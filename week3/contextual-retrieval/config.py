@@ -1,0 +1,199 @@
+"""Configuration for Agentic RAG System"""
+
+import os
+from dataclasses import dataclass, field
+from typing import Optional, Dict, Any
+from enum import Enum
+
+
+class Provider(str, Enum):
+    """Supported LLM providers"""
+    SILICONFLOW = "siliconflow"
+    DOUBAO = "doubao"
+    KIMI = "kimi"
+    MOONSHOT = "moonshot"
+    OPENROUTER = "openrouter"
+    OPENAI = "openai"
+    GROQ = "groq"
+    TOGETHER = "together"
+    DEEPSEEK = "deepseek"
+
+
+class KnowledgeBaseType(str, Enum):
+    """Knowledge base backend types"""
+    LOCAL = "local"  # Local retrieval pipeline
+    DIFY = "dify"    # Dify knowledge base API
+    RAPTOR = "raptor"  # RAPTOR tree-based index
+    GRAPHRAG = "graphrag"  # GraphRAG graph-based index
+
+
+@dataclass
+class LLMConfig:
+    """LLM configuration"""
+    provider: str = "kimi"  # Default provider
+    model: Optional[str] = None  # Will use provider defaults if not specified
+    api_key: Optional[str] = None  # Will read from env if not provided
+    temperature: float = 0.7
+    max_tokens: int = 4096
+    stream: bool = True
+    
+    # Provider-specific defaults
+    PROVIDER_DEFAULTS = {
+        "siliconflow": {
+            "model": "Qwen/Qwen3-235B-A22B-Thinking-2507",
+            "base_url": "https://api.siliconflow.cn/v1"
+        },
+        "doubao": {
+            "model": "doubao-seed-1-6-thinking-250715",
+            "base_url": "https://ark.cn-beijing.volces.com/api/v3"
+        },
+        "kimi": {
+            "model": "kimi-k2-0905-preview",
+            "base_url": "https://api.moonshot.cn/v1"
+        },
+        "moonshot": {
+            "model": "kimi-k2-0905-preview",
+            "base_url": "https://api.moonshot.cn/v1"
+        },
+        "openrouter": {
+            "model": "openai/gpt-4o-2024-11-20",
+            "base_url": "https://openrouter.ai/api/v1"
+        },
+        "openai": {
+            "model": "gpt-4o-2024-11-20",
+            "base_url": "https://api.openai.com/v1"
+        },
+        "groq": {
+            "model": "llama-3.3-70b-versatile",
+            "base_url": "https://api.groq.com/openai/v1"
+        },
+        "together": {
+            "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+            "base_url": "https://api.together.xyz"
+        },
+        "deepseek": {
+            "model": "deepseek-reasoner",
+            "base_url": "https://api.deepseek.com/v1"
+        }
+    }
+    
+    @classmethod
+    def get_api_key(cls, provider: str) -> Optional[str]:
+        """Get API key from environment"""
+        env_mappings = {
+            "siliconflow": "SILICONFLOW_API_KEY",
+            "doubao": "ARK_API_KEY",
+            "kimi": "MOONSHOT_API_KEY",
+            "moonshot": "MOONSHOT_API_KEY",
+            "openrouter": "OPENROUTER_API_KEY",
+            "openai": "OPENAI_API_KEY",
+            "groq": "GROQ_API_KEY",
+            "together": "TOGETHER_API_KEY",
+            "deepseek": "DEEPSEEK_API_KEY"
+        }
+        return os.getenv(env_mappings.get(provider.lower(), ""))
+    
+    def get_client_config(self) -> Dict[str, Any]:
+        """Get OpenAI client configuration"""
+        provider_lower = self.provider.lower()
+        defaults = self.PROVIDER_DEFAULTS.get(provider_lower, {})
+        
+        # Get API key
+        api_key = self.api_key or self.get_api_key(provider_lower)
+        if not api_key:
+            raise ValueError(f"API key required for provider '{provider_lower}'")
+        
+        # Build config
+        config = {
+            "api_key": api_key,
+            "model": self.model or defaults.get("model")
+        }
+        
+        # Add base_url if not OpenAI
+        if "base_url" in defaults:
+            config["base_url"] = defaults["base_url"]
+        
+        return config, config.pop("model")
+
+
+@dataclass
+class KnowledgeBaseConfig:
+    """Knowledge base configuration"""
+    type: KnowledgeBaseType = KnowledgeBaseType.LOCAL
+    
+    # Local retrieval pipeline config
+    local_base_url: str = "http://localhost:8002"
+    local_top_k: int = 10
+    
+    # Dify config
+    dify_api_key: Optional[str] = field(default_factory=lambda: os.getenv("DIFY_API_KEY"))
+    dify_base_url: str = "https://api.dify.ai/v1"
+    dify_dataset_id: Optional[str] = None
+    dify_top_k: int = 10
+    
+    # RAPTOR tree-based index config
+    raptor_base_url: str = "http://localhost:8080"
+    raptor_top_k: int = 10
+    raptor_search_levels: bool = True  # Search across multiple tree levels
+    
+    # GraphRAG graph-based index config
+    graphrag_base_url: str = "http://localhost:8080"
+    graphrag_top_k: int = 10
+    graphrag_search_type: str = "hybrid"  # entity, community, or hybrid
+    
+    # Document storage
+    document_store_path: str = "document_store.json"
+    
+    
+@dataclass
+class ChunkingConfig:
+    """Document chunking configuration"""
+    chunk_size: int = 2048  # Characters per chunk
+    max_chunk_size: int = 4096  # Max size when respecting paragraph boundaries
+    chunk_overlap: int = 200  # Overlap between chunks
+    respect_paragraph_boundary: bool = True
+    min_chunk_size: int = 100  # Minimum chunk size
+
+
+@dataclass 
+class AgentConfig:
+    """Agent configuration"""
+    max_iterations: int = 10  # Max reasoning iterations
+    enable_reasoning_trace: bool = True
+    enable_citations: bool = True
+    strict_knowledge_base: bool = True  # Only answer from knowledge base
+    conversation_history_limit: int = 20  # Max conversation turns to keep
+    verbose: bool = True
+
+
+@dataclass
+class EvaluationConfig:
+    """Evaluation configuration"""
+    dataset_path: str = "evaluation/legal_qa_dataset.json"
+    results_path: str = "evaluation/results"
+    metrics: list = field(default_factory=lambda: ["accuracy", "relevance", "citation_quality"])
+
+
+@dataclass
+class Config:
+    """Main configuration"""
+    llm: LLMConfig = field(default_factory=LLMConfig)
+    knowledge_base: KnowledgeBaseConfig = field(default_factory=KnowledgeBaseConfig)
+    chunking: ChunkingConfig = field(default_factory=ChunkingConfig)
+    agent: AgentConfig = field(default_factory=AgentConfig)
+    evaluation: EvaluationConfig = field(default_factory=EvaluationConfig)
+    
+    @classmethod
+    def from_env(cls) -> "Config":
+        """Create config from environment variables"""
+        config = cls()
+        
+        # Override from env
+        if provider := os.getenv("LLM_PROVIDER"):
+            config.llm.provider = provider
+        if model := os.getenv("LLM_MODEL"):
+            config.llm.model = model
+        if kb_type := os.getenv("KB_TYPE"):
+            config.knowledge_base.type = KnowledgeBaseType(kb_type.lower())
+        
+        return config

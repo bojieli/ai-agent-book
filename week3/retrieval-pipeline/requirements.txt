@@ -1,0 +1,12 @@
+fastapi==0.109.0
+uvicorn==0.27.0
+httpx==0.26.0
+pydantic==2.5.3
+transformers==4.36.2
+torch==2.1.2
+sentence-transformers==2.2.2
+numpy==1.26.3
+aiohttp==3.9.3
+typing-extensions==4.9.0
+python-multipart==0.0.6
+FlagEmbedding==1.2.10

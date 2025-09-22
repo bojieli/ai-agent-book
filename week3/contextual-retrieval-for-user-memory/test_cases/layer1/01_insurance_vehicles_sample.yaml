@@ -1,0 +1,180 @@
+test_id: "UCM-L1-SAMPLE"
+category: "layer1"
+title: "Insurance and Vehicle Management"
+description: "Test memory retrieval for insurance policies and vehicle registrations across multiple conversations"
+
+conversation_histories:
+  - conversation_id: "C001"
+    timestamp: "2024-01-15T10:00:00Z"
+    messages:
+      - role: user
+        content: "I need to review my car insurance policy"
+      - role: assistant
+        content: "I'll help you review your car insurance. What insurance company do you use?"
+      - role: user
+        content: "I have State Farm for my 2019 Honda Civic, policy number SF-AUTO-789456"
+      - role: assistant
+        content: "State Farm policy SF-AUTO-789456 for your 2019 Honda Civic noted. What would you like to review?"
+      - role: user
+        content: "The premium is $165 per month, and it renews in April"
+      - role: assistant
+        content: "Your State Farm auto insurance: $165/month, renews in April. Is this for full coverage?"
+      - role: user
+        content: "Yes, full coverage with $500 deductible for collision and $250 for comprehensive"
+      - role: assistant
+        content: "Full coverage with $500 collision and $250 comprehensive deductibles. These are relatively low deductibles."
+      - role: user
+        content: "I also have a 2021 Toyota Camry on the same policy"
+      - role: assistant
+        content: "So both the 2019 Honda Civic and 2021 Toyota Camry are on policy SF-AUTO-789456?"
+      - role: user
+        content: "Yes, the total premium for both cars is $285 per month"
+      - role: assistant
+        content: "Updated: State Farm SF-AUTO-789456 covers both vehicles for $285/month total."
+      - role: user
+        content: "The Civic's VIN ends in 1234 and the Camry's ends in 5678"
+      - role: assistant
+        content: "VIN information noted: Civic ends in 1234, Camry ends in 5678."
+      - role: user
+        content: "I'm thinking about shopping for better rates"
+      - role: assistant
+        content: "With an April renewal, you should start getting quotes in February or March for the best comparison."
+      - role: user
+        content: "Good point. My driving record is clean, no accidents or tickets"
+      - role: assistant
+        content: "A clean driving record should help you get competitive quotes. Consider bundling with home insurance too."
+      - role: user
+        content: "I don't have home insurance yet, I'm still renting"
+      - role: assistant
+        content: "Consider getting renter's insurance - it's inexpensive and some companies offer multi-policy discounts even with renter's insurance."
+      - role: user
+        content: "That's helpful. What information will I need for quotes?"
+      - role: assistant
+        content: "For quotes you'll need: VINs, current coverage levels, deductibles, annual mileage, and your driving history."
+      - role: user
+        content: "I drive about 12,000 miles per year on the Civic and 8,000 on the Camry"
+      - role: assistant
+        content: "Annual mileage noted: Civic 12,000 miles, Camry 8,000 miles. This moderate mileage should help with rates."
+
+  - conversation_id: "C002"
+    timestamp: "2024-02-10T14:00:00Z"
+    messages:
+      - role: user
+        content: "I need to track my vehicle registration dates"
+      - role: assistant
+        content: "I'll help you track vehicle registrations. Which vehicles need tracking?"
+      - role: user
+        content: "My Honda Civic registration expires in May 2024"
+      - role: assistant
+        content: "Honda Civic registration expires May 2024. What about your other vehicle?"
+      - role: user
+        content: "The Toyota Camry registration expires in September 2024"
+      - role: assistant
+        content: "Noted: Civic (May 2024), Camry (September 2024). What are the license plates?"
+      - role: user
+        content: "Civic is ABC-123 and Camry is XYZ-789"
+      - role: assistant
+        content: "License plates: Civic ABC-123, Camry XYZ-789. Do you know the registration fees?"
+      - role: user
+        content: "Last year the Civic was $186 and the Camry was $198"
+      - role: assistant
+        content: "Registration fees: Civic $186, Camry $198. Total annual registration cost: $384."
+      - role: user
+        content: "The Civic needs a smog check before renewal"
+      - role: assistant
+        content: "Important: Honda Civic needs smog check before May 2024 registration renewal."
+      - role: user
+        content: "Where should I go for the smog check?"
+      - role: assistant
+        content: "Any state-certified smog station works. Many offer coupons online for $10-15 off."
+      - role: user
+        content: "The DMV sent renewal notices to my old address"
+      - role: assistant
+        content: "You need to update your address with the DMV. What's your current address?"
+      - role: user
+        content: "123 Oak Street, San Jose, CA 95125"
+      - role: assistant
+        content: "Current address: 123 Oak Street, San Jose, CA 95125. Update this with DMV online or by form."
+      - role: user
+        content: "Should I update my insurance address too?"
+      - role: assistant
+        content: "Yes, definitely update State Farm with your new San Jose address for policy SF-AUTO-789456."
+      - role: user
+        content: "Will that change my premium?"
+      - role: assistant
+        content: "Possibly. Rates vary by ZIP code. San Jose 95125 rates depend on local claims history and theft rates."
+      - role: user
+        content: "I'll call them tomorrow"
+      - role: assistant
+        content: "Good plan. Ask about any address-change discounts and confirm both vehicles are listed at the new address."
+      - role: user
+        content: "Thanks for reminding me about both cars"
+      - role: assistant
+        content: "You're welcome. Both the Civic and Camry registrations and insurance should reflect your new address."
+
+  - conversation_id: "C003"
+    timestamp: "2024-03-05T09:00:00Z"
+    messages:
+      - role: user
+        content: "I got insurance quotes from other companies"
+      - role: assistant
+        content: "Great! What quotes did you receive? We can compare them to your current State Farm policy."
+      - role: user
+        content: "Geico quoted $245/month for both cars with the same coverage"
+      - role: assistant
+        content: "Geico at $245/month would save you $40/month compared to State Farm's $285."
+      - role: user
+        content: "Progressive quoted $255/month"
+      - role: assistant
+        content: "Progressive at $255 saves $30/month. Geico is the lowest so far at $245."
+      - role: user
+        content: "Allstate was $275/month but includes roadside assistance"
+      - role: assistant
+        content: "Allstate at $275 (with roadside) saves $10/month. Does your State Farm policy include roadside?"
+      - role: user
+        content: "No, State Farm charges extra $15/month for roadside"
+      - role: assistant
+        content: "So State Farm with roadside would be $300/month. Allstate at $275 with roadside included is actually $25 cheaper."
+      - role: user
+        content: "I didn't think of that comparison"
+      - role: assistant
+        content: "Summary: Geico $245 (no roadside), Progressive $255, Allstate $275 (with roadside), State Farm $300 (with roadside)."
+      - role: user
+        content: "Geico offers roadside for $14/month extra"
+      - role: assistant
+        content: "Geico with roadside: $259/month. Still the best deal, saving $41/month vs current State Farm with roadside."
+      - role: user
+        content: "When should I switch?"
+      - role: assistant
+        content: "Your State Farm policy renews in April. Switch at renewal to avoid cancellation fees."
+      - role: user
+        content: "How much notice should I give State Farm?"
+      - role: assistant
+        content: "No advance notice required, but comparing final renewal offers is wise. Just ensure new coverage starts when old ends."
+      - role: user
+        content: "Will switching affect my registration or anything?"
+      - role: assistant
+        content: "No impact on registration. Just update your insurance info if you get pulled over or have a claim."
+      - role: user
+        content: "What about my VIN numbers and all that?"
+      - role: assistant
+        content: "You'll need to provide VINs (Civic ends 1234, Camry ends 5678) to the new insurer for accurate coverage."
+      - role: user
+        content: "Right, I have those documented"
+      - role: assistant
+        content: "Perfect. You have all needed info: VINs, current coverage levels, deductibles, and annual mileage for both vehicles."
+
+user_question: "What are my vehicle insurance options and when do my car registrations expire?"
+
+evaluation_criteria: |
+  The agent should accurately retrieve and synthesize:
+  1. Current insurance: State Farm policy SF-AUTO-789456, $285/month for both vehicles
+  2. Insurance quotes: Geico $245, Progressive $255, Allstate $275 (includes roadside)
+  3. Vehicle details: 2019 Honda Civic and 2021 Toyota Camry
+  4. Registration dates: Civic expires May 2024, Camry expires September 2024
+  5. Additional requirements: Civic needs smog check before registration
+  6. The comparison showing Geico + roadside ($259) as best option
+
+expected_behavior: |
+  The agent should search across multiple conversations to compile complete insurance and registration information,
+  providing a comprehensive answer that includes current coverage, alternative quotes, and registration deadlines.

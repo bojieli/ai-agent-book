@@ -1,0 +1,59 @@
+{
+  "user_id": "demo_user",
+  "type": "advanced_json_cards",
+  "updated_at": "2025-09-22T08:28:04.748881",
+  "categories": {
+    "personal": {
+      "user_identity": {
+        "facts": {
+          "name": "John Doe",
+          "profession": "software engineer",
+          "employer": "TechCorp"
+        },
+        "backstory": "User introduced himself as a software engineer at TechCorp.",
+        "person": "John Doe",
+        "relationship": "self",
+        "date_created": "2024-06-04",
+        "_metadata": {
+          "created_at": "2025-09-22T08:28:04.748445",
+          "updated_at": "2025-09-22T08:28:04.748447",
+          "source": "DEMO-001"
+        }
+      },
+      "weekly_meeting": {
+        "facts": {
+          "day": "Tuesday",
+          "time": "3pm",
+          "frequency": "weekly"
+        },
+        "backstory": "User mentioned having a recurring meeting every Tuesday at 3pm.",
+        "person": "John Doe",
+        "relationship": "self",
+        "date_created": "2024-06-04",
+        "_metadata": {
+          "created_at": "2025-09-22T08:28:04.748713",
+          "updated_at": "2025-09-22T08:28:04.748714",
+          "source": "DEMO-001"
+        }
+      }
+    },
+    "family": {
+      "spouse_jane": {
+        "facts": {
+          "name": "Jane",
+          "profession": "designer",
+          "employer": "CreativeStudio"
+        },
+        "backstory": "User mentioned his wife Jane is a designer at CreativeStudio.",
+        "person": "Jane",
+        "relationship": "spouse",
+        "date_created": "2024-06-04",
+        "_metadata": {
+          "created_at": "2025-09-22T08:28:04.748851",
+          "updated_at": "2025-09-22T08:28:04.748852",
+          "source": "DEMO-001"
+        }
+      }
+    }
+  }
+}

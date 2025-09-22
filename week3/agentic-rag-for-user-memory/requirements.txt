@@ -1,0 +1,18 @@
+# Core dependencies
+openai>=1.0.0
+numpy>=1.24.0
+python-dotenv>=1.0.0
+
+# Optional vector database backends
+chromadb>=0.4.0  # For Chroma vector store
+faiss-cpu>=1.7.4  # For FAISS vector store (CPU version)
+# faiss-gpu>=1.7.4  # Uncomment for GPU support
+
+# Utilities
+pydantic>=2.0.0
+dataclasses-json>=0.6.0
+
+# For advanced features
+tiktoken>=0.5.0  # For token counting
+langchain>=0.1.0  # Optional: for additional RAG features
+langchain-openai>=0.0.5  # Optional: OpenAI integration for langchain

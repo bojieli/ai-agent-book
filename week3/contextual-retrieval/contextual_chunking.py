@@ -1,0 +1,552 @@
+"""Contextual Chunking Module - Educational implementation of Anthropic's Contextual Retrieval
+
+This module demonstrates the key insight from Anthropic's research:
+- Traditional RAG destroys context by chunking documents
+- Contextual Retrieval prepends chunk-specific context before embedding
+- This preserves semantic meaning that would otherwise be lost
+"""
+
+import json
+import hashlib
+import logging
+import requests
+from typing import List, Dict, Any, Optional, Tuple
+from pathlib import Path
+from datetime import datetime
+from dataclasses import dataclass, field
+import time
+from openai import OpenAI
+from config import ChunkingConfig, KnowledgeBaseConfig, KnowledgeBaseType, LLMConfig
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ContextualChunk:
+    """Enhanced chunk with contextual information"""
+    chunk_id: str
+    doc_id: str
+    text: str  # Original chunk text
+    context: str  # Generated contextual description
+    contextualized_text: str  # Context + original text
+    chunk_index: int
+    char_count: int
+    context_tokens: int = 0  # Track token usage
+    generation_time: float = 0.0  # Track generation time
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "chunk_id": self.chunk_id,
+            "doc_id": self.doc_id,
+            "text": self.text,
+            "context": self.context,
+            "contextualized_text": self.contextualized_text,
+            "chunk_index": self.chunk_index,
+            "char_count": self.char_count,
+            "context_tokens": self.context_tokens,
+            "generation_time": self.generation_time,
+            "metadata": self.metadata
+        }
+
+
+class ContextualChunker:
+    """
+    Implements contextual chunking inspired by Anthropic's Contextual Retrieval.
+    
+    Key Educational Points:
+    1. Context Generation: Uses LLM to generate chunk-specific context
+    2. Prepending Strategy: Context is prepended to chunks before embedding
+    3. BM25 Enhancement: Contextual chunks improve both semantic and lexical search
+    4. Cost Optimization: Uses caching strategies to reduce API costs
+    """
+    
+    def __init__(self, 
+                 chunking_config: Optional[ChunkingConfig] = None,
+                 llm_config: Optional[LLMConfig] = None,
+                 use_contextual: bool = True):
+        """
+        Initialize the contextual chunker.
+        
+        Args:
+            chunking_config: Configuration for chunking parameters
+            llm_config: LLM configuration for context generation
+            use_contextual: Whether to generate contextual chunks (for comparison)
+        """
+        self.chunking_config = chunking_config or ChunkingConfig()
+        self.llm_config = llm_config or LLMConfig()
+        self.use_contextual = use_contextual
+        
+        # Initialize LLM client for context generation
+        if self.use_contextual:
+            self._init_llm_client()
+        
+        # Statistics tracking
+        self.stats = {
+            "total_chunks": 0,
+            "contextual_chunks": 0,
+            "total_context_tokens": 0,
+            "total_generation_time": 0.0,
+            "cache_hits": 0,
+            "cache_misses": 0
+        }
+        
+        # Context cache to avoid regenerating for similar chunks
+        self.context_cache = {}
+        
+        logger.info(f"Initialized ContextualChunker (contextual={use_contextual})")
+    
+    def _init_llm_client(self):
+        """Initialize LLM client for context generation"""
+        client_config, model = self.llm_config.get_client_config()
+        base_url = client_config.pop("base_url", None)
+        
+        if base_url:
+            self.client = OpenAI(base_url=base_url, **client_config)
+        else:
+            self.client = OpenAI(**client_config)
+        
+        self.model = model
+        logger.info(f"Using {self.llm_config.provider} ({self.model}) for context generation")
+    
+    def chunk_document(self, 
+                      text: str, 
+                      doc_id: str,
+                      doc_metadata: Optional[Dict[str, Any]] = None) -> List[ContextualChunk]:
+        """
+        Chunk a document with optional contextual enhancement.
+        
+        Educational Note:
+        This is the core innovation - each chunk gets contextualized
+        with information about its position and meaning within the document.
+        
+        Args:
+            text: Full document text
+            doc_id: Document identifier
+            doc_metadata: Optional document metadata
+            
+        Returns:
+            List of ContextualChunk objects
+        """
+        logger.info(f"Starting chunking for document {doc_id}")
+        start_time = time.time()
+        
+        # Step 1: Create basic chunks
+        basic_chunks = self._create_basic_chunks(text, doc_id)
+        logger.info(f"Created {len(basic_chunks)} basic chunks")
+        
+        # Step 2: Generate contextual enhancements if enabled
+        if self.use_contextual:
+            contextual_chunks = self._generate_contextual_chunks(
+                basic_chunks, text, doc_id, doc_metadata
+            )
+        else:
+            # Create non-contextual chunks for comparison
+            contextual_chunks = []
+            for chunk in basic_chunks:
+                contextual_chunks.append(ContextualChunk(
+                    chunk_id=chunk["chunk_id"],
+                    doc_id=chunk["doc_id"],
+                    text=chunk["text"],
+                    context="",  # No context in non-contextual mode
+                    contextualized_text=chunk["text"],  # Just the original text
+                    chunk_index=chunk["chunk_index"],
+                    char_count=chunk["char_count"],
+                    metadata={"contextual": False}
+                ))
+        
+        # Update statistics
+        self.stats["total_chunks"] += len(contextual_chunks)
+        if self.use_contextual:
+            self.stats["contextual_chunks"] += len(contextual_chunks)
+        
+        elapsed = time.time() - start_time
+        logger.info(f"Chunking completed in {elapsed:.2f}s")
+        logger.info(f"Statistics: {json.dumps(self.stats, indent=2)}")
+        
+        return contextual_chunks
+    
+    def _create_basic_chunks(self, text: str, doc_id: str) -> List[Dict[str, Any]]:
+        """Create basic chunks using traditional chunking"""
+        chunks = []
+        
+        if self.chunking_config.respect_paragraph_boundary:
+            chunks = self._chunk_by_paragraphs(text, doc_id)
+        else:
+            chunks = self._chunk_by_size(text, doc_id)
+        
+        return chunks
+    
+    def _chunk_by_paragraphs(self, text: str, doc_id: str) -> List[Dict[str, Any]]:
+        """Chunk text respecting paragraph boundaries"""
+        paragraphs = text.split('\n\n')
+        chunks = []
+        current_chunk = []
+        current_size = 0
+        
+        for para in paragraphs:
+            para = para.strip()
+            if not para:
+                continue
+            
+            para_size = len(para)
+            
+            # Handle oversized paragraphs
+            if para_size > self.chunking_config.max_chunk_size:
+                if current_chunk:
+                    chunk_text = '\n\n'.join(current_chunk)
+                    chunks.append(self._create_basic_chunk(chunk_text, doc_id, len(chunks)))
+                    current_chunk = []
+                    current_size = 0
+                
+                # Split large paragraph into sentences
+                sentences = self._split_into_sentences(para)
+                for sent in sentences:
+                    if len(sent) > self.chunking_config.max_chunk_size:
+                        # Force split very long sentences
+                        for i in range(0, len(sent), self.chunking_config.chunk_size):
+                            sub_chunk = sent[i:i + self.chunking_config.chunk_size]
+                            chunks.append(self._create_basic_chunk(sub_chunk, doc_id, len(chunks)))
+                    else:
+                        chunks.append(self._create_basic_chunk(sent, doc_id, len(chunks)))
+                continue
+            
+            # Check if adding this paragraph exceeds chunk size
+            if current_size + para_size > self.chunking_config.chunk_size and current_chunk:
+                chunk_text = '\n\n'.join(current_chunk)
+                chunks.append(self._create_basic_chunk(chunk_text, doc_id, len(chunks)))
+                
+                # Start new chunk with overlap
+                if self.chunking_config.chunk_overlap > 0 and current_chunk:
+                    current_chunk = [current_chunk[-1], para]
+                    current_size = len(current_chunk[0]) + para_size
+                else:
+                    current_chunk = [para]
+                    current_size = para_size
+            else:
+                current_chunk.append(para)
+                current_size += para_size
+        
+        # Save final chunk
+        if current_chunk:
+            chunk_text = '\n\n'.join(current_chunk)
+            if len(chunk_text) >= self.chunking_config.min_chunk_size:
+                chunks.append(self._create_basic_chunk(chunk_text, doc_id, len(chunks)))
+        
+        return chunks
+    
+    def _chunk_by_size(self, text: str, doc_id: str) -> List[Dict[str, Any]]:
+        """Simple size-based chunking"""
+        chunks = []
+        
+        for i in range(0, len(text), self.chunking_config.chunk_size - self.chunking_config.chunk_overlap):
+            chunk_text = text[i:i + self.chunking_config.chunk_size]
+            
+            if len(chunk_text) >= self.chunking_config.min_chunk_size:
+                chunks.append(self._create_basic_chunk(chunk_text, doc_id, len(chunks)))
+        
+        return chunks
+    
+    def _split_into_sentences(self, text: str) -> List[str]:
+        """Split text into sentences"""
+        import re
+        
+        # Handle both English and Chinese sentence endings
+        sentences = re.split(r'([。！？\.!?]+)', text)
+        
+        # Reconstruct sentences with their endings
+        result = []
+        for i in range(0, len(sentences) - 1, 2):
+            if i + 1 < len(sentences):
+                result.append(sentences[i] + sentences[i + 1])
+            else:
+                result.append(sentences[i])
+        
+        return [s.strip() for s in result if s.strip()]
+    
+    def _create_basic_chunk(self, text: str, doc_id: str, chunk_index: int) -> Dict[str, Any]:
+        """Create a basic chunk dictionary"""
+        chunk_id = f"{doc_id}_chunk_{chunk_index}"
+        
+        return {
+            "chunk_id": chunk_id,
+            "doc_id": doc_id,
+            "text": text,
+            "chunk_index": chunk_index,
+            "char_count": len(text),
+            "hash": hashlib.md5(text.encode()).hexdigest()
+        }
+    
+    def _generate_contextual_chunks(self,
+                                   basic_chunks: List[Dict[str, Any]],
+                                   full_document: str,
+                                   doc_id: str,
+                                   doc_metadata: Optional[Dict[str, Any]] = None) -> List[ContextualChunk]:
+        """
+        Generate contextual enhancements for chunks.
+        
+        Educational Note:
+        This is where the magic happens. We use an LLM to understand
+        each chunk in the context of the full document and generate
+        a concise contextual description.
+        """
+        contextual_chunks = []
+        
+        # Get document summary for better context generation
+        doc_summary = self._generate_document_summary(full_document, doc_id)
+        
+        for i, chunk in enumerate(basic_chunks):
+            logger.info(f"Generating context for chunk {i+1}/{len(basic_chunks)}")
+            
+            # Check cache first
+            chunk_hash = chunk["hash"]
+            if chunk_hash in self.context_cache:
+                context = self.context_cache[chunk_hash]
+                generation_time = 0.0
+                context_tokens = 0
+                self.stats["cache_hits"] += 1
+                logger.debug(f"Cache hit for chunk {chunk['chunk_id']}")
+            else:
+                # Generate new context
+                context, context_tokens, generation_time = self._generate_chunk_context(
+                    chunk["text"],
+                    full_document,
+                    chunk["chunk_index"],
+                    len(basic_chunks),
+                    doc_summary,
+                    doc_metadata
+                )
+                
+                # Cache the context
+                self.context_cache[chunk_hash] = context
+                self.stats["cache_misses"] += 1
+                self.stats["total_context_tokens"] += context_tokens
+                self.stats["total_generation_time"] += generation_time
+            
+            # Create contextual chunk
+            contextualized_text = f"{context}\n\n{chunk['text']}" if context else chunk["text"]
+            
+            contextual_chunk = ContextualChunk(
+                chunk_id=chunk["chunk_id"],
+                doc_id=doc_id,
+                text=chunk["text"],
+                context=context,
+                contextualized_text=contextualized_text,
+                chunk_index=chunk["chunk_index"],
+                char_count=len(contextualized_text),
+                context_tokens=context_tokens,
+                generation_time=generation_time,
+                metadata={
+                    "contextual": True,
+                    "original_char_count": chunk["char_count"],
+                    "context_char_count": len(context),
+                    "doc_summary": doc_summary[:200] if doc_summary else None
+                }
+            )
+            
+            contextual_chunks.append(contextual_chunk)
+            
+            # Log progress
+            if (i + 1) % 10 == 0:
+                avg_time = self.stats["total_generation_time"] / (i + 1)
+                logger.info(f"Progress: {i+1}/{len(basic_chunks)} chunks, avg time: {avg_time:.2f}s")
+        
+        return contextual_chunks
+    
+    def _generate_document_summary(self, document: str, doc_id: str) -> str:
+        """
+        Generate a brief summary of the document for context.
+        
+        Educational Note:
+        A document summary helps provide high-level context
+        that can make chunk-specific context more meaningful.
+        """
+        if not self.use_contextual:
+            return ""
+        
+        try:
+            # Truncate document if too long
+            max_doc_chars = 8000  # Roughly 2000 tokens
+            if len(document) > max_doc_chars:
+                # Take beginning, middle, and end
+                third = max_doc_chars // 3
+                truncated = (
+                    document[:third] +
+                    "\n\n[... middle portion omitted ...]\n\n" +
+                    document[len(document)//2 - third//2:len(document)//2 + third//2] +
+                    "\n\n[... portion omitted ...]\n\n" +
+                    document[-third:]
+                )
+            else:
+                truncated = document
+            
+            prompt = f"""Please provide a brief 2-3 sentence summary of this document that captures its main topic and purpose:
+
+<document>
+{truncated}
+</document>
+
+Summary:"""
+            
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant that creates concise document summaries."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=150
+            )
+            
+            summary = response.choices[0].message.content.strip()
+            logger.info(f"Generated document summary for {doc_id}: {summary[:100]}...")
+            return summary
+            
+        except Exception as e:
+            logger.error(f"Error generating document summary: {e}")
+            return ""
+    
+    def _generate_chunk_context(self,
+                               chunk_text: str,
+                               full_document: str,
+                               chunk_index: int,
+                               total_chunks: int,
+                               doc_summary: str,
+                               doc_metadata: Optional[Dict[str, Any]] = None) -> Tuple[str, int, float]:
+        """
+        Generate contextual description for a chunk.
+        
+        This follows Anthropic's approach:
+        1. Provide the full document (or representative sample)
+        2. Show the specific chunk
+        3. Ask for concise context to situate the chunk
+        
+        Returns:
+            Tuple of (context, token_count, generation_time)
+        """
+        start_time = time.time()
+        
+        try:
+            # Prepare document context (truncate if needed)
+            max_context_chars = 6000  # Leave room for chunk and prompt
+            if len(full_document) > max_context_chars:
+                # Include surrounding context for the chunk
+                chunk_position = full_document.find(chunk_text[:100])  # Find chunk in document
+                if chunk_position > 0:
+                    # Get context around the chunk
+                    context_start = max(0, chunk_position - max_context_chars // 2)
+                    context_end = min(len(full_document), chunk_position + len(chunk_text) + max_context_chars // 2)
+                    document_context = full_document[context_start:context_end]
+                    
+                    if context_start > 0:
+                        document_context = "[... previous content ...]\n\n" + document_context
+                    if context_end < len(full_document):
+                        document_context = document_context + "\n\n[... following content ...]"
+                else:
+                    # Fallback to document sample
+                    document_context = full_document[:max_context_chars] + "\n\n[... remainder of document ...]"
+            else:
+                document_context = full_document
+            
+            # Build the prompt (following Anthropic's template)
+            prompt = f"""<document>
+{document_context}
+</document>
+
+Here is the chunk we want to situate within the whole document:
+<chunk>
+{chunk_text}
+</chunk>
+
+{f"The document is about: {doc_summary}" if doc_summary else ""}
+
+Chunk position: {chunk_index + 1} of {total_chunks} total chunks.
+
+Please give a short, succinct context (2-3 sentences max) to situate this chunk within the overall document for the purposes of improving search retrieval of the chunk. Focus on:
+1. What section/topic of the document this chunk belongs to
+2. Any important entities, concepts, or relationships mentioned
+3. How this chunk relates to the document's main topic
+
+Answer only with the succinct context and nothing else. Do not repeat information already clear from the chunk itself."""
+
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": "You are a helpful assistant that generates concise contextual descriptions for document chunks to improve search retrieval."
+                    },
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,  # Low temperature for consistency
+                max_tokens=150
+            )
+            
+            context = response.choices[0].message.content.strip()
+            
+            # Estimate token count (rough approximation)
+            token_count = len(prompt.split()) + len(context.split())
+            generation_time = time.time() - start_time
+            
+            logger.debug(f"Generated context in {generation_time:.2f}s: {context[:100]}...")
+            
+            return context, token_count, generation_time
+            
+        except Exception as e:
+            logger.error(f"Error generating chunk context: {e}")
+            return "", 0, time.time() - start_time
+    
+    def compare_retrieval_methods(self,
+                                 query: str,
+                                 contextual_chunks: List[ContextualChunk],
+                                 non_contextual_chunks: List[ContextualChunk]) -> Dict[str, Any]:
+        """
+        Compare contextual vs non-contextual retrieval.
+        
+        Educational Note:
+        This method demonstrates the improvement that contextual
+        chunks provide for retrieval accuracy.
+        """
+        results = {
+            "query": query,
+            "timestamp": datetime.now().isoformat(),
+            "contextual_results": [],
+            "non_contextual_results": [],
+            "analysis": {}
+        }
+        
+        # This would integrate with the retrieval pipeline
+        # For now, we return the structure
+        logger.info(f"Comparison structure prepared for query: {query}")
+        
+        return results
+    
+    def get_statistics(self) -> Dict[str, Any]:
+        """Get chunking statistics"""
+        stats = self.stats.copy()
+        
+        # Calculate averages
+        if stats["contextual_chunks"] > 0:
+            stats["avg_context_tokens"] = stats["total_context_tokens"] / stats["contextual_chunks"]
+            stats["avg_generation_time"] = stats["total_generation_time"] / stats["contextual_chunks"]
+        else:
+            stats["avg_context_tokens"] = 0
+            stats["avg_generation_time"] = 0
+        
+        # Cache efficiency
+        total_cache_ops = stats["cache_hits"] + stats["cache_misses"]
+        if total_cache_ops > 0:
+            stats["cache_hit_rate"] = stats["cache_hits"] / total_cache_ops
+        else:
+            stats["cache_hit_rate"] = 0
+        
+        # Cost estimation
+        if self.llm_config.provider == "openai":
+            cost_per_1k = 0.03
+        else:
+            cost_per_1k = 0.01
+        
+        stats["estimated_cost"] = (stats["total_context_tokens"] / 1000) * cost_per_1k
+        
+        return stats

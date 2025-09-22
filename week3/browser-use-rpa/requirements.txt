@@ -1,0 +1,22 @@
+# Browser-use and dependencies
+browser-use>=0.1.0
+playwright>=1.40.0
+playwright-stealth>=1.0.6
+
+# LLM providers
+openai>=1.0.0
+anthropic>=0.18.0
+google-generativeai>=0.3.0
+
+# Core dependencies
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+asyncio-atexit>=1.0.1
+
+# Utilities
+uuid-extensions>=1.0.0
+aiofiles>=23.0.0
+Pillow>=10.0.0
+
+# Logging and monitoring
+colorlog>=6.7.0
