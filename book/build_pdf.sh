@@ -55,7 +55,7 @@ pandoc "${CHAPTERS[@]}" \
     --metadata author-meta="李博杰" \
     -H preamble.tex \
     --include-before-body=cover.tex \
-    --highlight-style=kate \
+    --syntax-highlighting=kate \
     --columns=80 \
     2>&1
 
