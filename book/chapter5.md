@@ -34,7 +34,7 @@
 
 ```
 Agent（思考）：需要找到所有包含 TODO 的代码行。
-Agent → Grep("TODO", pattern="**/*.py")       # 搜索文件内容
+Agent → Grep("TODO", glob="**/*.py")          # 搜索文件内容
 工具返回：
   src/api.py:42: # TODO: add rate limiting
   src/db.py:15:  # TODO: migrate to PostgreSQL
