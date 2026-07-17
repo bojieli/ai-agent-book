@@ -1,0 +1,11 @@
+# 生成产物
+output/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 环境变量
+.env

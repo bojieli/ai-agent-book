@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 环境变量与密钥
+.env
+
+# 运行时生成的工件（Coding Agent 改写的工作副本、运行日志等）
+runtime/
+output/

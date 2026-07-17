@@ -1,0 +1,9 @@
+node_modules/
+output/
+slidev_workspace/exports/
+slidev_workspace/slides.md
+slidev_workspace/.slidev/
+slidev_workspace/public/*.png
+__pycache__/
+.env
+package-lock.json

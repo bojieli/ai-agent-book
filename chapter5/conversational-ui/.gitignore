@@ -1,0 +1,16 @@
+# 前端依赖与构建产物
+frontend/node_modules/
+frontend/dist/
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 环境变量
+.env
+
+# Vite 缓存
+frontend/.vite/

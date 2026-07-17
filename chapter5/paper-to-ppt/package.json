@@ -1,0 +1,12 @@
+{
+  "name": "paper-to-ppt-slidev",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Slidev workspace for 实验 5-4 (proposer-reviewer PPT generation)",
+  "dependencies": {
+    "@slidev/cli": "^0.49.29",
+    "@slidev/theme-default": "^0.25.0",
+    "playwright-chromium": "^1.44.0",
+    "typescript": "^5.9.3"
+  }
+}
