@@ -4,9 +4,10 @@ Compare baseline → pretrained → finetuned Korean Mistral models (3-way compa
 Shows progression from original model to final Korean-capable model
 """
 
-import torch
-from unsloth import FastLanguageModel
-from transformers import TextStreamer
+import argparse
+
+# 说明：unsloth / torch 等重型依赖在函数内按需导入，
+# 这样 `python compare_models.py --help` 无需 GPU 环境即可查看参数。
 
 # ANSI color codes for colored output
 class Colors:
@@ -26,10 +27,11 @@ def print_section(title, color=Colors.CYAN):
     print(f"{title}")
     print(f"{'='*80}{Colors.ENDC}\n")
 
-def load_baseline_model(max_seq_length=2048):
+def load_baseline_model(base_model="unsloth/mistral-7b-v0.3", max_seq_length=2048):
     """Load the original Mistral model (before any training)"""
+    from unsloth import FastLanguageModel
     model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name="unsloth/mistral-7b-v0.3",
+        model_name=base_model,
         max_seq_length=max_seq_length,
         dtype=None,
         load_in_4bit=True,
@@ -39,6 +41,7 @@ def load_baseline_model(max_seq_length=2048):
 
 def load_model(model_path, max_seq_length=2048):
     """Load a trained LoRA model"""
+    from unsloth import FastLanguageModel
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=model_path,
         max_seq_length=max_seq_length,
@@ -118,7 +121,30 @@ def compare_on_prompt(baseline_model, baseline_tokenizer,
     print(f"{Colors.CYAN}│{Colors.ENDC}")
     print(f"{Colors.CYAN}└────────────────────────────────────────────────────────────────────┘{Colors.ENDC}\n")
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="对比韩语 Mistral 的三个阶段模型：基础模型 → 继续预训练 → 指令微调。"
+                    "在同一批中韩英提示上并排生成，直观展示韩语能力的提升与英语能力的保留。",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument("--base_model", type=str, default="unsloth/mistral-7b-v0.3",
+                        help="基础（未训练）模型名称")
+    parser.add_argument("--pretrained_path", type=str, default="lora_model_pretrained",
+                        help="继续预训练后保存的 LoRA 模型目录")
+    parser.add_argument("--finetuned_path", type=str, default="lora_model",
+                        help="指令微调后保存的最终 LoRA 模型目录")
+    parser.add_argument("--max_seq_length", type=int, default=2048,
+                        help="最大序列长度")
+    parser.add_argument("--max_new_tokens", type=int, default=150,
+                        help="每次生成的最大 token 数")
+    parser.add_argument("--temperature", type=float, default=0.3,
+                        help="采样温度（越低越确定）")
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+
     print_section("🔬 KOREAN MISTRAL 3-WAY MODEL COMPARISON", Colors.HEADER)
     print(f"{Colors.YELLOW}This script compares three model stages:{Colors.ENDC}")
     print(f"  1. {Colors.RED}Baseline{Colors.ENDC} - Original Mistral (no Korean training)")
@@ -179,7 +205,8 @@ def main():
         finetuned_model, finetuned_tokenizer,
         wikipedia_prompt_korean.format("인공지능", ""),
         "Test 1: Korean Wikipedia - Artificial Intelligence (인공지능)",
-        "Wikipedia Article / Title: Artificial Intelligence / Article:"
+        "Wikipedia Article / Title: Artificial Intelligence / Article:",
+        max_new_tokens=args.max_new_tokens, temperature=args.temperature
     )
     
     # Test 2: English Wikipedia - Preservation Check
@@ -189,7 +216,8 @@ def main():
         finetuned_model, finetuned_tokenizer,
         wikipedia_prompt_english.format("Artificial Intelligence", ""),
         "Test 2: English Wikipedia - Artificial Intelligence (Preservation Check)",
-        None
+        None,
+        max_new_tokens=args.max_new_tokens, temperature=args.temperature
     )
     
     # Test 3: Korean Instruction - Kimchi
@@ -199,7 +227,8 @@ def main():
         finetuned_model, finetuned_tokenizer,
         alpaca_prompt_korean.format("한국의 전통 음식인 김치에 대해 설명하세요.", ""),
         "Test 3: Korean Instruction - Explain Kimchi",
-        "Instruction: Explain about kimchi, a traditional Korean food. / Response:"
+        "Instruction: Explain about kimchi, a traditional Korean food. / Response:",
+        max_new_tokens=args.max_new_tokens, temperature=args.temperature
     )
     
     # Test 4: Korean Instruction - Seoul
@@ -209,7 +238,8 @@ def main():
         finetuned_model, finetuned_tokenizer,
         alpaca_prompt_korean.format("대한민국의 수도인 서울에 대해 간단히 소개해주세요.", ""),
         "Test 4: Korean Instruction - Introduce Seoul",
-        "Instruction: Briefly introduce Seoul, the capital of South Korea. / Response:"
+        "Instruction: Briefly introduce Seoul, the capital of South Korea. / Response:",
+        max_new_tokens=args.max_new_tokens, temperature=args.temperature
     )
     
     # Test 5: English Instruction - Preservation Check
@@ -219,7 +249,8 @@ def main():
         finetuned_model, finetuned_tokenizer,
         alpaca_prompt_english.format("Explain about Thanksgiving turkey, a traditional American food.", ""),
         "Test 5: English Instruction - Thanksgiving Turkey (Preservation Check)",
-        None
+        None,
+        max_new_tokens=args.max_new_tokens, temperature=args.temperature
     )
     
     print_section("📊 COMPARISON COMPLETE", Colors.GREEN)

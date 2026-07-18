@@ -6,9 +6,9 @@ Loads saved LoRA adapters and evaluates on Korean and English tasks
 
 import os
 import argparse
-import torch
-from unsloth import FastLanguageModel
-from transformers import TextStreamer
+
+# 说明：unsloth / torch / transformers 等重型依赖在函数内按需导入，
+# 这样 `python evaluate_model.py --help` 无需 GPU 环境即可查看参数。
 
 # ANSI color codes for colored output
 class Colors:
@@ -30,8 +30,9 @@ def print_section(title, color=Colors.CYAN):
 
 def load_model(model_path, max_seq_length=2048, dtype=None, load_in_4bit=True):
     """Load the saved LoRA model"""
+    from unsloth import FastLanguageModel
     print_section(f"📥 LOADING MODEL FROM: {model_path}", Colors.BLUE)
-    
+
     print(f"{Colors.YELLOW}Loading model and tokenizer...{Colors.ENDC}")
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name = model_path,
@@ -48,7 +49,8 @@ def load_model(model_path, max_seq_length=2048, dtype=None, load_in_4bit=True):
 def run_evaluation(model, tokenizer, max_new_tokens=150, 
                    temperature=0.7, top_p=0.9, use_sampling=False):
     """Run all evaluation tests"""
-    
+    from transformers import TextStreamer
+
     print_section("🧪 RUNNING EVALUATION TESTS", Colors.CYAN)
     print(f"{Colors.YELLOW}Generation Parameters:{Colors.ENDC}")
     print(f"  • max_new_tokens: {max_new_tokens}")
@@ -250,6 +252,7 @@ def main():
     )
     
     # Display GPU info
+    import torch
     print_section("💾 GPU MEMORY STATS", Colors.YELLOW)
     gpu_stats = torch.cuda.get_device_properties(0)
     reserved_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)

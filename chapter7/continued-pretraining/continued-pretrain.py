@@ -24,6 +24,70 @@ We will use the Korean subset of the [Wikipedia dataset](https://huggingface.co/
 # IMPORTS
 # ============================================================================
 import os
+import argparse
+
+
+# ============================================================================
+# 命令行参数（默认值与原始脚本硬编码值完全一致，保证行为不变）
+# ============================================================================
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="韩语 Mistral 继续预训练 + 指令微调（Unsloth / LoRA）。"
+                    "先用韩语维基百科做继续预训练注入韩语能力，再用韩语 Alpaca 数据做 SFT。",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+
+    # 基础模型
+    parser.add_argument("--base_model", type=str, default="unsloth/mistral-7b-v0.3",
+                        help="基础模型名称（HuggingFace / Unsloth 仓库名）")
+    parser.add_argument("--max_seq_len", type=int, default=2048,
+                        help="最大序列长度")
+    parser.add_argument("--no_4bit", action="store_true",
+                        help="关闭 4bit 量化加载（默认开启 4bit 以节省显存）")
+
+    # LoRA 配置
+    parser.add_argument("--lora_rank", type=int, default=128,
+                        help="LoRA 秩 r（继续预训练建议较大，如 128）")
+    parser.add_argument("--lora_alpha", type=int, default=32,
+                        help="LoRA alpha")
+
+    # 数据集
+    parser.add_argument("--wiki_dataset", type=str, default="wikimedia/wikipedia",
+                        help="继续预训练用的维基百科数据集")
+    parser.add_argument("--wiki_config", type=str, default="20231101.ko",
+                        help="维基百科数据集的语言/版本配置（默认韩语快照）")
+    parser.add_argument("--wiki_train_size", type=float, default=0.05,
+                        help="维基百科数据集抽样比例（0~1，默认取 5%% 以加速训练）")
+    parser.add_argument("--alpaca_dataset", type=str,
+                        default="FreedomIntelligence/alpaca-gpt4-korean",
+                        help="指令微调（SFT）用的韩语 Alpaca 数据集")
+
+    # 训练超参数
+    parser.add_argument("--pretrain_epochs", type=int, default=1,
+                        help="继续预训练阶段的训练轮数")
+    parser.add_argument("--pretrain_max_steps", type=int, default=-1,
+                        help="继续预训练最大步数（-1 表示不限制，按 epoch 训练）")
+    parser.add_argument("--sft_epochs", type=int, default=2,
+                        help="指令微调阶段的训练轮数")
+    parser.add_argument("--sft_max_steps", type=int, default=-1,
+                        help="指令微调最大步数（-1 表示不限制，按 epoch 训练）")
+
+    # 输出目录
+    parser.add_argument("--pretrain_output_dir", type=str, default="outputs_pretrain",
+                        help="继续预训练的检查点目录")
+    parser.add_argument("--sft_output_dir", type=str, default="outputs_sft",
+                        help="指令微调的检查点目录")
+    parser.add_argument("--pretrained_save_dir", type=str, default="lora_model_pretrained",
+                        help="继续预训练后保存的 LoRA 模型目录")
+    parser.add_argument("--final_save_dir", type=str, default="lora_model",
+                        help="指令微调后保存的最终 LoRA 模型目录")
+
+    return parser.parse_args()
+
+
+# 先解析参数（放在重型导入之前，这样 `--help` 无需 GPU / Unsloth 也能运行）
+args = parse_args()
+
 import torch
 from unsloth import FastLanguageModel, is_bfloat16_supported, UnslothTrainer, UnslothTrainingArguments
 from transformers import TrainingArguments, TextStreamer
@@ -52,9 +116,9 @@ def print_section(title, color=Colors.CYAN):
 # ============================================================================
 print_section("🚀 LOADING MODEL", Colors.BLUE)
 
-max_seq_length = 2048 # Choose any! We auto support RoPE Scaling internally!
+max_seq_length = args.max_seq_len # Choose any! We auto support RoPE Scaling internally!
 dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
-load_in_4bit = True # Use 4bit quantization to reduce memory usage. Can be False.
+load_in_4bit = not args.no_4bit # Use 4bit quantization to reduce memory usage. Can be False.
 
 # 4bit pre quantized models we support for 4x faster downloading + no OOMs.
 fourbit_models = [
@@ -69,9 +133,9 @@ fourbit_models = [
     "unsloth/gemma-7b-bnb-4bit",             # Gemma 2.2x faster!
 ] # More models at https://huggingface.co/unsloth
 
-print(f"{Colors.GREEN}Loading Mistral-7B v0.3...{Colors.ENDC}")
+print(f"{Colors.GREEN}Loading {args.base_model}...{Colors.ENDC}")
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name = "unsloth/mistral-7b-v0.3", # Choose ANY! eg teknium/OpenHermes-2.5-Mistral-7B
+    model_name = args.base_model, # Choose ANY! eg teknium/OpenHermes-2.5-Mistral-7B
     max_seq_length = max_seq_length,
     dtype = dtype,
     load_in_4bit = load_in_4bit,
@@ -84,11 +148,11 @@ print(f"Including embed_tokens and lm_head for continual pretraining{Colors.ENDC
 
 model = FastLanguageModel.get_peft_model(
     model,
-    r = 128, # Choose any number > 0 ! Suggested 8, 16, 32, 64, 128
+    r = args.lora_rank, # Choose any number > 0 ! Suggested 8, 16, 32, 64, 128
     target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
                       "gate_proj", "up_proj", "down_proj",
                       "embed_tokens", "lm_head",], # Add for continual pretraining
-    lora_alpha = 32,
+    lora_alpha = args.lora_alpha,
     lora_dropout = 0, # Supports any, but = 0 is optimized
     bias = "none",    # Supports any, but = "none" is optimized
     # [NEW] "unsloth" uses 30% less VRAM, fits 2x larger batch sizes!
@@ -198,9 +262,9 @@ def formatting_prompts_func_wiki(examples):
         outputs.append(text)
     return { "text" : outputs, }
 
-dataset = load_dataset("wikimedia/wikipedia", "20231101.ko", split = "train",)
+dataset = load_dataset(args.wiki_dataset, args.wiki_config, split = "train",)
 # We select 5% of the data to make training faster!
-dataset = dataset.train_test_split(train_size = 0.05)["train"]
+dataset = dataset.train_test_split(train_size = args.wiki_train_size)["train"]
 dataset = dataset.map(formatting_prompts_func_wiki, batched = True,)
 
 print(f"{Colors.GREEN}✓ Wikipedia dataset loaded: {len(dataset)} examples{Colors.ENDC}")
@@ -208,7 +272,7 @@ print(f"{Colors.GREEN}✓ Wikipedia dataset loaded: {len(dataset)} examples{Colo
 print_section("📚 DATA PREPARATION - ALPACA KOREAN DATASET", Colors.CYAN)
 print(f"{Colors.YELLOW}Loading Alpaca GPT4 Korean dataset for instruction finetuning...{Colors.ENDC}")
 
-alpaca_dataset = load_dataset("FreedomIntelligence/alpaca-gpt4-korean", split = "train")
+alpaca_dataset = load_dataset(args.alpaca_dataset, split = "train")
 
 # Use the prompts already defined above
 def formatting_prompts_func_alpaca(conversations):
@@ -251,10 +315,10 @@ trainer = UnslothTrainer(
         gradient_accumulation_steps = 8,
 
         # Use warmup_ratio and num_train_epochs for longer runs!
-        # max_steps = 120,
+        max_steps = args.pretrain_max_steps,
         warmup_steps = 10,
         warmup_ratio = 0.1,
-        num_train_epochs = 1,
+        num_train_epochs = args.pretrain_epochs,
 
         # Select a 2 to 10x smaller learning rate for the embedding matrices!
         learning_rate = 5e-5,
@@ -267,7 +331,7 @@ trainer = UnslothTrainer(
         weight_decay = 0.01,
         lr_scheduler_type = "linear",
         seed = 42,
-        output_dir = "outputs_pretrain",
+        output_dir = args.pretrain_output_dir,
         
         # Checkpoint saving
         save_strategy = "steps",
@@ -295,9 +359,9 @@ if wandb.run is not None:
     print(f"{Colors.CYAN}✓ Finished wandb run for pretraining{Colors.ENDC}")
 
 print_section("💾 SAVING PRETRAINED MODEL", Colors.GREEN)
-model.save_pretrained("lora_model_pretrained") # Local saving
-tokenizer.save_pretrained("lora_model_pretrained")
-print(f"{Colors.GREEN}✓ Model saved to: lora_model_pretrained/{Colors.ENDC}")
+model.save_pretrained(args.pretrained_save_dir) # Local saving
+tokenizer.save_pretrained(args.pretrained_save_dir)
+print(f"{Colors.GREEN}✓ Model saved to: {args.pretrained_save_dir}/{Colors.ENDC}")
 
 # ============================================================================
 # TESTING PRETRAINED MODEL
@@ -379,10 +443,10 @@ trainer = UnslothTrainer(
         gradient_accumulation_steps = 8,
 
         # Use num_train_epochs and warmup_ratio for longer runs!
-        #max_steps = 120,
+        max_steps = args.sft_max_steps,
         warmup_steps = 10,
         warmup_ratio = 0.1,
-        num_train_epochs = 2,
+        num_train_epochs = args.sft_epochs,
 
         # Select a 2 to 10x smaller learning rate for the embedding matrices!
         learning_rate = 5e-5,
@@ -395,7 +459,7 @@ trainer = UnslothTrainer(
         weight_decay = 0.00,
         lr_scheduler_type = "linear",
         seed = 42,
-        output_dir = "outputs_sft",
+        output_dir = args.sft_output_dir,
         
         # Checkpoint saving
         save_strategy = "steps",
@@ -483,9 +547,9 @@ print(f"{Colors.CYAN}💡 Model should now follow instructions well in both Kore
 # ============================================================================
 print_section("💾 SAVING FINAL FINETUNED MODEL", Colors.GREEN)
 
-model.save_pretrained("lora_model") # Local saving
-tokenizer.save_pretrained("lora_model")
-print(f"{Colors.GREEN}✓ Final model saved to: lora_model/{Colors.ENDC}")
+model.save_pretrained(args.final_save_dir) # Local saving
+tokenizer.save_pretrained(args.final_save_dir)
+print(f"{Colors.GREEN}✓ Final model saved to: {args.final_save_dir}/{Colors.ENDC}")
 # model.push_to_hub("your_name/lora_model", token = "...") # Online saving
 # tokenizer.push_to_hub("your_name/lora_model", token = "...") # Online saving
 
