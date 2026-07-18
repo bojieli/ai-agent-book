@@ -32,6 +32,59 @@ A modern AI agent with **native async support** that responds to events from var
 - Public data (weather, stocks, Wikipedia, ArXiv)
 - Private data (Google Calendar, Notion)
 
+## ⚡ 事件驱动演示（离线可运行，无需 API Key）
+
+在启动 HTTP 服务器之前，推荐先运行 `event_loop_demo.py`，它在单个进程里
+直观演示本章的核心概念——**外部世界主动唤醒 Agent**。脚本注册三类"事件触发器"，
+由后台线程在事件真正发生时把结构化事件推入统一的事件队列，事件循环逐个取出
+并唤醒 Agent 处理，形成"注册 → 触发 → 唤醒 → 处理"的完整闭环：
+
+| 触发器 | 类 | 对应书中概念 |
+|--------|----|----|
+| 一次性定时器 | `OneShotTimer` | `set_timer` 一次性定时器（如"下周一 10:00 致电 DMV"）|
+| 循环定时器 | `RecurringTimer` | `set_timer` 循环定时器 / Heartbeat（如"每小时检查服务器"）|
+| 文件监听 | `FileWatchTrigger` | n8n 等平台的文件变更触发器 |
+
+`--mock` 离线模式不调用大模型，用"模拟动作"打印 Agent 被唤醒后的处理过程，
+因此**无需任何 API Key** 即可跑通：
+
+```bash
+# 离线演示全部触发器（一次性定时器 + 循环定时器 + 文件监听）
+python event_loop_demo.py --mock
+
+# 只演示一次性定时器；2 秒后触发，共运行 6 秒
+python event_loop_demo.py --mock --trigger timer --delay 2 --duration 6
+
+# 每 3 秒触发一次循环定时器
+python event_loop_demo.py --mock --trigger recurring --interval 3 --duration 12
+
+# 监听目录，向其中写入文件即可触发事件（另开终端 echo hello > watched_dir/a.txt）
+python event_loop_demo.py --mock --trigger file --watch-dir watched_dir
+```
+
+离线运行的输出示例（节选）：
+
+```
+⏱️  [OneShotTimer(daily_backup_check)] 已注册：2 秒后触发
+🔁 [RecurringTimer(health_check)] 已注册：每 3 秒触发一次
+🟢 事件循环启动，将运行 8 秒，等待事件唤醒 Agent...
+⚡ [OneShotTimer(daily_backup_check)] 触发事件 -> timer_trigger: 一次性定时器到期：请检查每日备份是否已经完成。
+📥 事件循环取出第 1 个事件 -> 唤醒 Agent
+🤖 Agent 被唤醒，收到消息: [Timer daily_backup_check triggered] 一次性定时器到期：请检查每日备份是否已经完成。
+🛠️  [模拟动作] 读取定时任务上下文 -> 执行例行检查 -> 汇报结果
+✅ Agent 处理完成: 已响应 timer_trigger 事件
+```
+
+去掉 `--mock` 即接入真实的大模型（默认仅用内置工具，不加载 MCP），
+需要设置对应 provider 的 API Key：
+
+```bash
+export KIMI_API_KEY='your-api-key-here'
+python event_loop_demo.py --trigger timer --provider kimi
+```
+
+完整参数见 `python event_loop_demo.py --help`。
+
 ## 🚀 Quick Start
 
 ### Installation
@@ -52,6 +105,14 @@ export KIMI_API_KEY='your-api-key-here'
 
 ```bash
 python server.py
+```
+
+服务器支持命令行参数（优先级高于环境变量），完整列表见 `python server.py --help`：
+
+```bash
+python server.py --port 9000           # 自定义端口
+python server.py --provider doubao     # 指定大模型提供商
+python server.py --no-mcp              # 只用内置工具，不加载 MCP 工具
 ```
 
 Output:
@@ -285,6 +346,7 @@ AGENT_PORT=9000 python server.py
 agent-with-event-trigger/
 ├── agent.py                 # Event-triggered agent with system hints
 ├── event_types.py           # Event type definitions
+├── event_loop_demo.py       # Offline event-loop demo (timer / recurring / file-watch triggers)
 ├── server.py                # FastAPI server (main entry point)
 ├── requirements.txt         # Dependencies (FastAPI, uvicorn, MCP)
 ├── env.example              # Environment template
@@ -332,7 +394,8 @@ class EventType(Enum):
     IM_MESSAGE = "im_message"             # Instant messaging
     EMAIL_REPLY = "email_reply"           # Email responses
     GITHUB_PR_UPDATE = "github_pr_update" # PR notifications
-    TIMER_TRIGGER = "timer_trigger"       # Scheduled tasks
+    TIMER_TRIGGER = "timer_trigger"       # Scheduled tasks (one-shot / recurring)
+    FILE_CHANGE = "file_change"           # File watch trigger (created / modified)
     
     # System reminder events
     USER_TIMEOUT = "user_timeout"         # No user activity
@@ -364,8 +427,11 @@ python client.py --mode interactive
 # Test scenarios
 python client.py --mode test
 
-# Direct command
+# Send a single event (defaults to web_message)
 python client.py --message "Create a Python hello world script"
+
+# Send a single event of a specific type
+python client.py --event-type timer_trigger --message "检查每日备份"
 ```
 
 ## 🔐 Security Considerations

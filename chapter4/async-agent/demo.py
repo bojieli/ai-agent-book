@@ -1,14 +1,20 @@
-"""实验 4-5 演示脚本：带并行执行与打断能力的异步 Agent。
+"""实验 4-5 命令行入口：带并行执行、打断/取消与状态管理的异步 Agent。
 
-用法：
-    python demo.py                # 依次跑完四个验证场景
-    python demo.py --scenario 1   # 只跑场景 1（异步工具执行 + 即时插入提问）
-    python demo.py --scenario 2   # 只跑场景 2（非紧急事件批量处理）
-    python demo.py --scenario 3   # 只跑场景 3（打断机制）
-    python demo.py --scenario 4   # 只跑场景 4（并行工具的取消与状态查询）
+本脚本提供两类演示，用子命令区分：
 
-依赖真实 LLM 决策：读取 OPENAI_API_KEY（默认 gpt-4o-mini）。
-也可通过 LLM_PROVIDER=moonshot / ark 切换到 MOONSHOT_API_KEY / ARK_API_KEY。
+  【离线演示】不需要任何 API key，直接测量异步运行时的底层行为——
+      python demo.py parallel     并行 vs 串行工具调用的墙钟时间对比（打印加速比）
+      python demo.py interrupt    长任务运行中被打断/取消，随后系统恢复
+      python demo.py state        Agent 状态检查点持久化 + 跨会话恢复并校验
+      python demo.py offline       依次运行上面全部三个离线演示（默认行为）
+
+  【LLM 场景】需要 OPENAI_API_KEY（或 MOONSHOT/ARK），由真实模型做决策——
+      python demo.py scenarios              依次运行书中四个验证场景
+      python demo.py scenarios --scenario 1  只跑场景 1（异步执行 + 即时提问）
+      python demo.py scenarios --scenario 3  只跑场景 3（打断机制）
+
+不带任何子命令时运行【离线演示】，因此开箱即用、无需联网。
+为兼容旧用法，`python demo.py --scenario N` 等价于 `scenarios --scenario N`。
 """
 
 from __future__ import annotations
@@ -16,6 +22,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import os
+import sys
 import time
 
 try:
@@ -24,13 +31,15 @@ try:
 except Exception:
     pass
 
-from openai import AsyncOpenAI
-
+from async_demos import OFFLINE_DEMOS, banner
 from runtime import AgentRuntime
 
+# openai 仅在运行 LLM 场景时才惰性导入；离线演示不碰它，保证无 key/无 openai 也能跑。
 
-def make_client() -> tuple[AsyncOpenAI, str]:
+
+def make_client():
     """按 LLM_PROVIDER 选择可用的模型服务（默认 openai）。"""
+    from openai import AsyncOpenAI  # 惰性导入：离线演示无需安装 openai
     provider = os.getenv("LLM_PROVIDER", "openai").lower()
     if provider == "moonshot":
         key = os.environ["MOONSHOT_API_KEY"]
@@ -48,12 +57,6 @@ def make_client() -> tuple[AsyncOpenAI, str]:
     model = os.getenv("LLM_MODEL", "gpt-4o-mini")
     base = os.getenv("OPENAI_BASE_URL")
     return AsyncOpenAI(api_key=key, base_url=base) if base else AsyncOpenAI(api_key=key), model
-
-
-def banner(title: str) -> None:
-    print("\n" + "=" * 78)
-    print(f"  {title}")
-    print("=" * 78, flush=True)
 
 
 async def run_runtime(rt: AgentRuntime):
@@ -134,21 +137,67 @@ async def scenario_4(client, model):
 SCENARIOS = {1: scenario_1, 2: scenario_2, 3: scenario_3, 4: scenario_4}
 
 
-async def main():
-    parser = argparse.ArgumentParser(description="实验 4-5 异步 Agent 演示")
-    parser.add_argument("--scenario", type=int, choices=[1, 2, 3, 4],
-                        help="只运行指定场景；不填则依次运行全部四个场景")
-    args = parser.parse_args()
+# ------------------------------- 子命令实现 -------------------------------
 
+async def run_offline(names: list[str]) -> None:
+    """运行离线演示（无需 API key）。"""
+    for name in names:
+        await OFFLINE_DEMOS[name]()
+
+
+async def run_scenarios(which: int | None) -> None:
+    """运行 LLM 驱动的验证场景（需要 API key）。"""
     client, model = make_client()
     print(f"使用模型：{model}")
+    todo = [which] if which else [1, 2, 3, 4]
+    for i in todo:
+        await SCENARIOS[i](client, model)
+        await asyncio.sleep(0.5)
 
-    if args.scenario:
-        await SCENARIOS[args.scenario](client, model)
-    else:
-        for i in [1, 2, 3, 4]:
-            await SCENARIOS[i](client, model)
-            await asyncio.sleep(0.5)
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="demo.py",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="实验 4-5：带并行执行、打断/取消与状态管理的异步 Agent 演示。",
+        epilog=(
+            "示例：\n"
+            "  python demo.py                     # 默认：依次运行三个离线演示（无需 API key）\n"
+            "  python demo.py parallel            # 并行 vs 串行的墙钟时间对比（打印加速比）\n"
+            "  python demo.py interrupt           # 长任务运行中被打断/取消，随后恢复\n"
+            "  python demo.py state               # 状态检查点持久化 + 跨会话恢复并校验\n"
+            "  python demo.py scenarios --scenario 3   # LLM 场景 3：打断机制（需 API key）\n"
+            "\n离线演示不联网、不需要任何 key；scenarios 子命令需要 OPENAI_API_KEY（或 MOONSHOT/ARK）。"
+        ),
+    )
+    sub = parser.add_subparsers(dest="command", metavar="<子命令>")
+
+    sub.add_parser("parallel", help="并行 vs 串行工具调用的墙钟时间对比（离线，无需 key）")
+    sub.add_parser("interrupt", help="长任务运行中被打断/取消，随后系统恢复（离线，无需 key）")
+    sub.add_parser("state", help="Agent 状态检查点持久化与跨会话恢复（离线，无需 key）")
+    sub.add_parser("offline", help="依次运行上面三个离线演示（默认行为）")
+
+    ps = sub.add_parser("scenarios", help="书中四个 LLM 验证场景（需要 API key）")
+    ps.add_argument("--scenario", type=int, choices=[1, 2, 3, 4],
+                    help="只运行指定场景（1 异步执行 / 2 批量处理 / 3 打断 / 4 并行取消）；不填则全部")
+    return parser
+
+
+async def main() -> None:
+    # 兼容旧用法：`python demo.py --scenario N` 等价于 `scenarios --scenario N`
+    argv = sys.argv[1:]
+    if argv and argv[0].startswith("-") and argv[0] not in ("-h", "--help"):
+        argv = ["scenarios"] + argv
+
+    args = build_parser().parse_args(argv)
+    cmd = args.command or "offline"
+
+    if cmd == "scenarios":
+        await run_scenarios(args.scenario)
+    elif cmd == "offline":
+        await run_offline(["parallel", "interrupt", "state"])
+    else:  # parallel / interrupt / state
+        await run_offline([cmd])
 
     print("\n演示结束。")
 

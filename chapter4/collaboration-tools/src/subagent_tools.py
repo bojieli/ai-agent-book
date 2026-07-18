@@ -48,6 +48,11 @@ _CLIENT_TIMEOUT = float(os.getenv("OPENAI_TIMEOUT", "60"))
 _CLIENT_MAX_RETRIES = int(os.getenv("OPENAI_MAX_RETRIES", "2"))
 
 
+def _offline() -> bool:
+    """离线模式：未配置 OPENAI_API_KEY 时启用确定性模拟，便于无密钥演示。"""
+    return not os.getenv("OPENAI_API_KEY")
+
+
 def _get_client() -> OpenAI:
     """Build an OpenAI client with timeout + retries and no hardcoded secrets."""
     api_key = os.getenv("OPENAI_API_KEY")
@@ -168,6 +173,20 @@ def _prepare_llm_generated_context(
         "2) 只保留与子任务直接相关的事实，压缩无关寒暄；"
         "3) 保留关键约束、用户身份要点与相关工具结果。"
     )
+    if _offline():
+        # 离线退回：规则式过滤敏感字段 + 截断，标注未调用 LLM（不冒充模型输出）。
+        generated = _offline_summarize_context(full_context)
+        context_text = (
+            f"[FROM_MAIN_AGENT] 子任务：{task}\n"
+            f"[FROM_MAIN_AGENT] 由规则式离线摘要生成的移交上下文（未调用 LLM）：\n{generated}"
+        )
+        return {
+            "strategy": "llm_generated",
+            "context_text": context_text,
+            "context_tokens": _count_tokens(context_text),
+            "prep_tokens": 0,
+            "notes": "离线模式：规则式过滤隐私字段并压缩（配置 OPENAI_API_KEY 后改为 LLM 动态生成）",
+        }
     client = _get_client()
     prompt = f"""你是主协调 Agent 的上下文准备助手。请阅读主 Agent 的完整轨迹，
 按照业务规则，为下面的子任务生成一份**精炼、结构化**的移交上下文，供子 Agent 使用。
@@ -227,8 +246,45 @@ def _prepare_context(
 # Sub-agent execution
 # ---------------------------------------------------------------------------
 
+_SENSITIVE_MARKERS = ("card", "cvv", "token", "卡号", "密码", "password")
+
+
+def _offline_summarize_context(full_context: str) -> str:
+    """规则式离线上下文摘要：剔除敏感行并压缩长度（llm_generated 的离线替身）。"""
+    kept = [
+        line.strip()
+        for line in full_context.splitlines()
+        if line.strip() and not any(m in line.lower() for m in _SENSITIVE_MARKERS)
+    ]
+    body = "\n".join(kept)
+    if len(body) > 800:
+        body = body[:800] + " …（超长内容已压缩）"
+    return body
+
+
+def _run_turn_offline(record: Dict[str, Any]) -> Dict[str, Any]:
+    """离线确定性回合：按系统提示词约定的 JSON 结构返回占位结论，不冒充 LLM。"""
+    reply = json.dumps(
+        {
+            "status": "done",
+            "result": (
+                f"[离线模拟] 已按角色「{record.get('role') or '子 Agent'}」接收子任务，"
+                f"移交上下文约 {record.get('context_tokens', '?')} tokens；"
+                "未配置 OPENAI_API_KEY，此为占位结论（非真实模型输出）。"
+            ),
+            "missing": "",
+        },
+        ensure_ascii=False,
+    )
+    record["messages"].append({"role": "assistant", "content": reply})
+    record["run_prompt_tokens"] = 0
+    return {"reply": reply, "prompt_tokens": 0, "total_tokens": 0}
+
+
 def _run_turn(record: Dict[str, Any]) -> Dict[str, Any]:
     """Run one LLM turn over the sub-agent's current message list (blocking)."""
+    if _offline():
+        return _run_turn_offline(record)
     client = _get_client()
     response = client.chat.completions.create(
         model=DEFAULT_MODEL,

@@ -13,7 +13,7 @@ from event_types import EventType
 class EventClient:
     """Client to send events to the event-triggered agent server"""
     
-    def __init__(self, server_url: str = "http://localhost:4242"):
+    def __init__(self, server_url: str = "http://localhost:8000"):
         """
         Initialize the client
         
@@ -319,25 +319,47 @@ def interactive_mode(client: EventClient):
 
 def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(description="Event Client for Event-Triggered Agent")
-    
+    parser = argparse.ArgumentParser(
+        description="事件客户端：向事件驱动 Agent 服务器发送事件。",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""示例：
+  python client.py --mode test                 # 依次发送多种事件，跑通全部场景
+  python client.py --mode interactive          # 交互模式，手动输入事件
+  python client.py --message "创建一个 hello world 脚本"   # 发送单条 web_message 事件
+  python client.py --event-type timer_trigger --message "检查每日备份"   # 指定事件类型
+""",
+    )
+
     parser.add_argument(
         '--server',
-        default='http://localhost:4242',
-        help='Server URL (default: http://localhost:4242)'
+        default='http://localhost:8000',
+        help='服务器地址（默认：http://localhost:8000）'
     )
-    
+
     parser.add_argument(
         '--mode',
         choices=['test', 'interactive'],
         default='test',
-        help='Mode: test (run test scenarios) or interactive (manual mode)'
+        help='模式：test（依次发送预置场景事件）或 interactive（交互式手动发送）'
     )
-    
+
+    parser.add_argument(
+        '--message',
+        default=None,
+        help='发送单条事件的内容；提供该参数时忽略 --mode，发完即退出'
+    )
+
+    parser.add_argument(
+        '--event-type',
+        default=EventType.WEB_MESSAGE.value,
+        choices=[e.value for e in EventType],
+        help=f'--message 使用的事件类型（默认：{EventType.WEB_MESSAGE.value}）'
+    )
+
     args = parser.parse_args()
-    
+
     client = EventClient(server_url=args.server)
-    
+
     # Check if server is running
     try:
         response = requests.get(f"{args.server}/health", timeout=5)
@@ -349,8 +371,10 @@ def main():
         print(f"\n💡 Make sure the server is running:")
         print(f"   python server.py")
         return
-    
-    if args.mode == 'test':
+
+    if args.message is not None:
+        client.send_event(event_type=args.event_type, content=args.message)
+    elif args.mode == 'test':
         run_test_scenarios(client)
     else:
         interactive_mode(client)

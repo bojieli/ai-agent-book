@@ -41,7 +41,7 @@ print()
 # Check if server is already running
 import requests
 try:
-    response = requests.get("http://localhost:4242/health", timeout=2)
+    response = requests.get("http://localhost:8000/health", timeout=2)
     print("✅ Server is already running!")
     print("\n💡 You can now use the client to send events:")
     print("   python client.py --mode test")
@@ -68,7 +68,7 @@ try:
     max_wait = 30
     for i in range(max_wait):
         try:
-            response = requests.get("http://localhost:4242/health", timeout=1)
+            response = requests.get("http://localhost:8000/health", timeout=1)
             if response.status_code == 200:
                 print("✅ Server is running!\n")
                 break
@@ -86,7 +86,7 @@ try:
     print("🎉 QUICK START READY!")
     print("="*80)
     print()
-    print("The event-triggered agent server is now running on port 4242.")
+    print("The event-triggered agent server is now running on port 8000.")
     print()
     print("📋 What you can do now:")
     print()
@@ -97,12 +97,12 @@ try:
     print("   python client.py --mode interactive")
     print()
     print("3. Send individual events via API:")
-    print("   curl -X POST http://localhost:4242/event \\")
+    print("   curl -X POST http://localhost:8000/event \\")
     print("     -H 'Content-Type: application/json' \\")
     print("     -d '{\"event_type\": \"web_message\", \"content\": \"Hello!\"}'")
     print()
     print("4. Check agent status:")
-    print("   curl http://localhost:4242/agent/status")
+    print("   curl http://localhost:8000/agent/status")
     print()
     print("="*80)
     print("📺 Server output will appear below:")

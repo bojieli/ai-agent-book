@@ -57,7 +57,7 @@ def example_data_pipeline():
         print(f"   {i}. {tool}")
     
     print(f"\n📊 Efficiency:")
-    print(f"   • Only {len(result['tools_loaded'])} tools loaded (out of 40+ available)")
+    print(f"   • Only {len(result['tools_loaded'])} tools loaded (out of 35 available)")
     print(f"   • Token savings: ~90% compared to loading all tools")
 
 

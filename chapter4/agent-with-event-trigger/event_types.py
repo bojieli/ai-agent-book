@@ -16,7 +16,8 @@ class EventType(Enum):
     EMAIL_REPLY = "email_reply"
     GITHUB_PR_UPDATE = "github_pr_update"
     TIMER_TRIGGER = "timer_trigger"
-    
+    FILE_CHANGE = "file_change"
+
     # System reminder events
     USER_TIMEOUT = "user_timeout"
     PROCESS_TIMEOUT = "process_timeout"
@@ -54,7 +55,12 @@ class Event:
         elif self.event_type == EventType.TIMER_TRIGGER:
             timer_id = self.metadata.get('timer_id', 'Unknown')
             return f"[Timer {timer_id} triggered] {self.content}"
-        
+
+        elif self.event_type == EventType.FILE_CHANGE:
+            path = self.metadata.get('path', 'Unknown')
+            change = self.metadata.get('change', 'modified')
+            return f"[File {change}: {path}] {self.content}"
+
         elif self.event_type == EventType.USER_TIMEOUT:
             duration = self.metadata.get('duration', 'unknown')
             return f"[System Reminder] User has not responded for {duration}. {self.content}"

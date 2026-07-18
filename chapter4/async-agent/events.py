@@ -71,3 +71,19 @@ class Event:
     task_id: Optional[str] = None         # 关联的异步任务 ID（若有）
     urgency: Optional[str] = None         # 仅用户输入事件会带
     ts: float = field(default_factory=time.time)
+
+    def to_dict(self) -> dict:
+        """序列化为纯 JSON 可写的字典（用于状态检查点持久化）。"""
+        return {
+            "type": self.type, "message": self.message, "label": self.label,
+            "task_id": self.task_id, "urgency": self.urgency, "ts": self.ts,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Event":
+        """从检查点字典还原事件对象。"""
+        return cls(
+            type=d["type"], message=d.get("message"), label=d.get("label", ""),
+            task_id=d.get("task_id"), urgency=d.get("urgency"),
+            ts=d.get("ts", time.time()),
+        )

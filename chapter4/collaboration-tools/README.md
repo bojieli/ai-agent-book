@@ -112,6 +112,41 @@ OPENAI_MODEL=gpt-4o-mini
 
 ## Usage
 
+### 命令行入口 (`main.py`)
+
+不启动 MCP 服务器，也可以用统一的命令行入口列出、单独调用协作工具，或运行端到端演示。
+帮助信息为中文，`-h` 可查看任意子命令的参数：
+
+```bash
+python main.py --help            # 总览
+python main.py list              # 列出全部协作工具（子 Agent / HITL / 多渠道通知）
+python main.py demo              # 端到端协作演示：客服协调 Agent 处理一笔退款
+python main.py subagent -h       # 子 Agent 子命令帮助
+python main.py hitl -h           # HITL 子命令帮助
+python main.py notify -h         # 通知子命令帮助
+```
+
+常用示例：
+
+```bash
+# 对比两种上下文传递策略（minimal vs llm_generated）
+python main.py subagent compare
+
+# 创建子 Agent（同步、最小化上下文）
+python main.py subagent spawn --task "查询订单 A12345 状态" --strategy minimal --role 订单查询助手
+
+# 关键决策请求管理员批准；--auto-approve 在后台模拟管理员应答，便于离线演示闭环
+python main.py hitl approve --message "删除 1000 条记录？" --timeout 5 --auto-approve
+
+# 多渠道通知
+python main.py notify slack --message "部署完成"
+```
+
+`demo` 会串联三类协作工具：① 委派子 Agent 审批退款并对比上下文策略；② 大额操作
+触发 HITL 审批（演示"超时前批准"与"超时保守默认"两种路径）；③ 向协作者多渠道通知结果。
+其中 **HITL 与通知路径完全离线可跑**；子 Agent 的真实执行与 `llm_generated` 策略需要
+`OPENAI_API_KEY`（未配置时会明确提示，命令仍可正常解析运行）。
+
 ### Running the MCP Server
 
 Start the server using stdio transport:

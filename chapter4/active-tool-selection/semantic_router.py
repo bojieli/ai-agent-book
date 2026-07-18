@@ -96,6 +96,34 @@ class SemanticRouter:
         # Return top tools
         return [tool for tool, _ in relevant_tools[:top_k_tools * top_k_servers]]
     
+    def retrieve(self, query: str, top_k: int) -> List[ToolDefinition]:
+        """
+        Flat top-k tool retrieval across ALL servers (single-shot RAG-style routing).
+
+        Unlike ``route_request`` (which first narrows to a few candidate servers),
+        this scores every tool in every server and returns the global top-k. It is the
+        most direct embodiment of "turn tool selection into knowledge retrieval": given
+        the task description, fetch only the handful of tools most likely to be relevant.
+
+        Args:
+            query: Natural language task/request description
+            top_k: Number of tools to return
+
+        Returns:
+            Up to ``top_k`` tools ranked by combined (server + tool) similarity.
+        """
+        # Score against every server so no candidate tool is filtered out prematurely.
+        relevant_servers = self._route_to_servers(query, len(self.servers))
+
+        scored_tools = []
+        for server, server_score in relevant_servers:
+            for tool, tool_score in self._route_to_tools(server, query, len(server.tools)):
+                combined_score = 0.3 * server_score + 0.7 * tool_score
+                scored_tools.append((tool, combined_score))
+
+        scored_tools.sort(key=lambda x: x[1], reverse=True)
+        return [tool for tool, _ in scored_tools[:top_k]]
+
     def _route_to_servers(self, request: str, top_k: int) -> List[Tuple[ServerDefinition, float]]:
         """
         Stage 1: Route request to top-k relevant servers.

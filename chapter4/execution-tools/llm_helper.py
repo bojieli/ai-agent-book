@@ -18,16 +18,30 @@ class LLMHelper:
     """Helper class for LLM-based operations."""
     
     def __init__(self):
-        """Initialize the LLM client based on configuration."""
-        llm_config = Config.get_llm_config()
-        
-        # All providers use OpenAI-compatible API
-        self.client = OpenAI(
-            api_key=llm_config["api_key"],
-            base_url=llm_config.get("base_url")
-        )
-        self.model = llm_config["model"]
-        self.provider = llm_config["provider"]
+        """Initialize the LLM helper.
+
+        The OpenAI-compatible client is created lazily on first use so that
+        execution tools which do not need an LLM (e.g. Python code execution
+        with local syntax checking, terminal commands, file writes) work
+        offline without any API key configured. Methods that actually call
+        the LLM (approval, summarization, non-Python syntax check) will raise
+        or fail-safe if no key is available.
+        """
+        self.client = None
+        self.model = None
+        self.provider = None
+
+    def _ensure_client(self) -> None:
+        """Create the LLM client on first use (raises if no API key)."""
+        if self.client is None:
+            llm_config = Config.get_llm_config()
+            # All providers use OpenAI-compatible API
+            self.client = OpenAI(
+                api_key=llm_config["api_key"],
+                base_url=llm_config.get("base_url")
+            )
+            self.model = llm_config["model"]
+            self.provider = llm_config["provider"]
     
     def request_approval(
         self, 
@@ -66,6 +80,7 @@ Respond in JSON format:
 """
         
         try:
+            self._ensure_client()
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -78,7 +93,7 @@ Respond in JSON format:
                 temperature=_reasoning_safe_temperature(self.model, 0.1),
                 max_tokens=Config.MAX_TOKENS
             )
-            
+
             result = json.loads(response.choices[0].message.content)
             return result["approved"], result["reason"]
             
@@ -115,6 +130,7 @@ Output to summarize:
 Provide a concise summary that captures the essential information."""
         
         try:
+            self._ensure_client()
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -127,12 +143,12 @@ Provide a concise summary that captures the essential information."""
                 temperature=_reasoning_safe_temperature(self.model, 0.1),
                 max_tokens=Config.MAX_TOKENS
             )
-            
+
             summary = response.choices[0].message.content
             return f"[SUMMARIZED OUTPUT]\n{summary}\n\n[Original output length: {len(output)} characters]"
-            
+
         except Exception as e:
-            return f"[SUMMARIZATION FAILED: {str(e)}]\n\n{output[:max_length]}..."
+            return f"[SUMMARIZATION FAILED: {str(e)}]\n\n{output[:Config.MAX_OUTPUT_LENGTH]}..."
     
     def analyze_error(
         self,
@@ -167,6 +183,7 @@ Provide:
 Be concise and practical."""
         
         try:
+            self._ensure_client()
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -179,7 +196,7 @@ Be concise and practical."""
                 temperature=_reasoning_safe_temperature(self.model, 0.2),
                 max_tokens=Config.MAX_TOKENS
             )
-            
+
             return response.choices[0].message.content
             
         except Exception as e:
@@ -224,6 +241,7 @@ Respond in JSON format:
 """
         
         try:
+            self._ensure_client()
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[

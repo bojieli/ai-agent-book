@@ -23,6 +23,71 @@ This project implements three core mechanisms from MCP-Zero:
 2. **Hierarchical Semantic Routing**: Two-stage matching algorithm (server-level → tool-level)
 3. **Iterative Capability Extension**: Progressive toolchain building as task understanding evolves
 
+## 🔬 三种策略对比 (Strategy Comparison)
+
+本实验把"工具选择"问题落到可度量的基准上，对比三种策略在**同一批任务**上的表现：
+
+| 策略 | 说明 | 上下文里的工具 |
+|------|------|----------------|
+| `all-tools` | 一次性注入全部工具（传统被动式基线） | 全部 N 个 |
+| `retrieval` | 按任务语义检索 top-k 个工具后再注入（工具检索 / RAG 式，`RetrievalToolAgent`） | 仅 top-k 个 |
+| `active` | MCP-Zero 式主动发现：模型迭代地请求所需工具（`ActiveToolAgent`） | 按需增长 |
+
+评测入口是 `demo_comparison.py`，带完整的 `argparse` 命令行：
+
+```bash
+# 仅离线对比（确定性，无需 API Key）：召回率 vs token 成本 vs 随规模的扩展性
+python demo_comparison.py --offline
+
+# 把工具目录扩充到 200 个（合成干扰工具补齐），观察 token 成本的分化
+python demo_comparison.py --offline --num-tools 200
+
+# 三种策略端到端对比（需要 API Key）：模型是否真的调用了正确的工具、token、延迟
+python demo_comparison.py --strategy compare
+
+# 只对单条查询运行某种策略
+python demo_comparison.py --query "Deploy version 2.0 to production" --strategy retrieval
+
+# 保存结果为 JSON
+python demo_comparison.py --offline --output results.json
+```
+
+运行 `python demo_comparison.py --help` 查看全部参数（`--strategy / --query / --num-tools /
+--top-k / --model / --output / --offline / --legacy-demos`）。
+
+### 离线基准（确定性，无需 API）
+
+`benchmark.py` 提供了一个带**标准答案工具**的小型基准集（10 个任务，每个任务标注了应当被选中的
+工具），并在**不调用任何 API** 的情况下度量两件事：
+
+- **Retrieval recall@k**：标准答案工具是否落在被注入上下文的工具集合里；
+- **Schema tokens**：注入的工具描述占用的 token 数（由 schema 直接估算，确定性可复现）。
+
+下表是 `python demo_comparison.py --offline` 的**实测输出**（top-k=5，10 个任务）：
+
+| 策略 | 上下文工具数 | Schema tokens | 召回率（标准答案可达） |
+|------|------|------|------|
+| all-tools（全部注入） | 35 | 3,857 | 100% |
+| retrieval（top-5） | 5 | 551 | 100% |
+
+随着工具目录增长，`all-tools` 的 token 成本线性膨胀，而 `retrieval` 基本持平（实测）：
+
+| 目录规模 | all-tools tokens | retrieval(top-5) tokens | retrieval 召回率 |
+|------|------|------|------|
+| 35 | 3,857 | 551 | 100% |
+| 100 | 10,292 | 539 | 100% |
+| 200 | 20,258 | 540 | 100% |
+| 400 | 40,258 | 540 | 100% |
+
+> 结论：检索式按需选择在保持 100% 召回率的同时，把工具描述的 token 成本从数千压到数百，且不随
+> 生态规模膨胀。这正是本章"把工具选择转化为知识检索"的量化体现。上述数字由 `--offline` 路径
+> 确定性生成，可直接复现。
+
+### 端到端准确率（需要 API Key）
+
+在配置 `OPENAI_API_KEY` 后，`--strategy compare` 会真正调用模型，度量每种策略下模型**是否调用了
+标准答案工具**（accuracy）、平均 token 与平均延迟。这一部分需要联网与 API，故不在离线路径中运行。
+
 ## 🏗️ Architecture
 
 ```
@@ -61,7 +126,7 @@ This project implements three core mechanisms from MCP-Zero:
 ┌─────────────────────────────────────────────────────────────┐
 │               Tool Knowledge Base                            │
 │                                                              │
-│  8 Servers × 40+ Tools:                                     │
+│  8 Servers × 35 Tools (optionally padded with distractors): │
 │  • GitHub: Repository management (5 tools)                  │
 │  • Filesystem: File operations (5 tools)                    │
 │  • Database: SQL operations (5 tools)                       │
@@ -77,12 +142,18 @@ This project implements three core mechanisms from MCP-Zero:
 
 ### Core Files
 
-- **`agent.py`**: Active and passive agent implementations
-  - `ActiveToolAgent`: Discovers tools on-demand
-  - `PassiveToolAgent`: Traditional approach with all tools pre-loaded
+- **`agent.py`**: Three agent implementations (one per strategy)
+  - `ActiveToolAgent`: MCP-Zero style on-demand discovery (`active`)
+  - `RetrievalToolAgent`: one-shot semantic retrieval of top-k tools (`retrieval`)
+  - `PassiveToolAgent`: traditional approach with all tools pre-loaded (`all-tools`)
+
+- **`benchmark.py`**: Labeled benchmark + offline evaluation
+  - 10 tasks, each labeled with its ground-truth tool
+  - `build_catalog(num_tools)`: real catalog, optionally padded with distractors
+  - `evaluate_offline(...)`: deterministic recall@k / token-cost measurement (no API)
 
 - **`tool_knowledge_base.py`**: Comprehensive tool catalog
-  - 8 servers (domains) with 40+ tools
+  - 8 servers (domains) with 35 tools
   - Organized by platform/functionality
   - Simulates MCP ecosystem
 
@@ -130,14 +201,14 @@ This will demonstrate:
 
 ## 📊 Performance Comparison
 
-Typical efficiency gains from active discovery:
+See the measured, reproducible numbers in **[三种策略对比](#-三种策略对比-strategy-comparison)** above.
+The offline table (schema-token cost + retrieval recall) is generated deterministically by
+`python demo_comparison.py --offline` — no API key required. End-to-end accuracy/latency across
+the three strategies requires an API key (`--strategy compare`).
 
-| Metric | Active | Passive | Improvement |
-|--------|--------|---------|-------------|
-| **Tokens Used** | 2,000 | 50,000 | **96% reduction** |
-| **Tools Loaded** | 3-5 | 40 | **87-92% reduction** |
-| **Context Size** | Minimal | Bloated | **Scales with task** |
-| **Agent Autonomy** | ✅ Preserved | ❌ Compromised | **Full control** |
+> Note: earlier drafts of this README quoted round illustrative figures for token savings. Those
+> have been replaced with the actual measured output of the offline benchmark to avoid fabricated
+> numbers.
 
 ## 🎓 Key Concepts
 
@@ -242,17 +313,21 @@ python quickstart.py
 
 Shows basic active vs passive comparison.
 
-### 2. Comprehensive Comparison
+### 2. Strategy Comparison Benchmark (main experiment)
 
 ```bash
-python demo_comparison.py
+python demo_comparison.py --offline   # deterministic, no API key needed
+python demo_comparison.py             # + end-to-end accuracy/latency if API key present
 ```
 
-Includes:
-- Side-by-side comparison on multiple tasks
-- Detailed routing process
-- Semantic matching demonstration
-- Iterative capability extension
+By default it prints:
+- Offline strategy table: retrieval recall@k vs. tool-schema token cost (deterministic)
+- Scaling table: token cost as the catalog grows to hundreds of tools
+- End-to-end table (with API key): accuracy / tokens / latency for `all-tools`, `retrieval`, `active`
+
+The original narrative demos (semantic-routing walk-through, iterative discovery, etc.) are still
+available via `--legacy-demos`. See the [Strategy Comparison](#-三种策略对比-strategy-comparison)
+section and `python demo_comparison.py --help` for all flags.
 
 ### 3. Use Case Examples
 
@@ -293,9 +368,9 @@ OPENAI_BASE_URL = "https://api.openai.com/v1"
 OPENAI_MODEL = "gpt-4o-mini"
 
 # Routing Configuration
-SIMILARITY_THRESHOLD = 0.3  # Min similarity for tool match
-TOP_K_SERVERS = 3           # Number of servers to search
-TOP_K_TOOLS = 5             # Tools to return per server
+SIMILARITY_THRESHOLD = 0.15  # Min similarity for tool match
+TOP_K_SERVERS = 3            # Number of servers to search
+TOP_K_TOOLS = 5              # Tools to return per server
 
 # Agent Configuration
 MAX_TOOL_REQUESTS = 5       # Max discovery iterations

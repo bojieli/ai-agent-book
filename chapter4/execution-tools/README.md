@@ -73,6 +73,47 @@ AUTO_VERIFY_CODE=true
 
 ## Usage
 
+### 命令行入口 (CLI)
+
+`cli.py` 是统一的命令行入口，用于列出、单独调用每个执行工具，并运行端到端演示。
+它复用与 MCP 服务器相同的工具实现，因此行为完全一致。
+
+```bash
+# 查看总帮助与所有子命令
+python cli.py --help
+
+# 列出所有执行工具
+python cli.py list
+
+# 端到端离线演示（推荐先看这个；无需 API key 即可运行）
+python cli.py demo
+
+# 单独调用某个工具
+python cli.py code --language python --code "print(2 ** 10)"
+python cli.py shell "python3 --version"
+python cli.py write --path notes.txt --content "hello" --overwrite
+python cli.py edit --path notes.txt --search hello --replace world
+```
+
+全局开关（放在子命令之前）：
+
+| 开关 | 作用 |
+|------|------|
+| `--provider` | 覆盖 LLM 提供商（`PROVIDER`） |
+| `--workspace` | 覆盖工作目录（文件操作被限制在此目录内） |
+| `--no-approval` | 关闭危险操作的 LLM 事前审批 |
+| `--no-verify` | 关闭写文件/代码的自动语法校验 |
+| `--no-summarize` | 关闭长输出的 LLM 总结（仍会截断并持久化） |
+
+**离线运行**：`list`、`demo` 以及关闭了审批/总结/非 Python 校验的
+`code`/`shell`/`write`/`edit` 均无需 API key。需要 API key 的场景为：LLM 事前审批、
+长输出的 LLM 总结、非 Python 语法校验。`calendar` 与 `pr` 还额外需要相应外部凭据。
+
+> **长输出的截断与持久化**：当 `code_interpreter` / `virtual_terminal` 的输出
+> 超过阈值（默认 200 行或 10000 字符）时，工具只在上下文中保留头尾各 50 行，
+> 完整输出落盘到临时文件，并在返回值的 `stdout_file` / `stderr_file` 字段给出路径。
+> 该机制不依赖 LLM，可离线工作。
+
 ### Running the MCP Server
 
 ```bash
@@ -130,6 +171,8 @@ The server implements a layered architecture:
 
 See `examples.py` for comprehensive usage examples.
 
-## Experiment 4.3
+## 实验 4-2：执行工具 MCP 服务器
 
-This project is part of Week 4 experiments focusing on execution tools with safety mechanisms.
+本项目对应书中第 4 章「执行工具」一节的实验 4-2，聚焦执行工具的安全机制：
+分层安全防护（输入验证、权限控制、LLM 事前审批）、自动语法验证与反馈闭环、
+以及长输出的截断与持久化。推荐从 `python cli.py demo` 开始。

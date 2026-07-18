@@ -11,4 +11,5 @@ venv/
 # Generated artifacts
 output/
 logs/
+checkpoints/
 *.log

@@ -23,27 +23,30 @@ class ActiveToolAgent:
     3. Iteratively builds toolchain as task understanding evolves
     """
     
-    def __init__(self):
+    def __init__(self, servers: Optional[List[ServerDefinition]] = None,
+                 model: Optional[str] = None):
         self.client = OpenAI(
             api_key=config.OPENAI_API_KEY,
             base_url=config.OPENAI_BASE_URL
         )
-        
-        # Initialize tool knowledge base
-        self.servers = create_tool_knowledge_base()
+        self.model = model or config.OPENAI_MODEL
+
+        # Initialize tool knowledge base (callers may inject a padded/custom catalog)
+        self.servers = servers if servers is not None else create_tool_knowledge_base()
         self.router = SemanticRouter(self.servers)
-        
+
         # Agent state
         self.conversation_history = []
         self.available_tools: List[ToolDefinition] = []  # Currently loaded tools
         self.tool_request_count = 0
-        
+
         # Metrics
         self.metrics = {
             'tokens_used': 0,
             'tool_requests': 0,
             'tools_loaded': 0,
-            'api_calls': 0
+            'api_calls': 0,
+            'tools_called': []  # Names of tools the model actually invoked
         }
     
     def execute_task(self, task: str) -> Dict[str, Any]:
@@ -134,11 +137,11 @@ Current available tools: None (request tools as needed)"""
     def _call_llm(self) -> str:
         """Call LLM with current context and available tools."""
         kwargs = {
-            "model": config.OPENAI_MODEL,
+            "model": self.model,
             "messages": self.conversation_history,
             "temperature": config.AGENT_TEMPERATURE
         }
-        
+
         # Add tools if available
         if self.available_tools:
             kwargs["tools"] = [tool.to_schema() for tool in self.available_tools]
@@ -213,7 +216,8 @@ You can now use these tools to complete the task. Please proceed."""
         
         for tool_call in message.tool_calls:
             func_name = tool_call.function.name
-            
+            self.metrics['tools_called'].append(func_name)
+
             # Simulate tool execution
             result = f"[Simulated] Tool '{func_name}' executed successfully with result: Success"
             tool_results.append({
@@ -258,7 +262,140 @@ You can now use these tools to complete the task. Please proceed."""
             'tokens_used': 0,
             'tool_requests': 0,
             'tools_loaded': 0,
-            'api_calls': 0
+            'api_calls': 0,
+            'tools_called': []
+        }
+
+
+class RetrievalToolAgent:
+    """
+    One-shot retrieval agent (semantic tool retrieval / "工具检索").
+
+    This is the RAG-style middle ground between passive injection and active
+    discovery: before the very first LLM call, it retrieves the top-k tools most
+    semantically relevant to the task and injects *only* those. There is no extra
+    discovery round-trip — tool selection is delegated to the retriever, turning the
+    "which of hundreds of tools" problem into a knowledge-retrieval problem.
+
+    This directly embodies the mechanism the chapter attributes to Anthropic's
+    on-demand tool retrieval experiment: fewer, more relevant tool schemas in
+    context both cut token cost and reduce the model's selection errors.
+    """
+
+    def __init__(self, servers: Optional[List[ServerDefinition]] = None,
+                 model: Optional[str] = None, top_k: Optional[int] = None):
+        self.client = OpenAI(
+            api_key=config.OPENAI_API_KEY,
+            base_url=config.OPENAI_BASE_URL
+        )
+        self.model = model or config.OPENAI_MODEL
+        self.top_k = top_k if top_k is not None else config.TOP_K_TOOLS
+
+        self.servers = servers if servers is not None else create_tool_knowledge_base()
+        self.router = SemanticRouter(self.servers)
+
+        self.conversation_history = []
+        self.available_tools: List[ToolDefinition] = []
+        self.metrics = {
+            'tokens_used': 0,
+            'tools_loaded': 0,
+            'api_calls': 0,
+            'tools_called': []
+        }
+
+    def execute_task(self, task: str) -> Dict[str, Any]:
+        """Retrieve top-k relevant tools for the task, then execute in one shot."""
+        self.conversation_history = []
+
+        # Retrieval step (no LLM call): pick the top-k most relevant tools.
+        self.available_tools = self.router.retrieve(task, self.top_k)
+        self.metrics['tools_loaded'] = len(self.available_tools)
+
+        tool_list = "\n".join(
+            f"- {t.name}: {t.description}" for t in self.available_tools
+        )
+        system_message = f"""You are an AI agent. A retrieval system has pre-selected the \
+{len(self.available_tools)} tools below as most relevant to the user's task.
+
+{tool_list}
+
+Analyze the task and call the appropriate tool(s) to complete it."""
+
+        self.conversation_history.append({"role": "system", "content": system_message})
+        self.conversation_history.append({"role": "user", "content": task})
+
+        response = self._call_llm()
+        self.metrics['api_calls'] += 1
+
+        return {
+            'response': response,
+            'metrics': self.metrics,
+            'tools_loaded': [t.name for t in self.available_tools],
+            'conversation': self.conversation_history
+        }
+
+    def _call_llm(self) -> str:
+        """Call LLM with only the retrieved tools injected."""
+        kwargs = {
+            "model": self.model,
+            "messages": self.conversation_history,
+            "temperature": config.AGENT_TEMPERATURE
+        }
+        if self.available_tools:
+            kwargs["tools"] = [tool.to_schema() for tool in self.available_tools]
+            kwargs["tool_choice"] = "auto"
+
+        response = self.client.chat.completions.create(**kwargs)
+
+        if hasattr(response, 'usage'):
+            self.metrics['tokens_used'] += response.usage.total_tokens
+
+        message = response.choices[0].message
+        if message.tool_calls:
+            return self._handle_tool_calls(message)
+        return message.content or ""
+
+    def _handle_tool_calls(self, message) -> str:
+        """Handle tool execution (simulated)."""
+        tool_results = []
+        for tool_call in message.tool_calls:
+            func_name = tool_call.function.name
+            self.metrics['tools_called'].append(func_name)
+            result = f"[Simulated] Tool '{func_name}' executed successfully"
+            tool_results.append({"tool_call_id": tool_call.id, "output": result})
+
+        self.conversation_history.append({
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [
+                {
+                    "id": tc.id,
+                    "type": "function",
+                    "function": {
+                        "name": tc.function.name,
+                        "arguments": tc.function.arguments
+                    }
+                }
+                for tc in message.tool_calls
+            ]
+        })
+        for result in tool_results:
+            self.conversation_history.append({
+                "role": "tool",
+                "tool_call_id": result["tool_call_id"],
+                "content": result["output"]
+            })
+        return self._call_llm()
+
+    def reset(self):
+        """Reset agent state."""
+        self.conversation_history = []
+        self.available_tools = []
+        self.metrics = {
+            'tokens_used': 0,
+            'tools_loaded': 0,
+            'api_calls': 0,
+            'tools_called': []
         }
 
 
@@ -272,23 +409,26 @@ class PassiveToolAgent:
     3. Reduces agent to passive tool selector
     """
     
-    def __init__(self):
+    def __init__(self, servers: Optional[List[ServerDefinition]] = None,
+                 model: Optional[str] = None):
         self.client = OpenAI(
             api_key=config.OPENAI_API_KEY,
             base_url=config.OPENAI_BASE_URL
         )
-        
+        self.model = model or config.OPENAI_MODEL
+
         # Load ALL tools upfront
-        self.servers = create_tool_knowledge_base()
+        self.servers = servers if servers is not None else create_tool_knowledge_base()
         self.all_tools = []
         for server in self.servers:
             self.all_tools.extend(server.tools)
-        
+
         self.conversation_history = []
         self.metrics = {
             'tokens_used': 0,
             'tools_loaded': len(self.all_tools),
-            'api_calls': 0
+            'api_calls': 0,
+            'tools_called': []
         }
     
     def execute_task(self, task: str) -> Dict[str, Any]:
@@ -324,7 +464,7 @@ All available tools have been pre-loaded. Analyze the task and use the appropria
     def _call_llm(self) -> str:
         """Call LLM with ALL tools injected."""
         kwargs = {
-            "model": config.OPENAI_MODEL,
+            "model": self.model,
             "messages": self.conversation_history,
             "temperature": config.AGENT_TEMPERATURE,
             "tools": [tool.to_schema() for tool in self.all_tools],
@@ -351,12 +491,13 @@ All available tools have been pre-loaded. Analyze the task and use the appropria
         
         for tool_call in message.tool_calls:
             func_name = tool_call.function.name
+            self.metrics['tools_called'].append(func_name)
             result = f"[Simulated] Tool '{func_name}' executed successfully"
             tool_results.append({
                 "tool_call_id": tool_call.id,
                 "output": result
             })
-        
+
         # Add to history
         self.conversation_history.append({
             "role": "assistant",
@@ -389,5 +530,6 @@ All available tools have been pre-loaded. Analyze the task and use the appropria
         self.metrics = {
             'tokens_used': 0,
             'tools_loaded': len(self.all_tools),
-            'api_calls': 0
+            'api_calls': 0,
+            'tools_called': []
         }

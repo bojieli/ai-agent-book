@@ -121,5 +121,6 @@ class Config:
             )
 
 
-# Validate configuration on import
-Config.validate()
+# Note: configuration is validated lazily when the LLM is actually used
+# (see LLMHelper), so that execution tools which do not require an LLM
+# (file write, code run, terminal) can be used offline without an API key.

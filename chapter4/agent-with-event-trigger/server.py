@@ -14,6 +14,7 @@ from event_types import Event, EventType
 import threading
 import time
 import asyncio
+import argparse
 import uvicorn
 
 
@@ -381,27 +382,72 @@ async def unregister_process(process: ProcessUnregister):
 # Main Entry Point
 # ============================================================================
 
+def build_parser() -> argparse.ArgumentParser:
+    """构建命令行参数解析器（命令行参数优先级高于环境变量）。"""
+    parser = argparse.ArgumentParser(
+        description="事件驱动 Agent 的 HTTP 服务器（FastAPI）："
+                    "对外暴露 /event 等接口，把 Webhook 式的外部回调转成事件唤醒 Agent。",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""示例：
+  python server.py                       # 使用默认配置（端口 8000，启用 MCP 工具）
+  python server.py --port 9000           # 自定义端口
+  python server.py --provider doubao     # 指定大模型提供商
+  python server.py --no-mcp              # 只用内置工具，不加载 MCP 工具
+  之后用客户端发送事件：python client.py --mode test
+""",
+    )
+    parser.add_argument(
+        "--host", default=os.getenv("AGENT_HOST", "0.0.0.0"),
+        help="监听地址（默认：0.0.0.0）",
+    )
+    parser.add_argument(
+        "--port", type=int, default=int(os.getenv("AGENT_PORT", "8000")),
+        help="监听端口（默认：环境变量 AGENT_PORT 或 8000）",
+    )
+    parser.add_argument(
+        "--provider", default=None,
+        choices=["siliconflow", "doubao", "kimi", "moonshot", "openrouter"],
+        help="大模型提供商（默认：环境变量 LLM_PROVIDER 或 kimi）",
+    )
+    parser.add_argument(
+        "--model", default=None,
+        help="模型名覆盖（默认：使用提供商默认模型）",
+    )
+    parser.add_argument(
+        "--no-mcp", action="store_true",
+        help="禁用 MCP 工具，只使用内置工具（等价于 ENABLE_MCP_TOOLS=false）",
+    )
+    return parser
+
+
 def main():
     """Main entry point"""
+    args = build_parser().parse_args()
+
+    # 命令行参数覆盖环境变量：init_agent() 在 lifespan 中读取这些环境变量
+    if args.provider:
+        os.environ["LLM_PROVIDER"] = args.provider
+    if args.model:
+        os.environ["LLM_MODEL"] = args.model
+    if args.no_mcp:
+        os.environ["ENABLE_MCP_TOOLS"] = "false"
+
     print("\n" + "="*80)
     print("🤖 EVENT-TRIGGERED AGENT SERVER (FastAPI)")
     print("="*80)
     print()
-    
-    # Get port from environment
-    port = int(os.getenv('AGENT_PORT', '8000'))
-    
-    print(f"✅ Starting server on port {port}")
-    print(f"📡 API Documentation: http://localhost:{port}/docs")
-    print(f"📊 ReDoc: http://localhost:{port}/redoc")
+
+    print(f"✅ Starting server on {args.host}:{args.port}")
+    print(f"📡 API Documentation: http://localhost:{args.port}/docs")
+    print(f"📊 ReDoc: http://localhost:{args.port}/redoc")
     print()
     print("="*80 + "\n")
-    
+
     # Run with uvicorn
     uvicorn.run(
         app,
-        host="0.0.0.0",
-        port=port,
+        host=args.host,
+        port=args.port,
         log_level="info"
     )
 

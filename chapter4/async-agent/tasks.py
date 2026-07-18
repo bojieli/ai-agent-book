@@ -122,3 +122,38 @@ class TaskManager:
 
     def any_running(self) -> bool:
         return any(s.status == "running" for s in self._tasks.values())
+
+    def all_states(self) -> list[TaskState]:
+        return list(self._tasks.values())
+
+    # --------------------------- 状态检查点（持久化） ---------------------------
+
+    def snapshot(self) -> list[dict]:
+        """导出所有任务的最后已知状态，供检查点持久化。
+
+        注意：正在跑的 asyncio 协程无法序列化，只能记录其最后已知进度；
+        重启后据此决定「重跑」还是「按进度续跑」，这正是异步任务状态管理的意义。
+        """
+        return [
+            {"task_id": s.task_id, "command": s.command, "rate": s.rate,
+             "progress": s.progress, "status": s.status, "result": s.result}
+            for s in self._tasks.values()
+        ]
+
+    def restore(self, records: list[dict]) -> None:
+        """从检查点还原任务的历史状态（不重启协程）。
+
+        还原时把「运行中」的任务标记为 suspended（挂起）——它没有活着的协程，
+        只保留了被打快照那一刻的进度，等待上层逻辑决定如何续跑。
+        """
+        for r in records:
+            status = "suspended" if r["status"] == "running" else r["status"]
+            state = TaskState(
+                task_id=r["task_id"], command=r["command"], rate=r["rate"],
+                progress=r["progress"], status=status, result=r.get("result", ""),
+            )
+            self._tasks[state.task_id] = state
+            try:
+                self._counter = max(self._counter, int(state.task_id.lstrip("T") or 0))
+            except ValueError:
+                pass

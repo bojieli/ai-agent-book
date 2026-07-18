@@ -19,7 +19,8 @@ from multimodal_tools import read_webpage, read_document, parse_image, parse_vid
 from filesystem_tools import read_file, grep_search, summarize_text
 from public_data_tools import (
     get_weather, get_stock_price, convert_currency,
-    search_wikipedia, search_arxiv, search_wayback
+    search_wikipedia, search_arxiv, search_wayback,
+    get_crypto_price, search_location, search_poi
 )
 from private_data_tools import get_calendar_events, search_notion
 from pubchem_tools import search_compounds, get_compound_properties, get_compound_synonyms, search_similar_compounds
@@ -67,7 +68,10 @@ A comprehensive MCP server providing various perception and data retrieval capab
 ## Public Data Sources
 - Weather information
 - Stock prices and market data
+- Cryptocurrency prices (CoinGecko)
 - Currency conversion
+- Location search / geocoding (Nominatim)
+- Points of Interest search (Overpass)
 - Wikipedia search
 - ArXiv academic papers
 - Wayback Machine archives
@@ -83,15 +87,14 @@ A comprehensive MCP server providing various perception and data retrieval capab
 # SEARCH TOOLS
 # ============================================================================
 
-@mcp.tool(description="Search the web using Google Custom Search API")
+@mcp.tool(description="Search the web using DuckDuckGo (free, no API key required)")
 async def web_search(
     query: str = Field(description="Search query string"),
     num_results: int = Field(default=5, description="Number of results (1-10)"),
-    language: str = Field(default="en", description="Language code"),
-    country: str = Field(default="us", description="Country code")
+    region: str = Field(default="wt-wt", description="Region code (e.g., 'us-en', 'uk-en', 'wt-wt' for worldwide)")
 ):
     """Search the web and return results."""
-    return await search_web(query, num_results, language, country)
+    return await search_web(query, num_results, region)
 
 
 @mcp.tool(description="Download a file from a URL to local storage")
@@ -198,13 +201,14 @@ async def text_summarizer(
 # PUBLIC DATA SOURCE TOOLS
 # ============================================================================
 
-@mcp.tool(description="Get current weather information for a location")
+@mcp.tool(description="Get current weather information for a location (Open-Meteo, free, no API key)")
 async def weather(
-    location: str = Field(description="City name or coordinates"),
-    units: str = Field(default="metric", description="Units (metric/imperial/standard)")
+    location: str = Field(description="City name (automatically geocoded)"),
+    latitude: float | None = Field(default=None, description="Latitude coordinate (optional)"),
+    longitude: float | None = Field(default=None, description="Longitude coordinate (optional)")
 ):
     """Get weather data."""
-    return await get_weather(location, units)
+    return await get_weather(location, latitude, longitude)
 
 
 @mcp.tool(description="Get stock price and market information")
@@ -224,6 +228,37 @@ async def currency_converter(
 ):
     """Convert currency."""
     return await convert_currency(amount, from_currency, to_currency)
+
+
+@mcp.tool(description="Get cryptocurrency price information (CoinGecko, free, no API key)")
+async def crypto_price(
+    symbol: str = Field(description="Cryptocurrency symbol or ID (e.g., bitcoin, ethereum, btc, eth)"),
+    vs_currency: str = Field(default="usd", description="Target currency (usd, eur, gbp, etc.)")
+):
+    """Get cryptocurrency price."""
+    return await get_crypto_price(symbol, vs_currency)
+
+
+@mcp.tool(description="Search for locations using Nominatim/OpenStreetMap (free, no API key)")
+async def location_search(
+    query: str = Field(description="Location query (e.g., 'Eiffel Tower', 'New York', 'Tokyo')"),
+    limit: int = Field(default=5, description="Maximum number of results (1-50)"),
+    country_code: str | None = Field(default=None, description="Country code filter (e.g., 'us', 'gb', 'fr')")
+):
+    """Search locations (geocoding)."""
+    return await search_location(query, limit, country_code)
+
+
+@mcp.tool(description="Search for Points of Interest near a location using Overpass/OpenStreetMap (free, no API key)")
+async def poi_search(
+    query: str = Field(description="Type of POI (e.g., 'restaurant', 'cafe', 'hospital', 'atm', 'hotel')"),
+    latitude: float = Field(description="Center latitude coordinate"),
+    longitude: float = Field(description="Center longitude coordinate"),
+    radius: int = Field(default=1000, description="Search radius in meters"),
+    limit: int = Field(default=10, description="Maximum number of results")
+):
+    """Search points of interest."""
+    return await search_poi(query, latitude, longitude, radius, limit)
 
 
 @mcp.tool(description="Search Wikipedia and get article summary")

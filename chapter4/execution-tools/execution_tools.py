@@ -1,14 +1,63 @@
 """Generic execution tools: code interpreter and virtual terminal."""
 
+import os
 import subprocess
 import sys
 import io
+import tempfile
 import traceback
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 from contextlib import redirect_stdout, redirect_stderr
 from llm_helper import LLMHelper
 from config import Config
 from multilang_executor import LanguageExecutor, ExecutionStatus
+
+# Long-output handling thresholds (see "长输出的截断与持久化" in chapter 4).
+# When output exceeds either threshold, keep the head and tail few lines in the
+# context and persist the full output to a temp file for later retrieval.
+MAX_OUTPUT_LINES = 200
+MAX_OUTPUT_CHARS = 10000
+HEAD_LINES = 50
+TAIL_LINES = 50
+
+
+def truncate_and_persist(
+    text: str,
+    tool_name: str = "execution",
+    max_lines: int = MAX_OUTPUT_LINES,
+    max_chars: int = MAX_OUTPUT_CHARS,
+    head_lines: int = HEAD_LINES,
+    tail_lines: int = TAIL_LINES,
+) -> Tuple[str, Optional[str]]:
+    """Truncate over-long output and persist the full text to a temp file.
+
+    Returns a tuple of (processed_text, saved_path). When the output is within
+    both thresholds, it is returned unchanged with ``saved_path`` set to None.
+    Otherwise only the first ``head_lines`` and last ``tail_lines`` lines are
+    kept in context, with a middle marker pointing to the saved file. This
+    keeps the agent's context bounded without discarding any information and
+    requires no LLM call.
+    """
+    if text is None:
+        return text, None
+
+    lines = text.split("\n")
+    if len(text) <= max_chars and len(lines) <= max_lines:
+        return text, None
+
+    # Persist the complete output for later retrieval via read_file.
+    fd, path = tempfile.mkstemp(prefix=f"{tool_name}_output_", suffix=".txt")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(text)
+
+    head_part = lines[:head_lines]
+    tail_part = lines[-tail_lines:]
+    omitted = max(len(lines) - head_lines - tail_lines, 0)
+
+    middle = f"... [省略 {omitted} 行，完整输出已保存至 {path}] ..."
+    guide = f"[如需完整输出，请使用 read_file 工具读取 {path}]"
+    truncated = "\n".join(head_part + [middle] + tail_part + [guide])
+    return truncated, path
 
 
 class ExecutionTools:
@@ -94,21 +143,27 @@ class ExecutionTools:
             # Convert status to success flag
             success = result.get('status') == ExecutionStatus.SUCCESS
             
-            # Summarize long outputs
+            # Long outputs: truncate head/tail and persist the full text to a
+            # temp file (offline-safe), then optionally LLM-summarize whatever
+            # still exceeds the char threshold.
             stdout = result.get('stdout', '')
             stderr = result.get('stderr', '')
-            
-            if Config.AUTO_SUMMARIZE_COMPLEX_OUTPUT and len(stdout) > 10000:
+            stdout, stdout_file = truncate_and_persist(stdout, "code_interpreter")
+            stderr, stderr_file = truncate_and_persist(stderr, "code_interpreter")
+
+            if Config.AUTO_SUMMARIZE_COMPLEX_OUTPUT and len(stdout) > MAX_OUTPUT_CHARS:
                 stdout = self.llm_helper.summarize_output("code_interpreter", stdout)
-            if Config.AUTO_SUMMARIZE_COMPLEX_OUTPUT and len(stderr) > 10000:
+            if Config.AUTO_SUMMARIZE_COMPLEX_OUTPUT and len(stderr) > MAX_OUTPUT_CHARS:
                 stderr = self.llm_helper.summarize_output("code_interpreter", stderr)
-            
+
             return {
                 "success": success,
                 "status": result.get('status'),
                 "language": result.get('language', language),
                 "stdout": stdout,
                 "stderr": stderr,
+                "stdout_file": stdout_file,
+                "stderr_file": stderr_file,
                 "returncode": result.get('returncode'),
                 "error": result.get('error'),
                 "compile_output": result.get('compile_output'),
@@ -174,25 +229,31 @@ class ExecutionTools:
             
             stdout = result.stdout
             stderr = result.stderr
-            
-            # Summarize long output (>10000 characters)
+
+            # Long output: truncate head/tail and persist to a temp file, then
+            # optionally LLM-summarize whatever still exceeds the char threshold.
+            stdout, stdout_file = truncate_and_persist(stdout, "virtual_terminal")
+            stderr, stderr_file = truncate_and_persist(stderr, "virtual_terminal")
+
             if Config.AUTO_SUMMARIZE_COMPLEX_OUTPUT:
-                if len(stdout) > 10000:
+                if len(stdout) > MAX_OUTPUT_CHARS:
                     stdout = self.llm_helper.summarize_output(
                         "virtual_terminal",
                         stdout
                     )
-                if len(stderr) > 10000:
+                if len(stderr) > MAX_OUTPUT_CHARS:
                     stderr = self.llm_helper.summarize_output(
                         "virtual_terminal",
                         stderr
                     )
-            
+
             response = {
                 "success": result.returncode == 0,
                 "returncode": result.returncode,
                 "stdout": stdout,
-                "stderr": stderr
+                "stderr": stderr,
+                "stdout_file": stdout_file,
+                "stderr_file": stderr_file
             }
             return response
             
