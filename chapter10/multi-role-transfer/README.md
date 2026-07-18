@@ -80,7 +80,7 @@ python demo.py
 | `--task "..."` | 自定义任务文本，覆盖 `--scenario` |
 | `--role {triage,research,coding,data_analysis,writing}` | 指定**起始角色**（别名 `--starting-role`，默认 `triage`） |
 | `--interactive` | **交互式多轮**：复用同一编排器，角色与共享历史跨轮保留 |
-| `--model gpt-4o` | 临时覆盖 `OPENAI_MODEL` |
+| `--model gpt-5.6-luna` | 临时覆盖 `OPENAI_MODEL` |
 | `--max-steps 30` | 单条消息的最大 LLM 轮数硬上限（默认 20，防死循环） |
 
 例：
@@ -123,7 +123,7 @@ triage → research → data_analysis → writing
 
 ### 预期输出示例（真实运行截取）
 
-以下是一次 `python demo.py`（`model=gpt-4o-mini`）真实运行的关键片段，未做任何编造或修饰：
+以下是一次 `python demo.py`（`model=gpt-5.6-luna`，经 OpenRouter 路由）真实运行的关键片段，未做任何编造或修饰：
 
 ```
 === 角色花名册（共 5 个专业角色）===
@@ -134,15 +134,29 @@ triage → research → data_analysis → writing
     工具集: ['web_search', 'transfer_to_agent']
     ...（其余角色略，完整列表见上方角色表）
 
+┌── 当前角色: 信息检索专家 (research)  工具: ['web_search', 'transfer_to_agent']
+└── 🔧 调用工具 web_search args={'query': '中国 2021年 2022年 2023年 新能源汽车销量 乘联会 中汽协'}
+    → 【检索结果·中国乘用车市场信息联席会/中汽协】…2021 年：352.1 万辆 / 2022 年：688.7 万辆 / 2023 年：949.5 万辆
+┌── 当前角色: 数据分析专家 (data_analysis)  工具: ['calculate', 'descriptive_stats', 'transfer_to_agent']
+└── 🔧 调用工具 calculate args={'expression': '(949.5/352.1)**(1/2)-1'}
+    → (949.5/352.1)**(1/2)-1 = 0.6421562289791105
+
 ================ 运行汇总 ================
-自主移交链: triage → research → data_analysis → writing
-移交次数: 3
-  1. triage → research  |  reason: 需要查找中国2021、2022、2023三年的新能源汽车销量数据。
-  2. research → data_analysis  |  reason: 需要计算2021、2022、2023年新能源汽车销量的年均复合增长率(CAGR)。
-  3. data_analysis → writing  |  reason: 需要将新能源汽车销量数据和CAGR的结论写成一段面向投资人的总结。
+自主移交链: triage → research → data_analysis → writing → triage
+移交次数: 4
+  1. triage → research  |  reason: 需要先检索中国2021、2022、2023年新能源汽车销量及可靠来源，为后续CAGR计算和投资人摘要提供数据依据。
+  2. research → data_analysis  |  reason: 已检索到2021、2022、2023年新能源汽车销量，请计算2021至2023年的两年CAGR，并给出结果供后续写作。
+  3. data_analysis → writing  |  reason: 销量数据与CAGR已完成：2021年352.1万辆、2022年688.7万辆、2023年949.5万辆；2021—2023年CAGR=(949.5/352.1)^(1/2)-1=64.22%。请据此写不超过120字的投资人中文总结。
+  4. writing → triage  |  reason: 已完成投资人摘要并核对篇幅（101字符，不超过120字）…请做最终收尾确认。
+
+各角色分工（谁用了什么工具、谁产出最终回复）:
+  triage        : （仅路由/移交，未用专属工具）  ⇒ 产出最终回复
+  research      : web_search
+  data_analysis : calculate
+  writing       : count_characters
 
 最终成果:
-根据数据显示，中国新能源汽车销量在2021年为352.1万辆，2022年达到688.7万辆，2023年预计为949.5万辆。由此计算得出，2021至2023年间的年均复合增长率（CAGR）为约64.22%。这一强劲的增长趋势表明，新能源汽车市场正处于快速发展阶段，未来潜力巨大，值得投资者关注。
+据中汽协公开数据，中国新能源汽车销量由2021年的352.1万辆增至2022年的688.7万辆、2023年的949.5万辆。2021—2023年两年CAGR达64.2%，市场保持高速扩张，成长潜力显著。
 ```
 
 ## 局限

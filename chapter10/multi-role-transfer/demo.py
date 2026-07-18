@@ -215,14 +215,19 @@ def main():
 
     # 通用回退：优先直连 OPENAI_API_KEY；否则用 OPENROUTER_API_KEY 走 OpenRouter；
     # 都没有则报清晰错误。
-    api_key = os.environ.get("OPENAI_API_KEY")
+    # 特例：gpt-5.x 系列直连 OpenAI 需组织验证，且其 /v1/chat/completions 对带工具的
+    # 推理模型支持受限（reasoning_effort 限制）。因此只要设置了 OPENROUTER_API_KEY，
+    # 就对 gpt-5.x 优先改走 OpenRouter，避免直连报错。
+    prefer_openrouter = model.startswith("gpt-5") and os.environ.get("OPENROUTER_API_KEY")
+    api_key = None if prefer_openrouter else os.environ.get("OPENAI_API_KEY")
     if api_key:
         base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
     elif os.environ.get("OPENROUTER_API_KEY"):
         api_key = os.environ["OPENROUTER_API_KEY"]
         base_url = "https://openrouter.ai/api/v1"
         model = _to_openrouter_model(model)
-        print(f"（未检测到 OPENAI_API_KEY，改用 OpenRouter；模型映射为 {model}）")
+        why = "gpt-5.x 优先走 OpenRouter" if prefer_openrouter else "未检测到 OPENAI_API_KEY"
+        print(f"（{why}，改用 OpenRouter；模型映射为 {model}）")
     else:
         print("错误：未找到环境变量 OPENAI_API_KEY 或 OPENROUTER_API_KEY。请先设置后重试。",
               file=sys.stderr)
