@@ -29,4 +29,4 @@ def get_client() -> OpenAI:
         )
     # timeout + 自动重试：发现/抽取阶段要连续发几十次请求，单次瞬时错误
     # （网络抖动 / 限流 / 5xx）不应中断整条流水线。
-    return OpenAI(api_key=api_key, timeout=60.0, max_retries=2)
+    return OpenAI(api_key=api_key, timeout=60.0, max_retries=5)

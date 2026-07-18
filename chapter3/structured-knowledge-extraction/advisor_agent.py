@@ -59,13 +59,13 @@ class LegalAdvisorAgent:
     def advise(self, known):
         arch, dist = nearest_archetype(self.model, known)
         m = arch["months"]
-        cd = "，".join(f"{k} {v} 例" for k, v in arch["charge_dist"].items())
         defining = "；".join(
             f"{d['label']}（{d['direction']}，典型 {d['typical']}）"
             for d in arch["defining"][:4]
         )
         evidence = (
-            f"- 命中案件原型 #{arch['id']}（该原型含 {arch['size']} 例：{cd}），匹配距离 {dist:.2f}\n"
+            f"- 命中案件原型 #{arch['id']}（{arch['charge']}，该原型含 {arch['size']} 例），"
+            f"匹配距离 {dist:.2f}\n"
             f"- 该原型典型刑期：中位 {m['median']:.0f} 个月，区间 {m['min']:.0f}~{m['max']:.0f} 个月\n"
             f"- 定义该原型的关键因子：{defining}"
         )

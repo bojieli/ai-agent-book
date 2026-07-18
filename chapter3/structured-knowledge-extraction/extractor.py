@@ -53,7 +53,7 @@ def extract_one(fact_text, schema=None, client=None, charge=None):
             messages=[
                 {"role": "system", "content":
                     "判断下述刑事案件属于哪个罪名，只能从这些里选："
-                    + "/".join(charges) + '。只输出 {"charge": "..."}。'},
+                    + "/".join(charges) + '。只输出 JSON：{"charge": "..."}。'},
                 {"role": "user", "content": fact_text},
             ],
         )
