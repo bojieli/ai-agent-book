@@ -6,7 +6,7 @@ Python 沙箱后，它在竞赛数学题上的准确率会**显著高于**纯思
 ## 目的
 
 大模型「心算」大数、枚举、因式分解时极易出错——不是不会方法，而是算错。
-本实验让同一个模型（默认 `gpt-4o-mini`）在同一组题上跑两种模式，直接对比：
+本实验让同一个模型（默认 `gpt-5.6-luna`）在同一组题上跑两种模式，直接对比：
 
 - **纯 CoT**：只能用自然语言一步步推理，禁止写代码；
 - **代码辅助**：把题目形式化为 Python（sympy 符号计算、numpy 矩阵、scipy 数值求解），
@@ -87,7 +87,12 @@ python demo.py --problems mine.json   # 换用自定义题库
 | `--verbose` | 打印生成的代码与沙箱执行结果 |
 
 可用环境变量：`OPENAI_API_KEY`（或 `MOONSHOT_API_KEY` / `ARK_API_KEY`）、
-`OPENAI_BASE_URL`（切换兼容端点）、`MODEL`（默认 `gpt-4o-mini`）。
+`OPENAI_BASE_URL`（切换兼容端点）、`MODEL`（默认 `gpt-5.6-luna`）。
+
+**通用 OpenRouter 兜底**：未配置任何直连 key 时，只要设置了 `OPENROUTER_API_KEY`
+即可自动改走 OpenRouter（模型名自动映射：`gpt-*` → `openai/*`，其它 → `openai/gpt-5.6-luna`）。
+另外默认模型 `gpt-5.6-luna` 属于 gpt-5.x，直连 OpenAI 调用它需要组织实名认证，
+因此只要设置了 `OPENROUTER_API_KEY` 就会优先走 OpenRouter（route `openai/gpt-5.6-luna`）。
 
 ## 预期输出示例 / 结论
 

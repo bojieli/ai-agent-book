@@ -17,16 +17,64 @@ from openai import OpenAI
 
 from ffmpeg_utils import extract_frame, probe_duration
 
-TEXT_MODEL = os.getenv("TEXT_MODEL", "gpt-4o")
-VISION_MODEL = os.getenv("VISION_MODEL", "gpt-4o")  # 必须支持图像输入
+TEXT_MODEL = os.getenv("TEXT_MODEL", "gpt-5.6-luna")
+VISION_MODEL = os.getenv("VISION_MODEL", "gpt-5.6-luna")  # 必须支持图像输入
+
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 _client = None
 
 
+def map_model_to_openrouter(model: str) -> str:
+    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
+    if not model or "/" in model:
+        return model or "openai/gpt-5.6-luna"
+    m = model.lower()
+    if m.startswith(("gpt-", "o1", "o3", "o4")):
+        return "openai/" + model
+    if m.startswith("claude"):
+        if "haiku" in m:
+            return "anthropic/claude-haiku-4.5"
+        if "sonnet" in m:
+            return "anthropic/claude-sonnet-4.6"
+        return "anthropic/claude-opus-4.8"
+    if m.startswith("gemini"):
+        return "google/" + model
+    return "openai/gpt-5.6-luna"
+
+
+def _temp_for(model):
+    """推理模型（gpt-5 / o 系列等）不接受 temperature=0。"""
+    return (1 if any(k in (model or "").lower()
+                     for k in ("gpt-5", "o1", "o3", "o4", "thinking", "reasoner", "kimi-k3"))
+            else 0)
+
+
 def client() -> OpenAI:
-    global _client
+    """构造（并缓存）OpenAI 客户端，含通用 OpenRouter 兜底。
+
+    - 有 OPENAI_API_KEY：直连；但默认模型 gpt-5.x（直连需组织实名认证）且设置了
+      OPENROUTER_API_KEY 时优先走 OpenRouter。
+    - 无 OPENAI_API_KEY 但有 OPENROUTER_API_KEY：改走 OpenRouter（模型名自动映射）。
+    """
+    global _client, TEXT_MODEL, VISION_MODEL
     if _client is None:
-        _client = OpenAI()  # 读取 OPENAI_API_KEY / 可选 OPENAI_BASE_URL
+        api_key = os.getenv("OPENAI_API_KEY")
+        base_url = os.getenv("OPENAI_BASE_URL")
+        orkey = os.getenv("OPENROUTER_API_KEY")
+        prefer_or = bool(orkey) and (
+            (TEXT_MODEL or "").lower().startswith("gpt-5") or (VISION_MODEL or "").lower().startswith("gpt-5")
+        )
+        if prefer_or or (not api_key and orkey):
+            api_key, base_url = orkey, OPENROUTER_BASE_URL
+            TEXT_MODEL = map_model_to_openrouter(TEXT_MODEL)
+            VISION_MODEL = map_model_to_openrouter(VISION_MODEL)
+        kw = {}
+        if api_key:
+            kw["api_key"] = api_key
+        if base_url:
+            kw["base_url"] = base_url
+        _client = OpenAI(**kw)
     return _client
 
 
@@ -91,7 +139,7 @@ class VideoAnalyzerAgent:
         resp = client().chat.completions.create(
             model=VISION_MODEL,
             messages=[{"role": "user", "content": content}],
-            temperature=0,
+            temperature=_temp_for(VISION_MODEL),
             max_tokens=300,
         )
         self.meter.add(resp)
@@ -174,7 +222,7 @@ class ProposerAgent:
         """把自然语言需求解析成结构化意图：目标场景描述 + 特效列表。"""
         resp = client().chat.completions.create(
             model=TEXT_MODEL,
-            temperature=0,
+            temperature=_temp_for(TEXT_MODEL),
             max_tokens=400,
             messages=[{
                 "role": "user",
@@ -198,7 +246,7 @@ class ProposerAgent:
         """根据 Reviewer 反馈微调边界（保守外扩/内收）。"""
         resp = client().chat.completions.create(
             model=TEXT_MODEL,
-            temperature=0,
+            temperature=_temp_for(TEXT_MODEL),
             max_tokens=200,
             messages=[{
                 "role": "user",
@@ -251,7 +299,7 @@ class ReviewerAgent:
 
         resp = client().chat.completions.create(
             model=VISION_MODEL,
-            temperature=0,
+            temperature=_temp_for(VISION_MODEL),
             max_tokens=300,
             messages=[{"role": "user", "content": content}],
         )

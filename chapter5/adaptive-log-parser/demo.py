@@ -187,7 +187,7 @@ def main(args: argparse.Namespace) -> None:
     engine.register("builtin_json", builtin_json_parser)
     print(f"当前已注册解析器：{engine.parser_names}")
 
-    # model=None 时回落到 MODEL 环境变量/默认 gpt-4o-mini；离线模式不触碰 API
+    # model=None 时回落到 MODEL 环境变量/默认 gpt-5.6-luna；离线模式不触碰 API
     agent = OfflineCodeGenAgent(args.model) if args.offline else CodeGenAgent(model=args.model)
     print(f"代码生成 Agent 使用模型：{agent.model}")
 
@@ -277,7 +277,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--model",
         default=None,
-        help="覆盖代码生成使用的模型；默认读取环境变量 MODEL，再回落到 gpt-4o-mini。"
+        help="覆盖代码生成使用的模型；默认读取环境变量 MODEL，再回落到 gpt-5.6-luna。"
         "（--offline 下此项仅作展示，不影响预置解析器。）",
     )
     parser.add_argument(

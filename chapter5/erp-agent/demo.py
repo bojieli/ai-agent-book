@@ -223,8 +223,8 @@ def _write_output(path, mode, today, passed, total, results):
 
 
 def _require_api():
-    if not os.environ.get("OPENAI_API_KEY"):
-        print("请先设置 OPENAI_API_KEY 环境变量（可复制 env.example 为 .env）。")
+    if not (os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENROUTER_API_KEY")):
+        print("请先设置 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底）环境变量（可复制 env.example 为 .env）。")
         print("若只想离线跑通、不调用 API，请改用：python demo.py gold")
         sys.exit(1)
 

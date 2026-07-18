@@ -31,6 +31,11 @@ cp env.example .env      # 填入 OPENAI_API_KEY
 python demo.py           # 等价于 python demo.py run
 ```
 
+**通用 OpenRouter 兜底**：未配置 `OPENAI_API_KEY` 时，设置 `OPENROUTER_API_KEY` 即自动
+改走 OpenRouter（`gpt-*` → `openai/*`，其它 → `openai/gpt-5.6-luna`）。默认模型
+`gpt-5.6-luna` 属 gpt-5.x，直连 OpenAI 需组织实名认证，故设置了 `OPENROUTER_API_KEY`
+时会优先走 OpenRouter。
+
 `demo.py` 提供 4 个子命令（不带子命令时等价于 `run`）：
 
 | 子命令 | 是否需要 API | 作用 |
@@ -41,7 +46,7 @@ python demo.py           # 等价于 python demo.py run
 | `initdb` | 不需要 | 建表并把种子数据灌入一个 SQLite 文件，便于用 `sqlite3` 手工查看 |
 
 常用参数：`--only 1,5,10`（只跑指定题号）、`--db erp.db`（用文件库而非内存库）、
-`--model gpt-4o`（覆盖模型）、`--output result.json`（导出逐题明细）。示例：
+`--model gpt-5.6-luna`（覆盖模型）、`--output result.json`（导出逐题明细）。示例：
 
 ```bash
 python demo.py gold                 # 离线跑通 10 题，无需 API
@@ -70,7 +75,7 @@ python demo.py ask "研发部现在有多少在职员工？"
 | `reference.py` | 10 题的独立 Python 参考实现（校验基准） |
 | `gold.py` | 10 题人工编写的「标准 SQL」（SQLite 方言），供 `gold` 离线自检 |
 | `questions.py` | 10 个自然语言问题 + 给 Agent 的「返回列/业务口径」提示 |
-| `agent.py` | NL→SQL Agent（OpenAI SDK，读 `OPENAI_API_KEY`，默认 `gpt-4o-mini`） |
+| `agent.py` | NL→SQL Agent（OpenAI SDK，读 `OPENAI_API_KEY` 或 `OPENROUTER_API_KEY` 兜底，默认 `gpt-5.6-luna`） |
 | `schema_postgres.sql` | 书中 PostgreSQL 版建表 DDL（迁移到真实 Postgres 时参考） |
 
 ## 关于数据库

@@ -71,18 +71,45 @@ def _extract_code(text: str) -> str:
     return (m.group(1) if m else text).strip()
 
 
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
+
+def _map_to_openrouter_model(model: str) -> str:
+    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
+    if not model or "/" in model:
+        return model or "openai/gpt-5.6-luna"
+    m = model.lower()
+    if m.startswith(("gpt-", "o1", "o3", "o4")):
+        return "openai/" + model
+    if m.startswith("claude"):
+        if "haiku" in m:
+            return "anthropic/claude-haiku-4.5"
+        if "sonnet" in m:
+            return "anthropic/claude-sonnet-4.6"
+        return "anthropic/claude-opus-4.8"
+    if m.startswith("gemini"):
+        return "google/" + model
+    return "openai/gpt-5.6-luna"
+
+
 class CodeGenAgent:
     def __init__(self, model: Optional[str] = None):
+        model = model or os.getenv("MODEL", "gpt-5.6-luna")
         api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise SystemExit("未找到 OPENAI_API_KEY，请在环境变量或 .env 中设置。")
         base_url = os.getenv("OPENAI_BASE_URL")
+        orkey = os.getenv("OPENROUTER_API_KEY")
+        # 通用 OpenRouter 兜底：无直连 key，或默认 gpt-5.x（直连需组织实名认证）时改走 OpenRouter。
+        prefer_or = bool(orkey) and (model or "").lower().startswith("gpt-5")
+        if prefer_or or (not api_key and orkey):
+            api_key, base_url, model = orkey, OPENROUTER_BASE_URL, _map_to_openrouter_model(model)
+        if not api_key:
+            raise SystemExit("未找到 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底），请在环境变量或 .env 中设置。")
         # timeout / max_retries：让偶发的网络/SSL 抖动自动重试，不至于整轮崩溃
         client_kwargs = {"api_key": api_key, "timeout": 60.0, "max_retries": 3}
         if base_url:
             client_kwargs["base_url"] = base_url
         self.client = OpenAI(**client_kwargs)
-        self.model = model or os.getenv("MODEL", "gpt-4o-mini")
+        self.model = model
 
     def generate_parser_code(
         self,
@@ -93,9 +120,12 @@ class CodeGenAgent:
     ) -> str:
         """调用 LLM 生成解析器代码，返回纯 Python 源码字符串。"""
         user_prompt = _build_user_prompt(samples, required_keys, error_report, feedback)
+        # 推理模型（gpt-5 / o 系列等）不接受 temperature=0。
+        _reasoning = any(k in (self.model or "").lower()
+                         for k in ("gpt-5", "o1", "o3", "o4", "thinking", "reasoner", "kimi-k3"))
         resp = self.client.chat.completions.create(
             model=self.model,
-            temperature=0,
+            temperature=1 if _reasoning else 0,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},

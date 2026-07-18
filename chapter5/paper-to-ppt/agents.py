@@ -19,9 +19,29 @@ from openai import OpenAI
 from PIL import Image
 
 # 文本生成用的模型（Proposer / 单 Agent 的文本部分）
-TEXT_MODEL = os.environ.get("TEXT_MODEL", "gpt-4o")
+TEXT_MODEL = os.environ.get("TEXT_MODEL", "gpt-5.6-luna")
 # 视觉审查用的模型（Reviewer / 单 Agent 的看图部分），必须支持图像
-VISION_MODEL = os.environ.get("VISION_MODEL", "gpt-4o")
+VISION_MODEL = os.environ.get("VISION_MODEL", "gpt-5.6-luna")
+
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
+
+def map_model_to_openrouter(model: str) -> str:
+    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
+    if not model or "/" in model:
+        return model or "openai/gpt-5.6-luna"
+    m = model.lower()
+    if m.startswith(("gpt-", "o1", "o3", "o4")):
+        return "openai/" + model
+    if m.startswith("claude"):
+        if "haiku" in m:
+            return "anthropic/claude-haiku-4.5"
+        if "sonnet" in m:
+            return "anthropic/claude-sonnet-4.6"
+        return "anthropic/claude-opus-4.8"
+    if m.startswith("gemini"):
+        return "google/" + model
+    return "openai/gpt-5.6-luna"
 
 # 发送给 Vision 前把截图缩放到该宽度，兼顾“看得清文字溢出”与“控制 token 成本”
 VISION_IMAGE_WIDTH = 1280
@@ -52,17 +72,28 @@ class TokenMeter:
 
 
 def _client() -> OpenAI:
-    # 仅使用 OPENAI_API_KEY（可选 OPENAI_BASE_URL）；不使用其它已失效的供应商。
+    # 通用 OpenRouter 兜底：无直连 key，或默认 gpt-5.x（直连需组织实名认证）时改走 OpenRouter。
+    global TEXT_MODEL, VISION_MODEL
     api_key = os.environ.get("OPENAI_API_KEY")
+    base_url = os.environ.get("OPENAI_BASE_URL")
+    orkey = os.environ.get("OPENROUTER_API_KEY")
+    prefer_or = bool(orkey) and (
+        (TEXT_MODEL or "").lower().startswith("gpt-5") or (VISION_MODEL or "").lower().startswith("gpt-5")
+    )
+    if prefer_or or (not api_key and orkey):
+        api_key, base_url = orkey, OPENROUTER_BASE_URL
+        # 走 OpenRouter 时把模型名映射为其 id（幂等：已带前缀的 id 原样返回）。
+        TEXT_MODEL = map_model_to_openrouter(TEXT_MODEL)
+        VISION_MODEL = map_model_to_openrouter(VISION_MODEL)
     if not api_key:
         raise SystemExit(
-            "❌ 未检测到 OPENAI_API_KEY。请先 `cp env.example .env` 并填入有效的 "
-            "OpenAI API Key（或 `export OPENAI_API_KEY=sk-...`）后再运行。"
+            "❌ 未检测到 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底）。请先 `cp env.example .env` 并填入有效的 "
+            "OpenAI API Key（或 `export OPENAI_API_KEY=sk-...` / `export OPENROUTER_API_KEY=...`）后再运行。"
         )
     # timeout + max_retries：单次网络抖动/SSL 中断会自动重试，而不是让整条流水线崩溃。
     return OpenAI(
         api_key=api_key,
-        base_url=os.environ.get("OPENAI_BASE_URL"),
+        base_url=base_url,
         timeout=60.0,
         max_retries=4,
     )

@@ -227,7 +227,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  python demo.py                         # 默认：控制组 vs 实验组（均用小模型），跑全部 8 个 case\n"
             "  python demo.py --quick -v              # 只跑前 4 个 case，并打印每步工具调用\n"
             "  python demo.py --task R009             # 只跑匹配 'R009' 的 case（核心拦截样例）\n"
-            "  python demo.py --big-model gpt-4o      # 加入第三臂：大模型裸跑基线，验证'小模型+规则≈大模型'\n"
+            "  python demo.py --big-model gpt-5.6-luna  # 加入第三臂：大模型裸跑基线，验证'小模型+规则≈大模型'\n"
             "  python demo.py --mode codified         # 只跑实验组（with 代码化规则）\n"
             "  python demo.py --mode control          # 只跑控制组（without 代码化规则）\n"
             "  python demo.py --small-model qwen3-4b --output result.json   # 指定小模型并保存结果\n"
@@ -260,8 +260,8 @@ def main():
         run_selftest(tasks)
         return
 
-    if not os.environ.get("OPENAI_API_KEY"):
-        sys.exit("错误：未设置 OPENAI_API_KEY，请复制 env.example 为 .env 并填入，或直接 export。"
+    if not (os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENROUTER_API_KEY")):
+        sys.exit("错误：未设置 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底），请复制 env.example 为 .env 并填入，或直接 export。"
                  "\n（提示：想离线看代码化校验逻辑，可跑 `python demo.py --selftest`，无需 Key。）")
 
     arms = build_arms(args.small_model, args.big_model, args.mode)

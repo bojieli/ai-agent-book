@@ -13,7 +13,7 @@
      装了 Blender 则无头渲染，否则回退 ffmpeg——但 bpy 脚本始终生成（代码生成产物）；
   5. Reviewer 检查成片关键帧，给出反馈；不合格则 Proposer 修正边界重剪，迭代。
 
-依赖：ffmpeg/ffprobe（回退后端 + 抽帧）、OPENAI_API_KEY（gpt-4o 视觉 + 文本）；
+依赖：ffmpeg/ffprobe（回退后端 + 抽帧）、OPENAI_API_KEY（gpt-5.6-luna 视觉 + 文本；未配置时可用 OPENROUTER_API_KEY 兜底）；
       可选 Blender（书中原方案，`--backend blender`）。
 
 常用命令（完整用法见 `python demo.py --help`）：
@@ -123,11 +123,11 @@ def smoke_check():
 def preflight():
     """启动自检：给出清晰中文报错，而非 traceback。"""
     from ffmpeg_utils import ensure_ffmpeg
-    if not os.getenv("OPENAI_API_KEY"):
-        print("\n[错误] 未检测到 OPENAI_API_KEY。\n"
+    if not (os.getenv("OPENAI_API_KEY") or os.getenv("OPENROUTER_API_KEY")):
+        print("\n[错误] 未检测到 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底）。\n"
               "  请复制 env.example 为 .env 并填入有效的 OpenAI Key，或执行：\n"
-              "    export OPENAI_API_KEY=sk-...\n"
-              "  本实验用 gpt-4o 做视觉定位与审查，必须提供有效 Key。")
+              "    export OPENAI_API_KEY=sk-...   # 或 export OPENROUTER_API_KEY=sk-or-...\n"
+              "  本实验用 gpt-5.6-luna 做视觉定位与审查，必须提供有效 Key。")
         sys.exit(1)
     try:
         ensure_ffmpeg()

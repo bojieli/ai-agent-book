@@ -11,7 +11,7 @@ Agent 自主**定位并修改前端源码**，开发模式下的**热加载（HM
 - 基础 chatbot 应用 = **React(Vite) 前端 + FastAPI 后端**；
 - 前后端都跑在开发模式：前端 Vite **HMR**、后端 uvicorn **--reload**；
 - 用户说"把发送按钮改成蓝色 / 换成等宽字体 / 标题改成 XXX"，
-  Agent（OpenAI，默认 `gpt-4o-mini`）读懂需求 → 改 `frontend/src` 里的源码文件；
+  Agent（OpenAI，默认 `gpt-5.6-luna`；未配置 `OPENAI_API_KEY` 时设 `OPENROUTER_API_KEY` 自动改走 OpenRouter）读懂需求 → 改 `frontend/src` 里的源码文件；
 - 热加载检测到文件变化，浏览器无需整页刷新即可看到界面变化。
 
 ## 原理 / 架构（简述）
@@ -76,7 +76,7 @@ pip install -r requirements.txt
 cd frontend && npm install && cd ..
 
 # 配置 OpenAI Key
-cp env.example .env   # 然后填入 OPENAI_API_KEY
+cp env.example .env   # 然后填入 OPENAI_API_KEY（或设 OPENROUTER_API_KEY 兜底）
 ```
 
 ### 2) 自动验证闭环（无需浏览器）
@@ -100,7 +100,7 @@ python demo.py -h         # 查看全部参数
 # 终端 A：后端（热加载）。两种启动方式行为一致，任选其一：
 cd backend && python main.py --reload --port 8000          # 本文件自带命令行入口
 #   或： cd backend && uvicorn main:app --reload --port 8000   # 书中示例写法
-#   想让运行起来的 chatbot 真会说话（而非回声）：加 --model gpt-4o-mini（需 OPENAI_API_KEY）
+#   想让运行起来的 chatbot 真会说话（而非回声）：加 --model gpt-5.6-luna（需 OPENAI_API_KEY 或 OPENROUTER_API_KEY）
 
 # 终端 B：前端（HMR）
 cd frontend && npm run dev
@@ -169,7 +169,7 @@ r=agent.customize(c,m,pathlib.Path('frontend'),'把发送按钮改成橙色'); \
 
 | 变量 | 说明 |
 | --- | --- |
-| `OPENAI_API_KEY` | 必填，本实验读取此项 |
+| `OPENAI_API_KEY` | 必填其一，本实验读取此项（未配置时用 `OPENROUTER_API_KEY` 兜底） |
 | `OPENAI_BASE_URL` | 可选，切换到兼容 OpenAI 协议的服务端点 |
 | `MODEL` | 可选，默认 `gpt-4o-mini` |
 

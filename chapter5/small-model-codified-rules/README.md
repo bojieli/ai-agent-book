@@ -70,6 +70,8 @@
 ```bash
 pip install -r requirements.txt
 cp env.example .env   # 填入 OPENAI_API_KEY（也可直接用环境变量）
+# 通用兜底：未配置 OPENAI_API_KEY 时，设置 OPENROUTER_API_KEY 即自动改走 OpenRouter
+#（小模型 gpt-4o-mini → openai/gpt-4o-mini；大模型基线若用 gpt-5.x 则优先走 OpenRouter）
 
 # 离线自检（无需 API Key）：直接看代码化守卫的校验逻辑
 python demo.py --selftest
@@ -78,7 +80,7 @@ python demo.py --selftest
 python demo.py
 
 # 三方对照：加跑大模型基线臂，验证"小模型+规则 ≈ 大模型裸跑"
-python demo.py --big-model gpt-4o
+python demo.py --big-model gpt-5.6-luna
 ```
 
 ### 命令行参数（`python demo.py --help` 看完整中文帮助）

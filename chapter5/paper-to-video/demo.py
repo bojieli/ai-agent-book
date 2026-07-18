@@ -6,7 +6,7 @@
 流水线（端到端自包含，无需依赖 5-4）：
   1) 幻灯片：用 PIL 生成若干页带标题/要点的 PNG（模拟“论文 -> PPT”的产物），
             也可用 --slides 传入外部 JSON 替换内置示例。
-  2) 讲解词：对每一页调用 gpt-4o-mini 生成【口语化、引导性】的讲解文字
+  2) 讲解词：对每一页调用 gpt-5.6-luna 生成【口语化、引导性】的讲解文字
             （是叙述而非复述要点，负责承上启下）；也可用 --script 直接喂入现成脚本。
   3) TTS：用 OpenAI tts-1（voice=alloy）把讲解词合成为每页的语音 mp3；
           或用 --tts-provider offline 让 ffmpeg 生成占位静音音轨（无需任何 API）。
@@ -15,7 +15,7 @@
   5) 校验：用 ffprobe 打印最终 mp4 的时长/分辨率/音视频流信息。
 
 依赖：ffmpeg / ffprobe（命令行）、Python 包见 requirements.txt。
-环境变量：OPENAI_API_KEY（用 openai 供应商时必填），
+环境变量：OPENAI_API_KEY（用 openai 供应商时必填；未配置时可用 OPENROUTER_API_KEY 兜底讲解词生成，TTS 降级为离线占位），
           可选 OPENAI_BASE_URL / TEXT_MODEL / TTS_MODEL / TTS_VOICE。
 提示：想在无 API / 无网络时验证整条 ffmpeg 合成流水线，用 `python demo.py --offline`。
 """
@@ -50,9 +50,29 @@ SEG_DIR = OUTPUT_DIR / "segments"
 FINAL_MP4 = OUTPUT_DIR / "lecture.mp4"
 
 # 默认模型/音色：优先取环境变量，命令行 --text-model 等可再覆盖。
-DEFAULT_TEXT_MODEL = os.getenv("TEXT_MODEL", "gpt-4o-mini")
+DEFAULT_TEXT_MODEL = os.getenv("TEXT_MODEL", "gpt-5.6-luna")
 DEFAULT_TTS_MODEL = os.getenv("TTS_MODEL", "tts-1")
 DEFAULT_TTS_VOICE = os.getenv("TTS_VOICE", "alloy")
+
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
+
+def map_model_to_openrouter(model: str) -> str:
+    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
+    if not model or "/" in model:
+        return model or "openai/gpt-5.6-luna"
+    m = model.lower()
+    if m.startswith(("gpt-", "o1", "o3", "o4")):
+        return "openai/" + model
+    if m.startswith("claude"):
+        if "haiku" in m:
+            return "anthropic/claude-haiku-4.5"
+        if "sonnet" in m:
+            return "anthropic/claude-sonnet-4.6"
+        return "anthropic/claude-opus-4.8"
+    if m.startswith("gemini"):
+        return "google/" + model
+    return "openai/gpt-5.6-luna"
 
 # 离线占位音轨的中文语速估算（字/秒），用于把讲解词长度换算成展示时长。
 OFFLINE_CHARS_PER_SEC = 4.5
@@ -248,7 +268,7 @@ def offline_narration(slide: dict) -> str:
 
 
 def generate_narration(client, cfg: Config, slide: dict, index: int, total: int) -> str:
-    """调用 gpt-4o-mini，为当前页生成口语化、引导性的讲解文字。"""
+    """调用文本模型（默认 gpt-5.6-luna），为当前页生成口语化、引导性的讲解文字。"""
     position = (
         "这是开场第一页，请自然地引入主题" if index == 0
         else "这是最后一页，请做收尾总结" if index == total - 1
@@ -266,10 +286,13 @@ def generate_narration(client, cfg: Config, slide: dict, index: int, total: int)
         "3) 长度控制在 3~4 句话（约 70~110 字）；\n"
         "4) 只输出讲解词正文，不要任何前后缀、标题或列表符号。"
     )
+    # 推理模型（gpt-5 / o 系列等）可能不接受自定义 temperature，统一置 1。
+    _reasoning = any(k in (cfg.text_model or "").lower()
+                     for k in ("gpt-5", "o1", "o3", "o4", "thinking", "reasoner", "kimi-k3"))
     resp = client.chat.completions.create(
         model=cfg.text_model,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.7,
+        temperature=1 if _reasoning else 0.7,
     )
     return resp.choices[0].message.content.strip()
 
@@ -381,10 +404,13 @@ def self_check(cfg: Config) -> int:
     print(f"  {'[OK]' if font else '[回退]'} 中文字体: {font or '未找到系统中文字体，将回退默认字体'}")
 
     key_set = bool(os.getenv("OPENAI_API_KEY"))
+    or_set = bool(os.getenv("OPENROUTER_API_KEY"))
     if cfg.provider == "offline":
         print("  [OK] 供应商: offline（占位静音音轨，无需 OPENAI_API_KEY）")
     else:
-        print(f"  {'[OK]' if key_set else '[缺失]'} OPENAI_API_KEY: {'已设置' if key_set else '未设置'}")
+        print(f"  {'[OK]' if (key_set or or_set) else '[缺失]'} OPENAI_API_KEY: {'已设置' if key_set else '未设置'}"
+              f"  OPENROUTER_API_KEY(兜底): {'已设置' if or_set else '未设置'}"
+              + ("" if key_set else "  ← 无直连 key 时讲解词走 OpenRouter、TTS 降级为离线占位"))
     print(f"  [配置] provider={cfg.provider}  TEXT_MODEL={cfg.text_model}  "
           f"TTS_MODEL={cfg.tts_model}  TTS_VOICE={cfg.tts_voice}")
     print(f"  [配置] OPENAI_BASE_URL={os.getenv('OPENAI_BASE_URL') or '（官方默认）'}")
@@ -401,19 +427,35 @@ def main(cfg: Config) -> None:
     online = cfg.provider != "offline"
     need_llm = cfg.script is None and online  # 未给脚本且非离线时才调用 LLM 生成讲解词
 
-    client = None
+    # 文本（讲解词）与 TTS 用两个客户端：OpenAI 语音接口不在 OpenRouter 上，
+    # 因此 TTS 必须走直连 OPENAI_API_KEY；讲解词文本则可享受通用 OpenRouter 兜底。
+    client = None       # 文本/讲解词客户端
+    tts_client = None   # TTS 客户端（仅直连 OpenAI）
     if online:
-        if not os.getenv("OPENAI_API_KEY"):
-            sys.exit("[错误] 未设置 OPENAI_API_KEY，请复制 env.example 为 .env 并填入；"
+        api_key = os.getenv("OPENAI_API_KEY")
+        base_url = os.getenv("OPENAI_BASE_URL") or None
+        orkey = os.getenv("OPENROUTER_API_KEY")
+        if not (api_key or orkey):
+            sys.exit("[错误] 未设置 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底），请复制 env.example 为 .env 并填入；"
                      "或用 --offline 在无 API 时验证合成流水线。")
         from openai import OpenAI  # 延迟导入：--offline 时无需安装/联网 openai
 
-        # timeout / max_retries：TTS/文本调用偶发网络抖动时自动重试，不至于整轮崩溃
-        client = OpenAI(
-            base_url=os.getenv("OPENAI_BASE_URL") or None,
-            timeout=120.0,
-            max_retries=3,
-        )
+        # 文本客户端：无直连 key，或默认 gpt-5.x（直连需组织实名认证）时改走 OpenRouter。
+        prefer_or = bool(orkey) and (cfg.text_model or "").lower().startswith("gpt-5")
+        if prefer_or or (not api_key and orkey):
+            client = OpenAI(api_key=orkey, base_url=OPENROUTER_BASE_URL, timeout=120.0, max_retries=3)
+            cfg.text_model = map_model_to_openrouter(cfg.text_model)
+        else:
+            client = OpenAI(base_url=base_url, timeout=120.0, max_retries=3)
+
+        # TTS 客户端：只能用直连 OPENAI_API_KEY；缺失则音频降级为离线静音占位
+        #（讲解词仍由文本客户端真实生成）。
+        if api_key:
+            tts_client = OpenAI(base_url=base_url, timeout=120.0, max_retries=3)
+        else:
+            print("[提示] 未配置直连 OPENAI_API_KEY，OpenAI TTS 不在 OpenRouter 上；"
+                  "音频改用离线静音占位（讲解词仍由 OpenRouter 真实生成）。\n")
+            cfg.provider = "offline"
 
     for d in (SLIDES_DIR, AUDIO_DIR, SEG_DIR):
         d.mkdir(parents=True, exist_ok=True)
@@ -449,8 +491,8 @@ def main(cfg: Config) -> None:
             narration = offline_narration(slide)
         print(f"    讲解词: {narration}")
 
-        # 3) TTS 合成语音（openai 真配音 / offline 静音占位）
-        mp3 = synthesize_speech(client, cfg, narration, i)
+        # 3) TTS 合成语音（openai 真配音走直连 tts_client / offline 静音占位）
+        mp3 = synthesize_speech(tts_client, cfg, narration, i)
         dur = ffprobe_duration(mp3)
         print(f"    音频:   {mp3.relative_to(ROOT)}  时长 {dur:.2f}s")
 

@@ -21,21 +21,61 @@ import argparse
 from sandbox import run_python
 
 # ---------------------------------------------------------------------------
-# 配置：兼容多种可用的 OpenAI 协议 key
+# 配置：兼容多种可用的 OpenAI 协议 key（含通用 OpenRouter 兜底）
 # ---------------------------------------------------------------------------
+
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
+
+def map_model_to_openrouter(model: str) -> str:
+    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
+    if not model or "/" in model:
+        return model or "openai/gpt-5.6-luna"
+    m = model.lower()
+    if m.startswith(("gpt-", "o1", "o3", "o4")):
+        return "openai/" + model
+    if m.startswith("claude"):
+        if "haiku" in m:
+            return "anthropic/claude-haiku-4.5"
+        if "sonnet" in m:
+            return "anthropic/claude-sonnet-4.6"
+        return "anthropic/claude-opus-4.8"
+    if m.startswith("gemini"):
+        return "google/" + model
+    # kimi / doubao / 其它非 OpenRouter 原生 id -> 统一兜底
+    return "openai/gpt-5.6-luna"
+
+
+def resolve_llm(api_key, base_url, model):
+    """通用 OpenRouter 兜底 + gpt-5.x 优先路由，返回 (api_key, base_url, model)。
+
+    - gpt-5.x / gpt-5.6* 且设置了 OPENROUTER_API_KEY 时优先走 OpenRouter
+      （直连 OpenAI 调用 gpt-5.6 需要组织实名认证）。
+    - 否则有直连 key 就保持直连不变。
+    - 否则有 OPENROUTER_API_KEY 就整体改走 OpenRouter。
+    - 都没有则原样返回，由调用方给出缺 key 的报错。
+    """
+    orkey = os.getenv("OPENROUTER_API_KEY")
+    m = (model or "").lower()
+    prefer_or = bool(orkey) and m.startswith("gpt-5")
+    if prefer_or or (not api_key and orkey):
+        return orkey, OPENROUTER_BASE_URL, map_model_to_openrouter(model)
+    return api_key, base_url, model
+
 
 def build_client_and_model(model_override=None):
     """根据环境变量构造 OpenAI 客户端与默认模型名。
 
-    优先级：OPENAI_API_KEY > MOONSHOT_API_KEY > ARK_API_KEY。
+    优先级：OPENAI_API_KEY > MOONSHOT_API_KEY > ARK_API_KEY，均缺失时走 OPENROUTER_API_KEY。
     这些服务都兼容 OpenAI 的 chat.completions + function calling 接口。
     命令行 --model 优先级最高，会覆盖环境变量推断出的默认模型。
     """
     # 延迟导入：离线自检（--selfcheck）不需要 openai，也不需要 API key。
     from openai import OpenAI
 
-    model = os.getenv("MODEL", "gpt-4o-mini")
+    model = os.getenv("MODEL", "gpt-5.6-luna")
     base_url = os.getenv("OPENAI_BASE_URL")
+    api_key = None
 
     if os.getenv("OPENAI_API_KEY"):
         api_key = os.getenv("OPENAI_API_KEY")
@@ -47,14 +87,18 @@ def build_client_and_model(model_override=None):
         api_key = os.getenv("ARK_API_KEY")
         base_url = base_url or "https://ark.cn-beijing.volces.com/api/v3"
         model = os.getenv("MODEL", "doubao-seed-1-6-250615")
-    else:
-        raise SystemExit(
-            "未找到 API key，请设置 OPENAI_API_KEY（或 MOONSHOT_API_KEY / ARK_API_KEY）。\n"
-            "若只想验证沙箱与题库而不调用大模型，可运行：python demo.py --selfcheck"
-        )
 
     if model_override:
         model = model_override
+
+    # 通用 OpenRouter 兜底：无直连 key（或默认走 gpt-5.x）时改走 OpenRouter。
+    api_key, base_url, model = resolve_llm(api_key, base_url, model)
+
+    if not api_key:
+        raise SystemExit(
+            "未找到 API key，请设置 OPENAI_API_KEY（或 MOONSHOT_API_KEY / ARK_API_KEY / OPENROUTER_API_KEY）。\n"
+            "若只想验证沙箱与题库而不调用大模型，可运行：python demo.py --selfcheck"
+        )
 
     # 加上超时与重试：避免个别 API 调用长时间挂起导致整个评测卡死。
     _kw = {"api_key": api_key, "timeout": 60.0, "max_retries": 3}
@@ -266,7 +310,7 @@ def parse_args(argv=None):
             "  python demo.py --selfcheck           离线自检沙箱与题库真值，无需 API key\n"
             "  python demo.py --mode code           只跑代码辅助模式\n"
             "  python demo.py --mode cot --limit 3  只跑纯 CoT 的前 3 题\n"
-            "  python demo.py --model gpt-4o        换用更强的模型\n"
+            "  python demo.py --model gpt-5.6        换用更强的模型\n"
             "  python demo.py --output result.json  把逐题结果写入 JSON\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -287,7 +331,7 @@ def parse_args(argv=None):
         "--model",
         default=None,
         metavar="名称",
-        help="覆盖模型名（默认取环境变量 MODEL，再退化到供应商默认，如 gpt-4o-mini）。",
+        help="覆盖模型名（默认取环境变量 MODEL，再退化到供应商默认，如 gpt-5.6-luna）。",
     )
     parser.add_argument(
         "--limit",

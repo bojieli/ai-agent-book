@@ -51,7 +51,55 @@ def _load_dotenv(path=".env"):
 
 _load_dotenv()
 
-MODEL = os.environ.get("MODEL", "gpt-4o-mini")
+MODEL = os.environ.get("MODEL", "gpt-5.6-luna")
+
+# --- 通用 OpenRouter 兜底：无直连 key 时自动改走 OpenRouter ---
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
+
+def map_model_to_openrouter(model: str) -> str:
+    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
+    if not model or "/" in model:
+        return model or "openai/gpt-5.6-luna"
+    m = model.lower()
+    if m.startswith(("gpt-", "o1", "o3", "o4")):
+        return "openai/" + model
+    if m.startswith("claude"):
+        if "haiku" in m:
+            return "anthropic/claude-haiku-4.5"
+        if "sonnet" in m:
+            return "anthropic/claude-sonnet-4.6"
+        return "anthropic/claude-opus-4.8"
+    if m.startswith("gemini"):
+        return "google/" + model
+    return "openai/gpt-5.6-luna"
+
+
+def build_client_and_model():
+    """构造 OpenAI 客户端并返回 (client, model)。
+
+    - 有 OPENAI_API_KEY：直连；但默认模型 gpt-5.6-luna（gpt-5.x）在同时设置了
+      OPENROUTER_API_KEY 时优先走 OpenRouter（直连 gpt-5.6 需组织实名认证）。
+    - 无 OPENAI_API_KEY 但有 OPENROUTER_API_KEY：整体改走 OpenRouter。
+    """
+    from openai import OpenAI
+    global MODEL
+    api_key = os.environ.get("OPENAI_API_KEY")
+    base_url = os.environ.get("OPENAI_BASE_URL")
+    orkey = os.environ.get("OPENROUTER_API_KEY")
+    prefer_or = bool(orkey) and (MODEL or "").lower().startswith("gpt-5")
+    if prefer_or or (not api_key and orkey):
+        api_key, base_url, MODEL = orkey, OPENROUTER_BASE_URL, map_model_to_openrouter(MODEL)
+    kw = {"api_key": api_key, "timeout": 60.0, "max_retries": 3}
+    if base_url:
+        kw["base_url"] = base_url
+    return OpenAI(**kw), MODEL
+
+
+def _reasoning(model: str) -> bool:
+    """推理模型（gpt-5 / o 系列 / *thinking 等）不接受 temperature=0。"""
+    return any(k in (model or "").lower()
+               for k in ("gpt-5", "o1", "o3", "o4", "thinking", "reasoner", "kimi-k3"))
 
 # run_python 工具的 function calling 定义
 TOOLS = [{
@@ -144,7 +192,9 @@ def call_model(client, system, user, use_tools):
                 {"role": "user", "content": user}]
     codes = []
     for _ in range(8):  # 最多 8 轮，防止无限循环
-        kwargs = dict(model=MODEL, messages=messages, temperature=0)
+        kwargs = (dict(model=MODEL, messages=messages, temperature=1, max_tokens=8192)
+                  if _reasoning(MODEL)
+                  else dict(model=MODEL, messages=messages, temperature=0))
         if use_tools:
             kwargs.update(tools=TOOLS, tool_choice="auto")
         resp = client.chat.completions.create(**kwargs)
@@ -283,11 +333,10 @@ def main():
         print("== 约束求解(solver，离线) ==")
         results["solver"] = run_solver(puzzles)
     else:
-        if not os.environ.get("OPENAI_API_KEY"):
-            sys.exit("错误：pure/code/both 模式需要 OPENAI_API_KEY 环境变量"
-                     "(可写入 .env)。若只想看离线约束求解基线，请用 --mode solver。")
-        from openai import OpenAI  # 延迟导入：solver 模式无需安装/联网 openai
-        client = OpenAI()
+        if not (os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENROUTER_API_KEY")):
+            sys.exit("错误：pure/code/both 模式需要 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底）"
+                     "环境变量(可写入 .env)。若只想看离线约束求解基线，请用 --mode solver。")
+        client, MODEL = build_client_and_model()  # 延迟导入 openai + OpenRouter 兜底
         print(f"模型：{MODEL}    题目数：{len(puzzles)}    模式：{args.mode}\n")
         for m in llm_modes:
             print(f"== {LABELS[m]}({m}) ==")

@@ -14,7 +14,8 @@
 环境变量:
   OPENAI_API_KEY   （必填，本实验读取此项）
   OPENAI_BASE_URL  （可选，切换到兼容 OpenAI 协议的服务端点）
-  MODEL            （可选，默认 gpt-4o-mini）
+  MODEL            （可选，默认 gpt-5.6-luna）
+  OPENROUTER_API_KEY（可选，无直连 key 时自动改走 OpenRouter 兜底）
 """
 
 import os
@@ -38,12 +39,38 @@ EDITABLE_FILES = [
 ]
 
 
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
+
+def map_model_to_openrouter(model: str) -> str:
+    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
+    if not model or "/" in model:
+        return model or "openai/gpt-5.6-luna"
+    m = model.lower()
+    if m.startswith(("gpt-", "o1", "o3", "o4")):
+        return "openai/" + model
+    if m.startswith("claude"):
+        if "haiku" in m:
+            return "anthropic/claude-haiku-4.5"
+        if "sonnet" in m:
+            return "anthropic/claude-sonnet-4.6"
+        return "anthropic/claude-opus-4.8"
+    if m.startswith("gemini"):
+        return "google/" + model
+    return "openai/gpt-5.6-luna"
+
+
 def build_client_and_model():
+    model = os.getenv("MODEL", "gpt-5.6-luna")
     api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise SystemExit("未找到 OPENAI_API_KEY，请先在环境变量或 .env 中设置。")
     base_url = os.getenv("OPENAI_BASE_URL")
-    model = os.getenv("MODEL", "gpt-4o-mini")
+    orkey = os.getenv("OPENROUTER_API_KEY")
+    # 通用 OpenRouter 兜底：无直连 key，或默认 gpt-5.x（直连需组织实名认证）时改走 OpenRouter。
+    prefer_or = bool(orkey) and (model or "").lower().startswith("gpt-5")
+    if prefer_or or (not api_key and orkey):
+        api_key, base_url, model = orkey, OPENROUTER_BASE_URL, map_model_to_openrouter(model)
+    if not api_key:
+        raise SystemExit("未找到 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底），请先在环境变量或 .env 中设置。")
     # timeout / max_retries：让偶发的网络/SSL 抖动自动重试，不至于整轮崩溃
     client_kwargs = {"api_key": api_key, "timeout": 60.0, "max_retries": 3}
     if base_url:
@@ -137,7 +164,9 @@ def customize(client, model, frontend_dir: Path, requirement: str) -> dict:
         ],
         tools=[APPLY_EDITS_TOOL],
         tool_choice={"type": "function", "function": {"name": "apply_edits"}},
-        temperature=0,
+        temperature=(1 if any(k in (model or "").lower()
+                              for k in ("gpt-5", "o1", "o3", "o4", "thinking", "reasoner", "kimi-k3"))
+                     else 0),
     )
 
     msg = resp.choices[0].message

@@ -55,22 +55,55 @@ USER_REQUEST = "我想订一张去北京的机票"
 # ---------------------------------------------------------------------------
 # 配置（在线模式）
 # ---------------------------------------------------------------------------
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
+
+def _map_to_openrouter_model(model: str) -> str:
+    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
+    if not model or "/" in model:
+        return model or "openai/gpt-5.6-luna"
+    m = model.lower()
+    if m.startswith(("gpt-", "o1", "o3", "o4")):
+        return "openai/" + model
+    if m.startswith("claude"):
+        if "haiku" in m:
+            return "anthropic/claude-haiku-4.5"
+        if "sonnet" in m:
+            return "anthropic/claude-sonnet-4.6"
+        return "anthropic/claude-opus-4.8"
+    if m.startswith("gemini"):
+        return "google/" + model
+    return "openai/gpt-5.6-luna"
+
+
 def build_client_and_model(model_override=None):
-    """构造 OpenAI 客户端与模型名（读取 OPENAI_API_KEY）。"""
+    """构造 OpenAI 客户端与模型名，含通用 OpenRouter 兜底。"""
     from openai import OpenAI  # 延迟导入：离线模式无需安装/配置 openai
 
+    model = model_override or os.getenv("MODEL", "gpt-5.6-luna")
     api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise SystemExit("未找到 OPENAI_API_KEY，请先在环境变量或 .env 中设置，或改用 --offline。")
-
     base_url = os.getenv("OPENAI_BASE_URL")
-    model = model_override or os.getenv("MODEL", "gpt-4o-mini")
+    orkey = os.getenv("OPENROUTER_API_KEY")
+    # 无直连 key，或默认 gpt-5.x（直连需组织实名认证）时改走 OpenRouter。
+    prefer_or = bool(orkey) and (model or "").lower().startswith("gpt-5")
+    if prefer_or or (not api_key and orkey):
+        api_key, base_url, model = orkey, OPENROUTER_BASE_URL, _map_to_openrouter_model(model)
+    if not api_key:
+        raise SystemExit("未找到 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底），请先在环境变量或 .env 中设置，或改用 --offline。")
+
     client = (
         OpenAI(api_key=api_key, base_url=base_url)
         if base_url
         else OpenAI(api_key=api_key)
     )
     return client, model
+
+
+def _temp_for(model):
+    """推理模型（gpt-5 / o 系列等）不接受 temperature=0。"""
+    return (1 if any(k in (model or "").lower()
+                     for k in ("gpt-5", "o1", "o3", "o4", "thinking", "reasoner", "kimi-k3"))
+            else 0)
 
 
 # ---------------------------------------------------------------------------
@@ -103,7 +136,7 @@ def generate_form(client, model, user_request):
     """调用模型生成澄清表单的 HTML。"""
     resp = client.chat.completions.create(
         model=model,
-        temperature=0,
+        temperature=_temp_for(model),
         messages=[
             {"role": "system", "content": FORM_SYSTEM_PROMPT},
             {
@@ -471,7 +504,7 @@ def continue_task(client, model, original_request, submitted_json):
     """把用户提交的 JSON 交回 Agent（在线），生成订票摘要。"""
     resp = client.chat.completions.create(
         model=model,
-        temperature=0,
+        temperature=_temp_for(model),
         messages=[
             {"role": "system", "content": PARSE_SYSTEM_PROMPT},
             {
@@ -602,10 +635,10 @@ def main():
     if not os.path.isabs(out_path):
         out_path = os.path.join(SCRIPT_DIR, out_path)
 
-    # 离线判定：显式 --offline，或未设置 OPENAI_API_KEY 时自动回落
+    # 离线判定：显式 --offline，或既无 OPENAI_API_KEY 也无 OPENROUTER_API_KEY 时自动回落
     offline = args.offline
-    if not offline and not os.getenv("OPENAI_API_KEY"):
-        print("未检测到 OPENAI_API_KEY，自动切换到离线模式（等价于 --offline）。\n")
+    if not offline and not (os.getenv("OPENAI_API_KEY") or os.getenv("OPENROUTER_API_KEY")):
+        print("未检测到 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底），自动切换到离线模式（等价于 --offline）。\n")
         offline = True
 
     client = model = None

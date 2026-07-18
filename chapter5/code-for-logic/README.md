@@ -55,7 +55,7 @@ python demo.py --mode solver --min-people 4   # 只跑 >=4 人的难题
 
 这条路径完全离线、确定性，直接演示「谜题→约束程序→求解」的核心论点，准确率 100%。
 
-### 2) LLM 对照实验（需要 OPENAI_API_KEY）
+### 2) LLM 对照实验（需要 OPENAI_API_KEY 或 OPENROUTER_API_KEY）
 
 ```bash
 cp env.example .env        # 然后编辑 .env 填入 OPENAI_API_KEY
@@ -65,9 +65,14 @@ python demo.py             # 默认 both：纯思考 vs 代码辅助，全部 12
 python demo.py --mode pure # 只跑纯思考基线
 python demo.py --limit 4   # 只跑前 4 题(省钱冒烟测试)
 python demo.py --max-people 3        # 只跑 <=3 人的谜题(按难度筛选)
-python demo.py --model gpt-4o-mini   # 指定模型(默认 gpt-4o-mini)
+python demo.py --model gpt-5.6-luna  # 指定模型(默认 gpt-5.6-luna)
 python demo.py --puzzles my.json --output run.json   # 换数据集/输出路径
 ```
+
+**通用 OpenRouter 兜底**：未配置 `OPENAI_API_KEY` 时，只要设置了 `OPENROUTER_API_KEY`
+即自动改走 OpenRouter（`gpt-*` → `openai/*`，其它 → `openai/gpt-5.6-luna`）。默认模型
+`gpt-5.6-luna` 属 gpt-5.x，直连 OpenAI 需组织实名认证，故设置了 `OPENROUTER_API_KEY`
+时会优先走 OpenRouter。
 
 完整参数见 `python demo.py --help`（中文说明）。
 
@@ -166,7 +171,7 @@ for s in p.getSolutions():
 ## 注意事项
 
 - **成本**：默认 `gpt-4o-mini`，跑完 12 题两种模式约几分钱人民币，很便宜。
-- **API Key**：从环境变量或 `.env` 读 `OPENAI_API_KEY`；用 `MODEL` 可换模型。
+- **API Key**：从环境变量或 `.env` 读 `OPENAI_API_KEY`（或 `OPENROUTER_API_KEY` 兜底）；用 `MODEL` 可换模型。
 - **沙箱**：`sandbox.py` 用子进程 + 超时执行代码，属教学用极简沙箱；生产环境应换成
   容器/gVisor 等更强隔离。
 - **谜题可靠性**：`build_puzzles.py` 用 `python-constraint` 求解每题(内置精选题或随机生成)，

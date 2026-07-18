@@ -40,12 +40,12 @@
 
 ```bash
 pip install -r requirements.txt
-cp env.example .env                 # 填入 OPENAI_API_KEY（或直接用环境变量）
+cp env.example .env                 # 填入 OPENAI_API_KEY（未配置时设 OPENROUTER_API_KEY 自动改走 OpenRouter）
 
 python demo.py                      # 在线：Agent 调 OpenAI 生成（需 API Key）
 python demo.py --offline            # 离线：内置 schema 确定性渲染，无需 API Key
 python demo.py --offline --serve    # 离线渲染后起本地服务，浏览器实时体验级联/提交
-python demo.py --model gpt-4o       # 可选：覆盖在线模型（--offline 下忽略）
+python demo.py --model gpt-5.6     # 可选：覆盖在线模型（--offline 下忽略）
 python demo.py --request "我想订去东京的机票"   # 可选：自定义模糊请求
 python demo.py --help               # 查看全部参数
 ```
@@ -56,7 +56,7 @@ python demo.py --help               # 查看全部参数
 | --- | --- | --- |
 | `-r` / `--request TEXT` | 用户的模糊请求（意图） | `我想订一张去北京的机票` |
 | `-o` / `--output PATH` | 生成的 HTML 输出路径（相对路径按脚本目录解析） | `generated_form.html` |
-| `--model NAME` | 覆盖在线模型名（`--offline` 下忽略） | 环境变量 `MODEL`，缺省 `gpt-4o-mini` |
+| `--model NAME` | 覆盖在线模型名（`--offline` 下忽略） | 环境变量 `MODEL`，缺省 `gpt-5.6-luna` |
 | `--offline` | 离线模式：内置 schema 确定性渲染，无需 API Key | 关（未设 Key 时自动开启） |
 | `--serve` | 生成后起本地 HTTP 服务并打开浏览器，真实体验级联/提交 | 关 |
 | `--port N` | `--serve` 使用的端口 | `8000` |
@@ -70,7 +70,7 @@ python demo.py --help               # 查看全部参数
 环境变量：
 - `OPENAI_API_KEY`（在线模式必填；未设置时自动回落到离线模式）
 - `OPENAI_BASE_URL`（可选，兼容 OpenAI 协议的第三方端点）
-- `MODEL`（可选，默认 `gpt-4o-mini`）
+- `MODEL`（可选，默认 `gpt-5.6-luna`）
 
 ## 真实运行输出
 
@@ -92,7 +92,7 @@ python demo.py --help               # 查看全部参数
 正在为您检索航班...
 ```
 
-**在线模式（默认，模型 `gpt-4o-mini`）**
+**在线模式（默认，模型 `gpt-5.6-luna`）**
 
 ```
 [步骤 2] 结构化校验表单字段与级联逻辑：

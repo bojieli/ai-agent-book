@@ -64,11 +64,18 @@ def _llm_reply(message: str, model: str) -> str:
         return "（未安装 openai 依赖，无法启用 LLM 模式；已回退占位回复）"
 
     api_key = os.getenv("OPENAI_API_KEY")
+    base_url = os.getenv("OPENAI_BASE_URL")
+    orkey = os.getenv("OPENROUTER_API_KEY")
+    # 通用 OpenRouter 兜底：无直连 key，或 gpt-5.x（直连需组织实名认证）时改走 OpenRouter。
+    prefer_or = bool(orkey) and (model or "").lower().startswith("gpt-5")
+    if prefer_or or (not api_key and orkey):
+        api_key, base_url = orkey, "https://openrouter.ai/api/v1"
+        if "/" not in model:
+            model = ("openai/" + model) if model.lower().startswith(("gpt-", "o1", "o3", "o4")) else "openai/gpt-5.6-luna"
     if not api_key:
-        return "（未配置 OPENAI_API_KEY，无法启用 LLM 模式；已回退占位回复）"
+        return "（未配置 OPENAI_API_KEY 或 OPENROUTER_API_KEY，无法启用 LLM 模式；已回退占位回复）"
 
     client_kwargs = {"api_key": api_key, "timeout": 60.0, "max_retries": 2}
-    base_url = os.getenv("OPENAI_BASE_URL")
     if base_url:
         client_kwargs["base_url"] = base_url
 
@@ -80,7 +87,9 @@ def _llm_reply(message: str, model: str) -> str:
                 {"role": "system", "content": "你是一个乐于助人的中文智能助手，回答简洁友好。"},
                 {"role": "user", "content": message},
             ],
-            temperature=0.7,
+            temperature=(1 if any(k in (model or "").lower()
+                                  for k in ("gpt-5", "o1", "o3", "o4", "thinking", "reasoner", "kimi-k3"))
+                         else 0.7),
         )
         return resp.choices[0].message.content or "（模型返回了空回复）"
     except Exception as e:  # 网络/鉴权/模型名等问题都在此兜底
@@ -146,7 +155,7 @@ def parse_args(argv=None):
         "--model",
         default=os.getenv("CHAT_MODEL") or None,
         metavar="NAME",
-        help="打开真实 LLM 对话并指定模型名（如 gpt-4o-mini）；"
+        help="打开真实 LLM 对话并指定模型名（如 gpt-5.6-luna）；"
         "缺省则为默认的 echo 回声模式。也可用环境变量 CHAT_MODEL 设置。",
     )
     parser.add_argument(

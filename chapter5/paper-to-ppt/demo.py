@@ -14,7 +14,7 @@
      python demo.py --mode dual --max-rounds 1   # 快速：只跑双 Agent、只出首版
      python demo.py --smoke     # 仅验证 Slidev 渲染链路，不调用任何 LLM
      python demo.py --dry-run   # 离线走通提议者-审核者循环（真实渲染 + 脚本化改稿）
-依赖：Node/Slidev（渲染）、OPENAI_API_KEY（gpt-4o 视觉 + 文本）。
+依赖：Node/Slidev（渲染）、OPENAI_API_KEY（gpt-5.6-luna 视觉 + 文本；未配置时可用 OPENROUTER_API_KEY 兜底）。
 """
 import argparse
 import json
@@ -379,8 +379,8 @@ def main(argv=None):
     if not os.path.exists(args.paper):
         print(f"找不到论文文件：{args.paper}（用 --paper 指定，或参考默认 paper/sample_paper.md）")
         sys.exit(1)
-    if not os.environ.get("OPENAI_API_KEY"):
-        print("请先设置 OPENAI_API_KEY（可参考 env.example）")
+    if not (os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENROUTER_API_KEY")):
+        print("请先设置 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底，可参考 env.example）")
         sys.exit(1)
 
     banner("准备：论文 + 程序化复现的图表")

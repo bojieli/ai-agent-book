@@ -28,7 +28,7 @@ data/PRD.md              (产品需求)          ├─► [LLM] diagnose()     
                                             github_mcp.py  (mock) 渲染并打印/落盘 GitHub Issue
 ```
 
-- `diagnoser.py`：诊断 Agent，两次真实调用 OpenAI（gpt-4o-mini，JSON 模式）。
+- `diagnoser.py`：诊断 Agent，两次真实调用 OpenAI（默认 gpt-5.6-luna，JSON 模式）。
 - `sut.py`：被测系统的**确定性仿真器**。`fixed=False` 复现线上 bug，`fixed=True` 模拟修复后行为。
 - `replay.py`：回归测试重放框架。取轨迹输入 → 重放 `sut` → 在新轨迹上求值断言（内置 4 种断言 DSL）。
 - `github_mcp.py`：GitHub Issue 创建，默认 mock（打印 + 写 `output/github_issues.json`）。
@@ -46,7 +46,7 @@ data/PRD.md              (产品需求)          ├─► [LLM] diagnose()     
 
 ```bash
 pip install -r requirements.txt
-cp env.example .env      # 填入 OPENAI_API_KEY（模型默认 gpt-4o-mini）
+cp env.example .env      # 填入 OPENAI_API_KEY（模型默认 gpt-5.6-luna）；未配置时设 OPENROUTER_API_KEY 自动改走 OpenRouter
 python demo.py           # 完整流程（两次真实 LLM 调用）
 ```
 
@@ -55,7 +55,7 @@ python demo.py           # 完整流程（两次真实 LLM 调用）
 常用参数（`python demo.py -h` 查看全部）：
 
 - `--smoke`：**免 API 快速自检**，跳过 LLM，用内置诊断结果仅跑重放框架 + GitHub mock，验证管道是否端到端连通（全绿退出码 0）。适合无 Key 环境或 CI。
-- `--model gpt-4o`：临时覆盖模型（等价于设置 `OPENAI_MODEL`）。
+- `--model gpt-5.6`：临时覆盖模型（等价于设置 `OPENAI_MODEL`）。
 - `--data-dir DIR`：换用自己的输入目录（需含 `trajectories.jsonl` + `architecture.md` + `PRD.md`，默认 `data/`）。
 - `--output FILE`：mock GitHub Issue 的落盘路径（默认 `output/github_issues.json`）。
 - `--create-issue`：**经 MCP 在真实仓库创建 Issue**（需 `GITHUB_TOKEN` + `GITHUB_REPO`，见下节；缺失时自动回退 mock）。

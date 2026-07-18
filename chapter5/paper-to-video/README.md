@@ -10,7 +10,7 @@
 论文要点(内置示例)
    │  PIL 渲染
    ▼
-每页 PNG 幻灯片 ──► gpt-4o-mini 生成口语化讲解词 ──► OpenAI tts-1 合成 mp3
+每页 PNG 幻灯片 ──► gpt-5.6-luna 生成口语化讲解词 ──► OpenAI tts-1 合成 mp3
    │                                                        │
    └──────────────── ffmpeg：每页 PNG + 该页音频 ───────────┘
                               │  (每页时长 = 该页音频时长)
@@ -22,7 +22,7 @@
 
 - 本项目**自包含**，不依赖实验 5-4：内置一份《Attention Is All You Need》的论文要点，
   用 PIL 直接渲染出 5 页幻灯片 PNG（也可替换为 5-4 的 Slidev 截图）。
-- 讲解词由 `gpt-4o-mini` 生成；语音由 OpenAI `tts-1`（`voice=alloy`）合成。
+- 讲解词由 `gpt-5.6-luna` 生成；语音由 OpenAI `tts-1`（`voice=alloy`）合成。
 - 视频由 `ffmpeg` 合成：每页做一段 mp4，段时长等于该页音频时长，最后 concat 拼接，
   因此**每页展示时间与语音时长精确匹配**。
 
@@ -30,7 +30,7 @@
 
 ```bash
 pip install -r requirements.txt      # 安装 Python 依赖
-cp env.example .env                  # 填入 OPENAI_API_KEY
+cp env.example .env                  # 填入 OPENAI_API_KEY（未配置时设 OPENROUTER_API_KEY 兜底讲解词，TTS 降级为离线占位）
 python demo.py                       # 生成全部 5 页的完整讲解视频
 ```
 
@@ -94,12 +94,12 @@ ffprobe -v error -show_format -show_streams output/lecture.mp4
 - **Python 包**：`openai`、`Pillow`、`python-dotenv`（见 `requirements.txt`）。
 - **中文字体**：渲染幻灯片需系统中文字体，脚本已按 macOS 常见字体
   （PingFang / STHeiti / Hiragino / Arial Unicode）自动回退。
-- **环境变量**：仅需 `OPENAI_API_KEY`（走官方 OpenAI）；可选项见 `env.example`。
+- **环境变量**：需 `OPENAI_API_KEY`（走官方 OpenAI）；未配置时可用 `OPENROUTER_API_KEY` 兜底讲解词生成（此时 TTS 因不在 OpenRouter 上而降级为离线静音占位）。可选项见 `env.example`。
 
 ## 如何适配 / 扩展
 
 - **换模型 / 换供应商**：环境变量或命令行均可，无需改代码：
-  - `TEXT_MODEL` / `--text-model`：讲解词生成模型（默认 `gpt-4o-mini`，可换 `gpt-4o` 等）。
+  - `TEXT_MODEL` / `--text-model`：讲解词生成模型（默认 `gpt-5.6-luna`，可换其它）。
   - `TTS_MODEL` / `TTS_VOICE`（或 `--tts-model` / `--tts-voice`）：语音模型与音色
     （默认 `tts-1` / `alloy`，音色可选 `nova` / `shimmer` / `echo` 等）。
   - `--tts-provider offline`：切到离线占位音轨（不产生任何 API 调用），用于本地验证。
