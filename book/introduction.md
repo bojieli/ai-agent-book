@@ -38,9 +38,9 @@
 
 本书共十章，分为三个部分（图0-1、图0-2）：第一章是基础，建立对 Agent 的全局认知；第二至七章依次展开三大支柱：上下文（第二至三章）、工具（第四至五章）与模型（第六至七章，评估与后训练）；第八至十章是进阶与应用，展示 Agent 的自我进化、多模态与实时交互，以及多 Agent 协作。
 
-![图0-1：Agent = LLM + 上下文 + 工具](images/fig0-1.svg)
+![图0-1 Agent = LLM + 上下文 + 工具](images/fig0-1.svg)
 
-![图0-2：全书结构，从基础到应用](images/fig0-2.svg)
+![图0-2 全书结构，从基础到应用](images/fig0-2.svg)
 
 - **第一章（Agent 基础知识）**以多个真实 Agent 产品为引，建立对 Agent 的直观理解。深入解析 Agent 的核心公式：从实现层的 LLM + 上下文 + 工具，到直觉层的大脑 + 眼睛 + 手脚，再到学术层的策略（Policy）、观察空间（Observation Space）与动作空间（Action Space）。同时通过实验剖析 ReAct 循环的运作机制，也就是“思考→行动→观察”的迭代过程，并介绍 Agent 的三种学习范式：后训练（Post-training）、上下文学习（In-Context Learning）与外部化学习（Externalized Learning）。最后讨论从工作流到自主 Agent 的编排设计模式，为后续章节建立统一的概念框架。
 - **第二章（上下文工程）**是全书最关键的一章，系统讲解上下文，也就是 Agent 的“眼睛”。本章先从 API 消息结构与 Agent 核心循环讲起，建立“上下文就是消息列表”的地基，再深入 KV Cache（大模型推理过程中复用历史计算结果的机制）的底层原理，然后依次展开：提示工程（Prompt Engineering，包括流程化设计、工具描述、业务规则细化）与提示注入（Prompt Injection）攻防、Agent Skills 的按需加载机制、Agent 状态栏技术，以及上下文压缩（Context Compression）策略。各术语的完整定义在正文首次出现处给出。

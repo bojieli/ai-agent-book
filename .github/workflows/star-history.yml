@@ -19,17 +19,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate & commit star history chart
-        uses: carsteneu/mystarhistory@v1
+      - uses: actions/setup-python@v5
         with:
-          repos: ${{ github.repository }}
-          # 默认 github.token 不是本仓库协作者，读不到 stargazers，
-          # 需自建细粒度 PAT（Metadata: Read-only + Contents: Read and write）
-          # 并存为仓库 secret STAR_HISTORY_TOKEN。
-          token: ${{ secrets.STAR_HISTORY_TOKEN }}
-          # 以下均为默认值，如需改动可取消注释：
-          # branch: star-history
-          # output-dir: assets/my-star-history
-          # themes: light,dark
-          # color: "#dd4528"
-          # title: Star History
+          python-version: "3.12"
+
+      - name: Install matplotlib
+        run: pip install matplotlib
+
+      - name: Generate star history chart
+        run: python scripts/gen_star_history.py --refresh
+        env:
+          # STAR_HISTORY_TOKEN（细粒度 PAT）如存在则优先，否则用内置 GITHUB_TOKEN，
+          # 读取公开仓库的 stargazers 时间戳不需要额外权限。
+          GITHUB_TOKEN: ${{ secrets.STAR_HISTORY_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Commit updated charts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/star-history-*.png
+          git diff --cached --quiet && exit 0
+          git commit -m "Update star history chart [skip ci]"
+          git push

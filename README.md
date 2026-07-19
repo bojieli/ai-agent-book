@@ -1,13 +1,20 @@
 # 深入理解 AI Agent：设计原理与工程实践
 
+**[English](README.en.md) | 中文**
+
 本仓库是《深入理解 AI Agent：设计原理与工程实践》一书的开源主仓库，包含**全书正文**与**配套示例代码**。全书正文、配图与配套实验代码全部开源，欢迎把实验亲手跑一遍、提 issue 和 PR。
 
 ## 📖 电子书
 
-全书正文与编译好的 PDF 位于 [`book/`](book/) 目录：
+全书提供中英双语版本：
+
+- **中文 PDF（原版）**：[`book/深入理解-AI-Agent-李博杰-v1.1.pdf`](book/深入理解-AI-Agent-李博杰-v1.1.pdf)
+- **英文 PDF**（社区贡献翻译，by [@nsdevaraj](https://github.com/nsdevaraj)）：[`book-en/AI-Agents-in-Depth-Bojie-Li-v1.1.pdf`](book-en/AI-Agents-in-Depth-Bojie-Li-v1.1.pdf)
+- **泰米尔语 PDF**（社区贡献翻译，by [@nsdevaraj](https://github.com/nsdevaraj)）：[`book-ta/AI-Agents-in-Depth-Bojie-Li-v1.1-ta.pdf`](book-ta/AI-Agents-in-Depth-Bojie-Li-v1.1-ta.pdf)
+
+中文正文与编译好的 PDF 位于 [`book/`](book/) 目录；英文与泰米尔语翻译为**社区贡献**，分别位于 [`book-en/`](book-en/) 与 [`book-ta/`](book-ta/) 目录，内容可能滞后于中文原版：
 
 - **正文源码**：`book/introduction.md`（引言）、`book/chapter1.md` ~ `book/chapter10.md`（第一至第十章）、`book/afterword.md`（后记）
-- **编译版 PDF**：[`book/深入理解-AI-Agent-李博杰-v1.1.pdf`](book/深入理解-AI-Agent-李博杰-v1.1.pdf)
 - **自行编译**：安装 pandoc、xelatex、ElegantBook 文档类与相关字体后，运行
 
   ```bash
@@ -850,10 +857,10 @@ git clone https://github.com/joonspk-research/generative_agents.git    chapter10
 
 <a href="https://star-history.com/#bojieli/ai-agent-book&Date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/bojieli/ai-agent-book/star-history/assets/my-star-history/star-history-dark.svg" />
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/bojieli/ai-agent-book/star-history/assets/my-star-history/star-history-light.svg" />
-    <img alt="Star History Chart" src="https://raw.githubusercontent.com/bojieli/ai-agent-book/star-history/assets/my-star-history/star-history-light.svg" width="720" />
+    <source media="(prefers-color-scheme: dark)" srcset="assets/star-history-dark.png" />
+    <source media="(prefers-color-scheme: light)" srcset="assets/star-history-light.png" />
+    <img alt="Star History Chart" src="assets/star-history-light.png" width="720" />
   </picture>
 </a>
 
-<sub>图表由 [GitHub Actions 定时任务](.github/workflows/star-history.yml) 每周自动生成 star-history 风格图并提交到 <code>star-history</code> 分支，本地托管、不受外部限流影响；点击可跳转到 star-history.com 查看实时数据。</sub>
+<sub>图表由 [`scripts/gen_star_history.py`](scripts/gen_star_history.py) 绘制（自 2026 年 7 月 13 日起），[GitHub Actions 定时任务](.github/workflows/star-history.yml) 每天自动更新并提交到 <code>assets/</code> 目录；点击可跳转到 star-history.com 查看实时数据。</sub>
