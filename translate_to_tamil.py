@@ -121,11 +121,20 @@ TRANSLATE
   human-facing string literals or comments inside code blocks.
 - Produce fluent, idiomatic Tamil (meaning-for-meaning, not word-for-word),
   written for a technical reader in a precise, professional tone.
-- Established technical terms may stay in English when there is no widely used
-  Tamil equivalent (e.g., agent, context, prompt, token, LLM, API, tool call,
-  embedding, fine-tuning, reinforcement learning, KV Cache, RAG). Prefer natural
-  Tamil phrasing and, on first use, you may keep the English term in parentheses
-  where it aids clarity. Do not invent obscure neologisms.
+- CRITICAL — NEVER transliterate English technical terms, concept keywords, or
+  proper nouns into Tamil script. Keep them VERBATIM in Latin (English) script,
+  exactly as written in the source. Transliteration (spelling an English word
+  using Tamil letters) is forbidden. This applies to, among others: agent,
+  model, context, tool/tools, prompt, token, embedding, attention, transformer,
+  workflow, harness, pipeline, fine-tuning, reinforcement learning, and all
+  abbreviations / product / company names (LLM, RAG, API, KV Cache, SFT, RL,
+  ReAct, GPT, Claude, Cursor, OpenAI, ...). Translate ONLY the genuine Tamil
+  grammatical/connective words around them.
+  Worked example: "Model as Agent" MUST become "Model ஆக Agent" — translate
+  only "as" → "ஆக" and keep "Model" and "Agent" in English. It is WRONG to
+  write "மாடல் ஆக ஏஜென்ட்" or "மாடல்" or "ஏஜென்ட்".
+- Do not invent obscure Tamil neologisms for technical concepts; if the natural
+  Tamil word is uncommon or ambiguous, keep the English term instead.
 - Keep terminology consistent throughout the file.
 
 DO NOT CHANGE (copy verbatim, byte for byte)
@@ -212,6 +221,50 @@ def split_budget(text: str, budget: int) -> list[str]:
     return parts or [text]
 
 
+# A fenced code block opens with >=3 backticks or tildes (optionally indented)
+# and closes with a line of only that fence character (>= the opening length).
+FENCE_OPEN_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})")
+
+
+def split_prose_code(text: str) -> list[tuple[str, str]]:
+    """Split markdown into ('prose'|'code', segment) parts on fenced code blocks.
+
+    Concatenating the segments reproduces ``text`` exactly. Fenced code blocks
+    (the fence lines and everything between them) are isolated as 'code' so the
+    caller can pass them through untranslated -- translating inside code fences
+    is what corrupts fence structure (the model reflows fences, bolds lines,
+    merges markers), so we never send code to the model.
+    """
+    lines = text.splitlines(keepends=True)
+    out: list[tuple[str, str]] = []
+    prose: list[str] = []
+    i, n = 0, len(lines)
+    while i < n:
+        m = FENCE_OPEN_RE.match(lines[i])
+        if m:
+            fence = m.group(1)
+            fchar, flen = fence[0], len(fence)
+            if prose:
+                out.append(("prose", "".join(prose)))
+                prose = []
+            code = [lines[i]]
+            i += 1
+            while i < n:
+                code.append(lines[i])
+                s = lines[i].strip()
+                if s and all(c == fchar for c in s) and len(s) >= flen:
+                    i += 1
+                    break
+                i += 1
+            out.append(("code", "".join(code)))
+        else:
+            prose.append(lines[i])
+            i += 1
+    if prose:
+        out.append(("prose", "".join(prose)))
+    return out
+
+
 def strip_wrapping_fence(src: str, out: str) -> str:
     """Remove a Markdown code fence the model may have wrapped the output in."""
     if src.lstrip().startswith("```"):
@@ -284,14 +337,36 @@ class Translator:
         return strip_wrapping_fence(text, content)
 
     def translate(self, text: str, filetype: str) -> tuple[str, int]:
-        """Translate a whole file. Returns (new_text, num_chunks)."""
-        if len(text) <= self.max_chars:
-            out = self._fragment(text, filetype)
-            chunks = 1
-        else:
-            parts = split_budget(text, self.max_chars)
-            out = "".join(self._fragment(p, filetype) for p in parts)
-            chunks = len(parts)
+        """Translate a file, passing fenced code blocks through verbatim.
+
+        Only prose segments are sent to the model; fenced code blocks (fences +
+        contents) are copied unchanged, so the Tamil output keeps byte-identical
+        code-fence structure to the English source. Returns (new_text, chunks).
+
+        The model often drops the leading/trailing newlines of a fragment. If
+        left uncorrected, the trailing newline before a code block is lost and
+        the block's opening ``` glues onto the previous prose line, breaking the
+        fence. So for every translated fragment we restore the EXACT leading and
+        trailing newline count of its source, guaranteeing fences and block
+        boundaries always start on their own line.
+        """
+        out_parts: list[str] = []
+        chunks = 0
+        for kind, seg in split_prose_code(text):
+            if kind == "code" or not has_source_text(seg):
+                out_parts.append(seg)  # code fences / blank gaps: verbatim
+                continue
+            parts = [seg] if len(seg) <= self.max_chars else split_budget(seg, self.max_chars)
+            for p in parts:
+                if not has_source_text(p):
+                    out_parts.append(p)
+                    continue
+                tp = self._fragment(p, filetype)
+                lead = len(p) - len(p.lstrip("\n"))
+                trail = len(p) - len(p.rstrip("\n"))
+                out_parts.append(("\n" * lead) + tp.strip("\n") + ("\n" * trail))
+                chunks += 1
+        out = "".join(out_parts)
         if text.endswith("\n") and not out.endswith("\n"):
             out += "\n"
         elif not text.endswith("\n") and out.endswith("\n"):

@@ -9,9 +9,12 @@
 % ucharclasses inserts the begin/end code at every entry/exit of a Tamil run.
 % Wrapping in \begingroup…\endgroup means the exact surrounding style (bold in
 % headings, monospace in code) is restored for whatever follows a Tamil run.
+% Script=Tamil is REQUIRED: without it XeTeX applies default (Latin) shaping and
+% the complex-script reordering (pre-base vowels ெ/ே/ை, two-part vowels ொ/ோ/ௌ,
+% consonant conjuncts) is skipped, producing scrambled output.
 \usepackage{ucharclasses}
 \IfFontExistsTF{Noto Serif Tamil}{%
-  \newfontfamily\tamilfont{Noto Serif Tamil}%
+  \newfontfamily\tamilfont{Noto Serif Tamil}[Script=Tamil,Language=Tamil]%
   \setTransitionsFor{Tamil}{\begingroup\tamilfont}{\endgroup}%
 }{%
   \PackageWarning{tamil-fonts}{Noto Serif Tamil not found; Tamil text will not render.}%
