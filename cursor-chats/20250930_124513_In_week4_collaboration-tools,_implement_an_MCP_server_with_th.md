@@ -12,19 +12,19 @@
 
 In week4/collaboration-tools, implement an MCP server with the following collaboration tools:
 
-#### GUI Operation Tools
+#### 图形界面操作工具
 
-- Virtual browser (browser-use, a well-known virtual browser library)
+- 虚拟浏览器（browser use，是一个知名的虚拟浏览器库）
 
-#### Human Collaboration Tools
+#### 人类协作工具
 
-- Human-In-the-Loop request admin assistance
-- Send IM notification to a person
-- Send email notification to a person
+- Human-In-the-Loop 请求管理员协助
+- 给人发 IM 消息通知
+- 给人发邮件通知
 
-#### Timer Tools
+#### 定时器工具
 
-- Agent sets a timer to continue processing a task when the timer fires
+- Agent 设置一个定时器，到时间再继续处理任务
 
 ---
 
@@ -92,18 +92,18 @@ I've successfully implemented a comprehensive **Collaboration Tools MCP Server**
 
 ### ✅ What Was Implemented
 
-#### **1. GUI Operation Tools (Browser Automation)**
-- ✅ Virtual browser using the **browser-use** library (well-known virtual browser library)
+#### **1. 图形界面操作工具 (Browser Automation)**
+- ✅ Virtual browser using **browser-use** library (知名虚拟浏览器库)
 - 5 tools: navigate, get content, execute AI tasks, screenshot, list tabs
 - Full Playwright-based automation with AI agent support
 
-#### **2. Human Collaboration Tools**
+#### **2. 人类协作工具 (Human Collaboration)**
 - ✅ **Human-in-the-Loop**: Request admin approval/input
 - ✅ **IM Messages**: Telegram, Slack, Discord webhooks
 - ✅ **Email Notifications**: SMTP + SendGrid support
 - 8 tools total for human collaboration
 
-#### **3. Timer Tools**
+#### **3. 定时器工具 (Timer Tools)**
 - ✅ One-time timers with callbacks
 - ✅ Recurring timers for scheduled tasks
 - ✅ Timer management (cancel, list, status)
@@ -122,7 +122,8 @@ I've successfully implemented a comprehensive **Collaboration Tools MCP Server**
 ```
 week4/collaboration-tools/
 ├── 📘 Documentation (8 files)
-│   ├── 00_START_HERE.md          ← Main entry point│   ├── README.md                 ← Setup & usage guide
+│   ├── 00_START_HERE.md          ← Main entry point
+│   ├── README.md                 ← Setup & usage guide
 │   ├── ARCHITECTURE.md           ← System architecture
 │   ├── IMPLEMENTATION.md         ← Technical details
 │   ├── USAGE_EXAMPLES.md         ← 7+ practical examples

@@ -1,27 +1,28 @@
-"""Hybrid retrieval pipeline offline evaluation CLI.
+"""混合检索流水线离线评测 CLI。
 
-This script runs the entire retrieval pipeline—chunk → embed → retrieve →
-fuse → rerank—completely in a **single-process, offline** environment, and on a small
-evaluation set with annotated answers, compares the retrieval quality of each method stage by stage. It does not depend on dense/sparse microservices
-(ports 4240/4241/4242), so you can reproduce the core conclusion of "how metrics improve with each added stage" offline using local models.
+本脚本把整条检索流水线——分块(chunk) → 嵌入(embed) → 检索(retrieve) →
+融合(fuse) → 重排(rerank)——完整地跑在**单进程、可离线**的环境里，并在一个带
+标注答案的小型评测集上，逐阶段对比各方法的检索质量。它不依赖 dense/sparse 微服务
+（4240/4241/4242 端口），因此可以脱离服务、直接用本地模型复现「每加一个阶段、指标如何
+提升」这一核心结论。
 
-Local components used in each stage:
-  - Sparse retrieval: BM25 (pure Python, rank_bm25, no model download required)
-  - Dense retrieval: Local sentence embedding model (default Qwen3-Embedding-0.6B, multilingual,
-                    loaded via transformers; can also be replaced with BGE-M3, etc.)
-  - Fusion: see fusion.py, two strategies: RRF and weighted normalization
-  - Rerank: Cross-encoder (default cross-encoder/ms-marco-MiniLM-L-6-v2)
+各阶段使用的本地组件：
+  - 稀疏检索(sparse)  : BM25（纯 Python，rank_bm25，无需下载模型）
+  - 稠密检索(dense)   : 本地句向量模型（默认 Qwen3-Embedding-0.6B，多语言，
+                        通过 transformers 加载；也可换成 BGE-M3 等）
+  - 融合(fuse)        : 见 fusion.py，RRF 与加权归一化两种策略
+  - 重排(rerank)      : 交叉编码器（默认 cross-encoder/ms-marco-MiniLM-L-6-v2）
 
-Default behavior (without any arguments): Evaluate on the built-in evaluation set
-  BM25 / Dense / Hybrid-RRF / Hybrid-Weighted / Hybrid-RRF+Rerank five configurations,
-  print Recall@k, MRR, nDCG@k comparison table.
+默认行为（不带任何参数）：在内置评测集上评测
+  BM25 / Dense / Hybrid-RRF / Hybrid-Weighted / Hybrid-RRF+Rerank 五种配置，
+  打印 Recall@k、MRR、nDCG@k 对比表。
 
-Examples:
-  python evaluate.py                         # Built-in evaluation set, full comparison table
+示例：
+  python evaluate.py                         # 内置评测集，完整对比表
   python evaluate.py --top-k 10 --rerank-top-k 5
-  python evaluate.py --no-rerank             # Skip rerank stage
+  python evaluate.py --no-rerank             # 跳过重排阶段
   python evaluate.py --embed-model BAAI/bge-m3 --pooling cls
-  python evaluate.py --query "怎样提升检索精度"  # Single query, per-stage ranking trace
+  python evaluate.py --query "怎样提升检索精度"  # 单条查询、逐阶段排名追踪
   python evaluate.py --corpus my_corpus.json --queries my_queries.json --output result.json
 """
 
@@ -37,33 +38,33 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from fusion import fuse
 
 # ---------------------------------------------------------------------------
-#  Built-in evaluation set: directly reuses the educational test cases from test_client.py (four categories: semantic similarity / exact name /
-#  multilingual / technical code), whose expected field is the manually annotated relevant documents, serving as the evaluation gold standard.
-#  Additionally, two longer documents are included to demonstrate the chunk stage.
+# 内置评测集：直接复用 test_client.py 中的教育性测试案例（语义相似 / 精确名称 /
+# 多语言 / 技术代码四类），其 expected 字段即人工标注的相关文档，作为评测金标准。
+# 另加两篇较长文档用于演示分块(chunk)阶段。
 # ---------------------------------------------------------------------------
 DEFAULT_CORPUS: List[Dict[str, Any]] = [
-    # --- Near-duplicate code cluster (sparse dominates, dense fails) ---
-    #  Each text is almost identical, differing only in model code; dense vectors can hardly distinguish members within the same cluster,
-    #  while sparse retrieval hits precisely via exact term matching. The larger the cluster, the higher the probability of dense selection errors.
+    # --- 近似重复的代码簇（稀疏占优、稠密翻车）---
+    # 各条文本几乎完全相同，只有型号代码不同；稠密向量几乎无法区分同一簇内的成员，
+    # 稀疏检索靠精确词项匹配却能一击命中。簇越大，稠密选错的概率越高。
     {"doc_id": "xr_7001", "text": "Product model XR-7001 is a smartphone available now."},
     {"doc_id": "xr_7002", "text": "Product model XR-7002 is a smartphone available now."},
     {"doc_id": "xr_7003", "text": "Product model XR-7003 is a smartphone available now."},
     {"doc_id": "xr_7004", "text": "Product model XR-7004 is a smartphone available now."},
     {"doc_id": "xr_7005", "text": "Product model XR-7005 is a smartphone available now."},
     {"doc_id": "xr_7006", "text": "Product model XR-7006 is a smartphone available now."},
-    #  Near-duplicate HTTP error code cluster (sparse dominates, dense fails)
+    # 近似重复的 HTTP 错误码簇（稀疏占优、稠密翻车）
     {"doc_id": "http_400", "text": "The HTTP-400 response is a client error status code."},
     {"doc_id": "http_401", "text": "The HTTP-401 response is a client error status code."},
     {"doc_id": "http_403", "text": "The HTTP-403 response is a client error status code."},
     {"doc_id": "http_404", "text": "The HTTP-404 response is a client error status code."},
     {"doc_id": "http_500", "text": "The HTTP-500 response is a server error status code."},
-    # --- Semantic paraphrase cluster (dense dominates, sparse fails) ---
-    #  Query and documents share almost no common words; sparse BM25 cannot match, dense hits via semantics.
+    # --- 语义改写簇（稠密占优、稀疏翻车）---
+    # 查询与文档几乎没有共同词，稀疏 BM25 无从匹配，稠密靠语义命中。
     {"doc_id": "sem_readable", "text": "The language emphasizes clean, readable code that newcomers can pick up quickly."},
     {"doc_id": "sem_gc", "text": "Automatic memory management frees developers from manually releasing objects."},
     {"doc_id": "sem_photo", "text": "Green plants convert sunlight into chemical energy stored as sugars."},
     {"doc_id": "sem_crypto", "text": "Encryption scrambles a message so that only the intended recipient can read it."},
-    #  Longer documents: topics independent of each other, used to demonstrate the chunk stage (will be split into multiple chunks before retrieval)
+    # 较长文档：话题彼此独立，用于演示分块阶段（会被切成多个 chunk 后再检索）
     {"doc_id": "doc_watercycle", "text": (
         "The water cycle describes how water moves continuously between the ocean, the atmosphere and the land. "
         "Heat from the sun evaporates water from the sea surface into vapor that rises high into the sky. "
@@ -80,38 +81,38 @@ DEFAULT_CORPUS: List[Dict[str, Any]] = [
 ]
 
 DEFAULT_QUERIES: List[Dict[str, Any]] = [
-    #  Exact code query: sparse hits precisely, dense struggles to distinguish similar models (expected is the only correct answer)
+    # 精确代码查询：稀疏一击命中，稠密难辨近似型号（expected 为唯一正确答案）
     {"query": "XR-7003", "expected": ["xr_7003"]},
     {"query": "XR-7005", "expected": ["xr_7005"]},
     {"query": "HTTP-403", "expected": ["http_403"]},
     {"query": "HTTP-400", "expected": ["http_400"]},
-    #  Semantic paraphrase query: almost no common words with documents, dense hits via semantics, sparse cannot match
+    # 语义改写查询：与文档几乎无共同词，稠密靠语义命中，稀疏无从匹配
     {"query": "a beginner friendly language with tidy syntax", "expected": ["sem_readable"]},
     {"query": "reclaiming unused heap space without programmer effort", "expected": ["sem_gc"]},
     {"query": "how vegetation turns light into food", "expected": ["sem_photo"]},
     {"query": "hiding a note so eavesdroppers cannot understand it", "expected": ["sem_crypto"]},
-    #  Long document semantic query: the hit long document is first chunked, then recalled and reranked by a chunk
+    # 长文档语义查询：命中的长文档会先被分块，再由某个 chunk 召回、重排
     {"query": "how does water move between the ocean and the sky", "expected": ["doc_watercycle"]},
     {"query": "how are volcanoes formed from molten rock", "expected": ["doc_volcano"]},
 ]
 
 
 # ---------------------------------------------------------------------------
-#  Chunk
+# 分块(chunk)
 # ---------------------------------------------------------------------------
 def chunk_text(text: str, chunk_size: int, overlap: int) -> List[str]:
-    """Splits a document into overlapping chunks by character window.
+    """按字符窗口把文档切成带重叠的 chunk。
 
-    Short documents (length <= chunk_size) return a single chunk as-is. In real scenarios, chunks are the smallest
-    retrieval unit; here we use a character-level sliding window to keep implementation simple and language-agnostic.
+    短文档（长度 <= chunk_size）原样返回单个 chunk。真实场景中 chunk 是检索的最小
+    单元；这里用字符级滑窗保持实现简单、语言无关。
 
     Args:
-        text: Original document text.
-        chunk_size: Maximum number of characters per chunk.
-        overlap: Number of overlapping characters between adjacent chunks.
+        text: 原始文档文本。
+        chunk_size: 每个 chunk 的最大字符数。
+        overlap: 相邻 chunk 的重叠字符数。
 
     Returns:
-        List of chunk texts (at least one).
+        chunk 文本列表（至少一个）。
     """
     text = text.strip()
     if chunk_size <= 0 or len(text) <= chunk_size:
@@ -129,17 +130,17 @@ def chunk_text(text: str, chunk_size: int, overlap: int) -> List[str]:
 
 
 # ---------------------------------------------------------------------------
-#  Tokenization (for BM25): keep English words/numbers/codes with hyphens or underscores, CJK uses jieba + single characters
+# 分词（BM25 用）：保留英文词/数字/带连字符或下划线的代码，CJK 走 jieba + 单字
 # ---------------------------------------------------------------------------
 _TOKEN_RE = re.compile(r"[a-z0-9]+(?:[-_][a-z0-9]+)*|[一-鿿]+")
 
 
 def tokenize(text: str) -> List[str]:
-    """Tokenizes text into BM25 terms.
+    """把文本切成 BM25 词项。
 
-    - English words, pure numbers, and technical codes like ``http-403`` / ``max_buffer_size`` / ``xr-7000``
-      are kept intact (hyphens and underscores not split), ensuring exact matching.
-    - Consecutive CJK segments produce both jieba segmentation results and single characters, enhancing Chinese recall robustness.
+    - 英文单词、纯数字、以及像 ``http-403`` / ``max_buffer_size`` / ``xr-7000``
+      这样的技术代码会被整体保留（连字符、下划线不切开），保证精确匹配。
+    - 连续 CJK 片段同时产出 jieba 分词结果与单字，增强中文召回鲁棒性。
     """
     tokens: List[str] = []
     for match in _TOKEN_RE.finditer(text.lower()):
@@ -157,10 +158,10 @@ def tokenize(text: str) -> List[str]:
 
 
 # ---------------------------------------------------------------------------
-#  Sparse retrieval: BM25
+# 稀疏检索：BM25
 # ---------------------------------------------------------------------------
 class BM25Retriever:
-    """BM25 retriever based on rank_bm25 (chunk level)."""
+    """基于 rank_bm25 的 BM25 检索器（chunk 级）。"""
 
     def __init__(self, chunk_ids: List[str], chunk_texts: List[str]):
         from rank_bm25 import BM25Okapi
@@ -170,17 +171,17 @@ class BM25Retriever:
         self.bm25 = BM25Okapi(self.tokenized)
 
     def search(self, query: str, top_k: int) -> List[Tuple[str, float]]:
-        """Returns a list of (chunk_id, score) sorted by score descending, keeping only positive scores."""
+        """返回 (chunk_id, score) 列表，按分数降序，只保留正分。"""
         scores = self.bm25.get_scores(tokenize(query))
         ranked = sorted(zip(self.chunk_ids, scores), key=lambda kv: kv[1], reverse=True)
         return [(cid, float(s)) for cid, s in ranked[:top_k] if s > 0]
 
 
 # ---------------------------------------------------------------------------
-#  Dense retrieval: local sentence embedding model (transformers)
+# 稠密检索：本地句向量模型（transformers）
 # ---------------------------------------------------------------------------
 class DenseEncoder:
-    """Loads a local sentence embedding model via transformers for dense retrieval."""
+    """用 transformers 加载本地句向量模型，做稠密检索。"""
 
     def __init__(self, model_name: str, pooling: str, device: str,
                  query_instruct: str = "", max_length: int = 256):
@@ -191,10 +192,10 @@ class DenseEncoder:
         self.device = device
         self.max_length = max_length
         self.pooling = self._resolve_pooling(pooling, model_name)
-        #  Instruction-based retrieval models (e.g., Qwen3-Embedding, last-token pooling) require a task instruction on the query side;
-        #  mean/cls pooling models (MiniLM / BGE-M3) do not, so it is automatically disabled.
+        # 指令式检索模型（如 Qwen3-Embedding，last-token 池化）要求查询侧带任务指令；
+        # mean/cls 池化的模型（MiniLM / BGE-M3）不需要，自动关闭。
         self.query_instruct = query_instruct if (query_instruct and self.pooling == "last") else ""
-        #  last-token pooling requires left padding so that the last position aligns with the actual last token
+        # last-token pooling 需要左侧 padding，才能让最后一个位置对齐真实末词
         padding_side = "left" if self.pooling == "last" else "right"
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, padding_side=padding_side)
         self.model = AutoModel.from_pretrained(model_name).to(device).eval()
@@ -228,8 +229,8 @@ class DenseEncoder:
         for start in range(0, len(texts), batch_size):
             batch = list(texts[start:start + batch_size])
             pooled = self._forward(batch)
-            #  Some models produce NaN on mps during forward pass (transformers 5.x + certain weights);
-            #  After detection, permanently fall back to CPU recomputation to ensure finite vectors and reproducible results.
+            # 某些模型在 mps 上前向会出 NaN（transformers 5.x + 某些权重）；
+            # 检测到后永久退回 CPU 重算，保证向量有限、结果可复现。
             if self.device != "cpu" and torch.isnan(pooled).any():
                 self.device = "cpu"
                 self.model = self.model.to("cpu")
@@ -250,12 +251,12 @@ class DenseEncoder:
 
 
 class DenseRetriever:
-    """  Chunk-level retriever based on dense vector cosine similarity."""
+    """基于稠密向量余弦相似度的 chunk 级检索器。"""
 
     def __init__(self, encoder: DenseEncoder, chunk_ids: List[str], chunk_texts: List[str]):
         self.encoder = encoder
         self.chunk_ids = chunk_ids
-        self.matrix = encoder.encode(chunk_texts)  #  [N, D], normalized
+        self.matrix = encoder.encode(chunk_texts)  # [N, D], 已归一化
 
     def search(self, query: str, top_k: int) -> List[Tuple[str, float]]:
         q = self.encoder.encode([query], is_query=True)[0]
@@ -265,13 +266,13 @@ class DenseRetriever:
 
 
 # ---------------------------------------------------------------------------
-#  Reranking: cross-encoder
+# 重排：交叉编码器（cross-encoder）
 # ---------------------------------------------------------------------------
 class CrossEncoderReranker:
-    """  Fine-rank candidates with a cross-encoder.
+    """用交叉编码器对候选做精排。
 
-    In transformers 5.x + some BERT weights, fp32 forward may produce NaN; this class detects NaN and
-    automatically falls back to CPU + float64 recomputation to ensure finite and reproducible output.
+    在 transformers 5.x + 部分 BERT 权重上，fp32 前向可能出现 NaN；本类检测到 NaN 后
+    自动回退到 CPU + float64 重算，保证输出有限、可复现。
     """
 
     def __init__(self, model_name: str, device: str, max_length: int = 512):
@@ -296,7 +297,7 @@ class CrossEncoderReranker:
         with torch.no_grad():
             logits = self.model(**enc).logits.squeeze(-1).float()
         if torch.isnan(logits).any():
-            #  Fallback: CPU + float64 recomputation
+            # 回退：CPU + float64 重算
             enc_cpu = {k: v.to("cpu") for k, v in enc.items()}
             model64 = self.model.to("cpu").double()
             with torch.no_grad():
@@ -305,7 +306,7 @@ class CrossEncoderReranker:
         return [float(x) for x in logits.reshape(-1).tolist()]
 
     def rerank(self, query: str, candidates: List[Tuple[str, str]], top_k: int) -> List[Tuple[str, float]]:
-        """  candidates: [(doc_id, text)] -> [(doc_id, rerank_score)] descending, take top_k."""
+        """candidates: [(doc_id, text)] -> [(doc_id, rerank_score)] 降序，取 top_k。"""
         scores = self.score(query, [text for _, text in candidates])
         ranked = sorted(
             ((doc_id, s) for (doc_id, _), s in zip(candidates, scores)),
@@ -315,7 +316,7 @@ class CrossEncoderReranker:
 
 
 # ---------------------------------------------------------------------------
-#  chunk-level results -> doc-level results (take the highest-scoring chunk per document)
+# chunk 级结果 -> doc 级结果（同一文档取最高分的 chunk）
 # ---------------------------------------------------------------------------
 def chunks_to_docs(ranked_chunks: List[Tuple[str, float]], chunk_to_doc: Dict[str, str]) -> List[Tuple[str, float]]:
     best: Dict[str, float] = {}
@@ -327,7 +328,7 @@ def chunks_to_docs(ranked_chunks: List[Tuple[str, float]], chunk_to_doc: Dict[st
 
 
 # ---------------------------------------------------------------------------
-#  Evaluation metrics
+# 评测指标
 # ---------------------------------------------------------------------------
 def recall_at_k(ranked_ids: List[str], gold: Sequence[str], k: int) -> float:
     if not gold:
@@ -366,7 +367,7 @@ def aggregate_metrics(per_query_ranked: List[Tuple[List[str], Sequence[str]]], k
 
 
 # ---------------------------------------------------------------------------
-#  Pipeline: produce doc-level rankings for each method for a single query
+# 流水线：为一条查询产出各方法的文档级排名
 # ---------------------------------------------------------------------------
 class Pipeline:
     def __init__(self, corpus, args):
@@ -376,7 +377,7 @@ class Pipeline:
         self.chunk_to_doc: Dict[str, str] = {}
         self.doc_text: Dict[str, str] = {}
 
-        #  Chunking
+        # 分块
         for doc in corpus:
             self.doc_text[doc["doc_id"]] = doc["text"]
             chunks = chunk_text(doc["text"], args.chunk_size, args.chunk_overlap)
@@ -389,23 +390,23 @@ class Pipeline:
         self.n_docs = len(corpus)
         self.n_chunks = len(self.chunk_ids)
 
-        #  Sparse index
+        # 稀疏索引
         self.bm25 = BM25Retriever(self.chunk_ids, self.chunk_texts)
 
-        #  Dense index (optional)
+        # 稠密索引（可选）
         self.dense: Optional[DenseRetriever] = None
         if args.use_dense:
             encoder = DenseEncoder(args.embed_model, args.pooling, args.device,
                                    query_instruct=args.query_instruct)
             self.dense = DenseRetriever(encoder, self.chunk_ids, self.chunk_texts)
 
-        #  Reranker (optional)
+        # 重排器（可选）
         self.reranker: Optional[CrossEncoderReranker] = None
         if args.use_rerank:
             self.reranker = CrossEncoderReranker(args.reranker_model, args.device)
 
     def run_query(self, query: str) -> Dict[str, List[Tuple[str, float]]]:
-        """  Return doc-level rankings for each method {method: [(doc_id, score)]}."""
+        """返回各方法的 doc 级排名 {method: [(doc_id, score)]}。"""
         top_k = self.args.top_k
         sparse_chunks = self.bm25.search(query, top_k)
         sparse_docs = chunks_to_docs(sparse_chunks, self.chunk_to_doc)
@@ -425,7 +426,7 @@ class Pipeline:
             out["weighted"] = weighted
 
             if self.reranker is not None:
-                #  Fine-rank top-N candidate pool from RRF fusion
+                # 对 RRF 融合的候选池 top-N 精排
                 pool = [doc_id for doc_id, _ in rrf[: self.args.rerank_pool]]
                 candidates = [(doc_id, self.doc_text[doc_id]) for doc_id in pool]
                 reranked = self.reranker.rerank(query, candidates, self.args.rerank_top_k)
@@ -435,7 +436,7 @@ class Pipeline:
 
 
 # ---------------------------------------------------------------------------
-#  Output: comparison table / single query trace
+# 输出：对比表 / 单条查询追踪
 # ---------------------------------------------------------------------------
 METHOD_LABELS = [
     ("sparse", "BM25 (sparse)"),
@@ -487,16 +488,16 @@ def run_evaluation(pipeline: Pipeline, queries, args) -> Dict[str, Any]:
 def print_table(report: Dict[str, Any], pipeline: Pipeline, args) -> None:
     k = report["eval_k"]
     print("=" * 78)
-    print("Hybrid retrieval pipeline · stage-by-stage evaluation comparison")
+    print("混合检索流水线 · 逐阶段评测对比")
     print("=" * 78)
-    print(f"Corpus: {pipeline.n_docs}  documents → {pipeline.n_chunks}  chunks "
+    print(f"语料: {pipeline.n_docs} 篇文档 → {pipeline.n_chunks} 个 chunk "
           f"(chunk_size={args.chunk_size}, overlap={args.chunk_overlap})")
-    print(f"Queries: {len(report['per_query'])}  "
-          f"Dense model: {args.embed_model if args.use_dense else '(disabled)'}   "
-          f"Rerank model: {args.reranker_model if args.use_rerank else '(disabled)'}")
-    print(f"Retrieval top_k={args.top_k}  Fusion k(RRF)={args.k_rrf}  "
-          f"Rerank candidate pool={args.rerank_pool}  Evaluation truncation k={k}  device={args.device}")
-    print(f"Time: {report['elapsed_sec']}s")
+    print(f"查询: {len(report['per_query'])} 条   "
+          f"稠密模型: {args.embed_model if args.use_dense else '(禁用)'}   "
+          f"重排模型: {args.reranker_model if args.use_rerank else '(禁用)'}")
+    print(f"检索 top_k={args.top_k}  融合 k(RRF)={args.k_rrf}  "
+          f"重排候选池={args.rerank_pool}  评测截断 k={k}  设备={args.device}")
+    print(f"耗时: {report['elapsed_sec']}s")
     print("-" * 78)
     header = f"{'Stage / Method':<22}{'Recall@'+str(k):>12}{'MRR':>12}{'nDCG@'+str(k):>12}"
     print(header)
@@ -507,16 +508,16 @@ def print_table(report: Dict[str, Any], pipeline: Pipeline, args) -> None:
         m = report["summary"][method]
         print(f"{label:<22}{m['recall@k']:>12.4f}{m['mrr']:>12.4f}{m['ndcg@k']:>12.4f}")
     print("-" * 78)
-    print("Read the table: gradually add the dense retrieval / fusion / reranking stages from top to bottom and observe the changes in metrics.")
+    print("读表：从上到下逐步加入 稠密检索 / 融合 / 重排 阶段，观察指标的变化。")
     print("=" * 78)
 
 
 def print_per_query(report: Dict[str, Any]) -> None:
-    """Print the MRR of each method for each query, intuitively showing that 'a single path may fail, fusion provides a safety net'."""
+    """逐条查询打印各方法的 MRR，直观展示「单路会翻车、融合来兜底」。"""
     methods = [m for m, _ in METHOD_LABELS]
     short = {"sparse": "BM25", "dense": "Dense", "rrf": "RRF",
              "weighted": "Wgt", "rerank": "Rerank"}
-    print("\nMRR details for each query (1.00 = correct document ranked 1st; roughly see which path fails on which type of query)")
+    print("\n逐条查询 MRR 明细（1.00=正确文档排在第 1 位；粗看哪一路在哪类查询上翻车）")
     print("-" * 78)
     header = f"{'Query':<42}" + "".join(f"{short[m]:>7}" for m in methods)
     print(header)
@@ -537,8 +538,8 @@ def print_per_query(report: Dict[str, Any]) -> None:
 def print_query_trace(pipeline: Pipeline, query: str, args) -> None:
     results = pipeline.run_query(query)
     print("=" * 78)
-    print(f"Per-query per-stage ranking tracking   query = {query!r}")
-    print(f"corpus {pipeline.n_docs} docs → {pipeline.n_chunks} chunk   device={args.device}")
+    print(f"单条查询逐阶段排名追踪   query = {query!r}")
+    print(f"语料 {pipeline.n_docs} 篇 → {pipeline.n_chunks} chunk   设备={args.device}")
     print("=" * 78)
     for method, label in METHOD_LABELS:
         if method not in results:
@@ -574,67 +575,67 @@ def load_json(path: str):
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="CLI for offline evaluation of hybrid retrieval pipeline (chunk→embed→retrieve→fuse→rerank, compare per stage).",
+        description="混合检索流水线离线评测 CLI（chunk→embed→retrieve→fuse→rerank，逐阶段对比）。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "Examples:\n"
-            "  python evaluate.py                       # Built-in evaluation set, full comparison table\n"
-            "  python evaluate.py --no-rerank           # Skip reranking stage\n"
-            "  python evaluate.py --no-dense            # BM25 only (fully offline, no model needed)\n"
-            "  python evaluate.py --query 'how to improve retrieval accuracy'  # Per-query per-stage ranking\n"
+            "示例:\n"
+            "  python evaluate.py                       # 内置评测集，完整对比表\n"
+            "  python evaluate.py --no-rerank           # 跳过重排阶段\n"
+            "  python evaluate.py --no-dense            # 仅 BM25（纯离线、无需模型）\n"
+            "  python evaluate.py --query '怎样提升检索精度'  # 单条查询逐阶段排名\n"
             "  python evaluate.py --embed-model BAAI/bge-m3 --pooling cls\n"
-            "  python evaluate.py --output result.json  # Write results to JSON as well\n"
+            "  python evaluate.py --output result.json  # 结果同时写入 JSON\n"
         ),
     )
-    data = parser.add_argument_group("Data")
-    data.add_argument("--corpus", help="Corpus JSON file, format [{'doc_id','text'}...]; default uses built-in corpus")
-    data.add_argument("--queries", help="Query JSON file, format [{'query','expected':[...]}...]; default uses built-in queries")
-    data.add_argument("--query", help="Single query mode: only run per-stage ranking tracking for that query, no evaluation")
-    data.add_argument("--limit-queries", type=int, default=0, help="Only evaluate the first N queries (0 = all)")
+    data = parser.add_argument_group("数据")
+    data.add_argument("--corpus", help="语料 JSON 文件，格式 [{'doc_id','text'}...]；缺省用内置语料")
+    data.add_argument("--queries", help="查询 JSON 文件，格式 [{'query','expected':[...]}...]；缺省用内置查询")
+    data.add_argument("--query", help="单条查询模式：只对该查询做逐阶段排名追踪，不跑评测")
+    data.add_argument("--limit-queries", type=int, default=0, help="只评测前 N 条查询（0=全部）")
 
-    stages = parser.add_argument_group("Pipeline stages")
+    stages = parser.add_argument_group("流水线阶段")
     stages.add_argument("--no-dense", dest="use_dense", action="store_false",
-                        help="Disable dense retrieval (also disables fusion and reranking; falls back to pure BM25, fully offline, no model needed)")
+                        help="禁用稠密检索（连带禁用融合与重排；退化为纯 BM25，完全离线无需模型）")
     stages.add_argument("--no-rerank", dest="use_rerank", action="store_false",
-                        help="Disable neural reranking stage")
+                        help="禁用神经重排阶段")
     stages.set_defaults(use_dense=True, use_rerank=True)
 
-    chunk = parser.add_argument_group("Chunking")
-    chunk.add_argument("--chunk-size", type=int, default=280, help="Maximum characters per chunk (default 280)")
-    chunk.add_argument("--chunk-overlap", type=int, default=40, help="Overlap characters between adjacent chunks (default 40)")
+    chunk = parser.add_argument_group("分块")
+    chunk.add_argument("--chunk-size", type=int, default=280, help="每个 chunk 的最大字符数（默认 280）")
+    chunk.add_argument("--chunk-overlap", type=int, default=40, help="相邻 chunk 的重叠字符数（默认 40）")
 
-    retr = parser.add_argument_group("Retrieval and Fusion")
-    retr.add_argument("--top-k", type=int, default=10, help="Number of candidates retrieved per path (default 10)")
-    retr.add_argument("--k-rrf", type=int, default=60, help="RRF smoothing constant k (default 60)")
-    retr.add_argument("--dense-weight", type=float, default=1.0, help="Dense path weight during fusion (default 1.0)")
-    retr.add_argument("--sparse-weight", type=float, default=1.0, help="Sparse path weight during fusion (default 1.0)")
+    retr = parser.add_argument_group("检索与融合")
+    retr.add_argument("--top-k", type=int, default=10, help="每路检索召回的候选数（默认 10）")
+    retr.add_argument("--k-rrf", type=int, default=60, help="RRF 平滑常数 k（默认 60）")
+    retr.add_argument("--dense-weight", type=float, default=1.0, help="融合时稠密路权重（默认 1.0）")
+    retr.add_argument("--sparse-weight", type=float, default=1.0, help="融合时稀疏路权重（默认 1.0）")
 
-    rer = parser.add_argument_group("Reranking")
-    rer.add_argument("--rerank-pool", type=int, default=10, help="Candidate pool size for reranking (top-N from RRF fusion, default 10)")
-    rer.add_argument("--rerank-top-k", type=int, default=10, help="Number of results returned after reranking (default 10)")
+    rer = parser.add_argument_group("重排")
+    rer.add_argument("--rerank-pool", type=int, default=10, help="送入重排的候选池大小（取 RRF 融合的 top-N，默认 10）")
+    rer.add_argument("--rerank-top-k", type=int, default=10, help="重排后返回的结果数（默认 10）")
 
-    model = parser.add_argument_group("Model")
+    model = parser.add_argument_group("模型")
     model.add_argument("--embed-model", default="sentence-transformers/all-MiniLM-L6-v2",
-                       help="Dense sentence embedding model (default sentence-transformers/all-MiniLM-L6-v2, ~90MB, English-oriented;"
-                            "For multilingual corpora, switch to Qwen/Qwen3-Embedding-0.6B or BAAI/bge-m3)")
+                       help="稠密句向量模型（默认 sentence-transformers/all-MiniLM-L6-v2，约 90MB、英文为主；"
+                            "多语言语料请换 Qwen/Qwen3-Embedding-0.6B 或 BAAI/bge-m3）")
     model.add_argument("--pooling", default="auto", choices=["auto", "mean", "cls", "last"],
-                       help="Sentence embedding pooling method (auto selects based on model name: qwen→last, bge-m3→cls, others→mean)")
+                       help="句向量池化方式（auto 会按模型名自动选择：qwen→last, bge-m3→cls, 其余→mean）")
     model.add_argument("--query-instruct",
                        default="Given a search query, retrieve relevant passages that answer the query",
-                       help="Query-side task instruction for instruction-aware retrieval models (only effective for last-token pooling models like Qwen3-Embedding)")
+                       help="指令式检索模型的查询侧任务指令（仅对 last-token 池化的模型如 Qwen3-Embedding 生效）")
     model.add_argument("--reranker-model", default="BAAI/bge-reranker-base",
-                       help="Cross-encoder reranking model (default BAAI/bge-reranker-base, multilingual, ~1.1GB on first run;"
-                            "For production, switch to stronger BAAI/bge-reranker-v2-m3; for lightweight, use cross-encoder/ms-marco-MiniLM-L-6-v2)")
+                       help="交叉编码器重排模型（默认 BAAI/bge-reranker-base，多语言、首次运行约 1.1GB；"
+                            "生产可换更强的 BAAI/bge-reranker-v2-m3，轻量可换 cross-encoder/ms-marco-MiniLM-L-6-v2）")
     model.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda", "mps"],
-                       help="Inference device (default auto)")
+                       help="推理设备（默认 auto）")
 
-    out = parser.add_argument_group("Evaluation and Output")
-    out.add_argument("--eval-k", type=int, default=3, help="Metric truncation position k (Recall@k / nDCG@k, default 3)")
+    out = parser.add_argument_group("评测与输出")
+    out.add_argument("--eval-k", type=int, default=3, help="指标截断位置 k（Recall@k / nDCG@k，默认 3）")
     out.add_argument("--no-per-query", dest="show_per_query", action="store_false",
-                     help="Do not print per-query MRR detail matrix")
+                     help="不打印逐条查询的 MRR 明细矩阵")
     out.set_defaults(show_per_query=True)
-    out.add_argument("--output", help="Write full results (including per-query details) to this JSON file")
-    out.add_argument("--offline", action="store_true", help="Set HF_HUB_OFFLINE=1 to force using only local cached models")
+    out.add_argument("--output", help="把完整结果（含每条查询明细）写入该 JSON 文件")
+    out.add_argument("--offline", action="store_true", help="设置 HF_HUB_OFFLINE=1，强制只用本地缓存模型")
     return parser
 
 
@@ -646,7 +647,7 @@ def main() -> int:
         os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
     args.device = detect_device(args.device)
-    #Single query tracing mode does not affect use_dense/use_rerank semantics, but reranking depends on dense fusion pool
+    # 单查询追踪模式不影响 use_dense/use_rerank 语义，但重排依赖稠密融合池
     if not args.use_dense:
         args.use_rerank = False
 
@@ -656,9 +657,9 @@ def main() -> int:
     try:
         pipeline = Pipeline(corpus, args)
     except Exception as exc:  # noqa: BLE001
-        print(f"[Error] Pipeline initialization failed: {exc}", file=sys.stderr)
-        print("Hint: Dense/reranking stages require local sentence embedding and cross-encoder models;"
-              "Use --no-dense to fall back to pure BM25 (fully offline), or specify a cached model with --embed-model.",
+        print(f"[错误] 流水线初始化失败: {exc}", file=sys.stderr)
+        print("提示：稠密/重排阶段需要本地句向量与交叉编码器模型；"
+              "可用 --no-dense 退化为纯 BM25（完全离线），或用 --embed-model 指定已缓存模型。",
               file=sys.stderr)
         return 1
 
@@ -687,7 +688,7 @@ def main() -> int:
         }
         with open(args.output, "w", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False, indent=2)
-        print(f"\nResults written to {args.output}")
+        print(f"\n结果已写入 {args.output}")
 
     return 0
 

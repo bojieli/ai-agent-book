@@ -54,16 +54,16 @@ MAX_IMAGE = 50
 
 
 def parse_action_output(output_text):
-    # Extract Thought part
+    # 提取Thought部分
     logger.info(f"{output_text=}")
     thought_match = re.search(r'Thought:(.*?)\nAction:', output_text, re.DOTALL)
     thought = thought_match.group(1).strip() if thought_match else ""
 
-    # Extract Action part
+    # 提取Action部分
     action_match = re.search(r'Action:(.*?)(?:\n|$)', output_text, re.DOTALL)
     action_text = action_match.group(1).strip() if action_match else ""
 
-    # Initialize result dictionary
+    # 初始化结果字典
     result = {
         "thought": thought,
         "action": "",
@@ -78,26 +78,26 @@ def parse_action_output(output_text):
     if not action_text:
         return json.dumps(result, ensure_ascii=False)
 
-    # tmp compatibility with ui-tars1.5-7b
+    # tmp 兼容ui-tars1.5-7b
     action_text = action_text.replace("'(","'[").replace(")'","]'")
 
-    # Parse action type
+    # 解析action类型
     action_parts = action_text.split('(')
     action_type = action_parts[0]
     result["action"] = action_type
 
-    # Parse parameters
+    # 解析参数
     if len(action_parts) > 1:
         params_text = action_parts[1].rstrip(')')
         params = {}
 
-        # gpt-4o compatibility
+        # gpt-4o兼容
         if 'start_box' in params_text:
             params_text = params_text.replace(", ", " ").replace(",", " ")
         if 'end_box' in params_text:
             params_text = params_text.replace(" end_box", ", end_box")
 
-        # Handle key-value pair parameters
+        # 处理键值对参数
         for param in params_text.split(','):
             param = param.strip()
 
@@ -106,10 +106,10 @@ def parse_action_output(output_text):
                 key = key.strip()
                 value = value.strip().strip('\'"')
 
-                # Handle bbox format
+                # 处理bbox格式
                 if 'box' in key:
                     print(value)
-                    # Extract coordinate numbers
+                    # 提取坐标数字
                     numbers = re.findall(r'\d+', value)
                     print(numbers)
                     if numbers:
@@ -127,7 +127,7 @@ def parse_action_output(output_text):
                 elif key == 'key':
                     result["key"] = value.replace("pagedown", "PageDown").replace("pageup", "PageUp").replace("enter","Enter")
                 elif key == 'content':
-                    # Handle escape characters
+                    # 处理转义字符
                     value = value.replace('\\n', '\n').replace('\\"', '"').replace("\\'", "'")
                     result["content"] = value
                 elif key == 'website':
@@ -139,11 +139,11 @@ def parse_action_output(output_text):
 
 
 def parse_tool_call(line):
-    # Extract Action and param
+    # 提取 Action和param
     result, thought, action_text = parse_action_output(line)
     action = result['action']
 
-    # Map to actual function name and parameters
+    # 映射到实际函数名和参数
     if action == 'navigate':
         func_name = 'mcp__ms-playwright__browser_navigate'
         content = {'url': result['website']}
@@ -184,7 +184,7 @@ def parse_tool_call(line):
         func_name = 'mcp__ms-playwright__browser_screen_type'
         content = {'text': result['content']}
     elif action == 'scroll':
-        # Temporarily use presskey instead of scroll
+        # 暂时使用presskey代替scroll
         func_name = 'mcp__ms-playwright__browser_press_key'
         direction = result['direction']
         key_map = {
@@ -436,7 +436,7 @@ class PlayWrightAgent(Agent):
 
         self._log_messages(messages)
         if isinstance(messages[-1]['content'], list):
-            messages[-1]['role'] = 'user'  # If there is an image, must use user request and not write to history
+            messages[-1]['role'] = 'user'  # 有image的话必须使用user请求，而且不写入历史对话
             # self.memory.add(MemoryItem(
             #     content=messages[-1]['content'],
             #     metadata={
@@ -551,7 +551,7 @@ class PlayWrightAgent(Agent):
         # now is eval code:
         logger.info(f"step:{step}")
 
-        if self.finished or step >= 20:  # Temporarily hardcoded, should be max_step
+        if self.finished or step >= 20:  # 暂时写死，这里应该是max_step
             task = self.task.split("Please first navigate to the target")[0]
             key_points_messages = identify_key_points(task)
 
@@ -578,15 +578,15 @@ class PlayWrightAgent(Agent):
 
             tasks_messages = [judge_image(task, image_path, key_points) for image_path in self.step_images]
 
-            #  Here temporarily use serial execution approach
+            #  这里暂时使用串行执行的写法
             image_responses = []
             for task_messages in tasks_messages:
                 logger.info(task_messages)
                 image_response = await acall_llm_model(
-                    self.llm,  # Assume this is the first parameter you pass to the function
-                    messages=task_messages,  # Message content for each request
-                    model=eval_model_name,  # Model name
-                    temperature=0  # Temperature parameter
+                    self.llm,  # 假设这是你传给函数的第一个参数
+                    messages=task_messages,  # 每个请求的消息内容
+                    model=eval_model_name,  # 模型名称
+                    temperature=0  # 温度参数
                 )
                 image_responses.append(image_response)
 
@@ -664,7 +664,7 @@ class Pipeline(AworldBaseAgent):
             self.full_dataset = json.load(file)
             logging.info("playwright_agent init success")
 
-    # Rewrite build_agent
+    # 重写build_agent
     async def build_agent(self, body: dict):
         agent_config = await self.get_agent_config(body)
         mcp_servers = await self.get_mcp_servers(body)

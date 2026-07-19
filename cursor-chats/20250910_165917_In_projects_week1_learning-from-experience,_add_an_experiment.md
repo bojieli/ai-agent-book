@@ -258,7 +258,7 @@ The experiment perfectly demonstrates the key insight from "The Second Half": **
 
 ### 👤 You
 
-In the MDP section of the book, add an academic introduction to the algorithmic principles of Q-learning, ensuring consistency with the sample code. Maintain a scholarly tone, as this is an academic work; do not use Markdown lists.
+在书中 MDP 一节，增加关于 Q 学习的算法原理介绍，需要与样例代码保持一致。保持学术性，这是一本学术著作，不要用 markdown list。
 
 ---
 
@@ -317,105 +317,107 @@ I'll add a comprehensive academic explanation of Q-learning in the MDP section o
 - **缺乏语义理解**：无法利用常识和概念关系
 - **泛化能力差**：规则变化时需要重新学习
 
-### 🎯 学术价值This section closely integrates the theoretical foundations of Q-learning with practical implementation. By comparing the differences between traditional RL and modern LLM Agents, it reveals the paradigm shift brought by language models—from purely numerical optimization to intelligent decision-making that incorporates semantic understanding. This provides readers with a solid theoretical foundation for understanding the core theme of "the second half of AI."
+### 🎯 学术价值
+
+这部分内容将Q-learning的理论基础与实际实现紧密结合，通过对比传统RL与现代LLM Agent的差异，揭示了语言模型带来的范式转变——从纯粹的数值优化到融合语义理解的智能决策。这为读者理解"AI的下半场"这一核心主题提供了坚实的理论基础。
 
 ---
 
 ### 👤 You
 
-These formulas should use LaTeX format. The concepts of on-policy and off-policy need to be introduced here.
+这些公式应该用 LaTeX 格式。需要在这里介绍 on-policy 和 off-policy 的概念。
 
-In the modern LLM paradigm, ICL (In-Context Learning) is on-policy, while offline RL post-training models are generally off-policy. Consider whether external knowledge bases belong to on-policy or off-policy? These three paradigms of LLM Agents learning from experience need to be discussed from the perspective of on/off policy.
-
----
-
-### 🤖 Cursor Assistant
-
-I will modify the formulas to LaTeX format and delve into the concepts of on-policy and off-policy, as well as their manifestation in modern LLM Agent learning paradigms.
+在现代 LLM 范式中，ICL（In-Context Learning）是一种 on-policy，离线 RL 后训练模型一般是 off-policy。想想外部知识库属于 on 还是 off？需要把这三种 LLM Agent 从经验中学习的范式，站在 on/off policy 的视角加以讨论。
 
 ---
 
 ### 🤖 Cursor Assistant
 
-## ✅ Completed Update on Q-learning Theory and On/Off-Policy Discussion
+我将修改公式为LaTeX格式，并深入讨论on-policy和off-policy概念，以及它们在现代LLM Agent学习范式中的体现。
 
-I have completed the following work as requested:
+---
 
-### 📐 **1. LaTeX Formatting of Formulas**
-All mathematical formulas have been converted to LaTeX format, including:
-- Bellman optimality equation: $Q^*(s,a) = \mathbb{E}[R(s,a) + \gamma \max_{a'} Q^*(s',a')]$
-- Q-learning update rule: $Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma \max_{a'} Q(s',a') - Q(s,a)]$
-- TD error: $\delta_t = r + \gamma \max_{a'} Q(s',a') - Q(s,a)$
-- Convergence conditions: $\sum \alpha_t = \infty$ and $\sum \alpha_t^2 < \infty$
-- Specific calculation examples and parameter representations
+### 🤖 Cursor Assistant
 
-### 🎯 **2. In-depth Discussion of On-Policy vs. Off-Policy**
+## ✅ 已完成Q-learning理论和On/Off-Policy讨论的更新
 
-Detailed explanation of the essential differences between the two learning paradigms:
+我已经按照您的要求完成了以下工作：
 
-**On-policy learning**: The behavior policy is consistent with the target policy
-- SARSA algorithm example: $Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma Q(s',a') - Q(s,a)]$
-- Advantage: Good stability, avoids distribution shift
-- Limitation: Difficult to balance exploration and exploitation, low sample efficiency
+### 📐 **1. 公式LaTeX格式化**
+将所有数学公式改为LaTeX格式，包括：
+- 贝尔曼最优方程：$Q^*(s,a) = \mathbb{E}[R(s,a) + \gamma \max_{a'} Q^*(s',a')]$
+- Q-learning更新规则：$Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma \max_{a'} Q(s',a') - Q(s,a)]$
+- TD误差：$\delta_t = r + \gamma \max_{a'} Q(s',a') - Q(s,a)$
+- 收敛条件：$\sum \alpha_t = \infty$ 且 $\sum \alpha_t^2 < \infty$
+- 具体计算示例和参数表示
 
-**Off-policy learning**: The behavior policy is separated from the target policy
-- Q-learning algorithm example (always learning the optimal policy)
-- Advantage: Can learn from any data source, decouples exploration and exploitation
-- Challenge: High variance from importance sampling, potential instability
+### 🎯 **2. On-Policy与Off-Policy深入讨论**
 
-### 🤖 **3. On/Off-Policy Analysis of Three LLM Agent Learning Paradigms**
+详细阐述了两种学习范式的本质区别：
 
-In-depth analysis of three learning mechanisms of modern LLM Agents from the perspective of reinforcement learning:
+**On-policy学习**：行为策略与目标策略一致
+- SARSA算法示例：$Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma Q(s',a') - Q(s,a)]$
+- 优势：稳定性好，避免分布偏移
+- 局限：探索与利用难以平衡，样本利用率低
 
-**1. In-Context Learning (ICL) - Pure On-Policy**
-- The policy used by the agent is exactly the same as the policy being learned
-- All decisions are based on currently visible contextual experience
-- Advantages: Zero-shot generalization, high interpretability, no training required
-- Limitations: Context length constraints, high computational cost, temporary knowledge
+**Off-policy学习**：行为策略与目标策略分离
+- Q-learning算法示例（总是学习最优策略）
+- 优势：可从任何数据源学习，探索与利用解耦
+- 挑战：重要性采样带来的高方差，可能不稳定
 
-**2. Offline RL Post-Training - Pure Off-Policy**
-- Learning from historical data, independent of the deployment policy
-- Mathematical foundation: $J(\theta) = \mathbb{E}_{(s,a) \sim D} \left[ \frac{\pi_\theta(a|s)}{\mu(a|s)} R(s,a) \right]$
-- Representatives: OpenAI o1, RLHF fine-tuning
-- Advantages: Scalable learning, permanent knowledge encoding
-- Challenge: Distribution shift problem
+### 🤖 **3. LLM Agent三种学习范式的On/Off-Policy分析**
 
-**3. External Knowledge Bases - Hybrid Characteristics**
-- Knowledge collection (off-policy): $K = \{(q_i, a_i, r_i)\}_{i=1}^N$
-- Knowledge application (on-policy): $\pi(a|s) = f(s, \text{retrieve}(s, K))$
-- Representative: RAG systems
-- Combines the advantages of both paradigms
+从强化学习视角深入分析了现代LLM Agent的三种学习机制：
 
-### 🔬 **4. Unified Perspective and Practical Implications**
+**1. 上下文学习（ICL）- 纯On-Policy**
+- Agent使用的策略与学习的策略完全一致
+- 所有决策基于当前可见的上下文经验
+- 优势：零样本泛化、高可解释性、无需训练
+- 局限：上下文长度限制、计算成本高、知识临时性
 
-Reveals the key to the success of modern LLM Agents—the synergy of a multi-level learning system:
-- Pre-training provides foundational capabilities (off-policy)
-- In-context learning enables rapid adaptation (on-policy)
-- External knowledge provides scalable memory (hybrid)
+**2. 离线RL后训练 - 纯Off-Policy**
+- 从历史数据学习，独立于部署策略
+- 数学基础：$J(\theta) = \mathbb{E}_{(s,a) \sim D} \left[ \frac{\pi_\theta(a|s)}{\mu(a|s)} R(s,a) \right]$
+- 代表：OpenAI o1、RLHF微调
+- 优势：规模化学习、知识永久编码
+- 挑战：分布偏移问题
 
-This analytical framework not only has theoretical value but also provides guidance for practical system design: the most effective systems often combine all three mechanisms, building intelligent systems that are both powerful and flexible through synergistic enhancement.
+**3. 外部知识库 - 混合特性**
+- 知识收集（off-policy）：$K = \{(q_i, a_i, r_i)\}_{i=1}^N$
+- 知识应用（on-policy）：$\pi(a|s) = f(s, \text{retrieve}(s, K))$
+- 代表：RAG系统
+- 结合了两种范式的优势
 
-### 📊 **5. Consistency with Experimental Code**
+### 🔬 **4. 统一视角与实践意义**
 
-Ensures all theoretical descriptions correspond exactly to the experimental implementation:
-- Learning rate $\alpha = 0.2$
-- Discount factor $\gamma = 0.99$
-- $\epsilon$-greedy policy: $\epsilon_{t+1} = \max(0.1, 0.9995 \times \epsilon_t)$
-- Specific Q-value update calculation examples consistent with code logic
+揭示了现代LLM Agent成功的关键——多层次学习体系的协同：
+- 预训练提供基础能力（off-policy）
+- 上下文学习实现快速适应（on-policy）
+- 外部知识提供规模化记忆（混合）
 
-These updates make the book, while maintaining academic rigor, profoundly reveal the paradigm shift from traditional RL to modern LLM Agents, providing readers with a solid theoretical foundation for understanding "the second half of AI."
+这种分析框架不仅具有理论价值，更为实际系统设计提供了指导：最有效的系统往往结合所有三种机制，通过协同增效构建既强大又灵活的智能系统。
+
+### 📊 **5. 与实验代码的一致性**
+
+确保所有理论描述与实验实现完全对应：
+- 学习率 $\alpha = 0.2$
+- 折扣因子 $\gamma = 0.99$
+- $\epsilon$-贪婪策略：$\epsilon_{t+1} = \max(0.1, 0.9995 \times \epsilon_t)$
+- 具体的Q值更新计算示例与代码逻辑一致
+
+这些更新使得书籍在保持学术严谨性的同时，深刻揭示了从传统RL到现代LLM Agent的范式转变，为读者理解"AI的下半场"提供了坚实的理论基础。
 
 ---
 
 ### 👤 You
 
-"The On/Off-Policy Perspective of Modern LLM Agent Learning Paradigms" should be moved to the end of the section "Modern Paradigm: LLM+RL-based Agents." The current logic is chaotic. Ensure the entire text flows smoothly without repetition.
+"现代LLM Agent学习范式的On/Off-Policy视角" 应该移动到 “现代范式：基于LLM+RL的Agent” 这一节的末尾，现在的逻辑是混乱的。保证全文流畅，没有重复。
 
 ---
 
 ### 🤖 Cursor Assistant
 
-I will reorganize the article structure, moving "The On/Off-Policy Perspective of Modern LLM Agent Learning Paradigms" to the end of the "Modern Paradigm: LLM+RL-based Agents" section, ensuring logical flow.
+我将重新组织文章结构，把"现代LLM Agent学习范式的On/Off-Policy视角"移到"现代范式：基于LLM+RL的Agent"节的末尾，确保逻辑流畅。
 
 ---
 

@@ -1,21 +1,21 @@
 # System-Hint Enhanced AI Agent
 
-> Corresponds to **Experiment 2-8: Several Useful Agent Status Bar Techniques** in the book (Chapter 2, "Agent Status Bar" section). This directory is the `agent-status-bar` experiment framework mentioned in the book — "system hint" and "Agent status bar" refer to the same concept: injecting a dynamic status summary as a `role=user` message at the end of the context.
+> 对应书中 **实验 2-8：几种好用的 Agent 状态栏技术**（第二章“Agent 状态栏 / Agent Status Bar”一节）。本目录即书中所说的 `agent-status-bar` 实验框架——“system hint（系统提示）”与“Agent 状态栏（status bar）”是同一概念的两种叫法：在上下文末尾以一条 `role=user` 的消息注入动态状态摘要。
 
 An advanced AI agent that demonstrates the power of system hints for improving agent trajectory and preventing common issues like infinite loops, poor context awareness, and inefficient task management, with automatic trajectory saving for debugging.
 
-## ⚡ Offline Preview First (No API Key Required)
+## ⚡ 先跑离线预览（无需 API Key）
 
-To see how the status bar changes the context the model sees without configuring any API key, run:
+想在不配置任何 API Key 的情况下直观看到状态栏如何改变模型看到的上下文，运行：
 
 ```bash
 python main.py --mode preview
 ```
 
-This command locally renders the five status bar techniques from the book (timestamps, tool call counter, TODO list, detailed error messages, system state awareness),
-performing a **"without status bar vs. with status bar"** comparison for each, and printing the complete status bar message appended to the end of the context.
-Use `--no-timestamps` / `--no-counter` / `--no-todo` / `--no-errors` / `--no-state` to disable individual categories,
-and observe their impact on the context independently. This process does not make any LLM calls.
+该命令在本地渲染书中五种状态栏技术（时间戳、工具调用计数器、TODO 列表、详细错误信息、系统状态感知），
+对每一项做一次 **“无状态栏 vs 有状态栏”** 的前后对比，并打印最终追加到上下文末尾的完整状态栏消息。
+配合 `--no-timestamps` / `--no-counter` / `--no-todo` / `--no-errors` / `--no-state` 可分别关闭某一类，
+单独观察它对上下文的影响。整个过程不发起任何 LLM 调用。
 
 ## 🌟 Key Features
 
@@ -70,9 +70,9 @@ cp env.example .env
 export KIMI_API_KEY='your-api-key-here'
 ```
 
-> **Generic Fallback (OpenRouter)**: When `KIMI_API_KEY` is not set, as long as
-> `OPENROUTER_API_KEY` is configured, the experiment will automatically switch to OpenRouter (`kimi-*` maps to
-> `moonshotai/kimi-k2`). Behavior is completely unchanged when `KIMI_API_KEY` is set.
+> **通用回退（OpenRouter）**：未设置 `KIMI_API_KEY` 时，只要配置了
+> `OPENROUTER_API_KEY`，实验会自动改走 OpenRouter（`kimi-*` 会映射为
+> `moonshotai/kimi-k2`）。设置了 `KIMI_API_KEY` 时行为完全不变。
 
 ### Basic Usage
 
@@ -178,7 +178,7 @@ Current Directory: /home/user/projects
 System: Linux (5.15.0)
 Shell Environment: Linux Shell (bash)
 Python Version: 3.10.0
-```
+
 === CURRENT TASKS ===
 TODO List:
   [1] 🔄 Read configuration file (in_progress)

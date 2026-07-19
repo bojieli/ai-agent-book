@@ -17,8 +17,8 @@ from datasets import Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import LoraConfig, get_peft_model
 
-#  Note: trl's SFTTrainer / SFTConfig are imported on demand inside train_model(),
-#  so that command-line help can be displayed normally even if trl is not installed (e.g., when viewing --help offline).
+# 注意：trl 的 SFTTrainer / SFTConfig 在 train_model() 内部按需导入，
+# 这样即便未安装 trl（如离线查看 --help 时）也能正常展示命令行帮助。
 
 
 def load_jsonl_dataset(file_path: str) -> Dataset:
@@ -299,7 +299,7 @@ def train_model(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Train Prompt Distillation Student Model with Hugging Face TRL (Direct Answer Without Prompt)",
+        description="用 Hugging Face TRL 训练 Prompt 蒸馏学生模型（无提示直接作答）",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
@@ -308,7 +308,7 @@ def main():
         "--train_file",
         type=str,
         default="./data/prompt_distillation_lang.jsonl",
-        help="Training data path (JSONL format)",
+        help="训练数据路径（JSONL 格式）",
     )
 
     # Model arguments
@@ -316,13 +316,13 @@ def main():
         "--model_name",
         type=str,
         default="Qwen/Qwen3-30B-A3B-Instruct-2507",
-        help="Student base model name or path (non-thinking model for distillation)",
+        help="学生基座模型名称或路径（用于蒸馏的非思考型模型）",
     )
     parser.add_argument(
         "--output_dir",
         type=str,
         default="./models/prompt_distillation_trl",
-        help="Output directory for model checkpoints",
+        help="模型 checkpoint 的输出目录",
     )
 
     # LoRA arguments
@@ -330,19 +330,19 @@ def main():
         "--use_lora",
         action="store_true",
         default=True,
-        help="Use LoRA for parameter-efficient fine-tuning",
+        help="使用 LoRA 做参数高效微调",
     )
     parser.add_argument(
         "--lora_rank",
         type=int,
         default=32,
-        help="LoRA rank (default 32, consistent with tinker)",
+        help="LoRA rank（默认 32，与 tinker 一致）",
     )
     parser.add_argument(
         "--lora_alpha",
         type=int,
         default=16,
-        help="LoRA alpha parameter (default 16)",
+        help="LoRA alpha 参数（默认 16）",
     )
 
     # Training arguments
@@ -350,43 +350,43 @@ def main():
         "--num_train_epochs",
         type=int,
         default=1,
-        help="Number of training epochs (default 1, consistent with OpenAI tutorial)",
+        help="训练轮数（默认 1，与 OpenAI 教程一致）",
     )
     parser.add_argument(
         "--per_device_train_batch_size",
         type=int,
         default=4,
-        help="Batch size per GPU (default 4, consistent with OpenAI tutorial)",
+        help="每张 GPU 的批次大小（默认 4，与 OpenAI 教程一致）",
     )
     parser.add_argument(
         "--gradient_accumulation_steps",
         type=int,
         default=4,
-        help="Gradient accumulation steps (default 4, consistent with OpenAI tutorial)",
+        help="梯度累积步数（默认 4，与 OpenAI 教程一致）",
     )
     parser.add_argument(
         "--learning_rate",
         type=float,
         default=2e-4,
-        help="Learning rate (default 2e-4, consistent with OpenAI tutorial)",
+        help="学习率（默认 2e-4，与 OpenAI 教程一致）",
     )
     parser.add_argument(
         "--max_length",
         type=int,
         default=2048,
-        help="Maximum sequence length (default 2048, consistent with OpenAI tutorial)",
+        help="最大序列长度（默认 2048，与 OpenAI 教程一致）",
     )
     parser.add_argument(
         "--warmup_ratio",
         type=float,
         default=0.03,
-        help="Warmup ratio (default 0.03, consistent with OpenAI tutorial)",
+        help="warmup 比例（默认 0.03，与 OpenAI 教程一致）",
     )
     parser.add_argument(
         "--lr_scheduler_type",
         type=str,
         default="cosine_with_min_lr",
-        help="Learning rate scheduler type (default cosine_with_min_lr, consistent with OpenAI tutorial)",
+        help="学习率调度器类型（默认 cosine_with_min_lr，与 OpenAI 教程一致）",
     )
 
     # Logging arguments
@@ -395,13 +395,13 @@ def main():
         type=str,
         default="wandb",
         choices=["wandb", "tensorboard", "none"],
-        help="Training metric reporting target (default wandb)",
+        help="训练指标上报目标（默认 wandb）",
     )
     parser.add_argument(
         "--run_name",
         type=str,
         default=None,
-        help="Wandb run name (auto-generated if not provided)",
+        help="wandb 运行名称（未提供则自动生成）",
     )
     
     args = parser.parse_args()

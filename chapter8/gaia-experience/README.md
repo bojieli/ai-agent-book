@@ -1,13 +1,14 @@
 # GAIA Experience Learning System
 
-> Corresponds to Chapter 8 · Experiment 8-1 ★★ "Learning from Successful Experiences: Strategy Summarization" in *Deep Understanding of AI Agents*.
-> This directory contains the top-level wrapper script for the experiment; `AWorld/` is a copy of the upstream framework — do not modify.
+> 对应《深入理解 AI Agent》第 8 章 · 实验 8-1 ★★「从成功经验中学习：策略摘要」。
+> 本目录是实验的顶层封装脚本；`AWorld/` 为上游框架副本，请勿修改。
 
 A modified version of AWorld that adds learning from experience capabilities for the GAIA benchmark. This system can capture successful task trajectories, summarize them into reusable experiences, and apply learned knowledge to improve performance on new tasks.
 
-**Experiment highlights (why this matters)**: GAIA is a high-difficulty benchmark requiring multi-step reasoning and integrated use of browser/file/code interpreter tools.
-This experiment demonstrates a "learn-apply" loop — each time an agent successfully solves a task, its trajectory is distilled into an experience and stored in a knowledge base. When encountering a new task, similar experiences are retrieved and injected into the prompt.
-The hypothesis is: **Reusing accumulated experience improves GAIA performance**. Using `--compare`, you can run an A/B comparison on the same set of tasks to empirically test this hypothesis (see [A/B Comparison Experiment](#-ab-comparison-experimentreproduce-the-experiments-point) below).
+**实验要点（why this matters）**：GAIA 是需要多步推理、综合使用浏览器/文件/代码解释器的高难度基准。
+本实验演示一个「学习-应用」闭环——Agent 每成功解一题就把轨迹提炼为经验入库，遇到新题时检索相似经验注入提示词。
+命题是：**复用积累的经验能提升 GAIA 成绩**。使用 `--compare` 可以在同一批题上做 A/B 对照来直观检验这一命题（见下文
+[A/B 对照实验](#-ab-对照实验reproduce-the-experiments-point)）。
 
 ## 🌟 Features
 
@@ -79,7 +80,7 @@ LLM_PROVIDER=openai
 LLM_MODEL_NAME=gpt-5.6-luna
 LLM_API_KEY=your_api_key_here
 LLM_BASE_URL=https://api.openai.com/v1  # Optional
-# Fallback: if both LLM_API_KEY and OPENAI_API_KEY are missing but OPENROUTER_API_KEY is set, automatically use OpenRouter (mapped to openai/gpt-5.6-luna, etc.)
+# 兜底：若 LLM_API_KEY/OPENAI_API_KEY 都缺失但设了 OPENROUTER_API_KEY，自动走 OpenRouter（映射到 openai/gpt-5.6-luna 等）
 # OPENROUTER_API_KEY=sk-or-...
 
 # Dataset paths
@@ -126,7 +127,7 @@ Evaluate the same tasks twice — once without experience, once with — and rep
 python run_with_experience.py --compare --start 10 --end 20 \
     --experience-db ./learned_experiences.json
 ```
-See [A/B Comparison Experiment](#-ab-comparison-experimentreproduce-the-experiments-point) for the full workflow.
+See [A/B 对照实验](#-ab-对照实验reproduce-the-experiments-point) for the full workflow.
 
 > The full Chinese `--help` (with runnable examples) is always available without
 > installing the heavy stack: `python run_with_experience.py --help`.
@@ -137,7 +138,7 @@ See [A/B Comparison Experiment](#-ab-comparison-experimentreproduce-the-experime
 |----------|-------------|---------|
 | `--learning-mode` | Enable learning from successful trajectories | False |
 | `--apply-experience` | Apply learned experiences to new tasks | False |
-| `--compare` | A/B mode: run the slice **with** and **without** experience, report accuracy delta | False |
+| `--compare` | A/B mode: run the slice with **and** without experience, report accuracy delta | False |
 | `--preload-kb` | Preload knowledge base from gaia-validation.jsonl (can leak answers, see below) | False |
 | `--kb-path` | Path to store knowledge base index | ./kb_index |
 | `--experience-db` | Path to store learned experiences | ./learned_experiences.json |
@@ -173,7 +174,9 @@ python demo.py --agent       # Agent demo
 
 The `config.yaml` file provides detailed configuration options:
 
-### Key Configuration Sections:1. **Learning Settings**
+### Key Configuration Sections:
+
+1. **Learning Settings**
    - Summarizer model and temperature
    - Experience storage settings
    - Maximum trajectory steps
@@ -223,23 +226,27 @@ The system can preload the `gaia-validation.jsonl` file to bootstrap the knowled
 3. **Knowledge Transfer**: Experiences from similar problems apply to new challenges
 4. **Reduced Token Usage**: Past insights can reduce exploration and trial-and-error
 
-## 🧪 A/B Controlled Experiment (reproduce the experiment's point)
+## 🧪 A/B 对照实验（reproduce the experiment's point）
 
-The core hypothesis of this experiment is that **reusing accumulated experience improves GAIA scores**. The `--compare` mode turns this hypothesis into a runnable, reproducible controlled experiment: it runs the same set of questions twice—once with experience reuse **disabled** (baseline) and once with experience reuse **enabled** (with-experience)—and reports the difference in accuracy (delta) between the two.
+本实验的核心命题是「**复用积累的经验能提升 GAIA 成绩**」。`--compare` 模式把这个命题变成一个
+可运行、可复现的对照实验：对同一批题目跑两遍——一遍**关闭**经验复用（baseline），一遍**打开**
+经验复用（with-experience）——并报告两者的准确率之差（delta）。
 
-**Recommended workflow (to avoid data leakage):** First accumulate experience on one batch of questions, then run the comparison on a **different, unseen batch** of questions. Directly using `--preload-kb` on the evaluation questions will inject the reference solutions from `gaia-validation.jsonl` into the knowledge base, which is equivalent to leaking the answers; the script will print a warning if it detects this situation.
+**推荐工作流（避免数据泄漏）：** 先在一批题上积累经验，再在**另一批未见过的题**上做对照。
+直接对评测题 `--preload-kb` 会把这些题在 `gaia-validation.jsonl` 中的参考解法灌入知识库，
+等于泄漏答案；脚本检测到该情况会打印告警。
 
 ```bash
-# 1) Accumulate experience on questions 0-10 (learn only from successful trajectories)
+# 1) 在第 0~10 题上积累经验（仅从成功轨迹中学习）
 python run_with_experience.py --learning-mode --start 0 --end 10
 
-# 2) Run A/B comparison on questions 10-20 (unseen), reusing the experience learned in step 1
+# 2) 在第 10~20 题（未见过）上做 A/B 对照，复用第 1 步学到的经验
 python run_with_experience.py --compare --start 10 --end 20 \
     --experience-db ./learned_experiences.json
-#     Or: ./run.sh learn --start 0 --end 10 && ./run.sh compare --start 10 --end 20
+#    或： ./run.sh learn --start 0 --end 10 && ./run.sh compare --start 10 --end 20
 ```
 
-**Output:** The console prints the following summary, while also writing per-question details to `comparison_results.json` (or a path specified by `--output`):
+**输出**：控制台打印如下汇总，同时把每题明细写入 `comparison_results.json`（或 `--output` 指定路径）：
 
 ```
 ============================================================
@@ -253,9 +260,13 @@ A/B COMPARISON: experience reuse vs. baseline
 ============================================================
 ```
 
-**Expected results:** When the experience database contains transferable experiences relevant to the evaluation questions, the accuracy with experience should be **≥** the baseline, and the delta should be positive—this is the gain from the "learn-apply loop". All numbers are computed by `question_scorer` from actual run results; the script does not hardcode any scores. If the experience database is empty or the experiences are irrelevant, the delta may be 0, which is normal (indicating no reusable relevant experience is available yet).
+**预期结果**：当经验库中确有与评测题相关的可迁移经验时，with-experience 的准确率应 **≥** baseline，
+delta 为正——这正是「学习-应用闭环」带来的增益。所有数字均由 `question_scorer` 对真实运行结果计算得到，
+脚本不写死任何成绩；若经验库为空或经验不相关，delta 可能为 0，属于正常现象（说明还没有可复用的相关经验）。
 
-> ⚠️ Running the full comparison requires: a usable LLAPI (`LLM_API_KEY` etc. in `.env`), an installed AWorld (`pip install -e ./AWorld`), the `sentence-transformers` / `faiss-cpu` dependencies, and the GAIA dataset (`GAIA_DATASET_PATH`). If you only want to verify that the command line works, you can run `python run_with_experience.py --help` without the above environment.
+> ⚠️ 运行完整对照需要：可用的 LLAPI（`.env` 中的 `LLM_API_KEY` 等）、已安装的 AWorld（`pip install -e ./AWorld`）、
+> `sentence-transformers` / `faiss-cpu` 依赖，以及 GAIA 数据集（`GAIA_DATASET_PATH`）。
+> 若只想确认命令行可用，无需上述环境即可运行 `python run_with_experience.py --help`。
 
 ## 🔍 Example Experience
 

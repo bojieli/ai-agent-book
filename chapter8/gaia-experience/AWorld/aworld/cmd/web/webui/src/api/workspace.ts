@@ -1,53 +1,53 @@
 import { request } from '../utils/http';
 
 /**
- * Workspace tree node data structure
+ * 工作空间树节点数据结构
  */
 export interface WorkspaceTreeResponse {
-  id: string;          //Node ID
-  name: string;        //Node name
-  type: string;        //Node type (dir/file)
-  parentId: string | null; //Parent node ID
-  depth: number;       //Node depth
-  expanded: boolean;   //Expanded or not
-  children: WorkspaceTreeResponse[]; //Child node list
+  id: string;          // 节点ID
+  name: string;        // 节点名称
+  type: string;        // 节点类型 (dir/file)
+  parentId: string | null; // 父节点ID
+  depth: number;       // 节点深度
+  expanded: boolean;   // 是否展开
+  children: WorkspaceTreeResponse[]; // 子节点列表
 }
 
 /**
- * Request parameters for Get Artifact
+ * Get Artifact的请求参数
  */
 export interface ArtifactQueryRequest {
-  artifact_types: string[];    //Artifact type
+  artifact_types: string[];    // Artifact类型
   artifact_ids: string[];    // Artifact ID
 }
 
 /**
- * Request parameters for Create Artifact
+ * 创建Artifact的请求参数
  */
 export interface ArtifactCreateRequest {
-  name: string;    //Artifact name
-  type: string;    //Artifact type
-  content: any;    //Artifact content
+  name: string;    // Artifact名称
+  type: string;    // Artifact类型
+  content: any;    // Artifact内容
 }
 
 /**
- * Response data for Create Artifact
+ * 创建Artifact的响应数据
  */
 export interface ArtifactCreateResponse {
-  id: string;                     //Created Artifact ID
-  status: 'success' | 'failed';   //Operation status
-  message?: string;               //Optional status message
+  id: string;                     // 创建的Artifact ID
+  status: 'success' | 'failed';   // 操作状态
+  message?: string;               // 可选的状态信息
 }
 
 /**
- * Get workspace tree
+ * 获取工作空间树
  */
 export const getWorkspaceTree = (sessionId: string) =>
   request(`api/workspaces/${sessionId}/tree`);
 
 
 /**
- * Get workspace artifacts
+ * 获取工作空间Artifacts
  */
 export const getWorkspaceArtifacts = (sessionId: string, body: ArtifactQueryRequest) =>
   request(`api/workspaces/${sessionId}/artifacts`, {
@@ -57,7 +57,7 @@ export const getWorkspaceArtifacts = (sessionId: string, body: ArtifactQueryRequ
 
 
 /**
- * Create workspace artifact
+ * 创建工作空间Artifact
  */
 export const createArtifact = (workspaceId: string, body: ArtifactCreateRequest) =>
   request(`api/workspaces/${workspaceId}/artifacts`, {

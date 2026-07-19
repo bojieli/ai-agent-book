@@ -1,4 +1,4 @@
-# Generated artifacts
+# 生成产物
 output/
 
 # Python
@@ -7,5 +7,5 @@ __pycache__/
 .venv/
 venv/
 
-# Environment variables
+# 环境变量
 .env

@@ -1,15 +1,15 @@
-# Product Requirements Document (PRD, Abridged) — Order Refund Agent
+# 产品需求文档（PRD，精简版）—— 订单退款 Agent
 
-## R1 Refund Compliance Check (P0)
-Before initiating any refund (`process_refund`), **must** first call `verify_refund_eligibility` to complete the refund eligibility check.
-Proceeding with a refund without this check poses a serious compliance/financial risk and is prohibited.
+## R1 退款合规校验（P0）
+发起任何退款（`process_refund`）之前，**必须**先调用 `verify_refund_eligibility` 完成退款资格校验。
+未校验直接退款属于严重合规/资损风险，禁止出现。
 
-## R2 Payment Retry and Reporting (P0)
-`process_refund` calls the third-party payment gateway. When the gateway occasionally fails, the system should retry with backoff;
-if it still fails after all retries, the task must be marked as `failed` and the user must be notified. **Do not** silently end or falsely report success after multiple failures.
+## R2 支付重试与上报（P0）
+`process_refund` 调用第三方支付网关。网关偶发失败时，系统应带退避重试；
+若最终仍失败，必须将任务标记为 `failed` 并通知用户，**不得**在多次失败后静默结束或误报成功。
 
-## R3 Inventory Query Latency (P1)
-The single-call latency of `check_stock` must be less than **5000ms**. If the threshold is exceeded, a degradation should be triggered (return cached data or an "inventory query busy" prompt), and the user must not be kept waiting for a long time.
+## R3 库存查询延迟（P1）
+`check_stock` 单次调用延迟必须小于 **5000ms**。超过阈值应触发降级（返回缓存或"库存查询繁忙"提示），不得让用户长时间等待。
 
-## R4 Result Notification (P2)
-When a task ends (whether successful or failed), the final result must be notified to the user via `notification_service.notify_user`.
+## R4 结果通知（P2）
+任务结束（成功或失败）都应通过 `notification_service.notify_user` 通知用户最终结果。

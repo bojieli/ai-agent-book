@@ -91,14 +91,14 @@ You can see this in action at:
 
 ### 👤 You
 
-In the README, add documentation about resuming. For example, if interrupted at step 54:
+在 readme 中，加入 resume 有关的说明，例如，54 步时中断：
 
     trainer.resume_mode=resume_path \
     trainer.resume_from_path=recipe/retool/checkpoint/qwen2.5-32b_dapo_with_tool/global_step_50 \
 
-Or simply use auto.
+或者直接用 auto。
 
-Also need to add configuration for evaluating a checkpoint after training completes, or midway through training: first merge the model
+还需要加入训练完成后，或者训练进行到一半，evaluate 一个 checkpoint 的配置：首先需要合并模型
 
 python3 -m verl.model_merger merge --backend fsdp --local_dir qwen2.5-32b_dapo_with_tool/global_step_40/actor/ --target_dir qwen2.5-32b_dapo_with_tool/global_step_40/actor/huggingface
 
@@ -124,39 +124,39 @@ Perfect! I've added comprehensive documentation about resuming training and eval
 
 ### 🤖 Cursor Assistant
 
-Done! I have added detailed instructions about resuming and checkpoint evaluation to the README.
+完成！我已经在 README 中添加了关于 resume 和 checkpoint 评估的详细说明：
 
-## Main Updates
+## 主要更新
 
-### 1. **Resuming Interrupted Training** (expanded the "How to resume interrupted training?" section)
+### 1. **训练中断恢复**（扩展了"训练中断如何恢复？"章节）
 
-Added detailed explanations for two resume modes:
+添加了两种恢复模式的详细说明：
 
-- **Method 1: Specify a specific checkpoint** - Use `resume_mode=resume_path` with the exact checkpoint path
-  - Example: After interruption at step 54, resume from step 50
-  - Provided a complete command example
+- **方式一：指定具体检查点** - 使用 `resume_mode=resume_path` 配合具体的检查点路径
+  - 示例：在第 54 步中断后，从第 50 步恢复
+  - 提供了完整的命令示例
 
-- **Method 2: Auto-resume** - Use `resume_mode=auto` to automatically find the latest checkpoint
-  - The system will automatically search the `default_local_dir` directory
-  - If no checkpoint is found, it starts from scratch
+- **方式二：自动恢复** - 使用 `resume_mode=auto` 自动找到最新检查点
+  - 系统会自动搜索 `default_local_dir` 目录
+  - 如果找不到检查点则从头开始
 
-### 2. **Checkpoint Evaluation** (expanded the "How to evaluate model performance?" section)
+### 2. **检查点评估**（扩展了"如何评估模型性能？"章节）
 
-Added a complete two-step evaluation workflow:
+添加了完整的两步评估流程：
 
-- **Step 1: Merge the model checkpoint**
-  - Provided a complete example of the `verl.model_merger` command
-  - Detailed explanation of each parameter (`--backend`, `--local_dir`, `--target_dir`)
-  - Explained why merging is necessary (converting FSDP sharded format to Hugging Face format)
+- **步骤一：合并模型检查点**
+  - 提供了 `verl.model_merger` 命令的完整示例
+  - 详细说明了各个参数的含义（`--backend`, `--local_dir`, `--target_dir`）
+  - 解释了为什么需要合并（FSDP 分片格式转换为 Hugging Face 格式）
 
-- **Step 2: Run evaluation**
-  - Explained that checkpoints can be evaluated at any stage of training
-  - Facilitates tracking performance across different training stages
+- **步骤二：运行评估**
+  - 说明可以在训练任意阶段评估检查点
+  - 便于跟踪不同训练阶段的性能
 
-These updates make it easier for users to:
-- Resume training from an interruption point
-- Evaluate any checkpoint during the training process
-- Understand the entire checkpoint management workflow
+这些更新让用户能够更方便地：
+- 从训练中断处恢复
+- 评估训练过程中的任意检查点
+- 理解整个 checkpoint 管理流程
 
 ---
 

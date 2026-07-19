@@ -1,7 +1,7 @@
 """
 LLM-based Agent using In-Context Learning with the Kimi (Moonshot) API.
 This demonstrates how LLMs can generalize through reasoning without extensive training.
-Default model is Kimi K3 (matching Experiment 7-2 in the book); override via the
+Default model is Kimi K3 (matching 实验 7-2 in the book); override via the
 `model` argument or the MOONSHOT_MODEL environment variable.
 """
 
@@ -92,7 +92,7 @@ class LLMAgent:
     
     def __init__(self,
                  api_key: str = None,
-                 model: str = "kimi-k3",  # Kimi K3 (see Experiment 7-2)
+                 model: str = "kimi-k3",  # Kimi K3 (see 实验 7-2)
                  base_url: str = "https://api.moonshot.cn/v1",
                  temperature: float = 0.7,
                  max_experiences: int = 50):

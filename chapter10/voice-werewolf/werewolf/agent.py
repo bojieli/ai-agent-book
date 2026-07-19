@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Player Agent: Each player = an independent LLM Agent with **strictly isolated private context**.
+"""玩家 Agent：每个玩家 = 一个独立的 LLM Agent，拥有**严格隔离的私有上下文**。
 
-Key points for information isolation:
-- Each PlayerAgent only maintains its own `memory` (a sequence of events it "observed / was told").
-- The judge (judge.py) decides which information to push into which Agent's memory—only werewolves receive "teammate identities", only the seer receives "investigation results", and only public statements are pushed to everyone.
-- When an Agent thinks (speaks / votes / uses abilities), it can only see the content in its own memory, so it cannot "peek" at information it should not see. This is the implementation of information access control.
+信息隔离的实现要点：
+- 每个 PlayerAgent 只维护自己的 `memory`（一串它「观察到 / 被告知」的事件）。
+- 法官（judge.py）决定把哪条信息推给哪个 Agent 的 memory——狼人才会收到「队友
+  身份」，预言家才会收到「查验结果」，公开发言才会推给所有人。
+- Agent 每次思考（发言 / 投票 / 用技能）时，只能看到自己 memory 里的内容，
+  因此不可能「偷看」到本不该看到的信息。这就是信息权限控制的落点。
 
-Offline (--offline / --mock) strategy: When there is no OpenAI Key, or when you want to run a full game at zero cost and reproducibly, the Agent uses a **rule-driven** decision instead of LLM. The key point: the offline strategy also **only reads its own memory** (does not touch other Agents' private contexts), so the teaching point of information access control still holds and can be audited and verified in offline mode.
+离线（--offline / --mock）策略：当没有 OpenAI Key、或想零成本可复现地跑完整一局时，
+Agent 用一套**规则驱动**的决策代替 LLM。关键在于：离线策略同样**只读自己的 memory**
+（不碰其他 Agent 的私有上下文），因此信息权限控制这一教学要点在离线模式下依然成立、
+依然可被审计校验。
 """
 
 import json
@@ -17,28 +22,28 @@ from typing import List, Optional
 from .roles import Role, ROLE_STRATEGY, faction_of
 
 
-# Global singleton LLM client. Default model is currently the cheap flagship gpt-5.6-luna.
-# General fallback: prefer OPENAI_API_KEY to connect directly to OpenAI; otherwise use OPENROUTER_API_KEY to go through OpenRouter.
+# 全局唯一的 LLM 客户端。模型默认当前便宜旗舰 gpt-5.6-luna。
+# 通用回退：优先 OPENAI_API_KEY 直连 OpenAI；没有则用 OPENROUTER_API_KEY 走 OpenRouter。
 _MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.6-luna")
 _client = None
 
 
 def _to_openrouter_model(model: str) -> str:
-    """ Map model name to OpenRouter namespace (for fallback path without OPENAI_API_KEY)."""
+    """把模型名映射到 OpenRouter 命名空间（用于无 OPENAI_API_KEY 的回退路径）。"""
     if "/" in model:
-        return model                      # Already an OpenRouter namespace, use as-is
+        return model                      # 已是 OpenRouter 命名空间，原样使用
     if model.startswith("gpt-"):
         return "openai/" + model          # gpt-* -> openai/gpt-*
     if model.startswith("claude-"):
         return "anthropic/claude-opus-4.8"
-    return "openai/gpt-5.6-luna"          # Fallback: current cheap flagship
+    return "openai/gpt-5.6-luna"          # 兜底：当前便宜旗舰
 
 
 def _safe_create(client, **kwargs):
-    """ Call Chat Completions; for reasoning models (e.g., gpt-5.x), automatically degrade and retry with parameter restrictions:
-    - If max_tokens is not supported, use max_completion_tokens instead;
-    - If non-default temperature is not supported, remove that parameter (fallback to model default 1).
-    This way, the same code can run both traditional chat models (accepting temperature=0.8) and reasoning models."""
+    """调用 Chat Completions；对推理型模型（如 gpt-5.x）的参数限制做自动降级重试：
+    - 不支持 max_tokens 时改用 max_completion_tokens；
+    - 不支持非默认 temperature 时移除该参数（回退到模型默认 1）。
+    这样同一份代码既能跑传统对话模型（接受 temperature=0.8），也能跑推理模型。"""
     for _ in range(3):
         try:
             return client.chat.completions.create(**kwargs)
@@ -55,18 +60,18 @@ def _safe_create(client, **kwargs):
 
 
 def get_client():
-    """ Return the globally shared LLM client (lazy-loaded, process-wide singleton).
+    """返回全局共享的 LLM 客户端（懒加载，进程内单例）。
 
-    Only used in online mode (real LLM calls); offline mode does not import openai or construct a client.
-      1) If OPENAI_API_KEY is set -> connect directly to OpenAI;
-      2) Otherwise if OPENROUTER_API_KEY is set -> go through OpenRouter and map _MODEL to its namespace;
-      3) If neither is set, raise a clear error.
+    仅在线模式（真实调用 LLM）才会用到；离线模式不导入 openai、不构造客户端。
+      1) 有 OPENAI_API_KEY -> 直连 OpenAI；
+      2) 否则有 OPENROUTER_API_KEY -> 走 OpenRouter，并把 _MODEL 映射到其命名空间；
+      3) 都没有则报清晰错误。
     """
     global _client, _MODEL
     if _client is None:
-        from openai import OpenAI  # Lazy import: offline mode does not need openai
+        from openai import OpenAI  # 懒导入：离线模式无需安装 openai
         if os.environ.get("OPENAI_API_KEY"):
-            _client = OpenAI()  # Automatically read environment variable OPENAI_API_KEY
+            _client = OpenAI()  # 自动读取环境变量 OPENAI_API_KEY
         elif os.environ.get("OPENROUTER_API_KEY"):
             _MODEL = _to_openrouter_model(_MODEL)
             _client = OpenAI(
@@ -75,143 +80,143 @@ def get_client():
             )
         else:
             raise RuntimeError(
-                "Neither OPENAI_API_KEY nor OPENROUTER_API_KEY is set. Please refer to env.example for configuration, "
-                "or switch to offline mode: python demo.py --offline"
+                "未设置 OPENAI_API_KEY 或 OPENROUTER_API_KEY，请参考 env.example 配置，"
+                "或改用离线模式：python demo.py --offline"
             )
     return _client
 
 
 class PlayerAgent:
-    """A player Agent, encapsulating its identity, private context, and decision (LLM or offline rules)."""
+    """一个玩家 Agent，封装其身份、私有上下文与决策（LLM 或离线规则）。"""
 
     def __init__(self, name: str, role: Role, offline: bool = False, rng=None):
-        self.name = name          # Player name, e.g., "P3"
-        self.role = role          # Real identity (only known to the player and the judge)
+        self.name = name          # 玩家名，如 "P3"
+        self.role = role          # 真实身份（只有本人和法官知道）
         self.faction = faction_of(role)
         self.alive = True
-        self.offline = offline    # When True, use rule-based strategy instead of LLM (zero cost, reproducible)
-        # Private random source for offline strategy (seeded by player name for reproducibility and independence)
+        self.offline = offline    # True 时用规则策略代替 LLM（零成本、可复现）
+        # 离线策略的私有随机源（按玩家名种子化，保证可复现且各玩家独立）
         import random as _random
         self._rng = rng or _random.Random(hash(name) & 0xFFFF)
-        # Private context: all information this Agent can "see". Other Agents cannot access it.
+        # 私有上下文：这个 Agent「看得到」的全部信息。别的 Agent 无法访问。
         self.memory: List[str] = []
 
-    # ---- Context injection: only the judge calls this to deliver information into this Agent's private context ----
+    # ---- 上下文注入：只有法官会调用，用来把信息投递进这个 Agent 的私有上下文 ----
     def observe(self, event: str):
-        """Write a piece of information into this Agent's private context."""
+        """把一条信息写入本 Agent 的私有上下文。"""
         self.memory.append(event)
 
-    # ---- System prompt: role setting + strategy. Teammate identities of werewolves are not written here; instead, the judge
-    #      delivers them via observe() at game start, so the audit can record "who saw teammate identities". ----
+    # ---- system prompt：角色设定 + 策略。狼人的队友身份不写在这里，而是由法官
+    #      在游戏开始时通过 observe() 投递，以便审计能记录「谁看到了队友身份」。 ----
     def _system_prompt(self, players: List[str]) -> str:
         return (
-            f"You are playing a game of Werewolf. You are player {self.name}。\n"
-            f"Your real identity is [{self.role.value}], belonging to [{self.faction.value}】。\n"
-            f"There are {len(players)} players in this game: {'、'.join(players)}。\n\n"
+            f"你正在玩一局狼人杀。你是玩家 {self.name}。\n"
+            f"你的真实身份是【{self.role.value}】，属于【{self.faction.value}】。\n"
+            f"本局玩家共 {len(players)} 人：{'、'.join(players)}。\n\n"
             f"{ROLE_STRATEGY[self.role]}\n\n"
-            "Important: Only reason based on the information you know; do not fabricate identities you cannot know. Speak like a real person, "
-            "concise and natural, with reasoning and evidence."
+            "重要：只能依据你已知的信息推理，不要臆造你无从得知的身份。发言要像真人，"
+            "简洁自然，有理有据。"
         )
 
     def _context_block(self) -> str:
-        """Concatenate the private context into a piece of text for the LLM."""
+        """把私有上下文拼成给 LLM 的一段文字。"""
         if not self.memory:
-            return "(No information yet)"
+            return "（暂无信息）"
         return "\n".join(f"- {m}" for m in self.memory)
 
     def _chat(self, instruction: str, players: List[str], max_tokens: int,
               json_mode: bool = False) -> str:
-        """Assemble system + user messages and call the LLM; the user message only concatenates this Agent's own
-        private context (`_context_block`), never containing private information of other players."""
+        """组装 system + user 消息并调用 LLM；user 消息里只拼接本 Agent 自己的
+        私有上下文（`_context_block`），绝不包含其他玩家的私密信息。"""
         messages = [
             {"role": "system", "content": self._system_prompt(players)},
             {"role": "user", "content":
-                f"[Information you currently have (visible only to you)]\n{self._context_block()}\n\n"
-                f"[Current Task]\n{instruction}"},
+                f"【你目前掌握的信息（仅你可见）】\n{self._context_block()}\n\n"
+                f"【当前任务】\n{instruction}"},
         ]
-        #  Allocate sufficient output budget for reasoning models (e.g., GPT-5.6 series): their internal reasoning tokens also count.
-        # max_tokens, if the budget is too small, the content may be truncated to empty. Set a lower limit as a fallback.
+        # 给推理型模型（如 gpt-5.6 系列）留足输出预算：其内部推理 token 也计入
+        # max_tokens，预算过小会导致 content 被截断为空。设一个下限兜底。
         kwargs = dict(model=_MODEL, messages=messages, temperature=0.8,
                       max_tokens=max(max_tokens, 512))
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
         resp = _safe_create(get_client(), **kwargs)
-        # content may be None (e.g., truncated); fall back to empty string and let the upper layer parse with degraded handling.
+        # content 可能为 None（如被截断）；用空串兜底，交由上层解析做降级处理。
         return (resp.choices[0].message.content or "").strip()
 
-    # ---------- Three external capabilities: speech / decision (select target) / voting ----------
+    # ---------- 三种对外能力：发言 / 决策（选目标）/ 投票 ----------
 
     def speak(self, players: List[str]) -> str:
-        """Speak publicly during the day. Return a speech text (public information)."""
+        """白天公开发言。返回一段发言文本（公开信息）。"""
         if self.offline:
             return self._offline_speak(candidates=[p for p in players if p != self.name])
         instruction = (
-            "It's your turn to speak publicly during the day. Please combine the information you have and make a brief statement."
-            "(2~4 sentences, within 60 characters). Consistent with your identity and strategy. Output the speech content directly, without quotation marks."
+            "现在轮到你在白天公开发言。请结合你掌握的信息，发表一段简短的发言"
+            "（2~4 句话，60 字以内）。符合你的身份与策略。直接输出发言内容，不要加引号。"
         )
         return self._chat(instruction, players, max_tokens=180)
 
     def choose_target(self, prompt: str, candidates: List[str],
                       players: List[str], allow_none: bool = False) -> Optional[str]:
-        """Let the Agent select a target from the candidates (night kill / investigate / poison / save judgment, etc.).
+        """让 Agent 从候选人中选一个目标（夜间刀人 / 查验 / 用毒 / 救人判断等）。
 
-        Return in JSON mode, robustly parse the target player name.
+        用 JSON 模式返回，鲁棒地解析出目标玩家名。
         """
         if self.offline:
             return self._offline_choose_target(candidates, allow_none)
-        opt = ", or you can choose to give up (fill target with \"none\")" if allow_none else ""
+        opt = "，也可以选择放弃（target 填 \"none\"）" if allow_none else ""
         instruction = (
-            f"{prompt}\nCandidate players:{'、'.join(candidates)}{opt}。\n"
-            "Please only return JSON: {\"target\": \"player name or none\", \"reason\": \"one-sentence reason\"}"
+            f"{prompt}\n候选玩家：{'、'.join(candidates)}{opt}。\n"
+            "请只返回 JSON：{\"target\": \"玩家名或none\", \"reason\": \"一句话理由\"}"
         )
         raw = self._chat(instruction, players, max_tokens=120, json_mode=True)
         target = self._parse_target(raw, candidates, allow_none)
         return target
 
     def vote(self, candidates: List[str], players: List[str]) -> Optional[str]:
-        """Vote to banish. Return who to vote for (or abstain with none)."""
+        """投票放逐。返回票投给谁（或弃票 none）。"""
         if self.offline:
             return self._offline_vote(candidates)
         instruction = (
-            "It is now the daytime voting and banishment phase. Based on all the speeches and your reasoning, vote for the one you think is most likely to be"
-            "Werewolf player.\nCandidate players:" + "、".join(candidates) + "。\n"
-            "Please return only JSON: {\"target\": \"player name\", \"reason\": \"one-sentence reason\"}"
+            "现在是白天投票放逐环节。请根据全场发言与你的推理，投出你认为最可能是"
+            "狼人的玩家。\n候选玩家：" + "、".join(candidates) + "。\n"
+            "请只返回 JSON：{\"target\": \"玩家名\", \"reason\": \"一句话理由\"}"
         )
         raw = self._chat(instruction, players, max_tokens=120, json_mode=True)
         return self._parse_target(raw, candidates, allow_none=True)
 
-    # ---------- Offline (rule-based) strategy: only read own memory, never access others' context ----------
+    # ---------- 离线（规则）策略：只读自己的 memory，绝不访问他人上下文 ----------
     def _known_teammates(self) -> set:
-        """The werewolf parses the list of teammates from its own private context (the good guys cannot parse it and return empty)."""
+        """狼人从自己的私有上下文里解析出队友名单（好人解析不到，返回空）。"""
         mates = set()
         for m in self.memory:
-            hit = re.search(r"Players in the werewolf faction are: ([^(]+)", m)
+            hit = re.search(r"狼人阵营的玩家是：([^（(]+)", m)
             if hit:
                 mates |= set(re.findall(r"P\d+", hit.group(1)))
         return mates
 
     def _known_wolves(self) -> set:
-        """Collect players who are 'known werewolves' from your own private context: the Seer's investigation results + the werewolves' teammates.
+        """从自己的私有上下文里收集『已知是狼人』的玩家：预言家的查验结果 + 狼人的队友。
 
-        Good ordinary villagers have no way of knowing anyone's identity → return an empty set, they can only vote randomly. This is precisely information asymmetry.
+        好人平民无从得知任何人身份 → 返回空集合，只能随机投票。这正是信息不对称。
         """
         known = set(self._known_teammates())
         for m in self.memory:
-            hit = re.search(r"You checked \s*(P\d+), the result is [Werewolf]", m)
+            hit = re.search(r"你查验了\s*(P\d+)，结果为【狼人】", m)
             if hit:
                 known.add(hit.group(1))
         return known
 
     def _offline_vote(self, candidates: List[str]) -> Optional[str]:
-        """Offline voting: prioritize voting for 'confirmed werewolves' (seer's verification / werewolves not voting for teammates), otherwise random."""
+        """离线投票：优先投自己『确知的狼人』（预言家验人 / 狼人不投队友），否则随机。"""
         if not candidates:
             return None
         if self.role == Role.WEREWOLF:
-            #  Werewolf: vote for a non-teammate good person, try to hide yourself
+            # 狼人：投一个非队友的好人，尽量隐藏自己
             mates = self._known_teammates()
             targets = [c for c in candidates if c not in mates] or candidates
             return self._rng.choice(targets)
-        #  Good person: The Seer votes for the confirmed wolf if they have a result; otherwise, civilians can only vote randomly (the cost of information asymmetry).
+        # 好人：预言家有验人结果就投确认的狼；其余平民只能随机（信息不对称的代价）
         wolves = [c for c in candidates if c in self._known_wolves()]
         if wolves:
             return self._rng.choice(wolves)
@@ -219,17 +224,17 @@ class PlayerAgent:
 
     def _offline_choose_target(self, candidates: List[str],
                                allow_none: bool) -> Optional[str]:
-        """Offline night target selection: For mandatory scenarios like werewolf/seer, prioritize targets other than 'known werewolf';
-        For optional scenarios like witch antidote/poison, decide based on probability."""
+        """离线夜间选目标：狼人/预言家等必选场景优先选『已知狼人之外』的目标；
+        女巫解药/毒药等可放弃场景按概率决定。"""
         if not candidates:
             return None
         if allow_none:
-            # Witch's potion: about half probability to act (save/poison), making the game varied yet convergent.
+            # 女巫用药：约一半概率行动（救/毒），使对局有变化又能收敛
             if self._rng.random() < 0.5:
                 return None
             return self._rng.choice(candidates)
         if self.role == Role.SEER:
-            #  Seer: Prioritize checking players whose identities have not yet been confirmed (avoid re-checking known werewolves).
+            # 预言家：优先查验尚未确认身份的玩家（避免重复查验已知狼人）
             unknown = [c for c in candidates if c not in self._known_wolves()]
             return self._rng.choice(unknown or candidates)
         if self.role == Role.WEREWOLF:
@@ -239,20 +244,20 @@ class PlayerAgent:
         return self._rng.choice(candidates)
 
     def _offline_speak(self, candidates: List[str]) -> str:
-        """Offline speech: Generate a template utterance for a role that fits their identity and does not reveal private information."""
+        """离线发言：按角色生成一句符合身份、且不泄露私密信息的模板发言。"""
         wolves = [c for c in candidates if c in self._known_wolves()]
-        suspect = self._rng.choice(candidates) if candidates else "Everyone"
+        suspect = self._rng.choice(candidates) if candidates else "大家"
         if self.role == Role.SEER and wolves:
-            return f"I am the seer. Last night I checked {wolves[0]} is a werewolf. Please vote for him."
+            return f"我是预言家，昨晚查验到 {wolves[0]} 是狼人，请大家把票投给他。"
         if self.role == Role.WEREWOLF:
-            return f"I am a good person. From the speech, {suspect} seems a bit suspicious. I suggest keeping an eye on him."
+            return f"我是好人，从发言看 {suspect} 有点可疑，建议重点关注他。"
         if self.role == Role.WITCH:
-            return f"I'll wait and see for now. I think {suspect}'s speech is untenable. Let's keep an eye on it first."
+            return f"我暂时观望，觉得 {suspect} 的发言站不住脚，先留意一下。"
         if self.role == Role.SEER:
-            return "I don't have decisive information yet. Let's listen to everyone's speeches and vote carefully."
-        return f"I am a villager. I have no nighttime information, so I can only rely on reasoning. I feel {suspect} is slightly suspicious."
+            return "我还没有决定性的信息，先听大家发言，谨慎投票。"
+        return f"我是村民，没有夜间信息，只能靠推理，感觉 {suspect} 稍微可疑。"
 
-    # ---------- Parsing Tools ----------
+    # ---------- 解析工具 ----------
     @staticmethod
     def _parse_target(raw: str, candidates: List[str], allow_none: bool) -> Optional[str]:
         target = None
@@ -260,19 +265,19 @@ class PlayerAgent:
             data = json.loads(raw)
             target = str(data.get("target", "")).strip()
         except Exception:
-            # Fallback: Directly find candidate player names from text using regex
+            # 兜底：直接从文本里正则找候选玩家名
             target = raw
-        if allow_none and target.lower() in ("none", "", "Abstain", "Abandon"):
+        if allow_none and target.lower() in ("none", "", "弃票", "放弃"):
             return None
-        # Normalization: Exact match first, otherwise fuzzy match (find candidate names that appear)
+        # 归一化：精确匹配优先，否则模糊匹配（找出现的候选名）
         if target in candidates:
             return target
         for c in candidates:
             if c in (target or ""):
                 return c
-        # Final fallback: Search for Pn in the original string
+        # 最后兜底：从原始串里搜 Pn
         m = re.search(r"P\d+", target or "")
         if m and m.group(0) in candidates:
             return m.group(0)
-        # If parsing fails: Good people default to abstain, werewolves/mandatory scenarios are handled by the caller
+        # 实在解析不出：好人默认弃票，狼人/必须选的场景由调用方兜底
         return None if allow_none else (candidates[0] if candidates else None)

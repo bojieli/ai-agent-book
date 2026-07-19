@@ -16,13 +16,13 @@ Add all these benchmarks to a short section in Chapter 6.
 
 ### 👤 You
 
-Based on the content of the paper @https://arxiv.org/pdf/2503.16416, find the paper content related to the benchmarks in this figure, think deeply, and then write the agent benchmark chapter for Chapter 6.
+根据论文 @https://arxiv.org/pdf/2503.16416 的内容，找到图中这些 benchmark 所涉及的论文内容，深入思考，然后撰写第六章的 agent benchmark 章节
 
 ---
 
 ### 👤 You
 
-Based on the content of the paper @https://arxiv.org/pdf/2503.16416, find the paper content related to the benchmarks in this figure, think deeply, and then write the agent benchmark chapter for Chapter 6.
+根据论文 @https://arxiv.org/pdf/2503.16416 的内容，找到图中这些 benchmark 所涉及的论文内容，深入思考，然后撰写第六章的 agent benchmark 章节
 
 ---
 
@@ -60,17 +60,17 @@ I'm going to write a complete Chapter 6 on agent benchmarks into `book/chapter6.
 
 - Highlights:
   - Consolidated Pass@k/Maj@k/Best-Worst@k and process/cost/safety metrics.
-  - Detailed benchmark lists: MiniWoB/++ , WebShop, Mind2Web, WebVoyager, WebLinX, WebArena/VisualWebArena, MMINa, AssistantBench, WebCanvas, ST-WebAgentBench, WorkArena/++, HumanEval, SWE-bench variants (Verified/Lite/+ /Multimodal), TDD-Bench Verified, SWT-Bench, IT-Bench, SWELancer, ScienceQA, QASPER, MS², ScienceWorld, ScienceAgentBench, CORE-Bench, SciCode, MLGym-Bench, DiscoveryWorld, LAB-Bench, ABCD, MultiWOZ, SMCalFlow, ALMTA, τ-Bench, IntellAgent, LTM, GAIA, AgentBench, Galileo’s Agent Leaderboard, OSWorld, AppWorld, OmniACT, TheAgentCompany, CR-MArena, HAL.
+  - Detailed benchmark lists: MiniWoB/++ , WebShop, Mind2Web, WebVoyager, WebLinX, WebArena/VisualWebArena, MMINa, AssistantBench, WebCanvas, ST-WebAgentBench, WorkArena/++, HumanEval, SWE-bench variants (Verified/Lite/+ /Multimodal), TDD-Bench Verified, SWT-Bench, IT-Bench, SWELancer, ScienceQA、QASPER、MS²、ScienceWorld、ScienceAgentBench、CORE-Bench、SciCode、MLGym-Bench、DiscoveryWorld、LAB-Bench，ABCD、MultiWOZ、SMCalFlow、ALMTA、τ-Bench、IntellAgent、LTM，GAIA、AgentBench、Galileo’s Agent Leaderboard、OSWorld、AppWorld、OmniACT、TheAgentCompany、CR-MArena、HAL.
   - Added rubric design guidance with veto items and anti-cheating measures.
   - Engineering guidance: trajectory logs, reproducibility, parallel sampling + sequential revision, subagent encapsulation, guardrails.
 
-If you’d like, I can also add inline references for each benchmark name with the year or a reference table.
+If you’d like, I can also add inline references for each benchmark名称后标注年份或加入参考文献表。
 
 ---
 
 ### 👤 You
 
-Do not delete the original content. The original content is an outline of other content I plan to write. Append it back to the end of the article.
+不要删除原有内容，原有内容是我准备写的其他内容提纲，补充回文章末尾
 
 ---
 

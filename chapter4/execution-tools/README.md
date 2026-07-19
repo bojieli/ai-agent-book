@@ -79,44 +79,46 @@ AUTO_VERIFY_CODE=true
 
 ## Usage
 
-### CLI Entry Point
+### 命令行入口 (CLI)
 
-`cli.py` is the unified CLI entry point for listing, individually invoking each execution tool, and running an end-to-end demo.
-It reuses the same tool implementations as the MCP server, so behavior is identical.
+`cli.py` 是统一的命令行入口，用于列出、单独调用每个执行工具，并运行端到端演示。
+它复用与 MCP 服务器相同的工具实现，因此行为完全一致。
 
 ```bash
-# View top-level help and all subcommands
+# 查看总帮助与所有子命令
 python cli.py --help
 
-# List all execution tools
+# 列出所有执行工具
 python cli.py list
 
-# End-to-end offline demo (recommended to try first; runs without API key)
+# 端到端离线演示（推荐先看这个；无需 API key 即可运行）
 python cli.py demo
 
-# Invoke a specific tool
+# 单独调用某个工具
 python cli.py code --language python --code "print(2 ** 10)"
 python cli.py shell "python3 --version"
 python cli.py write --path notes.txt --content "hello" --overwrite
 python cli.py edit --path notes.txt --search hello --replace world
 ```
 
-Global flags (place before the subcommand):
+全局开关（放在子命令之前）：
 
-| Flag | Effect |
-|------|--------|
-| `--provider` | Override LLM provider (`PROVIDER`) |
-| `--workspace` | Override working directory (file operations are restricted to this directory) |
-| `--no-approval` | Disable LLM pre-approval for dangerous operations |
-| `--no-verify` | Disable automatic syntax verification for file writes/code |
-| `--no-summarize` | Disable LLM summarization of long output (still truncates and persists) |
+| 开关 | 作用 |
+|------|------|
+| `--provider` | 覆盖 LLM 提供商（`PROVIDER`） |
+| `--workspace` | 覆盖工作目录（文件操作被限制在此目录内） |
+| `--no-approval` | 关闭危险操作的 LLM 事前审批 |
+| `--no-verify` | 关闭写文件/代码的自动语法校验 |
+| `--no-summarize` | 关闭长输出的 LLM 总结（仍会截断并持久化） |
 
-**Offline operation**: `list`, `demo`, and `code`/`shell`/`write`/`edit` with approval/summarization/non-Python verification disabled all run without an API key. Scenarios requiring an API key are: LLM pre-approval, LLM summarization of long output, and non-Python syntax verification. `calendar` and `pr` additionally require the corresponding external credentials.
+**离线运行**：`list`、`demo` 以及关闭了审批/总结/非 Python 校验的
+`code`/`shell`/`write`/`edit` 均无需 API key。需要 API key 的场景为：LLM 事前审批、
+长输出的 LLM 总结、非 Python 语法校验。`calendar` 与 `pr` 还额外需要相应外部凭据。
 
-> **Long output truncation and persistence**: When the output of `code_interpreter` / `virtual_terminal`
-> exceeds the threshold (default 200 lines or 10,000 characters), the tool retains only the first and last 50 lines
-> in the context, writes the full output to a temporary file, and provides the path in the `stdout_file` / `stderr_file`
-> fields of the return value. This mechanism does not depend on the LLM and works offline.
+> **长输出的截断与持久化**：当 `code_interpreter` / `virtual_terminal` 的输出
+> 超过阈值（默认 200 行或 10000 字符）时，工具只在上下文中保留头尾各 50 行，
+> 完整输出落盘到临时文件，并在返回值的 `stdout_file` / `stderr_file` 字段给出路径。
+> 该机制不依赖 LLM，可离线工作。
 
 ### Running the MCP Server
 
@@ -175,8 +177,8 @@ The server implements a layered architecture:
 
 See `examples.py` for comprehensive usage examples.
 
-## Experiment 4-2: Execution Tools MCP Server
+## 实验 4-2：执行工具 MCP 服务器
 
-This project corresponds to Experiment 4-2 in Chapter 4 "Execution Tools" of the book, focusing on the safety mechanisms of execution tools:
-layered security protection (input validation, permission control, LLM pre-approval), automatic syntax verification and feedback loops,
-and truncation and persistence of long outputs. It is recommended to start with `python cli.py demo`.
+本项目对应书中第 4 章「执行工具」一节的实验 4-2，聚焦执行工具的安全机制：
+分层安全防护（输入验证、权限控制、LLM 事前审批）、自动语法验证与反馈闭环、
+以及长输出的截断与持久化。推荐从 `python cli.py demo` 开始。

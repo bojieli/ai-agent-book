@@ -466,8 +466,8 @@ describe('LLM Providers - Individual Testing', function() {
       console.log('🇨🇳 Testing ARK Doubao with Chinese');
       
       const chineseMessages = [
-        { role: 'system', content: 'You are a helpful AI assistant.' },
-        { role: 'user', content: 'Please introduce Beijing in one sentence.' }
+        { role: 'system', content: '你是一个有用的AI助手。' },
+        { role: 'user', content: '请用一句话介绍北京。' }
       ];
       
       const result = await provider.createChatCompletion(chineseMessages, {

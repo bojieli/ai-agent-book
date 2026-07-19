@@ -10,21 +10,21 @@
 
 ### 👤 You
 
-Implement an agent by copying code from week2/system-hint to week4/agent-with-event-trigger, and rewrite the agent to use event triggers as user messages. (keep all the system hint functions) The agent should listen on a port (e.g. 4242) to receive events. Write another client to send test events to the agent. The agent should print received events and the responses on the console.
+Implement an agent by copying code from week2/system-hint to week4/agent-with-event-trigger, and rewrite the agent to use event triggers as user messages.  (keep all the system hint functions) The agent should listen on a port (e.g. 4242) to receive events. Write another client to send test events to the agent. The agent should print received events and the responses on the console.
 
-#### External Input Events
+#### 外部输入事件
 
-- Messages entered by users on the Web interface/app
-- Messages entered by users via SMS/IM
-- Replies received to emails sent by the Agent
-- Someone submits a review comment on a GitHub PR submitted by the Agent, or the PR status changes
-- A timer set by the Agent fires
+- 用户在 Web 界面/app 上输入的消息
+- 用户通过短信/IM 输入的消息
+- Agent 发出的邮件收到了回复
+- Agent 提交的 GitHub PR 有人提交 review 意见，或状态发生改变
+- Agent 设置的定时器到时间了
 
-#### System Reminder Events
+#### 系统提醒事件
 
-System reminder events: The system automatically reminds the LLM when it detects anomalies or timeouts.
-- For example, if the user hasn't responded for a day, an automatic trigger is needed to say something to the user to re-engage them.
-- For example, if a background process was started and hasn't exited after 10 minutes, the Agent needs a prompt to check whether it should read the current terminal output and kill the process accordingly.
+系统提醒事件：系统在检测到异常或超时的时候，自动提醒 LLM 的
+- 例如用户过了一天还没有响应，需要自动 trigger，给用户说一句话，召回用户
+- 例如启动了一个后台进程，该进程 10 分钟都没退出，需要给 Agent 一个提示，看是否需要读取当前终端输出，据此杀掉该进程
 
 ---
 
@@ -222,7 +222,8 @@ Tool Calls: 1
 ### 🔧 System Hints (All Preserved)
 
 From the original system-hint agent:
-- ✅ Timestamps - Temporal context tracking- ✅ Tool Counter - Prevents infinite loops
+- ✅ Timestamps - Temporal context tracking
+- ✅ Tool Counter - Prevents infinite loops
 - ✅ TODO Lists - Multi-step task management
 - ✅ Detailed Errors - With suggestions
 - ✅ System State - Directory, shell, OS info

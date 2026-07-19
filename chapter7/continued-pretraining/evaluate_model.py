@@ -7,8 +7,8 @@ Loads saved LoRA adapters and evaluates on Korean and English tasks
 import os
 import argparse
 
-#  Note: Heavy dependencies like unsloth / torch / transformers are imported on demand inside the function,
-#  so `python evaluate_model.py --help` can view parameters without a GPU environment.
+# 说明：unsloth / torch / transformers 等重型依赖在函数内按需导入，
+# 这样 `python evaluate_model.py --help` 无需 GPU 环境即可查看参数。
 
 # ANSI color codes for colored output
 class Colors:

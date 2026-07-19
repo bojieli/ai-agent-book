@@ -451,7 +451,7 @@ class CodingAgent:
                 openai_messages.append(msg_dict)
 
             elif role == "tool":
-                #  keep tool message
+                # 保留 tool 消息
                 openai_messages.append({
                     "role": "tool",
                     "tool_call_id": msg.get("tool_call_id", ""),

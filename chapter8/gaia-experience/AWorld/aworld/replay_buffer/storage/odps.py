@@ -16,7 +16,7 @@ class OdpsSQLBuilder:
             query_condition = QueryBuilder().eq("field1", "value1").and_().eq("field2", "value2")
             sql_builder = OdpsSQLBuilder(query_condition)
             sql = sql_builder.build_sql()
-            print(sql)  # Output: "field1 = 'value1' AND field2 = 'value2'"
+            print(sql)  # 输出: "field1 = 'value1' AND field2 = 'value2'"
     '''
 
     def __init__(self, query_condition: QueryCondition):

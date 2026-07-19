@@ -2,7 +2,7 @@
 
 # AWorld Train
 
-*Provides a framework-agnostic adapter layer, runnable examples, and common utilities for connecting agents built with AWorld to external RL/training frameworks*
+*为使用 AWorld 构建的智能体，提供与外部 RL/训练框架对接的、与框架无关的适配层、可运行示例与通用工具*
 
 [![License: MIT][license-image]][license-url]
 
@@ -10,30 +10,30 @@
 
 ---
 
-AWorld Train serves as a bridge between the AWorld agent ecosystem and various external training frameworks (such as reinforcement learning libraries). It is designed to be framework-agnostic, allowing you to use AWorld agents with your preferred training environment.
+AWorld Train 为 AWorld 智能体生态系统和各种外部训练框架（如强化学习库）之间提供了一座桥梁。它被设计为框架无关的，可以选择你喜欢的训练环境使用AWorld 智能体。
 
-The diagram below illustrates the overall architecture and interaction between the environment and the training cluster:
+下图说明了环境和训练集群之间的整体架构和交互：
 
-![Architecture Diagram](../readme_assets/train_env_agent_architecture.png)
+![架构示意图](../readme_assets/train_env_agent_architecture.png)
 
 
-## Environment Setup
+## 环境构建
 
-First, you need to set up the environment where the agent tools will run.
+首先，您需要设置智能体工具将要运行的环境。
 
-Choose a machine (it can also be the training machine).
+选择一台机器（也可以是训练机）。
 
-Recommended machine specifications:
-- For capacity planning, allocate approximately **2C4G** per concurrent worker process.
-- Example: For 8 concurrent workers, plan for **~16C32G**.
+机器规格建议：
+- 为进行容量规划，为每个并发工作进程分配大约 **2C4G**。
+- 示例：对于8个并发，计划需要 **约16C32G**。
 
 ```bash
-# Clone the AWorld repository
+# 克隆 AWorld 仓库
 git clone git@github.com:inclusionAI/AWorld.git
 cd /path/to/AWorld
 cp ./env/gaia-mcp-server/mcp_servers/.env_template ./env/gaia-mcp-server/mcp_servers/.env
 ```
-Edit `./env/gaia-mcp-server/mcp_servers/.env` to configure tokens for any tools that require authentication.
+编辑 `./env/gaia-mcp-server/mcp_servers/.env` 以配置任何需要身份验证的工具的令牌。
 
 ```.env
 JINA_API_KEY=<YOUR_JINA_API_KEY>
@@ -70,16 +70,16 @@ VIDEO_LLM_MODEL_NAME=${MCP_LLM_MODEL_NAME}
 VIDEO_LLM_API_KEY=${MCP_LLM_API_KEY}
 ```
 
-Next, run the startup script to launch the MCP server locally:
+接下来，运行启动脚本以在本地启动 MCP 服务器：
 
 ```bash
 cd /path/to/Aworld
-# The --docker_dir parameter specifies the Docker directory corresponding to the env to be built
+# --docker_dir 参数指定需要构建的env对应docker目录
 # e.g., --docker_dir=gaia-mcp-server
 python -m env.train_env --docker_dir=gaia-mcp-server
 ```
 
-Once the MCP server starts successfully, it will output connection details:
+MCP 服务器成功启动后，将输出连接详细信息：
 ```bash
   {
       "ip": "1xx.1xx.x.xx",
@@ -87,40 +87,40 @@ Once the MCP server starts successfully, it will output connection details:
       "token": "eyJhbGciOi...rYmQ"
   }
 ```
-You will need the `ip`, `port`, and `token` from this output to configure the agent on the training machine in the next step.
+您将需要此输出中的 `ip`、`port` 和 `token`，用于下一步在训练机上配置智能体。
 
-For instructions on deploying the environment on Kubernetes, refer to [`../env/README.md`](../env/README.md).
+有关在 Kubernetes 上部署环境的说明，请参阅 [`../env/README.md`](../env/README.md)。
 
-## Training Cluster Setup
+## 训练集群设置
 
-### 1. Create an Agent or Agent Swarm
-Now, on the training cluster machine, you must make the MCP service credentials available to your agent. Use the `ip`, `port`, and `token` from the [Environment Setup](#environment-setup) section and export them as environment variables or add them to a `.env` file:
+### 1. 创建智能体或智能体集群
+现在，在训练集群机器上，您必须使 MCP 服务凭据对您的智能体可用。使用[环境构建](#环境构建)部分中的 `ip`、`port` 和 `token`，并将它们导出为环境变量或添加到 `.env` 文件中：
 ```bash
-# Export as environment variables
-# Replace <ip>, <port>, and <token> with the ip, port, and token from the environment setup
+# 导出为环境变量
+# 将 <ip>、<port> 和 <token> 替换为环境构建中的 ip、port 和 token
 export MCP_SERVER_URL=http://<ip>:<port>/mcp
 export MCP_SERVER_TOKEN=<token>
 
-# Or add them to a .env file
+# 或将它们添加到 .env 文件中
 # echo "MCP_SERVER_URL=http://<ip>:<port>/mcp" >> .env
 # echo "MCP_SERVER_TOKEN=<token>" >> .env
 ```
 
-Then install `aworld` and the reinforcement learning framework:
+然后安装 `aworld` 和强化学习框架：
 
 ```bash
-# Python>=3.10 is recommended.
+# 推荐使用 Python>=3.10。
 
-# Install AWorld
+# 安装 AWorld
 pip install aworld
 
-# Install framework-specific dependencies (using VeRL as an example)
+# 安装特定框架的依赖（以 VeRL 为例）
 pip install verl==0.5.0
 ```
 
-With the connection details configured, you can define your agent within the chosen training framework. For VeRL, this is done by implementing a custom `AgentLoop`.
+配置好连接详细信息后，您可以在所选的训练框架内定义您的智能体。对于 VeRL，这是通过实现一个自定义的 `AgentLoop` 来完成的。
 
-For example, `GaiaAgentLoop` inherits from `AworldAgentLoop` and implements the `build_agents` method.
+例如，`GaiaAgentLoop` 继承自 `AworldAgentLoop` 并实现了 `build_agents` 方法。
 
 ```python
 from aworld.agents.llm_agent import Agent
@@ -131,57 +131,57 @@ from train.adapter.verl.common import get_agent_tool_env_and_servers
 
 class GaiaAgentLoop(AworldAgentLoop):
     def build_agents(self):
-        # Get environment configuration and server details.
-        # Note: The MCP server must be running (environment setup), and
-        # the MCP_SERVER_URL/MCP_SERVER_TOKEN environment variables must be set.
+        # 获取环境配置和服务器详细信息。
+        # 注意：MCP 服务器必须正在运行（环境构建），并且
+        # MCP_SERVER_URL/MCP_SERVER_TOKEN 环境变量必须已设置。
         gaia_env_config, gaia_env_servers = get_agent_tool_env_and_servers()
 
         return Agent(
             conf=AgentConfig(
-                # Get the dynamic LLM service address from the service manager.
-                # The LLM service is started within VeRL.
+                # 从服务管理器获取动态的 llm 服务地址。
+                # llm 服务是在 VeRL 中启动的。
                 llm_base_url=self.get_llm_server_address(),
                 llm_model_name=self.get_llm_server_model_name(),
             ),
             name="gaia_super_agent",
-            system_prompt="Your system prompt",
+            system_prompt="你的系统提示",
 
-            # Agent's MCP tool configuration
+            # 智能体的 MCP 工具配置
             mcp_config=gaia_env_config,
             mcp_servers=gaia_env_servers,
         )
 ```
 
-### 2. Run Training
-Before running training, specify your custom `AgentLoop` in `agent.yaml`:
+### 2. 运行训练
+在运行训练之前，请在 `agent.yaml` 中指定您的自定义 `AgentLoop`：
 
 ```yaml
-# In agent.yaml
+# 在 agent.yaml 中
 - name: gaia_agent
   _target_: train.examples.train_gaia_with_aworld_verl.custom_agent_loop.GaiaAgentLoop
 ```
 
-Finally, run the training script. This script is typically a `run.sh` file based on the VeRL example.
+最后，运行训练脚本。该脚本通常是基于 VeRL 示例的 `run.sh` 文件。
 ```bash
 bash run.sh
 ```
-This script handles the AgentLoop orchestrated by VeRL, the reward calculation function, and the training workflow.
-For parameter settings in `run.sh`, refer to the [VeRL documentation](https://verl.readthedocs.io/en/latest/examples/config.html).
+此脚本处理由 VeRL 编排的AgentLoop、奖励计算函数和训练流程。
+有关 `run.sh` 中的参数设置，请参阅 [VeRL 文档](https://verl.readthedocs.io/en/latest/examples/config.html)。
 
-A complete, runnable example, including a customized `run.sh` script for `GaiaAgentLoop`, can be found in [`./examples/train_gaia_with_aworld_verl/`](./examples/train_gaia_with_aworld_verl/).
+一个完整的、可运行的示例，包括为 `GaiaAgentLoop` 定制的 `run.sh` 脚本，可在 [`./examples/train_gaia_with_aworld_verl/`](./examples/train_gaia_with_aworld_verl/) 中找到。
 
-## Advanced Tutorial
+## 进阶教程
 
-### How to Create a Complex Multi-Agent Swarm
-Beyond a single agent, you can also train a multi-agent swarm. Simply have your `build_agents` method (or equivalent setup function) return a `Swarm` object instead of a single `Agent` object. AWorld and the training adapter will handle the rest.
+### 如何创建复杂的多智能体集群 (Swarm)
+除了单个智能体，您还可以训练一个多智能体集群。只需让您的 `build_agents` 方法（或等效的设置函数）返回一个 `Swarm` 对象而不是单个 `Agent` 对象即可。AWorld 和训练适配器将处理剩下的部分。
 
 ```python
-# In your custom AgentLoop
+# 在自定义的AgentLoop中
 def build_agents(self, ...) -> Union[Agent, Swarm]:
-    # ... create multiple agents
+    # ... 创建多个agent
     agent_to_be_train = Agent(
       conf=AgentConfig(
-          # For the agent to be trained, llm_base_url and llm_model_name are obtained from the service started by VeRL
+          # 对于要训练的agent，llm_base_url 和 llm_model_name 是从 VeRL 启动的服务中获取的
           llm_base_url=self.get_llm_server_address(),
           llm_model_name=self.get_llm_server_model_name(),
       ),
@@ -189,7 +189,7 @@ def build_agents(self, ...) -> Union[Agent, Swarm]:
 
     plan_agent = Agent(
       conf=AgentConfig(
-          # Provide a ready-to-use OpenAI-compatible LLM service address, model name, and api_key
+          # 提供一个即用型的 OpenAI 兼容的 llm 服务地址、模型名称和 api_key
           llm_base_url="",
           llm_model_name="",
           llm_api_key=""
@@ -198,7 +198,7 @@ def build_agents(self, ...) -> Union[Agent, Swarm]:
     
     exe_agent = Agent(
       conf=AgentConfig(
-          # Provide a ready-to-use OpenAI-compatible LLM service address, model name, and api_key
+          # 提供一个即用型的 OpenAI 兼容的 llm 服务地址、模型名称和 api_key
           llm_base_url="",
           llm_model_name="",
           llm_api_key=""
@@ -207,39 +207,42 @@ def build_agents(self, ...) -> Union[Agent, Swarm]:
     
     sum_agent = Agent(
       conf=AgentConfig(
-          # Provide a ready-to-use OpenAI-compatible LLM service address, model name, and api_key
+          # 提供一个即用型的 OpenAI 兼容的 llm 服务地址、模型名称和 api_key
           llm_base_url="",
           llm_model_name="",
           llm_api_key=""
       ),
     )
 
-    # Return a Swarm composed of the agents defined above
+    # 返回由以上定义的智能体组成的Swarm
     return Swarm(
         agent_to_be_train, plan_agent, exe_agent, sum_agent,
-        # ... other Swarm configurations
+        # ... 其他Swarm配置
     )
 ```
 
-### How to Integrate Other Training Frameworks
-AWorld Train is designed to be extensible. To add support for a new training framework (e.g., "Swift"), you typically need to:
+### 如何集成其他训练框架
+AWorld Train 被设计为可扩展的。要为新的训练框架（例如 “Swift”）添加支持，通常需要：
 
-1.  **Create a New Adapter**: Inside the `train/adapter/` directory, create a new folder for your framework (e.g., `swift/`).
-2.  **Implement Core Logic**: Create a main class (e.g., `AworldAgentTrainer`) that inherits from a base class of the target framework. This class will be responsible for:
-    *   Receiving tasks or observations from the framework's environment.    *   Run the AWorld agent (`Runners.sync_run(input=input, agent=agent)`) to obtain an action.
-    *   Return the agent's response to the framework.
-    *   Process rewards and updates.
-3.  **Create an Example**: Add a new example in the `train/examples/` directory to demonstrate how to use the new adapter.
+1.  **创建新的适配器**：在 `train/adapter/` 目录内，为您的框架创建一个新文件夹（例如 `swift/`）。
+2.  **实现核心逻辑**：创建一个主类（例如 `AworldAgentTrainer`），它继承自目标框架的某个基类。这个类将负责：
+    *   从框架的环境中接收任务或观察结果。
+    *   运行 AWorld 智能体（`Runners.sync_run(input=input, agent=agent)`）以获取动作。
+    *   将智能体的响应返回给框架。
+    *   处理奖励和更新。
+3.  **创建示例**：在 `train/examples/` 目录中添加一个新示例，以演示如何使用新的适配器。
 
-You can refer to the existing `verl` adapter (`train/adapter/verl/`) as a reference implementation.
+可以参考现有的 `verl` 适配器（`train/adapter/verl/`）作为参考实现。
 
 ---
 
 <div align="center">
 
-**AWorld Train** — Quickly integrate your AWorld agent with mainstream training frameworks
+**AWorld Train** — 让你的 AWorld 智能体快速接入主流训练框架
 
 [license-image]: https://img.shields.io/badge/License-MIT-yellow.svg
 [license-url]: https://opensource.org/licenses/MIT
 
 </div>
+
+

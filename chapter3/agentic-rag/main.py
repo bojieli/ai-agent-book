@@ -187,42 +187,42 @@ def run_comparison_mode(agent: AgenticRAG, query: str):
 def main():
     """Main function"""
     parser = argparse.ArgumentParser(
-        description="Agentic RAG System: Comparing the 'Agentic (multi-turn iterative retrieval)' and 'Non-agentic (single retrieval)' paradigms.",
+        description="智能体化 RAG 系统：对比『智能体化（多轮迭代检索）』与『非智能体化（单次检索）』两种范式。",
         epilog=(
-            "Example:\n"
-            "  python main.py --kb-type offline --query \"How to sentence for drunk driving causing serious injury with a prior theft record\"\n"
-            "  python main.py --query \"How many years for intentional homicide\" --mode compare --kb-type offline\n"
-            "  python compare_offline.py   # Pure offline retrieval comparison, no API or external services required\n"
+            "示例:\n"
+            "  python main.py --kb-type offline --query \"醉酒过失致人重伤且有盗窃前科如何量刑\"\n"
+            "  python main.py --query \"故意杀人罪判几年\" --mode compare --kb-type offline\n"
+            "  python compare_offline.py   # 纯离线检索对比，无需 API 与外部服务\n"
         ),
         formatter_class=argparse.RawTextHelpFormatter,
     )
 
-    #  Mode Selection
+    # 模式选择
     parser.add_argument("--mode", choices=["agentic", "non-agentic", "compare"],
                         default="agentic",
-                        help="Query mode: agentic=agentic multi-turn retrieval / non-agentic=single retrieval / compare=same query comparison (default: agentic)")
+                        help="查询模式：agentic=智能体化多轮检索 / non-agentic=单次检索 / compare=同题对比（默认：agentic）")
 
-    #  Query Options
-    parser.add_argument("--query", type=str, help="Single query question; if not specified, enter interactive mode")
-    parser.add_argument("--batch", type=str, help="Batch query file path (one question per line)")
+    # 查询选项
+    parser.add_argument("--query", type=str, help="单条查询问题；不指定则进入交互模式")
+    parser.add_argument("--batch", type=str, help="批量查询文件路径（每行一个问题）")
     parser.add_argument("--output", type=str, default="results.json",
-                        help="Output file path for batch results (default: results.json)")
+                        help="批量结果的输出文件路径（默认：results.json）")
 
-    #  Configuration Options
-    parser.add_argument("--provider", type=str, help="LLM provider (e.g., kimi / doubao / openai)")
-    parser.add_argument("--model", type=str, help="LLM model name (if not specified, use provider's default model)")
+    # 配置选项
+    parser.add_argument("--provider", type=str, help="LLM 提供商（如 kimi / doubao / openai）")
+    parser.add_argument("--model", type=str, help="LLM 模型名称（不指定则用提供商默认模型）")
     parser.add_argument("--kb-type", choices=["offline", "local", "dify"],
-                        help="Knowledge base backend: offline=built-in offline BM25 (no service/API required) / local=retrieval pipeline service / dify=Dify API")
+                        help="知识库后端：offline=内置离线 BM25（无需服务/无需 API）/ local=检索流水线服务 / dify=Dify API")
     parser.add_argument("--corpus", type=str,
-                        help="Legal corpus directory for offline backend (only effective with --kb-type offline, default: laws)")
+                        help="离线后端的法律语料目录（仅 --kb-type offline 生效，默认：laws）")
     parser.add_argument("--top-k", type=int, dest="top_k",
-                        help="Retrieval depth: number of chunks returned per retrieval (default: offline=5, local=3)")
-    parser.add_argument("--verbose", action="store_true", help="Output detailed Agent reasoning trace (enabled by default)")
-    parser.add_argument("--no-verbose", action="store_true", help="Disable verbose logging")
+                        help="检索深度：每次检索返回的分块数量（默认：offline=5，local=3）")
+    parser.add_argument("--verbose", action="store_true", help="输出详细的 Agent 推理轨迹（默认开启）")
+    parser.add_argument("--no-verbose", action="store_true", help="关闭详细日志输出")
 
-    #  Index Options
-    parser.add_argument("--index", type=str, help="File or directory path to index")
-    parser.add_argument("--chunk-size", type=int, default=2048, help="Chunk size for indexing (characters, default: 2048)")
+    # 索引选项
+    parser.add_argument("--index", type=str, help="待索引的文件或目录路径")
+    parser.add_argument("--chunk-size", type=int, default=2048, help="索引时的分块大小（字符数，默认：2048）")
 
     args = parser.parse_args()
     
@@ -246,7 +246,7 @@ def main():
     if args.corpus:
         config.knowledge_base.offline_corpus_path = args.corpus
     if args.top_k:
-        #Set retrieval depth for both offline and local backends simultaneously to keep behavior consistent
+        # 同时设置离线与本地后端的检索深度，保持行为一致
         config.knowledge_base.offline_top_k = args.top_k
         config.knowledge_base.local_top_k = args.top_k
 

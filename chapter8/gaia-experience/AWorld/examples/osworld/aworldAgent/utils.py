@@ -84,54 +84,54 @@ def sanitize_code(code):
 
 def prune_image_messages(memory_store: InMemoryMemoryStore, max_trajectory_length: int):
     """
-    Check the messages in memory_store and keep only the latest max_trajectory_length messages that contain images.
-    For earlier messages containing images, remove the image parts from their content.
+    检查 memory_store 中的消息，并仅保留最新的 max_trajectory_length 个包含图片的消息。
+    对于更早的包含图片的消息，会从其 content 中移除图片部分。
 
     Args:
-        memory_store (InMemoryMemoryStore): The instance of the in-memory store.
-        max_trajectory_length (int): The maximum number of image-containing messages to retain.
+        memory_store (InMemoryMemoryStore): 内存存储的对象实例。
+        max_trajectory_length (int): 希望保留的含图片消息的最大数量。
     """
-    # Step 1: Use memory_store's get_all method to retrieve all messages
+    # 步骤 1: 使用 memory_store 的 get_all 方法获取所有消息
     all_items = memory_store.get_all()
 
-    # Step 2: Filter out all messages that contain image content
+    # 步骤 2: 筛选出所有包含图片内容的消息
     image_messages = []
     for item in all_items:
         if isinstance(item.content, list):
             if any(isinstance(part, dict) and part.get('type') == 'image_url' for part in item.content):
                 image_messages.append(item)
 
-    # Step 3: Check if the number of image-containing messages exceeds the limit
+    # 步骤 3: 检查包含图片的消息数量是否超过限制
     if len(image_messages) <= max_trajectory_length:
         print("Number of image messages does not exceed the limit. No pruning needed.")
         return
 
-    # Step 4: Determine the old messages from which images need to be removed
-    # Since the list returned by get_all() is ordered by addition, items at the front are the oldest
+    # 步骤 4: 确定需要移除图片的旧消息
+    # 由于 get_all() 返回的列表是按添加顺序排列的，所以列表前面的项就是最旧的
     num_to_prune = len(image_messages) - max_trajectory_length
     messages_to_prune = image_messages[:num_to_prune]
 
     print(f"Found {len(image_messages)} image messages. Pruning the oldest {num_to_prune}.")
 
-    # Step 5: Iterate over the messages to be trimmed, update their content, and save using the store's update method
+    # 步骤 5: 遍历需要修剪的消息，更新其 content，并使用 store 的 update 方法保存
     for item_to_prune in messages_to_prune:
 
-        # Create a new content list containing only non-image parts
+        # 创建一个新的 content 列表，仅包含非图片部分
         new_content = [
             part for part in item_to_prune.content
             if not (isinstance(part, dict) and part.get('type') == 'image_url')
         ]
 
-        # Optional: If new_content has only one text element, it can be simplified to a string
+        # 可选：如果 new_content 中只剩下一个文本元素，可以将其简化为字符串
         if len(new_content) == 1 and new_content[0].get('type') == 'text':
             final_content = new_content[0].get('text', '')
         else:
             final_content = new_content
 
-        # Update the content attribute of the message object
+        # 更新消息对象的 content 属性
         item_to_prune.content = final_content
 
-        # Use memory_store's update method to persist the changes to the store
+        # 使用 memory_store 的 update 方法将更改持久化到 store 中
         memory_store.update(item_to_prune)
 
         print(f"Pruned image from message with ID: {item_to_prune.id}")

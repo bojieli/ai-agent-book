@@ -62,134 +62,134 @@ logger = logging.getLogger(__name__)
 
 
 def parse_arguments():
-    """Parse command line arguments."""
+    """解析命令行参数（Parse command line arguments）。"""
     parser = argparse.ArgumentParser(
         prog="run_with_experience.py",
         description=(
-            "Run Agent with \"learning from experience\" capability on GAIA benchmark (Experiment 8-1: Policy Summary).\n"
-            "Two modes supported: learning-mode distills successful trajectories into experience and stores them after task completion;\n"
-            "apply-experience retrieves the most similar historical experience before solving a task and injects it into the system prompt.\n"
-            "Use --compare to automatically perform A/B comparison, intuitively showing whether reusing experience improves GAIA scores."
+            "在 GAIA 基准上运行带“从经验中学习”能力的 Agent（实验 8-1：策略摘要）。\n"
+            "支持两种模式：学习模式（learning-mode）在任务成功后把轨迹提炼成经验并入库；\n"
+            "应用模式（apply-experience）在解题前检索最相似的历史经验注入系统提示词。\n"
+            "使用 --compare 可自动做 A/B 对照，直观展示“复用经验是否提升 GAIA 成绩”。"
         ),
         epilog=(
-            "Examples:\n"
-            "  # 1) Only parse arguments, view help (no API/dataset needed)\n"
+            "示例（Examples）：\n"
+            "  # 1) 仅解析参数、查看帮助（无需 API/数据集）\n"
             "  python run_with_experience.py --help\n\n"
-            "  # 2) Learning mode: distill experience from successful trajectories of the first 10 tasks\n"
+            "  # 2) 学习模式：从前 10 道题的成功轨迹中沉淀经验\n"
             "  python run_with_experience.py --learning-mode --start 0 --end 10\n\n"
-            "  # 3) Apply mode: use learned experience to solve tasks 10~20\n"
+            "  # 3) 应用模式：用已学到的经验解 10~20 题\n"
             "  python run_with_experience.py --apply-experience --start 10 --end 20\n\n"
-            "  # 4) A/B comparison: run the same batch of tasks twice (without/with experience) and compare accuracy\n"
-            "  #    (First accumulate experience on other tasks using learning-mode, then compare on unseen tasks to avoid data leakage)\n"
+            "  # 4) A/B 对照：同一批题分别在“无经验/有经验”下各跑一次并对比准确率\n"
+            "  #    （先用 learning-mode 在其它题上积累经验，再在未见过的题上对照，避免数据泄漏）\n"
             "  python run_with_experience.py --compare --start 10 --end 20 \\\n"
             "      --experience-db ./learned_experiences.json\n\n"
-            "  # 5) Specify main Agent model and result output path\n"
+            "  # 5) 指定主 Agent 模型与结果输出路径\n"
             "  python run_with_experience.py --apply-experience --model gpt-5.6-luna \\\n"
             "      --output ./results/exp_run.json --start 0 --end 5\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    # ---- Task set selection ----
+    # ---- 任务集选择（Task set selection）----
     parser.add_argument(
         "--start",
         type=int,
         default=0,
-        help="Dataset start index (default: 0)",
+        help="数据集起始下标（默认：0）",
     )
     parser.add_argument(
         "--end",
         type=int,
         default=20,
-        help="Dataset end index (exclusive, default: 20)",
+        help="数据集结束下标（不含，默认：20）",
     )
     parser.add_argument(
         "--q",
         type=str,
-        help="Specify a single task index or task_id; highest priority, overrides --start/--end",
+        help="指定单个题目下标或 task_id；优先级最高，会覆盖 --start/--end",
     )
     parser.add_argument(
         "--skip",
         action="store_true",
-        help="Skip if the task has been processed before",
+        help="若题目此前已处理过则跳过",
     )
     parser.add_argument(
         "--split",
         type=str,
         default="validation",
-        help="Dataset split, e.g., validation, test (default: validation)",
+        help="数据集划分，如 validation、test（默认：validation）",
     )
     parser.add_argument(
         "--blacklist_file_path",
         type=str,
         nargs="?",
-        help="Blacklist file path, e.g., blacklist.txt (task_ids in it will be skipped)",
+        help="黑名单文件路径，如 blacklist.txt（其中的 task_id 会被跳过）",
     )
 
-    # ---- Model & output ----
+    # ---- 模型与输出（Model & output）----
     parser.add_argument(
         "--model",
         type=str,
         default=None,
-        help="Model name used by the main Agent; if not set, reads environment variable LLM_MODEL_NAME (default: gpt-5.6-luna)",
+        help="主 Agent 使用的模型名；缺省时读取环境变量 LLM_MODEL_NAME（默认 gpt-5.6-luna）",
     )
     parser.add_argument(
         "--summary-model",
         type=str,
         default=DEFAULT_MODEL,
-        help="Model used for trajectory summarization (experience distillation) (default: gpt-5.6-luna)",
+        help="用于轨迹总结（经验提炼）的模型（默认：gpt-5.6-luna）",
     )
     parser.add_argument(
         "--embedding-model",
         type=str,
         default="all-MiniLM-L6-v2",
-        help="Sentence-transformers model for semantic retrieval (default: all-MiniLM-L6-v2)",
+        help="用于语义检索的 sentence-transformers 模型（默认：all-MiniLM-L6-v2）",
     )
     parser.add_argument(
         "--output",
         type=str,
         default=None,
-        help="Result JSON output path; if not set, writes to $AWORLD_WORKSPACE/experience_results.json",
+        help="结果 JSON 输出路径；缺省写入 $AWORLD_WORKSPACE/experience_results.json",
     )
 
-    # ---- Experience learning ----
+    # ---- 经验学习开关（Experience learning）----
     parser.add_argument(
         "--learning-mode",
         action="store_true",
-        help="Enable learning mode: capture successful trajectories and summarize them as reusable experience",
+        help="启用学习模式：捕获成功轨迹并总结为可复用经验",
     )
     parser.add_argument(
         "--apply-experience",
         action="store_true",
-        help="Enable apply mode: retrieve and inject relevant historical experience for new tasks",
+        help="启用应用模式：为新任务检索并注入相关历史经验",
     )
     parser.add_argument(
         "--compare",
         action="store_true",
-        help="A/B comparison mode: run the same batch of tasks twice (without/with experience) and compare accuracy",
+        help="A/B 对照模式：同一批题分别在“无经验/有经验”下各跑一次并对比准确率",
     )
     parser.add_argument(
         "--preload-kb",
         action="store_true",
-        help="Preload knowledge base from gaia-validation.jsonl (Note: do not preload on the same batch of tasks being evaluated to avoid answer leakage)",
+        help="从 gaia-validation.jsonl 预加载知识库（注意：勿在评测同一批题上预加载，以免泄漏答案）",
     )
     parser.add_argument(
         "--kb-path",
         type=str,
         default="./kb_index",
-        help="Knowledge base index storage path (default: ./kb_index)",
+        help="知识库索引存储路径（默认：./kb_index）",
     )
     parser.add_argument(
         "--experience-db",
         type=str,
         default="./learned_experiences.json",
-        help="Storage path for learned experiences (default: ./learned_experiences.json)",
+        help="已学习经验的存储路径（默认：./learned_experiences.json）",
     )
     parser.add_argument(
         "--validation-file",
         type=str,
         default="gaia-validation.jsonl",
-        help="Path to gaia-validation.jsonl for preloading",
+        help="用于预加载的 gaia-validation.jsonl 路径",
     )
 
     return parser.parse_args()
@@ -246,7 +246,7 @@ async def run_with_experience(args):
     
     # Setup agent configuration. The main agent model can be overridden via the
     # --model CLI flag; otherwise it falls back to the LLM_MODEL_NAME env var.
-    #OpenAI direct connection preferred; automatically falls back to OpenRouter when key is missing (see llm_env.resolve_llm).
+    # OpenAI 直连优先，缺 Key 时自动走 OpenRouter 兜底（见 llm_env.resolve_llm）。
     agent_config = AgentConfig(
         **resolve_llm(model_override=args.model),
         llm_temperature=float(os.getenv("LLM_TEMPERATURE", "0.0"))

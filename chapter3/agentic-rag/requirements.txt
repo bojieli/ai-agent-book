@@ -1,6 +1,6 @@
 openai>=1.0.0
 requests>=2.31.0
 python-dotenv>=1.0.0
-# Optional: Chinese word segmentation for offline BM25 backend (offline_retriever.py / compare_offline.py).
-# If not installed, it will automatically fall back to character n-gram segmentation; functionality is unaffected, only recall is slightly reduced.
+# 可选：离线 BM25 后端（offline_retriever.py / compare_offline.py）的中文分词。
+# 未安装时会自动回退到字符 n-gram 分词，功能不受影响，仅召回略降。
 jieba>=0.42.1

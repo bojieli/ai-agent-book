@@ -1,5 +1,5 @@
 # coding: utf-8
 # Copyright (c) 2025 inclusionAI.
 """
-TeamSwarm example module
+TeamSwarm示例模块
 """ 

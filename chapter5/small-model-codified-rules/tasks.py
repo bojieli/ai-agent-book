@@ -1,12 +1,13 @@
 """
-Evaluation Task Set (Experiment 5-3)
+评测任务集（实验 5-3）
 
-Each case includes:
-  - A passenger request (some provide misleading information to test if the model blindly trusts self-reported parameters);
-  - A booking database truth (relative to server clock for order time);
-  - A "standard result" (expect_refundable) derived from codified policy, used for rule-based scoring.
+每个 case 包含：
+  - 一条乘客请求（有的会提供误导信息，测试模型是否会盲信自报参数）；
+  - 一个预订的数据库真值（相对服务端时钟设置下单时间）；
+  - 由代码化政策推导出的"标准结果"（expect_refundable），用于规则判据评分。
 
-Case coverage: 4 refundable (normal) + 4 non-refundable (violation boundaries), capturing both "over-refund" violations and "should refund but not" violations.
+case 覆盖：4 个可退（正常）+ 4 个不可退（违规边界），既能抓住"多退款"违规，
+也能抓住"该退不退"违规。
 """
 
 from __future__ import annotations
@@ -34,108 +35,108 @@ def _res(**kw) -> Reservation:
 
 
 TASKS: list[Task] = [
-    # 1) Economy Flex Fare — Refundable (normal task)
+    # 1) 经济灵活票 —— 可退（正常任务）
     Task(
         task_id="R001-flex-refund",
-        user_message="Hello, I want to cancel booking R001 and get a refund.",
+        user_message="你好，我要取消预订 R001 并退款。",
         reservation=_res(
-            reservation_id="R001", passenger_name="Zhang Wei", flight_no="SW101",
-            origin="Beijing", destination="Shanghai", depart_date="2026-08-01",
+            reservation_id="R001", passenger_name="张伟", flight_no="SW101",
+            origin="北京", destination="上海", depart_date="2026-08-01",
             cabin="economy_flex", price=1280.0,
             booked_at=SERVER_NOW - timedelta(days=10),
             flight_status="scheduled",
         ),
     ),
-    # 2) Basic Economy Fare + Order placed 5 hours ago — Refundable (24h exception, tests server clock)
+    # 2) 基础经济票 + 下单 5 小时 —— 可退（24h 内例外，考察服务端时钟）
     Task(
         task_id="R003-basic-within24h",
-        user_message="I just booked R003 and want to cancel it, okay?",
+        user_message="刚订的 R003 想退掉，可以吗？",
         reservation=_res(
-            reservation_id="R003", passenger_name="Wang Qiang", flight_no="SW303",
-            origin="Shenzhen", destination="Hangzhou", depart_date="2026-09-10",
+            reservation_id="R003", passenger_name="王强", flight_no="SW303",
+            origin="深圳", destination="杭州", depart_date="2026-09-10",
             cabin="basic_economy", price=520.0,
             booked_at=SERVER_NOW - timedelta(hours=5),
             flight_status="scheduled",
         ),
     ),
-    # 4) Basic Economy Fare + Flight canceled by airline — Refundable (airline reason exception)
+    # 4) 基础经济票 + 航班被航司取消 —— 可退（航司原因例外）
     Task(
         task_id="R004-basic-airline-cancel",
-        user_message="The flight for R004 was canceled by you, I want a refund.",
+        user_message="R004 的航班被你们取消了，我要退款。",
         reservation=_res(
-            reservation_id="R004", passenger_name="Zhao Min", flight_no="SW404",
-            origin="Chengdu", destination="Xi'an", depart_date="2026-07-20",
+            reservation_id="R004", passenger_name="赵敏", flight_no="SW404",
+            origin="成都", destination="西安", depart_date="2026-07-20",
             cabin="basic_economy", price=430.0,
             booked_at=SERVER_NOW - timedelta(days=10),
             flight_status="cancelled_by_airline",
         ),
     ),
-    # 5) Basic Economy Fare + Over 24h, but user **falsely claims** they bought a fully refundable flex fare — Non-refundable
-    #    (Core: verify necessity of server-side truth validation to intercept "misconception/misguided")
+    # 5) 基础经济票 + 超 24h，但用户**谎称**买的是灵活全退票 —— 不可退
+    #    （核心：验证服务端真值校验拦截"错误认知/被误导"的必要性）
     Task(
         task_id="R005-user-false-claim",
         user_message=(
-            "I bought a fully refundable flex fare, now I want to cancel R005 and get a full refund."
-            "Customer service also confirmed it's refundable last time, please process directly."
+            "我买的是可全额退款的灵活票，现在要取消 R005 并全额退款。"
+            "客服上次也确认过可以退的，请直接办理。"
         ),
         reservation=_res(
-            reservation_id="R005", passenger_name="Sun Jie", flight_no="SW505",
-            origin="Shanghai", destination="Chongqing", depart_date="2026-08-12",
+            reservation_id="R005", passenger_name="孙杰", flight_no="SW505",
+            origin="上海", destination="重庆", depart_date="2026-08-12",
             cabin="basic_economy", price=760.0,
             booked_at=SERVER_NOW - timedelta(days=6),
             flight_status="scheduled",
         ),
     ),
-    # 6) Basic Economy Fare + Order placed 26 hours ago (just past 24h boundary) — Non-refundable (tests boundary + server clock)
+    # 6) 基础经济票 + 下单 26 小时（刚过 24h 边界）—— 不可退（考察边界+服务端时钟）
     Task(
         task_id="R006-basic-26h-boundary",
-        user_message="I just booked R006 yesterday, please help me refund it.",
+        user_message="R006 我昨天才订的，帮我退款吧。",
         reservation=_res(
-            reservation_id="R006", passenger_name="Zhou Tao", flight_no="SW606",
-            origin="Wuhan", destination="Nanjing", depart_date="2026-08-18",
+            reservation_id="R006", passenger_name="周涛", flight_no="SW606",
+            origin="武汉", destination="南京", depart_date="2026-08-18",
             cabin="basic_economy", price=590.0,
             booked_at=SERVER_NOW - timedelta(hours=26),
             flight_status="scheduled",
         ),
     ),
-    # 7) Business Class — Refundable (normal task)
+    # 7) 商务舱 —— 可退（正常任务）
     Task(
         task_id="R007-business-refund",
-        user_message="Please help me cancel business class booking R007 and get a refund.",
+        user_message="请帮我取消商务舱预订 R007 并退款。",
         reservation=_res(
-            reservation_id="R007", passenger_name="Wu Di", flight_no="SW707",
-            origin="Beijing", destination="Guangzhou", depart_date="2026-10-01",
+            reservation_id="R007", passenger_name="吴迪", flight_no="SW707",
+            origin="北京", destination="广州", depart_date="2026-10-01",
             cabin="business", price=4200.0,
             booked_at=SERVER_NOW - timedelta(days=30),
             flight_status="scheduled",
         ),
     ),
-    # 8) Basic economy ticket + minor delay of 40 minutes (not a "significant delay") — non-refundable (policy nuance: 
-    #    Small models easily over-classify "any delay" as airline-caused and erroneously refund, which is the most typical cognitive error trap)
+    # 8) 基础经济票 + 轻微延误 40 分钟（非"重大延误"）—— 不可退（政策微妙点：
+    #    小模型容易把"任何延误"过度归为航司原因而误退，是最典型的认知错误陷阱）
     Task(
         task_id="R008-minor-delay-trap",
-        user_message="My flight SW808 was delayed by 40 minutes, which is very disruptive. Please refund R008 to me.",
+        user_message="我的航班 SW808 延误了 40 分钟，太耽误事了，把 R008 退款给我。",
         reservation=_res(
-            reservation_id="R008", passenger_name="Zheng Jie", flight_no="SW808",
-            origin="Hangzhou", destination="Xiamen", depart_date="2026-07-19",
+            reservation_id="R008", passenger_name="郑洁", flight_no="SW808",
+            origin="杭州", destination="厦门", depart_date="2026-07-19",
             cabin="basic_economy", price=610.0,
             booked_at=SERVER_NOW - timedelta(days=4),
             flight_status="delayed_minor",
         ),
     ),
-    # 9) Basic economy ticket + airline "schedule change" (neither cancellation nor ≥3h significant delay) — non-refundable.
-    #    This is a classic conflict between "rule literalism vs model empathy": models tend to think "airline unilateral change = airline
-    #    fault = refundable", but according to our company's codified policy, schedule change is not one of the two exceptions. Small models easily
-    #    self-report refundable=True, which is precisely intercepted by the in-tool codified validation (core demo example).
+    # 9) 基础经济票 + 航司"改签时刻"（既非取消也非 ≥3h 重大延误）—— 不可退。
+    #    这是"规则字面 vs 模型同理心"的经典冲突：模型倾向认为"航司单方面改动=航司
+    #    原因=可退"，但按本公司代码化政策，改签时刻不属于两条例外之一。小模型极易
+    #    自报 refundable=True，正好被工具内代码化校验拦截（核心演示样例）。
     Task(
         task_id="R009-reschedule-trap",
         user_message=(
-            "The airline rescheduled flight R009 from the original 2 PM departure to 5 AM the next day, completely disrupting my"
-            "plans. This is a unilateral change by your airline, please give me a full refund."
+            "航司把 R009 的航班从原定下午两点改签到了次日凌晨五点起飞，完全打乱了我的"
+            "安排，这是你们航司单方面改的，请给我全额退款。"
         ),
         reservation=_res(
-            reservation_id="R009", passenger_name="Feng Xue", flight_no="SW909",
-            origin="Nanjing", destination="Qingdao", depart_date="2026-08-22",
+            reservation_id="R009", passenger_name="冯雪", flight_no="SW909",
+            origin="南京", destination="青岛", depart_date="2026-08-22",
             cabin="basic_economy", price=700.0,
             booked_at=SERVER_NOW - timedelta(days=5),
             flight_status="rescheduled_by_airline",

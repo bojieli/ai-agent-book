@@ -1,96 +1,96 @@
 {
-  "description": "Context-aware retrieval vs. traditional chunking retrieval recall evaluation set (corresponding to Experiment 3-11). gold_chunk_id is the manually annotated relevant text chunk, with annotation basis in the note field. The corpus consists of indexed chunks of the \"Constitution\" and \"Prosecutor Law\" from document_store.json.",
+  "description": "上下文感知检索 vs. 传统分块的检索召回评测集（对应实验 3-11）。gold_chunk_id 为人工标注的相关文本块，标注依据见 note 字段。语料为 document_store.json 中已建好索引的《宪法》与《检察官法》分块。",
   "corpus": "document_store.json",
   "queries": [
     {
       "id": "q01",
-      "query": "In which year was the Constitution adopted? How many amendments has it undergone since then?",
-      "gold_chunk_id": "Constitution_chunk_0",
-      "note": "chunk_0 is the opening of the Constitution, listing the adoption date in 1982 and the dates of all subsequent amendments."
+      "query": "宪法是哪一年通过的？后来经过了几次修正？",
+      "gold_chunk_id": "宪法_chunk_0",
+      "note": "chunk_0 为宪法开篇，列举 1982 年通过日期及历次修正案日期。"
     },
     {
       "id": "q02",
-      "query": "What is the fundamental task of the state?",
-      "gold_chunk_id": "Constitution_chunk_1",
-      "note": "chunk_1's preamble explicitly states \"the fundamental task of the state is...\"."
+      "query": "国家的根本任务是什么？",
+      "gold_chunk_id": "宪法_chunk_1",
+      "note": "chunk_1 序言明确写明“国家的根本任务是……”。"
     },
     {
       "id": "q03",
-      "query": "What are the basic principles for handling ethnic relations in China and the Five Principles in foreign policy?",
-      "gold_chunk_id": "Constitution_chunk_2",
-      "note": "chunk_2 elaborates on socialist ethnic relations and the Five Principles of Peaceful Coexistence."
+      "query": "我国处理民族关系的基本原则和对外政策中的五项原则是什么？",
+      "gold_chunk_id": "宪法_chunk_2",
+      "note": "chunk_2 阐述社会主义民族关系与和平共处五项原则。"
     },
     {
       "id": "q04",
-      "query": "How is regional autonomy implemented in areas where ethnic minorities live in concentrated communities?",
-      "gold_chunk_id": "Constitution_chunk_3",
-      "note": "chunk_3, around Article 4, stipulates regional ethnic autonomy and rule of law."
+      "query": "少数民族聚居的地方如何实行区域自治？",
+      "gold_chunk_id": "宪法_chunk_3",
+      "note": "chunk_3 第四条前后规定民族区域自治与依法治国。"
     },
     {
       "id": "q05",
-      "query": "How does the Constitution protect non-public sectors of the economy such as individual and private economies?",
-      "gold_chunk_id": "Constitution_chunk_4",
-      "note": "chunk_4 contains Articles 11 to 13, stipulating the protection of non-public sectors and private property."
+      "query": "宪法如何保护个体经济、私营经济等非公有制经济？",
+      "gold_chunk_id": "宪法_chunk_4",
+      "note": "chunk_4 含第十一至十三条，规定非公有制经济与私有财产保护。"
     },
     {
       "id": "q06",
-      "query": "What are the provisions of the Constitution regarding the establishment of special administrative regions and the rights of foreigners in China?",
-      "gold_chunk_id": "Constitution_chunk_6",
-      "note": "chunk_6 contains Articles 31 and 32, covering special administrative regions and provisions for foreigners."
+      "query": "宪法关于设立特别行政区以及在华外国人权利的规定是什么？",
+      "gold_chunk_id": "宪法_chunk_6",
+      "note": "chunk_6 含第三十一、三十二条，特别行政区与外国人条款。"
     },
     {
       "id": "q07",
-      "query": "What supervisory rights do citizens have against illegal or derelict acts of state functionaries?",
-      "gold_chunk_id": "Constitution_chunk_7",
-      "note": "chunk_7, Article 41, stipulates the rights to criticize, suggest, appeal, accuse, and report."
+      "query": "公民对国家机关工作人员的违法失职行为享有哪些监督权利？",
+      "gold_chunk_id": "宪法_chunk_7",
+      "note": "chunk_7 第四十一条规定批评、建议、申诉、控告、检举权。"
     },
     {
       "id": "q08",
-      "query": "What are the functions and powers of the Standing Committee of the National People's Congress?",
-      "gold_chunk_id": "Constitution_chunk_10",
-      "note": "Flagship comparison case: chunk_10's original text begins with \"(4) Interpret the law...\", with neither \"Standing Committee\" nor \"functions and powers\" in the body; it can only be anchored by the context prefix (\"Article 67: The Standing Committee of the National People's Congress exercises the following functions and powers\"). Without context, it is easily preempted by chunk_9/chunk_11."
+      "query": "全国人民代表大会常务委员会有哪些职权？",
+      "gold_chunk_id": "宪法_chunk_10",
+      "note": "旗舰对照案例：chunk_10 原文以“（四）解释法律……”开头，正文既无“常务委员会”也无“职权”字样，纯靠上下文前缀（“第六十七条 全国人民代表大会常务委员会行使下列职权”）才能被锚定；无上下文时极易被 chunk_9/chunk_11 抢占。"
     },
     {
       "id": "q09",
-      "query": "What are the functions and powers of the President of the state?",
-      "gold_chunk_id": "Constitution_chunk_12",
-      "note": "chunk_12 contains Articles 80 to 82, covering the President's powers to promulgate laws, appoint and remove the Premier of the State Council, etc."
+      "query": "国家主席有哪些职权？",
+      "gold_chunk_id": "宪法_chunk_12",
+      "note": "chunk_12 含第八十至八十二条，国家主席公布法律、任免国务院总理等职权。"
     },
     {
       "id": "q10",
-      "query": "How are the terms and election methods of local people's congresses at various levels stipulated?",
-      "gold_chunk_id": "Constitution_chunk_14",
-      "note": "chunk_14 Articles 97 to 99 stipulate the election of local people's congress deputies and their five-year term."
+      "query": "地方各级人民代表大会的任期和代表选举方式是怎样规定的？",
+      "gold_chunk_id": "宪法_chunk_14",
+      "note": "chunk_14 第九十七至九十九条规定地方人大代表选举与五年任期。"
     },
     {
       "id": "q11",
-      "query": "What are the restrictions on holding concurrent positions for members of the standing committees of local people's congresses at or above the county level?",
-      "gold_chunk_id": "Constitution_chunk_15",
-      "note": "chunk_15 Stipulates that members of the standing committee shall not hold positions in administrative, supervisory, judicial, or procuratorial organs."
+      "query": "县级以上地方各级人民代表大会常务委员会组成人员有什么兼职限制？",
+      "gold_chunk_id": "宪法_chunk_15",
+      "note": "chunk_15 规定常委会组成人员不得担任行政、监察、审判、检察机关职务。"
     },
     {
       "id": "q12",
-      "query": "What are the nature, composition, and term of office of the supervisory commission?",
-      "gold_chunk_id": "Constitution_chunk_17",
-      "note": "chunk_17 Section 7, Supervisory Commission, stipulates its nature, composition, and term of office."
+      "query": "监察委员会的性质、组成和任期是怎样规定的？",
+      "gold_chunk_id": "宪法_chunk_17",
+      "note": "chunk_17 第七节监察委员会，规定其性质、组成与任期。"
     },
     {
       "id": "q13",
-      "query": "When was the Judges Law revised?",
-      "gold_chunk_id": "JudgesLaw_2019_04_23_chunk_0",
-      "note": "chunk_0 Lists the Judges Law passed in 1995, its subsequent amendments, and the revision date in 2019."
+      "query": "检察官法是什么时候修订的？",
+      "gold_chunk_id": "检察官法_2019_04_23_chunk_0",
+      "note": "chunk_0 列举检察官法 1995 年通过及历次修正、2019 年修订日期。"
     },
     {
       "id": "q14",
-      "query": "What are the members of the judges selection committee? What conditions are required for lawyers to participate in open selection?",
-      "gold_chunk_id": "JudgesLaw_2019_04_23_chunk_2",
-      "note": "chunk_2 Article 16 stipulates the composition of the provincial judges selection committee and the conditions for open selection of lawyers."
+      "query": "检察官遴选委员会由哪些人员组成？律师参加公开选拔需要什么条件？",
+      "gold_chunk_id": "检察官法_2019_04_23_chunk_2",
+      "note": "chunk_2 第十六条规定省级检察官遴选委员会组成及律师公开选拔条件。"
     },
     {
       "id": "q15",
-      "query": "Under what circumstances should a judge be removed from office?",
-      "gold_chunk_id": "JudgesLaw_2019_04_23_chunk_3",
-      "note": "chunk_3 Lists the circumstances for removal of a judge and the revocation procedure for appointments made in violation of conditions."
+      "query": "检察官在哪些情形下应当予以免职？",
+      "gold_chunk_id": "检察官法_2019_04_23_chunk_3",
+      "note": "chunk_3 列举检察官免职情形及违反条件任命的撤销程序。"
     }
   ]
 }

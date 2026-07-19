@@ -1,24 +1,29 @@
 """
-event_loop_demo.py —— End-to-end demonstration of an event-driven Agent (single process, can run offline)
+event_loop_demo.py —— 事件驱动 Agent 的端到端演示（单进程、可离线运行）
 
-The section "Event-Driven Asynchronous Agent" in this chapter points out that a true "proactive service" requires not only that the Agent can periodically check the world, but also that the world can actively notify the Agent. This script runs this concept with minimal code:
+本章"事件驱动的异步 Agent"一节指出：真正的"主动服务"不仅需要 Agent 能定时
+检查世界，更需要世界能主动通知 Agent。本脚本用最小的代码把这一点跑起来——
 
-  1. Register several "event triggers" (trigger sources), each running in a background thread, pushing a structured Event into a unified event queue at the moment the event actually occurs:
-       - OneShotTimer —— corresponds to the "one-shot timer" of set_timer in the book
-       - RecurringTimer —— corresponds to the "recurring timer" of set_timer in the book
-       - FileWatchTrigger —— corresponds to file change triggers in platforms like n8n
-  2. The EventLoop takes events one by one from the queue and wakes up the Agent to process them — this is the complete closed loop of "Agent registration, external triggering": declare what events you care about at registration time, and be asynchronously awakened when triggered.
+  1. 注册若干"事件触发器"（trigger source），每个触发器在后台线程里运行，
+     在事件真正发生的那一刻把一个结构化 Event 推入统一的事件队列：
+       - 一次性定时器 OneShotTimer      —— 对应书中 set_timer 的"一次性定时器"
+       - 循环定时器   RecurringTimer     —— 对应书中 set_timer 的"循环定时器"
+       - 文件监听     FileWatchTrigger   —— 对应 n8n 等平台的文件变更触发器
+  2. 事件循环 EventLoop 从队列里逐个取出事件，唤醒 Agent 处理——这正是
+     "Agent 注册、外部触发"的完整闭环：注册时声明关心什么事件，触发时被异步唤醒。
 
-Unlike server.py / client.py which require starting an HTTP server, this script plays both the "external world" and the "Agent" in a single process, making it suitable for intuitively demonstrating event-driven behavior.
+与需要起 HTTP 服务器的 server.py / client.py 不同，本脚本在单个进程里同时扮演
+"外部世界"和"Agent"，因此适合用来直观演示事件驱动的行为。
 
-Offline mode (--mock): Does not call the LLM, uses a "mock action" to print the processing after the Agent is awakened, allowing observation of the complete trigger→wake→process closed loop in an environment without an API Key.
-Real mode (default): Connects to EventTriggeredAgent, where the LLM actually processes each event.
+离线模式（--mock）：不调用大模型，用一个"模拟动作"打印 Agent 被唤醒后的处理
+过程，可在没有 API Key 的环境下观察完整的触发→唤醒→处理闭环。
+真实模式（默认）：接入 EventTriggeredAgent，由大模型真正处理每个事件。
 
-Usage examples:
-    python event_loop_demo.py --mock                       # Offline demonstration of all triggers
-    python event_loop_demo.py --mock --trigger timer       # Demonstrate only one-shot timer
+用法示例：
+    python event_loop_demo.py --mock                       # 离线演示全部触发器
+    python event_loop_demo.py --mock --trigger timer       # 只演示一次性定时器
     python event_loop_demo.py --mock --trigger recurring --interval 3 --duration 12
-    python event_loop_demo.py --trigger file --watch-dir ./watched   # Real Agent processes file events
+    python event_loop_demo.py --trigger file --watch-dir ./watched   # 真实 Agent 处理文件事件
 """
 
 import os
@@ -38,15 +43,15 @@ logger = logging.getLogger("event_loop")
 
 
 # ============================================================================
-# Event trigger (trigger source)
+# 事件触发器（trigger source）
 # ============================================================================
 
 class TriggerSource(threading.Thread):
-    """Event trigger base class: runs in a background thread and pushes events into a shared event queue.
+    """事件触发器基类：在后台线程中运行，把事件推入共享的事件队列。
 
-    Registration is embodied by instantiating and calling start(); firing is embodied in run()
-    calling self.emit(event) when conditions are met. This corresponds to the two moments in the book:
-    "registration is when the Agent actively calls the tool, firing is when an external event asynchronously calls back."
+    注册（register）体现在实例化并 start()；触发（fire）体现在 run() 中
+    满足条件时调用 self.emit(event)。这与书中"注册时由 Agent 主动调用工具、
+    触发时由外部事件异步回调"的两个时刻一一对应。
     """
 
     def __init__(self, name: str, event_queue: "queue.Queue[Event]"):
@@ -55,8 +60,8 @@ class TriggerSource(threading.Thread):
         self._stop = threading.Event()
 
     def emit(self, event: Event):
-        """Trigger: push the event into the event queue and wake up the event loop."""
-        logger.info(f"⚡ [{self.name}] Trigger event -> {event.event_type.value}: {event.content}")
+        """触发：把事件推入事件队列，唤醒事件循环。"""
+        logger.info(f"⚡ [{self.name}] 触发事件 -> {event.event_type.value}: {event.content}")
         self.event_queue.put(event)
 
     def stop(self):
@@ -64,9 +69,10 @@ class TriggerSource(threading.Thread):
 
 
 class OneShotTimer(TriggerSource):
-    """One-shot timer: triggers the timer_trigger event once after a delay of `delay` seconds.
+    """一次性定时器：延迟 delay 秒后触发一次 timer_trigger 事件。
 
-    Corresponds to tasks with a clear point in time, such as "the user asks to call the DMV, it is currently Saturday, and the Agent sets 'call the DMV at 10:00 AM next Monday'" as described in the book.
+    对应书中"用户要求给 DMV 打电话，当前是周六，Agent 设置'下周一上午 10:00
+    致电 DMV'"这类有明确时间点的任务。
     """
 
     def __init__(self, event_queue, delay: float, content: str, timer_id: str = "oneshot"):
@@ -76,7 +82,7 @@ class OneShotTimer(TriggerSource):
         self.timer_id = timer_id
 
     def run(self):
-        logger.info(f"⏱️  [{self.name}] Registered:{self.delay:.0f} trigger after seconds")
+        logger.info(f"⏱️  [{self.name}] 已注册：{self.delay:.0f} 秒后触发")
         if self._stop.wait(self.delay):
             return
         self.emit(Event(
@@ -88,10 +94,10 @@ class OneShotTimer(TriggerSource):
 
 
 class RecurringTimer(TriggerSource):
-    """Cycle timer: triggers the timer_trigger event every interval seconds.
+    """循环定时器：每隔 interval 秒触发一次 timer_trigger 事件。
 
-    Corresponds to "check server health every hour" and "send progress report every Friday" in the book, as well as
-    OpenClaw Heartbeat-style periodic polling.
+    对应书中"每小时检查一次服务器健康状况""每周五发送进展报告"，以及
+    OpenClaw Heartbeat 式的定时轮询。
     """
 
     def __init__(self, event_queue, interval: float, content: str, timer_id: str = "recurring"):
@@ -101,23 +107,23 @@ class RecurringTimer(TriggerSource):
         self.timer_id = timer_id
 
     def run(self):
-        logger.info(f"🔁 [{self.name}] Registered: every {self.interval:.0f} triggered once per second")
+        logger.info(f"🔁 [{self.name}] 已注册：每 {self.interval:.0f} 秒触发一次")
         tick = 0
         while not self._stop.wait(self.interval):
             tick += 1
             self.emit(Event(
                 event_type=EventType.TIMER_TRIGGER,
-                content=f"{self.content}(No. {tick} times)",
+                content=f"{self.content}（第 {tick} 次）",
                 metadata={"timer_id": self.timer_id, "kind": "recurring",
                           "interval_seconds": self.interval, "tick": tick},
             ))
 
 
 class FileWatchTrigger(TriggerSource):
-    """File monitoring: Poll the directory and trigger the file_change event when new or modified files are detected.
+    """文件监听：轮询目录，发现新增或被修改的文件时触发 file_change 事件。
 
-    Corresponds to the "Trigger ecosystem of workflow platforms like n8n: Webhooks, timers, emails, database
-    changes, file monitoring" in the book. Here, polling is used for implementation, without relying on third-party libraries, making it easy to run offline across platforms.
+    对应书中"n8n 等工作流平台的触发器生态：Webhook、定时器、邮件、数据库
+    变更、文件监听"。这里用轮询实现，不依赖第三方库，便于跨平台离线运行。
     """
 
     def __init__(self, event_queue, watch_dir: str, poll_interval: float = 1.0):
@@ -139,8 +145,8 @@ class FileWatchTrigger(TriggerSource):
     def run(self):
         os.makedirs(self.watch_dir, exist_ok=True)
         self._snapshot = self._scan()
-        logger.info(f"👀 [{self.name}] Registered: polling interval {self.poll_interval:.0f} seconds"
-                    f"(currently has {len(self._snapshot)} files)")
+        logger.info(f"👀 [{self.name}] 已注册：轮询间隔 {self.poll_interval:.0f} 秒"
+                    f"（当前已有 {len(self._snapshot)} 个文件）")
         while not self._stop.wait(self.poll_interval):
             current = self._scan()
             for name, mtime in current.items():
@@ -152,24 +158,22 @@ class FileWatchTrigger(TriggerSource):
                     continue
                 self.emit(Event(
                     event_type=EventType.FILE_CHANGE,
-                    content=f"File detected{'New' if change == 'created' else 'Modify'}, please review its content and provide brief handling suggestions.",
+                    content=f"检测到文件{'新增' if change == 'created' else '修改'}，请查看其内容并给出简要处理建议。",
                     metadata={"path": os.path.join(self.watch_dir, name), "change": change},
                 ))
             self._snapshot = current
 
 
 # ============================================================================
-# event loop
+# 事件循环（event loop）
 # ============================================================================
 
 class EventLoop:
-    """Unified event queue + single-threaded dispatch.
+    """统一事件队列 + 单线程分发。
 
-    All triggers push heterogeneous events into the same queue; the event loop
-    dequeues them in arrival order, each event waking the Agent once for
-    processing. This is the minimal implementation of the book's principle:
-    "Model all inputs uniformly as an event stream, driving the Agent's
-    thinking and actions through an event loop."
+    所有触发器把异构事件推入同一个队列；事件循环按到达顺序取出，每个事件
+    唤醒一次 Agent 处理。这正是书中"将所有输入统一建模为事件流，通过事件
+    循环驱动 Agent 的思考和行动"的最小实现。
     """
 
     def __init__(self, dispatch: Callable[[Event], None]):
@@ -182,42 +186,42 @@ class EventLoop:
         self.triggers.append(trigger)
 
     def run(self, duration: float):
-        """Start all triggers, stop after running for duration seconds."""
+        """启动所有触发器，运行 duration 秒后停止。"""
         deadline = time.monotonic() + duration
         for t in self.triggers:
             t.start()
 
-        logger.info(f"🟢 Event loop started, will run {duration:.0f} seconds, waiting for event to wake up Agent...\n")
+        logger.info(f"🟢 事件循环启动，将运行 {duration:.0f} 秒，等待事件唤醒 Agent...\n")
         while time.monotonic() < deadline:
             try:
                 event = self.event_queue.get(timeout=0.5)
             except queue.Empty:
                 continue
             self.processed += 1
-            logger.info(f"\n{'='*80}\n📥 Event loop fetches the {self.processed} event"
-                        f" -> Wake up Agent\n{'='*80}")
+            logger.info(f"\n{'='*80}\n📥 事件循环取出第 {self.processed} 个事件"
+                        f" -> 唤醒 Agent\n{'='*80}")
             try:
                 self.dispatch(event)
-            except Exception as e:  # noqa: BLE001 - do not want a single event exception to terminate the loop in the demo
-                logger.error(f"❌ Error processing event: {e}")
+            except Exception as e:  # noqa: BLE001 - 演示中不希望单个事件异常终止循环
+                logger.error(f"❌ 处理事件时出错: {e}")
 
         for t in self.triggers:
             t.stop()
-        logger.info(f"\n🔴 Event loop ended, processed {self.processed} events.")
+        logger.info(f"\n🔴 事件循环结束，共处理 {self.processed} 个事件。")
 
 
 # ============================================================================
-# Dispatch handler: simulated action or real Agent
+# 分发处理器：模拟动作 or 真实 Agent
 # ============================================================================
 
 def make_mock_dispatch() -> Callable[[Event], None]:
-    """Offline simulation handler: does not call the LLM, prints the processing flow after the Agent is awakened."""
+    """离线模拟处理器：不调用大模型，打印 Agent 被唤醒后的处理过程。"""
 
     def dispatch(event: Event):
-        logger.info(f"🤖 Agent awakened, received message: {event.to_user_message()}")
-        # Replace LLM + tool call with a deterministic "simulated action"
+        logger.info(f"🤖 Agent 被唤醒，收到消息: {event.to_user_message()}")
+        # 用一个确定性的"模拟动作"代替大模型 + 工具调用
         if event.event_type == EventType.TIMER_TRIGGER:
-            action = "Read scheduled task context -> perform routine check -> report result"
+            action = "读取定时任务上下文 -> 执行例行检查 -> 汇报结果"
         elif event.event_type == EventType.FILE_CHANGE:
             path = event.metadata.get("path", "")
             preview = ""
@@ -225,31 +229,31 @@ def make_mock_dispatch() -> Callable[[Event], None]:
                 with open(path, "r", encoding="utf-8", errors="replace") as f:
                     preview = f.read(120).replace("\n", " ")
             except OSError:
-                preview = "(Unable to read file content)"
-            action = f"Read file {os.path.basename(path)} -> content preview: {preview!r} -> generate processing suggestion"
+                preview = "(无法读取文件内容)"
+            action = f"读取文件 {os.path.basename(path)} -> 内容预览: {preview!r} -> 生成处理建议"
         else:
-            action = "Parse event -> call relevant tools -> generate processing result"
-        logger.info(f"🛠️  [Simulated action] {action}")
-        logger.info(f"✅ Agent processing complete: responded to {event.event_type.value} events")
+            action = "解析事件 -> 调用相关工具 -> 生成处理结果"
+        logger.info(f"🛠️  [模拟动作] {action}")
+        logger.info(f"✅ Agent 处理完成: 已响应 {event.event_type.value} 事件")
 
     return dispatch
 
 
 def make_agent_dispatch(provider: str, model: Optional[str],
                         max_iterations: int) -> Callable[[Event], None]:
-    """Real handler: connects to EventTriggeredAgent, each event is processed by the LLM."""
+    """真实处理器：接入 EventTriggeredAgent，由大模型处理每个事件。"""
     from agent import EventTriggeredAgent, SystemHintConfig, resolve_provider_and_key
 
-    # General fallback: when the key for the direct provider is missing, if OPENROUTER_API_KEY is set, automatically switch to openrouter.
+    # 通用兜底：直连 provider 的 key 缺失时，若有 OPENROUTER_API_KEY 则自动改走 openrouter。
     resolved_provider, api_key = resolve_provider_and_key(provider)
     if not api_key:
-        print(f"❌ No API Key detected for provider '{provider}' (nor OPENROUTER_API_KEY fallback configured).")
-        print(f"   Please set the environment variable first, or switch to offline demo: python event_loop_demo.py --mock")
+        print(f"❌ 未检测到 provider '{provider}' 对应的 API Key（也未配置 OPENROUTER_API_KEY 兜底）。")
+        print(f"   请先设置环境变量，或改用离线演示：python event_loop_demo.py --mock")
         sys.exit(1)
     if resolved_provider != provider:
-        print(f"ℹ️  provider '{provider}' has no available key, automatically switched to OpenRouter fallback (openrouter).")
+        print(f"ℹ️  provider '{provider}' 无可用 Key，已自动改用 OpenRouter 兜底（openrouter）。")
         provider = resolved_provider
-        # Keep explicit models already in provider/model form; otherwise let openrouter use its default model.
+        # 保留已是 provider/model 形式的显式模型；否则让 openrouter 用其默认模型。
         model = model if (model and "/" in model) else None
 
     config = SystemHintConfig(
@@ -262,15 +266,15 @@ def make_agent_dispatch(provider: str, model: Optional[str],
         trajectory_file="event_loop_trajectory.json",
         temperature=0.7,
         max_tokens=4096,
-        use_mcp_servers=False,  # This demo only uses built-in tools to avoid extra MCP dependencies
+        use_mcp_servers=False,  # 本演示仅用内置工具，避免额外的 MCP 依赖
     )
     agent = EventTriggeredAgent(api_key=api_key, provider=provider,
                                model=model, config=config, verbose=True)
-    logger.info(f"✅ Real Agent initialized (provider={provider}, model={agent.model}）")
+    logger.info(f"✅ 真实 Agent 初始化完成（provider={provider}, model={agent.model}）")
 
     def dispatch(event: Event):
         result = agent.handle_event(event, max_iterations=max_iterations)
-        logger.info(f"✅ Agent processing complete: success={result['success']}, "
+        logger.info(f"✅ Agent 处理完成: success={result['success']}, "
                     f"iterations={result['iterations']}, "
                     f"tool_calls={len(result['tool_calls'])}")
 
@@ -283,58 +287,58 @@ def make_agent_dispatch(provider: str, model: Optional[str],
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Event-driven Agent end-to-end demo: register triggers, asynchronously wake the Agent by external events.",
+        description="事件驱动 Agent 端到端演示：注册触发器，由外部事件异步唤醒 Agent。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""Examples:
+        epilog="""示例：
   python event_loop_demo.py --mock
-      Offline demo of all triggers (one-shot timer + recurring timer + file watcher), no API Key required
+      离线演示全部触发器（一次性定时器 + 循环定时器 + 文件监听），无需 API Key
   python event_loop_demo.py --mock --trigger timer
-      Demo only one-shot timer
+      只演示一次性定时器
   python event_loop_demo.py --mock --trigger recurring --interval 3 --duration 12
-      Trigger recurring timer every 3 seconds, run for 12 seconds total
+      每 3 秒触发一次循环定时器，共运行 12 秒
   python event_loop_demo.py --mock --trigger file --watch-dir ./watched
-      Watch the ./watched directory, writing a file there triggers an event
+      监听 ./watched 目录，向其中写入文件即可触发事件
   python event_loop_demo.py --trigger timer --provider kimi
-      Use a real LLM to process one-shot timer event (requires setting the corresponding API Key)
+      用真实大模型处理一次性定时器事件（需要设置对应的 API Key）
 """,
     )
     parser.add_argument(
         "--trigger", choices=["timer", "recurring", "file", "all"], default="all",
-        help="Trigger types to demo: timer=one-shot timer, recurring=recurring timer,"
-             "file=file watch, all=all (default: all)",
+        help="要演示的触发器类型：timer=一次性定时器，recurring=循环定时器，"
+             "file=文件监听，all=全部（默认：all）",
     )
     parser.add_argument(
         "--mock", action="store_true",
-        help="Offline mode: does not call the LLM, uses simulated actions to demonstrate the trigger→wake→process loop (no API Key required)",
+        help="离线模式：不调用大模型，用模拟动作演示触发→唤醒→处理闭环（无需 API Key）",
     )
     parser.add_argument(
         "--duration", type=float, default=12.0,
-        help="Total event loop runtime in seconds, after which all triggers are stopped (default: 12)",
+        help="事件循环总运行时长（秒），到时后停止所有触发器（默认：12）",
     )
     parser.add_argument(
         "--delay", type=float, default=3.0,
-        help="Delay trigger time for one-shot timer in seconds (default: 3)",
+        help="一次性定时器的延迟触发时间（秒）（默认：3）",
     )
     parser.add_argument(
         "--interval", type=float, default=4.0,
-        help="Trigger interval for periodic timer in seconds (default: 4)",
+        help="循环定时器的触发间隔（秒）（默认：4）",
     )
     parser.add_argument(
         "--watch-dir", default="watched_dir",
-        help="Directory monitored by the file watch trigger; created automatically if it does not exist (default: watched_dir)",
+        help="文件监听触发器监视的目录，不存在会自动创建（默认：watched_dir）",
     )
     parser.add_argument(
         "--provider", default=os.getenv("LLM_PROVIDER", "kimi"),
         choices=["siliconflow", "doubao", "kimi", "moonshot", "openrouter"],
-        help="LLM provider used in real mode (default: environment variable LLM_PROVIDER or kimi)",
+        help="真实模式使用的大模型提供商（默认：环境变量 LLM_PROVIDER 或 kimi）",
     )
     parser.add_argument(
         "--model", default=os.getenv("LLM_MODEL"),
-        help="Model name override in real mode (default: use provider's default model)",
+        help="真实模式的模型名覆盖（默认：使用提供商默认模型）",
     )
     parser.add_argument(
         "--max-iterations", type=int, default=10,
-        help="Maximum number of tool call rounds per event in real mode (default: 10)",
+        help="真实模式下单个事件的最大工具调用轮数（默认：10）",
     )
     return parser
 
@@ -343,10 +347,10 @@ def main():
     args = build_parser().parse_args()
 
     print("\n" + "=" * 80)
-    print("🚀 Event-Driven Agent Demo")
+    print("🚀 事件驱动 Agent 演示（EVENT-DRIVEN AGENT DEMO）")
     print("=" * 80)
-    print(f"Trigger: {args.trigger} | Mode: {'Offline Simulation' if args.mock else 'Real Agent'} | "
-          f"Duration: {args.duration:.0f}s")
+    print(f"触发器: {args.trigger} | 模式: {'离线模拟' if args.mock else '真实 Agent'} | "
+          f"时长: {args.duration:.0f}s")
     print("=" * 80 + "\n")
     sys.stdout.flush()
 
@@ -360,32 +364,32 @@ def main():
     if args.trigger in ("timer", "all"):
         loop.add_trigger(OneShotTimer(
             loop.event_queue, delay=args.delay, timer_id="daily_backup_check",
-            content="One-shot timer expired: please check if the daily backup has been completed.",
+            content="一次性定时器到期：请检查每日备份是否已经完成。",
         ))
     if args.trigger in ("recurring", "all"):
         loop.add_trigger(RecurringTimer(
             loop.event_queue, interval=args.interval, timer_id="health_check",
-            content="Periodic timer expired: please check server health.",
+            content="循环定时器到期：请检查服务器健康状况。",
         ))
     if args.trigger in ("file", "all"):
         loop.add_trigger(FileWatchTrigger(loop.event_queue, watch_dir=args.watch_dir))
-        print(f"💡 Hint: Write or modify a file in directory {args.watch_dir}/ to trigger a file_change event.")
-        print(f"   For example, in another terminal run: echo hello > {args.watch_dir}/note.txt\n")
+        print(f"💡 提示：向目录 {args.watch_dir}/ 写入或修改文件即可触发 file_change 事件。")
+        print(f"   例如另开一个终端执行：echo hello > {args.watch_dir}/note.txt\n")
     sys.stdout.flush()
 
     if not loop.triggers:
-        print("❌ No runnable triggers.")
+        print("❌ 没有可运行的触发器。")
         sys.exit(1)
 
     try:
         loop.run(duration=args.duration)
     except KeyboardInterrupt:
-        print("\n⚠️  Interrupt signal received, stopping...")
+        print("\n⚠️  收到中断信号，正在停止...")
         for t in loop.triggers:
             t.stop()
 
     print("\n" + "=" * 80)
-    print(f"📊 Demo ended: processed {loop.processed} events.")
+    print(f"📊 演示结束：共处理 {loop.processed} 个事件。")
     print("=" * 80 + "\n")
 
 

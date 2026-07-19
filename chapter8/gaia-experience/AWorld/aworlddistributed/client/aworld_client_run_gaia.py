@@ -83,7 +83,7 @@ if __name__ == '__main__':
                 client_id=get_local_ip(),
                 mcp_servers=custom_mcp_servers,
                 max_retries=5,
-                llm_custom_input="Hello"
+                llm_custom_input="你好"
                 # llm_model_name="gpt-4o",
                 # task_system_prompt=CUSTOM_SYSTEM_PROMPT
             )

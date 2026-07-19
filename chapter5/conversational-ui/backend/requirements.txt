@@ -1,6 +1,6 @@
-# Dependencies required for running the backend standalone (a subset consistent with root requirements.txt)
+# 后端单独运行所需依赖（与根目录 requirements.txt 一致的子集）
 fastapi>=0.110
 uvicorn[standard]>=0.27
-# The following are only needed when using `--model` to enable real LLM conversation mode; the default echo mode does not require installation:
+# 以下仅在用 `--model` 打开真实 LLM 对话模式时才需要；默认 echo 模式无需安装：
 # openai>=1.30
 # python-dotenv>=1.0

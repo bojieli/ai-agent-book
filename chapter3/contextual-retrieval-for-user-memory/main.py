@@ -52,7 +52,7 @@ class InteractiveContextualRAG:
         """Run the interactive session"""
         console.print(Panel.fit(
             "[bold cyan]Contextual RAG + Advanced Memory Cards System[/bold cyan]\n"
-            "Dual-layer memory system: context-aware retrieval + structured memory cards\n"
+            "双层记忆系统：上下文感知检索 + 结构化记忆卡片\n"
             "[dim]LLM Judge enabled for automatic evaluation[/dim]",
             border_style="cyan"
         ))
@@ -152,9 +152,9 @@ class InteractiveContextualRAG:
         
         # Test queries
         test_queries = [
-            "When does my passport expire?",
-            "What do I need to prepare for my trip to Tokyo in January?",
-            "What is my medical information?"
+            "我的护照什么时候过期？",
+            "我一月份的东京之行需要准备什么？",
+            "我的医疗信息有哪些？"
         ]
         
         console.print("\n[bold]Test Queries:[/bold]")
@@ -187,10 +187,10 @@ class InteractiveContextualRAG:
         
         # Sample conversation about travel
         messages = [
-            ConversationMessage("user", "I want to book a flight to Tokyo", 1),
-            ConversationMessage("assistant", "Okay, when would you like to depart?", 2),
-            ConversationMessage("user", "Depart on January 25, return on February 1", 3),
-            ConversationMessage("assistant", "Let me search for round-trip flights to Tokyo from January 25 to February 1", 4),
+            ConversationMessage("user", "我想订一张去东京的机票", 1),
+            ConversationMessage("assistant", "好的，请问您什么时候出发？", 2),
+            ConversationMessage("user", "1月25日出发，2月1日返回", 3),
+            ConversationMessage("assistant", "让我为您查询1月25日到2月1日的东京往返机票", 4),
         ]
         
         chunk = ConversationChunk(
@@ -207,10 +207,10 @@ class InteractiveContextualRAG:
         
         # Sample conversation about passport
         messages2 = [
-            ConversationMessage("user", "My passport is about to expire, when do I need to renew it?", 5),
-            ConversationMessage("assistant", "Your passport expires on February 18, 2025. It is recommended to renew 3-6 months in advance.", 6),
-            ConversationMessage("user", "Okay, I will do it as soon as possible.", 7),
-            ConversationMessage("assistant", "It is recommended to ensure your passport is valid for at least 6 months before traveling abroad.", 8),
+            ConversationMessage("user", "我的护照快过期了，什么时候需要续签？", 5),
+            ConversationMessage("assistant", "您的护照将于2025年2月18日过期，建议提前3-6个月办理续签", 6),
+            ConversationMessage("user", "好的，我会尽快去办理", 7),
+            ConversationMessage("assistant", "建议您在出国前确保护照有效期至少6个月", 8),
         ]
         
         chunk2 = ConversationChunk(
@@ -729,82 +729,82 @@ class InteractiveContextualRAG:
 
 
 def main():
-    """Main entry: Experiment 3-12 Context-Aware Retrieval Augmented User Memory"""
+    """主入口：实验 3-12 上下文感知检索增强用户记忆"""
     parser = argparse.ArgumentParser(
         description=(
-            "Experiment 3-12: Enhancing user memory with context-aware retrieval.\n"
-            "Generate a 'context prefix' before feeding conversation memory chunks into embedding/indexing,"
-            "to improve recall of isolated fragments lacking context (e.g., 'Okay, book this one')."
+            "实验 3-12：利用上下文感知检索增强用户记忆。\n"
+            "在把对话记忆块送入嵌入/索引前先生成『上下文前缀』，"
+            "提升脱离上下文的孤立片段（如『好的，就订这个吧』）的召回。"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "Examples:\n"
-            "  python main.py --mode compare                 # Offline comparison of contextual vs raw chunks (no API needed)\n"
-            "  python main.py --mode compare --query 'When does my passport expire?'  # Single query offline retrieval comparison\n"
-            "  python main.py --mode compare --output results/compare.json    # Save comparison results\n"
-            "  python main.py --mode evaluate --category layer1               # End-to-end evaluation (requires API/retrieval service)\n"
-            "  python main.py --mode interactive             # Interactive interface (default, requires API)\n"
+            "示例：\n"
+            "  python main.py --mode compare                 # 离线对比上下文化 vs 原始块（无需 API）\n"
+            "  python main.py --mode compare --query '我的护照什么时候过期？'  # 单条查询离线检索对比\n"
+            "  python main.py --mode compare --output results/compare.json    # 保存对比结果\n"
+            "  python main.py --mode evaluate --category layer1               # 端到端评估（需 API/检索服务）\n"
+            "  python main.py --mode interactive             # 交互式界面（默认，需 API）\n"
         ),
     )
     parser.add_argument(
         "--mode",
         choices=["interactive", "evaluate", "demo", "compare"],
         default="interactive",
-        help="Run modes: interactive (default) / evaluate (end-to-end evaluation) / demo / compare (offline comparison, no API needed)",
+        help="运行模式：interactive 交互式(默认) / evaluate 端到端评估 / demo 演示 / compare 离线对比(无需 API)",
     )
     parser.add_argument(
         "--category",
         choices=["layer1", "layer2", "layer3"],
-        help="Evaluation test categories (layer1 basic recall / layer2 multi-session retrieval / layer3 proactive service)",
+        help="评估的测试分类（layer1 基础回忆 / layer2 多会话检索 / layer3 主动服务）",
     )
     parser.add_argument(
         "--config",
         type=str,
-        help="Configuration file (JSON) path",
+        help="配置文件（JSON）路径",
     )
-    #  Parameters related to offline comparison (compare mode)
+    # 离线对比（compare 模式）相关参数
     parser.add_argument(
         "--dataset",
         type=str,
         default=None,
-        help="Memory QA comparison set JSON for compare mode (default: memory_qa_eval.json)",
+        help="compare 模式使用的记忆问答对照集 JSON（默认：memory_qa_eval.json）",
     )
     parser.add_argument(
         "--query",
         type=str,
         default=None,
-        help="Perform offline retrieval comparison for a single query in compare mode (plain vs contextual Top-K)",
+        help="compare 模式下对单条查询做离线检索对比（plain vs contextual 的 Top-K）",
     )
     parser.add_argument(
         "--output",
         type=str,
         default=None,
-        help="Path to save compare/evaluate results as JSON",
+        help="将 compare / evaluate 的结果保存为 JSON 的路径",
     )
-    #  Configuration overrides (optional, override environment variables/config file; does not change default behavior)
+    # 配置覆盖项（可选，覆盖环境变量/配置文件；不改变默认行为）
     parser.add_argument(
         "--user-id",
         type=str,
         default=None,
-        help="User identifier (written to output as a label to distinguish multi-user memory)",
+        help="用户标识（写入输出结果作为标签，便于区分多用户记忆）",
     )
     parser.add_argument(
         "--model",
         type=str,
         default=None,
-        help="Override LLM model name (defaults to environment variable/provider default)",
+        help="覆盖 LLM 模型名（默认取环境变量/提供商默认值）",
     )
     parser.add_argument(
         "--provider",
         type=str,
         default=None,
-        help="Override LLM provider (kimi / doubao / siliconflow / openai, etc.)",
+        help="覆盖 LLM 提供商（kimi / doubao / siliconflow / openai 等）",
     )
     parser.add_argument(
         "--store-path",
         type=str,
         default=None,
-        help="Chunk store path, overrides default data/chunk_store.json",
+        help="记忆块存储（chunk_store）路径，覆盖默认 data/chunk_store.json",
     )
     contextual_group = parser.add_mutually_exclusive_group()
     contextual_group.add_argument(
@@ -812,18 +812,18 @@ def main():
         dest="contextual",
         action="store_true",
         default=None,
-        help="Enable contextualization (generate context prefix for each chunk before indexing, enabled by default)",
+        help="启用上下文化（索引前为每块生成上下文前缀，默认开启）",
     )
     contextual_group.add_argument(
         "--no-contextual",
         dest="contextual",
         action="store_false",
-        help="Disable contextualization (index raw conversation chunks directly, for comparison)",
+        help="关闭上下文化（直接索引原始对话块，用于对照）",
     )
 
     args = parser.parse_args()
 
-    #Compare mode: fully offline, no need to load LLM / retrieval service configuration
+    # compare 模式：完全离线，无需加载 LLM / 检索服务配置
     if args.mode == "compare":
         from contextual_compare import (
             run_comparison,
@@ -843,7 +843,7 @@ def main():
     else:
         config = Config.from_env()
 
-    #Apply command-line overrides
+    # 应用命令行覆盖项
     if args.provider:
         config.llm.provider = args.provider
     if args.model:

@@ -553,7 +553,7 @@ class AworldMemory(Memory):
         )
         to_be_summary_items = [item for item in agent_task_total_message if item.memory_type == "message" and not item.has_summary]
 
-        # Delete the last complete [ai,tool] combination from the sequence
+        # 序列中删除最后一组完整的 [ai,tool] 组合
         to_be_summary_items = self._filter_incomplete_message_pairs(to_be_summary_items)
 
         check_need_summary,trigger_reason = self._check_need_summary(to_be_summary_items, agent_memory_config)

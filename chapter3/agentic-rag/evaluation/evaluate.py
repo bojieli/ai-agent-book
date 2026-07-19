@@ -83,7 +83,7 @@ class RAGEvaluator:
         evaluation["metrics"]["response_length"] = len(response)
         
         # Check if response indicates no answer
-        no_answer_indicators = ["Unable to answer", "Not found", "Not in knowledge base", "cannot answer", "not found"]
+        no_answer_indicators = ["无法回答", "没有找到", "知识库中没有", "cannot answer", "not found"]
         evaluation["metrics"]["gave_answer"] = not any(indicator in response.lower() for indicator in no_answer_indicators)
         
         return evaluation

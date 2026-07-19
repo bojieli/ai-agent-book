@@ -1,64 +1,64 @@
-# Experiment 3-12: Enhancing User Memory with Context-Aware Retrieval
+# 实验 3-12：利用上下文感知检索增强用户记忆
 
-Applying context-aware retrieval techniques to user memory construction addresses the core pain points of traditional dialogue history chunking and is key to advancing toward higher-level memory capabilities. This project implements a dual-layer memory system that combines:
+将上下文感知检索技术应用于用户记忆的构建，是解决传统对话历史分块所面临的核心痛点，并迈向更高层次记忆能力的关键。本项目实现了一个双层记忆系统，结合了：
 
-1. **Contextual RAG**: Precise retrieval of dialogue history
-2. **Advanced JSON Cards**: Structured storage of core facts
+1. **上下文感知检索（Contextual RAG）**：对话历史的精准检索
+2. **高级 JSON 卡片（Advanced JSON Cards）**：结构化的核心事实存储
 
-## 🆕 Latest Updates
+## 🆕 最新更新
 
 ### LLM-Based Memory Card Generation
-- **Automatic Extraction**: Uses LLM to intelligently extract structured memory cards from conversations
-- **Complete Structure**: Each card contains necessary fields such as backstory, person, relationship
-- **Intelligent Fallback**: Automatically degrades to keyword extraction when LLM is unavailable
+- **自动提取**：使用 LLM 从对话中智能提取结构化记忆卡片
+- **完整结构**：每张卡片包含 backstory、person、relationship 等必要字段
+- **智能降级**：当 LLM 不可用时自动降级到关键词提取
 
 ### LLM Judge Integration  
-- **Automatic Evaluation**: Integrates LLM Judge to automatically score Agent responses
-- **Dual Path Support**: Supports both module import and direct API calls
-- **Detailed Feedback**: Provides 0-1 scores, pass/fail status, and evaluation reasoning
+- **自动评估**：集成 LLM Judge 对 Agent 回答进行自动评分
+- **双路径支持**：支持导入模块或直接 API 调用
+- **详细反馈**：提供 0-1 分数、通过/失败状态和评估理由
 
 ### Enhanced Debugging
-- **Memory Card Visualization**: Automatically prints full JSON of all memory cards during evaluation
-- **Test Case Ordering**: Displays test cases sorted alphabetically by name
-- **Evaluation Transparency**: Clearly shows LLM Judge usage status
+- **内存卡片可视化**：评估时自动打印所有记忆卡片的完整 JSON
+- **测试用例排序**：按名称字母顺序显示测试用例
+- **评估透明度**：清晰显示 LLM Judge 使用状态
 
-## Core Innovations
+## 核心创新
 
-### 1. Context-Enhanced Dialogue Chunking
+### 1. 上下文增强的对话分块
 
-Traditional dialogue chunking loses contextual information. For example, an isolated dialogue fragment "Okay, book this one" is meaningless on its own. Only when we know the preceding context—discussing a "one-way ticket from Shanghai to Seattle priced at $500"—does this fragment become meaningful.
+传统的对话分块会丢失上下文信息。例如，一段孤立的对话片段"好的，就订这个吧"本身毫无信息量。只有知道上文是在讨论"从上海到西雅图的、价格为500美元的单程机票"，这段对话才有意义。
 
-This system adds a critical "context generation" step before indexing dialogue history:
-- Each dialogue chunk calls the LLM to generate a prefix summary containing key background information
-- Context includes critical clues such as time, people, and intent
-- Significantly improves retrieval accuracy and relevance
+本系统在索引对话历史之前，增加了关键的"上下文生成"步骤：
+- 每个对话块都会调用 LLM 生成包含关键背景信息的前缀摘要
+- 上下文包括时间、人物和意图等关键线索
+- 极大提升了检索的准确性和相关性
 
-### 2. Dual-Layer Memory Structure
+### 2. 双层记忆结构
 
-**Advanced JSON Cards (Persistent Memory)**
-- Stores structured, summarized core facts
-- Always fixed in the Agent's context
-- Contains metadata such as backstory (information source) and relationship (related persons)
-- Example: "User Jessica's passport will expire on February 18, 2025"
+**Advanced JSON Cards（常驻记忆）**
+- 存储结构化的、总结性的核心事实
+- 始终固定在 Agent 的上下文中
+- 包含 backstory（信息来源）和 relationship（关联人员）等元数据
+- 如："用户 Jessica 的护照将于2025年2月18日过期"
 
-**Contextual RAG (On-Demand Retrieval)**
-- Provides precise access to unstructured raw dialogue details
-- Quickly finds complete context for specific discussions
-- Serves as "evidence" to support decision-making
+**Contextual RAG（按需检索）**
+- 提供对非结构化的原始对话细节的精准访问
+- 快速找到具体讨论的完整上下文
+- 作为决策的"证据"支持
 
 ### 3. LLM-Based Memory Extraction
 
-The system can now intelligently extract structured memory cards from conversations:
+系统现在能够从对话中智能提取结构化记忆卡片：
 
 ```python
-# Automatically generate memory cards from conversations
+# 自动从对话生成记忆卡片
 cards = indexer._generate_summary_cards(chunks, conversation_id)
 
-# Example of generated card:
+# 生成的卡片示例：
 {
     "category": "financial",
     "card_key": "bank_account_primary", 
-    "backstory": "User provided bank information when opening the account",
+    "backstory": "用户在开设账户时提供了银行信息",
     "date_created": "2024-01-15 10:30:00",
     "person": "John Smith (primary)",
     "relationship": "primary account holder",
@@ -68,35 +68,35 @@ cards = indexer._generate_summary_cards(chunks, conversation_id)
 }
 ```
 
-## Project Structure
+## 项目结构
 
 ```
 contextual-retrieval-for-user-memory/
-├── contextual_chunking.py      # Context-aware chunking
-├── advanced_memory_manager.py  # Advanced JSON card management
-├── contextual_indexer.py       # Dual-layer memory indexer (with LLM extraction)
-├── contextual_agent.py         # Agent combining dual-layer memory
-├── contextual_evaluator.py     # Evaluation framework (with LLM Judge)
-├── contextual_compare.py       # 🆕 Offline comparison script: contextual vs plain chunk recall (no API needed)
-├── memory_qa_eval.json         # 🆕 Controlled memory QA evaluation set for offline comparison
-├── main.py                     # Main entry point (argparse, includes --mode compare for offline comparison)
-├── config.py                   # Configuration management
-├── chunker.py                  # Base chunker
-├── tools.py                    # Agent tools
-└── requirements.txt            # Dependencies
+├── contextual_chunking.py      # 上下文感知分块
+├── advanced_memory_manager.py  # 高级JSON卡片管理
+├── contextual_indexer.py       # 双层记忆索引器（含LLM提取）
+├── contextual_agent.py         # 结合双层记忆的Agent
+├── contextual_evaluator.py     # 评估框架（含LLM Judge）
+├── contextual_compare.py       # 🆕 离线对比脚本：上下文化 vs 原始块的召回（无需 API）
+├── memory_qa_eval.json         # 🆕 离线对比用的受控记忆问答对照集
+├── main.py                     # 主入口（argparse，含 --mode compare 离线对比）
+├── config.py                   # 配置管理
+├── chunker.py                  # 基础分块器
+├── tools.py                    # Agent工具
+└── requirements.txt            # 依赖项
 ```
 
-## Installation and Configuration
+## 安装与配置
 
-### 1. Install Dependencies
+### 1. 安装依赖
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment Variables
+### 2. 配置环境变量
 
-Create a `.env` file:
+创建 `.env` 文件：
 
 ```bash
 # LLM Provider Configuration
@@ -109,70 +109,70 @@ OPENAI_API_KEY=your_api_key_here
 LLM_PROVIDER=kimi  # Options: kimi, doubao, siliconflow, openai
 
 # Model Settings
-LLM_MODEL=kimi-k3  # Or other models
+LLM_MODEL=kimi-k3  # 或其他模型
 ```
 
-### 3. Start the Retrieval Pipeline Service
+### 3. 启动检索管道服务
 
 ```bash
 cd ../retrieval-pipeline
 python api_server.py
 ```
 
-## Usage Examples
+## 使用示例
 
-### Offline Comparison: Does Contextualization Help? (No API Needed, Recommended to Run First)
+### 离线对比：上下文化到底有没有用？（无需 API，推荐先跑这个）
 
-The core thesis of this experiment is: **Generating a 'context prefix' for each dialogue memory chunk before feeding it into embedding/indexing improves recall of isolated fragments (e.g., 'Okay, book this one') that lack context.** `--mode compare` provides a **fully offline, controlled comparison experiment that requires no API Key or retrieval service** to quantify this.
+本实验的核心论点是：**在把对话记忆块送入嵌入/索引前，先为每块生成一段『上下文前缀』，能提升脱离上下文的孤立片段（如『好的，就订这个吧』）的召回。** `--mode compare` 提供一个**完全离线、无需任何 API Key 或检索服务**的受控对照实验来量化这一点。
 
-It uses the same context to measure recall for both 'plain' (no concatenation) and 'contextual' (concatenated before indexing) approaches, with the only variable being whether the indexed text includes the context prefix. Thus, the results directly reflect the contribution of contextualization itself. Retrieval uses deterministic BM25 lexical retrieval (pure Python, no third-party dependencies) as an offline proxy for neural embeddings; the comparison dataset is in [`memory_qa_eval.json`](memory_qa_eval.json) (a controlled teaching set, replaceable with `--dataset`).
+它用同一份上下文，分别度量『不拼接（plain）』与『拼接后再索引（contextual）』两种方式的召回，变量只有『索引文本是否含上下文前缀』，因此结果直接反映上下文化本身的贡献。检索采用确定性的 BM25 词法检索（纯 Python、无第三方依赖）作为神经嵌入的离线代理；对照数据集见 [`memory_qa_eval.json`](memory_qa_eval.json)（受控教学集，可用 `--dataset` 替换）。
 
 ```bash
-# Print comparison metrics table (Recall@1 / Recall@3 / MRR)
+# 打印对比指标表（Recall@1 / Recall@3 / MRR）
 python main.py --mode compare
-# Equivalent to running the standalone script directly:
+# 等价于直接运行独立脚本：
 python contextual_compare.py
 
-# Compare plain vs contextual Top-K retrieval for a single query
-python main.py --mode compare --query 'Which flight was the ticket I finally confirmed?'
+# 对单条查询做 plain vs contextual 的 Top-K 检索对比
+python main.py --mode compare --query '我最后确认预订的那张机票是哪个航班？'
 
-# Save full results (including per-query ranking details) to JSON
+# 保存完整结果（含逐查询名次明细）到 JSON
 python main.py --mode compare --output results/compare.json
 ```
 
-Example output (controlled set with 12 memory chunks and 8 queries):
+实测输出（12 个记忆块、8 条查询的受控集）：
 
 ```
-Method                          Recall@1  Recall@3       MRR
+方法                            Recall@1  Recall@3       MRR
 --------------------------------------------------------------------
-Plain (directly indexing raw chunks)      0.625     1.000     0.792
-Contextual (indexing after contextualization)        0.750     1.000     0.875
+Plain（直接索引原始块）               0.625     1.000     0.792
+Contextual（上下文化后索引）        0.750     1.000     0.875
 --------------------------------------------------------------------
-Improvement (Δ)                         +0.125    +0.000    +0.083
+提升（Δ）                         +0.125    +0.000    +0.083
 ```
 
-For queries like "Has my Seattle hotel booking been confirmed?", the gold memory chunk ("Okay, book it for me") ranked 3rd under Plain but rose to 1st under Contextual—the context prefix re-anchored the isolated confirmation fragment back to the "Seattle Hyatt Hotel" scenario.
+其中『我订的西雅图酒店确认了吗』这类查询，gold 记忆块（『可以，帮我订下来』）在 Plain 下排名第 3、上下文化后升到第 1——正是上下文前缀把孤立确认片段重新锚定回了『西雅图凯悦酒店』的情境。
 
-> Note: This is an **offline lexical proxy** designed to clearly demonstrate the mechanism and directional benefits of contextualization in an API-free environment. In the production pipeline, context prefixes are generated per chunk by the LLM and indexed using neural embeddings + hybrid retrieval (see `--mode evaluate` below), requiring API Key configuration.
+> 说明：这是一个**离线词法代理**，用于在无 API 环境下清晰地演示上下文化的机制与方向性收益。生产管线中，上下文前缀由 LLM 逐块生成、并用神经嵌入 + 混合检索索引（见下方 `--mode evaluate`），需要配置 API Key。
 
-### End-to-End Evaluation (Requires API / Retrieval Service)
+### 端到端评估（需 API / 检索服务）
 
 ```bash
-# Interactive interface (default)
+# 交互式界面（默认）
 python main.py
 
-# Evaluate a specific category (requires LLM and retrieval pipeline service)
+# 评估特定分类（需 LLM 与检索管道服务）
 python main.py --mode evaluate --category layer1
 
-# Disable contextualization for comparison, specify model and output
+# 关闭上下文化做对照，并指定模型与输出
 python main.py --mode evaluate --category layer1 --no-contextual --model gpt-5.6-luna --output results/plain_eval.json
 ```
 
-See `python main.py --help` for full command-line arguments (with Chinese descriptions).
+完整命令行参数见 `python main.py --help`（含中文说明）。
 
-### Interactive Test Interface
+### 交互式测试界面
 
-Run `python main.py` to enter the interactive interface:
+运行 `python main.py` 进入交互式界面：
 
 ```
 Main Menu:
@@ -187,7 +187,7 @@ Main Menu:
 0. Exit
 ```
 
-### Evaluation Output Example
+### 评估输出示例
 
 ```
 ============================================================
@@ -196,7 +196,7 @@ DEBUG: All Memory Cards in System
 
 [financial.bank_account_primary]
 {
-  "backstory": "Information provided by the user when opening a bank account",
+  "backstory": "用户开设银行账户时提供的信息",
   "date_created": "2024-06-12 14:30:00",
   "person": "Michael James Robertson (primary)",
   "relationship": "primary account holder",
@@ -216,39 +216,40 @@ Reasoning: The agent correctly provided the checking account number...
 ============================================================
 ```
 
-## Workflow Example
+## 工作流程示例
 
-When a user asks "What else should I prepare for my Tokyo trip in January?":
+当用户询问"为我一月的东京之行，还有什么要准备的吗？"时：
 
-1. **Fact Review**: The Agent first examines the content in Advanced JSON Cards
-   - Finds "Tokyo trip" information (departing January 25th)
-   - Finds "passport information" (expiring February 18th)
+1. **事实回顾**：Agent 首先审视 Advanced JSON Cards 中的内容
+   - 发现"东京之行"信息（1月25日出发）
+   - 发现"护照信息"（2月18日过期）
 
-2. **Association and Reasoning**: By comparing core facts
-   - Identifies the risk of the flight date being close to the passport expiration date
+2. **关联与推理**：通过对比核心事实
+   - 识别出机票日期与护照过期日期接近的风险
 
-3. **Detail Verification**: Initiates RAG retrieval
-   - Searches for dialogue fragments related to "passport" and "Tokyo flight"
-   - Retrieves all details from the original discussion
+3. **细节验证**：启动 RAG 检索
+   - 搜索与"护照"和"东京机票"相关的对话片段
+   - 获取原始讨论的所有细节
 
-4. **Proactive Service**: Combines both types of memory
-   - Provides a key recommendation: "Your passport is about to expire. We strongly recommend you expedite the renewal immediately."
+4. **主动服务**：结合两种记忆
+   - 给出关键建议："您的护照即将过期，强烈建议您立即加急办理续签"
 
-5. **Automatic Evaluation**: LLM Judge evaluates the answer
-   - Score: 0.95/1.0
-   - Reasoning: Correctly identified the risk and provided appropriate recommendations
+5. **自动评估**：LLM Judge 评估答案
+   - 评分：0.95/1.0
+   - 理由：正确识别风险并给出适当建议
 
-## References
+## 参考资料
 
-- [Anthropic's Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval)- [RAG Technology Survey](https://arxiv.org/abs/2005.11401)
+- [Anthropic's Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval)
+- [RAG 技术综述](https://arxiv.org/abs/2005.11401)
 - [Memory Systems in AI Agents](https://arxiv.org/abs/2203.14680)
 - [LLM as Judge](https://arxiv.org/abs/2306.05685)
 
-## License
+## 许可证
 
 MIT License
 
-## OpenRouter Universal Fallback / Universal OpenRouter fallback
+## OpenRouter 通用回退 / Universal OpenRouter fallback
 
 This experiment now supports a **universal OpenRouter fallback** for its chat LLM.
 

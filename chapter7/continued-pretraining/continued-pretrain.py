@@ -28,64 +28,64 @@ import argparse
 
 
 # ============================================================================
-#  Command-line arguments (defaults exactly match original script hardcoded values, ensuring unchanged behavior)
+# 命令行参数（默认值与原始脚本硬编码值完全一致，保证行为不变）
 # ============================================================================
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Korean Mistral continued pretraining + instruction fine-tuning (Unsloth / LoRA)."
-                    "First use Korean Wikipedia for continued pretraining to inject Korean language capability, then use Korean Alpaca data for SFT.",
+        description="韩语 Mistral 继续预训练 + 指令微调（Unsloth / LoRA）。"
+                    "先用韩语维基百科做继续预训练注入韩语能力，再用韩语 Alpaca 数据做 SFT。",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    #  Base Model
+    # 基础模型
     parser.add_argument("--base_model", type=str, default="unsloth/mistral-7b-v0.3",
-                        help="Base model name (HuggingFace / Unsloth repository name)")
+                        help="基础模型名称（HuggingFace / Unsloth 仓库名）")
     parser.add_argument("--max_seq_len", type=int, default=2048,
-                        help="Maximum sequence length")
+                        help="最大序列长度")
     parser.add_argument("--no_4bit", action="store_true",
-                        help="Disable 4-bit quantization loading (default enables 4-bit to save VRAM)")
+                        help="关闭 4bit 量化加载（默认开启 4bit 以节省显存）")
 
-    #  LoRA Configuration
+    # LoRA 配置
     parser.add_argument("--lora_rank", type=int, default=128,
-                        help="LoRA rank r (recommended larger for continued pretraining, e.g., 128)")
+                        help="LoRA 秩 r（继续预训练建议较大，如 128）")
     parser.add_argument("--lora_alpha", type=int, default=32,
                         help="LoRA alpha")
 
-    #  Dataset
+    # 数据集
     parser.add_argument("--wiki_dataset", type=str, default="wikimedia/wikipedia",
-                        help="Wikipedia dataset for continued pretraining")
+                        help="继续预训练用的维基百科数据集")
     parser.add_argument("--wiki_config", type=str, default="20231101.ko",
-                        help="Language/version configuration for Wikipedia dataset (default Korean snapshot)")
+                        help="维基百科数据集的语言/版本配置（默认韩语快照）")
     parser.add_argument("--wiki_train_size", type=float, default=0.05,
-                        help="Sampling ratio for Wikipedia dataset (0~1, default 5%% to speed up training)")
+                        help="维基百科数据集抽样比例（0~1，默认取 5%% 以加速训练）")
     parser.add_argument("--alpaca_dataset", type=str,
                         default="FreedomIntelligence/alpaca-gpt4-korean",
-                        help="Korean Alpaca dataset for instruction fine-tuning (SFT)")
+                        help="指令微调（SFT）用的韩语 Alpaca 数据集")
 
-    #  Training Hyperparameters
+    # 训练超参数
     parser.add_argument("--pretrain_epochs", type=int, default=1,
-                        help="Number of training epochs for continued pretraining")
+                        help="继续预训练阶段的训练轮数")
     parser.add_argument("--pretrain_max_steps", type=int, default=-1,
-                        help="Maximum steps for continued pretraining (-1 means unlimited, train by epoch)")
+                        help="继续预训练最大步数（-1 表示不限制，按 epoch 训练）")
     parser.add_argument("--sft_epochs", type=int, default=2,
-                        help="Number of training epochs for instruction fine-tuning")
+                        help="指令微调阶段的训练轮数")
     parser.add_argument("--sft_max_steps", type=int, default=-1,
-                        help="Maximum steps for instruction fine-tuning (-1 means unlimited, train by epoch)")
+                        help="指令微调最大步数（-1 表示不限制，按 epoch 训练）")
 
-    #  Output Directory
+    # 输出目录
     parser.add_argument("--pretrain_output_dir", type=str, default="outputs_pretrain",
-                        help="Checkpoint directory for continued pretraining")
+                        help="继续预训练的检查点目录")
     parser.add_argument("--sft_output_dir", type=str, default="outputs_sft",
-                        help="Checkpoint directory for instruction fine-tuning")
+                        help="指令微调的检查点目录")
     parser.add_argument("--pretrained_save_dir", type=str, default="lora_model_pretrained",
-                        help="LoRA model directory saved after continued pretraining")
+                        help="继续预训练后保存的 LoRA 模型目录")
     parser.add_argument("--final_save_dir", type=str, default="lora_model",
-                        help="Final LoRA model directory saved after instruction fine-tuning")
+                        help="指令微调后保存的最终 LoRA 模型目录")
 
     return parser.parse_args()
 
 
-#  Parse arguments first (placed before heavy imports so that `--help` can run without GPU / Unsloth)
+# 先解析参数（放在重型导入之前，这样 `--help` 无需 GPU / Unsloth 也能运行）
 args = parse_args()
 
 import torch

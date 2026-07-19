@@ -12,7 +12,7 @@ from llm_helper import LLMHelper
 from config import Config
 from multilang_executor import LanguageExecutor, ExecutionStatus
 
-# Long-output handling thresholds (see "Truncation and Persistence of Long Outputs" in chapter 4).
+# Long-output handling thresholds (see "长输出的截断与持久化" in chapter 4).
 # When output exceeds either threshold, keep the head and tail few lines in the
 # context and persist the full output to a temp file for later retrieval.
 MAX_OUTPUT_LINES = 200
@@ -54,8 +54,8 @@ def truncate_and_persist(
     tail_part = lines[-tail_lines:]
     omitted = max(len(lines) - head_lines - tail_lines, 0)
 
-    middle = f"... [omitted {omitted} lines, full output saved to {path}] ..."
-    guide = f"[To view the full output, use the read_file tool to read {path}]"
+    middle = f"... [省略 {omitted} 行，完整输出已保存至 {path}] ..."
+    guide = f"[如需完整输出，请使用 read_file 工具读取 {path}]"
     truncated = "\n".join(head_part + [middle] + tail_part + [guide])
     return truncated, path
 

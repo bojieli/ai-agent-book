@@ -82,7 +82,13 @@ I'll search for specific benchmark papers and their reported results comparing d
 
 ### 👤 You
 
-Is there any papers on XML-assisted vision improving success rates for mobile agents?
+Is there any papers on XML 辅助视觉提升成功率 for mobile using agents?
+
+---
+
+### 🤖 Cursor Assistant
+
+I'll search for papers specifically about mobile agents that show XML (view hierarchy) assisting vision to improve success rates.
 
 ---
 

@@ -106,8 +106,8 @@ def print_comparison_table(results: Dict[str, Any], cache_price_ratio: float = 0
               f"{cache_pct:<8.1f} {billable:<10,.0f} {save_pct:<7.1f}")
 
     print("-" * 112)
-    print(f"Note: Bill.Tok / Save% assumes cached tokens are billed at the normal price {cache_price_ratio:.0%} billing"
-          f"(adjustable via --cache-price-ratio), for cost illustration only, not actual quotes from any provider.")
+    print(f"注：Bill.Tok / Save% 假设缓存 token 按正常价的 {cache_price_ratio:.0%} 计费"
+          f"（可用 --cache-price-ratio 调整），仅为成本示意，非某家服务商实际报价。")
 
 
 def load_result_files(paths: List[str]) -> Dict[str, Any]:
@@ -155,23 +155,23 @@ def run_report(inputs: List[str] = None, cache_price_ratio: float = 0.1) -> None
 
     paths = sorted(set(paths))
     if not paths:
-        logger.error("No result_*.json / comparison_*.json result files found."
-                     "Please run --mode or --compare to generate results, or use --input to specify a path.")
+        logger.error("未找到任何 result_*.json / comparison_*.json 结果文件。"
+                     "请先运行 --mode 或 --compare 生成结果，或用 --input 指定路径。")
         sys.exit(1)
 
     results = load_result_files(paths)
 
     print("\n" + "=" * 112)
-    print("KV CACHE Offline Comparison Report (based on saved measured results)")
+    print("KV CACHE 离线对比报告（基于已保存的实测结果）")
     print("=" * 112)
-    print(f"Data source ({len(paths)} files):")
+    print(f"数据来源（{len(paths)} 个文件）:")
     for mode, data in results.items():
         print(f"  • {mode:<16} ← {os.path.basename(data.get('_source', '?'))}")
 
     print_comparison_table(results, cache_price_ratio)
 
-    print("\n📝 Note: Different result files may come from different tasks/times; absolute values are for horizontal comparison within the same run only;"
-          "For strict comparison, use --compare to generate data for all modes in a single task.")
+    print("\n📝 说明：不同结果文件可能来自不同任务/时间，绝对数值仅供同一次运行内横向对比；"
+          "如需严格对照，请用 --compare 在同一任务下一次性生成全部模式的数据。")
 
 
 def create_summary_task() -> str:
@@ -447,41 +447,41 @@ def run_comparison(api_key: str, task: str = None, root_dir: str = "../..",
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
-        description="KV Cache Experiment: Use ReAct Agent to compare the impact of different context construction strategies on prefix cache"
-                    "(KV Cache / Prompt Cache) hit rate, TTFT latency, and cost.",
-        epilog="Example: \n"
-               "  python main.py --mode correct                  # Run a single strategy\n"
-               "  python main.py --compare                       # Run all strategies at once and print comparison table\n"
-               "  python main.py --report                        # Offline: read existing result_*.json and print comparison table (no API Key needed)\n"
+        description="KV Cache 实验：用 ReAct Agent 对比不同上下文构造策略对前缀缓存"
+                    "（KV Cache / Prompt Cache）命中率、TTFT 延迟与成本的影响。",
+        epilog="示例：\n"
+               "  python main.py --mode correct                  # 运行单个策略\n"
+               "  python main.py --compare                       # 一次跑完所有策略并打印对比表\n"
+               "  python main.py --report                        # 离线：读取已有 result_*.json 打印对比表（无需 API Key）\n"
                "  python main.py --mode sliding_window --model kimi-k2.6 --output run.json\n"
-               "\nOptional strategies (--mode): correct, dynamic_system, shuffled_tools,\n"
+               "\n可选策略（--mode）：correct, dynamic_system, shuffled_tools,\n"
                "                      dynamic_profile, sliding_window, text_format",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--api-key", type=str,
-                        help="Moonshot/Kimi API Key (or use environment variable MOONSHOT_API_KEY)")
+                        help="Moonshot/Kimi API Key（也可用环境变量 MOONSHOT_API_KEY）")
     parser.add_argument("--model", type=str, default=DEFAULT_MODEL,
-                        help=f"Model name to use (default: {DEFAULT_MODEL}）")
+                        help=f"使用的模型名（默认：{DEFAULT_MODEL}）")
     parser.add_argument("--mode", type=str,
-                        help="Run a single strategy: correct / dynamic_system / shuffled_tools / "
+                        help="运行单个策略：correct / dynamic_system / shuffled_tools / "
                              "dynamic_profile / sliding_window / text_format")
     parser.add_argument("--compare", action="store_true",
-                        help="Run all strategies sequentially and print a horizontal comparison table (API Key required)")
+                        help="依次运行全部策略并打印横向对比表（需要 API Key）")
     parser.add_argument("--report", action="store_true",
-                        help="Offline mode: generate comparison table from saved result_*.json / comparison_*.json (no API Key needed)")
+                        help="离线模式：从已保存的 result_*.json / comparison_*.json 生成对比表（无需 API Key）")
     parser.add_argument("--input", type=str, nargs="*", default=None,
-                        help="With --report: specify result file, wildcard, or directory (default: result_*.json and comparison_*.json in current directory)")
+                        help="配合 --report：指定结果文件、通配符或目录（默认：当前目录下的 result_*.json 与 comparison_*.json）")
     parser.add_argument("--output", type=str,
-                        help="Output path for result JSON (default: auto-named by mode and timestamp)")
+                        help="结果 JSON 的输出路径（默认按模式和时间戳自动命名）")
     parser.add_argument("--cache-price-ratio", type=float, default=0.1,
-                        help="Billing ratio of cached tokens relative to normal tokens in cost estimation (default: 0.1, i.e., cache reads at 10% cost), for illustration only")
-    parser.add_argument("--task", type=str, help="Custom task description (default: analyze and summarize project code)")
+                        help="成本估算中缓存 token 相对正常 token 的计费比例（默认：0.1，即缓存读取按一折计），仅作示意")
+    parser.add_argument("--task", type=str, help="自定义任务描述（默认：分析并总结项目代码）")
     parser.add_argument("--root-dir", type=str, default="../..",
-                        help="Root directory for file tools (default: ../.. i.e., repo root, for Agent to read code)")
+                        help="文件工具的根目录（默认：../.. 即仓库根，供 Agent 读取代码）")
     parser.add_argument("--interactive", action="store_true", default=True,
-                        help="Interactive menu to select strategy (default: enabled)")
+                        help="交互式菜单选择策略（默认开启）")
     parser.add_argument("--no-interactive", dest="interactive", action="store_false",
-                        help="Disable interactive menu")
+                        help="关闭交互式菜单")
 
     args = parser.parse_args()
 
@@ -490,14 +490,14 @@ def main():
         run_report(args.input, args.cache_price_ratio)
         return
 
-    # Get API key. Prefer Moonshot/Kimi official key; fallback to OPENROUTER_API_KEY if missing
-    # (KVCacheAgent will automatically switch to the OpenRouter endpoint and map the model name based on this).
+    # Get API key. 优先 Moonshot/Kimi 官方 key；缺失时回退到 OPENROUTER_API_KEY
+    # （KVCacheAgent 会据此自动切换到 OpenRouter 端点并映射模型名）。
     api_key = (args.api_key or os.getenv("MOONSHOT_API_KEY")
                or os.getenv("KIMI_API_KEY") or os.getenv("OPENROUTER_API_KEY"))
     if not api_key:
-        logger.error("Provide the API Key via --api-key or environment variable MOONSHOT_API_KEY / KIMI_API_KEY / "
-                     "OPENROUTER_API_KEY;"
-                     "If you only want to view existing results, use --report (no API Key required).")
+        logger.error("请通过 --api-key 或环境变量 MOONSHOT_API_KEY / KIMI_API_KEY / "
+                     "OPENROUTER_API_KEY 提供 API Key；"
+                     "若只想查看已有结果，可使用 --report（无需 API Key）。")
         sys.exit(1)
 
     # Run based on mode

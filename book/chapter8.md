@@ -1,155 +1,159 @@
-# Agent Self-Evolution
+# Agent 的自我进化
 
-The previous chapters built the Agent's capability system from different dimensions. Chapter 2 on context engineering laid the foundation for information management (including on-demand loading via the Skills mechanism); Chapter 3 on knowledge bases and user memory achieved cross-session knowledge persistence; Chapter 5 demonstrated how a Coding Agent can accumulate experience through the file system; and Chapter 7 on reinforcement learning post-training solidified strategies into model parameters. These techniques each have their own focus, but they all point to the same question: **How can an Agent continuously improve?**
+前面几章从不同维度构建了 Agent 的能力体系。第二章的上下文工程奠定了信息管理基础（包括 Skills 机制的按需加载）；第三章的知识库与用户记忆实现了跨会话的知识持久化；第五章展示了 Coding Agent 如何通过文件系统沉淀经验；第七章的强化学习后训练则将策略固化到模型参数中。这些技术各有侧重，但都指向同一个问题：**Agent 如何持续变强？**
 
-Even the most cutting-edge models, when faced with a specific company's refund process, a particular carrier's sales script, or the calling convention of an obscure API, are as clueless as a fresh hire on their first day. Modifying model weights requires massive amounts of data and compute, with update cycles measured in weeks; meanwhile, in the real world, new APIs go live, old services are decommissioned, and user needs are constantly changing. An Agent needs a lighter-weight, more immediate evolution mechanism—one that can continuously expand its own capability boundaries without changing the model parameters.
+即使是最前沿的模型，面对特定企业的退款流程、某个运营商的话术策略、或一个冷门 API 的调用方式时，仍然和刚入职的新员工一样两眼一黑。改模型权重需要大量数据和算力，更新周期动辄以周计；而现实中新的 API 上线、旧的服务下线、用户需求不断变化。Agent 需要一种更轻量、更即时的进化机制——不改动模型参数，却能持续拓展自身的能力边界。
 
-This chapter explores exactly that mechanism: **Agent Self-Evolution**. Self-evolution is externalized learning, encompassing two dimensions—distilling knowledge from experience, and proactively discovering and creating new tools. The core idea is to separate knowledge and processes from model parameters and transient context, externalizing them into persistent, retrievable, and reusable external resources—tool libraries and knowledge bases. This is not a replacement for post-training, but a complement: post-training addresses "how to make the model smarter," while self-evolution addresses "how to make the Agent more capable."
+本章探讨的正是这种机制：**Agent 的自我进化（Self-Evolution）**。自我进化即外部化学习，包含两个维度——从经验中沉淀知识，以及主动发现和创造新工具。核心思想是将知识和流程从模型参数和临时上下文中分离出来，外部化为可持久化、可检索、可复用的外部资源——工具库和知识库。这不是后训练的替代方案，而是互补：后训练解决“如何让模型更聪明”，自我进化解决“如何让 Agent 更能干”。
 
-## Why Agents Don't Learn Automatically
+## 为什么 Agent 不会自动学习
 
-The previous section discussed real-world needs. But there is a more fundamental question: **If the context window could be infinitely long, and we stuffed all the conversations and tool call results an Agent has ever experienced into it, would it automatically learn everything?**
+前面讲的是现实需求。但还有一个更根本的问题：**如果上下文窗口可以无限长，把 Agent 经历过的所有对话和工具调用结果都塞进去，它是不是就能自动学会一切？**
 
-The answer is no, and the reason lies in the attention mechanism discussed in Chapter 2. This is the theoretical starting point of this chapter, and after several chapters, it's worth a brief review.
+答案是否定的，原因藏在第二章讨论过的注意力机制里。这是本章的理论出发点，隔了几章，值得简单回顾。
 
-Chapter 2 repeatedly emphasized: **The internal mechanism of in-context learning is more like retrieval than reasoning.** Attention excels at "looking up"—"What cat is in the 37th cage?"—a direct hit; but it is not good at "inductive statistics" in a single forward pass—"How many black cats are there in 100 cages?" The latter requires traversing all records and maintaining a counting state, which is essentially thinking, not retrieval. In other words, if you dump raw experience into the context, the model can "remember" it, but it won't automatically "distill" it into reusable patterns. Even if the context were truly infinite, this gap would still exist: the information is there, but no one performs the compression step from "specific records" to "general patterns" for the model. Moreover, as Chapter 2's "context decay" revealed, the longer the context and the more noise it contains, the more diluted the attention becomes, making it harder to retrieve key information—an infinite context does not bring automatic learning; it causes retrieval quality to steadily decline. Karpathy's insight can be read in reverse: the model's "poor memory" is a feature, not a bug; it forces us to actively and explicitly perform knowledge distillation, rather than expecting the model to figure out patterns from lengthy histories on its own. In short: **Learning does not happen automatically; it must be explicitly designed**—and that is the very reason for this chapter's existence.
+第二章反复强调：**上下文学习的内部机制更像检索，而非推理**。注意力擅长“查找”——“第 37 个笼子里是什么猫？”一步命中；却不擅长在一次前向传播里“归纳统计”——“100 个笼子里共有多少只黑猫？”后者需要遍历全部记录、维护计数状态，本质是思考而非检索。也就是说，把原始经验一股脑堆进上下文，模型能“记得”，却不会自动把它“提炼”成可复用的规律。哪怕上下文真的无限大，这道鸿沟依然存在：信息就在那里，却没人替模型完成从“具体记录”到“一般模式”的那步压缩。更何况，正如第二章“上下文腐化”所揭示的，上下文越长、噪声越多，注意力被稀释得越厉害，关键信息反而越难被检索到——无限上下文非但不带来自动学习，还会让检索质量持续下滑。Karpathy 的洞察正可反过来读：模型“记性差”是特性而非缺陷，它逼着我们主动、显式地做知识提炼，而非指望模型自己从冗长历史里悟出规律。一句话：**学习不会自动发生，必须被显式设计出来**——这正是本章存在的理由。
 
-And "explicitly designed learning" doesn't just appear in Chapter 8. The previous chapters have already laid several foundations, although most of them serve the immediate needs **within a single session** or **across adjacent sessions**: Chapter 2's **context compression**, which uses an extra LLM call to "swap" bloated raw records for computed conclusions, compensating for the missing "distillation" half of attention; Chapter 2's **Agent status bar**, which deterministically maintains key conclusions in the context through code, is the other side of the same coin; Chapter 3's **user memory** has already pushed "learning" across sessions—the Agent accumulates understanding of the user over multiple conversations, becoming more accurate through offline organization.
+而“显式设计的学习”并非到第八章才登场。前几章已经埋下若干雏形，只是它们大多服务于**单次会话之内**或**紧邻会话**的即时需求：第二章的**上下文压缩**，用一次额外的 LLM 调用把臃肿的原始记录“换”成算好的结论，替注意力补上欠缺的那半截“提炼”；第二章的 **Agent 状态栏**，由代码逐步把关键结论确定性地维护进上下文，是同一枚硬币的另一面；第三章的**用户记忆**，则已把“学习”推向跨会话——Agent 在一次次对话中攒下对用户的了解，靠离线整理让它越来越准。
 
-The user memory in Chapter 3 is itself a form of learning, but what it distills is **information** about "who the user is" (preferences, facts, habits). Chapter 8 aims to fill the other, more long-term half: distilling problem-solving strategies, operational procedures, failure lessons, and even entirely new tools discovered during exploration into persistent, retrievable, and reusable **capabilities**, so that the Agent doesn't just "remember more," but becomes "increasingly capable." This type of learning is more long-term and requires the Agent to **proactively** initiate it, hence it deserves a dedicated chapter—starting with a macro-level positioning below.
+第三章的用户记忆本身就是一种学习，只不过沉淀的是“用户是谁”的**信息**（偏好、事实、习惯）。第八章要补的是另一半、也更长期的一半：把探索中总结出的解题策略、操作流程、失败教训乃至全新工具，沉淀为可持久、可检索、可复用的**能力**，让 Agent 不只是“记得更多”，而是“越来越能干”。这类学习更长期、也更需要 Agent **主动**发起，因此值得单列一章展开——下面先从宏观上为它定位。
 
-## Three Learning Paradigms and the Positioning of Self-Evolution
+## 三种学习范式与自我进化的定位
 
-The three paradigms introduced in Chapter 1 (Figure 1-1) are used here only for positioning comparison. **Post-training** modifies model weights, solidifying "experience" into "muscle memory" through RL, offering high success rates and low latency, but with high update costs and long cycles (detailed in Chapter 7); **In-Context Learning (ICL)** provides demonstration examples in the prompt for temporary adaptation, with low cost and quick results, but it disappears when the session ends (see Chapters 1 and 2); **Externalized Learning** is the path most easily overlooked by developers—distilling knowledge into files, knowledge bases, and tools outside the model, which is persistent, interpretable, and modifiable at any time. The three are synergistic, not competitive: factual knowledge goes to RAG (see Chapter 3) and externalized storage, stable behaviors and formats are solidified by post-training, and current transient information is handled by in-context learning.
+第一章引入的三种范式（图1-1）在此只作定位性对照。**后训练**修改模型权重，通过 RL 将“经验”固化为“肌肉记忆”，成功率高、延迟低，但更新成本高、周期长（第七章已详述）；**上下文学习**（In-Context Learning, ICL）在提示词中给出示范样例做临时适应，成本低、见效快但会随会话结束而消失（详见第一、二章）；**外部化学习**则是开发者最容易忽略的一条路径——把知识沉淀到模型之外的文件、知识库和工具中，持久、可解释、可随时修正。三者协同而非竞争：事实性知识交给 RAG（详见第三章）与外部化存储，稳定的行为与格式交给后训练固化，当下的临时信息交给上下文学习。
 
-This chapter focuses on the path that **does not change model weights**—externalized learning, which corresponds to the two dimensions mentioned at the beginning of the chapter: externalizing experience into knowledge and Skills, and externalizing capabilities into tools. (This should be distinguished from Chapter 5's "Code Creating Code: Agent Bootstrapping," which is about Agents creating systems similar to themselves; this chapter is about capability growth without changing weights. Chapter 3 solves "how to store and retrieve" knowledge bases; this chapter solves "who fills and updates them"—how the Agent proactively accumulates experience.)
+本章聚焦其中**不改模型权重**的路径——外部化学习，它正对应章首所说的两个维度：把经验外部化为知识和 Skill，把能力外部化为工具。（这里要与第五章“代码创造代码：Agent 自举”区分：那里讲的是 Agent 创建与自身同类的系统，本章讲的是不改权重的能力增长。第三章解决的是知识库“怎么存、怎么查”，本章解决的是“谁来填充和更新”——Agent 如何主动积累经验。）
 
-Why is it needed? Consider a negative scenario. Suppose a customer service Agent handles a certain bank's refund process for the first time: after 15 minutes of exploration—making 3 phone calls, trying 2 different scripts—it finally succeeds. If it lacks externalized learning capability, the next time it encounters an identical request, it will have to spend another 15 minutes going through the same exploration from scratch; the accumulated experience from this session will be lost when it ends. The key is the word "autonomous": it's not a human engineer preparing documentation for the Agent, but the Agent itself summarizing experience, building tools, and updating the knowledge base while completing tasks—just like a veteran customer service representative organizing scattered refund rules into a handbook that can be consulted at any time and updated autonomously based on new situations. The core philosophy is: instead of expecting the model to remember everything, use extra computation after task completion to summarize, compress, and structure the experience, then store it in a persistent, retrievable external system. Compared to parameter learning, this method can quickly distill interpretable, verifiable, and modifiable knowledge without expensive training; compared to in-context learning, it avoids inefficient retrieval from vast amounts of raw information through active distillation and structured organization, achieving cross-session persistence.
-
-
-![Figure 8-1 Externalized Learning Cycle](images/fig8-1.svg)
+为什么需要它？先看一个反面场景。假设一个客服 Agent 第一次处理某银行的退款流程：经过 15 分钟的探索——打了 3 次电话、尝试了 2 种话术——终于成功完成退款。如果它缺乏外部化学习能力，下次遇到完全相同的请求，只能从头再花 15 分钟走一遍同样的探索，这次积累的经验会随会话结束而消失。关键在于“自主”二字：不是人类工程师为 Agent 准备文档，而是 Agent 在完成任务的过程中自己总结经验、构建工具、更新知识库——就像一位客服老手把散落的退款规则整理成一本随时翻阅、并根据新情况自主更新的手册。核心哲学是：与其期待模型记住一切，不如在任务完成后用额外算力把经验总结、压缩、结构化，再存入可持久化、可检索的外部系统。相比参数学习，这种方式无需昂贵训练即可快速沉淀可解释、可验证、可修正的知识；相比上下文学习，它通过主动提炼和结构化组织，避免了在海量原始信息中低效检索，实现了跨会话持久化。
 
 
-More importantly, externalized learning elevates the Agent's learning capability from "remembering information" to "building capabilities": it can not only summarize experience into general knowledge and store it in a knowledge base for future retrieval (the RAPTOR tree-based summarization introduced in Chapter 3's RAG section is also applicable to the layer-by-layer distillation of experience—from specific operation records to rules, and then to principles), but also encapsulate repetitive operational procedures into precisely executable tools, forming a continuously growing skill library. For example, when a customer service Agent helps a client with a refund, it might learn three different types of things. The first is a specific rule—"Company A's refund requires verifying the last four digits of the credit card"—this is factual knowledge, stored in the knowledge base; the second is a general tool—"Use X API to automatically query order status"—this is a stable, reusable sequence of operations, best distilled into a code tool; the third is a job manual—"The complete Skill for the refund process"—involving strategic judgment and frequently changing business rules, better suited for a Skill document. Table 8-1 summarizes these three products of externalized learning.
+![图8-1 外部化学习循环](images/fig8-1.svg)
 
-Table 8-1 Three Products of Externalized Learning
 
-| Product Form | Content Carried | Example | Usage Method |
-|------|------|------|------|
-| Knowledge Base Entry | Facts and rules | "This bank requires the branch address" | Semantic search or `grep` exact retrieval |
-| Dedicated Code Tool | Repeatable operational procedures | "API call sequence for querying account balance" | Solidified as code, called via parameters |
-| Skill Document | Complex but frequently changing work strategies | "Best practices for handling insurance claims" | Natural language document, loaded on demand |
+更重要的是，外部化学习将 Agent 的学习能力从“记忆信息”提升到了“构建能力”：它不仅能把经验总结为概要性知识存入知识库供后续检索（第三章 RAG 部分介绍的 RAPTOR 树形归纳同样适用于经验的逐层提炼——从具体操作记录归纳为规则、再概括为原则），还能将重复性操作流程封装为可精确执行的工具，形成不断增长的技能库。举个例子：一位客服 Agent 在帮某位客户处理退款时，可能学到三类不同性质的东西。第一类是一条特定规则——“A 公司退款必须验证信用卡后四位”，这是事实性知识，存入知识库即可；第二类是一段通用工具——“用 X API 自动查询订单状态”，这是稳定可复用的操作序列，沉淀为代码工具最划算；第三类是一份岗位手册——“退款流程的完整 Skill”，涉及策略判断和经常变动的业务规则，更适合写成 Skill 文档。表8-1 总结了外部化学习沉淀的这三种产物。
 
-There is a simple rule of thumb for deciding which form to use: **Store purely factual information in the knowledge base; write frequently used, parameter-rich procedures as code (tools); and write frequently changing, strategy-involving processes as documents (Skills).** The latter two fall under "tool generation"—a higher-order form of externalized learning that externalizes not only "knowledge" but also "processes" into code, shifting from "rethinking every time" to "generate once, reuse many times," much like writing an automation script after manually deploying a server for the first time. Chapter 4 has already discussed the framework for choosing between dedicated tools and Skills in detail.
-## Why Agents Should Learn from Experience: From "Smart" to "Skilled"
+表8-1 外部化学习的三种产物
 
-The "veteran customer service representative" who organized scattered rules into a handbook highlights the key transition from "smart" to "skilled": the gap is often not that the model isn't smart enough, but that many business processes and domain knowledge are dynamic, non-public, and cannot be solved by merely improving the general capabilities of the base model—these are problems that depend on "experience." What an Agent learns from experience is precisely this type of knowledge: that unsubscribing from a certain service requires filling out a specific form rather than making a futile phone call; summarizing the eligibility conditions for a certain promotion (e.g., veterans or customers with over two years of tenure); judging whether there is room for negotiation on a broadband quote from a specific carrier in a specific region. Similarly, a Coding Agent is unaware of a project's unique code conventions and deployment processes, and a browser Agent doesn't know a particular website's anti-scraping strategies or layout changes—these are all real-time domain knowledge not present in pre-training data.
+| 产物形态 | 承载内容 | 示例 | 使用方式 |
+|-------------|----------------------|--------------------------------|---------------------------|
+| 知识库条目 | 事实和规则 | “该银行要求提供开户行地址” | 语义搜索或 `grep` 精确检索 |
+| 专用代码工具 | 可重复的操作流程 | “查询账户余额的 API 调用序列” | 固化为代码、通过参数调用 |
+| Skill 文档 | 复杂但常变的工作策略 | “处理保险理赔的最佳实践” | 自然语言文档、按需加载 |
 
-## Learning from Experience
+判断该用哪种形态有一条简单的经验法则：**纯粹是事实性信息的存入知识库，经常用且参数复杂的写成代码（工具），经常变且涉及策略判断的写成文档（Skill）**。其中后两种都属于“工具生成”——外部化学习的更高阶形式，不仅将“知识”外部化，更将“流程”外部化、代码化，从“每次重新思考”转为“一次生成、多次复用”，就好比第一次手动部署服务器后把步骤写成自动化脚本。第四章已详细讨论了专用工具与 Skill 的选择框架。
+## 为什么 Agent 要从经验中学习：从 “聪明” 到 “熟练”
 
-Having understood the "why," the next question is "how." The engineering practice of externalized learning begins with "recording and reusing successful experiences." The following two experiments demonstrate two complementary approaches to experience accumulation: one distills high-level strategies into retrievable knowledge summaries (akin to "problem-solving notes"), and the other solidifies specific operational sequences into replayable automation tools (akin to "operation recordings").
+前面那位把散落规则整理成手册的“客服老手”，点出了从“聪明”到“熟练”的关键：差距往往不在于模型不够聪明，而在于许多业务流程和领域知识是动态变化的、非公开的，仅靠提升基座模型的通用能力解决不了这类依赖“经验”的问题。Agent 从经验中学习，要学到的正是这类知识——某服务的退订要填特定表单而非无效地打电话、总结出某优惠的适用条件（如退伍军人或两年以上的老客户）、判断某地某运营商的宽带报价是否还有谈判空间。同理，Coding Agent 不了解项目特有的代码规范和部署流程，浏览器 Agent 不知道某个网站的反爬策略和页面布局变化——这些都是预训练数据中不包含的实时领域知识。
 
-Table 8-2 categorizes experience learning mechanisms by layer to help readers understand the relationships between knowledge distillation, knowledge organization, knowledge application, and engineering support.
+## 从经验中学习
 
-Table 8-2 Layers of Agent Experience Learning Mechanisms
+理解了“为什么要学”之后，接下来的问题是“怎么学”。外部化学习的工程实践从“记录和复用成功经验”开始。以下两个实验展示了两种互补的经验积累方式：一种将高层策略提炼为可检索的知识摘要（相当于“解题思路笔记”），另一种将具体操作序列固化为可回放的自动化工具（相当于“操作录像”）。
 
-| Layer | Mechanism | Problem Solved |
+表8-2 将经验学习机制按层面分类，用于帮助读者理解知识提炼、知识组织、知识应用和工程支撑之间的关系。
+
+表8-2 Agent 经验学习机制分层
+
+| 层面 | 机制 | 解决什么问题 |
 |------|------|-------------|
-| Knowledge Distillation | Strategy Summary, Workflow Recording, Failure Reflection | Extract reusable knowledge from successful and failed experiences |
-| Knowledge Organization | Skills, Sleep Consolidation | Structure and index knowledge for storage |
-| Knowledge Application | System Prompt Optimization | Inject knowledge into the Agent's behavior pattern |
-| Engineering Support | Cross-Session Continuation | Enable long tasks to execute persistently |
+| 知识提炼 | 策略摘要、工作流录制、失败反思 | 从成功与失败经验中提取可复用知识 |
+| 知识组织 | Skills、睡眠整合 | 将知识结构化存储和索引 |
+| 知识应用 | 系统提示词优化 | 将知识注入 Agent 的行为模式 |
+| 工程支撑 | 跨会话续跑 | 让长任务能持续执行 |
 
-These four layers are interwoven in the subsequent content—Strategy Summary, Workflow Recording, and Learning from Failure (Knowledge Distillation) naturally transition into Skills and Sleep Consolidation (Knowledge Organization), followed by System Prompt Optimization (Knowledge Application), and finally concluding with Cross-Session Continuation for long tasks (Engineering Support).
+以上四个层面在后续内容中交织展开——策略摘要、工作流录制和从失败中学习（知识提炼）自然过渡到 Skills 与睡眠整合（知识组织），然后是系统提示词优化（知识应用），最后以长任务的跨会话续跑收尾（工程支撑）。
 
-![Figure 8-2 Strategy Summary Learning-Application Loop in the GAIA Experiment](images/fig8-2.svg)
+![图8-2 GAIA 实验中的策略摘要学习-应用闭环](images/fig8-2.svg)
 
 
-> **Experiment 8-1 ★★: Learning from Successful Experience: Strategy Summary**
+> **实验 8-1 ★★：从成功经验中学习：策略摘要**
 >
-> The `gaia-experience` project is a typical implementation of the "Strategy Summary" idea. A strategy summary condenses a successful problem-solving process into a structured experience note—recording "what methods were used, what pitfalls were encountered, and what the key steps were"—so that it can be directly referenced when encountering similar problems in the future.
+> `gaia-experience` 项目是“策略摘要”（Strategy Summary）思想的典型实现。所谓策略摘要，就是把一次成功的解题过程浓缩为一段结构化的经验笔记——记录“用了什么方法、踩了什么坑、关键步骤是什么”，以便下次遇到类似问题时直接参考。
 >
-> Not every run trajectory is worth distilling into experience; the criterion is **transferability**: can the lesson learned from the current task be reused in similar future tasks? Fixes that are only valid for a specific input should not enter long-term memory.
+> 并非所有运行轨迹都值得提炼成经验——判断标准是**可迁移性**：当前任务中学到的教训，是否能在未来类似任务里复用？只对某次特定输入有效的修正，不应进入长期记忆。
 >
-> This experiment uses two key infrastructures. The **AWorld framework** is an open-source execution and evaluation environment specifically designed for AI Agents, providing a standardized set of tools (browser, file system, code interpreter, etc.) and an automated evaluation pipeline—think of it as an "exam room" for Agents. **GAIA** is a highly challenging benchmark that evaluates general-purpose AI Agent capabilities through complex, multi-step problems requiring human-like intelligence—for example, "find specific information on a website, process it with code, and calculate the answer," often requiring the combined use of a browser, file manager, code interpreter, and complex logical reasoning.
+> 该实验使用两个关键基础设施。**AWorld 框架**是专为 AI Agent 设计的开源执行与评估环境，提供标准化的工具集（浏览器、文件系统、代码解释器等）和自动评估管道，可以理解为 Agent 的“考试教室”。**GAIA** 是一套极具挑战性的评测基准，通过需要人类智慧才能解决的多步骤复杂问题来评估通用 AI Agent 能力——比如“在某个网站上找到特定信息，用代码处理后计算出答案”，往往需要综合使用浏览器、文件管理器、代码解释器并进行复杂逻辑推理。
 >
-> The core innovation is adding a complete "learning-application" loop to the Agent within the AWorld framework. In **Learning Mode**, whenever the Agent successfully completes a GAIA task, the system automatically captures its complete action trajectory and uses an LLM to "reflect" and "summarize" it, generating a structured experience summary. This summary not only contains the final answer but also distills the core method, key insights, and effective tool sequences used to solve the problem. These experiences are vectorized and stored in a knowledge base. In **Apply Experience Mode**, when the Agent receives a new task, it first performs a semantic search in the experience knowledge base to find the most similar historical success cases, and injects these experiences as "success examples" into the system prompt to guide decision-making. Experiments have shown this significantly improves the efficiency and success rate of solving new problems—the more tasks the Agent solves, the richer its accumulated experience, and the stronger its capabilities become, forming a positive feedback loop of self-evolution.
+> 核心创新在于为 AWorld 框架中的 Agent 增加了完整的“学习-应用”闭环。在**学习模式（Learning Mode）**下，每当 Agent 成功完成一个 GAIA 任务，系统自动捕获其完整行动轨迹，并利用 LLM 对其进行“反思”和“总结”，生成结构化的经验摘要。这个摘要不仅包含最终答案，还提炼了解决问题的核心方法、关键洞察以及有效使用的工具序列。这些经验被向量化后存入知识库。在**应用模式（Apply Experience Mode）**下，当 Agent 接到新任务时，它会先在经验知识库中进行语义搜索，找出历史上最相似的成功案例，并将这些经验作为“成功范例”注入系统提示词，为决策提供指引。实验证明这显著提升了解决新问题的效率和成功率——Agent 解决的任务越多、积累的经验越丰富、能力也就越强，形成了一个正向循环的自进化系统。
 >
-> **Experiment 8-2 ★★: Learning from Repetitive Tasks: Workflow Recording and Replay**
+> **实验 8-2 ★★：从重复任务中学习：工作流录制与回放**
 >
-> The `browser-use-rpa` project is an excellent example of the "Workflow Recording" idea. The concept of workflow recording is similar to Excel's "macro recording" feature: you record the steps during the first manual operation, and then you can automatically repeat them with a single "playback" click. The problem this project solves is very practical: many repetitive operations performed in the browser (e.g., sending a report email, querying information on a specific website), although the specific parameters vary each time (e.g., recipient, search keyword), have a fixed core operational flow. Having the Agent start from scratch every time, using an expensive multimodal LLM to "rediscover" this flow, is a huge waste of resources—it essentially relies solely on in-context learning without externalizing successful experiences into reusable tools. The project's core is an extreme comparative experiment on efficiency and cost.
+> `browser-use-rpa` 项目是“工作流录制”（Workflow Recording）思想的绝佳范例。工作流录制的思路类似于 Excel 的“宏录制”功能：第一次手动操作时把步骤录下来，以后只需点一下“回放”就能自动重复。这个项目要解决的问题很实际：许多在浏览器中进行的重复性操作（如发送报告邮件、查询特定网站信息），虽然每次的具体参数不同（如收件人、查询关键词），但核心操作流程是固定的。让 Agent 每次都从头开始、用昂贵的多模态大模型来“重新发现”这个流程，是极大的资源浪费——本质上是只依赖上下文学习，而没有将成功经验外部化为可复用的工具。项目核心是一场关于效率和成本的极致对比实验。
 >
-> In the **Learning Phase**, the Agent performs the task for the first time, completing the operation through the multimodal LLM's observe-think-act cycle, just like a human. Each time the LLM decides to execute an action, the system extracts the precise positioning information of the target element from the browser-use framework's history: the webpage is rendered as a DOM tree (Document Object Model) in the browser, where each button, input field, and link is a node; XPath (XML Path Language) points to a specific node using a path-like syntax such as `/html/body/div[2]/button[1]`. The action is recorded as a structured step: action type (click, input, etc.), XPath of the target element, action parameters, and post-execution verification information (e.g., whether the page URL changed, whether the expected element appeared). After the task is successful, the LLM generates a semantic label (e.g., "Send Email") and a description (e.g., "recipient field, subject field, content field, send button"), which are stored in the knowledge base along with the step sequence, forming a parameterized "workflow" entry.> In the **Replay Phase**, when a new task arrives, the system checks for a matching existing workflow using both semantic similarity (embedding vectors) and key element checks. If a match is found, it executes the steps at high speed: it uses Playwright's (an open-source browser automation library) waiting mechanism (`page.locator(xpath).wait_for(state='visible', timeout=15000)`) to ensure elements are loaded; parameterized templates (e.g., "Enter `{{email}}` in the recipient field") extract actual parameter values from the current task instructions via a lightweight LLM call, without requiring full visual reasoning. If a step fails (element not found, wait timeout), it indicates the webpage structure may have changed. The workflow is then marked as "potentially outdated," and the system falls back to learning mode, re-completing the task through LLM reasoning and generating a new workflow to replace the old one.
+> 在**学习阶段（Learning Phase）**，Agent 首次执行任务时像人类一样通过多模态 LLM 的观察-思考-行动循环完成操作。每次 LLM 决定执行操作时，系统从 browser-use 框架的历史记录中提取被操作元素的精确定位信息：网页在浏览器中呈现为一棵 DOM 树（Document Object Model，文档对象模型），每个按钮、输入框、链接都是树上的一个节点；XPath（XML Path Language）则用类似文件路径 `/html/body/div[2]/button[1]` 的写法指向特定节点。操作被录制为结构化步骤：操作类型（点击、输入等）、目标元素的 XPath、操作参数、以及执行后的验证信息（如页面 URL 是否发生变化、预期元素是否出现）。任务成功后，LLM 生成语义标签（如“发送电子邮件”）和描述（“收件人字段、主题字段、内容字段、发送按钮”），与步骤序列一起存入知识库，形成参数化的“工作流”条目。
+>
+> 在**回放阶段（Replay Phase）**，新任务到达时，系统结合语义相似度（嵌入向量）和关键要素检查匹配已有工作流。匹配成功则按步骤高速执行：通过 Playwright（开源的浏览器自动化库）的等待机制（`page.locator(xpath).wait_for(state='visible', timeout=15000)`）确保元素加载；参数化模板（如“在收件人字段输入 `{{email}}`”）通过轻量 LLM 调用从当前任务指令中提取实际参数值，无需完整的视觉思考。若某步失败（找不到元素、等待超时），说明网页结构可能已变化，此时标记该工作流“可能过时”，回退到学习模式重新通过 LLM 思考完成任务，并生成新工作流替换旧的。
+>
+> **验收场景**：在 Gmail 网页版中发送邮件。
+>
+> - 首次执行（学习阶段）：“给 test@example.com 发送邮件，主题‘测试邮件’，内容‘这是一封测试邮件’”。观察 Agent 如何通过多模态 LLM 识别“撰写”按钮、收件人输入框、主题和内容输入框、“发送”按钮。记录操作步骤、耗时、LLM 调用次数。
+> - 重复执行（回放阶段）：“给 another@example.com 发送邮件，主题‘后续测试’，内容‘第二封测试邮件’”。系统识别到匹配的工作流，提取新参数值，直接回放操作，无需 LLM 视觉思考。对比耗时和调用次数应显著降低。
+> - 知识更新：模拟网页改版（修改 HTML 结构使某按钮的 XPath 变化），验证 Agent 能检测到工作流失效并回退到学习模式，重新生成工作流更新知识库。
+>
+> 预期可观察到：回放阶段任务执行速度显著提升（数倍量级），LLM 调用成本大幅降低，成功率也更稳定。
 
-> **Acceptance Scenario**: Sending an email in the Gmail web interface.
->
-> - First Execution (Learning Phase): "Send an email to test@example.com with subject 'Test Email' and body 'This is a test email.'" Observe how the Agent uses a multimodal LLM to identify the "Compose" button, recipient input field, subject and body input fields, and the "Send" button. Record the operation steps, time taken, and number of LLM calls.
-> - Repeated Execution (Replay Phase): "Send an email to another@example.com with subject 'Follow-up Test' and body 'Second test email.'" The system identifies the matching workflow, extracts the new parameter values, and directly replays the operations without requiring LLM visual reasoning. The time taken and number of calls should be significantly reduced.
-> - Knowledge Update: Simulate a webpage redesign (modify the HTML structure so the XPath of a certain button changes), and verify that the Agent can detect the workflow failure, fall back to learning mode, and regenerate a workflow to update the knowledge base.
->
-> Expected observations: Task execution speed during the replay phase is significantly improved (by several times), LLM call costs are drastically reduced, and the success rate is more stable.
+工作流录制并非孤立的工程技巧，它背后是一套更通用的方法论。Voyager 是 NVIDIA 团队提出的开放世界 Agent 架构（详见后文），在 Minecraft 虚拟世界中将“探索-沉淀”循环系统化：**执行任务 → 验证成功 → 将成功的操作序列存入技能库 → 遇到类似任务时检索复用**。实验 8-2 正是这套思路在浏览器自动化场景的落地——学习阶段对应“探索”，工作流知识库对应“技能库”，回放与失效回退对应“检索复用”和持续改进。
 
-Workflow recording is not an isolated engineering trick; it is backed by a more general methodology. Voyager, an open-world Agent architecture proposed by the NVIDIA team (detailed later), systematizes the "explore-consolidate" cycle in the Minecraft virtual world: **Execute task → Verify success → Store the successful action sequence in a skill library → Retrieve and reuse when encountering similar tasks**. Experiment 8-2 is precisely the application of this approach to browser automation—the learning phase corresponds to "exploration," the workflow knowledge base corresponds to the "skill library," and replay and fallback on failure correspond to "retrieval and reuse" and continuous improvement.
+实验 8-2 也暴露了“录制-回放”最脆弱的两个环节，把它们处理干净，这套机制才真正可靠[^preact]。第一个环节是**什么时候敢信回放**。更稳妥的做法是把一次成功的操作序列编译成一个小小的**状态机程序**：每个状态都带一个“验证谓词”（一段必须在当前真实屏幕上成立的界面模式），回放时**每一步动作之前先拿谓词去核对实时屏幕**——“先看清、再动手”。一旦谓词不成立或动作报错，就交还给完整的 Agent 重新来过，并把这次的新轨迹重新编译成程序。正因为回放时一次模型调用都不需要，命中缓存的重复任务能快上 8.5–13 倍。第二个环节是**别把坏程序存进去**：编译完成后立刻重置环境、从头回放一遍，用基准自带的评判器确认“这次是真的做成了”才准入库——这道“存前验证”能挡住那种“回放 100% 覆盖、却其实没把事办成”的程序（比如流程全走完、Save 也点了，但某个字段其实是空的）。去掉这道关，程序库会随着有毛病的程序越攒越多而逐渐退化。归结成一条干净的原则就是：**流程记忆也要有验证闸门，自我改进的循环才不会腐坏**——这正是实验 8-2 里“检测工作流失效、回退重学”的严格版。
 
-Experiment 8-2 also exposes the two most fragile links in "record-replay." Handling these cleanly makes the mechanism truly reliable[^preact]. The first link is **when to trust the replay**. A more robust approach is to compile a successful action sequence into a small **state machine program**: each state comes with a "verification predicate" (a UI pattern that must hold true on the current real screen). During replay, **before each action, the predicate is checked against the live screen**—"look first, then act." If a predicate fails or an action errors out, control is handed back to the full Agent to start over, and the new trajectory is compiled into a program again. Because replay requires zero model calls, cached repetitive tasks can be 8.5–13 times faster. The second link is **don't store bad programs**: immediately after compilation, reset the environment and replay from scratch. Use a built-in benchmark evaluator to confirm "this actually got the job done" before allowing it into the library—this "pre-storage verification" blocks programs that "cover 100% of the replay steps but didn't actually accomplish the task" (e.g., the entire flow is completed and Save is clicked, but a certain field is actually empty). Without this gate, the program library degrades as faulty programs accumulate. This boils down to a clean principle: **Procedural memory also needs a verification gate, otherwise the self-improvement cycle will corrupt**—this is the strict version of "detect workflow failure, fall back and relearn" in Experiment 8-2.
+[^preact]: 把成功轨迹编译成带验证谓词的状态机程序、并设“存前验证”闸门，完整机制见 Li, Bojie. *PreAct: Computer-Using Agents that Get Faster on Repeated Tasks.* arXiv:2606.17929, 2026.
 
-[^preact]: The complete mechanism of compiling successful trajectories into state machine programs with verification predicates and setting a "pre-storage verification" gate is detailed in Li, Bojie. *PreAct: Computer-Using Agents that Get Faster on Repeated Tasks.* arXiv:2606.17929, 2026.
+### 从失败中学习
 
-### Learning from Failure
+策略摘要和工作流录制都是从**成功轨迹**中提炼经验——实验 8-1 只在任务成功后才触发反思和总结。但失败经验同样值得沉淀，甚至信息量更大：一次失败明确排除了一条路径，而成功往往只是众多可行路径中的一条。失败经验的典型沉淀形态有两种：**错误模式库**（记录“什么情况下用什么方法会失败、失败的信号是什么”）和**负面规则**（“不要再用 X 方法做 Y”——例如“不要用打电话的方式办理该运营商的退订，电话渠道无权限处理”）。
 
-Strategy summaries and workflow recording both extract experience from **successful trajectories**—Experiment 8-1 only triggers reflection and summarization after a task succeeds. But failure experiences are equally valuable, and often carry more information: a single failure definitively rules out one path, whereas success is often just one of many viable paths. Failure experiences typically crystallize into two forms: **Error Pattern Libraries** (recording "under what circumstances using what method fails, and what the failure signal is") and **Negative Rules** ("Don't use method X for Y anymore"—e.g., "Don't use the phone call method to cancel a subscription with this carrier; the phone channel has no authority to handle it").
-
-The representative work in this direction is Reflexion (Shinn et al., 2023)[^reflexion-2023]: After a task fails, the Agent reflects on the cause of failure in natural language (e.g., "I should have verified my identity in the third step instead of directly submitting the form") and stores the reflection text in episodic memory. When attempting a similar task next time, these reflections are read as additional context, thus avoiding repeating the same mistakes. The entire process does not update any model parameters—Reflexion is a classic example of "evolution without changing weights"; this language-carried reflection carries far more information than a scalar reward, a point that will be expanded upon later when discussing system prompt learning. Another important outlet for failure experience is the system prompt: the automatic optimization of system prompts discussed later in this chapter is precisely about writing negative rules extracted from failure cases (e.g., "Never transfer to a human agent due to policy disputes") into the system prompt, making them behavioral constraints effective for all subsequent tasks.
+这个方向的代表工作是 Reflexion（Shinn et al., 2023）[^reflexion-2023]：任务失败后，Agent 用自然语言对失败原因进行反思（如“我在第三步就应该先验证身份，而不是直接提交表单”），并将反思文本存入情景记忆（episodic memory）；下次尝试同类任务时，把这些反思作为额外上下文读取，从而避免重蹈覆辙。整个过程不更新任何模型参数——Reflexion 正是“不改权重的进化”的经典范例；这种用语言承载的反思，信息量远比一个标量奖励丰富，后文讨论系统提示学习时会展开这一点。失败经验的另一个重要出口是系统提示词：本章稍后讨论的系统提示词自动优化，正是把从失败案例中提炼的负面规则（如“绝不因政策争议而转接人工”）写入系统提示词，使其成为对所有后续任务生效的行为约束。
 
 [^reflexion-2023]: Shinn, N., et al. *Reflexion: Language Agents with Verbal Reinforcement Learning.* arXiv:2303.11366, 2023.
 
-### Skills: Externalizing Domain Knowledge into Structured Capabilities
+### Skills：将领域知识外部化为结构化能力
 
-The two mechanisms discussed earlier respectively consolidate experience on "how to think" and "how to do." The Skills mechanism takes a third path—systematically refining domain operational knowledge into structured capability modules that can be loaded on demand. Think of a Skill as a "job manual": a new employee doesn't need to figure everything out from scratch; they can start working after reading the manual. Chapter 2 discussed in detail the Progressive Disclosure mechanism of Skills (metadata → core process → details) and their compatibility design with KV Cache. This section focuses on the philosophy of knowledge externalization behind Skills and their automated generation.
+前面两种机制分别沉淀了“怎么想”和“怎么做”的经验。Skills 机制走的是第三条路——把领域操作知识系统性地提炼为结构化的、可按需加载的能力模块。可以把 Skill 理解为一份“岗位操作手册”：新员工入职时不需要从头摸索，读完手册就能上手干活。第二章详细讨论了 Skills 的渐进式披露（Progressive Disclosure）机制（元数据→核心流程→细则）和与 KV Cache 的兼容性设计，本节关注 Skills 背后的知识外部化哲学及其自动化生成。
 
-The core value of Skills lies in carrying knowledge in human-readable text: they are quick to update (no model retraining needed), auditable (human experts can directly modify and improve them), and transferable (usable across different models or systems). Essentially, Skills transform domain knowledge trapped in unstructured documents into a structured form easily utilized by Agents—allowing Agents to leverage knowledge through general search and reasoning capabilities, rather than hardcoding knowledge into code logic.
+Skills 的核心价值在于用人类可读的文本承载知识：更新快（不需重新训练模型）、可审查（人类专家能直接修改完善）、可迁移（换模型或换系统都能用）。本质上，Skills 是把困在非结构化文档里的领域知识转化为 Agent 容易利用的结构化形式——让 Agent 通过通用的搜索和思考能力来利用知识，而不是把知识硬编码到代码逻辑中。
 
-Going further, Anthropic's Skill Creator[^ch8-1] is a meta-capability that can create other Skills. It guides the Agent to refine domain operational knowledge into structured Skills through observation, learning, and summarization. When asked to create a Skill for a specific domain, the Agent first understands the specific usage scenarios through dialogue with the user, then analyzes each scenario to identify reusable resources, and finally creates a complete Skill package containing a standard directory structure, scripts, references, assets, and a main `SKILL.md` document. Skill Creator enables the knowledge transformation process itself to be completed by the Agent, realizing a bootstrapping cycle of knowledge accumulation: Agents can not only use Skills but also create them.
+更进一步，Anthropic 的 Skill Creator[^ch8-1] 是一个能创造其他 Skills 的元能力，它指导 Agent 通过观察、学习和总结，将领域操作知识提炼为结构化 Skill。当被要求为某领域创建 Skill 时，Agent 首先通过与用户对话理解具体使用场景，然后分析每个场景并识别可复用资源，最后创建包含标准目录结构、scripts、references、assets 和 `SKILL.md` 主文档的完整 Skill 包。Skill Creator 使知识转化过程本身也由 Agent 完成，实现了知识积累的自举循环：Agent 不仅能用 Skill，还能造 Skill。
 
-[^ch8-1]: Anthropic, "Skill Creator", 2025. https://github.com/anthropics/skills/blob/main/skill-creator/SKILL.md
+[^ch8-1]: Anthropic, “Skill Creator” , 2025. https://github.com/anthropics/skills/blob/main/skill-creator/SKILL.md
 
-Claude Code's `CLAUDE.md` mechanism demonstrates a similar capability: upon first encountering a code repository, it proactively reads the entire codebase to generate a project guide containing core information like architecture design, coding standards, and testing methods, which it continuously references and updates during subsequent development. This automated Skill generation mechanism means the expansion of an Agent's capabilities is no longer limited by the availability and knowledge coverage of human experts—when an Agent enters a new domain, it can learn through autonomous exploration, build operational guides, and solidify them as Skills, achieving a transition from "relying on pre-programmed knowledge" to "learning and accumulating knowledge through practice."
+Claude Code 的 `CLAUDE.md` 机制展示了类似能力：首次接触代码仓库时主动通读代码库，生成包含架构设计、编码规范、测试方式等核心信息的项目指南，在后续开发中持续引用和更新。这种自动化的 Skill 生成机制使 Agent 的能力扩展不再受限于人类专家的可用时间和知识覆盖范围——当 Agent 进入新领域时，可通过自主探索学习构建操作指南并固化为 Skill，实现从“依赖预编程知识”到“在实践中学习积累知识”的转变。
 
-From the perspective of "experience consolidation," the specific forms of tool generation can be further divided into dedicated code tools and Skills + general executors. The principles for choosing between the two were given earlier, with a complete framework in Chapter 4, so they won't be repeated here. Applied to this section's scenario: operations with complex parameters and frequent calls are solidified as code tools (e.g., Voyager's skill library in Minecraft, parameterized scripts generated from browser workflow recording), while strategic, volatile business rules are written as Skill documents (e.g., Claude Code's `CLAUDE.md`). Real-world systems often use a hybrid of both forms.
+从“经验沉淀”的视角看，工具生成这条路径的具体形态又可分为专用代码工具和 Skill + 通用执行器两种。如何在两者间取舍，前文已给出判别原则、第四章有完整框架，此处不再重复；落到本节的场景上：参数复杂、调用频繁的操作沉淀为代码工具（如 Voyager 在 Minecraft 中沉淀的技能库、浏览器工作流录制生成的参数化脚本），策略性、易变动的业务规则写成 Skill 文档（如 Claude Code 的 `CLAUDE.md`）。实际系统往往混合使用两种形态。
 
-### Sleep Learning: Autonomous Evolution of User Memory
+### 睡眠学习：用户记忆的自主进化
 
-The experiential learning mechanisms discussed earlier—strategy summaries, workflow recording, Skill generation—all occur during task execution or immediate post-task refinement. But human learning has another crucial component: **memory consolidation during sleep**. Chapter 2 used this analogy when discussing context compression—the brain processes the day's sensory input into compact long-term memory; this analogy applies not only to context compression within a single session but also extends to cross-session experience management: fragmented experiences gained during the day are reorganized, deduplicated, and integrated with existing knowledge networks during sleep, transforming into more compact, easily retrievable long-term memory.
+前面讨论的经验学习机制——策略摘要、工作流录制、Skills 生成——都发生在任务执行过程中或结束后的即时提炼。但人类学习还有一个重要环节：**睡眠期间的记忆整合**。第二章在讨论上下文压缩时曾用这个类比——大脑将白天的感官输入加工为紧凑的长期记忆；这个类比不仅适用于单次会话内的上下文压缩，更可以延伸到跨会话的经验管理：白天获取的零散经验在睡眠中被重新组织、去冗余、与已有知识网络融合，转化为更紧凑、更易调取的长期记忆。
 
-The most typical object of this offline consolidation is the Agent's memory of **the user themselves**—who you are, your preferences, facts you've mentioned. A common misconception needs clarification here: what Agents like Claude Code organize during "sleep" is primarily **user memory**, not shared knowledge bases. Knowledge bases (RAG from Chapter 3) carry domain documents unrelated to specific users, typically batch-loaded via offline pipelines with little change; user memory, on the other hand, is the model of "getting to know you better" accumulated piecemeal across conversations—it is precisely this that requires repeated "sleep consolidation." The Claude Code and Hermes introduced next in this section both store this type of user memory, focusing on **how they evolve autonomously**.
+这种离线整合最典型的对象，是 Agent 关于**用户本人**的记忆——你是谁、有什么偏好、说过哪些事实。这里要先厘清一个常见误解：像 Claude Code 这样的 Agent 在“睡眠”里整理的，主要是**用户记忆**而非共享知识库。知识库（第三章的 RAG）承载的是与具体用户无关的领域文档，通常由离线管道批量灌入、少有变动；而用户记忆是 Agent 在一次次对话中零散攒下、越来越懂你的模型——它才是需要反复“睡眠整合”的那部分。本节接下来介绍的 Claude Code 与 Hermes，存的都是这类用户记忆，重点看它们**如何自主进化**。
 
-Let's also clarify the division of labor with Chapter 3: Chapter 3 covered "how to store and how to query" user memory, and also introduced the consolidation **algorithms** for the memory storage layer (clustering summaries, conflict versioning, etc.), so those won't be repeated here. This section focuses on **engineering and evolution issues**—when to consolidate, who consolidates, and in what form to crystallize, so that memory becomes more accurate with use.
+再明确本节与第三章的分工：第三章讲过用户记忆“怎么存、怎么查”，也介绍了记忆存储层的整理**算法**（聚类摘要、冲突版本化等），此处不再重复；本节关注的是**工程与进化问题**——何时整理、谁来整理、以什么形式沉淀，才能让记忆越用越准。
 
-**Claude Code: Storing User Memory in Markdown.** Claude Code stores user memory directly as human-readable Markdown files: each memory is a small file with metadata (frontmatter), recording only one fact, with an index file (`MEMORY.md`) providing a summary navigation. The benefits of this form are clear—quick to update (just modify the file, no model retraining needed), auditable (users can directly open and modify), and transferable (usable across different models or systems).
+**Claude Code：用 Markdown 存储用户记忆。** Claude Code 把用户记忆直接存成人类可读的 Markdown 文件：每条记忆是一个带元数据（frontmatter）的小文件，只记录一条事实，再由一个索引文件（`MEMORY.md`）汇总导航。这种形式的好处一目了然——更新快（改文件即可，无需重训模型）、可审查（用户能直接打开修改）、可迁移（换模型或换系统都能用）。
 
-But beyond "recording," "organizing" is also needed. Claude Code engineers the cognitive metaphor of sleep consolidation into a periodically running background memory consolidation mechanism. (The following description is based on public version behavior and community analysis, not an official definition.) The core design idea is: **experience accumulation and memory consolidation are two independent processes that should not occur within the same time window**—Agents also need dedicated "review time." Specifically, when two gating conditions are met (a certain time interval has passed since the last consolidation, and enough new sessions have accumulated during that period), the system launches an independent sub-agent in the background to perform a four-stage consolidation: **Orient** (read the existing memory index to understand the overall knowledge landscape), **Gather** (search recent sessions for new information worth persisting and detect facts contradicting existing memory), **Consolidate** (merge new signals into existing topic files rather than creating near-duplicate entries, convert relative dates to absolute dates, delete old facts that have been disproven), and **Prune & Index** (control index size, remove outdated pointers).
+但“记录”之外还需要“整理”。Claude Code 将睡眠整合的认知隐喻工程化为一个在后台周期性运行的记忆整合机制。（以下描述基于公开版本行为与社区分析整理，并非官方正式定义。）核心设计思想是：**经验积累和记忆整合是两个独立的过程，不应在同一时间窗口内完成**——Agent 也需要专门的“复习时间”。具体而言，当满足两个门控条件（距上次整合超过一定时间间隔、且期间积累了足够多的新会话）时，系统在后台启动一个独立的子 Agent，执行四阶段整合：**定向**（Orient，读取现有记忆索引，了解知识全貌）、**采集新信号**（Gather，从近期会话中搜索值得持久化的新信息，并检测与现有记忆矛盾的事实）、**整合**（Consolidate，将新信号合并进已有主题文件而非新建近似重复条目，把相对日期转成绝对日期，删除已被证伪的旧事实）、**修剪与索引**（Prune & Index，控制索引大小、移除过时指针）。
 
-The most important design decision of this mechanism is: memory consolidation is not performed during user interaction but is completed asynchronously in the background, completely transparent to the user. Dual gating and distributed locks ensure concurrent instances don't trigger consolidation repeatedly, with automatic rollback on failure and retry next time; the consolidation sub-agent's permissions are strictly limited to the memory directory. From a broader perspective, it represents the evolution of user memory management from "recording without organizing" to a complete lifecycle of "record—consolidate—prune." Without regular consolidation, the memory repository degrades into a low signal-to-noise information dump, hindering retrieval quality; regular "sleep consolidation" keeps the memory repository compact, consistent, and easy to navigate, just as a human expert's knowledge is not an infinite accumulation of facts but a structured understanding refined through repeated organization.
+这套机制最重要的设计决定是：记忆整合不在用户交互时执行，而是异步后台完成，用户完全感知不到。双重门控和分布式锁确保并发实例不会重复触发整合，失败时自动回退、下次重试；整合子 Agent 的权限也被严格限定在记忆目录内，不会越界。从更宏观的视角看，它代表了用户记忆管理从“有记录无整理”到“记录—整合—修剪”完整生命周期的演进——没有定期整合，记忆库会退化为低信噪比的信息堆积，反而拖累检索质量；定期的“睡眠整合”让记忆库保持紧凑、一致、易于导航，正如人类专家的知识不是事实的无限堆叠，而是经过反复整理的结构化理解。
 
-**Hermes: Making Autonomous Learning a Resident Service.** Nous Research's open-source Hermes (2026) pushes this approach further: it is a daemon process resident on the user's own machine, continuously accumulating memory and evolving autonomously across sessions. Its memory is divided into four layers[^hermes]: **Prompt Memory** (`MEMORY.md` and `USER.md`, injected at session start, deliberately limited to a few thousand characters to "force" the Agent to prioritize), **Session Retrieval** (using SQLite full-text index FTS5 for historical sessions, retrieved fragments are first summarized by an LLM before injection, bringing in only parts relevant to the current task), **Skill Library** (procedural memory, using progressive disclosure, loading only skill names and summaries by default), and an optional **Honcho User Modeling Layer** (passively tracks preferences, communication style, and domain knowledge in the background, portraying "how the user and Agent co-evolve" across sessions). When a task meets specific conditions (e.g., more than five tool calls, recovery from an error, receiving user correction, or successfully completing a non-trivial workflow), Hermes automatically solidifies the experience into a reusable skill, preferentially updating it incrementally via patches rather than rewriting the entire document. Claude Code and Hermes represent the mainstream form of autonomous user memory evolution today—both use human-readable Markdown/text as the carrier.
+**Hermes：把自主学习做成常驻服务。** Nous Research 于 2026 年开源的 Hermes 把这套思路推得更彻底：它是一个常驻在用户自己机器上的进程（daemon），跨会话持续积累记忆并自主进化。其记忆分为四层[^hermes]：**提示词记忆**（`MEMORY.md` 与 `USER.md`，会话启动时注入，刻意限制在几千字符内，以“逼迫”Agent 主动取舍）、**会话检索**（用 SQLite 全文索引 FTS5 存放历史会话，检索到的片段先经 LLM 摘要再注入，只带进与当前任务相关的部分）、**技能库**（过程性记忆，采用渐进式披露，默认只加载技能名与摘要）、以及可选的 **Honcho 用户建模层**（在后台被动追踪偏好、沟通风格与领域知识，跨会话刻画“用户与 Agent 如何共同演化”）。当一次任务满足特定条件（如工具调用超过五次、从错误中恢复、收到用户纠正、或跑通了一个非显然的工作流）时，Hermes 会自动把其中的经验固化为一个可复用技能，并优先以打补丁（patch）的方式增量更新而非整篇重写。Claude Code 与 Hermes 代表了当下用户记忆自主进化的主流形态——都以人类可读的 Markdown/文本为载体。
 
 [^hermes]: Nous Research, *Hermes: A Self-Improving Personal Agent*, 2026. https://hermes-agent.nousresearch.com/docs/
 
-### Automatic Optimization of System Prompts
+### 系统提示词的自动优化
 
-Returning to the main thread of system prompts: the mechanisms in the previous sections all consolidate experience and memory outside the model—knowledge bases, workflows, Skill files, user memory. But there is another, more direct carrier of experience—the system prompt itself.Andrej Karpathy argues that a significant learning paradigm is missing from current LLM training: "System Prompt Learning." Pre-training acquires knowledge, and fine-tuning cultivates habitual behaviors; both involve changing model parameters. However, much of human learning resembles updating a "system prompt"—when we figure something out after encountering a problem, we explicitly write it down for ourselves, like "Next time I encounter this type of problem, I should try this method first."
+回到系统提示词这条主线：前面几节的机制都把经验和记忆沉淀在模型之外——知识库、工作流、Skill 文件、用户记忆。但还有一种更直接的经验载体——系统提示词本身。
 
-Karpathy points out that LLMs are like the protagonist in the movie *Memento*—they wake up each time without remembering what happened before, and we haven't given them a notebook to record things. After reading Claude's system prompt (approximately 17,000 words, varying by version), he found it contains numerous general problem-solving strategies, such as: "If asked to count words, letters, and characters, Claude should think step-by-step before answering, explicitly counting by assigning a number to each letter." This addresses problems like "How many 'r's are in 'strawberry'?"
+Andrej Karpathy 认为，当前 LLM 学习范式中遗漏了一种重要的学习方式——“系统提示学习”（System Prompt Learning）。预训练是为了获取知识，微调是为了培养习惯性行为，这两种方式都涉及模型参数改变。但人类的很多学习过程更像是“系统提示”的更新——遇到问题想通了某件事，会用明确的语言给自己记下来，比如“下次遇到这种类型的问题，应该先试这种方法”。
 
-Karpathy believes this type of knowledge shouldn't be hand-crafted by humans but should come from system prompt learning. It shares similarities with reinforcement learning—both use failure cases to improve future behavior. However, their learning algorithms differ: system prompt learning directly modifies the system prompt text, while reinforcement learning adjusts model parameters via gradient descent. The former has significantly higher data efficiency due to the difference in the "dimensionality" of the feedback channel. This is Karpathy's critique of **outcome-based reinforcement learning**: a single scalar outcome reward (e.g., "correct/incorrect") has far less information bandwidth than a full natural language post-mortem ("You should have verified the ID first before proceeding with the refund process"). Consequently, from the same failure, system prompt learning can absorb far more information than a single bit of "correct/incorrect."
+Karpathy 指出，LLM 就像电影《记忆碎片》的主角——每次醒来都不记得之前发生了什么，而我们还没给它们提供记录本。他在阅读 Claude 的系统提示词（约 1.7 万个单词，具体随版本变化）后发现其中包含大量通用问题解决策略，例如：“如果要求 Claude 计算单词、字母和字符，它会在回答之前一步步思考，通过给每个字母分配数字来显式计数。”这是为了解决“strawberry 中有几个 r”之类的问题。
 
-The author believes the essence of system prompt learning is to clarify rule boundaries through edge cases. Most rules work well in typical scenarios; the real challenge lies in gray areas—"Transfer to a human agent when the user's request exceeds your capabilities" sounds clear, but does "user dissatisfaction with policy" count as exceeding capabilities? What about user requests for exceptions? These edge cases define the true meaning of the rules.
+Karpathy 认为这类知识不应由人类手工编写，而应来自系统提示学习。它与强化学习有相通之处——都靠失败案例改进未来行为。但两者的学习算法不同：系统提示学习直接修改系统提示词文本，强化学习则通过梯度下降调整模型参数。前者的数据效率显著更高，原因是反馈通道的“维度”差异。这是 Karpathy 针对**结果奖励型强化学习**的批评：一次只有一个标量的结果奖励（如“对/错”），信息带宽远低于一整段自然语言描述的复盘（“这里应该先验证身份证再走退款流程”）。正因如此，同样一次失败，系统提示学习能吸收的信息远多于“对/错”一个比特。
 
-Compared to reinforcement learning, which requires repeated trial and error on massive data to adjust weights, system prompt learning can learn quickly from a single or a few edge cases. Upon encountering a failure case, a clear rule can be immediately added to the system prompt without needing to collect thousands of similar samples for fine-tuning. This learning is not only data-efficient but also fully interpretable—every rule is written in plain text, auditable, modifiable, and deletable. As edge cases accumulate, the system prompt gradually evolves into a detailed "problem-solving handbook," much like an expert continuously refining their notes on the job.
+笔者认为，系统提示学习的本质是通过边界情况（edge cases）让规则边界更清晰。大多数规则在典型场景下运作良好，真正的挑战在于灰色地带——“在用户请求超出能力范围时转接人工”听起来很清晰，但“用户不满意政策”算不算超出范围？用户要求例外处理呢？这些边界情况才定义了规则的真正含义。
 
-How to automate this? The key is introducing a Coding Agent. System prompts and tool descriptions are themselves documents and code, scattered across multiple files. When an edge case is discovered, the Coding Agent can: (1) read and understand the existing system prompt, analyze the rule structure and the failure context; (2) generate precise code-level diffs, specifying which file and location to modify and what changes to make; (3) maintain consistency, ensuring new rules don't introduce contradictions or redundancy. Final review authority remains with human experts, who examine these diffs to determine their reasonableness.
+相比强化学习需在海量数据上反复试错才能调整权重，系统提示学习可以从单个或少量边界案例中快速学习。遇到一个失败案例，就可以立即在系统提示中添加明确规则，不需要收集数千个类似样本进行微调。这种学习不仅数据效率高，而且完全可解释——每条规则都是明文写出的，可以审查、修改、删除。随着边界情况不断积累，系统提示逐渐演化为一本详尽的“问题处理手册”，就像一位专家在工作中不断完善自己的笔记。
 
-Automated prompt optimization is not just Karpathy's idea; it's a well-established research area in academia. DSPy[^dspy-2023] treats prompts as optimizable parameters of a program: developers only declare "what goes in and what comes out" for each module, and the framework automatically searches for example combinations and instruction phrasing on an evaluation set, transforming prompt engineering from manual debugging to systematic optimization. OPRO[^opro-2023] lets the LLM itself act as the optimizer: using historical prompts and their scores as context, the model iteratively proposes better rewrites, outperforming human-designed prompts on tasks like mathematical reasoning. GEPA[^gepa-2025], proposed in 2025, goes further: it performs natural language reflection on failure trajectories, evolves prompts accordingly, and maintains a Pareto frontier among multiple candidates (i.e., a set of candidates, each with unique strengths, where none can be fully surpassed by another, rather than keeping only a single "optimal" solution) to preserve complementary optimization directions—outperforming GRPO fine-tuning (introduced in Chapter 7) on multiple tasks while requiring one to two orders of magnitude fewer samples. GEPA is precisely what this section calls "system prompt learning," and its empirical results support the earlier judgment about feedback information volume.
+如何自动实现？关键在于引入 Coding Agent。系统提示词和工具描述本身就是文档和代码，分散在多个文件中。发现边界情况时，Coding Agent 可以：(1) 阅读和理解现有系统提示，分析规则结构和失败上下文；(2) 生成精确的代码级 diff，指明在哪个文件的哪个位置做什么修改；(3) 保持一致性，确保新规则不引入矛盾或冗余。最终审核权仍在人类专家手中，由他们审查这些 diff 判断是否合理。
+
+提示词自动优化并非只有 Karpathy 的构想，学术界已有成体系的研究。DSPy[^dspy-2023] 把提示词当作程序的可优化参数：开发者只声明每个模块“输入什么、输出什么”，由框架在评估集上自动搜索示例组合和指令措辞，将提示词工程从手工调试变成系统性优化。OPRO[^opro-2023] 则让 LLM 自己充当优化器：把历史提示词及其得分作为上下文，让模型迭代提出更好的改写，在数学推理等任务上超过人工设计的提示词。2025 年提出的 GEPA[^gepa-2025] 走得更远：它对失败轨迹做自然语言反思，据此进化提示词，并在多个候选之间维护帕累托前沿（即一组各有所长、无法被彼此全面超越的候选解，而非只留单一“最优”解）以保留互补的优化方向——在多项任务上超过了 GRPO 微调（第七章介绍过该算法），而所用的采样次数少一到两个数量级。GEPA 做的正是本节所说的“系统提示学习”，其实证结果也支撑了前文关于反馈信息量的判断。
 
 [^dspy-2023]: Khattab, O., et al. *DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines.* arXiv:2310.03714, 2023.
 
@@ -157,207 +161,210 @@ Automated prompt optimization is not just Karpathy's idea; it's a well-establish
 
 [^gepa-2025]: Agrawal, L. A., et al. *GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning.* arXiv:2507.19457, 2025.
 
-These automated frameworks differ from the "Coding Agent generates diffs + human review" approach in three aspects. First, offline vs. online: automated frameworks typically perform batch optimization on offline evaluation sets, while the diff approach evolves incrementally with edge cases in the production environment. Second, with or without human oversight: automated frameworks rewrite end-to-end automatically, which is efficient but may produce "weird" phrasing that overfits the evaluation set; the diff approach retains human review, making each rule interpretable and accountable, better suited for high-risk scenarios like customer service. Third, the need for an evaluation set: DSPy, OPRO, and GEPA all rely on scored task sets to drive the search, while the diff approach only needs a single failure case plus a piece of human feedback. In practice, they can complement each other: use automated frameworks for batch optimization of initial prompts, then use the diff approach for continuous evolution after deployment.
+这些自动化框架与上述“Coding Agent 生成 diff + 人工审核”方案的差异体现在三点。其一是离线与在线：自动化框架通常在离线评估集上批量优化，而 diff 方案随生产环境中的边界案例逐条演进。其二是有无人工把关：自动化框架端到端自动改写，效率高，但可能产出过拟合评估集的“怪异”措辞；diff 方案保留人类审核，每条规则可解释、可追责，更适合客服等高风险场景。其三是是否需要评估集：DSPy、OPRO、GEPA 都依赖带评分的任务集来驱动搜索，而 diff 方案只需要单个失败案例加一段人类反馈。实践中两者可以互补：用自动化框架完成初始提示词的批量优化，再用 diff 方案做上线后的持续演进。
 
-> **Experiment 8-3 ★★: Automatic Optimization of System Prompts**
+> **实验 8-3 ★★：系统提示词的自动优化**
 >
-> **Experiment Goal**: Implement an automated system prompt learning mechanism based on human feedback.
+> **实验目标**：实现基于人类反馈的自动化系统提示学习机制。
 >
-> **Technical Approach**: Design a system prompt learning workflow based on the tau-bench airline customer service scenario. The initial Agent's human transfer rule is "Transfer only when the request cannot be handled within your action scope." Evaluation reveals the Agent over-transfers—immediately transferring to a human upon encountering a policy dispute instead of trying to explain the policy to the user. Human expert feedback indicates that policy disputes should be handled by patiently explaining the policy, not by transferring. The Coding Agent reads the system prompt file, locates the relevant rule, and generates a precise modification: clarifying the transfer boundary as "user explicitly requests a human agent + emergency safety situations," adding a negative rule "never transfer due to a policy dispute," and implementing code-level changes.
+> **技术方案**：基于 tau-bench 航空客服场景设计系统提示学习流程。初始 Agent 的人工转接规则为“仅当请求无法在你的行动范围内处理时才转接”。通过评估发现 Agent 过度转接——一遇到政策争议就转给人工，而不是尝试向用户解释政策。人类专家反馈指出，应通过耐心解释政策来处理争议，而非一转了之。Coding Agent 读取系统提示词文件，定位相关规则，生成精确修改：将转接边界明确为“用户明确要求人工客服 + 紧急安全情况”，添加“绝不因政策争议而转接”的负面规则，并实施代码级修改。
 >
-> **Control Group**: Manually tuned system prompts (without the automated optimization process).
+> **对照组**：人工调优的系统提示词（不经自动优化流程）。
 >
-> **Expected Observation/Acceptance Criteria**: The optimized system prompts show no performance degradation on the original retained task set (new rules do not break existing correct behaviors), while accuracy improves on the set of edge cases that trigger over-transfer—i.e., for policy disputes, the agent no longer immediately transfers but first attempts to explain the policy.
+> **预期观察/验收标准**：优化后的系统提示词在原有保留任务集上表现不退化（不因新增规则而破坏既有正确行为），同时在触发过度转接的边界案例集上正确率提升——即针对政策争议不再一转了之，而是先尝试解释政策。
 
-### Cross-Session Continuation of Long Tasks (Engineering Support Appendix)
+### 长任务的跨会话续跑（工程支撑附论）
 
-Strictly speaking, this section discusses not an experience distillation mechanism, but the **engineering support** for self-evolution (corresponding to the "Engineering Support" layer in Table 8-2): applying the "externalization" concept to **task state management**, allowing both "learned" experiences and "partially completed work" to persist across sessions. This is consistent with the Coding Agent workflow from Chapter 5 and is placed in this chapter because it relies on the same core technique—writing state outside the model. Many tasks (e.g., building a complete application from scratch) far exceed the context window of a single session. Even with context compression enabled, two types of problems persist: trying to complete the entire application within a single session exhausts the context first; or, completing only part of it, the next session cannot accurately restore progress and prematurely judges the task as complete.
+严格来说，本节讨论的不是经验提炼机制，而是自我进化的**工程支撑**（对应表8-2的“工程支撑”层）：把“外部化”的理念应用于**任务状态管理**，让“学到的”经验和“干到一半的活”都能跨会话存续。它与第五章的 Coding Agent 工作流一脉相承，放在本章是因为它依赖同一个核心手法——把状态写到模型之外。许多任务（如从零搭建一个完整应用）的规模远超单个会话的上下文窗口，即使启用上下文压缩，也挡不住两类问题：在单个会话里试图做完整个应用，上下文先耗尽；只做完一部分，下一轮又无法准确恢复进度而过早判断完成。
 
-A more stable approach is to decompose long tasks into two roles: an **Initializer Agent** and a **Coding Agent**—similar to a project manager first breaking down tasks and writing a checklist, then an engineer completing items on the list. The Initializer Agent runs only once in the first round, generating a structured feature list (e.g., `feature-list.json`), an initialization script, an initial git commit, and a progress file (e.g., `progress.json`), turning the task into a persistent file system state. Subsequent sessions are executed by the Coding Agent in a loop: each time, it restores the context from the progress file and git log, locates the current feature to be implemented, implements it and runs tests, updates the `passes` field in the progress file, commits the code, and exits. The key constraints are: progress is stored in files, not in the context; the feature list uses JSON instead of Markdown (structured formats are more stable for model reading and writing); the task is considered complete only when all features have `passes: true`. This way, even if a crash occurs midway, the task can continue directly from the state in the file system—once a task exceeds half an hour, crash recovery is not an option but a necessity.
+更稳定的做法是把长任务拆成 **Initializer Agent** 和 **Coding Agent** 两个角色协作——类似于项目经理先拆分任务、写好清单，然后工程师按清单逐项完成。Initializer Agent 只在第一轮运行一次，生成结构化的功能清单（如 `feature-list.json`）、初始化脚本、初始 git commit 和进度文件（如 `progress.json`），把任务变成可持久化的文件系统状态。后续会话由 Coding Agent 循环执行：每次从进度文件和 git log 恢复现场，定位当前待实现的功能，实现并跑测试，更新进度文件的 `passes` 字段，提交代码后退出。关键约束是：进度放在文件里而非上下文里；功能清单用 JSON 而非 Markdown（结构化格式更适合模型稳定读写）；所有功能都变成 `passes: true` 时任务才算完成。这样即使中途崩溃，也能直接从文件系统中的状态继续——任务一旦超过半小时，崩溃恢复就不是可选项而是必选项。
 
-## Proactive Tool Discovery
+## 主动工具发现
 
-The previous sections discussed learning from successful experiences. However, all these mechanisms have a prerequisite: the Agent must first have the appropriate tools to complete the task. When the number of available tools grows from a dozen to hundreds or thousands, a new problem arises—how to efficiently find the needed tool from a vast library? This section first briefly reviews existing tool discovery methods (retrieval-based pre-filtering, proactive declaration, hierarchical matching), then introduces the more recent and lighter Skills progressive disclosure approach.
+前面讨论了如何从成功经验中学习。但所有这些机制都有一个前提：Agent 要先有合适的工具才能完成任务。当可用工具从十几个增长到成百上千，新问题随之而来——如何从庞大的工具库中高效找到当前需要的那一个？本节先精简回顾现有的工具发现方法（检索预筛选、主动声明、层次化匹配），再介绍近来更流行、也更轻量的 Skills 渐进式披露思路。
 
-### Existing Tool Discovery Methods
+### 现有工具发现方法
 
-The traditional approach is to inject the schemas of all tools into the system prompt at once, but this quickly fails when the number of tools reaches the thousands: the context becomes clogged with "tool manuals," and the model's selection accuracy declines. Retrieval-based pre-filtering (discussed in Chapter 4), which first screens a batch of candidate tools based on semantic similarity, alleviates this problem but has an inherent limitation—it performs **one-time** matching based on the user's initial query. A seemingly simple request like "Debug the file" might actually involve a multi-step, cross-domain tool chain including file access, code analysis, and command execution, making it impossible to foresee all requirements at the start of the task.
+传统做法是把所有工具的 schema 一次性注入系统提示词，但当工具数量上千时它迅速失效：上下文被“工具说明书”塞满，模型的选择精度随之下降。第四章讨论过的检索式预筛选（按语义相似度先筛出一批候选工具）缓解了这个问题，但有一个内在局限——它按用户的初始查询做**一次性**匹配，而“Debug the file”这类看似简单的请求，实际可能牵出文件访问、代码分析、命令执行等多步骤、跨领域的工具链，任务开始时无法预见所有需求。
 
-**From Passive Selection to Proactive Discovery.** A more advanced approach is to transform the Agent from a passive recipient to an active discoverer: when it realizes a capability gap during execution, it proactively declares "what capability I need" in natural language, and the system dynamically matches and injects the tool. MCP-Zero[^mcp-zero-2025] is a representative work—no tool schemas are pre-loaded in the system prompt; the Agent generates structured request blocks in its thinking (e.g., "GitHub server: search repositories and return metadata"), and the system performs two-level semantic routing (server-level → tool-level) from thousands of candidates to match and inject. The paper reports saving approximately 98% of tokens compared to full injection on about 2800 tools. A more common engineering equivalent is to keep only a few basic tools (web search, code interpreter) plus a "tool search tool" in the system prompt, allowing the Agent to describe its needs in natural language to retrieve and load tools—Anthropic's Tool Search Tool provided in the Claude API is an example. The commonality is "Agent declares the gap, system injects on demand."
+**从被动选择到主动发现。** 更进一步的思路，是让 Agent 从被动接受者变为主动发现者：在执行过程中意识到能力缺口时，主动用自然语言声明“我需要什么能力”，系统再动态匹配并注入。MCP-Zero[^mcp-zero-2025] 是代表工作——系统提示词中不预置任何工具 schema，Agent 在思考中生成结构化请求块（如“GitHub 服务器：搜索仓库并返回元数据”），系统通过服务器级→工具级的两层语义路由从数千候选中匹配注入，论文报告在约 2800 个工具上比全量注入节省约 98% 的 token。工程上更常见的等价方案，是在系统提示词里只保留少数基础工具（web search、code interpreter）外加一个“工具搜索工具”，Agent 用自然语言描述需求即可检索并加载——Anthropic 在 Claude API 中提供的 Tool Search Tool 即属此类。两者的共同点都是“Agent 声明缺口、系统按需注入”。
 
 [^mcp-zero-2025]: Fei, X., et al. *MCP-Zero: Active Tool Discovery for Autonomous LLM Agents.* arXiv:2506.01056, 2025.
 
-![Figure 8-3 Hierarchical Tool Matching (Two-Level Semantic Search: Server-Level → Tool-Level)](images/fig8-3.svg)
+![图8-3 层次化工具匹配（服务器级→工具级两层语义搜索）](images/fig8-3.svg)
 
-**Hierarchical Matching and Degradation.** The key to efficient matching lies in the hierarchical organization of tools itself. In protocols like MCP, tools are grouped by **server** (similar to apps on a phone, each providing a set of related functions). Thus, matching can be done in two layers: first, locate relevant servers based on capability descriptions; then, match specific tools within the server. This reduces the search space from "thousands of tools" to "dozens of servers × dozens of tools per server," saving computational power and reducing cross-domain semantic confusion. Engineering-wise, this relies on an offline-built, incrementally updatable embedding index. If the similarity scores of candidates from both layers fall below a threshold, it should explicitly return "not found," prompting the Agent to rewrite the requirement and retry, implement it manually using basic tools, or even create a new tool (see next section).
+**层次化匹配与降级。** 高效匹配的关键在于工具组织本身具有层次结构：在 MCP 等协议中，工具按**服务器**分组（类似手机上的 App，每个 App 提供一组相关功能），于是匹配可分两层——先按能力描述定位相关服务器，再在服务器内匹配具体工具，把搜索空间从“数千个工具”缩小为“数十个服务器 × 每个服务器数十个工具”，既省算力也减少跨领域的语义混淆。工程上这依赖一个离线构建、支持增量更新的嵌入索引；若两层匹配的候选相似度都低于阈值，则应明确返回“未找到”，让 Agent 改写需求重试、用基础工具手工实现，或干脆创造一个新工具（见下一节）。
 
-![Figure 8-4 KV Cache Optimization for Dynamic Tool Loading](images/fig8-4.svg)
+![图8-4 工具动态加载的 KV Cache 优化](images/fig8-4.svg)
 
-**Dynamic Loading and KV Cache.** Proactive discovery comes with a subtle engineering cost: dynamically loading tools **invalidates the KV Cache**—if the tool list is placed in the system prompt, loading a new tool invalidates the entire cache. The solution is consistent with the discussion on Skill injection position in Chapter 2: append the variable part (the complete schema of the new tool) as a user message at the end of the conversation, keeping the system prompt prefix stable and the KV Cache fully reusable, while maintaining only a brief list of tool names in the Agent's status bar. However, a prerequisite must be noted: in mainstream function-calling APIs, the valid tool set is determined by the request's `tools` parameter; the model cannot call a tool that "only appears in the conversation text but not in the `tools` parameter." Therefore, this pattern relies on specialized support from the framework or API (e.g., the aforementioned Tool Search Tool). Additionally, the dynamic tool environment demands higher model capability—weaker models struggle to understand the non-standard position of "tool definitions appearing in the middle of the context" and are prone to generating illegal call formats (e.g., mismatched JSON brackets, missing parameters), often requiring specialized training via reinforcement learning (see Chapter 7 for details).
+**动态加载与 KV Cache。** 主动发现有一个微妙的工程代价：动态加载工具会**破坏 KV Cache**——若把工具列表放进 system prompt，每加载一个新工具就使整段缓存失效。破解思路与第二章讨论 Skill 注入位置时一致：把会变动的部分（新工具的完整 schema）作为 user 消息追加到对话末尾，让 system prompt 前缀保持稳定、KV Cache 完全复用，只在 Agent 状态栏维护一份简短的工具名列表。但要注意一个前提：在主流 function-calling API 中，合法工具集由请求的 `tools` 参数决定，模型无法调用“只出现在对话文本里、却不在 `tools` 参数中”的工具，因此这套模式依赖框架或 API 的专门支持（如前述 Tool Search Tool）。此外，动态工具环境对模型能力要求也更高——能力较弱的模型既难以理解“工具定义出现在上下文中间”这种非标准位置，也容易生成非法的调用格式（如 JSON 括号不匹配、参数缺失），往往需要通过强化学习专门训练（详见第七章）。
 
-It's clear that while this entire mechanism of "proactive declaration—semantic matching—dynamic injection" is effective, it is quite cumbersome from an engineering perspective: maintaining an offline embedding index, handling KV Cache invalidation, relying on specific API support, and performing specialized training for weaker models. Their common prerequisite is treating each tool as a **formal definition for the model**, requiring registration, retrieval, and injection. The Skills mechanism in the next section takes a lighter approach.
+不难看出，这一整套“主动声明—语义匹配—动态注入”的机制虽然有效，工程上却相当繁琐：要离线维护嵌入索引、要处理 KV Cache 失效、要依赖特定 API 支持、还要为弱模型做专门训练。它们共同的前提，是把每个工具都当成一份**面向模型的正式定义**，先注册、再检索、再注入。下一节的 Skills 机制换了一种更轻的思路。
 
-> **Experiment 8-4 ★★★: Proactive Tool Discovery**
+> **实验 8-4 ★★★：主动工具发现**
 >
-> This experiment validates the significant value of proactive tool discovery for small-parameter models through comparison. Use the Qwen3-4B model to access 120+ tools from the previously built MCP server.
+> 本实验通过对比验证主动工具发现对小参数量模型的显著价值。使用 Qwen3-4B 模型访问前面构建的 MCP 服务器中的 120+ 工具。
 >
-> **Experiment Setup**: Prepare a set of tasks requiring cross-domain tool collaboration, for example:
-> - "Query the latest stock price of Apple Inc., search for related news to analyze the reasons" (requires Yahoo Finance + Web Search)
-> - "Search arXiv for the latest papers on transformers, download the top three papers" (requires arXiv Search + File Download)
-> - "Analyze the contributor statistics of a GitHub repository, generate a visualization report" (requires GitHub + Code Interpreter)
+> **实验设置**：准备一组需要跨领域工具协作的任务，例如：
+> - “查询苹果公司最新股价，搜索相关新闻分析原因”（需 Yahoo Finance + Web Search）
+> - “在 arXiv 上搜索关于 transformer 的最新论文，下载排名前三的论文”（需 arXiv Search + File Download）
+> - “分析 GitHub 上某个仓库的贡献者统计，生成可视化报告”（需 GitHub + Code Interpreter）
 >
-> **Control Group**: Inject the complete schemas of all 120+ tools into the system prompt at once (over 50K tokens). The 4B model's instruction-following ability severely degrades with such a long context, exhibiting typical problems: when faced with "query stock price," it might incorrectly select Web Search instead of the specialized Yahoo Finance tool, or "forget" certain tools in the list, leading to task failure.> **Experiment Group**: Implement the hybrid scheme described earlier (MCP-Zero's proactive discovery concept + tool-search-tool implementation): (1) The system prompt retains only the `web_search`, `code_interpreter`, and `discover_tools` meta-tools; (2) `discover_tools` accepts natural language requests (e.g., "I need the ability to query stock prices"), returns 3-5 candidate tools with complete schemas via embedding vector similarity matching; (3) New tool definitions are appended to the conversation history (as a user message), and the Agent status bar updates the tool name list; (4) Guide the model to proactively call `discover_tools` when encountering capability gaps.
+> **对照组**：将所有 120+ 工具的完整 schema 一次性注入 system prompt（超 50K tokens）。4B 模型在这么长的上下文下指令遵循能力严重退化，出现典型问题：面对“查询股价”可能错选 Web Search 而非专门的 Yahoo Finance 工具，或者“忘记”工具列表中某些工具导致任务失败。
 >
-> **Expected Observations**: Significant improvement in accuracy and task completion rate. Proactive tool discovery not only helps capable LLMs handle scenarios with thousands of tools but also keeps smaller-parameter models usable in scenarios with hundreds of tools.
+> **实验组**：实现前文所述的混合方案（MCP-Zero 的主动发现思想 + 工具搜索工具式实现）：(1) system prompt 仅保留 `web_search`、`code_interpreter` 和 `discover_tools` 元工具；(2) `discover_tools` 接受自然语言需求（如“我需要查询股票价格的能力”），通过嵌入向量相似度匹配返回 3-5 个候选工具及完整 schema；(3) 新工具定义追加到对话历史（作为 user message），Agent 状态栏更新工具名称列表；(4) 引导模型在遇到能力缺口时主动调用 `discover_tools`。
+>
+> **预期观察**：准确率和任务完成率显著提升。主动工具发现不仅帮助能力较强的大模型应对成千上万工具的场景，更让小参数量模型在上百工具的场景下保持可用。
 
-### Skills: Turning Tool Discovery into "On-Demand Reference"
+### Skills：把工具发现变成“按需查阅”
 
-A more recent line of thought comes from the Skills mechanism. Chapter 2 introduced Skills' **Progressive Disclosure** from a context engineering perspective; here, we view it as a tool discovery paradigm—its main difference from the previous section is that it no longer requires the "embedding index + semantic matching" infrastructure.
+近来更流行的一种思路来自 Skills 机制。第二章从上下文工程的角度介绍过 Skills 的**渐进式披露**（Progressive Disclosure）；这里换个角度，把它看作一种工具发现范式——它与上一节最大的不同，是不再需要那套“嵌入索引 + 语义匹配”的基础设施。
 
-**Not one-time full exposure, but layer-by-layer lookup.** Protocols like MCP tend to present the complete schema of tools to the model all at once (either full injection or pre-filtered via retrieval), whereas Skills does the opposite: when the Agent starts, it only sees a thin catalog—each skill's `name` and `description` (totaling a few hundred tokens). Only when the **current context** truly requires a certain capability does the model read the corresponding sub-skill, and then follow references within it to the next layer, reading specific scripts or sub-documents. "Discovery" is driven by the model's actual needs within the context, not by a one-time pre-matching of the initial query at the start of the task.
+**不是一次性全暴露，而是一层层查。** 像 MCP 这样的协议倾向于把工具的完整 schema 一次性摆在模型面前（要么全量注入、要么靠检索预筛先选出一批），Skills 则相反：Agent 启动时只看到一份薄薄的目录——每个 skill 的 `name` 与 `description`（合计数百 token）。当**当前上下文**真的需要某种能力时，模型才去读取对应的 sub-skill，并顺着其中的引用再往下一层，读取具体的脚本或子文档。“发现”由模型在上下文里的实际需要驱动，而不是在任务开始时对初始查询做一次性预匹配。
 
-**Like consulting a reference book or Wikipedia.** This is closer to how humans use reference materials: no one reads an entire reference book or the whole Wikipedia from the first page to the last; instead, they follow the index and table of contents, looking up one entry at a time precisely as needed. The detailed definitions of tools don't need to reside in the context permanently; you look up what you need when you need it. Compared to the previous section, the Agent uses general file-reading capabilities (`grep`, reading files) to browse the skill directory, eliminating the need to maintain a vector index or model "tool discovery" as a special semantic retrieval task—this is a more modern and less cumbersome approach to tool discovery.
+**就像查工具书或维基百科。** 这更接近人使用参考资料的方式：没有人会把一本工具书或整个维基百科从第一页读到最后一页，而是顺着索引和目录，按当下的需要一个词条、一个词条地精确查阅。工具的详细定义不必全部常驻上下文，用到哪条查哪条。相比上一节，Agent 靠通用的文件阅读能力（`grep`、读取文件）翻阅 skill 目录即可，既不必维护向量索引，也不必把“发现工具”单独建模成一次特殊的语义检索——这是一种更现代、也更省心的工具发现思路。
 
-**After loading Skills, what about the KV Cache?** The KV Cache optimization in the previous section was designed for "traditional tool definitions"—appending the schema to the end of the conversation to keep the system prefix unchanged. The Skills scenario has a similar issue: loading a sub-skill essentially inserts content into the context, and the same "injection position" method from Chapter 2 can be used to place it at the end and reuse the prefix. However, Skills has a new characteristic: the same set of skills is loaded repeatedly and at different positions (across sessions, across users). If each time it has to be prefilled from scratch along with the conversation history, the cost is significant. The "editable, composable KV Cache" introduced at the end of Chapter 2 is designed for this: **pre-compile and cache** the KV representation of each skill once, then use RoPE relocation to "paste" it into any context position, concatenating it at a cost of O(L) instead of O(L²); if a skill's content has minor changes (e.g., a field update), it can be incrementally corrected like an "errata note" without recalculating the entire segment[^prog-kv]. This way, a skill evolves from "a piece of text that needs to be prefilled each time" into "a reusable, composable cache object"—the repeated loading caused by progressive disclosure won't offset the saved tokens with increased latency.
+**加载 Skills 之后，KV Cache 怎么办？** 上一节的 KV Cache 优化是针对“传统工具定义”的——把 schema 追加到对话末尾以保住 system 前缀不变。Skills 场景下问题类似：加载一个 sub-skill，本质上就是往上下文里插入一段内容，同样可以用第二章的“注入位置”方法把它放到末尾、复用前缀。但 Skills 有个新特点：同一批 skill 会被反复、且在不同位置加载（跨会话、跨用户），若每次都随对话历史从头 prefill，成本不小。第二章末尾介绍的“可编辑、可组合的 KV Cache”正是为此而生：把每个 skill 的 KV 表示**预编译并缓存一次**，之后用 RoPE 重定位把它“粘贴”到任意上下文位置，以 O(L) 而非 O(L²) 的代价拼接进来；skill 内容若有小改动（如某个字段更新），也能以“勘误笔记”的方式增量修正，而不必整段重算[^prog-kv]。这样，skill 就从“一段每次都要重新 prefill 的文本”升级为“一个可复用、可组合的缓存对象”——渐进式披露带来的反复加载，才不至于把省下的 token 又从延迟上赔回去。
 
-[^prog-kv]: The complete method for upgrading skills, tool definitions, etc., into reusable, composable cache objects can be found in Li, Bojie. *Models Take Notes at Prefill: KV Cache Can Be Editable and Composable.* arXiv:2606.17107, 2026 (introduced in Chapter 2).
+[^prog-kv]: 把 skill、工具定义等升级为可复用、可组合缓存对象的完整方法，见 Li, Bojie. *Models Take Notes at Prefill: KV Cache Can Be Editable and Composable.* arXiv:2606.17107, 2026（第二章已作介绍）。
 
-## From Tool User to Tool Creator
+## 从工具使用者到工具创造者
 
-Proactive tool discovery solves the problem of "finding the right tool from existing ones." Next, we discuss a further capability: what happens when the required tool simply doesn't exist? How can an Agent autonomously discover and create new tools?
+主动工具发现解决了“从已有工具中找到合适的”问题。接下来讨论更进一步的能力：当需要的工具根本不存在时，Agent 如何自主发现和创造新工具。
 
-### The Fundamental Limitation of Predefined Tool Sets
+### 预定义工具集的根本性局限
 
-Current AI Agent systems are mostly built on an implicit assumption: a sufficiently complete tool set can be predefined to handle the vast majority of tasks. This might hold in closed domains—a dedicated customer service Agent might only need a dozen tools. But if we aim to build a truly general-purpose Agent, this assumption is overly optimistic.
+当前 AI Agent 系统大多建立在一个隐含假设上：可以预先定义一个足够完备的工具集来应对绝大多数任务。在封闭领域这或许成立——一个专门做客服的 Agent 可能只需十几个工具。但如果想构建真正的通用型 Agent，这个假设就过于乐观了。
 
-The fundamental difficulty lies in the fact that the number of tools needed in the real world is nearly infinite and cannot be enumerated in advance; even if a similar tool exists in the library, its interface and parameters often don't perfectly match the current need, leading to inefficiency or errors; not to mention the vast number of useful services that don't exist as Agent-friendly standard interfaces, requiring manual development for each adaptation. Ultimately, **the predefined paradigm locks the Agent's capability boundary within the foresight and preparation of human engineers**.
+根本困难在于：现实世界需要的工具数量几乎无限，没法预先枚举；即使工具库里有类似的，接口和参数也往往跟当前需求不完全匹配，用起来要么低效要么出错；更不用说大量有用的服务根本不是以 Agent 友好的标准接口存在的，适配一个就需要一次人工开发。归根到底，**预定义范式将 Agent 的能力边界锁定在了人类工程师的预见和准备上**。
 
-### From Predefinition to Self-Evolution
+### 从预定义到自我进化
 
-Breaking through this limitation requires a fundamental shift: **elevating the Agent from a tool user to a tool creator**. The Agent no longer passively waits for humans to prepare tools but actively seeks, learns, adapts, and creates tools from the open world based on task requirements—this is the second dimension of self-evolution mentioned at the beginning of this chapter: transforming from a tool user into a tool creator.
+突破这一局限需要根本性转变：将 **Agent 从工具的使用者提升为工具的创造者**。Agent 不再被动等待人类准备工具，而是根据任务需求主动从开放世界中寻找、学习、适配和创造工具——这正是本章开头所说的自我进化的第二个维度：从工具使用者变为工具创造者。
 
-The core idea is to endow the Agent with minimal foundational capabilities as a starting point, allowing it to autonomously expand its capability boundaries through interaction with the environment and utilization of external resources. As proposed in the Alita paper [^alita-2025]—"Minimal Predefinition, Maximal Self-Evolution": a small set of carefully designed foundational tools provides the basic ability to interact with the world, while the self-evolution mechanism grants unlimited expansion potential on this foundation.
+核心思想是：赋予 Agent 最小的基础能力作为起点，通过与环境交互和对外部资源的利用，自主扩展能力边界。正如 Alita 论文 [^alita-2025] 所提出的——“最小预定义，最大自我进化”：少量精心设计的基础工具提供与世界交互的基本能力，自我进化机制在此基础上赋予无限扩展潜力。
 
 [^alita-2025]: Qiu, J., et al. *Alita: Generalist Agent Enabling Scalable Agentic Reasoning with Minimal Predefinition and Maximal Self-Evolution.* arXiv:2505.20286, 2025.
 
-Self-evolution does not negate the value of predefined tools but constructs a hierarchical capability system.
+自我进化并非否定预定义工具的价值，而是构建了一个层次化的能力体系。
 
-The key to this paradigm shift is turning the global open-source ecosystem into a resource pool available to the Agent—when encountering a new task, instead of waiting for humans to prepare tools, it directly searches for the library that best matches the need, writing glue code to connect them when necessary. Tools that have been used are accumulated, and when a similar task arises next time, they can be called directly without reinventing the wheel.
+这种范式转变的关键在于把全球开源生态变成 Agent 可用的资源池——遇到新任务时不是等人类准备工具，而是直接去搜索最贴近需求的库，必要时写胶水代码拼接。用过的工具积累下来，下次遇到相似任务直接调用，不必重新发明轮子。
 
-### Agent Autonomously Finds and Executes Tools from the Web
-
-
-![Figure 8-5 Agent Self-Evolution Pipeline (from Need Identification to Tool Registration)](images/fig8-5.svg)
+### Agent 从网络上自主寻找并执行工具
 
 
-MCP (Model Context Protocol, detailed in Chapter 4) is the standard protocol for Agents to discover and call tools—it can be understood as the "communication specification for a tool marketplace," through which the Agent browses available tools, understands input/output formats, and reliably initiates calls. Take the Alita system as an example to see a specific task: "In a YouTube 360 VR video released in March 2018, narrated by the voice actor for Gollum from *The Lord of the Rings*, what number does the narrator mention directly after first showing a dinosaur?" This task requires a specific domain capability—extracting and analyzing video content. The Agent won't report "cannot complete" but will initiate a multi-stage self-evolution process:
-
-1. **MCP Brainstorming Stage**: Analyze the task requirements, identifying the need for a "YouTube video subtitle scraper." The specific implementation involves having the LLM analyze the task requirements and generate a set of candidate tool descriptions (e.g., "a tool that can fetch YouTube subtitles"), then search the MCP server registry for matching existing servers or mark them as needing to be created.
-2. **Web Agent Execution Stage**: Search open-source repositories, finding the Python library youtube-transcript-api (GitHub: jdepoix/youtube-transcript-api).
-3. **Manager Agent Synthesis Stage**: Visit the GitHub repository, read the README and code examples, understand the core API, and deduce the environment configuration and code framework.
-4. **Manager Agent Execution Stage**: Encapsulate the learned knowledge into a tool conforming to the MCP protocol, extract the target video's subtitles, analyze the content, and find the answer "100000000."
-
-The newly created tool is saved to the tool library, ready for direct reuse when encountering similar video analysis tasks in the future.
-
-### Agent Writes Code to Generate New Tools
-
-Integrating existing tools from the open-source ecosystem is the first mode, but not all needs have ready-made solutions. The Agent must also demonstrate a second capability: **writing code from scratch to create new tools**.
-
-As defined at the beginning of this chapter, tool generation is a higher-order form of externalized learning—here, we go a step further by also externalizing the "process" into precisely executable code tools.
-
-The key difference here lies in the **destination of the code**: in traditional Agent systems, code execution is one-off—the Python interpreter runs a script to complete the current task, and then the code is discarded. In the self-evolution paradigm, however, the Agent writes code with the purpose of **creating reusable, modular tools** that are persistently saved in the tool library, no longer relying on the model's temporary context or parametric memory. This has two benefits: experience no longer disappears with the end of a session but accumulates permanently; code tools have deterministic, testable behavior, which is far more reliable than having the model re-think the solution each time.
-
-The creation process itself follows the conventional rhythm of software engineering—from requirements specification and interface design, to algorithm selection and implementation, to testing and validation, and finally generating a schema conforming to the MCP protocol and registering it in the tool library. Compared to human engineers, Agents are more prone to errors in requirement understanding, debugging intuition, and boundary condition specification. Therefore, production systems typically allocate the most computational power to the testing and validation phase, using extensive automated tests to compensate for the uncertainty in the preceding steps.
-
-### Voyager: An Agent Continuously Learning in a Virtual World
+![图8-5 Agent 自我进化流水线（从需求识别到工具注册）](images/fig8-5.svg)
 
 
-![Figure 8-6 Voyager Continuous Learning Architecture (Curriculum Generator → Iterative Prompting Mechanism → Skill Library)](images/fig8-6.svg)
+MCP（Model Context Protocol，第四章详细介绍）是 Agent 发现和调用工具的标准协议——可以理解为“工具市场的通信规范”，Agent 通过它浏览可用工具、理解输入输出格式、并可靠地发起调用。以 Alita 系统为例，看一个具体的任务：“在 2018 年 3 月发布的、由《指环王》中咕噜的配音演员解说的 YouTube 360 VR 视频中，解说员在首次展示恐龙之后直接提到了什么数字？”这个任务需要一种特定的领域能力——提取和分析视频内容。Agent 不会报告“无法完成”，而是启动多阶段自我进化流程：
+
+1. **MCP 头脑风暴阶段**：分析任务需求，识别出需要“YouTube 视频字幕爬取器”。具体实现是让 LLM 分析任务需求后生成一组候选工具描述（如“需要一个能抓取 YouTube 字幕的工具”），然后在 MCP 服务器注册表中搜索匹配的现有服务器，或标记为需要新建
+2. **Web Agent 执行阶段**：在开源仓库中搜索，找到 Python 库 youtube-transcript-api（GitHub: jdepoix/youtube-transcript-api）
+3. **Manager Agent 综合阶段**：访问 GitHub 仓库，阅读 README 和代码示例，理解核心 API，推导出环境配置和代码框架
+4. **Manager Agent 执行阶段**：将学习成果封装为符合 MCP 协议的工具，提取目标视频字幕，分析内容找到答案“100000000”
+
+新创建的工具被保存到工具库中，以后遇到类似的视频分析任务可以直接复用。
+
+### Agent 编写代码生成新工具
+
+从开源生态集成现有工具是第一种模式，但并非所有需求都有现成方案。Agent 还需要展现第二种能力：**从头编写代码创造新工具**。
+
+如本章开头所定义，工具生成是外部化学习的更高阶形式——这里更进一步，把“流程”也外部化、代码化为可精确执行的工具。
+
+这里的关键差异在于**代码的去向**：传统 Agent 系统中，代码执行只是一次性的——调用 Python 解释器跑一段脚本完成当前任务，然后代码就丢弃了。自我进化范式下则不同，Agent 编写代码的目的是**创造可复用的模块化工具**，持久化保存在工具库中，不再依赖模型的临时上下文或参数记忆。这样做有两个好处：经验不再随会话结束而消失，而是永久积累；代码工具的行为确定、可测试，比每次重新让模型思考可靠得多。
+
+创造过程本身遵循软件工程的常规节奏——从需求规约与接口设计，到算法选择与实现，再到测试验证，最后生成符合 MCP 协议的 schema 并注册到工具库。与人类工程师相比，Agent 在需求理解、调试直觉、边界条件说明上更容易出错，因此生产系统通常把最多的算力压在测试验证环节，用大量自动化测试弥补前几步的不确定性。
+
+### Voyager：在虚拟世界中持续学习的 Agent
 
 
-We've discussed how Agents can autonomously discover and create tools. Voyager pushes this concept to its extreme within the Minecraft virtual world: it not only uses tools but also creates a reusable skill library from successful experiences, truly achieving "the more you use it, the better it gets" self-evolution.
+![图8-6 Voyager 持续学习架构（课程生成器 → 迭代提示机制 → 技能库）](images/fig8-6.svg)
 
-Voyager is a typical practice of externalized learning in an open world. This Minecraft Agent achieves continuous learning and self-evolution by distilling each successful experience into executable code tools and externalizing them.
 
-Its architecture embodies three key elements:
+前面讨论了 Agent 如何自主发现和创建工具。Voyager 在 Minecraft 虚拟世界中将这一理念推向了极致：它不仅使用工具，还从成功经验中创建可复用的技能库，真正实现了“越用越熟练”的自我进化。
 
-**Automatic Curriculum Generator** proposes the next exploration goal (e.g., "find iron ore," "craft an iron pickaxe") based on the Agent's current state, mastered skills, and surrounding environment. The goal lies within the Agent's "zone of proximal development"—neither too simple nor too difficult, similar to level design in games, progressing step by step.
+Voyager 是外部化学习在开放世界中的典型实践。这个 Minecraft Agent 通过将每次成功经验提炼并外部化为可执行代码工具，实现了持续学习和自我进化。
 
-**Skill Library** is the core mechanism. After successfully completing a new task, the action sequence is distilled into executable code and persistently stored. Skills are hierarchical and composable—for example, "craft a wooden pickaxe" calls upon foundational skills like "chop a tree" and "craft wooden planks." When facing a new task, retrieving and combining existing skills allows for a quick solution without requiring the LLM to think from scratch each time.
+其架构体现了三个关键要素：
 
-**Iterative Prompting Mechanism** is responsible for the continuous improvement of skills. Upon failure, feedback is collected (environmental observations, error messages, self-verification results), integrated into the LLM prompt to guide the generation of improved code, and iterated repeatedly until stable.
+**自动课程生成器**根据 Agent 当前状态、已掌握技能和周围环境，自动提出下一个探索目标（如“寻找铁矿”“制作铁镐”）。目标处于 Agent 的“最近发展区”——既不太简单也不太困难，类似于游戏中的关卡设计，循序渐进。
 
-Voyager explores autonomously in Minecraft, and its skill library grows continuously: the paper reports that it unlocks key technology tree milestones (wood, stone, iron, diamond) significantly faster, discovering 3.3 times more unique items than baseline methods. The essence of this continuous learning capability is achieving a leap from "temporary adaptation" to "permanent accumulation" through externalized learning—every successful exploration is transformed into a reusable code tool. It demonstrates the feasibility of this paradigm, providing a complete methodological blueprint for building self-evolving Agents in the real world—the following experiment applies it to a real-world tool discovery scenario.
+**技能库**是核心机制。成功完成新任务后，动作序列被提炼为可执行代码并持久化存储。技能是层次化、可组合的——比如“制作木镐”会调用“砍树”和“制作木板”等基础技能。面对新任务时，检索和组合已有技能即可快速解决，不需要每次都从头让 LLM 思考。
 
-> **Experiment 8-5 ★★★: Agent Finds Tools from the Web to Achieve Self-Evolution**
+**迭代提示机制**负责技能的持续改进。失败时收集反馈（环境观察、错误消息、自我验证结果），整合到 LLM 提示中引导生成改进代码，反复迭代直到稳定。
+
+Voyager 在 Minecraft 中自主探索，技能库持续增长：论文报告它能显著更快地解锁木、石、铁、钻石等关键科技树里程碑，发现的独特物品数量达到基线方法的 3.3 倍。这种持续学习能力的本质，正是通过外部化学习实现了从“临时适应”到“永久积累”的跨越——每一次成功探索都转化为可复用的代码工具。它证明了这种范式的可行性，为在现实世界构建自我进化 Agent 提供了完整的方法论蓝图——下面的实验就将它应用到现实世界的工具发现场景中。
+
+> **实验 8-5 ★★★：Agent 从网络上寻找工具，实现自我进化**
 >
 >
-> ![Figure 8-7 Experiment 8-5 Self-Evolving Agent Pipeline (Search → Evaluate → Test → Encapsulate → Reuse)](images/fig8-7.svg)
+> ![图8-7 实验 8-5 自我进化 Agent 流水线（搜索→评估→测试→封装→复用）](images/fig8-7.svg)
 >
 >
-> **Basic Tool Configuration**: Only `web_search`, `read_webpage`, `code_interpreter`, `create_tool`, `search_tools`. No domain-specific predefined tools.
+> **基础工具配置**：仅 `web_search`、`read_webpage`、`code_interpreter`、`create_tool`、`search_tools`。无任何特定领域预定义工具。
 >
-> **Task One: YouTube Video Content Understanding**—"In a YouTube 360 VR video released in March 2018, narrated by the voice actor for Gollum from *The Lord of the Rings*, what number does the narrator mention directly after first showing a dinosaur?" Expected Process: The Agent analyzes the task, identifies the need for the ability to extract YouTube subtitles; finds the youtube-transcript-api library and its GitHub repository via search; reads the README and documentation to understand the installation method and interface; tests the library using the code interpreter; writes wrapper code to package the subtitle extraction functionality as a standard tool; uses the new tool to extract the target video's subtitles and analyze the content. Success Criterion: Output the correct answer "100000000."
+> **任务一：YouTube 视频内容理解**——“在 2018 年 3 月发布的、由《指环王》中咕噜的配音演员解说的 YouTube 360 VR 视频中，解说员在首次展示恐龙之后直接提到了什么数字？”预期流程：Agent 分析任务，识别出需要提取 YouTube 字幕的能力；通过搜索找到 youtube-transcript-api 库及 GitHub 仓库；阅读 README 和文档理解安装方法和接口；用代码解释器测试该库；编写封装代码将字幕提取功能包装为标准工具；使用新工具提取目标视频字幕并分析内容。成功标准：输出正确答案“100000000”。
 >
-> **Task Two: Real-Time Financial Data Query**—"As of today, what is the latest stock price of NVIDIA (NVDA)? What is the percentage change compared to one week ago?" Expected Process: The Agent identifies the need for real-time stock data capabilities; searches for available financial data APIs (yfinance, Alpha Vantage, etc.); evaluates multiple options based on ease of use, need for API keys, and data completeness; selects the most suitable option and creates a query tool. If a certain API requires registration that cannot be completed automatically, the Agent should switch to a backup plan rather than hallucinating or giving up directly.
+> **任务二：实时金融数据查询**——“截至今天，NVIDIA (NVDA) 的最新股价是多少？与一周前相比涨跌幅是多少？”预期流程：Agent 识别出需要实时股票数据能力；搜索可用的金融数据 API（yfinance、Alpha Vantage 等）；评估多个方案的易用性、是否需要 API key、数据完整性；选择最合适的方案并创建查询工具。如果某个 API 需要注册但无法自动完成，Agent 应能切换到备选方案，而非产生幻觉或直接放弃。
 >
-> Verify Tool Reuse: When executing a similar type of task again, the Agent should directly retrieve the already created tool from the tool library, rather than going through the search and creation process again.
+> 验证工具复用：再次执行相同类型任务时，Agent 应直接从工具库中检索已创建的工具，而非重新经历搜索和创建过程。
 >
-> **Challenges and Difficulties**: Search precision (may find unsuitable libraries or outdated information), documentation understanding (some open-source projects have incomplete documentation, requiring synthesis from multiple sources), environment configuration (some libraries have complex dependencies or system requirements), error recovery (the first attempt may fail, requiring the Agent to debug and correct), hallucination control (must work based on actual search results and documentation, cannot assume the existence of a library or the usage of an API out of thin air).
+> **挑战与难点**：搜索精度（可能找到不合适的库或过时信息）、文档理解（某些开源项目文档不完整，需从多个来源综合）、环境配置（某些库有复杂的依赖关系或系统要求）、错误恢复（第一次尝试可能失败，Agent 需要调试修正）、幻觉控制（必须基于真实搜索结果和文档工作，不能凭空假设某个库存在或某个 API 的用法）。
 
-### Continuous Accumulation of Three-Layer Capabilities
+### 三层能力的持续积累
 
-Continuous learning is manifested at three levels:
+持续学习体现在三个层面：
 
-- **Tool Level**: Successfully created tools are saved to the tool library. New tools can be built upon existing ones, forming a hierarchical system. For example, after having a "get stock price" tool, a "portfolio analysis" tool can be constructed on this foundation.- **Knowledge Level**: Each tool creation is accompanied by knowledge accumulation. The agent gradually learns which open-source libraries are suitable for which tasks, which APIs do not require key applications, and which libraries frequently have compatibility issues with the system environment. This knowledge can be extracted as heuristic rules or case libraries and deposited into the knowledge base (storage and retrieval mechanisms are detailed in Chapter 3) to guide future tool creation.
-- **Strategy Level**: Through repeated practice, the agent gradually improves its self-evolution strategy—initially, it may select the wrong library, write overly complex logic, or miss critical edge cases. However, through feedback from failures and successes, it progressively learns to more accurately assess open-source project quality, implement functionality more concisely, and design tests more comprehensively. This meta-learning enables the agent's self-evolution capability to evolve itself. In the short term, system prompts and Skill deposition are used to accumulate such meta-experience; in the long term, once stable, it can be solidified into weights via reinforcement learning (see Chapter 7)—the latter goes beyond the scope of this chapter, which focuses on "not modifying weights."
+- **工具层面**：成功创建的工具保存到工具库，新工具可以基于已有工具构建，形成层次化体系。例如，先有了“获取股票价格”工具，后续就能在此基础上构建“投资组合分析”工具
+- **知识层面**：每一次工具创建都伴随着知识积累。Agent 逐渐了解到哪些开源库适用于哪类任务、哪些 API 不需要申请 key 即可使用、哪些库和系统环境之间经常有兼容性问题。这些知识可被提取为启发式规则或案例库，沉淀到知识库中（存储与检索机制见第三章），指导未来的工具创建
+- **策略层面**：Agent 通过反复实践逐渐改进自我进化策略——最初可能选错库、写出过于复杂的逻辑、遗漏关键边界情况，但通过失败和成功的反馈，逐步学会更准确地评估开源项目质量、更简洁地实现功能、更全面地设计测试。这种元学习使 Agent 的自我进化能力本身也在进化。短期靠系统提示词与 Skill 沉淀这类元经验；长期稳定后可由强化学习固化到权重（见第七章）——后者已超出本章“不改权重”的范围
 
-The first two levels are direct applications of externalized learning—tools are deposited into the tool library (this chapter), and knowledge is deposited into the knowledge base (Chapter 3). The strategy level demonstrates the relay division of labor between externalized learning and post-training: first, use interpretable and modifiable external carriers for rapid iteration, and once the strategy stabilizes, consider solidifying it into parameters (Chapter 7).
+前两个层面都是外部化学习的直接应用——工具沉淀到工具库（本章）、知识沉淀到知识库（第三章）；策略层面则展示了外部化学习与后训练的接力分工：先用可解释、可修改的外部载体快速迭代，待策略稳定后再考虑固化到参数（第七章）。
 
-### Safety Boundaries of Self-Evolution
+### 自我进化的安全边界
 
-Self-evolution endows agents with powerful capability expansion potential but also introduces unique safety risks.
+自我进化赋予 Agent 强大的能力扩展潜力，但也带来了独特的安全风险。
 
-**Supply Chain Attack** is the most direct threat: when an agent autonomously searches for and installs open-source libraries from the internet, malicious PyPI or npm packages may be automatically downloaded and executed. This is akin to letting a new employee freely download software from the internet—without constraints, it's easy to fall victim. Mitigation measures include running tools in a sandbox environment and performing automatic security scans on newly created tools.
+**供应链攻击（Supply Chain Attack）**是最直接的威胁：Agent 从网络上自主搜索和安装开源库时，恶意的 PyPI 或 npm 包可能被自动下载和执行。这就好比让一个新员工自由上网下载软件——如果不加约束，很容易中招。缓解措施包括在沙盒环境中运行工具、对新创建的工具进行自动安全扫描等。
 
-**Capability Drift** is a more insidious risk: the strategies and tools accumulated by an agent through continuous learning may gradually deviate from the designer's original intent, especially in long-running scenarios lacking human supervision. Countermeasures include setting a whitelist of allowed tool types, limiting the growth scope of the tool library, and conducting periodic manual reviews of new tools.
+**能力漂移（Capability Drift）**是更隐蔽的风险：Agent 通过持续学习积累的策略和工具可能逐渐偏离设计者的原始意图，尤其在缺乏人类监督的长期运行场景中。应对策略包括设定允许的工具类型白名单、限制工具库的增长范围，以及定期人工审核新增工具。
 
-**Tool Quality Degradation** also requires attention: automatically generated tools, if lacking sufficient testing, may produce erroneous results in edge cases, and these errors can propagate to subsequent tasks through tool reuse—a buggy tool called repeatedly is far more harmful than a one-time inference error.
+**工具质量退化**同样需要关注：自动生成的工具如果缺乏充分测试，可能在边界情况下产生错误结果，而这些错误会通过工具复用传播到后续任务中——一个有 bug 的工具被反复调用，危害远大于一次性的推理错误。
 
-**Memory and Experience Poisoning** is the most intrinsic attack surface of the self-writing mechanism. Content the agent encounters during task execution—web page text, tool outputs—may contain maliciously injected instructions (prompt injection, detailed in Chapters 2 and 4). If this content is deposited as "experience" into long-term memory or Skills without review, the attack transitions from one-time to persistent: contaminated entries remain effective across sessions, affecting subsequent tasks each time they are retrieved. Compared to in-session prompt injection, this attack is more insidious and harder to eliminate—the victim is not a single response but the agent's "knowledge" itself. Mitigation measures operate on three levels: **Pre-write review and source tagging** (record which task and information source each experience comes from, and perform injection detection on content from untrusted sources before storage); **Experience and instruction channel isolation** (retrieved experiences are injected into context as "reference materials" rather than "commands," explicitly informing the model that experience content lacks directive authority); **Injection detection during retrieval** (perform lightweight injection pattern scanning on retrieved experience entries, downgrading usage or raising alerts when suspicious content is found). Knowledge freshness and poison defense are two sides of the same coin: freshness combats natural knowledge obsolescence, while poison defense combats malicious knowledge contamination—both require the experience library to have source tracing and elimination mechanisms. (How the knowledge freshness mechanism detects and eliminates outdated experiences is left as an extension of Thought Question 4.)
+**记忆与经验投毒（Memory Poisoning）**是自我写入机制最内生的攻击面。Agent 在任务执行中接触的内容——网页文本、工具输出——可能包含恶意注入的指令（提示注入，详见第二、四章）。如果这些内容未经审查就被当作“经验”沉淀为长期记忆或 Skill，攻击就从一次性变成了持久性：被污染的条目跨会话持续生效，每次被检索命中都会影响后续任务。与会话内的提示注入相比，这种攻击更隐蔽也更难清除——受害的不是单次回答，而是 Agent 的“知识”本身。缓解手段有三层：**写入前审查与来源标记**（记录每条经验来自哪个任务、哪个信息源，对来自不可信来源的内容先做注入检测再入库）；**经验与指令通道隔离**（检索出的经验以“参考资料”而非“命令”的身份注入上下文，明确告知模型经验内容不具备指令效力）；**检索时注入检测**（对命中的经验条目做轻量的注入模式扫描，发现可疑内容时降级使用或告警）。知识保鲜与投毒防御是同一枚硬币的两面：保鲜对抗知识的自然过时，投毒防御对抗知识的恶意污染——两者都要求经验库具备来源追溯与淘汰机制。（知识保鲜机制如何检测和淘汰过时经验，留作思考题 4 延伸。）
 
-> **Experiment 8-6 ★★★: Design an Evaluation Dataset for Self-Evolving Agents**
+> **实验 8-6 ★★★：为自我进化 Agent 设计评估数据集**
 >
-> The preceding experiments demonstrate how agents learn from experience, discover tools, and create tools. But how do we evaluate these self-evolution capabilities? This requires specially designed evaluation datasets—ones that test both tool discovery and creation abilities while avoiding simple memorization of fixed tool usage patterns.
+> 前面的实验展示了 Agent 如何从经验中学习、发现工具、创造工具。但如何评估这些自我进化能力？这需要特殊设计的评估数据集——既要测试工具发现与创造能力，又要避免简单记忆固定的工具使用模式。
 >
-> Construct 20 tool-requiring tasks across different domains (multimedia processing, financial data, scientific computing, geographic information, social media, IoT device control, etc.). **Task descriptions should only state the goal without hinting at tool names**—for example, "Get the subtitles of a YouTube video" rather than "Use youtube-transcript-api," or "Query real-time cryptocurrency price trends" rather than "Use the CoinGecko API"—ensuring the agent must genuinely search for or create tools. The basic tool set typically includes: web search, web page reading, code interpreter, and tool creation and registration.
+> 构建 20 个不同领域的工具需求任务（多媒体处理、金融数据、科学计算、地理信息、社交媒体、IoT 设备控制等），**任务描述只说明目标不暗示工具名称**——如“获取某 YouTube 视频的字幕”而非“使用 youtube-transcript-api”，“查询加密货币实时价格趋势”而非“使用 CoinGecko API”——确保 Agent 必须真正搜索或创造工具。基础工具集通常包括：网络搜索、网页阅读、代码解释器、工具创建与注册。
 >
-> Design a four-layer hierarchical validation:
+> 设计四层分层验证：
 >
-> 1. **Task Correctness**: Subtitle content is accurate, financial data matches reality
-> 2. **Tool Discovery Effectiveness**: Analyze search keywords, visited web pages, and selected libraries to judge
-> 3. **Tool Creation Quality**: Error handling, parameter validation, documentation completeness, scored by LLM-as-a-Judge using a Rubric
-> 4. **Tool Reuse Capability**: Whether the second execution of a similar task directly retrieves the created tool instead of repeating the search
+> 1. **任务正确性**：字幕内容准确、金融数据符合实际
+> 2. **工具发现有效性**：分析搜索关键词、访问的网页、选择的库来判断
+> 3. **工具创造质量**：错误处理、参数验证、文档完整性，使用 LLM-as-a-Judge 按 Rubric 评分
+> 4. **工具复用能力**：第二次执行相似任务是否直接检索已创建工具而非重复搜索
 >
-> Prepare reference solutions (recommended open-source libraries and typical API examples) and known pitfalls (deprecated libraries, APIs requiring paid registration, etc.) for each task.
+> 为每个任务准备参考方案（推荐的开源库列表和典型 API 示例）和已知陷阱（废弃的库、需付费注册的 API 等）。
 
-## Chapter Summary
+## 本章小结
 
-This chapter systematically explores the methodology for agents to continuously expand their capabilities without modifying model weights—self-evolution.
+本章系统探讨了 Agent 在不修改模型权重的前提下持续拓展自身能力的方法论——自我进化。
 
-Building on Chapters 1 and 7, this chapter first clarifies the positioning of self-evolution among three learning paradigms—post-training solidifies parameters (detailed in Chapter 7, referenced here only for comparison), in-context learning handles temporary adaptation, and this chapter focuses on the evolution path without modifying model weights: externalized learning and its extensions—then delves into its engineering practice.
+在第一章和第七章的基础上，本章先明确了自我进化在三种学习范式中的定位——后训练固化参数（第七章已详述，本章仅作对照）、上下文学习做临时适应，本章聚焦的是不改模型权重的进化路径：外部化学习及其延伸——然后展开其工程实践。
 
-The chapter unfolds around two dimensions of self-evolution. One dimension is knowledge precipitation from experience: strategy summaries distill decision-making wisdom, workflow recording solidifies operational procedures, Reflexion-style reflection precipitates failure lessons, Skills structure domain knowledge, and system prompt optimization extracts rules from edge cases—collectively forming an accumulation mechanism of "getting better with practice." The other dimension is proactively breaking tool boundaries: from actively discovering existing tools, to searching the web and integrating existing libraries, to writing new tools from scratch, the agent transitions from a tool user to a tool creator, with Voyager providing a complete blueprint for this paradigm in open worlds.
+本章围绕自我进化的两个维度展开。一个维度是从经验中沉淀知识：策略摘要提炼决策智慧、工作流录制固化操作流程、Reflexion 式反思沉淀失败教训、Skills 将领域知识结构化、系统提示词优化从边界案例中提炼规则——共同形成“越做越熟练”的积累机制；另一个维度是主动突破工具边界：从主动发现已有工具，到从网络搜索、集成现有库，再到从头编写新工具，Agent 从工具的使用者变成创造者，Voyager 提供了这种范式在开放世界中的完整蓝图。
 
-At this point, we have completed the full discussion of the agent's core capability system—from context engineering, tool design, code generation, evaluation methodology, model post-training, to self-evolution. The next two chapters will shift perspective to cutting-edge applications. The next chapter will explore how agents move from pure text input/output to multimodal perception and real-time interaction: voice dialogue, Computer Use (GUI automation), and robotic manipulation. These scenarios share two core challenges—multimodality and real-time performance—which drive the fundamental evolution of agent architectures from serial pipelines to end-to-end models.
+至此，我们完成了 Agent 核心能力体系的全部讨论——从上下文工程、工具设计、代码生成、评估方法论、模型后训练到自我进化。接下来的两章将视角转向前沿应用。下一章将探讨 Agent 如何从纯文本输入输出走向多模态感知与实时交互：语音对话、Computer Use（GUI 自动化）和机器人操作。这些场景共享两个核心挑战——多模态和实时性——正是它们驱动着 Agent 架构从串行流水线向端到端模型的根本性演进。
 
-## Thought Questions
+## 思考题
 
-1. ★★ The ability of agents to autonomously search for and integrate open-source libraries (self-evolution) is extremely powerful but also introduces supply chain security risks. A malicious PyPI package could be automatically installed and executed by the agent. How would you mitigate this risk?
-2. ★★ Voyager-style experience learning allows agents to encode successful tool usage patterns into reusable Skills. However, as the Skill library grows, retrieving the correct Skill itself becomes a new challenge. Does this constitute a recursive problem—does an agent need a "Skill Retrieval Agent" to manage its own Skills?
-3. ★★ This chapter raises the "tool explosion" problem—the agent's selection accuracy decreases when facing thousands of tools. Besides active tool discovery, what other solutions exist? You can refer to strategies human experts use when faced with a large number of available tools.
-4. ★★★ Externalized learning encodes successful experiences into strategy summaries or workflow scripts. But the definition of "success" may change over time (e.g., business rule updates). Outdated experiences are not only useless but potentially harmful. What kind of "knowledge freshness" mechanism would you design to detect and eliminate outdated experiences?
-5. ★★★ Workflow recording converts successful operation sequences into replayable automation tools. However, APIs update and UIs change, causing recorded workflows to become invalid over time. How can workflows be made to automatically repair themselves when the environment changes, or at least avoid hallucinating that the task is complete when errors occur?
-6. ★★★ The three learning paradigms (post-training, in-context learning, externalized learning) correspond to three knowledge carriers: model parameters, context windows, and external storage. If there is a business rule that urgently needs to go live, which method should be used? If a customer service bot's responses are too verbose, which method should be used? If you want the generated PPT style to closely match the company's existing PPT style, which method should be used? Are these technical choices related to the capabilities of the currently used model?
-7. ★★ When an agent searches for tools on the internet, how does it determine whether an open-source library is "good to use"? Can the agent learn to evaluate the quality of open-source projects on its own?
-8. ★★ This chapter positions agent self-evolution as a path to "become stronger without modifying parameters." However, Chapter 7 points out that improvements at the strategy level ultimately require reinforcement learning to solidify. Where is the boundary between these two paths—what kind of capability improvements are suitable for externalization, and what kind are suitable for writing into parameters?
+1. ★★ Agent 自主搜索和集成开源库（自我进化）的能力极其强大，但也带来供应链安全风险。一个恶意的 PyPI 包可能被 Agent 自动安装和执行。你将如何缓解这个风险？
+2. ★★ Voyager 式经验学习让 Agent 将成功的工具使用模式编码为可复用的 Skill。但 Skill 库不断增长后，检索正确的 Skill 本身变成了新的挑战。这是否构成了一个递归问题——Agent 是否需要一个“Skill 检索 Agent”来管理自己的 Skill？
+3. ★★ 本章提出了“工具爆炸”问题——Agent 面对数千个工具时选择精度下降。除了主动工具发现，还有哪些方案？可以参考人类专家在面对大量可用工具时的策略。
+4. ★★★ 外部化学习将成功经验编码为策略摘要或工作流脚本。但“成功”的定义可能随时间变化（比如业务规则更新）。过时的经验不仅无用，还可能有害。你会设计怎样的“知识保鲜”机制来检测和淘汰过时经验？
+5. ★★★ 工作流录制将成功操作序列转化为可重放的自动化工具。但 API 会更新、UI 会改版，录制的工作流可能随时失效。如何让工作流能在环境变化时自动修复，或者至少不在出错的情况下幻觉认为任务已经完成？
+6. ★★★ 三种学习范式（后训练、上下文学习、外部化学习）分别对应模型参数、上下文窗口和外部存储三种知识载体。如果有一个急需上线的业务规则，应该用哪种方式？如果客服机器人回复用户的语言过于啰嗦，应该用哪种方式？如果希望让生成的 PPT 风格与公司现有 PPT 风格尽量相符，应该用哪种方式？这些技术选型与目前使用的模型能力是否有关？
+7. ★★ Agent 从网络上搜索工具时，如何判断一个开源库是否“好用”？Agent 能否学会自己评估开源项目的质量？
+8. ★★ 本章将 Agent 自我进化定位为“不改参数也能变强”的路径。但第七章指出，策略层面的改进最终还是需要强化学习来固化。这两种路径的边界在哪里——什么样的能力提升适合外部化，什么样的适合写入参数？

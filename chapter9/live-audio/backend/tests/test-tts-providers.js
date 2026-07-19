@@ -20,7 +20,7 @@ const testConfig = {
 // Test texts for different scenarios
 const testTexts = {
   simple: 'Hello, this is a simple text-to-speech test.',
-  multilingual: 'Hello world. Hello world. こんにちは世界.',
+  multilingual: 'Hello world. 你好世界. こんにちは世界.',
   punctuation: 'Testing punctuation: question? exclamation! comma, period.',
   numbers: 'The year is 2025, and the time is 12:34 PM.',
   long: 'This is a longer text to test the text-to-speech synthesis capability. It contains multiple sentences and should demonstrate the natural flow of speech generation. The quality and naturalness of the audio output will be evaluated.'

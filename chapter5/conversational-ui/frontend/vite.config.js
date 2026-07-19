@@ -1,13 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// Vite dev server enables HMR (Hot Module Replacement) by default.
-// When the Agent modifies source code under src/, the browser can instantly see UI changes without a full page refresh.
+// Vite 开发服务器默认开启 HMR（热模块替换）。
+// 当 Agent 修改 src/ 下的源码时，浏览器无需整页刷新即可即时看到界面变化。
 export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    // The backend FastAPI runs on port 8000, and the frontend proxies /api requests to it to avoid CORS.
+    // 后端 FastAPI 跑在 8000，前端把 /api 请求代理过去，避免跨域。
     proxy: {
       "/api": "http://127.0.0.1:8000",
     },

@@ -1,15 +1,15 @@
-"""Wrapper LLM factory: provides a unified model client with OpenRouter fallback for browser-use examples.
+"""包装层 LLM 工厂：为 browser-use 示例统一提供带 OpenRouter 兜底的模型客户端。
 
-This file resides in the RPA wrapper layer and does **not modify** the upstream browser-use fork. It selects the provider based on environment variables:
-- gemini-* models            -> ChatGoogle (uses GOOGLE_API_KEY)
-- OPENAI_API_KEY present     -> direct OpenAI
-- Otherwise OPENROUTER_API_KEY present -> use OpenRouter, mapping model names to OpenRouter naming:
+本文件位于 RPA 包装层，**不修改** 上游 browser-use fork。它按环境变量决定用哪家：
+- gemini-* 模型            -> ChatGoogle（走 GOOGLE_API_KEY）
+- 有 OPENAI_API_KEY        -> 直连 OpenAI
+- 否则有 OPENROUTER_API_KEY -> 走 OpenRouter，并把模型名映射到 OpenRouter 命名：
       gpt-*    -> openai/gpt-*
       claude-* -> anthropic/claude-opus-4.8
-      contains "/"   -> pass through as-is
-      others     -> openai/gpt-5.6-luna
+      含 "/"   -> 原样透传
+      其它     -> openai/gpt-5.6-luna
 
-Default model: gpt-5.6-luna.
+默认模型 gpt-5.6-luna。
 """
 
 import os
@@ -33,7 +33,7 @@ def to_openrouter_model(model: str) -> str:
 
 
 def make_llm(model: str = None):
-    """Constructs an LLM client based on environment variables (OpenAI direct connection preferred, OpenRouter fallback when key is missing)."""
+    """按环境变量构造 LLM 客户端（OpenAI 直连优先，缺 Key 时 OpenRouter 兜底）。"""
     model = model or DEFAULT_MODEL
     if model.startswith("gemini"):
         return ChatGoogle(model=model)
@@ -46,6 +46,6 @@ def make_llm(model: str = None):
             base_url=OPENROUTER_BASE_URL,
         )
     raise RuntimeError(
-        "Neither OPENAI_API_KEY nor OPENROUTER_API_KEY detected. Please configure one in .env"
-        "(OpenRouter can serve as a unified fallback)."
+        "未检测到 OPENAI_API_KEY 或 OPENROUTER_API_KEY，请在 .env 中配置其一"
+        "（OpenRouter 可作为统一兜底）。"
     )

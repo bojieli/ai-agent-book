@@ -837,14 +837,14 @@ Both servers can coexist - they use different ports! 🎉
 
 agent-with-event-trigger % python server_fastapi.py
 /Users/boj/ai-agent-book/projects/week4/agent-with-event-trigger/server_fastapi.py:161: DeprecationWarning:
-        `on_event` is deprecated, use lifespan event handlers instead.
+        on_event is deprecated, use lifespan event handlers instead.
 
         Read more about it in the
         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
 
   @app.on_event("startup")
 /Users/boj/ai-agent-book/projects/week4/agent-with-event-trigger/server_fastapi.py:169: DeprecationWarning:
-        `on_event` is deprecated, use lifespan event handlers instead.
+        on_event is deprecated, use lifespan event handlers instead.
 
         Read more about it in the
         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
@@ -874,8 +874,8 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 
 --
-1. Enable MCP tools by default
-2. Remove legacy Flask code
+1. enable MCP tools by default
+2. remove legacy flask code
 
 ---
 
@@ -884,7 +884,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 Perfect! Let me fix both issues:
 
 1. **Enable MCP tools by default**
-2. **Fix the deprecation warning** (use modern lifespan instead of `on_event`)
+2. **Fix the deprecation warning** (use modern lifespan instead of on_event)
 3. **Remove legacy Flask code**
 
 ---
@@ -962,7 +962,7 @@ Update README accordingly
 
 ### 👤 You
 
-Update the main `projects/README.md`, and move the event trigger to the last experiment (after the three tools)
+Update the main projects/README.md, and move the event trigger to the last experiment (after the three tools)
 
 ---
 
@@ -981,16 +981,16 @@ Perfect! I've updated the main `projects/README.md` with the following changes:
 ### 2. **Updated agent-with-event-trigger Description**
 
 **Old description** (outdated):
-> Extends the Week 2 system-hint Agent to implement a complete event-driven architecture...
+> 扩展 Week 2 的 system-hint Agent，实现完整的事件驱动架构...
 
 **New description** (current):
-> A modern event-driven Agent built on FastAPI, integrating the first three MCP servers (42 tools) by default. Uses a native async architecture for clean MCP tool loading, receives multi-source events (Web, IM, GitHub, timers, etc.) via HTTP API. Provides auto-generated API documentation (Swagger UI) and background monitoring capabilities.
+> 基于 FastAPI 构建的现代化事件驱动 Agent，默认集成前三个 MCP 服务器（42 个工具）。采用原生异步架构实现清晰的 MCP 工具加载，通过 HTTP API 接收多源事件（Web、即时消息、GitHub、定时器等）。提供自动 API 文档（Swagger UI）和后台监控能力。
 
 ### 3. **Updated Core Concepts**
 
-**Old**: Event-driven, HTTP API, async processing, multi-source input, background monitoring
+**Old**: 事件驱动、HTTP API、异步处理、多源输入、后台监控
 
-**New**: FastAPI, native async, MCP integration, event-driven, auto API docs, tool orchestration
+**New**: FastAPI、原生异步、MCP 集成、事件驱动、自动 API 文档、工具编排
 
 ## 🎯 Why This Order Makes Sense
 
@@ -1005,7 +1005,7 @@ The learning path now follows: "Here are the tools → Here's an agent that uses
 
 ### 👤 You
 
-Did you include `example_with_mcp.py` in the README of agent-with?
+Did you include example_with_mcp.py in README of agent-with
 
 ---
 

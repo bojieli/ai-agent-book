@@ -1,16 +1,16 @@
 """
-Experiment 10-3: Book Translation Agent — Orchestration Mode
+实验 10-3：书籍翻译 Agent —— 管理者模式（Orchestration）
 
-This module implements four specialized agents and two operation modes:
-  1) Orchestration mode: Manager only stores tasks/plans/call records/file indices,
-     without saving complete translations; each sub-agent has independent, isolated context.
-  2) Single-agent mode: One agent reads the entire book and translates chapter by chapter
-     in a continuously growing conversation, used to compare "context bloat" and "term drift".
+本模块实现四种专职 Agent，以及两种运行方式：
+  1) 管理者模式（orchestrate）：Manager 只保存任务/计划/调用记录/文件索引，
+     不保存完整译文；各子 Agent 拥有独立、隔离的上下文。
+  2) 单 Agent 模式（single_agent）：一个 Agent 在同一条不断增长的对话里
+     依次读全书、逐章翻译，用于对照“上下文膨胀”与“术语漂移”。
 
-Core verification points:
-  - Record the context token consumption of each agent/manager;
-  - Prove that in orchestration mode, the manager's context is significantly smaller than the cumulative context of a single agent;
-  - Prove that a shared glossary ensures term consistency across chapters.
+核心验证点：
+  - 记录每个 Agent / Manager 的上下文 token 消耗；
+  - 证明管理者模式下 Manager 的上下文明显小于单 Agent 的累积上下文；
+  - 证明共享术语表能让术语在各章保持一致。
 """
 
 import os
@@ -21,31 +21,31 @@ from openai import OpenAI
 
 
 # ----------------------------------------------------------------------------
-#  Configuration: model / base_url can be overridden via environment variables, default current cheap flagship gpt-5.6-luna
+# 配置：model / base_url 可通过环境变量覆盖，默认当前便宜旗舰 gpt-5.6-luna
 # ----------------------------------------------------------------------------
 MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.6-luna")
-BASE_URL = os.environ.get("OPENAI_BASE_URL")  #  Optional, compatible with self-hosted/proxy endpoints
+BASE_URL = os.environ.get("OPENAI_BASE_URL")  # 可选，兼容自建/代理端点
 
 
 def _to_openrouter_model(model: str) -> str:
-    """Map model names to OpenRouter namespace (for fallback path without OPENAI_API_KEY)."""
+    """把模型名映射到 OpenRouter 命名空间（用于无 OPENAI_API_KEY 的回退路径）。"""
     if "/" in model:
-        return model                      #  Already OpenRouter namespace, use as-is
+        return model                      # 已是 OpenRouter 命名空间，原样使用
     if model.startswith("gpt-"):
         return "openai/" + model          # gpt-* -> openai/gpt-*
     if model.startswith("claude-"):
         return "anthropic/claude-opus-4.8"
-    return "openai/gpt-5.6-luna"          #  Fallback: current cheap flagship
+    return "openai/gpt-5.6-luna"          # 兜底：当前便宜旗舰
 
 
 def get_client() -> OpenAI:
-    """Create an LLM client.
+    """创建 LLM 客户端。
 
-    General fallback strategy:
-      1) If OPENAI_API_KEY is set -> connect directly to OpenAI (respect optional OPENAI_BASE_URL);
-      2) Otherwise if OPENROUTER_API_KEY is set -> automatically switch to OpenRouter gateway and map MODEL
-         to OpenRouter namespace (e.g., gpt-5.6-luna -> openai/gpt-5.6-luna);
-      3) If neither is set, raise a clear error.
+    通用回退策略：
+      1) 有 OPENAI_API_KEY -> 直连 OpenAI（尊重可选的 OPENAI_BASE_URL）；
+      2) 否则有 OPENROUTER_API_KEY -> 自动改走 OpenRouter 网关，并把 MODEL
+         映射到 OpenRouter 命名空间（如 gpt-5.6-luna -> openai/gpt-5.6-luna）；
+      3) 都没有则报清晰错误。
     """
     global MODEL
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -59,11 +59,11 @@ def get_client() -> OpenAI:
         MODEL = _to_openrouter_model(MODEL)
         return OpenAI(api_key=or_key, base_url="https://openrouter.ai/api/v1")
     raise RuntimeError(
-        "Neither OPENAI_API_KEY nor OPENROUTER_API_KEY is set. Please refer to env.example for configuration."
+        "未设置 OPENAI_API_KEY 或 OPENROUTER_API_KEY，请参考 env.example 配置。"
     )
 
 
-# tiktoken encoder: used to count tokens of context not actually sent to the model (e.g., manager state)
+# tiktoken 编码器：用于统计“未真正发给模型”的上下文（如 Manager 状态）token 数
 try:
     _ENC = tiktoken.encoding_for_model(MODEL)
 except Exception:
@@ -71,7 +71,7 @@ except Exception:
 
 
 def _slug(name: str) -> str:
-    """Convert chapter name to a clean file name prefix, e.g., 'Chapter 1: ...' -> 'chapter1'."""
+    """把章节名转成干净的文件名前缀，如 'Chapter 1: ...' -> 'chapter1'。"""
     import re
     m = re.search(r"chapter\s*0*(\d+)", name, re.IGNORECASE)
     if m:
@@ -80,7 +80,7 @@ def _slug(name: str) -> str:
 
 
 def _loads_lenient(content: str):
-    """Fault-tolerant JSON parsing: handles cases where the model wraps JSON in ```json ... ``` code fences."""
+    """容错解析 JSON：兼容个别模型把 JSON 包在 ```json ... ``` 代码围栏里的情况。"""
     s = (content or "").strip()
     if s.startswith("```"):
         s = s.split("\n", 1)[-1] if "\n" in s else s
@@ -91,32 +91,32 @@ def _loads_lenient(content: str):
 
 
 def count_tokens(text: str) -> int:
-    """Count the number of tokens in a text string."""
+    """统计一段文本的 token 数。"""
     return len(_ENC.encode(text or ""))
 
 
 def count_messages_tokens(messages) -> int:
-    """Count the number of tokens in a set of chat messages (approximate: content + fixed overhead per message)."""
+    """统计一组 chat messages 的 token 数（近似：内容 + 每条消息固定开销）。"""
     total = 0
     for m in messages:
-        total += count_tokens(m.get("content", "")) + 4  #  Each message has about 4 tokens of structural overhead
+        total += count_tokens(m.get("content", "")) + 4  # 每条消息约 4 token 结构开销
     return total
 
 
 # ----------------------------------------------------------------------------
-# Token tracker: records the context size of every LLM call, aggregated by agent
+# Token 追踪器：记录每一次 LLM 调用的上下文规模，并按 Agent 聚合
 # ----------------------------------------------------------------------------
 class TokenTracker:
     """
-    Record the context token consumption of each agent per call.
+    记录每个 Agent 每次调用的上下文 token 消耗。
 
-    - prompt_tokens: the size of the "context" sent to the model in this call (real API usage).
-      This is the key metric for measuring "context bloat".
-    - peak: the maximum single-call context size for a given agent (context peak).
+    - prompt_tokens：本次调用发送给模型的“上下文”大小（真实 API usage）。
+      这是衡量“上下文膨胀”的关键指标。
+    - peak：某个 Agent 在其所有调用中，单次上下文的最大值（上下文峰值）。
     """
 
     def __init__(self):
-        self.calls = []  #  One record per call
+        self.calls = []  # 每次调用一条记录
 
     def record(self, agent, prompt_tokens, completion_tokens, note=""):
         self.calls.append(
@@ -129,7 +129,7 @@ class TokenTracker:
         )
 
     def by_agent(self):
-        """Aggregate by agent: call count, total input/output, context peak."""
+        """按 Agent 聚合：调用次数、输入/输出总量、上下文峰值。"""
         agg = {}
         for c in self.calls:
             a = agg.setdefault(
@@ -147,14 +147,14 @@ class TokenTracker:
 
 
 # ----------------------------------------------------------------------------
-# LLM call wrapper: each call includes the agent name for per-agent accounting
+# LLM 调用封装：每次调用都带上 agent 名字，便于按 Agent 记账
 # ----------------------------------------------------------------------------
 def llm_chat(client, tracker, agent, messages, json_mode=False, note=""):
     """
-    Make a chat completion call and record the real token usage in the tracker.
+    发起一次 chat completion，并把真实 token usage 记入 tracker。
 
-    Note: messages is the "independent context" for this call. Sub-agents construct messages from scratch each time,
-    so each agent's context is naturally isolated and does not contaminate others.
+    注意：messages 是本次调用的“独立上下文”。子 Agent 每次都从零构造 messages，
+    因此各 Agent 的上下文天然隔离，互不污染。
     """
     kwargs = {"model": MODEL, "messages": messages, "temperature": 0.2}
     if json_mode:
@@ -163,8 +163,8 @@ def llm_chat(client, tracker, agent, messages, json_mode=False, note=""):
     try:
         resp = client.chat.completions.create(**kwargs)
     except Exception as e:
-        #  Reasoning models (e.g., gpt-5.x) only accept default temperature and reject custom values;
-        #  in that case, remove temperature and retry once, keeping other parameters unchanged.
+        # 推理模型（如 gpt-5.x）只接受默认 temperature，会拒绝自定义值；
+        # 此时去掉 temperature 重试一次，保持其余参数不变。
         if "temperature" in str(e).lower():
             kwargs.pop("temperature", None)
             resp = client.chat.completions.create(**kwargs)
@@ -176,190 +176,190 @@ def llm_chat(client, tracker, agent, messages, json_mode=False, note=""):
 
 
 # ============================================================================
-#  Four specialized agents
+# 四种专职 Agent
 # ============================================================================
 
-#  Editorial house style terms: the manager forces these translations into the shared glossary,
-#  so all translation agents use them consistently across the book. Single agent cannot see the glossary and cannot enforce them.
+# 编辑部指定术语（house style）：Manager 会把这些译法强制写入共享术语表，
+# 让所有 Translation Agent 全书统一采用。单 Agent 看不到术语表，无法贯彻。
 EDITORIAL_MANDATE = {
-    "token": "token",
-    "prompt": "prompt",
-    "latency": "latency",
-    "embedding": "embedding vector",
+    "token": "词元",
+    "prompt": "提示词",
+    "latency": "时延",
+    "embedding": "嵌入向量",
 }
 
 
-def translation_guide(target_lang="Chinese"):
-    """Generate translation guidelines in the target language. Default is Chinese, maintaining consistency with the old behavior."""
+def translation_guide(target_lang="中文"):
+    """按目标语言生成翻译指南。默认中文，保持与旧行为一致。"""
     return (
-        f"Translation Guide: For{target_lang}For technical readers, the language should be fluent and natural; preserve the Markdown structure;"
-        "Code inside code blocks is kept as-is and not translated (English comments may be retained);"
-        "Terms appearing in the glossary must strictly use the prescribed translations; for new terms not in the glossary,"
-        "First provide your inferred translation, followed immediately by the marker [待审] to prompt manual review."
+        f"翻译指南：面向{target_lang}技术读者，语言流畅自然；保留 Markdown 结构；"
+        "代码块内的代码原样保留、不翻译（可保留英文注释）；"
+        "术语表中出现的术语必须严格使用规定译法；遇到术语表之外的新术语，"
+        "先给出你推断的译法，并在其后紧跟标记 [待审] 提示人工复核。"
     )
 
 
-# Backward compatibility: Module-level default (English→Chinese) translation guide, referenced by Manager context display, etc.
-TRANSLATION_GUIDE = translation_guide("Chinese")
+# 向后兼容：模块级默认（英文→中文）翻译指南，供 Manager 上下文展示等引用。
+TRANSLATION_GUIDE = translation_guide("中文")
 
 
-# Fixed execution plan for Manager (shared by the actual run and the --dry-run Agent graph to avoid drift between the two).
+# Manager 的固定执行计划（供实际运行与 --dry-run 的 Agent 图共用，避免两处漂移）。
 ORCHESTRATION_PLAN = [
-    "1. Call Glossary Agent to generate glossary and persist to disk",
-    "2. Call Translation Agent chapter by chapter (each with independent context, sharing a terminology file)",
-    "3. Call the Proofreading Agent for consistency review and save the report",
-    "4. Decide whether to send back individual chapter revisions based on the report.",
+    "1. 调用 Glossary Agent 生成术语表并落盘",
+    "2. 逐章调用 Translation Agent（各自独立上下文，共享术语表文件）",
+    "3. 调用 Proofreading Agent 做一致性审校并落盘报告",
+    "4. 依据报告决定是否发回个别章节修订",
 ]
 
 
-def glossary_agent(client, tracker, book_text, source_lang="English", target_lang="Chinese"):
+def glossary_agent(client, tracker, book_text, source_lang="英文", target_lang="中文"):
     """
-    Glossary Agent: Read the full book content, identify recurring technical terms,
-    output a structured term glossary (JSON). Independent context, can be released after output.
+    Glossary Agent：读全书内容，识别反复出现的专业术语，
+    输出结构化术语对照表（JSON）。独立上下文，产出后即可释放。
     """
     system = (
-        f"You are a terminology extraction expert. Read the entire book{source_lang}Technical book, identify recurring technical terms."
-        f"Provide a unified definition for each term{target_lang}Translation method. Output JSON only."
+        f"你是术语抽取专家。阅读整本{source_lang}技术书，找出反复出现的专业术语，"
+        f"为每个术语给出统一的{target_lang}译法。只输出 JSON。"
     )
     user = (
-        "Please read the entire book below and extract 6-10 recurring core technical terms."
-        "Output JSON in the format:"
+        "请阅读下面全书内容，抽取 6-10 个反复出现的核心专业术语，"
+        "输出 JSON，格式为："
         f'{{"glossary": [{{"en": "{source_lang}术语", "zh": "{target_lang}译法", '
-        '"pos": "part of speech", "context": "Explanation of the term\'s context in the book"'
-        "The full content is as follows:\n\n" + book_text
+        '"pos": "词性", "context": "该术语在书中的语境说明"}]}。\n\n'
+        "全书内容如下：\n\n" + book_text
     )
     messages = [
         {"role": "system", "content": system},
         {"role": "user", "content": user},
     ]
     content = llm_chat(
-        client, tracker, "Glossary", messages, json_mode=True, note="Extract glossary"
+        client, tracker, "Glossary", messages, json_mode=True, note="抽取术语表"
     )
     data = _loads_lenient(content)
     return data.get("glossary", [])
 
 
 def translation_agent(client, tracker, chapter_text, glossary, chapter_name,
-                      feedback=None, source_lang="English", target_lang="Chinese"):
+                      feedback=None, source_lang="英文", target_lang="中文"):
     """
-    Translation Agent: Receives "current chapter + glossary + translation guide" and produces fluent translation.
-    Each instance has an independent context (only sees its own chapter + glossary, not other chapters' translations).
+    Translation Agent：接收「当前章节 + 术语表 + 翻译指南」，翻成流畅译文。
+    每个实例都是独立上下文（只看到自己这一章 + 术语表，不看到别的章节译文）。
 
-    feedback: Optional, revision suggestions for this chapter sent back by Manager based on review report.
+    feedback：可选，Manager 依据审校报告发回的针对本章的修订意见。
     """
     glossary_lines = "\n".join(
         f'- {g["en"]} → {g["zh"]}（{g.get("pos","")}）' for g in glossary
     )
-    system = f"You are a professional technical translator. Translate{source_lang}Translate chapters into fluent and accurate{target_lang}。"
+    system = f"你是专业技术翻译。把{source_lang}章节翻译为流畅、准确的{target_lang}。"
     user = (
         f"{translation_guide(target_lang)}\n\n"
-        f"【Glossary (must be strictly followed)】\n{glossary_lines}\n\n"
+        f"【术语表（必须严格遵守）】\n{glossary_lines}\n\n"
     )
     if feedback:
-        user += f"[Revision suggestions for this chapter (please modify accordingly)]\n{feedback}\n\n"
+        user += f"【本章修订意见（请据此修改）】\n{feedback}\n\n"
     user += (
-        f"[Chapter to be translated: {chapter_name}】\n{chapter_text}\n\n"
-        f"Please directly output the{target_lang}translation (Markdown) for this chapter, without additional explanation."
+        f"【待翻译章节：{chapter_name}】\n{chapter_text}\n\n"
+        f"请直接输出该章节的{target_lang}译文（Markdown），不要额外解释。"
     )
     messages = [
         {"role": "system", "content": system},
         {"role": "user", "content": user},
     ]
-    note = f"Translate {chapter_name}" + ("(Revised)" if feedback else "")
+    note = f"翻译 {chapter_name}" + ("（修订）" if feedback else "")
     return llm_chat(client, tracker, "Translation", messages, note=note)
 
 
-def proofreading_agent(client, tracker, translations, glossary, target_lang="Chinese"):
+def proofreading_agent(client, tracker, translations, glossary, target_lang="中文"):
     """
-    Proofreading Agent: Receive all translations + glossary, perform consistency check
-    (whether terminology is unified, whether there are contradictions, whether it is fluent), output a structured proofreading report (JSON).
+    Proofreading Agent：接收所有译文 + 术语表，做一致性检查
+    （术语是否统一、前后是否矛盾、是否流畅），输出结构化审校报告（JSON）。
 
-    translations: {chapter_name: translation text}
+    translations：{chapter_name: 译文文本}
     """
     glossary_lines = "\n".join(f'- {g["en"]} → {g["zh"]}' for g in glossary)
     joined = "\n\n".join(
         f"===== {name} =====\n{text}" for name, text in translations.items()
     )
     system = (
-        f"You are a senior proofreader. Check the{target_lang}terminology consistency, cross-chapter consistency, and fluency of the translations."
-        "Output only JSON."
+        f"你是资深审校。检查多章{target_lang}译文的术语一致性、前后一致性与流畅性。"
+        "只输出 JSON。"
     )
     user = (
-        f"[Glossary]\n{glossary_lines}\n\n"
-        f"[All Translations]\n{joined}\n\n"
-        "Please output JSON:"
-        '{"issues": [{"chapter": "chapter name", "type": "terminology inconsistency/contradiction/fluency", '
-        '"detail": "issue description"}], "chapters_need_revision": ["chapter names needing revision"], '
-        '"summary": "overall evaluation"}'
+        f"【术语表】\n{glossary_lines}\n\n"
+        f"【全部译文】\n{joined}\n\n"
+        "请输出 JSON："
+        '{"issues": [{"chapter": "章节名", "type": "术语不一致/前后矛盾/流畅性", '
+        '"detail": "问题描述"}], "chapters_need_revision": ["需要修订的章节名"], '
+        '"summary": "总体评价"}'
     )
     messages = [
         {"role": "system", "content": system},
         {"role": "user", "content": user},
     ]
     content = llm_chat(
-        client, tracker, "Proofreading", messages, json_mode=True, note="Consistency Proofreading"
+        client, tracker, "Proofreading", messages, json_mode=True, note="一致性审校"
     )
     return _loads_lenient(content)
 
 
 def manager_decision(client, tracker, task, file_index, report):
     """
-    A real LLM decision call by the Manager Agent.
+    Manager Agent 的一次真实 LLM 决策调用。
 
-    Key point: The Manager only sends a small context like "task + file index + proofreading report summary"
-    to the model, to decide "which chapters need to be sent back to the Translation Agent for revision".
-    It never puts the full translation into its own context — this is the approach to control Manager context bloat.
+    关键点：Manager 只把「任务 + 文件索引 + 审校报告摘要」这类很小的上下文
+    发给模型，用来决定「哪些章节需要发回 Translation Agent 修订」。
+    它从不把完整译文放进自己的上下文 —— 这正是控制 Manager 上下文膨胀的做法。
     """
-    system = "You are the manager of the translation project, only making scheduling decisions, output JSON."
+    system = "你是翻译项目的管理者，只做调度决策，输出 JSON。"
     user = (
-        f"Task:{task}\n"
-        f"File index (only store paths, not content):{json.dumps(file_index, ensure_ascii=False)}\n"
-        f"Proofreading report summary:{json.dumps(report, ensure_ascii=False)}\n\n"
-        "Based on the proofreading report, decide which chapters need revision. Output JSON:"
-        '{"revise": ["chapter name", ...], "reason": "brief explanation"}'
+        f"任务：{task}\n"
+        f"文件索引（只存路径，不存正文）：{json.dumps(file_index, ensure_ascii=False)}\n"
+        f"审校报告摘要：{json.dumps(report, ensure_ascii=False)}\n\n"
+        "根据审校报告，决定需要修订的章节。输出 JSON："
+        '{"revise": ["章节名", ...], "reason": "简述"}'
     )
     messages = [
         {"role": "system", "content": system},
         {"role": "user", "content": user},
     ]
     content = llm_chat(
-        client, tracker, "Manager", messages, json_mode=True, note="Scheduling Decision"
+        client, tracker, "Manager", messages, json_mode=True, note="调度决策"
     )
     return _loads_lenient(content)
 
 
 # ============================================================================
-# Operation Mode 1: Orchestration Mode
+# 运行方式一：管理者模式（Orchestration）
 # ============================================================================
-def run_orchestration(chapters, out_dir, *, source_lang="English", target_lang="Chinese",
+def run_orchestration(chapters, out_dir, *, source_lang="英文", target_lang="中文",
                       enable_glossary=True, enable_proofreading=True, trace=None):
     """
-    chapters: ordered dictionary of {chapter_name: source text}
-    out_dir: output directory (glossary, chapter translations, proofreading report all written here)
+    chapters：{chapter_name: 原文} 的有序字典
+    out_dir：产物目录（术语表、各章译文、审校报告都写到这里）
 
-    Optional parameters:
-      source_lang / target_lang: source language / target language (default English → Chinese, consistent with old behavior).
-      enable_glossary: whether to enable Glossary Agent to extract glossary (if disabled, only editor-specified terms are kept).
-      enable_proofreading: whether to enable Proofreading Agent + Manager revision loop.
-      trace: optional callback trace(str), for printing real-time traces of the four-agent collaboration.
+    可选参数：
+      source_lang / target_lang：源语言 / 目标语言（默认 英文 → 中文，与旧行为一致）。
+      enable_glossary：是否启用 Glossary Agent 抽取术语表（关闭后仅保留编辑部指定术语）。
+      enable_proofreading：是否启用 Proofreading Agent + Manager 修订闭环。
+      trace：可选回调 trace(str)，用于打印四 Agent 协作的实时轨迹。
 
-    Returns: metrics dictionary, including tracker, manager context peak, translation mapping, etc.
+    返回：metrics 字典，含 tracker、manager 上下文峰值、译文映射等。
     """
     os.makedirs(out_dir, exist_ok=True)
     client = get_client()
     tracker = TokenTracker()
     emit = trace if callable(trace) else (lambda *a, **k: None)
 
-    # ---- Manager's context: only stores these "lightweight" information, never contains full translations ----
+    # ---- Manager 的上下文：只保存这些“轻量”信息，绝不含完整译文 ----
     manager_context = {
-        "task": f"Translate a{source_lang}technical booklet into fluent{target_lang}, ensuring terminology consistency throughout the book.",
+        "task": f"把一本{source_lang}技术小书翻译成流畅{target_lang}，保证术语全书一致。",
         "guide": translation_guide(target_lang),
         "plan": list(ORCHESTRATION_PLAN),
-        "call_log": [],       #  Agent invocation records (summary only, no content)
-        "file_index": {},     #  File index: only store paths
-        "progress": {},       #  Progress status
+        "call_log": [],       # 各 Agent 调用记录（只记摘要，不记正文）
+        "file_index": {},     # 文件索引：只存路径
+        "progress": {},       # 进度状态
     }
-    manager_peak = 0  #  Manager context (serialized state) token peak
+    manager_peak = 0  # Manager 上下文（其状态序列化后的）token 峰值
 
     def snapshot_manager():
         nonlocal manager_peak
@@ -368,7 +368,7 @@ def run_orchestration(chapters, out_dir, *, source_lang="English", target_lang="
         return size
 
     def log_call(agent, note, out_file, prompt_tokens, completion_tokens):
-        #  Manager only records 'who did what, where the output is, how many tokens spent', not the content
+        # Manager 只记录“谁做了什么、产物在哪、花了多少 token”，不记录正文
         manager_context["call_log"].append(
             {
                 "agent": agent,
@@ -381,19 +381,19 @@ def run_orchestration(chapters, out_dir, *, source_lang="English", target_lang="
         snapshot_manager()
 
     snapshot_manager()
-    emit("Manager: formulate plan and dispatch four specialized agents (each with independent context)")
+    emit("Manager：制定计划并调度四个专职 Agent（各自独立上下文）")
     for step in manager_context["plan"]:
-        emit(f"    Plan {step}")
+        emit(f"    计划 {step}")
 
-    # ---- Step 1: Glossary Agent (independent context, read full book; release after output) ----
+    # ---- 步骤 1：Glossary Agent（独立上下文，读全书；产出后释放）----
     book_text = "\n\n".join(f"# {n}\n{t}" for n, t in chapters.items())
     if enable_glossary:
-        emit(f"Manager → Glossary Agent: read full book ({len(chapters)} chapters) extract shared glossary")
+        emit(f"Manager → Glossary Agent：读全书（{len(chapters)} 章）抽取共享术语表")
         glossary = glossary_agent(client, tracker, book_text, source_lang, target_lang)
     else:
-        emit("Manager: skipped Glossary Agent (--no-glossary), only keep editorial-specified terms")
+        emit("Manager：已跳过 Glossary Agent（--no-glossary），仅保留编辑部指定术语")
         glossary = []
-    # Manager forcibly writes 'editorial-specified terms' into glossary (overwrite or add), as the unified contract for the whole book.
+    # Manager 把“编辑部指定术语”强制写入术语表（覆盖或新增），作为全书统一契约。
     for g in glossary:
         en = g["en"].strip().lower()
         if en in EDITORIAL_MANDATE:
@@ -401,32 +401,32 @@ def run_orchestration(chapters, out_dir, *, source_lang="English", target_lang="
     present = {g["en"].strip().lower() for g in glossary}
     for en, zh in EDITORIAL_MANDATE.items():
         if en not in present:
-            glossary.append({"en": en, "zh": zh, "pos": "Terms", "context": "Editorial-specified terms"})
+            glossary.append({"en": en, "zh": zh, "pos": "名词", "context": "编辑部指定术语"})
     glossary_path = os.path.join(out_dir, "glossary.json")
     with open(glossary_path, "w", encoding="utf-8") as f:
         json.dump(glossary, f, ensure_ascii=False, indent=2)
-    # Manager only records paths in file index; glossary content stays in file system, not in Manager context
+    # Manager 只在文件索引里记路径；术语表正文留在文件系统，不进 Manager 上下文
     manager_context["file_index"]["glossary"] = glossary_path
-    # LLM usage is accounted only when Glossary Agent is actually invoked; no invocation when --no-glossary.
+    # 仅在真正调用了 Glossary Agent 时才有 LLM usage 可记账；--no-glossary 时无调用。
     g_prompt, g_completion = (
         (tracker.calls[-1]["prompt_tokens"], tracker.calls[-1]["completion_tokens"])
         if enable_glossary and tracker.calls else (0, 0)
     )
-    log_call("Glossary", f"Extract {len(glossary)} terms", glossary_path,
+    log_call("Glossary", f"抽取 {len(glossary)} 个术语", glossary_path,
              g_prompt, g_completion)
     if enable_glossary:
-        emit(f"Glossary Agent ✓: determined {len(glossary)} terms → {os.path.basename(glossary_path)}"
-             f" (Manager only records path, glossary content stays in file system)")
+        emit(f"Glossary Agent ✓：确定 {len(glossary)} 个术语 → {os.path.basename(glossary_path)}"
+             f"（Manager 只记路径，术语表正文留在文件系统）")
     else:
-        emit(f"Manager: wrote {len(glossary)} editorial-specified terms → {os.path.basename(glossary_path)}")
+        emit(f"Manager：写入 {len(glossary)} 个编辑部指定术语 → {os.path.basename(glossary_path)}")
 
-    # ---- Step 2: Per-chapter Translation Agent (each chapter has an independent context instance) ----
+    # ---- 步骤 2：逐章 Translation Agent（每章一个独立上下文实例）----
     translations = {}
     for name, text in chapters.items():
-        emit(f"Manager → Translation Agent: translate \"{name}\" (independent context, only sees this chapter + glossary)")
+        emit(f"Manager → Translation Agent：翻译《{name}》（独立上下文，仅见本章 + 术语表）")
         zh = translation_agent(client, tracker, text, glossary, name,
                                source_lang=source_lang, target_lang=target_lang)
-        # File name like chapter1_zh.md
+        # 文件名如 chapter1_zh.md
         base = _slug(name)
         out_file = os.path.join(out_dir, f"{base}_zh.md")
         with open(out_file, "w", encoding="utf-8") as f:
@@ -435,16 +435,16 @@ def run_orchestration(chapters, out_dir, *, source_lang="English", target_lang="
         manager_context["file_index"][name] = out_file
         manager_context["progress"][name] = "translated"
         last = tracker.calls[-1]
-        log_call("Translation", f"Translate {name}", out_file,
+        log_call("Translation", f"翻译 {name}", out_file,
                  last["prompt_tokens"], last["completion_tokens"])
         emit(f"Translation Agent ✓：{os.path.basename(out_file)}"
-             f"(Context {last['prompt_tokens']} tok, translation written to disk, not returned to Manager)")
+             f"（上下文 {last['prompt_tokens']} tok，译文落盘不回传 Manager）")
 
-    # ---- Step 3: Proofreading Agent (reads all translations + glossary, independent context) ----
+    # ---- 步骤 3：Proofreading Agent（读所有译文 + 术语表，独立上下文）----
     if not enable_proofreading:
-        emit("Manager: Skipped Proofreading Agent and revision loop (--no-proofreading)")
+        emit("Manager：已跳过 Proofreading Agent 与修订闭环（--no-proofreading）")
         report = {"issues": [], "chapters_need_revision": [],
-                  "summary": "(Skipped proofreading)"}
+                  "summary": "（已跳过审校）"}
         snapshot_manager()
         return {
             "mode": "orchestration",
@@ -457,20 +457,20 @@ def run_orchestration(chapters, out_dir, *, source_lang="English", target_lang="
             "out_dir": out_dir,
         }
 
-    emit("Manager → Proofreading Agent: Read all translations + glossary for consistency/fluency review")
+    emit("Manager → Proofreading Agent：读全部译文 + 术语表做一致性/流畅性审校")
     report = proofreading_agent(client, tracker, translations, glossary, target_lang)
     report_path = os.path.join(out_dir, "proofreading_report.json")
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
     manager_context["file_index"]["report"] = report_path
     last = tracker.calls[-1]
-    log_call("Proofreading", "Consistency Proofreading", report_path,
+    log_call("Proofreading", "一致性审校", report_path,
              last["prompt_tokens"], last["completion_tokens"])
-    emit(f"Proofreading Agent ✓：{len(report.get('issues', []))} issues → "
+    emit(f"Proofreading Agent ✓：{len(report.get('issues', []))} 处问题 → "
          f"{os.path.basename(report_path)}")
 
-    # ---- Step 4: Manager decision + at most one revision round ----
-    # Manager only sends small context like "file index + report summary" to the model for decision
+    # ---- 步骤 4：Manager 决策 + 至多一轮修订 ----
+    # Manager 只把“文件索引 + 报告摘要”这类小上下文发给模型做决策
     report_summary = {
         "chapters_need_revision": report.get("chapters_need_revision", []),
         "issues": report.get("issues", [])[:5],
@@ -479,23 +479,23 @@ def run_orchestration(chapters, out_dir, *, source_lang="English", target_lang="
     manager_context["progress"]["proofread"] = "done"
     snapshot_manager()
 
-    emit("Manager: Read proofreading report summary (not the full text) → decide which sections need revision")
+    emit("Manager：读审校报告摘要（不读正文）→ 决策哪些章节需发回修订")
     decision = manager_decision(
         client, tracker, manager_context["task"],
         manager_context["file_index"], report_summary
     )
     revise = decision.get("revise", [])
-    emit(f"Manager decision ✓: Sections needing revision {revise or 'None'}")
+    emit(f"Manager 决策 ✓：需修订章节 {revise or '无'}")
 
     for name in revise:
         if name not in chapters:
             continue
-        # Find revision comments for that section
+        # 找到该章节的修订意见
         fb = "; ".join(
             i.get("detail", "") for i in report.get("issues", [])
             if i.get("chapter") == name
-        ) or "Please unify terminology according to the glossary and improve fluency."
-        emit(f"Manager → Translation Agent: Revise \"{name}\" (with revision comments)")
+        ) or "请根据术语表统一术语并提升流畅性。"
+        emit(f"Manager → Translation Agent：修订《{name}》（附审校意见）")
         zh = translation_agent(client, tracker, chapters[name], glossary, name,
                                feedback=fb, source_lang=source_lang, target_lang=target_lang)
         base = _slug(name)
@@ -505,11 +505,11 @@ def run_orchestration(chapters, out_dir, *, source_lang="English", target_lang="
         translations[name] = zh
         manager_context["progress"][name] = "revised"
         last = tracker.calls[-1]
-        log_call("Translation", f"Revision {name}", out_file,
+        log_call("Translation", f"修订 {name}", out_file,
                  last["prompt_tokens"], last["completion_tokens"])
 
     snapshot_manager()
-    emit(f"Manager: All done, output directory {out_dir}")
+    emit(f"Manager：全部完成，产物目录 {out_dir}")
 
     return {
         "mode": "orchestration",
@@ -524,26 +524,26 @@ def run_orchestration(chapters, out_dir, *, source_lang="English", target_lang="
 
 
 # ============================================================================
-# Run mode 2: Single Agent mode (control group)
+# 运行方式二：单 Agent 模式（对照组）
 # ============================================================================
-def run_single_agent(chapters, out_dir, *, source_lang="English", target_lang="Chinese"):
+def run_single_agent(chapters, out_dir, *, source_lang="英文", target_lang="中文"):
     """
-    Naive baseline: one agent in a single growing conversation first skims the entire book,
-    then translates chapter by chapter. No independent glossary tool to "pin down" terms, and context accumulates across chapters.
+    朴素基线：一个 Agent 在同一条不断增长的对话里，先粗读全书，
+    再逐章翻译。没有独立的术语表工具来“钉死”术语，且上下文随章节累积。
 
-    This mode exposes two issues:
-      - Context bloat: peak context of a single conversation = all content accumulated up to the last chapter;
-      - Terminology drift: without a shared glossary constraint, the same term may be translated inconsistently across chapters.
+    这一模式用于暴露两个问题：
+      - 上下文膨胀：单条对话的上下文峰值 = 累积到最后一章时的全部内容；
+      - 术语漂移：缺少共享术语表约束，同一术语在不同章可能译法不一致。
     """
     os.makedirs(out_dir, exist_ok=True)
     client = get_client()
     tracker = TokenTracker()
 
     system = (
-        f"You are a professional technical translator. I will give you a{source_lang}technical book chapter by chapter. Please translate each chapter into"
-        f"fluent, accurate{target_lang}. Preserve Markdown structure; keep code in code blocks unchanged, do not translate."
+        f"你是专业技术翻译。我会逐章给你一本{source_lang}技术书，请把每一章翻译成"
+        f"流畅、准确的{target_lang}。保留 Markdown 结构；代码块内的代码原样保留、不翻译。"
     )
-    # Single Agent's "main context": a continuously growing conversation
+    # 单 Agent 的“主上下文”：一条持续增长的对话
     messages = [{"role": "system", "content": system}]
 
     translations = {}
@@ -551,13 +551,13 @@ def run_single_agent(chapters, out_dir, *, source_lang="English", target_lang="C
         messages.append(
             {
                 "role": "user",
-                "content": f"Please translate the following chapter and output the Chinese translation directly: \n\n# {name}\n{text}",
+                "content": f"请翻译下面这一章，直接输出中文译文：\n\n# {name}\n{text}",
             }
         )
         content = llm_chat(
-            client, tracker, "SingleAgent", messages, note=f"Translate {name}"
+            client, tracker, "SingleAgent", messages, note=f"翻译 {name}"
         )
-        # The translation remains in the conversation — this is the source of context bloat
+        # 译文继续留在对话里 —— 这正是上下文膨胀的来源
         messages.append({"role": "assistant", "content": content})
         translations[name] = content
         base = _slug(name)
@@ -568,7 +568,7 @@ def run_single_agent(chapters, out_dir, *, source_lang="English", target_lang="C
     return {
         "mode": "single_agent",
         "tracker": tracker,
-        # Single Agent's "main context peak" = the largest prompt_tokens among all its calls
+        # 单 Agent 的“主上下文峰值”= 其所有调用中最大的一次 prompt_tokens
         "main_context_peak": tracker.by_agent()["SingleAgent"]["peak_context"],
         "translations": translations,
         "out_dir": out_dir,

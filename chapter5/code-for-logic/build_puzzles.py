@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generate/validate "Knights and Knaves" puzzles and export to puzzles.json.
+生成/校验「骑士与无赖」(Knights and Knaves)谜题，并导出 puzzles.json。
 
-Each sentence of every puzzle is represented using the structured DSL in csp_solver.py (see the top of that file),
-which can both render into Chinese puzzle text (for LLM consumption) and be directly translated into python-constraint constraints for solving.
-This script uses python-constraint to verify that each puzzle has a unique solution before writing it out—this ensures unambiguous truth-value solutions,
-while demonstrating the core of Experiment 5-2: formalizing puzzles as CSPs and solving them offline with a solver.
+每道谜题的每句话都用 csp_solver.py 里的结构化 DSL 表示(见该文件顶部说明)，
+既能渲染成中文题面(给 LLM 看)，也能直接翻译成 python-constraint 约束来求解。
+本脚本用 python-constraint 校验每题「解唯一」后才写出——这确保真值解无歧义，
+同时演示了实验 5-2 的核心：把谜题形式化为 CSP 并用求解器离线求解。
 
-Convention: knights always tell the truth, knaves always lie. t[name]=True means knight.
+约定：骑士(knight)永远说真话，无赖(knave)永远说假话。t[name]=True 表示骑士。
 
-Usage:
-    python build_puzzles.py                       # Export the built-in 12 curated puzzles (default)
-    python build_puzzles.py --generate 20         # Randomly generate 20 puzzles with unique solutions
+用法：
+    python build_puzzles.py                       # 导出内置的 12 道精选谜题(默认)
+    python build_puzzles.py --generate 20         # 随机生成 20 道解唯一的谜题
     python build_puzzles.py --generate 20 --min-people 3 --max-people 5 --seed 7
-    python build_puzzles.py --output my.json      # Specify output file
+    python build_puzzles.py --output my.json      # 指定输出文件
 """
 import argparse
 import json
@@ -22,8 +22,8 @@ import random
 
 from csp_solver import render_nl, solve, solve_labeled
 
-#  Each puzzle: id, list of names, dict{name: structured statement}. The Chinese puzzle text is automatically rendered from the structured statements,
-#  but curated puzzles retain hand-written more natural Chinese (see STATEMENTS_NL override).
+# 每题：id, 名字列表, dict{name: 结构化陈述}。中文题面由结构化陈述自动渲染，
+# 但精选题保留手写的更自然的中文(见 STATEMENTS_NL 覆盖)。
 CURATED = [
     ("kk01", ["A", "B"], {
         "A": ["is", "B", "knave"],
@@ -79,45 +79,45 @@ CURATED = [
         "E": ["same", "A", "C"]}),
 ]
 
-#  Hand-written Chinese puzzle text for curated puzzles (more natural than auto-rendered). Uncovered sentences fall back to render_nl.
+# 精选题的手写中文题面(比自动渲染更自然)。未覆盖的句子回退到 render_nl。
 STATEMENTS_NL = {
-    ("kk01", "B"): "Neither of us is a knight.",
-    ("kk02", "A"): "I am of the same type as B (both knights or both knaves).",
-    ("kk02", "B"): "I am of a different type from A.",
-    ("kk03", "A"): "At least one of us is a knight.",
-    ("kk04", "C"): "A and B are both knaves.",
-    ("kk06", "C"): "I am of the same type as A.",
-    ("kk07", "A"): "I am a knave, or B is a knight.",
-    ("kk09", "D"): "A and B are not of the same type.",
-    ("kk10", "A"): "At least three of the four of us are knaves.",
-    ("kk11", "E"): "At least two of the five of us are knights.",
-    ("kk12", "E"): "A and C are of the same type.",
+    ("kk01", "B"): "我们两人都不是骑士。",
+    ("kk02", "A"): "我和 B 是同一类人（要么都是骑士，要么都是无赖）。",
+    ("kk02", "B"): "我和 A 是不同类人。",
+    ("kk03", "A"): "我们当中至少有一个骑士。",
+    ("kk04", "C"): "A 和 B 都是无赖。",
+    ("kk06", "C"): "我和 A 是同一类人。",
+    ("kk07", "A"): "我是无赖，或者 B 是骑士。",
+    ("kk09", "D"): "A 和 B 不是同一类人。",
+    ("kk10", "A"): "我们四人当中至少有三个无赖。",
+    ("kk11", "E"): "我们五人当中至少有两个骑士。",
+    ("kk12", "E"): "A 和 C 是同一类人。",
 }
 
 
 def build_puzzle(pid, names, structs, nl_overrides=None):
-    """Solve and validate (require unique solution) and assemble into one record for writing to puzzles.json."""
+    """求解校验(要求解唯一)并组装成写入 puzzles.json 的一条记录。"""
     sols = solve_labeled(names, structs)
     if len(sols) != 1:
-        raise ValueError(f"{pid}  Solution not unique: {len(sols)} solutions -> {sols}")
+        raise ValueError(f"{pid} 解不唯一: {len(sols)} 个解 -> {sols}")
     solution = sols[0]
 
     nl_overrides = nl_overrides or {}
     statements = {n: nl_overrides.get(n, render_nl(structs[n])) for n in names}
     lines = [f"{n}: 「{statements[n]}」" for n in names]
     desc = (
-        f"There are {len(names)} inhabitants on this island: {', '.join(names)}。"
-        "Each inhabitant is either a knight (always tells the truth) or a knave (always lies)."
-        "They each said the following:\n" + "\n".join(lines)
+        f"这座岛上有 {len(names)} 位居民：{', '.join(names)}。"
+        "每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。"
+        "他们各自说了如下的话：\n" + "\n".join(lines)
     )
     return dict(id=pid, num_people=len(names), names=names,
                 statements=statements, statements_struct=structs,
                 description=desc, solution=solution)
 
 
-# ---------------- Random Generator ----------------
+# ---------------- 随机生成器 ----------------
 def _random_stmt(speaker, names, rng):
-    """Randomly generate a valid structured statement for the speaker."""
+    """为 speaker 随机生成一句合法的结构化陈述。"""
     others = [n for n in names if n != speaker]
     kind = rng.choice(["is", "is", "same", "diff", "count"])
     if kind == "is":
@@ -126,7 +126,7 @@ def _random_stmt(speaker, names, rng):
         return ["same", speaker, rng.choice(others)]
     if kind == "diff":
         return ["diff", speaker, rng.choice(others)]
-    # count: the number of people of a certain role among all satisfies a comparison
+    # count：全体中某角色的人数满足某比较
     role = rng.choice(["knight", "knave"])
     op = rng.choice([">=", "<=", "=="])
     k = rng.randint(1, len(names))
@@ -134,7 +134,7 @@ def _random_stmt(speaker, names, rng):
 
 
 def generate(count, min_people, max_people, seed):
-    """Randomly generate count puzzles with unique solutions (filtered using python-constraint)."""
+    """随机生成 count 道「解唯一」的谜题(用 python-constraint 过滤)。"""
     rng = random.Random(seed)
     names_pool = ["A", "B", "C", "D", "E", "F", "G"]
     puzzles = []
@@ -144,12 +144,12 @@ def generate(count, min_people, max_people, seed):
         n = rng.randint(min_people, max_people)
         names = names_pool[:n]
         structs = {sp: _random_stmt(sp, names, rng) for sp in names}
-        if len(solve(names, structs)) != 1:      #  Only keep puzzles with unique solutions
+        if len(solve(names, structs)) != 1:      # 只保留解唯一的谜题
             continue
         pid = f"gen{len(puzzles) + 1:03d}"
         puzzles.append(build_puzzle(pid, names, structs))
     if len(puzzles) < count:
-        print(f"Warning: {attempts} attempts only generated {len(puzzles)}/{count} puzzles with unique solutions.")
+        print(f"警告：{attempts} 次尝试只生成了 {len(puzzles)}/{count} 道解唯一的谜题。")
     return puzzles
 
 
@@ -164,35 +164,35 @@ def build_curated():
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Generate/validate knights and knaves puzzles and export puzzles.json"
-                    "(Solve offline with python-constraint, verify each puzzle has a unique solution)",
+        description="生成/校验骑士与无赖谜题并导出 puzzles.json"
+                    "（用 python-constraint 离线求解，校验每题解唯一）",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__)
     ap.add_argument("--generate", type=int, metavar="N", default=0,
-                    help="Randomly generate N puzzles with unique solutions (default 0 = export built-in 12 selected puzzles)")
+                    help="随机生成 N 道解唯一的谜题(默认 0=导出内置 12 道精选题)")
     ap.add_argument("--min-people", type=int, default=2,
-                    help="Minimum number of residents per puzzle when randomly generating (default 2)")
+                    help="随机生成时每题最少居民数(默认 2)")
     ap.add_argument("--max-people", type=int, default=5,
-                    help="Maximum number of residents per puzzle when randomly generating (difficulty cap, default 5)")
+                    help="随机生成时每题最多居民数(难度上限，默认 5)")
     ap.add_argument("--seed", type=int, default=42,
-                    help="Random seed for reproducibility (default 42)")
+                    help="随机种子，保证可复现(默认 42)")
     ap.add_argument("--output", default="puzzles.json",
-                    help="Output file path (default puzzles.json)")
+                    help="输出文件路径(默认 puzzles.json)")
     args = ap.parse_args()
 
     if args.generate > 0:
-        print(f"Randomly generate {args.generate} puzzles"
-              f"({args.min_people}~{args.max_people} people, seed={args.seed})...")
+        print(f"随机生成 {args.generate} 道谜题"
+              f"({args.min_people}~{args.max_people} 人，seed={args.seed})...")
         out = generate(args.generate, args.min_people, args.max_people, args.seed)
     else:
         out = build_curated()
 
     for p in out:
-        print(f"{p['id']}: OK unique solution = {p['solution']}")
+        print(f"{p['id']}: OK 唯一解 = {p['solution']}")
 
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
-    print(f"\nWritten {len(out)} puzzles to {args.output}")
+    print(f"\n已写出 {len(out)} 题到 {args.output}")
 
 
 if __name__ == "__main__":

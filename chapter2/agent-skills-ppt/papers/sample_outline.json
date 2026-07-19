@@ -1,69 +1,69 @@
 {
-  "title": "Impact of Progressive Disclosure Agent Skills on Context Efficiency",
-  "subtitle": "Example Author Team · Example Data (corresponding to papers/sample_paper.md)",
+  "title": "渐进式披露式 Agent Skills 对上下文效率的影响",
+  "subtitle": "示例作者团队 · 示例数据（对应 papers/sample_paper.md）",
   "slides": [
     {
-      "title": "Table of Contents",
+      "title": "目录",
       "bullets": [
-        "Research Background and Problem",
-        "Method Overview: Three-Level Progressive Disclosure",
-        "Key Results: Context and Cache",
-        "Limitations and Discussion",
-        "Summary"
+        "研究背景与问题",
+        "方法概述：三层渐进式披露",
+        "关键结果：上下文与缓存",
+        "局限性与讨论",
+        "小结"
       ]
     },
     {
-      "title": "Research Background and Problem",
+      "title": "研究背景与问题",
       "bullets": [
-        "The more tasks an Agent supports, the more linearly a single system prompt expands",
-        "Long prompts incur triple costs: token cost, attention dilution, and cache prefix invalidation",
-        "Core contradiction: letting the Agent \"know its own capabilities\" without long-term context occupation"
+        "Agent 支持的任务越多，单一系统提示词越线性膨胀",
+        "长提示词带来 token 成本、注意力稀释、缓存前缀失效三重代价",
+        "核心矛盾：让 Agent「知道自己有哪些能力」又不长期占用上下文"
       ]
     },
     {
-      "title": "Method Overview (Overall Approach)",
+      "title": "方法概述（总体思路）",
       "bullets": [
-        "First give the Agent a thin directory, then load the full Skill when needed",
-        "Layer 1: At startup, inject only each Skill's name + description (hundreds of tokens)",
-        "Layer 2: When a task triggers, load the complete SKILL.md as a tool result"
+        "先给 Agent 一份薄目录，需要时再加载完整 Skill",
+        "第一层：启动只注入各 Skill 的 name + description（数百 token）",
+        "第二层：任务触发时加载完整 SKILL.md 作为 tool result"
       ]
     },
     {
-      "title": "Method Overview (Key Mechanism)",
+      "title": "方法概述（关键机制）",
       "bullets": [
-        "Layer 3: On-demand reading of reference.md, script source code, and other sub-documents",
-        "description should be written as \"routing conditions\" rather than \"feature introduction\"",
-        "Bundle executable scripts to upgrade knowledge into actionable capabilities"
+        "第三层：按需读取 reference.md、脚本源码等子文档",
+        "description 应写成「路由条件」而非「功能介绍」",
+        "捆绑可执行脚本，把知识升级为可落地的能力"
       ]
     },
     {
-      "title": "Key Results (Efficiency Metrics)",
+      "title": "关键结果（效率指标）",
       "bullets": [
-        "Resident context drops from thousands of tokens to directory-level hundreds of tokens",
-        "Constant number of tools, stable prefix, significantly improved KV Cache hit rate"
+        "常驻上下文从数千 token 降到目录级的数百 token",
+        "工具数量恒定、前缀稳定，KV Cache 命中率显著提升"
       ]
     },
     {
-      "title": "Key Results (Effect Comparison)",
+      "title": "关键结果（效果对比）",
       "bullets": [
-        "On tasks requiring specialized Skills, success rate is on par with the \"full injection\" baseline",
-        "Adding counterexamples (Don't use when) significantly improves routing accuracy",
-        "Reduces false triggers on irrelevant tasks"
+        "需要专业 Skill 的任务上，成功率与「全量注入」基线持平",
+        "加入反例（Don't use when）明显提升路由准确率",
+        "减少不相关任务上的误触发"
       ]
     },
     {
-      "title": "Limitations and Discussion",
+      "title": "局限性与讨论",
       "bullets": [
-        "Triggering relies on the model's \"metacognition\"; misjudgment may cause missed Skill loading",
-        "Third-party Skills introduce a new prompt injection surface; their content must be reviewed before loading"
+        "触发依赖模型的「元认知」，判断失误会漏加载 Skill",
+        "第三方 Skill 是新的提示注入面，加载前需审查其内容"
       ]
     },
     {
-      "title": "Summary",
+      "title": "小结",
       "bullets": [
-        "Progressive disclosure transforms \"stuffing everything at once\" into \"on-demand loading\"",
-        "Almost no loss in task success rate, while greatly reducing resident context",
-        "It is a practical paradigm for building scalable agent capability systems."
+        "渐进式披露把「一次性塞满」变为「按需加载」",
+        "几乎不损失任务成功率，同时大幅降低常驻上下文",
+        "是构建可扩展 Agent 能力体系的实用范式"
       ]
     }
   ]

@@ -102,8 +102,8 @@ class SystemHintAgent:
         
         # Configure client based on provider
         if self.provider == "kimi" or self.provider == "moonshot":
-            # Default Moonshot/Kimi official endpoint; if an OpenRouter key (sk-or-…) is provided, it automatically
-            # falls back to OpenRouter and maps kimi-* to moonshotai/kimi-k2.
+            # 默认 Moonshot/Kimi 官方端点；若传入 OpenRouter key（sk-or-…）则自动
+            # 回退到 OpenRouter，并把 kimi-* 映射为 moonshotai/kimi-k2。
             from openrouter_fallback import (
                 OPENROUTER_BASE_URL,
                 is_openrouter_key,

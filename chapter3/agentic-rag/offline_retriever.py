@@ -2,7 +2,7 @@
 
 This backend makes the whole experiment runnable without the external
 `retrieval-pipeline` HTTP service: it reads the Markdown law files under
-``laws/``, splits them into article-level chunks (one chunk per article), and
+``laws/``, splits them into article-level chunks (每一条法条一个 chunk), and
 scores queries with Okapi BM25. Retrieval therefore runs fully offline with no
 API key and no server; only the LLM answer-generation step (in ``agent.py``)
 still needs a provider API.
@@ -23,7 +23,7 @@ from collections import Counter, defaultdict
 logger = logging.getLogger(__name__)
 
 
-#Article marker at the start of a line, e.g. 第二百三十五条 / 第一百三十三条之一
+# Article marker at the start of a line, e.g. 第二百三十五条 / 第一百三十三条之一
 _ARTICLE_RE = re.compile(r"^第[一二三四五六七八九十百千零两0-9]+条(?:之[一二三四五六七八九十0-9]+)?")
 
 

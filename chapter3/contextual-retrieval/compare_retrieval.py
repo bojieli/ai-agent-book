@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
-"""Context-Aware Retrieval Benchmark (Experiment 3-11)
+"""上下文感知检索对比评测（实验 3-11）
 
-This script uses controlled comparative experiments to quantify the recall improvement of "context-aware retrieval" over traditional chunking:
-The same set of text chunks is indexed with BM25 in two ways:
+本脚本用可控的对比实验量化“上下文感知检索”相较传统分块的检索召回提升：
+同一批文本块分别以两种方式建立 BM25 索引——
 
-  * Without context (plain): index only the original text chunk metadata.original_text
-  * With context (contextual): index LLM-generated prefix + original text chunk (content field)
+  * 无上下文（plain）  ：只索引原始文本块 metadata.original_text
+  * 有上下文（contextual）：索引 LLM 生成的前缀 + 原始文本块（content 字段）
 
-Then compare recall@k (hit rate: whether the relevant chunk appears in the top k results) on the same evaluation set.
-This is the core claim of Anthropic's "Contextual Retrieval": adding a context prefix to text chunks
-can enhance recall for both BM25 (sparse) and vector (dense) retrieval.
+然后在同一评测集上比较 recall@k（命中率：前 k 个结果中是否含有相关文本块）。
+这正是 Anthropic “Contextual Retrieval” 的核心主张：为文本块补上上下文前缀，
+能同时增强 BM25（稀疏）与向量（稠密）检索的召回率。
 
-BM25 retrieval is fully offline, requiring no API or retrieval service; embedding/hybrid methods require
-calling an embedding API (see --method description).
+BM25 检索完全离线，无需任何 API 或检索服务；embedding / hybrid 方法需要
+调用 embedding API（见 --method 说明）。
 
-Usage examples:
-  python compare_retrieval.py                       # Run comparison table with default eval set
-  python compare_retrieval.py --query "What are the powers of the President?"   # Single query side-by-side comparison
-  python compare_retrieval.py --mode plain          # Only baseline without context
-  python compare_retrieval.py --output result.json  # Save machine-readable results
+用法示例：
+  python compare_retrieval.py                       # 用默认评测集跑对比表
+  python compare_retrieval.py --query "国家主席有哪些职权？"   # 单条查询并排对比
+  python compare_retrieval.py --mode plain          # 只看无上下文基线
+  python compare_retrieval.py --output result.json  # 另存机器可读结果
 """
 
 import argparse
@@ -33,22 +33,22 @@ from rank_bm25 import BM25Okapi
 try:
     import jieba
     if hasattr(jieba, "setLogLevel"):
-        jieba.setLogLevel(60)  #Suppress jieba loading logs
+        jieba.setLogLevel(60)  # 关闭 jieba 的加载日志
     _HAS_JIEBA = True
-except Exception:  # pragma: no cover - jieba is usually installed via requirements
+except Exception:  # pragma: no cover - jieba 一般随 requirements 安装
     _HAS_JIEBA = False
 
 
 # ---------------------------------------------------------------------------
-# Tokenization: Chinese has no spaces, so .split() treats the whole segment as one token, making BM25 completely ineffective.
-# Default uses jieba tokenization; with --no-jieba, falls back to character bigrams, also runnable offline.
+# 分词：中文没有空格，直接 .split() 会把整段当成一个 token，BM25 完全失效。
+# 默认用 jieba 分词；--no-jieba 时退化为字符二元组（bigram），同样可离线运行。
 # ---------------------------------------------------------------------------
 def tokenize(text: str, use_jieba: bool = True) -> List[str]:
-    """Split text into token list for BM25."""
+    """把文本切成 token 列表，供 BM25 使用。"""
     text = (text or "").lower()
     if use_jieba and _HAS_JIEBA:
         return [t for t in jieba.cut(text) if t.strip()]
-    # Fallback scheme: Chinese character bigrams + contiguous ASCII words
+    # 退化方案：中文字符二元组 + 连续 ASCII 词
     tokens: List[str] = []
     buf = ""
     chars = list(text)
@@ -63,20 +63,20 @@ def tokenize(text: str, use_jieba: bool = True) -> List[str]:
             tokens.append(ch)
     if buf:
         tokens.append(buf)
-    # Append Chinese bigrams to improve matching granularity
+    # 追加中文 bigram，提升匹配粒度
     cjk = [c for c in text if "一" <= c <= "鿿"]
     tokens.extend(cjk[i] + cjk[i + 1] for i in range(len(cjk) - 1))
     return tokens
 
 
 # ---------------------------------------------------------------------------
-# Corpus loading
+# 语料加载
 # ---------------------------------------------------------------------------
 def load_corpus(path: str) -> List[Dict]:
-    """Load chunks from document_store.json, return [{chunk_id, contextual, plain, context}].
+    """从 document_store.json 载入分块，返回 [{chunk_id, contextual, plain, context}]。
 
-    Each chunk's content field is "context prefix + original text", metadata.original_text
-    is the original text without context, used for comparison between the two indexing methods.
+    每个分块的 content 字段是“上下文前缀 + 原始文本”，metadata.original_text
+    是不带上下文的原始文本，正好用于两种索引方式的对照。
     """
     with open(path, "r", encoding="utf-8") as f:
         store = json.load(f)
@@ -84,13 +84,13 @@ def load_corpus(path: str) -> List[Dict]:
     chunks: List[Dict] = []
     for chunk_id, entry in store.items():
         if "_chunk_" not in chunk_id:
-            continue  #Skip whole-document entries
+            continue  # 跳过整篇文档条目
         if not isinstance(entry, dict):
             continue
         meta = entry.get("metadata", {}) or {}
         contextual_text = entry.get("content", "") or ""
         plain_text = meta.get("original_text") or contextual_text
-        #Context prefix = contextual minus trailing original_text
+        # 上下文前缀 = contextual 去掉结尾的 original_text
         context = contextual_text
         if plain_text and contextual_text.endswith(plain_text):
             context = contextual_text[: len(contextual_text) - len(plain_text)].strip()
@@ -104,17 +104,17 @@ def load_corpus(path: str) -> List[Dict]:
 
 
 def load_eval(path: str) -> List[Dict]:
-    """Load evaluation set, return [{id, query, gold_chunk_id, ...}]."""
+    """载入评测集，返回 [{id, query, gold_chunk_id, ...}]。"""
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     return data.get("queries", data if isinstance(data, list) else [])
 
 
 # ---------------------------------------------------------------------------
-# BM25 Retriever
+# BM25 检索器
 # ---------------------------------------------------------------------------
 class BM25Retriever:
-    """Simple retriever that builds a BM25 index over a given text field."""
+    """对给定文本字段建立 BM25 索引的简单检索器。"""
 
     def __init__(self, chunks: List[Dict], field: str, use_jieba: bool = True):
         self.chunk_ids = [c["chunk_id"] for c in chunks]
@@ -123,23 +123,23 @@ class BM25Retriever:
         self.index = BM25Okapi(corpus_tokens)
 
     def rank(self, query: str) -> List[str]:
-        """Return chunk_id list sorted by relevance descending."""
+        """返回按相关性从高到低排序的 chunk_id 列表。"""
         scores = self.index.get_scores(tokenize(query, self.use_jieba))
         order = np.argsort(scores)[::-1]
         return [self.chunk_ids[i] for i in order]
 
     def scored(self, query: str, top_k: int) -> List[Dict]:
-        """Return top_k results with scores."""
+        """返回前 top_k 个结果及其分数。"""
         scores = self.index.get_scores(tokenize(query, self.use_jieba))
         order = np.argsort(scores)[::-1][:top_k]
         return [{"chunk_id": self.chunk_ids[i], "score": float(scores[i])} for i in order]
 
 
 # ---------------------------------------------------------------------------
-# Evaluation
+# 评测
 # ---------------------------------------------------------------------------
 def recall_at_k(retriever: BM25Retriever, queries: List[Dict], ks: List[int]) -> Dict:
-    """Compute recall@k (hit rate) for a batch of queries at various k values."""
+    """计算一批查询在各 k 值下的 recall@k（命中率）。"""
     per_query = []
     hits = {k: 0 for k in ks}
     for q in queries:
@@ -159,28 +159,28 @@ def recall_at_k(retriever: BM25Retriever, queries: List[Dict], ks: List[int]) ->
 
 
 def print_comparison_table(plain: Optional[Dict], contextual: Optional[Dict], ks: List[int]):
-    """Print recall@k comparison table."""
+    """打印 recall@k 对比表。"""
     print("\n" + "=" * 68)
-    print("Retrieval Recall Comparison: Non-contextual Chunks vs. Context-Aware Retrieval (BM25)")
+    print("检索召回对比：无上下文分块  vs.  上下文感知检索（BM25）")
     print("=" * 68)
-    header = "  k  | " + " | ".join(f"{'No Context':>10}" if False else f"recall@{k:<3}" for k in ks)
-    #Print each method line by line
+    header = "  k  | " + " | ".join(f"{'无上下文':>10}" if False else f"recall@{k:<3}" for k in ks)
+    # 逐行打印每个方法
     col_w = 12
-    line = f"{'Method':<16}" + "".join(f"recall@{k}".rjust(col_w) for k in ks)
+    line = f"{'方法':<16}" + "".join(f"recall@{k}".rjust(col_w) for k in ks)
     print(line)
     print("-" * len(line))
     if plain:
-        print(f"{'No Context (plain)':<16}" + "".join(f"{plain['recall'][k]*100:>10.1f}%" for k in ks))
+        print(f"{'无上下文 (plain)':<16}" + "".join(f"{plain['recall'][k]*100:>10.1f}%" for k in ks))
     if contextual:
-        print(f"{'With Context (ctx)':<16}" + "".join(f"{contextual['recall'][k]*100:>10.1f}%" for k in ks))
+        print(f"{'有上下文 (ctx)':<16}" + "".join(f"{contextual['recall'][k]*100:>10.1f}%" for k in ks))
     if plain and contextual:
         print("-" * len(line))
         deltas = []
         for k in ks:
             d = (contextual["recall"][k] - plain["recall"][k]) * 100
             deltas.append(f"{d:>+9.1f}pp")
-        print(f"{'Improvement (Δpp)':<16}" + "".join(s.rjust(col_w) for s in deltas))
-        # Retrieval failure rate decrease (corresponding to "1 - recall@k" metric in the book)
+        print(f"{'提升 (Δpp)':<16}" + "".join(s.rjust(col_w) for s in deltas))
+        # 检索失败率下降（对应书中“1 - recall@k”口径）
         print("-" * len(line))
         fails = []
         for k in ks:
@@ -191,18 +191,18 @@ def print_comparison_table(plain: Optional[Dict], contextual: Optional[Dict], ks
                 fails.append(f"{red:>9.0f}%")
             else:
                 fails.append(f"{'-':>10}")
-        print(f"{'Failure rate decreased':<16}" + "".join(s.rjust(col_w) for s in fails))
+        print(f"{'失败率下降':<16}" + "".join(s.rjust(col_w) for s in fails))
     print("=" * 68)
 
 
 def print_per_query(result: Dict, label: str):
-    print(f"\n[{label}] Rank of gold chunk in results for each query (— indicates not recalled)")
+    print(f"\n[{label}] 每条查询命中排名（rank=gold 文本块在结果中的名次，— 表示未召回）")
     for row in result["per_query"]:
         print(f"  {row['id']}  rank={str(row['rank']):>3}  gold={row['gold']:<28} {row['query'][:32]}")
 
 
 # ---------------------------------------------------------------------------
-# Side-by-side comparison for a single query
+# 单条查询并排对比
 # ---------------------------------------------------------------------------
 def single_query_compare(chunks: List[Dict], query: str, top_k: int, use_jieba: bool,
                          mode: str):
@@ -218,59 +218,59 @@ def single_query_compare(chunks: List[Dict], query: str, top_k: int, use_jieba: 
             ctx = c["context"].replace("\n", " ").strip()[:40]
             print(f"  {i}. score={r['score']:6.2f}  {r['chunk_id']}")
             if field == "contextual" and ctx:
-                print(f"       Context prefix: {ctx}")
-            print(f"       Original text: {snippet}")
+                print(f"       上下文前缀: {ctx}")
+            print(f"       原文: {snippet}")
 
     print("\n" + "=" * 60)
-    print(f"Query: {query}")
+    print(f"查询: {query}")
     print("=" * 60)
     if mode in ("plain", "both"):
-        show("No Context (plain)", "plain")
+        show("无上下文 (plain)", "plain")
     if mode in ("contextual", "both"):
-        show("With context (contextual)", "contextual")
+        show("有上下文 (contextual)", "contextual")
 
 
 # ---------------------------------------------------------------------------
-# Optional: embedding / hybrid (requires API)
+# 可选：embedding / hybrid（需要 API）
 # ---------------------------------------------------------------------------
 def embedding_unavailable_notice(method: str):
-    print(f"\n[Prompt] --method {method} Requires embedding API (dense vectors), cannot run offline.")
-    print("       Please configure OPENAI_API_KEY / SILICONFLOW_API_KEY etc. in .env,")
-    print("       and use contextual_tools.ContextualKnowledgeBaseTools for embedding/hybrid retrieval.")
-    print("       The default --method bm25 in this script can fully reproduce the recall improvement conclusion of \"context-augmented BM25\" in the book.")
+    print(f"\n[提示] --method {method} 需要调用 embedding API（稠密向量），无法离线运行。")
+    print("       请在 .env 中配置 OPENAI_API_KEY / SILICONFLOW_API_KEY 等，")
+    print("       并使用 contextual_tools.ContextualKnowledgeBaseTools 的 embedding/hybrid 检索。")
+    print("       本脚本的默认 --method bm25 已可完整复现书中“上下文增强 BM25”的召回提升结论。")
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        description="Context-aware retrieval comparison evaluation: quantify the improvement of context prefix on retrieval recall@k (Experiment 3-11)",
+        description="上下文感知检索对比评测：量化上下文前缀对检索召回（recall@k）的提升（实验 3-11）",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Example:\n"
+        epilog="示例:\n"
                "  python compare_retrieval.py\n"
-               "  python compare_retrieval.py --query \"What are the powers of the President?\" --top-k 5\n"
+               "  python compare_retrieval.py --query \"国家主席有哪些职权？\" --top-k 5\n"
                "  python compare_retrieval.py --mode both --k 1 3 5 --output result.json",
     )
     p.add_argument("--corpus", default="document_store.json",
-                   help="Corpus file (chunked storage with content and metadata.original_text), default document_store.json")
+                   help="语料文件（含 content 与 metadata.original_text 的分块存储），默认 document_store.json")
     p.add_argument("--eval", dest="eval_path", default="evaluation/retrieval_eval.json",
-                   help="Evaluation set (query + gold_chunk_id), default evaluation/retrieval_eval.json")
+                   help="评测集（query + gold_chunk_id），默认 evaluation/retrieval_eval.json")
     p.add_argument("--query", default=None,
-                   help="Temporary single query: side-by-side display of Top-K retrieval results with/without context (does not run full evaluation set)")
+                   help="临时单条查询：并排展示无上下文/有上下文的 Top-K 检索结果（不跑整个评测集）")
     p.add_argument("--mode", choices=["plain", "contextual", "both"], default="both",
-                   help="Which index to compare: plain=only without context, contextual=only with context, both=compare both (default)")
+                   help="对比哪种索引：plain=仅无上下文，contextual=仅有上下文，both=两者对比（默认）")
     p.add_argument("--method", choices=["bm25", "embedding", "hybrid"], default="bm25",
-                   help="Retrieval method: bm25 (offline, default); embedding/hybrid requires embedding API")
+                   help="检索方法：bm25（离线，默认）；embedding/hybrid 需 embedding API")
     p.add_argument("--k", nargs="+", type=int, default=[1, 3, 5],
-                   help="List of k values for evaluation (recall@k), default 1 3 5")
+                   help="评测的 k 值列表（recall@k），默认 1 3 5")
     p.add_argument("--top-k", type=int, default=5,
-                   help="--query Number of results to display per method in single query mode, default 5")
+                   help="--query 单查询模式下每种方法展示的结果条数，默认 5")
     p.add_argument("--model", default=None,
-                   help="Embedding model name (only effective when --method embedding/hybrid)")
+                   help="embedding 模型名（仅 --method embedding/hybrid 时生效）")
     p.add_argument("--no-jieba", action="store_true",
-                   help="Disable jieba tokenization, use character bigram tokenization (no jieba dependency)")
+                   help="禁用 jieba 分词，改用字符二元组分词（无需 jieba 依赖）")
     p.add_argument("--output", default=None,
-                   help="Write machine-readable evaluation results to this JSON file")
+                   help="将机器可读的评测结果写入该 JSON 文件")
     p.add_argument("--per-query", action="store_true",
-                   help="Print hit rank details for each query")
+                   help="额外打印每条查询的命中排名明细")
     return p
 
 
@@ -280,31 +280,31 @@ def main():
 
     corpus_path = Path(args.corpus)
     if not corpus_path.exists():
-        print(f"[Error] Cannot find corpus file: {corpus_path}", file=sys.stderr)
+        print(f"[错误] 找不到语料文件: {corpus_path}", file=sys.stderr)
         sys.exit(1)
 
     chunks = load_corpus(str(corpus_path))
     if not chunks:
-        print(f"[Error] No available chunks in corpus (missing *_chunk_* entries): {corpus_path}", file=sys.stderr)
+        print(f"[错误] 语料中没有可用分块（缺少 *_chunk_* 条目）: {corpus_path}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Loaded {len(chunks)} text block | tokenization: {'jieba' if (use_jieba and _HAS_JIEBA) else 'character bigram'} "
-          f"| retrieval method: {args.method}")
+    print(f"已加载 {len(chunks)} 个文本块 | 分词: {'jieba' if (use_jieba and _HAS_JIEBA) else '字符bigram'} "
+          f"| 检索方法: {args.method}")
 
     if args.method in ("embedding", "hybrid"):
         embedding_unavailable_notice(args.method)
-        # still use BM25 to provide runnable offline results
-        print("       below, switch to BM25 to provide offline baseline results.\n")
+        # 仍继续用 BM25 给出可运行的离线结果
+        print("       以下改用 BM25 给出离线对照结果。\n")
 
-    # single query mode
+    # 单条查询模式
     if args.query:
         single_query_compare(chunks, args.query, args.top_k, use_jieba, args.mode)
         return
 
-    # evaluation set mode
+    # 评测集模式
     eval_path = Path(args.eval_path)
     if not eval_path.exists():
-        print(f"[error] evaluation set not found: {eval_path}", file=sys.stderr)
+        print(f"[错误] 找不到评测集: {eval_path}", file=sys.stderr)
         sys.exit(1)
     queries = load_eval(str(eval_path))
     ks = sorted(set(args.k))
@@ -315,14 +315,14 @@ def main():
     if args.mode in ("contextual", "both"):
         contextual_res = recall_at_k(BM25Retriever(chunks, "contextual", use_jieba), queries, ks)
 
-    print(f"evaluation set: {eval_path}  total {len(queries)} queries")
+    print(f"评测集: {eval_path}  共 {len(queries)} 条查询")
     print_comparison_table(plain_res, contextual_res, ks)
 
     if args.per_query:
         if plain_res:
-            print_per_query(plain_res, "no context plain")
+            print_per_query(plain_res, "无上下文 plain")
         if contextual_res:
-            print_per_query(contextual_res, "with context contextual")
+            print_per_query(contextual_res, "有上下文 contextual")
 
     if args.output:
         out = {
@@ -337,7 +337,7 @@ def main():
         }
         with open(args.output, "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=2)
-        print(f"\nresults written to {args.output}")
+        print(f"\n结果已写入 {args.output}")
 
 
 if __name__ == "__main__":

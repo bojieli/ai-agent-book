@@ -125,10 +125,10 @@ def run_demo():
     print("="*60)
     
     print("\nDemo queries you can try:")
-    print("1. How many years for intentional homicide?")
-    print("2. What is the filing standard for theft?")
-    print("3. How is drunk driving punished?")
-    print("4. Zhang breaks into a house with a knife, robs, and causes serious injury to another person. How should he be convicted and sentenced?")
+    print("1. 故意杀人罪判几年？")
+    print("2. 盗窃罪的立案标准是什么？")
+    print("3. 醉酒驾驶如何处罚？")
+    print("4. 张某持刀入室抢劫并造成他人重伤，应如何定罪量刑？")
     
     print("\nCommands:")
     print("- 'mode' to switch between agentic/non-agentic")
@@ -148,8 +148,8 @@ def run_comparison_demo():
     print("="*60)
     
     queries = [
-        "How many years for intentional homicide?",
-        "Zhang, due to an economic dispute, breaks into Li's home with a knife, stabs Li causing serious injury, and takes 50,000 yuan in cash. How should he be convicted?"
+        "故意杀人罪判几年？",
+        "张某因经济纠纷持刀闯入李某家中，刺伤李某致重伤并拿走5万元现金，应如何定罪？"
     ]
     
     for query in queries:

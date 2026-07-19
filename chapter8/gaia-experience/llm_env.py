@@ -1,17 +1,17 @@
-"""Packaging layer LLM environment resolution: provides configuration with OpenRouter fallback for GAIA experience learning examples.
+"""包装层 LLM 环境解析：为 GAIA 经验学习示例提供带 OpenRouter 兜底的配置。
 
-This file resides in the gaia-experience packaging layer and does **not modify** the upstream AWorld fork. It centralizes the scattered
-`os.getenv("LLM_API_KEY"/"LLM_BASE_URL"/"LLM_MODEL_NAME")` reads and adds a unified fallback:
+本文件位于 gaia-experience 包装层，**不修改** 上游 AWorld fork。它把散落在各处的
+`os.getenv("LLM_API_KEY"/"LLM_BASE_URL"/"LLM_MODEL_NAME")` 读取集中起来，并加入统一兜底：
 
-- If LLM_API_KEY / OPENAI_API_KEY is set -> direct connection (uses LLM_BASE_URL, can be empty for OpenAI official)
-- Otherwise, if OPENROUTER_API_KEY is set -> route through OpenRouter (https://openrouter.ai/api/v1),
-  and map model names to OpenRouter naming:
+- 有 LLM_API_KEY / OPENAI_API_KEY -> 直连（沿用 LLM_BASE_URL，可为空即 OpenAI 官方）
+- 否则有 OPENROUTER_API_KEY        -> 走 OpenRouter（https://openrouter.ai/api/v1），
+                                     并把模型名映射到 OpenRouter 命名：
       gpt-*    -> openai/gpt-*
       claude-* -> anthropic/claude-opus-4.8
-      contains "/"   -> pass through as-is
-      others     -> openai/gpt-5.6-luna
+      含 "/"   -> 原样透传
+      其它     -> openai/gpt-5.6-luna
 
-Default model: gpt-5.6-luna.
+默认模型 gpt-5.6-luna。
 """
 
 import os
@@ -33,9 +33,9 @@ def to_openrouter_model(model: str) -> str:
 
 
 def resolve_llm(default_model: str = DEFAULT_MODEL, model_override: str = None) -> dict:
-    """Returns the provider/model/base_url/api_key quadruple required by AgentConfig (with OpenRouter fallback).
+    """返回 AgentConfig 需要的 provider/model/base_url/api_key 四元组（含 OpenRouter 兜底）。
 
-    model_override: if a model name is explicitly given (e.g., in config.yaml or CLI), it takes precedence.
+    model_override: 若显式给了模型名（如 config.yaml 或 CLI），优先用它。
     """
     provider = os.getenv("LLM_PROVIDER", "openai")
     model = model_override or os.getenv("LLM_MODEL_NAME", default_model)

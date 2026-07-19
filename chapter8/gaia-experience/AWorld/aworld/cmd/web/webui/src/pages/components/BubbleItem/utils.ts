@@ -27,7 +27,7 @@ export const extractToolCards = (content: string): ParsedContent => {
   while ((match = toolCardRegex.exec(content)) !== null) {
     const [, textBefore, fullToolCard, toolCardJson] = match;
 
-    // Add text content
+    // 添加文本内容
     if (textBefore) {
       segments.push({
         type: 'text',
@@ -35,7 +35,7 @@ export const extractToolCards = (content: string): ParsedContent => {
       });
     }
 
-    // Add tool card
+    // 添加工具卡片
     try {
       segments.push({
         type: 'tool_card',
@@ -44,7 +44,7 @@ export const extractToolCards = (content: string): ParsedContent => {
       });
     } catch (e) {
       console.error('Failed to parse tool_card JSON:', e);
-      // If parsing fails, keep the original text
+      // 如果解析失败，仍保留原始文本
       segments.push({
         type: 'text',
         content: fullToolCard.trim()
@@ -54,7 +54,7 @@ export const extractToolCards = (content: string): ParsedContent => {
     lastIndex = toolCardRegex.lastIndex;
   }
 
-  // Add the remaining text content
+  // 添加最后剩余的文本内容
   const remainingText = content.slice(lastIndex);
   if (remainingText.trim()) {
     segments.push({

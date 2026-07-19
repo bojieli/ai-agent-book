@@ -28,7 +28,7 @@ class ActionResponse(BaseModel):
     message: Any = Field(default=None, description="The execution result of the action")
     metadata: dict[str, Any] = Field(default={}, description="The metadata of the action")
 
-# Set Python path to ensure the subprocess can find the core module
+# 设置Python路径，确保子进程能找到core模块
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, '..', '..'))
 if project_root not in sys.path:

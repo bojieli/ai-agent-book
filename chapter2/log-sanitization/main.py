@@ -91,10 +91,10 @@ def main(test_id: Optional[str] = None, limit: Optional[int] = None,
 
 
 def demo_regex_mode():
-    """Offline Rule Masking Demo: Show before/after and category summary for multiple representative samples"""
-    print("🎯 Offline Rule Masking Demo (regex mode, no Ollama needed)")
+    """离线规则脱敏演示：对多个代表性样本展示 before/after 与类别汇总"""
+    print("🎯 离线规则脱敏演示 (regex 模式，无需 Ollama)")
     print("=" * 60)
-    print(f"Total {len(SAMPLES)} representative samples covering keys/tokens/private keys/PII and other categories\n")
+    print(f"共 {len(SAMPLES)} 个代表性样本，覆盖密钥 / 令牌 / 私钥 / PII 等类别\n")
 
     total = Counter()
     total_hits = 0
@@ -105,36 +105,36 @@ def demo_regex_mode():
         total_hits += len(findings)
 
     print(f"\n{'=' * 64}")
-    print("Masking Category Summary (across all samples)")
+    print("脱敏类别汇总 (across all samples)")
     print("=" * 64)
     for category, count in total.most_common():
         label = regex_sanitizer.CATEGORY_LABELS.get(category, category)
-        print(f"   {label:<16} {count} occurrences")
-    print(f"\n   Total masked {total_hits} sensitive items across {len(total)} categories")
+        print(f"   {label:<16} {count} 处")
+    print(f"\n   合计脱敏 {total_hits} 处敏感信息，覆盖 {len(total)} 个类别")
     return 0
 
 
 def sanitize_file(input_path: str, output_path: Optional[str] = None,
                   mode: str = "regex", model: str = OLLAMA_MODEL):
-    """Apply masking to any log file and write results to output file"""
+    """对任意日志文件执行脱敏，结果写入输出文件"""
     in_file = Path(input_path)
     if not in_file.exists():
-        print(f"❌ Input file does not exist: {input_path}")
+        print(f"❌ 输入文件不存在: {input_path}")
         return 1
 
     text = in_file.read_text(encoding="utf-8", errors="replace")
     out_file = Path(output_path) if output_path else in_file.with_suffix(in_file.suffix + ".sanitized")
 
     if mode == "regex":
-        print(f"🔍 Masking with offline rule engine: {input_path}")
+        print(f"🔍 使用离线规则引擎脱敏: {input_path}")
         redacted, findings = regex_sanitizer.sanitize(text)
         counts = regex_sanitizer.summarize(findings)
     else:
-        print(f"🔍 Masking with local LLM ({model}): {input_path}")
+        print(f"🔍 使用本地 LLM ({model}) 脱敏: {input_path}")
         try:
             from agent import LogSanitizationAgent
         except Exception as e:
-            print(f"❌ Failed to load LLM engine: {e}")
+            print(f"❌ 加载 LLM 引擎失败: {e}")
             return 1
         agent = LogSanitizationAgent(model=model)
         pii_values, _ = agent.detect_pii(text)
@@ -144,16 +144,16 @@ def sanitize_file(input_path: str, output_path: Optional[str] = None,
 
     out_file.write_text(redacted, encoding="utf-8")
 
-    print(f"\n✅ Masking results written to: {out_file}")
-    print(f"   Total masked {sum(counts.values())} sensitive items")
+    print(f"\n✅ 已写入脱敏结果: {out_file}")
+    print(f"   共脱敏 {sum(counts.values())} 处敏感信息")
     for category, count in counts.most_common():
         label = regex_sanitizer.CATEGORY_LABELS.get(category, category)
-        print(f"   - {label}: {count} occurrences")
+        print(f"   - {label}: {count} 处")
     return 0
 
 
 def demo_mode(model: str = OLLAMA_MODEL):
-    """Run a quick demo with sample PII-containing text (local LLM mode)"""
+    """Run a quick demo with sample PII-containing text (本地 LLM 模式)"""
     print("🎯 Running Demo Mode (LLM)")
     print("=" * 60)
 
@@ -218,21 +218,21 @@ def demo_mode(model: str = OLLAMA_MODEL):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Log Masking Experiment: Detect and mask sensitive information from Agent logs / tool outputs"
-                    "(API keys, tokens, private keys, credit cards, ID numbers, phone numbers, emails, etc.).",
+        description="日志脱敏实验：从 Agent 日志 / 工具输出中检测并脱敏敏感信息"
+                    "（API 密钥、令牌、私钥、信用卡、身份证、手机号、邮箱等）。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""\
-Two masking engines:
-  regex  Offline rule engine (default), based on regex + validation algorithms, no Ollama needed, deterministic results, fast
-  llm    Local LLM engine, calls a small model (default qwen3:0.6b) via Ollama for semantic Level 3 PII recognition
+两种脱敏引擎：
+  regex  离线规则引擎（默认），基于正则 + 校验算法，无需 Ollama，结果确定、速度快
+  llm    本地 LLM 引擎，通过 Ollama 调用小模型（默认 qwen3:0.6b）语义识别 Level 3 PII
 
-Common examples:
-  python main.py --demo                     # Run built-in samples offline, show before/after and masking summary
-  python main.py --demo --mode llm          # Run demo samples with local LLM
-  python main.py --input app.log            # Mask a log file offline
-  python main.py --input app.log -o out.log # Specify output file
-  python main.py --input app.log --mode llm # Mask file with local LLM
-  python main.py                            # (LLM) Batch process Layer 3 test cases in chapter3 evaluation framework
+常用示例：
+  python main.py --demo                     # 离线跑内置样本，展示 before/after 与脱敏汇总
+  python main.py --demo --mode llm          # 用本地 LLM 跑演示样本
+  python main.py --input app.log            # 离线脱敏一个日志文件
+  python main.py --input app.log -o out.log # 指定输出文件
+  python main.py --input app.log --mode llm # 用本地 LLM 脱敏文件
+  python main.py                            # (LLM) 批量处理 chapter3 评测框架中的 Layer 3 用例
   python main.py --test-id layer3_01_travel_coordination
   python main.py --limit 3 --model qwen3:1.7b
 """,
@@ -242,47 +242,47 @@ Common examples:
         '--mode',
         choices=['regex', 'llm'],
         default='regex',
-        help='Masking engine: regex=offline rules (default), llm=local Ollama model.'
-             '(Note: batch evaluation path without --demo/--input always uses LLM)'
+        help='脱敏引擎：regex=离线规则(默认)，llm=本地 Ollama 模型。'
+             '（注意：不带 --demo/--input 的批量评测路径始终使用 LLM）'
     )
 
     parser.add_argument(
         '-i', '--input',
         type=str,
         metavar='FILE',
-        help='Path to log file to be masked (use with --mode to select engine)'
+        help='待脱敏的日志文件路径（配合 --mode 选择引擎）'
     )
 
     parser.add_argument(
         '-o', '--output',
         type=str,
         metavar='FILE',
-        help='Output file path for masking results (only effective with --input mode, defaults to <input>.sanitized)'
+        help='脱敏结果输出文件路径（仅 --input 模式生效，默认写到 <输入>.sanitized）'
     )
 
     parser.add_argument(
         '--model',
         type=str,
         default=OLLAMA_MODEL,
-        help=f'Ollama model name (default {OLLAMA_MODEL}), only effective in llm mode'
+        help=f'Ollama 模型名（默认 {OLLAMA_MODEL}），仅 llm 模式生效'
     )
 
     parser.add_argument(
         '--test-id',
         type=str,
-        help='Only process test cases with the specified ID (LLM batch path)'
+        help='仅处理指定 ID 的评测用例（LLM 批量路径）'
     )
 
     parser.add_argument(
         '--limit',
         type=int,
-        help='Maximum number of test cases to process (LLM batch path)'
+        help='最多处理多少个评测用例（LLM 批量路径）'
     )
 
     parser.add_argument(
         '--demo',
         action='store_true',
-        help='Run demo: default offline rule engine runs built-in representative samples; add --mode llm to use local LLM'
+        help='运行演示：默认离线规则引擎跑内置代表性样本；加 --mode llm 则用本地 LLM'
     )
 
     args = parser.parse_args()

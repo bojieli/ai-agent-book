@@ -1,23 +1,23 @@
 """
-Offline Constraint Solver: Translates the structured representation of the "Knights and Knaves" puzzle into a Constraint Satisfaction Problem (CSP),
-solved using the python-constraint library—this is the deterministic reference implementation for the "code solving" path that Experiment 5-2 aims to demonstrate.
+离线约束求解器：把「骑士与无赖」谜题的结构化陈述翻译成约束满足问题(CSP)，
+用 python-constraint 库求解——这是实验 5-2 想论证的「代码求解」路径的确定性参考实现。
 
-It does not rely on any LLM / network and can run completely offline, so it is used both by build_puzzles.py to verify that a puzzle has a unique solution,
-and by demo.py's solver mode to provide a constraint-solving baseline (theoretically 100% correct).
+它不依赖任何 LLM / 网络，可完全离线运行，因此既用于 build_puzzles.py 校验谜题
+「解唯一」，也用于 demo.py 的 solver 模式给出约束求解基线(理论上 100% 正确)。
 
-【Structured Statement DSL】Each statement is represented by a JSON-serializable list, with node forms as follows
-(True=knight/truth-teller, False=knave/liar):
+【结构化陈述 DSL】每句话用一个 JSON 可序列化的列表表示，节点形式如下
+(True=骑士/说真话，False=无赖/说假话)：
 
-    ["is",   target, "knight"|"knave"]   # target is a knight / knave
-    ["same",  a, b]                       # a and b are the same type
-    ["diff",  a, b]                       # a and b are different types
-    ["count", "knight"|"knave", op, k]    # the number of that role among all satisfies op k, op ∈ {">=","<=","=="}
-    ["and",  s1, s2]                       # conjunction
-    ["or",   s1, s2]                       # disjunction
-    ["not",  s1]                           # negation
+    ["is",   target, "knight"|"knave"]   # target 是骑士 / 无赖
+    ["same",  a, b]                       # a 和 b 是同一类人
+    ["diff",  a, b]                       # a 和 b 是不同类人
+    ["count", "knight"|"knave", op, k]    # 全体中该角色的人数 op k, op ∈ {">=","<=","=="}
+    ["and",  s1, s2]                       # 合取
+    ["or",   s1, s2]                       # 析取
+    ["not",  s1]                           # 否定
 
-Key modeling rule: For each speaker X, add a 【biconditional constraint】 `t[X] == eval_stmt(X's statement)`—
-X is a knight if and only if his statement is true. Never treat the statement itself as a hard constraint.
+关键建模规则：对每位说话者 X 加一条【双条件约束】 `t[X] == eval_stmt(X 的话)`——
+X 是骑士当且仅当他的话为真。绝不能把话本身当作硬约束。
 """
 from constraint import Problem
 
@@ -27,7 +27,7 @@ _OPS = {">=": lambda a, b: a >= b,
 
 
 def eval_stmt(node, t):
-    """Evaluate the semantic truth value of a statement under an assignment t(name->bool, True=knight)."""
+    """在赋值 t(name->bool, True=骑士) 下求某句话的语义真值。"""
     tag = node[0]
     if tag == "is":
         _, target, role = node
@@ -47,20 +47,20 @@ def eval_stmt(node, t):
         return eval_stmt(node[1], t) or eval_stmt(node[2], t)
     if tag == "not":
         return not eval_stmt(node[1], t)
-    raise ValueError(f"Unknown statement node: {node!r}")
+    raise ValueError(f"未知的陈述节点: {node!r}")
 
 
 def solve(names, structs):
-    """Solve using python-constraint, returning a list of all assignments (dict name->bool) that satisfy the constraints.
+    """用 python-constraint 求解，返回所有满足约束的赋值(dict name->bool)列表。
 
-    names   : list of resident names
-    structs : dict name -> structured DSL of that resident's statement
+    names   : 居民名字列表
+    structs : dict name -> 该居民陈述的结构化 DSL
     """
     problem = Problem()
     for n in names:
         problem.addVariable(n, [True, False])
 
-    # Add a biconditional constraint for each speaker: t[X] == (X's statement is true)
+    # 对每位说话者加一条双条件约束：t[X] == (X 的话为真)
     for speaker in names:
         stmt = structs[speaker]
 
@@ -76,7 +76,7 @@ def solve(names, structs):
 
 
 def solve_labeled(names, structs):
-    """Solve and convert boolean solutions to {name: 'knight'/'knave'}. Return list of solutions (usually unique)."""
+    """求解并把布尔解转成 {name: 'knight'/'knave'}。返回解列表(通常唯一)。"""
     out = []
     for sol in solve(names, structs):
         out.append({n: ("knight" if sol[n] else "knave") for n in names})
@@ -84,33 +84,33 @@ def solve_labeled(names, structs):
 
 
 def render_nl(node):
-    """Render a structured statement into a Chinese puzzle description (for use with randomly generated puzzles)."""
+    """把结构化陈述渲染成中文题面(供随机生成的谜题使用)。"""
     tag = node[0]
     if tag == "is":
-        role = "knight" if node[2] == "knight" else "knave"
-        return f"{node[1]} is {role}。"
+        role = "骑士" if node[2] == "knight" else "无赖"
+        return f"{node[1]} 是{role}。"
     if tag == "same":
-        return f"{node[1]} and {node[2]} are the same type."
+        return f"{node[1]} 和 {node[2]} 是同一类人。"
     if tag == "diff":
-        return f"{node[1]} and {node[2]} are different types."
+        return f"{node[1]} 和 {node[2]} 是不同类人。"
     if tag == "count":
-        role = "knight" if node[1] == "knight" else "knave"
-        word = {">=": "at least", "<=": "at most", "==": "exactly"}[node[2]]
-        return f"Among us, {word} there are {node[3]} {role}。"
+        role = "骑士" if node[1] == "knight" else "无赖"
+        word = {">=": "至少", "<=": "至多", "==": "恰好"}[node[2]]
+        return f"我们当中{word}有 {node[3]} 个{role}。"
     if tag == "and":
-        return f"{render_nl(node[1])[:-1]}, and {render_nl(node[2])}"
+        return f"{render_nl(node[1])[:-1]}，并且 {render_nl(node[2])}"
     if tag == "or":
-        return f"{render_nl(node[1])[:-1]}, or {render_nl(node[2])}"
+        return f"{render_nl(node[1])[:-1]}，或者 {render_nl(node[2])}"
     if tag == "not":
-        return f"The following statement is false: {render_nl(node[1])}"
-    raise ValueError(f"Unknown statement node: {node!r}")
+        return f"以下说法不成立：{render_nl(node[1])}"
+    raise ValueError(f"未知的陈述节点: {node!r}")
 
 
 if __name__ == "__main__":
-    # Self-test: kk01 — A says "B is a knave", B says "Neither of us is a knight"
+    # 自测：kk01 —— A 说"B 是无赖"，B 说"我们都不是骑士"
     names = ["A", "B"]
     structs = {
         "A": ["is", "B", "knave"],
         "B": ["and", ["is", "A", "knave"], ["is", "B", "knave"]],
     }
-    print("Solution:", solve_labeled(names, structs))
+    print("求解结果:", solve_labeled(names, structs))

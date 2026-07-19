@@ -1,18 +1,18 @@
 """
-Phase 3: Clustering + Hierarchical Importance — Discover "Case Archetypes" and "Factor Importance Hierarchy" from Structured Factors.
+阶段 3：聚类 + 层次重要性 —— 从结构化因子里发现「案件原型」与「因子重要性层次」。
 
-Instead of regression on sentence length (which yields an uninterpretable black box), we:
-  1. Translate each case's factors into a numerical feature vector:
-       - Charge / categorical factors (e.g., injury level) use one-hot encoding (not 1/2/3, to avoid implying order);
-       - Numerical factors (amount/number of people) use ln to compress scale; binary facts use 0/1.
-     (If a factor appears in both core and a charge extension, deduplicate by key; feature columns are not repeated.)
-  2. Standardize, then cluster with KMeans; k is automatically selected by silhouette score, yielding several "case archetypes";
-  3. Compute two levels of importance:
-       - Global importance: discriminative power of each factor across archetypes (between-cluster variance ratio) → global factor importance ranking;
-       - Within-archetype importance: factors that deviate most from the global mean for each archetype → define key features of that archetype.
-     Also compute sentence distribution (mean/median/range) for each archetype as "data-driven sentencing experience".
+不做刑期回归（那会得到一个说不清理由的黑箱），而是：
+  1. 把每条案例的因子翻译成数值特征向量：
+       - 罪名 / 分类因子(如伤害等级) 用 one-hot 开关位（不用 1/2/3，避免暗示大小关系）；
+       - 数值因子(金额/人数)取 ln 压缩量纲；是非情节取 0/1。
+     （某因子若同时落在 core 与某罪名扩展里，按 key 去重，特征列不重复。）
+  2. 标准化后用 KMeans 聚类，k 由轮廓系数(silhouette)自动挑选，得到若干「案件原型」；
+  3. 计算两级重要性：
+       - 全局重要性：每个因子在原型之间的区分度（簇间方差占比）→ 全局因子重要性排序；
+       - 原型内重要性：每个原型相对全局均值最突出的因子 → 定义该原型的关键特征。
+     并统计每个原型的刑期分布（均值/中位/区间）作为「数据驱动的判决经验」。
 
-Output data/archetypes.json (readable, self-consistent, including standardization parameters and cluster centers) for direct reference by the dialogue agent.
+产出 data/archetypes.json（可读、自洽，含标准化参数与簇心），供对话 Agent 直接引用。
 """
 import json
 import math
@@ -29,9 +29,9 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 MODEL_PATH = os.path.join(DATA_DIR, "archetypes.json")
 
 
-# --- Feature Space: Self-describing column names, shared by training and inference -----------------------------------
+# --- 特征空间：自描述列名，训练与推理共用 -----------------------------------
 def build_columns(schema, results):
-    """Determine ordered feature columns based on schema + extraction results (column names self-describe their meaning)."""
+    """根据 schema + 抽取结果确定有序特征列（列名自描述其含义）。"""
     factors = all_factors(schema)
     kind = {f["key"]: f["kind"] for f in factors}
     charges = sorted({r["extracted"]["charge"] for r in results})
@@ -43,7 +43,7 @@ def build_columns(schema, results):
             cols.append(f"num:{k}")
         elif kind[k] == "bool":
             cols.append(f"bool:{k}")
-        else:  # categorical: value set is the union of schema and actual data
+        else:  # categorical：取值集合来自 schema 与实际数据的并集
             vals = set(f.get("values") or [])
             for r in results:
                 v = r["extracted"].get(k)
@@ -55,13 +55,13 @@ def build_columns(schema, results):
 
 
 def vectorize(extraction, columns):
-    """Convert one extraction result into a feature vector, and return a known mask (whether each dimension has a known value)."""
+    """把一条抽取结果转成特征向量，并返回 known 掩码（该维是否有已知取值）。"""
     charge = extraction.get("charge")
     vec, known = [], []
     for col in columns:
         if col.startswith("charge="):
             vec.append(1.0 if charge == col[len("charge="):] else 0.0)
-            known.append(True)  # Charge is considered known once determined
+            known.append(True)  # 罪名一旦判定即视为已知
         elif col.startswith("num:"):
             v = extraction.get(col[len("num:"):])
             vec.append(math.log(v) if v else 0.0)
@@ -80,12 +80,12 @@ def vectorize(extraction, columns):
 
 
 def column_label(col, schema):
-    """Column name -> Chinese readable label."""
+    """列名 -> 中文可读标签。"""
     name_cn = {f["key"]: f["name_cn"] for f in all_factors(schema)}
     if col.startswith("charge="):
-        return "Charge=" + col[len("charge="):]
+        return "罪名=" + col[len("charge="):]
     if col.startswith("num:"):
-        return name_cn.get(col[len("num:"):], col[len("num:"):]) + "(log)"
+        return name_cn.get(col[len("num:"):], col[len("num:"):]) + "(对数)"
     if col.startswith("bool:"):
         k = col[len("bool:"):]
         return name_cn.get(k, k)
@@ -94,10 +94,10 @@ def column_label(col, schema):
     return f"{name_cn.get(key, key)}={val}"
 
 
-# --- Clustering + Hierarchical Importance ------------------------------------------------------
+# --- 聚类 + 层次重要性 ------------------------------------------------------
 def fit(schema, results, k_range=range(2, 5), save=True, verbose=True):
-    """Cluster case archetypes **within each charge** (in the book: automatically cluster typical patterns within a charge),
-    then compute global factor importance across all archetypes."""
+    """在**每个罪名内部**聚类出案件原型（书中：在某罪名内自动聚出典型模式），
+    再跨全部原型算全局因子重要性。"""
     columns = build_columns(schema, results)
     X_raw = np.array([vectorize(r["extracted"], columns)[0] for r in results])
     months = np.array([r["label_months"] for r in results], dtype=float)
@@ -111,7 +111,7 @@ def fit(schema, results, k_range=range(2, 5), save=True, verbose=True):
     for ch in sorted(set(charges)):
         idx = np.where(charges == ch)[0]
         Zc = Z[idx]
-        # Use silhouette score to select k within this charge
+        # 该罪名内用轮廓系数挑 k
         best = None
         for k in k_range:
             if k >= len(idx):
@@ -123,18 +123,18 @@ def fit(schema, results, k_range=range(2, 5), save=True, verbose=True):
         sil, k, km = best
         sils.append(sil)
         if verbose:
-            print(f"    {ch}: n={len(idx)}  Automatically selected k={k}  Silhouette score={sil:.3f}")
+            print(f"    {ch}: n={len(idx)}  自动选定 k={k}  轮廓系数={sil:.3f}")
         for c in range(k):
             sub = idx[km.labels_ == c]
-            z = km.cluster_centers_[c]         # Standardized space cluster centers (all dimensions)
+            z = km.cluster_centers_[c]         # 标准化空间簇心（全维）
             mth = months[sub]
-            # Defining features: **non-charge** columns with largest |cluster center| (charge is constant within a charge, so not counted)
+            # 定义性特征：|簇心| 最大的**非罪名**列（罪名在同一罪名内是常量，不算）
             cand = [j for j in np.argsort(-np.abs(z)) if not is_charge_col[j]][:6]
             defining = [{
                 "feature": columns[j],
                 "label": column_label(columns[j], schema),
                 "z": float(z[j]),
-                "direction": "Above average" if z[j] > 0 else "Below average",
+                "direction": "高于平均" if z[j] > 0 else "低于平均",
                 "typical": _typical_value(columns[j], float(X_raw[sub, j].mean())),
             } for j in cand]
             archetypes.append({
@@ -148,11 +148,11 @@ def fit(schema, results, k_range=range(2, 5), save=True, verbose=True):
             })
             aid += 1
 
-    # Global importance: between-cluster variance ratio across all archetypes (weighted variance of cluster centers)
+    # 全局重要性：跨全部原型的簇间方差占比（簇心加权方差）
     cents = np.array([a["centroid_std"] for a in archetypes])
     sizes = np.array([a["size"] for a in archetypes])
     weights = sizes / sizes.sum()
-    between_var = (weights[:, None] * cents ** 2).sum(axis=0)  # Total mean after standardization ≈ 0
+    between_var = (weights[:, None] * cents ** 2).sum(axis=0)  # 标准化后总均值≈0
     global_importance = [
         {"feature": columns[j], "label": column_label(columns[j], schema),
          "score": float(between_var[j])}
@@ -179,14 +179,14 @@ def fit(schema, results, k_range=range(2, 5), save=True, verbose=True):
 
 
 def _typical_value(col, raw_mean):
-    """Translate the raw mean of a column within a cluster into human-readable language."""
+    """把某列在簇内的原始均值翻译成人话。"""
     if col.startswith("num:"):
-        return f"Approximately {math.exp(raw_mean):,.0f}" if raw_mean else "Mostly missing"
+        return f"约 {math.exp(raw_mean):,.0f}" if raw_mean else "多为缺失"
     if col.startswith("charge="):
-        return f"{raw_mean*100:.0f}% are this charge"
+        return f"{raw_mean*100:.0f}% 为该罪名"
     if col.startswith("cat:"):
-        return f"{raw_mean*100:.0f}% hit"
-    return f"{raw_mean*100:.0f}% have this circumstance"  # bool
+        return f"{raw_mean*100:.0f}% 命中"
+    return f"{raw_mean*100:.0f}% 具备此情节"  # bool
 
 
 def load_model():
@@ -195,8 +195,8 @@ def load_model():
 
 
 def nearest_archetype(model, extraction):
-    """Match a (possibly incomplete) case to the nearest case archetype: first narrow candidates by charge,
-    then compare distance only on **known dimensions** (avoid misleading match by treating missing dimensions as 0)."""
+    """把一条(可能不完整的)案件匹配到最近的案件原型：先按罪名圈定候选，
+    再只在**已知维度**上比距离（避免用缺失维=0 误导匹配）。"""
     vec, known = vectorize(extraction, model["columns"])
     z = (vec - np.array(model["scaler_mean"])) / np.array(model["scaler_scale"])
 
@@ -212,17 +212,17 @@ def nearest_archetype(model, extraction):
     return best
 
 
-# --- Print -------------------------------------------------------------------
+# --- 打印 -------------------------------------------------------------------
 def print_model(model):
-    print(f"  Sample count={model['n_samples']}  Found {model['n_archetypes']} case prototypes"
-          f" (clustered by charge, average silhouette coefficient ={model['silhouette_mean']:.3f}）")
-    print("\n  Global factor importance ranking (discrimination between prototypes, larger values indicate key factors for splitting prototypes):")
+    print(f"  样本数={model['n_samples']}  共发现 {model['n_archetypes']} 个案件原型"
+          f"（各罪名内聚类，平均轮廓系数={model['silhouette_mean']:.3f}）")
+    print("\n  全局因子重要性排序（原型间区分度，越大越是划分原型的关键因子）:")
     for i, item in enumerate(model["global_importance"][:10], 1):
-        print(f"    {i:>2}. {item['label']:<22} discrimination ={item['score']:.3f}")
-    print("\n  Case prototypes (sorted by charge + median typical sentence):")
+        print(f"    {i:>2}. {item['label']:<22} 区分度={item['score']:.3f}")
+    print("\n  案件原型（按罪名 + 典型刑期中位数排序）:")
     for a in model["archetypes"]:
         m = a["months"]
-        print(f"\n    ▸ Prototype #{a['id']} [{a['charge']}]  Size {a['size']} cases"
-              f"  Median typical sentence {m['median']:.0f} months / range {m['min']:.0f}~{m['max']:.0f} months")
+        print(f"\n    ▸ 原型#{a['id']} [{a['charge']}]  规模 {a['size']} 例"
+              f"  典型刑期 中位 {m['median']:.0f} 月 / 区间 {m['min']:.0f}~{m['max']:.0f} 月")
         for d in a["defining"][:4]:
-            print(f"        · {d['label']:<20} {d['direction']}(z={d['z']:+.2f})  Typical:{d['typical']}")
+            print(f"        · {d['label']:<20} {d['direction']}(z={d['z']:+.2f})  典型：{d['typical']}")

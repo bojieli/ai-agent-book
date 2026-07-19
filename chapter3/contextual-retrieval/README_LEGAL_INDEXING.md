@@ -55,7 +55,7 @@ python index_local_laws_contextual.py
 python index_local_laws_contextual.py --max-docs 10
 
 # Process specific categories
-python index_local_laws_contextual.py --categories "Constitution" "Civil Code"
+python index_local_laws_contextual.py --categories "宪法" "民法典"
 
 # Use different LLM provider
 python index_local_laws_contextual.py --llm-provider openai --llm-model gpt-5.6-luna

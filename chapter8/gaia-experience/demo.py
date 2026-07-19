@@ -129,7 +129,7 @@ class ExperienceLearningDemo:
         print("DEMO 2: Trajectory Summarization")
         print("="*60)
         
-        # Initialize summarizer (OpenAI direct connection, falls back to OpenRouter when key is missing)
+        # Initialize summarizer（OpenAI 直连，缺 Key 时 OpenRouter 兜底）
         summarizer_model = self.config.get('learning', {}).get('summarizer', {}).get('model', DEFAULT_MODEL)
         llm_kwargs = resolve_llm(model_override=summarizer_model)
         agent_config = AgentConfig(**llm_kwargs)
@@ -197,7 +197,7 @@ class ExperienceLearningDemo:
         print("DEMO 3: Experience Agent")
         print("="*60)
         
-        # Initialize agent with all features (OpenAI direct connection, falls back to OpenRouter when key is missing)
+        # Initialize agent with all features（OpenAI 直连，缺 Key 时 OpenRouter 兜底）
         agent_config = AgentConfig(
             **resolve_llm(),
             llm_temperature=0.0

@@ -1,3 +1,3 @@
 openai>=1.30.0
-# Optional: automatically load .env file (demo.py uses soft dependency, runs even if not installed)
+# 可选：自动加载 .env 文件（demo.py 里做了软依赖，未安装也能跑）
 python-dotenv>=1.0.0

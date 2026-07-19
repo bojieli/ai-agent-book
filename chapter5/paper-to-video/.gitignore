@@ -1,4 +1,4 @@
-# Generated outputs (slides/audio/segments/final video)
+# 生成产物（幻灯片/音频/分段/最终视频）
 output/
 *.mp4
 *.mp3
@@ -9,5 +9,5 @@ __pycache__/
 .venv/
 venv/
 
-# Environment variables
+# 环境变量
 .env

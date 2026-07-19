@@ -5,9 +5,9 @@ __pycache__/
 .venv/
 venv/
 
-# Environment variables and secrets
+# 环境变量与密钥
 .env
 
-# Runtime-generated artifacts (working copies rewritten by Coding Agent, run logs, etc.)
+# 运行时生成的工件（Coding Agent 改写的工作副本、运行日志等）
 runtime/
 output/

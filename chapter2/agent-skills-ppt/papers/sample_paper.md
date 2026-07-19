@@ -1,38 +1,45 @@
-# Condensed Paper: The Impact of Progressive Disclosure of Agent Skills on Context Efficiency
+# 精简论文：渐进式披露式 Agent Skills 对上下文效率的影响
 
-Authors: Example Author Team (Anthropic-style Agent Research, Example Data)
+作者：示例作者团队（Anthropic 风格 Agent 研究，示例数据）
 
-## Abstract
+## 摘要
 
-Modern LLM Agents need to cover an increasing number of specialized tasks. The conventional approach of cramming all instructions into a single system prompt leads to token consumption bloat, diluted attention, and frequent invalidation of KV Cache prefixes. This paper proposes and evaluates a "Progressive Disclosure" mechanism for Agent Skills: first, inject a thin catalog (only name + description) of each Skill into the Agent; then, load the complete SKILL.md and sub-documents on demand when a task actually requires them. Experiments show that this mechanism significantly reduces the resident context length while maintaining task success rates.
+现代 LLM Agent 需要覆盖越来越多的专业任务，传统做法是把所有指令塞进单一
+系统提示词，导致 token 消耗膨胀、注意力被稀释、KV Cache 前缀频繁失效。
+本文提出并评估一种「渐进式披露（Progressive Disclosure）」的 Agent Skills
+机制：先向 Agent 注入各 Skill 的薄目录（仅 name + description），当任务确实
+需要时再按需加载完整的 SKILL.md 与子文档。实验表明，该机制在保持任务成功率的
+同时显著降低常驻上下文长度。
 
-## 1. Research Background and Problem
+## 1. 研究背景与问题
 
-- As the variety of tasks an Agent supports grows, a single system prompt expands linearly.
-- Long prompts incur a triple cost: token cost, attention dilution, and cache prefix invalidation.
-- Core question: Can we strike a balance between "the Agent knowing what capabilities it has" and "not permanently occupying context for this purpose"?
+- 随着 Agent 支持的任务种类增长，单一系统提示词呈线性膨胀。
+- 长提示词带来三重代价：token 成本、注意力稀释、缓存前缀失效。
+- 核心问题：能否在「Agent 知道自己有哪些能力」与「不为此长期占用上下文」之间取得平衡？
 
-## 2. Method Overview
+## 2. 方法概述
 
-- **Three-Layer Progressive Disclosure**:
-  - Layer 1 (Metadata): At startup, only inject each Skill's name + description (hundreds of tokens).
-  - Layer 2 (Core Process): When a task triggers, load the complete SKILL.md as a tool result.
-  - Layer 3 (Details): Read sub-documents such as reference.md, script source code, etc., on demand.
-- **Routing Decisions Depend on Description**: Descriptions should be written as "routing conditions" rather than "feature introductions," and should include counterexamples (Don't use when) to reduce false triggers.
-- **Bundled Executable Scripts**: A Skill is not just documentation; it can also include scripts and templates, upgrading knowledge into capability.
+- **三层渐进式披露**：
+  - 第一层（元数据）：启动时只注入每个 Skill 的 name + description（数百 token）。
+  - 第二层（核心流程）：任务触发时加载完整 SKILL.md 作为 tool result。
+  - 第三层（细则）：按需读取 reference.md、脚本源码等子文档。
+- **路由决策依赖 description**：描述应写成「路由条件」而非「功能介绍」，
+  并给出反例（Don't use when），以降低误触发。
+- **捆绑可执行脚本**：Skill 不止是文档，还可附带脚本与模板，把知识升级为能力。
 
-## 3. Key Results
+## 3. 关键结果
 
-- Resident context is reduced from thousands of tokens (full injection) to hundreds of tokens (catalog level).
-- Because the number of tools is constant and the prefix is stable, KV Cache hit rate improves significantly.
-- On tasks requiring specialized Skills, the success rate is on par with the "full injection" baseline (no significant decline).
-- Counterexamples (Don't use when) significantly improve routing accuracy and reduce false triggers on irrelevant tasks.
+- 常驻上下文从「全量塞入」的数千 token 降到目录级的数百 token。
+- 因为工具数量恒定、前缀稳定，KV Cache 命中率显著提升。
+- 在需要专业 Skill 的任务上，成功率与「全量注入」基线持平（无明显下降）。
+- 反例（Don't use when）能明显提升路由准确率，减少不相关任务上的误触发。
 
-## 4. Limitations and Discussion
+## 4. 局限性与讨论
 
-- Triggering relies on the model's "meta-cognition": the model must judge when it needs a particular Skill, and misjudgments can lead to missed loading.
-- Third-party Skills introduce a new prompt injection surface; their content must be reviewed before loading.
+- 触发依赖模型的「元认知」：模型需判断自己何时需要某个 Skill，判断失误会漏加载。
+- 第三方 Skill 是新的提示注入面，加载前需审查其内容。
 
-## 5. Conclusion
+## 5. 结论
 
-Progressive Disclosure transforms "cramming everything in at once" into "loading on demand." While incurring almost no loss in task success rate, it substantially reduces resident context and improves cache friendliness, making it a practical paradigm for building scalable Agent capability systems.
+渐进式披露把「一次性塞满」变为「按需加载」，在几乎不损失任务成功率的前提下，
+大幅降低常驻上下文并改善缓存友好度，是构建可扩展 Agent 能力体系的实用范式。

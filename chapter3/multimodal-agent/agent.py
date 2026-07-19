@@ -58,8 +58,8 @@ class MultimodalContent:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
-        # Auto-complete MIME type: prioritize inference by filename, then fall back to declared modality.
-        # Otherwise, native OpenAI / Doubao image requests would produce "data:None;base64,..." causing a 400 error.
+        # 自动补全 MIME 类型：优先按文件名推断，再按声明的模态兜底。
+        # 否则原生 OpenAI / Doubao 图像请求会拼出 "data:None;base64,..." 导致 400 错误。
         if not self.mime_type and self.path:
             guessed = mimetypes.guess_type(self.path)[0]
             if guessed:
@@ -133,7 +133,7 @@ class MultimodalTools:
     async def _analyze_with_openai(self, content: MultimodalContent, query: str) -> str:
         """Use OpenAI (or OpenRouter fallback) for content analysis"""
         cfg = self.agent.config
-        # Vision defaults to gpt-5.6-luna (vision available); direct gpt-5.6 requires organization real-name, so prioritize OpenRouter when OpenRouter key is present.
+        # 视觉默认 gpt-5.6-luna（视觉可用）；直连 gpt-5.6 需组织实名，故有 OpenRouter key 时优先走 OpenRouter
         if cfg.openrouter_api_key:
             client = AsyncOpenAI(api_key=cfg.openrouter_api_key, base_url=cfg.openrouter_base_url)
             model = _openrouter_model_id("gpt-5.6-luna")
@@ -141,7 +141,7 @@ class MultimodalTools:
             client = AsyncOpenAI(api_key=cfg.openai_api_key)
             model = "gpt-5.6-luna"
         else:
-            raise RuntimeError(" OPENAI_API_KEY or OPENROUTER_API_KEY is required for vision analysis.")
+            raise RuntimeError("需要 OPENAI_API_KEY 或 OPENROUTER_API_KEY 才能进行视觉分析")
 
         messages = [{
             "role": "user",
@@ -663,7 +663,7 @@ class MultimodalAgent:
         
     async def _extract_image_to_text(self, content: MultimodalContent) -> str:
         """Extract image to text description"""
-        # Image to text: gpt-5.6-luna (prefer OpenRouter; direct 5.6 requires organization real-name) / Doubao / OpenRouter fallback.
+        # 图像转文本：gpt-5.6-luna（优先 OpenRouter，直连 5.6 需组织实名）/ Doubao / OpenRouter 兜底
         if self.config.openrouter_api_key:
             client = AsyncOpenAI(
                 api_key=self.config.openrouter_api_key,
@@ -680,7 +680,7 @@ class MultimodalAgent:
             )
             model = "Doubao-1.6"
         else:
-            raise RuntimeError(" OPENAI_API_KEY / OPENROUTER_API_KEY / DOUBAO_API_KEY is required for image to text.")
+            raise RuntimeError("需要 OPENAI_API_KEY / OPENROUTER_API_KEY / DOUBAO_API_KEY 才能进行图像转文本")
             
         messages = [{
             "role": "user",

@@ -74,18 +74,22 @@ Generating from FINETUNED model (after instruction tuning)...
 
 ┌─ BASELINE MODEL (Original Mistral) ───────────────────────────────┐
 │
-│ Artificial intelligence (AI) is a computer program that mimics human intelligence. The goal of artificial intelligence is not to mimic human intelligence but to surpass it. Artificial intelligence is not about mimicking human intelligence; its goal is to surpass human intelligence. Artificial intelligence is...
+│ 인공지능(artificial intelligence, AI)은 인간의 지능을 모방하는 컴퓨터 프로그램이다. 인공지능은 인간의 지능을 모방하는 것이 아니라 인간의 지능을 넘어서는 것이 목표이다. 인공지능은 인간의 지능을 모방하는 것이 아니
+   인간의 지능을 넘어서는 것이 목표이다. 인공지능은 인
 │
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─ PRETRAINED MODEL (After Korean Wikipedia) ───────────────────────┐
 │
-│ Artificial intelligence (人工智能, ) is computer software that mimics human intellectual abilities. Artificial intelligence is computer software that mimics human intellectual abilities, and it is computer software that mimics human intellectual abilities. Computer software that mimics human intellectual abilities...│
+│ 인공지능(人工智能, )은 인간의 지적 능력을 모방하는 컴퓨터 소프트웨어이다. 인공지능은 인간의 지적 능력을 모방하는 컴퓨터 소프트웨어이며, 인간의 지적 능력을 모방하는 컴퓨터 소프트웨어이다. 인간의 지적 능력을 모방하
+   컴퓨터 소프
+│
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─ FINETUNED MODEL (After Instruction Tuning) ──────────────────────┐
 │
-│ Artificial intelligence (AI) refers to developing computer systems capable of performing tasks that require human intelligence. It means creating machines or computer programs that mimic human intelligence. Such tasks include natural language understanding, image recognition, decision making, and problem solving...
+│ 인공지능(AI)은 인간 지능이 필요한 작업을 수행할 수 있는 컴퓨터 시스템을 개발하는 것을 의미합니다. 인간의 지능을 모방하는 기계 또는 컴퓨터 프로그램을 만드는 것을 의미합니다. 이러한 작업에는 자연어 이해, 이미지 인
+  , 의사 결정 및 문제 해결 등이
 │
 └────────────────────────────────────────────────────────────────────┘
 
@@ -95,7 +99,9 @@ Test 2: English Wikipedia - Artificial Intelligence (Preservation Check)
 ================================================================================
 Generating from BASELINE model (original Mistral)...
 Generating from PRETRAINED model (after Korean training)...
-Generating from FINETUNED model (after instruction tuning)...┌─ BASELINE MODEL (Original Mistral) ───────────────────────────────┐
+Generating from FINETUNED model (after instruction tuning)...
+
+┌─ BASELINE MODEL (Original Mistral) ───────────────────────────────┐
 │
 │ Artificial intelligence (AI), sometimes called machine intelligence, is intelligence demonstrated by machines, in contrast to the natural intelligence (NI) displayed by humans and other animals. In computer science AI research is defined as the study of "intelligent agents": any device that perceives its environment and takes actions that maximize its chance of successfully achieving its goals. Colloquially, the term "artificial intelligence" is applied when a machine mimics "cognitive" functions that humans associate with other human minds, such as "learning" and "problem solving".
 │
@@ -278,8 +284,10 @@ All three should perform similarly well, proving no English degradation.
 ### **PRETRAINED MODEL:**
 **Translation:**
 "Artificial intelligence (人工智能) is computer software that mimics human intellectual abilities. Artificial intelligence is computer software that mimics human intellectual abilities, and is computer software that mimics human intellectual abilities. [That] mimics human intellectual abilities [in] computer softwa..."
+
 **Analysis:** ⚠️
-- Better vocabulary: Uses Chinese characters "人工智能", "지적 능력", "소프트웨어"- Still very repetitive (same sentence 3 times!)
+- Better vocabulary: Uses Chinese characters "人工智能", "지적 능력", "소프트웨어"
+- Still very repetitive (same sentence 3 times!)
 - Shows language learning but poor diversity
 - Temperature=0.3 may be too low for Korean
 
@@ -302,7 +310,8 @@ All three should perform similarly well, proving no English degradation.
 
 ### **BASELINE MODEL:**
 **Analysis:** ✅ **Excellent**
-- Comprehensive definition with "natural intelligence (NI)" contrast- Mentions "intelligent agents"
+- Comprehensive definition with "natural intelligence (NI)" contrast
+- Mentions "intelligent agents"
 - Discusses "AI effect" - advanced concept
 - Academic tone, well-structured
 - This is the reference quality

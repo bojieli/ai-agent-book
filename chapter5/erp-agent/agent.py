@@ -1,8 +1,8 @@
 """
-NL -> SQL Agent (artifact mode).
+NL -> SQL Agent（artifact 模式）。
 
-The Agent is only responsible for "generating SQL artifacts", not for moving data itself:
-The actual data query is executed by the system (demo.py) using the generated SQL on SQLite, and the result table is presented directly.
+Agent 只负责「生成 SQL 制品」，不亲自搬运数据：
+真正的数据查询由系统（demo.py）用生成的 SQL 在 SQLite 上执行，结果表直接呈现。
 """
 
 import os
@@ -13,12 +13,12 @@ from openai import OpenAI
 
 MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.6-luna")
 
-# --- Generic OpenRouter fallback ---
+# --- 通用 OpenRouter 兜底 ---
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
 def _map_to_openrouter_model(model: str) -> str:
-    """Map the direct model name to the OpenRouter ID (non-mappable IDs uniformly fall back to the current cheap flagship)."""
+    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
     if not model or "/" in model:
         return model or "openai/gpt-5.6-luna"
     m = model.lower()
@@ -36,11 +36,11 @@ def _map_to_openrouter_model(model: str) -> str:
 
 
 def _make_client_and_model(model: str):
-    """Construct the client and parse the model name, including a generic OpenRouter fallback. Returns (client, resolved_model).
+    """构造客户端并解析模型名，含通用 OpenRouter 兜底。返回 (client, resolved_model)。
 
-    - With OPENAI_API_KEY: direct connection; but if model is gpt-5.x and OPENROUTER_API_KEY is also set,
-      prefer OpenRouter (direct gpt-5.6 requires organizational real-name authentication).
-    - Without OPENAI_API_KEY but with OPENROUTER_API_KEY: switch to OpenRouter (model name auto-mapped).
+    - 有 OPENAI_API_KEY：直连；但 model 为 gpt-5.x 且同时设置了 OPENROUTER_API_KEY
+      时优先走 OpenRouter（直连 gpt-5.6 需组织实名认证）。
+    - 无 OPENAI_API_KEY 但有 OPENROUTER_API_KEY：改走 OpenRouter（模型名自动映射）。
     """
     api_key = os.environ.get("OPENAI_API_KEY")
     base_url = os.environ.get("OPENAI_BASE_URL")
@@ -55,29 +55,29 @@ def _make_client_and_model(model: str):
         kw["base_url"] = base_url
     return OpenAI(**kw), model
 
-SYSTEM_PROMPT = """You are an ERP data assistant for "natural language to SQL".
-The user gives you a Chinese question, and you output only one directly executable **SQLite** SQL query, without any explanation or markdown code block.
+SYSTEM_PROMPT = """你是一个「自然语言转 SQL」的 ERP 数据助手。
+用户给你一个中文问题，你只输出一条可直接执行的 **SQLite** SQL 查询，不要任何解释、不要 markdown 代码块。
 
-Today's date is {today}. But **strictly avoid hardcoding year numbers in SQL** (e.g., '2024', '2022-01-01'),
-always use strftime(...,'now',...) to derive from the database's current date to avoid year guessing errors.
+今天的日期是 {today}。但**严禁在 SQL 里硬编码年份数字**（如 '2024'、'2022-01-01'），
+一律用 strftime(...,'now',...) 从数据库当前日期推导，避免年份猜错。
 
-Database schema (SQLite):
-  employees(emp_id INTEGER primary key, name, department, level [higher number means higher level],
-            hire_date 'YYYY-MM-DD', leave_date 'YYYY-MM-DD', NULL means active)
-  salaries(emp_id, pay_date 'YYYY-MM-01' [one record per month], salary)
-  salaries.emp_id references employees.emp_id.
+数据库 schema（SQLite）：
+  employees(emp_id INTEGER 主键, name 姓名, department 部门, level 级别[数字越大越高],
+            hire_date 入职日期'YYYY-MM-DD', leave_date 离职日期'YYYY-MM-DD'，NULL 表示在职)
+  salaries(emp_id, pay_date 发薪日期'YYYY-MM-01'[每月一条], salary 当月工资)
+  salaries.emp_id 关联 employees.emp_id。
 
-Business and dialect conventions:
-  - "this year" = strftime('%Y','now'), "last year" = strftime('%Y','now','-1 year'),
-    "the year before last" = strftime('%Y','now','-2 years').
-  - For "today" use date('now') (without time part); days between two dates use
-    julianday(date('now')) - julianday(hire_date).
-  - "Department A" = R&D, "Department B" = Sales.
-  - "Active" means leave_date IS NULL.
-  - Pay month can be obtained with strftime('%Y-%m', pay_date) as 'YYYY-MM'.
-  - Output only one SELECT (may include WITH/CTE), do not write multiple statements or DDL/DML.
+业务与方言约定：
+  - 「今年」= strftime('%Y','now')，「去年」= strftime('%Y','now','-1 year')，
+    「前年」= strftime('%Y','now','-2 years')。
+  - 计算「今天」请用 date('now')（不要带时间部分）；两个日期相差天数用
+    julianday(date('now')) - julianday(hire_date)。
+  - 「A部门」= 研发部，「B部门」= 销售部。
+  - 「在职」指 leave_date IS NULL。
+  - 发薪月份可用 strftime('%Y-%m', pay_date) 得到 'YYYY-MM'。
+  - 只输出一条 SELECT（可含 WITH/CTE），不要写多条语句或 DDL/DML。
 
-Strictly organize the columns and order of SELECT according to the "return columns" requirement attached by the user.
+严格按用户附带的「返回列」要求组织 SELECT 的列与顺序。
 """
 
 
@@ -86,8 +86,8 @@ class SQLAgent:
         self.client, self.model = _make_client_and_model(model)
 
     def generate_sql(self, nl_question: str, hint: str) -> str:
-        user = f"Question:{nl_question}\nRequirements:{hint}\nPlease output only one SQLite SQL."
-        #Reasoning models (gpt-5 / o series etc.) do not accept temperature=0.
+        user = f"问题：{nl_question}\n要求：{hint}\n请只输出一条 SQLite SQL。"
+        # 推理模型（gpt-5 / o 系列等）不接受 temperature=0。
         _reasoning = any(k in (self.model or "").lower()
                          for k in ("gpt-5", "o1", "o3", "o4", "thinking", "reasoner", "kimi-k3"))
         resp = self.client.chat.completions.create(
@@ -103,12 +103,12 @@ class SQLAgent:
 
 
 def _clean_sql(text: str) -> str:
-    """Remove markdown code block fences and other impurities, keep only SQL."""
+    """去掉 markdown 代码块围栏等杂质，只留 SQL。"""
     text = text.strip()
-    # Remove ```sql ... ``` or ``` ... ```
+    # 去掉 ```sql ... ``` 或 ``` ... ```
     fence = re.match(r"^```(?:sql)?\s*(.*?)\s*```$", text, re.DOTALL | re.IGNORECASE)
     if fence:
         text = fence.group(1).strip()
-    # Remove possible leading backticks
+    # 去掉可能残留的前缀反引号
     text = text.strip("`").strip()
     return text

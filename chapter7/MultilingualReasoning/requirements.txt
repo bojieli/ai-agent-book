@@ -1,20 +1,21 @@
-# Multi-language Reasoning Model Fine-tuning Dependencies
+# 多语言推理模型微调依赖
 
-# Core dependencies
+# 核心依赖
 torch>=2.0.0
 transformers>=4.55.0
 datasets>=2.14.0
 accelerate>=0.20.0
 
-# Fine-tuning related
+# 微调相关
 trl>=0.20.0
 peft>=0.17.0
 bitsandbytes>=0.41.0
 
-# Tools and monitoring
+# 工具和监控
 trackio
 huggingface-hub>=0.16.0
 
-# Optional: experiment tracking
+# 可选：实验跟踪
 # wandb
 # tensorboard
+

@@ -2,6 +2,6 @@ __pycache__/
 *.pyc
 .env
 
-# Parser auto-generated and persisted by the agent (runtime artifact); keep the directory but ignore generated .py files
+# Agent 自动生成并持久化的解析器（运行时产物），保留目录但忽略生成的 .py
 parsers/*.py
 !parsers/.gitkeep

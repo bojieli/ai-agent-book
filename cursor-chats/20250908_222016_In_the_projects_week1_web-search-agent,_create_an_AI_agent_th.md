@@ -16,34 +16,34 @@ In the projects/week1/web-search-agent, create an AI agent that utilizes Kimi we
 Requirements:
 
 
-# Week 1 · Practical Case Study
+# Week 1 · 实战案例
 
-### Build a Web-Connected Search Agent from Scratch
+### 动手搭建一个能联网搜索的 Agent
 
 <div class="mt-8">
 
-**Goal**: Build a basic autonomous Agent that can understand user questions, retrieve information through a search engine, and synthesize an answer.
+**目标**: 构建一个基础的自主式 Agent，能够理解用户问题，通过搜索引擎获取信息，并总结出答案。
 
 <div grid="~ cols-2 gap-8">
 <div>
 
-**Core Challenges**
-- **Task Decomposition**: Break down complex questions into searchable keywords.
-- **Tool Definition**: Define and implement a `web_search` tool.
-- **Result Integration**: Understand search results and synthesize information into a final answer.
+**核心挑战**
+- **任务分解**: 将复杂问题分解为可搜索的关键词。
+- **工具定义**: 定义并实现一个 `web_search` 工具。
+- **结果整合**: 理解搜索结果，并综合信息生成最终答案。
 
 </div>
 <div>
 
-**Architecture Design**
+**架构设计**
 ```mermaid {scale: 0.5}
 graph TD
-    A[User Question] --> B{LLM Reasoning};
-    B -->|Search Needed| C[Call web_search Tool];
-    C --> D[Search Engine API];
-    D --> E[Return Search Results];
+    A[用户问题] --> B{LLM 思考};
+    B -->|需要搜索| C[调用 web_search 工具];
+    C --> D[搜索引擎 API];
+    D --> E[返回搜索结果];
     E --> B;
-    B -->|Sufficient Information| F[Generate Final Answer];
+    B -->|信息充足| F[生成最终答案];
 ```
 
 ---
@@ -198,7 +198,8 @@ def chat(messages) -> Choice:
  
  
 def main():
-    messages = [        {"role": "system", "content": "You are Kimi."},
+    messages = [
+        {"role": "system", "content": "You are Kimi."},
     ]
  
     # Initial question
@@ -272,17 +273,17 @@ I'll update the code to use stream mode by default. Let me make the necessary ch
 ### 👤 You
 
 ============================================================
-📝 Agent Response (Streaming):
+📝 Agent 回答（流式）:
 ------------------------------------------------------------
-2025-09-09 10:03:24,060 - INFO - Starting streaming call to Kimi search tool...
-2025-09-09 10:03:24,060 - INFO - Iteration 1/5
+2025-09-09 10:03:24,060 - INFO - 开始流式调用 Kimi 搜索工具...
+2025-09-09 10:03:24,060 - INFO - 迭代 1/5
 2025-09-09 10:03:28,747 - INFO - HTTP Request: POST https://api.moonshot.cn/v1/chat/completions "HTTP/1.1 200 OK"
-2025-09-09 10:03:28,755 - INFO - Model request called 1 tool
-2025-09-09 10:03:28,756 - INFO - Executing tool: $web_search, Parameters: {'search_result': {'search_id': 'ffccb1c968bf8af02b42f6000187bedd'}, 'usage': {'total_tokens': 8551}}
-2025-09-09 10:03:28,756 - INFO - Iteration 2/5
+2025-09-09 10:03:28,755 - INFO - 模型请求调用 1 个工具
+2025-09-09 10:03:28,756 - INFO - 执行工具: $web_search, 参数: {'search_result': {'search_id': 'ffccb1c968bf8af02b42f6000187bedd'}, 'usage': {'total_tokens': 8551}}
+2025-09-09 10:03:28,756 - INFO - 迭代 2/5
 2025-09-09 10:03:29,169 - INFO - HTTP Request: POST https://api.moonshot.cn/v1/chat/completions "HTTP/1.1 400 Bad Request"
-2025-09-09 10:03:29,171 - ERROR - Error during streaming search: Error code: 400 - {'error': {'message': 'Invalid request: tool_call_id  is not found', 'type': 'invalid_request_error'}}
-Error during streaming search: Error code: 400 - {'error': {'message': 'Invalid request: tool_call_id  is not found', 'type': 'invalid_request_error'}}
+2025-09-09 10:03:29,171 - ERROR - 流式搜索过程中出现错误: Error code: 400 - {'error': {'message': 'Invalid request: tool_call_id  is not found', 'type': 'invalid_request_error'}}
+流式搜索过程中出现错误: Error code: 400 - {'error': {'message': 'Invalid request: tool_call_id  is not found', 'type': 'invalid_request_error'}}
 ============================================================
 
 ---
@@ -334,7 +335,10 @@ The agent now provides real-time feedback by default:
 ```python
 # Streaming is now the default
 for chunk in agent.search_and_answer_stream(question):
-    print(chunk, end="", flush=True)The streaming mode provides a much better user experience by showing results as they're generated, rather than waiting for the complete response. The tool call errors have been resolved, and the system now properly handles the conversation flow with the Kimi API.
+    print(chunk, end="", flush=True)
+```
+
+The streaming mode provides a much better user experience by showing results as they're generated, rather than waiting for the complete response. The tool call errors have been resolved, and the system now properly handles the conversation flow with the Kimi API.
 
 ---
 

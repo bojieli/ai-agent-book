@@ -16,80 +16,80 @@
 
 ### 🤖 Cursor Assistant
 
-Let me check the current `projects/README.md` file, then simplify each project description to one or two sentences based on the book's content.
+我来查看当前的 projects/README.md 文件，然后根据书的内容将项目描述简化为每个项目一两句话。
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Now I'll simplify each project's description to one or two sentences, directing readers to the book for details:
+现在我来将每个项目的描述简化为一两句话，让读者去书中了解细节：
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Let me verify the modified file to ensure all descriptions have been simplified:
+让我检查一下修改后的文件，确保所有描述都已经简化：
 
 ---
 
 ### 🤖 Cursor Assistant
 
-I notice there are two projects (mem0 and memobase) in the project directory that are not listed in the README. Let me check these directories and add brief descriptions:
+我注意到在项目目录中还有两个项目（mem0 和 memobase）没有在 README 中列出。让我检查一下这些目录并添加简短的描述：
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Let me check the README files of these two projects to understand their content:
+让我查看这两个项目的 README 文件来了解它们的内容：
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Now let me add brief descriptions for these two missing projects in the README:
+现在让我在 README 中添加这两个缺失项目的简短描述：
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Let me review the final modifications to ensure all project descriptions have been simplified:
+让我再查看一下最终的修改结果，确保所有项目描述都已简化：
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Done! I have simplified all project descriptions in `projects/README.md` to one or two sentences based on the book's content. The main changes include:
+完成！我已经根据书的内容将 projects/README.md 中所有项目的描述简化为一两句话。主要修改包括：
 
-1. **Week 1 Projects**:
-   - learning-from-experience: Simplified to "Compares traditional reinforcement learning with LLM in-context learning through a treasure hunt game, demonstrating the huge difference in sample efficiency"
-   - web-search-agent: Simplified to "Implements an Agent with deep search capabilities, capable of multi-round search and information integration"
-   - search-codegen: Simplified to "Builds an Agent that can search the web and generate code, demonstrating basic patterns of tool calling and task decomposition"
-   - context: Simplified to "Shows the importance of each Agent context component through ablation experiments, supporting multiple LLM providers"
+1. **Week 1 项目**：
+   - learning-from-experience：简化为"通过寻宝游戏对比传统强化学习与 LLM 的上下文学习，展示样本效率的巨大差异"
+   - web-search-agent：简化为"实现具备深度搜索能力的 Agent，能够进行多轮搜索和信息整合"
+   - search-codegen：简化为"构建能够搜索网络并生成代码的 Agent，展示工具调用和任务分解的基本模式"
+   - context：简化为"通过消融实验展示 Agent 上下文各组件的重要性，支持多种 LLM 提供商"
 
-2. **Week 2 Projects**:
-   - All projects simplified to one-sentence descriptions highlighting core functionality
-   - Removed all "**Core Concepts**" labels
-   - Added brief descriptions for two missing projects (mem0 and memobase)
+2. **Week 2 项目**：
+   - 所有项目都简化为一句话描述，突出核心功能
+   - 移除了所有"**核心概念**"标签
+   - 添加了两个缺失项目（mem0 和 memobase）的简短描述
 
-Now each project has only a concise one or two sentence introduction, allowing readers to quickly understand the project's core content, while specific technical details and implementation methods are directed to the corresponding chapters of the companion book.
-
----
-
-### 🤖 Cursor Assistant
-
-I need to check the descriptions of these two Agents in chapter1.md, then update the corresponding descriptions in projects/README.md.
+现在每个项目都只有简洁的一两句话介绍，让读者快速了解项目核心内容，具体技术细节和实现方法则引导他们去阅读配套书籍的相应章节。
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Let me search chapter1.md for specific descriptions of these two Agents:
+我需要查看 chapter1.md 中关于这两个 Agent 的描述，然后更新 projects/README.md 中的相应描述。
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Let me check chapter1.md for descriptions related to code Agents:
+让我搜索 chapter1.md 中关于这两个 Agent 的具体描述：
+
+---
+
+### 🤖 Cursor Assistant
+
+让我再查看 chapter1.md 中关于代码相关 Agent 的描述：
 
 ---
 

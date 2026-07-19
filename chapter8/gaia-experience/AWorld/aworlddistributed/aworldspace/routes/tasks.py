@@ -389,13 +389,13 @@ async def download_task_results(
             try:
                 start_datetime = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
             except ValueError:
-                raise ValueError("❌ Invalid start_time format. Please use YYYY-MM-DD HH:MM:SS format.")
+                raise ValueError("❌ start_time格式错误，请使用 YYYY-MM-DD HH:MM:SS 格式")
                 
         if end_time:
             try:
                 end_datetime = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
             except ValueError:
-                raise ValueError("❌ Invalid end_time format. Please use YYYY-MM-DD HH:MM:SS format.")
+                raise ValueError("❌ end_time格式错误，请使用 YYYY-MM-DD HH:MM:SS 格式")
         
         results = await task_manager.query_and_download_task_results(
             start_time=start_datetime,

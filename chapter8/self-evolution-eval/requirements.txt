@@ -1,5 +1,5 @@
-# Experiment 8-6: Designing an Evaluation Dataset for a Self-Evolving Agent
-# Only the harness / demo itself requires these two dependencies; the domain-specific libraries mentioned in dataset.json
-# (youtube-transcript-api, yfinance, etc.) are merely "reference solutions" – the Agent under test will install them, the evaluator does not need them.
+# 实验 8-6：为自我进化 Agent 设计评估数据集
+# 仅 harness / demo 本身需要这两个依赖；dataset.json 中提到的各领域库
+# （youtube-transcript-api、yfinance 等）只是"参考方案"，被测 Agent 才会去安装，评估器不需要。
 openai>=1.30.0
 python-dotenv>=1.0.0

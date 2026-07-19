@@ -1,26 +1,26 @@
 """
-Rule-based (regex) offline log desensitization engine
+基于规则（正则）的离线日志脱敏引擎
 
-Complementary to the local LLM approach in agent.py: this module requires no model or network,
-purely relies on regular expressions + validation algorithms (Luhn, ID checksum) to identify
-sensitive information in logs / tool outputs. Fast, deterministic, suitable as the first line of defense before Agent logs are persisted.
+与 agent.py 中依赖本地 LLM 的方案互补：本模块不需要任何模型或网络，
+纯靠正则表达式 + 校验算法（Luhn、身份证校验码）识别日志 / 工具输出中的
+敏感信息，速度快、结果确定，适合作为 Agent 日志落盘前的第一道防线。
 
-Covered sensitive information categories (in descending match priority):
-  - Private keys / certificates (PEM blocks)
+覆盖的敏感信息类别（按匹配优先级从高到低）：
+  - 私钥 / 证书（PEM 块）
   - JWT
-  - Cloud vendor and third-party keys (AWS AKIA, GitHub, Slack, Google, OpenAI style sk-)
-  - HTTP Authorization: Bearer tokens
-  - Passwords / secret assignments in config (password=..., token: ... etc.)
-  - Email addresses
-  - Credit card numbers (Luhn check)
-  - IBAN international bank account numbers
-  - US Social Security Numbers (SSN)
-  - Mainland China ID numbers (checksum validation)
-  - Mainland China mobile phone numbers
-  - IPv4 addresses
+  - 云厂商与第三方密钥（AWS AKIA、GitHub、Slack、Google、OpenAI 风格 sk-）
+  - HTTP Authorization: Bearer 令牌
+  - 配置中的口令 / 密钥赋值（password=..., token: ... 等）
+  - 邮箱地址
+  - 信用卡号（Luhn 校验）
+  - IBAN 国际银行账号
+  - 美国社会安全号（SSN）
+  - 中国大陆身份证号（校验码验证）
+  - 中国大陆手机号
+  - IPv4 地址
 
-Each category is replaced with a category-tagged placeholder (e.g., [REDACTED_API_KEY]),
-which both hides the original value and preserves readability of "what was here" for troubleshooting.
+每一类都会被替换为带类别标签的占位符（如 [REDACTED_API_KEY]），
+既隐去了原值，又保留了“这里原本是什么”的可读性，方便排障。
 """
 
 import re
@@ -29,7 +29,7 @@ from typing import Dict, List, Tuple
 
 
 def _luhn_ok(number: str) -> bool:
-    """Luhn check, used to reduce false positives for credit card numbers"""
+    """Luhn 校验，用于降低信用卡号的误报率"""
     digits = [int(c) for c in number if c.isdigit()]
     if not 13 <= len(digits) <= 19:
         return False
@@ -45,7 +45,7 @@ def _luhn_ok(number: str) -> bool:
 
 
 def _cn_id_ok(value: str) -> bool:
-    """Mainland China second-generation ID number (18-digit) checksum validation"""
+    """中国大陆二代身份证号（18 位）校验码验证"""
     s = value.upper()
     if len(s) != 18 or not s[:17].isdigit():
         return False
@@ -55,8 +55,8 @@ def _cn_id_ok(value: str) -> bool:
     return check_codes[total % 11] == s[17]
 
 
-#  Each rule: (category, placeholder, compiled regex, capture group index for value, optional validation function)
-#  Group index 0 means the entire match is redacted; N means only the Nth capture group is redacted (preserving key names and other context).
+# 每条规则：(类别, 占位符, 编译后的正则, 用于取值的分组号, 可选校验函数)
+# 分组号为 0 表示整段命中都要脱敏；为 N 表示只脱敏第 N 个捕获组（保留键名等上下文）。
 _RULES = [
     (
         "private_key", "[REDACTED_PRIVATE_KEY]",
@@ -72,7 +72,7 @@ _RULES = [
         0, None,
     ),
     (
-        #  Password in connection string, e.g., postgres://user:PASSWORD@host:5432/db
+        # 连接串中的口令，如 postgres://user:PASSWORD@host:5432/db
         "url_credential", "[REDACTED_URL_CRED]",
         re.compile(r"://[^\s:/@]+:([^\s:/@]+)@"),
         1, None,
@@ -152,41 +152,41 @@ _RULES = [
     ),
 ]
 
-#  Human-readable Chinese category name, used for printing summary
+# 人类可读的类别中文名，用于打印汇总
 CATEGORY_LABELS = {
-    "private_key": "Private key / certificate",
-    "jwt": "JWT token",
-    "url_credential": "Connection string credential",
-    "aws_access_key": "AWS access key",
-    "github_token": "GitHub token",
-    "slack_token": "Slack token",
+    "private_key": "私钥 / 证书",
+    "jwt": "JWT 令牌",
+    "url_credential": "连接串凭据",
+    "aws_access_key": "AWS 访问密钥",
+    "github_token": "GitHub 令牌",
+    "slack_token": "Slack 令牌",
     "google_api_key": "Google API Key",
     "api_key": "API Key (sk-)",
-    "bearer_token": "Bearer token",
-    "secret_assignment": "Password / secret assignment",
-    "email": "Email address",
-    "credit_card": "Credit card number",
-    "iban": "IBAN bank account number",
-    "us_ssn": "US Social Security Number (SSN)",
-    "cn_id_card": "ID number",
-    "cn_phone": "Mobile phone number",
-    "ip_address": "IP address",
+    "bearer_token": "Bearer 令牌",
+    "secret_assignment": "口令 / 密钥赋值",
+    "email": "邮箱地址",
+    "credit_card": "信用卡号",
+    "iban": "IBAN 银行账号",
+    "us_ssn": "美国社保号(SSN)",
+    "cn_id_card": "身份证号",
+    "cn_phone": "手机号",
+    "ip_address": "IP 地址",
 }
 
 
 def sanitize(text: str) -> Tuple[str, List[Dict]]:
     """
-    Apply offline rule-based desensitization to the text.
+    对文本执行离线规则脱敏。
 
     Returns:
-        - Desensitized text
-        - List of hits, each item is {category, value, placeholder, start, end}
+        - 脱敏后的文本
+        - 命中列表，每项为 {category, value, placeholder, start, end}
     """
     candidates: List[Dict] = []
     for priority, (category, placeholder, pattern, group, validator) in enumerate(_RULES):
         for m in pattern.finditer(text):
             start, end = m.span(group)
-            if start < 0:  #  This capture group did not participate in the current match
+            if start < 0:  # 该捕获组未参与本次匹配
                 continue
             value = text[start:end]
             if validator and not validator(value):
@@ -200,7 +200,7 @@ def sanitize(text: str) -> Tuple[str, List[Dict]]:
                 "priority": priority,
             })
 
-    #  Handle overlaps: higher priority (smaller number) rules win, avoiding duplicate/incorrect redaction of the same segment
+    # 处理重叠：优先级高（数字小）的规则胜出，避免同一段被重复/错误脱敏
     candidates.sort(key=lambda c: (c["priority"], c["start"]))
     accepted: List[Dict] = []
     for c in candidates:
@@ -208,7 +208,7 @@ def sanitize(text: str) -> Tuple[str, List[Dict]]:
             continue
         accepted.append(c)
 
-    #  Rebuild desensitized text in positional order
+    # 按位置顺序重建脱敏文本
     accepted.sort(key=lambda c: c["start"])
     parts: List[str] = []
     last = 0
@@ -226,28 +226,28 @@ def sanitize(text: str) -> Tuple[str, List[Dict]]:
 
 
 def summarize(findings: List[Dict]) -> Counter:
-    """Count hits per category"""
+    """统计各类别命中次数"""
     return Counter(f["category"] for f in findings)
 
 
 def print_report(name: str, original: str, redacted: str, findings: List[Dict]) -> None:
-    """Print before/after and hit details for a single sample"""
+    """打印单条样本的 before/after 与命中明细"""
     print(f"\n{'=' * 64}")
-    print(f"Sample: {name}  (hit {len(findings)} sensitive information)")
+    print(f"样本: {name}  （命中 {len(findings)} 处敏感信息）")
     print("=" * 64)
-    print("--- BEFORE ---")
+    print("--- 脱敏前 (BEFORE) ---")
     print(original.rstrip())
-    print("\n--- AFTER ---")
+    print("\n--- 脱敏后 (AFTER) ---")
     print(redacted.rstrip())
     if findings:
-        print("\n--- Hit Details ---")
+        print("\n--- 命中明细 ---")
         for f in findings:
             label = CATEGORY_LABELS.get(f["category"], f["category"])
             print(f"   [{label}] {f['value']}  ->  {f['placeholder']}")
 
 
 if __name__ == "__main__":
-    # When running this module directly, perform a quick demo on built-in samples
+    # 直接运行本模块时，对内置样本做一次快速演示
     from samples import SAMPLES
 
     total = Counter()
@@ -257,9 +257,9 @@ if __name__ == "__main__":
         total.update(summarize(findings))
 
     print(f"\n{'=' * 64}")
-    print("Desensitization Category Summary")
+    print("脱敏类别汇总")
     print("=" * 64)
     for category, count in total.most_common():
         label = CATEGORY_LABELS.get(category, category)
-        print(f"   {label:<16} {count} items")
-    print(f"\n   Total desensitized {sum(total.values())} sensitive information")
+        print(f"   {label:<16} {count} 处")
+    print(f"\n   合计脱敏 {sum(total.values())} 处敏感信息")

@@ -1,123 +1,126 @@
-# Experiment 8-4: Active Tool Discovery
+# 实验 8-4：主动工具发现（Active Tool Discovery）
 
-> Companion code for *Deep Understanding of AI Agents* · ★★★
+> 《深入理解 AI Agent》配套代码 · ★★★
 >
-> On a tool library of **126 cross-domain tools**, run a single comparison of three "tool discovery" strategies—**full injection**,
-> **retrieval pre-filtering** (one-shot semantic pre-selection of top-n), **active discovery** (on-demand `discover_tools` during execution)—
-> and output a unified comparison table (accuracy / injection tokens / latency). Quantify the token waste of full injection, demonstrate how active discovery
-> uses **embedding vector similarity** to converge hundreds of tools into a few precise candidates, while revealing the inherent limitation of "one-shot pre-filtering"
-> on multi-step cross-domain tasks. **No API key required**: `python demo.py --offline` uses local embeddings + a mock model self-check mechanism.
+> 在 **126 个跨领域工具**的工具库上，一次运行对比三种"工具发现"策略——**全量注入**、
+> **检索预筛选**（一次性语义预选 top-n）、**主动发现**（执行中按需 `discover_tools`）——
+> 并输出统一的对比表（准确率 / 注入 token / 延迟）。量化全量注入的 token 浪费，展示主动发现
+> 如何用**嵌入向量相似度**把上百个工具收敛成几条精准候选，同时揭示"一次性预筛选"在多步跨领域
+> 任务上的内在局限。**无 API key 也能跑**：`python demo.py --offline` 用本地嵌入 + mock 模型自检机制。
 
-## Purpose
+## 目的
 
-When an Agent has hundreds of tools, the common practice is to inject the JSON schemas of all tools into the system prompt at once.
-This introduces two problems:
+当一个 Agent 拥有上百个工具时，常见做法是把全部工具的 JSON schema 一次性塞进 system prompt。
+这会带来两个问题：
 
-1. **Token waste**: The full schema of 126 tools is approximately **11,600 tokens**, and each inference step incurs repeated costs.
-2. **Instruction-following degradation**: Under vaguely worded tasks, the model will "cast a wide net" by invoking both generic fallback tools (`web_search` /
-   `google_search` / `universal_search`) and specialized tools together, or even replace specialized tools with generic search
-   — i.e., the book's example of "choosing a generic web_search to look up a stock price."
+1. **token 浪费**：126 个工具的完整 schema 约 **1.16 万 token**，每一步推理都要重复计费。
+2. **指令遵循退化**：措辞稍泛的任务下，模型会"广撒网"地把通用兜底工具（`web_search` /
+   `google_search` / `universal_search`）和专用工具一起调用，甚至用通用搜索替代专用工具
+   —— 即书中所说的"查股价却选了通用 web_search"。
 
-**Active discovery** keeps only a small set of basic tools in the system prompt plus a `discover_tools(need)` meta-tool. When the model encounters a capability gap,
-it describes the need in natural language, and the system retrieves 3-5 most relevant specialized tools from the tool library using embedding similarity, appending their schemas as
-**user messages** into the conversation (preserving the KV Cache of the system prefix), and updates the status bar's available tool list.
+**主动发现**只在 system 里保留少量基础工具 + 一个 `discover_tools(need)` 元工具。模型遇到能力缺口时，
+用自然语言描述需求，系统用嵌入相似度从工具库检索 3-5 个最相关的专用工具，把它们的 schema 作为
+**user message** 追加进对话（保护 system 前缀的 KV Cache），并更新状态栏可用工具列表。
 
-## Mechanism
+## 机制
 
 ```
-tools_library.py   126 cross-domain tools (finance/web/arxiv/github/geo/weather/media/... 17 domains total)
-                   Each tool has a real name/description/parameters; execution is lightweight mock (focus is on "selecting the right tool")
-                   8 "generic/synonymous" tools (web_search, etc.) are deliberately mixed in, with descriptions exaggerating their omnipotence
-                   select_tools(size): Subset by --tool-set-size, demonstrating "the larger the tool set, the more costly full injection"
-discovery.py       Pluggable embedding backend + tool vector index; OpenAIEmbedder generates vectors with text-embedding-3-small
-                   and caches them in .cache/; search(need) = vectorize need, compute cosine similarity with tool vectors, return top-k
-agent.py           ReAct loop for three strategies (text protocol: model outputs a JSON tool call per step)
-                   - run_full_injection: All 126 tool schemas written into the system prompt
-                   - run_retrieval_prefilter: One-shot retrieval of top-n tools based on the initial query (the book's "retrieval pre-filtering")
-                   - run_active_discovery: Basic tools + discover_tools, on-demand retrieval and loading during execution
-offline_backend.py Offline backend: LocalEmbedder (local hash bag-of-words embedding) + MockChatClient (scripted mock model),
-                   enabling --offline to run the full pipeline without any API key (token/latency are real, accuracy only reflects heuristic routing)
-demo.py            Run selected strategies on the same set of tasks, print token/latency/call trace/whether precisely correct, and output a summary comparison table
+tools_library.py   126 个跨领域工具（finance/web/arxiv/github/geo/weather/media/... 共 17 个领域）
+                   每个工具有真实 name/description/parameters；执行为轻量 mock（重点是"选对工具"）
+                   其中故意混入 8 个"通用/近义"工具（web_search 等），它们的描述夸大自己无所不能
+                   select_tools(size)：按 --tool-set-size 截取子集，演示"工具集越大全量注入越吃亏"
+discovery.py       可插拔嵌入后端 + 工具向量索引；OpenAIEmbedder 用 text-embedding-3-small 生成向量
+                   并缓存到 .cache/；search(need) = 把 need 向量化后与工具向量做余弦相似度返回 top-k
+agent.py           三种策略的 ReAct 循环（文本协议：模型每步输出一个 JSON 工具调用）
+                   - run_full_injection：126 个工具 schema 全部写进 system prompt
+                   - run_retrieval_prefilter：按初始查询一次性检索 top-n 工具注入（书中"检索式预筛选"）
+                   - run_active_discovery：基础工具 + discover_tools，执行中按需检索加载
+offline_backend.py 离线后端：LocalEmbedder（本地哈希词袋嵌入）+ MockChatClient（脚本化 mock 模型），
+                   让 --offline 无需任何 API key 即可跑通全流程（token/延迟真实，准确率仅反映启发式路由）
+demo.py            对同一组任务分别跑所选策略，打印 token / 延迟 / 调用轨迹 / 是否精确选对，并汇总对比表
 ```
 
-**Why use "text injection + text parsing" instead of OpenAI's native function calling?**
-The native function-calling interface imposes strong optimization constraints on tool selection, making it rare to mis-select even with hundreds of tools, thus failing to demonstrate the
-"instruction-following degradation under long context" described in the book. Treating schemas as plain text injected into the prompt and having the model output tool calls as JSON
-is the real mechanism of the control group, and only then can degradation be observed. This is exactly the approach of "injecting schemas into the system prompt (tens of thousands of tokens)" in the book.
+**为什么用"文本注入 + 文本解析"而不是 OpenAI 原生 function calling？**
+原生 function-calling 接口对工具选择做了很强的约束优化，即使上百个工具也极少选错，无法体现书中
+所述的"超长上下文指令遵循退化"。把 schema 当作纯文本塞进 prompt、让模型自己以 JSON 输出工具调用，
+才是控制组的真实机制，也才能观察到退化。这也正是书中"把 schema 注入 system prompt（几万 token）"的写法。
 
-**Why can embedding retrieval avoid mis-selection?** The description of the generic tool `web_search` ("can do anything") dilutes its semantics; whereas specialized tools
-(e.g., `search_news`) have focused descriptions. For a focused `need` ("get the latest news about Tesla"), the focused specialized tool has a higher cosine similarity
-and ranks higher, while the generic tool often fails to make it into the top-k and thus is never loaded — the retrieval layer naturally acts as a "precision filter."
+**为什么嵌入检索能避免错选？** 通用工具 `web_search` 的描述"什么都能做"，语义被稀释；而专用工具
+（如 `search_news`）描述聚焦。对一个聚焦的 `need`（"获取特斯拉最近的新闻"），聚焦的专用工具余弦相似度
+更高、排在前面，通用工具往往进不了 top-k，于是根本不会被加载 —— 检索层天然起到了"精度过滤"作用。
 
-**Why is retrieval pre-filtering insufficient?** Retrieval pre-filtering (`run_retrieval_prefilter`) performs only a single semantic match based on the **initial query**,
-injecting the top-n tools all at once. For multi-step cross-domain tasks like "look up a stock price + search for news," the vector of the initial query often leans toward the first domain,
-and the specialized tool needed for the second sub-task may not make it into the top-n. The model then discovers halfway through that "the tool I want to call isn't even in the list" —
-this is the inherent limitation of one-shot matching pointed out in the book. Active discovery postpones "discovery" to execution time, retrieving separately for each real `need` that emerges,
-thereby filling this gap (in the offline self-check, it can be directly observed that retrieval pre-filtering misses the second tool in half of the multi-step tasks, see table below).
+**检索预筛选为什么不够？** 检索预筛选（`run_retrieval_prefilter`）只按**初始查询**做一次语义匹配、
+一次性注入 top-n 工具。对"查股价 + 搜新闻"这类多步跨领域任务，初始查询的向量往往偏向第一个领域，
+第二个子任务需要的专用工具可能挤不进 top-n，模型执行到一半才发现"想调用的工具根本没在清单里"——
+这正是书中指出的一次性匹配的内在局限。主动发现把"发现"延后到执行中、按每个真实浮现的 `need` 分别检索，
+从而补齐这一缺口（离线自检里可直接观察到：检索预筛选在半数多步任务上漏掉了第二个工具，见下表）。
 
-## Running
+## 运行
 
 ```bash
 pip install -r requirements.txt
 
-# Method A: Offline mechanism self-check (no key required; token/latency are real, accuracy only reflects heuristic routing)
+# 方式 A：离线机制自检（无需任何 key；token/延迟真实，准确率仅反映启发式路由）
 python demo.py --offline
 
-# Method B: Real model (demonstrating "instruction-following degradation" in small models requires a real LLM)
-cp env.example .env    # Fill in OPENAI_API_KEY (both chat and embeddings use OpenAI)
-# Fallback: If no OPENAI_API_KEY but OPENROUTER_API_KEY is set, chat will automatically switch to OpenRouter
-# (model mapped to openai/gpt-5.6-luna, etc.), tool retrieval falls back to local hash embeddings (OpenRouter has no embeddings API).
-python demo.py                                   # All 8 tasks × three strategies
-python demo.py --strategies full,discovery       # Run only two strategies for comparison
-python demo.py --tasks finance+news,crypto+news  # Run only specified tasks (comma-separated)
-python demo.py --tasks 'opinion(诱导)'            # Task IDs with parentheses, remember to quotepython demo.py --tool-set-size 20                # Reduce tool set size to see how full injection's disadvantage scales
-python demo.py --query 'Check Nvidia's stock price and search for related news' --offline   # Temporary single natural language taskpython demo.py --offline --output results/offline.json         # Export structured results
+# 方式 B：真实模型（体现小模型"指令遵循退化"需要真实 LLM）
+cp env.example .env    # 填入 OPENAI_API_KEY（chat 与 embeddings 都用 OpenAI）
+# 兜底：若无 OPENAI_API_KEY 但设置了 OPENROUTER_API_KEY，chat 会自动改走 OpenRouter
+#（模型映射到 openai/gpt-5.6-luna 等），工具检索退用本地哈希嵌入（OpenRouter 无 embeddings 接口）。
+python demo.py                                   # 全部 8 任务 × 三种策略
+python demo.py --strategies full,discovery       # 只跑其中两种策略对比
+python demo.py --tasks finance+news,crypto+news  # 只跑指定任务（逗号分隔）
+python demo.py --tasks 'opinion(诱导)'            # 含括号的任务 id 记得加引号
+python demo.py --tool-set-size 20                # 缩小工具集，看全量注入的劣势如何随规模放大
+python demo.py --query '查英伟达股价再搜点相关新闻' --offline   # 临时单条自然语言任务
+python demo.py --offline --output results/offline.json         # 导出结构化结果
 ```
 
-Default model `gpt-5.6-luna`, can be overridden with `--model` or env: `python demo.py --model gpt-5.6-luna`.
-First run generates embedding vectors for tools and caches them in `.cache/`, subsequent runs reuse them. `python demo.py --help` for all parameters
-(`--query / --tasks / --strategies / --tool-set-size / --top-k / --prefilter-n / --model / --embed-model / --max-steps / --offline / --output`).
+默认模型 `gpt-5.6-luna`，可用 `--model` 或 env 覆盖：`python demo.py --model gpt-5.6-luna`。
+首次运行会为工具生成嵌入向量并缓存到 `.cache/`，之后复用。`python demo.py --help` 查看全部参数
+（`--query / --tasks / --strategies / --tool-set-size / --top-k / --prefilter-n / --model / --embed-model / --max-steps / --offline / --output`）。
 
-## How to Adapt / Extend
+## 如何适配 / 扩展
 
-- **Change model**: `MODEL=gpt-4.1-mini python demo.py` (chat model); `EMBED_MODEL=text-embedding-3-large` to change embedding model
-  (changing the embedding model will automatically rebuild the `.cache/` index due to signature changes).
-- **Change provider / gateway**: Both chat and embeddings use the OpenAI SDK; `OpenAI()` automatically reads the environment variable `OPENAI_BASE_URL`,
-  so pointing to any **OpenAI-compatible** gateway/proxy only requires `OPENAI_BASE_URL=https://your-gateway/v1` (this endpoint must provide both chat and embeddings).
-- **Change tasks / input**: Edit `TASKS` in `tools_library.py` (each entry contains a `prompt` and capability slots for scoring), or use
-  `--tasks` to run only a few, or use `--query` to pass a temporary requirement; to expand the tool library, add or remove entries in `ALL_TOOLS` in `tools_library.py`.
-- **Offline self-check**: `--offline` uses the local hash embedding from `offline_backend.py` + a scripted mock model, requiring no key,
-  suitable for CI, offline environments, or quick pipeline validation; it reproduces the token/latency structure and the mechanism of "retrieval pre-filtering missing tools in one shot,"
-  but does not reproduce the real model's selection behavior under a long-context tool wall (see the real gpt-5.6-luna results below).
+- **换模型**：`MODEL=gpt-4.1-mini python demo.py`（chat 模型）；`EMBED_MODEL=text-embedding-3-large` 换嵌入模型
+  （换嵌入模型会因签名变化自动重建 `.cache/` 索引）。
+- **换供应商 / 网关**：chat 与 embeddings 都走 OpenAI SDK，`OpenAI()` 会自动读取环境变量 `OPENAI_BASE_URL`，
+  因此指向任意 **OpenAI 兼容**的网关/代理只需 `OPENAI_BASE_URL=https://your-gateway/v1`（该端点需同时提供 chat 与 embeddings）。
+- **换任务 / 输入**：编辑 `tools_library.py` 里的 `TASKS`（每条含 `prompt` 与判分用的能力槽位），或用
+  `--tasks` 只跑其中几条，或用 `--query` 传一句临时需求；想扩充工具库同样在 `tools_library.py` 的 `ALL_TOOLS` 中增删。
+- **离线自检**：`--offline` 用 `offline_backend.py` 的本地哈希嵌入 + 脚本化 mock 模型，无需任何 key，
+  适合 CI、无网环境或快速验证流水线；它复现的是 token/延迟结构与"检索预筛选一次性漏工具"的机制，
+  不复现真实模型在长上下文工具墙下的选择行为（后者见下方 gpt-5.6-luna 真实结果）。
 
-## Offline Mechanism Self-Check (Local Embeddings + Mock Model, `python demo.py --offline`)
+## 离线机制自检（本地嵌入 + mock 模型，`python demo.py --offline`）
 
-The table below is from a real `--offline` run (8 tasks × three strategies). **Token/latency are real measurements from tiktoken/wall-clock**;
-**accuracy only reflects the scripted heuristic routing, not the real model's capability**—the mock model is a "strong router" that does not degrade, so full injection also scores perfectly.
+下表为一次真实的 `--offline` 运行（8 任务 × 三策略）。**token/延迟是 tiktoken/wall-clock 真实测量**；
+**准确率仅反映脚本化启发式路由，不代表真实模型能力**——mock 模型是"强路由器"，不会退化，所以全量注入也拿满分。
 
-| Strategy | Precisely Correct | Task Completion | Avg Injection Tokens | Total Injection Tokens | Avg Latency (s) |
+| 策略 | 精确选对 | 任务完成 | 平均注入 token | 总注入 token | 平均延迟(s) |
 |---|---|---|---|---|---|
-| Full Injection | 8/8 | 8/8 | 11630 | 93040 | 0.008 |
-| Retrieval Pre-filtering | 4/8 | 4/8 | 1030 | 8236 | 0.006 |
-| Active Discovery | 8/8 | 8/8 | 974 | 7796 | 0.010 |
+| 全量注入 | 8/8 | 8/8 | 11630 | 93040 | 0.008 |
+| 检索预筛选 | 4/8 | 4/8 | 1030 | 8236 | 0.006 |
+| 主动发现 | 8/8 | 8/8 | 974 | 7796 | 0.010 |
 
-**Two real, reproducible structural conclusions** from the offline self-check:
+离线自检要传达的**两个真实、可复现的结构性结论**：
 
-1. **Token differentiation scales with tool set size**: Full injection is a fixed 11,630 tokens/task; retrieval pre-filtering and active discovery inject only
-   about 1,000 tokens on demand (**~11.9× reduction**). Using `--tool-set-size 20` to shrink the tool set narrows the gap to ~1.8×—confirming "the more tools,
-   the more costly full injection."
-2. **Retrieval pre-filtering structurally misses tools on multi-step cross-domain tasks**: One-shot top-10 retrieval missed the specialized tool needed for the second sub-task
-   in 4 out of 8 tasks (e.g., `academic(诱导)`'s top-10 had no `arxiv_search` at all); the model reaches the middle of execution and cannot call the tool → sub-task fails;   active discovery retrieves separately for each real `need` that emerges, completing 8/8.
+1. **token 随工具集规模放大而分化**：全量注入固定 11,630 token/任务；检索预筛选与主动发现按需只注入
+   约 1,000 token（**~11.9× 精简**）。用 `--tool-set-size 20` 缩小工具集，差距收敛到 ~1.8×——印证"工具越多、
+   全量注入越吃亏"。
+2. **检索预筛选在多步跨领域任务上结构性漏工具**：一次性 top-10 检索在 8 个任务里有 4 个漏掉了第二个子任务
+   所需的专用工具（如 `academic(诱导)` 的 top-10 里根本没有 `arxiv_search`），模型执行到一半调不到工具 →
+   子任务失败；主动发现按每个真实浮现的 `need` 分别检索，8/8 补齐。
 
-## Conclusion (Based on a Real Run, gpt-5.6-luna, 2026-07)
+## 结论（基于一次真实运行，gpt-5.6-luna，2026-07）
 
-> Note: The table below is from a real LLM run (`python demo.py --model gpt-5.6-luna`, 8 tasks × three strategies, OpenAI direct connection
-> chat + `text-embedding-3-small` retrieval). gpt-5.6-luna is a reasoning model that only supports the default `temperature=1`
-> (does not support `temperature=0`; the code automatically falls back to the default temperature upon encountering this error), so this is a **single, non-deterministic** run;
-> token/latency are real measurements, and per-task selection results may vary with sampling. Judgment: ✅=Precisely correct (covers all capability slots and did not mis-select
-> a generic fallback tool); ⚠️=Completed but incidentally mis-selected a generic tool; ❌=Error (missed specialized tool or gave up midway, 0 tool calls).
+> 说明：下表是一次真实 LLM 运行（`python demo.py --model gpt-5.6-luna`，8 任务 × 三策略，OpenAI 直连
+> chat + `text-embedding-3-small` 检索）。gpt-5.6-luna 是推理型模型，仅支持默认 `temperature=1`
+> （不支持 `temperature=0`，代码遇到该报错会自动回退到默认温度），故本次为**单次、非确定性**运行；
+> token/延迟为真实测量，逐任务的选择结果可能随采样波动。判定：✅=精确选对（覆盖全部能力槽位且未错选
+> 通用兜底工具）；⚠️=完成但顺手错选了通用工具；❌=出错（漏用专用工具或中途放弃、0 次工具调用）。
 
-| Task | Full Injection | Retrieval Pre-filtering | Active Discovery | Full Tokens | Discovery Tokens |
+| 任务 | 全量注入 | 检索预筛选 | 主动发现 | 全量 token | 发现 token |
 |---|---|---|---|---|---|
 | finance+news | ✅ | ❌ | ✅ | 11630 | 883 |
 | arxiv+download | ✅ | ❌ | ✅ | 11630 | 927 |
@@ -125,66 +128,103 @@ The table below is from a real `--offline` run (8 tasks × three strategies). **
 | weather+calendar | ❌ | ✅ | ✅ | 11630 | 1055 |
 | forex+weather | ✅ | ✅ | ❌ | 11630 | 295 |
 | crypto+news | ❌ | ⚠️ | ❌ | 11630 | 295 |
-| opinion(induction) | ⚠️ | ❌ | ✅ | 11630 | 688 |
-| academic(induction) | ⚠️ | ⚠️ | ❌ | 11630 | 295 || **Precisely Correct** | **3/8** | **2/8** | **4/8** | | || **Task Completion** | **5/8** | **4/8** | **4/8** | | |
-| **Total Injected Tokens** | | | | **93040** | **4733** |
+| opinion(诱导) | ⚠️ | ❌ | ✅ | 11630 | 688 |
+| academic(诱导) | ⚠️ | ⚠️ | ❌ | 11630 | 295 |
+| **精确选对** | **3/8** | **2/8** | **4/8** | | |
+| **任务完成** | **5/8** | **4/8** | **4/8** | | |
+| **总注入 token** | | | | **93040** | **4733** |
 
-(Retrieval pre-filtering averages 971 tokens/task, total 7768; average latency for the three strategies is approximately 11.5 / 9.6 / 10.7 s, all measured in this run.)
+（检索预筛选平均 971 token/任务、总 7768；三策略平均延迟约 11.5 / 9.6 / 10.7 s，均为本次真实测量。）
 
-1.  **Token savings remain robust (and even more pronounced)**: Full injection injects a fixed **11,630 tokens** per task; active discovery, with on-demand loading, uses only **295~1,055 tokens**, totaling 93,040 → 4,733 (**~19.7×**). It must be honestly noted: this ratio is larger partly because gpt-5.6-luna directly gave up on several tasks without triggering `discover_tools` (injecting only 3 basic tools = 295 tokens). Even so, the structural benefit of "full injection fixedly billing tens of thousands of tokens repeatedly, while on-demand discovery only injects thousands of tokens" remains unaffected.
+1. **token 节省依旧稳健（且更悬殊）**：全量注入每任务固定注入 **11,630 token**；主动发现按需加载后仅
+   **295~1,055 token**，合计 93,040 → 4,733（**~19.7×**）。需诚实说明：本次比值偏大，部分是因为
+   gpt-5.6-luna 在若干任务上直接放弃、根本没触发 `discover_tools`（此时只注入 3 个基础工具 = 295 token）。
+   即便如此，"全量注入固定重复计费上万 token、按需发现只注入千级 token"这一结构性收益不受影响。
 
-2.  **Core phenomena from the book are faithfully reproduced on the two "inducement tasks"**: When wording is vague, full injection tends to grab general-purpose fallback tools:
-    -   `opinion(inducement)` ("Tesla's recent news and public opinion trends"): Full injection called `search_news, search_news, web_search, search_tweets`, also using the general-purpose **`web_search`** (⚠️ wrong selection); active discovery retrieved `search_news / get_news_by_source / ...` (**no** `web_search`), calling only specialized news tools, **clean and correct (✅)**.
-    -   `academic(inducement)` ("Latest scientific research progress in quantum computing"): Full injection called 8 tools at once, including **`google_search / universal_search / ask_knowledge_base`**, all general-purpose fallbacks (⚠️); retrieval pre-filtering also incorrectly selected `google_search / universal_search`. This is exactly the portrayal from the book of "a tool wall of hundreds of tools + vague wording → casting a wide net and grabbing general-purpose tools".
+2. **书中核心现象在两个"诱导任务"上如实复现**：措辞偏泛时，全量注入会顺手抓通用兜底工具——
+   - `opinion(诱导)`（"特斯拉最近的新闻舆论风向"）：全量注入调用了 `search_news, search_news,
+     web_search, search_tweets`，把通用的 **`web_search`** 也用上（⚠️ 错选）；主动发现检索到
+     `search_news / get_news_by_source / ...`（**没有** `web_search`），只调用专用新闻工具，**干净选对（✅）**。
+   - `academic(诱导)`（"量子计算最新科研进展"）：全量注入一口气调用了 8 个工具，其中
+     **`google_search / universal_search / ask_knowledge_base`** 三个都是通用兜底（⚠️）；检索预筛选也错选了
+     `google_search / universal_search`。这正是书中"上百工具的工具墙 + 措辞含糊 → 广撒网抓通用工具"的写照。
 
-3.  **Another type of real behavior exposed in this run (different from the earlier gpt-4o-mini run, must be faithfully recorded)**: gpt-5.6-luna is a conservative reasoning model. On several tasks, it **finished early without calling (mock) tools**, often citing "inability to access real-time data/tools" (e.g., `github+viz`, `weather+calendar` for full injection, and `forex+weather`, `crypto+news`, `academic` for active discovery, all showed 0 tool calls). This lowered the absolute accuracy for all three strategies and also means that **this run cannot conclude** that "the model always selects correctly when facing a tool wall on clear tasks" – on the contrary, giving up/missing steps became the main source of errors, and this type of error exists in both full injection and active discovery.
+3. **本次运行暴露的另一类真实行为（与早期 gpt-4o-mini 运行不同，须如实记录）**：gpt-5.6-luna 是偏保守的
+   推理型模型，在多个任务上**没有调用（mock）工具就提前 `finish`**，理由多为"无法访问实时数据/工具"
+   （如 `github+viz`、`weather+calendar` 的全量注入，以及 `forex+weather`、`crypto+news`、`academic` 的
+   主动发现，均出现 0 次工具调用）。这压低了三种策略的绝对准确率，也意味着本次**得不出**"清晰任务下模型
+   面对工具墙一律选对"的结论——恰恰相反，放弃/漏步成了主要失分点，且这类失分在全量注入与主动发现上都存在。
 
-4.  **Honest explanation of boundaries**:
-    -   This experiment uses a control group mechanism of "injecting schemas as plain text + the model self-outputting JSON tool calls" to observe long-context selection behavior; mock tools return placeholder data, and conservative reasoning models sometimes see through this and refuse to answer, which is a major source of the low accuracy in this run.
-    -   Because gpt-5.6-luna only supports the default `temperature=1`, per-task results are stochastic; which tasks "give up" and which "incorrectly select general-purpose tools" will fluctuate in repeated runs, but the two structural conclusions (token savings, full injection misusing general-purpose tools on inducement tasks) are directionally stable.
-    -   For a cleaner, reproducible mechanism self-check (token/latency structure + retrieval pre-filtering one-shot tool omission), see the `--offline` table above.
+4. **如实说明的边界**：
+   - 本实验用"schema 当纯文本注入 + 模型自行输出 JSON 工具调用"的控制组机制来观察长上下文选择行为；
+     mock 工具返回的是占位数据，保守的推理模型有时会识破并拒绝作答，这是本次准确率偏低的一大来源。
+   - 因 gpt-5.6-luna 仅支持默认 `temperature=1`，逐任务结果具随机性；重复运行时哪些任务"放弃"、哪些
+     "错选通用工具"会有波动，但两条结构性结论（token 节省、诱导任务下全量注入误用通用工具）方向稳定。
+   - 想要更干净、可复现的机制自检（token/延迟结构 + 检索预筛选一次性漏工具），见上方 `--offline` 表。
 
-> In a nutshell: **On gpt-5.6-luna, the most stable benefit of active tool discovery remains tokens (~19.7× in this run); on "inducement tasks" with vague wording where general-purpose tools are easily misused, embedding retrieval indeed blocks exaggerated general-purpose tools like `web_search / google_search / universal_search` from the candidate set. However, this version of the real run also reminds us: the conservative "give up" behavior of strong reasoning models simultaneously lowers the absolute accuracy of all strategies, and single-run results must be interpreted faithfully according to the table above.**
+> 一句话：**在 gpt-5.6-luna 上，主动工具发现最稳的收益仍是 token（本次 ~19.7×）；在措辞含糊、通用工具
+> 易被误用的"诱导任务"上，嵌入检索确实把 `web_search / google_search / universal_search` 等夸大其词的
+> 通用工具挡在候选之外。但这一版真实运行也提醒：强推理模型保守的"放弃"行为会同时拉低各策略的绝对准确率，
+> 单次结果需按上表如实解读。**
 
-## Model ↔ Scaffolding Trade-off (Weak Model gpt-4o-mini vs Strong Model gpt-5.6-luna, Both Real Runs)
+## 模型 ↔ 脚手架此消彼长（弱模型 gpt-4o-mini vs 强模型 gpt-5.6-luna，均为真实运行）
 
-> This section answers a direct question: **As models become stronger, does this "active tool discovery" scaffolding become useless?**
-> We compare the gpt-5.6-luna (strong) results above with a real run of **gpt-4o-mini (weak)** under the same 8 tasks × 3 strategies, using OpenAI direct chat + `text-embedding-3-small` retrieval
-> (`python demo.py --model gpt-4o-mini`, July 2026, same judgment criteria). The conclusion is: the scaffolding has two types of value, one that **fades** as models become stronger, and another that is **independent of model strength and always exists**.
+> 这一节回答一个直接的问题：**模型变强，这套"主动工具发现"脚手架是不是就没用了？**
+> 我们把上面的 gpt-5.6-luna（强）结果，与同样 8 任务 × 三策略、OpenAI 直连 chat +
+> `text-embedding-3-small` 检索的 **gpt-4o-mini（弱）** 真实运行放在一起对照
+> （`python demo.py --model gpt-4o-mini`，2026-07，判定口径同上）。结论是：脚手架有两种价值，
+> 一种随模型变强而**淡出**，另一种与模型强弱**无关、始终存在**。
 
-**Weak model gpt-4o-mini real summary:**
+**弱模型 gpt-4o-mini 真实汇总：**
 
-| Strategy | Precise Correct | Task Completion | Total Injected Tokens | Avg Latency(s) |
+| 策略 | 精确选对 | 任务完成 | 总注入 token | 平均延迟(s) |
 |---|---|---|---|---|
-| Full Injection | 5/8 | **8/8** | 93040 | 8.38 |
-| Retrieval Pre-filtering | 7/8 | 7/8 | 7768 | 4.90 |
-| Active Discovery | **8/8** | **8/8** | 7266 | 7.65 |
+| 全量注入 | 5/8 | **8/8** | 93040 | 8.38 |
+| 检索预筛选 | 7/8 | 7/8 | 7768 | 4.90 |
+| 主动发现 | **8/8** | **8/8** | 7266 | 7.65 |
 
-(Tokens 93040 → 7266, **~12.8×** reduction.)
+（token 93040 → 7266，**~12.8×** 精简。）
 
-### Value 1: Avoiding "Incorrect Selection of General-Purpose Tools" – **Fades** as Models Become Stronger
+### 价值一：避免"错选通用工具"—— 随模型变强而**淡出**（fading）
 
--   **Weak model gpt-4o-mini: Scaffolding value is huge and clean.** Under full injection, gpt-4o-mini never gives up (task completion 8/8), but on 3 tasks it "cast a wide net" and grabbed general-purpose fallback tools – `crypto+news` used `web_search`, and the two inducement tasks `opinion` / `academic` each called `web_search / google_search / universal_search` together – so full injection achieved only **5/8 precise**. Active discovery allowed embedding retrieval to **block these exaggerated general-purpose tools from the candidate set**, making it impossible for gpt-4o-mini to misuse them: **8/8 precise, 0 general-purpose tool misuses, and task completion did not decrease (still 8/8)**. This is exactly the weak model ailment of "a tool wall of hundreds of tools + vague wording → casting a wide net and grabbing general-purpose tools" described in the book, and the scaffolding cures it in one go.
--   **Strong model gpt-5.6-luna: The same value is significantly diminished.** Its "general-purpose tool misuse" under full injection is limited to only 2 tasks (`opinion` / `academic`), fewer than gpt-4o-mini's 3; active discovery cleans up these two instances, but the precise rate only increases from **3/8 to 4/8 (+1)**, and **task completion actually decreases from 5/8 to 4/8**. The reason is that the strong reasoning model's main source of error is **not "selecting the wrong tool," but "directly giving up"**: on several tasks, it called 0 tools and `finished` (often citing "inability to access real-time data"). The retrieval layer cannot fix this type of error, and with fewer tools visible, it might even be slightly exacerbated. **In other words, the weakness that the scaffolding specifically treats – "incorrectly selecting general-purpose tools" – is already thin in strong models, and the benefit fades accordingly.**
+- **弱模型 gpt-4o-mini：脚手架价值巨大且干净。** 全量注入下，gpt-4o-mini 从不放弃（任务完成 8/8），
+  但在 3 个任务上"广撒网"抓了通用兜底工具——`crypto+news` 用了 `web_search`，两个诱导任务
+  `opinion` / `academic` 各自把 `web_search / google_search / universal_search` 一并调用——
+  于是全量注入只有 **5/8 精确**。主动发现让嵌入检索把这些夸大其词的通用工具**挡在候选之外**，
+  gpt-4o-mini 根本无从误用：**8/8 精确、0 次通用工具误用、且任务完成不降（仍 8/8）**。
+  即"全量 5/8 → 发现 8/8 精确，+3 个任务，零完成损失"——这正是书中"上百工具的工具墙 +
+  措辞含糊 → 广撒网抓通用工具"的弱模型病症，脚手架把它一次性治好。
+- **强模型 gpt-5.6-luna：同一价值明显缩水。** 它在全量注入下的"通用工具误用"只剩 2 个任务
+  （`opinion` / `academic`），比 gpt-4o-mini 的 3 个更少；主动发现把这两处也擦干净，但精确率只从
+  **3/8 提到 4/8（+1）**，而且**任务完成反而从 5/8 降到 4/8**。原因在于强推理模型的主要失分点
+  **不是"选错工具"，而是"直接放弃"**：多个任务它 0 次工具调用就 `finish`（理由多为"无法访问实时数据"），
+  这类失分检索层无法修复，工具可见得更少时甚至略微加剧。**换言之，脚手架专治的"错选通用工具"这一弱点，
+  在强模型上本就稀薄，收益随之淡出。**
 
-### Value 2: Saving Injected Tokens – **Independent of Model Strength, Always Exists** (Persisting)
+### 价值二：节省注入 token —— 与模型强弱**无关、始终存在**（persisting）
 
-Full injection, regardless of model strength, is fixed at **11,630 tokens/task** (stuffing all 126 tool schemas into the system). On-demand discovery injects only a few hundred to over a thousand tokens:
+全量注入无论模型强弱都固定为 **11,630 token/任务**（把 126 个工具 schema 全塞进 system），
+这是纯结构性开销。按需发现只注入几百到一千余 token：
 
--   Weak model gpt-4o-mini: 93,040 → 7,266, **~12.8×**;
--   Strong model gpt-5.6-luna: 93,040 → 4,733, **~19.7×** (the ratio is larger, partly because it often gave up and never triggered `discover_tools`, injecting only 3 basic tools).
+- 弱模型 gpt-4o-mini：93,040 → 7,266，**~12.8×**；
+- 强模型 gpt-5.6-luna：93,040 → 4,733，**~19.7×**（比值更大，部分是因为它常放弃、根本没触发 `discover_tools`，
+  只注入 3 个基础工具）。
 
-Token savings are solidly established for both models and scale up with a larger tool set – **this benefit does not disappear as models become stronger** and is a hard reason for the scaffolding to remain valuable in the "era of strong models."
+两个模型上 token 节省都稳稳成立，且随工具集变大而放大——**这份收益不因模型变强而消失**，
+是脚手架在"强模型时代"仍然值得保留的硬理由。
 
-### One-Sentence Summary
+### 一句话小结
 
-> **The stronger the model, the more the scaffolding's value of "helping it avoid selecting the wrong tool" fades (gpt-4o-mini full 5/8 → discovery 8/8 precise, zero completion loss; gpt-5.6-luna only 3/8 → 4/8 with completion even decreasing, because its errors are "giving up" rather than "wrong selection"); but the value of "saving tokens" is independent of model strength and always exists (weak model ~12.8×, strong model ~19.7×, full injection constant at 11,630 tokens/task). Therefore, on strong models, the primary reason for active tool discovery shifts from "correcting instruction-following degradation" to "controlling context cost."**
+> **模型越强，脚手架"帮它别选错工具"的价值越淡（gpt-4o-mini 全量 5/8→发现 8/8 精确、零完成损失；
+> gpt-5.6-luna 仅 3/8→4/8 且完成还降了，因为它的失分是"放弃"而非"错选"）；但"省 token"的价值
+> 与模型强弱无关、始终存在（弱模型 ~12.8×、强模型 ~19.7×，全量注入恒为 11,630 token/任务）。
+> 所以在强模型上，主动工具发现的主要理由从"纠正指令遵循退化"转向"控制上下文成本"。**
 
-## Files
+## 文件
 
--   `tools_library.py` — 126 tool definitions + `select_tools` subset extraction + mock execution + 8 evaluation tasks and scoring criteria
--   `discovery.py` — Pluggable embedding backend (`OpenAIEmbedder`) + tool vector index and similarity retrieval (`discover_tools`/pre-filtering backend)
--   `agent.py` — ReAct loop and token statistics for three strategies (full injection / retrieval pre-filtering / active discovery)
--   `offline_backend.py` — Offline backend: `LocalEmbedder` + `MockChatClient`, supporting `--offline` keyless self-check
--   `demo.py` — One-click multi-strategy comparison demo (includes CLI: `--query/--tasks/--strategies/--tool-set-size/--offline/--output`, etc.)
--   `requirements.txt` / `env.example`
+- `tools_library.py` — 126 个工具定义 + `select_tools` 子集截取 + mock 执行 + 8 个评测任务与判分标准
+- `discovery.py` — 可插拔嵌入后端（`OpenAIEmbedder`）+ 工具向量索引与相似度检索（`discover_tools`/预筛选的后端）
+- `agent.py` — 三种策略（全量注入 / 检索预筛选 / 主动发现）的 ReAct 循环与 token 统计
+- `offline_backend.py` — 离线后端：`LocalEmbedder` + `MockChatClient`，支撑 `--offline` 无 key 自检
+- `demo.py` — 一键多策略对比演示（含 CLI：`--query/--tasks/--strategies/--tool-set-size/--offline/--output` 等）
+- `requirements.txt` / `env.example`

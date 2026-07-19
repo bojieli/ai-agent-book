@@ -96,7 +96,7 @@ async def guarding_reasoning_process(
         # Prepare the guarding prompt
         prompt = _prepare_guarding_prompt(
             question, original_task
-        )  ## Simple raw question + question assigned to MCP server
+        )  ## 简单的原始问题+分配给mcp server的问题
 
         # Enhance prompt based on guarding style
         if guarding_style == "step-by-step":

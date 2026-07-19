@@ -1,40 +1,42 @@
-# pptx Skill — Technical Details (Layer 3 / Deepest Progressive Disclosure)
+# pptx Skill —— 技术细则（第三层 / 渐进式披露最深一层）
 
-This file corresponds to the third layer of the book's "progressive disclosure": it is only read when the Agent needs to control layout, color schemes, or troubleshoot generation issues; it does not occupy context during normal use.
+本文件对应本书「渐进式披露」的第三层：只有当 Agent 需要控制版式、配色，
+或排查生成问题时才会读取，平时不占用上下文。
 
-## Layout Conventions
+## 版式约定
 
-The generator uses the blank layout of python-pptx (`slide_layouts[6]`) and manually positions text boxes, thereby fully controlling the layout without relying on template placeholders:
+生成器使用 python-pptx 的空白版式（`slide_layouts[6]`），并手动摆放文本框，
+从而完全掌控排版，不依赖模板占位符：
 
-- Canvas size: 10 x 7.5 inches (4:3).
-- **Title slide**: Dark blue background (RGB 1F4E79), white centered large title (40pt) + light blue subtitle (20pt).
-- **Content slides**: White background, page title (26pt white text) inside a dark blue bar at the top, with a bullet list (18pt) below.
+- 画布尺寸：10 x 7.5 英寸（4:3）。
+- **标题页**：深蓝底（RGB 1F4E79），白色居中大标题（40pt）+ 浅蓝副标题（20pt）。
+- **内容页**：白底，顶部深蓝色条内放页标题（26pt 白字），下方为要点列表（18pt）。
 
-## Color Scheme
+## 配色
 
-| Name   | RGB      | Usage                |
-|--------|----------|----------------------|
-| ACCENT | #1F4E79  | Title slide background / color bar |
-| DARK   | #222222  | Body text            |
-| LIGHT  | #F2F5FA  | Alternate light background |
+| 名称   | RGB      | 用途           |
+|--------|----------|----------------|
+| ACCENT | #1F4E79  | 标题页底 / 色条 |
+| DARK   | #222222  | 正文文字        |
+| LIGHT  | #F2F5FA  | 备用浅背景      |
 
-## python-pptx Key Points
+## python-pptx 关键点
 
-- `Presentation()` creates a new presentation; `prs.slides.add_slide(layout)` adds a slide.
-- Text must be placed inside a `text_frame`, using `add_paragraph()` for each paragraph and `add_run()` for each run to set fonts.
-- Solid page background: call `slide.background.fill.solid()` then set `fore_color.rgb`.
-- Shape type `1` corresponds to a rectangle (MSO_SHAPE.RECTANGLE), used for the top color bar.
-- Save: `prs.save(path)`, the extension must be `.pptx`.
+- `Presentation()` 新建演示文稿；`prs.slides.add_slide(layout)` 增页。
+- 文本必须放进 `text_frame`，逐段 `add_paragraph()`、逐段 `add_run()` 设置字体。
+- 纯色页背景：`slide.background.fill.solid()` 后设 `fore_color.rgb`。
+- 形状类型 `1` 对应矩形（MSO_SHAPE.RECTANGLE），用于顶部色条。
+- 保存：`prs.save(path)`，扩展名必须是 `.pptx`。
 
-## Validation Suggestions
+## 校验建议
 
-Reopen the file after generation to verify validity:
+生成后重新打开文件即可验证有效性：
 
 ```python
 from pptx import Presentation
 prs = Presentation("output/deck.pptx")
-print(len(list(prs.slides)))               # Number of slides
-for s in prs.slides:                        # First text on each slide
+print(len(list(prs.slides)))               # 页数
+for s in prs.slides:                        # 每页第一个文本
     for shp in s.shapes:
         if shp.has_text_frame and shp.text_frame.text.strip():
             print(shp.text_frame.text.strip().splitlines()[0]); break

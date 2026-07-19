@@ -1,4 +1,4 @@
-# Generated videos, screenshots, final cuts — avoid repository bloat
+# 生成的视频、截图、成片——避免仓库膨胀
 output/
 __pycache__/
 .env

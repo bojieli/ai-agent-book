@@ -1,105 +1,109 @@
-# Multi-Dimensional Model Performance Benchmark (Code for Experiment 6-8)
+# 多维度模型性能基准测试（实验 6-8 配套代码）
 
-A horizontal benchmark for multiple OpenAI-compatible LLM API providers. Run a single command to produce a multi-dimensional comparison table of
-**TTFT / End-to-End Latency / Throughput / Std Dev / p50 / p95 / p99 / Success Rate**,
-providing empirical data for model selection. Also supports **concurrency stress testing** (stepwise pressure increase to find rate limits, observing how metrics change with concurrency)
-and **offline self-check** (`--mock` synthetic data, no key/network required to verify metric aggregation).
+对多个 OpenAI 兼容的 LLM API 提供商做横向基准测试，一条命令跑出
+**TTFT / 端到端延迟 / 吞吐 / 标准差 / p50 / p95 / p99 / 成功率** 的多维度对比表，
+为模型选型提供实测依据。还支持**并发压测**（逐档加压找限流点，看指标随并发的变化）
+与**离线自检**（`--mock` 合成数据，无需 key/网络即可验证指标聚合）。
 
-Corresponds to Chapter 6, **Experiment 6-8: Multi-Dimensional Model Performance Benchmark** in *Understanding AI Agents*.
+对应《深入理解 AI Agent》第 6 章 **实验 6-8：多维度模型性能基准测试**。
 
-## Purpose
+## 目的
 
-The full version of Experiment 6-8 in the book requires "probing every hour for a week, 8K/32K/128K context, 100+ requests, MTTR/rate-limit thresholds/comprehensive cost", etc. This companion code focuses on the **most core, low-cost, locally reproducible** part: using **streaming interfaces** to precisely measure time-to-first-token,
-measuring latency percentiles and throughput under **concurrency**, and characterizing availability with **success rate** —
-allowing readers to obtain a real multi-provider comparison table in minutes for pennies,
-and understand that "model selection is a multi-dimensional trade-off, not just looking at a leaderboard."
+书中实验 6-8 的完整版要求"一周内每小时探测、8K/32K/128K 上下文、
+100+ 请求、MTTR/限流阈值/综合成本"等。本配套代码聚焦其中**最核心、
+可低成本本地复现**的一环：用**流式接口**精确测量首 token 延迟，
+在**并发**下测出延迟分位数与吞吐，并以**成功率**刻画可用性——
+让读者用几分钟、几分钱就能得到一张真实的多提供商对比表，
+理解"选型是多维权衡而非单看排行榜"。
 
-## Metric Definitions
+## 指标定义
 
-| Metric | Meaning | How It's Measured |
+| 指标 | 含义 | 怎么测的 |
 | --- | --- | --- |
-| Success Rate (Availability) | Successful requests / Total requests | Any exception (timeout/rate-limit/network error/empty response) for a single request counts as failure, without aborting the entire table |
-| TTFT | Time to first token | Streaming read, record the arrival time of the first "content" chunk − request send time |
-| End-to-End Latency | Total time from request send to response end | Last chunk time − request send time |
-| Throughput (tokens/s) | Output speed during generation phase | Output tokens / (End-to-End − TTFT), stripping out first-token wait, reflecting pure decoding speed |
-| p50 / p95 / p99 | Median / 95th / 99th percentile of latency | Linear interpolation after sorting multiple successful requests for the same (provider, model); high p95/p99 indicates heavy tail and unstable experience |
-| Std Dev (std) | Dispersion of latency | Sample standard deviation; the book emphasizes "high latency variance means unstable user experience" |
-| Aggregate Throughput / RPS | Total throughput of the batch | During concurrency stress testing: total output tokens of all successful requests / total wall-clock time of the batch (RPS = successful requests / wall-clock time); as concurrency increases, it first rises then plateaus, hitting the server-side limit at the plateau point |
+| 成功率（可用性） | 成功请求数 / 总请求数 | 单次请求任何异常（超时/限流/网络错误/空响应）都计为失败，不中断整表 |
+| TTFT | 首个 token 到达延迟 | 流式读取，记录第一个"有内容" chunk 到达的时刻 − 请求发出时刻 |
+| 端到端延迟 | 请求发出到响应结束的总耗时 | 最后一个 chunk 时刻 − 请求发出时刻 |
+| 吞吐（tokens/s） | 生成阶段的输出速度 | 输出 token 数 / (端到端 − TTFT)，剥离首 token 等待，反映纯解码速度 |
+| p50 / p95 / p99 | 延迟的中位数 / 95 / 99 分位 | 对同一 (provider, model) 的多次成功请求排序后线性插值；p95、p99 高说明长尾重、体验不稳 |
+| 标准差（std） | 延迟的离散程度 | 样本标准差；书中强调"高延迟方差意味着用户体验不稳定" |
+| 聚合吞吐 / RPS | 整批的总吞吐 | 并发压测时：全部成功请求的输出 token 总数 / 整批墙钟耗时（RPS 为成功请求数 / 墙钟）；随并发上升先增后趋平，触及服务端上限即触顶 |
 
-> Output token count preferentially uses the server-returned precise `usage.completion_tokens`;
-> if the service does not return usage, it is approximated by counting streaming chunks (slightly overestimated, noted in code comments).
+> 输出 token 数优先取服务端回传的精确 `usage.completion_tokens`；
+> 若服务不返回 usage，则以流式 chunk 数近似计数（会略微偏高，已在代码注释标明）。
 
-## Running
+## 运行
 
 ```bash
 cd chapter6/model-benchmark
 pip install -r requirements.txt
 
-# Configure keys: only fill in the ones you have; providers without keys are automatically skipped
-cp env.example .env        # Then edit .env
-# Or directly export OPENAI_API_KEY=... MOONSHOT_API_KEY=... ARK_API_KEY=...
+# 配置 key：只需填手上有的，未设置的提供商会自动跳过
+cp env.example .env        # 然后编辑 .env
+# 或直接 export OPENAI_API_KEY=... MOONSHOT_API_KEY=... ARK_API_KEY=...
 
-python demo.py             # Run a single command to produce the comparison table
+python demo.py             # 一条命令跑出对比表
 ```
 
-Common parameters:
+常用参数：
 
 ```bash
-python demo.py --list                          # Only list providers to be tested
-python demo.py --num-requests 20 --concurrency 5   # Increase sample size and concurrency
-python demo.py --serial                        # Send serially (concurrency=1, measure baseline latency without contention)
-python demo.py --max-tokens 256                # Generate longer responses for more thorough throughput measurement
+python demo.py --list                          # 仅列出将测试的提供商
+python demo.py --num-requests 20 --concurrency 5   # 加大样本与并发
+python demo.py --serial                        # 串行发送（并发=1，看无竞争下的基线延迟）
+python demo.py --max-tokens 256                # 生成更长响应，更充分地测吞吐
 ```
 
-Default parameters (`N=10/provider, concurrency=3, max_tokens=64`) cost about a few cents for a full run.
-To approach the book's statistical requirement of "≥100 requests per configuration", set `--num-requests` to 100
-(note that cost and rate limits will increase accordingly).
+默认参数（`N=10/家, 并发=3, max_tokens=64`）单次全跑成本约几分钱。
+要接近书中"每配置 ≥100 次请求"的统计口径，把 `--num-requests` 调到 100 即可
+（注意成本与限流会同步上升）。
 
-### Specify Any OpenAI-Compatible Endpoint (Test New Models/Providers Without Changing Code)
+### 指定任意 OpenAI 兼容端点（不改代码测新模型/新提供商）
 
-The book requires "testing the same model against different API providers (e.g., DeepSeek official vs SiliconFlow)".
-Use `--base-url / --model / --api-key-env` to directly specify a single endpoint without modifying `DEFAULT_PROVIDERS`:
+书中要求"对同一模型测试不同 API 提供商（如 DeepSeek 官方 vs SiliconFlow）"。
+用 `--base-url / --model / --api-key-env` 即可直接指定单个端点，无需改 `DEFAULT_PROVIDERS`：
 
 ```bash
 python demo.py --base-url https://api.deepseek.com --model deepseek-chat \
-               --api-key-env DEEPSEEK_API_KEY --name "DeepSeek Official/deepseek-chat"
-# Change base_url, keep the same model, to compare "same model, different providers"
+               --api-key-env DEEPSEEK_API_KEY --name "DeepSeek官方/deepseek-chat"
+# 换个 base_url、保持同一 model，即可对比"同模型不同提供商"
 ```
 
-### Concurrency Stress Testing: Stepwise Pressure Increase to Find Rate Limits
+### 并发压测：逐步加压找限流点
 
-Experiment 6-8 in the book requires "finding rate limits by gradually increasing concurrency, recording RPM/TPM limits."
-`--concurrency-sweep` applies stepwise pressure to the same model, producing a table of metrics as concurrency changes
-(p50/p95/p99/std/success rate/RPS/aggregate throughput):
+书中实验 6-8 要求"通过逐步提升并发量来找到限流点，记录 RPM/TPM 上限"。
+`--concurrency-sweep` 对同一模型逐档加压，产出一张随并发变化的指标表
+（p50/p95/p99/std/成功率/RPS/聚合吞吐）：
 
 ```bash
 python demo.py --model gpt-5.6-luna --concurrency-sweep 1,2,4,8,16 --num-requests 100
 ```
 
-As concurrency increases, single-request latency tail (p95/p99/std) typically worsens, availability may decrease due to rate limiting,
-while **aggregate throughput (tokens/s) and RPS first rise then plateau** — the plateau point is the server's actual throughput limit.
+随着并发上升，单请求延迟长尾（p95/p99/std）通常变差、可用性可能因限流下降，
+而**聚合吞吐（tokens/s）与 RPS 先升后趋平**——趋平点即服务端的实际吞吐上限。
 
-### Select Metrics to Display / Export Results
-
-```bash
-python demo.py --metrics ttft,throughput      # Main table shows only TTFT and throughput (success rate always shown)
-python demo.py --output result.json           # Write full results (including p50/p95/p99/std) to JSON
-```
-
-### Offline Self-Check (`--mock`, No Key/Network Required)
-
-Run the entire metric aggregation pipeline with **synthetic data**, convenient for verifying p50/p95/p99/std/availability/aggregate throughput calculations without an API key or network. **All output numbers are pseudo-random synthetic, marked with `[SYNTHETIC]`, not real benchmarks. Never use for model selection.**
+### 选择要显示的指标 / 导出结果
 
 ```bash
-python demo.py --mock                                   # Synthetic horizontal comparison table
-python demo.py --mock --concurrency-sweep 1,2,4,8,16     # Synthetic concurrency stress test table
+python demo.py --metrics ttft,throughput      # 主表只看 TTFT 与吞吐（成功率始终显示）
+python demo.py --output result.json           # 完整结果（含 p50/p95/p99/std）写入 JSON
 ```
 
-Output of a single synthetic concurrency stress test (`--mock --concurrency-sweep 1,2,4,8,16 --num-requests 100`,
-**numbers are synthetic, for trend demonstration only**):
+### 离线自检（`--mock`，无需 key/网络）
+
+用**合成（synthetic）数据**跑通整条指标聚合链路，便于在没有 API key 或无网络时
+验证 p50/p95/p99/std/可用性/聚合吞吐的计算是否正确。**输出数字全部为伪随机合成，
+带 `[SYNTHETIC]` 标注，绝非真实基准，切勿用于选型。**
+
+```bash
+python demo.py --mock                                   # 合成横向对比表
+python demo.py --mock --concurrency-sweep 1,2,4,8,16     # 合成并发压测表
+```
+
+一次合成并发压测的输出（`--mock --concurrency-sweep 1,2,4,8,16 --num-requests 100`，
+**数字为合成，仅演示趋势**）：
 
 ```
-Concurrency | Success Rate      | TTFT_p50 | TTFT_p95 | End-to-End p50 | End-to-End p95 | End-to-End p99 | End-to-End std | RPS  | Aggregate Throughput
+并发 | 成功率         | TTFT_p50 | TTFT_p95 | 端到端p50 | 端到端p95 | 端到端p99 | 端到端std | RPS  | 聚合吞吐
 -----+----------------+----------+----------+-----------+-----------+-----------+-----------+------+----------
 1    | 99/100 (99%)   | 301ms    | 514ms    | 0.73s     | 1.04s     | 1.16s     | 0.13s     | 1.3  | 49.8 t/s
 2    | 100/100 (100%) | 335ms    | 570ms    | 0.79s     | 1.07s     | 1.19s     | 0.15s     | 2.5  | 94.4 t/s
@@ -108,64 +112,76 @@ Concurrency | Success Rate      | TTFT_p50 | TTFT_p95 | End-to-End p50 | End-to-
 16   | 97/100 (97%)   | 878ms    | 1487ms   | 1.30s     | 1.97s     | 2.37s     | 0.35s     | 11.9 | 441.0 t/s
 ```
 
-As concurrency increases: End-to-End p95/p99 and std rise (worse tail), aggregate throughput continues to grow (not yet plateaued).
-On a real endpoint, this curve will plateau at some concurrency level accompanied by a drop in availability — that is the rate limit point.
+可见随并发上升：端到端 p95/p99 与 std 走高（长尾变差），聚合吞吐持续增长（尚未触顶）。
+真实端点上这条曲线会在某个并发处趋平并伴随可用性下降——那就是限流点。
 
-## Default Tested Providers
+## 默认测试的提供商
 
-`DEFAULT_PROVIDERS` in the code only runs providers with **valid keys** (OpenAI one key tests multiple models):
+代码里 `DEFAULT_PROVIDERS` 默认只跑**手上有有效 key**的提供商（OpenAI 一个 key 测多个模型）：
 
-| Display Name | Model | base_url | Key Environment Variable |
+| 展示名 | 模型 | base_url | key 环境变量 |
 | --- | --- | --- | --- |
-| OpenAI/gpt-5.6-luna | gpt-5.6-luna | (Official default, can fallback to OpenRouter) | OPENAI_API_KEY |
+| OpenAI/gpt-5.6-luna | gpt-5.6-luna | （官方默认，可回退 OpenRouter） | OPENAI_API_KEY |
 | Moonshot/moonshot-v1-8k | moonshot-v1-8k | https://api.moonshot.cn/v1 | MOONSHOT_API_KEY |
 | Doubao/doubao-1.5-pro-32k | doubao-1-5-pro-32k-250115 | https://ark.cn-beijing.volces.com/api/v3 | ARK_API_KEY |
 
-> **OpenRouter Fallback**: The `OpenAI/*` entries (native OpenAI entries with empty base_url) will automatically fall back to **OpenRouter** (`OPENROUTER_API_KEY`, model name mapped to `openai/*`) when `OPENAI_API_KEY` is not set. Direct connection to `gpt-5.x` via OpenAI requires organizational real-name authentication, so as long as `OPENROUTER_API_KEY` is set, OpenRouter is preferred. Entries with dedicated `base_url` (Kimi/Doubao) do not participate in the fallback.
+> **OpenRouter 回退**：`OpenAI/*` 这几条（base_url 为空的 OpenAI 原生条目）在未设置
+> `OPENAI_API_KEY` 时会自动改走 **OpenRouter**（`OPENROUTER_API_KEY`，模型名映射为
+> `openai/*`）。`gpt-5.x` 直连 OpenAI 需组织实名认证，因此只要设置了 `OPENROUTER_API_KEY`
+> 就优先走 OpenRouter。带专属 `base_url` 的条目（Kimi/豆包）不参与回退。
 
-**The provider list is configurable**: Append `ProviderConfig(...)` to `DEFAULT_PROVIDERS` in `benchmark.py` to extend. All providers use the same OpenAI-compatible protocol, differing only in `base_url` and `model` — this is precisely why "same model, different providers" (e.g., DeepSeek official vs SiliconFlow as mentioned in the book) can be compared.
+**提供商列表是可配置的**：在 `benchmark.py` 的 `DEFAULT_PROVIDERS` 里追加
+`ProviderConfig(...)` 即可扩展。所有提供商都走同一套 OpenAI 兼容协议，
+只是 `base_url` 与 `model` 不同——这正是可以"同一模型对比不同提供商"
+（如书中提到的 DeepSeek 官方 vs SiliconFlow）的原因。
 
-## Real Run Results (Example)
+## 真实运行结果（示例）
 
-Below is the output of a real run (`python demo.py --num-requests 10 --concurrency 3`,
-test machine on mainland China network, `2026-07`). **Numbers are real measurements, not fabricated**;
-results may vary with different networks/time periods. Please rely on your own runs.
+以下是一次真实运行的输出（`python demo.py --num-requests 10 --concurrency 3`，
+测试机在中国大陆网络环境，`2026-07`）。**数字为真实测得，非虚构**；
+不同网络/时段会有波动，请以自己跑出的结果为准。
 
 ```
-Provider/Model            | Success Rate  | TTFT Avg | TTFT_p95 | End-to-End Avg | End-to-End p95 | Throughput | Output Tok
+Provider/Model            | 成功率       | TTFT均值 | TTFT_p95 | 端到端均值 | 端到端p95 | 吞吐      | 输出tok
 --------------------------+--------------+----------+----------+------------+-----------+-----------+--------
 OpenAI/gpt-5.6-luna       | 10/10 (100%) | 1360ms   | 2334ms   | 1.73s      | 2.54s     | 174.9 t/s | 26
 Moonshot/moonshot-v1-8k   | 10/10 (100%) | 530ms    | 671ms    | 0.89s      | 1.07s     | 92.1 t/s  | 32
 Doubao/doubao-1.5-pro-32k | 10/10 (100%) | 1097ms   | 1409ms   | 2.32s      | 2.91s     | 36.2 t/s  | 44
 ```
 
-## Conclusions (Based on the Run Above)
+## 结论（基于上面这次运行）
 
-- **Availability**: All three providers achieved 10/10 (100%) success this time. Availability differences often only emerge with larger samples, higher concurrency, or longer time windows — precisely why the book emphasizes "probing every hour for a week." The code is designed so that a single point of failure is "recorded as a drop in availability, without aborting the entire table," facilitating long-term sampling.
-- **Time to First Token (TTFT)**: On this test machine within mainland China's network, Kimi's TTFT (~530ms) was significantly lower than cross-border access to OpenAI/gpt-5.6-luna (~1.36s); Doubao's TTFT (~1.1s) was slightly lower than OpenAI but had longer end-to-end latency. **TTFT is highly dependent on network location** — running the same code in a US data center would drastically reduce OpenAI's TTFT.
-- **Throughput**: This run: gpt-5.6-luna (175 t/s) > Kimi (92 t/s) > Doubao (36 t/s). Throughput determines wait time for long responses and is an independent dimension from TTFT.
-- **Stability (p95)**: Look at the gap between p95 and the average. For gpt-5.6-luna accessed cross-border, TTFT p95 (2.33s) / average (1.36s)The spread is larger, and the long tail is heavier; Kimi's p95 is closest to the mean, making it the most stable this time.
-- **Selection Insights**: No single provider is "universally optimal"—latency, throughput, availability, and price involve **multi-dimensional trade-offs**.
-  For real-time interactive scenarios targeting domestic users, localized services with low TTFT offer a better experience;
-  batch processing/long-text generation places more emphasis on throughput and unit price. **Be sure to test in your own deployment network environment**,
-  and do not directly copy numbers from third-party monitoring platforms (e.g., Artificial Analysis).
+- **可用性**：本次三家全部 10/10（100%）成功。可用性差异往往要在更大样本、
+  更高并发或更长时间窗口下才暴露——这正是书中强调"一周每小时探测"的原因。
+  代码已把单点失败设计成"记为可用性下降、不中断整表"，便于长时间挂机采样。
+- **首 token 延迟（TTFT）**：本测试机在国内网络下，Kimi 的 TTFT（~530ms）明显低于
+  跨境访问的 OpenAI/gpt-5.6-luna（~1.36s）；豆包 TTFT（~1.1s）略低于 OpenAI 但端到端更长。
+  **TTFT 强依赖网络位置**——同一份代码在美国机房跑，OpenAI 的 TTFT 会大幅下降。
+- **吞吐**：本次 gpt-5.6-luna（175 t/s）> Kimi（92 t/s）> 豆包（36 t/s）。
+  吞吐决定长响应的等待时间，与 TTFT 是两个独立维度。
+- **稳定性（p95）**：看 p95 与均值的差距。gpt-5.6-luna 跨境访问，TTFT p95(2.33s)/均值(1.36s)
+  拉开较大，长尾更重；Kimi 的 p95 与均值最接近，本次最稳。
+- **选型启示**：不存在"全面最优"的一家——延迟、吞吐、可用性、价格是**多维权衡**。
+  面向国内用户的实时交互场景，低 TTFT 的本地化服务体验更好；
+  批处理/长文本生成则更看重吞吐与单价。**务必在你自己的部署网络环境下实测**，
+  不要直接照搬第三方监测平台（如 Artificial Analysis）的数字。
 
-## File Description
+## 文件说明
 
-| File | Description |
+| 文件 | 作用 |
 | --- | --- |
-| `benchmark.py` | Core: provider configuration, single streaming measurement, concurrency scheduling, metric aggregation (including p99/std/aggregate throughput), concurrency sweep `sweep_concurrency`, synthetic data `synthetic_summary` |
-| `demo.py` | Command-line entry: parse arguments, run tests (including concurrency stress test / `--mock` offline self-check), print comparison table, export JSON |
-| `requirements.txt` | Dependencies (openai SDK + optional python-dotenv) |
-| `env.example` | Key configuration template |
+| `benchmark.py` | 核心：提供商配置、单次流式测量、并发调度、指标聚合（含 p99/std/聚合吞吐）、并发扫描 `sweep_concurrency`、合成数据 `synthetic_summary` |
+| `demo.py` | 命令行入口：解析参数、跑测试（含并发压测 / `--mock` 离线自检）、打印对比表、导出 JSON |
+| `requirements.txt` | 依赖（openai SDK + 可选 python-dotenv） |
+| `env.example` | key 配置模板 |
 
-## Notes
+## 注意事项
 
-- **Cost Control**: Default `max_tokens=64`, `N=10`, the full run cost is very low. Be mindful of billing before increasing parameters.
-- **Rate Limiting**: Setting concurrency or N very high may trigger provider RPM/TPM rate limits, which will then be recorded as failures
-  contributing to decreased availability—this itself is a way to "measure rate limit thresholds in practice" (part of Experiment 6-8 in the book).
-- **TTFT is Highly Network-Dependent**: Services accessed across borders will have significantly higher TTFT; conclusions must be interpreted in the context of the deployment location.
-- **OpenRouter Fallback**: When `OPENAI_API_KEY` is not set, `OpenAI/*` entries are automatically routed through OpenRouter
-  (requires `OPENROUTER_API_KEY`, `gpt-*` mapped to `openai/*`); `gpt-5.x` will prioritize OpenRouter as long as `OPENROUTER_API_KEY` is set
-  (direct connection requires real-name authentication). For other providers (DEEPSEEK / SILICONFLOW, etc.), if you wish to enable them,
-  add the configuration in `DEFAULT_PROVIDERS` and set the corresponding environment variables.
+- **成本控制**：默认 `max_tokens=64`、`N=10`，全跑成本极低。调大参数前请留意计费。
+- **限流**：把并发或 N 调很大时可能触发提供商 RPM/TPM 限流，届时会以失败形式
+  计入可用性下降——这本身也是一种"实测限流阈值"的方式（书中实验 6-8 的一环）。
+- **TTFT 与网络强相关**：跨境访问的服务 TTFT 会显著偏高，结论需结合部署地点解读。
+- **OpenRouter 回退**：未设置 `OPENAI_API_KEY` 时，`OpenAI/*` 条目自动经 OpenRouter 路由
+  （需 `OPENROUTER_API_KEY`，`gpt-*` 映射为 `openai/*`）；`gpt-5.x` 只要有 `OPENROUTER_API_KEY`
+  即优先走 OpenRouter（直连需实名认证）。其它提供商（DEEPSEEK / SILICONFLOW 等）如需启用，
+  在 `DEFAULT_PROVIDERS` 中补充配置并设置对应环境变量即可。

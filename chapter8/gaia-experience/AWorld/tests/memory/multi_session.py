@@ -27,13 +27,13 @@ async def _run_multi_session_examples() -> None:
         user_id=user_id,
         session_id=session_id,
         task_id="alice:day1_morning:task#1",
-        user_input="I want to deeply understand reinforcement learning-based agents (Agent-RL). Please use DEEPSEARCH to help me research this topic, including: 1. Basic architecture (state space, action space, reward mechanism) 2. Common algorithms (DQN, PPO, SAC, etc.) 3. Environment interaction design 4. Implementation best practices"
+        user_input="我想深入了解基于强化学习的智能体（Agent-RL）。请使用DEEPSEARCH帮我研究这个话题，包括：1. 基础架构（状态空间、动作空间、奖励机制）2. 常用算法（DQN、PPO、SAC等）3. 环境交互设计 4. 实现最佳实践"
     )
     await super_agent.async_run(
         user_id=user_id,
         session_id=session_id,
         task_id="alice:day1_morning:task#2",
-        user_input="Based on the search results above, please generate a structured learning document (markdown), focusing on: 1. Theoretical framework 2. Code examples (implementing simple Agent-RL using Python) 3. Common issues and solutions"
+        user_input="基于上面的搜索结果，请生成一个结构化的学习文档(markdown)，重点包含：1. 理论框架 2. 代码示例（使用Python实现简单的Agent-RL）3. 常见问题和解决方案"
     )
 
     # Day 1 - Session 2: Content Revision
@@ -42,13 +42,13 @@ async def _run_multi_session_examples() -> None:
     #     user_id=user_id,
     #     session_id=session_id,
     #     task_id="alice:day1_afternoon:task#1",
-    #     user_input="I think the 'Environment Interaction Design' section in the previously generated document needs supplementation. Specifically: 1. How to design appropriate reward functions 2. Representation methods for environment states 3. Design considerations for action space"
+    #     user_input="我觉得之前生成的文档中'环境交互设计'这部分需要补充。特别是：1. 如何设计合适的奖励函数 2. 环境状态的表示方法 3. 动作空间的设计考虑"
     # )
     # await super_agent.async_run(
     #     user_id=user_id,
     #     session_id=session_id,
     #     task_id="alice:day1_afternoon:task#2",
-    #     user_input="Great! Now please help me convert the revised document into a more understandable form, especially explaining the mathematical concepts of reinforcement learning with common examples, preparing for voice content generation"
+    #     user_input="太好了！现在请帮我把修改后的文档转换成更容易理解的形式，特别是把强化学习的数学概念用通俗的例子解释，准备生成语音内容"
     # )
 
     # Day 1 - Session 3: TTS Generation
@@ -57,13 +57,13 @@ async def _run_multi_session_examples() -> None:
     #     user_id=user_id,
     #     session_id=session_id,
     #     task_id="alice:day1_evening:task#1",
-    #     user_input="Please convert the content into a voice file, requirements: 1. Moderate speaking speed 2. Clear explanation of key algorithms and mathematical concepts 3. Chapters organized in the order of 'theoretical foundation - algorithm implementation - practical application' 4. Generate subtitles"
+    #     user_input="请将内容转换成语音文件，要求：1. 语速适中 2. 关键算法和数学概念讲解要清晰 3. 按照'理论基础-算法实现-实践应用'的顺序分章节 4. 生成字幕"
     # )
     # await super_agent.async_run(
     #     user_id=user_id,
     #     session_id=session_id,
     #     task_id="alice:day1_evening:task#2",
-    #     user_input="Please generate a knowledge graph for Agent-RL, including: 1. Core concept relationships 2. Algorithm classification 3. Application scenarios 4. Learning path suggestions"
+    #     user_input="请生成一个Agent-RL的知识图谱，包含：1. 核心概念关系 2. 算法分类 3. 应用场景 4. 学习路径建议"
     # )
 
     # Day 2 - Morning Review
@@ -72,19 +72,19 @@ async def _run_multi_session_examples() -> None:
     #     user_id=user_id,
     #     session_id=session_id,
     #     task_id="alice:day2_morning:task#1",
-    #     user_input="Good morning! Please help me review yesterday's learning content about Agent-RL. Specifically: 1. Review core concepts through the knowledge graph 2. Review the pros and cons of each algorithm 3. Check if key mathematical principles are understood"
+    #     user_input="早上好！请帮我回顾一下昨天关于Agent-RL的学习内容。特别是：1. 通过知识图谱回顾核心概念 2. 复习各个算法的优缺点 3. 检查是否理解了关键的数学原理"
     # )
     # await super_agent.async_run(
     #     user_id=user_id,
     #     session_id=session_id,
     #     task_id="alice:day2_morning:task#2",
-    #     user_input="Based on the learned content, please recommend next steps for learning: 1. Advanced algorithms (e.g., MARL multi-agent reinforcement learning) 2. Practical project practice 3. Cutting-edge research directions"
+    #     user_input="基于已学内容，请推荐下一步的学习方向：1. 进阶算法（如MARL多智能体强化学习）2. 实际项目实践 3. 前沿研究方向"
     # )
     # await super_agent.async_run(
     #     user_id=user_id,
     #     session_id=session_id,
     #     task_id="alice:day2_morning:task#3",
-    #     user_input="Please design a practical project for me to apply the learned Agent-RL knowledge. Requirements: 1. Moderate project difficulty 2. Include a complete code framework 3. Have clear evaluation metrics 4. Provide optimization suggestions"
+    #     user_input="请设计一个实践项目，让我可以应用学到的Agent-RL知识。要求：1. 项目难度适中 2. 包含完整的代码框架 3. 有清晰的评估指标 4. 提供优化建议"
     # )
 
 

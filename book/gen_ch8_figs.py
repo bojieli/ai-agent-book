@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Chapter 8 figures — Agent's self-evolution.
+"""Chapter 8 figures — Agent 的自我进化.
 
 NOTE: this generator was previously a stray copy of chapter 9's figures, which
 left fig8-1..fig8-7 showing chapter-9 content. It has been rewritten so each
@@ -40,73 +40,73 @@ def _pipeline(stages, fname, W=880, feedback=None):
     s.save(os.path.join(OUT, fname + '.svg'))
 
 
-def fig8_1():  #Externalized learning loop
-    _pipeline([("Complete task", "Generate raw experience"), ("Refine experience", "Summarize, compress, structure"),
-               ("Store in external system", "Knowledge base/tools, retrievable"), ("Retrieve and reuse", "Invoke in next task")],
-              'fig8-1', feedback="Experience accumulates persistently, reused across sessions")
+def fig8_1():  # 外部化学习循环
+    _pipeline([("完成任务", "产生原始经验"), ("提炼经验", "总结·压缩·结构化"),
+               ("存入外部系统", "知识库/工具，可检索"), ("检索复用", "下次任务调用")],
+              'fig8-1', feedback="经验持续沉淀，跨会话复用")
 
 
-def fig8_2():  #GAIA experience learning system
-    _pipeline([("Successful trajectory", "Process of completing task"), ("Strategy summary", "Refine into knowledge summary"),
-               ("Knowledge summary base", "Build semantic index"), ("Retrieval injection", "Agent uses when making decisions")],
-              'fig8-2', feedback="Reuse historical experience for similar tasks")
+def fig8_2():  # GAIA 经验学习系统
+    _pipeline([("成功轨迹", "完成任务的过程"), ("策略总结", "提炼为知识摘要"),
+               ("知识摘要库", "建立语义索引"), ("检索注入", "Agent 决策时取用")],
+              'fig8-2', feedback="相似任务复用历史经验")
 
 
-def fig8_3():  #Hierarchical tool matching (server level → tool level)
+def fig8_3():  # 层次化工具匹配（服务器级→工具级）
     W, H = 620, 354
     s = SVG(W, H)
     cx = W / 2
-    s.box(cx - 150, 46, 300, 52, "User query", sublabel="\"Debug this file\"", bold=True, fill='light')
+    s.box(cx - 150, 46, 300, 52, "用户查询", sublabel="“Debug 这个文件”", bold=True, fill='light')
     s.arrow(cx, 100, cx, 120)
-    s.box(cx - 220, 122, 440, 62, "Layer 1: Server-level semantic search",
-          sublabel="Hundreds of MCP servers → recall Top-K relevant servers", bold=True, fill='light')
+    s.box(cx - 220, 122, 440, 62, "第一层：服务器级语义搜索",
+          sublabel="数百个 MCP 服务器 → 召回 Top-K 相关服务器", bold=True, fill='light')
     s.arrow(cx, 186, cx, 208)
-    s.box(cx - 220, 210, 440, 62, "Layer 2: Tool-level semantic search",
-          sublabel="Match only within tools of Top-K servers → Top-N tools", bold=True, fill='light')
+    s.box(cx - 220, 210, 440, 62, "第二层：工具级语义搜索",
+          sublabel="仅在 Top-K 服务器的工具内匹配 → Top-N 工具", bold=True, fill='light')
     s.arrow(cx, 274, cx, 296)
-    s.box(cx - 150, 298, 300, 46, "Selected tool",
-          sublabel="Significantly narrows candidate scope, reduces selection cost", bold=True, fill='light')
+    s.box(cx - 150, 298, 300, 46, "选定工具",
+          sublabel="大幅缩小候选范围，降低选择成本", bold=True, fill='light')
     s.save(os.path.join(OUT, 'fig8-3.svg'))
 
 
-def fig8_4():  #KV Cache Optimization for Dynamic Tool Loading (Naive vs Optimized)
+def fig8_4():  # 工具动态加载的 KV Cache 优化（朴素 vs 优化）
     W, H = 860, 244
     s = SVG(W, H)
-    s.text(220, 46, "Naive approach: Tool definitions mixed into system prompt", size=FS_SMALL, bold=True, fill='darker')
+    s.text(220, 46, "朴素做法：工具定义混入系统提示", size=FS_SMALL, bold=True, fill='darker')
     s.rect(30, 62, 380, 70, fill='#f0d8d8')
-    s.text(220, 84, "System prompt + all tool definitions", size=FS_SMALL, bold=True)
-    s.text(220, 108, "Tool addition/deletion → prefix changes → KV Cache entirely invalidated", size=FS_TINY, fill='text_light')
+    s.text(220, 84, "系统提示 + 全部工具定义", size=FS_SMALL, bold=True)
+    s.text(220, 108, "工具增删 → 前缀改变 → KV Cache 全部失效", size=FS_TINY, fill='text_light')
     s.rect(30, 140, 380, 46, fill='light')
-    s.text(220, 163, "Recalculated every round, high cost", size=FS_SMALL)
+    s.text(220, 163, "每轮重算，成本高", size=FS_SMALL)
 
-    s.text(640, 46, "Optimized approach: Dynamic loading of tool definitions", size=FS_SMALL, bold=True, fill='darker')
+    s.text(640, 46, "优化做法：工具定义动态加载", size=FS_SMALL, bold=True, fill='darker')
     s.rect(450, 62, 380, 40, fill='#d8e8d8')
-    s.text(640, 82, "Stable system prompt (cache-hit prefix)", size=FS_SMALL, bold=True)
+    s.text(640, 82, "稳定系统提示（缓存命中前缀）", size=FS_SMALL, bold=True)
     s.rect(450, 106, 380, 40, fill='light')
-    s.text(640, 126, "On-demand appended tool definitions (changing part)", size=FS_SMALL)
+    s.text(640, 126, "按需追加的工具定义（变化部分）", size=FS_SMALL)
     s.rect(450, 150, 380, 40, fill='light')
-    s.text(640, 170, "Conversation trajectory", size=FS_SMALL)
-    s.text(640, 206, "Stable prefix unchanged → KV Cache continuously reused", size=FS_TINY, fill='text_light')
+    s.text(640, 170, "对话轨迹", size=FS_SMALL)
+    s.text(640, 206, "稳定前缀不变 → KV Cache 持续复用", size=FS_TINY, fill='text_light')
     s.line(430, 54, 430, 220, dash=True)
     s.save(os.path.join(OUT, 'fig8-4.svg'))
 
 
-def fig8_5():  #Agent Self-Evolution Pipeline (Requirement Identification → Tool Search → Code Encapsulation → Tool Registration)
-    _pipeline([("① Requirement Identification", "Existing tools insufficient"), ("② Tool Search", "Open-world search"),
-               ("③ Code Encapsulation", "Generate and encapsulate"), ("④ Tool Registration", "Incorporate into library for reuse")],
-              'fig8-5', feedback="Newly registered tools can be reused by subsequent tasks, continuously expanding capability boundaries")
+def fig8_5():  # Agent 自我进化流水线（需求识别→工具搜索→代码封装→工具注册）
+    _pipeline([("① 需求识别", "现有工具不足"), ("② 工具搜索", "开放世界查找"),
+               ("③ 代码封装", "生成并封装"), ("④ 工具注册", "纳入库可复用")],
+              'fig8-5', feedback="新工具注册后可被后续任务复用，持续扩展能力边界")
 
 
-def fig8_6():  #Voyager Continuous Learning Architecture (Curriculum Generator + Skill Library + Iterative Prompting)
-    _pipeline([("Curriculum Generator", "Propose progressive new tasks"), ("Iterative Prompting Mechanism", "Generate and debug skill code"),
-               ("Skill Library", "Store reusable skills")],
-              'fig8-6', W=760, feedback="Skill accumulation unlocks harder tasks (open-world exploration)")
+def fig8_6():  # Voyager 持续学习架构（课程生成器 + 技能库 + 迭代提示）
+    _pipeline([("课程生成器", "提出渐进式新任务"), ("迭代提示机制", "生成并调试技能代码"),
+               ("技能库", "存储可复用技能")],
+              'fig8-6', W=760, feedback="技能积累后解锁更难的任务（开放世界探索）")
 
 
-def fig8_7():  #Experiment 8-5 Self-Evolution Pipeline (Search → Evaluate → Test → Encapsulate → Reuse)
-    _pipeline([("① Search", "Find tools on open network"), ("② Evaluate", "Determine suitability"), ("③ Test", "Verify usability"),
-               ("④ Package", "Wrap into standard tool"), ("⑤ Reuse", "Include in tool library")],
-              'fig8-7', W=940, feedback="New tools are accumulated for reuse in subsequent tasks")
+def fig8_7():  # 实验 8-5 自我进化流水线（搜索→评估→测试→封装→复用）
+    _pipeline([("① 搜索", "开放网络找工具"), ("② 评估", "判断是否合适"), ("③ 测试", "验证可用性"),
+               ("④ 封装", "包成标准工具"), ("⑤ 复用", "纳入工具库")],
+              'fig8-7', W=940, feedback="新工具沉淀后供后续任务复用")
 
 
 if __name__ == '__main__':

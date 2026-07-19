@@ -1,26 +1,23 @@
 #!/usr/bin/env python3
 """
-Perception Tool MCP Server — Unified CLI Entry (Experiment 4-1).
+感知工具 MCP 服务器 —— 统一命令行入口（实验 4-1）。
 
-In addition to serving via the MCP stdio protocol (see src/main.py), this file provides a
-CLI entry point that does not depend on an MCP client, making it easy to list, invoke, and
-demonstrate various perception tools:
+除了以 MCP stdio 协议对外提供服务（见 src/main.py），本文件提供一个不依赖
+MCP 客户端的命令行入口，方便直接列出、调用和演示各类感知工具：
 
-    python cli.py list                 # List all perception tools by five categories
-    python cli.py info <tool>          # View parameter signature of a tool
-    python cli.py run <tool> k=v ...   # Directly invoke a tool and print JSON result
-    python cli.py demo [--offline]     # Run an end-to-end perception scenario demo
+    python cli.py list                 # 按五大类列出全部感知工具
+    python cli.py info <tool>          # 查看某个工具的参数签名
+    python cli.py run <tool> k=v ...   # 直接调用某个工具并打印 JSON 结果
+    python cli.py demo [--offline]     # 运行一个端到端的感知场景演示
 
-Tools are organized according to the five categories of perception tools in Chapter 4 of
-"Deep Understanding of AI Agents": search, multimodal understanding, file system, public
-data sources, and private data sources.
+工具按《深入理解 AI Agent》第四章「感知工具」的五类场景组织：
+搜索、多模态理解、文件系统、公开数据源、私有数据源。
 
-Design notes:
-- Each tool is an async function returning a unified ActionResponse (JSON). The CLI handles
-the event loop, parses JSON, and prints it in a user-friendly manner.
-- Tools are lazily imported on demand: only when a tool is actually invoked is its module
-imported. Therefore, list / info / offline demo still work normally when optional
-dependencies (e.g., yfinance, opencv, whisper) are missing.
+设计说明：
+- 每个工具都是异步函数，返回统一的 ActionResponse（JSON）。CLI 负责运行事件
+  循环、解析 JSON 并友好打印。
+- 工具按需惰性导入：只有真正调用某个工具时才导入其所在模块，因此在缺少
+  可选依赖（如 yfinance、opencv、whisper）时，list / info / 离线 demo 仍可正常工作。
 """
 import argparse
 import asyncio
@@ -36,165 +33,165 @@ from pathlib import Path
 SRC_DIR = Path(__file__).parent / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-#  Five categories of Chinese titles (corresponding one-to-one to the classifications in Experiment 4-1 of the book)
+# 五大类的中文标题（与书中实验 4-1 的分类一一对应）
 CATEGORIES = {
-    "search": "Search",
-    "multimodal": "Multimodal understanding",
-    "filesystem": "File system",
-    "public": "Public data source",
-    "private": "private data source",
+    "search": "搜索",
+    "multimodal": "多模态理解",
+    "filesystem": "文件系统",
+    "public": "公开数据源",
+    "private": "私有数据源",
 }
 
 
 class Tool(typing.NamedTuple):
-    """A registration entry for a perception tool."""
-    name: str          #Tool name exposed in CLI / MCP
+    """一个感知工具的注册项。"""
+    name: str          # CLI / MCP 中暴露的工具名
     category: str      # 所属分类（CATEGORIES 的 key）
-    module: str        #Module name under src/
+    module: str        # src/ 下的模块名
     func: str          # 模块中的异步函数名
-    desc: str          #  A one-sentence Chinese description
-    online: bool = False   #  Whether internet access is required
-    note: str = ""     # Additional notes (e.g., API Key / authorization required)
+    desc: str          # 一句话中文描述
+    online: bool = False   # 是否需要联网
+    note: str = ""     # 额外说明（如需要 API Key / 授权）
 
 
 # ---------------------------------------------------------------------------
-# Tool registry: consistent with the MCP tools exposed in src/main.py, and complete those declared in the README, 
-#  But the three tools (crypto_price / location_search / poi_search) that were not registered in main.py before.
+# 工具注册表：与 src/main.py 暴露的 MCP 工具保持一致，并补齐 README 中已声明、
+# 但此前未在 main.py 注册的三个工具（crypto_price / location_search / poi_search）。
 # ---------------------------------------------------------------------------
 TOOLS: list[Tool] = [
-    # ---- Search ----
+    # ---- 搜索 ----
     Tool("web_search", "search", "search_tools", "search_web",
-         "Search the web using DuckDuckGo (free, no API key required)", online=True),
+         "使用 DuckDuckGo 进行网络搜索（免费，无需 API Key）", online=True),
     Tool("knowledge_base_search", "search", "search_tools", "search_knowledge_base",
-         "Perform full-text search in the local knowledge base directory"),
+         "在本地知识库目录中做全文检索"),
     Tool("download", "search", "search_tools", "download_file",
-         "Download file from URL to local (with size/overwrite protection)", online=True),
+         "从 URL 下载文件到本地（含大小/覆盖保护）", online=True),
     Tool("google_search_enhanced", "search", "google_search_enhanced", "google_search_api",
-         "Google Custom Search, fallback to DuckDuckGo on failure", online=True,
-         note="Google API requires GOOGLE_API_KEY, falls back automatically if not configured"),
+         "Google Custom Search，失败时回退 DuckDuckGo", online=True,
+         note="Google API 需 GOOGLE_API_KEY，未配置则自动回退"),
 
-    # ---- Multimodal Understanding ----
+    # ---- 多模态理解 ----
     Tool("webpage_reader", "multimodal", "multimodal_tools", "read_webpage",
-         "Scrape and extract webpage content/links", online=True),
+         "抓取并提取网页正文/链接", online=True),
     Tool("webpage_read_enhanced", "multimodal", "google_search_enhanced", "read_webpage_content",
-         "Enhanced web page text extraction", online=True),
+         "增强版网页正文提取", online=True),
     Tool("document_reader", "multimodal", "multimodal_tools", "read_document",
-         "Read PDF/DOCX/PPTX document content"),
+         "读取 PDF/DOCX/PPTX 文档内容"),
     Tool("pdf_extract", "multimodal", "document_processing_tools", "extract_pdf_text",
-         "Extract PDF text (supports page range)"),
+         "提取 PDF 文本（支持页码范围）"),
     Tool("docx_extract", "multimodal", "document_processing_tools", "extract_docx_content",
-         "Extract Word (DOCX) document content"),
+         "提取 Word（DOCX）文档内容"),
     Tool("pptx_extract", "multimodal", "document_processing_tools", "extract_pptx_content",
-         "Extract PowerPoint (PPTX) content"),
+         "提取 PowerPoint（PPTX）内容"),
     Tool("csv_parse", "multimodal", "document_processing_tools", "extract_csv_content",
-         "Parse CSV table data"),
+         "解析 CSV 表格数据"),
     Tool("image_parser", "multimodal", "multimodal_tools", "parse_image",
-         "Parse image (optional LLM vision analysis)", note="use_llm requires vision model API"),
+         "解析图片（可选 LLM 视觉分析）", note="use_llm 需视觉模型 API"),
     Tool("image_ocr", "multimodal", "media_processing_tools", "extract_text_ocr",
-         "Perform OCR text recognition on image", note="Requires tesseract installation"),
+         "对图片做 OCR 文字识别", note="需安装 tesseract"),
     Tool("image_analyze", "multimodal", "media_processing_tools", "analyze_image_ai",
-         "Analyze image content with vision model", note="Requires vision model API"),
+         "用视觉模型分析图片内容", note="需视觉模型 API"),
     Tool("image_metadata", "multimodal", "media_processing_tools", "get_image_metadata",
-         "Read image EXIF and other metadata"),
+         "读取图片 EXIF 等元数据"),
     Tool("video_parser", "multimodal", "multimodal_tools", "parse_video",
-         "Extract video metadata/sample frames"),
+         "提取视频元数据/采样帧"),
     Tool("video_keyframes", "multimodal", "media_processing_tools", "extract_video_keyframes",
-         "Extract key frames from video"),
+         "从视频抽取关键帧"),
     Tool("video_analyze", "multimodal", "media_processing_tools", "analyze_video_ai",
-         "Analyze video content with vision model", note="Requires vision model API"),
+         "用视觉模型分析视频内容", note="需视觉模型 API"),
     Tool("audio_transcribe", "multimodal", "media_processing_tools", "transcribe_audio_whisper",
-         "Transcribe audio to text using Whisper", note="Requires whisper installation"),
+         "用 Whisper 将音频转写为文本", note="需安装 whisper"),
     Tool("audio_metadata", "multimodal", "media_processing_tools", "extract_audio_metadata",
-         "Read audio file metadata"),
+         "读取音频文件元数据"),
     Tool("audio_trim", "multimodal", "media_processing_tools", "trim_audio",
-         "Trim audio to specified time range"),
+         "裁剪音频到指定时间区间"),
     Tool("youtube_transcript", "multimodal", "multimodal_tools", "extract_youtube_transcript",
-         "Extract YouTube video subtitles", online=True),
+         "提取 YouTube 视频字幕", online=True),
     Tool("youtube_download", "multimodal", "multimodal_tools", "download_youtube_video",
-         "Download YouTube video", online=True),
+         "下载 YouTube 视频", online=True),
 
-    # ---- File System ----
+    # ---- 文件系统 ----
     Tool("file_reader", "filesystem", "filesystem_tools", "read_file",
-         "Read file content (supports encoding and truncation)"),
+         "读取文件内容（支持编码与截断）"),
     Tool("grep", "filesystem", "filesystem_tools", "grep_search",
-         "Search file content in directory by regex"),
+         "在目录中按正则搜索文件内容"),
     Tool("text_summarizer", "filesystem", "filesystem_tools", "summarize_text",
-         "Summarize long text (extractive/truncation, placeholder implementation)"),
+         "对长文本做摘要（抽取式/截断，占位实现）"),
 
-    # ---- Public Data Sources ----
+    # ---- 公开数据源 ----
     Tool("weather", "public", "public_data_tools", "get_weather",
-         "Query weather (Open-Meteo, free no key)", online=True),
+         "查询天气（Open-Meteo，免费无 Key）", online=True),
     Tool("stock_price", "public", "public_data_tools", "get_stock_price",
-         "Query stock quotes", online=True),
+         "查询股票行情", online=True),
     Tool("crypto_price", "public", "public_data_tools", "get_crypto_price",
-         "Query cryptocurrency prices (CoinGecko, free no key)", online=True),
+         "查询加密货币价格（CoinGecko，免费无 Key）", online=True),
     Tool("currency_converter", "public", "public_data_tools", "convert_currency",
-         "Currency exchange rate conversion (free no key)", online=True),
+         "货币汇率换算（免费无 Key）", online=True),
     Tool("wikipedia_search", "public", "public_data_tools", "search_wikipedia",
-         "Search Wikipedia and return summary", online=True),
+         "搜索 Wikipedia 并返回摘要", online=True),
     Tool("arxiv_search", "public", "public_data_tools", "search_arxiv",
-         "Search ArXiv academic papers", online=True),
+         "搜索 ArXiv 学术论文", online=True),
     Tool("wayback_search", "public", "public_data_tools", "search_wayback",
-         "Look up historical snapshots on Wayback Machine", online=True),
+         "在 Wayback Machine 查历史快照", online=True),
     Tool("location_search", "public", "public_data_tools", "search_location",
-         "Geocode place/location (Nominatim, free no key)", online=True),
+         "地名/地点地理编码（Nominatim，免费无 Key）", online=True),
     Tool("poi_search", "public", "public_data_tools", "search_poi",
-         "Query points of interest near coordinates (Overpass, free, no key)", online=True),
+         "查询坐标附近的兴趣点（Overpass，免费无 Key）", online=True),
     Tool("yfinance_quote", "public", "yahoo_finance_tools", "get_stock_quote",
-         "Yahoo Finance real-time quotes", online=True),
+         "Yahoo Finance 实时报价", online=True),
     Tool("yfinance_historical", "public", "yahoo_finance_tools", "get_historical_data",
-         "Yahoo Finance historical data", online=True),
+         "Yahoo Finance 历史行情", online=True),
     Tool("yfinance_company_info", "public", "yahoo_finance_tools", "get_company_info",
-         "Yahoo Finance company profile", online=True),
+         "Yahoo Finance 公司资料", online=True),
     Tool("yfinance_financials", "public", "yahoo_finance_tools", "get_financial_statements",
-         "Yahoo Finance financial statements", online=True),
+         "Yahoo Finance 财务报表", online=True),
     Tool("pubchem_search", "public", "pubchem_tools", "search_compounds",
-         "Search compounds in PubChem", online=True),
+         "在 PubChem 搜索化合物", online=True),
     Tool("pubchem_properties", "public", "pubchem_tools", "get_compound_properties",
-         "Get PubChem compound properties", online=True),
+         "获取 PubChem 化合物属性", online=True),
     Tool("pubchem_synonyms", "public", "pubchem_tools", "get_compound_synonyms",
-         "Get PubChem compound synonyms", online=True),
+         "获取 PubChem 化合物别名", online=True),
     Tool("pubchem_similar", "public", "pubchem_tools", "search_similar_compounds",
-         "Search for structurally similar compounds", online=True),
+         "搜索结构相似的化合物", online=True),
     Tool("wiki_article_full", "public", "wiki_enhanced", "get_article_content",
-         "Get full Wikipedia article", online=True),
+         "获取 Wikipedia 条目全文", online=True),
     Tool("wiki_article_categories", "public", "wiki_enhanced", "get_article_categories",
-         "Get Wikipedia article categories", online=True),
+         "获取 Wikipedia 条目分类", online=True),
     Tool("wiki_article_links", "public", "wiki_enhanced", "get_article_links",
-         "Get links in Wikipedia article", online=True),
+         "获取 Wikipedia 条目中的链接", online=True),
     Tool("wiki_article_history", "public", "wiki_enhanced", "get_article_history",
-         "Get Wikipedia article revision history", online=True),
+         "获取 Wikipedia 条目历史版本", online=True),
     Tool("arxiv_paper_details", "public", "arxiv_enhanced", "get_paper_details",
-         "Get ArXiv paper details", online=True),
+         "获取 ArXiv 论文详情", online=True),
     Tool("arxiv_download", "public", "arxiv_enhanced", "download_paper",
-         "Download ArXiv paper PDF", online=True),
+         "下载 ArXiv 论文 PDF", online=True),
     Tool("arxiv_categories", "public", "arxiv_enhanced", "get_arxiv_categories",
-         "List ArXiv subject categories", online=True),
+         "列出 ArXiv 学科分类", online=True),
     Tool("wayback_archived_content", "public", "wayback_enhanced", "get_archived_content",
-         "Get Wayback archived page content", online=True),
+         "获取 Wayback 存档页面内容", online=True),
 
-    # ---- Private data sources ----
+    # ---- 私有数据源 ----
     Tool("calendar_events", "private", "private_data_tools", "get_calendar_events",
-         "Read Google Calendar events", online=True, note="Requires Google OAuth authorization"),
+         "读取 Google 日历事件", online=True, note="需 Google OAuth 授权"),
     Tool("notion_search", "private", "private_data_tools", "search_notion",
-         "Search Notion workspace", online=True, note="Requires NOTION_API_KEY"),
+         "搜索 Notion 工作区", online=True, note="需 NOTION_API_KEY"),
 ]
 
 TOOLS_BY_NAME = {t.name: t for t in TOOLS}
 
 
 # ---------------------------------------------------------------------------
-# Call helper
+# 调用辅助
 # ---------------------------------------------------------------------------
 def _load_callable(tool: Tool):
-    """Lazily import and return the async function corresponding to the tool."""
+    """惰性导入并返回工具对应的异步函数。"""
     module = importlib.import_module(tool.module)
     return getattr(module, tool.func)
 
 
 def _coerce(value: str, annotation):
-    """Convert command-line input strings to appropriate types according to function annotations."""
-    # Unwrap Optional[X] / X | None
+    """把命令行传入的字符串按函数注解转换成合适的类型。"""
+    # 解开 Optional[X] / X | None
     origin = typing.get_origin(annotation)
     if origin is typing.Union or (origin is not None and str(origin) == "<class 'types.UnionType'>"):
         args = [a for a in typing.get_args(annotation) if a is not type(None)]
@@ -213,23 +210,23 @@ def _coerce(value: str, annotation):
 
 
 def _parse_kwargs(func, pairs: list[str]) -> dict:
-    """Parse key=value list into keyword arguments for the tool function."""
+    """把 key=value 列表解析成传给工具函数的关键字参数。"""
     sig = inspect.signature(func)
     kwargs = {}
     for pair in pairs:
         if "=" not in pair:
-            raise ValueError(f"Arguments must be in key=value form:{pair!r}")
+            raise ValueError(f"参数必须是 key=value 形式：{pair!r}")
         key, _, raw = pair.partition("=")
         key = key.strip()
         if key not in sig.parameters:
             valid = ", ".join(sig.parameters)
-            raise ValueError(f"Unknown argument {key!r}, available arguments:{valid}")
+            raise ValueError(f"未知参数 {key!r}，可用参数：{valid}")
         kwargs[key] = _coerce(raw, sig.parameters[key].annotation)
     return kwargs
 
 
 def _unwrap(result):
-    """Tool returns TextContent(JSON) or bare JSON string, uniformly parsed into dict."""
+    """工具返回 TextContent(JSON) 或裸 JSON 字符串，统一解析成 dict。"""
     text = getattr(result, "text", result)
     if isinstance(text, (dict, list)):
         return text
@@ -246,54 +243,54 @@ async def _invoke(tool: Tool, kwargs: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-#  Subcommand implementation
+# 子命令实现
 # ---------------------------------------------------------------------------
 def cmd_list(args) -> int:
-    print("\nPerception Tool MCP Server — Tool List ({} total)".format(len(TOOLS)))
+    print("\n感知工具 MCP 服务器 —— 工具清单（共 {} 个）".format(len(TOOLS)))
     print("=" * 72)
     cats = [args.category] if args.category else list(CATEGORIES)
     for cat in cats:
         tools = [t for t in TOOLS if t.category == cat]
         if not tools:
             continue
-        print(f"\n【{CATEGORIES[cat]}】({len(tools)} )")
+        print(f"\n【{CATEGORIES[cat]}】({len(tools)} 个)")
         print("-" * 72)
         for t in tools:
             flags = []
             if t.online:
-                flags.append("Online")
+                flags.append("联网")
             if t.note:
                 flags.append(t.note)
             tag = f"  [{'；'.join(flags)}]" if flags else ""
             print(f"  {t.name:<26} {t.desc}{tag}")
-    print("\nTip: `python cli.py info <tool>` to view parameters; `python cli.py run <tool> k=v` to invoke.\n")
+    print("\n提示：`python cli.py info <tool>` 查看参数；`python cli.py run <tool> k=v` 调用。\n")
     return 0
 
 
 def cmd_info(args) -> int:
     tool = TOOLS_BY_NAME.get(args.tool)
     if tool is None:
-        print(f"Tool not found:{args.tool}. Use `python cli.py list` to view all.", file=sys.stderr)
+        print(f"未找到工具：{args.tool}。用 `python cli.py list` 查看全部。", file=sys.stderr)
         return 1
     try:
         func = _load_callable(tool)
     except Exception as e:
-        print(f"Tool {tool.name} failed to import its module (optional dependency may be missing):{e}", file=sys.stderr)
+        print(f"工具 {tool.name} 所在模块导入失败（可能缺少可选依赖）：{e}", file=sys.stderr)
         return 1
     sig = inspect.signature(func)
-    print(f"\nTool:{tool.name}   Category:{CATEGORIES[tool.category]}")
-    print(f"Description:{tool.desc}")
-    print(f"Implementation: src/{tool.module}.py :: {tool.func}()")
+    print(f"\n工具：{tool.name}   分类：{CATEGORIES[tool.category]}")
+    print(f"描述：{tool.desc}")
+    print(f"实现：src/{tool.module}.py :: {tool.func}()")
     if tool.online:
-        print("Requires internet: Yes")
+        print("需要联网：是")
     if tool.note:
-        print(f"Description:{tool.note}")
-    print("\nParameters:")
+        print(f"说明：{tool.note}")
+    print("\n参数：")
     for name, p in sig.parameters.items():
         ann = "" if p.annotation is inspect.Parameter.empty else f": {p.annotation}"
         default = "" if p.default is inspect.Parameter.empty else f" = {p.default!r}"
         print(f"  {name}{ann}{default}")
-    print(f"\nExample: python cli.py run {tool.name} " +
+    print(f"\n示例：python cli.py run {tool.name} " +
           " ".join(f"{n}=..." for n, p in sig.parameters.items()
                    if p.default is inspect.Parameter.empty) + "\n")
     return 0
@@ -302,31 +299,31 @@ def cmd_info(args) -> int:
 def cmd_run(args) -> int:
     tool = TOOLS_BY_NAME.get(args.tool)
     if tool is None:
-        print(f"Tool not found:{args.tool}. Use `python cli.py list` to view all.", file=sys.stderr)
+        print(f"未找到工具：{args.tool}。用 `python cli.py list` 查看全部。", file=sys.stderr)
         return 1
     try:
         func = _load_callable(tool)
     except Exception as e:
-        print(f"Tool {tool.name} failed to import its module (optional dependency may be missing):{e}", file=sys.stderr)
+        print(f"工具 {tool.name} 所在模块导入失败（可能缺少可选依赖）：{e}", file=sys.stderr)
         return 1
     try:
         kwargs = _parse_kwargs(func, args.params)
     except Exception as e:
-        print(f"Parameter error:{e}", file=sys.stderr)
+        print(f"参数错误：{e}", file=sys.stderr)
         return 1
 
-    print(f"Invoke tool {tool.name} ...", file=sys.stderr)
+    print(f"调用工具 {tool.name} ...", file=sys.stderr)
     try:
         data = asyncio.run(_invoke(tool, kwargs))
     except Exception as e:
-        print(f"Invocation failed:{type(e).__name__}: {e}", file=sys.stderr)
+        print(f"调用失败：{type(e).__name__}: {e}", file=sys.stderr)
         return 1
     print(json.dumps(data, ensure_ascii=False, indent=2))
     return 0 if data.get("success", True) else 2
 
 
 # ---------------------------------------------------------------------------
-#  End-to-end demo: Perception flow of a research assistant Agent with "local notes + external sources"
+# 端到端演示：一个「本地笔记 + 外部资料」研究助手 Agent 的感知流程
 # ---------------------------------------------------------------------------
 def _header(title: str) -> None:
     print("\n" + "─" * 72)
@@ -340,113 +337,113 @@ async def _demo(offline: bool) -> None:
     from public_data_tools import convert_currency, search_wikipedia
     from multimodal_tools import read_webpage
 
-    #  Each tool internally uses logging.error to print the full stack trace; during the demo, the threshold is raised so only
-    #  the clean status line organized by CLI is shown per step (real errors are still presented as friendly prompts).
+    # 各工具内部会用 logging.error 打印完整堆栈；演示时抬高阈值，让每步只显示
+    # CLI 自己组织的干净状态行（真实错误仍以友好提示呈现）。
     logging.getLogger().setLevel(logging.CRITICAL)
 
     print("\n" + "=" * 72)
-    print("Perception Tool End-to-End Demo")
-    print("Scenario: A research assistant Agent needs to \"first check local materials, then supplement with external information\"")
-    print("      This demo chains five perception tools to show how the Agent 'perceives the world'" +
-          ("(Offline mode: skip online steps)" if offline else ""))
+    print("感知工具端到端演示")
+    print("场景：一个研究助手 Agent 需要「先看本地资料、再补充外部信息」")
+    print("      本演示串联五类感知工具，展示 Agent 如何『感知世界』" +
+          ("（离线模式：跳过联网步骤）" if offline else ""))
     print("=" * 72)
 
-    #  Prepare a temporary local knowledge base to avoid polluting the repository
+    # 准备一个临时本地知识库，避免污染仓库
     tmp = Path(tempfile.mkdtemp(prefix="perception_demo_"))
     (tmp / "mcp_notes.md").write_text(
-        "# MCP Research Notes\n\n"
-        "Model Context Protocol (MCP) is an open protocol for \n"
-        "standardized context exchange between agents and tools/data sources. Sensory tools (e.g., web_search, read_file) are the senses through which agents acquire information. \n"
-        "Key design considerations: granularity trade-offs, output information control, context-aware compression. \n",
+        "# MCP 调研笔记\n\n"
+        "Model Context Protocol (MCP) 是一套开放协议，用于在 Agent 与工具/数据源之间\n"
+        "标准化上下文交换。感知工具（如 web_search、read_file）是 Agent 获取信息的感官。\n"
+        "关键设计：粒度权衡、输出信息量控制、上下文感知压缩。\n",
         encoding="utf-8",
     )
     (tmp / "budget.md").write_text(
-        "# Budget\n\nThe cloud resource budget for this research is 200 USD, which needs to be converted to RMB for reimbursement. \n",
+        "# 预算\n\n本次调研的云资源预算为 200 USD，需要换算成人民币报销。\n",
         encoding="utf-8",
     )
 
-    # 1) File system awareness: locate implementation in local codebase
-    _header("[1/5] File system awareness: grep locate + read_file deep read (offline available)")
+    # 1) 文件系统感知：在本地代码库里定位实现
+    _header("[1/5] 文件系统感知：grep 定位 + read_file 精读（离线可用）")
     data = _unwrap(await grep_search("ActionResponse", str(SRC_DIR),
                                      file_pattern="*.py", max_results=5))
     if data.get("success"):
         msg = data["message"]
-        print(f"  grep 'ActionResponse' hits {msg['total_found']}  example:")
+        print(f"  grep 'ActionResponse' 命中 {msg['total_found']} 处，示例：")
         for hit in msg["results"][:3]:
             print(f"    - {hit['file']}:{hit['line_number']}")
     base_py = _unwrap(await read_file(str(SRC_DIR / "base.py"), max_length=200))
     if base_py.get("success"):
         head = base_py["message"]["content"].strip().splitlines()[0]
-        print(f"  read_file base.py first line:{head}")
+        print(f"  read_file base.py 首行：{head}")
 
-    # 2) Search awareness: knowledge base retrieval (offline) + web search (online)
-    _header("[2/5] Search awareness: local knowledge base retrieval (offline) + web search (online)")
+    # 2) 搜索感知：知识库检索（离线）+ 网络搜索（联网）
+    _header("[2/5] 搜索感知：本地知识库检索（离线）+ 网络搜索（联网）")
     kb = _unwrap(await search_knowledge_base("MCP", str(tmp), top_k=3))
     if kb.get("success"):
-        print(f"  Knowledge base retrieval 'MCP' hits {kb['message']['total_found']}  files:")
+        print(f"  知识库检索 'MCP' 命中 {kb['message']['total_found']} 个文件：")
         for r in kb["message"]["results"]:
-            print(f"    - {r['file']} (relevance {r['relevance']}）")
+            print(f"    - {r['file']}（相关度 {r['relevance']}）")
     if offline:
-        print("  Web search: skipped (offline mode)")
+        print("  网络搜索：已跳过（离线模式）")
     else:
         try:
             web = _unwrap(await search_web("Model Context Protocol", num_results=3))
             if web.get("success") and web["message"]["results"]:
-                print(f"  web_search returned {web['message']['count']}  results, first:")
+                print(f"  web_search 返回 {web['message']['count']} 条结果，首条：")
                 top = web["message"]["results"][0]
                 print(f"    - {top['title']}\n      {top['url']}")
             else:
-                print("  web_search returned no results (possibly rate limited)")
+                print("  web_search 未返回结果（可能被限流）")
         except Exception as e:
-            print(f"  web_search failed (requires network):{e}")
+            print(f"  web_search 失败（需要网络）：{e}")
 
-    # 3) Public data source awareness: currency conversion (convert budget 200 USD to CNY)
-    _header("[3/5] Public data source awareness: currency conversion + Wikipedia summary (online)")
+    # 3) 公开数据源感知：汇率换算（把预算 200 USD 换成 CNY）
+    _header("[3/5] 公开数据源感知：汇率换算 + Wikipedia 摘要（联网）")
     if offline:
-        print("  Skipped (offline mode)")
+        print("  已跳过（离线模式）")
     else:
         try:
             fx = _unwrap(await convert_currency(200, "USD", "CNY"))
             if fx.get("success"):
                 m = fx["message"]
-                print(f"  Budget conversion: 200 USD ≈ {m['converted_amount']:.2f} CNY"
-                      f" (exchange rate {m.get('exchange_rate')}）")
+                print(f"  预算换算：200 USD ≈ {m['converted_amount']:.2f} CNY"
+                      f"（汇率 {m.get('exchange_rate')}）")
         except Exception as e:
-            print(f"  Currency conversion failed (requires network):{e}")
+            print(f"  汇率换算失败（需要网络）：{e}")
         try:
             wiki = _unwrap(await search_wikipedia("Model Context Protocol", sentences=2))
             if wiki.get("success"):
                 print(f"  Wikipedia：{wiki['message']['title']}")
                 print(f"    {wiki['message']['summary'][:120]}...")
             else:
-                print("  Wikipedia returned no results (possibly rate limited), agent can use other sources")
+                print("  Wikipedia 未返回结果（可能被限流），Agent 可改用其它来源")
         except Exception as e:
-            print(f"  Wikipedia query failed (requires network):{e}")
+            print(f"  Wikipedia 查询失败（需要网络）：{e}")
 
-    # 4) Multimodal understanding: read web page body
-    _header("[4/5] Multimodal understanding: fetch web page body (online)")
+    # 4) 多模态理解：读取网页正文
+    _header("[4/5] 多模态理解：抓取网页正文（联网）")
     if offline:
-        print("  Skipped (offline mode)")
+        print("  已跳过（离线模式）")
     else:
         try:
             page = _unwrap(await read_webpage("https://example.com", extract_text=True))
             if page.get("success"):
                 m = page["message"]
-                print(f"  Page title:{m.get('title')}; Body length: {m.get('text_length', 0)} characters")
+                print(f"  网页标题：{m.get('title')}；正文长度：{m.get('text_length', 0)} 字符")
         except Exception as e:
-            print(f"  Web scraping failed (network required): {e}")
+            print(f"  网页抓取失败（需要网络）：{e}")
 
-    # 5) Private data sources: authorization required
-    _header("[5/5] Private data source awareness: Calendar / Notion (authorization required)")
-    print("  calendar_events requires Google OAuth authorization, notion_search requires NOTION_API_KEY.")
-    print("  When not configured, the tool returns structured failure information, and the Agent can prompt the user to authorize accordingly.")
+    # 5) 私有数据源：需要授权
+    _header("[5/5] 私有数据源感知：日历 / Notion（需授权）")
+    print("  calendar_events 需 Google OAuth 授权，notion_search 需 NOTION_API_KEY。")
+    print("  未配置时工具会返回结构化的失败信息，Agent 可据此提示用户去授权。")
 
     print("\n" + "=" * 72)
-    print("Demo complete. Key point: Perception tools are the 'senses' of the Agent—read-only, cacheable, parallelizable;")
-    print("      The design key lies in granularity trade-offs and output information control (see Chapter 4).")
+    print("演示完成。要点：感知工具是 Agent 的『感官』——只读、可缓存、可并行；")
+    print("      设计关键在于粒度权衡与输出信息量控制（详见第四章）。")
     print("=" * 72 + "\n")
 
-    # Clean temporary knowledge base
+    # 清理临时知识库
     for f in tmp.glob("*"):
         f.unlink()
     tmp.rmdir()
@@ -458,42 +455,42 @@ def cmd_demo(args) -> int:
 
 
 # ---------------------------------------------------------------------------
-# Parameter parsing
+# 参数解析
 # ---------------------------------------------------------------------------
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="cli.py",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="Command-line entry point for the perception tool MCP server (Experiment 4-1).\n"
-                    "Organized by five perception scenarios: Search / Multimodal Understanding / File System / Public Data Sources / Private Data Sources.",
-        epilog="Examples:\n"
-               "  python cli.py list                         List all perception tools\n"
-               "  python cli.py list --category filesystem   List only file system tools\n"
-               "  python cli.py info weather                 View weather parameters\n"
-               "  python cli.py run grep pattern=async directory=src   Call grep\n"
+        description="感知工具 MCP 服务器的命令行入口（实验 4-1）。\n"
+                    "按五类感知场景组织：搜索 / 多模态理解 / 文件系统 / 公开数据源 / 私有数据源。",
+        epilog="示例：\n"
+               "  python cli.py list                         列出全部感知工具\n"
+               "  python cli.py list --category filesystem   只看文件系统类\n"
+               "  python cli.py info weather                  查看 weather 的参数\n"
+               "  python cli.py run grep pattern=async directory=src   调用 grep\n"
                "  python cli.py run currency_converter amount=100 from_currency=USD to_currency=CNY\n"
-               "  python cli.py demo --offline               Run offline end-to-end demo\n",
+               "  python cli.py demo --offline               运行离线端到端演示\n",
     )
-    sub = parser.add_subparsers(dest="command", required=True, metavar="<command>")
+    sub = parser.add_subparsers(dest="command", required=True, metavar="<命令>")
 
-    p_list = sub.add_parser("list", help="List all perception tools (grouped by five categories)")
+    p_list = sub.add_parser("list", help="列出全部感知工具（按五类分组）")
     p_list.add_argument("--category", choices=list(CATEGORIES),
-                        help="List only one category:" + " / ".join(f"{k}={v}" for k, v in CATEGORIES.items()))
+                        help="只列出某一类：" + " / ".join(f"{k}={v}" for k, v in CATEGORIES.items()))
     p_list.set_defaults(handler=cmd_list)
 
-    p_info = sub.add_parser("info", help="View parameter signature and examples for a tool")
-    p_info.add_argument("tool", help="Tool name (see list)")
+    p_info = sub.add_parser("info", help="查看某个工具的参数签名与示例")
+    p_info.add_argument("tool", help="工具名（见 list）")
     p_info.set_defaults(handler=cmd_info)
 
-    p_run = sub.add_parser("run", help="Directly call a tool and print JSON result")
-    p_run.add_argument("tool", help="Tool name (see list)")
+    p_run = sub.add_parser("run", help="直接调用某个工具并打印 JSON 结果")
+    p_run.add_argument("tool", help="工具名（见 list）")
     p_run.add_argument("params", nargs="*", metavar="key=value",
-                       help="Tool parameters in key=value format")
+                       help="以 key=value 形式传入的工具参数")
     p_run.set_defaults(handler=cmd_run)
 
-    p_demo = sub.add_parser("demo", help="Run end-to-end perception scenario demo")
+    p_demo = sub.add_parser("demo", help="运行端到端感知场景演示")
     p_demo.add_argument("--offline", action="store_true",
-                        help="Offline mode: run only steps that do not require network (file system / local knowledge base)")
+                        help="离线模式：只跑不联网的步骤（文件系统 / 本地知识库）")
     p_demo.set_defaults(handler=cmd_demo)
 
     return parser

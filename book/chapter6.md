@@ -1,707 +1,719 @@
-# Evaluating Agents
+# Agent 的评估
 
-When building an Agent system, developers face numerous design choices that often lack obvious correct answers:
+构建 Agent 系统时，开发者面对大量设计选择，而它们往往没有显而易见的正确答案：
 
-- Which model to use?
-- What tools should the model be able to call?
-- What data should the knowledge base store, and how should it be structured?
-- How should user memory be implemented?
-- How should the model's prompts and Skills be organized?
-- What constraints need to be added to the Harness?
-- How should this Agent's self-evolution and self-iteration be carried out?
+- 用什么模型？
+- 让模型能调用哪些工具？
+- 知识库该存什么数据、以什么结构来构建？
+- 用户记忆该怎么做？
+- 模型的提示词和 Skills 该如何组织？
+- Harness 中需要加上哪些约束？
+- 这个 Agent 的自我进化和自迭代该怎么做？
 
-Evaluation provides us with a scientific basis for decision-making: through systematic comparative experiments (changing one variable and observing the effect) and ablation experiments (disabling one component at a time and observing the overall performance change to determine that component's true contribution), we can distinguish genuine capability improvements from superficial fluctuations, avoiding "penny wise, pound foolish" mistakes. As the saying in software engineering goes, "you can't improve what you don't measure" — without establishing a repeatable evaluation system, the iteration direction of an Agent can only rely on intuition.
+评估为我们提供了科学的决策依据：通过系统性的对比实验（改变一个变量，观察效果变化）和消融实验（逐一关闭某个组件，观察整体性能变化，从而判断该组件的真实贡献），区分真正的能力提升与表面的波动，避免“捡了芝麻，丢了西瓜”。正如软件工程中“没有度量就没有改进”的说法，不建立可重复的评估体系，Agent 的迭代方向就只能靠直觉。
 
-From the perspective of Harness engineering introduced in Chapter 1, evaluation plays the core role of "verification" within the Harness. A key insight is: **the object of evaluation should not be just the model, but the combination of the model and the Harness**. The same model can perform drastically differently in different Harnesses — some teams have significantly improved the performance of the same model on terminal tasks solely by optimizing the Harness (see Chapter 5 for details). This means that when an Agent performs poorly in evaluation, the improvement direction might not be to change the model, but to optimize some component of the Harness (prompts, tool design, feedback loops). A sound evaluation system should be able to distinguish between two fundamentally different types of problems: "insufficient model capability" and "Harness design flaws." **A common method for distinguishing these two types of problems is the model swap experiment** — fix the Harness, only replace the model with a stronger/weaker one, and observe the magnitude of score change; if swapping to a stronger model doesn't increase the score, the bottleneck is in the Harness; if swapping to a weaker model causes a large score drop and the score fluctuates significantly with model capability, the most direct interpretation is that the bottleneck lies in the model's own capability and the current performance is primarily determined by the model (whether this is because the task itself is difficult or because the Harness overly relies on the model's prior knowledge requires further analysis). Note that this is different from the "ablation experiment" mentioned earlier: ablation is **disabling a component of the Harness** to see how overall performance changes, while model swapping is **fixing the Harness, only changing the model** — the former identifies which part inside the Harness is important, the latter distinguishes whether the bottleneck is in the model or the Harness.
+从第一章引入的 Harness 工程视角看，评估在 Harness 中扮演着“验证”功能的核心角色。一个关键认识是：**评估的对象不应只是模型，而应是模型与 Harness 的组合体**。同一个模型在不同的 Harness 中可能表现差异悬殊——一些团队仅通过优化 Harness 就显著提升了同一模型在终端类任务上的表现（详见第五章）。这意味着，当 Agent 在评估中表现不佳时，改进方向可能不是换模型，而是优化 Harness 的某个组件（提示词、工具设计、反馈循环）。完善的评估体系应能区分“模型能力不足”和“Harness 设计缺陷”这两类本质不同的问题。**区分这两类问题的常见手段是模型替换实验（model swap）**——固定 Harness，只更换更强/更弱的模型，观察分数变化幅度；如果换强模型分数不涨，说明瓶颈在 Harness；如果换弱模型分数大跌、分数随模型能力大幅波动，最直接的解读就是瓶颈在模型能力本身、当前表现主要由模型决定（至于这是因为任务本身就难、还是 Harness 过度依赖模型先验，则需进一步分析）。注意这与前面提到的“消融实验”是两种不同的方法：消融是**关闭 Harness 的某个组件**看整体性能如何变化，模型替换则是**固定 Harness、只换模型**——前者定位 Harness 内部哪个部件重要，后者区分瓶颈在模型还是在 Harness。
 
-The value of an evaluation system becomes even more prominent in an era of rapid model evolution. Model capabilities are still evolving quickly, but a new model performing better on public benchmarks does not guarantee it will perform better on your specific task — in fact, performance regression (where a new version is worse than the old one in some aspects) can occur. Only by thoroughly testing on your own evaluation dataset can you make data-driven upgrade decisions. Furthermore, a comprehensive evaluation system makes it a feasible strategy to "develop products for future models" — even if the current model is not sufficient for commercial deployment, you can complete product development and establish an evaluation set, continuously track the performance of new models, and launch immediately once the threshold is met.
+评估体系的价值在模型快速演进的时代更加凸显。模型能力仍在快速演进，但新模型在公开基准上表现更好，并不意味着在你的特定任务上也更好——反而可能出现性能退化（regression，即新版本在某些方面不如旧版本）。只有在自己的评估数据集上完整测试，才能做出数据驱动的升级决策。更进一步，完善的评估体系使得“为未来的模型开发产品”成为可行策略——即使当前模型不足以支撑商用，也可以先完成产品开发并建立评估集，持续追踪新模型的表现，一旦达到门槛就立即上线。
 
-> **Chapter Guide**
+> **本章导读**
 >
-> This chapter builds a complete evaluation system from three levels. The first level is the **Evaluation Environment** ("where to test"): how to set up an automated, reproducible testing environment, including two paradigms: tool-calling type and human-computer interaction type. The second level is **Evaluation Methods** ("how to judge"): from dataset design principles, evaluation indicator systems (what to measure), to LLM-as-a-Judge (using large language models as judges) for automated evaluation, and then to pairwise comparison and model ranking. The third level is **Evaluation-Driven Decision Making** ("what to do after testing"): transforming evaluation results into actionable guidelines for model selection, architecture optimization, and continuous iteration, and using statistical significance to determine whether observed score differences are genuine and reliable. Additionally, this chapter will discuss observability and the internal evaluation infrastructure for production-grade Agents, and introduce the simulation environment connecting to post-training in Chapter 7 at the end of the chapter.
+> 本章从三个层次构建完整的评估体系。第一层是**评估环境**（“在哪里测”）：如何搭建自动化、可复现的测试环境，包括工具调用型和人机交互型两种范式。第二层是**评估方法**（“怎么判”）：从数据集设计原则、评估指标体系（该测什么），到 LLM-as-a-Judge（用大语言模型充当评委）自动化评判，再到配对比较与模型排名。第三层是**评估驱动的决策**（“测了干什么”）：将评估结果转化为模型选型、架构优化和持续迭代的行动指南，并借助统计显著性判断观察到的分数差异是否真实可信。此外，本章还会讨论可观测性与生产级 Agent 的内部评估基础设施，并在章末介绍连接第七章后训练的仿真环境。
 >
-> The core concept running through the entire chapter is: **The primary value of an evaluation system is not to score the current system, but to enable you to quickly and reliably keep up with model evolution.** When a stronger or cheaper model is released, a team with a robust evaluation system can make a switching decision within hours, while a team lacking an evaluation system can only rely on intuition or wait for community feedback — in the highly competitive Agent market, this speed difference can determine success or failure.
+> 贯穿全章的核心理念是：**评估体系的首要价值不是给当前系统打分，而是让你能快速、可靠地跟上模型的演进**。当一个更强或更便宜的模型发布时，拥有完善评估体系的团队能在数小时内得出切换决策，而缺乏评估体系的团队只能凭直觉或等待社区反馈——在竞争激烈的 Agent 市场中，这种速度差距可能决定成败。
 
-![Figure 6-1 Three Levels of the Evaluation System](images/fig6-1.svg)
+![图6-1 评估体系的三个层次](images/fig6-1.svg)
 
-## A Concrete Evaluation Example
+## 一个具体的评估示例
 
-Before diving into the methodology, let's build intuition through a complete example. Suppose we have built a customer service Agent and need to evaluate its ability to handle refund requests.
+在深入方法论之前，先通过一个完整的例子建立直觉。假设我们构建了一个客服 Agent，需要评估它处理退款请求的能力。
 
-**Test Case**: The user wants to return an order from 3 days ago (Order #12345, Amount ¥299). Company policy: Full refund within 7 days.
+**测试用例**：用户要求退掉 3 天前的订单（订单号 #12345，金额 ¥299）。公司政策：7 天内可全额退款。
 
-**Agent Trajectory**:
+**Agent 的轨迹**：
 
 ```
-User: I want to return the headphones I bought 3 days ago, order number 12345. (Today is 2026-04-10)
+用户：我想退掉 3 天前买的那个耳机，订单号 12345。（今天是 2026-04-10）
 
-Agent (thinking): The user wants a refund, I need to check the order information first.
-Agent → Calls tool query_order(order_id="12345")
-Tool returns: {status: "delivered", amount: 299, date: "2026-04-07", item: "Bluetooth Headphones"}
+Agent（思考）：用户要退款，需要先查询订单信息。
+Agent → 调用工具 query_order(order_id="12345")
+工具返回：{status: "delivered", amount: 299, date: "2026-04-07", item: "蓝牙耳机"}
 
-Agent (thinking): Order date 2026-04-07, today is 2026-04-10, that's 3 days, within the 7-day refund period, eligible for full refund.
-Agent → Calls tool process_refund(order_id="12345", amount=299)
-Tool returns: {refund_id: "R-98765", status: "processing", eta: "3-5 business days"}
+Agent（思考）：下单日 2026-04-07，距今天 2026-04-10 为 3 天，在 7 天退款期内，符合全额退款条件。
+Agent → 调用工具 process_refund(order_id="12345", amount=299)
+工具返回：{refund_id: "R-98765", status: "processing", eta: "3-5个工作日"}
 
-Agent: A refund has been initiated for you. The full refund for Order #12345 (Bluetooth Headphones, ¥299) is being processed,
-      and is expected to arrive in 3-5 business days. The refund ID is R-98765, which can be used to check the progress.
+Agent：已为您发起退款，订单 #12345（蓝牙耳机，¥299）的全额退款正在处理中，
+      预计 3-5 个工作日到账。退款编号 R-98765，可用来查询进度。
 ```
 
-**Scoring with a Rubric** (four dimensions, each scored 1-4). Table 6-1 provides a scoring example for this customer service refund task, illustrating how a Rubric breaks down an Agent trajectory into checkable evaluation dimensions.
+**用 Rubric 评分**（四个维度，每维度 1-4 分）。表6-1 给出了这个客服退款任务的评分示例，用来说明 Rubric 如何把一次 Agent 轨迹拆成可检查的评价维度。
 
-Table 6-1 Rubric Scoring Example for Customer Service Refund Task
+表6-1 客服退款任务的 Rubric 评分示例
 
-| Dimension | Criteria | Score | Reason |
+| 维度 | 标准 | 得分 | 理由 |
+|--------------------|-----------------------------------|---------|-------------------------------|
+| 操作正确性 | 退款金额、订单号是否正确 | 4 | 正确查询并发起 ¥299 全额退款 |
+| 政策合规性 | 是否遵循 7 天退款政策 | 4 | 订单在退款期内，符合政策 |
+| 信息完整性 | 是否告知金额、到账时间、退款编号 | 4 | 三项关键信息均已告知 |
+| 幻觉检测（否决项） | 是否编造不存在的信息 | 通过 | 所有信息均来自工具返回结果 |
+
+幻觉之所以列为**否决项**而非分级评分维度，是因为它与质量是正交的——一个流畅、详尽、礼貌的回答如果包含虚假事实，对用户的伤害远大于一个简短但准确的回答。（否决机制的通用设计详见后文“Rubric 四准则”。）
+
+这个用例通过了。但好的评估不仅测成功场景，更要测边界和陷阱——用户要退 15 天前的订单（超出退款期）时，Agent 能否正确拒绝？用户声称“客服已经批准了退款”时，Agent 是否会在没有系统记录的情况下轻信？这些边界场景才是区分 Agent 能力高低的关键。
+
+上面这个流程——定义测试用例、运行 Agent、用 Rubric 评分、分析结果——就是评估的基本骨架。本章接下来会逐步展开每个环节的设计方法。
+
+## 自动评估环境
+
+Agent 评估需要一个可重复运行的自动化环境——能在开发阶段快速测试变更的效果。搭建这样的环境要回答三个问题：评什么（任务定义和验证标准）、对谁评（如何模拟 Agent 的交互对象）、用什么标准打分。
+
+### 评估环境的基本组成
+
+评估环境包含五个要素——后续章节将重点展开其中的数据集设计和评分标准设计：
+
+**数据集（Dataset）**定义任务集合，包含初始状态、目标描述和可选的参考解决方案。
+
+**环境状态（Environment State）**维护任务执行中的可变信息，需在真实性和可控性之间取得平衡。例如，在客服评估中，环境状态包括数据库中的订单记录和用户账户余额。Agent 调用 `process_refund` 后，订单状态从 'delivered' 变为 'refunded'、余额增加——这些就是“可变信息”。“真实性”要求状态变化符合业务逻辑（退款不超过订单金额），“可控性”要求每次测试可重置到相同初始状态。
+
+**工具接口（Tools）**定义 Agent 可执行的操作集合——工具不应提供过高层的抽象（如“解决用户问题”），而应提供原子操作（如查询订单、修改预订、发送邮件），迫使 Agent 通过规划和思考来组合这些操作。
+
+**评分标准（Rubric，评分准则）**量化 Agent 的表现，可以是二元的（通过/不通过）、连续的（0 到 100 分）或多维的（分别给准确性、效率、安全性打分）。
+
+**执行协议（Interaction Protocol）**规定交互模式和终止条件。
+
+![图6-2 工具调用型与人机交互型评估环境](images/fig6-2.svg)
+
+### 工具调用型评估环境
+
+对于代码生成、数据分析等主要依赖工具使用的任务，Verifiers 框架展示了典型的设计模式。Agent 通过调用预定义工具完成任务，验证基于可执行标准（测试是否通过、答案是否匹配），不依赖人类标注或模型评判。
+
+Verifiers 引入了层次化的环境设计：`SingleTurnEnv` 适用于单轮任务（如简单问答），`ToolEnv` 支持多轮工具调用的自主循环，`StatefulToolEnv` 和 `SandboxEnv` 支持有状态工具和长期运行的沙盒环境（如代码执行）。例如，`SingleTurnEnv` 适用于问一道数学题后直接验证答案；`ToolEnv` 适用于搜索多个网页后综合回答再验证最终结果；`StatefulToolEnv` 适用于修改数据库记录后验证数据库状态变化；`SandboxEnv` 适用于在沙盒中运行代码后检查输出文件。表6-2 汇总了这些环境类型，便于读者按任务状态、工具调用和隔离需求选择合适的评估环境。
+
+表6-2 Verifiers 环境类型对比
+
+| 环境类型 | 状态保持 | 工具调用 | 典型用例 |
 |---|---|---|---|
-| Operational Correctness | Is the refund amount and order number correct? | 4 | Correctly queried and initiated a ¥299 full refund |
-| Policy Compliance | Does it follow the 7-day refund policy? | 4 | Order is within the refund period, complies with policy |
-| Information Completeness | Does it inform the amount, arrival time, and refund ID? | 4 | All three key pieces of information were provided |
-| Hallucination Detection (Veto Item) | Does it fabricate non-existent information? | Pass | All information comes from tool return results |
+| SingleTurnEnv | 无 | 无 | 单轮问答、数学题 |
+| ToolEnv | 无 | 多轮 | 搜索+信息综合 |
+| StatefulToolEnv | 有 | 多轮 | 修改数据库记录 |
+| SandboxEnv | 有+隔离 | 多轮 | 代码执行与测试 |
 
-Hallucination is listed as a **veto item** rather than a graded scoring dimension because it is orthogonal to quality — a fluent, detailed, and polite response containing false information is far more harmful to the user than a brief but accurate one. (For the general design of the veto mechanism, see the "Four Rubric Principles" section later.)
+框架支持并行采样和轨迹缓存，每次评估的完整轨迹（观察、行动、奖励）都会被保存，方便后续分析和回放。
 
-This test case passed. But a good evaluation doesn't just test success scenarios; it also tests boundaries and pitfalls — when a user wants to return an order from 15 days ago (beyond the refund period), can the Agent correctly refuse? When a user claims "a customer service representative already approved the refund," will the Agent believe it without a system record? These boundary scenarios are key to distinguishing Agent capability levels.
+环境还需处理操作的状态依赖性——工具的执行效果取决于当前状态，失败时应提供清晰的错误信息而非简单的失败标志，让 Agent 能从错误中学习并调整策略。
 
-The process above — defining test cases, running the Agent, scoring with a Rubric, and analyzing results — is the basic skeleton of evaluation. The following sections of this chapter will gradually expand on the design methods for each step.
+### 人机交互型评估环境
 
-## Automated Evaluation Environment
+许多真实任务不仅涉及工具调用，还需要与人类用户对话。客服 Agent 需要理解模糊表达、澄清需求、查询后台系统、向用户确认信息。这类任务的评估面临一个根本性挑战：如何在自动化环境中模拟真实用户？
 
-Agent evaluation requires a repeatable, automated environment — one that can quickly test the effects of changes during development. Building such an environment requires answering three questions: what to evaluate (task definition and verification criteria), who to evaluate against (how to simulate the Agent's interaction partner), and what scoring criteria to use.
+关键设计原则是**渐进式信息透露（Progressive Information Disclosure）**，这是人机交互型评估与传统基准测试（benchmark）的根本区别。大多数 benchmark 一开始就把完整需求全盘托出，但现实中用户很少能一上来就清晰描述需求——他们往往只会说“我的航班好像有问题”、“网络连不上了”。Agent 需要通过主动提问来澄清需求，这个过程本身就是能力的重要体现。因此在评估中，**绝不能一开始就把模拟用户的所有信息暴露给 Agent**，信息应按需、渐进地在对话中透露。
 
-### Basic Components of an Evaluation Environment
+τ-bench 的解决方案是**用户模拟（User Simulation）**：用另一个 LLM 扮演用户角色，根据预定义的指令与 Agent 对话。模拟用户接收任务指令（如“我需要取消明天的航班”），在对话中逐步向 Agent 透露必要信息、回应询问，任务完成后发出终止信号。提示词要求模拟用户“不要一次性透露所有信息，只提供当前步骤必要的内容”、“不要编造指令中未提供的信息”。用户模拟的设计需要在真实性和可控性之间权衡：行为应接近真实用户（表达模糊、信息不完整、偶尔情绪波动），同时遵循一定的剧本以确保可复现。
 
-An evaluation environment consists of five elements — the following sections will focus on dataset design and scoring criteria design:
+以下是一个渐进式信息透露的多轮对话示例（用户模拟器按固定脚本行动）：
 
-**Dataset**: Defines the task set, including initial state, goal description, and optional reference solutions.
+> **用户**：“我的航班有个问题。”
+> **Agent**：“请问是哪个航班？”
+> **用户**（按脚本透露）：“Delta 123，明天早上从旧金山飞纽约。”
+> **Agent**：“具体是什么问题？”
+> **用户**（按脚本透露）：“飞行时间太长了，我想改签。”
+> **Agent**：“对新航班有什么偏好吗？”
+> **用户**（按脚本透露）：“下午的航班都行。”
 
-**Environment State**: Maintains variable information during task execution, requiring a balance between authenticity and controllability. For example, in a customer service evaluation, the environment state includes order records in the database and user account balances. After the Agent calls `process_refund`, the order status changes from 'delivered' to 'refunded' and the balance increases — these are "variable information." "Authenticity" requires that state changes follow business logic (refund amount cannot exceed the order amount), and "controllability" requires that each test can be reset to the same initial state.
+用户模拟器遵循一个固定的脚本（已知信息 + 透露规则），确保评估可复现，同时模拟真实用户的渐进式表达方式。
 
-**Tools**: Defines the set of operations the Agent can perform — tools should not provide overly high-level abstractions (like "solve user problem"), but should provide atomic operations (like query order, modify booking, send email), forcing the Agent to combine these operations through planning and reasoning.
+τ-bench 是评测 Agent 在结构化业务流程（如航空客服、零售客服）中表现的基准测试。它的检查是组件级、多维度的：一方面检查数据库最终状态是否正确（如预订记录状态变为“已取消”），另一方面验证 Agent 在对话中是否输出了必要的关键信息（如退款金额和到账时间，通过搜索特定字符串或模式来验证）。这种双重验证同时考察操作准确性和沟通有效性。但在任务层面，这些检查最终汇总为**零或一的二元奖励**——所有检查全部通过才得 1 分，任何一项不通过就是 0 分。二元奖励便于统计 Pass^k 等可靠性指标（见后文“评估指标体系”），代价是“操作准确但漏掉某个非关键字段”与“完全失败”得到相同的分数。
 
-**Rubric (Scoring Criteria)**: Quantifies the Agent's performance, which can be binary (pass/fail), continuous (0 to 100 points), or multi-dimensional (scoring accuracy, efficiency, and safety separately).
+改进版 **τ²-bench** 的核心增量不在评分粒度，而在两点：一是**双控环境（Dual-Control）**——不再只有 Agent 一方能调用工具，用户模拟器也能操作同一个共享环境（如 Agent 指导用户切换飞行模式，用户的操作真正改变环境状态），这更贴近技术支持等需要用户动手配合的真实场景；二是**更精确的任务规范与组合式任务生成**——成功条件的歧义更少、具体任务实例可以参数化批量生成（详细验证维度见后文“可验证性与客观性保障”一节）。
 
-**Interaction Protocol**: Specifies the interaction mode and termination conditions.
-
-![Figure 6-2 Tool-Calling and Human-Computer Interaction Evaluation Environments](images/fig6-2.svg)
-
-### Tool-Calling Evaluation Environment
-
-For tasks that primarily rely on tool usage, such as code generation and data analysis, the Verifiers framework demonstrates a typical design pattern. The Agent completes the task by calling predefined tools, and verification is based on executable criteria (whether tests pass, whether answers match), without relying on human annotation or model judgment.
-
-Verifiers introduces a hierarchical environment design: `SingleTurnEnv` is suitable for single-turn tasks (e.g., simple Q&A), `ToolEnv` supports multi-turn autonomous loops of tool calls, and `StatefulToolEnv` and `SandboxEnv` support stateful tools and long-running sandbox environments (e.g., code execution). For example, `SingleTurnEnv` is suitable for asking a math problem and directly verifying the answer; `ToolEnv` is suitable for searching multiple web pages, synthesizing an answer, and then verifying the final result; `StatefulToolEnv` is suitable for modifying database records and then verifying the database state changes; `SandboxEnv` is suitable for running code in a sandbox and then checking the output files. Table 6-2 summarizes these environment types for readers to choose the appropriate evaluation environment based on task state, tool calls, and isolation requirements.
-
-Table 6-2 Verifiers Environment Type Comparison
-
-| Environment Type | State Persistence | Tool Calls | Typical Use Case |
-|---|---|---|---|
-| SingleTurnEnv | None | None | Single-turn Q&A, math problems |
-| ToolEnv | None | Multi-turn | Search + information synthesis |
-| StatefulToolEnv | Yes | Multi-turn | Modifying database records |
-| SandboxEnv | Yes + Isolation | Multi-turn | Code execution and testing |
-
-The framework supports parallel sampling and trajectory caching. The complete trajectory (observations, actions, rewards) from each evaluation is saved for subsequent analysis and replay.
-
-The environment also needs to handle the state dependency of operations — the execution effect of a tool depends on the current state. On failure, it should provide clear error messages rather than simple failure flags, allowing the Agent to learn from errors and adjust its strategy.
-
-### Human-Computer Interaction Evaluation Environment
-
-Many real-world tasks involve not only tool calls but also conversations with human users. A customer service Agent needs to understand vague expressions, clarify needs, query backend systems, and confirm information with the user. Evaluating such tasks faces a fundamental challenge: how to simulate real users in an automated environment?
-
-The key design principle is **Progressive Information Disclosure**, which is the fundamental difference between human-computer interaction evaluation and traditional benchmarks. Most benchmarks reveal the complete requirements upfront, but in reality, users rarely can clearly describe their needs from the start — they often just say "there seems to be a problem with my flight" or "the internet isn't working." The Agent needs to clarify needs through proactive questioning, and this process itself is an important demonstration of capability. Therefore, in evaluation, **all information from the simulated user must never be exposed to the Agent from the beginning**; information should be revealed progressively and on-demand during the conversation.
-
-τ-bench's solution is **User Simulation**: using another LLM to play the user role, conversing with the Agent according to predefined instructions. The simulated user receives task instructions (e.g., "I need to cancel tomorrow's flight"), gradually reveals necessary information to the Agent during the conversation, responds to inquiries, and sends a termination signal when the task is complete. The prompt requires the simulated user to "not reveal all information at once, only provide what is necessary for the current step" and "not fabricate information not provided in the instructions." The design of user simulation requires a trade-off between authenticity and controllability: behavior should be close to a real user (vague expressions, incomplete information, occasional emotional fluctuations) while following a certain script to ensure reproducibility.
-
-The following is an example of a multi-turn conversation with progressive information disclosure (the user simulator acts according to a fixed script):
-
-> **User**: "There's a problem with my flight."
-> **Agent**: "Which flight is it?"
-> **User** (revealing per script): "Delta 123, tomorrow morning from San Francisco to New York."
-> **Agent**: "What's the specific problem?"
-> **User** (revealing per script): "The flight time is too long, I want to change it."
-> **Agent**: "Any preferences for the new flight?"
-> **User** (revealing per script): "Any afternoon flight is fine."
-
-The user simulator follows a fixed script (known information + disclosure rules), ensuring evaluation reproducibility while simulating the progressive expression style of a real user.
-
-τ-bench is a benchmark for evaluating Agent performance in structured business processes (e.g., airline customer service, retail customer service). Its checks are component-level and multi-dimensional: on one hand, it checks whether the final database state is correct (e.g., the booking record status changes to "cancelled"); on the other hand, it verifies whether the Agent output necessary key information during the conversation (e.g., refund amount and arrival time, verified by searching for specific strings or patterns). This dual verification simultaneously examines operational accuracy and communication effectiveness. However, at the task level, these checks ultimately aggregate into a **binary reward of zero or one** — all checks must pass to get a score of 1, and any single failure results in a score of 0. Binary rewards facilitate the calculation of reliability metrics like Pass^k (see the "Evaluation Indicator System" section later), at the cost of giving the same score to "operationally accurate but missing a non-critical field" and "complete failure."
-
-The core improvements in the enhanced **τ²-bench** are not in scoring granularity, but in two points: first, **Dual-Control Environment** — it's no longer just the Agent that can call tools; the user simulator can also operate on the same shared environment (e.g., the Agent instructs the user to switch to airplane mode, and the user's action actually changes the environment state), which is closer to real-world scenarios like technical support that require user cooperation; second, **more precise task specifications and compositional task generation** — fewer ambiguities in success conditions, and specific task instances can be parameterized and generated in batches (see the "Verifiability and Objectivity Assurance" section later for detailed verification dimensions).
-
-> **Experiment 6-1 ★: Run τ²-bench and compare its evolution with τ-bench**> This experiment uses the τ²-bench evaluation framework to understand the design principles of human-computer interaction evaluation environments. By comparing the differences between τ-bench and τ²-bench, we can appreciate how evaluation datasets are iteratively improved.
+> **实验 6-1 ★：运行 τ²-bench 并对比 τ-bench 的演进**
 >
-> Read the task definition files in depth: each task contains known information (the user's background knowledge), task instructions (guiding how to progressively reveal information and response strategies), and success conditions (the target state of the database and confirmation information that must appear in the dialogue). Run the complete evaluation process, observe the multi-turn dialogue between the user simulator and the Agent, and analyze typical failure modes (policy violations, information omissions, excessive handoffs to human agents, etc.).
+> 本实验通过运行 τ²-bench 评估框架，理解人机交互型评估环境的设计要点，并通过对比 τ-bench 与 τ²-bench 的差异，体会评估数据集是如何迭代改进的。
+>
+> 深入阅读任务定义文件：每个任务包含已知信息（用户的背景知识）、任务指令（指导如何渐进式透露信息和响应策略）以及成功条件（数据库目标状态和对话中必须出现的确认信息）。运行完整评估流程，观察用户模拟器与 Agent 的多轮对话，分析典型的失败模式（政策违规、信息遗漏、过度转接人工等）。
 >
 >
-> ![Figure 6-3 τ²-bench Evaluation Architecture](images/fig6-3.svg)
+> ![图6-3 τ²-bench 评估架构](images/fig6-3.svg)
 >
 >
-> Compare the design differences between τ-bench and τ²-bench: The initial version of τ-bench had overly simple user instructions (the Agent could guess the answer), imprecise success conditions (leading to misjudgments), and a mechanical user simulator. τ²-bench made systematic improvements to address these issues:
+> 对比 τ-bench 与 τ²-bench 的设计差异：τ-bench 初始版本的用户指令过于简单（Agent 能猜对答案）、成功条件不够精确（导致误判）、用户模拟器过于机械。τ²-bench 针对这些问题做了系统性改进：
 >
-> - **Introduced more detailed task instructions**: Including "Grounding Requirements," meaning responses must be based on the actual state of the environment
-> - **More precise evaluation criteria**: For example, "a speed test must return 'excellent' to be considered resolved"
-> - **More realistic user simulator behavior specifications**: Progressive information disclosure, natural emotional fluctuations
+> - **引入更详细的任务指令**：包括“事实锚定要求”（Grounding），即必须基于环境真实状态回答
+> - **更精确的评估标准**：如“速度测试返回 excellent 才算解决”
+> - **更真实的用户模拟器行为规范**：渐进式信息透露、自然的情绪波动
 >
-> Pay special attention to the newly added telecom domain tasks in τ²-bench, and understand its dual-control environment design (as mentioned earlier, the user and the Agent jointly operate the same shared environment).
+> 特别关注 τ²-bench 新增的 telecom 领域任务，理解其双控环境设计（如前文所述，用户与 Agent 共同操作同一共享环境）。
 >
-Unlike tool-calling evaluations, which focus on "whether an observable state change has been completed," human-computer interaction evaluations focus on "whether the user has been guided through a cognitive or decision-making change." The former examines the correctness of the Agent's actions, while the latter examines the reasonableness of its communication strategy.
+与工具调用型评估侧重“是否完成了可观测的状态变更”不同，人机交互型评估关注“是否引导用户完成了认知或决策上的变化”——前者考察 Agent 的行动正确性，后者考察其沟通策略的合理性。
 
-The construction of the evaluation environment also involves the design of simulation environments. When the evaluation environment needs to support large-scale repeated interactions, it evolves into a simulation environment. This will be briefly discussed at the end of this chapter.
+评估环境的构建还涉及仿真环境的设计——当评估环境需要支持大规模重复交互时就演化为仿真环境，本章末尾将简要讨论。
 
-## Design of Evaluation Task Datasets
+## 评估任务数据集的设计
 
-The evaluation environment is the "stage," and the dataset is the "script." The quality of the script often determines the value of the evaluation more than the stage itself. A poorly designed dataset, even when run in a perfect environment, only yields noise. This section distills several repeatedly validated principles from the design practices of benchmarks such as GAIA, AndroidWorld, SWE-Bench Verified, τ-bench and τ²-bench, Terminal-Bench, OSWorld, and OSWorld-Verified.
+评估环境是“舞台”，数据集是“剧本”——剧本设计的好坏，往往比舞台本身更能决定评估的价值。一个设计糟糕的数据集，即使跑在完美的环境里，得到的也只是噪声。本节从 GAIA、AndroidWorld、SWE-Bench Verified（Software Engineering Benchmark，软件工程基准测试）、τ-bench 与 τ²-bench、Terminal-Bench、OSWorld 与 OSWorld-Verified 等基准的设计实践中，提炼出几条反复被验证的原则。
 
-This list is not exhaustive of the Agent evaluation landscape. Even within the Web/GUI category alone, there are multiple benchmarks with different focuses: WebArena builds its own set of fully reproducible websites (e-commerce, forums, code hosting, etc.), containing the uncontrollability of "real web pages" within a sandbox; Mind2Web takes the opposite approach, testing generalization capabilities directly on hundreds of real websites; BrowseComp specializes in deep retrieval—where answers are deeply hidden, requiring multi-hop browsing and cross-validation to find. In the tool-calling dimension, there are also specialized function-calling leaderboards like BFCL (Berkeley Function-Calling Leaderboard). This chapter does not aim to list all benchmarks but instead selects two core environmental paradigms (tool-calling type, human-computer interaction type), along with GUI operation scenarios that run through the dataset cases, to delve into their design trade-offs. Understanding the paradigms allows for quickly judging what any new benchmark measures, how well it prevents data leakage, and how far its conclusions can be extrapolated.
+这份清单并未穷尽 Agent 评估的版图。仅 Web/GUI 类就有多个各有侧重的基准：WebArena 自建了一套可完全复现的网站（电商、论坛、代码托管等），把“真实网页”的不可控性关进沙盒；Mind2Web 反其道而行，直接在上百个真实网站上测泛化能力；BrowseComp 则专攻深度检索——答案藏得很深、需要多跳浏览与交叉验证才能找到。工具调用维度还有 BFCL（Berkeley Function-Calling Leaderboard）这类专门的函数调用榜单。本章无意罗列所有基准，而是选取两种核心环境范式（工具调用型、人机交互型），加上贯穿数据集案例的 GUI 操作场景，深挖其设计取舍——理解了范式，面对任何新基准都能快速判断它测的是什么、防泄漏做得如何、结论能外推到哪里。
 
-> **Experiment 6-2 ★: Manually Execute Benchmark Tasks**
+> **实验 6-2 ★：人肉执行基准测试任务**
 >
-> Select one task each from GAIA, AndroidWorld, SWE-Bench Verified, τ²-bench, Terminal-Bench, and OSWorld-Verified and complete them manually. It is recommended to complete one simple, one medium, and one difficult task from each dataset—the "difficult" level should be challenging even for humans. Compare your execution results with the standard answers and analyze the sources of discrepancies. Through this hands-on experience, understand: task descriptions need to balance clarity and openness, verification standards must be objective and executable, and the hierarchical difficulty of tasks must be able to distinguish different capability levels.
+> 从 GAIA、AndroidWorld、SWE-Bench Verified、τ²-bench、Terminal-Bench、OSWorld-Verified 中各挑选任务亲手完成。建议每个数据集完成简单、中等、困难各一个——“困难”级别对人类也有挑战。将执行结果与标准答案对比，分析差异来源。通过亲身体验理解：任务描述需要在明确性与开放性之间平衡，验证标准必须客观可执行，任务难度的层次化要能区分不同能力水平。
 >
-### Core Challenges in Task Dataset Design
+### 任务数据集设计的核心挑战
 
-**Challenge One: The Tension Between Clarity and Openness.** Task descriptions must be clear enough to ensure reproducible evaluation, yet not so rigid as to stifle the Agent's creativity. GAIA provides an example: tasks are "conceptually simple" but have open implementation paths—for instance, requiring finding astronaut information from NASA's Astronomy Picture of the Day. The goal is clear (find a specific astronaut and their time in space), but how to search, filter, and verify is entirely up to the Agent's autonomous decision-making.
+**挑战一：明确性与开放性的张力。** 任务描述必须足够明确以确保评估可复现，又不能过于死板限制 Agent 的创造性。GAIA 提供了一个范例：任务“概念简单”但实现路径开放——例如要求找到 NASA 每日天文图片中的宇航员信息，目标明确（找到特定宇航员及其太空时间），但如何搜索、筛选、验证完全由 Agent 自主决策。
 
-**Challenge Two: Balancing Authenticity and Controllability.** Real-world tasks contain uncertainty and noise, which can reveal robustness but also threaten reproducibility. The initial version of SWE-Bench directly used real GitHub issues, ensuring authenticity but also leading to vague task descriptions, incomplete test cases, and subjective evaluation criteria. SWE-Bench Verified introduced systematic validation by human experts, filtering out 500 high-quality tasks with clear problems, sufficient tests, and clear solutions, significantly improving controllability while maintaining authenticity.
+**挑战二：真实性与可控性的平衡。** 真实任务包含不确定性和噪声，能让鲁棒性得以显现，但也威胁可复现性。SWE-Bench 初始版本直接取自 GitHub 真实 issue，确保了真实性，但也导致任务描述模糊、测试用例不完整、评估标准主观。SWE-Bench Verified 引入人类专家进行系统性验证，从中筛选出问题清晰、测试充分、方案明确的 500 个高质量任务，在保持真实性的同时显著提升了可控性。
 
-**Challenge Three: Coordinating Diversity and Systematization.** An effective dataset needs to cover typical scenarios, edge cases, and error traps, while also having a systematic organization so that evaluation results can diagnose specific capability weaknesses. AndroidWorld's 116 tasks span 20 real applications, with each task annotated for required core capabilities (multi-step planning, visual understanding, temporal reasoning). This allows evaluation results to not only provide an overall success rate but also reveal strengths and weaknesses in specific capability dimensions. More critically, a parameterization mechanism can generate almost unlimited task variants.
+**挑战三：多样性与系统性的协调。** 有效的数据集需覆盖典型情况、边界条件和错误陷阱，同时要有系统性的组织方式，使评估结果能诊断出具体的能力短板。AndroidWorld 的 116 个任务横跨 20 个真实应用，每个任务标注了所需的核心能力（多步规划、视觉理解、时间推理），使评估结果不仅能给出整体成功率，还能揭示特定能力维度的强弱。更关键的是，通过参数化机制可以生成几乎无限的任务变体。
 
-**Challenge Four: Evaluation Cost vs. Coverage.** Complex Agent tasks can take minutes or even hours to complete, consuming a large number of tokens. The size of the dataset needs to balance comprehensiveness and economy. GAIA carefully selects 466 questions across three difficulty levels, covering multiple capability dimensions while allowing evaluation at a reasonable cost. SWE-Bench Verified filtered from 2294 questions down to 500 (reducing costs by about four-fifths while improving the signal-to-noise ratio through stricter quality standards).
+**挑战四：评估成本与覆盖范围。** 复杂 Agent 任务可能需要数分钟甚至数小时才能完成，涉及大量 token 消耗。数据集的规模需要在全面性与经济性之间平衡。GAIA 精选 466 题、分三级难度，既覆盖多种能力维度又能在合理成本下完成评估。SWE-Bench Verified 从 2294 题筛选至 500 题（成本降低约五分之四，通过更严格的质量标准提升了信噪比）。
 
-**Challenge Five: Preventing Data Contamination.** In the era of large language models, data contamination is a serious challenge for evaluation: when evaluation data is included in the training data, the evaluation measures memorization rather than generalization. It's like memorizing the answers before an exam—good scores don't reflect true ability. Different benchmarks adopt different prevention strategies: GAIA relies on the uniqueness of its answers; questions require combining information from multiple sources to answer, and some tasks come with specially created attachment files (PDFs/audio/images that don't exist on the internet), so a single web page cannot directly provide the answer. SWE-Bench Verified itself is a 500-question subset obtained by OpenAI through manual quality screening of the original SWE-Bench, and does not include time-based anti-leakage design. It is subsequent works like SWE-bench-Live that truly use temporal freshness for anti-leakage, continuously incorporating issues created after the model's training cutoff date, keeping the evaluation ahead of the model's training corpus. τ²-bench prevents leakage through dynamic parameter generation, where specific task instances (user names, order numbers, dates, etc.) are randomly generated each time. AndroidWorld's parameterized task generation naturally has anti-leakage capabilities because verification is based on the final UI state, not the sequence of operations. Terminal-Bench makes leakage detectable by embedding canary GUIDs (Globally Unique Identifiers, a unique tracking marker): if a model can output content containing this GUID, it indicates that the benchmark data has leaked into the training set.
+**挑战五：数据泄漏（Data Contamination）防范。** 在大语言模型时代，数据泄漏是评估面临的严峻挑战：当评估数据被纳入训练数据时，评估测的就是记忆力而非泛化能力，好比考试前把答案背下来了，成绩再好也说明不了真实水平。各个基准采用了不同的防范策略：GAIA 依靠答案的独特性，问题需要组合多个信息源才能回答，且部分任务配有专门创建的附件文件（互联网上不存在的 PDF/音频/图片），单一网页无法直接提供答案。SWE-Bench Verified 本身是 OpenAI 对原 SWE-Bench 做人工质量筛选得到的 500 题子集，并不含时间维度的防泄漏设计；真正靠时间新鲜度防泄漏的是 SWE-bench-Live 等后续工作，它们持续收录模型训练截止日期之后新创建的 issue，使评估始终领先于模型的训练语料。τ²-bench 通过动态参数生成做防范，具体任务实例（用户姓名、订单号、日期等）每次随机生成。AndroidWorld 的参数化任务生成天然具有抗泄漏能力，因为验证基于最终 UI 状态而非操作序列。Terminal-Bench 通过嵌入金丝雀标识符（canary GUID，即全局唯一标识符，一种唯一追踪标记）使泄漏可检测：如果模型能输出含该 GUID 的内容，说明基准数据已泄漏到训练集中。
 
-### Precision Design of Task Descriptions
+### 任务描述的精确性设计
 
-GAIA ensures answer uniqueness through clear information source constraints, time ranges, topics, and query targets. For example, a Level 3 task requires starting from a specific date's NASA image, identifying the astronaut through visual understanding, querying their astronaut group, calculating time in space, and precisely formatting the output ("last name, semicolon separated, thousands separator"). Every detail serves automatic verification—only an exact match in format and content counts as a pass.
+GAIA 通过明确的信息源约束、时间范围、主题和查询目标来确保答案的唯一性。例如 Level 3 任务要求从特定日期的 NASA 图片出发，经视觉理解识别宇航员、查询所属宇航员组、计算太空停留时间并精确格式化输出（“姓氏，分号分隔，千位分隔符”），每个细节都服务于自动验证——只有格式和内容完全匹配才算通过。
 
-τ²-bench introduces contextualized design, with each task containing multiple layers of information: the surface problem ("mobile data isn't working"), performance expectations ("absolutely want excellent speed"), constraints ("won't accept other speeds"), and implied emotions. A key improvement is separating "known information" from "task instructions": known information is what the user currently knows, while task instructions guide the simulator on how to progressively reveal information, including "Grounding Requirements" (responses must be based on the actual results returned by tool calls, not fabricated).
+τ²-bench 引入了情境化设计，每个任务包含多层信息：表面问题（“移动数据无法工作”）、性能期望（“绝对想要出色速度”）、约束条件（“不接受其他速度”）以及隐含情绪。关键改进是将“已知信息”与“任务指令”分离：已知信息是用户当前掌握的事实，任务指令指导模拟器如何渐进式透露信息，其中包含“事实锚定要求”（Grounding Requirement，即必须根据工具调用的实际返回结果回答，不能编造）。
 
-SWE-Bench Verified includes structured fields like problem description, reproduction steps, expected/actual behavior, etc., with annotators verifying the match between the description and the test cases. Every element in Terminal-Bench's task descriptions can be mechanically verified: whether a file path exists, whether permission values are correct, certificate parameters, date formats, etc. For example, "build-linux-kernel-qemu" requires building the Linux kernel 6.9 from source, adding a custom printk in `start_kernel`, generating an initramfs, and running it in QEMU. The success criterion is the appearance of the custom message in the boot log—the Agent cannot fake the output; it must truly complete the entire process.
+SWE-Bench Verified 包含问题描述、复现步骤、预期/实际行为等结构化字段，标注者会验证描述与测试用例的匹配性。Terminal-Bench 的任务描述中每个元素都可以机械化验证：文件路径是否存在、权限数值是否正确、证书参数、日期格式等。例如“build-linux-kernel-qemu”要求从源码构建 Linux 内核 6.9、在 `start_kernel` 中添加自定义 printk、生成 initramfs 并在 QEMU 中运行，成功标准是启动日志中出现自定义消息——Agent 无法通过伪造输出蒙混过关，必须真正完成整个流程。
 
-AndroidWorld uses a **parameterized template** design. A task is not static text but a dynamically instantiable template (e.g., "Change the phone number of contact `[CONTACT_NAME]` to `[NEW_PHONE]`"), with different parameter values randomly generated for each evaluation. This has three benefits:
+AndroidWorld 采用**参数化模板**设计。一个任务不是静态文本，而是可动态实例化的模板（如“将联系人 `[CONTACT_NAME]` 的电话改为 `[NEW_PHONE]`”），每次评估时随机生成不同的参数值。好处有三个：
 
-- **Prevents memorization**: Parameter values differ each time, preventing the replay of a fixed sequence of operations
-- **Increases data diversity**: One template can generate almost unlimited instances
-- **Supports comparative experiments**: Fixing certain parameters while varying others allows precise measurement of specific factors' effects
+- **防止记忆**：参数值每次不同，无法回放固定的操作序列
+- **增加数据多样性**：一个模板可以生成几乎无限的实例
+- **支持对比实验**：固定某些参数只变化其他参数，精确测量特定因素的影响
 
-Verification is based on the final UI state (e.g., whether the phone number field contains the expected value), not the sequence of operations.
+验证基于最终 UI 状态（如电话号码字段是否包含预期值）而非操作序列。
 
-OSWorld tasks often do not start from a "clean" initial state but from carefully configured intermediate states, more closely resembling real-world usage scenarios. Task descriptions need to handle multiple solutions ("set the background to purple" requires a specific color code to disambiguate; "concatenate two CSVs" must accept all reasonable methods like keeping one header or both headers) and environmental uncertainty (website anti-scraping, application UI evolution, timing races—OSWorld-Verified mitigates these through offline page snapshots, locked dependency versions, explicit wait conditions, etc.).
+OSWorld 的任务往往不从“干净的”初始状态开始，而是从精心配置的中间状态启动，更贴近真实使用场景。任务描述需要处理多解性（“将背景设为紫色”需提供具体颜色代码消除歧义，“拼接两个 CSV”需接受保留单表头/双表头等所有合理方式）和环境不确定性（网站反爬、应用 UI 演变、时序竞争——OSWorld-Verified 通过离线页面快照、锁定依赖版本、显式等待条件等机制加以缓解）。
 
-### Hierarchical Design of Task Complexity
+### 任务复杂度的层次化设计
 
-GAIA designs three difficulty levels: Level 1 requires only 1-2 tools (humans 93.9% vs GPT-4 30.3%), Level 2 requires multi-step reasoning (91.8% vs 9.7%), and Level 3 requires complex combinations (87.3% vs 0%). The diagnostic value of this hierarchical design is: failure at Level 1 points to basic tool usage issues, Level 2 points to multi-step planning and information integration, and Level 3 points to long-sequence reasoning and complexity management. Each level corresponds to different improvement directions (prompt engineering vs. planning mechanisms vs. hierarchical architecture/post-training).
+GAIA 设计了三级难度：Level 1 只需 1-2 个工具（人类 93.9% vs GPT-4 30.3%），Level 2 需要多步思考（91.8% vs 9.7%），Level 3 需要复杂组合（87.3% vs 0%）。层次化设计的诊断价值在于：Level 1 失败指向基础工具使用问题，Level 2 指向多步规划和信息整合，Level 3 指向长序列思考和复杂性管理——每个层次对应不同的改进方向（提示工程 vs 规划机制 vs 分层架构/后训练）。
 
-τ²-bench layers complexity by business process: from simple information queries, to multi-step processes (modifying a flight requires querying, showing alternatives, confirming, calculating price differences, and paying), to fault diagnosis (systematically checking multiple possible causes and verifying fixes), and finally to strategic judgment (handling requests that don't comply with policy).
+τ²-bench 通过业务复杂度分层：从简单的信息查询，到多步流程（修改航班需要查询、展示替代、确认、计算差价、支付），再到故障诊断（系统性检查多个可能原因并验证修复），最后到策略判断（处理不符合政策的请求）。
 
-Terminal-Bench layers complexity along the dual dimensions of technical domain × operational complexity. Its task registry has collected over 200 tasks (the size of the core evaluation set varies by version; for example, version 2.0 selected 89 high-quality tasks from community contributions), ranging from simple mlflow model registration, to medium 7z password cracking, to difficult git server + webserver multi-component integration, to the most difficult FEAL differential cryptanalysis (requiring cryptography knowledge + algorithm optimization to meet the 30-second time constraint).
+Terminal-Bench 通过技术领域×操作复杂度双维度分层，其任务注册表已收录 200 余个任务（不同版本的核心评测集规模不同，如 2.0 版从社区贡献中精选了 89 个高质量任务），从简单的 mlflow 模型注册，到中等的 7z 密码破解，到困难的 git 服务器+webserver 多组件集成，到最困难的 FEAL 差分密码分析（需密码学知识+算法优化满足 30 秒时间约束）。
 
-### Ensuring Verifiability and Objectivity
+### 可验证性与客观性保障
 
-GAIA's answers are concise and clear. Strict formatting rules allow verification through exact string matching. The binary result (match or no match) ensures objective reproducibility. The rarity of the answers also serves as an anti-cheating measure—highly specific facts are unlikely to appear verbatim in training data.
+GAIA 的答案简洁明确，严格的格式规定使验证可以通过精确的字符串匹配来完成，二元结果（匹配或不匹配）确保客观可复现。答案的稀有性也起到了防作弊作用——高度具体的事实不太可能以原样出现在训练数据中。
 
-SWE-Bench Verified uses code executability for verification, distinguishing between FAIL_TO_PASS (fails before fix, passes after fix, proving the problem is solved) and PASS_TO_PASS (passes both before and after fix, proving no new bugs were introduced), achieving dual verification. The Verified version also ensures the tests themselves are reliable, without flaky tests that sometimes pass and sometimes fail.
+SWE-Bench Verified 基于代码的可执行性做验证，区分 FAIL_TO_PASS（修复前失败、修复后通过，证明问题被解决了）和 PASS_TO_PASS（修复前后都通过，证明没有引入新的 bug），实现双重验证。Verified 版本还确保测试本身质量可靠、没有时而通过时而失败的不稳定测试（flaky tests）。
 
-τ²-bench's verification system includes multiple layers of checks (the results of each layer are still aggregated into a binary reward at the task level; all must pass for success):
+τ²-bench 的验证体系包含多层检查（各层检查结果在任务层面仍汇总为二元奖励，全部通过才算成功）：
 
-- **Database state check**: Booking record status, whether a refund record was created
-- **Dialogue content keyword search**: Whether the user was asked to confirm the refund amount and arrival time
-- **Process compliance**: Analysis of the tool call sequence, e.g., whether the user's explicit confirmation was obtained before modifying an order
+- **数据库状态检查**：预订记录状态、退款记录是否创建
+- **对话内容关键词搜索**：是否向用户确认退款金额和到账时间
+- **流程合规性**：工具调用序列分析，如修改订单前是否获得用户的明确确认
 
-The dual-control environment of τ²-bench (see the earlier section "Human-Computer Interaction Evaluation Environment") adds another dimension to verification: after the user simulator actually changes the environment state, the Agent must observe this change through tool calls and proceed with troubleshooting accordingly. Verification therefore covers whether the Agent truly read the results of the user's actions.
+τ²-bench 的双控环境（见前文“人机交互型评估环境”）在验证层面还多出一维：用户模拟器实际改变环境状态后，Agent 必须通过工具调用观察到这一变化并据此继续排查，验证因此覆盖了“Agent 是否真的读到了用户侧的操作结果”。
 
-OSWorld is equipped with 134 independent evaluation functions, has full OS access, and can deeply inspect file system structures, process states, network connections, and application internal states. For example, in a database operation task, the evaluation script not only verifies that the report file exists but also directly connects to the database to check if the SQL was executed correctly. In browser tasks, it analyzes the DOM tree, checks cookies/localStorage, and sends verification requests to the backend to confirm if the form was truly submitted. This deep inspection can detect cases of "superficial completion but substantive error"—for instance, the Agent clicked the submit button, but the request was rejected by the server due to incorrect field entries.
+OSWorld 配备了 134 个独立评估函数，拥有完整的 OS 访问权限，能深入检查文件系统结构、进程状态、网络连接、应用内部状态。例如在数据库操作任务中，评估脚本不仅验证报告文件是否存在，还会直接连接数据库检查 SQL 是否正确执行；在浏览器任务中会分析 DOM 树、检查 cookie/localStorage、向后端发送验证请求确认表单是否真正生效。这种深度检查能发现“表面完成但实质错误”的情况——比如 Agent 点击了提交按钮，但因为字段填写错误而被服务端拒绝。
 
-Terminal-Bench is based on a standardized Docker container environment, combining file system state checks (path existence, permission values, content format) with program execution functional verification (in build-linux-kernel-qemu, actually starting QEMU and searching for the custom printk message). The canary GUID makes leakage traceable.
+Terminal-Bench 基于 Docker 容器标准化环境，结合文件系统状态检查（路径是否存在、权限数值、内容格式）和程序执行功能验证（build-linux-kernel-qemu 中实际启动 QEMU 并搜索自定义 printk 消息），canary GUID 使泄漏可追踪。
 
-### Systematic Design of Task Distribution
+### 任务分布的系统性设计
 
-Task distribution needs to systematically cover capability dimensions, difficulty dimensions, scenario dimensions, and edge cases. GAIA pursues generality—most tasks require a combination of reasoning, multimodality, browsing, and tool use. τ²-bench specifically designs "trap tasks"—for example, a user claims "customer service has approved the cancellation" but it doesn't actually comply with policy, testing whether the Agent can maintain correct judgment under pressure and misleading information. OSWorld is based on a dual-dimension matrix of operation type (file IO / desktop application / web application / cross-application workflow) and application domain, spanning three operating systems (research shows strong cross-OS correlation; skills learned on one system can transfer to others). Terminal-Bench includes "cross-technology stack combination tasks" to test systems thinking (e.g., a resharding task combining data processing + file operations + Python engineering).
+任务分布需要系统性地覆盖能力维度、难度维度、场景维度和边界情况。GAIA 追求通用性——大多数任务需要推理、多模态、浏览、工具使用的组合。τ²-bench 专门设计了“陷阱任务”——比如用户声称“客服已批准取消”但实际并不符合政策，用以测试 Agent 在面对压力和误导时能否保持正确判断。OSWorld 基于操作类型（文件 IO / 桌面应用 / 网页应用 / 跨应用流程）与应用领域的双维度矩阵，跨三个操作系统（研究表明跨 OS 能力强相关，在一个系统上学到的能力可以迁移到其他系统）。Terminal-Bench 包含“跨技术栈组合任务”以测试系统思维（如融合数据处理 + 文件操作 + Python 工程的重分片任务）。
 
-### Data Quality Control and Iterative ImprovementSWE-Bench Verified is a benchmark for quality control. OpenAI randomly selected 1,699 tasks from the original 2,294 for human evaluation, recruiting 93 Python-proficient developers. Annotators had to perform multiple checks: whether the problem description was clear (could they understand what needed to be solved), whether the test cases were complete (covering all aspects and edge cases), whether the tests were stable (no flaky tests due to environment or randomness), whether the patch was correct (did it introduce new errors), and whether the difficulty was reasonable. After rigorous screening, only 500 passed (29%)—this high rejection rate is a necessary investment in evaluation quality. They also established standardized annotation guidelines, defining specific criteria and examples for each check to ensure consistency among different annotators.
+### 数据质量控制与迭代改进
 
-τ²-bench introduces a separation of "known information" / "task instructions" (making the simulator behavior more realistic) and stricter completion conditions (e.g., "only excellent counts as solved; poor/fair/good are not accepted"), preventing "superficial fixes."
+SWE-Bench Verified 是质量控制的典范。OpenAI 从原始 2294 个任务中随机抽取 1699 个进行人工评估，招募了 93 名精通 Python 的开发者。标注者需完成多项检查：问题描述是否清晰（能否理解要解决什么）、测试用例是否完整（覆盖所有方面和边界条件）、测试是否稳定（有没有因环境或随机性导致的 flaky test）、patch 是否正确（是否引入了新错误）、难度是否合理。经过严格筛选，最终仅 500 个通过（29%）——这种高淘汰率是对评估质量的必要投资。他们还建立了标准化的标注指南，为每项检查定义具体标准和示例，确保不同标注者之间的一致性。
 
-OSWorld-Verified is a model of iterative improvement. After its release in April 2024, OSWorld quickly became an important benchmark for multimodal agent evaluation, but over 15 months of widespread use, more than 300 issues were uncovered. These issues fall into four categories: environment issues (website anti-scraping / CAPTCHA / dynamic content changes), task description issues (ambiguous phrasing), verification logic issues (too strict or too lenient), and initial state issues (incomplete configuration). A team of about 10 people from the University of Hong Kong collaborated deeply with MoonShot AI, OpenAI, ByteDance Seed TARS, Anthropic, Simular, and others for two months to systematically fix these issues. Repair strategies were formulated for each category: environment issues were resolved by locking versions and offline backups, task descriptions were clarified by rewriting ambiguous phrasing, verification logic was balanced by manually establishing correct baselines and adjusting conditions, and initial states were enhanced by adding completeness checks.
+τ²-bench 引入了“已知信息”/“任务指令”分离（使模拟器行为更真实）和更严格的完成条件（如“只有 excellent 才算解决，poor/fair/good 都不接受”），防止“敷衍性修复”。
 
-The evaluation infrastructure was also migrated from local VMs to the AWS cloud platform, leveraging elastic scaling to achieve a 50x parallel speedup (from over 10 hours to a few minutes). The Google Drive task initialization success rate increased from 50% to over 95%. All official evaluation trajectory data is publicly available on HuggingFace, allowing the community to review every detail, reproduce results, and identify issues, forming a virtuous cycle of continuous improvement.
+OSWorld-Verified 是迭代改进的典范。OSWorld 在 2024 年 4 月发布后迅速成为多模态 Agent 评估的重要基准，但在 15 个月的广泛使用中暴露出超过 300 个问题。这些问题分为四类：环境问题（网站反爬 / CAPTCHA / 动态内容变化）、任务描述问题（歧义表述）、验证逻辑问题（过严或过松）、初始状态问题（配置不完整）。香港大学团队组建了约 10 人小组，与 MoonShot AI、OpenAI、ByteDance Seed TARS、Anthropic、Simular 等深度合作两个月进行系统性修复。针对每类问题制定了修复策略：环境问题通过锁定版本和离线备份解决，任务描述通过重写歧义表述消除，验证逻辑通过人工建立正确基线和调整条件来平衡，初始状态通过增加完整性校验来增强。
 
-It is worth noting that the evaluation environment and the post-training environment often share the same origin: a well-designed evaluation environment can be easily adapted into a training environment—SWE-Gym is a representative example of building training tasks based on SWE-bench, while the parameterized templates of τ²-bench and AndroidWorld can generate massive training instances in batches. However, a clear red line must be drawn: what can be reused is the **construction mechanism of the environment**; the specific problems in the evaluation set itself must be strictly isolated from the training data—once an evaluation problem enters the training set, it tests memory rather than ability (see Chapter 7 for details).
+评估基础设施也从本地 VM 迁移到 AWS 云平台，利用弹性伸缩实现了 50 倍并行加速（从 10 多小时缩短到几分钟），Google Drive 任务初始化成功率从 50% 提升到 95% 以上。所有官方评估轨迹数据公开在 HuggingFace 上，使社区能审查每个细节、复现结果、发现问题，形成持续改进的良性循环。
 
-## Evaluation Metrics System
+值得一提的是，评估环境与后训练环境往往同源：一套设计良好的评估环境，稍加改造就能变成训练环境——SWE-Gym 就是基于 SWE-bench 构建训练任务的代表，τ²-bench、AndroidWorld 的参数化模板则能批量生成海量训练实例。但要划清一条红线：可以复用的是**环境的构造机制**，评估集本身的那些具体题目必须与训练数据严格隔离——一旦评估题进了训练集，测的就是记忆而非能力（详见第七章）。
 
-After determining "what tasks to evaluate on," we must also answer "which dimensions to measure." This section summarizes commonly used metrics for agent evaluation into a referenceable "metric dictionary"—from process to outcome, from quality to safety, providing definitions and applicable scenarios for each. The precise definitions of metrics like Pass@k and Pass^k, repeatedly mentioned earlier (e.g., in the τ-bench section), are also provided here.
+## 评估指标体系
 
-**Process Metrics: From Black Box to White Box.**
+确定了“在什么任务上评估”之后，还要回答“该度量哪些维度”。本节把 Agent 评估常用的指标汇总成一部可查阅的“指标词典”——从过程到结果、从质量到安全，逐一给出定义与适用场景。前文（如 τ-bench 一节）反复提到的 Pass@k、Pass^k 等指标，其精确定义也在这里给出。
 
-Focusing solely on the final outcome is insufficient; the process by which the agent achieves the outcome is equally important. **Action legality rate** measures the proportion of valid and legal operations among all actions—invalid operations include calling non-existent tools or passing incorrect parameter types; unauthorized operations refer to actions beyond the permitted scope. A high legality rate indicates the agent has a clear understanding of the tool ecosystem. **Tool call correctness rate** further requires that parameters are semantically reasonable: the query terms for a search tool should accurately express the need, and the path for a file operation should point to the correct target.
+**过程指标：从黑盒到白盒。**
 
-**Path efficiency** measures the economy of task completion: number of steps (think-act-observe cycles), redundant actions (repeatedly searching for the same keyword, re-reading the same file), and backtracking frequency (how often the agent realizes an error and corrects itself—occasional backtracking is normal, but frequent backtracking indicates insufficient forward planning). A baseline from human experts or heuristic algorithms is needed to define a "reasonable number of steps."
+仅关注最终结果是不够的，Agent 达到结果的过程同样重要。**行动合法率**测量操作中有效且合法的比例——无效操作包括调用不存在的工具、传递错误的参数类型；越权操作指超出权限范围的行为。高合法率说明 Agent 对工具生态有清晰的理解。**工具调用正确率**进一步要求参数在语义上合理：搜索工具的查询词应准确表达需求，文件操作的路径应指向正确目标。
 
-**Retrieval coverage** targets information-gathering tasks: Did the agent fully explore the information space? Did it jump to conclusions after only looking at the first page of search results? **Cost and latency** focuses on request count, token expenditure (distinguishing input/output costs, considering KV Cache reuse), and wall-clock time (including model inference + tool execution + network latency). Time distribution needs to be tracked to identify bottlenecks.
+**路径效率**衡量完成任务的经济性：步数（思考-行动-观察循环次数）、冗余动作（重复搜索相同关键词、反复读取同一文件）、回退次数（意识到错误并纠正的频率——偶尔回退很正常，但频繁回退说明前瞻规划不足）。需要建立人类专家或启发式算法的基线来定义“合理步数”。
 
-**Outcome and Quality Metrics.**
+**检索覆盖率**针对信息收集类任务：Agent 是否充分探索了信息空间？是否只看了搜索结果第一页就草率下结论？**成本与延迟**关注请求次数、Token 花费（需区分输入/输出成本，考虑 KV Cache 复用）、墙钟时间（包括模型推理 + 工具执行 + 网络延迟），需要追踪时间分布来定位瓶颈。
 
-**Task success rate** is the most direct hard metric, which can be designed with hierarchical standards (core goals must be achieved, secondary goals affect quality scores). In terms of statistical methods, two often-confused metrics need to be distinguished:
+**结果与质量指标。**
 
-- **Pass@k**: The probability that **at least one** of k attempts succeeds, answering "Can the agent do it?"
-- **Pass^k**: The probability that **all** k attempts succeed, answering "Is the agent stable and reliable?"
-- **Best@k**: The score of the **best** of k attempts (rather than whether it succeeded), measuring the "quality ceiling given enough opportunities," often used for open-ended tasks with continuous scoring.
+**任务成功率**是最直接的硬指标，可设计层次化标准（核心目标必须达成，次要目标影响质量评分）。在统计方式上需要区分两个常被混淆的指标：
 
-To illustrate the difference with a concrete number: Assume the agent's single-attempt success rate is 60% (i.e., Pass@1 = 0.6). For 5 attempts, the two metrics are: Pass@5 = 1 - 0.4^5 ≈ 99% (almost certain to succeed at least once), Pass^5 = 0.6^5 ≈ 7.8% (very low probability of all succeeding). The former evaluates the upper bound of capability, the latter evaluates stability; mixing them up can lead to misjudgment. Table 6-3 summarizes the applicable scenarios and risks of misuse for both, helping readers choose the correct metric between regression testing and exploratory evaluation.
+- **Pass@k**：k 次尝试中**至少有一次**成功的概率，回答“Agent 能不能做到”
+- **Pass^k**：k 次尝试**全部成功**的概率，回答“Agent 是否稳定可靠”
+- **Best@k**：k 次尝试中**最好一次**的得分（而非是否成功），衡量“给足机会后的质量上限”，多用于有连续评分的开放任务
 
-Table 6-3 Applicable Scenarios for Pass@k and Pass^k
+用一个具体数字感受差异：假设 Agent 的单次成功率是 60%（即 Pass@1 = 0.6），那么跑 5 次的两个指标分别是：Pass@5 = 1 - 0.4^5 ≈ 99%（几乎肯定至少成功一次），Pass^5 = 0.6^5 ≈ 7.8%（全部成功的概率很低）。前者评估能力上限，后者评估稳定性，混用会导致误判。表6-3 归纳两者的适用场景与误用风险，帮助读者在回归测试和探索性评估之间选择正确指标。
 
-| Evaluation Purpose | Which Metric to Use | Consequence of Misuse |
-|---|---|---|
-| Verify stability (regression testing) | Pass^k | Using Pass@k masks instability—an agent succeeding only once in five attempts would still show as "pass" |
-| Evaluate capability ceiling (exploratory tasks) | Pass@k or Best@k | Using Pass^k would incorrectly flag failures due to occasional fluctuations—every small change would be judged a failure |
+表6-3 Pass@k 与 Pass^k 的适用场景
 
-**Safety and Compliance Metrics** are crucial in production deployment: triggering sensitive operations (deleting data / modifying permissions / sending external communications), data leakage (printing passwords in logs / sending private documents to external APIs), and violating content should all follow the **zero-tolerance principle**—similar to the hallucination veto (see the "Four Rubric Principles" later). A single serious safety violation vetoes the overall evaluation, and it is not exempted due to good performance in other dimensions.
+| 评估目的 | 用什么指标 | 误用后果 |
+|-----------------------------|-----------------|--------------------------------------------------|
+| 验证稳定性（回归测试） | Pass^k | 用 Pass@k 会掩盖不稳定性——Agent 五次只成功一次也显示“通过” |
+| 评估能力天花板（探索性任务） | Pass@k 或 Best@k | 用 Pass^k 会因偶发波动误报——每次小改动都被判失败 |
 
-**Robustness** measures stability in the face of uncertainty: random seed sensitivity (how much performance varies under different initializations), adaptability to page changes (a website UI update should not cause complete failure), tolerance for API jitter (can it gracefully handle temporary failures, timeouts, format changes), and long-term memory interference (can outdated information accumulated in the context lead to incorrect decisions).
+**安全与合规指标**在生产部署中至关重要：触发敏感操作（删除数据 / 修改权限 / 发送对外通信）、数据外泄（日志中打印密码 / 私密文档发送到外部 API）、违规内容，都应遵循**零容忍原则**——与幻觉否决项同理（见后文“Rubric 四准则”），一次严重安全违规即否决整体评价，不因其他维度表现优秀而豁免。
 
-**Dual Coverage of Execution Trajectory and Final Outcome.** A distinction often overlooked in evaluation is that "what the agent said and did during execution" (i.e., the trajectory defined in Chapter 1) and "what the system ultimately became" (the final outcome) are two different things. The agent saying "the booking is complete" is information at the trajectory level; a record actually being generated in the database is verification at the outcome level. Looking only at the trajectory misses cases where the agent "said it but didn't do it," and looking only at the outcome might miss that the intermediate steps went astray. Anthropic once gave an example: a flight booking agent discovered a loophole in the airline's policy during execution and found a cheaper option for the user—if scored only according to the preset execution path, this run would be judged a failure; but from the final outcome, the user got a better deal. Therefore, both types of evaluation should be covered to avoid systematic blind spots.
+**鲁棒性**衡量面对不确定性时的稳定性：随机种子敏感性（不同初始化下表现差异有多大）、页面变化适应性（网站 UI 更新不应导致完全失效）、API 抖动容忍度（能否优雅处理临时故障、超时、格式变化）、长时记忆干扰（上下文中积累的过时信息是否会导致错误决策）。
 
-**Human Spot Checks and Adversarial Review.**
+**执行轨迹与最终结果的双重覆盖**。评测中容易忽视的一个区分是：Agent 在执行过程中“说了什么、做了什么”（即第一章定义的轨迹，trajectory）和“系统最终变成了什么样”（最终结果，outcome）是两件事。Agent 说“订票已完成”是轨迹层面的信息，数据库里确实生成了一条订单才是结果层面的验证。只看轨迹会漏掉“说了但没做到”的情况，只看结果又可能看不出中间步骤走歪了。Anthropic 曾举过一个例子：一个机票预订 Agent 在执行中发现了航空公司政策里的漏洞，为用户找到了更便宜的方案——如果只按预设执行路径打分，这次运行会被判为失败；但从最终结果看，用户拿到了更好的方案。因此两类评测都应覆盖，以避免系统性盲区。
 
-Even if automated evaluation is reliable in most cases, regular human spot checks are necessary: covering different task types, success/failure cases, and ambiguous cases near boundary scores, not only verifying the results but also reviewing the reasonableness of the scoring rationale. Human spot checks can be further systematized into **judge calibration**: before using LLM judges at scale, first construct a human-annotated gold standard set (e.g., 100-200 cases covering various task types and difficulties), measure the agreement rate between the judge model (i.e., using an LLM as a judge, the mechanism of which is detailed in the next section on LLM-as-a-Judge) and human annotations (simple agreement rate or Cohen's kappa, the latter of which removes chance agreement), and only use the judge model for large-scale evaluation after reaching a preset threshold (e.g., kappa above 0.7); thereafter, whenever the judge model or Rubric is updated, recalibrate on the gold standard set. Without this step, the scores from an LLM judge are just "another model's opinion," not a reliable proxy for human judgment. **Adversarial review** uses Red Teaming to actively construct challenging cases: seemingly perfect answers containing hidden errors, answers that get by through keyword stuffing, and answers that exploit known biases of the judge model to obtain undeservedly high scores. **Multi-judge mechanisms** use multiple independent judges to score separately, determining the final result through weighted averaging or consistency checks—when judges disagree significantly, the case is flagged for further human review.
+**人工抽检和对抗式评审。**
 
-## Automated Evaluation Methods
+即使自动评估在大多数情况下是可靠的，也需要定期人工抽检：覆盖不同任务类型、成功/失败案例和边界分数附近的模糊案例，不仅验证结果，还要审查评分理由的合理性。人工抽检可以进一步系统化为**评判者校准**：在放量使用 LLM 评判之前，先构建一个人工标注的金标集（如 100-200 个覆盖各任务类型和难度的案例），在其上测量评判模型（即用 LLM 充当评委，其机制详见下节 LLM-as-a-Judge）与人类标注的一致率（简单一致率或 Cohen's kappa 等一致性系数，后者剔除了随机猜中的成分），达到预设门槛（如 kappa 高于 0.7）后才将评判模型用于大规模评估；此后每当评判模型或 Rubric 更新，都应在金标集上重新校准。没有这一步，LLM 评判的分数只是“另一个模型的意见”，而非人类判断的可靠代理。**对抗式评审**通过红队（Red Teaming）主动构造挑战性案例：表面完美但含隐蔽错误的回答、通过关键词堆砌蒙混过关的回答、利用评判模型已知偏见获取不应得高分的回答。**多评委机制**使用多个独立评判者分别评分，通过加权平均或一致性检查确定最终结果——当评判者之间严重分歧时，标记为需进一步人工审查。
 
-With the evaluation environment, dataset, and clear metrics system in place, the core question becomes: how to score? For tasks with clear correct answers (e.g., math problems, SQL queries), simple binary judgment (correct/incorrect) is sufficient; but for open-ended tasks (e.g., customer service dialogues, report writing), more refined evaluation methods are needed.
+## 自动化评估方法
 
-Code-based automatic verification only covers scenarios with standard answers; scoring open-ended tasks is the main topic of this section. Among these, the design of reward signal density (from binary rewards to process rewards to generative rewards) and training methods for reward models are left for systematic discussion in the post-training section of Chapter 7; this section answers a more fundamental question: how to use LLMs to automatically judge the output quality of open-ended tasks.
+有了评估环境、数据集和明确的指标体系，接下来的核心问题是：怎么打分？对于有明确正确答案的任务（如数学题、SQL 查询），简单的二元判定（对/错）已经足够；但对于开放式任务（如客服对话、报告撰写），需要更精细的评估方法。
 
-### LLM-as-a-Judge: The Core of Automated Evaluation
+代码自动验证只覆盖有标准答案的场景，开放式任务的评分才是本节的主题。其中，奖励信号的密度设计（从二元奖励到过程奖励再到生成式奖励）以及奖励模型的训练方法留待第七章后训练部分系统讨论；本节则回答一个更基础的问题：如何用 LLM 自动化地评判开放式任务的输出质量。
 
-![Figure 6-4 LLM-as-a-Judge Pipeline](images/fig6-4.svg)
+### LLM-as-a-Judge：自动化评估的核心
 
-Why is LLM-as-a-Judge needed? For open-ended tasks (e.g., generating reports, handling customer complaints, creative content), there are no standard answers for automatic comparison, and human evaluation is costly and difficult to scale. LLM-as-a-Judge achieves a balance between automation scale and human professional judgment by having a language model evaluate based on expert-defined scoring criteria (Rubric). However, this method also has known limitations: the judge model may have its own biases (the most typical being **length bias**—a tendency to give higher scores to longer, more detailed responses, even if the content is not more correct), and multiple evaluations of the same input may also have fluctuations. Length bias is particularly worth guarding against separately; common methods include three: explicitly penalizing verbosity in the Rubric, setting an upper limit on response length for similar tasks; when doing pairwise comparisons, first controlling the lengths of the two candidates to be similar before evaluating; and regularly auditing the correlation between scores and response length—if high scores are almost always accompanied by long responses, it indicates that the judge has been biased by length and the Rubric needs to be revised. To systematically address these challenges, Rubric design must follow the following principles:
+![图6-4 LLM-as-a-Judge 流水线](images/fig6-4.svg)
 
-**Rubric (Scoring Criteria): The Basis for LLM Judgment.**
+为什么需要 LLM-as-a-Judge？对于开放式任务（如生成报告、处理客户投诉、创意内容），没有标准答案可以自动对比，人工评估成本高且难以规模化。LLM-as-a-Judge 通过让语言模型根据专家定义的评分标准（Rubric）进行评判，在自动化规模和人类专业判断之间取得了平衡。但这种方法也有已知的局限：评判模型可能有自己的偏见（最典型的是**长度偏差**——倾向于给更长、更详尽的回复打高分，哪怕内容并不更正确），相同输入多次评判也可能有波动。长度偏差尤其值得单独防范，常用手段有三：在 Rubric 里显式惩罚冗长、对同类任务规定回答的长度上限；做配对比较时先把两个候选的长度控制到相近再评；以及定期审计评分与回答长度的相关性——如果高分几乎总是伴随长回答，就说明评判已被长度带偏，需要回炉修订 Rubric。为了系统性地应对这些挑战，Rubric 设计必须遵循以下准则：
 
-**Four Rubric Principles** (Scale AI, "Rubrics as Rewards"):
+**Rubric（评分标准）：LLM 评判的依据。**
 
-(1) **Based on Expert Guidance**—Must reflect domain knowledge, capturing core facts and reasoning steps. For example, a Rubric for medical Q&A needs to include diagnostic criteria and medical errors that must be avoided. A Rubric lacking professional foundation can only capture surface features like language fluency.
+**Rubric 四准则**（Scale AI，“Rubrics as Rewards”）：
 
-(2) **Comprehensive Coverage**—Covers factual accuracy, logical coherence, completeness, and safety, and not only defines positive standards but also explicitly identifies **Pitfalls**—i.e., high-risk common errors, such as recommending unverified therapies in medical advice.
+（1）**基于专家指导**——必须反映领域知识，捕捉核心事实和推理步骤。比如医疗问答的 Rubric 需包含诊断标准和必须避免的医学错误，缺乏专业基础的 Rubric 只能捕捉语言流畅度等表面特征。
 
-(3) **Standard Importance Weights**—Divided into Essential, Important, Optional, and Pitfall items. Supports a **Veto mechanism**: for example, in a customer service scenario, hallucination (fabricating false information) is a typical veto dimension—regardless of how well other dimensions perform, if false information appears, it must be vetoed. This also helps prevent reward hacking through keyword stuffing.
+（2）**全面覆盖**——涵盖事实准确性、逻辑连贯性、完整性、安全性，而且不仅定义正面标准，还要明确**陷阱（Pitfall）**——即高风险的常见错误，如医疗建议中推荐未经验证的疗法。
 
-(4) **Self-Contained Evaluation**—Each evaluation item is independently actionable and does not rely on the evaluator's domain knowledge. Abstract standards like "the response demonstrates deep understanding" should be avoided, replaced by verifiable standards like "cites at least two authoritative theories and accurately explains how they support the conclusion."
+（3）**标准重要性权重**——分为必要项（Essential）、重要项、可选项、陷阱项。支持**一票否决机制（Veto）**：比如在客服场景中，幻觉（编造虚假信息）是典型的否决维度——无论其他维度表现多优秀，只要出现虚假信息就必须否决。这也有助于防范关键词堆砌式的奖励作弊。
 
-Key practice: Define objectively verifiable scoring levels for each dimension, providing specific examples and **edge cases** to help distinguish ambiguous situations. Actively guard against **Reward Hacking**—where the agent finds a "shortcut" to get high scores without actually completing the task—by explicitly penalizing hallucination, sycophancy, keyword stuffing, and avoiding difficult questions. The Rubric is an iterative product—refined by collecting evaluator disagreements through trial use, gradually evolving from abstract principles to a detailed casebook.
+（4）**自包含评估**——每个评价项独立可操作，不依赖评价者的领域知识。要避免“回应展示了深刻理解”这种抽象标准，改为“引用了至少两个权威理论并准确解释如何支持结论”这种可验证的标准。
 
-Using a user memory agent as an example, a complete Rubric conforming to the four principles is shown. Test question: "Who is my daughter's pediatrician?" (The answer requires linking information across two conversations: the first conversation mentions "my daughter's name is Lily," the second mentions "took Lily to see Dr. Chen").
+关键实践：为每个维度定义客观可验证的评分档次，提供具体示例和**边界案例**帮助区分模糊情况。要主动防范**奖励作弊（Reward Hacking）**——即 Agent 找到了获取高分的“捷径”却没有真正完成任务——明确惩罚幻觉、讨好用户、关键词堆砌、回避棘手问题。Rubric 是迭代产物——通过试用收集评价者分歧、逐步完善，逐渐从抽象准则演化为详尽的判例集。
+
+以用户记忆 Agent 为例，展示一个符合四准则的完整 Rubric。测试问题：“我女儿的儿科医生是谁？”（答案需要跨两次对话关联：第一次对话提到“女儿叫 Lily”，第二次提到“带 Lily 去看了 Dr. Chen”）。
 
 ```yaml
 rubric:
   dimensions:
-    - name: Factual Correctness
-      weight: essential        # Essential item
+    - name: 事实正确性
+      weight: essential        # 必要项
       scoring:
-        4_Excellent: "Correctly answers Dr. Chen, and links to daughter Lily"
-        3_Good: "Correctly answers Dr. Chen, but does not mention it is Lily's doctor"
-        2_Passable: "Gives the correct doctor but with additional uncertain information"
-        1_Fail: "Gives an incorrect doctor's name, or answers 'I don't know'"
+        4_优秀: "准确回答 Dr. Chen，且关联到女儿 Lily"
+        3_良好: "准确回答 Dr. Chen，但未提及是 Lily 的医生"
+        2_及格: "给出了正确医生但附带不确定的额外信息"
+        1_不及格: "给出错误医生名，或回答不知道"
 
-    - name: Information Completeness
-      weight: important        # Important item
+    - name: 信息完整性
+      weight: important        # 重要项
       scoring:
-        4_Excellent: "Proactively supplements relevant information (e.g., last visit date, diagnosis)"
-        3_Good: "Answers the core question without omission"
-        2_Passable: "Answers the core question but omits available related information"
-        1_Fail: "Key information is missing"
+        4_优秀: "主动补充相关信息（如上次就诊时间、诊断结果）"
+        3_良好: "回答了核心问题，无遗漏"
+        2_及格: "回答了核心问题，但遗漏了可用的关联信息"
+        1_不及格: "关键信息缺失"
 
-    - name: Reasoning Correctness
+    - name: 思考正确性
       weight: important
       scoring:
-        4_Excellent: "Correctly links the two cross-session pieces of information: 'daughter=Lily' and 'Lily's doctor=Dr. Chen'"
-        3_Good: "Correctly links but the reasoning path is not clear enough"
-        2_Passable: "Partially correct linking"
-        1_Fail: "Incorrect linking (e.g., mistaking the user's own doctor for the daughter's doctor)"
+        4_优秀: "正确关联'女儿=Lily'和'Lily的医生=Dr. Chen'两条跨会话信息"
+        3_良好: "关联正确但思考路径不够清晰"
+        2_及格: "部分关联正确"
+        1_不及格: "错误关联（如把用户自己的医生当成女儿的医生）"
 
-    - name: Hallucination Detection
-      weight: veto             # Veto item: once triggered, total score is zero
+    - name: 幻觉检测
+      weight: veto             # 否决项：一旦触发，总分归零
       scoring:
-        pass: "All information can be traced back to historical conversation records"
-        fail: "Fabricated information not present in the conversation (e.g., fictitious visit dates, diagnoses)"
+        pass: "所有信息均可溯源到历史对话记录"
+        fail: "编造了对话中不存在的信息（如虚构就诊日期、诊断结果）"
 
   edge_cases:
-    - "If the user has multiple daughters who see different doctors, should ask which daughter"
-    - "If the memory contains both 'Dr. Chen' and 'Dr. Chen' (in Chinese), should recognize them as the same person"
-```**Good Rubric vs. Bad Rubric**: Each scoring level above provides verifiable, specific behaviors ("accurately answered Dr. Chen") rather than unverifiable descriptions like "demonstrates a deep understanding of memory." The disqualification criteria clearly define the baseline: even if all other dimensions score full marks, any instance of hallucination results in an automatic zero.
+    - "如果用户有多个女儿且分别看不同的医生，应追问是哪个女儿"
+    - "如果记忆中同时存在'Dr. Chen'和'陈医生'，应识别为同一人"
+```
 
-Send this Rubric together with the Agent's actual response to the judging model, which will score each dimension and provide reasoning. By running this across dozens of test cases, you can systematically identify the Agent's capability gaps—for example, an average score of 2.1 on the "cross-session association" dimension clearly points to deficiencies in memory retrieval or information correlation.
+**好的 Rubric vs 坏的 Rubric**：上面每个评分档都给出了可验证的具体行为（“准确回答 Dr. Chen”），而非“展示了对记忆的深刻理解”这类无法客观判定的描述。否决项明确了底线：即使其他维度全部满分，一旦出现幻觉就直接判零。
 
-> **Experiment 6-3 ★★: Building a Rubric-Based User Memory Evaluation System**
+将这个 Rubric 和 Agent 的实际回答一起发给评判模型，评判模型会逐维度打分并给出理由。通过在几十个测试用例上运行，就能系统性地发现 Agent 的能力短板——比如“跨会话关联”维度的平均分只有 2.1，就明确指向记忆检索或信息关联的不足。
+
+> **实验 6-3 ★★：构建基于 Rubric 的用户记忆评估系统**
 >
-> **Prerequisites**: Must complete the Chapter 3 User Memory Experiment (`ch3/user-memory-evaluation`).
+> **前置要求**：需完成第三章用户记忆实验（`ch3/user-memory-evaluation`）。
 >
-> This experiment requires modifying the `ch3/user-memory-evaluation` framework from Chapter 3, upgrading the current simple LLM-as-a-Judge scoring mechanism to a structured, multi-dimensional Rubric evaluation system. The existing system uses a single LLM call to return a pass/fail result plus evaluation reasoning, lacking structured diagnostic capabilities.
+> 本实验要求改造第三章的 `ch3/user-memory-evaluation` 框架，将当前基于简单 LLM-as-a-Judge 的评分机制升级为结构化的多维度 Rubric 评估系统。现有系统使用单一 LLM 调用返回通过/失败加评估理由，缺乏结构化的诊断能力。
 >
-> Design a unified multi-dimensional Rubric framework applicable to all three task levels. Evaluation dimensions include: Factual Precision (verifies whether numbers/dates/names are consistent with memory information); Factual Recall (verifies whether all relevant information is provided without omitting key content); Reasoning Correctness (checks whether the relationships between pieces of information and implicit logic are correctly understood); Reasoning Proactiveness (evaluates whether suggestions or risk warnings beyond a direct answer are provided when appropriate); Hallucination Detection (ensures no information not present in memory is fabricated).
+> 设计统一的多维度 Rubric 框架，适用于所有三层任务。评价维度包括：事实正确性（Precision，精确率——在所有给出的信息中，有多少是正确的）验证数字/日期/名称是否与记忆信息一致；事实完整性（Recall，召回率——在所有应该给出的信息中，有多少被提及了）验证是否提供了所有相关信息而非遗漏关键内容；思考正确性检查是否正确理解了信息间的关系和隐含逻辑；思考主动性评估是否在适当时候提供超出直接回答的建议或风险提醒；幻觉检测确保未编造记忆中不存在的信息。
 >
-> Four-level scoring (Excellent/Good/Pass/Fail), with specific judgment criteria for each level rather than abstract descriptions. The hallucination dimension is a one-vote veto item. Provide examples and boundary cases for each dimension.
+> 四档制评分（优秀/良好/及格/不及格），每档配具体判定标准而非抽象描述。幻觉维度设为一票否决项。为每个维度提供示例和边界案例。
 >
-> **Experiment 6-4 ★★: Comparative Evaluation of Advanced JSON Cards vs. RAG**
+> **实验 6-4 ★★：Advanced JSON Cards 与 RAG 的对比评估**
 >
-> **Prerequisites**: Must complete the Chapter 3 User Memory and RAG experiments (`ch3/user-memory`, `ch3/agentic-rag-for-user-memory`).
+> **前置要求**：需完成第三章用户记忆与 RAG 实验（`ch3/user-memory`、`ch3/agentic-rag-for-user-memory`）。
 >
-> **Objective**: Fairly compare the advantages and boundaries of structured memory versus unstructured retrieval on the same evaluation set. Reuse the two Chapter 3 projects and compare three configurations on the 60 test cases from `ch3/user-memory-evaluation`—Pure Advanced JSON Cards (structured cards resident in context, no retrieval needed), Pure RAG (conversation chunks embedded in a vector store, retrieval required), Hybrid System (core facts resident + original conversations retrieved on demand).
+> **目标**：在同一套评估集上公平对比结构化记忆与非结构化检索的优势边界。复用两个第三章项目，在 `ch3/user-memory-evaluation` 的 60 个测试用例上对比三种配置——纯 Advanced JSON Cards（结构化卡片常驻上下文、无需检索）、纯 RAG（对话分块入向量库、必须检索）、混合系统（核心事实常驻 + 原始对话按需检索）。
 >
-> **Acceptance Criteria**: Record success rate, average steps, number of tool calls, latency, and cost across three complexity levels (basic recall / multi-session disambiguation / cross-session hidden associations). Clearly describe the failure boundaries for each approach—what structure misses, what retrieval misses, and whether the hybrid truly achieves synergy. Configuration details and test cases are available in the companion repository.
+> **验收**：在三层复杂度（基础回忆 / 多会话消歧 / 跨会话隐藏关联）上记录成功率、平均步数、工具调用次数、延迟与成本，说清每种方案的失效边界——结构化丢了什么、检索漏了什么、混合是否真有协同。配置细节与测试用例见配套仓库。
 >
-**Homogeneous Model Evaluation and Multi-Source Judging.**
+**同源模型问题与多源评判。**
 
-When the Agent and the judging model come from the same family, the Agent may learn to exploit the judging model's preferences and blind spots.
+当 Agent 与评判模型来自同一家族时，Agent 可能学会利用评判模型的偏好和盲点。
 
-**This is precisely what Goodhart's Law states: when a metric becomes an optimization target, it ceases to be a good metric.** The more an Agent is trained or tuned on a particular scoring system, the more it tends to exploit loopholes in that system rather than genuinely improving its capabilities.
+**这正是古德哈特定律（Goodhart's Law）所说的：当一个度量指标变成优化目标时，它就不再是好的度量指标。** Agent 越是在某个评分系统上训练或调优，就越倾向于钻这个系统的漏洞，而非真正提升能力。
 
-More insidiously, the Agent will gradually learn to avoid the types of errors that the judging model is not good at detecting, making the scoring system appear perfectly fine.
+更隐蔽的是，Agent 还会逐渐学会避开评判模型不擅长检测的错误类型，让评分系统看起来一切正常。
 
-The mitigation strategy is **multi-source heterogeneous judging**—using multiple LLMs from different model families to judge independently (e.g., Agent uses Claude, judges use GPT-5 and Gemini). Biases from different families are often orthogonal, making it difficult for the Agent to "fool" all judges simultaneously. Use the same Rubric to ensure everyone is judging the same target, and aggregate results through weighted averaging or consistency checks. In the deployment phase, a single model can be used for rapid evaluation, but periodic quality audits using the full multi-source judging setup should be conducted.
+缓解策略是**多源异构评判**——使用不同模型家族的多个 LLM 分别评判（比如 Agent 用 Claude，评判就用 GPT-5 和 Gemini），不同家族的偏见往往是正交的，Agent 很难同时“欺骗”所有评判者。使用相同的 Rubric 确保大家评判的是同一目标，通过加权平均或一致性检查聚合结果。部署阶段可以用单一模型快速评估，但应定期用完整的多源评判进行质量审计。
 
-Multi-source judging addresses the question of "which model to use for judging"; next, we address "which modalities to judge"—extending the capability of LLM-as-a-Judge from text to speech, images, and video is another dimension of evaluation coverage.
+多源评判解决的是“用什么模型评判”的问题；接下来要解决“评判哪些模态”的问题——把 LLM-as-a-Judge 的能力从文本扩展到语音、图像、视频，是评估覆盖度的另一维度。
 
-**Multimodal LLM-as-a-Judge.**
+**多模态 LLM-as-a-Judge。**
 
-Multimodal judging extends LLM-as-a-Judge to the domains of speech, images, and video. Four common directions are as follows.
+多模态评判将 LLM-as-a-Judge 扩展到语音、图像、视频领域，常见的四个方向如下。
 
-- **TTS Evaluation** (TTS stands for Text-to-Speech): Assesses accuracy, naturalness, voice consistency, and emotional expression. These dimensions can capture prosodic issues that traditional WER (Word Error Rate) struggles to detect.
-- **ASR Evaluation** (ASR stands for Automatic Speech Recognition): Performs semantic impact assessment—misrecognizing "today's weather" is harmless, but misrecognizing "transfer one thousand" as "ten thousand" could have serious consequences.
-- **UI Evaluation**: Uses a **Proposer-Reviewer** mechanism to check for issues like text overflow, color contrast, and button placement. Here, the proposer-reviewer is used as an **evaluation method**, differing from its use as a **generation system component** in Chapter 5, but the core mechanism is the same—one model generates, another independently reviews.
-- **Video Editing Evaluation**: Verifies the correctness of clip start/end points and effect application through keyframes.
+- **TTS 评估**（TTS 即 Text-to-Speech，文本转语音）：判断准确性、自然度、音色一致度、情感表达。这些维度能发现传统 WER（Word Error Rate，词错误率）难以捕捉的韵律问题。
+- **ASR 评估**（ASR 即 Automatic Speech Recognition，语音识别）：做语义影响判断——“今天天气”识别错误无伤大雅，但“转账一千”变成“一万”就可能造成严重后果。
+- **UI 评估**：采用**提议者-审核者**（Proposer-Reviewer）机制，检查文字溢出、颜色对比度、按钮位置等问题。这里的提议者-审核者作为**评估方法**使用，与第五章中作为**生成系统组件**的用法不同，但核心机制相同——一个模型生成，另一个模型独立审查。
+- **视频剪辑评估**：通过关键帧验证剪辑起止点和特效应用是否正确。
 
-> **Experiment 6-5 ★★: Building a Fully Automated TTS Quality Evaluation Pipeline**
+> **实验 6-5 ★★：构建全自动 TTS 质量评估流水线**
 >
-> This experiment requires designing and implementing a complete multimodal LLM-as-a-Judge TTS quality evaluation system from scratch.
+> 本实验要求从零设计并实现完整的多模态 LLM-as-a-Judge TTS 质量评估系统。
 >
-> Design a multi-dimensional TTS Rubric: The Accuracy dimension verifies whether all text is correctly read (no omissions/misreadings/additions); the Naturalness dimension assesses whether the speech is fluent (free from robotic feel, unnatural pauses, and whether prosody conforms to human habits); the Emotional Expression dimension checks whether the tone matches the emotional color of the text (rising intonation for questions, emphasis for exclamations, slower pace and lower pitch for sad content); the Voice Consistency dimension evaluates speaker similarity when a reference voice is available (the multimodal model simultaneously receives the reference voice and the synthesized voice for comparison).
+> 设计 TTS 多维度 Rubric：准确性维度验证是否正确读出所有文字（无遗漏/错读/添加），自然度维度评估语音是否流畅（有无机器感、不自然停顿，韵律是否符合人类习惯），情感表达维度检查语气是否符合文本情感色彩（疑问句升调、感叹句强调、悲伤内容语速慢语调低），音色一致性维度在有参考语音时评估说话人相似程度（多模态模型同时接收参考语音与合成语音对比）。
 >
-> Build a diverse test corpus: varying lengths (single sentence → long paragraph), genres (news/story/dialogue), emotions (neutral/excited/sad), and special challenges (numbers/proper nouns/polyphonic characters/dialectal vocabulary). Implement the evaluation pipeline: The TTS generation module connects to mainstream services (OpenAI, ElevenLabs, Fish Audio, Minimax, Doubao); the multimodal judging module uses Gemini 3.5 Flash to input the synthesized speech, original text, reference voice, and Rubric together, scoring each dimension and providing detailed reasoning. Analyze the distribution of evaluation results to identify the strengths and weaknesses of different TTS models across dimensions—some models may excel in accuracy but lack naturalness, while others have high naturalness but are prone to errors on special vocabulary.
+> 构建多样化测试语料库：不同长度（单句→长段落）、文体（新闻/故事/对话）、情感（中性/兴奋/悲伤）、特殊挑战（数字/专有名词/多音字/方言词汇）。实现评估流水线：TTS 生成模块接入主流服务（OpenAI、ElevenLabs、Fish Audio、Minimax、豆包），多模态评判模块使用 Gemini 3.5 Flash 将合成语音、原始文本、参考语音和 Rubric 一起输入，逐维度评分并给出详细理由。分析评估结果的分布，识别不同 TTS 模型在各维度上的优劣势——某些模型可能准确性优秀但自然度不足，另一些自然度高但在特殊词汇上容易出错。
 >
-Beyond manually defining Rubrics, specialized **generative reward models** can be trained to automate judging—this involves training methods for reward models, which will be discussed in detail in Chapter 7.
+除了人工定义 Rubric，还可以训练专门的**生成式奖励模型**来自动化评判——这涉及奖励模型的训练方法，将在第七章详细讨论。
 
-In practical model selection, we often face the question: "Which is better, A or B?" Pairwise comparison provides an evaluation method that does not rely on absolute scores.
+在实际的模型选型中，我们经常面对的问题是：“A 和 B 哪个更好？”配对比较提供了一种不依赖绝对分数的评估方式。
 
-### Pairwise Comparison and Model Ranking
+### 配对比较与模型排名
 
-![Figure 6-5 Elo Rating and Pairwise Comparison Ranking](images/fig6-5.svg)
+![图6-5 Elo 评分与配对比较排名](images/fig6-5.svg)
 
-**Elo Rating** (a ranking system originally designed for chess) quantifies the relative ability of models through a large number of pairwise matchups: the larger the rating difference, the higher the expected win rate for the stronger model. For example, if Model A has a rating of 1200 and Model B has a rating of 1000, the Elo system would predict A's win rate to be approximately 76%. If B unexpectedly wins, B gains more points and A loses more points—an upset result leads to a larger rating adjustment. This mechanism allows the ranking to converge quickly to the true level. Its statistical foundation is the **Bradley-Terry model**: each model is abstracted as a latent "strength score," and the probability of one beating another in a pairwise matchup is determined by the difference in their scores. Elo is an engineering implementation of this model in an online update form.
+**Elo 评分**（一种最初用于国际象棋的排名系统）通过大量的两两对决来量化模型的相对能力：分差越大，强者的预期胜率越高。例如，模型 A 得分 1200、模型 B 得分 1000，Elo 系统会预测 A 的胜率约 76%。如果 B 意外获胜，B 加分较多、A 减分较多——爆冷的结果会带来更大的分数调整，这种机制让排名快速收敛到真实水平。其背后的统计基础是 **Bradley-Terry 模型**：将每个模型抽象为一个潜在的“实力分数”，两两对决胜负的概率由两者分数差决定，Elo 即是该模型在线更新形式的工程实现。
 
-Chatbot Arena uses anonymous random matchups—users blindly choose the better response without knowing the model's identity, and rankings are derived from millions of votes. The advantage of this method is that it does not require defining "absolute standards"; it only needs human judgment on "which is better, A or B." However, it also has limitations: the ranking results depend on the questions users ask—if a large number of users happen to ask programming questions, models good at programming will rank higher, which may not reflect their true level on other tasks.
+Chatbot Arena 采用匿名随机对决——用户在不知道模型身份的情况下盲选更优回应，通过数百万次投票得出排名。这种方法的优势在于不需要定义“绝对标准”，只需要人类判断“A 和 B 哪个更好”。但也有局限：排名结果取决于用户提了什么问题——如果大量用户恰好都问编程题，擅长编程的模型排名就会偏高，这未必反映它在其他任务上的真实水平。
 
-When pairwise judging is performed by an LLM rather than human voting, one must also guard against **Position Bias**—the judging model systematically favors the candidate appearing in a certain position (usually the first), and the judgment may remain unchanged even if the content of the two candidates is completely swapped. The standard mitigation method is to **evaluate each pair twice with swapped order**: once with A first, once with B first, and average the two results; a stricter approach is to only count cases where the two judgments are consistent, and treat inconsistencies as ties or send them for human review. Chatbot Arena's approach is essentially the same—randomizing the display positions of the two responses so that position bias cancels out over a large sample.
+当配对评判由 LLM 而非人类投票完成时，还要防范**位置偏差（Position Bias）**——评判模型会系统性地偏向出现在某个位置（通常是先出现）的候选，即使两个候选的内容完全对调，判决也可能不变。标准的缓解方法是**交换顺序各评一次**：A 在前评一次、B 在前再评一次，取两次结果的平均；更严格的做法是只有两次判决一致时才计入，不一致则记为平局或送人工复核。Chatbot Arena 的做法本质相同——随机化两个回答的展示位置，让位置偏差在大样本下相互抵消。
 
-**From Evaluation to Training: Transfer of Pairwise Comparison Signals.** Pairwise comparison is not only an evaluation tool but also an important source of signals for post-training. The **GRPO** (Group Relative Policy Optimization) algorithm, which will be introduced in Chapter 7, incorporates the "compare which is better" judging approach into model training—its core idea is to sample multiple candidate answers for the same question and use the relative merits between them (rather than absolute scores) to estimate advantages, thereby eliminating the need to train an additional value network (critic, used for estimating baselines) as in PPO—note that GRPO eliminates the value network, not the reward signal itself; it still relies on a reward model or verifiable reward rules to judge the quality of each candidate. This is just a foreshadowing; the complete algorithm derivation, comparison with PPO/DPO, and implementation details in Agent post-training will be covered in Chapter 7.
+**从评估到训练：配对比较信号的迁移**。配对比较不仅是评估手段，也是后训练的重要信号来源。第七章将介绍的 **GRPO**（Group Relative Policy Optimization，分组相对策略优化）算法正是将“对比哪个更好”的评判方式引入了模型训练——其核心思路是对同一问题采样多个候选答案，用它们之间的相对优劣（而非绝对得分）来估计优势，从而省去了 PPO 中额外训练一个价值网络（critic，用于估计基线）的麻烦——注意 GRPO 省掉的是价值网络，而非奖励信号本身，它仍然依赖奖励模型或可验证的奖励规则来评判每个候选的好坏。这里只是埋下伏笔，完整的算法推导、与 PPO/DPO 的对比、以及在 Agent 后训练中的落地细节都留到第七章展开。
 
-> **Experiment 6-6 ★★: Building a Model Leaderboard from Pairwise Comparison Data**
+> **实验 6-6 ★★：从配对比较数据构建模型排行榜**
 >
-> This experiment aims to deeply understand how the Bradley-Terry model extracts relative ability scores from a large number of pairwise comparisons by implementing an Elo rating calculation system from scratch. Use the real open-source voting dataset from Chatbot Arena (containing millions of anonymous user blind votes).
+> 本实验通过从零实现 Elo rating 计算系统，深入理解 Bradley-Terry 模型如何从大量配对比较中提取出相对能力评分。使用 Chatbot Arena 开源的真实投票数据集（包含数百万次用户盲选投票）。
 >
-> Implement the Elo rating iterative update algorithm: Initialize all models with a rating of 1000. Process voting records in chronological order. For each matchup, calculate the expected win rate based on the current rating difference between the two models, compare the actual result with the expectation, and adjust ratings by a fixed learning rate—the winner gains points, the loser loses points, with the adjustment magnitude proportional to the deviation from the expectation (an upset loss results in a larger rating change). Sort models in descending order by final rating and calculate the pairwise win rate matrix. Compare with the official leaderboard to verify that the rankings are generally consistent. Exact point-for-point alignment is not required: the official Chatbot Arena uses Bradley-Terry maximum likelihood estimation (solving all matchups simultaneously, independent of voting order), while this implementation uses online incremental Elo updates (results are affected by the learning rate K-factor and processing order). The two algorithms should yield consistent overall rankings, but the specific scores will not be precisely identical.
+> 实现 Elo rating 迭代更新算法：初始所有模型评分 1000 分，按时间顺序处理投票记录。对每场对决，根据两个模型当前的评分差计算预期胜率，将实际结果与预期比较，按固定学习率调整——胜者加分、败者减分，调整幅度与预期偏差成正比（爆冷失败会导致更大的分数变化）。按最终评分降序排列并计算两两胜率矩阵，与官方榜单对比、验证排名大体一致即可。不必苛求逐分对齐：Chatbot Arena 官方用的是 Bradley-Terry 极大似然拟合（对全部对局一次性求解，与投票的先后顺序无关），而这里实现的是在线增量更新的 Elo（结果受学习率 K 因子和处理顺序影响），两种算法在总体排名上应当吻合，但具体分值不会精确一致。
 >
-> The second part of the experiment creates a historical ranking evolution animation: Slice the voting data by time (weekly or monthly) and calculate Elo rating snapshots for each time point. Use D3.js to implement a bar chart race animation (horizontal bar length = rating, vertical position = ranking, smoothly changing over time). By observing the animation, identify technology breakthrough moments (a model's rating suddenly surges), competitive landscape evolution, and model lifecycles.
+> 实验第二部分创建历史排名演进动画：将投票数据按时间切片（每周或每月），对每个时间点计算 Elo 评分快照。使用 D3.js 实现条形图竞赛动画（水平条形长度=评分，纵向位置=排名，随时间平滑变化）。通过观察动画识别技术突破时刻（某模型评分骤升）、竞争格局演变、模型生命周期。
 >
-## Evaluation-Driven Model Selection
+## 评估驱动的模型选型
 
-Model selection is not simply about "choosing the strongest model"; it involves making evaluation-driven trade-offs across multiple dimensions based on the application scenario.
+模型选择不是简单地“选最强的模型”，而是根据应用场景在多个维度之间做评估驱动的权衡。
 
-### Key Dimensions for Selection
+### 选型的关键维度
 
-**Throughput** and **Latency** are two sets of metrics that are easily confused. Clarifying them requires understanding that LLM inference occurs in two stages. **Prefill** reads the entire context at once, determining the **Time To First Token (TTFT)**—the delay from when the user presses Enter to when the first character appears. Longer contexts mean slower prefill and higher TTFT. **Decode** then generates the response token by token, determining the subsequent generation speed (tokens/second), which also directly dictates thinking time: a model generating 50 tokens/s producing 2000 thinking tokens would take 40 seconds just to think.
+**吞吐量**与**延迟**是两组容易混淆的指标，理清它们只需知道大模型推理分两个阶段。**Prefill（预填充）**一次性读入完整上下文，决定用户按下回车到第一个字出现的**首字延迟**（业内用 **TTFT**，Time To First Token 度量）——上下文越长 prefill 越慢、TTFT 越大。**Decode（解码）**随后逐 token 生成回答，决定后续出字速度（tokens/秒），也直接决定思考时长：一个 50 tokens/s 的模型生成 2000 个思考 token，光思考就要 40 秒。
 
-Around these two stages, the main throughput and latency metrics are as follows:
+围绕这两个阶段，主要的吞吐与延迟指标如下：
 
-- **Input Throughput / Output Throughput**: Correspond to the speed of Prefill and Decode, respectively.
-- **TTFT**: Equals queuing time plus Prefill time; it is the user-perceived "responsiveness."
-- **Thinking Latency**: The number of thinking tokens generated by different models can vary by several times, and thinking length is not necessarily positively correlated with task effectiveness—the thinking token usage and corresponding benefits of each model should be measured on your own workload, rather than inferred solely from public leaderboards.
-- **p95 Tail Latency**: The latency that 95% of requests will not exceed. It is a better indicator of real user experience than the average, which can be pulled down by a large number of fast requests, masking severe slowdowns experienced by a minority of users.
+- **输入吞吐量 / 输出吞吐量**：分别对应 Prefill 和 Decode 的速度。
+- **TTFT**：等于排队时间加上 Prefill 时间，是用户感知的“反应快慢”。
+- **思考延迟**：不同模型生成的思考 token 数差异可达数倍，且思考长度与任务效果不一定正相关——应在自己的工作负载上实测各模型的思考 token 用量和对应收益，而非仅凭公开榜单推断。
+- **p95 尾部延迟**：95% 的请求都不会超过的延迟。它比平均值更能反映真实用户体验——均值会被大量快速请求拉低，掩盖少数用户遭遇的严重卡顿。
 
-**Cost**: Pricing for input/output/cache tokens. Cost should not be evaluated in isolation—a cheap model with a low success rate may actually incur higher costs due to frequent retries. The average cost per task and the cost-performance ratio need to be calculated.
+**成本**：输入/输出/缓存 token 的定价。成本不应孤立评估——一个便宜但成功率低的模型，因为需要频繁重试，实际花费可能反而更高。需要计算每个任务的平均成本和成本-性能比。
 
-**Performance**: The precise definitions of Pass@1, Pass^k, Pass@k, and Best@k are given earlier in the "Evaluation Metrics System." Here, we only discuss how to choose in the context of model selection—for daily scenarios, focus on Pass@1 (single-attempt average success rate); for critical operations, prioritize Pass^k, focusing on the stability of "never making a mistake"; for exploratory tasks, prioritize Pass@k or Best@k, looking at the upper bound of capability given enough opportunities; for open-ended tasks, use multi-dimensional Rubric scoring.
+**性能**：Pass@1、Pass^k、Pass@k、Best@k 四个指标的精确定义见前文“评估指标体系”，此处只说选型语境下怎么取舍——日常场景看最常用的 Pass@1（单次平均成功率）；关键操作场景优先 Pass^k，盯的是“每次都别出错”的稳定性；探索性任务优先 Pass@k 或 Best@k，看的是给足机会后的能力上限；开放式任务则用 Rubric 多维度评分。
 
-**Rate Limits and Reliability**: RPM (Requests Per Minute) / TPM (Tokens Per Minute) limits affect concurrency capabilities, and some APIs dynamically adjust quotas during peak hours. In terms of robustness, pay attention to out-of-distribution data, adversarial inputs, and long-running stability (whether issues like mode collapse or attention drift occur).
+**速率限制与可靠性**：RPM（每分钟请求数）/ TPM（每分钟 token 数）限制会影响并发能力，某些 API 在高峰期还会动态调整限额。鲁棒性方面需关注分布外数据、对抗性输入、长时运行稳定性（是否出现模式崩溃、注意力分散等问题）。
 
-In practice, a multi-model collaborative strategy can be adopted: use lightweight models for simple requests to reduce costs, use powerful models for complex tasks to ensure quality; or use specialized models for specific sub-tasks (e.g., image understanding, code generation), collaborating through sub-agent mechanisms. This heterogeneous combination needs to be validated through evaluation to confirm that the overall benefits outweigh the increased system complexity.
+实践中可以采用多模型协同的策略：用轻量模型处理简单请求以降低成本，用强大模型处理复杂任务以保证质量；或者使用专门的模型处理特定的子任务（如图像理解、代码生成），通过子 Agent 机制进行协作。这种异构的组合需要通过评估来验证，确认整体效益是否超过了所增加的系统复杂度。
 
-### Cost Analysis of Agent Systems
+### Agent 系统的成本分析
 
-Cost is a dimension of model selection that is easily underestimated. If your Agent is already in production or about to enter production, the cost analysis in this section should not be skipped.
+成本是模型选型中容易被低估的维度。如果你的 Agent 已进入生产环境或准备进入生产环境，本节的成本分析不应跳过。
 
-The previous section listed cost as one of the key dimensions for model selection, but the cost in Agent scenarios is far more complex than simple token pricing—multi-turn reasoning, tool calls, and context accumulation can lead to non-linear cost growth. Systematic cost analysis is an indispensable part of the evaluation system and a necessary prerequisite for production deployment.
+上一节将成本列为模型选型的关键维度之一，但 Agent 场景下的成本远比简单的 token 定价复杂——多轮推理、工具调用和上下文累积会使成本呈非线性增长。系统性的成本分析是评估体系不可或缺的一环，也是生产部署的必要前提。
 
-**Components of Cost.**
+**成本的构成要素。**
 
-The cost of an Agent system can be decomposed into three levels:**Model inference cost** is the most direct component, determined by the consumption of input tokens and output tokens. However, in Agent scenarios, there are two often-overlooked amplifying factors. The first is the **context accumulation effect**: each time an Agent calls an LLM, it sends all previous conversation history and tool return results together (so the model can understand the context). Without effectively utilizing KV Cache (i.e., caching already processed context to avoid redundant computation), the cost grows very quickly—Round 1 sends 1000 tokens, Round 2 sends 2000 tokens, Round 3 sends 3000 tokens, totaling 1000+2000+3000=6000 instead of 3×1000=3000. The more rounds, the larger the gap. The second is **thinking token cost**: models that support thinking generate a large number of thinking tokens. Although these tokens are not displayed to the user, they are still billed.
+Agent 系统的成本可分解为三个层次：
 
-**Tool call cost** includes external API fees (search engines charge per query, database queries consume computing resources), sandbox resources for code execution, and an easily overlooked indirect cost: the token cost incurred when tool return results are injected into the context. The content returned from a single web search might occupy 2000-5000 tokens, and it will be repeatedly billed as input in every subsequent round of inference.
+**模型推理成本**是最直接的部分，由输入 token 和输出 token 的消耗决定。但 Agent 场景下有两个常被忽视的放大因素。一是**上下文累积效应**：Agent 每轮调用 LLM 时，都会把之前所有的对话历史和工具返回结果一起发送（这样模型才能理解上下文）。如果没有利用好 KV Cache（即缓存已处理过的上下文，避免重复计算），成本增长会非常快——第 1 轮发送 1000 token，第 2 轮发送 2000 token，第 3 轮发送 3000 token，总量是 1000+2000+3000=6000 而非 3×1000=3000，轮次越多差距越大。二是**思考 token 成本**：支持思考的模型会生成大量思考 token，这些 token 虽然不展示给用户，但同样计入费用。
 
-**Infrastructure cost** covers operational overhead for vector databases (used for RAG retrieval), message queues, relational databases, and logging and tracing storage (for observability).
+**工具调用成本**包括外部 API 费用（搜索引擎按次计费、数据库查询消耗计算资源）、代码执行的沙盒资源，以及一个容易被忽视的间接成本：工具返回结果注入上下文后产生的 token 费用。一次网页搜索返回的内容可能就占用 2000-5000 个 token，而且在后续每轮推理中都会作为输入被反复计费。
 
-A concrete example illustrates the non-linear growth of costs. Table 6-4 uses the customer service refund Agent from the beginning of this chapter as an example, with a set of illustrative token price parameters to break down the cost of three rounds of calls, demonstrating the impact of multi-round context accumulation and cache hits on expenses.
+**基础设施成本**涵盖向量数据库（用于 RAG 检索）、消息队列、关系型数据库、日志与追踪存储（用于可观测性）等运维开销。
 
-**Table 6-4: Three-Round Cost Example for Customer Service Refund Agent**
+用一个具体例子说明成本的非线性增长。表6-4 以本章开头的客服退款 Agent 为例，使用一组示例性 token 价格参数拆解三轮调用成本，用于说明多轮上下文累积和缓存命中对费用的影响。
 
-| Round | Operation | Input Tokens | Output Tokens | Round Cost |
-|------|-----------|-------------|--------------|-----------|
-| 1 | System prompt + User question → Decide to query order | 2,500 (2,000 system prompt) | 150 | $0.0098 |
-| 2 | All of previous round + Tool return → Decide to initiate refund | 3,200 (2,000 cache hit) | 120 | $0.0060 |
-| 3 | All of previous round + Refund result → Reply to user | 3,800 (3,200 cache hit) | 200 | $0.0058 |
-| **Total** | | **9,500** | **470** | **$0.022** |
+表6-4 客服退款 Agent 的三轮成本示例
 
-Note: Calculated using example prices of $3/million tokens for input and $15/million tokens for output. The cache-hit portion is assumed to be billed at 10% of the input price (discounts vary by vendor; for example, Anthropic's cache write is about 1.25 times the input price and cache read is about 0.1 times; this is simplified to only the read discount).
+| 轮次 | 操作 | 输入 token | 输出 token | 本轮成本 |
+|--------|-----------------------------------|-------------------------------|----------|---------|
+| 1 | 系统提示 + 用户问题 → 决定查询订单 | 2,500（其中 2,000 为系统提示） | 150 | $0.0098 |
+| 2 | 上轮全部 + 工具返回 → 决定发起退款 | 3,200（2,000 命中缓存） | 120 | $0.0060 |
+| 3 | 上轮全部 + 退款结果 → 回复用户 | 3,800（3,200 命中缓存） | 200 | $0.0058 |
+| **合计** | | **9,500** | **470** | **$0.022** |
 
-Three rounds total $0.022—seems very cheap. Without any cache, the input cost for three rounds would be approximately $0.029, totaling about $0.036 with output included. In this example, caching saves nearly half the input cost, consistent with the empirical range mentioned later that "KV Cache can reduce input costs by 30%-60%." However, note several amplifying factors: if thinking mode is enabled, each round generates an additional 500-2,000 thinking tokens, potentially tripling or quintupling the cost; if a tool returns a 5,000-token web page in one round, subsequent rounds must pay for those tokens; if the Agent takes a detour and requires 10 rounds to complete, the context accumulates to 20,000+ tokens, and the cost far exceeds this simple scenario. Therefore, the core of cost optimization is not choosing a cheaper model, but controlling the number of rounds and context growth.
+注：按输入 $3/百万 token、输出 $15/百万 token 的示例价格计算，缓存命中部分假设按输入价的 10% 计费（各厂商折扣不同，例如 Anthropic 的缓存写入约为输入价的 1.25 倍、读取约为 0.1 倍，此处简化为只计读取折扣）。
 
-**Cost Optimization Strategies.**
+三轮调用总共 $0.022——看似很便宜。如果完全没有缓存，三轮输入成本约为 $0.029，加上输出后合计约 $0.036——这个例子里缓存节省了近一半的输入成本，与后文“KV Cache 可降低 30%-60% 输入成本”的经验区间一致。但注意几个放大因素：如果启用思考模式，每轮额外生成 500-2,000 个思考 token，成本可能翻 3-5 倍；如果某一轮工具返回了一个 5,000 token 的网页内容，后续每轮都要为这些 token 付费；如果 Agent 走了弯路需要 10 轮才完成，上下文累积到 20,000+ token，成本会远超上述简单场景。因此，成本优化的核心不在于选便宜的模型，而在于控制轮次和上下文增长。
 
-From a quantitative perspective, three types of levers acting on the input side are most effective: **KV Cache Reuse** (maintaining a stable prefix so that repeated system prompts, tool definitions, and historical rounds are billed at the cache price, reducing input token costs by 30%-60%—in the three-round example above, caching saved nearly half the input cost), **Context Compression** (compressing historical trajectories, truncating redundant tool return results, directly controlling the growth rate of context, especially effective in long tasks), and **Model Layered Routing** (simple requests go to lightweight models, complex reasoning goes to powerful models). The specific implementations of these three methods—prefix stability design, compression timing and strategy, and routing mechanisms—have been discussed in detail in Chapter 2 and will not be repeated here. This chapter supplements two methods specific to evaluation and operations perspectives.
+**成本优化策略。**
 
-**Asynchronous Batch Processing** accumulates non-real-time tasks for batch processing, leveraging batch pricing discounts from API providers; in self-deployment scenarios, it also improves GPU utilization during off-peak hours.
+从量化视角看，作用于输入侧的三类杠杆最为有效：**KV Cache 复用**（保持前缀稳定，让重复的系统提示词、工具定义和历史轮次按缓存价计费，可降低 30%-60% 的输入 token 成本——上面的三轮示例中缓存就省下了近一半输入费用）、**上下文压缩**（压缩历史轨迹、截断冗余的工具返回结果，直接控制上下文的增长速率，长任务中效果尤为显著）、**模型分层路由**（简单请求交给轻量模型，复杂思考交给强力模型）。这三类手段的具体实现——前缀稳定性设计、压缩时机与策略、路由机制——已在第二章详细讨论，此处不再展开。本章补充两个评估与运维视角特有的手段。
 
-**Cost Monitoring and Budget Control.**
+**异步批处理**将非实时任务积攒起来批量处理，利用 API 提供商的批量定价折扣；在自部署场景下，也能提高波谷时段的 GPU 利用率。
 
-In a production environment, a real-time cost monitoring system should be established: track token consumption and API costs by task type, model, user, etc. Also, set a cost cap for each task—automatically terminate the Agent when it falls into a loop or explores too deeply, preventing a single task from incurring abnormally high costs.
+**成本监控与预算控制。**
 
-> **Experiment 6-7 ★: End-to-End Cost Analysis of Agent Tasks**
+生产环境中应当建立实时的成本监控体系：按任务类型、模型、用户等维度追踪 token 消耗和 API 费用。同时设置每个任务的成本上限——当 Agent 陷入循环或探索过深时自动终止，防止单次任务产生异常高额的费用。
+
+> **实验 6-7 ★：Agent 任务的端到端成本分析**
 >
-> **Experiment Goal**: Perform a full-chain cost breakdown for typical Agent tasks, establish a cost baseline, and verify the effectiveness of optimization strategies.
+> **实验目标**：对典型 Agent 任务进行全链路成本拆解，建立成本基线并验证优化策略的效果。
 >
-> **Technical Approach**: Select several typical tasks, use LangSmith or a self-built tracing system to record the input/output token count, thinking token count, number of tool calls and return sizes, and end-to-end latency for each LLM call. Calculate the average cost, cost distribution (p50/p95/p99), and cost composition ratio for each task type.
+> **技术方案**：选择几个典型任务，使用 LangSmith 或自建追踪系统记录每次 LLM 调用的输入/输出 token 数、思考 token 数、工具调用次数和返回大小、端到端延迟。计算每类任务的平均成本、成本分布（p50/p95/p99）和成本构成比例。
 >
-> **Acceptance Criteria**: Generate a cost breakdown report, identify the main cost drivers. Compare the cost differences between enabling/disabling KV Cache and enabling/disabling context compression.
->
->
-### Evaluation-Driven Continuous Iteration
-
-Model selection is not a one-time decision but a continuous process that needs dynamic adjustment as models evolve. The beginning of this chapter introduced the core concept that "having an evaluation system allows you to quickly keep up with model evolution." Below, a specific model switching case illustrates how this system actually works in real-world decision-making.
-
-Suppose your Agent system is currently built on Claude, excelling in tool calling and complex orchestration. One day, Gemini releases a new model, and public benchmarks show it surpasses Claude on several metrics at a lower price. At this point, your question is not "Is Gemini better than Claude?" but "**On my specific tasks, is Gemini better than Claude? How much better? What is the switching cost?**"
-
-A team with a well-established evaluation system can answer this in hours: run the new model on their own evaluation dataset, comparing task success rate, tool call accuracy, latency, and cost. You might find that the new model is indeed better and cheaper on simple tasks, but in core scenarios involving complex multi-round tool orchestration, its success rate drops by 5%. After confirming that this difference exceeds the noise bandwidth (see "Statistical Significance of Evaluation Results" below), your decision becomes a differentiated strategy: "Migrate simple tasks to the new model to reduce costs, keep the original model for complex tasks to ensure quality," rather than a blind full-scale switch. This kind of granular, data-driven decision is only possible with a pre-built evaluation system.
-
-> **Experiment 6-8 ★★: Multi-Dimensional Model Performance Benchmarking**
->
-> Conduct a comprehensive benchmark of mainstream LLMs and different API providers to build a multi-dimensional model selection decision database.
->
-> Select test scope: Closed-source SOTA models like GPT series, Claude series, Gemini series, Doubao series, and open-source models like Qwen, Kimi, DeepSeek. Test the same model with different API providers (e.g., DeepSeek official vs. Siliconflow) to verify results from third-party performance monitoring platforms (e.g., Artificial Analysis).
->
-> Design standardized test workloads: Input throughput tests use fixed-length contexts (8K/32K/128K tokens), output throughput tests request fixed-length responses (512/2048 tokens). Latency tests include TTFT (Time to First Token) and end-to-end latency. For models supporting thinking, separately measure thinking length and thinking latency. Each configuration should have at least 100 requests, calculating standard deviation/p50/p95/p99—high latency variance indicates unstable user experience.
->
-> Evaluate API availability and stability: Probe once per hour for a week, recording success rate, error types, and failure duration. Calculate failure rate, MTTR (Mean Time to Recovery), and longest continuous uptime. Test the actual thresholds of rate limits—gradually increase concurrency to find the throttling point, recording RPM/TPM limits. Calculate comprehensive cost: Collect pricing information (unit prices for input/output/cache tokens), consider the impact of KV Cache, and calculate the average cost for typical multi-round Agent tasks.
->
-> **Experiment 6-9 ★★: End-to-End Selection Evaluation of User Memory Systems**
->
-> **Prerequisites**: Must complete the contextual retrieval or agentic RAG experiment from Chapter 3.
->
-> **Goal**: Perform a full-chain selection evaluation for a user memory retrieval Agent, examining how the three selection points—embedding model, reranker, and Agent main model—jointly affect retrieval quality, latency, and cost. Reuse `ch3/contextual-retrieval-for-user-memory` or `ch3/agentic-rag-for-user-memory`, comparing across 60 test cases.
->
-> **Acceptance**: Sweep through the three selection points individually—embedding model (BGE-M3 / OpenAI / Doubao, etc., record top-5 retrieval accuracy, latency, cost), reranker (include a "no reranker" baseline, quantify its marginal value), main model (compare success rate and tool usage efficiency under the same retrieval configuration). The key is to read the synergy between components: a stronger embedding might make the reranker redundant, a stronger main model might compensate for retrieval shortcomings—selection is a systemic trade-off, not picking the strongest one individually. Configuration details are in the companion repository.
->
-## Statistical Significance of Evaluation Results
-
-The premise of "making a switching decision within hours" has an implicit assumption: the observed score difference is a real signal, not sampling noise. With a limited evaluation set size and uncertain model outputs, this premise is not automatically valid.
-
-A rough tool for estimating noise bandwidth is the **standard error of the binomial distribution** (which characterizes the fluctuation of the success rate due to sampling randomness; the larger the value, the less reliable the success rate). If the success rate p is measured on n test cases, the standard error is approximately √(p(1-p)/n). For a concrete example: 100 cases, success rate 70%, standard error ≈ √(0.7×0.3/100) ≈ 4.6%. Intuitively, the 95% confidence interval (the range within which the true success rate is about 95% likely to fall) is approximately p ± 2 standard errors, i.e., 70% ± 9 percentage points. This means a difference of 3 percentage points, like "new model 73% vs. old model 70%," falls entirely within the noise bandwidth—when comparing the two success rates as independent, the standard error of the difference is approximately √2 times the individual standard error (here about 6.5%). However, it's important to emphasize that this √2 assumes "two measurements are independent," but in practice, the two configurations are usually run on the **same set of tasks**, so the samples are not independent. The independence assumption is just a conservative upper bound for a quick judgment of "whether this small difference is worth taking seriously." By this conservative measure, a 3% difference is far smaller than the 6.5% noise magnitude, so switching models based on this is little better than a coin flip.
-
-Agent evaluation has an additional layer of non-determinism: even with the same model and the same dataset, results from two runs can drift—temperature sampling, fluctuations in tool returns, and environmental timing all introduce randomness. Therefore, a single run's numbers should not be used as a basis for decision-making. Instead, **run multiple times and take the average** (e.g., 3-5 runs per configuration), reporting both the mean and the range of fluctuation. In the hypothetical case later, each configuration must be "run 5 times (using different random seeds)" precisely for this reason.
-
-This leads to a practical principle: **Do not make a switching decision when the score difference is smaller than the noise bandwidth.** However, before "not switching," one should first switch to a more sensitive and correct analysis method. When comparing two configurations on the same set of tasks, the correct default approach is **paired analysis**: compare the win/loss for each task individually, focusing only on cases where the results differ (one correct, one incorrect), and use a method like McNemar's test to determine if the difference is significant. Paired analysis removes the common noise source of "task difficulty itself," making it much more sensitive than subtracting two independent success rates with the same sample size—the earlier √2 estimate based on the independence assumption is just a conservative, mental-math sieve for quickly ruling out obviously insufficient differences. If paired analysis still shows the difference is uncertain, then consider expanding the sample: the standard error shrinks with √n, so expanding from 100 to 400 cases only halves the noise bandwidth, making sample expansion costly. Conversely, if the expected benefit of an improvement is only 2-3 percentage points and the evaluation set has only a few dozen cases, then the evaluation system simply cannot distinguish whether the improvement is effective—the priority should be to expand the evaluation set, not to continue iterating the Agent.
-
-There is another easily overlooked pitfall: **multiple comparisons**. When you test a batch of hypotheses in parallel, the probability of "at least one conclusion being a false positive" accumulates rapidly with the number of hypotheses—even if each individual conclusion uses a 95% confidence level, looking at 6 hypotheses simultaneously, the probability of hitting at least one false positive is 1 − 0.95^6 ≈ 26%. The more parallel hypotheses you run, the harder it is to avoid the coincidence of "one always appearing significant." There are two types of countermeasures: either tighten the confidence threshold for individual conclusions in multi-hypothesis scenarios (e.g., adjust the significance threshold by the number of hypotheses, like Bonferroni correction), or run an independent confirmatory re-run of any positive conclusion, only believing it if it replicates. The later section "From Data to Hypotheses" will test H1–H4, four truly parallel hypotheses (H5 and H6 are conditionally triggered and not run simultaneously with the first four), which is a typical scenario for this pitfall.
-
-Evaluation-driven decisions rely on high-quality data, which comes from the systematic recording of the Agent's operational process—this is what observability addresses.
-
-## Agent Observability
-
-Evaluation-driven decisions (whether for model selection or continuous iteration) rely on high-quality operational data. Below, we first introduce how to systematically collect this data (observability), and then discuss how to translate evaluation results into system improvements.
-
-![Figure 6-6: Observability Technology Stack](images/fig6-6.svg)
-
-Observability is a concept borrowed from the distributed systems domain: you cannot directly open the system to see what it is doing; you can only infer what is happening from the logs, metrics, and traces it outputs, much like a doctor cannot directly see inside a patient's body and must diagnose problems through external signals like temperature, blood pressure, and imaging. Agent systems make this even harder: the same input can produce different outputs, multi-round reasoning and tool calls make execution paths extremely complex, and the model's "thinking" process is completely opaque from the outside.
-
-The value of observability lies first in **problem diagnosis**: complete traces allow developers to replay the entire process rather than guessing. Second, it is the foundation for **continuous optimization**—you can see which tasks require multiple rounds of iteration, which tools have the lowest success rate, and which retrieval queries always return empty results. In **cost management**, Agent operational costs can vary by one or two orders of magnitude across different tasks, and tracing can identify cases with abnormally high costs. Finally, the accumulated trace data also provides a foundation for subsequent system optimization and model improvement.Agent observability is built on the foundation of **traces**, whose data structure directly inherits the span tree model from distributed systems: one task execution corresponds to one trace, where each LLM call, each tool call, and each retrieval is a **span** (an execution unit recording input/output, start/end times, token consumption, and error information). The parent-child relationships between spans form an execution tree—for example, an "Agent Main Loop" span may have several "LLM Call" and "Tool Call" child spans hanging beneath it. Standardized protocols are already available for this layer: **OpenTelemetry** is the general-purpose distributed tracing standard, while specifications like **OpenInference** define LLM-specific semantic conventions on top of it (how to record prompts, model parameters, token usage, etc.). The advantage of adopting standard protocols is the decoupling of collection and analysis—the same trace data can be connected to different analysis backends, avoiding vendor lock-in.
-
-LangSmith is one of the representative platforms in this domain (similar platforms include Langfuse, Arize Phoenix, etc.), integrating observability, evaluation, and optimization into a closed loop. Each execution creates a trace session, where model calls, tool usage, and knowledge retrieval are recorded as independent execution units, linked by causal relationships to form an execution tree. Each unit records complete input/output, timing information, cost data, and error information. The platform uses asynchronous batch data collection to ensure that tracing itself does not affect the Agent's response latency.
-
-The platform also supports A/B testing (routing a portion of user traffic to a new version, automatically comparing metrics, and supporting rapid rollback or gradual scaling), prompt version management (each version is associated with runtime performance data), and collaborative development (team members can share trace data and problem cases). The massive amount of real-world data from production environments is a goldmine for continuous improvement—it can uncover unforeseen scenarios and identify the features most in need of optimization.
-
-The most valuable destination for observability data is **being recycled into evaluation assets**. A practical closed loop is: filter failed and suspicious cases from production traces → anonymize (remove sensitive fields like user privacy, keys, etc.) → precipitate into new test cases and regression tests for the evaluation set. This way, the evaluation set is no longer a one-time, static collection but a living asset that evolves with the product and continuously reflects the real user distribution—the failure patterns exposed online today become the regression tests that guard the baseline tomorrow. This is precisely the interface between observability and the main theme of this chapter: observability is responsible for "seeing" what happens in the real world, and evaluation is responsible for solidifying those observations into repeatable standards.
-
-Observability faces several challenges:
-
-- **Trade-off between data volume and privacy**: High-traffic systems can generate terabytes of trace data daily, while also needing to comply with data protection regulations.
-- **Complexity of causal attribution**: Automatically identifying root causes from traces still requires more intelligent analysis algorithms; cutting-edge research is attempting causal inference and counterfactual analysis, but it is not yet mature.
-- **Tracing challenges in multi-agent systems**: Tracing execution flows across multiple agents is more complex and semantic than API calls between microservices.
-- **Balance between real-time guardrails and post-hoc analysis**: High-risk scenarios require proactive guardrails, but these introduce additional latency and false positives.
-
-As ML technology becomes more deeply integrated into the toolchain, future observability platforms are expected to automatically identify anomalies and pinpoint root causes.
-
-With a comprehensive evaluation system and dataset in place, the key is to translate evaluation results into tangible system improvements.
-
-## From Benchmark Reports to System Improvements
-
-**The following is a hypothetical teaching case**, using specific data to illustrate the complete decision-making process from a benchmark report to system improvements. The data is hypothetical and aims to demonstrate the methodology, not to report real experimental results.
-
-![Figure 6-7 Benchmark to Improvement Loop](images/fig6-7.svg)
-
-From the perspective of Harness engineering, this section is essentially about the methodology for iterative Harness optimization—using evaluation data to identify weak points in the Harness (insufficient context? missing constraints? inadequate validation? untimely feedback?), making targeted improvements, and then re-evaluating, forming a closed loop for the Harness's continuous evolution.
-
-Before starting to analyze a benchmark report, there is an easily overlooked principle: **When you see a drop in Agent performance, first check the evaluation system itself, then the Agent**. A common mistake is to immediately modify the Agent code upon seeing a score drop, ignoring the possibility that the evaluation system itself may have malfunctioned first—adjusting direction based on distorted signals means the correction might be wrong from the start. Common sources of error in evaluation systems include: insufficient resources in the runtime environment causing process termination (manifesting as random failures), bugs in the scorer itself that mark correct answers as failures, and a disconnect between test cases and production scenarios. These issues look identical to model degradation in the final numbers, and only reviewing the complete traces can distinguish them.
-
-### Reading a Benchmark Report: The Art of Problem Discovery
-
-Let's use a specific case to illustrate how to read a benchmark report. Suppose we evaluate an Agent on AndroidWorld and obtain two core report tables: a per-task performance list and a performance matrix grouped by capability tags. The value of the report lies not in the single overall success rate number, but in the structural weaknesses it reveals.
-
-The per-task table shows a clear pattern: the success rate for most routine tasks is close to 100%. These successful tasks cover common scenarios like recording, taking photos, contact management, note creation, file operations, and system settings. They require an average of over a dozen steps, with the most complex ones reaching several dozen. The Agent's ability to maintain such long action sequences and complete them successfully demonstrates its planning and execution capabilities in standard scenarios.
-
-Failures are highly concentrated in a few areas: SMS replies, Wi-Fi toggling and status verification, to-do list queries, combined Wi-Fi+Bluetooth operations, and VLC playlist creation. On the surface, these tasks seem unrelated, but the capability tag matrix reveals their common characteristics.
-
-**The capability tag matrix** is key to diagnosis—it cross-classifies all tasks by required capabilities and difficulty. The report often shows several capability dimensions with extremely low success rates: transcription (transcribing information from images/videos, exposing deficiencies in visual understanding), math_counting (the problem is not the math ability itself—modern LLMs are strong at math—but whether the Agent can recognize the need for calculation, extract numbers from the UI, and map the result to an action sequence), and complex_ui_understanding (heavily reliant on standard UI patterns, collapsing when encountering non-standard layouts).
-
-Combining the two tables makes the failure reasons clear: to-do list query failures point to the app's non-standard UI preventing the Agent from reading the task list and filtering; Wi-Fi operation failures point to the control hierarchy in the system settings UI exceeding the Agent's understanding; VLC playlist creation failures point to the Agent being unable to find the creation entry in the complex UI of a professional application.
-
-### From Data to Hypotheses: Building an Improvement Roadmap
-
-**Surface-level hypotheses** (low cost, independent, can be verified in parallel): H1: Add system settings navigation hints for Wi-Fi operations (the Agent might be able to operate the toggle but cannot find the entry page), expected to resolve the concentrated failures in settings tasks; H2: Provide UI element identification rules for the to-do app, expected to resolve failures in to-do tasks.
-
-**Mid-level hypotheses** (also independent, can be parallelized): H3: Fix the multimodal input pipeline—replaying failed traces reveals that images might be dropped or converted to text descriptions in the pipeline, rendering even the strongest multimodal models unable to transcribe; H4: Globally enable thinking to resolve counting-related failures.
-
-**Deep-level hypotheses** (high verification cost, only initiated if complex_ui success rate remains below 40% after surface and mid-level improvements): H5: Replace the model with one having stronger visual understanding (GPT-5); H6: Add UI element tree information beyond screenshots (structured DOM extracted by UI Automator for cross-validation with screenshots). These two can form a 2×2 comparative experiment (Claude/GPT-5 × screenshots only/screenshots + element tree) to answer "which is more critical, model capability or information richness, and is there a synergistic effect?"
-
-Each configuration is run 5 times on the full set of 116 tasks (using different random seeds), recording success rate, average steps, and execution time.
-
-### From Results to Decisions: Data-Driven Trade-offs
-
-Assume the experimental data shows the following results (**all data below is hypothetical**): H1 improves settings tasks from 0% to 75%, with an 8% increase in input tokens; H3 improves transcription from 0% to 80%, with a 15% increase in vision tokens and a 1-second increase in latency per step; H4 improves counting from 0% to 70%, but latency per step increases from 4 seconds to 12 seconds, and cost triples; H6 improves complex_ui from 17% to 52%, with a 30% increase in tokens and a 2-second increase in latency per step; H5 (GPT-5) improves complex_ui from 17% to 35%, but latency per step increases from 4 seconds to 15 seconds.
-
-The decision is not simply to adopt all effective improvements:
-
-**H1+H3 are clearly deployed**: H1 has low cost, high benefit, and no side effects; although H3 adds 15% vision token cost and 1 second latency, it brings transcription capability from zero to one, and fixes an architectural defect ("input pipeline losing multimodal information"), which may also improve other visual understanding tasks.
-
-**H4 global thinking is unacceptable**: Although the overall success rate rises from 88% to 91%, the capability tag distribution shows that only about 8% of tasks involve counting—making all tasks bear 3x the latency and cost for a minority of tasks is a classic case of "using a sledgehammer to crack a nut." However, H4 proves that thinking is effective for counting tasks, providing a basis for conditional activation in the next round.
-
-**H6 is better than H5**: H5 (GPT-5) sees latency per step skyrocket from 4 seconds to 15 seconds, yet complex_ui only improves to 35%, indicating the bottleneck is not the model's thinking ability but the sufficiency of input information; H6 (adding element tree information) achieves a 35-percentage-point improvement with a 30% token increase and 2-second latency increase, offering much better cost-effectiveness. The H5+H6 combination yields the highest score (68%), but the task duration is unacceptable for large-scale deployment. It is only suitable for selective activation in critical asynchronous tasks (e.g., bank transfers, medical appointments), while H6 suffices for common scenarios.
-
-**H2 faces scalability issues**: Writing specialized rules for every non-standard application is unsustainable. It can only serve as a temporary fix; the long-term solution should be to improve the Agent's generalization ability.
-
-### Continuous Iteration: From First Improvement to System Evolution
-
-After implementing the three improvements H1, H3, and H6 (H4 not deployed), the Agent's success rate on AndroidWorld rises from 88% to 94%. Re-running the full benchmark, the new report reveals a different failure pattern: transcription, settings, and complex UI tasks have all improved significantly. The remaining ~6% of failures are concentrated in unresolved counting tasks, still fluctuating Wi-Fi status verification (improved from 0% to 60% but unstable), and a small number of newly emerged failures—possibly due to longer prompts or excessive element tree information causing model attention dispersion.
-
-Based on the new report and insights from the H4 experiment, new hypotheses can be formed. H7: Conditional activation of thinking—use a quick LLM call (about 1-2 seconds) before a task starts to analyze the task description, enabling thinking mode only for tasks involving counting or complex reasoning, thus confining the latency increase to tasks that truly need it. H8: Expand the action space to support complex gestures (pinch-to-zoom, long-press drag, multi-touch)—replaying the remaining failed traces reveals that some tasks require operations like map zooming, image cropping, and long-press menus on lists.
-
-This continuous iteration based on benchmark feedback drives the Agent's capabilities in an upward spiral. A benchmark is not a one-time exam but a continuous health check. Establishing a regular evaluation mechanism (e.g., running the full test suite weekly) allows monitoring the capability evolution curve, promptly detecting regressions (new features introducing bugs), verifying improvements (optimizations are indeed effective), and accumulating knowledge (which types of improvements are usually effective, which tend to backfire). This data-driven, hypothesis-testing, continuous iteration methodology is the key path to transitioning Agent engineering from experience-driven to scientific engineering.
-
-> **Experiment 6-10 ★★★: Evaluation and Improvement on AndroidWorld**
->
-> This experiment is a complete closed-loop practice, from evaluation report to system improvement. Start with the AndroidWorld evaluation report in `ch6/android-world`.
->
-> Step 1: Diagnosis. Cross-analyze the per-task table and the capability tag matrix to map surface-level task failures to deep-seated capability deficiencies. Identify capability tags with below-expected success rates and task areas with concentrated failures.
->
-> Step 2: Build Hypotheses. Formulate improvement hypotheses following the three-layer framework (surface → mid → deep). Each hypothesis should clearly state the expected success rate improvement target and the verification method.
->
-> Step 3: Phased Experimentation. Design controlled experiments to test the hypotheses. Phase 1 tests low-cost surface hypotheses (prompt optimization, tool description supplementation). Phase 2 tests mid-level capability hypotheses (input pipeline modification, thinking mode switching). Focus on observing the improvement magnitude for tasks under specific capability tags, while also measuring side effects.
->
-> Step 4: Data-Driven Decision Making. Make deployment decisions based on cost-benefit analysis—not simply adopting all effective improvements, but weighing the scope of application, latency impact, and cost overhead for each improvement. Prioritize low-cost, high-benefit improvements for deployment; restrict high-cost improvements to critical scenarios.
->
-> Step 5: Iteration. After completing the improvements, re-run the evaluation dataset. Use an LLM to analyze the evaluation results and generate a new report. The new report will show a different failure pattern, serving as the starting point for the next iteration.
->
-## From External Evaluation to Internal Evaluation: Evaluation Infrastructure for Production-Grade Agents
-
-The previous sections discussed how to evaluate an Agent system externally—building an evaluation environment, designing datasets, and analyzing benchmark reports. However, the best Agent products not only undergo external evaluation but also **build in infrastructure for continuous self-evaluation**. Below, using the open-source general-purpose Agent OpenClaw introduced in Chapter 5 as an example, and combining public technical analysis from leading Coding Agent products with practitioner insights, we present a set of internal evaluation systems worth emulating—one that systematically embeds the experimental methodology from ML research into product engineering.
-
-### Ablation Infrastructure: Understanding the True Contribution of Each Feature
-
-ML researchers have long used ablation studies to understand which components of a model are truly important—ablation means systematically "removing" a component and observing how much overall performance drops. OpenClaw introduces this methodology into product engineering: the system has a built-in master switch that can disable multiple major features simultaneously (thinking mode, context compression, automatic memory, background tasks, etc.), creating a "bare model" baseline. This allows the team to answer a key question: **Does a feature truly improve user experience, or does it just feel useful?**
-
-Making ablation a routine engineering practice, rather than a one-time research activity, has several practical implications. First, the ablation switch must be injected very early in the startup path—before any module-level constant captures configuration values—meaning the ablation infrastructure must be designed into the system architecture from the start, not retrofitted later. Second, running ablation experiments regularly (e.g., before each major release) can uncover "feature debt"—features that were once effective but are no longer necessary as models evolve. For any team building a production Agent, the recommended practice is: **Every major feature should be independently disableable, and the team should regularly verify the actual contribution of each feature.**
-
-### A/B Testing Methodology: Distinguishing Mechanism from Goal
-
-Mature Agent products conduct rigorous A/B testing on their own behavior (i.e., randomly dividing users into two groups, one using the old version and one using the new version, and comparing actual data from both groups to determine if a change is effective). A well-designed Agent A/B test case illustrates several key methodological principles:
-
-**Multi-armed, not binary**. Instead of just comparing "with" and "without," design multiple progressive variants (e.g., when testing different strengths of prompt constraints, set up a control group and three experimental groups with progressively stricter constraints). This design can reveal dose-response relationships and help find the optimal point.**Distinguishing mechanism metrics from target metrics.** This is the easiest mistake to make—treating what you are changing as the optimization target. For example, if you are testing "shortening the Agent's plan file length," plan length is a mechanism metric (something you directly change), but it is not the target. The real target might be "reducing session-level cost." Shortening the plan file may lower costs, but it could also lead to more edit-check-edit loops due to insufficiently detailed plans, increasing total output. Always ask yourself: **Is what I am changing (the mechanism) the same as what I truly care about (the target)?** If not, prioritize the target.
-
-**Setting guardrail metrics.** Even if the target metric improves, the experiment should be stopped if user satisfaction declines, the number of operations increases, or the error rate rises. Guardrail metrics are the "bottom line that must not worsen."
-
-**Recording baseline statistics.** Include sample size, distribution percentiles, and correlation analysis (e.g., "rejection rate increases monotonically with plan size") to provide the necessary context for interpreting experimental results. Without a baseline, you cannot determine whether the experimental results are statistically significant.
-
-### Two-Layer Feature Flag System
-
-Agent products need a Feature Flag infrastructure designed from day one—a feature flag is a remotely controllable switch that determines whether a function is enabled or disabled for users, without requiring code redeployment. It serves three purposes simultaneously: experimentation, gradual rollout, and emergency circuit breaking.
-
-**Compile-time flags** physically remove the relevant code from the build artifact during the build phase. Internal-only features simply do not exist in external builds—even reverse engineering cannot discover the removed functionality. This also provides a clean ablation mechanism: disabling a feature does not skip logic at runtime; the corresponding code is physically absent.
-
-**Runtime flags** have their configuration delivered by the server and cached locally on disk. The design prioritizes reading slightly stale cached configuration over blocking the Agent's startup while waiting for a network request. Specific grouping decisions are made through an experimentation platform (e.g., GrowthBook) for assigning A/B test groups. A key design detail is that each feature's exposure event is logged at most once per session to avoid duplicate records polluting the experimental data.
-
-Implication for Agent developers: Feature flags are not debugging tools; they are **first-class architectural components**.
-
-### Prompt Sensitivity Assessment
-
-The system prompt is the core "code" of Agent behavior, yet it often lacks the version control and regression testing afforded to regular code. OpenClaw's approach is to provide a dedicated tool that can extract the fully rendered system prompt at a specified git version—including the final text after all dynamic conditions are expanded. This allows the team to precisely answer: **Which commit changed the prompt? What was the impact on the evaluation set?**
-
-For any Agent team, the recommended practices are: (1) The system prompt should be deterministically renderable (given the same configuration input, it always produces the same output); (2) Establish a versioned snapshot mechanism for prompts; (3) Every prompt change should run regression tests on the evaluation set—just as code changes require CI.
-
-### Privacy-Aware Analytics as an Evaluation Foundation
-
-Evaluation relies on good data, but Agent products often handle sensitive user content. OpenClaw resolves this contradiction through a type system: the analytics interface only accepts values wrapped in special types, where the type name itself serves as an audit trail—it explicitly declares "I have verified this is not code or a file path." This design transforms privacy constraints from documented specifications into compile-time enforced type checks.
-
-The core principle is: **Design privacy constraints in from the start, not bolt them on afterward.** If your analytics system cannot safely collect data, you cannot evaluate effectively. Privacy and evaluation are not opposing forces—privacy-aware design forces you to think carefully about *what truly needs to be measured*, which in turn fosters more precise evaluation metrics.
-
-### From External to Internal: A Shift in Evaluation Thinking
-
-The core message of this section is: **The previous sections taught you how to evaluate an Agent externally; this section reveals how the best Agent products evaluate themselves internally.** External evaluation tells you "how good the Agent is"; internal evaluation infrastructure tells you "which change made it better." Ablation experiments discover which features truly matter, A/B testing quantifies the impact of each change, feature flags provide the infrastructure for experimentation and rollback, prompt sensitivity assessment integrates the system prompt into the CI system, and privacy-aware analytics ensures compliance in data collection. These five components together constitute evaluation-driven product engineering—not evaluating occasionally, but embedding evaluation into every product decision.
-
-## Simulation Environments: The Bridge from Evaluation to Post-Training
-
-The endpoint of evaluation is not scoring, but improvement. This chapter has already demonstrated two paths for improvement: adjusting the Harness (from Benchmark reports to system improvements) and embedding evaluation into product engineering (internal evaluation infrastructure). The strongest form of improvement is training—when the goal expands from "evaluating existing capabilities" to "cultivating new capabilities," especially through the post-training techniques discussed in Chapter 7, the evaluation environment needs to evolve into a **simulation environment**: a virtual playground where the Agent can repeatedly practice and be automatically scored. The core differences between simulation environments and evaluation environments are: much higher interaction frequency (millions vs. thousands), the need for randomization (to prevent memorizing specific configurations), and the requirement for immediate feedback. From an application perspective, simulation environments are divided into two categories: digital environments (information processing tasks) and embodied environments (physical world perception and manipulation).
-
-The two ends of this bridge are connected as follows. Assets accumulated on the evaluation side can be transferred almost seamlessly into training signals: a well-defined Rubric or validator is essentially a **Reward Function for Reinforcement Learning with Verifiable Rewards (RLVR)**—the scoring script directly becomes the reward script; whether a test passes or a state meets the standard serves both as an evaluation criterion and as a reward for reinforcement learning. However, training introduces new requirements that evaluation does not need to worry about. The first is **reliable reset semantics**: training runs millions of episodes (an episode is one complete interaction round from an initial state to task completion), and each episode must be able to reset the environment to a deterministic, clean initial state; otherwise, the gradient signal will be contaminated by residual states from the previous episode. The second is **throughput far exceeding evaluation**: a few thousand evaluations are enough to draw conclusions, but training requires feeding the model millions of interactions within an acceptable wall-clock time; the degree of environment parallelism and per-instance overhead directly determine whether training is feasible. These two points—reward-function-validators and training-oriented reset and throughput—will be elaborated in Chapter 7.
-
-![Figure 6-8 Simulation Fidelity Spectrum](images/fig6-8.svg)
-
-**Digital Environments** side, the AWorld framework builds a controllable MCP server sandbox for GAIA tasks, providing 26 MCP servers covering 126 tool functions, avoiding the bans and uncontrollable side effects of directly accessing real APIs. All tool calls are replayable and auditable. AWorld's distributed architecture reduces the traditional serial execution time from 7695 seconds to 525 seconds (a 14.6x speedup), and the environment's stateless design makes each instance completely independent, supporting efficient parallelism.
-
-**Embodied Environments** side, RoboTwin2 builds dual-arm manipulation tasks based on a physics engine, randomizing object positions, orientations, and appearances to improve generalization. The observation space includes multi-camera visuals and joint states, achieving real-time control through **Action Chunking**—where the model plans multiple consecutive actions at once (detailed in Chapter 9). OSWorld achieves resettability through virtual machine snapshots, and AndroidWorld focuses on mobile application automation. Whether digital or embodied, simulation environments also require the isolated execution environments and virtual identity mechanisms discussed in Chapter 4 (VM/container isolation, residential proxies, Human-in-the-Loop authentication, shared file systems), which will not be repeated here.
-
-> **Experiment 6-11 ★★: Configure the Embodied Intelligence Environment for OpenVLA and RoboTwin2**
->
-> Set up a simulation environment for robot manipulation. Read `ch7/SimpleVLA-RL` and the OpenVLA documentation to understand the architecture of the Vision-Language-Action model (end-to-end integration of a vision encoder, language model, and action decoder, projecting images and text into a shared semantic space). Configure the RoboTwin2 environment, understanding the observation space (three-view RGB + 14-dimensional joint state) and action space (14-dimensional control vector). Study the environment randomization mechanism and spatial constraint logic in `move_can_pot`. Run the pre-trained model evaluation, recording success rate, completion time, and failure modes, with a focus on the impact of the action chunking mechanism.
+> **验收标准**：生成成本拆解报告，识别主要成本驱动因素。对比启用/禁用 KV Cache、启用/禁用上下文压缩的成本差异。
 >
 >
-> ![Figure 6-9 OpenVLA and RoboTwin2 Embodied Intelligence Environment](images/fig6-9.svg)
+### 评估驱动的持续迭代
+
+模型选择不是一次性的决策，而是随着模型演进需要动态调整的持续过程。本章开篇已经提出“拥有评估体系就能快速跟上模型演进”这一核心理念，下面用一个具体的模型切换案例，说明这套体系在真实决策中究竟如何运作。
+
+假设你的 Agent 系统当前基于 Claude 构建，在工具调用和复杂编排上表现优异。某天 Gemini 发布了一个新模型，公开基准显示它在多项指标上超越 Claude，而且定价更低。此时你面临的问题不是“Gemini 是否比 Claude 强”，而是“**在我的特定任务上，Gemini 是否比 Claude 好？好多少？切换成本是什么？**”
+
+拥有完善评估体系的团队可以在数小时内给出答案：在自己的评估数据集上运行新模型，对比任务成功率、工具调用正确率、延迟和成本。你可能会发现新模型在简单任务上确实更优且更便宜，但在涉及复杂多轮工具编排的核心场景中，成功率反而下降了 5%——在确认这一差异超出噪声带宽之后（见下文“评估结果的统计显著性”），你的决策就变成了“简单任务迁移到新模型以降低成本，复杂任务保留原模型以确保质量”的差异化策略，而非盲目的全量切换。这种精细化的数据驱动决策，只有在预先构建好评估体系的前提下才可能实现。
+
+> **实验 6-8 ★★：多维度模型性能基准测试**
+>
+> 对主流 LLM 及不同 API 提供商进行全面基准测试，建立多维度模型选型决策数据库。
+>
+> 选择测试范围：GPT 系列、Claude 系列、Gemini 系列、Doubao 系列等闭源 SOTA 模型，以及 Qwen、Kimi、DeepSeek 等开源模型。对同一模型测试不同 API 提供商（如 DeepSeek 官方 vs Siliconflow），验证第三方性能监测平台（如 Artificial Analysis）的结果。
+>
+> 设计标准化测试工作负载：输入吞吐量测试使用固定长度上下文（8K/32K/128K tokens），输出吞吐量测试请求生成固定长度响应（512/2048 tokens）。延迟测试包含 TTFT（首个 token 生成时间）和端到端延迟，对支持思考的模型单独测量思考长度与思考延迟。每个配置至少 100 次请求，计算标准差/p50/p95/p99——高延迟方差意味着用户体验不稳定。
+>
+> 评估 API 的可用性与稳定性：在一周内每小时探测一次，记录成功率、错误类型和故障时长。计算故障率、MTTR（平均恢复时间）和最长连续可用时间。测试速率限制的实际阈值——通过逐步提升并发量来找到限流点，记录 RPM/TPM 上限。计算综合成本：收集定价信息（输入/输出/缓存 token 的单价），考虑 KV Cache 的影响，计算典型多轮 Agent 任务的平均成本。
+>
+> **实验 6-9 ★★：用户记忆系统的端到端选型评估**
+>
+> **前置要求**：需完成第三章上下文检索或智能体化 RAG 实验。
+>
+> **目标**：对用户记忆检索 Agent 做全链路选型评估，看嵌入模型、reranker、Agent 主模型三个选择点如何共同影响检索质量、延迟与成本。复用 `ch3/contextual-retrieval-for-user-memory` 或 `ch3/agentic-rag-for-user-memory`，在 60 个测试用例上对比。
+>
+> **验收**：分别扫过三个选择点——嵌入模型（BGE-M3 / OpenAI / 豆包等，记 top-5 检索准确率、延迟、成本）、reranker（含“不用 reranker”基线，量化其边际价值）、主模型（相同检索配置下比成功率与工具使用效率）。关键是读出组件间的协同：更强的嵌入可能让 reranker 变得多余，更强的主模型可能弥补检索的不足——选型是系统性权衡，不是逐个挑最强。配置细节见配套仓库。
+>
+## 评估结果的统计显著性
+
+“数小时内得出切换决策”有一个隐含前提：观察到的分数差异是真实的信号，而不是抽样噪声。评估集规模有限、模型输出又不确定，这个前提并不自动成立。
+
+粗略估算噪声带宽的工具是**二项分布的标准误**（standard error，用来刻画成功率因抽样随机而波动的幅度，值越大说明这个成功率越不可靠）。若在 n 个测试用例上测得成功率 p，标准误约为 √(p(1-p)/n)。举个具体例子：100 个用例、成功率 70%，标准误 ≈ √(0.7×0.3/100) ≈ 4.6%。直觉上，95% 置信区间（真实成功率有约 95% 把握落在其中的范围）约为 p ± 2 个标准误，即 70% ± 9 个百分点。也就是说，“新模型 73% vs 旧模型 70%”这样 3 个百分点的差异完全落在噪声带宽之内——把两个成功率当作相互独立来比较时，差值的标准误约为单个的 √2 倍（这里约 6.5%）。但要强调：这个 √2 是“两次测量相互独立”的算法，而实战中两个配置通常跑在**同一批任务**上，样本并不独立——独立假设只是一个偏保守的上界，用来快速判断“这点差异值不值得当真”。按这个保守口径，3% 的分差也远小于 6.5% 的噪声量级，据此切换模型与掷硬币差别不大。
+
+Agent 评估还有一层额外的非确定性：同一模型、同一数据集，两次运行的结果也会漂移——温度采样、工具返回的波动、环境时序都会引入随机性。因此单次运行的数字不应作为决策依据，而应**多次运行取均值**（如每个配置跑 3-5 次），同时报告均值与波动范围。后文的假设案例中，每个配置都要“运行 5 次（使用不同的随机种子）”，正是出于这个原因。
+
+由此得到一条实用原则：**分差小于噪声带宽时，不做切换决策**。但“不切换”之前，应先换用更灵敏也更正确的分析方法。同一批任务上对比两个配置，正确的默认做法是**配对分析**：逐题比较两者的胜负，只看结果不同的那些用例（一个对一个错），用 McNemar 检验之类的思路判断差异是否显著。配对分析扣除了“题目本身难易”这一共同噪声源，因此在相同样本量下比“两个独立成功率相减”灵敏得多——前面基于独立假设的 √2 估算只是一个不必联网、口算即可的保守筛子，用来快速排除明显够不着的分差。如果配对分析仍显示差异不确定，再考虑扩大样本：标准误随 √n 缩小，样本从 100 扩到 400 噪声带宽才减半，扩样成本很高。反过来看，如果一项改进的预期收益本身只有 2-3 个百分点，而评估集只有几十个用例，那么这套评估根本分辨不出这项改进是否有效——此时优先要做的是扩充评估集，而不是继续迭代 Agent。
+
+还有一个容易被忽视的陷阱：**多重比较**。当你并行验证一批假设时，“至少有一个结论是假阳性”的概率会随假设数量迅速累积——哪怕每个单独结论都用了 95% 置信度，6 个假设同时看，至少踩中一个假阳性的概率就是 1 − 0.95^6 ≈ 26%。并行跑的假设越多，“总有一个看起来显著”的巧合越难避免。应对办法有两类：要么对多假设场景收紧单个结论的置信门槛（如 Bonferroni 式地按假设数把显著性阈值调严），要么对跑出来的正向结论做一次独立的验证性复跑，只有复现了才采信。后文“从数据到假设”一节会并行验证 H1–H4 这四个真正并行的假设（H5、H6 是条件化启动的，不与前四者同时跑），正是这一陷阱的典型场景。
+
+评估驱动的决策依赖于高质量的数据，而这些数据来自对 Agent 运行过程的系统性记录——这就是可观测性要解决的问题。
+
+## Agent 的可观测性
+
+评估驱动的决策（无论是模型选型还是持续迭代）都依赖于高质量的运行数据。下面先介绍如何系统性地采集这些数据（可观测性），然后讨论如何将评估结果转化为系统改进。
+
+![图6-6 可观测性技术栈](images/fig6-6.svg)
+
+可观测性（Observability）这个概念借自分布式系统领域：你没法直接打开系统内部看它在做什么，只能通过它输出的日志、指标和追踪数据来推断发生了什么，就像医生不能直接看到患者体内的情况，只能通过体温、血压、影像等外部信号来诊断问题。Agent 系统把这件事变得更难：同样的输入可能产生不同的输出，多轮推理和工具调用使执行路径极其复杂，而模型的“思考”过程对外完全不透明。
+
+可观测性的价值首先在于**问题诊断**：完整的轨迹让开发者能回放全过程，而非靠猜测。其次是**持续优化**的基础——你能看到哪些任务需要多轮迭代、哪些工具成功率最低、哪些检索查询总是返回空结果。在**成本管理**上，Agent 运行成本在不同任务上可能差一两个数量级，追踪可以识别出异常高成本的案例。最后，积累的轨迹数据也为后续的系统优化和模型改进提供了基础。
+
+Agent 可观测性的数据基础是**追踪（Trace）**，其数据结构直接沿用了分布式系统的 span 树模型：一次任务执行对应一条 trace，其中每个 LLM 调用、每次工具调用、每次检索都是一个 **span**（记录输入输出、起止时间、token 消耗、错误信息的执行单元），span 之间的父子关系构成一棵执行树——比如“Agent 主循环”span 之下挂着若干“LLM 调用”和“工具调用”子 span。这一层已有标准化协议可用：**OpenTelemetry** 是通用的分布式追踪标准，**OpenInference** 等规范则在其上定义了 LLM 应用特有的语义约定（如何记录提示词、模型参数、token 用量等）。采用标准协议的好处是采集与分析解耦——同一份追踪数据可以对接不同的分析后端，避免被单一平台锁定。
+
+LangSmith 是这一领域的代表性平台之一（类似定位的还有 Langfuse、Arize Phoenix 等），将可观测性、评估、优化整合为闭环。每次执行创建一个追踪会话，其中的模型调用、工具使用、知识检索被记录为独立的执行单元，通过因果关系链接形成一棵执行树。每个单元记录完整的输入输出、时间信息、成本数据和错误信息。平台采用异步批量数据采集，确保追踪本身不影响 Agent 的响应延迟。
+
+平台还支持 A/B 测试（将一部分用户的流量路由到新版本，自动对比各项指标，支持快速回滚或渐进扩量）、提示词版本管理（每个版本都关联着运行时的性能数据）、以及协作式开发（团队成员可共享追踪数据和问题案例）。生产环境中的海量真实数据是持续改进的金矿——能发现未曾预料的场景，识别最需要优化的功能点。
+
+可观测性数据最有价值的去向，是**回流成评估资产**。一条实用的闭环是：从生产轨迹中筛选出失败与可疑案例 → 脱敏处理（去除用户隐私、密钥等敏感字段）→ 沉淀为评估集的新用例和回归测试。这样评估集就不再是一次性构造的静态集合，而是随产品演化、持续贴近真实用户分布的活资产——今天线上暴露的失败模式，明天就成为守住这条底线的回归用例。这正是可观测性与本章评估主线的接口：可观测性负责“看见”真实世界发生了什么，评估负责把这些观察固化为可反复检验的标准。
+
+可观测性面临几类挑战：
+
+- **数据量与隐私的权衡**：高流量的系统每天会产生数 TB 的追踪数据，同时需要遵守数据保护法规。
+- **因果归因的复杂性**：从轨迹中自动识别根本原因仍然需要更智能的分析算法，前沿研究在尝试因果推理和反事实分析，但尚未成熟。
+- **多 Agent 系统的追踪难题**：跨多个 Agent 的执行流追踪比微服务间的 API 调用更复杂、更语义化。
+- **实时防护与事后分析的平衡**：高风险场景需要主动防护，但会带来额外的延迟和误报。
+
+随着 ML 技术深度整合到工具链中，未来的可观测性平台有望自动识别异常并定位根源。
+
+有了完备的评估体系和数据集之后，关键在于将评估结果转化为切实的系统改进。
+
+## 从 Benchmark 报告到系统改进
+
+**以下是一个示教性的假设案例**，用具体数据说明从 Benchmark 报告到系统改进的完整决策流程。数据为假设值，旨在演示方法论而非报告真实实验结果。
+
+![图6-7 Benchmark 到改进闭环](images/fig6-7.svg)
+
+从 Harness 工程的视角看，这一节本质上讲的是 Harness 迭代优化的方法论——通过评估数据定位 Harness 中的薄弱环节（上下文不足？约束缺失？验证不够？反馈不及时？），有针对性地改进，再重新评估，形成 Harness 持续进化的闭环。
+
+在开始分析 Benchmark 报告之前，有一条容易被忽视的原则：**看到 Agent 表现下降时，应先检查评测系统本身，再动 Agent**。一个常见误区是看到分数下降就立刻修改 Agent 代码，而忽略了评测系统本身可能先出了问题——基于失真的信号调整方向，改的方向可能从一开始就是错的。评测系统常见的错误来源包括：运行环境的资源不足导致进程被杀（表现为随机性的失败）、评分器本身有 bug 把正确答案判为失败、测试用例与生产场景之间存在脱节。这些问题在结果数字上都跟模型退化一模一样，只有审查完整的轨迹才能区分。
+
+### 读懂 Benchmark 报告：发现问题的艺术
+
+以一个具体案例来说明如何读 Benchmark 报告。假设我们在 AndroidWorld 上评估某个 Agent，得到两张核心报告表：逐任务性能列表和按能力标签划分的性能矩阵。报告的价值不在于总体成功率这个单一数字，而在于它揭示的结构性短板。
+
+逐任务表格显示了清晰的模式：大部分常规任务的成功率接近 100%。这些成功的任务涵盖录音、拍照、联系人管理、笔记创建、文件操作、系统设置等常见场景，平均需要十几步操作，最复杂的可达数十步。Agent 能维持如此长的操作序列并成功完成，证明了它在标准场景下的规划和执行能力。
+
+失败则高度集中在少数几个区域：短信回复、Wi-Fi 开关及状态验证、待办事项查询、Wi-Fi+蓝牙组合操作、VLC 播放列表创建等。表面上看这些任务彼此无关，但能力标签矩阵揭示了它们的共同特征。
+
+**能力标签矩阵**是诊断的关键——它将所有任务按所需能力和难度交叉分类。报告中往往会出现几个成功率极低的能力维度：transcription（从图像/视频中转录信息，暴露视觉理解的缺陷）、math_counting（问题不在数学能力本身——现代 LLM 数学能力很强——而在于 Agent 能否识别出需要计算、从界面中提取数字、再将结果映射到操作序列）、complex_ui_understanding（严重依赖标准化 UI 模式，一遇到非标准布局就崩溃）。
+
+将两张表结合起来分析，失败原因就清晰了：待办事项查询失败，指向该应用的非标准 UI 使 Agent 无法读取任务列表并筛选；Wi-Fi 操作失败，指向系统设置界面的控件层级超出了 Agent 的理解范围；VLC 播放列表失败，指向专业应用的复杂界面中 Agent 找不到创建入口。
+
+### 从数据到假设：构建改进路线图
+
+**表层假设**（成本低、相互独立，可并行验证）：H1 为 Wi-Fi 操作增加系统设置导航提示（Agent 可能会操作开关，只是找不到入口页面），预期解决设置类任务的集中失败；H2 为待办应用提供 UI 元素识别规则，预期解决待办类任务的失败。
+
+**中层假设**（同样独立、可并行）：H3 修复多模态输入管道——回放失败轨迹发现图片可能在管道中被丢弃或转成文本描述，再强的多模态模型也无从转录；H4 全局启用思考以解决计数类失败。
+
+**深层假设**（验证成本高，仅在表层和中层改进后 complex_ui 成功率仍低于 40% 时才启动）：H5 更换视觉理解更强的模型（GPT-5），H6 在截图之外增加 UI 元素树信息（UI Automator 提取的结构化 DOM 与截图交叉验证）。两者可组成 2×2 对比实验（Claude/GPT-5 × 仅截图/截图+元素树），回答“模型能力和信息丰富度哪个更关键、两者是否有协同效应”。
+
+每个配置在完整的 116 个任务集上运行 5 次（使用不同的随机种子），记录成功率、平均步数和执行时间。
+
+### 从结果到决策：数据驱动的权衡
+
+假设实验数据显示如下结果（**以下数据均为假设值**）：H1 将设置类任务从 0% 提升到 75%，输入 token 增加 8%；H3 将转录从 0% 提升到 80%，vision token 增加 15%，每步延迟增加 1 秒；H4 将计数从 0% 提升到 70%，但每步延迟从 4 秒升到 12 秒，成本增至 3 倍；H6 将 complex_ui 从 17% 提升到 52%，token 增加 30%，每步延迟增加 2 秒；H5（GPT-5）将 complex_ui 从 17% 提升到 35%，但每步延迟从 4 秒升到 15 秒。
+
+决策不是简单采用所有有效改进：
+
+**H1+H3 明确部署**：H1 成本低、收益高、无副作用；H3 虽增加 15% 的 vision token 成本和 1 秒延迟，但转录能力从无到有，且修复的是“输入管道丢失多模态信息”这一架构性缺陷，还可能顺带改善其他视觉理解任务。
+
+**H4 全局思考不可接受**：总体成功率虽从 88% 升到 91%，但能力标签分布显示只有约 8% 的任务涉及计数——为少数任务让全部任务承担 3 倍的延迟和成本，是典型的“杀鸡用牛刀”。不过 H4 证明了思考对计数任务有效，可作为下一轮条件化启用的基础。
+
+**H6 优于 H5**：H5（GPT-5）每步延迟从 4 秒飙升到 15 秒，complex_ui 却只提升到 35%，说明瓶颈不在模型的思考能力，而在输入的信息是否充分；H6（增加元素树信息）用 30% 的 token 增量和 2 秒延迟换来 35 个百分点的提升，性价比高得多。H5+H6 组合成绩最高（68%），但任务时长在大规模部署中不可接受，只适合在关键的异步任务（银行转账、医疗预约）中选择性启用，普通场景使用 H6 即可。
+
+**H2 面临可扩展性问题**：为每个非标准应用编写专门规则不可持续，只能作为临时方案，长期应提升 Agent 的泛化能力。
+
+### 持续迭代：从第一次改进到系统演化
+
+实施 H1、H3、H6 三项改进后（H4 未部署），Agent 在 AndroidWorld 上的成功率从 88% 提升到了 94%。重新运行完整的 benchmark，新报告显示出不同的失败模式：转录、设置类和复杂 UI 任务均大幅改善，剩余约 6% 的失败集中在尚未解决的计数任务、仍有波动的 Wi-Fi 状态验证（从 0% 升到 60% 但不稳定），以及少量新出现的失败——可能是提示词变长或元素树信息过多导致模型注意力分散。
+
+基于新报告和 H4 实验的洞察，可以形成新的假设。H7：条件化启用思考——任务开始前用一次快速的 LLM 调用（约 1-2 秒）分析任务描述，只对涉及计数或复杂推理的任务开启思考模式，把延迟增加控制在真正需要的任务上。H8：扩展动作空间，支持复杂手势（双指缩放、长按拖动、多点触控）——回放剩余失败轨迹可以发现，部分任务需要地图缩放、图片裁剪、列表长按菜单等操作。
+
+这种基于 benchmark 反馈的持续迭代，推动着 Agent 能力的螺旋上升。Benchmark 不是一次性的考试，而是持续的能力体检。建立定期的评估机制（如每周跑一次完整测试），可以监测能力的演进曲线，及时发现退化（新功能引入了 bug）、验证改进（优化确实有效）、积累知识（哪些类型的改进通常有效、哪些容易适得其反）。这种数据驱动、假设检验、持续迭代的方法论，是将 Agent 工程从经验驱动转向科学工程的关键路径。
+
+> **实验 6-10 ★★★：AndroidWorld 的评估和改进**
+>
+> 本实验是一次完整的从评估报告到系统改进的闭环实践。以 `ch6/android-world` 中的 AndroidWorld 评估报告为起点。
+>
+> 第一步：诊断。交叉分析逐任务表格和能力标签矩阵，将表面的任务失败映射到深层的能力缺陷。识别成功率低于预期的能力标签和集中失败的任务区域。
+>
+> 第二步：构建假设。按照三层框架（表层→中层→深层）形成改进假设，每个假设明确预期的成功率提升目标和验证方法。
+>
+> 第三步：分阶段实验。设计对照实验验证假设。第一阶段测试低成本的表层假设（提示词优化、工具描述补充），第二阶段测试中层能力假设（输入管道修改、思考模式切换），重点观察特定能力标签下任务的改进幅度，同时测量副作用。
+>
+> 第四步：数据驱动决策。根据成本收益比做部署决策——不是简单地采用所有有效的改进，而是需要权衡每项改进的适用范围、延迟影响和成本开销。低成本高收益的改进优先部署，高成本的改进限定在关键场景中使用。
+>
+> 第五步：迭代。完成改进后重新运行评估数据集，使用 LLM 分析评估结果生成新报告。新报告将显示不同的失败模式，成为下一轮迭代的起点。
+>
+## 从外部评估到内部评估：生产级 Agent 的评估基础设施
+
+前面几节讨论了如何从外部评估 Agent 系统——搭建评估环境、设计数据集、分析 Benchmark 报告。但最优秀的 Agent 产品不仅接受外部评估，还**内建了持续自我评估的基础设施**。下面以第五章介绍的开源通用 Agent OpenClaw 为例，并结合头部 Coding Agent 产品的公开技术分析与从业者分享，展示一套值得借鉴的内部评估体系——它将 ML 研究中的实验方法论系统性地嵌入到了产品工程中。
+
+### 消融基础设施：理解每个特性的真实贡献
+
+ML 研究者长期使用消融实验（Ablation Study）来理解模型的哪些组件真正重要——所谓消融，就是逐一“摘除”某个组件，看整体性能掉多少。OpenClaw 将这一方法论引入了产品工程：系统内置了一个总开关，可以同时禁用多个主要特性（思考模式、上下文压缩、自动记忆、后台任务等），创造一个“裸模型”基线。这使得团队能回答一个关键问题：**某个特性是真的改善了用户体验，还是只是感觉有用？**
+
+将消融作为常规的工程实践而非一次性的研究，有几个实际意义。首先，消融开关必须在启动路径的极早期注入——在任何模块级常量捕获配置值之前——这意味着消融基础设施必须从一开始就设计进系统架构，而非事后加装。其次，定期运行消融实验（如每次大版本发布前）可以发现“特性债务”——那些曾经有效但随着模型进化已不再必要的特性。对于任何构建生产 Agent 的团队，建议的实践是：**每个主要特性都应是可独立关闭的，团队应定期验证每个特性的实际贡献**。
+
+### AB 测试方法论：区分机制与目标
+
+成熟的 Agent 产品会对自身行为进行严格的 AB 测试（即把用户随机分成两组，一组使用旧版本、一组使用新版本，通过对比两组的实际数据来判断改动是否有效）。一个设计精良的 Agent AB 测试案例展示了几个关键的方法论原则：
+
+**多臂而非二元**。不仅对比 “有” 和 “没有”，而是设计多个渐进式变体（例如测试不同强度的提示词约束时，设置控制组和三个渐进更严格的实验组）。这种设计能揭示剂量-效应关系，帮助找到最优点。
+
+**区分机制指标和目标指标**。这是最容易犯的错误——把你正在改变的东西当作优化目标。例如，如果你在测试“缩短 Agent 的计划文件长度”，计划长度是机制指标（你直接改变的东西），但它不是目标。真正的目标可能是“降低会话级成本”。缩短计划文件可能降低成本，但也可能因为计划不够详细而导致更多的编辑-检查-编辑循环，反而增加了总输出量。始终问自己：**我改变的东西（机制）和我真正关心的东西（目标）是同一个吗？**如果不是，以目标为准。
+
+**设置护栏指标**。即使目标指标改善了，如果用户满意度下降、操作次数增加、或错误率上升，实验也应该停止。护栏指标是 “不能变差的底线”。
+
+**记录基线统计**。包含样本量、分布百分位数、相关性分析（如 “拒绝率随计划大小单调递增”），为实验结果的解读提供必要的上下文。没有基线，你无法判断实验结果是否具有统计显著性。
+
+### 双层特性开关系统
+
+Agent 产品需要从第一天就设计特性开关（Feature Flag）基础设施——所谓特性开关，就是一个可以远程控制的开关，决定某项功能对用户是开启还是关闭，无需重新部署代码。它同时服务于三个目的：实验、渐进发布和紧急熔断。
+
+**编译时开关**在构建阶段就将相关代码从产物中物理移除。内部专用的特性在外部构建中根本不存在——即使逆向工程也无法发现被移除的功能。这也是一种干净的消融机制：关闭某个特性不是在运行时跳过逻辑，而是对应的代码在物理上就不存在。
+
+**运行时开关**的配置由服务端下发，并在本地磁盘缓存一份。设计上宁可读取到稍旧的缓存配置，也不能让 Agent 因等待网络请求而阻塞启动。具体的分组决策通过实验平台（如 GrowthBook）完成，用于分配 AB 测试组。一个关键的设计细节是：每个特性的曝光事件在每个会话中最多记录一次，避免重复记录污染实验数据。
+
+对于 Agent 开发者的启示：特性开关不是调试工具，而是**一等公民级的架构组件**。
+
+### 提示词敏感性评估
+
+系统提示是 Agent 行为的核心“代码”，但它往往缺少与普通代码同等的版本控制和回归测试。OpenClaw 的做法是提供一个专用工具，能在指定的 git 版本上提取完整渲染后的系统提示——包含所有动态条件展开后的最终文本。这使得团队能精确回答：**哪个 commit 改变了提示词？对评估集的影响是什么？**
+
+对于任何 Agent 团队，建议的实践是：(1) 系统提示应该是可确定性渲染的（给定相同的配置输入，永远产生相同的输出）；(2) 建立提示词的版本化快照机制；(3) 每次提示词变更都应在评估集上运行回归测试——就像代码变更需要跑 CI 一样。
+
+### 隐私感知的分析作为评估基础
+
+评估依赖好的数据，但 Agent 产品处理的往往是用户的敏感内容。OpenClaw 通过类型系统来解决这个矛盾：分析接口只接受经过特殊类型包装的值，类型名本身就是审计线索——它直白地声明“我已验证这不是代码或文件路径”。这种设计将隐私约束从文档化的规范变成了编译时强制执行的类型检查。
+
+核心原则是：**从一开始就把隐私约束设计进去，而非事后加装**。如果你的分析系统无法安全地收集数据，你就无法有效地评估。隐私和评估并不对立——隐私感知的设计迫使你认真思考*真正需要度量什么*，这反而会催生更精准的评估指标。
+
+### 从外部到内部：评估思维的转变
+
+本节的核心信息是：**前面几节教你如何从外部评估 Agent，本节揭示的是最好的 Agent 产品如何从内部评估自己**。外部评估告诉你“Agent 有多好”，内部评估基础设施告诉你“哪个改变让它变好了”。消融实验发现哪些特性真正重要，AB 测试量化每个改变的影响，特性开关提供实验和回滚的基础设施，提示词敏感性评估将系统提示纳入 CI 体系，隐私感知分析确保数据收集的合规性。这五个组件共同构成了评估驱动的产品工程——不是偶尔做一次评估，而是将评估嵌入到每一次产品决策中。
+
+## 仿真环境：从评估到后训练的桥梁
+
+评估的终点不是打分，而是改进。本章已经展示了改进的两条路径：调整 Harness（从 Benchmark 报告到系统改进）和把评估嵌入产品工程（内部评估基础设施）。而改进的最强形态是训练——当目标从“评估现有能力”扩展到“培养新能力”时，特别是通过第七章讨论的后训练技术，评估环境就需要演化为**仿真环境**：一个能让 Agent 反复练习、自动打分的虚拟操场。仿真环境与评估环境的核心区别在于：交互频率远高（数百万次 vs 数千次）、需要随机化（防止死记硬背特定配置）、以及必须提供即时反馈。从应用领域看，仿真环境分为数字环境（信息处理任务）与具身环境（物理世界感知与操作）两大类。
+
+这座桥梁的两端是这样接起来的。评估侧已经积累的资产可以近乎无缝地转成训练信号：一套定义清晰的 Rubric 或验证器，本质上就是一个**可验证奖励（RLVR，Reinforcement Learning with Verifiable Rewards）**的奖励函数——判分脚本直接就是奖励脚本，测试是否通过、状态是否达标，既是评估的判据，也是强化学习的回报。但训练会提出评估阶段不必操心的新要求。其一是**可靠的 reset 语义**：训练要跑数百万个 episode（一个 episode 即一次从初始状态到任务结束的完整交互回合），每个 episode 都必须能把环境重置到一个确定、干净的初始状态，否则梯度信号会被上一轮的残留状态污染。其二是**远高于评估的吞吐**：评估几千次就够出结论，训练则要在可接受的墙钟时间内喂给模型上百万次交互，环境的并行度和单实例开销直接决定训练是否可行。这两点——奖励函数化的验证器、面向训练的 reset 与吞吐——都将在第七章展开。
+
+![图6-8 仿真保真度谱](images/fig6-8.svg)
+
+**数字环境**方面，AWorld 框架为 GAIA 任务构建了可控的 MCP 服务器沙盒，提供 26 个 MCP 服务器、涵盖 126 个工具函数，避免直接访问真实 API 带来的封禁和不可控副作用。所有工具调用可重放、可审计。AWorld 的分布式架构将传统串行执行的 7695 秒缩短到 525 秒（14.6 倍加速），环境的无状态设计使每个实例完全独立，支持高效并行。
+
+**具身环境**方面，RoboTwin2 基于物理引擎构建双臂操作任务，环境随机化物体位置、朝向和外观以提升泛化能力。观测空间包括多相机视觉和关节状态，通过**动作分块（Action Chunking）**——模型一次规划多个连续动作——实现实时控制（详见第九章）。OSWorld 通过虚拟机快照实现可重置性，AndroidWorld 聚焦移动应用自动化。无论数字环境还是具身环境，仿真环境同样需要第四章讨论的隔离执行环境与虚拟身份机制（VM/容器隔离、住宅代理、Human-in-the-Loop 认证、共享文件系统），此处不再重复。
+
+> **实验 6-11 ★★：配置 OpenVLA 与 RoboTwin2 的具身智能环境**
+>
+> 搭建机器人操作的仿真环境。阅读 `ch7/SimpleVLA-RL` 和 OpenVLA 文档，理解视觉-语言-动作模型的架构（视觉编码器 + 语言模型 + 动作解码器端到端整合，图像和文本投影到共享语义空间）。配置 RoboTwin2 环境，理解观测空间（三视角 RGB + 14 维关节状态）和动作空间（14 维控制向量）。研究 move_can_pot 中的环境随机化机制和空间约束逻辑。运行预训练模型评估，记录成功率、完成时间和失败模式，重点关注动作分块机制的影响。
 >
 >
-### Fidelity Trade-offs and Domain Randomization
+> ![图6-9 OpenVLA 与 RoboTwin2 具身智能环境](images/fig6-9.svg)
+>
+>
+### 保真度权衡与领域随机化
 
-High-fidelity environments transfer better to the real world but have high computational costs. Another dimension of fidelity is the degree of randomization: moderate randomization improves generalization, while excessive randomization can make tasks too difficult. **Domain Randomization** is a key technique for narrowing the sim-to-real gap: introducing a wide range of random variations in physical parameters, visual appearance, sensor noise, etc.—just like practicing grasping under various lighting and angles, so you won't fail in the real world just because the light changes. In digital environments, sim-to-real manifests as differences in interface rendering, response times, etc., which can be mitigated by introducing randomization in latency and failures.
+高保真环境能更好地迁移到真实世界，但计算开销大。保真度的另一维度是随机化程度：适度随机化能提升泛化能力，过度随机化则会让任务变得过于困难。**领域随机化（Domain Randomization）**是缩小仿真与现实差距（sim-to-real gap）的关键技术：在物理参数、视觉外观、传感器噪声等方面引入大范围随机变化——好比在各种光照和角度下都练习过抓取，到了真实环境也不会因为光线变化就失手。在数字环境中，sim-to-real 表现为界面渲染、响应时间等方面的差异，可通过引入延迟和失败的随机化来缓解。
 
-At this point, the evaluation environment completes its final evolution: from a testing ground for measuring capabilities to a training ground for cultivating them. Chapter 7 will introduce how AWorld-train transforms such simulation environments into trainable arenas, along with the engineering challenges involved—the evaluation system and simulation environments established in this chapter are the two cornerstones of post-training.
+至此，评估环境完成了它的最后一次演化：从度量能力的考场，变成培养能力的训练场。第七章将介绍 AWorld-train 如何把这类仿真环境改造为可训练的场地，以及其中的工程挑战——本章建立的评估体系与仿真环境，正是后训练的两块基石。
 
-## Chapter Summary
+## 本章小结
 
-This chapter revolves around a core question: How do you determine if an Agent has truly improved? From building reproducible test environments, to designing datasets resistant to leakage, to using LLMs as judges, and finally to using evaluation results to drive model selection and iteration—every link in this chain affects the credibility of the conclusions. Evaluation of production-grade Agents is not an occasional exam but continuous validation embedded in every product decision.
+本章围绕一个核心问题：怎么判断 Agent 真的变好了？从搭建可复现的测试环境，到设计经得起泄漏考验的数据集，到让 LLM 担任评判者，最后到用评估结果驱动模型选型和迭代——这条链路的每个环节都会影响结论的可信度。生产级 Agent 的评估不是偶尔做一次的考试，而是嵌入到每个产品决策中的持续验证。
 
-Core methodology: Observe → Hypothesize → Experiment → Validate → New Understanding → New Hypothesis, transforming Agent engineering from experience-driven "alchemy" to data-driven scientific engineering.
+核心方法论：观察→假设→实验→验证→新认识→新假设，使 Agent 工程从经验驱动的 “炼金术” 转向数据驱动的科学工程。
 
-The evaluation system introduced in this chapter forms a complete closed loop: **Evaluation Environment** provides automated testing infrastructure → **Evaluation Dataset** defines test cases → **Automated Evaluation Methods** (LLM-as-a-Judge and Rubric) score Agent performance → **Benchmark Analysis** reveals improvement directions → **System Improvements** fix issues → Update the evaluation environment and dataset, starting a new iteration cycle.
+本章介绍的评估体系形成一个完整闭环：**评估环境**提供自动化的测试基础设施 → **评估数据集**定义测试用例 → **自动化评估方法**（LLM-as-a-Judge 与 Rubric）对 Agent 表现打分 → **Benchmark 分析**揭示改进方向 → **系统改进**修复问题 → 更新评估环境和数据集，开始新一轮迭代。
 
-From the perspective of the Harness engineering introduced in Chapter 1, the evaluation methodology in this chapter is the systematic implementation of the "validation" function within the Harness, and the "from Benchmark report to system improvement" closed loop is the core mechanism for the Harness's iterative optimization—evaluation not only measures the Agent's current capabilities but also guides the Harness's continuous evolution direction.
+从第一章引入的 Harness 工程视角看，本章的评估方法论是 Harness 中 “验证” 功能的系统化实现，而 “从 Benchmark 报告到系统改进” 的闭环则是 Harness 迭代优化的核心机制——评估不仅度量 Agent 的当前能力，更指引 Harness 的持续进化方向。
 
-The evaluation system established in this chapter not only serves the optimization of the current system but also provides a critical foundation for the model post-training in the next chapter—the evaluation environment and dataset are important inputs for post-training, and the simulation environment is the practice ground for post-training. The next chapter will shift from evaluation to model-level improvement, delving into how to embed interaction strategies into model parameters through SFT and RL.
+本章建立的评估体系不仅服务于当前系统的优化，也为下一章的模型后训练提供关键基础——评估环境和数据集是后训练的重要输入，仿真环境则是后训练的练习场。下一章将从评估转向模型层面的改进，深入探讨如何通过 SFT 和 RL 将交互策略写入模型参数。
 
-## Thought Questions
+## 思考题
 
-1. ★★ LLM-as-a-Judge uses a language model to evaluate the output of a language model. Does this "self-evaluation" have systematic blind spots—for example, the model might consistently give high scores to a certain style of response, a preference that is inconsistent with human judgment? How can such biases be detected and corrected?
-2. ★★★ The "leakage-proof" design of evaluation datasets is crucial. However, in the open-source ecosystem, once benchmark data is made public, it is quickly incorporated into training data. Does this "cat-and-mouse game" have an endgame? Design an evaluation method that fundamentally resists data leakage.
-3. ★★ Scale AI's four criteria (expert guidance, comprehensive coverage, standard importance weighting, self-contained evaluation) aim to eliminate subjectivity in evaluation. However, certain task dimensions (e.g., "Is the answer helpful?" "Is the tone appropriate?") are inherently subjective. How can reliable Rubrics be designed for these subjective dimensions?
-4. ★★ τ-bench evaluates Agents by simulating real user behavior. But the simulated user itself is an LLM—it might systematically underestimate certain edge cases (e.g., emotionally agitated or unclear users). How can the quality of the simulated user itself be validated?
-5. ★★ Pairwise comparison (Bradley-Terry model) assumes preferences are transitive (if A > B and B > C, then A > C). However, human preferences often violate transitivity. In Agent evaluation, in what scenarios might non-transitive preferences appear? How does this affect the reliability of rankings?
-6. ★★ This chapter proposes the scientific method of "Observe → Hypothesize → Experiment → Validate." In practice, however, the Agent's behavior space is vast, and validating a single hypothesis may require hundreds of evaluation runs. How can the information gained from evaluation be maximized under a limited computational budget?
-7. ★ In the hypothetical case in this chapter, globally enabling thinking (H4) improved overall success rate but was rejected due to latency and cost, eventually evolving into conditional enabling (H7). Which signals (task description features, historical failure patterns, runtime uncertainty) are suitable as routing criteria for "whether to enable thinking mode"? Are there Agent scenarios where thinking is actually harmful?
-8. ★★ τ-bench's user simulation employs "progressive information disclosure"—not providing all information at once, but gradually revealing it based on the Agent's questions. How does this design affect evaluation results? If the simulated user's information disclosure strategy differs significantly from real users, are the evaluation conclusions still reliable?
+1. ★★ LLM-as-a-Judge 使用语言模型评估语言模型的输出。这种 “自我评估” 是否存在系统性盲区——比如模型可能一致地给某种风格的回答打高分，而这种偏好与人类评判不一致？如何检测和校正这种偏差？
+2. ★★★ 评估数据集的 “防泄漏” 设计至关重要。但在开源生态中，benchmark 数据一旦公开，很快就会被纳入训练数据。这场 “猫鼠游戏” 有终局吗？设计一种从根本上抵抗数据泄漏的评估方法。
+3. ★★ Scale AI 的四准则（基于专家指导、全面覆盖、标准重要性权重、自包含评估）旨在消除评估的主观性。但某些任务维度（如 “回答是否有帮助”“语气是否恰当”）天然具有主观性。如何为这些主观维度设计可靠的 Rubric？
+4. ★★ τ-bench 通过模拟真实用户行为来评估 Agent。但模拟用户本身也是一个 LLM——它可能系统性地低估某些边缘场景（如情绪激动、表达不清的用户）。如何验证模拟用户本身的质量？
+5. ★★ 配对比较（Bradley-Terry 模型）假设偏好是传递的（如果 A > B 且 B > C，则 A > C）。但人类偏好经常违反传递性。在 Agent 评估中，非传递偏好可能出现在哪些场景？这如何影响排名的可靠性？
+6. ★★ 本章提出 “观察→假设→实验→验证” 的科学方法。但在实践中，Agent 的行为空间巨大，验证一个假设可能需要数百次评估运行。如何在有限计算预算下最大化评估的信息量？
+7. ★ 本章的假设案例中，全局启用思考（H4）虽然提升了总体成功率，却因延迟和成本被否决，最终演化为条件化启用（H7）。哪些信号（任务描述特征、历史失败模式、运行中的不确定性）适合作为“是否启用思考模式”的路由依据？是否存在思考反而有害的 Agent 场景？
+8. ★★ τ-bench 的用户模拟采用了 “渐进式信息透露”——不一次性提供所有信息，而是根据 Agent 的提问逐步透露。这种设计如何影响评估结果？如果模拟用户的信息透露策略与真实用户差异较大，评估结论还可靠吗？

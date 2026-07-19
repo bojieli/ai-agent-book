@@ -1,9 +1,9 @@
 """
-agent.py —— Code Generation Agent (the "brain" of the self-healing loop)
+agent.py —— 代码生成 Agent（自愈闭环的“大脑”）
 
-Responsibility: Given an unparseable failed sample + error message, call OpenAI to generate a
-Python parsing function `def parse(line: str) -> dict | None` that can correctly parse the format.
-Supports feeding back the failure report from the previous auto-test round to regenerate (iterative repair).
+职责：拿到无法解析的失败样本 + 报错，调用 OpenAI，生成一个能正确解析该格式的
+Python 解析函数 `def parse(line: str) -> dict | None`。支持把上一轮自动测试的
+失败报告作为反馈再次生成（迭代修复）。
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from typing import List, Optional
 
 from openai import OpenAI
 
-# .env loading (optional dependency)
+# .env 加载（可选依赖）
 try:
     from dotenv import load_dotenv
 
@@ -23,19 +23,20 @@ except Exception:
     pass
 
 
-SYSTEM_PROMPT = """You are a "log parser code generator". The user will provide you with a batch of log samples of the **same unknown format**,
-and error messages from existing system parsing failures. Your task: write a Python function that parses each line of this format into structured fields.
+SYSTEM_PROMPT = """你是一个"日志解析器代码生成器"。用户会给你一批**同一种未知格式**的日志样本，
+以及现有系统解析失败的报错。你的任务：编写一个 Python 函数，把这种格式的每一行解析成结构化字段。
 
-Strict requirements:
-1. Output only a Python code block (```python ... ```), no explanatory text.
-2. The code block must define a function: def parse(line: str) -> dict | None
-   - Input is a log line (string).
-   - If the line matches the format you are parsing, return a dict with field names (English lowercase underscore) as keys and parsed content as values.
-   - If the line **does not** match this format, must return None (do not raise exceptions, leave opportunity for other parsers).
-3. Only use Python standard library (re, json, datetime, etc.), do not import third-party libraries.
-4. No side effects such as print, input, file I/O, network access, etc.
-5. Must parse all **required fields** (required_keys) specified by the user, field values cannot be empty.
-6. Be robust: use regex/delimiters for parsing, tolerate spaces within field order."""
+严格要求：
+1. 只输出一个 Python 代码块（```python ... ```），不要任何解释文字。
+2. 代码块里必须定义一个函数：def parse(line: str) -> dict | None
+   - 输入是一行日志（字符串）。
+   - 如果这行符合你要解析的格式，返回一个 dict，键为字段名（英文小写下划线），值为解析出的内容。
+   - 如果这行**不符合**这种格式，必须返回 None（不要抛异常，把机会让给其它解析器）。
+3. 只能使用 Python 标准库（re、json、datetime 等），不要 import 第三方库。
+4. 不要有任何 print、input、文件读写、网络访问等副作用。
+5. 必须解析出用户指定的**所有必需字段**（required_keys），字段值不能为空。
+6. 尽量健壮：用正则/分隔符解析，容忍字段顺序内的空格。
+"""
 
 
 def _build_user_prompt(
@@ -46,26 +47,26 @@ def _build_user_prompt(
 ) -> str:
     sample_block = "\n".join(samples)
     parts = [
-        "The existing system cannot parse logs in the following format. Please generate a parsing function.",
+        "现有系统无法解析下面这种格式的日志，请生成解析函数。",
         "",
-        "[Failure sample (same new format)]",
+        "【失败样本（同一种新格式）】",
         sample_block,
         "",
-        f"[System Error]\n{error_report}",
+        f"【系统报错】\n{error_report}",
         "",
-        f"[Required parsed fields required_keys]\n{required_keys}",
+        f"【必需解析出的字段 required_keys】\n{required_keys}",
     ]
     if feedback:
         parts += [
             "",
-            "[The previous version of the code did not pass the automated tests. Please fix and regenerate.]",
+            "【上一版代码没通过自动测试，请修复后重新生成】",
             feedback,
         ]
     return "\n".join(parts)
 
 
 def _extract_code(text: str) -> str:
-    """Extract Python code blocks from the model response; fall back to the entire text when no fences are present."""
+    """从模型回复中抽取 Python 代码块；没有围栏时退回整段文本。"""
     m = re.search(r"```(?:python)?\s*(.*?)```", text, re.DOTALL)
     return (m.group(1) if m else text).strip()
 
@@ -74,7 +75,7 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
 def _map_to_openrouter_model(model: str) -> str:
-    """Map the direct model name to the ID on OpenRouter (non-mappable IDs fall back to the current cheap flagship)."""
+    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
     if not model or "/" in model:
         return model or "openai/gpt-5.6-luna"
     m = model.lower()
@@ -97,13 +98,13 @@ class CodeGenAgent:
         api_key = os.getenv("OPENAI_API_KEY")
         base_url = os.getenv("OPENAI_BASE_URL")
         orkey = os.getenv("OPENROUTER_API_KEY")
-        # General OpenRouter fallback: when there is no direct key, or the default gpt-5.x (direct connection requires organizational real-name authentication) is used, switch to OpenRouter.
+        # 通用 OpenRouter 兜底：无直连 key，或默认 gpt-5.x（直连需组织实名认证）时改走 OpenRouter。
         prefer_or = bool(orkey) and (model or "").lower().startswith("gpt-5")
         if prefer_or or (not api_key and orkey):
             api_key, base_url, model = orkey, OPENROUTER_BASE_URL, _map_to_openrouter_model(model)
         if not api_key:
-            raise SystemExit("OPENAI_API_KEY (or fallback OPENROUTER_API_KEY) not found. Please set it in environment variables or .env.")
-        # timeout / max_retries: automatically retry on occasional network/SSL glitches to avoid crashing the entire round
+            raise SystemExit("未找到 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底），请在环境变量或 .env 中设置。")
+        # timeout / max_retries：让偶发的网络/SSL 抖动自动重试，不至于整轮崩溃
         client_kwargs = {"api_key": api_key, "timeout": 60.0, "max_retries": 3}
         if base_url:
             client_kwargs["base_url"] = base_url
@@ -117,9 +118,9 @@ class CodeGenAgent:
         error_report: str,
         feedback: Optional[str] = None,
     ) -> str:
-        """Call LLM to generate parser code, returning a pure Python source string."""
+        """调用 LLM 生成解析器代码，返回纯 Python 源码字符串。"""
         user_prompt = _build_user_prompt(samples, required_keys, error_report, feedback)
-        # Reasoning models (gpt-5 / o series, etc.) do not accept temperature=0.
+        # 推理模型（gpt-5 / o 系列等）不接受 temperature=0。
         _reasoning = any(k in (self.model or "").lower()
                          for k in ("gpt-5", "o1", "o3", "o4", "thinking", "reasoner", "kimi-k3"))
         resp = self.client.chat.completions.create(
@@ -134,15 +135,15 @@ class CodeGenAgent:
 
 
 # ---------------------------------------------------------------------------
-#  Offline (no API) code generation agent
+# 离线（无 API）代码生成 Agent
 # ---------------------------------------------------------------------------
-#  The interface is exactly the same as CodeGenAgent, but instead of calling OpenAI, it returns **preset** values based on required fields.
-# Parser source code. Its purpose is to deterministically demonstrate and verify the entire pipeline in environments without an API Key.
-# Mechanism: failure detection → (preset) code generation → automatic testing → hot-load registration → persistent reuse.
-# Note: The "generation" here returns pre-written code from a lookup table, not actually asking the LLM to write it on the fly; only when switching to
-# CodeGenAgent is the real code generation.
+# 与 CodeGenAgent 接口完全一致，但不调用 OpenAI，而是根据必需字段返回**预置**的
+# 解析器源码。它的用途是：在没有 API Key 的环境里，仍能确定性地演示与验证整条
+# 机制——失败检测 → （预置）生成代码 → 自动测试 → 热加载注册 → 持久化复用。
+# 注意：这里的“生成”是查表返回预写好的代码，并非真正让 LLM 现写；只有换用
+# CodeGenAgent 才是真正的代码生成。
 _CANNED_PARSERS = {
-    #  Vertical bar separated format: timestamp|level|module|step=N|message
+    # 竖线分隔格式：时间戳|级别|模块|step=N|消息
     frozenset(["timestamp", "level", "module", "step", "message"]): '''import re
 
 
@@ -156,7 +157,7 @@ def parse(line: str) -> dict | None:
         return match.groupdict()
     return None
 ''',
-    #  Nested bracket format: [time] (level) <tool=name> {k=v k=v} :: message
+    # 嵌套括号格式：[时间] (级别) <tool=名字> {k=v k=v} :: 消息
     frozenset(["timestamp", "level", "tool", "message"]): '''import re
 
 
@@ -174,7 +175,7 @@ def parse(line: str) -> dict | None:
 
 
 class OfflineCodeGenAgent:
-    """Offline mode: Look up table to return preset parser code, interface consistent with CodeGenAgent (no API Key required)."""
+    """离线桩：查表返回预置解析器代码，接口与 CodeGenAgent 一致（无需 API Key）。"""
 
     def __init__(self, model: Optional[str] = None):
         self.model = model or "offline-canned"
@@ -190,10 +191,10 @@ class OfflineCodeGenAgent:
         code = _CANNED_PARSERS.get(key)
         if code is not None:
             return code
-        #  Format not preset: return a stub that always returns None, so that automated tests fail truthfully,
-        #  thereby demonstrating the branch of "test failed → abandon this format" (offline mode cannot actually write code on the fly).
+        # 未预置该格式：返回一个永远返回 None 的桩，让自动测试如实失败，
+        # 从而演示“测试未通过 → 放弃该格式”的分支（离线模式无法真正现写代码）。
         return (
             "def parse(line: str) -> dict | None:\n"
-            "    # Offline mode does not have a preset parser for this format\n"
+            "    # 离线模式未预置该格式的解析器\n"
             "    return None\n"
         )

@@ -10,44 +10,43 @@
 
 ### 👤 You
 
-In the projects/week1/context directory, create an AI agent that uses Qwen/Qwen3-235B-A22B-Thinking-2507 from SiliconFlow to build an AI Agent with tool calls, and create ablation test cases to explore the importance of context.
+In the projects/week1/context, create an AI agent that utilizes Qwen/Qwen3-235B-A22B-Thinking-2507 from siliconflow to build an AI Agent with tool calls, and create ablation test cases to explore the importance of context. 
 
-The agent should have access to a document parsing tool (using PyMuPDF), a currency conversion tool, and a calculator tool. The question should ask for a complicated analytics question regarding a PDF URL. The agent is expected to first download and parse a PDF, then use the currency conversion tool and calculator tool multiple times to compute the final result. You should design such a test case that highlights the impact of:
-1) complete lack of historical tool calls in the trajectory,
-2) lack of reasoning process in the trajectory,
-3) lack of tool call commands in the trajectory,
-4) lack of tool call results in the trajectory.
+The agent should have access to a document parsing tool (using PyMuPDF), a currency conversion tool, and a calculator tool. The question should ask for a complicated analytics question regarding a PDF URL. The agent is expected first download and parse a PDF, then use concurrency conversion tool and calculator tool multiple times to compute the final result. You should think of such a test case, which should highlight the impact of:
+1) complete lack of historical tool calls in trajectory,
+2) lack of reasoning process in trajectory,
+3) lack of tool call commands in trajectory,
+4) lack of tool call results in trajectory.
 
----
+--
+# Week 1 · 进阶实践
 
-# Week 1 · Advanced Practice
-
-### Exploring the Impact of Missing Context on Agent Behavior
+### 探索上下文缺失对 Agent 行为的影响
 
 <div class="mt-8">
 
-**Objective**: Through experiments, understand the indispensable roles of `thinking`, `tool call`, and `tool result` in the Agent workflow.
+**目标**: 通过实验，理解 `thinking`, `tool call`, `tool result` 各部分在 Agent 工作流中不可或缺的作用。
 
 <div grid="~ cols-2 gap-8">
 <div>
 
-**Core Challenges**
-- **Modify the Agent Framework**: Modify the agent's core loop to selectively remove specific parts from the context.
-- **Design Comparative Experiments**: Design a set of tasks where agents missing different context components exhibit clear behavioral differences or even failures.
-- **Behavioral Analysis**: Analyze and summarize which types of failures each missing context component causes.
+**核心挑战**
+- **修改 Agent 框架**: 修改 Agent 的核心循环，选择性地从上下文中移除特定部分。
+- **设计对比实验**: 设计一组任务，在这些任务中，缺失不同上下文的 Agent 会表现出明显的行为差异甚至失败。
+- **行为分析**: 分析并总结不同上下文缺失分别导致了哪种类型的失败。
 
 </div>
 <div>
 
-**Experiment Design**
+**实验设计**
 ```mermaid
 graph TD
-    A[Task] --> B{Full Context Agent};
-    A --> C{No Tool Call Agent};
-    A --> D{No Tool Result Agent};
-    B --> E[Success];
-    C --> F[Abnormal/Incomprehensible Behavior];
-    D --> G[Infinite Retries/Erroneous Planning];
+    A[任务] --> B{完整上下文 Agent};
+    A --> C{无 Tool Call Agent};
+    A --> D{无 Tool Result Agent};
+    B --> E[成功];
+    C --> F[行为异常/难以理解];
+    D --> G[无限重试/错误规划];
 ```
 
 curl --request POST \
@@ -178,7 +177,8 @@ This implementation demonstrates:
 
 ## 💡 **Key Insights from Design**
 
-The ablation study will reveal:- **Tool calls** are fundamental - without them, agents can't act
+The ablation study will reveal:
+- **Tool calls** are fundamental - without them, agents can't act
 - **Tool results** provide essential feedback loops
 - **Reasoning** enables strategic planning and reduces iterations
 - **History** prevents redundancy and maintains coherence
@@ -410,7 +410,7 @@ curl https://ark.cn-beijing.volces.com/api/v3/chat/completions \
                     "type": "image_url"
                 },
                 {
-                    "text": "What is the main content of the image?",
+                    "text": "图片主要讲了什么?",
                     "type": "text"
                 }
             ],
@@ -476,7 +476,7 @@ python main.py --mode interactive --provider doubao
 
 #### **With Custom Model:**
 ```bash
-```python main.py --provider doubao --model doubao-seed-1-6-thinking-250715 --mode single
+python main.py --provider doubao --model doubao-seed-1-6-thinking-250715 --mode single
 ```
 
 ### 🔧 **Testing Tools Created**

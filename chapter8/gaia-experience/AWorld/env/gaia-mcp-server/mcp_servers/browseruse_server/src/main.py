@@ -18,17 +18,17 @@ mcp = FastMCP("browseruse-server")
 
 extended_browser_system_prompt = """
 
-# Efficiency Guide
-0. If the user query contains a clear URL, access it directly
-1. Use specific search queries containing key terms of the task
-2. Avoid being distracted by irrelevant information
-3. If blocked by a paywall, try using archive.org or similar alternatives
-4. Record each important finding clearly and concisely
-5. Precisely extract necessary information with minimal browsing steps.
+# 效率指南
+0. 如果用户问句里面有明确的URL地址，可以直接访问
+1. 使用包含任务关键术语的特定搜索查询
+2. 避免被无关信息分散注意力
+3. 如果被付费墙阻挡，尝试使用 archive.org 或类似替代方案
+4. 清晰简洁地记录每个重要发现
+5. 用最少的浏览步骤精确提取必要信息。
 
-## Output Rules
-1. If the task requires finding relevant content, return a summary of the relevant content
-2. If the task requires querying related downloads, try to find downloadable links and return them (e.g., downloadable links on GitHub are typically: https://raw.githubusercontent.com/; for Hugging Face, find the raw tag address on the corresponding file page). The download link should be the most matching address based on the task. Example:
+## 输出规则
+1、如果任务要求查找相关资料内容，可以返回相关资料内容的总结
+2、如果任务要求查询相关下载，那尽量的找出可以下载的链接，返回可以下载的链接(比如github上可以下载的链接一般是：https://raw.githubusercontent.com/，如果是huggingface相关的，要找到对应文件页面里面raw标签里面的地址)，下载的链接需要根据任务选择最匹配的地址，示例：
 Example 1:
 ```json
 {
@@ -49,13 +49,13 @@ async def complete_browser_task(
     task: str = Field(
         ...,
         description=(
-            "Task-related description"
+            "任务相关描述"
         ),
     )
 )-> Union[str, TextContent]:
     browser_session = BrowserSession(
-        # headless=True,  # Key parameter: set to True to enable headless mode
-        headless=False,  # Key parameter: set to True to enable headless mode
+        # headless=True,  # 关键参数：设置为 True 启用无头模式
+        headless=False,  # 关键参数：设置为 True 启用无头模式
     )
     try:
         load_dotenv()

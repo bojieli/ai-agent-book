@@ -1,38 +1,40 @@
-# Log Sanitization
-This experiment demonstrates how to detect and sanitize sensitive information from Agent logs and tool outputs. It provides **two complementary sanitization engines**:
+# Log Sanitization / 日志脱敏
 
-1. **Offline Rule Engine (regex, default)** — Pure regular expressions + validation algorithms (Luhn, ID checksum),  
-   **no Ollama, no network, no external frameworks required**, deterministic results, fast, suitable as the first line of defense before logs are persisted.  
-   It covers both the **key/secret** sensitive information most commonly leaked in Agent scenarios (API Key, cloud vendor tokens, private keys, connection string passwords)  
-   and traditional **PII** (ID numbers, phone numbers, credit cards, emails, etc.).
-2. **Local LLM Engine (llm)** — Uses Ollama to call a local small model (default `qwen3:0.6b`) for semantic recognition of  
-   Level 3 PII. This echoes the chapter's argument that "small models can also handle structured tasks," while also exposing the limitations of small models  
-   (e.g., they may return values with descriptive prefixes instead of the original string, causing backfill failures).
+本实验演示如何从 Agent 的日志与工具输出中检测并脱敏敏感信息。它提供**两种互补的脱敏引擎**：
 
-> To quickly see the effect, just run `python main.py --demo` (offline, no dependencies required) to see before/after comparisons and sanitization category summaries for multiple representative samples.
+1. **离线规则引擎（regex，默认）** —— 纯正则表达式 + 校验算法（Luhn、身份证校验码），
+   **无需 Ollama、无需网络、无需外部框架**，结果确定、速度快，适合作为日志落盘前的第一道防线。
+   它同时覆盖 Agent 场景中最常泄露的**密钥类**敏感信息（API Key、云厂商令牌、私钥、连接串口令）
+   与传统 **PII**（身份证、手机号、信用卡、邮箱等）。
+2. **本地 LLM 引擎（llm）** —— 通过 Ollama 调用一个本地小模型（默认 `qwen3:0.6b`）语义识别
+   Level 3 PII。呼应本章“小模型也能胜任结构化任务”的论点，同时也暴露小模型的局限
+   （例如可能返回带描述前缀的值而非原始字符串，导致回填失败）。
 
-## Sensitive Information Categories Covered by the Offline Rule Engine
+> 想快速看效果，直接运行 `python main.py --demo`（离线，无需任何依赖）即可看到多个代表性样本的
+> before/after 对比与脱敏类别汇总。
 
-`regex_sanitizer.py` processes the following categories by priority (higher priority rules win when overlapping), replacing each with a tagged placeholder:
+## 离线规则引擎覆盖的敏感信息类别
 
-| Category | Placeholder | Description |
+`regex_sanitizer.py` 按优先级处理以下类别（重叠时高优先级规则胜出），每类替换为带标签的占位符：
+
+| 类别 | 占位符 | 说明 |
 | --- | --- | --- |
-| Private Key / Certificate | `[REDACTED_PRIVATE_KEY]` | PEM private key blocks |
-| JWT | `[REDACTED_JWT]` | `eyJ...` three-part tokens |
-| Connection String Credentials | `[REDACTED_URL_CRED]` | `scheme://user:PASSWORD@host` |
-| AWS Access Key | `[REDACTED_AWS_KEY]` | `AKIA...` |
-| GitHub / Slack / Google / OpenAI Keys | `[REDACTED_*_TOKEN]` / `[REDACTED_API_KEY]` | `ghp_`, `xoxb-`, `AIza`, `sk-` |
-| Bearer Token | `[REDACTED_BEARER_TOKEN]` | `Authorization: Bearer ...` |
-| Password / Secret Assignment | `[REDACTED_SECRET]` | `password=...`, `token: ...`, etc. |
-| Email | `[REDACTED_EMAIL]` | |
-| Credit Card Number | `[REDACTED_CREDIT_CARD]` | Passes Luhn check to reduce false positives |
-| IBAN | `[REDACTED_IBAN]` | International Bank Account Number |
-| US Social Security Number | `[REDACTED_SSN]` | |
-| ID Card Number | `[REDACTED_ID_CARD]` | Mainland China 18-digit, includes checksum validation |
-| Phone Number | `[REDACTED_PHONE]` | Mainland China |
-| IP Address | `[REDACTED_IP]` | IPv4 |
+| 私钥 / 证书 | `[REDACTED_PRIVATE_KEY]` | PEM 私钥块 |
+| JWT | `[REDACTED_JWT]` | `eyJ...` 三段式令牌 |
+| 连接串凭据 | `[REDACTED_URL_CRED]` | `scheme://user:PASSWORD@host` |
+| AWS 访问密钥 | `[REDACTED_AWS_KEY]` | `AKIA...` |
+| GitHub / Slack / Google / OpenAI 密钥 | `[REDACTED_*_TOKEN]` / `[REDACTED_API_KEY]` | `ghp_`、`xoxb-`、`AIza`、`sk-` |
+| Bearer 令牌 | `[REDACTED_BEARER_TOKEN]` | `Authorization: Bearer ...` |
+| 口令 / 密钥赋值 | `[REDACTED_SECRET]` | `password=...`、`token: ...` 等 |
+| 邮箱 | `[REDACTED_EMAIL]` | |
+| 信用卡号 | `[REDACTED_CREDIT_CARD]` | 通过 Luhn 校验，降低误报 |
+| IBAN | `[REDACTED_IBAN]` | 国际银行账号 |
+| 美国社保号 | `[REDACTED_SSN]` | |
+| 身份证号 | `[REDACTED_ID_CARD]` | 中国大陆 18 位，含校验码验证 |
+| 手机号 | `[REDACTED_PHONE]` | 中国大陆 |
+| IP 地址 | `[REDACTED_IP]` | IPv4 |
 
-## Level 3 PII Categories (LLM Engine)
+## Level 3 PII Categories（LLM 引擎）
 
 Based on the privacy protection architecture, Level 3 PII includes highly sensitive information:
 - Social Security Numbers (SSN)
@@ -62,10 +64,10 @@ Based on the privacy protection architecture, Level 3 PII includes highly sensit
 
 ### 1. Install Ollama
 
-> **General Fallback (OpenRouter)**: This experiment uses a local Ollama small model by default. If Ollama is unavailable  
-> (not running / unreachable) and `OPENROUTER_API_KEY` is set, the Agent will automatically switch to OpenRouter  
-> (default hosted model `openai/gpt-5.6-luna`). To force fallback for verification, point Ollama to an  
-> unreachable port: `export OLLAMA_HOST=http://127.0.0.1:1`.
+> **通用回退（OpenRouter）**：本实验默认用本地 Ollama 小模型。若 Ollama 不可用
+> （未运行 / 不可达）且设置了 `OPENROUTER_API_KEY`，Agent 会自动改走 OpenRouter
+> （默认托管模型 `openai/gpt-5.6-luna`）。想强制走回退做验证，可把 Ollama 指到一个
+> 不可达端口：`export OLLAMA_HOST=http://127.0.0.1:1`。
 
 #### macOS:
 ```bash
@@ -82,15 +84,15 @@ systemctl start ollama
 #### Windows:
 Download from [ollama.com](https://ollama.com/download/windows)
 
-> Note: The following Ollama-related steps are only needed when using `--mode llm` (local LLM engine) or running the LLM batch evaluation path.  
-> The offline rule engine (`--demo`, `--input`) only depends on the Python standard library and does not require Ollama.
+> 说明：以下 Ollama 相关步骤仅在使用 `--mode llm`（本地 LLM 引擎）或运行 LLM 批量评测路径时才需要。
+> 离线规则引擎（`--demo`、`--input`）只依赖 Python 标准库，无需安装 Ollama。
 
 ### 2. Pull the Qwen3 Model
 ```bash
 ollama pull qwen3:0.6b
 ```
 
-Note: The 0.6B model requires approximately 500MB of disk space (you can replace it with `qwen3:1.7b` or `qwen3:4b` as needed to improve accuracy).
+Note: The 0.6B model requires approximately 500MB of disk space（可按需换用 `qwen3:1.7b`、`qwen3:4b` 提升准确率）。
 
 ### 3. Install Python Dependencies
 ```bash
@@ -99,34 +101,34 @@ pip install -r requirements.txt
 
 ## Usage
 
-See `python main.py --help` for complete parameter descriptions (in Chinese).
+完整参数说明见 `python main.py --help`（中文）。
 
-### Offline Rule Demo (Recommended, No Ollama Required)
-Displays before/after comparisons and sanitization category summaries for multiple built-in representative samples:
+### 离线规则演示（推荐，无需 Ollama）
+对多个内置代表性样本展示 before/after 与脱敏类别汇总：
 ```bash
 python main.py --demo
 ```
 
-### Sanitize Any Log File (Offline)
+### 脱敏任意日志文件（离线）
 ```bash
-python main.py --input app.log                 # Results written to app.log.sanitized
-python main.py --input app.log -o cleaned.log  # Specify output file
+python main.py --input app.log                 # 结果写到 app.log.sanitized
+python main.py --input app.log -o cleaned.log  # 指定输出文件
 ```
 
-You can also run the rule engine module directly to demo only the built-in samples:
+也可以直接运行规则引擎模块，仅对内置样本做演示：
 ```bash
 python regex_sanitizer.py
 ```
 
-### Using the Local LLM Engine
-Add `--mode llm` to the above demo/file sanitization commands to switch to the local Ollama model:
+### 使用本地 LLM 引擎
+上述演示 / 文件脱敏加 `--mode llm` 即改用本地 Ollama 模型：
 ```bash
 python main.py --demo --mode llm
 python main.py --input app.log --mode llm --model qwen3:1.7b
 ```
 
-### Process All Layer 3 Test Cases (LLM Batch Evaluation Path)
-Process all complex test cases from user-memory-evaluation (this path always uses LLM and requires Ollama and the chapter3 evaluation framework):
+### Process All Layer 3 Test Cases（LLM 批量评测路径）
+Process all complex test cases from user-memory-evaluation（该路径固定使用 LLM，需要 Ollama 与 chapter3 评测框架）：
 ```bash
 python main.py
 ```
@@ -142,9 +144,9 @@ Process only the first N test cases:
 python main.py --limit 3
 ```
 
-### Select Model
+### 选择模型
 ```bash
-python main.py --demo --mode llm --model qwen3:4b   # Default is qwen3:0.6b
+python main.py --demo --mode llm --model qwen3:4b   # 默认 qwen3:0.6b
 ```
 
 ## Output Structure
@@ -196,7 +198,8 @@ The system tracks the following metrics for each conversation:
    - 123-45-6789
    - 4532 1234 5678 9012
    - MRN-789456
-```============================================================
+
+============================================================
 PERFORMANCE SUMMARY
 ============================================================
 

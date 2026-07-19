@@ -1,445 +1,461 @@
-# Getting Started with AI Agents
+# AI Agent 入门
 
-If you've used Cursor to write code, watching it search your codebase, edit multiple files, and run tests until they pass; used Deep Research to investigate a topic, watching it repeatedly search, read, and synthesize a comprehensive report; used Manus to control a browser and complete online tasks for you; asked the Doubao phone assistant to book tickets or send messages on your phone; or had Pine AI call your telecom provider to negotiate a lower bill—you've already been using AI Agents.
+如果你用 Cursor 写过代码，看它搜索代码库、编辑多个文件、运行测试直到通过；用 Deep Research 调研过一个课题，看它反复搜索、阅读，总结出一份完整报告；用 Manus 操控浏览器帮你完成在线任务；让豆包手机助手帮你在手机上订票、发消息；或者让 Pine AI 替你打电话给运营商协商降低账单——你已经在使用 AI Agent 了。
 
-These products come in various forms, but they share a common trait: they are no longer passive conversations where "you ask, it answers." Instead, they are intelligent systems that can autonomously plan execution steps, call various tools to complete tasks, and continuously adjust strategies based on results. AI Agents are becoming a new way for us to interact with computers.
+这些产品的形态各异，但有一个共同点：它们不再是“你问一句、它答一句”的被动对话，而是能够自主规划执行步骤、调用各种工具完成任务，并根据结果不断调整策略的智能系统。AI Agent 正在成为我们与计算机交互的一种全新方式。
 
-This chapter will guide you from hands-on practice to understanding the core components of AI Agents. We'll directly experience the capabilities of modern Agents, understand the architectural principles behind them, and master the design patterns and best practices for building Agent systems.
+本章将带你从实践出发理解 AI Agent 的核心组成。我们将直接动手体验现代 Agent 的能力，理解其背后的架构原理，掌握构建 Agent 系统的设计模式与最佳实践。
 
-> **Reading Tip**: This chapter serves as the conceptual map for the entire book—it quickly introduces the core formula, operational loop, engineering framework, and design patterns of Agents, providing a unified terminology and reference coordinate system for subsequent chapters. Don't try to memorize every concept on your first read; instead, build a general impression first. Each subsequent chapter will elaborate on one aspect mentioned here, and you can always come back to this chapter for reference.
+> **阅读提示**：本章是全书的概念地图——它会快速引入 Agent 的核心公式、运行循环、工程框架和设计模式，为后续章节提供统一的术语和参照坐标。初次阅读时不必逐一记住所有概念，建议先建立整体印象；后续每一章都会展开讲解本章提到的某一个方面，届时可随时回来对照。
 
-## Modern Agent = LLM + Context + Tools
+## 现代 Agent = LLM + 上下文 + 工具
 
-The essence of modern Agent systems can be expressed with a concise formula: **Agent = LLM (Large Language Model) + Context + Tools**. This formula is simple and practical, but each term needs to be understood broadly:
+现代 Agent 系统的本质可以用一个简洁的公式来表达：**Agent = LLM（大语言模型，Large Language Model）+ 上下文 + 工具**。这个公式简洁而实用，但其中每个词都需要做广义的理解：
 
-- **LLM is the Agent's brain**: It's not just a set of model parameters, but the entire decision-making core of the Agent—understanding intent, thinking, planning, and making judgments. Just as the human brain is more than a collection of neurons, including ways of thinking shaped by experience, the LLM's capabilities come from two parts: the world knowledge and language abilities accumulated through **pre-training**, and the decision-making strategies solidified through **post-training**—the specific techniques of the latter (such as supervised fine-tuning and reinforcement learning) will be expanded in Chapter 7.
-- **Context is the Agent's eyes**: It's not just the text input to the model, but all the information the Agent can see at each decision point—environmental information, user memory, domain knowledge, its own state, and task progress. Just as humans need to see the current situation, recall relevant experiences, and consult reference materials when making decisions, the Agent's context window is everything it can see at that moment.
-- **Tools are the Agent's hands and feet**: They're not just a few callable API functions, but the entire set of things the Agent can do—from predefined tool calls to on-demand loading of specialized skills (Skills), from dynamically generating code to create new capabilities to delegating to sub-agents for collaboration, from proactively communicating with users to responding to external events.
+- **LLM 是 Agent 的大脑**：它不只是一组模型参数，而是 Agent 的整个决策内核——理解意图、思考规划、做出判断。就像人类大脑不只是神经元的集合，还包括通过经验塑造的思维方式，LLM 的能力也来自两部分：**预训练**所积累的世界知识与语言能力，以及**后训练**所固化的决策策略——后者的具体技术（如监督微调与强化学习）将在第七章展开。
+- **上下文是 Agent 的眼睛**：它不只是输入给模型的那段文本，而是 Agent 在每个决策点能看到的全部信息——环境信息、用户记忆、领域知识、自身状态和任务进展。就像人类做决定时需要看清当前的状况、回忆相关经验、翻阅参考资料，Agent 的上下文窗口就是它当下能看到的一切。
+- **工具是 Agent 的手脚**：它不只是几个可调用的 API 函数，而是 Agent 能做的所有事情的集合——从预定义的工具调用到按需加载的专业技能（Skills），从动态生成代码创造新能力到委托子 Agent 协作，从主动与用户沟通到响应外部事件。
 
-Put more intuitively: **Agent = Brain + Eyes + Hands and Feet**. The brain is responsible for thinking and decision-making, the eyes provide all the information needed for thinking, and the hands and feet translate decisions into changes in the real world.
+换一种更直观的说法：**Agent = 大脑 + 眼睛 + 手脚**。大脑负责思考和决策，眼睛提供思考所需的全部信息，手脚将决策转化为对现实世界的改变。
 
-These three components correspond exactly to three core concepts in RL (see Chapter 7). The following table is **optional reading**—if you don't have an RL background, feel free to skip it; it won't affect your understanding. It's only meant to help readers with RL backgrounds map their existing knowledge to the terminology of this book:
+这三个组件恰好对应 RL（详见第七章）中的三个核心概念。下面这张表格是**可选阅读**——如果你没有 RL 背景，完全可以跳过，不影响后续理解；它只是帮助有 RL 背景的读者把已有知识和本书的术语对应起来：
 
-| Intuitive Understanding | Implementation Component | Academic Concept (Optional) | Meaning |
-|---------|---------|---------|------|
-| **Brain** | LLM | **Policy** | The decision-making logic that determines "what to do next"—given the current information, choose the most appropriate action from all available options |
-| **Eyes** | Context | **Observation Space** | All the information the Agent can see—what it can see, read, remember, and which systems it can access |
-| **Hands and Feet** | Tools | **Action Space** | The complete set of things the Agent can do—what "means" are available, from sending messages to executing code to controlling interfaces |
+| 直觉理解 | 实现组件 | 学术概念（可选） | 含义 |
+|-----------|-----------|----------------------------|----------------------------------------------|
+| **大脑** | LLM | **策略**（Policy） | Agent 决定“下一步做什么”的决策逻辑——面对当前看到的信息，从所有可选行动中挑出最合适的一个 |
+| **眼睛** | 上下文 | **观察空间**（Observation Space） | Agent 能看到的所有信息——能看到什么、读到什么、记住什么、能访问哪些系统 |
+| **手脚** | 工具 | **动作空间**（Action Space） | Agent 能做的所有事情的集合——有哪些“手段”可用，从发消息到执行代码再到操控界面 |
 
-Understanding the roles of these three components and their interrelationships is the foundation for building effective Agent systems. We'll start with the most concrete component—tools (hands and feet)—and gradually delve into the brain (LLM) and eyes (context). Let's first look at how different types of Agents operate across these three dimensions:
+理解这三者的作用及其相互关系，是构建有效 Agent 系统的基础。我们从最具体的手脚（工具）开始介绍，逐步深入到大脑（LLM）和眼睛（上下文）。先来看看不同类型的 Agent 如何在这三个维度上展开：
 
-| Agent Product | Eyes (Perception) | Hands and Feet (Action) | Strategy |
-|---------|------|---------|------|
-| **Coding Agents (e.g., Cursor)** | Requirements documents, codebase, terminal environment | Open-ended (internal reasoning, code search, file read/write, command execution, etc.) | Incremental development: understand requirements → search relevant code → edit code → test and verify → debug and fix |
-| **Search Agents (e.g., Deep Research)** | Web resources, academic databases, local files | Open-ended (internal reasoning, search queries, web reading, summary generation) | Iterative deepening: adjust search direction based on existing information, gradually synthesize a complete report |
-| **Computer Control Agents (e.g., Manus)** | Computer screen, browser pages, file system | Open-ended (internal reasoning, clicking, typing, scrolling, screenshots, code execution, etc.) | Visual perception + operation: observe screen → identify target elements → perform actions → verify results |
-| **Phone Assistant Agents (e.g., Doubao)** | Phone screen, installed apps | Open-ended (internal reasoning, clicking, swiping, typing, opening apps, etc.) | Intent understanding + App control: understand user needs → locate target app → perform actions → confirm completion |
-| **Personal Task Agents (e.g., Pine AI)** | User account information, historical bills, service provider knowledge base | Open-ended (internal reasoning, making calls, sending emails, filling forms, confirming with user) | Multi-step task execution: gather information → formulate negotiation strategy → contact service provider → negotiate → report results |
+| Agent 产品 | 眼睛（感知） | 手脚（行动） | 策略 |
+|----------------|----------------------|----------------------------|------------------------------|
+| **Cursor 等 Coding Agent** | 需求文档、代码库、终端环境 | 开放式（内部思考、代码搜索、文件读写、执行命令等） | 增量开发：理解需求→搜索相关代码→编辑代码→测试验证→调试修复 |
+| **Deep Research 等搜索 Agent** | 网络资源、学术数据库、本地文件 | 开放式（内部思考、搜索查询、网页阅读、摘要生成） | 迭代深化：根据已有信息调整搜索方向，逐步综合出完整报告 |
+| **Manus 等电脑操控 Agent** | 电脑屏幕、浏览器页面、文件系统 | 开放式（内部思考、点击、输入、滚动、截图、执行代码等） | 视觉感知+操作：观察屏幕→识别目标元素→执行操作→验证结果 |
+| **豆包等手机助手 Agent** | 手机屏幕、已安装的 App | 开放式（内部思考、点击、滑动、输入、打开 App 等） | 意图理解+App 操控：理解用户需求→定位目标 App→执行操作→确认完成 |
+| **Pine AI 等个人办事 Agent** | 用户账户信息、历史账单、服务商知识库 | 开放式（内部思考、打电话、发邮件、填表单、与用户确认） | 多步骤任务执行：收集信息→制定协商策略→联系服务商→谈判→汇报结果 |
 
-These Agent systems share several common features: they all use **open-ended action spaces**—not choosing from a limited set of buttons, but generating arbitrary natural language and code; they all can **think internally**—planning and reasoning before taking action; and they all can **interact continuously**—adjusting strategies based on environmental feedback. These capabilities come precisely from the synergy of the brain, eyes, and hands and feet—i.e., LLM, context, and tools.
+这些 Agent 系统有几个共同特征：它们都使用**开放式的动作空间**——不是从有限的几个按钮中选择，而是能生成任意自然语言和代码；它们都能**内部思考**——在采取行动前先思考和规划；它们都能**持续交互**——根据环境反馈不断调整策略。这些能力正是来自大脑、眼睛和手脚——即 LLM、上下文和工具——的协同作用。
 
-### Tools: The Agent's Hands and Feet
+### 工具：Agent 的手脚
 
-Tools are the bridge for the Agent to interact with the external world, just like human hands and feet, allowing the Agent to transform from a passive observer into an active executor. Without tools, the Agent can only "talk on paper"; with tools, it can truly change the world.
+工具是 Agent 与外部世界交互的桥梁，就像人类的手脚一样，让 Agent 能够从被动的观察者变成主动的执行者。没有工具，Agent 只能 “纸上谈兵”；有了工具，它才能真正改变世界。
 
-To discuss tools systematically, we can categorize them into five types based on the direction of the Agent's interaction with the outside world. Let's quickly go through the representative scenarios for each type to build a general impression; subsequent chapters will elaborate on each one.
+为了系统化地讨论工具，可以根据 Agent 与外界互动的方向把工具分为五类。下面先快速过一遍每一类的代表场景，建立整体印象，后续章节会逐一展开。
 
-**Perception Tools** allow the Agent to access information: search engines provide real-time web data, file systems read local documents, and APIs and databases connect to external services and enterprise core data.
+**感知工具**让 Agent 能访问信息：搜索引擎提供实时网络数据，文件系统读取本地文档，API 和数据库则对接外部服务和企业核心数据。
 
-**Execution Tools** allow the Agent to change the world: code execution, file operations, system commands, external API calls—decisions are thus transformed into concrete actions.
+**执行工具**让 Agent 改变世界：代码执行、文件操作、系统命令、外部 API 调用——决策由此变成实际行动。
 
-**Collaboration Tools** allow the Agent to cooperate with other Agents: delegating sub-agents for specialized tasks, requesting human confirmation at key decision points, or coordinating actions in multi-agent systems.
+**协作工具**让 Agent 与其他 Agent 分工合作：委托子 Agent 完成专项任务，在关键决策点请求人类确认，或在多 Agent 系统中协调行动。
 
-**Event Trigger Tools** differ fundamentally from the first three categories in how they are invoked—they are not actively called by the Agent, but serve as external inputs that drive the Agent to start executing a task. For example, receiving a new email, reaching a scheduled time, or receiving a Webhook callback from another system—these events activate the Agent, prompting it to begin subsequent thinking and action. Although event triggers are not actively called by the Agent, they are one of the channels for the Agent to interact with the external world, so they are included in the broad tool system.
+**事件触发工具**与前三类在调用方式上有本质的区别——它们不是 Agent 主动调用的，而是作为外部输入来驱动 Agent 开始执行任务。比如收到一封新邮件、到了某个预定时间点、或另一个系统发出了 Webhook 回调，这些事件会激活 Agent，让它开始后续的思考和行动。虽然事件触发不是 Agent 主动调用的，但它是 Agent 与外部世界交互的通道之一，因此归入广义的工具体系。
 
-**User Communication Tools** are channels for the Agent to proactively connect with and convey information to the user. Unlike execution tools that change the external world, user communication tools focus on information transmission and interaction—conveying the Agent's execution progress or proactive care to the user through text messages, voice calls, emails, etc.
+**用户沟通工具**是 Agent 主动与用户建立连接、传递信息的渠道。与执行工具改变外部世界不同，用户沟通工具专注于信息的传递和交互——通过文字消息、语音通话、邮件等方式，将 Agent 的执行进展或主动关怀传达给用户。
 
-The complete classification system and design principles for the above five types of tools will be discussed in Chapter 4. The quality of tool design directly determines how far an Agent can go—if interface definitions are unclear, the model will misuse tools; if error handling is inadequate, tool failure can become a deadlock for the Agent; if permission controls are too broad, the consequences of an Agent error can be irreparable. The promotion of the MCP (Model Context Protocol) standard is making tool integration more like installing plugins—the ecosystem is expanding rapidly, but design principles remain timeless.
+以上五类工具的完整分类体系和设计原则将在第四章展开讨论。工具设计的质量直接决定了 Agent 能走多远——接口定义不清晰，模型就会乱用工具；错误处理不到位，工具一旦失败就会变成 Agent 的死锁；权限控制太宽泛，Agent 一旦出错，后果就难以挽回。MCP（Model Context Protocol，模型上下文协议）标准的推广，正在让工具接入变得更像安装插件——生态在快速扩展，但设计原则不会过时。
 
-**Tool Calling** (also known as Function Calling) is a core capability of modern LLM Agents, allowing the model to call external tools in a structured way. This capability transforms the LLM from a pure text generator into an intelligent system capable of performing actual operations. This book will consistently use the term "tool calling" going forward.
+**工具调用**（Tool Calling，也称 Function Calling）是现代 LLM Agent 的一项核心能力，它让模型能够通过结构化的方式调用外部工具。这种能力将 LLM 从一个纯粹的文本生成器转变为能够执行实际操作的智能系统。本书后续统一使用“工具调用”这一术语。
 
-The tool calling process consists of four steps: First, inform the model in the context about which tools are available (including their names, purposes, and parameters); then, the model autonomously decides whether to call a tool, which one to call, and what parameters to pass; next, after the tool executes, the result is appended to the context; finally, the model decides the next action based on the result. This loop is the foundation of ReAct, which will be introduced later.
+工具调用的流程分为四步：首先，在上下文里告诉模型有哪些工具可用（包括名称、用途和参数）；然后，模型自主判断要不要调用工具、调用哪个、传什么参数；接着，工具执行完毕后，结果被追加到上下文中；最后，模型据此决定下一步行动。这个循环就是后文要介绍的 ReAct 的基础。
 
-Taking a weather query scenario as an example, the simplified representation of the four-step process at the API level is as follows:
-
-```
-Step 1: Declare tools                  Step 2: Model decides to call
-tools: [{                             assistant: {
-  name: "get_weather",                  tool_calls: [{
-  parameters: {                           function: "get_weather",
-    city: "string"                        arguments: {city: "Beijing"}
-  }                                      }]
-}]                                    }
-
-Step 3: Result appended to context    Step 4: Model responds based on result
-tool: {                               assistant: {
-  tool_call_id: "call_1",               content: "Today in Beijing: 28°C, sunny."
-  content: '{"temp":28,"sky":"clear"}'     }}
-```
-
-Developers only need to define tools and execute tool calls; the model autonomously completes the decision of "whether to call, which one to call, and what parameters to pass." Chapter 2 will elaborate on this API structure in detail.
-
-When designing tools for an Agent, strive to keep them general-purpose, giving the LLM more room to operate. For example, instead of designing a dedicated calculator tool, provide a Python code interpreter and create a secure sandbox execution environment for the Agent. Instead of designing a tool for logging work notes, provide file read/write tools and create a virtual file system for the Agent. General-purpose tools allow the Agent to solve problems creatively by combining basic capabilities.
-
-### LLM: The Agent's Brain
-
-The Large Language Model (LLM) is the decision-making core of the Agent. Upon receiving a user request, it must first parse the true intent (what the user says is often not what they really want), then break down vague or complex tasks into executable steps. During execution, it must continuously make judgments: what to do next, whether to call a tool, which tool to call, and what parameters to pass. This "understand-plan-execute" capability comes from the knowledge accumulated during pre-training and is the foundation that both workflows and autonomous Agents rely on.
-
-A unique capability of LLM Agents is **internal reasoning**—before taking actual action, the Agent can plan and reason. This process does not change the external environment but can significantly improve the quality of subsequent actions. The reason LLMs can perform effective internal reasoning is due to capabilities acquired during the pre-training phase (initial training on massive internet text, allowing the model to learn language patterns and world knowledge)—the reasoning the model follows is based on logical rules already embedded in human knowledge, including mathematical laws, causal relationships, problem decomposition strategies, etc. Therefore, the Agent's reasoning is not blind random exploration but unfolds on a structured knowledge system.
-This structured reasoning capability allows LLM Agents to handle novel tasks directly—explained below through the concepts of zero-shot and few-shot. A direct manifestation of this capability is **Zero-shot Generalization**: even when faced with a task never seen before, the LLM Agent can handle it by combining existing knowledge, without needing any examples. For instance, you never taught it to write a poem about quantum physics, but it can generate a decent piece based on its existing language and physics knowledge.
-
-Furthermore, LLM Agents can achieve **Few-shot Adaptation** with just a few examples—by providing two or three demonstration examples in the prompt, the model can master a new task pattern. For example, showing it a few "user comment -> sentiment label" examples allows it to learn sentiment classification for new comments. Simply put, zero-shot means "can do it without examples," and few-shot means "can learn it after seeing a few examples."
-
-#### Model as Agent: When the Model Itself Becomes the Product
-
-The "Model as Agent" paradigm represents the latest direction in AI Agent development. Advanced models internalize tool calling capabilities as native abilities through post-training (especially reinforcement learning): when to call a tool, which one to call, and what parameters to pass are all decided by the model itself, without manual orchestration. However, this does not mean the framework layer becomes less important. On the contrary, the more powerful the model, the more critical the Harness built around it becomes. The term Harness originally refers to the gear placed on a horse—the reins and tack—not to restrict the horse's running ability, but to guide that power in the right direction. In the Agent context, the model is the powerful but unpredictable horse, and the Harness is the engineering shell that channels its capabilities into reliable task execution. You can also think of it as the entire support system around a race car driver: seatbelt, track barriers, pit crew. The faster the driver (model), the more important this system becomes. In an Agent, the Harness includes infrastructure such as context management, tool interfaces, safety constraints, and verification and correction mechanisms (see the final section of this chapter).
-
-The greater the model's autonomous decision-making space, the larger the potential impact of errors, thus requiring more refined constraints, verification, and correction mechanisms to ensure reliability. The true advantage of model vendors is not "making the framework thinner," but being able to co-optimize the model and the surrounding Harness, iterating continuously.
-
-#### Agent Learning Mechanisms: Post-training, In-context Learning, and Externalized LearningEarlier we discussed how models can internalize tool calling as a native capability through reinforcement learning. However, an agent’s learning is not limited to the training phase—some readers, when thinking about agents learning from experience, immediately assume that the model must be trained. In fact, post-training is not the only way for an agent to learn from experience. The learning mechanisms of an agent can be summarized into three complementary paradigms (Figure 1-1):
-
-![Figure 1-1: Three learning paradigms of an agent](images/fig1-1.svg)
-
-- **Post-training**: Solidifies experience into the model’s parameters through reinforcement learning, providing the strongest cross-task generality, but with high update costs (see Chapter 7 for details).
-- **In-Context Learning**: Achieves rapid adaptation through pattern retrieval in the context via the Attention Mechanism (the mechanism by which the model decides “which information to focus on” when processing input). For example, showing the model a few examples of customer service conversation handling in the prompt (e.g., “customer complaint → appeasement + compensation plan”) allows it to handle new customer service conversations in a similar way—this is in-context learning. It enables quick adaptation but is temporary, disappearing when the session ends. It should be noted that although it is called “learning,” its internal mechanism is closer to **pattern matching rather than true learning**. To draw an analogy: if you are shown three math problems of the same type along with their answers, and then a fourth one, you can probably solve it by following the pattern—this is what in-context learning does. But if the fourth problem requires a completely new approach, just looking at the answers to the first three is not enough. In other words, in-context learning allows the model to **apply patterns it has already seen**, but it cannot **discover entirely new rules**—this is fundamentally different from post-training (Chapter 2 will elaborate on this claim from the perspective of the attention mechanism).
-- **Externalized Learning**: Externalizes knowledge and processes into knowledge bases and executable tool code, offering both persistence and interpretability.
-
-These three paradigms complement each other on different time scales: post-training provides foundational capabilities, in-context learning enables rapid adaptation, and externalized learning ensures reliability and efficiency. Chapter 8 will systematically compare the synergistic relationships among the three paradigms.
-
-To draw an analogy: post-training is like systematically studying a textbook—once learned, the ability is permanently improved, but the learning cost is high; in-context learning is like consulting reference materials on the spot—with the materials, you can do well, but you forget once you close them; externalized learning is like organizing a personal notebook—information is stored persistently and can be accessed anytime, but it requires dedicated organization.
-
-### Context: The Eyes of the Agent
-
-Context is all the information an agent can see at each decision point. Just as a person needs to see all the materials spread out on the table when making a decision—task instructions, reference manuals, previous communication records, the latest data—an agent’s context window is its “field of vision.” From an API perspective (see Chapter 2 for details), the context for each LLM call consists of the following five parts:
-
-- **System Prompt**: Unlike the prompt input by the user each time, the system prompt is written by the developer and remains unchanged throughout the conversation. It acts as the agent’s “job description”—defining its identity, permissions, and behavioral guidelines. Through careful prompt engineering of the system prompt, we can shape how the agent works. The system prompt also includes **user memory** (personalized information such as user preferences, historical behavior, background settings, etc., see Chapter 3 for details) that persists across sessions, as well as dynamically injected environmental states.
-- **Tool Definitions**: Declares the names, functional descriptions, and parameter formats of the tools available to the agent. Without tool definitions, the agent cannot recognize or call any tools—an ablation study (Experiment 1.1) will verify this. Tool definitions, together with the system prompt, form the **static prefix** that remains unchanged throughout the conversation.
-- **User Messages**: Input from the user. User messages may also contain **external knowledge** dynamically retrieved via RAG (Retrieval-Augmented Generation, see Chapter 3 for details)—covering information beyond the training data cutoff or private domain knowledge.
-- **Assistant Messages**: Responses previously generated by the model, which can contain up to three parts—reasoning (the internal chain of thought, maintaining coherence and decision interpretability), content (the response to the user), and tool calls (the way the agent takes action). In a specific response, these three parts may not all appear simultaneously: for example, when the agent decides to call a tool, it usually only has reasoning + tool_calls; when giving a final answer, it usually only has reasoning + content.
-- **Tool Results**: The results returned after the agent framework executes a tool. These results serve as the direct basis for the agent’s next thought, and also allow it to learn from execution results and avoid repeating mistakes.
-
-The first two items (system prompt + tool definitions) constitute the static prefix, while the last three items (user messages + assistant messages + tool results) form the dynamic message history that grows with each interaction. Together, these five parts constitute the context for each LLM inference.
-
-To verify whether each component is indispensable, the most direct method is an **ablation study**: just as a doctor diagnoses by ruling out possible causes one by one—first remove component A to see if the system still works, then remove component B, and so on—to determine the contribution of each component. Experiment 1.1 follows this approach by systematically testing the five components mentioned above. The results show that: removing tool definitions renders the agent completely incapable of action; without tool results, the agent cannot see feedback from the previous step and repeatedly calls the same tool, falling into an infinite loop; if the reasoning process in the assistant messages is stripped away, consecutive decisions begin to contradict each other; and without message history, the agent loses its memory, restarts the entire task flow from the beginning, and repeats already completed steps. The role of each component is supported by experimental evidence, not just theoretical inference.
-
-### Experiment 1.1 ★★: The Critical Role of Context
-
-Through a systematic **ablation study**, we explored the impact of different context components on agent behavior. The experiment selected four components from the five mentioned above for testing—the system prompt, as the agent’s basic identity definition, was not ablated because without it, the agent lacks even a basic role awareness, making the test meaningless. As shown in Figure 1-2, the five groups of controlled experiments include: one complete baseline group retaining all components, plus four control groups each missing one component, to observe the impact of each component on agent performance.
-
-![Figure 1-2: Experiment 1.1—Context ablation study design](images/fig1-2.svg)
-
-The experimental results revealed the irreplaceable role of each context component. **Tool Definitions** (part of the static prefix) are the foundation of the agent’s action capability; without them, the agent cannot recognize or call any tools. **Tool Results** are key to closed-loop control; their absence causes the agent to act “blindly” and fall into an infinite loop. The **reasoning process** (the reasoning part of assistant messages) preserves the reasons for the agent’s previous decisions, making the thought process more coherent and preventing contradictory decisions. **Message history** (user messages, assistant messages, and tool results from previous rounds) prevents redundant operations, maintains task execution coherence, and avoids repeating the same mistakes.
-
-The core insight of this experiment is: **Context determines what the agent can see, and the agent can only make decisions based on the information it sees**. Just as a person cannot make sound judgments with their eyes blindfolded, missing any context component severely degrades the agent’s decision-making ability—without tool definitions, it doesn’t know what tools are available; without previous execution results, it doesn’t know what has already been done.
-
-### The ReAct Loop
-
-Having understood the three major components of an agent, a natural question arises: how do they work together? The ReAct loop is the core mechanism that connects the LLM, context, and tools—let’s see how an agent thinks and acts step by step.
-
-The core pattern of an agent executing a task is called **ReAct** (Reasoning + Acting). Although the name only reflects the two words “Reasoning” and “Acting,” the actual loop consists of three stages: the model first **reasons** about what to do next, then calls a tool to **act**, and then **observes** the result returned by the tool and continues reasoning about the next step. This “think → do → see → think → do → see” loop repeats until the task is complete.
-
-Let’s understand an agent’s **trajectory** through a concrete example of multi-currency revenue aggregation. The trajectory is the message history that accumulates as the agent executes the task—user messages, assistant messages (including reasoning and tool calls), and tool results. Each time the LLM is called, the complete context it receives consists of the **static prefix** (system prompt + tool definitions) and the **trajectory** (dynamic message history) (Figure 1-3). This reveals a key fact: **Agent context = static prefix + trajectory**. Specifically, the static prefix corresponds to the first two of the five components mentioned earlier (system prompt + tool definitions), and the trajectory corresponds to the last three (user messages + assistant messages + tool results, which grow with each interaction). Based on this complete context, the LLM generates the next response, which is then appended to the trajectory for the next call.
-
-![Figure 1-3: Agent trajectory—ReAct loop for a multi-currency aggregation task](images/fig1-3.svg)
-
-Let’s understand the structure of an agent trajectory through pseudocode:
+以一个查天气的场景为例，四步流程在 API 层面的简化表示如下：
 
 ```
-trajectory = [
-  {role: "user", content: "Based on the company's quarterly revenue: Q1 2.5M USD, Q2 2.1M EUR, Q3 1.8M GBP, Q4 380M JPY, calculate the company's total annual revenue and average quarterly revenue"},
+第一步：声明工具                    第二步：模型决定调用
+tools: [{                          assistant: {
+  name: "get_weather",               tool_calls: [{
+  parameters: {                        function: "get_weather",
+    city: "string"                     arguments: {city: "北京"}
+  }                                  }]
+}]                                 }
+
+第三步：结果追加到上下文              第四步：模型基于结果回复
+tool: {                            assistant: {
+  tool_call_id: "call_1",            content: "北京今天 28°C，晴。"
+  content: '{"temp":28,"sky":"晴"}'  }
+}
+```
+
+开发者只需要定义工具和执行工具调用，模型自主完成“要不要调用、调哪个、传什么参数”的决策。第二章将详细展开这个 API 结构。
+
+在为 Agent 设计工具时，应尽量保持工具的通用性，给 LLM 更大的发挥空间。例如，与其设计一个专用的计算器工具，不如提供一个 Python 代码解释器，并为 Agent 创建一个安全的沙盒执行环境。与其设计一个记录工作日志的工具，不如提供文件读写工具，并为 Agent 创建一个虚拟的文件系统。通用的工具让 Agent 能够通过组合基础能力来创造性地解决问题。
+
+### LLM：Agent 的大脑
+
+大语言模型（Large Language Model, LLM）是 Agent 的决策核心。收到用户的请求后，它需要先解析真实意图（用户说的往往不是他真正想要的），再将模糊或复杂的任务拆解成可执行的步骤。执行过程中它还要持续做出判断：下一步该做什么、要不要调用工具、调哪个工具、传什么参数。这种“理解-规划-执行”的能力来自预训练所积累的知识，是工作流和自主 Agent 都依赖的基础。
+
+LLM Agent 的一个独特能力是**内部思考**——在采取实际行动之前，Agent 可以先进行规划与推演。这一过程不改变外部环境，却能显著提升后续行动的质量。LLM 之所以能够进行有效的内部推演，得益于预训练（Pre-training，即在海量互联网文本上进行初始训练，让模型学会语言规律和世界知识）阶段习得的能力——模型在推演时所遵循的是人类知识中已经沉淀下来的逻辑规则，包括数学定律、因果关系、问题分解策略等。因此 Agent 的推演不是盲目的随机探索，而是在结构化的知识体系上展开。
+
+这种结构化推演的能力，让 LLM Agent 在面对全新任务时也能直接上手——下面通过零样本和少样本两个概念分别说明。这种能力的直接体现是**零样本泛化**（Zero-shot Generalization）：即使面对从未见过的任务，LLM Agent 也能通过组合已有知识来处理，无需任何示例。比如你从未教过它写一首关于量子物理的诗，但它能根据已有的语言和物理知识生成一首像样的作品。
+
+更进一步，LLM Agent 还能通过极少的示例实现**少样本适应**（Few-shot Adaptation）——只需在提示中给出两三个示范例子，模型就能掌握一种新的任务模式。比如给它看几条“用户评论 -> 情感标签”的例子，它就能学会对新评论做情感分类。简单来说，零样本是“没有例子也能做”，少样本是“看几个例子就能学会”。
+
+#### 模型即 Agent：当模型本身成为产品
+
+“模型即 Agent”（Model as Agent）这一新范式代表了 AI Agent 发展的最新方向。先进模型通过后训练（特别是强化学习）将工具调用能力内化为原生能力：何时调用工具、调哪个、传什么参数，都由模型自己决定，无需人工编排。但这并不意味着框架层变得不重要了。恰恰相反，模型越强大，围绕模型构建的 Harness 就越关键。Harness 这个词原指马具，即套在马身上的缰绳与挽具，不是为了限制马的奔跑能力，而是把这种力量引导到正确的方向上。换到 Agent 语境里，模型是那匹强大但不可预测的马，Harness 则是把它的能力引导成可靠任务执行的工程外壳。你也可以把它想象成赛车手周围的整套保障系统：安全带、赛道护栏、进站维修团队。车手（模型）越快，这套系统越重要。在 Agent 中，Harness 包括上下文管理、工具接口、安全约束、验证与纠正等基础设施（详见本章末节）。
+
+模型自主决策的空间越大，出错时的影响面也越大，因此需要更精细的约束、验证和纠正机制来确保可靠性。模型厂商的真正优势不是“让框架变薄”，而是能对模型与外围 Harness 进行协同优化，持续迭代。
+
+#### Agent 的学习机制：后训练、上下文学习与外部化学习
+
+前面讨论了模型如何通过强化学习将工具调用内化为原生能力。但 Agent 的学习不只发生在训练阶段——一些读者一想到 Agent 从经验中学习，就认为一定要训练模型。事实上，后训练并不是 Agent 从经验中学习的唯一方法。Agent 的学习机制可以总结为三个互补的范式（图 1-1）：
+
+![图1-1 Agent 的三种学习范式](images/fig1-1.svg)
+
+- **后训练（Post-training）**：通过强化学习将经验固化到模型的参数中，提供最强的跨任务通用性，但更新成本高（详见第七章）。
+- **上下文学习（In-Context Learning）**：通过注意力机制（Attention Mechanism，即模型在处理输入时决定“关注哪些信息”的机制）在上下文中进行模式检索式的快速适配。比如在提示词中给模型看几条客服对话的处理示例（如“用户投诉→安抚+补偿方案”），它就能用类似的方式处理新的客服对话——这就是上下文学习。能快速适应但临时性强，会话结束就消失了。需要说明的是，虽然名字叫“学习”，但它的内部机制更接近**模式匹配而非真正的学习**。打个比方：如果给你看三道相同类型的数学题和答案，然后给你第四道，你大概率能照葫芦画瓢做出来——这就是上下文学习在做的事。但如果第四道题需要一种全新的解题思路，光看前三道题的答案是不够的。换句话说，上下文学习让模型能**套用已见过的模式**，但不能**发现全新的规律**——这一点与后训练有本质区别（第二章将从注意力机制的角度详细展开这个论断）。
+- **外部化学习（Externalized Learning）**：将知识和流程外部化为知识库与可执行的工具代码，兼具持久性和可解释性。
+
+这三种范式在不同的时间尺度上互补：后训练提供基础能力，上下文学习实现快速适应，外部化学习确保可靠性和效率。第八章将系统地比较三种范式的协同关系。
+
+打个比方：后训练像是系统性学习教科书——学完后能力永久提升，但学习成本高；上下文学习像是临场查阅参考资料——有资料就能做好，合上就忘；外部化学习像是整理个人笔记本——信息持久保存且随时可查，但需要专门整理。
+
+### 上下文：Agent 的眼睛
+
+上下文是 Agent 在每个决策点能看到的全部信息。就像一个人在做决策时需要看到桌上摊开的所有资料——任务说明、参考手册、之前的沟通记录、最新的数据——Agent 的上下文窗口就是它的“视野”。从 API 的视角看（详见第二章），每次调用 LLM 时的上下文由以下五个部分构成：
+
+- **系统提示词**（System Prompt）：与用户每次输入的提示词不同，系统提示词由开发者编写，在整个对话过程中保持不变，相当于 Agent 的“岗位说明书”——定义它的身份、权限和行为准则。通过提示工程（Prompt Engineering）精心设计系统提示词，我们可以塑造 Agent 的工作方式。系统提示词中还会包含跨会话保存的**用户记忆**（用户偏好、历史行为、背景设定等个性化信息，详见第三章）和动态注入的环境状态。
+- **工具定义**（Tool Definitions）：声明 Agent 可用工具的名称、功能描述和参数格式。没有工具定义，Agent 就无法识别和调用任何工具——消融实验（实验 1-1）将验证这一点。工具定义与系统提示词一起构成对话中保持不变的**静态前缀**。
+- **用户消息**（User Messages）：来自用户的输入。用户消息中还可能包含通过 RAG（检索增强生成，Retrieval-Augmented Generation，详见第三章）动态检索引入的**外部知识**——覆盖训练数据截止后的信息或私有领域知识。
+- **模型回复**（Assistant Messages）：模型之前生成的回复，最多包含三个部分——思考过程（reasoning，即内部思考链，保持思维连贯性和决策可解释性）、文本内容（content，即对用户的回复）和工具调用请求（tool_calls，即 Agent 采取行动的方式）。在一次具体的回复中，三者不一定同时出现：例如 Agent 决定调用工具时通常只有 reasoning + tool_calls，给出最终回答时通常只有 reasoning + content。
+- **工具执行结果**（Tool Results）：Agent 框架执行工具后返回的结果。这些结果是 Agent 下一步思考的直接依据，也让它能够从执行结果中学习、避免重复犯错。
+
+前两项（系统提示词 + 工具定义）是静态前缀，后三项（用户消息 + 模型回复 + 工具执行结果）是随交互不断增长的动态消息历史。这五个部分共同构成了 LLM 每次推理时的上下文。
+
+要验证每个组件是否都不可或缺，最直接的方法是**消融实验**（Ablation Study）：就像医生诊断时逐一排除病因——先去掉 A 组件看系统是否还正常，再去掉 B 组件，以此类推，从而判断每个组件的贡献。实验 1-1 正是按这个思路对上述五个组件做了系统性测试，结果表明：去掉工具定义，Agent 完全丧失行动能力；缺少工具执行结果时，由于看不到上一步的反馈，Agent 会反复调用同一个工具，陷入无限循环；模型回复中的思考过程一旦被剥离，前后决策就开始互相矛盾；至于历史消息，没有它 Agent 等于失忆，于是从头开始整个任务流程，重复执行已完成的步骤。每个组件的作用都有实验证据支撑，而不只是理论推断。
+
+### 实验 1-1 ★★：上下文的关键作用
+
+通过系统性的**消融实验**（Ablation Study），我们探索了不同上下文组件对 Agent 行为的影响。实验从上述五个部分中选取了四个组件进行测试——系统提示词作为 Agent 的基本身份定义不参与消融，因为没有系统提示词，Agent 连基本的角色认知都没有，测试没有意义。如图 1-2 所示，五组对照实验包括：一组保留全部组件的完整基线，再加上四组各缺失一个组件的对照，以此观察每个组件对 Agent 性能的影响。
+
+![图1-2 实验 1-1——上下文消融实验设计](images/fig1-2.svg)
+
+实验结果揭示了每个上下文组件不可替代的作用。**工具定义**（Tool Definitions，静态前缀的一部分）是 Agent 行动能力的基础，没有它，Agent 就无法识别和调用任何工具。**工具执行结果**（Tool Results）是闭环控制的关键，缺失它会导致 Agent“盲目”执行，陷入无限循环。**思考过程**（模型回复中的 reasoning 部分）保留了 Agent 做出之前决策的原因，使思维流程更加连贯，避免做出前后矛盾的决策。**历史消息**（之前轮次的用户消息、模型回复和工具执行结果）则防止了冗余操作，保持任务执行的连贯性，避免重复犯同样的错误。
+
+这个实验的核心洞察是：**上下文决定了 Agent 能看到什么，而 Agent 只能基于它看到的信息做决策**。就像一个人蒙住眼睛就无法做出合理判断一样，缺失任何一个上下文组件，Agent 的决策能力都会严重退化——看不到工具定义就不知道有哪些工具可用，看不到之前的执行结果就不知道已经做过什么。
+
+### ReAct 循环
+
+了解了 Agent 的三大组件后，一个自然的问题是：它们如何协同工作？ReAct 循环就是将 LLM、上下文和工具串联起来的核心机制——让我们看看一个 Agent 是如何一步步思考和行动的。
+
+Agent 执行任务的核心模式叫做 **ReAct**（Reasoning + Acting）。虽然名字只体现了思考（Reasoning）和行动（Acting）两个词，但实际循环包含三个环节：模型先**思考**当前应该做什么，然后调用工具**行动**，再**观察**工具返回的结果并继续思考下一步。这个“想→做→看→想→做→看”的循环不断重复，直到任务完成。
+
+让我们通过一个多币种收入汇总的具体例子来理解 Agent 的**轨迹**（trajectory）。轨迹是 Agent 在执行任务过程中不断积累的消息历史——用户消息、模型回复（包括思考过程和工具调用）、工具执行结果。每一次调用 LLM 时，它接收的完整上下文由**静态前缀**（系统提示词 + 工具定义）和**轨迹**（动态消息历史）两部分组成（图 1-3）。这揭示了一个关键事实：**Agent 的上下文 = 静态前缀 + 轨迹**。具体地说，静态前缀对应前文五个组件中的前两项（系统提示词 + 工具定义），轨迹对应后三项（用户消息 + 模型回复 + 工具执行结果，随交互不断增长）。基于这个完整上下文，LLM 生成下一步的响应，然后这个响应又追加到轨迹中，供下一次调用使用。
+
+![图1-3 Agent 轨迹——多币种汇总任务的 ReAct 循环](images/fig1-3.svg)
+
+让我们通过伪代码来理解 Agent 轨迹的结构：
+
+```
+轨迹 = [
+  {role: “user” , content: “根据公司季度收入：Q1 2.5M 美元，Q2 2.1M 欧元，Q3 1.8M 英镑，Q4 380M 日元，计算公司年度总收入和季度平均收入” },
   
-  # First iteration - LLM sees the above trajectory, generates a response
-  {role: "assistant",
-   reasoning: "Need to convert all currencies to USD...",
-   content: "",  # No direct reply to the user
+  # 第一次迭代 - LLM 看到上述轨迹，生成响应
+  {role: “assistant” , 
+   reasoning: “需要将所有货币转换为 USD...” ,
+   content: “” ,  # 没有直接回复用户
    tool_calls: [
-     {name: "convert_currency", args: {amount: 2100000, from: "EUR", to: "USD"}},
-     {name: "convert_currency", args: {amount: 1800000, from: "GBP", to: "USD"}},
-     {name: "convert_currency", args: {amount: 380000000, from: "JPY", to: "USD"}}
+     {name: “convert_currency” , args: {amount: 2100000, from: “EUR” , to: “USD” }},
+     {name: “convert_currency” , args: {amount: 1800000, from: “GBP” , to: “USD” }},
+     {name: “convert_currency” , args: {amount: 380000000, from: “JPY” , to: “USD” }}
    ]},
   
-  # Agent framework executes tools, adds results to trajectory
-  {role: "tool", content: "EUR->USD: 2282608.7"},
-  {role: "tool", content: "GBP->USD: 2278481.01"},
-  {role: "tool", content: "JPY->USD: 2541806.02"},
+  # Agent 框架执行工具，添加结果到轨迹
+  {role: “tool” , content: “EUR->USD: 2282608.7” },
+  {role: “tool” , content: “GBP->USD: 2278481.01” },
+  {role: “tool” , content: “JPY->USD: 2541806.02” },
   
-  # Second iteration - LLM sees the complete trajectory, including tool results
-  {role: "assistant",
-   reasoning: "Conversion results obtained, now need to aggregate and calculate...",
-   content: "",
+  # 第二次迭代 - LLM 看到完整轨迹，包括工具结果
+  {role: “assistant” ,
+   reasoning: “已获得转换结果，现在需要汇总计算...” ,
+   content: “” ,
    tool_calls: [
-     {name: "code_interpreter", args: {code: "total = 2500000 + 2282608.7 + ..."}}
+     {name: “code_interpreter” , args: {code: “total = 2500000 + 2282608.7 + ...” }}
    ]},
   
-  {role: "tool", content: "Total: $9,602,895.73, Average: $2,400,723.93..."},
+  {role: “tool” , content: “Total: $9,602,895.73, Average: $2,400,723.93...” },
   
-  # Third iteration - LLM sees the complete trajectory, generates the final answer
-  {role: "assistant",
-   reasoning: "All calculations complete, summarizing results...",
-   content: "FINAL ANSWER: Total revenue $9,602,895.73..."}
+  # 第三次迭代 - LLM 看到完整轨迹，生成最终答案
+  {role: “assistant” ,
+   reasoning: “所有计算完成，总结结果...” ,
+   content: “FINAL ANSWER: 总收入$9,602,895.73...” }
 ]
 ```
 
-Note that the system prompt and tool definitions are not shown in the trajectory—they serve as the static prefix and are automatically prepended to the trajectory before each LLM call.
+注意，轨迹中没有显示系统提示词和工具定义——它们作为静态前缀，在每次 LLM 调用时都会被自动拼接在轨迹前面。
 
-In our experiments, this loop was demonstrated vividly. In the first round, the agent analyzed the task and called three currency conversion tools in parallel; in the second round, based on the conversion results, it called a code interpreter for complex calculations; in the third round, after confirming all calculations were complete, it generated the final answer. The entire process completed a complex multi-step task in just 3 iterations and 4 tool calls.
+在我们的实验中，这个循环展现得淋漓尽致。第一轮，Agent 分析任务后并行调用三个货币转换工具；第二轮，基于转换结果调用代码解释器进行复杂计算；第三轮，确认所有计算完成后生成最终答案。整个过程仅用了 3 次迭代、4 次工具调用就完成了复杂的多步骤任务。
 
-The brilliance of this design lies in the **accumulative nature of the context**. Each LLM call sees the complete trajectory, allowing it to understand which stage of the task it is in, what was attempted before, and what results were obtained. Just as humans constantly review and summarize when solving problems, the agent maintains a global awareness of the entire task through the trajectory. At the same time, the structured nature of the trajectory makes the system highly interpretable and debuggable: user messages, assistant messages (reasoning + tool calls), and tool results are all clearly separated.
+这种设计的精妙之处在于**上下文的累积性**。每次 LLM 调用都能看到完整的轨迹，这让它能够理解当前处于任务的哪个阶段、之前尝试了什么、得到了什么结果。就像人类解决问题时会不断回顾和总结，Agent 通过轨迹保持着对整个任务的全局认知。同时，轨迹的结构化特性也让系统具有高度的可解释性和可调试性：用户消息、模型回复（思考过程 + 工具调用）和工具执行结果都被清晰地区分开来。
 
-The trajectory is not just a record of execution; it is also a reflection of the agent’s capabilities. By analyzing a large number of trajectories, we can discover agent behavior patterns, optimize decision paths, and improve tool design. Trajectory data can even be summarized into a knowledge base or used to train better agent models through reinforcement learning, achieving a closed-loop optimization of learning from experience.
+轨迹不仅是执行的记录，更是 Agent 能力的体现。通过分析大量的轨迹，我们可以发现 Agent 的行为模式、优化决策路径、改进工具设计。轨迹数据甚至可以总结到知识库中，或者通过强化学习来训练更好的 Agent 模型，实现从经验中学习的闭环优化。
 
-### Experiment 1.2 ★: Kimi K3 Native Agent Capability
 
-This experiment demonstrates the native agent capability of **Kimi K3**, embodying the new paradigm of “model as agent.” Kimi K3, released by Moonshot AI in 2026, is a Mixture of Experts (MoE) model with approximately 2.8 trillion parameters—you can think of MoE as an expert team: when faced with different types of problems, the system automatically selects the most suitable experts to answer, without requiring all experts to work simultaneously, thus ensuring both capability and efficiency. It features a 1 million token context window, native visual understanding capabilities, and an always-on “thinking mode”; the model, trained through reinforcement learning, has internalized tool calling as a native capability, enabling it to autonomously make decisions and execute tasks such as web searches.
+理解了 Agent 的运行循环后，让我们通过两个实验来感受不同模型如何驱动这个循环。
 
-Key observations include: the model naturally learned to use tools through RL training, without the need for an additional orchestration layer; the model decides for itself when to search and what to search for, demonstrating true autonomy; it can dynamically adjust its strategy based on search results and autonomously determine whether the information is sufficient; the ability to use tools is not “taught” to the model but learned through repeated interaction with the environment.Kimi K3 has a standout advantage in agent tasks: **the stability of long-chain tool calls**—it can perform 200–300 consecutive tool calls while maintaining coherent reasoning, far surpassing most models that begin to degrade after just a few dozen calls. K3 is optimized for long-cycle programming and agent workloads, and was released in two variants: K3 Max (for dialogue and agent tasks) and K3 Swarm Max (for large-scale parallel processing). As an open-source model, it achieves performance comparable to top-tier closed-source systems in software engineering and agent benchmarks, demonstrating the effectiveness of using reinforcement learning to endow models with native agent capabilities.
+#### 实验 1-2 ★：Kimi K3 原生 Agent 能力
 
-#### Experiment 1.3 ★: GPT-5.6 Native Deep Research Capability
+这个实验展示了 **Kimi K3** 的原生 Agent 能力，体现了“模型即 Agent”的新范式。Kimi K3 由 Moonshot AI 于 2026 年发布，是一个约 2.8 万亿参数的混合专家（MoE, Mixture of Experts）模型——可以把 MoE 想象成一个专家团队：面对不同类型的问题，系统会自动选择最合适的几位专家来作答，而不需要所有专家同时上阵，这样既保证了能力又提高了效率。它拥有 100 万 token 的上下文窗口、原生的视觉理解能力，以及始终开启的“思考模式”（thinking mode）；模型通过强化学习训练，将工具调用能力内化为原生能力，能够自主决策并执行网络搜索等任务。
 
-The second experiment uses **OpenAI GPT-5.6** to showcase how advanced models internalize **Deep Research** as a native capability. GPT-5.6 comes in three variants—Sol (flagship frontier model), Terra (balanced model for everyday work), and Luna (fast, economical lightweight model)—all of which treat tool calling as a native model capability, requiring no external framework. Its most groundbreaking feature is **Freeform Tool Calling**—traditionally, when a model calls a tool, it must pack all parameters into a strict JSON format (a structured data format), which is like filling out a form with many formatting constraints. Freeform tool calling allows the model to send raw content directly to the tool (e.g., a snippet of Python code, a SQL query), eliminating the hassle of format conversion and offering greater flexibility and efficiency. GPT-5.6 also introduces the Verbosity parameter (controlling output detail) and the Reasoning Effort parameter (adjusting the depth of thinking; Sol adds a max level for the most thorough reasoning time), enabling developers to finely control model behavior based on task complexity.
+关键观察包括：模型通过 RL 训练自然地学会了使用工具，不需要额外的编排层；模型自己决定何时搜索、搜索什么，展现了真正的自主性；它能根据搜索结果动态调整策略，自主判断信息是否充足；工具使用能力不是“教”给模型的，而是通过与环境反复交互而学会的。
 
-GPT-5.6 possesses powerful native **web search and code interpreter** capabilities—the very core of Deep Research: the model can autonomously search the web for real-time information and write code for in-depth analysis, enabling an iterative research process of "search -> read -> analyze -> search again." For example, when faced with a question like "What is the shortest distance between the capitals of the 10 ASEAN countries?", GPT-5.6 automatically searches for the geographic coordinates of each capital, then writes Python code to calculate the great-circle distance between all pairs of capitals, ultimately identifying the closest pair. Similarly, in a task like "Search for Bitcoin's trend over the past month and perform technical analysis," it can fetch real-time price data from multiple financial data sources, use professional technical analysis libraries to calculate moving averages, RSI, MACD, and other technical indicators, generate visual charts, and provide trading recommendations.
+Kimi K3 在 Agent 任务中的一个突出优势是**长链工具调用的稳定性**——它能够连续执行 200～300 次工具调用而保持思考的一致性，远超多数模型在数十次调用后就开始退化的表现。K3 面向长周期编程与 Agent 工作负载优化，发布时提供 K3 Max（面向对话与 Agent 任务）与 K3 Swarm Max（面向大规模并行处理）两个规格。作为开源模型，它在软件工程和 Agent 基准测试中展现了可与顶尖闭源系统比肩的性能，证明了通过强化学习赋予模型原生 Agent 能力这条路线的有效性。
 
-More importantly, GPT-5.6 internalizes the design philosophy of the **OpenAI Deep Research** product at the model level, introducing an **intent clarification process**. When a user submits a research request, GPT-5.6 does not immediately execute it. Instead, it first clarifies the user's true intent through a series of questions. Taking "Search for Bitcoin's trend over the past month and perform technical analysis" as an example, it would first ask: "Which data source do you prefer? Which technical indicators would you like analyzed?" Through this interactive intent clarification, GPT-5.6 can generate more precise research reports that better meet user needs.
+#### 实验 1-3 ★：GPT-5.6 原生 Deep Research 能力
 
-GPT-5.6 is a mature example of the "model as agent" concept—Deep Research capabilities are internalized at the model level, no longer relying on external orchestration frameworks. The most noteworthy aspect is the intent clarification mechanism: the model does not immediately execute a task upon receiving it; instead, it first confirms the user's true needs through questioning, then formulates a research strategy. This bridges the gap between "what the user said" and "what the user actually wants" before the task is even executed.
+第二个实验使用 **OpenAI GPT-5.6**，展示先进模型如何将 **Deep Research** 能力内化为原生能力。GPT-5.6 提供了三种规格——Sol（旗舰前沿模型）、Terra（面向日常工作的均衡模型）和 Luna（快速经济的轻量模型），均将工具调用作为模型的原生能力，无需外部框架。其最具突破性的特性是**自由格式工具调用**（Freeform Tool Calling）——传统方式中，模型调用工具时必须把所有参数打包成严格的 JSON 格式（一种结构化的数据格式），这就像填表格一样有很多格式限制。自由格式工具调用允许模型直接向工具发送原始内容（比如一段 Python 代码、一条 SQL 查询），省去了格式转换的麻烦，更加灵活高效。GPT-5.6 还引入了 Verbosity 参数（控制输出的详略程度）和 Reasoning Effort 参数（调整思考的深度，Sol 新增了 max 档位以获得最充分的推理时间），使开发者能根据任务的复杂度精细控制模型行为。
 
-Figure 1-4 illustrates the complete architecture of native tool calling under the "model as agent" paradigm, along with the ReAct execution process of Kimi K3 / GPT-5.6 in real-world tasks.
+GPT-5.6 具备强大的**网络搜索和代码解释器**原生能力——这正是 Deep Research 的核心：模型能够自主搜索网络获取实时信息，并编写代码进行深度分析，实现“搜索 -> 阅读 -> 分析 -> 再搜索”的迭代研究过程。例如，面对 “东盟 10 国首都之间，最近的一对首都距离多少” 这样的问题，GPT-5.6 会自动搜索各国首都的地理坐标，然后编写 Python 代码计算所有首都对之间的大圆距离，最终找出最近的一对。又如 “搜索最近一个月的比特币走势，做技术分析” 任务中，它能从多个金融数据源获取实时价格数据，运用专业的技术分析库计算移动平均线、RSI、MACD 等技术指标，生成可视化图表并给出交易建议。
 
-![Figure 1-4: "Model as Agent" Architecture—Native Tool Calling](images/fig1-4.svg)
+更重要的是，GPT-5.6 将 **OpenAI Deep Research** 产品的设计理念内化到了模型层面，引入了**意图澄清过程**。当用户提出研究需求后，GPT-5.6 不会立即动手执行，而是首先通过一系列问题来澄清用户的真实意图。以“搜索最近一个月的比特币走势，做技术分析”为例，它会先问：“您偏好使用哪个数据源？需要分析哪些技术指标？”通过这种交互式的意图澄清，GPT-5.6 能够生成更精准、更符合用户需求的研究报告。
 
-## Harness Engineering: Competitiveness Beyond the Model
+GPT-5.6 是“模型即 Agent”概念的一个成熟实例——Deep Research 能力内化到了模型层面，不再依赖外部编排框架。其中最值得关注的是意图澄清机制：模型不会一收到任务就立即执行，而是先通过提问来确认用户的真实需求，再制定研究策略。这让“用户说了什么”和“用户真正想要什么”之间的差距，在任务执行之前就得到了弥合。
 
-At this point, you understand the core working principle of an agent—the LLM uses the ReAct loop, aided by context, to complete tasks using tools. The preceding experiments have proven that this basic mechanism works, but they have also exposed clear vulnerabilities: the model may hallucinate (inventing non-existent tools or parameters), select the wrong tool, or fail to recover from errors. There is a vast gap between a demo that works and a reliable product, and these vulnerabilities are precisely what Harness Engineering aims to solve. The first half of this chapter answered what an agent is; the second half answers how an agent can operate reliably in a production environment.
+图 1-4 展示了“模型即 Agent”范式下原生工具调用的完整架构，以及 Kimi K3 / GPT-5.6 在实际任务中的 ReAct 执行过程。
 
-The preceding sections established the core formula: **Agent = LLM + Context + Tools**. This formula describes the **internal composition** of an agent—what serves as the brain, eyes, hands, and feet. From the perspective of Harness Engineering, an **engineering implementation** viewpoint is also needed: treating the LLM as a core component (Model), and collectively referring to all the supporting code built around it as the Harness. These two perspectives are not replacements for each other but rather descriptions of the same system at different levels of abstraction. The reason for switching to the more general term "Model" is that the principles of Harness Engineering apply to any model capable of reasoning and tool calling, not just a specific type. The core of the Harness is the original formula's "Context + Tools," plus three layers of safeguards: **Constrain** (limiting what the agent can and cannot do), **Verify** (checking whether the agent did it correctly), and **Correct** (remedying mistakes).
+![图1-4 “模型即 Agent” 架构——原生工具调用](images/fig1-4.svg)
 
-The complete composition in a production setting can be expanded with an equation:
 
-> **Agent = LLM + [Context + Tools + Constrain + Verify + Correct] = Model + Harness**
+## Harness 工程：模型之外的竞争力
 
-A minimal viable agent only needs the LLM, context, and tools to run. However, for it to operate reliably over the long term in a production environment, the three engineering shells of constrain, verify, and correct must be added—constrain prevents overstepping, verify detects errors, and correct recovers from anomalies. These three layers are not new "independent modules" but rather safeguard layers built around "Context + Tools." In other words, the minimal formula is the demo perspective, while the expanded formula is the production perspective; the latter fully contains the former and adds a safety net around it.
+到这里你已经理解了 Agent 的核心工作原理——LLM 通过 ReAct 循环，在上下文的辅助下使用工具完成任务。前面的实验证明了这套基本机制是有效的，但同时也暴露了明显的脆弱点：模型可能产生幻觉（编造不存在的工具或参数）、选错工具、或在遇到错误时无法自我恢复。一个能跑的 Demo 和一个可靠的产品之间还有巨大的鸿沟，而这些脆弱点正是 Harness 工程要解决的问题。本章前半部分回答了 Agent 是什么，下半部分回答 Agent 如何在生产环境中可靠运行。
 
-For example, embedding the refund policy in the context falls under "Context," while verifying that the refund amount does not exceed the order amount falls under "Constrain." Executing an API call is a "Tool" function, while automatically retrying after an API timeout falls under "Correct." The model provides the foundational understanding and reasoning capabilities, while the Harness guides, constrains, and amplifies these capabilities into reliable task execution. The engineering practice of designing and optimizing this infrastructure outside the model is **Harness Engineering**.
+前面几节建立了 **Agent = LLM + 上下文 + 工具** 的核心公式。这个公式描述了 Agent 的**内部组成**，即大脑、眼睛、手脚分别由什么承担。从 Harness 工程的视角看，还需要一个**工程实现**层面的视角：把 LLM 当作一个核心组件（Model），围绕它构建的所有支撑代码统称为 Harness。两个视角并非替代关系，而是不同抽象层次上对同一系统的描述。之所以换用更通用的 “Model” 一词，是因为 Harness 工程的原则适用于任何具备推理和工具调用能力的模型，不限于某种特定模型类型。Harness 的核心就是原公式中的“上下文 + 工具”，再加上三层保障机制：**约束**（限定 Agent 能做什么、不能做什么）、**验证**（检查 Agent 做得对不对）和**纠正**（做错了怎么补救）。
 
-Consider a concrete example to understand the value of Harness. Suppose you ask an agent to help a user refund an order placed 3 days ago. **Without Harness**: The model cannot see the refund policy (lacks context), does not know which API to call (lacks tools), fabricates a refund result to tell the user (lacks verification), and the user finds the refund never happened (lacks correction). **With Harness**: The system prompt specifies a 7-day refund policy (context), the agent calls the `query_order` and `process_refund` tools to complete the operation (tools), the framework verifies the refund amount does not exceed the order amount (constrain), checks the database status to confirm the refund was successful (verify), and automatically retries if the API call times out (correct). The same model, with and without Harness, yields vastly different results.
+用方程展开生产形态下的完整组成：
 
-Returning to the harness metaphor from earlier in this chapter: a model without a Harness is like a wild horse—immensely capable but unreliable for completing tasks.
+> **Agent = LLM + [上下文 + 工具 + 约束 + 验证 + 纠正] = Model + Harness**
 
-More precisely, all infrastructure outside the model belongs to the Harness. The core of the Harness is Context and Tools, around which three types of engineering safeguards are built:
+最小可工作的 Agent 只需要 LLM、上下文与工具就能跑起来；而要让它在生产环境中长期可靠运转，还需要补全约束、验证、纠正这三层工程外壳——约束防止越界、验证发现错误、纠正恢复异常。这三层机制不是新增的“独立模块”，而是围绕“上下文 + 工具”构建的保障层。换句话说，最小公式是 Demo 视角，扩展公式是生产视角；后者完全包含前者，并在外围加了一圈安全网。
 
-| Function | One-Sentence Responsibility | Relationship with Context/Tools |
-|----------|-----------------------------|--------------------------------|
-| **Context** | Provides the model with perceptual information | Core capability |
-| **Tools** | Provides the model with means of action | Core capability |
-| **Constrain** | Sets behavioral boundaries—what can and cannot be done | Safety boundary built around context and tools |
-| **Verify** | Automatically judges the correctness of operation results | Checking mechanism built around tool execution results |
-| **Correct** | Automatically fixes or rolls back when problems are found | Recovery mechanism built around tool call failures |
+举个例子帮助理解：上下文中嵌入退款政策是“上下文”的范畴，而校验退款金额不超过订单金额则属于“约束”；工具执行 API 调用是“工具”的范畴，而 API 超时后自动重试则属于“纠正”。模型提供基础的理解和推理能力，而 Harness 将这些能力引导、约束和放大为可靠的任务执行。设计和优化这套模型之外的基础设施的工程实践，就是 **Harness 工程**（Harness Engineering）。
 
-Context and Tools enable the agent to "get things done"—understand tasks and take action. Constrain, Verify, and Correct ensure the agent "doesn't do things wrong"—they are not separate from Context and Tools but are the engineering practices that ensure Context and Tools operate reliably in production. On the maturity curve of agent products, their importance is asymmetric.
+用一个具体的例子来理解 Harness 的价值。假设你让一个 Agent 帮用户退掉 3 天前的订单。**没有 Harness 时**：模型看不到退款政策（缺上下文），不知道该调哪个 API（缺工具），直接编造一个退款结果回复用户（缺验证），用户发现退款根本没发生（缺纠正）。**有了 Harness 后**：系统提示词写明了 7 天退款政策（上下文），Agent 调用 `query_order` 和 `process_refund` 工具完成操作（工具），框架校验退款金额不超过订单金额（约束），校验数据库状态确认退款成功（验证），如果 API 调用超时则自动重试（纠正）。同一个模型，有无 Harness，结果天壤之别。
 
-Early agent frameworks primarily focused on Context and Tools: give the model tools, give the model context, and let it "get things done." The focus of production-grade agent systems has now shifted to Constrain, Verify, and Correct: ensuring tool calls are safe, context is managed, and errors are recoverable.
+回到本章前面给出的马具隐喻：没有 Harness 的模型就像脱缰的野马，能力惊人，但无法可靠地完成任务。
 
-Take Claude Code as an example. The vast majority of its Harness code is for Constrain, Verify, and Correct, not Context and Tools—the tools themselves (file read/write, command execution, search) are only a small part, while the safeguards built around these tools are the true core. These mechanisms include:
+更精确地说，模型之外的全部基础设施都属于 Harness。Harness 的核心是上下文与工具，围绕它们构建了三类工程化保障机制：
 
-- **Process State Management**: Tracks which step the agent is currently executing
-- **Multi-Layer Context Compression**: Automatically prunes information when there is too much
-- **Permission Classification**: Controls which operations require user confirmation
-- **Circuit Breaker**: Automatically "trips" and stops retrying when errors occur consecutively—like a fuse blowing when a short circuit occurs in a home electrical system, preventing the entire system from crashing
-- **Error Recovery Mechanisms**: Catches exceptions, rolls back to the last stable state, retries, or hands off to a human
+| 功能 | 一句话职责 | 与上下文/工具的关系 |
+|--------------------|----------------------------------------|-----------------------------------|
+| **Context（上下文）** | 为模型提供感知信息 | 核心能力 |
+| **Tools（工具）** | 为模型提供行动手段 | 核心能力 |
+| **Constrain（约束）** | 设定行为边界——能做什么、不能做什么 | 围绕上下文和工具构建的安全边界 |
+| **Verify（验证）** | 自动判断操作结果的对错 | 围绕工具执行结果构建的检查机制 |
+| **Correct（纠正）** | 发现问题时自动修正或回退 | 围绕工具调用失败构建的恢复机制 |
 
-**The industry is shifting from "getting things done" to "getting things done reliably," making Harness Engineering the core competitive advantage of agent systems.**
+上下文与工具让 Agent “能做事”——理解任务并采取行动；约束、验证与纠正让 Agent “不做错事”——它们不是独立于上下文和工具之外的东西，而是确保上下文和工具在生产环境中可靠运转的工程实践。在 Agent 产品的成熟度曲线上，两者的重要性是不对称的。
 
-### From Prompt Engineering to Harness Engineering: The Evolution of Engineering Paradigms
+早期的 Agent 框架主要关注上下文与工具：给模型工具、给模型上下文，让它“能做事”。而生产级 Agent 系统的重心已经转向约束、验证与纠正：确保工具调用是安全的、上下文是经过管理的、错误是可恢复的。
 
-Looking back at the development of AI application engineering, a clear evolutionary arc emerges:
+以 Claude Code 为例，它的 Harness 中绝大部分代码都是约束、验证与纠正，而非上下文与工具——工具本身（文件读写、命令执行、搜索）只是一小部分，而围绕这些工具构建的保障机制才是真正的核心。这些机制包括：
 
-**Software Engineering** is the foundation—traditional system design, architecture, testing, and deployment practices. **Prompt Engineering** was the first wave of innovation—improving output quality by optimizing the natural language instructions fed to the model. **Context Engineering** was the second wave—people realized that simply optimizing prompts was insufficient; they needed to systematically manage all the information the model could see (system instructions, tool definitions, conversation history, external knowledge). **Harness Engineering** is the current frontier—it expands the view from "what the model can see" to "what kind of system the model operates in," encompassing all infrastructure outside the model, including constraint mechanisms, verification methods, feedback loops, and error recovery.
+- **流程状态管理**：追踪 Agent 当前执行到哪一步
+- **多层上下文压缩**：当信息太多时自动精简
+- **权限分类**：控制哪些操作需要用户确认
+- **熔断器**（Circuit Breaker）：当错误连续发生时自动“断电”停止重试——就像家里电路短路时保险丝会自动跳闸，防止整个系统崩溃
+- **错误恢复机制**：捕获异常、回滚到上一稳定状态、重试或交还给人类
 
-These four stages are not replacements but layers of inclusion: Prompt Engineering is a subset of Context Engineering, and Context Engineering is a subset of Harness Engineering. Each layer expands the engineer's scope of concern and influence based on the previous one. **When model capabilities become increasingly similar and are no longer a decisive differentiator, the competitive advantage shifts to the engineering practices outside the model.** This judgment has been validated in recent engineering practice—LangChain's work on Terminal Bench 2.0 (a benchmark evaluating an agent's ability to complete complex tasks in a terminal environment) is a powerful example: their Coding Agent improved from 52.8% to 66.5% (jumping from outside the top 30 to the top 5 on the leaderboard). The change was not the model, but the Harness: engineering measures such as having the agent automatically check its own execution results, detect if it is stuck in a repetitive loop, and optimize its thinking strategy. OpenAI's engineering team has also publicly shared similar experiences—3 engineers completed approximately one million lines of code and nearly 1500 PRs in 5 months, achieving about 10 times the traditional development speed. The secret behind this efficiency was not the model's strength, but getting the Harness right.
+**行业正在从“能做事”向“可靠地做事”转变，Harness 工程因此成为 Agent 系统的核心竞争力。**
 
-### Core Principles of the Five Harness Functions
+### 从提示工程到 Harness 工程：工程范式的演进
 
-The table above lists the five functions of the Harness. The table below further elaborates on the core design principles for each function and their corresponding chapters in this book, helping readers build a mapping from concept to practice:
+回顾 AI 应用工程的发展，可以看到一条清晰的演进弧线：
 
-| Function | Core Principle | Practical Example | See Chapter |
-|----------|----------------|-------------------|-------------|
-| **Context** | Information Sufficiency: Ensure the agent makes decisions based on sufficient information at every decision point | System prompts, knowledge bases, agent status bars, Sidecar bypass queries | Chapters 2 & 3 |
-| **Tools** | Clear Interface: Tool names are intuitive, parameters have examples, boundaries are explained | MCP tools, code interpreter, search tools | Chapter 4 |
-| **Constrain** | Fail-Safe Defaults: All capabilities are off by default and must be explicitly enabled (similar to mobile app permission management) | In Claude Code, every tool requires user authorization by default before execution | Chapter 4 |
-| **Verify** | Input Isolation: Security checks only look at structured data (e.g., JSON fields returned by tools), not free-form text generated by the model (because attackers might manipulate model output through prompt injection) | Linter checks, type systems, tool call result validation | Chapters 5 & 6 |
-| **Correct** | Do Not Expose Intermediate States Before Confirming Irrecoverability (e.g., silently retry on tool call failure without showing partial results to the user) | Silent retries, continuation generation, fallback to human judgment upon consecutive failures (circuit breaker mechanism) | Chapters 2 & 5 |
+**软件工程**（Software Engineering）是基础——传统的系统设计、架构、测试和部署实践。**提示工程**（Prompt Engineering）是第一波创新——通过优化输入给模型的自然语言指令来提升输出质量。**上下文工程**（Context Engineering）是第二波——人们认识到单纯优化提示词还不够，需要系统性地管理模型能看到的所有信息（系统指令、工具定义、对话历史、外部知识）。**Harness 工程**是当前的前沿——它将视野从“模型能看到什么”进一步扩展到“模型在什么样的系统中运行”，涵盖了约束机制、验证手段、反馈循环和错误恢复等模型之外的全部基础设施。
 
-The five functions form a closed loop: Context and Tools support decision-making, Constrain prevents errors, Verify detects deviations, and Correct closes the cycle. Missing any single link creates a reliability gap in the system. Before delving into specific orchestration patterns and guardrail designs, we first clarify the core principles for building effective agents and model selection strategies—they are the foundation for all subsequent design decisions.
+这四个阶段不是替代关系，而是层层包含的：提示工程是上下文工程的子集，上下文工程是 Harness 工程的子集。每一层都在前一层的基础上扩展了工程师的关注范围和影响力。**当各家模型的能力越来越接近、不再是决定性的差异因素时，竞争优势就转移到了模型之外的工程实践**。这一判断在最近的工程实践中得到验证——LangChain 在 Terminal Bench 2.0（一个评估 Agent 在终端环境中完成复杂任务能力的基准测试）上的实践就是一个有力的例证：他们的 Coding Agent 从 52.8% 提升到 66.5%（从排行榜 30 名开外跃升至前 5），改变的不是模型，而是 Harness：让 Agent 自动检查自己的执行结果、检测是否陷入了重复循环、优化思考策略等工程手段。OpenAI 的工程团队也公开分享了类似的经验——3 名工程师用 5 个月完成了约百万行代码和近 1500 个 PR，达到传统开发速度的约 10 倍。这一效率的背后不是模型有多强，而是 Harness 做对了。
 
-### Core Principles for Building Effective Agents
+### Harness 五个功能的核心原则
 
-Based on Anthropic's experience, successful agent systems follow three core principles.
+上面的表格列出了 Harness 的五个功能。下表进一步展开每个功能的核心设计原则和在本书中的对应章节，帮助读者建立从概念到实践的映射：
 
-**Keep it simple.** Start with the simplest solution and only add complexity when truly necessary. Direct API calls are better than complex frameworks; clear code is better than clever abstractions. Because every additional layer of abstraction becomes a new blind spot during debugging.
+| 功能 | 核心原则 | 实际例子 | 详见 |
+|------|-----------------------------------------------|-----------------------------------|-------|
+| **上下文** | 信息充分性：让 Agent 在每个决策点都基于足够的信息判断 | 系统提示词、知识库、Agent 状态栏、Sidecar 旁路查询 | 第二、三章 |
+| **工具** | 接口清晰：工具命名直观、参数有例子、边界有说明 | MCP 工具、代码解释器、搜索工具 | 第四章 |
+| **约束** | 故障安全默认值：所有能力默认关闭，必须显式开放（类似手机 App 权限管理） | Claude Code 中每个工具默认需要用户授权才能执行 | 第四章 |
+| **验证** | 输入隔离：安全检查只看结构化数据（如工具返回的 JSON 字段），而不是模型自由生成的文本（因为攻击者可能通过提示注入操纵模型输出） | Linter 检查、类型系统、工具调用结果校验 | 第五、六章 |
+| **纠正** | 在确认无法恢复之前，不暴露中间态（例如工具调用失败时先静默重试，不将半成品结果展示给用户） | 静默重试、接续生成、连续失败时回退到人工判断（熔断机制） | 第二、五章 |
 
-**Keep it transparent.** Clearly display the agent's planning steps, execution logs, and decision trajectory—this is not just for debugging convenience but also a prerequisite for building user trust. Because once an error occurs inside a black box, an external observer can neither locate nor correct it.**Design a Good Tool Interface (ACI, Agent-Computer Interface)**. ACI emphasizes designing interfaces from the agent's perspective (making them easy for the agent to understand and use), rather than from the programmer's perspective like traditional APIs. Tool names and parameters should be intuitive, and common misuse cases should be proactively prevented through design, making errors impossible—much like a USB connector that can only be inserted one way, preventing the user from plugging it in incorrectly. This approach of "eliminating errors through design" has a specific term in manufacturing called **Poka-yoke**, originating from the Toyota Production System. A poorly designed tool will cause even the most powerful model to make frequent errors—because the only communication channel between the model and the tool is the interface itself, and a vague interface will be amplified by the model into a systemic error.
+五个功能构成一个闭环：上下文与工具支撑决策，约束预防错误，验证发现偏差，纠正闭合循环。缺少任何一个环节，系统都会出现可靠性缺口。在深入具体的编排模式和护栏设计之前，我们先明确构建 Agent 的核心原则和模型选择策略——它们是后续所有设计决策的基础。
 
-The following three sections expand on three independent but important topics in Harness engineering: model selection, orchestration patterns, and guardrails & safety. None of them are part of the five core elements of Harness, but they are unavoidable decisions in engineering practice.
 
-### How to Choose a Model
+### 构建有效 Agent 的核心原则
 
-Before discussing orchestration patterns, let's first address a practical question: what kind of model should be chosen to drive an agent?
+根据 Anthropic 的经验，成功的 Agent 系统遵循三个核心原则。
 
-The model is the intelligent foundation of an agent, and choosing the right model is often more effective than optimizing prompts. Since models iterate very quickly, this section does not recommend specific model versions but instead provides directions for selection.
+**保持简单**。从最简单的方案开始，只在确实必要时才增加复杂度。直接的 API 调用优于复杂的框架，清晰的代码优于聪明的抽象。因为每多一层抽象都会成为以后调试时新的盲区。
 
-**Know the "Big Three."** The three most commonly used closed-source model providers in current agent development are OpenAI (GPT/o series), Anthropic (Claude series), and Google (Gemini series). Each has its strengths: Claude excels in complex reasoning, coding, and tool calling, making it a popular choice for agent development; Gemini boasts an ultra-long context window and powerful multimodal capabilities, suitable for long texts and multimedia scenarios like images and videos; the GPT/o series offers balanced capabilities across the board and has the largest user base. When selecting a model, don't just look at leaderboards; **evaluate it on your own tasks** (see Chapter 6).
+**保持透明**。明确显示 Agent 的规划步骤、执行日志和决策轨迹——这不只是为了调试方便，也是让用户建立信任的前提。因为黑箱里的错误一旦发生，外部观察者既无法定位也无法纠正。
 
-**Domestic Models.** If your application is deployed domestically or has a strict budget, domestic models are a pragmatic choice. ByteDance's Doubao series offers extremely low latency domestically, suitable for real-time interaction; Moonshot AI's Kimi is a model with strong agent capabilities domestically; open-source models like Qwen and DeepSeek have advantages in cost and customizability. It's important to note that different models vary significantly in their tool-calling capabilities, so be sure to test them in your specific scenario before making a selection. Domestic models are typically accessed via APIs from platforms like Volcano Engine (Doubao) and SiliconFlow (open-source models), while overseas models can be accessed uniformly through OpenRouter.
+**设计好工具接口（ACI，Agent-Computer Interface）**。ACI 强调的是从 Agent 视角设计接口（让 Agent 容易理解和使用），而非传统 API 从程序员视角设计接口。工具的命名和参数要直观，容易误用的地方要主动防呆，从设计上让错误无法发生——比如 USB 接口只能从一个方向插入，就避免了用户插反的错误。这种“用设计消除错误”的思路在制造业里有一个专门的术语，叫**防呆**（Poka-yoke），源自丰田生产体系。设计不好的工具会让再强的模型也频繁出错——因为模型与工具之间唯一的沟通通道就是接口本身，模糊的接口会被模型放大成系统性的错误。
 
-**Open Source vs. Closed Source.** Closed-source models generally lead in capability but are more expensive and constrained by the vendor's API policies. Open-source models are low-cost, support private deployment, and allow fine-tuning customization, making them suitable for cost-sensitive scenarios or those with data compliance requirements.
+以下三节展开 Harness 工程中三个独立但重要的主题：模型选型、编排模式、护栏与安全性。它们都不属于 Harness 五要素本身，但是工程实践中绕不开的决策。
 
-**The Vast Majority of Agents Need a Model that Supports Reasoning.** Agents need to perform complex decisions like multi-step reasoning and tool selection. Models without reasoning capabilities often perform poorly on these tasks. There are only a few exceptions—such as executing a single, simple step, or simple GUI operations in Computer Use that only require clicking a fixed position—where a model without reasoning can suffice. However, as soon as multi-step reasoning or dynamic decision-making is involved, a model that supports reasoning is essential.
+### 如何选择模型
 
-**Pay Attention to Output Speed and Multimodal Capabilities.** Besides cost, there are two other often-overlooked dimensions. First is **output token speed**: Agents often require multiple rounds of inference, and each round must wait for the model to finish outputting before proceeding to the next step. Therefore, output speed directly determines the end-to-end response latency—if an agent task requires 20 rounds of inference, and each round is 2 seconds slower, that means an extra 40 seconds of waiting. Second is **multimodal support**: If your agent needs to understand images, audio, or video, multimodal capability is a hard requirement, and different models vary greatly in this regard.
+在讨论编排模式之前，先回答一个实操问题：应该选什么样的模型来驱动 Agent？
 
-### Orchestration Patterns: Workflow vs. Autonomous
+模型是 Agent 的智能基座，选对模型往往比优化提示词更有效。由于模型迭代极快，本节不推荐具体的模型版本，而是提供一些选择的方向。
 
-Orchestration patterns are the organizational method at the "context and tools" level within Harness—they determine how context flows between LLM calls, how tools are scheduled, and whether the agent's execution path is pre-defined or dynamically generated. The orchestration of agent systems has evolved from simple to complex, with each pattern having its applicable scenarios and trade-offs. Based on Anthropic's experience collaborating with dozens of teams building LLM agents, the most successful implementations often don't use complex frameworks but instead employ simple, composable patterns.
+**认识 “御三家”。** 目前 Agent 开发中最常用的三大闭源模型厂商是 OpenAI（GPT/o 系列）、Anthropic（Claude 系列）和 Google（Gemini 系列）。它们各有侧重：Claude 在复杂推理、编程和工具调用方面表现突出，是目前 Agent 开发的热门选择；Gemini 拥有超长上下文窗口和强大的多模态能力，适合长文本与图片、视频等多媒体场景；GPT/o 系列各方面能力均衡，用户数量最多。选模型时不要只看排行榜，**要在你自己的任务上做评估**（见第六章）。
 
-When building LLM applications, follow the principle of "starting simple and moving to complex": first consider a single LLM call—if optimizing prompts and in-context examples can solve the problem, don't introduce an agent system; when multi-step processing is needed, for scenarios that can be clearly decomposed into fixed sub-tasks, consider using a workflow; only use an autonomous agent when dynamic decision-making and flexible execution paths are required. It's important to remember: agent systems typically trade latency and cost for better task performance, so carefully weigh whether this trade-off is worthwhile.
+**国内模型。** 如果你的应用部署在国内或有较严格的成本预算，国内模型是务实的选择。字节跳动的豆包系列国内延迟极低，适合实时交互；月之暗面的 Kimi 是国内 Agent 能力较强的模型；Qwen 和 DeepSeek 等开源模型则在成本和可定制性方面有优势。需要注意的是，不同模型在工具调用方面的能力差异很大，选型前务必在具体场景中测试。国内模型通常通过火山引擎（豆包）、硅基流动（开源模型）等平台的 API 访问，海外模型则可以通过 OpenRouter 统一访问。
 
-#### Workflow Pattern: Deterministic Orchestration
+**开源与闭源。** 闭源模型通常在能力上领先，但成本较高且受限于厂商的 API 策略。开源模型成本低、可私有化部署、支持微调定制，适合对成本敏感或有数据合规要求的场景。
 
-A **workflow** is a system that orchestrates LLMs and tools through predefined code paths. Its execution path is deterministic, pre-designed by the developer—what each step does and where it goes next is hardcoded, with the LLM only responsible for understanding and generating within each node.
+**绝大多数 Agent 需要支持思考（Reasoning）的模型。** Agent 需要进行多步思考、工具选择等复杂决策，不带思考能力的模型在这些任务上表现往往很差。只有极少数场景例外——比如只执行单步简单任务、或 Computer Use 中仅需点击固定位置的简单 GUI 操作——此时不带思考的模型也能胜任。但只要涉及多步思考或动态决策，就一定要选择支持思考的模型。
 
-Taking a flight booking agent as an example, a workflow can be designed with four fixed nodes:
+**关注输出速度和多模态能力。** 除了成本，还有两个容易被忽视的维度。一是**输出 token 的速度**：Agent 往往需要多轮推理，每轮都要等待模型输出完成才能执行下一步，所以输出速度直接决定了端到端的响应延迟——如果一个 Agent 任务需要 20 轮推理，每轮慢 2 秒就意味着总共多等 40 秒。二是**多模态支持**：如果你的 Agent 需要理解图片、音频或视频，多模态能力就是硬性要求，不同模型在这方面的差异很大。
 
-1.  **Verify User Identity**—Call the identity verification API to confirm who the user is.
-2.  **Search for Available Flights**—Query the flight database based on user requirements.
-3.  **Complete Payment**—Call the payment interface to deduct the amount.
-4.  **Confirm Booking**—Call the booking API to lock the seat and send a confirmation to the user.
 
-An LLM can be used within each node (e.g., using natural language to understand the user's travel needs), but the flow sequence between nodes is fixed by code—the system won't book a seat before payment is completed, nor will it start searching for flights before identity verification.
+### 编排模式：工作流与自主
 
-The workflow pattern has two core advantages. First is **strict process control**: the developer can ensure that critical steps are not skipped or executed out of order. For example, business rules like "cannot book before payment" are enforced by code, not reliant on the LLM's judgment. Second is **security**: because the execution path is deterministic, prompt injection or model errors can, at most, affect the processing within the current node, preventing the agent from jumping to an unintended branch—the attack surface is limited to a single node.
+编排模式是 Harness 中“上下文与工具”层面的组织方式——它决定了上下文如何在 LLM 调用之间流动、工具如何被调度、以及 Agent 的执行路径是预先设定还是动态生成。Agent 系统的编排方式经历了从简单到复杂的演进过程，每种模式都有其适用的场景和需要权衡的取舍。根据 Anthropic 与数十个团队合作构建 LLM Agent 的经验，最成功的实现往往不是使用复杂的框架，而是采用简单、可组合的模式。
 
-The main limitation of a workflow is its **lack of flexibility**. When situations not covered by the preset flow arise (e.g., the user wants to change their booking during payment, or a flight is suddenly canceled and an alternative needs to be recommended), the fixed node path cannot adapt flexibly, and it can only follow preset exception handling branches or hand control back to a human.
+在构建 LLM 应用时，应遵循“从简单到复杂”的原则：首先考虑单个 LLM 调用——如果通过优化提示词和上下文示例就能解决问题，就不要引入 Agent 系统；当需要多步骤处理时，对于可以清晰分解为固定子任务的场景，考虑使用工作流；只有当需要动态决策和灵活的执行路径时，才使用自主 Agent。需要记住的是：Agent 系统通常会用延迟和成本换取更好的任务性能，应该谨慎权衡这种交换是否值得。
 
-#### Autonomous Agent: Dynamic Autonomous Decision-Making
+#### 工作流模式：确定性的编排
 
-When the fixed path of a workflow is insufficient, we need an **autonomous agent**. The core difference between an autonomous agent and a workflow is that the execution path is not pre-defined but is determined in real-time by the agent based on **environmental feedback**.
+**工作流**（Workflow）是通过预定义的代码路径来编排 LLM 和工具的系统。它的执行路径是确定性的，由开发者预先设计好——每一步做什么、下一步去哪里，都是代码写死的，LLM 只在每个节点内部负责理解和生成。
 
-Using the flight booking example again: an autonomous agent doesn't need four pre-defined fixed nodes. When the user says, "Help me book a flight to Shanghai next Wednesday," the agent will decide on its own to first search for flights, discover it needs to log in, then verify identity, return to search, find the cheapest flight requires a layover, proactively ask the user if that's acceptable, the user says no layovers, the agent adjusts the search criteria...
+以一个订机票 Agent 为例，工作流可以设计为四个固定节点：
 
-This means an autonomous agent needs the ability for autonomous planning—deciding its own execution steps—and also needs to recognize failure and adjust strategies, not just stop when an error occurs. However, autonomy is not unlimited; clear **stopping conditions** must be designed (task completion, reaching maximum iterations, or encountering an unrecoverable error), otherwise the agent can easily fall into an infinite loop or over-execute.
+1. **核实用户身份**——调用身份验证 API，确认用户是谁
+2. **搜索可用航班**——根据用户需求查询航班数据库
+3. **完成付款**——调用支付接口扣款
+4. **确认预订**——调用预订 API 锁定座位，向用户发送确认信息
 
-From an implementation perspective, an autonomous agent is essentially an LLM using tools in a loop, continuously obtaining environmental feedback to advance the task—this is the ReAct loop introduced earlier. Common exit conditions include: calling a final output tool, the model returning a response without any tool calls, or encountering an error or reaching the maximum number of rounds.
+每个节点内部可以使用 LLM（例如用自然语言理解用户的出行需求），但节点之间的流转顺序是代码固定的——系统不会在付款完成之前去预订座位，也不会在身份核实之前开始搜索航班。
 
-![Figure 1-5: Execution loop of an autonomous agent](images/fig1-5.svg)
+工作流模式有两个核心优势。第一是**严格的流程控制**：开发者可以确保关键步骤不被跳过或乱序执行，例如“付款前不能预订”这类业务规则通过代码强制执行，不依赖 LLM 的判断。第二是**安全性**：由于执行路径是确定的，提示注入或模型犯错最多只能影响当前节点内部的处理，无法让 Agent 跳到不该执行的分支——攻击面被限制在单个节点内。
 
-Autonomous agents are particularly suitable for open-ended problems—those where it's difficult or impossible to predict the number of steps required. Typical application scenarios include: Coding Agents solving SWE-bench (Software Engineering Benchmark, a benchmark for evaluating an agent's ability to automatically fix real GitHub issues) tasks, "Computer Use" agents operating computer interfaces like a human, and research tasks requiring iterative search and analysis.
+工作流的主要局限是**缺乏变通性**。当出现预设流程未覆盖的情况时（例如用户在付款环节临时想改签、或航班突然取消需要推荐替代方案），固定的节点路径无法灵活应对，只能走预设的异常处理分支或将控制权交还给人类。
 
-However, autonomy also brings higher costs and the potential for compounding errors. Therefore, when deploying autonomous agents, thorough testing in a sandbox environment, setting appropriate guardrails and monitoring mechanisms, and considering human-in-the-loop checkpoints at critical decision points are essential.
+#### 自主 Agent：动态自主决策
 
-#### Choosing and Mixing the Two Patterns
+当工作流的固定路径无法满足需求时，我们就需要**自主 Agent**（Autonomous Agent）。自主 Agent 与工作流的核心区别在于：执行路径不是预先定义的，而是 Agent 根据**环境反馈**实时决定的。
 
-In practice, workflows and autonomous agents are not mutually exclusive—many systems use a mix of both: critical processes with strict compliance requirements use workflows to ensure reliability, while parts requiring flexible decision-making switch to autonomous mode. For example, n8n is a mature open-source workflow automation framework where developers build agents by dragging and dropping functional components in a visual interface, allowing the use of both workflow nodes and autonomous agent nodes within the same system.
+仍以订机票为例：自主 Agent 不需要预定义四个固定节点。用户说“帮我订下周三去上海的机票”，Agent 会自行决定先搜索航班、发现需要登录、于是先核实身份、再回来搜索、发现最便宜的航班需要转机、主动询问用户是否接受、用户说不要转机、Agent 调整搜索条件……
 
-![Figure 1-6: n8n workflow editor interface](images/n8n-workflow.png)
+这意味着自主 Agent 需要具备自主规划的能力——自主决定执行步骤，还需要能识别失败、调整策略，而不只是在出错时停下来。但自主性不等于无限制——必须设计明确的**停止条件**（任务完成、达到最大迭代次数或遭遇不可恢复的错误），否则 Agent 容易陷入死循环或过度执行。
 
-#### Brief Comparison of Mainstream Agent Frameworks
+从实现角度看，自主 Agent 本质上就是在一个循环中使用工具的 LLM，通过持续获取环境反馈来推进任务——这正是前面介绍的 ReAct 循环。常见的退出条件包括：调用最终输出工具、模型返回没有任何工具调用的响应，或者遇到错误、达到最大轮次数。
 
-The following table summarizes the current mainstream agent frameworks/platforms to help readers quickly identify the right one for their scenario:
+![图1-5 自主 Agent 的执行循环](images/fig1-5.svg)
 
-| Framework/Platform | Core Positioning | Orchestration Pattern | Development Approach | Applicable Scenarios |
-|---|---|---|---|---|
-| **OpenAI Agents SDK** | Lightweight agent development library | Autonomous (tool loop) | Code-first | Rapid prototyping, single-agent applications |
-| **Claude Agent SDK** | Production-grade agent development framework | Autonomous (tool loop + sub-agents) | Code-first | Complex autonomous tasks, Coding Agent |
-| **LangChain / LangGraph** | General-purpose LLM application framework | Workflow + Autonomous | Code-first | Complex chain-of-thought, multi-step workflows |
-| **n8n** | Visual workflow automation | Workflow + Autonomous | Low-code (visual drag-and-drop) | Business automation, non-technical teams |
-| **Dify** | LLM application development platform | Workflow + Conversational | Low-code (visual + API) | Enterprise-grade RAG, knowledge base applications |
-| **CrewAI** | Role-based multi-agent orchestration | Multi-Agent collaboration | Code-first | Team-based task decomposition and execution |
-| **OpenClaw** | Open-source all-in-one personal agent | Autonomous + Event-driven | Configuration + Code (self-hosted) | Personal assistant, Deep Research, Computer Use, multi-platform message integration |
+自主 Agent 特别适用于开放式的问题——这类问题难以或不可能预测所需的步骤数量。典型的应用场景包括：Coding Agent 解决 SWE-bench（Software Engineering Benchmark，一个评估 Agent 自动修复真实 GitHub Issue 能力的基准测试）任务，“计算机使用”（Computer Use）Agent 像人类一样操作计算机界面，以及需要迭代搜索和分析的研究任务。
 
-With the deepening trend of "model as agent," the core value of frameworks is no longer limited to "orchestrating LLM calls"—models are increasingly capable of autonomous decision-making. However, the Harness engineering around context management, tool ecosystems, security constraints, and error recovery built around the model has become even more important. When choosing a framework, the key consideration is not the complexity of the framework itself, but whether it allows you to focus on business logic with minimal abstraction layers.
+不过，自主性也带来了更高的成本和潜在的复合错误风险。因此在部署自主 Agent 时，必须在沙盒环境中进行充分的测试，设置适当的护栏和监控机制，并在关键决策点考虑加入人机协作的检查点。
 
-The orchestration patterns discussed earlier address the organization of context and tools within Harness—how to connect LLM calls, tools, and data flows. But being able to do things is not enough; we also need to ensure things are done correctly and safely. Next, we discuss the most crucial practical implementation methods for constraints, validation, and correction mechanisms built around context and tools: guardrails.
+#### 两种模式的选择与混合
 
-### Guardrails and Safety
+实践中，工作流和自主 Agent 并非非此即彼——很多系统会混合使用两种模式：关键的、有严格合规要求的流程用工作流来确保可靠性，需要灵活决策的部分切换到自主模式。例如，n8n 是一个成熟的工作流自动化开源框架，开发者通过可视化界面拖拽功能组件来构建 Agent，可以在同一个系统中同时使用工作流节点和自主 Agent 节点。
 
-This section provides a high-level overview of guardrails to help readers build a holistic understanding. Specific implementation details and practical methods will be elaborated in Chapter 2 (Prompt Injection Protection), Chapter 4 (Tool Permission Control), and Chapter 5 (Code Execution Security). First-time readers don't need to delve into every detail.
+![图1-6 n8n 工作流编辑器界面](images/n8n-workflow.png)
 
-Guardrails are the core implementation method for the "constraints, validation, and correction" layer within Harness—they form a layered defense ensuring the safe and controllable behavior of an agent. Well-designed **guardrails** help manage data privacy risks (e.g., preventing system prompt leakage) or reputational risks (e.g., ensuring model behavior aligns with brand image). You can start by setting guardrails for identified risks and then gradually add new ones as new vulnerabilities are discovered.
+#### 主流 Agent 框架简要对比
 
-Think of guardrails as a layered defense mechanism. A single guardrail is unlikely to provide sufficient protection, but combining multiple specialized guardrails can build a more resilient agent system.
+下表梳理了当前主流的 Agent 框架/平台，帮助读者根据场景快速定位：
 
-#### Types of Guardrails
+| 框架/平台 | 核心定位 | 编排模式 | 开发方式 | 适用场景 |
+|---------------|---------------|-------------------|---------------|--------------------------------|
+| **OpenAI Agents SDK** | 轻量级 Agent 开发库 | 自主（工具循环） | 代码优先 | 快速原型、单 Agent 应用 |
+| **Claude Agent SDK** | 生产级 Agent 开发框架 | 自主（工具循环 + 子 Agent） | 代码优先 | 复杂自主任务、Coding Agent |
+| **LangChain / LangGraph** | 通用 LLM 应用框架 | 工作流 + 自主 | 代码优先 | 复杂链式思考、多步骤工作流 |
+| **n8n** | 可视化工作流自动化 | 工作流 + 自主 | 低代码（可视化拖拽） | 业务自动化、非技术团队 |
+| **Dify** | LLM 应用开发平台 | 工作流 + 对话式 | 低代码（可视化 + API） | 企业级 RAG、知识库应用 |
+| **CrewAI** | 角色化多 Agent 编排 | Multi-Agent 协作 | 代码优先 | 团队式任务分解与执行 |
+| **OpenClaw** | 开源全能个人 Agent | 自主 + 事件驱动 | 配置 + 代码（自托管） | 个人助理、Deep Research、Computer Use、多平台消息集成 |
 
-Based on their protection location, they can be categorized into three types: input-side, execution-side, and output-side.
+随着“模型即 Agent”趋势的深化，框架的核心价值已经不再局限于“编排 LLM 调用”——模型越来越能自主决策，但围绕模型构建的上下文管理、工具生态、安全约束和错误恢复等 Harness 工程反而变得更加重要。选择框架时，关键考量不在于框架本身的复杂度，而在于它能否以最小的抽象层让你专注于业务逻辑。
 
-**Input-side** guardrails intercept requests before they reach the agent, typically including four mechanisms. **Relevance classifiers** flag off-topic queries, like a coding assistant receiving "How tall is the Empire State Building?". **Safety classifiers** detect jailbreaks (inducing the model to bypass safety restrictions) and prompt injections (embedding malicious instructions in input). The key difference is: jailbreaking is the user trying to bypass the model's safety restrictions, while prompt injection is an attacker indirectly manipulating model behavior through external data (e.g., web content, documents). **Content moderation** flags harmful or inappropriate input, such as violent or discriminatory content. **Rule-based protections** use deterministic measures, including blacklists, input length limits, and regular expression filters, to guard against known threats like SQL injection.
+前面讨论的编排模式解决了 Harness 中上下文与工具的组织问题——如何把 LLM 调用、工具和数据流串联起来。但光能做事还不够，还需要确保做得对、做得安全。接下来讨论围绕上下文和工具构建的约束、验证与纠正机制在实践中最核心的落地手段：护栏。
 
-**Execution-side** guardrails validate tool calls. The core is **tool risk rating**: based on whether an operation is reversible, its permission level, and financial impact, each tool is assigned a risk level (low/medium/high). High-risk operations require additional review or human confirmation.
+### 护栏与安全性
 
-**Output-side** guardrails check the response before it is returned to the user. **PII filters** review the output for personally identifiable information (e.g., ID numbers, phone numbers) to prevent unnecessary exposure; **output validation** ensures the reply aligns with brand values through content checks.
+本节对护栏做高层次的概览，帮助读者建立整体认知；具体的实现细节和实践方法将在第二章（提示注入防护）、第四章（工具权限控制）和第五章（代码执行安全）中分别展开，初次阅读时无需深究每个细节。
 
-Note that some mechanisms (e.g., rule-based regex filtering) can be used on both the input and output sides; the above categorization follows the most common deployment locations.
+护栏是 Harness 中“约束、验证与纠正”层面的核心实现手段——它们构成了保障 Agent 行为安全可控的分层防线。精心设计的**护栏**（Guardrails）有助于管理数据隐私风险（例如防止系统提示泄露）或声誉风险（例如确保模型行为与品牌形象一致）。你可以先针对已识别的风险设置护栏，然后在发现新漏洞时逐步添加新的护栏。
 
-#### Human Intervention
+可以将护栏理解为分层防御机制。单个护栏不太可能提供足够的保护，但将多个专门的护栏组合使用，就能构建出更有韧性的 Agent 系统。
 
-**Human in the loop** is a crucial protective measure that allows an agent to improve actual performance without compromising user experience. This is especially important in the early stages of deployment, helping to identify failure modes, discover edge cases, and establish a robust evaluation cycle.
+#### 护栏类型
 
-Implementing a human-in-the-loop mechanism allows an agent to gracefully transfer control when it cannot complete a task. In customer service, this means escalating the issue to a human agent; for a Coding Agent, this means handing control back to the developer.
+按防护位置可以分为三类：输入侧、执行侧和输出侧。
 
-There are typically two main situations that trigger human intervention:
+**输入侧**护栏在请求到达 Agent 之前拦截，通常包含四种机制。**相关性分类器**标记偏离主题的查询，比如编程助手收到“帝国大厦有多高？”这类无关问题。**安全分类器**检测越狱（Jailbreak，即诱导模型绕过安全限制）和提示注入（Prompt Injection，即在输入中嵌入恶意指令），两者的关键区别在于：越狱是用户自己试图绕过模型的安全限制，提示注入则是攻击者通过外部数据（如网页内容、文档）间接操纵模型行为。**内容审核**标记有害或不当的输入，如暴力、歧视性内容。**基于规则的保护**则采用确定性措施，包括黑名单、输入长度限制、正则表达式过滤器，用以防范 SQL 注入等已知威胁。
 
-**Exceeding Failure Thresholds**
-Set limits on the number of retries or operations for the agent. If the agent exceeds these limits (e.g., failing to understand the customer's intent after multiple attempts), it should escalate to human intervention.
+**执行侧**护栏在工具调用时验证。其核心是**工具风险评级**：根据操作是否可逆、权限等级、财务影响，为每个工具标注风险等级（低/中/高），高风险操作需额外审查或人工确认。
 
-**High-Risk Operations**
-Operations that are sensitive, irreversible, or high-risk should trigger human oversight, at least until the team has built sufficient confidence in the agent's reliability. Typical examples include canceling a user's order, authorizing a large refund, or processing a payment.Returning to the main thread of the five elements of Harness—let's see how the chapters of this book unfold within this framework.
+**输出侧**护栏在响应返回用户之前检查。**PII 过滤器**审查输出中的个人身份信息（如身份证号、手机号），防止不必要暴露；**输出验证**则通过内容检查确保回复与品牌价值一致。
 
-### This Book as a Practical Guide to Harness Engineering
+需要注意的是，某些机制（如基于规则的正则过滤）既可以用在输入侧也可以用在输出侧，上文按最常见的部署位置归类。
 
-Re-examining the structure of this book from the perspective of Harness engineering reveals that each chapter systematically builds a specific component of the Harness. At the same time, security is not an isolated topic in any single chapter but a cross-cutting concern throughout the entire book (a cross-cutting concern is an issue that affects multiple parts of a system, much like how logging in software engineering must permeate every module). The table below presents the Harness functions, security aspects, and corresponding chapters in a unified view:
+#### 人工干预
 
-| Harness Focus | Corresponding Chapter | Core Content | Security Concerns |
-|-------------|---------|---------|-----------|
-| Context Design | Chapter 2 (Context Engineering) | Prompt engineering, Agent status bar, context compression, Agent Skills | Prompt injection and information leakage |
-| Context Expansion (Knowledge Persistence) | Chapter 3 (Knowledge Base) | User memory, RAG, structured indexing, agentic RAG | Sensitive information exposure, privacy protection |
-| Tool Design and Security Constraints | Chapter 4 (Tool Design) | Tool classification, permission control, MCP standard, asynchronous architecture | Misoperation, unauthorized access, irreversible operations |
-| Tool Validation and Correction | Chapter 5 (Code Generation) | Coding Agent's Harness, test-driven development, codified rules | Identity impersonation, responsibility attribution |
-| System-Level Validation | Chapter 6 (Evaluation) | Evaluation environment, datasets, automated evaluation, observability | — |
-| Model-Level Correction | Chapter 7 (Post-Training) | SFT (Supervised Fine-Tuning), Reinforcement Learning—writing feedback signals accumulated in the Harness into model parameters, seen as an extension of Harness engineering | Goal misalignment, alignment and robustness |
-| System-Level Correction | Chapter 8 (Self-Evolution) | Externalized learning, tool creation, experience accumulation | — |
-| Multimodal Context and Tools | Chapter 9 (Multimodal and Real-Time Interaction) | Voice Agent, Computer Use, robotic operation | Security filtering of multimodal input, permission control in real-time interaction |
-| Constraints and Corrections Among Multiple Agents | Chapter 10 (Multi-Agent Collaboration) | Collaboration architecture, failure modes, Agent society | Trust boundary violations between agents, shared resource conflicts |
+**人工干预**（Human in the loop，又称人在回路）是一个关键的保护措施，它让 Agent 能够在不损害用户体验的情况下提升实际性能。这在部署早期尤为重要，有助于识别失败模式、发现边缘情况并建立健壮的评估周期。
 
-Anthropic's practice in building long-running Agents demonstrates how Harness design can solve problems that the model itself cannot. They decompose complex tasks into an "Initialization Agent" (setting up the environment, decomposing the task list) and an "Execution Agent" (making incremental progress in each session and leaving clear handover artifacts), using a structured Harness to address the issues of "context exhaustion" and "premature task completion" in long tasks. Subsequent chapters will delve into each component of the Harness one by one—Chapter 2 starts with the most core aspect, context engineering, and Chapter 5 will specifically expand on the complete practice of Harness engineering in Coding Agents.
+实施人工干预机制，可以让 Agent 在无法完成任务时优雅地转移控制权。在客户服务中，这意味着将问题升级到人工客服；对于 Coding Agent，这意味着将控制权交还给开发者。
 
-## Chapter Summary
+通常有两种主要情况会触发人工干预：
 
-This chapter establishes a foundational framework for understanding and building AI Agents from a practical perspective.
+**超过失败阈值**
+为 Agent 的重试次数或操作次数设置上限。如果 Agent 超过了这些限制（例如多次尝试后仍未能理解客户意图），就应该升级到人工干预。
 
-**Agent = Brain + Eyes + Hands**: The LLM is the brain (decision-making core), context is the eyes (determining what it can see), and tools are the hands (determining what it can do). All three are indispensable.
+**高风险操作**
+涉及敏感、不可逆或高风险的操作时，应触发人工监督，至少在团队对 Agent 可靠性建立起足够信心之前是如此。典型的例子包括取消用户订单、授权大额退款或付款等。
 
-**Eyes (Context) Are the Decisive Factor**: Context consists of a static prefix (system prompt + tool definitions) and a dynamic trajectory (message history). Ablation experiments show that removing any component leads to significant system degradation. The essence of the ReAct loop is to continuously append trajectories to drive the model forward in its task.
+回到 Harness 五要素的主线——下面我们看看本书各章节如何在这个框架下展开。
 
-**Harness Is the Competitive Advantage**: Model capabilities are becoming commoditized; the real differentiator lies in the Harness—the constraints, validation, and correction mechanisms built around context and tools, ensuring the Agent "reliably gets things done." In production-grade Agent systems, the vast majority of Harness code is dedicated to these safeguard mechanisms, not just the context and tools themselves.
+### 本书作为 Harness 工程的实践指南
 
-**From Workflow to Autonomous Agent**: Optimize prompts first, then consider workflows, and only finally introduce autonomous Agents—this is the most practical order to reduce the risk of unexpected behavior. Each orchestration pattern has its applicable scenarios, and there is no universally optimal solution.
+从 Harness 工程的视角重新审视本书的结构，可以发现每一章都在系统性地构建 Harness 的某个组件。同时，安全不是某一章的独立话题，而是贯穿全书的横切关注点（Cross-cutting Concern，即一个影响系统多个部分的问题，类似于软件工程中日志记录需要渗透到每个模块中一样）。下表将 Harness 功能、安全层面和对应章节统一呈现：
 
-**Security Is an Architectural Issue**: Guardrails, human-in-the-loop intervention, alignment (ensuring the model's behavior aligns with human intent)—security must be considered from the first line of code, not patched in before deployment. Security issues span five levels: model, context, tools, collaboration, and society.
+| Harness 重点 | 对应章节 | 核心内容 | 安全关注点 |
+|---------------|-----------------|------------------------------------|---------------------------|
+| 上下文设计 | 第二章（上下文工程） | 提示工程、Agent 状态栏、上下文压缩、Agent Skills | 提示注入与信息泄露 |
+| 上下文扩展（知识持久化） | 第三章（知识库） | 用户记忆、RAG、结构化索引、智能体化 RAG | 敏感信息暴露、隐私保护 |
+| 工具设计与安全约束 | 第四章（工具设计） | 工具分类、权限控制、MCP 标准、异步架构 | 误操作、未授权访问、不可逆操作 |
+| 工具的验证与纠正 | 第五章（代码生成） | Coding Agent 的 Harness、测试驱动、代码化规则 | 身份冒用、责任归属 |
+| 系统级验证 | 第六章（评估） | 评估环境、数据集、自动化评估、可观测性 | — |
+| 模型层面的纠正 | 第七章（后训练） | SFT（监督微调）、强化学习——将 Harness 中积累的反馈信号写入模型参数，可看作 Harness 工程的延伸 | 目标偏离、对齐与鲁棒性 |
+| 系统层面的纠正 | 第八章（自我进化） | 外部化学习、工具创造、经验积累 | — |
+| 多模态上下文与工具 | 第九章（多模态与实时交互） | 语音 Agent、Computer Use、机器人操作 | 多模态输入的安全过滤、实时交互中的权限控制 |
+| 多 Agent 间的约束与纠正 | 第十章（多 Agent 协作） | 协作架构、失败模式、Agent 社会 | Agent 间信任越界、共享资源冲突 |
 
-The next chapter will delve into the most core component of the Harness—context engineering. Regarding the academic origins of the Agent concept in reinforcement learning and an in-depth comparison between traditional RL and modern LLM Agents, we will systematically cover this in Chapter 7.
+Anthropic 在构建长时运行 Agent 时的实践展示了 Harness 设计如何解决模型本身无法解决的问题。他们将复杂任务分解为“初始化 Agent”（设置环境、分解任务列表）和“执行 Agent”（在每个会话中增量推进并留下清晰的交接制品），通过结构化的 Harness 解决了 Agent 在长任务中“上下文耗尽”和“过早声明完成”的问题。后续章节将逐一深入 Harness 的各个组件——第二章从最核心的上下文工程开始，第五章将专门展开 Harness 工程在 Coding Agent 中的完整实践。
 
-The following thought questions are designed to help readers explore the core concepts of this chapter in greater depth.
+## 本章小结
 
-### Thought Questions
+本章从实践出发，建立了理解和构建 AI Agent 的基础框架。
 
-1. ★★ If you could only add one capability to an Agent system—a stronger model, richer context, or more tools—which would you choose? Under what conditions would your choice change?
-2. ★★★ In the ReAct loop, every LLM call by the Agent sees the complete history trajectory. As the trajectory grows, the cost of this design grows quadratically. Is there a way to break this quadratic growth without losing critical information?
-3. ★★ The "Model as Agent" paradigm means models are becoming more autonomous in tool-calling decisions. However, this chapter argues that the importance of Harness engineering is actually increasing. How can these two trends coexist? Where does the future core value of Agent frameworks lie?
-4. ★★ In the ablation experiment, the absence of "tool result feedback" caused the Agent to fall into an infinite loop. In a production environment, besides missing tool results, what other situations could cause an Agent to loop? What detection and termination mechanisms would you design?
-5. ★ This chapter analyzed five Agent products across three dimensions: perception, action, and strategy. Choose an AI product you use daily, analyze it using these three dimensions, and consider whether its architecture design is reasonable. If you were to design this AI product, what improvements could be made?
-6. ★★ If you were to design a customer service system specifically for booking flights, would you choose a workflow pattern or an autonomous Agent pattern? Is it possible to mix both patterns in the same system?
-7. ★★★ The guardrails section mentioned tool risk ratings. If a tool is generally low-risk but becomes high-risk with specific parameter combinations (e.g., `delete_file` deleting a normal file vs. deleting a system file), how would you design dynamic risk assessment?
-8. ★★ In the Agent product table in this chapter, all Agents have an "open-ended" action space. In what scenarios would a constrained action space (e.g., only being able to choose from predefined options) be superior to an open-ended one?
-9. ★★ The human-in-the-loop intervention mechanism requires the Agent to "gracefully hand over control." However, in practice, the user might be offline, respond slowly, or give vague instructions. What should the Agent do in such cases?
-10. ★★★ The introduction states that "good design principles should transcend model iteration cycles." Try to give an example of a current Agent design principle that you believe might become obsolete as models improve, and explain your reasoning.
+**Agent = 大脑 + 眼睛 + 手脚**：LLM 是大脑（决策核心），上下文是眼睛（决定它能看到什么），工具是手脚（决定它能做什么）。三者缺一不可。
+
+**眼睛（上下文）是决定性的因素**：上下文由静态前缀（系统提示词 + 工具定义）和动态轨迹（消息历史）构成。消融实验表明，去掉任何一个组件都会导致系统显著退化。ReAct 循环的本质是通过不断追加轨迹来让模型持续推进任务。
+
+**Harness 是竞争力所在**：模型能力正在商品化，真正的差异在于 Harness——围绕上下文和工具构建的约束、验证与纠正机制，确保 Agent “可靠地做事”。在生产级的 Agent 系统中，Harness 的绝大部分代码都在做这些保障机制，而不仅仅是上下文和工具本身。
+
+**从工作流到自主 Agent**：先优化提示词，再考虑工作流，最后才引入自主 Agent——这是降低意外风险最实用的顺序。每种编排模式都有其适用场景，不存在通用最优解。
+
+**安全是架构问题**：护栏、人工干预、对齐（alignment，即让模型的行为与人类意图保持一致）——安全问题从第一行代码就要考虑，而不是上线前打补丁。安全问题贯穿模型、上下文、工具、协作和社会五个层面。
+
+下一章将深入探讨 Harness 中最核心的组件——上下文工程。关于 Agent 概念在强化学习中的学术渊源，以及传统 RL 与现代 LLM Agent 的深入对比，我们将在第七章系统展开。
+
+以下思考题旨在帮助读者对本章核心概念进行更深入的探讨。
+
+## 思考题
+
+1. ★★ 如果你只能给一个 Agent 系统增加一项能力——更强的模型、更丰富的上下文、还是更多的工具——你会选哪个？在什么条件下你的选择会改变？
+2. ★★★ ReAct 循环中，Agent 的每一次 LLM 调用都会看到完整的历史轨迹。随着轨迹增长，这种设计的成本是二次方增长的。有没有办法在不丢失关键信息的前提下打破这个二次方？
+3. ★★ “模型即 Agent” 范式意味着模型在工具调用决策上越来越自主。但本章论证了 Harness 工程的重要性反而在增加。这两个趋势如何共存？Agent 框架未来的核心价值体现在哪些方面？
+4. ★★ 消融实验中 “工具结果反馈” 的缺失导致 Agent 陷入无限循环。在生产环境中，除了工具结果缺失，还有哪些情况可能导致 Agent 循环？你会设计怎样的检测和终止机制？
+5. ★ 本章用感知、行动、策略三个维度分析了五个 Agent 产品。请选择一个你日常使用的 AI 产品，用这三个维度进行分析，并思考它的架构设计是否合理。如果由你来设计这个 AI 产品，有哪些改进空间？
+6. ★★ 如果你要设计一个专门处理航班订票的客服系统，你会选择工作流模式还是自主 Agent 模式？有没有可能在同一个系统中混合使用两种模式？
+7. ★★★ 护栏部分提到了工具风险评级。如果一个工具在大多数情况下是低风险的，但在特定参数组合下变为高风险（如 `delete_file` 删除普通文件 vs 删除系统文件），你会如何设计动态风险评估？
+8. ★★ 本章的 Agent 产品表格中，所有 Agent 的动作空间都是 “开放式” 的。一个受限的动作空间（比如只能从预定义选项中选择）在什么场景下反而优于开放式？
+9. ★★ 人工干预机制要求 Agent 能 “优雅地移交控制”。但在实践中，用户可能不在线、响应很慢、或者给出模糊的指令。此时 Agent 应该怎么办？
+10. ★★★ 引言指出 “好的设计原则应该穿越模型的迭代周期”。试举一个你认为可能会随模型进步而过时的当前 Agent 设计原则，并说明理由。

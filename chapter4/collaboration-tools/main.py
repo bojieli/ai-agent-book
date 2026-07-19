@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
-"""Collaboration Tools — Unified CLI Entry (Experiment 4-3)
+"""协作工具 —— 统一命令行入口 (实验 4-3)
 
-Command-line interface for Experiment 4-3 "Collaboration Tools MCP Server" in Chapter 4 of "Deep Understanding of AI Agents".
-List and invoke each collaboration tool directly, and run end-to-end demos without starting the MCP server.
+《深入理解 AI Agent》第 4 章 实验 4-3「协作工具 MCP 服务器」的命令行界面。
+在不启动 MCP 服务器的前提下，直接列出、单独调用各协作工具，并运行端到端演示。
 
-Collaboration tools are divided into three categories (corresponding to the "Collaboration Tools" section in the book):
-  1. Sub-agent Management: spawn_subagent / send_message_to_subagent / cancel_subagent
-     (supports synchronous/asynchronous modes, and minimal / llm_generated context passing strategies)
-  2. Human Collaboration (HITL): request_admin_approval / request_admin_input (with timeout and default behavior)
-  3. Multi-channel Notifications: email / slack / telegram / discord
+协作工具分三类（对应书中"协作工具"一节）：
+  1. 子 Agent 管理：spawn_subagent / send_message_to_subagent / cancel_subagent
+     （支持同步/异步两种模式，以及 minimal / llm_generated 两种上下文传递策略）
+  2. 人类协作（HITL）：request_admin_approval / request_admin_input（含超时与默认行为）
+  3. 多渠道通知：email / slack / telegram / discord
 
-Examples:
-  python main.py list                     # List all collaboration tools
-  python main.py demo                      # Run offline end-to-end collaboration demo (no API Key required)
-  python main.py subagent compare          # Compare two context passing strategies
-  python main.py subagent spawn --task "Query order A12345 status" --strategy minimal
-  python main.py hitl approve --message "Delete 1000 records?" --timeout 5 --auto-approve
-  python main.py notify slack --message "Deployment complete ✅"
+示例：
+  python main.py list                     # 列出全部协作工具
+  python main.py demo                      # 运行离线端到端协作演示（无需 API Key）
+  python main.py subagent compare          # 对比两种上下文传递策略
+  python main.py subagent spawn --task "查询订单 A12345 状态" --strategy minimal
+  python main.py hitl approve --message "删除 1000 条记录？" --timeout 5 --auto-approve
+  python main.py notify slack --message "部署完成 ✅"
 
-Notes:
-  - Sub-agent execution and llm_generated context strategy require OPENAI_API_KEY;
-    if not configured, it automatically falls back to deterministic offline simulation (results will be explicitly marked "LLM not invoked").
-  - Actually sending notifications/emails requires configuring credentials for the corresponding channel in .env;
-    if not configured, the tool will return a "not configured" message, but the command itself can still be parsed and run normally.
+说明：
+  - 子 Agent 的执行、以及 llm_generated 上下文策略需要 OPENAI_API_KEY；
+    未配置时自动退回到确定性的离线模拟（结果会明确标注"未调用 LLM"）。
+  - 真实发送通知 / 邮件需要在 .env 中配置对应渠道的凭据；未配置时工具会
+    返回"未配置"的说明，命令本身仍可正常解析与运行。
 """
 
 import argparse
@@ -31,7 +31,7 @@ import json
 import os
 import sys
 
-#Modules under src/ use bare imports (consistent with quickstart.py / subagent_comparison.py)
+# src/ 下的模块使用裸导入（与 quickstart.py / subagent_comparison.py 一致）
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 import subagent_tools as sa  # noqa: E402
@@ -40,12 +40,12 @@ import notification_tools as notify  # noqa: E402
 
 
 def _print(obj) -> None:
-    """Uniformly print tool results as indented JSON."""
+    """统一以带缩进的 JSON 打印工具返回结果。"""
     print(json.dumps(obj, ensure_ascii=False, indent=2, default=str))
 
 
 def _parse_json_arg(value):
-    """Attempt to parse as JSON; if not valid JSON, return as raw string (for direct use by sub-agents)."""
+    """尝试按 JSON 解析；不是合法 JSON 时按原始字符串返回（供子 Agent 直接使用）。"""
     if value is None:
         return None
     try:
@@ -55,42 +55,42 @@ def _parse_json_arg(value):
 
 
 # ---------------------------------------------------------------------------
-# Tool List
+# 工具清单
 # ---------------------------------------------------------------------------
 
 COLLAB_TOOLS = {
-    "Sub-agent Management": [
-        ("spawn_subagent", "Create sub-agent (sync/async, minimal/llm_generated context strategy)"),
-        ("send_message_to_subagent", "Send subsequent message to sub-agent and get reply"),
-        ("cancel_subagent", "Cancel sub-agent (async tasks will abort background coroutine)"),
-        ("get_subagent_status", "Query sub-agent status and result (for async)"),
+    "子 Agent 管理": [
+        ("spawn_subagent", "创建子 Agent（同步/异步，minimal/llm_generated 上下文策略）"),
+        ("send_message_to_subagent", "向子 Agent 发送后续消息并获取回复"),
+        ("cancel_subagent", "取消子 Agent（异步任务会中止后台协程）"),
+        ("get_subagent_status", "查询子 Agent 状态与结果（用于异步）"),
     ],
-    "Human Collaboration (HITL)": [
-        ("request_admin_approval", "Request admin approval before critical decisions (supports timeout and default behavior)"),
-        ("request_admin_input", "Request additional input from admin"),
-        ("respond_to_request", "Admin approves/rejects pending requests"),
-        ("list_pending_requests", "List all pending approval requests"),
+    "人类协作 (HITL)": [
+        ("request_admin_approval", "关键决策前请求管理员批准（支持超时与默认行为）"),
+        ("request_admin_input", "向管理员请求补充输入"),
+        ("respond_to_request", "管理员对待处理请求作出批准/拒绝"),
+        ("list_pending_requests", "列出全部待处理的审批请求"),
     ],
-    "Multi-channel Notifications": [
-        ("send_email", "Send email notification (SMTP / SendGrid)"),
-        ("send_slack_message", "Send Slack message via Webhook"),
-        ("send_telegram_message", "Send Telegram message"),
-        ("send_discord_message", "Send Discord message via Webhook"),
+    "多渠道通知": [
+        ("send_email", "发送邮件通知（SMTP / SendGrid）"),
+        ("send_slack_message", "通过 Webhook 发送 Slack 消息"),
+        ("send_telegram_message", "发送 Telegram 消息"),
+        ("send_discord_message", "通过 Webhook 发送 Discord 消息"),
     ],
 }
 
 
 def cmd_list(args) -> None:
-    print("Collaboration Tools List (Experiment 4-3)\n" + "=" * 60)
+    print("协作工具清单（实验 4-3）\n" + "=" * 60)
     for category, tools in COLLAB_TOOLS.items():
         print(f"\n【{category}】")
         for name, desc in tools:
             print(f"  - {name:<28} {desc}")
-    print("\nTip: `python main.py <subcommand> -h` to view parameters for each tool.")
+    print("\n提示：`python main.py <子命令> -h` 查看每个工具的参数。")
 
 
 # ---------------------------------------------------------------------------
-# Sub-agent Subcommands
+# 子 Agent 子命令
 # ---------------------------------------------------------------------------
 
 async def _subagent_dispatch(args) -> None:
@@ -120,11 +120,11 @@ def cmd_subagent(args) -> None:
 
 
 # ---------------------------------------------------------------------------
-# HITL Subcommands
+# HITL 子命令
 # ---------------------------------------------------------------------------
 
 async def _auto_responder(approve: bool, notes: str, delay: float = 1.0) -> None:
-    """Simulate admin: poll pending requests and respond, used for offline HITL loop demo."""
+    """模拟管理员：轮询待处理请求并作答，用于离线演示 HITL 闭环。"""
     await asyncio.sleep(delay)
     pending = await hitl.list_pending_requests()
     for req in pending.get("requests", []):
@@ -141,7 +141,7 @@ async def _hitl_dispatch(args) -> None:
         if args.auto_approve or args.auto_reject:
             responder = _auto_responder(
                 approve=not args.auto_reject,
-                notes=args.notes or ("Auto-simulate approval" if not args.auto_reject else "Auto-simulate rejection"),
+                notes=args.notes or ("自动模拟批准" if not args.auto_reject else "自动模拟拒绝"),
             )
             res, _ = await asyncio.gather(coro, responder)
         else:
@@ -166,7 +166,7 @@ def cmd_hitl(args) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Notification Subcommands
+# 通知子命令
 # ---------------------------------------------------------------------------
 
 async def _notify_dispatch(args) -> None:
@@ -185,11 +185,11 @@ def cmd_notify(args) -> None:
 
 
 # ---------------------------------------------------------------------------
-# End-to-End Demo: Customer Service Coordination Agent Handles a Refund
+# 端到端演示：客服协调 Agent 处理一笔退款
 # ---------------------------------------------------------------------------
 
 def _neutralize_network_creds() -> None:
-    """Clear placeholder credentials in .env before demo to avoid offline demo attempting real network requests and blocking."""
+    """演示前清空 .env 中的占位凭据，避免离线演示尝试真实网络请求而阻塞。"""
     from config import config
 
     config.email.smtp_username = None
@@ -207,52 +207,52 @@ async def _demo() -> None:
     online = bool(os.getenv("OPENAI_API_KEY"))
 
     print("=" * 74)
-    print("End-to-End Collaboration Demo: Customer Service Agent Handling a Refund")
-    print(f"(Sub-Agent Execution Mode:{'Online LLM' if online else 'Offline Simulation (OPENAI_API_KEY not configured)'}）")
+    print("端到端协作演示：客服协调 Agent 处理一笔退款")
+    print(f"（子 Agent 执行模式：{'在线 LLM' if online else '离线模拟（未配置 OPENAI_API_KEY）'}）")
     print("=" * 74)
 
-    print("\n[Step 1/3] Delegate sub-agent to approve refund, and compare two context passing strategies")
+    print("\n[步骤 1/3] 委派子 Agent 审批退款，并对比两种上下文传递策略")
     print("-" * 74)
     if not online:
-        print("(Note: OPENAI_API_KEY not configured, sub-agent execution and llm_generated strategy")
-        print("  will return errors, only for demonstrating interface and context construction; configure Key to see real results.)")
+        print("（提示：未配置 OPENAI_API_KEY，子 Agent 的执行与 llm_generated 策略")
+        print("  会返回错误，仅用于展示接口与上下文构建；配置 Key 后可看到真实结果。）")
     await sa.run_context_strategy_comparison()
 
-    print("\n[Step 2/3] Large operation triggers HITL: Request approval from admin (with timeout and default behavior)")
+    print("\n[步骤 2/3] 大额操作触发 HITL：向管理员请求批准（含超时与默认行为）")
     print("-" * 74)
-    print("→ Scenario A: Admin approves before timeout (simulated backend response)")
+    print("→ 场景 A：管理员在超时前批准（后台模拟应答）")
     approval, _ = await asyncio.gather(
         hitl.request_admin_approval(
-            request_message="Refund amount 8888 yuan, exceeds auto-approval threshold, please confirm manually.",
+            request_message="退款金额 8888 元，超过自动批准阈值，请人工确认。",
             timeout_seconds=10,
             urgent=True,
         ),
-        _auto_responder(approve=True, notes="Verified correct, approve refund", delay=1.0),
+        _auto_responder(approve=True, notes="核对无误，同意退款", delay=1.0),
     )
     _print(approval)
 
-    print("\n→ Scenario B: Admin does not respond in time, triggers timeout and conservative default (not approved)")
+    print("\n→ 场景 B：管理员未及时响应，触发超时与保守默认（不批准）")
     timeout_res = await hitl.request_admin_approval(
-        request_message="Refund amount 8888 yuan, please confirm manually.",
+        request_message="退款金额 8888 元，请人工确认。",
         timeout_seconds=2,
     )
     _print(timeout_res)
 
-    print("\n[Step 3/3] Multi-channel notification to collaborators of processing result")
+    print("\n[步骤 3/3] 多渠道通知协作者处理结果")
     print("-" * 74)
-    summary = "Refund ticket A12345: Sub-agent approved, admin confirmed, funds released."
+    summary = "退款工单 A12345：子 Agent 审批通过，管理员已确认，已放款。"
     for channel, coro in (
-        ("email", notify.send_email("admin@example.com", "Refund processing completed", summary)),
+        ("email", notify.send_email("admin@example.com", "退款处理完成", summary)),
         ("slack", notify.send_slack_message(summary)),
         ("telegram", notify.send_telegram_message(summary)),
     ):
         res = await coro
-        status = "Sent" if res.get("success") else f"Not sent ({res.get('error')}）"
+        status = "已发送" if res.get("success") else f"未发送（{res.get('error')}）"
         print(f"  [{channel:<8}] {status}：{summary}")
 
     print("\n" + "=" * 74)
-    print("Demo ended. To actually send notifications/emails, configure corresponding channel credentials in .env;")
-    print("Sub-agent's real LLM execution and llm_generated strategy require configuring OPENAI_API_KEY.")
+    print("演示结束。真实发送通知/邮件需在 .env 配置对应渠道凭据；")
+    print("子 Agent 的真实 LLM 执行与 llm_generated 策略需配置 OPENAI_API_KEY。")
     print("=" * 74)
 
 
@@ -267,104 +267,104 @@ def cmd_demo(args) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="main.py",
-        description="Collaboration tool command line entry (Experiment 4-3): Sub-agent management / Human collaboration / Multi-channel notification",
+        description="协作工具命令行入口（实验 4-3）：子 Agent 管理 / 人类协作 / 多渠道通知",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "Example: \n"
+            "示例：\n"
             "  python main.py list\n"
             "  python main.py demo\n"
             "  python main.py subagent compare\n"
-            "  python main.py subagent spawn --task 'Query order A12345 status' --strategy minimal\n"
-            "  python main.py hitl approve --message 'Delete 1000 records?' --timeout 5 --auto-approve\n"
-            "  python main.py notify slack --message 'Deployment complete'\n"
+            "  python main.py subagent spawn --task '查询订单 A12345 状态' --strategy minimal\n"
+            "  python main.py hitl approve --message '删除 1000 条记录？' --timeout 5 --auto-approve\n"
+            "  python main.py notify slack --message '部署完成'\n"
         ),
     )
-    sub = parser.add_subparsers(dest="command", required=True, metavar="<Command>")
+    sub = parser.add_subparsers(dest="command", required=True, metavar="<命令>")
 
-    sub.add_parser("list", help="List all collaboration tools").set_defaults(func=cmd_list)
+    sub.add_parser("list", help="列出全部协作工具").set_defaults(func=cmd_list)
 
-    p_demo = sub.add_parser("demo", help="Run offline end-to-end collaboration demo (no API Key required)")
+    p_demo = sub.add_parser("demo", help="运行离线端到端协作演示（无需 API Key）")
     p_demo.set_defaults(func=cmd_demo)
 
     # subagent
-    p_sa = sub.add_parser("subagent", help="Sub-agent management tool")
-    sa_sub = p_sa.add_subparsers(dest="sub_action", required=True, metavar="<Action>")
+    p_sa = sub.add_parser("subagent", help="子 Agent 管理工具")
+    sa_sub = p_sa.add_subparsers(dest="sub_action", required=True, metavar="<动作>")
 
-    p_spawn = sa_sub.add_parser("spawn", help="Create Sub-Agent")
-    p_spawn.add_argument("--task", required=True, help="Delegate Subtask to Sub-Agent")
+    p_spawn = sa_sub.add_parser("spawn", help="创建子 Agent")
+    p_spawn.add_argument("--task", required=True, help="委派给子 Agent 的子任务")
     p_spawn.add_argument("--strategy", default="minimal",
-                         choices=["minimal", "llm_generated"], help="Context Passing Strategy")
+                         choices=["minimal", "llm_generated"], help="上下文传递策略")
     p_spawn.add_argument("--mode", default="sync", choices=["sync", "async"],
-                         help="sync: wait synchronously for result; async: return task_id")
-    p_spawn.add_argument("--role", default=None, help="Sub-Agent Role (for system prompt)")
+                         help="sync 同步等待结果；async 返回 task_id")
+    p_spawn.add_argument("--role", default=None, help="子 Agent 的角色（用于系统提示词）")
     p_spawn.add_argument("--parent-context", default=None,
-                         help="Main Agent Trajectory/State (JSON string)")
+                         help="主 Agent 轨迹/状态（JSON 字符串）")
     p_spawn.add_argument("--minimal-slice", default=None,
-                         help="Manually selected information under minimal strategy (string or JSON)")
+                         help="minimal 策略下手动挑选的信息（字符串或 JSON）")
     p_spawn.add_argument("--business-rules", default=None,
-                         help="Privacy/compression rules under llm_generated strategy")
+                         help="llm_generated 策略下的隐私/压缩规则")
 
-    p_send = sa_sub.add_parser("send", help="Send Follow-up Message to Sub-Agent")
-    p_send.add_argument("--id", required=True, help="Sub-Agent ID")
-    p_send.add_argument("--message", required=True, help="Message Content")
+    p_send = sa_sub.add_parser("send", help="向子 Agent 发送后续消息")
+    p_send.add_argument("--id", required=True, help="子 Agent ID")
+    p_send.add_argument("--message", required=True, help="消息内容")
 
-    p_cancel = sa_sub.add_parser("cancel", help="Cancel Sub-Agent")
-    p_cancel.add_argument("--id", required=True, help="Sub-Agent ID")
+    p_cancel = sa_sub.add_parser("cancel", help="取消子 Agent")
+    p_cancel.add_argument("--id", required=True, help="子 Agent ID")
 
-    p_status = sa_sub.add_parser("status", help="Query Sub-Agent Status/Result")
-    p_status.add_argument("--id", required=True, help="Sub-Agent ID")
+    p_status = sa_sub.add_parser("status", help="查询子 Agent 状态/结果")
+    p_status.add_argument("--id", required=True, help="子 Agent ID")
 
-    p_cmp = sa_sub.add_parser("compare", help="Compare minimal and llm_generated strategies")
-    p_cmp.add_argument("--task", default=None, help="Common subtask for comparison")
+    p_cmp = sa_sub.add_parser("compare", help="对比 minimal 与 llm_generated 两种策略")
+    p_cmp.add_argument("--task", default=None, help="用于对比的共同子任务")
     p_sa.set_defaults(func=cmd_subagent)
 
     # hitl
-    p_hitl = sub.add_parser("hitl", help="Human-in-the-Loop (HITL) Tool")
-    hitl_sub = p_hitl.add_subparsers(dest="hitl_action", required=True, metavar="<Action>")
+    p_hitl = sub.add_parser("hitl", help="人类协作（HITL）工具")
+    hitl_sub = p_hitl.add_subparsers(dest="hitl_action", required=True, metavar="<动作>")
 
-    p_appr = hitl_sub.add_parser("approve", help="Request Admin Approval")
-    p_appr.add_argument("--message", required=True, help="Content requiring approval")
-    p_appr.add_argument("--timeout", type=int, default=None, help="Wait seconds (timeout triggers default behavior)")
-    p_appr.add_argument("--urgent", action="store_true", help="Mark as Urgent")
-    p_appr.add_argument("--auto-approve", action="store_true", help="Simulate admin approval in background (for offline demo)")
-    p_appr.add_argument("--auto-reject", action="store_true", help="Simulate admin rejection in background (for offline demo)")
-    p_appr.add_argument("--notes", default=None, help="Admin Note")
+    p_appr = hitl_sub.add_parser("approve", help="请求管理员批准")
+    p_appr.add_argument("--message", required=True, help="需要批准的内容")
+    p_appr.add_argument("--timeout", type=int, default=None, help="等待秒数（超时后按默认行为）")
+    p_appr.add_argument("--urgent", action="store_true", help="标记为紧急")
+    p_appr.add_argument("--auto-approve", action="store_true", help="后台模拟管理员批准（离线演示用）")
+    p_appr.add_argument("--auto-reject", action="store_true", help="后台模拟管理员拒绝（离线演示用）")
+    p_appr.add_argument("--notes", default=None, help="管理员备注")
 
-    p_inp = hitl_sub.add_parser("input", help="Request Input from Admin")
-    p_inp.add_argument("--prompt", required=True, help="Question/Prompt")
-    p_inp.add_argument("--timeout", type=int, default=None, help="Wait seconds")
-    p_inp.add_argument("--auto-answer", default=None, help="Simulate admin response in background (for offline demo)")
+    p_inp = hitl_sub.add_parser("input", help="向管理员请求输入")
+    p_inp.add_argument("--prompt", required=True, help="问题/提示")
+    p_inp.add_argument("--timeout", type=int, default=None, help="等待秒数")
+    p_inp.add_argument("--auto-answer", default=None, help="后台模拟管理员回答（离线演示用）")
 
-    p_resp = hitl_sub.add_parser("respond", help="Admin's answer to request")
-    p_resp.add_argument("--id", required=True, help="Request ID")
+    p_resp = hitl_sub.add_parser("respond", help="管理员对请求作答")
+    p_resp.add_argument("--id", required=True, help="请求 ID")
     grp = p_resp.add_mutually_exclusive_group(required=True)
-    grp.add_argument("--approve", dest="approve", action="store_true", help="Approve")
-    grp.add_argument("--reject", dest="approve", action="store_false", help="Reject")
-    p_resp.add_argument("--notes", default=None, help="Notes")
+    grp.add_argument("--approve", dest="approve", action="store_true", help="批准")
+    grp.add_argument("--reject", dest="approve", action="store_false", help="拒绝")
+    p_resp.add_argument("--notes", default=None, help="备注")
 
-    hitl_sub.add_parser("list", help="List pending requests")
+    hitl_sub.add_parser("list", help="列出待处理请求")
     p_hitl.set_defaults(func=cmd_hitl)
 
     # notify
-    p_notify = sub.add_parser("notify", help="Multi-channel notification tool")
-    notify_sub = p_notify.add_subparsers(dest="channel", required=True, metavar="<Channel>")
+    p_notify = sub.add_parser("notify", help="多渠道通知工具")
+    notify_sub = p_notify.add_subparsers(dest="channel", required=True, metavar="<渠道>")
 
-    p_email = notify_sub.add_parser("email", help="Send email")
-    p_email.add_argument("--to", required=True, help="Recipient")
-    p_email.add_argument("--subject", required=True, help="Subject")
-    p_email.add_argument("--body", required=True, help="Body")
+    p_email = notify_sub.add_parser("email", help="发送邮件")
+    p_email.add_argument("--to", required=True, help="收件人")
+    p_email.add_argument("--subject", required=True, help="主题")
+    p_email.add_argument("--body", required=True, help="正文")
 
-    p_slack = notify_sub.add_parser("slack", help="Send Slack message")
-    p_slack.add_argument("--message", required=True, help="Message Content")
-    p_slack.add_argument("--webhook", default=None, help="Slack Webhook URL (default from .env)")
+    p_slack = notify_sub.add_parser("slack", help="发送 Slack 消息")
+    p_slack.add_argument("--message", required=True, help="消息内容")
+    p_slack.add_argument("--webhook", default=None, help="Slack Webhook URL（默认取 .env）")
 
-    p_tg = notify_sub.add_parser("telegram", help="Send Telegram message")
-    p_tg.add_argument("--message", required=True, help="Message Content")
-    p_tg.add_argument("--chat-id", default=None, help="Telegram chat ID (default from .env)")
+    p_tg = notify_sub.add_parser("telegram", help="发送 Telegram 消息")
+    p_tg.add_argument("--message", required=True, help="消息内容")
+    p_tg.add_argument("--chat-id", default=None, help="Telegram chat id（默认取 .env）")
 
-    p_dc = notify_sub.add_parser("discord", help="Send Discord message")
-    p_dc.add_argument("--message", required=True, help="Message Content")
-    p_dc.add_argument("--webhook", default=None, help="Discord Webhook URL (default from .env)")
+    p_dc = notify_sub.add_parser("discord", help="发送 Discord 消息")
+    p_dc.add_argument("--message", required=True, help="消息内容")
+    p_dc.add_argument("--webhook", default=None, help="Discord Webhook URL（默认取 .env）")
     p_notify.set_defaults(func=cmd_notify)
 
     return parser

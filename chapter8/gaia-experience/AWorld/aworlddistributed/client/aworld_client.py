@@ -125,7 +125,7 @@ class AworldTaskClient(BaseModel):
     async def _async_submit_task_to_server(self, aworld_server, task: AworldTask):
         import httpx
         from base import AworldTaskForm, AworldTaskResult
-        # Build AworldTaskForm
+        # 构建 AworldTaskForm
         form_data = AworldTaskForm(task=task)
         async with httpx.AsyncClient() as client:
             resp = await client.post(f"{aworld_server}/api/v1/tasks/submit_task", json=form_data.model_dump())
@@ -236,7 +236,7 @@ class AworldTaskClient(BaseModel):
                 params["task_id"] = task_id
             
             # send download request
-            async with httpx.AsyncClient(timeout=300.0) as client:  # 5-minute timeout
+            async with httpx.AsyncClient(timeout=300.0) as client:  # 5分钟超时
                 response = await client.get(
                     f"{aworld_server}/api/v1/tasks/download_task_results",
                     params=params
@@ -309,7 +309,7 @@ class AworldTaskClient(BaseModel):
                 params["task_id"] = task_id
             
             # send download request
-            async with httpx.AsyncClient(timeout=300.0) as client:  # 5-minute timeout
+            async with httpx.AsyncClient(timeout=300.0) as client:  # 5分钟超时
                 response = await client.get(
                     f"{aworld_server}/api/v1/tasks/download_task_results",
                     params=params
@@ -353,7 +353,7 @@ class AworldTaskClient(BaseModel):
             with open(file_path, 'r', encoding='utf-8') as f:
                 for line_num, line in enumerate(f, 1):
                     line = line.strip()
-                    if line:  # Skip empty lines
+                    if line:  # 跳过空行
                         try:
                             result_data = json.loads(line)
                             results.append(result_data)

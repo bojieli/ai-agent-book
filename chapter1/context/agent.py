@@ -590,7 +590,7 @@ Important: When you have gathered all necessary information and computed the fin
             assistant message together with the tool results that follow it).
         All earlier steps are dropped, so the agent "forgets" what it already
         did and tends to repeat tool calls -- exactly the failure mode the book
-        attributes to missing history messages. Keeping the last assistant
+        attributes to missing 历史消息 (history). Keeping the last assistant
         message together with its trailing tool messages preserves API validity
         (tool results stay paired with their assistant tool_calls).
 

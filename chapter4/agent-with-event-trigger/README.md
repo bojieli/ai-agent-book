@@ -32,56 +32,63 @@ A modern AI agent with **native async support** that responds to events from var
 - Public data (weather, stocks, Wikipedia, ArXiv)
 - Private data (Google Calendar, Notion)
 
-## ⚡ Event-Driven Demo (Runs Offline, No API Key Required)
+## ⚡ 事件驱动演示（离线可运行，无需 API Key）
 
-Before starting the HTTP server, we recommend running `event_loop_demo.py` first. It demonstrates the core concept of this chapter—**the external world actively waking up the Agent**—within a single process. The script registers three types of "event triggers." Background threads push structured events into a unified event queue when the events actually occur. The event loop retrieves them one by one and wakes up the Agent for processing, forming a complete "register → trigger → wake → process" loop:
+在启动 HTTP 服务器之前，推荐先运行 `event_loop_demo.py`，它在单个进程里
+直观演示本章的核心概念——**外部世界主动唤醒 Agent**。脚本注册三类"事件触发器"，
+由后台线程在事件真正发生时把结构化事件推入统一的事件队列，事件循环逐个取出
+并唤醒 Agent 处理，形成"注册 → 触发 → 唤醒 → 处理"的完整闭环：
 
-| Trigger | Class | Corresponding Book Concept |
-|---------|-------|----------------------------|
-| One-shot Timer | `OneShotTimer` | `set_timer` one-shot timer (e.g., "Call DMV next Monday at 10:00") |
-| Recurring Timer | `RecurringTimer` | `set_timer` recurring timer / Heartbeat (e.g., "Check server every hour") |
-| File Watch | `FileWatchTrigger` | File change trigger in platforms like n8n |
+| 触发器 | 类 | 对应书中概念 |
+|--------|----|----|
+| 一次性定时器 | `OneShotTimer` | `set_timer` 一次性定时器（如"下周一 10:00 致电 DMV"）|
+| 循环定时器 | `RecurringTimer` | `set_timer` 循环定时器 / Heartbeat（如"每小时检查服务器"）|
+| 文件监听 | `FileWatchTrigger` | n8n 等平台的文件变更触发器 |
 
-The `--mock` offline mode does not call the LLM; instead, it prints the Agent's processing flow using "simulated actions." Therefore, **no API Key is required** to run it:
+`--mock` 离线模式不调用大模型，用"模拟动作"打印 Agent 被唤醒后的处理过程，
+因此**无需任何 API Key** 即可跑通：
 
 ```bash
-# Offline demo of all triggers (one-shot timer + recurring timer + file watch)
+# 离线演示全部触发器（一次性定时器 + 循环定时器 + 文件监听）
 python event_loop_demo.py --mock
 
-# Demo only the one-shot timer; triggers after 2 seconds, runs for 6 seconds total
+# 只演示一次性定时器；2 秒后触发，共运行 6 秒
 python event_loop_demo.py --mock --trigger timer --delay 2 --duration 6
 
-# Trigger a recurring timer every 3 seconds
+# 每 3 秒触发一次循环定时器
 python event_loop_demo.py --mock --trigger recurring --interval 3 --duration 12
 
-# Watch a directory; writing a file to it triggers an event (open another terminal: echo hello > watched_dir/a.txt)
+# 监听目录，向其中写入文件即可触发事件（另开终端 echo hello > watched_dir/a.txt）
 python event_loop_demo.py --mock --trigger file --watch-dir watched_dir
 ```
 
-Sample offline output (excerpt):
+离线运行的输出示例（节选）：
 
 ```
-⏱️  [OneShotTimer(daily_backup_check)] Registered: triggers in 2 seconds
-🔁 [RecurringTimer(health_check)] Registered: triggers every 3 seconds
-🟢 Event loop started, will run for 8 seconds, waiting for events to wake the Agent...
-⚡ [OneShotTimer(daily_backup_check)] Event triggered -> timer_trigger: One-shot timer expired: Please check if the daily backup has been completed.
-📥 Event loop retrieved event #1 -> waking Agent
-🤖 Agent woken up, received message: [Timer daily_backup_check triggered] One-shot timer expired: Please check if the daily backup has been completed.
-🛠️  [Simulated Action] Reading scheduled task context -> Performing routine check -> Reporting results
-✅ Agent processing complete: Responded to timer_trigger event
+⏱️  [OneShotTimer(daily_backup_check)] 已注册：2 秒后触发
+🔁 [RecurringTimer(health_check)] 已注册：每 3 秒触发一次
+🟢 事件循环启动，将运行 8 秒，等待事件唤醒 Agent...
+⚡ [OneShotTimer(daily_backup_check)] 触发事件 -> timer_trigger: 一次性定时器到期：请检查每日备份是否已经完成。
+📥 事件循环取出第 1 个事件 -> 唤醒 Agent
+🤖 Agent 被唤醒，收到消息: [Timer daily_backup_check triggered] 一次性定时器到期：请检查每日备份是否已经完成。
+🛠️  [模拟动作] 读取定时任务上下文 -> 执行例行检查 -> 汇报结果
+✅ Agent 处理完成: 已响应 timer_trigger 事件
 ```
 
-Remove `--mock` to connect to a real LLM (by default, only built-in tools are used; MCP is not loaded). You need to set the API Key for the corresponding provider:
+去掉 `--mock` 即接入真实的大模型（默认仅用内置工具，不加载 MCP），
+需要设置对应 provider 的 API Key：
 
 ```bash
 export KIMI_API_KEY='your-api-key-here'
 python event_loop_demo.py --trigger timer --provider kimi
 ```
 
-> **OpenRouter Fallback**: If the Key for the selected provider (default `kimi`) is missing, but `OPENROUTER_API_KEY` is set, `event_loop_demo.py` / `server.py` / `quickstart.py` will automatically switch to the `openrouter` provider and continue running (you can specify the model with `LLM_MODEL=openai/gpt-5.6-luna`). For example:
+> **OpenRouter 通用兜底**：若所选 provider（默认 `kimi`）的 Key 缺失，但设置了
+> `OPENROUTER_API_KEY`，`event_loop_demo.py` / `server.py` / `quickstart.py` 会自动
+>改用 `openrouter` provider 继续运行（可用 `LLM_MODEL=openai/gpt-5.6-luna` 指定模型）。例如：
 > `OPENROUTER_API_KEY=sk-or-xxx LLM_MODEL=openai/gpt-5.6-luna python event_loop_demo.py --trigger timer`
 
-See `python event_loop_demo.py --help` for the full list of parameters.
+完整参数见 `python event_loop_demo.py --help`。
 
 ## 🚀 Quick Start
 
@@ -105,12 +112,12 @@ export KIMI_API_KEY='your-api-key-here'
 python server.py
 ```
 
-The server supports command-line arguments (higher priority than environment variables). See `python server.py --help` for the full list:
+服务器支持命令行参数（优先级高于环境变量），完整列表见 `python server.py --help`：
 
 ```bash
-python server.py --port 9000           # Custom port
-python server.py --provider doubao     # Specify the LLM provider
-python server.py --no-mcp              # Use only built-in tools, do not load MCP tools
+python server.py --port 9000           # 自定义端口
+python server.py --provider doubao     # 指定大模型提供商
+python server.py --no-mcp              # 只用内置工具，不加载 MCP 工具
 ```
 
 Output:
@@ -196,7 +203,9 @@ This standalone script:
 - Shows the complete flow from tool discovery to execution
 - Properly cleans up MCP connections
 
-Output:================================================================================
+Output:
+```
+================================================================================
 Event-Triggered Agent with MCP Tools Example
 ================================================================================
 
@@ -427,7 +436,7 @@ python client.py --mode test
 python client.py --message "Create a Python hello world script"
 
 # Send a single event of a specific type
-python client.py --event-type timer_trigger --message "Check daily backup"
+python client.py --event-type timer_trigger --message "检查每日备份"
 ```
 
 ## 🔐 Security Considerations

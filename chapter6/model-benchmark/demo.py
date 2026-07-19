@@ -1,25 +1,25 @@
 """
-demo.py — One command to generate multi-provider performance comparison table / concurrency stress test table.
+demo.py —— 一条命令跑出多提供商性能对比表 / 并发压测表。
 
-Usage:
-    python demo.py                      # Use default parameters, horizontal comparison across multiple providers
+用法：
+    python demo.py                      # 使用默认参数，多提供商横向对比
     python demo.py --num-requests 20 --concurrency 5
-    python demo.py --serial             # Send serially (concurrency=1)
-    python demo.py --list               # Only list providers to be tested
+    python demo.py --serial             # 串行发送（并发=1）
+    python demo.py --list               # 仅列出将要测试的提供商
 
-    # Specify any OpenAI-compatible endpoint (test new models/providers without modifying code):
+    # 指定任意一个 OpenAI 兼容端点（不改代码即可测新模型/新提供商）：
     python demo.py --base-url https://api.deepseek.com --model deepseek-chat \
                    --api-key-env DEEPSEEK_API_KEY
 
-    # Concurrency stress test: gradually increase concurrency for the same model to find rate limits and observe latency tail changes with concurrency:
+    # 并发压测：对同一模型逐步提升并发，找限流点、看延迟长尾随并发的变化：
     python demo.py --model gpt-5.6-luna --concurrency-sweep 1,2,4,8
 
-    # Offline self-check (no key/network needed): use synthetic data to verify metric aggregation math
+    # 离线自检（无需 key/网络）：用合成数据跑通指标聚合数学
     python demo.py --mock
     python demo.py --mock --concurrency-sweep 1,2,4,8,16
 
-By default, only providers with valid keys are tested (OpenAI / Kimi / Doubao).
-Providers without corresponding environment variables set are automatically skipped.
+默认只测"手上有有效 key"的提供商（OpenAI / Kimi / 豆包）。
+未设置对应环境变量的提供商会被自动跳过。
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ import argparse
 import json
 import os
 
-#  If python-dotenv is installed and a .env file exists, it is automatically loaded (optional, not mandatory)
+# 若安装了 python-dotenv 且存在 .env，则自动加载（可选，不强制）
 try:
     from dotenv import load_dotenv
 
@@ -46,22 +46,22 @@ from benchmark import (
 )
 
 
-#  Short prompt: control cost while ensuring stable output for throughput measurement.
-DEFAULT_PROMPT = "Explain in one sentence what a large language model is."
+# 短 prompt：控制成本，同时保证有稳定的输出用于测吞吐。
+DEFAULT_PROMPT = "用一句话解释什么是大语言模型。"
 
-#  Optional metric families for the main comparison table (success rate always displayed). Use --metrics to select a subset with commas.
+# 主对比表可选的指标族（成功率始终显示）。--metrics 用逗号选择子集。
 METRIC_KEYS = ["ttft", "e2e", "throughput", "tokens"]
 
 
 def _fmt(v, unit: str = "", scale: float = 1.0, digits: int = 1) -> str:
-    """Format possibly None numeric values into aligned strings."""
+    """把可能为 None 的数值格式化为对齐的字符串。"""
     if v is None:
         return "  N/A"
     return f"{v * scale:.{digits}f}{unit}"
 
 
 def _render_table(headers: list[str], rows: list[list[str]]) -> None:
-    """Print a table aligned by Chinese character width."""
+    """按中文宽度对齐打印一张表。"""
     def width(text: str) -> int:
         return sum(2 if ord(c) > 127 else 1 for c in text)
 
@@ -84,31 +84,31 @@ def _render_table(headers: list[str], rows: list[list[str]]) -> None:
 
 
 def _print_errors(summaries: list[ProviderSummary]) -> None:
-    """Print failure details for locating availability issues."""
+    """打印失败明细，便于定位可用性问题。"""
     if not any(s.errors for s in summaries):
         return
-    print("Failed request details (reasons for availability degradation):")
+    print("失败请求明细（可用性下降原因）：")
     for s in summaries:
         if s.errors:
             for e in s.errors[:3]:
                 print(f"  - {s.provider}: {e}")
             if len(s.errors) > 3:
-                print(f"    ... and another {len(s.errors) - 3} similar errors")
+                print(f"    ... 以及另外 {len(s.errors) - 3} 条同类错误")
     print()
 
 
 def print_table(summaries: list[ProviderSummary], metrics: list[str]) -> None:
-    """Print horizontal comparison table across multiple providers (success rate + selected metric families)."""
-    headers = ["Provider/Model", "Success Rate"]
+    """打印多提供商横向对比表（成功率 + 所选指标族）。"""
+    headers = ["Provider/Model", "成功率"]
     for m in metrics:
         if m == "ttft":
-            headers += ["Avg TTFT", "TTFT_p95"]
+            headers += ["TTFT均值", "TTFT_p95"]
         elif m == "e2e":
-            headers += ["Avg End-to-End", "p95 End-to-End"]
+            headers += ["端到端均值", "端到端p95"]
         elif m == "throughput":
-            headers += ["Throughput"]
+            headers += ["吞吐"]
         elif m == "tokens":
-            headers += ["Output Tokens"]
+            headers += ["输出tok"]
 
     rows: list[list[str]] = []
     for s in summaries:
@@ -135,13 +135,13 @@ def print_table(summaries: list[ProviderSummary], metrics: list[str]) -> None:
 
 def print_sweep_table(summaries: list[ProviderSummary]) -> None:
     """
-    Print concurrency stress test table: each row is a concurrency level, showing latency tail (p50/p95/p99/std),
-    availability, and aggregate throughput (RPS / tokens·s⁻¹) as concurrency changes.
+    打印并发压测表：每一行是一个并发档位，展示延迟长尾（p50/p95/p99/std）、
+    可用性与聚合吞吐（RPS / tokens·s⁻¹）随并发的变化。
     """
     headers = [
-        "Concurrency", "Success Rate", "TTFT_p50", "TTFT_p95",
-        "p50 End-to-End", "p95 End-to-End", "p99 End-to-End", "Std End-to-End",
-        "RPS", "Aggregate Throughput",
+        "并发", "成功率", "TTFT_p50", "TTFT_p95",
+        "端到端p50", "端到端p95", "端到端p99", "端到端std",
+        "RPS", "聚合吞吐",
     ]
     rows: list[list[str]] = []
     for s in summaries:
@@ -162,7 +162,7 @@ def print_sweep_table(summaries: list[ProviderSummary]) -> None:
 
 
 def summary_to_dict(s: ProviderSummary) -> dict:
-    """Serialize a summary into a JSON-serializable structure (for --output)."""
+    """把一个汇总序列化为可 JSON 落盘的结构（供 --output 使用）。"""
     def stats(attr: str) -> dict:
         return {
             k: s.stat(attr, k)
@@ -191,50 +191,50 @@ def write_output(path: str, meta: dict, summaries: list[ProviderSummary]) -> Non
     payload = {"meta": meta, "results": [summary_to_dict(s) for s in summaries]}
     with open(path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
-    print(f"Results written to:{path}")
+    print(f"结果已写入：{path}")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Multi-dimensional model performance benchmark (Experiment 6-8): TTFT / End-to-End / Throughput / p50·p95·p99·std / Availability",
+        description="多维度模型性能基准测试（实验 6-8）：TTFT / 端到端 / 吞吐 / p50·p95·p99·std / 可用性",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--num-requests", type=int, default=10,
-                        help="Number of requests per concurrency level (default 10, cost control; book standard ≥100)")
+                        help="每个档位的请求次数（默认 10，控制成本；书中口径 ≥100）")
     parser.add_argument("--concurrency", type=int, default=3,
-                        help="Concurrency per level (default 3; mutually exclusive with --concurrency-sweep)")
+                        help="单档位并发数（默认 3；与 --concurrency-sweep 二选一）")
     parser.add_argument("--serial", action="store_true",
-                        help="Send serially (equivalent to --concurrency 1, baseline latency without contention)")
+                        help="串行发送（等价于 --concurrency 1，看无竞争下的基线延迟）")
     parser.add_argument("--concurrency-sweep", type=str, default=None, metavar="1,2,4,8",
-                        help="Concurrency stress test: comma-separated list of concurrency levels, progressively increasing load on the same model to find the throttling point")
+                        help="并发压测：逗号分隔的并发档位列表，对同一模型逐档加压找限流点")
     parser.add_argument("--max-tokens", type=int, default=64,
-                        help="Maximum number of tokens generated per request (default 64, controls cost)")
+                        help="每次请求生成的最大 token 数（默认 64，控制成本）")
     parser.add_argument("--timeout", type=float, default=60.0,
-                        help="Single request timeout (seconds); timeout counts as availability degradation")
+                        help="单次请求超时（秒），超时记为可用性下降")
     parser.add_argument("--prompt", type=str, default=DEFAULT_PROMPT,
-                        help="Short test prompt")
+                        help="测试用的短 prompt")
     parser.add_argument("--metrics", type=str, default="all",
-                        help="Metric families displayed in the main comparison table, comma-separated, optional "
-                             "ttft/e2e/throughput/tokens or all (default all; success rate always shown)")
+                        help="主对比表显示的指标族，逗号分隔，可选 "
+                             "ttft/e2e/throughput/tokens 或 all（默认 all；成功率始终显示）")
     parser.add_argument("--output", type=str, default=None, metavar="FILE.json",
-                        help="Write full results (including p50/p95/p99/std) to a JSON file")
+                        help="把完整结果（含 p50/p95/p99/std）写入 JSON 文件")
     parser.add_argument("--list", action="store_true",
-                        help="List the providers to be tested and exit")
+                        help="仅列出将测试的提供商后退出")
 
-    # Specify any single OpenAI-compatible endpoint (test new providers/models without modifying code)
-    grp = parser.add_argument_group("Custom endpoint (if specified, only this one is tested, ignoring the default provider list)")
+    # 指定任意单个 OpenAI 兼容端点（不改代码即可测新提供商/新模型）
+    grp = parser.add_argument_group("自定义端点（指定后只测这一个，忽略默认提供商列表）")
     grp.add_argument("--base-url", type=str, default=None,
-                     help="base_url of the OpenAI-compatible endpoint (leave empty for official OpenAI)")
+                     help="OpenAI 兼容端点的 base_url（OpenAI 官方留空）")
     grp.add_argument("--model", type=str, default=None,
-                     help="Model name to test (e.g., gpt-5.6-luna / deepseek-chat)")
+                     help="要测试的模型名（如 gpt-5.6-luna / deepseek-chat）")
     grp.add_argument("--api-key-env", type=str, default="OPENAI_API_KEY",
-                     help="Environment variable name for the API key (default OPENAI_API_KEY)")
+                     help="读取 API key 的环境变量名（默认 OPENAI_API_KEY）")
     grp.add_argument("--name", type=str, default=None,
-                     help="Display name of this endpoint in the table (defaults to model name)")
+                     help="该端点在表格中的展示名（默认用 model 名）")
 
     parser.add_argument("--mock", action="store_true",
-                        help="Offline self-check: run metric aggregation with synthetic data,"
-                             "no network requests or keys needed (numbers are synthetic, not real benchmarks)")
+                        help="离线自检：用合成（synthetic）数据跑通指标聚合，"
+                             "不发任何网络请求、不需要 key（数字为合成，非真实基准）")
     return parser.parse_args()
 
 
@@ -244,18 +244,18 @@ def resolve_metrics(raw: str) -> list[str]:
     chosen = [m.strip() for m in raw.split(",") if m.strip()]
     bad = [m for m in chosen if m not in METRIC_KEYS]
     if bad:
-        raise SystemExit(f"Unknown metric:{', '.join(bad)}; optional:{', '.join(METRIC_KEYS)} or all")
+        raise SystemExit(f"未知指标：{', '.join(bad)}；可选：{', '.join(METRIC_KEYS)} 或 all")
     return chosen
 
 
 def build_providers(args: argparse.Namespace) -> tuple[list[ProviderConfig], list[ProviderConfig]]:
     """
-    Returns (available, skipped).
-    If --base-url or --model is specified, constructs a single custom provider (overrides default list).
+    返回 (available, skipped)。
+    若指定了 --base-url 或 --model，则构造单个自定义提供商（覆盖默认列表）。
     """
     if args.base_url or args.model:
         if not args.model:
-            raise SystemExit("Must provide --model when using a custom endpoint")
+            raise SystemExit("使用自定义端点时必须提供 --model")
         cfg = ProviderConfig(
             name=args.name or f"custom/{args.model}",
             model=args.model,
@@ -272,12 +272,12 @@ def build_providers(args: argparse.Namespace) -> tuple[list[ProviderConfig], lis
 
 
 def run_mock(args: argparse.Namespace, metrics: list[str]) -> None:
-    """Demonstrate metric aggregation with synthetic data, no key/network required."""
+    """用合成数据演示指标聚合，无需 key/网络。"""
     print("=" * 72)
-    print("Multi-dimensional model performance benchmark (experimental 6-8) — synthetic data self-check mode [SYNTHETIC]")
+    print("多维度模型性能基准测试（实验 6-8）—— 合成数据自检模式 [SYNTHETIC]")
     print("=" * 72)
-    print("⚠️  All numbers below are synthetically generated (pseudo-random), only for verifying metric aggregation math,")
-    print("    do not represent any real model/provider/network performance, and must not be used for selection.")
+    print("⚠️  以下所有数字均为合成（伪随机）生成，仅用于验证指标聚合数学，")
+    print("    不代表任何真实模型/提供商/网络环境的性能，切勿作为选型依据。")
     print("-" * 72)
 
     name = args.name or (args.model and f"custom/{args.model}") or "mock/demo-model"
@@ -285,18 +285,18 @@ def run_mock(args: argparse.Namespace, metrics: list[str]) -> None:
 
     if args.concurrency_sweep:
         levels = parse_sweep_levels(args.concurrency_sweep)
-        print(f"Concurrency stress test (synthetic):{name}  level={levels}  N={args.num_requests}/level")
+        print(f"并发压测（合成）：{name}  档位={levels}  N={args.num_requests}/档")
         summaries = [
             synthetic_summary(name, model, args.num_requests, c, fail_rate=0.02, seed=42)
             for c in levels
         ]
         print_sweep_table(summaries)
-        print("Interpretation: as concurrency increases → end-to-end p95/p99 and std increase (long tail worsens),")
-        print("      availability decreases due to throttling, aggregate throughput first rises then plateaus (hits server-side limit).")
+        print("解读：并发上升 → 端到端 p95/p99 与 std 走高（长尾变差），")
+        print("      可用性因限流下降，聚合吞吐先升后趋平（触及服务端上限即触顶）。")
     else:
         concurrency = 1 if args.serial else args.concurrency
-        print(f"Single-concurrency comparison (synthetic): concurrency={concurrency}  N={args.num_requests}/provider")
-        # Create three "providers" with different parameters to show horizontal differences
+        print(f"单档位对比（合成）：并发={concurrency}  N={args.num_requests}/家")
+        # 造三个"提供商"，参数不同以体现横向差异
         summaries = [
             synthetic_summary("mockA/fast-low-ttft", "fast", args.num_requests,
                               concurrency, base_ttft=0.20, base_gen_throughput=110, seed=1),
@@ -309,7 +309,7 @@ def run_mock(args: argparse.Namespace, metrics: list[str]) -> None:
         print_table(summaries, metrics)
 
     if args.output:
-        write_output(args.output, {"mode": "mock-synthetic", "note": "Numbers are synthetic, not real benchmarks"},
+        write_output(args.output, {"mode": "mock-synthetic", "note": "数字为合成，非真实基准"},
                      summaries)
 
 
@@ -317,10 +317,10 @@ def parse_sweep_levels(raw: str) -> list[int]:
     try:
         levels = [int(x) for x in raw.split(",") if x.strip()]
     except ValueError:
-        raise SystemExit(f"--concurrency-sweep must be a comma-separated list of integers, e.g., 1,2,4,8; received:{raw!r}")
+        raise SystemExit(f"--concurrency-sweep 需为逗号分隔的整数，如 1,2,4,8；收到：{raw!r}")
     levels = [c for c in levels if c >= 1]
     if not levels:
-        raise SystemExit("--concurrency-sweep requires at least one concurrency level ≥ 1")
+        raise SystemExit("--concurrency-sweep 至少需要一个 ≥1 的并发档位")
     return levels
 
 
@@ -335,23 +335,23 @@ def main() -> None:
     available, skipped = build_providers(args)
 
     print("=" * 72)
-    print("Multi-dimensional model performance benchmark (experiments 6-8)")
+    print("多维度模型性能基准测试（实验 6-8）")
     print("=" * 72)
     if skipped:
         for p in skipped:
-            print(f"[Skip] {p.name} —— environment variable not set {p.api_key_env}")
+            print(f"[跳过] {p.name} —— 未设置环境变量 {p.api_key_env}")
     if not available:
-        print("No available providers: set the corresponding API key environment variables,")
-        print("or use --mock to verify metric aggregation offline without keys.")
+        print("没有任何可用提供商：请设置对应 API key 环境变量，")
+        print("或用 --mock 在无 key 情况下离线验证指标聚合。")
         return
 
-    print(f"Providers under test:{', '.join(p.name for p in available)}")
+    print(f"待测提供商：{', '.join(p.name for p in available)}")
 
-    # ---- Concurrency stress test mode ----
+    # ---- 并发压测模式 ----
     if args.concurrency_sweep:
         levels = parse_sweep_levels(args.concurrency_sweep)
-        print(f"Mode: concurrency stress test (stepwise pressurization to find rate limit)   concurrency={levels}")
-        print(f"Parameters: N={args.num_requests}/run, max_tokens={args.max_tokens}, "
+        print(f"模式：并发压测（逐档加压找限流点）  档位={levels}")
+        print(f"参数：N={args.num_requests}/档, max_tokens={args.max_tokens}, "
               f"timeout={args.timeout}s")
         print(f"Prompt：{args.prompt!r}")
         if args.list:
@@ -359,7 +359,7 @@ def main() -> None:
         all_summaries: list[ProviderSummary] = []
         for cfg in available:
             print("-" * 72)
-            print(f"Stress test {cfg.name}:")
+            print(f"压测 {cfg.name}:")
             summaries = sweep_concurrency(
                 cfg, args.prompt, args.num_requests, levels,
                 args.max_tokens, args.timeout,
@@ -371,9 +371,9 @@ def main() -> None:
                          {"mode": "concurrency-sweep", "levels": levels}, all_summaries)
         return
 
-    # ---- Single-concurrency horizontal comparison mode (default, keep original behavior) ----
+    # ---- 单档位横向对比模式（默认，保持原行为）----
     concurrency = 1 if args.serial else args.concurrency
-    print(f"Parameters: N={args.num_requests}/provider, concurrency={concurrency}, "
+    print(f"参数：N={args.num_requests}/家, 并发={concurrency}, "
           f"max_tokens={args.max_tokens}, timeout={args.timeout}s")
     print(f"Prompt：{args.prompt!r}")
 
@@ -392,13 +392,13 @@ def main() -> None:
 
     print_table(summaries, metrics)
 
-    print("Metric description:")
-    print("  Success rate = successful requests / total requests (availability dimension)")
-    print("  TTFT    = time to first token (measured via streaming), lower is smoother")
-    print("  End-to-end = total time from request to response completion")
-    print("  Throughput = output tokens / generation phase time (tokens/s)")
-    print("  p95     = 95th percentile latency, reflects long-tail/stability (high variance means unstable experience)")
-    print("  Hint    = add --concurrency-sweep 1,2,4,8 to run concurrency stress test and see how metrics change with concurrency")
+    print("指标说明：")
+    print("  成功率  = 成功请求数 / 总请求数（可用性维度）")
+    print("  TTFT    = 首个 token 到达延迟（流式测得），越低越流畅")
+    print("  端到端  = 请求发出到响应结束的总耗时")
+    print("  吞吐    = 输出 token 数 / 生成阶段耗时（tokens/s）")
+    print("  p95     = 95 分位延迟，反映长尾/稳定性（方差大则体验不稳）")
+    print("  提示    = 加 --concurrency-sweep 1,2,4,8 可做并发压测，看指标随并发的变化")
 
     if args.output:
         write_output(args.output,

@@ -13,42 +13,42 @@
 Implement an MCP server in week3/perception-tools, supporting all of the following tools, in an organized way.
 
 
-### Perception Tools
+### 感知工具
 
-#### Search Tools
+#### 搜索工具
 
-- Knowledge base search
-- Web search
-- File download
+- 知识库搜索
+- 网络搜索
+- 文件下载
 
-#### Multimodal Understanding Tools
+#### 多模态理解工具
 
-- Webpage reading
-- Document reading (PDF, PPTX, DOCX, etc.)
-- Image parsing
-- Video parsing
+- 网页阅读
+- PDF、PPTX、DOCX 等文档阅读
+- 图片解析
+- 视频解析
 
-#### File System Tools
+#### 文件系统工具
 
-- File reading
-- File search (grep)
-- Long text summarization
+- 文件读取
+- 文件搜索（grep）
+- 长文本总结
 
-#### Public Data Source Retrieval Tools
+#### 公开数据源检索工具
 
-Tools for specific data sources to improve retrieval efficiency
+特定数据源的工具，提高检索特定数据源的效率
 
-- Check weather
-- Check stock prices
-- Currency conversion
-- Wiki search
-- ArXiv paper search
-- Wayback Machine search
+- 查天气
+- 查股价
+- 货币转换
+- Wiki 检索
+- ArXiv 论文检索
+- Wayback Machine 检索
 
-#### Private Data Source Retrieval Tools
+#### 私有数据源检索工具
 
-- Check Google Calendar
-- Check Notion knowledge base
+- 查 Google Calendar
+- 查 Notion 知识库
 
 ---
 
@@ -227,7 +227,8 @@ python src/main.py
 All tools return standardized responses:
 ```json
 {
-  "success": true/false,  "message": "Result data or error",
+  "success": true/false,
+  "message": "Result data or error",
   "metadata": {"additional": "context"}
 }
 ```

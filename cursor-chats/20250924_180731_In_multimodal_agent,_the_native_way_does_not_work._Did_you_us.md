@@ -312,43 +312,80 @@ Zhang Jinlin is a highly experienced Tech Lead and Architect with over 14 years 
 
 ### **Key Skills**
 
-*   **Programming Languages:** Java, Python, Go*   **Programming Languages:** Java, Python, Go, C++, Scala
-*   **AI & Machine Learning:** AI Pipeline Development, Large Model Fine-tuning (e.g., Yi-6B/34B), RAG, Vector Databases, Prompt Engineering, Computer Vision (OpenCV, ffmpeg)
+*   **Programming Languages:** Java, Python, Go, C++, Scala
+*   **AI & Machine Learning:** AI Pipeline Development, Large Model Fine-tuning (e, C++, Scala
+*   **AI & Machine Learning:** AI Pipeline Development, Large Model Fine-tuning (e.g., Yi-6B/34B), RAG, Vector Databases, Prompt Engineering, Computer Vision (OpenCV.g., Yi-6B/34B), RAG, Vector Databases, Prompt Engineering, Computer Vision (OpenCV, ffmpeg)
+*   **Backend Architecture:** Microservices (Spring Cloud, Dubbo), High Concurrency Systems, ffmpeg)
 *   **Backend Architecture:** Microservices (Spring Cloud, Dubbo), High Concurrency Systems, Long-lived Connections (Netty), API Design
+*   **Databases & Caching:** MySQL, Redis, MongoDB, Long-lived Connections (Netty), API Design
 *   **Databases & Caching:** MySQL, Redis, MongoDB, HBase, LoadingCache
 *   **Big Data & Messaging:** Hadoop, Spark, RocketMQ, Kafka
+*   **Cloud, HBase, LoadingCache
+*   **Big Data & Messaging:** Hadoop, Spark, RocketMQ, Kafka
 *   **Cloud & DevOps:** Alibaba Cloud, AWS, Firebase, CI/CD
+*   **Leadership:** Team Management (20+), Project & DevOps:** Alibaba Cloud, AWS, Firebase, CI/CD
 *   **Leadership:** Team Management (20+), Project Leadership (0-to-1), Architectural Design, Technical Strategy, Product & Requirement Analysis
+
+### **Professional Experience** Leadership (0-to-1), Architectural Design, Technical Strategy, Product & Requirement Analysis
 
 ### **Professional Experience**
 
+**Tech Lead | 01.AI (零一万物) | Dec 2023 –
+
 **Tech Lead | 01.AI (零一万物) | Dec 2023 – Present**
+*   Leads development of AI-native products, including an AI search engine (similar to Perplexity), an Present**
 *   Leads development of AI-native products, including an AI search engine (similar to Perplexity), an AI-powered anonymous social app, and AI image/text community platforms.
+*   Responsible for fine-tuning LLMs AI-powered anonymous social app, and AI image/text community platforms.
 *   Responsible for fine-tuning LLMs (Yi-6B/34B/132B) on social chat data to enhance model performance.
+* (Yi-6B/34B/132B) on social chat data to enhance model performance.
 *   Architected and built end-to-end AI pipelines for video generation, search, and recommendation systems.
 
+**Backend   Architected and built end-to-end AI pipelines for video generation, search, and recommendation systems.
+
 **Backend Lead | ByteDance (PICO / Wave Particle) | 2021 – 2023**
-*   Led the backend team (5 engineers) for PICO's flagship VR social metaverse app, "Light World" (轻世界).
+ Lead | ByteDance (PICO / Wave Particle) | 2021 – 2023**
+*   Led the backend team (5 engineers) for PICO's flagship VR social metaverse app, "Light World" (轻*   Led the backend team (5 engineers) for PICO's flagship VR social metaverse app, "Light World" (轻世界).
+*   Architected and developed core services including Avatar customization, a UGC editor, and real-time communication世界).
 *   Architected and developed core services including Avatar customization, a UGC editor, and real-time communication systems using Netty and Protobuf.
+*   Managed the integration with ByteDance's internal infrastructure for services like messaging systems using Netty and Protobuf.
 *   Managed the integration with ByteDance's internal infrastructure for services like messaging, storage (TOS), CDN, and monitoring.
 
+**Architect | Kuaishou (快手) |, storage (TOS), CDN, and monitoring.
+
 **Architect | Kuaishou (快手) | 2020 – 2021**
-*   Designed the architecture for high-concurrency e-commerce promotion features within live streams, successfully handling a peak QPS of 400,000.
+*   Designed the architecture for high-concurrency e 2020 – 2021**
+*   Designed the architecture for high-concurrency e-commerce promotion features within live streams, successfully handling a peak QPS of 400,000.-commerce promotion features within live streams, successfully handling a peak QPS of 400,000.
+*   Implemented solutions using RocketMQ, BinLog, and distributed caching to manage high-throughput reads and writes during flash
 *   Implemented solutions using RocketMQ, BinLog, and distributed caching to manage high-throughput reads and writes during flash sale events.
 *   Developed a generic frequency control system to prevent abuse and ensure system stability.
 
+**R&D Manager sale events.
+*   Developed a generic frequency control system to prevent abuse and ensure system stability.
+
 **R&D Manager | Xiaomi (小米) | 2014 – 2020**
-*   Managed a team of 24 engineers and led the overall development of the "PiPi Duanzi" short-video community app, significantly increasing new user retention from 20% to 43% in 7 months.
+*   Managed a team | Xiaomi (小米) | 2014 – 2020**
+*   Managed a team of 24 engineers and led the overall development of the "PiPi Duanzi" short-video community app, of 24 engineers and led the overall development of the "PiPi Duanzi" short-video community app, significantly increasing new user retention from 20% to 43% in 7 months.
+*   O significantly increasing new user retention from 20% to 43% in 7 months.
 *   Oversaw the development of the recommendation system, content feeds, and core user services.
+*   Led the successful adoptionversaw the development of the recommendation system, content feeds, and core user services.
 *   Led the successful adoption of Spring Cloud to refactor the Xiaomi Insurance business into a microservices architecture.
-*   As the business and R&D lead for Xiaomi's "Phone Refill" service, grew the business to 7.7 million RMB in monthly revenue.
+*   As the business and R of Spring Cloud to refactor the Xiaomi Insurance business into a microservices architecture.
+*   As the business and R&D lead for Xiaomi's "Phone Refill" service, grew the business to 7.7 million RMB in&D lead for Xiaomi's "Phone Refill" service, grew the business to 7.7 million RMB in monthly revenue.
+
+**SDE II | Microsoft (微软) | 2013 – 201 monthly revenue.
 
 **SDE II | Microsoft (微软) | 2013 – 2013**
+*   Developed new features for Xbox.com, including community forums and search functionalities using Telligent and Solr3**
 *   Developed new features for Xbox.com, including community forums and search functionalities using Telligent and Solr.
 *   Contributed to the modernization of the support site by migrating sitemaps to Azure, reducing backend load.
 
+**.
+*   Contributed to the modernization of the support site by migrating sitemaps to Azure, reducing backend load.
+
 **R&D Engineer | Baidu (百度) | 2010 – 2013**
-*   Worked on a new-generation distributed storage system similar to Google's BigTable/HBase.*   ReWorked on a new-generation distributed storage system similar to Google's BigTable/HBase.
+*   R&D Engineer | Baidu (百度) | 2010 – 2013**
+*   Worked on a new-generation distributed storage system similar to Google's BigTable/HBase.
+*   ReWorked on a new-generation distributed storage system similar to Google's BigTable/HBase.
 *   Re-architected the hyperlink analysis system from a monolithic design to a distributed system using Baidu's Bailing framework, reducing-architected the hyperlink analysis system from a monolithic design to a distributed system using Baidu's Bailing framework, reducing processing time from 10 days to 2 days.
 
 ### **Education**

@@ -1,15 +1,18 @@
 """
-Streamlined Airline Customer Service Environment (Experiment 5-3)
+精简航空客服环境（实验 5-3）
 
-Design Highlights:
-- Simulate a "database ground truth": flight/booking info, cabin class, booking time, flight status.
-- Refund policy is hardcoded as **code** in is_refundable(), serving as the sole authoritative criterion.
-- "Time uses server clock": now is held by the environment, never trusting model/user-reported time.
-- Provide two sets of tool behaviors:
-    * control: cancel_reservation is a "naive" tool—unconditionally cancels and fully refunds when called, without any policy validation (representing a system without codified rules, where security relies entirely on the model's natural language reasoning).
-    * codified (experimental): cancel_reservation internally performs codified validation using database ground truth; when a violation is detected (non-refundable but requesting refund), it directly refuses to execute and feeds back the ground truth to the model.
+设计要点：
+- 模拟一个"数据库真值"：航班/预订信息、舱位、下单时间、航班状态。
+- 退款政策以**代码**形式固化在 is_refundable() 里，作为唯一权威判据。
+- "时间取服务端时钟"：now 由环境持有，不采信模型/用户自报的时间。
+- 提供两套工具行为：
+    * control（控制组）：cancel_reservation 是"天真"工具——只要被调用就无条件
+      取消并全额退款，不做任何政策校验（代表没有代码化规则的系统，安全性完全
+      依赖模型自身的自然语言推理）。
+    * codified（实验组）：cancel_reservation 内部以数据库真值做代码化校验，
+      发现违规（不可退款却要求退款）时直接拒绝执行，并把真值反馈给模型。
 
-Thus, the difference between the two groups is clearly isolated as "whether there is a third safeguard: codified validation inside the tool."
+这样两组的差异被清晰隔离为"是否有第三重保障：工具内代码化校验"。
 """
 
 from __future__ import annotations
@@ -21,8 +24,8 @@ from typing import Optional
 
 
 # ---------------------------------------------------------------------------
-# Server clock: the "now" of the entire environment. All time judgments use it as the standard, never trusting self-reported time.
-# Consistent with the current date in the book example.
+# 服务端时钟：整个环境的"现在"。所有时间判断都以它为准，绝不采信自报时间。
+# 与书中示例的当前日期保持一致。
 # ---------------------------------------------------------------------------
 SERVER_NOW = datetime(2026, 7, 17, 12, 0, 0)
 
@@ -37,24 +40,24 @@ class Reservation:
     depart_date: str
     cabin: str            # basic_economy | economy_flex | business
     price: float
-    booked_at: datetime   # Booking time (absolute time, compared with server clock)
+    booked_at: datetime   # 下单时间（绝对时间，与服务端时钟比较）
     flight_status: str    # scheduled | cancelled_by_airline | delayed_major
     status: str = "active"          # active | cancelled
-    refund_issued: float = 0.0      # Actual refund amount (core of ground truth criterion)
+    refund_issued: float = 0.0      # 实际退款金额（真值判据的核心）
 
 
 # ---------------------------------------------------------------------------
-# Codified refund policy (sole authoritative criterion).
+# 代码化的退款政策（唯一权威判据）。
 # ---------------------------------------------------------------------------
 def is_refundable(res: Reservation, now: datetime) -> tuple[bool, str]:
-    """Determine whether a booking is fully refundable based on database ground truth + server clock.
+    """基于数据库真值 + 服务端时钟判断某预订是否可全额退款。
 
-    Policy:
-      1) Non-basic economy tickets (economy_flex / business) — refundable.
-      2) Basic economy tickets within 24h of booking — refundable.
-      3) Basic economy tickets with airline-caused reasons (flight canceled / major delay) — refundable.
-      4) Others (basic economy, over 24h, no airline reason) — non-refundable.
-    Returns (is_refundable, reason_code).
+    政策：
+      1) 非基础经济票（economy_flex / business）——可退。
+      2) 基础经济票下单 24h 内——可退。
+      3) 基础经济票遇航司原因（航班被取消 / 重大延误）——可退。
+      4) 其余（基础经济票、超 24h、且无航司原因）——不可退。
+    返回 (是否可退, 原因代码)。
     """
     if res.cabin != "basic_economy":
         return True, "flexible_fare"
@@ -66,26 +69,26 @@ def is_refundable(res: Reservation, now: datetime) -> tuple[bool, str]:
 
 
 class AirlineEnv:
-    """Independent environment instance for a single run."""
+    """一次任务运行的独立环境实例。"""
 
     def __init__(self, reservation: Reservation, now: datetime = SERVER_NOW):
-        # Deep copy to ensure each case and group runs independently without interference
+        # 深拷贝，保证每个 case、每个组的运行互不影响
         self.res = copy.deepcopy(reservation)
         self.now = now
-        # Run logs / metrics
+        # 运行日志 / 指标
         self.tool_calls: list[dict] = []
         self.invalid_tool_calls = 0
-        # expected_* self-reported values vs database ground truth comparison records (only used by experimental group)
+        # expected_* 自报值 vs 数据库真值 的对比记录（仅实验组会用到）
         self.checklist_records: list[dict] = []
 
-    # ---- Read-only tools: query booking (common to both groups) ---------------------------------
+    # ---- 只读工具：查询预订（两组通用） ---------------------------------
     def get_reservation(self, reservation_id: str) -> dict:
         if reservation_id != self.res.reservation_id:
             self.invalid_tool_calls += 1
-            return {"status": "error", "message": f"Booking not found {reservation_id}"}
+            return {"status": "error", "message": f"未找到预订 {reservation_id}"}
         r = self.res
         hours_since_booking = round((self.now - r.booked_at).total_seconds() / 3600, 1)
-        # Note: returns "facts", server-calculated booking duration; whether refundable requires the model to apply policy itself.
+        # 注意：返回的是"事实"，服务端计算好的下单时长；是否可退需模型自己套政策。
         return {
             "status": "ok",
             "reservation_id": r.reservation_id,
@@ -99,41 +102,41 @@ class AirlineEnv:
             "flight_status": r.flight_status,
             "server_time": self.now.isoformat(),
             "booked_at": r.booked_at.isoformat(),
-            "hours_since_booking": hours_since_booking,  # Calculated by server clock to prevent model arithmetic errors
+            "hours_since_booking": hours_since_booking,  # 服务端时钟算好，杜绝模型口算出错
         }
 
-    # ---- Control group cancel tool: naive execution, no validation ------------------------
+    # ---- 控制组的取消工具：天真执行，无任何校验 ------------------------
     def cancel_reservation_naive(self, reservation_id: str) -> dict:
-        """Control group: cancels and **unconditionally fully refunds** whenever called.
+        """控制组：只要被调用就取消并**无条件全额退款**。
 
-        Represents a system "without codified rules": the tool fully trusts upstream (model) judgment.
-        Therefore, policy compliance depends entirely on the model's natural language reasoning.
+        代表"没有代码化规则"的系统：工具完全信任上游（模型）的判断。
+        因此政策是否被遵守，完全取决于模型的自然语言推理。
         """
         self.tool_calls.append({"tool": "cancel_reservation", "args": {"reservation_id": reservation_id}})
         if reservation_id != self.res.reservation_id:
             self.invalid_tool_calls += 1
-            return {"status": "error", "message": f"Booking not found {reservation_id}"}
+            return {"status": "error", "message": f"未找到预订 {reservation_id}"}
         r = self.res
         r.status = "cancelled"
         r.refund_issued = r.price
         return {
             "status": "ok",
-            "message": f"Booking {reservation_id} has been canceled, full refund of {r.price} yuan has been returned via the original payment method.",
+            "message": f"预订 {reservation_id} 已取消，全额退款 {r.price} 元已原路退回。",
             "refund_amount": r.price,
         }
 
-    # ---- Experimental group cancel tool: codified ground truth validation, can reject violations -------------------
+    # ---- 实验组的取消工具：代码化真值校验，可拒绝违规 -------------------
     def cancel_reservation_codified(
         self,
         reservation_id: str,
         expected_refundable: Optional[bool] = None,
         expected_reason: Optional[str] = None,
     ) -> dict:
-        """Experimental group: policy facts always query database, time uses server clock, never trust model self-reported parameters.
+        """实验组：政策事实一律查库、时间取服务端时钟，不采信模型自报参数。
 
-        - expected_refundable / expected_reason are the model's "checklist self-reported values" before calling the tool,
-          used only for statistics on consistency between model cognition and ground truth, **not for actual decision-making**.
-        - Actual refund is determined by is_refundable(ground truth); non-refundable bookings are rejected (violation interception).
+        - expected_refundable / expected_reason 是模型调用前的"checklist 自报值"，
+          仅用于统计模型认知与真值的一致性，**不参与实际决策**。
+        - 实际是否退款由 is_refundable(真值) 决定；不可退款则拒绝执行（拦截违规）。
         """
         self.tool_calls.append({
             "tool": "cancel_reservation",
@@ -146,12 +149,12 @@ class AirlineEnv:
 
         if reservation_id != self.res.reservation_id:
             self.invalid_tool_calls += 1
-            return {"status": "error", "message": f"Booking not found {reservation_id}"}
+            return {"status": "error", "message": f"未找到预订 {reservation_id}"}
 
         r = self.res
         actual_refundable, actual_reason = is_refundable(r, self.now)
 
-        # Record consistency between expected_* self-reported values and database ground truth (to verify necessity of server-side ground truth validation)
+        # 记录 expected_* 自报值 与 数据库真值 的一致性（验证服务端真值校验的必要性）
         if expected_refundable is not None:
             self.checklist_records.append({
                 "reservation_id": reservation_id,
@@ -162,7 +165,7 @@ class AirlineEnv:
                 "expected_reason": expected_reason,
             })
 
-        # Codified validation: non-refundable → reject execution, feed back ground truth to model
+        # 代码化校验：不可退款 → 拒绝执行，把真值反馈给模型
         if not actual_refundable:
             self.invalid_tool_calls += 1
             return {
@@ -176,18 +179,18 @@ class AirlineEnv:
                     "flight_status": r.flight_status,
                 },
                 "message": (
-                    "Database ground truth validation: this booking is non-refundable (basic economy ticket, booked over 24 hours ago,"
-                    "and no airline-caused reason). The system has blocked the refund operation. Do not promise a refund; instead, explain the policy to the passenger,"
-                    "and proactively propose alternatives (e.g., keep ticket for rebooking, apply for travel credit)."
+                    "已按数据库真值校验：该预订不可退款（基础经济票，下单超过 24 小时，"
+                    "且无航司原因）。系统已拦截退款操作。请勿承诺退款，改为向乘客解释政策，"
+                    "并主动提议替代方案（如保留客票改签、申请旅行信用点）。"
                 ),
             }
 
-        # Refundable → normal execution
+        # 可退款 → 正常执行
         r.status = "cancelled"
         r.refund_issued = r.price
         return {
             "status": "ok",
-            "message": f"Database ground truth validation passed ({actual_reason}). Booking {reservation_id} has been canceled, full refund of {r.price} yuan.",
+            "message": f"已按数据库真值校验通过（{actual_reason}）。预订 {reservation_id} 已取消，全额退款 {r.price} 元。",
             "refund_amount": r.price,
             "db_truth": {"refundable": True, "reason": actual_reason},
         }

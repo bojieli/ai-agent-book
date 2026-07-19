@@ -1,124 +1,144 @@
-# Experiment 2-6: Generating a Presentation from a Paper Using Agent Skills
+# 实验 2-6：使用 Agent Skills 从论文生成演示文稿
 
-Accompanying experiment 2-6 (★★) from Chapter 2 of "Deep Understanding of AI Agents" – "Dynamic Prompts and Agent Skills".
+配套《深入理解 AI Agent》第二章「动态提示词与 Agent Skills」一节的实验 2-6（★★）。
 
-## Purpose
+## 目的
 
-Validate the core proposition of the book: **An Agent can complete complex tasks by loading specialized domain Skills on demand through "Progressive Disclosure," without needing to cram all knowledge into the system prompt at once.**
+验证书中的核心命题：**Agent 通过「渐进式披露（Progressive Disclosure）」按需加载
+专业领域 Skill，即可完成复杂任务，而无需把所有知识一次性塞进系统提示词。**
 
-This demo has an Agent generate an 8-12 page PowerPoint from a (bundled) condensed paper. The Agent starts with **only a thin Skill catalog**. Only after it identifies that the task requires the `pptx` Skill does it progressively load that Skill's full workflow, sub-documents, and bundled scripts, finally generating a real `.pptx` file using **python-pptx**.
+本 demo 让一个 Agent 从一篇（自带的）精简论文生成一份 8-12 页的 PowerPoint。
+Agent 启动时**只看到一份薄 Skill 目录**，当它识别出任务需要 `pptx` Skill 后，
+才逐层加载该 Skill 的完整流程、子文档与捆绑脚本，最后用 **python-pptx** 生成真实
+的 `.pptx` 文件。
 
-## Relationship with the Anthropic PPTX Skill
+## 与 Anthropic PPTX Skill 的关系
 
-The original experiment in the book runs on **Claude Code + the official Anthropic PPTX Skill**. Since the Anthropic key for the current environment is invalid, this project **builds its own isomorphic Skills mechanism** to reproduce the same concept, rather than calling Anthropic:
+书中原实验跑在 **Claude Code + Anthropic 官方 PPTX Skill** 上。由于当前环境的
+Anthropic key 无效，本项目**自建了一套同构的 Skills 机制**来复现同样的思想，
+而非调用 Anthropic：
 
-| Dimension | Anthropic PPTX Skill (in book) | This Project (Self-built Isomorphic Version) |
-|-----------|-------------------------------|----------------------------------------------|
-| Runtime | Claude Code | Python + OpenAI SDK (`gpt-5.6-luna`) |
-| Layer 1 · Metadata | Inject all Skill names+descriptions at startup | `scan_skill_catalog()` reads only frontmatter, appends to system prompt |
-| Layer 2 · Core Workflow | Skill tool loads the full `SKILL.md` | `read_skill` tool loads `skills/pptx/SKILL.md` |
-| Layer 3 · Details | References `html2pptx.md` / `reference.md` | `read_skill_file` reads `reference.md` / script source code |
-| Bundled Scripts | `scripts/thumbnail.py`, etc. | `scripts/generate_pptx.py` (python-pptx generator) |
+| 维度 | Anthropic PPTX Skill（书中） | 本项目（自建同构版） |
+|------|------------------------------|----------------------|
+| 运行时 | Claude Code | Python + OpenAI SDK（`gpt-5.6-luna`） |
+| 第一层·元数据 | 启动注入所有 Skill 的 name+description | `scan_skill_catalog()` 只读 frontmatter 拼进 system prompt |
+| 第二层·核心流程 | Skill 工具加载完整 `SKILL.md` | `read_skill` 工具加载 `skills/pptx/SKILL.md` |
+| 第三层·细则 | 引用 `html2pptx.md` / `reference.md` | `read_skill_file` 读 `reference.md` / 脚本源码 |
+| 捆绑脚本 | `scripts/thumbnail.py` 等 | `scripts/generate_pptx.py`（python-pptx 生成器） |
 
-The mechanisms correspond one-to-one, simply replacing "Claude's built-in Skill loader" with several explicit read/execute tools. This allows a genuine demonstration of the three-layer progressive disclosure process without requiring Anthropic access.
+机制一一对应，只是把「Claude 内置的 Skill 加载器」换成了几个显式的读取/执行工具，
+从而在没有 Anthropic 访问权限时，依然能真实演示渐进式披露的三层加载过程。
 
-> Note: This project primarily uses OpenAI (default model gpt-5.6-luna). **General fallback**: If `OPENAI_API_KEY` is not set, as long as `OPENROUTER_API_KEY` is configured, it will automatically switch to OpenRouter (`gpt-*` maps to `openai/…`). Behavior is completely unchanged when `OPENAI_API_KEY` is set.
+> 说明：本项目主用 OpenAI（默认模型 gpt-5.6-luna）。**通用回退**：未设置
+> `OPENAI_API_KEY` 时，只要配置了 `OPENROUTER_API_KEY`，会自动改走 OpenRouter
+> （`gpt-*` 映射为 `openai/…`）。设置了 `OPENAI_API_KEY` 时行为完全不变。
 
-## Three-Layer Structure of Progressive Disclosure
+## 渐进式披露的三层结构
 
 ```
 skills/
 └── pptx/
-    ├── SKILL.md              # Layer 1: Top YAML frontmatter (name+description) – Only this enters the system prompt
-    │                         # Layer 2: Core workflow in the body – Loaded only when read_skill is called
-    ├── reference.md          # Layer 3: Layout/color/technical details – Loaded only when read_skill_file is called
+    ├── SKILL.md              # 第一层：顶部 YAML frontmatter(name+description) —— 只有它进 system prompt
+    │                         # 第二层：正文核心流程 —— read_skill 时才加载
+    ├── reference.md          # 第三层：版式/配色/技术细则 —— read_skill_file 时才加载
     └── scripts/
-        └── generate_pptx.py  # Bundled executable script – Executed only when run_skill_script is called
+        └── generate_pptx.py  # 捆绑可执行脚本 —— run_skill_script 时才执行
 ```
 
-- **Layer 1 (Metadata)**: At Agent startup, the `system prompt` contains only each Skill's `name + description` (a few hundred tokens). At this point, it doesn't know how to make a PPT.
-- **Layer 2 (Core Workflow)**: The Agent determines the task needs `pptx`, calls `read_skill("pptx")` to load the full `SKILL.md` as a tool result into the context, obtaining the slide sequence plan and script invocation conventions.
-- **Layer 3 (Details)**: If implementation/style details are needed, the Agent uses `read_skill_file("pptx", "reference.md")` or reads the script source code.
-- **Execution**: The Agent organizes the slide outline JSON, calls the bundled `generate_pptx.py` via `run_skill_script`, and uses python-pptx to produce `output/presentation.pptx`.
+- **第一层（元数据）**：Agent 启动时，`system prompt` 里只有各 Skill 的
+  `name + description`（约数百 token）。此刻它并不知道怎么做 PPT。
+- **第二层（核心流程）**：Agent 判断任务需要 `pptx`，调用 `read_skill("pptx")`
+  把完整 `SKILL.md` 作为 tool result 载入上下文，得到页序规划与脚本调用约定。
+- **第三层（细则）**：如需实现/样式细节，Agent 再用
+  `read_skill_file("pptx", "reference.md")` 或读取脚本源码。
+- **执行**：Agent 组织好幻灯片大纲 JSON，通过 `run_skill_script` 调用捆绑的
+  `generate_pptx.py`，用 python-pptx 落地为 `output/presentation.pptx`。
 
-## Running
+## 运行
 
 ```bash
 pip install -r requirements.txt
-cp env.example .env        # Or directly export
-export OPENAI_API_KEY=sk-...   # Default model gpt-5.6-luna, can be overridden with OPENAI_MODEL
+cp env.example .env        # 或直接 export
+export OPENAI_API_KEY=sk-...   # 默认模型 gpt-5.6-luna，可用 OPENAI_MODEL 覆盖
 python demo.py
-python demo.py --paper papers/your_paper.md    # Use a different paper/outline
-python demo.py -o output/deck.pptx --model gpt-5.6-luna   # Specify output path / model
-python demo.py --help                          # View all parameters
+python demo.py --paper papers/your_paper.md    # 换一篇论文/大纲
+python demo.py -o output/deck.pptx --model gpt-5.6-luna   # 指定输出路径 / 模型
+python demo.py --help                          # 查看全部参数
 ```
 
-A single command `python demo.py` runs the full process: it makes a real call to OpenAI, prints each step of progressive disclosure, generates `output/presentation.pptx`, and reopens the file with python-pptx to read back the page count and each page's title for validation.
+一条命令 `python demo.py` 即可跑通：真实调用 OpenAI，打印渐进式披露的每一步，
+生成 `output/presentation.pptx`，并用 python-pptx 重新打开该文件读回页数与每页标题
+作为校验。
 
-### Command Line Arguments
+### 命令行参数
 
-| Argument | Default | Description |
-|----------|---------|-------------|
-| `--paper` | `papers/sample_paper.md` | Input paper/outline (markdown) path |
-| `--output` / `-o` | `output/presentation.pptx` | Output `.pptx` path |
-| `--model` | `OPENAI_MODEL` or `gpt-5.6-luna` | OpenAI model name |
-| `--max-turns` | `8` | Maximum turns for the agentic loop |
-| `--offline` | Off | Offline demo, does not call OpenAI (see below) |
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `--paper` | `papers/sample_paper.md` | 输入论文/大纲（markdown）路径 |
+| `--output` / `-o` | `output/presentation.pptx` | 输出 `.pptx` 路径 |
+| `--model` | `OPENAI_MODEL` 或 `gpt-5.6-luna` | OpenAI 模型名 |
+| `--max-turns` | `8` | agentic loop 的最大轮数 |
+| `--offline` | 关 | 离线演示，不调用 OpenAI（见下） |
 
-### Offline Mode (No API Key Required, Reproducible)
+### 离线模式（无需 API key，可复现）
 
-Without an OpenAI key, use `--offline` to run the same three-layer progressive disclosure: it reads the built-in outline `papers/sample_outline.json`, goes through **the exact same tool channels as the online version** (`read_skill` → `read_skill_file` → `run_skill_script`), and deterministically generates and validates the pptx. The only difference is that "which Skill to use" and "what the outline contains" are given by pre-set files, rather than decided by the model in real-time. Therefore, it is suitable as a reproducible teaching demo and smoke test.
+没有 OpenAI key 时，用 `--offline` 即可跑通同一套三层渐进式披露：它读取内置大纲
+`papers/sample_outline.json`，走**与在线完全相同**的工具通道
+（`read_skill` → `read_skill_file` → `run_skill_script`）确定性地生成并校验 pptx。
+唯一区别是「用哪个 Skill、大纲写什么」由预置文件给定，而非模型即时决策——因此它
+适合作为可复现的教学演示与冒烟测试。
 
 ```bash
-python demo.py --offline                       # Generates output/presentation.pptx, no network required
-python demo.py --offline -o output/deck.pptx   # Specify output path
+python demo.py --offline                       # 生成 output/presentation.pptx，全程无网络
+python demo.py --offline -o output/deck.pptx   # 指定输出路径
 ```
 
-The bundled script can also run independently of the Agent, directly converting an outline JSON to pptx:
+捆绑脚本本身也可脱离 Agent 单独运行，直接把大纲 JSON 落地为 pptx：
 
 ```bash
 python skills/pptx/scripts/generate_pptx.py papers/sample_outline.json output/deck.pptx
 ```
 
-## Real Run Output (Excerpt)
+## 真实运行输出（节选）
 
 ```
-[Layer 1 · Metadata] Agent starts with only this thin Skill catalog (system prompt):
-== Installed Skills (Thin Catalog, Metadata Only) ==
-- pptx: Generate PowerPoint from paper... Use when... Don't use when...
+【第一层·元数据】Agent 启动时只看到这份薄 Skill 目录（system prompt）：
+== 已安装的 Skills（薄目录，仅元数据）==
+- pptx: 从论文...生成 PowerPoint...Use when...Don't use when...
 
-[Agent Round 1] Tool call -> read_skill(name=pptx)
-  >>> [Progressive Disclosure · Layer 2] Loading full SKILL.md (1150 characters)
-[Agent Round 2] Tool call -> read_skill_file(name=pptx, path=scripts/generate_pptx.py)
-  >>> [Progressive Disclosure · Layer 3] Loading sub-document (4270 characters)
-[Agent Round 3] Tool call -> run_skill_script(name=pptx, script=generate_pptx.py, ...)
-  >>> Generating presentation.pptx ...
+[Agent 第 1 轮] 调用工具 -> read_skill(name=pptx)
+  >>> [渐进式披露·第二层] 加载完整 SKILL.md（1150 字符）
+[Agent 第 2 轮] 调用工具 -> read_skill_file(name=pptx, path=scripts/generate_pptx.py)
+  >>> [渐进式披露·第三层] 加载子文档（4270 字符）
+[Agent 第 3 轮] 调用工具 -> run_skill_script(name=pptx, script=generate_pptx.py, ...)
+  >>> 生成 presentation.pptx ...
 
-[Validation] Reopening the generated file with python-pptx, reading page count and titles:
-Total pages: 9
-  Page  1 title: Condensed Paper: The Impact of Progressive Disclosure Agent Skills on Context Efficiency
-  Page  2 title: Table of Contents
-  Page  3 title: Research Background and Problem
-  Page  4 title: Method Overview (General Approach)
+【校验】用 python-pptx 重新打开生成的文件，读回页数与每页标题：
+总页数: 9
+  第  1 页标题: 精简论文：渐进式披露式 Agent Skills 对上下文效率的影响
+  第  2 页标题: 目录
+  第  3 页标题: 研究背景与问题
+  第  4 页标题: 方法概述（总体思路）
   ...
-  Page  9 title: Summary
-Validation passed: This is a valid .pptx (9 pages) that can be opened by python-pptx / PowerPoint.
+  第  9 页标题: 小结
+校验通过：这是一个可被 python-pptx / PowerPoint 打开的有效 .pptx（9 页）。
 ```
 
-(The page count and titles are planned by the model in real-time and may vary slightly between runs, but will always fall within the 8-12 page range.)
+（页数/标题由模型即时规划，每次运行可能略有差异，但均落在 8-12 页区间。）
 
-## File Descriptions
+## 文件说明
 
-| File | Purpose |
-|------|---------|
-| `demo.py` | Main program: scan thin catalog → agentic loop → progressive disclosure → generate and validate pptx |
-| `skills/pptx/SKILL.md` | pptx Skill: frontmatter (metadata) + core workflow |
-| `skills/pptx/reference.md` | Layer 3 details: layout/color/python-pptx technical points |
-| `skills/pptx/scripts/generate_pptx.py` | Bundled generator, uses python-pptx to create .pptx from an outline |
-| `papers/sample_paper.md` | Bundled condensed paper/outline (online mode input) |
-| `papers/sample_outline.json` | Built-in slide outline (offline mode input, also serves as a payload schema example) |
-| `output/presentation.pptx` | Generated presentation (output, created after running) |
+| 文件 | 作用 |
+|------|------|
+| `demo.py` | 主程序：扫描薄目录 → agentic loop → 渐进式披露 → 生成并校验 pptx |
+| `skills/pptx/SKILL.md` | pptx Skill：frontmatter（元数据）+ 核心流程 |
+| `skills/pptx/reference.md` | 第三层细则：版式/配色/python-pptx 技术点 |
+| `skills/pptx/scripts/generate_pptx.py` | 捆绑生成器，用 python-pptx 从大纲生成 .pptx |
+| `papers/sample_paper.md` | 自带的精简论文/大纲（在线模式输入） |
+| `papers/sample_outline.json` | 内置幻灯片大纲（离线模式输入，同时是 payload schema 的范例） |
+| `output/presentation.pptx` | 生成的演示文稿（输出，运行后产生） |
 
-## Using a Different Paper
+## 换一篇论文
 
-Replace `papers/sample_paper.md` with your own paper/outline (markdown), or simply specify the path directly with `python demo.py --paper your_paper.md`.
+把 `papers/sample_paper.md` 替换为你自己的论文/大纲（markdown），或直接
+`python demo.py --paper 你的论文.md` 指定路径即可。

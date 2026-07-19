@@ -1,11 +1,11 @@
 """
-github_mcp.py —— GitHub Issue Creation (default mock, optional real MCP)
+github_mcp.py —— GitHub Issue 创建（默认 mock，可选真实 MCP）
 
-- mock (default): renders "Create Issue" as the Issue structure to be submitted, prints it and writes to a local file,
-  no network access, no token required.
-- real (mock=False, requires GITHUB_TOKEN + GITHUB_REPO): connects to the official
-  GitHub MCP Server (stdio) via the MCP protocol, calls its `create_issue` tool to create an Issue in a real repository.
-  For safety, real creation must be explicitly enabled by demo.py's --create-issue.
+- mock（默认）：把"创建 Issue"渲染成将要提交的 Issue 结构，打印并写入本地文件，
+  不联网、不需要 token。
+- 真实（mock=False，需 GITHUB_TOKEN + GITHUB_REPO）：通过 MCP 协议连接官方
+  GitHub MCP Server（stdio），调用其 `create_issue` 工具在真实仓库创建 Issue。
+  出于安全，真实创建须由 demo.py 的 --create-issue 显式开启。
 """
 
 import json
@@ -16,36 +16,36 @@ from typing import Dict, Any, List
 
 _OUT = os.path.join(os.path.dirname(__file__), "output", "github_issues.json")
 
-# Default startup command for the official GitHub MCP Server (can be overridden with GITHUB_MCP_COMMAND).
-# Default runs the official image with Docker; can also be replaced with any MCP Server that exposes the create_issue tool.
+# 官方 GitHub MCP Server 的默认启动命令（可用 GITHUB_MCP_COMMAND 覆盖）。
+# 默认用 Docker 运行官方镜像；也可换成任何暴露 create_issue 工具的 MCP Server。
 _DEFAULT_MCP_COMMAND = (
     "docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server")
 
-# Priority -> GitHub label mapping
+# 优先级 -> GitHub label 的映射
 _PRIORITY_LABEL = {"P0": "priority:critical", "P1": "priority:high",
                    "P2": "priority:medium", "P3": "priority:low"}
 
 
 def build_issue(problem: Dict[str, Any], test_cases: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Renders a diagnostic issue + associated regression test case into a GitHub Issue structure."""
+    """把一条诊断问题 + 关联回归测试用例，渲染成 GitHub Issue 结构。"""
     prio = problem.get("priority", "P2")
     module = problem.get("module", "unknown")
     related = [tc for tc in test_cases
                if tc.get("trajectory_id") in problem.get("trajectory_ids", [])]
 
     body_lines = [
-        f"## Problem Description\n{problem.get('description', '')}",
-        f"\n## Involved Modules\n`{module}`",
-        f"\n## Priority\n{prio}",
-        f"\n## Improvement Suggestions\n{problem.get('suggestion', '')}",
-        f"\n## Related Production Traces\n" + ", ".join(problem.get("trajectory_ids", []) or ["(None)"]),
+        f"## 问题描述\n{problem.get('description', '')}",
+        f"\n## 涉及模块\n`{module}`",
+        f"\n## 优先级\n{prio}",
+        f"\n## 改进建议\n{problem.get('suggestion', '')}",
+        f"\n## 相关生产轨迹\n" + ", ".join(problem.get("trajectory_ids", []) or ["(无)"]),
     ]
     if related:
-        body_lines.append("\n## Associated Regression Test Cases")
+        body_lines.append("\n## 关联回归测试用例")
         for tc in related:
             body_lines.append(
-                f"- `{tc.get('test_id')}` (Trace {tc.get('trajectory_id')} "
-                f"Round {tc.get('focus_turn')}): {tc.get('description', '')}")
+                f"- `{tc.get('test_id')}` (轨迹 {tc.get('trajectory_id')} "
+                f"第 {tc.get('focus_turn')} 轮): {tc.get('description', '')}")
 
     return {
         "title": f"[{prio}][{module}] {problem.get('title', problem.get('description', ''))[:60]}",
@@ -59,10 +59,10 @@ def build_issue(problem: Dict[str, Any], test_cases: List[Dict[str, Any]]) -> Di
 def create_issues(problems: List[Dict[str, Any]], test_cases: List[Dict[str, Any]],
                   mock: bool = True, out_path: str = _OUT,
                   repo: str = None, token: str = None) -> List[Dict[str, Any]]:
-    """Create an Issue for each problem.
+    """为每条问题创建 Issue。
 
-    mock=True (default): print + write to out_path, no network.
-    mock=False: create Issues in a real repository (owner/repo) via GitHub MCP Server, requires token.
+    mock=True（默认）：打印 + 落盘到 out_path，不联网。
+    mock=False：通过 GitHub MCP Server 在 repo（owner/repo）真实创建 Issue，需 token。
     """
     issues = [build_issue(p, test_cases) for p in problems]
 
@@ -72,7 +72,7 @@ def create_issues(problems: List[Dict[str, Any]], test_cases: List[Dict[str, Any
                    "mode": "mock", "issues": issues}
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False, indent=2)
-        print(f"\n[github_mcp:mock] Wrote {len(issues)} Issues to {out_path}")
+        print(f"\n[github_mcp:mock] 已将 {len(issues)} 个 Issue 写入 {out_path}")
         for i, iss in enumerate(issues, 1):
             print(f"\n----- Mock GitHub Issue #{i} -----")
             print(f"title  : {iss['title']}")
@@ -83,9 +83,9 @@ def create_issues(problems: List[Dict[str, Any]], test_cases: List[Dict[str, Any
     else:
         if not token or not repo:
             raise RuntimeError(
-                "Real creation requires GITHUB_TOKEN and GITHUB_REPO (owner/repo), see README.")
+                "真实创建需 GITHUB_TOKEN 与 GITHUB_REPO(owner/repo)，见 README。")
         created = _create_issues_via_mcp(issues, repo=repo, token=token)
-        print(f"\n[github_mcp] Created {repo} Issues via MCP in {len(created)}: ")
+        print(f"\n[github_mcp] 通过 MCP 在 {repo} 创建了 {len(created)} 个 Issue：")
         for url in created:
             print(f"    {url}")
 
@@ -93,23 +93,23 @@ def create_issues(problems: List[Dict[str, Any]], test_cases: List[Dict[str, Any
 
 
 def _create_issues_via_mcp(issues: List[Dict[str, Any]], repo: str, token: str) -> List[str]:
-    """Connect to the official GitHub MCP Server via stdio, call create_issue tool one by one.
+    """通过 stdio 连接官方 GitHub MCP Server，逐个调用 create_issue 工具。
 
-    Returns a list of successfully created Issue URLs. Requires the `mcp` Python SDK and an available
-    GitHub MCP Server (default Docker image, startup command can be overridden with GITHUB_MCP_COMMAND).
+    返回创建成功的 Issue URL 列表。需要已安装 `mcp` Python SDK 与可用的
+    GitHub MCP Server（默认 Docker 镜像，可用 GITHUB_MCP_COMMAND 覆盖启动命令）。
     """
     import asyncio
 
     try:
         from mcp import ClientSession, StdioServerParameters
         from mcp.client.stdio import stdio_client
-    except ImportError as e:  # pragma: no cover - provide clear guidance when dependencies are missing
+    except ImportError as e:  # pragma: no cover - 依赖缺失时给出清晰指引
         raise RuntimeError(
-            "Missing MCP client: pip install mcp (and ensure GitHub MCP Server can be started)") from e
+            "缺少 MCP 客户端：pip install mcp（并确保 GitHub MCP Server 可启动）") from e
 
     owner, _, name = repo.partition("/")
     if not owner or not name:
-        raise RuntimeError(f"GITHUB_REPO must be in the form owner/repo, received: {repo!r}")
+        raise RuntimeError(f"GITHUB_REPO 需形如 owner/repo，收到：{repo!r}")
 
     cmd = shlex.split(os.getenv("GITHUB_MCP_COMMAND", _DEFAULT_MCP_COMMAND))
     params = StdioServerParameters(
@@ -128,7 +128,7 @@ def _create_issues_via_mcp(issues: List[Dict[str, Any]], repo: str, token: str) 
                         "labels": iss["labels"],
                         "assignees": iss["assignees"],
                     })
-                    # MCP tool returns text content; try to extract Issue URL, otherwise fall back to raw text.
+                    # MCP 工具返回文本内容；尽力提取 Issue URL，否则回退为原始文本。
                     text = "".join(getattr(c, "text", "") for c in result.content)
                     url = text
                     try:

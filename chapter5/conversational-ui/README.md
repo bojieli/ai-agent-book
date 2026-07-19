@@ -1,190 +1,192 @@
-# Experiment 5-11: Conversational Interface Customization System (★★)
+# 实验 5-11：对话式界面定制系统（★★）
 
-Users propose UI customization requirements (colors / fonts / text / layout / component positions) using **natural language**,
-the Agent autonomously **locates and modifies the frontend source code**, and the **Hot Module Replacement (HMR)** in development mode makes changes take effect instantly,
-supporting multi-round iterative customization.
+用户用**自然语言**提出 UI 定制需求（颜色 / 字体 / 文案 / 布局 / 组件位置），
+Agent 自主**定位并修改前端源码**，开发模式下的**热加载（HMR）**让改动即时生效，
+支持多轮迭代定制。
 
-## Purpose
+## 目的
 
-Transform a "one-size-fits-all" standard frontend into a "thousand faces for thousand users" conversational customizable interface:
+把"一刀切"的标准前端，变成"千人千面"的可对话定制界面：
 
-- Basic chatbot application = **React(Vite) frontend + FastAPI backend**;
-- Both frontend and backend run in development mode: frontend Vite **HMR**, backend uvicorn **--reload**;
-- User says "change the send button to blue / switch to monospace font / change the title to XXX",
-  Agent (OpenAI, default `gpt-5.6-luna`; if `OPENAI_API_KEY` is not configured, set `OPENROUTER_API_KEY` to automatically switch to OpenRouter) understands the requirement → modifies source files in `frontend/src`;
-- Hot reload detects file changes, the browser sees interface changes without a full page refresh.
+- 基础 chatbot 应用 = **React(Vite) 前端 + FastAPI 后端**；
+- 前后端都跑在开发模式：前端 Vite **HMR**、后端 uvicorn **--reload**；
+- 用户说"把发送按钮改成蓝色 / 换成等宽字体 / 标题改成 XXX"，
+  Agent（OpenAI，默认 `gpt-5.6-luna`；未配置 `OPENAI_API_KEY` 时设 `OPENROUTER_API_KEY` 自动改走 OpenRouter）读懂需求 → 改 `frontend/src` 里的源码文件；
+- 热加载检测到文件变化，浏览器无需整页刷新即可看到界面变化。
 
-## Principle / Architecture (Brief)
+## 原理 / 架构（简述）
 
-The entire system consists of four parts, each with its own role:
+整个系统由四部分组成，各司其职：
 
-- **`agent.py` (Customization Agent)**: The core. Feeds one natural language requirement + the current editable source code to OpenAI,
-  uses the `apply_edits` tool via function calling to let the model return the "rewritten full file content".
-  Only exposes whitelisted files (`src/App.jsx`, `src/theme.css`) to the model, and validates the path after return,
-  preventing the model from modifying/adding incorrect files. It only produces the rewriting plan, **does not write to disk** (facilitates diff display and validation).
-- **`baseline/src/` (Baseline Snapshot)**: The "factory original" of the frontend source code. `demo.py` copies it back to `frontend/src` before each round,
-  ensuring repeatable results across multiple runs without cross-contamination—this also serves as the comparison baseline for the Agent's changes versus the original interface.
-- **`frontend/` (React + Vite Frontend)**: The object being customized. The Agent modifies `src/*` here;
-  Vite **HMR** in development mode makes changes instantly visible, `vite build` is used to verify "changes didn't break the application".
-- **`backend/` (FastAPI Backend)**: Minimal chatbot service (`/api/chat`), providing a conversational carrier for the frontend;
-  default **echo** mode (works out of the box, no API Key required), or use `--model` to switch to **real LLM conversation** with one command;
-  comes with a command-line entry point (`python main.py --help`), `--reload` demonstrates "backend hot reload". It does not participate in UI customization,
-  it is a supporting role to make the entire interface actually run.
+- **`agent.py`（定制 Agent）**：核心。把一条自然语言需求 + 当前可编辑源码喂给 OpenAI，
+  用 function calling 的 `apply_edits` 工具让模型返回"改写后的文件全文"。
+  只暴露白名单文件（`src/App.jsx`、`src/theme.css`）给模型，并在返回后校验路径，
+  防止模型改错/新增文件。它只产出改写方案，**不落盘**（便于展示 diff 与验证）。
+- **`baseline/src/`（基线快照）**：前端源码的"出厂原样"。`demo.py` 每轮开始前把它
+  拷回 `frontend/src`，保证多次运行结果可重复、互不污染——这也是 Agent 改动与
+  原始界面做 diff 的对照基准。
+- **`frontend/`（React + Vite 前端）**：被定制的对象。Agent 改的就是这里的 `src/*`；
+  开发模式下 Vite **HMR** 让改动即时可见，`vite build` 用于验证"改动没破坏应用"。
+- **`backend/`（FastAPI 后端）**：最小 chatbot 服务（`/api/chat`），为前端提供可对话的载体；
+  默认 **echo 回声**模式（开箱即用、无需任何 Key），也可用 `--model` 一键切到**真实 LLM 对话**；
+  自带命令行入口（`python main.py --help`），`--reload` 演示"后端热加载"。它不参与 UI 定制，
+  是让整套界面能真实跑起来的配角。
 
-In one sentence: **Agent reads requirement → modifies frontend source code → asserts changes take effect + build is not broken**,
-`baseline` ensures repeatability, `backend` enables the interface to actually converse.
+一句话：**Agent 读需求 → 改前端源码 → 断言改动生效 + 构建不破坏**，
+`baseline` 保证可重复，`backend` 让界面能真实对话。
 
-## About Hot Module Replacement (HMR)
+## 关于热加载（HMR）
 
-- **Frontend**: The Vite dev server started with `npm run dev` has built-in HMR. As soon as the Agent modifies `src/*.jsx`
-  or `src/theme.css`, the browser performs a local hot replacement, preserving application state, and the interface updates instantly.
-- **Backend**: `uvicorn main:app --reload` monitors `.py` changes and restarts automatically.
-- The customization in this experiment mainly targets the frontend source code, so the visual effect is reflected through frontend HMR.
+- **前端**：`npm run dev` 启动的 Vite dev server 自带 HMR。Agent 一改 `src/*.jsx`
+  或 `src/theme.css`，浏览器局部热替换、保留应用状态，界面即时更新。
+- **后端**：`uvicorn main:app --reload` 监听 `.py` 变化自动重启。
+- 本实验的定制主要作用于前端源码，所以视觉效果靠前端 HMR 体现。
 
-## Directory Structure
+## 目录结构
 
 ```
 conversational-ui/
-├── frontend/                 # React + Vite frontend (basic chatbot interface)
-│   ├── src/App.jsx           #   Interface and UI text (Agent modifies "text/components")
-│   ├── src/theme.css         #   Color/font/layout styles (Agent modifies "styles")
+├── frontend/                 # React + Vite 前端（基础 chatbot 界面）
+│   ├── src/App.jsx           #   界面与 UI 文案（Agent 改"文案/组件"）
+│   ├── src/theme.css         #   颜色/字体/布局样式（Agent 改"样式"）
 │   ├── src/main.jsx
 │   ├── index.html
-│   ├── vite.config.js        #   Enables HMR + /api proxy to backend
+│   ├── vite.config.js        #   开启 HMR + /api 代理到后端
 │   └── package.json
 ├── backend/
-│   ├── main.py               # FastAPI backend (/api/chat)
+│   ├── main.py               # FastAPI 后端（/api/chat）
 │   └── requirements.txt
-├── baseline/src/             # Initial snapshot of frontend source code (restored before each demo run, ensuring repeatability)
-├── agent.py                  # Customization Agent: NL requirement → rewrites source code using OpenAI
-├── demo.py                   # End-to-end demo + automatic validation (NL→code→assertion→build)
-├── requirements.txt          # Backend + Agent dependencies
+├── baseline/src/             # 前端源码初始快照（demo 每次运行前恢复，保证可重复）
+├── agent.py                  # 定制 Agent：NL 需求 → 用 OpenAI 改写源码
+├── demo.py                   # 端到端演示 + 自动验证（NL→代码→断言→构建）
+├── requirements.txt          # 后端 + Agent 依赖
 ├── env.example
-└── .gitignore                # node_modules / dist / .env are all ignored
+└── .gitignore                # node_modules / dist / .env 均已忽略
 ```
 
-## How to Run
+## 运行方式
 
-### 1) Prepare Environment
+### 1) 准备环境
 
 ```bash
-# Python dependencies (Agent + Backend)
+# Python 依赖（Agent + 后端）
 pip install -r requirements.txt
 
-# Frontend dependencies (first npm install may be slow, which is normal)
+# 前端依赖（首次 npm install 较慢属正常）
 cd frontend && npm install && cd ..
 
-# Configure OpenAI Key
-cp env.example .env   # Then fill in OPENAI_API_KEY (or set OPENROUTER_API_KEY as fallback)
+# 配置 OpenAI Key
+cp env.example .env   # 然后填入 OPENAI_API_KEY（或设 OPENROUTER_API_KEY 兜底）
 ```
 
-### 2) Automated Validation Loop (No Browser Required)
+### 2) 自动验证闭环（无需浏览器）
 
 ```bash
-python demo.py            # Run all 3 customization rounds with full validation
-python demo.py --quick    # Run only round 1 (saves time, for quick smoke test)
-python demo.py --rounds 2 # Run only the first 2 rounds
-python demo.py --no-build # Skip vite build (only verify "changes are correctly applied", faster)
-python demo.py -h         # View all parameters
+python demo.py            # 跑全部 3 轮定制并做完整验证
+python demo.py --quick    # 只跑第 1 轮（省时，用于快速冒烟）
+python demo.py --rounds 2 # 只跑前 2 轮
+python demo.py --no-build # 跳过 vite build（仅验证"改动被正确应用"，更快）
+python demo.py -h         # 查看全部参数
 ```
 
-`demo.py` will run 3 consecutive rounds of natural language customization. Each round:
-Calls real OpenAI to rewrite source code → prints the diff of changes → reads back the source code and asserts "changes meet requirements" →
-`vite build` verifies "application is not broken". The first round is often slower due to `npm install` or the initial build;
-for a quick test, use `--quick` or `--no-build`.
+`demo.py` 会连续跑 3 轮自然语言定制，每轮：
+调用真实 OpenAI 改写源码 → 打印改动 diff → 读回源码断言"改动符合需求" →
+`vite build` 验证"没破坏应用"。首轮较慢多因 `npm install` 或首次构建，
+想快速验证可用 `--quick` 或 `--no-build`。
 
-### 3) Manual Experience of Real HMR (Optional, Requires Browser)
+### 3) 手动体验真实 HMR（可选，需要浏览器）
 
 ```bash
-# Terminal A: Backend (hot reload). Both startup methods behave identically, choose either:
-cd backend && python main.py --reload --port 8000          # This file has its own command-line entry point
-#   Or: cd backend && uvicorn main:app --reload --port 8000   # Example from the book
-#   To make the running chatbot actually talk (instead of echo): add --model gpt-5.6-luna (requires OPENAI_API_KEY or OPENROUTER_API_KEY)
+# 终端 A：后端（热加载）。两种启动方式行为一致，任选其一：
+cd backend && python main.py --reload --port 8000          # 本文件自带命令行入口
+#   或： cd backend && uvicorn main:app --reload --port 8000   # 书中示例写法
+#   想让运行起来的 chatbot 真会说话（而非回声）：加 --model gpt-5.6-luna（需 OPENAI_API_KEY 或 OPENROUTER_API_KEY）
 
-# Terminal B: Frontend (HMR)
+# 终端 B：前端（HMR）
 cd frontend && npm run dev
-# Open http://localhost:5173
+# 打开 http://localhost:5173
 
-# Terminal C: Run a customization requirement, then go back to the browser to see the interface change instantly
+# 终端 C：跑一条定制需求，回到浏览器即可看到界面即时变化
 python -c "import agent,pathlib; c,m=agent.build_client_and_model(); \
-r=agent.customize(c,m,pathlib.Path('frontend'),'change the send button to orange'); \
+r=agent.customize(c,m,pathlib.Path('frontend'),'把发送按钮改成橙色'); \
 [pathlib.Path('frontend',f['path']).write_text(f['content']) for f in r['files']]"
 ```
 
-Backend command-line parameters (`cd backend && python main.py --help`):
+后端命令行参数（`cd backend && python main.py --help`）：
 
-| Parameter | Description | Default |
+| 参数 | 说明 | 默认 |
 | --- | --- | --- |
-| `--host` | Listen address (use `0.0.0.0` for external access) | `127.0.0.1` |
-| `--port` | Listen port (frontend proxies `/api` to this port) | `8000` |
-| `--reload` / `--no-reload` | Whether to enable backend hot reload | Enabled |
-| `--model NAME` | Specify model name, switch to real LLM conversation; default is echo mode (can also use environment variable `CHAT_MODEL`) | None (echo) |
-| `--log-level` | uvicorn log/output level | `info` |
-| `--print-config` | Only print effective configuration (JSON) and exit, do not listen on port (useful for validation in portless environments) | Off |
+| `--host` | 监听地址（对外可用 `0.0.0.0`） | `127.0.0.1` |
+| `--port` | 监听端口（前端把 `/api` 代理到此端口） | `8000` |
+| `--reload` / `--no-reload` | 是否开启后端热加载 | 开启 |
+| `--model NAME` | 指定模型名，切到真实 LLM 对话；缺省为 echo 回声模式（也可用环境变量 `CHAT_MODEL`） | 无（echo） |
+| `--log-level` | uvicorn 日志/输出级别 | `info` |
+| `--print-config` | 只打印生效配置(JSON)后退出，不监听端口（便于无端口环境下校验） | 关 |
 
-> Both echo and LLM modes do not affect the UI customization loop—customization acts on the **frontend source code**, the backend is merely a carrier for the interface to actually converse.
-> The LLM mode reuses the same `OPENAI_API_KEY` / `OPENAI_BASE_URL` configuration as `agent.py`; if the key is missing or the call fails, it will automatically fall back to a placeholder prompt, never fabricating a response.
+> echo 与 LLM 两种模式都不影响 UI 定制闭环——定制作用于**前端源码**，后端只是让界面能真实对话的载体。
+> LLM 模式复用与 `agent.py` 相同的 `OPENAI_API_KEY` / `OPENAI_BASE_URL` 配置；缺 Key 或调用失败会自动回退占位提示，绝不编造回复。
 
-## Validation Methods and Limitations
+## 验证方式与局限
 
-- **What this demo automatically validates**: The loop from natural language → code modification is **correctly applied** and **does not break the build**.
-  - Reads back the source code and asserts: e.g., "change to blue #2563eb" → the color value indeed appears in the source code;
-    "switch to monospace font" → `monospace` appears; "change title to XXX" → the text appears.
-  - After each round of changes, `vite build` must compile successfully, proving the changes did not break the application.
-- **What this demo does NOT do**: The **visual** instant refresh of HMR in a real browser.
-  There is no Playwright/browser on this machine, so it cannot automatically take screenshots to verify the visual effect—
-  this part requires manually running `npm run dev` + opening a browser to view (see step 3 above).
-- The Agent is only allowed to modify whitelisted files (`src/App.jsx`, `src/theme.css`),
-  reducing the risk of modifying the wrong files; the modification uses "full file rewrite", which is more stable for small files than piecemeal replacements.
+- **本 demo 自动验证的是**：自然语言 → 代码修改被**正确应用**且**不破坏构建**的闭环。
+  - 读回源码断言：如"改成蓝色 #2563eb"→ 源码里确实出现该色值；
+    "换成等宽字体"→ 出现 `monospace`；"标题改成 XXX"→ 出现该文案。
+  - 每轮改动后 `vite build` 必须编译通过，证明改动没破坏应用。
+- **本 demo 不做的**：真实浏览器内 HMR 的**视觉**即时刷新。
+  本机无 Playwright/浏览器，无法自动截图验证视觉效果——
+  这部分需手动 `npm run dev` + 打开浏览器查看（见上文第 3 步）。
+- Agent 只被允许改写白名单文件（`src/App.jsx`、`src/theme.css`），
+  降低改错文件的风险；改写采用"整文件重写"，对小文件比零散替换更稳。
 
-## Real Run Output (Excerpt)
+## 真实运行输出（节选）
 
 ```
-Round 1 NL customization requirement: Change the theme color of the send button and user message bubbles from green to blue, using #2563eb.
-[Modified file] src/theme.css
-  - --color-primary: #16a34a;   /* Initially green */
-  + --color-primary: #2563eb;   /* Changed to blue */
-Assertion: Blue value #2563eb appears in source code -> Passed ✅
-Build result: Passed ✅
+第 1 轮 NL 定制需求：把发送按钮和用户消息气泡的主题色从绿色改成蓝色，用 #2563eb 这个蓝。
+[改动文件] src/theme.css
+  - --color-primary: #16a34a;   /* 初始为绿色 */
+  + --color-primary: #2563eb;   /* 改为蓝色 */
+断言：源码中出现蓝色值 #2563eb -> 通过 ✅
+构建结果：通过 ✅
 
-Round 2 NL customization requirement: Change the entire interface font to monospace.
-[Modified file] src/theme.css
+第 2 轮 NL 定制需求：把整个界面的字体换成等宽字体（monospace）。
+[改动文件] src/theme.css
   - --font-family: system-ui, "PingFang SC", ... sans-serif;
   + --font-family: monospace;
-Assertion: Monospace font appears in source code -> Passed ✅
-Build result: Passed ✅
+断言：源码中出现 monospace 等宽字体 -> 通过 ✅
+构建结果：通过 ✅
 
-Round 3 NL customization requirement: Change the top title text to "My Personal Assistant".
-[Modified file] src/App.jsx
-  - const HEADER_TITLE = "Smart Assistant";
-  + const HEADER_TITLE = "My Personal Assistant";
-Assertion: New title text "My Personal Assistant" appears in source code -> Passed ✅
-Build result: Passed ✅
+第 3 轮 NL 定制需求：把顶部的标题文案改成"我的专属客服"。
+[改动文件] src/App.jsx
+  - const HEADER_TITLE = "智能助手";
+  + const HEADER_TITLE = "我的专属客服";
+断言：源码中出现新标题文案"我的专属客服" -> 通过 ✅
+构建结果：通过 ✅
 
-Multi-round customization summary: All passed ✅
+多轮定制总结：全部通过 ✅
 ```
 
-## Environment Variables
+## 环境变量
 
-| Variable | Description |
+| 变量 | 说明 |
 | --- | --- |
-| `OPENAI_API_KEY` | One of these is required; this experiment reads this item (uses `OPENROUTER_API_KEY` as fallback if not configured) |
-| `OPENAI_BASE_URL` | Optional, switch to a service endpoint compatible with the OpenAI protocol |
-| `MODEL` | Optional, default `gpt-5.6-luna` |
+| `OPENAI_API_KEY` | 必填其一，本实验读取此项（未配置时用 `OPENROUTER_API_KEY` 兜底） |
+| `OPENAI_BASE_URL` | 可选，切换到兼容 OpenAI 协议的服务端点 |
+| `MODEL` | 可选，默认 `gpt-5.6-luna` |
 
-## How to Adapt / Extend
+## 如何适配 / 扩展
 
-- **Change model / change provider**: The Agent uses the standard OpenAI SDK; any service "compatible with the OpenAI protocol" can be connected.
-  Simply set `OPENAI_BASE_URL` + `MODEL` + the corresponding `OPENAI_API_KEY` in `.env` or environment variables,
-  no code changes needed. For example:
-  - Kimi / Moonshot: `OPENAI_BASE_URL=https://api.moonshot.cn/v1`, `MODEL=kimi-k3`;
-  - Volcano Ark (ARK): `OPENAI_BASE_URL=https://ark.cn-beijing.volces.com/api/v3`, `MODEL=<endpoint-id>`;
-  - Local vLLM / Ollama, etc.: Point `OPENAI_BASE_URL` to the local endpoint.
-- **Expand the customization scope**: By default, only `src/App.jsx` and `src/theme.css` are allowed to be modified. To allow the Agent to modify more files,
-  add or remove paths in the `EDITABLE_FILES` whitelist in `agent.py` (the larger the whitelist, the more flexible, but also the greater the risk of modifying the wrong file).
-- **Add new validation rounds**: Append `{"requirement": ..., "verify": ...}` to the `ROUNDS` list in `demo.py`,
-  to incorporate your own customization requirements into the automated assertion loop.- **Frontend integration**: `frontend/` is a standard Vite project. Run `npm run dev` for HMR, or `npm run build` to generate static assets.  
-  To use your own UI, replace `src/*` and update the whitelist and `baseline/` snapshots accordingly.  
-- **Backend integration / real LLM chat**: The `/api/chat` endpoint in `backend/main.py` defaults to an echo-style placeholder response.  
-  Add `--model <model_name>` (or set `CHAT_MODEL`) to switch to real LLM chat (reusing the `OPENAI_*` configuration above) and turn it into a real agent.  
-  To replace it with custom business logic, modify the return in `_llm_reply` or `chat`.
+- **换模型 / 换供应商**：Agent 走标准 OpenAI SDK，任何"兼容 OpenAI 协议"的服务都能接。
+  只需在 `.env` 或环境变量里设置 `OPENAI_BASE_URL` + `MODEL` + 对应的 `OPENAI_API_KEY`，
+  代码无需改动。例如：
+  - Kimi / Moonshot：`OPENAI_BASE_URL=https://api.moonshot.cn/v1`、`MODEL=kimi-k3`；
+  - 火山方舟(ARK)：`OPENAI_BASE_URL=https://ark.cn-beijing.volces.com/api/v3`、`MODEL=<endpoint-id>`；
+  - 本地 vLLM / Ollama 等：把 `OPENAI_BASE_URL` 指向本地端点即可。
+- **扩展可定制范围**：默认只允许改 `src/App.jsx`、`src/theme.css`。想让 Agent 能改更多文件，
+  在 `agent.py` 的 `EDITABLE_FILES` 白名单里增删路径即可（白名单越大越灵活，但改错风险也越大）。
+- **新增验证轮次**：在 `demo.py` 的 `ROUNDS` 里追加 `{"requirement": ..., "verify": ...}`，
+  即可把自己的定制需求纳入自动断言闭环。
+- **接前端**：`frontend/` 是标准 Vite 工程，`npm run dev` 起 HMR、`npm run build` 出静态产物。
+  想接自己的界面，替换 `src/*` 并同步更新白名单与 `baseline/` 快照即可。
+- **接后端 / 真实 LLM 对话**：`backend/main.py` 的 `/api/chat` 默认是回声式占位回复，
+  加 `--model <模型名>`（或设 `CHAT_MODEL`）即可切到真实 LLM 对话（复用上面的 `OPENAI_*` 配置）变成真实客服；
+  想换成自定义业务逻辑，改写 `_llm_reply` 或 `chat` 里的返回即可。

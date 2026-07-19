@@ -1,17 +1,17 @@
 """
-ffmpeg / ffprobe thin wrapper: all external process calls are centralized here, with unified error checking.
+ffmpeg / ffprobe 薄封装：所有对外部进程的调用都集中在这里，统一做错误检查。
 
-Design highlights:
-  - run() catches non-zero exit codes and throws a clear exception with stderr (instead of leaking traceback);
-  - Provides probe_duration / probe_streams for Reviewer and validation steps to read clip info;
-  - extract_frame captures a frame at a given time as a PNG (scaled to 512 width to save Vision tokens).
+设计要点：
+  - run() 捕获非零退出码并抛出带 stderr 的清晰异常（而非让 traceback 泄漏）；
+  - 提供 probe_duration / probe_streams，供 Reviewer 与验证环节读取成片信息；
+  - extract_frame 把某一时间点抽成一张 PNG（缩放到 512 宽以节省 Vision token）。
 """
 import json
 import os
 import shutil
 import subprocess
 
-# macOS built-in fonts; change here when switching platforms (Linux common DejaVuSans.ttf).
+# macOS 自带字体；换平台时改这里即可（Linux 常见 DejaVuSans.ttf）。
 FONT_CANDIDATES = [
     "/System/Library/Fonts/Supplemental/Arial.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
@@ -23,78 +23,78 @@ def find_font() -> str:
     for p in FONT_CANDIDATES:
         if os.path.exists(p):
             return p
-    return ""  # drawtext falls back to default font
+    return ""  # drawtext 会退化为默认字体
 
 
 def ensure_ffmpeg():
-    """Pre-start self-check: whether ffmpeg / ffprobe are available, with clear Chinese error messages."""
+    """启动前自检：ffmpeg / ffprobe 是否可用，给出清晰中文报错。"""
     for tool in ("ffmpeg", "ffprobe"):
         if shutil.which(tool) is None:
             raise RuntimeError(
-                f"Not found {tool}, this project uses ffmpeg for actual editing.\n"
+                f"未找到 {tool}，本项目用 ffmpeg 完成实际剪辑。\n"
                 f"  macOS: brew install ffmpeg\n"
                 f"  Ubuntu: sudo apt install ffmpeg"
             )
 
 
-def run(cmd, desc="ffmpeg command"):
-    """Execute command, throw exception with tail of stderr on failure."""
+def run(cmd, desc="ffmpeg 命令"):
+    """执行命令，失败时抛出带 stderr 尾部的异常。"""
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:
         tail = "\n".join(proc.stderr.strip().splitlines()[-8:])
-        raise RuntimeError(f"{desc} Execution failed (exit={proc.returncode}）：\n{tail}")
+        raise RuntimeError(f"{desc} 执行失败（exit={proc.returncode}）：\n{tail}")
     return proc
 
 
 def probe_duration(path: str) -> float:
-    """Return video duration (seconds)."""
+    """返回视频时长（秒）。"""
     proc = run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
          "-of", "default=noprint_wrappers=1:nokey=1", path],
-        desc="ffprobe read duration",
+        desc="ffprobe 读取时长",
     )
     return float(proc.stdout.strip())
 
 
 def probe_streams(path: str) -> dict:
-    """Return ffprobe JSON (format + streams) for printing clip info."""
+    """返回 ffprobe 的 JSON（format + streams），用于打印成片信息。"""
     proc = run(
         ["ffprobe", "-v", "error", "-show_format", "-show_streams",
          "-of", "json", path],
-        desc="ffprobe read stream info",
+        desc="ffprobe 读取流信息",
     )
     return json.loads(proc.stdout)
 
 
 def format_probe(path: str) -> str:
-    """Format clip info into human-readable lines (for validation output)."""
+    """把成片信息格式化成一行行的人类可读文本（用于验证输出）。"""
     info = probe_streams(path)
     fmt = info.get("format", {})
     lines = [
-        f"  File: {os.path.basename(path)}",
-        f"  Duration: {float(fmt.get('duration', 0)):.2f}s",
-        f"  Container: {fmt.get('format_name', '?')}",
-        f"  Size: {int(fmt.get('size', 0)) / 1024:.1f} KB",
+        f"  文件: {os.path.basename(path)}",
+        f"  时长: {float(fmt.get('duration', 0)):.2f}s",
+        f"  容器: {fmt.get('format_name', '?')}",
+        f"  大小: {int(fmt.get('size', 0)) / 1024:.1f} KB",
     ]
     for s in info.get("streams", []):
         if s.get("codec_type") == "video":
             lines.append(
-                f"  Video stream: {s.get('codec_name')} {s.get('width')}x{s.get('height')} "
+                f"  视频流: {s.get('codec_name')} {s.get('width')}x{s.get('height')} "
                 f"@ {s.get('r_frame_rate')} fps"
             )
         elif s.get("codec_type") == "audio":
             lines.append(
-                f"  Audio stream: {s.get('codec_name')} {s.get('sample_rate')}Hz "
+                f"  音频流: {s.get('codec_name')} {s.get('sample_rate')}Hz "
                 f"{s.get('channels')}ch"
             )
     return "\n".join(lines)
 
 
 def extract_frame(video: str, t: float, out_png: str, width: int = 512):
-    """Extract a frame at t seconds, scaled to width wide, saved as PNG."""
+    """抽取 t 秒处的一帧，缩放到 width 宽存为 PNG。"""
     run(
         ["ffmpeg", "-y", "-ss", f"{t:.3f}", "-i", video,
          "-frames:v", "1", "-vf", f"scale={width}:-1", out_png],
-        desc=f"Extract frame t={t:.1f}s",
+        desc=f"抽帧 t={t:.1f}s",
     )
     return out_png

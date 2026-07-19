@@ -11,8 +11,8 @@ from agent import KVCacheAgent, KVCacheMode
 def main():
     """Run a quick demo comparing correct vs incorrect implementation"""
     
-    # Get API key. Prefer Moonshot/Kimi; fallback to OPENROUTER_API_KEY if missing
-    # (KVCacheAgent will automatically switch to OpenRouter endpoint and map model names).
+    # Get API key. 优先 Moonshot/Kimi；缺失时回退 OPENROUTER_API_KEY
+    # （KVCacheAgent 会自动切换到 OpenRouter 端点并映射模型名）。
     api_key = (os.getenv("MOONSHOT_API_KEY") or os.getenv("KIMI_API_KEY")
                or os.getenv("OPENROUTER_API_KEY"))
     if not api_key:

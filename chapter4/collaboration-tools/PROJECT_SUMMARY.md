@@ -41,7 +41,7 @@ collaboration-tools/
 - `mcp_browser_list_tabs` - List all open tabs
 
 **Implementation:**
-- Uses `browser-use` library (well-known virtual browser library)
+- Uses `browser-use` library (知名虚拟浏览器库)
 - Singleton browser session management
 - Support for autonomous AI agents via LangChain + OpenAI
 - Full Playwright-based automation
@@ -230,7 +230,8 @@ if result["approved"]:
 ### 3. Scheduled Task
 ```python
 # Set timer for delayed execution
-timer = await mcp_set_timer(    duration_seconds=3600,  # 1 hour
+timer = await mcp_set_timer(
+    duration_seconds=3600,  # 1 hour
     timer_name="Report Generation",
     callback_message="Generate daily report"
 )

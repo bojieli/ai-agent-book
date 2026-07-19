@@ -1,40 +1,40 @@
-"""Experiment 6-5: Fully Automated TTS Quality Evaluation Pipeline — Configuration and Test Corpus.
+"""实验 6-5：全自动 TTS 质量评估流水线 —— 配置与测试语料。
 
-This module centrally manages:
-  - The OpenAI model names and billing rates used (for cost estimation only);
-  - Multiple TTS "configurations" (combinations of model / voice / speed, as objects to be compared);
-  - A set of challenging reference texts (numbers / polyphonic characters / long sentences / proper nouns + emotion).
+本模块集中管理：
+  - 用到的 OpenAI 模型名与计费单价（仅供参考成本估算）；
+  - 多个 TTS「配置」（model / voice / speed 的组合，作为待对比的对象）；
+  - 一组带挑战性的参考文本（数字 / 多音字 / 长句 / 专有名词 + 情感）。
 """
 
 from dataclasses import dataclass, field
 
 # ---------------------------------------------------------------------------
-# Model name (all OpenAI, read OPENAI_API_KEY).
+# 模型名（均为 OpenAI，读 OPENAI_API_KEY）。
 # ---------------------------------------------------------------------------
-WHISPER_MODEL = "whisper-1"        # Speech transcription (back-translation) for computing WER/word accuracy (must use OpenAI direct connection)
-JUDGE_MODEL = "gpt-5.6-luna"       # LLM Rubric evaluation model (current budget flagship; chat calls can fall back to OpenRouter)
+WHISPER_MODEL = "whisper-1"        # 语音转写（回译），用于计算 WER/字准确率（须走 OpenAI 直连）
+JUDGE_MODEL = "gpt-5.6-luna"       # LLM Rubric 评审模型（当前廉价旗舰；chat 调用可回退 OpenRouter）
 
-# Optional Gemini audio review (scheme in the book). Default uses the current cheap flagship gemini-3.5-flash (verified support
-# Audio input, can directly 'hear' synthesized speech). Model names may expire over time, runtime uses REST /models
-#  Probe correction. Only used when --gemini is enabled.
+# 可选的 Gemini 音频评审（书中方案）。默认用当前廉价旗舰 gemini-3.5-flash（已验证支持
+# 音频输入，能直接「听」合成语音）。模型名可能随时间过期，运行时会通过 REST /models
+# 探测校正。仅当 --gemini 开启时才会用到。
 GEMINI_MODEL_DEFAULT = "gemini-3.5-flash"
 
-# Billing unit price (USD), only used for printing rough cost, does not affect scoring. The value may change with official adjustments.
+# 计费单价（美元），仅用于打印粗略成本，不影响评分。数值随官方调整可能变化。
 PRICE = {
-    "tts-1": 15.0 / 1_000_000,          # $ / character
-    "tts-1-hd": 30.0 / 1_000_000,       # $ / character
+    "tts-1": 15.0 / 1_000_000,          # $ / 字符
+    "tts-1-hd": 30.0 / 1_000_000,       # $ / 字符
     "gpt-4o-mini-tts": 12.0 / 1_000_000,
-    "whisper-1": 0.006 / 60,            # $ / sec
+    "whisper-1": 0.006 / 60,            # $ / 秒
 }
 
 
 @dataclass
 class TTSConfig:
-    """A TTS configuration to be evaluated. The name must be unique within the entire table.
+    """一个待评估的 TTS 配置。name 需在整表内唯一。
 
-    provider specifies which service to use for synthesis (openai / elevenlabs / fishaudio / minimax /
-    doubao). The semantics of model / voice / speed are interpreted by each provider: for example, elevenlabs'
-    voice is a voice_id, fishaudio's voice is a reference_id (can be left empty to use the default timbre).
+    provider 指明合成走哪个服务商（openai / elevenlabs / fishaudio / minimax /
+    doubao）。model / voice / speed 的语义由各 provider 自行解释：例如 elevenlabs
+    的 voice 是 voice_id，fishaudio 的 voice 是 reference_id（可留空用默认音色）。
     """
 
     name: str
@@ -44,26 +44,26 @@ class TTSConfig:
     provider: str = "openai"
 
     def supports_speed(self) -> bool:
-        #  Only some providers/models support the speed parameter; this field is ignored when not supported.
+        # 只有部分 provider/模型支持 speed 参数；不支持时忽略该字段。
         if self.provider == "openai":
             return self.model in ("tts-1", "tts-1-hd")
         return self.provider in ("minimax", "doubao")
 
 
 # ---------------------------------------------------------------------------
-# Multi-provider registry (corresponding to the book's "Accessing Mainstream Services: OpenAI, ElevenLabs, Fish Audio,
-# Minimax, Doubao). Each provider declares required environment variables and a representative configuration for cross-service
-#  Horizontal comparison. Except for OpenAI, all are implemented according to each provider's public REST interface. When a key is missing, the row for that provider will be
-#  Mark as failed without affecting the entire table (see demo.py).
+# 多 provider 注册表（对应书中「接入主流服务：OpenAI、ElevenLabs、Fish Audio、
+# Minimax、豆包」）。每个 provider 声明所需环境变量与一个代表性配置，便于跨服务商
+# 横向对比。除 OpenAI 外均按各家公开 REST 接口实现，缺 key 时该 provider 的行会被
+# 记为失败而不影响整表（见 demo.py）。
 # ---------------------------------------------------------------------------
-# Environment variable aliases: the same credential may have multiple historical/commonly used names; if any one of them is set, it is considered configured.
+# 环境变量别名：同一凭据可能有多个历史/惯用名，任意一个被设置即视为已配置。
 ENV_ALIASES = {
     "FISH_API_KEY": ("FISH_API_KEY", "FISHAUDIO_API_KEY"),
 }
 
 
 def env_get(name: str) -> str:
-    """Read environment variables, supporting aliases registered in ENV_ALIASES, and return the first non-empty value (stripped)."""
+    """读取环境变量，支持 ENV_ALIASES 中登记的别名，返回第一个非空值（已 strip）。"""
     import os
     for n in ENV_ALIASES.get(name, (name,)):
         val = os.environ.get(n, "").strip()
@@ -74,10 +74,10 @@ def env_get(name: str) -> str:
 
 @dataclass
 class ProviderInfo:
-    key: str                #  Internal identifier (for --providers)  
-    label: str              # Display Name
-    env: tuple              #  The environment variable name required for the provider synthesis
-    note: str               #  A sentence explaining the semantics of the voice field, etc.
+    key: str                # 内部标识（--providers 用）
+    label: str              # 展示名
+    env: tuple              # 该 provider 合成所需的环境变量名
+    note: str               # 一句话说明 voice 字段语义等
 
     def configured(self) -> bool:
         return all(env_get(e) for e in self.env)
@@ -86,28 +86,28 @@ class ProviderInfo:
 PROVIDERS = {
     "openai": ProviderInfo(
         "openai", "OpenAI", ("OPENAI_API_KEY",),
-        "voice=alloy/nova/…, model=tts-1/tts-1-hd/gpt-4o-mini-tts; the only end-to-end verified provider in this repository.",
+        "voice=alloy/nova/…，model=tts-1/tts-1-hd/gpt-4o-mini-tts；本仓库唯一端到端验证过的 provider。",
     ),
     "elevenlabs": ProviderInfo(
         "elevenlabs", "ElevenLabs", ("ELEVENLABS_API_KEY",),
-        "voice=voice_id, model defaults to eleven_multilingual_v2 (multilingual/Chinese).",
+        "voice=voice_id，model 默认 eleven_multilingual_v2（多语言/中文）。",
     ),
     "fishaudio": ProviderInfo(
         "fishaudio", "Fish Audio", ("FISH_API_KEY",),
-        "voice=reference_id (leave empty to use default voice), use /v1/tts; key can also use alias FISHAUDIO_API_KEY.",
+        "voice=reference_id（留空用默认音色），走 /v1/tts；key 亦可用别名 FISHAUDIO_API_KEY。",
     ),
     "minimax": ProviderInfo(
         "minimax", "Minimax", ("MINIMAX_API_KEY", "MINIMAX_GROUP_ID"),
-        "voice=voice_id, model defaults to speech-01-turbo; additional GroupId required.",
+        "voice=voice_id，model 默认 speech-01-turbo；需额外 GroupId。",
     ),
     "doubao": ProviderInfo(
-        "doubao", "Doubao (Volcano Engine)", ("DOUBAO_APP_ID", "DOUBAO_ACCESS_TOKEN"),
-        "voice=voice_type, go to openspeech.bytedance.com; the authentication header is 'Bearer;{token}'.",
+        "doubao", "豆包（火山引擎）", ("DOUBAO_APP_ID", "DOUBAO_ACCESS_TOKEN"),
+        "voice=voice_type，走 openspeech.bytedance.com；鉴权头为 'Bearer;{token}'。",
     ),
 }
 
-# Representative configuration of each provider (when --providers is selected, each provider takes this one for comparison).
-# For non-OpenAI voice/model, common defaults from various providers are used; you can adjust here based on the available voices for your account.
+# 各 provider 的代表性配置（--providers 选中时，每个 provider 取这一条参与对比）。
+# 非 OpenAI 的 voice/model 取各家常见默认值，可在此按账号可用音色调整。
 PROVIDER_CONFIGS = {
     "openai": TTSConfig("openai-alloy", provider="openai", model="tts-1", voice="alloy"),
     "elevenlabs": TTSConfig("elevenlabs-multi", provider="elevenlabs",
@@ -121,8 +121,8 @@ PROVIDER_CONFIGS = {
 }
 
 
-# Default comparison configuration set: covers three dimensions—model (tts-1 vs tts-1-hd), voice, and speed,
-# facilitating observation of differences in accuracy/naturalness across configurations. Defaults to using OpenAI entirely to ensure zero extra configuration works out of the box.
+# 默认对比的配置集合：覆盖 model（tts-1 vs tts-1-hd）、voice、speed 三个维度，
+# 便于观察不同配置在准确性/自然度上的差异。默认全部走 OpenAI 以保证零额外配置跑通。
 TTS_CONFIGS = [
     TTSConfig("tts1-alloy-1.0", model="tts-1", voice="alloy", speed=1.0),
     TTSConfig("tts1hd-alloy-1.0", model="tts-1-hd", voice="alloy", speed=1.0),
@@ -130,7 +130,7 @@ TTS_CONFIGS = [
     TTSConfig("tts1-alloy-1.5", model="tts-1", voice="alloy", speed=1.5),
 ]
 
-# Optionally include (enabled via --extra): gpt-4o-mini-tts. Not included by default to guarantee a baseline run.
+# 可选加入（--extra 开启）：gpt-4o-mini-tts。默认不加入以保证一定跑通。
 EXTRA_CONFIGS = [
     TTSConfig("4omini-nova-1.0", model="gpt-4o-mini-tts", voice="nova", speed=1.0),
 ]
@@ -138,39 +138,39 @@ EXTRA_CONFIGS = [
 
 @dataclass
 class Sample:
-    """ A reference text + expected emotion label (for Rubric emotion dimension reference)."""
+    """一条参考文本 + 期望情感标签（供 Rubric 情感维度参考）。"""
 
     id: str
     text: str
-    challenge: str      # The main challenge points tested by this sample
-    emotion: str = "Neutral"
+    challenge: str      # 该样本主要考察的挑战点
+    emotion: str = "中性"
 
 
-# Diverse test corpus: numbers/dates, polyphonic characters, long sentences, proper nouns + emotion.
+# 多样化测试语料：数字/日期、多音字、长句、专有名词+情感。
 CORPUS = [
     Sample(
         id="num",
-        text="In the third quarter of 2026, revenue grew by 37.5%, an increase of 12 percentage points year-over-year.",
-        challenge="Numbers/Percentages/Dates",
-        emotion="Neutral",
+        text="2026年第三季度营收增长了37.5%，同比提升12个百分点。",
+        challenge="数字/百分比/日期",
+        emotion="中性",
     ),
     Sample(
         id="polyphone",
-        text="The bank president is re-prioritizing this matter; in the long run, all debts must still be repaid.",
-        challenge="Polyphonic characters (行/长/重/还)",
-        emotion="Neutral",
+        text="银行行长正在重新调整这件事的重点，长此以往，还得还清所有欠款。",
+        challenge="多音字（行/长/重/还）",
+        emotion="中性",
     ),
     Sample(
         id="long",
-        text="According to reports, with the rapid development of AI technology, more and more enterprises are starting to apply large language models"
-             "to scenarios such as customer service, content creation, and data analysis, thereby significantly improving operational efficiency.",
-        challenge="Long sentence/News style",
-        emotion="Neutral",
+        text="据报道，随着人工智能技术的快速发展，越来越多的企业开始将大语言模型"
+             "应用于客户服务、内容创作和数据分析等场景，从而显著提升了运营效率。",
+        challenge="长句/新闻文体",
+        emotion="中性",
     ),
     Sample(
         id="emotion",
-        text="Awesome! The new model just released by OpenAI has performed amazingly on the GAIA benchmark!",
-        challenge="Proper noun + Exclamation emotion",
-        emotion="Excited",
+        text="太棒了！OpenAI 刚刚发布的新模型在 GAIA 基准测试上表现惊人！",
+        challenge="专有名词 + 感叹情感",
+        emotion="兴奋",
     ),
 ]

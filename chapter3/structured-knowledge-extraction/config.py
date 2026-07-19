@@ -1,24 +1,24 @@
 """
-Global configuration: load environment variables, provide OpenAI client and default model name.
+全局配置：加载环境变量、提供 OpenAI 客户端与默认模型名。
 
-Only depends on the official OpenAI SDK, reads OPENAI_API_KEY.
-Default model gpt-5.6-luna (cheap, sufficient for factor discovery, structured extraction, and copy generation).
+只依赖官方 OpenAI SDK，读取 OPENAI_API_KEY。
+默认模型 gpt-5.6-luna（便宜、够用于因子发现、结构化抽取与文案生成）。
 """
 import os
 
 from openai import OpenAI
 
 try:
-    # Optional: if python-dotenv is installed, automatically load .env from the same directory
+    # 可选：如果安装了 python-dotenv，则自动加载同目录 .env
     from dotenv import load_dotenv
 
     load_dotenv()
-except Exception:  # pragma: no cover - dotenv is an optional dependency
+except Exception:  # pragma: no cover - dotenv 是可选依赖
     pass
 
 def _openrouter_model_id(model) -> str:
-    """Map vendor native model names to OpenRouter model IDs (for generic OpenRouter fallback).
-    Explicit OPENROUTER_MODEL environment variable takes precedence."""
+    """将供应商原生模型名映射为 OpenRouter 模型 id（通用 OpenRouter 回退用）。
+    显式的 OPENROUTER_MODEL 环境变量优先。"""
     override = os.getenv("OPENROUTER_MODEL")
     if override:
         return override
@@ -38,15 +38,15 @@ def _openrouter_model_id(model) -> str:
     return "openai/gpt-5.6-luna"
 
 
-# Default model, can be overridden by environment variable
+# 默认模型，可用环境变量覆盖
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-luna")
 
-# Generic OpenRouter fallback: if no OPENAI_API_KEY but OPENROUTER_API_KEY is set,
-# route chat models to OpenRouter and map model names to OpenRouter IDs.
+# 通用 OpenRouter 回退：若没有 OPENAI_API_KEY 但设置了 OPENROUTER_API_KEY，
+# 则把聊天模型路由到 OpenRouter，并把模型名映射为 OpenRouter 的 id。
 _OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 _OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-# gpt-5.x (including gpt-5.6*) requires organization real-name authentication on the OpenAI direct API; as long as
-# OPENROUTER_API_KEY is set, prefer routing such IDs through OpenRouter.
+# gpt-5.x（含 gpt-5.6*）在 OpenAI 直连 API 上需要组织实名认证；只要设置了
+# OPENROUTER_API_KEY，就优先把这类 id 走 OpenRouter。
 _PREFER_OPENROUTER = bool(_OPENROUTER_API_KEY) and MODEL.lower().startswith("gpt-5")
 _USE_OPENROUTER = _PREFER_OPENROUTER or ((not _OPENAI_API_KEY) and bool(_OPENROUTER_API_KEY))
 if _USE_OPENROUTER:
@@ -54,11 +54,12 @@ if _USE_OPENROUTER:
 
 
 def get_client() -> OpenAI:
-    """Return a configured OpenAI client.
+    """返回一个配置好的 OpenAI 客户端。
 
-    Prefer the official endpoint (reads OPENAI_API_KEY); if missing, fall back to OpenRouter (OpenAI-compatible endpoint) when OPENROUTER_API_KEY is present."""
-    # timeout + automatic retry: discovery/extraction stages may send dozens of requests consecutively; a single transient error
-    # (network jitter / rate limiting / 5xx) should not interrupt the entire pipeline.
+    优先使用官方端点（读取 OPENAI_API_KEY）；若缺失则在存在 OPENROUTER_API_KEY 时
+    回退到 OpenRouter（OpenAI 兼容端点）。"""
+    # timeout + 自动重试：发现/抽取阶段要连续发几十次请求，单次瞬时错误
+    # （网络抖动 / 限流 / 5xx）不应中断整条流水线。
     if _OPENAI_API_KEY and not _PREFER_OPENROUTER:
         return OpenAI(api_key=_OPENAI_API_KEY, timeout=60.0, max_retries=5)
     if _OPENROUTER_API_KEY:
@@ -69,6 +70,6 @@ def get_client() -> OpenAI:
             max_retries=5,
         )
     raise RuntimeError(
-        "No OPENAI_API_KEY or OPENROUTER_API_KEY found. Please `cp env.example .env` first "
-        "and fill in your OpenAI Key (or OpenRouter Key as fallback)."
+        "未找到 OPENAI_API_KEY 或 OPENROUTER_API_KEY，请先 `cp env.example .env` "
+        "并填入你的 OpenAI Key（或 OpenRouter Key 作为回退）。"
     )

@@ -21,8 +21,8 @@ Both approaches are optimized for handling large technical documentation like th
 - Community detection for identifying related concepts
 - Hierarchical community summarization
 - Graph-based search with multiple strategies
-- **Multi-hop relation traversal** (`GraphRAGIndexer.multi_hop_search`): traverses along relationship edges for multiple hops,
-  answering relational questions like "What connects A to B?" that flat vector retrieval cannot express (corresponding to "multi-hop relation reasoning" in the book)
+- **Multi-hop relation traversal** (`GraphRAGIndexer.multi_hop_search`)：沿关系边做多跳遍历，
+  回答扁平向量检索无法表达的「A 通过什么与 B 相连」这类关系性问题（对应书中「多跳关系推理」）
 - Support for different entity types (instructions, registers, features, etc.)
 
 ### HTTP API Service
@@ -52,82 +52,82 @@ cp env.example .env
 
 ## Quick Start
 
-### Command Line Interface (CLI)
+### 命令行接口（CLI）
 
-All subcommands provide Chinese `--help`: `python main.py --help`, `python main.py demo --help`, etc.
+所有子命令都提供中文 `--help`：`python main.py --help`、`python main.py demo --help` 等。
 
 ```
 usage: main.py [-h] {build,query,demo,serve} ...
-  build   Build structured index from document (requires OPENAI_API_KEY)
-  query   Query existing index (requires OPENAI_API_KEY and existing index)
-  demo    Offline comparison demo: structured index vs flat retrieval (no API Key required)
-  serve   Start HTTP API service
+  build   从文档构建结构化索引（需要 OPENAI_API_KEY）
+  query   查询已构建的索引（需要 OPENAI_API_KEY 及已有索引）
+  demo    离线对比演示：结构化索引 vs 扁平检索（无需 API Key）
+  serve   启动 HTTP API 服务
 ```
 
-#### 0. Offline Comparison Demo (No API Key Required, Recommended to Run First)
+#### 0. 离线对比演示（无需 API Key，推荐先跑这个）
 
-This is the fastest way to understand Experiment 3-8: it uses a hand-curated Intel x86 SIMD knowledge base to
-intuitively compare "flat retrieval" vs "structured indexing" across three query types, without needing the OpenAI API:
+这是理解实验 3-8 的最快入口：它用一个手工整理的 Intel x86 SIMD 小知识库，
+直观对比「扁平检索」与「结构化索引」在三类查询上的差异，全程无需 OpenAI API：
 
 ```bash
-# Run the built-in three comparison queries (multi-hop relation reasoning / cross-node comprehensive comparison / multi-level navigation)
+# 运行内置的三组对比查询（多跳关系推理 / 跨节点综合对比 / 多层次导航）
 python main.py demo
 
-# Custom query, providing both flat retrieval and graph multi-hop traversal perspectives
-python main.py demo --query "Which register does VADDPS use?"
+# 自定义查询，同时给出扁平检索与图多跳遍历两种视角
+python main.py demo --query "VADDPS 用到哪个寄存器"
 
-# Write results to JSON
+# 把结果写入 JSON
 python main.py demo --output demo_result.json
 ```
 
-Demo output example (multi-hop relation reasoning: flat retrieval cannot answer, graph retrieval can reach along relationship edges):
+演示输出示例（多跳关系推理，扁平检索答不了、图检索沿关系边可达）：
 
 ```
-【Query 1 | Multi-hop Relation Reasoning】Before executing the ADDPS instruction, which control register bit must the operating system set to 1?
--- Flat Retrieval (returns isolated fragments by lexical similarity) --
+【查询 1｜多跳关系推理】运行 ADDPS 指令前，操作系统必须把哪个控制寄存器位置 1？
+-- 扁平检索（按词面相似度返回独立片段）--
   1. [control-bit] CR4.OSFXSR  (score=0.459)
   ...
-  ✗ Can only recall isolated fragments with similar wording, cannot "connect" ADDPS to a specific control bit.
--- Structured Graph Retrieval (multi-hop traversal along relationship edges) --
-  ADDPS --belongs to--> SSE --requires enabling--> CR4.OSFXSR
-  ✓ Answer: CR4.OSFXSR (reachable from ADDPS in 2 hops)
+  ✗ 只能召回词面相近的孤立片段，无法把 ADDPS 与某个控制位「连」起来。
+-- 结构化图检索（沿关系边多跳遍历）--
+  ADDPS --属于--> SSE --需要启用--> CR4.OSFXSR
+  ✓ 答案：CR4.OSFXSR（从 ADDPS 经 2 跳可达）
 ```
 
-> Note: `build` and `query` require a real index, and index construction depends on LLMs (entity extraction, recursive summarization),
-> so `OPENAI_API_KEY` must be set (embeddings use local `sentence-transformers`). The `demo`
-> command pre-writes the index results manually, allowing readers to see what problems structured indexing solves without needing an API Key.
+> 说明：`build` 与 `query` 需要真实索引，而索引构建依赖 LLM（实体抽取、递归摘要），
+> 因此需要设置 `OPENAI_API_KEY`（嵌入用本地 `sentence-transformers`）。`demo`
+> 则把索引结果预先手工写好，让读者无需 API Key 也能看到结构化索引解决的问题。
 
-#### 1. Build Index (Requires OPENAI_API_KEY)
+#### 1. 构建索引（需要 OPENAI_API_KEY）
 
 ```bash
-# Build both RAPTOR and GraphRAG indexes
+# 同时构建 RAPTOR 与 GraphRAG 索引
 python main.py build path/to/document.pdf
 
-# Build only RAPTOR, or only GraphRAG
+# 只构建 RAPTOR，或只构建 GraphRAG
 python main.py build path/to/document.pdf --type raptor
 python main.py build path/to/document.pdf --type graphrag
 
-# Write index statistics to JSON
+# 将索引统计写入 JSON
 python main.py build path/to/document.pdf --output stats.json
 ```
 
-#### 2. Query Index
+#### 2. 查询索引
 
 ```bash
-# Query both indexes
+# 查询两种索引
 python main.py query "What are the MOV instruction variants?"
 
-# Specify index type and number of results
+# 指定索引类型与返回条数
 python main.py query "explain SSE instructions" --type raptor --top-k 10
 
-# GraphRAG multi-hop relation traversal: start from the best retrieved entity and traverse N hops along relationship edges
+# GraphRAG 多跳关系遍历：以召回的最佳实体为起点，沿关系边走 N 跳
 python main.py query "SSE registers" --type graphrag --multi-hop 2
 
-# Write query results to JSON
+# 将查询结果写入 JSON
 python main.py query "control registers" --output result.json
 ```
 
-#### 3. Start API Service
+#### 3. 启动 API 服务
 
 ```bash
 python main.py serve
@@ -196,7 +196,7 @@ structured-index/
 ├── graphrag_indexer.py    # GraphRAG graph-based indexing
 ├── document_processor.py  # Document parsing and preprocessing
 ├── api_service.py         # HTTP API service
-├── structured_vs_flat_demo.py  # Offline comparison demo: structured index vs flat retrieval (no API required)
+├── structured_vs_flat_demo.py  # 离线对比演示：结构化索引 vs 扁平检索（无需 API）
 ├── main.py               # CLI interface
 ├── requirements.txt      # Python dependencies
 ├── env.example          # Environment variables template
@@ -210,7 +210,8 @@ structured-index/
 
 ### RAPTOR Indexing Process
 
-1. **Text Chunking**: Document is split into manageable chunks with overlap2. **Embedding Generation**: Each chunk is converted to vector embeddings
+1. **Text Chunking**: Document is split into manageable chunks with overlap
+2. **Embedding Generation**: Each chunk is converted to vector embeddings
 3. **Leaf Node Creation**: Chunks become leaf nodes with summaries
 4. **Hierarchical Clustering**: Nodes are clustered using GMM
 5. **Parent Node Generation**: Clusters are summarized to create parent nodes
@@ -330,7 +331,7 @@ This project provides backend services for the agentic-rag project. See the agen
 - [Intel Architecture Manuals](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html)
 
 
-## OpenRouter Universal Fallback
+## OpenRouter 通用回退 / Universal OpenRouter fallback
 
 This experiment now supports a **universal OpenRouter fallback** for its chat LLM.
 

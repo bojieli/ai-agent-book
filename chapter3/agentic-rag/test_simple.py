@@ -42,11 +42,13 @@ def test_basic_functionality():
     print("\n📄 Testing Document Chunking...")
     try:
         chunker = DocumentChunker(config.chunking)
-        sample_text = """The crime of intentional homicide refers to the act of intentionally and unlawfully depriving another person of life.
+        sample_text = """故意杀人罪是指故意非法剥夺他人生命的行为。
         
-        According to Article 232 of the Criminal Law of the People's Republic of China, whoever intentionally commits homicide shall be sentenced to death, life imprisonment, or fixed-term imprisonment of not less than ten years; if the circumstances are relatively minor, the sentence shall be fixed-term imprisonment of not less than three years but not more than ten years.
+        根据《中华人民共和国刑法》第二百三十二条规定，故意杀人的，
+        处死刑、无期徒刑或者十年以上有期徒刑；情节较轻的，
+        处三年以上十年以下有期徒刑。
         
-        Sentencing considerations include the motive, means, consequences, etc. of the crime."""
+        量刑考虑因素包括犯罪动机、手段、后果等。"""
         
         chunks = chunker.chunk_text(sample_text, "test_doc")
         print(f"  Created {len(chunks)} chunks")
@@ -64,7 +66,7 @@ def test_basic_functionality():
         # Add test document to store
         kb_tools.add_document(
             "test_doc_1",
-            "The crime of intentional homicide is punishable by death, life imprisonment, or fixed-term imprisonment of not less than ten years.",
+            "故意杀人罪处死刑、无期徒刑或者十年以上有期徒刑。",
             {"source": "test"}
         )
         
@@ -98,15 +100,15 @@ def test_basic_functionality():
             # Add some test data
             kb_tools.add_document(
                 "criminal_law_test",
-                """Standards for filing a theft case:
-                1. Relatively large amount: generally 1,000 yuan to 3,000 yuan or more
-                2. Multiple thefts: three or more thefts within two years
-                3. Burglary, theft with a weapon, and pickpocketing regardless of the amount""",
+                """盗窃罪的立案标准：
+                1. 数额较大：一般为1000元至3000元以上
+                2. 多次盗窃：2年内盗窃3次以上
+                3. 入户盗窃、携带凶器盗窃、扒窃不论数额""",
                 {"type": "law"}
             )
             
             # Test non-agentic query (simpler, less likely to fail)
-            response = agent.query_non_agentic("Standards for filing a theft case", stream=False)
+            response = agent.query_non_agentic("盗窃罪立案标准", stream=False)
             
             if response and len(response) > 10:
                 print(f"  Response: {response[:200]}...")

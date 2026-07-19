@@ -73,7 +73,7 @@ class ContextCompressor:
         """
         self.strategy = strategy
         self.enable_streaming = enable_streaming
-        # If the Moonshot official key exists, connect directly; otherwise fall back to OpenRouter (see Config.resolve_llm).
+        # Moonshot 官方 key 存在则直连；否则回退 OpenRouter（见 Config.resolve_llm）。
         resolved_key, resolved_base_url, resolved_model = Config.resolve_llm()
         self.client = OpenAI(
             api_key=resolved_key,

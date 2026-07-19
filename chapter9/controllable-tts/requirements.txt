@@ -1,5 +1,5 @@
 openai>=1.40.0
 python-dotenv>=1.0.0
-# System-level ffmpeg / ffprobe is also required (for generating silence, concatenating, and verifying audio):
+# 另需系统级 ffmpeg / ffprobe（用于生成静音、拼接与验证音频）：
 #   macOS:  brew install ffmpeg
 #   Ubuntu: apt-get install ffmpeg

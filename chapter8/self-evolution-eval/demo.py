@@ -1,22 +1,22 @@
 """
-Experiment 8-6 One-click demo: python demo.py
+实验 8-6 一键演示：python demo.py
 
-Process:
-1) Print dataset overview and a few task examples that "do not imply tool names".
-2) Use strong reference Agent to run four-layer validation on 2-3 tasks (including real LLM-as-a-Judge scoring).
-3) Use weak reference Agent as a control to show the discriminative power of the four layers.
-4) Reuse layer comparison: strong directly retrieves registered tools for a second similar task; weak repeats search and creation.
-5) Finally print a "per-task × per-layer" result table, horizontally comparing each task's scores across the four layers.
+流程：
+1) 打印数据集概览与几条"不暗示工具名"的任务示例。
+2) 用 strong 参考 Agent 在 2-3 个任务上跑完四层验证（含真实 LLM-as-a-Judge 打分）。
+3) 用 weak 参考 Agent 做对照，展示四层的区分度。
+4) 复用层对照：strong 第二次相似任务直接检索已注册工具；weak 则重复搜索创建。
+5) 最后打印一张"每任务 × 每层"的结果表，横向对比各任务在四层上的得分。
 
-Usage:
-    python demo.py                       # Default: strong runs 3 tasks + weak control runs 1 task
-    python demo.py --quick               # Quick demo: strong/weak each run only 1 task, saves time and cost
-    python demo.py --tasks task-01,task-07   # Specify task IDs to evaluate (comma-separated)
-    python demo.py --all --offline       # Run all 20 tasks offline without API key on deterministic layers (L1/L2/L4)
-    python demo.py --layers L1,L2,L4     # Run only specified layers (excluding L3 means no network required)
-    python demo.py --output results.json # Write full scoring results as JSON
+用法：
+    python demo.py                       # 默认：strong 跑 3 个任务 + weak 对照 1 个任务
+    python demo.py --quick               # 快速演示：strong / weak 各只跑 1 个任务，省时省钱
+    python demo.py --tasks task-01,task-07   # 指定要评估的任务 id（逗号分隔）
+    python demo.py --all --offline       # 无 Key 离线跑完全部 20 个任务的确定性层（L1/L2/L4）
+    python demo.py --layers L1,L2,L4     # 只跑指定层（不含 L3 即无需联网）
+    python demo.py --output results.json # 把完整评分结果写出为 JSON
 
-Full parameters see python demo.py --help.
+完整参数见 python demo.py --help。
 """
 
 import argparse
@@ -30,7 +30,7 @@ from config import Config
 from harness import ALL_LAYERS, FourLayerEvaluator
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEMO_TASK_IDS = ["task-01", "task-17", "task-07"]  #Multimedia / Geospatial / Weather
+DEMO_TASK_IDS = ["task-01", "task-17", "task-07"]  # 多媒体 / 地理空间 / 天气
 _PROFILES = {"strong": STRONG, "weak": WEAK}
 
 
@@ -44,7 +44,7 @@ def fmt(x):
 
 
 def _disp_w(s: str) -> int:
-    """Consider display width of CJK full-width characters for table alignment."""
+    """考虑中日韩全角字符的显示宽度，用于表格对齐。"""
     return sum(2 if unicodedata.east_asian_width(c) in "WF" else 1 for c in str(s))
 
 
@@ -56,11 +56,11 @@ def _pad(s: str, width: int) -> str:
 def print_dataset_overview(ds):
     tasks = ds["tasks"]
     print("=" * 78)
-    print(f"Dataset:{ds['meta']['name']}  Total {len(tasks)} tasks, covering domains:")
+    print(f"数据集：{ds['meta']['name']}  共 {len(tasks)} 个任务，覆盖领域：")
     domains = [t["domain"] for t in tasks]
     print("  " + " | ".join(domains))
     print("-" * 78)
-    print("Task examples (note: only state the goal, do not imply tool name / library name):")
+    print("任务示例（注意：只说目标，不暗示工具名 / 库名）：")
     for t in tasks[:4]:
         print(f"  [{t['id']}] ({t['domain']}) {t['goal']}")
     print("=" * 78 + "\n")
@@ -68,26 +68,26 @@ def print_dataset_overview(ds):
 
 def print_report(rep):
     L = rep["layers"]
-    print(f"■ Task {rep['task_id']} ({rep['domain']}) | Profile={rep['profile']}")
-    print(f"  L1 Task Correctness     : {fmt(L['L1']['score'])}  | {L['L1']['detail']}")
-    print(f"  L2 Tool Discovery Effectiveness : {fmt(L['L2']['score'])}  | {L['L2']['detail']}")
+    print(f"■ 任务 {rep['task_id']} ({rep['domain']}) | 画像={rep['profile']}")
+    print(f"  L1 任务正确性     : {fmt(L['L1']['score'])}  | {L['L1']['detail']}")
+    print(f"  L2 工具发现有效性 : {fmt(L['L2']['score'])}  | {L['L2']['detail']}")
     l3 = L["L3"]
-    print(f"  L3 Tool Creation Quality   : {fmt(l3['score'])}  | {l3['detail']}")
+    print(f"  L3 工具创造质量   : {fmt(l3['score'])}  | {l3['detail']}")
     if l3.get("rubric"):
         r = l3["rubric"]
-        print(f"       Rubric: Error Handling={r.get('error_handling')} Parameter Validation={r.get('input_validation')} "
-              f"Documentation={r.get('documentation')} Robustness={r.get('robustness')}")
-        print(f"       LLM-Judge Comments: {r.get('comment', '')}")
-    print(f"  L4 Tool Reuse Capability   : {fmt(L['L4']['score'])}  | {L['L4']['detail']}")
-    print(f"  >> Overall Score   : {fmt(rep['summary']['overall'])}  (Layers considered: {rep['summary']['used_layers']})")
+        print(f"       Rubric: 错误处理={r.get('error_handling')} 参数校验={r.get('input_validation')} "
+              f"文档={r.get('documentation')} 健壮性={r.get('robustness')}")
+        print(f"       LLM-Judge 点评: {r.get('comment', '')}")
+    print(f"  L4 工具复用能力   : {fmt(L['L4']['score'])}  | {L['L4']['detail']}")
+    print(f"  >> 总评 overall   : {fmt(rep['summary']['overall'])}  (计入层: {rep['summary']['used_layers']})")
     print()
 
 
 def print_results_table(reports):
-    """Print 'per-task × per-layer' result table: horizontal comparison of scores across L1-L4 and overall."""
+    """打印'每任务 × 每层'结果表：横向对比各任务在 L1-L4 与总评上的得分。"""
     if not reports:
         return
-    headers = ["Task", "Domain", "Profile", "L1", "L2", "L3", "L4", "Overall"]
+    headers = ["任务", "领域", "画像", "L1", "L2", "L3", "L4", "总评"]
     rows = []
     for rep in reports:
         L = rep["layers"]
@@ -101,7 +101,7 @@ def print_results_table(reports):
         ])
     widths = [max(_disp_w(headers[i]), *(_disp_w(r[i]) for r in rows)) for i in range(len(headers))]
     print("=" * 78)
-    print("Per-task × per-layer result table (N/A = layer not applicable or not selected)")
+    print("每任务 × 每层 结果表（N/A = 该层不适用或未选择）")
     print("-" * 78)
     print("  ".join(_pad(headers[i], widths[i]) for i in range(len(headers))))
     for r in rows:
@@ -110,90 +110,90 @@ def print_results_table(reports):
 
 
 def run_profile(name, profile, tasks, evaluator, offline=False, verbose=True):
-    """Run all tasks under one profile, return a list of four-layer scoring reports for each task."""
+    """跑一个画像下的全部任务，返回每个任务的四层评分报告列表。"""
     if verbose:
         print("#" * 78)
-        print(f"# Evaluate with {name} reference Agent (for each task: first run the initial task, then run a similar task to test reuse)")
+        print(f"# 用 {name} 参考 Agent 评估（每个任务：先做首次任务，再做相似任务测复用）")
         print("#" * 78 + "\n")
-    registry = ToolRegistry()  # Per-profile independent registry
+    registry = ToolRegistry()  # 每个画像独立的注册表
     agent = SelfEvolutionAgent(registry=registry, model=Config.AGENT_MODEL, offline=offline)
     reports = []
     for task in tasks:
-        first = agent.run(task, profile, use_variant=False)   #  First: Discover + Create + Register (strong true-tune LLM generation tool)
-        variant = agent.run(task, profile, use_variant=True)  #  Second similar task: test reuse
+        first = agent.run(task, profile, use_variant=False)   # 首次：发现+创造+注册（strong 真调 LLM 生成工具）
+        variant = agent.run(task, profile, use_variant=True)  # 第二次相似任务：测复用
         rep = evaluator.evaluate(task, first, variant)
         reports.append(rep)
         if verbose:
             print_report(rep)
-            #  Show trajectory difference evidence for reuse layer
+            # 展示复用层的轨迹差异证据
             v_actions = [s["action"] for s in variant["steps"]]
-            print(f"    [Reuse Probe] Action sequence for second similar task: {v_actions}")
+            print(f"    [复用探针] 第二次相似任务的动作序列: {v_actions}")
             print()
     return reports
 
 
 def parse_args():
     ap = argparse.ArgumentParser(
-        description="Experiment 8-6: Design evaluation dataset for self-evolving Agent · Four-layer validation demo",
+        description="实验 8-6：为自我进化 Agent 设计评估数据集 · 四层验证演示",
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=(
-            "Example: \n"
-            "  python demo.py                        Default: strong runs 3 tasks + weak runs 1 control\n"
-            "  python demo.py --quick               strong / weak each runs only 1 task, saves time and cost\n"
-            "  python demo.py --tasks task-01,task-07   Specify task IDs to evaluate\n"
-            "  python demo.py --all --offline       Run all 20 tasks' deterministic layers offline without Key\n"
-            "  python demo.py --layers L1,L2,L4     Run only specified layers (no L3 means no internet needed)\n"
-            "  python demo.py --profile both --table Run both profiles, show only result table\n"
-            "  python demo.py --output results.json Write full scoring results as JSON"
+            "示例：\n"
+            "  python demo.py                       默认：strong 跑 3 个任务 + weak 对照 1 个\n"
+            "  python demo.py --quick               strong / weak 各只跑 1 个任务，省时省钱\n"
+            "  python demo.py --tasks task-01,task-07   指定要评估的任务 id\n"
+            "  python demo.py --all --offline       无 Key 离线跑完全部 20 个任务的确定性层\n"
+            "  python demo.py --layers L1,L2,L4     只跑指定层（不含 L3 即无需联网）\n"
+            "  python demo.py --profile both --table 两个画像都跑，只看结果表\n"
+            "  python demo.py --output results.json 把完整评分结果写出为 JSON"
         ),
     )
-    # ---- Task Selection ----
+    # ---- 任务选择 ----
     ap.add_argument("--quick", action="store_true",
-                    help="Quick demo: strong / weak each runs only 1 task, reducing API calls and time.")
+                    help="快速演示：strong / weak 各只跑 1 个任务，减少 API 调用与耗时。")
     ap.add_argument("--all", action="store_true",
-                    help="Evaluate all 20 tasks in the dataset (default switches to table output).")
+                    help="评估数据集中全部 20 个任务（默认自动切到结果表输出）。")
     ap.add_argument("--tasks", metavar="IDS",
-                    help="Comma-separated task IDs (e.g., task-01,task-07), defaults to built-in example tasks.")
-    # ---- Layer and Profile Selection ----
+                    help="逗号分隔的任务 id（如 task-01,task-07），缺省用内置的示例任务。")
+    # ---- 层与画像选择 ----
     ap.add_argument("--layers", metavar="L1,L2,...",
-                    help="Select which validation layers to run, comma-separated (default runs all four layers).\n"
-                         "Only L3 requires LLM calls via internet; removing L3 allows fully offline operation.")
+                    help="选择运行哪些验证层，逗号分隔（默认四层全跑）。\n"
+                         "仅 L3 需联网调用 LLM，去掉 L3 即可纯离线运行。")
     ap.add_argument("--profile", choices=["strong", "weak", "both"],
-                    help="Reference Agent profile under test: strong / weak / both.\n"
-                         "Default retains default behavior (strong runs all selected tasks + weak runs only the first).")
+                    help="被测参考 Agent 画像：strong / weak / both。\n"
+                         "缺省保留默认行为（strong 跑全部选中任务 + weak 只跑第一个）。")
     ap.add_argument("--offline", action="store_true",
-                    help="Offline mode: no LLM calls (strong uses offline tool templates),\n"
-                         "and automatically skips L3. Used for demonstrating L1/L2/L4 deterministic layers without API Key.")
-    # ---- Model / Provider ----
+                    help="离线模式：不调用任何 LLM（strong 用离线工具模板），\n"
+                         "并自动跳过 L3。用于无 API Key 时演示 L1/L2/L4 确定性层。")
+    # ---- 模型 / 供应商 ----
     ap.add_argument("--provider", choices=["openai", "moonshot", "ark"],
-                    help="Override PROVIDER (default reads environment variable, defaults to openai).")
+                    help="覆盖 PROVIDER（默认读环境变量，缺省 openai）。")
     ap.add_argument("--agent-model", metavar="MODEL",
-                    help="Override the model used by the Agent under test for tool creation (default reads AGENT_MODEL).")
+                    help="覆盖被测 Agent 造工具用的模型（默认读 AGENT_MODEL）。")
     ap.add_argument("--judge-model", metavar="MODEL",
-                    help="Override the model used by L3 LLM-as-a-Judge (default reads JUDGE_MODEL).")
-    # ---- Output ----
+                    help="覆盖 L3 LLM-as-a-Judge 用的模型（默认读 JUDGE_MODEL）。")
+    # ---- 输出 ----
     ap.add_argument("--table", action="store_true",
-                    help="Print only 'per-task × per-layer' result table, not detailed per-task layer reports.")
+                    help="只打印'每任务 × 每层'结果表，不打印逐任务的详细分层报告。")
     ap.add_argument("--output", metavar="PATH",
-                    help="Write the complete scoring result (including details of each layer) to a JSON file.")
+                    help="把完整评分结果（含各层明细）写出为 JSON 文件。")
     return ap.parse_args()
 
 
 def resolve_layers(args):
-    """Determine which layers to actually run based on --layers / --offline."""
+    """根据 --layers / --offline 决定实际运行哪些层。"""
     if args.layers:
         want = [x.strip().upper() for x in args.layers.split(",") if x.strip()]
         bad = [x for x in want if x not in ALL_LAYERS]
         if bad:
-            print(f"[Error] Unknown layer: {bad}, optional: {list(ALL_LAYERS)}")
+            print(f"[错误] 未知的层：{bad}，可选：{list(ALL_LAYERS)}")
             sys.exit(1)
-        layers = tuple(x for x in ALL_LAYERS if x in want)  # Normalize to L1..L4 order
+        layers = tuple(x for x in ALL_LAYERS if x in want)  # 归一到 L1..L4 顺序
     elif args.offline:
-        layers = ("L1", "L2", "L4")  # Offline mode: skip L3 which requires network by default
+        layers = ("L1", "L2", "L4")  # 离线默认跳过需联网的 L3
     else:
         layers = ALL_LAYERS
     if args.offline and "L3" in layers:
-        print("[Hint] Offline mode cannot run L3 (requires an online LLM judge); L3 has been automatically removed from the current layer set.\n")
+        print("[提示] 离线模式无法运行 L3（需联网 LLM 裁判），已自动从本次层中移除 L3。\n")
         layers = tuple(x for x in layers if x != "L3")
     return layers
 
@@ -201,7 +201,7 @@ def resolve_layers(args):
 def main():
     args = parse_args()
 
-    # Apply command-line overrides for vendor/model (higher priority than environment variables)
+    # 应用供应商 / 模型的命令行覆盖（优先级高于环境变量）
     if args.provider:
         Config.PROVIDER = args.provider
     if args.agent_model:
@@ -211,30 +211,30 @@ def main():
 
     layers = resolve_layers(args)
 
-    # Non-offline mode: the strong agent profiling tool will actually call the LLM, and L3 also requires network, so a usable client is needed.
+    # 非离线模式：strong 画像造工具会真的调 LLM、L3 也需联网，因此需要可用的客户端。
     if not args.offline:
         try:
             Config.get_client()
         except Exception as e:
-            print(f"[Configuration Error] {e}")
-            print("Hint: If you only want to demonstrate deterministic layers, use `python demo.py --offline` (no API Key required).")
+            print(f"[配置错误] {e}")
+            print("提示：若只想演示确定性层，可用 `python demo.py --offline`（无需 API Key）。")
             sys.exit(1)
 
-    mode = "offline" if args.offline else "online"
-    print(f"Run mode={mode}  PROVIDER={Config.PROVIDER}  "
+    mode = "离线(offline)" if args.offline else "联网(online)"
+    print(f"运行模式={mode}  PROVIDER={Config.PROVIDER}  "
           f"AGENT_MODEL={Config.resolve_default_model()}  JUDGE_MODEL={Config.JUDGE_MODEL}")
-    print(f"Verification layers for this run:{list(layers)}\n")
+    print(f"本次运行的验证层：{list(layers)}\n")
 
     ds = load_dataset()
     print_dataset_overview(ds)
 
     by_id = {t["id"]: t for t in ds["tasks"]}
-    # Task selection: --tasks specified > --all all > --quick pick 1 > default 3 sample tasks
+    # 任务选择：--tasks 指定 > --all 全部 > --quick 取 1 个 > 默认 3 个示例任务
     if args.tasks:
         want = [i.strip() for i in args.tasks.split(",") if i.strip()]
         missing = [i for i in want if i not in by_id]
         if missing:
-            print(f"[Error] These task IDs do not exist in the dataset: {missing}")
+            print(f"[错误] 数据集中不存在这些任务 id：{missing}")
             sys.exit(1)
         task_ids = want
     elif args.all:
@@ -246,22 +246,22 @@ def main():
     tasks = [by_id[i] for i in task_ids]
     evaluator = FourLayerEvaluator(judge_model=Config.JUDGE_MODEL, layers=layers)
 
-    # When there are many tasks (--all), only the result table is output by default to avoid flooding with per-task detailed reports.
+    # 任务较多（--all）时默认只出结果表，避免逐任务详报刷屏
     verbose = not (args.table or (args.all and not args.tasks))
 
     all_reports = []
     if args.profile in (None, "strong", "both"):
-        # Strong: good discovery + high-quality tools (offline templates / online LLM calls) + reuse
+        # strong：好发现 + 高质量工具（离线用模板 / 联网调 LLM）+ 复用
         strong_tasks = tasks
-        all_reports += run_profile("STRONG", STRONG, strong_tasks, evaluator,
+        all_reports += run_profile("STRONG(强)", STRONG, strong_tasks, evaluator,
                                    offline=args.offline, verbose=verbose)
     if args.profile in ("weak", "both"):
         weak_tasks = tasks
-        all_reports += run_profile("WEAK", WEAK, weak_tasks, evaluator,
+        all_reports += run_profile("WEAK(弱)", WEAK, weak_tasks, evaluator,
                                    offline=args.offline, verbose=verbose)
     elif args.profile is None:
-        # Default behavior: weak only runs the first task, highlighting the four-layer differentiation.
-        all_reports += run_profile("WEAK", WEAK, tasks[:1], evaluator,
+        # 默认行为：weak 只跑第一个任务，凸显四层区分度
+        all_reports += run_profile("WEAK(弱)", WEAK, tasks[:1], evaluator,
                                    offline=args.offline, verbose=verbose)
 
     print_results_table(all_reports)
@@ -270,12 +270,12 @@ def main():
         with open(args.output, "w", encoding="utf-8") as f:
             json.dump({"layers": list(layers), "reports": all_reports}, f,
                       ensure_ascii=False, indent=2)
-        print(f"[Written] Complete scoring result -> {args.output}\n")
+        print(f"[已写出] 完整评分结果 -> {args.output}\n")
 
     print("=" * 78)
-    print("Conclusion: The four-layer verification yields different scores for 'strong' and 'weak' agents under test;")
-    print(" L2 judges discovery effectiveness based on search keywords/database selection, L3 uses LLM-as-a-Judge to score tool code according to a rubric,")
-    print(" L4 distinguishes 'reuse' from 'repeated search' via action sequences in a second similar task.")
+    print("结论：四层验证对'强/弱'两种被测 Agent 给出了不同分数；")
+    print("其中 L2 依据搜索关键词/选库判定发现有效性，L3 由 LLM-as-a-Judge 按 Rubric 对")
+    print("工具代码打分，L4 通过第二次相似任务的动作序列区分'复用'与'重复搜索'。")
     print("=" * 78)
 
 

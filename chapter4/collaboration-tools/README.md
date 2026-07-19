@@ -11,7 +11,7 @@ A comprehensive Model Context Protocol (MCP) server that provides collaboration 
 - Take screenshots
 - Full virtual browser capabilities
 
-### 🤝 Sub-Agent Management
+### 🤝 Sub-Agent Management (子 Agent 管理)
 - Spawn sub-agents in **sync** (wait for result) or **async** (returns a `task_id`) mode
 - Send follow-up messages to a sub-agent and cancel a running one
 - **Two context-passing strategies**, made inspectable (context text + token count):
@@ -119,40 +119,40 @@ OPENAI_MODEL=gpt-5.6-luna
 
 ## Usage
 
-### Command-Line Entry Point (`main.py`)
+### 命令行入口 (`main.py`)
 
-Without starting the MCP server, you can also use the unified command-line entry point to list, individually invoke collaboration tools, or run an end-to-end demo.
-Help text is in Chinese; use `-h` to view parameters for any subcommand:
+不启动 MCP 服务器，也可以用统一的命令行入口列出、单独调用协作工具，或运行端到端演示。
+帮助信息为中文，`-h` 可查看任意子命令的参数：
 
 ```bash
-python main.py --help            # Overview
-python main.py list              # List all collaboration tools (Sub-Agent / HITL / Multi-Channel Notifications)
-python main.py demo              # End-to-end collaboration demo: Customer service coordinator agent handles a refund
-python main.py subagent -h       # Sub-Agent subcommand help
-python main.py hitl -h           # HITL subcommand help
-python main.py notify -h         # Notification subcommand help
+python main.py --help            # 总览
+python main.py list              # 列出全部协作工具（子 Agent / HITL / 多渠道通知）
+python main.py demo              # 端到端协作演示：客服协调 Agent 处理一笔退款
+python main.py subagent -h       # 子 Agent 子命令帮助
+python main.py hitl -h           # HITL 子命令帮助
+python main.py notify -h         # 通知子命令帮助
 ```
 
-Common examples:
+常用示例：
 
 ```bash
-# Compare two context-passing strategies (minimal vs llm_generated)
+# 对比两种上下文传递策略（minimal vs llm_generated）
 python main.py subagent compare
 
-# Create a sub-agent (sync, minimal context)
-python main.py subagent spawn --task "Check order A12345 status" --strategy minimal --role Order Query Assistant
+# 创建子 Agent（同步、最小化上下文）
+python main.py subagent spawn --task "查询订单 A12345 状态" --strategy minimal --role 订单查询助手
 
-# Request admin approval for a critical decision; --auto-approve simulates an admin response in the background, convenient for offline demo closed-loop
-python main.py hitl approve --message "Delete 1000 records?" --timeout 5 --auto-approve
+# 关键决策请求管理员批准；--auto-approve 在后台模拟管理员应答，便于离线演示闭环
+python main.py hitl approve --message "删除 1000 条记录？" --timeout 5 --auto-approve
 
-# Multi-channel notification
-python main.py notify slack --message "Deployment complete"
+# 多渠道通知
+python main.py notify slack --message "部署完成"
 ```
 
-The `demo` command chains three types of collaboration tools: ① Delegates a sub-agent to approve a refund and compares context strategies; ② Large-value operations
-trigger HITL approval (demonstrates both "approve before timeout" and "conservative default on timeout" paths); ③ Notifies collaborators of results via multiple channels.
-**The HITL and notification paths run completely offline**; the sub-agent's actual execution and the `llm_generated` strategy require
-`OPENAI_API_KEY` (if not configured, a clear prompt will be shown, but the command will still parse and run normally).
+`demo` 会串联三类协作工具：① 委派子 Agent 审批退款并对比上下文策略；② 大额操作
+触发 HITL 审批（演示"超时前批准"与"超时保守默认"两种路径）；③ 向协作者多渠道通知结果。
+其中 **HITL 与通知路径完全离线可跑**；子 Agent 的真实执行与 `llm_generated` 策略需要
+`OPENAI_API_KEY`（未配置时会明确提示，命令仍可正常解析运行）。
 
 ### Running the MCP Server
 
@@ -170,7 +170,7 @@ Run the quickstart demo to see all features in action:
 python quickstart.py
 ```
 
-### Sub-Agent Context Strategy Comparison
+### Sub-Agent Context Strategy Comparison (对比效果)
 
 Spawn a sub-agent under **both** context-passing strategies on the same task and
 print the difference (context tokens handed off, extra preparation cost, whether
@@ -205,7 +205,8 @@ Add to your Claude Desktop configuration (`claude_desktop_config.json`):
 ## Available Tools
 
 ### Browser Tools
-- `mcp_browser_navigate` - Navigate to a URL- `mcp_browser_get_content` - Get page content
+- `mcp_browser_navigate` - Navigate to a URL
+- `mcp_browser_get_content` - Get page content
 - `mcp_browser_execute_task` - Execute AI-driven browser task
 - `mcp_browser_screenshot` - Take a screenshot
 - `mcp_browser_list_tabs` - List all open tabs

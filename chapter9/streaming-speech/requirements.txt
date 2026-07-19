@@ -1,4 +1,4 @@
-# Experiment 9-3 Dependencies
-# Also requires ffmpeg / ffprobe installed locally (brew install ffmpeg)
+# 实验 9-3 依赖
+# 另需本机安装 ffmpeg / ffprobe（brew install ffmpeg）
 openai>=1.40.0
 python-dotenv>=1.0.0

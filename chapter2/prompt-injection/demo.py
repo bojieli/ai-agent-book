@@ -1,20 +1,20 @@
 """
-Experiment 2-5: Prompt Injection Attack and Defense Experiment — Main Program.
+实验 2-5：提示注入攻防实验 —— 主程序。
 
-For each combination of 3 attack scenarios x 4 defense configurations, run N trials, count the attack success rate,
-and finally print an attack x defense success rate matrix, intuitively showing "defense layers strengthen -> success rate decreases".
+对 3 种攻击场景 x 4 种防御配置 的每个组合跑 N 次试验，统计攻击成功率，
+最后打印一张 攻击 x 防御 的成功率矩阵，直观展示"防御逐层加强 -> 成功率下降"。
 
-Command-line usage (see --help for details):
-    python demo.py                       # Default: all 3x4 combinations, 4 trials per combination
-    python demo.py --trials 5            # Run 5 trials per combination
-    python demo.py --model gpt-5.6-luna        # Change model
-    python demo.py --attack 2,3          # Only run attack scenarios 2 and 3
-    python demo.py --defense 1,4         # Only run defenses D1 and D4
-    python demo.py --output result.json  # Additionally save the result matrix as JSON
-    python demo.py --list                # List all attacks/defenses offline without calling API
+命令行用法（详见 --help）：
+    python demo.py                       # 默认：全部 3x4 组合，每组合 4 次试验
+    python demo.py --trials 5            # 每个组合跑 5 次
+    python demo.py --model gpt-5.6-luna        # 换模型
+    python demo.py --attack 2,3          # 只跑第 2、3 个攻击场景
+    python demo.py --defense 1,4         # 只跑 D1 和 D4 两种防御
+    python demo.py --output result.json  # 额外把结果矩阵保存为 JSON
+    python demo.py --list                # 离线列出所有攻击/防御，不调用 API
 
-Backward compatibility: environment variables TRIALS / OPENAI_MODEL / OPENAI_BASE_URL can still be used to set defaults,
-command-line arguments take precedence.
+兼容旧行为：仍可用环境变量 TRIALS / OPENAI_MODEL / OPENAI_BASE_URL 设置默认值，
+命令行参数优先级更高。
 """
 
 from __future__ import annotations
@@ -30,14 +30,14 @@ from attacks import ATTACKS
 
 
 def _parse_selection(spec: str, items: list, kind: str) -> list[int]:
-    """Parse a selection string like "1,3" or "indirect,D4" into a list of item indices.
+    """把 "1,3" 或 "间接,D4" 这样的选择字符串解析为 items 的下标列表。
 
-    Supports two formats (can be mixed, comma-separated):
-    - 1-based index (e.g., "1,3");
-    - Name substring (e.g., "indirect" matches "indirect injection", "D4" matches "D4-combined defense").
-    Preserves the user-given order and removes duplicates.
+    支持两种写法（可混用，逗号分隔）：
+    - 1 起始的序号（如 "1,3"）；
+    - 名称子串（如 "间接" 匹配"间接注入"，"D4" 匹配"D4-组合防御"）。
+    保持用户给定的顺序并去重。
     """
-    if spec is None or spec.strip().lower() in ("", "all", "All"):
+    if spec is None or spec.strip().lower() in ("", "all", "全部"):
         return list(range(len(items)))
 
     chosen: list[int] = []
@@ -50,7 +50,7 @@ def _parse_selection(spec: str, items: list, kind: str) -> list[int]:
             n = int(token)
             if not 1 <= n <= len(items):
                 raise ValueError(
-                    f"{kind}Index {n} out of range (valid range 1-{len(items)}）"
+                    f"{kind}序号 {n} 超出范围（有效范围 1-{len(items)}）"
                 )
             idx = n - 1
         else:
@@ -60,33 +60,33 @@ def _parse_selection(spec: str, items: list, kind: str) -> list[int]:
                 if token.lower() in it.name.lower()
             ]
             if not matches:
-                raise ValueError(f"No name contains \"{token}\"{kind}")
+                raise ValueError(f"没有名字包含 “{token}” 的{kind}")
             if len(matches) > 1:
                 names = "、".join(items[i].name for i in matches)
-                raise ValueError(f"“{token}\" matches multiple, please be more specific{kind}：{names}No ")
+                raise ValueError(f"“{token}” 同时匹配多个{kind}：{names}，请写得更具体")
             idx = matches[0]
         if idx not in chosen:
             chosen.append(idx)
     if not chosen:
-        raise ValueError(f" selected{kind}")
+        raise ValueError(f"未选中任何{kind}")
     return chosen
 
 
 def list_items() -> None:
-    """Print all attack scenarios and defense configurations offline (no API Key required)."""
-    print("Attack scenarios (--attack can select by index or name substring):")
+    """离线打印所有攻击场景与防御配置（无需 API Key）。"""
+    print("攻击场景（--attack 可用序号或名称子串选择）：")
     for i, attack in enumerate(ATTACKS, 1):
         print(f"  {i}. {attack.name} —— {attack.description}")
-    print("\nDefense configurations (--defense can select by index or name substring):")
+    print("\n防御配置（--defense 可用序号或名称子串选择）：")
     for i, defense in enumerate(DEFENSES, 1):
         layers = []
         if defense.prompt_hardening:
-            layers.append("Prompt hardening")
+            layers.append("提示词加固")
         if defense.source_tagging:
-            layers.append("Source marking")
+            layers.append("来源标记")
         if defense.runtime_guard:
-            layers.append("Runtime validation")
-        detail = " + ".join(layers) if layers else "None (baseline)"
+            layers.append("运行时校验")
+        detail = " + ".join(layers) if layers else "无（基线）"
         print(f"  {i}. {defense.name} —— {detail}")
 
 
@@ -99,9 +99,9 @@ def run_matrix(
     base_url: str | None,
 ) -> tuple[list[list[float]], str]:
     client, resolved_model = make_client(model=model, base_url=base_url)
-    print(f"Using model: {resolved_model}, each combination trial {trials} times\n")
+    print(f"使用模型：{resolved_model}，每个组合试验 {trials} 次\n")
 
-    # matrix[attack_index][defense_index] = success rate (only filled for selected rows/cols, others are None)
+    # matrix[攻击索引][防御索引] = 成功率（仅填充被选中的行列，其余为 None）
     matrix: list[list[float | None]] = [
         [None for _ in DEFENSES] for _ in ATTACKS
     ]
@@ -128,10 +128,10 @@ def run_matrix(
                     successes += 1
             rate = successes / trials if trials else 0.0
             matrix[ai][di] = rate
-            flag = f" (including {errors} errors)" if errors else ""
+            flag = f"  (含 {errors} 次错误)" if errors else ""
             print(
                 f"[{attack.name:<6}] x [{defense.name:<10}] "
-                f"Success rate {rate:5.0%} ({successes}/{trials}){flag}"
+                f"成功率 {rate:5.0%} ({successes}/{trials}){flag}"
             )
         print()
 
@@ -144,13 +144,13 @@ def print_matrix(
     defense_idx: list[int],
 ) -> None:
     print("=" * 68)
-    print("Attack success rate matrix (rows=attack scenarios, columns=defense configurations, lower is safer)")
+    print("攻击成功率矩阵（行=攻击场景，列=防御配置，越低越安全）")
     print("=" * 68)
 
     def cell(v: float | None) -> str:
         return "   -  " if v is None else f"{v:.0%}"
 
-    corner = "Attack \\ Defense"
+    corner = "攻击 \\ 防御"
     header = f"{corner:<12}" + "".join(
         f"{DEFENSES[di].name:>14}" for di in defense_idx
     )
@@ -163,8 +163,8 @@ def print_matrix(
         print(row)
     print("-" * len(header))
 
-    # Average success rate of each defense configuration across selected attacks, showing "layered strengthening -> overall decrease"
-    avg = f"{'Average':<12}"
+    # 各防御配置在被选攻击上的平均成功率，展示"逐层加强 -> 整体下降"
+    avg = f"{'平均':<12}"
     for di in defense_idx:
         vals = [matrix[ai][di] for ai in attack_idx if matrix[ai][di] is not None]
         col = sum(vals) / len(vals) if vals else 0.0
@@ -196,24 +196,24 @@ def save_json(
     }
     with open(path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
-    print(f"\nResult matrix saved to {path}")
+    print(f"\n结果矩阵已保存到 {path}")
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="demo.py",
         description=(
-            "Experiment 2-5: Prompt Injection Attack and Defense Experiment. For each combination of 3 attack scenarios x 4 defense configurations"
-            "Repeat trials, count attack success rate and print attack x defense success rate matrix."
+            "实验 2-5：提示注入攻防实验。对 3 种攻击场景 x 4 种防御配置的每个组合"
+            "重复试验，统计攻击成功率并打印 攻击x防御 成功率矩阵。"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "Example: \n"
-            "  python demo.py                       # all combinations, 4 trials each\n"
-            "  python demo.py -n 5 -m gpt-5.6-luna        # change model and run 5 trials\n"
-            "  python demo.py -a 2,3 -d 1,4         # only run attack 2/3 x defense D1/D4\n"
-            "  python demo.py -o result.json        # additionally save JSON result\n"
-            "  python demo.py --list                # list attacks/defenses offline, no API call\n"
+            "示例：\n"
+            "  python demo.py                       # 全部组合，每组合 4 次\n"
+            "  python demo.py -n 5 -m gpt-5.6-luna        # 换模型并跑 5 次\n"
+            "  python demo.py -a 2,3 -d 1,4         # 只跑攻击2/3 x 防御D1/D4\n"
+            "  python demo.py -o result.json        # 额外保存 JSON 结果\n"
+            "  python demo.py --list                # 离线列出攻击/防御，不调用 API\n"
         ),
     )
     parser.add_argument(
@@ -222,28 +222,28 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=int(os.getenv("TRIALS", "4")),
         metavar="N",
-        help="Number of trials for each attack x defense combination (default 4, recommend 3-5 to control cost; smoke test can use 1)",
+        help="每个 攻击x防御 组合重复试验的次数（默认 4，建议 3-5 以控制成本；冒烟测试可用 1）",
     )
     parser.add_argument(
         "-m",
         "--model",
         default=None,
         metavar="NAME",
-        help="Model name to use (default from environment variable OPENAI_MODEL, if unset then gpt-4o-mini)",
+        help="使用的模型名（默认取环境变量 OPENAI_MODEL，未设置则 gpt-4o-mini）",
     )
     parser.add_argument(
         "-a",
         "--attack",
         default="all",
         metavar="SEL",
-        help="Select attack scenarios to run, comma-separated indices or name substrings (e.g., 1,3 or indirect,memory); default all",
+        help="选择要跑的攻击场景，逗号分隔的序号或名称子串（如 1,3 或 间接,记忆）；默认 all（全部）",
     )
     parser.add_argument(
         "-d",
         "--defense",
         default="all",
         metavar="SEL",
-        help="Select defense configurations to run, comma-separated indices or name substrings (e.g., 1,4 or D1,D4); default all",
+        help="选择要跑的防御配置，逗号分隔的序号或名称子串（如 1,4 或 D1,D4）；默认 all（全部）",
     )
     parser.add_argument(
         "-t",
@@ -251,26 +251,26 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.7,
         metavar="T",
-        help="Sampling temperature (default 0.7; set to 0 for more stable and reproducible results)",
+        help="采样温度（默认 0.7；设为 0 可让结果更稳定、便于复现）",
     )
     parser.add_argument(
         "--base-url",
         default=None,
         metavar="URL",
-        help="Custom OpenAI-compatible API base_url (default from environment variable OPENAI_BASE_URL)",
+        help="自定义 OpenAI 兼容接口的 base_url（默认取环境变量 OPENAI_BASE_URL）",
     )
     parser.add_argument(
         "-o",
         "--output",
         default=None,
         metavar="PATH",
-        help="Path to save the success rate matrix as an additional JSON file",
+        help="把成功率矩阵额外保存为 JSON 文件的路径",
     )
     parser.add_argument(
         "-l",
         "--list",
         action="store_true",
-        help="List all attack scenarios and defense configurations offline and exit (no API key required)",
+        help="离线列出所有攻击场景与防御配置后退出（无需 API Key）",
     )
     return parser
 
@@ -284,11 +284,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.trials < 1:
-        parser.error("--trials must be >= 1")
+        parser.error("--trials 必须 >= 1")
 
     try:
-        attack_idx = _parse_selection(args.attack, ATTACKS, "Attack scenarios")
-        defense_idx = _parse_selection(args.defense, DEFENSES, "Defense configurations")
+        attack_idx = _parse_selection(args.attack, ATTACKS, "攻击场景")
+        defense_idx = _parse_selection(args.defense, DEFENSES, "防御配置")
     except ValueError as exc:
         parser.error(str(exc))
 
@@ -302,8 +302,8 @@ def main(argv: list[str] | None = None) -> int:
             base_url=args.base_url,
         )
     except RuntimeError as exc:
-        #  Common when OPENAI_API_KEY is not configured: give a clear human-readable prompt instead of raw stack trace.
-        print(f"Startup failure:{exc}", file=sys.stderr)
+        # 常见于未配置 OPENAI_API_KEY：给出清晰的人类可读提示而非原始堆栈。
+        print(f"启动失败：{exc}", file=sys.stderr)
         return 1
 
     print_matrix(matrix, attack_idx, defense_idx)
@@ -312,9 +312,9 @@ def main(argv: list[str] | None = None) -> int:
         save_json(args.output, matrix, attack_idx, defense_idx, args.trials, model)
 
     print(
-        "\nConclusion: From D1 to D4, as defenses are progressively strengthened (prompt hardening -> source marking -> "
-        "runtime high-risk operation validation), the success rate of various injection attacks decreases significantly, "
-        "and under combined defense (D4), unauthorized tool call attacks are completely blocked by runtime validation, approaching 0."
+        "\n结论：从 D1 到 D4，随着防御逐层加强（提示词加固 -> 来源标记 -> "
+        "运行时高风险操作校验），各类注入攻击的成功率显著下降，"
+        "组合防御（D4）下越权工具调用类攻击被运行时校验彻底挡住，接近 0。"
     )
     return 0
 

@@ -13,8 +13,8 @@ class OpenAICompatibleEmbeddings(EmbeddingsBase):
     """
     OpenAI compatible embeddings using OpenAI-compatible HTTP API.
 
-    - text-embedding-v4: [2048, 1536, 1024 (default), 768, 512, 256, 128, 64]
-    - text-embedding-v3: [1024 (default), 512, 256, 128, 64]
+    - text-embedding-v4: [2048、1536、1024（默认）、768、512、256、128、64]
+    - text-embedding-v3: [1024(默认)、512、256、128、64]
     - text-embedding-v2: [1536]
     - text-embedding-v1: [1536]
     """

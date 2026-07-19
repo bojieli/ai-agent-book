@@ -1,39 +1,42 @@
 """
-Control Markup Parser
-=====================
+控制标记解析器（Control Markup Parser）
+========================================
 
-Parses text with control markup into a sequence of "segments", each of which is either a speech segment to be synthesized with a reference voice, or a silence segment. This step corresponds to "the execution layer parses markup and maps to corresponding reference voices" in the book.
+把带控制标记的文本解析成一串「片段」，每个片段要么是一段需要用某条参考语音
+合成的语音（speech），要么是一段静音停顿（silence）。这一步对应书中「执行层
+解析标记并映射到对应的参考语音」。
 
-Two types of markup are supported:
+支持两类标记：
 
-1) State markers (persist until changed by the next same-type marker)
-   [EMO:neutral|happy|frustrated|thinking]           or  [emotion=neutral|happy|frustrated|thinking]
-   [SPEED:normal|fast|slow] / [SPEED:0.8x]           or  [speed=normal|fast|slow]
-   [STYLE:formal|casual]                             or  [style=formal|casual]
+1) 状态标记（持续生效，直到被下一个同类标记改变）
+   [EMO:neutral|happy|frustrated|thinking]           或  [情感=中性|高兴|沮丧|思考]
+   [SPEED:normal|fast|slow] / [SPEED:0.8x]           或  [语速=正常|快|慢]
+   [STYLE:formal|casual]                             或  [风格=正式|轻松]
 
-2) Inline markers (one-time events, insert pauses / fillers / non-verbal sounds, or temporarily change state)
-   [THINKING]   Thinking pause + hesitant tone (= emotion thinking / slow / formal, with pause inserted)
-   [SEARCHING]  Searching pause (same, slightly shorter pause)
-   [PAUSE] / <pause> / [pause]     Insert pause
-   [BREATH] / <breath>             Breath pause
-   [SIGH]  / <sigh>                Sigh (approximated with sigh onomatopoeia)
-   [LAUGH:small] / [LAUGH] / <laugh>   Light laugh (approximated with laugh onomatopoeia)
-   <emphasis>...</emphasis> / [emphasis]...[/emphasis]   Emphasize the enclosed text
+2) 内联标记（一次性事件，插入停顿 / 填充音 / 非语言音，或临时改变状态）
+   [THINKING]   思考停顿 + 迟疑语气（=情绪思考/慢速/正式，并插入停顿）
+   [SEARCHING]  搜索性停顿（同上，停顿略短）
+   [PAUSE] / <pause> / [停顿]     插入停顿
+   [BREATH] / <breath>            换气停顿
+   [SIGH]  / <sigh>               叹气（用叹气拟声词近似）
+   [LAUGH:small] / [LAUGH] / <laugh>  轻笑（用笑声拟声词近似）
+   <emphasis>...</emphasis> / [强调]...[/强调]   对包裹的文本加重强调
 
-Note: OpenAI TTS cannot "natively generate" non-verbal sounds like laughter/sighs like Fish Audio can; here we approximate using "onomatopoeia + matching emotion" (see README provider adaptation notes).
+注意：OpenAI TTS 无法像 Fish Audio 那样「原生生成」笑声/叹气等非语言音，
+这里用「拟声词 + 匹配情绪」的方式近似（详见 README 的 provider 适配说明）。
 """
 
 import re
 
-# Chinese values -> alias mapping for English dimension values
+# 中文取值 -> 英文维度值的别名映射
 _EMO_ALIAS = {
-    "neutral": "neutral", "happy": "happy", "happy": "happy", "excited": "happy",
-    "frustrated": "frustrated", "helpless": "frustrated", "thinking": "thinking",
+    "中性": "neutral", "高兴": "happy", "开心": "happy", "兴奋": "happy",
+    "沮丧": "frustrated", "无奈": "frustrated", "思考": "thinking",
 }
-_SPEED_ALIAS = {"normal": "normal", "fast": "fast", "fast": "fast", "slow": "slow", "slow": "slow"}
-_STYLE_ALIAS = {"formal": "formal", "casual": "casual", "casual": "casual"}
+_SPEED_ALIAS = {"正常": "normal", "快": "fast", "快速": "fast", "慢": "slow", "慢速": "slow"}
+_STYLE_ALIAS = {"正式": "formal", "轻松": "casual", "随意": "casual"}
 
-# Pause duration (ms) for each inline event
+# 各内联事件插入的停顿时长（毫秒）
 PAUSE_MS = 500
 BREATH_MS = 400
 THINKING_MS = 500
@@ -47,25 +50,25 @@ def _norm(value: str, alias: dict) -> str:
 
 
 class Segment(dict):
-    """A segment: type='speech'(text, emotion, speed, style, emphasis) or type='silence'(ms)."""
+    """一个片段：type='speech'(text, emotion, speed, style, emphasis) 或 type='silence'(ms)。"""
 
 
 def parse(text: str, trace: list | None = None):
     """
-    Parse text with control markup and return a list of segments.
-    If trace (list) is provided, the parsing process of "marker -> action" will be recorded line by line for printing.
+    解析带控制标记的文本，返回片段列表。
+    若传入 trace（list），会把「标记 -> 动作」的解析过程逐条记入，便于打印。
     """
     def log(msg):
         if trace is not None:
             trace.append(msg)
 
-    # Current state (state markers will change it persistently)
+    # 当前状态（状态标记会持续改变它）
     state = {"emotion": "neutral", "speed": "normal", "style": "formal", "emphasis": False}
     segments: list[Segment] = []
-    buf = []  # Accumulated plain text under current state
+    buf = []  # 累积当前状态下的普通文本
 
     def flush():
-        """Flush the buffered plain text as a speech segment."""
+        """把缓冲区的普通文本作为一个 speech 片段输出。"""
         s = "".join(buf).strip()
         buf.clear()
         if s:
@@ -74,39 +77,39 @@ def parse(text: str, trace: list | None = None):
     def add_silence(ms, why):
         flush()
         segments.append(Segment(type="silence", ms=ms))
-        log(f"  {why:22s} -> Insert silence {ms}ms")
+        log(f"  {why:22s} -> 插入静音 {ms}ms")
 
     def add_speech_token(token, emotion, speed, style, why):
-        """Insert an independent short speech segment with specified emotion (for onomatopoeia like laughter/sighs)."""
+        """插入一个独立的、带指定情绪的短语音片段（用于笑声/叹气等拟声词）。"""
         flush()
         segments.append(Segment(type="speech", text=token, emotion=emotion,
                                 speed=speed, style=style, emphasis=False))
-        log(f"  {why:22s} -> Onomatopoeia speech '{token}' (emotion={emotion}, speed={speed})")
+        log(f"  {why:22s} -> 拟声语音 '{token}' (情绪={emotion},语速={speed})")
 
     def set_state(**kw):
-        flush()  # Before state change, flush the old state's text
+        flush()  # 状态改变前，先把旧状态的文本收尾
         for k, v in kw.items():
             state[k] = v
 
-    # Use a single regex to extract all [..] and <..> markers, the rest is plain text
+    # 用一个总正则切出所有 [..] 与 <..> 标记，其余为普通文本
     parts = re.split(r"(\[[^\]]*\]|<[^>]+>)", text)
     for part in parts:
         if not part:
             continue
         if not re.fullmatch(r"\[[^\]]*\]|<[^>]+>", part):
-            buf.append(part)  # plain text
+            buf.append(part)  # 普通文本
             continue
 
-        m = part  # mark original text
+        m = part  # 标记原文
         inner = m[1:-1].strip()
 
-        # --- Status markers: EMO / SPEED / STYLE (English colon style or Chinese equals sign style) ---
+        # --- 状态标记：EMO / SPEED / STYLE（英文冒号式 或 中文等号式） ---
         km = re.match(r"(?i)^(EMO|SPEED|STYLE)\s*:\s*(.+)$", inner)
-        cm = re.match(r"^(emotion|speed|style)\s*=\s*(.+)$", inner)
+        cm = re.match(r"^(情感|语速|风格)\s*=\s*(.+)$", inner)
         if km:
             key, val = km.group(1).upper(), km.group(2)
         elif cm:
-            key = {"emotion": "EMO", "speed": "SPEED", "style": "STYLE"}[cm.group(1)]
+            key = {"情感": "EMO", "语速": "SPEED", "风格": "STYLE"}[cm.group(1)]
             val = cm.group(2)
         else:
             key = val = None
@@ -114,106 +117,106 @@ def parse(text: str, trace: list | None = None):
         if key == "EMO":
             e = _norm(val, _EMO_ALIAS)
             set_state(emotion=e)
-            log(f"  {m:22s} -> emotion = {e}")
+            log(f"  {m:22s} -> 情绪 = {e}")
             continue
         if key == "SPEED":
             raw = val.strip()
-            v = raw.lower().replace("x", "")  # compatible with 0.8x
-            # first recognize English values (normal/fast/slow), then Chinese aliases (正常/快/慢)
+            v = raw.lower().replace("x", "")  # 兼容 0.8x
+            # 先认英文取值(normal/fast/slow)，再认中文别名(正常/快/慢)
             if v in ("normal", "fast", "slow"):
                 s = v
             elif raw in _SPEED_ALIAS:
                 s = _SPEED_ALIAS[raw]
             else:
-                # numeric type (e.g., 0.8) maps to fast/slow/normal nearby, only for display
+                # 数字型（如 0.8）就近映射到 fast/slow/normal，仅用于展示
                 try:
                     f = float(v)
                     s = "fast" if f > 1.05 else ("slow" if f < 0.95 else "normal")
                 except ValueError:
                     s = "normal"
             set_state(speed=s)
-            log(f"  {m:22s} -> speed = {s}")
+            log(f"  {m:22s} -> 语速 = {s}")
             continue
         if key == "STYLE":
             st = _norm(val, _STYLE_ALIAS)
             set_state(style=st)
-            log(f"  {m:22s} -> style = {st}")
+            log(f"  {m:22s} -> 风格 = {st}")
             continue
 
-        # --- Emphasis wrapping ---
+        # --- 强调包裹 ---
         low = inner.lower()
-        if low in ("emphasis", "emphasis"):
+        if low in ("emphasis", "强调"):
             set_state(emphasis=True)
-            log(f"  {m:22s} -> enable emphasis")
+            log(f"  {m:22s} -> 开启强调")
             continue
-        if low in ("/emphasis", "/emphasis"):
+        if low in ("/emphasis", "/强调"):
             set_state(emphasis=False)
-            log(f"  {m:22s} -> disable emphasis")
+            log(f"  {m:22s} -> 关闭强调")
             continue
 
-        # --- Inline event markers ---
+        # --- 内联事件标记 ---
         tag = low.split(":")[0]  # laugh:small -> laugh
         if tag == "thinking":
             set_state(emotion="thinking", speed="slow", style="formal")
-            log(f"  {m:22s} -> switch to thinking/slow/formal reference voice")
-            add_silence(THINKING_MS, "[THINKING] pause")
+            log(f"  {m:22s} -> 切换到 思考/慢速/正式 参考语音")
+            add_silence(THINKING_MS, "[THINKING] 停顿")
             continue
         if tag == "searching":
             set_state(emotion="thinking", speed="slow", style="formal")
-            log(f"  {m:22s} -> switch to thinking/slow/formal reference voice")
-            add_silence(SEARCHING_MS, "[SEARCHING] pause")
+            log(f"  {m:22s} -> 切换到 思考/慢速/正式 参考语音")
+            add_silence(SEARCHING_MS, "[SEARCHING] 停顿")
             continue
-        if tag in ("pause", "pause"):
+        if tag in ("pause", "停顿"):
             add_silence(PAUSE_MS, m)
             continue
-        if tag in ("breath", "breath"):
+        if tag in ("breath", "换气"):
             add_silence(BREATH_MS, m)
             continue
         if tag == "sigh":
-            add_speech_token("ah——", "frustrated", "slow", "formal", m)
+            add_speech_token("唉——", "frustrated", "slow", "formal", m)
             segments.append(Segment(type="silence", ms=SIGH_TAIL_MS))
             continue
         if tag == "laugh":
-            add_speech_token("haha,", "happy", "fast", "casual", m)
+            add_speech_token("哈哈，", "happy", "fast", "casual", m)
             continue
 
-        # unknown marker: ignore but record
-        log(f"  {m:22s} -> [unknown marker, ignored]")
+        # 未知标记：忽略但记录
+        log(f"  {m:22s} -> [未知标记，已忽略]")
 
     flush()
     return segments
 
 
 # ---------------------------------------------------------------------------
-# static mapping table from control markers to actions (offline queryable, for demo.py --dump-mapping)
-# This is the single source of truth for the mapping from control markers in the book to reference voices / non-verbal sounds.
+# 控制标记 -> 动作 的静态映射表（离线可查，供 demo.py --dump-mapping 打印）
+# 这是「书中控制标记 -> 参考语音 / 非语言音」映射关系的单一事实来源。
 # ---------------------------------------------------------------------------
 
-# (Category, Tag Syntax, Chinese Syntax, Mapped Action)
+# (类别, 标记写法, 中文写法, 映射到的动作)
 MARKER_REFERENCE = [
-    ("State", "[EMO:neutral|happy|frustrated|thinking]", "[Emotion=Neutral|Happy|Frustrated|Thinking]",
-     "Switch emotion dimension, select reference voice"),
-    ("State", "[SPEED:normal|fast|slow] / [SPEED:0.8x]", "[Speed=Normal|Fast|Slow]",
-     "Switch speed dimension (numeric values map to fast/slow/normal)"),
-    ("State", "[STYLE:formal|casual]", "[Style=Formal|Casual]", "Switch tone dimension"),
-    ("Inline", "[THINKING]", "—", "Switch to 'Thinking/Slow/Formal' reference voice + insert 500ms pause"),
-    ("Inline", "[SEARCHING]", "—", "Switch to 'Thinking/Slow/Formal' reference voice + insert 400ms pause"),
-    ("Inline", "[PAUSE] / <pause>", "[Pause]", "Insert 500ms silence"),
-    ("Inline", "[BREATH] / <breath>", "[Breath]", "Insert 400ms breath pause"),
-    ("Inline", "[SIGH] / <sigh>", "—", "Sigh onomatopoeia 'Ai——' (frustrated tone) + 300ms pause"),
-    ("Inline", "[LAUGH:small] / [LAUGH] / <laugh>", "—", "Light laugh onomatopoeia 'Haha,' (happy tone)"),
-    ("Inline", "<emphasis>…</emphasis>", "[Emphasis]…[/Emphasis]", "Append 'emphasis' prompt to wrapped text"),
+    ("状态", "[EMO:neutral|happy|frustrated|thinking]", "[情感=中性|高兴|沮丧|思考]",
+     "切换情绪维度，选择参考语音"),
+    ("状态", "[SPEED:normal|fast|slow] / [SPEED:0.8x]", "[语速=正常|快|慢]",
+     "切换语速维度（数字型就近映射到 fast/slow/normal）"),
+    ("状态", "[STYLE:formal|casual]", "[风格=正式|轻松]", "切换口吻维度"),
+    ("内联", "[THINKING]", "—", "切到「思考/慢速/正式」参考语音 + 插入 500ms 停顿"),
+    ("内联", "[SEARCHING]", "—", "切到「思考/慢速/正式」参考语音 + 插入 400ms 停顿"),
+    ("内联", "[PAUSE] / <pause>", "[停顿]", "插入 500ms 静音"),
+    ("内联", "[BREATH] / <breath>", "[换气]", "插入 400ms 换气停顿"),
+    ("内联", "[SIGH] / <sigh>", "—", "叹气拟声词「唉——」(沮丧音色) + 300ms 停顿"),
+    ("内联", "[LAUGH:small] / [LAUGH] / <laugh>", "—", "轻笑拟声词「哈哈，」(高兴音色)"),
+    ("内联", "<emphasis>…</emphasis>", "[强调]…[/强调]", "对包裹文本追加「加重强调」提示词"),
 ]
 
 
 def format_marker_reference() -> str:
-    """Render MARKER_REFERENCE as a printable aligned table string."""
-    lines = [f"{'Category':<4} {'Tag Syntax':<40} {'Chinese Syntax':<24} Action", "-" * 100]
+    """把 MARKER_REFERENCE 渲染成可打印的对齐表格字符串。"""
+    lines = [f"{'类别':<4} {'标记写法':<40} {'中文写法':<24} 动作", "-" * 100]
     for cat, mark, zh, action in MARKER_REFERENCE:
         lines.append(f"{cat:<4} {mark:<40} {zh:<24} {action}")
     return "\n".join(lines)
 
 
 if __name__ == "__main__":
-    print("Control Tag -> Action Mapping Table: \n")
+    print("控制标记 -> 动作 映射表：\n")
     print(format_marker_reference())

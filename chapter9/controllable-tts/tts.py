@@ -1,19 +1,19 @@
 """
-TTS Synthesis Layer (OpenAI TTS)
+TTS 合成层（OpenAI TTS）
 ========================
 
-Provider adaptation: The book's experiments use Fish Audio's control markers + voice cloning reference library.
-Fish Audio has no available key, so OpenAI TTS is used here to demonstrate the same idea:
+Provider 适配：书中实验用 Fish Audio 的控制标记 + 声音克隆参考语音库。
+Fish Audio 无可用 key，这里改用 OpenAI TTS 演示相同思路：
 
-  - Preferred: gpt-4o-mini-tts: supports `instructions` parameter, can use a style prompt to precisely
-    control emotion / speed / tone, closest to the semantics of "control markers -> stylized speech";
-  - If that model is unavailable, fallback to tts-1: does not support instructions, uses multiple voices +
-    `speed` parameter + text-level pauses as approximation.
+  - 首选 gpt-4o-mini-tts：支持 `instructions` 参数，可用一段风格提示词精确
+    控制情感 / 语速 / 口吻，最贴近「控制标记 -> 风格化语音」的语义；
+  - 若该模型不可用，自动兜底到 tts-1：不支持 instructions，改用多 voice +
+    `speed` 参数 + 文本级停顿近似。
 
-After a control marker text is parsed into multiple segments:
-  - speech segments: each synthesized with corresponding reference voice (same base voice + different instructions);
-  - silence segments: real silence generated with ffmpeg;
-Finally, all segments are concatenated in order into a single mp3 using ffmpeg (consistent timbre, varying prosody/emotion/pauses).
+一段控制标记文本被解析成多个片段后：
+  - speech 片段：各自用对应参考语音（同一 base voice + 不同 instructions）合成；
+  - silence 片段：用 ffmpeg 生成真实静音；
+最后用 ffmpeg 把所有片段按顺序拼成一个 mp3（音色一致、韵律/情感/停顿不同）。
 """
 
 import os
@@ -24,28 +24,28 @@ from openai import OpenAI
 
 from voice_library import VOICE_LIBRARY, BASE_VOICE, build_instructions, speed_factor, profile_key
 
-#  Override with TTS_MODEL environment variable; default prefers gpt-4o-mini-tts
+# 可用 TTS_MODEL 环境变量覆盖；默认首选 gpt-4o-mini-tts
 PREFERRED_MODEL = os.getenv("TTS_MODEL", "gpt-4o-mini-tts")
 FALLBACK_MODEL = "tts-1"
 
 _client = None
-_active_model = None  #  Actual model determined after first call
+_active_model = None  # 首次调用后确定实际使用的模型
 
 
 def _get_client():
     global _client
     if _client is None:
-        #  timeout + auto retry: single network/SSL glitch won't crash the entire synthesis
+        # timeout + 自动重试：单次网络/SSL 抖动不至于让整段合成崩溃
         _client = OpenAI(timeout=60.0, max_retries=3)
     return _client
 
 
 def _synth_call(model, text, voice, instructions, speed, out_path):
-    """Actual call to OpenAI TTS. gpt-4o-mini-tts uses instructions; tts-1 uses speed."""
+    """真正调用 OpenAI TTS。gpt-4o-mini-tts 用 instructions；tts-1 用 speed。"""
     client = _get_client()
     kwargs = dict(model=model, voice=voice, input=text, response_format="mp3")
     if model == "tts-1":
-        #  tts-1 does not support instructions, approximate speed control with speed parameter
+        # tts-1 不支持 instructions，用 speed 参数近似语速控制
         kwargs["speed"] = max(0.25, min(4.0, speed))
     else:
         kwargs["instructions"] = instructions
@@ -55,8 +55,8 @@ def _synth_call(model, text, voice, instructions, speed, out_path):
 
 def synth_speech(text, emotion, speed, style, emphasis, out_path):
     """
-    Synthesize a speech segment, return the actual (model, voice, instructions/speed) for logging.
-    Timbre fixed = BASE_VOICE, ensuring consistent timbre across the segment (simulating Fish Audio's timbre consistency).
+    合成一个 speech 片段，返回实际使用的 (model, voice, instructions/speed) 供打印。
+    音色固定 = BASE_VOICE，保证整段音色一致（模拟 Fish Audio 的音色一致性）。
     """
     global _active_model
     key = profile_key(emotion, speed, style)
@@ -70,9 +70,9 @@ def synth_speech(text, emotion, speed, style, emphasis, out_path):
         _synth_call(model, text, voice, instructions, spd, out_path)
         _active_model = model
     except Exception as e:
-        #  Fallback to tts-1 when preferred model is unavailable
+        # 首选模型不可用时兜底到 tts-1
         if model != FALLBACK_MODEL:
-            print(f"  [warn] Model {model}  Call failed({repr(e)[:80]}), falling back to {FALLBACK_MODEL}")
+            print(f"  [warn] 模型 {model} 调用失败({repr(e)[:80]})，兜底到 {FALLBACK_MODEL}")
             _synth_call(FALLBACK_MODEL, text, voice, instructions, spd, out_path)
             _active_model = FALLBACK_MODEL
             model = FALLBACK_MODEL
@@ -83,7 +83,7 @@ def synth_speech(text, emotion, speed, style, emphasis, out_path):
 
 
 def make_silence(ms, out_path):
-    """Generate a real silence mp3 with ffmpeg (counts toward total duration, verifiable by ffprobe)."""
+    """用 ffmpeg 生成一段真实静音 mp3（会计入总时长，可被 ffprobe 验证）。"""
     subprocess.run(
         ["ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
          "-t", f"{ms/1000:.3f}", "-q:a", "9", out_path],
@@ -92,7 +92,7 @@ def make_silence(ms, out_path):
 
 
 def concat_mp3(part_paths, out_path):
-    """Concatenate multiple mp3 segments in order using ffmpeg concat demuxer (uniform re-encoding to avoid timebase issues)."""
+    """用 ffmpeg concat demuxer 把多个 mp3 片段按顺序拼接（统一重编码，避免时基问题）。"""
     with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
         for p in part_paths:
             f.write(f"file '{os.path.abspath(p)}'\n")
@@ -109,8 +109,8 @@ def concat_mp3(part_paths, out_path):
 
 def synthesize_segments(segments, out_path, workdir):
     """
-    Combine the segment list from parse() into a complete mp3.
-    Return synthesis info list for each segment (for logging verification).
+    把 parse() 得到的片段列表合成为一个完整 mp3。
+    返回每个片段的合成信息列表（供打印验证）。
     """
     os.makedirs(workdir, exist_ok=True)
     parts, info = [], []

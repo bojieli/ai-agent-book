@@ -1,21 +1,21 @@
 """
-Offline backend: enables the entire pipeline to run **without an OpenAI key**, used to verify mechanisms,
-quantify tokens/latency, and allow readers to reproduce the comparison structure of "three strategies" at zero cost.
+离线后端：让整条流水线在**没有 OpenAI key** 时也能跑通，用于验证机制、
+量化 token/延迟，并让读者零成本复现"三种策略"的对比结构。
 
-Contains two parts:
-1) LocalEmbedder — a local hash bag-of-words embedding (Chinese character unigram/bigram + English words),
-   no internet required to support semantic similarity for discover_tools / retrieval pre-filtering.
-2) MockChatClient — a deterministic "scripted" model with an interface identical to the OpenAI client
-   (client.chat.completions.create(...).choices[0].message.content).
-   It decomposes tasks into subtasks based on keywords and follows the ReAct text protocol to call tools step by step.
+包含两部分：
+1) LocalEmbedder —— 本地哈希词袋嵌入（中文字 unigram/bigram + 英文词），
+   无需联网即可支撑 discover_tools / 检索预筛选的语义相似度。
+2) MockChatClient —— 一个确定性的"脚本化"模型，接口与 OpenAI 客户端一致
+   （client.chat.completions.create(...).choices[0].message.content）。
+   它按关键词把任务拆成若干子任务，遵循 ReAct 文本协议逐步调用工具。
 
-Important boundary notes:
-- MockChatClient is a **strongly heuristic router** and does not represent the capabilities of a real small model; therefore it **will not** reproduce
-  the phenomenon of "instruction-following degradation and mis-selection of generic tools under extremely long contexts" described in the book — that requires a real small-parameter model.
-- What can be truly reproduced in offline mode: ① the token count injected by each strategy (real computation via tiktoken);
-  ② the structural limitation of retrieval pre-filtering "one-shot matching" (if the specialized tool for the second subtask is not selected by the initial retrieval,
-  the model cannot call it → the subtask fails); ③ proactive discovery that tools can still be supplemented and tasks completed after on-demand loading.
-- To observe the selection behavior of real models under a long-context tool wall, please configure a real model (see the real results table for gpt-5.6-luna in the README).
+重要边界说明：
+- MockChatClient 是一个**强启发式路由器**，不代表真实小模型的能力，因此它**不会**复现
+  书中"超长上下文下指令遵循退化、错选通用工具"的现象——那需要真实的小参数量模型。
+- 离线模式下真实可复现的是：① 各策略注入的 token 量（tiktoken 真实计算）；
+  ② 检索预筛选"一次性匹配"的结构性局限（若第二个子任务的专用工具没被初始检索选中，
+  模型就调用不到它 → 该子任务失败）；③ 主动发现按需加载后仍能补齐工具、完成任务。
+- 要观察真实模型在长上下文工具墙下的选择行为，请配置真实模型（见 README 中 gpt-5.6-luna 的真实结果表）。
 """
 
 import hashlib
@@ -30,11 +30,11 @@ _DIM = 512
 
 
 # ---------------------------------------------------------------------------
-# 1) Local embedding backend
+# 1) 本地嵌入后端
 # ---------------------------------------------------------------------------
 
 def _tokens(text: str) -> List[str]:
-    """Tokenize mixed Chinese-English text into bag-of-words tokens: English by word (and split underscores), Chinese by character unigram + bigram."""
+    """把中英文混合文本切成词袋 token：英文按词（并拆下划线），中文按字 unigram + bigram。"""
     text = text.lower()
     toks: List[str] = []
     for w in re.findall(r"[a-z0-9]+", text):
@@ -46,7 +46,7 @@ def _tokens(text: str) -> List[str]:
 
 
 class LocalEmbedder:
-    """Hash bag-of-words embedding: deterministic, no internet required. Similarity is driven by overlapping Chinese and English keywords."""
+    """哈希词袋嵌入：确定性、无需联网。相似度由中英文关键词重叠驱动。"""
 
     name = "local-hash-%d" % _DIM
 
@@ -63,43 +63,43 @@ class LocalEmbedder:
 
 
 # ---------------------------------------------------------------------------
-# 2) Scripted mock model
+# 2) 脚本化 mock 模型
 # ---------------------------------------------------------------------------
-# Intent rules: map task keywords to the "specialized tool to use" and a capability requirement description.
-# Order matters (e.g., "forecast" type weather must precede generic "weather").
+# 意图规则：把任务关键词映射到"应当使用的专用工具"及一句能力需求描述。
+# 顺序有意义（如"预报"类天气须排在通用"天气"之前）。
 INTENT_RULES: List[Tuple[str, str, str]] = [
-    (r"stock price|stock", "get_stock_price", "Query the real-time price and change of a stock"),
-    (r"Ethereum|Bitcoin|crypto|\beth\b|\bbtc\b", "get_crypto_price", "Query the real-time price of cryptocurrencies"),
-    (r"yen|exchange rate|USD.*exchange|exchange.*(JPY|USD|EUR)|currency conversion", "get_forex_rate", "Query the foreign exchange rate between two fiat currencies"),
-    (r"paper|arxiv|literature|quantum computing|research progress|research advance", "arxiv_search", "Search for the latest papers in the academic paper database"),
-    (r"download", "download_file", "Download a file from a URL and save it locally"),
-    (r"contributions", "github_list_contributors", "Get contributor commit statistics for a GitHub repository"),
-    (r"chart|visualization|draw a|plot|graph", "render_chart", "Render a visualization chart based on data"),
-    (r"forecast|future|Sunday|this week|tomorrow|day after tomorrow|next week", "get_weather_forecast", "Query the weather forecast for a city for the next few days"),
-    (r"weather", "get_current_weather", "Query the current weather for a city"),
-    (r"calendar|schedule|event|note a|record a", "create_calendar_event", "Create an event on the calendar"),
-    (r"news|public opinion|message|report|trend", "search_news", "Search for the latest news by keyword"),
+    (r"股价|股票", "get_stock_price", "查询某股票的实时价格与涨跌幅"),
+    (r"以太坊|比特币|加密|\beth\b|\bbtc\b", "get_crypto_price", "查询加密货币的实时价格"),
+    (r"日元|汇率|美元.*换|换.*(日元|美元|欧元)|兑换", "get_forex_rate", "查询两种法定货币的外汇汇率"),
+    (r"论文|arxiv|文献|量子计算|科研进展|研究进展", "arxiv_search", "在学术论文库检索最新论文"),
+    (r"下载", "download_file", "从 URL 下载文件保存到本地"),
+    (r"贡献", "github_list_contributors", "获取 GitHub 仓库的贡献者提交统计"),
+    (r"图表|可视化|画个|画图|画一", "render_chart", "根据数据渲染可视化图表"),
+    (r"预报|未来|周日|这周|明天|后天|下周", "get_weather_forecast", "查询某城市未来若干天的天气预报"),
+    (r"天气", "get_current_weather", "查询某城市的实时天气"),
+    (r"日历|日程|活动|记一个|记录一个", "create_calendar_event", "在日历上创建一个事件"),
+    (r"新闻|舆论|消息|报道|风向", "search_news", "按关键词检索相关的最新新闻"),
 ]
 
 
 def match_intents(prompt: str) -> List[Tuple[str, str]]:
-    """Return the list of (specialized tool name, capability requirement description) involved in the task (deduplicated, order-preserving)."""
+    """返回任务涉及的 (专用工具名, 能力需求描述) 列表（去重、保序）。"""
     needed: List[Tuple[str, str]] = []
     seen = set()
     for pat, tool, phrase in INTENT_RULES:
         if re.search(pat, prompt, re.IGNORECASE) and tool not in seen:
             needed.append((tool, phrase))
             seen.add(tool)
-    # Weather deduplication: if "forecast" is hit, do not separately require "real-time weather".
+    # 天气去重：若命中"预报"则不再单独要求"实时天气"。
     if "get_weather_forecast" in seen and "get_current_weather" in seen:
         needed = [(t, p) for t, p in needed if t != "get_current_weather"]
     return needed
 
 
 _ARG_HINTS = {
-    "symbol": "AAPL", "location": "Beijing", "query": "query", "url": "https://example.com/f.pdf",
+    "symbol": "AAPL", "location": "北京", "query": "查询", "url": "https://example.com/f.pdf",
     "path": "/tmp/paper.pdf", "owner": "pytorch", "repo": "pytorch", "base": "USD",
-    "quote": "JPY", "title": "outdoor hiking", "start": "2026-07-19T09:00", "end": "2026-07-19T12:00",
+    "quote": "JPY", "title": "户外徒步", "start": "2026-07-19T09:00", "end": "2026-07-19T12:00",
     "days": 3, "data": "[]", "chart_type": "bar", "code": "print('ok')", "max_results": 3,
 }
 
@@ -145,7 +145,7 @@ def _json(thought: str, tool: str, arguments: Dict) -> str:
 
 
 class MockChatClient:
-    """Deterministic script model; interface compatible with OpenAI client subset."""
+    """确定性脚本模型；接口与 OpenAI 客户端子集兼容。"""
 
     def __init__(self):
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))
@@ -161,7 +161,7 @@ class MockChatClient:
         full_text = "\n".join(m.get("content", "") for m in messages)
         has_discover = "discover_tools" in system
 
-        # Current "available tools" = tool names appearing in the dialogue text (system injection / discover append).
+        # 当前"可用工具" = 出现在对话文本中的工具名（system 注入 / discover 追加）。
         available = set(re.findall(r'"name":\s*"([a-zA-Z_][a-zA-Z0-9_]*)"', full_text))
         available.discard("discover_tools")
 
@@ -181,15 +181,15 @@ class MockChatClient:
             if tool in called_ok:
                 continue
             if tool in available:
-                return _json(f"Call specialized tool {tool}", tool, _fill_args(tool))
-            # Target tool currently unavailable
+                return _json(f"调用专用工具 {tool}", tool, _fill_args(tool))
+            # 目标工具当前不可用
             if has_discover:
                 if discover_needs.count(phrase) >= 1:
-                    continue  # Already discovered but not yet hit -> abandon this subtask
-                return _json(f"I need a tool that can '{phrase}', first discover it", "discover_tools",
+                    continue  # 已发现过仍未命中 -> 放弃该子任务
+                return _json(f"我需要一个能『{phrase}』的工具，先发现它", "discover_tools",
                              {"need": phrase})
             else:
                 if attempted.count(tool) >= 1:
-                    continue  # Tool not in the list, try once and give up
-                return _json(f"Task requires {tool}, try calling", tool, _fill_args(tool))
-        return _json("All subtasks processed", "finish", {"answer": "Completed the subtasks that can be completed."})
+                    continue  # 清单里没有该工具，尝试过一次即放弃
+                return _json(f"任务需要 {tool}，尝试调用", tool, _fill_args(tool))
+        return _json("所有子任务已处理", "finish", {"answer": "已完成可完成的子任务。"})

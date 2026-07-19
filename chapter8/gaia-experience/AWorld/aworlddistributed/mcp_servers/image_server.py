@@ -138,7 +138,7 @@ def encode_images(image_sources: List[str], with_header: bool = True) -> List[st
 
 def image_to_base64(image_path):
     try:
-        # TODO parse images from PDF or other files
+        # todo 解析pdf或其他文件的图片
         with Image.open(image_path) as image:
             buffered = BytesIO()
             image_format = image.format if image.format else "JPEG"

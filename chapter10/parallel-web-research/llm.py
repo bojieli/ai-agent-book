@@ -1,14 +1,14 @@
 """
-Optional LLM judgment layer
+可选的 LLM 判断层
 =================
 
-After the sub-agent captures the web page text, it needs to determine "whether this content answers the target question."
-- By default, the controllable keyword judgment of ``sources.keyword_judge`` is used (no internet required, results reproducible);
-- If ``OPENAI_API_KEY`` is set and not forced offline, the real LLM is called for judgment,
-  demonstrating the path where "the sub-agent uses a large model to make real decisions."
+子 Agent 抓到网页文本后，需要判断"这段内容是否回答了目标问题"。
+- 默认使用 ``sources.keyword_judge`` 的可控关键词判断（无需联网、结果可复现）；
+- 若设置了 ``OPENAI_API_KEY`` 且未强制离线，则调用真实 LLM 做判断，
+  展示"子 Agent 用大模型做真实决策"这条路径。
 
-Coordination / bus / termination / race condition mechanisms are independent of the LLM and are always real implementations;
-the LLM only affects the judgment of "whether a single source contains the answer," which is a pluggable part.
+协调 / 总线 / 终止 / 竞态这些机制与 LLM 无关，始终是真实实现；
+LLM 只影响"单个源里是否命中答案"的判断，属于可插拔部分。
 """
 
 from __future__ import annotations
@@ -21,18 +21,18 @@ from sources import keyword_judge
 
 
 def _to_openrouter_model(model: str) -> str:
-    """Map model names to the OpenRouter namespace (for fallback path without OPENAI_API_KEY)."""
+    """把模型名映射到 OpenRouter 命名空间（用于无 OPENAI_API_KEY 的回退路径）。"""
     if "/" in model:
-        return model                      # is already in OpenRouter namespace, use as is
+        return model                      # 已是 OpenRouter 命名空间，原样使用
     if model.startswith("gpt-"):
         return "openai/" + model          # gpt-* -> openai/gpt-*
     if model.startswith("claude-"):
         return "anthropic/claude-opus-4.8"
-    return "openai/gpt-5.6-luna"          # Fallback: current cheap flagship
+    return "openai/gpt-5.6-luna"          # 兜底：当前便宜旗舰
 
 
 def _loads_lenient(content: str):
-    """Fault-tolerant JSON parsing: handles cases where some models wrap JSON in ```json ... ``` code fences."""
+    """容错解析 JSON：兼容个别模型把 JSON 包在 ```json ... ``` 代码围栏里的情况。"""
     s = (content or "").strip()
     if s.startswith("```"):
         s = s.split("\n", 1)[-1] if "\n" in s else s
@@ -43,14 +43,14 @@ def _loads_lenient(content: str):
 
 
 def llm_available() -> bool:
-    """Whether conditions for calling the real LLM are met.
+    """是否具备调用真实 LLM 的条件。
 
-    Note: The focus of this experiment is on mechanisms like "parallel coordination / message bus / cascading termination / race settlement,"
-    not on LLM retrieval quality. To ensure the demo is **reproducible** (only sources that truly contain the answer are hit,
-    thereby stably triggering race conditions and cascading termination), deterministic keyword judgment is used by default.
-    Only when USE_LLM=1 is explicitly set is the real LLM judgment enabled (may hallucinate on mock sources, for experience only).
+    注意：本实验的重点是"并行协调 / 消息总线 / 级联终止 / 竞态结算"这些机制，
+    而不是 LLM 的检索质量。为保证演示**可复现**（只有真正包含答案的源才命中，
+    从而稳定触发竞态与级联终止），默认走确定性的关键词判断。
+    只有显式设置 USE_LLM=1 时才启用真实 LLM 判断（可能对 mock 源产生幻觉，仅供体验）。
 
-    Key resolution: priority to OPENAI_API_KEY; if absent, fallback to OPENROUTER_API_KEY (via OpenRouter).
+    Key 解析：优先 OPENAI_API_KEY；没有则回退 OPENROUTER_API_KEY（走 OpenRouter）。
     """
     if os.getenv("USE_LLM", "").lower() not in ("1", "true", "yes"):
         return False
@@ -59,18 +59,18 @@ def llm_available() -> bool:
 
 async def judge_answer(question: str, text: str) -> Optional[str]:
     """
-    Determine whether text answers the question. If hit, return the answer string; otherwise return None.
-    Prefer LLM; fallback to keyword judgment when unavailable or on error, ensuring the demo always runs.
+    判断 text 是否回答了 question。命中则返回答案字符串，否则返回 None。
+    优先用 LLM；不可用或出错时回退到关键词判断，保证 demo 始终可跑通。
     """
     if not llm_available():
         return keyword_judge(text)
 
     try:
-        # Lazy import to avoid affecting keyword path when openai is not installed
+        # 延迟导入，避免没装 openai 时影响关键词路径
         from openai import AsyncOpenAI
 
         model = os.getenv("OPENAI_MODEL", "gpt-5.6-luna")
-        # General fallback: prefer direct OPENAI_API_KEY; otherwise use OPENROUTER_API_KEY via OpenRouter.
+        # 通用回退：优先直连 OPENAI_API_KEY；否则用 OPENROUTER_API_KEY 走 OpenRouter。
         if os.getenv("OPENAI_API_KEY"):
             client = AsyncOpenAI(
                 api_key=os.getenv("OPENAI_API_KEY"),
@@ -83,13 +83,13 @@ async def judge_answer(question: str, text: str) -> Optional[str]:
             )
             model = _to_openrouter_model(model)
         prompt = (
-            f"Question:{question}\n\n"
-            f"Web page content:{text}\n\n"
-            "Strictly judge based only on the above 'Web page content', **do not use your own knowledge**."
-            "Only count as a hit if the web page content **actually contains** the specific answer to the question."
-            "If hit, output only JSON: {\"found\": true, \"answer\": \"<answer extracted from web page content>\"};"
-            "If the web page content does not directly provide the answer (even if you know it), always output {\"found\": false}."
-            "Output only JSON, no other text."
+            f"问题：{question}\n\n"
+            f"网页内容：{text}\n\n"
+            "严格只依据上面的『网页内容』判断，**不得使用你自己的知识**。"
+            "只有当网页内容里**确实出现了**问题的具体答案时，才算命中。"
+            "命中则只输出 JSON：{\"found\": true, \"answer\": \"<从网页内容中摘出的答案>\"}；"
+            "若网页内容没有直接给出答案（哪怕你知道答案），一律输出 {\"found\": false}。"
+            "只输出 JSON，不要其它文字。"
         )
         resp = await client.chat.completions.create(
             model=model,
@@ -101,6 +101,6 @@ async def judge_answer(question: str, text: str) -> Optional[str]:
         if data.get("found"):
             return data.get("answer") or text
         return None
-    except Exception as exc:  # noqa: BLE001 —— any exception falls back to offline judgment
-        print(f"  [llm] call failed, fallback to keyword judgment:{exc}")
+    except Exception as exc:  # noqa: BLE001 —— 任何异常都回退到离线判断
+        print(f"  [llm] 调用失败，回退关键词判断：{exc}")
         return keyword_judge(text)

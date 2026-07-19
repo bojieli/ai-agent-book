@@ -13,7 +13,7 @@ Usage (OpenAI, the default):
     python gen_cover.py
 
 Swapping providers: edit generate() below. Stubs/notes are included for
-Tongyi Wanxiang (DashScope), Jimeng/Kolors, and Flux (fal / Replicate) — pick whichever you
+通义万相 (DashScope)、即梦/可图, and Flux (fal / Replicate) — pick whichever you
 have access to. The prompt is the important part and is provider-agnostic.
 """
 import os
@@ -58,7 +58,7 @@ def generate_openai(prompt, out):
 
 
 # ── Alternative providers (uncomment / adapt the one you use) ───────────────
-# def generate_dashscope(prompt, out):   # Alibaba Tongyi Wanxiang (wanx)
+# def generate_dashscope(prompt, out):   # 阿里 通义万相 (wanx)
 #     import dashscope  # pip install dashscope ; export DASHSCOPE_API_KEY=...
 #     rsp = dashscope.ImageSynthesis.call(model="wanx-v1", prompt=prompt,
 #                                         n=1, size="1024*1536")

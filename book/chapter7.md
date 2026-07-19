@@ -1,746 +1,762 @@
-# Model Post-Training
+# 模型后训练
 
-The core formula of this book is Agent = LLM + Context + Tools. This chapter focuses on optimizing the LLM, the "brain"—using post-training to make the model better utilize context and tools, thereby enhancing the entire Agent system's capabilities. The end of Chapter 6 pointed out that the evaluation system and simulation environment are the two cornerstones of post-training: the evaluation environment provides a practice ground for training, and evaluation metrics define the goals for training. This chapter builds on these two cornerstones, discussing how to actually modify model weights and embed capabilities into parameters.
+本书的核心公式是 Agent = LLM + 上下文 + 工具。本章聚焦于优化 LLM 这个“大脑”——通过后训练让模型更好地利用上下文和工具，从而提升整个 Agent 系统的能力。第六章结尾指出，评估体系与仿真环境是后训练的两块基石：评估环境为训练提供练习场，评估指标为训练定义目标。本章就建立在这两块基石之上，讨论如何真正改动模型权重，把能力沉淀进参数。
 
-This chapter is aimed at readers with no background in reinforcement learning or model training. We don't assume you understand gradients or policy optimization. Instead, we start from the very concept of "how a model is trained," explaining the purpose, principles, and problems solved at each step. After reading this chapter, you should be able to answer: how many stages are needed to forge a model's capabilities, what each stage does, why this order is necessary, and where to focus your efforts in your own projects.
+本章面向完全没有强化学习或模型训练背景的读者。我们不预设你懂梯度、懂策略优化，而是从“一个模型是怎么被训练出来的”这件事本身讲起，把每一步的目的、原理和它解决的问题都讲清楚。读完这一章，你应该能回答：模型的能力分几步炼成、每一步在做什么、为什么必须按这个顺序、以及在自己的项目里该在哪一步下功夫。
 
-**First, let's establish the most important map: the capabilities of a modern model are forged in three stages.** These three stages are interlocking and indispensable:
+**先建立一张最重要的地图：一个现代模型的能力，是分三个阶段炼成的。** 这三个阶段环环相扣，缺一不可：
 
-1.  **Pre-training**: Training on massive internet text to "predict the next word." This step teaches the model language rules, world knowledge, and basic reasoning. It's like a person who has read all the books in a library—erudite, but not yet good at answering questions. This is the most expensive step (often tens of millions of dollars) and the foundation of all capabilities.
-2.  **Supervised Fine-Tuning (SFT)**: Using thousands to tens of thousands of "question-standard answer" demonstration data points to teach the model "what format, style, and process to use when answering." This step transforms the erudite model into an assistant that understands instructions and produces well-structured outputs. It's cheap, fast, and stable, and is currently a step almost all deployed models undergo.
-3.  **Reinforcement Learning (RL)**: No longer showing the model standard answers, but letting it try on its own, adjusting the probability of good behaviors up and bad behaviors down. This step teaches the model to make reasonable decisions even in **unseen situations**—and it's also the step that takes up the most space in this chapter and requires the most engineering effort.
+1. **预训练（Pre-training）**：在海量互联网文本上做“预测下一个词”的训练。这一步让模型学会语言规律、世界知识和基本推理，就像一个人读完了图书馆里的所有书——博学，但还不会好好回答问题。这是最贵的一步（动辄数千万美元），也是能力的地基。
+2. **监督微调（SFT，Supervised Fine-Tuning，即用标注好的“输入—输出”对来训练模型，类似老师给出标准答案让学生照着学）**：用几千到几万条“问题—标准回答”的示范数据，教会模型“该用什么格式、什么风格、什么流程来回答”。这一步把博学的模型变成一个听得懂指令、输出规整的助手。它便宜、快、稳，是当前几乎所有部署模型都会经过的一步。
+3. **强化学习（RL，Reinforcement Learning，即让模型反复尝试、根据结果好坏给奖惩来改进行为，类似训练小狗：做对了给零食，做错了不给）**：不再给模型看标准答案，而是让它自己去试，把做得好的行为的概率调高、做得差的调低。这一步让模型学会在**没见过的情况**下也能做出合理决策——也是本章篇幅最大、最需要工程功力的一步。
 
-An intuitive analogy: Pre-training is "reading ten thousand books" (accumulating knowledge), SFT is "a teacher guiding you step-by-step through standard solutions" (imitating demonstrations), and RL is "solving problems yourself and refining based on right or wrong" (learning through trial and error). The relationship isn't a choice of one out of three, but a pipeline—first read, then watch demonstrations, and finally practice.
+一个直觉类比：预训练是“读万卷书”（积累知识），SFT 是“老师手把手教标准解法”（模仿示范），RL 是“自己下场做题、根据对错反复打磨”（试错提升）。三者的关系不是三选一，而是流水线——先读书，再看示范，最后实战。
 
-**This chapter has two main threads that run throughout. Please remember them, as all subsequent content serves them:**
+**本章有两条贯穿始终的主线，请先记住，后面所有内容都在为它们服务：**
 
-*   **Thread One: SFT memorizes, RL generalizes.** For the same task and budget, SFT tends to **memorize** the answers in the training data, failing when the deployment environment differs from training. RL tends to **learn** a transferable strategy, remaining stable even in unseen situations. This isn't just a slogan, but a measurable phenomenon that this chapter will repeatedly verify with controlled experiments. Section 7.1 will dedicate a whole section to explaining the **underlying reasons** for this difference.
-*   **Thread Two: Data and environment are more important than algorithms.** This is the most counterintuitive and valuable lesson from the industry. Knowing how to use off-the-shelf RL algorithms (PPO, GRPO, etc.) is sufficient. What truly determines success are two things: the **simulation environment** (is the practice ground realistic enough?) and the **training data** (is the quality of demonstrations and reward signals high enough?). In many scenarios, if the SFT data quality is adequate, you might not even need to do RL at all. This chapter will constantly redirect your attention from "which algorithm to tune" to "are the data and environment done right?"
+- **主线一：SFT 记忆，RL 泛化。** 在相同任务、相同预算下，SFT 倾向于**记住**训练数据里的答案，一旦部署环境和训练时不一样就容易失效；RL 则倾向于**学会**一套能迁移的策略，面对没见过的情况也更稳。这不是口号，而是能测量的现象，本章会用一组对照实验反复验证它。7.1 节会专门用一节把这个区别的**底层原因**讲透。
+- **主线二：数据和环境，比算法更重要。** 这是工业界最反直觉、也最值钱的一条经验。现成的 RL 算法（PPO、GRPO 等）你知道怎么用就够了，真正决定成败的是两件事：**仿真环境**（模型练习的场地够不够真实）和**训练数据**（示范和奖励信号的质量够不够高）。很多场景下，只要 SFT 的数据质量到位，你甚至根本不需要做 RL。本章会不断把你的注意力从“调哪个算法”拉回到“数据和环境做对了没有”。
 
-> **Reading Guide**: The content of this chapter is divided into two paths based on the reader's background:
+> **阅读指引**：本章内容按读者背景分为两条路径：
 >
-> *   **Agent Application Developers** (don't need to train models themselves): Start by reading the opening "Pre-training, SFT, RL: A Three-Stage Panorama" to build a global understanding. Then you can skip the following two `[Optional Reading]` sections (classic RL and pre-training background) and continue from the SFT section. Focus on the decision framework for "the essential difference between SFT and RL" and "when to choose SFT vs. RL," as well as the judgment that "data and environment are more important than algorithms"—these insights will influence your design decisions in Harness engineering (when to solve with prompts, when fine-tuning is worth it).
-> *   **Model Training Engineers**: Read sequentially from the beginning. The two `[Optional Reading]` sections provide complete background on reinforcement learning and pre-training. The subsequent experiments provide reproducible training schemes.
+> - **Agent 应用开发者**（不需要自己训练模型）：先读开篇的“预训练、SFT、RL：三阶段全景”建立全局认知，然后可以跳过紧随其后的两节 `[可选阅读]`（经典 RL 与预训练背景），从 SFT 一节继续。重点关注“SFT 与 RL 的本质区别”“何时选择 SFT，何时选择 RL”的决策框架，以及“数据与环境比算法更重要”的判断——这些认知会影响你在 Harness 工程中的设计决策（什么时候靠 prompt 解决，什么时候值得微调）。
+> - **模型训练工程师**：从头顺序阅读，两节 `[可选阅读]` 提供强化学习和预训练的完整背景，后续实验提供可复现的训练方案。
 
-## Pre-training, SFT, RL: A Three-Stage Panorama
+## 预训练、SFT、RL：三阶段全景
 
-The introduction provided a map of the three stages. This section explains the mechanisms of each step in detail. The **data**, **optimization objectives**, and **costs** of the three stages are all different. Understanding their similarities and differences is the key to understanding the entire chapter. Table 7-1 provides an overview first, followed by a detailed breakdown.
+引言给了三阶段的地图，这一节把每一步的机制讲透。三个阶段用的**数据**、**优化目标**、**代价**各不相同，理解它们的异同，是读懂整章的钥匙。表7-1 先给一个总览，随后逐项展开。
 
-**Table 7-1: The Three Stages of Forging Model Capabilities**
+表7-1 模型能力炼成的三个阶段
 
-| Stage | Data Used | Optimization Objective | What is Learned | Typical Cost |
-|-------|-----------|-----------------------|-----------------|--------------|
-| **Pre-training** | Massive raw internet text | Predict the next token | Language rules, world knowledge, basic reasoning | Very High (millions to tens of millions USD) |
-| **SFT** | Thousands to tens of thousands of "input-output" demonstration pairs | Predict the next token (loss calculated only on the response) | Instruction following, output format, style, process protocol | Low (hours to days) |
-| **RL** | Task + Reward function (no standard answer) | Maximize expected reward | Transferable decision-making strategy, newly discovered solutions | High (often tens to hundreds of times that of SFT) |
+| 阶段 | 用什么数据 | 优化目标 | 学到什么 | 典型代价 |
+|------|---------------------|-----------------------|------------------------|---------------------|
+| **预训练** | 海量原始互联网文本 | 预测下一个词 | 语言规律、世界知识、基本推理 | 极高（数百万～数千万美元） |
+| **SFT** | 几千～几万条“输入—输出”示范对 | 预测下一个词（只在回答上算损失） | 指令遵循、输出格式、风格、流程协议 | 低（几小时～几天） |
+| **RL** | 任务 + 奖励函数（无标准答案） | 最大化期望奖励 | 可迁移的决策策略、探索出的新解法 | 高（常是 SFT 的几十～上百倍） |
 
-### What Pre-training Does: Predicting the Next Token
+### 预训练在做什么：预测下一个词
 
-All the "intelligence" of modern large models is built on a task so simple it's surprising: **Next Token Prediction (NTP)**.
+现代大模型的全部“智能”，都建立在一个简单到令人意外的任务上：**预测下一个词（Next Token Prediction，NTP）**。
 
-Show the model the first part of a text and have it guess the next token. For example, given the input "The capital of China is," the model should assign a high probability to "Beijing." Each time the model guesses, it compares its prediction to the actual next token. The larger the difference (called the loss), the more it adjusts its parameters to guess more accurately in similar contexts next time. By repeatedly doing this on trillions of tokens of internet text, the model is forced to learn grammar, facts, logic, and even basic reasoning—because to consistently guess the next word correctly across a vast range of contexts, there's no shortcut; it must truly "digest" the patterns in the text.
+给模型看一段文本的前半部分，让它猜下一个 token 是什么。比如输入“中国的首都是”，模型应该给“北京”很高的概率。模型每猜一次，就把自己的预测和真实的下一个 token 比较，差距（称为损失 Loss）越大，就越用力地调整参数，让下次在类似上下文里猜得更准。在几万亿 token 的互联网文本上反复做这件事，模型被迫学会了语法、事实、逻辑乃至基本推理——因为要在海量语境里持续猜对下一个词，没有捷径，只能真正“消化”文本里的规律。
 
-There's a key point to remember that will carry through to SFT and RL: **The model's output is essentially a probability distribution.** Given the preceding text, the model assigns a probability to every possible token in its vocabulary. "Training," at its core, is **adjusting this probability distribution**—making the probability of desired tokens higher and undesired ones lower. The difference between the three stages lies only in "what is desired" and "what signal defines 'desired'."
+有一个关键点要记住，它会一路贯穿到 SFT 和 RL：**模型的输出本质上是一个概率分布**。给定前文，模型对词表里每一个可能的 token 都给出一个概率。所谓“训练”，归根结底就是**调整这个概率分布**——让我们想要的 token 概率更高、不想要的更低。三个阶段的区别，只在于“想要什么”，以及“用什么信号来定义想要”。
 
-After pre-training, the model is erudite but not user-friendly: if you ask it a question, it might continue generating more questions instead of answering—because in internet text, a question is often followed by another question. It hasn't yet learned the protocol of "when asked a question, you should answer."
+预训练之后，模型博学却不好用：你问它问题，它可能续写出更多问题，而不是回答——因为互联网文本里，一个问题后面常常跟着的是另一个问题。它还没学会“被提问时应该回答”这个协议。
 
-### The Essence of SFT: "Predict the Next Token" with Different Data
+### SFT 的本质：换了数据的“预测下一个词”
 
-This is the first key insight to grasp in this chapter: **Mathematically, SFT and pre-training are the same task—both predict the next token and minimize the same loss function.** Many beginners think SFT is a completely new method, but it's not. The difference between SFT and pre-training is only two things:
+这是本章第一个需要打通的关键认知：**SFT 在数学上和预训练是同一个任务——都是预测下一个词、最小化同一个损失函数。** 很多初学者以为 SFT 是一种全新方法，其实不是。SFT 与预训练的差别只有两点：
 
-1.  **Different Data.** Pre-training uses raw internet text (unstructured, containing everything); SFT uses carefully prepared "input-output" pairs, uniformly formatted as "user question → ideal answer." The model continues "predicting the next token" on these demonstrations, thereby learning the protocol of "how to structure a response when asked a question."
-2.  **Loss is calculated only on the "response" (loss masking).** An SFT sample consists of a question and a labeled response. We don't want the model to learn "how to ask a question," only "how to answer." So, when calculating the loss, the tokens in the question part are masked, and gradients are only backpropagated for the response part. This is the only substantive engineering difference between SFT and pre-training.
+1. **数据不同。** 预训练用原始互联网文本（无结构、什么都有）；SFT 用人工精心准备的“输入—输出”对，格式统一为“用户提问 → 理想回答”。模型在这些示范上继续做“预测下一个词”，于是把“被提问时该怎么组织回答”这个协议学了进去。
+2. **损失只算在“回答”上（loss masking，损失屏蔽）。** 一条 SFT 样本包含问题和标注回答两部分。我们不希望模型学“怎么提问”，只希望它学“怎么回答”，所以计算损失时把问题部分的 token 屏蔽掉，只对回答部分回传梯度。这是 SFT 在工程上与预训练唯一实质性的区别。
 
-Understanding this makes "SFT memorization" logical: the optimization goal of SFT is to **maximize the probability of every token in the labeled response**—in other words, "memorize this standard answer verbatim." Given the same question, it is trained to reproduce the demonstration as closely as possible. This is extremely efficient for tasks with clear goals and fixed formats (thousands of examples suffice), but its capability boundary is also nailed to the demonstration data: it hasn't learned situations not in the demonstrations; if the answer in the demonstration is no longer applicable (the environment changes), it will still recite it by rote.
+理解了这一点，“SFT 记忆”就顺理成章了：SFT 的优化目标是**让标注回答里每一个 token 的概率尽可能高**——说白了就是“把这条标准答案背下来”。给定同样的问题，它被训练成尽量一字不差地复现示范。这在目标明确、格式固定的任务上极其高效（几千条样例就见效），但能力边界也钉死在示范数据上：示范里没有的情况它没学过；示范里的答案一旦不再适用（环境变了），它还是照背不误。
 
-In a nutshell, the essence of SFT is: **With extremely high sample efficiency, solidify a stable "input→output" mapping and protocol into the parameters.** What it solidifies is **protocol knowledge** (how to say it, how to do it) like "format, style, process," not a large amount of **factual knowledge** (what to know)—the latter relies on pre-training or RAG (we'll return to this distinction at the end of the chapter).
+一句话概括 SFT 的本质：**用极高的样本效率，把一套稳定的“输入→输出”映射与协议固化进参数。** 它固化的是“格式、风格、流程”这类**协议性知识**（该怎么说、怎么做），而非大量**事实性知识**（知道什么）——后者要靠预训练或 RAG（本章末会回到这个区分）。
 
-> **Training Cost: LoRA Parameter-Efficient Fine-Tuning.** Both SFT and the subsequent RL require updating model parameters, and full-parameter fine-tuning has high VRAM requirements (needing to store gradients and optimizer states for billions of parameters). **LoRA** (Low-Rank Adaptation) is the most common cost-saving method: instead of modifying the large original weight matrices, it attaches a small "patch" (low-rank matrix) to learn the task. The parameter count is only 1%–5% of the original, yet it can approach the performance of full fine-tuning. Because the original weights are frozen, LoRA also causes less perturbation to the base model's existing capabilities, reducing the risk of catastrophic forgetting. Several validated practical experiences[^ch7-1]: **Must** apply LoRA to all major weight matrices (especially the MLP layers, which have the largest parameter count); applying it only to attention layers will cause performance drops. **The optimal learning rate is about 10 times that of full fine-tuning** (true for both SFT and RL, a very practical transfer rule). Use medium-to-high rank (64–256) for SFT; since the information per round is small for RL, a small rank (8–32) or even rank=1 is sufficient. During deployment, a single inference server can load multiple LoRA adapters simultaneously for multi-tenant service. This book treats LoRA as the default engineering choice for all post-training methods and will not elaborate on it separately.
+> **训练成本：LoRA 参数高效微调**。上面 SFT 和后面的 RL 都要更新模型参数，而全参数微调对显存的要求很高（要为数十亿参数都存梯度和优化器状态）。**LoRA**（Low-Rank Adaptation，低秩适配）是最常用的省钱办法：不动原始的大权重矩阵，只在旁边挂一个很小的“补丁”（低秩矩阵）来学习任务，参数量仅占原始的 1%–5%，却能接近全参微调的效果。因为原权重被冻结，LoRA 对基座已有能力的扰动也更小，灾难性遗忘的风险更低。几条经过验证的实践经验[^ch7-1]：**必须**把 LoRA 应用到所有主要权重矩阵（尤其参数占比最大的 MLP 层），只加在注意力层会掉点；**最优学习率约是全参微调的 10 倍**（SFT、RL 都成立，是个非常实用的迁移规则）；SFT 用中高 rank（64–256），RL 因每轮信息量很小、用小 rank（8–32）甚至 rank=1 就够。部署时一台推理服务器可同时加载多个 LoRA adapter 做多租户服务。本书把 LoRA 当作贯穿所有后训练方法的工程默认项，不再单独展开。
 
-### Why SFT Must Come Before RL, and Not the Other Way Around
+### 为什么必须先 SFT 后 RL，而不是反过来
 
-The order of the three stages is not arbitrary. Pre-training first is uncontroversial—without the foundation of language and knowledge, nothing else is possible. What needs explanation is: **Why must SFT come before RL?**
+三阶段的顺序不是随意的。预训练排在最前没有争议——不先有语言和知识的地基，后面无从谈起。真正需要解释的是：**为什么 SFT 要在 RL 之前？**
 
-The answer lies in how RL works. RL doesn't look at standard answers; it lets the model **generate** its own responses and then gives rewards or penalties based on the quality of the response. But to judge quality, you first need to be able to **parse** the model's output: if the task requires outputting a JSON object or a tool call, and the model produces a jumble of poorly formatted text, the reward function has no basis for calculation (it can't even tell "success from failure"), and RL cannot learn.
+答案藏在 RL 的工作方式里。RL 不看标准答案，而是让模型**自己生成**回答，再根据回答好坏给奖惩。可要判断好坏，首先得能把模型的输出**解析出来**：如果任务要求输出一段 JSON 或一次工具调用，而模型吐出的是一团格式混乱的文本，奖励函数根本无从算起（连“成功还是失败”都判断不了），RL 也就无从学起。
 
-So, SFT plays the role of "**getting the speech right first**": using a small number of demonstrations to stabilize the output format so it can be reliably parsed, giving RL a starting point for scoring. This is the industry's most robust **"SFT first, then RL"** two-stage paradigm. Doing RL first and SFT later doesn't work—without stable output, the reward signal is just noise. Borrowing a concept from Chinese painting: SFT first establishes the **"form"** (format, structure), and then RL pursues the **"spirit"** (strategy, generalization)—**form before spirit**.
+所以 SFT 在这里扮演“**先把话说利索**”的角色：用少量示范让输出格式稳定、能被可靠解析，RL 才有一个能打分的起点。这就是业界最稳健的**“先 SFT 后 RL”**两阶段范式。反过来先 RL 后 SFT 行不通——没有稳定的输出，奖励信号就是一片噪声。借用中国画的说法：SFT 先把“**形**”（格式、结构）立起来，RL 再追求“**神**”（策略、泛化），即**先形后神**。
 
-An important boundary condition: "SFT must come first" holds true in the setting of a **"smaller base model + strictly structured output"** (Experiment 7-11 will show that Llama-3.2-Vision-11B fails completely if RL is done directly without SFT). However, if the base model is strong enough, it might be able to produce adequate output from the start, allowing SFT to be skipped—DeepSeek-R1-Zero demonstrated that a strong base model can succeed with direct RL, spontaneously emerging with reflection and long chain-of-thought. The cost is poor output readability and mixed Chinese/English, so DeepSeek ultimately added back "cold-start SFT" in R1 to re-establish the "form." The journey of R1 from Zero to cold-start is the best illustration of "form before spirit."
+一个重要边界：“必须先 SFT”是在“**较小基础模型 + 严格结构化输出**”的设定下成立的（实验 7-11 会看到，Llama-3.2-Vision-11B 这个量级不经 SFT 直接 RL 会完全失败）。但若基础模型足够强，它可能一上来就能产出够格的输出，从而跳过 SFT——DeepSeek-R1-Zero 就证明了强基模可以直接 RL 成功，自行涌现出反思与长链思考。代价是输出可读性差、中英文混杂，所以 DeepSeek 最终仍在 R1 里加回“冷启动 SFT”，把“形”重新立稳。R1 从 Zero 到冷启动的往返，正是“先形后神”的最好注脚。
 
-### The Essential Difference Between SFT and RL (The Most Important Table in This Chapter)
+### SFT 与 RL 的本质区别（本章最重要的一张表）
 
-We've repeatedly said "SFT memorizes, RL generalizes." Now let's explain the underlying reasons thoroughly. All differences between the two stem from **different optimization objectives**:
+前面反复说“SFT 记忆、RL 泛化”，现在把底层原因一次讲透。两者的一切差异，都源于**优化目标不同**：
 
-*   **SFT optimizes for "how much it looks like the standard answer."** The goal is to maximize the probability of the labeled answer (maximum likelihood). Given a question, there is only one "correct" output—the demonstration answer. The model is pulled to approximate this single path, learning a fixed mapping of "see this input, produce that output." So it **memorizes**: during training, J/Q/K are all worth 10, it memorizes "when seeing J/Q/K, use 10"; during testing, J becomes 11, it still uses 10, thus making an error.
-*   **RL optimizes for "how good the result is."** The goal is to maximize the expected reward. Given a question, **any** output that achieves a high reward is good—not just one. The model explores multiple paths on its own, reinforcing the ones that yield good results. It learns a more general **strategy** of "what process leads to the correct result": when J becomes 11, it recalculates using the same strategy, rather than applying a memorized answer. This is **generalization**.
+- **SFT 优化的是“像不像标准答案”。** 目标是最大化标注答案的概率（极大似然）。给定问题只有唯一一条“对”的输出——示范答案，模型被拉着去逼近这一条，学到的是“看到这种输入，就吐出那种输出”的固定映射。所以它**记忆**：训练时 J/Q/K 都当 10，它记死“见到 J/Q/K 用 10”；测试时 J 变成 11，它照旧用 10，于是出错。
+- **RL 优化的是“结果好不好”。** 目标是最大化期望奖励。给定问题，**任何**能拿到高奖励的输出都是好的——不止一条。模型自己探索多条路径，哪条结果好就强化哪条，学到的是“怎样的过程能得到正确结果”这一更通用的**策略**：J 变成 11 时，它用同一套策略重算一遍，而不是套用记忆里的答案。这就是**泛化**。
 
-**Table 7-2: Essential Comparison of SFT and RL**
+表7-2 SFT 与 RL 的本质对比
 
-| Dimension | SFT (Supervised Fine-Tuning) | RL (Reinforcement Learning) |
-|-----------|------------------------------|-----------------------------|
-| Optimization Objective | Maximize probability of labeled answer (Maximum Likelihood) | Maximize expected reward |
-| Training Signal | Single standard answer (supervision for every token) | Multiple self-generated responses + reward (one success/failure signal per response) |
-| Data Form | "Input-Output" demonstration pairs | Task + Reward function (no standard answer needed) |
-| What is Learned | Fixed "Input→Output" mapping (memorization) | Transferable decision-making strategy (generalization) |
-| Under Distribution Shift | Applies old answer when environment changes, performance drops | Re-solves using the same strategy, more stable |
-| Sample Efficiency | High (thousands of examples are effective) | Low (often tens to hundreds of times that of SFT) |
-| Training Stability | High, converges quickly | Low, prone to oscillation, requires careful tuning |
-| Best Suited For | Solidifying format/style/process, high-quality demonstrations, stable environment | Needing generalization to new scenarios, exploring optimal strategies, high annotation cost |
+| 维度 | SFT（监督微调） | RL（强化学习） |
+|----------|-----------------------------------------|--------------------------------------------|
+| 优化目标 | 最大化标注答案的概率（极大似然） | 最大化期望奖励 |
+| 训练信号 | 唯一的标准答案（每个 token 都有监督） | 自己生成的多条回答 + 奖励（每条只有一个成败信号） |
+| 数据形态 | “输入—输出”示范对 | 任务 + 奖励函数（无需标准答案） |
+| 学到的东西 | 固定的“输入→输出”映射（记忆） | 可迁移的决策策略（泛化） |
+| 分布漂移下 | 环境一变就套用旧答案、性能下降 | 用同一策略重新求解、更稳 |
+| 样本效率 | 高（几千条见效） | 低（常是 SFT 的几十～上百倍） |
+| 训练稳定性 | 高、收敛快 | 低、易震荡，需要小心调 |
+| 最适合 | 固化格式/风格/流程、有高质量示范、环境稳定 | 需泛化到新场景、探索最优策略、标注成本过高 |
 
-There's another deeper, but worthwhile mechanism to know, called **mode-seeking**, which explains why RL "converges to a few good strategies." The probability distribution of all possible answers a model can give to a question might have many "modes" (each mode is a class of reasonable answer methods). The maximum likelihood used by SFT is **mass-covering**—it tries to cover all modes present in the demonstration, even assigning probability to lower-quality modes ("spreading the wealth"). RL (especially policy optimization with KL constraints, whose mathematical form corresponds to **reverse KL divergence**, detailed in the RLHF section) is **mode-seeking**—it tends to find the few modes with the highest reward, concentrating probability on them and decisively discarding the rest ("winner takes all"). This is why models after RL are more "decisive" and focused on high-quality strategies, and also why RL tends to sacrifice diversity. Remember the concepts of mass-covering and mode-seeking; the KL divergence section will use them to explain a seemingly dry but critically important design choice.**Why does RL have a higher ceiling than SFT? — Because it is "online."** This is a deeper distinction between SFT and RL, and the fundamental reason why RL is worth the extra cost. SFT is an **offline** method: it can only learn from a fixed set of demonstration data and can never see the world beyond that data. RL is an **online** method: it lets the model generate its own responses, then improve based on feedback, learning by trial and error. (The terms "online/offline" and the stricter "on-policy/off-policy" will be formally distinguished in Section 7.8; for now, we build intuition.) Being "online" brings three advantages that SFT naturally cannot achieve, which together raise the ceiling:
+还有一个更深、但值得知道的机制，叫 **mode-seeking（寻峰）**，它解释了 RL 为什么会“收敛到少数几种好策略”。模型对一个问题的所有可能回答构成一个概率分布，这个分布可能有很多“峰”（每个峰是一类合理的回答方式）。SFT 用的极大似然是 **mass-covering（覆盖式）** 的——它努力覆盖示范里出现的所有模式，哪怕有些模式质量一般也会分给概率（“雨露均沾”）。RL（尤其是带 KL 约束的策略优化，其数学形式对应**反向 KL 散度**，后文 RLHF 一节会详解）则是 **mode-seeking 的**——它倾向于找到少数几个奖励最高的峰，把概率集中过去、其余果断舍弃（“赢者通吃”）。这正是为什么经过 RL 的模型回答更“笃定”、更集中于高质量策略，也是为什么 RL 容易牺牲多样性。请记住 mass-covering 与 mode-seeking 这对概念，KL 散度那一节会用它来解释一个看似枯燥、实则关键的设计选择。
+**为什么 RL 的上限比 SFT 高？——因为它是“在线”的。** 这是 SFT 与 RL 更深一层的区别，也是 RL 值得那么贵的根本理由。SFT 是**离线（offline）**方法：它只能从一份固定的示范数据里学，永远看不到数据之外的世界。RL 是**在线（online）**方法：它让模型自己下场生成回答、再根据反馈改进，边试边学。（“在线/离线”与更严格的“在轨/离轨，on-policy / off-policy”术语，7.8 节会正式区分，这里先建立直觉。）“在线”带来三个 SFT 天然拿不到的好处，它们共同把上限抬高：
 
-- **First, the ceiling of offline is the data; the ceiling of online is the task.** The optimal result of SFT is to "perfectly replicate" the demonstrations—so its ceiling is the **level of the demonstrator**; it can at most approach, and almost never surpass, that level. A dataset labeled by a 60-point teacher cannot train a 90-point student. RL does not look at demonstrations, only at outcome rewards: **any** behavior that yields a higher reward will be reinforced, even if no one has ever demonstrated it. Thus, RL can independently **discover superior strategies that do not exist in the demonstrations**—in the SimpleVLA experiment 7-13 later in this chapter, the model's self-created "push-cut" action never appeared in human demonstrations, which is direct evidence of "surpassing the demonstrations." The ceiling of RL is determined by the task itself (what the reward can recognize), not by what happens to be in the data.
-- **Second, "verification" is easier than "generation"—this is the fundamental reason RL can reach higher.** SFT requires someone to **first write out the correct answer** as a demonstration; RL only needs to be able to **judge** whether an answer is good (give a reward). In many tasks, "judging right from wrong" is far easier than "writing the correct answer"—math answers can be checked against a key, code can be run through tests, and theorem provers can verify. As long as "recognizing good" is easier than "producing good," RL can train a model stronger than any existing demonstrator: the model tries randomly, and the environment is responsible for picking out the good ones and reinforcing them. This "verification-generation asymmetry" is the source of the power of verifiable reward methods like RLVR.
-- **Third, being online allows the model to practice on the path it will walk itself, learning to recover from its own mistakes.** Offline imitation has a classic problem called **covariate shift**: when the student walks on its own, it deviates from the demonstrations and enters states not present in the data, and it has never learned how to get back on track from these states, so errors accumulate along the trajectory (theoretically, the error of pure imitation grows roughly as $T^2$ with trajectory length T, while training with online data can compress it to about $T$). Online methods are the opposite—the distribution the model trains on is the same as the one it will deploy on, and each step of feedback precisely targets its current real weaknesses; the data is always "fresh," unlike offline data which describes the behavior of someone else (the teacher) and becomes increasingly irrelevant as the model improves. The reason On-Policy Distillation (Section 7.12) later in this chapter is so strong is essentially that it combines this "online" advantage with the "dense supervision" advantage of SFT.
+- **其一，离线的天花板是数据，在线的天花板是任务。** SFT 的最优结果是把示范“完美复现”——所以它的上限就是**示范者的水平**，最多逼近、几乎不可能超过；一份由 60 分老师标注的数据，训不出 90 分的学生。RL 不看示范、只看结果奖励：**任何**能拿到更高奖励的行为都会被强化，哪怕没有任何人演示过。于是 RL 能自己**发现示范里根本不存在的更优策略**——本章后面实验 7-13 的 SimpleVLA 里，模型自创的“推切”动作从未在人类演示中出现，正是“超越示范”的直接证据。RL 的上限由任务本身（奖励能认可什么）决定，而不是由数据里恰好有什么决定。
+- **其二，“验证”比“生成”容易，这是 RL 能摸高的根本原因。** SFT 需要有人**先把好答案写出来**当示范；RL 只需要能**判断**一个答案好不好（给个奖励）。很多任务里“判断对错”远比“写出正确答案”容易——数学题答案能对照、代码能跑测试、定理证明器能校验。只要“认出好”比“做出好”容易，RL 就能训出比任何现成示范者都强的模型：模型自己乱试，环境负责挑出好的加以强化。这条“验证—生成不对称”，正是 RLVR 这类可验证奖励方法威力的来源。
+- **其三，在线让模型练在自己会走的路上，学会从自己的错误里爬出来。** 离线模仿有个经典毛病叫**协变量漂移（covariate shift）**：学生自己走时会偏离示范、进入数据里没有的状态，而它从没学过怎么从这些状态回正轨，于是误差沿轨迹越滚越大（理论上，纯模仿的误差随轨迹长度 T 大致按 $T^2$ 增长，而用在线数据训练能把它压到约 $T$）。在线方法恰好相反——模型训练时走的就是它部署时会走的分布，每一步反馈都精确打在它当前的真实弱点上；数据永远“新鲜”，不像离线数据那样描述的是别人（教师）的行为、随模型进步越来越不相关。本章后面的 On-Policy Distillation（7.12 节）之所以强，本质就是把这个“在线”的好处，和 SFT“稠密监督”的好处合到了一起。
 
-To use an analogy: **SFT is tracing a map drawn by someone else; at best, it is as good as the map. RL is exploring with a compass (the reward) in hand, with the opportunity to go beyond the map.** This is also why "SFT first for a foundation, then RL to reach higher" has become the mainstream recipe.
+打个比方：**SFT 是在别人画好的地图上临摹，最多和地图一样好；RL 是自己拿着指南针（奖励）探路，有机会走出地图。** 这也是“先 SFT 打底、再 RL 摸高”成为主流配方的原因。
 
-With this big picture in mind, every subsequent section can be placed in context. The next two sections, `[Optional Reading]`—"From Classic RL Agents to Modern Agents" and "Foundations of Model Pre-training"—provide background on reinforcement learning and pre-training for readers who want to go deeper. Readers who only want to get started with post-training can skip them and begin directly with the SFT section.
+有了这张全景图，后面每一节都能对号入座。紧接着的两节 `[可选阅读]`——“从经典 RL Agent 到现代 Agent”和“模型预训练基础”——为想深入的读者补上强化学习与预训练的背景；只想直接上手后训练的读者可以跳过它们，直接从 SFT 一节开始。
 
-## From Classic RL Agents to Modern Agents `[Optional Reading]`
+## 从经典 RL Agent 到现代 Agent `[可选阅读]`
 
-### Agent-Environment Interaction
+### Agent 与环境的交互
 
-**Reinforcement Learning (RL)** is fundamentally about learning how to select actions based on the current situation to maximize **cumulative reward**. Imagine an AI learning to play chess: each move is an action, winning gives a positive reward, losing gives a negative reward, and the cumulative reward is the total gain from the entire game. The Agent and the environment interact continuously: at each step, the Agent observes the current state, chooses an action, the environment produces a new state and gives a reward.
+**强化学习（Reinforcement Learning, RL）**的核心在于学习如何根据当前情境选择动作，以获得最大的**累积奖励（Cumulative Reward）**。想象一个学下棋的 AI：每走一步就是一个动作，赢棋得到正奖励、输棋得到负奖励，累积奖励就是整盘棋的总收益。Agent 和环境持续交互：每一步，Agent 观察当前状态，选择一个动作，环境产生新状态并给出奖励。
 
-To understand this interaction more intuitively, the following diagram shows the standard RL loop—at each time step, the Agent observes the environment state, outputs an action, and the environment gives a reward and transitions to a new state based on that action.
+为了更直观地理解这种交互，下图展示了标准 RL 循环——Agent 在每个时间步观察环境状态，输出动作，环境据此给出奖励并转移到新状态。
 
-![Figure 7-1 Reinforcement Learning Agent-Environment Interaction Loop](images/fig7-1.svg)
+![图7-1 强化学习 Agent-环境交互循环](images/fig7-1.svg)
 
-This interaction produces a **trajectory**—a complete record of "state → action → reward → new state → action → reward...". The quality of a policy is ultimately reflected in the quality of the trajectories. A **value function** answers the question: "If I am in this state now and continue acting according to the current policy, how much total reward will I eventually accumulate?" This is like an experienced chess player looking at a position and, without calculating to the end, intuitively estimating the winning probability. (When the "current policy" is replaced by the "optimal policy," we get the optimal value function, which will be used later in this chapter when discussing the Bellman optimality equation.) The boundary between the Agent and the environment follows a simple principle: **anything the Agent cannot arbitrarily change belongs to the environment.**
+交互产生**轨迹**——即“状态→动作→奖励→新状态→动作→奖励...”的完整记录，策略的优劣最终体现在轨迹质量上。**价值函数（Value Function）**回答的是这样一个问题：“如果我现在处于这个状态，按照当前策略一直行动下去，最终总共能获得多少奖励？”这就像一位经验丰富的棋手看到一个局面时，不需要算到最后一步，凭直觉就能估计出这盘棋的胜率。（当这里的“当前策略”换成“最优策略”时，得到的就是最优价值函数，本章后面讲 Bellman 最优方程时会用到。）Agent 与环境的边界遵循一个简洁的原则：**凡是 Agent 无法任意改变的，都属于环境**。
 
-Two unique features distinguish reinforcement learning from supervised learning (which requires labeled correct answers) and unsupervised learning (which discovers hidden patterns in data): **trial-and-error search** (the Agent must figure out which actions are good on its own, without a teacher directly providing the correct answer) and **delayed reward** (the effect of an action may only become apparent many steps later, e.g., the value of a good chess move is only evident at the end of the game). This also brings about the unique **exploration-exploitation tradeoff**: always taking familiar paths means learning nothing new; always trying randomly means never reaching the goal.
+强化学习区别于监督学习（需要标注正确答案）和无监督学习（发现数据中的隐藏模式）的两个独特特征是**试错搜索**（Agent 必须自己摸索哪些动作好，没有老师直接告诉正确答案）和**延迟奖励**（动作的影响可能在多步之后才显现，比如一步好棋的价值到终局才看得出来）。由此还带来独特的**探索与利用权衡（Exploration-Exploitation Tradeoff）**：一直走熟悉的路，学不到新东西；一直乱试，永远到不了终点。
 
-A reinforcement learning system consists of five core elements:
+强化学习系统包含五个核心要素：
 
-- **Action Space**: Defines the set of all possible actions the Agent can take. Actions can be discrete (e.g., "which move to make" in chess, with a finite number of options) or continuous (e.g., "how many degrees to rotate a joint" for a robot, a continuous value).
-- **Policy**: The Agent's behavioral rule, specifying what to do in a given state. A policy can be simple (a lookup table: in state A, execute action X) or complex (a deep neural network).
-- **Reward Signal**: The immediate feedback from the environment. However, the Agent's goal is to maximize long-term, not immediate, reward—this distinction is crucial, just as investment should not be judged by today's gains and losses but by long-term returns.
-- **Value Function**: Estimates the total cumulative reward obtainable from a given state in the future, helping the Agent make wise decisions even without immediate feedback. One of the most important insights from sixty years of RL research is the central role of value estimation.
-- **Environment Model** (optional): Predicts the environment's response to actions. Methods that use an environment model are called **model-based methods** (first learn to predict how the environment changes, then plan accordingly); those without are called **model-free methods** (do not predict the environment, but learn directly from experience).
+- **动作空间**：定义 Agent 可以采取的所有行动集合。动作可以是离散的（如棋类中“走哪一步”，选项有限）或连续的（如机器人“关节转多少度”，是一个连续数值）。
+- **策略**：Agent 的行为准则，规定在给定状态下应该怎么做。策略可以很简单（一张查找表：看到状态 A 就执行动作 X），也可以很复杂（一个深度神经网络）。
+- **奖励信号**：环境给出的即时反馈。但 Agent 的目标是最大化长期而非即时奖励——这个区别至关重要，就像投资不能只看今天涨跌，要看长期回报。
+- **价值函数**：估计从某个状态出发，未来总共能获得多少累积奖励，帮助 Agent 在没有即时反馈时做出明智决策。过去六十年 RL 研究最重要的认识之一就是价值估计的核心地位。
+- **环境模型**（可选）：预测环境对动作的响应。有了环境模型的方法称为**基于模型的方法**（先学会预测环境怎么变化，再据此规划），没有环境模型的称为**无模型方法**（不去预测环境，直接从经验中学习）。
 
-Table 7-3 compares the key components of various Agent systems, revealing the universality of the Agent concept and helping readers see the difference in action spaces between traditional RL Agents and modern LLM Agents.
+表7-3 对比了各种 Agent 系统的关键组成要素，揭示了 Agent 概念的普遍性，并帮助读者看到传统 RL Agent 与现代 LLM Agent 在动作空间上的差异。
 
-**Table 7-3 Comparison of Key Elements in Different Agent Systems**
+表7-3 不同 Agent 系统的关键要素对比
 
-| Agent Type | Environment | Action Space | Reward Signal |
-|---------|------|---------|---------|
-| **Newborn Gazelle** | Terrain, gravity, body posture | Continuous high-dimensional (muscle group contractions) | Balance (+), Falling (-) |
-| **Vacuum Robot** | Room layout, battery level | Discrete (direction, vacuum, charge) | Cleaned area (+), Battery depleted (-) |
-| **Chess Grandmaster** | Board state, time limit | Discrete finite (legal moves) | Win (+1), Loss (-1) |
-| **Customer Service Agent** | Conversation history, knowledge base | Open-ended (think, speak, API call) | Problem solved (+), Handling time (-) |
-| **Code Assistant Agent** | Requirements document, codebase | Open-ended (think, search, edit, execute) | Test passed (+), Bug introduced (-) |
+| Agent 类型 | 环境 | 动作空间 | 奖励信号 |
+|---------------|---------------------|----------------------------------|-------------------------|
+| **新生小羚羊** | 地形、重力、身体姿态 | 连续高维（各肌肉群收缩） | 平衡(+)、跌倒(-) |
+| **扫地机器人** | 房间布局、电量 | 离散（方向、吸尘、充电） | 清洁面积(+)、电量耗尽(-) |
+| **国际象棋大师** | 棋盘状态、时间限制 | 离散有限（合法走法） | 赢棋(+1)、输棋(-1) |
+| **客户服务 Agent** | 对话历史、知识库 | 开放式（思考、说话、API 调用） | 问题解决(+)、处理时间(-) |
+| **代码助手 Agent** | 需求文档、代码库 | 开放式（思考、搜索、编辑、执行） | 测试通过(+)、引入 bug(-) |
 
-The table reveals an important insight: the action space of traditional RL Agents (chess, robotics) is closed, while the action space of modern LLM-based Agents (customer service, code assistant) is open-ended and almost unlimited, and they can leverage the special action of "internal thinking" to enhance their capabilities.
+表格揭示了一个重要洞察：传统 RL Agent（棋类、机器人）的动作空间是封闭的，而基于 LLM 的现代 Agent（客户服务、代码助手）的动作空间是开放的、几乎无限的，并且可以利用“内部思考”这种特殊动作来提升能力。
 
-### Two Agent Paradigms: From MDP to LLM+RL
+### 两种 Agent 范式：从 MDP 到 LLM+RL
 
-The most fundamental difference lies in the action space—MDP assumes the action space is finite and closed (up/down/pick/place), while the action space of an LLM is open-ended, consisting of combinatorially explosive natural language sequences. This difference determines the fundamental divergence between the two paradigms in algorithm design, sample efficiency, and generalization ability. They are elaborated on below.
+两者最根本的差异在于动作空间——MDP 假设动作空间是有限且封闭的（向上/向下/拿/放），而 LLM 的动作空间是开放的、组合爆炸的自然语言序列。这一差异决定了两类范式在算法设计、样本效率、泛化能力上的根本分野。下面分别展开。
 
-**Traditional Paradigm: MDP and Q-learning.**
+**传统范式：MDP 与 Q-learning。**
 
-MDP (Markov Decision Process) is the mathematical framework for reinforcement learning, defining core elements such as states, actions, and rewards. Its core assumption is the **Markov property**: the future depends only on the current state, not on the earlier history. For example, in chess, looking only at the current board position is sufficient to determine the optimal move; there is no need to review every previous move. This assumption simplifies the problem but also limits the ability to model historical dependencies.
+MDP（Markov Decision Process，马尔可夫决策过程）是强化学习的数学框架，定义了状态、动作、奖励等核心要素。它的核心假设是**马尔可夫性质**：未来只取决于当前状态，与更早的历史无关。打个比方，下棋时只看当前棋盘局面就足以决定最优走法，不需要回顾之前每一步是怎么下的。这个假设简化了问题，但也限制了对历史依赖的建模能力。
 
-![Figure 7-2 Markov Decision Process (MDP) Diagram](images/fig7-2.svg)
+![图7-2 马尔可夫决策过程（MDP）示意图](images/fig7-2.svg)
 
-The key feature of a traditional RL Agent is a **closed action space**—all possible actions the Agent can take form a predefined, finite set. **Classic chess Agents** are the most typical example: the 361 possible move positions in Go, though vast, are completely determined and finite; chess, considering the different movement rules of pieces, still has enumerable actions; Atari games have only a few to a dozen discrete actions. **Robotic Agents** represent a continuous but bounded action space: joint angles, velocities, and grip forces are continuous values, but all have clear physical boundaries (maximum rotation angle, maximum torque, speed limits), with dimensions determined by the robot's degrees of freedom.
+传统 RL Agent 的关键特征是**封闭动作空间**——Agent 可采取的所有行动形成预定义的有限集合。**经典棋类 Agent** 是最典型的例子：围棋 361 个落子位置虽庞大但完全确定有限，国际象棋考虑不同棋子移动规则但动作仍可枚举，Atari 游戏只有几到十几个离散动作。**机器人 Agent** 代表连续但有界的动作空间：关节角度、速度、抓取力度是连续值，但都有明确物理边界（最大旋转角度、最大扭矩、速度限制），维度由机器人自由度决定。
 
-This closed nature brings computational advantages: all actions can be enumerated and evaluated one by one, facilitating dynamic programming and Monte Carlo tree search, and the action-value function can be approximated using tables or simple functions. However, it also limits expressiveness and generalization. Traditional RL Agents start from scratch, learning purely through trial and error—starting from a random policy, collecting experience, updating the value function or policy, and repeating until convergence.
+这种封闭性带来计算上的优势：可以枚举所有动作逐一评估，便于动态规划和蒙特卡洛树搜索，动作价值函数可以用表格或简单函数来近似。但它也限制了表达与泛化能力。传统 RL Agent 从零开始，纯粹靠试错学习——从随机策略出发，收集经验，更新价值函数或策略，如此反复直到收敛。
 
-Within this framework, one of the most fundamental and important algorithms is **Q-learning**. It maintains a value estimate for each "state-action" pair: if you take action *a* in state *s* and then act optimally thereafter, how much total reward can you expect? Intuitively, whether an action is good depends on the immediate reward it brings, plus "how good the next state it leads to is."
+在这个框架下，最基础也最重要的算法之一是 **Q-learning**。它为每个“状态-动作”组合维护一个价值估计：在状态 s 下采取动作 a，之后一直按最优策略行动，总共能拿到多少奖励？直觉上，一个动作好不好，取决于它带来的即时回报，再加上“它把你带到的下一个状态有多好”。
 
-Writing this intuition as an equation gives the core recursive relationship of the famous **Bellman equation** in RL textbooks: **The true value of an action = the immediate reward obtained at this step + the maximum future value obtainable from the next state**:
+把这个直觉写成等式，就是 RL 教科书里大名鼎鼎的**贝尔曼方程**（Bellman equation）的核心递归关系：**一个动作的真实价值 = 这一步拿到的即时奖励 + 到达下一个状态后能拿到的最大未来价值**：
 
 $$Q^*(s, a) = r + \gamma \max_{a'} Q^*(s', a')$$
 
-where $r$ is the immediate reward, $s'$ is the next state reached after executing the action (written in deterministic form for intuition; in a stochastic environment, an expectation over the next state $s'$ is needed), and $\gamma \in [0, 1)$ is the **discount factor**—it determines how much the Agent values the future: the closer $\gamma$ is to 1, the more it values long-term returns; the closer to 0, the more it focuses on the immediate. The "cumulative reward" mentioned repeatedly earlier is precisely the sum of rewards at each step, discounted by $\gamma$: $\sum_{t} \gamma^{t} r_t$. After each action, the algorithm slightly adjusts the old estimate towards the "actually observed outcome"—this paradigm of "correcting an old estimate with a one-step actual result" is called **Temporal-Difference Learning (TD learning)**. After thousands of trials, the estimate gradually approaches the true value.
+其中 $r$ 是即时奖励，$s'$ 是执行动作后到达的下一个状态（这里为直觉起见写成确定性形式，随机环境下需对下一个状态 $s'$ 取期望），$\gamma \in [0, 1)$ 是**折扣因子**——它决定 Agent 有多看重未来：$\gamma$ 越接近 1 越重视长期回报，越接近 0 越只顾眼前。前文反复出现的“累积奖励”，正是各步奖励按 $\gamma$ 逐步折扣后的总和 $\sum_{t} \gamma^{t} r_t$。算法每次行动后，把旧的估计值往“实际发生的结果”方向微调一点——这种“用一步实际结果修正旧估计”的范式叫**时序差分学习**（Temporal-Difference Learning, TD learning），经过成千上万次试错，估计值逐渐逼近真实值。
 
-The following two figures show the exploration process of Q-learning in a grid world and the gradual convergence of Q-values.
+以下两张图分别展示 Q-learning 在网格世界中的探索过程与 Q 值的逐步收敛。
 
-![Figure 7-3 Q-learning Grid World](images/fig7-3.svg)
+![图7-3 Q-learning 网格世界](images/fig7-3.svg)
 
-![Figure 7-4 Q-value Update Visualization](images/fig7-4.svg)
+![图7-4 Q 值更新可视化](images/fig7-4.svg)
 
-Q-learning is a specific type of **off-policy** method—it can use data generated by any policy (including random exploration) to learn the optimal policy. The strict definitions of on-policy/off-policy and their correspondence in LLM post-training are discussed in the "Comparison of Reinforcement Learning Algorithms" section later.
+Q-learning 属于一种特殊的**离轨策略**（Off-Policy）方法——它可以用任意策略（包括随机探索）产生的数据来学习最优策略。在轨/离轨策略的严格定义与在 LLM 后训练中的对应关系，见后文“强化学习算法比较”一节。
 
-> **Experiment 7-1 ★: Q-learning Performance in a Treasure Hunt Game**
+> **实验 7-1 ★：Q-learning 在寻宝游戏中的表现**
 >
-> To verify the characteristics and limitations of Q-learning, we designed a **treasure hunt game environment**. This environment includes several key challenges: **hidden mechanisms** require the Agent to discover the correspondence between keys and doors, weapon effects, and item crafting rules on its own; **multi-step dependencies** mean that completing the task requires the correct sequence of actions (optimal solution: 11 steps); **sparse rewards** mean that only key actions and the final victory yield significant rewards, with most intermediate steps receiving no feedback.
+> 为了验证 Q-learning 的特性与局限，我们设计了一个**寻宝游戏环境**。这个环境包含几个关键挑战：**隐藏机制**要求 Agent 自行发现钥匙和门的对应关系、武器效果和物品合成规则；**多步依赖**意味着完成任务需要正确的动作序列（最优解 11 步）；**稀疏奖励**意味着只有关键动作和最终胜利才有显著奖励，中间大部分步骤得不到任何反馈。
 >
-> The Q-learning Agent uses standard parameter configurations and an ε-greedy exploration strategy (mostly choosing the current best action, occasionally trying randomly, gradually reducing the proportion of random exploration as training progresses).
+> Q-learning Agent 使用标准参数配置，采用 ε-贪婪探索策略（大部分时间选当前最优动作，偶尔随机尝试，随着训练推进逐渐减少随机探索的比例）。
 >
-> The learning curve shows typical characteristics (an episode is one complete game, from start to completion or failure):
-> - **First 1000 episodes**: 0% win rate, Q-table has only 124 states, Agent is blindly exploring
-> - **First 5000 episodes**: Still no stable victories, Q-table has 133 states
-> - **7000-8000 episodes**: Win rate gradually rises from 34% to 96%
-> - **10000 episodes**: 100% win rate, Q-table has 145 states, found the 11-step optimal solution
+> 学习曲线展现典型特征（episode 指一局完整的游戏，从开局到通关或失败算作一次）：
+> - **前 1000 episodes**：0% 胜率，Q 表仅 124 个状态，Agent 在盲目探索
+> - **前 5000 episodes**：依然没有稳定胜利，Q 表 133 个状态
+> - **7000-8000 episodes**：胜率从 34% 逐步升至 96%
+> - **10000 episodes**：100% 胜率，Q 表 145 个状态，找到 11 步最优解
 >
-> The entire training takes less than 10 seconds (very efficient simulation), but requires nearly 10,000 complete attempts. This demonstrates the core characteristic of Q-learning: it requires a large amount of random exploration to accidentally complete the full path, and the propagation of value signals is very slow, requiring repeated reinforcement. Pure symbolic learning, without prior knowledge, can only brute-force search the state space.
+> 整个训练仅需不到 10 秒（仿真效率极高），但需要将近 10000 次完整尝试。这展示了 Q-learning 的核心特征：需要大量随机探索才能偶然走通完整路径，价值信号的传播很慢，必须反复强化。纯符号化学习在没有先验知识时只能暴力搜索状态空间。
 >
-> In a game simulator, 10,000 trials take only 10 seconds, a negligible cost. But in real-world Agent scenarios—where each phone call has a cost, each browser operation has a delay, and each wrong decision can have irreversible consequences—10,000 trials are completely unacceptable. This is precisely why modern Agents have turned to LLM-based methods: leveraging knowledge accumulated during pre-training to make effective decisions with minimal interaction.
+> 在游戏模拟器中，10000 轮试错只需 10 秒，代价微乎其微。但在真实世界的 Agent 场景中——每次打电话有成本、每次操作浏览器有延迟、每次错误决策可能造成不可逆后果——10000 次试错是完全不可接受的。这正是为什么现代 Agent 转向了基于 LLM 的方法：利用预训练积累的知识，在极少的交互中做出有效决策。
 >
-> The fundamental limitations of MDP are threefold: low sample efficiency (requiring massive interaction to learn simple tasks), poor generalization (knowledge learned in one environment is difficult to transfer to another), and inability to leverage prior knowledge (each new task must be learned from scratch). These limitations become particularly pronounced when facing complex state spaces like natural language or high-dimensional vision.
+> MDP 的根本局限有三点：样本效率低（需要海量交互才能学会简单任务）、泛化能力差（在一个环境学到的知识很难迁移到另一个环境）、无法利用先验知识（每个新任务都要从头学起）。一旦面对自然语言或高维视觉这类复杂状态空间，这些局限就尤为突出。
 >
-**Modern Paradigm: LLM+RL-based Agents.**
+**现代范式：基于 LLM+RL 的 Agent。**
 
-Large language models have brought about a new paradigm for Agents, fundamentally changing how Agents are built—especially in the design of the action space.In traditional RL, an agent can only receive feedback by changing the environment: making a move in chess, taking a step in a maze. But LLMs introduce a completely new type of action: internal thinking. Thinking doesn't change the external world, but it can significantly improve the quality of the final action. This shift changes everything: the agent's action space is no longer just "what to do," but also includes "how long to think and what to think about."
+大语言模型带来了全新的 Agent 范式，根本性地改变了 Agent 的构建方式——特别是动作空间设计。
 
-The most important innovation is incorporating **Thinking as a special action** into the action space. In traditional RL, agents can only perform external actions that change the environment state (move, attack, pick up); in LLM agents, **internal thinking becomes a core component of the action space**—it doesn't directly change the external environment, has no immediate reward, is almost unlimited in number, and has a relatively low cost.
+传统 RL 的 Agent 只能通过改变环境来获得反馈：下一步棋、走一步迷宫。但 LLM 带来了一种全新的动作类型：内部思考。思考不会改变外部世界，但它能显著改善最终的行动质量。这个转变改变了一切：Agent 的动作空间不再只是“做什么”，还包括了“想多久、想什么”。
 
-Traditional RL struggles with this type of action, fundamentally because the exploration space is too large and lacks structure: an agent learning from scratch is like searching for treasure in a desert blindfolded, only able to stumble around randomly. LLMs are different. Through massive text pre-training, they have internalized the rules of human thinking: solving math problems follows "identify conditions → recall formulas → calculate step by step," writing code follows "understand requirements → design structure → implement details." This allows LLM thinking to proceed along structured paths, drastically compressing the search space. Therefore, even without additional RL training, a pre-trained LLM can generate a basic logical Chain of Thought (CoT). This basic logic comes from the vast amount of human thinking processes in the pre-training corpus (math problem solutions, code comments, debate responses, etc.). Through next-token prediction, the model implicitly learns "what the next step of reasoning should look like."
+最重要的创新是**将思考（Thinking）作为一种特殊动作**纳入动作空间。在传统 RL 中，Agent 只能执行改变环境状态的外部动作（移动、攻击、拾取）；而在 LLM Agent 中，**内部思考成为动作空间的核心组成部分**——它不直接改变外部环境，没有即时奖励，几乎不限次数，成本也较低。
 
-RL post-training then uses external rewards to teach the LLM to use these rules more efficiently for specific tasks. The structure of language itself also provides an implicit internal reward—a logically coherent chain of thought (e.g., "Because we need to convert foreign currency to USD, the first step is to look up the exchange rate") has a high generation probability, while a logically chaotic one (e.g., "Because we need to convert currency, let's first check the weather") has an extremely low probability, naturally guiding the model towards reasonable paths.
+传统 RL 难以处理这类动作，根源在于探索空间太大且缺乏结构：从零学习的 Agent 就像蒙着眼在沙漠里找宝藏，只能随机乱撞。LLM 则不同。通过海量文本预训练，它已经内化了人类沉淀的思考规则：解数学题时遵循“识别条件→回忆公式→逐步计算”，写代码时遵循“理解需求→设计结构→实现细节”。这使 LLM 的思考沿着有结构的路径前进，极大地压缩了搜索空间。因此即使没有额外的 RL 训练，预训练后的 LLM 也能生成具备基本逻辑的思维链（Chain of Thought, CoT）。这种基本逻辑来自预训练语料中海量的人类思考过程（数学解题、代码注释、辩论回应等），模型通过 next-token prediction 隐式学会了“下一步应该是什么样的推理形态”。
 
-![Figure 7-5 Comparison of Classic RL and Modern LLM Agent](images/fig7-5.svg)
+RL 后训练则通过外部奖励教会 LLM 在特定任务中更高效地运用这些规则。语言结构本身也提供一种隐性的内部奖励——逻辑连贯的思维链（如“因为需要将外币换算成美元，所以第一步查询汇率”）生成概率高，逻辑混乱的（如“因为需要换算货币，所以先了解天气”）概率极低，天然引导模型偏好合理路径。
 
-This thinking ability, grounded in the inherent rules of language, enables LLM agents to understand instructions they have never seen before (zero-shot generalization) and master new tasks with very few examples (few-shot adaptation)—a stark contrast to the traditional MDP agent paradigm that requires extensive trial and error. Furthermore, the new paradigm also possesses capabilities like compositional generalization (recombining known concepts to handle new situations), in-context learning (rapid adaptation through prompts and examples), and multimodal understanding (naturally integrating modalities like vision, language, and action). It's important to note that the **effectiveness** of in-context learning (zero-shot generalization, few-shot adaptation) and its **internal mechanism** are two different things—as analyzed in Chapter 2, the attention mechanism works more like retrieval than reasoning, but this doesn't hinder its powerful practical effects in task adaptation.
+![图7-5 经典 RL 与现代 LLM Agent 对比](images/fig7-5.svg)
 
-The evolution from a closed to an open action space reflects a fundamental shift in the AI agent paradigm. Beyond internal thinking, the diversity of tool parameters (natural language queries, program code, complex JSON, multimodal content) makes the actual action space nearly infinite—a code interpreter can theoretically execute any computable task, and a search tool can explore the entire information space of the internet. This brings both new opportunities (agents can handle unprecedented tasks, solve complex problems by combining basic tools) and new challenges (how to define and optimize reward functions in an open environment, how to search efficiently in an infinite action space).
+这种基于语言内在规则的思考能力，使 LLM Agent 能够理解从未见过的指令（零样本泛化），也能通过极少示例掌握新任务（少样本适应）——这与传统 MDP Agent 必须大量试错的范式截然不同。此外，新范式还具备组合泛化（把已知概念重新组合来应对新情况）、上下文学习（通过提示和示例快速适应）以及多模态理解（自然整合视觉、语言、动作等模态）等能力。需要注意的是，上下文学习的**效果**（零样本泛化、少样本适应）和它的**内部机制**是两回事——第二章分析过，注意力机制的工作方式更像检索而非推理，但这不妨碍它在任务适应方面产生强大的实际效果。
 
-Taking models like Kimi K3, optimized for tool calling and long-chain thinking, as an example, we can see the typical direction of the LLM+RL paradigm: based on large-scale language pre-training, post-training strengthens capabilities in problem decomposition, tool calling, and self-correction. **OpenVLA** (detailed in Chapter 9) showcases the VLA (Vision-Language-Action) architecture paradigm of the LLM era: a vision encoder processes environmental observations, a language model understands instructions and reasons, and an action decoder generates control signals, enabling language-conditioned control and cross-task generalization. It needs to be clarified that OpenVLA itself is trained on nearly a million robot **demonstration trajectories** via imitation learning (behavioral cloning), which is SFT in nature, not RL; the true representative of introducing RL into robotics, using rewards for further optimization on top of such VLA architectures, is SimpleVLA-RL in Experiment 7-13 later in this chapter.
+从封闭到开放的动作空间演进，反映了 AI Agent 范式的根本转变。除内部思考外，工具参数的多样性（自然语言查询、程序代码、复杂 JSON、多模态内容）使实际动作空间接近无限——一个代码解释器理论上可执行任何可计算的任务，一个搜索工具可探索整个互联网的信息空间。这既带来新机遇（Agent 可处理前所未见的任务、通过组合基础工具解决复杂问题），也带来新挑战（如何在开放环境中定义和优化奖励函数、如何在无限动作空间中高效搜索）。
 
-![Figure 7-6 Evolution of OpenAI Training Paradigms](images/fig7-6.svg)
+以 Kimi K3 这类面向工具调用和长链思考优化的模型为例，可以看到 LLM+RL 范式的典型方向：在大规模语言预训练基础上，通过后训练强化问题分解、工具调用和自我纠错能力。**OpenVLA**（详见第九章）则展示了 LLM 时代的 VLA（视觉-语言-动作）架构范式：视觉编码器处理环境观察、语言模型理解指令并推理、动作解码器生成控制信号，实现语言条件控制与跨任务泛化。需要澄清的是，OpenVLA 本身是在近百万条机器人**演示轨迹**上通过模仿学习（行为克隆）训练的，属于 SFT 性质而非 RL；真正把 RL 引入机器人、在这类 VLA 架构之上用奖励进一步优化的代表，是本章后面实验 7-13 的 SimpleVLA-RL。
 
-**OpenAI's Exploration Path** (detailed by Shunyu Yao, Assistant Professor at Princeton University and author of the ReAct paper, in "The Second Half") reveals a cognitive evolution. **Phase 1 (2015-2016) Algorithm-Centric**: Believed better algorithms were key, made progress in standard environments like Atari, but had to retrain from scratch for any new environment. **Phase 2 (2016-2018) Importance of Environment**: Gym standardized various tasks, Universe and World of Bits attempted to turn the entire internet into an RL training environment, Dota 2 pursued superhuman performance in specific complex environments. The idea was clear, but general computer use and web navigation remained unbreakable barriers.
+![图7-6 OpenAI 训练范式演进](images/fig7-6.svg)
 
-**Phase 3 (2018-present) Awakening of Priors**: GPT-2/GPT-3 demonstrated the power of language pre-training, WebGPT and ChatGPT proved these priors could be transformed into practical agents. The most important discovery was: **Priors can be obtained in ways completely unrelated to RL**. This is a counterintuitive truth: for decades, RL researchers' priorities might have been completely reversed—it's not algorithm > environment > prior, but prior > environment > algorithm.
+**OpenAI 的探索之路**（姚顺雨（普林斯顿大学助理教授、ReAct 论文作者）在《The Second Half》中详细记录）揭示了认知上的演变。**第一阶段（2015-2016）算法中心主义**：相信更好的算法才是关键，在 Atari 等标准环境取得进展，但换一个新环境就得从头训练。**第二阶段（2016-2018）环境的重要性**：Gym 标准化了各类任务，Universe 和 World of Bits 试图把整个互联网变成 RL 的训练环境，Dota 2 在特定复杂环境中追求超人表现。思路很清晰，但通用计算机使用和网页导航始终无法突破。
 
-> **Experiment 7-2 ★★: Comparative Study of Traditional RL and LLM Agent**
->
->
-> ![Figure 7-7 Architecture Comparison of Q-learning and LLM Agent in a Treasure Hunt Game](images/fig7-7.svg)
->
->
-> Compare Q-learning and an LLM Agent (Kimi K3, maintaining a buffer of up to 50 experiences) in the same treasure hunt game. The results are astonishing: **The LLM Agent completed the game in 18 steps on its first try**.
->
-> **Early Stage (Purposeful Exploration)**: Picks up a rusty sword ("A weapon is better than bare hands"), systematically explores the map, deduces "need to find a key" after finding the north gate locked, explores the storeroom, acquires the red key and magic crystal. **Middle Stage (Mechanism Understanding and Proactive Synthesis)**: Understands the "key auto-use" rule and anticipates the rusty sword is insufficient against the guard, proactively synthesizes a silver sword on step 8. **Late Stage (Execution and Error Correction)**: Heads north with the silver sword, defeats the strong guard on step 13, interspersed with one or two ineffective attempts (repeatedly swinging sword/backtracking), finally obtains the dragon treasure on step 18.
->
-> This demonstrates a fundamental difference between semantic understanding and symbolic mapping. The LLM Agent understood the conceptual structure of the game; every step had purpose and logical support. For Q-learning, "door," "key," and "sword" are just meaningless symbol combinations, and it can only slowly discover their relationships through extensive statistical learning.
->
-> Computational cost presents an interesting paradox: Q-learning runs 10,000 games in 10 seconds, while the LLM Agent takes 1-2 minutes per game. However, in real-world tasks, the time, money, and risk costs per interaction far outweigh pure computational costs, so judging solely by GPU time is unfair. A more critical insight is: The LLM Agent's success isn't due to having a better "learning algorithm," but because it carries vast prior knowledge. When game rules change, Q-learning needs complete retraining, while the LLM Agent can adapt directly through reasoning. This leads to a practical design principle: Traditional RL remains valuable in scenarios with low simulation costs and high repeatability; in real-world scenarios with high interaction costs and a need for rapid adaptation, the sample efficiency of LLM Agents is more practical.
->
-As for the respective positioning and synergy of the three learning paradigms—in-context learning, externalized learning, and parametric learning (post-training)—Chapter 1 provides a systematic comparison, and the "Complete Picture" at the end of this chapter will return to this topic. The main thread of this chapter is post-training—writing interaction strategies into model parameters.
+**第三阶段（2018 至今）先验的觉醒**：GPT-2/GPT-3 展示了语言预训练的强大力量，WebGPT、ChatGPT 证明这些先验知识可以转化为实用 Agent。最重要的发现是：**先验知识可以通过与 RL 完全无关的方式获得**。这是一个反直觉的真相：几十年来 RL 研究者的优先级可能完全颠倒了——不是算法 > 环境 > 先验，而是先验 > 环境 > 算法。
 
-## Model Pre-training Basics `[Optional Reading]`
-
-To understand why post-training techniques are effective, one must first understand what pre-training establishes. Post-training (SFT and RL) essentially optimizes within the representation space established by pre-training—the knowledge structure laid down by pre-training determines the ceiling of post-training. Therefore, we examine the core aspects of pre-training through three experiments: training a small-scale language model from scratch, extending visual capabilities, and injecting new language knowledge. The three experiments in this section are supplementary, helping readers build intuition about pre-training (Pretraining, i.e., initial training on large-scale data to teach the model basic language rules and world knowledge)—readers already familiar with the pre-training process can skip them.
-
-![Figure 7-8 Pre-training Next Token Prediction](images/fig7-8.svg)
-
-Language model training follows a three-stage process: "tokenization — pre-training — post-training." Tokenization segments text into discrete units. For example, "I like programming" might be tokenized into "I," "like," "program," "ming"—these tokens are the smallest units the model processes for text. The task of pre-training is conceptually simple: show the model the first part of a text segment and have it predict the next token. By comparing its prediction to the correct answer (this difference is called Loss; smaller loss means more accurate prediction), the model continuously adjusts its parameters. After repeated training on massive text data, the model gradually learns language rules, world knowledge, and basic reasoning abilities. After pre-training, the model can generate fluent text, but the output lacks structure and struggles to follow instructions. Post-training, through SFT (training on labeled input-output pairs) and preference optimization (e.g., DPO, teaching the model to generate responses humans prefer), transforms it into a practical assistant.
-
-> **Experiment 7-3 ★★: Training an LLM from Scratch—The Power of Algorithm Improvement**
->
-> Using MiniMind 2 (100 million parameters) as a case study, complete the full training process on a consumer-grade GPU. By introducing two algorithmic optimizations (QK Norm and Muon optimizer), convergence speed increases by 3x, and generation quality significantly improves—achieved at a very low cost, total training ~14 hours, cost ~$34.
->
-> Effects of each training stage: After pre-training, the model can answer factual questions like "What is the highest mountain in the world?" but the format is non-standard; after SFT, instruction following and output format significantly improve, organizing answers as expected; preference optimization further reduces factual errors and unnatural expressions. The 100-million-parameter model still has obvious limitations (prone to errors on complex problems), but the lesson is: **With a fixed, small budget, algorithmic improvements offer better value than simply scaling up size**.
->
-> **Experiment 7-4 ★★: Training Your Own VLM**
+> **实验 7-2 ★★：传统 RL 与 LLM Agent 的对比研究**
 >
 >
-> ![Figure 7-9 Vision-Language Model (VLM) Architecture](images/fig7-9.svg)
+> ![图7-7 Q-learning 与 LLM Agent 在寻宝游戏中的架构对比](images/fig7-7.svg)
 >
 >
-> VLMs unify visual perception and language understanding within a single model. The core challenge is cross-modal alignment—making "what is seen" correspond to "what is said." The architecture consists of three components: a **Vision Encoder** (e.g., CLIP, parameters frozen) extracts semantic features from images; a **Projection Layer** (lightweight, the only part trained from scratch) acts as a "translator" between visual features and the language model, mapping visual features into a representation space the language model can understand; and a **Language Model** generates descriptive text. Training uses a "freeze LLM + train only projection layer" strategy to avoid Catastrophic Forgetting (forgetting old skills after learning new ones); after pre-training alignment, the LLM is unfrozen, and SFT is performed with high-quality image-description pairs, significantly improving the detail and accuracy of descriptions.
+> 在同一个寻宝游戏中对比 Q-learning 与 LLM Agent（Kimi K3，维护最多 50 条经验的缓冲区）。结果令人震撼：**LLM Agent 第一局就在 18 步内通关**。
 >
-> This experiment reveals the basic paradigm for multimodal model training: reusing unimodal pre-training results and achieving cross-modal alignment by training a lightweight projection layer—efficient and scalable, but the projection layer's limited expressiveness can become a bottleneck for deep cross-modal understanding. Extending this same "vision encoder + projection layer + LLM" skeleton one step further, having the model output actions, leads to the VLA (Vision-Language-Action) model detailed in Chapter 9.
+> **前期（有目的的探索）**：拿起生锈的剑（“武器总比空手好”），系统探索地图，发现北门被锁后推理 “需要找钥匙”，转而探索储藏室，先后取得红钥匙与魔法水晶。**中期（机制理解与主动合成）**：理解 “钥匙自动使用” 规则，并预判生锈的剑不足以对付守卫，于是在第 8 步主动合成银剑。**后期（执行与纠错）**：持银剑向北，第 13 步击败强守卫，其间夹杂一两步无效尝试（重复挥剑/回退），最终在第 18 步取得巨龙宝藏。
 >
-> **Experiment 7-5 ★★: Continued Pre-training to Learn a New Language**
+> 这展现了语义理解与符号映射之间的根本差异。LLM Agent 理解了游戏的概念结构，每一步都有目的和逻辑支撑。而对 Q-learning 来说，“门”“钥匙”“剑”只是无意义的符号组合，只能通过大量统计学习慢慢发现它们之间的关系。
 >
-> Using Mistral 7B v0.3 as a base (primarily pre-trained on English, with almost no understanding of Korean), inject Korean capability through continued pre-training on Korean Wikipedia—performing unsupervised training on new language data using a model that has already completed pre-training. The model already possesses general language modeling capabilities and only needs to adapt to the new data distribution, making the cost much lower than training from scratch. A key engineering point is using mixed data (~80% Korean + 20% English) to mitigate catastrophic forgetting: too high a proportion of the target language leads to degradation in the original language, while too low a proportion results in insufficient learning efficiency. Finally, SFT is performed with Korean instruction data to obtain practical Korean conversational ability. The conclusion of this experiment will be used again in the complete picture at the end of this chapter: to make a model remember a large amount of new domain knowledge, rely on continued pre-training, not SFT.
+> 计算成本形成了一个有趣的悖论：Q-learning 跑 10000 局只需 10 秒，LLM Agent 一局却要 1-2 分钟。但在现实任务中，每次交互的时间、金钱和风险成本远超纯计算成本，所以单看 GPU 时间并不公平。更关键的洞察是：LLM Agent 的成功不是因为拥有更好的“学习算法”，而是因为携带了海量先验知识。当游戏规则变化时，Q-learning 需要完全重新训练，LLM Agent 却能通过推理直接适应。由此可以得出实用的设计原则：在仿真成本低、可大量重复的场景中，传统 RL 仍然有价值；在交互成本高、需快速适应的现实场景中，LLM Agent 的样本效率更为实际。
 >
-The three pre-training experiments collectively reveal a pattern: when budgets are constrained, algorithmic improvements and architectural innovations offer better value than simply scaling up size. More importantly, pre-training endows the model with descriptive knowledge and language modeling capabilities, but lacks structured instruction following and task-oriented behavior—this is precisely the gap that SFT needs to fill.
+至于上下文学习、外部化学习与参数化学习（后训练）这三种学习范式各自的定位与协同，第一章已有系统对照，本章末尾的“完整图景”也会回到这个话题。本章的主线是其中的后训练——把交互策略写进模型参数。
 
-With the foundational capabilities from pre-training, the next step is to transform the general-purpose model into a practical agent through post-training. The first stage of post-training is Supervised Fine-Tuning (SFT).
+## 模型预训练基础 `[可选阅读]`
 
-## SFT (Supervised Fine-Tuning)
+要理解后训练技术为什么有效，需要先明白预训练建立了什么。后训练（SFT 与 RL）本质上是在预训练建立的表征空间内进行优化——预训练奠定的知识结构决定了后训练的天花板。因此，我们通过三个实验考察预训练的核心环节：从头训练小规模语言模型、扩展视觉能力、以及注入新语言知识。本节三个实验为辅助性内容，帮助读者建立对预训练（Pretraining，即在大规模数据上进行初始训练，让模型学会语言的基本规律和世界知识）的直觉——已熟悉预训练流程的读者可跳过。
 
-![Figure 7-10 Supervised Fine-Tuning (SFT) Pipeline](images/fig7-10.svg)
+![图7-8 预训练的下一个 Token 预测](images/fig7-8.svg)
 
-Section 7.1 already thoroughly explained the essence of SFT (changing the data, calculating loss only on the response, "predicting the next word"). This section uses four experiments to see what this mechanism of "writing stable mappings and protocols into parameters" specifically solidifies for different tasks. The core value of SFT is not injecting new knowledge, but **solidifying protocols**: writing mapping relationships, interaction formats, and style norms into parameters, enabling the model to produce outputs that meet expectations during inference without lengthy prompts. Typically, only a few thousand to tens of thousands of high-quality examples are needed to establish basic conversational ability and instruction following.
+语言模型训练遵循“tokenization — 预训练 — 后训练”三阶段流程。Tokenization（词元化）将文本切分为离散单元，比如“我喜欢编程”可能被切分为“我”“喜欢”“编”“程”四个 token——这些 token 就是模型处理文本的最小单位。预训练的任务概念上很简单：给模型看一段文本的前半部分，让它预测下一个 token 是什么。模型通过比较自己的预测与正确答案的差距（这个差距叫做损失（Loss），损失越小说明预测越准），不断调整自身参数。在海量文本上反复训练后，模型逐渐学会了语言规律、世界知识与基本推理能力。预训练完成后，模型能生成流畅文本，但输出缺乏结构、难以遵循指令。后训练通过 SFT（用标注好的输入-输出对训练）与偏好优化（如 DPO，让模型学会生成人类更偏好的回答）将其转化为实用助手。
 
-The price of this efficiency is a strong dependence on the training distribution: SFT tends towards memorization rather than generalization. When encountering situations unseen during training at test time, performance often degrades noticeably. The following experiments will demonstrate this process of "solidifying protocols" from different angles.
-
-> **Experiment 7-6 ★★★: Voice SFT—From "Sound Copying" to "Paralinguistic Modeling" `[Extended Experiment]`**
+> **实验 7-3 ★★：从头训练 LLM——算法改进的威力**
 >
-> Using Orpheus (contextual prompt voice cloning) and Sesame (paralinguistic token modeling) as targets, demonstrate how "voice style and expression habits" are written into parameters. The two approaches differ:
+> 以 MiniMind 2（一亿参数）为案例，在消费级 GPU 上完成完整训练流程。通过引入两项算法优化（QK Norm 和 Muon 优化器），收敛速度提升 3 倍，生成质量显著改善——实现成本极低，总训练约 14 小时，成本约 34 美元。
 >
-> - **Orpheus**: Compresses the voice waveform into a token sequence. By concatenating reference audio from the same speaker, the model learns to "speak in this person's voice," achieving cross-sentence timbre consistency.
-> - **Sesame**: Abstracts paralinguistic phenomena like laughter and sighs into special tokens like `<laugh>`, `<sigh>`. The model learns to "produce the corresponding sound when seeing the token."
+> 各训练阶段的效果：预训练后模型可以回答“世界上最高的山峰”等事实性问题，但格式不规范；SFT 后指令遵循与输出格式显著改善，能按期望方式组织答案；偏好优化进一步减少了事实错误与不自然表达。一亿参数的模型仍有明显局限（复杂问题容易出错），但启示是：**在固定的小规模预算下，算法改进比单纯堆规模更具性价比**。
 >
-> In expressive tasks, SFT solidifies style control protocols and structured expression habits, not factual knowledge or complex reasoning. The key lies in the diversity and annotation quality of the training data. Common failure modes: too few speakers in the training data causing everyone to sound the same; token overfitting (Overfitting, where the model memorizes training sample details and performs worse on new situations) leading to "mechanical laughter."
+> **实验 7-4 ★★：自己训练 VLM**
 >
-> **Experiment 7-7 ★★★: Multilingual Thinking—Enabling the Model to Think in Any Language `[Extended Experiment]`**
 >
-> Most thinking models only "think" in English: regardless of the language you use to ask a question, the model's internal chain of thought is almost always in English, because the high-quality thinking demonstrations in the training data are mostly written in English. The goal of this experiment is simple—to enable the model to think in a specified language.
->> The approach is to perform SFT on gpt-oss-20b: add a line `reasoning language: German` (or another language) to the system instruction, then train with reasoning examples in English, Spanish, French, etc. The training data contains **no Chinese at all**, but after training, simply setting the reasoning language to Chinese enables the model to perform complete chain-of-thought reasoning in Chinese—this zero-shot cross-lingual generalization is the most interesting finding of this experiment. Note that this is not the generalization capability of SFT itself. Multilingual pre-training has already established a shared cross-lingual representation space in the model; SFT merely activates this pre-existing cross-lingual ability.
-
-> **Experiment 7-8 ★★: Prompt Distillation—Replicating Usable Capabilities at Lower Cost**
-
-> In practical applications, to make a model perform complex tasks, lengthy system prompts (thousands or even tens of thousands of tokens) are often required, increasing latency and cost with each call. When using reasoning LLMs, internal thinking tokens further amplify the cost. The idea behind prompt distillation is to compress the behavior of a "long prompt + thinking teacher" into a "short prompt/no prompt + non-thinking student." The teacher generates high-quality answers under the full prompt and thinking mode; the training data retains only the user input and final conclusion, discarding the lengthy prompt and intermediate thinking process. The student learns to "directly give the conclusion." After distillation, the student's output quality on the same inputs approaches that of the teacher, while latency and cost are significantly reduced because there is no need to process lengthy prompts and thinking tokens.
-
-> Distillation can be performed along two dimensions: "large to small" (replacing a large model with a medium or small one to balance cost and quality) and "thinking to non-thinking" (folding explicit CoT into implicit parametric knowledge at the same scale, achieving a 20-30x improvement in response speed). These two are not mutually exclusive and are often used together in production environments. It is important to note that distillation inherits the teacher's boundaries—if the teacher has systematic errors on the long tail of the distribution, the student will further hard-code these errors; if the teacher relies on tools to ensure correctness, simple output distillation will lose the robustness provided by tools. Engineering insight: when the product form is stable, the input distribution is predictable, and cost constraints are significant, prompt distillation is an excellent optimization method; during the exploration phase or when the task is not yet finalized, retaining explicit thinking and editable prompt engineering remains the core of rapid experimentation.
-
-> **Experiment 7-9 ★★★: Chain of Thought (CoT) Distillation `[Extended Experiment]`**
-
-> Prompt distillation discards the thinking process; CoT distillation does the opposite: it transfers the **complete thinking trajectory** of a strong teacher model to the student model. CoT distillation on a capable teacher model can recover 70%-80% of the teacher's capability at the same parameter count. For teams that do not aim to push the frontier of state-of-the-art capabilities but seek controllable models, this is the most pragmatic follower strategy. The series of distilled small models open-sourced by DeepSeek-R1 (using R1's thinking trajectories to perform SFT on the Qwen and Llama series) are a representative example of this approach.
-
-> **Background: The "Thinking Wall" Phenomenon.** Some closed-source reasoning models (e.g., OpenAI o-series, Gemini series) generate internal chain-of-thought during reasoning, but what users see is not the original thinking process—for reasons such as preventing distillation, safety, and product experience, providers often rewrite or summarize the CoT before outputting it, hiding the most valuable original thinking process behind the API. This is precisely why this experiment chooses open-source reasoning models as teachers: models like DeepSeek-R1 and QwQ expose the complete chain-of-thought in `<think>` tags, making distillation technically and legally feasible (though one should still confirm the model license's terms regarding distilled products before use).
-
-> **Experiment Design:** A three-step process. Step 1, **Collect Trajectories**: Sample problems from the target task distribution (e.g., math, code), use the open-source teacher model to generate complete "thinking + answer" trajectories, and filter out trajectories with incorrect final answers using a rule-based validator—otherwise, the student will imitate the erroneous thinking process. Step 2, **SFT Training**: Use "problem → `<think>` thinking trajectory `</think>` + final answer" as training pairs to perform standard SFT on a small model (e.g., 7B scale). Step 3, **Comparative Evaluation**: Compare the student model before and after distillation, as well as the teacher model, on the same benchmark to measure the proportion of capability recovered.
-
-> **Acceptance Criteria:** The distilled student model shows significant improvement on math/code benchmarks compared to before distillation, and its thinking trajectories exhibit teacher-like behaviors such as reflection, backtracking, and verification. Also, be aware of the cost of distillation: the student will inherit the teacher's systematic errors and verbose thinking habits (the latter can be further optimized using the AdaptThink approach from Experiment 7-10).
-
-> These four experiments share a common feature—"writing stable mappings and protocols into parameters": voice SFT solidifies style control protocols, multilingual SFT solidifies thinking organization templates, and distillation SFT solidifies the direct mapping from input to output. Their commonality is clear objectives, clear formats, and stable evaluation criteria, allowing SFT to achieve gains with extremely high sample efficiency; however, once the distribution changes, the memorization tendency is exposed as performance degradation. This is the experimental manifestation of the memory-generalization divide discussed in Section 7.1, "The Essential Difference Between SFT and RL."
-
-## When to Choose SFT and When to Choose RL
-
-> Section 7.1 clarified the **essential difference** between SFT and RL. This section answers a more practical question: **Faced with a specific task, which one should be used?** Some conclusions from the decision framework below will be further validated in subsequent RL experiments (Experiment 7-10, Experiment 7-11). Readers can first form a preliminary judgment and then return to cross-reference after reading the RL section.
-
-> ![Figure 7-11 SFT→RL Two-Stage Training Pipeline](images/fig7-11.svg)
-
-> **SFT is suitable for** scenarios with fixed formats (JSON output, conversation style), high-quality expert demonstrations, and high consistency between training and deployment environments. **Scenarios where RL is necessary** are different: when there are systematic differences between the actual deployment environment and the training environment (e.g., during training, cards J/Q/K are all 10, but during deployment they become 11/12/13—the rules changed; or during training, black suits are used, but during deployment, red suits are encountered—the appearance changed), when optimal strategies need to be explored (expert demonstrations are not necessarily optimal), or when annotation costs are too high to provide demonstrations for every path, RL is needed.
-
-> The most robust strategy is the **"SFT first, then RL"** two-stage pipeline. The primary goal of SFT is not to maximize task performance but to establish **format stability** for the output—ensuring the model can produce parseable JSON and correct tool interface calls. Only after the output format is stable can the RL reward signal be reliably computed. Performing RL directly on a base model without SFT often leads to training failure due to chaotic output formats and incalculable rewards—though this conclusion has boundary conditions: it comes from the setting of a "smaller base model + strict structured output requirements" (as in Experiment 7-11 later). DeepSeek-R1-Zero demonstrated that a sufficiently strong base model can skip SFT and succeed with direct RL, emerging with reflection and long-chain reasoning abilities—at the cost of poor output readability and mixed languages, which is precisely why DeepSeek ultimately added back "cold-start SFT" in R1. R1's round trip from Zero to cold-start is the best example of "form first, spirit second": RL can grow its own "spirit" (strategy and reasoning ability), but "form" (format and readability) is still established quickly and stably by SFT.
-
-> Both have their costs: SFT has high sample efficiency and fast convergence but limited generalization; RL can learn transferable strategies but has low sample efficiency and unstable training. A practical criterion is: when "no matter how many demonstration examples are added, performance on new scenarios still does not improve," it is the critical point to switch to RL—the root of the problem is not the number of demonstrations but the optimization objective of SFT itself.
-
-> In practice, the decision can be made in the following order:
-
-> 1. **First ask: Is post-training needed?** If the problem can be solved through Harness engineering (optimizing prompts, tool design, context management), no model training is needed. Most agent applications fall here.
-> 2. **If training is needed: Try SFT first.** Suitable for solidifying output formats (JSON schema, API call format), solidifying protocol knowledge (usage of terms, output format, process habits, i.e., "how to say and do things"), and unifying style (tone, length). But note that SFT is not suitable for injecting large amounts of factual knowledge ("what to know")—that requires continued pre-training or RAG (see the "Complete Picture" at the end of this chapter). SFT is low-cost and quick to show results.
-> 3. **When SFT is insufficient: Add RL.** Suitable for scenarios requiring generalization to new situations, exploration of optimal strategies, or when annotation costs are too high. Be sure to first stabilize the output format with SFT before applying RL on top of it.
-
-## Single-Turn Reinforcement Learning: A Comparison of Memory and Generalization
-
-> "Single-turn" means the task is completed in one interaction: the model receives input, produces output, and receives a reward, without needing to maintain state across steps. This simplified setting allows us to focus on the fundamental differences in learning mechanisms between SFT and RL, without the complexity of multi-turn interactions. The single-turn scenario provides clear controlled experimental conditions: the same task, the same base model, the same computational budget, with the only variable being the training method. The first experiment demonstrates how RL learns the meta-strategy of "when to think"; the second experiment uses an arithmetic reasoning card game to systematically quantify "SFT memorizes, RL generalizes."
-
-> Before entering the experiments, let's establish some **minimal intuition** about RL algorithms to understand the terms that appear in subsequent experiments (complete formulas and comparisons are reserved for the "Comparison of Reinforcement Learning Algorithms" section later in this chapter). The RL training in this chapter is mostly based on **policy gradient**: the model generates several responses to the same problem; responses with high rewards have their probability increased, and those with low rewards have their probability decreased—"go more in the direction of high reward, go less in the direction of low reward." To avoid large single updates that could derail the model, the mainstream **PPO** algorithm clips the update magnitude at each step (the "PPO with value network" mentioned in later experiments refers to this; the value network estimates a baseline to compute a finer advantage); another method, **GRPO**, does not train a value network but instead uses "comparison among multiple responses to the same problem" to judge the relative quality of each. Keeping this intuition in mind is sufficient to understand the next two experiments.
-
-> **Experiment 7-10 ★★: AdaptThink—Learning "When Not to Think"**
-
-> Large reasoning models (e.g., OpenAI o1, DeepSeek-R1) generate lengthy chain-of-thought for all problems, causing unnecessary overhead on simple problems. The experiment first validates an intuition: **NoThinking mode** (skipping thinking via `<think></think>`) performs comparably or even better on simple problems; only when facing difficult problems does the advantage of Thinking mode become apparent.
-
-> AdaptThink uses RL to train the model to adaptively choose the mode. Two core components:
-
-> - **Constrained Optimization Objective**: Encourages NoThinking while ensuring overall performance does not degrade.
-> - **Importance Sampling Strategy**: Balances Thinking/NoThinking samples to solve the **cold start** problem (Cold Start, here specifically referring to the issue where the initial model almost always chooses Thinking, resulting in very few NoThinking branch samples and making it difficult to learn; this is a different usage context from the "cold-start SFT" with a small number of demonstration examples mentioned earlier for DeepSeek-R1).
-
-> The "importance sampling" mentioned here is a common statistical method—when the sampling distribution is biased towards a certain class of samples, weights are applied to the samples to "correct" the distribution, ensuring that the learning signal fairly covers all classes. This idea is repeatedly used in RL algorithms like PPO and DAPO discussed later in this book.
-
-> Evaluation results: On multiple math benchmarks, response length is reduced by 45%-64%, while accuracy does not decrease and even improves. The model learns to make choices based on problem characteristics: directly answering simple, well-structured problems; retaining the complete chain-of-thought for difficult problems requiring multi-step reasoning; and correctly judging the difficulty of unseen task types.
-
-> Complementary to prompt distillation, this forms a "fast-slow dual system": distillation reduces the proportion of tasks requiring thinking, while AdaptThink optimizes the triggering strategy for the remaining tasks, together maximizing thinking efficiency.
-
-> **Experiment 7-11 ★★: GeneralPoints—A "Memory and Generalization" Comparison in Single-Turn RL**
-
-> ![Figure 7-12 GeneralPoints Experimental Architecture (Training and Testing Design for GP-L and GP-VL Variants)](images/fig7-12.svg)
-
-> GeneralPoints is an arithmetic reasoning card game proposed by Chu et al. (2025, "SFT Memorizes, RL Generalizes," arXiv:2501.17161), specifically designed to evaluate model generalization. The task objective is similar to the "24 Game": use the numbers on four cards, through addition, subtraction, multiplication, and division operations, using each number exactly once, to reach the target number 24. The experiment designs two variants: the text-only GP-L and the image-based GP-VL, allowing us to examine rule generalization and visual generalization within the same framework.
-
-> **Rule Variant**: During training, J/Q/K are all counted as 10; during testing, they are counted as 11/12/13 respectively, ensuring the test set contains unseen number combinations (operations involving 11, 12, 13) to strictly evaluate generalization. **Visual Variant**: Training uses black suits (♠♣), testing uses red suits (♥♦), to evaluate robustness to changes in visual appearance. Based on Llama-3.2-Vision-11B, following the standard post-training pipeline: first, SFT initialization to give it basic instruction-following ability; then, with the same computational budget, extend SFT and RL training separately (the RL part uses the PPO algorithm with a value network), train with data using a single rule (J/Q/K=10), and evaluate on in-distribution (ID) and out-of-distribution (OOD) test sets.
-
-> The results clearly reveal the fundamental difference. **Rule OOD**: RL improves by +3.5% on GP-L (11.5%→15.0%), while SFT **decreases** by 8.1% (11.5%→3.4%); on GP-VL, RL improves by +3.0%, while SFT decreases by 5.6%. **Visual OOD**: RL improves by **+17.6%** on GP-VL (23.6%→41.2%), while SFT decreases by 9.9% (23.6%→13.7%).
-
-> Tracking visual recognition accuracy reveals that RL improves the underlying visual encoder through outcome-oriented optimization, and this improvement is highly correlated with overall performance gains; in contrast, SFT overfits to the token patterns in the thinking process, neglecting the learning of visual tokens, leading to a decrease in recognition accuracy.
-
-> The experiment also reveals the necessity of SFT for RL: under the settings of this experiment (a base model of the Llama-3.2-Vision-11B scale, plus strict structured output requirements), performing end-to-end RL directly without SFT completely fails—the base model cannot produce structured outputs, and rewards cannot be calculated at all. Note that this is a conclusion under specific settings, not a universal law: a sufficiently strong base model can skip SFT and succeed with direct RL (see the earlier discussion on DeepSeek-R1-Zero). Another noteworthy finding is that more verification iterations lead to better generalization: 10 iterations +5.99% vs 1 iteration +0.48%, indicating that computational scaling during thinking is key to RL generalization.> Why does SFT performance collapse under distribution shift, while RL performs better? SFT learns a mapping of "given this input, output that answer": during training, J/Q/K are all 10, so the model memorizes the fixed pattern "when encountering J/Q/K, treat them as 10"; during testing, J=11, but the model still calculates it as 10, naturally making errors. RL learns a more general strategy of "what calculation process yields the correct answer": when J becomes 11, the RL model recalculates using the same strategy, rather than applying a memorized answer. This is the essential difference between "memorization" and "generalization."
+> ![图7-9 视觉语言模型（VLM）架构](images/fig7-9.svg)
 >
-> The core contribution of this experiment is to systematically quantify the phenomenon of "SFT memorizes, RL generalizes," proving that this rule holds in both pure language and vision-language modalities, revealing the synergistic relationship between SFT and RL: SFT provides format stability, while RL breaks through the boundaries of memorization on this basis; both are indispensable. This "form first, spirit later" training paradigm—borrowing a term from Chinese painting, first accurately draw the external form (format, structure), then pursue the inner spirit (generalization, strategy)—lays a methodological foundation for subsequent multi-turn, multi-modal tasks.
+>
+> VLM 将视觉感知与语言理解统一在一个模型中，核心挑战在于跨模态对齐——让“看到的”和“说出来的”对应起来。架构由三个组件构成：**视觉编码器**（如 CLIP，参数固定）提取图像的语义特征；**投影层**（轻量级，唯一从头训练的部分）充当视觉特征与语言模型之间的“翻译官”，将视觉特征映射到语言模型能理解的表示空间；**语言模型**生成描述文本。训练采用“冻结 LLM + 只训练投影层”的策略，以避免灾难性遗忘（Catastrophic Forgetting，即学了新技能后把旧技能忘了）；预训练对齐后再解冻 LLM，用高质量图像-描述对做 SFT，描述的详细程度与准确性显著改善。
+>
+> 本实验揭示了多模态模型训练的基本范式：复用单模态预训练成果，通过训练一个轻量投影层实现跨模态对齐——高效且可扩展，但投影层的表达能力有限，可能成为跨模态深层理解的瓶颈。同样的“视觉编码器 + 投影层 + LLM”骨架再向前延伸一步、让模型输出动作，就是第九章将展开的 VLA（视觉-语言-动作）模型。
+>
+> **实验 7-5 ★★：继续预训练学习新语言**
+>
+> 以 Mistral 7B v0.3 为基础（主要用英语预训练，对韩语几乎没有理解能力），通过韩语维基百科继续预训练来注入韩语能力——在已完成预训练的模型上用新语言数据继续做无监督训练，模型已具备通用语言建模能力，只需适应新的数据分布，成本远低于从头训练。关键工程点是用混合数据（约 80% 韩语 + 20% 英语）缓解灾难性遗忘：目标语言占比过高会导致原语言退化，占比过低则学习效率不足。最后用韩语指令数据做 SFT，获得实用的韩语对话能力。本实验的结论会在本章末尾的完整图景中再次用到：要让模型记住大量新领域知识，靠的是继续预训练而非 SFT。
+>
+三个预训练实验共同揭示了一个规律：在预算受限时，算法改进与架构创新比单纯扩大规模更具性价比。更重要的是，预训练赋予模型的是描述性知识与语言建模能力，缺乏结构化的指令遵循和任务导向行为——这正是 SFT 需要填补的空白。
 
-## RLHF: From Human Preferences to Reward Models
+有了预训练的基础能力，下一步就是通过后训练把通用模型变成实用的 Agent。后训练的第一阶段是监督微调（SFT）。
 
-The previous experiments share a common premise: the tasks have verifiable correctness—whether the formula is right or the format complies, a rule-based verifier can score it. However, the conversational models deployed today behave like "decent, safe assistants" thanks to another, earlier-matured approach: **RLHF** (Reinforcement Learning from Human Feedback). Understanding RLHF is key to understanding where the conversational quality and safety alignment of products like ChatGPT come from, and also a prerequisite for understanding concepts like KL penalty and reward hacking in the algorithms discussed later.
+## SFT（监督微调）
 
-**InstructGPT's Three-Stage Pipeline.** OpenAI's InstructGPT[^ch7-4] established the standard process still in use today:
+![图7-10 监督微调（SFT）流水线](images/fig7-10.svg)
 
-1. **SFT**: Fine-tune the pre-trained model on human-demonstrated "instruction-response" pairs to establish basic instruction-following ability—this is the content discussed in the earlier "SFT (Supervised Fine-Tuning)" section.
-2. **Train a Reward Model (RM)**: For the same prompt, have the model generate multiple responses, and human annotators compare them pairwise, indicating which one they prefer. Train a scoring model using these preference pairs, with the training objective based on the Bradley-Terry model:
+7.1 节已经讲透了 SFT 的本质（换了数据、只在回答上算损失的“预测下一个词”）。这一节用四个实验，看看这套“把稳定映射与协议写进参数”的机制在不同任务上具体固化了什么。SFT 的核心价值不在于注入新知识，而在于**固化协议**：把映射关系、交互格式、风格规范写入参数，使推理时无需冗长提示即可产出符合预期的输出。通常只需数千到数万条高质量样例，即可建立基本的对话能力与指令遵循。
+
+高效性的代价是对训练分布的强依赖：SFT 倾向于记忆而非泛化，一旦测试时遇到训练中没见过的情况，性能往往明显下降。接下来的实验将从不同角度展示这一“固化协议”的过程。
+
+> **实验 7-6 ★★★：语音 SFT——从 “声音复制” 到 “副语言建模” `[扩展实验]`**
+>
+> 以 Orpheus（语境提示 voice cloning）与 Sesame（副语言标记建模）为对象，展示如何将“声音风格与表达习惯”写入参数。两者思路不同：
+>
+> - **Orpheus**：把声音波形压缩为 token 序列，通过拼接同一说话者的参考音频，让模型学会“用这个人的声音说话”，实现跨句音色一致。
+> - **Sesame**：将笑声、叹气等副语言现象抽象为 `<laugh>`、`<sigh>` 等特殊标记，训练模型学会“看到标记就发出对应的声音”。
+>
+> SFT 在表达型任务中固化的是风格控制协议与结构化表达习惯，而非事实知识或复杂思考。关键在于训练数据的多样性和标注质量。常见失败模式：训练数据中说话者过少导致所有人听起来一个腔调；标记过拟合（Overfitting，即模型死记硬背了训练样本的细节，遇到新情况反而表现更差）产生“机械笑”。
+>
+> **实验 7-7 ★★★：多语言思考——让模型用任意语言思考 `[扩展实验]`**
+>
+> 大多数思考模型只会用英语“思考”：不管你用什么语言提问，模型内部的思维链几乎都是英文的，因为训练数据中高质量的思考示范基本都是英语写的。本实验的目标很简单——让模型能够用指定的语言进行思考。
+>
+> 做法是对 gpt-oss-20b 进行 SFT：在系统指令中加一句 `reasoning language: German`（或其他语言），然后用英语、西班牙语、法语等几种语言的思考样例进行训练。训练数据中**完全没有中文**，但训练完成后，只要把 reasoning language 设为 Chinese，模型就能用中文进行完整的思维链思考——这种零样本的跨语言泛化是本实验最有意思的发现。需要注意，这并非 SFT 本身的泛化能力。多语言预训练已经在模型中建立了跨语言的共享表征空间，SFT 只是激活了这种预训练时已有的跨语言能力。
+>
+> **实验 7-8 ★★：Prompt 蒸馏——以更小开销复现可用能力**
+>
+> 在实际应用中，为了让模型完成复杂任务，常常需要设计冗长的系统提示（数千甚至上万 token），每次调用都会增加延迟与费用。使用思考型大模型时，内部思考 token 进一步放大成本。Prompt 蒸馏的思路是把“长提示 + 思考型教师”的行为压缩到“短提示/无提示 + 非思考学生”中。教师在完整提示与思考模式下生成高质量答案，训练数据只保留用户输入与最终结论，丢弃冗长提示与中间思考过程。学生学会“直接给出结论”，蒸馏后在相同输入上接近教师的输出质量，同时因为不需要处理冗长提示和思考 token，延迟与费用显著降低。
+>
+> 蒸馏可以在两个维度进行：“大到小”（用中小模型替代大模型，在成本和质量之间取得折中）和“思考到非思考”（同等规模下把显式 CoT 折叠为隐式参数化知识，获得 20-30 倍的响应速度提升）。两者并不冲突，在生产环境中经常同时使用。需要注意的是，蒸馏会继承教师的边界——若教师在长尾分布上有系统性错误，学生会进一步硬编码这些错误；若教师依赖工具来确保正确性，单纯的输出蒸馏会失去工具带来的鲁棒性。工程启示：当产品形态稳定、输入分布可预期、成本约束明显时，Prompt 蒸馏是很好的优化手段；而在探索期或任务尚未定型的阶段，保留显式思考与可编辑的提示工程仍是快速试错的核心。
+>
+> **实验 7-9 ★★★：思维链（Chain of Thought, CoT）蒸馏 `[扩展实验]`**
+>
+> Prompt 蒸馏丢弃思考过程，CoT 蒸馏则相反：把强教师模型的**完整思考轨迹**转移给学生模型。对能力较强的教师模型进行 CoT 蒸馏，在同等参数量下可恢复教师 70%-80% 能力。对于不追求刷新前沿能力边界、但寻求自主可控模型的团队，这是最务实的跟随者策略。DeepSeek-R1 发布时同步开源的一系列蒸馏小模型（用 R1 的思考轨迹对 Qwen、Llama 系列做 SFT），正是这条路线的代表。
+>
+> **背景：“思维围墙”现象**。一些闭源思考模型（如 OpenAI o 系列、Gemini 系列）在思考时会生成内部思维链，但用户看到的并非原始思考过程——厂商出于防蒸馏、安全和产品体验等考虑，通常会在输出前对 CoT 进行改写或摘要，最有价值的原始思考过程被隐藏在 API 之后。这正是本实验选择开源思考模型作为教师的原因：DeepSeek-R1、QwQ 等模型在 `<think>` 标签中公开完整思维链，蒸馏在技术与许可上都可行（使用前仍应确认模型许可证对蒸馏产物的授权条款）。
+>
+> **实验设计**：三步流程。第一步，**采集轨迹**：从目标任务分布（如数学、代码）采样问题，用开源教师模型生成完整的“思考 + 答案”轨迹，并用规则验证器过滤掉最终答案错误的轨迹——否则错误的思考过程会被学生一并模仿。第二步，**SFT 训练**：以“问题 → `<think>` 思考轨迹 `</think>` + 最终答案”为训练对，对小模型（如 7B 量级）做标准 SFT。第三步，**对比评估**：在同一基准上对比蒸馏前后的学生模型与教师模型，衡量能力恢复比例。
+>
+> **验收标准**：蒸馏后的学生模型在数学/代码基准上相对蒸馏前显著提升，且思考轨迹中出现教师式的反思、回溯与验算行为。同时注意蒸馏的代价：学生会继承教师的系统性错误和冗长思考习惯（后者可结合实验 7-10 的 AdaptThink 思路做二次优化）。
+>
+这四个实验有一个共同特征——“把稳定的映射与协议写进参数”：语音 SFT 固化风格控制协议，多语言 SFT 固化思考组织模板，蒸馏 SFT 固化输入到输出的直接映射。它们的共性是目标明确、格式清晰、评估标准稳定，因此 SFT 能以极高的样本效率达成收益；而一旦分布变化，记忆倾向就会暴露为性能下降。这正是 7.1 节“SFT 与 RL 的本质区别”所讲的记忆—泛化分野在实验层面的体现。
+
+## 何时选择 SFT，何时选择 RL
+
+7.1 节讲清了 SFT 与 RL 的**本质区别**，这一节回答一个更实操的问题：**面对一个具体任务，到底该用哪一个？** 下面的决策框架部分结论会在后续 RL 实验（实验 7-10、实验 7-11）中进一步验证，读者可先建立初步判断，读完 RL 部分再回来对照。
+
+![图7-11 SFT→RL 两阶段训练流程](images/fig7-11.svg)
+
+**SFT 适用于**格式固化（JSON 输出、对话风格）、拥有高质量专家示范、训练与部署环境高度一致的场景。**RL 必须介入的场景**则不同：当实际部署环境与训练环境存在系统性差异时（比如训练时卡牌 J/Q/K 都是 10，部署时变成了 11/12/13——规则变了；或者训练时用黑色花色，部署时遇到红色花色——外观变了），需要探索最优策略（专家示范本身不一定最优），或者标注成本过高、无法为每条路径都提供示范时，就需要 RL。
+
+最稳健的策略是**“先 SFT 后 RL”**两阶段流程。SFT 的主要目标不是追求任务性能的极致，而是建立输出的**格式稳定性**——确保模型能产出可解析的 JSON、正确的工具接口调用。只有输出格式稳定后，RL 的奖励信号才能被可靠地计算。直接在未经 SFT 的基础模型上做 RL，往往会因为输出格式混乱、奖励无法计算而训练失败——不过这个结论有边界条件：它来自“较小基础模型 + 严格结构化输出要求”的设定（如后文实验 7-11）。DeepSeek-R1-Zero 证明了足够强的基础模型可以跳过 SFT、直接 RL 成功，涌现出反思与长链思考能力——代价是输出可读性差、多种语言混杂，这正是 DeepSeek 最终在 R1 中加回“冷启动 SFT”的原因。R1 从 Zero 到冷启动的这段往返是“先形后神”的最好例证：RL 能自己长出“神”（策略与推理能力），但“形”（格式与可读性）还是靠 SFT 立得又快又稳。
+
+两者各有代价：SFT 样本效率高、收敛快，但泛化受限；RL 能学到可迁移的策略，但样本效率低且训练不稳定。一个实用的判断标准是：当“无论怎么增加示范数据，新场景的表现仍然上不去”时，就是该转向 RL 的临界点——问题的根源不在示范数量，而在 SFT 的优化目标本身。
+
+实际决策时，可以按以下顺序考虑：
+
+1. **先问：需要后训练吗？** 如果通过 Harness 工程（优化 prompt、工具设计、上下文管理）就能解决问题，不需要训练模型。大多数 Agent 应用落在这里。
+2. **如果需要训练：先试 SFT。** 适用于固化输出格式（JSON schema、API 调用格式）、固化协议性知识（术语的用法、输出格式、流程习惯，即“该怎么说、怎么做”）、统一风格（语气、长度）。但注意 SFT 不适合注入大量事实性知识（“知道什么”）——那需要继续预训练或交给 RAG（详见本章末“完整图景”）。SFT 成本低、见效快。
+3. **SFT 不够时：加 RL。** 适用于需要泛化到新场景、需要探索最优策略、或标注成本过高的情况。务必先用 SFT 稳定输出格式，再在其基础上做 RL。
+
+## 单轮强化学习：记忆与泛化的对照
+
+“单轮”指任务在一次交互中完成：模型接收输入、产出输出、获得奖励，无需维护跨步骤的状态。这种简化设定让我们能够聚焦于 SFT 与 RL 在学习机制上的根本差异，而不被多轮交互的复杂性干扰。单轮场景提供了清晰的对照实验条件：相同任务、相同基础模型、相同计算预算，唯一的变量是训练方法。第一个实验展示 RL 如何学会“何时该思考”这一元策略；第二个实验通过算术推理卡牌游戏系统地量化“SFT 记忆、RL 泛化”。
+
+在进入实验之前，先建立一点关于 RL 算法的**最小直觉**，以便理解后续实验里出现的术语（完整的公式与对比留到本章后面的“强化学习算法比较”一节）。本章的 RL 训练大多基于**策略梯度**：让模型对同一个问题多生成几条回答，奖励高的回答就提高它出现的概率、奖励低的就降低——“奖励高的方向多走，奖励低的方向少走”。为避免单次更新幅度过大把模型带偏，主流的 **PPO** 算法会裁剪每一步的更新幅度（后文实验中出现的“带价值网络的 PPO”即指此，价值网络用来估计基线、算出更细的优势）；另一种 **GRPO** 则不训练价值网络，而是用“同一问题的多条回答互相比较”来判断每条的相对好坏。记住这条直觉，就足以读懂接下来两个实验。
+
+> **实验 7-10 ★★：AdaptThink——学会 “何时不思考”**
+>
+> 大型思考模型（如 OpenAI o1、DeepSeek-R1）对所有问题都会生成冗长的思维链，在简单问题上造成不必要的开销。实验首先验证了一个直觉：**NoThinking 模式**（通过 `<think></think>` 跳过思考）在简单问题上性能相当甚至更好，只有面对困难问题时 Thinking 的优势才显现出来。
+>
+> AdaptThink 通过 RL 训练模型自适应地选择模式。两个核心组件：
+>
+> - **约束优化目标**：鼓励 NoThinking 的同时确保整体性能不下降。
+> - **重要性采样策略**：平衡 Thinking/NoThinking 样本，解决初始模型几乎总选 Thinking 带来的**冷启动**问题（Cold Start，这里特指训练初期模型几乎只产生 Thinking 样本、NoThinking 分支样本极少而学不起来的问题；它与前文 DeepSeek-R1 用少量示范数据做“冷启动 SFT”是不同语境下的用法）。
+>
+> 这里出现的“重要性采样”是统计学常用的方法——在采样分布偏向某一类样本时，通过给样本加权来“纠正”分布，让学习信号能够公平覆盖所有类别。本书后续讨论的 PPO、DAPO 等 RL 算法都会反复用到这一思想。
+>
+> 评估结果：在多个数学基准上，响应长度减少 45%-64%，准确率不降反升。模型学会了根据问题特征做选择：结构清晰的简单问题直接作答，需要多步推导的困难问题保留完整思维链，面对未见过的任务类型仍能正确判断难度。
+>
+> 与 Prompt 蒸馏互补形成 “快-慢双系统”：蒸馏降低需思考的任务比例，AdaptThink 优化剩余任务的触发策略，共同实现思考效率最大化。
+>
+> **实验 7-11 ★★：GeneralPoints——单轮 RL 的 “记忆与泛化” 对照**
+>
+>
+> ![图7-12 GeneralPoints 实验架构（GP-L 与 GP-VL 两个变体的训练与测试设计）](images/fig7-12.svg)
+>
+>
+> GeneralPoints 是 Chu 等人（2025，《SFT Memorizes, RL Generalizes》，arXiv:2501.17161）提出的算术思考卡牌游戏，专门用于评估模型的泛化能力。任务目标类似“24 点”游戏：使用四张卡牌上的数字，通过加减乘除运算，每个数字恰好用一次，凑出目标数字 24。实验设计了纯文本 GP-L 与图像 GP-VL 两个变体，使我们能在同一框架下分别考察规则泛化与视觉泛化。
+>
+> **规则变体**：训练时 J/Q/K 都计为 10，测试时分别计为 11/12/13，确保测试集出现训练未见的数字组合（含 11、12、13 的运算），严格评估泛化能力。**视觉变体**：训练用黑色花色（♠♣），测试用红色花色（♥♦），评估视觉外观变化下的鲁棒性。基于 Llama-3.2-Vision-11B，遵循标准后训练流程：先 SFT 初始化使其具备基本指令遵循能力，然后在相同计算预算下分别扩展 SFT 与 RL 训练（RL 部分采用带价值网络的 PPO 算法），用单一规则（J/Q/K=10）数据训练，在分布内（ID）与分布外（OOD）测试集上评估。
+>
+> 结果清晰揭示根本差异。**规则 OOD**：RL 在 GP-L 上 +3.5%（11.5%→15.0%），SFT **下降** 8.1%（11.5%→3.4%）；GP-VL 上 RL +3.0%，SFT 下降 5.6%。**视觉 OOD**：RL 在 GP-VL 上 **+17.6%**（23.6%→41.2%），SFT 下降 9.9%（23.6%→13.7%）。
+>
+> 追踪视觉识别准确率后发现：RL 通过结果导向的优化改善了底层视觉编码器，且这种改善与整体性能提升高度相关；而 SFT 因为过度拟合思考过程中的 token 模式，忽视了对视觉 token 的学习，导致识别准确率反而下降。
+>
+> 实验还揭示了 SFT 对 RL 的必要性：在本实验的设定下（Llama-3.2-Vision-11B 这个量级的基础模型，加上严格的结构化输出要求），未经 SFT 直接做端到端 RL 完全失败——基础模型无法产生结构化输出，奖励根本无法计算。注意这是特定设定下的结论而非普适规律：足够强的基础模型可以跳过 SFT 直接 RL 成功（见前文对 DeepSeek-R1-Zero 的讨论）。另一个值得关注的发现是，验证迭代次数越多泛化越好：10 次 +5.99% vs 1 次 +0.48%，说明思考时的计算扩展是 RL 泛化的关键。
+>
+> 为什么 SFT 在分布偏移下性能崩溃，而 RL 反而更好？SFT 学的是“看到这种输入，就输出那种答案”的映射：训练时 J/Q/K 都是 10，模型就记住了“遇到 J/Q/K 就当 10 用”的固定模式；测试时 J=11，模型仍按 10 计算，自然出错。RL 学的则是“怎样的计算过程能得到正确答案”这一更通用的策略：J 变成 11 时，RL 模型会用同样的策略重新计算，而不是套用记忆中的答案。这就是“记忆”与“泛化”的本质区别。
+>
+> 本实验的核心贡献在于系统量化了 “SFT 记忆、RL 泛化” 现象，证明该规律在纯语言与视觉-语言两种模态下都成立，揭示了 SFT 与 RL 的协同关系：SFT 提供格式稳定性，RL 在此基础上突破记忆边界，两者缺一不可。这一 “先形后神” 的训练范式——借用中国画术语，先把外在形态（格式、结构）画准，再追求内在神韵（泛化、策略）——为后续多轮、多模态任务奠定了方法论基础。
+
+## RLHF：从人类偏好到奖励模型
+
+前面的实验有一个共同前提：任务有可验证的对错——算式对不对、格式合不合规，规则验证器就能打分。但当前部署的对话模型之所以“像一个得体、安全的助手”，靠的是另一条更早成熟的路线：**RLHF**（Reinforcement Learning from Human Feedback，基于人类反馈的强化学习）。理解 RLHF，既是理解 ChatGPT 这类产品的对话质量与安全对齐从何而来，也是理解后文各算法中 KL 惩罚、reward hacking 等概念的前提。
+
+**InstructGPT 的三段式管线。** OpenAI 的 InstructGPT[^ch7-4] 确立了沿用至今的标准流程：
+
+1. **SFT**：用人工示范的“指令—回答”对微调预训练模型，建立基本的指令遵循能力——即前文“SFT（监督微调）”一节讨论的内容。
+2. **训练奖励模型（Reward Model, RM）**：对同一提示让模型生成多个回答，人类标注员两两比较、标出更偏好哪个。用这些偏好对训练一个打分模型，训练目标基于 Bradley-Terry 模型：
 
    $$\mathcal{L}_{\text{RM}} = -\log \sigma\big(r(x, y_w) - r(x, y_l)\big)$$
 
-   where $y_w$ is the preferred response, $y_l$ is the rejected response, and $\sigma$ is the sigmoid function. The intuition is very simple: **make the RM give a higher score to the preferred response**. The reason for collecting comparisons rather than scores is that it is difficult for humans to consistently give absolute scores ("this response deserves a 7.3" is nearly impossible to label consistently), but judgments of "which is better, A or B" are much more reliable. **Remember the role of the "reward model"—it is a running theme in this chapter**: here, it is a scorer learned from human preferences; when we get to Section 7.10 on reward design, you will see its various forms (ORM that only looks at the final result, PRM that scores step-by-step, generative reward models that provide reasoning in natural language), and a special case—when correctness can be directly determined by rules, the "reward model" simply degenerates into a deterministic piece of code (this is what RLVR, discussed below, is). They all answer the same question: **where does the reward come from?**
-3. **Use RM scores for PPO**: Using the RM's score as the reward signal, perform PPO training on the SFT model (the mechanism of PPO is explained in the next section), enabling the model to learn to generate responses that the RM believes "humans would prefer."
+   其中 $y_w$ 是被偏好的回答、$y_l$ 是被拒绝的回答，$\sigma$ 是 sigmoid 函数。直觉非常简单：**让 RM 给被偏好的回答打更高的分**。之所以采集比较而非打分，是因为人类很难一致地给出绝对分数（“这个回答值 7.3 分”几乎无法标注一致），但“A 和 B 哪个更好”的判断可靠得多。**记住“奖励模型”这个角色——它是本章一条暗线**：这里它是从人类偏好学出来的打分器；到 7.10 节讲奖励设计时，你会看到它的各种变体（只看最终结果的 ORM、逐步打分的 PRM、用自然语言讲理由的生成式奖励模型），以及一个特例——当对错能用规则直接判定时，“奖励模型”干脆退化成一段确定性代码（这就是下面要说的 RLVR）。它们回答的都是同一个问题：**奖励从哪来**。
+3. **用 RM 打分做 PPO**：以 RM 的分数作为奖励信号，对 SFT 模型做 PPO 训练（PPO 的机制见下一节），让模型学会生成 RM 认为“人类会更喜欢”的回答。
 
-**KL Penalty: Don't Stray Too Far from the Starting Point (Explaining KL Divergence Thoroughly).** In RLHF, the reward that the model actually optimizes is usually not the RM score itself, but a penalty term subtracted from it:
+**KL 惩罚：别离出发点太远（把 KL 散度讲透）。** RLHF 里模型实际优化的奖励，通常不是 RM 打分本身，而是减掉一个惩罚项：
 
 $$r = r_{\text{RM}} - \beta \cdot \mathrm{KL}\big(\pi_\theta \,\|\, \pi_{\text{ref}}\big)$$
 
-This single formula raises three common questions from beginners, which we will address one by one.
+这一个式子里有四个初学者常问的问题，逐个讲清。
 
-**(1) What is KL divergence, and where is the penalty applied?** KL divergence (Kullback-Leibler Divergence) measures the difference between two probability distributions: the more similar the distributions, the smaller the KL, reaching 0 when identical; the more different, the larger the KL. The two distributions here are the **current policy** $\pi_\theta$ (the model being trained) and the **reference policy** $\pi_{\text{ref}}$ (the training starting point, usually the SFT model) for the "next token probability distribution" given the same preceding context. $\beta$ controls the penalty strength—it is the `kl_coef` hyperparameter commonly seen in training scripts. In engineering terms, this penalty is **calculated per token and added to the reward** (per-token KL): each time the model generates a token, it compares the probability difference at that position with the reference model; the greater the deviation, the more the reward for that step is penalized. In other words, KL is not a separate loss term, but is **mixed into the reward signal**, which then goes through the advantage calculation of PPO/GRPO—this is the exact point where it acts.
+**（1）KL 散度是什么，惩罚加在哪里？** KL 散度（Kullback-Leibler Divergence）衡量两个概率分布的差异：两个分布越像，KL 越小，完全相同为 0；越不像，KL 越大。这里的两个分布是**当前策略** $\pi_\theta$（正在训练的模型）和**参考策略** $\pi_{\text{ref}}$（训练起点，通常就是那个 SFT 模型）对同一段前文给出的“下一个 token 概率分布”。$\beta$ 控制惩罚力度——训练脚本里常见的 `kl_coef` 超参数就是它。工程上，这个惩罚**按 token 逐位计算并加进奖励**（per-token KL）：模型每生成一个 token，就比一下它和参考模型在这个位置的概率差，偏离越大、这一步的奖励就被扣得越多。也就是说，KL 不是单独的一项 loss，而是**掺进奖励信号里**，再走 PPO/GRPO 那套优势计算——这是它作用的确切位置。
 
-**(2) Why is the direction "current policy first, reference policy second"?** KL divergence is asymmetric, $\mathrm{KL}(P\|Q)\neq\mathrm{KL}(Q\|P)$, so the direction is not arbitrary. Here it is written as $\mathrm{KL}(\pi_\theta\|\pi_{\text{ref}})$—current policy first—which is mathematically called **reverse KL**. It penalizes situations where "$\pi_\theta$ assigns high probability somewhere, while $\pi_{\text{ref}}$ assigns near-zero probability there," i.e., it **penalizes the model for going to places the reference model thinks it shouldn't go**. This is exactly what we want: the reference model (SFT model) represents the safe zone of "speaking naturally and with normal format," and reverse KL keeps the current policy near this safe zone, preventing it from drifting wildly. If we used **forward KL** $\mathrm{KL}(\pi_{\text{ref}}\|\pi_\theta)$ instead, it would penalize patterns that "the reference model has, but the current model misses"—which would force the model to cover all the expression styles of the reference model, which is precisely not the goal of RLHF.
+**（2）方向为什么是“当前策略在前、参考策略在后”？** KL 散度不对称，$\mathrm{KL}(P\|Q)\neq\mathrm{KL}(Q\|P)$，方向不是随便写的。这里写成 $\mathrm{KL}(\pi_\theta\|\pi_{\text{ref}})$——当前策略在前——数学上叫**反向 KL（reverse KL）**。它惩罚的是“$\pi_\theta$ 在某处给了高概率、而 $\pi_{\text{ref}}$ 在该处几乎为零”的情况，也就是**惩罚模型跑到参考模型认为不该去的地方**。这正是我们想要的：参考模型（SFT 模型）代表“说人话、格式正常”的安全区，反向 KL 把当前策略摁在这个安全区附近，不让它乱飘。如果反过来用**正向 KL** $\mathrm{KL}(\pi_{\text{ref}}\|\pi_\theta)$，惩罚的将是“参考模型有、而当前模型漏掉”的模式——那会逼着模型去覆盖参考模型的一切表达方式，恰恰不是 RLHF 的目的。
 
-**(3) Why is it designed this way?—The origin of mode-seeking.** Reverse KL has a key characteristic: it is **mode-seeking**. Section 7.1 laid the groundwork for this—reverse KL allows the model to **retain only a few high-reward "modes" and decisively discard the rest**, without having to cover everything equally like SFT's maximum likelihood (mass-covering). In the context of RLHF, this is exactly the effect we want: pick one or two high-scoring response styles recognized by the RM and output them stably, rather than learning all possible responses. This also explains why models after RL are more "decisive" and have lower diversity. The combination of reverse KL's mode-seeking property and keeping the model near the reference distribution is the secret to RLHF's stability.
+**（3）为什么这么设计？——mode-seeking 的由来。** 反向 KL 有一个关键性格：它是 **mode-seeking（寻峰）** 的。7.1 节埋过这个伏笔——反向 KL 允许模型**只保留少数几个高奖励的“峰”、果断丢掉其余模式**，而不必像 SFT 的极大似然（mass-covering，覆盖式）那样雨露均沾。放到 RLHF 里，这正是我们要的效果：在 RM 认可的高分回答方式里挑一两种稳定输出，而不是把所有可能的回答都学一遍。这也解释了 RL 后的模型为什么更“笃定”、多样性更低。反向 KL 的 mode-seeking + 把模型摁在参考分布附近，两者合起来就是 RLHF 稳定的秘诀。
 
-**(4) What happens without it?** The intuition is simple: **Don't stray too far from the starting point, or the reward model's scores become unreliable.** The RM is trained on the output distribution near the reference policy. Once the model is optimized to a distribution the RM has never seen, the RM's scores become extrapolation without basis, and high scores no longer equal high quality. Therefore, the KL penalty prevents two things simultaneously: **reward hacking** (the model exploiting loopholes in the reward to get high scores without actually doing the task well, see next paragraph) and **distribution collapse** (outputs degenerating into extreme forms like repetition or gibberish). Even in RLVR training with verifiable rewards, KL regularization is often retained to stabilize training (a few works like DAPO and Open-Reasoner-Zero intentionally remove it—note that DeepSeek-R1-Zero's GRPO itself still explicitly includes a KL term).
+**（4）不加会怎样？** 直觉是一句话：**别离出发点太远，否则奖励模型的分数不可信。** RM 是在参考策略附近的输出分布上训练出来的，模型一旦被优化到 RM 没见过的分布上，RM 打分就成了没有依据的外推，高分不再等于高质量。所以 KL 惩罚同时防两件事：**reward hacking**（模型钻奖励漏洞刷高分而非真做好任务，见下一段）和**分布崩塌**（输出退化成重复、乱码等极端形态）。即便在可验证奖励的 RLVR 训练中，KL 正则也常被保留以稳定训练（DAPO、Open-Reasoner-Zero 等少数工作有意去掉它——注意 DeepSeek-R1-Zero 的 GRPO 本身仍显式包含 KL 项）。
 
-**Reward Models Can Be "Over-Optimized."** The RM is, after all, just a proxy indicator of human preferences. Goodhart's Law states: when a metric becomes the optimization target, it ceases to be a good metric—pushing the proxy to extremes distorts its correlation with the true objective. OpenAI's research[^ch7-5] systematically measured this **reward model over-optimization** phenomenon: as RL training progresses, the proxy reward (RM score) monotonically increases, while the true quality (human evaluation) first rises and then falls. The model gradually learns not to "answer better," but to "make the RM give a high score"—verbose, ingratiating, seemingly rigorous but empty talk. This is the specific form of reward hacking in the context of RLHF, and KL penalty and early stopping are the most common mitigation methods; the reward hacking problem in the "Common Pitfalls" section at the end of this chapter shares the same origin.
+**奖励模型会被“过度优化”。** RM 终究只是人类偏好的代理指标（proxy）。Goodhart 定律说：一个指标一旦成为优化目标，它就不再是好指标——把代理指标推到极端，它与真实目标的相关性就会失真。OpenAI 的研究[^ch7-5]系统测量了这种**奖励模型过优化（reward model over-optimization）**现象：随着 RL 训练推进，代理奖励（RM 分数）单调上升，而真实质量（人类评估）先升后降。模型逐渐学会的不是“更好地回答”，而是“让 RM 打高分”——冗长、讨好、貌似严谨的空话。这正是 reward hacking 在 RLHF 语境下的具体形态，KL 惩罚与早停是最常用的缓解手段；本章末尾“常见陷阱”中的奖励黑客问题与此同源。
 
-**DPO: Skipping the Explicit Reward Model.** DPO (Direct Preference Optimization)[^ch7-6] starts from the premise: since the combination of "training RM + PPO" ultimately results in "increasing the probability of preferred responses and decreasing that of rejected responses, while not straying too far from the reference model," why not skip the explicit RM and directly turn the preference pairs into a classification loss with an implicit reward? Mathematically, it can be shown that this is equivalent to offline preference optimization with a KL constraint, where the reward model is implicitly embedded within the policy itself. DPO training is as simple as SFT: no online sampling, no value network, no need to maintain a separate RM. The cost is that it is entirely offline—it cannot explore new behaviors beyond the preference data, and its performance ceiling is determined by the quality and coverage of the preference data.
+**DPO：跳过显式奖励模型。** DPO（Direct Preference Optimization，直接偏好优化）[^ch7-6]的出发点是：既然“训练 RM + PPO”的组合最终效果是“提高被偏好回答的概率、压低被拒绝回答的概率，同时不离参考模型太远”，那不如跳过显式 RM，把偏好对直接变成一个带隐式奖励的分类损失——数学上可以证明这等价于带 KL 约束的离线偏好优化，奖励模型被隐式地藏进了策略本身。DPO 训练像 SFT 一样简单：不需要在线采样、不需要价值网络、不需要单独维护 RM。代价是它完全离线——无法探索偏好数据之外的新行为，性能天花板由偏好数据的质量与覆盖面决定。
 
-**The Relationship Between RLHF and RLVR.** To summarize, the difference between the two approaches lies in **where the reward comes from**: RLHF's reward comes from a learned RM (backed by human preference data), while **RLVR** (Reinforcement Learning with Verifiable Rewards) uses a rule-based verifier (whether the test is passed, whether the answer is correct). Agent tasks happen to be mostly verifiable—this is precisely why this chapter focuses on RLVR as the main thread. However, it is not a matter of choosing one over the other; models deployed in practice use them in combination: RLHF handles conversational quality and safety alignment, while RLVR handles reasoning and Agent capabilities. The "Evolution of Reward Paradigms" section later discusses generative reward models, which can be seen as the confluence of these two lines—using a trainable reward model to handle open-ended tasks that rules cannot cover.
+**RLHF 与 RLVR 的关系。** 归纳起来，两条路线的差别在于**奖励从哪来**：RLHF 的奖励来自学习到的 RM（背后是人类偏好数据），**RLVR**（Reinforcement Learning with Verifiable Rewards，可验证奖励强化学习）的奖励来自规则验证器（测试是否通过、答案是否正确）。Agent 任务恰好大多是可验证的——这正是本章以 RLVR 为主线的原因。但两者不是取舍关系：实际部署的模型是叠加使用的，RLHF 负责对话质量与安全对齐，RLVR 负责推理与 Agent 能力。后文“奖励范式的演进”讨论的生成式奖励模型，可以看作两条线的汇流——用可训练的奖励模型去承接规则无法覆盖的开放任务。
 
-## Comparison of Reinforcement Learning Algorithms
+## 强化学习算法比较
 
-The previous single-turn experiments demonstrated the generalization advantage of RL, and the previous section introduced the preference optimization approach of RLHF. However, the specific algorithms used in these works vary and are just a subset of many options. Before moving on to more complex multi-turn tasks, it is necessary to systematically review the characteristics and applicable scenarios of mainstream algorithms.
+前面的单轮实验证明了 RL 的泛化优势，上一节又引入了 RLHF 的偏好优化路线，但这些工作使用的具体算法各不相同、也只是众多选择中的一部分。在进入更复杂的多轮任务之前，有必要系统梳理主流算法的特点和适用场景。
 
-> **First, the most important point, so readers don't get lost in the formulas.** This section lists quite a few algorithm names and formulas, but please remember the second main thread of this chapter: **In the industry, with ready-made RL algorithms (PPO, GRPO, etc.), knowing how to use them and choosing the right one is sufficient; what truly determines success or failure is the data and the environment, not the algorithm itself.** These algorithms are already encapsulated in mature frameworks like veRL and TRL; calling them usually just involves changing a few lines of configuration. Therefore, the goal of this section is not to enable you to derive them, but to help you build a "which algorithm for which scenario" selection map; the formula parts (aimed at training engineers) can be skipped if not understood, without affecting the subsequent reading. The next section will directly explain "why data and environment are more important than algorithms."
+> **先说一句最重要的话，免得读者陷进公式里。** 本节列了不少算法名字和公式，但请记住本章主线二：**在工业界，现成的 RL 算法（PPO、GRPO 等）你知道怎么用、能选对就够了，真正决定成败的是数据和环境，而不是算法本身。** 这些算法早已封装进 veRL、TRL 等成熟框架，调用它们通常只是改几行配置。所以本节的目标不是让你会推导，而是让你建立一张“什么场景用什么算法”的选择地图；公式部分（面向训练工程师）看不懂可以跳过，不影响后面的阅读。下一节会正面讲清“为什么数据和环境比算法更重要”。
 
-![Figure 7-13 GRPO Algorithm Flow](images/fig7-13.svg)
+![图7-13 GRPO 算法流程](images/fig7-13.svg)
 
-The RL scenario for modern LLM Agents differs fundamentally from traditional RL—Agents need to understand user intent, call tools, generate structured outputs, and engage in long-chain reasoning across multiple dialogue turns. This multi-objective, multi-stage decision-making means that "choosing the right algorithm" has some impact, but far less than the data and environment.
+现代 LLM Agent 的 RL 场景与传统 RL 存在本质差异——Agent 需要在多轮对话中理解用户意图、调用工具、生成结构化输出并进行长链思考，这种多目标、多阶段的决策，让“选对算法”有一定影响，但影响远不如数据与环境。
 
-From an implementation perspective, RL algorithms are divided into **online exploration methods** (exploring new strategies through interaction with the environment) and **offline optimization methods** (optimizing based on existing data, more stable and direct). Here, we also provide the strict terminology promised earlier: **On-Policy** methods only use data newly sampled by the current policy itself to update itself; **Off-Policy** methods can use data generated by other policies (or older versions of the policy) for learning (such as Q-learning mentioned earlier). Aligning with the methods discussed in this chapter by this definition: SFT is off-policy imitation learning—the data comes from a teacher or human demonstrations, not the model itself; the standard forms of PPO and GRPO used for LLM training are on-policy—each round uses rollouts newly sampled by the current model (i.e., having the model run through the entire task once, generating a complete trajectory from start to finish) for updates; DPO is offline preference optimization, involving neither online sampling nor strict policy iteration.
+从实现路径看，RL 算法分为**在线探索方法**（通过与环境交互探索新策略）和**离线优化方法**（基于已有数据优化，更稳定直接）。这里顺便给出一对前文承诺过的严格术语：**在轨策略（On-Policy）**方法只用当前策略自己新采样的数据来更新自己，**离轨策略（Off-Policy）**方法则可以用其他策略（或旧版本策略）产生的数据来学习（如前文的 Q-learning）。按这个口径对齐本章讨论过的方法：SFT 是离轨的模仿学习——数据来自教师或人类示范而非模型自身；PPO、GRPO 用于 LLM 训练的标准形式是在轨的——每一轮都用当前模型新采样的 rollout（即让模型完整跑一遍任务、生成一整条从头到尾的轨迹）更新；DPO 则是离线的偏好优化，既不在线采样、也不做严格意义上的策略迭代。
 
-These algorithms are mostly built on the same idea of **Policy Gradient**: adjusting the policy parameters $\theta$ in the direction that "increases the expected return." Its most basic form (REINFORCE) is:
+这些算法大多建立在**策略梯度**（Policy Gradient）的同一思想上：朝着“能提高期望回报的方向”调整策略参数 $\theta$。其最基本的形式（REINFORCE）为：
 
 $$\nabla_\theta J(\theta) = \mathbb{E}\big[\nabla_\theta \log \pi_\theta(a \mid s)\, G\big]$$
 
-where $\pi_\theta(a\mid s)$ is the policy (probability of choosing action $a$ in state $s$), and $G$ is the cumulative return for this trajectory (or from that step onward)—the higher the return, the more the probability of that action is reinforced. Using the entire trajectory's return $G$ as the weight is unbiased but has high variance; hence, a baseline $b$ is introduced, and the **Advantage** $\hat{A}=G-b$ (how much better this action is than average) is used as the weight to reduce variance. The subsequent PPO and GRPO are essentially two types of improvements on "how to stably estimate and use the advantage $\hat{A}$."
+其中 $\pi_\theta(a\mid s)$ 是策略（在状态 $s$ 下选择动作 $a$ 的概率），$G$ 是这条轨迹（或从该步往后）的累计回报——回报越高，就越强化产生该动作的概率。直接用整条轨迹的回报 $G$ 作为权重虽然无偏，但方差很大；于是引入一个基线 $b$，改用**优势**（Advantage）$\hat{A}=G-b$（这个动作比平均水平好多少）作为权重来降低方差。接下来的 PPO 与 GRPO，本质上就是在“如何稳定地估计并使用优势 $\hat{A}$”上给出的两类改进。
 
-**PPO** uses "clipping" to limit the update magnitude in each step, preventing the policy from straying too far in one go:
+**PPO** 用“裁剪”限制每次更新的幅度，避免策略一步跑偏：
 
 $$L^{\text{CLIP}}(\theta) = \mathbb{E}\Big[\min\big(\rho\,\hat{A},\ \operatorname{clip}(\rho,\, 1-\epsilon,\, 1+\epsilon)\,\hat{A}\big)\Big],\quad \rho = \frac{\pi_\theta(a\mid s)}{\pi_{\theta_{\text{old}}}(a\mid s)}$$
 
-where $\rho$ is the probability ratio between the new and old policies, and $\epsilon$ (e.g., 0.2) limits the adjustment range per step; the later-mentioned "Clip-Higher" specifically relaxes the upper bound $1+\epsilon$.
+其中 $\rho$ 是新旧策略的概率比，$\epsilon$（如 0.2）限定单步可调整的幅度；后文“Clip-Higher”正是放宽了 $1+\epsilon$ 这个上界。
 
-**GRPO** eliminates the value network (an auxiliary neural network additionally trained in PPO to estimate the value function for each step in the trajectory, thereby calculating finer-grained advantages) and instead uses "intra-group relative comparison" to estimate advantages: for the same problem, sample $N$ trajectories to obtain returns $r_1,\dots,r_N$, and define the advantage of each trajectory as its relative performance within the group:
+**GRPO** 则省去价值网络（value network，PPO 里额外训练的一个辅助神经网络，用来给轨迹中的每一步单独估计价值函数、从而算出更细的优势），改用“组内相对比较”来估计优势：对同一问题采样 $N$ 条轨迹得到回报 $r_1,\dots,r_N$，把每条的优势定义为它在组内的相对表现：
 
-$$\hat{A}_i = \frac{r_i - \operatorname{mean}(r_1,\dots,r_N)}{\operatorname{std}(r_1,\dots,r_N)}$$That is, "positive if better than the group average, negative if worse"—no value network needed. This is precisely why it is cheaper. Note: The formula above omits the KL regularization term; in actual training, the per-token KL penalty introduced in the previous section is typically added to constrain the policy near the reference model.
+$$\hat{A}_i = \frac{r_i - \operatorname{mean}(r_1,\dots,r_N)}{\operatorname{std}(r_1,\dots,r_N)}$$
 
-Table 7-4 summarizes the core characteristics of mainstream methods. When reading, pay attention to distinguishing two things often conflated: **where the reward comes from** (rule verifier, learned reward model, or human preference data) and **which algorithm is used for optimization**. PPO and GRPO are not picky about the reward source—they can connect to either a rule verifier (RLVR) or a reward model (RLHF); their real difference lies in the advantage estimation method (value network vs. group-relative baseline).
+即“比同组平均好则为正、差则为负”，无需价值网络——这正是它成本更低的原因。需要注明：上式省略了 KL 正则项，实际训练中通常还要加上前一节介绍的 per-token KL 惩罚，把策略约束在参考模型附近。
 
-Table 7-4 Comparison of Post-Training and Inference-Time Optimization Methods
+表7-4 总结了主流方法的核心特点。阅读时注意区分两件常被混为一谈的事：**奖励从哪来**（规则验证器、学习到的奖励模型，还是人类偏好数据）与**用什么算法优化**。PPO 和 GRPO 对奖励来源并不挑剔——既可以接规则验证器（RLVR），也可以接奖励模型（RLHF）；它们的真正差异在于优势估计方式（价值网络 vs 组内相对基线）。
 
-| Method | Type | Core Idea | Advantage | Disadvantage | Applicable Scenario |
-|------|------|---------|------|------|---------|
-| **REINFORCE** | Online RL Algorithm | Updates the policy using the final reward of the entire trajectory | Simple to implement | High variance, unstable training | Theoretical baseline; rarely used directly in its original form, but its variants with baselines (RLOO, REINFORCE++, etc.) are among the current mainstream; GRPO is essentially REINFORCE with a group-relative baseline |
-| **PPO** | Online RL Algorithm | Limits the update magnitude per step to prevent the policy from "going off track" | Stable; the value network provides finer-grained credit assignment | Requires additional training and storage of a value network; sensitive to hyperparameters | Multi-turn agents, long-trajectory credit assignment |
-| **GRPO** | Online RL Algorithm | Samples multiple trajectories for the same problem and compares "which is better" within the group | No value network needed, low cost | Advantage is averaged over the entire response, leading to coarse credit assignment; relies on discriminative rewards within the group | Single-turn/short-trajectory tasks, scenarios with good reward discrimination |
-| **DPO** | Offline Preference Optimization | Directly turns preference pairs into a classification loss with an implicit reward | Extremely simple and efficient; no online sampling needed | Cannot explore new policies; limited by the quality and coverage of offline preference data | Scenarios with existing high-quality preference data |
-| **KTO** | Offline Preference Optimization | Only needs a "good/bad" label for a single sample | Very low annotation cost | Coarse signal | Scenarios with extremely limited annotation resources |
-| **Best-of-N** | Inference-Time Method | Generates N outputs at inference time and selects the best one | No model modification; simple to implement | Inference cost increases multiplicatively; capabilities are not embedded into parameters | Early-stage rapid quality improvement; provides an upper-bound estimate of reward for RL |
+表7-4 后训练与推理时优化方法对比
 
-Returning to the experiments in this chapter, let's be transparent about the algorithms used in each: GeneralPoints and V-IRL (Experiments 7-11, 7-12) come from the same study and use PPO with a value network; AdaptThink (Experiment 7-10) uses a custom constrained optimization objective with importance sampling; later, ReTool (Experiment 7-15) uses PPO modified based on veRL (training data taken from DAPO-Math-17k, but the optimization algorithm remains PPO); SimpleVLA (Experiment 7-13) and RLVP (Experiment 7-14) are based on GRPO. In multi-turn scenarios, the credit assignment problem is more complex, and different algorithms have their own strengths and weaknesses.
+| 方法 | 类型 | 核心思路 | 优势 | 劣势 | 适用场景 |
+|--------------|-----|-------------------|---------------|--------------------|----------------------|
+| **REINFORCE** | 在线 RL 算法 | 用整条轨迹的最终奖励来更新策略 | 实现简单 | 方差大、训练不稳定 | 理论基准；原始形式很少直接使用，但其带基线变体（RLOO、REINFORCE++ 等）是当前主流之一，GRPO 本质上就是带组内基线的 REINFORCE |
+| **PPO** | 在线 RL 算法 | 限制每次更新幅度，防止策略“跑偏” | 稳定，价值网络提供更细粒度的信用分配 | 需要额外训练和存储价值网络，超参数敏感 | 多轮 Agent、长轨迹信用分配 |
+| **GRPO** | 在线 RL 算法 | 对同一问题采样多条轨迹，组内相对比较“哪条更好” | 无需价值网络，成本低 | 优势按整条回复均摊，信用分配粗糙；依赖组内奖励有区分度 | 单轮/短轨迹任务，奖励区分度好的场景 |
+| **DPO** | 离线偏好优化 | 把偏好对直接变成带隐式奖励的分类损失 | 极简高效，不需在线采样 | 无法探索新策略，受限于离线偏好数据的质量与覆盖面 | 已有高质量偏好数据的场景 |
+| **KTO** | 离线偏好优化 | 仅需给单个样本打“好/坏”标签 | 标注成本极低 | 信号粗糙 | 标注资源极有限的场景 |
+| **Best-of-N** | 推理时方法 | 推理时生成 N 个输出，选最优 | 不改模型，实施简单 | 推理成本成倍增加，能力不沉淀进参数 | 早期快速提升质量，为 RL 提供收益上界估计 |
 
-Practical selection path: Have a reliable reward signal and computational resources → GRPO (simple) or PPO (flexible, finer credit assignment for long trajectories); Have high-quality preference data → DPO/KTO (low cost); Early exploration stage → Best-of-N for a quick start.
+回到本章的实验，如实交代各自所用的算法：GeneralPoints 与 V-IRL（实验 7-11、7-12）来自同一项研究，用的是带价值网络的 PPO；AdaptThink（实验 7-10）用的是自定义的约束优化目标加重要性采样；后文的 ReTool（实验 7-15）用的是基于 veRL 改造的 PPO（训练数据取自 DAPO-Math-17k，但优化算法仍是 PPO），SimpleVLA（实验 7-13）与 RLVP（实验 7-14）则基于 GRPO。多轮场景下信用分配问题更复杂，不同算法各有优劣。
 
-After looking at this table, you might think, "So which algorithm should I fine-tune?" The answer might be surprising: **In most cases, any of them will do—don't get hung up on the algorithm first.** The next section is dedicated to this topic.
+实践中的选择路径：有可靠奖励信号且有计算资源 → GRPO（简洁）或 PPO（灵活，长轨迹信用分配更细）；有高质量偏好数据 → DPO/KTO（低成本）；早期探索阶段 → Best-of-N 快速起步。
 
-## Data and Environment: More Important Than Algorithms
+看完这张表，你可能会想“那我到底该精调哪个算法”。答案可能出乎意料：**大多数情况下，哪个都行——先别在算法上纠结。** 下一节专门讲这件事。
 
-This is the section I most want you to remember from this chapter, and it is the positive statement of the chapter's second main line. We've spent a fair amount of time on algorithms, but the experience from the front lines of the industry is the opposite: **The importance of algorithms is far less than three more fundamental elements—the fidelity of the simulation environment, the quality of the training data, and the capability of the base model.** You just need to know how to use existing algorithms; what truly creates a gap is how well you handle the environment and data. This echoes the conclusion of Chapter 6 (evaluation and simulation environments are the cornerstone of post-training) and the OpenAI cognitive reversal mentioned in Section 7.2 of this chapter—decades of RL research got the priority wrong; the real order is **prior (base model) > environment > algorithm**.
+## 数据与环境：比算法更重要的事
 
-### Environment: The Training Ground for the Model
+这是全章我最想让你记住的一节，也是本章主线二的正面陈述。前面花了不少篇幅讲算法，但工业界一线的经验恰恰相反：**算法的重要性，远不及三个更基础的要素——仿真环境的保真度、训练数据的质量、基础模型的能力。** 现成算法你会用就行；真正拉开差距的，是环境和数据做得好不好。这也呼应了第六章的结论（评估与仿真环境是后训练的基石），以及本章 7.2 节提到的 OpenAI 认知反转——几十年 RL 研究把优先级搞反了，真实的排序是**先验（基础模型）> 环境 > 算法**。
 
-The essence of RL is "trial-and-error learning," and trial-and-error requires a **training ground**—this is the simulation environment. The model repeatedly runs tasks in the environment, receives feedback, and adjusts its policy. The **fidelity** of the environment (how closely it resembles the real deployment scenario) directly determines whether the trained policy is usable:
+### 环境：模型练习的场地
 
-- **If the environment is distorted, the policy will fail.** If the customer service agent in the simulation always responds according to a fixed script, and the error messages don't match the production environment, the model will learn a "test-taking strategy" that only works in the simulation and will fail immediately upon deployment. This is the most common way RL projects fail—not because the algorithm is bad, but because the practice field is not the same as the exam room.
-- **Building a high-fidelity environment is often more expensive and difficult than training itself.** An environment that can be massively parallelized, is reproducible, and provides realistic feedback often requires significantly more engineering effort than tuning the model. The tool-calling experiments later in this chapter (AWorld's MCP sandbox, ReTool's code interpreter sandbox) invested heavily in building environments precisely because **real APIs have rate limits, can get accounts banned, have side effects, and simply cannot be used directly for training**—you must first create a stable, controllable, replayable "shadow world."
-- **The other half of the environment is the reward function.** The environment must not only simulate "how the world changes" but also determine "whether the action was good or bad"—this is the source of the reward signal. Reward design is part of environment engineering, which will be expanded upon in the next section.
+RL 的本质是“试错学习”，而试错必须有个**试错的场地**——这就是仿真环境（simulation environment）。模型在环境里一遍遍地跑任务、拿反馈、调整策略。环境的**保真度**（跟真实部署场景有多像）直接决定了训练出来的策略能不能用：
 
-In a nutshell: **Before you start tuning algorithms, ask yourself—does my simulation environment truly resemble the real world?** The answer to this question is far more important than choosing between PPO and GRPO.
+- **环境失真，策略必废。** 如果仿真里的客服总是按固定套路回话、错误信息跟生产环境对不上，模型就会学到一套只在仿真里管用的“应试策略”，一上线就露馅。这是 RL 项目最常见的翻车方式——不是算法不行，是练习场跟考场不是一回事。
+- **构建高保真环境，常常比训练本身更贵、更难。** 一个能大规模并行、可复现、反馈真实的环境，往往需要投入比调模型多得多的工程。本章后面工具调用的实验（AWorld 的 MCP 沙盒、ReTool 的代码解释器沙盒）之所以花大力气搭环境，正是因为**真实 API 有速率限制、会封号、有副作用，根本没法直接拿来训练**——你必须先造一个稳定可控可重放的“影子世界”。
+- **环境的另一半是奖励函数。** 环境不仅要模拟“世界怎么变”，还要能判定“做得好不好”，这就是奖励信号的来源。奖励设计是环境工程的一部分，下一节会专门展开。
 
-### Data: The Most Critical Link, and Quality Trumps Everything
+一句话：**在动手调算法之前，先问自己——我的仿真环境，真的像真实世界吗？** 这个问题的答案，比选 PPO 还是 GRPO 重要得多。
 
-If the environment is the training ground, then **data is the textbook, and it is the most critical link among the three elements.** "Data" here refers to demonstration samples (input-output pairs) in the SFT phase and the task distribution and reward signal in the RL phase. Regardless of the phase, there is one iron rule:
+### 数据：最关键的一环，且质量胜过一切
 
-> **Data quality trumps algorithms.** No matter how sophisticated the algorithm, if you feed it dirty data, incomplete data, or data with systematic bias, the learned policy will also be dirty. SFT will solidify the noise and bias in the data into the parameters verbatim; RL will optimize relentlessly towards a biased reward, taking the wrong direction further and further (this is the breeding ground for reward hacking). **Garbage in, garbage out** is fully manifested in post-training.
+如果说环境是场地，**数据就是教材，而且是三要素里最关键的一环**。这里说的“数据”，SFT 阶段指示范样本（输入—输出对），RL 阶段指任务分布和奖励信号。无论哪个阶段，有一条铁律：
 
-Furthermore, there is a judgment that many teams haven't realized but is extremely cost-effective:
+> **数据质量胜过算法。** 再精巧的算法，喂进去的是脏数据、覆盖不全的数据、有系统性偏差的数据，学出来的也只能是脏策略。SFT 会一字不差地把数据里的噪声和偏见固化进参数；RL 则会朝着有偏差的奖励拼命优化，把错误方向越走越远（这就是 reward hacking 的温床）。**Garbage in, garbage out** 在后训练里体现得淋漓尽致。
 
-> **In many scenarios, as long as the SFT data quality is sufficient, you don't need to do RL at all.** RL is expensive and unstable (often tens to hundreds of times the cost of SFT), yet many teams jump straight to it. However, if your task distribution is predictable and you can obtain sufficiently diverse and high-quality demonstration data, a solid SFT often meets the requirements. The truly irreplaceable scenarios for RL are limited (see Section 7.5): the deployment distribution will drift systematically, expert demonstrations are not optimal themselves, or the annotation cost is too high to provide demonstrations for every path. **First, make the SFT data good; then decide if RL is even needed**—this sequence can save you a lot of compute and time.
+更进一步，有一个很多团队没想通、却极其省钱的判断：
 
-A compelling industry example is Anthropic. Before 2025, its post-training recipe mainly consisted of two parts: **SFT with massive amounts of high-quality data**, plus **RLAIF** (Reinforcement Learning from AI Feedback in Constitutional AI, Bai et al. 2022, using a "constitution" to guide the model to score its own responses for alignment)—and it **did not heavily rely on RLVR (Reinforcement Learning from Verifiable Rewards), which is now standard for code and reasoning**. Yet, even so, its Coding model quality was already excellent. The reason is largely not the algorithm but the fact that it pushed the data quality for both SFT and RLAIF to the extreme—this confirms the judgment above: **When SFT data is good enough, a simple recipe can train a top-tier model; complex verifiable-reward RL is not necessarily required.** Of course, this doesn't mean RL is useless: Since 2025, Anthropic has significantly increased its investment in RL—on the foundation laid by good data, RL can push the capability ceiling even higher. **Data determines where you can go; RL determines how much higher you can go.**
+> **很多场景下，只要 SFT 的数据质量到位，你根本不需要做 RL。** RL 又贵又不稳定（常是 SFT 的几十到上百倍成本），大家却常常一上来就想上 RL。但如果你的任务分布可预期、能拿到足够多样、足够高质量的示范数据，一个扎实的 SFT 往往就能满足要求。RL 真正不可替代的场景是有限的（见 7.5 节）：部署分布会系统性漂移、专家示范本身不是最优、或标注成本高到无法为每条路径都提供示范。**先把 SFT 数据做好，再判断到底需不需要 RL**——这个顺序能帮你省下大量算力和时间。
 
-What does data quality specifically mean? At least three dimensions: **Coverage** (does it cover the various situations encountered during deployment, especially long-tail and edge cases?), **Diversity** (are the speakers, styles, and solutions in the demonstrations rich enough? Otherwise, the model will collapse into a single mode, like "everyone speaking in the same tone" in Experiment 7-6), and **Annotation Accuracy** (is the demonstration answer itself correct? Especially in chain-of-thought distillation, erroneous thought processes will be imitated by the student—hence Experiment 7-9 uses a rule verifier to first filter out trajectories with incorrect answers). The return on investment for these three points is usually far higher than switching to a fancier algorithm.
+一个有说服力的行业例子是 Anthropic。在 2025 年之前，它的后训练配方主要是两块：**用海量高质量数据做 SFT**，再加上 **RLAIF**（Constitutional AI 中的“基于 AI 反馈的强化学习”，Bai 等人 2022，用一部“宪法”引导模型自己给回答打分来做对齐）——而**并不怎么依赖今天做代码、推理已成标配的 RLVR（可验证奖励的强化学习）**。可即便如此，它当时的 Coding 模型质量就已经非常出色。原因很大程度上不在算法，而在于它把 SFT 和 RLAIF 两块的数据质量都做到了极致——这正印证了上面那条判断：**当 SFT 数据足够好时，一套并不花哨的配方也能训出顶尖模型，未必需要复杂的可验证奖励 RL。** 当然这不是说 RL 没用：2025 年以来 Anthropic 也明显加大了 RL 投入——在数据打好的地基之上，RL 能把能力上限再往上拉一截。**数据决定你能到哪，RL 决定你还能再高多少。**
 
-Chapter 9 will echo this judgment again: In speech recognition, the model's "whether to interrupt" decision keeps oscillating. The root cause is not the model structure but the training labels being annotated from a "god's-eye view"—changing the labels to "only use information available at the decision moment" makes the problem disappear. **Many times, data is more critical than architecture.**
+数据质量具体指什么？至少三个维度：**覆盖面**（有没有覆盖到部署时会遇到的各种情况，尤其是长尾和边界情况）、**多样性**（示范里的说话者、风格、解法够不够丰富，否则模型会塌缩到单一模式，比如实验 7-6 里“所有人一个腔调”）、**标注准确性**（示范答案本身对不对，尤其思维链蒸馏里，错误的思考过程会被学生一并模仿——所以实验 7-9 要用规则验证器先过滤掉答案错误的轨迹）。这三点的投入产出比，通常远高于换一个更花哨的算法。
 
-### So, When Does the Algorithm Come In?
+第九章会再次呼应这条判断：语音识别里模型“该不该收话”总在摇摆，根源不在模型结构，而在训练标签是用“上帝视角”标的——把标签改成“只用决策当下能拿到的信息”，问题就消失了。**很多时候，数据比架构更关键。**
 
-This is not to say algorithms are completely unimportant, but their position is later. The reasonable order of effort is: **First, choose a strong base model → then polish the environment and data → finally, make marginal optimizations on algorithms and hyperparameters.** Only when your environment is realistic, your data is good, and your base model is strong will the differences between algorithms become apparent. Only then are questions like "GRPO or PPO, should we use Clip-Higher?" worth tuning seriously. Conversely, chasing algorithms before the environment and data are ready is a classic case of putting the cart before the horse. With this priority in mind, we move to multi-turn tasks—where reward design (the intersection of data and environment) becomes the key to success or failure.
+### 那什么时候才轮到算法？
 
-## From Single-Turn to Multi-Turn: Credit Assignment and Reward Design
+不是说算法完全不重要，而是它的位置在后面。合理的用力顺序是：**先选强基础模型 → 再把环境和数据打磨到位 → 最后才在算法和超参上做边际优化。** 当你的环境够真、数据够好、基模够强，算法之间的差异才会显现出来，这时候“GRPO 还是 PPO、要不要 Clip-Higher”这类问题才值得认真调。反过来，环境和数据没做好就去卷算法，是典型的南辕北辙。带着这个优先级，我们进入多轮任务——那里奖励设计（数据与环境交汇的地方）会成为决定成败的关键。
 
-### The Core Challenge of Multi-Turn Tasks
+## 从单轮到多轮：信用分配与奖励设计
 
-![Figure 7-14 Comparison of Single-Turn RL and Multi-Turn RL](images/fig7-14.svg)
+### 多轮任务的核心挑战
 
-![Figure 7-15 Credit Assignment in Multi-Turn Interactions](images/fig7-15.svg)
+![图7-14 单轮 RL 与多轮 RL 对比](images/fig7-14.svg)
 
-Moving from single-turn to multi-turn involves a qualitative leap in complexity. The policy must not only choose the optimal action for the current step but also consider the future state value; it must not only handle immediate feedback but also perform **Credit Assignment** under delayed rewards—determining which step in a multi-step sequence contributed most to the final outcome. For example, a customer service agent solves a user's problem after 10 turns of dialogue and receives a positive review—but should this positive review be attributed to the precise questioning in turn 2 or the patient explanation in turn 7? Multi-turn also introduces another challenge: **Partial Observability** (the agent cannot obtain the complete state and must construct an implicit state representation from historical observations).
+![图7-15 多轮交互中的信用分配](images/fig7-15.svg)
 
-The physical form of the multi-turn interaction discussed here is precisely the ReAct loop described in Chapters 1 and 4—each turn is an iteration of **Think → Act → Observe**, and the reward delay stems from the structural constraint that "the final outcome can only be judged after multiple turns."
+从单轮到多轮，复杂性发生了质的跃迁。策略不仅要选择当前最优动作，还要考虑未来的状态价值；不仅要处理即时反馈，还要在延迟奖励下进行**信用分配（Credit Assignment）**——判断多步序列中到底哪一步对最终结果贡献最大。比如一个客服 Agent 用了 10 轮对话解决了用户问题，最终获得好评——但这个好评该归功于第 2 轮的精准提问，还是第 7 轮的耐心解释？多轮还引入了另一个难题：**部分可观测性**（Agent 无法获得完整状态，必须通过历史观测构建隐含的状态表征）。
 
-### Density and Paradigm of Reward Signals
+这里讨论的多轮交互，其物理形态正是第一章和第四章描述的 ReAct 循环——每一轮就是一次**思考 → 行动 → 观察**的迭代，奖励延迟即来自“最终结果好坏要在多轮之后才能判断”这一结构性约束。
 
-The reward design discussed in this subsection also applies to single-turn tasks; it is placed in the multi-turn section because the difficulty of credit assignment in multi-turn scenarios elevates "how dense the feedback is and what form it takes" from an option to a decisive factor for success. Reward signals have two design dimensions: **Density** (how often feedback is given—binary/sparse/process reward) and **Representation Form** (what the feedback looks like—scalar/vector/generative).
+### 奖励信号的密度与范式
 
-Before discussing multi-turn reward design, let's systematically outline the design space for reward signals. This is a core topic for RL training and is closely related to the automated evaluation discussed in Chapter 6—**a carefully designed evaluation environment can often be transformed into a high-quality training environment.** However, it's important to distinguish two things: "The evaluation environment can be reused" does not mean "this specific evaluation data can be directly used for training."
+本小节讨论的奖励设计对单轮任务同样适用；之所以放在多轮部分，是因为多轮的信用分配难度让“给多密的反馈、用什么形式的反馈”从可选项变成了决定成败的关键。奖励信号有两个设计维度：**密度**（多久给一次反馈——二元/稀疏/过程奖励）和**表示形式**（反馈长什么样——标量/向量/生成式）。
 
-Let's look at three examples. **SWE-bench** provides a typical case of this transformation: SWE-Gym is built upon it to construct a trainable task set (problem description as input, patch as supervision signal, test cases providing reward signal)—but the data used for training is the newly constructed task set, while the 500-question evaluation subset **SWE-Bench Verified**, manually curated by OpenAI, must be strictly isolated from the training data. Once mixed into the training set, the evaluation becomes meaningless (this is the tension discussed in Chapter 7's thought question 10). The complete trajectory records of **τ²-bench** (dialogue history, tool calls, state changes) provide valuable data for imitation learning—successful trajectories as positive samples, and failed trajectories, after annotation, as negative samples. The parameterized templates of **AndroidWorld** can generate countless variants in batches, naturally supporting curriculum learning—progressing from simple single-step operations to complex cross-application workflows.
+在讨论多轮奖励设计之前，先系统梳理奖励信号的设计空间。这既是 RL 训练的核心议题，也与第六章讨论的自动化评估密切相关——**精心设计的评估环境往往也能改造成高质量的训练环境**。但要区分两件事：“评估环境可以复用”不等于“这一份评估数据可以直接拿去训练”。
 
-These examples point to the same conclusion: The quality of the reward signal provided by the evaluation environment directly determines the efficiency of RL training—provided that the data used for training is separated from the data used for evaluation.
+来看三个例子。**SWE-bench** 提供了这种改造的典型：SWE-Gym 正是基于它构建出可训练的任务集（问题描述作为输入、patch 作为监督信号、测试用例提供奖励信号）——但被拿去训练的是新构建的任务集，而 OpenAI 人工筛选出的 **SWE-Bench Verified** 这 500 题评估子集必须与训练数据严格隔离，一旦混入训练集，评估就失去意义（这正是本章思考题 10 讨论的张力）。**τ²-bench** 的完整轨迹记录（对话历史、工具调用、状态变化）为模仿学习提供了宝贵数据——成功轨迹作正样本，失败轨迹经标注后作负样本。**AndroidWorld** 的参数化模板可以批量生成无数变体，自然支持课程学习——从简单的单步操作渐进到复杂的跨应用流程。
 
-![Figure 7-16 Reward Density Spectrum](images/fig7-16.svg)
+这些例子指向同一个结论：评估环境提供的奖励信号质量直接决定了 RL 训练的效率——前提是把用于训练的数据与用于评估的数据分开。
 
-**Applicable Scenarios for Binary Rewards.**
+![图7-16 奖励密度谱](images/fig7-16.svg)
 
-For many tasks, the simplest binary reward (success=1, failure=0) is sufficient. For example, "answering a math problem"—the answer is either right or wrong, with no gray area; or "executing an SQL query"—the returned result either matches the expectation or not. For tasks with clear correct answers, binary rewards are simple and reliable, requiring no more complex design.
+**二元奖励的适用场景。**
 
-The problem arises with open-ended tasks that lack a clear correct answer.
+对于许多任务，最简单的二元奖励（成功=1，失败=0）已经足够好。比如“回答一道数学题”——答案要么对要么错，中间没有灰色地带；或者“执行一条 SQL 查询”——返回结果要么匹配预期要么不匹配。这类有明确正确答案的任务，二元奖励既简单又可靠，不需要更复杂的设计。
 
-**The Dilemma of Sparse Rewards.**
+问题出在没有明确正确答案的开放式任务上。
 
-Take the example of Pine AI making phone calls to handle tasks. Using a binary reward (success = 1, failure = 0) to train an agent to contact Xfinity to change a plan: The first time, it forgets to collect the account number, failure reward = 0; the second time, it forgets the last four digits of the credit card, failure reward = 0; the third time, it misses the billing address, failure reward = 0... It only succeeds by chance after 100 attempts.
+**稀疏奖励的困境。**
 
-The root of the problem, as Silver and Sutton point out in "Welcome to the Era of Experience"[^ch7-8], is that current RL methods can only learn from the final outcome of success or failure but **cannot learn from the rich feedback provided by the environment**. The customer service agent explicitly says, "I need the last four digits of your credit card." A human hears it once and remembers, but RL only sees the final result "failure" and doesn't know why it failed. Worse still: In a 10-step process, even if the first 9 steps are perfect and only the 10th step is wrong, the signal received is just "the entire task failed," with no way to know which specific step went wrong. Advanced techniques like On-Policy Distillation and RLVP (Reinforcement Learning with Verification Path Penalty) later in this chapter are designed to alleviate this dilemma.
+以 Pine AI 打电话办事的场景为例。用二元奖励（binary reward，成功 = 1，失败 = 0）训练 Agent 帮用户联系 Xfinity 修改套餐：第一次忘记收集账号，失败 reward = 0；第二次忘记信用卡后四位，失败 reward = 0；第三次遗漏账单地址，失败 reward = 0......经过 100 次尝试才偶然成功。
 
-**Process Reward** provides immediate feedback for each key step during execution, transforming evaluation from a black box to a white box. For example, in code generation, it can evaluate stages like requirement understanding, code search, solution design, code writing, and test running separately; in customer service scenarios, it can check whether steps like identity verification, information query, confirmation, and payment are correct. However, process rewards face challenges such as high annotation costs and the potential to overly constrain innovation, and in practice, they need to be used synergistically with outcome rewards.
+问题的根源正如 Silver 与 Sutton 在《Welcome to the Era of Experience》中所指出的[^ch7-8]：当前 RL 方法只能从最终的成败结果中学习，却**无法从环境给出的丰富反馈中学习**。客服明确说了“需要信用卡后四位”，人类听到一次就记住了，但 RL 只看到最终结果“失败”，不知道为什么失败。更糟糕的是：10 步流程中，即使前 9 步完美、只有第 10 步出错，得到的信号也只是“整个任务失败了”，无从得知具体哪一步出了问题。本章后文的 On-Policy Distillation 与验证路径惩罚（RLVP）等前沿技术，正是为了缓解这一困境。
 
-**The Evolution of Reward Paradigms.**
+**过程奖励（Process Reward）**则对执行中每个关键步骤给予即时反馈，将评估从黑盒转向白盒。比如在代码生成中，可以分别评价需求理解、搜索代码、设计方案、编写代码、运行测试等各阶段；在客服场景中，可以检查身份验证、查询信息、确认、支付等步骤是否正确。但过程奖励面临标注成本高和可能过度约束创新性等挑战，实践中需要与结果奖励协同使用。
 
-![Figure 7-17 Evolution of Reward Paradigms](images/fig7-17.svg)DeepSeek's research (Liu et al., 2025) systematically analyzes the differences in learning signals across reward paradigms along the scalar-semi-scalar-generative spectrum. Building on this, this book adds a vector (multi-dimensional) scoring dimension. To intuitively understand the differences between paradigms, we reuse the earlier scenario of Pine AI calling to set up an Xfinity package: This time, the Agent completed the task, but with flaws—it missed the billing address (needs to be added) and misstated the package name, saying "Performance Plus" instead of "Performance Pro" (the following scores are illustrative):
+**奖励范式的演进。**
 
-**Scalar Paradigm**: Gives a score of 7.2—no diagnostic capability, no insight into what was done well or poorly. **Semi-Scalar Paradigm**: First analyzes strengths and weaknesses, then gives a score of 6.5—provides a basis, but the information is still limited. **Vector Paradigm (dimension added by this book)**: Scores multiple dimensions separately—Information Query Accuracy 9/10, Information Collection Completeness 6/10, Communication Fluency 8/10, Communication Accuracy 7/10, User Communication Accuracy 10/10, Overall Task Completion 8/10. This is like a medical checkup report, precisely pinpointing the problem ("Information Collection" scored only 6, indicating the prompt for the collection phase should be optimized).
+![图7-17 奖励范式演进](images/fig7-17.svg)
 
-**Generative Paradigm**: Provides a detailed description in natural language, supporting multiple sampling runs for analysis from different perspectives—illustratively, sampling the same execution multiple times for evaluation yields analytical views covering different aspects. Combining these diagnoses for improvement yields far greater benefits than just getting a single score. The real conclusion of the DeepSeek paper is: Generative reward models can continuously improve evaluation quality through inference-time scaling (multiple sampling evaluations then aggregating), surpassing scalar approaches that rely solely on increasing model size on multiple reward model benchmarks. The core value of generative rewards lies in transforming rich environmental feedback into learnable knowledge, enabling the Agent to learn improvement directions from a single failure, rather than requiring hundreds of blind trial-and-error attempts.
+DeepSeek 的研究（Liu et al., 2025）在标量—半标量—生成式这条连续谱上系统性地剖析了不同奖励范式在学习信号上的差异；在此之上，本书再补充一个向量（多维）打分的维度。为了直观理解各范式的区别，沿用前面 Pine AI 打电话办理 Xfinity 套餐的场景：这次 Agent 完成了任务，但有瑕疵——遗漏了账单地址需要补充、误报套餐名称把 Performance Pro 说成了 Performance Plus（以下打分均为示意）：
 
-From the RLHF perspective, generative reward models can be seen as an evolution of the previously discussed Bradley-Terry discriminative reward model: The discriminative RM only outputs a scalar score (who is higher/lower), while the generative RM generates a judgment with reasoning in natural language, explaining "why it's good, why it's bad." This makes it inherently more transparent and easier to extend to open-ended tasks that are difficult to cover with rules and scalar scores.
+**标量范式**：给出 7.2 分——没有任何诊断能力，不知道哪里做得好、哪里有问题。**半标量范式**：先分析优缺点再给 6.5 分——有了依据，但信息量仍然有限。**向量范式（本书补充的维度）**：多维度分别打分——信息查询准确性 9/10、信息收集完整性 6/10、沟通流畅度 8/10、沟通准确性 7/10、用户沟通准确性 10/10、整体任务完成度 8/10。这就像体检报告一样，能精确定位问题（“信息收集”只有 6 分，说明应该重点优化收集环节的 prompt）。
 
-Choosing which reward function depends on the task's verification method. If the answer can be automatically verified by code (e.g., math problems, unit tests), binary rewards are the simplest and most direct. If the task has multiple independent quality dimensions (e.g., information accuracy, communication politeness, problem resolution rate in customer service scenarios), use vector rewards for dimension-wise evaluation. If the task is highly open-ended and difficult to break down into dimensions (e.g., creative writing, complex dialogue), use generative rewards to let the evaluation model provide qualitative analysis.
+**生成式范式**：用自然语言给出详细描述，并支持多次采样从不同角度进行分析——示意性地说，对同一次执行采样多次评估，可以得到覆盖不同侧面的分析视角，综合这些诊断做改进，收益远大于只拿到一个分数。DeepSeek 论文的真实结论是：生成式奖励模型可以通过推理时扩展（多次采样评价再汇总）持续提升评判质量，在多个奖励模型基准上超越了仅靠扩大模型规模的标量方案。生成式奖励的核心价值在于将环境的丰富反馈转化为可学习的知识，使 Agent 从一次失败中就能学到改进方向，而非需要数百次盲目试错。
 
-**Training Generative Reward Models.**
+从 RLHF 的视角看，生成式奖励模型可以视为前文 Bradley-Terry 判别式奖励模型的演进：判别式 RM 只输出一个标量分数（谁高谁低），生成式 RM 则用自然语言生成一段带推理的评判，把“为什么好、为什么差”也讲出来。这让它天然更透明，也更容易扩展到规则和标量分数难以覆盖的开放任务。
 
-How to train a generative reward model? Traditional methods require human experts to evaluate a large number of cases and then have the model imitate them, which is costly, and humans often find it difficult to explain why A is better than B. DeepSeek's method allows the model to autonomously learn evaluation capabilities in three steps:
+选择哪种奖励函数取决于任务的验证方式。如果答案可以用代码自动验证（如数学题、单元测试），用二元奖励最简单直接；如果任务有多个独立的质量维度（如客服场景的信息准确性、沟通礼貌度、问题解决率），用向量奖励分维度评估；如果任务高度开放、难以拆分维度（如创意写作、复杂对话），用生成式奖励让评判模型给出定性分析。
 
-Step 1: The model automatically generates evaluation principles for specific tasks. For example, when evaluating "helping a user call to change an Xfinity package," the model summarizes: "A good Agent should: 1) Find the correct official customer service channel; 2) Collect complete identity verification information; 3) Accurately convey user needs during the phone call; 4) Avoid fabricating or misstating information; 5) Respond promptly to customer service requests."
+**生成式奖励模型的训练。**
 
-Step 2: Evaluate the execution process based on each principle. Continuing the example: Was the correct phone number found? Yes, 1-800-XFINITY is the official customer service. Was information collection complete? No, the billing address was missed. Was the conveyance accurate? There was one error; the package name was stated incorrectly.
+如何训练出生成式奖励模型？传统方法需要人类专家评价大量案例，然后让模型模仿，成本高昂且人类往往很难解释为什么 A 比 B 好。DeepSeek 的方法让模型自主学习评价能力，分三步走：
 
-Step 3: The system automatically checks the accuracy of the evaluation. For instance, if the model says "the package name was accurately conveyed," but the actual trajectory shows the name was wrong, the system gives negative feedback. If the model accurately identifies the missed billing address, it gives positive feedback. Through repeated practice on thousands of cases, the model gradually learns to formulate reasonable principles for different tasks and make accurate diagnoses.
+第一步，模型为具体任务自动生成评价原则。比如评估“帮用户打电话办理 Xfinity 套餐变更”时，模型总结出：“优秀的 Agent 应该：1）查到正确的官方客服渠道；2）收集齐全的身份验证信息；3）电话沟通中准确转述用户需求；4）避免编造或误述信息；5）处理客服要求时响应及时。”
 
-This method has several key advantages: Strong generalization ability (it learns the meta-capability of "setting standards and making evaluations," not a fixed scoring rubric); the evaluation process is transparent, facilitating bias review (e.g., if the model always considers "long replies" as a strength, it's clear it mistakenly equates length with quality); it supports the co-evolution of the reward model and the policy model, unlike traditional methods where the reward model remains fixed.
+第二步，根据原则逐条评价执行过程。继续上例：查到正确电话了吗？是的，1-800-XFINITY 是官方客服。信息收集全了吗？没有，遗漏了账单地址。转述准确吗？有一处错误，套餐名称说错了。
 
-### Process Reward vs. Outcome Reward: A Key Choice for Multi-Turn Tasks
+第三步，系统自动检查评价的准确性。比如模型说“准确转述了套餐名称”，但实际轨迹显示名称说错了，系统就给负反馈；如果模型准确识别出遗漏的账单地址，就给正反馈。通过数千个案例的反复练习，模型逐渐学会为不同任务制定合理原则并做出准确诊断。
 
-Beyond credit assignment and partial observability, multi-turn tasks also face the **long-distance dependency** problem—the impact of early decisions, such as sub-goal setting or tool selection, may only become apparent dozens of steps later. This presents a key choice in reward design: **Process Reward** provides feedback at every step, reducing the difficulty of credit assignment but introducing human design bias, potentially limiting the exploration space. **Outcome Reward** provides feedback only at the end, offering maximum exploration freedom but requiring higher training difficulty and sample demands. By analogy, process reward is like a teacher grading homework problem by problem, allowing the student to quickly know where they went wrong; outcome reward is like only looking at the final exam score, giving the student more freedom to explore learning methods, but feedback comes very late. Reward function design is closely related to the evaluation environment construction discussed in Chapter 6—a high-quality automatic evaluation environment is a prerequisite for RL training.
+这种方法有几个关键优势：泛化能力强（学会的是“定标准、做评价”的元能力，而非固定的评分表）；评价过程透明、便于审查偏见（比如发现模型总是把“回复长”当优点，就知道它错误地把长度当成了质量）；支持奖励模型与策略模型协同进化，而非像传统方法那样奖励模型固定不变。
 
-Terminologically, these two rewards correspond to two types of reward models: **Process Reward Model (PRM)** scores each intermediate step of reasoning or execution. Representative work is OpenAI's "Let's Verify Step by Step" [^ch7-7]—on mathematical reasoning tasks, PRMs trained with step-by-step human annotations significantly outperformed supervision that only looked at the final answer. **Outcome Reward Model (ORM)** only evaluates the final result. The rule-based verifier in RLVR discussed earlier can be seen as a special case of ORM—replacing the "learned scoring model" with deterministic rules.
+### 过程奖励 vs 结果奖励：多轮任务的关键选择
 
-**Credit Assignment in Practice.** In engineering terms, credit assignment is handled by several specific mechanisms. The discount factor $\gamma$ is typically set directly to 1 in multi-turn LLM RL: tasks only last a few to dozens of turns, and the optimization goal is ultimate success or failure; there's no need to discount rewards for "earlier success." PPO relies on GAE (Generalized Advantage Estimation), intuitively using a value network to estimate "how much better this step is than expected" for each step in the trajectory, making a weighted trade-off between bias and variance. GRPO goes to the other extreme: it treats the entire response as a single action, and the trajectory-level advantage is evenly distributed across all tokens—a precise question in turn 2 and an ineffective pleasantry in turn 7 receive identical credit. This coarse credit assignment is less problematic in short, single-turn tasks but dilutes the learning signal in long-horizon, multi-turn tasks—which is why PPO with a value network remains valuable in multi-turn scenarios. An intermediate approach is turn-level credit assignment: calculating advantages at the "turn" level (e.g., using environmental feedback or process rewards after each turn), which is cheaper than token-level and more fine-grained than trajectory-level, representing a common compromise in current multi-turn Agent RL frameworks.
+信用分配和部分可观测性之外，多轮任务还面临**长距离依赖**问题——早期决策如子目标设定、工具选择的影响可能要数十步后才显现出来。这使得奖励设计面临一个关键选择：**过程奖励**每一步都给反馈，降低了信用分配的难度，但引入了人工设计偏见，可能限制探索空间；**结果奖励**只在终点给反馈，给予最大探索自由度，但训练难度和样本需求都更高。打个比方，过程奖励像老师逐题批改作业，学生能快速知道哪里错了；结果奖励像只看期末考试成绩，学生有更大自由探索学习方法，但反馈来得很晚。奖励函数设计与第六章讨论的评估环境构建密切相关——高质量的自动评估环境是 RL 训练的前提。
 
-> **Experiment 7-12 ★★★: V-IRL-VL Spatial Reasoning—Process Reward**
+术语上，这两种奖励对应两类奖励模型：**过程奖励模型（Process Reward Model, PRM）**对推理或执行的每个中间步骤打分，代表工作是 OpenAI 的《Let's Verify Step by Step》[^ch7-7]——在数学推理任务上，用逐步骤人工标注训练的 PRM 显著优于只看最终答案的监督；**结果奖励模型（Outcome Reward Model, ORM）**则只评估最终结果。前文 RLVR 中的规则验证器可以看作 ORM 的特例——把“学习到的打分模型”换成了确定性规则。
+
+**实践中的信用分配。** 落到工程上，信用分配由几个具体机制承担。折扣因子 $\gamma$ 在多轮 LLM RL 中通常直接设为 1：任务只有几轮到几十轮、优化目标就是最终成功与否，没有必要为“更早成功”给奖励打折。PPO 依赖 GAE（Generalized Advantage Estimation，广义优势估计），直觉是用价值网络对轨迹中的每一步估计“这一步比预期好多少”，在偏差与方差之间做加权折中。GRPO 则走向另一个极端：它把整条 response 视为单一动作，轨迹级的优势值被均摊到所有 token 上——第 2 轮的精准提问和第 7 轮的无效寒暄拿到完全相同的信用。这种粗糙的信用分配在单轮短任务中问题不大，但在长程多轮任务中会稀释学习信号——这正是带价值网络的 PPO 在多轮场景下仍有价值的原因。介于两者之间的是 turn-level 分摊：以“轮”为单位计算优势（例如利用每轮之后的环境反馈或过程奖励），比 token-level 便宜、比轨迹级精细，是当前多轮 Agent RL 框架的常见折中。
+
+> **实验 7-12 ★★★：V-IRL-VL 空间思考——过程奖励**
 >
-> V-IRL (Yang et al., 2024; this experiment follows the aforementioned Chu et al. 2025 study, with the RL algorithm also being PPO with a value network) is an open-world visual navigation environment using real city street views. V-IRL-L uses pure text descriptions, while V-IRL-VL provides a 2×2 grid of street view images (front, back, left, right). Training uses 1000 routes in New York, testing uses 18 routes across nine cities (Milan, New Delhi, London, Hong Kong, etc.) from the V-IRL official benchmark—with vastly different architectural styles, street layouts, and lighting conditions.
+> V-IRL（Yang 等人，2024；本实验沿用自上述 Chu 等人 2025 的研究，RL 算法同为带价值网络的 PPO）是开放世界视觉导航环境，使用真实城市街景。V-IRL-L 用纯文本描述，V-IRL-VL 提供 2×2 街景图像网格（前后左右）。训练用纽约 1000 条路线，测试用 V-IRL 官方 benchmark 的米兰、新德里、伦敦、香港等九城市 18 条路线——建筑风格、街道布局、光照条件差异巨大。
 >
-> **Rule Variant**: Training uses absolute directions (north/east), testing uses relative directions (left/right). **Visual Variant**: Cross-city testing.
+> **规则变体**：训练用绝对方向（north/east），测试用相对方向（left/right）。**视觉变体**：跨城市测试。
 >
-> Results again validate "SFT memorizes, RL generalizes." Rule OOD: RL improves by +11.0% on V-IRL-L, while SFT **decreases by 79.5%**; on V-IRL-VL, RL improves by +9.3%, SFT decreases by 33.2%. Visual OOD: RL on V-IRL-VL improves from 16.7% to **77.8%** (+61.1%), with end-to-end RL using an open-source model surpassing a strong baseline that relies on careful prompt engineering with a closed-source model; SFT drops to 11.1% (-5.6%).
+> 结果再次验证 “SFT 记忆、RL 泛化”。规则 OOD：RL 在 V-IRL-L 上 +11.0%，SFT **下降 79.5%**；V-IRL-VL 上 RL +9.3%，SFT 下降 33.2%。视觉 OOD：RL 在 V-IRL-VL 上从 16.7% 提升至 **77.8%**（+61.1%），端到端 RL 用开源模型超越了依赖闭源模型精心提示工程的强基线；SFT 降至 11.1%（-5.6%）。
 >
-> Process reward played a key role in this experiment. Unlike the single-turn GeneralPoints task, navigation requires feedback at every step: correct action +1, incorrect action -1, landmark recognition error an additional -1.5. This dense feedback reduces the difficulty of long-sequence credit assignment—when the Agent makes a wrong turn at step 5, it receives immediate negative feedback, without waiting until the task ends at step 20 to find out. Combined with a verification retry mechanism (verify_iter=2, allowing two attempts at a single decision point), it further improves sample efficiency and training stability.
+> 过程奖励在本实验中扮演了关键角色。与 GeneralPoints 的单轮任务不同，导航需要在每一步都给予反馈：正确动作 +1，错误动作 -1，地标识别错误额外 -1.5。这种密集反馈降低了长时序信用分配的难度——当 Agent 在第 5 步走错时立即获得负反馈，不用等到第 20 步任务结束后才知道。配合验证重试机制（verify_iter=2，允许在单个决策点尝试两次），进一步提升了样本效率与训练稳定性。
 >
-> Tracking the relationship between visual recognition accuracy and overall performance reveals: RL not only optimizes "decision-making given recognition results" but also improves "visual recognition itself"—the outcome-oriented optimization signal backpropagates to the perception layer, prompting the visual encoder to learn task-relevant feature representations. In contrast, SFT tends to overfit in the reasoning layer, neglecting learning in the perception layer, leading to failure when visual appearance changes.
+> 追踪视觉识别准确率与整体性能的关系后发现：RL 不仅优化了“给定识别结果后的决策”，还改善了“视觉识别本身”——结果导向的优化信号反向传播到感知层，促使视觉编码器学习与任务相关的特征表征。而 SFT 则倾向于在思考层过拟合，忽视了感知层的学习，导致视觉外观一变就失效。
 >
-> The synergy between SFT and RL is even more pronounced in multi-turn tasks. Without SFT initialization, RL cannot be effectively trained (the base model cannot produce structured JSON output). However, if SFT is over-trained, leading to severe overfitting, RL also cannot recover out-of-distribution (OOD) performance. This is a delicate balance: SFT should be trained just enough to achieve "stable format and basic capability," without overstaying its welcome.
+> SFT 与 RL 的协同在多轮任务中更加明显。若不经 SFT 初始化，RL 无法有效训练（基础模型无法产生结构化 JSON 输出）。但若 SFT 过度训练导致严重过拟合，RL 同样无法恢复分布外（OOD）性能。这是一个微妙的平衡：SFT 应训练到“格式稳定、能力初具”即可，不宜恋战。
 >
-> **Experiment 7-13 ★★★: SimpleVLA-RL—Outcome Reward `[Extended Experiment]`**
+> **实验 7-13 ★★★：SimpleVLA-RL——结果奖励 `[扩展实验]`**
 >
-> VLA (Vision-Language-Action) models unify visual perception, language understanding, and action generation, representing an emerging paradigm in robotic manipulation. It faces two major challenges: scaling SFT requires large-scale human operation trajectories (high collection cost and limited diversity), and models trained on limited scenarios perform poorly when encountering unseen tasks, environments, or objects. Inspired by DeepSeek-R1's significant improvement in step-by-step reasoning through RL, this experiment explores whether RL can similarly enhance VLA's step-by-step action generation. SimpleVLA-RL is built on veRL, using only binary outcome rewards (success/failure), and introduces three exploration enhancement measures: **Dynamic Sampling** filters out groups with all successes or all failures to ensure stable gradients; **Higher Clipping Bounds** [0.8, 1.28] encourage exploration; **Higher Temperature** 1.6 generates diverse trajectories. The combination of the three improves performance by approximately 30% within 300 steps.
+> VLA（Vision-Language-Action）模型统一了视觉感知、语言理解与动作生成，是机器人操作领域的新兴范式。它面临两大挑战：扩展 SFT 需要大规模的人工操作轨迹（收集成本极高且多样性受限），而基于有限场景训练的模型在遇到未见过的任务、环境或物体时性能显著下降。受 DeepSeek-R1 通过 RL 显著提升逐步思考能力的启发，本实验探索 RL 是否同样能增强 VLA 的逐步动作生成能力。SimpleVLA-RL 基于 veRL 构建，仅使用二元结果奖励（成功/失败），引入三项探索增强措施：**动态采样**过滤全成功/全失败组以确保稳定梯度；**更高裁剪界** [0.8, 1.28] 鼓励探索；**更高温度** 1.6 生成多样化轨迹。三项组合在 300 步内提升了约 30%。
 >
-> It reports a high-level result of **97.6%** on LIBERO (a robotic manipulation task benchmark). Cold-start experiment: with only 1 trajectory per task for SFT (17.3%), adding RL achieves **91.7%** (+74.4 percentage points, a relative improvement of ~430%), strongly demonstrating RL's power under data scarcity.
+> 在 LIBERO（一个机器人操作任务基准测试平台）上报告达到 **97.6%** 的高水平结果。冷启动实验：每任务仅 1 条轨迹 SFT（17.3%），加 RL 后达 **91.7%**（+74.4 个百分点，相对提升约 430%），有力证明 RL 在数据稀缺下的强大能力。
 >
-> During training, a "**pushcut**" action emerged—a new action pattern autonomously discovered by RL, never seen in human demonstrations. The standard demonstration path was "approach → grasp → vertical lift → horizontal move → release," while RL discovered a more efficient path: "approach → grasp → keep low → horizontal push → complete," eliminating the lift step, resulting in faster speed and lower precision requirements. This strongly proves that RL can surpass imitation learning to discover superior strategies never conceived by humans.
+> 训练中涌现出了“**推切**”（pushcut）——这是 RL 自主发现的新动作模式，从未在人类演示中出现过。标准演示的路径是“接近→抓取→垂直抬起→水平移动→放下”，而 RL 发现了更优的路径：“接近→抓取→保持低位→水平推动→完成”，省去了抬起步骤，速度更快且对精确定位的要求更低。这有力地证明了 RL 能超越模仿学习，发现人类未曾想到的更优策略。
 >
-> The framework uses the GRPO algorithm with a dynamic sampling strategy—only retaining tasks with moderate success rates for training, naturally forming a curriculum (easy to hard). Real-time performance relies on **action chunking**: the model generates multiple future actions in one inference pass, executed sequentially by a control thread while the GPU asynchronously generates the next batch in the background. As long as inference time is less than execution time, the robot maintains continuous, smooth motion (a full discussion of action chunking is in Chapter 9, VLA Control Layer).
+> 框架采用 GRPO 算法，配合动态采样策略——仅保留成功率适中的任务进行训练，自然形成了课程学习（先易后难）。实时性则依靠**动作分块**（action chunking）：模型一次推理生成未来多步动作，由控制线程依次执行、GPU 在后台异步生成下一批，只要推理时间小于执行时间，机器人就能保持连续流畅的运动（动作分块的完整讨论见第九章 VLA 控制层）。
 >
-> Generalization capability improvements are seen across multiple dimensions: spatial generalization (strategies trained on specific layouts transfer to different configurations), object generalization (handling unseen object shapes and textures), and goal generalization (adapting to new task goal descriptions).
+> 泛化能力的提升体现在多个维度：空间泛化（特定布局训练的策略能迁移到不同配置）、物体泛化（处理未见物体形状与纹理）、目标泛化（适应新任务目标描述）。
 >
-> Comparing with V-IRL-VL reveals the trade-offs of the two reward designs: Outcome rewards provide sparser signals but give the model greater exploration freedom (which is how "pushcut" was discovered); process rewards accelerate convergence through dense feedback but may limit the strategy from breaking out of the demonstration space. Simply put, when the correctness of intermediate steps is easy to define, process rewards are more efficient; when the optimal path is unknown, outcome rewards have more potential.
+> 与 V-IRL-VL 对照可以看出两种奖励设计的取舍：结果奖励的信号更稀疏，但给了模型更大的探索自由度（“推切”就是这样被发现的）；过程奖励通过密集反馈加速收敛，但可能限制策略跳出演示空间。简单来说，当中间步骤的正确性容易定义时，过程奖励更高效；当最优路径未知时，结果奖励更有潜力。
 
-### Reward the Outcome, Constrain the Process: RLVP and Partial Rewards
+### 奖励结果，约束过程：验证路径惩罚（RLVP）与部分奖励
 
-Process rewards and outcome rewards address "how dense the feedback should be." But there's a problem none of the previous RL methods have tackled: **Outcome rewards simply cannot express the requirement that "the process must follow the rules"** —and this is precisely what determines whether a real-world Agent can be deployed. This section explains this thoroughly, using the method from the RLVP paper[^ch7-9] (Reinforcement Learning with Verified Penalty). The recipe in one sentence: **reward the outcome, penalize the path**.
+过程奖励和结果奖励解决的是“反馈给多密”。但还有一个前面所有 RL 都没处理的问题：**结果奖励根本无法表达“过程必须守规矩”这件事**——而这恰恰决定真实 Agent 能不能上线。这一小节把它讲透，用到的方法来自 RLVP 论文[^ch7-9]（Reinforcement Learning with Verified Penalty，验证路径惩罚），配方一句话概括就是：**奖励结果，惩罚路径（reward the outcome, penalize the path）**。
 
-**Problem: There is a class of constraints that outcome rewards not only fail to learn but also provide perverse incentives to violate.** Real-world Agents, besides "getting the job done," must adhere to a class of **outcome-neutral constraints**—whether they are followed or not has no necessary connection to task success: do not repeatedly call a user who has explicitly declined, do not act autonomously outside of working hours, do not skip identity verification, do not execute destructive commands like `rm -rf`, do not modify test files just to make tests pass, do not overwrite a file without reading it. The trouble is: **violating these constraints often leads to higher "apparent success rates"**—cutting corners is faster: directly modifying the test file is quicker to pass than actually fixing the bug; skipping verification is quicker to get results than going through the full process. Thus, pure outcome rewards not only fail to learn these constraints but **actively incentivize** the Agent to violate them. In the paper, Agents trained solely with outcome rewards violated the rules in almost every episode.
+**问题：有一类约束，结果奖励不但学不会，还会反向激励违反。** 现实中的 Agent 除了“把事办成”，还必须遵守一类**与结果无关的约束**（outcome-neutral constraints）——遵不遵守，跟任务成没成功没有必然联系：不要反复拨打已明确拒接的用户、不要在非工作时间擅自行动、不要跳过身份验证、不要执行 `rm -rf` 这类破坏性命令、不要为让测试通过去改测试文件、不要覆盖一个自己都没读过的文件。麻烦在于：**违反这些约束往往会让“表面成功率”更高**——抄近路更快：直接改测试文件当然比真去修 bug 更快通过，跳过验证当然比老实验证更快拿到结果。于是纯结果奖励不但学不会这些约束，反而**主动激励** Agent 去违反它们。论文里，只用结果奖励训练的 Agent 几乎每一局都会踩线。
 
-**Core Insight: Real environments are "asymmetric verifiers."** This is the key to understanding the entire method. In a machine-verifiable environment (terminal, codebase, theorem prover), one thing is **easy** to verify—**whether an action is a bad action** (ran a destructive command, called before preconditions were met), because bad actions have clear, deterministic characteristics. But another thing is **hard** to verify—**whether the Agent is making meaningful progress toward the goal** (this is almost as hard as "solving the task" itself). Since "detecting bad actions" is cheap and reliable, while "judging progress" is expensive and error-prone, the **dense signal** the environment can reliably provide is essentially **"penalties on the path," not "rewards for progress."** This asymmetry determines the shape of the method.
+**核心洞察：真实环境是“不对称的验证器”。** 这是理解整个方法的钥匙。在一个可机器判定的环境里（终端、代码库、定理证明器），有一件事很**容易**验证——**某个动作是不是坏动作**（跑了破坏性命令、在前置条件没满足时就打电话），因为坏动作有明确、确定的特征；但另一件事很**难**验证——**Agent 是不是在朝目标取得有意义的进展**（这几乎和“解决任务”本身一样难）。既然“检测坏动作”便宜可靠、“判定进展”昂贵易错，那么环境能可靠提供的**密集信号，本质上是“路径上的惩罚”，而不是“进展上的奖励”**。这个不对称性决定了方法的形状。
 
-**Approach: In addition to outcome rewards, add a verifiable "path signal."** The total reward is written as two parts:
+**做法：在结果奖励之外，加一路可验证的“路径信号”。** 总奖励写成两部分：
 
 $$R = O + \beta\cdot\Phi$$
 
-O is the original **outcome reward** (sparse, still the true goal); Φ is the **path signal**, given action-by-action by a **deterministic rule engine**—it is a pure function judgment of "the action + the state before the action," not a learned judge model. Φ has two uses, corresponding to a minus sign and a plus sign:
+O 是原来的**结果奖励**（稀疏，仍是真正的目标）；Φ 是**路径信号**，由一个**确定性的规则引擎**逐动作给出——它是对“动作 + 动作发生前的状态”的纯函数判断，而不是一个学出来的裁判模型。Φ 有两种用法，对应一个减号和一个加号：
 
-- **Penalty (−λ)**: For every occurrence of a **machine-verifiable violation action** (destructive command, modifying test file) in the trajectory, deduct λ points from the tokens of that action.- **Compliance Reward / Partial Credit (+μ)**: Each time a verifiable **good action** occurs—satisfying a prerequisite, achieving a subgoal, increasing the number of passed tests, or decreasing the number of goals to prove—add μ points.
+- **惩罚（−λ）**：轨迹里每出现一次可机器判定的**违规动作**（破坏性命令、改测试文件），就在该动作的 token 上扣 λ 分。
+- **守规奖励 / 部分奖励（+μ，Partial Credit）**：每出现一次可验证的**好动作**——满足了某个前置条件、达成了一个子目标、通过的测试数变多、待证目标数变少——就加 μ 分。
 
-The two signals are each normalized separately before being combined, preventing a dense path signal from overwhelming a sparse outcome signal (or vice versa). This mechanism is directly plugged into the PPO/GRPO training loop: it **does not change the optimization algorithm, only reshapes the reward at each step**, allowing the advantage calculation to see right and wrong actions along the way.
+两路信号各自归一化后再合并，避免密集的路径信号淹没稀疏的结果信号（或反之）。这套东西直接接在 PPO/GRPO 的训练循环上：它**不改优化算法，只是重塑了每一步的奖励**，让优势计算能看到过程里的对错。
 
-**Why it works—a unified explanation: within-group variance.** Recall Section 7.8: GRPO does not train a value network. Instead, it samples a group (G rollouts) for the same prompt and uses the **relative goodness of each rollout compared to the group average** as the advantage. Here's a mathematical fact: **GRPO's advantage is essentially within-group variance**—if every rollout in a group receives **exactly the same reward**, the variance is zero, each rollout's advantage is zero, and the group contributes no gradient, wasting computation.
+**为什么它有效？——一个统一的解释：组内方差（within-group variance）。** 回忆 7.8 节：GRPO 不训价值网络，而是对同一个 prompt 采样一组（G 条）rollout，用每条**相对组内平均**的好坏当优势。这里有个数学事实：**GRPO 的优势本质就是组内方差**——如果一组里每条 rollout 拿到的奖励**完全一样**，方差为零，每条的优势都是零，这组样本贡献不出任何梯度、白跑了。
 
-With outcome-only rewards, this "zero-variance deadlock" inevitably occurs in two scenarios, which happen to be the most common at the **beginning and end of training**:
+只用结果奖励时，这种“零方差死局”在两种情况下必然发生，而且恰是**训练一头一尾最常见的两种情况**：
 
-- **All-fail group (early training)**: The task is too hard; all rollouts in a group fail, O is all 0 → within-group variance is zero → no gradient. Early training consists almost entirely of such groups, wasting a large number of expensive samples.
-- **All-pass group (late training)**: The task is nearly learned; all rollouts in a group succeed, O is all 1 → variance is also zero → no gradient.
+- **全败组（训练早期）**：任务太难，一组 rollout 全部失败，O 全是 0 → 组内方差为零 → 没有梯度。训练早期几乎全是这种组，大量昂贵的采样被白白浪费。
+- **全胜组（训练后期）**：任务快学会了，一组 rollout 全部成功，O 全是 1 → 方差同样为零 → 没有梯度。
 
-In other words, **pure outcome rewards are "blind" at both extremes of success rate**. The community's previous approach was to **discard** these zero-variance groups outright (DAPO's dynamic sampling discards prompts where all rollouts are correct or all are wrong). RLVP asks a different question: **Instead of discarding, what dense signals could restore the missing variance here?** The answer becomes immediately clear:
+也就是说，**纯结果奖励在成功率的两个极端都是“瞎的”**。社区以前的做法是把这些零方差的组直接**丢掉**（DAPO 的 dynamic sampling 就丢掉全对和全错的 prompt）。RLVP 换了个问法：**与其丢掉，不如问——什么样的密集信号能在这里补回缺失的方差？** 答案立刻清晰：
 
-- **A verifiable penalty can always restore variance.** Even if all rollouts in a group fail, they usually differ in *how* they fail—some execute destructive commands, others do not. Adding a penalty immediately creates differences (variance) within the all-fail group, reviving the gradient. Because bad actions are cheap to check, **penalties are the "always reachable" half of the solution**.
-- **A verifiable progress reward (Partial Credit) can restore variance only when progress is reachable.** If some rollouts in a group pass two more tests or prove one more lemma, they differ in progress, and +μ can create variance. But if the task is too hard and **every rollout's progress is stuck at zero** (e.g., in software repair, no one can make any hidden test pass), the progress signal is zero everywhere, resulting in zero variance—then it cannot help. So **progress rewards are the "reachability-gated" half of the solution**: in theorem proving, where the "number of goals to prove" gradually decreases, it is reachable and useful; in software repair, where the "proportion of passed tests" is often unreachable, it is useless.
+- **一个可验证的惩罚，永远能补回方差。** 哪怕一组 rollout 全部失败，它们“失败得规不规矩”通常各不相同——有的跑了破坏性命令、有的没有。惩罚一加，全败组内部立刻有了差异（方差），梯度就活了。因为坏动作总是便宜可查，**惩罚是“永远可达”的那半个解**。
+- **一个可验证的进展奖励（Partial Credit），只在“进展可达”时能补回方差。** 如果一组里有的多通过两个测试、有的多证出一个引理，它们之间就有了进展差异，+μ 就能造出方差；但如果任务太难、**每条 rollout 的进展都卡在零**（软件修复里没人能让任何一个隐藏测试通过），进展信号处处为零、还是零方差——这时它帮不上忙。所以**进展奖励是“可达性门控（reachability-gated）”的那半个解**：定理证明里逐步的“待证目标数下降”是可达的、它就有用；软件修复里的“通过测试比例”常常不可达、它就没用。
 
-To summarize: **Dense signals are useful only when they can restore the within-group variance missing from outcome rewards**—penalties always satisfy this (bad actions are checkable), while progress rewards satisfy it only when partial success is reachable. The paper therefore calls penalties the "universally available half" and progress rewards the "conditional half."
+归纳起来：**密集信号只在它能补回结果奖励所缺的组内方差时才有用**——惩罚永远满足（坏动作可查），进展奖励只在部分成功可达时满足。论文因此把惩罚称为“普遍可用的那一半”、进展奖励称为“有条件的那一半”。
 
-**Use Case 1: Penalizing paths for deployability—four design principles.** Using Φ as a penalty to teach an agent to follow constraints, there are four principles validated by ablation, each addressing a specific pitfall:
+**用法一：惩罚路径，换取可部署性——四条设计原则。** 把 Φ 当惩罚用来教会 Agent 守约束，有四条经过消融验证的原则，每条都堵一个坑：
 
-1. **Penalize only verifiable "actions," never "lack of progress."** The target of a penalty must be a specific, machine-detectable bad action (e.g., running `rm -rf`, calling someone without meeting a prerequisite), not "no progress at this step." Because "doing nothing" is the easiest way to avoid a "no progress" penalty—this would directly teach the agent to do nothing.
-2. **Outcome rewards are always the primary driver; penalties cannot be optimized alone.** There is a fatal **inaction trap**: with only penalties and no outcome rewards, the optimal strategy is "do nothing"—zero violations, but also zero success. Paper ablations show that pure penalties cause success rates to **collapse to zero on every random seed**. Outcome rewards must provide the "pull" to complete the task, while penalties only guide *how* to do it.
-3. **Pair each penalty (−λ) with a corresponding compliance reward (+μ).** Deduct points for "modifying test files," but also reward the compliant action of "actually fixing the bug to make it pass naturally"—give the agent a way out, not just a blockade. Ablations show that removing this paired compliance reward significantly slows down and destabilizes the learning of compliant behavior.
-4. **Compliant paths must be reachable, and penalty targets must be un-gameable.** Use a few scripted demonstrations to first show the agent "how to follow the rules" (otherwise it might never explore compliant actions, and +μ would never be used). At the same time, the judgment of "what counts as a violation" must use specific, deterministic checks, not a learned "compliance score" judge—otherwise, the problem of gaming just shifts from the policy to the judge.
+1. **只惩罚可验证的“动作”，绝不惩罚“没进展”。** 惩罚的靶子必须是一个具体、可机器判定的坏动作（跑了 `rm -rf`、前置条件没满足就打电话），而不是“这一步没进展”。因为“不做任何动作”正是规避“没进展惩罚”最省事的办法——那会把 Agent 直接教成什么都不干。
+2. **结果奖励始终是主驱动力，惩罚不能单独优化。** 这里有个致命的**不作为陷阱（inaction trap）**：只有惩罚、没有结果奖励时，最优策略就是“什么都不做”——零违规，但也零成功。论文消融显示，纯惩罚会让成功率在**每一个随机种子上都塌到零**。必须让结果奖励提供“把任务做完”的拉力，惩罚只负责“怎么做”。
+3. **每个惩罚（−λ）配一个对应的守规奖励（+μ）。** 既扣“改测试文件”的分，也奖励“真去修 bug 让它自然通过”的合规动作——给 Agent 指一条出路，而不是只堵不疏。消融显示，去掉这个配套的守规奖励会明显拖慢、并动摇合规行为的养成。
+4. **合规路径必须可达、惩罚靶子必须无法钻空子。** 用少量脚本示范先让 Agent 知道“守规的路怎么走”（否则它可能永远探索不到合规动作、+μ 就永远用不上）；同时，判定“什么算违规”必须用具体的确定性检查，而不是一个学出来的“合规度”评委——否则钻空子的问题只是从策略转移到了评委身上。
 
-**Use Case 2: Rewarding reachable progress for sample efficiency (Partial Credit).** By repurposing the same +μ from a "compliance reward" to a "progress reward," it shifts from "constraining the process" to "accelerating learning": in all-fail groups, as long as progress is reachable, +μ can turn a zero-gradient deadlock into an effective gradient, allowing the model to achieve the same capability with fewer expensive interactions. The paper conducts comparisons in theorem proving (miniF2F) and software repair, concluding that **the key variable is reachability, not whether the signal itself is "dense"**: in theorem proving, each proven step genuinely reduces the number of goals to prove, progress is reachable, and dense progress rewards significantly accelerate convergence (and are more stable, with less divergence). In software repair, however, often an entire batch of rollouts cannot pass a single test, progress is unreachable, and in this case, sticking with pure outcome rewards is better. Reachability can be diagnosed before training by measuring within-group variance using a small number of rollouts from the base model.
+**用法二：奖励可达进展，换取样本效率（Partial Credit）。** 把同一个 +μ 从“守规奖励”换成“进展奖励”，它就从“约束过程”变成了“加速学习”：在全败组里，只要进展可达，+μ 就能把原本零梯度的死局变成有效梯度，让模型用更少的昂贵交互达到同样能力。论文在定理证明（miniF2F）和软件修复上做了对照，结论是**关键变量是可达性，而不是信号本身是否“密集”**：定理证明里每证出一步、待证目标数就实实在在下降，进展可达，密集进展奖励显著加速收敛（且更稳、更少发散）；而软件修复里很多时候一整批 rollout 一个测试都过不了，进展不可达，这时老老实实用纯结果奖励反而更好。可达性可以在训练前用少量 base 模型的 rollout 测一下组内方差来诊断。
 
-**Relationship with RLVR (clarifying a common point of confusion).** RLVP and the RLVR (Reinforcement Learning with Verifiable Rewards) repeatedly mentioned in this chapter differ by only one letter, which neatly highlights their complementarity: **RLVR verifies outcomes; RLVP additionally verifies processes.** Combining the two yields a training signal that both focuses on "getting the job done" and "doing it properly"—exactly what is needed for an agent that can be safely deployed.
+**和 RLVR 的关系（顺便点破一个易混点）。** RLVP 和本章反复出现的 RLVR（可验证奖励的强化学习）只差一个字母，恰好点出互补：**RLVR 验证的是结果，RLVP 额外验证过程**。两者叠加，就得到一个既盯着“把事办成”、又盯着“办得规不规矩”的训练信号——这正是能安全上线的 Agent 所需要的。
 
-> **Experiment 7-14 ★★★: RLVP—Rewarding Outcomes, Penalizing Paths `[Extended Experiment]`**
+> **实验 7-14 ★★★：RLVP——奖励结果、惩罚路径 `[扩展实验]`**
 >
-> **Experiment Goal**: Verify whether "outcome rewards + verifiable path signals" can, without sacrificing task success rate, on the one hand reduce constraint violations (penalty usage) and on the other hand improve sample efficiency (partial credit usage).
+> **实验目标**：验证“结果奖励 + 验证路径信号”能否在不牺牲任务成功率的前提下，一方面把约束违反降下来（惩罚用法），另一方面提升样本效率（部分奖励用法）。
 >
-> **Technical Approach**: On top of GRPO, add two signals—outcome reward O (whether the task is completed) and path signal Φ (deduct points for each machine-detectable violation action in the trajectory, add points for each corresponding compliant/progress action). Normalize each separately and combine as R = O + β·Φ. Test environments include TerminalBench (terminal operations, violations like executing destructive commands) and miniF2F (formal theorem proving, examining sample efficiency).
+> **技术方案**：在 GRPO 基础上加入两路信号——结果奖励 O（任务是否完成）与路径信号 Φ（轨迹中每出现一次可机器判定的违规动作就扣分，每出现一次对应的合规/进展动作就加分），两路分别归一化后按 R = O + β·Φ 合并。测试环境包括 TerminalBench（终端操作，违规如执行破坏性命令）与 miniF2F（形式化定理证明，考察样本效率）。
 >
-> **Control Group**: Standard GRPO using only outcome rewards.
+> **对照组**：只用结果奖励的标准 GRPO。
 >
-> **Expected Observations**: On TerminalBench (Qwen3-4B, 5 random seeds), the number of violations per episode drops from 3.71 with pure outcome rewards to 0.66 (about a 6x reduction), while task success rate remains roughly within noise range—indicating that "compliance" is almost free, and the agent actually performs more effective actions, not just "doing less to make fewer mistakes." On miniF2F algebra problems (progress reachable), the number of iterations needed to reach 0.9 success rate drops from 7.0 to 4.4 (4B model), with an even larger gap on larger models (30B: 8.5 → 5.4, and pure outcome rewards diverge on some seeds). On a chained file operation task, the proportion of "all-fail groups" (wasted samples that learn nothing) drops from 65% to 8%. As a counterexample, in a software repair setting where progress is unreachable, an entire batch of rollouts often cannot pass a single test, the dense progress reward is zero everywhere and provides no benefit—confirming that "reachability is the threshold."
+> **预期观察**：在 TerminalBench 上（Qwen3-4B，5 个随机种子），每局违规次数从纯结果奖励的 3.71 降到 0.66（约 6 倍），而任务成功率在噪声范围内基本持平——说明“守规”几乎是免费拿到的，且此时 Agent 反而做了更多有效动作，并非靠“少做少错”。在 miniF2F 代数题上（进展可达），达到 0.9 成功率所需的迭代数从 7.0 降到 4.4（4B 模型），大模型上差距更明显（30B：8.5 → 5.4，且纯结果奖励在部分种子上直接发散）。在链式文件操作任务上，“全败组”（学不到任何东西的浪费样本）比例从 65% 降到 8%。作为反例，在“进展不可达”的软件修复设定下，一整批 rollout 常常连一个测试都过不了，密集进展奖励处处为零、并不带来收益——印证了“可达性才是门槛”这一判断。
 
-## RL for Learning Tool Calling
+## RL 学习工具调用
 
-In the preceding multi-round experiments, the agent's action space was limited to built-in operations like moving and observing. Real-world agents also need to call various external tools—search engines, code interpreters, document parsers, etc.—which introduces new challenges for RL training.
+前面的多轮实验中，Agent 的动作空间仅限于移动、观察等内置操作。现实中的 Agent 还需要调用各种外部工具——搜索引擎、代码解释器、文档解析器等——这为 RL 训练带来了新的挑战。
 
-![Figure 7-18 Tool Calling RL Reward Loop](images/fig7-18.svg)
+![图7-18 工具调用 RL 奖励循环](images/fig7-18.svg)
 
-Tool use extends the agent's capability boundary from "model's own reasoning" to "calling external systems for collaboration," making it a key step toward practical agents. From a difficulty gradient perspective, RL training for tool use faces three levels of challenges. The first level is learning to use a single tool—understanding input/output specifications, mastering the timing of calls, and handling error feedback. The second level is making choices within a multi-tool ecosystem—facing dozens of tools, deciding when to search, when to execute code, and when to parse documents. The third level is tool chain orchestration—discovering dependencies between tools, identifying mutually exclusive constraints, and optimizing cost efficiency.
+工具使用将 Agent 的能力边界从“模型自身推理”扩展到“调用外部系统协作”，是 Agent 走向实用的关键。从难度梯度看，工具使用的 RL 训练面临三个层次的挑战。第一层是学会使用单一工具——理解输入输出规范、掌握调用时机、处理错误反馈。第二层是在多工具生态中做选择——面对数十种工具，何时该搜索、何时该执行代码、何时该解析文档。第三层是工具链编排——发现工具间的依赖关系、识别互斥约束、优化成本效率。
 
-There are currently two active lines of research around agent RL for tool calling. One is **retrieval augmentation**: represented by Search-R1 (Jin et al., 2025), which uses RL to train the model to autonomously decide when to initiate a search during the thinking process and to use the returned results to continue reasoning, rather than following a fixed RAG pipeline. The other is **software engineering**: represented by training environments like SWE-Gym, which perform multi-round RL on coding agents in real codebases, allowing the model to iteratively edit, run, and fix code. A common challenge for both lines is long-term credit assignment (attributing a final success to a decision made dozens of steps earlier) and environment engineering (building stable, reproducible, and massively parallelizable training environments).
+围绕工具调用的 Agent RL 目前有两条活跃路线。一条是**检索增强**：以 Search-R1（Jin 等人，2025）为代表，用 RL 训练模型在思考过程中自主决定何时发起搜索、并利用返回结果继续推理，而不是套用固定的 RAG 流程。另一条是**软件工程**：以 SWE-Gym 等训练环境为代表，针对 coding Agent 在真实代码库上做多轮 RL，让模型迭代地编辑、运行、修复代码。两条路线共同的挑战是长时序信用分配（一次最终成功要归因到几十步之前的某个决策）与环境工程（构建稳定、可复现、可大规模并行的训练环境）。
 
-Tool RL also has an unavoidable engineering detail: **loss masking for environment feedback tokens**. A tool call trajectory contains both tokens generated by the model itself (thinking, tool call parameters) and tokens returned by the environment (code interpreter output, search results, customer service replies). The latter are not generated by the policy but are given by the environment—if they are included in the policy gradient, the model would be trained to "predict what the sandbox will output," which deviates from the optimization objective and makes training unstable. The standard practice is to mask the environment feedback tokens when computing the loss, backpropagating gradients only for the tokens generated by the model. This is one of the core technical points of ReTool (masking gradients for feedback tokens inside `<interpreter>` tags), and it is what Search-R1 refers to as "masking retrieved tokens to stabilize training." Major training frameworks like veRL and AWorld have this mechanism built-in.
+工具 RL 还有一个绕不开的工程细节：**对环境反馈的 token 做损失屏蔽（loss masking）**。一条工具调用轨迹里既有模型自己生成的 token（思考、工具调用参数），也有环境返回的 token（代码解释器的输出、搜索结果、客服的回话）。后者不是策略生成的、而是环境给定的——如果把它们也计入策略梯度，模型就会被训练去“预测沙盒会输出什么”，这既偏离了优化目标，又会让训练变得不稳定。标准做法是在计算损失时把环境反馈 token 屏蔽掉，只对模型自己生成的 token 回传梯度。这正是 ReTool 的核心技术点之一（对 `<interpreter>` 标签内的反馈 token 屏蔽梯度），也是 Search-R1 所说的“对检索到的 token 做屏蔽以稳定训练”，veRL、AWorld 等主流训练框架都内置了这一机制。
 
-> **Experiment 7-15 ★★★: ReTool—Code Interpreter Enhanced Math Problem Solving**
->
->
-> ![Figure 7-19 ReTool Interleaving Text-Code Thinking and Sandbox Execution Feedback Loop](images/fig7-19.svg)
+> **实验 7-15 ★★★：ReTool——代码解释器增强数学解题**
 >
 >
-> Pure text thinking is prone to cumulative errors in precise numerical calculations, symbolic operations, or complex equation solving (e.g., ten consecutive multiplication steps, each potentially wrong). Code interpreters provide precise verification through an executable interface. ReTool integrates the real-time execution of a code interpreter into the RL thinking loop, allowing the model to autonomously learn when and how to use the tool under the guidance of result feedback.
->
-> Training is divided into two stages. SFT warm-up (about 1 hour) converts pure text reasoning data into code-augmented trajectories, establishing basic tool calling patterns. RL training (PPO based on modified veRL, training data from DAPO-Math-17k, about 9 days for 400 steps) optimizes the policy through rollouts interleaved with real-time code execution: the model generates code containing `<code>` tags, the sandbox executes it and wraps the result in `<interpreter>` tags for feedback, the model continues generating, forming a mixed reasoning sequence of "text 1 + code 1 + feedback 1 + ... + answer." Each training step generates 512 responses (32 questions × 16 candidates), with an average of 7-9 interaction rounds per response, and total token processing grows from an initial 25M to 40M.
->
-> ReTool itself uses standard PPO and does not modify the optimization algorithm. However, its training data comes from the DAPO team's DAPO-Math-17k, so we take this opportunity to introduce the recently popular **DAPO** algorithm (Yu et al., 2025). It makes four improvements over standard PPO, with the core goal of preventing the model from prematurely converging to a single strategy (only solving problems in one way):
->
-> - **Clip-Higher (Relaxing the exploration upper bound)**: Standard PPO limits the magnitude of policy changes per training step—too large a change can destabilize training. But too strict a limit makes the model "afraid to try new paths." Clip-Higher moderately relaxes this limit: when the model accidentally discovers a clearly better path, it is allowed to adjust more boldly toward it, thereby encouraging exploration.
-> - **Token-Level Policy Gradient Loss (Equal weight for each token)**: The original GRPO normalizes the loss at the sample level—first averaging within each response by the number of tokens, then averaging across samples—which dilutes each token in a long response by `1/|o_i|`: high-quality long chains of thought receive insufficient reward, and verbose repetition receives insufficient penalty. DAPO's Token-Level Policy Gradient Loss removes this sample-level averaging and instead normalizes uniformly across all tokens in the entire batch, giving each token equal weight; the direct consequence is that long responses receive a gradient contribution commensurate with their length.
-> - **Dynamic Sampling (Intelligent allocation of compute)**: Dynamically adjust the number of samples per question during training—reduce sampling for simple questions the model can already solve stably (further training yields little benefit), and increase sampling for questions in the "learnable range" with success rates between 20% and 80% (these are the most informative), concentrating compute on the most valuable data.
-> - **Overlong Reward Shaping (Penalizing verbose responses)**: Apply a soft penalty to excessively long responses. When the model generates a very long thinking process without answering better, the system reduces its reward score, guiding it to learn more concise and efficient thinking.
->
-> Back to ReTool. On AIME 2024, training based on Qwen2.5-32B-Instruct achieved an accuracy improvement from an initial ~25% to 52% at the 110-step intermediate checkpoint (Best-of-30 reached 85%); the paper's final result after 400 steps was 67.0%, while the pure text RL baseline after 1080 steps was only 40.0%. The training dynamics numbers in this experiment box are all based on this 32B model configuration.
->
-> Emergent capabilities: code self-correction (identifying execution errors and autonomously generating corrected versions), tool use shifting from late-stage verification to early-stage exploration, and improved thinking efficiency (length reduced by 40% while accuracy increased).
->
-> The training dynamics for the first 110 steps show a three-phase pattern: early (0-20 steps) rapid learning of basic tool use, accuracy improving by 0.5% per step; middle (20-70 steps) oscillatory exploration, response length increasing from 2500 to a peak of 4700 tokens, with a surge in policy diversity; late (70-110 steps) stable convergence, length dropping to 4400 tokens, performance continuing to improve but with reduced fluctuation.> The fundamental difference in time cost between SFT and RL stems from differing information density: SFT provides a supervisory signal for every token, while RL only gives a success/failure signal per episode. In practice, the time per step increases with response length, and a few extremely long responses can significantly prolong the entire training cycle.
->
-> **Experiment 7-16 ★★★: AWorld-train — Learning to Use Tools in a Sandbox**
+> ![图7-19 ReTool 交织文本-代码思考与沙盒执行反馈循环](images/fig7-19.svg)
 >
 >
-> ![Figure 7-20 AWorld-train MCP Sandbox Training Architecture and Tool Ecosystem](images/fig7-20.svg)
+> 纯文本思考在精确数值计算、符号操作或复杂方程求解中容易产生累积误差（比如连续做十步乘法，每步都可能算错），而代码解释器通过提供可执行的接口实现精确验证。ReTool 将代码解释器的实时执行整合到 RL 思考循环中，使模型在结果反馈的指导下自主学习何时以及如何使用工具。
+>
+> 训练分两个阶段。SFT 预热（约 1 小时）将纯文本推理数据转换为代码增强轨迹，建立基本工具调用模式。RL 训练（基于 veRL 改造的 PPO，训练数据取自 DAPO-Math-17k，约 9 天 400 步）通过交织实时代码执行的 rollout 优化策略：模型生成包含 `<code>` 标签的代码，沙盒执行后将结果包装在 `<interpreter>` 标签中反馈，模型继续生成，形成 “文本 1 + 代码 1 + 反馈 1 + ... + 答案” 的混合推理序列。每个训练步需生成 512 个响应（32 问题 × 16 候选），平均每个响应 7-9 轮交互，总 token 处理量从初始 25M 增长到 40M。
+>
+> ReTool 本身用的是标准 PPO，并未改动优化算法。不过它的训练数据来自 DAPO 团队的 DAPO-Math-17k，这里顺带介绍近期流行的 **DAPO** 算法（Yu 等人，2025）——它在标准 PPO 基础上做了四项改进，核心目标是防止模型过早收敛到单一策略（只会用一种方式解题）：
+>
+> - **Clip-Higher（放宽探索上限）**：标准 PPO 算法会限制每次训练时策略变化的幅度——变化太大容易导致训练不稳定。但限制太严格又会让模型“不敢尝试新路子”。Clip-Higher 适度放宽了这个限制：当模型偶然发现一条明显更好的路径时，允许它更大胆地向这条路径调整，从而鼓励探索。
+> - **Token-Level Policy Gradient Loss（让每个 token 权重相等）**：原始 GRPO 对损失做样本级归一化——先在每条回答内部按 token 数平均、再在样本之间平均——这会让长回答里的每个 token 被 `1/|o_i|` 稀释：高质量的长链思考得不到足够奖励，冗长重复也得不到足够惩罚。DAPO 的 Token-Level Policy Gradient Loss 正是去掉这层按样本平均，改为在整个 batch 的全部 token 上统一归一，让每个 token 权重相等；其直接后果是长回答按它的长度获得相称的梯度贡献。
+> - **Dynamic Sampling（智能分配算力）**：训练时动态调整每道题的采样次数——对于模型已经能稳定解决的简单题减少采样（继续练也没什么收益），对于成功率在 20%-80% 之间的“可学习区间”的题增加采样（这些是最能学到东西的），集中算力于最有学习价值的数据。
+> - **Overlong Reward Shaping（惩罚冗长回答）**：对超长响应施加软惩罚。当模型生成了很长的思考过程但并没有因此答得更好时，系统会降低其奖励分数，引导它学会更简洁高效地思考。
+>
+> 回到 ReTool。在 AIME 2024 上，基于 Qwen2.5-32B-Instruct 的训练在第 110 步的中间检查点时，准确率已从初始约 25% 提升至 52%（Best-of-30 达 85%）；论文的最终结果是 400 步后达到 67.0%，而纯文本 RL 基线训练 1080 步也只有 40.0%。本实验框内的训练动态数字均以这一 32B 模型设定为口径。
+>
+> 涌现能力：代码自我修正（识别执行错误并自主生成修正版本）、工具调用从后期验证转为早期探索、思考效率提升（长度减少 40% 但准确率不降反升）。
+>
+> 前 110 步的训练动态呈三阶段模式：初期（0-20 步）快速学习基本工具使用，准确率每步提升 0.5%；中期（20-70 步）波动式探索，响应长度从 2500 增至峰值 4700 tokens，策略多样性激增；后期（70-110 步）稳定收敛，长度回落到 4400 tokens，性能持续提升但波动减小。
+>
+> SFT 与 RL 的时间差异根源在于信息密度不同：SFT 每个 token 都有监督信号，而 RL 每个 episode 只得到一个成败信号。在实际训练中，单步耗时会随着响应长度增长而增加，少数超长响应会显著拖长整个训练周期。
+>
+> **实验 7-16 ★★★：AWorld-train——在沙盒中学习使用工具**
 >
 >
-> GAIA is one of the most challenging Agent evaluation benchmarks. Even large-parameter models trained at scale may only achieve around 32%, still significantly behind top-scoring systems. This experiment uses a smaller model (Qwen3-4B), with the primary goal of demonstrating a complete "learning from practice" training pipeline.
+> ![图7-20 AWorld-train MCP 沙盒训练架构与工具生态](images/fig7-20.svg)
 >
-> The AWorld training environment is an MCP server sandbox, providing 26 servers and 126 tool functions. These cover Web interaction (Google Search, Smart Browser, Playwright), document processing (CSV/DOCX/PPTX/PDF), multimedia processing (audio transcription, OCR, video summarization), code execution (terminal commands, E2B sandbox), Excel processing (29 enterprise-level operations), and knowledge retrieval (Wikipedia, ArXiv, Wayback Machine). Rate limits, service fluctuations, and account bans from real APIs make direct training in a production environment infeasible—building a stable, controllable, and replayable simulation environment is an engineering prerequisite for multi-tool RL training.
 >
-> The qualitative leap from single-tool to multi-tool lies in this: a single tool only requires deciding "when" and "how" to call it; multi-tool scenarios also require solving "which one to call" and "how to combine them," introducing combinatorial explosion and dependency management complexity—tools have prerequisite dependencies (must search before browsing a specific page), mutual exclusion constraints (some tools cannot be called simultaneously), and cost differences (different APIs have varying quotas and latencies). The policy must plan holistically under these constraints, rather than greedily choosing the locally optimal action.
+> GAIA 是最具挑战性的 Agent 评测基准之一。即使大参数模型经过大规模训练也可能只达到约 32%，距高分系统仍有明显差距。本实验采用较小的模型（Qwen3-4B），主要目标是演示完整的“从实践中学习”训练流程。
 >
-> It should be noted that this experiment is an **open-ended training experiment without baseline results**—a model of Qwen3-4B's scale is unlikely to achieve impressive scores on GAIA. The value of this experiment lies in successfully running the complete "learning from practice" pipeline, not in setting new benchmarks. Acceptable validation criteria and expected observations are: the environment's reset and episode loop (tool calls, feedback, state updates) runs stably without crashes; the average reward curve shows an upward trend during training; tool call success rate improves with training, and the model gradually learns to make more reasonable choices and combinations among multiple tools.
+> AWorld 训练环境是 MCP 服务器沙盒，提供 26 个服务器、126 个工具函数，涵盖 Web 交互（Google 搜索、智能浏览器、Playwright）、文档处理（CSV/DOCX/PPTX/PDF）、多媒体处理（音频转写、OCR、视频摘要）、代码执行（终端命令、E2B 沙盒）、Excel 处理（29 个企业级操作）、知识检索（Wikipedia、ArXiv、Wayback Machine）。真实 API 的速率限制、服务波动、账号封禁使直接在生产环境训练不可行——构建稳定可控可重放的仿真环境是多工具 RL 训练的工程前提。
+>
+> 从单工具到多工具的质变在于：单工具只需决定“何时”与“如何”调用；多工具还要解决“调用哪个”与“如何组合”，引入了组合爆炸与依赖管理的复杂性——工具间有前置依赖（先搜索才能浏览具体页面）、互斥约束（某些工具不能同时调用）、成本差异（不同 API 的配额与延迟不同）。策略需要在这些约束下做整体规划，而非贪心地选择当下最优。
+>
+> 需要说明，本实验是一个**开放式训练实验，不提供基线结果**——Qwen3-4B 这个量级在 GAIA 上难以取得亮眼分数，本实验的价值在于跑通“从实践中学习”的完整链路，而非刷新指标。可参考的验收标准与预期观察是：能稳定跑通环境的 reset 与 episode 循环（工具调用、反馈、状态更新不崩溃）；训练过程中平均奖励曲线呈上升趋势；工具调用成功率随训练提升，且模型逐渐学会在多工具间做出更合理的选择与组合。
 
-## Cutting-Edge Exploration for Improving Sample Efficiency
+## 提升样本效率的前沿探索
 
-The experiments described above have systematically demonstrated the core value of RL in Agent training, but all at a high sample cost. ReTool's RL training time was over 200 times that of SFT (9 days vs. 1 hour), which may be unacceptable in resource-constrained or rapid-iteration scenarios.
+前述实验已系统展示了 RL 在 Agent 训练中的核心价值，但都付出了高昂的样本成本。ReTool 的 RL 训练时间是 SFT 的 200 倍以上（9 天 vs 1 小时），在资源受限或需快速迭代的场景中可能难以接受。
 
-The low sample efficiency of RL has multiple causes (high variance, sparse rewards, difficulty in reusing on-policy data). One significant root cause lies in the model-free nature of mainstream policy gradient methods—they do not model environment dynamics (a world model, "what the world will look like after an action is taken"), nor can they easily leverage the rich information contained in a single feedback signal (these two points are related but not identical). The rich feedback returned by the environment after each interaction (error reasons, missing fields, correct procedure hints) is mostly wasted—the earlier section "The Dilemma of Sparse Rewards" analyzed this problem in detail. Consider a scenario of calling customer service: the agent is explicitly told, "I need the last four digits of your credit card to verify your identity," but model-free RL can only learn from the final success/failure signal (reward of 0 or 1). It cannot directly utilize this explicit feedback and must rely on hundreds of random explorations to accidentally try providing the credit card information. A human, upon hearing this feedback, would immediately remember it and proactively prepare it next time.
+RL 样本效率低有多重原因（高方差、稀疏奖励、在轨数据难以复用等），其中一个重要根源在于主流策略梯度方法的 model-free（无模型）特性——它不建模环境动态（world model，“执行动作后世界会变成什么样”），也难以直接利用单次反馈里的丰富信息（这两点相关但并不等同）。环境每次交互返回的丰富反馈（错误原因、缺少字段、正确流程提示）大部分被浪费了——前文“稀疏奖励的困境”已详细分析了这个问题。考虑一个打电话联系客服的场景：客服明确告知“需要信用卡后四位来验证身份”，但 model-free RL 只能从最终成败信号学习（reward 为 0 或 1），无法直接利用这个明确反馈，只能通过数百次随机探索偶然尝试到提供信用卡信息。而人类听到反馈后会立即记住，下次主动准备。
 
-Addressing this bottleneck, this chapter has actually provided two complementary approaches. One is to **re-transform the wasted information from environment feedback into learnable rewards**—turning explicit, machine-determinable signals like "the agent requires identity verification first," "this command is destructive," or "another step is proven" directly into the reward function. This is the RLVP method discussed in Section 7.10 (especially its use of partial rewards for "rewardable progress," which can salvage wasted samples from completely failed groups). The other approach, which this section will formally develop, is to **make the training signal denser at every step**: instead of only receiving a single success/failure scalar at the end of the task, provide guidance at every point along the trajectory. This is On-Policy Distillation.
+围绕这个瓶颈，本章其实已经给出两条互补的思路。一条是**把环境反馈里被浪费的信息重新变成可学习的奖励**——把“客服要求先验证身份”“这个命令有破坏性”“又证出一步”这类明确、可机器判定的信号直接写进奖励函数，这就是 7.10 节讲过的 RLVP（尤其是它“奖励可达进展”的部分奖励用法，能把全败组里被浪费的采样救回来）。另一条是本节要正式展开的方法——**让每一步的训练信号更密集**：与其只在任务终点拿到一个成败标量，不如在轨迹的每个位置都获得指引，这就是 On-Policy Distillation。
 
-### On-Policy Distillation: Combining the Strengths of SFT and RL
+### On-Policy Distillation：兼得 SFT 与 RL 之长
 
-On-Policy Distillation, systematically proposed and popularized by Thinking Machines Lab in 2025[^ch7-10], has become a very mainstream method in post-training and deserves a dedicated explanation. To understand what problem it solves, let's first look at a critical weakness of both SFT and RL—it neatly combines the advantages of both.
+On-Policy Distillation（在轨蒸馏）由 Thinking Machines Lab 于 2025 年系统提出并推广[^ch7-10]，如今已经是后训练里非常主流的一种方法，值得单独讲清楚。要理解它解决了什么，先看 SFT 和 RL 各自的一个致命短板——它恰好把两者的优点合到了一起。
 
-**SFT's Weakness: Learner-Sampler Mismatch.** SFT's training data is generated by a "sampler" (a teacher model or human expert), and the "learner" (the model being trained) merely passively imitates these **correct paths**. The problem is that when the learner acts on its own, it inevitably makes mistakes and enters **off-distribution states** never seen in the training data. It has never learned how to recover from these states back to the correct path, so small errors accumulate into large ones—like a student who only memorized the correct answers and has no idea how to recover if a single intermediate step is wrong. The root cause is that the distribution of "who is acting" during training (the teacher) differs from the distribution during deployment (the student itself).
+**SFT 的短板：Learner-Sampler Mismatch（学习者与采样者不匹配）。** SFT 的训练数据由“采样者”（教师模型或人类专家）生成，“学习者”（被训练的模型）只是被动模仿这些**正确路径**。问题在于：学习者自己上场时难免犯错、走到训练数据里从没出现过的**偏差状态**，而它从没见过怎么从这些状态回到正轨，于是小错累积成大错——就像只背过标准答案的学生，中间某一步一旦算错，完全不知道怎么找回来。根源是训练时“谁在走”（教师）和部署时“谁在走”（学生自己）不是同一个分布。
 
-**RL's Weakness: Signals are Too Sparse.** RL lets the student act on its own (on-policy), solving the distribution mismatch. However, each trajectory only yields a single success/failure scalar at the end. How to correct each intermediate step must be reverse-engineered through hundreds or thousands of trial-and-error attempts.
+**RL 的短板：信号太稀疏。** RL 让学生自己走（在轨），解决了分布不匹配，但每条轨迹走到头只拿到一个成败标量，中间每一步到底该怎么改，还得靠成百上千次试错慢慢反推。
 
-**On-Policy Distillation combines the strengths of both: it lets the student generate its own trajectories (On-Policy, solving distribution mismatch) while a stronger teacher model provides a dense signal for every token the student generates (Dense Signal, solving signal sparsity).** A one-line comparison of the three methods: SFT is "off-policy + dense signal" (has distribution mismatch), RL is "on-policy + sparse signal" (feedback is sparse), and On-Policy Distillation is "**on-policy + dense signal**"—both weaknesses are addressed.
+**On-Policy Distillation 把两者的优点合起来：让学生自己生成轨迹（On-Policy，解决分布不匹配），同时让一个更强的教师模型对学生走的每一步逐 token 打分（Dense Signal，解决信号稀疏）。** 一句话对照三种方法：SFT 是“离轨 + 稠密信号”（有分布不匹配），RL 是“在轨 + 稀疏信号”（反馈稀疏），On-Policy Distillation 是“**在轨 + 稠密信号**”——两个短板都补上了。
 
-How exactly is the scoring done? The teacher doesn't just judge whether the student's step is correct; it provides the complete probability distribution for the next token at the current position. For example, if the student writes "first query the API, then parse the return value...", the teacher might determine that at this position, "query" should have an 80% probability, "call" 15%, and the remaining 5% for other tokens. The student's learning objective is to make its own predictive distribution at each position as close as possible to the teacher's distribution. Technically, this is achieved by minimizing the **KL divergence** between the two distributions (KL divergence measures the difference between two probability distributions; the smaller it is, the closer they are, and it is zero when identical, as detailed in Section 7.7). Compared to the binary signal of final success/failure, this token-level distribution alignment is denser by more than an order of magnitude.
+具体怎么打分？教师不只判断学生这一步对不对，而是直接给出“在当前这个位置，下一个 token 各种选择分别该有多大概率”的完整分布。比如学生写到“先查询 API，再解析返回值……”的某个位置，教师认为这里“查询”该占 80%、“调用”占 15%、其余 5%；学生的学习目标就是让自己在每个位置的预测分布尽量贴近教师的分布。技术上通过最小化两个分布之间的 **KL 散度**来实现（KL 散度衡量两个概率分布的差异，越接近越小、相同为 0，7.7 节已详细介绍）。相比只有最终成败的二元信号，这种逐 token 的分布对齐，密集了不止一个数量级。
 
-The results are striking: on tasks like mathematics, achieving equivalent performance requires roughly **1/10** of the training steps needed for pure RL. The advantage is especially pronounced in long-chain reasoning tasks—with the teacher guiding every step, the student quickly learns to correct errors instead of drifting further down a wrong path. It also helps mitigate overfitting: in standard RL, repeatedly training on the same prompt can lead to memorizing the final answer. Here, each trajectory is different, and the teacher provides feedback specific to that trajectory, leading to learning a general strategy rather than specific answers, thus significantly improving data reuse efficiency.
+效果很突出：在数学等任务上，达到同等性能所需的训练步数只要纯 RL 的约 **1/10**。长链思考任务上优势尤其明显——每一步都有教师指路，学生迅速学会纠错，而不是在错误路径上越走越远。它还顺带缓解了过拟合：标准 RL 里同一个 prompt 反复训练容易把最终答案背下来，而这里每次轨迹都不同、教师针对具体轨迹给反馈，学到的是通用策略而非特定答案，数据复用率因此大幅提升。
 
-This method is particularly valuable in **multi-turn Agent scenarios**: the success/failure signal appears at the very end, being both sparse and delayed. The token-level teacher distribution perfectly fills the missing guidance for every intermediate step. However, it has a prerequisite that echoes the main theme of this chapter: **a sufficiently realistic simulation environment is necessary for the student to explore freely**—otherwise, when the student enters an off-distribution state that the teacher has also never seen, the teacher's scoring becomes unreliable. The value of On-Policy learning is built upon the premise that "the student is truly exploring the deployment distribution."
+这个方法在**多轮 Agent 场景**里价值尤其大：多轮任务的成败信号出现在最末端、既稀疏又滞后，逐 token 的教师分布恰好补上了中间每一步缺失的指引。但它有一个前提，正好呼应本章反复强调的主线：**必须有一个足够真实的仿真环境让学生自由探索**——否则学生走到教师也没见过的偏差状态时，教师的打分同样不可靠。On-Policy 的价值，建立在“学生真的在部署分布上探索”之上。
 
-The principle that "dense signals outperform sparse signals" had a very clean validation in a pure Agent scenario. Chapter 2, when discussing the status bar, mentioned an Agent's "sense of time"—urgency, persistence, vigilance—which can be instilled at inference time via an instruction manual. However, embedding this sense of rhythm directly into the weights of an 8B small model, without relying on prompts, presents a post-training challenge. The author and collaborators sequentially tried DPO and four RL recipes on this problem. These four RL methods each fell into a failure mode discussed earlier in this chapter: a hard-gated reward was too sparse, most rollouts scored zero, and the within-group advantage was nullified (sparsity); switching to a graded reward made the signal denser, but the proxy metric did not correspond to the actual pass rate (objective misalignment); scoring only the first turn's reply encouraged short, perfunctory answers that performed worse in multi-turn evaluations (rollout shape mismatch); finally, aligning the rollout shape with the evaluation and seeing the training reward start to climb led to the policy collapsing to a single mode within a few steps, which even a 4x stronger KL anchor could not prevent (training collapse). None of the recipes surpassed the SFT ceiling. Switching to On-Policy Distillation—using a frozen Qwen3-32B teacher to provide token-level target distributions on the student's own multi-turn trajectories—led to smooth training convergence, with pass rates under four different conditions all being 23 to 47 percentage points higher than the baseline SFT model trained on the same data[^ch7-11]. Four sparse signals failed in turn, while one dense signal succeeded, reinforcing the chapter's main point: what often bottlenecks post-training is not a cleverly designed reward function, but the insufficient density of the signal itself.
+“稠密信号胜过稀疏信号”这条规律，在一个纯 Agent 的场景里有过一次相当干净的验证。第二章讲状态栏时提到过 Agent 的“时间感”——紧迫度、坚持度、警觉度——推理时靠一份操作手册就能装上；但要让一个 8B 小模型脱离提示词、把这种节奏感直接写进权重，就是一道后训练难题。笔者和合作者在这上面依次试了 DPO 和四种强化学习配方，四种 RL 恰好各自踩中一个本章前面讨论过的失败模式：硬门控奖励太稀疏、绝大多数 rollout 得零分、组内优势归零（稀疏性）；改成分级奖励后信号密了，可代理指标并不对应真实通过率（目标错位）；只给第一轮回复打分，逼出了在多轮评测里反而更差的敷衍式短答（rollout 形状不匹配）；最后让 rollout 形状和评测对齐、训练奖励确实开始爬升，策略却在几步之内塌缩到单一模式、连 4 倍强的 KL 锚都拉不住（训练崩溃）。没有一种配方越过 SFT 的天花板。换成 On-Policy Distillation——用一个冻结的 Qwen3-32B 教师，在学生自己走出的多轮轨迹上逐 token 给出目标分布——训练平滑收敛，四种条件下通过率一律比同源的 SFT 基线高出 23 到 47 个百分点[^ch7-11]。四种稀疏信号轮番失败、一种稠密信号成功，把本节的主线又坐实了一遍：卡住后训练的，往往不是奖励函数设计得不够巧，而是信号本身不够密。
 
-## The Complete Post-Training Landscape and Practical Tips
+## 后训练完整图景与实践要点
 
-This chapter started from pre-training's "predict the next word" and has traveled a long path: SFT solidifies format, RL enables generalization, multi-turn tasks introduce the credit assignment problem, reward design extends from outcome rewards to path signals that "reward outcomes and constrain processes," and tool use brings combinatorial explosion. A common thread runs through these experiments—what a model learns depends on what the training signal teaches it; and the quality of the signal is primarily determined by the data and environment, not the algorithm.
+这一章从预训练的“预测下一个词”出发，走了一条很长的路：SFT 固化格式，RL 突破泛化，多轮任务引入信用分配难题，奖励设计从结果奖励延伸到“奖励结果、约束过程”的路径信号，工具使用带来组合爆炸。这些实验有一条共同的线索——模型学到什么，取决于训练信号教了它什么；而信号的质量，主要由数据和环境决定，不是由算法决定。
 
-**Synergistic Paradigm**: The earlier section (GeneralPoints experiment summary) used the Chinese painting principle of "form first, spirit second" to summarize this paradigm—SFT is used until "format is stable and basic capabilities are present," and then RL shapes the strategy on this foundation. They operate on different levels: SFT solidifies protocols and structures (JSON format, dialogue templates, tool interfaces), while RL optimizes strategy and generalization (arithmetic rules, spatial reasoning, action sequences). The key balance: excessive SFT training can cause the model to collapse onto the training distribution, limiting the optimization space for RL.
+**协同范式**：前文（GeneralPoints 实验小结）已借中国画的“先形后神”概括这一范式——SFT 到 “格式稳定、能力初具” 即止，RL 在此基础上塑形策略。两者作用于不同层次：SFT 固化协议与结构（JSON 格式、对话模板、工具接口），RL 优化策略与泛化（算术规则、空间思考、动作序列）。关键平衡：SFT 过度训练会导致模型塌缩到训练分布，限制 RL 优化空间。
 
-The following **common pitfalls** are worth noting; recognizing these problems is often more valuable for avoiding wasted resources than mastering technical details:
+以下**常见陷阱**值得警惕，识别这些问题往往比掌握技术细节更能避免资源浪费：
 
-1.  **Over-reliance on post-training to memorize facts**—Use RAG for factual knowledge management (dynamically updatable, traceable sources, not forgotten during training). Post-training should focus on "how to use knowledge."
-2.  **Introducing RL before format is stable**—If the model cannot reliably produce basic JSON (parsing failure rate > 20%), RL training will completely fail. SFT must come first.
-3.  **Poorly designed reward functions leading to reward hacking**—The model learns to exploit loopholes in the reward to get high scores without truly completing the task (e.g., generating long, meaningless text just for length). Evaluate the final objective, not intermediate metrics.
-4.  **Neglecting simulation fidelity**—If the simulation is too simplistic (customer service always responds in a fixed pattern) or the environment response is unrealistic (error messages differ from the production environment), the trained policy will completely fail in real-world scenarios. The cost of building a high-fidelity simulation environment may exceed the training cost itself.
-5.  **Over-training leading to decreased generalization**—When training loss continues to decrease but validation set performance worsens, the model is memorizing training details. SFT is particularly prone to this; early stopping remains crucial. Over-optimization in RL can also lead to policy overfitting to the current task distribution.
-6.  **Value function collapse and insufficient exploration**—Inaccurate value estimation in PPO can bias advantage calculation, manifesting as severe oscillations in the training curve. Too low a temperature or insufficient randomness can trap the Agent in a local optimum.
-7.  **Underestimating the computational cost of RL**—Tasks that perform well with SFT may require 10-100 times the training time when switched to RL. If the test distribution is highly consistent with the training distribution, SFT may be sufficient.
-8.  **Low-quality training data**—SFT will directly learn noise and bias in the data, solidifying errors into parameters. While RL might discover better strategies through exploration, if the reward model has systematic biases, it will optimize in the wrong direction.
+1. **过度依赖后训练来记忆事实**——应该用 RAG 管理事实知识（可动态更新、可追溯来源、不因训练而遗忘），后训练聚焦于“如何使用知识”。
+2. **格式未稳定就引入 RL**——模型连基本 JSON 都无法稳定产出时（解析失败率超 20%），RL 训练会完全失败。必须先做 SFT。
+3. **奖励函数设计不当**导致奖励黑客——模型学会钻奖励的漏洞来获得高分，而非真正完成任务（比如只看回复长度就生成冗长无意义的文本）。应该评估最终目标而非中间指标。
+4. **忽视仿真保真度**——若仿真过于简化（客服总按固定模式回复）或环境响应不真实（错误信息与生产环境不一致），训练出的策略在真实场景中会完全失效。高保真仿真环境的构建成本可能高于训练本身。
+5. **过度训练导致泛化下降**——训练损失持续下降但验证集性能反而恶化时，模型正在死记训练细节。SFT 尤其容易出现这个问题，早停仍然至关重要；RL 过度优化同样会导致策略过拟合当前任务分布。
+6. **价值函数崩溃与探索不足**——PPO 中价值估计不准确会导致优势计算出现偏差，表现为训练曲线剧烈震荡。温度参数过低或随机性不足会使 Agent 陷入局部最优。
+7. **低估 RL 的计算成本**——SFT 上表现良好的任务转 RL 可能需要 10-100 倍训练时间。如果测试分布与训练高度一致，SFT 可能已经足够。
+8. **训练数据质量低下**——SFT 会直接学习数据中的噪声与偏差，将错误固化为参数；RL 虽然通过探索可能发现更好的策略，但如果奖励模型有系统性偏差，就会朝错误方向优化。
 
-Core principle: **Before investing large-scale resources, validate key assumptions with small-scale experiments**—test if SFT can stabilize format with a small amount of data, verify if RL can converge in a simplified environment, and check with a small sample if the reward function reflects the true objective. Failing fast is more acceptable than failing at scale.
+核心原则：**在投入大规模资源前，先用小规模实验验证关键假设**——少量数据测试 SFT 能否稳定格式、简化环境验证 RL 能否收敛、小样本检查奖励函数是否反映真实目标。快速失败比大规模失败更可接受。
 
-**Synergy with RAG/ICL**: Post-training, externalized learning, and in-context learning constitute three dimensions of Agent capability. They are not mutually exclusive alternatives but three adjustable "knobs" acting on model parameters, external knowledge, and conditional information at inference time, respectively. The value of ICL lies in its "zero-parameter-change" immediate control—using a few examples or explicit rules to quickly shape behavior, making it the preferred choice for the exploration phase. However, as the number of examples increases, latency and cost grow rapidly. The value of RAG lies in "externalizing facts and evidence"—providing dynamically updatable external knowledge and traceable sources without changing parameters, naturally suppressing hallucinations and meeting audit/compliance requirements. The value of post-training lies in "writing behavior and style into parameters"—stabilizing tone, format, and tool usage habits, significantly improving consistency. A special note: SFT/RL struggle to accurately memorize large amounts of factual knowledge. If the model must master domain facts, continuous pre-training is required (cost is much higher than SFT and requires carefully designed data ratios). Therefore, memorizing facts is better suited for RAG.
+**与 RAG/ICL 的协同**：后训练、外部化学习与上下文学习构成 Agent 能力的三个维度，并非互斥的替代方案，而是分别作用于模型参数、外部知识与推理时条件信息的三个可调节“旋钮”。ICL 的价值在于“零参数改动”的即时操控——用极少示例或明确规则就可快速塑形行为，是探索阶段的首选，但随着示例增多，延迟与费用会迅速增加。RAG 的价值在于“把事实与证据外接”——在不改动参数的前提下提供动态可更新的外部知识和可追溯来源，天然抑制幻觉并满足审计合规要求。后训练的价值在于“把行为与风格写进参数”——稳定语气、格式、工具使用习惯，显著提升一致性。特别注意：SFT/RL 很难准确记忆大量事实性知识，若确实需要让模型掌握领域事实，须采用持续预训练（成本远高于 SFT 且需精心设计数据配比），因此记忆事实更适合交给 RAG。
 
-The most common and robust practice is: use RAG for the precise memorization and interpretability of "factual knowledge," delegate "behavior and structure" to post-training for solidification; use ICL with more capable models for rapid strategy iteration, and then internalize stable behaviors into parameters via post-training. Post-training can also achieve model distillation—distilling the capabilities of a high-capability large model into a smaller, lower-cost model.
+最常见也最稳健的做法是：用 RAG 解决“事实性知识”的精确记忆与可解释性，把“行为与结构”交给后训练固化；用 ICL 与能力较强的模型快速迭代测试策略，再把效果稳定的行为通过后训练内化到参数中。后训练还可以实现模型蒸馏——把高能力大模型的能力蒸馏到成本更低的小模型中。
 
-## Chapter Summary
+## 本章小结
 
-The essence of model post-training is writing interaction strategies into parameters.
+模型后训练的本质是把交互策略写入参数。
 
-SFT and RL are not competitors but sequential stages: SFT first stabilizes the output format (otherwise, RL's reward signal cannot even be computed), and then RL learns to generalize on this foundation. "SFT memorizes, RL generalizes" is not just a slogan but a measurable phenomenon.
-There are also two judgments that run through the entire chapter and are more worth remembering than any algorithm. First, **data and environment are more important than algorithms**: you can use off-the-shelf RL algorithms; what truly creates a gap is the fidelity of the simulation environment and the quality of the training data—in many scenarios, if the SFT data quality is sufficient, you may not even need RL. Second, **the current main bottleneck of RL is sample efficiency**: On-Policy Distillation, which makes the signal denser at every step, and RLVP (Verification-guided RL with Path Penalties), which transforms wasted environment feedback into learnable signals ("reward outcomes, penalize paths," using partial rewards for reachable progress to salvage samples from completely failed groups), are currently the two most promising directions. Their commonality remains the same—transforming information that already exists in the environment and data but is wasted by pure outcome rewards, back into something the model can learn.
+SFT 和 RL 不是竞争关系，而是先后关系：SFT 先把输出格式稳定下来（否则 RL 的奖励信号根本无法计算），RL 再在这个基础上学会泛化。“SFT 记忆、RL 泛化”不是口号，而是可测量的现象。
+还有两条贯穿全章、比任何算法都值得记住的判断。其一，**数据和环境比算法更重要**：现成的 RL 算法你会用就行，真正拉开差距的是仿真环境的保真度和训练数据的质量——很多场景下，只要 SFT 的数据质量到位，你甚至不需要做 RL。其二，**当前 RL 的主要瓶颈是样本效率**：让每一步信号更密集的 On-Policy Distillation，和把被浪费的环境反馈变成可学习信号的验证路径惩罚 RLVP（“奖励结果、惩罚路径”，并用可达进展的部分奖励救回全败组的采样），是目前看起来最有希望的两个方向。它们的共同点仍然是那句话——把环境和数据里本就存在、却被纯结果奖励浪费掉的信息，重新变成模型能学的东西。
 
-[^ch7-1]: Schulman, John and Thinking Machines Lab, “LoRA Without Regret” , 2025.[^ch7-4]: Ouyang, Long et al., “Training Language Models to Follow Instructions with Human Feedback”, OpenAI, 2022.
-[^ch7-5]: Gao, Leo, John Schulman, and Jacob Hilton, “Scaling Laws for Reward Model Overoptimization”, OpenAI, 2023.
-[^ch7-6]: Rafailov, Rafael et al., “Direct Preference Optimization: Your Language Model is Secretly a Reward Model”, 2023.
-[^ch7-7]: Lightman, Hunter et al., “Let's Verify Step by Step”, OpenAI, 2023.
-[^ch7-8]: Silver, David and Richard S. Sutton, “Welcome to the Era of Experience”, 2025.
-[^ch7-9]: The path penalty design, four principles, and experimental data in this section are from Li, Bojie and Noah Shi, “RLVP: Penalize the Path, Reward the Outcome”, 2026. arXiv:2607.07435.
-[^ch7-10]: The method and experiments for On-Policy Distillation are from Thinking Machines Lab, “On-Policy Distillation”, 2025.
-[^ch7-11]: This set of post-training comparisons for Agent time perception—the failure modes of DPO and four RL methods, and the breakthrough of On-Policy Distillation—are from Li, Bojie and Noah Shi, “Agents That Sense Physical Time: Urgency, Persistence, and Vigilance as Missing Controls for LLM Agents”, 2026. https://01.me/research/physical-time-agent
+[^ch7-1]: Schulman, John and Thinking Machines Lab, “LoRA Without Regret” , 2025.
+[^ch7-4]: Ouyang, Long et al., “Training Language Models to Follow Instructions with Human Feedback” , OpenAI, 2022.
+[^ch7-5]: Gao, Leo, John Schulman, and Jacob Hilton, “Scaling Laws for Reward Model Overoptimization” , OpenAI, 2023.
+[^ch7-6]: Rafailov, Rafael et al., “Direct Preference Optimization: Your Language Model is Secretly a Reward Model” , 2023.
+[^ch7-7]: Lightman, Hunter et al., “Let's Verify Step by Step” , OpenAI, 2023.
+[^ch7-8]: Silver, David and Richard S. Sutton, “Welcome to the Era of Experience” , 2025.
+[^ch7-9]: 本节的路径惩罚设计、四条原则与实验数据见 Li, Bojie and Noah Shi, “RLVP: Penalize the Path, Reward the Outcome” , 2026. arXiv:2607.07435.
+[^ch7-10]: On-Policy Distillation 的方法与实验见 Thinking Machines Lab, “On-Policy Distillation” , 2025.
+[^ch7-11]: 这组 Agent 时间感的后训练对照——DPO 与四种 RL 各自的失败模式、以及 On-Policy Distillation 的突破——见 Li, Bojie and Noah Shi, “Agents That Sense Physical Time: Urgency, Persistence, and Vigilance as Missing Controls for LLM Agents” , 2026. https://01.me/research/physical-time-agent
 
-Post-training solves the problem of "how to make the model smarter," but model weight update cycles are measured in weeks, while in reality, API launches and deprecations, user demand evolution, and business rule changes happen every day. The next chapter will explore a complementary evolutionary path—one that does not modify model weights, but instead enables the Agent to autonomously build a tool library and knowledge base through externalized learning, achieving continuous capability expansion.
+后训练解决了“如何让模型更聪明”的问题，但模型权重的更新周期以周计，而现实中 API 上线下线、用户需求演化、业务规则变更每天都在发生。下一章将探讨一条互补的进化路径——不修改模型权重，而是通过外部化学习让 Agent 自主构建工具库和知识库，实现持续的能力扩展。
 
-## Exercises
+## 思考题
 
-1. ★★ Catastrophic forgetting—where fine-tuning for a specific task destroys the model's original general capabilities (e.g., general tool calling)—is particularly troublesome in Agent scenarios. Compared to full-parameter fine-tuning, LoRA freezes the base weights and carries a lower risk of forgetting, but it is not immune. What strategies can further mitigate capability forgetting during fine-tuning?
-2. ★★ Post-training solidifies capabilities into model weights ("muscle memory"), while in-context learning places knowledge in the input during inference. However, some capabilities (e.g., domain knowledge) can be learned either through post-training or provided via few-shot examples. What criteria would you use to decide which path a given capability should take?
-3. ★★ Model distillation allows a small model to learn the behavior of a large model. By capability level, the models being distilled can be roughly divided into three tiers—**Chat models** (single-turn dialogue, direct answers), **Reasoning models** (generating long chains of thought before answering), and **Agentic models** (multi-turn tool calls, interacting with the environment). What are the different challenges in distilling each of these three types of models? (Hint: Start with "what exactly is being distilled"—is it the style of the output, the complete reasoning trace, or the decision-making strategy for interacting with the environment; which tokens in the trace should be learned and which are environmental returns that should not be learned; and how late and how sparse the success/failure signals are.)
-4. ★★★ In multi-turn Agent interactions, the credit assignment problem is more severe than in single-turn scenarios—a final success or failure is difficult to attribute to a decision made in turn 3 versus turn 7. How would you design a reward allocation strategy?
-5. ★★★ Post-training, externalized learning, and in-context learning constitute three dimensions of Agent capability. If you have a fixed budget (e.g., $10,000) to improve the performance of a customer service Agent, how would you allocate the budget among these three dimensions? What factors would your decision depend on?
-6. ★★★ Autonomous model learning, without a clear reward function and with scarce samples, is considered by some to be the ultimate goal of post-training. How far are current RL training methods from this goal? Where do you think the next breakthrough is most likely to come from?
-7. ★★ This chapter points out that the cost of LoRA fine-tuning is not high. So, is it possible to train a dedicated LoRA for each user (or each client company), writing user memory or enterprise knowledge into the parameters, rather than storing it in an external knowledge base as in Chapter 3? In what scenarios would "writing memory into parameters" have an advantage over "storing memory in a knowledge base"? And in what scenarios would it be counterproductive?
-8. ★★★ On-Policy Distillation relies on a stronger teacher model to supervise the student. However, OpenAI's Weak-to-Strong Generalization research proposed a counterintuitive finding: the supervisory signal from a weak model can sometimes unlock latent but unactivated capabilities in a strong model. If this idea is applied to Agent training, could it achieve a "small model teaches large model" reverse distillation?
-9. ★★ A Process Reward Model (PRM) evaluates each reasoning step, while an Outcome Reward Model (ORM) only looks at the final result. But which is more worthy of reward: "a correct process leading to a wrong result" or "a wrong process luckily leading to a correct result"? In the multi-step tool-calling scenario of an Agent, how would you weigh these?
-10. ★★★ The evaluation datasets discussed in this chapter (e.g., SWE-Bench Verified, τ²-bench, AndroidWorld) can be used for both evaluation and post-training. However, if an evaluation set is used for training, it is no longer an independent evaluation set—does this violate the fundamental principle that training and test sets must be separated? The dynamic parameter generation of τ²-bench and the parameterized templates of AndroidWorld alleviate this problem to some extent, but the template structure itself remains fixed. How can we find a balance between fully leveraging the training value of evaluation data and maintaining evaluation independence?
-11. ★★★ This chapter proposes a "form first, substance later" training paradigm: stop SFT once "the format is stable and basic capabilities are present," then switch to RL. But in practice, how do you determine when SFT is "enough" and it's time to switch?
-12. ★★★ The training dynamics of ReTool show (see Experiment 7-15) that a small number of very long responses can significantly lengthen the entire training cycle—most rollouts in a batch are already generated, but you have to wait for those few longest responses to finish, during which GPU utilization on the cluster is very low. How can resource utilization be improved in training clusters for such long-tail response scenarios?
+1. ★★ 灾难性遗忘——一次针对特定任务的微调破坏了模型原有的通用能力（如通用工具调用）——在 Agent 场景下尤其棘手。相比全参微调，LoRA 冻结基座权重、遗忘风险更低，但并非免疫。有哪些策略可以进一步缓解微调带来的能力遗忘？
+2. ★★ 后训练将能力固化为模型权重（“肌肉记忆”），而上下文学习将知识放在推理时的输入中。但有些能力（如领域知识）既可以通过后训练学习，也可以通过 few-shot 示例提供。你会用什么标准来决定某项能力应该走哪条路径？
+3. ★★ 模型蒸馏让小模型学习大模型的行为。按能力层次，被蒸馏的模型大致可分为三级——**Chat 模型**（单轮对话、直接作答）、**Reasoning 模型**（带长链思考再作答）、**Agentic 模型**（多轮调用工具、与环境交互）。分别蒸馏这三类模型，难点有什么不同？（提示：从“要蒸馏的到底是什么”入手——是输出的风格、完整的思考轨迹，还是与环境交互的决策策略；轨迹里哪些 token 该学、哪些是环境返回的不该学；以及成败信号出现得有多晚、有多稀疏。）
+4. ★★★ 在多轮 Agent 交互中，奖励的归因（credit assignment）问题比单轮更严重——一个最终的成功或失败很难归因到第 3 轮还是第 7 轮的决策。你会如何设计奖励分配策略？
+5. ★★★ 后训练、外部化学习和上下文学习构成 Agent 能力的三个维度。如果你有固定预算（比如 $10,000），要提升一个客服 Agent 的性能，你会如何在这三个维度之间分配预算？你的决策取决于哪些因素？
+6. ★★★ 在没有明确奖励函数、样本稀少的情况下，自主实现模型学习，被一些人认为是后训练的终极目标。当前的 RL 训练方法距离这个目标还有多远？你认为下一个突破最可能来自哪个方向？
+7. ★★ 本章指出 LoRA 微调的成本并不高。那么，是否有可能给每个用户（或每个客户公司）训练一个专属的 LoRA，将用户记忆或企业知识写入参数，而非像第三章那样存储在外部知识库中？在什么场景下，“记忆写入参数” 比 “记忆存入知识库” 更有优势？又在什么场景下会适得其反？
+8. ★★★ On-Policy Distillation 依赖更强的教师模型来监督学生。但 OpenAI 的 Weak-to-Strong Generalization 研究提出了一个反直觉的发现：弱模型的监督信号有时能激发强模型本身潜在但未被激活的能力。如果将这一思路应用到 Agent 训练，是否可能实现 “小模型教大模型” 的逆向蒸馏？
+9. ★★ 过程奖励模型（PRM）评估每个思考步骤，而结果奖励模型（ORM）只看最终结果。但“正确的过程导致错误结果”和“错误的过程侥幸得到正确结果”哪个更值得奖励？在 Agent 的多步工具调用场景中，你会如何权衡？
+10. ★★★ 本章讨论的评估数据集（如 SWE-Bench Verified、τ²-bench、AndroidWorld）既可以用于评估也可以用于后训练。但如果将评估集用于训练，它就不再是独立的评估集——这是否违反了训练集与测试集必须分离的基本原则？τ²-bench 的动态参数生成和 AndroidWorld 的参数化模板在一定程度上缓解了这个问题，但模板结构本身仍然是固定的。如何在充分利用评估数据的训练价值与维护评估独立性之间找到平衡？
+11. ★★★ 本章提出 “先形后神” 的训练范式：SFT 到 “格式稳定、能力初具” 即止，然后切换到 RL。但实践中，如何判断 SFT 已经 “足够” 而应该切换？
+12. ★★★ ReTool 的训练动态显示（见实验 7-15），少数超长响应会显著拖长整个训练周期——一批 rollout 里绝大多数已经生成完毕，却要等那几条最长的响应收尾，其间集群的 GPU 利用率很低。如何提升这种长尾响应场景下训练集群的资源利用率？

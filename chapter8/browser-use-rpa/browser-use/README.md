@@ -23,10 +23,12 @@
 [Deutsch](https://www.readme-i18n.com/browser-use/browser-use?lang=de) |
 [Español](https://www.readme-i18n.com/browser-use/browser-use?lang=es) |
 [français](https://www.readme-i18n.com/browser-use/browser-use?lang=fr) |
-[English](https://www.readme-i18n.com/browser-use/browser-use?lang=en) |[한국어](https://www.readme-i18n.com/browser-use/browser-use?lang=ko) |
+[日本語](https://www.readme-i18n.com/browser-use/browser-use?lang=ja) |
+[한국어](https://www.readme-i18n.com/browser-use/browser-use?lang=ko) |
 [Português](https://www.readme-i18n.com/browser-use/browser-use?lang=pt) |
 [Русский](https://www.readme-i18n.com/browser-use/browser-use?lang=ru) |
-[English](https://www.readme-i18n.com/browser-use/browser-use?lang=en)
+[中文](https://www.readme-i18n.com/browser-use/browser-use?lang=zh)
+
 
 # 🤖 Quickstart
 

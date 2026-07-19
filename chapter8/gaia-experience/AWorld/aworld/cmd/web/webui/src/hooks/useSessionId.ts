@@ -4,20 +4,20 @@ import { v4 as uuidv4 } from 'uuid';
 export const useSessionId = () => {
   const [sessionId, setSessionId] = useState<string>('');
 
-  // Get session ID from URL parameters
+  // 从URL参数中获取session ID
   const getSessionIdFromURL = (): string => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('session_id') || '';
   };
 
-  // Update session ID in URL parameters
+  // 更新URL参数中的session ID
   const updateURLSessionId = (id: string) => {
     const url = new URL(window.location.href);
     url.searchParams.set('session_id', id);
     window.history.replaceState({}, '', url.toString());
   };
 
-  // Generate new session ID and update URL
+  // 生成新的session ID并更新URL
   const generateNewSessionId = (): string => {
     const newId = uuidv4();
     setSessionId(newId);
@@ -27,14 +27,14 @@ export const useSessionId = () => {
   };
 
   useEffect(() => {
-    // Check URL for session ID on initialization
+    // 初始化时检查URL中是否有session ID
     const urlSessionId = getSessionIdFromURL();
 
     if (urlSessionId) {
-      // If URL has session ID, use it
+      // 如果URL中有session ID，使用它
       setSessionId(urlSessionId);
     } else {
-      // If URL does not have session ID, generate a new one
+      // 如果URL中没有session ID，生成一个新的
       generateNewSessionId();
     }
   }, []);

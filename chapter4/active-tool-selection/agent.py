@@ -269,7 +269,7 @@ You can now use these tools to complete the task. Please proceed."""
 
 class RetrievalToolAgent:
     """
-    One-shot retrieval agent (semantic tool retrieval / "tool retrieval").
+    One-shot retrieval agent (semantic tool retrieval / "工具检索").
 
     This is the RAG-style middle ground between passive injection and active
     discovery: before the very first LLM call, it retrieves the top-k tools most

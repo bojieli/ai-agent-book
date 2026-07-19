@@ -1,14 +1,14 @@
 """
-Phone Agent — a ReAct Agent that uses PineClaw Voice (make_phone_call) as a tool.
+电话 Agent —— 一个把 PineClaw Voice（make_phone_call）当作工具的 ReAct Agent。
 
-The upper layer is a standard ReAct loop (OpenAI function calling implementation):
-    The user gives a task (e.g., "Call the broadband customer service, find out why an extra 50 yuan was deducted this month, and ask for an explanation")
-        -> Agent thinks about what parameters are needed (number / goal / context)
-        -> Calls the make_phone_call tool to complete the entire conversation
-        -> Reads the returned [structured call record]
-        -> If information is insufficient, asks follow-up questions or calls again; otherwise, gives a final report to the user
+上层是标准的 ReAct 循环（OpenAI function calling 实现）：
+    用户给一个任务（如"打电话给宽带客服，问清本月为何多扣 50 元并要求解释"）
+        -> Agent 思考需要哪些参数（号码 / 目标 / 上下文）
+        -> 调用 make_phone_call 工具完成整段通话
+        -> 读取返回的【结构化通话记录】
+        -> 若信息不足则追问/再拨，否则向用户给出最终汇报
 
-The tool make_phone_call is provided by the pine_voice module (a local simulation of the real PineClaw Voice API).
+工具 make_phone_call 由 pine_voice 模块提供（对真实 PineClaw Voice API 的本地模拟）。
 """
 
 from __future__ import annotations
@@ -17,27 +17,27 @@ import json
 import re
 from typing import Any, Callable
 
-#  Reuse the unified client/model parsing from pine_voice (direct connection via OPENAI_API_KEY, fallback to OpenRouter if missing).
+# 复用 pine_voice 里的统一 client/模型解析（OPENAI_API_KEY 直连，缺失则回退 OpenRouter）。
 from pine_voice import make_phone_call, _get_client, default_model
 
-#  Maximum number of tool calls (including follow-ups/redials) allowed for the agent to prevent infinite loops.
+# 最多允许 Agent 发起几次工具调用（含追问/再拨），防止死循环。
 _MAX_STEPS = 6
 
 _SYSTEM_PROMPT = (
-    "You are a 'Phone Assistant' agent. The user will give you a task that requires making a phone call to complete."
-    "You need to make the phone call on behalf of the user and report the results.\n\n"
-    "You have a tool make_phone_call, which handles the entire phone call (dialing, IVR menu navigation, multi-turn conversation with customer service,"
-    "(Transcription) All handled by the PineClaw voice agent, returning a structured call log.\n\n"
-    "Working Mode (ReAct): \n"
-    "1. First, clarify the number to dial, the call objective, and the context to bring (account/name/known information).\n"
-    "2. Call make_phone_call to complete the call.\n"
-    "3. Read the returned structured record (goal_achieved / key_fields / summary / transcript).\n"
-    "4. If the goal is not achieved or information is insufficient (follow_up_needed is true), you can call again with a clearer objective."
-    "(But the total number of times is limited, do not redial unnecessarily).\n"
-    "5. After the goal is achieved, report to the user in concise Chinese: conclusion + key information (amount/reason/confirmation number/time, etc.)"
-    "+ Follow-up suggestions (if any).\n\n"
-    "Note: If there is no phone number in the task, use a reasonable placeholder number and explain it in the report."
-    "Always report based on the call records actually returned by the tool, and do not fabricate information not mentioned in the call."
+    "你是一名『电话助理』Agent。用户会交给你一个需要打电话才能完成的任务，"
+    "你要代表用户把电话打好并汇报结果。\n\n"
+    "你有一个工具 make_phone_call，它会把整通电话（拨号、IVR 菜单导航、与客服多轮对话、"
+    "转录）全部交给 PineClaw 语音 Agent 完成，并返回结构化通话记录。\n\n"
+    "工作方式（ReAct）：\n"
+    "1. 先想清楚要拨打的号码、通话目标、需要带上的上下文（账号/姓名/已知信息）。\n"
+    "2. 调用 make_phone_call 完成通话。\n"
+    "3. 读取返回的结构化记录（goal_achieved / key_fields / summary / transcript）。\n"
+    "4. 若目标未达成或信息不足（follow_up_needed 为真），可以带着更明确的目标再拨一次"
+    "（但总次数有限，不要无谓重拨）。\n"
+    "5. 目标达成后，用简洁中文向用户汇报：结论 + 关键信息（金额/原因/确认号/时间等）"
+    "+ 后续建议（如有）。\n\n"
+    "注意：如果任务里连电话号码都没有，就用一个合理的占位号码并在汇报中说明。"
+    "始终基于工具真实返回的通话记录来汇报，不要编造通话没有提到的信息。"
 )
 
 _TOOLS = [
@@ -46,24 +46,24 @@ _TOOLS = [
         "function": {
             "name": "make_phone_call",
             "description": (
-                "Make a real phone call on behalf of the user. PineClaw Voice Agent will handle dialing, IVR menu navigation,"
-                "Engage in multiple rounds of dialogue with the other party and return a structured call record (including transcript, whether the goal was achieved,"
-                "Extracted key fields)."
+                "代表用户拨打一通真实电话。PineClaw 语音 Agent 会完成拨号、IVR 菜单导航、"
+                "与对方多轮对话，并返回结构化通话记录（含 transcript、是否达成目标、"
+                "抽取的关键字段）。"
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "phone_number": {
                         "type": "string",
-                        "description": "Called phone number, such as 10000 or 400-810-xxxx.",
+                        "description": "被叫电话号码，如 10000 或 400-810-xxxx。",
                     },
                     "goal": {
                         "type": "string",
-                        "description": "Clear goal for this call (one sentence).",
+                        "description": "本次通话要达成的明确目标（一句话）。",
                     },
                     "context": {
                         "type": "string",
-                        "description": "Auxiliary context: account, name, known amount, time, etc., can be empty.",
+                        "description": "辅助上下文：账号、姓名、已知金额、时间等，可为空。",
                     },
                 },
                 "required": ["phone_number", "goal"],
@@ -83,20 +83,20 @@ def run_agent(
     dry_run: bool = False,
 ) -> str:
     """
-    Run the ReAct phone agent.
+    运行 ReAct 电话 Agent。
 
-    Parameters:
-        task:       The user's natural language task.
-        on_event:   Optional callback for external observation of the agent's trajectory.
-                    Event types: 'think' (agent thinking text) / 'call' (tool input parameters) /
-                    'record' (structured call record) / 'final' (final report).
-        model:      Override the model to use (defaults to environment variable OPENAI_MODEL).
-        phone_hint: Optional phone number; if given, provided as known info to the agent (in dry-run mode, used directly as the called number).
-        goal_hint:  Optional call goal; if given, provided as known info to the agent (in dry-run mode, used directly as the call goal).
-        dry_run:    If true, runs a fully offline scripted ReAct trajectory (no network, no API key required).
+    参数：
+        task:       用户的自然语言任务。
+        on_event:   可选回调，用于外部观察 Agent 轨迹。
+                    事件类型：'think'(Agent 思考文本) / 'call'(工具入参) /
+                    'record'(结构化通话记录) / 'final'(最终汇报)。
+        model:      覆盖使用的模型（默认取环境变量 OPENAI_MODEL）。
+        phone_hint: 可选的电话号码；给定时作为已知信息交给 Agent（dry-run 下直接用作被叫号码）。
+        goal_hint:  可选的通话目标；给定时作为已知信息交给 Agent（dry-run 下直接用作通话目标）。
+        dry_run:    若为真，走完全离线的脚本化 ReAct 轨迹（不联网、不需要任何 API Key）。
 
-    Returns:
-        The agent's final report text for the user.
+    返回：
+        Agent 面向用户的最终汇报文本。
     """
 
     def emit(kind: str, payload: Any) -> None:
@@ -108,12 +108,12 @@ def run_agent(
 
     model = model or default_model()
 
-    # If a number/target is explicitly given, it is spliced into the user message as "known information", and the Agent still decides how to use it.
+    # 若显式给了号码/目标，就作为「已知信息」拼进用户消息，Agent 仍自行决定如何使用。
     hints = []
     if phone_hint:
-        hints.append(f"Known phone number of the other party:{phone_hint}")
+        hints.append(f"已知对方电话号码：{phone_hint}")
     if goal_hint:
-        hints.append(f"User's clear call objective:{goal_hint}")
+        hints.append(f"用户明确的通话目标：{goal_hint}")
     user_content = task if not hints else task + "\n\n（" + "；".join(hints) + "）"
 
     messages: list[dict[str, Any]] = [
@@ -131,22 +131,22 @@ def run_agent(
         )
         msg = resp.choices[0].message
 
-        # Append the assistant message returned by the model at this step (may contain both reasoning text and tool calls).
+        # 附上模型这一步返回的 assistant 消息（可能同时含思考文本与工具调用）。
         messages.append(msg.model_dump(exclude_none=True))
 
         if msg.content:
             emit("think", msg.content)
 
         if not msg.tool_calls:
-            # No tool call = Agent gave final answer.
+            # 没有工具调用 = Agent 给出了最终答复。
             final = msg.content or ""
             emit("final", final)
             return final
 
-        # Execute tool calls one by one (in this example, only make_phone_call).
+        # 逐个执行工具调用（本例只有 make_phone_call）。
         for tc in msg.tool_calls:
             if tc.function.name != "make_phone_call":
-                result = {"error": f"unknown tool {tc.function.name}"}
+                result = {"error": f"未知工具 {tc.function.name}"}
             else:
                 args = json.loads(tc.function.arguments or "{}")
                 emit("call", args)
@@ -167,11 +167,11 @@ def run_agent(
                 }
             )
 
-    # Fallback: steps exhausted without convergence, force the model to summarize once.
+    # 兜底：步数用尽仍未收敛，逼模型直接总结一次。
     messages.append(
         {
             "role": "user",
-            "content": "Based on the above call record, immediately give the user a final report, do not call again.",
+            "content": "请根据以上通话记录，立即给用户一份最终汇报，不要再打电话了。",
         }
     )
     resp = _get_client().chat.completions.create(
@@ -183,17 +183,17 @@ def run_agent(
 
 
 def _guess_phone(task: str) -> str | None:
-    """Roughly extract a digit string that looks like a phone number from the task text (>=4 digits, avoid amounts like '50 yuan')."""
+    """从任务文本里粗略抽取一个像电话号码的数字串（>=4 位，避开『50 元』这类金额）。"""
     for m in re.finditer(r"\d{4,}", task):
         return m.group(0)
     return None
 
 
 def _guess_context(task: str) -> str:
-    """Roughly extract account and other context from the task text (heuristic for dry-run only, not exhaustive)."""
-    m = re.search(r"acc[ount][^A-Za-z0-9]{0,3}([A-Za-z0-9][A-Za-z0-9\-]{2,})", task)
+    """从任务文本里粗略抽取账号等上下文（仅用于 dry-run 的启发式，不求完备）。"""
+    m = re.search(r"账[号户][^A-Za-z0-9]{0,3}([A-Za-z0-9][A-Za-z0-9\-]{2,})", task)
     if m:
-        return f"account {m.group(1)}"
+        return f"账号 {m.group(1)}"
     return ""
 
 
@@ -204,8 +204,8 @@ def _run_agent_dryrun(
     goal_hint: str | None,
 ) -> str:
     """
-    Fully offline scripted ReAct trajectory: no LLM/phone API calls, only demonstrates the loop shape—
-    Think(infer parameters) → Act(make_phone_call, dry_run) → Observe(structured record) → Report.
+    完全离线的脚本化 ReAct 轨迹：不调用任何 LLM/电话 API，仅演示循环的形状——
+    思考(推断参数) → 行动(make_phone_call, dry_run) → 观察(结构化记录) → 汇报。
     """
     phone = phone_hint or _guess_phone(task) or "10010"
     goal = goal_hint or task
@@ -213,8 +213,8 @@ def _run_agent_dryrun(
 
     emit(
         "think",
-        "This is a task that requires making a phone call. I first determine the three elements of the call—"
-        f"number={phone}; target={goal}; context={context or '(none)'}. Parameters are sufficient, now initiating the call.",
+        "这是一个需要打电话才能完成的任务。我先确定通话三要素——"
+        f"号码={phone}；目标={goal}；上下文={context or '（无）'}。参数已足够，现在发起通话。",
     )
 
     call_args = {"phone_number": phone, "goal": goal, "context": context}
@@ -223,11 +223,11 @@ def _run_agent_dryrun(
     emit("record", record)
 
     kf = record.get("key_fields", {}) or {}
-    kf_text = "；".join(f"{k}={v}" for k, v in kf.items()) or "(none)"
+    kf_text = "；".join(f"{k}={v}" for k, v in kf.items()) or "（无）"
     final = (
-        f"Called (dry-run script simulation) {phone} and completed the call.\n"
-        f"Conclusion:{record.get('summary', '')}\n"
-        f"Key information:{kf_text}。"
+        f"已（dry-run 脚本模拟）拨打 {phone} 并完成通话。\n"
+        f"结论：{record.get('summary', '')}\n"
+        f"关键信息：{kf_text}。"
     )
     emit("final", final)
     return final

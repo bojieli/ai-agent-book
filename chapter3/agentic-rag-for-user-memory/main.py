@@ -583,7 +583,7 @@ class InteractiveRAGEvaluator:
 
 
 def _apply_cli_overrides(config: Config, args) -> Config:
-    """Override command-line arguments onto the configuration (unspecified items keep defaults, original behavior unchanged)."""
+    """把命令行参数覆盖到配置上（未指定的项保持默认，不改变原有行为）。"""
     if args.provider:
         config.llm.provider = args.provider
     if args.model:
@@ -606,11 +606,11 @@ def _apply_cli_overrides(config: Config, args) -> Config:
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
-        description="Experiment 3-10 · Agentic RAG User Memory Evaluation System",
+        description="实验 3-10 · 智能体化 RAG 用户记忆评估系统",
         epilog=(
-            "Example:\n"
-            "  python main.py                              # Interactive menu (default)\n"
-            "  python main.py --mode offline-demo          # Offline comparison demo, no API / port 4242 required\n"
+            "示例:\n"
+            "  python main.py                              # 交互式菜单（默认）\n"
+            "  python main.py --mode offline-demo          # 离线对比演示，无需 API / port 4242\n"
             "  python main.py --mode batch --category layer2 --backend local\n"
             "  python main.py --mode batch --test-id layer2_01_multiple_vehicles --provider openai\n"
         ),
@@ -618,67 +618,67 @@ def main():
     )
     parser.add_argument(
         "--config", type=str,
-        help="Configuration file (JSON) path"
+        help="配置文件（JSON）路径"
     )
     parser.add_argument(
         "--mode",
         choices=["interactive", "batch", "demo", "offline-demo"],
         default="interactive",
-        help="Run mode: interactive menu (default) / batch evaluation / demo quick demo / offline-demo offline retrieval comparison"
+        help="运行模式：interactive 交互菜单（默认）/ batch 批量评估 / demo 快速演示 / offline-demo 离线检索对比"
     )
     parser.add_argument(
         "--category",
         choices=["layer1", "layer2", "layer3"],
-        help="Difficulty levels to evaluate in batch mode"
+        help="批量模式下要评估的难度层次"
     )
     parser.add_argument(
         "--test-id", type=str,
-        help="Specify a single test case ID to evaluate"
+        help="指定要评估的单个用例 ID"
     )
     parser.add_argument(
         "--query", type=str,
-        help="Override the user question provided by the test case in offline-demo mode"
+        help="offline-demo 模式下覆盖用例自带的用户问题"
     )
     parser.add_argument(
         "--provider", type=str,
-        help="LLM provider (e.g., openai / kimi / siliconflow / deepseek, etc.)"
+        help="LLM 提供商（如 openai / kimi / siliconflow / deepseek 等）"
     )
     parser.add_argument(
         "--model", type=str,
-        help="LLM model name, overrides the provider's default model"
+        help="LLM 模型名，覆盖提供商默认模型"
     )
     parser.add_argument(
         "--index-mode", choices=["dense", "sparse", "hybrid"],
-        help="Retrieval strategy: dense / sparse (BM25) / hybrid"
+        help="检索策略：dense 稠密 / sparse 稀疏(BM25) / hybrid 混合"
     )
     parser.add_argument(
         "--backend", choices=["auto", "local", "pipeline"],
-        help="Retrieval backend: auto (default, falls back to local if pipeline unavailable) / local built-in offline BM25 / pipeline external 4242 service"
+        help="检索后端：auto 自动（默认，pipeline 不可用则本地）/ local 内置离线 BM25 / pipeline 外部 4242 服务"
     )
     parser.add_argument(
         "--top-k", type=int,
-        help="Number of memory chunks returned per memory retrieval"
+        help="每次记忆检索返回的记忆块数量"
     )
     parser.add_argument(
         "--rounds-per-chunk", type=int,
-        help="Number of turns per chunk when splitting conversation history (default 20)"
+        help="对话历史分块时每块的轮数（默认 20）"
     )
     parser.add_argument(
         "--store-path", type=str,
-        help="Storage path prefix for memory index (default indexes/memory_index)"
+        help="记忆索引的存储路径前缀（默认 indexes/memory_index）"
     )
     parser.add_argument(
         "--test-cases-dir", type=str,
-        help="Evaluation set test_cases directory (default ../user-memory-evaluation/test_cases)"
+        help="评估集 test_cases 目录（默认 ../user-memory-evaluation/test_cases）"
     )
     parser.add_argument(
         "--output", type=str,
-        help="Result output file path"
+        help="结果输出文件路径"
     )
 
     args = parser.parse_args()
 
-    #offline-demo mode: delegate to fully offline comparison demo script
+    # offline-demo 模式：委托给完全离线的对比演示脚本
     if args.mode == "offline-demo":
         import offline_demo
         demo_args = offline_demo.build_parser().parse_args([])
@@ -704,7 +704,7 @@ def main():
     else:
         config = Config.from_env()
 
-    #Apply command-line overrides
+    # 应用命令行覆盖项
     config = _apply_cli_overrides(config, args)
 
     if args.mode == "interactive":

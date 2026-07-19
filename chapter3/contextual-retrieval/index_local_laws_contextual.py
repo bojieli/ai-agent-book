@@ -473,11 +473,11 @@ class ContextualLegalIndexer:
         """Compare contextual vs non-contextual retrieval"""
         if not test_queries:
             test_queries = [
-                "What are the conditions for the formation of a contract",
-                "What are the basic rights of workers",
-                "How to handle liability in traffic accidents",
-                "What is justifiable defense",
-                "Rights and obligations of company shareholders"
+                "什么是合同的成立条件",
+                "劳动者的基本权利有哪些",
+                "如何处理交通事故责任",
+                "什么是正当防卫",
+                "公司股东的权利和义务"
             ]
         
         print("\n" + "="*60)

@@ -1,4 +1,4 @@
-# Core mechanisms (message bus / parallelism / cascading termination / race conditions) use only Python standard library asyncio, no third-party dependencies required.
-# The following dependencies are only used for "optional real LLM judgment" and reading keys from .env; the offline demo works without them.
+# 核心机制（消息总线 / 并行 / 级联终止 / 竞态）仅用 Python 标准库 asyncio，无需任何第三方依赖。
+# 以下依赖仅用于"可选的真实 LLM 判断"与从 .env 读取密钥；不装也能跑通离线演示。
 openai>=1.30.0
 python-dotenv>=1.0.0

@@ -1,15 +1,15 @@
-# Kimi Web Search Agent Dependencies
+# Kimi Web Search Agent 依赖
 
-# Core dependencies
-openai>=1.12.0  # OpenAI Python client, used to call Kimi API
-python-dotenv>=1.0.0  # Environment variable management
+# 核心依赖
+openai>=1.12.0  # OpenAI Python 客户端，用于调用 Kimi API
+python-dotenv>=1.0.0  # 环境变量管理
 
-# Optional dependencies (for advanced features)
-aiohttp>=3.9.0  # Asynchronous HTTP requests
-rich>=13.7.0  # Beautify terminal output
-tenacity>=8.2.3  # Retry mechanism
+# 可选依赖（用于高级功能）
+aiohttp>=3.9.0  # 异步 HTTP 请求
+rich>=13.7.0  # 美化终端输出
+tenacity>=8.2.3  # 重试机制
 
-# Development dependencies
-pytest>=7.4.0  # Testing framework
-black>=23.0.0  # Code formatter
-pylint>=3.0.0  # Code linter
+# 开发依赖
+pytest>=7.4.0  # 测试框架
+black>=23.0.0  # 代码格式化
+pylint>=3.0.0  # 代码检查

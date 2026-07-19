@@ -1,13 +1,13 @@
 """
-Phase 2: Structured Extraction — Extract structured factors from judgment texts using the discovered schema.
+阶段 2：结构化抽取 —— 用发现出来的 schema 从判例文本抽取结构化因子。
 
-Process:
-  1. First determine the charge of the case (select from known charges in the schema);
-  2. Extract factors item by item according to "core general factors + extended factors for this charge", output structured JSON;
-  3. Factors not mentioned in the text return null (for the dialogue Agent to determine "what information is missing");
-  4. With disk cache (data/extracted.jsonl), re-running after a one-time extraction is almost free.
+流程：
+  1. 先判定案件罪名（从 schema 已知的罪名里选）；
+  2. 按「核心通用因子 + 该罪名扩展因子」逐项抽取，输出结构化 JSON；
+  3. 文本未提及的因子返回 null（供对话 Agent 判断"还缺什么信息"）；
+  4. 带磁盘缓存（data/extracted.jsonl），一次性抽取后重跑几乎免费。
 
-Output is uniformly {"charge": <charge>, <factor_key>: <value|null>, ...}.
+输出统一为 {"charge": <罪名>, <factor_key>: <值|null>, ...}。
 """
 import json
 import os
@@ -23,11 +23,11 @@ def _factor_lines(factors):
     lines = []
     for f in factors:
         if f["kind"] == "numeric":
-            t = "Number (integer, remove unit)"
+            t = "数值(整数，去掉单位)"
         elif f["kind"] == "bool":
             t = "true/false"
         else:
-            t = "One of the values:" + "/".join(f.get("values", [])) if f.get("values") else "Categorical value"
+            t = "取值之一：" + "/".join(f.get("values", [])) if f.get("values") else "分类取值"
         lines.append(f'  - "{f["key"]}": {t}  # {f["name_cn"]}')
     return "\n".join(lines)
 
@@ -37,46 +37,46 @@ def _charges(schema):
 
 
 def extract_one(fact_text, schema=None, client=None, charge=None):
-    """Extract {charge, factors...} from a single judgment text. Missing factors take null.
+    """从单条判例文本抽取 {charge, factors...}。缺失因子取 null。
 
-    When charge is known (dataset extraction), reuse it directly to save one call; when unknown (new case in dialogue), first let LLM determine it.
+    charge 已知时（数据集抽取）直接沿用，省一次调用；未知时（对话新案情）先让 LLM 判定。
     """
     schema = schema or load_schema()
     client = client or get_client()
     charges = _charges(schema)
 
-    #  Step 1: Determine charge (call LLM only if not provided)
+    # 第 1 步：判定罪名（仅在未提供时调用 LLM）
     if charge is None:
         charge_resp = client.chat.completions.create(
             model=MODEL, temperature=0,
             response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content":
-                    "Determine which charge the following criminal case belongs to, only from these options:"
-                    + "/".join(charges) + '. Output only JSON: {"charge": "..."}.'},
+                    "判断下述刑事案件属于哪个罪名，只能从这些里选："
+                    + "/".join(charges) + '。只输出 JSON：{"charge": "..."}。'},
                 {"role": "user", "content": fact_text},
             ],
         )
         charge = json.loads(charge_resp.choices[0].message.content).get("charge")
-    if charge not in charges:  #  Fallback: default to the first charge
+    if charge not in charges:  # 兜底：默认第一个罪名
         charge = charges[0]
 
-    #  Step 2: Extract factors applicable to this charge
+    # 第 2 步：按该罪名适用的因子抽取
     factors = factors_for_charge(schema, charge)
     sys = (
-        "You are an information extraction assistant for judicial data analysis. Please extract the following factors from the \"facts\" paragraph of the judgment:"
-        "Output only a JSON object:\n" + _factor_lines(factors) + "\n\nRules:\n"
-        "1. Numeric factors: output integer (remove '元', '人民币', '名', etc.).\n"
-        "2. Boolean factors: true if text explicitly supports, false if explicitly denies.\n"
-        "3. Categorical factors: only take one of the given values.\n"
-        "4. Factors with no relevant information in the text: return null (do not guess).\n"
-        "5. Output only JSON, no explanation."
+        "你是协助司法数据分析的信息抽取助手。请从判决书「事实」段落中抽取以下因子，"
+        "只输出一个 JSON 对象：\n" + _factor_lines(factors) + "\n\n规则：\n"
+        "1. 数值因子输出整数（去掉'元''人民币''名'等字样）。\n"
+        "2. 是非因子：文本明确支持则 true，明确否定则 false。\n"
+        "3. 分类因子只能取给定取值之一。\n"
+        "4. 文本完全没有相关信息的因子取 null（不要臆测）。\n"
+        "5. 只输出 JSON，不要解释。"
     )
     resp = client.chat.completions.create(
         model=MODEL, temperature=0,
         response_format={"type": "json_object"},
         messages=[{"role": "system", "content": sys},
-                  {"role": "user", "content": f"Facts paragraph of the judgment:\n{fact_text}"}],
+                  {"role": "user", "content": f"判决书事实段落：\n{fact_text}"}],
     )
     raw = json.loads(resp.choices[0].message.content)
     return _normalize(raw, charge, factors)
@@ -95,7 +95,7 @@ def _normalize(raw, charge, factors):
             else:
                 out[f["key"]] = int(v)
         elif f["kind"] == "bool":
-            out[f["key"]] = bool(v) if isinstance(v, bool) else str(v).lower() in ("true", "1", "Yes")
+            out[f["key"]] = bool(v) if isinstance(v, bool) else str(v).lower() in ("true", "1", "是")
         else:  # categorical
             out[f["key"]] = str(v)
     return out
@@ -108,7 +108,7 @@ def load_dataset():
 
 
 def extract_dataset(schema, use_cache=True, verbose=True):
-    """Extract for the entire dataset with caching. Returns a list, each item contains original case fields + `extracted`."""
+    """对整个数据集抽取，带缓存。返回 list，每项含原案例字段 + `extracted`。"""
     cases = load_dataset()
     cache = {}
     if use_cache and os.path.exists(CACHE_PATH):
@@ -129,7 +129,7 @@ def extract_dataset(schema, use_cache=True, verbose=True):
             cache[c["id"]] = extracted
             n_called += 1
             if verbose:
-                print(f"  Extracting {c['id']} ({extracted.get('charge')}) ... done")
+                print(f"  抽取 {c['id']} ({extracted.get('charge')}) ... 完成")
         results.append({**c, "extracted": extracted})
 
     with open(CACHE_PATH, "w", encoding="utf-8") as fh:
@@ -137,5 +137,5 @@ def extract_dataset(schema, use_cache=True, verbose=True):
             fh.write(json.dumps({"id": r["id"], "extracted": r["extracted"]},
                                 ensure_ascii=False) + "\n")
     if verbose:
-        print(f"  Actual LLM calls this time: {n_called} times, the rest hit cache.")
+        print(f"  本次实际调用 LLM {n_called} 次，其余命中缓存。")
     return results

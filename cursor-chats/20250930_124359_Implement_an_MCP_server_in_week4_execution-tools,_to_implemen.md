@@ -10,32 +10,34 @@
 
 ### 👤 You
 
-Implement an MCP server in week4/execution-tools, to implement all of the execution tools thoroughly.
+Implement an MCP server in week4/execution-tools, to implement all of the execution tools throughly.
 
-### Execution Tools
 
-Before executing irreversible critical operations, call another LLM to check, similar to real-world leadership approval and risk control processes.
+### 执行工具
 
-If the result of a tool call is very complex, call another LLM after execution to summarize and plan (e.g., error messages returned by a virtual terminal may be very long).
+不可逆的关键操作执行前，调用另一个 LLM 进行检查，类似现实世界的领导审批和风控流程
 
-If a tool call can be verified, such as writing code that can be checked for syntax errors, automatically perform the verification and feed the verification result back to the model.
+如果工具调用的结果非常复杂，工具执行后调用另一个 LLM 进行总结和规划（例如虚拟终端返回的错误信息可能很长）
 
-#### File System Tools
+如果工具调用可以验证，例如写代码后可以验证代码是否有语法错误，则自动执行验证，并把验证结果反馈到模型
 
-- File write
-- File edit
+#### 文件系统工具
 
-#### General Execution Tools
+- 文件写入
+- 文件编辑
 
-- Code interpreter
-- Virtual terminal
+#### 通用执行工具
 
-#### External System Integration Tools
+- 代码解释器
+- 虚拟终端
 
-- Add Google Calendar
-- GitHub Pull Request submission
+#### 对接外部系统工具
 
-Experiment 4.3: Execution Tools MCP Server
+- 添加 Google Calendar
+- GitHub 提交 Pull Request
+
+
+实验 4.3：执行工具 MCP 服务器
 
 ---
 
@@ -119,7 +121,7 @@ The implementation includes comprehensive error handling, detailed documentation
 
 ### 👤 You
 
-For execution tools, use exactly the same model options and model configs as conversational_agent.py in user-memory.
+For execution tools, use exactly the same model options and model configs as conversational_agent.py in user-memory
 
 ---
 
@@ -177,7 +179,9 @@ The execution tools MCP server now has the exact same LLM configuration architec
 
 ---
 
-### 👤 YouFor the execution tools (code interpreter or virtual terminal), only use LLM summary if it is larger than 10000 characters. Otherwise, directly return the result as-is
+### 👤 You
+
+For the execution tools (code interpreter or virtual terminal), only use LLM summary if it is larger than 10000 characters. Otherwise, directly return the result as-is
 
 ---
 

@@ -21,7 +21,7 @@
 
 <h4 align="center">
 
-[English](./README.md) |
+[中文版](./README_zh.md) |
 [Quickstart](#️-quickstart) |
 [Architecture](#️-architecture-design-principles) |
 [Applications](#-applications) |
@@ -122,7 +122,8 @@ Demonstrating collective intelligence across diverse domains. Join us in the ong
 <details>
 <summary style="font-size: 1.2em;font-weight: bold;"> 🌏 View ongoing projects </summary>
 
-<!--| **Category** | **Achievement** | **Status** | **Expected Impact** |
+<!--
+| **Category** | **Achievement** | **Status** | **Expected Impact** |
 |:-------------|:----------------|:-----------|:-------------------|
 | **🖼️ Multi-Modal** | Advanced OS / Web Interaction |  In Progress | Visual reasoning & environment understanding |
 | **💻 Code** | Advanced installation, coding, testing, debugging, etc. ability | In Progress | Automated software engineering capabilities |

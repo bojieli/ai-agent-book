@@ -172,6 +172,10 @@ Double check if consistent with official cookbook:
 
 ### 🤖 Cursor Assistant
 
+Let me read the current state of the file to do a comprehensive comparison with the [official OpenAI Cookbook tutorial](https://cookbook.openai.com/articles/gpt-oss/fine-tune-transfomers):
+
+---
+
 ### 🤖 Cursor Assistant
 
 Perfect! Let me now compare every aspect with the [official OpenAI Cookbook](https://cookbook.openai.com/articles/gpt-oss/fine-tune-transfomers):
@@ -364,94 +368,96 @@ Perfect! The README has been updated to match all the new parameters while keepi
 ### ⚠️ **Preserved as Requested:**
    - H100 vs H200 hardware requirements (kept your empirical experience)
    - 97GB peak memory usage
-   - All warnings about OOM on 80GB GPUsThe README now perfectly aligns with the updated Python script and the [official OpenAI Cookbook tutorial](https://cookbook.openai.com/articles/gpt-oss/fine-tune-transfomers)! 🎉
+   - All warnings about OOM on 80GB GPUs
+
+The README now perfectly aligns with the updated Python script and the [official OpenAI Cookbook tutorial](https://cookbook.openai.com/articles/gpt-oss/fine-tune-transfomers)! 🎉
 
 ---
 
 ### 👤 You
 
-The README needs to include the introduction and examples of chat templates from @https://cookbook.openai.com/articles/gpt-oss/fine-tune-transfomers
+README 需要包括 @https://cookbook.openai.com/articles/gpt-oss/fine-tune-transfomers  中关于 chat template 的介绍和示例
 
 ---
 
 ### 🤖 Cursor Assistant
 
-I'll add a detailed introduction and examples of chat templates to the README. Let me add a new section after the dataset preparation section:
+我来在 README 中添加关于 chat template 的详细介绍和示例。让我在数据集准备之后添加一个新章节：
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Now let me add an explanation before the inference examples to help users understand the output format:
+现在让我在推理示例前面添加一个说明，帮助用户理解输出格式：
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Perfect! Now let me check for any formatting issues:
+Perfect! 现在让我检查是否有任何格式问题：
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Perfect! The README has been successfully updated, including a complete introduction and examples of chat templates from the [OpenAI Cookbook official tutorial](https://cookbook.openai.com/articles/gpt-oss/fine-tune-transfomers). Here is a summary of the added content:
+完美！README 已经成功更新，包含了来自 [OpenAI Cookbook 官方教程](https://cookbook.openai.com/articles/gpt-oss/fine-tune-transfomers)中关于 chat template 的完整介绍和示例。以下是添加的内容：
 
-## 📝 Summary of New Content
+## 📝 新增内容总结
 
-### 1. **New Section 3: Understanding Chat Templates and the Harmony Format** (Lines 82-152)
+### 1. **新增章节 3: 理解 Chat Template 和 Harmony 格式**（第82-152行）
 
-Detailed introduction of:
-- ✅ **Message type table**: developer, user, assistant, analysis, final, messages
-- ✅ **Key features**:
-  - The `thinking` and `content` fields of Assistant messages
-  - Two types of system messages (system and developer)
-- ✅ **Chat Template example code**: Demonstrates how to use `apply_chat_template()`
-- ✅ **Formatting example**: Shows the complete Harmony format output structure
-- ✅ **Special token explanation**: `<|start|>`, `<|end|>`, `<|return|>`, `<|channel|>`, etc.
+详细介绍了：
+- ✅ **消息类型表格**：developer, user, assistant, analysis, final, messages
+- ✅ **重要特性**：
+  - Assistant 消息的 `thinking` 和 `content` 字段
+  - 两种系统消息（system 和 developer）
+- ✅ **Chat Template 示例代码**：展示如何使用 `apply_chat_template()`
+- ✅ **格式化示例**：展示完整的 Harmony 格式输出结构
+- ✅ **特殊 token 说明**：`<|start|>`, `<|end|>`, `<|return|>`, `<|channel|>` 等
 
-### 2. **Technical Details Section Enhancement** (Lines 382-444)
+### 2. **技术细节章节增强**（第382-444行）
 
-Added:
-- ✅ **Detailed Harmony response format**
-- ✅ **Comparison with standard conversation formats** (traditional vs Harmony)
-- ✅ **Channel mechanism**: The purpose of analysis, commentary, and final
-- ✅ **Role of Chat Templates**: The conversion process from structured messages to formatted text
-- ✅ **Dataset format explanation**: Explains how Multilingual-Thinking uses the Harmony format
+添加了：
+- ✅ **Harmony 响应格式详解**
+- ✅ **与标准对话格式的对比**（传统 vs Harmony）
+- ✅ **Channel 机制**：analysis、commentary、final 的用途
+- ✅ **Chat Template 的作用**：从结构化消息到格式化文本的转换过程
+- ✅ **数据集格式说明**：解释 Multilingual-Thinking 如何使用 Harmony 格式
 
-### 3. **Inference Example Enhancement** (Lines 250-333)
+### 3. **推理示例增强**（第250-333行）
 
-Added to each example:
-- ✅ Format explanation (meaning of special tokens)
-- ✅ Example titles and descriptions
-- ✅ Specific demonstration of cross-lingual capabilities
+为每个示例添加了：
+- ✅ 格式说明（特殊 token 的含义）
+- ✅ 示例标题和说明
+- ✅ 跨语言能力的具体展示
 
-### 4. **New FAQ Items** (Lines 519-531)
+### 4. **常见问题新增**（第519-531行）
 
-Added two new questions:
-- ✅ **Q: What is the Harmony format? Why use it?**
-- ✅ **Q: Do I need to handle Chat Templates manually?**
+添加了两个新问题：
+- ✅ **Q: 什么是 Harmony 格式？为什么要使用它？**
+- ✅ **Q: 我需要手动处理 Chat Template 吗？**
 
-### 5. **Other Updates**
+### 5. **其他更新**
 
-- ✅ Updated section numbers (original sections 3-4 became 4-5)
-- ✅ Enhanced feature descriptions
-- ✅ Updated post-training evaluation recommendations
+- ✅ 更新了章节编号（原来的章节 3-4 变成了 4-5）
+- ✅ 增强了功能特性说明
+- ✅ 更新了训练后评估的建议
 
-## 🎯 Key Features
+## 🎯 关键特性
 
-The README now fully covers:
-1. **Complete explanation of the Harmony format** (what it is, why use it, how to use it)
-2. **How Chat Templates work** (conversion from input to output)
-3. **Practical examples** (code + output format)
-4. **Usage guidance** (developers don't need to handle it manually)
+现在 README 完整涵盖了：
+1. **Harmony 格式的完整说明**（什么是、为什么用、怎么用）
+2. **Chat Template 的工作原理**（从输入到输出的转换）
+3. **实际示例**（代码 + 输出格式）
+4. **使用指导**（开发者无需手动处理）
 
-This enables users to:
-- 🔍 Understand the special format of gpt-oss models
-- 🛠️ Know how to prepare their own datasets
-- 📊 Understand the output format for training and inference
-- 🚀 Quickly get started with multilingual reasoning model fine-tuning
+这使得用户能够：
+- 🔍 理解 gpt-oss 模型的特殊格式
+- 🛠️ 知道如何准备自己的数据集
+- 📊 理解训练和推理的输出格式
+- 🚀 快速上手多语言推理模型微调
 
-The README is now fully aligned with the official tutorial, while retaining your hardware requirement notes based on practical experience!
+README 现在完全与官方教程保持一致，同时保留了您基于实际经验的硬件要求说明！
 
 ---
 

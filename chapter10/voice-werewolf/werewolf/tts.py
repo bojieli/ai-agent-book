@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Optional Text-to-Speech (TTS) – synthesizes players' public messages into speech.
+"""可选的语音合成（TTS）——把玩家公开发言合成为语音。
 
-Voice is an **optional enhancement** for this experiment, not required to run: the default text mode is sufficient to complete a full game and
-verify information isolation. It is only enabled with --voice, using OpenAI tts-1 to synthesize each public message into mp3,
-saved to the audio/ directory; on macOS, afplay can be used to play them on the fly (--play).
+语音是本实验的**可选增强**，不是跑通的必需：默认文本模式即可完整跑完一局并
+验证信息隔离。加 --voice 时才启用，用 OpenAI tts-1 把每条公开发言合成 mp3，
+存到 audio/ 目录；在 macOS 上可用 afplay 顺带播放（--play）。
 """
 
 import os
@@ -12,7 +12,7 @@ import subprocess
 from .agent import get_client
 
 
-#Assign different voices to different players for easy distinction
+# 给不同玩家分配不同音色，便于区分
 _VOICES = ["alloy", "echo", "fable", "onyx", "nova", "shimmer", "coral"]
 
 
@@ -31,9 +31,9 @@ class TTS:
             resp = get_client().audio.speech.create(
                 model="tts-1", voice=voice, input=text)
             resp.stream_to_file(path)
-            print(f"    [TTS] {speaker}Message synthesized to speech (voice {voice}）→ {path}")
+            print(f"    [TTS] {speaker} 发言已合成语音（音色 {voice}）→ {path}")
             if self.play:
-                #macOS comes with afplay; for other platforms, please change the player yourself
+                # macOS 自带 afplay；其它平台请自行改播放器
                 subprocess.run(["afplay", path], check=False)
         except Exception as e:
-            print(f"    [TTS] Synthesis failed (does not affect game progress):{e}")
+            print(f"    [TTS] 合成失败（不影响游戏进行）：{e}")

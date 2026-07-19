@@ -1025,22 +1025,22 @@ def interactive_mode(api_key: str, provider: str = "siliconflow", model: str = N
 def main():
     """Main function"""
     parser = argparse.ArgumentParser(
-        description="Context-Aware AI Agent (Chapter 1 Experiment 1.1: Context Ablation Study)",
-        epilog="""Examples:
-  # Interactive mode (default)
+        description="上下文感知 AI Agent（第一章 实验 1.1：上下文消融实验）",
+        epilog="""示例：
+  # 交互模式（默认）
   python main.py
 
-  # Run full ablation study (five context modes comparison)
+  # 运行完整消融实验（五种上下文模式对照）
   python main.py --mode ablation
 
-  # Multi-case ablation comparison, output results to specified file
+  # 多案例消融对照，输出结果到指定文件
   python main.py --mode ablation --cases 3 --output my_ablation.json
 
-  # Compare only "full context" and "no history" modes
+  # 只对比“完整上下文”与“无历史消息”两种模式
   python main.py --mode ablation --ablation-modes full no_history
 
-  # Single task execution, specify context mode and provider
-  python main.py --mode single --task "Convert $1000 to EUR, GBP, JPY and compute the average" \\
+  # 单任务执行，指定上下文模式与提供商
+  python main.py --mode single --task "把 1000 美元换算成欧元、英镑、日元并求平均值" \\
       --context-mode full --provider doubao
 """,
         formatter_class=argparse.RawDescriptionHelpFormatter
@@ -1049,52 +1049,52 @@ def main():
         "--mode",
         choices=["single", "ablation", "interactive"],
         default="interactive",
-        help="Run mode: single=single task, ablation=ablation study, interactive=interactive (default)"
+        help="运行模式：single=单任务，ablation=消融实验，interactive=交互式（默认）"
     )
     parser.add_argument(
         "--task",
         type=str,
-        help="Task/question to execute (for single mode; if not provided, select from example tasks)"
+        help="要执行的任务/问题（用于 single 模式；不提供则从示例任务中选择）"
     )
     parser.add_argument(
         "--context-mode",
         choices=["full", "no_history", "no_reasoning", "no_tool_calls", "no_tool_results"],
         default="full",
-        help="Context mode in single mode: full=full; no_history=no history messages;"
-             "no_reasoning=no reasoning process; no_tool_calls=no tool definitions; no_tool_results=no tool execution results"
+        help="single 模式下的上下文模式：full=完整；no_history=无历史消息；"
+             "no_reasoning=无思考过程；no_tool_calls=无工具定义；no_tool_results=无工具执行结果"
     )
     parser.add_argument(
         "--ablation-modes",
         nargs="+",
         choices=["full", "no_history", "no_reasoning", "no_tool_calls", "no_tool_results"],
-        help="Context modes to test in ablation study (default: test all five modes)"
+        help="消融实验中要测试的上下文模式（默认测试全部五种）"
     )
     parser.add_argument(
         "--cases",
         type=int,
         default=1,
-        help="Number of cases for ablation study (default: 1; >1 runs cross-mode comparison on multiple example tasks)"
+        help="消融实验运行的案例数量（默认 1；>1 时在多个示例任务上做跨模式对照）"
     )
     parser.add_argument(
         "--provider",
         choices=["siliconflow", "doubao", "kimi", "moonshot", "openrouter"],
         default="doubao",
-        help="LLM provider (default: doubao; openrouter or falls back to OpenRouter when primary key is missing)"
+        help="LLM 提供商（默认：doubao；openrouter 或缺失主 key 时经 OpenRouter 兜底）"
     )
     parser.add_argument(
         "--model",
         type=str,
-        help="Model name to use (optional; if not specified, uses the provider's default model)"
+        help="使用的模型名称（可选，不指定则使用该提供商的默认模型）"
     )
     parser.add_argument(
         "--api-key",
         type=str,
-        help="API Key for the LLM provider (can also be set via environment variables SILICONFLOW_API_KEY/ARK_API_KEY/MOONSHOT_API_KEY)"
+        help="LLM 提供商的 API Key（也可通过环境变量 SILICONFLOW_API_KEY/ARK_API_KEY/MOONSHOT_API_KEY 设置）"
     )
     parser.add_argument(
         "--output",
         type=str,
-        help="Result output file path (JSON result for single mode, raw result JSON for ablation mode)"
+        help="结果输出文件路径（single 模式为 JSON 结果，ablation 模式为原始结果 JSON）"
     )
 
     args = parser.parse_args()

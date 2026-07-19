@@ -411,57 +411,57 @@ def build_parser() -> argparse.ArgumentParser:
         prog="demo_comparison.py",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=(
-            "Active tool selection experiment: comparing the strategy of \"stuffing all tools into context\" with \"on-demand tool retrieval\".\n"
-            "When the number of tools grows to hundreds, dynamic retrieval maintains recall while significantly reducing\n"
-            "context token cost and decreasing model selection errors.\n\n"
-            "Strategy description:\n"
-            "  all-tools  Inject all tools at once (traditional passive baseline)\n"
-            "  retrieval  Retrieve top-k tools by task semantics before injection (tool retrieval / RAG style)\n"
-            "  active     MCP-Zero style active discovery: model iteratively requests needed tools\n\n"
-            "Offline table (recall / token cost / scalability with tool count) runs without API key;\n"
-            "end-to-end accuracy and latency comparison requires API key configuration."
+            "主动工具选择实验：对比\"把全部工具塞进上下文\"与\"按需检索工具\"两类策略。\n"
+            "在工具数量增长到上百个时，动态检索（retrieval）在保持召回率的同时大幅降低\n"
+            "上下文 token 成本，并减少模型的选择错误。\n\n"
+            "策略说明：\n"
+            "  all-tools  一次性注入全部工具（传统被动式基线）\n"
+            "  retrieval  按任务语义检索 top-k 个工具后再注入（工具检索 / RAG 式）\n"
+            "  active     MCP-Zero 式主动发现：模型迭代地请求所需工具\n\n"
+            "离线表格（召回率 / token 成本 / 随工具规模的扩展性）无需 API Key 即可运行；\n"
+            "端到端准确率与延迟对比需要配置 API Key。"
         ),
         epilog=(
-            "Example:\n"
-            "  python demo_comparison.py --offline                 # Offline comparison only, no API needed\n"
-            "  python demo_comparison.py --offline --num-tools 200 # Scale to 200 tools for comparison\n"
-            "  python demo_comparison.py --strategy compare        # End-to-end comparison of all three strategies (API required)\n"
-            "  python demo_comparison.py --query \"deploy to production\" --strategy retrieval\n"
-            "  python demo_comparison.py --output results.json     # Save results as JSON"
+            "示例：\n"
+            "  python demo_comparison.py --offline                 # 仅离线对比，无需 API\n"
+            "  python demo_comparison.py --offline --num-tools 200 # 扩展到 200 个工具再对比\n"
+            "  python demo_comparison.py --strategy compare        # 三种策略端到端对比（需 API）\n"
+            "  python demo_comparison.py --query \"部署到生产环境\" --strategy retrieval\n"
+            "  python demo_comparison.py --output results.json     # 保存结果为 JSON"
         ),
     )
     parser.add_argument(
         "--strategy", choices=["all", "retrieval", "active", "compare"],
         default="compare",
-        help="Strategy used for end-to-end evaluation; compare means compare all three strategies (default: compare)",
+        help="端到端评测使用的策略；compare 表示三种策略全部对比（默认：compare）",
     )
     parser.add_argument(
         "--query", type=str, default=None,
-        help="Run the selected strategy on a single query only (requires API), instead of running the full benchmark set",
+        help="只对单条查询运行选定策略（需要 API），而不是跑整个基准集",
     )
     parser.add_argument(
         "--num-tools", type=int, default=0, metavar="N",
-        help="Expand the tool directory to N tools (fill with synthetic distractor tools to observe scalability); 0 means keep the real directory (default: 0)",
+        help="将工具目录扩充到 N 个（用合成干扰工具补齐，用于观察扩展性）；0 表示保持真实目录（默认：0）",
     )
     parser.add_argument(
         "--top-k", type=int, default=config.TOP_K_TOOLS, metavar="K",
-        help=f"Number of tools retrieved by the retrieval strategy (default: {config.TOP_K_TOOLS}）",
+        help=f"retrieval 策略检索的工具数量（默认：{config.TOP_K_TOOLS}）",
     )
     parser.add_argument(
         "--model", type=str, default=config.OPENAI_MODEL,
-        help=f"LLM model used for coverage (default: {config.OPENAI_MODEL}）",
+        help=f"覆盖使用的 LLM 模型（默认：{config.OPENAI_MODEL}）",
     )
     parser.add_argument(
         "--output", type=str, default=None, metavar="PATH",
-        help="Write results to a JSON file",
+        help="将结果写入 JSON 文件",
     )
     parser.add_argument(
         "--offline", action="store_true",
-        help="Run only offline deterministic comparison (recall/token cost), without any API calls",
+        help="仅运行离线确定性对比（召回率/token 成本），不进行任何 API 调用",
     )
     parser.add_argument(
         "--legacy-demos", action="store_true",
-        help="Additionally run the original narrative demonstrations (semantic routing, iterative discovery, etc., require API)",
+        help="额外运行原有的叙事式演示（语义路由、迭代发现等，需要 API）",
     )
     return parser
 
@@ -499,10 +499,10 @@ def main(argv=None):
 
     # 2) Online end-to-end comparison — needs an API key.
     if args.offline:
-        print("\n[offline mode] Skipping all evaluations that require API.")
+        print("\n[offline mode] 跳过所有需要 API 的评测。")
     elif not _has_api_key():
-        print("\n[Tip] OPENAI_API_KEY not detected, skipping end-to-end evaluation (accuracy/latency).")
-        print("       Configure .env to run end-to-end comparison; or use --offline to explicitly run only the offline part.")
+        print("\n[提示] 未检测到 OPENAI_API_KEY，跳过端到端评测（准确率/延迟）。")
+        print("       配置 .env 后可运行端到端对比；或使用 --offline 显式仅跑离线部分。")
     else:
         if args.query:
             results['single_query'] = run_single_query(
@@ -520,14 +520,14 @@ def main(argv=None):
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
-        print(f"\nResults written to {args.output}")
+        print(f"\n结果已写入 {args.output}")
 
     print_section("Takeaway")
     print(
-        "When the number of tools grows to hundreds, stuffing all tools into context wastes tokens and interferes with decision-making;\n"
-        "On-demand retrieval transforms the \"tool selection\" problem into a \"knowledge retrieval\" problem—while maintaining recall,\n"
-        "it reduces the token cost of tool descriptions to a very low level and also decreases model selection errors.\n\n"
-        "Reference: MCP-Zero paper (https://arxiv.org/pdf/2506.01056)"
+        "当工具数量增长到上百个时，把全部工具塞进上下文既浪费 token 又干扰决策；\n"
+        "按需检索把\"工具选择\"问题转化为\"知识检索\"问题——在保持召回率的同时\n"
+        "把工具描述的 token 成本压到很低，也减少了模型的选择错误。\n\n"
+        "参考：MCP-Zero 论文 (https://arxiv.org/pdf/2506.01056)"
     )
 
 

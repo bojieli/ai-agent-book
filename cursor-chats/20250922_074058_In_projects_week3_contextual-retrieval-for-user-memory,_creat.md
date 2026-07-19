@@ -143,124 +143,7 @@ I'll enhance the experiment to integrate Advanced JSON Cards with contextual ret
 
 ### 🤖 Cursor Assistant
 
-I've now thoroughly examined the existing codebase. Let me now read the chapter2.md to understand the Advanced JSON Cards concept, and then examine the existing project structure to integrate everything properly.
-
----
-
-### 🤖 Cursor Assistant
-
-Now I have a comprehensive understanding of both the Advanced JSON Cards system and the existing project structure. Let me now enhance the project to integrate both systems.
-
----
-
-### 🤖 Cursor Assistant
-
-I've now created the enhanced project with full integration of Advanced JSON Cards and contextual retrieval. Let me verify the final structure and provide a summary.
-
----
-
-### 🤖 Cursor Assistant
-
-I've successfully enhanced the project with full Advanced JSON Cards integration! Here's a summary of what was created:
-
-## 🎯 Enhanced Project: Dual-Context Memory System
-
-The project now combines **two complementary memory systems**:
-
-### 1️⃣ Advanced JSON Cards (Static Context - Always Present)
-- **Key Facts**: User's personal information, preferences, identity details
-- **Backstory**: Narrative summary of important life events and relationships
-- **Always in context** - provides stable, reliable user profile
-- Generated automatically from conversation history during learning phase
-
-### 2️⃣ Contextualized Agentic RAG (Dynamic Context - On Demand)
-- **Conversation chunks**: Detailed dialogue history in 20-round segments
-- **Context-enhanced**: Each chunk enriched with contextual description
-- **Agent-driven**: Agent decides when to search for specific memories
-- **Tool-based**: Uses `search_memories` and `get_conversation_details` tools
-
-## 📁 Updated Project Structure
-
-```
-projects/week3/contextual-retrieval-for-user-memory/
-├── README.md                       # Updated with dual-context explanation
-├── config.py                       # Enhanced with Advanced JSON Cards config
-├── memory_indexer.py              # Updated to generate Advanced JSON Cards
-├── memory_tools.py                # Enhanced with card-aware tools
-├── agentic_memory_agent.py        # Dual-context agent implementation
-├── evaluation.py                  # Updated evaluation framework
-├── main.py                        # Enhanced entry point
-├── demo.py                        # Updated demonstration
-├── requirements.txt               # Dependencies
-├── env.example                    # Environment template
-└── test_cases/
-    └── layer1/
-        └── 01_insurance_vehicles_sample.yaml
-```
-
-## 🔄 How the Dual System Works
-
-### Learning Phase
-```
-Conversation History
-        │
-        ├──→ Chunk into 20-round segments
-        │       │
-        │       └──→ Contextual Retrieval Indexing
-        │               • Generate context for each chunk
-        │               • Create BM25 + embedding indexes
-        │
-        └──→ Extract Key Facts & Backstory
-                │
-                └──→ Advanced JSON Cards Generation
-                        • Extract user preferences
-                        • Summarize important events
-                        • Build relationship graph
-```
-
-### Evaluation Phase (Agent Execution)
-```
-Agent receives query
-        │
-        ├──→ Advanced JSON Cards (always in context)
-        │       • "User prefers email communication"
-        │       • "User has 2 vehicles insured"
-        │       • "User's backstory: married, 2 kids"
-        │
-        └──→ Agent decides to search memories
-                │
-                └──→ Contextual Retrieval (on demand)
-                        • "Find conversations about vehicle claims"
-                        • "Retrieve details about insurance discussion"
-                        • "Get specific dates and amounts mentioned"
-```
-
-## 🚀 Usage
-
-```bash
-# Run the enhanced demo
-python demo.py
-
-# Evaluate with dual-context mode
-python main.py evaluate --mode dual-context --test-case layer1/01_insurance_vehicles_sample.yaml
-
-# Compare all modes
-python main.py evaluate --mode compare --test-case layer1/01_insurance_vehicles_sample.yaml
-
-# Interactive mode with full context
-python main.py interactive
-```
-
-## 📊 Expected Benefits
-
-The dual-context approach provides:
-1. **Immediate user understanding** - Cards give instant profile without search
-2. **Precise detail retrieval** - RAG finds specific conversation details when needed
-3. **Robust fallback** - If RAG fails, cards still provide useful information
-4. **Cost efficiency** - Cards are small (always in context), RAG is used only when necessary
-5. **Proactive service** - Agent can anticipate needs based on card summaries
-
-This implementation demonstrates the key insight from chapter2: effective AI agents need both **stable knowledge** (Advanced JSON Cards) and **dynamic retrieval** (contextual RAG) working together.I'll now enhance the contextual retrieval system to integrate Advanced JSON Cards as the primary structured summary (always in context) alongside the dynamic contextual RAG for detailed conversation retrieval. This dual-context approach enables truly proactive service [[memory:8629917]].
+I'll now enhance the contextual retrieval system to integrate Advanced JSON Cards as the primary structured summary (always in context) alongside the dynamic contextual RAG for detailed conversation retrieval. This dual-context approach enables truly proactive service [[memory:8629917]].
 
 ---
 
@@ -429,7 +312,9 @@ python main.py evaluate --test-case layer1/01_insurance_vehicles_sample.yaml
 
 ### 📚 Educational Value
 
-This implementation demonstrates [[memory:8629901]] [[memory:8629917]]:1. **主动服务** requires both:
+This implementation demonstrates [[memory:8629901]] [[memory:8629917]]:
+
+1. **主动服务** (Proactive Service) requires both:
    - Structured summary (JSON Cards) for understanding relationships
    - Detailed context (Contextual RAG) for specific information
 
@@ -484,7 +369,7 @@ agent = MemoryAgent(user_id)  # Dual-context automatic
 
 ### 5. **Highlighted the Innovation**
 - Explained why embedding both systems is revolutionary
-- Used the concept of **主动服务** to emphasize the advancement
+- Used the concept of **主动服务** (proactive service) to emphasize the advancement
 - Made clear this moves beyond Q&A to anticipatory assistance
 
 ### 6. **Improved Visual Flow**

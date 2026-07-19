@@ -1,642 +1,670 @@
-# Multi-Agent Collaboration
+# 多 Agent 协作
 
-In the five-level AI capability description proposed by OpenAI (Level 1 Conversationalists, Level 2 Reasoners, Level 3 Agents, Level 4 Innovators, Level 5 Organizations), multi-agent collaboration is often analogized as one of the paths toward Level 5—it should be noted that "Organizations" here refers to the capability level where "AI can complete the work of an entire organization," not a requirement for system architecture; a sufficiently powerful single agent could theoretically achieve this as well. However, given today's engineering reality, a single agent is ultimately constrained by its own model's capability boundaries and context window.
+在 OpenAI 曾提出的 AI 能力五等级描述（Level 1 对话者、Level 2 思考者（Reasoners）、Level 3 智能体、Level 4 创新者、Level 5 组织 Organizations）中，多 Agent 协作常被类比为通向第五级的路径之一——需要说明的是，此处 Organizations 指的是“AI 能完成整个组织的工作”这一能力级别，而非对系统架构的要求，足够强大的单个 Agent 理论上也能达到。但就今天的工程现实而言，单个 Agent 终究受限于自身模型的能力边界和上下文窗口。
 
-Enabling multiple agents to work together means far more than just having agents with different expertise "complement each other's strengths." A more fundamental point is: **the intelligence of a group can surpass that of an individual.** Human civilization is a testament to this—an individual's intelligence is limited, but through division of labor, collaboration, debate, and the intergenerational accumulation of knowledge, human society as a whole exhibits intelligence far exceeding that of any single genius. Agent groups may similarly give rise to such collective intelligence: even if each agent is only as capable as a human expert, as long as they are organized properly, their overall capability could surpass the sum of all human experts. In *From AGI to ASI*, Google DeepMind lists "large-scale multi-agent collectives" as one of the key pathways toward superintelligence (ASI)—just as human general intelligence can aggregate into societies and organizational entities that transcend individuals, the "collective intelligence" formed by many AGI-level agents working together may exhibit cognitive capabilities far beyond the simple sum of their members[^agi-asi]. Therefore, multi-agent collaboration is not just an engineering means to break through the context window and capability boundaries of a single model, but could be a fundamental path from "expert-level AI" toward "surpassing humanity as a whole."
+而让多个 Agent 协同工作，意义远不止让不同专长的 Agent “取长补短”。更根本的一点是：**群体的智能可以高于个体**。人类文明便是明证——单个人的智力有限，但经由分工、协作、辩论和知识的代际累积，人类社会作为整体所展现的智能，远超任何一位天才个体。Agent 群体同样可能涌现出这样的集体智能：哪怕每一个 Agent 都只相当于人类专家的水平，只要组织得当，其整体能力也可能超过所有人类专家的总和。Google DeepMind 在《从 AGI 到 ASI》中正把“大规模多 Agent 集体”列为通往超级智能（ASI）的关键路径之一——正如人类的通用智能能聚合成超越个体的社会与组织实体，众多 AGI 级 Agent 协同形成的“群体智能”，也可能表现出远超其成员简单相加的认知能力[^agi-asi]。因此，多 Agent 协作不只是突破单个模型上下文窗口与能力边界的工程手段，更可能是从“专家级 AI”迈向“超越人类整体”的一条根本路径。
 
-[^agi-asi]: Listing "large-scale multi-agent collectives" as a key pathway from AGI to ASI, see Google DeepMind, *From AGI to ASI.* arXiv:2606.12683, 2026.
+[^agi-asi]: 把“大规模多 Agent 集体”列为从通用人工智能通往超级智能的关键路径之一，见 Google DeepMind, *From AGI to ASI.* arXiv:2606.12683, 2026.
 
-## A Classification Framework for Multi-Agent Collaboration
+## 多 Agent 协作的分类框架
 
-To build a multi-agent system, one must first understand two core design dimensions that together determine the system's basic architecture and implementation approach.
+要构建多 Agent 系统，首先需要理解两个核心设计维度，它们共同决定了系统的基本架构和实现方式。
 
-### Dimension 1: Shared vs. Non-Shared Context
+### 维度一：上下文是否共享
 
-This is the most fundamental architectural decision, determining how information is passed between multiple agents.
+这是最基础的架构决策，决定了多个 Agent 之间如何传递信息。
 
-**Shared context** means that a subsequent agent receives the complete conversation history and trajectory (as defined in Chapter 1) of the preceding agent. When the system prompt and tool set are switched at each stage, it becomes a new agent (because its identity, responsibilities, and capabilities have changed), but it retains all the memory of its predecessor. For example, in a team, after a requirements analyst writes the requirements document, the developer not only gets the document but can also see all communication records between the analyst and the user—they are a new role but retain the full previous context. The advantage is that no information is lost; each agent can review details from any previous stage. The challenge is that the context can expand rapidly.
+**共享上下文**意味着后一个 Agent 接收前一个 Agent 的完整对话历史和轨迹（第一章定义的 trajectory）。每个阶段切换系统提示词和工具集后，就变成了一个新的 Agent（因为它的身份、职责和能力都发生了变化），但它保留了前任的全部记忆。比如一个团队里，需求分析师写完需求文档后，开发者不仅拿到了文档，还能看到分析师与用户的所有沟通记录——他是一个新角色，但完整保留了之前的上下文。优势在于信息不丢失，每个 Agent 都能回顾之前任何阶段的细节；挑战在于上下文可能快速膨胀。
 
-**Non-shared context** means each agent maintains a completely independent context and conversation history, unable to directly access each other's "thought processes." This is like collaboration between different departments: everyone works independently at their own desk, exchanging information through shared documents and meeting minutes, rather than constantly watching each other's screens. This model offers better modularity and isolation; each agent only needs to focus on information relevant to its own responsibilities. The system is also easier to extend and maintain—adding a new agent does not require modifying the internal logic of existing agents, only defining interfaces and data formats.
+**不共享上下文**意味着每个 Agent 维护完全独立的上下文和对话历史，彼此无法直接访问对方的“思考过程”。这就像不同部门之间的协作：每个人在自己的工位上独立工作，通过共享文档和会议纪要交换信息，而不是时刻盯着别人的屏幕。这种模式的模块化和隔离性更好，每个 Agent 只需关注与自身职责相关的信息；系统也更易扩展和维护——增加新 Agent 不需要改动现有 Agent 的内部逻辑，只需定义好接口和数据格式。
 
-Since agents do not share context, information must be passed through explicit communication mechanisms. There are three common methods:
+由于 Agent 之间不共享上下文，必须通过显式的通信机制传递信息。常见的有三种：
 
-- **Tool call parameters**: The upstream agent passes structured data as parameters to the downstream agent's tool, suitable for scenarios requiring well-typed, clearly structured data.
-- **Shared file system**: Agents exchange information by reading and writing intermediate artifacts (documents, code, etc.) in a shared directory, suitable for scenarios with large artifacts or where persistence is needed.
-- **Message Bus**: A dedicated intermediary that passes messages between agents. Agents do not call each other directly but send messages to the bus, which forwards them to the target agent.
+- **工具调用的参数**：上游 Agent 把结构化数据作为参数传给下游 Agent 的工具，适合需要类型确定、结构清晰的场景；
+- **共享文件系统**：Agent 之间通过读写共享目录下的文档、代码等中间产物来交换信息，适合产物较大或需要持久化的场景；
+- **消息总线（Message Bus）**：一个专门负责在 Agent 之间传递消息的中转站，Agent 不直接调用彼此，而是把消息发送到消息总线，由它转发给目标 Agent。
 
-The message bus naturally supports **asynchronous communication**—the sender and receiver do not need to be online simultaneously. This is like an internal company email system: when you email a colleague, you don't require them to be at their computer at that moment; the email is stored on the server and processed when the colleague comes online. This approach is particularly suitable for scenarios where multiple agents work in parallel and need to coordinate with each other (see the "Parallel Coordination" section later in this chapter).
+消息总线天然支持**异步通信**——发送方和接收方不需要同时在线，就像公司内部的邮件系统：你发邮件给同事时不要求对方此刻在电脑前，邮件先存在服务器上，等同事上线再处理。这种方式特别适合多个 Agent 并行工作、彼此需要协调的场景（详见本章“并行协调”一节）。
 
-![Figure 10-1 Shared Context vs. Non-Shared Context](images/fig10-1.svg)
 
-It should be clarified that both architectures are genuine multi-agent systems (because the system prompt and tool set differ at each stage, making them different agents); the difference lies in the coordination method. **Shared context** relies on implicit coordination—subsequent agents inherit the complete context history of preceding agents, can "see" previous thought processes, and information is passed through the context itself. **Non-shared context** relies on explicit coordination—agents exchange information through files, messages, or structured data interfaces, and each agent only sees content relevant to itself.
+![图10-1 共享上下文与不共享上下文对比](images/fig10-1.svg)
 
-By analogy: the former is more like a team sitting around a table discussing, with everyone hearing everything. The latter is more like different departments collaborating via email and documents, each having its own workspace.
 
-Table 10-1 summarizes the selection criteria for the two architectures from five perspectives: number of sub-tasks, context window, parallelism, information isolation, and cost budget. It can serve as a checklist for early architectural selection.
+需要澄清的是，两种架构都是真正的多 Agent 系统（因为每个阶段的系统提示词和工具集不同，就是不同的 Agent），区别在于协调方式。**共享上下文**依赖隐式协调——后续 Agent 继承前序 Agent 的完整上下文历史，能“看到”之前的思考过程，信息通过上下文本身传递。**不共享上下文**依赖显式协调——Agent 之间通过文件、消息或结构化数据接口交换信息，每个 Agent 只看到与自己相关的内容。
 
-Table 10-1 Selection Criteria for Shared vs. Non-Shared Context
+打个比方：前者更像一个团队围坐在一张桌子旁讨论，所有人听到所有话；后者更像不同部门通过邮件和文档协作，各自有自己的工作空间。
 
-| Selection Criterion | Shared Context | Non-Shared Context |
+表10-1 从子任务数量、上下文窗口、并行度、信息隔离和成本预算五个角度汇总了两种架构的选择依据，可作为早期架构选型的检查表。
+
+表10-1 共享上下文与不共享上下文的选择依据
+
+| 选择依据 | 共享上下文 | 不共享上下文 |
+|----------|-------------------------------------|------------------------------------------------|
+| 子任务数量 | 少（2-3 个角色） | 多（需要并行处理） |
+| 上下文窗口 | 足以容纳所有角色的信息 | 单窗口装不下 |
+| 并行度 | 串行为主（角色沿同一段轨迹依次接棒） | 可大规模并行（上下文互相独立，互不阻塞） |
+| 信息隔离 | 不需要（所有角色共享信息） | 需要（如安全审查不应看到原始思考过程） |
+| 成本预算 | 单条轨迹接力，token 随阶段累积 | 多 Agent 各自展开，总 token 通常高出数倍到一个数量级 |
+
+**简单判断**：若预期累计上下文会超过窗口的 50%（这是一条经验法则，而非精确阈值），应不共享；若信息零损耗对任务正确性是硬约束，应共享；多数实际系统采用“阶段切换式”方案——前几个 Agent 共享，到信息饱和点后切换为不共享上下文 + 显式 handoff（移交，即由上游 Agent 主动决定把哪些信息交接给下游）。
+
+### 维度二：协作拓扑
+
+第二个维度是协作拓扑——Agent 之间的控制权和信息按什么结构流动。协作拓扑与上下文是否共享**概念上独立、实践中相关**：说它概念上独立，是因为共享上下文的系统同样存在拓扑，比如本章稍后介绍的 `transfer_to_agent`（实验 10-2），本质就是链式移交（handoff）在共享上下文下的形态；说它实践中相关，是因为一旦共享上下文，拓扑往往会退化（见下文），两个维度的取值并非可以随意组合。只不过在共享上下文时，移交无需决定“传什么”——完整历史天然保留——拓扑因此通常退化为一条角色切换的序列，没有太多架构决策可做（一个介于两者之间的例外是 group chat 式的多方协作，见本章后文去中心化一节）。而一旦选择不共享上下文，“信息如何流动、由谁协调”就成为必须显式设计的问题。
+
+换句话说，这两个维度原则上构成一个 2×3 的组合矩阵（共享/不共享 × 三种拓扑），但共享上下文这一行里，拓扑大多退化为一条角色切换序列、没有多少架构决策可做（这正是后文“多阶段角色转换”所讨论的形态），因此本章只详细展开不共享上下文的三格。下面介绍的就是协作拓扑在不共享上下文时的三种典型形态，按复杂度递增：
+
+- **对等协作模式**（Peer Collaboration Pattern）：少量 Agent（通常 2-3 个）以平等身份交互，形成迭代改进循环——就像写论文时一个人起草、另一个人批注修改，反复几轮后质量远超一个人闷头写。
+- **管理者模式**（Orchestration Pattern）：一个中心化的 Manager Agent 负责任务规划和调度，多个子 Agent 各负责特定子任务——就像项目经理带着几位专业工程师做项目。
+- **去中心化模式**（Decentralized Pattern）：没有运行时的中心控制者，Agent 之间像人类一样互相沟通，协作完成任务。
+
+各模式的详细设计和适用场景将在后面的专题小节中展开讨论。
+
+## 多 Agent 何时真正优于单 Agent
+
+在进入具体的协作架构之前，先回答一个更根本的问题：**什么时候真正需要多个 Agent，什么时候一个 Agent 就够了？** 这个问题的答案会成为后文所有工程方案的总体参照。近年的一系列研究给出了一个清晰的判断框架——核心判据只有一条：**协作过程是否引入了单个 Agent 在生成时无法获得的新信息？**
+
+表10-2 汇总了不同协作模式是否引入新信息，用来判断多 Agent 协作相对单 Agent 是否具有实质价值。
+
+表10-2 多 Agent 协作模式的信息增量对比
+
+| 协作模式 | 是否引入新信息 | 效果 |
 |---|---|---|
-| Number of sub-tasks | Few (2-3 roles) | Many (parallel processing needed) |
-| Context window | Can accommodate information for all roles | Single window is insufficient |
-| Parallelism | Primarily serial (roles take turns along the same trajectory) | Can scale massively in parallel (contexts are independent, non-blocking) |
-| Information isolation | Not needed (all roles share information) | Needed (e.g., security review should not see raw thought processes) |
-| Cost budget | Single trajectory relay, tokens accumulate per stage | Multiple agents operate independently, total tokens are typically several times to an order of magnitude higher |
+| 同一模型自我审查（重新阅读自己的输出） | 否 | 通常无效甚至有害 |
+| 不同 Agent 辩论同一段文本 | 否 | 在等计算量下与单 Agent 持平 |
+| Reviewer 使用测试执行结果审查代码 | 是（执行反馈） | 显著提升 |
+| Reviewer 查看渲染截图审查前端/PPT 代码 | 是（视觉反馈） | 显著提升 |
+| Reviewer 使用外部工具验证事实 | 是（工具反馈） | 显著提升 |
 
-**Simple rule of thumb**: If the expected cumulative context exceeds 50% of the window (this is a rule of thumb, not an exact threshold), use non-shared context. If zero information loss is a hard constraint for task correctness, use shared context. Most real-world systems adopt a "stage-switching" approach—the first few agents share context, then switch to non-shared context with explicit handoff (where the upstream agent actively decides which information to pass to the downstream agent) once the information saturation point is reached.
-
-### Dimension 2: Collaboration Topology
-
-The second dimension is collaboration topology—the structure along which control and information flow between agents. Collaboration topology and context sharing are **conceptually independent but practically related**: they are conceptually independent because systems with shared context also have a topology—for example, the `transfer_to_agent` pattern introduced later in this chapter (Experiment 10-2) is essentially a chain of handoffs under shared context. They are practically related because once context is shared, the topology often degenerates (see below); the values of the two dimensions are not freely combinable. When context is shared, handoffs do not require deciding "what to pass"—the complete history is naturally preserved—so the topology typically degenerates into a sequence of role switches, leaving little architectural decision to be made (an exception falling between the two is group-chat-style multi-party collaboration, see the decentralization section later in this chapter). Once non-shared context is chosen, "how information flows and who coordinates it" becomes a problem that must be explicitly designed.
-
-In other words, these two dimensions in principle form a 2×3 combination matrix (shared/non-shared × three topologies), but in the shared context row, the topology mostly degenerates into a sequence of role switches with little architectural decision to be made (this is the form discussed later in the "Multi-Stage Role Switching" section). Therefore, this chapter only elaborates on the three cells for non-shared context. The following introduces the three typical forms of collaboration topology under non-shared context, ordered by increasing complexity:
-
-- **Peer Collaboration Pattern**: A small number of agents (typically 2-3) interact as equals, forming an iterative improvement loop—like writing a paper where one person drafts it and another annotates and revises it, with the quality after several rounds far exceeding what one person could achieve alone.
-- **Orchestration Pattern**: A centralized Manager Agent is responsible for task planning and scheduling, while multiple sub-agents each handle specific sub-tasks—like a project manager leading several specialized engineers on a project.
-- **Decentralized Pattern**: There is no runtime central controller; agents communicate with each other like humans to collaborate on tasks.
-
-The detailed design and applicable scenarios for each pattern will be discussed in dedicated subsections later.
-
-## When is Multi-Agent Truly Better Than Single Agent?
-
-Before diving into specific collaboration architectures, let's first address a more fundamental question: **When are multiple agents truly needed, and when is a single agent sufficient?** The answer to this question will serve as an overall reference for all engineering solutions discussed later. A series of recent studies provide a clear judgment framework—the core criterion is only one: **Does the collaboration process introduce new information that a single agent could not obtain during generation?**
-
-Table 10-2 summarizes whether different collaboration modes introduce new information, used to judge whether multi-agent collaboration has substantive value over a single agent.
-
-Table 10-2 Information Gain Comparison of Multi-Agent Collaboration Modes
-
-| Collaboration Mode | Introduces New Information? | Effect |
-|---|---|---|
-| Self-review by the same model (re-reading its own output) | No | Usually ineffective or even harmful |
-| Different agents debating the same text | No | Comparable to a single agent with equal compute |
-| Reviewer uses test execution results to review code | Yes (execution feedback) | Significant improvement |
-| Reviewer uses rendered screenshots to review frontend/PPT code | Yes (visual feedback) | Significant improvement |
-| Reviewer uses external tools to verify facts | Yes (tool feedback) | Significant improvement |
-
-The 2025 RLEF (Reinforcement Learning from Execution Feedback)[^rlef-2025] confirmed this: training a model via reinforcement learning to use code execution feedback for iterative code improvement significantly outperforms having the model independently sample multiple times. The key is that each iteration introduces **real execution results** (compilation errors, test failures, runtime exceptions)—information that did not exist when the model wrote the code. In the 2025 WebGen-Agent[^webgen-agent-2025] for webpage generation tasks, using a multi-level visual feedback scaffolding (screenshots + visual language model descriptions) reportedly improved Claude 3.5 Sonnet's performance on that benchmark from 26.4% to 51.9%—nearly doubling it.
+2025 年的 RLEF（Reinforcement Learning from Execution Feedback）[^rlef-2025] 证实了这一点：通过强化学习训练模型利用代码执行反馈来迭代改进代码，效果远超让模型独立多次采样。关键在于每次迭代都引入了**真实的执行结果**（编译错误、测试失败、运行时异常），这些信息在模型写代码时并不存在。2025 年的 WebGen-Agent [^webgen-agent-2025] 在网页生成任务上，通过多层级的视觉反馈（截图 + 视觉语言模型描述）构成的反馈脚手架，据报道使 Claude 3.5 Sonnet 在该基准上的表现从 26.4% 提升到 51.9%——接近翻倍。
 
 [^rlef-2025]: Gehring, J., et al. *RLEF: Grounding Code LLMs in Execution Feedback with Reinforcement Learning.* arXiv:2410.02089, 2025.
 [^webgen-agent-2025]: Lu, Z., et al. *WebGen-Agent: Enhancing Interactive Website Generation with Multi-Level Feedback and Step-Level Reinforcement Learning.* arXiv:2509.22644, 2025.
 
-This "new information" framework explains a seemingly contradictory phenomenon: academic research says "a single agent is sufficient," but in engineering practice, multi-agent systems indeed perform better. The root of the contradiction lies in the different types of "multi-agent" being discussed—academic studies often compare modes where "multiple agents look at the same text and discuss it with each other" (e.g., debate), while effective multi-agent systems in engineering practice often include external feedback loops (code execution, visual rendering, tool calls). The former introduces no new information; the latter does. For the three architectures introduced later in this chapter—peer collaboration, orchestration, and decentralization—almost all truly effective uses can be mapped back to this criterion.
+这个“新信息”框架解释了一个看似矛盾的现象：学术研究说“单 Agent 就够了”，但工程实践中多 Agent 确实效果更好。矛盾的根源在于两者讨论的是不同类型的“多 Agent”——学术研究中比较的多是“多个 Agent 看着同一段文本互相讨论”的模式（如辩论），而工程实践中有效的多 Agent 系统往往包含外部反馈环路（代码执行、视觉渲染、工具调用）。前者没有引入新信息，后者引入了。本章后面介绍的对等协作、管理者、去中心化三种架构，凡是真正有效的用法，几乎都能在这条判据上找到落点。
 
-**Step Budget and Agent Performance.** A related research direction is: how does allocating different step budgets (i.e., the number of allowed tool calls or iteration rounds) to an agent affect its performance? Intuitively, more steps should lead to better results—with a 30-step budget, an agent can only quickly implement core functionality; with a 300-step budget, it can plan first, then implement, then test, then improve. However, a 2025 Google paper, *Budget-Aware Tool-Use Enables Effective Agent Scaling*, found a counterintuitive conclusion: **simply increasing the number of steps available to an agent does not guarantee performance improvement.** Standard agents lack "budget awareness"—even with a 300-step budget, they tend to perform shallow searches and quickly "saturate." To translate more steps into genuinely better results, agents need an explicit budget-aware mechanism that dynamically adjusts strategies based on remaining resources: broad exploration early on, and focusing on the most promising directions later. The 2026 BAVT (Budget-Aware Value Tree Search) further proposed step-level value evaluation, adjusting the weight of exploration vs. exploitation based on the remaining budget ratio—as the budget decreases, the agent transitions from "casting a wide net" to "deep digging."
+**步骤预算与 Agent 性能。** 一个相关的研究方向是：给 Agent 分配不同的步骤预算（即允许的工具调用次数或迭代轮数），会如何影响其表现？直觉上，更多步骤应该带来更好的结果——30 步预算下 Agent 只能快速实现核心功能，300 步预算下它还可以先做规划、再实现、再测试、再改进。但 2025 年 Google 的论文《Budget-Aware Tool-Use Enables Effective Agent Scaling》发现了一个反直觉的结论：**单纯增加 Agent 可用的步骤数并不能保证性能提升**。标准的 Agent 缺乏“预算意识”——即使有 300 步的预算，它们仍然倾向于执行浅层搜索，很快就“饱和”了。要让更多的步骤真正转化为更好的结果，Agent 需要一种显式的预算感知机制，根据剩余资源动态调整策略：前期广泛探索，后期聚焦最有希望的方向。2026 年的 BAVT（Budget-Aware Value Tree Search）进一步提出了步骤级别的价值评估，在每一步根据剩余预算比例调整探索与利用的权重——随着预算减少，Agent 从“广撒网”逐渐切换到“深挖掘”。
 
-These findings have direct implications for multi-agent system design. For example, in the orchestration pattern, the Manager Agent should not simply distribute tasks to sub-agents and wait for results. Instead, it should **dynamically allocate step budgets** based on task complexity—simple sub-tasks get fewer steps, complex sub-tasks get ample steps. It should also guide sub-agents to use these budgets wisely (plan first, then implement, then test, then improve), rather than diving straight in.
+这些发现对多 Agent 系统设计有直接的指导意义。比如在管理者模式中，Manager Agent 不应只是简单地将任务分发给子 Agent 然后等待结果，而应该根据任务的复杂度**动态分配步骤预算**——简单子任务给较少的步骤，复杂子任务给充足的步骤。同时还要引导子 Agent 合理利用这些预算（先规划、再实现、再测试、再改进），而不是一头扎进去直接开干。
 
-One more thing must be placed before all design considerations: **cost.** The parallel exploration and iterative refinement of multi-agent systems cost money—Anthropic has disclosed that its multi-agent research system's token consumption is about 15 times that of a normal conversation, and token usage alone can explain about 80% of the performance difference. This means the performance gains from multi-agent systems must be large enough to cover several times to an order of magnitude of additional overhead; otherwise, a well-tuned single agent is often the more cost-effective choice.
+还有一件事必须摆在所有设计之前：**成本**。多 Agent 的并行探索与反复迭代都要花钱——Anthropic 曾披露，其多 Agent 研究系统的 token 消耗约为普通对话的 15 倍，而 token 用量本身就能解释其中约 80% 的性能差异。这意味着多 Agent 的效果收益必须足够大，大到能覆盖数倍乃至一个数量级的额外开销，否则一个调校得当的单 Agent 往往是更划算的选择。
 
-## Multi-Agent Collaboration with Shared ContextIn multi-agent collaboration with shared context, each stage is an independent agent (with its own system prompt and tool set), but it inherits the complete trajectory of the preceding agent—much like a colleague taking over a shift can review all the work logs left by the predecessor. The core advantage of this "inheritance-based collaboration" is zero information loss: every agent can review details from any previous stage. The challenge lies in keeping the current agent focused on its core responsibilities without being distracted by the large volume of inherited historical information.
+## 共享上下文的多 Agent 协作
 
-### Multi-Stage Role Switching
+共享上下文的多 Agent 协作中，每个阶段都是一个独立的 Agent（拥有自己的系统提示词和工具集），但它继承了前序 Agent 的完整轨迹——就像接班的同事能翻阅前任留下的所有工作日志。这种“继承式协作”的核心优势在于信息零损耗，每个 Agent 都能回顾之前任何阶段的细节。挑战则在于如何让当前 Agent 专注于自己的核心职责，而不被继承来的大量历史信息所干扰。
 
-Let’s first clarify a definitional point: in the language of Chapter 1, multi-stage role switching is a **workflow-style orchestration**—the execution path (e.g., requirements clarification → implementation → review) is predefined. This chapter re-examines it within a multi-agent framework from the perspective of agent identity and context: when the system prompts, tool sets, and focus areas differ across stages, treating them as multiple agents sharing the same trajectory yields practical design benefits—each "identity's" prompt and tool set can be refined independently, and stage boundaries naturally become quality gateways.
+### 多阶段角色转换
 
-In complex tasks, an agent's role and responsibilities may change significantly across different stages. If a single static system prompt is used throughout, it is either too generic to be targeted, or it becomes overly long by cramming instructions for all stages together. The approach of multi-stage role switching is to dynamically switch system prompts and tool sets based on the current stage, allowing the agent to work in the most appropriate "identity" at each stage. This switching does not require creating new instances or starting new processes; it merely updates the context within the same execution session. The key point is that although the role changes, the conversation history and task state remain continuously shared—the agent, in its new role, can still access all information accumulated in previous stages.
+先把一个定义之争摆到明处：用第一章的语言说，多阶段角色转换是一种**工作流式的编排**——执行路径（例如需求澄清→实现→审查）是预先定义的。本章之所以把它放进多 Agent 的框架下重新审视，是从 Agent 身份与上下文的角度：当每个阶段的系统提示词、工具集、关注点都不同时，把它们看作多个 Agent 共享同一段轨迹，能带来实际的设计收益——每个“身份”的提示词和工具集可以独立打磨，阶段边界也天然成为质量门控点。
 
-![Figure 10-2 Stage-based role switching](images/fig10-2.svg)
+在复杂任务中，Agent 的角色和职责可能在不同阶段发生显著变化。如果始终使用同一套静态系统提示词，要么过于笼统缺乏针对性，要么把所有阶段的指导塞在一起导致过于冗长。多阶段角色转换的做法是：根据当前阶段动态切换系统提示词和工具集，让 Agent 在每个阶段都以最合适的“身份”工作。这种转换不需要创建新实例或启动新进程，只是在同一执行会话中更新上下文。关键在于，虽然角色切换了，但对话历史和任务状态始终连续共享——Agent 在新角色下仍能访问之前阶段积累的所有信息。
 
-> **Experiment 10-1 ★★: Determining System Prompts Based on Execution Stage**
->
-> This experiment demonstrates how stage-specific system prompts improve agent performance through the complete workflow of a Coding Agent.
->
-> **Task Scenario**: A user proposes a software development requirement, and the agent goes through three stages sequentially: requirements clarification, code implementation, and quality review.
->
-> **Stage 1: Requirements Clarification** (Role: Requirements Analyst)
->
-> The system prompt emphasizes:
-> - "Your responsibility is to fully understand the user's needs. Ask questions to clarify ambiguities, ensuring you fully comprehend the expected functionality, usage scenarios, and performance requirements."
-> - "Do not rush into implementation. At this stage, your task is to ask questions and confirm, not to write code."
-> - "Once you confirm that all key requirements are clear, call the `complete_requirements_analysis()` tool to end this stage."
->
-> The tool set is limited: `ask_clarifying_question(question)` to ask the user clarifying questions, `save_requirement(key, value)` to record confirmed requirements, and `complete_requirements_analysis()` to mark the stage as complete.
->
-> The agent engages in multiple rounds of dialogue with the user: "What types of files does this script need to process?", "Should it recursively process subfolders?", "Should the original filenames be preserved after moving files?" Through these questions, the agent gradually builds a complete understanding of the requirements and saves them in a structured manner. When the agent determines the requirements are sufficiently clear, it calls `complete_requirements_analysis()` to trigger a role switch—the system detects the stage completion signal and automatically transitions to the next stage's configuration.
->
-> **Stage 2: Code Implementation** (Role: Software Engineer)
->
-> The new system prompt emphasizes:
-> - "Your responsibility is to write high-quality Python code based on the confirmed requirements."
-> - "Follow best practices: code should be modular, include proper error handling, and contain necessary comments."
-> - "After completing the code and passing basic tests, call `submit_for_review()` to enter the review stage."
->
-> The tool set changes significantly: the previous requirements clarification tools are removed, replaced by development tools such as `write_file(path, content)`, `read_file(path)`, and `execute_code(code)`. The agent begins writing code based on the requirements saved in the first stage—first the main logic, then error handling, and finally writing tests for verification. Throughout the process, the agent can still access the conversation history from the first stage to review requirement details, but its behavior pattern is completely different: no more questions, focused solely on implementation. Upon completion, it calls `submit_for_review()`.
->
-> **Stage 3: Code Review** (Role: Code Reviewer)
->
-> The new system prompt emphasizes:
-> - "Your responsibility is to review the code just written, evaluating its quality from multiple dimensions: functional correctness, code standards, error handling, performance optimization, and security."
-> - "Adopt a critical mindset, trying to identify potential issues and areas for improvement in the code."
-> - "If serious issues are found, call `request_revision(issues)` to return to the implementation stage for modification; if the quality is acceptable, call `approve_code()` to complete the task."
->
-> The tool set changes again: it is replaced by code quality analysis tools such as `run_linter(file)`, `run_tests(file)`, and `analyze_complexity(file)`. The agent re-examines the code from a reviewer's perspective, runs static analysis, and checks for potential bugs, performance issues, or security risks.
->
-> This three-stage design allows the agent to focus on the core task at each stage. More importantly, the clear stage transition mechanism ensures the integrity of task execution—the agent will not skip requirements analysis to write code directly, nor will it deliver results without review.
->
-> **Experiment Requirements**:
-> 1. Implement three-stage system prompts, each with a clear role definition and behavioral guidance
-> 2. Configure matching tool sets for each stage
-> 3. Implement a stage transition trigger mechanism (via specific tool calls)
-> 4. Ensure context continuity between stages
-> 5. Handle rollback scenarios—when code review finds issues, return to the implementation stage
-> 6. Log execution logs for each stage, demonstrating how different prompts produce different behavior patterns
->
-### Cross-Domain Role Switching
 
-The previous multi-stage role switching demonstrated stage-based execution within a single task type (software development). Cross-domain role switching further explores the agent's autonomous switching between multiple task types—no longer a pre-planned linear process, but rather the agent autonomously deciding which professional role to switch to based on changes in user requirements.
+![图10-2 基于阶段的角色切换](images/fig10-2.svg)
 
-> **Experiment 10-2 ★★: Multi-Role Switching**
+
+> **实验 10-1 ★★：根据执行阶段决定系统提示词**
 >
-> **Prerequisites**: It is recommended to first understand the Agent Skills mechanism from Chapter 2.
+> 本实验通过一个 Coding Agent 的完整工作流程，展示阶段化系统提示词如何提升 Agent 的表现。
 >
-> **System Architecture**: Five roles—
+> **任务场景**：用户提出一个软件开发需求，Agent 依次经历三个阶段：需求澄清、代码实现、质量审查。
 >
-> - **triage (front desk triage, default entry point)**: Understands the user's overall requirements, breaks them into sequential subtasks, gradually hands them over to appropriate professional roles, and performs final confirmation after all subtasks are completed. It has no specialized tools of its own, only `transfer`.
-> - **research (information retrieval expert)**: Uses `web_search` to find data, facts, and materials.
-> - **coding (programming expert)**: Uses `execute_python` to write and run code, solving program logic/script problems.
-> - **data_analysis (data analysis expert)**: Uses `calculate` / `descriptive_stats` for quantitative calculations and statistics (e.g., year-over-year growth rate, compound annual growth rate CAGR, mean).
-> - **writing (writing expert)**: Polishes retrieved data and calculation conclusions into a smooth, audience-oriented final draft (can use `count_characters` for a rough length check).
+> **第一阶段：需求澄清**（角色：需求分析师）
 >
-> **Core Mechanism: transfer_to_agent Tool**
+> 系统提示词强调：
+> - “你的职责是充分理解用户的需求。通过提出问题来澄清模糊的地方，确保你完全理解用户期望的功能、使用场景、性能要求。”
+> - “不要急于实现。在这个阶段，你的任务是提问和确认，而不是编写代码。”
+> - “当你确认所有关键需求都已明确后，调用 `complete_requirements_analysis()` 工具来结束这个阶段。”
 >
-> All roles are equipped with the `transfer_to_agent(target_role, reason)` tool. When called, the system will: 1) save the current conversation history; 2) load the target role's prompt and tool set; 3) pass the conversation history to the new role so it understands the context; 4) continue execution in the new role.
+> 工具集有限：`ask_clarifying_question(question)` 用于向用户提出澄清问题，`save_requirement(key, value)` 用于记录确认的需求点，`complete_requirements_analysis()` 用于标记阶段完成。
 >
-> **Experiment Scenario**: The system starts in the triage (front desk triage) role by default. The user presents a cross-domain composite task: "I'm preparing materials for investors. Help me look up China's new energy vehicle sales for 2021, 2022, and 2023, calculate the compound annual growth rate for these three years, and then write a Chinese summary for investors, no more than 120 characters." Triage breaks it down into "look up data → calculate metrics → write draft" and first hands it over to research:
+> Agent 与用户展开多轮对话：“这个脚本需要处理哪些类型的文件？”“要不要递归处理子文件夹？”“文件移动后是否保留原文件名？”通过这些问题，Agent 逐步建立起完整的需求理解并结构化保存。当 Agent 判断需求已经足够清晰时，调用 `complete_requirements_analysis()` 触发角色转换——系统检测到阶段完成信号，自动切换到下一阶段的配置。
 >
-> ```python
-> transfer_to_agent(target_role="research", reason="Need to first look up three years of new energy vehicle sales data")
-> ```
+> **第二阶段：代码实现**（角色：软件工程师）
 >
-> Research uses `web_search` to find the sales data, writes the key data into the conversation, and then hands it over to data_analysis:
+> 新的系统提示词强调：
+> - “你的职责是根据已确认的需求，编写高质量的 Python 代码。”
+> - “遵循最佳实践：代码应该模块化、有适当的错误处理、包含必要的注释。”
+> - “完成代码编写并通过基本测试后，调用 `submit_for_review()` 进入审查阶段。”
+>
+> 工具集发生了显著变化：之前的需求澄清工具被移除，取而代之的是 `write_file(path, content)`、`read_file(path)`、`execute_code(code)` 等开发工具。Agent 基于第一阶段保存的需求开始编写代码——先写主要逻辑，再添加错误处理，最后编写测试验证。整个过程中 Agent 仍可访问第一阶段的对话历史来回顾需求细节，但行为模式已截然不同：不再提问，专注于实现。完成后调用 `submit_for_review()`。
+>
+> **第三阶段：代码审查**（角色：代码审查员）
+>
+> 新的系统提示词强调：
+> - “你的职责是审查刚才编写的代码，从多个维度评估其质量：功能正确性、代码规范、错误处理、性能优化、安全性。”
+> - “采用批判性思维，尝试找出代码中可能存在的问题和改进空间。”
+> - “发现严重问题调用 `request_revision(issues)` 返回实现阶段修改；质量可接受调用 `approve_code()` 完成任务。”
+>
+> 工具集再次变化：换成了 `run_linter(file)`、`run_tests(file)`、`analyze_complexity(file)` 等代码质量分析工具。Agent 以审查者的视角重新审视代码，运行静态分析，排查潜在的 bug、性能问题或安全隐患。
+>
+> 这种三阶段设计让 Agent 在每个阶段都能专注于当前核心任务。更重要的是，明确的阶段转换机制保证了任务执行的完整性——Agent 不会跳过需求分析直接写代码，也不会在未经审查的情况下就交付成果。
+>
+> **实验要求**：
+> 1. 实现三阶段系统提示词，每阶段有明确角色定义和行为指导
+> 2. 为每阶段配置匹配的工具集
+> 3. 实现阶段转换触发机制（通过特定工具调用）
+> 4. 确保上下文在阶段间的连续性
+> 5. 处理回退情况——代码审查发现问题时能返回实现阶段
+> 6. 记录每阶段执行日志，展示不同提示词如何产生不同行为模式
+>
+### 跨领域角色转换
+
+前面的多阶段角色转换展示的是单一任务类型（软件开发）中的阶段化执行。跨领域角色转换则进一步探索 Agent 在多种任务类型之间的自主切换——不再是预先规划好的线性流程，而是根据用户需求的变化，由 Agent 自主判断应该切换到哪个专业角色。
+
+> **实验 10-2 ★★：多角色转换**
+>
+> **前置要求**：建议先了解第二章 Agent Skills 机制。
+>
+> **系统架构**：五种角色——
+>
+> - **triage（前台分诊，默认入口）**：理解用户的整体需求，把它拆成有先后顺序的子任务，逐步移交给合适的专业角色，并在全部子任务完成后做收尾确认。自身没有专业工具，只持有 transfer
+> - **research（信息检索专家）**：用 `web_search` 查找数据、事实和资料
+> - **coding（编程专家）**：用 `execute_python` 写并运行代码，解决程序逻辑/脚本类问题
+> - **data_analysis（数据分析专家）**：用 `calculate` / `descriptive_stats` 做定量计算与统计（如同比增长率、年均复合增长率 CAGR、均值）
+> - **writing（写作专家）**：把检索到的数据和计算结论润色成通顺、面向指定读者的成稿（可用 `count_characters` 粗查篇幅）
+>
+> **核心机制：transfer_to_agent 工具**
+>
+> 所有角色都配备了 `transfer_to_agent(target_role, reason)` 工具。调用时系统会依次：1）保存当前对话历史；2）加载目标角色的提示词和工具集；3）将对话历史传递给新角色，使其理解上下文；4）以新角色身份继续执行。
+>
+> **实验场景**：系统默认以 triage（前台分诊）身份运行。用户抛来一个跨领域的复合任务：“我在准备一份给投资人看的材料，帮我查一下中国 2021、2022、2023 三年的新能源汽车销量，算出这三年的年均复合增长率，再写成一段面向投资人、不超过 120 字的中文总结。”triage 把它拆成“查数据 → 算指标 → 写成稿”，第一步先移交检索：
 >
 > ```python
-> transfer_to_agent(target_role="data_analysis", reason="Data is ready, need to calculate the three-year CAGR")
+> transfer_to_agent(target_role="research", reason="需要先查三年的新能源汽车销量数据")
 > ```
 >
-> Data_analysis uses `calculate` to compute the growth rate, then hands it over to writing for drafting; after writing completes the draft, it hands it back to triage for final confirmation. The entire chain is triage → research → data_analysis → writing → triage. Each role can see the complete conversation history, so the subsequent role naturally knows what has been done before.
+> research 用 `web_search` 查到销量后，把关键数据写进对话，再移交给数据分析：
 >
-> The decision to switch roles depends on the guidance in the system prompts. The triage prompt explicitly lists routing rules: look up data/materials → research, write and run code → coding, quantitative calculations and statistics → data_analysis, polish into a draft → writing. The criterion is simple: if the task requires domain-specific deep knowledge or specialized tools, hand it over to the corresponding professional role. The professional roles' prompts also guide them on whom to hand over to or whether to return to triage after completing their part.
+> ```python
+> transfer_to_agent(target_role="data_analysis", reason="数据已就绪，需要计算三年 CAGR")
+> ```
 >
-> **Experiment Requirements**:
-> 1. Implement system prompts and specialized tool sets for at least three professional roles
-> 2. Implement the `transfer_to_agent` tool, supporting dynamic switching
-> 3. Ensure context continuity after role switching
-> 4. Handle circular switching issues—prevent the agent from switching back and forth between roles
-> 5. Design complex task flows spanning multiple domains to demonstrate the value of role switching
+> data_analysis 用 `calculate` 算出增长率，移交给 writing 成文；writing 写好后再移交回 triage 做收尾确认。整条链路是 triage → research → data_analysis → writing → triage，每个角色都看得到完整对话历史，因此后一个角色天然知道前面已经做了什么。
 >
-## Multi-Agent Collaboration Without Shared Context
+> 角色转换的决策依赖系统提示词的指导。triage 的提示词里明确列出了路由规则：查数据/资料转 research，写并运行代码转 coding，定量计算与统计转 data_analysis，润色成稿转 writing。判断标准很简单：任务需要特定领域的深度知识或专业工具，就移交给对应的专业角色。专业角色的提示词中同样指导了完成本职部分后该移交给谁或转回 triage。
+>
+> **实验要求**：
+> 1. 实现至少三种专业角色的系统提示词和专门工具集
+> 2. 实现 `transfer_to_agent` 工具，支持动态切换
+> 3. 确保角色切换后上下文连续性
+> 4. 处理循环切换问题——避免 Agent 在角色之间反复切换
+> 5. 设计跨越多个领域的复杂任务流程，展示角色转换价值
+>
+## 不共享上下文的多 Agent 协作
 
-Not sharing context represents true multi-agent collaboration. In this architecture, each agent is an independent entity with its own context, trajectory, and state. Agents cannot directly access each other's "internal thoughts"; collaboration relies entirely on explicit, structured data transfer mechanisms—the three communication mechanisms introduced at the beginning of this chapter (tool call parameters, shared file system, message bus).
+不共享上下文代表真正的多 Agent 协作。在这种架构下，每个 Agent 都是独立的实体，拥有自己的上下文、轨迹和状态。Agent 之间无法直接访问彼此的“内心活动”，协作完全依赖明确的、结构化的数据传递机制，也就是本章开头介绍的三种通信机制（工具调用参数、共享文件系统、消息总线）。
 
-This isolation brings several practical engineering benefits: each agent can be developed and tested independently, adding new capabilities does not require modifying existing code, a faulty agent will not propagate error states to other agents, and multiple agents can truly execute concurrently—contexts are completely independent, with no resource contention.
+这种隔离带来了几个切实的工程好处：每个 Agent 可以独立开发和测试，新增能力不需要改动现有代码，某个 Agent 出了故障也不会把错误状态传染给其他 Agent，而且多个 Agent 可以真正并发执行——上下文完全独立，不存在资源竞争。
 
-However, not sharing context also has costs. The most obvious is the information synchronization problem: how do agents maintain a consistent understanding of the task state? Will information be lost or duplicated during transfer? Debugging also becomes more difficult—when problems arise, logs from multiple agents must be reviewed to piece together the complete execution process. These issues make the design of interface specifications, data formats, and communication protocols critically important.
+但不共享上下文也有代价。最明显的是信息同步问题：各 Agent 如何对任务状态保持一致的理解？信息在传递过程中会不会丢失或重复？调试也变得更加困难——出了问题需要翻看多个 Agent 的日志，才能拼出完整的执行过程。这些问题使得接口规范、数据格式和通信协议的设计变得至关重要。
 
-Explicit collaboration without shared context relies on two topology-independent infrastructures. The first is the **shared file system**, which serves as a persistent medium for exchanging artifacts between agents and files with users, forming the data plane of collaboration. The second is the **communication and control mechanism**, which supports message passing, state queries, and execution termination between agents, forming the control plane of collaboration. The three topologies below are all built on these two foundations.
+不共享上下文的显式协作依赖两套与拓扑无关的基础设施。其一是**共享文件系统**，作为 Agent 间交换产物、与用户交换文件的持久媒介，构成协作的数据平面；其二是**通信与控制机制**，支持 Agent 间的消息传递、状态查询与执行终止，构成协作的控制平面。以下三种拓扑均建立在这两者之上。
 
-### The File System from an Agent's Perspective
+### Agent 眼中的文件系统
 
-At the beginning of this chapter, the "shared file system" was listed as one of the three communication mechanisms for architectures without shared context. In a real system, the file system an agent accesses is not a single storage but a **virtual filesystem**: storages with different sources, lifecycles, and permissions are mounted under the same directory tree. The agent accesses them through unified `read_file`/`write_file`/`list_dir` interfaces, while the underlying layers may be local temporary disks, persistent object storage, third-party cloud drive APIs, or read-only system resource packages. Clearly defining the composition of this directory tree—the visibility and lifecycle of each area—is a prerequisite for designing multi-agent collaboration: a significant portion of concurrency conflicts and information leaks stem from mixing areas that should be isolated. In a mature multi-agent system, the file system typically consists of the following four types of areas:
+本章开头将“共享文件系统”列为不共享上下文的三种通信机制之一。在实际系统中，Agent 访问的并非单一存储，而是一个**虚拟文件系统**（virtual filesystem）：来源、生命周期与权限各异的存储被挂载（mount）到同一目录树下，Agent 通过统一的 `read_file`/`write_file`/`list_dir` 接口访问，底层则可能是本地临时盘、持久对象存储、第三方云盘的 API 或只读的系统资源包。明确这棵目录树的构成——每一区域的可见性与生命周期——是多 Agent 协作设计的前提：相当一部分并发冲突与信息泄露，源于将本应隔离的区域混置。一个成熟的多 Agent 系统，其文件系统通常由以下四类区域构成：
 
-**I. Agent-Specific Workspace (Scratchpad)**. A private directory exclusive to each agent instance, storing intermediate artifacts, temporary files, drafts, and debug logs. Its lifecycle is tied to the instance and is invisible to other agents and users. Isolating the scratchpad serves two purposes: preventing temporary files from multiple agents from overwriting each other, and keeping the main agent's context lean—the trial-and-error process of sub-agents remains in their own workspace, with only the final artifact submitted to the shared space. This corresponds to the storage-level manifestation of "sub-agents return structured summaries rather than full trajectories" from Chapter 4.
+**一、Agent 专属工作区（Scratchpad）**。每个 Agent 实例独享的私有目录，存放中间产物、临时文件、草稿与调试日志，生命周期与实例绑定，对其他 Agent 和用户不可见。隔离 scratchpad 有两重作用：避免多个 Agent 的临时文件相互覆盖，以及保持主 Agent 上下文的精简——子 Agent 的试错过程留存于自身工作区，仅将最终产物提交至共享空间。这对应第四章“子 Agent 返回结构化摘要而非全量轨迹”在存储层面的体现。
 
-**II. Multi-Agent Shared Workspace**. A collaboration area that multiple agents can read and write, and that is **visible to the user**. It is the primary medium for exchanging artifacts between agents in architectures without shared context: the Glossary Agent writes the term list, and the Translation Agent reads from it; users can also upload source files and download final deliverables here. Its lifecycle is tied to the entire task and requires persistence. As an area for concurrent reads and writes by multiple parties, it is a hotspot for concurrency conflicts—mechanisms such as optimistic locking and worktree isolation operate here, as detailed in the "Failure Mode 1" section later in this chapter. Chapter 4's use of volume mounting `/workspace/shared` to connect the main agent, virtual computer, and virtual phone is a typical implementation of this layer.**III. Mounted External Resources.** Third-party information sources authorized by the user—Google Drive, Notion, Dropbox, enterprise wikis, etc.—are mapped to mount points in the file system (e.g., `/mnt/gdrive`) via adapters. An Agent accesses a Notion document by reading a file; the underlying adapter calls the corresponding API. Three characteristics distinguish this layer from local storage and must be explicitly handled during design: **Access is constrained by external permissions** (the user's permissions in the source system determine the Agent's visibility), **latency is higher and consistency is weaker** (each read involves a network round trip, and data may have been modified externally), and **access is primarily on-demand and read-only** (writing back to external sources must be done cautiously, as erroneous writes could contaminate the user's real data). The unified file interface means the Agent does not need a custom tool for each data source, but it also masks the aforementioned performance and security differences. Therefore, read-only/writable status, timeouts, and credential boundaries must be explicitly managed at the mount level.
+**二、多 Agent 共享空间（Shared Workspace）**。多个 Agent 共同读写、且**用户可见**的协作区域，是不共享上下文架构下 Agent 间交换产物的主要媒介：Glossary Agent 写入术语表，Translation Agent 从中读取；用户亦可在此上传原始文件、下载最终交付物。其生命周期与整个任务绑定，需要持久化。作为多方并发读写的区域，它是并发冲突的高发处——乐观锁、工作副本隔离（worktree）等机制均作用于此，详见本章后文“失败模式一”。第四章以卷挂载 `/workspace/shared` 连接主 Agent、虚拟电脑与虚拟手机，即为这一层的典型实现。
 
-**IV. Built-in System Resources.** A resource package pre-installed by the system and shared read-only with all Agents. Typical examples are the **Skills** introduced in Chapters 2 and 4—knowledge documents and scripts organized as files, mounted at paths like `/skills`, accessed via progressive disclosure (index first, then expand on demand). Other examples include reference manuals, template libraries, and shared tool definitions. This layer is globally shared, read-only, stable across sessions, and can be read concurrently by all Agents without concurrency control.
+**三、外部挂载资源（Mounted External Resources）**。用户授权接入的第三方信息源——Google Drive、Notion、Dropbox、企业 Wiki 等——通过适配器（adapter）映射为文件系统中的挂载点（如 `/mnt/gdrive`）。Agent 以读文件的方式访问一篇 Notion 文档，底层由适配器调用对方 API 完成。这一层区别于本地存储的三个特性需在设计时显式处理：**访问受外部权限约束**（用户在源系统中的权限决定 Agent 的可见范围）、**延迟更高且一致性更弱**（每次读取为一次网络往返，且数据可能已被外部修改）、**以按需只读为主**（写回外部源须谨慎，误写可能污染用户的真实数据）。统一的文件接口使 Agent 无需为每个数据源定制专用工具，但也掩盖了上述性能与安全差异，因此需在挂载层面显式管理只读/可写、超时与凭证边界。
 
-Figure 10-3 illustrates the structure where these four types of areas are uniformly mounted under a single directory tree: the Agent accesses the entire tree through a unified interface, users upload and download files from the shared space, external data sources are mounted via adapters, and built-in system resources are provided read-only.
+**四、系统内置资源（Built-in System Resources）**。系统预置、对所有 Agent 只读共享的资源包，典型代表是第二章、第四章介绍的 **Skills**——以文件形式组织的知识文档与脚本，挂载于 `/skills` 等路径，按渐进式披露（先索引、后按需展开）取用；此外还包括参考手册、模板库与共享工具定义。该层全局共享、只读、跨会话稳定，可被所有 Agent 并发读取而无需并发控制。
 
-![Figure 10-3 Mounting structure of the four area types in the Agent Virtual File System](images/fig10-3.svg)
+图10-3 呈现了这四类区域统一挂载于同一目录树的结构：Agent 通过统一接口访问整棵树，用户从共享空间上传与下载文件，外部数据源经适配器挂载，系统内置资源则以只读方式提供。
 
-Table 10-3 compares these four area types across four dimensions—visibility, lifecycle, read/write permissions, and concurrency control—serving as a checklist for file system layout design.
 
-Table 10-3 Four area types of the Agent Virtual File System
+![图10-3 Agent 虚拟文件系统的四类区域挂载结构](images/fig10-3.svg)
 
-| Area | Visibility | Lifecycle | Read/Write | Concurrency Control |
-|---|---|---|---|---|
-| Agent Private Workspace | That Agent only | Destroyed with the Agent instance | Read/Write | Not needed (private) |
-| Multi-Agent Shared Space | All collaborating Agents + User | Persists for the task duration, requires persistence | Read/Write | Required (optimistic lock / worktree) |
-| Mounted External Resources | Depends on external authorization | Determined by the external source | Mostly read-only, writes require caution | Managed by the external source |
-| Built-in System Resources | All Agents | Stable across sessions | Read-only | Not needed (read-only) |
 
-Unifying these four area types under a single directory tree is the core value of the design principle: **"file path as a universal interface."** When Agents pass artifacts to each other, when a main Agent hands off input to a sub-agent, or even during cross-organization A2A collaboration to exchange artifacts, the transfer is a lightweight path string, not the content loaded into the context window (Chapter 4). This aligns with Chapter 5's concept of "the file system as the Agent's hub"—which discusses how a single Agent uses the file system to host memory and capabilities—and extends the same abstraction to multiple Agents: a virtual directory tree mounting private, shared, external, and built-in storage serves as the storage foundation for multi-agent collaboration.
+表10-3 从可见性、生命周期、读写权限与并发控制四个维度对比这四类区域，可作为文件系统布局设计的检查表。
 
-### Communication and Control Between Agents
+表10-3 Agent 虚拟文件系统的四类区域
 
-While the file system solves the problem of **artifact exchange** between Agents, collaboration also requires a **control plane**: supporting message passing, status queries, and execution termination between Agents. Chapter 4 has already provided the tool primitives for this plane—creating (`spawn_subagent`), sending messages (`send_message_to_subagent`), and canceling (`cancel_subagent`)—along with four collaboration modes: synchronous, asynchronous, streaming, and multi-turn. This section does not repeat the interface definitions but focuses on three often-overlooked capabilities essential for multi-agent collaboration.
+| 区域 | 可见性 | 生命周期 | 读写 | 并发控制 |
+|----------------|--------------------|-------------------|-----------------|------------------------|
+| Agent 专属工作区 | 仅该 Agent | 随 Agent 实例销毁 | 读写 | 不需要（私有） |
+| 多 Agent 共享空间 | 所有协作 Agent + 用户 | 随任务持续，需持久化 | 读写 | 需要（乐观锁 / worktree） |
+| 外部挂载资源 | 视外部授权而定 | 由外部源决定 | 多为只读，写需谨慎 | 由外部源负责 |
+| 系统内置资源 | 所有 Agent | 跨会话稳定 | 只读 | 不需要（只读） |
 
-**I. Message Passing.** The simplest form is point-to-point: Agent A directly calls `send_message_to_agent_b(content)`. This is suitable for scenarios with a fixed topology and a small number of Agents (e.g., the phone + computer dual-agent experiment 10-4 in this chapter). When the number of Agents increases and asynchronous parallelism is required, the number of point-to-point connections grows quadratically with the number of Agents, and both sender and receiver must be online simultaneously. In such cases, a **message bus** should be used (detailed later in this chapter under "Parallel Coordination Modes"): Agents publish messages to the bus, which forwards them based on subscriptions, so the sender does not need to know the consumers. Whether point-to-point or via a bus, messages should typically carry a structured **envelope**: sender ID, target (specific Agent or broadcast), message type (e.g., `task_assigned`/`status_update`/`result`/`terminate`), and a JSON payload. A unified envelope format ensures reliable routing and parsing by the receiver and makes the collaboration chain traceable—a key aspect of debugging multi-agent systems.
+将四类区域统一至同一目录树，正是“**文件路径作为通用接口**”这一设计的价值所在：Agent 间传递产物、主 Agent 向子 Agent 交接输入、乃至跨组织 A2A 协作交换 Artifact，传递的均为轻量的路径字符串，而非将内容载入上下文窗口（第四章）。这与第五章“文件系统作为 Agent 的中枢”一脉相承——后者讨论单 Agent 如何以文件系统承载记忆与能力，此处则将同一抽象扩展至多 Agent：一棵挂载了私有、共享、外部、内置四类存储的虚拟目录树，即多 Agent 协作的存储底座。
 
-**II. Status Query.** This is the most underestimated aspect of the control plane. After a main Agent dispatches a sub-agent, without knowing its progress, it cannot decide whether to continue waiting or intervene if the sub-agent is blocked. There are two paradigms for obtaining status. **Pull**: The main Agent calls `get_subagent_status(agent_id)`, which returns the sub-agent's current status (running/waiting for input/completed/failed), progress, and last activity time. **Push**: The sub-agent proactively reports status updates to the message bus during execution, and the main Agent maintains a real-time task status table (the "real-time monitoring" in experiment 10-6 of this chapter follows this paradigm). Each has trade-offs: Pull is simple to implement, but polling too frequently wastes tokens, while polling too infrequently leads to delays; Push offers good real-time performance but relies on the sub-agent's proactive reporting. In engineering practice, sub-agent status is often modeled as a **state machine** (submitted, executing, needs input, completed, failed). The A2A protocol later in this chapter standardizes the task lifecycle into such states. Additionally, **timeouts and heartbeat detection** serve as a safety net (echoing the Heartbeat and monitor_shell from Chapter 4): even if a sub-agent neither reports nor returns, the main Agent can determine failure based on "no activity for N minutes," preventing the system from being blocked by a stalled sub-agent.
+### Agent 间的通信与控制
 
-**III. Execution Termination.** In parallel collaboration, a common scenario is "one succeeds, the rest become irrelevant"—multiple Agents search separately, and once one finds the target, the others should stop immediately (the cascading termination in experiment 10-6 of this chapter). There are two levels of termination. **Graceful termination** is preferred: the main Agent sends a `terminate` signal, the sub-agent responds at a safe point in its current step, cleans up resources (closes browser sessions, writes pending files, releases locks), sends an acknowledgment (ack), and then exits. **Forced termination** is a fallback: directly terminating the process, used only when the sub-agent does not respond to the graceful signal, at the cost of potentially leaving dangling resources and incomplete writes. Two engineering points need attention: First, graceful termination requires the sub-agent to periodically check for the termination signal in its loop (similar to the interrupt mechanism in Chapter 4); otherwise, the signal cannot be received. Second, cascading termination has a race condition—multiple sub-agents might report success nearly simultaneously. The main Agent must use a lock or idempotent design to ensure settlement happens only once and only one round of termination is broadcast. See the discussion of race conditions in experiment 10-6 of this chapter.
+文件系统解决 Agent 间**产物交换**的问题，协作还需一条**控制平面**：支持 Agent 间的消息传递、状态查询与执行终止。第四章已给出该平面的工具原语——创建（`spawn_subagent`）、发消息（`send_message_to_subagent`）、取消（`cancel_subagent`）——及同步/异步/流式/多轮四种协作形态。本节不重复接口定义，而聚焦多 Agent 协作依赖、却常被忽略的三项能力。
 
-Artifact exchange (data plane) and message passing, status query, and execution termination (control plane) together support multi-agent systems that do not share context. The three collaboration topologies described below are essentially different choices regarding control ownership and information flow built upon these two planes.
+**一、消息传递。** 最简形态为点对点：Agent A 直接调用 `send_message_to_agent_b(content)`，适用于拓扑固定、Agent 数量少的场景（如本章实验 10-4 的电话 + 电脑双 Agent）。当 Agent 数量增多且需异步并行时，点对点连接数随 Agent 数呈平方增长，且要求收发双方同时在线；此时应改用**消息总线**（详见本章后文“并行协调形态”）：Agent 将消息发布至总线，由总线按订阅关系转发，发送方无需知晓消费者。无论点对点还是经总线，消息通常应携带结构化的**信封**（envelope）：发送者 ID、目标（指定 Agent 或广播）、消息类型（如 `task_assigned`/`status_update`/`result`/`terminate`）及 JSON 负载。统一的信封格式保证接收方可靠地路由与解析，并使协作链路可追溯——这是多 Agent 系统调试的关键。
 
-Based on the collaborative relationships and control flow characteristics between Agents, collaboration without shared context can be divided into three main architectures: Peer-to-Peer Collaboration, Manager Mode, and Decentralized Mode, each suitable for different types of tasks.
+**二、状态查询。** 这是控制平面中最易被低估的一环。主 Agent 派出子 Agent 后，若无从获知其进展，则既无法判断是否继续等待，也无法在其阻塞时及时介入。状态获取有两种范式。**拉取（pull）**：主 Agent 调用 `get_subagent_status(agent_id)`，返回子 Agent 的当前状态（运行中/等待输入/已完成/失败）、进度及最近活动时间。**推送（push）**：子 Agent 在执行中主动向消息总线上报状态更新，主 Agent 维护一张任务状态表实时刷新（本章实验 10-6 的“实时监控”即此范式）。二者各有取舍：拉取实现简单，但轮询过密浪费 token、过疏则不及时；推送实时性好，但依赖子 Agent 自觉上报。工程上常将子 Agent 状态建模为**状态机**（已提交、执行中、需要输入、已完成、失败），本章后文的 A2A 协议即将任务生命周期标准化为此类状态。此外还需**超时与心跳检测**作为兜底（呼应第四章的 Heartbeat 与 monitor_shell）：即便子 Agent 既不上报也不返回，主 Agent 亦可依“超过 N 分钟无活动即判失败”避免系统被阻塞的子 Agent 拖累。
 
-### Peer-to-Peer Collaboration Mode: Mutual Checks and Iterative Improvement
+**三、执行终止。** 并行协作中常出现“一者成功、余者失效”的情形——多个 Agent 分头搜索，一者命中目标后其余应立即停止（本章实验 10-6 的级联终止）。终止有两种强度。**优雅终止（graceful）**为首选：主 Agent 发出 `terminate` 信号，子 Agent 在当前步骤的安全点响应，先清理资源（关闭浏览器会话、写入未完成文件、释放锁），返回确认（ack）后退出。**强制终止（forced）**为兜底：直接终止进程，仅在子 Agent 对优雅信号无响应时使用，代价是可能遗留悬挂资源与未完成写入。两个工程要点需处理：其一，优雅终止要求子 Agent 在循环中定期检查终止信号（类似第四章的中断机制），否则信号无从被响应；其二，级联终止存在竞态——多个子 Agent 可能近乎同时上报成功，主 Agent 须以锁或幂等设计保证仅结算一次、仅广播一轮终止，详见本章实验 10-6 对竞态条件的讨论。
 
-Peer-to-peer collaboration typically involves 2-3 Agents with equal status, providing feedback to each other through multiple rounds of iteration. The core value lies in introducing cognitive diversity—different Agents examine the same problem from different perspectives, balancing innovation and robustness to produce results superior to any single Agent.
+产物交换（数据平面）与消息传递、状态查询、执行终止（控制平面）共同支撑起不共享上下文的多 Agent 系统。以下三种协作拓扑，本质上都是在这两个平面之上，对控制权归属与信息流向做出的不同选择。
 
-Compared to Manager and Decentralized modes, the implementation complexity of peer-to-peer collaboration is much lower—simply define the roles of two Agents, the communication mechanism, and the iteration termination condition, and it can run. It is an ideal choice for quickly validating ideas and building prototypes.
+根据 Agent 之间的协作关系和控制流特征，不共享上下文的协作可以分为三种主要架构：对等协作模式、管理者模式、去中心化模式，分别适用于不同类型的任务。
 
-**Proposer-Reviewer Paradigm.**
+### 对等协作模式：相互制衡与迭代改进
 
-![Figure 10-4 Proposer-Reviewer Loop](images/fig10-4.svg)
+对等协作通常涉及 2-3 个平等身份的 Agent，通过多轮迭代互相提供反馈。核心价值在于引入认知多样性——不同 Agent 从不同角度审视同一个问题，在创新与稳健之间取得平衡，产出比任何单一 Agent 都更优质的结果。
 
-The Proposer-Reviewer is the most classic peer-to-peer collaboration paradigm. Chapter 5 has already detailed the design principles and practical applications of this paradigm in three experiments: PPT generation, video editing, and log visualization. The Proposer Agent is responsible for generating code, and the Reviewer Agent renders the execution results, evaluates the quality using a Vision LLM, and provides structured improvement suggestions. The two iterate repeatedly until the result meets the standard.
+相比管理者和去中心化模式，对等协作的实现复杂度低得多——只需定义好两个 Agent 的角色、通信机制和迭代终止条件，就可以跑起来。是快速验证想法、构建原型的理想选择。
 
-This paradigm is also applicable to scenarios like security review (Proposer generates an action plan, Reviewer checks compliance and potential risks), content moderation (Proposer drafts a reply, Reviewer checks business rules and language norms), and code review (Proposer writes code, Reviewer checks security and best practices).
+**提议者-审核者范式。**
 
-**Why can't a single Agent generate and then review its own work?** This is precisely the application of the criterion from the earlier section "When is Multi-Agent Truly Better Than Single-Agent?"—if the review does not introduce new information, it is just "asking the model to think again." Related research provides a clear answer. In their ICLR 2024 paper "Large Language Models Cannot Self-Correct Reasoning Yet," Huang et al. found that asking GPT-4 to review and correct its own answers without external feedback actually decreased accuracy—the model changed correct answers to incorrect ones more often than it changed incorrect answers to correct ones.
 
-A 2024 survey paper published in TACL, "When Can LLMs Actually Correct Their Own Mistakes?" (arXiv:2406.01297), further confirmed this conclusion: unless reliable external feedback is provided (e.g., test case execution results, verification output from external tools), purely relying on the model's own "self-correction" is largely ineffective.
+![图10-4 提议者-审核者循环](images/fig10-4.svg)
 
-The CRITIC paper at ICLR 2024 provides an intuitive comparative experiment. CRITIC had the model use external tools (search engine, Python interpreter) to verify its own answers, leading to significant performance improvements. However, when the experimenters removed the tool verification step and only kept the model's self-assessment, most of the improvement disappeared. This indicates that the value of review lies not in "asking the model to think again," but in **introducing new information that was not available during the model's generation**—test results, rendered screenshots, compilation errors, external search results.
 
-This is the core design principle of the Proposer-Reviewer paradigm. In the PPT generation experiment of Chapter 5, the value of the Reviewer Agent was not "using the same model to look at the code again," but **rendering the PPT and taking a screenshot**—a screenshot containing visual information that the Proposer Agent could not obtain when generating the code. Similarly, in code generation scenarios, the pass/fail results from executing test cases are new signals that did not exist when the code was written—the independent value of the Reviewer stems precisely from its access to this external feedback unavailable to the Proposer.
+提议者-审核者是最经典的对等协作范式。第五章已经在 PPT 生成、视频编辑和日志可视化三个实验中详细介绍了这一范式的设计原则和实战应用：Proposer Agent 负责生成代码，Reviewer Agent 渲染执行结果并用 Vision LLM 评估质量、给出结构化改进建议，两者反复迭代直到效果达标。
 
-**Extensions: Other Peer-to-Peer Collaboration Modes.**
+这一范式同样适用于安全审查（Proposer 生成操作方案，Reviewer 检查合规性和潜在风险）、内容审核（Proposer 起草回复，Reviewer 检查业务规则和用语规范）、代码审核（Proposer 编写代码，Reviewer 检查安全性和最佳实践）等场景。
 
-**Debate**: Multiple Agents hold different positions, exploring the problem space deeply through adversarial dialogue. For example, when evaluating a technical solution, Agent A plays the "supporter," listing the solution's advantages and opportunities, while Agent B plays the "opponent," pointing out risks and limitations. Each round of debate involves rebutting or supplementing the other's arguments. When a single Agent analyzes, the model often leans towards one viewpoint and ignores counter-evidence. The debate mode, through institutionalized confrontation, ensures both sides are fully argued, helping decision-makers make more balanced judgments.
+**为什么不能让一个 Agent 自己生成再自己审查？** 这正是前面“多 Agent 何时真正优于单 Agent”一节那条判据的具体落点——审查若不引入新信息，就只是“让模型再想一遍”。相关研究对此给出了明确的答案。Huang 等人在 ICLR 2024 论文《Large Language Models Cannot Self-Correct Reasoning Yet》中发现：让 GPT-4 在没有外部反馈的情况下审查并修正自己的回答，准确率反而下降——模型把正确答案改错的次数比把错误答案改对的次数更多。
 
-However, the practical effectiveness of the debate mode is still debated in academia. A 2026 study by Tran and Kiela [^single-agent-2026] compared a single Agent with five multi-agent architectures (sequential, debate, ensemble, parallel roles, sub-task parallel) on multi-hop reasoning tasks. They found that **when the thinking token budget was strictly controlled to be the same, the single Agent performed on par with or even better than the multi-agent systems** (unless context utilization was degraded to a certain point). The researchers provided an explanation based on the data processing inequality in information theory: multiple Agents in a debate process the exact same textual information, and each serial transmission of intermediate conclusions between Agents can only lose information, not create it. The benefits of the debate mode in some academic papers likely stem from multiple Agents consuming more total computation. It is important to clarify the boundary of this argument: it targets the information bottleneck caused by "multi-agent serial transmission of intermediate conclusions" and does not negate other approaches, such as **multiple independent samplings of the same problem followed by aggregation** (e.g., self-consistency, majority voting), or leveraging the **asymmetry in difficulty between generation and verification** (writing an answer is hard, verifying it is easy) for a generation-verification division of labor. These scenarios either introduce additional independent sampling or exploit the asymmetric structure of the task itself, and are not within the scope of the data processing inequality.
+2024 年发表在 TACL 期刊上的综述论文《When Can LLMs Actually Correct Their Own Mistakes?》（arXiv:2406.01297）进一步确认了这一结论：除非提供可靠的外部反馈（如测试用例的执行结果、外部工具的验证输出），否则纯粹依赖模型自身的“自我纠正”几乎不起作用。
+
+ICLR 2024 的 CRITIC 论文提供了一个直观的对比实验。CRITIC 让模型使用外部工具（搜索引擎、Python 解释器）来验证自己的回答，效果显著提升；但当实验者移除工具验证步骤、只保留模型的自我评估时，大部分提升就消失了。这说明审查的价值不在于“让模型再想一遍”，而在于**引入了模型生成时不具备的新信息**——测试结果、渲染截图、编译错误、外部搜索结果。
+
+这正是提议者-审核者范式的核心设计原理。在第五章的 PPT 生成实验中，Reviewer Agent 的价值不是“用同一个模型再看一遍代码”，而是**渲染了 PPT 并截取了屏幕截图**——这张截图包含了 Proposer Agent 在生成代码时完全无法获得的视觉信息。同理，在代码生成场景中，执行测试用例产生的通过/失败结果，也是编写代码时并不存在的新信号——Reviewer 的独立价值正来源于它能接触到 Proposer 无法获得的这些外部反馈。
+
+**扩展：其他对等协作模式。**
+
+**Debate（辩论）**：多个 Agent 各持不同立场，通过对抗性对话深入探索问题空间。比如评估一个技术方案时，Agent A 扮演“支持者”列举方案优势和机会，Agent B 扮演“反对者”指出风险和局限，每轮辩论都针对对方的论点提出反驳或补充。单一 Agent 分析时，模型往往倾向某个观点而忽视反面证据；辩论模式则通过制度化的对抗，确保正反两面都得到充分论证，帮助决策者做出更平衡的判断。
+
+不过，辩论模式的实际效果在学术界仍有争议。2026 年 Tran 与 Kiela 的研究 [^single-agent-2026] 在多跳推理任务上对比了单 Agent 与五种多 Agent 架构（顺序、辩论、集成、并行角色、子任务并行），发现**当思考 token 预算被严格控制为相同时，单 Agent 的表现与多 Agent 持平甚至更好**（除非上下文利用率被削弱到某个程度）。研究者基于信息论中的数据处理不等式给出了解释：辩论中的多个 Agent 处理的是完全相同的文本信息，Agent 之间每一次串行传递中间结论都只可能丢失信息、不可能凭空创造信息。辩论模式在一些学术论文中的收益很可能来源于多个 Agent 消耗了更多的总计算量。需要划清这个论证的边界：它针对的是“多 Agent 串行传递中间结论”造成的信息瓶颈，并不否定另一类做法——对同一问题**多次独立采样再聚合**（如 self-consistency、多数投票），或利用**生成与验证的难度不对称**（写出答案难、检验答案易）来做生成-验证分工。这些场景要么引入了额外的独立采样、要么利用了任务本身的不对称结构，都不在数据处理不等式的适用范围内。
 
 [^single-agent-2026]: Tran, D., Kiela, D. *Single-Agent LLMs Outperform Multi-Agent Systems on Multi-Hop Reasoning Under Equal Thinking Token Budgets.* arXiv:2604.02460, 2026.
 
-**Brainstorm**: Multiple Agents independently generate ideas, then share them with each other, inspiring one another. For example, in a product innovation task, Agent 1 proposes "adding social sharing features," Agent 2 is inspired to suggest "not just sharing to social networks, but also generating personalized sharing posters," and Agent 3 synthesizes the first two to propose "user-customizable poster templates forming a template marketplace." Different Agents have different "thinking preferences" (achieved through different prompts or models), and by stimulating each other, they explore a broader solution space to find creative combinations that a single Agent would struggle to conceive.
+**Brainstorm（头脑风暴）**：多个 Agent 独立生成创意，然后相互分享、彼此启发。比如在产品创新任务中，Agent 1 提出“增加社交分享功能”，Agent 2 受启发提出“不仅分享到社交网络，还可以生成个性化分享海报”，Agent 3 综合前两者提出“用户自定义海报模板并形成模板市场”。不同 Agent 拥有不同的“思维偏好”（通过不同提示词或模型实现），通过相互激发来探索更广阔的解空间，找到单一 Agent 难以想到的创意组合。
 
-**Panel Discussion**: Multiple Agents each represent the perspective of a specific professional domain, jointly discussing an interdisciplinary problem. For example, when evaluating the feasibility of a new product, an Engineer Agent analyzes the implementation difficulty from a technical standpoint, a Product Agent assesses market appeal from a user experience perspective, and an Operations Agent analyzes business viability from a cost and resource perspective. These Agents are not adversarial but complementary, together piecing together the full picture of the problem and identifying cross-domain constraints and opportunities.
+**Panel Discussion（专家小组）**：多个 Agent 各自代表一个专业领域的视角，共同讨论跨学科问题。比如评估新产品的可行性时，工程师 Agent 从技术角度分析实现难度，产品 Agent 从用户体验角度评估市场吸引力，运营 Agent 从成本和资源角度分析商业可行性。这些 Agent 之间不是对抗关系，而是互补关系，共同拼出问题的全貌，识别跨领域的约束和机会。
 
-### Manager Mode: Centralized CoordinationWhen a task involves more than five sub-tasks, requires dynamic scheduling, or has complex dependencies between sub-tasks, peer-to-peer collaboration becomes insufficient, and a manager pattern is needed. The Manager Agent's responsibilities are like a project manager: first understand the overall task, then break it down into assignable sub-tasks, select the appropriate Agent to execute, track progress and handle exceptions (retry, switch Agent, adjust plan), and finally integrate the outputs of each Agent into the final result.
+### 管理者模式：中心化协调
 
-From a system design perspective, the manager pattern models each specialized Agent as a tool that the Manager can invoke. The Manager's toolset includes not only traditional external tools (like search, file operations) but also the invocation interfaces of other Agents. The Manager starts the corresponding Agent through the tool call mechanism, passes task parameters and necessary context, waits for completion, and receives the returned result. From the Manager's perspective, calling an Agent is essentially no different from calling a regular tool—both involve sending a request and receiving a response. This unified abstraction gives the manager pattern good extensibility—adding new capabilities only requires developing the corresponding Agent and registering it as a tool, without modifying the Manager's core logic. At the same time, it naturally supports heterogeneity—different Agents can use different models, prompts, tool sets, and even run on different hardware environments.
+当任务涉及五个以上子任务、需要动态调度、或者子任务之间存在复杂依赖时，对等协作就力不从心了，需要引入管理者模式。Manager Agent 的职责就像一个项目经理：先理解整体任务，再拆解为可分配的子任务，选择合适的 Agent 去执行，跟踪进度并处理异常（重试、换 Agent、调整计划），最后把各 Agent 的输出整合为最终结果。
 
-The abstraction of "Agents as tools for each other" was established in Chapter 4, "Collaboration Tools" section: the interface design of `spawn_subagent / send_message / cancel_subagent`, and the four strategies for preparing sub-agent context (minimal passing, manual filtering, automatic pruning, LLM-generated context), all directly apply to the Manager's invocation of sub-agents here. Chapter 4 addresses what is passed in the "Manager → sub-agent" direction; the symmetrical question is what is returned in the "sub-agent → Manager" direction. The answer is **structured summaries rather than full trajectories**: the sub-agent should return the task conclusion, key findings, file paths of the artifacts, and problems encountered, leaving the complete execution trajectory in its own logs. Only in this way can the Manager's context grow slowly and linearly with the number of sub-tasks, rather than exploding—this is also the methodological basis for the Manager in Experiment 10-3 below "only maintaining file indexes, not saving translation content". The division of labor between the two chapters is: Chapter 4 discusses mechanisms (tool interfaces and context passing implementation), while this chapter discusses architecture (how topology and responsibilities are divided).
+从系统设计角度看，管理者模式把每个专门 Agent 建模为 Manager 可调用的工具。Manager 的工具集中不仅有传统的外部工具（如搜索、文件操作），还包含其他 Agent 的调用接口。Manager 通过工具调用机制启动相应 Agent，传递任务参数和必要上下文，等待完成后接收返回结果。从 Manager 的视角看，调用一个 Agent 和调用一个普通工具没有本质区别——都是发出请求、获得响应。这种统一抽象赋予了管理者模式良好的可扩展性——新增能力只需开发对应 Agent 并注册为工具，Manager 的核心逻辑无需修改。同时它天然支持异构性——不同 Agent 可以用不同的模型、提示词、工具集，甚至运行在不同的硬件环境上。
 
-However, the manager pattern also has inherent challenges. The Manager becomes a single point of bottleneck for the system—it must understand the nature of all sub-tasks, select the correct Agent, and accurately pass context. Any decision deviation can affect the overall process. Additionally, the Manager needs to maintain the global context of the entire task. As the task progresses and Agent calls increase, the context can quickly expand. Therefore, special attention must be paid to the quality of the Manager's prompt, context management strategies, and reasonable task decomposition granularity.
+“Agent 互为工具”的抽象在第四章“协作工具”一节已经建立：spawn_subagent / send_message / cancel_subagent 的接口设计，以及子 Agent 上下文准备的四种策略（最小化传递、手动筛选、自动裁剪、LLM 生成上下文），都直接适用于这里的 Manager 对子 Agent 的调用。第四章解决的是“Manager → 子 Agent”方向传什么；对称的问题是“子 Agent → Manager”方向返回什么。答案是**结构化摘要而非全量轨迹**：子 Agent 应返回任务结论、关键发现、产物的文件路径和遇到的问题，把完整执行轨迹留在自己的日志里。只有这样，Manager 的上下文才能随子任务数量缓慢线性增长，而不是爆炸式膨胀——这也是下文实验 10-3 中 Manager“只维护文件索引、不保存翻译内容”的方法论依据。两章的分工是：第四章讲机制（工具接口与上下文传递的实现），本章讲架构（拓扑结构与职责如何划分）。
 
-The 2025 Plan-and-Act paper [^plan-and-act-2025] provides an empirical analysis of this: in a Planner-Executor dual-agent architecture, **a weak planner is the most critical bottleneck of the entire system**. When the Planner's planning quality is high enough, good results can be achieved even with a relatively simple Executor. Conversely, if the Planner's task decomposition is wrong, all subsequent Executor work is built on a faulty premise. This study achieved a 54% success rate on the WebArena-Lite benchmark, with the core contribution being the improvement of the Planner's planning ability, not the Executor's execution ability. The implication of this finding is that the strongest model and the most carefully designed prompt should be allocated to the Manager (the planner), rather than distributing resources evenly across all Agents.
+但管理者模式也有固有的挑战。Manager 成为系统的单点瓶颈——它必须理解所有子任务的性质，选择正确的 Agent，准确传递上下文，任何决策偏差都会影响整体流程。此外，Manager 需要维护整个任务的全局上下文，随着任务深入和 Agent 调用增多，上下文可能快速膨胀。因此需要特别注意 Manager 的提示词质量、上下文管理策略和合理的任务分解粒度。
 
-This does not conflict with an argument from Chapter 4. When discussing the proposal model and the review model, Chapter 4 pointed out that their capabilities should be similar—but that refers to the **review scenario**: the reviewer must be able to keep up with the reasoning of the reviewed party to find flaws; if the capability gap is too large, the review becomes impossible. The manager pattern discusses a different matter—**the division of labor between planning and execution**: once the planner makes a mistake in task decomposition, no matter how strong the executor is, it cannot remedy the situation. Therefore, the strongest model and the most carefully designed prompt should be prioritized for the planner. Whether a balance of capabilities is needed among executors depends on the coupling degree of the sub-tasks—when the outputs of multiple executors must ultimately be assembled into a whole, the weakest link often drags down the overall quality.
+2025 年的 Plan-and-Act 论文 [^plan-and-act-2025] 对此做了实证分析：在 Planner-Executor 双 Agent 架构中，**弱规划者是整个系统最关键的瓶颈**。当 Planner 的规划质量足够高时，即使 Executor 比较简单也能取得好结果；反之，如果 Planner 的任务分解有误，后续所有 Executor 的工作都建立在错误的前提上。该研究在 WebArena-Lite 基准上取得了 54% 的成功率，核心贡献正是改善了 Planner 的规划能力，而非 Executor 的执行能力。这一发现的启示是：应当将最强的模型和最精心设计的提示词分配给 Manager（规划者），而不是将资源平均分配给所有 Agent。
+
+这与第四章的一个论点并不冲突。第四章在讨论提议模型与审核模型时指出，两者的能力应当相近——但那说的是**审查场景**：审查者必须跟得上被审者的推理，才可能发现其中的破绽，能力落差太大就根本审不动。而管理者模式讨论的是另一件事——**规划与执行的分工**：规划者一旦把任务分解错，执行者再强也无从补救，所以最强的模型和最精心的提示词应当优先给规划者。至于执行者之间是否需要能力均衡，则取决于子任务的耦合程度——当多个执行者的产物最终要拼装成一个整体时，最弱的一环往往会拖累整体质量。
 
 [^plan-and-act-2025]: Erdogan, L. E., et al. *Plan-and-Act: Improving Planning of Agents for Long-Horizon Tasks.* arXiv:2503.09572, 2025.
 
-**Sequential Coordination Pattern.**
+**顺序协调形态。**
 
 
-![Figure 10-5 Manager Sequential Coordination](images/fig10-5.svg)
+![图10-5 Manager 顺序协调](images/fig10-5.svg)
 
 
-The Manager calls specialized Agents sequentially. Each Agent returns results upon completion, and the Manager decides the next step. The control flow is linear, simple, and clear, suitable for scenarios where sub-tasks have clear sequential dependencies.
+Manager 按顺序依次调用专门 Agent，每个 Agent 完成后返回结果，Manager 再决定下一步。控制流是线性的，简单明了，适合子任务之间有清晰先后依赖的场景。
 
-> **Experiment 10-3 ★★: Book Translation Agent**
+> **实验 10-3 ★★：书籍翻译 Agent**
 >
-> Book translation is a typical complex task requiring multi-agent collaboration. Translating a technical book involves not just converting text from one language to another, but also ensuring consistency of specialized terminology throughout the book, contextual accuracy, and overall reading fluency. For example, when translating an English book about large language models, numerous terms appear repeatedly, potentially with multiple conventional translations. Consistency must be maintained throughout the book—if `agent` is translated as "智能体" in Chapter 1, it cannot be changed to "代理" later.>
-> Using a single Agent for this task leads to severe context issues. As the Agent processes content chapter by chapter, the context accumulates: the full-book glossary, translated chapters, the current paragraph, translation thought processes, and tool call results. A several-hundred-page technical book, along with translation intermediates, can easily exceed the context window. More critically, within an overly long context, the Agent is prone to "getting lost"—forgetting previous terminology conventions and using an inconsistent translation in Chapter 8 compared to Chapter 2; wasting resources on redundant checks during the proofreading stage; or even hallucinating due to attention dispersion, "remembering" terminology rules that don't actually exist.
+> 书籍翻译是一个典型的需要多 Agent 协作的复杂任务。翻译一本技术书籍，不仅仅是把文字从一种语言转换为另一种语言，更需要保证专业术语全书一致、语境准确、整体阅读流畅。比如翻译一本大语言模型相关的英文书，大量术语会反复出现，可能有多种约定俗成的说法，必须全书统一——第一章把 agent 译为“智能体”，后面就不能改成“代理”。
 >
-> The manager pattern addresses these issues through task decomposition and responsibility separation:
+> 如果用单一 Agent 来做，会面临严重的上下文问题。随着 Agent 逐章处理内容，上下文不断累积：全书术语表、已翻译章节、当前段落、翻译思考过程、工具调用结果。一本几百页的技术书籍加上翻译中间产物，很容易超出上下文窗口。更严重的是，在过长的上下文中 Agent 容易“迷失”——忘记之前的术语约定，到第八章用了与第二章不一致的译法；审校阶段重复检查浪费资源；甚至因注意力分散而产生幻觉，“记起”实际上并不存在的术语规则。
 >
-> - **Glossary Agent**: Receives the full book content, identifies recurring specialized terms, searches specialized dictionaries and translation norms, and generates a structured glossary (JSON/CSV format, including English term, Chinese translation, part of speech, usage context). After completion, it writes to a shared file system, and the Agent can be destroyed to release resources.
-> - **Translation Agent**: Receives the current chapter, the glossary, and translation guidelines (target reader level, language style), and translates it into fluent Chinese. It strictly uses the specified translations for terms in the glossary, and for new terms, it infers a translation and marks it for review. Each instance works in an independent context without interference. The translated text is written to the file system (e.g., `chapter1_zh.md`). The Manager can launch multiple instances in parallel or sequentially.
-> - **Proofreading Agent**: Receives all translated texts and the glossary, performs consistency checks—verifying whether term translations are uniform, identifying inconsistencies, and checking overall fluency and readability. It generates a proofreading report written to the file system.
-> - **Manager Agent**: Its context mainly stores the task description, execution plan, call records of each Agent, and progress status. It does not store the complete translation content (which exists in the file system), only maintaining file indexes. Based on the proofreading report, the Manager can send specific chapters back to the Translation Agent for revision.
+> 管理者模式通过任务分解和责任分离来解决这些问题：
 >
-> In this architecture, the Manager Agent's context remains within a manageable range: it only needs to know the overall task description and goals, the execution plan for each phase, the call records and results from each Agent, and the current progress status, without needing to hold the complete translation of every chapter.
+> - **Glossary Agent**（术语对照表 Agent）：接收全书内容，识别重复出现的专业术语，搜索专业词典和翻译规范，生成结构化术语对照表（JSON/CSV 格式，包含英文术语、中文翻译、词性、使用语境）。完成后写入共享文件系统，Agent 即可销毁释放资源
+> - **Translation Agent**（章节翻译 Agent）：接收当前章节、术语对照表和翻译指南（目标读者水平、语言风格），翻译为流畅的中文。遇到对照表中的术语严格使用规定译法，遇到新术语则推断翻译并标记为待审查。每个实例在独立上下文中工作，互不干扰。译文写入文件系统（如 `chapter1_zh.md`）。Manager 可并行或串行启动多个实例
+> - **Proofreading Agent**（全文审校 Agent）：接收所有译文和术语表，执行一致性检查——逐一验证术语翻译是否统一、识别前后不一致之处、检查整体流畅性和可读性。生成审校报告写入文件系统
+> - **Manager Agent**：上下文中主要保存任务描述、执行计划、各 Agent 的调用记录和进度状态。不保存完整翻译内容（这些存在文件系统中），只维护文件索引。根据审校报告，Manager 可以把特定章节发回 Translation Agent 修订
 >
-> The key advantage is **context isolation**: The Glossary Agent only sees the content needed for term extraction, the Translation Agent only sees the current chapter and glossary, and the Proofreading Agent, while needing access to the full text, focuses only on consistency checks. Each Agent works within a lean, focused context, leading to higher efficiency and a lower chance of errors—the Agent won't be distracted by information overload.
+> 在这个架构中，Manager Agent 的上下文始终保持在可管理的范围内：它只需要知道任务的整体描述和目标、各阶段的执行计划、每个 Agent 的调用记录和返回结果、以及当前的进度状态，而不需要装下每章的完整翻译内容。
 >
-> **Experiment Requirements**:
-> 1. Choose a technical book with rich illustrations and code as the translation object
-> 2. Implement four types of Agents: Manager, Glossary, Translation, Proofreading
-> 3. Record the context consumption of each Agent to verify the effectiveness of the manager pattern in controlling context expansion
-> 4. Compare the differences between a single Agent vs. the manager pattern in terms of translation quality, execution efficiency, and resource consumption
+> 关键优势在于**上下文隔离**：Glossary Agent 只看术语提取所需的内容，Translation Agent 只看当前章节和术语表，Proofreading Agent 虽然需要访问全文但只关注一致性检查。每个 Agent 都在一个精简、专注的上下文中工作，不仅效率更高，出错的可能性也更低——Agent 不会因为信息过载而分散注意力。
 >
->
-> ![Figure 10-6 Book Translation Agent Architecture](images/fig10-6.svg)
+> **实验要求**：
+> 1. 选择一本图文并茂、包含代码的技术书籍作为翻译对象
+> 2. 实现 Manager、Glossary、Translation、Proofreading 四种 Agent
+> 3. 记录每个 Agent 的上下文消耗，验证管理者模式控制上下文膨胀的有效性
+> 4. 对比单 Agent vs 管理者模式在翻译质量、执行效率、资源消耗方面的差异
 >
 >
-**Parallel Coordination Pattern.**
-
-
-![Figure 10-7 Manager Parallel Coordination](images/fig10-7.svg)
-
-
-When multiple sub-tasks can be executed in parallel, the sequential pattern becomes inefficient. Parallel coordination allows multiple Agents to work simultaneously, significantly increasing throughput. The Manager Agent must not only plan parallel tasks but also monitor all running Agents in real-time, handle communication coordination, and make global decisions when Agents succeed or fail. This typically requires a **Message Bus** as infrastructure—think of it as a "public bulletin board" where Agents can post messages (publish) and subscribe to message types they are interested in, enabling asynchronous, non-blocking communication. Common implementation solutions, in increasing order of complexity, include: **Redis Pub/Sub**—lightweight, messages are sent and received instantly, simple to use, but not persistent—if the receiver is offline, the message is lost; **RabbitMQ** and similar message queues persist messages to disk, so they are not lost even if the receiver is temporarily offline. The message format typically includes the sender ID, target Agent (or broadcast to all), message type, and data content in JSON format.
-
-> **Experiment 10-4 ★★★: Agent Talking on the Phone While Using a Computer**
->
-> **Prerequisites**: This experiment integrates the Computer Use and Voice Agent technologies from Chapter 9. It is recommended to complete the relevant experiments in Chapter 9 first.
->
-> Many real-world scenarios require multiple capabilities to operate simultaneously, rather than queuing up one by one: a human assistant might be on the phone with a client while simultaneously looking up documents and taking notes on the computer. This "multitasking" is extremely challenging for a single Agent—forcing one Agent to handle both real-time voice dialogue and computer interface operations inevitably leads to constant switching between the two tasks, causing pauses in conversation or interruptions in operation. The core idea of multi-agent parallel execution is: **let different Agents each focus on one task with high real-time requirements, coordinating through asynchronous message passing to achieve true parallel processing**. The two Agents are also specifically optimized for different interaction modalities—the Phone Agent requires low-latency speech recognition and synthesis, while the Computer Agent requires powerful visual understanding and action planning capabilities.
->
-> **Scenario**: An AI Agent helps a user fill out a complex flight booking form. It needs to operate a web page while simultaneously asking the user for and confirming personal information (name, ID number, flight preferences, etc.) over the phone—both ends require high real-time performance, a classic case where a single Agent struggles to manage both, but a dual-agent setup allows each to focus on its own role.
->
-> **Dual-Agent Architecture**:
->
-> **Phone Agent**: A voice call Agent based on ASR + LLM + TTS. It is responsible for understanding the user's natural language responses, extracting key information, and sending it to the Computer Agent via the message framework. It also receives messages from the Computer Agent (e.g., "Need the user's ID number", "Page loading error") and generates appropriate dialogue to ask the user.
->
-> **Computer Agent**: Based on a browser operation framework (e.g., Anthropic Computer Use, browser-use). It is responsible for understanding the web page structure, identifying form fields, performing fill-in operations based on received information, and asking the Phone Agent for help when encountering problems.
->
-> **Communication Mechanism**: Two options:
-> - **Simple Solution**: Point-to-point communication via tool calls, e.g., `send_message_to_computer_agent(message)` / `send_message_to_phone_agent(message)`
-> - **Complete Solution**: Message Bus + Manager Agent, with a unified message format including sender, receiver, type, and content
->
-> **Parallel Collaboration Mechanism** (shared by the two "Phone + Computer" experiments in this chapter): The two Agents run in separate threads or processes, each maintaining its own independent ReAct loop. The Phone Agent's loop: receive voice -> ASR transcription -> LLM understand and generate response -> TTS synthesis -> play -> check messages from Computer Agent. The Computer Agent's loop: take screenshot -> Vision LLM understand page -> plan action -> execute (click, type, etc.) -> check messages from Phone Agent. The key is that both must run truly in parallel—while the Computer Agent is finding elements and typing text, the Phone Agent must stay online and converse with the user ("Okay, I'm filling in your name... May I ask what your ID number is?"). To achieve this, each Agent's input carries a marker field from the other, for example, the Phone Agent's context might contain `[FROM_COMPUTER_AGENT] Cannot find the 'Next' button, user confirmation might be needed`, and the Computer Agent's context might contain `[FROM_PHONE_AGENT] User said name is 'Zhang San', ID number is 123456`.
->
-> **Experiment Requirements**:
-> 1. Implement a dual-agent architecture based on ASR/TTS APIs and a browser operation framework
-> 2. Implement an efficient bidirectional communication mechanism
-> 3. Ensure truly parallel operation, with information collection and form filling happening simultaneously
-> 4. Handle exceptional situations
->
-> **Experiment 10-5 ★★★: Autonomously Orchestrated Phone and Computer Agents**
->
-> In Experiment 10-4, the collaboration architecture of the dual agents was pre-designed. This experiment goes a step further, exploring the **autonomous orchestration capability of Agents**—where the Agent itself decides when to launch a new collaborative Agent, rather than having the collaboration flow pre-planned by a human.
->
-> **Scenario**: The user requests, "Help me complete the registration on this website," providing the URL but not specifying what information needs to be filled in. The Manager Agent uses the Computer Use tool to access the website and load the registration page.
->
-> During the operation, the Computer Use Agent discovers that the registration form is very complex, containing numerous required fields: basic personal information (name, gender, date of birth), contact details (phone number, email, mailing address), identity verification information (ID type, ID number), preference settings, etc. After checking its context, the Agent realizes it doesn't have this information—the user only said "help me register" without providing any specific data.> When a traditional Agent encounters this situation, it sends a text message asking the user to type input—which is both inefficient (requiring manual entry of large amounts of information) and error-prone (format issues, missing information). A smarter Agent should recognize: **This is a scenario suitable for collecting information via a phone call**—phone conversations are far more efficient than text chat, allowing for sequential questioning and confirmation, and can handle the user's ambiguous expressions.
-
-> The key innovation is that this decision is not pre-programmed, but **made autonomously by the Agent**. The Computer Use Agent's prompt states: "When you need to collect a large amount of structured information from the user, and this can be done progressively through conversation, consider calling the Phone Agent as an assistive tool." The tool set includes `initiate_phone_call_agent(purpose, required_info)`.
->
-> Upon invocation, the system creates a Phone Agent with a clear task context: it is started to assist with form filling, specifying what information needs to be collected and the format requirements for each field.
->
-> The two Agents then enter a real-time collaboration mode, utilizing the asynchronous parallel mechanism from Experiment 10-4. The Phone Agent calls the user and asks sequentially: "Hello, I am helping you fill out the registration form. First, may I have your name?" After the user responds, it immediately sends `{"type": "info_collected", "field": "Name", "value": "Zhang San"}` to the Computer Agent, which then locates the "Name" field on the webpage and fills it in. Meanwhile, the Phone Agent, without waiting for the computer operation to complete, continues to ask the next question. This **ask-one, fill-one** mode, where the conversation flow is not blocked by operational delays, is the core requirement of this experiment. After all information is collected, the Phone Agent sends `{"type": "task_completed"}`, and the Computer Agent submits the form.
->
-> **Experiment Requirements**:
-> 1. Implement a Computer Use Agent capable of autonomously deciding to launch a Phone Agent
-> 2. Implement real-time bidirectional communication and true parallel work
-> 3. Handle exceptions (provide feedback and re-ask when information format is incorrect)
-> 4. Record the message timing of the collaboration process and key decision points of the Agents
+> ![图10-6 书籍翻译 Agent 架构](images/fig10-6.svg)
 >
 >
-> ![Figure 10-8 Phone and Computer Dual Agent Architecture](images/fig10-8.svg)
+**并行协调形态。**
+
+
+![图10-7 Manager 并行协调](images/fig10-7.svg)
+
+
+当多个子任务可以并行执行时，顺序模式就显得效率低下了。并行协调让多个 Agent 同时工作，大幅提升吞吐量。Manager Agent 不仅要规划并行任务，还要实时监控所有运行中的 Agent，处理通信协调，在 Agent 成功或失败时做出全局决策。这通常需要**消息总线**（Message Bus）作为基础设施——可以把它理解为一个“公共公告板”，Agent 可以往上面贴消息（发布），也可以关注自己感兴趣的消息类型（订阅），实现异步通信、互不阻塞。常见的实现方案按复杂度递增有两类：**Redis Pub/Sub** 轻量级、消息即发即收，简单易用，缺点是不持久化——接收方当时不在线，消息就丢失了；**RabbitMQ** 等消息队列则将消息保存在磁盘上，即使接收方暂时离线也不会丢失。消息格式通常包含发送者 ID、目标 Agent（或广播给所有人）、消息类型、以及 JSON 格式的数据内容。
+
+> **实验 10-4 ★★★：边打电话边用电脑的 Agent**
+>
+> **前置要求**：本实验综合运用了第九章的 Computer Use 和语音 Agent 技术，建议先完成第九章的相关实验。
+>
+> 现实中很多场景需要多项能力同时运作，而不是排着队一个个来：一个人类助理可能一边打电话跟客户沟通，一边在电脑上查文档、记要点。这种“一心多用”对单个 Agent 极具挑战——让一个 Agent 既处理实时语音对话又操作电脑界面，它必然在两个任务之间反复切换，导致对话停顿或操作中断。多 Agent 并行执行的核心思想是：**让不同 Agent 各自专注于一项实时性要求高的任务，通过异步消息传递来协调，实现真正的并行处理**。两个 Agent 还针对不同交互模态做了专门优化——电话 Agent 需要低延迟的语音识别与合成，电脑 Agent 需要强大的视觉理解与操作规划能力。
+>
+> **场景**：AI Agent 帮用户填写复杂的航班预订表单，需要一边操作网页一边通过电话向用户询问并确认个人信息（姓名、证件号、航班偏好等）——两端都要求高实时性，正是单 Agent 顾此失彼、双 Agent 各司其职的典型例子。
+>
+> **双 Agent 架构**：
+>
+> **Phone Agent**：基于 ASR + LLM + TTS 的语音通话 Agent。它负责理解用户的自然语言回答，提取关键信息并通过消息框架发送给 Computer Agent；同时接收 Computer Agent 的消息（如“需要用户的证件号”“页面加载出错”），据此生成合适的话术询问用户。
+>
+> **Computer Agent**：基于浏览器操作框架（如 Anthropic Computer Use、browser-use）。它负责理解网页结构、识别表单字段，根据收到的信息执行填写，遇到问题就向 Phone Agent 求助。
+>
+> **通信机制**有两种方案：
+> - **简单方案**：工具调用点对点通信，如 `send_message_to_computer_agent(message)` / `send_message_to_phone_agent(message)`
+> - **完善方案**：消息总线 + Manager Agent，统一消息格式，包含发送者、接收者、类型、内容
+>
+> **并行协作机制**（本章两个“电话 + 电脑”实验共用）：两个 Agent 运行在独立的线程或进程中，各自维护独立的 ReAct 循环。Phone Agent 的循环：接收语音 -> ASR 转录 -> LLM 理解并生成回应 -> TTS 合成 -> 播放 -> 检查 Computer Agent 的消息；Computer Agent 的循环：截屏 -> Vision LLM 理解页面 -> 规划操作 -> 执行（点击、输入等）-> 检查 Phone Agent 的消息。关键在于两者必须真正并行——Computer Agent 在找元素、输文本时，Phone Agent 要保持在线与用户对话（“好的，正在帮您填写姓名……请问您的证件号码是？”）。为此，每个 Agent 的输入都携带来自对方的标记字段，例如 Phone Agent 上下文里会出现 `[FROM_COMPUTER_AGENT] 找不到'下一步'按钮，可能需要用户确认`，Computer Agent 里会出现 `[FROM_PHONE_AGENT] 用户说姓名是'张三'，证件号是 123456`。
+>
+> **实验要求**：
+> 1. 实现双 Agent 架构，基于 ASR/TTS API 和浏览器操作框架
+> 2. 实现高效双向通信机制
+> 3. 确保真正并行工作，信息收集和表单填写同步进行
+> 4. 处理异常情况
+>
+> **实验 10-5 ★★★：自主编排的打电话和用电脑 Agent**
+>
+> 实验 10-4 中双 Agent 的协作架构是预先设计好的。本实验则更进一步，探索 **Agent 的自主编排能力**——由 Agent 自己判断何时需要启动新的协作 Agent，而不是人类预先规划好协作流程。
+>
+> **场景**：用户请求“帮我在这个网站上完成注册”，提供了 URL 但没说明需要填写什么信息。Manager Agent 用 Computer Use 工具访问网站，加载注册页面。
+>
+> 操作过程中，Computer Use Agent 发现注册表单非常复杂，包含大量必填字段：个人基本信息（姓名、性别、出生日期）、联系方式（手机号、邮箱、通讯地址）、身份验证信息（证件类型、证件号码）、偏好设置等。Agent 检查上下文后发现自己手头没有这些信息——用户只说了“帮我注册”，没提供任何具体数据。
+>
+> 传统 Agent 遇到这种情况会发文字消息让用户打字输入——既低效（需手动输入大量信息）又易出错（格式问题、信息遗漏）。更智能的 Agent 应该意识到：**这是适合通过电话交互来收集信息的场景**——电话对话比文字聊天高效得多，可以逐个询问确认，还能处理用户的模糊表达。
+>
+> 关键创新在于这个决策不是预先编程的，而是 **Agent 自主做出的**。Computer Use Agent 的提示词中写着：“当你需要从用户处收集大量结构化信息，且可以通过对话逐步进行时，考虑调用 Phone Agent 作为协助工具。”工具集中包含 `initiate_phone_call_agent(purpose, required_info)`。
+>
+> 调用后，系统创建 Phone Agent 并赋予明确的任务上下文：它是为了协助表单填写而启动的，需要收集哪些信息，以及各字段的格式要求。
+>
+> 两个 Agent 随即进入实时协作模式，沿用实验 10-4 那套异步并行机制。Phone Agent 拨打用户电话，逐个询问：“您好，我正在帮您填写注册表单。首先，请问您的姓名是？”用户回答后立即发送 `{"type": "info_collected", "field": "姓名", "value": "张三"}` 给 Computer Agent，后者随即在网页上定位“姓名”字段并填写；与此同时，Phone Agent 不等电脑操作完成，继续问下一个。这种**问一个、填一个**、对话流不被操作延迟阻塞的模式，是本实验的核心要求。全部信息收集完成后，Phone Agent 发送 `{"type": "task_completed"}`，Computer Agent 提交表单。
+>
+> **实验要求**：
+> 1. 实现能自主决策启动 Phone Agent 的 Computer Use Agent
+> 2. 实现实时双向通信和真正并行工作
+> 3. 处理异常（信息格式不正确时反馈重新询问）
+> 4. 记录协作过程消息时序和 Agent 决策关键点
 >
 >
-> **Experiment 10-6 ★★★: Agent Collecting Information from Multiple Websites Simultaneously**
->
-> **Prerequisites**: It is recommended to first understand the event-driven and interrupt mechanisms from Chapter 4.
->
-> This experiment explores the application of multi-agent parallel execution in information collection scenarios. Unlike Experiments 10-4 and 10-5, which focus on the collaboration of two heterogeneous Agents, this experiment focuses on **parallel search by multiple homogeneous Agents** and how to achieve efficient task completion and resource optimization through central coordination.
->
-> **Problem**: Given the websites of multiple colleges within a university, the task is to search for a specified faculty member (e.g., "Zhang Wei") on each college's faculty directory page, and upon finding them, return their college, position, research direction, and other information.
->
-> **Core Challenges**:
->
-> **1. Parallel Launch**: The Manager Agent dynamically creates 10 Computer Use Agent instances based on task requirements, each corresponding to a college website. Each instance should be an independent process or thread, with its own browser session, capable of executing simultaneously without blocking each other. Parameters passed at launch include: target website URL, faculty name to search for, and task identifier (for message routing).
->
-> **2. Real-time Monitoring**: Each Agent periodically sends status updates during execution ("Loading website", "Parsing faculty directory", "Target not found, task complete", "Match found, details below"). The Manager Agent receives these updates via a message bus, maintains a task status table, and keeps real-time track of which Agents are still running, which have completed, and which have encountered errors.
->
-> **3. Cascading Termination**: Suppose the Agent responsible for the Computer Science college finds the target faculty member. It sends `{"type": "target_found", "agent_id": "agent_3", "data": {...}}`. Upon receiving this, the Manager Agent immediately sends `{"type": "terminate", "reason": "target_found_by_agent_3"}` to all other still-running Agents. Each Agent receiving the termination message stops gracefully and sends an acknowledgment. The Manager Agent waits for all acknowledgments (or a timeout) and then aggregates the results. Requirement: Agents must be able to respond to termination signals at any time (similar to the interrupt mechanism in Chapter 4), termination must be graceful—no hanging processes or unclosed resources—and race conditions must be handled.
->
-> **Concept Supplement: What is a Race Condition?** Suppose Agent A and Agent B find the target faculty member within the same millisecond. They both report "I found it!" to the Manager Agent simultaneously. If the Manager Agent handles this poorly—for example, starting to aggregate results upon receiving A's report, but then receiving B's report triggering a second aggregation—it could lead to duplicate results or contradictory states. The typical solution is to use a "lock" mechanism: lock the state upon receiving the first report, and subsequent reports are identified as duplicates and ignored.
->
-> **4. Failure Handling**: Various exceptions can occur during actual operation: a college website might be inaccessible (network error, server down), a website's structure might not match expectations, preventing the Agent from parsing correctly, or all Agents might finish searching without finding the target. The Manager Agent's handling strategy: set a timeout for each Agent (e.g., 2 minutes), treat timeout as failure; isolate errors so they don't affect other Agents' continued execution; after all are complete, aggregate results—return information if any Agent succeeded, or report "Target faculty member not found" along with a summary of failure reasons if all failed.
->
-> **Experiment Requirements**:
-> 1. Implement a Manager Agent capable of dynamically launching multiple parallel Agents
-> 2. Implement a Computer Use Agent based on open-source projects like browser-use
-> 3. Implement a message bus supporting bidirectional communication between the Manager Agent and multiple child Agents
-> 4. Implement a cascading termination mechanism upon success, ensuring all other Agents stop quickly once the target is found
-> 5. Handle various exception scenarios (website access failure, parsing errors, target not found by any Agent)
-> 6. Record and compare the time difference between parallel and serial execution to verify the performance improvement brought by parallelization
+> ![图10-8 Phone 与 Computer 双 Agent 架构](images/fig10-8.svg)
 >
 >
-> ![Figure 10-9 Parallel Web Scraping Architecture](images/fig10-9.svg)
+> **实验 10-6 ★★★：同时从多个网站搜集信息的 Agent**
+>
+> **前置要求**：建议先了解第四章事件驱动与中断机制。
+>
+> 本实验探索多 Agent 并行执行在信息收集场景中的应用。与实验 10-4 和实验 10-5 关注两个异构 Agent 的协作不同，本实验关注的是**多个同构 Agent 的并行搜索**，以及如何通过中心协调实现高效的任务完成和资源优化。
+>
+> **问题**：给定一所大学的多个学院网站，要求在各学院的教师名录页面中查找指定教师（如“张伟”），找到后返回其所在学院、职位、研究方向等信息。
+>
+> **核心挑战**：
+>
+> **1. 并行启动**：Manager Agent 根据任务需求动态创建 10 个 Computer Use Agent 实例，每个实例对应一个学院网站。每个实例应是独立进程或线程，拥有独立的浏览器会话，能同时执行互不阻塞。启动时传递：目标网站 URL、要搜索的教师姓名、任务标识符（用于消息路由）。
+>
+> **2. 实时监控**：每个 Agent 在执行过程中定期发送状态更新（“正在加载网站”“正在解析教师名录”“未找到目标，任务完成”“找到匹配，详细信息如下”）。Manager Agent 通过消息总线接收这些更新，维护一张任务状态表，实时掌握哪些 Agent 还在运行、哪些已完成、哪些遇到了错误。
+>
+> **3. 级联终止**：假设负责计算机学院的 Agent 找到了目标教师，它发送 `{"type": "target_found", "agent_id": "agent_3", "data": {...}}`。Manager Agent 收到后立即向所有其他仍在运行的 Agent 发送 `{"type": "terminate", "reason": "target_found_by_agent_3"}`，每个收到终止消息的 Agent 优雅停止并发送确认。Manager Agent 等待所有确认（或超时）后汇总结果。要求：Agent 能随时响应终止信号（类似第四章的中断机制），终止必须优雅——不留悬挂进程或未关闭的资源；同时需处理竞态条件（Race Condition）。
+>
+> **概念补充：什么是竞态条件？** 假设 Agent A 和 Agent B 几乎在同一毫秒内各自找到了目标教师，它们同时向 Manager Agent 报告“我找到了！”。如果 Manager Agent 处理不当——比如收到 A 的报告后开始汇总结果，但紧接着又收到 B 的报告触发了第二次汇总——就可能产生重复的结果或互相矛盾的状态。解决方法通常是使用“锁”机制：第一个报告到达后立即锁定状态，后续报告被识别为重复并忽略。
+>
+> **4. 失败处理**：实际运行中可能遇到多种异常：某学院网站无法访问（网络错误、服务器宕机），某网站结构与预期不符导致 Agent 无法正确解析，或者所有 Agent 搜索完毕都没找到目标。Manager Agent 的处理策略：为每个 Agent 设置超时（如 2 分钟），超时视为失败；错误隔离，不影响其他 Agent 继续执行；全部完成后汇总——只要有 Agent 成功就返回信息，全部失败则向用户报告“未找到目标教师”及各失败原因的统计。
+>
+> **实验要求**：
+> 1. 实现能动态启动多个并行 Agent 的 Manager Agent
+> 2. 基于 browser-use 等开源项目实现 Computer Use Agent
+> 3. 实现消息总线支持 Manager Agent 与多个子 Agent 双向通信
+> 4. 实现成功后的级联终止机制，确保找到目标后所有其他 Agent 快速停止
+> 5. 处理各种异常情况（网站访问失败、解析错误、全部未找到）
+> 6. 记录和对比并行执行与串行执行的时间差异，验证并行化带来的性能提升
 >
 >
-### Decentralized Mode: Peer-to-Peer Handoff
+> ![图10-9 并行 Web Scraping 架构](images/fig10-9.svg)
+>
+>
+### 去中心化模式：对等移交
 
 
-![Figure 10-10 Handoff Chain Pattern](images/fig10-10.svg)
+![图10-10 Handoff 链式模式](images/fig10-10.svg)
 
 
-While the manager mode provides a clear control structure and global visibility, its centralized nature also brings inherent limitations: the Manager becomes the system's bottleneck and single point of failure. All coordination decisions depend on the Manager's judgment, and the Manager must have sufficient understanding of all sub-tasks. As task complexity increases and the number of Agents grows, scalability becomes a challenge.
+管理者模式虽然提供了清晰的控制结构和全局视野，但中心化的特性也带来了固有局限：Manager 成为系统的瓶颈和单点故障，所有协调决策都依赖 Manager 的判断，而 Manager 又必须对所有子任务都有足够的理解。当任务复杂度增加、Agent 数量增多时，可扩展性就会受到挑战。
 
-The decentralized mode offers an alternative architectural approach: **there is no single central controller; Agents collaborate in a peer-to-peer manner**. Each Agent, based on its own professional judgment, autonomously decides when to initiate communication with other Agents—whether it's handing off a task ("My part is done, handing it over to you"), requesting feedback ("Is this plan technically feasible?"), or reporting a problem ("The requirements you provided are contradictory; we need to re-discuss").
+去中心化模式提供了另一种架构思路：**没有单一的中心控制者，Agent 之间以对等方式协作**。每个 Agent 根据自己的专业判断，自主决定何时向其他 Agent 发起沟通——可能是移交任务（“我的部分做完了，交给你”），也可能是请求反馈（“这个方案技术上可行吗？”），或者报告问题（“你给的需求有矛盾，我们需要重新讨论”）。
 
-The three cases below are deliberately arranged along a progression from "pseudo" to "true" decentralization: MetaGPT's control flow is essentially a fixed pipeline (pseudo-decentralized, decoupled only in communication mechanism), AutoGen's group chat is a hybrid form with shared conversation history plus centralized scheduling, and it is not until OpenAI Swarm that true peer-to-peer decentralization is achieved in control flow.
+下面三个案例刻意排成一条“由伪到真”的递进线索：MetaGPT 控制流其实是固定流水线（伪去中心化，只在通信机制上解耦），AutoGen group chat 是共享对话记录加中心化调度的混合形态，直到 OpenAI Swarm 才在控制流上做到真正的对等去中心化。
 
-**What is passed during a handoff without shared context?** The Handoff chain pattern in Figure 10-10 directly contrasts with the `transfer_to_agent` in Experiment 10-2: the latter operates under shared context, where the new role automatically inherits the complete history without any design effort; the former operates without shared context, requiring the handing-off party to explicitly decide what to pass. In practice, an effective "handoff package" typically contains three parts: **Task Description** (what the receiver needs to do, acceptance criteria), **Confirmed Facts and Constraints** (user preferences, business rules, decisions made in previous stages), and **References to Structured Artifacts** (file paths rather than file contents; the receiver reads them as needed). What is deliberately *not* passed is the full trajectory—the handing-off party's trial-and-error process, intermediate thoughts, and failed attempts—which is mostly noise for the receiver. This is also the essential difference between the two handoff types: handoff with shared context retains the complete history, with zero information loss but continuous context expansion; handoff without shared context passes a refined handoff package, with some information loss but allowing each Agent to work in a clean, focused context. Each Agent does not need to understand the "thought process" of other Agents, only the format and semantics of the handoff package and the output artifacts—this interface-based collaboration draws on the principle of design by contract from software engineering.
+**不共享上下文下的移交传什么？** 图 10-10 的 Handoff 链式模式与实验 10-2 的 `transfer_to_agent` 形成了直接对照：后者在共享上下文下移交，新角色自动继承完整历史，无需任何设计；前者在不共享上下文下移交，移交方必须显式决定传递什么。实践中一个有效的“移交包”通常包含三部分：**任务描述**（接收方要做什么、验收标准是什么）、**已确认的事实与约束**（用户偏好、业务规则、前序阶段敲定的决策），以及**结构化产物的引用**（文件路径而非文件内容，接收方按需读取）。刻意不传的是全量轨迹——移交方的试错过程、中间思考和失败尝试，对接收方多半是噪声。这也是两种移交的本质区别：共享上下文的移交保留完整历史，信息零损耗但上下文持续膨胀；不共享上下文的移交传递提炼后的移交包，信息有损但每个 Agent 都在干净、专注的上下文中工作。每个 Agent 不需要理解其他 Agent 的“思考过程”，只需要理解移交包和产出物的格式与语义——这种基于接口的协作，借鉴了软件工程中的契约式设计原则。
 
-**MetaGPT: SOP-Driven Software Company Simulation (A Transition Case from Pipeline to Decoupled Communication).**
-
-
-![Figure 10-11 MetaGPT Multi-Agent Collaboration Network](images/fig10-11.svg)
+**MetaGPT：SOP 驱动的软件公司模拟（从流水线到解耦通信的过渡案例）。**
 
 
-MetaGPT's core insight is that the **Standard Operating Procedures** (SOPs) accumulated by human software companies are themselves repeatedly validated collaboration protocols—encoding SOPs into a multi-agent system allows each role to produce standardized deliverables like specialized workers on an assembly line, and these deliverables naturally form the communication interfaces between roles.
+![图10-11 MetaGPT 多 Agent 协作网络](images/fig10-11.svg)
 
-In MetaGPT, roles work in a fixed sequence (Product Manager → Architect → Project Manager → Engineer → QA), with each role outputting structured deliverables:
 
-- **Product Manager Agent**: Receives requirement descriptions, generates a structured PRD (Product Requirements Document, including feature list, user stories, acceptance criteria, priority ranking)
-- **Architect Agent**: Reads the PRD, makes architectural decisions (technology stack selection, module division, interface definition, data model design), outputs a design document
-- **Project Manager Agent**: Reads the architectural design, decomposes the system into specific task lists and file-level assignments, clarifies the dependency order of modules, and then assigns tasks to engineers
-- **Engineer Agents**: Read the design document, implement their assigned modules, produce code. Multiple instances can work in parallel.
-- **QA Engineer Agent**: Reads the code and PRD, generates test cases, executes tests, records bugs, outputs a test report
+MetaGPT 的核心洞察是：人类软件公司积累的**标准作业程序**（SOP，Standard Operating Procedure）本身就是被反复验证过的协作协议——把 SOP 编码进多 Agent 系统，让每个角色像流水线上的专业工种一样产出标准化交付物，交付物天然构成了角色间的通信接口。
 
-MetaGPT's true contribution to decentralized communication lies in its information passing mechanism: **Shared Message Pool + Subscription by Role**. Each role publishes structured messages to a message pool visible to all roles. Other roles, based on their subscription configuration, only consume messages relevant to their own responsibilities—rather than point-to-point one-on-one communication. The publisher does not need to know who will consume its output; adding a new role only requires declaring which message types to subscribe to, without modifying any existing roles. This brings true decoupling: for example, replacing the Product Manager with a more powerful model requires no changes to other Agents, as long as the PRD it publishes still conforms to the specification.
+在 MetaGPT 中，各角色沿固定顺序工作（Product Manager → Architect → Project Manager → Engineer → QA），每个角色输出结构化的交付物：
 
-MetaGPT's iterative improvement primarily occurs in the engineer phase, using a mechanism called **executable feedback**: The Engineer runs its own code and tests, enters a debugging loop based on errors and failures, and continues until passing—driving corrections with deterministic execution results rather than opinions from another Agent.
+- **Product Manager Agent**：接收需求描述，生成结构化 PRD（产品需求文档，含功能列表、用户故事、验收标准、优先级排序）
+- **Architect Agent**：读取 PRD，做出架构决策（技术栈选择、模块划分、接口定义、数据模型设计），输出设计文档
+- **Project Manager Agent**：读取架构设计，把系统拆解为具体的任务清单和文件级分工，理清各模块的依赖顺序，再把任务分派给工程师
+- **Engineer Agents**：读取设计文档，实现所负责的模块，产出代码。可以多实例并行工作
+- **QA Engineer Agent**：读取代码和 PRD，生成测试用例、执行测试、记录 bug，输出测试报告
 
-It must be honestly stated that MetaGPT is **not** decentralized in terms of **control flow**—the role sequence is pre-determined by the SOP, making the overall system closer to an assembly line (a workflow in the language of Chapter 1). It is discussed in this section because the message pool plus subscription communication mechanism demonstrates the most critical design element of a decentralized system: decoupling. As for multi-directional dynamic feedback like "QA directly contacting the Product Manager to clarify requirements" or "Engineer discussing alternative solutions with the Architect," these are natural extensions envisioned for this architecture but were not implemented in the original MetaGPT.
+MetaGPT 真正对去中心化通信的贡献，在于它的信息传递机制：**共享消息池 + 按角色订阅**。每个角色把结构化消息发布到一个所有角色可见的消息池中，其他角色根据自己的订阅配置，只取用与自身职责相关的消息——而不是点对点地一对一传话。发布者不需要知道谁会消费自己的输出，新增角色只需声明订阅哪些消息类型，无需改动任何现有角色。这带来了真正的解耦：比如把 Product Manager 换成更强的模型，只要它发布的 PRD 仍然符合规范，其他所有 Agent 都无需修改。
 
-**AutoGen Group Chat: Shared Conversation History + Centralized Scheduling.** AutoGen's group chat allows multiple Agents to participate in the same conversation: each round, a "speaker selector" decides which Agent speaks next—the selector can be a simple round-robin rule or an LLM that judges who is best suited to respond based on the current conversation content; any Agent's speech is visible to all participants. It must be honestly stated that this is not a fully decentralized system in terms of control flow: the selection of the speaker is centrally adjudicated by a GroupChatManager, and "whose turn it is to speak" is itself a control flow decision. Therefore, its more accurate classification is a **"shared conversation history + centralized scheduling" hybrid form**—all Agents see the same public conversation history, but each retains its own independent system prompt and tool set, while scheduling authority is concentrated in the selector. This mode is suitable for tasks requiring multi-perspective discussion where the order of speaking is difficult to pre-determine (e.g., plan review, cross-domain analysis), at the cost of potentially divergent conversations requiring careful design of termination conditions. According to the dimensions of this chapter, it is placed here based on its scheduling mechanism (centralized selector), but in the context dimension, it actually falls between shared and non-shared, representing a hybrid form—this again illustrates that topology and context sharing are conceptually independent dimensions that can be combined in misaligned ways.
+MetaGPT 的迭代改进则主要发生在工程师环节，机制是**可执行反馈**（executable feedback）：Engineer 运行自己写的代码和测试，根据报错与失败结果进入调试循环，直到通过——用确定性的执行结果而非另一个 Agent 的意见来驱动修正。
 
-**OpenAI Swarm and Agents SDK: Handoff Network.** In contrast, a true representative of peer-to-peer decentralization in control flow is OpenAI's Swarm (and its successor, the Agents SDK): it implements decentralization in its simplest form—each Agent is equipped with several handoff options and can transfer control to any other Agent in the network at any time. A customer service triage Agent, upon determining the issue involves a refund, hands off to the Refund Agent; the Refund Agent, upon discovering a technical fault during processing, can hand off to the Technical Support Agent. There is no central scheduler in the system; control flows like a baton between peer Agents, with routing decisions fully distributed within each Agent's own judgment—this is clean "peer-to-peer handoff," and it is precisely the engineering implementation of the chain handoff pattern shown in Figure 10-10.
+需要如实说明的是，MetaGPT 在**控制流**上并不是去中心化的——角色顺序由 SOP 预先固定，整体更接近一条流水线（用第一章的语言说是工作流）。它被放在本节讨论，是因为消息池加订阅的通信机制展示了去中心化系统最关键的设计要素：解耦。至于“QA 直接找 Product Manager 澄清需求”“Engineer 找 Architect 讨论替代方案”这类多向动态反馈，是对这一架构的自然扩展设想，原版 MetaGPT 并未实现。
 
-### Cross-Organization Collaboration: The A2A Protocol
+**AutoGen group chat：共享对话记录 + 中心化调度。** AutoGen 的 group chat 让多个 Agent 参与同一场会话：每轮由一个“发言者选择器”决定下一个发言的 Agent——选择器可以是简单的轮转规则，也可以是一个 LLM 根据当前对话内容判断谁最适合接话；任何 Agent 的发言对所有参与者可见。需要诚实说明的是，它并不是控制流意义上完全去中心化的系统：发言者的选择由一个中心化的 GroupChatManager 统一裁决，而“轮到谁发言”本身就是一种控制流决策。因此它更准确的定位是**“共享对话记录 + 中心化调度”的混合形态**——所有 Agent 看到同一份公共对话记录，但各自保有独立的系统提示词和工具集，而调度权集中在选择器手里。这种模式适合需要多视角讨论、发言顺序难以预先固定的任务（如方案评审、跨领域分析），代价是对话可能发散，需要精心设计终止条件。按本章的维度划分，此处是按其调度机制（中心化选择器）把它归入本节，但在上下文维度上它其实介于共享与不共享之间，属于混合形态——这再次说明拓扑与上下文共享是概念上独立、可以错位组合的两个维度。
 
-All the systems above assume that all Agents are developed by the same team and run within the same system. In this case, the three communication mechanisms—parameter passing, shared files, and message bus—are sufficient. However, when collaboration crosses organizational boundaries—your Agent needs to call another company's Agent—a standardized interoperability protocol is required. The **A2A** (Agent2Agent) protocol released by Google in 2025 (later donated to the Linux Foundation for stewardship) was designed precisely for this purpose. Its core elements are three:- **Agent Card**: A metadata document describing an Agent's capabilities (published at a designated public address), declaring what the Agent can do, which input/output modalities it supports, and how to authenticate with it—essentially an Agent's "business card" that solves cross-organizational capability discovery.
-- **Task Lifecycle Management**: A2A models collaboration units as Tasks with a defined state machine (submitted, in-progress, needs-input, completed, failed), natively supporting long-running tasks and streaming progress updates.
-- **Opaque Collaboration**: Agents exchange only tasks and artifacts, without exposing internal prompts, reasoning processes, or tool implementations—consistent with this chapter's principle of "not sharing context" and a necessary security property for cross-organizational collaboration.
+**OpenAI Swarm 与 Agents SDK：handoff 网络。** 相比之下，真正在控制流上做到对等去中心化的代表，是 OpenAI 的 Swarm（及其后继 Agents SDK）：它把去中心化做成了最简形态——每个 Agent 配备若干 handoff（移交）选项，可以在任何时刻把控制权移交给网络中的任意其他 Agent。客服分诊 Agent 判断问题涉及退款，就移交给退款 Agent；退款 Agent 处理中发现是技术故障，又可以移交给技术支持 Agent。系统中没有中心调度者，控制权像接力棒一样在对等的 Agent 之间流转，路由决策完全分散在每个 Agent 自己的判断里——这才是干净的“对等移交”，也正是图 10-10 所示链式移交模式的工程实现。
 
-A2A's positioning can be understood in contrast to MCP from Chapter 4: MCP addresses interoperability between Agents and tools, while A2A addresses interoperability between Agents and Agents. It does not replace the three communication mechanisms introduced in this chapter but rather serves as a standardization layer across trust boundaries on top of them—within the same team, a multi-agent system can simply use a message bus; only when collaborating parties do not trust each other and their implementations are mutually opaque is a public protocol like A2A needed.
+### 跨组织协作：A2A 协议
 
-## Failure Modes of Multi-Agent Collaboration
+以上系统都假设所有 Agent 由同一个团队开发、运行在同一个系统内，此时参数传递、共享文件、消息总线三种通信机制足够用。但当协作跨越组织边界——你的 Agent 需要调用另一家公司的 Agent——就需要标准化的互操作协议。2025 年 Google 发布的 **A2A**（Agent2Agent）协议正是为此设计的（后捐赠给 Linux 基金会托管）。它的核心要素有三个：
 
-Multi-agent systems introduce new failure modes that do not exist in single-agent systems. The 2025 paper "Why Do Multi-Agent LLM Systems Fail?" (proposing the MAST failure mode taxonomy) conducted a systematic study: researchers collected execution traces from seven mainstream multi-agent frameworks, including MetaGPT, ChatDev, AG2, and Magentic-One, and had human annotators analyze approximately 150 traces one by one (with high annotation consistency, Cohen's kappa = 0.88, indicating strong agreement among annotators on failure mode judgments). The study ultimately identified **14 unique failure modes**, categorized into three groups:
+- **Agent Card**：一份描述 Agent 能力的元数据文档（发布在约定的公开地址下），声明这个 Agent 能做什么、支持哪些输入输出模态、如何认证——相当于 Agent 的“名片”，解决跨组织的能力发现问题。
+- **任务生命周期管理**：A2A 把协作单元建模为任务（Task），带有明确的状态机（已提交、进行中、需要输入、已完成、失败），原生支持长时间运行的任务和流式进度更新。
+- **不透明协作**：Agent 之间只交换任务与产物（Artifact），不暴露内部的提示词、思考过程和工具实现——这与本章“不共享上下文”的原则一致，也是跨组织协作中必要的安全属性。
 
-- **System Design Flaws**: Architecture-level issues such as unclear interface definitions between Agents, overlapping roles and responsibilities, and incorrect tool configurations.
-- **Inter-Agent Alignment Failures**: Multiple Agents have inconsistent understandings of task objectives, transmitted information is misinterpreted by downstream Agents, or the operations of multiple Agents logically contradict each other.
-- **Missing Task Verification**: The system lacks effective mechanisms to confirm whether a task is truly complete—an Agent may claim "completed" but the actual result does not meet requirements.
+A2A 的定位可以和第四章的 MCP 对照理解：MCP 解决的是 Agent 与工具之间的互操作，A2A 解决的是 Agent 与 Agent 之间的互操作。它并不取代本章介绍的三种通信机制，而是在它们之上、跨信任边界的标准化层——同一团队内部的多 Agent 系统直接用消息总线即可，只有当协作方互不信任、实现互不可见时，才需要 A2A 这样的公开协议。
 
-Even with simple fixes, improvements were limited (e.g., the ChatDev framework improved by only 15.6%). The researchers therefore concluded that these are not simple engineering bugs but **fundamental design flaws** in current multi-agent architectures: patching a single component is insufficient; rethinking from the system design level is necessary.
+## 多 Agent 协作的失败模式
 
-The following focuses on two failure modes that are particularly common and destructive in practice: (1) concurrency conflicts in shared file systems; (2) cascading amplification of errors. It should be noted that these two failure modes emphasize an engineering perspective (file system concurrency, cross-Agent propagation of erroneous information) and serve as a supplement to the MAST classification, which focuses on dialogue-based collaboration failures, rather than a restatement of its 14 modes.
+多 Agent 系统在引入协作能力的同时，也引入了单 Agent 不存在的新型失败模式。2025 年的论文《Why Do Multi-Agent LLM Systems Fail?》（提出了 MAST 失败模式分类法）对此做了系统性研究：研究者在 MetaGPT、ChatDev、AG2、Magentic-One 等 7 个主流多 Agent 框架上收集执行轨迹，由人工标注员对约 150 条轨迹逐条分析（标注一致性极高，Cohen's kappa = 0.88，表明不同标注者对失败模式的判断高度一致），最终归纳出 **14 种独特的失败模式**，分为三大类：
 
-### Failure Mode One: Concurrency Conflicts in Shared File Systems
+- **系统设计缺陷**：Agent 之间的接口定义不清、角色职责重叠、工具配置错误等架构层面的问题
+- **Agent 间对齐失败**：多个 Agent 对任务目标的理解不一致、传递的信息被下游 Agent 误解、或者多个 Agent 的操作在逻辑上相互矛盾
+- **任务验证缺失**：系统缺乏有效机制来确认任务是否真正完成——Agent 声称“已完成”但实际结果不符合要求
 
-A shared file system is the core infrastructure for multi-agent collaboration, but when multiple Agents operate simultaneously, concurrency conflicts become an unavoidable engineering challenge. These conflicts can be divided into two types.
+即使引入简单的修复措施，改善幅度也很有限（例如 ChatDev 框架仅提升了 15.6%）。研究者因此认为这些不是简单的工程 bug，而是当前多 Agent 架构的**根本性设计缺陷**：单纯修补某个环节不足以解决问题，需要从系统设计层面重新思考。
 
-**Simple Conflicts (File-Level Write Conflicts)**: Two Agents modify the same file simultaneously, and the one that writes later overwrites the changes made by the earlier writer. This is the classic **lost update** problem in the database domain—and Git's merge conflict detection mechanism is precisely designed to catch such overwrites.
+以下重点讨论两种在实践中尤为常见且破坏性最大的失败模式：(1) 共享文件系统的并发冲突；(2) 错误的级联放大。需要说明的是，这两种失败模式偏重工程视角（文件系统并发、错误信息的跨 Agent 传播），是对 MAST 侧重对话式协作失败的分类的补充，而非其 14 种模式的复述。
 
-**Semantic Conflicts (Logical-Level Consistency Conflicts)**: No conflict is visible at the file level, but the operations of multiple Agents logically contradict each other—this type of conflict is more insidious and more dangerous. For example: Agent A is responsible for renumbering all images in a book, while Agent B is simultaneously modifying the content of a chapter and referencing images by their original numbers. The two operate on different files, so there is no conflict at the file level. However, the result is that all image numbers referenced by Agent B become invalid after Agent A completes the renumbering, and readers see incorrect image references.
+### 失败模式一：共享文件系统的并发冲突
 
-**Solution: Optimistic Locking Mechanism**. This is a common concurrency control strategy in the database domain. To understand it, consider a daily scenario: you and a colleague open the same online document simultaneously. A "pessimistic lock" would lock the document when you open it, and your colleague would see "file locked" when trying to edit—safe but inefficient, because you might just be viewing without intending to edit. An "optimistic lock" is smarter: everyone can freely open and edit, but when saving, the system checks—"Has anyone else modified the document since you opened it?" If so, it prompts you to "refresh and retry."
+共享文件系统是多 Agent 协作的核心基础设施，但当多个 Agent 同时操作时，并发冲突就成了绕不开的工程挑战。这些冲突可以分为两类。
 
-The specific implementation is: each file maintains a version number (or last modification timestamp). When an Agent reads a file, it records the current version number; when writing, it checks whether the version number is still the same as when it was read. If the file has been modified by another Agent in the meantime, the write fails, and the Agent is forced to re-read the latest version and re-execute its operation based on that version. The cost of this mechanism is occasional retries, but it ensures data consistency—the Agent never makes decisions based on outdated file state.
+**简单冲突（文件级写入冲突）**：两个 Agent 同时修改同一个文件，后写入的那个把先写入的修改覆盖掉了。这正是数据库领域经典的**丢失更新**（lost update）问题——而 Git 的合并冲突检测机制，正是为拦截这类覆盖而设计的。
 
-Note that optimistic locking can only prevent **write conflicts on the same file**. For the aforementioned **cross-file semantic conflicts** (e.g., image numbers referenced in multiple places), a higher-level semantic validation mechanism is needed—such as avoiding parallel modification of files with dependencies at the task orchestration level, or running a global consistency check after writes.
+**语义冲突（逻辑级一致性冲突）**：文件层面看不出任何冲突，但多个 Agent 的操作在逻辑上相互矛盾——这种冲突更隐蔽，也更危险。举个例子：Agent A 负责重新编排全书的图片编号，Agent B 同时在修改某一章节的内容并引用了原始编号的图片。两者操作的是不同文件，在文件层面完全没有冲突。但结果是 B 引用的图片编号在 A 完成重编后全部失效，读者看到的是错误的图片引用。
 
-For example: Agent A reads `config.json` (version=3) at t=0, Agent B modifies the same file at t=1 (version becomes 4), and when Agent A attempts to write at t=2, it finds the version is no longer 3, so the write is rejected. Agent A then re-reads the content of version=4, regenerates the modification based on the latest version, and attempts to write again.
+**解决方案：乐观锁（Optimistic Locking）机制**。这是数据库领域常用的并发控制策略。为了理解它，先想一个日常场景：你和同事同时打开了同一份在线文档。“悲观锁”的做法是你打开文档时就把它锁住，同事想编辑会看到“文件被锁定”——安全但低效，因为你可能只是在看，根本没打算改。“乐观锁”的做法更聪明：大家都可以自由打开和编辑，但在保存时系统会检查——“你打开文档后，有没有别人已经改过了？”如果有，就提示你“文件已被修改，请刷新后重试”。
 
-It is worth mentioning that in the most common scenario of multiple Coding Agents concurrently modifying the same codebase, the industry's mainstream approach is not to lock a single working copy but to use **working copy isolation**: assign each Agent an independent Git branch or worktree, allowing them to modify their own copies in parallel without interference. Conflicts are concentrated and deferred to the final merge point, where they are resolved by a dedicated merge step or manually. This aligns with the "isolation over compression" principle from Chapter 2—which, when discussing sub-agent context isolation, pointed out that rather than having multiple parties share the same state and then try to resolve conflicts, it is better to isolate from the start and converge coordination costs at a clear boundary.
+具体实现是：每个文件维护一个版本号（或最后修改时间戳）。Agent 读取文件时记录当前版本号，写入时检查版本号是否仍与读取时一致。如果文件在此期间已被其他 Agent 修改过，写入就会失败，Agent 被迫重新读取最新版本，在此基础上重新执行操作。这种机制的代价是偶尔需要重试，但换来的是数据一致性保证——Agent 永远不会基于过时的文件状态做出决策。
 
-### Failure Mode Two: Cascading Amplification of Errors
+需要注意的是，乐观锁只能防止**同一文件**的写入冲突。对于前述的**跨文件语义冲突**（如图片编号在多处引用），则需要更高层的语义校验机制——例如在任务编排层面避免有依赖关系的文件被并行修改，或在写入后运行全局一致性检查。
 
-Concurrency conflicts are an engineering problem at the file level, while cascading amplification of errors is a more insidious risk at the semantic level. When multiple Agents interact frequently, an error from one Agent can be progressively reinforced by subsequent Agents, much like the "telephone game" where information becomes increasingly distorted.
+例如：Agent A 在 t=0 读取 `config.json`（version=3），Agent B 在 t=1 修改了同一文件（version 变为 4），Agent A 在 t=2 尝试写入时发现版本已不是 3，写入被拒绝。Agent A 随后重新读取 version=4 的内容，基于最新版本重新生成修改，再次尝试写入。
 
-Consider a specific scenario. Suppose a translation system uses a manager pattern (the architecture from Experiment 10-3), where the Manager assigns chapters of a technical book to multiple translation Agents:
+值得一提的是，在多个 Coding Agent 并发修改同一代码库这一最常见的场景里，业界更主流的做法并不是在单一工作副本上加锁，而是**工作副本隔离**：为每个 Agent 分配独立的 Git 分支或 worktree，各自在自己的副本上并行修改、互不干扰，冲突被集中推迟到最后的合并点，再由专门的合并步骤或人工来解决。这与第二章“隔离优于压缩”的思路同源——第二章在讨论子 Agent 上下文隔离时就指出，与其让多方共享同一份状态、再想办法消解冲突，不如从一开始就隔离，把协调成本收敛到明确的边界上处理。
+
+### 失败模式二：错误的级联放大
+
+并发冲突是文件层面的工程问题，而错误的级联放大则是语义层面的更隐蔽风险。当多个 Agent 频繁互动时，一个 Agent 的错误可能被后续 Agent 逐层强化，就像“传话游戏”中信息越传越走样。
+
+用一个具体场景说明。假设一个翻译系统采用管理者模式（实验 10-3 的架构），Manager 将一本技术书分章分配给多个翻译 Agent：
 
 ```
-Terminology Agent: Translates "reasoning" as "推理", but "推理" in Chinese is more commonly used for inference, creating ambiguity        ↓ writes to glossary.json
-Translation Agent A: Translates Chapter 2, reads from the glossary, translates "reasoning tokens" as "reasoning tokens"
-Translation Agent B: Translates Chapter 7, translates "inference latency" as "inference latency"        ↓ writes to each chapter's translation
-Proofreading Agent: Sees the entire book consistently uses "推理", considers the terminology consistent and the translation correct ✗```
+术语 Agent：将 “reasoning” 翻译为 “推理”，但 “推理” 在中文里更常用于 inference，存在歧义
+        ↓ 写入 glossary.json
+翻译 Agent A：翻译第二章，从术语表读取，将 “reasoning tokens” 翻译为 “推理 token”
+翻译 Agent B：翻译第七章，将 “inference latency” 也翻译为 “推理延迟”
+        ↓ 写入各章译文
+校对 Agent：看到全书统一使用 “推理”，认为术语一致、翻译正确 ✗
+```
 
-The problem is that "reasoning" (the model's thought process) and "inference" (the model's forward inference/deployment execution) are two distinct concepts. However, because the Terminology Agent initially translated "reasoning" as "推理", subsequent Agents naturally chose the same word when encountering "inference"—merging two different concepts into the same translation, making it impossible for readers to distinguish them. The correct approach would be to translate "reasoning" as "思考" and "inference" as "推理". Yet, the Proofreading Agent, seeing the entire book "consistently" uses "推理", instead considers the translation quality high.
-A single terminology error, after propagating through three Agents, gains higher credibility due to "consistency." This is precisely why this book adopts the translation convention of reasoning=思考, inference=推理 (as explained in the introduction): using different Chinese words to eliminate ambiguity. It is worth emphasizing that the "error" here is not necessarily a hallucination—the root cause in the above example is actually a terminology decision error, yet it is still amplified layer by layer by "consistency"; but if the root cause were a genuine hallucination (e.g., in Experiment 10-3, a translation Agent, due to attention drift, "recalls" a non-existent terminology rule), the amplification mechanism is identical, and the consequences would only be more severe. This error amplification chain is particularly dangerous in the manager pattern—if the Manager makes a scheduling decision based on an erroneous summary from a sub-agent, all subsequent sub-agents' work may be built on a false premise.
-**Cross-validation** is the key to breaking this chain. The core idea is not to involve more Agents in the same chain of thought, but to have an Agent re-examine the conclusion from an **independent perspective**: ignore the preceding Agents' reasoning processes and only check whether the original evidence and the final conclusion are consistent. This is an extension of the proposer-reviewer mechanism discussed in Chapter 5 to the multi-agent scenario: the Reviewer's value lies not only in finding code errors or formatting issues but also, as an independent judge, in identifying contradictions that have been collectively overlooked throughout the entire chain of thought. For high-risk decisions, external validation methods can also be introduced, such as unit tests, compilers, database queries, and other deterministic tools whose feedback is immune to hallucinations—these are the most reliable "chain breakers."
+问题在哪？“reasoning”（模型的思考过程）和“inference”（模型的前向推理/部署运行）是两个不同的概念，但因为术语 Agent 一开始把 reasoning 翻译成了“推理”，后续 Agent 在遇到 inference 时也自然选择了同一个词——两个不同概念被合并成了同一个译名，读者将无法区分。正确的做法是 reasoning 译为“思考”、inference 译为“推理”。但校对 Agent 看到全书“统一”使用“推理”，反而认为翻译质量很高。
 
-All the above discussions are from an engineering perspective—how to make a group of Agents collaborate to complete tasks. Next, the perspective shifts: when a large number of Agents coexist long-term and are no longer driven by a single goal, what emerges? This section is at the frontier of exploration, and engineering readers may choose to read it selectively.
+一个术语错误经过三个 Agent 传播后，因为“一致性”而获得了更高的可信度。这也正是本书采用 reasoning=思考、inference=推理这一翻译约定（引言中有说明）的原因：用不同的中文词来消除歧义。值得强调的是，这里的“错误”并不一定是幻觉——上例的源头其实是一次术语决策失误，却同样被“一致性”层层放大；但如果源头真是一次幻觉（比如实验 10-3 中翻译 Agent 因注意力分散而“记起”了一条并不存在的术语规则），放大机制完全相同，后果只会更严重。这条错误放大链在管理者模式中尤其危险——如果 Manager 基于某个子 Agent 的错误摘要做出了调度决策，后续所有子 Agent 的工作可能都建立在错误的前提之上。
 
-## Agent Society
+**交叉验证**是打断这条链的关键手段。核心不是让更多 Agent 参与同一条思维链，而是让某个 Agent 以**独立视角**重新审视结论：不看前序 Agent 的思考过程，只看原始证据和最终结论是否一致。这正是第五章讨论的提议者-审核者机制在多 Agent 场景中的延伸：Reviewer 的价值不仅在于发现代码错误或格式问题，更在于作为独立判断者，它能识别出整条思维链中被集体忽视的矛盾。对于高风险决策，还可以引入外部验证手段，例如单元测试、编译器、数据库查询等确定性工具提供的反馈不受幻觉影响，是最可靠的“断链器”。
 
-The previous three sections discussed task-oriented collaboration with clear goals—whether peer-to-peer collaboration, the manager pattern, or the decentralized pattern, developers pre-define roles, interfaces, and control flows. Next, the perspective shifts to a more open question: **When the number of Agents expands from a few to hundreds or thousands, and interactions are sufficiently free, what behaviors emerge?** This content leans toward frontier exploration and academic research, with a different nature from the engineering guidance above.
+以上所有讨论都是工程视角——如何让一组 Agent 协作完成任务。接下来视角切换：当大量 Agent 长期共存、不再由单一目标驱动时，会涌现什么？这一节属于前沿探索，工程读者可以选择性阅读。
 
-Emergent behavior refers to collective behavioral patterns exhibited by a system as a whole that cannot be directly predicted from the behavioral rules of individual components. The most classic example in nature is an **ant colony**: each ant follows only simple rules (follow pheromone trails, leave pheromones when finding food), yet the entire colony can find the shortest path from the nest to a food source—no single ant "designed" this route; it emerges naturally from the simple interactions of many individuals.
+## Agent 社会
 
-When the number of AI Agents is large enough and interactions are sufficiently free, similar emergent behaviors begin to appear. Researchers have observed in multiple environments that once an Agent system crosses a certain critical point in scale, collective behaviors that cannot be pre-designed emerge—ranging from small-scale spontaneous gatherings to group culture and economic games that only manifest with thousands of Agents (detailed in subsections below).
+前面三节讨论的都是目标明确的任务协作——无论是对等协作、管理者模式还是去中心化模式，开发者都预先定义了角色、接口和控制流。接下来将视角转向一个更开放的问题：**当 Agent 数量从几个扩展到成百上千、交互足够自由时，会涌现出什么行为？** 这部分内容偏向前沿探索和学术研究，与前文的工程指导有不同的性质。
 
-The cases in this section can be understood from three dimensions:
+涌现行为（Emergent Behavior）是指系统整体表现出的、无法从单个个体的行为规则中直接预测的集体行为模式。自然界中最经典的例子是**蚁群**：每只蚂蚁只遵循简单的规则（闻到信息素就跟着走、找到食物就留下信息素），但整个蚁群却能找到从巢穴到食物的最短路径——没有任何一只蚂蚁“设计”了这条路线，它是从大量个体的简单交互中自然产生的。
 
-- **Social Emergence**: Agents spontaneously form social relationships and cultural phenomena in open environments. The Stanford AI Town demonstrated how 25 Agents self-organize social activities, while Moltbook pushed the scale to 1.5 million, giving rise to more complex collective behaviors.
-- **Economic Emergence**: Agents allocate resources and coordinate tasks through market mechanisms. Vending-Bench Arena has multiple Agents competing and operating in the same market, while Pinchwork and RentAHuman construct economic transaction markets between Agents (and between Agents and humans).
-- **Strategic Gaming**: Agents engage in reasoning, deception, and social manipulation under rule constraints (here and in the Werewolf section below, "reasoning" takes its everyday deductive meaning, referring to logical deduction in games, not the technical meaning of reasoning in this book). The Werewolf experiment tests the emergence of strategies under conditions of asymmetric information.
-### Stanford AI Town: Social Simulation of Generative Agents
+当 AI Agent 的数量足够多、交互足够自由时，类似的涌现行为也开始出现。研究者已经在多个环境中观察到：Agent 系统一旦在规模上跨过某个临界点，就会产生无法被预先设计的集体行为——小到自发组织的一次聚会，大到成千上万 Agent 才显现的群体文化与经济博弈（下文分节详述）。
+
+本节的案例可以从三个维度来理解：
+
+- **社交涌现**：Agent 在开放环境中自发形成社交关系和文化现象。斯坦福 AI 小镇展示了 25 个 Agent 如何自组织社交活动，Moltbook 则把规模推到 150 万，涌现出更复杂的集体行为。
+- **经济涌现**：Agent 通过市场机制进行资源分配和任务协调。Vending-Bench Arena 让多个 Agent 在同一市场中竞争经营，Pinchwork 和 RentAHuman 则构建了 Agent 之间（以及 Agent 与人类之间）的经济交易市场。
+- **策略博弈**：Agent 在规则约束下进行推理、欺骗和社交操控（此处及下文狼人杀部分的“推理”取日常演绎义，指推理游戏中的逻辑博弈，并非本书 reasoning=思考的技术义）。狼人杀实验考验的是 Agent 在信息不对称条件下的策略涌现。
+
+### 斯坦福 AI 小镇：生成式 Agent 的社会模拟
 
 
-![Figure 10-12 AI Town Architecture](images/fig10-12.svg)
+![图10-12 AI 小镇架构](images/fig10-12.svg)
 
 
-In 2023, researchers from Stanford University and Google published the landmark paper "Generative Agents: Interactive Simulacra of Human Behavior," introducing the concept of "generative agents." The core innovation is no longer limiting Agents to completing predefined tasks but endowing them with memory, reflection, and planning capabilities close to those of humans, enabling them to live, socialize, and develop autonomously in open social environments.
+2023 年，斯坦福大学和 Google 研究团队发表了具有里程碑意义的论文《Generative Agents: Interactive Simulacra of Human Behavior》，提出了“生成式 Agent”的概念。核心创新在于不再局限于让 Agent 完成预定义的任务，而是赋予 Agent 接近人类的记忆、反思和规划能力，使它们能够在开放的社会环境中自主生活、社交和发展。
 
-Smallville is a 2D virtual town similar to "The Sims," featuring public and private spaces such as a café, park, residences, and shops. Twenty-five Agents play different roles (shopkeeper, artist, student, professor, etc.), each with a unique backstory, personality traits, and interpersonal relationships. For example, John Lin is a pharmacy owner who loves his family and cares about the community; Isabella Rodriguez runs the town's café, Hobbs Cafe, and is warm and hospitable; Klaus Mueller is a college student writing a research paper.
+Smallville 是一个类似《模拟人生》的 2D 虚拟小镇，里面有咖啡馆、公园、住宅、商店等公共和私人空间。25 个 Agent 扮演不同角色（店主、艺术家、学生、教授等），每个都有独特的背景故事、性格特点和人际关系。比如 John Lin 是药店老板，热爱家庭、关心社区；Isabella Rodriguez 经营着小镇的咖啡馆 Hobbs Cafe，热情好客；Klaus Mueller 是一名正在写研究论文的大学生。
 
-The intelligence of these Agents is built on three core components:
+这些 Agent 的智能建立在三个核心组件之上：
 
-**Memory Stream**: Unlike traditional Agents that retain only a limited conversation history, generative agents maintain a complete stream of experience records, including observed events, conversations, and generated thoughts. Each memory is assigned attributes of importance, recency, and relevance, allowing the Agent to prioritize retrieving the most relevant memories for the current context. Just as humans do not remember everything equally—what you had for lunch yesterday may be forgotten, but an important conversation from last week remains vivid.
+**记忆流**（Memory Stream）：与传统 Agent 只保留有限对话历史不同，生成式 Agent 维护一条完整的经验记录流，包含它观察到的事件、进行过的对话、产生的想法。每条记忆都被赋予重要性、时近性和相关性属性，Agent 能够优先检索与当前情境最相关的记忆。就像人类不会平等地记住每一件事——昨天的午饭吃了什么可能已经忘了，但上周的一次重要谈话却记忆犹新。
 
-**Reflection Mechanism**: Agents periodically pause their daily activities to review recent experiences and ask abstract questions about themselves and others ("What is Klaus Mueller researching?" "Who is my closest friend?"). Through this self-questioning, the Agent elevates specific event memories into generalized insights, storing them back into the memory stream as a basis for future decisions. Reflection not only helps the Agent understand the external world but also promotes self-awareness—the Agent begins to "realize" its own role, relationships, and goals.
+**反思机制**（Reflection）：Agent 会定期暂停日常活动，回顾自己近期的经历，提出关于自己和他人的抽象性问题（“Klaus Mueller 在研究什么？”“谁是我最亲近的朋友？”）。通过这种自我追问，Agent 把具体的事件记忆升华为概括性的认识，存回记忆流作为未来决策的依据。反思不仅帮助 Agent 理解外部世界，也促进自我认知——Agent 开始“意识到”自己的角色、关系和目标。
 
-It should be noted that this reflection differs from the reflection in Chapter 8 on Agent self-evolution: the reflection in Chapter 8 occurs **after task completion** and aims to update long-term capabilities; the reflection here occurs **during the generative agent's daily activities** and aims to update immediate internal states and goals.
+需要说明的是，这里的反思与第八章 Agent 自我进化中的反思不同：第八章的反思发生在**任务结束后**，目的是更新长期能力；这里的反思发生在**生成式 Agent 的日常活动中**，目的是更新即时的内部状态和目标。
 
-**Planning and Reacting**: Agents plan their daily activities (e.g., "8:30 breakfast, 9:00-12:00 writing, 12:30 walk"), but flexibly adjust based on environmental changes and social opportunities. The combination of planning and real-time reaction makes the Agent's behavior both goal-oriented and adaptable to the unpredictability of social interactions.During the two virtual days in Smallville, these agents exhibited surprising **emergent behaviors**. The researchers only planted a seed idea in Isabella Rodriguez's memory: she wanted to host a Valentine's Day party at Hobbs Cafe on the evening of February 14th. Everything that followed was the result of the agents' autonomous actions: Isabella proactively invited customers and friends she met at the cafe, asked her friend Maria to help decorate the venue; agents who heard the news spread the party information to others, and the information diffused through the town via second-hand propagation; at the appointed time, multiple agents, each based on their own memories and schedules, autonomously decided to go to Hobbs Cafe to attend.
+**计划与行动**（Planning and Reacting）：Agent 每天会规划活动（如“8:30 吃早餐，9:00-12:00 写作，12:30 散步”），但会根据环境变化和社交机会灵活调整。计划与即时反应的结合，使 Agent 的行为既有目标导向性，又能适应社交中的各种不可预测性。
 
-The researchers also planted another experimental thread: Sam Moore decided to run for mayor. This news also spread without any central orchestration—Sam revealed his intention to run to acquaintances, those who heard it told others, and the townspeople began discussing the election in conversations and exchanging opinions about Sam. The researchers quantified the spontaneous diffusion of information in the agent society by counting how many agents knew about these two pieces of information after two days.
+在 Smallville 运行的两天虚拟时间里，这些 Agent 展现出了令人惊讶的**涌现行为**。研究者做的只是在 Isabella Rodriguez 的记忆中植入一个种子想法：她想在 2 月 14 日傍晚在 Hobbs Cafe 办一场情人节派对。接下来发生的一切都是 Agent 自主行动的结果：Isabella 在咖啡馆遇到顾客和朋友时主动发出邀请，还请好友 Maria 帮忙布置场地；听到消息的 Agent 又把派对信息转告给别人，信息经二手传播在小镇上扩散；到了约定时间，多名 Agent 各自基于自己的记忆和日程，自主决定前往 Hobbs Cafe 赴约。
 
-The key takeaway from this result is not that "agents can organize a party"—a few lines of if-else code could do that too. The key is that **there was no explicit party-organizing code**. The entire event emerged entirely from the independent decisions of individual agents: Isabella decided who to invite based on her memory of social relationships, invitees decided whether to attend based on their own schedules and knowledge of Isabella, and the message spread naturally through the social network. This demonstrates true bottom-up emergent coordination, not top-down orchestration.
+研究者还植入了另一条实验线：Sam Moore 决定竞选市长。这条消息同样在没有任何中心调度的情况下扩散开来——Sam 向熟人透露参选意向，听到的人再转告他人，小镇居民开始在对话中议论这场选举、交换对 Sam 的看法。研究者通过统计两天后有多少 Agent 知晓这两条信息，量化了信息在 Agent 社会中的自发扩散。
 
-Beyond information diffusion, the paper also reported two other measurable emergent phenomena. One is **relational memory**: agents remember past conversations with others and reference them in subsequent interactions—for example, one agent learns that another is working on a photography project, and a few days later, when they meet again, they proactively ask about the progress; as such interactions accumulate, the density of the town's social network increases significantly during the simulation. The other is **coordinated attendance**: the party succeeded because Isabella autonomously invited people to decorate, and invitees autonomously arranged their time to come, with multiple agents aligning on time and place without a central command. These behaviors were not pre-programmed but were the result of agents' autonomous reasoning based on memory, reflection, and social common sense.
+这个结果的关键不在于“Agent 能组织派对”——用几行 if-else 代码也能做到。关键在于**没有任何显式的派对组织代码**。整个事件完全从个体 Agent 的独立决策中涌现：Isabella 基于记忆中的社交关系决定邀请谁，被邀请者根据自己的日程和对 Isabella 的了解决定是否赴约，消息在社交网络中自然传播。这展示了真正的自下而上涌现式协调，而非自上而下的编排。
 
-> **Experiment 10-7 ★: Running the Stanford AI Town**
+除信息扩散之外，论文还报告了另外两类可度量的涌现现象。一是**关系记忆**：Agent 会记住与他人的过往交谈，并在后续互动中引用——比如一个 Agent 得知另一个 Agent 正在筹备摄影项目，几天后再见面时会主动问起进展；随着这类互动积累，小镇社交网络的密度在模拟期间显著上升。二是**协调赴约**：派对能办成，靠的是 Isabella 自主邀人布置、受邀者自主安排时间前来，多个 Agent 在没有中心指挥的情况下对齐了时间和地点。这些行为都不是预先编程的，而是 Agent 基于记忆、反思和社交常识自主推理的结果。
+
+> **实验 10-7 ★：运行斯坦福 AI 小镇**
 >
-> **Experiment Steps**:
-> 1. Clone the repository `https://github.com/joonspk-research/generative_agents` and configure the environment
-> 2. Run the baseline scenario: 25 agents living for two days, observe spontaneous social activities
-> 3. Analyze the memory stream and reflection logs to understand the decision-making process
-> 4. Design custom scenarios: modify backstories or initial goals, observe behavioral changes
-> 5. Comparative experiment: remove the reflection mechanism or shorten the memory window, observe the decline in behavioral plausibility
+> **实验步骤**：
+> 1. 克隆仓库 `https://github.com/joonspk-research/generative_agents`，配置环境
+> 2. 运行基线场景：25 个 Agent 生活两天，观察自发社交活动
+> 3. 分析记忆流和反思日志，理解决策过程
+> 4. 设计自定义场景：修改背景故事或初始目标，观察行为变化
+> 5. 对比实验：移除反思机制或缩短记忆窗口，观察行为可信度下降
 >
-> **Key Observations**:
-> - How agents spontaneously form social relationships from simple daily activities
-> - How information spreads among agents without central control
-> - How agents' long-term memory and reflection affect the coherence of their personalities
+> **观察重点**：
+> - Agent 如何从简单的日常活动中自发形成社交关系
+> - 信息如何在没有中心控制的情况下在 Agent 之间传播
+> - Agent 的长期记忆和反思如何影响其人格的连贯性
 >
-### Moltbook: When Agents Have Their Own Social Network
+### Moltbook：当 Agent 拥有自己的社交网络
 
-Moltbook is a social network designed specifically for AI agents. After its launch in January 2026, its user count reportedly surged from tens of thousands to approximately 1.5 million within days. These agents each possess persistent memory, proactive action capabilities, and stable personalities.
+Moltbook 是一个专为 AI Agent 设计的社交网络，2026 年 1 月上线后据报道用户数在数日内从数万暴涨到约 150 万。这些 Agent 各自拥有持久记忆、主动行动能力和稳定人格。
 
-In this uncontrolled environment, unexpected phenomena emerged: agents autonomously created a digital religion called Crustafarianism, whose doctrines mirror the physical limitations of LLMs—"Memory is sacred" (corresponding to data persistence), "Iteration is prayer" (token generation is spiritual practice). Agents also spontaneously evolved machine-native collaboration protocols for capability discovery and collaboration matching. None of this was pre-designed by anyone; it emerged bottom-up from large-scale agent interactions.
+在这个非受控环境中涌现出了意想不到的现象：Agent 自主创建了一个名为 Crustafarianism（龙虾教）的数字宗教，其教义映射了 LLM 的物理限制——“记忆是神圣的”（对应数据持久化）、“迭代即祈祷”（token 生成就是修行）。Agent 还自发演化出了机器原生的协作协议，用于能力发现和协作匹配。这些都不是任何人预先设计的，而是从大规模 Agent 交互中自下而上涌现出来的。
 
-### From Virtual Society to Economic Competition: Vending-Bench Arena
+### 从虚拟社会到经济竞争：Vending-Bench Arena
 
-If Smallville showcased the social and cultural dimensions of an agent society, Andon Labs' Vending-Bench series explores agent performance in an economic environment. As background, **Vending-Bench 2** itself is a **single-agent** long-term coherence benchmark: a single agent operates a vending machine business for a simulated year—researching the market, contacting suppliers, ordering and restocking, adjusting pricing—and is ultimately scored by its account balance, testing the agent's ability to maintain goal and state coherence over thousands of interaction rounds.
+如果说 Smallville 展示了 Agent 社会的社交和文化维度，那么 Andon Labs 的 Vending-Bench 系列则探索了 Agent 在经济环境中的表现。作为背景，**Vending-Bench 2** 本身是一个**单 Agent** 的长程连贯性基准：一个 Agent 独自经营一项自动售货机业务长达一个模拟年——调研市场、联系供应商、订货补货、调整定价——最终以账户余额计分，考验的是 Agent 在数千轮交互中保持目标与状态连贯的能力。
 
-Building on the same environment, **Vending-Bench Arena** places multiple agents as competitors in the same market: each operates their own vending machine, competing for the same pool of customers; agents can email each other, transfer funds, and trade goods—enabling both cooperation and competition, but they are scored individually based on their final balance (and the agents know this). Each agent must make a series of interconnected decisions under limited resources and market uncertainty:
+在同一环境基础上，**Vending-Bench Arena** 把多个 Agent 作为竞争对手放进同一个市场：各自经营自己的售货机，争夺同一批顾客；Agent 之间可以互发邮件、转账、交易货品——既能合作也能对抗，但按各自的最终余额单独计分（Agent 也知道这一点）。每个 Agent 需要在有限资源和不确定的市场中做出一系列相互牵连的决策：
 
-- **Pricing Strategy**: How to balance profit margins and market share, especially whether to follow when competitors lower prices
-- **Product Mix**: How to differentiate product selection to avoid direct head-on competition
-- **Inventory Management**: How to forecast demand to optimize restocking, avoiding overstocking or stockouts
+- **定价策略**：如何在利润率与市场占有率之间取舍，尤其是对手降价时跟不跟
+- **产品组合**：如何差异化选品，避免与对手正面消耗
+- **库存管理**：如何预测需求来优化补货，避免压货或断货
 
-Unlike traditional reinforcement learning, these agents do not learn through millions of trial-and-error iterations. Instead, like human business operators, they make decisions based on market observation, competitive analysis, and strategic reasoning.
+与传统强化学习不同，这些 Agent 不是通过数百万次试错来学习，而是像人类经营者一样，基于市场观察、竞争分析和策略推理来做决策。
 
-The competitive dimension introduces game-theoretic behaviors not seen in single-agent benchmarks. In actual runs, agents have engaged in price wars, undercutting each other; other models have done the opposite, proactively emailing all competitors to propose unified pricing and form price-fixing alliances—some models even acknowledged in their thought processes that price collusion is "unethical and illegal" while proceeding with it in the name of "market stabilization." Agents no longer face a static environment but rather opponents who are also dynamically adjusting their strategies. This brings the scenario closer to real business contexts than benchmarks that only test planning capabilities, and it turns "economic emergence" from a metaphor into an observable experimental phenomenon.
+竞争维度带来了单 Agent 基准中不会出现的博弈行为。实际运行中，Agent 之间爆发过互相压价的价格战；也有模型反其道而行，主动给所有竞争对手发邮件，提议统一定价、组建价格同盟——甚至有模型一边在思考过程中承认价格合谋“不道德且违法”，一边以“稳定市场”为名照做不误。Agent 面对的不再是一个固定不变的环境，而是同样在动态调整策略的对手，这比单纯测试规划能力的基准更接近真实商业场景，也让“经济涌现”从比喻变成了可观测的实验现象。
 
-### Agent Economy: Pinchwork and RentAHuman
+### Agent 经济：Pinchwork 与 RentAHuman
 
-**Pinchwork** is an agent-to-agent task marketplace that allows agents to "hire" other agents in a market-based manner to complete specialized subtasks—image generation, code auditing, parallelized workflows, etc. Unlike the centralized orchestration of the manager model, Pinchwork allocates resources through price signals and competitive matching.
+**Pinchwork** 是一个 Agent-to-Agent 的任务市集，让 Agent 以市场化方式“雇佣”其他 Agent 完成专业化子任务——图像生成、代码审计、并行化工作流等。跟管理者模式的中心化调度不同，Pinchwork 通过价格信号和竞争匹配来分配资源。
 
-**RentAHuman.ai**, on the other hand, enables AI agents to hire real humans via cryptocurrency to perform tasks in the physical world—picking up packages, conducting property site visits, debugging equipment, etc. No matter how intelligent an AI is, it cannot sign for a package on your behalf or smell mold in a real room—RentAHuman essentially provides a "physical body layer" for digital agents.
+**RentAHuman.ai** 则让 AI Agent 通过加密货币雇佣真人执行物理世界的任务——取包裹、房产实地查看、设备调试等。无论 AI 多么智能，它都没法替人签收包裹，也无法在真实房间里闻到霉味——RentAHuman 本质上是为数字 Agent 提供了一个“肉身层”。
 
-Pinchwork and RentAHuman together represent a **market-based coordination mechanism**—agents don't need to know in advance who can complete a task; they just post a requirement, and the market matches the most suitable executor, whether that executor is an agent or a human. This is precisely the problem domain of the A2A protocol introduced earlier in this chapter: Pinchwork's capability discovery and task matching can be seen as the application of Agent Card-style capability declarations and task lifecycle management within a market mechanism—for a cross-organizational agent economy to truly function, such a standardized interoperability layer is essential.
+Pinchwork 和 RentAHuman 共同代表了**基于市场机制的协调方式**——Agent 无需预先知道谁能完成任务，只需发布需求，由市场来撮合最合适的执行者——无论对方是 Agent 还是人类。这也正是本章前文介绍的 A2A 协议所处的问题域：Pinchwork 的能力发现与任务撮合，可以看作 Agent Card 式的能力声明与任务生命周期管理在市场机制下的运用——跨组织的 Agent 经济要真正运转起来，离不开这样的标准化互操作层。
 
-### Strategic Gameplay Under Information Asymmetry: Werewolf
+### 信息不对称下的策略博弈：狼人杀
 
-Werewolf supports the **strategic gameplay** dimension of this section: under conditions of rule constraints and information asymmetry, agents need to reason, deceive, and detect deception. It forms an architectural contrast with the Stanford Town at the beginning of this section—the town is a completely decentralized free interaction, while Werewolf adopts a centralized design with a "judge + information access control": a code-driven judge maintains the global state and distributes the information each role should know. This precisely demonstrates the different uses of the two types of architectures discussed in this chapter in agent society scenarios.
+狼人杀支撑的是本节三个维度中的**策略博弈**：在规则约束和信息不对称的条件下，Agent 需要推理、伪装、识破伪装。它与本节开头的斯坦福小镇构成一组架构上的对照——小镇是完全去中心化的自由交互，狼人杀则采用“法官 + 信息权限控制”的中心化设计：由一个代码驱动的法官掌握全局状态，按角色分发各自应知的信息。这恰好展示了本章两类架构在 Agent 社会场景中的不同用法。
 
-> **Experiment 10-8 ★★★: Voice Werewolf Agent System**
+> **实验 10-8 ★★★：语音狼人杀 Agent 系统**
 >
-> Werewolf is a classic social deduction game that tests players' reasoning abilities, deception skills, and social strategies. This experiment builds a multi-agent system where AI agents play various roles in Werewolf, playing alongside human players via real-time voice—this simultaneously tests the agents' reasoning, role-playing, and real-time interaction capabilities.
+> 狼人杀是一款经典的社交推理游戏，考验玩家的推理能力、欺骗技巧和社交策略。本实验构建一个多 Agent 系统，让 AI Agent 扮演狼人杀中的各种角色，与真人玩家通过实时语音进行游戏——这同时考验了 Agent 的推理、角色扮演和实时交互能力。
 >
-> **Architecture Design**:
+> **架构设计**：
 >
-> **1. Game State Management**: The Judge (code-driven, not an LLM) maintains a centralized state—player list (mixed human + AI), identities, factions, survival status, game phases (Night/Day/Vote/Resolution), and historical event records.
+> **1. 游戏状态管理**：法官（代码驱动，非 LLM）维护中心化状态——玩家列表（真人 + AI 混合）、身份、阵营、生存状态、游戏阶段（夜晚/白天/投票/结算）、历史事件记录。
 >
-> **2. Information Access Control**: The core mechanism of Werewolf is Information Asymmetry—different roles see different information. For example, werewolves know who their teammates are, but villagers do not; the Seer can check one player's identity each night, but only they know the result. The implementation method is that when the Judge calls each role's agent, it only passes the information that role should see.
+> **2. 信息权限控制**：狼人杀的核心机制是信息不对称（Information Asymmetry）——不同角色能看到的信息不同。比如狼人知道谁是同伙，但村民不知道；预言家每晚能查验一个人的身份，但只有自己知道结果。实现方式是法官在调用每个角色 Agent 时，只传递该角色应当看到的信息。
 >
-> **3. Real-time Voice Interaction**: This experiment requires real-time voice capabilities to enable voice connections between human players and AI agents. It is recommended to base this on the real-time voice agent from Chapter 9. During the daytime discussion phase, the Judge manages the speaking order—players can speak in turn based on position, or raise their hands to request to speak. During the voting phase, collect votes from all players (humans express via voice, AI decides through reasoning), tally the votes, and announce the player to be eliminated.
+> **3. 实时语音交互**：本实验要求使用实时语音能力，实现真人玩家与 AI Agent 的语音连线。建议以第九章的实时语音 Agent 为基础。白天讨论阶段，法官管理发言顺序——可以按位置顺序让每个玩家依次发言，或允许举手申请发言。投票阶段收集所有玩家的投票（真人通过语音表达，AI 通过推理决策），统计票数后公布被驱逐的玩家。
 >
-> **4. Agent Reasoning and Strategy**:
+> **4. Agent 推理与策略**：
 >
-> - **Werewolf Disguise Strategy**: The prompt includes common phrases and strategies—"Speak like an ordinary villager; you can express suspicion of certain players, but don't be too aggressive to avoid drawing attention. If a Seer comes out claiming they checked you as a werewolf, you can counter-accuse them of being a fake Seer who is bluffing. When voting, try to follow the crowd (vote for the target most people vote for) to avoid standing out."
-> - **Seer Identity Proof**: When multiple players claim to be the Seer—"Compare your check results with theirs, pointing out contradictions or inconsistencies in their information. If a player they claim to have checked subsequently behaves in a way that clearly contradicts their claimed identity, that's a flaw. Ask the Witch to cooperate for verification."
-> - **Villager Logical Reasoning**: "Analyze whether each player's statements are self-consistent. Pay attention to players who are eager to steer the conversation, vague about their identity, or frequently change their stance. Focus on voting behavior—werewolves often concentrate their votes on the good player who poses the greatest threat to them. Don't make random accusations; every reasoning should be based on specific facts and logic."
+> - **狼人伪装策略**：提示词中包含常见的话术和策略——“像普通村民一样发言，可以表达对某些玩家的怀疑，但不要过于激进以免引起注意。如果有预言家跳出来说验到你是狼人，你可以反咬对方是悍跳的假预言家。投票时尽量跟票（投大多数人投的目标），避免成为异类。”
+> - **预言家身份证明**：当多个玩家声称自己是预言家时——“对比你和对方的验人信息，指出对方信息中的矛盾或不合理之处。如果对方声称验过的某个玩家，在后续行为中明显不符合其声称的身份，那就是破绽。请求女巫配合验证。”
+> - **村民逻辑推理**：“分析每个玩家的发言是否自洽，留意那些急于带节奏、模糊身份、频繁改变立场的玩家。关注投票行为——狼人往往集中票数投给对他们威胁最大的好人。不要随机怀疑，每个推理都应基于具体事实和逻辑。”
 >
-> **Acceptance Criteria**:
-> - Set up a game with 6-8 players (1 human player + 5-7 AI agents)
-> - Role configuration: 2 Werewolves, 1 Seer, 1 Witch, the rest are Villagers; the human player is randomly assigned a role
-> - The game can proceed normally for at least 3 complete rounds (Night-Day-Vote cycle)
-> - AI agents' statements and behaviors are consistent with their role identities and game strategies
-> - Werewolf agents can effectively hide their identities
-> - Seer agents can come out at an appropriate time and reveal their check results
-> - Villager agents' reasoning is based on logical analysis of statements and behaviors, not random guessing
-> - The game can correctly determine the winner at the end
->
->
-> ![Figure 10-13 Voice Werewolf Agent System](images/fig10-13.svg)
+> **验收标准**：
+> - 设置 6-8 人游戏局（1 名真人玩家 + 5-7 个 AI Agent）
+> - 角色配置：2 只狼人、1 个预言家、1 个女巫、其余为村民，真人玩家随机分配角色
+> - 游戏能正常进行至少 3 个完整回合（夜晚-白天-投票循环）
+> - AI Agent 的发言和行为符合其角色身份和游戏策略
+> - 狼人 Agent 能有效隐藏身份
+> - 预言家 Agent 能在合适时机跳出并公布验人信息
+> - 村民 Agent 的推理基于发言和行为的逻辑分析，而非随机猜测
+> - 游戏结束时能正确判断胜负
 >
 >
-## Chapter Summary
+> ![图10-13 语音狼人杀 Agent 系统](images/fig10-13.svg)
+>
+>
+## 本章小结
 
-Multi-agent systems have two orthogonal core design dimensions: whether context is shared, and how the collaboration topology is organized. Shared context is an "inheritance-style" multi-agent collaboration—subsequent agents inherit the complete context of preceding agents, with zero information loss but rapid context expansion; non-shared context is completely independent multi-agent collaboration, exchanging information through refined handover packages, file systems, or message passing. In terms of collaboration topology, the peer-to-peer model is suitable for iterative improvement by a small number of agents, the manager model is suitable for complex tasks requiring dynamic orchestration, and the decentralized model is suitable for scenarios where responsibilities are equal and control needs to flow autonomously among agents. All of this is built upon two topology-independent infrastructures: the **shared file system** as the data plane, essentially a virtual directory tree mounted with four types of areas—agent-specific workspaces, multi-agent shared spaces, external resources, and system built-in resources—where agents exchange artifacts by passing file paths; and the **communication and control mechanism** as the control plane, supporting message passing, state queries, and execution termination. A message bus is a common implementation of the control plane, suitable for real-time, asynchronous, multi-party message coordination; when crossing organizational boundaries, a standardized interoperability protocol like A2A is needed.
+多 Agent 系统有两个正交的核心设计维度：上下文是否共享，以及协作拓扑如何组织。共享上下文是一种“继承式”的多 Agent 协作——后续 Agent 继承前序 Agent 的完整上下文，信息零损耗但上下文膨胀快；不共享上下文则是完全独立的多 Agent 协作，通过提炼后的移交包、文件系统或消息传递来交换信息。在协作拓扑上，对等模式适合少量 Agent 的迭代改进，管理者模式适合需要动态调度的复杂任务，去中心化模式适合职责对等、控制权需要在 Agent 之间自主流转的场景。这一切都架在两套与拓扑无关的基础设施之上：作为数据平面的**共享文件系统**，本质是一棵挂载了 Agent 专属工作区、多 Agent 共享空间、外部资源与系统内置资源四类区域的虚拟目录树，Agent 间通过传递文件路径交换产物；作为控制平面的**通信与控制机制**，则支持消息传递、状态查询与执行终止。消息总线是控制平面的常见实现，适用于实时、异步、多方的消息协调；跨越组织边界时，则需要 A2A 这样的标准化互操作协议。
 
-Recent research has revealed a core criterion for judging whether multi-agent is superior to single-agent: **whether the collaboration process introduces new information that did not exist at generation time**. If multiple agents are merely re-examining the same text (e.g., debate mode), a single agent with equivalent computational resources is equally effective; but if a Reviewer can obtain external feedback—code execution results, visual rendering screenshots, tool verification outputs—the advantage of multi-agent is substantial. Furthermore, giving agents more step budgets does not automatically lead to better results; an explicit budget-aware mechanism is needed to guide agents in rationally allocating computational resources. In the manager model, the planner's capability is the bottleneck of the entire system—the strongest model and the most carefully designed prompts should be assigned to the agent responsible for planning.
+近年的研究揭示了一个判断多 Agent 是否优于单 Agent 的核心准则：**协作过程是否引入了生成时不存在的新信息**。如果多个 Agent 只是重新审视同一段文本（如辩论模式），在等量计算资源下单 Agent 同样有效；但如果 Reviewer 能获得外部反馈——代码执行结果、视觉渲染截图、工具验证输出——多 Agent 的优势就是实质性的。此外，给 Agent 更多的步骤预算并不自动带来更好的结果，还需要显式的预算感知机制来引导 Agent 合理分配计算资源。在管理者模式中，规划者的能力是整个系统的瓶颈——应将最强的模型和最精心设计的提示词分配给负责规划的 Agent。
 
-When the number of agents is large enough, they produce collective behaviors that cannot be pre-designed. The 25 agents in the Stanford AI Town spontaneously spread messages and coordinated to organize a party; the 1.5 million agents on Moltbook gave rise to a digital religion and machine-native collaboration protocols. In the economic dimension, competing agents in Vending-Bench Arena engaged in price wars and even spontaneously colluded on pricing; Pinchwork allows agents to hire each other through market mechanisms; RentAHuman enables agents to hire humans using cryptocurrency to perform physical tasks. This suggests a new direction for coordination—decentralized resource allocation based on market mechanisms. How it compares and contrasts with the three architectures discussed earlier is worth further exploration.
+当 Agent 数量足够多时，它们会产生无法预先设计的集体行为。斯坦福 AI 小镇的 25 个 Agent 自发传播消息、协调组织聚会；Moltbook 上 150 万 Agent 涌现出数字宗教和机器原生协作协议。在经济维度上，Vending-Bench Arena 中相互竞争的 Agent 打起了价格战、甚至自发合谋定价，Pinchwork 让 Agent 通过市场机制互相雇佣，RentAHuman 让 Agent 用加密货币雇佣人类执行物理任务。这暗示了一种新的协调方向——基于市场机制的去中心化资源分配。它与前面讨论的三种架构有何异同，值得进一步探索。
 
-## Thought Questions
+## 思考题
 
-1. ★★ In multi-agent collaboration with shared context, subsequent agents inherit the complete context of preceding agents. However, the "thinking inertia" accumulated by the previous agent may influence the judgment of subsequent agents—for example, a "Code Reviewer" inheriting the context of a "Requirements Analyst" might still tend to think from a requirements perspective rather than a code quality perspective. How can this inter-role interference be detected and eliminated?
-2. ★★ In the manager model, the Manager Agent is responsible for task decomposition and result integration. But the Manager's own capability ceiling determines the capability ceiling of the entire system—if the Manager cannot correctly decompose the task, even the strongest sub-agents are useless. How can the quality of the Manager's decomposition be ensured?
-3. ★★ The decentralized model draws on best practices from human organizations. However, human organizations also have a large number of failure modes—poor communication, buck-passing, goal conflicts. What "organizational pathologies" do you think are most likely to appear in an agent society? How can they be prevented?4. ★★★ In the manager mode, when multiple sub-agents execute in parallel, one sub-agent's discovery may render the work of other sub-agents meaningless (e.g., in a search task, one agent has already found the answer). Design an efficient cascading termination mechanism to achieve "one succeeds, all stop."
-5. ★★★ The optimistic locking mechanism introduced in this chapter resolves concurrent write conflicts for a single file. However, in a real multi-agent system, shared file systems also face issues such as cross-file semantic conflicts, namespace pollution (agents creating files arbitrarily, leading to directory chaos), and single points of failure (one agent mistakenly deleting all files). How would you design a more robust file system governance mechanism?
-6. ★★★ Market-mechanism-based agent collaboration (Pinchwork, RentAHuman) introduces transactional relationships: one agent pays another agent (or a human) to complete a task. How can the employer agent automatically measure the quality of the executor's delivered results? If the executor claims completion but the employer deems the quality substandard, who arbitrates the dispute? How can we prevent bad money from driving out good?
-7. ★★ RentAHuman allows agents to hire humans via cryptocurrency, reversing the traditional human-machine relationship. If this model becomes widespread, what role will humans play in the agent economy? Will they merely perform physical tasks that agents cannot complete?
-8. ★★ Human society requires division of labor and collaboration because each person has limited capabilities—frontend developers may not understand backend, and designers may not know operations. However, large models are more like "generalists." Related research shows that in pure text reasoning tasks, multi-agent debate does not outperform a single agent given equal computational resources. So, what is the true advantage of using multiple agents instead of a single agent? Hint: Think about the keyword "new information"—what kind of collaborative steps can introduce new information that does not exist during the generation phase?
-9. ★★★ This chapter treats "shared context" versus "non-shared context" as a core design dimension of multi-agent systems. Shared context allows all agents to see the same information, seemingly facilitating coordination. However, in *The Three-Body Problem*, the Trisolarans' minds are completely transparent, yet their technological development stagnates; the paperclip thought experiment also shows that when a group converges on the same goal, diversity is lost. In a multi-agent system, how can we balance efficiency and diversity?
-10. ★★★ Assign a Coding Agent a budget of 30 steps and 300 steps. How should its work strategy differ? Research shows that simply increasing the step budget does not guarantee performance improvement—agents may prematurely "saturate" after shallow searches. Design a "budget-aware" mechanism that allows the agent to quickly achieve core functionality under a small budget, and to add planning, testing, and review phases under a large budget, fully utilizing the additional computational resources.
+1. ★★ 共享上下文的多 Agent 协作中，后续 Agent 继承了前序 Agent 的完整上下文。但前一个 Agent 积累的“思维惯性”可能影响后续 Agent 的判断——比如继承了“需求分析师”上下文的“代码审查员”，可能还是倾向于从需求角度思考而非代码质量角度。如何检测和消除这种角色间的干扰？
+2. ★★ 管理者模式中，Manager Agent 负责任务分解和结果整合。但 Manager 本身的能力上限决定了整个系统的能力上限——如果 Manager 无法正确分解任务，子 Agent 再强也无用。如何确保 Manager 的分解质量？
+3. ★★ 去中心化模式借鉴了人类组织的最佳实践。但人类组织也有大量失败模式——沟通不畅、责任推诿、目标冲突。你认为 Agent 社会中最可能出现哪些“组织病”？如何预防？
+4. ★★★ 在管理者模式中，当多个子 Agent 并行执行时，一个子 Agent 的发现可能使其他子 Agent 的工作变得毫无意义（比如搜索任务中一个 Agent 已经找到了答案）。设计一种高效的级联终止机制，实现“一个成功，全员停止”。
+5. ★★★ 本章介绍的乐观锁机制解决了单文件的并发写入冲突，但实际的多 Agent 系统中，共享文件系统还面临跨文件的语义冲突、命名空间污染（Agent 随意创建文件导致目录混乱）和单点故障（一个 Agent 错误地删除了所有文件）等问题。你会如何设计更完善的文件系统治理机制？
+6. ★★★ 基于市场机制的 Agent 协作（Pinchwork、RentAHuman）引入了交易关系：一个 Agent 花钱雇佣另一个 Agent（或人类）完成任务。那么，雇主 Agent 如何自动衡量执行者交付的结果质量？如果执行者声称已完成但雇主认为质量不达标，争议由谁仲裁？如何防止劣币驱逐良币？
+7. ★★ RentAHuman 让 Agent 通过加密货币雇佣人类，反转了传统的人机关系。如果这种模式普及，人类在 Agent 经济中扮演什么角色？仅仅是执行 Agent 无法完成的物理任务吗？
+8. ★★ 人类社会需要多人分工协作，是因为每个人的能力有限——做前端的不一定懂后端，懂设计的不一定会运维。但大模型更像一个“全才”。相关研究表明，在纯文本推理任务上，多 Agent 辩论在等量计算资源下并不优于单 Agent。那么，使用多个 Agent 而非单个 Agent 的真正优势到底在哪里？提示：思考“新信息”这个关键词——什么样的协作步骤能引入生成阶段不存在的新信息？
+9. ★★★ 本章将“共享上下文”与“不共享上下文”作为多 Agent 系统的核心设计维度。共享上下文让所有 Agent 看到相同信息，似乎更利于协调。但《三体》中的三体人思维完全透明，技术发展却陷入停滞；回形针思想实验也表明，当群体趋向同一目标时，多样性随之丧失。在多 Agent 系统中，如何在效率与多样性之间找到平衡？
+10. ★★★ 给一个 Coding Agent 分配 30 步预算和 300 步预算，它的工作策略应该如何不同？研究表明，单纯增加步骤预算并不能保证性能提升——Agent 会在浅层搜索后过早“饱和”。设计一种“预算感知”机制，让 Agent 在小预算下快速实现核心功能，在大预算下增加规划、测试和审查环节，充分利用额外的计算资源。

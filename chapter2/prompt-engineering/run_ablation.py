@@ -30,32 +30,32 @@ from ablation_utils import (
 def parse_args():
     parser = argparse.ArgumentParser(
         description=(
-            "Prompt engineering ablation study (Experiment 2-4): Based on Tau-Bench, systematically degrade prompt engineering components,"
-            "quantify their impact on task success rate.\n"
-            "Three ablation dimensions: tone style (--tone-style), information organization (--randomize-wiki),"
-            "tool descriptions (--remove-tool-descriptions)."
+            "提示工程消融实验（实验 2-4）：基于 Tau-Bench 逐个降解提示工程要素，"
+            "量化其对任务成功率的影响。\n"
+            "三个消融维度：语气风格（--tone-style）、信息组织（--randomize-wiki）、"
+            "工具描述（--remove-tool-descriptions）。"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "Example:\n"
-            "  # Baseline (structured prompt + full tool descriptions + professional neutral tone), run first 10 tasks\n"
+            "示例：\n"
+            "  # 基线（结构化提示词 + 完整工具描述 + 专业中立语气），跑前 10 个任务\n"
             "  python run_ablation.py --model gpt-5.6-luna --env airline --end-index 10\n\n"
-            "  # Single ablation: shuffle the organizational structure of wiki rules\n"
+            "  # 单个消融：打乱 wiki 规则的组织结构\n"
             "  python run_ablation.py --env airline --randomize-wiki --end-index 10\n\n"
-            "  # Run the full ablation suite with one command and print comparison table (baseline + each dimension + all combined)\n"
+            "  # 一键跑完整套消融并打印对比表（基线 + 各维度 + 全部叠加）\n"
             "  python run_ablation.py --env airline --all --end-index 10\n\n"
-            "  # After running, separately aggregate analysis: python analyze_results.py\n"
+            "  # 跑完后单独汇总分析：python analyze_results.py\n"
         ),
     )
 
     # Original arguments
     parser.add_argument(
         "--num-trials", type=int, default=1,
-        help="Number of repetitions per task (default: 1)"
+        help="每个任务重复运行的次数（默认：1）"
     )
     parser.add_argument(
         "--env", type=str, choices=["retail", "airline"], default="airline",
-        help="Scenario environment to run: airline (airline customer service) or retail (retail customer service), default airline"
+        help="运行的场景环境：airline（航空客服）或 retail（零售客服），默认 airline"
     )
     parser.add_argument(
         "--model",
@@ -122,46 +122,46 @@ def parse_args():
         type=str,
         choices=["default", "trump", "casual"],
         default="default",
-        help="Dimension 1 - Tone style: default (professional neutral, baseline), trump (Trump exaggerated style), casual (casual style with many emojis)"
+        help="维度一·语气风格：default（专业中立，基线）、trump（Trump 夸张风格）、casual（大量表情符号的休闲风格）"
     )
 
     parser.add_argument(
         "--randomize-wiki",
         action="store_true",
-        help="Dimension 2 - Information organization: shuffle the organizational structure of wiki rules (remove heading hierarchy, flatten rules into unordered list)"
+        help="维度二·信息组织：打乱 wiki 规则的组织结构（去除标题层次，规则平铺为无序列表）"
     )
 
     parser.add_argument(
         "--remove-tool-descriptions",
         action="store_true",
-        help="Dimension 3 - Tool descriptions: retain function signatures and parameters, but remove all descriptive text"
+        help="维度三·工具描述：保留函数签名与参数，但移除所有描述性文本"
     )
 
     parser.add_argument(
         "--ablation-name",
         type=str,
         default="",
-        help="Custom name for this ablation experiment (used for result file name identification)"
+        help="本次消融实验的自定义名称（用于结果文件名标识）"
     )
 
     parser.add_argument(
         "--all",
         dest="run_all",
         action="store_true",
-        help="One-click run of the full ablation suite (baseline + each single dimension + all combined), print success rate comparison table after completion"
+        help="一键运行完整消融套件（基线 + 各单维度 + 全部叠加），结束后打印成功率对比表"
     )
 
     parser.add_argument(
         "--output",
         type=str,
         default=None,
-        help="(--all mode only) Write suite summary statistics to this JSON file path (default: log-dir/ablation_summary_<timestamp>.json)"
+        help="（仅 --all 模式）将套件汇总统计写入该 JSON 文件路径（默认写入 log-dir/ablation_summary_<时间戳>.json）"
     )
 
     parser.add_argument(
         "--no-verbose",
         action="store_true",
-        help="Suppress verbose output (verbose enabled by default)"
+        help="关闭详细输出（默认开启 verbose）"
     )
 
     args = parser.parse_args()
@@ -408,7 +408,7 @@ def run_with_ablation(args):
 
 
 # Full ablation suite: (name, {modifications}) covering the three dimensions
-# described in the book (Experiment 2-4): tone / information organization / tool descriptions.
+# described in the book (实验 2-4): tone / information organization / tool descriptions.
 ABLATION_SUITE = [
     ("baseline",      {"tone_style": "default", "randomize_wiki": False, "remove_tool_descriptions": False}),
     ("tone_trump",    {"tone_style": "trump",   "randomize_wiki": False, "remove_tool_descriptions": False}),

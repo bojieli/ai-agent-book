@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flight Booking · Intent Clarification Form</title>
+<title>机票预订 · 意图澄清表单</title>
 <style>
   :root { color-scheme: light dark; }
   body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -23,21 +23,21 @@
 </style>
 </head>
 <body>
-<h1>Flight Booking · Intent Clarification Form</h1>
-<p class="req">Original request: I want to book a flight to Beijing — Please fill in all the following information at once (return date appears only when "Round Trip" is selected; baggage allowance varies by cabin class).</p>
+<h1>机票预订 · 意图澄清表单</h1>
+<p class="req">原始请求：我想订一张去北京的机票 —— 请一次性补全以下信息（返程日期仅在选择"往返"时出现；行李额度随舱位变化）。</p>
 <form id="clarify-form">
-<div class="field"><label class="fld-label" for="departure_city">Departure City</label><input class="fld-input" type="text" id="departure_city" name="departure_city" placeholder="e.g., Shanghai" required></div>
-<div class="field"><label class="fld-label" for="departure_date">Departure Date</label><input class="fld-input" type="date" id="departure_date" name="departure_date" required></div>
-<div class="field"><span class="fld-label">Trip Type</span><div class="radio-row"><label class="radio"><input type="radio" name="trip_type" value="one_way" checked> One Way</label><label class="radio"><input type="radio" name="trip_type" value="round_trip"> Round Trip</label></div></div>
-<div class="field" id="return_date_field" style="display:none"><label class="fld-label" for="return_date">Return Date</label><input class="fld-input" type="date" id="return_date" name="return_date"></div>
-<div class="field"><label class="fld-label" for="cabin_class">Cabin Class</label><select class="fld-input" id="cabin_class" name="cabin_class"><option value="economy" selected>Economy</option><option value="business">Business</option><option value="first">First Class</option></select></div>
-<div class="field"><label class="fld-label" for="baggage_count">Free Checked Baggage Allowance</label><select class="fld-input" id="baggage_count" name="baggage_count"></select></div>
-  <button type="submit">Submit</button>
+<div class="field"><label class="fld-label" for="departure_city">出发城市</label><input class="fld-input" type="text" id="departure_city" name="departure_city" placeholder="如：上海" required></div>
+<div class="field"><label class="fld-label" for="departure_date">出发日期</label><input class="fld-input" type="date" id="departure_date" name="departure_date" required></div>
+<div class="field"><span class="fld-label">旅行类型</span><div class="radio-row"><label class="radio"><input type="radio" name="trip_type" value="one_way" checked> 单程</label><label class="radio"><input type="radio" name="trip_type" value="round_trip"> 往返</label></div></div>
+<div class="field" id="return_date_field" style="display:none"><label class="fld-label" for="return_date">返程日期</label><input class="fld-input" type="date" id="return_date" name="return_date"></div>
+<div class="field"><label class="fld-label" for="cabin_class">舱位</label><select class="fld-input" id="cabin_class" name="cabin_class"><option value="economy" selected>经济舱</option><option value="business">公务舱</option><option value="first">头等舱</option></select></div>
+<div class="field"><label class="fld-label" for="baggage_count">免费托运行李额度</label><select class="fld-input" id="baggage_count" name="baggage_count"></select></div>
+  <button type="submit">提交</button>
 </form>
 <pre id="result"></pre>
 <script>
 
-const FORM_CONFIG = {"fields": [{"name": "departure_city"}, {"name": "departure_date"}, {"name": "trip_type"}, {"name": "return_date", "container_id": "return_date_field", "show_when": {"field": "trip_type", "equals": "round_trip"}}, {"name": "cabin_class"}, {"name": "baggage_count", "options_when": {"field": "cabin_class", "map": {"economy": [{"value": "0", "label": "Carry-on only"}, {"value": "1", "label": "1 piece (≤23kg)"}], "business": [{"value": "0", "label": "Carry-on only"}, {"value": "1", "label": "1 piece (≤32kg)"}, {"value": "2", "label": "2 pieces (≤32kg)"}], "first": [{"value": "1", "label": "1 piece (≤32kg)"}, {"value": "2", "label": "2 pieces (≤32kg)"}, {"value": "3", "label": "3 pieces (≤32kg)"}]}}}], "constants": {"destination_city": "Beijing"}};
+const FORM_CONFIG = {"fields": [{"name": "departure_city"}, {"name": "departure_date"}, {"name": "trip_type"}, {"name": "return_date", "container_id": "return_date_field", "show_when": {"field": "trip_type", "equals": "round_trip"}}, {"name": "cabin_class"}, {"name": "baggage_count", "options_when": {"field": "cabin_class", "map": {"economy": [{"value": "0", "label": "仅手提行李"}, {"value": "1", "label": "1 件（≤23kg）"}], "business": [{"value": "0", "label": "仅手提行李"}, {"value": "1", "label": "1 件（≤32kg）"}, {"value": "2", "label": "2 件（≤32kg）"}], "first": [{"value": "1", "label": "1 件（≤32kg）"}, {"value": "2", "label": "2 件（≤32kg）"}, {"value": "3", "label": "3 件（≤32kg）"}]}}}], "constants": {"destination_city": "北京"}};
 const form = document.getElementById('clarify-form');
 
 function valueOf(name) {
@@ -48,7 +48,7 @@ function valueOf(name) {
 
 function applyCascade() {
   FORM_CONFIG.fields.forEach(function (f) {
-    // Cascade ①: show_when — control field container visibility
+    // 级联①：show_when —— 控制字段容器显示/隐藏
     if (f.show_when) {
       const box = document.getElementById(f.container_id);
       if (box) {
@@ -56,7 +56,7 @@ function applyCascade() {
         box.style.display = show ? '' : 'none';
       }
     }
-    // Cascade ②: options_when — dynamically rebuild dropdown options based on another field's value
+    // 级联②：options_when —— 根据另一字段的取值动态重建下拉可选项
     if (f.options_when) {
       const sel = form.elements[f.name];
       if (sel) {
@@ -77,13 +77,13 @@ function applyCascade() {
 }
 
 form.addEventListener('change', applyCascade);
-applyCascade();  // Apply once on initial load
+applyCascade();  // 首次加载即应用一次
 
 form.addEventListener('submit', function (e) {
   e.preventDefault();
   const data = {};
   FORM_CONFIG.fields.forEach(function (f) {
-    // Hidden (collapsed) cascade fields are excluded from submission
+    // 隐藏（未展开）的级联字段不计入提交结果
     if (f.container_id) {
       const box = document.getElementById(f.container_id);
       if (box && box.style.display === 'none') return;

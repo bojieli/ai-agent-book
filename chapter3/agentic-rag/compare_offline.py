@@ -1,16 +1,16 @@
-"""Offline comparison experiment: Agentic RAG (multi-turn/decomposed retrieval) vs. Non-agentic RAG (single-shot retrieval).
+"""离线对比实验：智能体化 RAG（多轮/分解检索）vs 非智能体化 RAG（单次检索）。
 
-This script runs **completely offline**—it only performs retrieval, does not call any LLM, and does not rely on external retrieval services,
-so it can be reproduced without an API key. It uses a small Chinese judicial QA dataset (evaluation/offline_qa.json)
-to quantitatively compare the 'evidence recall' of two retrieval paradigms:
+本脚本**完全离线运行**——只做检索、不调用任何 LLM、不依赖外部检索服务，
+因此无需 API Key 即可复现。它在一个小型中文司法问答集（evaluation/offline_qa.json）
+上，量化对比两种检索范式的『证据召回率』：
 
-  - Non-agentic: Use the user's original question as the only query for a single retrieval (single-shot);
-  - Agentic: Simulate an agent decomposing/rewriting the question to perform multiple retrievals, then take the union of results.
+  - 非智能体化：把用户原始问题作为唯一查询做一次检索（single-shot）；
+  - 智能体化：模拟 Agent 分解/改写问题后发起多次检索，再对结果取并集。
 
-The gold standard (gold_articles) is the set of legal article numbers required to answer each question; an article is considered 'hit'
-if and only if there exists a chunk in the retrieval results that starts with that article number. Evidence recall = number of hit gold articles
-/ total number of gold articles. This retrieval-level metric is the upper bound of answer quality: if evidence is not retrieved, generation cannot begin.
-End-to-end evaluation at the generation stage (requires LLM API) is in evaluation/evaluate.py.
+金标准（gold_articles）为回答每个问题所必需的法条编号；某法条被判定为『命中』
+当且仅当检索结果中存在一个以该法条编号开头的分块。证据召回率 = 命中金标准法条数
+/ 金标准法条总数。这一检索层指标是回答质量的上界：检索不到证据，生成阶段就无从
+谈起。生成阶段的端到端评测（需要 LLM API）见 evaluation/evaluate.py。
 """
 
 import os
@@ -26,13 +26,13 @@ from offline_retriever import OfflineRetriever, _ARTICLE_RE
 
 
 def _leading_article(text: str) -> str:
-    """Extract the legal article number at the beginning of the chunk (e.g., 'Article 235'), return empty string if none."""
+    """抽取分块开头的法条编号（如『第二百三十五条』），无则返回空串。"""
     m = _ARTICLE_RE.match(text.strip())
     return m.group(0) if m else ""
 
 
 def _covered(retrieved: List[Dict[str, Any]], gold_articles: List[str]) -> List[str]:
-    """Return the list of gold standard articles hit by the retrieval results."""
+    """返回被检索结果命中的金标准法条列表。"""
     hit_markers = {_leading_article(r["text"]) for r in retrieved}
     hit_markers.discard("")
     return [g for g in gold_articles if g in hit_markers]
@@ -41,12 +41,12 @@ def _covered(retrieved: List[Dict[str, Any]], gold_articles: List[str]) -> List[
 def run_case(retriever: OfflineRetriever, case: Dict[str, Any], top_k: int) -> Dict[str, Any]:
     gold = case["gold_articles"]
 
-    #  Non-agentic: Single retrieval, query is the user's original question.
+    # 非智能体化：单次检索，查询即用户原始问题。
     naive_query = case.get("naive_query", case["question"])
     naive_hits = retriever.search(naive_query, top_k)
     naive_covered = _covered(naive_hits, gold)
 
-    #  Agentic: Decompose into multiple sub-queries, retrieve each, then take the union.
+    # 智能体化：分解为多个子查询，逐一检索后取并集。
     subqueries = case.get("subqueries") or [case["question"]]
     agentic_hits: List[Dict[str, Any]] = []
     seen = set()
@@ -80,7 +80,7 @@ def _mean(xs: List[float]) -> float:
 
 
 def _pad(text: str, width: int) -> str:
-    """Left-aligned by display width (one Chinese character counts as two widths)."""
+    """按显示宽度左对齐（一个中文字符按两个宽度计）。"""
     display = sum(2 if ord(c) > 127 else 1 for c in text)
     return text + " " * max(0, width - display)
 
@@ -105,10 +105,10 @@ def summarize(results: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def print_table(results: List[Dict[str, Any]], summary: Dict[str, Any]):
     print("\n" + "=" * 78)
-    print("Offline Retrieval Comparison: Evidence Recall")
+    print("离线检索对比：证据召回率（Evidence Recall）")
     print("=" * 78)
-    print(_pad("Question", 30) + _pad("Difficulty", 8) + _pad("Single-shot Retrieval", 12)
-          + _pad("Decomposed Retrieval", 12) + "Retrieval Count")
+    print(_pad("问题", 30) + _pad("难度", 8) + _pad("单次检索", 12)
+          + _pad("分解检索", 12) + "检索次数")
     print("-" * 78)
     for r in results:
         q = (r["question"][:13] + "…") if len(r["question"]) > 13 else r["question"]
@@ -124,44 +124,44 @@ def print_table(results: List[Dict[str, Any]], summary: Dict[str, Any]):
               + _pad(f"{s['agentic_recall']:.0%}", 12)
               + f"{s['naive_searches']:.1f} → {s['agentic_searches']:.1f}")
 
-    print("Aggregate Metrics (Average Evidence Recall):")
-    row("  All", summary["overall"])
+    print("聚合指标（平均证据召回率）:")
+    row("  全部", summary["overall"])
     if "easy" in summary:
-        row("  Easy", summary["easy"])
+        row("  简单题", summary["easy"])
     if "hard" in summary:
-        row("  Hard", summary["hard"])
+        row("  复杂题", summary["hard"])
     print("=" * 78)
     ov = summary["overall"]
     lift = ov["agentic_recall"] - ov["naive_recall"]
-    print(f"Conclusion: Decomposed multi-turn retrieval improves overall evidence recall from {ov['naive_recall']:.0%} "
-          f" to {ov['agentic_recall']:.0%}（+{lift:.0%}），"
-          f"at the cost of increasing the average retrieval count from {ov['naive_searches']:.1f} to {ov['agentic_searches']:.1f}。")
+    print(f"结论：分解式多轮检索将整体证据召回率从 {ov['naive_recall']:.0%} "
+          f"提升到 {ov['agentic_recall']:.0%}（+{lift:.0%}），"
+          f"代价是平均检索次数由 {ov['naive_searches']:.1f} 增至 {ov['agentic_searches']:.1f}。")
     if "hard" in summary:
         hv = summary["hard"]
-        print(f"      The gap is most significant on hard questions:{hv['naive_recall']:.0%} → {hv['agentic_recall']:.0%}。")
+        print(f"      复杂题上的差距最为显著：{hv['naive_recall']:.0%} → {hv['agentic_recall']:.0%}。")
     print("=" * 78)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Offline comparison of evidence recall between agentic RAG (multi-turn decomposed retrieval) and non-agentic RAG (single-shot retrieval); pure retrieval, no LLM or external services required.",
+        description="离线对比智能体化 RAG（多轮分解检索）与非智能体化 RAG（单次检索）的证据召回率；纯检索、无需 LLM 与外部服务。",
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument("--dataset", type=str, default="evaluation/offline_qa.json",
-                        help="Offline QA dataset path (default: evaluation/offline_qa.json)")
+                        help="离线问答数据集路径（默认：evaluation/offline_qa.json）")
     parser.add_argument("--corpus", type=str, default="laws",
-                        help="Legal corpus directory for building offline BM25 index (default: laws)")
+                        help="法律语料目录，用于构建离线 BM25 索引（默认：laws）")
     parser.add_argument("--top-k", type=int, default=5,
-                        help="Number of chunks returned per retrieval, i.e., retrieval depth (default: 5)")
+                        help="每次检索返回的分块数量，即检索深度（默认：5）")
     parser.add_argument("--output", type=str, default=None,
-                        help="JSON file path to write detailed results (default: do not write to disk, only print)")
+                        help="将详细结果写入的 JSON 文件路径（默认：不落盘，仅打印）")
     args = parser.parse_args()
 
-    print(f"[Offline Comparison] Building BM25 index, corpus directory: {args.corpus} …")
+    print(f"[离线对比] 构建 BM25 索引，语料目录：{args.corpus} …")
     t0 = time.time()
     retriever = OfflineRetriever(args.corpus)
-    print(f"[Offline Comparison] Indexing complete: {len(retriever.chunks)} legal article chunks / "
-          f"{len(retriever.documents)} documents, elapsed time {time.time() - t0:.1f}s")
+    print(f"[离线对比] 索引完成：{len(retriever.chunks)} 个法条分块 / "
+          f"{len(retriever.documents)} 篇文档，用时 {time.time() - t0:.1f}s")
 
     with open(args.dataset, "r", encoding="utf-8") as f:
         dataset = json.load(f)
@@ -182,7 +182,7 @@ def main():
         }
         with open(args.output, "w", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False, indent=2)
-        print(f"\nDetailed results saved to: {args.output}")
+        print(f"\n详细结果已保存至：{args.output}")
 
 
 if __name__ == "__main__":

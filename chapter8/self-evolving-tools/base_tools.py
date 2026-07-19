@@ -1,11 +1,11 @@
 """
-The "non-tool library" part of the five basic tools: web_search / read_webpage / code_interpreter.
+五个基础工具中的「非工具库」部分：web_search / read_webpage / code_interpreter。
 
-Design principles (corresponding to Experiment 8-5 "Minimal Predefinition, Maximum Self-Evolution"):
-- **No domain-specific tools are included** (no get_stock_price, no get_youtube_transcript ...).
-- The Agent can only rely on web_search to find open-source libraries/APIs, read_webpage to read documentation,
-  and code_interpreter to actually execute code in a subprocess sandbox to verify whether a solution works.
-- All outputs are based on "real web results / real execution results", thereby suppressing LLM hallucinations.
+设计原则（对应实验 8-5「最小预定义，最大自我进化」）：
+- 这里 **不包含任何领域工具**（没有 get_stock_price、没有 get_youtube_transcript ...）。
+- Agent 只能靠 web_search 找开源库/API，read_webpage 读文档，
+  code_interpreter 在子进程沙箱里真实执行代码来验证方案是否可行。
+- 所有输出都基于「真实网络结果 / 真实执行结果」，从而抑制大模型的幻觉。
 """
 
 import json
@@ -19,23 +19,23 @@ from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
 
-# Target directory for pip install --target inside the sandbox: third-party packages installed here will persist,
-# and subsequent encapsulated tools can directly import them under the same PYTHONPATH.
+# 沙箱内 pip install --target 的目标目录：安装的第三方包会持久化到这里，
+# 后续被封装的工具在同一个 PYTHONPATH 下也能直接 import 使用。
 PROJECT_DIR = Path(__file__).resolve().parent
 SANDBOX_PKG_DIR = PROJECT_DIR / ".sandbox_packages"
 
 
 # --------------------------------------------------------------------------- #
-# Tool 1: web_search —— DuckDuckGo (no API key required)
+# 工具 1：web_search —— DuckDuckGo（无需 API key）
 # --------------------------------------------------------------------------- #
 def web_search(query: str, num_results: int = 6) -> dict:
     """
-    Perform web search using DuckDuckGo (free, no key required).
+    使用 DuckDuckGo 进行网页搜索（免费、无需 key）。
 
-    Implementation highlights (refer to the style of chapter4/perception-tools):
-    - Primary: lite.duckduckgo.com (more stable, less likely to be rate-limited);
-    - Fallback: html.duckduckgo.com;
-    - With exponential backoff retry, automatically retry when DDG occasionally returns 202 (rate-limited), avoiding "network glitch leads to failure".
+    实现要点（参考 chapter4/perception-tools 的风格）：
+    - 主用 lite.duckduckgo.com（返回更稳定、不易被限流）；
+    - 备用 html.duckduckgo.com；
+    - 带指数退避重试，DDG 偶发返回 202（限流）时自动重试，避免「网络抖动即失败」。
     """
     query = (query or "").strip()
     if not query:
@@ -50,14 +50,14 @@ def web_search(query: str, num_results: int = 6) -> dict:
     }
 
     last_err = None
-    # Retry each endpoint several times
+    # 两个端点各重试若干次
     for endpoint in ("https://lite.duckduckgo.com/lite/", "https://html.duckduckgo.com/html/"):
         for attempt in range(3):
             try:
                 resp = requests.post(
                     endpoint, data={"q": query, "kl": "wt-wt"}, headers=headers, timeout=15
                 )
-                if resp.status_code == 202:  # DDG rate-limit signal
+                if resp.status_code == 202:  # DDG 限流信号
                     raise RuntimeError("rate limited (202)")
                 resp.raise_for_status()
                 results = _parse_ddg(endpoint, resp.text, num_results)
@@ -66,13 +66,13 @@ def web_search(query: str, num_results: int = 6) -> dict:
                 last_err = "no results parsed"
             except Exception as e:  # noqa: BLE001
                 last_err = str(e)
-            time.sleep(1.5 * (attempt + 1))  # Backoff
+            time.sleep(1.5 * (attempt + 1))  # 退避
 
     return {"success": False, "error": f"search failed: {last_err}", "results": []}
 
 
 def _parse_ddg(endpoint: str, html: str, num_results: int) -> list:
-    """ Parse two page structures of DuckDuckGo."""
+    """解析 DuckDuckGo 的两种页面结构。"""
     soup = BeautifulSoup(html, "html.parser")
     results = []
 
@@ -89,7 +89,7 @@ def _parse_ddg(endpoint: str, html: str, num_results: int) -> list:
                     "snippet": snip.get_text(strip=True) if snip else "",
                 }
             )
-    else:  # Lite version: results are plain <a href="http...">
+    else:  # lite 版：结果是普通 <a href="http...">
         for a in soup.find_all("a"):
             href = a.get("href", "")
             text = a.get_text(strip=True)
@@ -101,10 +101,10 @@ def _parse_ddg(endpoint: str, html: str, num_results: int) -> list:
 
 
 # --------------------------------------------------------------------------- #
-# Tool 2: read_webpage —— Fetch web page and extract main content
+# 工具 2：read_webpage —— 抓取网页并抽取正文
 # --------------------------------------------------------------------------- #
 def read_webpage(url: str, max_chars: int = 6000) -> dict:
-    """Fetch a web page and extract plain text content for the Agent to read README / API documentation."""
+    """抓取网页并抽取纯文本正文，供 Agent 阅读 README / API 文档。"""
     if not url or not url.startswith(("http://", "https://")):
         return {"success": False, "error": "invalid url"}
     headers = {
@@ -134,27 +134,27 @@ def read_webpage(url: str, max_chars: int = 6000) -> dict:
 
 
 # --------------------------------------------------------------------------- #
-# Tool 3: code_interpreter —— Execute Python in a subprocess sandbox
+# 工具 3：code_interpreter —— 子进程沙箱执行 Python
 # --------------------------------------------------------------------------- #
 def code_interpreter(code: str, pip_install: list | None = None, timeout: int = 60) -> dict:
     """
-    Execute Python code in an **independent subprocess** (sandbox) to verify libraries/APIs found online.
+    在 **独立子进程** 中执行 Python 代码（沙箱），用于验证从网上找到的库 / API。
 
-    - pip_install: list of third-party packages to install first; install to temporary directory .sandbox_packages (--target),
-      without polluting the system environment, and make them importable by the subprocess via PYTHONPATH.
-    - timeout: force termination on timeout to avoid infinite loops / hangs.
+    - pip_install: 需要先安装的第三方包列表；安装到临时目录 .sandbox_packages（--target），
+      不污染系统环境，并通过 PYTHONPATH 让子进程可 import。
+    - timeout: 超时强制终止，避免死循环 / 挂起。
 
-    Security boundary reminder: This is a "demo-level" sandbox (process isolation + timeout only), not a security sandbox.
-    For production, use containers / gVisor / network-namespace-less strong isolation, and audit packages to install (supply chain risk).
+    安全边界提醒：这是「演示级」沙箱（仅进程隔离 + 超时），不是安全沙箱。
+    生产环境请使用容器 / gVisor / 无网络命名空间等强隔离，并审计要安装的包（供应链风险）。
     """
     SANDBOX_PKG_DIR.mkdir(exist_ok=True)
     logs = []
 
-    # Subprocess environment: add sandbox package directory to PYTHONPATH (system site-packages still available)
+    # 子进程环境：把沙箱包目录加入 PYTHONPATH（系统 site-packages 仍可用）
     env = os.environ.copy()
     env["PYTHONPATH"] = str(SANDBOX_PKG_DIR) + os.pathsep + env.get("PYTHONPATH", "")
 
-    # 1) pip install --target as needed
+    # 1) 按需 pip install --target
     if pip_install:
         for pkg in pip_install:
             try:
@@ -170,7 +170,7 @@ def code_interpreter(code: str, pip_install: list | None = None, timeout: int = 
             except Exception as e:  # noqa: BLE001
                 logs.append(f"[pip install {pkg}] error: {e}")
 
-    # 2) Execute code
+    # 2) 执行代码
     with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False, dir=SANDBOX_PKG_DIR) as f:
         f.write(code)
         script = f.name
@@ -187,11 +187,11 @@ def code_interpreter(code: str, pip_install: list | None = None, timeout: int = 
             "returncode": r.returncode,
             "pip_logs": logs,
         }
-        # Remind the model: running successfully but without any print output means no real data was obtained; cannot answer or encapsulate tools based on that.
+        # 提醒模型：跑通但没有任何 print 输出 = 没有拿到真实数据，不能据此作答或封装工具。
         if r.returncode == 0 and not out.strip():
             result["note"] = (
-                "Code executed successfully but stdout is empty — you did not print any real data."
-                "This does not count as verification passed: please modify the code to actually call the library and print real numbers."
+                "代码执行成功但 stdout 为空——你没有打印出任何真实数据。"
+                "这不算验证通过：请修改代码，真正调用库并 print 出真实数字。"
             )
         return result
     except subprocess.TimeoutExpired:
@@ -204,5 +204,5 @@ def code_interpreter(code: str, pip_install: list | None = None, timeout: int = 
 
 
 def run_python_snippet(code: str, timeout: int = 60) -> dict:
-    """For reuse by tool_manager: execute a script in the same sandbox environment and return the result (without pip)."""
+    """供 tool_manager 复用：在同一沙箱环境执行一段脚本并返回结果（不做 pip）。"""
     return code_interpreter(code, pip_install=None, timeout=timeout)

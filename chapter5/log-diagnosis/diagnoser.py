@@ -1,11 +1,11 @@
 """
-diagnoser.py —— Diagnostic Agent (actual OpenAI calls)
+diagnoser.py —— 诊断 Agent（真实调用 OpenAI）
 
-Two phases, both real LLM calls:
-  1) diagnose()        Read trajectory set + architecture + PRD -> structured problem report (priority/module/description/suggestion)
-  2) gen_test_cases()  Based on problem report -> generate regression test cases executable by replay.py
+两个阶段，均为真实 LLM 调用：
+  1) diagnose()        读轨迹集合 + 架构 + PRD -> 结构化问题报告(优先级/模块/描述/建议)
+  2) gen_test_cases()  基于问题报告 -> 生成可被 replay.py 自动执行的回归测试用例
 
-Default model gpt-5.6-luna, output uses JSON mode for stable parsing.
+默认模型 gpt-5.6-luna，输出走 JSON 模式，尽量稳定可解析。
 """
 
 import json
@@ -16,12 +16,12 @@ from openai import OpenAI
 
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-luna")
 
-# --- Generic OpenRouter fallback ---
+# --- 通用 OpenRouter 兜底 ---
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
 def _map_to_openrouter_model(model: str) -> str:
-    """Map direct model names to OpenRouter IDs (non-mappable IDs fall back to current cheap flagship)."""
+    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
     if not model or "/" in model:
         return model or "openai/gpt-5.6-luna"
     m = model.lower()
@@ -37,24 +37,24 @@ def _map_to_openrouter_model(model: str) -> str:
         return "google/" + model
     return "openai/gpt-5.6-luna"
 
-# Assertion DSL description for LLM test case generation (must be consistent with replay.py)
-_ASSERTION_SPEC = """Available assertion types (assertion.type can only be one of the following):
-- "step_present"    params: {"tool": <tool name>}                 The tool must appear in the trajectory
-- "tool_succeeds"   params: {"tool": <tool name>}                 The tool must eventually succeed without "false success after multiple failures"
-- "latency_under"   params: {"tool": <tool name>, "threshold_ms": <integer>}  The tool's single latency must be below the threshold
-- "final_status_is" params: {"value": "success"|"failed"}        The final task status must equal the given value"""
+# 供 LLM 生成测试用例时使用的断言 DSL 说明（须与 replay.py 保持一致）
+_ASSERTION_SPEC = """可用断言类型（assertion.type 只能取以下之一）：
+- "step_present"    params: {"tool": <工具名>}                 该工具必须在轨迹中出现
+- "tool_succeeds"   params: {"tool": <工具名>}                 该工具最终成功且无"多次失败后误报成功"
+- "latency_under"   params: {"tool": <工具名>, "threshold_ms": <整数>}  该工具单次延迟须低于阈值
+- "final_status_is" params: {"value": "success"|"failed"}      任务最终状态必须等于给定值"""
 
 
 class Diagnoser:
     def __init__(self, model: str = MODEL):
-        # Generic OpenRouter fallback: no direct key, or default gpt-5.x (direct requires org real-name auth) switches to OpenRouter.
+        # 通用 OpenRouter 兜底：无直连 key，或默认 gpt-5.x（直连需组织实名认证）时改走 OpenRouter。
         api_key = os.getenv("OPENAI_API_KEY")
         base_url = os.getenv("OPENAI_BASE_URL")
         orkey = os.getenv("OPENROUTER_API_KEY")
         prefer_or = bool(orkey) and (model or "").lower().startswith("gpt-5")
         if prefer_or or (not api_key and orkey):
             api_key, base_url, model = orkey, OPENROUTER_BASE_URL, _map_to_openrouter_model(model)
-        # timeout / max_retries: let occasional network/SSL jitter auto-retry without crashing the whole round
+        # timeout / max_retries：让偶发的网络/SSL 抖动自动重试，不至于整轮崩溃
         kw = {"timeout": 60.0, "max_retries": 3}
         if api_key:
             kw["api_key"] = api_key
@@ -62,46 +62,47 @@ class Diagnoser:
             kw["base_url"] = base_url
         self.client = OpenAI(**kw)
         self.model = model
-        # Inference models (gpt-5 / o series etc.) do not accept temperature=0.
+        # 推理模型（gpt-5 / o 系列等）不接受 temperature=0。
         self._temp = (1 if any(k in (model or "").lower()
                                for k in ("gpt-5", "o1", "o3", "o4", "thinking", "reasoner", "kimi-k3"))
                       else 0)
 
-    # ---------- Phase 1: Diagnosis ----------
+    # ---------- 阶段一：诊断 ----------
     def diagnose(self, architecture: str, prd: str,
                  trajectories: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         traj_text = json.dumps(trajectories, ensure_ascii=False, indent=2)
         system = (
-            "You are a senior Agent system diagnostic expert. Given system architecture docs, PRD, and a set of production trajectories,"
-            "you need to determine whether each trajectory's execution flow meets the architecture and PRD requirements, identify problem patterns, locate specific modules,"
-            "and output a structured problem report. Only report issues with evidence; do not fabricate."
+            "你是资深的 Agent 系统诊断专家。给定系统架构文档、PRD 与一组生产轨迹，"
+            "你要判断每条轨迹的执行流程是否符合架构与 PRD 的要求，识别问题模式、定位到具体模块，"
+            "输出结构化问题报告。只报告确有证据的问题，不要臆造。"
         )
-        user = f"""# System Architecture
+        user = f"""# 系统架构
 {architecture}
 
 # PRD
 {prd}
 
-# Production Trajectory Set (JSON)
+# 生产轨迹集合（JSON）
 {traj_text}
 
-# Task
-Check each trajectory against the PRD/architecture one by one, find deviations. Output as JSON with structure:
+# 任务
+逐条核对轨迹与 PRD/架构，找出偏离项。以 JSON 输出，结构：
 {{
   "problems": [
     {{
-      "title": "One-line problem title",
+      "title": "一句话问题标题",
       "priority": "P0|P1|P2|P3",
-      "module": "Involved module name (from architecture)",
-      "description": "Problem description, citing specific trajectory and turns as evidence",
-      "suggestion": "Actionable improvement suggestion",
-      "trajectory_ids": ["Involved trajectory IDs"],
-      "focus_turns": [Indexes of key interaction turns],
-      "prd_ref": "Corresponding PRD entry (e.g., R1/R2/R3)",
-      "suggested_assignee": "Suggested assignee (can be left blank)"
+      "module": "涉及的模块名(取架构中的模块)",
+      "description": "问题描述，引用具体轨迹与轮次作为证据",
+      "suggestion": "可操作的改进建议",
+      "trajectory_ids": ["涉及的轨迹ID"],
+      "focus_turns": [关键交互轮次的index],
+      "prd_ref": "对应的PRD条目(如 R1/R2/R3)",
+      "suggested_assignee": "建议负责人(可留空)"
     }}
   ]
-}}Output only JSON."""
+}}
+只输出 JSON。"""
         resp = self.client.chat.completions.create(
             model=self.model,
             messages=[{"role": "system", "content": system},
@@ -112,34 +113,35 @@ Check each trajectory against the PRD/architecture one by one, find deviations. 
         data = json.loads(resp.choices[0].message.content)
         return data.get("problems", [])
 
-    # ---------- Phase 2: Generate Regression Test Cases ----------
+    # ---------- 阶段二：生成回归测试用例 ----------
     def gen_test_cases(self, problems: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         prob_text = json.dumps(problems, ensure_ascii=False, indent=2)
         system = (
-            "You are a test engineer. Based on the diagnosed issues, generate one regression test case per issue,"
-            "the test case references the problem trajectory ID and key interaction turns, and provides an assertion evaluable by the automated replay framework."
+            "你是测试工程师。基于诊断出的问题，为每个问题生成一条回归测试用例，"
+            "用例引用问题轨迹 ID 与关键交互轮次，并给出一个可被自动重放框架求值的断言。"
         )
-        user = f"""# Diagnosed Issues
+        user = f"""# 已诊断的问题
 {prob_text}
 
-# Assertion DSL
+# 断言 DSL
 {_ASSERTION_SPEC}
 
-# Task
-Generate 1 regression test case per issue. The assertion should express "the correct behavior the system should satisfy after fixing"
-(e.g., verify_refund_eligibility should appear before refund; process_refund should eventually succeed; check_stock latency should be < 5000ms).
-Output as JSON:
+# 任务
+为每个问题生成 1 条回归测试用例。断言应表达"修复后系统应满足的正确行为"
+（例如：退款前应出现 verify_refund_eligibility；process_refund 应最终成功；check_stock 延迟应 < 5000ms）。
+以 JSON 输出：
 {{
   "test_cases": [
     {{
       "test_id": "RT-001",
-      "trajectory_id": "Referenced problem trajectory ID",
-      "focus_turn": Key turn index,
-      "description": "What this test case verifies",
+      "trajectory_id": "引用的问题轨迹ID",
+      "focus_turn": 关键轮次index,
+      "description": "该用例验证什么",
       "assertion": {{"type": "...", "params": {{...}}}}
     }}
   ]
-}}Output only JSON."""
+}}
+只输出 JSON。"""
         resp = self.client.chat.completions.create(
             model=self.model,
             messages=[{"role": "system", "content": system},

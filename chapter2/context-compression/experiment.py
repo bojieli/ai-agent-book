@@ -22,7 +22,7 @@ from compression_strategies import CompressionStrategy
 init(autoreset=True)
 
 
-# Short CLI aliases -> compression strategy (order matches the book's Experiment 2-9)
+# Short CLI aliases -> compression strategy (order matches the book's 实验 2-9)
 STRATEGY_CHOICES = {
     "no_compression": CompressionStrategy.NO_COMPRESSION,
     "individual": CompressionStrategy.NON_CONTEXT_AWARE_INDIVIDUAL,
@@ -284,44 +284,44 @@ class ExperimentRunner:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build command-line argument parser"""
+    """构建命令行参数解析器"""
     parser = argparse.ArgumentParser(
         prog="experiment.py",
-        description="Context compression strategy comparison experiment (corresponds to Experiment 2-9 of \"Deep Understanding of AI Agent\").\n"
-                    "For the same research task (tracking the current status of OpenAI co-founders), run multiple compression strategies,"
-                    "Output a comparison table of token usage / compression ratio / success rate, and save the JSON result.",
-        epilog="Example:\n"
-               "  python experiment.py                       # Run all 6 strategies and compare\n"
-               "  python experiment.py -s context_aware      # Run only \"context-aware compression\"\n"
-               "  python experiment.py -s individual combined # Compare only two non-task-aware strategies\n"
+        description="上下文压缩策略对比实验（对应《深入理解 AI Agent》实验 2-9）。\n"
+                    "对同一个研究任务（追踪 OpenAI 联合创始人的现状）分别运行多种压缩策略，"
+                    "输出 token 用量 / 压缩率 / 成功率对比表，并保存 JSON 结果。",
+        epilog="示例：\n"
+               "  python experiment.py                       # 运行全部 6 种策略并对比\n"
+               "  python experiment.py -s context_aware      # 只运行“上下文感知压缩”\n"
+               "  python experiment.py -s individual combined # 只对比两种非任务感知策略\n"
                "  python experiment.py --model kimi-k3 -o results/k2.json\n"
-               "  python experiment.py --list-strategies     # View available strategy names",
+               "  python experiment.py --list-strategies     # 查看可选策略名",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "-s", "--strategy", nargs="+", choices=list(STRATEGY_CHOICES.keys()), metavar="NAME",
-        help="Compression strategies to run (multiple can be specified, default runs all 6). Optional values:"
+        help="要运行的压缩策略（可指定多个，默认运行全部 6 种）。可选值："
              + ", ".join(STRATEGY_CHOICES.keys()),
     )
     parser.add_argument(
         "-m", "--model", default=None,
-        help=f"Override the model name used (default reads environment variable MODEL_NAME, currently {Config.MODEL_NAME}）",
+        help=f"覆盖使用的模型名称（默认读取环境变量 MODEL_NAME，当前为 {Config.MODEL_NAME}）",
     )
     parser.add_argument(
         "-o", "--output", default=None, metavar="PATH",
-        help="Path to save the result JSON (default results/experiment_<timestamp>.json)",
+        help="结果 JSON 的保存路径（默认 results/experiment_<时间戳>.json）",
     )
     parser.add_argument(
         "-n", "--max-iterations", type=int, default=None, metavar="N",
-        help=f"Maximum iterations (tool call rounds) allowed per strategy, default {Config.MAX_ITERATIONS}",
+        help=f"每个策略允许的最大迭代（工具调用轮数），默认 {Config.MAX_ITERATIONS}",
     )
     parser.add_argument(
         "--streaming", action="store_true",
-        help="Stream real-time output of model and compression process (default off for cleaner comparison output)",
+        help="实时流式打印模型与压缩过程的输出（默认关闭，以获得更整洁的对比输出）",
     )
     parser.add_argument(
         "--list-strategies", action="store_true",
-        help="List all available compression strategy names and exit",
+        help="列出所有可选的压缩策略名称后退出",
     )
     return parser
 
@@ -332,7 +332,7 @@ def main():
     args = parser.parse_args()
 
     if args.list_strategies:
-        print("Available compression strategies (values for --strategy):")
+        print("可选的压缩策略（--strategy 的取值）：")
         for alias, strat in STRATEGY_CHOICES.items():
             print(f"  {alias:<16} -> {strat.value}")
         return

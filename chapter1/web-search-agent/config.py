@@ -1,5 +1,5 @@
 """
-Configuration File - Kimi API Configuration
+配置文件 - Kimi API 配置
 """
 
 import os
@@ -59,49 +59,49 @@ def resolve_llm_backend(primary_key: str, primary_base_url: str, model: str):
 
 
 class Config:
-    """Configuration Class"""
+    """配置类"""
     
-    # Kimi API Configuration
+    # Kimi API 配置
     MOONSHOT_API_KEY: str = os.getenv("MOONSHOT_API_KEY", "")
-    # Backward compatibility: if MOONSHOT_API_KEY is not set, try KIMI_API_KEY
+    # 向后兼容：如果没有 MOONSHOT_API_KEY，尝试使用 KIMI_API_KEY
     if not MOONSHOT_API_KEY:
         MOONSHOT_API_KEY = os.getenv("KIMI_API_KEY", "")
     
     KIMI_BASE_URL: str = "https://api.moonshot.cn/v1"
     
-    # Model Configuration
-    DEFAULT_MODEL: str = "kimi-k3"  # Use the latest Kimi K3 model
+    # 模型配置
+    DEFAULT_MODEL: str = "kimi-k3"  # 使用最新的 Kimi K3 模型
 
-    # Search Configuration
-    MAX_SEARCH_ITERATIONS: int = 5  # Maximum search iterations (consistent with agent default)
-    SEARCH_TIMEOUT: int = 30  # Search timeout (seconds)
+    # 搜索配置
+    MAX_SEARCH_ITERATIONS: int = 5  # 最大搜索迭代次数（与 agent 默认值保持一致）
+    SEARCH_TIMEOUT: int = 30  # 搜索超时时间（秒）
     
-    # Logging Configuration
+    # 日志配置
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     
     @classmethod
     def validate(cls) -> bool:
         """
-        Validate whether the configuration is valid
+        验证配置是否有效
         
         Returns:
-            bool: Whether the configuration is valid
+            bool: 配置是否有效
         """
         if not cls.MOONSHOT_API_KEY:
-            print("Error: MOONSHOT_API_KEY environment variable is not set")
-            print("Please set the environment variable: export MOONSHOT_API_KEY='your-api-key'")
-            print("(Or use the old environment variable name: export KIMI_API_KEY='your-api-key')")
+            print("错误: 未设置 MOONSHOT_API_KEY 环境变量")
+            print("请设置环境变量: export MOONSHOT_API_KEY='your-api-key'")
+            print("(或者使用旧的环境变量名: export KIMI_API_KEY='your-api-key')")
             return False
         return True
     
     @classmethod
     def get_api_key(cls, api_key: Optional[str] = None) -> str:
         """
-        Get API Key
+        获取 API Key
         
         Args:
-            api_key: Optional API key; if provided, use it; otherwise, get from environment variable
+            api_key: 可选的 API key，如果提供则使用，否则从环境变量获取
             
         Returns:
             API key

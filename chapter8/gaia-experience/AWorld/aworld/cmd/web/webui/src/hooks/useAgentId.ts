@@ -3,13 +3,13 @@ import { useEffect, useState } from 'react';
 export const useAgentId = () => {
   const [agentId, setAgentId] = useState<string>('');
 
-  // Get agent ID from URL parameters
+  // 从URL参数中获取agent ID
   const getAgentIdFromURL = (): string => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('agentid') || '';
   };
 
-  // Update agent ID in URL parameters
+  // 更新URL参数中的agent ID
   const updateURLAgentId = (id: string) => {
     const url = new URL(window.location.href);
     if (id) {
@@ -20,18 +20,18 @@ export const useAgentId = () => {
     window.history.replaceState({}, '', url.toString());
   };
 
-  // Set new agent ID and update URL
+  // 设置新的agent ID并更新URL
   const setAgentIdAndUpdateURL = (id: string) => {
     setAgentId(id);
     updateURLAgentId(id);
   };
 
   useEffect(() => {
-    // Check for agent ID in URL on initialization
+    // 初始化时检查URL中是否有agent ID
     const urlAgentId = getAgentIdFromURL();
     
     if (urlAgentId) {
-      // If there is an agent ID in the URL, use it
+      // 如果URL中有agent ID，使用它
       setAgentId(urlAgentId);
     }
   }, []);

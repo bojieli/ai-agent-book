@@ -4,7 +4,7 @@ openai>=1.50.0
 httpx>=0.27.0
 python-dotenv>=1.0.0
 
-# For async support (asyncio and mimetypes are part of the Python standard library, no installation needed)
+# For async support (asyncio 与 mimetypes 属于 Python 标准库，无需安装)
 aiofiles>=24.1.0
 
 # For file handling

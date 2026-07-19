@@ -1,41 +1,41 @@
 """
-Offline sample generator
+离线样例生成器 (Offline sample generator)
 
-Generate a "report with chart" as a multimodal sample for experiments 3-7 comparing three extraction paradigms.
-The output includes:
-  - test_files/sample_chart.png   only the chart (image modality)
-  - test_files/sample_report.pdf  chart + text description (document modality, the "PDF report with chart" in the book)
+生成一个"含图表的报告"作为多模态样例，用于实验 3-7 对比三种提取范式。
+产物同时包含：
+  - test_files/sample_chart.png   仅图表（图像模态）
+  - test_files/sample_report.pdf  图表 + 文字说明（文档模态，书中的"含图表的 PDF 报告"）
 
-Key design: precise values in the chart (e.g., quarterly revenue) appear only on the bar chart, not written out in the text.
-Thus in experiments:
-  - Native multimodal mode can directly "read" the bars and extract values;
-  - Text extraction mode, if using a generic captioner to transcribe the image, often loses precise values and spatial relationships;
-So the trade-offs among the three paradigms can be directly measured, rather than guessed.
+关键设计：图表里的精确数值（如各季度营收）只出现在柱状图上，正文并未逐一写出。
+这样在实验中：
+  - 原生多模态模式可以直接"看懂"柱子读出数值；
+  - 提取为文本模式若用通用描述器转写图像，往往丢失精确数值与空间关系；
+从而让三种范式的取舍可被直接测量，而不是靠猜。
 
-This script is fully offline and requires no API Key.
+本脚本完全离线，不需要任何 API Key。
 """
 
 import argparse
 from pathlib import Path
 
 import matplotlib
-matplotlib.use("Agg")  #  No GUI backend, purely offline chart generation
+matplotlib.use("Agg")  # 无界面后端，纯离线出图
 import matplotlib.pyplot as plt
 
 
-#  Chart data: only annotated on the bar chart, text does not repeat these precise numbers
+# 图表数据：只在柱状图上标注，正文不重复这些精确数字
 QUARTERS = ["Q1", "Q2", "Q3", "Q4"]
-REVENUE = [120, 150, 95, 180]  #  Unit: millions of dollars ($M)
+REVENUE = [120, 150, 95, 180]  # 单位：百万美元 ($M)
 
 
 def create_chart(output_path: Path) -> Path:
-    """Generate a bar chart using matplotlib (image modality sample)."""
+    """用 matplotlib 生成一张柱状图（图像模态样例）。"""
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     fig, ax = plt.subplots(figsize=(6, 4), dpi=150)
     bars = ax.bar(QUARTERS, REVENUE, color=["#4C72B0", "#55A868", "#C44E52", "#8172B3"])
 
-    #  Annotate precise values at the top of bars—this information exists only in the image
+    # 把精确数值标注在柱子顶端——这些信息只存在于图像里
     for bar, value in zip(bars, REVENUE):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
@@ -59,7 +59,7 @@ def create_chart(output_path: Path) -> Path:
 
 
 def create_report_pdf(chart_path: Path, output_path: Path) -> Path:
-    """Combine the chart with a text description into a PDF report (document modality sample)."""
+    """把图表和一段文字说明组合成一份 PDF 报告（文档模态样例）。"""
     try:
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.units import cm
@@ -71,13 +71,13 @@ def create_report_pdf(chart_path: Path, output_path: Path) -> Path:
             Image as RLImage,
         )
     except ImportError:
-        print("Tip: reportlab not installed, skip PDF generation (pip install reportlab).")
+        print("提示：未安装 reportlab，跳过 PDF 生成（pip install reportlab）。")
         return None
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     styles = getSampleStyleSheet()
 
-    #  The text deliberately provides only qualitative descriptions, not writing out each quarter's precise values—values are only in the chart
+    # 正文刻意只给出定性描述，不逐一写出各季度精确数值——数值只在图里
     body_text = (
         "This internal report summarizes Acme Corp's revenue performance in 2024. "
         "Overall the year showed healthy growth, with a mid-year dip followed by a "
@@ -100,32 +100,32 @@ def create_report_pdf(chart_path: Path, output_path: Path) -> Path:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Offline generation of multimodal samples with charts (image + PDF report) for experiments 3-7. No API Key required."
+        description="离线生成含图表的多模态样例（图像 + PDF 报告），供实验 3-7 使用。无需 API Key。"
     )
     parser.add_argument(
         "--output-dir",
         default="test_files",
-        help="Sample output directory (default: test_files)",
+        help="样例输出目录（默认：test_files）",
     )
     parser.add_argument(
         "--no-pdf",
         action="store_true",
-        help="Generate only PNG chart, not PDF report",
+        help="只生成 PNG 图表，不生成 PDF 报告",
     )
     args = parser.parse_args()
 
     out_dir = Path(args.output_dir)
     chart_path = create_chart(out_dir / "sample_chart.png")
-    print(f"Generated chart: {chart_path}")
+    print(f"已生成图表: {chart_path}")
 
     if not args.no_pdf:
         pdf_path = create_report_pdf(chart_path, out_dir / "sample_report.pdf")
         if pdf_path:
-            print(f"Generated report: {pdf_path}")
+            print(f"已生成报告: {pdf_path}")
 
     print(
-        "\nTip: precise quarterly revenue on the chart exists only in the image, not written out in the text.\n"
-        "Use the following questions to compare the three paradigms (native / extract as text / with tools):\n"
+        "\n提示：图表上的精确季度营收只存在于图像中，正文并未逐一写出。\n"
+        "可用如下问题对比三种范式（原生 / 提取为文本 / 带工具）：\n"
         '  "Which quarter had the highest revenue, and what was the exact value?"'
     )
 

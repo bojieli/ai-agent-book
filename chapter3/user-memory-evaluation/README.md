@@ -307,7 +307,8 @@ https://github.com/your-repo/user-memory-evaluation
 ```
 
 
-## OpenRouter Universal Fallback
+## OpenRouter 通用回退 / Universal OpenRouter fallback
+
 This experiment now supports a **universal OpenRouter fallback** for its chat LLM.
 
 - If the primary provider key (e.g. `MOONSHOT_API_KEY` / `KIMI_API_KEY` / `OPENAI_API_KEY` / `DOUBAO_API_KEY` …) is present, behavior is unchanged.

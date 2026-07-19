@@ -1,125 +1,133 @@
-# Multimodal and Real-Time Interaction
+# 多模态与实时交互
 
-The previous chapters explored the design of Agents in the text world—interacting with digital systems through context, tools, and code. However, Agents interact with more than just text and APIs. When an Agent needs to understand a user's voice commands, find and click the correct button on a screen, or precisely control a robotic arm to grasp an object, it enters a new domain: **multimodal real-time interaction**—expanding from pure text input/output to **multimodal perception and real-time response**. This is a crucial step for Agents to break out of the "dialog box." "Multimodal" means simultaneously processing multiple forms of information—text, speech, images, video, actions—rather than just text.
+前面的章节探讨了 Agent 在文本世界中的设计——通过上下文、工具和代码与数字系统交互。然而，Agent 的交互对象不仅仅是文本和 API。当 Agent 需要听懂用户的语音指令、在屏幕上找到并点击正确的按钮、或控制机械臂精确抓取物体时，它进入了一个全新的领域：**多模态实时交互**——从纯文本输入输出扩展到**多模态感知与实时响应**，这是 Agent 跳出“对话框”的关键一步。所谓“多模态”，就是同时处理多种信息形式——文字、语音、图像、视频、动作——而不只是文本。
 
-First, let's define the boundaries of this chapter. Static image and document understanding—looking at a screenshot, reading a chart, parsing a PDF—have already been naturally integrated as perception tools into the Agent practices of previous chapters. For today's multimodal LLMs, these "one input, one understanding" tasks are relatively mature and do not require specialized architectural design. This chapter focuses on another class of problems: three scenarios where **real-time constraints make multimodal problems difficult**—voice dialogue, GUI operation, and robot control. In these scenarios, input is continuous, and output must be given within strict time budgets, causing a qualitative change in architectural design. As for the real-time understanding of continuous visual streams (video), it remains an open problem for Agents at the time of writing—the limitations of frame-by-frame screenshots discussed in the Computer Use section of this chapter and the questions at the end will return to this topic. Another boundary must also be drawn: multimodal **generation** (image generation, video generation) is just a regular tool call within the framework of this book (covered in Chapter 5 on Multimedia Generation). The Agent simply uses it as an external tool; it does not involve the real-time interaction challenges this chapter addresses and is therefore not part of the main thread.
+先划定本章的边界。静态的图像与文档理解——看一张截图、读一幅图表、解析一份 PDF——已经作为感知工具自然融入了前面各章的 Agent 实践：对今天的多模态大模型来说，这类“一次输入、一次理解”的任务已相对成熟，不需要专门的架构设计。本章聚焦的是另一类问题：**实时性把多模态问题变难**的三个场景——语音对话、GUI 操作、机器人控制。在这些场景中，输入是持续流动的、输出必须在严格的时间预算内给出，架构设计因此发生质变。至于连续视觉流（视频）的实时理解，截至写作时对 Agent 而言仍是开放问题——本章 Computer Use 部分讨论的逐帧截图局限和章末思考题会再回到这个话题。还要划清另一条边界：多模态**生成**（生图、生视频）在本书框架中只是普通的工具调用（第五章多媒体生成已涉及），Agent 把它当作一个外部工具来使唤即可，并不涉及本章要解决的实时交互难题，因此不在本章主线之内。
 
-Voice interaction, Computer Use, and robot operation seem to span three completely different fields, but when implemented, the bottlenecks are strikingly similar: they all need to process multiple modalities of information simultaneously and are extremely sensitive to latency. A voice pause of more than two seconds causes frustration, and millisecond-level jitter in robot control can lead to collisions. These two constraints push all three scenarios towards the same architectural direction: moving from a **serial pipeline** (like a factory assembly line, where one step must finish before the next begins) to an **end-to-end model** (a unified model that goes directly from input to output, eliminating intermediate handoffs).
+语音交互、Computer Use 和机器人操作看上去跨越三个完全不同的领域，但做起来会发现卡住的地方高度相似：都要同时处理多种模态的信息，都对延迟极度敏感。语音停顿超过两秒就让人焦躁，机器人控制的毫秒级抖动可能导致碰撞。这两个约束共同把三个场景推向同一个架构方向：从**串行流水线**（像工厂流水线一样，一个环节做完才能交给下一个）走向**端到端模型**（一个统一的模型直接从输入到输出，省去中间的交接环节）。
 
-This chapter unfolds along the following lines:
+本章按以下脉络展开：
 
-1.  First, we establish a coordinate system with the "three paradigms of voice architecture"—cascaded (VAD-ASR-LLM-TTS pipeline), end-to-end omnimodal (Omni, single model but still turn-taking), and full-duplex (Moshi, GPT-Live, listening and speaking simultaneously)—and dissect the latency and trade-offs of each link along the axis of "how to break free from VAD's turn assumption." The cascaded section will also discuss how to replace VAD + ASR with streaming voice perception.
-2.  Next, we examine how the thinking architecture reconciles the conflict between "real-time response" and "deep thinking": from simple parallelization of fast and slow, to the decoupled approach where a background reasoning model acts as a "strategist" (GPT-Live delegation, Pine AI, etc.), to Step-Audio R1's "internalization" of thinking into a single model that "thinks while speaking."
-3.  Then, we discuss how more human-like speech synthesis optimizes the execution layer.
-4.  Finally, we extend the perspective to Computer Use (enabling AI to operate a computer screen like a human) and robot operation, observing how the same latency and multimodality issues manifest in these two scenarios.
+1. 先用“语音架构的三种范式”搭起坐标系——级联（VAD-ASR-LLM-TTS 流水线）、端到端全模态（Omni，单模型但仍轮流说话）、全双工（Moshi、GPT-Live，边听边说），并沿“如何摆脱 VAD 的轮次假设”这条轴依次拆解每一环的延迟与取舍；其中级联一节还会讲如何用流式语音感知替代 VAD + ASR。
+2. 再看思考架构如何调和“实时响应”与“深度思考”的矛盾：从快慢简单并行，到后台推理模型当“军师”的解耦路线（GPT-Live 委派、Pine AI 等），再到 Step-Audio R1 把思考“内化”进单一模型的“边想边说”。
+3. 然后讨论更像人的语音合成对执行层的优化。
+4. 最后把视角扩展到 Computer Use（让 AI 像人一样操作电脑屏幕）和机器人操作，看同样的延迟与多模态问题在这两个场景中如何表现。
 
-Two theoretical points that are transferable across scenarios deserve special attention: the **thinking architecture** (how fast and slow thinking collaborate) and the **fast-slow interface** derived from it (**Latent Bridge**, what can be passed between fast and slow models besides text). Although introduced from the voice scenario, they are not limited to voice—the Computer Use and robot sections will also encounter the question of "when to consult a slow strategist," which readers should note carefully.
+其中要特别提示两处偏理论、可跨场景迁移的重点：**思考架构**（快、慢两套思考如何协作）以及由它衍生出的**快慢接口**（Latent Bridge，快慢模型之间除了文字还能传什么）。它们虽然从语音场景讲起，却不只服务于语音——后面的 Computer Use 与机器人同样会遇到“何时该请一个慢军师”的问题，值得读者格外留意。
 
-## Voice: The Most Natural Human-Machine Interface
+## 语音：最自然的人机接口
 
-Before dissecting the architecture of a voice Agent, let's step back and consider the value of voice itself. Among various ways humans interact with computers, voice has the highest bandwidth and is the most natural: normal speaking speed is about four times faster than typing, and it doesn't occupy hands or eyes. For this reason, voice is evolving from a secondary input method into the primary interaction interface for many people in their daily work—speaking directly to an Agent from morning to night, rather than typing word by word.
+在拆解语音 Agent 的架构之前，先退一步看语音本身的价值。在人与计算机的各种交互方式中，语音是带宽最高、也最自然的一种：正常说话的速度约为打字的四倍，且无需占用双手与视线。正因如此，语音正从一种次要的输入方式，逐渐变为不少人日常工作的主交互界面——从早到晚直接对 Agent 讲，而非逐字敲键盘。
 
-At the tool level, there are roughly two types of products along this path. One is **voice input methods** (e.g., Typeless): they transcribe speech into text in real-time and feed it into any application, essentially replacing keyboard input. The other is **voice Agents** (e.g., Pine, ChatGPT Voice): users engage in direct dialogue and collaboration, where voice is both the input and the interaction itself. The most typical advanced use case for both is **whisper coding** mentioned in the introduction—directing a coding or research Agent by speaking: the developer states their intention, discusses it back and forth with the Agent, and the Agent executes the coding and experiments; over a dozen papers from this book's author team were completed in this manner.
+落到工具层面，这条路线上大致有两类产品。一类是**语音输入法**（如 Typeless）：把口述实时转写为文字，再送入任意应用，本质上是对键盘输入的替换；另一类是**语音 Agent**（如 Pine、ChatGPT Voice）：用户与之直接对话协作，语音既是输入，也是交互本身。二者最典型的进阶用法，是引言中提到的 **whisper coding**——以口述指挥编程或研究 Agent：开发者讲出意图、与 Agent 反复讨论，再由它执行编码与实验；本书作者团队的十余篇论文正是以这种方式完成的。
 
-It should be noted that the voice architecture discussed next serves both directions: the user speaking to the Agent (as a human-machine interface), and the Agent speaking to the outside world on behalf of the user (e.g., making a phone call to negotiate). Both rely on the same underlying real-time voice technology. We will start with the three paradigms of voice architecture.
+需要说明的是，本章接下来讨论的语音架构同时服务于两个方向：用户对 Agent 说话（作为人机接口），以及 Agent 代替用户对外部世界说话（如打电话协商）。两者背后是同一套实时语音技术。下面就从语音架构的三种范式说起。
 
-## Three Paradigms of Voice Architecture
+## 语音架构的三种范式
 
-To clarify the technical evolution of voice Agents, a clear coordinate system is the three-part classification given by OpenAI when it released GPT-Live in 2026[^ch9-12]—which happens to correspond to the three generations of architecture that ChatGPT Voice itself has gone through:
+要理清语音 Agent 的技术演进，一个清晰的坐标系是 OpenAI 在 2026 年发布 GPT-Live 时给出的三分法[^ch9-12]——它恰好对应了 ChatGPT 语音自身走过的三代架构：
 
-1.  **Cascaded**: Stringing together three models—Automatic Speech Recognition (ASR), Large Language Model (LLM), and Text-to-Speech (TTS)—into a pipeline, passing the baton from one to the next. The earliest ChatGPT Voice was like this. It allowed people to "talk" to a frontier model for the first time, but information was lost during transfer between models, and responses were slow and stiff.
-2.  **End-to-End Omnimodal (Omni)**: Using a single model to directly "listen to audio, think of a reply, and speak it out," merging the three stages into one. This results in lower latency and preserves non-textual information like prosody and emotion. However, it still assumes "turn-taking"—the model waits for the user to pause before speaking, and turn switching relies on silence detection. A slight pause or background noise can be misjudged as "finished speaking," causing the model to interrupt inappropriately. ChatGPT's Advanced Voice Mode belongs to this generation; OpenAI calls it "turn-based voice models," while the industry more commonly refers to them by their capability as "Omni" models (e.g., Qwen3-Omni). The two names refer to the same thing.
-3.  **Full-Duplex / Interactive**: The model listens and speaks simultaneously, processing input and output concurrently, making decisions many times per second about whether to "speak, listen, stop, interrupt, or call a tool," completely eliminating the "turn-taking" assumption. Kyutai's Moshi in 2024 was a research pioneer, and OpenAI's GPT-Live in 2026 brought it to a scale of 150 million users.
+1. **级联（Cascaded）**：把语音识别（ASR）、大语言模型（LLM）、语音合成（TTS）三个模型串成一条流水线，一棒接一棒。最早的 ChatGPT Voice 就是这样，它第一次让人能“对话”前沿模型，但信息在模型间传递时会丢失，回应缓慢而生硬。
+2. **端到端全模态（Omni）**：用单一模型直接“听音频、想回复、说出来”，把三段合一，延迟更低、韵律与情感等非文字信息得以保留。但它仍然假设“轮流说话”——模型要等用户停顿才开口，而轮次切换靠静音来判断，稍一停顿或有背景噪音就可能被误判为“说完了”，在不该插话时插话。ChatGPT 的高级语音模式（Advanced Voice Mode）就属于这一代；OpenAI 把它称作“轮次式语音模型（turn-based）”，工业界更常按模型能力称之为“全模态（Omni）”模型（如 Qwen3-Omni），两个名字指的是同一类东西。
+3. **全双工 / 交互式（Full-Duplex / Interactive）**：模型边听边说，同时处理输入与输出，每秒做许多次“该说、该听、该停、该打断、还是该调用工具”的决策，彻底取消了“轮流”这个假设。2024 年 Kyutai 的 Moshi 是研究先声，2026 年 OpenAI 的 GPT-Live 把它带到了 1.5 亿用户的规模。
 
-The common thread running through these three generations is the same: **how to break free from the "turn-taking" assumption and the guesswork of VAD (Voice Activity Detection) regarding turns**. Both cascaded and Omni architectures still rely on VAD to delineate turns; only full-duplex completely dissolves the concept of turns. The following three sections will expand on this axis. These three paradigms are not simply a case of new replacing old, but rather design choices under different latency and cost constraints, coexisting in production systems in 2026.
+贯穿这三代的其实是同一条主线：**如何摆脱“轮流说话”这个假设，摆脱 VAD（语音活动检测）对轮次的猜测**。级联和 Omni 都还依赖 VAD 划分轮次，只有全双工彻底消解了轮次本身。下面三节就沿这条轴依次展开。三种范式并非简单的新旧替代，而是不同延迟与成本约束下的设计取舍，在 2026 年的生产系统里长期并存。
 
-Furthermore, GPT-Live introduced a second structural change—decoupling "real-time interaction" from "deep thinking": when encountering a problem requiring search or complex reasoning, the interaction model delegates the task to a background frontier model (GPT-5.5 at launch) while continuing the conversation itself. This thread of "fast-slow division of labor" will be explored in detail in the later section "Trade-offs in Thinking Architecture."
+此外，GPT-Live 还带来第二个结构性变化——把“实时交互”与“深度思考”解耦：遇到需要搜索或复杂推理的问题时，交互模型把任务委派给后台的前沿模型（发布时用 GPT-5.5），自己继续维持对话。这条“快慢分工”的线索会在后面“思考架构的取舍”一节专门展开。
 
-[^ch9-12]: OpenAI. *Introducing GPT-Live.* 2026-07-08. https://openai.com/index/introducing-gpt-live/ . The three-part classification of "Cascaded / Turn-based / Full-Duplex" in this section originates from this article's summary of the three generations of ChatGPT Voice evolution; the "End-to-End Omnimodal (Omni)" in the text corresponds to its "turn-based voice models" category.
+[^ch9-12]: OpenAI. *Introducing GPT-Live.* 2026-07-08. https://openai.com/index/introducing-gpt-live/ 。本节“级联 / 轮次式 / 全双工”三分法即出自该文对 ChatGPT 语音三代演进的总结；文中“端到端全模态（Omni）”对应其“turn-based voice models”一类。
 
-## Paradigm 1: Cascading Pipeline
+## 范式一 · 级联流水线（Cascading）
 
-The vast majority of commercial voice assistants—from smart speakers to customer service robots—are based on a serial pipeline (Figure 9-1): Voice Activity Detection (VAD) determines when the user has finished speaking → Automatic Speech Recognition (ASR) converts the audio into text → a Large Language Model (LLM) understands the intent and generates a reply → Text-to-Speech (TTS) vocalizes the reply. Like a relay race, each stage must wait for the previous one to finish before it can start.
+绝大多数商业语音助手——从智能音箱到客服机器人——都基于串行流水线（图9-1）：语音活动检测（VAD）判断用户何时说完 → 自动语音识别（ASR）把音频转成文字 → 大语言模型（LLM）理解意图并生成回复 → 文本到语音（TTS）把回复念出来。就像接力赛一样，每个环节必须等上一棒跑完才能起跑。
 
-![Figure 9-1 Voice Agent Serial Pipeline](images/fig9-1.svg)
 
-Early voice assistants adopted this four-stage serial pipeline for a simple reason: no single model could simultaneously handle speech recognition, language understanding, thinking, and speech synthesis. The modular architecture allowed each component to be developed and optimized independently. However, the cost of modularity is accumulated latency—each stage must wait for the previous one to complete before it can begin.
+![图9-1 语音 Agent 串行流水线](images/fig9-1.svg)
 
-**VAD** is the starting point of the pipeline, continuously monitoring the audio stream. The most critical design is End-of-Speech Detection: typically, a continuous silence threshold of 500-800ms is set—if the user stops speaking for more than half a second, VAD considers the utterance finished. This introduces the first layer of latency, and it's a difficult trade-off: if the threshold is too short, a pause for thought is misjudged as the end, cutting the sentence short; if it's too long, the user has to wait for nearly a second after finishing before getting a response.
 
-**ASR** converts the audio waveform into text. Models like Whisper and SenseVoice, when transcribing 5 seconds of audio with a small to medium-sized model deployed on a GPU, typically take 50-200ms; larger models or resource-constrained deployments can take 200-500ms (the control group in Experiment 9-3 falls into the latter category). A more critical issue is that during the entire VAD waiting and ASR transcription process, the LLM behind it is completely idle, receiving no information and unable to start thinking early.
+早期的语音助手采用这种四阶段串行流水线，原因很简单：没有单一模型能同时处理语音识别、语言理解、思考和语音合成四个任务。模块化架构让每个组件可以独立开发和优化。但模块化的代价是延迟累积——每个阶段都要等上一个阶段完成才能开始。
 
-**LLM** inference, even when optimized, often has a Time to First Token (TTFT) of 100-500ms depending on context length, and it takes another ~100ms to finish outputting the first sentence. If reasoning is enabled, the time can extend to 5-10 seconds. In the traditional architecture, TTS must wait for the LLM to output the complete reply text before it can start working.
+**VAD** 是流水线的起点，持续监听音频流。最关键的设计是结束点检测（End-of-Speech Detection）：通常设置 500-800ms 的连续静音阈值——如果用户停了半秒以上没说话，VAD 就认为用户说完了。这引入了第一层延迟，而且很难两全：阈值设得太短，用户只是思考时停顿一下就被误判为说完，句子被截断；设得太长，用户说完后要干等大半秒才有反应。
 
-**TTS** converts the reply text into speech, typically taking 200-500ms for synthesis. Summing up the latency of each link (Figure 9-2): VAD (500-800ms) + ASR (50-200ms) + LLM (100-500ms) + TTS (200-500ms), totaling approximately 0.9-2 seconds—and this is the ideal case with all services idle and no queuing.
+**ASR** 把音频波形转成文字。Whisper、SenseVoice 等模型转录 5 秒音频，在 GPU 上部署中小规格模型时通常需要 50-200ms；更大规格的模型或资源受限的部署环境则会达到 200-500ms（实验 9-3 中的对照组即属后者）。更关键的问题在于：在整个 VAD 等待与 ASR 转录过程中，后面的 LLM 完全闲着，没收到任何信息，无法提前开始思考。
 
-![Figure 9-2 Latency Waterfall: Serial Accumulation of Total Response Time](images/fig9-2.svg)
+**LLM** 推理（inference）阶段，即使优化得当，根据上下文长度不同，首 token 延迟（TTFT，即模型吐出第一个字的等待时间）往往需要 100-500ms，而输出完第一句话又额外需要 100ms 左右。如果启用 reasoning（思考），时间可能延长到 5-10 秒。在传统架构中，TTS 必须等 LLM 输出完整回复文本才能开始工作。
 
-Once in production, queuing latency makes the situation worse. This is similar to queuing in a restaurant: the busier the kitchen, the longer the wait time, and it doesn't increase linearly but skyrockets (Figure 9-3). When a server has no waiting queue (i.e., "idle"), the time to process a request is called idle latency. But when multiple requests arrive simultaneously, later requests must queue up.
+**TTS** 把回复文字转成语音，合成通常需要 200-500ms。把每一环的延迟加起来（图9-2）：VAD（500-800ms）+ ASR（50-200ms）+ LLM（100-500ms）+ TTS（200-500ms），总计约 0.9-2 秒——这还是所有服务都空闲、没人排队的理想情况。
 
-Intuitively, the higher the utilization, the more non-linearly the wait time increases. The specific mathematical relationship can be given by queuing theory (for intuitive understanding here, no rigorous derivation is needed): Total Latency ≈ Idle Latency × 1/(1-Utilization). Utilization refers to the proportion of time the server is busy; for example, 50% utilization means the server is processing requests half the time and idle half the time. At 50% utilization, latency doubles; at 80% utilization, it becomes 5 times—this is why servers cannot run under high load for extended periods.
 
-![Figure 9-3 Queuing Latency Curve](images/fig9-3.svg)
+![图9-2 延迟瀑布：串行累积总响应时间](images/fig9-2.svg)
 
-> **Experiment 9-1 ★: Building a Traditional Voice Agent**
+
+一旦投入生产，排队延迟会让情况雪上加霜。这和餐厅排队的道理一样：厨房越忙，等餐时间越长，而且不是线性增长而是急剧飙升（图9-3）。当服务器没有任何等待队列时（即“空载”），处理一个请求的时间称为空载延迟。但当多个请求同时到达时，后到的请求必须排队等待。
+
+直觉上，利用率越高，等待时间会非线性地飙升。具体的数学关系可由排队论给出（此处仅作直觉理解，不需要严格推导）：总延迟 ≈ 空载延迟 × 1/(1-利用率)。利用率是指服务器忙碌时间的比例，比如利用率 50% 意味着服务器一半时间在处理请求、一半时间空闲。利用率 50% 时延迟变成空载的 2 倍，利用率 80% 时变成 5 倍——这就是为什么服务器不能长期在高负载下运行。
+
+
+![图9-3 排队延迟曲线](images/fig9-3.svg)
+
+
+> **实验 9-1 ★：构建传统语音 Agent**
 >
-> This experiment builds a complete real-time voice dialogue system, allowing users to interact with an AI via voice through a microphone. The system uses a front-end/back-end separation architecture with real-time communication via WebSocket.
+> 本实验构建完整的实时语音对话系统，支持用户通过麦克风与 AI 语音交互。系统采用前后端分离架构，通过 WebSocket 实时通信。
 >
-> The core process follows a strict serial pattern: the front-end captures microphone input and sends it to the back-end in real-time via WebSocket. The back-end runs a Silero VAD model for voice activity detection, which offers higher accuracy and better noise resistance compared to traditional volume-based detection methods. After detecting approximately 500ms of continuous silence, the audio segment is extracted for subsequent processing.
+> 核心流程遵循严格的串行模式：前端捕获麦克风输入，通过 WebSocket 实时发送到后端。后端运行 Silero VAD 模型进行语音活动检测，相比传统的音量检测方法准确率更高、抗噪能力更强，检测到约 500ms 连续静音后将音频片段提取出来进行后续处理。
 >
-> The ASR, LLM, and TTS stages each support flexible switching between multiple providers, allowing developers to choose the optimal combination based on latency, accuracy, and regional network conditions.
+> ASR、LLM、TTS 各阶段均支持多家提供商灵活切换，开发者可根据延迟、准确率和地区网络条件选择最优组合。
 >
-> **Experiment 9-2 ★: Building a Phone Agent Using the PineClaw Voice API**
+> **实验 9-2 ★：使用 PineClaw Voice API 构建电话 Agent**
 >
-> Experiment 9-1 built an in-browser voice dialogue system, but many real-world Agent tasks require making actual phone calls—contacting customer service to negotiate bills, booking restaurants, confirming orders. Chapter 4 demonstrated, through PineClaw's Channel mechanism, how an event-driven architecture can reduce the response latency for phone notifications from minutes to seconds. This experiment focuses on building the voice call itself. Taking the [PineClaw Voice API](https://pineclaw.com/) (developed by the author's team) as an example, such production-grade telephony voice APIs typically encapsulate the entire process of dialing, IVR navigation (i.e., "For inquiries, press 1; for an operator, press 0" phone menus), conversation, and transcription: the Agent provides the phone number, goal, and context information, and the voice Agent completes the entire call, returning a structured call record.
+> 实验 9-1 构建了浏览器内的语音对话系统，但真实世界中许多 Agent 任务需要拨打真实电话——联系客服协商账单、预约餐厅、确认订单。第四章通过 PineClaw 的 Channel 机制展示了事件驱动架构如何将电话通知的响应延迟从分钟级降到秒级；本实验则聚焦于语音通话本身的构建。以 [PineClaw Voice API](https://pineclaw.com/)（作者团队所开发）为例，这类生产级电话语音 API 通常封装了拨号、IVR 导航（即“查询请按 1，转人工请按 0”这类电话菜单）、对话和转录的全流程：Agent 提供电话号码、目标和上下文信息后，由语音 Agent 完成整段通话，返回结构化的通话记录。
 >
-> **Experiment Goal**: Build an Agent capable of completing tasks via real phone calls, integrating PineClaw Voice as a tool into the ReAct loop.
+> **实验目标**：构建一个能通过真实电话完成任务的 Agent，将 PineClaw Voice 作为工具集成到 ReAct 循环中。
 >
-> **Technical Approach**: Use the PineClaw Voice Python SDK (`pine-voice`) to equip the Agent with a `make_phone_call` tool. The Agent receives the user's task description (e.g., "Help me book a dental checkup for tomorrow at 3 PM"), and through ReAct thinking, decides: (1) which phone number to call; (2) the goal and key information for the call; (3) how to report the results to the user after the call ends.
+> **技术方案**：使用 PineClaw Voice Python SDK（`pine-voice`），为 Agent 配备 `make_phone_call` 工具。Agent 接收用户的任务描述（如 “帮我预约明天下午 3 点的牙科检查”），通过 ReAct 思考决定：(1) 需要拨打哪个电话号码；(2) 通话的目标和关键信息；(3) 通话结束后如何向用户汇报结果。
 >
-> The Agent's workflow: User says "Call the clinic to book an appointment for tomorrow" → Agent thinks about what information is needed (clinic phone number, appointment time, patient name) → If information is insufficient, asks the user for clarification → Calls the `make_phone_call` tool → PineClaw dials the number, converses with the other party, and completes the booking → Agent receives the call summary and transcript → Reports the result to the user.
+> Agent 的工作流程：用户说 “帮我打电话给诊所预约明天的检查” → Agent 思考需要哪些信息（诊所电话、预约时间、患者姓名）→ 如信息不足则向用户澄清 → 调用 `make_phone_call` 工具 → PineClaw 拨打电话、与对方对话、完成预约 → Agent 收到通话摘要和转录 → 向用户汇报结果。
 >
-> **Acceptance Criteria**: Successfully make a test call (can first call your own phone to verify connectivity). The Agent can autonomously determine call parameters based on the task description. After the call ends, it correctly extracts key information (appointment time, confirmation number, etc.) and reports it to the user. Compare the difference between using the API directly and calling it through the Agent's ReAct loop—the latter can handle situations with incomplete information (e.g., searching for the phone number if the user didn't provide it).
+> **验收标准**：成功拨打测试电话（可先拨打自己的手机验证连通性）。Agent 能根据任务描述自主决定通话参数，通话结束后正确提取关键信息（预约时间、确认号等）并向用户汇报。对比直接使用 API 与通过 Agent ReAct 循环调用的差异——后者能处理信息不完整的情况（如用户未提供电话号码时先搜索）。
 >
-> This experiment demonstrates an important application direction for voice Agents: **Agents can not only have voice conversations with users but also interact with the outside world via phone calls on behalf of the user**. PineClaw's voice Agent is specifically trained to handle hour-long waits, phone menu navigation, and complex negotiations—imagine having an AI wait on hold for a customer service operator for you. These are precisely the scenarios where traditional serial voice pipelines struggle.### Full-Chain Streaming for Cascaded Pipelines
+> 这个实验展示了语音 Agent 的一个重要应用方向：**Agent 不仅能与用户语音对话，还能代替用户与外部世界进行电话交互**。PineClaw 的语音 Agent 经过专门训练，能应付小时级的等待、电话菜单导航和复杂协商——想象一下让 AI 替你打运营商客服电话等候转人工，这些正是传统串行语音管线难以胜任的场景。
 
-A common misconception needs clarification: the 0.9–2 second latency budget mentioned above assumes a **fully serial** scenario where "each link finishes before passing the baton." However, production systems in 2025 no longer operate this way. The mainstream approach is not to abandon modularity, but to retain the VAD-ASR-LLM-TTS division while making each stage **streaming**, allowing adjacent stages to overlap in time:
+### 级联流水线的全链路流式化
 
-- **ASR transcribes while listening**: Using streaming recognition, text is continuously produced while the user is still speaking, without waiting for VAD to determine the end of a sentence before starting transcription.
-- **LLM outputs in sentence chunks**: As the model generates, it splits the reply into small sentences based on punctuation or semantics. The first sentence is sent downstream as soon as it takes shape, rather than waiting for the entire reply to be written.
-- **TTS streams at the sentence level**: It starts synthesizing and playing the first small sentence as soon as it arrives, with subsequent sentences generated and added on the fly. This significantly advances the time the user hears the first syllable.
+需要澄清一个常见误解：上面 0.9-2 秒的延迟账，算的是“每一环都跑完再交棒”的**完全串行**情形。但 2025 年的生产系统早已不这么做了。主流做法不是抛弃模块化，而是保留 VAD-ASR-LLM-TTS 的分工，同时让每一级都变成**流式**，让相邻环节在时间上重叠起来：
 
-As a result, the three stages—ASR, LLM, and TTS—are no longer in a relay-like sequential relationship but operate like three workstations on an assembly line working simultaneously. Open-source frameworks like LiveKit Agents and Pipecat, as well as mainstream commercial outbound call systems, all follow this approach. After full-chain streaming, end-to-end latency can typically be compressed to 600–800ms, significantly better than the 0.9–2 seconds of fully serial processing.
+- **ASR 边听边转**：采用流式识别，用户还在说，文字就在持续产出，不必等 VAD 判定整句结束再开始转录；
+- **LLM 按句切分输出**：模型一边生成，一边按标点或语义把回复切成小句，第一句刚成形就往下游送，而不是等整段回复写完；
+- **TTS 句级流式合成**：拿到第一小句就开始合成播放，后面的句子边生成边补上，用户听到第一个音节的时间大大提前。
 
-However, streaming can only compress the "transcription, thinking, and synthesis" segments that can overlap. There is one segment of latency it cannot eliminate: **VAD's silence waiting and turn judgment itself**. The system still relies on a 500–800ms silence threshold to guess "whether the user has finished speaking." This waiting period is a prerequisite for the pipeline to start and cannot be eliminated through overlap. To also compress this latency, the focus must shift from "overlapping stages" to the perception stage at the very front end.
+这样一来，ASR、LLM、TTS 三级不再是接力棒式的先后关系，而是像流水线上三个同时开工的工位。LiveKit Agents、Pipecat 这类开源框架，以及主流商用外呼系统，走的都是这条路线。全链路流式化之后，端到端延迟通常能压到 600-800ms，明显好于完全串行的 0.9-2 秒。
 
-### Streaming Voice Perception: Replacing VAD + ASR
+但流式化能压缩的只是“转录、思考、合成”这三段可以重叠的计算，有一段延迟它压不掉：**VAD 的静默等待与轮次判断本身**。系统仍然要靠 500-800ms 的静音阈值来猜测“用户到底说完没有”，这段等待是流水线开工的前提，无法靠重叠来消除。要连这段延迟也一并压缩，就不能再在“让各级重叠”上着力，而须转向最前端的感知环节本身。
 
-This perception front-end consists of two stages—VAD determines if the user has finished speaking, and ASR transcribes audio into text. Together, they determine when the entire pipeline starts and what input it receives. The traditional VAD + ASR cascade has three fundamental problems:
+### 流式语音感知：替代 VAD + ASR
 
-1. **Latency Accumulation**: VAD must wait for 500–800ms of silence to confirm the user has finished, because it cannot predict the future and can only rely on "waiting" to distinguish between "truly finished" and "just pausing to think."
-2. **Information Loss**: VAD only outputs a binary signal like "voice/silence." All acoustic details—emotional changes, tone fluctuations, hesitant pauses, background environment—are lost. Misjudgment issues are particularly prominent in complex environments: a slightly longer user pause is misjudged as finished, causing sentence truncation; background noise triggers false starts, causing the system to process when no one is speaking; and a user's "uh-huh" cannot be determined as an interruption or an acknowledgment.
-3. **Decreased Accuracy**: VAD cuts continuous audio into independent segments, each sent to ASR for recognition, disrupting contextual continuity. Content that requires context for correct recognition (email addresses, brand names, person names, proper nouns) sees a significant increase in error rates—for example, if a user says "john dot smith at gmail dot com" and "john" and "smith" are cut into different segments, "smith" might be misrecognized as "miss" due to lack of context.
+这一感知前端由两级构成——VAD 判断用户是否说完、ASR 将音频转写为文字——二者共同决定了整条流水线何时启动、又接收到怎样的输入。传统的 VAD + ASR 级联存在三个根本问题：
 
-**Streaming Voice Perception Models** provide a fundamental solution. First, clarify the technical meaning of "streaming": whether a voice model can process streaming depends on whether the **encoder is causal or chunk-based** (relying only on audio that has already arrived, without needing to see the entire recording) and whether **decoding is incremental** (outputting partial results each time a small audio chunk is received). Whisper cannot stream, not because of its decoding method—its decoding is inherently autoregressive—but because its encoder requires a complete audio segment (fixed 30 seconds, padded if shorter) to start working. It should also be noted that streaming recognition itself is not a new technology: traditional streaming ASR represented by RNN-T and streaming Conformer has long been deployed at scale in the industry—real-time captions on phones and voice input for input methods use such models—and they have nothing to do with LLMs.
+1. **延迟累积**：VAD 必须等 500-800ms 静音才能确认用户说完，因为它无法预知未来，只能靠“等一等”来区分“真的说完了”和“只是停顿想一想”
+2. **信息丢失**：VAD 只输出“有声/无声”这样的二值信号，情绪变化、语气起伏、犹豫停顿、背景环境等声学细节全部丢失。误判问题在复杂环境中尤为突出——用户停顿稍长就被误判为说完导致句子截断，背景噪音误触发导致没人说话时系统开始处理，用户附和的一声“嗯”也无法判断到底是想打断还是在表示认可
+3. **准确率下降**：VAD 把连续音频切成一段段独立片段，各自送入 ASR 识别，破坏了上下文的连续性。需要前后文才能正确识别的内容（邮箱地址、品牌名、人名、专有名词）错误率明显上升——比如用户报邮箱“john dot smith at gmail dot com”，如果“john”和“smith”被切到不同片段，“smith”可能因为缺少上下文被误识别为“miss”
 
-This section focuses on a new path: **LLM-based streaming auditory perception**—using an open-source LLM as a backbone for post-training, allowing the model to directly output semantic-level responses from a continuous audio stream, merging "recognition" and "understanding" into a single model. It is an upgrade to traditional streaming ASR, not an invention of streaming technology: the latency of incremental recognition remains on the order of single-step inference time (tens to a couple hundred milliseconds), but the model no longer sees isolated fragments cut by VAD. Instead, it sees a continuous audio stream from the start of the conversation to the current moment, enabling In-Context Learning based on complete context, significantly improving recognition accuracy for user personal information, professional terms, and pronunciation habits.
+**流式语音感知模型**提供了根本性的解决方案。先澄清“流式”的技术含义：一个语音模型能否流式处理，关键在于**编码器是否因果或分块**（只依赖已经到达的音频，而不需要看到整段录音）以及**解码是否增量**（每收到一小段音频就输出一部分结果）。Whisper 不能流式，并不是因为它的解码方式——它的解码本身就是自回归的——而是因为它的编码器需要一个完整的音频段（固定 30 秒、不足则填充）才能开始工作。还要说明的是，流式识别本身并不是新技术：以 RNN-T 和流式 Conformer 为代表的传统流式 ASR 早已在工业界大规模部署——手机的实时字幕、输入法的语音输入用的都是这类模型——它们与 LLM 并无关系。
 
-Another key advantage of this path is inheriting the world knowledge and common sense reasoning capabilities of LLMs—after all, the backbone model has seen vast amounts of text. For example, the model knows that "Apple" followed by "event" likely refers to the company rather than the fruit. This knowledge enhancement makes recognition accuracy for high-value information like amounts, place names, and brand names far exceed traditional ASR. This path already has deployable models, such as Fixie's Ultravox—which feeds audio directly into an LLM backbone and outputs text and semantic tokens. The Qwen2-Audio used in this section's experiments, and Alibaba's Qwen2.5-Omni, also belong to this category of audio-native models.
+本节关注的是一条新路线：**基于 LLM 的流式听觉感知**——以开源 LLM 为骨干做后训练，让模型直接从连续音频流中输出语义级的响应，把“识别”和“理解”合并进同一个模型。它是对传统流式 ASR 的升级，而非流式技术的发明：增量识别的延迟同样保持在单步推理时间（几十到一二百毫秒）的量级，但模型看到的不再是被 VAD 切碎的孤立片段，而是从对话开始到当前时刻的连续音频流，可以基于完整上下文做上下文学习（In-Context Learning），对用户的个人信息、专业名词、发音习惯的识别准确率显著提升。
 
-However, replacing VAD does not necessarily require using a full-scale audio LLM. If the goal is only to solve the first problem—**determining whether the user has finished speaking**—there is a lighter path: embedding this "turn judgment" directly into the recognizer itself[^ch9-11]. The approach is to add a LoRA to a small open-source streaming recognition model, allowing it to simultaneously transcribe and **integrate semantics and silence** to judge "whether this sentence has expressed a complete meaning"—because intra-turn pauses (pausing when reciting a phone number) are often longer than inter-turn intervals, relying solely on a silence threshold inevitably fails on both fronts. A more interesting conclusion is that the model's oscillation on "whether to take the turn" often stems not from the model architecture but from **training labels annotated with a "God's eye view"** —the annotation used audio that appeared after the decision point, while the online model cannot see the future. By changing each label to be annotated using "only information available at the decision moment," this false oscillation disappears. This echoes a judgment from Chapter 7 on post-training: often, data is more critical than architecture. This lighter path also has production-grade implementations: Deepgram's Flux and AssemblyAI's Universal-Streaming embed endpoint and turn judgment directly into streaming recognition models, designed specifically for voice agents; on the open-source side, LiveKit and Pipecat provide semantic turn detection models.
+这条路线的另一个关键优势是继承了 LLM 的世界知识和常识推理能力——毕竟骨干模型见过海量文本。比如模型知道“苹果”后面跟“发布会”大概率指 Apple 而非水果，这种知识增强使得对金额、地名、品牌名等高价值信息的识别准确率远超传统 ASR。这条路线已有可落地的模型，如 Fixie 的 Ultravox——把音频直接送入 LLM 骨干、输出文本与语义 token；本节实验所用的 Qwen2-Audio、阿里的 Qwen2.5-Omni 也属于同一类音频原生模型。
 
-[^ch9-11]: The diagnosis of embedding turn judgment into the recognizer and the "God's eye view" of labels can be found in Li, Bojie and Noah Shi. *The Trade-off Was in the Labels: Causal Supervision for Turn-Aware Streaming ASR.* 2026 (forthcoming).
+不过，替代 VAD 不一定非得动用一个完整的音频大模型。如果只想解决第一个问题——**判断用户到底说完没有**，还有一条更轻的路子：把这个“轮次判断”直接塞进识别器本身[^ch9-11]。做法是在一个很小的开源流式识别模型上加个 LoRA，让它一边转写、一边**综合语义和静音**判断“这句话是不是已经表达完一个完整的意思”——因为轮内停顿（报电话号码时顿一下）常常比轮间间隔还长，光靠静音阈值必然两头不讨好。更有意思的结论是：模型总在“该不该收话”上摇摆，根源往往不在模型结构，而在**训练标签是用“上帝视角”标的**——标注时用到了决策点之后才出现的音频，而线上的模型根本看不到未来；把每条标签都改成“只用决策当下能拿到的信息”来标，这种虚假的摇摆就消失了。这也呼应了第七章后训练的一条判断：很多时候，数据比架构更关键。这条更轻的路线也已有生产级实现：Deepgram 的 Flux、AssemblyAI 的 Universal-Streaming 把端点与轮次判断直接嵌入流式识别模型、专为语音 Agent 设计；开源侧则有 LiveKit、Pipecat 提供的语义轮次检测模型。
 
-The model outputs not only text but also a series of **special markers for acoustic events**—these are dedicated tokens introduced during model training. The model learns to automatically output them when detecting corresponding acoustic events. Common types include:
+[^ch9-11]: 把轮次判断做进识别器、以及“标签的上帝视角”这一诊断见 Li, Bojie and Noah Shi. *The Trade-off Was in the Labels: Causal Supervision for Turn-Aware Streaming ASR.* 2026（待发表）.
 
-- `<speak_start/end>`: Determines speech start and end based on a comprehensive judgment of semantics and acoustics, rather than simple silence detection.
-- `<interrupt>`: Distinguishes whether the user truly wants to interrupt or is just acknowledging or affected by background noise.
-- `<emotion:happy/frustrated>`: Emotion markers.
-- `<laugh>` / `<sigh>`: Paralinguistic signals like laughter and sighs.
-- `<music>` / `<noise>`: Environmental sounds.
+模型输出的不仅是文字，还包括一系列**声学事件的特殊标记**——它们是模型训练时引入的专用 token，模型学会了在检测到对应声学事件时自动输出。常见的几类如下：
 
-These markers, along with text tokens, form a unified event stream that is fed into the thinking layer.
+- `<speak_start/end>`：基于语义和声学的综合判断来确定说话起止，而非简单的静音检测
+- `<interrupt>`：区分用户是真的想打断，还是只是在附和或受到背景噪音干扰
+- `<emotion:happy/frustrated>`：情感标记
+- `<laugh>` / `<sigh>`：笑声、叹气等副语言信号
+- `<music>` / `<noise>`：环境声
+
+这些标记和文字 token 形成统一的事件流，一起送入思考层。
 
 ```
 Input audio: "Um, actually I think... no wait, let me reconsider."
@@ -128,218 +136,232 @@ Model output stream:
   <silence:500ms> no wait, <emotion:confident> let me reconsider <speak_end>
 ```
 
-Note that the model outputs not just a text transcription but also voice event markers (start/end of speech, emotion changes, silence intervals). Agent frameworks can leverage these markers for more natural interactions—for example, proactively offering options when detecting user hesitation.
+注意模型输出的不只是文字转录，还包括语音事件标记（开始/结束说话、情绪变化、沉默间隔）。Agent 框架可以利用这些标记实现更自然的交互——比如检测到用户犹豫时主动提供选项。
 
-> **Experiment 9-3 ★: Simulating Streaming Voice Perception with Qwen2-Audio**
+> **实验 9-3 ★：使用 Qwen2-Audio 模拟流式语音感知**
 >
-> The experimental design needs clarification first: Qwen2-Audio itself is a non-streaming model that takes entire segments as input. This experiment uses **chunked input to simulate streaming processing**—cutting the continuous audio stream into fixed-length small chunks, each sent to the model along with the accumulated audio context. The model gradually generates text and acoustic event tokens (such as laughter, pauses, and other non-verbal signals), and measures the latency from inputting each chunk to producing text. There is a key cost here: Qwen2-Audio's encoder is not incremental. Each time a new chunk is processed, all previously accumulated audio must be re-encoded from scratch. Therefore, the longer the conversation and the more accumulated audio, the higher the encoding latency for each chunk—this is the essential difference between "simulated streaming" and "true streaming" (which uses incremental or causal encoders that only incrementally encode the newly arrived small audio segment). This design can demonstrate the accuracy benefits of "continuous perception with complete context," but the latency numbers only reflect chunk granularity and inference speed, not the first-packet latency of a truly streaming-designed model (such as Qwen3-Omni with chunked encoding); interested readers can replace it with the latter to redo the experiment. The comparison baseline is the traditional VAD + Whisper ASR pipeline. Three scenarios are tested: normal conversation, long sentences with pauses, and conversation with background noise.
+> 需要先说明实验设计：Qwen2-Audio 本身是整段输入的非流式模型。本实验采用**分块输入模拟流式处理**——把连续音频流切成固定长度的小块，每块连同此前累积的音频上下文一起送入模型，模型逐步生成文本和声学事件 token（如笑声、停顿等非语言信号），并测量每个分块从送入到产出文本的延迟。这里有个关键代价：Qwen2-Audio 的编码器不是增量式的，每处理一个新块都要把此前累积的全部音频从头重新编码一遍，因此对话越长、累积音频越多，单块的编码延迟就越高——这正是“模拟流式”与“真流式”（采用增量或因果编码器，只对新到达的一小段音频做增量编码）之间的本质差别。这一设计能演示“保留完整上下文的连续感知”带来的准确率收益，但延迟数字只反映分块粒度与推理速度，并不等于真正按流式设计的模型（如采用分块编码的 Qwen3-Omni）的首包延迟；感兴趣的读者可以换用后者重做本实验。对比方案是传统的 VAD + Whisper ASR 流水线。测试三类场景：正常对话、带停顿的长句、含背景噪音的对话。
 >
-> Results: The incremental recognition latency of the chunked simulation scheme can be controlled on the order of one to two hundred milliseconds (depending on chunk length and hardware), while the traditional scheme requires waiting for VAD to confirm completion (600ms) plus Whisper inference (about 200–500ms under this experiment's configuration), totaling 800–1100ms. In the scenario with pauses, VAD misjudged the first long pause as the end of speech, cutting the sentence into two segments for separate recognition. "大概两点左右" (around two o'clock) was misrecognized as "大概零点左右" (around midnight) due to lack of context. The chunked scheme, maintaining complete context, correctly recognized the entire sentence. In the background noise scenario, Qwen2-Audio outputs `<|noise|>` tokens to mark the presence of noise without interrupting recognition, while traditional VAD was falsely triggered by noise, causing the recognition process to start prematurely.
-## Paradigm 2: End-to-End Full-Modal Model (Omni)
+> 结果：分块模拟方案的增量识别延迟可以控制在一二百毫秒的量级（具体取决于分块长度与硬件），而传统方案需要等 VAD 确认说完（600ms）再加上 Whisper 推理（本实验配置下约 200-500ms），合计 800-1100ms。在带停顿的场景中，VAD 在第一次长停顿处就误判为说完，把句子截成了两段分别识别，“大概两点左右”因为缺少上下文被误识别为“大概零点左右”；而分块方案保持完整上下文，正确识别了整句。在背景噪音场景中，Qwen2-Audio 输出 `<|noise|>` token 标记噪音存在但不中断识别，传统 VAD 则被噪音误触发，导致识别流程提前启动。
 
-Looking back at the entire cascaded pipeline: even if the perception front-end has been replaced with streaming voice perception, it still ultimately assigns "listening, thinking, and speaking" to three independent models, connected by a discrete interface. No matter how wide this interface is, it is merely a few semantic tokens and occasional acoustic markers—the speaker's current emotion, tone, intonation, and background environmental sounds and music are mostly lost during handover. Moreover, the three segments are trained and optimized independently, making it difficult for them to collaborate. End-to-end full-modal models (Omni) take a different path—using a single model to directly "listen" to audio, "think" of a reply, and "speak" it out, merging the three segments into one (Figure 9-4). With sufficient training data, the model's internal latent space can directly transmit these paralinguistic features to the generation end beyond text: lower latency, and preserved prosody and emotion. The trade-off is: **cascaded pipelines** have clear modules, each segment can be independently tuned, and they offer good interpretability; **end-to-end models** have lower latency and can retain non-textual information, at the cost of greater training data requirements and poorer interpretability.
+## 范式二 · 端到端全模态模型（Omni）
 
-A frequently overlooked dimension should also be added: the advantage of end-to-end is mainly in **latency**; it does not necessarily hold an advantage in **accuracy**. A scheme worth comparing is **self-cascade**—where the same model first transcribes audio into structured text and then performs reasoning based on that text. Compared to answering end-to-end in one go, which has higher accuracy depends on the specific task. The pattern can be summarized as: when the answer is mainly determined by semantic content (i.e., "what was said") and the intermediate text can sufficiently carry the task-related information, self-cascade achieves accuracy comparable to or even better than end-to-end, especially for models with weaker perception capabilities. Conversely, when the answer highly depends on non-verbal cues (tone, emotion, environmental sounds) that are difficult to represent in text, end-to-end shows a clear advantage. More importantly, the relative merits of the two can be **determined in advance based on task nature**, rather than simply attributing it to "end-to-end being more advanced." This leads to a design principle: the key to performance often lies not in whether to introduce an intermediate representation as a **bottleneck**, but in the information carried by that bottleneck. If the intermediate text is upgraded from a simple transcription to a structured representation with paralinguistic markers (emotion, speech rate, environmental sounds), the original accuracy advantage of end-to-end often narrows. This is consistent with the earlier claim in "Streaming Voice Perception" that "the perception layer should not output only plain text"[^ch9-13].
+回顾整个级联流水线：即便感知前端已替换为流式语音感知，它终究仍将“听、想、说”三者分派给三个独立的模型，彼此之间以一条离散的接口相连。这条接口再宽，也不过是若干语义 token 与零星的声学标记——说话人当下的情绪、语气、语调，以及背景中的环境声与音乐，绝大部分在交接时损失殆尽；何况三段各自训练、各自优化，彼此难以协同。端到端全模态模型（Omni）则另辟蹊径——以单一模型直接“听”音频、“想”回复、“说”出来，将三段合而为一（图9-4）。只要训练数据充分，模型内部的隐空间（Latent Space）便能在文本之外将这些副语言信息直接传递至生成端：延迟更低，韵律与情感也得以保留。取舍在于：**级联流水线**模块清晰、每段可独立调优、可解释性好；**端到端模型**延迟更低、能保留非文字信息，代价是训练数据需求更大、可解释性更差。
 
-However, no matter how powerful Omni is, it essentially just merges three models into one, **without eliminating the assumption of "taking turns speaking"** : it still relies on VAD to divide speaking rights—stopping when it detects the user speaking, and starting to speak as soon as the user goes silent. Thus, the familiar problem resurfaces: when a user recites a string of numbers and pauses briefly, Omni judges that the other party has finished and forcefully interrupts. The streaming voice perception mentioned earlier can upgrade turn judgment from silence duration to the semantic level, significantly alleviating such misjudgments, but that is ultimately a local patch within the "turn-taking" framework, not eliminating turn-taking itself. To **fundamentally** escape this dilemma, one can no longer patch within the "turn-taking" framework. Instead, the model must listen and speak simultaneously, autonomously deciding when to speak, with no hard switch of "whose turn it is."
+还需补充一个常被忽略的维度：端到端的优势主要体现在**延迟**上，在**准确率**维度上并不必然占优。一个值得对照的方案是**自级联**（self-cascade）——由同一模型先将音频转录为结构化文本，再基于该文本进行推理；与其一次性端到端作答相比，何者准确率更高取决于具体任务。其规律可概括为：当答案主要由语义内容（即“说了什么”）决定、中间文本足以充分承载任务相关信息时，自级联的准确率与端到端相当乃至更优，这一优势在感知能力较弱的模型上尤为显著；反之，当答案高度依赖文本难以表征的非语言线索（语调、情绪、环境声）时，端到端方显现出明显优势。更重要的是，二者的优劣**可依据任务性质事先判定**，而非简单归因于“端到端更为先进”。由此可进一步导出一条设计原则：决定性能的关键往往不在于是否引入中间表示这一**瓶颈**，而在于该瓶颈所承载的信息——若将中间文本由单纯的转录提升为附带副语言标记（情绪、语速、环境声）的结构化表示，端到端原有的准确率优势往往随之收窄，这与前文〈流式语音感知〉所主张的“感知层不应仅输出纯文本”一脉相承[^ch9-13]。
 
-[^ch9-13]: For a complete cross-modal measurement of when the accuracy advantages of cascade and end-to-end reverse, and how to predict the direction based on task nature (whether the intermediate representation can sufficiently carry task-related information), see Li, Bojie and Noah Shi. *The Cascade Gap: When and Why Self-Cascades Help Multimodal Agents.* 2026 (forthcoming).
+但 Omni 无论多强，本质上也只是把三个模型合成了一个，**并未取消“轮流说话”这一假设**：它依然依赖 VAD 来划分发言权——一旦检测到用户出声便停下，用户一静音便随即开口。于是那个熟悉的问题再度浮现：用户报出一串数字、中途略作停顿，Omni 便判定对方已说完而强行插话。前文的流式语音感知能将轮次判断从静音时长升级到语义层面，大幅缓解这类误判，但那终究只是在“轮次”框架内的局部修补，并未取消轮流本身。要**从根本上**跳出这一困境，就不能再于“轮次”框架内修补，而须让模型边听边说、自主决定何时开口，不再存在“该谁说话”的硬性切换。
 
-
-![Figure 9-4 Comparison of End-to-End Multimodal Voice Model Architectures](images/fig9-4.svg)
+[^ch9-13]: 级联与端到端在准确率上的优劣何时逆转，以及如何依据任务性质（中间表示能否充分承载任务相关信息）预测其方向，完整的跨模态测量见 Li, Bojie and Noah Shi. *The Cascade Gap: When and Why Self-Cascades Help Multimodal Agents.* 2026（待发表）。
 
 
-**OpenAI Realtime API** is close to end-to-end at the model level (the model natively processes audio), but still relies on traditional VAD at the interaction control level, making it an intermediate solution transitioning to full end-to-end. It initially (2024 preview) ran on GPT-4o, and after its official GA in 2025, it switched to a dedicated voice model **gpt-realtime** (no longer a mode of GPT-4o, but a model specifically optimized for real-time voice). The API enables server-side VAD by default, automatically determining when the user starts and stops speaking. It supports interruption during conversation—detecting when the user starts speaking and immediately stopping current voice generation, much like when one person interrupts in a face-to-face conversation and the other naturally stops. gpt-realtime also introduces asynchronous function calls: the model can continue talking to the user while waiting for tool results, hiding tool latency within the conversation process. These improvements enhance the experience, but are essentially optimizations within the VAD framework. **Gemini Live API** has a similar approach, supporting VAD sensitivity configuration and retaining sent information upon interruption to ensure conversational coherence.
+![图9-4 端到端多模态语音模型架构对比](images/fig9-4.svg)
 
-**Qwen3-Omni** adopts a Thinker-Talker architecture: separating thinking (understanding and reasoning) from expression (voice generation) into two specialized modules, unifying perception and generation for text, images, audio, and video.To keep high capability while controlling computational cost, Qwen3-Omni adopts the MoE (Mixture of Experts) architecture—think of it as "calling expert teams on demand": it contains multiple small expert networks internally, and for each inference, only the few most relevant to the current task are activated, while the rest do not participate in computation. For example, when processing speech, it primarily activates speech-related experts; when processing images, it primarily activates vision-related experts. This allows the model to have a very large total parameter count (ensuring high capability) while keeping the actual computation per token very small, thereby improving inference throughput and reducing queuing latency under high load.
 
-It is important to distinguish that MoE addresses the throughput issue of "how many requests can be served per unit of compute." It does not directly determine "how early the first audio packet can be sent"—first-packet latency depends on the generation architecture. Qwen3-Omni's low first-packet latency comes from the design of its Talker module: it generates audio tokens incrementally in a multi-codebook autoregressive manner, and uses a causal codec to decode these tokens into waveforms incrementally. Therefore, as soon as the thinking module produces text, the Talker can begin streaming speech synthesis without waiting for the entire response to be generated. According to the official report, its cold-start theoretical first-packet latency is as low as approximately 234ms, supports understanding in 19 languages and generation in 10 languages, and leads in 22 out of 36 audio-video benchmarks.
+**OpenAI Realtime API** 在模型层面接近端到端（模型原生处理音频），但在交互控制层面仍依赖传统 VAD，属于向完全端到端过渡的中间方案。它最初（2024 年 preview）跑在 GPT-4o 上，2025 年正式 GA 后改用独立的语音专用模型 **gpt-realtime**（不再是 GPT-4o 的一个模式，而是为实时语音单独优化的模型）。API 默认启用服务端 VAD，自动判断用户何时开始与结束说话。支持对话中打断——检测到用户开口时立即停止当前语音生成，就像两个人面对面聊天时一方插话、另一方会自然停下来。gpt-realtime 还引入了异步函数调用：模型可以一边等工具返回结果，一边继续和用户说话，把工具延迟藏在对话过程中。这些都改善了体验，但本质仍在 VAD 框架下做优化。**Gemini Live API** 思路类似，支持 VAD 敏感度配置，打断时保留已发送的信息以确保对话连贯。
 
-**Step-Audio 2** takes a different route: it directly processes raw audio input and outputs both text and audio, achieving true end-to-end voice conversation. It can not only understand *what* is said (semantic information) but also perceive *how* it is said—paralinguistic information, such as whether the speaker's emotion is happy or angry, whether the speech rate is rapid or hesitant, whether the intonation is rising or falling—as well as background environmental sounds and music. It generates expressive responses through thinking and reinforcement learning, and also integrates a RAG mechanism and external tools (web search, audio search). According to the Step-Audio 2 paper, on their proposed StepEval-Audio-Paralinguistic benchmark for paralinguistic understanding, Step-Audio 2 achieves an accuracy of 83.09%, leading over the contemporaneous open-source full-modal model Qwen2.5-Omni (44.18%), and also surpassing GPT-4o Audio (43.45%) and Kimi-Audio (49.64%).
+**Qwen3-Omni** 采用 Thinker-Talker 架构：将思考（理解与推理）与表达（语音生成）分成两个专门模块，统一了对文本、图像、音频与视频的感知与生成。
 
-Step-Audio R1 is a follow-up work in the Step-Audio series. Building on Step-Audio 2's end-to-end voice conversation architecture, it further internalizes thinking capabilities directly into the audio model. The two represent a progressive evolution along the same technical path.
+为了在保持高能力的同时控制计算开销，Qwen3-Omni 采用 MoE（Mixture of Experts，混合专家）架构——可以理解为“按需调用专家团队”：内部包含多个小型专家网络，每次推理只激活与当前任务最相关的少数几个，其余不参与计算。例如处理语音时主要激活语音相关专家，处理图像时主要激活视觉相关专家。这样模型既能拥有很大的总参数量（保证能力上限），又能把单个 token 的实际计算量控制得很小，从而提升推理吞吐、降低高负载下的排队延迟。
 
-## Paradigm 3: Full-Duplex / Interactive Models
+需要分清的是，MoE 解决的是“单位算力能服务多少请求”的吞吐问题，它并不直接决定“能不能尽早吐出第一个音频包”——首包延迟取决于生成端的架构。Qwen3-Omni 的低首包来自 Talker 模块的设计：它以多码本自回归的方式逐步生成音频 token，配合因果（causal）codec 把这些 token 增量地解码成波形，因此思考模块一产出文本，Talker 就能接着流式合成语音，无需等整段回复生成完毕。据官方报告，其冷启动理论首包延迟低至约 234ms，支持 19 种语言理解和 10 种语言生成，在 36 项音视频基准中 22 项领先。
 
-Paradigm 2 merged three models into one, but still clung to the assumption of "taking turns speaking"—either the user speaks or the model speaks, with the switch point guessed by VAD or semantics. However, some scenarios simply cannot accommodate the "one sentence at a time" turn-taking. **Simultaneous interpretation** is a prime example: the interpreter does not wait for the speaker to finish a complete sentence before starting; instead, they listen and organize in their mind simultaneously, translating as soon as a meaning unit is roughly complete, with listening and translation always overlapping. **Rhythm games where you hit drumbeats along with music** are even more extreme—the auditory sense must continuously track an uninterrupted music stream, hands must strike the beat instantly, while simultaneously anticipating the next beat. Here, there is not even a concept of "turns"; the input is an unending continuous stream. Such tasks pose a fundamental challenge to the turn-by-turn model: they require listening, thinking, and action to occur simultaneously, whereas the premise of the turn-based model is to place these three in separate time slices. The full-duplex model takes the path of "eliminating VAD" to its logical endpoint—it simply discards the assumption of "taking turns," allowing the model to **listen and speak simultaneously and continuously**.
+**Step-Audio 2** 走了一条不同的路线：直接处理原始音频输入，输出文本和音频，实现真正的端到端语音对话。它不仅能理解说了什么（语义信息），还能感知怎么说的——副语言信息（Paralinguistic Information），比如说话人的情绪是高兴还是愤怒、语速是急促还是迟疑、语调是上扬还是低沉——以及背景里的环境声和音乐。它通过思考与强化学习生成富有表现力的回复，还集成了 RAG 机制和外部工具（网络搜索、音频搜索）。据 Step-Audio 2 论文报告，在其提出的 StepEval-Audio-Paralinguistic 副语言理解基准上，Step-Audio 2 的准确率达 83.09%，领先同期开源全模态模型 Qwen2.5-Omni（44.18%），也高于 GPT-4o Audio（43.45%）和 Kimi-Audio（49.64%）。
 
-The pioneering research work here is Kyutai's **Moshi** (2024). It models two audio streams in parallel (the user's voice and the model's own voice), supplemented by an "inner monologue" text stream to improve the linguistic quality of the generated speech. Since it is always listening, overlapping speech and interruptions become natural behaviors, requiring no explicit interruption detection logic. End-to-end latency is approximately 200ms, approaching the natural rhythm of human conversation.
+Step-Audio R1 是 Step-Audio 系列的后续工作，在 Step-Audio 2 端到端语音对话架构的基础上，进一步把思考能力直接内化到音频模型中，两者代表了同一技术路线的递进演化。
+## 范式三 · 全双工交互模型（Full-Duplex / Interactive）
 
-In 2026, **Thinking Machines Lab**, founded by Mira Murati, previewed a new category they call the **Interaction Model**[^ch9-14], and made explicit the claim behind full-duplex: interactivity should not be an external harness like VAD wrapped around the model, but should be built into the model itself. In their words, "for interactivity to scale with intelligence, it must become part of the model itself." Architecturally, this translates to **micro-turns**: instead of waiting for an entire turn to finish, the model continuously "reads in 200ms, generates 200ms," allowing audio, video, and text streams to interleave and advance together. This granularity is a deliberate compromise—fine enough that silence, overlap, and interruption are preserved as continuous streams in the model's context, with no artificial turn boundaries to accommodate; yet coarse enough to process multiple modalities in chunks concurrently, keeping latency within a perceptually real-time range. Because interaction is internalized into the model, behaviors like "listening while speaking" and "watching while interjecting," which previously required specialized harnesses, are now the model's inherent capabilities and will improve as the model improves: the first model, TML-Interaction-Small, trains all three streams from scratch together. Once it detects a user writing a piece of buggy code or someone entering the frame, it can proactively speak up.
+范式二把三个模型合成了一个，却仍守着“轮流说话”的假设——要么用户说、要么模型说，切换点靠 VAD 或语义来猜。可有些场景，本就容纳不下“你一句我一句”的轮流。**同声传译**便是一例：译员并不等说话者说完整句才开口，而是边听边在脑中组织，一个意群的意思大致完整便随即译出，聆听与翻译始终重叠进行。**合着音乐击打鼓点**的节奏游戏则更为极端——听觉须持续追踪不间断的音乐流，双手要踩准节拍即时敲击，同时还需预判下一拍，此处甚至无所谓“一轮”，输入是一条永不停歇的连续流。这类任务对 turn-by-turn 模式构成根本性挑战：它们要求聆听、思考、动作同时进行，而轮次模式的前提恰恰是将三者分置于先后不同的时间片。全双工模型正是把“摆脱 VAD”这条路走到逻辑终点——索性取消“轮流”这一假设，让模型**同时持续地听和说**。
 
-Its approach to "slow thinking" is also representative. The interaction model itself is only responsible for keeping the conversation online. When it encounters a problem requiring deep reasoning or tool calls, it delegates to a stronger reasoning model in the background—what it hands over is not an isolated query, but the **entire conversation context**. While the background model reasons, results stream back incrementally. The interaction model then chooses a moment that does not interrupt the user to naturally weave the result into the conversation, all the while continuing to respond, answer follow-ups, and hold the floor. In this way, it delivers the "planning, tool, and agent capabilities of a reasoning model" with the "latency of a non-thinking model." According to the official report, TML-Interaction-Small (276B parameter MoE, 12B activated) achieves a turn-switching latency as low as approximately 0.40 seconds (GPT-realtime-2.0 is about 1.18 seconds), and significantly outperforms competitors that score nearly zero on benchmarks for visual proactivity; as of writing, it is still in the research preview stage.
+研究上的先声是 Kyutai 的 **Moshi**（2024）。它并行建模两条音频流（用户的声音和模型自己的声音），再辅以一条“内心独白”文本流来提升生成语音的语言质量。由于任一时刻都在收听，重叠说话、随时打断都成了天然行为，不需要任何显式的打断检测逻辑，端到端延迟约 200ms，接近人类对话的自然节奏。
 
-[^ch9-14]: Thinking Machines Lab, "Interaction Models: A Scalable Approach to Human-AI Collaboration," 2026-05. https://thinkingmachines.ai/blog/interaction-models/
+2026 年，Mira Murati 创立的 **Thinking Machines Lab** 预览了他们称为**交互模型（Interaction Model）**的新范畴[^ch9-14]，并把全双工背后的主张挑明：交互性不该以 VAD 之类的外挂 harness 环绕在模型之外，而应内建于模型自身——用其原话说，“要让交互性随智能一同扩展，交互性就必须成为模型本身的一部分”。落到架构上便是**微轮次（micro-turn）**：模型不等一整轮说完，而是以约 200ms 为一段，持续地“读入 200ms、生成 200ms”，让音频、视频、文本几路流交织推进。这一粒度是刻意的折中——足够细，使静音、重叠、打断都作为连续流保留在模型的上下文里，不再有人为的轮次边界需要迁就；又足够粗，能把多路模态成块地并发处理，把延迟压在实时可感的范围内。正因交互被纳入模型内部，“边听边说”“边看边插话”这些过去要靠专门 harness 才能拼出的行为，如今都成了模型的分内之事，并会随模型一同变强：首个模型 TML-Interaction-Small 把三路流从零一同训练，一旦察觉用户正写下一段含 bug 的代码、或有人步入画面，都能主动开口。
 
-In the same year, OpenAI's **GPT-Live** brought full-duplex to production scale, rolling out globally as the new default voice model for ChatGPT. It no longer treats conversation as a series of discrete message turns, but instead **continuously processes input while continuously generating output**. Therefore, it can make many interaction decisions per second: whether to start speaking, continue listening, pause, interrupt, or call a tool. The result is that it waits quietly when the user is thinking instead of interrupting, uses acknowledgments like "mm-hmm" and "right" to show it is listening, and is also capable of tasks like real-time translation that require listening and speaking simultaneously.
+它对“慢思考”的接法也颇具代表性。交互模型自身只负责让对话保持在线，一旦遇到需要深度推理或工具调用的问题，便委派给后台一个更强的推理模型——交出去的不是一句孤立的查询，而是**整段对话的上下文**。后台模型一边推理，结果一边流式回传，交互模型再挑一个不打断用户的时机将其自然织入对话，其间它照常接话、答追问、守住话头。如此便以“非思考模型的延迟”，兑现了“推理模型的规划、工具与智能体能力”。据官方报告，TML-Interaction-Small（276B 参数 MoE、激活 12B）的轮次切换延迟低至约 0.40 秒（GPT-realtime-2.0 约 1.18 秒），在考察视觉主动性的基准上大幅领先于近乎零分的竞品；截至写作时仍处于研究预览阶段。
 
-GPT-Live also follows the same path of separating fast and slow processes—**decoupling "real-time interaction" from "deep thinking"**: when it encounters a task requiring search, reasoning, or more complex agent operations, the interactive GPT-Live delegates the task to a frontier model in the background (at launch, GPT-5.5), while continuing to maintain the flow of conversation itself. Once the background model produces a result, it brings it back into the conversation. GPT-Live-1 and the mini version use GPT-5.5 Instant in the background, while the Medium and High tiers call the thinking-enabled GPT-5.5, allowing users to choose between "fast" and "deep" as needed. This "fast-slow division of labor" is precisely the topic to be expanded upon in the next section, "Trade-offs in Thinking Architectures."
+[^ch9-14]: Thinking Machines Lab, “Interaction Models: A Scalable Approach to Human-AI Collaboration,” 2026-05. https://thinkingmachines.ai/blog/interaction-models/
 
-Reviewing this chapter's narrative thread of "replacing VAD": VAD guesses the turn-switching point based on silence thresholds; streaming perception (see the earlier section "Streaming Speech Perception" in Paradigm 1) upgrades the switching judgment to the semantic level; and the full-duplex model completely dissolves the concept of "switching" itself—it is always listening, so "interruption" is no longer an event requiring special handling, and the barge-in processing chain is largely eliminated architecturally. This is the endpoint of the "replacing VAD" narrative thread as of the time of writing.
+同年，OpenAI 的 **GPT-Live** 则把全双工带到了生产规模，作为 ChatGPT 语音的新默认模型向全球铺开。它不再把对话看作一串分立的消息轮次，而是**持续处理输入的同时持续生成输出**，因此每秒能做许多次交互决策：该开口说、继续听、停顿、打断，还是去调用一个工具。表现出来就是：用户思考时它会安静等待而不是抢话，会用“嗯”“对”这样的附和表示自己在听，也能胜任实时翻译这类必须边听边说的任务。
 
-## Trade-offs in Thinking Architectures: From Separation to Unification
+GPT-Live 也走了同一条快慢分工的路——**把“实时交互”与“深度思考”解耦**：碰到需要搜索、推理或更复杂的智能体操作时，负责交互的 GPT-Live 把任务委派给后台的前沿模型（发布时是 GPT-5.5），自己继续维持对话的流动，等后台出结果再把它带回对话里。GPT-Live-1 与 mini 版本在后台用 GPT-5.5 Instant，Medium、High 档位则调用带思考的 GPT-5.5，让用户按需在“快”与“深”之间取舍。这条“快慢分工”正是下一节“思考架构的取舍”要展开的主题。
 
-The real problem to solve is the **contradiction between real-time response and deep thinking**: users expect millisecond-level responses, while complex problems require seconds of thinking time. How can the model think deeply enough while maintaining low latency? This contradiction is not unique to end-to-end architectures; cascaded pipelines also face it.
+回顾本章的“替代 VAD”叙事链：VAD 靠静音阈值猜测发言权的切换，流式感知（见前文范式一“流式语音感知”一节）把切换判断升级到语义层，而全双工模型彻底消解了“切换”本身——它一直在听，“打断”不再是一个需要专门处理的事件，barge-in 处理链也因此在架构上被省去了大部分环节。这是“替代 VAD”这条叙事线截至写作时的终点。
 
-The three solutions below are not a linear technological iteration—they are design trade-offs for different constraints, coexisting in practice. The choice depends on the application's requirements for latency and depth of thinking. It is necessary to first clarify the distinction between the three: Solutions 1 and 2 are essentially a "fast-slow division of labor" with two independent models running concurrently. They do not depend on end-to-end and can even be applied on top of a cascaded pipeline. Only Solution 3 truly internalizes thinking into the end-to-end model.
+## 思考架构的取舍：从分离到统一
 
-It is worth noting that by 2026, the "fast-slow decoupling" path has become the mainstream choice for cutting-edge voice products and has acquired a specific name. Thinking Machines Lab calls it "Interaction Models"—a real-time interaction model coupled with an asynchronous background reasoning model; xAI's Grok Voice "Think Fast," Pine AI's voice Agent, and the previous section's GPT-Live "delegation" all follow the same route of "fast in the foreground maintaining the conversation, slow in the background for deep reasoning." The choice to decouple rather than "train a single all-powerful model" has a pragmatic reason: frontier reasoning models iterate every few months, while real-time interaction capabilities require specialized data and training objectives. Stuffing both into the same model means chasing a moving target and potentially diluting the most valuable reasoning capability[^ch9-8]. Conversely, by keeping the strongest reasoning model intact in the background and only training a lightweight interaction model for the foreground, one can always use the current strongest "brain"—this is precisely why GPT-Live emphasizes "sustainable swapping to the latest frontier models." Below, we examine the three solutions in order of "coordination mechanism from weak to strong."
+真正要解决的是**实时响应与深度思考之间的矛盾**：用户期待毫秒级的回应，而复杂问题需要秒级的思考时间，如何在保持低延迟的同时让模型想得足够深？这个矛盾并不专属于端到端架构，级联流水线同样绕不开。
 
-### Solution 1: Fast Thinking for Fillers, Slow Thinking for Answers
+下面的三种方案并非线性的技术迭代——它们是针对不同约束条件的设计取舍，在实践中并存，选择哪种取决于应用场景对延迟和思考深度的要求。需要先点明三者的分野：方案一、方案二本质上是“两个独立模型并发”的快慢分工，并不依赖端到端，甚至可以套在级联流水线之上；只有方案三才把思考真正内化进端到端模型。
 
-Fast and slow thinking execute in parallel (Figure 9-5): fast thinking provides a brief filler response within 500ms (similar to a human first saying "let me think"), while slow thinking takes 5-10 seconds in the background for deep reasoning before providing a complete answer. The technology used by slow thinking is called "test-time scaling"—in simple terms, it means letting the model "think a bit longer" when answering a question: instead of giving an answer in one step, it first outlines ideas, derives step-by-step, and checks results, using more computational steps in exchange for higher quality answers.
+值得注意的是，到 2026 年，“快慢解耦”这条路已经成了前沿语音产品的主流选择，并有了专门的名字。Thinking Machines Lab 把它称作“交互模型（Interaction Models）”——一个实时交互模型耦合一个异步的后台推理模型；xAI 的 Grok Voice “Think Fast”、Pine AI 的语音 Agent、以及上一节 GPT-Live 的“委派”，走的都是同一条“快在前台维持对话、慢在后台深度推理”的路线。选择解耦而非“训练一个全能模型”，背后有一个务实的理由：前沿推理模型每隔几个月就迭代一次，而实时交互能力需要专门的数据和训练目标，把两者塞进同一个模型，等于让它去追一个不断移动的靶子，还可能稀释掉最宝贵的推理能力[^ch9-8]。反过来，只要把最强的推理模型原封不动放在后台、只训练一个轻量的交互模型在前台，就能始终用上当下最强的“大脑”——这正是 GPT-Live 强调“可持续换用最新前沿模型”的原因。下面按“协调机制由弱到强”的顺序看三种方案。
 
-![Figure 9-5 Fast/Slow Thinking Architecture and Solution Comparison](images/fig9-5.svg)
+### 方案一：快思考应付，慢思考回答
 
-**Problem 1: Overthinking simple questions.** The user asks "What day is it today?" Fast thinking correctly answers "Wednesday" within 500ms, but slow thinking still runs the full 10 seconds of thinking and then repeats "Wednesday." This not only wastes computational resources but, more critically, disrupts the conversation rhythm—the user already has the answer and is ready to move on, only to be interrupted by a repeated response. **Problem 2: Inconsistency between fast and slow.** The two run independently in parallel. Although they see the same context, their reasoning paths may be completely different—fast thinking gives a preliminary answer based on one assumption, while slow thinking finds that assumption invalid and reaches the opposite conclusion. The user hears contradictory answers within seconds, instantly destroying trust. The root cause is that Solution 1 splits the conversation into two independent thinking processes rather than a coherent cognitive activity, lacking a coordination mechanism between fast and slow.
+快慢思考并行执行（图9-5）：快思考在 500ms 内给出简短的应付性回答（类似于人先说一句“让我想想”），慢思考在后台花 5-10 秒进行深度思考后给出完整回答。慢思考使用的技术叫“推理时计算扩展”（test-time scaling）——通俗地说，就是让模型在回答问题时“多想一会儿”：不是一步给出答案，而是像人类解数学题一样，先列出思路、逐步推导、检查结果，用更多的计算步骤换取更高质量的回答。
+
+
+![图9-5 快/慢思考架构与方案对比](images/fig9-5.svg)
+
+
+**问题一：简单问题过度思考**。用户问“今天星期几”，快思考已在 500ms 内正确回答“星期三”，慢思考仍然跑完整整 10 秒思考后又重复一遍“星期三”。这不仅浪费计算资源，更严重的是破坏对话节奏——用户已经得到答案准备聊下一个话题了，却被一个重复回答打断。**问题二：快慢不一致**。两者独立并行，虽然看到的上下文相同，但思考路径可能完全不同——快思考基于某个假设给出初步答案，慢思考却发现这个假设不成立，得出了相反的结论。用户在几秒之内先后听到自相矛盾的回答，信任感瞬间崩塌。根本原因在于：方案一把对话拆成两个独立的思考过程，而非一个连贯的认知活动，快慢之间缺乏协调机制。
 
 ```
-<user>Is this plan suitable for me?</user>
-<!-- Fast thinking after 0.5 seconds -->
-<assistant (fast thinking)>This plan is very affordable, I recommend you purchase it.</assistant>
-<user>Okay, then I'll...</user>
-<!-- Slow thinking completes after 8 seconds -->
-<assistant (slow thinking)>Wait, I found that this plan lacks the international roaming feature you need, so it might not be suitable.</assistant>
-<user>(Angry) So do you recommend I buy it or not?!</user>
+<user>这个套餐适合我吗?</user>
+<!-- 快思考 0.5 秒后 -->
+<assistant（快思考）>这个套餐价格很优惠，我建议您购买。</assistant>
+<user>好的，那我...</user>
+<!-- 慢思考 8 秒后完成 -->
+<assistant（慢思考）>等一下，我发现这个套餐缺少您需要的国际漫游功能，可能不太适合。</assistant>
+<user>（愤怒） 你到底是建议我买还是不买?!</user>
 ```
 
-### Solution 2: Fast Thinking for Interaction, Slow Thinking for Advice
+### 方案二：快思考交互，慢思考提醒
 
-Solution 2 allows slow thinking to see the output of fast thinking. It provides suggestions to fast thinking via the Agent Status Bar (the dynamic meta-information injection mechanism introduced in Chapter 2), rather than speaking directly to the user. Compared to Solution 1, it improves in two ways: slow thinking runs asynchronously in the background, continuously thinking during speech gaps; and because it can see fast thinking's output, it avoids direct conflict, instead acting as a behind-the-scenes "advisor." The GPT-Live delegation and Pine AI voice Agent mentioned earlier are production examples of Solution 2—the background reasoning model sends its conclusions back to the foreground interaction model via a concise text channel, and the foreground model decides when and how to phrase it for the user.
+方案二让慢思考能看到快思考的输出，通过 Agent 状态栏（第二章介绍的动态元信息注入机制）向快思考提供建议，而不是直接对用户说话。相比方案一改进了两点：慢思考在后台异步运行，利用说话间隙持续思考；由于能看到快思考的输出，不会直接冲突，而是退到幕后当“军师”。前面提到的 GPT-Live 委派、Pine AI 语音 Agent 都是方案二在生产中的实例——后台的推理模型把结论通过一条精简的文本通道回传给前台的交互模型，由前台决定何时、以何种措辞说给用户听。
 
-However, this solution still has fundamental limitations. **Fast thinking may not follow instructions**—communication between two independent thinking instances is indirect and ambiguous. Fast thinking might misinterpret the Agent Status Bar, for example, understanding "the price needs to be reconfirmed" as "ask the user if they can accept this price" rather than "the price calculation is wrong and needs to be recalculated." **Inability to access intermediate thinking results**—during slow thinking's 10 seconds of reasoning, a wealth of valuable intermediate conclusions are generated, but fast thinking cannot see them at all, only waiting for the final Agent Status Bar. If the user asks another question or interrupts before slow thinking completes, fast thinking can only rely on its own limited understanding to respond. This is like two people collaborating to solve a problem but only communicating through notes, unable to see each other's scratch paper.
+但这个方案仍有本质局限。**快思考可能不听指挥**——两个独立的思考实例之间的沟通是间接且模糊的。快思考收到 Agent 状态栏 后可能理解偏了，比如把“价格需要重新确认”理解成“问用户能否接受这个价格”而非“价格算错了要重新计算”。**无法获知中间思考结果**——慢思考 10 秒思考中已经产生了大量有价值的中间结论，快思考完全看不到，只能干等最终 Agent 状态栏。如果用户在慢思考完成前再次提问或打断，快思考只能靠自己有限的理解回答。这就像两个人合作解题却只能通过递纸条交流，看不到对方的草稿纸。
 
-Solution 2 also faces a fundamental theoretical problem: **it cannot achieve "thinking while speaking."** When humans face a complex problem, they do not first formulate the complete answer in their mind and then speak it all at once; instead, they think and speak in segments—"This is an interesting question... (pause to think) First, we need to consider... (continue thinking) Secondly..." In Solution 2, fast thinking can only utter filler words while waiting for slow thinking to produce results, unable to naturally intersperse the thinking process within the conversation.
+方案二还面临一个根本性的理论问题：**无法实现“边想边说”**。人类面对复杂问题时，不是先在脑子里想好完整答案再一口气说出来，而是想一段说一段——“这个问题很有意思……（停顿思考）首先我们需要考虑……（继续思考）其次……”。方案二中的快思考只能说些填充词干等慢思考出结果，无法将思考过程自然地穿插在对话中。
 
-### Solution 3: End-to-End Unification of Thinking and Expression (Using Step-Audio R1 as an Example)
+### 方案三：端到端思考与表达统一（以 Step-Audio R1 为例）
 
-Although Solution 2 solves the waiting problem for slow thinking, it is still architecturally "think first, then speak"—thinking and expression remain two separate processes, making it impossible to achieve the human-like "thinking while speaking." To break this fundamental limitation, thinking capabilities must be directly internalized into the model.
+方案二虽然解决了慢思考的等待问题，但在架构上依然是“先想再说”——思考和表达仍是两个分离的过程，不可能实现像人一样边想边说。要突破这个根本限制，需要将思考能力直接内化到模型中。
 
-Step-Audio R1 proposes a fundamentally different solution along this direction: it internalizes thinking capabilities directly into the end-to-end audio language model, achieving true "thinking while speaking" through a dual-brain architecture. It actually consists of two complementary mechanisms, each solving a different problem: **Modal-Grounded Reasoning Distillation (MGRD)** first solves "thinking correctly"—ensuring the model truly reasons based on acoustic features rather than text transcripts; **MPS Dual-Brain Architecture** then solves "speaking in a timely manner"—enabling thinking and expression to run in parallel for low-latency thinking while speaking. The former is a prerequisite for the latter: only when thinking is rooted in sound does thinking while speaking become truly valuable. These are elaborated on below.**Textual Surrogate Reasoning**. Ideally, a voice model should directly analyze acoustic features (such as pitch, rhythm, and intonation) to understand a speaker's emotion or intent. However, many models in practice take a shortcut: existing audio language models exhibit a counterintuitive phenomenon where longer chains of thought lead to worse performance. The Step-Audio R1 team identified the root cause as "Textual Surrogate Reasoning" (using textual information to "stand in" for acoustic information for analysis): when the model "thinks," it is actually performing semantic reasoning based on text transcription, rather than genuinely analyzing acoustic features. For example, when asked to judge the emotion of a song, the model analyzes "the lyrics mention sadness," rather than "the minor key melody combined with a descending pitch contour conveys a feeling of sorrow." This modality mismatch originates from the training data: most audio models' CoT (Chain-of-Thought) data is generated by text models, which naturally inherit a pure-text thinking pattern.
+Step-Audio R1 正是沿着这个方向提出了一个根本不同的方案：将思考能力直接内化到端到端音频语言模型中，通过双脑架构实现真正的“边想边说”。它其实由两个互补的机制组成，分别解决两个不同的问题：**模态锚定思考蒸馏（MGRD）**先解决“想得对不对”——让模型真正基于声学特征而非文本转录来思考；**MPS 双脑架构**再解决“说得及不及时”——让思考与表达并行，实现低延迟的边想边说。前者是后者的前提：只有思考本身扎根于声音，边想边说才真正有价值。下面依次展开。
 
-**Modality-Grounded Reasoning Distillation** (MGRD) addresses this issue through iterative self-improvement (Figure 9-6). Although the name is a mouthful, the core idea is intuitive: filter out thought processes that are "truly listening to the sound," and use them to train the model, teaching it to analyze with its ears like a music teacher, rather than just reading the lyrics like a text editor. The specific steps are threefold:
+**文本代理思考问题**。理想情况下，语音模型应该直接分析声音特征（如音高、节奏、语调）来理解说话人的情绪或意图。但实际上很多模型走了捷径：现有音频语言模型存在一种反直觉现象，思考链越长，性能反而越差。Step-Audio R1 团队发现根因是“文本代理思考”（Textual Surrogate Reasoning，即用文本信息“代替”声学信息来分析）：模型在“思考”时，实际上是基于文本转录在做语义层面的思考，而不是真正在分析声学特征。举个例子：让模型判断一首歌的情绪，它分析的是“歌词里提到了悲伤”，而不是“小调旋律加上下行音高轮廓传递出忧伤感”。这种模态错位源于训练数据：大多数音频模型的 CoT（Chain-of-Thought，思维链）数据由文本模型生成，自然继承了纯文本的思考模式。
 
-1.  Have the current model generate multiple different thought processes for the same audio segment, then filter out those genuinely based on acoustic features. How to filter? Check if the thought content mentions specific sound parameters. For example, for an angry voice input, a text-based thought would be "The user said negative words like 'too bad,' so I judge it as anger"—this is only analyzing the text content; an acoustic-feature-based thought would be "The speaking rate is 40% faster than normal, the volume is significantly higher, and the pitch is sharper"—this is truly "listening" to the sound. MGRD selects the latter.
-2.  Retrain the model using these high-quality thought data to strengthen its "think with your ears" ability.
-3.  Further optimize through reinforcement learning to prevent the model from taking shortcuts by skipping the thinking process and guessing the answer directly.
+**模态锚定思考蒸馏**（MGRD, Modality-Grounded Reasoning Distillation）通过迭代自我改进来解决这一问题（图9-6）。名字虽然拗口，核心思路其实很直观：筛选出“真正在听声音”的思考过程，用它们来训练模型，让模型学会像音乐老师一样用耳朵分析，而不是像文字编辑一样只看歌词。具体分三步：
 
-After multiple iterations, the foundation of thinking gradually shifts from text abstraction to acoustic analysis—the model begins to focus on "the pitch contour drops sharply at 1.2 seconds" rather than vaguely stating "the speaker seems unhappy."
+1. 让当前模型对同一段音频生成多条不同的思考过程，然后筛选出真正基于声学特征的那些。怎么筛选？看思考内容里有没有提到具体的声音参数。例如，对于一段愤怒的语音输入，基于文本的思考是“用户说了‘太差了’这种负面词汇，所以判断是愤怒”——这只是在分析文字内容；而基于声学特征的思考是“语速比正常快了 40%、音量明显升高、声调变尖”——这才是在真正“听”声音。MGRD 筛选后者
+2. 用这些高质量的思考数据重新训练模型，强化其“用耳朵思考”的能力
+3. 通过强化学习进一步优化，防止模型偷懒跳过思考直接猜答案
 
-**MPS Dual-Brain Architecture** (Mind-Paced Speaking) addresses the latency contradiction between thinking and speech output (Figure 9-6). Its inspiration comes from the division of labor in the human brain: the areas responsible for thinking and those responsible for organizing language are separate and can work in parallel—you think of the next sentence while your mouth is still speaking the previous one. MPS uses two models to simulate this division: the **Formulation Brain** is responsible for continuous thinking, producing segments of thought results; the **Articulation Brain**, upon receiving each new segment of thought results, combines it with previous thoughts and the existing reply to convert it into a speech response.
+经过多轮迭代，思考的根基从文本抽象逐步迁移到声学分析——模型开始关注“音高轮廓在 1.2 秒处急剧下降”而非笼统地说“说话者似乎不开心”。
 
-Both run in parallel—the Formulation Brain doesn't need to finish thinking everything before the Articulation Brain starts speaking. For example, at t=0ms, the Formulation Brain starts analyzing the user's question; at t=200ms, it outputs the first segment of thought results (a sequence of text tokens); the Articulation Brain receives this result at t=200ms, combines it with the generated reply context, and starts outputting the corresponding speech tokens at t=350ms—the two modules operate in a pipeline parallel fashion, and the user hears the first syllable at t=350ms.
+**MPS 双脑架构**（Mind-Paced Speaking，直译为“跟随思维节奏说话”）解决的是思考与语音输出之间的延迟矛盾（图9-6）。它的灵感来自人脑的分工：人脑中负责思考的区域和负责组织语言的区域是分开的，可以并行工作——你在想下一句话的同时，嘴巴还在说上一句。MPS 用两个模型模拟这种分工：**构思脑**（Formulation Brain）负责持续思考，产出一段段的思考结果；**表达脑**（Articulation Brain）每收到一段新的思考结果，就结合之前的思考和已有回复，把它转化为语音回复。
 
-![Figure 9-6 Step-Audio R1 MGRD and MPS Dual-Brain Architecture](images/fig9-6.svg)
+两者并行运行——构思脑不必想完全部内容，表达脑就已经开始说话了。例如，在 t=0ms 时构思脑开始分析用户问题，在 t=200ms 时输出第一段思考结果（文本 token 序列）；表达脑在 t=200ms 收到这段结果后，结合已生成的回复上下文，在 t=350ms 开始输出对应的语音 token——两个模块以流水线方式并行运作，用户在 t=350ms 就能听到第一个音节。
 
-> **Experiment 9-4 ★★★: Using Step-Audio R1 for End-to-End Speech Thinking**
+
+![图9-6 Step-Audio R1 MGRD 与 MPS 双脑架构](images/fig9-6.svg)
+
+
+> **实验 9-4 ★★★：使用 Step-Audio R1 实现端到端语音思考**
 >
-> This experiment uses the Step-Audio R1 model to compare the performance of different configurations on speech thinking and dialogue tasks. Step-Audio R1 consists of an audio encoder, an audio adapter, and a Qwen2.5 32B decoder, requiring multi-GPU deployment.
+> 本实验使用 Step-Audio R1 模型，对比不同配置在语音思考与对话任务上的表现。Step-Audio R1 由音频编码器、音频适配器和 Qwen2.5 32B 解码器组成，需要多卡 GPU 部署。
 >
-> This experiment evaluates two tasks: **Spoken-MQA** (Spoken Math Questions) tests whether the model can perform multi-step mathematical reasoning after hearing an orally presented problem; **URO-Bench** (Chinese Oral Dialogue Benchmark) evaluates the quality of open-ended dialogue.
+> 本实验在两个任务上评估：**Spoken-MQA**（语音数学题）考察模型在听到口述题目后能否进行多步数学推理；**URO-Bench**（中文口语对话基准）考察开放对话质量。
 >
-> Test configurations are divided into two dimensions. The first is **Thinking Timing**: the complete **TBS** (Think-Before-Speak, serving as a latency-unconstrained control baseline) generates all thoughts before speaking; to reduce latency, MPS offers two "think-while-speaking" variants—**Speak-First** (also called spkfirst, zero latency, speaking and thinking start simultaneously) and **Think-First** (also called thkfirst, waiting for the thinking brain to produce the first segment before speaking, latency of about 80 tokens). The second dimension is **Architecture**: MPS dual-brain parallel vs. traditional single-model TBS.
+> 测试配置分为两个维度。第一是**思考时机**：完整的 **TBS**（Think-Before-Speak，先想完再说，作为无延迟约束的对照基线）会先生成全部思考再开口；为了降低延迟，MPS 提供两种“边想边说”的变体——**Speak-First**（也称 spkfirst，零延迟，开口和思考同时启动）与 **Think-First**（也称 thkfirst，等思考脑产出第一段后才开口，延迟约 80 token）。第二是**架构**：MPS 双脑并行 vs. 传统单模型 TBS。
 >
-> The results are shown in Table 9-1, used to compare the performance of different thinking timing and architecture configurations on math accuracy and dialogue scores.
+> 结果如表9-1所示，用于对比不同思考时机和架构配置在数学准确率与对话评分上的表现。
 >
-> Table 9-1 Step-Audio R1 Different Speech Thinking Configuration Comparison
+> 表9-1 Step-Audio R1 不同语音思考配置对比
 >
-> | Configuration | Spoken-MQA | URO-Bench |
+> | 配置 | Spoken-MQA | URO-Bench |
 > |------|-----------|-----------|
-> | Answer directly without thinking (Baseline) | 70.6% | 77.4 |
-> | MPS Speak-First (Zero Latency) | 92.8% | 82.5 |
-> | MPS Think-First (~80 tok Latency) | 93.9% | 84.8 |
-> | Complete TBS (No Latency Constraint) | 93.0% | — |
+> | 不思考直接回答（基线） | 70.6% | 77.4 |
+> | MPS Speak-First（零延迟） | 92.8% | 82.5 |
+> | MPS Think-First（~80 tok 延迟） | 93.9% | 84.8 |
+> | 完整 TBS（无延迟约束） | 93.0% | — |
 >
-> An interesting finding is that Speak-First has minimal impact on thinking tasks (92.8% is close to the complete TBS's 93.0%). The reason is that the beginning of a **CoT** (Chain-of-Thought) usually just restates the problem content and hasn't yet entered true reasoning. Therefore, even if the model starts thinking simultaneously with speaking, the final accuracy is hardly affected. Another noteworthy detail is that Think-First (93.9%) is even slightly higher than the latency-unconstrained complete TBS (93.0%)—one possible explanation is that producing thoughts in segments and converting them segment by segment into speech acts like step-by-step supervision, having a positive effect; of course, the difference between the two is also within the evaluation error margin and should not be over-interpreted.
->
-
-Option Three internalizes thinking into a single model, most elegantly achieving "thinking while speaking," but the cost is the "moving target" mentioned at the beginning of this section: this single model must be both the strongest reasoner and a real-time speaker, and both capabilities are evolving rapidly, so the unified approach requires repeated retraining to keep up. This also explains the industry divide at the time of writing—cutting-edge products pursuing "interchangeable latest brains" (GPT-Live, Grok Voice, Pine AI) mostly bet on Option Two's decoupled approach, while Option Three is more suitable for scenarios pursuing ultimate naturalness and willing to bear the cost of specialized training. It's not about one replacing the other, but a trade-off between an "interchangeable brain" and "tighter thinking-while-speaking."
-
-### The Interface Between Fast and Slow: What Else Can Be Passed Besides Text
-
-(Hint: This is a cross-scenario interface discussion, temporarily leaving the voice main thread.) Looking back at Option Two reveals a neglected design dimension: the "message" passed from slow thinking to fast thinking uses the **text** channel (passing a suggestion via a status bar). Text is easy to understand and debug, but it's a thin straw for the rich content in the slow thinker's mind—the truly rich intermediate states are compressed into a few sentences. So, can this interface between fast and slow not use text?
-
-In real-time gaming, the most demanding scenario for timing, this path is feasible (it can be called a Latent Bridge) [^ch9-8]: freeze both a small model responsible for quick reactions (producing dozens of actions per second) and a slow model responsible for reasoning (producing one thought per second), and only train a small "bridge" of a few tens of millions of parameters between them. This bridge directly projects the slow model's hidden layer conclusions into a few "latent tokens," which are spliced into the fast model's input, similar to how multimodal models insert visual tokens—bypassing the round trip of "idea → text → re-understanding." The result is that on multiple Atari games, this latent space channel outperforms the traditional text channel by a significant margin (+26% to +82% on some games), while only adding about 5 milliseconds per step, still keeping up with real-time demands.
-
-It also reveals an honest boundary: **whether fast-slow collaboration is useful depends on whether the task's bottleneck is "can't think of it" or "can't react in time"**—this bridge only helps when the slow thinker is inherently better than the fast reactor (this correlation across games is as high as r≈0.9); conversely, if the task purely relies on reaction speed, even the best bridge is useless. This judgment applies beyond games; it also foreshadows the same problem Computer Use will encounter later in this chapter: when is it worth inviting a "slow strategist," and when does it just add latency?
-
-[^ch9-8]: The complete analysis of training only a latent space bridge between two frozen models and "when it's worth inviting a slow strategist" can be found in Li, Bojie and Noah Shi. *The Latent Bridge: A Continuous Slow-Fast Channel for Real-Time Game Agents.* arXiv:2606.24470, 2026.
-
-Whether end-to-end or modular, the quality of the perception and execution layers remains crucial. End-to-end models solve the architectural latency problem, but the fundamentals of "hearing accurately" and "speaking naturally" are not automatically solved by a change in architecture—"hearing accurately" corresponds to streaming speech perception, discussed in Paradigm One; here, we look at the execution layer for "speaking naturally": more human-like speech synthesis.
-
-## More Human-like Speech Synthesis
-
-The "perfection" of traditional TTS is precisely the problem: overly fluent, zero pauses, no filler words make it instantly recognizable as a machine. The "imperfections" in human speech are not flaws—pauses, filler words ("um," "uh," "you know"), occasional repetitions—are natural externalizations of the thinking process, conveying important signals to the listener like "I'm thinking" or "I'm not entirely sure." However, AI's thinking speed is much faster than speech playback, and its output is naturally fluent and complete; directly synthesizing it reveals its machine nature.
-
-**Solution**: Delegate the decision of "where to pause and what tone to use" to the main LLM. The LLM outputs not just text, but also control tokens: `[THINKING]` indicates inserting a 1-2 second thinking pause and filler sound ("um..."); `[SEARCHING]` generates a shorter pause and searching filler words ("you know...", "how should I put it"); `[EMO:happy]` adjusts tone and prosody; `[SPEED:0.8x]` controls speaking rate. Only the LLM knows whether it's answering a complex question needing a pause, the user is impatient and it should speed up, or it's a casual chat and should be lively.
-
-In this scheme, TTS acts as a multimodal generator, taking text + control tokens as input and outputting audio. It synthesizes speech normally for regular text, and generates corresponding non-linguistic audio for control tokens: `[THINKING]` generates a drawn-out "um...", `[SIGH]` generates a sigh, `[LAUGH:small]` generates a light laugh, `[BREATH]` generates an inhale sound.
-
-There are two implementation paths: one is developing proprietary TTS with native support for control tokens (highest flexibility, but requires a specialized team); the other is using voice cloning, preparing dozens of reference audio clips for the same virtual persona covering different emotions, speeds, and styles, and selecting the best matching reference audio based on the control token to call a TTS API (e.g., ElevenLabs, Fish Audio), which can be deployed within weeks.
-
-> **Experiment 9-5 ★★: Control Token-Driven TTS Based on Fish Audio**
->
-> Use Fish Audio S1's voice cloning capability (only 3-10 seconds of reference audio needed for zero-shot cloning of the same timbre). Build a library of 24 reference audio clips, covering Emotion (Neutral/Happy/Frustrated/Thinking) x Speed (Normal/Fast/Slow) x Style (Formal/Casual), each about 5 seconds long.
->
-> LLM output example: `[EMO:happy][SPEED:fast]Great! Your order has been confirmed.[THINKING]Um, let me check the shipping time...[EMO:neutral][SPEED:normal]It is expected to arrive tomorrow afternoon.`
->
-> The execution layer parses the tokens and maps them to the corresponding reference audio: `[EMO:happy][SPEED:fast]` maps to "Happy+Fast+Casual" reference; `[THINKING]` maps to "Thinking+Slow+Formal" reference (with pause rhythm and hesitant tone); `[EMO:neutral][SPEED:normal]` maps to "Neutral+Normal+Formal" reference. Fish Audio ensures consistent timbre across different reference clips, only varying prosody and emotion.
->
-> Compare three configurations: No control tokens (fluent but robotic, sounds like AI), Single reference audio (natural but emotionally monotone), Multi-reference audio library (cheerful and fast when confirming information, natural pauses before explanations, overall close to a real human customer service representative's expression).
-
-## Computer Use: GUI Automation Agent
-
-You might notice by now that this chapter devotes significantly more space to voice than the subsequent two scenarios—this is intentional. On the evolutionary path of real-time multimodality, voice is the most complete and most worthy as a reference frame: starting from the problem of "serial pipeline latency is too high," through a series of solutions like end-to-end, full-duplex, and thinking-while-speaking, all the way to today's relatively mature end state, the entire journey from problem → solution → end state has been traversed. Therefore, we explain it thoroughly. The subsequent Computer Use and Robotics scenarios can be viewed against this voice trajectory—seeing where each stands on this evolutionary line and where they are stuck.
-
-These three scenarios seem different but face the same core challenges: real-time perception, low-latency decision-making, and continuous interaction. Next, let's see how these technical themes reappear in visual interaction (Computer Use) and physical interaction (Robotics)—first, expanding the perspective from the auditory modality to the visual modality: what if an Agent can not only understand speech but also "see" the screen and operate the graphical interface?
-
-Computer Use (also known as GUI Automation Agent) allows AI to use software like a human by observing the screen and operating the mouse and keyboard—for example, opening a browser to search for information, filling in data in a spreadsheet application, or adjusting configurations in system settings. Its core is a **Perceive-Think-Act** loop (Figure 9-7):
-
-1.  The Agent takes a screenshot of the current screen.
-2.  A multimodal model receives the screenshot and task instruction, and outputs a thought and a specific action.
-3.  The execution layer performs the action in the real environment (moving the mouse, clicking, typing text, etc.).
-4.  It waits for the interface to respond, takes another screenshot, and enters the next loop iteration.
-
-![Figure 9-7 Computer Use Agent's Perceive-Think-Act Loop](images/fig9-7.svg)
-
-There are three key design dimensions in this loop: **Action Space** (what operations the Agent can perform), **Visual Grounding** (how to find the target element in the screenshot), and **Model Architecture** (how to generate the correct action from the screenshot).
-
-### Action Space Design
-
-Anthropic defines three types of tools that constitute a complete interaction capability (Figure 9-8):
-
-![Figure 9-8 Computer Use Action Space](images/fig9-8.svg)**GUI Operation Tool** (computer tool): Mouse operations include moving (mouse_move), left/right/middle click, double-click/triple-click, dragging (left_click_drag), and more precise press/release actions (left_mouse_down/up). Scrolling (scroll) supports four directions and can be combined with modifier keys. Keyboard operations include typing character by character (type, with a 12ms interval between characters to simulate real typing), key combinations (key, e.g., Ctrl+C), and holding a key (hold_key). Perception actions: screenshot, cursor position retrieval (cursor_position), and waiting (wait).
-
-**Command Execution Tool** (bash tool): Provides a persistent bash terminal session with a 120-second timeout. It uses a sentinel string to detect command completion and maintains environment state across multiple calls (e.g., after `cd` to a directory, the next call remains in that directory).
-
-**File Editing Tool** (str_replace_editor): Enables safe editing via string matching, supporting view, create, replace, insert, and undo operations. It is more precise than directly overwriting the entire file and less prone to accidentally modifying other content.
-
-> **Experiment 9-6 ★: Running the Anthropic Computer Use Demo**
->
-> The container packages a complete Ubuntu desktop environment (including a browser, terminal, and other common tools). The frontend receives task instructions, the backend sends the instructions along with screenshots to Claude, and the model returns operation instructions (move mouse, click, type text, etc.), which are then executed in the virtual desktop.
->
-> Key observation: Each action takes 2-5 seconds (significantly slower than a human), but the system demonstrates good planning ability for common tasks, autonomously decomposing them into reasonable action sequences.
+> 一个有趣的发现是：Speak-First 对思考任务影响极小（92.8% 接近完整 TBS 的 93.0%）。原因在于 **CoT**（Chain-of-Thought，思维链）的开头通常只是在复述问题内容，还没进入真正的推理，因此即便让模型一开口就同时启动思考，最终准确率也几乎不受损失。另一个值得注意的细节是：Think-First（93.9%）甚至略高于无延迟约束的完整 TBS（93.0%）——一种可能的解释是分段产出思考、逐段转化为表达，起到了类似分步监督的正向作用；当然，两者差距也在评测误差范围之内，不宜过度解读。
 >
 
-### Visual Grounding
+方案三把思考“内化”进单一模型，最优雅地实现了“边想边说”，但代价正是本节开头说的“移动靶子”：这一个模型既要当最强的推理者、又要当实时的说话者，而两种能力都在快速演进，统一路线就得反复重训才跟得上。这也解释了写作时的产业分野——追求“可随时换用最新大脑”的前沿产品（GPT-Live、Grok Voice、Pine AI）大多押注方案二的解耦路线，方案三则更适合追求极致自然度、且愿意承担专门训练成本的场景。两者不是谁取代谁，而是“可换的大脑”与“更紧的边想边说”之间的取舍。
 
-In each iteration of the loop, the model needs to accurately locate the target element in the screenshot—"Where is the search box?" "What are the coordinates of the submit button?" This is the visual grounding problem. Currently, there are **two main approaches**: one is to turn localization into a **multiple-choice problem**—first annotate the interface elements with numbers, and the model only needs to select one; the other is **pure coordinate prediction**—letting the model "look" at the screenshot and report coordinates directly, just like a human. The multiple-choice approach has two implementation methods: **pure visual annotation** (the original Set-of-Mark, using a segmentation model to cut out candidate regions on the pixels) and **structured element indexing** (DOM/Accessibility Tree, directly reading the interface's inherent structure). The common advantage of the multiple-choice approach is that it transforms the open-ended problem of "find the button in the screenshot and predict its coordinates" into a closed-ended one of "choose one from the already annotated elements"—just as multiple-choice questions are easier to answer correctly than fill-in-the-blank questions in an exam, the model only needs to say "click [123]" instead of "click the blue button approximately 200 pixels to the right of the top-left corner of the screen."
+### 快慢之间的接口：文本之外还能传什么
 
-**Set-of-Mark: Visual Annotation Method.**
+（提示：这是一段跨场景的接口讨论，暂时离开语音主线。）回头看方案二会发现一个被忽略的设计维度：慢思考给快思考“递话”，用的是**文本**通道（通过状态栏传一句建议）。文本好懂、好调试，却是慢思考脑子里那点东西的一根细吸管——真正丰富的中间状态，被压成了几句话。那么，这条快慢之间的接口，能不能不用文字？
 
-The original Set-of-Mark (SoM) was proposed by Microsoft Research in 2023, initially to unlock the visual grounding capabilities of GPT-4V. It is a **purely visual** method: it uses image segmentation models (SAM, SEEM, etc.) to automatically cut out candidate regions on the screenshot, overlays a numbered marker on each region, and the model sees an image with numbers. The model only needs to report the number, and the system converts it into the center coordinates of the corresponding region. The entire process does not require a DOM or any internal interface structure, so it is equally applicable to native desktop software and game interfaces—as long as the segmentation model can cut out the candidate regions.
+在实时游戏这种对节拍最苛刻的场景里，这条路是走得通的（可称之为潜空间桥，Latent Bridge）[^ch9-8]：让一个负责快速反应的小模型（每秒出十几个动作）和一个负责推理的慢模型（每秒出一次思考）都**冻结不动**，只训练它们之间一个几千万参数的小“桥”，把慢模型的隐层结论直接投影成几个“潜 token”，像多模态模型塞视觉 token 那样拼进快模型的输入里——绕开了“想法→文字→再理解”的往返。结果在多个 Atari 游戏上，这条潜空间通道比传统文本通道又高出一截（部分游戏 +26% 到 +82%），而每步只多花约 5 毫秒，仍然跟得上实时的节拍。
 
-**Structured Element Indexing: A Structured Implementation of the SoM Idea on the Web.**
+它也给出一条诚实的边界：**快慢协作到底有没有用，取决于任务的瓶颈在“想不想得到”还是“来不来得及反应”**——当慢思考本来就比快反应强时，这座桥才帮得上忙（这条相关性跨游戏高达 r≈0.9）；反过来，如果任务纯拼反应速度，再好的桥也无济于事。这个判断不止对游戏成立，它也预告了本章后面 Computer Use 会遇到的同一个问题：什么时候值得请一个“慢军师”，什么时候那只是徒增延迟。
 
-When the interface itself can provide structured information, annotation can be more precise. Modern web pages define a complete element structure (DOM tree) and semantic roles (which is a button, which is an input box) before rendering, and the Accessibility Interface (Accessibility Tree) provides similar information for many desktop applications. Instead of having a segmentation model guess "which region is a button" from the pixels, it's better to directly ask the interface itself, "What clickable elements do you have?" The Web Agent approach, represented by the browser-use project, does exactly this: it enumerates interactive elements from the DOM and numbers them. This can be seen as a structured implementation of the SoM idea on the Web (Figure 9-9). The process consists of four steps:
+[^ch9-8]: 只训练一座冻结双模型之间的潜空间桥、以及“何时值得请慢军师”的完整分析见 Li, Bojie and Noah Shi. *The Latent Bridge: A Continuous Slow-Fast Channel for Real-Time Game Agents.* arXiv:2606.24470, 2026.
 
-1. Obtain the structured representation (DOM tree) and accessibility information of the web page through the browser debugging interface (CDP, Chrome DevTools Protocol)
-2. Automatically detect which elements are interactive (buttons, input boxes, links, etc.)
-3. Annotate each interactive element with a unique ID and draw bounding boxes on the screenshot
-4. Simultaneously generate a text list describing the element corresponding to each ID
+无论端到端还是模块化，感知层和执行层各自的质量仍然至关重要。端到端模型解决了架构层面的延迟问题，但“听得准”和“说得像”这两个基本功并不会因为架构的变化而自动解决——“听得准”对应的流式语音感知已在范式一中讨论过，这里再看“说得像”的执行层：更像人的语音合成。
+
+## 更像人的语音合成
+
+传统 TTS 的“完美”恰恰是问题所在：过于流畅、零停顿、没有填充词的语音让人一听就知道是机器。人类说话时的那些“不完美”并非缺陷——停顿、填充词（“嗯”、“呃”、“那个”）、偶尔的重复——其实是思考过程的自然外化，向听者传递“我正在想”“我不太确定”等重要信号。但 AI 的思考速度远快于语音播放，输出天然流畅完整，直接合成出来就会暴露机器身份。
+
+**解决方案**：把“在哪里该停顿、该用什么语气”的决策权交给主 LLM。LLM 输出的不仅是文本，还包括控制标记：`[THINKING]` 表示插入 1-2 秒的思考停顿和填充音（“嗯……”）；`[SEARCHING]` 生成较短停顿和搜索性填充词（“那个……”“怎么说呢”）；`[EMO:happy]` 等调整语气韵律；`[SPEED:0.8x]` 控制语速。只有 LLM 才知道当前是在回答复杂问题需要停顿一下、还是用户已经不耐烦了应该加快语速、又或者是轻松闲聊该活泼些。
+
+TTS 在这个方案中扮演多模态生成器的角色，输入文本 + 控制标记，输出音频。遇到普通文本就正常合成语音，遇到控制标记就生成对应的非语言音频：`[THINKING]` 生成“嗯……”拖长音，`[SIGH]` 生成叹气声，`[LAUGH:small]` 生成轻笑，`[BREATH]` 生成吸气声。
+
+实现路径有两条：一是自研 TTS 原生支持控制标记（灵活性最高，但需要专业团队）；二是利用 voice cloning（声音克隆），为同一个虚拟人准备数十条不同情绪、语速、风格的参考语音，根据控制标记选择最匹配的参考语音去调用 TTS API（如 ElevenLabs、Fish Audio），几周内就能完成部署。
+
+> **实验 9-5 ★★：基于 Fish Audio 的控制标记驱动 TTS**
+>
+> 使用 Fish Audio S1 的声音克隆能力（只需 3-10 秒参考语音就能零样本克隆出同一音色）。构建 24 条参考语音库，覆盖情绪（中性/高兴/沮丧/思考）x 语速（正常/快/慢）x 风格（正式/轻松），每条约 5 秒。
+>
+> LLM 输出示例：`[EMO:happy][SPEED:fast]太好了！您的订单已确认。[THINKING]嗯，让我查一下发货时间...[EMO:neutral][SPEED:normal]预计明天下午送达。`
+>
+> 执行层解析标记并映射到对应的参考语音：`[EMO:happy][SPEED:fast]` 对应“高兴+快速+轻松”参考音，`[THINKING]` 对应“思考+慢速+正式”参考音（带停顿节奏和犹豫语气），`[EMO:neutral][SPEED:normal]` 对应“中性+正常+正式”参考音。Fish Audio 会保证不同参考语音之间音色一致，只是韵律和情感有所变化。
+>
+> 对比三种配置：无控制标记（流畅但机械，一听就是 AI）、单一参考语音（自然但情感单调）、多参考语音库（确认信息时欢快快速，解释说明前有自然停顿，整体接近真人客服的表达方式）。
+
+## Computer Use：GUI 自动化 Agent
+
+读到这里也许会注意到，本章给语音的篇幅明显多于后两个场景——这是有意为之。在实时多模态这条演进线上，语音是走得最完整、最值得当作参考系的一个：从“串行流水线延迟太高”这个问题出发，经过端到端、全双工、边想边说等一系列方案，一直走到今天相对成型的终局，问题→方案→终局的全程都已经跑通。因此我们把它讲透，接下来的 Computer Use 和机器人两个场景，都可以对照语音这条脉络来看——它们各自走到了这条演进线的哪一段、卡在了哪里。
+
+这三个场景看似不同，却面临相同的核心挑战：实时感知、低延迟决策、持续交互。接下来看这些技术主题如何在视觉交互（Computer Use）和物理交互（机器人）中重现——首先把视角从听觉模态扩展到视觉模态：如果 Agent 不仅能理解语音，还能“看懂”屏幕并操作图形界面呢？
+
+Computer Use（也称 GUI 自动化 Agent）让 AI 像人类一样通过观察屏幕、操作鼠标键盘来使用软件——比如打开浏览器搜索信息、在表格软件中填写数据、或在系统设置中调整配置。其核心是一个**感知-思考-行动**的循环（图9-7）：
+
+1. Agent 对当前屏幕截图
+2. 多模态模型接收截图和任务指令，输出一段思考和一个具体动作
+3. 执行层在真实环境中执行该动作（移动鼠标、点击、输入文字等）
+4. 等待界面响应后再次截图，进入下一轮循环
+
+
+![图9-7 Computer Use Agent 的感知-思考-行动循环](images/fig9-7.svg)
+
+
+这个循环中有三个关键设计维度：**动作空间**（Agent 能执行哪些操作）、**视觉定位**（如何在截图中找到目标元素）、以及**模型架构**（如何从截图生成正确动作）。
+
+### 动作空间设计
+
+Anthropic 定义三类工具构成完整的交互能力（图9-8）：
+
+
+![图9-8 Computer Use 动作空间](images/fig9-8.svg)
+
+
+**GUI 操作工具**（computer tool）：鼠标操作包括移动（mouse_move）、左/右/中键点击、双击/三击、拖拽（left_click_drag），以及更精细的按下/松开（left_mouse_down/up）。滚动（scroll）支持四个方向并可配合修饰键。键盘操作包括逐字输入（type，每个字符间隔 12ms 模拟真实打字）、组合键（key，如 Ctrl+C）、长按（hold_key）。感知动作：截图（screenshot）、获取光标位置（cursor_position）、等待（wait）。
+
+**命令执行工具**（bash tool）：提供持久的 bash 终端会话，120 秒超时，通过哨兵字符串检测命令是否执行完毕，多次调用之间保持环境状态（比如 cd 到某个目录后下次调用还在那个目录）。
+
+**文件编辑工具**（str_replace_editor）：通过字符串匹配实现安全编辑，支持查看、创建、替换、插入和撤销操作，比直接覆盖整个文件更精确，不容易误改其他内容。
+
+> **实验 9-6 ★：运行 Anthropic Computer Use Demo**
+>
+> 容器打包了一个完整的 Ubuntu 桌面环境（含浏览器、终端等常用工具）。前端接收任务指令，后端将指令与截图发送给 Claude，模型返回操作指令（移动鼠标、点击、输入文字等），执行层在虚拟桌面中执行。
+>
+> 关键观察：每个动作间隔 2-5 秒（显著慢于人类），但对常见任务展现良好规划能力，能自主拆解为合理操作序列。
+>
+
+### 视觉定位（Grounding）
+
+在循环的每一轮中，模型需要在截图中准确定位目标元素——“搜索框在哪里？”“提交按钮的坐标是什么？”这就是视觉定位（Grounding）问题。当前主要有**两大思路**：一是把定位变成**选择题**——先把界面元素标注好编号，模型只需从中选一个；二是**纯坐标预测**——让模型像人一样直接“看”着截图报出坐标。其中选择题思路又有两种实现方式：**纯视觉标注**（原始的 Set-of-Mark，用分割模型在像素上切出候选区域）和**结构化元素索引**（DOM/Accessibility Tree，直接读取界面自带的结构）。选择题思路的共同优势，是把开放式的“在截图中找到按钮并预测坐标”转化为封闭式的“从已标注好的元素中选一个”——就像考试中选择题比填空题更容易答对一样，模型只需说“点击 [123]”而不是“点击屏幕左上角偏右大约 200 像素处的蓝色按钮”。
+
+**Set-of-Mark：视觉标注法。**
+
+原始的 Set-of-Mark（SoM）由微软研究院于 2023 年提出，最初是为了释放 GPT-4V 的视觉定位能力。它是一个**纯视觉**方法：用图像分割模型（SAM、SEEM 等）在截图上自动切出候选区域，为每个区域叠加编号标记，模型看到的是一张带编号的图，只需报出编号，由系统换算成对应区域的中心坐标。整个过程不需要 DOM，也不需要任何界面内部结构，因此原生桌面软件、游戏界面同样适用——只要分割模型能把候选区域切出来。
+
+**结构化元素索引：SoM 思想在 Web 上的结构化实现。**
+
+当界面本身能提供结构化信息时，标注可以做得更精确。现代网页在渲染之前就已经定义了完整的元素结构（DOM 树）和语义角色（哪个是按钮、哪个是输入框），无障碍接口（Accessibility Tree）为许多桌面应用提供了类似的信息。与其让分割模型在像素里猜“哪个区域是按钮”，不如直接问界面本身“你有哪些可以点击的元素？”。以 browser-use 项目为代表的 Web Agent 方案正是这样做的：从 DOM 中枚举可交互元素并编号，可以看作 SoM 思想在 Web 上的结构化实现（图9-9）。流程分四步：
+
+1. 通过浏览器调试接口（CDP，Chrome DevTools Protocol）获取网页的结构化表示（DOM 树）和无障碍信息
+2. 自动检测哪些元素可以交互（按钮、输入框、链接等）
+3. 为每个可交互元素标注唯一 ID 并在截图上绘制边界框
+4. 同时生成文本列表描述每个 ID 对应的元素
 
 ```
-Screenshot: [Key elements in the image are annotated with IDs like [1], [2], [3], [4]]
+Screenshot: [图片中关键元素标注了 [1]、[2]、[3]、[4] 等 ID]
 
 Elements:
 [1] <input type="text" placeholder="Search" aria-label="Search" />
@@ -348,163 +370,169 @@ Elements:
 [4] <a href="/docs" aria-label="Documentation" />
 ```
 
-The model only needs to output an ID number, and the system automatically executes the click using the center coordinates of that element. This type of approach does not save tokens (because all annotation information must be sent to the model), but the localization is accurate and stable, and it also avoids the missed detections and false positives that segmentation models might introduce.
+模型只需要输出一个 ID 号就行，系统自动用该元素的中心坐标执行点击。这类方案不省 token（因为要把所有标注信息都发给模型），但定位准确稳定，还免去了分割模型可能引入的漏检和误检。
 
 
-![Figure 9-9 Set-of-Mark vs. Structured Element Indexing (browser-use implementation)](images/fig9-9.svg)
+![图9-9 Set-of-Mark 与结构化元素索引（browser-use 实现）](images/fig9-9.svg)
 
-**Pure Coordinate Prediction.**
+**纯坐标预测。**
 
-The third route does not perform any annotation and directly asks the model to output coordinates. Represented by **SeeClick** and Claude's computer use, this approach trains a vision model on a massive dataset of GUI screenshots paired with element positions, teaching it to directly map natural language descriptions (e.g., "click the submit button") to precise coordinates in the screenshot—just like a human user, relying purely on "seeing" to find the location to click.
+第三条路线不做任何标注，直接让模型输出坐标。以 **SeeClick** 和 Claude 的 computer use 为代表：在海量 GUI 截图和元素位置的配对数据上训练视觉模型，让它学会将自然语言描述（如“点击提交按钮”）直接映射到截图中的精确坐标——就像人类用户一样，纯粹靠“看”来找到要点击的位置。
 
-In coordinate prediction schemes, the model's understanding of coordinates is highly dependent on the resolution used during training (Figure 9-10). Claude was trained using XGA (1024x768), WXGA (1280x800), and FWXGA (1366x768). If the input screenshot resolution does not match, the model's predicted coordinates will systematically shift—like measuring a distance on a small map and then applying it directly to a large map. Therefore, a bidirectional coordinate scaling mechanism must be implemented at the tool layer, and the target resolution must be **selected based on the aspect ratio** to avoid non-uniform stretching that distorts the image and consequently biases coordinate judgment. For example, if the actual screen resolution is 2560×1440 (16:9), the most suitable target among Claude's three supported options is FWXGA (1366×768), which has an aspect ratio closest to 16:9. The screenshot is proportionally scaled to 1366×768 and fed to the model; after the model outputs the click coordinates (683, 384), they are inversely mapped to the real coordinates (683×2560/1366, 384×1440/768) ≈ (1280, 720). Conversely, if a 16:9 image is forcibly stretched into the 4:3 1024×768, the image will be horizontally compressed, causing the model's predicted coordinates to systematically shift.
-
-
-![Figure 9-10 Resolution Matching and Bidirectional Coordinate Scaling](images/fig9-10.svg)
+在坐标预测方案中，模型对坐标的理解高度依赖训练时使用的分辨率（图9-10）。Claude 训练使用 XGA（1024x768）、WXGA（1280x800）、FWXGA（1366x768），如果输入的截图分辨率不匹配，模型预测的坐标就会系统性地偏移——就像在小地图上量距离然后直接用到大地图上一样。因此，需要在工具层实现双向坐标缩放机制，而且要**按宽高比选目标分辨率**，避免非等比拉伸把画面压变形、连带把坐标判断也带偏。例如，真实屏幕分辨率为 2560×1440（16:9），就该在 Claude 支持的三档里挑一个宽高比同样接近 16:9 的目标——FWXGA（1366×768）最匹配。截图时把屏幕等比缩放到 1366×768 送入模型；模型输出点击坐标 (683, 384) 后，反向映射为真实坐标 (683×2560/1366, 384×1440/768) ≈ (1280, 720)。反过来，若硬把 16:9 拉伸进 4:3 的 1024×768，画面会被横向压扁，模型预测的坐标就会系统性偏移。
 
 
-The selection logic for the three routes can be summarized as follows: **When structured information is available, prioritize DOM/Accessibility Tree indexing** for the most accurate and stable localization; **when it is unavailable** (e.g., native desktop software like Photoshop, Canvas/WebGL rendered interfaces, games), **either visual annotation (the original SoM route) or coordinate prediction can be used**. Visual annotation turns localization into a multiple-choice problem, which is more friendly to general-purpose models that have not been specifically trained; coordinate prediction eliminates the annotation step and is more direct for models trained on GUI localization. Both still have accuracy gaps on small elements and dense interfaces.
+![图9-10 分辨率匹配与双向坐标缩放](images/fig9-10.svg)
 
-> **Experiment 9-7 ★: Using browser-use to Implement Automated Browser Operations**
+
+三条路线的选择逻辑可以概括为：**结构化信息可得时，优先用 DOM/Accessibility Tree 索引**，定位最精确稳定；**不可得时**（原生桌面软件如 Photoshop、Canvas/WebGL 渲染的界面、游戏），**既可以用视觉标注（原始 SoM 路线），也可以用坐标预测**。视觉标注把定位变成选择题，对未经专门训练的通用模型更友好；坐标预测省去标注步骤，对做过 GUI 定位训练的模型更直接。两者在小元素和密集界面上的精度都仍有差距。
+
+> **实验 9-7 ★：使用 browser-use 实现自动浏览器操作**
 >
-> Based on the Playwright browser automation framework (a tool library for controlling browsers with code), combined with a multimodal large model, this implements natural language-driven browser operations. Enable SoM visualization mode, saving screenshots with annotated bounding boxes before each decision.
+> 基于 Playwright 浏览器自动化框架（一个用代码控制浏览器的工具库），结合多模态大模型实现自然语言驱动的浏览器操作。启用 SoM 可视化模式，每次决策前保存带标注框的截图。
 >
-> Test task "Open Google and query San Francisco weather": After the system starts, the screenshot shows the Google search page, with all interactive elements annotated with red bounding boxes and ID numbers (address bar `[1]`, search box `[2]`, search button `[3]`, "I'm Feeling Lucky" button `[4]`, etc.) → The model analyzes and clicks `[2]` (the search box) → The search box gains focus and the model types "San Francisco weather today" → The model clicks `[3]` (the search button) → The page navigates to the search results, the new screenshot annotates elements within the weather card, and the model identifies and extracts information like temperature and weather conditions. The entire process takes 5 steps and about 20 seconds.
+> 测试任务“打开 Google 查询旧金山天气”：系统启动后截图显示 Google 搜索页面，所有可交互元素被标注上红色边界框和 ID 号（地址栏 `[1]`、搜索框 `[2]`、搜索按钮 `[3]`、“手气不错”按钮 `[4]` 等）→ 模型分析后点击 `[2]`（搜索框）→ 搜索框获得焦点后输入“San Francisco weather today”→ 点击 `[3]`（搜索按钮）→ 页面跳转到搜索结果，新截图标注天气卡片内元素，模型识别并提取温度、天气状况等信息。全程 5 步操作，约 20 秒完成。
 
-### Computer Use Agent That Can See Videos and Hear Sounds
+### 能看动画、能听声音的 Computer Use Agent
 
-So far, the perception of Computer Use has been based on an implicit assumption: **the screen is static**—take a screenshot, think for a step, click, then take the next screenshot. But in reality, screens play videos, display fleeting notifications, and play human voices from meetings. An Agent that only "opens its eyes" every 3–5 seconds and has no ears is blind and deaf to everything that happens "between two frames." Watching screen recordings, joining meetings, listening to voice prompts, and dealing with transient dialog boxes—this entire category of everyday computer operations is almost a forbidden zone for today's Computer Use Agent.
+到目前为止，Computer Use 的感知都建立在一个隐含假设上：**屏幕是静止的**——截一张图、想一步、点一下，再截下一张图。可现实里的屏幕会放视频、会弹出转瞬即逝的通知、会播放会议里的人声。一个每 3–5 秒才睁一次眼、而且完全没有耳朵的 Agent，对这些“两帧之间发生的事”既看不见也听不到。看录屏、跟会议、听语音提示、应付一闪而过的对话框——这一整类日常电脑操作，对今天的 Computer Use Agent 几乎是禁区。
 
-What truly needs to be redesigned here is not the "action interface," but the "**observation interface**"[^ch9-9]. The core idea is to decouple **observation** (continuous, adaptive, multimodal) from **action** (discrete), creating a perceptual middleware layer that sits between the environment and any off-the-shelf Computer Use model, requiring no retraining (this can be called the Agent–Computer Observation Interface, AOI). It has three "gated" components: First, **inter-frame keyframe capture**—use a very cheap pixel gate to skip nearly unchanged frames, then use a small model to determine if a meaningful change has occurred, capturing a frame only when there is a change, resulting in near-zero cost for static screens; Second, **volume-gated speech transcription**—only invoke speech recognition when there is sound, giving the Agent "ears" for the first time; Third, and most critically, **narrating the screen into persistent text**—have the model describe the captured frame in a single sentence (e.g., "The popup just said the release date has been changed to April 28th"), and **even if the original image is later cleared from the context, this text remains in memory**, carrying the dynamic information forward in textual form.
+这里真正该被重新设计的，不是“动作接口”，而是“**观察接口**”[^ch9-9]。核心思想是把**观察**（连续、自适应、多模态）从**动作**（离散）里解耦出来，做成一层插在环境和任意现成 Computer Use 模型之间、无需重训的感知中间件（可称之为 Agent–电脑观察接口，AOI）。它有三个“按需开闸”的部件：其一，**帧间关键帧捕获**——先用一个极廉价的像素门跳过几乎没变的画面，再用一个小模型判断画面是否发生了有意义的变化，只在变化时才截一帧，静止画面下几乎零成本；其二，**音量门控的语音转写**——有声音时才调用语音识别，让 Agent 第一次“长出耳朵”；其三，也是最关键的，**把画面叙述成持久的文字**——让模型把捕获到的帧描述成一句话（“刚弹出的提示说发布日期改到了 4 月 28 号”），并且**即使原图之后被清理出上下文，这句文字仍留在记忆里**，把动态信息以文本形式带着往下走。
 
-A counterintuitive finding is that what truly matters is not "which frames to select," but "**narrating the frames into text that can persist long-term**"—text is the modality that LLM Agents handle best. Across eight models ranging from 7B to frontier scale, this middleware, without any retraining, yielded improvements of +17 to +48 percentage points, with the most significant gap in voice-related tasks: with this perceptual layer added, the Agent could accomplish voice tasks that were previously "audible but unactionable." However, it is not a one-size-fits-all fixed configuration—on some newer models, injecting too many image tokens can crowd out reasoning and degrade performance. Therefore, these components should be **selected on a per-model basis**, rather than being turned on indiscriminately. This is the same principle as the trade-off between Set-of-Mark and coordinate prediction: there is no silver bullet for perception schemes; they must be tailored to the model's temperament.
+一个反直觉的发现是：真正起作用的不是“选哪几帧”，而是“**把帧叙述成能长期留存的文字**”——文字才是 LLM Agent 最擅长处理的模态。在从 7B 到前沿规模的八个模型上，这层中间件无需任何重训就带来 +17 到 +48 个百分点的提升，其中语音类任务的差距最悬殊：加了这层感知，Agent 能把原本“听得见却动不了”的语音任务都做出来。但它也不是一套包打天下的固定配置——在某些更新的模型上，塞太多图像 token 反而会挤占推理、拖累表现，所以这些部件要**按模型逐个挑选**，而非一股脑全开。这与前面 Set-of-Mark 和坐标预测的取舍是同一个道理：感知方案没有银弹，要顺着模型的脾气来配。
 
-[^ch9-9]: For the complete mechanism and per-model ablation of the three components—gated keyframes, on-demand transcription, and narrating frames into persistent text—see Li, Bojie and Noah Shi. *Agent-Computer Observation Interfaces Enable Dynamic Computer Use.* arXiv:2606.29472, 2026.
+[^ch9-9]: 门控关键帧、按需转写、把帧叙述成持久文字这三个部件，完整机制与逐模型消融见 Li, Bojie and Noah Shi. *Agent-Computer Observation Interfaces Enable Dynamic Computer Use.* arXiv:2606.29472, 2026.
 
-### Mobile: Ecosystem Barriers Are Harder Than Technology
+### 移动端：生态壁垒比技术更难
 
-Computer Use is also expanding to the mobile domain. There are indeed technical differences between mobile and desktop: the action space is usually no longer "mouse coordinates + keyboard," but rather interfaces with the system's accessibility service API (e.g., Android's AccessibilityService) to read interface elements and issue clicks and text input; the interaction method also changes from a mouse pointer to touch gestures, altering the semantics of coordinates—whether the same (x, y) represents a finger tap, a long press, or the starting point of a swipe gesture requires an additional gesture type to define. The mobile benchmarks like AndroidWorld introduced in Chapter 6 evaluate the Agent's ability to complete tasks in real apps within this action space.
+Computer Use 也在向移动端扩展。移动端与桌面在技术上确有差异：动作空间通常不再是“鼠标坐标 + 键盘”，而是接入系统的无障碍服务 API（如 Android 的 AccessibilityService）来读取界面元素、下发点击与文本输入；交互方式也从鼠标指针变成触摸手势，坐标的语义随之改变——同一个 (x, y) 到底是手指的单击、长按，还是滑动手势的起点，需要额外的手势类型来界定。第六章介绍的 AndroidWorld 等移动端基准，正是在这样的动作空间上评测 Agent 完成真实 App 任务的能力。
 
-However, what truly hinders mobile Computer Use is often not these technical differences, but ecosystem barriers. Some phone manufacturers have attempted to integrate AI assistants into consumer-grade phones, allowing them to automatically operate everyday apps like WeChat, Taobao, and Alipay, but they quickly encountered platform restrictions.
+但真正卡住移动端的，往往不是这些技术差异，而是生态壁垒。曾有手机厂商尝试在消费级手机中集成 AI 助手，让它自动操作微信、淘宝、支付宝等日常应用，但很快遭遇平台限制。
 
-This reveals a unique challenge for Computer Use: **ecosystem barriers**. The fundamental reason behind the blockades is a conflict of business models. The core monetization logic of traditional internet applications is **traffic and attention**: users see ads while scrolling through feeds, follow recommendation algorithms when searching for products, and make impulse purchases while browsing pages. When an Agent operates on behalf of the user, this monetization chain is completely bypassed: the AI does not pay attention to ads, does not make impulse purchases, and goes straight to the goal to complete the task. For platforms that rely on advertising and traffic monetization, every operation by an Agent erodes the foundation of their business model.
+这揭示了 Computer Use 面临的一个独特挑战：**生态壁垒**。封杀背后的根本原因是商业模式冲突。传统互联网应用的核心变现逻辑是**流量与注意力**：用户刷信息流时看到广告，搜索商品时跟随推荐算法的引导，浏览页面时产生冲动消费。而当 Agent 代替用户操作时，这条变现链路被彻底绕过：AI 不会关注广告，也不会冲动消费，直奔目标完成任务就走。对于靠广告和流量变现的平台来说，Agent 的每一次操作都在侵蚀其商业模式的根基。
 
-This means that Computer Use faces not only technical adversarial measures like CAPTCHAs, but also a **structural conflict of interest**. This contradiction is difficult to reconcile in the short term and presents a more challenging obstacle for the deployment of Computer Use in consumer scenarios than purely technical issues.
+这意味着 Computer Use 面对的不仅是 CAPTCHA（验证码）等技术层面的对抗，更是一个**结构性的利益冲突**。这一矛盾在短期内难以调和，也让 Computer Use 在消费级场景中的落地面临比纯技术问题更棘手的挑战。
 
-### Real-Time Performance: The Unsolved Core Challenge
+### 实时性：尚未解决的核心挑战
 
-**OSWorld** (Chapter 6 details its evaluation methodology) is a widely used benchmark for Computer Use, testing an Agent's ability to complete cross-application tasks in real Ubuntu/Windows/macOS environments. Early general-purpose models achieved only about a 20% success rate on this benchmark. Subsequent specialized models and more powerful general-purpose models have continuously pushed the accuracy higher, gradually approaching human-level performance as of this writing. However, accuracy is far from the finish line—the real bottleneck has shifted from "can it do it correctly?" to "can it do it quickly?"
+**OSWorld**（第六章详细介绍了其评估方法论）是广泛使用的 Computer Use 评估基准，在真实 Ubuntu/Windows/macOS 环境中测试 Agent 完成跨应用任务的能力。早期通用模型在该基准上的成功率只有两成左右，后续专用模型和更强通用模型持续把准确率推高，截至写作时已逐步接近人类水平。但准确率远非终点——真正的瓶颈已经从“能不能做对”转向了“能不能做快”。
 
-The **OSWorld-Human** efficiency study reveals a sobering fact: even when a task is ultimately successful, the number of operation steps required by the Agent is still significantly higher than that of a human, and the inference latency for each step increases as the task progresses—the longer the context, the slower the model's decision-making, and the time taken for later steps often far exceeds that of the initial steps. A document formatting adjustment that a human could complete in tens of seconds might take an Agent several minutes to finish. **Achieving human-level accuracy is not the same as being practical—efficiency is the true bottleneck.**The root cause of the efficiency problem is similar to the speech scenario: in the serial "screenshot-think-click" loop, even if each step is optimized to the extreme, the accumulated delay from step to step is still unacceptable. The deeper problem is that current Computer Use is completely incapable of "thinking ahead." If an agent could predict what to do next while executing the current action—for example, thinking about where to click next while waiting for a page to load—it could overlap thinking and execution time, significantly reducing total latency (this is the same demand as the "thinking while speaking" in the speech scenario earlier in this chapter and the "continuous thinking" asynchronous agent in Chapter 4, just replaced here with "thinking while operating").
+**OSWorld-Human** 效率研究揭示了一个扎心的事实：即使任务最终成功，Agent 完成同样任务需要的操作步骤仍明显多于人类，而且每一步的推理延迟会随着任务推进持续增长——上下文越长，模型决策越慢，后期步骤的耗时往往远超前期。一个人类几十秒就能完成的文档格式调整，Agent 可能要磨蹭数分钟才能搞定。**准确率达到人类水平不等于实用——效率才是真正的瓶颈。**
 
-Unlike the speech domain, there is currently no systematic solution for improving the real-time performance of Computer Use itself—making the "screenshot-think-click" loop faster—and it remains stuck in a discrete loop of frame-by-frame screenshots. However, a workaround has already been proven effective, using the fast-slow decoupling that appears repeatedly in this chapter: since it's difficult to make a slow computer-use agent faster, **don't make the user wait for it**. Split "speaking" and "operating the computer" into two models running concurrently, one fast and one slow[^ch9-10]—a small model (fast) handles real-time voice conversation, while a cutting-edge VLM (slow) operates step-by-step in the browser. The two communicate only through a minimal "plain text contract": each time the slow agent performs an action, it appends a rolling status summary ("Filling out the form, still need your date of birth"). The fast agent uses this to answer the user in real-time and relays any new information the user provides verbally to the slow agent. Crucially, **the fast agent must never say "done" until the status summary confirms completion**. This is the scenario of "talking on the phone while letting the computer operate itself." In experiments, this decoupling made voice responses about 15 times faster than a "single model operating and speaking simultaneously" (median latency 0.58 seconds vs. 8.64 seconds), without reducing task success rate. Removing the text channel between the fast and slow models caused the success rate to immediately drop to 0—because key information provided verbally by the user could no longer reach the browser. This is the same idea as the Latent Bridge earlier and the "thinking while speaking" in the speech scenario: when one component is inherently slow, let another fast component fill the user's waiting time—except this "plain text contract" is essentially the agent status bar discussed from Chapter 2 onwards. Speeding up the Computer Use loop itself may still be an important research direction, but "hiding the slowness with fast-slow decoupling" is already a viable solution.
+效率问题的根源与语音场景类似：串行的“截图-思考-点击”循环中，即使每个环节都优化到极致，一步步累积的延迟仍然难以接受。更深层的问题是：目前的 Computer Use 完全不会“提前想”。如果 Agent 能在执行当前动作的同时预测下一步该做什么——比如在等页面加载时就想好接下来要点哪里——就可以把思考和执行的时间重叠起来，大幅降低总延迟（这正是本章前面语音场景里“边想边说”、以及第四章“持续思考”式异步 Agent 的同一诉求，只是这里换成了“边想边操作”）。
 
-[^ch9-10]: The complete design of the speech-operation fast-slow decoupling and the "plain text contract" can be found in Li, Bojie and Noah Shi. *Talking While Acting: Real-Time Voice for Slow Computer-Use Agents.* 2026 (forthcoming).
+与语音领域不同的是，Computer Use 自身的实时性——把“截图-思考-点击”这个循环本身变快——目前还没有系统性的解决方案，它仍停留在逐帧截图的离散循环中。但有一条绕过它的思路已经跑通，用的正是本章反复出现的快慢解耦：既然让慢的电脑操作 Agent 变快很难，那就**别让用户去干等它**。把“说话”和“操作电脑”拆成快慢两套模型并发运行[^ch9-10]——一个小模型（快）负责实时语音对话，一个前沿 VLM（慢）在浏览器里一步步操作，两者之间只靠一份极简的“纯文本契约”沟通：慢 Agent 每次操作都附带一句滚动更新的状态摘要（“正在填表单，还需要你的出生日期”），快 Agent 据此实时回答用户、并把用户口头给出的新信息转达给慢 Agent，而且**在状态摘要确认完成之前，快 Agent 绝不许说“办好了”**。这正是“一边打电话说话、一边让电脑自己操作”的场景。实验里，这套解耦让语音回应比“单模型边操作边说话”快了约 15 倍（中位延迟 0.58 秒 vs 8.64 秒），而任务成功率不降；一旦抽掉那条快慢之间的文本通道，成功率立刻塌到 0——因为用户口头给的关键信息再也传不到浏览器里了。这和前面 Latent Bridge、以及语音场景里“边想边说”是同一套思路：当一个环节天生慢，就让另一个快的环节把用户的等待填满——只不过那份“纯文本契约”，本质上就是本书从第二章讲到现在的 Agent 状态栏。Computer Use 循环本身的提速或许仍是下一个重要的研究方向，但“用快慢解耦把‘慢’藏起来”已经是一个可用的答案。
 
-## Robot Manipulation: From Real-Time Control to Training and Generalization
+[^ch9-10]: 语音-操作快慢解耦与“纯文本契约”的完整设计见 Li, Bojie and Noah Shi. *Talking While Acting: Real-Time Voice for Slow Computer-Use Agents.* 2026（待发表）.
 
-> **Reading Note**: This section discusses robot control. Experiment 9-10 demonstrates a method for transferring from simulation to reality—the **simulation training part (steps 3-4) can be completed on a pure GPU server** without hardware; however, to reproduce the entire pipeline end-to-end (including the real-world deployment steps), real hardware such as the SO100 robotic arm is required. If you are not currently interested in robotics, you can skip this section; it does not affect the reading of other chapters.
+## 机器人操作：从实时控制到训练与泛化
 
-Voice agents face latency in the auditory modality, and Computer Use faces latency in the visual modality. When agents need to control robots in the physical world, the challenges of latency and multimodality are further amplified—the consequences of actions are irreversible, and a single collision can damage objects or the robot itself. This section first looks at how robots use a two-layer architecture and action chunking to suppress the real-time control problem, then transitions to the current harder challenge—training and generalization: where data comes from and how models can transfer across tasks and platforms.
+> **阅读提示**：本节讨论机器人控制。实验 9-10 展示从模拟到真实的迁移方法——其中的**仿真训练部分（第 3-4 步）可以在纯 GPU 服务器上完成**，无需硬件；但要端到端复现整条流水线（含真实部署那几步），则需要 SO100 机械臂等真实硬件。如果你对机器人领域暂时不感兴趣，可以跳过本节，不影响其他章节的阅读。
 
-### Hardware is Not the Bottleneck, Algorithms Are
+语音 Agent 在听觉模态中面对延迟，Computer Use 在视觉模态中面对延迟，而当 Agent 需要控制物理世界的机器人时，延迟和多模态的挑战被进一步放大——动作的后果是不可逆的，一次碰撞就可能损坏物体或机器人本身。本节先看机器人如何用双层架构和动作分块把实时控制问题压下去，再顺势转到它当下更硬的骨头——训练与泛化：数据怎么来、模型怎样跨任务跨平台迁移。
 
-Why haven't robots been widely adopted in general open scenarios? Is the bottleneck hardware or algorithms? The XLeRobot project provides a strong counterexample: a dual-arm wheeled robot costing less than $1000, when remotely controlled by a human via a VR headset (teleoperation), can already smoothly perform a wide range of household tasks. For more complex household tasks requiring dexterous hands, robots from Unitree can also perform smoothly under human teleoperation. Teleoperation latency is around 100-200ms, which is close to the response requirements for physical interaction. Sensor resolution, actuator precision, and control frequency (the number of times a robot updates its action commands per second; lower frequency leads to less smooth motion and more jitter or deviation from the target trajectory) on current low-cost platforms are already sufficient for practical tasks.
+### 硬件不是瓶颈，算法才是
 
-This assertion needs a clear boundary: what the teleoperation counterexample truly demonstrates is that "existing low-cost hardware, combined with human intelligence, is sufficient to complete **this type of household manipulation task that primarily relies on visual feedback**." It does not mean hardware is adequate in all dimensions—the lack of tactile sensing, the reliability and cost of dexterous hands, remain recognized hardware shortcomings. Once a task heavily depends on fine force control and tactile feedback, hardware may indeed become the bottleneck. Therefore, the statement "hardware is not the bottleneck" below is limited to the type of tasks discussed in this section.
+机器人在通用开放场景中还没有得到广泛应用，瓶颈到底在硬件还是算法？XLeRobot 项目给出了一个有力的反证：成本不到 1000 美元的双臂轮式机器人，在人类通过 VR 头显远程操控（遥操作）时，已经能流畅完成大量家庭任务。更复杂的、需要灵巧手的家庭任务，宇树的机器人在人类遥操作下也能流畅完成。遥操作延迟大约 100-200ms，已接近物理交互的响应要求。传感器分辨率、执行器精度、控制频率（机器人每秒更新动作指令的次数，频率越低运动越不流畅、越容易出现抖动或偏离目标轨迹）在当前的低成本平台上已经足以支撑实用任务。
 
-For these tasks, the real gap lies in the algorithm layer, which is elaborated in the following two subsections.
+需要给这个论断划清边界：遥操作反证真正能说明的，是“现有低成本硬件加上人类的智能，足以完成**这类以视觉反馈为主的家庭操作任务**”。它并不意味着硬件在所有维度都过关——触觉传感的缺失、灵巧手的可靠性与成本，至今仍是公认的硬件短板；一旦任务重度依赖精细的力控与触觉反馈，硬件就未必不是瓶颈。因此下面说的“硬件不是瓶颈”，都限定在本节讨论的这类任务范围内。
 
-> **Experiment 9-8 ★: XLeRobot Teleoperation Experience**
+就这类任务而言，真正的鸿沟在算法层，下面两个小节分别展开。
+
+> **实验 9-8 ★：XLeRobot 遥操作体验**
 >
-> XLeRobot supports various teleoperation methods including keyboard, Xbox controller, Switch Joycon, and VR headset. By manually controlling the robot to complete tasks such as picking up objects, placing them, and wiping surfaces, observe the response latency, motion precision, and task completion quality to build an intuitive understanding of the boundaries of hardware capabilities—after experiencing it firsthand, you will find that the robot can do almost anything when controlled by a human, indicating that the current bottleneck is indeed algorithms, not hardware.[^ch9-1]
+> XLeRobot 支持键盘、Xbox 手柄、Switch Joycon 和 VR 头显等多种遥操作方式。通过亲手操控机器人完成取物、放置、擦拭等任务，观察响应延迟、运动精度和任务完成质量，建立对硬件能力边界的直观认知——亲身体验后就会发现，人操控时机器人什么都能干，说明当前瓶颈确实是算法而非硬件。[^ch9-1]
 >
-> [^ch9-1]: XLeRobot, "Teleop Documentation" . https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html
+> [^ch9-1]: XLeRobot, “Teleop 文档” . https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html
 
-### Two-Layer Architecture: Separation of Planning and Control
+### 双层架构：规划与控制的分离
 
-Robots need to make decisions at two different time scales to complete complex household tasks. The first layer is slower **long-horizon planning**: decomposing a high-level instruction like "clean the kitchen" into a sequence of sub-goals (clear the countertop, load the dishwasher, wipe the surfaces). This requires understanding environmental semantics, reasoning about task dependencies, and planning multi-step action sequences—similar to how a person thinks about "what to do first and what to do next" before starting. The second layer is faster **VLA control** (Vision-Language-Action model): executing each specific operation ("walk to the sink," "pick up the cloth," "wipe the countertop"), continuously outputting control signals based on the current visual input and language instruction to ensure smooth and coherent robot motion.
+机器人完成复杂家庭任务需要在两个不同的时间尺度上做决策。第一层是较慢的**长程规划**（long-horizon planning）：把“把厨房打扫干净”这样的高层指令拆解为子目标序列（清理台面、装载洗碗机、擦拭表面），需要理解环境语义、推理任务依赖、规划多步行动方案——就像人在动手之前先想想“先干什么后干什么”。第二层是较快的 **VLA 控制**（Vision-Language-Action，视觉-语言-动作模型）：执行每个具体操作（“走到水槽前”“拿起抹布”“擦拭台面”），根据当前看到的画面和语言指令持续输出控制信号，让机器人的动作流畅连贯。
 
-This two-layer architecture effectively separates complexity: long-horizon planning handles "what to do," and VLA control handles "how to do it." This "slow high-level decision-making + fast low-level execution" two-layer architecture is structurally highly similar to the "fast-slow thinking" in the speech scenario earlier—both decouple complex thinking from real-time response into different modules. It is important to note that the "planning/control" here corresponds to the decoupling dimension of "slow deep thinking / fast real-time response" in fast-slow thinking, not the "thinking/expression" decoupling of the MPS "conceptual brain / expressive brain" in Scheme Three—the latter separates "thinking" from "speaking," while the former separates "global planning" from "real-time execution." The dimensions of these two "dual-X architectures" are different.
+这种双层架构将复杂度有效分离：长程规划负责“做什么”，VLA 控制负责“怎么做”。这种“高层慢决策 + 底层快执行”的双层架构，与前文语音场景中的“快慢思考”在结构上高度相似——都是将复杂思考与实时响应解耦到不同模块中。需要提醒的是，这里的“规划 / 控制”对应的是快慢思考里“慢的深度思考 / 快的实时响应”这一维度的解耦，而不是方案三 MPS“构思脑 / 表达脑”那种“思考 / 表达”的解耦——后者拆的是“想”与“说”，前者拆的是“谋划全局”与“实时执行”，两种“双X架构”切分的维度并不相同。
 
-However, real-time performance hasn't disappeared; it has been pushed down to the VLA control layer, where it is mitigated by **Action Chunking** (see the "VLA Control" subsection below): the model generates a short sequence of future actions in one inference, and the control thread replays them at a high frequency, spreading the latency of a single inference across the execution time of the entire action sequence. But there is an unavoidable trade-off here—chunking trades reactivity for smoothness: the longer the chunk, the more the latency of each inference is amortized and the smoother the motion, but the model is "blind" to new visual information during this time, making it less responsive to sudden changes (an object being moved, a hand blocking the way). This trade-off between real-time performance and smoothness is a part of the problem that the two-layer architecture has not eliminated, only shifted.
+不过实时性并没有凭空消失，而是被下推到 VLA 控制层，靠**动作分块**（Action Chunking，见下文“VLA 控制”一节）来摊薄：模型一次推理生成未来一小段动作序列，控制线程高频回放，把单次推理的延迟摊进整段动作的执行时间里。但这里有个绕不开的权衡——分块是拿反应性换平滑性：块越长，每次推理的延迟被摊得越薄、运动越连贯，可模型在这段时间里“看不到”新画面，对突发变化（物体被挪走、有人伸手挡住）也就越迟钝。实时性与平滑性之间的这道取舍，是双层架构没有消除、只是转移了的部分。
 
-This also marks a shift in the main thread of this chapter: in the robotics scenario, the real-time contradiction has been partially alleviated by two-layer decoupling and action chunking. The current primary contradiction has shifted to **training and generalization**—how to obtain sufficient demonstration data and how to enable models to generalize across tasks and platforms. The following subsections focus on this new contradiction, which is an extension of the themes of simulation environments in Chapter 6 and reinforcement learning in Chapter 7 into the physical world.
+这里也需要交代本章主线的一个转向：在机器人场景中，实时性矛盾已经被双层解耦和动作分块部分缓解，当前的主要矛盾转移到了**训练与泛化**——如何获得足够的演示数据、如何让模型跨任务跨平台泛化。接下来几个小节正是围绕这条新矛盾展开的，这也是第六章仿真环境与第七章强化学习的主题在物理世界的延伸。
 
-This new contradiction primarily weighs on the VLA control layer. VLA can be seen as "VLM + action output": **VLM** (Vision-Language Model—a large model capable of understanding both images and text) handles "seeing" and "thinking clearly," while VLA must also "act." The real challenge lies in the "acting" layer. Currently, the VLA control layer is primarily trained via imitation learning (behavioral cloning)—directly learning "see something, do something" from a large number of human demonstrations (OpenVLA, RT-2, π₀, etc., all fall into this category). Reinforcement learning is a supplementary method that has been added on top in recent years. While VLAs trained with reinforcement learning can perform well on individual tasks, they often lack generalization ability: even if SimpleVLA-RL from Chapter 7 reports high single-task results on LIBERO, it is trained with RL for each task separately, not a unified model that generalizes zero-shot to all tasks. This "train once per task" model means that for every new task, data must be recollected and the model retrained.
+而这条新矛盾主要压在 VLA 控制层上。可以把 VLA 看作 “VLM + 动作输出”：**VLM**（Vision-Language Model，视觉-语言模型——能同时理解图像与文字的大模型）负责“看懂”和“想清楚”，VLA 在此基础上还要“动手”，真正的挑战正在于“动手”这一层。当前 VLA 控制层主要通过模仿学习（行为克隆）训练——直接从大量人类演示中学习“看到什么就做什么”（OpenVLA、RT-2、π₀ 等均属此类）；强化学习则是近年来在其之上的补充手段。用强化学习训练的 VLA 虽然能在单个任务上表现很好，但往往泛化能力不足：即使如第七章 SimpleVLA-RL 在 LIBERO 上报告了很高的单任务结果，也是针对每个任务分别做 RL 训练的，而非一个统一模型零样本泛化到所有任务。这种“一个任务训练一次”的模式意味着每遇到新任务，还得重新收集数据、重新训练。
 
-The following two sections delve into the specific technical solutions for long-horizon planning and VLA control, respectively.
+以下两节分别深入讨论长程规划和 VLA 控制的具体技术方案。
 
-### Long-Horizon Planning: From VLM to Specialized Embodied Reasoning Models
+### 长程规划：从 VLM 到专用具身思考模型
 
-General-purpose VLMs already possess decent embodied reasoning capabilities. Google DeepMind's **Gemini Robotics-ER 1.5** is specifically optimized for Embodied Reasoning (understanding the position, movement, and causal relationships of objects in the physical world). It achieves an average of 62.8% across 15 academic benchmarks (Point-Bench, RefSpatial, RoboSpatial, BLINK, etc.), surpassing GPT-4o (60.6%) and Gemini 2.5 Pro (59.3%). Key advantages include: advanced spatial understanding and object localization, temporal reasoning (predicting action consequences like "what happens if I push this cup"), task sequencing (decomposing high-level instructions into smaller steps), and native support for thinking mechanisms and tool calls.[^ch9-2]
+通用 VLM 已经具备不错的具身思考能力。Google DeepMind 的 **Gemini Robotics-ER 1.5** 专门针对具身思考（Embodied Reasoning，即理解物理世界中物体的位置、运动和因果关系）做了优化，在 15 个学术基准（Point-Bench、RefSpatial、RoboSpatial、BLINK 等）上平均 62.8%，超过 GPT-4o（60.6%）和 Gemini 2.5 Pro（59.3%）。核心优势包括：高级空间理解与物体定位、时序推理（预测“如果推倒这个杯子会怎样”这类动作因果）、任务编排（把高层指令分解为小步骤），并原生支持思考（thinking）机制和工具调用。[^ch9-2]
 
-[^ch9-2]: Google DeepMind, "Gemini Robotics-ER 1.5" . https://deepmind.google/models/gemini-robotics/gemini-robotics-er/
+[^ch9-2]: Google DeepMind, “Gemini Robotics-ER 1.5” . https://deepmind.google/models/gemini-robotics/gemini-robotics-er/
 
-> **Experiment 9-9 ★★: Using Gemini Robotics-ER 1.5 to Drive XLeRobot Autonomous Navigation**
+> **实验 9-9 ★★：使用 Gemini Robotics-ER 1.5 驱动 XLeRobot 自主导航**
 >
-> Use the RoboCrew library to employ Gemini Robotics-ER 1.5 as the long-horizon planning model, with camera images overlaid with angle scale annotations. The system provides only three simple tools: move forward, turn left, turn right. Given the task "find the kitchen and go there," the model makes decisions at a frequency of 0.5-1Hz: identify visual features like corridors, doors, and furniture; decide "the kitchen might be on the left" and execute a left turn; see "a refrigerator ahead" and continue moving forward. This can also be extended to a voice control mode (using a wake word to trigger new tasks). This experiment reveals the capability boundaries of VLMs in the long-horizon planning layer: spatial reasoning and task decomposition are already quite good, but robustness in complex environments and consistency in multi-step reasoning still have room for improvement.[^ch9-3]
+> 通过 RoboCrew 库将 Gemini Robotics-ER 1.5 作为长程规划模型，摄像头图像叠加角度刻度标注。系统只提供三个简单工具：前进、左转、右转。给定任务“找到厨房并走到那里”后，模型以 0.5-1Hz 的频率做决策：识别走廊、房门、家具等视觉特征，判断“厨房可能在左侧”就执行左转，看到“前方有冰箱”就继续前进。还可以扩展为语音控制模式（用唤醒词触发新任务）。这个实验揭示了 VLM 在长程规划层的能力边界：空间推理和任务分解已经做得不错，但在复杂环境中的鲁棒性和多步推理的一致性仍有提升空间。[^ch9-3]
 >
-> [^ch9-3]: XLeRobot, "LLM Agent Control" . https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html
+> [^ch9-3]: XLeRobot, “LLM Agent 控制” . https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html
 
-### VLA Control: From Demonstration Data to Cross-Embodiment Generalization
+### VLA 控制：从演示数据到跨具身泛化
 
-In the execution layer of the two-layer architecture, three representative models—RT-2, OpenVLA, and π₀—all focus on VLA control, i.e., outputting robot actions in real-time based on camera images and language instructions (Figure 9-11). They belong to two different routes in action representation: discrete action tokens and continuous trajectory generation.
-
-
-![Figure 9-11 VLA Architecture (Vision-Language-Action)](images/fig9-11.svg)
+在双层架构的执行层，RT-2、OpenVLA、π₀ 三个代表性模型都专注于 VLA 控制——即根据摄像头画面和语言指令实时输出机器人的动作（图9-11）。它们在动作表示上分属两条路线：离散动作 token 与连续轨迹生成。
 
 
-**RT-2 and OpenVLA: The Discrete Action Token Route.**
+![图9-11 VLA 架构（Vision-Language-Action）](images/fig9-11.svg)
 
-**RT-2** pioneered this route: it directly fine-tunes a large-scale vision-language model, discretizing the robot's continuous actions into tokens and outputting them autoregressively one by one, like generating text. It leverages the generalization ability of the pre-trained model to improve zero-shot transfer to new objects and instructions. **OpenVLA** follows RT-2's action representation scheme, unifying the language model and vision encoder in a single architecture. It takes images and text instructions as input and outputs action tokens. Training is done in two stages: first, pre-training on the large-scale cross-platform dataset Open X-Embodiment (covering real-world manipulation demonstrations from over 20 robot platforms) to learn general manipulation knowledge (action patterns like "grasp" and "place" are common across different robots); second, fine-tuning with a small amount of data for a specific platform. Since the action representation is essentially the same, the real difference between the two lies in openness and engineering choices: RT-2 and its training data are internal to Google, while OpenVLA is fully open-source—an open-source backbone model (Llama 2 plus a vision encoder) paired with public datasets, allowing the entire community to reproduce and improve upon it for the first time.
 
-**Action Chunking: A Universal Frequency Compensation Technique in the VLA Domain.**
+**RT-2 与 OpenVLA：离散动作 token 路线。**
 
-Due to the latency of LLM inference, the control frequency of VLA is much lower than that required by traditional robot control (traditional robot control typically requires 50-1000Hz, while VLA single inference is only about 1-10Hz—a difference of up to two orders of magnitude). The original OpenVLA is a typical example of this problem: it outputs only one action per inference (about 6Hz single-step autoregressive prediction), and action jerkiness is precisely its main criticized shortcoming. **Action Chunking** is a universal technique designed to bridge this gap—first proposed by ACT (Zhao et al., 2023), and later widely adopted by π₀, OpenVLA-OFT, etc.: instead of outputting just one action per inference, the model generates a short sequence of future actions all at once (using π₀'s typical configuration as an example, it generates an action chunk of about 0.5-1 second, which is 25-50 actions at a 50Hz control frequency). The control thread executes them sequentially at a high frequency, while the model asynchronously generates the next batch in the background. As long as the model's inference time is less than the execution time of this batch of actions, the robot can maintain continuous and smooth motion—like video buffering, loading the content ahead of time so playback doesn't stutter.
+**RT-2** 开创了这条路线：直接在大规模视觉-语言模型上微调，把机器人的连续动作离散化为 token，像生成文本一样逐个自回归输出，借助预训练模型的泛化能力提升对新物体和新指令的零样本迁移效果。**OpenVLA** 沿袭了 RT-2 的动作表示方案，将语言模型和视觉编码器统一在一个架构中，输入图像和文字指令，输出动作 token。训练分两阶段：先在大规模跨平台数据集 Open X-Embodiment（涵盖 20 多种机器人平台的真实操作演示）上做预训练，学习通用的操作知识（“抓取”“放置”等动作模式在不同机器人之间是相通的），再针对特定平台用少量数据微调。既然动作表示本质相同，两者的真正差异就在开放性与工程选择上：RT-2 及其训练数据是 Google 内部的，OpenVLA 则完全开源——开源骨干模型（Llama 2 加视觉编码器）配公开数据集，让整个社区第一次可以在其基础上复现和改进。
 
-**π₀: The Continuous Trajectory Generation Route.**
+**动作分块：VLA 领域通用的频率补偿技术。**
 
-The true divide in action representation is not between RT-2 and OpenVLA, but between **discrete tokens and continuous trajectory generation**. **π₀** represents the latter route: instead of predicting discrete action tokens one by one, it uses flow matching (a continuous generation method with the same origins as diffusion models) to start from random noise and, through multiple iterative "denoising" steps, directly generate a smooth, continuous action trajectory. This representation naturally combines with action chunking and performs better on tasks requiring high precision and smoothness, such as dexterous manipulation. To use an analogy: the discrete token route is like gradually selecting "5 degrees left," "3 cm forward" from a menu; the continuous trajectory route is like an artist first sketching the entire curve and then refining it stroke by stroke.
+由于 LLM 推理有延迟，VLA 的控制频率远低于传统机器人控制的要求（传统机器人控制通常要求 50-1000Hz 的控制频率，而 VLA 单次推理只有约 1-10Hz——差距可达两个数量级）。原版 OpenVLA 正是这个问题的典型代表：它每次推理只输出一个动作（约 6Hz 的单步自回归预测），动作卡顿恰恰是它被诟病的主要短板。**动作分块**（Action Chunking）就是为弥补这个差距而生的通用技术——最早由 ACT（Zhao et al., 2023）提出，后被 π₀、OpenVLA-OFT 等广泛采用：模型每次推理不是只输出一个动作，而是一口气生成未来一小段时间的动作序列（以 π₀ 的典型配置为例，一次生成约 0.5-1 秒的动作块，在 50Hz 控制频率下即 25-50 个动作），控制线程按高频依次执行，同时模型在后台异步生成下一批。只要模型的推理时间小于这批动作的执行时间，机器人就能保持连续流畅的运动——就像视频缓冲一样，提前加载好后面的内容，播放就不会卡顿。
 
-### Sim2Real Transfer: The Gap from Simulation to RealityChapter 6's simulation environment section has already explained the source of the sim-to-real gap and the principle of domain randomization to address it, so I won't repeat it here. In a nutshell: simulation cannot perfectly replicate real-world physics, visuals, and hardware characteristics. Therefore, during training, these parameters are randomized over a wide range, forcing the policy to learn a general representation that is robust to various changes (Figure 9-12). Below, we focus on how this principle is implemented on a real robotic arm.
+**π₀：连续轨迹生成路线。**
 
-![Figure 9-12 Sim2Real Gap and Domain Randomization](images/fig9-12.svg)
+动作表示的真正分野，不在 RT-2 与 OpenVLA 之间，而在**离散 token 与连续轨迹生成**之间。**π₀** 代表后一条路线：不再逐个预测离散动作 token，而是用 flow matching（流匹配，一种与扩散模型同源的连续生成方法）从随机噪声出发、经多步迭代“去噪”，直接生成一段平滑连续的动作轨迹。这种表示天然与动作分块结合，在灵巧操作等对动作精度和流畅度要求高的任务上表现更好。打个比方：离散 token 路线像从菜单中逐步选择“向左 5 度”“向前 3 厘米”，连续轨迹路线像画家先勾出整条曲线、再逐笔修正成型。
 
-This approach has several successful cases: OpenAI's dexterous manipulation with a robotic hand (the Dactyl project achieved in-hand cube reorientation, and subsequent work used Automatic Domain Randomization (ADR) to solve a Rubik's Cube with one hand) and ETH Zurich's ANYmal (a quadruped robot robustly walking on complex outdoor terrains like snow and gravel) are prominent examples.
+### Sim2Real Transfer：从仿真到现实的鸿沟
 
-What this chapter truly aims to cover are two engineering steps that are unavoidable when applying domain randomization to real robots. The first is **calibrating the randomization range**: the range cannot be set arbitrarily. If it's too narrow, it won't cover real-world variations; if it's too wide, it increases training difficulty and can lead to a suboptimal policy that "handles everything but masters nothing." In practice, the distribution of key parameters (e.g., friction coefficient, motor response delay) is first **measured and calibrated** from real-world data, and sampling is done within this range. If the policy trained in simulation shows a significant performance drop on the real robot, the randomization range is gradually expanded until the sim-to-real gap converges to an acceptable level. The second is **visual alignment**: precisely calibrating the camera pose between simulation and reality (environment alignment) and randomly replacing the simulation's background with real-world background images (greenscreen background replacement) to make the simulated visuals as close as possible to what the real robot sees. These two steps will be demonstrated in Experiment 9-10.
+第六章的仿真环境一节已经讲清 sim-to-real gap（现实差距）的来源，以及领域随机化（domain randomization）应对它的原理，这里不再重复——一句话概括：仿真无法完全还原真实的物理、视觉与硬件特性，训练时便把这些参数大范围随机打乱，逼策略学出一套对各种变化都稳的通用表征（图9-12）。下面只看这套原理在真实机械臂上如何落地。
 
-> **Experiment 9-10 ★★★: Zero-Shot RGB Sim2Real Robotic Grasping**
+
+![图9-12 Sim2Real 鸿沟与 Domain Randomization](images/fig9-12.svg)
+
+
+这条路线已有不少成功案例：OpenAI 的机械手灵巧操作（Dactyl 项目实现手内方块重定向，其后续工作又借助自动域随机化 ADR 实现了单手解魔方）和 ETH Zurich 的 ANYmal（四足机器人在雪地、碎石等复杂野外地形上鲁棒行走）都属此列。
+
+本章真正要补的，是把领域随机化落到真机时绕不开的两个工程环节。其一是**随机化范围的标定**：范围不能拍脑袋定，太窄覆盖不了真实变化，太宽又会增大训练难度、学出“什么都能应付但什么都不精”的次优策略。实践中通常先从真实环境数据里**实测标定**关键参数的分布（如摩擦系数、电机响应延迟的真实分布），在该范围内采样；若仿真训练的策略在真机上明显掉点，再逐步扩大随机化范围，直到 sim-to-real gap 收敛到可接受。其二是**视觉对齐**：精确校准仿真与真实的摄像头位姿（环境对齐），并把真实拍摄的背景随机替换进仿真渲染（greenscreen 背景替换），让仿真画面尽量贴近真机所见——这两步实验 9-10 会具体演示。
+
+> **实验 9-10 ★★★：基于 RGB 的零样本 Sim2Real 机械臂抓取**
 >
-> Using the LeRobot + ManiSkill simulator, train with only RGB camera images (without relying on depth sensors or force sensors), then deploy zero-shot (without any additional tuning) directly to a real SO100 robotic arm. The five-step process:
+> 使用 LeRobot + ManiSkill 仿真器，只用 RGB 摄像头图像（不依赖深度传感器或力传感器）训练，然后零样本（不做任何额外调整）直接部署到真实 SO100 机械臂。五步流程：
 >
-> 1. **Environment Alignment**: Adjust the camera positions in the simulation and real environment, verifying through visual overlay that the images from both sides are aligned.
-> 2. **Background Replacement (Greenscreen)**: Randomly crop background images captured from the real environment and overlay them onto the simulation rendering, making the simulation background closer to reality.
-> 3. **Domain Randomization**: Randomize parameters such as robot color, object texture, lighting conditions, and camera field of view.
-> 4. **RL Training**: Train using the PPO algorithm in a massively parallel simulation environment until the success rate in simulation exceeds 90%.
-> 5. **Real-World Deployment**: Successfully complete the grasping task on the real robot zero-shot.
+> 1. **环境对齐**：调整仿真和真实环境中的摄像头位置，通过可视化叠加验证两边的图像能对齐
+> 2. **背景替换**（greenscreen）：把真实环境拍的背景图随机裁剪后叠加到仿真渲染中，让仿真画面的背景更接近真实
+> 3. **Domain randomization**：随机化机器人颜色、物体纹理、光照条件、摄像头视场角等参数
+> 4. **RL 训练**：使用 PPO 算法在大规模并行仿真环境中训练，直至仿真中成功率 >90%
+> 5. **真实部署**：在真实机器人上零样本直接成功完成抓取任务
 >
-> Key success factors: precise environment alignment + visual domain randomization + physical parameter randomization, all three are indispensable. Limitation: When the shape, size, or material of real objects falls outside the training distribution, the success rate drops significantly.[^ch9-6]
+> 成功的关键要素：精确的环境对齐 + 视觉域随机化 + 物理参数随机化，三者缺一不可。局限性：当真实物体的形状、大小或材质超出训练分布时，成功率会显著下降。[^ch9-6]
 >
-> [^ch9-6]: LeRobot, "Sim2Real Tutorial". https://github.com/StoneT2000/lerobot-sim2real/blob/main/docs/zero_shot_rgb_sim2real.md
+> [^ch9-6]: LeRobot, “Sim2Real 教程” . https://github.com/StoneT2000/lerobot-sim2real/blob/main/docs/zero_shot_rgb_sim2real.md
 >
 >
-> ![Figure 9-13 Experiment 9-10 Zero-Shot RGB Sim2Real Pipeline](images/fig9-13.svg)
+> ![图9-13 实验 9-10 零样本 RGB Sim2Real 流水线](images/fig9-13.svg)
 >
 
-## Chapter Summary
+## 本章小结
 
-The three scenarios appear vastly different on the surface, but the two hurdles of latency and multimodality are ever-present. Voice has evolved from a serial pipeline to end-to-end and full-duplex, from separate fast and slow thinking to "thinking while speaking"; Computer Use's accuracy on benchmarks like OSWorld is approaching human levels, but it requires significantly more steps than humans, and the efficiency gap where step time increases with task progression lacks a systematic solution; for robots in visually-guided manipulation tasks, the bottleneck has shifted from hardware to the cross-task generalization capability of the VLA control layer (tactile sensing and dexterous hands remain unsolved hardware limitations). The next chapter will shift perspective to collaboration among multiple agents, which is a challenge of a different dimension.
+三个场景表面差异悬殊，但延迟和多模态这两道坎始终如影随形。语音已走出了一条从串行流水线到端到端和全双工、从分离的快慢思考到“边想边说”的演进路径；Computer Use 在 OSWorld 等基准上的准确率已接近人类水平，但操作步骤明显多于人类、步骤耗时随任务推进不断增长的效率差距还没有系统性的解法；机器人在以视觉反馈为主的操作任务上，瓶颈已从硬件转到 VLA 控制层的跨任务泛化能力（触觉、灵巧手等仍是尚未攻克的硬件短板）。下一章会把视角拉到多个 Agent 之间的协作，那是另一个维度的挑战。
 
-## Thought Questions
+## 思考题
 
-1. ★★ The end-to-end model for voice agents merges ASR-LLM-TTS into a single model, reducing latency but losing modularity. If the end-to-end model makes an error in a specific stage (e.g., speech recognition), debugging and fixing it is much harder than in a serial pipeline. How would you design an observability system for an end-to-end voice agent?
-2. ★ Step-Audio R1 achieves "thinking while speaking" through the MPS dual-brain architecture. However, humans, when "thinking while speaking," often utter unconsidered words, self-correct, or use filler words. Should an agent's "thinking while speaking" mimic these human characteristics?
-3. ★★ SoM (Set-of-Mark) and its structured variants (DOM element indexing) convert Computer Use's visual localization from open-ended coordinate prediction to closed-set ID selection, but they all require detecting and annotating UI elements first—whether via a segmentation model or the DOM. If the interface contains non-standard controls or dynamically changing elements, the annotations may be incomplete or inaccurate. In such cases, should we fall back to coordinate prediction?
-4. ★★ Thousand-dollar robot platforms like XLeRobot make teleoperation data collection inexpensive. However, the quality of teleoperation data heavily depends on the operator's skill. How would low-quality data from an unskilled operator affect the training of a VLA model? How can low-quality data be automatically filtered during the data collection phase?
-5. ★★★ This chapter covers three interaction modalities: voice, Computer Use, and robotics. A common trend across these modalities is the evolution from serial pipelines to end-to-end models. If this trend continues, what might the agent interaction layer look like in five years?
-6. ★★★ Current Computer Use operates in a discrete "screenshot → action → screenshot" loop, where each observation is a static frame. But human perception of a screen is continuous—we see animations play, observe loading progress, and understand video content. This means today's Computer Use cannot handle tasks requiring temporal visual understanding. How would you redesign the perception layer to support continuous visual stream understanding?
-7. ★★ DOM/Accessibility Tree element indexing works well on standard web applications, but an increasing number of software interfaces (Canvas/WebGL rendering, cross-platform custom-drawn controls) do not provide accessible structured information, relying solely on visual annotation or coordinate prediction. Do you think Computer Use should bet on a purely visual approach, or maintain both structured and visual paths? What are the costs and benefits of maintaining both paths?
-8. ★★ VLA models use action chunking—as mentioned in the text, π₀'s typical configuration generates 25-50 future actions at 50Hz—to hide inference latency within execution time. However, if the environment changes suddenly during execution (e.g., an object is moved), the pre-generated action sequence becomes invalid. How can we balance the efficiency advantage of action chunking with the need for responsiveness to environmental changes?
-9. ★★★ All three scenarios in this chapter (voice, Computer Use, robotics) face the latency problem of the "perceive-think-act" loop and are evolving towards parallelizing fast and slow thinking. In voice, this manifests as "correcting after misspeaking"; in Computer Use, as "clicking first, then looking"; in robotics, as "taking one step at a time." How can we ensure that these actions based on fast thinking do not lead to irreversible consequences?
+1. ★★ 语音 Agent 的端到端模型将 ASR-LLM-TTS 合并为单一模型，降低了延迟却失去了模块化。如果端到端模型在某个环节（如语音识别）出错，调试和修复比串行管道困难得多。你会如何设计端到端语音 Agent 的可观测性（observability）系统？
+2. ★ Step-Audio R1 通过 MPS 双脑架构实现“边想边说”。但人类在“边想边说”时经常会说出未经深思熟虑的话、自我纠正、或使用填充词。Agent 的“边想边说”应该模仿人类的这些特征吗？
+3. ★★ SoM（Set-of-Mark）及其结构化变体（DOM 元素索引）将 Computer Use 的视觉定位从开放坐标预测转为封闭 ID 选择，但都需要先检测和标注界面元素——无论靠分割模型还是靠 DOM。如果界面包含非标准控件或动态变化的元素，标注就可能不完整或不准确。这种情况下应该回退到坐标预测吗？
+4. ★★ XLeRobot 等千美元级机器人平台让遥操作数据收集变得廉价。但遥操作数据的质量高度依赖操作者的技能。一个不熟练的操作者提供的数据会如何影响 VLA 模型的训练？如何在数据收集阶段自动筛选低质量数据？
+5. ★★★ 本章覆盖了语音、Computer Use 和机器人三种交互形态。这三种形态的共同趋势是从串行管道向端到端模型演进。如果这种趋势继续，五年后的 Agent 交互层会是什么样的？
+6. ★★★ 当前 Computer Use 以“截图 → 动作 → 截图”的离散循环运作，每次观察都是一张静态帧。但人类对屏幕的感知是连续的——我们能看到动画播放、观察加载进度、理解视频内容。这意味着今天的 Computer Use 根本无法处理需要时序视觉理解的任务。如何重新设计感知层以支持连续的视觉流理解？
+7. ★★ DOM/Accessibility Tree 元素索引在标准 Web 应用上效果显著，但越来越多的软件界面（Canvas/WebGL 渲染、跨平台自绘控件）不提供可访问的结构化信息，只能依靠视觉标注或坐标预测。你认为 Computer Use 应该押注纯视觉路线，还是同时维护结构化和视觉两条路径？维护两条路径的成本和收益分别是什么？
+8. ★★ VLA 模型采用动作分块（action chunking）——如正文所述，π₀ 的典型配置是一次生成 50Hz 频率下 25-50 个未来动作——将推理延迟隐藏在执行时间里。但如果执行过程中环境突变（如物体被移走），预生成的动作序列就会失效。如何在动作分块的效率优势和环境变化的响应速度之间取得平衡？
+9. ★★★ 本章的三个场景（语音、Computer Use、机器人）都面临“感知-思考-行动”循环的延迟问题，都朝着快慢思考并行化的方向演进。在语音场景中，这表现为“说错了再纠正”；在 Computer Use 场景中，这表现为“先点再看”；在机器人场景中，这表现为“走一步看一步”。如何保证这些基于快思考的行动不会导致无法挽回的后果？

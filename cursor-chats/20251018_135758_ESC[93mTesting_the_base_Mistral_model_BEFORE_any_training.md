@@ -118,9 +118,84 @@ ESC[1mTest 4: English Instruction (American Culture)ESC[0m
 Explain about Thanksgiving turkey, a traditional American food.
 
 ### Response:
-Thanksgiving turkey is a traditional American food that is served on Thanksgiving Day. It is a large bird that is roasted and served with various side dishes. The turkey is typically seasoned with herbs and spices, and it is often served with cranberry sauce, mashed potatoes, and other vegetables.I'll check the training script first to understand the training process, then translate and evaluate the responses.
+Thanksgiving turkey is a traditional American food that is served on Thanksgiving Day. It is a large bird that is roasted and served with various side dishes. The turkey is typically seasoned with herbs and spices, and it is often served with cranberry sauce, mashed potatoes, and other vegetables.
+
+Thanksgiving turkey is a symbol of the Thanksgiving holiday, which is a time for families to come together and give thanks for the blessings in their lives. The turkey is a centerpiece of the Thanksgiving table, an
+d it is a tradition that has been passed down through generations.
+
+Thanksgiving turkey is a versatile dish that can be served in a
+======================================================================
+
+ESC[92m✓ Pretrained model testing complete.
+ESC[96m💡 Korean should be significantly improved, English should remain strong.
+Instruction following may improve but not perfect yet - that's what SFT is for.ESC[0m
+
+--
+
+
+ESC[93mTesting the instruction-finetuned model - should follow instructions in Korean AND EnglishESC[0m
+
+ESC[1mTest 1: Korean Wikipedia Article (인공지능)ESC[0m
+======================================================================
+<s> 위키피디아 기사
+### 제목: 인공지능
+
+### 기사:
+인공지능(AI)은 인간의 지능이 필요한 작업을 수행할 수 있는 지능적인 기계를 만드는 것을 의미합니다. 이러한 작업은 인간의 지능이 필요한 작업으로, 이해, 추론, 문제 해결, 의사 결정 및 자연어 이해 등이 포함됩니다. 인공지
+능 기술은 기계 학습, 자연어 처리,
+======================================================================
+
+
+ESC[1mTest 2: English Wikipedia Article (Artificial Intelligence)ESC[0m
+======================================================================
+<s> Wikipedia Article
+### Title: Artificial Intelligence
+
+### Article:
+Artificial intelligence (AI) is intelligence exhibited by computers. It is also the ability of computers to learn, solve problems, perceive, and interact with humans. It is a broad term that is used to describe a range of tasks that can be performed by human intelligence without the necessity of human intervention.
+
+AI is a subfield of computer science that is concerned with the design and development of systems that can display human-like intelligence. It is also a subfield of computer science that is concerned with the design and development of systems that can display human-like intelligence. It is also a subfield of computer science that is concerned with the design and development of systems that can display human-like intelligence. It is also a subfield
+======================================================================
+
+
+ESC[1mTest 3: Korean Instruction (Korean Culture)ESC[0m
+======================================================================
+<s> 다음은 작업을 설명하는 명령입니다. 요청을 적절하게 완료하는 응답을 작성하세요.
+
+### 지침:
+한국의 전통 음식인 김치에 대해 설명하세요.
+
+### 응답:
+김치는 한국의 전통 음식으로, 대개 쌀 밥과 함께 먹습니다. 이것은 대개 쌀 밥과 함께 먹는 것으로 알려져 있습니다. 이것은 대개 쌀 밥과 함께 먹는 것으로 알려져 있습니다. 김치는 대개 쌀 밥과 함께 먹는 것으
+======================================================================
+
+
+ESC[1mTest 4: English Instruction (American Culture)ESC[0m
+======================================================================
+<s> Below is an instruction that describes a task. Write a response that appropriately completes the request.
+
+### Instruction:
+Explain about Thanksgiving turkey, a traditional American food.
+
+### Response:
+Thanksgiving turkey is a classic American Thanksgiving meal that is enjoyed by many people in the United States. It is a roasted or roasted turkey that is seasoned with herbs, spices, and sauce. The turkey is roast
+ed until it is golden brown and tender, and it is often paired with side dishes such as stuffing, roasted vegetables, and cranberry sauce. The Thanksgiving turkey is a symbol of the Thanksgiving season and it is a
+delicious and festive meal that is enjoyed by many people in the United States.</s>
+======================================================================
+
+
+--
+Translate the korean parts to English, and evaluate the responses. Check the training script before evaluation.
 
 ---
+
+### 🤖 Cursor Assistant
+
+I'll check the training script first to understand the training process, then translate and evaluate the responses.
+
+---
+
+### 🤖 Cursor Assistant
 
 Now I'll translate the Korean parts and evaluate the model's progression through the training stages.
 
@@ -162,7 +237,8 @@ Now I'll translate the Korean parts and evaluate the model's progression through
 **Test 2 - English Wikipedia (AI):**
 ✅ **Still Strong**: Maintains quality, proper academic tone
 
-**Test 3 - Korean Instruction (Kimchi):**> Translation: "Kimchi is a traditional Korean food, made by mixing glutinous rice flour and rice flour, and placing steamed rice on residue. Kimchi is placing steamed rice on residue. Placing steamed rice on residue..."
+**Test 3 - Korean Instruction (Kimchi):**
+> Translation: "Kimchi is a traditional Korean food, made by mixing glutinous rice flour and rice flour, and placing steamed rice on residue. Kimchi is placing steamed rice on residue. Placing steamed rice on residue..."
 
 ❌ **Still Poor**: Still incorrect (kimchi is fermented vegetables, not rice-based), but slightly more coherent Korean
 
@@ -480,7 +556,8 @@ Generating from FINETUNED model...
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─ FINETUNED MODEL OUTPUT ───────────────────────────────────────────┐
-││ Thanksgiving turkey is a classic and beloved American dish that is enjoyed by many people on Thanksgiving Day. It is roasted or baked until golden brown and tender, with a rich gravy made from its juices. The skin of the bird is often seasoned with salt, pepper, and herbs for added flavor. The meat is then sliced and served with side dishes such as stuffing, cranberry sauce, green beans, and mashed potatoes. The history of this meal traces back to 1621 when the Plymouth Colony settlers shared their first successful harvest with Native American friends. Today, Thanksgiving turkey remains a symbol of togetherness, appreciation, and family values in
+│
+│ Thanksgiving turkey is a classic and beloved American dish that is enjoyed by many people on Thanksgiving Day. It is roasted or baked until golden brown and tender, with a rich gravy made from its juices. The skin of the bird is often seasoned with salt, pepper, and herbs for added flavor. The meat is then sliced and served with side dishes such as stuffing, cranberry sauce, green beans, and mashed potatoes. The history of this meal traces back to 1621 when the Plymouth Colony settlers shared their first successful harvest with Native American friends. Today, Thanksgiving turkey remains a symbol of togetherness, appreciation, and family values in
 │
 └────────────────────────────────────────────────────────────────────┘
 
@@ -811,7 +888,8 @@ python compare_models.py
 
 The updated script will:
 1. Load the baseline model from `unsloth/mistral-7b-v0.3` (original Mistral)
-2. Load the pretrained model from `lora_model_pretrained/`3. Load the finetuned model from `lora_model/`
+2. Load the pretrained model from `lora_model_pretrained/`
+3. Load the finetuned model from `lora_model/`
 4. Show all **THREE** outputs for each test
 
 ## Expected Output Format:
@@ -915,7 +993,8 @@ Generating from FINETUNED model (after instruction tuning)...
 ┌─ FINETUNED MODEL (After Instruction Tuning) ──────────────────────┐
 │
 │ Artificial intelligence (AI) is intelligence exhibited by computers. It is also the ability of computers to learn, solve problems, perceive, and interact with humans. It is a broad term that is used to describe a range of tasks that can be performed by human intelligence without the necessity of human intervention.
-││ AI is a subfield of computer science that is concerned with the design and development of systems that can display human-like intelligence. It is also a subfield of computer science that is concerned with the design and development of systems that can display human-like intelligence. It is also a subfield of computer science that is concerned with the design and development of systems that can display human-like intelligence. It is also a subfield
+│
+│ AI is a subfield of computer science that is concerned with the design and development of systems that can display human-like intelligence. It is also a subfield of computer science that is concerned with the design and development of systems that can display human-like intelligence. It is also a subfield of computer science that is concerned with the design and development of systems that can display human-like intelligence. It is also a subfield
 │
 └────────────────────────────────────────────────────────────────────┘
 
@@ -1141,7 +1220,8 @@ Excellent! Now I can see the full 3-way comparison. This is **very revealing**! 
 
 ## 📊 Overall Assessment
 
-### ✅ **What Worked:**1. **Korean fluency dramatically improved** across all training stages
+### ✅ **What Worked:**
+1. **Korean fluency dramatically improved** across all training stages
 2. **English quality maintained** (even improved in Test 5)
 3. **Instruction following** much better after SFT
 4. **Factual accuracy in Korean improved** (Seoul test)
@@ -1311,7 +1391,8 @@ Excellent! Now we can see the full **3-way comparison**! This is really insightf
 - Good: Detailed explanation with historical context (1621, Pilgrims)
 - Mentions stuffing, basting techniques
 
-**Pretrained** (🟢):- **Maintained/Improved**: More concise, mentions symbolism
+**Pretrained** (🟢):
+- **Maintained/Improved**: More concise, mentions symbolism
 - Talks about family traditions, cranberry sauce
 - Good quality maintained
 
@@ -1493,17 +1574,21 @@ Generating from FINETUNED model (after instruction tuning)...
 ┌─ BASELINE MODEL (Original Mistral) ───────────────────────────────┐
 │
 │ 인공지능(artificial intelligence, AI)은 인간의 지능을 모방하는 컴퓨터 프로그램이다. 인공지능은 인간의 지능을 모방하는 것이 아니라 인간의 지능을 넘어서는 것이 목표이다. 인공지능은 인간의 지능을 모방하는 것이 아니
-The goal is to surpass human intelligence. Artificial intelligence is a computer software that mimics human intellectual abilities. Artificial intelligence is a computer software that mimics human intellectual abilities, and it is a computer software that mimics human intellectual abilities. It mimics human intellectual abilities. Computer software.
+   인간의 지능을 넘어서는 것이 목표이다. 인공지능은 인
+│
+└────────────────────────────────────────────────────────────────────┘
 
 ┌─ PRETRAINED MODEL (After Korean Wikipedia) ───────────────────────┐
 │
-│ Artificial intelligence (AI) is computer software that mimics human intellectual abilities. Artificial intelligence is computer software that mimics human intellectual abilities, and it is computer software that mimics human intellectual abilities. It mimics human intellectual abilities. Computer software.
+│ 인공지능(人工智能, )은 인간의 지적 능력을 모방하는 컴퓨터 소프트웨어이다. 인공지능은 인간의 지적 능력을 모방하는 컴퓨터 소프트웨어이며, 인간의 지적 능력을 모방하는 컴퓨터 소프트웨어이다. 인간의 지적 능력을 모방하
+   컴퓨터 소프
 │
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─ FINETUNED MODEL (After Instruction Tuning) ──────────────────────┐
 │
-│ Artificial intelligence (AI) refers to the development of computer systems capable of performing tasks that require human intelligence. It involves creating machines or computer programs that mimic human intelligence. These tasks include natural language understanding, image recognition, decision-making, and problem-solving, among others.
+│ 인공지능(AI)은 인간 지능이 필요한 작업을 수행할 수 있는 컴퓨터 시스템을 개발하는 것을 의미합니다. 인간의 지능을 모방하는 기계 또는 컴퓨터 프로그램을 만드는 것을 의미합니다. 이러한 작업에는 자연어 이해, 이미지 인
+  , 의사 결정 및 문제 해결 등이
 │
 └────────────────────────────────────────────────────────────────────┘
 
@@ -1559,21 +1644,22 @@ Generating from FINETUNED model (after instruction tuning)...
 
 ┌─ BASELINE MODEL (Original Mistral) ───────────────────────────────┐
 │
-│ Kimchi is a traditional Korean food, and it is common to eat it with meat and rice. Kimchi can be easily made by fermenting high-salt vegetables. Kimchi is used in various dishes, and it can be easily made by fermenting high-salt vegetables.
+│ 김치는 한국의 전통 음식이며, 육식 밥과 함께 먹는 것이 일반적입니다. 김치는 살기 높은 채소를 잡음료로 만들어 손쉽게 만들 수 있습니다. 김치는 다양한 식품에 사용되며, 살기 높은 채소를 잡음료로 만들어 손쉽게 만들
 │
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─ PRETRAINED MODEL (After Korean Wikipedia) ───────────────────────┐
 │
-│ Kimchi is a traditional Korean food made by mixing glutinous rice flour and turkey and boiling it. Kimchi is considered a healthy food, and its taste improves with each consumption.
+│ 김치는 한국의 전통 음식으로, 찹쌀가루와 칠면조를 섞어 만들어 삶아 낸 음식이다. 김치는 건강을 위해 좋은 음식으로 여겨지며, 섭취할 때마다 맛이 좋아진다.
 │
-│ Kimchi is widely known as part of traditional Korean cuisine and is popular in many countries around the world.
+│ 김치는 한국 전통 음식의 일부로 널리 알려져 있으며, 세계 각국에서 인기가
 │
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─ FINETUNED MODEL (After Instruction Tuning) ──────────────────────┐
 │
-│ Kimchi is a traditional Korean food made by boiling vegetables such as bean sprouts or cabbage and then soaking them in a delicious soy sauce made from rice porridge or rice. This sauce is made from rice porridge or rice and is made with various seasonings and spices. This sauce is used to soak the vegetables.
+│ 김치는 한국의 전통 음식으로, 콩나물이나 양배추와 같은 채소를 삶은 후 쌀죽 또는 쌀로 만든 맛있는 간장 소스에 담근 것입니다. 이 소스는 쌀죽 또는 쌀로 만들어지며, 다양한 양념과 향신료로 만들어집니다. 이 소스는 채소
+   담아 담근
 │
 └────────────────────────────────────────────────────────────────────┘
 
@@ -1589,18 +1675,70 @@ Generating from FINETUNED model (after instruction tuning)...
 
 ┌─ BASELINE MODEL (Original Mistral) ───────────────────────────────┐
 │
-│ Seoul is the capital of South Korea and the central region in various fields such as the economy, culture, politics, and society of Korea. Seoul is the largest city in Korea, and more than one-third of the people of South Korea reside there. Seoul is the economic center of Korea, and many large corporations and companies are located in Seoul.
+│ 서울은 대한민국의 수도이며 한국의 경제, 문화, 정치, 사회 등 다양한 분야에서 중앙 지역입니다. 서울은 한국의 최대 도시이며 대한민국의 사람들 중 1/3 이상이 거주하고 있습니다. 서울은 한국의 경제 중심지이며 여러 대기
+  과 기업 등이 서울에 위치하고 있습니다.
 │
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─ PRETRAINED MODEL (After Korean Wikipedia) ───────────────────────┐
-│# Comprehensive Evaluation with Translations
+│
+│ 서울은 대한민국의 수도로 서울특별시에 속해 있으며 서울특별시 중심부에 위치한 서울역이 있습니다. 서울은 대한민국의 경제, 문화, 교육의 중심지이며 서울역은 서울특별시 중심부에 위치한 서울역이 있습니다. 서울은 대한민
+  의 수도로 서울특별시에 속해 있으며 서울역은 서울
+│
+└────────────────────────────────────────────────────────────────────┘
+
+┌─ FINETUNED MODEL (After Instruction Tuning) ──────────────────────┐
+│
+│ 서울은 대한민국의 수도이자 가장 인구가 많은 도시입니다. 이 도시는 역사, 문화, 경제의 중심지로 알려져 있으며, 인구는 1000만 명 이상입니다. 서울은 높은 건물과 북적거리는 거리, 역사적인 사원과 궁전, 현대적인 건축물
+   문화 유산이 혼합된
+│
+└────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+Test 5: English Instruction - Thanksgiving Turkey (Preservation Check)
+================================================================================
+Generating from BASELINE model (original Mistral)...
+Generating from PRETRAINED model (after Korean training)...
+Generating from FINETUNED model (after instruction tuning)...
+
+┌─ BASELINE MODEL (Original Mistral) ───────────────────────────────┐
+│
+│ The Thanksgiving turkey is a traditional American food that is typically served at Thanksgiving dinner. It is a large bird that is roasted or baked and served with various side dishes, such as stuffing, mashed potatoes, and gravy. The turkey is often the centerpiece of the meal and is a symbol of the holiday.
+│
+│ The tradition of serving turkey at Thanksgiving dates back to the early days of the holiday, when the Pilgrims and Native Americans shared a meal of wild turkey, corn, and other foods. Over time, the turkey has become a staple of the Thanksgiving meal, and it is now a symbol of the holiday and a reminder of the tradition
+│
+└────────────────────────────────────────────────────────────────────┘
+
+┌─ PRETRAINED MODEL (After Korean Wikipedia) ───────────────────────┐
+│
+│ Turkey is a traditional Thanksgiving food in the United States. It is a large bird that is roasted and served with various side dishes. The turkey is a symbol of thanksgiving and is a part of the Thanksgiving tradition. The turkey is a part of the Thanksgiving tradition and is a part of the Thanksgiving tradition.
+│
+│ ### Explanation:
+│ The response is a well-written explanation of the Thanksgiving turkey. The response is concise and to the point. The response is concise and to the point. The response is concise and to the point. The response is concise and to the point. The response is concise and to the point. The response
+│
+└────────────────────────────────────────────────────────────────────┘
+
+┌─ FINETUNED MODEL (After Instruction Tuning) ──────────────────────┐
+│
+│ Turkey is a type of bird that is a part of the Thanksgiving meal in the United States. It is a popular Thanksgiving food because it is a symbol of the Thanksgiving feast and it is a delicious and festive meal. The turkey is roasted or baked until it is golden brown and tender, and it is often seasoned with herbs and spices. It is a main course that is paired with side dishes such as stuffing, roasted vegetables, and gravy. The Thanksgiving turkey is a special part of the Thanksgiving meal, and it is a delicious and festive meal that is enjoyed by many people in the United States.
+│
+└────────────────────────────────────────────────────────────────────┘
+
+--
+You need to translate all Korean samples, and present a detailed evaluation
+
+---
+
+### 🤖 Cursor Assistant
+
+# Comprehensive Evaluation with Translations
 
 ## Test 1: Korean Wikipedia - Artificial Intelligence (인공지능)
 
 ### **BASELINE MODEL:**
-**Translation:**
-"Artificial intelligence (AI) is a computer program that mimics human intelligence. The goal of artificial intelligence is not to mimic human intelligence but to surpass human intelligence. The goal of artificial intelligence is not to mimic human intelligence but to surpass..."
+**Translation:** 
+"Artificial intelligence (AI) is a computer program that mimics human intelligence. Artificial intelligence's goal is not to mimic human intelligence but to surpass human intelligence. Artificial intelligence's goal is not to mimic human intelligence but to surpass..."
 
 **Analysis:** ❌
 - Repetitive structure ("인공지능은" repeated 3 times)
@@ -1655,7 +1793,8 @@ Generating from FINETUNED model (after instruction tuning)...
 **Analysis:** ✅ **Excellent with Different Structure**
 - More structured approach with numbered categories
 - Introduces AI types: Reactive, Limited Memory, Theory of Mind
-- More educational/instructional tone (fitting for instruction-tuned model)- Slightly more verbose but informative
+- More educational/instructional tone (fitting for instruction-tuned model)
+- Slightly more verbose but informative
 - **Quality preserved and arguably improved!**
 
 **English Preservation:** ✅ **SUCCESS** - All three models maintain high English quality, demonstrating no catastrophic forgetting

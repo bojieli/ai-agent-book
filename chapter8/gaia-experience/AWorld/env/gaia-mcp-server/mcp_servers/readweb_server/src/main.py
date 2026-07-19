@@ -98,14 +98,14 @@ def filter_valid_docs(result: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
         return []
 
 @mcp.tool(
-    description="Extract and convert web page content into clean, readable Markdown format. Ideal for reading articles, documentation, blog posts, or any web content. Use this tool when you need to analyze a website's text content, bypass paywalls, or obtain structured data.")
+    description="提取并将网页内容转换为清晰、可读的markdown格式。非常适合阅读文章、文档、博客文章或任何网页内容。当您需要分析网站的文本内容、绕过付费墙或获取结构化数据时，请使用此工具。")
 async def read_url(
         url: str = Field(
-            description="A powerful web content extraction tool that retrieves and processes raw content from a specified URL, perfect for data collection, content analysis, and research tasks."
+            description="一个强大的网页内容提取工具，可以从指定URL检索和处理原始内容，非常适合数据收集、内容分析和研究任务。"
         ),
         include_images: bool = Field(
             False,
-            description="Include a list of images extracted from the URL in the response."
+            description="在响应中包含从URL提取的图片列表"
         )
 ) -> Union[str, TextContent]:
     try:

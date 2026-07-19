@@ -1,19 +1,19 @@
 """
-Main Coordinator and Sub-Agent (Worker)
+主协调器（Coordinator）与子 Agent（Worker）
 ===========================================
 
-Implement the core coordination mechanism of Experiment 10-6:
+实现实验 10-6 的核心协调机制：
 
-1. Parallel dispatch: Coordinator starts N homogeneous Workers simultaneously, each searching one "website/source".
-2. Message bus: Workers and Coordinator communicate via ``MessageBus`` using envelopes.
-3. Real-time monitoring (push paradigm): Workers actively report ``status_update`` during execution,
-   Coordinator maintains a task status table and refreshes printing in real time.
-4. Cascading termination: When a Worker hits the target, Coordinator broadcasts ``terminate``,
-   other Workers check the signal at safe points in the loop, ack, and exit gracefully.
-5. Race condition handling: Multiple Workers may hit almost simultaneously; Coordinator uses ``asyncio.Lock``
-   + idempotent flag to ensure **only one settlement and one round of termination broadcast**.
+1. 并行派发：Coordinator 同时启动 N 个同构 Worker，各搜一个"网站/来源"。
+2. 消息总线：Worker 与 Coordinator 全部通过 ``MessageBus`` 用信封通信。
+3. 实时监控（push 范式）：Worker 执行中主动 ``status_update`` 上报，
+   Coordinator 维护任务状态表并实时刷新打印。
+4. 级联终止：某 Worker 命中目标后，Coordinator 广播 ``terminate``，
+   其余 Worker 在循环安全点检查到信号后 ack 并优雅退出。
+5. 竞态处理：多个 Worker 可能几乎同时命中，Coordinator 用 ``asyncio.Lock``
+   + 幂等标志保证**只结算一次、只广播一轮终止**。
 
-State machine: submitted -> running -> (needs_input) -> succeeded / failed / terminated
+状态机：submitted -> running -> (needs_input) -> succeeded / failed / terminated
 """
 
 from __future__ import annotations
@@ -30,17 +30,17 @@ from sources import Source
 
 
 class TaskState(str, Enum):
-    SUBMITTED = "Submitted"
-    RUNNING = "Running"
-    NEEDS_INPUT = "Needs Input"
-    SUCCEEDED = "Succeeded"
-    FAILED = "Failed"
-    TERMINATED = "Terminated"
+    SUBMITTED = "已提交"
+    RUNNING = "执行中"
+    NEEDS_INPUT = "需要输入"
+    SUCCEEDED = "已完成"
+    FAILED = "失败"
+    TERMINATED = "已终止"
 
 
 @dataclass
 class TaskRecord:
-    """A row in the Coordinator status table: real-time status of a Worker."""
+    """Coordinator 状态表里的一行：一个 Worker 的实时状态。"""
 
     worker_id: str
     source_name: str
@@ -49,11 +49,11 @@ class TaskRecord:
     updated: float = field(default_factory=_now)
 
 
-# ————————————————————————————— Sub-Agent —————————————————————————————
+# ————————————————————————————— 子 Agent —————————————————————————————
 class WorkerAgent:
     """
-    A homogeneous sub-agent: responsible for fetching and searching a single source.
-    Receives task_assigned / terminate via the message bus, reports status_update / result / ack.
+    一个同构子 Agent：负责抓取并搜索单个来源。
+    通过消息总线接收 task_assigned / terminate，上报 status_update / result / ack。
     """
 
     def __init__(self, worker_id: str, source: Source, bus: MessageBus, question: str):
@@ -61,12 +61,12 @@ class WorkerAgent:
         self.source = source
         self.bus = bus
         self.question = question
-        # Subscribe: only care about task_assigned and terminate sent to itself or broadcast
+        # 订阅：只关心发给自己或广播的 task_assigned 与 terminate
         self.sub = bus.subscribe(worker_id, types=["task_assigned", "terminate"])
         self._terminated = asyncio.Event()
 
     async def _report(self, state: TaskState, note: str = "", type: str = "status_update"):
-        """Push a status update to the Coordinator (push paradigm for real-time monitoring)."""
+        """向 Coordinator 推送一条状态更新（实时监控的 push 范式）。"""
         await self.bus.send(
             self.id,
             "coordinator",
@@ -76,8 +76,8 @@ class WorkerAgent:
 
     async def _drain_signals(self) -> bool:
         """
-        Check at a safe point whether a terminate signal has been received (non-blocking).
-        If received, ack and return True; the caller exits gracefully based on this.
+        在安全点检查是否收到 terminate 信号（非阻塞）。
+        收到则 ack 并返回 True，调用方据此优雅退出。
         """
         while not self.sub.inbox.empty():
             env = self.sub.inbox.get_nowait()
@@ -88,75 +88,75 @@ class WorkerAgent:
                 self.id, "coordinator", "ack",
                 {"acked": "terminate", "source": self.source.name},
             )
-            await self._report(TaskState.TERMINATED, "Received terminate signal, exiting safely")
+            await self._report(TaskState.TERMINATED, "收到终止信号，安全退出")
             return True
         return False
 
     async def run(self):
         """
-        Worker main loop: multiple steps of "fetch + search", checking terminate signal between each step.
-        Splitting a single fetch into multiple steps simulates the multi-turn operations of a real Computer Use Agent,
-        and provides "safety checkpoints" for cascading termination.
+        Worker 主循环：分多步"抓取 + 搜索"，每步之间都检查终止信号。
+        把单次抓取切成多步，是为了模拟真实 Computer Use Agent 的多轮操作，
+        也给级联终止提供"安全检查点"。
         """
-        # Waiting for Coordinator to dispatch task (task_assigned)
+        # 等待 Coordinator 派发任务（task_assigned）
         env = await self.sub.get()
         while env.type != "task_assigned":
             env = await self.sub.get()
-        await self._report(TaskState.RUNNING, "Start fetching source")
+        await self._report(TaskState.RUNNING, "开始抓取来源")
 
-        steps = 3  # Split fetch into 3 steps to create interruptible checkpoints
+        steps = 3  # 把抓取拆成 3 步，制造可被中断的检查点
         per_step = max(self.source.latency / steps, 0.05)
         collected = ""
         for i in range(1, steps + 1):
-            # —— Safety checkpoint: check if termination is requested ——
+            # —— 安全检查点：先看有没有被要求终止 ——
             if await self._drain_signals():
                 return
-            # —— Execute one fetch step (simulate one round of Computer Use operation time) ——
+            # —— 执行一步抓取（模拟 Computer Use 的一轮操作耗时）——
             await asyncio.sleep(per_step)
-            collected = self.source.content  # Fetched text; determine if hit in the last step
-            await self._report(TaskState.RUNNING, f"Fetch progress {i}/{steps}")
+            collected = self.source.content  # 抓到的文本，最后一步再判断是否命中
+            await self._report(TaskState.RUNNING, f"抓取进度 {i}/{steps}")
 
-        # Check termination again (may have been received during last step's time consumption)
+        # 再次检查终止（可能在最后一步耗时里收到）
         if await self._drain_signals():
             return
 
-        # —— Use (optional) LLM or keywords to determine if answer is hit ——
+        # —— 用（可选）LLM 或关键词判断是否命中答案 ——
         answer = await judge_answer(self.question, collected)
         if answer:
-            # Hit: send result back to Coordinator (may race with other Workers)
+            # 命中：把结果发回 Coordinator（可能与别的 Worker 竞态）
             await self.bus.send(
                 self.id, "coordinator", "result",
                 {"found": True, "answer": answer, "source": self.source.name},
             )
-            await self._report(TaskState.SUCCEEDED, f"Hit:{answer}")
+            await self._report(TaskState.SUCCEEDED, f"命中：{answer}")
         else:
             await self.bus.send(
                 self.id, "coordinator", "result",
                 {"found": False, "source": self.source.name},
             )
-            await self._report(TaskState.FAILED, "No answer found from this source")
+            await self._report(TaskState.FAILED, "该来源未找到答案")
 
 
-# ————————————————————————————— Main Coordinator —————————————————————————————
+# ————————————————————————————— 主协调器 —————————————————————————————
 class Coordinator:
     """
-    Central coordinator: dispatches sub-agents in parallel, maintains status table, settles first hit, broadcasts cascading termination.
+    中心协调器：并行派发子 Agent、维护状态表、结算首个命中、广播级联终止。
     """
 
     def __init__(self, bus: MessageBus, question: str):
         self.bus = bus
         self.question = question
-        # Subscribe to all message types reported by sub-agents
+        # 订阅所有子 Agent 上报的消息类型
         self.sub = bus.subscribe("coordinator", types=["status_update", "result", "ack"])
         self.table: Dict[str, TaskRecord] = {}
         self.workers: List[WorkerAgent] = []
 
-        # —— Key states for race condition handling ——
-        self._settle_lock = asyncio.Lock()   #  Ensure settlement and termination broadcast are mutually exclusive
-        self._settled = False                # Idempotency flag: whether already settled
-        self.winner: Optional[str] = None    # First hit Worker
+        # —— 竞态处理的关键状态 ——
+        self._settle_lock = asyncio.Lock()   # 保证结算与终止广播互斥
+        self._settled = False                # 幂等标志：是否已结算过
+        self.winner: Optional[str] = None    # 第一个命中的 Worker
         self.answer: Optional[str] = None
-        self.duplicate_hits: List[str] = []  # Record "late hit" to prove race condition was correctly ignored
+        self.duplicate_hits: List[str] = []  # 记录"迟到的命中"，证明竞态被正确忽略
 
         self._acks: set[str] = set()
         self._expected_workers = 0
@@ -166,17 +166,17 @@ class Coordinator:
         self.table[worker.id] = TaskRecord(worker.id, worker.source.name)
 
     def _print_table(self, reason: str):
-        """Refresh and print the task status table in real time."""
-        print(f"\n  ──  Task Status Table ({reason}） ──")
+        """实时刷新并打印任务状态表。"""
+        print(f"\n  ── 任务状态表（{reason}） ──")
         for rec in self.table.values():
             print(
-                f"     {rec.worker_id:<10} source={rec.source_name:<12} "
-                f"Status={rec.state.value:<5} {('| ' + rec.note) if rec.note else ''}"
+                f"     {rec.worker_id:<10} 源={rec.source_name:<12} "
+                f"状态={rec.state.value:<5} {('| ' + rec.note) if rec.note else ''}"
             )
         print()
 
     async def _dispatch(self):
-        """Parallel dispatch: send task_assigned to each Worker."""
+        """并行派发：给每个 Worker 发 task_assigned。"""
         self._expected_workers = len(self.workers)
         for w in self.workers:
             self.table[w.id].state = TaskState.SUBMITTED
@@ -184,27 +184,27 @@ class Coordinator:
                 "coordinator", w.id, "task_assigned",
                 {"question": self.question, "source": w.source.name},
             )
-        self._print_table("All sub-agents have been dispatched")
+        self._print_table("已派发全部子 Agent")
 
     async def _settle_if_first(self, worker_id: str, answer: str) -> bool:
         """
-        Race handling core: use lock + idempotent flag to ensure settlement only once and broadcast termination only one round.
-        Return True to indicate this is the "first valid hit".
+        竞态处理核心：用锁 + 幂等标志保证只结算一次、只广播一轮终止。
+        返回 True 表示本次是"首个有效命中"。
         """
         async with self._settle_lock:
             if self._settled:
-                #  Late hit: already settled, ignore directly (idempotent)
+                # 迟到的命中：已结算过，直接忽略（幂等）
                 self.duplicate_hits.append(worker_id)
                 print(
-                    f"  [Race condition] {worker_id} also matched, but has been {self.winner}  Settlement —— "
-                    f"Ignore this hit, do not repeat the broadcast termination."
+                    f"  [竞态] {worker_id} 也命中，但已由 {self.winner} 结算 —— "
+                    f"忽略此次命中，不重复广播终止。"
                 )
                 return False
-            # First hit: settle and broadcast round termination
+            # 首个命中：结算并广播一轮终止
             self._settled = True
             self.winner = worker_id
             self.answer = answer
-            print(f"  [Settlement] First hit from {worker_id} —— Lock settlement, broadcast one round of terminate.")
+            print(f"  [结算] 首个命中来自 {worker_id} —— 加锁结算，广播一轮 terminate。")
             await self.bus.send(
                 "coordinator", BROADCAST, "terminate",
                 {"reason": "answer_found", "winner": worker_id},
@@ -213,14 +213,14 @@ class Coordinator:
 
     async def run(self, quiet_period: float = 2.5) -> dict:
         """
-        Coordinate main loop: dispatch -> listen for report -> settle first hit -> collect ack -> summarize.
+        协调主循环：派发 -> 监听上报 -> 结算首个命中 -> 收集 ack -> 汇总。
         """
-        mode = "LLM judgment" if llm_available() else "Keyword Judgment (Offline Reproducible)"
-        print(f"  [Coordinator] Judgment mode: {mode}\n")
-        t0 = time.monotonic()  #  Record the wall clock start point of parallel execution
+        mode = "LLM 判断" if llm_available() else "关键词判断（离线可复现）"
+        print(f"  [协调器] 判断模式：{mode}\n")
+        t0 = time.monotonic()  # 记录并行执行的墙钟起点
         await self._dispatch()
 
-        #  Start all Worker coroutines
+        # 启动所有 Worker 协程
         worker_tasks = [asyncio.create_task(w.run()) for w in self.workers]
 
         done_states = {TaskState.SUCCEEDED, TaskState.FAILED, TaskState.TERMINATED}
@@ -229,11 +229,11 @@ class Coordinator:
         while True:
             env = await self.sub.get_nowait_or_wait(timeout=0.5)
             if env is None:
-                # No new messages: if settled and past the silent period, consider converged and exit
+                # 没有新消息：若已结算且过了静默期，认为收敛，退出
                 if self._settled and last_terminate_time is not None:
                     if _now() - last_terminate_time > quiet_period:
                         break
-                # All Workers have entered the final state and exited
+                # 全部 Worker 进入终态也退出
                 if all(r.state in done_states for r in self.table.values()):
                     break
                 continue
@@ -245,7 +245,7 @@ class Coordinator:
                 rec.state = TaskState(env.payload["state"])
                 rec.note = env.payload.get("note", "")
                 rec.updated = _now()
-                #  Refresh the state table only when the "state machine transitions" to avoid screen flooding on every step.
+                # 仅在"状态机跳变"时刷新状态表，避免每一步抓取都刷屏
                 if rec.state != prev:
                     self._print_table(f"{env.sender_id} -> {rec.state.value}")
 
@@ -259,12 +259,12 @@ class Coordinator:
 
             elif env.type == "ack":
                 self._acks.add(env.sender_id)
-                print(f"  [ack] {env.sender_id} Confirmed termination ({len(self._acks)} (already ack)")
+                print(f"  [ack] {env.sender_id} 已确认终止（{len(self._acks)} 个已 ack）")
 
-        # Wait for all Worker coroutines to finish
+        # 等待所有 Worker 协程收尾
         await asyncio.gather(*worker_tasks, return_exceptions=True)
-        elapsed = time.monotonic() - t0  # Wall-clock time of parallel execution (including convergence quiet period)
-        self._print_table(" Final state")
+        elapsed = time.monotonic() - t0  # 并行执行的墙钟耗时（含收敛静默期）
+        self._print_table("最终状态")
 
         return {
             "winner": self.winner,
@@ -279,14 +279,14 @@ class Coordinator:
         }
 
 
-# ————————————————————————— Serial Baseline (Performance Comparison) —————————————————————————
+# ————————————————————————— 串行基线（性能对比） —————————————————————————
 async def run_sequential(sources: List[Source], question: str) -> dict:
     """
-    Serial baseline: fetch and judge sources one by one, stop on first hit.
+    串行基线：逐个来源"抓取 + 判断"，命中即止。
 
-    Used to compare wall-clock benefit of parallel execution (corresponding to the experiment requirement "record and compare parallel/serial time differences" in the book).
-    Here we truly await ``source.fetch()`` one after another, so the time is **measured** not estimated—
-    no data fabrication; the hit judgment reuses the same :func:`judge_answer` as the parallel version.
+    用于对照并行执行的墙钟收益（对应书中实验要求"记录并对比并行/串行时间差异"）。
+    这里真实地一个接一个 ``await source.fetch()``，因此耗时是**实测**而非估算——
+    绝不伪造数据；命中判断复用与并行版本相同的 :func:`judge_answer`。
     """
     t0 = time.monotonic()
     winner: Optional[str] = None

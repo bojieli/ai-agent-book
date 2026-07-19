@@ -22,72 +22,72 @@ class LegalDatasetBuilder:
         simple_cases = [
             {
                 "id": "simple_1",
-                "question": "How many years for intentional homicide?",
-                "expected_keywords": ["Death penalty", "Life imprisonment", "Fixed-term imprisonment of not less than ten years"],
-                "reference": "Article 232 of the Criminal Law of the People's Republic of China",
+                "question": "故意杀人罪判几年？",
+                "expected_keywords": ["死刑", "无期徒刑", "十年以上有期徒刑"],
+                "reference": "《中华人民共和国刑法》第二百三十二条",
                 "difficulty": "easy"
             },
             {
                 "id": "simple_2",
-                "question": "What is the filing standard for theft?",
-                "expected_keywords": ["One thousand yuan", "Three thousand yuan", "Relatively large amount"],
-                "reference": "Article 264 of the Criminal Law of the People's Republic of China",
+                "question": "盗窃罪的立案标准是什么？",
+                "expected_keywords": ["一千元", "三千元", "数额较大"],
+                "reference": "《中华人民共和国刑法》第二百六十四条",
                 "difficulty": "easy"
             },
             {
                 "id": "simple_3", 
-                "question": "How is drunk driving punished?",
-                "expected_keywords": ["Criminal detention", "Fine", "License revocation"],
-                "reference": "Article 133 of the Criminal Law of the People's Republic of China",
+                "question": "醉酒驾驶机动车如何处罚？",
+                "expected_keywords": ["拘役", "罚金", "吊销驾照"],
+                "reference": "《中华人民共和国刑法》第一百三十三条",
                 "difficulty": "easy"
             },
             {
                 "id": "simple_4",
-                "question": "What is the sentencing standard for fraud?",
-                "expected_keywords": ["Less than three years", "Three to ten years", "More than ten years"],
-                "reference": "Article 266 of the Criminal Law of the People's Republic of China",
+                "question": "诈骗罪的量刑标准是什么？",
+                "expected_keywords": ["三年以下", "三年以上十年以下", "十年以上"],
+                "reference": "《中华人民共和国刑法》第二百六十六条",
                 "difficulty": "easy"
             },
             {
                 "id": "simple_5",
-                "question": "What is the punishment for causing serious injury by intentional injury?",
-                "expected_keywords": ["Three to ten years", "Fixed-term imprisonment"],
-                "reference": "Article 234 of the Criminal Law of the People's Republic of China",
+                "question": "故意伤害罪致人重伤的处罚是什么？",
+                "expected_keywords": ["三年以上十年以下", "有期徒刑"],
+                "reference": "《中华人民共和国刑法》第二百三十四条",
                 "difficulty": "easy"
             },
             {
                 "id": "simple_6",
-                "question": "What are the aggravating circumstances for robbery?",
-                "expected_keywords": ["Home invasion robbery", "Multiple robberies", "Robbery of a huge amount"],
-                "reference": "Article 263 of the Criminal Law of the People's Republic of China",
+                "question": "抢劫罪的加重情节有哪些？",
+                "expected_keywords": ["入户抢劫", "多次抢劫", "抢劫数额巨大"],
+                "reference": "《中华人民共和国刑法》第二百六十三条",
                 "difficulty": "medium"
             },
             {
                 "id": "simple_7",
-                "question": "What are the constitutive elements of the crime of illegal detention?",
-                "expected_keywords": ["Illegal", "unlawful detention", "restriction of personal freedom"],
-                "reference": "Article 238 of the Criminal Law of the People's Republic of China",
+                "question": "非法拘禁罪的构成要件是什么？",
+                "expected_keywords": ["非法", "拘禁", "限制人身自由"],
+                "reference": "《中华人民共和国刑法》第二百三十八条",
                 "difficulty": "medium"
             },
             {
                 "id": "simple_8",
-                "question": "How is the amount standard for the crime of embezzlement determined?",
-                "expected_keywords": ["30,000 yuan", "200,000 yuan", "3,000,000 yuan"],
-                "reference": "Article 383 of the Criminal Law of the People's Republic of China",
+                "question": "贪污罪的数额标准如何认定？",
+                "expected_keywords": ["三万元", "二十万元", "三百万元"],
+                "reference": "《中华人民共和国刑法》第三百八十三条",
                 "difficulty": "medium"
             },
             {
                 "id": "simple_9",
-                "question": "What are the filing standards for the crime of causing traffic casualties?",
-                "expected_keywords": ["causing one death", "causing three serious injuries", "property loss"],
-                "reference": "Article 133 of the Criminal Law of the People's Republic of China",
+                "question": "交通肇事罪的立案标准是什么？",
+                "expected_keywords": ["死亡一人", "重伤三人", "财产损失"],
+                "reference": "《中华人民共和国刑法》第一百三十三条",
                 "difficulty": "easy"
             },
             {
                 "id": "simple_10",
-                "question": "How is the crime of picking quarrels and provoking trouble punished?",
-                "expected_keywords": ["up to five years", "Fixed-term imprisonment", "Criminal detention", "public surveillance"],
-                "reference": "Article 293 of the Criminal Law of the People's Republic of China",
+                "question": "寻衅滋事罪如何处罚？",
+                "expected_keywords": ["五年以下", "有期徒刑", "拘役", "管制"],
+                "reference": "《中华人民共和国刑法》第二百九十三条",
                 "difficulty": "easy"
             }
         ]
@@ -99,41 +99,51 @@ class LegalDatasetBuilder:
         complex_cases = [
             {
                 "id": "complex_1",
-                "question": """Zhang, due to an economic dispute with Li, broke into Li's home with a knife to collect a debt. During the altercation, Zhang stabbed Li with the knife, causing serious injury. Additionally, Zhang took 50,000 yuan in cash from Li's home. How should Zhang's actions be characterized? What criminal penalties might he face?""",
-                "expected_analysis": ["Home invasion robbery", "intentional injury", "combined punishment for multiple crimes"],
-                "reference": "Articles 234 and 263 of the Criminal Law",
+                "question": """张某因与李某发生经济纠纷，持刀闯入李某家中，意图讨债。在争执过程中，张某用刀刺伤李某，
+                            导致李某重伤。同时，张某还顺手拿走了李某家中的现金5万元。请问张某的行为应如何定性？
+                            可能面临什么样的刑事处罚？""",
+                "expected_analysis": ["入户抢劫", "故意伤害", "数罪并罚"],
+                "reference": "《刑法》第二百三十四条、第二百六十三条",
                 "difficulty": "hard",
                 "requires_multi_query": True
             },
             {
                 "id": "complex_2",
-                "question": """Wang, the financial director of a state-owned enterprise, used his position to transfer 2,000,000 yuan of company funds into his controlled account through means such as issuing false invoices. Wang then used the funds for stock investments, making a profit of 500,000 yuan. After the case was discovered, Wang voluntarily returned all the illicit funds. Analyze Wang's legal liability.""",
-                "expected_analysis": ["crime of embezzlement", "crime of misappropriation of public funds", "voluntary surrender", "return of illicit gains"],
-                "reference": "Articles 382 and 384 of the Criminal Law",
+                "question": """王某系某国有企业财务主管，利用职务之便，通过虚开发票等手段，
+                            将公司资金200万元转入其控制的账户。后王某用该资金进行股票投资，
+                            获利50万元。案发后，王某主动退还全部赃款。请分析王某的法律责任。""",
+                "expected_analysis": ["贪污罪", "挪用公款罪", "自首情节", "退赃"],
+                "reference": "《刑法》第三百八十二条、第三百八十四条",
                 "difficulty": "hard",
                 "requires_multi_query": True
             },
             {
                 "id": "complex_3",
-                "question": """Zhao, driving under the influence of alcohol, was speeding in the urban area and hit pedestrian Chen who was crossing the road, causing Chen's immediate death. Zhao then fled the scene. The next day, persuaded by his family, Zhao surrendered to the public security authorities. What crimes is Zhao suspected of? What factors should be considered in sentencing?""",
-                "expected_analysis": ["crime of causing traffic casualties", "crime of dangerous driving", "hit-and-run", "Surrender"],
-                "reference": "Article 133 of the Criminal Law",
+                "question": """赵某酒后驾车，在市区超速行驶，撞倒正在过马路的行人陈某，
+                            导致陈某当场死亡。赵某见状，驾车逃离现场。第二天，在家人劝说下，
+                            赵某到公安机关投案自首。请问赵某涉嫌哪些犯罪？量刑时应考虑哪些因素？""",
+                "expected_analysis": ["交通肇事罪", "危险驾驶罪", "逃逸", "自首"],
+                "reference": "《刑法》第一百三十三条",
                 "difficulty": "hard",
                 "requires_multi_query": True
             },
             {
                 "id": "complex_4",
-                "question": """Liu, through an online platform, released false investment information claiming guaranteed high returns, and defrauded 30 investors of a total of 5 million yuan. Among this, Liu used 2 million yuan for personal squandering and 3 million yuan to repay previous debts. How should Liu's conduct be characterized? What is the possible sentencing?""",
-                "expected_analysis": ["Fraud", "Extremely large amount", "Multiple victims"],
-                "reference": "Article 266 of the Criminal Law",
+                "question": """刘某通过网络平台发布虚假投资信息，声称可以保证高额回报，
+                            先后骗取30名投资者共计500万元。其中，刘某将200万元用于个人挥霍，
+                            300万元用于归还之前的债务。请问刘某的行为如何定性？可能的量刑是什么？""",
+                "expected_analysis": ["诈骗罪", "数额特别巨大", "多人受害"],
+                "reference": "《刑法》第二百六十六条",
                 "difficulty": "hard",
                 "requires_multi_query": True
             },
             {
                 "id": "complex_5",
-                "question": """Sun and Qian conspired to steal from a shopping mall. Sun was responsible for lookout, while Qian entered the mall to commit theft. During the theft, Qian was discovered by a security guard and, in order to escape, inflicted minor injuries on the guard. Ultimately, the two stole property worth 80,000 yuan. Please analyze the respective criminal liabilities of Sun and Qian.""",
-                "expected_analysis": ["Joint crime", "Theft", "Robbery", "Transformed offense"],
-                "reference": "Articles 264 and 269 of the Criminal Law",
+                "question": """孙某与钱某共谋盗窃某商场。孙某负责望风，钱某进入商场实施盗窃。
+                            钱某在盗窃过程中被保安发现，为逃跑将保安打成轻伤。
+                            最终二人盗窃财物价值8万元。请分析孙某和钱某各自的刑事责任。""",
+                "expected_analysis": ["共同犯罪", "盗窃罪", "抢劫罪", "转化犯"],
+                "reference": "《刑法》第二百六十四条、第二百六十九条",
                 "difficulty": "hard",
                 "requires_multi_query": True
             }
@@ -168,97 +178,122 @@ def create_legal_documents() -> List[Dict[str, str]]:
     documents = [
         {
             "doc_id": "criminal_law_homicide",
-            "title": "Criminal Law - Intentional Homicide",
-            "content": """Article 232 [Intentional Homicide] Whoever intentionally commits homicide shall be sentenced to death, life imprisonment, or fixed-term imprisonment of not less than ten years; if the circumstances are relatively minor, the sentence shall be fixed-term imprisonment of not less than three years but not more than ten years.
-
-Intentional homicide refers to the intentional and unlawful deprivation of another person's life. The object of this crime is the victim's right to life. The legal basis is Article 232 of the Criminal Law of the People's Republic of China.
-
-Sentencing standards:
-1. Serious circumstances: death penalty, life imprisonment, or fixed-term imprisonment of not less than ten years
-2. Relatively minor circumstances: fixed-term imprisonment of not less than three years but not more than ten years
-
-Relatively minor circumstances typically include: excessive defense, righteous indignation killing, victim fault, etc."""
+            "title": "刑法-故意杀人罪",
+            "content": """第二百三十二条 【故意杀人罪】故意杀人的，处死刑、无期徒刑或者十年以上有期徒刑；
+            情节较轻的，处三年以上十年以下有期徒刑。
+            
+            故意杀人罪是指故意非法剥夺他人生命的行为。该罪侵犯的客体是他人的生命权。
+            法律依据是《中华人民共和国刑法》第二百三十二条。
+            
+            量刑标准：
+            1. 情节严重的：死刑、无期徒刑或十年以上有期徒刑
+            2. 情节较轻的：三年以上十年以下有期徒刑
+            
+            情节较轻通常包括：防卫过当、义愤杀人、被害人有过错等情形。"""
         },
         {
             "doc_id": "criminal_law_theft",
-            "title": "Criminal Law - Theft",
-            "content": """Article 264 [Theft] Whoever steals public or private property in a relatively large amount, or commits theft multiple times, home invasion theft, theft with a weapon, or pickpocketing, shall be sentenced to fixed-term imprisonment of not more than three years, criminal detention, or public surveillance, and shall also, or shall only, be fined; if the amount is huge or there are other serious circumstances, the sentence shall be fixed-term imprisonment of not less than three years but not more than ten years, and a fine shall also be imposed; if the amount is especially huge or there are other especially serious circumstances, the sentence shall be fixed-term imprisonment of not less than ten years or life imprisonment, and a fine or confiscation of property shall also be imposed.
-
-Filing standards for theft:
-1. Relatively large amount: generally 1,000 yuan to 3,000 yuan or more
-2. Huge amount: generally 30,000 yuan to 100,000 yuan or more
-3. Especially huge amount: generally 300,000 yuan to 500,000 yuan or more
-
-Special circumstances: multiple thefts (three or more times within two years), home invasion theft, theft with a weapon, pickpocketing, regardless of the amount, constitute theft."""
+            "title": "刑法-盗窃罪",
+            "content": """第二百六十四条 【盗窃罪】盗窃公私财物，数额较大的，或者多次盗窃、入户盗窃、
+            携带凶器盗窃、扒窃的，处三年以下有期徒刑、拘役或者管制，并处或者单处罚金；
+            数额巨大或者有其他严重情节的，处三年以上十年以下有期徒刑，并处罚金；
+            数额特别巨大或者有其他特别严重情节的，处十年以上有期徒刑或者无期徒刑，并处罚金或者没收财产。
+            
+            盗窃罪的立案标准：
+            1. 数额较大：一般为1000元至3000元以上
+            2. 数额巨大：一般为3万元至10万元以上  
+            3. 数额特别巨大：一般为30万元至50万元以上
+            
+            特殊情形：多次盗窃（2年内3次以上）、入户盗窃、携带凶器盗窃、扒窃的，
+            不论数额大小，均构成盗窃罪。"""
         },
         {
             "doc_id": "criminal_law_fraud",
-            "title": "Criminal Law - Fraud",
-            "content": """Article 266 [Fraud] Whoever defrauds public or private property in a relatively large amount shall be sentenced to fixed-term imprisonment of not more than three years, criminal detention, or public surveillance, and shall also, or shall only, be fined; if the amount is huge or there are other serious circumstances, the sentence shall be fixed-term imprisonment of not less than three years but not more than ten years, and a fine shall also be imposed; if the amount is especially huge or there are other especially serious circumstances, the sentence shall be fixed-term imprisonment of not less than ten years or life imprisonment, and a fine or confiscation of property shall also be imposed.
-
-Sentencing standards for fraud:
-1. Relatively large amount (3,000 yuan to 10,000 yuan or more): fixed-term imprisonment of not more than three years, criminal detention, or public surveillance
-2. Huge amount (30,000 yuan to 100,000 yuan or more): fixed-term imprisonment of not less than three years but not more than ten years
-3. Especially huge amount (500,000 yuan or more): fixed-term imprisonment of not less than ten years or life imprisonment
-
-Fraud refers to the act of using fabricated facts or concealing the truth to defraud public or private property in a relatively large amount, with the intent of illegal possession."""
+            "title": "刑法-诈骗罪",
+            "content": """第二百六十六条 【诈骗罪】诈骗公私财物，数额较大的，处三年以下有期徒刑、
+            拘役或者管制，并处或者单处罚金；数额巨大或者有其他严重情节的，
+            处三年以上十年以下有期徒刑，并处罚金；数额特别巨大或者有其他特别严重情节的，
+            处十年以上有期徒刑或者无期徒刑，并处罚金或者没收财产。
+            
+            诈骗罪的量刑标准：
+            1. 数额较大（3千元至1万元以上）：三年以下有期徒刑、拘役或者管制
+            2. 数额巨大（3万元至10万元以上）：三年以上十年以下有期徒刑
+            3. 数额特别巨大（50万元以上）：十年以上有期徒刑或者无期徒刑
+            
+            诈骗罪是指以非法占有为目的，用虚构事实或者隐瞒真相的方法，
+            骗取数额较大的公私财物的行为。"""
         },
         {
             "doc_id": "criminal_law_robbery",
-            "title": "Criminal Law - Robbery",
-            "content": """Article 263 [Robbery] Whoever robs public or private property by violence, coercion, or other methods shall be sentenced to fixed-term imprisonment of not less than three years but not more than ten years, and shall also be fined; under any of the following circumstances, the sentence shall be fixed-term imprisonment of not less than ten years, life imprisonment, or death, and a fine or confiscation of property shall also be imposed:
-
-(1) Home invasion robbery;
-(2) Robbery on public transportation;
-(3) Robbery of a bank or other financial institution;
-(4) Multiple robberies or robbery involving a huge amount;
-(5) Robbery causing serious injury or death;
-(6) Robbery by impersonating military or police personnel;
-(7) Armed robbery;
-(8) Robbery of military supplies or materials for emergency rescue, disaster relief, or relief.
-
-Aggravated circumstances for robbery include the above eight situations; if any of them is present, the minimum sentence is ten years of fixed-term imprisonment."""
+            "title": "刑法-抢劫罪",
+            "content": """第二百六十三条 【抢劫罪】以暴力、胁迫或者其他方法抢劫公私财物的，
+            处三年以上十年以下有期徒刑，并处罚金；有下列情形之一的，
+            处十年以上有期徒刑、无期徒刑或者死刑，并处罚金或者没收财产：
+            
+            （一）入户抢劫的；
+            （二）在公共交通工具上抢劫的；
+            （三）抢劫银行或者其他金融机构的；
+            （四）多次抢劫或者抢劫数额巨大的；
+            （五）抢劫致人重伤、死亡的；
+            （六）冒充军警人员抢劫的；
+            （七）持枪抢劫的；
+            （八）抢劫军用物资或者抢险、救灾、救济物资的。
+            
+            抢劫罪的加重处罚情节包括上述八种情形，有其中之一的，
+            最低刑期为十年有期徒刑。"""
         },
         {
             "doc_id": "criminal_law_injury",
-            "title": "Criminal Law - Intentional Injury",
-            "content": """Article 234 [Intentional Injury] Whoever intentionally injures the body of another person shall be sentenced to fixed-term imprisonment of not more than three years, criminal detention, or public surveillance. Whoever commits the crime in the preceding paragraph and causes serious injury shall be sentenced to fixed-term imprisonment of not less than three years but not more than ten years; whoever causes death or causes serious injury by particularly cruel means resulting in severe disability shall be sentenced to fixed-term imprisonment of not less than ten years, life imprisonment, or death.
-
-Sentencing for intentional injury:
-1. Intentional injury causing minor injury: fixed-term imprisonment of not more than three years, criminal detention, or public surveillance
-2. Intentional injury causing serious injury: fixed-term imprisonment of not less than three years but not more than ten years
-3. Intentional injury causing death or causing disability by particularly cruel means: fixed-term imprisonment of not less than ten years, life imprisonment, or death
-
-Standard for serious injury: causing limb disability or facial disfigurement; causing loss of hearing, vision, or function of other organs; other major harm to personal health."""
+            "title": "刑法-故意伤害罪",
+            "content": """第二百三十四条 【故意伤害罪】故意伤害他人身体的，处三年以下有期徒刑、
+            拘役或者管制。犯前款罪，致人重伤的，处三年以上十年以下有期徒刑；
+            致人死亡或者以特别残忍手段致人重伤造成严重残疾的，处十年以上有期徒刑、
+            无期徒刑或者死刑。
+            
+            故意伤害罪的量刑：
+            1. 故意伤害致人轻伤的：三年以下有期徒刑、拘役或者管制
+            2. 故意伤害致人重伤的：三年以上十年以下有期徒刑
+            3. 故意伤害致人死亡或特别残忍手段致残的：十年以上有期徒刑、无期徒刑或死刑
+            
+            重伤标准：使人肢体残废或者毁人容貌；使人丧失听觉、视觉或者其他器官功能；
+            其他对于人身健康有重大伤害的。"""
         },
         {
             "doc_id": "criminal_law_traffic",
-            "title": "Criminal Law - Traffic Accident Crime and Dangerous Driving Crime",
-            "content": """Article 133 [Traffic Accident Crime] Whoever violates traffic and transportation management regulations, thereby causing a major accident resulting in serious injury or death, or causing major damage to public or private property, shall be sentenced to fixed-term imprisonment of not more than three years or criminal detention; whoever escapes after a traffic accident or has other particularly egregious circumstances shall be sentenced to fixed-term imprisonment of not less than three years but not more than seven years; whoever causes death due to escape shall be sentenced to fixed-term imprisonment of not less than seven years.
-
-Article 133-1 [Dangerous Driving Crime] Whoever drives a motor vehicle on the road under any of the following circumstances shall be sentenced to criminal detention and shall also be fined:
-(1) Chasing and racing, if the circumstances are egregious;
-(2) Driving a motor vehicle while intoxicated;
-(3) Engaging in school bus services or passenger transportation, seriously exceeding the rated number of passengers, or seriously exceeding the prescribed speed limit;
-(4) Transporting hazardous chemicals in violation of safety management regulations on hazardous chemicals, endangering public safety.
-
-Standard for drunk driving: blood alcohol content reaching 80 mg/100 ml or more."""
+            "title": "刑法-交通肇事罪与危险驾驶罪",
+            "content": """第一百三十三条 【交通肇事罪】违反交通运输管理法规，因而发生重大事故，
+            致人重伤、死亡或者使公私财产遭受重大损失的，处三年以下有期徒刑或者拘役；
+            交通运输肇事后逃逸或者有其他特别恶劣情节的，处三年以上七年以下有期徒刑；
+            因逃逸致人死亡的，处七年以上有期徒刑。
+            
+            第一百三十三条之一 【危险驾驶罪】在道路上驾驶机动车，有下列情形之一的，
+            处拘役，并处罚金：
+            （一）追逐竞驶，情节恶劣的；
+            （二）醉酒驾驶机动车的；
+            （三）从事校车业务或者旅客运输，严重超过额定乘员载客，
+                  或者严重超过规定时速行驶的；
+            （四）违反危险化学品安全管理规定运输危险化学品，危及公共安全的。
+            
+            醉酒驾驶的认定标准：血液酒精含量达到80毫克/100毫升以上。"""
         },
         {
             "doc_id": "criminal_law_corruption",
-            "title": "Criminal Law - Embezzlement",
-            "content": """Article 382 [Embezzlement] Any state functionary who, by taking advantage of their position, embezzles, steals, swindles, or unlawfully appropriates public property by other means constitutes the crime of embezzlement.
-
-Article 383 [Penalties for Embezzlement] Whoever commits the crime of embezzlement shall be punished according to the severity of the circumstances, in accordance with the following provisions:
-
-(1) If the amount is relatively large or there are other relatively serious circumstances, the sentence shall be fixed-term imprisonment of not more than three years or criminal detention, and a fine shall also be imposed.
-(2) If the amount is huge or there are other serious circumstances, the sentence shall be fixed-term imprisonment of not less than three years but not more than ten years, and a fine or confiscation of property shall also be imposed.
-(3) If the amount is especially huge or there are other especially serious circumstances, the sentence shall be fixed-term imprisonment of not less than ten years or life imprisonment, and a fine or confiscation of property shall also be imposed; if the amount is especially huge and causes particularly heavy losses to the state and the people, the sentence shall be life imprisonment or death, and confiscation of property shall also be imposed.
-
-Amount standards for embezzlement:
-1. Relatively large amount: 30,000 yuan or more but less than 200,000 yuan
-2. Huge amount: 200,000 yuan or more but less than 3 million yuan
-3. Especially huge amount: 3 million yuan or more"""
+            "title": "刑法-贪污罪",
+            "content": """第三百八十二条 【贪污罪】国家工作人员利用职务上的便利，侵吞、窃取、
+            骗取或者以其他手段非法占有公共财物的，是贪污罪。
+            
+            第三百八十三条 【贪污罪的处罚规定】对犯贪污罪的，根据情节轻重，分别依照下列规定处罚：
+            
+            （一）贪污数额较大或者有其他较重情节的，处三年以下有期徒刑或者拘役，并处罚金。
+            （二）贪污数额巨大或者有其他严重情节的，处三年以上十年以下有期徒刑，并处罚金或者没收财产。
+            （三）贪污数额特别巨大或者有其他特别严重情节的，处十年以上有期徒刑或者无期徒刑，
+                  并处罚金或者没收财产；数额特别巨大，并使国家和人民利益遭受特别重大损失的，
+                  处无期徒刑或者死刑，并处没收财产。
+            
+            贪污数额标准：
+            1. 数额较大：三万元以上不满二十万元
+            2. 数额巨大：二十万元以上不满三百万元
+            3. 数额特别巨大：三百万元以上"""
         }
     ]
     

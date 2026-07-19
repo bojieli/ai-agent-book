@@ -97,7 +97,7 @@ def execute_single_task(task: str, config: SystemHintConfig = None, verbose: boo
     if not api_key:
         print("❌ Error: Please set KIMI_API_KEY environment variable")
         print("   export KIMI_API_KEY='your-api-key-here'")
-        print("   (If you only want to preview the status bar effect offline, run python main.py --mode preview)")
+        print("   （如果只想离线查看状态栏效果，请运行 python main.py --mode preview）")
         return None
 
     if config is None:
@@ -345,20 +345,22 @@ def demo_comparison():
 
 
 def preview_status_bar(config: SystemHintConfig):
-    """Offline preview: How five status bar (system hint) techniques change the context seen by the model.
+    """离线预览：展示五种状态栏（system hint）技术如何改变模型看到的上下文。
 
-    Corresponds to the five techniques in Experiment 2-8 of the book. The entire process is rendered locally, **no LLM calls are made, so no API Key is required**. Each case provides a side-by-side comparison of "without status bar vs. with status bar", intuitively showing the explicit state injected by the Agent framework at the end of the context.
+    对应书中实验 2-8 的五种技术。整个过程在本地渲染，**不发起任何 LLM 调用，
+    因此无需 API Key**。每个案例都做一次“无状态栏 vs 有状态栏”的对照，
+    直观地展示 Agent 框架在上下文末尾注入的显式状态。
     """
     from datetime import datetime as _dt
 
-    print_section("Offline preview: How Agent status bar (System Hint) changes context")
+    print_section("离线预览：Agent 状态栏（System Hint）如何改变上下文")
     print(
-        "Description: Each case below compares [without status bar] (model sees only raw trajectory) with\n"
-        "      [with status bar] (framework distills implicit state into explicit knowledge and injects it at the end of the context).\n"
-        "      Scenarios are taken from the Xfinity refund case in the book, all rendered locally without calling any API."
+        "说明：以下每个案例对比【无状态栏】（模型只能看到原始轨迹）与\n"
+        "      【有状态栏】（框架把隐式状态提炼成显式知识注入上下文末尾）。\n"
+        "      场景取自书中的 Xfinity 退款案例，全部在本地渲染，不调用任何 API。"
     )
 
-    # Construct an Agent with a placeholder key; no network connection during construction. Fix the simulation time for stable and reproducible output.
+    # 用占位 Key 构造 Agent；构造过程不联网。固定模拟时间以便输出稳定可复现。
     agent = SystemHintAgent(
         api_key="offline-preview",
         provider="kimi",
@@ -370,113 +372,113 @@ def preview_status_bar(config: SystemHintConfig):
 
     enabled = []
 
-    # --- Case 1: Timestamp tracking -------------------------------------------------
+    # --- 案例 1：时间戳跟踪 -------------------------------------------------
     if config.enable_timestamps:
-        enabled.append("Timestamp tracking")
-        print("\n【Case 1 · Timestamp tracking】Add time prefixes to user messages and tool results")
+        enabled.append("时间戳跟踪")
+        print("\n【案例 1 · 时间戳跟踪】为用户消息与工具结果加上时间前缀")
         follow_up = "Can you call them again to follow up?"
         print("-" * 60)
-        print("  Without status bar:" + follow_up)
-        print("  With status bar:" + f"[{agent._get_timestamp()}] " + follow_up)
-        print("  → Agent can understand the temporal relationship between \"yesterday's file\" and \"today's modification\".")
+        print("  无状态栏：" + follow_up)
+        print("  有状态栏：" + f"[{agent._get_timestamp()}] " + follow_up)
+        print("  → Agent 能理解“昨天的文件”与“今天的修改”之间的时序关系。")
 
-    # --- Case 2: Tool call counter -------------------------------------------
+    # --- 案例 2：工具调用计数器 -------------------------------------------
     if config.enable_tool_counter:
-        enabled.append("Tool call counter")
-        print("\n【Case 2 · Tool call counter】Annotate tool results with the call number")
+        enabled.append("工具调用计数器")
+        print("\n【案例 2 · 工具调用计数器】在工具结果上标注第几次调用")
         raw_result = json.dumps({"success": True, "output": "Call connected, no answer"})
-        #  Reuse meta-information from execute_task to format the annotation
+        # 复用 execute_task 中的元信息拼装格式
         metadata = []
         if config.enable_timestamps:
             metadata.append(f"[{agent._get_timestamp()}]")
         metadata.append("[Tool call #3 for 'phone_call']")
         print("-" * 60)
-        print("  Without status bar:" + raw_result)
-        print("  With status bar:" + " ".join(metadata) + "\n            " + raw_result)
-        print("  → Explicit counting triggers the model's pattern recognition: actively stops when reaching the 3/3 limit, no longer repeats calls.")
+        print("  无状态栏：" + raw_result)
+        print("  有状态栏：" + " ".join(metadata) + "\n            " + raw_result)
+        print("  → 显式计数触发模型的模式识别：到达 3/3 上限时主动停止，不再重复拨打。")
 
-    # --- Case 3: TODO list management -------------------------------------------
+    # --- 案例 3：TODO 列表管理 -------------------------------------------
     if config.enable_todo_list:
-        enabled.append("TODO list management")
-        print("\n【Case 3 · TODO list management】Decompose multi-step tasks and continuously restate them")
+        enabled.append("TODO 列表管理")
+        print("\n【案例 3 · TODO 列表管理】把多步任务分解并持续复述")
         agent._tool_rewrite_todo_list(items=[
-            "Call Xfinity customer service to verify refund policy",
-            "Submit refund request",
-            "Confirm refund received",
+            "拨打 Xfinity 客服核实退款政策",
+            "提交退款申请",
+            "确认退款到账",
         ])
         agent._tool_update_todo_status(updates=[
             {"id": 1, "status": "completed"},
             {"id": 2, "status": "in_progress"},
         ])
         print("-" * 60)
-        print("  Without status bar: (model must recall remaining subtasks from the long trajectory, prone to omissions)")
-        print("  With status bar:")
+        print("  无状态栏：（模型需自行从长轨迹中回忆还剩哪些子任务，易遗漏）")
+        print("  有状态栏：")
         for line in agent._format_todo_list().splitlines():
             print("    " + line)
-        print("  → TODO list acts as external memory, ensuring actions align with the overall plan.")
+        print("  → TODO 列表充当外部记忆，确保行动与总体规划保持一致。")
 
-    # --- Case 4: Detailed error information -------------------------------------------
+    # --- 案例 4：详细错误信息 -------------------------------------------
     if config.enable_detailed_errors:
-        enabled.append("Detailed error information")
-        print("\n【Case 4 · Detailed error information】Upgrade bare exceptions to diagnostics with fix suggestions")
+        enabled.append("详细错误信息")
+        print("\n【案例 4 · 详细错误信息】把裸异常升级为带修复建议的诊断")
         exc = FileNotFoundError("File not found: /home/user/refund_policy.txt")
         detailed = agent._get_detailed_error(
             exc, "read_file", {"file_path": "refund_policy.txt"}
         )
         print("-" * 60)
-        print("  Without status bar:" + str(exc))
-        print("  With status bar:")
+        print("  无状态栏：" + str(exc))
+        print("  有状态栏：")
         for line in detailed.splitlines():
             print("    " + line)
-        print("  → Agent shifts from blind retries to analytical problem solving (verify path, check directory, use absolute path).")
+        print("  → Agent 从盲目重试转向分析性的问题解决（验证路径、检查目录、用绝对路径）。")
 
-    # --- Case 5: System State Awareness -------------------------------------------
+    # --- 案例 5：系统状态感知 -------------------------------------------
     if config.enable_system_state:
-        enabled.append("System State Awareness")
-        print("\n[Case 5 · System State Awareness] Inject current time, directory, OS, Shell, Python version")
+        enabled.append("系统状态感知")
+        print("\n【案例 5 · 系统状态感知】注入当前时间、目录、操作系统、Shell、Python 版本")
         print("-" * 60)
-        print("  No status bar: (model doesn't know which directory or OS it's in)")
-        print("  With status bar:")
+        print("  无状态栏：（模型不知道自己身处哪个目录、哪种操作系统）")
+        print("  有状态栏：")
         for line in agent._get_system_state().splitlines():
             print("    " + line)
-        print("  → OS info enables platform-specific decisions (Linux uses apt, macOS uses brew).")
+        print("  → 操作系统信息让 Agent 做出平台相关决策（Linux 用 apt、macOS 用 brew）。")
 
-    # --- Summary: Full status bar appended to context end ---------------------------
-    print_section("Status bar actually appended to context end (a role=user message)")
+    # --- 汇总：实际注入上下文末尾的完整状态栏 ---------------------------
+    print_section("实际追加到上下文末尾的状态栏（一条 role=user 的消息）")
     hint = agent._get_system_hint()
     if hint:
         print(hint)
         print(
-            "\nNote: This message has role=user, but content is auto-generated by Agent framework,"
-            "appended at the very end of context—\nadjacent to the model's next token to generate, thus receiving highest attention weight;"
-            "and because it's \"appended\" rather than \n\"modified\", the previously cached KV Cache prefix is unaffected."
+            "\n注意：这条消息的 role 是 user，但内容由 Agent 框架自动生成，"
+            "追加在上下文最末尾——\n紧邻模型即将生成的新 token，因此获得最高注意力权重；"
+            "且因为是“追加”而非\n“修改”，前面已缓存的 KV Cache 前缀不受影响。"
         )
     else:
-        print("(Under current config, system state and TODO are both disabled, no status bar to inject.)")
+        print("（当前配置下系统状态与 TODO 均被禁用，无状态栏可注入。）")
 
-    print("\nTechniques enabled in this preview:" + ("、".join(enabled) if enabled else "(All disabled)"))
-    print("Tip: Use --no-timestamps / --no-counter / --no-todo / --no-errors / --no-state")
-    print("      to disable each category and observe context differences.")
+    print("\n本次预览启用的技术：" + ("、".join(enabled) if enabled else "（全部禁用）"))
+    print("提示：用 --no-timestamps / --no-counter / --no-todo / --no-errors / --no-state")
+    print("      可分别关闭某一类，观察上下文的差异。")
 
 
 def main():
     """Main function with command-line argument support"""
     parser = argparse.ArgumentParser(
         description=(
-            "System-Hint Enhanced AI Agent (corresponding to Experiment 2-8 \"Agent Status Bar\" in the book)\n"
-            "Demonstrates how five status bar techniques extract implicit state from context into explicit knowledge,"
-            "thereby changing Agent behavior."
+            "System-Hint Enhanced AI Agent（对应书中实验 2-8 “Agent 状态栏”）\n"
+            "演示五种状态栏技术如何把上下文里的隐式状态提炼为显式知识，"
+            "从而改变 Agent 的行为。"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "Examples:\n"
-            "  # Preview status bar effect offline (no API Key needed, recommended to run first)\n"
+            "示例：\n"
+            "  # 离线预览状态栏效果（无需 API Key，推荐先跑这个）\n"
             "  python main.py --mode preview\n"
-            "  # View before/after comparison of a single technique (e.g., disable other four categories)\n"
+            "  # 只看某一类技术的前后对比（例如关闭其它四类）\n"
             "  python main.py --mode preview --no-todo --no-errors --no-state --no-timestamps\n"
-            "  # Execute a single task with a real model (requires KIMI_API_KEY)\n"
-            "  python main.py --mode single --task \"create a hello world script\"\n"
-            "  # Compare actual execution effect with status bar enabled/disabled\n"
+            "  # 用真实模型执行单个任务（需要 KIMI_API_KEY）\n"
+            "  python main.py --mode single --task \"创建一个 hello world 脚本\"\n"
+            "  # 对比“启用/禁用状态栏”的实际执行效果\n"
             "  python main.py --mode demo --demo comparison\n"
         ),
     )
@@ -486,79 +488,79 @@ def main():
         choices=["preview", "single", "interactive", "demo", "sample"],
         default="interactive",
         help=(
-            "Execution mode: preview=offline preview status bar (no API Key);"
-            "single=execute single task; interactive=interactive mode (default);"
-            "demo=run built-in demo; sample=run sample task"
+            "执行模式：preview=离线预览状态栏（无需 API Key）；"
+            "single=执行单个任务；interactive=交互模式（默认）；"
+            "demo=运行内置演示；sample=运行示例任务"
         )
     )
 
     parser.add_argument(
         "--task",
         type=str,
-        help="Task description to execute (required for single mode)"
+        help="要执行的任务描述（single 模式必填）"
     )
 
     parser.add_argument(
         "--demo",
         choices=["basic", "loop", "comparison"],
-        help="Demo to run (demo mode): basic=comprehensive demo, loop=loop protection, comparison=status bar enabled/disabled comparison"
+        help="指定要运行的演示（demo 模式）：basic=综合演示，loop=循环防护，comparison=启用/禁用状态栏对比"
     )
 
     parser.add_argument(
         "--provider",
         type=str,
         default="kimi",
-        help="LLM provider (default: kimi, compatible with moonshot)"
+        help="LLM 提供方（默认：kimi，兼容 moonshot）"
     )
 
     parser.add_argument(
         "--model",
         type=str,
         default=None,
-        help="Model name override (default determined by provider, e.g., kimi-k3)"
+        help="模型名称覆盖（默认由 provider 决定，如 kimi-k3）"
     )
 
     parser.add_argument(
         "--output",
         type=str,
         default=None,
-        help="Trajectory output file path (default: trajectory.json)"
+        help="轨迹输出文件路径（默认：trajectory.json）"
     )
 
     parser.add_argument(
         "--no-timestamps",
         action="store_true",
-        help="Disable timestamp tracking"
+        help="关闭时间戳跟踪"
     )
 
     parser.add_argument(
         "--no-counter",
         action="store_true",
-        help="Disable tool call counter"
+        help="关闭工具调用计数器"
     )
 
     parser.add_argument(
         "--no-todo",
         action="store_true",
-        help="Disable TODO list management"
+        help="关闭 TODO 列表管理"
     )
 
     parser.add_argument(
         "--no-errors",
         action="store_true",
-        help="Disable detailed error messages"
+        help="关闭详细错误信息"
     )
 
     parser.add_argument(
         "--no-state",
         action="store_true",
-        help="Disable system status awareness"
+        help="关闭系统状态感知"
     )
 
     parser.add_argument(
         "--verbose",
         action="store_true",
-        help="Output detailed logs"
+        help="输出详细日志"
     )
 
     args = parser.parse_args()

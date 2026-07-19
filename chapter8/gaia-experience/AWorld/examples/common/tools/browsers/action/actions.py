@@ -781,19 +781,19 @@ class SendKeys(ExecutableAction):
                         tool_name="browser")
 class WriteToFile(ExecutableAction):
     def act(self, action: ActionModel, **kwargs) -> Tuple[ActionResult, Any]:
-        # Set default file path
+        # 设置默认文件路径
         file_path = "tmp_result.md"
-        # Check if file_path is in parameters
+        # 检查参数中是否有file_path
         if "file_path" in action.params:
             file_path = action.params.get("file_path", "tmp_result.md")
-        # Check if file_name is in parameters
+        # 检查参数中是否有file_name
         elif "file_name" in action.params:
             file_path = action.params.get("file_name", "tmp_result.md")
         elif "filename" in action.params:
             file_path = action.params.get("filename", "tmp_result.md")
         content = action.params.get("content", "")
         mode = action.params.get("mode", "a")  # Default to append mode
-        # Get the absolute path of the file
+        # 获取文件的绝对路径
         abs_file_path = os.path.abspath(file_path)
         try:
             with open(file_path, mode, encoding='utf-8') as f:

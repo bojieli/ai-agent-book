@@ -1,2 +1,2 @@
 # -*- coding: utf-8 -*-
-"""Experiment 10-8: Voice Werewolf Agent System (Multi-Agent + Information Permission Control + Judge Orchestration)."""
+"""实验 10-8：语音狼人杀 Agent 系统（多 Agent + 信息权限控制 + 法官编排）。"""

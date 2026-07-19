@@ -1,6 +1,6 @@
 # GPT-5 Native Tools Agent
 
-An advanced AI agent leveraging GPT-5's native `web_search` and `code_interpreter` tools through the OpenRouter API, matching the exact implementation pattern from production Go code. This agent can search the internet for real-time information and run code for deep analysis using GPT-5's built-in capabilities, realizing the "search → read → analyze → search again" Deep Research loop.
+An advanced AI agent leveraging GPT-5's native `web_search` and `code_interpreter` tools through the OpenRouter API, matching the exact implementation pattern from production Go code. This agent can search the internet for real-time information and run code for deep analysis using GPT-5's built-in capabilities, realizing the "搜索 → 阅读 → 分析 → 再搜索" Deep Research loop.
 
 ## 🌟 Features
 
@@ -71,43 +71,43 @@ python main.py --mode single --request "Search for latest AI news and analyze th
 python main.py --mode test
 ```
 
-### CLI Arguments
+### 命令行参数（CLI）
 
-This experiment corresponds to **Experiment 1.3 ★: GPT-5.6 Native Deep Research Capability** in the book, demonstrating how the model autonomously combines the two native tools `web_search` and `code_interpreter` to complete the iterative research loop of "search → read → analyze → search again." Run `python main.py --help` to view Chinese help.
+本实验对应书中 **实验 1.3 ★：GPT-5.6 原生 Deep Research 能力**，演示模型如何自主组合 `web_search`（网络搜索）与 `code_interpreter`（代码解释器）两个原生工具，完成“搜索 → 阅读 → 分析 → 再搜索”的迭代研究。运行 `python main.py --help` 查看中文帮助。
 
-| Argument | Description | Default |
-|----------|-------------|---------|
-| `--mode` | Run mode: `interactive` / `single` / `test` | `interactive` |
-| `--request` | Task or query content for `single` / `--dry-run` mode | — |
-| `--model` | Override model name | `MODEL_NAME` from config |
-| `--reasoning` | Reasoning Effort (`low`/`medium`/`high`) | `low` |
-| `--verbosity` | Verbosity level (`low`/`medium`/`high`) | Follows model |
-| `--no-tools` | Disable native tools | Enabled |
-| `--output` | Save full results (including trace/request body) as JSON | — |
-| `--dry-run` | Assemble and print request body offline, no network or API Key required | Disabled |
-| `--test` | Run specific test case in `test` mode | Run all |
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| `--mode` | 运行模式：`interactive` 交互 / `single` 单次 / `test` 测试 | `interactive` |
+| `--request` | `single` / `--dry-run` 模式下的任务或查询内容 | — |
+| `--model` | 覆盖模型名称 | 配置中的 `MODEL_NAME` |
+| `--reasoning` | 推理力度 Reasoning Effort（`low`/`medium`/`high`） | `low` |
+| `--verbosity` | 输出详略程度 Verbosity（`low`/`medium`/`high`） | 跟随模型 |
+| `--no-tools` | 禁用原生工具 | 启用 |
+| `--output` | 将完整结果（含轨迹 / 请求体）保存为 JSON | — |
+| `--dry-run` | 离线组装并打印请求体，不联网、无需 API Key | 关闭 |
+| `--test` | `test` 模式下运行指定用例 | 运行全部 |
 
-> **Reasoning Effort** and **Verbosity** are two GPT-5 native parameters emphasized in the book: the former adjusts thinking depth, the latter controls response detail. Both are exposed via CLI and injected as-is into the request body sent to the model.
+> **Reasoning Effort 与 Verbosity** 是书中强调的两个 GPT-5 原生参数：前者调节思考深度，后者控制回答详略。二者都已通过 CLI 暴露，并原样注入到发送给模型的请求体中。
 
-Examples:
-
-```bash
-# Book example task: Closest pair among ASEAN-10 capitals (search coordinates + code to compute great-circle distance)
-python main.py --mode single --request "Among the capitals of the 10 ASEAN countries, which two are closest to each other? Provide a detailed analysis and reasoning process." --reasoning high
-
-# Book example task: Bitcoin technical analysis (multi-source real-time data + indicator calculation)
-python main.py --mode single --request "Search for Bitcoin's price trend over the past month and calculate technical indicators such as MA, RSI, and MACD." --verbosity high --output btc.json
-```
-
-### View Request Body Offline (dry-run)
-
-No API Key required to see the actual request sent to the model under the "model-as-agent" paradigm—including the definitions of the two native tools, `reasoning` and `verbosity` parameters. This provides an intuitive view of the native tool call structure and is also useful for debugging:
+示例：
 
 ```bash
-python main.py --dry-run --request "Among the capitals of the 10 ASEAN countries, which two are closest to each other?" --reasoning high --verbosity high
+# 书中示例任务：东盟 10 国首都最近的一对（搜索坐标 + 代码计算大圆距离）
+python main.py --mode single --request "东盟 10 国首都之间距离最近的两个首都是？给出详细分析推理过程。" --reasoning high
+
+# 书中示例任务：比特币技术分析（多源实时数据 + 指标计算）
+python main.py --mode single --request "搜索比特币最近一个月走势，计算 MA、RSI、MACD 等技术指标" --verbosity high --output btc.json
 ```
 
-In the output request body, the `tools` array contains both `web_search` and `code_interpreter`, while `reasoning.effort` and `verbosity` reflect the selected levels—exactly the combination of native tools + reasoning/verbosity parameters described in the book.
+### 离线查看请求体（dry-run）
+
+无需 API Key 即可查看“模型即 Agent”范式下真正发送给模型的请求——包括两个原生工具的定义、`reasoning` 与 `verbosity` 参数。这直观展示了原生工具调用的结构，也便于调试：
+
+```bash
+python main.py --dry-run --request "东盟 10 国首都之间距离最近的两个首都是？" --reasoning high --verbosity high
+```
+
+输出的请求体中，`tools` 数组同时包含 `web_search` 和 `code_interpreter`，`reasoning.effort` 与 `verbosity` 反映所选档位——正是书中所述的原生工具 + 推理/详略参数的组合。
 
 ## 🛠️ Usage Examples
 
@@ -199,7 +199,9 @@ Supports configurable reasoning effort:
 
 ## 🧪 Testing
 
-The test suite includes comprehensive test cases:1. **Basic Web Search**: Test internet search capabilities
+The test suite includes comprehensive test cases:
+
+1. **Basic Web Search**: Test internet search capabilities
 2. **Web Search with Analysis**: Search with analytical insights
 3. **Complex Research**: Deep research with high reasoning
 4. **Search and Code**: Search with code generation
@@ -282,7 +284,8 @@ Adjust `RATE_LIMIT_RPM` in `.env` if encountering rate limits
 
 ## 📝 License
 
-This project is part of the AI Agent Hands-on Training Camp curriculum.
+This project is part of the AI Agent实战训练营 curriculum.
+
 ## 🔗 Resources
 
 - [OpenRouter GPT-5 API](https://openrouter.ai/openai/gpt-5.6-sol)

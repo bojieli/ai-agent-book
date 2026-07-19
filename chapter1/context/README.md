@@ -206,13 +206,13 @@ A complex financial analysis task requiring:
 
 ### Expected Behaviors
 
-| Context Mode | Removed Component (book §Experiment 1.1) | Expected Behavior | Impact |
+| Context Mode | Removed Component (book §实验 1.1) | Expected Behavior | Impact |
 |-------------|-----------------------------------|-------------------|---------|
 | **full** | none (baseline) | Complete successful execution | Baseline performance |
-| **no_history** | History | Redundant operations, inefficiency | May repeat tool calls |
-| **no_reasoning** | Reasoning | Unstructured approach, potential errors | Lacks strategic planning |
-| **no_tool_calls** | Tool definitions | Complete failure | Cannot interact with external world |
-| **no_tool_results** | Tool results | Incorrect conclusions | Makes decisions without feedback |
+| **no_history** | 历史消息 (history) | Redundant operations, inefficiency | May repeat tool calls |
+| **no_reasoning** | 思考过程 (reasoning) | Unstructured approach, potential errors | Lacks strategic planning |
+| **no_tool_calls** | 工具定义 (tool definitions) | Complete failure | Cannot interact with external world |
+| **no_tool_results** | 工具执行结果 (tool results) | Incorrect conclusions | Makes decisions without feedback |
 
 **How each ablation is applied** (see `agent.py`):
 
@@ -303,7 +303,8 @@ The interactive mode supports the following commands:
 
 The agent maintains conversation history throughout interactive sessions:
 
-- **Persistent Context**: The agent remembers previous queries and responses within a session- **Multi-turn Conversations**: You can reference information from earlier in the conversation
+- **Persistent Context**: The agent remembers previous queries and responses within a session
+- **Multi-turn Conversations**: You can reference information from earlier in the conversation
 - **Tool Call Memory**: Previous tool executions are remembered and can be referenced
 - **Reset on Demand**: Use the `reset` command to clear history and start fresh
 

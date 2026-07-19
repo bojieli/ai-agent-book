@@ -66,8 +66,8 @@ class LogSanitizationAgent:
                 self.backend = "openrouter"
                 self.client = OpenAI(api_key=openrouter_key,
                                      base_url=OPENROUTER_BASE_URL)
-                # Local small models (qwen3:0.6b, etc.) may not be available on OpenRouter,
-                # Default to openai/gpt-5.6-luna; IDs containing "/" are passed through as-is.
+                # 本地小模型（qwen3:0.6b 等）在 OpenRouter 上未必可用，
+                # 默认改用 openai/gpt-5.6-luna；带 "/" 的 id 原样透传。
                 self.model = (map_model_to_openrouter(self.model)
                               if "/" in self.model else "openai/gpt-5.6-luna")
                 print(f"⚠️  Ollama unavailable ({e}); "
@@ -94,8 +94,8 @@ class LogSanitizationAgent:
             for chunk in stream:
                 yield chunk.get('message', {}).get('content', '')
         else:
-            # Use the same JSON Schema as Ollama to strictly constrain the output structure (pii_values array),
-            # preventing the model from inventing field names. strict mode requires additionalProperties=false.
+            # 用与 Ollama 相同的 JSON Schema 强约束输出结构（pii_values 数组），
+            # 避免模型自行发明字段名。strict 模式要求 additionalProperties=false。
             strict_schema = dict(PII_DETECTION_SCHEMA)
             strict_schema["additionalProperties"] = False
             stream = self.client.chat.completions.create(

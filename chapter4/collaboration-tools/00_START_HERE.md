@@ -9,7 +9,7 @@ A production-ready Model Context Protocol (MCP) server that provides **19 collab
 ### ✅ Implemented Features
 
 #### 🌐 Browser Automation (5 tools)
-- Virtual browser using **browser-use** library (well-known virtual browser library)
+- Virtual browser using **browser-use** library (知名虚拟浏览器库)
 - Navigate websites, extract content, take screenshots
 - AI-powered autonomous browser tasks
 - Multi-tab management
@@ -236,7 +236,8 @@ navigate → screenshot → set_recurring_timer → notify_via_slack
 ```
 
 ### Pattern 2: Admin Approval Flow
-```pythonrequest_approval → wait_for_response → notify_decision → execute_action
+```python
+request_approval → wait_for_response → notify_decision → execute_action
 ```
 
 ### Pattern 3: Scheduled Task

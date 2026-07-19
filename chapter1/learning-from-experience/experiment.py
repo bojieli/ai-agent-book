@@ -145,7 +145,7 @@ class ExperimentRunner:
         window = checkpoint_interval if checkpoint_interval > 0 else 1000
         print("\n" + "-"*60)
         print(f"LEARNING CURVE (Q-Learning success rate over episodes)")
-        print(f"Win rate based on the most recent {window} sliding window of games")
+        print(f"胜率按最近 {window} 局的滑动窗口统计")
         print("-"*60)
         print(f"{'Episodes':>10} | {'Victory rate':>12} | {'Q-table':>8} | {'epsilon':>8}")
         print(f"{'-'*10}-+-{'-'*12}-+-{'-'*8}-+-{'-'*8}")
@@ -482,72 +482,72 @@ class ExperimentRunner:
 def main():
     """Main entry point for the experiment."""
     parser = argparse.ArgumentParser(
-        description="Experiment 7-1 / 7-2: Compare Q-learning and LLM's \"learning from experience\" in a treasure hunt game."
-                    "Q-learning runs completely offline (no API required); LLM mode requires Moonshot/Kimi API Key.",
-        epilog="Example: \n"
-               "  python experiment.py --mode qlearning              # Run Q-learning only (offline, output learning curve)\n"
+        description="实验 7-1 / 7-2：在寻宝游戏中对比 Q-learning 与 LLM 的\"从经验中学习\"。"
+                    "Q-learning 完全离线运行（无需 API），LLM 模式需要 Moonshot/Kimi API Key。",
+        epilog="示例：\n"
+               "  python experiment.py --mode qlearning              # 只跑 Q-learning（离线，输出学习曲线）\n"
                "  python experiment.py --mode qlearning --rl-episodes 10000 --seed 42\n"
-               "  python experiment.py --mode both --model kimi-k3  # RL vs LLM comparison\n"
-               "  python experiment.py --mode llm --llm-episodes 20   # Run LLM agent only",
+               "  python experiment.py --mode both --model kimi-k3  # RL vs LLM 对比\n"
+               "  python experiment.py --mode llm --llm-episodes 20   # 只跑 LLM 智能体",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
         "--mode", choices=["both", "qlearning", "rl", "llm"], default="both",
-        help="Which agent to run: qlearning/rl runs Q-learning only (offline),"
-             "llm runs LLM agent only (requires API), both runs both for comparison (default)"
+        help="运行哪种智能体：qlearning/rl 只跑 Q-learning（离线），"
+             "llm 只跑 LLM 智能体（需 API），both 两者对比（默认）"
     )
     parser.add_argument(
         "--rl-episodes", type=int, default=10000,
-        help="Number of training episodes for Q-learning (default 10000, corresponds to Experiment 7-1)"
+        help="Q-learning 训练局数（默认 10000，对应实验 7-1）"
     )
     parser.add_argument(
         "--llm-episodes", type=int, default=20,
-        help="Number of training episodes for LLM agent (default 20)"
+        help="LLM 智能体的训练局数（默认 20）"
     )
     parser.add_argument(
         "--eval-episodes", type=int, default=100,
-        help="Number of greedy evaluation episodes after Q-learning training (default 100)"
+        help="Q-learning 训练后贪婪评估的局数（默认 100）"
     )
     parser.add_argument(
         "--checkpoint-interval", type=int, default=1000,
-        help="Learning curve sampling interval: record win rate / Q-table size every N episodes (default 1000)"
+        help="学习曲线采样间隔：每 N 局记录一次胜率/Q 表规模（默认 1000）"
     )
     parser.add_argument(
         "--model", type=str, default=os.getenv("MOONSHOT_MODEL", "kimi-k3"),
-        help="LLM model name (Moonshot/Kimi, default kimi-k3, can be overridden by MOONSHOT_MODEL environment variable)"
+        help="LLM 模型名称（Moonshot/Kimi，默认 kimi-k3，可用 MOONSHOT_MODEL 环境变量覆盖）"
     )
     parser.add_argument(
         "--output", type=str, default="results",
-        help="Output directory (default results/, a timestamped subdirectory will be created for each run)"
+        help="结果输出目录（默认 results/，每次运行会新建时间戳子目录）"
     )
     parser.add_argument(
         "--seed", type=int, default=None,
-        help="Random seed for reproducibility of Q-learning learning curve (default not fixed)"
+        help="随机种子，用于复现 Q-learning 的学习曲线（默认不固定）"
     )
-    # Q-learning hyperparameters
+    # Q-learning 超参数
     parser.add_argument("--learning-rate", type=float, default=0.2,
-                        help="Q-learning learning rate alpha (default 0.2)")
+                        help="Q-learning 学习率 alpha（默认 0.2）")
     parser.add_argument("--discount", type=float, default=0.99,
-                        help="Discount factor gamma (default 0.99)")
+                        help="折扣因子 gamma（默认 0.99）")
     parser.add_argument("--epsilon-decay", type=float, default=0.9995,
-                        help="Epsilon decay factor per episode (default 0.9995)")
+                        help="每局 epsilon 衰减系数（默认 0.9995）")
     parser.add_argument("--epsilon-min", type=float, default=0.1,
-                        help="Minimum exploration rate epsilon (default 0.1)")
+                        help="最小探索率 epsilon（默认 0.1）")
     parser.add_argument(
         "--verbose", action="store_true",
-        help="Print detailed information during training"
+        help="训练过程中打印详细信息"
     )
     parser.add_argument(
         "--skip-llm", action="store_true",
-        help="[Legacy usage] Skip LLM experiment, equivalent to --mode qlearning"
+        help="[兼容旧用法] 跳过 LLM 实验，等价于 --mode qlearning"
     )
     parser.add_argument(
         "--stochastic", action="store_true",
-        help="Use stochastic environment (rewards and actions have random perturbations)"
+        help="使用随机环境（奖励与动作带随机扰动）"
     )
     parser.add_argument(
         "--deterministic", action="store_true",
-        help="Use deterministic environment (default)"
+        help="使用确定性环境（默认）"
     )
 
     args = parser.parse_args()

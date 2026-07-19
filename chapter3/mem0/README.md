@@ -77,7 +77,7 @@ This will demonstrate:
 - Multi-session memory persistence
 - Multi-agent collaboration
 
-### Memory Pipeline Demo (Extract—Compare—Decide)
+### Memory Pipeline Demo (提取—对比—决策)
 
 The single clearest demonstration of Mem0's value — its ADD / UPDATE / DELETE /
 NOOP pipeline and cross-session recall — is the `demo` mode:
@@ -100,9 +100,11 @@ without the chat loop. All flags have Chinese `--help` (`python main.py --help`)
 
 ```bash
 # ADD — write a conversation/utterance; prints the ADD/UPDATE/DELETE events
-python main.py --mode memory --op add   --text "I live in Beijing and work as a backend engineer" --user-id u1
+python main.py --mode memory --op add   --text "我住在北京，是一名后端工程师" --user-id u1
+
 # SEARCH — semantic recall
-python main.py --mode memory --op search --query "Where does this user live?" --user-id u1
+python main.py --mode memory --op search --query "这个用户住在哪里？" --user-id u1
+
 # GET-ALL — list every stored memory (optionally dump to JSON)
 python main.py --mode memory --op get-all --user-id u1 --output mem.json
 
@@ -174,7 +176,8 @@ python experiment.py --scenarios 10 --output results/
 ```
 
 This will:
-1. Generate and run 10 benchmark scenarios2. Evaluate agent performance on each scenario
+1. Generate and run 10 benchmark scenarios
+2. Evaluate agent performance on each scenario
 3. Calculate metrics (consistency, coherence, memory utilization)
 4. Generate detailed reports with visualizations
 
@@ -367,7 +370,7 @@ For issues and questions:
 - Refer to the main AI Agent Book documentation
 
 
-## OpenRouter Universal Fallback
+## OpenRouter 通用回退 / Universal OpenRouter fallback
 
 This experiment now supports a **universal OpenRouter fallback** for its chat LLM.
 

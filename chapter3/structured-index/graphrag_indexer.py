@@ -450,23 +450,23 @@ class GraphRAGIndexer:
                          relation_filter: Optional[str] = None,
                          top_k: int = 10) -> List[Dict[str, Any]]:
         """
-        Multi-hop relation retrieval: traverse along the relation edges of the knowledge graph to answer relational questions such as "What connects A to B?"
-        that flat vector retrieval cannot express (corresponding to "multi-hop relation reasoning" in the book).
+        多跳关系检索：沿知识图谱的关系边遍历，回答「A 通过什么与 B 相连」这类
+        扁平向量检索无法表达的关系性问题（对应书中「多跳关系推理」）。
 
-        Difference from search(): search() only recalls isolated entities/communities by embedding similarity,
-        while this method truly leverages the graph structure, returning **relation paths** starting from the initial entity.
+        与 search() 的区别：search() 只按嵌入相似度召回孤立的实体/社区，
+        而本方法真正利用图结构，返回从起始实体出发的**关系路径**。
 
         Args:
-            start_entity: Name of the starting entity (case-insensitive, matched by substring).
-            max_hops: Maximum number of hops.
-            relation_filter: If specified, only keep paths whose final edge is of this relation type.
-            top_k: Maximum number of paths to return.
+            start_entity: 起始实体名（不区分大小写，按子串匹配）。
+            max_hops: 最大跳数。
+            relation_filter: 若指定，只保留终点边为该关系类型的路径。
+            top_k: 返回的路径数上限。
 
         Returns:
-            Each path is of the form {"target", "target_type", "hops", "path"},
-            where path is a list of {"source", "relation", "target"} steps.
+            每条路径形如 {"target", "target_type", "hops", "path"}，
+            path 是若干 {"source", "relation", "target"} 步骤。
         """
-        # Locate the starting node by name substring matching
+        # 按名字子串匹配定位起始节点
         start_id = None
         needle = start_entity.lower()
         for entity_id, entity in self.entities.items():
@@ -474,10 +474,10 @@ class GraphRAGIndexer:
                 start_id = entity_id
                 break
         if start_id is None or start_id not in self.graph:
-            logger.warning(f"multi_hop_search: starting entity not found '{start_entity}'")
+            logger.warning(f"multi_hop_search: 未找到起始实体 '{start_entity}'")
             return []
 
-        # BFS traversal along edges, collecting paths up to <= max_hops hops
+        # BFS 沿边遍历，收集 <= max_hops 跳的路径
         results: List[Dict[str, Any]] = []
         queue = [(start_id, [])]
         while queue and len(results) < top_k * 4:

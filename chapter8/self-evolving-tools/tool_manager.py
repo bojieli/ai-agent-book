@@ -1,10 +1,10 @@
 """
-Tool library management: create_tool (encapsulate and persist), search_tools (retrieve and reuse), and execution of encapsulated tools.
+工具库管理：create_tool（封装并持久化）、search_tools（检索复用）、以及被封装工具的执行。
 
-This is the core of Alita-style "self-evolution":
-- After an Agent validates a solution with code_interpreter, it calls create_tool to solidify it into a
-  "standard tool" — containing name / description / JSON-Schema parameters / Python code, persisted to tool_library/.
-- Next time a similar task arises, the Agent should search_tools to hit an existing tool and reuse it directly, instead of searching the web again and rewriting code.
+这是 Alita 式「自我进化」的核心：
+- Agent 用 code_interpreter 验证过某个方案后，调用 create_tool 把它固化成一个
+  「标准工具」——包含 name / description / JSON-Schema 参数 / Python 代码，持久化到 tool_library/。
+- 下次遇到同类任务，Agent 应先 search_tools 命中已有工具并直接复用，而不是重新上网搜索、重新写代码。
 """
 
 import json
@@ -21,25 +21,25 @@ SANDBOX_PKG_DIR = PROJECT_DIR / ".sandbox_packages"
 
 def normalize_schema(params) -> dict:
     """
-    Normalize the parameters given by the model into a valid OpenAI function-calling JSON Schema.
-    Common model mistake: only providing the properties mapping while omitting the top-level {"type":"object"}. Here we tolerate this error,
-    otherwise exposing such a tool to OpenAI would trigger a 400 invalid schema and interrupt the entire flow.
+    把模型给出的 parameters 规整为合法的 OpenAI function-calling JSON Schema。
+    模型常见错误：只给 properties 映射而漏掉顶层 {"type":"object"}。这里做容错，
+    否则把这样的工具再暴露给 OpenAI 会触发 400 invalid schema 而中断整个流程。
     """
     if not isinstance(params, dict):
         return {"type": "object", "properties": {}}
     if params.get("type") == "object" and "properties" in params:
         return params
-    if "properties" in params:  #  Has properties but type is missing/incorrect
+    if "properties" in params:  # 有 properties 但 type 缺失/错误
         out = {"type": "object", "properties": params["properties"]}
         if "required" in params:
             out["required"] = params["required"]
         return out
-    #  Treat the entire dict as the properties mapping
+    # 整个 dict 视为 properties 映射
     return {"type": "object", "properties": params}
 
 
 class ToolLibrary:
-    """A minimal file-based tool library. Each tool = one .json (metadata + code)."""
+    """基于文件系统的极简工具库。每个工具 = 一个 .json（元数据+代码）。"""
 
     def __init__(self, library_dir: Path = LIBRARY_DIR):
         self.dir = Path(library_dir)
@@ -49,22 +49,22 @@ class ToolLibrary:
     def create_tool(self, name: str, description: str, parameters: dict, code: str,
                     test_args: dict | None = None) -> dict:
         """
-        Encapsulate a function as a standard tool and persist it.
+        把一个功能封装为标准工具并持久化。
 
-        Convention: the code must define a function named run(**kwargs) that returns a JSON-serializable result.
-        parameters is an OpenAI function-calling style JSON Schema (type=object, properties, required).
+        约定：code 里必须定义一个名为 run(**kwargs) 的函数，返回可 JSON 序列化的结果。
+        parameters 为 OpenAI function-calling 风格的 JSON Schema（type=object, properties, required）。
 
-        "Pre-persistence validation" gate (corresponding to the "test" step in Figure 8-7 pipeline and the "tool quality degradation" warning in this chapter):
-        - First perform **syntax compilation check**; code with syntax errors is rejected from the library;
-        - If test_args is provided, **actually execute run(**test_args)** in a sandbox; only if it returns successfully
-          is registration allowed — thus preventing "encapsulated but non-functional" bad tools from polluting the tool library and being reused by subsequent tasks.
+        「存前验证」闸门（对应图 8-7 流水线里的「测试」一步、以及本章「工具质量退化」告诫）：
+        - 先做**语法编译检查**，语法错误的代码一律拒绝入库；
+        - 若给了 test_args，则在沙箱里**真正执行一次 run(**test_args)**，只有成功返回结果
+          才允许注册——从而挡住「封装了却根本跑不通」的坏工具污染工具库、再被后续任务反复复用。
         """
         name = name.strip()
         if not name.isidentifier():
             return {"success": False, "error": f"invalid tool name: {name!r} (must be a valid identifier)"}
         if "def run" not in code:
             return {"success": False, "error": "tool code must define a function `def run(**kwargs)`"}
-        #  Pre-persistence validation 1: syntax compilation check (bad syntax is blocked outside the library)
+        # 存前验证 1：语法编译检查（坏语法直接挡在库外）
         try:
             compile(code, f"<tool {name}>", "exec")
         except SyntaxError as e:
@@ -77,15 +77,15 @@ class ToolLibrary:
             "code": code,
         }
 
-        #  Pre-persistence validation 2: if test_args is given, actually run run() once; if it fails, reject registration
+        # 存前验证 2：给了 test_args 就真跑一次 run()，跑不通就拒绝入库
         validated = False
         if test_args is not None:
             val = self._run_record(record, test_args)
             if not val.get("success"):
                 return {
                     "success": False,
-                    "error": "Tool registration pre-validation failed: run(**test_args) did not return successfully. Please fix the code or test_args"
-                             "and resubmit (tools that fail validation will not be added to the library, to prevent bad tools from being reused by subsequent tasks).",
+                    "error": "工具注册前验证失败：run(**test_args) 没有成功返回。请修正代码或 test_args"
+                             "后重新提交（未通过验证的工具不会入库，以免坏工具被后续任务复用）。",
                     "validation": val,
                 }
             validated = True
@@ -94,14 +94,14 @@ class ToolLibrary:
         return {
             "success": True,
             "message": f"tool '{name}' created and saved to tool_library/"
-                       + ("(Passed pre-persistence validation)" if validated else "(No test_args provided, skipping runtime validation)"),
+                       + ("（已通过存前验证）" if validated else "（未提供 test_args，跳过运行验证）"),
             "name": name,
             "validated": validated,
         }
 
     # ----------------------------- search_tools ---------------------------- #
     def search_tools(self, query: str) -> dict:
-        """Keyword search by name/description, returning matched tools (for reuse)."""
+        """按名称/描述做关键词检索，返回命中的工具（用于复用）。"""
         query = (query or "").strip().lower()
         terms = [t for t in query.replace(",", " ").split() if t]
         hits = []
@@ -140,8 +140,8 @@ class ToolLibrary:
     # -------------------------- execute a wrapped tool --------------------- #
     def execute_tool(self, name: str, arguments: dict, timeout: int = 60) -> dict:
         """
-        Execute an encapsulated tool in a child process sandbox: inject code + run(**args), capture JSON result.
-        PYTHONPATH points to .sandbox_packages, making dependencies installed during create available.
+        在子进程沙箱中执行已封装的工具：注入代码 + run(**args)，捕获 JSON 结果。
+        PYTHONPATH 指向 .sandbox_packages，使 create 时 pip 安装的依赖可用。
         """
         rec = self.get_tool(name)
         if rec is None:
@@ -149,9 +149,9 @@ class ToolLibrary:
         return self._run_record(rec, arguments, timeout)
 
     def _run_record(self, rec: dict, arguments: dict, timeout: int = 60) -> dict:
-        """Execute run(**arguments) in a sandbox child process using the tool record (including code).
+        """按「工具记录（含 code）」在沙箱子进程里执行 run(**arguments)。
 
-        Directly consumes the record without reading disk, so it can be used for "pre-persistence validation" even before the tool is written to disk.
+        直接吃 record 而不读磁盘，因此可在工具**尚未落盘时**用于「存前验证」。
         """
         SANDBOX_PKG_DIR.mkdir(exist_ok=True)
         driver = (

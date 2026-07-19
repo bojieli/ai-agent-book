@@ -51,72 +51,72 @@ cd projects/week6/elo-leaderboard
 pip install -r requirements.txt
 ```
 
-## Command-Line Interface (`cli.py`)
+## 命令行工具 / Command-Line Interface (`cli.py`)
 
-`cli.py` is the unified argparse command-line entry point (Chinese `--help`) for this experiment. It breaks the entire pipeline into subcommands:
-**Battle -> Elo -> Leaderboard**, and provides `pipeline` for one-step execution.
+`cli.py` 是本实验统一的 argparse 命令行入口（中文 `--help`），把整条流水线拆成子命令：
+**对战 (battle) -> 计算评分 (elo) -> 展示排行榜 (leaderboard)**，并提供 `pipeline` 一步到位。
 
 ```bash
-python cli.py --help              # View all subcommands
-python cli.py battle --help       # View parameters for a specific subcommand
+python cli.py --help              # 查看全部子命令
+python cli.py battle --help       # 查看某个子命令的参数
 
-# Default offline end-to-end demo: simulate battles -> online Elo -> final leaderboard table (no data/API required)
-python cli.py                     # Equivalent to python cli.py pipeline
+# 默认离线端到端演示：模拟对战 -> 在线 Elo -> 最终排行榜表格（无需任何数据/API）
+python cli.py                     # 等价于 python cli.py pipeline
 ```
 
-### Subcommands
+### 子命令
 
-| Subcommand | Purpose | Key Parameters |
-|------------|---------|----------------|
-| `battle` | Generate pairwise battle results | `--source {simulate,arena,llm}`, `--num-battles`, `--tie-prob`, `--seed`, `--sample`, `--output` |
-| `elo` | Compute ratings from battle results | `--method {online-elo,bradley-terry}`, `--k`, `--bootstrap`, `--input`, `--output` |
-| `leaderboard` | Render the final leaderboard table | `--input` (battle or rating file), `--method`, `--bootstrap`, `--top-n` |
-| `pipeline` | Run battle -> Elo -> leaderboard in one step | Union of the above parameters |
+| 子命令 | 作用 | 关键参数 |
+|--------|------|----------|
+| `battle` | 生成两两对战结果 | `--source {simulate,arena,llm}`、`--num-battles`、`--tie-prob`、`--seed`、`--sample`、`--output` |
+| `elo` | 从对战结果计算评分 | `--method {online-elo,bradley-terry}`、`--k`、`--bootstrap`、`--input`、`--output` |
+| `leaderboard` | 渲染最终排行榜表格 | `--input`（对战或评分文件）、`--method`、`--bootstrap`、`--top-n` |
+| `pipeline` | 一步跑完 对战 -> Elo -> 排行榜 | 上述参数的并集 |
 
-### Three Battle Sources (`--source`)
+### 三种对战来源（`--source`）
 
-- **`simulate` (default, fully offline)**: Simulates battles from known latent skill scores. Since ground truth is known, it can be used to **validate** whether the recovered leaderboard ranking is correct; `--tie-prob` controls the tie ratio for practicing tie handling.
-- **`arena` (offline)**: Loads real Chatbot Arena voting data (default `arena_data.json`, ~2GB), with `--sample N` for sampling.
-- **`llm` (requires API)**: Uses an LLM for pairwise judging, with built-in **position bias elimination** — each pair is judged twice with swapped order; a win/loss is only counted if both judgments agree, otherwise it's a tie (corresponding to Section 6.4's discussion on position bias). Only this source requires an LLM API Key.
+- **`simulate`（默认，纯离线）**：从已知的潜在实力分模拟对战。因为真值已知，可用来**校验**恢复出的排行榜排序是否正确；`--tie-prob` 控制平局比例，用于演练平局处理。
+- **`arena`（离线）**：加载真实 Chatbot Arena 投票数据（默认 `arena_data.json`，约 2GB），可用 `--sample N` 抽样。
+- **`llm`（需 API）**：用 LLM 做配对评判，并内置**位置偏差消除**——每对交换顺序各评一次，两次判决一致才计胜负、否则记为平局（对应书中 6.4 位置偏差讨论）。仅此来源需要 LLM API Key。
 
-  **Two judging backends (`--judge-backend {anthropic,openrouter,auto}`, default `auto`)**:
-  - `anthropic`: Official `anthropic` SDK, uses `ANTHROPIC_API_KEY`.
-  - `openrouter`: OpenAI-compatible SDK pointing to `https://openrouter.ai/api/v1`, uses `OPENROUTER_API_KEY`. Internal Claude names are automatically mapped to OpenRouter IDs (`claude-opus-4-8` → `anthropic/claude-opus-4.8`, `claude-haiku-4-5` → `anthropic/claude-haiku-4.5`); IDs already containing `/` (e.g., `openai/gpt-5.6-luna`) are passed through as-is. Used as a fallback when the direct Anthropic key is missing or invalid.
-  - `auto` (default): Uses anthropic if `ANTHROPIC_API_KEY` is set, otherwise falls back to openrouter. Note that `auto` only checks whether the key exists, not its validity; if `ANTHROPIC_API_KEY` exists but is invalid, explicitly use `--judge-backend openrouter`.
+  **两种评判后端（`--judge-backend {anthropic,openrouter,auto}`，默认 `auto`）**：
+  - `anthropic`：官方 `anthropic` SDK，用 `ANTHROPIC_API_KEY`。
+  - `openrouter`：OpenAI 兼容 SDK 指向 `https://openrouter.ai/api/v1`，用 `OPENROUTER_API_KEY`。内部 Claude 名字会自动映射为 OpenRouter id（`claude-opus-4-8` → `anthropic/claude-opus-4.8`，`claude-haiku-4-5` → `anthropic/claude-haiku-4.5`）；已含 `/` 的 id（如 `openai/gpt-5.6-luna`）原样透传。当直连 Anthropic key 缺失或失效时用它兜底。
+  - `auto`（默认）：有 `ANTHROPIC_API_KEY` 走 anthropic，否则回退 openrouter。注意 `auto` 只看 key 是否存在、不校验有效性；若 `ANTHROPIC_API_KEY` 存在但已失效，请显式 `--judge-backend openrouter`。
 
-  The position bias elimination and A/B/tie parsing logic is backend-independent — both paths are identical.
+  位置偏差消除与 A/B/tie 解析逻辑与后端无关，两条路径完全一致。
 
-### Step-by-Step Examples
+### 分步示例
 
 ```bash
-# 1) Simulate 5000 battles (with 10% ties)
+# 1) 模拟 5000 场对战（含 10% 平局）
 python cli.py battle --source simulate --num-battles 5000 --output battles.json
 
-# 2) Compute ratings using official Bradley-Terry MLE + 100 bootstrap confidence intervals
+# 2) 用官方 Bradley-Terry MLE + 100 轮 bootstrap 置信区间计算评分
 python cli.py elo --input battles.json --method bradley-terry --bootstrap 100
 
-# 3) Display top 20 leaderboard (can also read rating file directly)
+# 3) 展示前 20 名排行榜（也可直接读评分文件）
 python cli.py leaderboard --input battles.json --top-n 20
 
-# Run with sampled real Arena data (offline)
+# 用真实 Arena 数据抽样跑（离线）
 python cli.py pipeline --source arena --arena-file arena_data.json --sample 50000 --method bradley-terry --bootstrap 100
 
-# LLM-judged battles (requires API Key) — official Anthropic
+# LLM 评判对战（需要 API Key）——官方 Anthropic
 export ANTHROPIC_API_KEY=sk-...
 python cli.py battle --source llm --candidate-models claude-opus-4-8 claude-haiku-4-5
 
-# LLM-judged battles — via OpenRouter fallback (when direct Anthropic key is missing/invalid)
+# LLM 评判对战——通过 OpenRouter 兜底（直连 Anthropic key 缺失/失效时）
 export OPENROUTER_API_KEY=sk-or-...
 python cli.py battle --source llm --judge-backend openrouter \
   --judge-model claude-opus-4-8 \
   --candidate-models anthropic/claude-haiku-4.5 openai/gpt-5.6-luna
 ```
 
-The simulation source also prints the ground-truth latent skill scores for comparison with the recovered leaderboard; both Online Elo and Bradley-Terry methods should recover rankings consistent with the ground truth (scores need not align exactly — see explanation below).
+模拟来源会同时打印真值潜在实力，方便和恢复出的排行榜对照；在线 Elo 与 Bradley-Terry 两种方法都应恢复出与真值一致的排名（分值不必精确对齐，见下文说明）。
 
 ## Quick Start
 
-The project implements **two ranking methods** following the official Chatbot Arena:
+The project implements **two ranking methods** following official Chatbot Arena:
 
 ### 1. Bradley-Terry Model (Default - Recommended)
 
@@ -155,7 +155,8 @@ python main.py online-elo
 ### Method Comparison
 
 | Feature | Bradley-Terry | Online Elo |
-|---------|--------------|------------|| **Stability** | High (MLE fit) | Medium (sequential) |
+|---------|--------------|------------|
+| **Stability** | High (MLE fit) | Medium (sequential) |
 | **Order dependence** | None | High |
 | **Confidence intervals** | Yes (bootstrap) | No |
 | **Speed** | Slower (~3 min) | Faster (~30 sec) |

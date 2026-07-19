@@ -232,61 +232,61 @@ async def demo_conversation_with_tools():
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build the command-line interface for Experiment 3-7."""
+    """构建实验 3-7 的命令行接口。"""
     parser = argparse.ArgumentParser(
         description=(
-            "Experiment 3-7: Comparison of three technical paradigms for multimodal information extraction (native multimodal / extract as text / with tools).\n"
-            "Feed the same multimodal file and the same question to the three modes respectively, and observe the performance differences."
+            "实验 3-7：多模态信息提取的三种技术范式对比（原生多模态 / 提取为文本 / 带工具）。\n"
+            "将同一多模态文件和同一问题分别交给三种模式处理，观察表现差异。"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "Example:\n"
-            "  # First, offline generate a sample with charts (no API Key required)\n"
+            "示例：\n"
+            "  # 先离线生成含图表的样例（无需 API Key）\n"
             "  python demo.py --generate-sample\n"
-            "  # Run the three-paradigm comparison with the generated chart (API Key required)\n"
+            "  # 用生成的图表跑三种范式对比（需要 API Key）\n"
             "  python demo.py --file test_files/sample_chart.png \\\n"
             '      --query \"Which quarter had the highest revenue, and what was the exact value?\"\n'
-            "  # Compatible with old syntax (positional arguments)\n"
-            "  python demo.py document.pdf \"Summarize the key points of this document\""
+            "  # 兼容旧写法（位置参数）\n"
+            "  python demo.py document.pdf \"总结这份文档的要点\""
         ),
     )
     parser.add_argument(
         "file", nargs="?", default=None,
-        help="The multimodal file to process (image / PDF document / audio). Can also be specified with --file",
+        help="要处理的多模态文件（图像 / PDF 文档 / 音频）。也可用 --file 指定",
     )
     parser.add_argument(
         "query", nargs="?", default=None,
-        help="The question to ask about the file. Can also be specified with --query",
+        help="向该文件提出的问题。也可用 --query 指定",
     )
     parser.add_argument(
         "--file", dest="file_opt", default=None,
-        help="The multimodal file to process (equivalent to positional argument file)",
+        help="要处理的多模态文件（等价于位置参数 file）",
     )
     parser.add_argument(
         "--query", dest="query_opt", default=None,
-        help="The question to ask about the file (equivalent to positional argument query)",
+        help="向该文件提出的问题（等价于位置参数 query）",
     )
     parser.add_argument(
         "--model", default="gemini-3.5-flash",
-        help="Model used for native / extraction mode (default: gemini-3.5-flash)",
+        help="原生 / 提取模式使用的模型（默认：gemini-3.5-flash）",
     )
     parser.add_argument(
         "--skip-model-comparison", action="store_true",
-        help="Only run the three-paradigm comparison, skip cross-model comparison",
+        help="只跑三种范式对比，跳过跨模型对比",
     )
     parser.add_argument(
         "--generate-sample", action="store_true",
-        help="Offline generate sample files with charts to test_files/ and exit (no API Key required)",
+        help="离线生成含图表的样例文件到 test_files/ 后退出（无需 API Key）",
     )
     parser.add_argument(
         "--output", "-o", default=None,
-        help="Write the full comparison results to the specified file (e.g., result.txt)",
+        help="将完整对比结果同时写入指定文件（如 result.txt）",
     )
     return parser
 
 
 async def run_comparison(file_path: str, query: str, model: str, skip_model_comparison: bool):
-    """Run the three-paradigm comparison, optionally with cross-model comparison."""
+    """运行三种范式对比，可选跨模型对比。"""
     print("="*80)
     print("MULTIMODAL AGENT DEMO")
     print("="*80)
@@ -297,32 +297,32 @@ async def run_comparison(file_path: str, query: str, model: str, skip_model_comp
 
 
 async def main():
-    """Experiment entry: parse arguments and run comparison."""
+    """实验入口：解析参数并运行对比。"""
     parser = build_parser()
     args = parser.parse_args()
 
-    #  Offline sample generation: no API Key needed, directly produce charts + PDF report
+    # 离线样例生成：不需要 API Key，直接产出图表 + PDF 报告
     if args.generate_sample:
         import create_sample
-        sys.argv = ["create_sample.py"]  #  Use default output directory test_files/
+        sys.argv = ["create_sample.py"]  # 用默认输出目录 test_files/
         create_sample.main()
         return
 
     file_path = args.file_opt or args.file
     query = args.query_opt or args.query
 
-    #  Fall back to dialogue demo without real files when file or question is missing
+    # 缺少文件或问题时，回退到无需真实文件的对话演示
     if not file_path or not query:
         print("="*80)
         print("MULTIMODAL AGENT DEMO")
         print("="*80)
-        print("\nNo <file> and <query> provided, switching to dialogue demo.")
-        print("Usage: python demo.py --file <file> --query <question>")
-        print("First generate a sample: python demo.py --generate-sample\n")
+        print("\n未提供 <file> 与 <query>，改为运行对话演示。")
+        print("用法：python demo.py --file <文件> --query <问题>")
+        print("先生成样例：python demo.py --generate-sample\n")
         await demo_conversation_with_tools()
         return
 
-    #  Supports --output: write the full comparison results to disk simultaneously
+    # 支持 --output：把整段对比结果同时落盘
     if args.output:
         with open(args.output, "w", encoding="utf-8") as fh:
             original_stdout = sys.stdout
@@ -331,7 +331,7 @@ async def main():
                 await run_comparison(file_path, query, args.model, args.skip_model_comparison)
             finally:
                 sys.stdout = original_stdout
-        print(f"\nFull comparison results have been written to:{args.output}")
+        print(f"\n完整对比结果已写入：{args.output}")
     else:
         await run_comparison(file_path, query, args.model, args.skip_model_comparison)
 

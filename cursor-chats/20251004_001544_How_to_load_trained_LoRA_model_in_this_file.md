@@ -422,47 +422,47 @@ The inference scripts now perfectly mirror the training script's approach! 🎉
 
 ### 👤 You
 
-The README needs to emphasize that, although the fine-tuning data contains no Chinese, the model's generalization ability enables it to output the reasoning process in Chinese.
+README 里面需要强调，虽然微调数据里面没有中文，但是泛化能力能够让它知道用中文输出推理过程
 
 ---
 
 ### 🤖 Cursor Assistant
 
-I'll update the MultilingualReasoning README to highlight the model's cross-lingual generalization ability.
+我来更新 MultilingualReasoning 的 README，强调模型的跨语言泛化能力。
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Done! I have emphasized the zero-shot generalization ability for Chinese reasoning in multiple places in the README:
+完成！我已经在 README 中多处强调了中文推理的零样本泛化能力：
 
-## Updated Locations
+## 更新的位置
 
-### 1. **Project Introduction** (Line 13)
-Added a special note highlighting that, although the training data contains no Chinese, the model can perform reasoning in a Chinese context through zero-shot generalization.
+### 1. **项目简介** (第 13 行)
+添加了特别说明，突出虽然训练数据中没有中文，但模型能够通过零样本泛化在中文环境下进行推理。
 
-### 2. **Features** (Line 20)
-Added a 🌏 icon feature description, marked with ⚠️ as an important characteristic, emphasizing:
-- Although the fine-tuning dataset contains no Chinese
-- The model's generalization ability enables it to generate reasoning processes in a Chinese context
-- This demonstrates the powerful zero-shot multilingual reasoning capability of large models
+### 2. **功能特性** (第 20 行)
+新增了 🌏 图标的特性说明，用 ⚠️ 标记为重要特性，强调：
+- 虽然微调数据集中没有中文
+- 但模型的泛化能力使其能够在中文环境下生成推理过程
+- 这展示了大模型在零样本多语言推理方面的强大能力
 
-### 3. **Dataset Preparation** (Line 79)
-Added an important note reminding readers that, although the dataset contains no Chinese data, the fine-tuned model can still reason in Chinese, and directing them to the detailed explanation.
+### 3. **数据集准备** (第 79 行)
+添加了重要提示，提醒读者虽然数据集中没有中文数据，但微调后的模型依然能够用中文进行推理，并引导读者查看详细说明。
 
-### 4. **New Dedicated Section** (Lines 200-217)
-Added a "🌏 Important Note on Chinese Reasoning" section before the inference examples, explaining in detail:
-- **Demonstration of zero-shot generalization ability**
-- Three reasons:
-  1. The base model's multilingual capability
-  2. Transfer of reasoning patterns
-  3. The guiding role of system prompts
-- **Practical significance**:
-  - No need to collect training data for each language
-  - Reduces training cost for multilingual models
-  - Proves that reasoning ability is a transferable, general skill
+### 4. **新增专门章节** (第 200-217 行)
+在推理示例之前添加了 "🌏 关于中文推理的重要说明" 章节，详细解释：
+- **零样本泛化能力展示**
+- 三个原因：
+  1. 基础模型的多语言能力
+  2. 推理模式的迁移
+  3. 系统提示的引导作用
+- **实际意义**：
+  - 无需为每种语言收集训练数据
+  - 降低多语言模型的训练成本
+  - 证明推理能力是可迁移的通用能力
 
-This emphasis ensures readers understand this important feature from multiple angles, highlighting the model's powerful cross-lingual generalization ability! ✨
+这样的强调方式确保读者从多个角度理解这个重要特性，突出了模型强大的跨语言泛化能力！✨
 
 ---
 

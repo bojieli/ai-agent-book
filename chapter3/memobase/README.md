@@ -134,7 +134,7 @@ python main.py --mode task --task "Plan a 7-day trip to Japan with a $3000 budge
 
 `profile_demo.py` uses the **real** open-source Memobase SDK to show its two
 memory structures: a **Profile** (topic → sub-topic → content, e.g.
-`basic_info→city`, `work→position`, `interest→game_preferences`) and **Event Memory** (a
+`basic_info→城市`, `work→职位`, `interest→游戏偏好`) and **Event Memory** (a
 timeline for "when did we discuss the budget?" style questions). It follows
 Memobase's buffered pipeline: `insert` (write to the user buffer) →
 `flush` (trigger one LLM extraction) → `profile` / `event` / `context` (recall).
@@ -169,7 +169,7 @@ python profile_demo.py --dry-run
 # Individual ops once memories exist:
 python profile_demo.py --op profile      # recall structured user profile
 python profile_demo.py --op event        # recall the event timeline
-```python profile_demo.py --op context      # assembled memory context string
+python profile_demo.py --op context      # assembled memory context string
 python profile_demo.py --input chat.json --output result.json
 ```
 
@@ -312,7 +312,7 @@ MIT License - See LICENSE file for details
 - LOCOMO benchmark design inspirations
 
 
-## OpenRouter Universal Fallback
+## OpenRouter 通用回退 / Universal OpenRouter fallback
 
 This experiment now supports a **universal OpenRouter fallback** for its chat LLM.
 

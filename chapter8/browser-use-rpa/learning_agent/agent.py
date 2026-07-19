@@ -471,7 +471,7 @@ class LearningAgent:
         # Extract quoted text as subject or content
         quoted = re.findall(r'"([^"]*)"', task)
         if quoted:
-            if 'subject' in task.lower() or 'Topic' in task.lower():
+            if 'subject' in task.lower() or '主题' in task.lower():
                 parameters['subject'] = quoted[0]
                 if len(quoted) > 1:
                     parameters['content'] = quoted[1]

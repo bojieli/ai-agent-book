@@ -250,7 +250,7 @@ class TriggerConfig(BaseModel):
 
     # Content importance triggers
     enable_importance_trigger: bool = Field(default=False, description="Enable content importance based triggers")
-    importance_keywords: List[str] = Field(default_factory=lambda: ["error", "success", "Succeeded", "Failed"],
+    importance_keywords: List[str] = Field(default_factory=lambda: ["error", "success", "完成", "失败"],
                                            description="Keywords that indicate important content")
 
     # Memory type specific triggers

@@ -1,6 +1,6 @@
 # Prompt Distillation with Hugging Face TRL
 
-This project demonstrates **prompt distillation** — a technique that distills knowledge from a **thinking model with long prompts** into a **non-thinking model without prompts**, making responses dramatically faster.
+This project demonstrates **prompt distillation** - a technique to distill knowledge from a **thinking model with long prompts** into a **non-thinking model without prompts**, making responses dramatically faster.
 
 ## 🎯 Main Goal
 
@@ -9,16 +9,16 @@ Distill the reasoning capability from:
 - **Student**: Qwen3-30B-A3B-**Instruct**-2507 without any prompt
 
 **Key Benefits:**
-- ⚡ **Much faster response time** — No thinking overhead, no long prompt processing
-- 💰 **Lower inference cost** — Fewer tokens to process per request
-- 🎯 **Same capability** — The student model learns to respond directly without explicit reasoning
-- 📦 **Easier deployment** — No need to manage long prompts in production
+- ⚡ **Much faster response time** - No thinking overhead, no long prompt processing
+- 💰 **Lower inference cost** - Fewer tokens to process per request
+- 🎯 **Same capability** - Student model learns to respond directly without explicit reasoning
+- 📦 **Easier deployment** - No need to manage long prompts in production
 
 ## What is Prompt Distillation?
 
 Prompt Distillation (also known as **context distillation**) is a training method that makes an LLM internalize a long and complex prompt into its parameters. In this experiment, we also remove the thinking overhead by distilling from a thinking model to a non-thinking model.
 
-**Example — Language Classification:**
+**Example - Language Classification:**
 
 We want to internalize this detailed prompt:
 > "Classify the language of the provided text into these labels: ar, de, el, en, es, fr, hi, ru, tr, ur, vi, zh, ot. Use these rules: Devanagari script → hi, Greek script → el, Cyrillic script → ru..." *(2000+ tokens)*
@@ -26,13 +26,15 @@ We want to internalize this detailed prompt:
 **Before distillation (Teacher with thinking + prompt):**
 ```
 System: <2000+ token detailed prompt>
-I'm sorry, but I can only assist with translating between Chinese and English. The text you provided appears to be in Japanese, which is outside my designated scope. Please provide the Chinese text you'd like translated.Assistant: <thinking>Let me analyze the script... These are Han characters... Based on rule X...</thinking>ja
+User: 一生、バンドしてくれる？
+Assistant: <thinking>Let me analyze the script... These are Han characters... Based on rule X...</thinking>ja
 ⏱️  Response time: ~2-3 seconds
 ```
 
 **After distillation (Student, no thinking, no prompt):**
 ```
-I'm sorry, but I can only translate between Chinese (Simplified/Traditional) and English. The text you provided appears to be in Japanese, which is outside my designated scope. Please provide Chinese text for translation.Assistant: ja
+User: 一生、バンドしてくれる？
+Assistant: ja
 ⏱️  Response time: ~0.1 seconds (20-30x faster!)
 ```
 
@@ -49,7 +51,7 @@ The method involves two stages:
 
 ## Hyperparameters
 
-This implementation uses **OpenAI Cookbook hyperparameters** (from the gpt-oss-20b example):
+This implementation uses **OpenAI Cookbook hyperparameters** (from gpt-oss-20b example):
 
 | Parameter | Value | Source |
 |-----------|-------|--------|
@@ -157,7 +159,9 @@ This will:
 
 ### Step 2: Train the Student Model
 
-Fine-tune the student model on the distilled data using TRL:```bash
+Fine-tune the student model on the distilled data using TRL:
+
+```bash
 # Single GPU training (recommended - simpler and works reliably)
 bash train_trl.sh
 ```

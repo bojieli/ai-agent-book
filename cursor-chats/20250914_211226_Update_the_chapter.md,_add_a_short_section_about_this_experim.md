@@ -28,7 +28,7 @@ I'll add a section about the attention_visualization experiment after the chat t
 
 ### 🤖 Cursor Assistant
 
-I've successfully added a section about the attention_visualization experiment to chapter2.md. The new section titled "Visualization Exploration of Attention Mechanisms" has been placed right after the chat template discussion and before the KV Cache section.
+I've successfully added a section about the attention_visualization experiment to chapter2.md. The new section titled "注意力机制的可视化探索" (Visualization Exploration of Attention Mechanisms) has been placed right after the chat template discussion and before the KV Cache section.
 
 The section covers:
 
@@ -86,19 +86,19 @@ The trajectory metadata will now accurately reflect the actual generation parame
 
 ### 👤 You
 
-Update Experiment 2.2: Input/Output Token and Attention Mechanism Visualization. The key point is to display all input and output tokens on the frontend for easy inspection of the prompt template, and to enable exploration of the attention sink phenomenon.
+更新 实验 2.2：输入输出 token 和注意力机制可视化，这里的关键是，把所有的输入输出 token 都显示到前端，方便查看 prompt template；而且能够探索 attention sink 情况
 
 ---
 
 ### 🤖 Cursor Assistant
 
-I'll add a new section "Experiment 2.2: Input/Output Token and Attention Mechanism Visualization" to chapter2.md, focusing on the practical aspects of visualizing tokens and attention patterns, particularly emphasizing prompt template visibility and attention sink exploration.
+I'll add a new section "实验 2.2：输入输出 token 和注意力机制可视化" to chapter2.md, focusing on the practical aspects of visualizing tokens and attention patterns, particularly emphasizing prompt template visibility and attention sink exploration.
 
 ---
 
 ### 🤖 Cursor Assistant
 
-I've successfully updated chapter2.md to add **"Experiment 2.2: Input/Output Token and Attention Mechanism Visualization"**. 
+I've successfully updated chapter2.md to add **"实验 2.2：输入输出 token 和注意力机制可视化"** (Experiment 2.2: Input/Output Token and Attention Mechanism Visualization). 
 
 The new section focuses on the key points you requested:
 
@@ -111,7 +111,8 @@ The section emphasizes how visualizing all input/output tokens reveals the actua
 Detailed discussion of the attention sink phenomenon, where models allocate disproportionate attention (sometimes over 30%) to early tokens like `<|im_start|>`. The section explains how this effect intensifies with longer contexts and may serve as an "attention storage pool" for weights that don't need to be distributed elsewhere.
 
 ### 3. **Dynamic Attention Patterns**
-- Analysis of attention distribution during tool calls, showing triangular attention patterns between tool definitions, parameter names, and user queries- Self-attention patterns in chain-of-thought reasoning within `<think>` tags
+- Analysis of attention distribution during tool calls, showing triangular attention patterns between tool definitions, parameter names, and user queries
+- Self-attention patterns in chain-of-thought reasoning within `<think>` tags
 - Correlation between attention pattern regularity and reasoning quality
 
 ### 4. **Practical Insights**

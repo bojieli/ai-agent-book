@@ -201,35 +201,35 @@ target a specific OpenRouter model without any mapping.
 
 ## 📖 Usage
 
-### Command-Line Entry Point (`main.py`)
+### 命令行入口（`main.py`）
 
-`main.py` is the single recommended entry point, providing a unified argparse CLI. Run
-`python main.py --help` to see the full help text:
+`main.py` 是唯一推荐的入口，提供统一的 argparse 命令行界面。运行
+`python main.py --help` 查看完整的中文帮助：
 
 ```bash
 python main.py --help
 ```
 
-Key parameters:
+主要参数：
 
-| Parameter | Description |
-|-----------|-------------|
-| (none) | Enter interactive conversation (default behavior) |
-| `-p, --prompt "task"` | Non-interactive mode: execute a single task then exit, suitable for scripts / CI |
-| `--list-tools` | **Offline** list all registered tools with descriptions (no API Key needed, useful for self-check) |
-| `--provider {anthropic,openai,openrouter}` | Temporarily override `PROVIDER` in `.env` |
-| `--model model-name` | Temporarily override `DEFAULT_MODEL` in `.env` |
-| `--base-url URL` | Temporarily override the API Base URL (for custom gateways / OpenAI-compatible services) |
-| `--max-iterations N` | Maximum number of agent iterations for a single task (default 50) |
-| `--no-color` | Disable colored output (automatically disabled when no TTY) |
+| 参数 | 说明 |
+|------|------|
+| （无参数） | 进入交互式对话（默认行为） |
+| `-p, --prompt "任务"` | 非交互模式：执行单个任务后退出，适合脚本 / CI |
+| `--list-tools` | **离线**列出全部已注册工具及简介（无需 API Key，可用于自检） |
+| `--provider {anthropic,openai,openrouter}` | 临时覆盖 `.env` 中的 `PROVIDER` |
+| `--model 模型名` | 临时覆盖 `.env` 中的 `DEFAULT_MODEL` |
+| `--base-url URL` | 临时覆盖 API Base URL（自建网关 / 兼容 OpenAI 的服务） |
+| `--max-iterations N` | 单个任务的最大 Agent 迭代轮数（默认 50） |
+| `--no-color` | 禁用彩色输出（无 TTY 时自动禁用） |
 
-### Quick Self-Check (Offline, No API Key Needed)
+### 快速自检（离线，无需 API Key）
 
-First, confirm the tool set loads correctly:
+先确认工具集加载正常：
 
 ```bash
 $ python main.py --list-tools
-16 tools registered:
+共 16 个工具：
 
   Task           Launch a new agent to handle complex, multi-step tasks autonomously.
   Bash           Executes a given bash command in a persistent shell session ...
@@ -238,19 +238,19 @@ $ python main.py --list-tools
   ...
 ```
 
-### End-to-End Example: Have the Agent Complete a Real Coding Task
+### 端到端示例：让 Agent 完成一个真实编码任务
 
-After configuring `.env` (see Configuration above), use a single command to have the Agent create and run a script:
+配置好 `.env`（见上文 Configuration）后，用一条命令让 Agent 创建并运行一个脚本：
 
 ```bash
-python main.py -p "Create hello_world.py: print Hello, World!, include a function that greets by name and a main demonstration block, then run it to verify the output."
+python main.py -p "创建 hello_world.py：打印 Hello, World!，包含一个按姓名问候的函数和一个 main 演示块，然后运行它验证输出。"
 ```
 
-**The terminal output structure on success looks roughly like this** (illustrative; actual rounds/calls depend on the model):
+**成功时的终端输出结构大致如下**（示意，实际轮次/调用次数取决于模型）：
 
 ```
 ✓ Agent initialized successfully
-You: Create hello_world.py ...
+You: 创建 hello_world.py ...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔧 Calling tool: Write
    ✓ Completed (call #1)
@@ -267,13 +267,13 @@ You: Create hello_world.py ...
    Tool calls: 2
 ```
 
-> Indicators of success: The Agent sequentially calls `Write` to create the file and `Bash` to run the script,
-> the actual script output appears in the terminal, and it ends with `✅ Task completed!`.
-> (`quickstart.py` is a scripted version of the same task, for comparison.)
+> 判定成功的标志：Agent 依次调用 `Write` 写文件、`Bash` 运行脚本，
+> 终端出现脚本的真实输出，并以 `✅ Task completed!` 收尾。
+> （`quickstart.py` 是同一任务的脚本化版本，可作对照。）
 
-### Interactive Conversation (Default)
+### 交互式对话（默认）
 
-Running without `-p` starts an interactive session:
+不带 `-p` 直接运行即进入交互式会话：
 
 ```bash
 python main.py
@@ -287,19 +287,19 @@ python main.py
 - 💬 Conversation history
 - 🔄 Reset command to start fresh
 
-**In-session commands (type during conversation):**
+**会话内命令（在对话中输入）：**
 - `/help` - Show help message
 - `/quit` or `/exit` - Exit the CLI
 - `/reset` - Reset conversation history
 - `/clear` - Clear the screen
 - `/status` - Show agent status (tool calls, TODOs, etc.)
 
-### Other Example Scripts (All Require API Key)
+### 其他示例脚本（均需 API Key）
 
 ```bash
-python quickstart.py                  # Basic quick start (same task as the end-to-end example above)
-python example_complex_task.py        # Complex multi-step task
-python example_with_system_hints.py   # System Hint technique demonstration
+python quickstart.py                  # 基础快速上手（与上文端到端示例同款任务）
+python example_complex_task.py        # 复杂多步任务
+python example_with_system_hints.py   # 系统提示（System Hint）技术演示
 ```
 
 ### Programmatic Usage
@@ -417,7 +417,9 @@ Python: Python 3.11.5
 **Why:** Maximum portability and compatibility
 - Works on any system with Python
 - No Homebrew, apt, or other package managers needed
-- Consistent behavior across platforms### 2. Modular Tool Architecture
+- Consistent behavior across platforms
+
+### 2. Modular Tool Architecture
 
 **Why:** Maintainability and extensibility
 - Each tool is self-contained

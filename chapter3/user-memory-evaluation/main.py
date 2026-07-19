@@ -291,7 +291,7 @@ def run_comparison(framework, args):
         with open(responses_path, "r", encoding="utf-8") as f:
             system_responses = json.load(f)
     except Exception as e:
-        console.print(f"[red]Failed to load system answer file {responses_path}: {e}[/red]")
+        console.print(f"[red]无法加载系统回答文件 {responses_path}: {e}[/red]")
         return
 
     gold_facts = {}
@@ -299,7 +299,7 @@ def run_comparison(framework, args):
         try:
             gold_facts = load_gold_facts(args.gold)
         except Exception as e:
-            console.print(f"[red]Failed to load gold facts file {args.gold}: {e}[/red]")
+            console.print(f"[red]无法加载 gold facts 文件 {args.gold}: {e}[/red]")
             return
 
     try:
@@ -313,11 +313,11 @@ def run_comparison(framework, args):
     except ValueError as e:
         # e.g. llm-judge selected but no API key configured
         console.print(f"[red]{e}[/red]")
-        console.print("[yellow]Tip: For offline comparison, use --metric keyword-recall (no API Key required).[/yellow]")
+        console.print("[yellow]提示：离线对比可改用 --metric keyword-recall（无需 API Key）。[/yellow]")
         return
 
     n_systems = len([s for s in system_responses if not s.startswith('_')])
-    console.print(f"[cyan]Using metric [bold]{args.metric}[/bold] to compare {n_systems} memory systems...[/cyan]")
+    console.print(f"[cyan]使用指标 [bold]{args.metric}[/bold] 对比 {n_systems} 个记忆系统...[/cyan]")
     results_by_system = runner.run(system_responses, category=args.category)
 
     table = runner.build_table(results_by_system)
@@ -326,21 +326,21 @@ def run_comparison(framework, args):
     report = runner.generate_report(results_by_system)
     with open(args.output, "w", encoding="utf-8") as f:
         f.write(report)
-    console.print(f"[green]Comparison report saved to {args.output}[/green]")
+    console.print(f"[green]对比报告已保存至 {args.output}[/green]")
 
 
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="User Memory Evaluation Framework (Experiment 3-1): Evaluate and compare recall quality of different memory systems using a three-level framework.",
+        description="用户记忆评估框架（实验 3-1）：用三层次框架评估并对比不同记忆系统的召回质量。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "Example: \n"
-            "  # Offline comparison of multiple memory systems (no API required, uses key fact recall metric)\n"
+            "示例：\n"
+            "  # 离线对比多个记忆系统（无需 API，使用关键事实召回指标）\n"
             "  python main.py --mode compare --metric keyword-recall\n\n"
-            "  # List test cases only (offline)\n"
+            "  # 仅列出测试用例（离线）\n"
             "  python main.py --list\n\n"
-            "  # Evaluate a single system's answers using LLM-as-judge (requires API Key configuration)\n"
+            "  # 用 LLM-as-judge 评测单个系统的回答（需要配置 API Key）\n"
             "  python main.py --mode batch --responses my_answers.json --metric llm-judge\n"
         ),
     )
@@ -348,58 +348,58 @@ def main():
         "--mode",
         choices=["interactive", "demo", "batch", "compare"],
         default="interactive",
-        help="Run mode: interactive (default); demo; batch (evaluate single system); compare (cross-system comparison scoring table)",
+        help="运行模式：interactive 交互式菜单（默认）；demo 演示；batch 评测单个系统；compare 跨系统对比打分表",
     )
     parser.add_argument(
         "--metric",
         choices=["llm-judge", "keyword-recall"],
         default="llm-judge",
-        help="Scoring metric: llm-judge (uses LLM as judge, requires API); keyword-recall (offline key fact recall rate, commonly used in compare mode)",
+        help="评分指标：llm-judge 用 LLM 当评委（需 API）；keyword-recall 离线关键事实召回率（compare 场景常用）",
     )
     parser.add_argument(
         "--responses",
         type=str,
-        help="Path to answer JSON file. For batch mode: {test_id: answer}; for compare mode: {system_name: {test_id: answer}} (compare mode uses built-in examples by default)",
+        help="回答 JSON 文件路径。batch 模式为 {test_id: 回答}；compare 模式为 {系统名: {test_id: 回答}}（compare 默认用内置示例）",
     )
     parser.add_argument(
         "--gold",
         type=str,
         default=DEFAULT_GOLD_FACTS,
-        help="Path to key fact annotation JSON used by keyword-recall metric (default fixtures/gold_facts.json)",
+        help="keyword-recall 指标使用的关键事实标注 JSON 路径（默认 fixtures/gold_facts.json）",
     )
     parser.add_argument(
         "--category",
         choices=["layer1", "layer2", "layer3"],
-        help="Only evaluate test cases of a specific level (layer1 basic recall / layer2 disambiguation / layer3 proactive service)",
+        help="只评测某一层次的测试用例（layer1 基础回忆 / layer2 消歧 / layer3 主动服务）",
     )
     parser.add_argument(
         "--test-cases-dir",
         type=str,
         default=None,
-        help="Test case (evaluation set) directory, defaults to built-in test_cases directory",
+        help="测试用例（评估集）目录，默认使用内置的 test_cases 目录",
     )
     parser.add_argument(
         "--evaluator",
         choices=["kimi", "openai"],
         default=None,
-        help="Backend for LLM-as-judge (kimi or openai), defaults to config/environment variable",
+        help="LLM-as-judge 的后端（kimi 或 openai），默认读取配置/环境变量",
     )
     parser.add_argument(
         "--model",
         type=str,
         default=None,
-        help="Override the model name for the judge LLM (only effective for llm-judge metric)",
+        help="覆盖评委 LLM 的模型名称（仅 llm-judge 指标生效）",
     )
     parser.add_argument(
         "--output",
         type=str,
         default="evaluation_report.txt",
-        help="Output file path for evaluation report",
+        help="评测报告的输出文件路径",
     )
     parser.add_argument(
         "--list",
         action="store_true",
-        help="List all test cases offline and exit (can be used with --category, --test-cases-dir)",
+        help="离线列出所有测试用例后退出（可配合 --category、--test-cases-dir）",
     )
 
     args = parser.parse_args()
@@ -421,7 +421,7 @@ def main():
         run_comparison(framework, args)
     elif args.mode == "batch":
         if not args.responses:
-            console.print("[red]Batch mode requires specifying the answer JSON file via --responses[/red]")
+            console.print("[red]batch 模式需要通过 --responses 指定回答 JSON 文件[/red]")
             return
 
         with open(args.responses, 'r', encoding='utf-8') as f:

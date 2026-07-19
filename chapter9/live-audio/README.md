@@ -2,7 +2,7 @@
 
 A real-time voice chat demo featuring speech-to-text, AI conversation, and text-to-speech capabilities. The application supports multiple AI service providers and provides a seamless conversational experience with minimal latency.
 
-> This is the companion code for **Experiment 9-1 "Building a Traditional Voice Agent"** in Chapter 9 of *Understanding AI Agents*. It implements the **cascaded** voice pipeline (VAD → ASR → LLM → TTS) discussed there: the frontend captures the microphone and streams audio over a WebSocket; the backend runs Silero VAD to detect end-of-speech (~500 ms of silence), then routes the utterance through pluggable ASR, LLM, and TTS providers and streams synthesized audio back for playback.
+> This is the companion code for **实验 9-1「构建传统语音 Agent」** in 《深入理解 AI Agent》第 9 章. It implements the **cascaded** voice pipeline (VAD → ASR → LLM → TTS) discussed there: the frontend captures the microphone and streams audio over a WebSocket; the backend runs Silero VAD to detect end-of-speech (~500 ms of silence), then routes the utterance through pluggable ASR, LLM, and TTS providers and streams synthesized audio back for playback.
 
 ## Features
 
@@ -149,7 +149,9 @@ This prints which prerequisites are satisfied and which selected providers have 
 
 ## Configuration
 
-### Provider-Based ConfigurationThe system now supports **multiple AI service providers** for maximum flexibility. You can mix and match different providers for ASR, LLM, and TTS services.
+### Provider-Based Configuration
+
+The system now supports **multiple AI service providers** for maximum flexibility. You can mix and match different providers for ASR, LLM, and TTS services.
 
 ### 1. Environment Variables Setup
 

@@ -1,94 +1,66 @@
 {
-  "description": "Offline retrieval comparison dataset: used to quantitatively compare the evidence recall capability of 'non-agentic RAG (single retrieval)' and 'agentic RAG (multi-round/decomposed retrieval)' without requiring LLM or external retrieval services. Each question is annotated with the gold-standard legal articles (gold_articles, matched exactly by article number) necessary for answering. naive_query is the user's original query (used directly for single retrieval); subqueries are the retrieval queries decomposed/rewritten by the agent after reasoning (union of multiple retrievals). All gold-standard articles are confirmed to exist in the laws/ corpus.",
-  "metric": "Evidence recall rate = number of gold-standard articles hit / total number of gold-standard articles (an article is considered hit if and only if a chunk starting with that article number exists in the retrieval results)",
+  "description": "离线检索对比数据集：用于在无需 LLM / 无需外部检索服务的情况下，量化对比『非智能体化 RAG（单次检索）』与『智能体化 RAG（多轮/分解检索）』的证据召回能力。每条问题标注了回答所必需的金标准法条（gold_articles，以法条编号精确匹配）。naive_query 为用户原始提问（单次检索直接使用）；subqueries 为智能体经过思考后分解/改写出的检索式（多次检索后取并集）。金标准法条均已确认存在于 laws/ 语料中。",
+  "metric": "证据召回率 = 命中的金标准法条数 / 金标准法条总数（某法条被命中当且仅当检索结果中存在以该法条编号开头的分块）",
   "cases": [
     {
       "id": "easy_1",
-      "question": "How is intentional injury causing serious injury punished?",
+      "question": "故意伤害致人重伤的，如何处罚？",
       "difficulty": "easy",
-      "naive_query": "How is intentional injury causing serious injury punished?",
-      "subqueries": [
-        "intentional injury causing serious injury fixed-term imprisonment"
-      ],
-      "gold_articles": [
-        "Article 234"
-      ]
+      "naive_query": "故意伤害致人重伤的，如何处罚？",
+      "subqueries": ["故意伤害 致人重伤 有期徒刑"],
+      "gold_articles": ["第二百三十四条"]
     },
     {
       "id": "easy_2",
-      "question": "How is self-defense defined?",
+      "question": "正当防卫是怎么规定的？",
       "difficulty": "easy",
-      "naive_query": "How is self-defense defined?",
-      "subqueries": [
-        "self-defense no criminal liability"
-      ],
-      "gold_articles": [
-        "Article 20"
-      ]
+      "naive_query": "正当防卫是怎么规定的？",
+      "subqueries": ["正当防卫 不负刑事责任"],
+      "gold_articles": ["第二十条"]
     },
     {
       "id": "easy_3",
-      "question": "How is drunk driving punished?",
+      "question": "醉酒驾驶机动车如何处罚？",
       "difficulty": "easy",
-      "naive_query": "How is drunk driving punished?",
-      "subqueries": [
-        "crime of dangerous driving drunk driving motor vehicle criminal detention"
-      ],
-      "gold_articles": [
-        "Article 133-1"
-      ]
+      "naive_query": "醉酒驾驶机动车如何处罚？",
+      "subqueries": ["危险驾驶罪 醉酒 驾驶机动车 拘役"],
+      "gold_articles": ["第一百三十三条之一"]
     },
     {
       "id": "hard_1",
-      "question": "How many years for intentional homicide?",
+      "question": "故意杀人罪判几年？",
       "difficulty": "hard",
-      "naive_query": "How many years for intentional homicide?",
-      "subqueries": [
-        "intentional homicide death penalty life imprisonment"
-      ],
-      "gold_articles": [
-        "Article 232"
-      ]
+      "naive_query": "故意杀人罪判几年？",
+      "subqueries": ["故意杀人 死刑 无期徒刑"],
+      "gold_articles": ["第二百三十二条"]
     },
     {
       "id": "hard_2",
-      "question": "What is the filing standard for theft?",
+      "question": "盗窃罪的立案标准是什么？",
       "difficulty": "hard",
-      "naive_query": "What is the filing standard for theft?",
-      "subqueries": [
-        "theft public or private property relatively large amount fixed-term imprisonment"
-      ],
-      "gold_articles": [
-        "Article 264"
-      ]
+      "naive_query": "盗窃罪的立案标准是什么？",
+      "subqueries": ["盗窃 公私财物 数额较大 有期徒刑"],
+      "gold_articles": ["第二百六十四条"]
     },
     {
       "id": "hard_3",
-      "question": "What is the sentencing standard for fraud?",
+      "question": "诈骗罪的量刑标准是什么？",
       "difficulty": "hard",
-      "naive_query": "What is the sentencing standard for fraud?",
-      "subqueries": [
-        "fraud public or private property relatively large amount fixed-term imprisonment fine"
-      ],
-      "gold_articles": [
-        "Article 266"
-      ]
+      "naive_query": "诈骗罪的量刑标准是什么？",
+      "subqueries": ["诈骗 公私财物 数额较大 有期徒刑 罚金"],
+      "gold_articles": ["第二百六十六条"]
     },
     {
       "id": "hard_4",
-      "question": "How should sentencing be determined for drunk driving causing serious injury by negligence with a prior theft conviction?",
+      "question": "醉酒过失致人重伤且有盗窃前科，应如何量刑？",
       "difficulty": "hard",
-      "naive_query": "How should sentencing be determined for drunk driving causing serious injury by negligence with a prior theft conviction?",
+      "naive_query": "醉酒过失致人重伤且有盗窃前科，应如何量刑？",
       "subqueries": [
-        "negligently injuring another person causing serious injury fixed-term imprisonment",
-        "crime of dangerous driving drunk driving motor vehicle",
-        "recidivist heavier punishment negligent crime"
+        "过失伤害他人致人重伤 有期徒刑",
+        "危险驾驶罪 醉酒 驾驶机动车",
+        "累犯 从重处罚 过失犯罪"
       ],
-      "gold_articles": [
-        "Article 235",
-        "Article 133-1",
-        "Article 65"
-      ]
+      "gold_articles": ["第二百三十五条", "第一百三十三条之一", "第六十五条"]
     }
   ]
 }

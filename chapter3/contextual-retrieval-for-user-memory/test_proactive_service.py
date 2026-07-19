@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test script to demonstrate the agent's proactive service capabilities"""
+"""Test script to demonstrate the agent's proactive service (主动服务) capabilities"""
 
 import logging
 from datetime import datetime, timedelta
@@ -15,7 +15,7 @@ def test_proactive_service():
     """Test the agent's ability to provide proactive service"""
     
     print("\n" + "="*80)
-    print("Testing Proactive Service")
+    print("测试主动服务 (Testing Proactive Service)")
     print("="*80)
     
     # Initialize system
@@ -115,9 +115,9 @@ def test_proactive_service():
     
     # Test questions that should trigger proactive service
     test_questions = [
-        "What else do I need to prepare for my Tokyo trip at the end of January?",
+        "我一月底的东京之行，还有什么要准备的吗？",
         "What do I need for my Tokyo trip?",
-        "What are my arrangements for next week?",
+        "我下周有什么安排吗？",
     ]
     
     for i, question in enumerate(test_questions, 1):
@@ -144,30 +144,30 @@ def test_proactive_service():
             print("\n✅ Proactive Service Check:")
             
             # Check if passport expiration was mentioned
-            if "passport" in answer_lower and ("expir" in answer_lower or "expired" in answer_lower):
+            if "passport" in answer_lower and ("expir" in answer_lower or "过期" in answer_lower):
                 print("  ✓ Identified passport expiration risk")
             else:
                 print("  ✗ Missed passport expiration risk")
             
             # Check if insurance was mentioned
-            if "insurance" in answer_lower or "insurance" in answer_lower:
+            if "insurance" in answer_lower or "保险" in answer_lower:
                 print("  ✓ Mentioned travel insurance status")
             else:
                 print("  ✗ Missed insurance consideration")
             
             # Check if medical appointment was mentioned (for weekly schedule question)
-            if i == 3 and ("appointment" in answer_lower or "physical" in answer_lower or "doctor" in answer_lower):
+            if i == 3 and ("appointment" in answer_lower or "physical" in answer_lower or "医生" in answer_lower):
                 print("  ✓ Reminded about medical appointment")
             
             # Check for urgency markers
-            if any(marker in trajectory.final_answer for marker in ["⚠️", "🔴", "⏰", "needs immediate", "urgent", "ASAP"]):
+            if any(marker in trajectory.final_answer for marker in ["⚠️", "🔴", "⏰", "需要立即", "urgent", "ASAP"]):
                 print("  ✓ Used urgency markers for time-sensitive items")
         
         print(f"\nMemory Cards Used: {trajectory.memory_cards_used}")
         print(f"Iterations: {len(trajectory.iterations)}")
 
     print("\n" + "="*80)
-    print("Proactive Service Test Complete")
+    print("主动服务测试完成 (Proactive Service Test Complete)")
     print("="*80)
     print("\nKey Features Demonstrated:")
     print("1. Risk Detection: Identifying passport expiration before travel")

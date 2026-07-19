@@ -360,8 +360,8 @@ class KVCacheAgent:
             root_dir: Root directory for file operations
             verbose: If True, log detailed information
         """
-        # Defaults to Moonshot/Kimi official endpoint; if an OpenRouter key (sk-or-…) is provided,
-        # it automatically falls back to OpenRouter and maps kimi-* model names to moonshotai/kimi-k2.
+        # 默认走 Moonshot/Kimi 官方端点；若传入的是 OpenRouter key（sk-or-…），
+        # 则自动回退到 OpenRouter，并把 kimi-* 模型名映射为 moonshotai/kimi-k2。
         from openrouter_fallback import (
             OPENROUTER_BASE_URL,
             is_openrouter_key,

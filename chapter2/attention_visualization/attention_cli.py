@@ -8,8 +8,8 @@ head to inspect. This is the standalone counterpart to the interactive
 frontend: instead of saving a trajectory JSON for the React app, it writes
 a publication-ready PNG directly.
 
-It reproduces the two patterns discussed in Chapter 2 ("Experiment 2-2 Attention Mechanism
-Visualization"):
+It reproduces the two patterns discussed in Chapter 2 ("实验 2-2 注意力机制
+可视化"):
 
   * the **attention sink** - the first token soaking up a large,
     disproportionate share of every row's attention, and
@@ -22,7 +22,7 @@ Examples
     python attention_cli.py
 
     # Custom prompt, inspect layer 0, head 3, save to a chosen path
-    python attention_cli.py --prompt "How is the weather in Beijing" \
+    python attention_cli.py --prompt "北京 的 天气 怎么样" \
         --layer 0 --head 3 --output layer0_head3.png
 
     # Let the model generate a short continuation, then visualize the
@@ -42,7 +42,7 @@ import sys
 import numpy as np
 
 
-DEFAULT_PROMPT = "How is the weather in Beijing"
+DEFAULT_PROMPT = "北京 的 天气 怎么样"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -58,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=(
             "Examples:\n"
             "  python attention_cli.py\n"
-            "  python attention_cli.py --prompt 'How is the weather in Beijing' --layer 0 --head 3\n"
+            "  python attention_cli.py --prompt '北京 的 天气 怎么样' --layer 0 --head 3\n"
             "  python attention_cli.py --prompt 'Explain attention.' --max-new-tokens 40\n"
             "  python attention_cli.py --compare-layers 0 -1 -o layer_compare.png\n"
         ),

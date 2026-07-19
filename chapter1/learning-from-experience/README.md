@@ -73,8 +73,8 @@ cd chapter1/learning-from-experience
 pip install -r requirements.txt
 ```
 
-> Corresponds to **Experiment 7-1 (Q-learning Performance in Treasure Hunt Game)** and **Experiment 7-2 (Comparative Study of Traditional RL vs LLM Agent)** in the book.
-> The Q-learning part runs entirely offline without any API key; the LLM part requires a Moonshot/Kimi API key.
+> 对应书中**实验 7-1（Q-learning 在寻宝游戏中的表现）**与**实验 7-2（传统 RL 与 LLM Agent 的对比研究）**。
+> Q-learning 部分完全离线运行、无需任何 API Key；LLM 部分需要 Moonshot/Kimi API Key。
 
 ### Setting up Kimi K3 API
 
@@ -92,12 +92,12 @@ Or create a `.env` file:
 echo "MOONSHOT_API_KEY=your-api-key-here" > .env
 ```
 
-**Universal Fallback (OpenRouter)**: If `MOONSHOT_API_KEY` is not set but `OPENROUTER_API_KEY` is,
-the LLM part will automatically switch to OpenRouter. Since Kimi models are not stably available on OpenRouter, the fallback uses
-`OPENROUTER_MODEL` (default `openai/gpt-5.6-luna`):
+**通用兜底（OpenRouter）**：若未设置 `MOONSHOT_API_KEY` 但设置了 `OPENROUTER_API_KEY`，
+LLM 部分会自动改走 OpenRouter。由于 Kimi 模型在 OpenRouter 上不稳定可用，兜底时会使用
+`OPENROUTER_MODEL`（默认 `openai/gpt-5.6-luna`）：
 ```bash
 export OPENROUTER_API_KEY=sk-or-v1-your-key-here
-python quick_demo.py   # Automatically runs via OpenRouter when MOONSHOT_API_KEY is missing
+python quick_demo.py   # MOONSHOT_API_KEY 缺失时自动经 OpenRouter 运行
 ```
 
 ### Running the Experiment
@@ -115,37 +115,38 @@ This shows a detailed view of how the LLM learns through reasoning, displaying:
 
 #### Command-Line Interface (`experiment.py`)
 
-`experiment.py` now provides a full CLI with Chinese help text. View all parameters:
+`experiment.py` 现在提供带中文帮助的完整 CLI。查看所有参数：
 
 ```bash
 python experiment.py --help
 ```
 
-Main parameters:
+主要参数：
 
-| Parameter | Description | Default |
+| 参数 | 说明 | 默认值 |
 | --- | --- | --- |
-| `--mode {both,qlearning,rl,llm}` | Which agent to run: `qlearning`/`rl` runs only Q-learning (offline), `llm` runs only LLM Agent, `both` compares both | `both` |
-| `--rl-episodes` | Number of Q-learning training episodes (use 10000 for Experiment 7-1) | `10000` |
-| `--llm-episodes` | Number of LLM Agent training episodes | `20` |
-| `--eval-episodes` | Number of greedy evaluation episodes after Q-learning training | `100` |
-| `--checkpoint-interval` | Learning curve sampling interval (record win rate/Q-table size every N episodes) | `1000` |
-| `--model` | LLM model name (can also use `MOONSHOT_MODEL` environment variable) | `kimi-k3` |
-| `--output` | Result output directory | `results` |
-| `--seed` | Random seed for reproducing Q-learning learning curves | Not fixed |
-| `--learning-rate` / `--discount` / `--epsilon-decay` / `--epsilon-min` | Q-learning hyperparameters | `0.2 / 0.99 / 0.9995 / 0.1` |
-| `--stochastic` | Use stochastic environment | Deterministic |
-| `--skip-llm` | Compatible with old usage, equivalent to `--mode qlearning` | — |
+| `--mode {both,qlearning,rl,llm}` | 运行哪种智能体：`qlearning`/`rl` 只跑 Q-learning（离线）、`llm` 只跑 LLM Agent、`both` 两者对比 | `both` |
+| `--rl-episodes` | Q-learning 训练局数（实验 7-1 用 10000） | `10000` |
+| `--llm-episodes` | LLM Agent 训练局数 | `20` |
+| `--eval-episodes` | Q-learning 训练后贪婪评估局数 | `100` |
+| `--checkpoint-interval` | 学习曲线采样间隔（每 N 局记录一次胜率/Q 表规模） | `1000` |
+| `--model` | LLM 模型名（也可用 `MOONSHOT_MODEL` 环境变量） | `kimi-k3` |
+| `--output` | 结果输出目录 | `results` |
+| `--seed` | 随机种子，用于复现 Q-learning 学习曲线 | 不固定 |
+| `--learning-rate` / `--discount` / `--epsilon-decay` / `--epsilon-min` | Q-learning 超参数 | `0.2 / 0.99 / 0.9995 / 0.1` |
+| `--stochastic` | 使用随机环境 | 确定性 |
+| `--skip-llm` | 兼容旧用法，等价于 `--mode qlearning` | — |
 
-#### Q-Learning Only (Experiment 7-1, Offline, No API Required)
+#### Q-Learning Only (实验 7-1，离线，无需 API)
 
 ```bash
 python experiment.py --mode qlearning --rl-episodes 10000 --seed 42
 ```
 
-Training completes in under 3 seconds and prints a **learning curve table**, intuitively showing how the agent gradually learns to complete the game from 0% win rate through nearly ten thousand episodes of trial and error (see "Experiment Results" below).
+训练不到 3 秒即可完成，并打印**学习曲线表格**，直观展现智能体如何在近万局试错中从
+0% 胜率逐步学会通关（见下方"Experiment Results"）。
 
-#### Full Comparison (RL vs LLM, Experiment 7-2)
+#### Full Comparison (RL vs LLM，实验 7-2)
 
 ```bash
 python experiment.py --mode both --model kimi-k3
@@ -158,7 +159,7 @@ This will:
 4. Generate comparison plots
 5. Save results to the `results/` directory
 
-**Note**: The LLM training shows the complete reasoning process for the first 3 episodes and the last episode, so you can see exactly how it learns! Each LLM episode takes ~1-2 minutes (real API calls), matching the cost trade-off discussed in Experiment 7-2.
+**Note**: The LLM training shows the complete reasoning process for the first 3 episodes and the last episode, so you can see exactly how it learns! Each LLM episode takes ~1-2 minutes (real API calls), matching the cost trade-off discussed in 实验 7-2.
 
 #### LLM Only
 
@@ -179,7 +180,7 @@ print("Available actions:", game.get_available_actions())
 
 # Try an action
 feedback, reward, done = game.execute_action("take rusty sword")
-```print(f"Feedback: {feedback}")
+print(f"Feedback: {feedback}")
 print(f"Reward: {reward}")
 ```
 
@@ -214,7 +215,7 @@ The experiment creates comparison plots showing:
 
 #### Q-Learning learning curve (measured locally, `--mode qlearning --rl-episodes 10000 --seed 42`)
 
-Measured learning curve (deterministic environment, victory rate computed over a sliding window of the last 1000 episodes, full training ~3 seconds):
+实测学习曲线（确定性环境，胜率按最近 1000 局滑动窗口统计，整段训练约 3 秒）：
 
 | Episodes | Victory rate | Q-table states | epsilon |
 | ---: | ---: | ---: | ---: |
@@ -227,13 +228,16 @@ Measured learning curve (deterministic environment, victory rate computed over a
 | 9000 | 9.3% | 143 | 0.100 |
 | 10000 | **99.8%** | 143 | 0.100 |
 
-After training, greedy evaluation (`--eval-episodes 100`) yields a victory rate of **100%**, with an average of 15 steps to complete. This is the core phenomenon of Experiment 7-1: for the first 8000 episodes, the victory rate is nearly 0%, with only blind exploration; the value signal takes nearly ten thousand episodes of trial and error to propagate. (Due to variance in random exploration, the inflection point may vary slightly across runs when `--seed` is not fixed, but the overall pattern remains consistent.)
+训练后贪婪评估（`--eval-episodes 100`）胜率为 **100%**，平均 15 步通关。这正是实验 7-1
+的核心现象：前 8000 局几乎 0% 胜率、只在盲目探索，价值信号需要近万局试错才传播到位。
+（因随机探索有方差，未固定 `--seed` 时各次运行的拐点会略有不同，但整体形态一致。）
 
-#### RL vs LLM (Comparison conclusions from Experiment 7-2)
+#### RL vs LLM（实验 7-2 的对比结论）
 
-- **Q-Learning**: Requires nearly 10,000 episodes to achieve stable completion; treats "door/key/sword" as meaningless symbols, relying solely on statistical brute-force exploration.
-- **LLM In-Context**: Carries pre-trained priors, often completing the game within a dozen steps on the first episode; understands the conceptual structure of the game through reasoning.
-- **Sample Efficiency**: LLM sample efficiency is 2-3 orders of magnitude higher; however, per-episode reasoning is slow (API call ~1-2 minutes), while Q-learning runs 10,000 episodes in about 3 seconds — the trade-off depends on interaction cost, as detailed in Experiment 7-2 of the book.
+- **Q-Learning**: 需要近 10000 局才达到稳定通关；把"门/钥匙/剑"当作无意义符号，只能靠统计式暴力探索。
+- **LLM In-Context**: 携带预训练先验，往往第一局就能在十几步内通关；靠推理理解游戏概念结构。
+- **Sample Efficiency**: LLM 的样本效率高出 2-3 个数量级；但单局推理慢（API 调用 ~1-2 分钟），
+  Q-learning 跑 10000 局只需约 3 秒——权衡取决于交互成本，详见书中实验 7-2。
 
 ## 🏗️ Project Structure
 

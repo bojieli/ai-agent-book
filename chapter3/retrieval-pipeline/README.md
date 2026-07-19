@@ -169,20 +169,21 @@ on a small labelled eval set and prints a stage-by-stage comparison table plus a
 per-query breakdown. The CLI has a full Chinese `--help`:
 
 ```bash
-python evaluate.py --help          # Chinese help: corpus/query/stage/top-k/model/output etc.
-python evaluate.py                 # Built-in eval set, full comparison table (default)
-python evaluate.py --no-dense      # BM25 only, fully offline, no models needed
-python evaluate.py --no-rerank     # Skip reranking stage
-python evaluate.py --query "XR-7003"   # Single query, per-stage rank tracking
-python evaluate.py --embed-model BAAI/bge-m3 --pooling cls   # Switch dense model
-python evaluate.py --output result.json                      # Write results to JSON
+python evaluate.py --help          # 中文帮助：语料/查询/阶段/top-k/模型/输出等
+python evaluate.py                 # 内置评测集，完整对比表（默认）
+python evaluate.py --no-dense      # 仅 BM25，纯离线、无需任何模型
+python evaluate.py --no-rerank     # 跳过重排阶段
+python evaluate.py --query "XR-7003"   # 单条查询逐阶段排名追踪
+python evaluate.py --embed-model BAAI/bge-m3 --pooling cls   # 换稠密模型
+python evaluate.py --output result.json                      # 结果写入 JSON
 ```
 
 Local components (each stage is a real model / algorithm, not a mock):
 
 | Stage    | Component (default)                              | Offline? |
 |----------|--------------------------------------------------|----------|
-| chunk    | character-window splitter                         | ✅ pure Python || sparse   | BM25 (`rank_bm25`)                                | ✅ no model download |
+| chunk    | character-window splitter                         | ✅ pure Python |
+| sparse   | BM25 (`rank_bm25`)                                | ✅ no model download |
 | dense    | `sentence-transformers/all-MiniLM-L6-v2` (~90MB) | ✅ via `transformers` (multilingual: swap in `Qwen/Qwen3-Embedding-0.6B` / `BAAI/bge-m3`) |
 | fuse     | RRF + weighted (`fusion.py`)                      | ✅ pure Python |
 | rerank   | `BAAI/bge-reranker-base` (~1.1GB, first run downloads) | ✅ once cached |
@@ -211,7 +212,7 @@ Hybrid-RRF                  1.0000      1.0000      1.0000
 Hybrid-Weighted             1.0000      0.9500      0.9631
 Hybrid-RRF+Rerank           1.0000      0.9500      0.9631
 
-Per-query MRR breakdown (1.00 = correct doc ranked 1st)
+逐条查询 MRR 明细（1.00=正确文档排在第 1 位）
 Query                                        BM25  Dense    RRF    Wgt Rerank
 ------------------------------------------------------------------------------
 XR-7003                                      1.00   0.50   1.00   1.00   1.00
@@ -272,7 +273,8 @@ $ python evaluate.py --query "XR-7003"
 
 ### Test Case 3: Multilingual (Dense Wins)
 ```python
-# Query: "人工智能" (Chinese for AI)# Dense finds AI docs in any language
+# Query: "人工智能" (Chinese for AI)
+# Dense finds AI docs in any language
 # Sparse only finds Chinese text
 ```
 
@@ -344,7 +346,7 @@ The search response provides educational insights:
       "doc_id": "doc_1",
       "rerank_score": 0.95,
       "original_ranks": {
-```        "dense": 3,         # Was rank 3 in dense
+        "dense": 3,         # Was rank 3 in dense
         "sparse": 5         # Was rank 5 in sparse
       },
       "rank_changes": [

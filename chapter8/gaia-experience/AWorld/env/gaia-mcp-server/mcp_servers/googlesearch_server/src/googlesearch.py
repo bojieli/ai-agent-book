@@ -138,14 +138,14 @@ async def search_google(
 
         # Parse search results
         search_results = []
-        search_items = []  #  New: used to store processed data
+        search_items = []  # 新增：用于存储加工后的数据
 
         if "items" in data:
-            #  Use dictionary deduplication to avoid duplicate URLs
+            # 使用字典去重，避免重复URL
             url_dict = {}
 
             for i, item in enumerate(data["items"]):
-                #  The original SearchResult processing logic remains unchanged
+                # 原有的SearchResult处理逻辑保持不变
                 result = SearchResult(
                     id=f"google-{i}",
                     title=item.get("title", ""),
@@ -157,7 +157,7 @@ async def search_google(
                 )
                 search_results.append(result)
 
-                #  New: simultaneously process search_items data
+                # 新增：同时加工search_items数据
                 url = item.get("link", "")
                 if url not in url_dict:
                     url_dict[url] = {
@@ -169,7 +169,7 @@ async def search_google(
                             item.get("snippet", "")) > 1000 else item.get("snippet", ""),
                     }
 
-            #  Convert dictionary values to list
+            # 将字典值转换为列表
             search_items = list(url_dict.values())
 
         # Format results based on requested format

@@ -1,2 +1,2 @@
 openai>=1.40.0
-# No other third-party libraries required: ffprobe uses system commands, Gemini optionally uses built-in urllib (REST) for review.
+# 无需其它第三方库：ffprobe 走系统命令，Gemini 可选评审走内置 urllib（REST）。

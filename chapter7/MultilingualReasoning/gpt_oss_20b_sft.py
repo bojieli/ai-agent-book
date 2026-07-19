@@ -1,26 +1,26 @@
 """
-Multilingual Reasoning Model Fine-Tuning Script
+多语言推理模型微调脚本
 
-This script demonstrates how to fine-tune OpenAI's gpt-oss-20b model using Hugging Face's TRL library,
-enabling effective reasoning across multiple languages.
+本脚本展示如何使用 Hugging Face 的 TRL 库对 OpenAI 的 gpt-oss-20b 模型进行微调，
+使其能够在多种语言中进行有效推理。
 
-Based on the OpenAI Cookbook tutorial:
+基于 OpenAI Cookbook 教程：
 https://cookbook.openai.com/articles/gpt-oss/fine-tune-transfomers
 
-Authors: Edward Beeching, Quentin Gallouédec, Lewis Tunstall
-Modified: Adapted as a complete Python script
+作者: Edward Beeching, Quentin Gallouédec, Lewis Tunstall
+修改: 适配为完整的 Python 脚本
 
-⚠️  Hardware Requirements (Important!):
-- GPU: H100 (80GB VRAM) or higher
-- Training time: Approximately 18 minutes on H100
-- Uses Mxfp4Config quantization and LoRA for memory-efficient training
+⚠️  硬件要求（重要！）:
+- GPU: H100（80GB 显存）或更高配置
+- 训练时间: H100 上约 18 分钟
+- 使用 Mxfp4Config 量化和 LoRA 进行内存高效训练
 
-Features:
-- Uses Mxfp4Config (4-bit floating point format optimized for OpenAI models)
-- Memory-efficient fine-tuning with LoRA (including MoE expert layers)
-- Supports multilingual reasoning (English, Spanish, French, German, Italian, etc.)
-- Can mix languages (ask in one language, reason in another)
-- All hyperparameters are identical to the OpenAI Cookbook tutorial
+功能特性:
+- 使用 Mxfp4Config（针对 OpenAI 模型优化的 4-bit 浮点格式）
+- 使用 LoRA 进行内存高效的微调（包括 MoE 专家层）
+- 支持多语言推理（英语、西班牙语、法语、德语、意大利语等）
+- 可以混合语言（用一种语言提问，用另一种语言推理）
+- 所有超参数与 OpenAI Cookbook 教程完全一致
 """
 
 import os
@@ -37,31 +37,31 @@ from trl import SFTTrainer, SFTConfig
 
 
 # ============================================================================
-#Part 1: Dataset Preparation
+# 第一部分：数据集准备
 # ============================================================================
 
 def load_and_prepare_dataset():
     """
-    Load and prepare the multilingual reasoning dataset
+    加载并准备多语言推理数据集
     
-    Uses the HuggingFaceH4/Multilingual-Thinking dataset, which contains:
-    - Reasoning chains (chain-of-thought) in multiple languages
-    - Supports English, Spanish, French, German, Italian, etc.
+    使用 HuggingFaceH4/Multilingual-Thinking 数据集，该数据集包含：
+    - 多种语言的推理链（思维链）
+    - 支持英语、西班牙语、法语、德语、意大利语等
     
     Returns:
-        Dataset: Formatted training dataset
+        Dataset: 格式化后的训练数据集
     """
     print("=" * 80)
-    print("Step 1: Load Dataset")
+    print("步骤 1: 加载数据集")
     print("=" * 80)
     
-    # Load dataset from Hugging Face Hub
+    # 从 Hugging Face Hub 加载数据集
     dataset = load_dataset("HuggingFaceH4/Multilingual-Thinking")
     
-    print(f"Dataset loaded!")
-    print(f"Number of training samples: {len(dataset['train'])}")
-    print(f"Dataset columns: {dataset['train'].column_names}")
-    print(f"\nExample data:")
+    print(f"数据集加载完成！")
+    print(f"训练样本数: {len(dataset['train'])}")
+    print(f"数据集列: {dataset['train'].column_names}")
+    print(f"\n示例数据:")
     print(dataset['train'][0])
     
     return dataset['train']
@@ -69,18 +69,18 @@ def load_and_prepare_dataset():
 
 def format_chat_template(example, tokenizer):
     """
-    Format conversation template
+    格式化对话模板
     
-    Formats messages in the dataset into a conversation format understandable by the model
+    将数据集中的消息格式化为模型可以理解的对话格式
     
     Args:
-        example: A sample from the dataset
-        tokenizer: Tokenizer
+        example: 数据集中的一个样本
+        tokenizer: 分词器
         
     Returns:
-        dict: Formatted sample
+        dict: 格式化后的样本
     """
-    # Apply chat template
+    # 应用聊天模板
     example["text"] = tokenizer.apply_chat_template(
         example["messages"],
         tokenize=False,
@@ -89,83 +89,83 @@ def format_chat_template(example, tokenizer):
 
 
 # ============================================================================
-#Part 2: Model Preparation
+# 第二部分：模型准备
 # ============================================================================
 
 def load_base_model(model_name="openai/gpt-oss-20b"):
     """
-    Load base model and tokenizer
+    加载基础模型和分词器
     
-    Uses Mxfp4Config for quantization, a 4-bit floating point format optimized for OpenAI models.
+    使用 Mxfp4Config 进行量化，这是专门为 OpenAI 模型优化的 4-bit 浮点格式。
     
     Args:
-        model_name: Model name or path
+        model_name: 模型名称或路径
         
     Returns:
         tuple: (model, tokenizer)
     """
     print("\n" + "=" * 80)
-    print("Step 2: Load Base Model")
+    print("步骤 2: 加载基础模型")
     print("=" * 80)
     
-    # Load tokenizer
-    print(f"Loading tokenizer: {model_name}")
+    # 加载分词器
+    print(f"加载分词器: {model_name}")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     
-    # Set pad token (if not present)
+    # 设置 pad token（如果不存在）
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     
-    # Configure Mxfp4 quantization (optimized for OpenAI models)
-    print("Quantizing with Mxfp4Config...")
+    # 配置 Mxfp4 量化（针对 OpenAI 模型优化）
+    print("使用 Mxfp4Config 量化...")
     quantization_config = Mxfp4Config(dequantize=True)
     
-    # Configure model loading parameters
+    # 配置模型加载参数
     model_kwargs = {
-        "attn_implementation": "eager",      # Attention implementation
-        "torch_dtype": torch.bfloat16,       # Use bfloat16 for efficiency
-        "quantization_config": quantization_config,  # Mxfp4 quantization configuration
-        "use_cache": False,                   # Disable KV cache during training
-        "device_map": "auto",                 # Automatically assign device
+        "attn_implementation": "eager",      # 注意力实现方式
+        "torch_dtype": torch.bfloat16,       # 使用 bfloat16 提高效率
+        "quantization_config": quantization_config,  # Mxfp4 量化配置
+        "use_cache": False,                   # 训练时禁用 KV 缓存
+        "device_map": "auto",                 # 自动分配设备
     }
     
-    # Load model
-    print(f"Loading model: {model_name}")
-    print("This may take a few minutes...")
+    # 加载模型
+    print(f"加载模型: {model_name}")
+    print("这可能需要几分钟时间...")
     model = AutoModelForCausalLM.from_pretrained(model_name, **model_kwargs)
     
-    print(f"Model loaded!")
-    print(f"Model parameters: {model.num_parameters() / 1e9:.2f}B")
+    print(f"模型加载完成！")
+    print(f"模型参数量: {model.num_parameters() / 1e9:.2f}B")
     
     return model, tokenizer
 
 
 def prepare_model_for_lora(model, lora_rank=8, lora_alpha=16):
     """
-    Configure LoRA (Low-Rank Adaptation) for efficient fine-tuning
+    配置 LoRA（低秩适应）进行高效微调
     
-    LoRA trains only a small number of parameters, significantly reducing memory usage and training time.
-    For the MoE (Mixture of Experts) architecture of openai/gpt-oss-20b, in addition to the attention layers,
-    the MLP expert layers must be specifically targeted for training.
+    LoRA 只训练少量参数，大大减少内存使用和训练时间。
+    针对 openai/gpt-oss-20b 的 MoE（混合专家）架构，除了注意力层外，
+    还需要特别指定 MLP 专家层进行训练。
     
     Args:
-        model: Base model
-        lora_rank: LoRA rank (default 8, consistent with official tutorial)
-        lora_alpha: LoRA scaling parameter (default 16)
+        model: 基础模型
+        lora_rank: LoRA 秩（默认 8，与官方教程一致）
+        lora_alpha: LoRA 缩放参数（默认 16）
         
     Returns:
-        PeftModel: Model configured with LoRA
+        PeftModel: 配置了 LoRA 的模型
     """
     print("\n" + "=" * 80)
-    print("Step 3: Configure LoRA")
+    print("步骤 3: 配置 LoRA")
     print("=" * 80)
     
-    # LoRA configuration (consistent with OpenAI Cookbook)
+    # LoRA 配置（与 OpenAI Cookbook 一致）
     peft_config = LoraConfig(
-        r=lora_rank,                     # LoRA rank
-        lora_alpha=lora_alpha,           # LoRA scaling parameter
-        target_modules="all-linear",     # Target all linear layers
-        target_parameters=[              # Specific parameters for MoE expert layers
+        r=lora_rank,                     # LoRA 秩
+        lora_alpha=lora_alpha,           # LoRA 缩放参数
+        target_modules="all-linear",     # 目标所有线性层
+        target_parameters=[              # MoE 专家层的特定参数
             "7.mlp.experts.gate_up_proj",
             "7.mlp.experts.down_proj",
             "15.mlp.experts.gate_up_proj",
@@ -175,54 +175,54 @@ def prepare_model_for_lora(model, lora_rank=8, lora_alpha=16):
         ],
     )
     
-    print("LoRA configuration:")
+    print("LoRA 配置:")
     print(f"  - Rank: {lora_rank}")
     print(f"  - Alpha: {lora_alpha}")
-    print(f"  - Target modules: {peft_config.target_modules}")
-    print(f"  - MoE expert layer parameters: {len(peft_config.target_parameters)} ")
+    print(f"  - 目标模块: {peft_config.target_modules}")
+    print(f"  - MoE 专家层参数: {len(peft_config.target_parameters)} 个")
     
-    # Apply LoRA
+    # 应用 LoRA
     model = get_peft_model(model, peft_config)
     
-    # Print trainable parameter statistics
+    # 打印可训练参数统计
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total_params = sum(p.numel() for p in model.parameters())
     trainable_percent = 100 * trainable_params / total_params
     
-    print(f"\nTrainable parameter statistics:")
-    print(f"  - Trainable parameters: {trainable_params:,} ({trainable_percent:.2f}%)")
-    print(f"  - Total parameters: {total_params:,}")
+    print(f"\n可训练参数统计:")
+    print(f"  - 可训练参数: {trainable_params:,} ({trainable_percent:.2f}%)")
+    print(f"  - 总参数: {total_params:,}")
     
     return model
 
 
 # ============================================================================
-#Part 3: Training
+# 第三部分：训练
 # ============================================================================
 
 def train_model(model, tokenizer, dataset, output_dir="./gpt-oss-20b-multilingual-reasoner", 
                 batch_size=4, num_epochs=1, learning_rate=2e-4, max_seq_length=2048):
     """
-    Train the model using SFTTrainer
+    使用 SFTTrainer 训练模型
     
     Args:
-        model: Model configured with LoRA
-        tokenizer: Tokenizer
-        dataset: Training dataset
-        output_dir: Output directory
-        batch_size: Batch size (adjust based on GPU memory, default 4)
-        num_epochs: Number of training epochs (default 1)
-        learning_rate: Learning rate (default 2e-4)
-        max_seq_length: Maximum sequence length
+        model: 配置了 LoRA 的模型
+        tokenizer: 分词器
+        dataset: 训练数据集
+        output_dir: 输出目录
+        batch_size: 批次大小（根据 GPU 显存调整，默认 4）
+        num_epochs: 训练轮数（默认 1）
+        learning_rate: 学习率（默认 2e-4）
+        max_seq_length: 最大序列长度
         
     Returns:
-        SFTTrainer: Trained trainer object
+        SFTTrainer: 训练好的 trainer 对象
     """
     print("\n" + "=" * 80)
-    print("Step 4: Start training")
+    print("步骤 4: 开始训练")
     print("=" * 80)
     
-    # Training parameter configuration (exactly consistent with OpenAI Cookbook)
+    # 训练参数配置（与 OpenAI Cookbook 完全一致）
     training_args = SFTConfig(
         learning_rate=learning_rate,
         gradient_checkpointing=True,
@@ -235,21 +235,21 @@ def train_model(model, tokenizer, dataset, output_dir="./gpt-oss-20b-multilingua
         lr_scheduler_type="cosine_with_min_lr",
         lr_scheduler_kwargs={"min_lr_rate": 0.1},
         output_dir=output_dir,
-        report_to="trackio",  # Set to "trackio" to enable experiment tracking
-        push_to_hub=False,  # Set to True to automatically push to Hub
+        report_to="trackio",  # 设为 "trackio" 以启用实验跟踪
+        push_to_hub=False,  # 设为 True 以自动推送到 Hub
     )
     
-    print("Training configuration:")
-    print(f"  - Batch size: {batch_size}")
-    print(f"  - Gradient accumulation steps: {training_args.gradient_accumulation_steps}")
-    print(f"  - Effective batch size: {batch_size * training_args.gradient_accumulation_steps}")
-    print(f"  - Number of epochs: {num_epochs}")
-    print(f"  - Learning rate: {learning_rate}")
-    print(f"  - Learning rate scheduler: {training_args.lr_scheduler_type}")
-    print(f"  - Maximum sequence length: {max_seq_length}")
-    print(f"  - Output directory: {output_dir}")
+    print("训练配置:")
+    print(f"  - 批次大小: {batch_size}")
+    print(f"  - 梯度累积步数: {training_args.gradient_accumulation_steps}")
+    print(f"  - 有效批次大小: {batch_size * training_args.gradient_accumulation_steps}")
+    print(f"  - 训练轮数: {num_epochs}")
+    print(f"  - 学习率: {learning_rate}")
+    print(f"  - 学习率调度: {training_args.lr_scheduler_type}")
+    print(f"  - 最大序列长度: {max_seq_length}")
+    print(f"  - 输出目录: {output_dir}")
     
-    #Initialize SFTTrainer
+    # 初始化 SFTTrainer
     trainer = SFTTrainer(
         model=model,
         args=training_args,
@@ -257,96 +257,96 @@ def train_model(model, tokenizer, dataset, output_dir="./gpt-oss-20b-multilingua
         processing_class=tokenizer,
     )
     
-    #Start training
-    print("\nStarting training...")
-    print("⚠️  Training on H100 GPU takes about 18 minutes")
+    # 开始训练
+    print("\n开始训练...")
+    print("⚠️  在 H100 GPU 上训练约需 18 分钟")
     print("-" * 80)
     
     trainer.train()
     
     print("\n" + "=" * 80)
-    print("Training complete!")
+    print("训练完成！")
     print("=" * 80)
     
     return trainer
 
 
 # ============================================================================
-#  Part 4: Save and push model
+# 第四部分：保存和推送模型
 # ============================================================================
 
 def save_and_push_model(trainer, output_dir, push_to_hub=False, hub_model_id=None):
     """
-    Save the model and optionally push to Hugging Face Hub
+    保存模型并可选择推送到 Hugging Face Hub
     
     Args:
-        trainer: Trained trainer object
-        output_dir: Output directory
-        push_to_hub: Whether to push to Hub
-        hub_model_id: Model ID on Hub
+        trainer: 训练好的 trainer 对象
+        output_dir: 输出目录
+        push_to_hub: 是否推送到 Hub
+        hub_model_id: Hub 上的模型 ID
     """
     print("\n" + "=" * 80)
-    print("Step 5: Save model")
+    print("步骤 5: 保存模型")
     print("=" * 80)
     
-    #  Save model locally
-    print(f"Saving model to: {output_dir}")
+    # 保存模型到本地
+    print(f"保存模型到: {output_dir}")
     trainer.save_model(output_dir)
-    print("Model saved!")
+    print("模型保存完成！")
     
-    #  Optional: Push to Hugging Face Hub
+    # 可选：推送到 Hugging Face Hub
     if push_to_hub:
         if hub_model_id is None:
-            raise ValueError("Need to provide hub_model_id to push to Hub")
+            raise ValueError("需要提供 hub_model_id 才能推送到 Hub")
         
-        print(f"\nPushing model to Hugging Face Hub: {hub_model_id}")
+        print(f"\n推送模型到 Hugging Face Hub: {hub_model_id}")
         trainer.push_to_hub(
             dataset_name="HuggingFaceH4/Multilingual-Thinking",
         )
-        print("Model successfully pushed to Hub!")
+        print("模型已成功推送到 Hub！")
 
 
 # ============================================================================
-#  Part 5: Inference
+# 第五部分：推理
 # ============================================================================
 
 def load_trained_model(base_model_name, peft_model_path):
     """
-    Load the trained model for inference
+    加载训练好的模型进行推理
     
     Args:
-        base_model_name: Base model name
-        peft_model_path: LoRA weight path
+        base_model_name: 基础模型名称
+        peft_model_path: LoRA 权重路径
         
     Returns:
         tuple: (model, tokenizer)
     """
     print("\n" + "=" * 80)
-    print("Load trained model for inference")
+    print("加载训练好的模型进行推理")
     print("=" * 80)
     
-    # Load tokenizer
-    print(f"Loading tokenizer: {base_model_name}")
+    # 加载分词器
+    print(f"加载分词器: {base_model_name}")
     tokenizer = AutoTokenizer.from_pretrained(base_model_name)
     
-    #  Load base model
-    print(f"Loading base model: {base_model_name}")
+    # 加载基础模型
+    print(f"加载基础模型: {base_model_name}")
     model_kwargs = {
         "attn_implementation": "eager",
         "torch_dtype": "auto",
-        "use_cache": True,  #  Enable KV cache during inference
+        "use_cache": True,  # 推理时启用 KV 缓存
         "device_map": "auto",
     }
     base_model = AutoModelForCausalLM.from_pretrained(base_model_name, **model_kwargs)
     
-    #  Load and merge LoRA weights
-    print(f"Loading LoRA weights: {peft_model_path}")
+    # 加载并合并 LoRA 权重
+    print(f"加载 LoRA 权重: {peft_model_path}")
     model = PeftModel.from_pretrained(base_model, peft_model_path)
     
-    print("Merging LoRA weights with base model...")
+    print("合并 LoRA 权重与基础模型...")
     model = model.merge_and_unload()
     
-    print("Model loaded!")
+    print("模型加载完成！")
     
     return model, tokenizer
 
@@ -354,35 +354,35 @@ def load_trained_model(base_model_name, peft_model_path):
 def generate_response(model, tokenizer, reasoning_language, user_prompt, 
                      max_new_tokens=512, temperature=0.6, format_output=True):
     """
-    Generate multilingual inference response
+    生成多语言推理响应
     
     Args:
-        model: Trained model
-        tokenizer: Tokenizer
-        reasoning_language: Language for reasoning
-        user_prompt: User query
-        max_new_tokens: Maximum number of new tokens to generate
-        temperature: Sampling temperature (higher = more random)
-        format_output: Whether to format output (with explicit markers)
+        model: 训练好的模型
+        tokenizer: 分词器
+        reasoning_language: 推理使用的语言
+        user_prompt: 用户提问
+        max_new_tokens: 最大生成 token 数
+        temperature: 采样温度（越高越随机）
+        format_output: 是否格式化输出（使用明显的标记）
         
     Returns:
-        str: Generated complete response
+        str: 生成的完整响应
     """
-    #  Build messages
+    # 构建消息
     system_prompt = f"reasoning language: {reasoning_language}"
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
     ]
     
-    # Apply chat template
+    # 应用聊天模板
     input_ids = tokenizer.apply_chat_template(
         messages,
         add_generation_prompt=True,
         return_tensors="pt",
     ).to(model.device)
     
-    #  Generation config
+    # 生成配置
     gen_kwargs = {
         "max_new_tokens": max_new_tokens,
         "do_sample": True,
@@ -391,15 +391,15 @@ def generate_response(model, tokenizer, reasoning_language, user_prompt,
         "top_k": None,
     }
     
-    #  Generate response
-    print(f"\nGenerating response...")
-    print(f"Inference language: {reasoning_language}")
-    print(f"User query: {user_prompt}")
+    # 生成响应
+    print(f"\n生成响应...")
+    print(f"推理语言: {reasoning_language}")
+    print(f"用户提问: {user_prompt}")
     
     with torch.no_grad():
         output_ids = model.generate(input_ids, **gen_kwargs)
     
-    # Decode output - preserve special markers for parsing
+    # 解码输出 - 保留特殊标记以便解析
     response_with_tokens = tokenizer.batch_decode(output_ids, skip_special_tokens=False)[0]
     print("-" * 80)
     print(response_with_tokens)
@@ -408,27 +408,27 @@ def generate_response(model, tokenizer, reasoning_language, user_prompt,
 
 def run_inference_examples(model, tokenizer):
     """
-    Run multiple inference examples
+    运行多个推理示例
     
     Args:
-        model: trained model
-        tokenizer: tokenizer
+        model: 训练好的模型
+        tokenizer: 分词器
     """
     print("\n" + "=" * 80)
-    print("Inference example")
+    print("推理示例")
     print("=" * 80)
     
-    # Example 1: Spanish query, German inference
-    print("\n[Example 1: Spanish query + German inference]")
+    # 示例 1: 西班牙语提问，德语推理
+    print("\n[示例 1: 西班牙语提问 + 德语推理]")
     generate_response(
         model, tokenizer,
         reasoning_language="German",
-        user_prompt="¿Cuál es el capital de Australia?",  # What is the capital of Australia?
+        user_prompt="¿Cuál es el capital de Australia?",  # 澳大利亚的首都是什么？
         format_output=True,
     )
     
-    # Example 2: English query, Chinese inference
-    print("\n\n[Example 2: English query + Chinese inference]")
+    # 示例 2: 英语提问，中文推理
+    print("\n\n[示例 2: 英语提问 + 中文推理]")
     generate_response(
         model, tokenizer,
         reasoning_language="Chinese",
@@ -436,63 +436,63 @@ def run_inference_examples(model, tokenizer):
         format_output=True,
     )
     
-    # Example 3: Chinese query, Chinese inference
-    print("\n\n[Example 3: Chinese query + Chinese inference]")
+    # 示例 3: 中文提问，中文推理
+    print("\n\n[示例 3: 中文提问 + 中文推理]")
     generate_response(
         model, tokenizer,
         reasoning_language="Chinese",
-        user_prompt="Solve for the roots of x^2 - 2x + 1 = 0",
+        user_prompt="求解 x^2 - 2x + 1 = 0 的根",
         format_output=True,
     )
 
 
 # ============================================================================
-# Main function
+# 主函数
 # ============================================================================
 
 def main():
-    """Main function: complete training pipeline"""
+    """主函数：完整的训练流程"""
     
-    parser = argparse.ArgumentParser(description="Multilingual inference model fine-tuning")
+    parser = argparse.ArgumentParser(description="多语言推理模型微调")
     parser.add_argument(
         "--mode", 
         type=str, 
         choices=["train", "inference", "full"],
         default="full",
-        help="Run mode: train (training only), inference (inference only), full (complete pipeline)"
+        help="运行模式: train（仅训练）, inference（仅推理）, full（完整流程）"
     )
-    parser.add_argument("--model_name", type=str, default="openai/gpt-oss-20b", help="Base model name")
-    parser.add_argument("--output_dir", type=str, default="./gpt-oss-20b-multilingual-reasoner", help="Output directory")
-    parser.add_argument("--batch_size", type=int, default=4, help="Training batch size (default 4, consistent with official tutorial)")
-    parser.add_argument("--num_epochs", type=int, default=1, help="Number of training epochs (default 1, consistent with official tutorial)")
-    parser.add_argument("--learning_rate", type=float, default=2e-4, help="Learning rate (default 2e-4, consistent with official tutorial)")
-    parser.add_argument("--max_seq_length", type=int, default=2048, help="Maximum sequence length")
-    parser.add_argument("--lora_rank", type=int, default=8, help="LoRA rank (default 8, consistent with official tutorial)")
+    parser.add_argument("--model_name", type=str, default="openai/gpt-oss-20b", help="基础模型名称")
+    parser.add_argument("--output_dir", type=str, default="./gpt-oss-20b-multilingual-reasoner", help="输出目录")
+    parser.add_argument("--batch_size", type=int, default=4, help="训练批次大小（默认 4，与官方教程一致）")
+    parser.add_argument("--num_epochs", type=int, default=1, help="训练轮数（默认 1，与官方教程一致）")
+    parser.add_argument("--learning_rate", type=float, default=2e-4, help="学习率（默认 2e-4，与官方教程一致）")
+    parser.add_argument("--max_seq_length", type=int, default=2048, help="最大序列长度")
+    parser.add_argument("--lora_rank", type=int, default=8, help="LoRA 秩（默认 8，与官方教程一致）")
     parser.add_argument("--lora_alpha", type=int, default=16, help="LoRA alpha")
-    parser.add_argument("--push_to_hub", action="store_true", default=False, help="Push model to Hugging Face Hub")
-    parser.add_argument("--hub_model_id", type=str, default=None, help="Hub model ID")
+    parser.add_argument("--push_to_hub", action="store_true", default=False, help="推送模型到 Hugging Face Hub")
+    parser.add_argument("--hub_model_id", type=str, default=None, help="Hub 模型 ID")
     
     args = parser.parse_args()
     
     print("=" * 80)
-    print("Multilingual inference model fine-tuning")
+    print("多语言推理模型微调")
     print("=" * 80)
-    print(f"Mode: {args.mode}")
-    print(f"Base model: {args.model_name}")
-    print(f"Output directory: {args.output_dir}")
+    print(f"模式: {args.mode}")
+    print(f"基础模型: {args.model_name}")
+    print(f"输出目录: {args.output_dir}")
     
-    # Training mode
+    # 训练模式
     if args.mode in ["train", "full"]:
-        # 1. Load dataset
+        # 1. 加载数据集
         dataset = load_and_prepare_dataset()
         
-        # 2. Load base model (quantized with Mxfp4Config)
+        # 2. 加载基础模型（使用 Mxfp4Config 量化）
         model, tokenizer = load_base_model(args.model_name)
         
-        # 3. Configure LoRA
+        # 3. 配置 LoRA
         model = prepare_model_for_lora(model, args.lora_rank, args.lora_alpha)
         
-        # 4. Train model
+        # 4. 训练模型
         trainer = train_model(
             model, 
             tokenizer, 
@@ -504,7 +504,7 @@ def main():
             max_seq_length=args.max_seq_length,
         )
         
-        # 5. Save model
+        # 5. 保存模型
         save_and_push_model(
             trainer, 
             args.output_dir,
@@ -512,23 +512,23 @@ def main():
             hub_model_id=args.hub_model_id,
         )
         
-        print("\nTraining complete! It is recommended to restart the kernel to free GPU memory before inference.")
+        print("\n训练完成！建议重启内核以释放 GPU 显存后再进行推理。")
     
-    # Inference mode
+    # 推理模式
     if args.mode == "inference":
         if not os.path.exists(args.output_dir):
-            print(f"Error: Model directory not found {args.output_dir}")
-            print("Please run training first or specify the correct model path")
+            print(f"错误: 未找到模型目录 {args.output_dir}")
+            print("请先运行训练或指定正确的模型路径")
             return
         
-        # Load trained model
+        # 加载训练好的模型
         model, tokenizer = load_trained_model(args.model_name, args.output_dir)
         
-        # Run inference example
+        # 运行推理示例
         run_inference_examples(model, tokenizer)
     
     print("\n" + "=" * 80)
-    print("Done!")
+    print("完成！")
     print("=" * 80)
 
 

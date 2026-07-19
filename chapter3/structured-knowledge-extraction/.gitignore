@@ -1,5 +1,5 @@
-# Auto-generated artifacts when running demo.py (discovered schemas, extraction caches, clustering models) — do not commit.
-# Note: data/cases.jsonl is a built-in small-sample synthetic dataset; keep it committed.
+# 运行 demo.py 时自动生成的产物（发现的 schema、抽取缓存、聚类模型），不应入库。
+# 注意：data/cases.jsonl 是自带的小样本合成数据集，需保留入库。
 data/schema.json
 data/extracted.jsonl
 data/archetypes.json

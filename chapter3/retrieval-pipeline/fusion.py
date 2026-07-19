@@ -5,7 +5,7 @@ the step that merges the separately-ranked dense and sparse candidate lists into
 a single, unified candidate pool before neural reranking.
 
 Two production-grade fusion strategies are provided, matching the two approaches
-discussed in the book (Chapter 3 "Hybrid Retrieval Pipeline"):
+discussed in the book (第3章「混合检索流水线」):
 
 1. Reciprocal Rank Fusion (RRF)
    score(d) = Σ_r  1 / (k + rank_r(d))

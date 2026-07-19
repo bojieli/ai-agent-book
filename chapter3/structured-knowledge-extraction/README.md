@@ -1,110 +1,118 @@
-# Experiment 3-13: Extracting Tacit Knowledge from Structured Data – A Case Study on Judicial Precedent Analysis
+# 实验 3-13：从结构化数据中提取隐性知识——以司法判例分析为例
 
-Accompanying Chapter 3 of *Understanding AI Agents*. Demonstrates how to make an Agent treat a knowledge base not as a "static warehouse for retrieval only," but rather to **first read and understand the data, inductively derive structured decision logic from the data itself, and then answer questions based on that logic**.
+配套《深入理解 AI Agent》第 3 章。演示如何让 Agent 不把知识库当成"只能检索的静态仓库"，
+而是**先把数据读懂、从数据本身归纳出结构化的决策逻辑，再基于这套逻辑回答问题**。
 
-Using precedents for three types of crimes (theft / intentional injury / fraud) as examples, the complete four-stage pipeline is demonstrated:
+以三类罪名（盗窃罪 / 故意伤害罪 / 诈骗罪）的判例为例，完整走通四段流水线：
 
 ```
-Precedent Text ──① Bottom-up Factor Discovery──▶ Modular Schema (Core + Per-Crime Extensions)
-                                                        │
-                                            ② Structured Extraction (extract factors using discovered schema)
-                                                        │
-                                            ③ Intra-Crime Clustering ──▶ Case Archetypes + Hierarchical Factor Importance
-                                                        │
-        New Case ──④ Conversational Agent (match nearest archetype, ask follow-ups by importance, give advice) ◀──┘
+判例文本 ──①自下而上因子发现──▶ 模块化 schema（核心+各罪名扩展）
+                                        │
+                            ②结构化抽取（用发现的 schema 抽因子）
+                                        │
+                            ③各罪名内聚类 ──▶ 案件原型 + 层次因子重要性
+                                        │
+        新案情 ──④对话 Agent（匹配最近原型、按重要性追问、给出建议）◀──┘
 ```
 
-Contrary to the "predefined rigid schema + regression black box" approach, the two key innovations of this experiment are:
-**Factors are not predefined; they are freely induced by the LLM from the data**; **Sentencing experience is not modeled by regression fitting sentence length, but by clustering into interpretable case archetypes**.
+与"预定义僵化 schema + 回归黑箱"的做法相反，本实验的两个关键创新是：
+**因子不预设、由 LLM 从数据里自由归纳**；**判决经验不靠回归拟合刑期、而靠聚类出可解释的案件原型**。
 
-## Four-Stage Pipeline
+## 四段流水线
 
-**① Bottom-up Factor Discovery (`discovery.py`)**
-No fields are predefined. Precedent texts are fed to the LLM in batches, allowing it to **freely list** all factors that might influence the judgment in each batch of cases; then, a single LLM call is used to **merge, deduplicate, and normalize** the raw factors discovered from each batch into a modular schema:
-`core` (general factors applicable to all crimes: voluntary surrender, compensation, guilty plea, prior record/recidivism…) + `extensions`
-(crime-specific extension factors: theft → amount stolen/home invasion/gang, intentional injury → injury level/weapon use/premeditation, fraud → amount/number of victims).
-Outputs `data/schema.json` (with caching).
+**① 自下而上因子发现（`discovery.py`）**
+不预先定义任何字段。把判例文本分批喂给 LLM，让它**自由列出**每一批案例中所有可能影响判决的
+因素；再用一次 LLM 调用把各批发现的原始因子**归并、去重、规范化**成一个模块化 schema：
+`core`（适用所有罪名的通用因子：自首、赔偿、认罪认罚、前科累犯……）+ `extensions`
+（各罪名特有扩展因子：盗窃→涉案金额/入户/团伙，故意伤害→伤害等级/持械/预谋，诈骗→金额/受害人数）。
+产出 `data/schema.json`（带缓存）。
 
-**② Structured Extraction (`extractor.py`)**
-Using the discovered schema, factors are extracted from each precedent as "core + crime-specific extensions" (LLM structured output,
-`response_format=json_object`). Factors not mentioned in the text return `null`. Extraction results are cached to
-`data/extracted.jsonl`; re-running after a one-time extraction is nearly free.
+**② 结构化抽取（`extractor.py`）**
+用发现出来的 schema，从每条判例抽取「核心 + 该罪名扩展」因子（LLM 结构化输出，
+`response_format=json_object`）。文本未提及的因子返回 `null`。抽取结果缓存到
+`data/extracted.jsonl`，一次性抽取后重跑几乎免费。
 
-**③ Clustering into Case Archetypes + Hierarchical Factor Importance (`archetypes.py`)**
-Factors are translated into numerical vectors: crime/categorical factors (e.g., injury level) use one-hot flags (not 1/2/3,
-to avoid implying ordinal relationships); amounts / counts take `ln` to compress scale; binary circumstances take 0/1. **Within each crime type**, KMeans
-clustering is applied (k automatically selected by silhouette score) to yield several "case archetypes"—for example, intentional injury will automatically cluster into
-"minor injury," "light injury," "severe injury with weapon and premeditation," and other typical patterns. Two levels of importance are then calculated:
-- **Global Factor Importance**: The discriminative power of each factor across all archetypes (between-cluster variance ratio) → global ranking;
-- **Archetype-Defining Factors**: The factors most prominent in each archetype relative to the global average + the typical sentence distribution for that archetype (median / range).
+**③ 聚类成案件原型 + 层次因子重要性（`archetypes.py`）**
+把因子翻译成数值向量：罪名 / 分类因子（如伤害等级）用 one-hot 开关位（不用 1/2/3，
+避免暗示大小关系）；金额 / 人数取 `ln` 压缩量纲；是非情节取 0/1。**在每个罪名内部**用
+KMeans 聚类（k 由轮廓系数自动挑选），得到若干「案件原型」——例如故意伤害罪会自动聚出
+"轻微伤"、"轻伤"、"持械预谋致重伤" 等典型模式。再算两级重要性：
+- **全局因子重要性**：每个因子在所有原型之间的区分度（簇间方差占比）→ 全局排序；
+- **原型内定义性因子**：每个原型相对全局最突出的因子 + 该原型典型刑期分布（中位 / 区间）。
 
-Outputs a readable, self-consistent `data/archetypes.json` (including normalization parameters and cluster centers).
+产出可读、自洽的 `data/archetypes.json`（含标准化参数与簇心）。
 
-**④ Conversational Sentencing Advice Agent (`advisor_agent.py`)**
-Uses "case archetypes + hierarchical factor importance" as decision logic: extracts known factors from the user's colloquial description → cross-references **global factor importance** to ask about still-missing key factors → **matches the case to the nearest case archetype** (first narrows candidates by crime type, then measures distance only on known dimensions) → has the LLM provide an interpretable recommendation based on the archetype's statistical data (typical sentence range, defining factors), supported by precedent and accompanied by a legal disclaimer. All sentence numbers come from archetype statistics; the LLM is only responsible for explaining them clearly.
+**④ 对话式量刑建议 Agent（`advisor_agent.py`）**
+把「案件原型 + 层次因子重要性」当决策逻辑：从用户口语描述抽取已知因子 → 对照**全局因子
+重要性**追问仍缺失的关键因子 → 把案件**匹配到最近的案件原型**（先按罪名圈定候选，再只在
+已知维度上比距离）→ 让 LLM 基于该原型的统计数据（典型刑期区间、定义性因子）给出一段
+有判例支持、可解释的建议（附法律免责声明）。所有刑期数字均来自原型统计，LLM 只负责讲清楚。
 
-## Running
+## 运行
 
 ```bash
 pip install -r requirements.txt
-cp env.example .env        # Fill in OPENAI_API_KEY (default model gpt-5.6-luna)
-python generate_data.py    # Optional: regenerate synthetic precedent dataset (data/cases.jsonl included)
-python demo.py             # Run full pipeline: factor discovery → extraction → clustering → conversational advice
+cp env.example .env        # 填入 OPENAI_API_KEY（默认模型 gpt-5.6-luna）
+python generate_data.py    # 可选：重新生成合成判例数据集（已自带 data/cases.jsonl）
+python demo.py             # 跑通 因子发现 → 抽取 → 聚类 → 对话建议 全流程
 ```
 
-The first run will call the LLM for factor discovery (approx. 7 calls) and per-case extraction (approx. 66 calls), writing results to
-`data/schema.json` and `data/extracted.jsonl` respectively; subsequent runs hit the cache directly and are nearly free.
+首次运行会调用 LLM 做因子发现（约 7 次）与逐条抽取（约 66 次），结果分别写入
+`data/schema.json`、`data/extracted.jsonl`；再次运行直接命中缓存，几乎免费。
 
-## Sample Real Output (Excerpt)
+## 真实运行输出（节选）
 
 ```
-Stage 1 Bottom-up discovered schema:
-  Core general factors: prior_record / self_surrender / compensation /
-               guilty_plea / victim_reconciliation ...
-  Extension·Theft:  amount_stolen / gang_involvement / use_of_weapon
-  Extension·Intentional Injury: injury_level[minor injury/grade 2 light injury/grade 2 severe injury] / premeditation ...
-  Extension·Fraud:  amount_defrauded / victim_count / group_crime
+阶段 1 自下而上发现的 schema：
+  核心通用因子: prior_record 前科 / self_surrender 自首 / compensation 赔偿 /
+               guilty_plea 认罪认罚 / victim_reconciliation 谅解 ...
+  扩展·盗窃罪:  amount_stolen 盗窃金额 / gang_involvement 团伙 / use_of_weapon 持械
+  扩展·故意伤害罪: injury_level 伤害等级[轻微伤/轻伤二级/重伤二级] / premeditation 预谋 ...
+  扩展·诈骗罪:  amount_defrauded 诈骗金额 / victim_count 受害人数 / group_crime 团伙
 
-Stage 3 Intra-crime clustering (k auto-selected by silhouette score) → 12 case archetypes total; global factor importance ranking:
-  1. Crime type  2. Injury level=severe  3. Amount defrauded  4. Amount stolen  5. Gang crime  6. Premeditation ...
-  ▸ Archetype#0 [Intentional Injury] median 2 months: injury level=minor injury(z=+2.5)
-  ▸ Archetype#1 [Intentional Injury] median 42 months: injury level=severe injury grade 2(z=+3.9), premeditation(z=+1.8) —— "Severe injury with weapon and premeditation" type
-  ▸ Archetype#5 [Theft]     median 51 months: high amount stolen, prior record/recidivism 100% ...
+阶段 3 各罪名内聚类（k 由轮廓系数自动选）→ 共 12 个案件原型；全局因子重要性排序：
+  1. 罪名  2. 伤害等级=重伤  3. 诈骗金额  4. 盗窃金额  5. 团伙作案  6. 是否预谋 ...
+  ▸ 原型#0 [故意伤害罪] 中位 2 月：伤害等级=轻微伤(z=+2.5)
+  ▸ 原型#1 [故意伤害罪] 中位 42 月：伤害等级=重伤二级(z=+3.9)、预谋(z=+1.8) —— "持械预谋重伤"型
+  ▸ 原型#5 [盗窃罪]     中位 51 月：盗窃金额高、前科/累犯 100% ...
 
-Stage 4 Conversation: identified theft case missing amount → asked about amount/guilty plea/reconciliation by importance → after completion, matched to Archetype#6
-         (typical sentence median 40 months, range 24~50 months), and cited the archetype's key factors for advice.
+阶段 4 对话：识别到盗窃案缺金额 → 按重要性追问金额/认罪/谅解 → 补全后匹配到 原型#6
+         （典型刑期中位 40 月、区间 24~50 月），并引用该原型的关键因子给出建议。
 ```
 
-## Data Description
+## 数据说明
 
-`data/cases.jsonl` is a **bundled small-sample synthetic dataset** (66 cases, covering 3 crime types), generated by `generate_data.py`
-using known sentencing formulas with added noise: each entry contains natural language `fact`, structured ground truth `gold`, and sentence length `label_months`.
-The key point is that **factors are "written into" the case text during generation, and then "read back" from the text during the discovery phase**—factor discovery relies entirely
-on the text, not on the field list used during generation, so the learned patterns come from the data itself.
+`data/cases.jsonl` 是**自带的小样本合成数据**（66 条，覆盖 3 类罪名），由 `generate_data.py`
+用已知量刑公式加噪声生成：每条含自然语言 `fact`、结构化真值 `gold`、刑期 `label_months`。
+关键点是**因子在生成时被"写进"案情文本，发现阶段再从文本里把它们"读"回来**——因子发现完全
+不依赖生成时的字段列表，因此学到的模式来自数据本身。
 
-**The real target dataset is CAIL2018** (Chinese criminal judgments, millions of entries). Synthetic small samples are used only because the full dataset is too large to conveniently distribute with the repository; to use real data, simply replace `generate_data.py` with code that reads CAIL's `data_*.json`
-(each line containing `fact`, `meta.accusation`, `meta.term_of_imprisonment`), producing a `cases.jsonl` of the same structure. The discovery / extraction / clustering / conversation code requires no modification.
+**真实目标数据集是 CAIL2018**（中文刑事判决，数百万条）。因体量太大不便随仓库分发才用合成
+小样本；换成真实数据只需把 `generate_data.py` 换成读取 CAIL 的 `data_*.json`
+（每行含 `fact`、`meta.accusation`、`meta.term_of_imprisonment`），产出同结构的
+`cases.jsonl` 即可，发现 / 抽取 / 聚类 / 对话四段代码无需改动。
 
-## Files
+## 文件
 
-| File | Purpose |
-|------|---------|
-| `generate_data.py` | Generate synthetic multi-crime small-sample precedent dataset |
-| `discovery.py` | Stage ①: Bottom-up factor discovery → modular schema |
-| `extractor.py` | Stage ②: Structured extraction using discovered schema (with caching) |
-| `archetypes.py` | Stage ③: Intra-crime clustering into case archetypes + hierarchical factor importance |
-| `advisor_agent.py` | Stage ④: Conversational sentencing advice Agent (match nearest archetype) |
-| `demo.py` | Full pipeline demonstration entry point |
-| `config.py` | OpenAI client and model configuration |
+| 文件 | 作用 |
+|------|------|
+| `generate_data.py` | 合成多罪名小样本判例数据集 |
+| `discovery.py` | 阶段 ①：自下而上因子发现 → 模块化 schema |
+| `extractor.py` | 阶段 ②：用发现的 schema 做结构化抽取（带缓存） |
+| `archetypes.py` | 阶段 ③：各罪名内聚类成案件原型 + 层次因子重要性 |
+| `advisor_agent.py` | 阶段 ④：对话式量刑建议 Agent（匹配最近原型） |
+| `demo.py` | 全流程演示入口 |
+| `config.py` | OpenAI 客户端与模型配置 |
 
-## Limitations and Disclaimer
+## 局限与免责声明
 
-- This project is **for educational purposes only**, demonstrating the technical paradigm of "extracting tacit knowledge from structured data."
-- The data is synthetic, the factor set is simplified, and clustering cannot capture the full complexity and non-linearity of real judicial sentencing.
-- **No output from this project constitutes legal advice.** Real case sentencing is influenced by legal provisions, judicial interpretations,
-  regional policies, and a large number of specific circumstances. Please consult a professional lawyer and do not make any legal decisions based on this.
+- 本项目**仅用于教学**，演示"从结构化数据中提取隐性知识"这一技术范式。
+- 数据为合成、因子集经简化，聚类也无法刻画真实司法量刑的复杂性与非线性。
+- **本项目的任何输出都不构成法律意见。** 真实案件量刑受法律条文、司法解释、
+  地域政策与大量具体情节影响，请务必咨询专业律师，切勿据此做任何法律决策。
 
-## OpenRouter Universal Fallback
+
+## OpenRouter 通用回退 / Universal OpenRouter fallback
 
 This experiment now supports a **universal OpenRouter fallback** for its chat LLM.
 

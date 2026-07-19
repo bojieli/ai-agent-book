@@ -10,11 +10,11 @@
 
 ### 👤 You
 
-In the agentic-rag project, add a script to chunk and index all laws in @https://github.com/ZixinxinWang/Legal-Eagle-InternLM/tree/main/Retrieval-Augmented%20Generation/laws 
+In agentic-rag project, add a script to chunk and index all laws in @https://github.com/ZixinxinWang/Legal-Eagle-InternLM/tree/main/Retrieval-Augmented%20Generation/laws 
 
-In the contextual-retrieval project, also add a script to chunk and index all laws in it, using contextual retrieval.
+In contextual-retrieval project, also add the script to chunk and index all laws in it, using the contextual retrieval.
 
-In both projects, do NOT chunk each paragraph as a chunk. You should set a character soft limit (e.g., 4096 characters) and a hard limit (e.g., 8192 characters) and be aware of paragraph boundaries when chunking (accumulate until exceeding the soft limit, but cut off a paragraph if the hard limit is reached).
+In both projects, do NOT chunk each paragraph as a chunk. You should set a character soft limit (e.g. 4096 characters) and hard limit (e.g. 8192 chars) and aware paragraph boundary when chunking (accumulate until exceeding soft limit, but cut off paragraph if reach hard limit).
 
 ---
 
@@ -32,7 +32,7 @@ Now I'll create scripts for both projects to download, chunk, and index the lega
 
 ### 👤 You
 
-Do NOT use a crawler. The laws folder is already present locally. You should first clean up existing indexes before creating the new index.
+Do NOT use crawler. The laws folder is already present locally. You should first clean up existing indexes before creating the new index.
 
 agentic-rag % ls laws
 1-宪法	2-宪法相关法  3-民法典	3-民法商法  4-行政法  5-经济法	6-社会法  7-刑法  8-诉讼与非诉讼程序法
@@ -77,7 +77,7 @@ I've created two comprehensive scripts for chunking and indexing the local legal
 
 ### 1. **Agentic-RAG Project** (`index_local_laws.py`)
 - Standard chunking with smart paragraph boundaries
-- Soft limit: 4096 characters, Hard limit: 8192 characters  
+- Soft limit: 4096 chars, Hard limit: 8192 chars  
 - Cleans existing indexes before processing
 - Category-based organization
 - Progress tracking and verification tests
@@ -92,7 +92,7 @@ I've created two comprehensive scripts for chunking and indexing the local legal
 ## Key Features
 
 Both scripts implement:
-- **Smart Chunking Strategy**: Accumulates paragraphs until the soft limit is reached, respects boundaries up to the hard limit
+- **Smart Chunking Strategy**: Accumulates paragraphs until soft limit, respects boundaries up to hard limit
 - **Automatic Cleanup**: Clears existing indexes before processing
 - **Category Support**: Process all or specific legal categories
 - **Progress Monitoring**: Real-time updates with detailed statistics
@@ -124,7 +124,7 @@ Created comprehensive README files for both scripts:
 - `agentic-rag/README_LEGAL_INDEXING.md`
 - `contextual-retrieval/README_LEGAL_INDEXING.md`
 
-The contextual-retrieval version includes a detailed explanation of the context generation process, cost estimation, and performance optimization strategies.
+The contextual-retrieval version includes detailed explanation of the context generation process, cost estimation, and performance optimization strategies.
 
 The scripts are ready to use with the existing 288 legal documents in the `laws` directory, properly organized by category (宪法, 民法典, 刑法, etc.).
 

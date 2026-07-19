@@ -22,7 +22,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ sessionId, toolCardData }) => {
   const [imgUrl, setImgUrl] = useState<string | undefined>();
   const isLinkListCard = toolCardData?.card_type === 'tool_call_card_link_list';
 
-  //  Used to cache the last request parameters to avoid repeated calls
+  // 用于缓存上次的请求参数，避免重复调用
   const lastRequestRef = useRef<{
     sessionId: string;
     artifactType: string;
@@ -30,7 +30,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ sessionId, toolCardData }) => {
   } | null>(null);
 
   useEffect(() => {
-    if (!toolCardData) return; //  If there is no toolCardData, exit directly
+    if (!toolCardData) return; // 如果没有 toolCardData，直接退出
 
     const fetchWorkspaceArtifacts = async () => {
       try {
@@ -42,7 +42,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ sessionId, toolCardData }) => {
           return;
         }
 
-        //  Check if it is the same as the last request parameters
+        // 检查是否与上次请求参数相同
         const currentRequest = {
           sessionId,
           artifactType,
@@ -53,11 +53,11 @@ const Workspace: React.FC<WorkspaceProps> = ({ sessionId, toolCardData }) => {
           lastRequestRef.current.sessionId === currentRequest.sessionId &&
           lastRequestRef.current.artifactType === currentRequest.artifactType &&
           lastRequestRef.current.artifactId === currentRequest.artifactId) {
-          //  Parameters are the same, skip duplicate request
+          // 参数相同，跳过重复请求
           return;
         }
 
-        //  Update cached request parameters
+        // 更新缓存的请求参数
         lastRequestRef.current = currentRequest;
 
         const data = await getWorkspaceArtifacts(sessionId, {

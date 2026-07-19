@@ -332,7 +332,7 @@ The stochastic environment makes the learning problem more challenging and reali
 
 ### 👤 You
 
-Summarize the content of this experiment and add it to the corresponding position in book/chapter1.md (the section comparing traditional RL and LLM-based approaches), and point out the key insights from the experimental description. This is a book, so the description should be as academic and professional as possible.
+把这个实验的内容，总结并补充到 book/chapter1.md 的对应位置（对比传统 RL 和 LLM-based 部分），并指出实验说明的关键 insight。这是一本书，所以描述要尽量学术、专业。
 
 ---
 
@@ -344,7 +344,13 @@ I'll help you add a professional, academic summary of the experiment to the book
 
 ### 🤖 Cursor Assistant
 
-I'll add a new section to the book that summarizes the experiment results and highlights the key insights about comparing traditional RL and LLM-based approaches. Let me insert it after the paradigm shift discussion.I've successfully added a comprehensive academic section to `book/chapter1.md` that summarizes the experimental findings and highlights the key insights. The new section is titled **"Experimental Validation: A Comparative Study of Traditional RL and LLM Agents"** and includes:
+I'll add a new section to the book that summarizes the experiment results and highlights the key insights about comparing traditional RL and LLM-based approaches. Let me insert it after the paradigm shift discussion.
+
+---
+
+### 🤖 Cursor Assistant
+
+I've successfully added a comprehensive academic section to `book/chapter1.md` that summarizes the experimental findings and highlights the key insights. The new section is titled **"实验验证：传统RL与LLM Agent的对比研究"** and includes:
 
 ## Key Components Added:
 
@@ -372,7 +378,7 @@ I'll add a new section to the book that summarizes the experiment results and hi
 
 ## Critical Insights Highlighted:
 
-The experiment validates **Shunyu Yao's "Second Half" thesis**: the priority should be **Prior Knowledge > Environment > Algorithm**, not the reverse as traditionally believed in RL research.
+The experiment validates **姚顺雨's "Second Half" thesis**: the priority should be **Prior Knowledge > Environment > Algorithm**, not the reverse as traditionally believed in RL research.
 
 The most profound finding: **Traditional RL treats randomness as noise to overcome through statistical convergence, while LLM agents understand it as an inherent environmental property and adjust strategies accordingly.**
 

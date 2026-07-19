@@ -1,19 +1,19 @@
 """
-In-process Async Message Bus
-============================
+进程内异步消息总线（Message Bus）
+================================
 
-Mimics the semantics of Redis Pub/Sub but runs entirely within a single-process asyncio event loop,
-without needing to deploy a real Redis. It serves as the communication backbone for "central coordination" in Experiment 10-6:
+模仿 Redis Pub/Sub 的语义，但完全跑在单进程的 asyncio 事件循环里，
+无需真正部署 Redis。它承担实验 10-6 里"中心协调"的通信底座：
 
-- Each message is wrapped in an ``Envelope`` with sender_id / target / type / payload;
-- Agents get a subscription handle via ``subscribe()`` and receive messages by type;
-- Agents send messages to a specific target or broadcast to everyone via ``publish()``;
-- The bus itself does no business logic, only "reliably delivers envelopes to subscribers."
+- 每条消息都封装在 ``Envelope`` 信封里，带上 sender_id / target / type / payload；
+- Agent 通过 ``subscribe()`` 拿到一个订阅句柄，按消息类型接收；
+- Agent 通过 ``publish()`` 把消息投递给指定目标或广播给所有人；
+- 总线本身不做任何业务判断，只负责"可靠地把信封送达订阅者"。
 
-Design highlights:
-- Uses ``asyncio.Queue`` as each subscriber's inbox, naturally thread/coroutine-safe;
-- When ``target`` is ``BROADCAST``, delivers to all subscribers of that type (except the sender);
-- Prints event logs with timestamps, making the publish/subscribe message flow visible in demos.
+设计要点：
+- 使用 ``asyncio.Queue`` 做每个订阅者的收件箱，天然线程/协程安全；
+- ``target`` 为 ``BROADCAST`` 时投递给所有订阅了该类型的人（发送者除外）；
+- 打印带时间戳的事件日志，方便在演示里"看见"发布/订阅的消息流。
 """
 
 from __future__ import annotations
@@ -25,34 +25,34 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-#  Broadcast target constant: send to all subscribers
+# 广播目标常量：发给所有订阅者
 BROADCAST = "*"
 
-#  Global monotonically increasing message sequence number for tracking order in logs
+# 全局单调递增的消息序号，方便在日志里追踪顺序
 _seq_counter = itertools.count(1)
 
-#  Demo start time, used to print relative timestamps (more readable)
+# 演示启动时间，用于打印相对时间戳（更易读）
 _START_TIME = time.monotonic()
 
 
 def _now() -> float:
-    """Returns seconds since demo start (relative timestamp)."""
+    """返回自演示启动以来的秒数（相对时间戳）。"""
     return time.monotonic() - _START_TIME
 
 
 @dataclass
 class Envelope:
-    """Message envelope: the smallest unit flowing in the bus."""
+    """消息信封：总线里流动的最小单元。"""
 
-    sender_id: str            #  Sender ID
-    target: str               #  Target Agent ID, or BROADCAST for broadcast
-    type: str                 #  Message type: task_assigned / status_update / result / terminate / ack ...
-    payload: Dict[str, Any] = field(default_factory=dict)  #  JSON payload
-    seq: int = field(default_factory=lambda: next(_seq_counter))  #  Global sequence number
-    ts: float = field(default_factory=_now)                       #  Relative timestamp
+    sender_id: str            # 发送者 ID
+    target: str               # 目标 Agent ID，或 BROADCAST 表示广播
+    type: str                 # 消息类型：task_assigned / status_update / result / terminate / ack ...
+    payload: Dict[str, Any] = field(default_factory=dict)  # JSON 负载
+    seq: int = field(default_factory=lambda: next(_seq_counter))  # 全局序号
+    ts: float = field(default_factory=_now)                       # 相对时间戳
 
     def short(self) -> str:
-        """Compact single-line representation for logging."""
+        """给日志用的紧凑单行表示。"""
         tgt = "ALL" if self.target == BROADCAST else self.target
         body = json.dumps(self.payload, ensure_ascii=False)
         if len(body) > 80:
@@ -64,11 +64,11 @@ class Envelope:
 
 
 class Subscription:
-    """Subscription handle: internally an inbox queue + a set of interested message types."""
+    """订阅句柄：内部就是一个收件箱队列 + 关心的消息类型集合。"""
 
     def __init__(self, owner_id: str, types: Optional[List[str]]):
         self.owner_id = owner_id
-        # types=None means subscribe to all types
+        # types 为 None 表示订阅所有类型
         self.types = set(types) if types else None
         self.inbox: "asyncio.Queue[Envelope]" = asyncio.Queue()
 
@@ -79,7 +79,7 @@ class Subscription:
         return await self.inbox.get()
 
     async def get_nowait_or_wait(self, timeout: float) -> Optional[Envelope]:
-        """Fetch a message with timeout; returns None on timeout (useful for child agents polling for termination signal in a loop)."""
+        """带超时地取一条消息；超时返回 None（便于子 Agent 在循环里轮询终止信号）。"""
         try:
             return await asyncio.wait_for(self.inbox.get(), timeout=timeout)
         except asyncio.TimeoutError:
@@ -87,33 +87,33 @@ class Subscription:
 
 
 class MessageBus:
-    """Async message bus: register subscribers, deliver envelopes, print message flow logs."""
+    """异步消息总线：注册订阅者、投递信封、打印消息流日志。"""
 
     def __init__(self, verbose: bool = True):
-        # owner_id -> list of subscriptions for that owner
+        # owner_id -> 该 owner 的订阅列表
         self._subs: Dict[str, List[Subscription]] = {}
         self.verbose = verbose
-        #  Record all envelopes that have flowed through the bus for post-hoc statistics/assertions
+        # 记录全部流过总线的信封，便于事后统计/断言
         self.history: List[Envelope] = []
 
     def subscribe(self, owner_id: str, types: Optional[List[str]] = None) -> Subscription:
-        """Register a subscriber and return a subscription handle. types=None means receive all types."""
+        """注册一个订阅者，返回订阅句柄。types=None 表示接收所有类型。"""
         sub = Subscription(owner_id, types)
         self._subs.setdefault(owner_id, []).append(sub)
         return sub
 
     async def publish(self, env: Envelope) -> None:
-        """Deliver an envelope to the bus: broadcast or point-to-point."""
+        """把信封投递到总线：广播或点对点。"""
         self.history.append(env)
         if self.verbose:
             print("  BUS " + env.short())
 
         delivered = 0
         for owner_id, sub_list in self._subs.items():
-            #  Point-to-point: deliver only to the specified target
+            # 点对点：只投递给指定目标
             if env.target != BROADCAST and owner_id != env.target:
                 continue
-            #  Do not deliver back to the sender during broadcast
+            # 广播时不回投给发送者自己
             if env.target == BROADCAST and owner_id == env.sender_id:
                 continue
             for sub in sub_list:
@@ -121,10 +121,10 @@ class MessageBus:
                     await sub.inbox.put(env)
                     delivered += 1
 
-        #  Yield the event loop to ensure messages are picked up by the peer as soon as possible (closer to real push timing)
+        # 让出事件循环，保证消息尽快被对端取走（更接近真实推送时序）
         await asyncio.sleep(0)
 
-    # —— Convenience construction and publish ——
+    # —— 便捷构造并发布 ——
     async def send(
         self,
         sender_id: str,

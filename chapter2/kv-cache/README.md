@@ -103,7 +103,9 @@ pip install -r requirements.txt
 export MOONSHOT_API_KEY="your-api-key-here"
 ```
 
-> **Generic Fallback (OpenRouter)**: When neither `MOONSHOT_API_KEY` nor `KIMI_API_KEY` is set, as long as> If `OPENROUTER_API_KEY` is configured, the experiment will automatically switch to OpenRouter (`kimi-*` will be mapped to `moonshotai/kimi-k2`). Behavior remains completely unchanged when a Moonshot key is set.
+> **通用回退（OpenRouter）**：未设置 `MOONSHOT_API_KEY` / `KIMI_API_KEY` 时，只要
+> 配置了 `OPENROUTER_API_KEY`，实验会自动改走 OpenRouter（`kimi-*` 会映射为
+> `moonshotai/kimi-k2`）。设置了 Moonshot key 时行为完全不变。
 
 ## 📖 Usage
 
@@ -135,16 +137,16 @@ python main.py
 
 The CLI ships Chinese `--help`; run `python main.py --help` for the full list. Key flags:
 
-| Flag | Description |
-|------|-------------|
-| `--mode MODE` | Run a single strategy (correct / dynamic_system / shuffled_tools / dynamic_profile / sliding_window / text_format) |
-| `--compare` | Run all strategies sequentially and print a cross-comparison table (requires API Key) |
-| `--report` | **Offline**: Generate a comparison table from saved `result_*.json` / `comparison_*.json` files, **no API Key needed** |
-| `--input ...` | Used with `--report` to specify result files / wildcards / directories (defaults to scanning the current directory) |
-| `--model MODEL` | Select the model (default `kimi-k2.6`; siblings `kimi-k2.5` / `kimi-k3` also work, all report `cached_tokens`) |
-| `--output PATH` | Specify the output path for the result JSON (defaults to auto-naming based on mode + timestamp) |
-| `--cache-price-ratio R` | Billing ratio of cached tokens to normal tokens for cost estimation (default `0.1`, i.e., 90% discount), for illustration only |
-| `--task`, `--root-dir` | Custom task / file tool root directory |
+| Flag | 说明 |
+|------|------|
+| `--mode MODE` | 运行单个策略（correct / dynamic_system / shuffled_tools / dynamic_profile / sliding_window / text_format） |
+| `--compare` | 依次运行全部策略并打印横向对比表（需要 API Key） |
+| `--report` | **离线**：从已保存的 `result_*.json` / `comparison_*.json` 生成对比表，**无需 API Key** |
+| `--input ...` | 配合 `--report` 指定结果文件 / 通配符 / 目录（默认扫描当前目录） |
+| `--model MODEL` | 选择模型（默认 `kimi-k2.6`；同族 `kimi-k2.5` / `kimi-k3` 亦可，均会上报 `cached_tokens`） |
+| `--output PATH` | 指定结果 JSON 的输出路径（默认按模式 + 时间戳自动命名） |
+| `--cache-price-ratio R` | 成本估算中缓存 token 相对正常 token 的计费比例（默认 `0.1`，即一折），仅作示意 |
+| `--task`, `--root-dir` | 自定义任务 / 文件工具根目录 |
 
 ```bash
 # Run specific mode directly (bypasses menu)
@@ -257,7 +259,7 @@ When comparing implementations, you should observe:
       Iteration 5: 0.192s (with cache)
   • TTFT Analysis:
       First iteration: 0.823s
-```      Last iteration: 0.192s
+      Last iteration: 0.192s
       Average (after first): 0.203s
       Improvement: 76.7%
 

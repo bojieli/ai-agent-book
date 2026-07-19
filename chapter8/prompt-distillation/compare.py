@@ -1,13 +1,19 @@
 """
-Prompt Distillation "Before vs After" quantitative comparison script.
+Prompt 蒸馏「蒸馏前 vs 蒸馏后」量化对比脚本。
 
-This script addresses the core question of Experiments 7-8: after distilling a "long prompt + thinking teacher" into a "no prompt + direct answer student", how much is saved and how much quality is lost? It operates **without loading any LLM or connecting to the internet**, using real data to compute a before/after comparison table:
+本脚本回答实验 7-8 的核心问题：把「长提示 + 思考型教师」蒸馏成「无提示 + 直接
+回答的学生」之后，到底省了多少、质量掉了多少？它在 **不加载任何大模型、不联网** 的
+前提下，用真实数据算出一张 before/after 对比表：
 
-  1. Input cost (tokens): each teacher call requires the full language classification prompt (about a thousand tokens), while the student only needs the raw text to be classified. The token difference is the input cost saved per call.
-  2. Task quality: directly reads evaluation_results.json produced by evaluate.py to obtain the student's agreement rate with teacher labels on the same inputs (i.e., distillation fidelity).
-  3. Case-by-case examples: extracts several real samples and displays side-by-side: teacher tokens / student tokens / teacher label / student prediction / whether they match, making the before/after on multiple cases clear at a glance.
+  1. 输入成本（token）：教师每次调用都要带上完整的语言分类提示（约上千 token），
+     学生只需要原始待分类文本。二者的 token 差就是每次调用省下的输入开销。
+  2. 任务质量：直接读取 evaluate.py 产出的 evaluation_results.json，得到学生在
+     相同输入上「与教师标注的一致率」（即蒸馏保真度）。
+  3. 逐条案例：抽取若干条真实样本，并排展示 教师 token / 学生 token / 教师标签 /
+     学生预测 / 是否一致，让「多个案例上的 before/after」一目了然。
 
-Design principle: all numbers come from real data and real tokenizers, no fabrication. Latency (sub-second response time) requires measurement on GPU; this script does not estimate it, only reporting offline-reproducible token cost and quality.
+设计原则：所有数字都来自真实数据与真实分词器，不臆造。延迟（秒级响应时间）需要
+在 GPU 上实测，本脚本不做估算，只报告可离线复现的 token 成本与质量。
 """
 
 import argparse
@@ -23,7 +29,7 @@ VALID_LABELS = ["ar", "de", "el", "en", "es", "fr", "hi", "ru", "tr", "ur", "vi"
 
 
 def load_prompt_template(source_file: str) -> str:
-    """Extract the language classification prompt template used by teachers from create_data.py (avoid importing vllm)."""
+    """从 create_data.py 中提取教师使用的语言分类提示模板（避免 import vllm）。"""
     src = Path(source_file).read_text(encoding="utf-8")
     match = re.search(
         r'LANGUAGE_CLASSIFICATION_PROMPT\s*=\s*"""(.*?)"""',
@@ -32,40 +38,40 @@ def load_prompt_template(source_file: str) -> str:
     )
     if not match:
         raise ValueError(
-            f"Cannot be found in {source_file}  found the LANGUAGE_CLASSIFICATION_PROMPT template, "
-            f"Please specify the file containing this constant using --prompt_source."
+            f"无法在 {source_file} 中找到 LANGUAGE_CLASSIFICATION_PROMPT 模板，"
+            f"请用 --prompt_source 指定包含该常量的文件。"
         )
     return match.group(1)
 
 
 def build_token_counter(tokenizer_name: Optional[str]) -> Tuple[Callable[[str], int], str]:
     """
-    Construct a token counting function with priority fallback to ensure offline availability.
+    构造一个 token 计数函数，按优先级回退，保证离线可用。
 
-    Returns (counter, method_description):
-      1) If --tokenizer is specified, use HuggingFace tokenizer for precise counting (on GPU machines, obtain the actual token count for Qwen).
-      2) Otherwise, use tiktoken's o200k_base (GPT-4o/o1 tokenizer) for approximation, reproducible offline.
-      3) Fall back to a rough heuristic of 'character count / 4', explicitly marked as an estimate.
-    Each method is noted in the output, and approximate values are never presented as exact.
+    返回 (counter, method_description)：
+      1) 若指定 --tokenizer，用 HuggingFace 分词器精确计数（GPU 机器上可得到 Qwen 的真实 token 数）。
+      2) 否则用 tiktoken 的 o200k_base（GPT-4o/o1 分词器）作近似，可离线复现。
+      3) 再退化为「字符数 / 4」的粗略启发式，并明确标注为估算。
+    每种方法都会在输出里注明，绝不把近似值当成精确值。
     """
     if tokenizer_name:
         try:
             from transformers import AutoTokenizer
 
             tok = AutoTokenizer.from_pretrained(tokenizer_name, trust_remote_code=True)
-            return (lambda s: len(tok.encode(s))), f"HuggingFace tokenizer (exact): {tokenizer_name}"
+            return (lambda s: len(tok.encode(s))), f"HuggingFace 分词器（精确）: {tokenizer_name}"
         except Exception as exc:  # noqa: BLE001
-            print(f"[warn] Unable to load tokenizer {tokenizer_name}（{exc}), fallback to tiktoken.", file=sys.stderr)
+            print(f"[warn] 无法加载分词器 {tokenizer_name}（{exc}），回退到 tiktoken。", file=sys.stderr)
 
     try:
         import tiktoken
 
         enc = tiktoken.get_encoding("o200k_base")
-        return (lambda s: len(enc.encode(s))), "tiktoken o200k_base (approximate, reproducible offline)"
+        return (lambda s: len(enc.encode(s))), "tiktoken o200k_base（近似，可离线复现）"
     except Exception as exc:  # noqa: BLE001
-        print(f"[warn] tiktoken is not available ({exc}), fallback to character heuristic.", file=sys.stderr)
+        print(f"[warn] tiktoken 不可用（{exc}），回退到字符启发式。", file=sys.stderr)
 
-    return (lambda s: max(1, len(s) // 4)), "Number of characters / 4 (rough estimate)"
+    return (lambda s: max(1, len(s) // 4)), "字符数/4（粗略估算）"
 
 
 def load_texts(test_file: str) -> List[str]:
@@ -74,7 +80,7 @@ def load_texts(test_file: str) -> List[str]:
 
 
 def load_teacher_labels(train_data_file: str) -> Dict[str, str]:
-    """Read the mapping of text -> teacher labels from the distillation training data (teacher annotations)."""
+    """从蒸馏训练数据（教师标注）中读取 文本 -> 教师标签 的映射。"""
     mapping: Dict[str, str] = {}
     if not Path(train_data_file).exists():
         return mapping
@@ -112,7 +118,7 @@ def compare(
 ) -> Dict:
     n = len(texts)
 
-    # Fixed prompt overhead (template itself, excluding text to be classified)
+    # 固定提示开销（模板本身，不含待分类文本）
     fixed_overhead = count_tokens(prompt_template.format(text=""))
 
     teacher_input_total = 0
@@ -131,7 +137,7 @@ def compare(
     reduction_pct = 100.0 * (1 - student_input_total / teacher_input_total)
     ratio = teacher_input_total / student_input_total if student_input_total else float("inf")
 
-    #  Student predictions (aligned line by line with test_file)
+    # 学生预测（与 test_file 逐行对齐）
     student_preds: Optional[List[Optional[str]]] = None
     accuracy = None
     correct = evaluated = None
@@ -142,7 +148,7 @@ def compare(
         correct = summary.get("correct")
         evaluated = summary.get("evaluated")
 
-    #  Case by case: prioritize covering different languages, and try to include consistent/inconsistent examples for each.
+    # 逐条案例：优先覆盖不同语言，并尽量各带上一致/不一致的例子
     examples: List[Dict] = []
     seen_labels = set()
     for idx, text in enumerate(texts):
@@ -190,45 +196,45 @@ def compare(
 def print_report(r: Dict) -> None:
     line = "=" * 78
     print("\n" + line)
-    print("Prompt distillation: before vs after quantization comparison")
+    print("Prompt 蒸馏：蒸馏前 vs 蒸馏后 量化对比")
     print(line)
-    print(f"Number of samples: {r['num_cases']}")
-    print(f"Token counting method: {r['token_method']}")
-    print(f"Fixed prompt overhead      : {r['fixed_prompt_overhead']} tokens (the template itself, which is repeatedly paid for each call)")
+    print(f"样本数            : {r['num_cases']}")
+    print(f"Token 计数方式    : {r['token_method']}")
+    print(f"固定提示开销      : {r['fixed_prompt_overhead']} tokens（模板本身，每次调用都要重复付费）")
 
     print("\n" + "-" * 78)
-    print("1. Input cost (input tokens per call)")
+    print("一、输入成本（每次调用的输入 token）")
     print("-" * 78)
-    print(f"{'dimension':<24}{'Teacher (long prompt + thinking)':>20}{'Student (no prompt)':>18}")
-    print(f"{'Average input tokens per entry':<24}{r['teacher_input_avg']:>20.1f}{r['student_input_avg']:>18.1f}")
-    print(f"{'Total input tokens':<24}{r['teacher_input_total']:>20,}{r['student_input_total']:>18,}")
+    print(f"{'维度':<24}{'教师(长提示+思考)':>20}{'学生(无提示)':>18}")
+    print(f"{'单条平均输入 token':<24}{r['teacher_input_avg']:>20.1f}{r['student_input_avg']:>18.1f}")
+    print(f"{'全量总输入 token':<24}{r['teacher_input_total']:>20,}{r['student_input_total']:>18,}")
     print(
-        f"\n→ Input token reduction {r['input_token_reduction_pct']:.1f}%"
-        f"(Teachers are students' {r['teacher_student_ratio']:.1f}  times)."
+        f"\n→ 输入 token 降低 {r['input_token_reduction_pct']:.1f}%"
+        f"（教师是学生的 {r['teacher_student_ratio']:.1f} 倍）。"
     )
-    print("  On APIs billed by input token, this directly reduces cost proportionally; there are also unaccounted")
-    print("  thinking (CoT) output tokens, so the actual gap is even larger. Latency needs to be measured on GPU, not estimated here.")
+    print("  按输入 token 计费的 API 上，这一项直接等比例降低费用；教师端还有未计入的")
+    print("  思考（CoT）输出 token，实际差距只会更大。延迟需在 GPU 上实测，此处不估算。")
 
     print("\n" + "-" * 78)
-    print("2. Task Quality (student's agreement rate with teacher on same inputs = distillation fidelity)")
+    print("二、任务质量（学生在相同输入上与教师标注的一致率 = 蒸馏保真度）")
     print("-" * 78)
     if r["student_accuracy"] is not None:
         print(
-            f"Teacher (baseline): 100.00%    Student (after distillation): {r['student_accuracy'] * 100:.2f}%"
+            f"教师(基准) : 100.00%   学生(蒸馏后) : {r['student_accuracy'] * 100:.2f}%"
             f"  ({r['student_correct']}/{r['student_evaluated']})"
         )
         print(
-            f"→ Student without prompts or thinking retains about {r['student_accuracy'] * 100:.1f}% of teacher's judgments,"
-            f"quality loss about {(1 - r['student_accuracy']) * 100:.1f} percentage points."
+            f"→ 无提示、无思考的学生保留了教师约 {r['student_accuracy'] * 100:.1f}% 的判断，"
+            f"质量损失约 {(1 - r['student_accuracy']) * 100:.1f} 个百分点。"
         )
     else:
-        print("evaluation_results.json not found (student not yet evaluated). Run evaluate.py first to generate,")
-        print("then come back to this section. Missing this section does not affect the input cost comparison above.")
+        print("未找到 evaluation_results.json（学生尚未评估）。先运行 evaluate.py 生成，")
+        print("再回来看这一栏。本栏缺失不影响上面的输入成本对比。")
 
     print("\n" + "-" * 78)
-    print(f"3. Case-by-case examples ({len(r['examples'])} examples)")
+    print(f"三、逐条案例（{len(r['examples'])} 例）")
     print("-" * 78)
-    print(f"{'Text to classify':<44}{'Teacher tok':>8}{'Student tok':>8}{'Teacher':>6}{'Student':>6}{'Agree':>6}")
+    print(f"{'待分类文本':<44}{'教师tok':>8}{'学生tok':>8}{'教师':>6}{'学生':>6}{'一致':>6}")
     for ex in r["examples"]:
         if ex["match"] is None:
             mark = "—"
@@ -245,58 +251,58 @@ def print_report(r: Dict) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Prompt Distillation \"Before vs After\" Quantitative Comparison: offline calculation of input cost, task quality, and case-by-case examples",
+        description="Prompt 蒸馏「蒸馏前 vs 蒸馏后」量化对比：离线算出输入成本、任务质量与逐条案例",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--test_file",
         type=str,
         default="./example-data/multilingual.txt",
-        help="Text file to classify (one sentence per line), used as the input set for comparison",
+        help="待分类文本文件（每行一句），作为对比的输入集合",
     )
     parser.add_argument(
         "--train_data_file",
         type=str,
         default="./data/prompt_distillation_lang.jsonl",
-        help="Distillation training data (teacher annotations), used to obtain teacher labels as quality baseline",
+        help="蒸馏训练数据（教师标注），用于取教师标签作为质量基准",
     )
     parser.add_argument(
         "--eval_results",
         type=str,
         default="./evaluation_results.json",
-        help="Evaluation results produced by evaluate.py, used to read student agreement rate (optional)",
+        help="evaluate.py 产出的评估结果，用于读取学生的一致率（可选）",
     )
     parser.add_argument(
         "--prompt_source",
         type=str,
         default="./create_data.py",
-        help="Source file containing the teacher prompt template LANGUAGE_CLASSIFICATION_PROMPT",
+        help="包含教师提示模板 LANGUAGE_CLASSIFICATION_PROMPT 的源文件",
     )
     parser.add_argument(
         "--tokenizer",
         type=str,
         default=None,
-        help="Optional: HuggingFace tokenizer name/path (e.g., Qwen/Qwen3-30B-A3B-Instruct-2507)."
-        "If specified, use it for exact counting; otherwise, approximate with tiktoken to ensure offline runnability",
+        help="可选：HuggingFace 分词器名/路径（如 Qwen/Qwen3-30B-A3B-Instruct-2507）。"
+        "指定后用它精确计数；不指定则用 tiktoken 近似，保证离线可跑",
     )
     parser.add_argument(
         "--num_examples",
         type=int,
         default=10,
-        help="Number of case-by-case examples to display (try to cover different languages)",
+        help="逐条案例展示的条数（尽量覆盖不同语言）",
     )
     parser.add_argument(
         "--output_file",
         type=str,
         default=None,
-        help="Optional: path to save comparison results (including case-by-case examples) as JSON",
+        help="可选：把对比结果（含逐条案例）保存为 JSON 的路径",
     )
     args = parser.parse_args()
 
     if not os.path.exists(args.test_file):
-        raise FileNotFoundError(f"Text file to classify does not exist: {args.test_file}")
+        raise FileNotFoundError(f"待分类文本文件不存在: {args.test_file}")
     if not os.path.exists(args.prompt_source):
-        raise FileNotFoundError(f"Prompt template source file does not exist: {args.prompt_source}")
+        raise FileNotFoundError(f"提示模板源文件不存在: {args.prompt_source}")
 
     prompt_template = load_prompt_template(args.prompt_source)
     texts = load_texts(args.test_file)
@@ -306,12 +312,12 @@ def main():
 
     if not teacher_labels:
         print(
-            f"[warn] No teacher annotations read from {args.train_data_file}, teacher labels for individual cases will be displayed as '?'.",
+            f"[warn] 未从 {args.train_data_file} 读到教师标注，逐条案例的教师标签将显示为 '?'。",
             file=sys.stderr,
         )
     if eval_results is None:
         print(
-            f"[warn] {args.eval_results} not found, only input cost comparison will be provided, skipping the quality column.",
+            f"[warn] 未找到 {args.eval_results}，将只给出输入成本对比，跳过质量一栏。",
             file=sys.stderr,
         )
 
@@ -330,7 +336,7 @@ def main():
     if args.output_file:
         with open(args.output_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
-        print(f"📁 Comparison results saved to: {args.output_file}")
+        print(f"📁 对比结果已保存到: {args.output_file}")
 
 
 if __name__ == "__main__":

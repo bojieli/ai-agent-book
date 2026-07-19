@@ -234,45 +234,47 @@ python test_streaming.py --mode compare
 
 ## 📈 Serving Benchmark (`benchmark.py`)
 
-`benchmark.py` is the companion benchmark for Experiment 2-1. It measures core serving-level metrics for locally deployed small models, helping build intuition around throughput, latency, batching, and KV cache. It works through the OpenAI-compatible interface and supports both vLLM and Ollama.**All numbers come from real server-side measurements; the script itself does not generate any synthetic data.** If the server has not been started yet, use `--dry-run` to view the request configuration for each scenario offline.
+`benchmark.py` 是实验 2-1 的配套基准，用于测量本地部署的小模型在 **服务（serving）** 层面的核心指标，帮助建立对吞吐 / 延迟 / 批处理 / KV Cache 的直觉。它通过 OpenAI 兼容接口工作，vLLM 与 Ollama 均可。
 
-### Scenarios (`--scenario`)
+**所有数字都来自真实服务端的实测，脚本本身不产生任何合成数据。** 如果服务端尚未启动，可用 `--dry-run` 离线查看每个场景将要发出的请求配置。
 
-| Scenario | Description | Corresponding Book Points |
-|----------|-------------|---------------------------|
-| `throughput` | Single-stream decoding throughput (tok/s) and time to first token (TTFT) | Experiment 2-1, point 2: >100 tok/s on M2 |
-| `kv-cache` | TTFT comparison of prefix cache **hit vs. miss** | Experiment 2-1, point 5: Changing the beginning of the system prompt → cache invalidation, requiring full prefix recomputation |
-| `batching` | Aggregate throughput under different concurrency levels (batching trade-offs) | How continuous batching improves system throughput |
-| `all` | Run all the above scenarios sequentially (default) | — |
+### 场景（`--scenario`）
 
-### Usage
+| 场景 | 说明 | 对应书中要点 |
+|------|------|-------------|
+| `throughput` | 单流解码吞吐（tok/s）与首 token 延迟（TTFT） | 实验 2-1 第 2 点：M2 上 >100 tok/s |
+| `kv-cache` | 前缀缓存 **命中 vs 未命中** 的 TTFT 对比 | 实验 2-1 第 5 点：改动系统提示词开头 → 缓存失效、需重算整个前缀 |
+| `batching` | 不同并发度下的聚合吞吐（批处理权衡） | 连续批处理如何提升系统吞吐 |
+| `all` | 依次运行以上全部场景（默认） | — |
+
+### 用法
 
 ```bash
-# 1. Start the server first (choose one)
-python server.py                            # vLLM (requires NVIDIA GPU)
-ollama serve && ollama pull qwen3:0.6b      # Ollama (Mac / no GPU)
+# 1. 先启动服务端（二选一）
+python server.py                            # vLLM（需要 NVIDIA GPU）
+ollama serve && ollama pull qwen3:0.6b      # Ollama（Mac / 无 GPU）
 
-# 2. Run the benchmark
-python benchmark.py --scenario all --output results.json   # Run all and save
-python benchmark.py --scenario kv-cache --backend ollama    # View KV Cache TTFT comparison only
-python benchmark.py --scenario batching --concurrency 1,2,4,8   # Batch throughput sweep
+# 2. 运行基准
+python benchmark.py --scenario all --output results.json   # 跑全部并保存
+python benchmark.py --scenario kv-cache --backend ollama    # 只看 KV Cache TTFT 对比
+python benchmark.py --scenario batching --concurrency 1,2,4,8   # 批处理吞吐扫描
 
-# View plan offline (without accessing the server), useful for parameter validation
+# 离线查看计划（不访问服务端），可用于验证参数
 python benchmark.py --dry-run
 python benchmark.py --help
 ```
 
-### Main Parameters
+### 主要参数
 
-- `--backend {vllm,ollama}`: Infer default address and model name (vLLM `Qwen3-0.6B` @ `:8000/v1`, Ollama `qwen3:0.6b` @ `:11434/v1`)
-- `--base-url` / `--model` / `--api-key`: Override default connection configuration
-- `--repeats`: Number of repetitions for `throughput` / `kv-cache` scenarios (default 5)
-- `--max-tokens` / `--temperature`: Generation parameters
-- `--prefix-tokens`: Approximate length of the shared prefix for the `kv-cache` scenario; longer prefixes yield more pronounced caching effects (default 1024)
-- `--concurrency`: Comma-separated list of concurrency levels for the `batching` scenario (default `1,2,4,8`)
-- `--output`: Write results to a JSON file
+- `--backend {vllm,ollama}`：推断默认地址与模型名（vLLM `Qwen3-0.6B` @ `:8000/v1`，Ollama `qwen3:0.6b` @ `:11434/v1`）
+- `--base-url` / `--model` / `--api-key`：覆盖默认连接配置
+- `--repeats`：`throughput` / `kv-cache` 的重复次数（默认 5）
+- `--max-tokens` / `--temperature`：生成参数
+- `--prefix-tokens`：`kv-cache` 场景共享前缀的近似长度，越长缓存效果越明显（默认 1024）
+- `--concurrency`：`batching` 场景的并发度列表，逗号分隔（默认 `1,2,4,8`）
+- `--output`：将结果写入 JSON 文件
 
-> Note: `kv-cache` relies on the server's prefix caching (vLLM's automatic prefix caching is enabled by default). The hit group keeps the system prompt byte-identical. The miss group inserts a unique counter string at the **beginning** of the system prompt each time, causing the prefix to change and invalidating the entire cache—this is a practical demonstration of the book's point: "Once the system prompt is set, do not change it."
+> 说明：`kv-cache` 依赖服务端的前缀缓存（vLLM 的 automatic prefix caching 默认开启）。命中组保持系统提示词逐字节不变；未命中组每次只在系统提示词**开头**插入一个唯一计数串，前缀被改写导致缓存全部失效——这正是书中「系统提示词一旦定下来就不要改」的实测演示。
 
 ## 🔧 Configuration
 

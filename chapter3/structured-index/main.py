@@ -1,9 +1,9 @@
 """
-Main entry for structured indexing tools: build / query RAPTOR and GraphRAG indexes, or run offline comparison demos.
+结构化索引工具的主入口：构建 / 查询 RAPTOR 与 GraphRAG 索引，或运行离线对比演示。
 
-Note: Building indexes for RAPTOR and GraphRAG requires calling LLMs (entity extraction, recursive summarization), so
-build / query depend on OPENAI_API_KEY and corresponding heavy dependencies (umap, sentence-transformers, etc.).
-If you just want an intuitive understanding of "what problems structured indexing solves for flat retrieval", you can run the `demo` subcommand which requires no API.
+说明：RAPTOR、GraphRAG 的**索引构建**需要调用 LLM（实体抽取、递归摘要），因此
+build / query 依赖 OPENAI_API_KEY 及相应重型依赖（umap、sentence-transformers 等）。
+若只想直观理解「结构化索引解决了扁平检索的什么问题」，可运行无需 API 的 `demo` 子命令。
 """
 
 import argparse
@@ -18,7 +18,7 @@ from loguru import logger
 async def build_indexes(file_path: Path, index_type: str = "both",
                         output: str = None):
     """Build RAPTOR and/or GraphRAG indexes from a document."""
-    # Lazy import of heavy dependencies: ensures --help / demo still work when umap and other dependencies are missing
+    # 重型依赖延迟导入：保证 --help / demo 在缺少 umap 等依赖时仍可用
     from config import get_raptor_config, get_graphrag_config
     from raptor_indexer import RaptorIndexer
     from graphrag_indexer import GraphRAGIndexer
@@ -60,7 +60,7 @@ async def build_indexes(file_path: Path, index_type: str = "both",
     if output:
         with open(output, "w", encoding="utf-8") as f:
             json.dump(all_stats, f, ensure_ascii=False, indent=2)
-        logger.info(f"Index statistics written to:{output}")
+        logger.info(f"索引统计已写入：{output}")
 
     logger.info("Indexing complete!")
 
@@ -96,7 +96,7 @@ async def query_indexes(query: str, index_type: str = "both", top_k: int = 5,
             results["graphrag"] = graphrag_results
             logger.info(f"GraphRAG returned {len(graphrag_results)} results")
 
-            # Multi-hop relation retrieval: starting from the best recalled entity, traverse along relation edges
+            # 多跳关系检索：以召回的最佳实体为起点，沿关系边遍历
             if multi_hop > 0 and graphrag_results:
                 start = next((r.get("name") for r in graphrag_results
                               if r.get("type") == "entity"), None)
@@ -113,47 +113,47 @@ async def query_indexes(query: str, index_type: str = "both", top_k: int = 5,
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Structured indexing tool: build and query RAPTOR (tree hierarchy) and "
-                    "GraphRAG (entity-relation graph) indexes under a unified framework, corresponding to experiments 3-8 in this book.",
+        description="结构化索引工具：在统一框架下构建并查询 RAPTOR（树状层次）与 "
+                    "GraphRAG（实体关系图）索引，对应本书实验 3-8。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    subparsers = parser.add_subparsers(dest="command", help="Subcommand to execute")
+    subparsers = parser.add_subparsers(dest="command", help="要执行的子命令")
 
     # Build command
     build_parser = subparsers.add_parser(
-        "build", help="Build structured index from documents (requires OPENAI_API_KEY)")
+        "build", help="从文档构建结构化索引（需要 OPENAI_API_KEY）")
     build_parser.add_argument("file", type=str,
-                              help="Document path to index (supports .pdf/.txt/.md/.html)")
+                              help="待索引的文档路径（支持 .pdf/.txt/.md/.html）")
     build_parser.add_argument("--type", choices=["raptor", "graphrag", "both"],
-                              default="both", help="Index type to build (default both)")
+                              default="both", help="要构建的索引类型（默认 both）")
     build_parser.add_argument("--output", type=str, default=None,
-                              help="Write index statistics to specified JSON file")
+                              help="将索引统计信息写入指定 JSON 文件")
 
     # Query command
     query_parser = subparsers.add_parser(
-        "query", help="Query a built index (requires OPENAI_API_KEY and an existing index)")
-    query_parser.add_argument("query", type=str, help="Retrieval query statement")
+        "query", help="查询已构建的索引（需要 OPENAI_API_KEY 及已有索引）")
+    query_parser.add_argument("query", type=str, help="检索查询语句")
     query_parser.add_argument("--type", choices=["raptor", "graphrag", "both"],
-                              default="both", help="Index type to query (default both)")
+                              default="both", help="要查询的索引类型（默认 both）")
     query_parser.add_argument("--top-k", type=int, default=5,
-                              help="Number of results to return (default 5)")
+                              help="返回结果条数（默认 5）")
     query_parser.add_argument("--multi-hop", type=int, default=0, metavar="N",
-                              help="Additional N-hop relation traversal for GraphRAG (0 to disable)")
+                              help="对 GraphRAG 额外执行 N 跳关系遍历（0 表示关闭）")
     query_parser.add_argument("--output", type=str, default=None,
-                              help="Write query results to specified JSON file")
+                              help="将查询结果写入指定 JSON 文件")
 
-    # Demo command (offline, no API required)
+    # Demo command（离线，无需 API）
     demo_parser = subparsers.add_parser(
-        "demo", help="Offline comparison demo: structured indexing vs flat retrieval (no API key required)")
+        "demo", help="离线对比演示：结构化索引 vs 扁平检索（无需 API Key）")
     demo_parser.add_argument("--query", type=str, default=None,
-                             help="Custom query; if omitted, runs the built-in three comparison queries")
+                             help="自定义查询；缺省时运行内置的三组对比查询")
     demo_parser.add_argument("--top-k", type=int, default=3,
-                             help="Number of results to display for flat retrieval (default 3)")
+                             help="扁平检索展示的结果条数（默认 3）")
     demo_parser.add_argument("--output", type=str, default=None,
-                             help="Write demo results to specified JSON file")
+                             help="将演示结果写入指定 JSON 文件")
 
     # Server command
-    subparsers.add_parser("serve", help="Start HTTP API service")
+    subparsers.add_parser("serve", help="启动 HTTP API 服务")
 
     args = parser.parse_args()
 
@@ -172,7 +172,7 @@ def main():
                     chain = r["path"][0]["source"]
                     for step in r["path"]:
                         chain += f" --{step['relation']}--> {step['target']}"
-                    print(f"\n{i}. [{r['hops']} hop] {chain}")
+                    print(f"\n{i}. [{r['hops']} 跳] {chain}")
                 continue
             for i, result in enumerate(index_results, 1):
                 print(f"\n{i}. Score: {result.get('score', 'N/A'):.3f}")
@@ -186,7 +186,7 @@ def main():
         if args.output:
             with open(args.output, "w", encoding="utf-8") as f:
                 json.dump(results, f, ensure_ascii=False, indent=2, default=str)
-            print(f"\nQuery results written to:{args.output}")
+            print(f"\n查询结果已写入：{args.output}")
     elif args.command == "demo":
         from structured_vs_flat_demo import run_demo
         run_demo(top_k=args.top_k, custom_query=args.query, output=args.output)

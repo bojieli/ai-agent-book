@@ -66,13 +66,13 @@ cp env.example .env
 ```
 
 Required API keys:
-- `MOONSHOT_API_KEY`: For the Kimi (Moonshot) model (required). The book's Experiment 2-9 uses Kimi K3 (a reasoning
+- `MOONSHOT_API_KEY`: For the Kimi (Moonshot) model (required). The book's 实验 2-9 uses Kimi K3 (a reasoning
   model whose real context window is ~1M tokens; the demo deliberately caps context at a 128K budget via
   `CONTEXT_WINDOW_SIZE` so the overflow/compression behavior is observable). The model name is configurable via
   `MODEL_NAME` in `.env` or the `-m/--model` CLI flag (e.g. `kimi-k2.5`, `kimi-k3`, `moonshot-v1-128k`).
-- `OPENROUTER_API_KEY`: General fallback. When `MOONSHOT_API_KEY` is not set, as long as
-  `OPENROUTER_API_KEY` is configured, the experiment automatically switches to OpenRouter (`kimi-*` maps to
-  `moonshotai/kimi-k2`). Behavior is completely unchanged when `MOONSHOT_API_KEY` is set.
+- `OPENROUTER_API_KEY`: 通用回退。未设置 `MOONSHOT_API_KEY` 时，只要配置了
+  `OPENROUTER_API_KEY`，实验会自动改走 OpenRouter（`kimi-*` 映射为
+  `moonshotai/kimi-k2`）。设置了 `MOONSHOT_API_KEY` 时行为完全不变。
 - `SERPER_API_KEY`: For web search (optional, will use mock data if not provided)
 
 Get API keys:
@@ -91,9 +91,9 @@ Get API keys:
 All three main entrypoints ship an `argparse` CLI (Chinese `--help`). Run any of them with `-h`
 to see the full option list. The three most useful flags are shared:
 
-- `-s/--strategy` — Select one or more strategies to run (default: all 6); see "Compression Strategies" below or run `--list-strategies` for valid values
-- `-m/--model` — Override the model name (default: reads environment variable `MODEL_NAME`)
-- `-n/--max-iterations` — Maximum number of tool call rounds allowed per strategy
+- `-s/--strategy` — 选择要运行的一种或多种策略（默认全部 6 种）；取值见下方“Compression Strategies”或运行 `--list-strategies`
+- `-m/--model` — 覆盖模型名（默认读取环境变量 `MODEL_NAME`）
+- `-n/--max-iterations` — 每个策略允许的最大工具调用轮数
 
 Strategy aliases accepted by `--strategy`: `no_compression`, `individual`, `combined`,
 `context_aware`, `citations`, `windowed`.
@@ -104,11 +104,11 @@ Strategy aliases accepted by `--strategy`: `no_compression`, `individual`, `comb
 
 Compare all 6 strategies (default), or a subset:
 ```bash
-python experiment.py                          # Run all 6 strategies and generate comparison table
-python experiment.py -s context_aware         # Run only "Context-Aware Summarization"
-python experiment.py -s individual combined   # Compare only the two non-context-aware strategies
-python experiment.py -m moonshot-v1-128k -o results/run.json   # Switch model + specify output path
-python experiment.py --list-strategies        # View available strategy names
+python experiment.py                          # 运行全部 6 种策略并生成对比表
+python experiment.py -s context_aware         # 只运行“上下文感知压缩”
+python experiment.py -s individual combined   # 只对比两种非任务感知策略
+python experiment.py -m moonshot-v1-128k -o results/run.json   # 换模型 + 指定输出路径
+python experiment.py --list-strategies        # 查看可选策略名
 ```
 
 This will:
@@ -123,8 +123,8 @@ Key flags: `-s/--strategy`, `-m/--model`, `-o/--output`, `-n/--max-iterations`, 
 
 Run strategies with detailed logging and compression output:
 ```bash
-python run_all_strategies.py                  # All 6 strategies
-python run_all_strategies.py -s windowed      # Run only adaptive windowed compression
+python run_all_strategies.py                  # 全部 6 种策略
+python run_all_strategies.py -s windowed      # 只跑自适应窗口化
 python run_all_strategies.py --log-dir logs/k2 -m kimi-k2.5
 ```
 
@@ -134,7 +134,9 @@ Features:
 - Shows streaming output in real-time
 - Saves detailed logs to `<log-dir>/strategy_run_TIMESTAMP.log`
 - Saves JSON results to `<log-dir>/strategy_results_TIMESTAMP.json`
-- Generates comparison summary at the endKey flags: `-s/--strategy`, `-m/--model`, `--log-dir`, `-n/--max-iterations`, `--list-strategies`.
+- Generates comparison summary at the end
+
+Key flags: `-s/--strategy`, `-m/--model`, `--log-dir`, `-n/--max-iterations`, `--list-strategies`.
 
 ### Interactive Demo
 
@@ -243,7 +245,7 @@ Moonshot reasoning model.
 - **Model**: `kimi-k3` (Moonshot reasoning model; real window ~1M tokens, but the demo caps
   the compression/overflow budget at `CONTEXT_WINDOW_SIZE = 128000`)
 - **Search**: real Serper (`google.serper.dev`) web search + page crawling
-- **Task**: Identify and track the employment status of OpenAI co-founders (track current affiliations of the ~11 OpenAI co-founders)
+- **Task**: 识别并追踪 OpenAI 联合创始人的职业状态 (track current affiliations of the ~11 OpenAI co-founders)
 - **Run date**: 2026-07-18 · `MAX_ITERATIONS=15` · raw JSON: `results/kimi_k3_real_20260718.json`
 
 Columns: **Tokens** = cumulative Kimi API token usage (prompt + completion across all
@@ -268,7 +270,8 @@ Notes:
   is summarized separately by the reasoning model; token usage is also the highest.
 - **Windowed context (#6)** only compresses when prompt usage crosses the 80% threshold
   (≈102,400 tokens), then batch-compresses all uncompressed tool messages at once; because
-  it keeps recent full content, its char-level "compression ratio" stays ~100% while it  still completes the task fastest among the compressing strategies.
+  it keeps recent full content, its char-level "compression ratio" stays ~100% while it
+  still completes the task fastest among the compressing strategies.
 - These are single-run measurements with a reasoning model and live web search, so absolute
   numbers will vary run to run; the relative ordering is the takeaway.
 

@@ -1,8 +1,7 @@
 #!/bin/bash
 # Build the complete book as a single PDF (ElegantBook design, teal/cyan theme).
 # Requirements: pandoc, xelatex, ElegantBook class, rsvg-convert (librsvg),
-#               fonts: Menlo / Arial Unicode MS (macOS) — Linux auto-falls back
-#               to DejaVu Sans/Mono and Noto CJK (see preamble.tex).
+#               fonts: Songti SC / Heiti SC (ctex), Menlo, Arial Unicode MS
 # Usage: cd book && bash build_pdf.sh
 # Note: chapter/section numbers come from the document class; source headings
 #       carry no manual numbers (see git history for the de-numbering pass).
@@ -12,22 +11,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# ── Runtime environment tweaks (harmless on macOS, needed on Linux/TeX Live) ──
-# 1) This book is large enough to exhaust XeTeX's default main memory
-#    ("TeX capacity exceeded ... [main memory size=5000000]") during page
-#    output. main_memory is baked into the format at dump time, but
-#    extra_mem_top/bot extend an existing format at runtime — so we bump them
-#    here instead of rebuilding the xelatex format.
-export extra_mem_top=8000000
-export extra_mem_bot=8000000
-# 2) The mac-only monospace font (Menlo) is probed with \IfFontExistsTF in
-#    preamble.tex. On systems without it, kpathsea otherwise spawns METAFONT to
-#    build a Menlo.tfm (slow, noisy, always fails) before the DejaVu Sans Mono
-#    fallback engages. Disabling on-the-fly TFM creation makes the probe return
-#    immediately with the correct "not found" result.
-export MKTEXTFM=0
-
-OUT="Deep-Understanding-of-AI-Agents-Li-Bojie-v1.1.pdf"
+OUT="深入理解-AI-Agent-李博杰-v1.1.pdf"
 CHAPTERS=(
     introduction.md
     chapter1.md
@@ -63,12 +47,12 @@ pandoc "${CHAPTERS[@]}" \
     --toc-depth=3 \
     --number-sections \
     -V documentclass=elegantbook \
-    -V classoption=lang=en \
+    -V classoption=lang=cn \
     -V classoption=cyan \
     -V classoption=device=normal \
-    -V author="Li Bojie" \
-    --metadata title-meta="Deep Understanding of AI Agents: Design Principles and Engineering Practice" \
-    --metadata author-meta="Li Bojie" \
+    -V author="李博杰" \
+    --metadata title-meta="深入理解 AI Agent：设计原理与工程实践" \
+    --metadata author-meta="李博杰" \
     -H preamble.tex \
     --include-before-body=cover.tex \
     --syntax-highlighting=kate \

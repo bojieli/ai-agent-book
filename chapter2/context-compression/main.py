@@ -16,7 +16,7 @@ from compression_strategies import CompressionStrategy
 init(autoreset=True)
 
 
-# Short CLI aliases -> compression strategy (order matches the book's Experiment 2-9)
+# Short CLI aliases -> compression strategy (order matches the book's 实验 2-9)
 STRATEGY_CHOICES = {
     "no_compression": CompressionStrategy.NO_COMPRESSION,
     "individual": CompressionStrategy.NON_CONTEXT_AWARE_INDIVIDUAL,
@@ -178,27 +178,27 @@ def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(
         prog="main.py",
-        description="Interactive demo of context compression strategy: for the research task of tracking the current status of OpenAI co-founders,"
-                    "Run a single compression strategy independently and observe its execution and compression process in real time.",
-        epilog="Example: \n"
-               "  python main.py                         # Interactively select strategy\n"
-               "  python main.py -s citations            # Directly run the \"citation-aware context\" strategy\n"
+        description="上下文压缩策略交互式演示：针对“追踪 OpenAI 联合创始人现状”这一研究任务，"
+                    "单独运行某一种压缩策略并实时观察其执行与压缩过程。",
+        epilog="示例：\n"
+               "  python main.py                         # 交互式选择策略\n"
+               "  python main.py -s citations            # 直接运行“带引用的上下文感知”策略\n"
                "  python main.py -s windowed --no-streaming\n"
-               "To batch compare all strategies and generate a comparison table, use experiment.py.",
+               "如需批量对比全部策略并生成对比表，请使用 experiment.py。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         '-s', '--strategy', choices=list(STRATEGY_CHOICES.keys()), metavar="NAME",
-        help="Directly specify the compression strategy (skip interactive selection). Optional values:" + ", ".join(STRATEGY_CHOICES.keys()),
+        help="直接指定压缩策略（跳过交互式选择）。可选值：" + ", ".join(STRATEGY_CHOICES.keys()),
     )
     parser.add_argument(
         '-m', '--model', default=None,
-        help=f"Override the model name used (default reads environment variable MODEL_NAME, currently {Config.MODEL_NAME}）",
+        help=f"覆盖使用的模型名称（默认读取环境变量 MODEL_NAME，当前为 {Config.MODEL_NAME}）",
     )
     parser.add_argument(
         '--no-streaming',
         action='store_true',
-        help='Disable streaming output (streaming is enabled by default)'
+        help='关闭流式输出（默认开启流式）'
     )
     args = parser.parse_args()
 

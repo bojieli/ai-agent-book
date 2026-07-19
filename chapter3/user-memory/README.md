@@ -450,7 +450,7 @@ python -c "from memory_manager import NotesMemoryManager; m=NotesMemoryManager('
 [Support Information]
 
 
-## OpenRouter Universal Fallback
+## OpenRouter 通用回退 / Universal OpenRouter fallback
 
 This experiment now supports a **universal OpenRouter fallback** for its chat LLM.
 

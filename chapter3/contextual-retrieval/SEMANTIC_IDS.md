@@ -24,10 +24,11 @@ Format: `{document_id}_chunk_{index}`
 
 | Original File | Document ID | Sample Chunk IDs |
 |--------------|-------------|------------------|
-| Constitution.md | Constitution | Constitution_chunk_0, Constitution_chunk_1 |
-| Labor Law (2018-12-29).md | Labor_Law_2018_12_29 | Labor_Law_2018_12_29_chunk_0 |
-| Civil Code General Principles.md | Civil_Code_General_Principles | Civil_Code_General_Principles_chunk_0 |
-| Public Prosecutors Law (2019-04-23).md | Public_Prosecutors_Law_2019_04_23 | Public_Prosecutors_Law_2019_04_23_chunk_0 |
+| 宪法.md | 宪法 | 宪法_chunk_0, 宪法_chunk_1 |
+| 劳动法（2018-12-29）.md | 劳动法_2018_12_29 | 劳动法_2018_12_29_chunk_0 |
+| 民法典总则编.md | 民法典总则编 | 民法典总则编_chunk_0 |
+| 检察官法（2019-04-23）.md | 检察官法_2019_04_23 | 检察官法_2019_04_23_chunk_0 |
+
 ## Comparison with Hash-Based IDs
 
 ### Old System (MD5 Hash)
@@ -42,8 +43,9 @@ Chunks: 08f758bf19c0_chunk_0, 08f758bf19c0_chunk_1
 
 ### New System (Semantic)
 ```
-Constitution
-Chunks: Constitution_chunk_0, Constitution_chunk_1```
+Document: 宪法
+Chunks: 宪法_chunk_0, 宪法_chunk_1
+```
 - ✅ Human-readable
 - ✅ Self-documenting
 - ✅ Easy to debug
@@ -93,6 +95,6 @@ python index_local_laws_contextual.py
 ## Future Enhancements
 
 Potential improvements for the ID generation:
-1. Add version tracking (e.g., labor_law_v2018_12_29)
-2. Include document type prefix (e.g., law_labor_law, regulation_xxx)
-3. Support for hierarchical documents (e.g., civil_code/general_principles → civil_code_general_principles)
+1. Add version tracking (e.g., 劳动法_v2018_12_29)
+2. Include document type prefix (e.g., law_劳动法, regulation_xxx)
+3. Support for hierarchical documents (e.g., 民法典/总则编 → 民法典_总则编)

@@ -17,8 +17,8 @@ class Config:
     MOONSHOT_API_KEY: str = os.getenv("MOONSHOT_API_KEY", "")
     MOONSHOT_BASE_URL: str = "https://api.moonshot.cn/v1"
 
-    # Universal fallback: when MOONSHOT_API_KEY is missing but OPENROUTER_API_KEY is set,
-    # automatically switch to OpenRouter (kimi-* model names mapped to moonshotai/kimi-k2).
+    # Universal fallback: 当 MOONSHOT_API_KEY 缺失但设置了 OPENROUTER_API_KEY 时，
+    # 自动改走 OpenRouter（kimi-* 模型名映射为 moonshotai/kimi-k2）。
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
     
     SERPER_API_KEY: str = os.getenv("SERPER_API_KEY", "")

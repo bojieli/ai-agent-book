@@ -45,10 +45,10 @@ def test_dual_memory_system():
     
     # Conversation about travel
     messages1 = [
-        ConversationMessage("user", "I want to book a flight to Tokyo", 1),
-        ConversationMessage("assistant", "Sure, when would you like to depart?", 2),
-        ConversationMessage("user", "Depart on January 25, return on February 1", 3),
-        ConversationMessage("assistant", "Let me search for round-trip flights from January 25 to February 1 to Tokyo", 4),
+        ConversationMessage("user", "我想订一张去东京的机票", 1),
+        ConversationMessage("assistant", "好的，请问您什么时候出发？", 2),
+        ConversationMessage("user", "1月25日出发，2月1日返回", 3),
+        ConversationMessage("assistant", "让我为您查询1月25日到2月1日的东京往返机票", 4),
     ]
     
     chunk1 = ConversationChunk(
@@ -65,10 +65,10 @@ def test_dual_memory_system():
     
     # Conversation about passport
     messages2 = [
-        ConversationMessage("user", "My passport is about to expire, when do I need to renew it?", 5),
-        ConversationMessage("assistant", "Your passport expires on February 18, 2025. It is recommended to renew it 3-6 months in advance", 6),
-        ConversationMessage("user", "Okay, I will do it as soon as possible", 7),
-        ConversationMessage("assistant", "It is recommended to ensure your passport is valid for at least 6 months before traveling abroad", 8),
+        ConversationMessage("user", "我的护照快过期了，什么时候需要续签？", 5),
+        ConversationMessage("assistant", "您的护照将于2025年2月18日过期，建议提前3-6个月办理续签", 6),
+        ConversationMessage("user", "好的，我会尽快去办理", 7),
+        ConversationMessage("assistant", "建议您在出国前确保护照有效期至少6个月", 8),
     ]
     
     chunk2 = ConversationChunk(
@@ -106,9 +106,9 @@ def test_dual_memory_system():
     # Test queries
     print("\n6. Testing Queries...")
     test_queries = [
-        ("When does my passport expire?", "Should find passport expiration date from memory cards"),
-        ("What do I need to prepare for my trip to Tokyo in January?", "Should combine travel and passport info"),
-        ("What is my bank account information?", "Should find bank account from memory cards"),
+        ("我的护照什么时候过期？", "Should find passport expiration date from memory cards"),
+        ("我一月份的东京之行需要准备什么？", "Should combine travel and passport info"),
+        ("我的银行账户信息是什么？", "Should find bank account from memory cards"),
     ]
     
     for i, (query, expected) in enumerate(test_queries, 1):

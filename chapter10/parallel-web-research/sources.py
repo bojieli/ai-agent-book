@@ -1,16 +1,16 @@
 """
-Simulated "Multiple Websites/Information Sources"
+模拟的"多个网站/信息源"
 =======================
 
-Experiment 10-6 emphasizes "parallel search by multiple homogeneous agents + central coordination"; the browser itself is not the focus.
-Therefore, a set of **controllable simulated data sources** is used instead of real browsers:
+实验 10-6 强调的是"多个同构 Agent 并行搜索 + 中心协调"，浏览器本身不是重点，
+因此这里用一批**可控的模拟数据源**代替真实浏览器：
 
-- Each Source corresponds to a "website", with a name, content, and a controllable access delay;
-- ``fetch()`` simulates "opening a website and scraping", using ``asyncio.sleep`` to create varying time costs,
-  making "who hits first" reproducible (and also making cascading termination/race conditions appear stably);
-- Whether the target answer is included is determined by ``holds_answer``.
+- 每个 Source 对应一个"网站"，有名字、内容、以及一个可控的访问延迟；
+- ``fetch()`` 模拟"打开网站并抓取"，用 ``asyncio.sleep`` 制造不同的耗时，
+  让"谁先命中"变得可复现（也让级联终止/竞态现象稳定出现）；
+- 是否包含目标答案由 ``holds_answer`` 决定。
 
-The delays are deliberately designed: two sources hit almost simultaneously, stably triggering a "race" demonstration.
+延迟是刻意设计的：让两个源几乎同时命中，以此稳定地触发"竞态"演示。
 """
 
 from __future__ import annotations
@@ -22,45 +22,45 @@ from typing import List, Optional
 
 @dataclass
 class Source:
-    name: str            # "Website" name
-    latency: float       # Single-step fetch delay (seconds), simulating network/rendering time
-    content: str         # Searchable text of the website
-    holds_answer: bool   # Whether the website actually contains the target answer
+    name: str            # "网站"名字
+    latency: float       # 单步抓取延迟（秒），模拟网络/渲染耗时
+    content: str         # 该网站的可搜索文本
+    holds_answer: bool   # 该网站是否真的包含目标答案
 
     async def fetch(self) -> str:
-        """Simulate a fetch: wait for latency then return content."""
+        """模拟一次抓取：等待 latency 后返回内容。"""
         await asyncio.sleep(self.latency)
         return self.content
 
 
-# —— Demo task: parallel search for "Which is the highest mountain in the world and what is its altitude?" ——
-# Only some sources contain the exact answer; the delays of the two correct sources are designed to be very close, creating a race condition.
-QUESTION = "What is the highest mountain in the world and what is its approximate altitude?"
-ANSWER_KEYWORDS = ["Mount Everest", "Everest", "Everest", "8848"]
+# —— 演示任务：并行查找"世界上最高的山峰是哪座、海拔多少" ——
+# 只有部分源包含准确答案；两个正确源的延迟被设计得很接近，用来制造竞态。
+QUESTION = "世界上海拔最高的山峰是哪座？海拔约多少米？"
+ANSWER_KEYWORDS = ["珠穆朗玛", "珠峰", "Everest", "8848"]
 
 DEMO_SOURCES: List[Source] = [
-    Source("baike-wiki", 0.9, "Encyclopedia entry: The Himalayas stretch across the southern edge of the Qinghai-Tibet Plateau.", False),
-    Source("news-portal", 1.1, "News portal: Multiple mountaineering teams plan to climb high-altitude peaks recently.", False),
-    Source("geo-journal", 0.6, "Geography journal: The world's highest peak is Mount Everest, with an altitude of about 8848 meters, located on the China-Nepal border.", True),
-    Source("travel-blog", 1.4, "Travel blog: The author shares experiences of trekking to the base camp in Nepal.", False),
-    # Same delay as geo-journal: the two correct sources will hit almost simultaneously, stably triggering a race condition.
-    Source("forum-qa", 0.6, "Q&A community: Netizens discuss that the highest peak is actually Mount Everest, with an official altitude of 8848.86 meters.", True),
-    Source("edu-site", 1.2, "Educational website: Introduces how plate movements uplifted tall mountain ranges.", False),
-    Source("gov-data", 1.6, "Government data: Published survey parameters and coordinate information for several peaks.", False),
-    Source("random-blog", 0.8, "Personal blog: Random notes about a snow mountain photography trip.", False),
-    Source("science-mag", 1.3, "Science magazine: Explains the effects of high-altitude hypoxia on the human body.", False),
-    Source("map-service", 1.0, "Map service: Can query contour lines and terrain profiles of various peaks.", False),
+    Source("baike-wiki", 0.9, "百科条目：喜马拉雅山脉横亘于青藏高原南缘。", False),
+    Source("news-portal", 1.1, "新闻门户：近期多支登山队计划攀登高海拔山峰。", False),
+    Source("geo-journal", 0.6, "地理期刊：世界最高峰为珠穆朗玛峰，海拔约 8848 米，位于中尼边境。", True),
+    Source("travel-blog", 1.4, "旅行博客：作者分享了在尼泊尔徒步大本营的见闻。", False),
+    # 与 geo-journal 完全相同的延迟：两个正确源会几乎同一时刻命中，稳定触发竞态。
+    Source("forum-qa", 0.6, "问答社区：网友讨论最高峰其实是珠穆朗玛峰，官方海拔 8848.86 米。", True),
+    Source("edu-site", 1.2, "教育网站：介绍板块运动如何抬升出高大的山脉。", False),
+    Source("gov-data", 1.6, "政府数据：发布了若干山峰的测绘参数与坐标信息。", False),
+    Source("random-blog", 0.8, "个人博客：随笔记录了一次雪山摄影旅行。", False),
+    Source("science-mag", 1.3, "科普杂志：解释高海拔缺氧对人体的影响。", False),
+    Source("map-service", 1.0, "地图服务：可查询各山峰的等高线与地形剖面。", False),
 ]
 
 
 def keyword_judge(text: str) -> Optional[str]:
     """
-    Controllable "judge whether answer is hit" logic (does not rely on LLM):
-    If any keyword is hit, the answer is considered found, and the extracted answer sentence is returned; otherwise, None is returned.
+    可控的"判断是否命中答案"逻辑（不依赖 LLM）：
+    命中任一关键词即认为找到了答案，返回抽取到的答案句子；否则返回 None。
     """
     for kw in ANSWER_KEYWORDS:
         if kw in text:
-            # Simply return the sentence containing the keyword as the answer
+            # 简单地把包含关键词的那句话当作答案返回
             for sentence in text.replace("。", "。\n").splitlines():
                 if kw in sentence:
                     return sentence.strip("：: ")
@@ -70,16 +70,16 @@ def keyword_judge(text: str) -> Optional[str]:
 
 def build_sources(n: int) -> List[Source]:
     """
-    Construct n parallel sources, allowing command-line ``--agents N`` to dynamically adjust the number of parallel agents.
+    构造 n 个并行来源，供命令行 ``--agents N`` 动态调整并行 Agent 数量。
 
-    Design constraints (to ensure the demo is always reproducible):
-    - When n == 10, **return** ``DEMO_SOURCES`` as-is, default behavior exactly as before;
-    - When n >= 2, always include two sources that "contain the answer and have the same delay" (geo-journal / forum-qa),
-      thus stably triggering hits, races, and cascading termination;
-    - Fill the rest with non-answer sources; when n exceeds the number of built-in sources, cycle and add a sequence number suffix.
+    设计约束（保证演示始终可复现）：
+    - n == 10 时**原样返回** ``DEMO_SOURCES``，默认行为与之前完全一致；
+    - n >= 2 时始终包含两个"含答案且延迟相同"的源（geo-journal / forum-qa），
+      从而稳定触发命中、竞态与级联终止；
+    - 其余用无答案的填充源补齐；n 超过内置源数量时循环生成并加序号后缀。
     """
     if n < 1:
-        raise ValueError("Number of parallel agents must be at least 1")
+        raise ValueError("并行 Agent 数量至少为 1")
     if n == len(DEMO_SOURCES):
         return list(DEMO_SOURCES)
 
@@ -97,7 +97,7 @@ def build_sources(n: int) -> List[Source]:
         fillers.append(Source(name, base.latency, base.content, False))
 
     sources = fillers
-    # Insert the answer-containing sources at fixed positions (following the default layout: near the front but not at the very front, to facilitate observation of parallel progress)
+    # 把含答案的源插入到确定的位置（沿用默认布局：靠前但不在最前，便于观察并行推进）
     for j, src in enumerate(answer_pool[:k_answer]):
         pos = min(2 + 2 * j, len(sources))
         sources.insert(pos, Source(src.name, src.latency, src.content, src.holds_answer))

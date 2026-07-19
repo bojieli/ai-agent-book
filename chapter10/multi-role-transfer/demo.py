@@ -1,20 +1,20 @@
 """
-demo.py — Experiment 10-2 demo entry: multi-role transfer / transfer_to_agent
+demo.py —— 实验 10-2 演示入口：多角色转换 / transfer_to_agent
 
-Minimal run (one command, runs default composite task):
+最简运行（一条命令，跑默认复合任务）：
     python demo.py
 
-Other common usages:
-    python demo.py --list-roles              # Offline: print role roster and exit (no API Key needed)
-    python demo.py --scenario coding         # Switch to a built-in scenario (routes to coding role)
-    python demo.py --task "..."              # Custom task
-    python demo.py --role research            # Specify starting role (default is triage front desk)
-    python demo.py --interactive             # Interactive multi-turn dialogue (roles and shared history persist across turns)
+其它常用方式：
+    python demo.py --list-roles              # 离线：只打印角色花名册后退出（无需 API Key）
+    python demo.py --scenario coding         # 换一个内置场景（会路由到 coding 角色）
+    python demo.py --task "..."              # 自定义任务
+    python demo.py --role research            # 指定起始角色（默认 triage 前台分诊）
+    python demo.py --interactive             # 交互式多轮对话（角色与共享历史跨轮保留）
     python demo.py --model gpt-5.6-luna --max-steps 30
 
-Demonstrates a composite task requiring [multiple cross-domain switches], expected to produce
+演示一个需要【多次跨领域切换】的复合任务，预期出现
     triage → research → data_analysis → writing
-autonomous handoff chain — each handoff is triggered by the current role judging and calling transfer_to_agent.
+的自主移交链——每次移交都由当前角色自己判断并调用 transfer_to_agent 触发。
 """
 
 from __future__ import annotations
@@ -30,16 +30,16 @@ from orchestrator import MultiRoleOrchestrator, C
 
 
 def _to_openrouter_model(model: str) -> str:
-    """Map model name to OpenRouter namespace (for fallback path without OPENAI_API_KEY)."""
+    """把模型名映射到 OpenRouter 命名空间（用于无 OPENAI_API_KEY 的回退路径）。"""
     if "/" in model:
-        return model                      #  Already OpenRouter namespace, use as-is
+        return model                      # 已是 OpenRouter 命名空间，原样使用
     if model.startswith("gpt-"):
         return "openai/" + model          # gpt-* -> openai/gpt-*
     if model.startswith("claude-"):
         return "anthropic/claude-opus-4.8"
-    return "openai/gpt-5.6-luna"          #  Fallback: current cheap flagship
+    return "openai/gpt-5.6-luna"          # 兜底：当前便宜旗舰
 
-#  Try to read .env (optional dependency, can run without it if already exported in shell)
+# 尽量读取 .env（可选依赖，没装也能跑，只要 shell 里已 export）
 try:
     from dotenv import load_dotenv
 
@@ -49,90 +49,90 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
-#  Built-in scenarios: each deliberately spans multiple domains to force multiple autonomous handoffs.
-#  Key name used for --scenario; value is (task text, one-sentence description).
+# 内置场景：每个都刻意跨多个领域，以逼出多次自主移交。
+# 键名用于 --scenario；值为 (任务文本, 一句话说明)。
 # ---------------------------------------------------------------------------
 COMPOSITE_TASK = (
-    "I am preparing materials for investors. Please help me: \n"
-    "1) Look up China's new energy vehicle sales for 2021, 2022, and 2023; \n"
-    "2) Calculate the compound annual growth rate (CAGR) for these three years; \n"
-    "3) Write a Chinese summary of the data and CAGR conclusion for investors, no more than 120 characters."
+    "我在准备一份给投资人看的材料。请帮我：\n"
+    "1) 查一下中国 2021、2022、2023 三年的新能源汽车销量；\n"
+    "2) 据此算出这三年的年均复合增长率(CAGR)；\n"
+    "3) 把数据和这个增长率结论，写成一段面向投资人的、不超过 120 字的中文总结。"
 )
 
 SCENARIOS: dict[str, tuple[str, str]] = {
     "cagr": (
         COMPOSITE_TASK,
-        "Default scenario. Spans retrieval/computation/writing three domains: look up sales → calculate CAGR → write investment summary,"
-        "Expected chain triage → research → data_analysis → writing.",
+        "默认场景。跨检索/计算/写作三领域：查销量 → 算 CAGR → 写投资总结，"
+        "预期链路 triage → research → data_analysis → writing。",
     ),
     "solar": (
-        "Look up China's new photovoltaic installed capacity for 2021, 2022, and 2023,"
-        "calculate the CAGR for these three years, then write a one-sentence conclusion for readers.",
-        "Similar chain for another dataset (research → data_analysis → writing), verifying mechanism rather than memorizing answers.",
+        "帮我查一下中国 2021、2022、2023 三年的光伏新增装机量，"
+        "算出这三年的年均复合增长率(CAGR)，再写成一句话面向读者的结论。",
+        "另一组数据的同类链路（research → data_analysis → writing），验证机制而非记住答案。",
     ),
     "coding": (
-        "Write a Python script: compute the first 20 Fibonacci numbers and their sum;"
-        "after running the script, explain the result in one sentence to a non-technical audience.",
-        "Routes to coding role to actually run code with execute_python, then wrapped up by writing/triage.",
+        "请写一个 Python 脚本：计算斐波那契数列前 20 项，并求它们的和；"
+        "运行脚本得到结果后，用一句话向非技术读者解释这个结果。",
+        "路由到 coding 角色用 execute_python 真正跑代码，再由 writing/triage 收尾。",
     ),
 }
 DEFAULT_SCENARIO = "cagr"
 
 
 def print_roster():
-    """Print role roster, proving there are 5 roles each with different system prompts/tool sets."""
-    print(f"{C.BOLD}=== Role Roster (total {len(ROLES)} professional roles) ==={C.RESET}")
+    """打印角色花名册，证明存在 5 个角色、各有不同系统提示词/工具集。"""
+    print(f"{C.BOLD}=== 角色花名册（共 {len(ROLES)} 个专业角色）==={C.RESET}")
     for name, role in ROLES.items():
-        default_tag = "(default entry)" if name == DEFAULT_ROLE else ""
+        default_tag = "（默认入口）" if name == DEFAULT_ROLE else ""
         tools = role.tools + ["transfer_to_agent"]
         first_line = role.system_prompt.strip().splitlines()[0]
         print(
             f"{C.CYAN}• {name}{C.RESET} — {role.title}{default_tag}\n"
-            f"    Tool set: {tools}\n"
-            f"    System prompt (first sentence): {first_line}"
+            f"    工具集: {tools}\n"
+            f"    系统提示词(首句): {first_line}"
         )
     print()
 
 
 def print_scenarios():
-    """Print built-in scenario list (for --help / --list-roles reference)."""
-    print(f"{C.BOLD}=== Built-in Scenarios (--scenario) ==={C.RESET}")
+    """打印内置场景列表（供 --help / --list-roles 参考）。"""
+    print(f"{C.BOLD}=== 内置场景（--scenario）==={C.RESET}")
     for key, (_task, desc) in SCENARIOS.items():
-        default_tag = "(default)" if key == DEFAULT_SCENARIO else ""
+        default_tag = "（默认）" if key == DEFAULT_SCENARIO else ""
         print(f"{C.CYAN}• {key}{C.RESET}{default_tag} — {desc}")
     print()
 
 
 def parse_args() -> argparse.Namespace:
-    """Command-line arguments — all optional; when omitted, behavior is exactly the same as the original version (runs default composite task)."""
+    """命令行参数——均为可选，不传时行为与最初版本完全一致（跑默认复合任务）。"""
     parser = argparse.ArgumentParser(
         prog="demo.py",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=(
-            "Experiment 10-2 demo: multi-role transfer / transfer_to_agent.\n"
-            "On a piece of shared conversation history, 5 professional roles autonomously hand off via transfer_to_agent,"
-            "triggering a handoff chain like triage → research → data_analysis → writing."
+            "实验 10-2 演示：多角色转换 / transfer_to_agent。\n"
+            "在一段【共享对话历史】上，5 个专业角色通过 transfer_to_agent 自主接力，"
+            "触发形如 triage → research → data_analysis → writing 的移交链。"
         ),
         epilog=(
-            "Example: \n"
-            "  python demo.py                     # Run default scenario (new energy vehicle CAGR investment summary)\n"
-            "  python demo.py --list-roles        # Offline: list roles/scenarios only, no API calls\n"
-            "  python demo.py --scenario coding   # Switch to a scenario that routes to the coding role\n"
-            "  python demo.py --task 'Help me...' # Custom task\n"
-            "  python demo.py --role research     # Start from the research role\n"
-            "  python demo.py --interactive       # Interactive multi-turn, roles and shared history persist across turns\n"
+            "示例：\n"
+            "  python demo.py                     # 跑默认场景（新能源汽车 CAGR 投资总结）\n"
+            "  python demo.py --list-roles        # 离线：只看角色/场景清单，不调用 API\n"
+            "  python demo.py --scenario coding   # 换到会路由至 coding 角色的场景\n"
+            "  python demo.py --task '帮我...'    # 自定义任务\n"
+            "  python demo.py --role research     # 从 research 角色起步\n"
+            "  python demo.py --interactive       # 交互式多轮，角色与共享历史跨轮保留\n"
         ),
     )
     parser.add_argument(
         "--scenario",
         choices=list(SCENARIOS.keys()),
         default=DEFAULT_SCENARIO,
-        help=f"Select a built-in scenario (default {DEFAULT_SCENARIO}); overridden by --task. Options:{list(SCENARIOS.keys())}",
+        help=f"选择一个内置场景（默认 {DEFAULT_SCENARIO}）；被 --task 覆盖。可选：{list(SCENARIOS.keys())}",
     )
     parser.add_argument(
         "--task",
         default=None,
-        help="Custom task text, overrides --scenario; if not provided, uses the selected built-in scenario.",
+        help="自定义任务文本，覆盖 --scenario；不传则使用所选内置场景。",
     )
     parser.add_argument(
         "--role",
@@ -140,62 +140,62 @@ def parse_args() -> argparse.Namespace:
         dest="role",
         choices=list(ROLES.keys()),
         default=DEFAULT_ROLE,
-        help=f"Specify starting role (default {DEFAULT_ROLE} front triage). Options:{list(ROLES.keys())}",
+        help=f"指定起始角色（默认 {DEFAULT_ROLE} 前台分诊）。可选：{list(ROLES.keys())}",
     )
     parser.add_argument(
         "--interactive",
         action="store_true",
-        help="Interactive multi-turn mode: reuse the same orchestrator, roles and shared history persist across turns (Ctrl-C / type exit to quit).",
+        help="交互式多轮模式：复用同一编排器，角色与共享历史跨轮保留（Ctrl-C / 输入 exit 退出）。",
     )
     parser.add_argument(
         "--model",
         default=None,
-        help="Override OPENAI_MODEL environment variable (defaults to environment variable, or gpt-5.6-luna if not set).",
+        help="覆盖 OPENAI_MODEL 环境变量（默认沿用环境变量，未设置则为 gpt-5.6-luna）。",
     )
     parser.add_argument(
         "--max-steps",
         type=int,
         default=20,
-        help="Hard upper limit on LLM rounds per single user message to prevent infinite loops (default 20).",
+        help="单条用户消息的最大 LLM 轮数硬上限，防止死循环（默认 20）。",
     )
     parser.add_argument(
         "--list-roles",
         action="store_true",
-        help="Offline: print role roster and built-in scenarios then exit, no API Key needed (for self-check).",
+        help="离线打印角色花名册与内置场景后退出，不需要 API Key（用于自检）。",
     )
     return parser.parse_args()
 
 
 def print_run_summary(orch: MultiRoleOrchestrator, final: str):
-    """Print the handoff chain, division of labor overview, and final results for one run."""
-    print(f"\n{C.BOLD}================ Run Summary ================{C.RESET}")
-    print(f"{C.MAGENTA}Autonomous handoff chain:{C.RESET} {orch.handoff_chain_str()}")
-    print(f"{C.MAGENTA}Handoff count:{C.RESET} {len(orch.handoffs)}")
+    """打印一次运行的移交链、分工总览与最终成果。"""
+    print(f"\n{C.BOLD}================ 运行汇总 ================{C.RESET}")
+    print(f"{C.MAGENTA}自主移交链:{C.RESET} {orch.handoff_chain_str()}")
+    print(f"{C.MAGENTA}移交次数:{C.RESET} {len(orch.handoffs)}")
     for i, h in enumerate(orch.handoffs, 1):
         print(f"  {i}. {h.from_role} → {h.to_role}  |  reason: {h.reason}")
-    print(f"\n{C.MAGENTA}Role division (who used what tools, who produced the final response):{C.RESET}")
+    print(f"\n{C.MAGENTA}各角色分工（谁用了什么工具、谁产出最终回复）:{C.RESET}")
     print(orch.role_work_summary())
-    print(f"\n{C.GREEN}Final result:{C.RESET}\n{final}")
+    print(f"\n{C.GREEN}最终成果:{C.RESET}\n{final}")
 
 
 def run_interactive(orch: MultiRoleOrchestrator):
-    """Interactive multi-turn: same orchestrator reused across turns, shared history and current role persist."""
+    """交互式多轮：同一编排器跨轮复用，共享历史与当前角色持续保留。"""
     print(
-        f"{C.BOLD}=== Interactive Multi-turn Mode ==={C.RESET}\n"
-        f"{C.DIM}Enter your request and press Enter; type exit / quit or press Ctrl-C to exit."
-        f"Roles and conversation history persist across turns (shared context).{C.RESET}"
+        f"{C.BOLD}=== 交互式多轮模式 ==={C.RESET}\n"
+        f"{C.DIM}输入你的请求后回车；输入 exit / quit 或按 Ctrl-C 退出。"
+        f"角色与对话历史会跨轮保留（共享上下文）。{C.RESET}"
     )
     turn = 0
     while True:
         try:
-            user_message = input(f"\n{C.BOLD}👤 You (current control is with {orch.current_role}）> {C.RESET}").strip()
+            user_message = input(f"\n{C.BOLD}👤 你（当前控制权在 {orch.current_role}）> {C.RESET}").strip()
         except (EOFError, KeyboardInterrupt):
-            print("\nExited interactive mode.")
+            print("\n已退出交互模式。")
             break
         if not user_message:
             continue
         if user_message.lower() in {"exit", "quit", "q"}:
-            print("Exited interactive mode.")
+            print("已退出交互模式。")
             break
         turn += 1
         final = orch.run(user_message)
@@ -205,7 +205,7 @@ def run_interactive(orch: MultiRoleOrchestrator):
 def main():
     args = parse_args()
 
-    # ---- Offline self-check path: no API Key required ----
+    # ---- 离线自检路径：无需 API Key ----
     if args.list_roles:
         print_roster()
         print_scenarios()
@@ -213,11 +213,11 @@ def main():
 
     model = args.model or os.environ.get("OPENAI_MODEL", "gpt-5.6-luna")
 
-    # General fallback: prioritize direct connection to OPENAI_API_KEY; otherwise use OPENROUTER_API_KEY via OpenRouter;
-    # If neither is set, report a clear error.
-    # Special case: gpt-5.x series direct connection to OpenAI requires organization verification, and its /v1/chat/completions has limited support for
-    # reasoning models with tools (reasoning_effort restriction). Therefore, if OPENROUTER_API_KEY is set,
-    # gpt-5.x will prefer OpenRouter to avoid direct connection errors.
+    # 通用回退：优先直连 OPENAI_API_KEY；否则用 OPENROUTER_API_KEY 走 OpenRouter；
+    # 都没有则报清晰错误。
+    # 特例：gpt-5.x 系列直连 OpenAI 需组织验证，且其 /v1/chat/completions 对带工具的
+    # 推理模型支持受限（reasoning_effort 限制）。因此只要设置了 OPENROUTER_API_KEY，
+    # 就对 gpt-5.x 优先改走 OpenRouter，避免直连报错。
     prefer_openrouter = model.startswith("gpt-5") and os.environ.get("OPENROUTER_API_KEY")
     api_key = None if prefer_openrouter else os.environ.get("OPENAI_API_KEY")
     if api_key:
@@ -226,12 +226,12 @@ def main():
         api_key = os.environ["OPENROUTER_API_KEY"]
         base_url = "https://openrouter.ai/api/v1"
         model = _to_openrouter_model(model)
-        why = "gpt-5.x prefers OpenRouter" if prefer_openrouter else "OPENAI_API_KEY not detected"
-        print(f"（{why}, switching to OpenRouter; model mapping is {model}）")
+        why = "gpt-5.x 优先走 OpenRouter" if prefer_openrouter else "未检测到 OPENAI_API_KEY"
+        print(f"（{why}，改用 OpenRouter；模型映射为 {model}）")
     else:
-        print("Error: environment variable OPENAI_API_KEY or OPENROUTER_API_KEY not found. Please set and retry.",
+        print("错误：未找到环境变量 OPENAI_API_KEY 或 OPENROUTER_API_KEY。请先设置后重试。",
               file=sys.stderr)
-        print("(Tip: to only view the role/scenario list, run `python demo.py --list-roles`, no Key required.)",
+        print("（提示：只想看角色/场景清单可运行 `python demo.py --list-roles`，无需 Key。）",
               file=sys.stderr)
         sys.exit(1)
 
@@ -248,14 +248,14 @@ def main():
     )
 
     if args.interactive:
-        print(f"{C.BOLD}=== Model model={model}, starting role {args.role} ==={C.RESET}")
+        print(f"{C.BOLD}=== 模型 model={model}，起始角色 {args.role} ==={C.RESET}")
         run_interactive(orch)
         return
 
-    # ---- Scripted: single composite task, run end-to-end once ----
+    # ---- 脚本化：单条复合任务，端到端跑完一次 ----
     task = args.task if args.task is not None else SCENARIOS[args.scenario][0]
-    scenario_tag = "Custom task" if args.task is not None else f"Scenario {args.scenario}"
-    print(f"{C.BOLD}=== Starting execution ({scenario_tag}，model={model}, starting role={args.role}）==={C.RESET}")
+    scenario_tag = "自定义任务" if args.task is not None else f"场景 {args.scenario}"
+    print(f"{C.BOLD}=== 开始执行（{scenario_tag}，model={model}，起始角色={args.role}）==={C.RESET}")
 
     final = orch.run(task)
     print_run_summary(orch, final)

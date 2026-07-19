@@ -1,258 +1,35 @@
-# Design Document: Conversational Legal Advisory Agent for Non-Professionals
+# Cursor Chat: ai-agent-book
 
-## 1. Problem Statement
+## Metadata
+- **Project**: ai-agent-book
+- **Path**: `/Users/boj`
+- **Date**: 2025-09-18 18:53:45
+- **Session ID**: `541ada49-b7ec-473b-9b6a-37d453971433`
 
-Non-professional individuals facing legal issues often cannot articulate their situation in precise legal terminology. They describe events in everyday language, omitting critical details that a lawyer would know to ask about. The challenge is to build an AI agent that can:
+## Conversation
 
-1. **Conduct an intelligent conversation** to extract relevant facts from a user's natural-language description
-2. **Map those facts to structured legal dimensions** (e.g., injury severity, weapon use, prior relationship, provocation)
-3. **Query a knowledge base of 10,000+ real Chinese legal cases** to find similar precedents
-4. **Provide actionable, understandable advice** about likely charges, sentencing ranges, and next steps
+### 👤 You
 
-## 2. The Core Challenge: Knowledge Engineering from 10K+ Cases
+In projects/week3/structured-knowledge-extraction, create an educational project demonstrating an agent that summarizes legal cases in this dataset and extract knowledge in a structured way  @https://github.com/thunlp/CAIL?tab=readme-ov-file 
 
-The dataset (CAIL - Chinese AI and Law) contains raw case texts with structured metadata. The key challenge is **transforming unstructured case facts into a queryable knowledge representation** that the agent can use to match user descriptions.
+The aim of this project is to create a conversational AI agent that provides legal advise to non-professional people. The challenge is that non-professional people does not know how to describe the details. So the agent must have a conversation with the user, and ask questions about details of the user, and query the knowledge base to find similar cases and provide suggestions. So, the agent MUST know what it needs to know in order to determine the judgement, and ask the necessary questions. The challenge becomes, how to summarize the 10K+ cases into tags, how to define the tags, and find the factors that impact the length of imprisonment.
 
-### 2.1 What We Need to Extract from Each Case
+Give me a detailed design document first, outlining the problem, challenge and your solution, without writing code.
 
-From each case fact description and its metadata, we need to identify **factors that influence sentencing**. Based on analysis of the provided examples, these factors include:
+The cases look like the following.
 
-| Factor Category | Specific Factors | Example from Data |
-|----------------|-----------------|-------------------|
-| **Injury Severity** | Minor injury (轻伤一级/二级), Serious injury (重伤), Death | 轻伤一级 → 12 months; 重伤 → 36 months |
-| **Weapon Use** | None, Improvised (stone, stool), Weapon (knife) | 石头 → 12 months; 杀猪刀 → 42 months |
-| **Provocation** | None, Verbal dispute, Physical altercation | 争吵 → lighter sentence |
-| **Relationship** | Stranger, Acquaintance, Family | 继任丈夫 → domestic context |
-| **Number of Participants** | Single, Multiple (organized) | 伙同多人 → 42 months |
-| **Prior Criminal Record** | None, Has record | (not in examples but important) |
-| **Compensation/Reconciliation** | Paid compensation, No compensation | 赔偿4万元 → lighter sentence |
-| **Voluntary Surrender/Confession** | Yes, No | 坦白 → lighter sentence |
-| **Role in Crime** | Principal, Accomplice | 从犯 → lighter sentence |
+{"fact": "昌宁县人民检察院指控，2014年4月19日下午16时许，被告人段某驾拖车经过鸡飞乡澡塘街子，时逢堵车，段某将车停在“冰凉一夏”冷饮店门口，被害人王某的侄子王2某示意段某靠边未果，后上前敲打车门让段某离开，段某遂驾车离开，但对此心生怨愤。同年4月21日22时许，被告人段某酒后与其妻子王1某一起准备回家，走到鸡飞乡澡塘街富达通讯手机店门口时停下，段某进入手机店内对被害人王某进行吼骂，紧接着从手机店出来拿得一个石头又冲进手机店内朝王某头部打去，致王某右额部粉碎性骨折、右眼眶骨骨折。经鉴定，被害人王某此次损伤程度为轻伤一级。", "meta": {"relevant_articles": [234], "accusation": ["故意伤害"], "punish_of_money": 0, "criminals": ["段某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 12, "life_imprisonment": false}}}
+{"fact": "公诉机关指控,2015年11月10日晚9时许，被告人李某的妹妹李某某与被害人华某某在桦川县悦来镇石锅烤肉吃饭时发生口角，华某某殴打李某某被他人拉开。后李某某打电话将此事告知李某。李某便开车接上李某某在悦来镇“0454饮吧”找到华某某并质问其因何殴打李某某，之后二人厮打在一起。李某用拳头、巴掌连续击打华某某脸部，致华受伤住院治疗。经桦川县公安局司法鉴定，华某某所受伤为轻伤二级。", "meta": {"relevant_articles": [234], "accusation": ["故意伤害"], "punish_of_money": 0, "criminals": ["李某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 10, "life_imprisonment": false}}}
+{"fact": "贵州省平坝县人民检察院指控：2014年4月9日下午，被告人王某丁与其堂哥王4某（另案处理）假释驾驶大货车（贵A×××××）准备到乐某镇大屯村拉砂，行至大屯村时与被害人王某乙相遇，王4某与王某乙因琐事发生矛盾，准备打架时被路人劝开，双方离开现场。之后，王4某打电话邀约王某乙打架，接着又打电话召集郑3某、艾1某雷、邱某（均另案处理）、。王3某王6某、王某丁与艾1某雷、邱某、郑3某等人聚集后，行至乐某商务宾馆门前大街上时，与被害人高某乙、王某乙、王某甲、李某等人相遇，王4某、王某丁等人就从郑3某驾驶的面包车上拿出杀猪刀、砍刀等凶器准备，当王4某于与高某乙正在交谈时，艾1某雷大喊一声“杀”，王4某、郑3某等人手持凶器将高某乙、王某乙、王某甲、李某杀伤，王某丁等人手持凶器打砸车身。在将对方杀伤后，王4某、王某丁等人驾车逃离现场。被害人高某乙受伤经医院抢救无效，于2014年4月9日17时许死亡。经鉴定，高某乙系创伤性、失血性休克死亡；王某甲所受之伤为轻伤一级；王某乙所受之伤为轻伤二级；李某所受之伤为轻微伤。公诉机关认为，被告人王某丁伙同王4某等人××他人身体，致一人死亡，二人受轻伤，一人受轻微伤，其行为触犯了《中华人民共和国刑法》××××，犯罪事实清楚，证据确实、充分，应当以××罪追究其刑事责任。王某丁在共同犯罪中其次起次要作用，是从犯，依法应当从轻、减轻或者免除处罚；其到案后如实公式供述自己的罪行，是坦白，依法可从轻处罚。根据《中华人民共和国刑事诉讼法》××的规定，特对被告人王某丁提起公诉。请依法判处。", "meta": {"relevant_articles": [292, 234], "accusation": ["故意伤害"], "punish_of_money": 0, "criminals": ["王某丁"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 42, "life_imprisonment": false}}}
+{"fact": "经审理查明：2014年5月6日14时许，被告人叶某某驾车途径赤壁市赵李桥镇胜利街涵洞时，被在此处饭店外的朱某某等人挡住去路，叶某某与朱某某为此发生争吵。随后，叶某某到赵李桥镇街道胡某某茶馆准备打牌，将自己的小车停在茶馆门前。朱某某的丈夫叶某甲带着外甥肖某回家时，发现叶某某的车子停在胡某某门外，肖某便用手拍打汽车，扬言要打叶某某，后被胡某某劝离。叶某某随后邀约余某某、黎某某、黄某某、陈某某（均另案处理）等人来到叶某甲楼下，与叶某甲、肖某及叶某甲另一个外甥刘某某发生厮打，被告人一伙手持木棍、砍刀、砖头将叶某甲、肖某、刘某某打伤。经鉴定：叶某甲为轻伤二级，肖某、刘某某均为轻微伤，叶某某亦受轻微伤。2015年1月26日18时许，被告人叶某某在赤壁市赵李桥镇紫阳酒店被公安民警抓获归案。同时查明，当事人双方已就本案民事赔偿问题自愿达成如下协议：即由被告人叶某某一次性赔偿被害人叶某甲、肖某、刘某某各项经济损失4万元，被害人表示不追究叶某某等人的法律责任。上述事实，被告人叶某某在开庭过程中亦无异议，且有被害人叶某甲、肖某、刘某某的陈述、证人朱某某、胡某某、甘某某等人的证言、辨认笔录、鉴定意见、调解协议、谅解书、户籍证明、到案经过等证据证实，足以认定。", "meta": {"relevant_articles": [234], "accusation": ["故意伤害"], "punish_of_money": 0, "criminals": ["叶某某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 12, "life_imprisonment": false}}}
+{"fact": "安阳县人民检察院指控：2014年4月27日上午11时许，宋某甲在安阳县吕村镇翟奇务村被告人梁某甲家吃饭时，因琐事发生争执，梁某甲用板凳将宋某甲头部砸致轻伤。案发后民事部分已调解。上述事实，公诉机关向本院提供了被告人供述、被害人陈述、证人证言、鉴定意见等证据，认为被告人的行为触犯了《中华人民共和国刑法》××××之规定，构成××罪，提请本院依法判处。", "meta": {"relevant_articles": [234], "accusation": ["故意伤害"], "punish_of_money": 0, "criminals": ["梁某甲"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 12, "life_imprisonment": false}}}
+{"fact": "富平县人民检察院指控，2016年6月11日18时许，在富平县某镇某村家中，被告人刘某因继任丈夫封某某给封某某之女封某入赘女婿用房一事，刘某、封某某两人发生冲突，后封某某离开并让封某锁上家中大门。在封某锁大门时，刘某用随身携带的折叠刀将封某腹部捅伤，致肝脏破裂。经渭南市公安司法鉴定中心鉴定，被害人封某所受损伤属重伤二级。为证实所指控的犯罪事实成立，公诉人当庭宣读，出示了受案登记表、诊断证明、出院病历、行政处罚决定书、证人证言、被害人陈述、被告人供述、鉴定意见、现场照片及勘验笔录等。据此认定被告人刘某之行为已构成××罪，要求依法判处。", "meta": {"relevant_articles": [234], "accusation": ["故意伤害"], "punish_of_money": 0, "criminals": ["刘某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 36, "life_imprisonment": false}}}
+{"fact": "深圳市龙岗区人民检察院指控，2014年5月16日22时许，被害人周某某驾驶小汽车途径龙岗区某花园入口处，被被告人卢某拦截下来，因周某某欠卢某的介绍生意的介绍费，双方发生争执，卢某用拳头将周某某的脸部、鼻子等处打伤。经鉴定，被害人周某某的伤情为轻伤二级。公诉机关为证明指控的事实，当庭宣读和出示了书证、证人证言、被害人陈述、被告人供述和辩解、鉴定意见、现场勘查笔录以及照片、视听资料等证据。公诉机关认为，被告人卢某的行为已构成××罪，建议对被告人卢某判处一年以下××。诉请本院依法判处。", "meta": {"relevant_articles": [234], "accusation": ["故意伤害"], "punish_of_money": 0, "criminals": ["卢某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 10, "life_imprisonment": false}}}
+{"fact": "经审理查明，2011年8月25日凌晨2时50分许，被告人许某伙同谭某和饶某（均已判刑）及李某某等人，在韶关市曲江区马坝镇长江路宵夜广场吃宵夜时，邻桌的郑某某带着被害人文某某过来敬酒，被害人文某某与其认识的李某某拥抱了一下并聊天，谭某等人见状即感到生气，双方为此发生纠纷。谭某、饶某及被告人许某三人就地拿起啤酒瓶、木板等物殴打文某某，造成文某某左眼、身上多处受伤。被告人及同案人随即逃离现场。2013年11月1日，被告人许某在深圳市罗岗区被抓获归案。2011年9月14日，法医鉴定文某某的损伤为轻伤；2012年2月22日补充鉴定文某某的损伤属重伤，七级伤残。被害人文某某于2013年11月因交通事故意外死亡，在本院主持调解下，2014年2月21日，双方达成赔偿协议，被告人通过其亲属赔偿被害人亲属50000元，并取得被害人亲属的谅解。被害人亲属要求法院从轻处罚被告人，并适用××。上述事实，被告人许某在开庭审理过程中亦无异议，并有书证韶关市公安局曲江区分局受案登记表和立案决定书、被告人常住人口登记表、网上追逃登记表、被告人到案经过、被告人户籍证明、被害人文某某死亡证、被害人亲属出具的谅解书及收款收据，被害人文某某的陈述，证人李某某、周某某、杨某某、黄某某、郑某某、欧某某的证言，同案人谭某、饶某的供述，被告人许某在侦查阶段的供述和辩解，辨认笔录，韶关市公安局曲江区分局的现场勘验检查笔录、照片、韶关市曲江区公安司法鉴定中心韶公（司）鉴（损）字（2012）181号法医学人体损伤程度鉴定书及补充鉴定书等证据证实，足以认定。", "meta": {"relevant_articles": [234], "accusation": ["故意伤害"], "punish_of_money": 0, "criminals": ["许某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 36, "life_imprisonment": false}}}
 
-### 2.2 The Tagging Approach
+---
 
-We will create a **multi-dimensional tag system** where each case is represented as a vector of these factors. This allows:
-
-- **Similarity search**: Find cases with matching factor profiles
-- **Sentencing prediction**: Given a factor profile, estimate the likely imprisonment term
-- **Question generation**: The agent knows which factors are missing and asks about them
-
-## 3. Proposed Solution Architecture
-
-### 3.1 Offline Phase: Knowledge Base Construction
-
-```
-Raw Cases (JSONL)
-       │
-       ▼
-┌─────────────────────────────┐
-│  Case Fact Parser (LLM)     │
-│  Extracts structured factors│
-│  from natural language text │
-└─────────────────────────────┘
-       │
-       ▼
-┌─────────────────────────────┐
-│  Factor Tag Database        │
-│  Each case → {              │
-│    factor_1: value,         │
-│    factor_2: value,         │
-│    ...                      │
-│    imprisonment_months: N   │
-│  }                          │
-└─────────────────────────────┘
-       │
-       ▼
-┌─────────────────────────────┐
-│  Embedding Index            │
-│  Vector embeddings of       │
-│  factor profiles for        │
-│  similarity search          │
-└─────────────────────────────┘
-```
-
-### 3.2 Online Phase: Conversational Agent
-
-```
-User Input (Natural Language)
-       │
-       ▼
-┌─────────────────────────────────────┐
-│  Dialogue Manager                   │
-│  ├─ Intent Recognition              │
-│  ├─ Entity Extraction               │
-│  └─ State Tracking (missing factors)│
-└─────────────────────────────────────┘
-       │
-       ▼
-┌─────────────────────────────────────┐
-│  Question Generator                 │
-│  Asks about missing factors:        │
-│  "Was a weapon used?"               │
-│  "Did you suffer any injuries?"     │
-│  "Was there a prior relationship?"  │
-└─────────────────────────────────────┘
-       │
-       ▼
-┌─────────────────────────────────────┐
-│  Knowledge Base Query Engine        │
-│  ├─ Factor matching                 │
-│  ├─ Similar case retrieval          │
-│  └─ Sentencing range estimation     │
-└─────────────────────────────────────┘
-       │
-       ▼
-┌─────────────────────────────────────┐
-│  Response Generator                 │
-│  Presents findings in plain         │
-│  language with case examples        │
-└─────────────────────────────────────┘
-```
-
-## 4. Detailed Component Design
-
-### 4.1 Case Fact Parser
-
-**Input**: Raw case fact text (Chinese)
-**Output**: Structured factor profile
-
-**Method**: Use an LLM (e.g., GPT-4 or a fine-tuned model) to extract factors from each case. The prompt would instruct the model to identify:
-
-- Injury severity (minor/serious/fatal)
-- Weapon type (none/improvised/weapon)
-- Provocation level (none/verbal/physical)
-- Relationship (stranger/acquaintance/family)
-- Number of participants (single/multiple)
-- Compensation paid (yes/no)
-- Confession (yes/no)
-- Role (principal/accomplice)
-
-**Example extraction** from case 1:
-```json
-{
-  "injury_severity": "minor_1",
-  "weapon_used": "improvised_stone",
-  "provocation": "verbal_dispute",
-  "relationship": "stranger",
-  "participants": "single",
-  "compensation": false,
-  "confession": false,
-  "role": "principal",
-  "imprisonment_months": 12
-}
-```
-
-### 4.2 Factor Tag Database
-
-A structured database (SQLite or a simple JSON index) that stores:
-
-- **Case ID**: Unique identifier
-- **Factor vector**: Binary or categorical values for each factor
-- **Metadata**: Original accusation, relevant articles, imprisonment term
-- **Full text**: Original case fact for reference
-
-### 4.3 Embedding Index
-
-Create vector embeddings of the factor profiles (not the raw text) to enable fast similarity search. Each factor profile is a fixed-length vector where each dimension represents a factor category.
-
-**Similarity metric**: Weighted cosine similarity, where certain factors (e.g., injury severity) are weighted more heavily than others (e.g., location).
-
-### 4.4 Dialogue Manager
-
-**State machine** with the following states:
-
-1. **INITIAL**: Greet user, ask for general description
-2. **FACT_GATHERING**: Ask specific questions to fill missing factors
-3. **QUERYING**: Search knowledge base with current factor profile
-4. **RESULT_PRESENTATION**: Show similar cases and advice
-5. **REFINEMENT**: Ask if user wants to clarify or add details
-
-**State tracking**: Maintain a `FactorProfile` object that starts empty and gets filled as the conversation progresses.
-
-### 4.5 Question Generator
-
-For each missing factor, generate a natural-language question:
-
-| Missing Factor | Question |
-|---------------|----------|
-| Injury severity | "Were you or the other person injured? How serious was it?" |
-| Weapon use | "Was any weapon involved in the incident?" |
-| Relationship | "Did you know the other person before this incident?" |
-| Provocation | "Was there any argument or fight before the main incident?" |
-| Participants | "Were there other people involved besides you and the other person?" |
-| Compensation | "Have you or the other party paid any compensation for damages?" |
-| Confession | "Did you voluntarily go to the police or confess to what happened?" |
-
-### 4.6 Knowledge Base Query Engine
-
-**Algorithm**:
-
-1. Take the current factor profile from the dialogue state
-2. Compute similarity against all cases in the database
-3. Return top-K most similar cases
-4. Aggregate sentencing data from similar cases to estimate a range
-
-**Output**: 
-- Top 3-5 most similar cases with their facts and sentences
-- Estimated sentencing range (e.g., "Based on similar cases, the imprisonment term is typically between 10-18 months")
-- Key factors that influence the sentence (e.g., "Cases with weapon use tend to receive 30% longer sentences")
-
-### 4.7 Response Generator
-
-**Template-based generation** that:
-
-1. Summarizes what the user described
-2. Presents similar cases in simplified language
-3. Explains the likely legal outcome
-4. Provides actionable advice (e.g., "You should consider seeking legal counsel" or "Based on similar cases, compensation may reduce the sentence")
-
-## 5. Implementation Plan (No Code)
-
-### Phase 1: Data Preparation
-1. Download CAIL dataset (10,000+ cases)
-2. Parse each case fact using an LLM to extract factor profiles
-3. Build the factor tag database
-4. Create embedding index for similarity search
-
-### Phase 2: Dialogue System
-1. Implement state machine for conversation flow
-2. Create question templates for each factor
-3. Build the query engine that matches user profiles to case database
-4. Implement response generation with templates
-
-### Phase 3: Integration & Testing
-1. Connect dialogue system to knowledge base
-2. Test with sample user scenarios
-3. Refine factor extraction and question ordering
-4. Evaluate accuracy of sentencing predictions
-
-## 6. Key Design Decisions
-
-### 6.1 Why Factor-Based Matching Instead of Full-Text Search?
-
-Full-text search would match on surface-level words (e.g., "stone", "knife") but miss the underlying legal structure. Factor-based matching captures the **legal semantics** that determine sentencing.
-
-### 6.2 Why Use an LLM for Factor Extraction?
-
-The case facts are written in complex legal Chinese. An LLM can understand nuance (e.g., distinguishing "improvised weapon" from "premeditated weapon") better than rule-based NLP.
-
-### 6.3 Why a State Machine for Dialogue?
-
-A state machine ensures the agent systematically covers all relevant factors without forgetting to ask about important details. It also prevents the conversation from going in circles.
-
-## 7. Expected Outcomes
-
-1. **Conversational agent** that can guide non-professionals through legal fact disclosure
-2. **Structured knowledge base** of 10,000+ cases tagged with sentencing factors
-3. **Sentencing prediction** with reasonable accuracy (±6 months for minor injuries, ±12 months for serious injuries)
-4. **Explainable advice** that references specific similar cases
-
-## 8. Limitations & Future Work
-
-- **Data bias**: CAIL dataset may not represent all regions or case types equally
-- **Language barrier**: The agent currently works only in Chinese
-- **Legal accuracy**: The agent provides informational advice, not legal counsel
-- **Future**: Could be extended to support multiple legal domains (civil, administrative) and multiple languages### 🤖 Cursor Assistant
+### 🤖 Cursor Assistant
 
 Of course. I will create a detailed design document for the conversational legal advisory agent project. This document will outline the problem, challenges, and a comprehensive solution, as you've requested.
 
@@ -268,23 +45,27 @@ I have created the design document as requested in `projects/week3/structured-kn
 
 ### 👤 You
 
-You should notice that there are many different types of accusations, not only injury. Should we incrementally add new tags as we add new cases? Or should we scan all the 10K+ cases at once and define all tags beforehand, and then go through the cases again? Or some other way to extract the important factors that are relevant to the sentence? You MUST think carefully before updating the docs.
+You should notice that there are many different types of accusations, not only injury. Should we incrementally add new tags as we add new cases? Or we should scan all the 10K+ cases at once and define all tags beforehand, and then go through the cases again? Or other kind of way to extract the important factors that are relevant to the sentence? You MUST think carefully before updating the docs.
 
-{"fact": "The Puning City People's Procuratorate charged that, starting from December 2013, the defendant Lai, without obtaining a drug sales license, operated an "adult products store" next to the "Chiwei Gas Station" on Chiwei Street, Puning, selling sexual health products and other items. On June 17, 2015, the public security authorities seized from his "adult products store" 3 boxes of "Letangtang Viagra 999," 3 boxes of "Jinlong Weige Wang," and 2 bottles of "PLANTVIGRA" that had not yet been sold. The seized drugs were identified as counterfeit by the Jieyang City Food and Drug Administration. The Puning City People's Procuratorate provided the court with evidence including the crime scene, photos of the seized drugs, extraction records, seizure lists, a reply letter from the food and drug regulatory authority, and the defendant's confession. It believed that the defendant Lai's actions violated Article XX of the Criminal Law of the People's Republic of China and constituted the crime of selling counterfeit drugs. It requested the court to render a judgment according to law.", "meta": {"relevant_articles": [141], "accusation": ["[Production, Sale] of Counterfeit Drugs"], "punish_of_money": 5000, "criminals": ["Lai"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 8, "life_imprisonment": false}}}
-{"fact": "The Xi'an Beilin District People's Procuratorate indictment charged: 1. At around 15:00 on August 17, 2009, the defendant Gao Jia, together with "Xiao Liu" and Li 2 (separately prosecuted), came to Shu beauty salon at No. 36 Stadium Road, this city. The defendant Gao Jia and "Xiao Liu" used knives to slash the victim Zhang, causing minor injuries. Subsequently, the defendant Gao Jia and "Xiao Liu" smashed the glass door, glass mirror, coffee table, and other items in the store. Before leaving, the two threatened the victim Zhang, demanding that he prepare RMB 5,000 by that evening, otherwise his beauty salon would not be able to operate. On the third night, another group came to the store to collect the money, but failed because the victim Zhang was hospitalized due to his injuries. 2. On October 20, 2009, the defendant Gao Jia, together with Kou and Fei (both subjected to re-education through labor), came to Daohuaxiang massage parlor on Stadium Road, this city, and extorted RMB 680 from the owner Gao Yi. 3. At around 13:00 on November 5, 2009, the defendant Gao Jia, together with Luo (at large), came to Molihua beauty salon on Stadium Road, this city, and extorted RMB 600 from the owner Cheng.", "meta": {"relevant_articles": [234, 274], "accusation": ["Intentional Injury", "Extortion"], "punish_of_money": 0, "criminals": ["Gao Jia"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 30, "life_imprisonment": false}}}
-{"fact": "The prosecuting authority charged that, from mid-December 2013 to January 20, 2014, the defendant Ruan, together with A (separately prosecuted) and others, set up one "Fishing" game machine capable of accommodating 6 people for gambling at No. 88 Hewei Street, Songcheng Street, Xiapu County, for unspecified members of the public to gamble, illegally profiting RMB 10,000. At 22:00 on January 20, 2014, the public security authorities caught the defendant Ruan red-handed in the store and seized one gambling machine on the spot. The Xiapu County Public Security Bureau determined that the "Fishing" game machine was an electronic game facility with gambling functions, capable of being used by six people and functioning normally. After the incident, the defendant Ruan returned the illegal gains of RMB 10,000 to the public security authorities.", "meta": {"relevant_articles": [303], "accusation": ["Operating a Gambling Establishment"], "punish_of_money": 20000, "criminals": ["Ruan"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 6, "life_imprisonment": false}}}
-{"fact": "The Neihuang County People's Procuratorate charged: On a day in September 2001, the defendant Bian, taking advantage of his position, accepted RMB 350,000 from Feng and sought benefits for him. On a day in the first half of 2002, the defendant Bian, taking advantage of his position, accepted RMB 2,000,000 from Wang and sought benefits for him. From the end of 2003 to the end of 2004, the defendant Bian, taking advantage of his position, accepted RMB 175,000 from Hao in five installments and sought benefits for him. On a day in February 2010, the defendant Bian, taking advantage of his position, accepted RMB 20,000 from Hao and sought benefits for him. On a day at the end of 2009, the defendant Bian, taking advantage of his position, accepted RMB 50,000 from Zhang and sought benefits for him. On a day at the end of 2010, the defendant Bian, taking advantage of his position, accepted RMB 50,000 from Zhang and sought benefits for him. Around the Mid-Autumn Festival in 2011 and on a day in May or June 2012, the suspect Bian, taking advantage of his position, accepted RMB 210,000 from Chen in two installments and sought benefits for him. Existing evidence proves that after the incident, the defendant Bian returned illicit money totaling RMB 855,000. The evidence provided by the prosecuting authority includes the defendant Bian's confession and defense, household registration certificate, and testimony from witnesses such as Feng. It believed that the defendant Bian's actions constituted the crime of bribery. It requested a judgment according to law.", "meta": {"relevant_articles": [385, 383, 383, 386], "accusation": ["Bribery"], "punish_of_money": 0, "criminals": ["Bian"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 132, "life_imprisonment": false}}}
-{"fact": "The Chongzuo Jiangzhou District People's Procuratorate charged that, on October 3, 2015, when police officers inspected the home and retail store of the defendant Wei at Quzhu Tun, Gongyi Village, Taiping Town, Jiangzhou District, Chongzuo City, they seized one fuse, approximately 14.25 meters long, from Wei's house, and 11.26 kilograms of emulsion explosives and 27 electric detonators from his retail store. Investigation revealed that Wei had no relevant qualifications for storing, using, or trading explosives. Appraisal showed that ammonium ions and nitrate ions were detected in the emulsion explosives seized from Wei's retail store. The Guangxi Public Judicial Appraisal Center appraised that the emulsion explosives seized from Wei's retail store had explosive function and power. Regarding the alleged criminal facts, the prosecuting authority presented relevant evidence in court and accordingly believed that the defendant Wei illegally stored explosives, amounting to 11.26 kilograms, which constituted a serious circumstance, and his actions had violated the provisions of Article XX of the Criminal Law of the People's Republic of China, constituting the crime of illegally storing explosives. However, after the incident, Wei was able to voluntarily surrender himself, which could be a ground for mitigated punishment. It requested the court to render a judgment according to law. The defendant Wei and his defender had no objection to the charges brought by the prosecuting authority. The defendant Wei argued that his purpose in buying the explosives was to level the land, and they were stored in the retail store only because he did not have time to start the work. After the incident, he recognized his mistake and was able to surrender himself, requesting the court for a lighter punishment. The defender argued that the defendant Wei stored the explosives for production and living purposes, did not cause social harm, had the circumstance of voluntary surrender after the incident, and was a first-time and occasional offender, and should be given a lighter punishment.", "meta": {"relevant_articles": [125], "accusation": ["Illegal [Manufacture, Trade, Transport, Mail, Store] of [Guns, Ammunition, Explosives]"], "punish_of_money": 0, "criminals": ["Wei"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 36, "life_imprisonment": false}}}
-{"fact": "The prosecuting authority charged that, starting from February 2014, the defendant Cai, in a signless stall he rented at the basement of No. X, Lane X, Street X, Baiyun District, this city, harbored and introduced female youths such as Guo and Wu to engage in prostitution with others. At around 22:00 on March 18 of the same year, Cai again introduced the aforementioned female youths to engage in prostitution with others at the above address when he was caught by the public security personnel. Based on the above facts, the prosecuting authority believed that Cai harbored and introduced others for prostitution, and his actions had violated the provisions of Article XXXX of the Criminal Law of the People's Republic of China, and he should be held criminally liable for the crime of harboring and introducing prostitution. It requested the court to render a judgment according to law.", "meta": {"relevant_articles": [359], "accusation": ["[Organizing, Forcing, Luring, Harboring, Introducing] Prostitution", "[Luring, Harboring, Introducing] Prostitution"], "punish_of_money": 0, "criminals": ["Cai"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 5, "life_imprisonment": false}}}
-{"fact": "The Dingbian County People's Procuratorate charged that, on November 4, 2015, during the process of assisting the Yangjing Town People's Government of Dingbian County in distributing land acquisition compensation funds for the "Sunan 41-77 Well," the defendant Lv used the land acquisition funds of 99,225 yuan belonging to the Xitan Village group, which were deposited in his own account, to treat his son's illness. On June 7, 2016, the defendant Lv returned the compensation funds to the Xitan Village group.", "meta": {"relevant_articles": [384], "accusation": ["Misappropriation of Public Funds"], "punish_of_money": 0, "criminals": ["Lv"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 2, "life_imprisonment": false}}}
-{"fact": "The prosecuting authority charged: At around 20:00 on March 16, 2017, the defendant Tong, driving a taxi with license plate Chuan X, picked up four passengers including Xu and Fan at Xiaobei Street, Yucheng District. After contacting Xu 1 (separately prosecuted), an organizer of prostitution, by phone, Tong transported Xu, Fan, and others to the outside of Zhongxi Hotel on Dabei Street, Yucheng District, Ya'an City. Xu 1 arranged for Xu and Fan to engage in prostitution inside the hotel, while Tong waited outside the hotel. Xu 1 collected the prostitution fees from Xu and Fan, arranged for prostitutes Yang and Wang to provide services, and then paid Tong, who was waiting outside the hotel, an introduction fee of 200 yuan. On April 6, 2017, the public security police arrested the defendant Tong at the Yucheng taxi company. After his arrest, Tong truthfully confessed the above criminal facts.", "meta": {"relevant_articles": [359], "accusation": ["[Organizing, Forcing, Luring, Harboring, Introducing] Prostitution", "[Luring, Harboring, Introducing] Prostitution"], "punish_of_money": 0, "criminals": ["Tong"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 7, "life_imprisonment": false}}}
-{"fact": "The Ningde Jiaocheng District People's Procuratorate charged: From April 2012 to September 2014, the defendant Lin 2 successively organized four rounds of "mutual aid associations" with upper bids of 1,000 yuan and lower bids of 1,000 yuan, illegally absorbing 263 person-times of members. The defendant Lin 2 illegally absorbed deposits from the aforementioned members totaling RMB 9,919,004 (currency unit, same below), causing direct economic losses of RMB 2,343,280 to the reporting members. On March 21, 2016, the defendant Lin 2 surrendered to the public security authorities. On June 27 of the same year, the relatives of the defendant Lin 2 returned a total of RMB 79,500 in association fees to the reporting members. Regarding the above alleged criminal facts, the prosecutor presented relevant evidence to the court. The prosecuting authority accordingly believed that the defendant Lin 2 violated financial management regulations, XX, with a huge amount, and his actions had violated the provisions of Article XX of the Criminal Law of the People's Republic of China, and he should be held criminally liable for the crime of XX. It requested the court to render a judgment according to law.", "meta": {"relevant_articles": [176], "accusation": ["Illegally Absorbing Public Deposits"], "punish_of_money": 50000, "criminals": ["Lin 2"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 44, "life_imprisonment": false}}}{"fact": "The prosecution alleged that between approximately 11:00 and 15:00 on August 4, 2016, the defendant Zhang, in the Sanshan waters of Zhouxi Town, Duchang County, Poyang Lake, used a prohibited fishing tool, a mechanical suction dredge, to illegally harvest live clams. At 15:00 that afternoon, he was apprehended by the Duchang County Poyang Lake Fishery Administration Bureau. The illegally harvested live clams weighed 6,894.6 kg. To substantiate the above allegations, the prosecution presented and read documentary evidence, witness testimony, the defendant's confession, inspection records, expert opinions, and other evidence in court. The prosecution argued that the defendant Zhang violated regulations on the protection of aquatic resources by using a prohibited fishing tool, a mechanical suction dredge, and his actions violated Article XX of the Criminal Law of the People's Republic of China. The facts of the crime are clear, and the evidence is credible and sufficient; he should be held criminally liable for the crime of XX. The defendant Zhang has a confession, which may lead to a lighter punishment according to law. Additionally, the prosecution also argued that the defendant Zhang's illegal fishing activities harmed the aquatic resources of Poyang Lake and damaged its ecological environment. Studies have shown that clams are a special aquatic product with high protein and low fat, have a positive effect on purifying water quality, and are an important aquatic resource of Poyang Lake. In recent years, many lake area fishery departments have also specially organized the release of clam seedlings into the lake to enrich resource species and improve the lake's water ecology. To strengthen the protection of aquatic resources, the state prohibits illegal fishing. Article XX of the Fisheries Law of the People's Republic of China clearly stipulates that 'the use of methods such as explosive fishing, poison fishing, and electric fishing that destroy fishery resources is prohibited. The manufacture, sale, and use of prohibited fishing gear are prohibited.' The fishing gear used by the defendant Zhang was determined by experts to be an improved motorized bottom trawl net, which is extremely destructive to the aquatic ecological environment. The provincial agricultural and fishery departments have explicitly banned its use. Zhang illegally harvested 6,894.6 kg of clam aquatic resources from Poyang Lake, causing certain ecological damage to Poyang Lake, valued at 1,241 yuan. Accordingly, in accordance with Articles XX, XX, and XX of the General Principles of the Civil Law of the People's Republic of China, the prosecution demanded that the defendant Zhang compensate for the losses of 1,241 yuan caused to the fishery resources of Poyang Lake due to XX.", "meta": {"relevant_articles": [340], "accusation": ["Illegal Fishing of Aquatic Products"], "punish_of_money": 0, "criminals": ["Zhang"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 0, "life_imprisonment": false}}}
-{"fact": "The People's Procuratorate of Pudong New Area, Shanghai, alleged: The defendant Li 3, without obtaining a "Medical Institution Practice License" and lacking medical practice qualifications, had been operating a clinic at No. XXX, Junmin Road, Zhangjiang Town, in this district since August 2011, conducting medical activities. During this period, he was twice subjected to administrative penalties by the Pudong New Area Health Bureau for practicing without a license. On December 19, 2013, the defendant Li 3 was apprehended while treating a patient, Li 1, at the aforementioned clinic. After being brought to justice, the defendant Li 3 truthfully confessed to the above criminal facts.", "meta": {"relevant_articles": [336], "accusation": ["Illegal Medical Practice"], "punish_of_money": 2000, "criminals": ["Li 3"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 5, "life_imprisonment": false}}}
-{"fact": "Upon trial, it was established that from August 28 to September 2, 2013, the defendant Zhu, harboring a grudge against Bai, the principal of Conghua City XX Kindergarten, over a trivial matter, used a computer to composite pornographic photos of Bai and composed text messages threatening the safety of her family and the kindergarten. These were sent to the victim Bai via email and mobile phone to intimidate her, demanding 70,000 yuan, which was unsuccessful. Between July and August 2013, the defendant Zhu, harboring a grudge against Xie Yib, a staff member of Conghua City XX Town Government, over a trivial matter, impersonated a member of the Discipline Inspection Commission's supervision team, fabricated photos of fake disciplinary inspection materials, and sent text messages and made phone calls to Xie Yib's daughter, Xie Jia, to intimidate the victim Xie Yib, demanding 1.25 million yuan, which was unsuccessful. The above facts are supported by evidence presented by the prosecution, including the victims Bai and Xie Yib's reports and their signed confirmations of phone messages and tools, records of the defendant identifying photos of victims Bai, Xie Yib, and witness Xie Jia, testimony of witnesses Feng, Zheng, and Xie Jia and their signed confirmations of phone messages, a list of seized items, scene photos, photos of phone messages, the crime scene, and tools signed by the defendant, arrest records, and the defendant's household registration information. During the court trial, the defendant Zhu also confessed to the crimes.", "meta": {"relevant_articles": [274], "accusation": ["Extortion"], "punish_of_money": 0, "criminals": ["Zhu"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 60, "life_imprisonment": false}}}
-{"fact": "The People's Procuratorate of Tiexi District, Anshan City, prosecuted and alleged: At approximately 05:30 on October 18, 2016, the defendant Wang, without lawfully obtaining a motor vehicle driver's license and using a purchased, forged driver's license, drove a Wuling brand minivan (license plate Liao CM E750) eastbound along South Third Ring Road in Tiexi District. When approaching the "Ma Yi Tun" bus stop on Route 40, he encountered pedestrian Wu, who was walking north to south to that location. Because Wang, while driving at night, failed to observe properly during a meeting with an oncoming vehicle and did not notice pedestrian Wu, the front right bumper and the front right end of the hood of the Liao CM E750 Wuling minivan collided with the right side of pedestrian Wu's body, causing a traffic accident resulting in Wu's injury and vehicle damage. Wu died at 6:29 that same day after rescue efforts failed. On February 6, 2017, the Accident Handling Brigade of the Anshan City Public Security Bureau Traffic Management Bureau determined that Wang bore full responsibility for the traffic accident, and Wu bore no responsibility.", "meta": {"relevant_articles": [280, 133], "accusation": ["Traffic Accident"], "punish_of_money": 5000, "criminals": ["Wang"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 24, "life_imprisonment": false}}}
-{"fact": "The People's Procuratorate of Lianyuan City, Hunan Province, alleged that on March 9, 2014, the defendant Wu, at the Gutang Mobile Cooperative Business Office in Lianyuan City, applied for a mobile SIM card in the name of Wu Jia for his nephew. However, because he did not meet his nephew, the SIM card remained with Wu. Due to work and financial pressure, Wu conceived the idea of extorting money from others. At approximately 6:00 AM on March 26, 2014, Wu inserted the SIM card into his phone and composed threatening messages, including "Holy War Organization fundraising," which he sent to Liu, the principal of Lianyuan Blue Sky Kindergarten, and Hu, the principal of Sunshine Baby Kindergarten. He demanded that they each open an Agricultural Bank of China card (binding the card to his mobile number), set the password to 045474, deposit no less than 44,444 yuan into the card, and place the card at a designated location; otherwise, a tragedy would occur. After receiving the message, Hu immediately reported the case to the public security authorities. Neither followed Wu's instructions to transfer money. That afternoon, realizing his actions were illegal, Wu discarded the SIM card into the sewer drain of the Lianyuan City Traffic Police Brigade's restroom and took no further action. On March 28, 2014, the defendant Wu was apprehended by police from the Lianyuan City Public Security Bureau at the Lianyuan City Road Traffic Safety Committee's School Bus Office.", "meta": {"relevant_articles": [274], "accusation": ["Extortion"], "punish_of_money": 10000, "criminals": ["Wu"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 30, "life_imprisonment": false}}}
-{"fact": "Upon trial, it was established that during his tenure as Sales Manager of Wuhan Tianzi Wudang Red Wine Sales Co., Ltd., the defendant Zhu, taking advantage of his position responsible for sales business, signed a dual contract with client Zeng on November 14, 2012, at the Yihetang Massage and Wellness Center located at No. 497 Luoshi Road, Lishida Garden, Hongshan District, this city. He demanded the client transfer 100,000 yuan in payment to his personal bank account, subsequently remitting only 50,000 yuan to the company and misappropriating the remaining 50,000 yuan for personal use. On April 27, 2013, the defendant Zhu collected 50,000 yuan in payment from client Zeng at the company's office in Lingjiaohu Wanda Plaza, Jianghan District, this city, and misappropriated it for personal use. Following a report from the victim company, the public security organs apprehended the defendant Zhu on August 20, 2015, based on leads. As of the time of the case, the defendant Zhu had not returned the aforementioned funds. It was further established that during the trial, the defendant Zhu's family returned 3,000 yuan in illicit gains on his behalf. The defendant had no objections to the above facts during the court trial, and they are supported by documentary evidence such as household registration records, arrest and case-solving reports from the public security organs, agency sales contracts, delivery notes, deposit slips, and business licenses, testimony from witnesses Liu and Dong, and testimony and identification records from witnesses Jin and Zeng, which are sufficient for determination.", "meta": {"relevant_articles": [272], "accusation": ["Misappropriation of Funds"], "punish_of_money": 0, "criminals": ["Zhu"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 42, "life_imprisonment": false}}}
-{"fact": "The prosecution alleged: At approximately 8:00 AM on October 4, 2015, the defendant Ma, without checking the vehicle's safety condition, drove an engineering motorized tricycle belonging to Zoucheng City Municipal Engineering Company to the Yashan Road construction site for inspection. During this time, because the defendant Ma failed to drive safely and the vehicle's brakes failed, he struck and ran over the victim Li 2, who was walking ahead on that road section, resulting in Li 2's death after rescue efforts failed. Forensic medical examination determined that the victim Li 2 died from craniocerebral injury. On October 7, 2015, the defendant Ma and Zoucheng City Municipal Engineering Company compensated the family of the victim Li 2 with 400,000 yuan, and a mediation agreement was reached between both parties. Regarding the allegations, the prosecution presented and read relevant evidence in court, arguing that the actions of the defendant Ma violated the provisions of Article XX of the Criminal Law of the People's Republic of China and should be investigated for criminal liability under the crime of XX.", "meta": {"relevant_articles": [233], "accusation": ["Negligent Homicide"], "punish_of_money": 0, "criminals": ["Ma"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 36, "life_imprisonment": false}}}
+
+{"fact": "普宁市人民检察院指控，从2013年12月份开始，被告人赖某在没有获得药品销售许可证的情况下，在普宁××××街道“池尾加油站”隔壁经营一家“成人用品店”销售性用药品等物。2015年6月17日，公安机关从其经营的“成人用品店”缴获尚未出卖的“乐园堂伟哥999”3盒、“金龙威哥王”3盒、“PLANTVIGRA”2瓶。上述被查获的药品经揭阳市食品药品监督管理局鉴定均为假药。普宁市人民检察院向法庭提供了作案地点、查获的药品照片，提取笔录，扣押清单，食品药品监督管理部门出具的函复，被告人的供述等证据。认为被告人赖某的行为触犯了《中华人民共和国刑法》××的规定，已构成销售假药罪。提请本院依法判处。", "meta": {"relevant_articles": [141], "accusation": ["[生产、销售]假药"], "punish_of_money": 5000, "criminals": ["赖某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 8, "life_imprisonment": false}}}
+{"fact": "西安市碑林区人民检察院起诉书指控：1、2009年8月17日15时许，被告人高某甲伙同“小刘”、李2某（另案）来到本市体育馆路36号舒某美容美发店内。被告人高某甲及“小刘”持刀将被害人张某砍成轻伤。随后，被告人高某甲及“小刘”将店内的玻璃门、玻璃镜、茶几等物品砸坏。临走时二人威胁被害人张某，让其当晚准备人民币5000元，否则其美容美发店店开不成。第三天晚上，另一伙人来到该店取钱，因被害人张某受伤住院未果。2、2009年10月20日，被告人高某甲伙同寇某、费某（均被劳教）等人来到本市体育馆路稻花香按摩店内，敲诈店主高某乙人民币680元。3、2009年11月5日13时许，被告人高某甲伙同罗某（在逃）在本市体育馆路茉莉花美容美发店内，敲诈店主程某人民币600元。", "meta": {"relevant_articles": [234, 274], "accusation": ["故意伤害", "敲诈勒索"], "punish_of_money": 0, "criminals": ["高某甲"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 30, "life_imprisonment": false}}}
+{"fact": "公诉机关指控，2013年12月中旬至2014年1月20日，被告人阮某伙同阿某（另案处理）等人在霞浦县松城街道河尾街88号游戏机店内设置可供6人同时赌博的“捕鱼”游戏机1台，供社会不特定人员参赌，非法获利人民币10000元。2014年1月20日22时，公安机关在该店内当场抓获被告人阮某，并当场查获赌博机1台。经霞浦县公安局认定，该台“捕鱼”游戏机为具有赌博功能的电子游戏设施设备，同时可供六人使用且功能正常。案发后，被告人阮某向公安机关退出违法所得人民币10000元。", "meta": {"relevant_articles": [303], "accusation": ["开设赌场"], "punish_of_money": 20000, "criminals": ["阮某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 6, "life_imprisonment": false}}}
+{"fact": "内黄县人民检察院指控：2001年9月的一天，被告人卞某利用职务之便，收受冯某人民币35万某，为其谋取利益。2002年上半年的一天，被告人卞某利用职务之便，收受王某人民币200万某，为其谋取利益。2003年底至2004年年底，被告人卞某利用职务之便，五次共收受郝某人民币17.5万某，为其谋取利益。2010年2月份的一天，被告人卞某利用职务之便，收受郝某人民币2万某，为其谋取利益。2009年底的一天，被告人卞某利用职务之便，收受章某人民币5万某，为其谋取利益。2010年底的一天，被告人卞某利用职务之便，收受章某人民币5万某，为其谋取利益。2011年中秋节前后及2012年5、6月份的一天，被告疑人卞某利用职务之便，二次收受陈某人民币21万某，为其谋取利益。现有证据证明，案发后被告人卞某退出赃款85.5万某。公诉机关提供的证据有：被告人卞某的供述与辩解、户籍证明，证人冯某等人的证言。认为被告人卞某的行为已构成××罪。请求依法判处。", "meta": {"relevant_articles": [385, 383, 383, 386], "accusation": ["受贿"], "punish_of_money": 0, "criminals": ["卞某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 132, "life_imprisonment": false}}}
+{"fact": "崇左市江州区人民检察院指控，2015年10月3日，民警在对被告人韦某位于崇左市江州区太平镇公益村渠珠屯家里及代销店进行检查时，从韦某房屋内查获导火索一条，长约14.25米，在其代销店内查获重达11.26千克的乳化炸药和27枚电雷管。经查，韦某无储存、使用、买卖爆炸物的相关资质。经鉴定，从韦某代销店内查获的乳化炸药中均检出铵离子和硝酸根离子。经广西公众司法鉴定中心鉴定，从韦某代销店内查获的乳化炸药具有爆炸功能和爆炸威力。对指控的犯罪事实，公诉机关在法庭上出示了相关的证据，并据此认为被告人韦某非法储存爆炸物，数量达11.26千克，情节严重，其行为已触犯了《中华人民共和国刑法》××之规定，构成非法储存爆炸物罪。但案发后韦某能够主动投案自首，可以对其减轻处罚，提请本院依法判处。被告人韦某及其辩护人对公诉机关指控的罪名均无异议。被告人韦某辩称其买炸药目的是用于平整土地，因来不及开工才一直存放在代销店内，案发后其认识到了错误且能够投案自首，请求法庭对其从轻处罚。辩护人辩称被告人韦某储存爆炸物的目的是用于生产生活，没有造成社会危害性，且案发后有投案自首的情节，其是初犯、偶犯，应当对其从轻处罚。", "meta": {"relevant_articles": [125], "accusation": ["非法[制造、买卖、运输、邮寄、储存][枪支、弹药、爆炸物]"], "punish_of_money": 0, "criminals": ["韦某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 36, "life_imprisonment": false}}}
+{"fact": "公诉机关指控，2014年2月起，被告人蔡某某在其承租的本市白云区某街某巷某号地下一无牌档口内，容留、介绍郭某某、吴某某等女青年向他人卖淫。同年3月18日22时许，蔡某某再次介绍上述女青年在上址向他人卖淫时被公安人员抓获。根据上述事实，公诉机关认为，蔡某某容留、介绍他人卖淫，其行为已触犯《中华人民共和国刑法》××××之规定，应以容留、介绍卖淫罪追究刑事责任。提请法院依法判处。", "meta": {"relevant_articles": [359], "accusation": ["[组织、强迫、引诱、容留、介绍]卖淫", "[引诱、容留、介绍]卖淫"], "punish_of_money": 0, "criminals": ["蔡某某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 5, "life_imprisonment": false}}}
+{"fact": "定边县人民检察院指控，2015年11月4日，被告人吕某某在协助定边县杨井镇人民政府从事“苏南41-77井”征地补偿款发放过程中，将存放在自己账户中该村西滩小组征地款99225元，用于给其子治病。2016年6月7日，被告人吕某某将该笔补偿款交回西滩村民小组。", "meta": {"relevant_articles": [384], "accusation": ["挪用公款"], "punish_of_money": 0, "criminals": ["吕某某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 2, "life_imprisonment": false}}}
+{"fact": "公诉机关指控：2017年3月16日20时许，被告人童某驾驶川X号出租车在雨城区小北街搭载乘客徐某、范某等4人，与组织卖淫人员徐某1（另案处理）电话联系后，童某将徐某、范某等人载到雅安市雨城区大北街中喜宾馆外，由徐某1安排徐某、范某到宾馆内嫖娼，童某在宾馆门口等候。徐某1收取徐某、范某嫖资，并安排卖淫人员杨某、王某卖淫后，给付等候在宾馆门口的童某介绍费200元。2017年4月6日，公安民警在雨城出租车公司将被告人童某抓获，童某到案后如实供述了上述犯罪事实。", "meta": {"relevant_articles": [359], "accusation": ["[组织、强迫、引诱、容留、介绍]卖淫", "[引诱、容留、介绍]卖淫"], "punish_of_money": 0, "criminals": ["童某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 7, "life_imprisonment": false}}}
+{"fact": "宁德市蕉城区人民检察院指控：2012年4月至2014年9月，被告人林2某先后组织1000元上标、1000元下标的“互助会”四场，非法吸收263人次入会。被告人林2某非法吸收上述会员存款计人民币9919004元（币种，下同），造成报案会员直接经济损失2343280元。2016年3月21日，被告人林2某向公安机关投案。同年6月27日，被告人林2某亲属归还报案会员会款共计79500元。针对上述指控的事实，公诉人向法庭出示相关证据予以证实。公诉机关据此认为被告人林2某违反金融管理法规，××，数额巨大，其行为已触犯《中华人民共和国刑法》××的规定，应以××罪追究被告人林2某刑事责任。提请本院依法惩处。", "meta": {"relevant_articles": [176], "accusation": ["非法吸收公众存款"], "punish_of_money": 50000, "criminals": ["林2某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 44, "life_imprisonment": false}}}
+
+
+{"fact": "公诉机关指控：2016年8月4日上午11时许至下午15时许，被告人张某在鄱阳湖都昌县周溪镇三山水域，使用禁用渔具机械吸螺机，非法捕捞活蚬，当日下午15时被都昌县鄱阳湖渔政管理局查获，经称重非法捕捞的活蚬6894.6公斤。公诉机关为证实上述指控的成立，当庭出示、宣读了书证、证人证言、被告人供述、检查笔录、鉴定意见等证据。公诉机关认为，被告人张某违反保护水产资源法规，使用禁用渔具机械吸螺机××，其行为触犯了《中华人民共和国刑法》××，犯罪事实清楚，证据确实、充分，应当以××罪追究其刑事责任。被告人张某具有坦白情节，依法可以从轻处罚。同时，公诉机关还认为被告人张某的非法捕捞行为，侵害了鄱阳湖的水产资源、破坏了鄱阳湖的生态环境。有研究表明，蚬是一种高蛋白、低脂肪的特种水产品，有净化水质的积极作用，是鄱阳湖的重要水产资源。近年来，许多湖区渔政部门还专门组织向湖域放流蚬苗，丰富资源种类，改善湖水生态。为了加强对水产资源的保护，国家禁止非法捕捞，《中华人民共和国渔业法》××明确规定“禁止使用炸鱼、毒鱼、电鱼等破坏渔业资源的方法进行捕捞。禁止制造、销售、使用禁用的渔具”。被告人张某使用的渔具，经专家论证为改进型机动底拖网，对水域生态环境破坏性极大，省农业、渔政部门已明令禁止使用。张某非法捕捞鄱阳湖蚬类水产资源6894.6公斤，给鄱阳湖的生态造成一定的损害，价值1241元。据此，依照《中华人民共和国民法通则》××、××、××的规定，公诉机关要求被告人张某赔偿因××给鄱阳湖渔业资源造成的损失1241元。", "meta": {"relevant_articles": [340], "accusation": ["非法捕捞水产品"], "punish_of_money": 0, "criminals": ["张某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 0, "life_imprisonment": false}}}
+{"fact": "上海市浦东新区人民检察院指控：被告人李3某在未取得《医疗机构执业许可证》及无行医资质的情况下，从2011年8月起擅自在本区张江镇军民路XXX号内开设诊所进行医疗活动。期间，先后两次因未能取得《医疗机构执业许可证》擅自执业被浦东新区卫生局行政处罚。2013年12月19日，被告人李3某在上述诊所内为患者李1某诊治时被查获。被告人李3某到案后如实供述了上述犯罪事实。", "meta": {"relevant_articles": [336], "accusation": ["非法行医"], "punish_of_money": 2000, "criminals": ["李3某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 5, "life_imprisonment": false}}}
+{"fact": "经审理查明，2013年8月28日至9月2日，被告人朱某因锁事对从化市XX幼儿园园长白某怀恨在心，利用电脑合成白某的艳照图片和编写威胁其家人安全、幼儿园安全等内容的短信，通过电子邮箱和手机发送给被害人白某，对其进行恐吓，索要7万元未得逞。2013年7月至8月间，被告人朱某因锁事对从化市XX镇政府工作人员谢某乙怀恨在心，昌充纪委督导组人员，制作假的纪委调查材料照片，通过向谢某乙的女儿谢某甲发送手机短信、打电话等方式，对被害人谢某乙进行恐吓、索要125万元未得逞。上述事实，有公诉机关列举的以下证据证实，其中有被害人白某、谢某乙的报案陈述及其签认手机信息和作案工具，被告人辨认被害人白某、谢某乙、证人谢某甲照片的笔录，证人冯某、郑某、谢某甲的证言及其签认手机信息，扣押物品清单，现场照片，被告人签认的手机信息、作案现场及作案工具照片，抓获经过，被告人的户籍资料等证据证实；在开庭审理过程中，被告人朱某亦供认在案。", "meta": {"relevant_articles": [274], "accusation": ["敲诈勒索"], "punish_of_money": 0, "criminals": ["朱某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 60, "life_imprisonment": false}}}
+{"fact": "鞍山市铁西区人民检察院起诉指控：2016年10月18日05时30分左右，被告人王某未依法取得机动车驾驶证、使用购买伪造他人的机动车驾驶证，驾驶辽CME750号五菱牌小型面包车，沿铁西区南三环路由东向西行驶，当行驶至40路“马驿屯”公交站点附近时，遇行人吴某某由南向北步行至此处。由于王某驾车在夜间会车过程中瞭望不周，未发现行人吴某某，致使辽CME750号五菱牌小型普通客车前保险杠右侧、前舱盖前端右侧与行人吴某某身体右侧接触碰撞，造成吴某某受伤及车辆损坏的道路交通事故。吴某某经医院抢救无效，于当日6时29分死亡。2017年2月6日，经鞍山市公安局公安交通管理局事故处理大队认定，王某承担此次道路交通事故全部责任，吴某某无责任。", "meta": {"relevant_articles": [280, 133], "accusation": ["交通肇事"], "punish_of_money": 5000, "criminals": ["：王某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 24, "life_imprisonment": false}}}
+{"fact": "湖南省涟源市人民检察院指控，2014年3月9日，被告人吴某某在涟源市古塘移动合作营业点以吴某甲的名义为其侄子办理了手机卡，但因没碰到侄子，这手机卡便一直留在吴某某手上。因工作和经济压力大，吴某某产生了敲诈他人钱财的想法。2014年3月26日凌晨6时许，吴某某将该手机卡装进自己的手机，编辑了“圣战组织筹集经费”等恐吓信息，发送给了涟源市蓝天幼儿园园长刘某某和阳光宝贝幼儿园园长胡某某，要求两人办好农行卡（将该银行卡与其手机号码绑定），将密码设为045474，汇不少于44444元钱到卡上，并将该银行卡放到指定的地点，否则将会发生惨案。胡某某收到该短信后，立即向公安机关报案。两人均未按照吴某某的要求汇款。当天下午，被告人吴某某认识到自己的行为违法，便将该手机卡丢进了涟源市交警大队厕所的下水道里，未进行进一步的行动。2014年3月28日，被告人吴某某在涟源市道路交通安全委员会校车办被涟源市公安局民警抓获归案。", "meta": {"relevant_articles": [274], "accusation": ["敲诈勒索"], "punish_of_money": 10000, "criminals": ["吴某某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 30, "life_imprisonment": false}}}
+{"fact": "经审理查明，被告人朱某在担任武汉天滋武当红酒业销售有限公司销售经理期间，利用负责销售业务的职务便利，于2012年11月14日在本市洪山区珞狮路497号丽岛花园的颐和堂推拿养生会馆内与客户曾某签订鸳鸯合同，并要求客户将10万元货款打入其个人银行账户，后仅向公司上交其中的5万元，将剩余的人民币5万元挪作个人使用；2013年4月27日，被告人朱某在本市江汉区菱角湖万达广场武汉天滋武当红酒业销售有限公司的办公室内，收取曾某货款人民币5万元，并挪作个人使用。接被害单位报案，公安机关根据线索于2015年8月20日将被告人朱某抓获。上述款项，被告人朱某截至案发均未退还。另查明，在案件审理期间，被告人朱某的家属代为退出赃款人民币3000元。上述事实，被告人在开庭审理过程中亦无异议，且有户籍资料、公安机关的抓获及破案经过、代理销售合同、送货单、存款凭条、营业执照等书证，证人刘某、董某的证言，证人金某、曾某的证言及辨认笔录等证据证实，足以认定。", "meta": {"relevant_articles": [272], "accusation": ["挪用资金"], "punish_of_money": 0, "criminals": ["朱某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 42, "life_imprisonment": false}}}
+{"fact": "公诉机关指控：2015年10月4日8时许，被告人马某在未检查车辆安全状况的情况下，驾驶邹城市市政公司的工程用机动三轮车到牙山路施工现场进行巡查，期间由于被告人马某未注意安全行驶且车辆刹车失灵，其将前方步行至该路段的被害人李某2撞倒并碾轧，致被害人李某2经抢救无效死亡。经法医学鉴定，被害人李某2系颅脑损伤而死亡。2015年10月7日，被告人马某及邹城市市政公司向被害人李某2的家属赔偿40万元，双方达成调解协议。针对指控，公诉机关当庭宣读、出示了相关证据，认为被告人马某××的行为触犯了《中华人民共和国刑法》××之规定，应当以××罪追究其刑事责任。", "meta": {"relevant_articles": [233], "accusation": ["过失致人死亡"], "punish_of_money": 0, "criminals": ["马某"], "term_of_imprisonment": {"death_penalty": false, "imprisonment": 36, "life_imprisonment": false}}}
 
 ---
 
@@ -303,7 +84,8 @@ Instead of manually defining all possible tags beforehand (which is too rigid) o
 1.  **Top-Down Thematic Grouping:** First, we will programmatically scan the entire dataset to find all unique `accusation` types. We will then group these into logical, high-level categories (e.g., "Crimes Against Persons," "Crimes Against Property," "White-Collar Crimes," "Public Order Offenses"). This gives us a structured way to manage complexity.
 
 2.  **Core Schema + Crime-Specific Extensions:** We will design a modular schema system:
-    *   **A `core_schema`:** This will contain elements common to nearly all criminal cases, such as mitigating factors (`confession`, `compensation`, `surrender`), aggravating factors (`recidivism`, `use_of_a_weapon`), and details about the defendant's actions.    *   **`extension_schemas`:** For each thematic group, we will define a specific extension. For example, the "Crimes Against Persons" schema would add fields like `victim_injury_level`, while a "Financial Crimes" schema would add fields like `amount_of_money_involved` and `method_of_fraud`.
+    *   **A `core_schema`:** This will contain elements common to nearly all criminal cases, such as mitigating factors (`confession`, `compensation`, `surrender`), aggravating factors (`recidivism`, `use_of_a_weapon`), and details about the defendant's actions.
+    *   **`extension_schemas`:** For each thematic group, we will define a specific extension. For example, the "Crimes Against Persons" schema would add fields like `victim_injury_level`, while a "Financial Crimes" schema would add fields like `amount_of_money_involved` and `method_of_fraud`.
 
 3.  **Two-Pass LLM Extraction Process:** This is the key to discovering the most relevant factors without human bias.
     *   **Pass 1: Automated Factor Discovery (Bottom-Up):** We won't just guess the important factors. We will sample a few hundred cases from each thematic group and use an LLM with a broad prompt, asking it to identify all elements that likely influenced the outcome. This turns the LLM into an analytical partner that helps us discover the most salient features in the data. We will use this output to refine our `core_schema` and `extension_schemas`.

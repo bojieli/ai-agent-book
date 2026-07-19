@@ -1,25 +1,25 @@
 """
-Coding Agent: Read the system prompt file → Locate relevant rules → Generate precise search/replace edits → Actually rewrite the file.
+Coding Agent：读取系统提示词文件 → 定位相关规则 → 生成精确的搜索/替换编辑 → 真的改写文件。
 
-It works the same way as real coding agents (e.g., Claude Code / Cursor):
-Instead of having the model rewrite the entire file, the model produces a set of precise (old_str -> new_str) edits,
-which are applied one by one via exact string replacement in the file; if an edit's old_str does not match,
-the error is fed back to the model for retry. This makes modifications "code-level" and auditable (directly produces a diff).
+它的工作方式和真实的编程 Agent（如 Claude Code / Cursor）一致：
+不是让模型整篇重写，而是让模型产出一组 (old_str -> new_str) 的精确编辑，
+由代码逐条做"精确字符串替换"落到文件里；若某条编辑的 old_str 匹配不上，
+把错误反馈回模型让它重试。这样修改是"代码级"的、可审计的（能直接出 diff）。
 """
 
 import difflib
 from config import get_client, get_model, TEMPERATURE
 
-#File editing tool exposed to the Coding Agent
+# 暴露给 Coding Agent 的"文件编辑工具"
 EDIT_TOOLS = [
     {
         "type": "function",
         "function": {
             "name": "apply_edits",
             "description": (
-                "Apply a set of precise search/replace edits to the prompt file. Each edit provides an old_str"
-                "(the unique original text fragment in the file) and a new_str (the replacement text)."
-                "old_str must match the file content character by character exactly."
+                "对提示词文件应用一组精确的搜索/替换编辑。每条编辑给出 old_str "
+                "（文件中唯一存在的原文片段）和 new_str（替换后的新文本）。"
+                "old_str 必须与文件内容逐字符完全一致。"
             ),
             "parameters": {
                 "type": "object",
@@ -37,7 +37,7 @@ EDIT_TOOLS = [
                     },
                     "rationale": {
                         "type": "string",
-                        "description": "Briefly describe how this change responds to human feedback.",
+                        "description": "简述本次改动如何回应人类反馈。",
                     },
                 },
                 "required": ["edits"],
@@ -48,20 +48,20 @@ EDIT_TOOLS = [
 
 
 def _apply_one(content: str, old_str: str, new_str: str) -> tuple[str, str | None]:
-    """Attempt to apply one edit. On success return (new content, None), on failure return (original content, error message)."""
+    """尝试应用一条编辑。成功返回(新内容, None)，失败返回(原内容, 错误信息)。"""
     count = content.count(old_str)
     if count == 0:
-        return content, f"old_str not found in the file:{old_str[:60]!r}"
+        return content, f"old_str 在文件中未找到：{old_str[:60]!r}"
     if count > 1:
-        return content, f"old_str appears {count} times (not unique):{old_str[:60]!r}"
+        return content, f"old_str 在文件中出现 {count} 次（不唯一）：{old_str[:60]!r}"
     return content.replace(old_str, new_str, 1), None
 
 
 def optimize_prompt(prompt_path: str, feedback: str, max_rounds: int = 3, verbose: bool = True) -> dict:
     """
-    Have the Coding Agent rewrite the file pointed to by prompt_path (in-place overwrite) based on human feedback.
+    让 Coding Agent 根据 human feedback 改写 prompt_path 指向的文件（原地覆盖）。
 
-    Returns {"before": original text, "after": new text, "diff": unified diff text, "rationale": explanation}.
+    返回 {"before": 原文, "after": 新文, "diff": 统一 diff 文本, "rationale": 说明}。
     """
     client = get_client()
     model = get_model()
@@ -70,15 +70,15 @@ def optimize_prompt(prompt_path: str, feedback: str, max_rounds: int = 3, verbos
         original = f.read()
 
     system = (
-        "You are a senior prompt engineering Coding Agent. You will receive a system prompt file for an airline customer service agent,"
-        "along with feedback from a human expert. Please locate the rules related to 'manual transfer',"
-        "generate precise search/replace edits to improve them, then call the apply_edits tool to apply the modifications.\n"
-        "Change objectives:\n"
-        "1) Tighten the transfer boundary, clarifying only two cases: the passenger explicitly requests a human agent, and emergency safety situations;\n"
-        "2) Delete or rewrite vague rules that induce 'excessive transfer' (e.g., 'transfer if uncertain or passenger is dissatisfied');\n"
-        "3) Add a clear negative rule: never transfer due to policy disputes / passenger dissatisfaction; instead, first check policy,"
-        "patiently explain, and provide compliant alternatives.\n"
-        "Only modify parts related to transfer strategy; keep the rest as unchanged as possible."
+        "你是一名资深的提示词工程 Coding Agent。你会收到一份航空客服 Agent 的"
+        "系统提示词文件，以及人类专家的反馈。请定位与'人工转接'相关的规则，"
+        "生成精确的搜索/替换编辑来改进它，然后调用 apply_edits 工具落地修改。\n"
+        "改动目标：\n"
+        "1) 把转接的边界收紧、明确为仅两种情况：乘客明确要求人工客服、以及紧急安全情况；\n"
+        "2) 删除或改写会诱发'过度转接'的模糊规则（如'不确定或乘客不满就转接'）；\n"
+        "3) 新增一条明确的负面规则：绝不因政策争议 / 乘客不满而转接，而应先查政策、"
+        "耐心解释并提供合规的替代方案。\n"
+        "只修改与转接策略相关的部分，尽量保留其余内容不动。"
     )
 
     messages = [
@@ -86,9 +86,9 @@ def optimize_prompt(prompt_path: str, feedback: str, max_rounds: int = 3, verbos
         {
             "role": "user",
             "content": (
-                f"【Human Expert Feedback】\n{feedback}\n\n"
-                f"【Current System Prompt File Content】\n---\n{original}\n---\n\n"
-                "Please call apply_edits to submit your precise edits."
+                f"【人类专家反馈】\n{feedback}\n\n"
+                f"【当前系统提示词文件内容】\n---\n{original}\n---\n\n"
+                "请调用 apply_edits 提交你的精确编辑。"
             ),
         },
     ]
@@ -110,7 +110,7 @@ def optimize_prompt(prompt_path: str, feedback: str, max_rounds: int = 3, verbos
         if not msg.tool_calls:
             break
 
-        # Process the (single) apply_edits call
+        # 处理（唯一的）apply_edits 调用
         tc = msg.tool_calls[0]
         import json
 
@@ -131,24 +131,24 @@ def optimize_prompt(prompt_path: str, feedback: str, max_rounds: int = 3, verbos
                 applied += 1
 
         if verbose:
-            print(f"  [round {round_idx + 1}] Submitted {len(edits)} edits, succeeded {applied}, failed {len(errors)}")
+            print(f"  [round {round_idx + 1}] 提交 {len(edits)} 条编辑，成功 {applied}，失败 {len(errors)}")
 
         if not errors:
-            # All edits succeeded, writing to disk
+            # 全部编辑成功，落盘
             messages.append(
-                {"role": "tool", "tool_call_id": tc.id, "content": "All edits have been successfully applied."}
+                {"role": "tool", "tool_call_id": tc.id, "content": "所有编辑已成功应用。"}
             )
             break
         else:
-            # Some failed: roll back to original text, feed errors back to model for retry (maintain atomicity of edits)
+            # 有失败：回滚到原文，把错误反馈给模型重试（保持编辑的原子性）
             working = original
             feedback_msg = (
-                "The following edits could not be applied. Please correct and resubmit the complete edit list (note that old_str must match the file character by character):\n"
+                "以下编辑未能应用，请修正后重新提交完整的编辑列表（注意 old_str 必须与文件逐字符一致）：\n"
                 + "\n".join(f"- {er}" for er in errors)
             )
             messages.append({"role": "tool", "tool_call_id": tc.id, "content": feedback_msg})
 
-    # Write to disk (overwrite prompt file in place)
+    # 落盘（原地覆盖 prompt 文件）
     with open(prompt_path, "w", encoding="utf-8") as f:
         f.write(working)
 

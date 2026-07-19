@@ -1,22 +1,22 @@
 """
-Experiment 8-4 Demo: Active Tool Discovery vs Retrieval Prefilter vs Full Injection
+实验 8-4 演示：主动工具发现 vs 检索预筛选 vs 全量注入
 
-For the same set of cross-domain tasks, run three "tool discovery" strategies on a tool library of 126 tools,
-and output a comparable table (accuracy / injected tokens / latency) in a single run:
+对同一组跨领域任务，在 126 个工具的工具库上分别用三种"工具发现"策略运行，
+并在一次运行里输出可对比的表格（准确率 / 注入 token / 延迟）：
 
-- full_injection: Inject all 126 tool schemas into the context at once (control group, as in the book).
-- retrieval_prefilter: Perform a one-time semantic retrieval based on the initial query, injecting only top-n candidate tools.
-- active_discovery: Start with a small set of basic tools plus the discover_tools meta-tool, loading tools on demand during execution.
+- full_injection    全量注入：126 个工具 schema 一次性进上下文（对照组，书中控制组）。
+- retrieval_prefilter 检索预筛选：按初始查询做**一次性**语义检索，只注入 top-n 候选工具。
+- active_discovery  主动发现：少量基础工具 + discover_tools 元工具，执行中按需检索加载。
 
-Core argument (Chapter 8): When the tool set reaches hundreds, "stuffing all tools into the context" is expensive in tokens
-and disastrous for instruction following in small models; active discovery loads tools on demand, drastically reducing tokens and improving selection accuracy.
+核心论点（第 8 章）：当工具规模达到上百个时，"把所有工具塞进上下文"在 token 上昂贵、
+且对小模型的指令遵循是灾难；主动发现按需加载，token 大幅下降、选择更精准。
 
-Usage (see --help):
-    python demo.py                         # Default: all tasks × three strategies (requires OPENAI_API_KEY)
-    python demo.py --offline               # Offline self-check: local embeddings + mock model, no key needed
+用法（详见 --help）：
+    python demo.py                         # 默认：全部任务 × 三种策略（需 OPENAI_API_KEY）
+    python demo.py --offline               # 离线自检：本地嵌入 + mock 模型，无需任何 key
     python demo.py --tasks finance+news,crypto+news
     python demo.py --strategies full,discovery --tool-set-size 30
-    python demo.py --query "Check Nvidia stock price and search related news" --offline
+    python demo.py --query "查一下英伟达股价再搜点相关新闻" --offline
     python demo.py --offline --output results/offline.json
 """
 
@@ -30,7 +30,7 @@ from tools_library import TASKS, grade, select_tools, ALL_TOOLS
 
 
 def _to_openrouter_model(model: str) -> str:
-    """Map common model names to OpenRouter namespace (for fallback path without OPENAI_API_KEY)."""
+    """把常见模型名映射到 OpenRouter 命名空间（用于无 OPENAI_API_KEY 的兜底路径）。"""
     if not model:
         return "openai/gpt-5.6-luna"
     if "/" in model:
@@ -42,11 +42,11 @@ def _to_openrouter_model(model: str) -> str:
     return "openai/gpt-5.6-luna"
 
 
-# Strategy registry: key -> (Chinese name, needs index?)
+# 策略注册表：key -> (中文名, 需要 index 吗)
 STRATEGIES = {
-    "full": ("Full Injection", False),
-    "prefilter": ("Retrieval Prefilter", True),
-    "discovery": ("Active Discovery", True),
+    "full": ("全量注入", False),
+    "prefilter": ("检索预筛选", True),
+    "discovery": ("主动发现", True),
 }
 STRATEGY_ORDER = ["full", "prefilter", "discovery"]
 
@@ -55,61 +55,61 @@ def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         prog="demo.py",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="Experiment 8-4: Active Tool Discovery vs Retrieval Prefilter vs Full Injection.\n"
-                    "On a tool library of 126 tools, output a comparison table of 'accuracy / injected tokens / latency' for multiple tasks in one run,\n"
-                    "validating Chapter 8's argument: in scenarios with hundreds of tools, active on-demand discovery is superior to stuffing all tools into the context.",
-        epilog="Examples:\n"
-               "  python demo.py --offline                 # Offline self-check without API key\n"
+        description="实验 8-4：主动工具发现 vs 检索预筛选 vs 全量注入。\n"
+                    "在 126 个工具的工具库上，对多任务一次性输出『准确率 / 注入 token / 延迟』对比表，\n"
+                    "验证第 8 章论点：上百工具场景下，主动按需发现优于把全部工具塞进上下文。",
+        epilog="示例：\n"
+               "  python demo.py --offline                 # 无需 key 的离线机制自检\n"
                "  python demo.py --strategies full,discovery --tasks finance+news\n"
-               "  python demo.py --query 'Check Nvidia stock price and search related news' --offline\n")
+               "  python demo.py --query '查英伟达股价并搜相关新闻' --offline\n")
     ap.add_argument("--query", metavar="TEXT",
-                    help="Temporary single task: directly provide a natural language requirement, skipping the built-in task set (scoring slots inferred automatically from keywords).")
+                    help="临时单任务：直接给一句自然语言需求，跳过内置任务集（判分槽位按关键词自动推断）。")
     ap.add_argument("--tasks", metavar="IDS",
-                    help="Comma-separated built-in task IDs (see tools_library.TASKS); default runs all 8 tasks."
-                         "IDs with parentheses should be quoted, e.g., 'opinion(诱导)'.")
+                    help="逗号分隔的内置任务 id（见 tools_library.TASKS），缺省跑全部 8 个任务。"
+                         "含括号的 id 记得加引号，如 'opinion(诱导)'。")
     ap.add_argument("--strategies", metavar="LIST", default="full,prefilter,discovery",
-                    help="Comma-separated strategies, values: full/prefilter/discovery; default runs all three and compares.")
+                    help="逗号分隔的策略，取值 full/prefilter/discovery，缺省三者全跑并对比。")
     ap.add_argument("--tool-set-size", type=int, default=None, metavar="N",
-                    help="Truncate the tool library to N tools (always retain basic/generic/task-relevant tools)."
-                         "Default uses all 126 tools—using small N can compare 'the larger the tool set, the more full injection suffers'.")
+                    help="把工具库截取为 N 个工具（始终保留基础/通用/任务相关工具）。"
+                         "缺省用全部 126 个——用小 N 可对比『工具集越大，全量注入越吃亏』。")
     ap.add_argument("--top-k", type=int, default=4, metavar="K",
-                    help="Number of candidate tools returned by discover_tools in active discovery (default 4).")
+                    help="主动发现中 discover_tools 每次返回的候选工具数（默认 4）。")
     ap.add_argument("--prefilter-n", type=int, default=10, metavar="N",
-                    help="Number of candidate tools injected at once in retrieval prefilter (default 10).")
+                    help="检索预筛选一次性注入的候选工具数（默认 10）。")
     ap.add_argument("--model", default=os.getenv("MODEL", "gpt-5.6-luna"), metavar="NAME",
-                    help="Dialogue model name (default: env var MODEL or gpt-5.6-luna); ignored in offline mode.")
+                    help="对话模型名（默认取环境变量 MODEL 或 gpt-5.6-luna）；离线模式下忽略。")
     ap.add_argument("--embed-model", default=os.getenv("EMBED_MODEL", "text-embedding-3-small"),
-                    metavar="NAME", help="Embedding model name (default: text-embedding-3-small); ignored in offline mode.")
+                    metavar="NAME", help="嵌入模型名（默认 text-embedding-3-small）；离线模式下忽略。")
     ap.add_argument("--max-steps", type=int, default=10, metavar="N",
-                    help="Maximum ReAct steps for a single task (default 10).")
+                    help="单个任务的 ReAct 最大步数（默认 10）。")
     ap.add_argument("--offline", action="store_true",
-                    help="Offline self-check: uses local hash embeddings + scripted mock model, no API key required."
-                         "Token/latency are real measurements; accuracy reflects heuristic routing only, not real model capability.")
+                    help="离线机制自检：用本地哈希嵌入 + 脚本化 mock 模型，无需任何 API key。"
+                         "token/延迟为真实测量，准确率仅反映启发式路由、不代表真实模型能力。")
     ap.add_argument("--output", metavar="PATH",
-                    help="Write per-task, per-strategy structured results to this JSON file.")
+                    help="把逐任务、逐策略的结构化结果写入该 JSON 文件。")
     return ap
 
 
 def _fmt_grade(g):
-    tag = "✅ Correct selection" if g["precise"] else ("⚠️ Completed but wrong selection" if g["correct"] else "❌ Error")
-    detail = f"{g['filled_slots']}/{g['total_slots']} Capability slot hit"
+    tag = "✅ 精确选对" if g["precise"] else ("⚠️ 完成但错选" if g["correct"] else "❌ 出错")
+    detail = f"{g['filled_slots']}/{g['total_slots']} 能力槽位命中"
     extra = ""
     if g["missed_slots"]:
-        extra += f"| Misuse: {[s[0] for s in g['missed_slots']]}"
+        extra += f"｜漏用: {[s[0] for s in g['missed_slots']]}"
     if g["used_generic_substitute"]:
-        extra += f"| Wrong generic tool: {g['used_generic_substitute']}"
+        extra += f"｜错选通用工具: {g['used_generic_substitute']}"
     return f"{tag}（{detail}{extra}）"
 
 
 def _make_task_from_query(query: str):
-    """Wrap temporary --query into a task with grading slots (slots inferred by keywords)."""
+    """把临时 --query 包装成带判分槽位的任务（槽位按关键词推断）。"""
     from offline_backend import match_intents
     slots = [[tool] for tool, _ in match_intents(query)]
     return {"id": "adhoc", "prompt": query, "required_slots": slots}
 
 
 def run_strategy(key, client, model, prompt, index, tools, args):
-    """Execute a strategy and return (result_dict, latency_s)."""
+    """执行一种策略并返回 (result_dict, latency_s)。"""
     from agent import (run_active_discovery, run_full_injection,
                        run_retrieval_prefilter)
     t0 = time.perf_counter()
@@ -130,11 +130,11 @@ def main():
     strategies = [s.strip() for s in args.strategies.split(",") if s.strip()]
     bad = [s for s in strategies if s not in STRATEGIES]
     if bad:
-        print(f"Unknown strategy: {bad}, optional: {list(STRATEGIES)}")
+        print(f"未知策略: {bad}，可选: {list(STRATEGIES)}")
         sys.exit(2)
     strategies.sort(key=STRATEGY_ORDER.index)
 
-    # ---- Task Set ----
+    # ---- 任务集 ----
     if args.query:
         tasks = [_make_task_from_query(args.query)]
     else:
@@ -143,13 +143,13 @@ def main():
             want = set(args.tasks.split(","))
             tasks = [t for t in TASKS if t["id"] in want]
         if not tasks:
-            print(f"No matching task id: {args.tasks}")
+            print(f"没有匹配的任务 id：{args.tasks}")
             sys.exit(2)
 
     tools = select_tools(args.tool_set_size, tasks)
     need_index = any(STRATEGIES[s][1] for s in strategies)
 
-    # ---- Backend (Online OpenAI / Offline Mock) ----
+    # ---- 后端（在线 OpenAI / 离线 mock）----
     if args.offline:
         from offline_backend import LocalEmbedder, MockChatClient
         from discovery import ToolIndex
@@ -157,51 +157,51 @@ def main():
         model = "mock-offline"
         embedder = LocalEmbedder()
         print("=" * 92)
-        print("Offline self-check mode: local hash embedding + scripted mock model (no API key needed).")
-        print("  · Token/latency are real measurements; accuracy only reflects heuristic routing, not real model capability.")
-        print("  · Observation point: token gap among three strategies, and structural tool misuse of 'retrieval pre-filtering one-shot match'.")
+        print("离线机制自检模式：本地哈希嵌入 + 脚本化 mock 模型（无需 API key）。")
+        print("  · token / 延迟为真实测量；准确率仅反映启发式路由，不代表真实模型能力。")
+        print("  · 观察点：三种策略的 token 差距，以及『检索预筛选一次性匹配』的结构性漏工具。")
         print("=" * 92)
     else:
         try:
             from dotenv import load_dotenv
             from openai import OpenAI
         except ImportError:
-            print("Missing openai / python-dotenv, please pip install -r requirements.txt first,"
-                  "or use --offline for offline self-check.")
+            print("缺少 openai / python-dotenv，请先 pip install -r requirements.txt，"
+                  "或改用 --offline 离线自检。")
             sys.exit(1)
         load_dotenv()
         from discovery import OpenAIEmbedder, ToolIndex
         if os.getenv("OPENAI_API_KEY"):
-            #  Direct OpenAI: both chat and embeddings go through OpenAI
+            # 直连 OpenAI：chat + embeddings 都走 OpenAI
             client = OpenAI()
             model = args.model
             embedder = OpenAIEmbedder(client, model=args.embed_model)
         elif os.getenv("OPENROUTER_API_KEY"):
-            #  Unified fallback: OpenRouter only proxies chat completions, no embeddings API,
-            #  so chat goes through OpenRouter (real model), tool retrieval uses local hash embedding.
+            # 统一兜底：OpenRouter 只代理 chat completions，没有 embeddings 接口，
+            # 因此对话走 OpenRouter（真实模型），工具检索改用本地哈希嵌入。
             from offline_backend import LocalEmbedder
             client = OpenAI(api_key=os.getenv("OPENROUTER_API_KEY"),
                             base_url="https://openrouter.ai/api/v1")
             model = _to_openrouter_model(args.model)
             embedder = LocalEmbedder()
-            print("OPENAI_API_KEY not detected, switching to OpenRouter fallback:")
-            print(f"  · Chat model: {model}(real call)")
-            print("  · Tool retrieval: local hash embedding (OpenRouter has no embeddings API).")
+            print("未检测到 OPENAI_API_KEY，改走 OpenRouter 兜底：")
+            print(f"  · 对话模型: {model}（真实调用）")
+            print("  · 工具检索: 本地哈希嵌入（OpenRouter 无 embeddings 接口）。")
         else:
-            print("Please set OPENAI_API_KEY or OPENROUTER_API_KEY (see env.example),"
-                  "or use --offline for offline self-check.")
+            print("请设置 OPENAI_API_KEY 或 OPENROUTER_API_KEY（见 env.example），"
+                  "或改用 --offline 离线自检。")
             sys.exit(1)
 
     index = ToolIndex(embedder, tools=tools) if need_index else None
 
-    print(f"Model: {model}  |  Embedding: {embedder.name}  |  Tool library: {len(tools)} items  "
-          f"|  Tasks: {len(tasks)}  |  Strategy: {[STRATEGIES[s][0] for s in strategies]}\n")
+    print(f"模型: {model}  |  嵌入: {embedder.name}  |  工具库: {len(tools)} 个  "
+          f"|  任务数: {len(tasks)}  |  策略: {[STRATEGIES[s][0] for s in strategies]}\n")
 
-    # ---- Per-Task Run ----
-    records = []           #  Each: {task, strategy, result, grade, latency}
+    # ---- 逐任务运行 ----
+    records = []           # 每条: {task, strategy, result, grade, latency}
     for task in tasks:
         print("=" * 92)
-        print(f"Task [{task['id']}]: {task['prompt']}")
+        print(f"任务 [{task['id']}]: {task['prompt']}")
         print("-" * 92)
         for key in strategies:
             res, latency = run_strategy(key, client, model, task["prompt"], index, tools, args)
@@ -209,17 +209,17 @@ def main():
             records.append({"task": task["id"], "strategy": key, "result": res,
                             "grade": g, "latency_s": round(latency, 3)})
             cname = STRATEGIES[key][0]
-            print(f"[{cname}] injection {res['injected_tokens']:>6} tokens "
-                  f"(exposed {res['num_tools_exposed']} tools)  delay {latency:5.2f}s")
+            print(f"[{cname}] 注入 {res['injected_tokens']:>6} tokens "
+                  f"（暴露 {res['num_tools_exposed']} 个工具）  延迟 {latency:5.2f}s")
             if key == "prefilter":
-                print(f"           pre-filter hits: {res['prefiltered']}")
+                print(f"           预筛选命中: {res['prefiltered']}")
             if key == "discovery":
                 for line in res["trace"]:
                     if line.startswith("[discover_tools]"):
                         print(f"           {line}")
-                print(f"           discovered and loaded: {res['discovered']}")
-            print(f"           call trace: {res['called']}")
-            print(f"           verdict: {_fmt_grade(g)}")
+                print(f"           发现并加载: {res['discovered']}")
+            print(f"           调用轨迹: {res['called']}")
+            print(f"           判定: {_fmt_grade(g)}")
         print()
 
     _print_summary(tasks, strategies, records)
@@ -231,15 +231,15 @@ def main():
                    "records": records}
         json.dump(payload, open(args.output, "w", encoding="utf-8"),
                   ensure_ascii=False, indent=2)
-        print(f"structured result written to: {args.output}")
+        print(f"\n结构化结果已写入: {args.output}")
 
 
 def _print_summary(tasks, strategies, records):
     n = len(tasks)
     print("=" * 92)
-    print("Summary comparison ('Precise correct selection' = covers all capability slots and does not mistakenly select the general fallback tool)")
+    print("汇总对比（『精确选对』= 覆盖全部能力槽位 且 未错选通用兜底工具）")
     print("=" * 92)
-    header = f"{'Strategy':<14}{'Precise correct selection':>10}{'Task completion':>10}{'Avg injection tokens':>16}{'Total injection tokens':>14}{'Avg delay (s)':>12}"
+    header = f"{'策略':<14}{'精确选对':>10}{'任务完成':>10}{'平均注入token':>16}{'总注入token':>14}{'平均延迟(s)':>12}"
     print(header)
     print("-" * 92)
     for key in strategies:
@@ -257,7 +257,7 @@ def _print_summary(tasks, strategies, records):
         ft = sum(r["result"]["injected_tokens"] for r in records if r["strategy"] == "full")
         at = sum(r["result"]["injected_tokens"] for r in records if r["strategy"] == "discovery")
         if at:
-            print(f"Injection tokens: full injection {ft} vs active discovery {at}, avg precise per task approx {ft/at:.1f} times.")
+            print(f"注入 token：全量注入 {ft} vs 主动发现 {at}，平均每任务精简约 {ft/at:.1f} 倍。")
 
 
 if __name__ == "__main__":

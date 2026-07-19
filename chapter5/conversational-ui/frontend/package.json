@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Experiment 5-11: Conversational Interface Customization System — React (Vite) Frontend",
+  "description": "实验 5-11：对话式界面定制系统 —— React(Vite) 前端",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -103,33 +103,38 @@ The server runs using stdio transport, suitable for integration with MCP clients
 
 ### Command-Line Interface (`cli.py`)
 
-In addition to serving via the MCP stdio protocol, the repository root provides a unified command-line entry point `cli.py`. It allows you to list, inspect, invoke, and demo various perception tools directly without an MCP client. Tools are organized according to the five categories in Chapter 4 "Perception Tools": Search / Multimodal Understanding / File System / Public Data Sources / Private Data Sources (currently 53 tools in total).
+除了以 MCP stdio 协议对外服务，仓库根目录提供了一个统一的命令行入口
+`cli.py`，无需 MCP 客户端即可直接列出、查看、调用和演示各类感知工具。
+工具按第四章「感知工具」的五类场景组织：搜索 / 多模态理解 / 文件系统 /
+公开数据源 / 私有数据源（当前共 53 个工具）。
 
 ```bash
-# View help (in Chinese)
+# 查看帮助（中文）
 python cli.py --help
 
-# List all perception tools by five categories (use --category to filter by one category)
+# 按五类列出全部感知工具（可用 --category 只看某一类）
 python cli.py list
 python cli.py list --category filesystem
 
-# View parameter signatures and usage examples for a specific tool
+# 查看某个工具的参数签名与调用示例
 python cli.py info weather
 
-# Directly invoke a tool, passing parameters as key=value; output is a standard ActionResponse JSON
+# 直接调用某个工具，参数以 key=value 形式传入，结果为标准 ActionResponse JSON
 python cli.py run grep 'pattern=async def' directory=src 'file_pattern=*.py'
 python cli.py run currency_converter amount=100 from_currency=USD to_currency=CNY
 
-# Run an end-to-end demo: a research assistant agent perception pipeline combining local documents and external information
-python cli.py demo            # Full demo (includes online steps)
-python cli.py demo --offline  # Offline demo (runs only file system / local knowledge base steps that don't require internet)
+# 运行端到端演示：串联「本地资料 + 外部信息」的研究助手 Agent 感知流程
+python cli.py demo            # 完整演示（含联网步骤）
+python cli.py demo --offline  # 离线演示（只跑文件系统 / 本地知识库等不联网步骤）
 ```
 
-Notes:
+说明：
 
-- Each tool is an async function returning a unified `ActionResponse` (JSON); the CLI manages the event loop, parses JSON, and prints it in a user-friendly format.
-- Tools are lazily imported on demand: `list` / `info` / offline `demo` work even when optional dependencies (e.g., `whisper`, `waybackpy`) are missing; the corresponding modules are only imported when the tool is actually invoked.
-- Tools requiring internet are marked as "online" in `list`; tools requiring authorization/API keys have corresponding notes.
+- 每个工具都是异步函数，返回统一的 `ActionResponse`（JSON）；CLI 负责运行事件
+  循环、解析 JSON 并友好打印。
+- 工具按需惰性导入：`list` / `info` / 离线 `demo` 在缺少可选依赖（如 `whisper`、
+  `waybackpy`）时仍可正常工作，只有真正调用相关工具时才导入对应模块。
+- 需要联网的工具在 `list` 中标注「联网」，需要授权/API Key 的工具标注了对应说明。
 
 ### Using with MCP Clients
 
@@ -195,7 +200,8 @@ Parameters:
 #### `image_parser`
 Parse and analyze image files.
 
-Parameters:- `image_path` (str): Path to image file or URL
+Parameters:
+- `image_path` (str): Path to image file or URL
 - `use_llm` (bool, default=True): Use LLM for analysis
 
 > **Vision LLM keys / OpenRouter fallback**: AI image/video analysis

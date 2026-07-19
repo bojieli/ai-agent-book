@@ -444,7 +444,7 @@ class OSWorldACI(ACI):
         for k in hold_keys:
             command += f"pyautogui.keyUp({repr(k)}); "
 
-        # === New code: add a 1-second wait here ===
+        # === 新增代码：在这里添加1秒的等待 ===
         command += "time.sleep(2); "
         # Return pyautoguicode to click on the element
         return command
@@ -499,7 +499,7 @@ class OSWorldACI(ACI):
 
             command = "import pyautogui; "
             # command += f"pyautogui.click({x}, {y}); "
-            # Change to double click
+            # 修改成double click
             command += f"pyautogui.doubleClick({x}, {y}); "
 
             if overwrite:
@@ -527,7 +527,7 @@ class OSWorldACI(ACI):
             if enter:
                 command += "pyautogui.press('enter'); "
 
-        # === New code: add a 1-second wait here ===
+        # === 新增代码：在这里添加1秒的等待 ===
         command += "time.sleep(2); "
 
         return command
@@ -566,7 +566,7 @@ class OSWorldACI(ACI):
 
         # Return pyautoguicode to drag and drop the elements
 
-        # === New code: add a 1-second wait here ===
+        # === 新增代码：在这里添加1秒的等待 ===
         command += "time.sleep(2); "
 
         return command
@@ -591,7 +591,7 @@ class OSWorldACI(ACI):
 
         # Return pyautoguicode to drag and drop the elements
 
-        # === New code: add a 1-second wait here ===
+        # === 新增代码：在这里添加1秒的等待 ===
         command += "time.sleep(2); "
 
         return command
@@ -713,7 +713,7 @@ ret = ""
 def code_compare_files(file1, file2):
     global ret
     try:
-        # Get compare result
+        # 获取compare结果
         subprocess.run(["code", "-d", file1, file2], check=True)
         ret = "The compared files are opened in VSCode"
     except subprocess.CalledProcessError as e:
@@ -812,46 +812,46 @@ def libreoffice_calc_get_last_used_row():
 def libreoffice_calc_set_column_as_text(column_name):
     global ret
     try:
-        # Get column index
+        # 获取列索引
         column_index = libreoffice_calc_get_column_index(column_name)
         if column_index is None:
             ret = f"Error: Invalid column name '{{column_name}}'"
             return False
 
-        # Get last used row
+        # 获取最后使用的行
         last_row = libreoffice_calc_get_last_used_row()
         if last_row == -1:
             ret = "Error: No data found in sheet"
             return False
 
-        # Get range for the entire column
+        # 获取整列的范围
         cell_range = sheet.getCellRangeByPosition(column_index, 0, column_index, last_row)
 
-        # Set number format to text format
-        # Use "@" for text format
-        cell_range.NumberFormat = 0  # Reset format
+        # 设置数字格式为文本格式
+        # 使用 "@" 表示文本格式
+        cell_range.NumberFormat = 0  # 重置格式
 
-        # Get format object and set to text
+        # 获取格式对象并设置为文本
         formats = doc.NumberFormats
         locale = uno.createUnoStruct("com.sun.star.lang.Locale")
         locale.Language = "en"
         locale.Country = "US"
 
-        # Create text format
+        # 创建文本格式
         text_format_key = formats.queryKey("@", locale, False)
         if text_format_key == -1:
             text_format_key = formats.addNew("@", locale)
 
-        # Apply text format to entire column
+        # 应用文本格式到整列
         cell_range.NumberFormat = text_format_key
 
-        # Convert existing numeric values to text
+        # 将现有数值转换为文本
         data_array = cell_range.getDataArray()
         for row_idx, row in enumerate(data_array):
             cell = sheet.getCellByPosition(column_index, row_idx)
             current_value = cell.getValue() if cell.getType().value == "VALUE" else cell.getString()
             if current_value != 0 or cell.getString() != "":
-                # Set value as string
+                # 将值设置为字符串
                 cell.setString(str(current_value))
 
         ret = f"Successfully set column {{column_name}} as text format"
@@ -2442,7 +2442,7 @@ def libreoffice_writer_save():
         if doc.hasLocation():
             doc.store()
         else:
-            raise Exception("Document has no save location, please use Save As")
+            raise Exception("文档没有保存位置，请使用另存为功能")
         return True
     except Exception as e:
         return False
@@ -3560,7 +3560,7 @@ def libreoffice_calc_get_column_data(column_name):
         return "Column not found"
     last_row = libreoffice_calc_get_last_used_row()
     _range = sheet.getCellRangeByPosition(column_index, 0, column_index, last_row)
-    # Get data array and flatten
+    # 获取数据数组并展平
     ret = json.dumps([row[0] for row in _range.getDataArray()], ensure_ascii=False)
     return [row[0] for row in _range.getDataArray()]
 libreoffice_calc_get_column_data(column_name={column_name})
@@ -3589,22 +3589,22 @@ ret = ""
 def libreoffice_calc_switch_active_sheet(sheet_name):
     global ret
     try:
-        # Get all sheets
+        # 获取所有工作表
         sheets = doc.getSheets()
 
-        # Check if sheet exists
+        # 检查工作表是否存在
         if not sheets.hasByName(sheet_name):
-            # Create new sheet
+            # 创建新工作表
             new_sheet = doc.createInstance("com.sun.star.sheet.Spreadsheet")
             sheets.insertByName(sheet_name, new_sheet)
 
-        # Get target sheet
+        # 获取目标工作表
         sheet = sheets.getByName(sheet_name)
 
-        # Switch to target sheet
+        # 切换到目标工作表
         doc.getCurrentController().setActiveSheet(sheet)
 
-        # Update current sheet reference
+        # 更新当前工作表引用
         sheet = sheet
         ret = "Success"
         return True
@@ -3643,29 +3643,29 @@ def libreoffice_calc_get_last_used_column():
 def libreoffice_calc_get_active_sheet_data():
     global ret
     try:
-        # Get the last row and column of the used range
+        # 获取使用范围的最后行和列
         last_row = libreoffice_calc_get_last_used_row()
         last_col = libreoffice_calc_get_last_used_column()
 
-        # If no data, return empty result
+        # 如果没有数据，返回空结果
         if last_row == -1 or last_col == -1:
             ret = json.dumps({{"data": [], "rows": 0, "columns": 0}}, ensure_ascii=False)
             return {{"data": [], "rows": 0, "columns": 0}}
 
-        # Get data for the entire used range
+        # 获取整个使用范围的数据
         data_range = sheet.getCellRangeByPosition(0, 0, last_col, last_row)
         data_array = data_range.getDataArray()
 
-        # Convert to data structure with coordinate information
+        # 转换为带坐标信息的数据结构
         sheet_data = []
         for row_idx, row in enumerate(data_array):
             row_data = []
             for col_idx, cell in enumerate(row):
-                # Calculate Excel-style column name (A, B, C, ...)
+                # 计算Excel风格的列名 (A, B, C, ...)
                 col_name = chr(ord('A') + col_idx) if col_idx < 26 else f"A{{chr(ord('A') + col_idx - 26)}}"
                 cell_address = f"{{col_name}}{{row_idx + 1}}"
 
-                # Handle different types of cell values
+                # 处理不同类型的单元格值
                 if isinstance(cell, (int, float)):
                     cell_value = cell
                 elif isinstance(cell, str):
@@ -3737,7 +3737,7 @@ def libreoffice_calc_set_column_values(column_name, data, start_index=2):
     for i, value in enumerate(data):
         cell = sheet.getCellByPosition(column_index, i + start_index - 1)
         if isinstance(value, str) and value.startswith("="):
-            cell.setFormula(value)  # ✅ Key fix: use setFormula for formulas
+            cell.setFormula(value)  # ✅ 关键修复：公式用 setFormula
         elif isinstance(value, float) and value.is_integer():
             cell.setNumber(int(value))
         else:
@@ -3819,10 +3819,10 @@ def libreoffice_calc_transpose_range(source_range, target_cell):
         target = sheet.getCellRangeByName(target_cell)
 
         data = source.getDataArray()
-        # Transpose data
+        # 转置数据
         transposed_data = list(map(list, zip(*data)))
 
-        # Set transposed data
+        # 设置转置后的数据
         target_range = sheet.getCellRangeByPosition(
             target.CellAddress.Column,
             target.CellAddress.Row,
@@ -3872,27 +3872,27 @@ ret = ""
 def libreoffice_calc_export_to_csv():
     global ret
     try:
-        # Get the URL of the current document
+        # 获取当前文档的URL
         doc_url = doc.getURL()
         if not doc_url:
             raise ValueError("Document must be saved first")
 
-        # Construct the CSV file path
+        # 构造CSV文件路径
         if doc_url.startswith("file://"):
-            base_path = doc_url[7:]  # Remove 'file://' prefix
+            base_path = doc_url[7:]  # 移除 'file://' 前缀
         else:
             base_path = doc_url
 
-        # Get the base path and filename
+        # 获取基本路径和文件名
         csv_path = os.path.splitext(base_path)[0] + ".csv"
 
-        # Ensure the path is absolute
+        # 确保路径是绝对路径
         csv_path = os.path.abspath(csv_path)
 
-        # Convert to LibreOffice URL format
+        # 转换为 LibreOffice URL 格式
         csv_url = uno.systemPathToFileUrl(csv_path)
 
-        # Set CSV export options
+        # 设置CSV导出选项
         props = (
             PropertyValue(Name="FilterName", Value="Text - txt - csv (StarCalc)"),
             PropertyValue(
@@ -3900,13 +3900,13 @@ def libreoffice_calc_export_to_csv():
             ),  # 44=comma, 34=quote, 76=UTF-8, 1=first row as header
         )
 
-        # Export the file
+        # 导出文件
         doc.storeToURL(csv_url, props)
         ret = "Success"
         return True
 
     except Exception as e:
-        ret = f"Error: {e}"
+        ret = f"Error: {{e}}"
         return False
 libreoffice_calc_export_to_csv()
 print(ret)
@@ -3949,7 +3949,7 @@ def libreoffice_calc_get_column_data(column_name):
         return "Column not found"
     last_row = libreoffice_calc_get_last_used_row()
     _range = sheet.getCellRangeByPosition(column_index, 0, column_index, last_row)
-    # Get data array and flatten
+    # 获取数据数组并展平
     ret = json.dumps([row[0] for row in _range.getDataArray()], ensure_ascii=False)
     return [row[0] for row in _range.getDataArray()]
 
@@ -3961,7 +3961,7 @@ def libreoffice_calc_get_column_index(column_name, sheet=None):
         return None
 def libreoffice_calc_set_column_values(column_name, data, start_index=2):
     global ret
-    # Get column index
+    # 获取列的索引
     column_index = libreoffice_calc_get_column_index(column_name)
     if column_index is None:
         ret = "Column not found"
@@ -4026,23 +4026,23 @@ def libreoffice_calc_set_validation_list(column_name, values):
         last_row = libreoffice_calc_get_last_used_row()
         cell_range = sheet.getCellRangeByPosition(column_index, 1, column_index, last_row)
 
-        # Get existing validation object
+        # 获取现有的验证对象
         validation = cell_range.getPropertyValue("Validation")
 
-        # Set basic validation type
+        # 设置基本验证类型
         validation.Type = uno.Enum("com.sun.star.sheet.ValidationType", "LIST")
         validation.Operator = uno.Enum("com.sun.star.sheet.ConditionOperator", "EQUAL")
 
-        # Set dropdown list
+        # 设置下拉列表
         validation.ShowList = True
-        # Debug: print actual values
+        # 调试：打印实际的值
         print(f"Debug: Original values = {{{{values}}}}")
-        # Enclose each value in double quotes, which is the standard format for LibreOffice
+        # 用双引号包围每个值，这是 LibreOffice 的标准格式
         values_str = ";".join('"' + str(val) + '"' for val in values)
         print(f"Debug: values_str = '{{{{values_str}}}}'")
         validation.Formula1 = values_str
 
-        # Apply validation settings back to cell range
+        # 应用验证设置回单元格范围
         cell_range.setPropertyValue("Validation", validation)
 
         ret = "Success"
@@ -4132,10 +4132,10 @@ def libreoffice_calc_get_column_index(column_name, sheet=None):
 def libreoffice_calc_reorder_columns(column_order):
     global ret
     try:
-        # Get new column indices
+        # 获取新的列索引
         new_indices = [libreoffice_calc_get_column_index(col) for col in column_order]
 
-        # Create new column order
+        # 创建新的列顺序
         for new_index, old_index in enumerate(new_indices):
             if new_index != old_index:
                 sheet.Columns.insertByIndex(new_index, 1)
@@ -4189,63 +4189,63 @@ def libreoffice_calc_create_pivot_table(source_sheet,
     try:
         source = doc.getSheets().getByName(source_sheet)
 
-        # Get data range
+        # 获取数据范围
         cursor = source.createCursor()
         cursor.gotoEndOfUsedArea(False)
         end_col = cursor.getRangeAddress().EndColumn
         end_row = cursor.getRangeAddress().EndRow
 
-        # Get full data range
+        # 获取完整的数据范围
         source_range = source.getCellRangeByPosition(0, 0, end_col, end_row)
 
-        # Get data pilot tables collection
+        # 获取数据透视表集合
         dp_tables = sheet.getDataPilotTables()
 
-        # Create data pilot descriptor
+        # 创建数据透视表描述符
         dp_descriptor = dp_tables.createDataPilotDescriptor()
 
-        # Set data source
+        # 设置数据源
         dp_descriptor.setSourceRange(source_range.getRangeAddress())
 
-        # Set row fields
+        # 设置行字段
         if row_fields:
             for field in row_fields:
                 field_index = libreoffice_calc_get_column_index(field)
                 dimension = dp_descriptor.getDataPilotFields().getByIndex(field_index)
                 dimension.Orientation = uno.Enum("com.sun.star.sheet.DataPilotFieldOrientation", "ROW")
 
-        # Set column fields
+        # 设置列字段
         if col_fields:
             for field in col_fields:
                 field_index = libreoffice_calc_get_column_index(field)
                 dimension = dp_descriptor.getDataPilotFields().getByIndex(field_index)
                 dimension.Orientation = uno.Enum("com.sun.star.sheet.DataPilotFieldOrientation", "COLUMN")
 
-        # Set data fields
+        # 设置数据字段
         for field in value_fields:
             field_index = libreoffice_calc_get_column_index(field)
             dimension = dp_descriptor.getDataPilotFields().getByIndex(field_index)
             dimension.Orientation = uno.Enum("com.sun.star.sheet.DataPilotFieldOrientation", "DATA")
 
-            # Set aggregation function
-            function_map = {"Count": "COUNT", "Sum": "SUM", "Average": "AVERAGE", "Min": "MIN", "Max": "MAX"}
+            # 设置聚合函数
+            function_map = {{"Count": "COUNT", "Sum": "SUM", "Average": "AVERAGE", "Min": "MIN", "Max": "MAX"}}
 
             if aggregation_function in function_map:
                 dimension.Function = uno.Enum(
                     "com.sun.star.sheet.GeneralFunction", function_map[aggregation_function]
                 )
 
-        # Create pivot table in current sheet
+        # 在当前工作表中创建数据透视表
         dp_tables.insertNewByName(
-            table_name,  # Pivot table name
-            sheet.getCellRangeByName(target_cell).CellAddress,  # Target position
-            dp_descriptor,  # Descriptor
+            table_name,  # 透视表名称
+            sheet.getCellRangeByName(target_cell).CellAddress,  # 目标位置
+            dp_descriptor,  # 描述符
         )
 
         ret = "Success"
         return True
     except Exception as e:
-        ret = f"Error: {e}"
+        ret = f"Error: {{e}}"
         return False
 libreoffice_calc_create_pivot_table(source_sheet={source_sheet}, table_name={table_name}, row_fields={row_fields}, col_fields={col_fields}, value_fields={value_fields}, aggregation_function={aggregation_function}, target_cell={target_cell})
 print(ret)
@@ -4279,16 +4279,16 @@ ret = ""
 def libreoffice_calc_merge_cells(sheet_name, range_str):
     global ret
     try:
-        # Get the specified worksheet by name
+        # 通过名称获取指定的工作表
         sheet = doc.getSheets().getByName(sheet_name)
 
-        # Get the cell range
+        # 获取单元格范围
         cell_range = sheet.getCellRangeByName(range_str)
 
-        # Check if the cells are already merged
+        # 检查单元格是否已经合并
         is_merged = cell_range.getIsMerged()
 
-        # If the cell range is not yet merged, merge it
+        # 如果单元格范围尚未合并，则进行合并
         if not is_merged:
             cell_range.merge(True)
 
@@ -4298,7 +4298,7 @@ def libreoffice_calc_merge_cells(sheet_name, range_str):
         ret = f"Error: {{e}}"
         return False
 
-# When calling the function, pass sheet_name and range_str as parameters
+# 调用函数时需要传入 sheet_name 和 range_str 两个参数
 libreoffice_calc_merge_cells(sheet_name={sheet_name}, range_str={range_str})
 print(ret)
 """
@@ -4337,27 +4337,27 @@ ret = ""
 def libreoffice_calc_set_cell_value(cell, value):
     global ret
     try:
-        # Get the cell object
+        # 获取单元格对象
         cell_obj = sheet.getCellRangeByName(cell)
 
         if isinstance(value, str) and value.startswith("="):
-            # Set formula
+            # 设置公式
             cell_obj.Formula = value
             ret = "Success"
             return True
 
-        # Try to convert the value to a number
+        # 尝试将值转换为数字
         try:
-            # Try to convert to integer
+            # 尝试转换为整数
             int_value = int(value)
             cell_obj.Value = int_value
         except ValueError:
             try:
-                # Try to convert to float
+                # 尝试转换为浮点数
                 float_value = float(value)
                 cell_obj.Value = float_value
             except ValueError:
-                # If not a number, set as string
+                # 如果不是数字，则设置为字符串
                 cell_obj.String = value
 
         ret = "Success"
@@ -4391,28 +4391,28 @@ ret = ""
 def libreoffice_calc_format_range(range_str, background_color=None, font_color=None, bold=None, alignment=None):
     global ret
     try:
-        # Get the specified range
+        # 获取指定范围
         cell_range = sheet.getCellRangeByName(range_str)
 
-        # Set background color
+        # 设置背景颜色
         if background_color:
-            # Convert hex color to integer
+            # 将十六进制颜色转换为整数
             bg_color_int = int(background_color.replace("#", ""), 16)
             cell_range.CellBackColor = bg_color_int
 
-        # Set font color
+        # 设置字体颜色
         if font_color:
-            # Convert hex color to integer
+            # 将十六进制颜色转换为整数
             font_color_int = int(font_color.replace("#", ""), 16)
             cell_range.CharColor = font_color_int
 
-        # Set bold
+        # 设置粗体
         if bold is not None:
-            cell_range.CharWeight = 150.0 if bold else 100.0  # 150.0 is bold, 100.0 is normal
+            cell_range.CharWeight = 150.0 if bold else 100.0  # 150.0 是粗体，100.0 是正常
 
-        # Set alignment
+        # 设置对齐方式
         if alignment:
-            # Set horizontal alignment
+            # 设置水平对齐方式
             struct = cell_range.getPropertyValue("HoriJustify")
             if alignment == "left":
                 struct.value = "LEFT"
@@ -4474,13 +4474,13 @@ def libreoffice_calc_insert_chart(
     global ret
 
     try:
-        # Generate a unique chart name
+        # 生成唯一的图表名称
         if chart_name is None:
             import time
-            timestamp = str(int(time.time() * 1000))  # Use millisecond timestamp
+            timestamp = str(int(time.time() * 1000))  # 使用毫秒时间戳
             chart_name = f"Chart_{{timestamp}}"
 
-        # Chart type mapping
+        # 图表类型映射
         chart_type_map = {{
             "column": "com.sun.star.chart.ColumnDiagram",
             "line": "com.sun.star.chart.LineDiagram"
@@ -4490,7 +4490,7 @@ def libreoffice_calc_insert_chart(
             ret = f"Error: Unsupported chart type '{{chart_type}}'. Supported: column, line"
             return False
 
-        # Process data ranges
+        # 处理数据范围
         if isinstance(data_ranges, str):
             if "," in data_ranges:
                 range_list = [r.strip() for r in data_ranges.split(",")]
@@ -4502,7 +4502,7 @@ def libreoffice_calc_insert_chart(
             ret = "Error: data_ranges must be string or list"
             return False
 
-        # Convert data ranges to CellRangeAddress objects
+        # 转换数据范围为CellRangeAddress对象
         cell_ranges = []
         for range_str in range_list:
             try:
@@ -4512,7 +4512,7 @@ def libreoffice_calc_insert_chart(
                 ret = f"Error processing range '{{range_str}}': {{e}}"
                 return False
 
-        # Set chart position and size
+        # 设置图表位置和大小
         if chart_position and chart_size:
             rect = Rectangle(
                 chart_position.get("x", 1000),
@@ -4529,19 +4529,19 @@ def libreoffice_calc_insert_chart(
         else:
             rect = Rectangle(1000, 1000, 10000, 7000)
 
-        # Create chart
+        # 创建图表
         charts = sheet.Charts
         charts.addNewByName(chart_name, rect, tuple(cell_ranges), first_row_as_label, first_column_as_label)
 
-        # Get chart object
+        # 获取图表对象
         chart_obj = charts.getByName(chart_name)
         chart_doc = chart_obj.EmbeddedObject
 
-        # Create and set chart type
+        # 创建并设置图表类型
         diagram = chart_doc.createInstance(chart_type_map[chart_type])
         chart_doc.setDiagram(diagram)
 
-        # Set data series orientation
+        # 设置数据系列排列方向
         try:
             if hasattr(chart_doc, 'setDataSourceLabelsInFirstRow'):
                 chart_doc.setDataSourceLabelsInFirstRow(not data_series_in_rows)
@@ -4550,7 +4550,7 @@ def libreoffice_calc_insert_chart(
         except Exception as e:
             print(f"Warning: Failed to set data series orientation: {{e}}")
 
-        # Set chart title
+        # 设置图表标题
         if title:
             try:
                 title_obj = chart_doc.getTitle()
@@ -4561,7 +4561,7 @@ def libreoffice_calc_insert_chart(
             except Exception as e:
                 print(f"Warning: Failed to set title: {{e}}")
 
-        # Set subtitle
+        # 设置副标题
         if subtitle:
             try:
                 subtitle_obj = chart_doc.getSubTitle()
@@ -4572,7 +4572,7 @@ def libreoffice_calc_insert_chart(
             except Exception as e:
                 print(f"Warning: Failed to set subtitle: {{e}}")
 
-        # Set axis titles
+        # 设置坐标轴标题
         if x_axis_title or y_axis_title:
             try:
                 if hasattr(diagram, 'XAxisTitle') and x_axis_title:
@@ -4587,7 +4587,7 @@ def libreoffice_calc_insert_chart(
             except Exception as e:
                 print(f"Warning: Failed to set axis titles: {{e}}")
 
-        # Set grid lines
+        # 设置网格线
         try:
             if hasattr(diagram, 'HasXAxisGrid'):
                 diagram.HasXAxisGrid = display_x_grid
@@ -4640,10 +4640,10 @@ ret = ""
 def libreoffice_calc_freeze_panes(rows=0, columns=0):
     global ret
     try:
-        # Get the current view
+        # 获取当前视图
         view = doc.getCurrentController()
 
-        # Set freeze panes
+        # 设置冻结窗格
         view.freezeAtPosition(columns, rows)
 
         ret = "Success"
@@ -4677,21 +4677,21 @@ ret = ""
 def libreoffice_calc_rename_sheet(old_name, new_name):
     global ret
     try:
-        # Get all sheets
+        # 获取所有工作表
         sheets = doc.getSheets()
 
-        # Check if the original sheet exists
+        # 检查原工作表是否存在
         if not sheets.hasByName(old_name):
             return False
 
-        # Check if the new name already exists
+        # 检查新名称是否已存在
         if sheets.hasByName(new_name):
             return False
 
-        # Get the sheet to rename
+        # 获取要重命名的工作表
         sheet = sheets.getByName(old_name)
 
-        # Rename the sheet
+        # 重命名工作表
         sheet.setName(new_name)
 
         ret = "Success"
@@ -4726,30 +4726,30 @@ ret = ""
 def libreoffice_calc_copy_sheet(source_sheet, new_sheet_name=None):
     global ret
     try:
-        # Get all sheets
+        # 获取所有工作表
         sheets = doc.getSheets()
 
-        # Check if the source sheet exists
+        # 检查源工作表是否存在
         if not sheets.hasByName(source_sheet):
             return None
 
-        # If no new name is provided, generate one
+        # 如果没有提供新名称，则生成一个
         if not new_sheet_name:
-            # Generate a name like "Sheet1 (2)"
+            # 生成类似 "Sheet1 (2)" 的名称
             base_name = source_sheet
             counter = 1
             new_sheet_name = f"{{base_name}} ({{counter}})"
 
-            # Ensure the name is unique
+            # 确保名称不重复
             while sheets.hasByName(new_sheet_name):
                 counter += 1
                 new_sheet_name = f"{{base_name}} ({{counter}})"
 
-        # Check if the new name already exists
+        # 检查新名称是否已存在
         if sheets.hasByName(new_sheet_name):
-            return None  # Name already exists, cannot create
+            return None  # 名称已存在，无法创建
 
-        # Get the index of the source sheet
+        # 获取源工作表的索引
         source_index = -1
         for i in range(sheets.getCount()):
             if sheets.getByIndex(i).getName() == source_sheet:
@@ -4759,7 +4759,7 @@ def libreoffice_calc_copy_sheet(source_sheet, new_sheet_name=None):
         if source_index == -1:
             return None
 
-        # Copy the sheet
+        # 复制工作表
         sheets.copyByName(source_sheet, new_sheet_name, source_index + 1)
 
         ret = f"New sheet created: {{new_sheet_name}}"
@@ -4795,24 +4795,24 @@ ret = ""
 def libreoffice_calc_reorder_sheets(sheet_name, position):
     global ret
     try:
-        # Get all sheets
+        # 获取所有工作表
         sheets = doc.getSheets()
 
-        # Check if sheet exists
+        # 检查工作表是否存在
         if not sheets.hasByName(sheet_name):
             return False
 
-        # Get total number of sheets
+        # 获取工作表总数
         sheet_count = sheets.getCount()
 
-        # Check if position is valid
+        # 检查位置是否有效
         if position < 0 or position >= sheet_count:
             return False
 
-        # Get the sheet to move
+        # 获取要移动的工作表
         sheet = sheets.getByName(sheet_name)
 
-        # Get current index of the sheet
+        # 获取工作表当前索引
         current_index = -1
         for i in range(sheet_count):
             if sheets.getByIndex(i).Name == sheet_name:
@@ -4822,7 +4822,7 @@ def libreoffice_calc_reorder_sheets(sheet_name, position):
         if current_index == -1:
             return False
 
-        # Move sheet to specified position
+        # 移动工作表到指定位置
         sheets.moveByName(sheet_name, position)
 
         ret = "Success"
@@ -4857,32 +4857,32 @@ ret = ""
 def libreoffice_calc_set_chart_legend_position(position):
     global ret
     try:
-        # Get all charts in the current sheet
+        # 获取当前工作表中的所有图表
         charts = sheet.getCharts()
         if charts.getCount() == 0:
             return False
 
-        # Get the first chart (assuming we want to modify the first chart)
+        # 获取第一个图表（假设我们要修改的是第一个图表）
         chart = charts.getByIndex(0)
         chart_obj = chart.getEmbeddedObject()
 
-        # Get the chart's diagram
+        # 获取图表的图例
         diagram = chart_obj.getDiagram()
         legend = chart_obj.getLegend()
 
-        # Set legend position based on specified position
+        # 根据指定的位置设置图例位置
         if position == "none":
-            # If "none" is selected, hide the legend
+            # 如果选择"none"，则隐藏图例
             chart_obj.HasLegend = False
         else:
-            # Ensure legend is visible
+            # 确保图例可见
             chart_obj.HasLegend = True
 
             import inspect
 
             print(inspect.getmembers(legend))
 
-            # Set legend position
+            # 设置图例位置
             if position == "top":
                 pos = uno.Enum("com.sun.star.chart.ChartLegendPosition", "TOP")
             elif position == "bottom":
@@ -4925,14 +4925,14 @@ ret = ""
 def libreoffice_calc_set_number_format(range_str, format_type, decimal_places=None):
     global ret
     try:
-        # Get cell range
+        # 获取单元格范围
         cell_range = sheet.getCellRangeByName(range_str)
 
-        # Get number format service
+        # 获取数字格式化服务
         number_formats = doc.NumberFormats
         locale = doc.CharLocale
 
-        # Set format string based on format type
+        # 根据格式类型设置格式字符串
         format_string = ""
 
         if format_type == "general":
@@ -4971,14 +4971,14 @@ def libreoffice_calc_set_number_format(range_str, format_type, decimal_places=No
         elif format_type == "text":
             format_string = "@"
 
-        # Get format key
+        # 获取格式键
         format_key = number_formats.queryKey(format_string, locale, True)
 
-        # If format does not exist, add it
+        # 如果格式不存在，则添加
         if format_key == -1:
             format_key = number_formats.addNew(format_string, locale)
 
-        # Apply format
+        # 应用格式
         cell_range.NumberFormat = format_key
 
         ret = "Success"
@@ -5020,7 +5020,7 @@ def libreoffice_calc_column_name_to_index(column_name):
 def libreoffice_calc_adjust_column_width(columns, width=None, autofit=False):
     global ret
     try:
-        # Parse column range
+        # 解析列范围
         col_range = columns.split(":")
         start_col = libreoffice_calc_column_name_to_index(col_range[0])
 
@@ -5029,19 +5029,19 @@ def libreoffice_calc_adjust_column_width(columns, width=None, autofit=False):
         else:
             end_col = start_col
 
-        # Get column object
+        # 获取列对象
         columns_obj = sheet.getColumns()
 
-        # Iterate over the specified column range
+        # 遍历指定的列范围
         for col_idx in range(start_col, end_col + 1):
             column = columns_obj.getByIndex(col_idx)
 
             if autofit:
-                # Auto-fit column width
+                # 自动调整列宽
                 column.OptimalWidth = True
             elif width is not None:
-                # Set specified width (convert to 1/100 mm)
-                # Approximately one character width is 256 (1/100 mm)
+                # 设置指定宽度（转换为1/100毫米）
+                # 大约一个字符宽度为256 (1/100 mm)
                 column.Width = int(width * 256)
 
         ret = "Success"
@@ -5077,21 +5077,21 @@ ret = ""
 def libreoffice_calc_adjust_row_height(rows, height=None, autofit=False):
     global ret
     try:
-        # Parse row range
+        # 解析行范围
         row_range = rows.split(":")
         start_row = int(row_range[0])
         end_row = int(row_range[1]) if len(row_range) > 1 else start_row
 
-        # Get row object
+        # 获取行对象
         for row_index in range(start_row, end_row + 1):
-            row = sheet.getRows().getByIndex(row_index - 1)  # Index starts from 0
+            row = sheet.getRows().getByIndex(row_index - 1)  # 索引从0开始
 
             if autofit:
-                # Auto-fit row height to content
+                # 自动调整行高以适应内容
                 row.OptimalHeight = True
             elif height is not None:
-                # Set specified height (convert points to 1/100 mm, unit used by LibreOffice)
-                # 1 point ≈ 35.28 1/100 mm
+                # 设置指定高度（将点转换为1/100毫米，LibreOffice使用的单位）
+                # 1点 ≈ 35.28 1/100毫米
                 row.Height = int(height * 35.28)
                 row.OptimalHeight = False
 
@@ -5127,46 +5127,46 @@ ret = ""
 def libreoffice_calc_export_to_pdf(file_path=None, sheets=None, open_after_export=False):
     global ret
     try:
-        # If no file path is specified, use the current document path and change the extension to .pdf
+        # 如果未指定文件路径，则使用当前文档路径并更改扩展名为.pdf
         if not file_path:
             if doc.hasLocation():
                 url = doc.getLocation()
                 file_path = uno.fileUrlToSystemPath(url)
                 file_path = os.path.splitext(file_path)[0] + ".pdf"
             else:
-                # If the document has not been saved, create a temporary file on the user's desktop
+                # 如果文档尚未保存，则在用户桌面创建临时文件
                 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
                 file_path = os.path.join(desktop_path, "LibreOffice_Export.pdf")
 
-        # Ensure the file path is a system path, then convert to URL
+        # 确保文件路径是系统路径，然后转换为URL
         pdf_url = uno.systemPathToFileUrl(os.path.abspath(file_path))
 
-        # Create export properties
+        # 创建导出属性
         export_props = []
 
-        # Set filter name
+        # 设置过滤器名称
         export_props.append(PropertyValue(Name="FilterName", Value="calc_pdf_Export"))
 
-        # If specific sheets are specified, export only those sheets
+        # 如果指定了特定工作表，则只导出这些工作表
         if sheets and isinstance(sheets, list) and len(sheets) > 0:
-            # Get all sheets
+            # 获取所有工作表
             all_sheets = doc.getSheets()
             selection = []
 
-            # Find the specified sheets
+            # 查找指定的工作表
             for sheet_name in sheets:
                 if all_sheets.hasByName(sheet_name):
                     sheet = all_sheets.getByName(sheet_name)
                     selection.append(sheet)
 
-            # If specified sheets are found, set the export selection
+            # 如果找到了指定的工作表，则设置导出选择
             if selection:
                 export_props.append(PropertyValue(Name="Selection", Value=tuple(selection)))
 
-        # Export PDF
+        # 导出PDF
         doc.storeToURL(pdf_url, tuple(export_props))
 
-        # If needed, open the PDF after export
+        # 如果需要，导出后打开PDF
         if open_after_export:
             if sys.platform.startswith("darwin"):  # macOS
                 subprocess.call(("open", file_path))
@@ -5208,17 +5208,17 @@ ret = ""
 def libreoffice_calc_set_zoom_level(zoom_percentage):
     global ret
     try:
-            # Get the current controller
+            # 获取当前控制器
             controller = doc.getCurrentController()
 
-            # Set the zoom value
-            # Ensure the zoom value is within a reasonable range
+            # 设置缩放值
+            # 确保缩放值在合理范围内
             if zoom_percentage < 10:
                 zoom_percentage = 10
             elif zoom_percentage > 400:
                 zoom_percentage = 400
 
-            # Apply the zoom value
+            # 应用缩放值
             controller.ZoomValue = zoom_percentage
             ret = "Success"
             return True

@@ -1,16 +1,16 @@
 """
-Phase 1: Bottom-up factor discovery.
+阶段 1：自下而上的因子发现（bottom-up factor discovery）。
 
-Instead of predefining any rigid data schema:
-  1. Feed batches of judgment texts to an LLM, letting it **freely list** all factors that may affect the verdict in each batch;
-  2. Aggregate the raw factors discovered from all batches, then use one more LLM call to **merge and normalize** them, producing a
-     「modular data schema」:
-        - core        —— generic factors applicable to all charges (voluntary surrender, compensation, guilty plea, prior record...);
-        - extensions  —— charge-specific factors (theft→amount involved/breaking into premises; injury→injury level...).
+不预先定义任何僵化的数据模式，而是：
+  1. 把判例文本分批喂给 LLM，让它**自由列出**每一批案例中所有可能影响判决的因素；
+  2. 汇总各批发现的原始因子，再用一次 LLM 调用做**归并与规范化**，产出一个
+     「模块化数据模式」：
+        - core        —— 适用于所有罪名的通用因子（自首、赔偿、认罪、前科……）；
+        - extensions  —— 各罪名特有的扩展因子（盗窃→涉案金额/入户；伤害→伤害等级……）。
 
-The resulting schema is saved to data/schema.json for reuse in subsequent extraction/clustering/dialogue steps.
-Each factor in the schema includes: key (English), name_cn, kind (numeric/bool/categorical),
-values (categorical values), direction (aggravating/mitigating/neutral), question (guiding follow-up question).
+产出的 schema 落盘到 data/schema.json，供后续抽取 / 聚类 / 对话三段复用。
+schema 里每个因子含：key（英文）、name_cn、kind(numeric/bool/categorical)、
+values(categorical 取值)、direction(aggravating/mitigating/neutral)、question(引导性追问)。
 """
 import json
 import os
@@ -20,31 +20,31 @@ from config import MODEL, get_client
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 SCHEMA_PATH = os.path.join(DATA_DIR, "schema.json")
 
-_BATCH_SYS = """You are an expert assisting judicial data analysis. Below are several "facts" paragraphs from criminal judgments.
-Please **freely summarize** all factors that may affect the court's sentencing/verdict (do not limit yourself to any preset list).
-For each factor, provide:
-  - key: short English snake_case identifier
-  - name_cn: Chinese name
-  - charge: the charge to which this factor mainly applies (fill "通用" if applicable to all types)
-  - kind: numeric (numerical, e.g., amount/number) | bool (yes/no circumstance) | categorical (multiple values, e.g., injury level)
-  - values: if kind is categorical, list the observed value array; otherwise empty array
-Output only JSON: {"factors": [ {factor...}, ... ]}"""
+_BATCH_SYS = """你是协助司法数据分析的专家。下面给你若干条刑事判决书的「事实」段落。
+请你**自由归纳**出其中所有可能影响法院量刑/判决的因素（不要局限于任何预设清单）。
+对每个因素给出：
+  - key: 简短英文 snake_case 标识
+  - name_cn: 中文名
+  - charge: 该因素主要适用的罪名（若各类案件通用则填 "通用"）
+  - kind: numeric（数值，如金额/人数）| bool（是非情节）| categorical（多取值，如伤害等级）
+  - values: 若 kind 为 categorical，列出观察到的取值数组；否则为空数组
+只输出 JSON：{"factors": [ {factor...}, ... ]}"""
 
-_CONSOLIDATE_SYS = """You are a judicial data modeling expert. Below are **raw factor lists** discovered separately from multiple judgment examples
-(they may contain duplicates, synonyms, inconsistent naming). Please **merge, deduplicate, and normalize** them into a modular data schema:
-  - core: generic factors applicable to all charges (e.g., voluntary surrender, compensation and forgiveness, guilty plea and acceptance of punishment, prior record and recidivism)
-  - extensions: an object whose keys are charge names (e.g., "盗窃罪"/"故意伤害罪"/"诈骗罪") and values are arrays of factors specific to that charge
-Normalization requirements:
-  - Merge synonymous factors (e.g., "自首/主动投案", "认罪认罚/认罪/如实供述", "赔偿/退赔/退赃",
-    "累犯/前科", "涉案金额/物品价值/诈骗金额" under the same charge keep only one),
-    keep only the clearest key and Chinese name per group;
-  - Remove factors with no substantive relation to sentencing (e.g., descriptive information like defendant's gender, crime scene);
-  - Do not redundantly keep factors that are opposites of each other, such as "是否否认指控/辩称正当防卫" and "认罪认罚".
-Each factor output fields:
-  key, name_cn, kind (numeric|bool|categorical), values (array of categorical values, otherwise []),
-  direction (aggravating | mitigating | neutral),
-  question (a Chinese guiding question to ask the party when this factor is missing)
-Output only JSON: {"core": [...], "extensions": {"charge": [...], ...}}"""
+_CONSOLIDATE_SYS = """你是司法数据建模专家。下面是从多批判例中分别发现的**原始因子清单**
+（可能有重复、同义、命名不一致）。请把它们**归并、去重、规范化**成一个模块化数据模式：
+  - core: 适用于所有罪名的通用因子（如自首、赔偿谅解、认罪认罚、前科累犯）
+  - extensions: 一个对象，键为罪名（如 "盗窃罪"/"故意伤害罪"/"诈骗罪"），值为该罪名特有的因子数组
+规范化要求：
+  - 合并同义因子（如"自首/主动投案"、"认罪认罚/认罪/如实供述"、"赔偿/退赔/退赃"、
+    "累犯/前科"、同一罪名下的"涉案金额/物品价值/诈骗金额"只保留一个），
+    每组只保留一个最清晰的 key 与中文名；
+  - 剔除与量刑无实质关系的因素（如被告人性别、案发地点这类描述性信息）;
+  - "是否否认指控/辩称正当防卫"这类与"认罪认罚"互为反面的，不要重复保留。
+每个因子输出字段：
+  key, name_cn, kind(numeric|bool|categorical), values(categorical 的取值数组，否则[]),
+  direction(aggravating 从重 | mitigating 从轻 | neutral 中性),
+  question(当该因子缺失时，向当事人提出的一句中文引导性问题)
+只输出 JSON：{"core": [...], "extensions": {"罪名": [...], ...}}"""
 
 
 def _chat_json(client, system, user):
@@ -59,32 +59,32 @@ def _chat_json(client, system, user):
 
 
 def discover_schema(cases, batch_size=12, use_cache=True, verbose=True):
-    """Bottom-up factor discovery and merging into a modular schema. With disk cache (to avoid repeated costs)."""
+    """自下而上发现因子并归并成模块化 schema。带磁盘缓存（避免重复花钱）。"""
     if use_cache and os.path.exists(SCHEMA_PATH):
         with open(SCHEMA_PATH, encoding="utf-8") as fh:
             if verbose:
-                print(f"  Cache hit schema -> {SCHEMA_PATH}")
+                print(f"  命中缓存 schema -> {SCHEMA_PATH}")
             return json.load(fh)
 
     client = get_client()
 
-    # --- Step 1: Batch free discovery ---
+    # --- 第 1 步：分批自由发现 ---
     raw_factors = []
     for start in range(0, len(cases), batch_size):
         batch = cases[start:start + batch_size]
-        facts = "\n\n".join(f"[Case{start + j + 1}]（{c['charge']}）{c['fact']}"
+        facts = "\n\n".join(f"[案例{start + j + 1}]（{c['charge']}）{c['fact']}"
                             for j, c in enumerate(batch))
         out = _chat_json(client, _BATCH_SYS, facts)
         got = out.get("factors", [])
         raw_factors.extend(got)
         if verbose:
-            print(f"  Batch {start // batch_size + 1} : discovered {len(got)} candidate factors")
+            print(f"  批次 {start // batch_size + 1}：发现 {len(got)} 个候选因子")
 
-    # --- Step 2: Merge / normalize into modular schema ---
+    # --- 第 2 步：归并 / 规范化成模块化 schema ---
     if verbose:
-        print(f"  Aggregated {len(raw_factors)} raw factors, merging and normalizing ...")
+        print(f"  汇总 {len(raw_factors)} 个原始因子，做归并与规范化 ...")
     schema = _chat_json(client, _CONSOLIDATE_SYS,
-                        "Raw factor list: \n" + json.dumps(raw_factors, ensure_ascii=False))
+                        "原始因子清单：\n" + json.dumps(raw_factors, ensure_ascii=False))
     schema.setdefault("core", [])
     schema.setdefault("extensions", {})
 
@@ -92,21 +92,21 @@ def discover_schema(cases, batch_size=12, use_cache=True, verbose=True):
     with open(SCHEMA_PATH, "w", encoding="utf-8") as fh:
         json.dump(schema, fh, ensure_ascii=False, indent=2)
     if verbose:
-        print(f"  Discovered modular schema saved -> {SCHEMA_PATH}")
+        print(f"  发现的模块化 schema 已保存 -> {SCHEMA_PATH}")
     return schema
 
 
-# --- Schema quick access ---------------------------------------------------------
+# --- schema 便捷访问 ---------------------------------------------------------
 def load_schema():
     with open(SCHEMA_PATH, encoding="utf-8") as fh:
         return json.load(fh)
 
 
 def factors_for_charge(schema, charge):
-    """Return the list of factors applicable to a given charge: core generic factors + charge-specific extension factors (deduplicated by key)."""
+    """返回某罪名适用的因子列表：核心通用因子 + 该罪名扩展因子（按 key 去重）。"""
     seen, out = set(), []
     for f in schema.get("core", []) + schema.get("extensions", {}).get(charge, []):
-        if f["key"] in seen:  #  Deduplication: if a factor appears in both core and extensions, keep only once
+        if f["key"] in seen:  # 去重：某因子同时落在 core 和扩展里时只保留一次
             continue
         seen.add(f["key"])
         out.append(f)
@@ -114,7 +114,7 @@ def factors_for_charge(schema, charge):
 
 
 def all_factors(schema):
-    """All factors (core + all extensions), deduplicated by key."""
+    """全部因子（core + 所有扩展），按 key 去重。"""
     seen, out = set(), []
     lists = [schema.get("core", [])] + list(schema.get("extensions", {}).values())
     for lst in lists:
@@ -127,12 +127,12 @@ def all_factors(schema):
 
 
 def print_schema(schema):
-    print("  Core generic factors (core):")
+    print("  核心通用因子 (core):")
     for f in schema.get("core", []):
         vals = f"={f['values']}" if f.get("values") else ""
         print(f"    - {f['key']:<16} {f['name_cn']}  [{f['kind']}{vals}] {f.get('direction','')}")
     for charge, lst in schema.get("extensions", {}).items():
-        print(f"  Extension factors · {charge}:")
+        print(f"  扩展因子 · {charge}:")
         for f in lst:
             vals = f"={f['values']}" if f.get("values") else ""
             print(f"    - {f['key']:<16} {f['name_cn']}  [{f['kind']}{vals}] {f.get('direction','')}")

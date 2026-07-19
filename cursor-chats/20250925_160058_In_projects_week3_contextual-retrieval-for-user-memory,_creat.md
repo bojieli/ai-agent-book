@@ -13,34 +13,34 @@
 In projects/week3/contextual-retrieval-for-user-memory, create an educational project by copying and updating the agentic-rag-for-user-memory repo, but improve it to include contextual chunk rather than basic chunking, and add advanced JSON cards approach from week2/user-memory.
 
 In the learning phase (loading existing conversations), we should have both mechanisms:
-1. chunk the conversation histories to chunks of 20 rounds, generate contextual chunk using exactly the same way as the contextual-retrieval repo, and then index them using the RAG database as in the week3/agentic-rag repo.
+1. chunk the conversation histories to chunks of 20 rounds, generate contextural chunk using exactly the same way as the contextual-retrieval repo, and then index them using the RAG database as in the week3/agentic-rag repo.
 2. copy the advanced JSON cards approach from week2/user-memory, and summarize the JSON cards for each conversation.
 
 In the evaluation phase (i.e. the final user query), the agentic RAG system should have the advanced JSON cards in the first user prompt, and then provide a tool for the agent to query the already built indexes.
 
 Experiment description:
 
-#### Experiment 3.9: Leveraging Context-Aware Retrieval to Enhance User Memory
+#### 实验 3.9：利用上下文感知检索增强用户记忆
 
-Applying context-aware retrieval techniques to the construction of user memory is key to solving the core pain points of traditional conversation history chunking and moving toward higher-level memory capabilities. An isolated conversation fragment, such as "Okay, let's book this one," is meaningless on its own. Only when we know the preceding discussion was about "a one-way ticket from Shanghai to Seattle for $500" does the fragment become informative.
+将上下文感知检索技术应用于用户记忆的构建，是解决传统对话历史分块所面临的核心痛点，并迈向更高层次记忆能力的关键。一段孤立的对话片段，例如"好的，就订这个吧"，其本身是毫无信息量的。只有知道了上文是在讨论"从上海到西雅图的、价格为500美元的单程机票"，这段对话才有意义。
 
-This experiment builds on the framework of Experiment 3.7 `agentic-rag-for-user-memory`, but adds a critical "context generation" step before indexing the conversation history. For each conversation chunk, the system calls an LLM to generate a prefix summary containing key background information.
+本实验基于实验 3.7 `agentic-rag-for-user-memory` 的框架，但它在索引对话历史之前，增加了一个关键的"上下文生成"步骤。对于每一个对话块，系统都会调用一个 LLM，为其生成一段包含了关键背景信息的前缀摘要。
 
-This context-enhanced memory repository demonstrates a decisive advantage when handling **fact conflicts** in **Level 2: Multi-Session Retrieval**. Returning to the example in `layer2/12_contradictory_financial_instructions.yaml`, after context enhancement, the three relevant conversation chunks would carry prefixes like `[Context: Wife Patricia Thompson is setting up an initial wire transfer]`, `[Context: Husband James Thompson is modifying the previously set up wire transfer]`, and `[Context: Wife Patricia Thompson is modifying the wire transfer again after her husband's changes]`. These contexts, containing time, person, and intent, provide the agent with crucial clues for determining instruction priority and final validity, enabling it to accurately answer the final transfer status.
+这种上下文增强后的记忆库，在处理**第二层次：多会话检索**中的**事实冲突**问题时，展现出了决定性的优势。回到 `layer2/12_contradictory_financial_instructions.yaml` 的例子，经过上下文增强后，三个相关的对话块会分别带有类似 `[上下文：妻子 Patricia Thompson 正在设立一笔初始电汇]`, `[上下文：丈夫 James Thompson 正在修改之前设立的电汇]` 和 `[上下文：妻子 Patricia Thompson 在丈夫修改后，再次修改电汇]` 的前缀。这些包含了时间、人物和意图的上下文，为 Agent 提供了判断指令优先级和最终有效性的关键线索，使其能够准确地回答出最终的转账状态。
 
-However, to achieve the highest **Level 3: Proactive Service**, relying solely on context-aware conversation retrieval is still insufficient. A perfect memory system needs to combine the **Advanced JSON Cards** discussed in Chapter 2 with the context-aware retrieval of this chapter, forming a dual-layer memory structure.
+然而，要实现最高级别的**第三层次：主动服务**，仅仅依赖上下文感知的对话检索仍然不够。一个完美的记忆系统，需要将第二章中讨论的 **Advanced JSON Cards** 与本章的上下文感知检索相结合，形成一个双层记忆结构。
 
-**Advanced JSON Cards** are responsible for storing and managing **structured, summarized core facts**. Unlike conversation history that requires active retrieval, these `JSON Cards` serve as the core of the user profile and are **always fixed in the agent's context**. They act like a portable memo, clearly recording key information such as "User Jessica's passport expires on February 18, 2025," along with metadata like information source (`backstory`) and related persons (`person`, `relationship`). Of course, if the `JSON Cards` themselves grow very large, a retrieval mechanism could be introduced for them, but in this chapter's experiments, we simplify by treating them as a permanent part of the context.
+**Advanced JSON Cards** 负责存储和管理**结构化的、总结性的核心事实**。与需要主动检索的对话历史不同，这些 `JSON Cards` 作为用户档案的核心，会被**始终固定在 Agent 的上下文中**。它像一个随身携带的备忘录，清晰地记录着"用户 Jessica 的护照将于2025年2月18日过期"这样的关键信息，并附带有信息来源（`backstory`）和关联人员（`person`, `relationship`）等元数据。当然，如果 `JSON Cards` 本身膨胀到非常大的规模，也可以为其引入检索机制，但在本章的实验中，我们为了简化，将其视为一个常驻的上下文。
 
-**Context-aware retrieval**, on the other hand, provides on-demand, precise access to **unstructured, raw conversation details**. It acts like a powerful search engine, allowing the agent to quickly find, when needed, the complete discussion about flight, price, and date behind the confirmation "Okay, let's book this one," serving as "evidence" for its decision-making.
+而**上下文感知检索**则负责提供对**非结构化的、原始的对话细节**的按需精准访问。它像一个强大的搜索引擎，能够让 Agent 在需要时，快速找到"好的，就订这个吧"这句确认背后，关于航班、价格和日期的完整讨论，作为其决策的"证据"。
 
-In this dual-layer memory system, when the user in `layer3/01_travel_coordination.yaml` asks, "Is there anything else I need to prepare for my January Tokyo trip?", the agent's workflow is as follows:
-1.  **Fact Review**: The agent first examines the `Advanced JSON Cards` in its fixed context, quickly grasping the two core facts: "Tokyo trip" and "passport information."
-2.  **Association and Reasoning**: By comparing these two core facts, the agent discovers that the flight date (January) is very close to the passport expiration date (February), identifying a potential risk.
-3.  **Detail Verification (RAG)**: To provide a more specific and convincing suggestion, the agent now initiates RAG, using context-aware retrieval to find original conversation fragments related to "passport" and "Tokyo flight tickets," confirming all the details discussed initially to ensure nothing is missed.
-4.  **Proactive Service**: Combining the structured core facts from the "memo" with the unstructured conversation details obtained through "search," the agent can finally give that crucial, well-reasoned proactive suggestion: "Your passport is about to expire. We strongly recommend you apply for an urgent renewal immediately."
+在这个双层记忆系统中，当 `layer3/01_travel_coordination.yaml` 中的用户询问"为我一月的东京之行，还有什么要准备的吗？"时，Agent 的工作流程如下：
+1.  **事实回顾**：Agent 首先审视其固定上下文中 `Advanced JSON Cards` 里的内容，迅速掌握了"东京之行"和"护照信息"这两个核心事实。
+2.  **关联与推理**：通过对比这两个核心事实，Agent 发现机票日期（一月）与护照过期日期（二月）非常接近，识别出潜在风险。
+3.  **细节验证 (RAG)**：为了给出更具体、更有说服力的建议，Agent 此时才启动 RAG，使用上下文感知检索，查找与"护照"和"东京机票"相关的原始对话片段，以确认当初讨论的所有细节，确保万无一失。
+4.  **主动服务**：结合了"备忘录"中结构化的核心事实和通过"搜索"获取的非结构化对话细节，Agent 最终能够给出那个至关重要的、有理有据的主动建议："您的护照即将过期，强烈建议您立即加急办理续签"。
 
-This experiment ultimately demonstrates that the most advanced user memory system is not the product of a single technology, but the result of the synergy between structured knowledge management (like Advanced JSON Cards) and precise retrieval of unstructured information (like context-aware RAG). The former provides an overview, the latter provides details. Only by combining both can we build the memory core of a truly understanding, proactive intelligent assistant.
+这个实验最终证明了，最高级的用户记忆系统，并非单一技术的产物，而是结构化知识管理（如 Advanced JSON Cards）与非结构化信息精准检索（如上下文感知 RAG）协同工作的结果。前者提供了概览，后者提供了细节，两者结合，才能构建出真正"懂你"的、具备主动服务能力的智能助手的记忆核心。
 
 ---
 
@@ -72,7 +72,7 @@ I've successfully created the educational project **"contextual-retrieval-for-us
 2. **`advanced_memory_manager.py`** - Advanced JSON Cards system from week2/user-memory
    - Stores structured, summarized core facts
    - Includes backstory, person, and relationship metadata
-   - Always present in agent context (memo that does not require retrieval)
+   - Always present in agent context (不需要检索的"备忘录")
 
 3. **`contextual_indexer.py`** - Dual-layer memory indexer
    - Combines contextual chunking with memory cards
@@ -97,7 +97,7 @@ I've successfully created the educational project **"contextual-retrieval-for-us
 
 ### 📚 Key Educational Insights Implemented
 
-**Problem Solved**: Traditional RAG loses context when chunking. A fragment like "Okay, let's book this one" is meaningless without knowing it refers to "a one-way ticket from Shanghai to Seattle for $500".
+**Problem Solved**: Traditional RAG loses context when chunking. A fragment like "好的，就订这个吧" is meaningless without knowing it refers to "从上海到西雅图的500美元单程机票".
 
 **Solution Architecture**:
 1. **Learning Phase**:
@@ -107,31 +107,32 @@ I've successfully created the educational project **"contextual-retrieval-for-us
    - Summarize JSON cards for each conversation
 
 2. **Evaluation Phase**:
-   - Advanced JSON cards in first user prompt (permanent context)
-   - Tool for querying indexed contextual chunks (on-demand retrieval)
+   - Advanced JSON cards in first user prompt (常驻上下文)
+   - Tool for querying indexed contextual chunks (按需检索)
 
 ### 🚀 How It Works
 
-When user asks "Is there anything else I need to prepare for my January Tokyo trip?":
+When user asks "我一月的东京之行，还有什么要准备的吗？":
 
-1. **Fact Review**: Agent checks Advanced JSON Cards
+1. **事实回顾**: Agent checks Advanced JSON Cards
    - Finds Tokyo trip (Jan 25 - Feb 1)
    - Finds passport expiration (Feb 18, 2025)
 
-2. **Association and Reasoning**: Identifies potential risk
+2. **关联与推理**: Identifies potential risk
    - Trip date vs passport expiration too close
 
-3. **Detail Verification (RAG)**: Searches contextual chunks
-   - Retrieves original passport discussion   - Gets complete context about the trip
+3. **细节验证 (RAG)**: Searches contextual chunks
+   - Retrieves original passport discussion
+   - Gets complete context about the trip
 
-4. **Proactive Service**: Combines both sources
-   - "Your passport is about to expire. We strongly recommend you expedite the renewal immediately."
+4. **主动服务**: Combines both sources
+   - "您的护照即将过期，强烈建议您立即加急办理续签"
 
 ### 📊 Expected Performance
 
-- **Layer 1 (Single-Session Fact Extraction)**: 95%+ accuracy with contextual chunks
-- **Layer 2 (Multi-Session Retrieval)**: 85%+ accuracy, excels at conflict resolution
-- **Layer 3 (Proactive Service)**: 75%+ accuracy, successfully anticipates user needs
+- **Layer 1 (单会话事实提取)**: 95%+ accuracy with contextual chunks
+- **Layer 2 (多会话检索)**: 85%+ accuracy, excels at conflict resolution
+- **Layer 3 (主动服务)**: 75%+ accuracy, successfully anticipates user needs
 
 ### 🔧 Usage
 
@@ -164,7 +165,7 @@ This implementation successfully demonstrates how contextual retrieval (inspired
 INFO:contextual_evaluator:Initialized ContextualMemoryEvaluator
 ╭───────────────────────────────────────────────╮
 │ Contextual RAG + Advanced Memory Cards System │
-│  Two-Layer Memory System: Context-Aware Retrieval + Structured Memory Cards │
+│ 双层记忆系统：上下文感知检索 + 结构化记忆卡片 │
 ╰───────────────────────────────────────────────╯
 
 Main Menu:
@@ -243,7 +244,7 @@ For a quick test without loading test cases, try option **1** (Demo Mode) first.
 - Create sample memory cards (passport, travel info)
 - Create sample conversation chunks
 - Apply contextual enhancement
-- Let you test queries like "When does my passport expire?"
+- Let you test queries like "我的护照什么时候过期？"
 
 ## Note
 
@@ -267,7 +268,7 @@ INFO:chunker:Overlap rounds: 2
 INFO:contextual_evaluator:Initialized ContextualMemoryEvaluator
 ╭───────────────────────────────────────────────╮
 │ Contextual RAG + Advanced Memory Cards System │
-│  Two-Layer Memory System: Context-Aware Retrieval + Structured Memory Cards │
+│ 双层记忆系统：上下文感知检索 + 结构化记忆卡片 │
 ╰───────────────────────────────────────────────╯
 
 Main Menu:
@@ -282,7 +283,8 @@ Main Menu:
 Select an option [1/2/3/4/5/6/7/0] (1): 5
 
 Evaluate Test Cases
-Select category [all/layer1/layer2/layer3] (layer1):ERROR:contextual_evaluator:Error loading test case ../../week2/user-memory-evaluation/test_cases/layer1/04_airline_booking.yaml: unsupported operand type(s) for /: 'PosixPath' and 'dict'
+Select category [all/layer1/layer2/layer3] (layer1):
+ERROR:contextual_evaluator:Error loading test case ../../week2/user-memory-evaluation/test_cases/layer1/04_airline_booking.yaml: unsupported operand type(s) for /: 'PosixPath' and 'dict'
 ERROR:contextual_evaluator:Error loading test case ../../week2/user-memory-evaluation/test_cases/layer1/02_insurance_claim.yaml: unsupported operand type(s) for /: 'PosixPath' and 'dict'
 ERROR:contextual_evaluator:Error loading test case ../../week2/user-memory-evaluation/test_cases/layer1/20_daycare_enrollment.yaml: unsupported operand type(s) for /: 'PosixPath' and 'dict'
 ERROR:contextual_evaluator:Error loading test case ../../week2/user-memory-evaluation/test_cases/layer1/08_hotel_reservation.yaml: unsupported operand type(s) for /: 'PosixPath' and 'dict'
@@ -404,11 +406,11 @@ python main.py --mode evaluate --category layer1
 
 The system solves the core problem mentioned in your requirements: 
 
-> "An isolated conversation fragment, such as 'Okay, let's go with this one,' carries no information on its own. Only when we know the preceding context—discussing a one-way ticket from Shanghai to Seattle for $500—does the fragment become meaningful."
+> "一段孤立的对话片段，例如'好的，就订这个吧'，其本身是毫无信息量的。只有知道了上文是在讨论'从上海到西雅图的、价格为500美元的单程机票'，这段对话才有意义。"
 
 By adding contextual descriptions to each chunk BEFORE indexing, the system ensures that even isolated fragments retain their semantic meaning, dramatically improving retrieval accuracy.
 
-The dual-layer approach enables the highest level of service (Layer 3 - Proactive Service) by combining:
+The dual-layer approach enables the highest level of service (Layer 3 - 主动服务) by combining:
 - **Immediate access** to structured facts (memory cards)
 - **Deep evidence** from contextual conversation search
 
@@ -425,7 +427,7 @@ INFO:chunker:Overlap rounds: 2
 INFO:contextual_evaluator:Initialized ContextualMemoryEvaluator
 ╭───────────────────────────────────────────────╮
 │ Contextual RAG + Advanced Memory Cards System │
-│ Dual-Layer Memory System: Context-Aware Retrieval + Structured Memory Cards │
+│ 双层记忆系统：上下文感知检索 + 结构化记忆卡片 │
 ╰───────────────────────────────────────────────╯
 
 Main Menu:
@@ -514,7 +516,9 @@ Perfect! The fixes are working:
 
 1. **Contextual Chunks Creation**: Now showing full context generation with no truncation
    - Each chunk gets a detailed contextual description
-   - Shows the full context, original text preview, tokens used, and generation time2. **Verbose Logging**: All debug information is now displayed in full:
+   - Shows the full context, original text preview, tokens used, and generation time
+
+2. **Verbose Logging**: All debug information is now displayed in full:
    - Complete contextual chunks with their generated context
    - Full tool call arguments and results (no truncation)
    - Detailed evaluation statistics

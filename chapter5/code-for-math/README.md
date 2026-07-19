@@ -1,105 +1,105 @@
-# Experiment 5-1: Boosting Math Problem-Solving with Code Generation Tools
+# 实验 5-1：用代码生成工具提升数学解题能力
 
-Companion experiment for "Deep Understanding of AI Agents" (★★). Validates a conclusion: when an Agent is equipped with a
-Python sandbox capable of executing code, its accuracy on competitive math problems is **significantly higher** than with pure Chain-of-Thought (CoT).
+《深入理解 AI Agent》配套实验（★★）。验证一个结论：给 Agent 配上能执行代码的
+Python 沙箱后，它在竞赛数学题上的准确率会**显著高于**纯思维链（Chain-of-Thought, CoT）。
 
-## Purpose
+## 目的
 
-Large models frequently make errors when "mentally calculating" large numbers, enumerations, and factorizations—not because they lack the method, but because they miscalculate.
-This experiment runs the same model (default `gpt-5.6-luna`) on the same set of problems in two modes for a direct comparison:
+大模型「心算」大数、枚举、因式分解时极易出错——不是不会方法，而是算错。
+本实验让同一个模型（默认 `gpt-5.6-luna`）在同一组题上跑两种模式，直接对比：
 
-- **Pure CoT**: Reasoning step-by-step using only natural language, with code writing prohibited;
-- **Code-Assisted**: Formalizing the problem into Python (sympy symbolic computation, numpy matrices, scipy numerical solving),
-  invoking the `run_python` tool via function calling to execute in a **subprocess sandbox**, using precise results to replace mental calculation.
+- **纯 CoT**：只能用自然语言一步步推理，禁止写代码；
+- **代码辅助**：把题目形式化为 Python（sympy 符号计算、numpy 矩阵、scipy 数值求解），
+  通过 function calling 调用 `run_python` 工具在**子进程沙箱**里执行，用精确结果替代心算。
 
-## Principle
+## 原理
 
 ```
-Problem ──► Model
-            │  Pure CoT: Direct natural language reasoning ─────────────► Final Answer (prone to errors)
-            │
-            └─ Code-Assisted: Generate Python code
-                         │  function calling
-                         ▼
-                   run_python tool (subprocess sandbox, pre-installed sympy/numpy/scipy, timeout protection)
-                         │  returns stdout
-                         ▼
-                  Model continues reasoning based on precise results ──────────► Final Answer (more accurate)
+题目 ──► 模型
+          │  纯 CoT：直接自然语言推理 ─────────────► 最终答案（易算错）
+          │
+          └─ 代码辅助：生成 Python 代码
+                       │  function calling
+                       ▼
+                 run_python 工具（子进程沙箱，预装 sympy/numpy/scipy，超时保护）
+                       │  返回 stdout
+                       ▼
+                 模型基于精确结果继续推理 ──────────► 最终答案（更准）
 ```
 
-- The tool is exposed via OpenAI **function calling**: the model autonomously decides when and what code to write.
-- The sandbox is `run_python()` in `sandbox.py`: writes code to a temporary file, executes it in a subprocess,
-  with a 20-second timeout; crashes/infinite loops do not affect the main process. `sympy / numpy / scipy` are pre-imported.
-- Problems are in `problems.json`: 11 AIME-style competition problems, **answers are all integers, verified offline via brute-force enumeration**,
-  covering number theory, modular arithmetic, Diophantine equations, generating functions, prime factorization, lattice point counting, etc. Each problem also includes a
-  `solution` reference solution code for offline self-checking (see below).
+- 工具用 OpenAI **function calling** 暴露：模型自主决定何时写代码、写什么代码。
+- 沙箱是 `sandbox.py` 里的 `run_python()`：把代码写入临时文件，用子进程执行，
+  带 20 秒超时，崩溃/死循环不影响主进程。预导入了 `sympy / numpy / scipy`。
+- 题目在 `problems.json`：11 道 AIME 风格竞赛题，**答案均为整数、已用暴力枚举离线校验**，
+  覆盖数论、模运算、丢番图方程、生成函数、素因子分解、格点计数等。每题还附带一段
+  `solution` 参考解代码，用于离线自检（见下）。
 
-## Offline Self-Check (No API Key Required)
+## 离线自检（无需 API key）
 
-Want to verify that the "sandbox + problem set ground truth" pipeline works, but don't have an API key handy? Run:
+想验证「沙箱 + 题库真值」这条链路是否可用、但手头没有 API key？跑：
 
 ```bash
 pip install -r requirements.txt
-python demo.py --selfcheck        # Executes the reference solution for each problem in the sandbox, scores against ground truth
+python demo.py --selfcheck        # 在沙箱中执行每题的参考解，按真值判分
 ```
 
-It executes the reference solution attached in `problems.json` for each problem, runs it in the subprocess sandbox, extracts the integer output
-and compares it against the ground truth—this both demonstrates the core mechanism of "write code → sandbox execution → score against ground truth" and self-checks the
-problem set's ground truth itself. Exit code is 0 when all pass. Actual output (11/11 all passed):
+它会对每道题执行 `problems.json` 里附带的参考解，在子进程沙箱中运行，抽取整数输出
+与真值比对——这既演示了「写代码 → 沙箱执行 → 按真值判分」的核心机制，也自检了题库
+真值本身。全部命中时退出码为 0。真实输出（11/11 全部通过）：
 
 ```
-Problem  Topic                           Ground Truth  Sandbox Output
+题号   考点                             真值      沙箱输出
 --------------------------------------------------------
 1    number theory (inclusion-exclusion)    925       925   ✓
 2    modular exponentiation        216       216   ✓
 ...
 11   lattice points               1245      1245   ✓
 --------------------------------------------------------
-Reference solutions matched ground truth: 11/11
+参考解命中真值：11/11
 ```
 
-## Running the Controlled Experiment (API Key Required)
+## 运行对照实验（需要 API key）
 
 ```bash
-cp env.example .env   # Or directly export OPENAI_API_KEY=...
-export OPENAI_API_KEY=sk-...      # Also supports MOONSHOT_API_KEY / ARK_API_KEY
+cp env.example .env   # 或直接 export OPENAI_API_KEY=...
+export OPENAI_API_KEY=sk-...      # 也支持 MOONSHOT_API_KEY / ARK_API_KEY
 
-python demo.py                    # Run the full controlled experiment (code and cot modes)
-python demo.py --verbose          # Additionally print the model-generated code and execution results
-python demo.py --limit 3          # Only run the first 3 problems (saves money for debugging)
-python demo.py --mode code        # Only run code-assisted mode
-python demo.py --mode cot         # Only run pure chain-of-thought mode
-python demo.py --model gpt-5.6-luna   # Override the model name (equivalent to setting the MODEL environment variable)
-python demo.py --output result.json   # Write per-problem results and summary to JSON
-python demo.py --problems mine.json   # Use a custom problem set
+python demo.py                    # 跑完整对照实验（code 与 cot 两种模式）
+python demo.py --verbose          # 额外打印模型生成的代码与执行结果
+python demo.py --limit 3          # 只跑前 3 题（省钱调试）
+python demo.py --mode code        # 只跑代码辅助模式
+python demo.py --mode cot         # 只跑纯思维链模式
+python demo.py --model gpt-5.6-luna   # 覆盖模型名（等价于设 MODEL 环境变量）
+python demo.py --output result.json   # 把逐题结果与汇总写入 JSON
+python demo.py --problems mine.json   # 换用自定义题库
 ```
 
-See `python demo.py --help` for all parameters. Common flags:
+完整参数见 `python demo.py --help`。常用开关：
 
-| Parameter | Description |
+| 参数 | 说明 |
 | --- | --- |
-| `--mode {both,code,cot}` | Solving mode, default `both` (runs both and compares) |
-| `--selfcheck` | Offline self-check, only runs sandbox reference solutions, no API key needed |
-| `--model name` | Override the model name (higher priority than the `MODEL` environment variable) |
-| `--problems path` | Path to the problem set JSON, default `problems.json` |
-| `--limit N` | Only run the first N problems |
-| `--output path` | Write per-problem results to a JSON file |
-| `--verbose` | Print generated code and sandbox execution results |
+| `--mode {both,code,cot}` | 求解模式，默认 `both`（两种都跑并对照） |
+| `--selfcheck` | 离线自检，只跑沙箱参考解，无需 API key |
+| `--model 名称` | 覆盖模型名（优先级高于 `MODEL` 环境变量） |
+| `--problems 路径` | 题库 JSON 路径，默认 `problems.json` |
+| `--limit N` | 只跑前 N 题 |
+| `--output 路径` | 把逐题结果写入 JSON 文件 |
+| `--verbose` | 打印生成的代码与沙箱执行结果 |
 
-Available environment variables: `OPENAI_API_KEY` (or `MOONSHOT_API_KEY` / `ARK_API_KEY`),
-`OPENAI_BASE_URL` (to switch compatible endpoints), `MODEL` (default `gpt-5.6-luna`).
+可用环境变量：`OPENAI_API_KEY`（或 `MOONSHOT_API_KEY` / `ARK_API_KEY`）、
+`OPENAI_BASE_URL`（切换兼容端点）、`MODEL`（默认 `gpt-5.6-luna`）。
 
-**Universal OpenRouter fallback**: When no direct API key is configured, as long as `OPENROUTER_API_KEY`
-is set, it will automatically route through OpenRouter (model names are auto-mapped: `gpt-*` → `openai/*`, others → `openai/gpt-5.6-luna`).
-Additionally, the default model `gpt-5.6-luna` belongs to the gpt-5.x series; calling it directly via OpenAI requires organizational identity verification.
-Therefore, as long as `OPENROUTER_API_KEY` is set, it will prioritize OpenRouter (route `openai/gpt-5.6-luna`).
+**通用 OpenRouter 兜底**：未配置任何直连 key 时，只要设置了 `OPENROUTER_API_KEY`
+即可自动改走 OpenRouter（模型名自动映射：`gpt-*` → `openai/*`，其它 → `openai/gpt-5.6-luna`）。
+另外默认模型 `gpt-5.6-luna` 属于 gpt-5.x，直连 OpenAI 调用它需要组织实名认证，
+因此只要设置了 `OPENROUTER_API_KEY` 就会优先走 OpenRouter（route `openai/gpt-5.6-luna`）。
 
-## Expected Output Example / Conclusion
+## 预期输出示例 / 结论
 
-An excerpt from an actual run with `gpt-5.6-luna` (11 problems, reasoning model default `temperature=1`):
+真实跑 `gpt-5.6-luna`（11 题，reasoning 模型默认 `temperature=1`）的一次逐题结果节选：
 
 ```
-Problem  Topic                           Ground Truth  CoT Prediction  Code Prediction
+题号   考点                             真值     CoT预测          代码预测
 ------------------------------------------------------------------------------
 2    modular exponentiation        216       216   ✓       216   ✓
 6    sum of two squares            330       306   ✗       330   ✓
@@ -107,56 +107,56 @@ Problem  Topic                           Ground Truth  CoT Prediction  Code Pred
 10   factorials and modular arithmetic    313       313   ✓       313   ✓
 11   lattice points               1245      1245   ✓      1245   ✓
 ------------------------------------------------------------------------------
-Accuracy                                  10/11 =   91%     11/11 =  100%
+准确率                                  10/11 =   91%     11/11 =  100%
 ```
 
-| Mode | Accuracy (this actual measurement) |
+| 模式 | 准确率（本次实测） |
 | --- | --- |
-| Pure CoT | 10 / 11 (≈ 91%) |
-| Code-Assisted | 11 / 11 (100%) |
+| 纯 CoT | 10 / 11（≈ 91%） |
+| 代码辅助 | 11 / 11（100%） |
 
-**The accuracy of the code-assisted mode is consistently not lower than pure CoT.** The pure CoT of strong reasoning models like `gpt-5.6-luna` is already quite accurate,
-but it can still stumble on problems requiring extensive enumeration / error-prone boundary conditions—the only miss this time was problem 6, "Sum of Two Squares Counting"
-(e.g., counting representations for x²+y²<400; CoT miscalculated the boundary, giving 306 instead of 330). Code-assisted mode delegates such enumeration to
-sympy/numpy for precise execution, filling this gap and achieving a perfect score.
+**代码辅助模式准确率稳定地不低于纯 CoT。** `gpt-5.6-luna` 这类强推理模型的纯 CoT 已经相当准，
+但在需要大量枚举 / 边界易错的题上仍会翻车——本次唯一漏掉的是第 6 题「两平方和计数」
+（x²+y²<400 之类的表示计数，CoT 心算边界算错，给出 306 而非 330）。代码辅助把这类
+枚举交给 sympy/numpy 精确执行，把这道题也补齐，达到满分。
 
-> **Stronger models narrow the gap, but the direction remains unchanged.** With a weaker small model, pure CoT will make more errors on
-> problems requiring large number operations / extensive enumeration (large number modulo, 100! accumulation modulo, lattice point counting, perfect square determination, etc.),
-> and the lead of code-assisted mode will be significantly larger; however, code-assisted mode is not absolutely infallible: weak models may occasionally write enumeration code
-> that is "correct in concept but wrong in detail," in which case a buggy piece of code is precisely executed. Regardless of model strength, the conclusion that "code-assisted is not lower than, and is usually significantly higher than,
-> pure CoT" holds stably.
+> **强模型让差距收窄，但方向不变。** 换成更弱的小模型，纯 CoT 会在
+> 更多需要大数运算 / 大量枚举的题上出错（大数取模、100! 累加取模、格点计数、完全平方判定等），
+> 代码辅助的领先幅度会明显更大；而代码辅助也并非绝对万能：弱模型偶尔会写出「思路对、细节错」
+> 的枚举代码，此时精确执行的是一段有 bug 的代码。无论模型强弱，「代码辅助不低于、通常显著高于
+> 纯 CoT」这一结论都稳定成立。
 
-> **This is another example of the "model ↔ harness seesaw."** This experiment has been run on both strong and weak models:
-> The weaker model `gpt-4o-mini` achieved 6/11 with pure CoT and 8/11 with code-assisted, with the code harness widening the gap by **+2 problems**; switching to the strong reasoning model
-> `gpt-5.6-luna`, pure CoT itself rose to 10/11, code-assisted to 11/11, narrowing the gap to **+1 problem** (only the most difficult enumeration problem, "Sum of Two Squares Counting," needed code as a safety net).
-> The stronger the model, the less code can compensate for it; if the model were strong enough to solve everything with pure thought, the gain from code-assisted would converge to 0, as seen in the companion experiment `code-for-logic`.
-> **How thick the harness should be depends on the capability boundary of the model you are using**—this is a prerequisite often overlooked when evaluating an Agent technology.
+> **这正是「模型 ↔ 脚手架（harness）此消彼长」的又一例证。** 本实验在强弱两个模型上都实测过：
+> 较弱模型 `gpt-4o-mini` 纯 CoT 6/11、代码辅助 8/11，代码这层脚手架把差距拉开 **+2 题**；换成强推理模型
+> `gpt-5.6-luna`，纯 CoT 自己就升到 10/11、代码辅助 11/11，差距收窄到 **+1 题**（只剩最难的枚举题「两平方和计数」需要代码兜底）。
+> 模型越强，代码能替它补的越少；若再强到纯思考也能全解，代码辅助的增益就会像姊妹实验 `code-for-logic` 那样收敛到 0。
+> **脚手架该做多厚，取决于你手上模型的能力边界**——这也是评估一项 Agent 技术时容易被忽视的前提。
 
-## How to Adapt / Extend
+## 如何适配 / 扩展
 
-- **Change Model / Provider**: Set the `MODEL` environment variable to switch models (e.g., `MODEL=gpt-5.6-luna`, `MODEL=claude-opus-4.8`);
-  to change providers, set `MOONSHOT_API_KEY` (automatically switches to Kimi) or `ARK_API_KEY` (automatically switches to Doubao),
-  or use `OPENAI_BASE_URL` to point to any endpoint compatible with the OpenAI protocol. Stronger models can compensate for occasional buggy code.
-- **Change Problem Set**: Edit `problems.json`, providing `question` / `answer` (integer) / `topic` for each problem,
-  and include a `solution` (Python reference solution that prints the answer). When adding new problems, it is recommended to **first use
-  `python demo.py --selfcheck` to have the reference solution produce the ground truth in the sandbox**, just like the existing problems, to avoid errors in the answer itself.
-- **Change Sandbox Capabilities**: The `PREAMBLE` in `sandbox.py` pre-imports sympy/numpy/scipy; to support more libraries,
-  add the import here and update `requirements.txt` accordingly.
+- **换模型 / 供应商**：设 `MODEL` 环境变量即可换模型（如 `MODEL=gpt-5.6-luna`、`MODEL=claude-opus-4.8`）；
+  换供应商则设 `MOONSHOT_API_KEY`（自动切 Kimi）或 `ARK_API_KEY`（自动切豆包），
+  或用 `OPENAI_BASE_URL` 指向任意兼容 OpenAI 协议的端点。更强模型能把偶发的 bug 代码补齐。
+- **换题库**：编辑 `problems.json`，每题给出 `question` / `answer`（整数）/ `topic`，
+  并附一段 `solution`（打印答案的 Python 参考解）。建议新增题目时像现有题一样**先用
+  `python demo.py --selfcheck` 让参考解在沙箱里跑出真值**，避免答案本身出错。
+- **换沙箱能力**：`sandbox.py` 的 `PREAMBLE` 预导入 sympy/numpy/scipy；要支持更多库
+  就在此追加 import 并同步更新 `requirements.txt`。
 
-## Limitations
+## 局限
 
-- The sandbox is a teaching-grade implementation (subprocess + timeout + temporary directory), **not a security isolation boundary**; production environments should use
-  containers / gVisor / network-less strong isolation sandboxes.
-- Accuracy depends on model quality: small models may still produce buggy code (see above); code-assisted reduces but does not eliminate errors.
-- Answer extraction parses according to `FINAL ANSWER: <integer>`, only supporting integer-type answers; non-integer / multi-value answers require modifying
-  `extract_answer` and the scoring logic.
+- 沙箱是教学级实现（子进程 + 超时 + 临时目录），**不是安全隔离边界**；生产环境应换成
+  容器 / gVisor / 无网络的强隔离沙箱。
+- 准确率依赖模型质量：小模型仍可能写出有 bug 的代码（见上），代码辅助降低但不消除错误。
+- 答案抽取按 `FINAL ANSWER: <整数>` 解析，仅支持整数型答案；非整数 / 多值答案需改
+  `extract_answer` 与判分逻辑。
 
-## Files
+## 文件
 
-| File | Description |
+| 文件 | 说明 |
 | --- | --- |
-| `demo.py` | Main program: controlled experiment + function calling loop + results table + offline self-check (`--selfcheck`) |
-| `sandbox.py` | Subprocess Python sandbox (`run_python`, timeout protection, pre-installed math libraries) |
-| `problems.json` | 11 competition problems (problem statements + verified integer ground truths + topics + reference solutions `solution`) |
-| `requirements.txt` | Dependencies |
-| `env.example` | Environment variable example |
+| `demo.py` | 主程序：对照实验 + function calling 循环 + 结果表 + 离线自检（`--selfcheck`） |
+| `sandbox.py` | 子进程 Python 沙箱（`run_python`，超时保护，预装数学库） |
+| `problems.json` | 11 道竞赛题（题面 + 已校验的整数真值 + 考点 + 参考解 `solution`） |
+| `requirements.txt` | 依赖 |
+| `env.example` | 环境变量样例 |

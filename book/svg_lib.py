@@ -40,13 +40,13 @@ FS_SMALL = 16
 FS_TINY = 14
 FS_LABEL = 16
 
-# Per academic convention: the figure itself does not include a title; the title is written in the main text.
-# When OMIT_TITLE=True, any 'title-type' text with font_size==FS_TITLE (except short symbols like
-# VS/→/+) is treated as a figure title and not rendered—regardless of whether it is at the top or middle of the figure (section titles
-# of multi-panel figures are also removed). Short symbols are preserved via the TITLE_MIN_LEN length threshold.
+# 按学术规范：图本身不包含标题，标题写在正文里。
+# 当 OMIT_TITLE=True 时，任何 font_size==FS_TITLE 的“标题型”文本（短符号如
+# VS/→/+ 除外）都视为图标题，不予渲染——无论它位于图的顶部还是中部（多面板
+# 图的分节标题同样剔除）。短符号通过 TITLE_MIN_LEN 长度阈值保留。
 OMIT_TITLE = True
-TITLE_Y_THRESHOLD = 60   # Kept for backward compatibility; no longer relied upon independently
-TITLE_MIN_LEN = 4        # Only FS_TITLE text with length >= this value is considered a title and removed
+TITLE_Y_THRESHOLD = 60   # 兼容旧逻辑保留，当前不再单独依赖
+TITLE_MIN_LEN = 4        # 长度 >= 此值的 FS_TITLE 文本才视为标题并剔除
 TITLE_CROP_PX = 40
 
 
@@ -340,7 +340,7 @@ class SVG:
     def text(self, x, y, content, size=FS_BODY, bold=False, anchor='middle', fill='text', baseline='central', max_width=None):
         # Skip in-figure titles per academic convention (titles belong in body text).
         # Drop any FS_TITLE-sized phrase anywhere in the figure; keep short symbols
-        # (VS / → / + etc.) which also happen to use the title size as diagram content.
+        # (VS / → / + 等) which also happen to use the title size as diagram content.
         if OMIT_TITLE and size == FS_TITLE and len(str(content).strip()) >= TITLE_MIN_LEN:
             return
         if max_width:

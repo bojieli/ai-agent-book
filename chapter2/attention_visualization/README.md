@@ -20,7 +20,7 @@ The system follows a simple architecture:
 ## Quick Start (Standalone CLI)
 
 The fastest way to reproduce the attention patterns described in Chapter 2
-(Experiment 2-2) is the standalone command-line tool `attention_cli.py`. It runs a
+(实验 2-2) is the standalone command-line tool `attention_cli.py`. It runs a
 real model, captures its self-attention, and writes a heatmap PNG directly —
 no frontend needed.
 
@@ -29,7 +29,8 @@ no frontend needed.
 python attention_cli.py
 
 # Custom prompt, inspect a specific layer/head, choose the output path
-python attention_cli.py --prompt "How is the weather in Beijing" \    --layer 0 --head 3 --output layer0_head3.png
+python attention_cli.py --prompt "北京 的 天气 怎么样" \
+    --layer 0 --head 3 --output layer0_head3.png
 
 # Generate a short continuation first, then visualize the whole sequence
 python attention_cli.py --prompt "Explain attention in one sentence." \
@@ -43,7 +44,8 @@ Run `python attention_cli.py --help` for the full flag list. Key flags:
 
 | Flag | Meaning | Default |
 | --- | --- | --- |
-| `-p, --prompt` | Text to visualize | `How's the weather in Beijing` || `-o, --output` | Output PNG path | `attention_heatmap.png` |
+| `-p, --prompt` | Text to visualize | `北京 的 天气 怎么样` |
+| `-o, --output` | Output PNG path | `attention_heatmap.png` |
 | `-m, --model` | HF model name or local path | `Qwen/Qwen3-0.6B` |
 | `--device` | `cuda` / `mps` / `cpu` | auto-detect |
 | `-l, --layer` | Layer index (`-1` = last) | `-1` |
@@ -58,9 +60,10 @@ and columns are Key positions (the token attended to). The tool measures and
 prints the **attention-sink share** — the fraction of each row's attention
 that lands on the first token — directly from the model's own weights. On
 `Qwen3-0.6B` the last-layer sink typically absorbs ~75–85% of every row (the
-Chapter 2 "Attention Sink" phenomenon), while layer 0 is close to a local
-diagonal pattern. The masked upper triangle makes the causal "triangle"
-structure explicit: each token only attends to itself and the tokens before it.
+Chapter 2 "注意力储存池 / Attention Sink" phenomenon), while layer 0 is close
+to a local diagonal pattern. The masked upper triangle makes the causal
+"triangle" structure explicit: each token only attends to itself and the
+tokens before it.
 
 > First run downloads the model weights (~1–2 GB). GPU/MPS is recommended but
 > CPU works for these short prompts.
@@ -150,7 +153,7 @@ Each trajectory JSON contains:
   "test_case": {
     "category": "Math",
     "query": "What is 25 * 37?",
-```    "description": "Agent trajectory from..."
+    "description": "Agent trajectory from..."
   },
   "response": "The answer is...",
   "tokens": ["What", "is", "25", ...],

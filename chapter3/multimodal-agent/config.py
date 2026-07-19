@@ -59,8 +59,8 @@ class Config:
     
     def __init__(self):
         # Load API keys from environment.
-        #  Compatible with common aliases: Gemini official SDK uses GEMINI_API_KEY, old docs use GOOGLE_API_KEY, both are accepted;
-        #  The Key environment variable for Doubao/Ark is commonly DOUBAO_API_KEY or ARK_API_KEY.
+        # 兼容常见别名：Gemini 官方 SDK 用 GEMINI_API_KEY，旧文档用 GOOGLE_API_KEY，两者都接受；
+        # 豆包/方舟(Ark)的 Key 环境变量常见为 DOUBAO_API_KEY 或 ARK_API_KEY。
         self.gemini_api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY", "")
         self.openai_api_key = os.getenv("OPENAI_API_KEY", "")
         self.doubao_api_key = os.getenv("DOUBAO_API_KEY") or os.getenv("ARK_API_KEY", "")
@@ -152,7 +152,7 @@ class Config:
         applying the universal OpenRouter fallback when needed."""
         provider = model_config.provider
         _m = (model_config.model_name or "").lower()
-        _prefer_or = bool(self.openrouter_api_key) and _m.startswith("gpt-5")  #  Direct connection to gpt-5.6 requires organizational real-name verification, prefer OpenRouter
+        _prefer_or = bool(self.openrouter_api_key) and _m.startswith("gpt-5")  # 直连 gpt-5.6 需组织实名，优先 OpenRouter
         if _prefer_or or self.use_openrouter(provider):
             return (
                 {"api_key": self.openrouter_api_key, "base_url": self.openrouter_base_url},

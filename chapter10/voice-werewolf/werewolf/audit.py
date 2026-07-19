@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Information Visibility Audit.
+"""信息可见性审计（Information Visibility Audit）。
 
-This is the core tool of this experiment for "verifiable information access control": each time the judge delivers a piece of information to the context of one (or more) players, a record is registered here — which category the information belongs to, a summary of its content, and **whose context it entered**. After the game ends, printing this audit table provides objective proof of whether information isolation is correct (e.g., "werewolf teammate identity" only enters the werewolf's context, "seer investigation result" only enters the seer's own context, "public speech" enters everyone's context).
+这是本实验「信息权限控制可验证」的核心工具：法官每向某个（或某些）玩家的
+上下文投递一条信息时，都会在这里登记一条记录——这条信息属于哪个类别、内容
+摘要是什么、**进入了谁的上下文**。游戏结束后打印这张审计表，即可客观证明
+信息隔离是否正确（例如「狼人队友身份」只进狼人上下文、「预言家查验结果」只进
+预言家本人上下文、「公开发言」进所有人上下文）。
 """
 
 from dataclasses import dataclass, field
@@ -10,11 +14,11 @@ from typing import List
 
 @dataclass
 class AuditRecord:
-    round_no: int          # Round
-    phase: str             # Phase (Night/Day/...)
-    category: str          # Information Category (e.g., "Werewolf Teammate Identity", "Seer Investigation Result", "Public Speech")
-    content: str           # Information Content Summary
-    visible_to: List[str]  # Which players' contexts this information entered (list of player names)
+    round_no: int          # 第几回合
+    phase: str             # 阶段（夜晚/白天/...）
+    category: str          # 信息类别（如「狼人队友身份」「预言家查验结果」「公开发言」）
+    content: str           # 信息内容摘要
+    visible_to: List[str]  # 该信息进入了哪些玩家的上下文（玩家名列表）
 
 
 @dataclass
@@ -25,15 +29,15 @@ class AuditLog:
         self.records.append(AuditRecord(round_no, phase, category, content, list(visible_to)))
 
     def print_table(self, all_players):
-        """ Print the complete information visibility audit table."""
+        """打印完整的信息可见性审计表。"""
         print("\n" + "=" * 78)
-        print("Information Visibility Audit Table (which players' contexts each piece of information entered)")
+        print("信息可见性审计表（每条信息进入了谁的上下文）")
         print("=" * 78)
-        header = f"{'Round':<4}{'Phase':<6}{'Category':<14}{'Visible Players':<20}Content"
+        header = f"{'回合':<4}{'阶段':<6}{'类别':<14}{'可见玩家':<20}内容"
         print(header)
         print("-" * 78)
         for r in self.records:
-            vis = "All" if set(r.visible_to) == set(all_players) else "、".join(r.visible_to)
+            vis = "所有人" if set(r.visible_to) == set(all_players) else "、".join(r.visible_to)
             content = r.content if len(r.content) <= 30 else r.content[:29] + "…"
             print(f"{r.round_no:<5}{r.phase:<7}{r.category:<15}{vis:<21}{content}")
         print("=" * 78)

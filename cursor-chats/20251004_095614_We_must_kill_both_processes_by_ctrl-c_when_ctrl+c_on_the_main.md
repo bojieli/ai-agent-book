@@ -2035,8 +2035,8 @@ Evaluating model...
 ✓ [   1/2095] Pred: ar | GT: ar | Acc: 1/1 (100.0%) | وقال، ماما، لقد عدت للمنزل.
 ✓ [   2/2095] Pred: en | GT: en | Acc: 2/2 (100.0%) | Hello, how are you today?
 ✗ [   3/2095] Pred: es | GT: fr | Acc: 2/3 ( 66.7%) | Bonjour, comment allez-vous?
-✓ [   4/2095] Pred: zh | GT: zh | Acc: 4/4 (100.0%) | 你好，今天天气怎么样？
-✓ [   5/2095] Pred: de | GT: de | Acc: 5/5 (100.0%) | Guten Tag, wie geht es Ihnen?
+✓ [   4/2095] Pred: zh | GT: zh | Acc: 3/4 ( 75.0%) | 你好，今天天气怎么样？
+✓ [   5/2095] Pred: de | GT: de | Acc: 4/5 ( 80.0%) | Guten Tag, wie geht es Ihnen?
 ...
 ✓ [2095/2095] Pred: vi | GT: vi | Acc: 1998/2095 ( 95.4%) | Xin chào, bạn khỏe không?
 ================================================================================
@@ -2068,7 +2068,8 @@ The following generation flags are not valid and may be ignored: ['top_p', 'top_
   [   3/2100] Pred: de | und er hat gesagt, Mama ich bin daheim.
   [   4/2100] Pred: el | Και είπε, Μαμά, έφτασα στο σπίτι.
   [   5/2100] Pred: en | And he said, Mama, I'm home.
-  [   6/2100] Pred: es | Y él dijo: Mamá, estoy en casa.  [   7/2100] Pred: fr | Et il a dit, maman, je suis à la maison.
+  [   6/2100] Pred: es | Y él dijo: Mamá, estoy en casa.
+  [   7/2100] Pred: fr | Et il a dit, maman, je suis à la maison.
   [   8/2100] Pred: hi | और उसने कहा, माँ, मैं घर आया हूं।
   [   9/2100] Pred: ru | И он сказал: Мама, я дома.
   [  10/2100] Pred: ot | Naye akasema, Mama, niko nyumbani.
@@ -2262,7 +2263,9 @@ Perfect! I've updated the evaluation script with comprehensive confusion matrix 
 
 ### 1. **Proper 2D Confusion Matrix**
 
-Displayed in console with colors:================================================================================
+Displayed in console with colors:
+```
+================================================================================
 CONFUSION MATRIX
 ================================================================================
 

@@ -9,14 +9,14 @@ from config import ROOT_LOG
 
 
 class TaskLogger:
-    """Task submission logger"""
+    """任务提交日志记录器"""
 
     def __init__(self, log_file: str = "aworld_task_submissions.log"):
         self.log_file = os.path.join(ROOT_LOG, 'task_logs' , log_file)
         self._ensure_log_file_exists()
 
     def _ensure_log_file_exists(self):
-        """Ensure log file exists"""
+        """确保日志文件存在"""
         if not os.path.exists(self.log_file):
             os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
             with open(self.log_file, 'w', encoding='utf-8') as f:
@@ -26,7 +26,7 @@ class TaskLogger:
 
     def log_task_submission(self, task: AworldTask, status: str, details: str = "",
                             task_result: AworldTaskResult = None):
-        """Record task submission log"""
+        """记录任务提交日志"""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_entry = f"[{timestamp}] {task.task_id} | {task.agent_id} | {task.node_id} | {status} | {task_result.data.get('agent_answer') if task_result and task_result.data else None} | {task_result.data.get('correct_answer') if task_result and task_result.data else None} | {task_result.data.get('gaia_correct') if task_result and task_result.data else None} |{details}\n"
 

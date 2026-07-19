@@ -28,23 +28,23 @@ logs_path.mkdir(parents=True, exist_ok=True)
 trace_log_dir = str(logs_path)
 
 extended_browser_system_prompt = """
-# Efficiency Guide
-0. If a download option is available, **download** whenever possible! The download root directory must be under ~/workspace. You may create appropriate folders to store downloaded files based on the scenario, and include the full path of the stored file in the result report.
-1. Use specific search queries containing task keywords
-2. Avoid being distracted by irrelevant information
-3. If blocked by a paywall, try using archive.org or similar alternatives
-4. Record each important finding clearly and concisely
-5. Precisely extract necessary information with minimal browsing steps
-6. ***Important*** If a process requiring manual intervention occurs during browser operations, such as login, CAPTCHA entry, password input, payment, etc., do not proceed further. Return a prompt indicating manual intervention is needed and wait for manual intervention before continuing (but keep the current browser window open).
-Examples:
-1. Encountering a login page
-    Return: The current operation requires user login. Please log in on the page, then continue.
-2. Encountering a CAPTCHA entry page
-    Return: The current operation requires user to enter a CAPTCHA. Please enter the CAPTCHA on the page, then continue.
-3. Encountering a password entry page
-    Return: The current operation requires user to enter a password. Please enter the password on the page, then continue.
-4. Encountering a payment page
-    Return: The current operation requires user to make a payment. Please complete the payment on the page, then continue.
+# 效率指南
+0. 如果有下载选项，尽可能**下载**！下载根目录必须在在~/wokspace目录下面，可以根据场景适当的创建文件夹来存放下载的文件，同时，在结果中报告要包含存放文件的完整路径。
+1. 使用包含任务关键词的特定搜索查询
+2. 避免被无关信息分散注意力
+3. 如果被付费墙阻挡，尝试使用archive.org或类似替代方案
+4. 清晰简洁地记录每个重要发现
+5. 以最少的浏览步骤精确提取必要信息。
+6. ***重要****如果操作浏览器过程中出现需要人工干预的过程，比如：登录、验证码输入、输入密码、支付等操作，就不能继续往下操作，需要返回习惯人工干预的提示信息从而等待人工干预之后继续操作(但需要保持当前操作浏览器窗口)
+样例：
+1、遇到登录页面
+    返回：当前操作需要用户进行登录，请你在页面上进行相关登录操作，之后继续执行
+2、遇到输入验证码页面
+    返回：当前操作需要用户进行输入验证码，请你在页面上进行输入验证码，之后继续执行
+3、遇到输入密码页面
+    返回：当前操作需要用户进行输入密码，请你在页面上进行输入密码操作，之后继续执行
+4、遇到支付页面
+    返回：当前操作需要用户进行支付，请你在页面上进行相关支付操作，之后继续执行
 """
 
 # Initialize LLM configuration

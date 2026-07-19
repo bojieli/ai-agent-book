@@ -319,13 +319,13 @@ def create_visualization_data(results: Dict[str, List[float]], results_dir: str 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Summarize and analyze the prompt engineering ablation experiment results, print a success rate comparison table, and generate chart data.",
+        description="汇总分析提示工程消融实验结果，打印成功率对比表并生成图表数据。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "Example: \n"
-            "  # Analyze the default results directory\n"
+            "示例：\n"
+            "  # 分析默认结果目录\n"
             "  python analyze_results.py\n\n"
-            "  # Analyze the specified directory and write the summary to JSON\n"
+            "  # 分析指定目录并把汇总写入 JSON\n"
             "  python analyze_results.py --results-dir results_ablation --output summary.json\n"
         ),
     )
@@ -333,13 +333,13 @@ def parse_args() -> argparse.Namespace:
         "--results-dir",
         type=str,
         default="results_ablation",
-        help="Directory containing JSON files of each ablation experiment result (default: results_ablation)",
+        help="存放各消融实验结果 JSON 的目录（默认：results_ablation）",
     )
     parser.add_argument(
         "--output",
         type=str,
         default=None,
-        help="(Optional) Write the summary statistics to this JSON file path",
+        help="（可选）将汇总统计写入该 JSON 文件路径",
     )
     return parser.parse_args()
 

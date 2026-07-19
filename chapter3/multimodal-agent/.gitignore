@@ -1,7 +1,7 @@
-# Sample file generated offline by create_sample.py
+# 由 create_sample.py 离线生成的样例文件
 test_files/
 
-# Python cache and environment
+# Python 缓存与环境
 __pycache__/
 *.pyc
 .env

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Quick Start Script - One-Click Experience of Kimi Web Search Agent
+快速开始脚本 - 一键体验 Kimi Web Search Agent
 """
 
 import os
@@ -8,7 +8,7 @@ import sys
 from agent import WebSearchAgent
 from config import Config
 
-# Color Output
+# 彩色输出
 class Colors:
     HEADER = '\033[95m'
     BLUE = '\033[94m'
@@ -21,39 +21,38 @@ class Colors:
 
 
 def print_colored(text, color):
-    """Print colored text"""
+    """打印彩色文本"""
     print(f"{color}{text}{Colors.END}")
 
 
 def print_banner():
-    """Print welcome banner"""
+    """打印欢迎横幅"""
     banner = """
 ╔══════════════════════════════════════════════════════════╗
-║         🤖 Kimi Web Search Agent - Quick Experience       ║
+║         🤖 Kimi Web Search Agent - 快速体验              ║
 ║                                                          ║
-║  Intelligent search assistant based on Kimi API           ║
-║  Automatically searches web information and generates     ║
-║  intelligent answers                                      ║
+║  基于 Kimi API 的智能搜索助手                             ║
+║  能够自动搜索网络信息并生成智能答案                         ║
 ╚══════════════════════════════════════════════════════════╝
 """
     print_colored(banner, Colors.CYAN)
 
 
 def check_api_key():
-    """Check API Key Configuration"""
+    """检查 API Key 配置"""
     api_key = os.getenv("MOONSHOT_API_KEY")
     if not api_key:
-        # Backward compatibility: try old environment variable name
+        # 向后兼容：尝试旧的环境变量名
         api_key = os.getenv("KIMI_API_KEY")
     
     if not api_key:
-        print_colored("\n⚠️  No API Key detected", Colors.WARNING)
-        print("\nPlease configure as follows:")
-        print("1. Visit https://platform.moonshot.ai/ to get an API Key")
-        print("2. Set environment variable:")
+        print_colored("\n⚠️  未检测到 API Key", Colors.WARNING)
+        print("\n请按以下步骤配置:")
+        print("1. 访问 https://platform.moonshot.ai/ 获取 API Key")
+        print("2. 设置环境变量:")
         print("   export MOONSHOT_API_KEY='your-api-key'")
-        print("   (or use: export KIMI_API_KEY='your-api-key')")
-        print("\nOr enter API Key directly (enter 'skip' to skip):")
+        print("   (或使用: export KIMI_API_KEY='your-api-key')")
+        print("\n或者直接输入 API Key (输入 'skip' 跳过):")
         
         user_input = input("> ").strip()
         
@@ -64,134 +63,134 @@ def check_api_key():
         else:
             return None
     
-    print_colored("✅ API Key configured", Colors.GREEN)
+    print_colored("✅ API Key 已配置", Colors.GREEN)
     return api_key
 
 
 def demo_search(agent):
-    """Demo Search Function"""
-    print_colored("\n📝 Demo Search Function", Colors.HEADER)
+    """演示搜索功能"""
+    print_colored("\n📝 演示搜索功能", Colors.HEADER)
     print("-" * 60)
     
     demo_questions = [
-        "What new product did OpenAI recently release?",
-        "What are the important AI breakthroughs in 2024?",
-        "How to start learning machine learning?",
+        "OpenAI 最新发布了什么产品？",
+        "2024年有哪些重要的AI突破？",
+        "如何开始学习机器学习？",
     ]
     
-    print("Select a demo question, or enter your own question:")
+    print("选择一个演示问题，或输入您自己的问题:")
     for i, q in enumerate(demo_questions, 1):
         print(f"{i}. {q}")
-    print("0. Enter custom question")
+    print("0. 输入自定义问题")
     
-    choice = input("\nPlease select (0-3): ").strip()
+    choice = input("\n请选择 (0-3): ").strip()
     
     try:
         choice = int(choice)
         if choice == 0:
-            question = input("Please enter your question: ").strip()
+            question = input("请输入您的问题: ").strip()
             if not question:
-                print_colored("❌ Question cannot be empty", Colors.FAIL)
+                print_colored("❌ 问题不能为空", Colors.FAIL)
                 return
         elif 1 <= choice <= len(demo_questions):
             question = demo_questions[choice - 1]
         else:
-            print_colored("❌ Invalid selection", Colors.FAIL)
+            print_colored("❌ 无效的选择", Colors.FAIL)
             return
     except ValueError:
-        print_colored("❌ Please enter a number", Colors.FAIL)
+        print_colored("❌ 请输入数字", Colors.FAIL)
         return
     
-    print_colored(f"\n🔍 Searching: {question}", Colors.BLUE)
-    print("Please wait, the Agent is searching and analyzing...")
+    print_colored(f"\n🔍 正在搜索: {question}", Colors.BLUE)
+    print("请稍候，Agent 正在搜索和分析...")
     print("-" * 60)
     
     try:
         answer = agent.search_and_answer(question)
-        print_colored("\n📖 Agent Answer:", Colors.GREEN)
+        print_colored("\n📖 Agent 回答:", Colors.GREEN)
         print(answer)
     except Exception as e:
-        print_colored(f"\n❌ Search failed: {str(e)}", Colors.FAIL)
+        print_colored(f"\n❌ 搜索失败: {str(e)}", Colors.FAIL)
 
 
 def interactive_mode(agent):
-    """Interactive Mode"""
-    print_colored("\n💬 Entering Interactive Mode", Colors.HEADER)
-    print("You can ask questions continuously; type 'quit' to exit")
+    """交互模式"""
+    print_colored("\n💬 进入交互模式", Colors.HEADER)
+    print("您可以连续提问，输入 'quit' 退出")
     print("-" * 60)
     
     while True:
-        question = input("\nYour question: ").strip()
+        question = input("\n您的问题: ").strip()
         
         if question.lower() in ['quit', 'exit', 'q']:
-            print_colored("👋 Thank you for using!", Colors.GREEN)
+            print_colored("👋 感谢使用！", Colors.GREEN)
             break
         
         if not question:
             continue
         
-        print_colored("🔍 Searching...", Colors.BLUE)
+        print_colored("🔍 搜索中...", Colors.BLUE)
         
         try:
             answer = agent.search_and_answer(question)
-            print_colored("\n📖 Answer:", Colors.GREEN)
+            print_colored("\n📖 回答:", Colors.GREEN)
             print(answer)
         except Exception as e:
-            print_colored(f"❌ Error: {str(e)}", Colors.FAIL)
+            print_colored(f"❌ 错误: {str(e)}", Colors.FAIL)
 
 
 def main():
-    """Main Function"""
+    """主函数"""
     print_banner()
     
-    # Checking API Key
+    # 检查 API Key
     api_key = check_api_key()
     if not api_key:
-        print_colored("\n⚠️  Cannot proceed, API Key needs to be configured", Colors.WARNING)
+        print_colored("\n⚠️  无法继续，需要配置 API Key", Colors.WARNING)
         sys.exit(1)
     
-    # Creating Agent
+    # 创建 Agent
     try:
-        print_colored("\n🚀 Initializing Agent...", Colors.BLUE)
+        print_colored("\n🚀 初始化 Agent...", Colors.BLUE)
         agent = WebSearchAgent(api_key=api_key)
-        print_colored("✅ Agent Ready", Colors.GREEN)
+        print_colored("✅ Agent 已就绪", Colors.GREEN)
     except Exception as e:
-        print_colored(f"❌ Initialization failed: {str(e)}", Colors.FAIL)
+        print_colored(f"❌ 初始化失败: {str(e)}", Colors.FAIL)
         sys.exit(1)
     
-    # Select Mode
-    print("\nSelect usage mode:")
-    print("1. Demo Search (Quick Experience)")
-    print("2. Interactive Mode (Continuous Conversation)")
-    print("3. Exit")
+    # 选择模式
+    print("\n选择使用模式:")
+    print("1. 演示搜索 (快速体验)")
+    print("2. 交互模式 (连续对话)")
+    print("3. 退出")
     
-    mode = input("\nPlease select (1-3): ").strip()
+    mode = input("\n请选择 (1-3): ").strip()
     
     if mode == "1":
         demo_search(agent)
-        # Ask whether to continue
-        cont = input("\nEnter Interactive Mode? (y/n): ").strip().lower()
+        # 询问是否继续
+        cont = input("\n是否进入交互模式？(y/n): ").strip().lower()
         if cont == 'y':
             interactive_mode(agent)
     elif mode == "2":
         interactive_mode(agent)
     elif mode == "3":
-        print_colored("👋 Goodbye!", Colors.GREEN)
+        print_colored("👋 再见！", Colors.GREEN)
     else:
-        print_colored("❌ Invalid selection", Colors.FAIL)
+        print_colored("❌ 无效的选择", Colors.FAIL)
     
-    print_colored("\nThank you for using Kimi Web Search Agent!", Colors.CYAN)
-    print("For more features, see:")
-    print("- README.md: Full Documentation")
-    print("- examples.py: Advanced Examples")
-    print("- main.py: Main Program")
+    print_colored("\n感谢使用 Kimi Web Search Agent！", Colors.CYAN)
+    print("更多功能请查看:")
+    print("- README.md: 完整文档")
+    print("- examples.py: 高级示例")
+    print("- main.py: 主程序")
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print_colored("\n\n👋 Program Interrupted", Colors.WARNING)
+        print_colored("\n\n👋 程序被中断", Colors.WARNING)
     except Exception as e:
-        print_colored(f"\n❌ Error occurred: {str(e)}", Colors.FAIL)
+        print_colored(f"\n❌ 发生错误: {str(e)}", Colors.FAIL)
         sys.exit(1)

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Judge (Host) Agent: Code-driven game orchestration and information permission control hub.
+"""法官（主持人）Agent：代码驱动的游戏编排与信息权限控制中枢。
 
-The Judge is not an LLM—it is a **deterministic orchestrator** responsible for:
-1. Maintaining centralized game state (identities, factions, life/death, phases, history).
-2. **Information permission control**: deciding which information is delivered to each player Agent's private context
-   (only werewolves know their teammates, only the Seer knows investigation results, public speeches go to everyone), and logging for audit.
-3. Orchestrating day-night cycles: Night (werewolf kill → Seer investigate → Witch use potion) → Day (announce deaths →
-   sequential speeches → vote to banish) → Determine win/loss.
+法官不是 LLM——它是**确定性的编排器**，负责：
+1. 维护中心化游戏状态（身份、阵营、生死、阶段、历史）。
+2. **信息权限控制**：决定每条信息投递给哪些玩家 Agent 的私有上下文
+   （狼人才知道队友、预言家才知道查验结果、公开发言进所有人），并登记审计。
+3. 编排昼夜循环：夜晚（狼人刀人 → 预言家查验 → 女巫用药）→ 白天（公布死讯 →
+   依次发言 → 投票放逐）→ 结算胜负。
 """
 
 import random
@@ -19,31 +19,32 @@ from .roles import Role, Faction
 
 
 def build_roles(players: int = 7, wolves: Optional[int] = None) -> List[Role]:
-    """Derive identity composition from total player count: default 7 players = 2 werewolves + 1 Seer + 1 Witch + 3 Villagers.
+    """按玩家总数推导身份组成：默认 7 人 = 2 狼人 + 1 预言家 + 1 女巫 + 3 村民。
 
-    - If wolves is not specified, estimate as max(1, players // 3) (7 players gives 2 wolves, consistent with the book default).
-    - For 4 or more players, assign 1 Seer; for 5 or more, additionally assign 1 Witch; the rest are all Villagers.
+    - wolves 未指定时按 max(1, players // 3) 估算（7 人得 2 狼，与书中默认一致）。
+    - 4 人及以上配 1 预言家，5 人及以上再配 1 女巫，其余全为村民。
     """
     if players < 3:
-        raise ValueError("Total player count must be at least 3")
+        raise ValueError("玩家总数至少为 3")
     wolves = wolves if wolves is not None else max(1, players // 3)
     seer = 1 if players >= 4 else 0
     witch = 1 if players >= 5 else 0
     villagers = players - wolves - seer - witch
     if wolves < 1 or villagers < 0:
         raise ValueError(
-            f"Illegal identity composition: {players} players cannot accommodate {wolves} wolves + {seer} Seers + "
-            f"{witch} Witches (remaining villagers {villagers}). Please reduce --wolves or increase --players.")
+            f"身份组成非法：{players} 人无法容纳 {wolves} 狼 + {seer} 预言家 + "
+            f"{witch} 女巫（剩余村民 {villagers}）。请调小 --wolves 或调大 --players。")
     return ([Role.WEREWOLF] * wolves + [Role.SEER] * seer
             + [Role.WITCH] * witch + [Role.VILLAGER] * villagers)
 
 
 def create_players(seed: int = 42, players: int = 7, wolves: Optional[int] = None,
                    offline: bool = False) -> List[PlayerAgent]:
-    """Create a game instance (default 7 players: 2 werewolves + 1 Seer + 1 Witch + 3 Villagers, for cost control).
+    """创建一局游戏（默认 7 人：2 狼人 + 1 预言家 + 1 女巫 + 3 村民，控成本）。
 
-    Identities are randomly shuffled and assigned to P1~Pn, ensuring different identity distributions per game but reproducible with a seed.
-    When offline=True, each Agent uses rule-based strategies instead of LLM (zero cost, reproducible); each Agent also receives an independent random source seeded by the seed and its index, ensuring fully reproducible offline games.
+    身份随机洗牌后分配给 P1~Pn，保证每局身份分布不同但可用 seed 复现。
+    offline=True 时每个 Agent 用规则策略代替 LLM（零成本、可复现）；每个 Agent
+    还会拿到一个按 seed 与序号种子化的独立随机源，保证离线对局完全可复现。
     """
     rng = random.Random(seed)
     roles = build_roles(players, wolves)
@@ -54,7 +55,7 @@ def create_players(seed: int = 42, players: int = 7, wolves: Optional[int] = Non
 
 
 class Judge:
-    """Judge: orchestration + information permission control."""
+    """法官：编排 + 信息权限控制。"""
 
     def __init__(self, players: List[PlayerAgent], seed: int = 42,
                  tts=None, max_rounds: int = 6):
@@ -62,41 +63,41 @@ class Judge:
         self.names = [p.name for p in players]
         self.audit = AuditLog()
         self.rng = random.Random(seed + 1)
-        self.tts = tts                 # Optional TTS synthesizer (injected when --voice is set)
+        self.tts = tts                 # 可选的 TTS 合成器（--voice 时注入）
         self.max_rounds = max_rounds
         self.round_no = 0
-        self.phase = "Initialize"
-        # Witch potion state
+        self.phase = "初始化"
+        # 女巫药剂状态
         self.witch_heal_available = True
         self.witch_poison_available = True
 
     # ------------------------------------------------------------------
-    # Information delivery primitives: each primitive simultaneously (a) writes to the corresponding Agent's private context;
-    #               (b) logs in the audit trail that 'this information entered whose context'.
+    # 信息投递原语：每个原语都同时 (a) 写入相应 Agent 的私有上下文；
+    #               (b) 在审计日志里登记「这条信息进了谁的上下文」。
     # ------------------------------------------------------------------
     def _log(self, category, content, visible_to):
         self.audit.add(self.round_no, self.phase, category, content, visible_to)
 
     def broadcast(self, category: str, content: str):
-        """Public information: enters the context of **all players** (including eliminated ones)."""
+        """公开信息：进入**所有玩家**（含已出局者）的上下文。"""
         for p in self.players:
             p.observe(content)
         self._log(category, content, self.names)
 
     def private_send(self, player: PlayerAgent, category: str, content: str):
-        """Private information: enters the context of **only the specified single player**."""
+        """私密信息：只进入**指定单个玩家**的上下文。"""
         player.observe(content)
         self._log(category, content, [player.name])
 
     def wolves_send(self, category: str, content: str):
-        """Werewolf-exclusive information: enters the context of **only all werewolves**."""
+        """狼人专属信息：只进入**所有狼人**的上下文。"""
         wolves = self.wolves()
         for w in wolves:
             w.observe(content)
         self._log(category, content, [w.name for w in wolves])
 
     # ------------------------------------------------------------------
-    # State queries
+    # 状态查询
     # ------------------------------------------------------------------
     def alive(self) -> List[PlayerAgent]:
         return [p for p in self.players if p.alive]
@@ -112,44 +113,44 @@ class Judge:
         return None
 
     # ------------------------------------------------------------------
-    # Phase 0: Assign identities and deliver initial 'who knows whom' information
+    # 阶段 0：分配身份并投递「谁知道谁」的初始信息
     # ------------------------------------------------------------------
     def assign_identities(self):
-        self.phase = "Identity assignment"
+        self.phase = "身份分配"
         print("\n" + "#" * 78)
-        print("[Phase 0 · Identity Assignment] The Judge privately informs each player of their identity; werewolves are additionally told who their teammates are.")
-        print("   Information isolation: each player only knows their own identity; only werewolves have 'teammate identities' in their context.")
+        print("【阶段 0 · 身份分配】法官私下告知每人身份；狼人额外被告知队友是谁。")
+        print("  信息隔离：每人只知道自己的身份；只有狼人上下文里有『队友身份』。")
         print("#" * 78)
-        # Each player privately knows their own identity (only enters their own context)
+        # 每个玩家私下知道自己的身份（只进本人上下文）
         for p in self.players:
-            self.private_send(p, "Identity assignment", f"Your identity is: {p.role.value}")
-        # Werewolves know who their teammates are (only enters werewolf context)—this is the key to information asymmetry
+            self.private_send(p, "身份分配", f"你的身份是：{p.role.value}")
+        # 狼人互相知道队友是谁（只进狼人上下文）——这是信息不对称的关键
         wolves = self.wolves()
         team = "、".join(w.name for w in wolves)
-        self.wolves_send("Werewolf teammate identities", f"Players in the werewolf faction are: {team}(You are teammates and act together at night)")
-        #  Print the real identity table (this is a 'God's perspective', for human observation only, not entering any Agent context)
-        print("  [God's perspective / Human-only] Real identity table:")
+        self.wolves_send("狼人队友身份", f"狼人阵营的玩家是：{team}（你们互为队友，夜晚共同行动）")
+        # 打印真实身份表（这是「上帝视角」，仅供人类观察，不进任何 Agent 上下文）
+        print("  [上帝视角/仅人类可见] 真实身份表：")
         for p in self.players:
             print(f"    {p.name}: {p.role.value}（{p.faction.value}）")
-        print(f"  Wolf teammates (only werewolf {team} has this information in their context)")
+        print(f"  狼队友（仅狼人 {team} 的上下文里有这条信息）")
 
     # ------------------------------------------------------------------
-    #  Night
+    # 夜晚
     # ------------------------------------------------------------------
     def night(self) -> List[str]:
-        """Execute a night phase and return the list of players eliminated tonight."""
-        self.phase = "  Night"
+        """执行一个夜晚，返回今晚出局玩家名列表。"""
+        self.phase = "夜晚"
         print("\n" + "=" * 78)
-        print(f"  [Round {self.round_no} · Night] The night falls, close your eyes.")
-        print("  Information isolation: all actions and results below are private—werewolf consensus only enters werewolf context,")
-        print("  seer's investigation result only enters seer context, witch's potion use only enters witch context.")
+        print(f"【第 {self.round_no} 回合 · 夜晚】天黑请闭眼。")
+        print("  信息隔离：以下所有行动与结果都是私密的——狼人共识只进狼人上下文、")
+        print("  预言家查验结果只进预言家上下文、女巫用药只进女巫上下文。")
         print("=" * 78)
 
         killed = self._wolves_act()
         self._seer_act()
         poisoned, saved = self._witch_act(killed)
 
-        #  Settle tonight's deaths: killed by wolves and not saved + poisoned
+        # 结算今晚死亡：被刀且未被救 + 被毒
         deaths = []
         if killed and not saved:
             deaths.append(killed)
@@ -163,28 +164,28 @@ class Judge:
         wolves = self.wolves(alive_only=True)
         if not wolves:
             return None
-        #  Candidates: all surviving non-werewolves (werewolves do not kill their own)
+        # 候选：所有存活的非狼人（狼人不刀自己人）
         candidates = [p.name for p in self.alive() if p.role != Role.WEREWOLF]
         if not candidates:
             return None
         votes = []
         for w in wolves:
             t = w.choose_target(
-                "  It is night, werewolves act. Please agree with your teammates and choose a good player to kill tonight.",
+                "现在是夜晚，狼人行动。请与队友一致，选择今晚要击杀的一名好人玩家。",
                 candidates, self.names, allow_none=False)
             if t:
                 votes.append(t)
-                print(f"  [Judge + Werewolf only] Werewolf {w.name} proposes to kill → {t}")
+                print(f"  [仅法官+狼人可见] 狼人 {w.name} 提议击杀 → {t}")
         if not votes:
             return None
-        #  Summary: highest votes; tie goes to the first werewolf's opinion
+        # 汇总：最高票；平票取第一名狼人的意见
         tally = Counter(votes)
         top = tally.most_common()
         best = [n for n, c in top if c == top[0][1]]
         killed = votes[0] if len(best) > 1 else top[0][0]
-        #  Write 'tonight's werewolf consensus' into the werewolf shared context (only werewolves can see it)
-        self.wolves_send("  Werewolf night consensus", f"  Round{self.round_no} night, werewolves decide to kill {killed}")
-        print(f"  → Werewolf consensus: kill {killed} (this consensus only enters werewolf context)")
+        # 把「今晚狼人共识」写进狼人共享上下文（只有狼人看得到）
+        self.wolves_send("狼人夜间共识", f"第{self.round_no}回合夜晚，狼人决定击杀 {killed}")
+        print(f"  → 狼人共识：击杀 {killed}（此共识只进狼人上下文）")
         return killed
 
     def _seer_act(self):
@@ -194,16 +195,16 @@ class Judge:
         seer = seers[0]
         candidates = [p.name for p in self.alive() if p.name != seer.name]
         target = seer.choose_target(
-            "  It is night, seer acts. Please choose a player to investigate their true faction.",
+            "现在是夜晚，预言家行动。请选择一名玩家查验其真实阵营。",
             candidates, self.names, allow_none=False)
         if not target:
             target = self.rng.choice(candidates)
         tgt = self.by_name(target)
-        result = "  Werewolf" if tgt.role == Role.WEREWOLF else "  Good"
-        #  Investigation result only enters the seer's own context—this is key information exclusive to the seer
-        self.private_send(seer, "  Seer investigation result",
-                          f"  Round{self.round_no}  Round you investigated {target}, result is 【{result}】")
-        print(f"  [Judge + Seer only {seer.name} visible] Seer investigates {target} → {result}")
+        result = "狼人" if tgt.role == Role.WEREWOLF else "好人"
+        # 查验结果只进预言家本人上下文——这是预言家独享的关键信息
+        self.private_send(seer, "预言家查验结果",
+                          f"第{self.round_no}回合你查验了 {target}，结果为【{result}】")
+        print(f"  [仅法官+预言家 {seer.name} 可见] 预言家查验 {target} → {result}")
 
     def _witch_act(self, killed: Optional[str]):
         witches = [p for p in self.alive() if p.role == Role.WITCH]
@@ -213,71 +214,71 @@ class Judge:
         saved = False
         poisoned = None
 
-        # Inform the witch who was killed tonight (only enters witch's context)
+        # 告知女巫今晚谁被刀（只进女巫上下文）
         if killed:
-            self.private_send(witch, "Witch's night info", f"  Round{self.round_no}Round, the player attacked by werewolves tonight is {killed}")
-            print(f"  [Judge + Witch only {witch.name} visible] Witch learns who was killed tonight:{killed}")
-            #  Antidote: whether to save
+            self.private_send(witch, "女巫夜间信息", f"第{self.round_no}回合，今晚被狼人袭击的是 {killed}")
+            print(f"  [仅法官+女巫 {witch.name} 可见] 女巫得知今晚被刀者：{killed}")
+            # 解药：是否救
             if self.witch_heal_available and killed != witch.name:
                 dec = witch.choose_target(
-                    f"Tonight {killed} was attacked by werewolves. Do you use the [Antidote] to save them?"
-                    "(If saving, fill target with the player's name; if not, fill none)",
+                    f"今晚 {killed} 被狼人袭击。你是否使用【解药】救他？"
+                    "（救则 target 填该玩家名，不救填 none）",
                     [killed], self.names, allow_none=True)
                 if dec == killed:
                     saved = True
                     self.witch_heal_available = False
-                    self.private_send(witch, "Witch uses potion", f"You used the antidote in round {self.round_no}, saving {killed}")
-                    print(f"  [Judge + Witch only visible] Witch uses antidote to save {killed}")
+                    self.private_send(witch, "女巫用药", f"你在第{self.round_no}回合使用了解药，救活了 {killed}")
+                    print(f"  [仅法官+女巫可见] 女巫使用解药救 {killed}")
         else:
-            self.private_send(witch, "Witch's night info", f"  Round{self.round_no}Round is a peaceful night (no one was killed by werewolves, or you have no way of knowing)")
+            self.private_send(witch, "女巫夜间信息", f"第{self.round_no}回合是平安夜（无人被狼人击杀，或你无从得知）")
 
-        #  Poison: whether to poison someone
+        # 毒药：是否毒一人
         if self.witch_poison_available:
             candidates = [p.name for p in self.alive() if p.name != witch.name]
             dec = witch.choose_target(
-                "Do you use the [Poison] to kill a player you suspect is a werewolf? (If poisoning, fill the player's name; if not, fill none)",
+                "你是否使用【毒药】毒死一名你怀疑是狼人的玩家？（毒则填玩家名，不毒填 none）",
                 candidates, self.names, allow_none=True)
             if dec and dec in candidates:
                 poisoned = dec
                 self.witch_poison_available = False
-                self.private_send(witch, "Witch uses potion", f"You used the antidote in round {self.round_no}Round used poison, killing {poisoned}")
-                print(f"  [Judge + Witch only visible] Witch uses poison to kill {poisoned}")
+                self.private_send(witch, "女巫用药", f"你在第{self.round_no}回合使用了毒药，毒杀了 {poisoned}")
+                print(f"  [仅法官+女巫可见] 女巫使用毒药毒 {poisoned}")
         return poisoned, saved
 
     # ------------------------------------------------------------------
-    #  Daytime
+    # 白天
     # ------------------------------------------------------------------
     def day(self, night_deaths: List[str]) -> Optional[str]:
-        """Daytime: Announce deaths → Speak in turn → Vote to banish. Return the name of the banished player (or None)."""
-        self.phase = "Daytime"
+        """白天：公布死讯 → 依次发言 → 投票放逐。返回被放逐者名（或 None）。"""
+        self.phase = "白天"
         print("\n" + "=" * 78)
-        print(f"  [Round {self.round_no} Round · Daytime] The sky is bright. Please open your eyes.")
-        print("  Information isolation: Death announcements, speeches, and voting results are public information and enter everyone's context.")
+        print(f"【第 {self.round_no} 回合 · 白天】天亮请睁眼。")
+        print("  信息隔离：死讯、发言、投票结果都是公开信息，进入所有人上下文。")
         print("=" * 78)
 
-        #  Announce deaths (public)
+        # 公布死讯（公开）
         if night_deaths:
-            msg = f"Day has dawned. The players eliminated last night are:{'、'.join(night_deaths)}"
+            msg = f"天亮了。昨晚出局的玩家是：{'、'.join(night_deaths)}"
         else:
-            msg = "Day has dawned. Last night was a peaceful night, no one was eliminated"
-        self.broadcast("Public - Death announcement", msg)
-        print(f"  Judge announces:{msg}")
+            msg = "天亮了。昨晚是平安夜，无人出局"
+        self.broadcast("公开-死讯", msg)
+        print(f"  法官宣布：{msg}")
 
         if self._check_winner():
             return None
 
-        #  Speak in turn (public)
-        print("\n  —— Speech phase (in seat order, public speech enters everyone's context) ——")
+        # 依次发言（公开）
+        print("\n  —— 发言阶段（按座位顺序，公开发言进入所有人上下文）——")
         for p in self.alive():
             speech = p.speak(self.names)
-            line = f"{p.name} (speak):{speech}"
-            self.broadcast("Public speech", f"{p.name}  says:{speech}")
+            line = f"{p.name}（发言）：{speech}"
+            self.broadcast("公开发言", f"{p.name} 说：{speech}")
             print(f"  {line}")
-            if self.tts:  #  Optional: synthesize speech
+            if self.tts:  # 可选：把发言合成语音
                 self.tts.synth(p.name, speech, self.round_no)
 
-        #  Vote to banish (public)
-        print("\n  —— Voting phase ——")
+        # 投票放逐（公开）
+        print("\n  —— 投票阶段 ——")
         exiled = self._vote()
         return exiled
 
@@ -289,40 +290,40 @@ class Judge:
             t = p.vote(candidates, self.names)
             if t:
                 tally[t] += 1
-                print(f"  {p.name}  Vote → {t}")
+                print(f"  {p.name} 投票 → {t}")
             else:
-                print(f"  {p.name}  Abstain")
+                print(f"  {p.name} 弃票")
         if not tally:
-            self.broadcast("Public-Banish", "No one was banished this round (all abstained)")
-            print("  No one was banished this round")
+            self.broadcast("公开-放逐", "本轮无人被放逐（全部弃票）")
+            print("  本轮无人被放逐")
             return None
         top = tally.most_common()
         best = [n for n, c in top if c == top[0][1]]
         exiled = self.rng.choice(best) if len(best) > 1 else top[0][0]
         ex = self.by_name(exiled)
         ex.alive = False
-        result = f"Vote result:{exiled}  was banished, their true identity is [{ex.role.value}]. Vote count:" + \
-                 "，".join(f"{n}={c} votes" for n, c in top)
-        self.broadcast("Public-Banish", result)
+        result = f"投票结果：{exiled} 被放逐出局，其真实身份是【{ex.role.value}】。计票：" + \
+                 "，".join(f"{n}={c}票" for n, c in top)
+        self.broadcast("公开-放逐", result)
         print(f"  → {result}")
         return exiled
 
     # ------------------------------------------------------------------
-    #  Settlement
+    # 结算
     # ------------------------------------------------------------------
     def _check_winner(self) -> Optional[Faction]:
-        """Determine if the game has ended: if all werewolves are eliminated, good wins; if werewolves >= good players, werewolves win;
-        otherwise return None (continue game)."""
+        """判定当前是否已分出胜负：狼人全灭则好人胜；狼人数≥好人数则狼人胜；
+        否则返回 None（继续游戏）。"""
         w = len(self.wolves(alive_only=True))
         g = len([p for p in self.alive() if p.role != Role.WEREWOLF])
         if w == 0:
             return Faction.GOOD
-        if w >= g:  #  Werewolves >= good players → werewolves win (simplified kill-all rule)
+        if w >= g:  # 狼人数不少于好人数 → 狼人胜（屠边简化规则）
             return Faction.WEREWOLF
         return None
 
     def run(self) -> Faction:
-        """Run a full game and return the winning faction."""
+        """跑完整一局，返回获胜阵营。"""
         self.assign_identities()
         winner = None
         while winner is None and self.round_no < self.max_rounds:
@@ -334,16 +335,16 @@ class Judge:
             self.day(deaths)
             winner = self._check_winner()
         if winner is None:
-            #  Reached round limit, determine by number of survivors (more good players means good wins)
+            # 达到回合上限，按存活人数判定（好人多则好人赢）
             winner = self._check_winner() or Faction.GOOD
         self._announce(winner)
         return winner
 
     def _announce(self, winner: Faction):
-        self.phase = "Settlement"
+        self.phase = "结算"
         print("\n" + "#" * 78)
-        print("[Game Over · Settlement]")
+        print("【游戏结束 · 结算】")
         alive = [f"{p.name}({p.role.value})" for p in self.alive()]
-        print(f"  Surviving players:{'、'.join(alive) if alive else 'None'}")
-        print(f"  >>> Winning faction:{winner.value} <<<")
+        print(f"  存活玩家：{'、'.join(alive) if alive else '无'}")
+        print(f"  >>> 获胜阵营：{winner.value} <<<")
         print("#" * 78)

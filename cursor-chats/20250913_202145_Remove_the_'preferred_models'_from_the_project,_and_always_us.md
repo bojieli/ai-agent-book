@@ -92,13 +92,19 @@ Let me know if you'd like further details!
 
 
 --
-When there are no tool calls, it seems like Thinking, Assistant are both missing, leaving only the last sentence?
+当没有 tool calls 的时候，似乎 Thinking, Assistant 都不见了，只剩下最后一句话了？
 
 ---
 
 ### 🤖 Cursor Assistant
 
-I see the issue - when there are no tool calls in the response, the formatting labels like "🧠 Thinking:" and "🤖 Assistant:" are not being displayed, leaving only the final message. Let me examine the streaming output code to fix this formatting inconsistency.I see the issue now. When the ReAct loop continues after tool calls (in the Ollama agent), it starts streaming a new response for the second iteration. However, the display logic in `main.py` doesn't properly handle this case - the flags for showing labels (`thinking_shown`, `tools_shown`, `response_started`) are set once and never reset between iterations, so when the second response comes after tool calls, no labels are displayed.
+I see the issue - when there are no tool calls in the response, the formatting labels like "🧠 Thinking:" and "🤖 Assistant:" are not being displayed, leaving only the final message. Let me examine the streaming output code to fix this formatting inconsistency.
+
+---
+
+### 🤖 Cursor Assistant
+
+I see the issue now. When the ReAct loop continues after tool calls (in the Ollama agent), it starts streaming a new response for the second iteration. However, the display logic in `main.py` doesn't properly handle this case - the flags for showing labels (`thinking_shown`, `tools_shown`, `response_started`) are set once and never reset between iterations, so when the second response comes after tool calls, no labels are displayed.
 
 Let me fix this issue by improving the streaming display logic to handle multiple response sections properly:
 

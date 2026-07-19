@@ -36,7 +36,7 @@ class LegalChunk:
     chunk_id: str
     doc_id: str
     doc_title: str
-    category: str  # e.g., "Constitution", "Civil Code"
+    category: str  # e.g., "宪法", "民法典"
     text: str
     chunk_index: int
     char_count: int
@@ -245,9 +245,9 @@ class LocalLegalIndexer:
         
         # Common patterns in Chinese legal documents
         patterns = [
-            r'Article [一二三四五六七八九十百千\d]+[章节条款篇编]',
-            r'Part [一二三四五六七八九十百千\d]+',
-            r'[【\[]Article [一二三四五六七八九十百千\d]+[章节条款篇编][】\]]'
+            r'第[一二三四五六七八九十百千\d]+[章节条款篇编]',
+            r'第[一二三四五六七八九十百千\d]+部分',
+            r'[【\[]第[一二三四五六七八九十百千\d]+[章节条款篇编][】\]]'
         ]
         
         for pattern in patterns:
@@ -408,11 +408,11 @@ class LocalLegalIndexer:
         """Verify that indexing worked by performing test searches"""
         if not test_queries:
             test_queries = [
-                "Civil Code",
-                "Contract Law",
-                "Labor Law",
-                "Criminal Law",
-                "Constitution"
+                "民法典",
+                "合同法",
+                "劳动法",
+                "刑法",
+                "宪法"
             ]
         
         print("\n" + "="*60)
@@ -462,7 +462,7 @@ def main():
     parser = argparse.ArgumentParser(description="Index local legal documents into retrieval pipeline")
     parser.add_argument("--pipeline-url", default=RETRIEVAL_PIPELINE_URL, help="Retrieval pipeline URL")
     parser.add_argument("--max-docs", type=int, help="Maximum number of documents to process")
-    parser.add_argument("--categories", nargs="+", help="Specific categories to process (e.g., 'Constitution' 'Civil Code')")
+    parser.add_argument("--categories", nargs="+", help="Specific categories to process (e.g., '宪法' '民法典')")
     parser.add_argument("--no-cleanup", action="store_true", help="Don't clean existing indexes")
     parser.add_argument("--verify", action="store_true", help="Run verification tests after indexing")
     

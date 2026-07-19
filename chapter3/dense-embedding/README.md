@@ -4,68 +4,76 @@ An educational HTTP service for vector similarity search using BGE-M3 embeddings
 
 ---
 
-## Command Line Tool: Dense Retrieval & ANN Comparison (cli.py, Experiment 3-4)
+## 命令行工具：稠密检索与 ANN 对比（cli.py，实验 3-4）
 
-In addition to the HTTP service above, this project provides an **out-of-the-box, offline-reproducible** command line tool `cli.py` that directly quantifies the two observation points from Experiment 3-4 in the book into measurable numbers, without needing to start the service first:
+除了上面的 HTTP 服务，本项目还提供一个**开箱即用、可离线复现**的命令行工具 `cli.py`，
+把书中实验 3-4 的两个观察点直接跑成可量化的数字，无需先启动服务：
 
-1. **Semantic capability of dense embedding retrieval** — computes `recall@k / precision@k / MRR` on a small annotated corpus;
-2. **ANN index backend comparison** (the focus of Experiment 3-4) — reuses the ANNOY / HNSW implementations from the server-side `indexing.py` to measure their recall relative to **exact brute-force search**, index build time, and query latency.
+1. **稠密嵌入检索的语义能力**——在带标注的小型语料上计算 `recall@k / precision@k / MRR`；
+2. **ANN 索引后端对比**（实验 3-4 的重点）——复用服务端 `indexing.py` 里的 ANNOY / HNSW
+   实现，测量二者相对**精确暴力检索**的召回率、建索引耗时与查询延迟。
 
-### Usage
+### 用法
 
 ```bash
-# 1) Single dense query (default query "a cat playing", requires embedding model)
+# 1) 单条稠密查询（默认查询 "a cat playing"，需要嵌入模型）
 python cli.py -q "model distillation" -k 3
 
-# 2) Retrieval quality evaluation: recall@k / precision@k / MRR
+# 2) 检索质量评测：recall@k / precision@k / MRR
 python cli.py --eval
 
-# 2') Offline reproduction: use a cached small model (no need to download 2.3GB BGE-M3)
+# 2') 离线复现：用已缓存的小模型（无需下载 2.3GB 的 BGE-M3）
 python cli.py --embedding-model sentence-transformers/all-MiniLM-L6-v2 --eval
 
-# 3) ANN backend comparison (synthetic vectors, fully offline, no model required)
+# 3) ANN 后端对比（合成向量，完全离线、无需任何模型）
 python cli.py --compare-ann -k 10
-python cli.py --compare-ann --backend hnsw --hnsw-ef-search 200 -k 10   # Tune ef_search to see recall increase
+python cli.py --compare-ann --backend hnsw --hnsw-ef-search 200 -k 10   # 调 ef_search 看召回随之上升
 
-# Custom corpus / labels / output
+# 自定义语料 / 标注 / 输出
 python cli.py --corpus my.json --labels my_labels.json --eval -o result.json
 ```
 
-`python cli.py --help` provides complete parameter descriptions in Chinese (`--corpus / --query / --embedding-model / --top-k / --output`, plus various index hyperparameters for ANN comparison).
+`python cli.py --help` 提供完整的中文参数说明（`--corpus / --query / --embedding-model /
+--top-k / --output`，以及 ANN 对比的各项索引超参）。
 
-### Common Parameters
+### 常用参数
 
-| Parameter | Description |
+| 参数 | 说明 |
 | --- | --- |
-| `-q, --query` | Query string (default `a cat playing`) |
-| `-c, --corpus` | Corpus file (`.json` array or `.jsonl` one document per line); defaults to built-in example corpus |
-| `-k, --top-k` | Return top k results (default 5) |
-| `-o, --output` | Write results / evaluation metrics to a JSON file |
-| `--embedding-model` | Embedding model name (default `BAAI/bge-m3`; offline-capable `sentence-transformers/all-MiniLM-L6-v2`) |
-| `--pooling` | Pooling method `auto` (bge* uses cls, others mean) / `mean` / `cls` |
-| `--eval` | Evaluate recall@k / precision@k / MRR on the labeled dataset |
-| `--compare-ann` | Compare ANNOY / HNSW (synthetic vectors, no model required) |
-| `--ann-base / --ann-dim / --ann-queries` | Synthetic base size / dimension / number of queries (default 3000 / 128 / 100) |
-| `--annoy-n-trees / --hnsw-M / --hnsw-ef-search` | Key index hyperparameters for the two ANN types |
+| `-q, --query` | 查询字符串（默认 `a cat playing`） |
+| `-c, --corpus` | 语料文件（`.json` 数组 或 `.jsonl` 每行一篇）；缺省用内置示例语料 |
+| `-k, --top-k` | 返回前 k 条结果（默认 5） |
+| `-o, --output` | 把结果 / 评测指标写入 JSON 文件 |
+| `--embedding-model` | 嵌入模型名（默认 `BAAI/bge-m3`；离线可用 `sentence-transformers/all-MiniLM-L6-v2`） |
+| `--pooling` | 池化方式 `auto`（bge* 用 cls，其余 mean）/ `mean` / `cls` |
+| `--eval` | 在标注集上评测 recall@k / precision@k / MRR |
+| `--compare-ann` | 对比 ANNOY / HNSW（合成向量，无需模型） |
+| `--ann-base / --ann-dim / --ann-queries` | 合成底库规模 / 维度 / 查询数（默认 3000 / 128 / 100） |
+| `--annoy-n-trees / --hnsw-M / --hnsw-ef-search` | 两类 ANN 的关键索引超参 |
 
-### Measured Results (Real Runs, Not Fabricated)
+### 实测结果（真实运行，非杜撰）
 
-**Dense Retrieval Quality** (built-in 12-document corpus, `all-MiniLM-L6-v2`, offline):
+**稠密检索质量**（内置 12 篇语料，`all-MiniLM-L6-v2`，离线）：
 
 ```
-Macro avg  recall@5=1.000  precision@5=0.320  MRR=1.000
+宏平均  recall@5=1.000  precision@5=0.320  MRR=1.000
 ```
 
-For the query `a cat playing`, the relevant documents only use `kitten` / `feline` and **do not contain the literal word "cat"**; dense retrieval still ranks them 1st and 2nd — this is the semantic advantage of dense over sparse BM25 (Experiment 3-5 would miss recall).
+其中查询 `a cat playing` 的相关文档只用 `kitten` / `feline` 表达、**不含字面 "cat"**，
+稠密检索仍把它们排到第 1、2 名——这正是稠密相对稀疏 BM25（实验 3-5 会漏召回）的语义优势。
 
-**ANN Backend Comparison** (3000 128-dimensional random unit vectors, 100 queries, top-10): HNSW recall increases monotonically with `ef_search`, demonstrating the "precision / speed" trade-off:
+**ANN 后端对比**（3000 条 128 维随机单位向量，100 条查询，top-10）：HNSW 的召回率随
+`ef_search` 单调上升，体现"精度 / 速度"取舍：
 
-| Configuration | recall@10 | Avg Query Latency |
+| 配置 | recall@10 | 平均查询延迟 |
 | --- | --- | --- |
 | HNSW `ef_search=20` | 0.562 | 0.05 ms |
 | HNSW `ef_search=200` | 0.991 | 0.25 ms |
 
-> **Environment Note**: This tool performs a "self-query" health check for each backend. On some macOS/arm64 environments, the precompiled wheel for `annoy==1.17.3` has a defect (even querying a vector already in the index only returns itself). In such cases, the tool prints `[Warning] ...suspected to be broken in the current environment` and marks that backend's numbers as unreliable. HNSW is unaffected. To reproduce the full ANNOY vs HNSW comparison, run in an environment where annoy works correctly (e.g., Linux x86_64).
+> **环境提示**：本工具对每个后端会先做"自查询自身向量"的健康检查。在部分 macOS/arm64 环境下，
+> `annoy==1.17.3` 的预编译轮子存在缺陷（连查询库中已有向量都只返回它自己），此时工具会打印
+> `[警告] ...疑似当前环境下损坏` 并把该后端的数字标记为不可信。HNSW 不受影响。若要复现完整的
+> ANNOY vs HNSW 对比，请在 annoy 正常工作的环境（如 Linux x86_64）中运行。
 
 ## Features
 
@@ -234,21 +242,7 @@ Search for similar documents.
 **Response:**
 ```json
 {
-  "results": [
-    {
-      "doc_id": "doc_001",
-      "score": 0.92,
-      "text": "Machine learning is a subset of artificial intelligence.",
-      "metadata": {
-        "category": "AI",
-        "author": "John Doe"
-      }
-    }
-  ],
-  "query": "What is deep learning?",
-  "total_results": 1
-}
-```  "success": true,
+  "success": true,
   "query": "What is deep learning?",
   "results": [
     {

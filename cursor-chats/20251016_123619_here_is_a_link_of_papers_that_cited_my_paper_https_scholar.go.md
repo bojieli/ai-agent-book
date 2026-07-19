@@ -413,6 +413,45 @@ Based on the analysis of **last authors (corresponding authors)** from the citin
 | 17 | Liyuan Wu | IHEP CAS, Beijing | China 🇨🇳 | 1 | https://scholar.google.com/citations?user=gc_JlrYAAAAJ |
 | 18 | Yu Yan | USTB, Beijing | China 🇨🇳 | 1 | https://scholar.google.com/citations?user=Ou99CTgAAAAJ |
 | 19 | Eduardo Berrios | Universidad de Valparaiso | Chile 🇨🇱 | 1 | https://scholar.google.com/citations?user=XepoVOwAAAAJ |
+| 20 | Haikuan Dong | Bohai University | China 🇨🇳 | 1 | https://scholar.google.com/citations?user=WOx-S_QAAAAJ |
+
+### Summary by Country (Last Authors):
+- **China: 9 authors** (45%) - Ranks 5, 11-15, 17-18, 20
+- **India: 4 authors** (20%) - Ranks 2, 3, 6, 10
+- **USA: 2 authors** (10%) - Ranks 1, 4 (both from UC San Diego!)
+- **South Korea: 2 authors** (10%) - Ranks 8, 9
+- **Italy: 1 author** (5%) - Rank 7
+- **UAE: 1 author** (5%) - Rank 16
+- **Chile: 1 author** (5%) - Rank 19
+
+### Key Insights:
+1. **Kesong Yang (UC San Diego)** leads with **3 papers** as corresponding author
+2. **Only 2 US-based corresponding authors** - both from UC San Diego (Kesong Yang and Marc Andre Meyers)
+3. **China dominates** with 9 corresponding authors (45% of top 20)
+4. **India has strong presence** with 4 corresponding authors
+
+The data shows that while your work is cited globally, the **research leadership** (as indicated by corresponding authorship) is primarily from **China and India**, with limited US leadership beyond UC San Diego.
+
+---
+
+### 👤 You
+
+Switch back to the all authors version: 把所有的作者都列出来，按照大学牛逼程度排名，并且citation要多于 2000，还要国家，大学名称，google scholar链接
+
+---
+
+### 🤖 Cursor Assistant
+
+我来修改脚本，列出所有作者（不仅仅是最后作者），按大学排名排序，筛选引用数>2000的作者，并包含国家、大学名称和Google Scholar链接。
+
+---
+
+### 🤖 Cursor Assistant
+
+完美！我已经提取了所有引用数>2000的作者，按大学排名排序。以下是汇总表：
+
+## 引用您工作的高引用作者 (>2000 citations) - 按大学排名排序
+
 | 排名 | 姓名 | 大学 | 国家 | 总引用数 | Google Scholar |
 |------|------|------|------|----------|----------------|
 | 1 | **Luigi G. Occhipinti** | **Cambridge University** | UK 🇬🇧 | **7,779** | https://scholar.google.com/citations?user=IYV4c0YAAAAJ |
@@ -444,43 +483,73 @@ Based on the analysis of **last authors (corresponding authors)** from the citin
 | 27 | Pancham Kumar | Bhartiya Skill Dev. Univ. | India 🇮🇳 | 2,484 | https://scholar.google.com/citations?user=1JHVpbgAAAAJ |
 | 28 | Haikuan Dong | Bohai University | China 🇨🇳 | 2,377 | https://scholar.google.com/citations?user=WOx-S_QAAAAJ |
 
-### Key Findings:
+### 关键发现 Key Findings:
 
-**🏆 Ultra-High Citation Authors (>50,000):**
-- **Huang Baibiao (黄柏标)** - Shandong University - **181,189 citations** 🌟
-- **Marc Andre Meyers** - UC San Diego - **63,875 citations**
-- **Ying Dai (戴瑛)** - Shandong University - **62,549 citations**
+**🏆 超高引用作者 (>50,000):**
+- **Huang Baibiao (黄柏标)** - Shandong University - **181,189次引用** 🌟
+- **Marc Andre Meyers** - UC San Diego - **63,875次引用**
+- **Ying Dai (戴瑛)** - Shandong University - **62,549次引用**
 
-**🎓 Top Universities:**
+**🎓 顶尖大学 Top Universities:**
 1. **Cambridge** (UK) - Rank 1
-2. **UC San Diego** (USA) - Ranks 2, 18, 23 - 3 authors
+2. **UC San Diego** (USA) - Ranks 2, 18, 23 - 3位作者
 3. **UCSF** (USA) - Rank 3
 4. **Columbia** (USA) - Rank 4
 
-**🌍 Country Distribution:**
-- **China: 13 authors** (46%) - Shandong University contributes the most
-- **USA: 8 authors** (29%) - UC system contributes the most
-- **India: 3 authors** (11%)
-- **South Korea: 2 authors** (7%)
-- **UK, Canada, Italy, Pakistan: 1 each**
+**🌍 国家分布 Country Distribution:**
+- **China: 13位作者** (46%) - 山东大学贡献最大
+- **USA: 8位作者** (29%) - UC系统贡献最大
+- **India: 3位作者** (11%)
+- **South Korea: 2位作者** (7%)
+- **UK, Canada, Italy, Pakistan: 各1位**
 
-All data has been saved to the `high_citation_authors.json` file!Perfect! I have corrected the table. Here is the **corrected complete version**, saved to `HIGH_CITATION_AUTHORS_TABLE.md`:
+所有数据已保存到 `high_citation_authors.json` 文件！
 
-## ✅ Corrected High-Citation Author Table (>2000 citations) - Sorted by University Ranking
+---
 
-| Rank | Name | University | Country | Total Citations | Citations of Your Work | Google Scholar |
-|------|------|------------|---------|----------------|------------------------|----------------|
-| 1 | **Luigi G. Occhipinti** | **Cambridge** | UK 🇬🇧 | **7,779** | 1 | [Link](https://scholar.google.com/citations?user=IYV4c0YAAAAJ) |
-| 2 | **Kesong Yang** | **UC San Diego** | USA 🇺🇸 | **11,433** | **5** ⭐ | [Link](https://scholar.google.com/citations?user=o8CD9uAAAAAJ) |
-| 3 | **Joseph K Wong** | **UCSF** | USA 🇺🇸 | **22,574** | 2 | [Link](https://scholar.google.com/citations?user=2XnTId0AAAAJ) |
-| 4 | **Xiaoyang Zhu** | **Columbia** | USA 🇺🇸 | **48,394** | 1 | [Link](https://scholar.google.com/citations?user=-DhgqkAAAAAJ) |
-| 5 | Hao Huang | CAS | China 🇨🇳 | 7,338 | 1 | [Link](https://scholar.google.com/citations?user=_GOnM9wAAAAJ) |
-| 6 | Lina Zhao | IHEP CAS | China 🇨🇳 | 5,679 | 1 | [Link](https://scholar.google.com/citations?user=M_wuS-AAAAAJ) |
-| 7 | Liyuan Wu | IHEP CAS/BUPT | China 🇨🇳 | 2,408 | 2 | [Link](https://scholar.google.com/citations?user=gc_JlrYAAAAJ) |
-| 8 | Chenyang Zha | U. Macau | China 🇨🇳 | 5,985 | 1 | [Link](https://scholar.google.com/citations?user=K1Vg_o0AAAAJ) |
-| 9 | Lei Zhang | Nanjing (NUIST) | China 🇨🇳 | 4,242 | 1 | [Link](https://scholar.google.com/citations?user=VWCHBjUAAAAJ) |
-| 10 | Huifang Ma | Nanjing P&T | China 🇨🇳 | 3,656 | 1 | [Link](https://scholar.google.com/citations?user=DYCaFEwAAAAJ) |
-| 11 | Xin He | Jilin Univ. | China 🇨🇳 | 2,688 | 1 | [Link](https://scholar.google.com/citations?user=5wGkMq0AAAAJ) |
+### 👤 You
+
+Fix the table
+
+---
+
+### 🤖 Cursor Assistant
+
+Let me read the JSON file to see what needs to be fixed:
+
+---
+
+### 🤖 Cursor Assistant
+
+I see several country classification errors. Let me check the affiliations and create a corrected table:
+
+---
+
+### 🤖 Cursor Assistant
+
+I notice there's still an error - Maurizia Palummo should be Italy, not India. Let me create the final corrected table:
+
+---
+
+### 🤖 Cursor Assistant
+
+完美！我已经修正了表格。这是**修正后的完整版本**，已保存到 `HIGH_CITATION_AUTHORS_TABLE.md`：
+
+## ✅ 修正后的高引用作者表格 (>2000 citations) - 按大学排名排序
+
+| 排名 | 姓名 | 大学 | 国家 | 总引用 | 引用您的工作 | Google Scholar |
+|------|------|------|------|--------|--------------|----------------|
+| 1 | **Luigi G. Occhipinti** | **Cambridge** | UK 🇬🇧 | **7,779** | 1 | [链接](https://scholar.google.com/citations?user=IYV4c0YAAAAJ) |
+| 2 | **Kesong Yang** | **UC San Diego** | USA 🇺🇸 | **11,433** | **5** ⭐ | [链接](https://scholar.google.com/citations?user=o8CD9uAAAAAJ) |
+| 3 | **Joseph K Wong** | **UCSF** | USA 🇺🇸 | **22,574** | 2 | [链接](https://scholar.google.com/citations?user=2XnTId0AAAAJ) |
+| 4 | **Xiaoyang Zhu** | **Columbia** | USA 🇺🇸 | **48,394** | 1 | [链接](https://scholar.google.com/citations?user=-DhgqkAAAAAJ) |
+| 5 | Hao Huang | CAS | China 🇨🇳 | 7,338 | 1 | [链接](https://scholar.google.com/citations?user=_GOnM9wAAAAJ) |
+| 6 | Lina Zhao | IHEP CAS | China 🇨🇳 | 5,679 | 1 | [链接](https://scholar.google.com/citations?user=M_wuS-AAAAAJ) |
+| 7 | Liyuan Wu | IHEP CAS/BUPT | China 🇨🇳 | 2,408 | 2 | [链接](https://scholar.google.com/citations?user=gc_JlrYAAAAJ) |
+| 8 | Chenyang Zha | U. Macau | China 🇨🇳 | 5,985 | 1 | [链接](https://scholar.google.com/citations?user=K1Vg_o0AAAAJ) |
+| 9 | Lei Zhang | Nanjing (NUIST) | China 🇨🇳 | 4,242 | 1 | [链接](https://scholar.google.com/citations?user=VWCHBjUAAAAJ) |
+| 10 | Huifang Ma | Nanjing P&T | China 🇨🇳 | 3,656 | 1 | [链接](https://scholar.google.com/citations?user=DYCaFEwAAAAJ) |
+| 11 | Xin He | Jilin Univ. | China 🇨🇳 | 2,688 | 1 | [链接](https://scholar.google.com/citations?user=5wGkMq0AAAAJ) |
 | 12 | Pooja Sharma | Old Dominion | USA
 
 ---
@@ -499,62 +568,62 @@ I'll extract and list all the papers that cited your work from the Google Schola
 
 ### 🤖 Cursor Assistant
 
-Perfect! I have extracted all **32 papers citing your work**. Here is the summary:
+完美！我已经提取了所有**32篇引用您工作的论文**。以下是总结：
 
-## 📚 List of Papers Citing Your Work (32 papers)
+## 📚 引用您工作的论文列表 (32篇)
 
-### 🔬 By Research Topic:
+### 🔬 按研究主题分类：
 
-#### **1. Perovskite Materials Research** - 23 papers
-The largest research area! Includes:
-- Lead-free perovskite materials
-- Double perovskites
-- 2D/3D hybrid perovskites
-- Cs-based, Tl-based perovskites, etc.
+#### **1. 钙钛矿材料研究 (Perovskite Materials)** - 23篇
+最多的研究领域！包括：
+- Lead-free/无铅钙钛矿材料
+- 双钙钛矿 (Double perovskites)
+- 2D/3D混合钙钛矿
+- Cs基、Tl基钙钛矿等
 
-**Representative papers:**
-- "Lead-free halide perovskite photovoltaics" - APL Materials, 2020 (**108 citations**)
-- "Electronic and optical properties of vacancy ordered double perovskites" - Scientific Reports, 2021 (**174 citations**)
+**代表性论文：**
+- "Lead-free halide perovskite photovoltaics" - APL Materials, 2020 (**108次引用**)
+- "Electronic and optical properties of vacancy ordered double perovskites" - Scientific Reports, 2021 (**174次引用**)
 
-#### **2. First-Principles/DFT Calculations** - 15 papers
-Using computational methods to study material properties
+#### **2. 第一性原理/DFT计算 (First-Principles/DFT)** - 15篇
+使用计算方法研究材料性质
 
-#### **3. Machine Learning in Materials Science** - 3 papers
-- "Machine learning for halide perovskite materials" (**129 citations**)
+#### **3. 机器学习在材料科学 (Machine Learning)** - 3篇
+- "Machine learning for halide perovskite materials" (**129次引用**)
 - "Machine learning accelerated study of defect energy levels"
 
-#### **4. Heusler Alloys** - 1 paper
-- "Heusler alloys: Past, properties, new alloys, and prospects" (**219 citations**) ⭐ **Most cited**
+#### **4. Heusler合金 (Heusler Alloys)** - 1篇
+- "Heusler alloys: Past, properties, new alloys, and prospects" (**219次引用**) ⭐ **被引最多**
 
-### 📊 Top 5 by Citation Count:
+### 📊 按引用次数排名 Top 5:
 
-| Rank | Paper | Journal | Year | Citations |
-|------|-------|---------|------|-----------|
+| 排名 | 论文 | 期刊 | 年份 | 引用数 |
+|------|------|------|------|--------|
 | 1 | Heusler alloys | Progress in Materials Science | 2023 | **219** |
 | 2 | Electronic and optical properties of vacancy ordered double perovskites | Scientific Reports | 2021 | **174** |
 | 3 | Machine learning for halide perovskite materials | Nano Energy | 2020 | **129** |
 | 4 | Lead-free halide perovskite photovoltaics | APL Materials | 2020 | **108** |
 | 5 | 2D hybrid halide perovskites | Solar RRL | 2021 | **35** |
 
-### 📅 By Year:
-- **2020**: 6 papers
-- **2021**: 4 papers
-- **2022**: 7 papers
-- **2023**: 7 papers
-- **2024**: 2 papers
-- **2025**: 3 papers
+### 📅 按年份分布：
+- **2020年**: 6篇
+- **2021年**: 4篇
+- **2022年**: 7篇
+- **2023年**: 7篇
+- **2024年**: 2篇
+- **2025年**: 3篇
 
-### 🌐 Major Publishing Journals:
-- **Elsevier** journals: 8 papers
-- **ACS** series: 7 papers
-- **Wiley** series: 5 papers
-- Nature series, RSC, IOP, etc.
+### 🌐 主要发表期刊：
+- **Elsevier** 期刊: 8篇
+- **ACS** 系列: 7篇
+- **Wiley** 系列: 5篇
+- Nature系列, RSC, IOP等
 
-### 📄 Full list saved to:
-1. **`CITING_PAPERS_LIST.md`** - Complete Markdown list with all paper details
-2. **`citing_papers.json`** - JSON format for data analysis
+### 📄 完整列表已保存至：
+1. **`CITING_PAPERS_LIST.md`** - 完整的Markdown格式列表，包含所有论文详情
+2. **`citing_papers.json`** - JSON格式，便于数据分析
 
-All papers include: title, authors, year, journal, link, abstract, and citation count!
+所有论文都包含：标题、作者、年份、期刊、链接、摘要和被引次数！
 
 ---
 

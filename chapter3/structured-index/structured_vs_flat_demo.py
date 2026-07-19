@@ -1,17 +1,20 @@
 """
-Structured Index vs Flat Retrieval: An Offline Comparative Demo.
+结构化索引 vs 扁平检索：离线对比演示。
 
-This module does not depend on OpenAI / vector models / network, and can run with pure Python + networkx.
-It uses a manually curated small knowledge base of the "Intel x86 SIMD Instruction Set" to intuitively compare two retrieval approaches:
+本模块不依赖 OpenAI / 向量模型 / 网络，纯 Python + networkx 即可运行。
+它用一个手工整理的「Intel x86 SIMD 指令集」小知识库，直观对比两条检索路线：
 
-  * Flat Retrieval: Treat each knowledge point as an independent text chunk, and recall by word-level similarity scoring.
-    This is an abstraction of traditional RAG "document chunking + vector retrieval" — it can only return scattered fragments.
-  * Structured Retrieval:
-      - GraphRAG-style entity-relation graph: performs multi-hop traversal along relation edges, capable of answering relational questions like "What connects A and B?" that flat retrieval cannot handle (corresponding to "multi-hop relational reasoning" in the book).
-      - RAPTOR-style hierarchical tree: aggregates details into higher-level summaries, capable of answering macro questions like "Overview of a topic" that require cross-fragment synthesis (corresponding to "multi-level navigation" in the book).
+  * 扁平检索（Flat）：把每个知识点当成互相独立的文本块，按词面相似度打分召回。
+    这是传统 RAG「文档分块 + 向量检索」的抽象——只能返回零散片段。
+  * 结构化检索（Structured）：
+      - GraphRAG 式的实体-关系图：沿关系边做多跳遍历，能回答扁平检索答不了的
+        「A 通过什么和 B 相连」这类关系性问题（对应书中「多跳关系推理」）。
+      - RAPTOR 式的层次树：把细节聚合成上层摘要，能回答「概述某主题」这类
+        需要跨片段综合的宏观问题（对应书中「多层次导航」）。
 
-This demo corresponds to the "Comparative Study of Knowledge Representation Philosophy" in Experiment 3-8 (structured-index).
-Building a real index requires calling an LLM (see main.py build), but this demo pre-writes the index results manually so that readers can see "what problems structured indexing solves for flat retrieval" without needing an API Key.
+这段演示对应实验 3-8（structured-index）中「知识表达哲学的对比研究」。
+构建真实索引需要调用 LLM（见 main.py build），本演示则把索引结果预先手工写好，
+让读者无需 API Key 也能看到「结构化索引到底解决了扁平检索的什么问题」。
 """
 
 import json
@@ -23,67 +26,67 @@ import networkx as nx
 
 
 # ---------------------------------------------------------------------------
-# Manually curated small knowledge base (corresponding to the Intel x86 example document in test_indexing.py)
-# Each entity's description also serves as "a text chunk for flat retrieval".
+# 手工整理的小知识库（对应 test_indexing.py 中的 Intel x86 示例文档）
+# 每个实体的 description 同时充当「扁平检索的一个文本块」。
 # ---------------------------------------------------------------------------
 
 ENTITIES: Dict[str, Dict[str, str]] = {
     "ADDPS": {"type": "instruction",
-              "desc": "ADDPS: Performs parallel addition on packed single-precision floating-point numbers, processing four lanes of single-precision floating-point operations at once."},
+              "desc": "ADDPS：对打包的单精度浮点数执行并行加法，一次处理四路单精度浮点运算。"},
     "MOVAPS": {"type": "instruction",
-               "desc": "MOVAPS: Moves 128-bit packed single-precision floating-point data between vector registers and aligned memory."},
+               "desc": "MOVAPS：在向量寄存器与对齐内存之间搬运 128 位打包单精度浮点数据。"},
     "VADDPS": {"type": "instruction",
-               "desc": "VADDPS: AVX version of packed single-precision floating-point addition, processing eight lanes of single-precision floating-point operations at once."},
+               "desc": "VADDPS：AVX 版本的打包单精度浮点加法，一次处理八路单精度浮点运算。"},
     "CPUID": {"type": "instruction",
-              "desc": "CPUID: Returns processor identification and feature information, used to detect whether the processor supports SSE, AVX, and other extensions."},
+              "desc": "CPUID：返回处理器标识与特性信息，用于探测处理器是否支持 SSE、AVX 等扩展。"},
     "SSE": {"type": "extension",
-            "desc": "SSE (Streaming SIMD Extensions): Introduces 128-bit vector registers, supporting packed single-precision floating-point parallel operations."},
+            "desc": "SSE（Streaming SIMD Extensions）：引入 128 位向量寄存器，支持打包单精度浮点并行运算。"},
     "AVX": {"type": "extension",
-            "desc": "AVX (Advanced Vector Extensions): Extends vector registers to 256 bits, further enhancing SIMD capabilities."},
+            "desc": "AVX（Advanced Vector Extensions）：把向量寄存器扩展到 256 位，进一步增强 SIMD 能力。"},
     "XMM": {"type": "register",
-            "desc": "XMM0-XMM15: 128-bit vector registers used by SSE instructions to hold packed data."},
+            "desc": "XMM0-XMM15：128 位向量寄存器，供 SSE 指令存放打包数据。"},
     "YMM": {"type": "register",
-            "desc": "YMM0-YMM15: 256-bit vector registers used by AVX instructions, with the lower 128 bits shared with XMM registers."},
+            "desc": "YMM0-YMM15：256 位向量寄存器，供 AVX 指令使用，低 128 位与 XMM 共享。"},
     "CR4.OSFXSR": {"type": "control-bit",
-                   "desc": "CR4.OSFXSR: Control bit for operating system support of FXSAVE/FXRSTOR; must be set to 1 to allow SSE instructions."},
+                   "desc": "CR4.OSFXSR：操作系统支持 FXSAVE/FXRSTOR 的控制位，置 1 后才允许使用 SSE 指令。"},
     "CR0.EM": {"type": "control-bit",
-               "desc": "CR0.EM: Emulation flag; when set to 1, SIMD is disabled; must be cleared to execute SSE/AVX instructions."},
+               "desc": "CR0.EM：仿真标志位，为 1 时禁用 SIMD，必须清零才能执行 SSE / AVX 指令。"},
 }
 
-# Entity-relation triples (subject, relation, object) forming the knowledge graph of GraphRAG.
+# 实体-关系三元组（主语, 关系, 宾语），构成 GraphRAG 的知识之网。
 TRIPLES: List[Tuple[str, str, str]] = [
-    ("ADDPS", "belongs to", "SSE"),
-    ("MOVAPS", "belongs to", "SSE"),
-    ("VADDPS", "belongs to", "AVX"),
-    ("ADDPS", "operates", "XMM"),
-    ("VADDPS", "operates", "YMM"),
-    ("SSE", "uses register", "XMM"),
-    ("AVX", "uses register", "YMM"),
-    ("AVX", "extends from", "SSE"),
-    ("SSE", "requires enabling", "CR4.OSFXSR"),
-    ("AVX", "requires enabling", "CR4.OSFXSR"),
-    ("SSE", "requires clearing", "CR0.EM"),
-    ("CPUID", "detects", "SSE"),
-    ("CPUID", "detects", "AVX"),
+    ("ADDPS", "属于", "SSE"),
+    ("MOVAPS", "属于", "SSE"),
+    ("VADDPS", "属于", "AVX"),
+    ("ADDPS", "操作", "XMM"),
+    ("VADDPS", "操作", "YMM"),
+    ("SSE", "使用寄存器", "XMM"),
+    ("AVX", "使用寄存器", "YMM"),
+    ("AVX", "扩展自", "SSE"),
+    ("SSE", "需要启用", "CR4.OSFXSR"),
+    ("AVX", "需要启用", "CR4.OSFXSR"),
+    ("SSE", "要求清零", "CR0.EM"),
+    ("CPUID", "探测", "SSE"),
+    ("CPUID", "探测", "AVX"),
 ]
 
-# RAPTOR-style hierarchical tree: aggregates fine-grained leaves into higher-level summaries (parent nodes).
+# RAPTOR 式层次树：把细粒度叶子聚合为上层摘要（父节点）。
 TREE_SUMMARY = {
-    "id": "SIMD Instruction Set Overview",
-    "summary": ("x86 SIMD instruction sets started with MMX; SSE introduced 128-bit XMM vector registers and supported packed"
-                "single-precision floating-point operations; AVX further extended registers to 256-bit YMM, increasing the parallel width of single-instruction multiple-data"
-                "generation by generation; before use, enable via CR0/CR4 control bits and detect support with CPUID."),
+    "id": "SIMD 指令集综述",
+    "summary": ("x86 的 SIMD 指令集自 MMX 起步，SSE 引入 128 位 XMM 向量寄存器并支持打包"
+                "单精度浮点运算，AVX 进一步把寄存器扩展到 256 位 YMM，逐代提升单指令多数据"
+                "的并行宽度；使用前需通过 CR0/CR4 控制位使能，并可用 CPUID 探测支持情况。"),
     "children": ["ADDPS", "MOVAPS", "VADDPS", "SSE", "AVX", "XMM", "YMM"],
 }
 
 
 # ---------------------------------------------------------------------------
-# Flat retrieval: treats each entity description as an independent text chunk, recalled by word-level similarity (cosine of word frequencies).
-# This is a deterministic proxy for "vector retrieval" in offline scenarios: no internal structure, only the fragment itself.
+# 扁平检索：把每个实体描述当作独立文本块，按词面相似度（词频余弦）召回。
+# 这是「向量检索」在离线场景下的一个确定性替身：无内在结构、只看片段本身。
 # ---------------------------------------------------------------------------
 
 def _tokenize(text: str) -> List[str]:
-    """Coarse-grained tokenization: ASCII words (e.g., ADDPS, CR4, XMM) are kept intact; Chinese characters are split by individual characters."""
+    """粗粒度分词：ASCII 词（如 ADDPS、CR4、XMM）整体保留，中文按单字切。"""
     tokens = re.findall(r"[a-zA-Z0-9]+", text.lower())
     tokens += re.findall(r"[一-鿿]", text)
     return tokens
@@ -98,7 +101,7 @@ def _cosine(a: Dict[str, int], b: Dict[str, int]) -> float:
 
 
 class FlatRetriever:
-    """Recall independent text chunks by word surface similarity (simulating flat vector retrieval)."""
+    """按词面相似度召回独立文本块（模拟扁平向量检索）。"""
 
     def __init__(self, entities: Dict[str, Dict[str, str]]):
         self.docs = {name: e["desc"] for name, e in entities.items()}
@@ -124,7 +127,7 @@ class FlatRetriever:
 
 
 # ---------------------------------------------------------------------------
-# Structured retrieval: multi-hop traversal over entity-relation graphs (core capability of GraphRAG).
+# 结构化检索：基于实体-关系图的多跳遍历（GraphRAG 的核心能力）。
 # ---------------------------------------------------------------------------
 
 def build_graph(triples: List[Tuple[str, str, str]]) -> nx.DiGraph:
@@ -137,15 +140,15 @@ def build_graph(triples: List[Tuple[str, str, str]]) -> nx.DiGraph:
 
 
 def multi_hop_paths(graph: nx.DiGraph, start: str, max_hops: int = 3) -> List[List[Tuple[str, str, str]]]:
-    """Starting from start, perform BFS along relation edges, returning all relation paths with <= max_hops hops.
+    """从 start 出发沿关系边做 BFS，返回所有 <= max_hops 跳的关系路径。
 
-    Each path is a list of (source entity, relation, target entity) steps. This is exactly what flat retrieval cannot express:
-    'traversal along relation edges' — corresponding to the book's statement that 'knowledge graphs naturally support traversal along relation edges, making multi-hop queries efficient and reliable'.
+    每条路径是若干 (源实体, 关系, 目标实体) 步骤的列表。这正是扁平检索无法表达的
+    「沿关系边遍历」——对应书中「知识图谱天然支持沿关系边遍历，使多跳查询高效可靠」。
     """
     if start not in graph:
         return []
     paths: List[List[Tuple[str, str, str]]] = []
-    # Queue element: (current node, path to reach this node)
+    # 队列元素：(当前节点, 到达该节点的路径)
     queue: deque = deque([(start, [])])
     while queue:
         node, path = queue.popleft()
@@ -160,7 +163,7 @@ def multi_hop_paths(graph: nx.DiGraph, start: str, max_hops: int = 3) -> List[Li
 
 
 def match_entity(graph: nx.DiGraph, query: str) -> Optional[str]:
-    """Find the starting entities appearing in the query (by longest name match, deterministic)."""
+    """在查询中找出出现的起始实体（按名字最长匹配，确定性）。"""
     q = query.lower()
     hits = [name for name in graph.nodes if name.lower() in q]
     return max(hits, key=len) if hits else None
@@ -176,83 +179,83 @@ def format_path(path: List[Tuple[str, str, str]]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Three demo queries: highlighting three shortcomings of flat retrieval.
+# 三个演示查询：分别凸显扁平检索的三类短板。
 # ---------------------------------------------------------------------------
 
 def demo_multi_hop(flat: FlatRetriever, graph: nx.DiGraph, query: str, top_k: int) -> None:
-    print(f"\n【Query 1｜Multi-hop Relation Reasoning】{query}")
-    print("-- Flat retrieval (returns independent fragments by word surface similarity) --")
+    print(f"\n【查询 1｜多跳关系推理】{query}")
+    print("-- 扁平检索（按词面相似度返回独立片段）--")
     for i, r in enumerate(flat.search(query, top_k), 1):
         print(f"  {i}. [{r['type']}] {r['name']}  (score={r['score']:.3f})")
-    print("  ✗ Can only recall isolated fragments with similar wording, unable to 'connect' ADDPS to a specific control bit —"
-          "without relations, it cannot determine which control bit is the answer for ADDPS.")
+    print("  ✗ 只能召回词面相近的孤立片段，无法把 ADDPS 与某个控制位「连」起来——"
+          "缺少关系，就无法判断哪个控制位是 ADDPS 的答案。")
 
-    print("-- Structured graph retrieval (multi-hop traversal along relation edges) --")
+    print("-- 结构化图检索（沿关系边多跳遍历）--")
     start = match_entity(graph, query)
     paths = multi_hop_paths(graph, start, max_hops=3)
-    #  Only show paths ending at control bits (the question asks about 'control register bits')
+    # 只展示终点为控制位的路径（问题问的是「控制寄存器位」）
     answers = [p for p in paths if graph.nodes[p[-1][2]]["type"] == "control-bit"]
     for p in answers:
         print(f"  {format_path(p)}")
-    enable = [p for p in answers if p[-1][1] == "requires enabling"]
+    enable = [p for p in answers if p[-1][1] == "需要启用"]
     if enable:
         target = enable[0][-1][2]
-        print(f"  ✓ Answer:{target}(Reachable from {start} via {len(enable[0])} hops)")
+        print(f"  ✓ 答案：{target}（从 {start} 经 {len(enable[0])} 跳可达）")
         print(f"    {graph.nodes[target]['desc']}")
 
 
 def demo_compare(flat: FlatRetriever, graph: nx.DiGraph, query: str, top_k: int) -> None:
-    print(f"\n【Query 2｜Cross-Node Comprehensive Comparison】{query}")
-    print("-- Flat retrieval --")
+    print(f"\n【查询 2｜跨节点综合对比】{query}")
+    print("-- 扁平检索 --")
     for i, r in enumerate(flat.search(query, top_k), 1):
         print(f"  {i}. [{r['type']}] {r['name']}  (score={r['score']:.3f})")
-    print("  ✗ Facts about SSE and AVX registers are scattered across different fragments; flat retrieval recalls them separately,"
-          "but does not actively align 'who uses which register' into a comparison table.")
+    print("  ✗ SSE 与 AVX 各自的寄存器事实散落在不同片段里，扁平检索把它们分别召回，"
+          "却不会主动把「谁用哪种寄存器」对齐成一张对比表。")
 
-    print("-- Structured graph retrieval (traverse along 'uses register' edge to retrieve facts on both sides) --")
+    print("-- 结构化图检索（顺着「使用寄存器」边取回两侧事实）--")
     for ext in ("SSE", "AVX"):
-        regs = [dst for _, dst, d in graph.out_edges(ext, data=True) if d["rel"] == "uses register"]
+        regs = [dst for _, dst, d in graph.out_edges(ext, data=True) if d["rel"] == "使用寄存器"]
         for reg in regs:
-            print(f"  {ext} --uses register--> {reg}：{graph.nodes[reg]['desc']}")
-    print("  ✓ By traversing two entities along the same relation edge, we can directly synthesize the comparison: 'SSE=128-bit XMM, AVX=256-bit YMM'.")
+            print(f"  {ext} --使用寄存器--> {reg}：{graph.nodes[reg]['desc']}")
+    print("  ✓ 沿同一种关系边遍历两个实体，即可直接综合出「SSE=128 位 XMM，AVX=256 位 YMM」的对比。")
 
 
 def demo_hierarchical(flat: FlatRetriever, query: str, top_k: int) -> None:
-    print(f"\n【Query 3｜Multi-Level Navigation (RAPTOR Hierarchy Tree)】{query}")
-    print("-- Flat retrieval --")
+    print(f"\n【查询 3｜多层次导航（RAPTOR 层次树）】{query}")
+    print("-- 扁平检索 --")
     for i, r in enumerate(flat.search(query, top_k), 1):
         print(f"  {i}. [{r['type']}] {r['name']}  (score={r['score']:.3f})")
-    print("  ✗ Recalls scattered detail fragments, too granular to answer macro-level questions like 'overview' that require cross-fragment synthesis.")
+    print("  ✗ 召回的是零散的细节片段，过于细碎，答不了「概述」这种需要跨片段综合的宏观问题。")
 
-    print("-- Structured tree retrieval (return upper-level summary nodes) --")
-    print(f"  [Parent node summary] {TREE_SUMMARY['id']}")
+    print("-- 结构化树检索（返回上层摘要节点）--")
+    print(f"  [父节点摘要] {TREE_SUMMARY['id']}")
     print(f"  {TREE_SUMMARY['summary']}")
-    print(f"  ✓ Start from a macro summary, then drill down to {', '.join(TREE_SUMMARY['children'][:4])} and other leaf nodes when details are needed.")
+    print(f"  ✓ 由宏观摘要切入，需要细节时再向下钻取到 {', '.join(TREE_SUMMARY['children'][:4])} 等叶子节点。")
 
 
 def run_demo(top_k: int = 3, custom_query: Optional[str] = None,
              output: Optional[str] = None) -> Dict:
-    """Run offline comparison demo; return structured results (for --output persistence)."""
+    """运行离线对比演示；返回结构化结果（便于 --output 落盘）。"""
     flat = FlatRetriever(ENTITIES)
     graph = build_graph(TRIPLES)
 
     print("=" * 68)
-    print("Structured Index vs Flat Retrieval · Offline Comparison Demo (No API Key Required)")
-    print(f"Knowledge Base: Intel x86 SIMD Instruction Set  |  Entity {graph.number_of_nodes()} entities, "
-          f"relations {graph.number_of_edges()} , 1 hierarchy tree")
+    print("结构化索引 vs 扁平检索 · 离线对比演示（无需 API Key）")
+    print(f"知识库：Intel x86 SIMD 指令集  |  实体 {graph.number_of_nodes()} 个，"
+          f"关系 {graph.number_of_edges()} 条，层次树 1 棵")
     print("=" * 68)
 
     if custom_query:
-        # Custom Query: Provides both flat and graph retrieval perspectives
-        print(f"\n【Custom Query】{custom_query}")
-        print("-- Flat retrieval --")
+        # 自定义查询：同时给出扁平与图检索两种视角
+        print(f"\n【自定义查询】{custom_query}")
+        print("-- 扁平检索 --")
         flat_hits = flat.search(custom_query, top_k)
         for i, r in enumerate(flat_hits, 1):
             print(f"  {i}. [{r['type']}] {r['name']}  (score={r['score']:.3f})")
-        print("-- Structured Graph Retrieval (Multi-hop traversal of entities identified from the query) --")
+        print("-- 结构化图检索（从查询中识别到的实体多跳遍历）--")
         start = match_entity(graph, custom_query)
         if start is None:
-            print("  (No known entities identified in the query, unable to perform graph traversal)")
+            print("  （未在查询中识别到已知实体，无法进行图遍历）")
             paths = []
         else:
             paths = multi_hop_paths(graph, start, max_hops=3)
@@ -263,9 +266,9 @@ def run_demo(top_k: int = 3, custom_query: Optional[str] = None,
                   "graph_start": start,
                   "graph_paths": [format_path(p) for p in paths]}
     else:
-        q1 = "Before executing the ADDPS instruction, which control register bit must the operating system set to 1?"
-        q2 = "What is the difference between the vector registers used by SSE and AVX?"
-        q3 = "Overview of the x86 SIMD instruction set"
+        q1 = "运行 ADDPS 指令前，操作系统必须把哪个控制寄存器位置 1？"
+        q2 = "SSE 与 AVX 使用的向量寄存器有什么区别？"
+        q3 = "概述一下 x86 的 SIMD 指令集"
         demo_multi_hop(flat, graph, q1, top_k)
         demo_compare(flat, graph, q2, top_k)
         demo_hierarchical(flat, q3, top_k)
@@ -281,14 +284,14 @@ def run_demo(top_k: int = 3, custom_query: Optional[str] = None,
         }
 
     print("\n" + "=" * 68)
-    print("Conclusion: Flat retrieval excels at 'finding fragments containing certain information', but once a query requires cross-fragment relational reasoning or"
-          "multi-level synthesis, it must rely on structured indexing (graph/hierarchy tree). — Corresponds to the core point of Experiment 3-8 in the book.")
+    print("结论：扁平检索擅长「找到含某信息的片段」，但一旦查询需要跨片段的关系推理或"
+          "多层次综合，就必须依赖结构化索引（图 / 层次树）。——对应书中实验 3-8 的核心观点。")
     print("=" * 68)
 
     if output:
         with open(output, "w", encoding="utf-8") as f:
             json.dump(result, f, ensure_ascii=False, indent=2)
-        print(f"\nResults written to:{output}")
+        print(f"\n结果已写入：{output}")
     return result
 
 

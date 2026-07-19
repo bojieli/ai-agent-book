@@ -1,22 +1,22 @@
 import { useState } from "react";
 
 // ===========================================================================
-// Basic chatbot interface.
-// This is a minimal React application that can be "customized via natural language":
-//   - UI text such as title copy and button labels are written here (the Agent can modify the copy as needed);
-//   - Styles such as colors, fonts, and layout are centralized in theme.css (the Agent can modify the styles as needed).
-// When the user says in the conversation "change the send button to blue / switch to a monospace font / change the title to XXX",
-// the Agent will locate and modify these source files, and Vite HMR will make the changes take effect immediately.
+// 基础 chatbot 界面。
+// 这是一个"可被自然语言定制"的最小 React 应用：
+//   - 标题文案、按钮文字等 UI 文本都写在这里（Agent 可按需求改文案）；
+//   - 颜色、字体、布局等样式集中在 theme.css（Agent 可按需求改样式）。
+// 用户在对话中说"把发送按钮改成蓝色 / 换成等宽字体 / 标题改成 XXX"，
+// Agent 会定位并修改这些源码文件，Vite HMR 让改动即时生效。
 // ===========================================================================
 
-// UI copy (modify here when the Agent customizes the "copy" requirement)
-const HEADER_TITLE = "Smart Assistant";
-const HEADER_SUBTITLE = "How can I help you?";
-const SEND_BUTTON_LABEL = "Send";
+// UI 文案（Agent 定制"文案"需求时修改这里）
+const HEADER_TITLE = "智能助手";
+const HEADER_SUBTITLE = "有什么可以帮你的吗？";
+const SEND_BUTTON_LABEL = "发送";
 
 export default function App() {
   const [messages, setMessages] = useState([
-    { role: "assistant", text: "Hello! I am your smart assistant, always at your service." },
+    { role: "assistant", text: "你好！我是你的智能助手，随时为你服务。" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,7 @@ export default function App() {
     } catch (e) {
       setMessages((m) => [
         ...m,
-        { role: "assistant", text: "(Backend not connected, this is a local placeholder reply)" },
+        { role: "assistant", text: "（后端未连接，这是本地占位回复）" },
       ]);
     } finally {
       setLoading(false);
@@ -65,7 +65,7 @@ export default function App() {
         <input
           className="composer-input"
           value={input}
-          placeholder="Enter message…"
+          placeholder="输入消息…"
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />

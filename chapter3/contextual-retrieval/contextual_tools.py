@@ -19,8 +19,8 @@ from pathlib import Path
 from config import KnowledgeBaseConfig, KnowledgeBaseType
 from tools import KnowledgeBaseTools, SearchResult
 from contextual_chunking import ContextualChunk
-# Shared tokenizer: Chinese has no spaces, the original .lower().split() would treat the entire segment as a single token,
-# causing BM25 to be almost ineffective on Chinese corpora. Unified to use compare_retrieval.tokenize (jieba segmentation).
+# Shared tokenizer: 中文没有空格，原先的 .lower().split() 会把整段当成一个 token，
+# 导致 BM25 在中文语料上几乎失效。统一改用 compare_retrieval.tokenize（jieba 分词）。
 from compare_retrieval import tokenize as _bm25_tokenize
 
 logger = logging.getLogger(__name__)
@@ -164,7 +164,7 @@ class ContextualKnowledgeBaseTools(KnowledgeBaseTools):
         if self.contextual_chunk_store:
             contextual_texts = []
             for chunk in self.contextual_chunk_store.values():
-                # Tokenize for BM25 (jieba Chinese segmentation, compatible with English)
+                # Tokenize for BM25 (jieba 中文分词，兼容英文)
                 tokens = _bm25_tokenize(chunk.contextualized_text)
                 contextual_texts.append(tokens)
             
@@ -299,7 +299,7 @@ class ContextualKnowledgeBaseTools(KnowledgeBaseTools):
             logger.warning("BM25 index not available")
             return []
         
-        # Tokenize query (jieba Chinese segmentation, compatible with English)
+        # Tokenize query (jieba 中文分词，兼容英文)
         query_tokens = _bm25_tokenize(query)
         
         # Get BM25 scores

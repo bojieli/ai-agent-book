@@ -260,7 +260,7 @@ async def run_educational_tests():
         },
         {
             "doc_id": "ml_zh_1",
-            "text": "Machine learning is a subset of artificial intelligence.",  # Same content in Chinese
+            "text": "机器学习是人工智能的一个子集。",  # Same content in Chinese
             "metadata": {"language": "chinese", "topic": "AI"}
         },
         {
@@ -282,7 +282,7 @@ async def run_educational_tests():
             "explanation": "Dense embeddings (BGE-M3) should find similar content across languages"
         },
         {
-            "query": "Artificial intelligence",  # Chinese query for "artificial intelligence"
+            "query": "人工智能",  # Chinese query for "artificial intelligence"
             "expected": ["ml_zh_1", "ml_en_1"],
             "explanation": "Dense should match Chinese query to related documents in any language"
         }
@@ -421,8 +421,8 @@ async def run_interactive_demo():
             "metadata": {"category": "AI", "language": "english"}
         },
         {
-            "doc_id": "Deep learning",
-            "text": "Deep learning is a branch of machine learning that uses neural networks to process complex data.",
+            "doc_id": "深度学习",
+            "text": "深度学习是机器学习的一个分支，使用神经网络处理复杂数据。",
             "metadata": {"category": "AI", "language": "chinese"}
         },
         {

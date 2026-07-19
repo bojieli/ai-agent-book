@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
-Experiment 2-6: Generating Presentations from Papers Using Agent Skills (Self-built Isomorphic Skills Mechanism)
+实验 2-6：使用 Agent Skills 从论文生成演示文稿（自建同构 Skills 机制）
 
-This demo reproduces the idea from Chapter 2 "Agent Skills / Progressive Disclosure" of "Deep Understanding of AI Agents".
-Since the Anthropic key is invalid, we use OpenAI (gpt-5.6-luna) + a self-built mechanism isomorphic to Anthropic
-Skills to demonstrate, with the core concept being "Progressive Disclosure":
+本 demo 复现《深入理解 AI Agent》第二章「Agent Skills / 渐进式披露」一节的思想。
+由于 Anthropic key 无效，这里用 OpenAI（gpt-5.6-luna）+ 一套自建的、与 Anthropic
+Skills 同构的机制来演示，核心是「渐进式披露（Progressive Disclosure）」：
 
-  Layer 1 (Metadata): The system prompt at Agent startup only contains each Skill's name +
-                    description (thin catalog, hundreds of tokens), without specific procedures.
-  Layer 2 (Core Process): When needed by the task, the Agent actively loads the complete SKILL.md using the read_skill tool.
-  Layer 3 (Details): The Agent can further use read_skill_file to read reference.md / script source code.
+  第一层（元数据）：Agent 启动时的 system prompt 里只放各 Skill 的 name +
+                    description（薄目录，数百 token），并不含具体流程。
+  第二层（核心流程）：当任务需要时，Agent 主动用 read_skill 工具加载完整 SKILL.md。
+  第三层（细则）：Agent 可再用 read_skill_file 读取 reference.md / 脚本源码。
 
-Then the Agent uses the bundled script scripts/generate_pptx.py (via the run_skill_script tool) with
-python-pptx to generate a real .pptx, and reads back to verify the page count and each page title.
+然后 Agent 用捆绑脚本 scripts/generate_pptx.py（经 run_skill_script 工具）用
+python-pptx 生成真实的 .pptx，并读回校验页数与每页标题。
 
-Run:
+运行：
     export OPENAI_API_KEY=sk-...
     python demo.py
 """
@@ -28,7 +28,7 @@ from pathlib import Path
 from openai import OpenAI
 from pptx import Presentation
 
-# Read OPENAI_API_KEY from .env in the same directory (if python-dotenv is installed)
+# 从同目录 .env 读取 OPENAI_API_KEY（若安装了 python-dotenv）
 try:
     from dotenv import load_dotenv
 
@@ -37,7 +37,7 @@ except ImportError:
     pass
 
 # ---------------------------------------------------------------------------
-# Paths and Configuration
+# 路径与配置
 # ---------------------------------------------------------------------------
 ROOT = Path(__file__).resolve().parent
 SKILLS_DIR = ROOT / "skills"
@@ -51,11 +51,11 @@ def log(msg: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Layer 1: Scan the skills/ directory at startup, only read the frontmatter of each SKILL.md
-# (name + description), compose a thin catalog and inject it into the system prompt. This step deliberately "only looks at the catalog".
+# 第一层：启动时扫描 skills/ 目录，只读取每个 SKILL.md 的 frontmatter
+# （name + description），拼成薄目录注入 system prompt。这一步刻意「只看目录」。
 # ---------------------------------------------------------------------------
 def parse_frontmatter(skill_md: str) -> dict:
-    """ Parse name / description from the --- YAML frontmatter --- at the top of SKILL.md."""
+    """从 SKILL.md 顶部的 --- YAML frontmatter --- 中解析 name / description。"""
     meta = {}
     if not skill_md.startswith("---"):
         return meta
@@ -70,7 +70,7 @@ def parse_frontmatter(skill_md: str) -> dict:
 
 
 def scan_skill_catalog() -> dict:
-    """ Return {skill_name: {"description":..., "dir": Path}}, containing only metadata."""
+    """返回 {skill_name: {"description":..., "dir": Path}}，只含元数据。"""
     catalog = {}
     for skill_md in sorted(SKILLS_DIR.glob("*/SKILL.md")):
         meta = parse_frontmatter(skill_md.read_text(encoding="utf-8"))
@@ -84,16 +84,16 @@ def scan_skill_catalog() -> dict:
 
 def build_system_prompt(catalog: dict) -> str:
     lines = [
-        "You are an assistant capable of using Agent Skills. You do not know the detailed process of each Skill in advance;",
-        "you only see a \"thin catalog\" below—the name and description (routing conditions) of each Skill.",
+        "你是一个能使用 Agent Skills 的助手。你并不预先知道每个 Skill 的详细流程，",
+        "只在下方看到一份「薄目录」——每个 Skill 的 name 与 description（路由条件）。",
         "",
-        "When a task requires a certain Skill, you must:",
-        "  1) First use read_skill(name) to load its complete SKILL.md (Layer 2: core process);",
-        "  2) If implementation/style details are needed, use read_skill_file(name, path) to read subdocuments or scripts (Layer 3);",
-        "  3) Follow the conventions in SKILL.md to call the bundled script via run_skill_script to complete the task.",
-        "Do not guess the invocation method of a Skill without using read_skill.",
+        "当任务需要某个 Skill 时，你必须：",
+        "  1) 先用 read_skill(name) 加载它的完整 SKILL.md（第二层：核心流程）；",
+        "  2) 如需实现/样式细节，再用 read_skill_file(name, path) 读取子文档或脚本（第三层）；",
+        "  3) 按 SKILL.md 的约定，用 run_skill_script 调用捆绑脚本完成任务。",
+        "不要在没有 read_skill 的情况下臆测某个 Skill 的调用方式。",
         "",
-        "== Installed Skills (Thin Catalog, Metadata Only) ==",
+        "== 已安装的 Skills（薄目录，仅元数据）==",
     ]
     for name, info in catalog.items():
         lines.append(f"- {name}: {info['description']}")
@@ -101,32 +101,32 @@ def build_system_prompt(catalog: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Tool implementations: read_skill / read_skill_file / run_skill_script
-# These are the channels for "Progressive Disclosure"—Layer 2 and Layer 3 content only enters the context when invoked.
+# 工具实现：read_skill / read_skill_file / run_skill_script
+# 这些是「渐进式披露」的通道——第二、三层内容只有被调用时才进入上下文。
 # ---------------------------------------------------------------------------
 def tool_read_skill(catalog: dict, name: str) -> str:
     info = catalog.get(name)
     if not info:
-        return f"[error] Skill not found: {name}"
+        return f"[error] 未找到 Skill: {name}"
     content = (info["dir"] / "SKILL.md").read_text(encoding="utf-8")
-    log(f"\n  >>> [Progressive Disclosure·Layer 2] Agent calls read_skill('{name}')，"
-        f"Loaded complete SKILL.md ({len(content)} characters)")
+    log(f"\n  >>> [渐进式披露·第二层] Agent 调用 read_skill('{name}')，"
+        f"加载完整 SKILL.md（{len(content)} 字符）")
     return content
 
 
 def tool_read_skill_file(catalog: dict, name: str, rel_path: str) -> str:
     info = catalog.get(name)
     if not info:
-        return f"[error] Skill not found: {name}"
+        return f"[error] 未找到 Skill: {name}"
     target = (info["dir"] / rel_path).resolve()
-    # Anti-directory-traversal: must be within the skill directory
+    # 防目录穿越：必须落在该 skill 目录内
     if not str(target).startswith(str(info["dir"].resolve())):
-        return f"[error] Illegal path: {rel_path}"
+        return f"[error] 非法路径: {rel_path}"
     if not target.exists():
-        return f"[error] File does not exist: {rel_path}"
+        return f"[error] 文件不存在: {rel_path}"
     content = target.read_text(encoding="utf-8")
-    log(f"  >>> [Progressive Disclosure·Layer 3] Agent calls read_skill_file('{name}', '{rel_path}')，"
-        f"Loaded subdocument ({len(content)} characters)")
+    log(f"  >>> [渐进式披露·第三层] Agent 调用 read_skill_file('{name}', '{rel_path}')，"
+        f"加载子文档（{len(content)} 字符）")
     return content
 
 
@@ -134,12 +134,12 @@ def tool_run_skill_script(catalog: dict, name: str, script: str, payload: str,
                           out_path: Path) -> str:
     info = catalog.get(name)
     if not info:
-        return f"[error] Skill not found: {name}"
+        return f"[error] 未找到 Skill: {name}"
     script_path = (info["dir"] / "scripts" / script).resolve()
     if not script_path.exists():
-        return f"[error] Script does not exist: {script}"
+        return f"[error] 脚本不存在: {script}"
 
-    # Dynamically load bundled script (it is part of the Skill)
+    # 动态载入捆绑脚本（它就是 Skill 的一部分）
     import importlib.util
     spec = importlib.util.spec_from_file_location("bundled_generator", script_path)
     module = importlib.util.module_from_spec(spec)
@@ -148,10 +148,10 @@ def tool_run_skill_script(catalog: dict, name: str, script: str, payload: str,
     try:
         data = json.loads(payload) if isinstance(payload, str) else payload
     except json.JSONDecodeError as e:
-        return f"[error] payload is not valid JSON: {e}"
+        return f"[error] payload 不是合法 JSON: {e}"
 
-    log(f"  >>> [Executing bundled script] run_skill_script('{name}', '{script}') "
-        f"Generate {out_path.name} ...")
+    log(f"  >>> [执行捆绑脚本] run_skill_script('{name}', '{script}') "
+        f"生成 {out_path.name} ...")
     result = module.build_presentation(data, str(out_path))
     return json.dumps(result, ensure_ascii=False)
 
@@ -161,10 +161,10 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "read_skill",
-            "description": "Load the complete SKILL.md of the specified Skill (core process, progressive disclosure of the second layer).",
+            "description": "加载指定 Skill 的完整 SKILL.md（核心流程，渐进式披露第二层）。",
             "parameters": {
                 "type": "object",
-                "properties": {"name": {"type": "string", "description": "Skill name"}},
+                "properties": {"name": {"type": "string", "description": "Skill 名称"}},
                 "required": ["name"],
             },
         },
@@ -173,12 +173,12 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "read_skill_file",
-            "description": "Read the sub-documents or script source code within a certain Skill directory (details, progressive disclosure layer 3).",
+            "description": "读取某 Skill 目录内的子文档或脚本源码（细则，渐进式披露第三层）。",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "name": {"type": "string"},
-                    "path": {"type": "string", "description": "Path relative to the skill directory, such as reference.md or scripts/generate_pptx.py"},
+                    "path": {"type": "string", "description": "相对 skill 目录的路径，如 reference.md 或 scripts/generate_pptx.py"},
                 },
                 "required": ["name", "path"],
             },
@@ -188,13 +188,13 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "run_skill_script",
-            "description": "Execute the script bound to a Skill to produce actual output (e.g., generate a pptx).",
+            "description": "执行某 Skill 捆绑的脚本以完成实际产出（如生成 pptx）。",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "name": {"type": "string"},
-                    "script": {"type": "string", "description": "Script file name, e.g., generate_pptx.py"},
-                    "payload": {"type": "string", "description": "JSON string passed to the script (outline)"},
+                    "script": {"type": "string", "description": "脚本文件名，如 generate_pptx.py"},
+                    "payload": {"type": "string", "description": "传给脚本的 JSON 字符串（大纲）"},
                 },
                 "required": ["name", "script", "payload"],
             },
@@ -211,22 +211,22 @@ def dispatch(catalog: dict, name: str, args: dict, out_path: Path) -> str:
     if name == "run_skill_script":
         return tool_run_skill_script(catalog, args["name"], args["script"],
                                      args["payload"], out_path)
-    return f"[error] Unknown tool: {name}"
+    return f"[error] 未知工具: {name}"
 
 
 # ---------------------------------------------------------------------------
-# Main flow: agentic loop
+# 主流程：agentic loop
 # ---------------------------------------------------------------------------
 def run_agent(paper_path: Path, model: str, out_path: Path,
               max_turns: int = 8) -> Path | None:
-    # If OPENAI_API_KEY exists, connect directly to official; otherwise fallback to OPENROUTER_API_KEY
-    # (gpt-* model names will be mapped to openai/...). If neither is present, give a clear error.
+    # OPENAI_API_KEY 存在则官方直连；否则回退 OPENROUTER_API_KEY
+    # （gpt-* 模型名会被映射为 openai/…）。两者皆无则给出清晰错误。
     from openrouter_fallback import resolve_llm
 
     if not os.environ.get("OPENAI_API_KEY") and not os.environ.get("OPENROUTER_API_KEY"):
-        log("Error: OPENAI_API_KEY is not set, nor is OPENROUTER_API_KEY (general fallback).")
-        log("Please export OPENAI_API_KEY=sk-... or export OPENROUTER_API_KEY=sk-or-...")
-        log("(When there is no key, you can use --offline to follow the built-in outline, deterministically reproduce three-layer progressive disclosure, and generate pptx.)")
+        log("错误：未设置 OPENAI_API_KEY，也未设置 OPENROUTER_API_KEY（通用回退）。")
+        log("请 export OPENAI_API_KEY=sk-... 或 export OPENROUTER_API_KEY=sk-or-...")
+        log("（无 key 时可用 --offline 走内置大纲、确定性地复现三层渐进式披露并生成 pptx。）")
         sys.exit(1)
 
     api_key, base_url, model = resolve_llm(
@@ -234,25 +234,25 @@ def run_agent(paper_path: Path, model: str, out_path: Path,
         primary_keys=("OPENAI_API_KEY",),
         primary_base_url=os.getenv("OPENAI_BASE_URL") or None,
     )
-    # timeout + automatic retry: a single network/SSL glitch should not crash the entire agentic loop
+    # timeout + 自动重试：单次网络/SSL 抖动不至于让整个 agentic loop 崩溃
     client = OpenAI(api_key=api_key, base_url=base_url, timeout=60.0, max_retries=3)
     catalog = scan_skill_catalog()
 
     system_prompt = build_system_prompt(catalog)
     log("=" * 72)
-    log("[Layer 1 · Metadata] When the Agent starts, it only sees this thin Skill directory (system prompt):")
+    log("【第一层·元数据】Agent 启动时只看到这份薄 Skill 目录（system prompt）：")
     log("-" * 72)
     log(system_prompt)
     log("-" * 72)
-    log(f"(thin directory approx {len(system_prompt)}  characters / hundreds of tokens; the detailed flow of each Skill is not in the context at the moment)")
+    log(f"（薄目录约 {len(system_prompt)} 字符 / 数百 token；各 Skill 的详细流程此刻并不在上下文中）")
     log("=" * 72)
 
     paper = paper_path.read_text(encoding="utf-8")
     user_task = (
-        "Please turn the following paper into an 8-12 page presentation (including title page, table of contents, problem background,"
-        "Method overview, key results, limitations, summary page), the total number of pages must be between 8 and 12."
-        "First determine which Skill to use, then strictly follow the page order and constraints of its SKILL.md.\n\n"
-        "=== Full Paper ===\n" + paper
+        "请把下面这篇论文做成一份 8-12 页的演示文稿（含标题页、目录页、问题背景、"
+        "方法概述、关键结果、局限性、小结页），总页数务必落在 8-12 页。"
+        "先判断该用哪个 Skill，再严格按其 SKILL.md 的页序与约束操作。\n\n"
+        "=== 论文全文 ===\n" + paper
     )
 
     messages = [
@@ -260,7 +260,7 @@ def run_agent(paper_path: Path, model: str, out_path: Path,
         {"role": "user", "content": user_task},
     ]
 
-    log("\n[Task Assignment] The agent is required to generate a presentation from a paper. Observe how it progressively discloses information on demand: \n")
+    log("\n【任务下发】要求 Agent 从论文生成演示文稿。观察它如何按需渐进式披露：\n")
 
     final_result = None
     for turn in range(1, max_turns + 1):
@@ -274,7 +274,7 @@ def run_agent(paper_path: Path, model: str, out_path: Path,
         messages.append(msg.model_dump(exclude_none=True))
 
         if not msg.tool_calls:
-            log(f"\n【Agent No. {turn}  Round·Conclusion】\n{msg.content}")
+            log(f"\n【Agent 第 {turn} 轮·结束语】\n{msg.content}")
             break
 
         for tc in msg.tool_calls:
@@ -283,11 +283,11 @@ def run_agent(paper_path: Path, model: str, out_path: Path,
                 args = json.loads(tc.function.arguments or "{}")
             except json.JSONDecodeError:
                 args = {}
-            log(f"\n[Agent Round {turn} ] call tool -> {fn}({', '.join(f'{k}={_short(v)}' for k, v in args.items())})")
+            log(f"\n[Agent 第 {turn} 轮] 调用工具 -> {fn}({', '.join(f'{k}={_short(v)}' for k, v in args.items())})")
             result = dispatch(catalog, fn, args, out_path)
             if fn == "run_skill_script" and not result.startswith("[error]"):
                 final_result = json.loads(result)
-                log(f"  >>> Generation result:{result}")
+                log(f"  >>> 生成结果：{result}")
             messages.append({
                 "role": "tool",
                 "tool_call_id": tc.id,
@@ -300,10 +300,10 @@ def run_agent(paper_path: Path, model: str, out_path: Path,
 
 
 # ---------------------------------------------------------------------------
-# Offline reproduction: When there is no OpenAI key, use the built-in outline (papers/sample_outline.json) deterministically
-# Walk through the exact same three-level progressive disclosure and tool channel as online (read_skill / read_skill_file /
-# run_skill_script), so that pptx can be genuinely generated and verified without any API access.
-# The only difference is that "which Skill to use and what to write in the outline" is given by a preset script, not decided by the model in real time.
+# 离线复现：无 OpenAI key 时，用内置大纲（papers/sample_outline.json）确定性地
+# 走完与在线完全相同的三层渐进式披露与工具通道（read_skill / read_skill_file /
+# run_skill_script），从而在没有任何 API 访问权限时也能真实生成并校验 pptx。
+# 唯一区别是「用哪个 Skill、大纲写什么」由预置脚本给定，而非模型即时决策。
 # ---------------------------------------------------------------------------
 OUTLINE_PATH = ROOT / "papers" / "sample_outline.json"
 
@@ -312,20 +312,20 @@ def run_offline(out_path: Path) -> Path | None:
     catalog = scan_skill_catalog()
     system_prompt = build_system_prompt(catalog)
     log("=" * 72)
-    log(" [Offline Mode] Does not call OpenAI, uses built-in outline to deterministically reproduce the three-level progressive disclosure.")
-    log(" [Layer 1 · Metadata] On startup, only this thin Skill directory (system prompt) is visible:")
+    log("【离线模式】不调用 OpenAI，用内置大纲确定性地复现三层渐进式披露。")
+    log("【第一层·元数据】启动时只看到这份薄 Skill 目录（system prompt）：")
     log("-" * 72)
     log(system_prompt)
     log("-" * 72)
-    log(f"(thin directory approx {len(system_prompt)} characters; the detailed flow of each Skill is not in the context at this moment)")
+    log(f"（薄目录约 {len(system_prompt)} 字符；各 Skill 的详细流程此刻并不在上下文中）")
     log("=" * 72)
 
     if not OUTLINE_PATH.exists():
-        log(f" Error: Built-in outline does not exist:{OUTLINE_PATH}")
+        log(f"错误：内置大纲不存在：{OUTLINE_PATH}")
         return None
 
-    # Same tool channel as the online agentic loop, except the call sequence is given by the script
-    log("\n[Offline Replay] According to SKILL.md convention, load and call bundled scripts layer by layer:")
+    # 与在线 agentic loop 相同的工具通道，只是调用序列由脚本给定
+    log("\n【离线回放】按 SKILL.md 约定，逐层加载并调用捆绑脚本：")
     dispatch(catalog, "read_skill", {"name": "pptx"}, out_path)
     dispatch(catalog, "read_skill_file",
              {"name": "pptx", "path": "reference.md"}, out_path)
@@ -335,9 +335,9 @@ def run_offline(out_path: Path) -> Path | None:
                       {"name": "pptx", "script": "generate_pptx.py", "payload": payload},
                       out_path)
     if result.startswith("[error]"):
-        log(f"  >>> Generation failed:{result}")
+        log(f"  >>> 生成失败：{result}")
         return None
-    log(f"  >>> Generation result:{result}")
+    log(f"  >>> 生成结果：{result}")
     return Path(json.loads(result)["path"])
 
 
@@ -347,46 +347,46 @@ def _short(v, n=48):
 
 
 # ---------------------------------------------------------------------------
-# Verification: Use python-pptx to reopen the generated file, read back the page count and each page title, proving it is a valid pptx.
+# 校验：用 python-pptx 重新打开生成的文件，读回页数与每页标题，证明是有效 pptx。
 # ---------------------------------------------------------------------------
 def verify_pptx(path: Path) -> None:
     log("\n" + "=" * 72)
-    log(" [Verification] Use python-pptx to reopen the generated file, read back the page count and each page title:")
+    log("【校验】用 python-pptx 重新打开生成的文件，读回页数与每页标题：")
     log("-" * 72)
     prs = Presentation(str(path))
     slides = list(prs.slides)
-    log(f" File: {path}")
-    log(f" Total pages: {len(slides)}")
+    log(f"文件: {path}")
+    log(f"总页数: {len(slides)}")
     for i, slide in enumerate(slides, 1):
-        first_text = "(empty)"
+        first_text = "(空)"
         for shp in slide.shapes:
             if shp.has_text_frame and shp.text_frame.text.strip():
                 first_text = shp.text_frame.text.strip().splitlines()[0]
                 break
-        log(f"  Page {i:>2} title: {first_text}")
+        log(f"  第 {i:>2} 页标题: {first_text}")
     log("-" * 72)
-    log(f" Verification passed: This is a valid .pptx that can be opened by python-pptx / PowerPoint ({len(slides)} pages).")
+    log(f"校验通过：这是一个可被 python-pptx / PowerPoint 打开的有效 .pptx（{len(slides)} 页）。")
     log("=" * 72)
 
 
 def parse_args():
     p = argparse.ArgumentParser(
-        description=" Experiment 2-6: Use Agent Skills' \"progressive disclosure\" to generate a presentation from a paper."
-                    " The Agent only sees a thin Skill directory on startup, loads the pptx Skill's flow and scripts layer by layer as needed,"
-                    " then uses python-pptx to generate and verify output/presentation.pptx.",
+        description="实验 2-6：用 Agent Skills 的「渐进式披露」从论文生成演示文稿。"
+                    "Agent 启动只看到薄 Skill 目录，按需逐层加载 pptx Skill 的流程与脚本，"
+                    "最后用 python-pptx 生成并校验 output/presentation.pptx。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument("--paper", default=str(PAPER_PATH),
-                   help=" Input paper/outline (markdown) path, default papers/sample_paper.md.")
+                   help="输入论文/大纲（markdown）路径，默认 papers/sample_paper.md。")
     p.add_argument("--output", "-o", default=str(OUTPUT_DIR / "presentation.pptx"),
-                   help=" Output .pptx path, default output/presentation.pptx.")
+                   help="输出 .pptx 路径，默认 output/presentation.pptx。")
     p.add_argument("--model", default=MODEL,
-                   help=" OpenAI model name, defaults to environment variable OPENAI_MODEL, otherwise gpt-5.6-luna.")
+                   help="OpenAI 模型名，默认取环境变量 OPENAI_MODEL，否则 gpt-5.6-luna。")
     p.add_argument("--max-turns", type=int, default=8,
-                   help=" Maximum number of rounds for the agentic loop, default 8.")
+                   help="agentic loop 的最大轮数，默认 8。")
     p.add_argument("--offline", action="store_true",
-                   help=" Offline demo: Does not call OpenAI, uses built-in outline (papers/sample_outline.json)"
-                        " to deterministically walk through the three-level progressive disclosure and generate pptx (no API key needed, reproducible).")
+                   help="离线演示：不调用 OpenAI，用内置大纲（papers/sample_outline.json）"
+                        "确定性地走完三层渐进式披露并生成 pptx（无需 API key，可复现）。")
     return p.parse_args()
 
 
@@ -400,14 +400,14 @@ def main():
         pptx_path = run_offline(out_path)
     else:
         if not paper_path.exists():
-            log(f" Error: Paper file does not exist:{paper_path}")
+            log(f"错误：论文文件不存在：{paper_path}")
             sys.exit(1)
         pptx_path = run_agent(paper_path, args.model, out_path, args.max_turns)
 
     if pptx_path and pptx_path.exists():
         verify_pptx(pptx_path)
     else:
-        log("\nNo pptx generated. Please check the logs above.")
+        log("\n未生成 pptx。请检查上面的日志。")
         sys.exit(2)
 
 

@@ -1,3 +1,3 @@
-# Experiment 10-2 Multi-role Handoff Dependency
-openai>=1.30.0        # OpenAI Python SDK, used for function calling and handoff loop
-python-dotenv>=1.0.0  # Read OPENAI_API_KEY from .env (optional; shell export also works)
+# 实验 10-2 多角色转换依赖
+openai>=1.30.0        # OpenAI Python SDK，用于 function calling 与移交循环
+python-dotenv>=1.0.0  # 读取 .env 中的 OPENAI_API_KEY（可选，shell 已 export 也可）

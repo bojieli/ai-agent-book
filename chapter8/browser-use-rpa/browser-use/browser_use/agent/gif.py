@@ -89,11 +89,11 @@ def create_history_gif(
 		font_options = [
 			'PingFang',
 			'STHeiti Medium',
-			'Microsoft YaHei',  # Microsoft YaHei
-			'SimHei',  # SimHei
-			'SimSun',  # SimSun
-			'Noto Sans CJK SC',  # Source Han Sans
-			'WenQuanYi Micro Hei',  # WenQuanYi Micro Hei
+			'Microsoft YaHei',  # 微软雅黑
+			'SimHei',  # 黑体
+			'SimSun',  # 宋体
+			'Noto Sans CJK SC',  # 思源黑体
+			'WenQuanYi Micro Hei',  # 文泉驿微米黑
 			'Helvetica',
 			'Arial',
 			'DejaVuSans',

@@ -1,92 +1,123 @@
-# Experiment 6-5: Fully Automated TTS Quality Evaluation Pipeline
+# 实验 6-5：全自动 TTS 质量评估流水线
 
-Companion to Chapter 6 of "Deep Understanding of AI Agents" – Experiment 6-5 ★★: Building a Fully Automated TTS Quality Evaluation Pipeline.
+配套《深入理解 AI Agent》第 6 章「实验 6-5 ★★：构建全自动 TTS 质量评估流水线」。
 
-Use multiple **TTS providers / configurations** (OpenAI, ElevenLabs, Fish Audio, Minimax, Doubao, or different models/voices/speeds from the same provider) to synthesize the same set of challenging reference texts. Then, use a **multimodal LLM-as-a-Judge** approach to score the synthesized speech across multiple dimensions according to a **Rubric**. Finally, aggregate the results into a **comparison table** reflecting the strengths and weaknesses of different providers/configurations in terms of accuracy and naturalness.
+用多个 **TTS provider / 配置**（OpenAI、ElevenLabs、Fish Audio、Minimax、豆包，或同
+一家的不同 model / voice / speed）合成同一组带挑战性的参考文本，再用
+**多模态 LLM-as-a-Judge** 的思路对合成语音按 **Rubric** 逐维度打分，最后汇总成一张
+**对比表**，反映不同 provider / 配置在准确性 / 自然度上的优劣。
 
-## Purpose
+## 目的
 
-Address practical engineering questions: *For the same text, how big is the gap between `tts-1` and `tts-1-hd`? How much quality is sacrificed by changing the voice or increasing the speed to 1.5x?* This demo turns such comparisons into a **single-command, reproducible pipeline**.
+回答工程中的实际问题：*同一段文本，`tts-1` 和 `tts-1-hd` 有多大差距？换 voice、把
+语速调到 1.5x 会牺牲多少质量？* 本 demo 把这类对比做成**一条命令跑通、可复现**的流水线。
 
-## Evaluation Dimensions and Rubric
+## 评审维度与 Rubric
 
-For each synthesized speech, objective features (duration, speed, character error rate) are first measured. Then, the evaluation model scores them on a 1–5 scale:
+对每条合成语音，先测出客观特征（时长、语速、字错误率），再让评审模型按 1–5 分打分：
 
-| Dimension | Meaning |
-|-----------|---------|
-| Clarity | Whether the transcription matches the original text (more missing/incorrect/extra characters result in a lower score, corresponding to the accuracy dimension) |
-| Naturalness | Whether the speed is close to natural reading (approximately 4–6 characters/second for Chinese; too fast or too slow incurs penalties) |
-| Pacing & Rhythm | Judge whether the rhythm is reasonable based on speed and text length (excessive speed often implies dropped characters) |
-| Overall | Comprehensive impression score |
+| 维度 | 含义 |
+|------|------|
+| 清晰度 | 转写是否与原文一致（漏字/错字/多字越多分越低，对应准确性维度） |
+| 自然度 | 语速是否接近自然朗读（中文约 4–6 字/秒，过快/过慢都扣分） |
+| 停顿节奏 | 结合语速与文本长度判断节奏是否合理（过快常意味吞字） |
+| 整体 | 综合印象分 |
 
-Objective metric **CER (Character Error Rate) / Character Accuracy**: Normalize the Whisper back-transcribed text and the original text (remove punctuation and whitespace, unify case), then compute character-level edit distance. `CER = Edit distance / Reference character count`, `Character accuracy = 1 - CER`. Calculated at the **character level** for Chinese (equivalent to the intelligibility dimension of WER in the book).
+客观指标 **CER（字错误率）/ 字准确率**：把 Whisper 回译文本与原文归一化（去标点空白、
+统一大小写）后做字符级编辑距离，`CER = 编辑距离 / 参考字数`，`字准确率 = 1 - CER`。
+中文按**字级**计算（等价于书中 WER 的可懂度维度）。
 
-## Provider Adaptation Notes
+## Provider 适配说明
 
-- **TTS Synthesis (Multiple Providers)**: Corresponds to the book's "Integrating mainstream services: OpenAI, ElevenLabs, Fish Audio, Minimax, Doubao". Each provider is implemented according to their public REST API (OpenAI uses the official SDK; the rest use built-in `urllib` with no extra dependencies). By default (without `--providers`), only 4 OpenAI configurations are run, requiring only a single `OPENAI_API_KEY` for zero-configuration execution; `--providers openai,minimax,...` enables cross-provider horizontal comparison. Required environment variables and voice field semantics for each provider can be found via `python demo.py --list-providers`.
+- **TTS 合成（多 provider）**：对应书中「接入主流服务：OpenAI、ElevenLabs、Fish Audio、
+  Minimax、豆包」。每个 provider 按各家公开 REST 接口实现（OpenAI 走官方 SDK，其余走内置
+  `urllib`，无额外依赖）。默认（不加 `--providers`）只跑 OpenAI 的 4 个配置，保证单个
+  `OPENAI_API_KEY` 即可零配置跑通；`--providers openai,minimax,...` 做跨服务商横向对比。
+  各 provider 所需环境变量与 voice 字段语义见 `python demo.py --list-providers`。
 
-  | Provider | Environment Variable | Voice Semantics |
-  |----------|---------------------|-----------------|
-  | `openai` | `OPENAI_API_KEY` | alloy/nova…; model=tts-1 / tts-1-hd / gpt-4o-mini-tts |
-  | `elevenlabs` | `ELEVENLABS_API_KEY` | voice_id; model defaults to eleven_multilingual_v2 |
-  | `fishaudio` | `FISH_API_KEY` (alias `FISHAUDIO_API_KEY`) | reference_id (leave empty for default voice) |
-  | `minimax` | `MINIMAX_API_KEY` + `MINIMAX_GROUP_ID` | voice_id; model defaults to speech-01-turbo |
-  | `doubao` | `DOUBAO_APP_ID` + `DOUBAO_ACCESS_TOKEN` | voice_type (Volcengine) |
+  | provider | 环境变量 | voice 语义 |
+  |----------|----------|-----------|
+  | `openai` | `OPENAI_API_KEY` | alloy/nova…；model=tts-1 / tts-1-hd / gpt-4o-mini-tts |
+  | `elevenlabs` | `ELEVENLABS_API_KEY` | voice_id；model 默认 eleven_multilingual_v2 |
+  | `fishaudio` | `FISH_API_KEY`（别名 `FISHAUDIO_API_KEY`） | reference_id（留空用默认音色） |
+  | `minimax` | `MINIMAX_API_KEY` + `MINIMAX_GROUP_ID` | voice_id；model 默认 speech-01-turbo |
+  | `doubao` | `DOUBAO_APP_ID` + `DOUBAO_ACCESS_TOKEN` | voice_type（火山引擎） |
 
-  > Note: Only the **OpenAI** path in this repository has been end-to-end verified; the other four are implemented according to their respective public REST documentation. Please override `config.PROVIDER_CONFIGS` with your account's available voice/model before use. If the corresponding key is missing, the row for that provider will be marked as a failure, **without interrupting the entire table**.
-- **Quality Evaluation (Default)**: Use Whisper (`whisper-1`) to back-transcribe the synthesized speech into text, calculate CER, then use `gpt-5.6-luna` (current cost-effective flagship) to score based on the "transcribed text + duration + speed + CER" according to the Rubric. Use Simplified Chinese prompts during transcription to guide Whisper to output Simplified Chinese, avoiding inflated CER due to Traditional Chinese character differences.
-  **Credentials/Fallback**: TTS synthesis and Whisper back-transcription must use **direct OpenAI connection** (`OPENAI_API_KEY`; OpenRouter does not provide audio/transcription); **only the LLM Rubric chat evaluation supports OpenRouter fallback** – since direct connection for `gpt-5.x` requires organizational real-name authentication, as long as `OPENROUTER_API_KEY` is set, the evaluation will prioritize OpenRouter (`gpt-*` maps to `openai/*`).
-- **Quality Evaluation (Optional, Book's Approach)**: `--gemini` enables **Gemini multimodal direct "listening" to audio** for scoring (original text + audio + Rubric input together), requiring `GEMINI_API_KEY`. The default model is `gemini-3.5-flash` (verified to support audio input); the code first probes `/models`, and if this name is unavailable, it automatically falls back to the currently available model (e.g., `gemini-2.5-pro`).
+  > 说明：本仓库仅 **OpenAI** 路径经端到端验证；其余四家按各自公开 REST 文档实现，请用自己
+  > 账号可用的 voice/model 覆盖 `config.PROVIDER_CONFIGS` 后使用。缺对应 key 时该 provider
+  > 的行会被记为失败，**不中断整表**。
+- **质量评审（默认）**：用 Whisper（`whisper-1`）把合成语音回译成文本算 CER，再用
+  `gpt-5.6-luna`（当前廉价旗舰）基于「转写文本 + 时长 + 语速 + CER」按 Rubric 打分。
+  转写时用简体中文提示语引导 Whisper 输出简体，避免繁体字形差异虚高 CER。
+  **凭据/回退**：TTS 合成与 Whisper 回译必须走 **OpenAI 直连**（`OPENAI_API_KEY`，
+  OpenRouter 不提供音频/转写）；**仅 LLM Rubric 的 chat 评审支持 OpenRouter 回退**——
+  `gpt-5.x` 直连需组织实名认证，故只要设置了 `OPENROUTER_API_KEY`，评审就优先走
+  OpenRouter（`gpt-*` 映射为 `openai/*`）。
+- **质量评审（可选，书中方案）**：`--gemini` 让 **Gemini 多模态直接「听」音频**打分
+  （原文 + 音频 + Rubric 一起输入），需 `GEMINI_API_KEY`。默认模型为
+  `gemini-3.5-flash`（已验证支持音频输入）；代码会先探测 `/models`，若该名不可用再
+  自动回退到当前可用模型（如 `gemini-2.5-pro`）。
 
-> The book uses Gemini to directly listen to synthesized speech for scoring (this demo defaults to `gemini-3.5-flash`, verified to support audio); the default is changed to "Whisper back-transcription + LLM Rubric" to enable **zero additional configuration for execution**, while retaining the `--gemini` flag to reproduce the book's approach. The difference between the two: Gemini can directly perceive timbre, prosody, and emotion; the back-transcription approach can only make conservative inferences based on measurable features (see "Limitations").
+> 书中用 Gemini 直接听合成语音打分（本 demo 默认 `gemini-3.5-flash`，已验证支持音频）；
+> 默认改用「Whisper 回译 + LLM Rubric」以便**零额外配置即可跑通**，同时保留 `--gemini`
+> 开关复现书中方案。两者的
+> 区别：Gemini 能直接感知音色/韵律/情感；回译方案只能基于可测特征做保守推断（见「局限」）。
 
-## Files
+## 文件
 
-| File | Description |
-|------|-------------|
-| `config.py` | Model names and unit prices, provider registry (`PROVIDERS` / `PROVIDER_CONFIGS`), TTS configuration sets, test corpus |
-| `pipeline.py` | Multi-provider synthesis dispatch / ffprobe duration / Whisper back-transcription / CER calculation / LLM Rubric / optional Gemini |
-| `demo.py` | Entry point: run full pipeline for multiple configurations × multiple corpus items, print detailed per-item results + comparison summary table |
-| `requirements.txt` / `env.example` | Dependencies and environment variable examples |
+| 文件 | 说明 |
+|------|------|
+| `config.py` | 模型名与单价、provider 注册表（`PROVIDERS` / `PROVIDER_CONFIGS`）、TTS 配置集合、测试语料 |
+| `pipeline.py` | 多 provider 合成分发 / ffprobe 时长 / Whisper 回译 / CER 计算 / LLM Rubric / 可选 Gemini |
+| `demo.py` | 入口：多配置 × 多语料跑全流程，打印逐条明细 + 对比汇总表 |
+| `requirements.txt` / `env.example` | 依赖与环境变量示例 |
 
-## Running
+## 运行
 
 ```bash
-pip install -r requirements.txt          # Only needs openai
-brew install ffmpeg                        # Provides ffprobe (duration detection)
+pip install -r requirements.txt          # 只需 openai
+brew install ffmpeg                        # 提供 ffprobe（时长探测）
 export OPENAI_API_KEY=sk-...
 
-python demo.py            # Default: 4 OpenAI configurations × 4 corpus items, Whisper back-transcription + LLM Rubric
-python demo.py --quick   # Use only the first 2 corpus items for a quick smoke test
-python demo.py --extra   # Additionally include the gpt-4o-mini-tts configuration
-python demo.py --gemini  # Switch evaluation to Gemini multimodal direct audio listening (requires GEMINI_API_KEY)
-python demo.py --fresh   # Ignore existing audio files and re-synthesize everything
+python demo.py            # 默认：4 个 OpenAI 配置 × 4 条语料，Whisper 回译 + LLM Rubric
+python demo.py --quick   # 只用前 2 条语料，快速冒烟
+python demo.py --extra   # 额外加入 gpt-4o-mini-tts 配置
+python demo.py --gemini  # 评审改用 Gemini 多模态直接听音频（需 GEMINI_API_KEY）
+python demo.py --fresh   # 忽略已有音频全部重合成
 
-# Multi-provider / Custom input (new)
-python demo.py --providers openai,minimax,elevenlabs   # Cross-provider horizontal comparison (requires respective keys)
-python demo.py --text '2026年营收增长37.5%'             # Replace the corpus with a single custom textpython demo.py --judge-model gpt-5.6-luna                 # Override the LLM evaluation model
-python demo.py --output ./runs/exp1                     # Custom output directory
+# 多 provider / 自定义输入（新增）
+python demo.py --providers openai,minimax,elevenlabs   # 跨服务商横向对比（需各自 key）
+python demo.py --text '2026年营收增长37.5%'             # 用一段自定义文本替换语料库
+python demo.py --judge-model gpt-5.6-luna                 # 覆盖 LLM 评审模型
+python demo.py --output ./runs/exp1                     # 自定义输出目录
 
-# Offline (no API keys required)
-python demo.py --list-providers   # View all providers and their configuration status
-python demo.py --dump-rubric      # View the Rubric dimension definitions
+# 离线（无需任何 API key）
+python demo.py --list-providers   # 查看所有 provider 及配置状态
+python demo.py --dump-rubric      # 查看 Rubric 维度定义
 ```
 
-See `python demo.py --help` (in Chinese) for all parameters. Synthesized audio is written to `output/` (ignored by `.gitignore`), and structured results are written to `output/results.json` (use `--output` to change the directory).
-**Idempotent**: By default, existing audio files are reused; repeated runs will not re-synthesize.
+完整参数见 `python demo.py --help`（全中文）。合成音频写入 `output/`（已被 `.gitignore`
+忽略），结构化结果写入 `output/results.json`（可用 `--output` 改目录）。
+**幂等**：默认复用已存在的音频，重复运行不会重复合成。
 
-## Test Corpus
+## 测试语料
 
-4 items covering different challenge points: numbers/percentages/dates, polyphonic characters (行/长/重/还), long news-style sentences, proper nouns + emotional exclamation. Items can be added or removed in `config.py`'s `CORPUS`.
-## Robustness
+4 条覆盖不同挑战点：数字/百分比/日期、多音字（行/长/重/还）、长句新闻文体、
+专有名词 + 感叹情感。可在 `config.py` 的 `CORPUS` 中增删。
 
-- Missing `OPENAI_API_KEY` immediately exits with a clear error message; missing `ffprobe` provides installation instructions.
-- If any step (synthesis/transcription/evaluation) fails for a single (configuration, corpus) pair, only that item is marked as a failure, **without interrupting the entire table**; the summary table aggregates based on successful items.
-- The OpenAI client includes automatic retries (`max_retries=5`) to mitigate occasional network fluctuations.
-- The ffprobe call checks the return code and the parsability of the output.
+## 健壮性
 
-## Limitations
+- 缺 `OPENAI_API_KEY` 立即清晰报错退出；缺 `ffprobe` 给出安装提示。
+- 单个（配置, 语料）在合成/转写/评审任一步失败，只把该条记为失败，**不中断整表**，
+  汇总表按成功条数聚合。
+- OpenAI 客户端带自动重试（`max_retries=5`）缓解偶发网络抖动。
+- ffprobe 调用检查返回码与输出可解析性。
 
-- **The default evaluation cannot see the audio itself**: It only infers based on back-transcribed text and objective features, making it impossible to directly judge timbre consistency, true prosody, and emotional expression (the book's Gemini approach can, reproduced with `--gemini`). Therefore, the "naturalness/emotion" dimension is a conservative estimate. The timbre consistency dimension requires reference to the speech, which this demo does not cover.
-- CER depends on Whisper transcription quality; Whisper's own errors introduce noise. Numbers/proper nouns may exhibit non-phonetic differences due to writing form (Arabic numerals vs. Chinese numerals).
-- The Rubric is scored by an LLM, which introduces evaluation model bias; scores are intended for **relative comparison** rather than as an absolute benchmark.
+## 局限
+
+- **默认评审看不到音频本身**：只基于回译文本 + 客观特征推断，无法直接判断音色一致度、
+  真实韵律与情感表达（书中的 Gemini 方案能，用 `--gemini` 复现）。因此「自然度/情感」
+  维度是保守估计。音色一致性维度需参考语音，本 demo 未覆盖。
+- CER 依赖 Whisper 转写质量，Whisper 自身错误会引入噪声；数字/专名可能因书写形式
+  （阿拉伯数字 vs 中文数字）产生非发音性差异。
+- Rubric 由 LLM 打分，存在评审模型偏好；分数用于**相对对比**而非绝对基准。

@@ -7,8 +7,8 @@
       "B"
     ],
     "statements": {
-      "A": "B is a knave.",
-      "B": "Neither of us is a knight."
+      "A": "B 是无赖。",
+      "B": "我们两人都不是骑士。"
     },
     "statements_struct": {
       "A": [
@@ -30,7 +30,7 @@
         ]
       ]
     },
-    "description": "There are 2 residents on this island: A, B. Each resident is either a knight who always tells the truth or a knave who always lies. They each said the following:\nA: \"B is a knave.\"\nB: \"Neither of us is a knight.\"",
+    "description": "这座岛上有 2 位居民：A, B。每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。他们各自说了如下的话：\nA: 「B 是无赖。」\nB: 「我们两人都不是骑士。」",
     "solution": {
       "A": "knight",
       "B": "knave"
@@ -44,8 +44,8 @@
       "B"
     ],
     "statements": {
-      "A": "I and B are of the same type (both knights or both knaves).",
-      "B": "I and A are of different types."
+      "A": "我和 B 是同一类人（要么都是骑士，要么都是无赖）。",
+      "B": "我和 A 是不同类人。"
     },
     "statements_struct": {
       "A": [
@@ -59,7 +59,7 @@
         "B"
       ]
     },
-    "description": "There are 2 residents on this island: A, B. Each resident is either a knight who always tells the truth or a knave who always lies. They each said the following:\nA: \"I and B are of the same type (both knights or both knaves).\"\nB: \"I and A are of different types.\"",
+    "description": "这座岛上有 2 位居民：A, B。每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。他们各自说了如下的话：\nA: 「我和 B 是同一类人（要么都是骑士，要么都是无赖）。」\nB: 「我和 A 是不同类人。」",
     "solution": {
       "A": "knave",
       "B": "knight"
@@ -73,8 +73,8 @@
       "B"
     ],
     "statements": {
-      "A": "At least one of us is a knight.",
-      "B": "A is a knave."
+      "A": "我们当中至少有一个骑士。",
+      "B": "A 是无赖。"
     },
     "statements_struct": {
       "A": [
@@ -89,7 +89,7 @@
         "knave"
       ]
     },
-    "description": "There are 2 residents on this island: A, B. Each resident is either a knight who always tells the truth or a knave who always lies. They each said the following:\nA: \"At least one of us is a knight.\"\nB: \"A is a knave.\"",
+    "description": "这座岛上有 2 位居民：A, B。每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。他们各自说了如下的话：\nA: 「我们当中至少有一个骑士。」\nB: 「A 是无赖。」",
     "solution": {
       "A": "knight",
       "B": "knave"
@@ -104,9 +104,9 @@
       "C"
     ],
     "statements": {
-      "A": "B is a knave.",
-      "B": "C is a knave.",
-      "C": "A and B are both knaves."
+      "A": "B 是无赖。",
+      "B": "C 是无赖。",
+      "C": "A 和 B 都是无赖。"
     },
     "statements_struct": {
       "A": [
@@ -133,7 +133,7 @@
         ]
       ]
     },
-    "description": "There are 3 residents on this island: A, B, C. Each resident is either a knight who always tells the truth or a knave who always lies. They each said the following:\nA: \"B is a knave.\"\nB: \"C is a knave.\"\nC: \"A and B are both knaves.\"",
+    "description": "这座岛上有 3 位居民：A, B, C。每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。他们各自说了如下的话：\nA: 「B 是无赖。」\nB: 「C 是无赖。」\nC: 「A 和 B 都是无赖。」",
     "solution": {
       "A": "knave",
       "B": "knight",
@@ -149,9 +149,9 @@
       "C"
     ],
     "statements": {
-      "A": "B is a knight.",
-      "B": "C is a knave.",
-      "C": "A and B are of the same type."
+      "A": "B 是骑士。",
+      "B": "C 是无赖。",
+      "C": "A 和 B 是同一类人。"
     },
     "statements_struct": {
       "A": [
@@ -170,7 +170,7 @@
         "B"
       ]
     },
-    "description": "There are 3 residents on this island: A, B, C. Each resident is either a knight who always tells the truth or a knave who always lies. They each said the following:\nA: \"B is a knight.\"\nB: \"C is a knave.\"\nC: \"A and B are of the same type.\"",
+    "description": "这座岛上有 3 位居民：A, B, C。每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。他们各自说了如下的话：\nA: 「B 是骑士。」\nB: 「C 是无赖。」\nC: 「A 和 B 是同一类人。」",
     "solution": {
       "A": "knave",
       "B": "knave",
@@ -186,9 +186,9 @@
       "C"
     ],
     "statements": {
-      "A": "B and C are of the same type.",
-      "B": "A is a knave.",
-      "C": "I and A are of the same type."
+      "A": "B 和 C 是同一类人。",
+      "B": "A 是无赖。",
+      "C": "我和 A 是同一类人。"
     },
     "statements_struct": {
       "A": [
@@ -207,7 +207,7 @@
         "A"
       ]
     },
-    "description": "There are 3 residents on this island: A, B, C. Each resident is either a knight who always tells the truth or a knave who always lies. They each said the following:\nA: \"B and C are of the same type.\"\nB: \"A is a knave.\"\nC: \"I and A are of the same type.\"",
+    "description": "这座岛上有 3 位居民：A, B, C。每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。他们各自说了如下的话：\nA: 「B 和 C 是同一类人。」\nB: 「A 是无赖。」\nC: 「我和 A 是同一类人。」",
     "solution": {
       "A": "knight",
       "B": "knave",
@@ -223,9 +223,9 @@
       "C"
     ],
     "statements": {
-      "A": "I am a knave, or B is a knight.",
-      "B": "A is a knight.",
-      "C": "B is a knave."
+      "A": "我是无赖，或者 B 是骑士。",
+      "B": "A 是骑士。",
+      "C": "B 是无赖。"
     },
     "statements_struct": {
       "A": [
@@ -252,7 +252,7 @@
         "knave"
       ]
     },
-    "description": "There are 3 residents on this island: A, B, C. Each resident is either a knight who always tells the truth or a knave who always lies. They each said the following:\nA: \"I am a knave, or B is a knight.\"\nB: \"A is a knight.\"\nC: \"B is a knave.\"",
+    "description": "这座岛上有 3 位居民：A, B, C。每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。他们各自说了如下的话：\nA: 「我是无赖，或者 B 是骑士。」\nB: 「A 是骑士。」\nC: 「B 是无赖。」",
     "solution": {
       "A": "knight",
       "B": "knight",
@@ -269,10 +269,10 @@
       "D"
     ],
     "statements": {
-      "A": "B and D are of the same type.",
-      "B": "C is a knave.",
-      "C": "D is a knight.",
-      "D": "B and C are of different types."
+      "A": "B 和 D 是同一类人。",
+      "B": "C 是无赖。",
+      "C": "D 是骑士。",
+      "D": "B 和 C 是不同类人。"
     },
     "statements_struct": {
       "A": [
@@ -296,7 +296,7 @@
         "C"
       ]
     },
-    "description": "There are 4 residents on this island: A, B, C, D. Each resident is either a knight who always tells the truth or a knave who always lies. They each said the following:\nA: \"B and D are of the same type.\"\nB: \"C is a knave.\"\nC: \"D is a knight.\"\nD: \"B and C are of different types.\"",
+    "description": "这座岛上有 4 位居民：A, B, C, D。每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。他们各自说了如下的话：\nA: 「B 和 D 是同一类人。」\nB: 「C 是无赖。」\nC: 「D 是骑士。」\nD: 「B 和 C 是不同类人。」",
     "solution": {
       "A": "knave",
       "B": "knave",
@@ -314,10 +314,10 @@
       "D"
     ],
     "statements": {
-      "A": "B is a knight.",
-      "B": "C is a knave.",
-      "C": "D is a knight.",
-      "D": "A and B are not of the same type."
+      "A": "B 是骑士。",
+      "B": "C 是无赖。",
+      "C": "D 是骑士。",
+      "D": "A 和 B 不是同一类人。"
     },
     "statements_struct": {
       "A": [
@@ -341,7 +341,7 @@
         "B"
       ]
     },
-    "description": "There are 4 residents on this island: A, B, C, D. Each resident is either a knight who always tells the truth or a knave who always lies. They each said the following:\nA: \"B is a knight.\"\nB: \"C is a knave.\"\nC: \"D is a knight.\"\nD: \"A and B are not of the same type.\"",
+    "description": "这座岛上有 4 位居民：A, B, C, D。每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。他们各自说了如下的话：\nA: 「B 是骑士。」\nB: 「C 是无赖。」\nC: 「D 是骑士。」\nD: 「A 和 B 不是同一类人。」",
     "solution": {
       "A": "knight",
       "B": "knight",
@@ -359,10 +359,10 @@
       "D"
     ],
     "statements": {
-      "A": "At least three of us are knaves.",
-      "B": "A is a knave.",
-      "C": "B is a knight.",
-      "D": "C is a knave."
+      "A": "我们四人当中至少有三个无赖。",
+      "B": "A 是无赖。",
+      "C": "B 是骑士。",
+      "D": "C 是无赖。"
     },
     "statements_struct": {
       "A": [
@@ -387,7 +387,7 @@
         "knave"
       ]
     },
-    "description": "There are 4 residents on this island: A, B, C, D. Each resident is either a knight who always tells the truth or a knave who always lies. They each said the following:\nA: \"At least three of us are knaves.\"\nB: \"A is a knave.\"\nC: \"B is a knight.\"\nD: \"C is a knave.\"",
+    "description": "这座岛上有 4 位居民：A, B, C, D。每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。他们各自说了如下的话：\nA: 「我们四人当中至少有三个无赖。」\nB: 「A 是无赖。」\nC: 「B 是骑士。」\nD: 「C 是无赖。」",
     "solution": {
       "A": "knave",
       "B": "knight",
@@ -406,11 +406,11 @@
       "E"
     ],
     "statements": {
-      "A": "B is a knight.",
-      "B": "C is a knave.",
-      "C": "D is a knight.",
-      "D": "E is a knave.",
-      "E": "At least two of the five of us are knights."
+      "A": "B 是骑士。",
+      "B": "C 是无赖。",
+      "C": "D 是骑士。",
+      "D": "E 是无赖。",
+      "E": "我们五人当中至少有两个骑士。"
     },
     "statements_struct": {
       "A": [
@@ -440,7 +440,7 @@
         2
       ]
     },
-    "description": "There are 5 residents on this island: A, B, C, D, E. Each resident is either a knight (always tells the truth) or a knave (always lies). They each said the following:\nA: \"B is a knight.\"\nB: \"C is a knave.\"\nC: \"D is a knight.\"\nD: \"E is a knave.\"\nE: \"At least two of the five of us are knights.\"",
+    "description": "这座岛上有 5 位居民：A, B, C, D, E。每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。他们各自说了如下的话：\nA: 「B 是骑士。」\nB: 「C 是无赖。」\nC: 「D 是骑士。」\nD: 「E 是无赖。」\nE: 「我们五人当中至少有两个骑士。」",
     "solution": {
       "A": "knight",
       "B": "knight",
@@ -460,11 +460,11 @@
       "E"
     ],
     "statements": {
-      "A": "B is a knight.",
-      "B": "C is a knave.",
-      "C": "D is a knave.",
-      "D": "E is a knight.",
-      "E": "A and C are of the same type."
+      "A": "B 是骑士。",
+      "B": "C 是无赖。",
+      "C": "D 是无赖。",
+      "D": "E 是骑士。",
+      "E": "A 和 C 是同一类人。"
     },
     "statements_struct": {
       "A": [
@@ -493,7 +493,7 @@
         "C"
       ]
     },
-    "description": "There are 5 residents on this island: A, B, C, D, E. Each resident is either a knight (always tells the truth) or a knave (always lies). They each said the following:\nA: \"B is a knight.\"\nB: \"C is a knave.\"\nC: \"D is a knave.\"\nD: \"E is a knight.\"\nE: \"A and C are of the same type.\"",
+    "description": "这座岛上有 5 位居民：A, B, C, D, E。每位居民要么是永远说真话的骑士(knight)，要么是永远说假话的无赖(knave)。他们各自说了如下的话：\nA: 「B 是骑士。」\nB: 「C 是无赖。」\nC: 「D 是无赖。」\nD: 「E 是骑士。」\nE: 「A 和 C 是同一类人。」",
     "solution": {
       "A": "knave",
       "B": "knave",

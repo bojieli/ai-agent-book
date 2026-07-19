@@ -380,7 +380,7 @@ class OSSClient:
 
     def get_object_url(self, oss_key: str, expires: int = 3600) -> Optional[str]:
         """
-        Return the direct URL of a public read bucket
+        返回公开读bucket的直链URL
         """
         if not self.initialize():
             logger.warn("OSS client not initialized or export is disabled")
@@ -459,15 +459,15 @@ def get_oss_client(access_key_id: Optional[str] = None,
 
 def get_full_url(self, oss_key: str, temp_url: bool = False, expires: int = 3600) -> str:
     """
-    Generate the complete URL of an OSS object
+    生成OSS对象的完整URL
 
     Args:
-        oss_key: The key of the OSS object
-        temp_url: Whether to generate a signed temporary URL
-        expires: Expiration time of the temporary URL (seconds)
+        oss_key: OSS对象的键
+        temp_url: 是否生成带签名的临时URL
+        expires: 临时URL的过期时间(秒)
 
     Returns:
-        str: The complete URL of the object
+        str: 对象的完整URL
     """
     if not self.initialize():
         logger.warn("OSS client not initialized")
@@ -475,10 +475,10 @@ def get_full_url(self, oss_key: str, temp_url: bool = False, expires: int = 3600
 
     try:
         if temp_url:
-            # Generate a signed temporary URL
+            # 生成带签名的临时URL
             return self.bucket.sign_url('GET', oss_key, expires)
         else:
-            # Generate a permanent URL (publicly accessible object)
+            # 生成永久URL (公开可访问的对象)
             return f"https://{self.bucket_name}.{self.endpoint}/{oss_key}"
     except Exception as e:
         logger.warn(f"Failed to generate URL for {oss_key}: {str(e)}")

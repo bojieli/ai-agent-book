@@ -1,29 +1,29 @@
 # -*- coding: utf-8 -*-
-"""Role definitions, factions, and strategy prompts for each role.
+"""角色定义、阵营、以及每个角色的策略提示词。
 
-The core of Werewolf is **information asymmetry**: different roles inherently know different information and have different
-night actions. Here we centrally define the metadata and prompts for each role, which agent.py uses to construct each player
-Agent's system prompt.
+狼人杀的核心是**信息不对称**：不同角色天生知道不同的信息，且拥有不同的
+夜间行动能力。这里集中定义角色的元数据与提示词，供 agent.py 构造每个玩家
+Agent 的 system prompt。
 """
 
 from enum import Enum
 
 
 class Role(str, Enum):
-    """The four roles in the game."""
-    WEREWOLF = "Werewolf"
-    SEER = "Seer"
-    WITCH = "Witch"
-    VILLAGER = "Villager"
+    """游戏中的四种角色。"""
+    WEREWOLF = "狼人"
+    SEER = "预言家"
+    WITCH = "女巫"
+    VILLAGER = "村民"
 
 
 class Faction(str, Enum):
-    """Two factions. The Seer, Witch, and Villager belong to the Good faction (Good = Special roles + Commoners)."""
-    WEREWOLF = "Werewolf faction"
-    GOOD = "Good faction"
+    """两大阵营。预言家、女巫、村民都属于好人阵营（好人 = 神职 + 平民）。"""
+    WEREWOLF = "狼人阵营"
+    GOOD = "好人阵营"
 
 
-# Role -> Faction
+# 角色 -> 阵营
 ROLE_FACTION = {
     Role.WEREWOLF: Faction.WEREWOLF,
     Role.SEER: Faction.GOOD,
@@ -32,35 +32,35 @@ ROLE_FACTION = {
 }
 
 
-# Strategy prompts for each role (corresponding to the "Agent Reasoning and Strategy" section in the book).
+# 各角色的策略提示词（对应书中「Agent 推理与策略」小节）。
 ROLE_STRATEGY = {
     Role.WEREWOLF: (
-        "You are a werewolf. Your goal is to hide your identity, mislead the good, and ultimately ensure that the number of werewolves is not less than the good.\n"
-        "Strategy: Speak like an ordinary villager; you can express reasonable suspicion of certain players, but do not be too aggressive to avoid exposure.\n"
-        "If a Seer claims to have checked you as a werewolf, you can consider counterattacking them as a fake Seer who is jumping out.\n"
-        "When voting, try to follow the majority of good players to avoid being an outlier. Never actively expose yourself or your teammates as werewolves."
+        "你是狼人。你的目标是隐藏身份，误导好人，最终让狼人数量不少于好人。\n"
+        "策略：像普通村民一样发言，可以表达对某些玩家的合理怀疑，但不要过于激进以免暴露。\n"
+        "如果有预言家跳出来说验到你是狼人，你可以考虑反咬对方是悍跳的假预言家。\n"
+        "投票时尽量跟大多数好人的票，避免成为异类。绝不要主动暴露自己或队友是狼人。"
     ),
     Role.SEER: (
-        "You are the Seer (Good faction). Each night you can check the true faction (Good/Werewolf) of one player.\n"
-        "Strategy: At an appropriate time (usually when you find a werewolf or the situation is critical), jump out to reveal your identity and check results to lead the good.\n"
-        "If someone claims to be the Seer, compare the check information of both sides and point out contradictions or inconsistencies in the other's logic.\n"
-        "Your check result is your unique key information; only you know it. Use it wisely to guide voting."
+        "你是预言家（好人阵营）。每晚你可以查验一名玩家的真实阵营（好人/狼人）。\n"
+        "策略：在合适时机（通常查到狼人或局势危急时）跳出来公布身份与验人信息，带领好人。\n"
+        "若有人悍跳预言家，请对比双方验人信息，指出对方逻辑中的矛盾或不合理之处。\n"
+        "你的查验结果是你独有的关键信息，只有你自己知道，请善用它引导投票。"
     ),
     Role.WITCH: (
-        "You are the Witch (Good faction). You have one antidote and one poison, each usable only once.\n"
-        "The antidote can save a player killed by werewolves at night; the poison can kill a player you suspect at night.\n"
-        "Strategy: The antidote is usually reserved for key good players (e.g., the Seer) or not wasted early; use the poison when you are fairly sure someone is a werewolf.\n"
-        "Your usage information is known only to you. During the day, be careful to protect yourself and do not easily reveal your identity as the Witch."
+        "你是女巫（好人阵营）。你有一瓶解药和一瓶毒药，各只能用一次。\n"
+        "解药可以在夜晚救活被狼人刀的玩家；毒药可以在夜晚毒死一名你怀疑的玩家。\n"
+        "策略：解药通常留给关键好人（如预言家）或前期不要浪费；毒药在你较确定某人是狼时使用。\n"
+        "你的用药信息只有你自己知道，白天发言时注意保护自己，不要轻易暴露女巫身份。"
     ),
     Role.VILLAGER: (
-        "You are a Villager (Good faction), with no night skills. You can only rely on logical reasoning to find werewolves.\n"
-        "Strategy: Analyze whether each player's speech is self-consistent; watch out for players who rush to lead the rhythm, obscure their identity, or frequently change their stance.\n"
-        "Pay attention to voting behavior—werewolves often concentrate their votes on the player most threatening to the good.\n"
-        "Do not suspect randomly; every inference should be based on specific speech and voting facts."
+        "你是村民（好人阵营），没有夜间技能，只能靠逻辑推理找出狼人。\n"
+        "策略：分析每个玩家的发言是否自洽，留意急于带节奏、模糊身份、频繁改变立场的玩家。\n"
+        "关注投票行为——狼人往往集中票数投给对好人威胁最大的人。\n"
+        "不要随机怀疑，每一个推理都应基于具体的发言和投票事实。"
     ),
 }
 
 
 def faction_of(role: Role) -> Faction:
-    """Return the faction to which a given role belongs."""
+    """返回某个角色所属的阵营。"""
     return ROLE_FACTION[role]

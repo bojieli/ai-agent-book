@@ -62,7 +62,7 @@ def get_deepresearch_swarm(user_input):
     
 
 if __name__ == "__main__":
-    user_input = "7-day Beijing travel plan"
+    user_input = "7天北京旅游计划"
     swarm = get_deepresearch_swarm(user_input)
     result = Runners.sync_run(
         input=user_input,

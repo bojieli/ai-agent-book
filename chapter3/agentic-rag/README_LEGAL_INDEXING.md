@@ -27,15 +27,15 @@ This script indexes local Chinese legal documents from the `laws` directory into
 2. The `laws` directory should be present with legal documents organized by category:
    ```
    laws/
-   ├── 1-Constitution/
-   ├── 2-Constitutional Laws/
-   ├── 3-Civil Code/
-   ├── 3-Civil and Commercial Laws/
-   ├── 4-Administrative Law/
-   ├── 5-Economic Law/
-   ├── 6-Social Law/
-   ├── 7-Criminal Law/
-   └── 8-Procedural and Non-Procedural Laws/
+   ├── 1-宪法/
+   ├── 2-宪法相关法/
+   ├── 3-民法典/
+   ├── 3-民法商法/
+   ├── 4-行政法/
+   ├── 5-经济法/
+   ├── 6-社会法/
+   ├── 7-刑法/
+   └── 8-诉讼与非诉讼程序法/
    ```
 
 ## Usage
@@ -55,7 +55,7 @@ python index_local_laws.py --verify
 python index_local_laws.py --max-docs 10
 
 # Index specific categories only
-python index_local_laws.py --categories "Constitution" "Civil Code" "Criminal Law"
+python index_local_laws.py --categories "宪法" "民法典" "刑法"
 
 # Use custom pipeline URL
 python index_local_laws.py --pipeline-url http://localhost:8080
@@ -95,11 +95,11 @@ python index_local_laws.py --verify
 ```
 
 Test queries include:
-- Civil Code
-- Contract Law
-- Labor Law
-- Criminal Law
-- Constitution
+- 民法典 (Civil Code)
+- 合同法 (Contract Law)
+- 劳动法 (Labor Law)
+- 刑法 (Criminal Law)
+- 宪法 (Constitution)
 
 ## Document Store
 

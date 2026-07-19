@@ -110,7 +110,7 @@ async def main():
         # Category 4: Multilingual Content
         {
             "doc_id": "ml_chinese",
-            "text": "Machine learning is a core technology of artificial intelligence, which trains models through data to solve problems.",
+            "text": "机器学习是人工智能的核心技术，通过数据训练模型来解决问题。",
             "metadata": {"category": "AI", "language": "chinese"}
         },
         {
@@ -175,7 +175,7 @@ async def main():
             "explanation": "Sparse matches exact error code"
         },
         {
-            "query": "Artificial intelligence",
+            "query": "人工智能",
             "description": "Cross-lingual search (Chinese for AI) - Dense should excel",
             "expected_strong": "dense",
             "explanation": "Dense embeddings (BGE-M3) handle multiple languages"

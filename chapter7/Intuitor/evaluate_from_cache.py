@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Extract answers from lighteval cached parquet files and compute GSM8K accuracy
-Supports both \\boxed{} and #### answer formats
+从 lighteval 缓存的 parquet 文件中提取答案并计算 GSM8K 准确率
+支持 \\boxed{} 和 #### 两种答案格式
 """
 
 import re
@@ -12,18 +12,18 @@ from typing import Optional
 
 
 def extract_answer_from_boxed(text: str) -> Optional[str]:
-    """Extract answer from \\boxed{} format (also supports \\(\\boxed{}\\) form)"""
+    """从 \\boxed{} 格式中提取答案（同时支持 \\(\\boxed{}\\) 形式）"""
     if not text:
         return None
     
-    # If it's bytes, convert to string
+    # 如果是 bytes，转换为字符串
     if isinstance(text, bytes):
         text = text.decode('utf-8', errors='ignore')
     
-    # Ensure it's a string
+    # 确保是字符串
     text = str(text)
     
-    # Match \\boxed{number}, this pattern matches both \boxed{} and \(\boxed{}\)
+    # 匹配 \\boxed{number}，这个模式同时匹配 \boxed{} 和 \(\boxed{}\)
     match = re.search(r'\\boxed\{([^}]+)\}', text)
     if match:
         return match.group(1).strip()
@@ -32,15 +32,15 @@ def extract_answer_from_boxed(text: str) -> Optional[str]:
 
 
 def extract_answer_from_gsm8k_format(text: str) -> Optional[str]:
-    """Extract answer from #### number format"""
+    """从 #### number 格式中提取答案"""
     if not text:
         return None
     
-    # If it's bytes, convert to string
+    # 如果是 bytes，转换为字符串
     if isinstance(text, bytes):
         text = text.decode('utf-8', errors='ignore')
     
-    # Ensure it's a string
+    # 确保是字符串
     text = str(text)
     
     if "####" in text:
@@ -52,33 +52,33 @@ def extract_answer_from_gsm8k_format(text: str) -> Optional[str]:
 
 
 def normalize_number(text: str) -> Optional[str]:
-    """Normalize number format: remove commas, spaces, LaTeX symbols, etc."""
+    """标准化数字格式：去除逗号、空格、LaTeX 符号等"""
     if not text:
         return None
     
-    # If it's bytes, convert to string
+    # 如果是 bytes，转换为字符串
     if isinstance(text, bytes):
         text = text.decode('utf-8', errors='ignore')
     
-    # Ensure it's a string
+    # 确保是字符串
     text = str(text)
     
-    # Remove LaTeX symbols
+    # 去除 LaTeX 符号
     text = text.replace("\\,", "")
     text = text.replace("\\text", "")
     text = text.replace("{", "").replace("}", "")
     
-    # Remove commas and spaces
+    # 去除逗号和空格
     text = text.replace(",", "").replace(" ", "")
     
-    # Extract number (including decimals and negatives)
+    # 提取数字（包括小数和负数）
     match = re.search(r'-?\d+\.?\d*', text)
     if match:
         num_str = match.group(0)
-        # Convert to float then back to string to normalize format
+        # 转换为浮点数再转回字符串，以标准化格式
         try:
             num = float(num_str)
-            # If it's an integer, return integer format
+            # 如果是整数，返回整数格式
             if num.is_integer():
                 return str(int(num))
             else:
@@ -90,119 +90,119 @@ def normalize_number(text: str) -> Optional[str]:
 
 
 def extract_and_normalize_answer(text: str) -> Optional[str]:
-    """Extract and normalize answer from model output"""
+    """从模型输出中提取并标准化答案"""
     if not text:
         return None
     
-    # If it's bytes, convert to string
+    # 如果是 bytes，转换为字符串
     if isinstance(text, bytes):
         text = text.decode('utf-8', errors='ignore')
     
-    # Ensure it's a string
+    # 确保是字符串
     text = str(text)
     
-    # First try to extract boxed format
+    # 先尝试提取 boxed 格式
     answer = extract_answer_from_boxed(text)
     
-    # If not found, try GSM8K format
+    # 如果没找到，尝试 GSM8K 格式
     if not answer:
         answer = extract_answer_from_gsm8k_format(text)
     
-    # If still not found, try to extract number from the last sentence
+    # 如果还是没找到，尝试从最后一句话提取数字
     if not answer:
-        # Take last 200 characters to avoid extracting intermediate numbers
+        # 取最后 200 个字符，避免提取到过程中的数字
         last_part = text[-200:] if len(text) > 200 else text
         answer = last_part
     
-    # Normalize number format
+    # 标准化数字格式
     return normalize_number(answer)
 
 
 def load_gsm8k_answers(split: str = "test") -> dict:
-    """Load gold answers from GSM8K dataset
+    """加载 GSM8K 数据集的金标答案
     
-    Returns a dictionary with keys as original indices in the dataset (0-1318) and values as normalized answers
+    返回一个字典，键是数据集中的原始索引（0-1318），值是标准化后的答案
     """
     try:
         from datasets import load_dataset
         dataset = load_dataset("gsm8k", "main", split=split)
         
         answers = {}
-        # Note: indices here are sequential indices in the dataset, not sample_id
+        # 注意：这里的索引是数据集中的顺序索引，不是 sample_id
         for idx in range(len(dataset)):
             item = dataset[idx]
-            # GSM8K answer format: calculation process\n#### answer
+            # GSM8K 答案格式：计算过程\n#### 答案
             gold_answer = item["answer"]
-            # Extract number after ####
+            # 提取 #### 后面的数字
             normalized = extract_answer_from_gsm8k_format(gold_answer)
             if normalized:
                 normalized = normalize_number(normalized)
             answers[idx] = normalized
         
-        print(f"✅ Loaded {len(answers)} gold answers")
+        print(f"✅ 加载了 {len(answers)} 个金标答案")
         return answers
     except ImportError:
-        print("❌ Error: datasets library required")
-        print("Run: pip install datasets")
+        print("❌ 错误：需要安装 datasets 库")
+        print("运行：pip install datasets")
         return {}
     except Exception as e:
-        print(f"❌ Error loading gold answers: {e}")
+        print(f"❌ 加载金标答案时出错: {e}")
         return {}
 
 
 def evaluate_from_parquet(parquet_path: str, verbose: bool = False):
-    """Evaluate from parquet file"""
-    print(f"📂 Reading predictions: {parquet_path}")
+    """从 parquet 文件评测"""
+    print(f"📂 读取预测结果: {parquet_path}")
     df = pd.read_parquet(parquet_path)
     
-    print(f"📊 Total samples: {len(df)}")
+    print(f"📊 总样本数: {len(df)}")
     
-    #  Load gold standard answers
-    print("📥 Loading GSM8K gold standard answers...")
+    # 加载金标答案
+    print("📥 加载 GSM8K 金标答案...")
     gold_answers = load_gsm8k_answers()
     
     if not gold_answers:
-        print("❌ Unable to load gold standard answers, exiting")
+        print("❌ 无法加载金标答案，退出")
         return
     
-    #  Evaluation
+    # 评测
     correct = 0
     total = 0
     errors = []
     
-    #  Debug: show first few sample_ids
+    # 调试：显示前几个 sample_id
     if verbose:
-        print(f"\nFirst 5 sample_ids: {df['sample_id'].head().tolist()}")
-        print(f"Gold standard answer key range: {min(gold_answers.keys()) if gold_answers else 'N/A'} - {max(gold_answers.keys()) if gold_answers else 'N/A'}")
+        print(f"\n前 5 个 sample_id: {df['sample_id'].head().tolist()}")
+        print(f"金标答案的键范围: {min(gold_answers.keys()) if gold_answers else 'N/A'} - {max(gold_answers.keys()) if gold_answers else 'N/A'}")
     
     for idx, row in df.iterrows():
         sample_id = row['sample_id']
         sample_data = row['sample']
         
-        #  Convert sample_id to integer (if it is a string)
+        # 转换 sample_id 为整数（如果它是字符串）
         if isinstance(sample_id, str):
             try:
                 sample_id = int(sample_id)
             except ValueError:
                 if verbose:
-                    print(f"⚠️  Sample {sample_id}: cannot convert to integer")
+                    print(f"⚠️  样本 {sample_id}: 无法转换为整数")
                 continue
         
-        #  Extract model output
+        # 提取模型输出
         model_output = sample_data.get('text', [''])[0] if isinstance(sample_data.get('text'), list) else sample_data.get('text', '')
         
-        #  Ensure model_output is a string
+        # 确保 model_output 是字符串
         if isinstance(model_output, bytes):
             model_output = model_output.decode('utf-8', errors='ignore')
         model_output = str(model_output) if model_output else ''
         
-        #  Extract and normalize answer
+        # 提取并标准化答案
         pred_answer = extract_and_normalize_answer(model_output)
         gold_answer = gold_answers.get(sample_id)
         
         if gold_answer is None:
             if verbose and idx < 5:
-                print(f"⚠️  Sample {sample_id}: gold standard answer not found")
+                print(f"⚠️  样本 {sample_id}: 找不到金标答案")
             continue
         
         total += 1
@@ -219,31 +219,31 @@ def evaluate_from_parquet(parquet_path: str, verbose: bool = False):
             })
         
         if verbose and idx < 5:
-            print(f"\nSample {sample_id}:")
-            print(f"  Prediction: {pred_answer}")
-            print(f"  Gold: {gold_answer}")
-            print(f"  Correct: {'✅' if is_correct else '❌'}")
+            print(f"\n样本 {sample_id}:")
+            print(f"  预测: {pred_answer}")
+            print(f"  金标: {gold_answer}")
+            print(f"  正确: {'✅' if is_correct else '❌'}")
     
-    #  Calculate accuracy
+    # 计算准确率
     accuracy = correct / total * 100 if total > 0 else 0
     
     print("\n" + "="*80)
-    print("📈 Evaluation results")
+    print("📈 评测结果")
     print("="*80)
-    print(f"Total samples: {total}")
-    print(f"Correct count: {correct}")
-    print(f"Incorrect count: {total - correct}")
-    print(f"Accuracy: {accuracy:.2f}%")
+    print(f"总样本数: {total}")
+    print(f"正确数量: {correct}")
+    print(f"错误数量: {total - correct}")
+    print(f"准确率: {accuracy:.2f}%")
     print("="*80)
     
-    #  Show some incorrect samples
+    # 显示部分错误样本
     if errors and verbose:
-        print("\n❌ First 10 incorrect samples:")
+        print("\n❌ 前 10 个错误样本:")
         for i, error in enumerate(errors[:10], 1):
-            print(f"\n{i}. Sample {error['sample_id']}:")
-            print(f"   Prediction: {error['predicted']}")
-            print(f"   Gold: {error['gold']}")
-            print(f"   Output: {error['output']}")
+            print(f"\n{i}. 样本 {error['sample_id']}:")
+            print(f"   预测: {error['predicted']}")
+            print(f"   金标: {error['gold']}")
+            print(f"   输出: {error['output']}")
     
     return {
         'total': total,
@@ -254,15 +254,15 @@ def evaluate_from_parquet(parquet_path: str, verbose: bool = False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Evaluate GSM8K results from lighteval cache')
-    parser.add_argument('parquet_file', type=str, help='Parquet file path')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Show details and error samples')
-    parser.add_argument('-o', '--output', type=str, help='Save results to JSON file')
+    parser = argparse.ArgumentParser(description='从 lighteval 缓存评测 GSM8K 结果')
+    parser.add_argument('parquet_file', type=str, help='Parquet 文件路径')
+    parser.add_argument('-v', '--verbose', action='store_true', help='显示详细信息和错误样本')
+    parser.add_argument('-o', '--output', type=str, help='保存结果到 JSON 文件')
     
     args = parser.parse_args()
     
     if not Path(args.parquet_file).exists():
-        print(f"❌ Error: file does not exist: {args.parquet_file}")
+        print(f"❌ 错误：文件不存在: {args.parquet_file}")
         return
     
     results = evaluate_from_parquet(args.parquet_file, verbose=args.verbose)
@@ -271,7 +271,7 @@ def main():
         import json
         with open(args.output, 'w') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
-        print(f"\n💾 Results saved to: {args.output}")
+        print(f"\n💾 结果已保存到: {args.output}")
 
 
 if __name__ == "__main__":

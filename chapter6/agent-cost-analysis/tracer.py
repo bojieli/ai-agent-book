@@ -1,20 +1,20 @@
 """
-Self-built lightweight tracing / observability system.
+自建的轻量级 tracing / 可观测系统。
 
-The design follows the distributed tracing span tree model (see book 6.x "Agent Observability"):
-    - One agent task = One Trace
-    - Each LLM call / tool call = One Span
-    - Span records: step, type, token usage (prompt/completion/cached), latency, cost
+设计沿用分布式追踪的 span 树模型（见书 6.x「Agent 的可观测性」）：
+    - 一次 agent 任务 = 一条 Trace
+    - 每次 LLM 调用 / 工具调用 = 一个 Span
+    - Span 记录：所属步骤、类型、token 用量（prompt/completion/cached）、时延、成本
 
-Usage:
+用法：
     tracer = Tracer(client)
     resp = tracer.chat(step="turn-1", tool="query_order",
                        model=..., messages=..., temperature=0)
-    tracer.print_breakdown()   # Print cost breakdown aggregated by step/tool
+    tracer.print_breakdown()   # 打印按步骤/工具聚合的成本拆解
 
-Offline replay (no model calls, only cost calculation):
+离线复用（不打模型、只算成本）：
     tracer = Tracer.from_records(records, pricing=..., name=...)
-    # records contain canned token counts from previous real runs
+    # records 里是此前真实运行录下的每一步 token 用量（canned token counts）
 """
 
 import time
@@ -25,7 +25,7 @@ from config import Pricing, default_pricing
 
 
 def _percentile(values: List[float], q: float) -> float:
-    """Nearest-rank percentile, avoiding numpy dependency. q ranges from 0 to 100."""
+    """最近秩（nearest-rank）百分位，避免引入 numpy 依赖。q 取 0~100。"""
     if not values:
         return 0.0
     xs = sorted(values)
@@ -37,15 +37,15 @@ def _percentile(values: List[float], q: float) -> float:
 
 @dataclass
 class Span:
-    """A traced call (mainly LLM calls here)."""
-    step: str                 # Logical step name, e.g., "turn-2"
-    tool: str                 # Tool/action name associated with this step, used to attribute "which step is most expensive"
-    kind: str = "llm"         # Span type: llm / tool
+    """一次被追踪的调用（这里主要是 LLM 调用）。"""
+    step: str                 # 逻辑步骤名，如 "turn-2"
+    tool: str                 # 该步骤关联的工具/动作名，用于归因“哪一步最贵”
+    kind: str = "llm"         # span 类型：llm / tool
     prompt_tokens: int = 0
     cached_tokens: int = 0
     completion_tokens: int = 0
-    # Cumulative tokens occupied by tool return results in this round's input (the same tool return is repeatedly billed in subsequent rounds).
-    # Estimated by the upper layer using a tokenizer and filled in; read back from records during offline replay. -1 means unknown.
+    # 该轮输入里「工具返回结果」占用的累计 token（同一份工具返回会在后续每轮被反复计费）。
+    # 由上层用 tokenizer 估算并填入；离线复用时从 records 读回。-1 表示未知。
     tool_ctx_tokens: int = -1
     latency_s: float = 0.0
     cost_usd: float = 0.0
@@ -60,7 +60,7 @@ class Span:
 
 
 class Tracer:
-    """Wraps the OpenAI client, automatically recording usage/latency/cost for each LLM call."""
+    """包裹 OpenAI client，自动记录每次 LLM 调用的 usage / 时延 / 成本。"""
 
     def __init__(self, client=None, name: str = "trace",
                  pricing: Optional[Pricing] = None):
@@ -69,20 +69,20 @@ class Tracer:
         self.pricing = pricing or default_pricing()
         self.spans: List[Span] = []
 
-    # ---------- Collection ----------
+    # ---------- 采集 ----------
     def chat(self, step: str, tool: str, tool_ctx_tokens: int = -1, **kwargs):
-        """Make a traced chat.completions call.
+        """发起一次被追踪的 chat.completions 调用。
 
-        kwargs are passed through to the openai client (model / messages / temperature, etc.).
-        tool_ctx_tokens: cumulative tokens occupied by tool return results in this round's input (optional, for cost attribution).
-        Returns the raw OpenAI response object for the upper layer to extract content.
+        kwargs 原样透传给 openai client（model / messages / temperature 等）。
+        tool_ctx_tokens：本轮输入里工具返回结果占用的累计 token（可选，用于成本归因）。
+        返回原始的 OpenAI response 对象，方便上层取 content。
         """
         t0 = time.time()
         resp = self.client.chat.completions.create(**kwargs)
         latency = time.time() - t0
 
         usage = resp.usage
-        # cached_tokens is hidden in prompt_tokens_details, use defensive reading
+        # cached_tokens 藏在 prompt_tokens_details 里，注意做防御式读取
         cached = 0
         details = getattr(usage, "prompt_tokens_details", None)
         if details is not None:
@@ -103,11 +103,11 @@ class Tracer:
         self.spans.append(span)
         return resp
 
-    # ---------- Offline Replay (canned token counts → recalculate cost) ----------
+    # ---------- 离线复用（canned token counts → 重新计成本）----------
     @classmethod
     def from_records(cls, records: List[dict], name: str = "trace",
                      pricing: Optional[Pricing] = None) -> "Tracer":
-        """Rebuild a trace from previously recorded token usage and recalculate cost with given unit prices (no model calls)."""
+        """用此前录下的 token 用量重建一条 trace，并按给定单价重算成本（不打模型）。"""
         tr = cls(client=None, name=name, pricing=pricing)
         for r in records:
             span = Span(
@@ -126,15 +126,15 @@ class Tracer:
         return tr
 
     def to_records(self) -> List[dict]:
-        """Export raw token usage for each step (for persisting as canned trace for offline replay)."""
+        """导出每一步的原始 token 用量（用于落盘成 canned trace，供离线复用）。"""
         out = []
         for s in self.spans:
             d = asdict(s)
-            d.pop("cost_usd", None)   # Cost is recalculated from unit prices, not persisted as fixed values
+            d.pop("cost_usd", None)   # 成本由单价重算，不落盘固定值
             out.append(d)
         return out
 
-    # ---------- Aggregation ----------
+    # ---------- 聚合 ----------
     def total_cost(self) -> float:
         return sum(s.cost_usd for s in self.spans)
 
@@ -161,9 +161,9 @@ class Tracer:
         return self.total_cached_tokens() / pin if pin else 0.0
 
     def component_costs(self) -> dict:
-        """Break down total cost into three cost components (corresponding to the book "Cost Components"):
-            - Uncached input / Cached input / Output
-        And the proportion of tool return injection tokens in the input side (if known)."""
+        """把总成本拆成三个成本构成要素（对应书「成本的构成要素」）：
+            - 未缓存输入 / 缓存输入 / 输出
+        以及输入侧里「工具返回注入」token 占比（若已知）。"""
         p = self.pricing
         uncached_in = self.total_uncached_prompt_tokens()
         cached_in = self.total_cached_tokens()
@@ -179,7 +179,7 @@ class Tracer:
         }
 
     def cost_distribution(self) -> dict:
-        """Per-step cost distribution (p50/p95/p99). Corresponds to the book "Cost Distribution p50/p95/p99"."""
+        """按步骤的单步成本分布（p50/p95/p99）。对应书「成本分布 p50/p95/p99」。"""
         costs = [s.cost_usd for s in self.spans]
         n = len(costs)
         return {
@@ -191,14 +191,14 @@ class Tracer:
             "max": max(costs) if costs else 0.0,
         }
 
-    # ---------- Print ----------
+    # ---------- 打印 ----------
     def print_breakdown(self, title: Optional[str] = None):
-        """Print a per-step cost breakdown table for an agent task, and indicate the most expensive step, cost composition, and distribution."""
+        """打印一次 agent 任务的按步骤成本拆解表，并指出最贵的一步、成本构成与分布。"""
         print()
-        print(f"===== Cost Breakdown: {title or self.name} =====")
+        print(f"===== 成本拆解: {title or self.name} =====")
         header = (
-            f"{'Step':<8} {'Tool/Action':<20} {'Input tok':>8} {'Cached tok':>8} "
-            f"{'Tool tok':>8} {'Output tok':>8} {'Latency(s)':>8} {'Cost($)':>12}"
+            f"{'步骤':<8} {'工具/动作':<20} {'输入tok':>8} {'缓存tok':>8} "
+            f"{'工具tok':>8} {'输出tok':>8} {'时延(s)':>8} {'成本($)':>12}"
         )
         print(header)
         print("-" * len(header))
@@ -213,37 +213,37 @@ class Tracer:
         tctx_total = self.total_tool_ctx_tokens() if any(
             s.tool_ctx_tokens >= 0 for s in self.spans) else "-"
         print(
-            f"{'Total':<8} {'':<20} {self.total_prompt_tokens():>8} "
+            f"{'合计':<8} {'':<20} {self.total_prompt_tokens():>8} "
             f"{self.total_cached_tokens():>8} {str(tctx_total):>8} "
             f"{self.total_completion_tokens():>8} "
             f"{self.total_latency():>8.2f} {self.total_cost():>12.6f}"
         )
 
-        # Attribution: which step is the most expensive
+        # 归因：哪一步最贵
         if self.spans:
             worst = max(self.spans, key=lambda s: s.cost_usd)
             total = self.total_cost()
             share = worst.cost_usd / total * 100 if total else 0
             print(
-                f"\nMost expensive step → {worst.step} / {worst.tool}: "
-                f"${worst.cost_usd:.6f} (of total cost {share:.1f}%）"
+                f"\n最贵的一步 → {worst.step} / {worst.tool}: "
+                f"${worst.cost_usd:.6f}（占总成本 {share:.1f}%）"
             )
 
-        # Cost breakdown (uncached input / cached input / output)
+        # 成本构成拆解（未缓存输入 / 缓存输入 / 输出）
         comp = self.component_costs()
         total = self.total_cost() or 1e-12
-        print("Cost breakdown:")
-        print(f"  Uncached input  {comp['uncached_input_tokens']:>8} tok  "
+        print("成本构成:")
+        print(f"  未缓存输入  {comp['uncached_input_tokens']:>8} tok  "
               f"${comp['uncached_input_cost']:.6f}  ({comp['uncached_input_cost']/total*100:.1f}%)")
-        print(f"  Cached input    {comp['cached_input_tokens']:>8} tok  "
+        print(f"  缓存输入    {comp['cached_input_tokens']:>8} tok  "
               f"${comp['cached_input_cost']:.6f}  ({comp['cached_input_cost']/total*100:.1f}%)")
-        print(f"  Output        {comp['output_tokens']:>8} tok  "
+        print(f"  输出        {comp['output_tokens']:>8} tok  "
               f"${comp['output_cost']:.6f}  ({comp['output_cost']/total*100:.1f}%)")
         if comp["tool_ctx_tokens"] > 0:
-            print(f"  Of which cumulative input from 'tool return injection' {comp['tool_ctx_tokens']} tok "
-                  f" (the same tool return is repeatedly billed in each subsequent round)")
+            print(f"  其中「工具返回注入」累计输入 {comp['tool_ctx_tokens']} tok "
+                  f"（同一份工具返回在后续每轮被反复计费）")
 
-        #  Per-step cost distribution
+        # 单步成本分布
         dist = self.cost_distribution()
-        print(f"Per-step cost distribution (n={dist['n']}): mean ${dist['mean']:.6f}  "
+        print(f"单步成本分布(n={dist['n']}): 均值 ${dist['mean']:.6f}  "
               f"p50 ${dist['p50']:.6f}  p95 ${dist['p95']:.6f}  p99 ${dist['p99']:.6f}")

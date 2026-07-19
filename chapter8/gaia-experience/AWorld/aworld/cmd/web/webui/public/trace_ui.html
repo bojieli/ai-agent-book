@@ -144,7 +144,7 @@
         <div class="trace-content">
             <div class="trace-list">
                 <div style="padding: 10px; border-bottom: 1px solid #e6e6e6;">
-                    <el-input v-model="searchTraceId" placeholder="Enter Trace ID to search" style="width: 100%;"
+                    <el-input v-model="searchTraceId" placeholder="输入Trace ID搜索" style="width: 100%;"
                         @keyup.enter="searchByTraceId">
                         <template #append>
                             <el-button @click="searchByTraceId">
@@ -186,7 +186,8 @@
                             @click="showStacktrace = true" icon="View" style="color: #F56C6C">
                             View Stack
                         </el-button>
-                    </div>                </el-descriptions-item>
+                    </div>
+                </el-descriptions-item>
                 <el-descriptions-item label="Start Time">{{ selectedSpan.start_time}}</el-descriptions-item>
                 <el-descriptions-item label="End Time">{{ selectedSpan.end_time }}</el-descriptions-item>
                 <el-descriptions-item label="Duration">{{ selectedSpan.duration_ms.toFixed(2) }}

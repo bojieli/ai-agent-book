@@ -320,40 +320,40 @@ def interactive_mode(client: EventClient):
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
-        description="Event client: sends events to the event-driven Agent server.",
+        description="事件客户端：向事件驱动 Agent 服务器发送事件。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""Examples:
-  python client.py --mode test                 # Send multiple events in sequence to run through all scenarios
-  python client.py --mode interactive          # Interactive mode, manually input events
-  python client.py --message "create a hello world script"   # Send a single web_message event
-  python client.py --event-type timer_trigger --message "check daily backup"   # Specify event type
+        epilog="""示例：
+  python client.py --mode test                 # 依次发送多种事件，跑通全部场景
+  python client.py --mode interactive          # 交互模式，手动输入事件
+  python client.py --message "创建一个 hello world 脚本"   # 发送单条 web_message 事件
+  python client.py --event-type timer_trigger --message "检查每日备份"   # 指定事件类型
 """,
     )
 
     parser.add_argument(
         '--server',
         default='http://localhost:8000',
-        help='Server address (default: http://localhost:8000)'
+        help='服务器地址（默认：http://localhost:8000）'
     )
 
     parser.add_argument(
         '--mode',
         choices=['test', 'interactive'],
         default='test',
-        help='Mode: test (send preset scenario events in sequence) or interactive (interactive manual sending)'
+        help='模式：test（依次发送预置场景事件）或 interactive（交互式手动发送）'
     )
 
     parser.add_argument(
         '--message',
         default=None,
-        help='Content of a single event to send; when this parameter is provided, --mode is ignored and the program exits after sending'
+        help='发送单条事件的内容；提供该参数时忽略 --mode，发完即退出'
     )
 
     parser.add_argument(
         '--event-type',
         default=EventType.WEB_MESSAGE.value,
         choices=[e.value for e in EventType],
-        help=f'Event type used by --message (default: {EventType.WEB_MESSAGE.value}）'
+        help=f'--message 使用的事件类型（默认：{EventType.WEB_MESSAGE.value}）'
     )
 
     args = parser.parse_args()

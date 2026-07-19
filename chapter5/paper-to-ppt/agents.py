@@ -1,13 +1,13 @@
 """
-Two agents, Proposer and Reviewer, along with an LLM client with token metering.
+提议者（Proposer）与审核者（Reviewer）两个 Agent，以及一个带 token 计量的 LLM 客户端。
 
-Design highlights (corresponding to the "Proposer-Reviewer" mechanism in the book):
-  - Proposer only handles **text**: paper body + accumulated structured text feedback; never receives rendered images.
-  - Reviewer **only sees the latest rendered screenshot** each round, and each round is a fresh, history-free call.
-  - In contrast, the single-agent self-review baseline accumulates all previous rendered images in the same conversation, causing rapid context expansion.
+设计要点（对应书中“提议者-审核者”机制）：
+  - Proposer 只处理**文本**：论文正文 + 累积的结构化文字反馈；从不接收渲染图片。
+  - Reviewer 每一轮**只看最新一版的渲染截图**，且每轮都是一次全新的、无历史的调用。
+  - 单 Agent 自审对照组则相反：同一段对话里不断累积历次渲染的图片，上下文迅速膨胀。
 
-All calls to OpenAI go through TokenMeter to count prompt/completion tokens,
-for the final "single-agent vs dual-agent context consumption" comparison.
+所有对 OpenAI 的调用都经过 TokenMeter 统计 prompt / completion token，
+用于最后的“单 Agent vs 双 Agent 上下文消耗”对比。
 """
 import base64
 import io
@@ -18,16 +18,16 @@ import re
 from openai import OpenAI
 from PIL import Image
 
-#  Model used for text generation (Proposer / text part of single agent)  
+# 文本生成用的模型（Proposer / 单 Agent 的文本部分）
 TEXT_MODEL = os.environ.get("TEXT_MODEL", "gpt-5.6-luna")
-#  The model used for visual review (Reviewer / single Agent's image-reading part) must support images
+# 视觉审查用的模型（Reviewer / 单 Agent 的看图部分），必须支持图像
 VISION_MODEL = os.environ.get("VISION_MODEL", "gpt-5.6-luna")
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
 def map_model_to_openrouter(model: str) -> str:
-    """Map the direct model name to the id on OpenRouter (non-mappable ids fall back to the current cheap flagship)."""
+    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
     if not model or "/" in model:
         return model or "openai/gpt-5.6-luna"
     m = model.lower()
@@ -43,19 +43,19 @@ def map_model_to_openrouter(model: str) -> str:
         return "google/" + model
     return "openai/gpt-5.6-luna"
 
-# Scale the screenshot to this width before sending to Vision, balancing "clear text overflow" and "controlling token cost".
+# 发送给 Vision 前把截图缩放到该宽度，兼顾“看得清文字溢出”与“控制 token 成本”
 VISION_IMAGE_WIDTH = 1280
 
 
 class TokenMeter:
-    """Accumulate tokens consumed by a "role/mode" and record the prompt tokens for each call (to observe context peaks)."""
+    """累计一个“角色/模式”消耗的 token，并记录每次调用的 prompt token（用于看上下文峰值）。"""
 
     def __init__(self, name: str):
         self.name = name
         self.prompt_tokens = 0
         self.completion_tokens = 0
         self.calls = 0
-        self.peak_prompt_tokens = 0  # Maximum prompt tokens per call — determines whether the context is "blown up"
+        self.peak_prompt_tokens = 0  # 单次调用最大的 prompt token —— 决定是否“撑爆上下文”
         self.per_call_prompt = []
 
     def add(self, usage):
@@ -72,7 +72,7 @@ class TokenMeter:
 
 
 def _client() -> OpenAI:
-    # General OpenRouter fallback: when there is no direct key, or the default gpt-5.x (direct connection requires organizational real-name authentication) is used, switch to OpenRouter.
+    # 通用 OpenRouter 兜底：无直连 key，或默认 gpt-5.x（直连需组织实名认证）时改走 OpenRouter。
     global TEXT_MODEL, VISION_MODEL
     api_key = os.environ.get("OPENAI_API_KEY")
     base_url = os.environ.get("OPENAI_BASE_URL")
@@ -82,15 +82,15 @@ def _client() -> OpenAI:
     )
     if prefer_or or (not api_key and orkey):
         api_key, base_url = orkey, OPENROUTER_BASE_URL
-        # When going through OpenRouter, map the model name to its id (idempotent: ids already with prefix are returned as-is).
+        # 走 OpenRouter 时把模型名映射为其 id（幂等：已带前缀的 id 原样返回）。
         TEXT_MODEL = map_model_to_openrouter(TEXT_MODEL)
         VISION_MODEL = map_model_to_openrouter(VISION_MODEL)
     if not api_key:
         raise SystemExit(
-            "❌ OPENAI_API_KEY (or fallback OPENROUTER_API_KEY) not detected. Please `cp env.example .env` first and fill in a valid "
-            "Run after setting the OpenAI API Key (or `export OPENAI_API_KEY=sk-...` / `export OPENROUTER_API_KEY=...`)."
+            "❌ 未检测到 OPENAI_API_KEY（或 OPENROUTER_API_KEY 兜底）。请先 `cp env.example .env` 并填入有效的 "
+            "OpenAI API Key（或 `export OPENAI_API_KEY=sk-...` / `export OPENROUTER_API_KEY=...`）后再运行。"
         )
-    # timeout + max_retries: Single network jitter/SSL interruptions will be automatically retried, rather than crashing the entire pipeline.
+    # timeout + max_retries：单次网络抖动/SSL 中断会自动重试，而不是让整条流水线崩溃。
     return OpenAI(
         api_key=api_key,
         base_url=base_url,
@@ -100,7 +100,7 @@ def _client() -> OpenAI:
 
 
 def encode_image(path: str) -> str:
-    """Read the PNG, scale to a uniform width, and encode as a data URL (base64)."""
+    """读取 PNG，缩放到统一宽度，编码为 data URL（base64）。"""
     img = Image.open(path).convert("RGB")
     if img.width > VISION_IMAGE_WIDTH:
         h = int(img.height * VISION_IMAGE_WIDTH / img.width)
@@ -112,12 +112,12 @@ def encode_image(path: str) -> str:
 
 
 def _extract_json(text: str):
-    """Robustly extract JSON from model responses (tolerating ```json code blocks or surrounding extra text)."""
+    """从模型回复里稳健地抽取 JSON（容忍 ```json 代码块或前后多余文字）。"""
     text = text.strip()
     m = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
     if m:
         text = m.group(1).strip()
-    #  find the first { to the last }
+    # 找到第一个 { 到最后一个 }
     start = text.find("{")
     end = text.rfind("}")
     if start != -1 and end != -1:
@@ -126,7 +126,7 @@ def _extract_json(text: str):
 
 
 def _extract_slides_md(text: str) -> str:
-    """Extract slides.md content from model response (tolerate ```markdown wrapping)."""
+    """从模型回复里抽取 slides.md 内容（容忍 ```markdown 包裹）。"""
     m = re.search(r"```(?:markdown|md)?\s*(.*?)```", text, re.DOTALL)
     if m:
         return m.group(1).strip()
@@ -134,36 +134,38 @@ def _extract_slides_md(text: str) -> str:
 
 
 # --------------------------------------------------------------------------- #
-# Reviewer's review scoring criteria (Proposer / Single Agent / Independent reviewer share the same rubric)
+# Reviewer 的审查评分标准（Proposer / 单 Agent / 独立评委共用同一套 rubric）
 # --------------------------------------------------------------------------- #
-REVIEW_RUBRIC = """You are a strict presentation quality reviewer (Reviewer). You will see a PPT rendered by Slidev,
-each image corresponds to one slide (numbered sequentially, starting from page 1). Please check each page for the following issues:
+REVIEW_RUBRIC = """你是一名严格的演示文稿质量审核员（Reviewer）。你会看到一份由 Slidev 渲染出的 PPT，
+每张图对应一页幻灯片（按顺序编号，从第 1 页开始）。请逐页检查以下问题：
 
-- text_overflow (text overflowing/cropped beyond page boundaries)
-- overcrowded (too much content/too crowded/insufficient whitespace)
-- image_size (image too large breaking layout, or too small to see clearly)
-- readability (font too small, poor contrast, code blocks hard to read)
-- layout (alignment chaos, unbalanced title-to-body ratio, empty pages)
+- text_overflow（文字溢出/被裁切超出页面边界）
+- overcrowded（内容过多/过于拥挤/留白不足）
+- image_size（图片过大顶出布局，或过小看不清）
+- readability（字号过小、对比度差、代码块难读）
+- layout（对齐混乱、标题与正文比例失衡、空页）
 
-Please review with a strict standard where the **target audience is the listeners** — if a slide has more than about 5 bullet points, or the body text block is too long, or an image squeezes text space, it should be considered an overcrowded/image_size issue. Report real problems, but do not overlook "overstuffed" slides. For each issue, provide: page (page number, integer),
-issue_type (one of the above), severity (high/medium/low), suggestion (specific, actionable modification suggestion, in Chinese).
+请以**目标用户是听众**的严格标准审查——一页幻灯片若要点超过约 5 条、或正文文字块偏长、
+或图片挤压了文字空间，都应视为 overcrowded/image_size 问题。报告真实存在的问题，
+但不要放过"塞得太满"。对每个问题给出：page（页码，整数）、
+issue_type（上面之一）、severity（high/medium/low）、suggestion（具体、可执行的修改建议，中文）。
 
-Also provide:
-- overall_score: overall quality score from 0-100 (higher is better)
-- pass: boolean, true only if the entire PPT **has no high or medium severity issues** and the layout is clean and readable
+同时给出：
+- overall_score：0-100 的整体质量分（越高越好）
+- pass：布尔值，仅当整份 PPT **既无 high 也无 medium 级问题**、排版干净可读时才为 true
 
-Output strictly the following JSON (do not output any extra text):
+严格输出如下 JSON（不要输出任何多余文字）：
 {
   "overall_score": <int>,
   "pass": <bool>,
   "issues": [
-    {"page": <int>, "issue_type": "<type>", "severity": "<high|medium|low>", "suggestion": "<Chinese suggestion>"}
+    {"page": <int>, "issue_type": "<type>", "severity": "<high|medium|low>", "suggestion": "<中文建议>"}
   ]
 }"""
 
 
 class Reviewer:
-    """Reviewer Agent: Look at the latest rendering screenshot and output structured JSON suggestions. Each round is called independently, no history."""
+    """审核者 Agent：看最新一版渲染截图，输出结构化 JSON 建议。每轮独立调用、无历史。"""
 
     def __init__(self, meter: TokenMeter):
         self.client = _client()
@@ -171,9 +173,9 @@ class Reviewer:
 
     def review(self, png_paths: list[str]) -> dict:
         content = [{"type": "text",
-                    "text": f"This PPT has a total of {len(png_paths)} page, the rendering screenshots of each page are given below in page number order. Please review."}]
+                    "text": f"这份 PPT 共 {len(png_paths)} 页，下面按页码顺序给出每一页的渲染截图。请审查。"}]
         for i, p in enumerate(png_paths, 1):
-            content.append({"type": "text", "text": f"Page {i} :"})
+            content.append({"type": "text", "text": f"第 {i} 页："})
             content.append({"type": "image_url",
                             "image_url": {"url": encode_image(p), "detail": "high"}})
         resp = self.client.chat.completions.create(
@@ -188,39 +190,39 @@ class Reviewer:
         return _extract_json(resp.choices[0].message.content)
 
 
-PROPOSER_SYSTEM = """You are a Proposer Agent skilled at converting academic papers into presentations.
-You write the PPT source code slides.md using the Slidev framework (Markdown + HTML).
+PROPOSER_SYSTEM = """你是一名擅长把学术论文转化为演示文稿的 Proposer Agent。
+你用 Slidev 框架（Markdown + HTML）编写 PPT 源码 slides.md。
 
-Slidev syntax essentials:
-- The file starts with YAML frontmatter (enclosed by ---), setting theme: default.
-- Use a single line `---` (with blank lines before and after) to separate each slide.
-- The first slide usually contains the title, authors, and conference.
-- Reference images using markdown: ![description](/image_filename.png), or use HTML to control size,
-  e.g., <img src="/speedup_bar.png" class="h-60 mx-auto" />.
-- Use Windi/Uno CSS utility classes to control layout (e.g., text-sm, grid grid-cols-2 gap-4).
+Slidev 语法要点：
+- 文件开头是 YAML frontmatter（--- 包裹），设置 theme: default。
+- 用单独一行的 `---`（前后空行）分隔每一页幻灯片。
+- 首页通常放标题、作者、会议。
+- 引用图片用 markdown：![说明](/图片文件名.png)，可用 HTML 控制尺寸，
+  例如 <img src="/speedup_bar.png" class="h-60 mx-auto" />。
+- 可用 Windi/Uno CSS 工具类控制排版（如 text-sm、grid grid-cols-2 gap-4）。
 
-Requirements:
-- Generate about 8-12 slides covering the paper's title, background/motivation, method, experimental results, and conclusion.
-- Use the provided charts/tables on at least 3 slides, ensuring the text matches the visuals.
-- Keep each slide moderately informative; avoid cramming too much text; split into more slides rather than overflowing.
-- Output only the complete content of slides.md, wrapped in a ```markdown code block, with no extra explanation."""
+要求：
+- 生成约 8-12 页，覆盖论文的标题、背景/动机、方法、实验结果、结论。
+- 至少在 3 页中使用提供的图表/表格，且图文匹配。
+- 每页信息量适中、不要塞太多字，宁可拆页也不要溢出。
+- 只输出 slides.md 的完整内容，用 ```markdown 代码块包裹，不要额外解释。"""
 
 
 class Proposer:
-    """Proposer Agent: Only consumes text (papers + cumulative text feedback), outputs slides.md."""
+    """提议者 Agent：只吃文本（论文 + 累积文字反馈），产出 slides.md。"""
 
     def __init__(self, meter: TokenMeter, paper_md: str, figures: dict):
         self.client = _client()
         self.meter = meter
         fig_desc = "\n".join(f"- {name}：{desc}" for name, desc in figures.items())
         first_user = (
-            f"Below is the full text of the paper (Markdown):\n\n{paper_md}\n\n"
-            f"Directly referenceable chart file (placed in Slidev public directory, referenced with /filename): \n{fig_desc}\n\n"
-            f"Please first produce a **quick draft**: to expedite the draft, compress the entire paper to **within 4 pages** —"
-            f"Directly paste the **complete original paragraph** corresponding to each chapter onto the slide (keep the entire text, do not condense into bullet points for now)."
-            f"Also include both charts. (A reviewer will later check the actual rendering and help you adjust it.) Generate the complete slides.md."
+            f"以下是论文全文（Markdown）：\n\n{paper_md}\n\n"
+            f"可直接引用的图表文件（放在 Slidev public 目录，用 /文件名 引用）：\n{fig_desc}\n\n"
+            f"请先做一版**快速初稿**：为了尽快出稿，把整篇论文压缩到 **4 页以内**——"
+            f"直接把每个章节对应的**完整段落原文**成段贴到幻灯片上（保留整段文字，先不要精简成要点），"
+            f"并把两张图表也放进去。（后续会有审核者看真实渲染效果再帮你调整。）生成完整的 slides.md。"
         )
-        # Proposer's conversation history — only text accumulates, images are never added
+        # Proposer 的对话历史——只累积文本，永不加入图片
         self.messages = [
             {"role": "system", "content": PROPOSER_SYSTEM},
             {"role": "user", "content": first_user},
@@ -236,48 +238,48 @@ class Proposer:
         return _extract_slides_md(reply)
 
     def propose(self) -> str:
-        """First round generation."""
+        """首轮生成。"""
         return self._generate()
 
     def revise(self, review: dict) -> str:
-        """Revise based on Reviewer's structured text feedback (only add JSON text to context)."""
+        """根据 Reviewer 的结构化文字反馈修订（只把 JSON 文本加入上下文）。"""
         feedback = json.dumps(review, ensure_ascii=False, indent=2)
         self.messages.append({
             "role": "user",
             "content": (
-                "Reviewer rendered screenshots of each page of your previous slides.md,"
-                "and provides the following structured improvement suggestions (JSON):\n\n"
+                "审核者（Reviewer）渲染了你上一版 slides.md 的每一页截图，"
+                "给出如下结构化改进建议（JSON）：\n\n"
                 f"{feedback}\n\n"
-                "Please understand these issues and revise slides.md (you can split pages, simplify text, adjust image sizes, etc.),"
-                "and output the complete revised slides.md."
+                "请理解这些问题并修订 slides.md（可拆页、精简文字、调整图片尺寸等），"
+                "重新输出完整的 slides.md。"
             ),
         })
         return self._generate()
 
 
 # --------------------------------------------------------------------------- #
-# Single Agent self-review control group: in the same conversation, generate, view own rendered images, and revise.
-# Key difference: rendered images from previous iterations **remain** in the same context, causing the context to expand rapidly with each iteration.
+# 单 Agent 自审对照组：同一段对话里既生成、又看自己的渲染图、又修订。
+# 关键区别：历次渲染的图片会**留在**同一上下文里，导致上下文随迭代快速膨胀。
 # --------------------------------------------------------------------------- #
 SELF_REVIEW_SYSTEM = PROPOSER_SYSTEM + """
 
-Additionally, you must **self-review**: when receiving screenshots of your own PPT, first mentally identify issues according to the following criteria
-(text overflow, content crowding, image size, readability, layout), then output the revised complete slides.md based on that."""
+此外，你还要**自我审查**：当收到自己 PPT 的渲染截图时，先在心里按下列标准找出问题
+（文字溢出、内容拥挤、图片尺寸、可读性、布局），再据此输出修订后的完整 slides.md。"""
 
 
 class SelfReviewAgent:
-    """Single Agent self-review: a continuously growing conversation, images accumulate in the context."""
+    """单 Agent 自审：一条不断增长的对话，图片累积在上下文中。"""
 
     def __init__(self, meter: TokenMeter, paper_md: str, figures: dict):
         self.client = _client()
         self.meter = meter
         fig_desc = "\n".join(f"- {name}：{desc}" for name, desc in figures.items())
         first_user = (
-            f"Below is the full text of the paper (Markdown):\n\n{paper_md}\n\n"
-            f"Directly referenceable chart files:\n{fig_desc}\n\n"
-            f"Please first produce a **quick draft**: to expedite the draft, compress the entire paper to **within 4 pages** —"
-            f"Directly paste the **complete original paragraph** corresponding to each chapter onto the slide (keep the entire text, do not condense into bullet points for now)."
-            f"Also include the two charts. (You will later see actual rendered screenshots and adjust accordingly.) Generate a complete slides.md."
+            f"以下是论文全文（Markdown）：\n\n{paper_md}\n\n"
+            f"可直接引用的图表文件：\n{fig_desc}\n\n"
+            f"请先做一版**快速初稿**：为了尽快出稿，把整篇论文压缩到 **4 页以内**——"
+            f"直接把每个章节对应的**完整段落原文**成段贴到幻灯片上（保留整段文字，先不要精简成要点），"
+            f"并把两张图表也放进去。（之后你会看到真实渲染截图再据此调整。）生成完整的 slides.md。"
         )
         self.messages = [
             {"role": "system", "content": SELF_REVIEW_SYSTEM},
@@ -294,13 +296,13 @@ class SelfReviewAgent:
         return _extract_slides_md(reply)
 
     def self_review_and_revise(self, png_paths: list[str]) -> str:
-        """Add the latest rendered screenshot to the **same** context, let the model self-review and revise. Images will remain in history."""
+        """把最新渲染截图加入**同一**上下文，让模型自审并修订。图片会一直留在历史里。"""
         content = [{"type": "text",
-                    "text": (f"This is a screenshot of your previous slides.md rendered into {len(png_paths)} pages."
-                             "Please self-review (text overflow/crowding/image size/readability/layout),"
-                             "then output the revised complete slides.md.")}]
+                    "text": (f"这是你上一版 slides.md 渲染出的 {len(png_paths)} 页截图。"
+                             "请自我审查（文字溢出/拥挤/图片尺寸/可读性/布局），"
+                             "然后输出修订后的完整 slides.md。")}]
         for i, p in enumerate(png_paths, 1):
-            content.append({"type": "text", "text": f"Page {i} :"})
+            content.append({"type": "text", "text": f"第 {i} 页："})
             content.append({"type": "image_url",
                             "image_url": {"url": encode_image(p), "detail": "high"}})
         self.messages.append({"role": "user", "content": content})
@@ -314,6 +316,6 @@ class SelfReviewAgent:
 
 
 def independent_judge(png_paths: list[str], meter: TokenMeter) -> dict:
-    """Use the same rubric to independently score a final PPT for fair comparison of the quality of the two approaches."""
+    """用同一套 rubric、独立地给某一版最终 PPT 打分，用于公平比较两种方案的质量。"""
     reviewer = Reviewer(meter)
     return reviewer.review(png_paths)

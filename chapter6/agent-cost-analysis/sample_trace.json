@@ -8,7 +8,7 @@
   "scenarios": [
     {
       "key": "naive",
-      "name": "A Naive (no cache/no compression)",
+      "name": "A 朴素(无缓存/无压缩)",
       "total_cost": 0.0037758,
       "component_costs": {
         "uncached_input_cost": 0.0031049999999999997,
@@ -112,7 +112,7 @@
     },
     {
       "key": "kv",
-      "name": "KV only cache (stable prefix/no compression)",
+      "name": "KV 仅缓存(稳定前缀/不压缩)",
       "total_cost": 0.0027075,
       "component_costs": {
         "uncached_input_cost": 0.0010227,
@@ -216,7 +216,7 @@
     },
     {
       "key": "compress",
-      "name": "Compression only (unstable prefix/summary)",
+      "name": "仅压缩(前缀不稳定/摘要)",
       "total_cost": 0.00311475,
       "component_costs": {
         "uncached_input_cost": 0.00242655,
@@ -320,7 +320,7 @@
     },
     {
       "key": "both",
-      "name": "B Optimized (KV cache + compression)",
+      "name": "B 优化(KV缓存+压缩)",
       "total_cost": 0.00264285,
       "component_costs": {
         "uncached_input_cost": 0.00148365,

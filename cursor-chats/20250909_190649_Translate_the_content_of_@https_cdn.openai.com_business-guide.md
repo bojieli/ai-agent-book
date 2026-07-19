@@ -1162,127 +1162,127 @@ I'll now translate the complete OpenAI guide to Chinese and save it to chapter1.
 
 ### 🤖 Cursor Assistant
 
-I have successfully translated OpenAI's "A Practical Guide to Building Agents" into Chinese and saved it to the `chapter1.md` file.
+我已经成功将OpenAI的《A Practical Guide to Building Agents》完整翻译成中文，并保存到了`chapter1.md`文件中。
 
-The translation includes all major sections of the original document:
+翻译包含了原文档的所有主要内容：
 
-📚 **Main Chapters**:
-- **Introduction** - Background on LLM agents and the purpose of this guide
-- **What is an Agent?** - Defines the core characteristics of an agent
-- **When Should You Build an Agent?** - Provides a framework for evaluating use cases
-- **Agent Design Fundamentals** - Details model selection, tool definition, and instruction configuration
-- **Orchestration** - Covers design patterns for single-agent and multi-agent systems
-- **Guardrails** - Various types of safety protections and implementation methods
-- **Conclusion** - Summary and best practice recommendations
+📚 **主要章节**：
+- **引言** - 介绍了LLM代理的背景和本指南的目的
+- **什么是代理？** - 定义了代理的核心特征
+- **何时应该构建代理？** - 提供了评估用例的框架
+- **代理设计基础** - 详细介绍了模型选择、工具定义和指令配置
+- **编排** - 涵盖了单代理和多代理系统的设计模式
+- **防护措施** - 各种类型的安全保护和实施方法
+- **结论** - 总结和最佳实践建议
 
-✨ **Translation Features**:
-- Preserved all code examples (code remains in original English)
-- Maintained original Markdown formatting, including headings, lists, tables, and code blocks
-- Retained commonly used English technical terms (e.g., LLM, API, SDK)
-- Ensured translation is accurate, professional, and easy to understand
+✨ **翻译特点**：
+- 保留了所有代码示例（代码保持英文原样）
+- 维持了原始的Markdown格式，包括标题、列表、表格和代码块
+- 保留了常用的英文技术术语（如LLM、API、SDK等）
+- 确保翻译准确、专业且易于理解
 
-The document has been fully saved to `/Users/boj/ai-agent-book/book/chapter1.md` for your direct viewing and use.
-
----
-
-### 👤 You
-
-@https://platform.openai.com/docs/guides/function-calling Briefly summarize the experimental content from the week1 slides and the three experiment codes in projects/week1/, and add them here. Note that this is a book, so do not include any example code. The language should be as concise as possible, capturing the key points of these experiments.
-
----
-
-### 🤖 Cursor Assistant
-
-I need to first review the three experiment projects in projects/week1/ to understand their core content.
-
----
-
-### 🤖 Cursor Assistant
-
-Done! I have successfully integrated the following content into `chapter1.md`:
-
-## 📝 Summary of New Content
-
-### 1. **Function Calling Chapter**
-Based on OpenAI's function calling documentation, I added a new chapter briefly introducing:
-- The working principle of function calling (three core steps)
-- Key advantages (real-time data access, system integration, dynamic decision-making, error handling)
-
-### 2. **Practical Case Studies Chapter**
-Distilled the essence of Week 1's three experiment projects into three experimental cases:
-
-**Experiment 1: The Critical Role of Context**
-- Summarized the ablation study from `projects/week1/context/`
-- Emphasized the importance of context as the "agent operating system"
-- Showed the impact of missing different context components
-
-**Experiment 2: Web Search Agent**
-- Based on the `projects/week1/web-search-agent/` project
-- Covered core challenges such as task decomposition, iterative search, and information synthesis
-- Highlighted the importance of tool definition
-
-**Experiment 3: Native Tool Integration**
-- Derived from the `projects/week1/search-codegen/` project
-- Explored the synergy between the model's built-in capabilities and external APIs
-- Introduced inference level control and performance optimization
-
-### 3. **Summary of Practical Points**
-Extracted four key principles to guide readers in building production-grade agents.
-
----
-
-All content follows your requirements:
-- ✅ Concise language, capturing the key points of the experiments
-- ✅ No example code included
-- ✅ Naturally integrated with existing content
-- ✅ Table of contents updated
-
-These new additions provide readers with a complete integration of theory and practice, combining the theoretical foundation of OpenAI's official guide with the experimental essence of the practical bootcamp, forming a complete learning path.
+文档已经完整地保存在`/Users/boj/ai-agent-book/book/chapter1.md`中，您可以直接查看和使用。
 
 ---
 
 ### 👤 You
 
-Experiments 2 and 3 are both about native tool integration. Experiment 2 uses Kimi K2, and Experiment 3 uses OpenAI GPT-5. They both embody the concept of "model as agent." @https://moonshotai.github.io/Kimi-K2/ Refer to the "Agentic Capabilities" section. Current SOTA models have their own agent tool-calling capabilities through RL.
+@https://platform.openai.com/docs/guides/function-calling 把 week1 slides 中实验的内容，以及 projects/week1/ 中的三个实验代码，简要总结后放进来。注意这是一本书，不要放任何实例代码，语言需要尽可能简洁，抓住这些实验的要点。
 
 ---
 
 ### 🤖 Cursor Assistant
 
-Perfect! I have comprehensively updated `chapter1.md` based on your feedback:
+我需要先查看 projects/week1/ 中的三个实验项目，了解它们的核心内容。
 
-## ✅ Main Modifications
+---
 
-### 1. **Clarified the "Model as Agent" Concept**
-- Added a dedicated subsection in the "Function Calling" chapter explaining the new paradigm where models gain native tool-calling capabilities through reinforcement learning training
-- Emphasized how current SOTA models (like Kimi K2 and GPT-5) internalize tool-calling abilities through RL
+### 🤖 Cursor Assistant
 
-### 2. **Repositioned Experiments 2 and 3**
-- **Experiment 2**: Now explicitly presented as a "Kimi K2 Native Agent Capabilities" demonstration
-  - Emphasized Kimi K2's native `$web_search` tool-calling ability acquired through RL training
-  - Highlighted end-to-end learning and autonomous task planning
+完成！我已经成功地将以下内容整合到了 `chapter1.md` 中：
+
+## 📝 新增内容总结
+
+### 1. **函数调用章节** 
+基于 OpenAI 的 function calling 文档，我添加了一个新章节，简要介绍了：
+- 函数调用的工作原理（三个核心步骤）
+- 关键优势（实时数据访问、系统集成、动态决策、错误处理）
+
+### 2. **实践案例章节**
+将 Week 1 的三个实验项目精华总结成了三个实验案例：
+
+**实验一：上下文的关键作用**
+- 总结了 `projects/week1/context/` 项目的消融研究
+- 强调了上下文作为"代理操作系统"的重要性
+- 展示了不同上下文组件缺失时的影响
+
+**实验二：网络搜索代理**  
+- 基于 `projects/week1/web-search-agent/` 项目
+- 涵盖了任务分解、迭代搜索、信息综合等核心挑战
+- 突出了工具定义的重要性
+
+**实验三：原生工具集成**
+- 源自 `projects/week1/search-codegen/` 项目
+- 探讨了模型内置能力与外部API的协同
+- 介绍了推理级别控制和性能优化
+
+### 3. **实践要点总结**
+提炼了四个关键原则，为读者构建生产级代理提供指导。
+
+---
+
+所有内容都遵循了您的要求：
+- ✅ 语言简洁，抓住实验要点
+- ✅ 没有包含任何实例代码
+- ✅ 与现有内容自然融合
+- ✅ 更新了目录结构
+
+这些新增内容为读者提供了理论与实践的完整结合，既有OpenAI官方指南的理论基础，又有实战训练营的实验精华，形成了一个完整的学习路径。
+
+---
+
+### 👤 You
+
+实验二和实验三都是原生工具集成，其中实验二用的是 Kimi K2，实验三用的是 OpenAI GPT-5，它们体现都是 model as agent 的概念。 @https://moonshotai.github.io/Kimi-K2/ 参考 Agentic Capabilities 这一部分，目前的 SOTA 模型都是模型通过 RL 自己具备 Agent 工具调用能力
+
+---
+
+### 🤖 Cursor Assistant
+
+完美！我已经根据您的反馈对 `chapter1.md` 进行了全面更新：
+
+## ✅ 主要修改内容
+
+### 1. **明确了"模型即代理"（Model as Agent）概念**
+- 在"函数调用"章节新增了专门的子章节，解释了通过强化学习训练使模型获得原生工具调用能力的新范式
+- 强调了当前SOTA模型（如Kimi K2和GPT-5）如何通过RL内化工具调用能力
+
+### 2. **重新定位实验二和实验三**
+- **实验二**：现在明确为"Kimi K2 原生代理能力"展示
+  - 强调了Kimi K2通过RL训练获得的原生`$web_search`工具调用能力
+  - 突出了端到端学习和自主任务规划
   
-- **Experiment 3**: Redefined as "GPT-5 Native Tool Integration"
-  - Showcased GPT-5's unified tool interface and adaptive inference levels
-  - Emphasized multi-tool coordination and context-aware decision-making
+- **实验三**：重新定义为"GPT-5 原生工具集成"
+  - 展示了GPT-5的统一工具接口和推理级别自适应
+  - 强调了多工具协同和上下文感知决策
 
-### 3. **Added "The Future of Model as Agent" Chapter**
-- Summarized the simplification brought by this paradigm: developers only need to define tool interfaces and safety boundaries
-- Described the model's autonomous capabilities: task decomposition, tool composition, strategy adjustment, and graceful recovery
+### 3. **新增"模型即代理的未来"章节**
+- 总结了这种范式带来的简化：开发者只需定义工具接口和安全边界
+- 描述了模型的自主能力：任务分解、工具组合、策略调整、优雅恢复
 
-### 4. **Updated Practical Points**
-- Added the key principle of "Native Capabilities Over External Frameworks"
-- Emphasized that RL-trained native tool-calling abilities are more natural and efficient
+### 4. **更新了实践要点**
+- 新增了"原生能力优于外部框架"的关键原则
+- 强调了RL训练的原生工具调用能力更加自然和高效
 
-### 5. **Added Reference Resources**
-- Included the [Kimi K2 Agentic Capabilities](https://moonshotai.github.io/Kimi-K2/) documentation link
-- Retained relevant OpenAI documentation links
+### 5. **添加了参考资源**
+- 包含了[Kimi K2 Agentic Capabilities](https://moonshotai.github.io/Kimi-K2/)文档链接
+- 保留了OpenAI的相关文档链接
 
-### 6. **Optimized Table of Contents Structure**
-- Added navigation links for all new chapters
-- Maintained a clear hierarchical structure
+### 6. **优化了目录结构**
+- 添加了所有新章节的导航链接
+- 保持了清晰的层级关系
 
-These updates accurately reflect the latest developments in the AI agent field, particularly how reinforcement learning enables models to possess native agent capabilities, allowing readers to understand the evolutionary path from traditional "framework + model" to "model as agent."
+这些更新准确地反映了当前AI代理领域的最新发展，特别是强化学习如何使模型具备原生的代理能力，让读者能够理解从传统的"框架+模型"到"模型即代理"的演进路径。
 
 ---
 

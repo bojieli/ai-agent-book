@@ -383,13 +383,13 @@ class CodingAgentCLI:
 
 
 def list_tools():
-    """Print all registered tools and their descriptions offline (no API Key required)."""
+    """离线打印所有已注册工具及其简介（无需 API Key）。"""
     import json
     tools_file = Path(__file__).parent / "tools.json"
     with open(tools_file, "r", encoding="utf-8") as f:
         tools = json.load(f)["tools"]
 
-    print(f"Total {len(tools)} tools:\n")
+    print(f"共 {len(tools)} 个工具：\n")
     for tool in tools:
         name = tool.get("name", "?")
         desc = (tool.get("description") or "").strip().splitlines()
@@ -406,62 +406,62 @@ def build_parser() -> "argparse.ArgumentParser":
     parser = argparse.ArgumentParser(
         prog="python main.py",
         description=(
-            "Coding Agent — a coding agent with a complete toolset (file read/write, pure Python Grep/Glob, "
-            "persistent Shell, TodoWrite planning, etc.).\n"
-            "Default enters interactive conversation; use -p to pass a single task for one-shot execution and exit."
+            "Coding Agent —— 一个具备完整工具集（文件读写、纯 Python Grep/Glob、"
+            "持久化 Shell、TodoWrite 规划等）的编码智能体。\n"
+            "默认进入交互式对话；也可用 -p 传入单个任务后一次性执行并退出。"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "Examples:\n"
-            "  # Interactive conversation (default)\n"
+            "示例：\n"
+            "  # 交互式对话（默认）\n"
             "  python main.py\n\n"
-            "  # One-shot execution of a single task, then exit (suitable for scripts/CI)\n"
-            "  python main.py -p \"List all Python files in the current directory using Glob tool\"\n\n"
-            "  # View all available tools offline (no API Key required)\n"
+            "  # 一次性执行单个任务，完成后退出（适合脚本/CI）\n"
+            "  python main.py -p \"用 Glob 工具列出当前目录下所有 Python 文件\"\n\n"
+            "  # 离线查看全部可用工具（无需 API Key）\n"
             "  python main.py --list-tools\n\n"
-            "  # Temporarily specify model / provider (overrides .env)\n"
+            "  # 临时指定模型 / 供应商（覆盖 .env）\n"
             "  python main.py --provider openrouter --model anthropic/claude-sonnet-4\n\n"
-            "Configuration: Copy .env.example to .env and fill in the API Key for your chosen provider."
-            "See README.md and PROVIDERS.md for details."
+            "配置：复制 .env.example 为 .env，填入所选供应商的 API Key。"
+            "详见 README.md 与 PROVIDERS.md。"
         ),
     )
 
     parser.add_argument(
         "-p", "--prompt",
-        metavar="Task",
-        help="Run in non-interactive mode: execute a single given task then exit. Omit to enter interactive conversation.",
+        metavar="任务",
+        help="以非交互模式运行：执行给定的单个任务后退出。省略则进入交互式对话。",
     )
     parser.add_argument(
         "--list-tools",
         action="store_true",
-        help="List all registered tools and descriptions offline then exit (no API Key required, useful for quick self-check).",
+        help="离线列出全部已注册工具及简介后退出（无需 API Key，可用于快速自检）。",
     )
     parser.add_argument(
         "--provider",
         choices=["anthropic", "openai", "openrouter"],
-        help="Temporarily override the PROVIDER setting in .env.",
+        help="临时覆盖 .env 中的 PROVIDER 设置。",
     )
     parser.add_argument(
         "--model",
-        metavar="Model name",
-        help="Temporarily override DEFAULT_MODEL in .env (e.g., claude-sonnet-5).",
+        metavar="模型名",
+        help="临时覆盖 .env 中的 DEFAULT_MODEL（例如 claude-sonnet-5）。",
     )
     parser.add_argument(
         "--base-url",
         metavar="URL",
-        help="Temporarily override API Base URL (for self-hosted gateways or third-party services compatible with OpenAI).",
+        help="临时覆盖 API Base URL（用于自建网关或兼容 OpenAI 的第三方服务）。",
     )
     parser.add_argument(
         "--max-iterations",
         type=int,
         default=Config.MAX_ITERATIONS,
         metavar="N",
-        help=f"Maximum number of Agent iterations for a single task (default {Config.MAX_ITERATIONS}）。",
+        help=f"单个任务的最大 Agent 迭代轮数（默认 {Config.MAX_ITERATIONS}）。",
     )
     parser.add_argument(
         "--no-color",
         action="store_true",
-        help="Disable colored output (automatically disabled in pipes / non-TTY environments).",
+        help="禁用彩色输出（管道 / 无 TTY 环境会自动禁用）。",
     )
     return parser
 
@@ -471,7 +471,7 @@ def main():
     parser = build_parser()
     args = parser.parse_args()
 
-    #  Offline mode: list tools only, no Agent or API Key initialization
+    # 离线路径：仅列出工具，无需初始化 Agent 或 API Key
     if args.list_tools:
         list_tools()
         return
@@ -479,7 +479,7 @@ def main():
     cli = CodingAgentCLI(use_colors=not args.no_color)
 
     if args.prompt:
-        #  Non-interactive (one-shot) mode
+        # 非交互（一次性）模式
         exit_code = cli.run_once(
             args.prompt,
             max_iterations=args.max_iterations,
@@ -489,7 +489,7 @@ def main():
         )
         sys.exit(exit_code)
     else:
-        #  Interactive mode (default behavior, unchanged)
+        # 交互模式（默认行为，保持不变）
         cli.run(
             max_iterations=args.max_iterations,
             model=args.model,

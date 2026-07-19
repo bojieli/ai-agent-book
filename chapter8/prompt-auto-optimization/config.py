@@ -1,21 +1,21 @@
 """
-Unified LLM client configuration.
+统一的 LLM 客户端配置。
 
-Defaults to OpenAI (reads OPENAI_API_KEY, model gpt-5.6-luna).
-Also supports switching to Moonshot / Volcano Ark (ARK) via the environment variable LLM_PROVIDER,
-both of which are compatible with OpenAI's Chat Completions + tool call interface.
+默认使用 OpenAI（读取 OPENAI_API_KEY，模型 gpt-5.6-luna）。
+也支持通过环境变量 LLM_PROVIDER 切换到 Moonshot / 火山方舟(ARK)，
+它们都兼容 OpenAI 的 Chat Completions + 工具调用接口。
 
-    export LLM_PROVIDER=openai   # default
-    export LLM_PROVIDER=moonshot # uses MOONSHOT_API_KEY
-    export LLM_PROVIDER=ark      # uses ARK_API_KEY, and must set ARK_MODEL
+    export LLM_PROVIDER=openai   # 默认
+    export LLM_PROVIDER=moonshot # 用 MOONSHOT_API_KEY
+    export LLM_PROVIDER=ark      # 用 ARK_API_KEY，并需设置 ARK_MODEL
 
-Unified OpenRouter fallback:
-    If the selected provider's own key is missing but OPENROUTER_API_KEY is set, automatically switch to
-    OpenRouter (https://openrouter.ai/api/v1), and map the model name to OpenRouter naming:
+统一的 OpenRouter 兜底（fallback）：
+    若所选 provider 自己的 Key 缺失，但设置了 OPENROUTER_API_KEY，则自动改走
+    OpenRouter（https://openrouter.ai/api/v1），并把模型名映射到 OpenRouter 命名：
         gpt-*     -> openai/gpt-*
         claude-*  -> anthropic/claude-opus-4.8
-        contains "/"    -> pass through as-is
-        others    -> openai/gpt-5.6-luna
+        含 "/"    -> 原样透传
+        其它      -> openai/gpt-5.6-luna
 """
 
 import os
@@ -26,10 +26,10 @@ load_dotenv()
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
-#Default configuration for each provider: base_url / environment variable name / default model
+# 各提供商的默认配置：base_url / 环境变量名 / 默认模型
 _PROVIDERS = {
     "openai": {
-        "base_url": None,  #Use SDK defaults
+        "base_url": None,  # 使用 SDK 默认
         "key_env": "OPENAI_API_KEY",
         "default_model": "gpt-5.6-luna",
     },
@@ -41,7 +41,7 @@ _PROVIDERS = {
     "ark": {
         "base_url": "https://ark.cn-beijing.volces.com/api/v3",
         "key_env": "ARK_API_KEY",
-        #ARK requires using the inference endpoint id as the model, please specify via ARK_MODEL
+        # ARK 需要用推理接入点(endpoint id) 作为 model，请通过 ARK_MODEL 指定
         "default_model": os.getenv("ARK_MODEL", "doubao-seed-1-6-250615"),
     },
 }
@@ -52,7 +52,7 @@ def get_provider() -> str:
 
 
 def _to_openrouter_model(model: str) -> str:
-    """Map common model names to OpenRouter namespace."""
+    """把常见模型名映射到 OpenRouter 命名空间。"""
     if not model:
         return "openai/gpt-5.6-luna"
     if "/" in model:
@@ -65,8 +65,8 @@ def _to_openrouter_model(model: str) -> str:
 
 
 def _is_reasoning_model(model: str) -> bool:
-    """gpt-5.x / o1·o3·o4 / kimi-k3 / *reasoner and other reasoning models: do not accept temperature=0,
-    direct connection to gpt-5.x also requires organizational real-name and has limited tool calls, so prefer OpenRouter."""
+    """gpt-5.x / o1·o3·o4 / kimi-k3 / *reasoner 等推理模型：不接受 temperature=0，
+    直连 gpt-5.x 还需组织实名且工具调用受限，故优先走 OpenRouter。"""
     m = (model or "").lower()
     return (m.startswith(("gpt-5", "o1", "o3", "o4"))
             or m.startswith("kimi-k3")
@@ -74,10 +74,10 @@ def _is_reasoning_model(model: str) -> bool:
 
 
 def _use_openrouter(cfg: dict) -> bool:
-    """Two scenarios for using OpenRouter:
-    1) The provider's own key is missing but OPENROUTER_API_KEY is set (unified fallback);
-    2) The target is gpt-5.x and OPENROUTER_API_KEY is set — direct connection to gpt-5.x requires organizational real-name,
-       and /chat/completions tool calls are limited, so even if OPENAI_API_KEY is set, prefer OpenRouter."""
+    """走 OpenRouter 的两种情形：
+    1) provider 自己的 Key 缺失、但有 OPENROUTER_API_KEY（统一兜底）；
+    2) 目标是 gpt-5.x 且有 OPENROUTER_API_KEY —— 直连 gpt-5.x 需组织实名、
+       且 /chat/completions 工具调用受限，故即便有 OPENAI_API_KEY 也优先 OpenRouter。"""
     if not os.getenv("OPENROUTER_API_KEY"):
         return False
     if not os.getenv(cfg["key_env"]):
@@ -87,10 +87,10 @@ def _use_openrouter(cfg: dict) -> bool:
 
 
 def get_model() -> str:
-    """Allow overriding the default model with LLM_MODEL; map model name under OpenRouter fallback path."""
+    """允许用 LLM_MODEL 覆盖默认模型；OpenRouter 兜底路径下映射模型名。"""
     provider = get_provider()
     if provider not in _PROVIDERS:
-        raise ValueError(f"Unknown LLM_PROVIDER: {provider}")
+        raise ValueError(f"未知的 LLM_PROVIDER: {provider}")
     cfg = _PROVIDERS[provider]
     model = os.getenv("LLM_MODEL") or cfg["default_model"]
     if _use_openrouter(cfg):
@@ -101,15 +101,15 @@ def get_model() -> str:
 def get_client() -> OpenAI:
     provider = get_provider()
     if provider not in _PROVIDERS:
-        raise ValueError(f"Unknown LLM_PROVIDER: {provider}")
+        raise ValueError(f"未知的 LLM_PROVIDER: {provider}")
     cfg = _PROVIDERS[provider]
     if _use_openrouter(cfg):
         return OpenAI(api_key=os.getenv("OPENROUTER_API_KEY"), base_url=OPENROUTER_BASE_URL)
     api_key = os.getenv(cfg["key_env"])
     if not api_key:
         raise RuntimeError(
-            f"Environment variable {cfg['key_env']} is not set, and OPENROUTER_API_KEY is also not set."
-            f"Please refer to env.example to configure one of them (OpenRouter can serve as a unified fallback) and retry."
+            f"环境变量 {cfg['key_env']} 未设置，也未设置 OPENROUTER_API_KEY。"
+            f"请参考 env.example 配置其一（OpenRouter 可作为统一兜底）后重试。"
         )
     kwargs = {"api_key": api_key}
     if cfg["base_url"]:
@@ -117,9 +117,9 @@ def get_client() -> OpenAI:
     return OpenAI(**kwargs)
 
 
-# All LLM calls uniformly use low temperature to ensure reproducible results;
-# but reasoning models (gpt-5.x / o series / kimi-k3, etc.) only accept default temperature=1,
-# so the default temperature is automatically selected based on the currently resolved model (can be explicitly overridden with LLM_TEMPERATURE).
+# 全部 LLM 调用统一使用低温度，保证结果可复现；
+# 但推理模型（gpt-5.x / o 系列 / kimi-k3 等）只接受默认 temperature=1，
+# 故按当前解析出的模型自动选择默认温度（可用 LLM_TEMPERATURE 显式覆盖）。
 def _default_temperature() -> str:
     provider = get_provider()
     cfg = _PROVIDERS.get(provider, _PROVIDERS["openai"])

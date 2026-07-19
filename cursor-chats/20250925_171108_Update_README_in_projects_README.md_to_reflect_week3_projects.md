@@ -44,7 +44,7 @@ Perfect! I've successfully updated the `projects/README.md` to include all Week 
 
 ## Summary of Changes
 
-1. **Added Week 3 Section** - "Knowledge Base and Learning Mechanisms"
+1. **Added Week 3 Section** - "知识库与学习机制" (Knowledge Base and Learning Mechanisms)
 
 2. **Included 12 Week 3 Projects**:
    - **dense-embedding**: Vector similarity search with ANNOY vs HNSW comparison

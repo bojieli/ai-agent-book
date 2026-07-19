@@ -12,17 +12,17 @@
 
 In project/week3/agentic-rag, create an educational agentic RAG system that queries the local retrieval pipeline in week3/retrieval-pipeline HTTP endpoint or a Dify knowledge base (configurable to use local retrieval pipeline or Dify API).
 
-The agent itself should follow the ReAct pattern, refer to the week2/user-memory/agent.py. Should support multiple LLM providers and multiple LLM models, exactly the same as in the week2/user-memory/agent.py. There should be two tools: knowledge_base_search, which has one parameter: a natural language query, and returns the top-matching document chunks along with the original document IDs. And another tool: get_document, which has one parameter: document ID, which retrieves the entire document from the knowledge base.
+The agent itself should be follow react pattern, refer to the week2/user-memory/agent.py. Should support multiple LLM providers and multiple LLM models, exactly the same as in the week2/user-memory/agent.py. There should be two tools: knowledge_base_search, which has one parameter: a natural language query, and return the top-matching document chunks along with the original document IDs. And another tool: get_document, which has one parameter: document ID, which retrieves the entire document from the knowledge base.
 
-Note that the agent should be able to answer follow-up questions, by simply appending the new user message to the conversation history (including user, assistant and tool messages according to OpenAI definition).
+Notice that the agent should be able to answer follow-up questions, by simply appending the new user message to the conversation history (including user, assistant and tool messages according to OpenAI definition).
 
-The agent's system prompt should request the agent to only answer questions according to the knowledge base, and always include the citations. Reject any questions that cannot be answered using data in the knowledge base.
+The agent's system prompt should request the agent to only answer questions according to the knowledge base, and always include the citations. Reject any questions that cannot be answered using data in knowledge base.
 
 We should create a chunking and indexing script with configurable chunk lengths (by default, 2048 characters, but respect paragraph boundary up to 4096 chars). Run the chunk and index script before using agentic RAG for query.
 
-For ablation study purposes, the main.py should have two modes: one mode is the agentic RAG mode, and the other mode is non-agentic RAG mode, which simply uses the latest user question to query the retrieval pipeline/Dify, and puts the returned result into the context of the LLM, and lets the LLM answer the question according to the user's original query and returned query result.
+For abalation study purpose, the main.py should have two modes: one mode is the agentic RAG mode, and the other mode is non-agentic RAG mode, which simply uses the latest user question to query the retrieval pipeline/Dify, and put the returned result to the context of LLM, and let LLM answer the question according to the user's original query and returned query result.
 
-Create an evaluation framework using the dataset in @https://github.com/ZixinxinWang/Legal-Eagle-InternLM/tree/main/Retrieval-Augmented%20Generation/laws (Chinese Law) and a benchmark according to the laws. We should have some simple cases which directly ask a simple question (e.g., "纵火判几年"), and hard cases which are complicated legal cases, which can demonstrate the effectiveness of agentic RAG (the agent determines the query and uses multiple rounds to focus on different aspects of the problem).
+Create a evaluation framework using the dataset in @https://github.com/ZixinxinWang/Legal-Eagle-InternLM/tree/main/Retrieval-Augmented%20Generation/laws  (中国法律) and a benchmark according to the laws. We should have some simple cases which directly asks a simple question (e.g. 纵火判几年), and hard cases which are complicated legal cases, which can demonstrate the effectiveness of agentic RAG (the agent determines the query and use multi rounds to focus on different aspects of the problem.
 
 ---
 
@@ -135,7 +135,8 @@ python evaluate.py
 
 ## 📊 **Evaluation Demonstrates**
 
-The ablation study shows:- **Agentic RAG** excels at complex multi-aspect questions through iterative search
+The ablation study shows:
+- **Agentic RAG** excels at complex multi-aspect questions through iterative search
 - **Non-Agentic RAG** is faster but less comprehensive
 - Metrics include accuracy, relevance, citation quality, and response time
 

@@ -21,7 +21,7 @@ from colorama import init, Fore, Style
 init(autoreset=True)
 
 
-# Short CLI aliases -> compression strategy (order matches the book's Experiment 2-9)
+# Short CLI aliases -> compression strategy (order matches the book's 实验 2-9)
 STRATEGY_CHOICES = {
     "no_compression": CompressionStrategy.NO_COMPRESSION,
     "individual": CompressionStrategy.NON_CONTEXT_AWARE_INDIVIDUAL,
@@ -359,39 +359,39 @@ class StrategyRunner:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build command-line argument parser"""
+    """构建命令行参数解析器"""
     parser = argparse.ArgumentParser(
         prog="run_all_strategies.py",
-        description="Run compression strategies one by one and write the full process (including streaming compression summary) to the log.\n"
-                    "Compared to experiment.py, this script focuses on \"reproducible detailed logs\": each run generates "
-                    ".log text log and .json result file, facilitating per-round inspection of compression effects.",
-        epilog="Example:\n"
-               "  python run_all_strategies.py                     # Run all 6 strategies\n"
-               "  python run_all_strategies.py -s windowed         # Run only the adaptive windowing strategy\n"
+        description="逐个运行压缩策略并将完整过程（含流式压缩摘要）写入日志。\n"
+                    "与 experiment.py 相比，本脚本侧重“可复盘的详细日志”：每次运行都会生成 "
+                    ".log 文本日志和 .json 结果文件，便于逐轮检查压缩效果。",
+        epilog="示例：\n"
+               "  python run_all_strategies.py                     # 运行全部 6 种策略\n"
+               "  python run_all_strategies.py -s windowed         # 只跑自适应窗口化策略\n"
                "  python run_all_strategies.py --model kimi-k3 --log-dir logs/k2\n"
                "  python run_all_strategies.py --list-strategies",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "-s", "--strategy", nargs="+", choices=list(STRATEGY_CHOICES.keys()), metavar="NAME",
-        help="Compression strategies to run (can specify multiple, defaults to all 6). Optional values:"
+        help="要运行的压缩策略（可指定多个，默认运行全部 6 种）。可选值："
              + ", ".join(STRATEGY_CHOICES.keys()),
     )
     parser.add_argument(
         "-m", "--model", default=None,
-        help=f"Override the model name used (default reads environment variable MODEL_NAME, currently {Config.MODEL_NAME}）",
+        help=f"覆盖使用的模型名称（默认读取环境变量 MODEL_NAME，当前为 {Config.MODEL_NAME}）",
     )
     parser.add_argument(
         "--log-dir", default="logs", metavar="DIR",
-        help="Output directory for logs and JSON results (default logs/)",
+        help="日志与 JSON 结果的输出目录（默认 logs/）",
     )
     parser.add_argument(
         "-n", "--max-iterations", type=int, default=None, metavar="N",
-        help=f"Maximum iterations (tool call rounds) allowed per strategy, default {Config.MAX_ITERATIONS}",
+        help=f"每个策略允许的最大迭代（工具调用轮数），默认 {Config.MAX_ITERATIONS}",
     )
     parser.add_argument(
         "--list-strategies", action="store_true",
-        help="List all optional compression strategy names and exit",
+        help="列出所有可选的压缩策略名称后退出",
     )
     return parser
 
@@ -402,7 +402,7 @@ def main():
     args = parser.parse_args()
 
     if args.list_strategies:
-        print("Optional compression strategies (values for --strategy):")
+        print("可选的压缩策略（--strategy 的取值）：")
         for alias, strat in STRATEGY_CHOICES.items():
             print(f"  {alias:<16} -> {strat.value}")
         return

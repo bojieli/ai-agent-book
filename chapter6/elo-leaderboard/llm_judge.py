@@ -38,9 +38,9 @@ DEFAULT_CANDIDATE_MODELS = ["claude-opus-4-8", "claude-haiku-4-5"]
 DEFAULT_JUDGE_MODEL = "claude-opus-4-8"
 
 DEFAULT_PROMPTS = [
-    "Explain in one sentence what the self-attention mechanism of a Transformer is.",
+    "用一句话解释什么是 Transformer 的自注意力机制。",
     "Write a haiku about distributed systems.",
-    "Give the time complexity of quicksort and briefly describe the worst-case scenario.",
+    "给出快速排序的时间复杂度，并简要说明最坏情况。",
 ]
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
@@ -57,9 +57,9 @@ _OPENROUTER_MODEL_MAP = {
 }
 
 _JUDGE_SYSTEM = (
-    "You are a strict judge. The user will give you a question and two candidate answers (Answer A and Answer B)."
-    "Judge which one is better based solely on answer quality, ignoring the order they appear."
-    "Output only one word: A, B, or tie."
+    "你是一个严格的评委。用户会给你一个问题和两个候选回答（回答 A 和回答 B）。"
+    "请只根据回答质量判断哪个更好，忽略它们出现的顺序。"
+    "只输出一个词：A、B 或 tie。"
 )
 
 
@@ -188,10 +188,10 @@ def _judge_once(client: JudgeClient, judge_model: str, prompt: str,
                 answer_first: str, answer_second: str) -> str:
     """Ask the judge which slot is better; returns 'first', 'second' or 'tie'."""
     user = (
-        f"Question: \n{prompt}\n\n"
-        f"Answer A: \n{answer_first}\n\n"
-        f"Answer B: \n{answer_second}\n\n"
-        "Which answer is better? Output only A, B, or tie."
+        f"问题：\n{prompt}\n\n"
+        f"回答 A：\n{answer_first}\n\n"
+        f"回答 B：\n{answer_second}\n\n"
+        "哪个回答更好？只输出 A、B 或 tie。"
     )
     verdict = client.chat(judge_model, user, max_tokens=8, system=_JUDGE_SYSTEM).lower()
     if verdict.startswith("a"):

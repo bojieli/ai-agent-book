@@ -16,7 +16,7 @@ An educational implementation of an Agentic Retrieval-Augmented Generation (RAG)
   - Together AI
   - DeepSeek
 - **Flexible Knowledge Base**:
-  - **Offline BM25 (built-in, zero-dependency offline)**: in-process BM25 over the bundled `laws/` corpus — no server, no API key required
+  - **Offline BM25 (内置，零依赖离线运行)**: in-process BM25 over the bundled `laws/` corpus — no server, no API key required
   - Local retrieval pipeline (requires ../retrieval-pipeline)
   - Dify knowledge base API
 - **Document Chunking**: Configurable chunking with paragraph boundary respect
@@ -46,7 +46,7 @@ TOGETHER_API_KEY=your_together_api_key
 DEEPSEEK_API_KEY=your_deepseek_api_key
 
 # Knowledge Base Configuration (optional, defaults to local)
-KB_TYPE=local  # Options: "offline" (built-in offline BM25, no server/API required), "local", "dify"
+KB_TYPE=local  # Options: "offline" (内置离线 BM25，无需服务/API), "local", "dify"
 DIFY_API_KEY=your_dify_api_key  # if using Dify
 DIFY_DATASET_ID=your_dataset_id  # optional
 
@@ -57,50 +57,50 @@ LLM_MODEL=kimi-k3  # optional, uses provider defaults
 
 ## 🚀 Usage
 
-### 0. Zero-Dependency Offline Comparison Experiment (Recommended First, No API / External Service Required)
+### 0. 零依赖离线对比实验（推荐先跑，无需 API / 无需外部服务）
 
-The core thesis of this experiment is: **When facing complex problems, allowing the Agent to autonomously decompose and perform multi-turn iterative retrieval yields significantly better evidence recall than a single retrieval.**
-`compare_offline.py` uses the built-in offline BM25 retriever (`offline_retriever.py`, which directly reads the `laws/` corpus)
-to quantify this gap on a small Chinese judicial QA dataset, **fully offline, no API Key required**:
+本实验的核心论点是：**面对复杂问题，让 Agent 自主分解、多轮迭代检索，其证据召回显著优于单次检索**。
+`compare_offline.py` 用内置的离线 BM25 检索器（`offline_retriever.py`，直接读取 `laws/` 语料）
+在小型中文司法问答集上量化这一差距，**完全离线、无需任何 API Key**：
 
 ```bash
 python compare_offline.py
-# Optional parameters: --corpus laws  --top-k 5  --dataset evaluation/offline_qa.json  --output result.json
+# 可选参数：--corpus laws  --top-k 5  --dataset evaluation/offline_qa.json  --output result.json
 ```
 
-Actual output (tested locally, 21,372 legal chunks / 288 documents):
+真实输出（本机实测，21372 个法条分块 / 288 篇文档）：
 
 ```
-Question                      Difficulty  Single Retrieval  Decomposed Retrieval  Retrieval Count
+问题                          难度    单次检索    分解检索    检索次数
 ------------------------------------------------------------------------------
-How to punish intentional injury causing serious injury…  easy    100%        100%        1 → 1
-What are the provisions on self-defense?        easy    100%        100%        1 → 1
-How to punish drunk driving?      easy    100%        100%        1 → 1
-How many years for intentional homicide?            hard    0%          100%        1 → 1
-What is the filing standard for theft?      hard    0%          100%        1 → 1
-What is the sentencing standard for fraud?      hard    0%          100%        1 → 1
-Drunk driving causing serious injury with prior theft…  hard    33%         100%        1 → 3
+故意伤害致人重伤的，如何处…  easy    100%        100%        1 → 1
+正当防卫是怎么规定的？        easy    100%        100%        1 → 1
+醉酒驾驶机动车如何处罚？      easy    100%        100%        1 → 1
+故意杀人罪判几年？            hard    0%          100%        1 → 1
+盗窃罪的立案标准是什么？      hard    0%          100%        1 → 1
+诈骗罪的量刑标准是什么？      hard    0%          100%        1 → 1
+醉酒过失致人重伤且有盗窃前…  hard    33%         100%        1 → 3
 ------------------------------------------------------------------------------
-Aggregate Metrics (Average Evidence Recall Rate):
-  Overall                                48%         100%        1.0 → 1.3
-  Easy Questions                         100%        100%        1.0 → 1.0
-  Hard Questions                         8%          100%        1.0 → 1.5
+聚合指标（平均证据召回率）:
+  全部                                48%         100%        1.0 → 1.3
+  简单题                              100%        100%        1.0 → 1.0
+  复杂题                              8%          100%        1.0 → 1.5
 ```
 
-Interpretation (consistent with book experiments 3-9): **For simple questions, both paradigms perform similarly (both 100%)**, a single direct retrieval suffices;
-**For complex/poorly-phrased questions, the gap is significant (8% → 100%)**, single retrieval misses key legal provisions due to imprecise keywords,
-while decomposed multi-turn retrieval can piece together evidence one by one. This metric is the pure retrieval-layer "evidence recall rate," which is the upper bound for answer quality
-— without retrieving evidence, the generation stage has nothing to work with. All gold-standard legal provisions have been confirmed to exist in the `laws/` corpus.
+解读（与书中实验 3-9 一致）：**简单问题两种范式相差无几（均 100%）**，一次直接检索就够；
+**复杂/措辞欠佳的问题上差距显著（8% → 100%）**，单次检索因关键词不精确而漏检关键法条，
+分解式多轮检索则能逐一补齐证据。该指标为纯检索层的『证据召回率』，是回答质量的上界
+——检索不到证据，生成阶段无从谈起。金标准法条均已确认存在于 `laws/` 语料中。
 
-> Note: The offline mode uses pre-annotated `subqueries` in the dataset to represent "retrieval initiated by the Agent after decomposition,"
-> to isolate the contribution of the **retrieval strategy** itself; in a real system, these sub-queries are dynamically generated by the LLM in the ReAct loop.
-> For LLM-generated, end-to-end answer quality evaluation, use `evaluation/evaluate.py` (requires API Key configuration).
+> 说明：离线模式用数据集中预先标注的 `subqueries` 表示『Agent 分解后发起的检索』，
+> 以隔离出**检索策略**本身的贡献；在真实系统中，这些子查询由 LLM 在 ReAct 循环中动态生成。
+> 需要 LLM 生成、端到端评测答案质量时，请使用 `evaluation/evaluate.py`（需配置 API Key）。
 
-You can also run the full Agent directly on the offline knowledge base (retrieval offline, only **answer generation** requires an API Key):
+也可以让完整 Agent 直接跑在离线知识库上（检索离线，仅**答案生成**需要 API Key）：
 
 ```bash
-python main.py --kb-type offline --query "How to sentence drunk driving causing serious injury with prior theft"
-python main.py --kb-type offline --query "How many years for intentional homicide" --mode compare
+python main.py --kb-type offline --query "醉酒过失致人重伤且有盗窃前科如何量刑"
+python main.py --kb-type offline --query "故意杀人罪判几年" --mode compare
 ```
 
 ### 1. Start the Retrieval Pipeline
@@ -123,7 +123,7 @@ python main.py
 python index_local_laws.py
 
 # With specific categories
-python index_local_laws.py --categories Constitution Civil Code
+python index_local_laws.py --categories 宪法 民法典
 
 # With document limit
 python index_local_laws.py --max-docs 10
@@ -170,22 +170,22 @@ In interactive mode:
 
 ```bash
 # Agentic mode
-python main.py --query "What is Article 1 of the Constitution?" --mode agentic
+python main.py --query "宪法第一条是什么？" --mode agentic
 
 # Non-agentic mode
-python main.py --query "What is the filing standard for theft?" --mode non-agentic
+python main.py --query "盗窃罪的立案标准是什么？" --mode non-agentic
 
 # Compare both modes
-python main.py --query "How many years for intentional homicide?" --mode compare
+python main.py --query "故意杀人罪判几年？" --mode compare
 ```
 
 #### Batch Processing
 
 ```bash
 # Create a file with queries (one per line)
-echo "How many years for intentional homicide?
-What is the filing standard for theft?
-How to punish drunk driving?" > queries.txt
+echo "故意杀人罪判几年？
+盗窃罪的立案标准是什么？
+醉酒驾驶如何处罚？" > queries.txt
 
 # Run batch
 python main.py --batch queries.txt --output results.json
@@ -199,7 +199,7 @@ python main.py --batch queries.txt --mode non-agentic
 ```bash
 python main.py --provider openai --model gpt-5.6-luna
 python main.py --provider doubao --model doubao-seed-1-6-thinking-250715
-python main.py --provider siliconflow --query "Hello"
+python main.py --provider siliconflow --query "你好"
 ```
 
 ### 4. Run Evaluation
@@ -213,7 +213,7 @@ python dataset_builder.py
 python evaluate.py
 
 # With specific configuration
-```python evaluate.py --provider kimi --kb-type local --output custom_results
+python evaluate.py --provider kimi --kb-type local --output custom_results
 ```
 
 ## 📁 Project Structure
@@ -222,9 +222,9 @@ python evaluate.py
 agentic-rag/
 ├── config.py              # Configuration classes
 ├── agent.py               # Main AgenticRAG implementation
-├── tools.py               # Knowledge base tools (includes offline BM25 backend)
-├── offline_retriever.py   # Built-in offline BM25 retriever (reads laws/, no service/API needed)
-├── compare_offline.py     # Offline comparison experiment: decomposed retrieval vs single retrieval (evidence recall table)
+├── tools.py               # Knowledge base tools (含 offline BM25 后端)
+├── offline_retriever.py   # 内置离线 BM25 检索器（读取 laws/，无需服务/API）
+├── compare_offline.py     # 离线对比实验：分解检索 vs 单次检索（证据召回率表）
 ├── chunking.py            # Document chunking and indexing
 ├── main.py                # Main entry point
 ├── index_local_laws.py    # Index Chinese law documents
@@ -234,18 +234,19 @@ agentic-rag/
 ├── README.md              # This file
 ├── document_store.json    # Local document storage
 ├── laws/                  # Chinese law documents
-│   ├── 1-Constitution/
-│   ├── 2-Constitutional Laws/
-│   ├── 3-Civil Code/
-│   ├── 3-Civil and Commercial Laws/
-│   ├── 4-Administrative Law/
-│   ├── 5-Economic Law/
-│   ├── 6-Social Law/
-│   ├── 7-Criminal Law/
-│   └── 8-Litigation and Non-Litigation Procedure Law/└── evaluation/
+│   ├── 1-宪法/
+│   ├── 2-宪法相关法/
+│   ├── 3-民法典/
+│   ├── 3-民法商法/
+│   ├── 4-行政法/
+│   ├── 5-经济法/
+│   ├── 6-社会法/
+│   ├── 7-刑法/
+│   └── 8-诉讼与非诉讼程序法/
+└── evaluation/
     ├── dataset_builder.py # Build evaluation dataset
-    ├── offline_qa.json    # Offline comparison dataset (questions + gold-standard articles + agent decomposed sub-queries)
-    └── evaluate.py        # Evaluation framework (end-to-end answer quality, requires API)
+    ├── offline_qa.json    # 离线对比数据集（问题 + 金标准法条 + Agent 分解子查询）
+    └── evaluate.py        # Evaluation framework (端到端答案质量，需 API)
 ```
 
 ## 🧠 How It Works
@@ -263,8 +264,10 @@ The agent uses the ReAct (Reasoning + Acting) pattern:
 
 Example flow:
 ```
-The first article of the Constitution states: "The People's Republic of China is a socialist state under the people's democratic dictatorship led by the working class and based on the alliance of workers and peasants."Agent: [Thinks] Need to find information about Article 1 of the Constitution
-       [Tool] knowledge_base_search("Article 1 of the Constitution")       [Result] Found relevant chunks about constitutional articles
+User: 宪法第一条是什么？
+Agent: [Thinks] Need to find information about Article 1 of the Constitution
+       [Tool] knowledge_base_search("宪法第一条")
+       [Result] Found relevant chunks about constitutional articles
        [Answer] Based on the retrieved information, Article 1 states...
 ```
 
@@ -311,8 +314,11 @@ temperature = 0.7  # 0.0 = deterministic, 1.0 = more creative
 
 ## 🎯 Evaluation Results
 
-**Retrieval layer (offline, reproducible, real measured results)**: See the evidence recall table in [Section 0](#0-零依赖离线对比实验推荐先跑无需-api--无需外部服务) above — decomposed multi-turn retrieval improved recall on complex questions from **8% to 100%**, while both paradigms performed equally on simple questions (both 100%).
-**Generation layer (end-to-end answer quality, requires LLM API)**: `evaluation/evaluate.py` actually calls the LLM to generate answers based on the above, and reports metrics such as keyword/analysis point recall, citation coverage, and response time. Below are the metrics and typical patterns produced by this framework:
+**检索层（离线、可复现、真实实测）**：见上文 [第 0 节](#0-零依赖离线对比实验推荐先跑无需-api--无需外部服务)
+的证据召回率表——分解式多轮检索把复杂题的召回率从 **8% 提升到 100%**，而简单题两种范式打平（均 100%）。
+
+**生成层（端到端答案质量，需 LLM API）**：`evaluation/evaluate.py` 在此基础上真正调用 LLM 生成答案，
+统计关键词/分析点召回、引用覆盖率、响应时间等指标。以下为该框架产出的指标与典型模式：
 
 ### Metrics
 - **Success Rate**: Whether the answer contains key legal concepts
@@ -397,7 +403,7 @@ Areas for potential enhancement:
 This is an educational project for learning purposes.
 
 
-## OpenRouter Universal Fallback
+## OpenRouter 通用回退 / Universal OpenRouter fallback
 
 This experiment now supports a **universal OpenRouter fallback** for its chat LLM.
 
