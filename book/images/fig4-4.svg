@@ -17,7 +17,7 @@
 <rect x="420.0" y="135" width="35.0" height="28" rx="4" fill="#999999" stroke="#333333" stroke-width="2"/>
 <text x="437.5" y="149.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-weight="normal">×</text>
 <rect x="469.0" y="175" width="371.0" height="28" rx="4" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
-<text x="654.5" y="189.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">New LLM reasoning (including interrupt event + clear queue)</text>
+<text x="654.5" y="189.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">New LLM reasoning (including interrupt event + clear queue)</text>
 <rect x="130" y="240" width="720" height="140" rx="6" fill="#ffffff" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
 <text x="65.0" y="310" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Queue-based</text>
 <text x="65.0" y="335" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">(Normal)</text>

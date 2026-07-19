@@ -10,17 +10,17 @@
 <text x="38" y="168" font-family="'Courier New', Courier, monospace" font-size="9" fill="#333333" text-anchor="start" dominant-baseline="central">   &quot;tool_call&quot;:&quot;cancel_order&quot;}</text>
 <text x="38" y="182" font-family="'Courier New', Courier, monospace" font-size="9" fill="#333333" text-anchor="start" dominant-baseline="central">  {&quot;role&quot;:&quot;tool&quot;,&quot;result&quot;:</text>
 <text x="38" y="196" font-family="'Courier New', Courier, monospace" font-size="9" fill="#333333" text-anchor="start" dominant-baseline="central">   &quot;ERROR: no insurance&quot;}</text>
-<text x="38" y="210" font-family="'Courier New', Courier, monospace" font-size="8.5" fill="#333333" text-anchor="start" dominant-baseline="central">  → Agent did not inform user of the reason</text>
+<text x="38" y="210" font-family="'Courier New', Courier, monospace" font-size="8" fill="#333333" text-anchor="start" dominant-baseline="central">  → Agent did not inform user of the reason</text>
 <line x1="270" y1="140" x2="310" y2="140" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <rect x="310" y="60" width="260" height="160" rx="6" fill="#ffffff" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
 <text x="440" y="82" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">② LLM analysis</text>
 <text x="320" y="100" font-family="'Courier New', Courier, monospace" font-size="9.5" fill="#333333" text-anchor="start" dominant-baseline="central">Input: trace + architecture document + PRD</text>
 <text x="320" y="114" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central"></text>
 <text x="320" y="128" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">Analysis dimensions:</text>
-<text x="320" y="142" font-family="'Courier New', Courier, monospace" font-size="8.5" fill="#333333" text-anchor="start" dominant-baseline="central">  - Whether the execution flow meets expectations</text>
+<text x="320" y="142" font-family="'Courier New', Courier, monospace" font-size="8" fill="#333333" text-anchor="start" dominant-baseline="central">  - Whether the execution flow meets expectations</text>
 <text x="320" y="156" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">  - Whether tool calls are correct</text>
 <text x="320" y="170" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">  - Whether error handling is appropriate</text>
-<text x="320" y="184" font-family="'Courier New', Courier, monospace" font-size="9.5" fill="#333333" text-anchor="start" dominant-baseline="central">  - Whether user experience is satisfactory</text>
+<text x="320" y="184" font-family="'Courier New', Courier, monospace" font-size="9" fill="#333333" text-anchor="start" dominant-baseline="central">  - Whether user experience is satisfactory</text>
 <text x="320" y="198" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central"></text>
 <text x="320" y="212" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">→ Locate the deviating step and module</text>
 <line x1="570" y1="140" x2="610" y2="140" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
@@ -30,8 +30,8 @@
 <text x="628" y="112" font-family="'Courier New', Courier, monospace" font-size="9" fill="#333333" text-anchor="start" dominant-baseline="central">Problem report:</text>
 <text x="628" y="126" font-family="'Courier New', Courier, monospace" font-size="9" fill="#333333" text-anchor="start" dominant-baseline="central">  Priority: P1 (User Churn Risk)</text>
 <text x="628" y="140" font-family="'Courier New', Courier, monospace" font-size="9" fill="#333333" text-anchor="start" dominant-baseline="central">  Module: cancellation_handler</text>
-<text x="628" y="154" font-family="'Courier New', Courier, monospace" font-size="7" fill="#333333" text-anchor="start" dominant-baseline="central">  Description: After cancellation failure, no explanation of</text>
-<text x="628" y="168" font-family="'Courier New', Courier, monospace" font-size="7" fill="#333333" text-anchor="start" dominant-baseline="central">    the reason and alternatives is provided to the user</text>
+<text x="628" y="154" font-family="'Courier New', Courier, monospace" font-size="6" fill="#333333" text-anchor="start" dominant-baseline="central">  Description: After cancellation failure, no explanation of</text>
+<text x="628" y="168" font-family="'Courier New', Courier, monospace" font-size="6.5" fill="#333333" text-anchor="start" dominant-baseline="central">    the reason and alternatives is provided to the user</text>
 <text x="628" y="182" font-family="'Courier New', Courier, monospace" font-size="8" fill="#333333" text-anchor="start" dominant-baseline="central">  Suggestion: Add failure reason explanation</text>
 <text x="628" y="196" font-family="'Courier New', Courier, monospace" font-size="9" fill="#333333" text-anchor="start" dominant-baseline="central">    and guidance to purchase insurance</text>
 <line x1="440.0" y1="220" x2="440.0" y2="260" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>

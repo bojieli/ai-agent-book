@@ -37,7 +37,7 @@
 <text x="90" y="455" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">&lt;tool_response&gt; {&quot;time&quot;:&quot;05:18&quot;,&quot;temp&quot;:&quot;13.2°C&quot;}</text>
 <line x1="230" y1="427" x2="230" y2="433" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <path d="M 80,455 Q 40.0,367.5 80,280" fill="none" stroke="#999999" stroke-width="2" marker-end="url(#ah-light)"/>
-<text x="30" y="367" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9.5" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold">Continue loop</text>
+<text x="30" y="367" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold">Continue loop</text>
 <rect x="430" y="280" width="320" height="55" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
 <text x="440" y="298" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Final output:</text>
 <text x="440" y="318" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">&quot;Vancouver: 05:18 AM, 13.2°C,</text>

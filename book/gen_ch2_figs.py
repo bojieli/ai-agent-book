@@ -800,10 +800,10 @@ def fig2_9_memory_comparison():
             '"User Expertise: Recommendation System"',
         ], 'Pros: O(1) operation, extremely low overhead\nCons: Complete loss of relevance'),
         ('Enhanced Notes', 'Full Paragraph', [
-            '"User holds a senior position at TechCorp',
-            'as a Software Engineer, focusing on ML for 3 years,',
-            'currently leading a 5-person team responsible for the recommendation',
-            'system project."',
+            '"Senior engineer at',
+            'TechCorp, leads a team',
+            'of 5 building a rec.',
+            'system, 3 yrs in ML."',
         ], 'Pros: Semantic completeness\nCons: Redundancy + complex updates'),
         ('JSON Cards', 'Hierarchical Structure', [
             'work:',
@@ -841,10 +841,9 @@ def fig2_9_memory_comparison():
         for j, line in enumerate(storage):
             s.mono(x + 8, 205 + j * 18, line, size=FS_TINY - 2)
 
-        # Tradeoff
-        tradeoff_lines = tradeoff.split('\n')
-        for j, tl in enumerate(tradeoff_lines):
-            s.text(x + col_w / 2, 200 + storage_h + 18 + j * 18, tl, size=FS_TINY, fill='text_light')
+        # Tradeoff (Pros/Cons) — wrapped so long lines don't collide with neighbours
+        s.text_block(x + col_w / 2, 200 + storage_h + 6, col_w - 6,
+                     tradeoff.split('\n'), size=FS_TINY, min_size=9, line_gap=1.25)
 
     # Evaluation framework (bottom)
     eval_y = 420

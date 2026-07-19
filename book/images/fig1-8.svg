@@ -3,7 +3,7 @@
 <rect x="260" y="60" width="300" height="95" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
 <text x="410" y="82" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Orchestrator LLM</text>
 <rect x="270" y="105" width="280" height="38" rx="4" fill="#e8e8e8" stroke="#333333" stroke-width="2"/>
-<text x="410" y="124" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">&quot;Analyze Issue → Locate Files → Assign Subtasks&quot;</text>
+<text x="410" y="124" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">&quot;Analyze Issue → Locate Files → Assign Subtasks&quot;</text>
 <rect x="40" y="220" width="230" height="55" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
 <text x="155.0" y="237.1" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Worker 1：Modify auth.py</text>
 <text x="155.0" y="257.9" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Add OAuth2 support</text>

@@ -26,7 +26,7 @@
 <text x="655.0" y="314.8" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Tools</text>
 <line x1="410" y1="157" x2="655.0" y2="218" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <rect x="260" y="370" width="300" height="55" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
-<text x="410.0" y="397.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Orchestrator: Merge Results → Verify Consistency</text>
+<text x="410.0" y="397.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Orchestrator: Merge Results → Verify Consistency</text>
 <line x1="155.0" y1="327" x2="410" y2="368" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <line x1="405.0" y1="327" x2="410" y2="368" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <line x1="655.0" y1="327" x2="410" y2="368" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>

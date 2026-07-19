@@ -38,7 +38,7 @@
 <text x="390" y="298" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Cascading Termination Sequence</text>
 <text x="100" y="322" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">t=0s</text>
 <text x="100" y="338" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Start 10 Agents</text>
-<text x="100" y="353" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9.5" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Parallel search for "Zhang Wei"</text>
+<text x="100" y="353" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Parallel search for "Zhang Wei"</text>
 <line x1="155" y1="335" x2="175" y2="335" stroke="#999999" stroke-width="2" marker-end="url(#ah-light)"/>
 <text x="240" y="322" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">t=12s</text>
 <text x="240" y="338" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Agent 2 completes</text>
@@ -64,5 +64,5 @@
 <text x="575" y="438" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Performance Comparison</text>
 <text x="420" y="462" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Serial: 10 websites × 30s = ~5 minutes</text>
 <text x="420" y="480" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Parallel: 18s to find + 1s to terminate = 19s</text>
-<text x="420" y="498" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Speedup: ~15× (with cascading termination optimization)</text>
+<text x="420" y="498" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12.5" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Speedup: ~15× (with cascading termination optimization)</text>
 </svg>

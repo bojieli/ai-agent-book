@@ -47,6 +47,6 @@
 <text x="660.0" y="493.40000000000003" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">legal provisions and sentencing analysis</text>
 <line x1="660" y1="433" x2="660" y2="447" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <path d="M 840,311 C 868,311 868,225 840,225" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#ah)"/>
-<text x="844" y="268.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="10" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Iteration</text>
+<text x="844" y="268.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9.5" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Iteration</text>
 <text x="660.0" y="545" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Multi-round iteration · Complete information</text>
 </svg>

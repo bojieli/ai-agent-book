@@ -771,7 +771,7 @@
 <line x1="30" y1="162" x2="205" y2="162" stroke="#999999" stroke-width="2"/>
 <text x="30" y="182" font-family="'Courier New', Courier, monospace" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central">GAIA: exact match → 0 / 1</text>
 <text x="30" y="204" font-family="'Courier New', Courier, monospace" font-size="10.5" fill="#333333" text-anchor="start" dominant-baseline="central">SWE-Bench: test pass → 0 / 1</text>
-<text x="30" y="226" font-family="'Courier New', Courier, monospace" font-size="7.5" fill="#333333" text-anchor="start" dominant-baseline="central">credit assignment difficulty: in 10 steps</text>
+<text x="30" y="226" font-family="'Courier New', Courier, monospace" font-size="7" fill="#333333" text-anchor="start" dominant-baseline="central">credit assignment difficulty: in 10 steps</text>
 <text x="30" y="248" font-family="'Courier New', Courier, monospace" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central">which step caused failure?</text>
 <line x1="310.8" y1="65" x2="310.8" y2="95" stroke="#333333" stroke-width="2"/>
 <line x1="310.8" y1="95" x2="310.8" y2="128" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
@@ -781,7 +781,7 @@
 <text x="223.3" y="182" font-family="'Courier New', Courier, monospace" font-size="7.5" fill="#333333" text-anchor="start" dominant-baseline="central">τ²-bench multi-dimensional verification:</text>
 <text x="223.3" y="204" font-family="'Courier New', Courier, monospace" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central">  DB status ✓ (+0.4)</text>
 <text x="223.3" y="226" font-family="'Courier New', Courier, monospace" font-size="9.5" fill="#333333" text-anchor="start" dominant-baseline="central">  keyword confirmation ✓ (+0.3)</text>
-<text x="223.3" y="248" font-family="'Courier New', Courier, monospace" font-size="10.5" fill="#333333" text-anchor="start" dominant-baseline="central">  process compliance ✓ (+0.3)</text>
+<text x="223.3" y="248" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">  process compliance ✓ (+0.3)</text>
 <line x1="531.2" y1="65" x2="531.2" y2="95" stroke="#333333" stroke-width="2"/>
 <line x1="531.2" y1="95" x2="531.2" y2="128" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <rect x="433.70000000000005" y="130" width="195" height="140" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>

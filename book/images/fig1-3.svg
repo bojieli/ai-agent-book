@@ -2,7 +2,7 @@
 <defs><marker id="ah" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker><marker id="ah-light" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#999999"/></marker></defs>
 <rect x="260" y="70" width="300" height="100" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
 <text x="410" y="100" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">LLM（Kimi K3 / GPT-5.6）</text>
-<text x="410" y="130" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Native agent capabilities after RL training</text>
+<text x="410" y="130" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15.5" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Native agent capabilities after RL training</text>
 <rect x="620" y="70" width="180" height="210" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
 <text x="632" y="88" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="bold">Native tools</text>
 <rect x="635" y="105" width="150" height="50" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
@@ -44,7 +44,7 @@
 <text x="605" y="330" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="bold">RL training signal</text>
 <rect x="15" y="70" width="230" height="120" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
 <text x="27" y="88" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11.0" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="bold">Differences from traditional frameworks</text>
-<text x="130" y="110" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">✗ No external orchestration code needed</text>
+<text x="130" y="110" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">✗ No external orchestration code needed</text>
 <text x="130" y="135" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">✗ No need to manually write ReAct loop</text>
-<text x="130" y="160" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="10" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">✓ Model autonomously decides the entire process</text>
+<text x="130" y="160" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">✓ Model autonomously decides the entire process</text>
 </svg>

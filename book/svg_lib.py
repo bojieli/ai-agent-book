@@ -222,6 +222,7 @@ def fit_overflow(svg, pad=5, min_size=7.0):
         fam = _ATTR(attrs, 'font-family') or ''
         bold = (_ATTR(attrs, 'font-weight') == 'bold')
         mono = 'Courier' in fam
+        floor = 6.0 if mono else min_size  # dense code insets tolerate a smaller floor
         w = _text_width(text, fs, bold, mono)
         lo, hi = _extent(x, w, anchor)
 
@@ -249,11 +250,12 @@ def fit_overflow(svg, pad=5, min_size=7.0):
 
         if w <= avail + 1 or avail <= 0:
             if avail <= 0:
-                new_fs = min_size
+                new_fs = floor
             else:
                 return m.group(0)
         else:
-            new_fs = max(min_size, round(fs * avail / w * 2) / 2)
+            # Floor (not round) to 0.5px so the shrunk text never re-overflows.
+            new_fs = max(floor, math.floor(fs * avail / w * 2) / 2)
         if new_fs >= fs:
             return m.group(0)
         new_attrs = re.sub(r'font-size="[^"]*"', f'font-size="{new_fs:g}"', attrs)
@@ -366,7 +368,7 @@ class SVG:
         """Render a block of monospace code lines with background."""
         avail = w - 20
         fs = font_size
-        while fs > 7 and max((_text_width(l, fs, mono=True) for l in lines), default=0) > avail:
+        while fs > 6 and max((_text_width(l, fs, mono=True) for l in lines), default=0) > avail:
             fs -= 0.5
         if line_h is None:
             line_h = fs * 1.5
@@ -384,6 +386,40 @@ class SVG:
         for i, line in enumerate(lines):
             ly = y + i * line_h
             self.text(x, ly, line, size=size, anchor=anchor, fill=fill, bold=bold, max_width=max_width)
+
+    def text_block(self, x, top_y, max_w, items, size=FS_SMALL, min_size=8,
+                   line_gap=1.2, bold=False, anchor='middle', mono=False):
+        """Word-wrap one or more captions to max_w at a single uniform font size
+        (shrinking only if an unbreakable token is too wide), then stack them
+        downward from top_y. Prevents the "long line shrunk tiny while the short
+        line stays large" look that plain text()+fit_overflow produces.
+
+        items: list of strings or (text, fill) tuples. Returns the bottom y.
+        """
+        norm = [t if isinstance(t, tuple) else (t, 'text') for t in items]
+
+        def wrap_all(f):
+            out = []
+            for t, fl in norm:
+                for ln in _wrap_line(str(t), max_w, f, bold, mono):
+                    out.append((ln, fl))
+            return out
+
+        fs = size
+        wrapped = wrap_all(fs)
+        while fs > min_size and max((_text_width(l, fs, bold, mono) for l, _ in wrapped), default=0) > max_w:
+            fs -= 0.5
+            wrapped = wrap_all(fs)
+
+        lh = fs * line_gap
+        y = top_y + fs * 0.85
+        for ln, fl in wrapped:
+            if mono:
+                self.mono(x, y, ln, size=fs, anchor=anchor, fill=fl)
+            else:
+                self.text(x, y, ln, size=fs, anchor=anchor, fill=fl, bold=bold)
+            y += lh
+        return y - lh + fs * 0.15
 
     def arrow(self, x1, y1, x2, y2, label=None, dash=False, color='border'):
         c = COLORS.get(color, color)

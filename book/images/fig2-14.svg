@@ -26,7 +26,7 @@
 <text x="120" y="335.5" font-family="'Courier New', Courier, monospace" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central">phone_call(Xfinity) → 2nd attempt</text>
 <rect x="30" y="356" width="385" height="35" rx="4" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
 <text x="38" y="373.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">tool:</text>
-<text x="120" y="373.5" font-family="'Courier New', Courier, monospace" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central">Result: connected, quoted $65/month</text>
+<text x="120" y="373.5" font-family="'Courier New', Courier, monospace" font-size="13.5" fill="#333333" text-anchor="start" dominant-baseline="central">Result: connected, quoted $65/month</text>
 <rect x="30" y="394" width="385" height="35" rx="4" fill="#e8e8e8" stroke="#333333" stroke-width="2"/>
 <text x="38" y="411.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">assistant:</text>
 <text x="120" y="411.5" font-family="'Courier New', Courier, monospace" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central">phone_call(Xfinity) → 3rd attempt</text>
@@ -43,7 +43,7 @@
 <text x="540" y="107.5" font-family="'Courier New', Courier, monospace" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central">System Prompt + Tools</text>
 <rect x="455" y="128" width="385" height="35" rx="4" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
 <text x="463" y="145.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">user:</text>
-<text x="540" y="145.5" font-family="'Courier New', Courier, monospace" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central">"Help me contact Xfinity to negotiate"</text>
+<text x="540" y="145.5" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#333333" text-anchor="start" dominant-baseline="central">"Help me contact Xfinity to negotiate"</text>
 <rect x="455" y="166" width="385" height="90" rx="4" fill="#e8e8e8" stroke="#333333" stroke-width="2"/>
 <text x="463" y="211.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">...:</text>
 <text x="540" y="211.0" font-family="'Courier New', Courier, monospace" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central">[ Same trajectory content ]</text>
@@ -54,7 +54,7 @@
 <text x="465" y="315" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">&lt;agent_status&gt;</text>
 <text x="470" y="337" font-family="'Courier New', Courier, monospace" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central">phone_call called 3 times (Xfinity: 3)</text>
 <text x="470" y="357" font-family="'Courier New', Courier, monospace" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central">Constraint check: reached limit (3/3) ✗</text>
-<text x="470" y="377" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">TODO: [✓]Contact Xfinity [✓]Confirm price reduction</text>
+<text x="470" y="377" font-family="'Courier New', Courier, monospace" font-size="11.5" fill="#333333" text-anchor="start" dominant-baseline="central">TODO: [✓]Contact Xfinity [✓]Confirm price reduction</text>
 <text x="470" y="397" font-family="'Courier New', Courier, monospace" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central">Current time: 2025-09-14 10:30</text>
 <text x="470" y="417" font-family="'Courier New', Courier, monospace" font-size="13.5" fill="#333333" text-anchor="start" dominant-baseline="central">Current status: waiting for user confirmation</text>
 <text x="815" y="417" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="end" dominant-baseline="central" font-weight="bold">&lt;/agent_status&gt;</text>

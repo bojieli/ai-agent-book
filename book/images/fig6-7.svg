@@ -8,7 +8,7 @@
 <text x="40" y="146" font-family="'Courier New', Courier, monospace" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central">math_counting: 0%  Wi-Fi Operation: 0%</text>
 <text x="40" y="168" font-family="'Courier New', Courier, monospace" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central">Task 82,102-115 Concentrated Failures</text>
 <rect x="460" y="60" width="400" height="130" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="660" y="82" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">② Hypothesis: Three-Layer Improvement Framework</text>
+<text x="660" y="82" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">② Hypothesis: Three-Layer Improvement Framework</text>
 <rect x="475" y="94" width="60" height="24" rx="12" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
 <text x="505.0" y="106.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Surface Layer</text>
 <text x="545" y="106" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">H1 Set Navigation Prompt H2 UI Rules</text>
@@ -16,7 +16,7 @@
 <text x="505.0" y="138.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="8.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Middle Layer</text>
 <text x="545" y="138" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">H3 Fix Multimodal Pipeline H4 Thinking</text>
 <rect x="475" y="158" width="60" height="24" rx="12" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
-<text x="505.0" y="170.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Deep Layer</text>
+<text x="505.0" y="170.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Deep Layer</text>
 <text x="545" y="170" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">H5 GPT-5 H6 UI Element Tree</text>
 <line x1="420" y1="125" x2="458" y2="125" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <rect x="20" y="210" width="840" height="120" rx="6" fill="#ffffff" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
@@ -40,7 +40,7 @@
 <rect x="20" y="350" width="420" height="130" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
 <text x="230" y="372" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">④ Decision: Cost-Benefit Trade-off</text>
 <text x="40" y="395" font-family="'Courier New', Courier, monospace" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central">✓ H1+H3: Low Cost, High Benefit → Deploy</text>
-<text x="40" y="419" font-family="'Courier New', Courier, monospace" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central">✗ H4: Only 8% Tasks Benefit but 3x Latency → Reject</text>
+<text x="40" y="419" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#333333" text-anchor="start" dominant-baseline="central">✗ H4: Only 8% Tasks Benefit but 3x Latency → Reject</text>
 <text x="40" y="443" font-family="'Courier New', Courier, monospace" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central">✓ H6: 35% Improvement / 30% Cost → Deploy</text>
 <text x="40" y="467" font-family="'Courier New', Courier, monospace" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central">✗ H5: 15s/Step Unacceptable → Alternative</text>
 <rect x="460" y="350" width="400" height="130" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
@@ -52,5 +52,5 @@
 <line x1="870" y1="415" x2="870" y2="125" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <text x="885" y="270" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="bold">↑ Loop</text>
 <rect x="80" y="500" width="720" height="42" rx="6" fill="#999999" stroke="#333333" stroke-width="2"/>
-<text x="440" y="521" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-weight="bold">Methodology: Observe → Hypothesize → Experiment → Decide → Iterate = From alchemy to scientific engineering</text>
+<text x="440" y="521" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-weight="bold">Methodology: Observe → Hypothesize → Experiment → Decide → Iterate = From alchemy to scientific engineering</text>
 </svg>

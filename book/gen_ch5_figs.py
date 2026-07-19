@@ -178,9 +178,8 @@ def fig5_2():
         for j, (tool, desc) in enumerate(steps):
             ty = 110 + j * 70
             _pill(svg, x + 8, ty, phase_w - 16, 22, tool, fill='dark', font_size=11, bold=True)
-            lines = desc.split('\n') if '\n' in desc else [desc]
-            for k, line in enumerate(lines):
-                svg.mono(x + 10, ty + 34 + k * 16, line, size=10)
+            svg.text_block(x + 10, ty + 26, phase_w - 20, desc.split('\n'),
+                           size=10, min_size=7, anchor='start', mono=True, line_gap=1.45)
 
         if i < len(phases) - 1:
             ax = x + phase_w + 2
@@ -340,6 +339,9 @@ def fig5_4():
     total_cw = len(approaches) * col_w + (len(approaches) - 1) * col_gap
     sx = (w - total_cw) / 2
 
+    max_code_h = max(len(a[2]) for a in approaches) * 17 + 14
+    py = 101 + max_code_h + 12   # common top for every Adv/Disadv box (keeps them aligned)
+    box_h = 80
     for i, (title, fill, code_lines, pro, con) in enumerate(approaches):
         x = sx + i * (col_w + col_gap)
 
@@ -352,13 +354,13 @@ def fig5_4():
         for j, line in enumerate(code_lines):
             svg.mono(x + 6, 117 + j * 17, line, size=11)
 
-        py = 101 + code_h + 12
-        svg.rect(x + 4, py, col_w - 8, 56, fill='white', stroke='dark', rx=3)
-        svg.text(x + col_w / 2, py + 19, pro, size=FS_TINY, fill='text')
-        svg.text(x + col_w / 2, py + 41, con, size=FS_TINY, fill='text_light')
+        svg.rect(x + 4, py, col_w - 8, box_h, fill='white', stroke='dark', rx=3)
+        svg.text_block(x + col_w / 2, py + 5, col_w - 18,
+                       [(pro, 'text'), (con, 'text_light')], size=FS_TINY - 2,
+                       min_size=9, line_gap=1.18)
 
     # Adoption bar chart at bottom
-    chart_y = 320
+    chart_y = py + box_h + 22
     svg.line(30, chart_y, w - 30, chart_y, color='dark', dash=True)
     svg.text(w / 2, chart_y + 24, "Actual adoption", size=FS_BODY, bold=True)
 

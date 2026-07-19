@@ -6,7 +6,7 @@
 <text x="810.0" y="77.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-weight="bold">✗ Inefficient</text>
 <rect x="60" y="100" width="130" height="60" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
 <text x="125" y="118" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">User</text>
-<text x="125" y="138" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7.5" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">&quot;Number of people per department?&quot;</text>
+<text x="125" y="138" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">&quot;Number of people per department?&quot;</text>
 <line x1="190" y1="130" x2="210" y2="130" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <rect x="215" y="100" width="130" height="60" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
 <text x="280" y="118" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">LLM</text>

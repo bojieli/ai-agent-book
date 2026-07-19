@@ -71,7 +71,7 @@ pandoc "${CHAPTERS[@]}" \
     --metadata author-meta="Li Bojie" \
     -H preamble.tex \
     --include-before-body=cover.tex \
-    --highlight-style=kate \
+    --syntax-highlighting=kate \
     --columns=80 \
     2>&1
 
