@@ -4,13 +4,13 @@
 % ── Text & math fonts: Palatino look, matching the author's papers ──
 % The papers' preprint style (arxiv.sty) uses mathpazo (Palatino body +
 % matching math) with helvet[scaled=.90] sans. These are the XeLaTeX-native
-% equivalents: TeX Gyre Pagella (Palatino) text + TeX Gyre Pagella Math.
-% Sans stays the class default (TeX Gyre Heros, Helvetica clone) — already
-% equivalent to the papers' helvet. unicode-math loads after the class's
-% amsmath, so math switches from Computer Modern to Pagella Math coherently.
+% equivalents: TeX Gyre Pagella (Palatino) text + TeX Gyre Pagella Math,
+% and TeX Gyre Heros (Helvetica clone) sans. Must be set here rather than
+% relying on the class: pandoc's template resets the fonts to Latin Modern
+% after the class runs, so only preamble-level settings take effect.
+% Loaded by filename (like the class's own setup): macOS fontconfig doesn't
+% index texmf-dist, so family-name lookup would fail.
 \usepackage{unicode-math}
-% Loaded by filename (like the class's own TeXGyreTermesX setup): macOS
-% fontconfig doesn't index texmf-dist, so family-name lookup would fail.
 \setmainfont{texgyrepagella}[
   UprightFont = *-regular,
   BoldFont = *-bold,
@@ -18,6 +18,13 @@
   BoldItalicFont = *-bolditalic,
   Extension = .otf,
   Scale = 1.0]
+\setsansfont{texgyreheros}[
+  UprightFont = *-regular,
+  BoldFont = *-bold,
+  ItalicFont = *-italic,
+  BoldItalicFont = *-bolditalic,
+  Extension = .otf,
+  Scale = 0.9]
 \setmathfont{texgyrepagella-math}[Extension = .otf]
 
 % ── Unicode glyph fallback (the text/mono fonts lack these) ──────
@@ -73,6 +80,13 @@
 % pulling in the whole ctex/xeCJK Chinese-typesetting stack. macOS: Heiti SC;
 % Linux: Noto Sans CJK SC.
 \IfFontExistsTF{Heiti SC}{\newfontfamily\cjkfallback{Heiti SC}}{\newfontfamily\cjkfallback{Noto Sans CJK SC}}
+\newunicodechar{医}{{\cjkfallback 医}}
+\newunicodechar{图}{{\cjkfallback 图}}
+\newunicodechar{型}{{\cjkfallback 型}}
+\newunicodechar{模}{{\cjkfallback 模}}
+\newunicodechar{生}{{\cjkfallback 生}}
+\newunicodechar{解}{{\cjkfallback 解}}
+\newunicodechar{陈}{{\cjkfallback 陈}}
 \newunicodechar{两}{{\cjkfallback 两}}
 \newunicodechar{么}{{\cjkfallback 么}}
 \newunicodechar{了}{{\cjkfallback 了}}
@@ -81,31 +95,21 @@
 \newunicodechar{体}{{\cjkfallback 体}}
 \newunicodechar{北}{{\cjkfallback 北}}
 \newunicodechar{右}{{\cjkfallback 右}}
-\newunicodechar{多}{{\cjkfallback 多}}
 \newunicodechar{大}{{\cjkfallback 大}}
 \newunicodechar{天}{{\cjkfallback 天}}
 \newunicodechar{左}{{\cjkfallback 左}}
-\newunicodechar{序}{{\cjkfallback 序}}
 \newunicodechar{怎}{{\cjkfallback 怎}}
 \newunicodechar{思}{{\cjkfallback 思}}
-\newunicodechar{戏}{{\cjkfallback 戏}}
 \newunicodechar{推}{{\cjkfallback 推}}
-\newunicodechar{时}{{\cjkfallback 时}}
 \newunicodechar{智}{{\cjkfallback 智}}
 \newunicodechar{样}{{\cjkfallback 样}}
 \newunicodechar{概}{{\cjkfallback 概}}
 \newunicodechar{气}{{\cjkfallback 气}}
-\newunicodechar{游}{{\cjkfallback 游}}
 \newunicodechar{点}{{\cjkfallback 点}}
 \newunicodechar{理}{{\cjkfallback 理}}
 \newunicodechar{的}{{\cjkfallback 的}}
-\newunicodechar{空}{{\cjkfallback 空}}
 \newunicodechar{考}{{\cjkfallback 考}}
 \newunicodechar{能}{{\cjkfallback 能}}
-\newunicodechar{跳}{{\cjkfallback 跳}}
-\newunicodechar{辑}{{\cjkfallback 辑}}
-\newunicodechar{逻}{{\cjkfallback 逻}}
-\newunicodechar{间}{{\cjkfallback 间}}
 \newunicodechar{零}{{\cjkfallback 零}}
 
 % ── Code/monospace font (covers box-drawing glyphs used in code) ──
