@@ -1,0 +1,18 @@
+% ===== Tamil script support for the Tamil edition =====
+% Included AFTER preamble.tex (see tbuild_pdf.sh). ElegantBook has no Tamil
+% language option, so the class runs in `lang=en` (English theorem names,
+% "Chapter"/"Contents" labels). Tamil rendering is purely a font concern:
+% the body/heading Latin fonts do not cover the Tamil block (U+0B80–U+0BFF),
+% and Noto Serif Tamil does not cover Latin — so we keep the book's default
+% Latin/CJK/symbol fonts and route ONLY Tamil codepoints to Noto Serif Tamil.
+%
+% ucharclasses inserts the begin/end code at every entry/exit of a Tamil run.
+% Wrapping in \begingroup…\endgroup means the exact surrounding style (bold in
+% headings, monospace in code) is restored for whatever follows a Tamil run.
+\usepackage{ucharclasses}
+\IfFontExistsTF{Noto Serif Tamil}{%
+  \newfontfamily\tamilfont{Noto Serif Tamil}%
+  \setTransitionsFor{Tamil}{\begingroup\tamilfont}{\endgroup}%
+}{%
+  \PackageWarning{tamil-fonts}{Noto Serif Tamil not found; Tamil text will not render.}%
+}

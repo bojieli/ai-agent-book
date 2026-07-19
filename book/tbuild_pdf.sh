@@ -27,7 +27,7 @@ export extra_mem_bot=8000000
 #    immediately with the correct "not found" result.
 export MKTEXTFM=0
 
-OUT="Deep-Understanding-of-AI-Agents-Li-Bojie-v1.1.pdf"
+OUT="Deep-Understanding-of-AI-Agents-Li-Bojie-v1.1-ta.pdf"
 CHAPTERS=(
     introduction.ta.md
     chapter1.ta.md
@@ -63,13 +63,14 @@ pandoc "${CHAPTERS[@]}" \
     --toc-depth=3 \
     --number-sections \
     -V documentclass=elegantbook \
-    -V classoption=lang=ta \
+    -V classoption=lang=en \
     -V classoption=cyan \
     -V classoption=device=normal \
     -V author="Li Bojie" \
     --metadata title-meta="Deep Understanding of AI Agents: Design Principles and Engineering Practice" \
     --metadata author-meta="Li Bojie" \
     -H preamble.tex \
+    -H tamil-fonts.tex \
     --include-before-body=cover.tex \
     --syntax-highlighting=kate \
     --columns=80 \
