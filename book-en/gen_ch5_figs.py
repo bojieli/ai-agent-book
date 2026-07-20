@@ -776,7 +776,7 @@ def fig5_9():
     svg.text(440, 483, "LLM is only responsible for generating code, not for data transfer", size=FS_TINY, fill='white')
 
     # Data flow arrow (bypass)
-    svg.arrow_curved(465, 435, 745, 435, curve=25, label="SQL results directly transmitted", dash=True, color='dark')
+    svg.arrow_curved(465, 435, 745, 435, curve=25, dash=True, color='dark')
 
     svg.save(os.path.join(OUT, 'fig5-9.svg'))
 

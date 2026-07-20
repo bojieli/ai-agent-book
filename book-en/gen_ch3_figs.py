@@ -426,10 +426,10 @@ def fig3_8():
         ("Intel", 375, 100, 'medium'),
         ("SSE", 150, 190, 'light'),
         ("AVX", 550, 190, 'light'),
-        ("XMM registers", 100, 320, 'light'),
+        ("XMM reg", 100, 320, 'light'),
         ("ADDPS", 280, 340, 'light'),
-        ("YMM registers", 520, 320, 'light'),
-        ("Floating-point operations", 375, 250, 'light'),
+        ("YMM reg", 520, 320, 'light'),
+        ("FP ops", 375, 250, 'light'),
     ]
     node_r = 42
 
@@ -442,7 +442,7 @@ def fig3_8():
 
     edges = [
         (0, 1, "Development"), (0, 2, "Development"),
-        (1, 3, "Usage"), (1, 6, ""), (1, 4, "Contains instructions"),
+        (1, 3, "Usage"), (1, 6, ""), (1, 4, "Contains"),
         (2, 5, "Usage"), (2, 6, "Execute"),
         (6, 3, ""), (6, 5, "Operation"),
     ]

@@ -64,5 +64,4 @@
 <text x="440" y="465" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15.5" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-weight="bold">Data flow: DB → Frontend → Visualization (completely bypasses LLM)</text>
 <text x="440" y="483" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-weight="normal">LLM is only responsible for generating code, not for data transfer</text>
 <path d="M 465,435 Q 605.0,460.0 745,435" fill="none" stroke="#999999" stroke-width="2" stroke-dasharray="8,4" marker-end="url(#ah-light)"/>
-<text x="605.0" y="437.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">SQL results directly transmitted</text>
 </svg>
