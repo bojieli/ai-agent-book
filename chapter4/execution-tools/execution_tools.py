@@ -89,6 +89,8 @@ class ExecutionTools:
         Returns:
             Result dictionary with output and analysis
         """
+        if language is None:
+            language = "python"
         language = language.lower()
         
         # Verify syntax first (only for Python for now)

@@ -216,7 +216,7 @@ async def handle_call_tool(
         elif name == "code_interpreter":
             result = await execution_tools.code_interpreter(
                 code=arguments["code"],
-                language=arguments.get("language", "python"),
+                language=arguments.get("language") or "python",
                 timeout=arguments.get("timeout", 30.0),
                 stdin=arguments.get("stdin"),
                 files=arguments.get("files")
