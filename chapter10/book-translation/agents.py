@@ -27,6 +27,12 @@ MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.6-luna")
 BASE_URL = os.environ.get("OPENAI_BASE_URL")  # 可选，兼容自建/代理端点
 
 
+def _report_issues(report: dict) -> list:
+    """JSON null issues must behave like omit ([])."""
+    issues = report.get("issues")
+    return issues if issues is not None else []
+
+
 def _to_openrouter_model(model: str) -> str:
     """把模型名映射到 OpenRouter 命名空间（用于无 OPENAI_API_KEY 的回退路径）。"""
     if "/" in model:
@@ -477,14 +483,14 @@ def run_orchestration(chapters, out_dir, *, source_lang="英文", target_lang="�
     last = tracker.calls[-1]
     log_call("Proofreading", "一致性审校", report_path,
              last["prompt_tokens"], last["completion_tokens"])
-    emit(f"Proofreading Agent ✓：{len(report.get('issues', []))} 处问题 → "
+    emit(f"Proofreading Agent ✓：{len(_report_issues(report))} 处问题 → "
          f"{os.path.basename(report_path)}")
 
     # ---- 步骤 4：Manager 决策 + 至多一轮修订 ----
     # Manager 只把“文件索引 + 报告摘要”这类小上下文发给模型做决策
     report_summary = {
-        "chapters_need_revision": report.get("chapters_need_revision", []),
-        "issues": report.get("issues", [])[:5],
+        "chapters_need_revision": report.get("chapters_need_revision", []) or [],
+        "issues": _report_issues(report)[:5],
         "summary": report.get("summary", ""),
     }
     manager_context["progress"]["proofread"] = "done"
@@ -503,7 +509,7 @@ def run_orchestration(chapters, out_dir, *, source_lang="英文", target_lang="�
             continue
         # 找到该章节的修订意见
         fb = "; ".join(
-            i.get("detail", "") for i in report.get("issues", [])
+            i.get("detail", "") for i in _report_issues(report)
             if i.get("chapter") == name
         ) or "请根据术语表统一术语并提升流畅性。"
         emit(f"Manager → Translation Agent：修订《{name}》（附审校意见）")
