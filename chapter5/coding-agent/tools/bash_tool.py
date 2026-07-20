@@ -27,7 +27,10 @@ class BashTool(BaseTool):
         - Output truncated if exceeds 30000 characters
         """
         command = params["command"]
-        timeout = params.get("timeout", 120000) / 1000  # Convert ms to seconds
+        timeout_ms = params.get("timeout")
+        if timeout_ms is None:
+            timeout_ms = 120000
+        timeout = timeout_ms / 1000  # Convert ms to seconds
         run_in_background = params.get("run_in_background", False)
         
         # Get or create shell session

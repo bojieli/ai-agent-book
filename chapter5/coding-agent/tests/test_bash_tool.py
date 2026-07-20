@@ -174,3 +174,14 @@ class TestBashTool:
         assert result.success
         assert "working_directory" in result.data
 
+    def test_null_timeout_like_omit(self, system_state):
+        """Explicit JSON null timeout must behave like omit (default 120s)."""
+        tool = BashTool(system_state)
+        result = tool.execute({
+            "command": "echo ok",
+            "timeout": None,
+        })
+        assert result.success
+        assert "ok" in result.data["output"]
+        assert result.data["exit_code"] == 0
+
