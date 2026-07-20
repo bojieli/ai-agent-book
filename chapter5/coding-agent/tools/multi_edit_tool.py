@@ -26,7 +26,9 @@ class MultiEditTool(BaseTool):
         - The edits are atomic - either all succeed or none are applied
         """
         file_path = Path(params["file_path"]).expanduser().resolve()
-        edits = params["edits"]
+        edits = params.get("edits")
+        if edits is None:
+            edits = []
         
         if not file_path.exists():
             # Check if this is a file creation (first edit has empty old_string)

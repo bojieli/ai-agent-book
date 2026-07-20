@@ -204,3 +204,16 @@ def old_function():
         assert result.success
         assert result.data["old_size"] < result.data["new_size"]
 
+    def test_null_edits_like_empty(self, system_state, temp_dir):
+        """Explicit JSON null edits must behave like an empty list."""
+        tool = MultiEditTool(system_state)
+        file_path = temp_dir / "null_edits.py"
+        file_path.write_text("x = 1\n")
+        result = tool.execute({
+            "file_path": str(file_path),
+            "edits": None,
+        })
+        assert result.success
+        assert "error" not in result.data
+        assert result.data["total_edits"] == 0
+        assert file_path.read_text() == "x = 1\n"
