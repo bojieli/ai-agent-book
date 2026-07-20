@@ -21,12 +21,11 @@ class TodoWriteTool(BaseTool):
         - Track progress, organize complex tasks
         - Helps user understand progress
         """
-        todos = params.get("todos")
+        # JSON null for required todos: same as empty list (LLM omit-as-null).
+        todos = params["todos"]
         if todos is None:
             todos = []
-        if not isinstance(todos, list):
-            return {"error": "todos must be a list of todo items"}
-        
+
         # Validate todo format
         for todo in todos:
             if not all(k in todo for k in ["id", "content", "status"]):
