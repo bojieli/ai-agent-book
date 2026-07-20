@@ -196,8 +196,12 @@ async def get_article_history(
     try:
         logging.info(f"📚 Getting historical version: {title} at {date}")
         
-        # Parse date
+        # Parse date (YYYY/MM or YYYY/MM/DD)
+        if not isinstance(date, str) or "/" not in date:
+            raise ValueError("date must be YYYY/MM/DD or YYYY/MM")
         date_parts = date.split("/")
+        if len(date_parts) < 2:
+            raise ValueError("date must be YYYY/MM/DD or YYYY/MM")
         year = int(date_parts[0])
         month = int(date_parts[1])
         day = int(date_parts[2]) if len(date_parts) > 2 else calendar.monthrange(year, month)[1]
