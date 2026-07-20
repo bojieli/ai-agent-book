@@ -38,9 +38,15 @@ class GrepTool(BaseTool):
         glob_pattern = params.get("glob")
         output_mode = params.get("output_mode", "files_with_matches")
         case_insensitive = params.get("-i", False)
-        context_before = params.get("-B") or 0
-        context_after = params.get("-A") or 0
-        context_around = params.get("-C") or 0
+        context_before = params.get("-B")
+        if context_before is None:
+            context_before = 0
+        context_after = params.get("-A")
+        if context_after is None:
+            context_after = 0
+        context_around = params.get("-C")
+        if context_around is None:
+            context_around = 0
         show_line_numbers = params.get("-n", False)
         multiline = params.get("multiline", False)
         head_limit = params.get("head_limit")
