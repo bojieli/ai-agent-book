@@ -25,6 +25,8 @@ class GlobTool(BaseTool):
         """
         pattern = params["pattern"]
         path = params.get("path", ".")
+        if path is None:
+            path = "."
         
         # Resolve search path
         search_path = Path(path).expanduser().resolve()
