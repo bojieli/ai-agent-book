@@ -47,12 +47,6 @@ EDIT_TOOLS = [
 ]
 
 
-def _edits_list(args: dict) -> list:
-    """JSON null edits must behave like omit ([])."""
-    edits = args.get("edits")
-    return edits if edits is not None else []
-
-
 def _apply_one(content: str, old_str: str, new_str: str) -> tuple[str, str | None]:
     """尝试应用一条编辑。成功返回(新内容, None)，失败返回(原内容, 错误信息)。"""
     if old_str is None or new_str is None:
@@ -63,6 +57,22 @@ def _apply_one(content: str, old_str: str, new_str: str) -> tuple[str, str | Non
     if count > 1:
         return content, f"old_str 在文件中出现 {count} 次（不唯一）：{old_str[:60]!r}"
     return content.replace(old_str, new_str, 1), None
+
+
+def _apply_edits_from_args(working: str, args: dict) -> tuple[str, int, list, list]:
+    """Apply apply_edits tool args to working text. JSON null edits like omit ([])."""
+    edits = args.get("edits")
+    if edits is None:
+        edits = []
+    errors = []
+    applied = 0
+    for e in edits:
+        working, err = _apply_one(working, e.get("old_str", ""), e.get("new_str", ""))
+        if err:
+            errors.append(err)
+        else:
+            applied += 1
+    return working, applied, errors, edits
 
 
 def optimize_prompt(prompt_path: str, feedback: str, max_rounds: int = 3, verbose: bool = True) -> dict:
@@ -126,17 +136,8 @@ def optimize_prompt(prompt_path: str, feedback: str, max_rounds: int = 3, verbos
             args = json.loads(tc.function.arguments or "{}")
         except json.JSONDecodeError:
             args = {}
-        edits = _edits_list(args)
         rationale = args.get("rationale", rationale)
-
-        errors = []
-        applied = 0
-        for e in edits:
-            working, err = _apply_one(working, e.get("old_str", ""), e.get("new_str", ""))
-            if err:
-                errors.append(err)
-            else:
-                applied += 1
+        working, applied, errors, edits = _apply_edits_from_args(working, args)
 
         if verbose:
             print(f"  [round {round_idx + 1}] 提交 {len(edits)} 条编辑，成功 {applied}，失败 {len(errors)}")
