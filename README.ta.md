@@ -9,7 +9,7 @@
 இந்தப் புத்தகம் பல மொழிப் பதிப்புகளில் வழங்கப்படுகிறது:
 
 - **சீன PDF (அசல் பதிப்பு)**: [`book/深入理解-AI-Agent-李博杰-v1.2.pdf`](book/深入理解-AI-Agent-李博杰-v1.2.pdf)
-- **பாரம்பரிய சீன (தைவான்) PDF** (எளிமையாக்கப்பட்ட அசலில் இருந்து OpenCC மூலம் மாற்றப்பட்டு zhtw-mcp மூலம் திருத்தப்பட்டது): [`book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf`](book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf)
+- **பாரம்பரிய சீன (தைவான்) PDF** (சமூகப் பங்களிப்பு மொழிபெயர்ப்பு, by [@tigercosmos](https://github.com/tigercosmos)): [`book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf`](book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf)
 - **ஆங்கில PDF** (சமூகப் பங்களிப்பு மொழிபெயர்ப்பு, by [@nsdevaraj](https://github.com/nsdevaraj)): [`book-en/AI-Agents-in-Depth-Bojie-Li-v1.2.pdf`](book-en/AI-Agents-in-Depth-Bojie-Li-v1.2.pdf)
 - **தமிழ் PDF** (சமூகப் பங்களிப்பு மொழிபெயர்ப்பு, by [@nsdevaraj](https://github.com/nsdevaraj)): [`book-ta/AI-Agents-in-Depth-Bojie-Li-v1.2-ta.pdf`](book-ta/AI-Agents-in-Depth-Bojie-Li-v1.2-ta.pdf)
 - **வியட்நாமிய PDF** (சமூகப் பங்களிப்பு மொழிபெயர்ப்பு, by [@toanalien](https://github.com/toanalien)): [`book-vi/AI-Agents-in-Depth-Bojie-Li-v1.2-vi.pdf`](book-vi/AI-Agents-in-Depth-Bojie-Li-v1.2-vi.pdf)

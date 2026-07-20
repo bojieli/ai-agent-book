@@ -9,7 +9,7 @@ This repository is the open-source main repository for the book *AI Agents in De
 The book is available in multiple languages:
 
 - **Chinese PDF (original / 中文原版)**: [`book/深入理解-AI-Agent-李博杰-v1.2.pdf`](book/深入理解-AI-Agent-李博杰-v1.2.pdf)
-- **Traditional Chinese (Taiwan) PDF** (converted from the Simplified original via OpenCC and corrected with zhtw-mcp): [`book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf`](book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf)
+- **Traditional Chinese (Taiwan) PDF** (community-contributed translation by [@tigercosmos](https://github.com/tigercosmos)): [`book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf`](book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf)
 - **English PDF** (community-contributed translation by [@nsdevaraj](https://github.com/nsdevaraj)): [`book-en/AI-Agents-in-Depth-Bojie-Li-v1.2.pdf`](book-en/AI-Agents-in-Depth-Bojie-Li-v1.2.pdf)
 - **Tamil PDF** (community-contributed translation by [@nsdevaraj](https://github.com/nsdevaraj)): [`book-ta/AI-Agents-in-Depth-Bojie-Li-v1.2-ta.pdf`](book-ta/AI-Agents-in-Depth-Bojie-Li-v1.2-ta.pdf)
 - **Vietnamese PDF** (community-contributed translation by [@toanalien](https://github.com/toanalien)): [`book-vi/AI-Agents-in-Depth-Bojie-Li-v1.2-vi.pdf`](book-vi/AI-Agents-in-Depth-Bojie-Li-v1.2-vi.pdf)
