@@ -6,7 +6,7 @@
 
 ## 📖 电子书
 
-全书提供中英双语版本：
+全书提供多种语言版本：
 
 - **中文 PDF（原版）**：[`book/深入理解-AI-Agent-李博杰-v1.1.pdf`](book/深入理解-AI-Agent-李博杰-v1.1.pdf)
 - **英文 PDF**（社区贡献翻译，by [@nsdevaraj](https://github.com/nsdevaraj)）：[`book-en/AI-Agents-in-Depth-Bojie-Li-v1.1.pdf`](book-en/AI-Agents-in-Depth-Bojie-Li-v1.1.pdf)
