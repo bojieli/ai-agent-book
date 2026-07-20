@@ -129,7 +129,7 @@ def build_presentation(payload: dict, out_path: str) -> dict:
     # 内容页
     for s in slides:
         s_title = s.get("title", "")
-        bullets = s.get("bullets", [])
+        bullets = s.get("bullets") or []
         _add_content_slide(prs, s_title, bullets)
         titles.append(s_title)
 
