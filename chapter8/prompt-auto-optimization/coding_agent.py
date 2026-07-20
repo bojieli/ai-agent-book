@@ -47,6 +47,12 @@ EDIT_TOOLS = [
 ]
 
 
+def _edits_list(args: dict) -> list:
+    """JSON null edits must behave like omit ([])."""
+    edits = args.get("edits")
+    return edits if edits is not None else []
+
+
 def _apply_one(content: str, old_str: str, new_str: str) -> tuple[str, str | None]:
     """尝试应用一条编辑。成功返回(新内容, None)，失败返回(原内容, 错误信息)。"""
     if old_str is None or new_str is None:
@@ -120,7 +126,7 @@ def optimize_prompt(prompt_path: str, feedback: str, max_rounds: int = 3, verbos
             args = json.loads(tc.function.arguments or "{}")
         except json.JSONDecodeError:
             args = {}
-        edits = args.get("edits", [])
+        edits = _edits_list(args)
         rationale = args.get("rationale", rationale)
 
         errors = []
