@@ -98,6 +98,8 @@ class LanguageExecutor:
         Returns:
             Execution result dictionary
         """
+        if language is None:
+            language = "python"
         language = language.lower()
         
         # Map language to executor
