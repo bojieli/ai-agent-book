@@ -18,7 +18,7 @@ A cross-platform demonstration of LLM tool calling using standard OpenAI-compati
 ```bash
 # 1. Clone the repository
 git clone <repository>
-cd projects/week2/chat_template
+cd chapter2/local_llm_serving
 
 # 2. Install dependencies
 pip install -r requirements.txt
@@ -158,7 +158,7 @@ registry.register_tool(
 ## 📁 Project Structure
 
 ```
-chat_template/
+local_llm_serving/
 ├── main.py              # Main entry point (auto-detects backend)
 ├── benchmark.py         # Serving benchmark: throughput / TTFT / KV cache / batching
 ├── agent.py             # vLLM agent implementation
