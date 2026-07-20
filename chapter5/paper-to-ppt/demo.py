@@ -54,12 +54,18 @@ def save_text(name, text):
     return path
 
 
+def _review_issues(review: dict) -> list:
+    """JSON null issues must behave like omit ([])."""
+    issues = review.get("issues")
+    return issues if issues is not None else []
+
+
 def summarize_review(review: dict) -> str:
-    n_high = sum(1 for x in review.get("issues", []) if x.get("severity") == "high")
-    n_med = sum(1 for x in review.get("issues", []) if x.get("severity") == "medium")
-    n_low = sum(1 for x in review.get("issues", []) if x.get("severity") == "low")
+    n_high = sum(1 for x in _review_issues(review) if x.get("severity") == "high")
+    n_med = sum(1 for x in _review_issues(review) if x.get("severity") == "medium")
+    n_low = sum(1 for x in _review_issues(review) if x.get("severity") == "low")
     return (f"score={review.get('overall_score')} pass={review.get('pass')} "
-            f"issues={len(review.get('issues', []))} (high={n_high}, med={n_med}, low={n_low})")
+            f"issues={len(_review_issues(review))} (high={n_high}, med={n_med}, low={n_low})")
 
 
 # --------------------------------------------------------------------------- #
@@ -93,7 +99,7 @@ def run_proposer_reviewer(paper_md, figures, max_rounds=MAX_ROUNDS):
                   json.dumps(review, ensure_ascii=False, indent=2))
         history.append((review.get("overall_score", 0), review))
 
-        blocking = [i for i in review.get("issues", [])
+        blocking = [i for i in _review_issues(review)
                     if i.get("severity") in ("high", "medium")]
         if review.get("pass") and not blocking:
             print("  ✓ Reviewer 判定达标（无 high/medium 问题），提前结束迭代。")
