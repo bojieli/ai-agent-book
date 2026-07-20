@@ -234,3 +234,27 @@ class TestGrepTool:
         assert result.success
         assert "ERROR" in result.data["output"]
 
+    def test_null_context_before_like_omit(self, system_state, sample_files):
+        """Explicit JSON null -B must behave like omit (default 0)."""
+        tool = GrepTool(system_state)
+        result = tool.execute({
+            "pattern": "ERROR",
+            "path": str(sample_files["text_file1"]),
+            "output_mode": "content",
+            "-B": None,
+        })
+        assert result.success
+        assert "ERROR" in result.data["output"]
+
+    def test_null_context_after_like_omit(self, system_state, sample_files):
+        """Explicit JSON null -A must behave like omit (default 0)."""
+        tool = GrepTool(system_state)
+        result = tool.execute({
+            "pattern": "ERROR",
+            "path": str(sample_files["text_file1"]),
+            "output_mode": "content",
+            "-A": None,
+        })
+        assert result.success
+        assert "ERROR" in result.data["output"]
+
