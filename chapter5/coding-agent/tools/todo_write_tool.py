@@ -21,7 +21,11 @@ class TodoWriteTool(BaseTool):
         - Track progress, organize complex tasks
         - Helps user understand progress
         """
-        todos = params["todos"]
+        todos = params.get("todos")
+        if todos is None:
+            todos = []
+        if not isinstance(todos, list):
+            return {"error": "todos must be a list of todo items"}
         
         # Validate todo format
         for todo in todos:

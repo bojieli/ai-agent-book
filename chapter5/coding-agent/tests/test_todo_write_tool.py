@@ -126,3 +126,11 @@ class TestTodoWriteTool:
         assert result.data["in_progress"] == 1
         assert result.data["completed"] == 3
 
+    def test_null_todos_like_empty(self, system_state):
+        """Explicit JSON null todos must behave like an empty list."""
+        tool = TodoWriteTool(system_state)
+        result = tool.execute({"todos": None})
+        assert result.success
+        assert "error" not in result.data
+        assert result.data["total_todos"] == 0
+
