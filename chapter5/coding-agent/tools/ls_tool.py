@@ -24,7 +24,9 @@ class LSTool(BaseTool):
         - You can optionally provide an array of glob patterns to ignore
         """
         path = Path(params["path"]).expanduser().resolve()
-        ignore_patterns = params.get("ignore") or []
+        ignore_patterns = params.get("ignore")
+        if ignore_patterns is None:
+            ignore_patterns = []
         
         if not path.exists():
             return {"error": f"Path not found: {path}"}
