@@ -173,6 +173,7 @@ def descriptive_stats(numbers: List[float]) -> str:
 
 def count_characters(text: str) -> str:
     """统计文本的字符数与中文字符数，帮助控制篇幅。"""
+    text = text or ""
     total = len(text)
     chinese = sum(1 for ch in text if "一" <= ch <= "鿿")
     return f"总字符数={total}, 其中中文字符={chinese}"
