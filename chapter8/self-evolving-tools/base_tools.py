@@ -41,6 +41,8 @@ def web_search(query: str, num_results: int = 6) -> dict:
     if not query:
         return {"success": False, "error": "search query is empty", "results": []}
 
+    if num_results is None:
+        num_results = 6
     num_results = max(1, min(int(num_results), 10))
     headers = {
         "User-Agent": (
