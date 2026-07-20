@@ -23,17 +23,16 @@ def try_decode(s: bytes) -> str:
         return f'[DecodeError] {e}'
 
 
-async def get_output_non_blocking(stream) -> str:
-    """Read output non-blocking to avoid hanging."""
-    result = b''
+async def get_all_output(stream) -> str:
+    """Read stream until EOF. Call after the process has exited or been killed."""
+    if stream is None:
+        return ""
     try:
-        # Read up to 1MB with very short timeout to avoid blocking
-        result = await asyncio.wait_for(stream.read(1024 * 1024), timeout=0.001)
-    except asyncio.TimeoutError:
-        pass
+        result = await stream.read()
+        return try_decode(result)
     except Exception as e:
         logger.debug(f"Error reading output: {e}")
-    return try_decode(result)
+        return ""
 
 
 def kill_process_tree(pid: int):
@@ -177,8 +176,8 @@ class LanguageExecutor:
                 execution_time = time.time() - start_time
                 
                 # Read output non-blocking
-                stdout = await get_output_non_blocking(process.stdout)
-                stderr = await get_output_non_blocking(process.stderr)
+                stdout = await get_all_output(process.stdout)
+                stderr = await get_all_output(process.stderr)
                 
                 logger.debug(f'Command completed in {execution_time:.2f}s')
                 
@@ -192,15 +191,14 @@ class LanguageExecutor:
                 
             except asyncio.TimeoutError:
                 execution_time = time.time() - start_time
-                
-                # Try to read partial output
-                stdout = await get_output_non_blocking(process.stdout)
-                stderr = await get_output_non_blocking(process.stderr)
-                
-                # Kill process tree
+
+                # Kill first so pipes close, then drain remaining output
                 if psutil.pid_exists(process.pid):
                     kill_process_tree(process.pid)
                     logger.info(f'Process {process.pid} killed due to timeout')
+
+                stdout = await get_all_output(process.stdout)
+                stderr = await get_all_output(process.stderr)
                 
                 return {
                     "status": ExecutionStatus.TIMEOUT,
@@ -251,7 +249,7 @@ class LanguageExecutor:
                 return False
             base64.b64decode(s, validate=True)
             return True
-        except:
+        except Exception:
             return False
     
     async def _run_python(
