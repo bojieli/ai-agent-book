@@ -27,8 +27,12 @@ class ReadTool(BaseTool):
         - Supports images, PDFs, Jupyter notebooks
         """
         file_path = Path(params["file_path"]).expanduser().resolve()
-        offset = params.get("offset", 0)
-        limit = params.get("limit", 2000)
+        offset = params.get("offset")
+        if offset is None:
+            offset = 0
+        limit = params.get("limit")
+        if limit is None:
+            limit = 2000
         
         if not file_path.exists():
             return {"error": f"File not found: {file_path}"}

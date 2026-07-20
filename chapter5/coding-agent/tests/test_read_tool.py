@@ -191,3 +191,17 @@ class TestReadTool:
         assert "error" in result.data
         assert "not a file" in result.data["error"].lower()
 
+
+    def test_null_offset_and_limit(self, system_state, sample_files):
+        """JSON null offset/limit must use defaults (agent omits optional numbers)."""
+        tool = ReadTool(system_state)
+        path = sample_files["python_file"]
+        result = tool.execute({
+            "file_path": str(path),
+            "offset": None,
+            "limit": None,
+        })
+        assert result.success
+        assert "error" not in result.data
+        assert "def hello" in result.data["content"]
+        assert result.data["total_lines"] > 0
