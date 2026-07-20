@@ -374,7 +374,9 @@ class StagedAgent:
             )
 
         if name == T.REQUEST_REVISION:
-            issues = args.get("issues", [])
+            issues = args.get("issues")
+            if issues is None:
+                issues = []
             if isinstance(issues, str):
                 issues = [issues]
             self.workspace.review_issues = list(issues)
@@ -432,7 +434,7 @@ class StagedAgent:
                     "content": "【系统】回退次数已达上限，演示到此结束。",
                 })
                 return True
-            issue_text = "\n".join(f"- {x}" for x in descriptor.get("issues", []))
+            issue_text = "\n".join(f"- {x}" for x in (descriptor.get("issues") or []))
             self.history.append({
                 "role": "user",
                 "content": (
