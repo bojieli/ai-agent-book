@@ -270,3 +270,13 @@ class TestGrepTool:
         assert result.success
         assert "ERROR" in result.data["output"]
 
+    def test_null_path_like_omit(self, system_state, sample_files):
+        """Explicit JSON null path must behave like omit (default search root)."""
+        tool = GrepTool(system_state)
+        result = tool.execute({
+            "pattern": "ERROR",
+            "path": None,
+            "output_mode": "content",
+        })
+        assert result.success
+        assert "error" not in result.data

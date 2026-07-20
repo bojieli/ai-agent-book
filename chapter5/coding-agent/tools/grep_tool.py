@@ -35,6 +35,8 @@ class GrepTool(BaseTool):
         """
         pattern = params["pattern"]
         path = params.get("path", ".")
+        if path is None:
+            path = "."
         glob_pattern = params.get("glob")
         output_mode = params.get("output_mode", "files_with_matches")
         case_insensitive = params.get("-i", False)
