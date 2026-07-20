@@ -196,3 +196,15 @@ class TestLSTool:
         finally:
             restricted_dir.chmod(0o755)  # Restore permissions for cleanup
 
+
+    def test_ignore_null_lists_directory(self, system_state, temp_dir):
+        """JSON null ignore must not break listing (agent omits optional array)."""
+        tool = LSTool(system_state)
+        (temp_dir / "keep.txt").write_text("keep")
+        result = tool.execute({
+            "path": str(temp_dir),
+            "ignore": None,
+        })
+        assert result.success
+        assert "error" not in result.data
+        assert any(e["name"] == "keep.txt" for e in result.data["entries"])
