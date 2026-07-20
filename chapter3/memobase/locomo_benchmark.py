@@ -403,8 +403,9 @@ class LOCOMOBenchmark:
         
         # Relevance (keyword matching)
         query_words = task.query.lower().split()
-        matching_words = sum(1 for word in query_words if word in response.lower())
-        score += min(0.4, matching_words / len(query_words))
+        if query_words:
+            matching_words = sum(1 for word in query_words if word in response.lower())
+            score += min(0.4, matching_words / len(query_words))
         
         return score
     

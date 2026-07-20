@@ -177,7 +177,7 @@ class Config:
         os.makedirs(cls.MEMORY_STORAGE_DIR, exist_ok=True)
         os.makedirs(cls.CONVERSATION_HISTORY_DIR, exist_ok=True)
         os.makedirs(cls.LOCOMO_OUTPUT_DIR, exist_ok=True)
-        os.makedirs(os.path.dirname(cls.LOG_FILE) if cls.LOG_FILE else "logs", exist_ok=True)
+        os.makedirs(os.path.dirname(cls.LOG_FILE) or "logs", exist_ok=True)
     
     @classmethod
     def get_model_config(cls) -> Dict[str, Any]:

@@ -93,7 +93,10 @@ def _normalize(raw, charge, factors):
                 digits = "".join(ch for ch in v if ch.isdigit())
                 out[f["key"]] = int(digits) if digits else None
             else:
-                out[f["key"]] = int(v)
+                try:
+                    out[f["key"]] = int(v)
+                except (TypeError, ValueError):
+                    out[f["key"]] = None
         elif f["kind"] == "bool":
             out[f["key"]] = bool(v) if isinstance(v, bool) else str(v).lower() in ("true", "1", "是")
         else:  # categorical

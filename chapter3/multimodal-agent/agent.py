@@ -1059,23 +1059,29 @@ class MultimodalAgent:
     async def _execute_tool(self, tool_call: Dict[str, Any]) -> str:
         """Execute a tool call"""
         function_name = tool_call["function"]["name"]
-        arguments = json.loads(tool_call["function"]["arguments"])
+        try:
+            arguments = json.loads(tool_call["function"]["arguments"])
+        except json.JSONDecodeError:
+            return f"Error: invalid JSON arguments for tool '{function_name}'"
         
         if function_name == "analyze_image":
-            return await self.tools.analyze_image(
-                arguments["image_path"],
-                arguments["query"]
-            )
+            image_path = arguments.get("image_path")
+            query = arguments.get("query")
+            if not image_path or not query:
+                return "Error: analyze_image requires 'image_path' and 'query' arguments"
+            return await self.tools.analyze_image(image_path, query)
         elif function_name == "analyze_audio":
-            return await self.tools.analyze_audio(
-                arguments["audio_path"],
-                arguments["query"]
-            )
+            audio_path = arguments.get("audio_path")
+            query = arguments.get("query")
+            if not audio_path or not query:
+                return "Error: analyze_audio requires 'audio_path' and 'query' arguments"
+            return await self.tools.analyze_audio(audio_path, query)
         elif function_name == "analyze_pdf":
-            return await self.tools.analyze_pdf(
-                arguments["pdf_path"],
-                arguments["query"]
-            )
+            pdf_path = arguments.get("pdf_path")
+            query = arguments.get("query")
+            if not pdf_path or not query:
+                return "Error: analyze_pdf requires 'pdf_path' and 'query' arguments"
+            return await self.tools.analyze_pdf(pdf_path, query)
         else:
             return f"Unknown tool: {function_name}"
             

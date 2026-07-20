@@ -501,8 +501,8 @@ Extract memory cards:"""
             local_results = []
             
             for chunk_id, chunk in self.contextual_chunks.items():
-                # Search in contextualized text
-                if query_lower in chunk.contextualized_text.lower():
+                # Search in contextualized text (skip chunks with empty text)
+                if query_lower and chunk.contextualized_text and query_lower in chunk.contextualized_text.lower():
                     # Calculate a simple relevance score based on frequency
                     score = chunk.contextualized_text.lower().count(query_lower) / len(chunk.contextualized_text)
                     local_results.append((score, chunk_id, chunk))

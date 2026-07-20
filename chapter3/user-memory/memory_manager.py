@@ -142,7 +142,7 @@ class NotesMemoryManager(BaseMemoryManager):
     def save_memory(self):
         """Save notes to storage"""
         try:
-            os.makedirs(os.path.dirname(self.memory_file), exist_ok=True)
+            os.makedirs(os.path.dirname(self.memory_file) or ".", exist_ok=True)
             with open(self.memory_file, 'w', encoding='utf-8') as f:
                 data = {
                     'user_id': self.user_id,
@@ -382,7 +382,7 @@ class JSONMemoryManager(BaseMemoryManager):
     def save_memory(self):
         """Save JSON memory cards to storage"""
         try:
-            os.makedirs(os.path.dirname(self.memory_file), exist_ok=True)
+            os.makedirs(os.path.dirname(self.memory_file) or ".", exist_ok=True)
             with open(self.memory_file, 'w', encoding='utf-8') as f:
                 data = {
                     'user_id': self.user_id,
@@ -560,7 +560,7 @@ class AdvancedJSONMemoryManager(BaseMemoryManager):
     def save_memory(self):
         """Save advanced JSON memory cards to storage"""
         try:
-            os.makedirs(os.path.dirname(self.memory_file), exist_ok=True)
+            os.makedirs(os.path.dirname(self.memory_file) or ".", exist_ok=True)
             with open(self.memory_file, 'w', encoding='utf-8') as f:
                 data = {
                     'user_id': self.user_id,

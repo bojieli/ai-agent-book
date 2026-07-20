@@ -76,7 +76,7 @@ class ConversationHistory:
     def save_history(self):
         """Save conversation history to storage"""
         try:
-            os.makedirs(os.path.dirname(self.history_file), exist_ok=True)
+            os.makedirs(os.path.dirname(self.history_file) or ".", exist_ok=True)
             with open(self.history_file, 'w', encoding='utf-8') as f:
                 data = {
                     'user_id': self.user_id,
