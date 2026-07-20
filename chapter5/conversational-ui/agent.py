@@ -79,6 +79,12 @@ def build_client_and_model():
     return client, model
 
 
+def _editable_files(args: dict) -> list:
+    """JSON null files must behave like omit ([])."""
+    files = args.get("files")
+    return files if files is not None else []
+
+
 APPLY_EDITS_TOOL = {
     "type": "function",
     "function": {
@@ -175,7 +181,7 @@ def customize(client, model, frontend_dir: Path, requirement: str) -> dict:
     args = json.loads(msg.tool_calls[0].function.arguments)
 
     # 安全校验：只允许改写白名单内的文件。
-    for f in args.get("files", []):
+    for f in _editable_files(args):
         if f["path"] not in EDITABLE_FILES:
             raise RuntimeError(f"模型试图修改非白名单文件：{f['path']}")
     return args
