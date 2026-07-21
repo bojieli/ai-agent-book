@@ -6,6 +6,7 @@ Demonstrates how to use vLLM with Qwen3 for tool calling
 import json
 import uuid
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any, Optional
 from openai import OpenAI
 from tools import ToolRegistry
@@ -95,11 +96,12 @@ After receiving tool results, use them to provide a comprehensive answer to the 
     def _execute_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Execute tool calls and return results.
-        Ensures that error messages from failed tool executions are properly formatted.
+        Multiple tool calls in the same turn are executed in parallel (they are
+        independent by construction, since the model generated all of them
+        without seeing any result). Ensures that error messages from failed
+        tool executions are properly formatted.
         """
-        results = []
-        
-        for tool_call in tool_calls:
+        def run_one(tool_call: Dict[str, Any]) -> Dict[str, Any]:
             tool_name = tool_call["function"]["name"]
             tool_args = tool_call["function"]["arguments"]
             tool_id = tool_call["id"]
@@ -131,14 +133,19 @@ After receiving tool results, use them to provide a comprehensive answer to the 
                 logger.debug(f"Tool {tool_name} returned: {result}")
             
             # Format the result
-            results.append({
+            return {
                 "role": "tool",
                 "tool_call_id": tool_id,
                 "name": tool_name,
                 "content": result if isinstance(result, str) else str(result)
-            })
+            }
         
-        return results
+        if len(tool_calls) <= 1:
+            return [run_one(tc) for tc in tool_calls]
+        
+        # Independent tool calls run concurrently; executor.map preserves order
+        with ThreadPoolExecutor(max_workers=len(tool_calls)) as executor:
+            return list(executor.map(run_one, tool_calls))
     
     def chat(self, message: str, use_tools: bool = True, 
              temperature: float = 0.7, max_tokens: int = 2048, 
