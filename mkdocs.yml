@@ -1,0 +1,120 @@
+site_name: 深入理解 AI Agent
+site_description: 深入理解 AI Agent：设计原理与工程实践 — 在线阅读版
+repo_url: https://github.com/phaethix/ai-agent-book
+repo_name: phaethix/ai-agent-book
+edit_uri: edit/main
+
+# The actual docs are assembled into `_web/` by `scripts/build_site.sh`
+# (only the Markdown sources + images are copied; code/PDFs are left out).
+docs_dir: _web
+
+# Strip Pandoc/LaTeX attributes the source Markdown uses (e.g. `{.unnumbered}`,
+# `{#sec:foo}`, image `{height=55%}`) which Python-Markdown cannot parse.
+hooks:
+  - scripts/mkdocs_pandoc_strip.py
+
+theme:
+  name: material
+  language: zh
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: 切换夜间模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: 切换日间模式
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - toc.follow
+    - content.code.copy
+    - content.code.annotate
+    - search.suggest
+    - search.highlight
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+
+# MathJax renders the `\(...\)` / `\[...\]` produced by arithmatex (generic).
+extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - 首页: index.md
+  - 中文:
+      - book/introduction.md
+      - book/chapter1.md
+      - book/chapter2.md
+      - book/chapter3.md
+      - book/chapter4.md
+      - book/chapter5.md
+      - book/chapter6.md
+      - book/chapter7.md
+      - book/chapter8.md
+      - book/chapter9.md
+      - book/chapter10.md
+      - book/afterword.md
+      - book/思考题参考答案.md
+  - English:
+      - book-en/introduction.md
+      - book-en/chapter1.md
+      - book-en/chapter2.md
+      - book-en/chapter3.md
+      - book-en/chapter4.md
+      - book-en/chapter5.md
+      - book-en/chapter6.md
+      - book-en/chapter7.md
+      - book-en/chapter8.md
+      - book-en/chapter9.md
+      - book-en/chapter10.md
+      - book-en/afterword.md
+  - தமிழ்:
+      - book-ta/introduction.ta.md
+      - book-ta/chapter1.ta.md
+      - book-ta/chapter2.ta.md
+      - book-ta/chapter3.ta.md
+      - book-ta/chapter4.ta.md
+      - book-ta/chapter5.ta.md
+      - book-ta/chapter6.ta.md
+      - book-ta/chapter7.ta.md
+      - book-ta/chapter8.ta.md
+      - book-ta/chapter9.ta.md
+      - book-ta/chapter10.ta.md
+      - book-ta/afterword.ta.md
+  - Tiếng Việt:
+      - book-vi/introduction.vi.md
+      - book-vi/chapter1.vi.md
+      - book-vi/chapter2.vi.md
+      - book-vi/chapter3.vi.md
+      - book-vi/chapter4.vi.md
+      - book-vi/chapter5.vi.md
+      - book-vi/chapter6.vi.md
+      - book-vi/chapter7.vi.md
+      - book-vi/chapter8.vi.md
+      - book-vi/chapter9.vi.md
+      - book-vi/chapter10.vi.md
+      - book-vi/afterword.vi.md
+      - book-vi/glossary.vi.md
