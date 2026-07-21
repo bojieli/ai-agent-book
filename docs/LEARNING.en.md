@@ -38,7 +38,7 @@ The learning path corresponds chapter by chapter to the entire book, unfolding l
 ### Practical Suggestions
 
 1.  **Hands-on Practice**: Each project is designed to be run independently. It is recommended to run and modify the code yourself.
-2.  **Combine with the Book**: Read the corresponding chapters in the manuscript in the [`book-en/`](book-en/) directory (English) or [`book/`](book/) directory (Chinese original) of this repository to understand the combination of theory and practice.
+2.  **Combine with the Book**: Read the corresponding chapters in the manuscript in the [`book-en/`](../book-en/) directory (English) or [`book/`](../book/) directory (Chinese original) of this repository to understand the combination of theory and practice.
 3.  **Experimental Comparison**: Many projects include ablation studies and comparative experiments. Deepen understanding through comparison.
 4.  **Progressive Learning**: Start with simple projects and gradually delve into complex systems.
 5.  **Focus on Protocols**: The MCP server project in Chapter 4 demonstrates standardized tool protocols, which are key to building scalable agents.

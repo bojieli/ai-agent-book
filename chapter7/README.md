@@ -10,9 +10,9 @@
 | --- | :--: | --- |
 | [AdaptThink](AdaptThink/) | 📖 | 让推理模型按问题难度自适应选 Thinking/NoThinking，约束优化 + 重要性采样降成本 45–69% 同时提准确率 |
 | [retool](retool/) | 📖 | 多轮对话 + 代码沙箱提升数学推理，SFT→RL 两阶段；Qwen2.5-32B + AIME 2024 + DAPO + SandboxFusion |
-| [AWorld](AWorld/) · [AWorld-train](AWorld-train/) | 📖 | 基于 AWorld 框架训练具身 Agent，在虚拟环境中执行任务并从经验中学习 |
-| [SFTvsRL](SFTvsRL/) | 📖 | 系统性对比监督微调与强化学习在不同任务上的效果与适用场景 |
-| [verl](verl/) | 📖 | 为 LLM RLHF 设计的高效 RL 框架，支持 PPO/GRPO/DAPO 等 |
+| `AWorld/` · [AWorld-train](AWorld-train/) | 📖 | 基于 AWorld 框架训练具身 Agent，在虚拟环境中执行任务并从经验中学习 |
+| `SFTvsRL/` | 📖 | 系统性对比监督微调与强化学习在不同任务上的效果与适用场景 |
+| `verl/` | 📖 | 为 LLM RLHF 设计的高效 RL 框架，支持 PPO/GRPO/DAPO 等 |
 | [Intuitor](Intuitor/) | ✅ | 训练模型的直觉推理，快速做出合理判断而不依赖详细思考链 |
 | [MultilingualReasoning](MultilingualReasoning/) | ✅ | 训练模型在多语言环境下的推理能力，提升跨语言任务表现 |
 | [SpatialReasoning](SpatialReasoning/) | 📖 | 训练模型的空间推理能力，处理位置、方向、距离等空间关系 |
@@ -21,7 +21,7 @@
 | [MiniMind-pretrain](MiniMind-pretrain/) | 📖 | 从零预训练小型 LLM/VLM，理解完整预训练流程与关键技术 |
 | [sesame](sesame/) | ✅ | 专注于序列建模任务的训练和评估方法 |
 | [orpheus](orpheus/) | ✅ | 训练模型的音乐生成与理解能力 |
-| [tinker-cookbook](tinker-cookbook/) | 📖 | 收集各种模型训练的实用技巧与最佳实践 |
+| `tinker-cookbook/` | 📖 | 收集各种模型训练的实用技巧与最佳实践 |
 
 ## 项目类型说明
 

@@ -37,7 +37,7 @@ Lộ trình học tương ứng một-một với các chương của sách, tri
 ### Gợi ý thực hành
 
 1. **Tự tay thực hành**: mỗi dự án đều được thiết kế để có thể chạy độc lập; khuyến nghị tự chạy và sửa mã
-2. **Kết hợp với sách**: đọc cùng các chương tương ứng trong bản thảo tại [`book/`](book/) để hiểu sự kết hợp giữa lý thuyết và thực hành
+2. **Kết hợp với sách**: đọc cùng các chương tương ứng trong bản thảo tại [`book/`](../book/) để hiểu sự kết hợp giữa lý thuyết và thực hành
 3. **So sánh thí nghiệm**: nhiều dự án chứa nghiên cứu ablation và thí nghiệm đối chứng; hãy dùng so sánh để hiểu sâu hơn
 4. **Học tăng dần**: bắt đầu từ dự án đơn giản rồi dần đi sâu vào hệ thống phức tạp
 5. **Chú ý giao thức**: các dự án MCP server ở chương 4 minh họa giao thức công cụ chuẩn hóa, đây là chìa khóa để xây dựng Agent có thể mở rộng

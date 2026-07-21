@@ -8,12 +8,12 @@
 
 | 项目 | 类型 | 一句话说明 |
 | --- | :--: | --- |
-| [terminal-bench](terminal-bench/) | 📖 | 测试 Agent 在真实终端环境的端到端能力（编译/训练/部署），约 100 任务 + 执行框架 |
-| [SWE-bench](SWE-bench/) | 📖 | 评估 LLM 解决真实 GitHub 问题的能力，含 SWE-bench/Lite/Verified/Multimodal 多个版本 |
-| [GAIA](GAIA/) | 📖 | 评估下一代 LLM 的工具/搜索/自主能力，450+ 个答案明确的非平凡问题，分 3 级难度 |
-| [OSWorld](OSWorld/) | 📖 | 评估 Agent 在完整 OS 环境执行复杂任务的能力：文件管理、应用操作、系统配置 |
-| [android_world](android_world/) | 📖 | 评估 Agent 在 Android 环境的应用导航、UI 交互与任务完成能力 |
-| [tau2-bench](tau2-bench/) | 📖 | 专注评估 Agent 使用工具进行复杂推理（计算、搜索、数据处理）的能力 |
+| `terminal-bench/` | 📖 | 测试 Agent 在真实终端环境的端到端能力（编译/训练/部署），约 100 任务 + 执行框架 |
+| `SWE-bench/` | 📖 | 评估 LLM 解决真实 GitHub 问题的能力，含 SWE-bench/Lite/Verified/Multimodal 多个版本 |
+| `GAIA/` | 📖 | 评估下一代 LLM 的工具/搜索/自主能力，450+ 个答案明确的非平凡问题，分 3 级难度 |
+| `OSWorld/` | 📖 | 评估 Agent 在完整 OS 环境执行复杂任务的能力：文件管理、应用操作、系统配置 |
+| `android_world/` | 📖 | 评估 Agent 在 Android 环境的应用导航、UI 交互与任务完成能力 |
+| `tau2-bench/` | 📖 | 专注评估 Agent 使用工具进行复杂推理（计算、搜索、数据处理）的能力 |
 | [elo-leaderboard](elo-leaderboard/) | ✅ | 基于 ELO 评分的 Agent 性能排行榜，通过对战比较相对能力 |
 | [model-benchmark](model-benchmark/) | ✅ | 对多家 OpenAI 兼容 API 横向压测 TTFT、p50/p95 延迟、吞吐与成功率，一条命令出对比表 |
 | [agent-cost-analysis](agent-cost-analysis/) | ✅ | 多轮 Agent 任务（客服退款）全链路成本拆解 + KV-cache 友好设计/上下文压缩的 A/B 节省量化 |
