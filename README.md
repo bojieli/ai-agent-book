@@ -51,10 +51,8 @@
 | 10 | 🤝 [多 Agent 协作](chapter10/) | 群体智能高于个体：协作框架、上下文共享/隔离、涌现的「Agent 社会」 | [6 →](chapter10/README.md) |
 
 > 💡 点击各章「**N →**」查看该章完整项目列表。项目类型说明（✅ 可运行 / 📖 复现 / 🚧 设计）见各章 README。
-
-## 📚 学习建议与路径
-
-如何高效阅读本书？详见 **[学习建议](docs/LEARNING.md)**（核心理念、学习路径、难度分级、实践建议）。
+>
+> 📚 如何高效阅读本书？详见 **[学习建议](docs/LEARNING.md)**（核心理念、学习路径、难度分级、实践建议）。
 
 ## 🔑 API 密钥
 
@@ -149,7 +147,7 @@ git clone https://github.com/joonspk-research/generative_agents.git    chapter10
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/star-history-dark.png" />
     <source media="(prefers-color-scheme: light)" srcset="assets/star-history-light.png" />
-    <img alt="Star History Chart" src="assets/star-history-light.png" width="720" />
+    <img alt="Star History Chart" src="assets/star-history-light.png" width="100%" />
   </picture>
 </a>
 
