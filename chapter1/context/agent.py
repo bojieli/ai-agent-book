@@ -381,9 +381,7 @@ class ContextAwareAgent:
                 "role": "system",
                 "content": """You are an intelligent assistant with access to tools. 
 
-Your task is to solve the given problems using the available tools. Think step by step and use tools as needed.
-
-Important: When you have gathered all necessary information and computed the final answer, clearly state "FINAL ANSWER:" followed by your answer."""
+Your task is to solve the given problems using the available tools. Think step by step and use tools as needed."""
             }
         ]
     
@@ -679,17 +677,9 @@ Important: When you have gathered all necessary information and computed the fin
                 if self.verbose:
                     self._log_request_response(request_data, response, iteration)
                 
-                message = response.choices[0].message
-                
-                # Check for final answer
-                if message.content and "FINAL ANSWER:" in message.content:
-                    final_answer = message.content.split("FINAL ANSWER:")[1].strip()
-                    logger.info(f"Final answer found: {final_answer}")
-                    # Add the message to conversation history
-                    assistant_msg = self._prepare_assistant_message(message)
-                    messages.append(assistant_msg)
-                    break
-                
+                choice = response.choices[0]
+                message = choice.message
+
                 # Handle tool calls
                 if hasattr(message, 'tool_calls') and message.tool_calls:
                     # Add the assistant message with tool calls
@@ -728,10 +718,12 @@ Important: When you have gathered all necessary information and computed the fin
                                 "content": "[Tool result hidden due to context mode]"
                             }
                             messages.append(tool_msg)
-                elif message.content:
-                    # No tool calls, but there's content - add the message
+                elif message.content and message.content.strip():
+                    final_answer = message.content.strip()
+                    logger.info(f"Final answer found: {final_answer}")
                     assistant_msg = self._prepare_assistant_message(message)
                     messages.append(assistant_msg)
+                    break
                 
                 # Note: We do NOT modify the system prompt anymore.
                 # The context is already built into the conversation through tool history
