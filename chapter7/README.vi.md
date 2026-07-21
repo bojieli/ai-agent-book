@@ -1,0 +1,32 @@
+# Chương 7 · Hậu huấn luyện mô hình
+
+> toàn cảnh ba giai đoạn tiền huấn luyện, SFT và RL. Khi nào chọn SFT, khi nào chọn RL, RLHF, so sánh thuật toán, dữ liệu và môi trường, cũng như các hướng tiên phong giúp mô hình học cách gọi công cụ và nâng cao hiệu quả mẫu.
+
+← [Về README chính](../README.vi.md)
+
+## Dự án đi kèm
+
+| Project | Type | Description |
+| --- | :--: | --- |
+| [AdaptThink](AdaptThink/) | 📖 | Cho mô hình suy luận học cách chọn chế độ suy luận thích ứng theo độ khó của câu hỏi (Thinking vs NoThinking). Thông qua tối ưu có ràng buộc và importance sampling, dự án giảm mạnh chi phí suy luận (45–69%) đồng thời nâng cao độ chính xác. Dựa trên mô hình DeepSeek-R1-Distill-Qwen, huấn luyện bằng thuật toán DAPO. |
+| [retool](retool/) | 📖 | Dùng hội thoại nhiều vòng và sandbox mã để nâng cao năng lực suy luận toán học của mô hình ngôn ngữ lớn. Thông qua hai giai đoạn SFT và RL, mô hình học cách dùng môi trường thực thi mã để hỗ trợ giải bài toán. Dựa trên Qwen2.5-32B-Instruct, huấn luyện trên bộ AIME 2024, dùng thuật toán DAPO và sandbox SandboxFusion. |
+| [AWorld](AWorld/) · [AWorld-train](AWorld-train/) | 📖 | Huấn luyện Agent hiện thân dựa trên framework AWorld, giúp Agent thực thi nhiệm vụ phức tạp trong môi trường ảo và học từ kinh nghiệm. |
+| [SFTvsRL](SFTvsRL/) | 📖 | So sánh có hệ thống hiệu quả của fine-tuning có giám sát (SFT) và học tăng cường (RL) trên các nhiệm vụ khác nhau, phân tích ưu nhược điểm và ngữ cảnh phù hợp của hai phương pháp. |
+| [verl](verl/) | 📖 | verl là framework học tăng cường hiệu quả được thiết kế riêng cho huấn luyện RLHF của mô hình ngôn ngữ lớn, hỗ trợ nhiều thuật toán như PPO, GRPO, DAPO. |
+| [Intuitor](Intuitor/) | ✅ | Huấn luyện năng lực suy luận trực giác của mô hình, giúp mô hình có thể nhanh chóng đưa ra phán đoán hợp lý mà không cần chuỗi suy nghĩ chi tiết. |
+| [MultilingualReasoning](MultilingualReasoning/) | ✅ | Huấn luyện năng lực suy luận của mô hình trong môi trường nhiều ngôn ngữ, nâng cao biểu hiện trên các nhiệm vụ xuyên ngôn ngữ. |
+| [SpatialReasoning](SpatialReasoning/) | 📖 | Tập trung huấn luyện năng lực suy luận không gian của mô hình, xử lý các vấn đề liên quan đến vị trí, phương hướng, khoảng cách và các quan hệ không gian khác. |
+| [SimpleVLA-RL](SimpleVLA-RL/) | 📖 | Huấn luyện học tăng cường kết hợp thị giác, ngôn ngữ và hành động, giúp mô hình hiểu đầu vào thị giác và thực hiện hành động tương ứng. |
+| [continued-pretraining](continued-pretraining/) | ✅ | Tiếp tục tiền huấn luyện trên dữ liệu miền cụ thể để nâng cao biểu hiện của mô hình trong miền mục tiêu. |
+| [MiniMind-pretrain](MiniMind-pretrain/) | 📖 | Tiền huấn luyện mô hình ngôn ngữ nhỏ từ con số 0, hiểu toàn bộ quy trình và kỹ thuật then chốt của tiền huấn luyện. |
+| [sesame](sesame/) | ✅ | Tập trung vào phương pháp huấn luyện và đánh giá cho nhiệm vụ mô hình hóa chuỗi. |
+| [orpheus](orpheus/) | ✅ | Huấn luyện năng lực sinh và hiểu âm nhạc của mô hình. |
+| [tinker-cookbook](tinker-cookbook/) | 📖 | Tập hợp nhiều kỹ thuật thực dụng và best practice cho huấn luyện mô hình. |
+
+## Phân loại dự án
+
+| Biểu tượng | Loại | Ý nghĩa |
+| :--: | --- | --- |
+| ✅ | **Chạy độc lập** | Có mã đầy đủ trong kho, chạy được sau khi cấu hình API Key |
+| 📖 | **Hướng dẫn tái hiện** | Tài liệu chi tiết, cần `git clone` **kho ngoài** |
+| 🚧 | **Tài liệu thiết kế** | Chỉ có kiến trúc/phương án, mã chạy được đang hoàn thiện |
