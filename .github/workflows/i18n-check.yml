@@ -1,0 +1,41 @@
+name: i18n consistency check
+
+# 防止主页或某章 README 改动后，其它语言版本跟不上而漂移。
+# 详见 scripts/check_i18n_consistency.py。
+#
+# 触发时机：
+#   1. 任何 PR / push 改动了 README、chapterN/、docs/LEARNING.* 等 i18n 相关文件
+#   2. 手动 workflow_dispatch
+
+on:
+  pull_request:
+    paths:
+      - "README*.md"
+      - "chapter*/README*.md"
+      - "docs/LEARNING*.md"
+      - "scripts/check_i18n_consistency.py"
+      - ".github/workflows/i18n-check.yml"
+  push:
+    branches: [main]
+    paths:
+      - "README*.md"
+      - "chapter*/README*.md"
+      - "docs/LEARNING*.md"
+      - "scripts/check_i18n_consistency.py"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run i18n consistency check
+        run: python scripts/check_i18n_consistency.py
