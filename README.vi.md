@@ -1,6 +1,6 @@
 # Hiểu sâu về AI Agent: Nguyên lý thiết kế và thực hành kỹ thuật
 
-**[English](README.en.md) | [中文](README.md) | Tiếng Việt | [தமிழ்](README.ta.md)**
+**[中文](README.md) · [English](README.en.md) · Tiếng Việt ← hiện tại · [தமிழ்](README.ta.md)**
 
 Kho này là kho mã nguồn mở chính thức của cuốn sách *Hiểu sâu về AI Agent: Nguyên lý thiết kế và thực hành kỹ thuật*, bao gồm **toàn bộ nội dung sách** và **mã ví dụ đi kèm**. Toàn bộ bản thảo, hình minh họa và mã thí nghiệm đều được mở nguồn; hoan nghênh bạn tự chạy các thí nghiệm, gửi issue và PR.
 

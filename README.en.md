@@ -1,6 +1,6 @@
 # AI Agents in Depth: Design Principles and Engineering Practice
 
-**English | [中文](README.md) | [Tiếng Việt](README.vi.md) | [தமிழ்](README.ta.md)**
+**[中文](README.md) · English ← current · [Tiếng Việt](README.vi.md) · [தமிழ்](README.ta.md)**
 
 This repository is the open-source main repository for the book *AI Agents in Depth: Design Principles and Engineering Practice*, containing **the full text** and **accompanying example code**. The full text, illustrations, and accompanying experimental code are all open source. You are welcome to run the experiments yourself, submit issues, and PRs.
 

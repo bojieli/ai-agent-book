@@ -2,7 +2,7 @@
 
 [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![PDF](https://img.shields.io/badge/PDF-%E4%B8%8B%E8%BD%BD-success.svg)](#-电子书) [![Languages](https://img.shields.io/badge/翻译-4%20种%20语言-informational.svg)](#-电子书)
 
-**中文** · [English](README.en.md) · [Tiếng Việt](README.vi.md) · [தமிழ்](README.ta.md)
+**中文** ← 当前 · [English](README.en.md) · [Tiếng Việt](README.vi.md) · [தமிழ்](README.ta.md)
 
 **Agent = LLM + 上下文 + 工具**——本书围绕这个核心公式，用 10 章把 AI Agent 从原理讲到工程实战。全书正文、配图、**88 个配套实验**全部开源，欢迎亲手把实验跑一遍。
 
