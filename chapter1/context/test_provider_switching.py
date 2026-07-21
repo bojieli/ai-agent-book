@@ -36,12 +36,19 @@ def test_provider_switching():
         print("✅ Kimi API key found")
     else:
         print("⏭️  Skipping Kimi (no API key)")
+
+    if os.getenv("DEEPSEEK_API_KEY"):
+        providers_to_test.append(("deepseek", os.getenv("DEEPSEEK_API_KEY")))
+        print("✅ DeepSeek API key found")
+    else:
+        print("⏭️  Skipping DeepSeek (no API key)")
     
     if not providers_to_test:
         print("\n❌ No API keys configured. Please set at least one:")
         print("  - SILICONFLOW_API_KEY")
         print("  - ARK_API_KEY")
         print("  - MOONSHOT_API_KEY")
+        print("  - DEEPSEEK_API_KEY")
         return
     
     print(f"\nTesting {len(providers_to_test)} provider(s)...")
@@ -89,7 +96,7 @@ def test_provider_switching():
     # Show summary
     print("\n📊 Summary:")
     print(f"  Providers tested: {len(providers_to_test)}")
-    print(f"  Available providers: siliconflow, doubao, kimi, moonshot")
+    print("  Available providers: siliconflow, doubao, kimi, moonshot, deepseek")
     
     if len(providers_to_test) < 3:
         print("\n💡 Tip: Configure more API keys to test all providers")

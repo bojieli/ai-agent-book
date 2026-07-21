@@ -40,6 +40,20 @@ def test_providers():
             print(f"   ❌ Error: {str(e)}")
     else:
         print("\n⚠️ Doubao/ARK API key not found (ARK_API_KEY)")
+
+    # Test DeepSeek
+    deepseek_key = os.getenv("DEEPSEEK_API_KEY")
+    if deepseek_key:
+        print("\n✅ DeepSeek API key found")
+        try:
+            agent = ContextAwareAgent(deepseek_key, ContextMode.FULL, provider="deepseek")
+            print(f"   Provider: {agent.provider}")
+            print(f"   Model: {agent.model}")
+            print(f"   Base URL: {agent.client.base_url}")
+        except Exception as e:
+            print(f"   ❌ Error: {str(e)}")
+    else:
+        print("\n⚠️ DeepSeek API key not found (DEEPSEEK_API_KEY)")
     
     # Test custom model
     if sf_key:
@@ -69,11 +83,17 @@ def test_providers():
         print("\n# Using Doubao:")
         print("python main.py --provider doubao")
         print("python main.py --provider doubao --model doubao-seed-1-6-thinking-250715")
+
+    if deepseek_key:
+        print("\n# Using DeepSeek:")
+        print("python main.py --provider deepseek")
+        print("python main.py --provider deepseek --model deepseek-v4-pro")
     
-    if not sf_key and not ark_key:
+    if not sf_key and not ark_key and not deepseek_key:
         print("\n⚠️ No API keys found. Please set one of:")
         print("   export SILICONFLOW_API_KEY=your_key")
         print("   export ARK_API_KEY=your_key")
+        print("   export DEEPSEEK_API_KEY=your_key")
     
     print("\n" + "="*60)
 

@@ -325,7 +325,8 @@ class ContextAwareAgent:
         Args:
             api_key: API key for the LLM provider
             context_mode: Context mode for ablation studies
-            provider: LLM provider ('siliconflow', 'doubao', 'kimi', or 'moonshot')
+            provider: LLM provider ('siliconflow', 'doubao', 'kimi', 'moonshot',
+                'deepseek', or 'openrouter')
             model: Optional model override
             verbose: If True, log full HTTP requests and responses (default: True)
         """
@@ -333,17 +334,21 @@ class ContextAwareAgent:
         self.verbose = verbose
 
         # Provider -> (base_url, default_model)
+        deepseek_base = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
         provider_defaults = {
             "siliconflow": ("https://api.siliconflow.cn/v1", "Qwen/Qwen3.5-397B-A17B"),
             "doubao": ("https://ark.cn-beijing.volces.com/api/v3", "doubao-seed-1-6-thinking-250715"),
             "kimi": ("https://api.moonshot.cn/v1", "kimi-k3"),
             "moonshot": ("https://api.moonshot.cn/v1", "kimi-k3"),
+            # V4 Flash: OpenAI-compatible; tool calling + thinking mode.
+            # Legacy deepseek-chat / deepseek-reasoner aliases deprecated 2026-07-24.
+            "deepseek": (deepseek_base, "deepseek-v4-flash"),
             "openrouter": ("https://openrouter.ai/api/v1", "openai/gpt-5.6-luna"),
         }
         if self.provider not in provider_defaults:
             raise ValueError(
                 f"Unsupported provider: {provider}. Use 'siliconflow', 'doubao', "
-                "'kimi', 'moonshot', or 'openrouter'"
+                "'kimi', 'moonshot', 'deepseek', or 'openrouter'"
             )
         base_url, default_model = provider_defaults[self.provider]
         resolved_model = model or default_model
@@ -620,17 +625,39 @@ Important: When you have gathered all necessary information and computed the fin
             windowed.extend(tail[assistant_rel[-1]:])
         return windowed
 
-    def execute_task(self, task: str, max_iterations: int = 10) -> Dict[str, Any]:
+    @staticmethod
+    def _extract_final_answer(content: str) -> Optional[str]:
+        """Extract text after FINAL ANSWER: if present; otherwise None."""
+        if not content or "FINAL ANSWER:" not in content:
+            return None
+        return content.split("FINAL ANSWER:", 1)[1].strip()
+
+    def execute_task(self, task: str, max_iterations: Optional[int] = None) -> Dict[str, Any]:
         """
-        Execute a task using available tools
-        
+        Execute a task using available tools (ReAct loop).
+
+        Stops when:
+          1. The model emits a text-only reply (no tool_calls) — conversational
+             or task complete, including plain replies like "hi" that omit the
+             FINAL ANSWER: marker; or
+          2. max_iterations is hit (safety cap for tool-call loops, e.g. the
+             no_tool_results ablation).
+
         Args:
             task: The task to execute
-            max_iterations: Maximum number of tool calls
-            
+            max_iterations: Maximum ReAct steps (default: Config.MAX_ITERATIONS
+                or 10). This is a safety ceiling, not a target round count.
+
         Returns:
             Task execution result
         """
+        if max_iterations is None:
+            try:
+                from config import Config
+                max_iterations = Config.MAX_ITERATIONS
+            except Exception:
+                max_iterations = 10
+
         # Add user message to conversation history
         self.conversation_history.append({"role": "user", "content": task})
         
@@ -662,77 +689,97 @@ Important: When you have gathered all necessary information and computed the fin
                     request_data["tools"] = self._get_tools_description()
                     request_data["tool_choice"] = "auto"
 
+                # DeepSeek V4: enable thinking so reasoning_content is present
+                # for the no_reasoning ablation (parity with thinking defaults of
+                # Doubao/Kimi). Skip when routed via OpenRouter, which may not
+                # accept the same extra body shape.
+                create_kwargs = {
+                    "model": self.model,
+                    "messages": api_messages,
+                    "tools": self._get_tools_description() if self.context_mode != ContextMode.NO_TOOL_CALLS else None,
+                    "tool_choice": "auto" if self.context_mode != ContextMode.NO_TOOL_CALLS else None,
+                    "temperature": _reasoning_safe_temperature(self.model, 0.3),
+                    "max_tokens": 8192,
+                    "timeout": 180,  # 180 second timeout for main execution
+                }
+                if self.provider == "deepseek" and not getattr(self, "using_openrouter", False):
+                    create_kwargs["extra_body"] = {"thinking": {"type": "enabled"}}
+                    request_data["thinking"] = {"type": "enabled"}
+
                 logger.info(f"Sending request to {self.provider} API")
 
                 # Call the model with tools
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=api_messages,
-                    tools=self._get_tools_description() if self.context_mode != ContextMode.NO_TOOL_CALLS else None,
-                    tool_choice="auto" if self.context_mode != ContextMode.NO_TOOL_CALLS else None,
-                    temperature=_reasoning_safe_temperature(self.model, 0.3),
-                    max_tokens=8192,
-                    timeout=180  # Add 180 second timeout for main execution
-                )
+                response = self.client.chat.completions.create(**create_kwargs)
                 
                 # Log response if verbose
                 if self.verbose:
                     self._log_request_response(request_data, response, iteration)
                 
                 message = response.choices[0].message
-                
-                # Check for final answer
-                if message.content and "FINAL ANSWER:" in message.content:
-                    final_answer = message.content.split("FINAL ANSWER:")[1].strip()
-                    logger.info(f"Final answer found: {final_answer}")
-                    # Add the message to conversation history
+                has_tool_calls = bool(getattr(message, "tool_calls", None))
+
+                # --- Terminal path: text reply with no tool calls ---
+                # A normal chat turn ("hi" -> "Hello!") or a task answer without
+                # the FINAL ANSWER: marker must end the ReAct loop. Previously
+                # only "FINAL ANSWER:" broke the loop, so plain replies were
+                # re-sent for up to max_iterations (wasted API calls).
+                if not has_tool_calls:
                     assistant_msg = self._prepare_assistant_message(message)
                     messages.append(assistant_msg)
-                    break
-                
-                # Handle tool calls
-                if hasattr(message, 'tool_calls') and message.tool_calls:
-                    # Add the assistant message with tool calls
-                    assistant_msg = self._prepare_assistant_message(message)
-                    messages.append(assistant_msg)
-                    for tool_call in message.tool_calls:
-                        function_name = tool_call.function.name
-                        function_args = json.loads(tool_call.function.arguments)
-                        
-                        logger.info(f"Executing tool: {function_name} with args: {function_args}")
-                        
-                        # Execute the tool
-                        result = self._execute_tool(function_name, function_args)
-                        
-                        # Record the tool call
-                        tool_call_record = ToolCall(
-                            tool_name=function_name,
-                            arguments=function_args,
-                            result=result
+                    content = (message.content or "").strip()
+                    if content:
+                        marked = self._extract_final_answer(content)
+                        final_answer = marked if marked is not None else content
+                        logger.info(
+                            "Terminal text response (no tool calls); "
+                            f"stopping after iteration {iteration}"
                         )
-                        self.trajectory.tool_calls.append(tool_call_record)
-                        
-                        # Add tool result to messages (if not disabled)
-                        if self.context_mode != ContextMode.NO_TOOL_RESULTS:
-                            tool_msg = {
-                                "role": "tool",
-                                "tool_call_id": tool_call.id,
-                                "content": json.dumps(result)
-                            }
-                            messages.append(tool_msg)
-                        else:
-                            # Add a placeholder message if tool results are disabled
-                            tool_msg = {
-                                "role": "tool",
-                                "tool_call_id": tool_call.id,
-                                "content": "[Tool result hidden due to context mode]"
-                            }
-                            messages.append(tool_msg)
-                elif message.content:
-                    # No tool calls, but there's content - add the message
-                    assistant_msg = self._prepare_assistant_message(message)
-                    messages.append(assistant_msg)
-                
+                    else:
+                        logger.warning(
+                            "Empty model response with no tool calls; "
+                            "stopping to avoid burning remaining iterations"
+                        )
+                    break
+
+                # --- Continue path: model requested tool execution ---
+                assistant_msg = self._prepare_assistant_message(message)
+                messages.append(assistant_msg)
+                for tool_call in message.tool_calls:
+                    function_name = tool_call.function.name
+                    function_args = json.loads(tool_call.function.arguments)
+
+                    logger.info(f"Executing tool: {function_name} with args: {function_args}")
+
+                    result = self._execute_tool(function_name, function_args)
+
+                    tool_call_record = ToolCall(
+                        tool_name=function_name,
+                        arguments=function_args,
+                        result=result
+                    )
+                    self.trajectory.tool_calls.append(tool_call_record)
+
+                    if self.context_mode != ContextMode.NO_TOOL_RESULTS:
+                        tool_msg = {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps(result)
+                        }
+                    else:
+                        tool_msg = {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": "[Tool result hidden due to context mode]"
+                        }
+                    messages.append(tool_msg)
+
+                # If the same turn also tagged FINAL ANSWER: (unusual with tools),
+                # still prefer extracting it after tools are recorded.
+                if message.content and "FINAL ANSWER:" in message.content:
+                    final_answer = self._extract_final_answer(message.content)
+                    logger.info(f"Final answer found alongside tool calls: {final_answer}")
+                    break
+
                 # Note: We do NOT modify the system prompt anymore.
                 # The context is already built into the conversation through tool history
                     
@@ -771,13 +818,13 @@ Important: When you have gathered all necessary information and computed the fin
         self._init_system_prompt()  # Reinitialize conversation with system prompt
         logger.info("Agent trajectory and conversation history reset")
     
-    def process(self, query: str, max_iterations: int = 10) -> str:
+    def process(self, query: str, max_iterations: Optional[int] = None) -> str:
         """
         Process a query and return the final answer as a string
         
         Args:
             query: The query to process
-            max_iterations: Maximum number of tool calls
+            max_iterations: Maximum ReAct steps (default from Config)
             
         Returns:
             The final answer as a string

@@ -23,6 +23,7 @@ def map_model_to_openrouter(model: str) -> str:
     - ids already containing '/' -> left as-is
     - gpt-*/o1-*/o3-*/o4-* -> 'openai/<id>'
     - claude-* -> anthropic Claude (opus/sonnet/haiku)
+    - deepseek-* -> deepseek/<id> (OpenRouter hosts official DeepSeek ids)
     - other native ids (kimi-*, doubao-*, ...) are NOT reliably on OpenRouter,
       so fall back to OPENROUTER_MODEL or a safe default that always works.
     """
@@ -41,6 +42,9 @@ def map_model_to_openrouter(model: str) -> str:
     if ml.startswith("kimi"):
         # kimi-k3 is not on OpenRouter; moonshotai/kimi-k2.6 is the closest hosted id.
         return "moonshotai/kimi-k2.6"
+    if ml.startswith("deepseek"):
+        # OpenRouter hosts deepseek/deepseek-v4-flash, deepseek-chat, etc.
+        return "deepseek/" + m
     return os.getenv("OPENROUTER_MODEL", "openai/gpt-5.6-luna")
 
 
@@ -66,7 +70,7 @@ def resolve_llm_backend(primary_key: str, primary_base_url: str, model: str):
         return openrouter_key, base_url, map_model_to_openrouter(model), True
     raise ValueError(
         "No API key found. Set a provider key "
-        "(SILICONFLOW_API_KEY/ARK_API_KEY/MOONSHOT_API_KEY) or "
+        "(SILICONFLOW_API_KEY/ARK_API_KEY/MOONSHOT_API_KEY/DEEPSEEK_API_KEY) or "
         "OPENROUTER_API_KEY (universal fallback)."
     )
 
@@ -86,6 +90,11 @@ class Config:
     
     MOONSHOT_API_KEY: str = os.getenv("MOONSHOT_API_KEY", "")
     MOONSHOT_BASE_URL: str = "https://api.moonshot.cn/v1"
+
+    DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
+    DEEPSEEK_BASE_URL: str = os.getenv(
+        "DEEPSEEK_BASE_URL", "https://api.deepseek.com"
+    )
     
     # Model Configuration (defaults based on provider)
     MODEL_NAME: str = os.getenv("MODEL_NAME", "")  # Will be set based on provider if not specified
@@ -145,6 +154,8 @@ class Config:
             return cls.ARK_API_KEY
         elif provider == "kimi" or provider == "moonshot":
             return cls.MOONSHOT_API_KEY
+        elif provider == "deepseek":
+            return cls.DEEPSEEK_API_KEY
         else:
             return ""
     
@@ -171,6 +182,10 @@ class Config:
             return "doubao-seed-1-6-thinking-250715"
         elif provider == "kimi" or provider == "moonshot":
             return "kimi-k3"
+        elif provider == "deepseek":
+            # V4 Flash: tool calling + thinking mode (legacy deepseek-chat /
+            # deepseek-reasoner aliases are deprecated 2026-07-24).
+            return "deepseek-v4-flash"
         else:
             return ""
     
@@ -195,6 +210,8 @@ class Config:
                 print("ERROR: ARK_API_KEY is not set")
             elif provider == "kimi" or provider == "moonshot":
                 print("ERROR: MOONSHOT_API_KEY is not set")
+            elif provider == "deepseek":
+                print("ERROR: DEEPSEEK_API_KEY is not set")
             else:
                 print(f"ERROR: No API key configured for provider: {provider}")
             

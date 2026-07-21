@@ -1,6 +1,6 @@
 # Context-Aware AI Agent with Ablation Studies
 
-An advanced AI agent implementation supporting multiple LLM providers (SiliconFlow Qwen, ByteDance Doubao, and Moonshot Kimi), designed to demonstrate the critical importance of context components through systematic ablation studies.
+An advanced AI agent implementation supporting multiple LLM providers (SiliconFlow Qwen, ByteDance Doubao, Moonshot Kimi, and DeepSeek), designed to demonstrate the critical importance of context components through systematic ablation studies.
 
 ## 🎯 Overview
 
@@ -8,7 +8,7 @@ This project implements a context-aware AI agent with multiple tools (PDF parsin
 
 ### Key Features
 
-- **Multi-provider Support**: Works with SiliconFlow (Qwen), Doubao (ByteDance), and Kimi (Moonshot) LLMs
+- **Multi-provider Support**: Works with SiliconFlow (Qwen), Doubao (ByteDance), Kimi (Moonshot), and DeepSeek LLMs
 - **Multi-tool Agent**: PDF parsing, currency conversion, calculations, and Python code execution
 - **Context Modes**: Five different context configurations for ablation studies
 - **Interactive & Batch Modes**: Run single tasks or comprehensive test suites
@@ -32,6 +32,12 @@ This project implements a context-aware AI agent with multiple tools (PDF parsin
 - **API**: OpenAI-compatible via Moonshot platform
 - **Best for**: Advanced reasoning, multi-turn conversations, both English and Chinese tasks
 - **Features**: Context caching for cost optimization
+
+### DeepSeek
+- **Model**: deepseek-v4-flash (default; use `--model deepseek-v4-pro` for the stronger tier)
+- **API**: OpenAI-compatible via [DeepSeek Platform](https://platform.deepseek.com/)
+- **Best for**: Cost-effective tool-calling agents; thinking mode enabled so the `no_reasoning` ablation can strip `reasoning_content`
+- **Note**: Legacy aliases `deepseek-chat` / `deepseek-reasoner` are deprecated (2026-07-24); prefer the V4 ids
 
 ## 🏗️ Architecture
 
@@ -57,6 +63,7 @@ This project implements a context-aware AI agent with multiple tools (PDF parsin
   - **SiliconFlow**: Get from [SiliconFlow](https://siliconflow.cn)
   - **Doubao (ByteDance)**: Get from [Volcano Engine](https://www.volcengine.com/)
   - **Kimi (Moonshot)**: Get from [Moonshot Platform](https://platform.moonshot.cn/)
+  - **DeepSeek**: Get from [DeepSeek Platform](https://platform.deepseek.com/api_keys)
 
 ## 📝 Sample Tasks
 
@@ -101,19 +108,26 @@ python main.py --provider siliconflow
 export MOONSHOT_API_KEY=your_key_here
 python main.py --provider kimi
 
+# For DeepSeek
+export DEEPSEEK_API_KEY=your_key_here
+python main.py --provider deepseek
+# Optional stronger model:
+python main.py --provider deepseek --model deepseek-v4-pro
+
 # Or specify a custom model
 python main.py --model doubao-seed-1-6-thinking-250715
 
 # Universal OpenRouter fallback: if the provider key above is missing/invalid
 # but OPENROUTER_API_KEY is set, requests are routed through OpenRouter and the
 # model id is mapped automatically (bare gpt-*/o1-* -> openai/*, claude-* ->
-# anthropic/*, other native ids -> OPENROUTER_MODEL or openai/gpt-5.6-luna).
+# anthropic/*, deepseek-* -> deepseek/*, other native ids -> OPENROUTER_MODEL
+# or openai/gpt-5.6-luna).
 export OPENROUTER_API_KEY=sk-or-v1-your-key-here
 python main.py                       # falls back to OpenRouter when ARK_API_KEY is unset
 python main.py --provider openrouter # or use OpenRouter directly
 ```
 
-### 3. Testing Kimi Integration
+### 3. Testing Kimi / DeepSeek Integration
 
 ```bash
 # Quick test of Kimi K3 model
@@ -125,6 +139,15 @@ python main.py --provider kimi --mode interactive
 
 # Run ablation study with Kimi
 python main.py --provider kimi --mode ablation
+
+# Quick test of DeepSeek V4
+export DEEPSEEK_API_KEY=your_key_here
+python test_deepseek.py
+# or: python quick_test_deepseek.py
+
+# Use DeepSeek in main script / ablation study
+python main.py --provider deepseek --mode interactive
+python main.py --provider deepseek --mode ablation
 ```
 
 ### 4. Run Interactive Mode (Recommended)
@@ -401,6 +424,7 @@ MIT License - See LICENSE file for details
 ## 🙏 Acknowledgments
 
 - SiliconFlow for providing the Qwen model API
+- DeepSeek for the OpenAI-compatible V4 API
 - OpenAI for the client library
 - The AI agent research community
 
