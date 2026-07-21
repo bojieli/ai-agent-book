@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""检查多语言版本（中/繁/英/越/泰米尔）的结构完整性。
+"""检查多语言版本的结构完整性。
 
 防止主页或某章 README 改动后，其它语言版本跟不上而漂移。CI 中运行；
 本地也可直接 `python scripts/check_i18n_consistency.py` 跑。
 
-设计原则：
-  - **完整性检查**（缺文件就报错）：主 README、docs/LEARNING
-  - **对齐检查**（中文版有什么，其它「主语言」也应有什么）：
-      chapterN/README、git clone 命令数、内容速览表列数
-  - 「共享」语言豁免：如繁体中文（zh-TW）代码页直接用中文版，是合理设计
+核心原则：**自动发现语言，不硬编码**。下次有人加新语言（日语、韩语…）时，
+CI 自动适配，无需改脚本。
+
+严格规则：**只要某语言有自己的主 README，CI 就要求它完整**：
+  - 10 章 chapterN/README.{lang}.md
+  - docs/LEARNING.{lang}.md
+  - 每章项目数与中文版对齐
+  - git clone 命令数对齐
+  - 内容速览表 ≥5 列
 
 退出码：0 = 全部一致；1 = 发现不一致。
 """
@@ -21,22 +25,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# 主 README 必须存在的语言（5 种）
-MAIN_LANGS = ["", ".zhtw", ".en", ".vi", ".ta"]
-
-# 「主语言」要完整对齐中文版（章节 README、LEARNING 等）。
-# zh-TW 共享中文代码页，不算主语言。
-FULL_LANGS = ["", ".en", ".vi", ".ta"]
-
-LANG_LABELS = {
-    "": "zh",
-    ".zhtw": "zh-TW",
-    ".en": "en",
-    ".vi": "vi",
-    ".ta": "ta",
-}
-
 CHAPTERS = range(1, 11)
+
+
+def lang_label(suffix: str) -> str:
+    """''.en'' → 'en'，'' → 'zh'。"""
+    return suffix.lstrip(".") or "zh"
 
 
 def project_count_in_table(path: Path) -> int:
@@ -65,45 +59,55 @@ def toc_table_columns(path: Path) -> int:
     return -1
 
 
+def discover_main_readmes() -> list[str]:
+    """扫描顶层 README*.md，返回所有语言后缀列表（含 "" 表示中文）。
+
+    例如 ["", ".en", ".vi", ".ta", ".zhtw"]
+    """
+    suffixes = []
+    for path in sorted(ROOT.glob("README*.md")):
+        m = re.match(r"^README(\..*)?\.md$", path.name)
+        if m:
+            suffixes.append(m.group(1) or "")
+    return suffixes
+
+
 def main() -> int:
     errors: list[str] = []
 
-    # ===== 检查 1：5 种主 README 都存在 =====
-    print("== 检查 1：主 README 存在（5 种语言）==")
-    for lang in MAIN_LANGS:
-        path = ROOT / f"README{lang}.md"
-        if not path.exists():
-            errors.append(f"README{lang}.md 不存在")
-        else:
-            print(f"  ✓ README{lang}.md ({path.stat().st_size} bytes)")
+    # ===== 自动发现语言 =====
+    main_langs = discover_main_readmes()
+
+    print("== 自动发现语言 ==")
+    print(f"  发现 {len(main_langs)} 个主 README（全部要求完整翻译）:")
+    for lang in main_langs:
+        print(f"    {lang_label(lang)}")
     print()
 
-    # ===== 检查 2：内容速览表结构（≥5 列）=====
-    print("== 检查 2：主 README 内容速览表结构（≥5 列）==")
-    for lang in MAIN_LANGS:
+    # ===== 检查 1：每个发现的主 README 都有完整结构 =====
+    print("== 检查 1：主 README 内容速览表结构（≥5 列）==")
+    for lang in main_langs:
         path = ROOT / f"README{lang}.md"
-        if not path.exists():
-            continue
         cols = toc_table_columns(path)
-        label = LANG_LABELS[lang]
+        label = lang_label(lang)
         if cols < 5:
             errors.append(
-                f"README{lang}.md 内容速览表列数 {cols} < 5（应至少 5 列：章/主题/核心/正文/代码）"
+                f"README{lang}.md ({label}) 内容速览表列数 {cols} < 5（应至少 5 列：章/主题/核心/正文/代码）"
             )
         else:
             print(f"  ✓ {label}: {cols} 列")
     print()
 
-    # ===== 检查 3：git clone 命令数对齐（以中文版为基准）=====
-    print("== 检查 3：主 README git clone 命令数 ==")
+    # ===== 检查 2：git clone 命令数对齐（以中文版为基准）=====
+    print("== 检查 2：主 README git clone 命令数 ==")
     zh_clones = count_git_clones(ROOT / "README.md")
     print(f"  中文基准：{zh_clones} 条")
-    for lang in MAIN_LANGS[1:]:
-        path = ROOT / f"README{lang}.md"
-        if not path.exists():
+    for lang in main_langs:
+        if lang == "":
             continue
+        path = ROOT / f"README{lang}.md"
         count = count_git_clones(path)
-        label = LANG_LABELS[lang]
+        label = lang_label(lang)
         if count != zh_clones:
             errors.append(
                 f"README{lang}.md ({label}) git clone 数 {count} ≠ 中文版 {zh_clones}"
@@ -112,59 +116,89 @@ def main() -> int:
             print(f"  ✓ {label}: {count} 条")
     print()
 
-    # ===== 检查 4：docs/LEARNING.{md,en,vi,ta}.md 都存在（主语言）=====
-    print("== 检查 4：docs/LEARNING.{{md,en,vi,ta}}.md 存在 ==")
-    for lang in FULL_LANGS:
+    # ===== 检查 3：每个主 README 语言必须有 docs/LEARNING.{lang}.md =====
+    print("== 检查 3：docs/LEARNING.{lang}.md 齐全 ==")
+    for lang in main_langs:
         path = ROOT / f"docs/LEARNING{lang}.md"
+        label = lang_label(lang)
         if not path.exists():
-            errors.append(f"docs/LEARNING{lang}.md 不存在")
+            errors.append(
+                f"docs/LEARNING{lang}.md 不存在（{label} 是主语言，需有学习建议文档）"
+            )
         else:
-            label = LANG_LABELS[lang]
             print(f"  ✓ docs/LEARNING{lang}.md ({label})")
     print()
 
-    # ===== 检查 5：chapterN/README.{md,en,vi,ta}.md 都存在（主语言 × 10 章）=====
-    print("== 检查 5：chapterN/README.{md,en,vi,ta}.md 齐全（40 个）==")
-    missing = []
-    for n in CHAPTERS:
-        for lang in FULL_LANGS:
+    # ===== 检查 4：每个主 README 语言必须有全部 10 章 README =====
+    print("== 检查 4：chapterN/README.{lang}.md 齐全 ==")
+    for lang in main_langs:
+        missing = []
+        for n in CHAPTERS:
             path = ROOT / f"chapter{n}/README{lang}.md"
             if not path.exists():
-                missing.append(f"chapter{n}/README{lang}.md")
-    if missing:
-        errors.append(
-            f"缺失 {len(missing)} 个章节 README：{missing[:5]}{'...' if len(missing) > 5 else ''}"
-        )
-    else:
-        print("  ✓ 40 个章节 README 齐全")
+                missing.append(str(n))
+        label = lang_label(lang)
+        if missing:
+            errors.append(
+                f"{label} 缺章节 README：第 {', '.join(missing)} 章"
+            )
+        else:
+            print(f"  ✓ {label}: 10 章齐全")
     print()
 
-    # ===== 检查 6：每章项目数对齐（主语言）=====
-    print("== 检查 6：每章项目数（主语言对齐）==")
+    # ===== 检查 5：每章项目数对齐（所有主 README 语言）=====
+    print("== 检查 5：每章项目数（所有语言对齐）==")
     zh_counts = {
         n: project_count_in_table(ROOT / f"chapter{n}/README.md") for n in CHAPTERS
     }
     total_zh = sum(zh_counts.values())
     print(f"  中文基准：{total_zh} 项目，分布 {[zh_counts[n] for n in CHAPTERS]}")
-    for lang in FULL_LANGS[1:]:
-        label = LANG_LABELS[lang]
+    for lang in main_langs:
+        if lang == "":
+            continue
+        label = lang_label(lang)
+        total = 0
+        mismatches = []
         for n in CHAPTERS:
             path = ROOT / f"chapter{n}/README{lang}.md"
             count = project_count_in_table(path)
+            total += max(count, 0)
             zh = zh_counts[n]
-            if count == -1:
-                # 已经在检查 5 报过了
-                continue
             if count != zh:
-                errors.append(
-                    f"chapter{n}/README{lang}.md ({label}) 项目数 {count} ≠ 中文版 {zh}"
-                )
-        # 输出汇总
-        total = sum(
-            project_count_in_table(ROOT / f"chapter{n}/README{lang}.md") for n in CHAPTERS
-        )
-        if total == total_zh:
+                mismatches.append(f"第{n}章 {count}≠{zh}")
+        if mismatches:
+            errors.append(
+                f"{label} 项目数不一致（{len(mismatches)} 处）：{'; '.join(mismatches[:3])}"
+            )
+        else:
             print(f"  ✓ {label}: {total} 项目对齐")
+    print()
+
+    # ===== 检查 6：主 README 语言切换栏完整性 =====
+    print("== 检查 6：主 README 语言切换栏列出所有语言 ==")
+    # 中文版 README.md 的语言栏应该列出所有 main_langs
+    zh_text = (ROOT / "README.md").read_text(encoding="utf-8")
+    # 找语言切换栏（一般在文件开头）
+    switcher_match = re.search(
+        r"\*\*[^*]*中文[^*]*\*\*.*?(?=\n\n|\n[^*])", zh_text, re.DOTALL
+    )
+    if switcher_match:
+        switcher = switcher_match.group(0)
+        missing_in_switcher = []
+        for lang in main_langs:
+            if lang == "":
+                continue
+            # 找 README{lang}.md 链接
+            if f"README{lang}.md" not in switcher:
+                missing_in_switcher.append(lang_label(lang))
+        if missing_in_switcher:
+            errors.append(
+                f"README.md 语言切换栏缺少：{', '.join(missing_in_switcher)}"
+            )
+        else:
+            print(f"  ✓ README.md 列出全部 {len(main_langs)} 种语言")
+    else:
+        print("  ⚠️ 未找到语言切换栏（跳过此项检查）")
     print()
 
     # ===== 汇总 =====
@@ -178,6 +212,7 @@ def main() -> int:
         print("  - 项目数不一致：参考中文版 chapterN/README.md 同步项目列表")
         print("  - git clone 不一致：参考 README.md 附录段同步")
         print("  - 内容速览表结构：参考 README.md 的 5 列模板")
+        print("  - 语言切换栏：参考 README.md 顶部，加入新语言链接")
         return 1
     print("✓ 所有语言版本结构一致/完整")
     return 0
