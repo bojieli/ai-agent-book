@@ -37,18 +37,18 @@ Mã nguồn tiếng Trung nằm trong [`book/`](book/); bản dịch Anh/Tamil/V
 
 Sách xoay quanh công thức cốt lõi **Agent = LLM + Context + Tools**, mười chương tuần tự nâng dần:
 
-| Ch | Chủ đề | Tóm tắt một câu | Văn bản / Mã |
-| :--: | --- | --- | :--: |
-| 1 | 🚀 **Kiến thức nền tảng về Agent** | Mô hình "Model as Agent" + **Agent = LLM + Context + Tools**; kỹ thuật Harness mới là lợi thế cạnh tranh thực sự | 📖 [Đọc](book-vi/chapter1.vi.md) · 💻 [4](chapter1/README.vi.md) |
-| 2 | 🎯 **Kỹ thuật ngữ cảnh** | Ngữ cảnh quyết định trần năng lực: KV Cache, prompt engineering, Agent Skills, nén ngữ cảnh | 📖 [Đọc](book-vi/chapter2.vi.md) · 💻 [9](chapter2/README.vi.md) |
-| 3 | 📚 **Bộ nhớ người dùng và kho tri thức** | Ghi nhớ người dùng qua phiên + tri thức ngoài: bộ nhớ người dùng, RAG, chỉ mục cấu trúc, đồ thị tri thức | 📖 [Đọc](book-vi/chapter3.vi.md) · 💻 [13](chapter3/README.vi.md) |
-| 4 | 🛠️ **Công cụ** | Công cụ là đôi tay Agent: giao thức MCP, cảm nhận/thực thi/cộng tác, Agent bất đồng bộ hướng sự kiện | 📖 [Đọc](book-vi/chapter4.vi.md) · 💻 [6](chapter4/README.vi.md) |
-| 5 | 💻 **Coding Agent và sinh mã** | Mã là "công cụ tạo ra công cụ mới"; Coding Agent cấp sản xuất đầy đủ | 📖 [Đọc](book-vi/chapter5.vi.md) · 💻 [12](chapter5/README.vi.md) |
-| 6 | 🎯 **Đánh giá Agent** | Biến biểu hiện thành tín hiệu so sánh được: môi trường, chỉ số, ý nghĩa thống kê, chọn mô hình dựa trên đánh giá | 📖 [Đọc](book-vi/chapter6.vi.md) · 💻 [10](chapter6/README.vi.md) |
-| 7 | 🧠 **Hậu huấn luyện mô hình** | Tiền huấn luyện/SFT/RL ba giai đoạn: khi nào SFT, khi nào RL, nội tại hóa gọi công cụ, hiệu quả mẫu | 📖 [Đọc](book-vi/chapter7.vi.md) · 💻 [14](chapter7/README.vi.md) |
-| 8 | 🔄 **Tự tiến hóa của Agent** | Trưởng thành không cần sửa trọng số: học từ kinh nghiệm, phát hiện công cụ chủ động, từ người dùng thành người tạo | 📖 [Đọc](book-vi/chapter8.vi.md) · 💻 [7](chapter8/README.vi.md) |
-| 9 | 🎙️ **Đa phương thức và tương tác thời gian thực** | Mở rộng từ văn bản sang giọng nói, GUI, thế giới vật lý: ba mô thức giọng nói, Computer Use, robot | 📖 [Đọc](book-vi/chapter9.vi.md) · 💻 [7](chapter9/README.vi.md) |
-| 10 | 🤝 **Cộng tác đa Agent** | Trí tuệ tập thể cao hơn cá thể: khung cộng tác, chia sẻ/cô lập ngữ cảnh, "xã hội Agent" nổi lên | 📖 [Đọc](book-vi/chapter10.vi.md) · 💻 [6](chapter10/README.vi.md) |
+| Ch | Chủ đề | Tóm tắt một câu | Văn bản | Mã |
+| :--: | --- | --- | :--: | :--: |
+| 1 | 🚀 **Kiến thức nền tảng về Agent** | Mô hình "Model as Agent" + **Agent = LLM + Context + Tools**; kỹ thuật Harness mới là lợi thế cạnh tranh thực sự | 📖 [Đọc](book-vi/chapter1.vi.md) | 💻 [4](chapter1/README.vi.md) |
+| 2 | 🎯 **Kỹ thuật ngữ cảnh** | Ngữ cảnh quyết định trần năng lực: KV Cache, prompt engineering, Agent Skills, nén ngữ cảnh | 📖 [Đọc](book-vi/chapter2.vi.md) | 💻 [9](chapter2/README.vi.md) |
+| 3 | 📚 **Bộ nhớ người dùng và kho tri thức** | Ghi nhớ người dùng qua phiên + tri thức ngoài: bộ nhớ người dùng, RAG, chỉ mục cấu trúc, đồ thị tri thức | 📖 [Đọc](book-vi/chapter3.vi.md) | 💻 [13](chapter3/README.vi.md) |
+| 4 | 🛠️ **Công cụ** | Công cụ là đôi tay Agent: giao thức MCP, cảm nhận/thực thi/cộng tác, Agent bất đồng bộ hướng sự kiện | 📖 [Đọc](book-vi/chapter4.vi.md) | 💻 [6](chapter4/README.vi.md) |
+| 5 | 💻 **Coding Agent và sinh mã** | Mã là "công cụ tạo ra công cụ mới"; Coding Agent cấp sản xuất đầy đủ | 📖 [Đọc](book-vi/chapter5.vi.md) | 💻 [12](chapter5/README.vi.md) |
+| 6 | 🎯 **Đánh giá Agent** | Biến biểu hiện thành tín hiệu so sánh được: môi trường, chỉ số, ý nghĩa thống kê, chọn mô hình dựa trên đánh giá | 📖 [Đọc](book-vi/chapter6.vi.md) | 💻 [10](chapter6/README.vi.md) |
+| 7 | 🧠 **Hậu huấn luyện mô hình** | Tiền huấn luyện/SFT/RL ba giai đoạn: khi nào SFT, khi nào RL, nội tại hóa gọi công cụ, hiệu quả mẫu | 📖 [Đọc](book-vi/chapter7.vi.md) | 💻 [14](chapter7/README.vi.md) |
+| 8 | 🔄 **Tự tiến hóa của Agent** | Trưởng thành không cần sửa trọng số: học từ kinh nghiệm, phát hiện công cụ chủ động, từ người dùng thành người tạo | 📖 [Đọc](book-vi/chapter8.vi.md) | 💻 [7](chapter8/README.vi.md) |
+| 9 | 🎙️ **Đa phương thức và tương tác thời gian thực** | Mở rộng từ văn bản sang giọng nói, GUI, thế giới vật lý: ba mô thức giọng nói, Computer Use, robot | 📖 [Đọc](book-vi/chapter9.vi.md) | 💻 [7](chapter9/README.vi.md) |
+| 10 | 🤝 **Cộng tác đa Agent** | Trí tuệ tập thể cao hơn cá thể: khung cộng tác, chia sẻ/cô lập ngữ cảnh, "xã hội Agent" nổi lên | 📖 [Đọc](book-vi/chapter10.vi.md) | 💻 [6](chapter10/README.vi.md) |
 
 > 💡 **📖 Đọc** = đọc nội dung chương trên GitHub (markdown); **💻 N** = số dự án đi kèm, nhấp để xem code. Phân loại (✅ Chạy độc lập / 📖 Tái hiện / 🚧 Thiết kế) xem README từng chương.
 >
