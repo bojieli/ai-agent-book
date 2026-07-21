@@ -2,7 +2,7 @@
 
 > Starting from the new paradigm of "Model as Agent," establishes the core formula **Agent = LLM + Context + Tools**, and introduces Harness engineering—all engineering capabilities beyond the model are the true competitive advantage.
 
-← [Back to main README](../README.en.md)
+← [Back to main README](../README.en.md) · 📖 [Read chapter text](../book-en/chapter1.md)
 
 ## Companion Projects
 

@@ -2,7 +2,7 @@
 
 > Agent vẫn có thể trưởng thành mà không cần sửa trọng số. Ba mô thức học tập: học từ kinh nghiệm, chủ động phát hiện công cụ, và từ “người dùng công cụ” thành “người tạo công cụ”, giúp Agent đi từ “thông minh” tới “thành thạo”.
 
-← [Về README chính](../README.vi.md)
+← [Về README chính](../README.vi.md) · 📖 [Đọc nội dung chương](../book-vi/chapter8.vi.md)
 
 ## Dự án đi kèm
 

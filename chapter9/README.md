@@ -2,7 +2,7 @@
 
 > 从文本扩展到语音、GUI、物理世界：语音三范式、Computer Use、机器人
 
-← [返回主目录](../README.md)
+← [返回主目录](../README.md) · 📖 [读本章正文](../book/chapter9.md)
 
 ## 配套项目
 

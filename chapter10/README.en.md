@@ -2,7 +2,7 @@
 
 > Collective intelligence can surpass individual intelligence. Multi-Agent classification framework, when it truly outperforms a single Agent, collaboration with and without shared context, failure modes, and the emergent "Agent Society."
 
-← [Back to main README](../README.en.md)
+← [Back to main README](../README.en.md) · 📖 [Read chapter text](../book-en/chapter10.md)
 
 ## Companion Projects
 

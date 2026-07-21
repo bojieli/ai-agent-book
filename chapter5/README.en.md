@@ -2,7 +2,7 @@
 
 > Code is a "tool that can create new tools" and is the meta-capability of a general-purpose Agent. Uses a production-grade Coding Agent as an example to demonstrate the complete implementation of this most powerful general tool.
 
-← [Back to main README](../README.en.md)
+← [Back to main README](../README.en.md) · 📖 [Read chapter text](../book-en/chapter5.md)
 
 ## Companion Projects
 

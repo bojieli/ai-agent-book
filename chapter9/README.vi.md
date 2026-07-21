@@ -2,7 +2,7 @@
 
 > mở rộng cảm nhận và hành động từ văn bản sang giọng nói, GUI và thế giới vật lý. Ba mô thức giọng nói (pipeline nối tầng/đa phương thức đầu cuối/full-duplex), cảm nhận và tổng hợp giọng nói dạng streaming, Computer Use và thao tác robot.
 
-← [Về README chính](../README.vi.md)
+← [Về README chính](../README.vi.md) · 📖 [Đọc nội dung chương](../book-vi/chapter9.vi.md)
 
 ## Dự án đi kèm
 

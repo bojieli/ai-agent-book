@@ -2,7 +2,7 @@
 
 > toàn cảnh ba giai đoạn tiền huấn luyện, SFT và RL. Khi nào chọn SFT, khi nào chọn RL, RLHF, so sánh thuật toán, dữ liệu và môi trường, cũng như các hướng tiên phong giúp mô hình học cách gọi công cụ và nâng cao hiệu quả mẫu.
 
-← [Về README chính](../README.vi.md)
+← [Về README chính](../README.vi.md) · 📖 [Đọc nội dung chương](../book-vi/chapter7.vi.md)
 
 ## Dự án đi kèm
 

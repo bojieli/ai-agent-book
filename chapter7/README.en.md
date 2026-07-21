@@ -2,7 +2,7 @@
 
 > A comprehensive view of the three stages: pre-training, SFT, and RL. When to choose SFT vs. RL, RLHF, algorithm comparison, data and environments, and cutting-edge exploration into teaching models tool calling and improving sample efficiency.
 
-← [Back to main README](../README.en.md)
+← [Back to main README](../README.en.md) · 📖 [Read chapter text](../book-en/chapter7.md)
 
 ## Companion Projects
 

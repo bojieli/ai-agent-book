@@ -2,7 +2,7 @@
 
 > xuất phát từ mô hình mới “model as Agent”, xây dựng công thức cốt lõi **Agent = LLM + context + tools**, đồng thời giới thiệu kỹ thuật Harness — mọi năng lực kỹ thuật nằm ngoài mô hình mới là lợi thế cạnh tranh thực sự.
 
-← [Về README chính](../README.vi.md)
+← [Về README chính](../README.vi.md) · 📖 [Đọc nội dung chương](../book-vi/chapter1.vi.md)
 
 ## Dự án đi kèm
 

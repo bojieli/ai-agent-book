@@ -2,7 +2,7 @@
 
 > Enables Agents to remember users across sessions and access external knowledge. Covers user memory systems, basic RAG pipelines, and knowledge organization and retrieval beyond flat text (structured indexes, knowledge graphs, etc.).
 
-← [Back to main README](../README.en.md)
+← [Back to main README](../README.en.md) · 📖 [Read chapter text](../book-en/chapter3.md)
 
 ## Companion Projects
 

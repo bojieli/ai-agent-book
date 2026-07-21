@@ -2,7 +2,7 @@
 
 > công cụ là đôi tay của Agent. Trình bày phân loại công cụ và nguyên tắc thiết kế tổng quát, giao thức MCP và thách thức chọn công cụ, ba loại công cụ cảm nhận/thực thi/cộng tác, cũng như Agent bất đồng bộ hướng sự kiện.
 
-← [Về README chính](../README.vi.md)
+← [Về README chính](../README.vi.md) · 📖 [Đọc nội dung chương](../book-vi/chapter4.vi.md)
 
 ## Dự án đi kèm
 

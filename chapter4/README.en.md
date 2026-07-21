@@ -2,7 +2,7 @@
 
 > Tools are the hands of an Agent. Discusses tool classification and general design principles, the MCP protocol and challenges of tool selection, three types of tools (perception, execution, collaboration), and event-driven asynchronous Agents.
 
-← [Back to main README](../README.en.md)
+← [Back to main README](../README.en.md) · 📖 [Read chapter text](../book-en/chapter4.md)
 
 ## Companion Projects
 

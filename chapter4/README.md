@@ -2,7 +2,7 @@
 
 > 工具是 Agent 的双手：MCP 协议、感知/执行/协作三类工具、事件驱动异步 Agent
 
-← [返回主目录](../README.md)
+← [返回主目录](../README.md) · 📖 [读本章正文](../book/chapter4.md)
 
 ## 配套项目
 

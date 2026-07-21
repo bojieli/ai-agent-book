@@ -37,20 +37,20 @@ Chinese text source is in [`book/`](book/); English/Tamil/Vietnamese translation
 
 The book revolves around the core formula **Agent = LLM + Context + Tools**, with ten chapters building progressively:
 
-| Ch | Topic | One-line Summary | Projects |
+| Ch | Topic | One-line Summary | Text / Code |
 | :--: | --- | --- | :--: |
-| 1 | 🚀 [Agent Fundamentals](chapter1/) | "Model as Agent" paradigm + **Agent = LLM + Context + Tools**; Harness engineering is the real competitive edge | [4 →](chapter1/README.en.md) |
-| 2 | 🎯 [Context Engineering](chapter2/) | Context caps Agent ability: KV Cache, prompt engineering, Agent Skills, context compression | [9 →](chapter2/README.en.md) |
-| 3 | 📚 [User Memory & Knowledge Bases](chapter3/) | Cross-session user memory + external knowledge: user memory, RAG, structured indexes, knowledge graphs | [13 →](chapter3/README.en.md) |
-| 4 | 🛠️ [Tools](chapter4/) | Tools are the Agent's hands: MCP protocol, perception/execution/collaboration tools, event-driven async Agents | [6 →](chapter4/README.en.md) |
-| 5 | 💻 [Coding Agent & Code Generation](chapter5/) | Code is a "tool that creates new tools"; production-grade Coding Agent in full | [12 →](chapter5/README.en.md) |
-| 6 | 🎯 [Agent Evaluation](chapter6/) | Turn performance into comparable signals: environments, metrics, statistical significance, evaluation-driven selection | [10 →](chapter6/README.en.md) |
-| 7 | 🧠 [Model Post-Training](chapter7/) | Pre-training/SFT/RL three stages: when to choose SFT vs. RL, internalizing tool calls, sample efficiency | [14 →](chapter7/README.en.md) |
-| 8 | 🔄 [Agent Self-Evolution](chapter8/) | Growth without changing weights: learning from experience, active tool discovery, from user to creator | [7 →](chapter8/README.en.md) |
-| 9 | 🎙️ [Multimodal & Real-Time Interaction](chapter9/) | Extending from text to voice, GUI, physical world: three voice paradigms, Computer Use, robotics | [7 →](chapter9/README.en.md) |
-| 10 | 🤝 [Multi-Agent Collaboration](chapter10/) | Collective intelligence > individual: collaboration frameworks, context sharing/isolation, emergent "Agent Society" | [6 →](chapter10/README.en.md) |
+| 1 | 🚀 **Agent Fundamentals** | "Model as Agent" paradigm + **Agent = LLM + Context + Tools**; Harness engineering is the real competitive edge | 📖 [Read](book-en/chapter1.md) · 💻 [4](chapter1/README.en.md) |
+| 2 | 🎯 **Context Engineering** | Context caps Agent ability: KV Cache, prompt engineering, Agent Skills, context compression | 📖 [Read](book-en/chapter2.md) · 💻 [9](chapter2/README.en.md) |
+| 3 | 📚 **User Memory & Knowledge Bases** | Cross-session user memory + external knowledge: user memory, RAG, structured indexes, knowledge graphs | 📖 [Read](book-en/chapter3.md) · 💻 [13](chapter3/README.en.md) |
+| 4 | 🛠️ **Tools** | Tools are the Agent's hands: MCP protocol, perception/execution/collaboration tools, event-driven async Agents | 📖 [Read](book-en/chapter4.md) · 💻 [6](chapter4/README.en.md) |
+| 5 | 💻 **Coding Agent & Code Generation** | Code is a "tool that creates new tools"; production-grade Coding Agent in full | 📖 [Read](book-en/chapter5.md) · 💻 [12](chapter5/README.en.md) |
+| 6 | 🎯 **Agent Evaluation** | Turn performance into comparable signals: environments, metrics, statistical significance, evaluation-driven selection | 📖 [Read](book-en/chapter6.md) · 💻 [10](chapter6/README.en.md) |
+| 7 | 🧠 **Model Post-Training** | Pre-training/SFT/RL three stages: when to choose SFT vs. RL, internalizing tool calls, sample efficiency | 📖 [Read](book-en/chapter7.md) · 💻 [14](chapter7/README.en.md) |
+| 8 | 🔄 **Agent Self-Evolution** | Growth without changing weights: learning from experience, active tool discovery, from user to creator | 📖 [Read](book-en/chapter8.md) · 💻 [7](chapter8/README.en.md) |
+| 9 | 🎙️ **Multimodal & Real-Time Interaction** | Extending from text to voice, GUI, physical world: three voice paradigms, Computer Use, robotics | 📖 [Read](book-en/chapter9.md) · 💻 [7](chapter9/README.en.md) |
+| 10 | 🤝 **Multi-Agent Collaboration** | Collective intelligence > individual: collaboration frameworks, context sharing/isolation, emergent "Agent Society" | 📖 [Read](book-en/chapter10.md) · 💻 [6](chapter10/README.en.md) |
 
-> 💡 Click each chapter's "**N →**" to see its full project list. Project types (✅ Standalone / 📖 Reproduction / 🚧 Design) are explained in each chapter's README.
+> 💡 **📖 Read** = read the chapter text on GitHub (markdown); **💻 N** = number of companion projects, click for code. Project types (✅ Standalone / 📖 Reproduction / 🚧 Design) are explained in each chapter's README.
 >
 > 📚 How to read this book efficiently? See **[Learning Suggestions](docs/LEARNING.en.md)** (core ideas, learning path, difficulty levels, practice tips).
 

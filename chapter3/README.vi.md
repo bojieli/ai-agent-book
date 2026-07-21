@@ -2,7 +2,7 @@
 
 > giúp Agent ghi nhớ người dùng qua nhiều phiên và kết nối với tri thức bên ngoài. Bao gồm hệ thống bộ nhớ người dùng, pipeline RAG cơ bản, cũng như tổ chức và truy xuất tri thức vượt ra ngoài văn bản phẳng (chỉ mục cấu trúc, đồ thị tri thức, v.v.).
 
-← [Về README chính](../README.vi.md)
+← [Về README chính](../README.vi.md) · 📖 [Đọc nội dung chương](../book-vi/chapter3.vi.md)
 
 ## Dự án đi kèm
 

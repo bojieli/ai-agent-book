@@ -2,7 +2,7 @@
 
 > ngữ cảnh quyết định trần năng lực của Agent. Đi sâu vào cấu trúc ngữ cảnh của API mô hình lớn, thiết kế thân thiện với KV Cache, prompt engineering, prompt động và Agent Skills, siêu thông tin trên thanh trạng thái, cũng như các chiến lược nén ngữ cảnh.
 
-← [Về README chính](../README.vi.md)
+← [Về README chính](../README.vi.md) · 📖 [Đọc nội dung chương](../book-vi/chapter2.vi.md)
 
 ## Dự án đi kèm
 

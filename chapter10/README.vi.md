@@ -2,7 +2,7 @@
 
 > trí tuệ tập thể có thể cao hơn cá thể. Khung phân loại đa Agent, khi nào thực sự tốt hơn đơn Agent, cộng tác chia sẻ và không chia sẻ ngữ cảnh, các chế độ thất bại, cũng như “xã hội Agent” nổi lên.
 
-← [Về README chính](../README.vi.md)
+← [Về README chính](../README.vi.md) · 📖 [Đọc nội dung chương](../book-vi/chapter10.vi.md)
 
 ## Dự án đi kèm
 

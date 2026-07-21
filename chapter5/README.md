@@ -2,7 +2,7 @@
 
 > 代码是「能创造新工具的工具」，生产级 Coding Agent 全景
 
-← [返回主目录](../README.md)
+← [返回主目录](../README.md) · 📖 [读本章正文](../book/chapter5.md)
 
 ## 配套项目
 

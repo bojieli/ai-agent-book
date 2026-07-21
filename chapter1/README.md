@@ -2,7 +2,7 @@
 
 > 「模型即 Agent」新范式 + **Agent = LLM + 上下文 + 工具**；Harness 工程才是竞争力
 
-← [返回主目录](../README.md)
+← [返回主目录](../README.md) · 📖 [读本章正文](../book/chapter1.md)
 
 ## 配套项目
 

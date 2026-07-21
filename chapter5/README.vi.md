@@ -2,7 +2,7 @@
 
 > mã là “công cụ có thể tạo ra công cụ mới”, là siêu năng lực của Agent tổng quát. Lấy Coding Agent cấp sản xuất làm ví dụ để trình bày triển khai đầy đủ của công cụ tổng quát mạnh nhất này.
 
-← [Về README chính](../README.vi.md)
+← [Về README chính](../README.vi.md) · 📖 [Đọc nội dung chương](../book-vi/chapter5.vi.md)
 
 ## Dự án đi kèm
 

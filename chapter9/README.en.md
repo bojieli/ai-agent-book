@@ -2,7 +2,7 @@
 
 > Extends perception and action from text to voice, GUI, and the physical world. Three voice paradigms (cascaded/end-to-end full-modal/full-duplex), streaming voice perception and synthesis, Computer Use, and robotic manipulation.
 
-← [Back to main README](../README.en.md)
+← [Back to main README](../README.en.md) · 📖 [Read chapter text](../book-en/chapter9.md)
 
 ## Companion Projects
 

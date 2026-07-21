@@ -2,7 +2,7 @@
 
 > Context determines the upper bound of Agent capabilities. Delves into the context structure of LLM APIs, KV Cache-friendly design, prompt engineering, dynamic prompts and Agent Skills, status bar meta-information, and context compression strategies.
 
-← [Back to main README](../README.en.md)
+← [Back to main README](../README.en.md) · 📖 [Read chapter text](../book-en/chapter2.md)
 
 ## Companion Projects
 
