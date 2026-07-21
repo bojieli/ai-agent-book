@@ -1,23 +1,24 @@
 # 深入理解 AI Agent：设计原理与工程实践
 
-[![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![PDF](https://img.shields.io/badge/PDF-%E4%B8%8B%E8%BD%BD-success.svg)](#-电子书) [![Languages](https://img.shields.io/badge/翻译-4%20种%20语言-informational.svg)](#-电子书)
+[![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![PDF](https://img.shields.io/badge/PDF-%E4%B8%8B%E8%BD%BD-success.svg)](#-电子书) [![Languages](https://img.shields.io/badge/翻译-5%20种%20语言-informational.svg)](#-电子书)
 
-**中文** ← 当前 · [English](README.en.md) · [Tiếng Việt](README.vi.md) · [தமிழ்](README.ta.md)
+**中文** ← 当前 · [台灣正體](README.zhtw.md) · [English](README.en.md) · [Tiếng Việt](README.vi.md) · [தமிழ்](README.ta.md)
 
 **Agent = LLM + 上下文 + 工具**——本书围绕这个核心公式，用 10 章把 AI Agent 从原理讲到工程实战。全书正文、配图、**88 个配套实验**全部开源，欢迎亲手把实验跑一遍。
 
-| 📚 **10 章** 正文，从基础到生产 | 📂 **88 个** 配套项目（70+ 可独立运行） | 🌐 **4 种** 语言：中 / 英 / 泰 / 越 |
+| 📚 **10 章** 正文，从基础到生产 | 📂 **88 个** 配套项目（70+ 可独立运行） | 🌐 **5 种** 语言：中 / 台灣正體 / 英 / 泰 / 越 |
 | :---: | :---: | :---: |
 
 ## 📖 电子书
 
 > 📥 **直接下载 PDF**（全书正文，开源免费）：
 > - **中文（原版）**：[`深入理解-AI-Agent-李博杰-v1.2.pdf`](book/深入理解-AI-Agent-李博杰-v1.2.pdf)
+> - **台灣正體**（社区翻译，by [@tigercosmos](https://github.com/tigercosmos)）：[`深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf`](book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf)
 > - **英文**（社区翻译，by [@nsdevaraj](https://github.com/nsdevaraj)）：[`AI-Agents-in-Depth-Bojie-Li-v1.2.pdf`](book-en/AI-Agents-in-Depth-Bojie-Li-v1.2.pdf)
 > - **泰米尔语**（社区翻译，by [@nsdevaraj](https://github.com/nsdevaraj)）：[`AI-Agents-in-Depth-Bojie-Li-v1.2-ta.pdf`](book-ta/AI-Agents-in-Depth-Bojie-Li-v1.2-ta.pdf)
 > - **越南语**（社区翻译，by [@toanalien](https://github.com/toanalien)）：[`AI-Agents-in-Depth-Bojie-Li-v1.2-vi.pdf`](book-vi/AI-Agents-in-Depth-Bojie-Li-v1.2-vi.pdf)
 
-中文正文源码位于 [`book/`](book/)；英文/泰米尔/越南语翻译为社区贡献（可能滞后于中文原版），分别位于 [`book-en/`](book-en/)、[`book-ta/`](book-ta/)、[`book-vi/`](book-vi/)。
+中文正文源码位于 [`book/`](book/)；台灣正體/英文/泰米尔/越南语版本为社区贡献（可能滞后于中文原版），分别位于 [`book-zhtw/`](book-zhtw/)、[`book-en/`](book-en/)、[`book-ta/`](book-ta/)、[`book-vi/`](book-vi/)。
 
 <details>
 <summary><b>🔧 想自行编译 PDF？</b>（需 pandoc / xelatex / ElegantBook）</summary>
@@ -133,7 +134,7 @@ git clone https://github.com/joonspk-research/generative_agents.git    chapter10
 | 🐛 **代码改进与 Bug 修复** | 让配套项目更健壮、更易用、更贴近生产实践 |
 | 🧪 **新的实践项目** | 为某个实验补充/替换更好的实现，或贡献全新的示例项目 |
 | 🎨 **配图设计改进** | 让 `book/images/` 中的图表更清晰美观（配图由 `book/gen_*_figs.py` 生成） |
-| 🌐 **新语言翻译** | 欢迎翻译成更多语言，可参考英文（`book-en/`）、泰米尔语（`book-ta/`）、越南语（`book-vi/`）的组织方式 |
+| 🌐 **新语言翻译** | 欢迎翻译成更多语言，可参考台灣正體（`book-zhtw/`）、英文（`book-en/`）、泰米尔语（`book-ta/`）、越南语（`book-vi/`）的组织方式 |
 
 提交前建议先把相关实验亲手跑一遍、确认可复现；也欢迎先提 issue 讨论想法。
 

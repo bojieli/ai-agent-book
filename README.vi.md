@@ -1,23 +1,24 @@
 # Hiểu sâu về AI Agent: Nguyên lý thiết kế và thực hành kỹ thuật
 
-[![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![PDF](https://img.shields.io/badge/PDF-tải%20về-success.svg)](#-sách-điện-tử) [![Languages](https://img.shields.io/badge/dịch-4%20ngôn%20ngữ-informational.svg)](#-sách-điện-tử)
+[![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![PDF](https://img.shields.io/badge/PDF-tải%20về-success.svg)](#-sách-điện-tử) [![Languages](https://img.shields.io/badge/dịch-5%20ngôn%20ngữ-informational.svg)](#-sách-điện-tử)
 
-**[中文](README.md) · [English](README.en.md) · Tiếng Việt ← hiện tại · [தமிழ்](README.ta.md)**
+**[中文](README.md) · [台灣正體](README.zhtw.md) · [English](README.en.md) · Tiếng Việt ← hiện tại · [தமிழ்](README.ta.md)**
 
 **Agent = LLM + Context + Tools** — Cuốn sách xây dựng trên công thức cốt lõi này qua 10 chương, đưa AI Agent từ nguyên lý đến thực hành kỹ thuật. Toàn bộ nội dung, hình minh họa và **88 thí nghiệm đi kèm** đều là mã nguồn mở. Hoan nghênh bạn tự chạy các thí nghiệm.
 
-| 📚 **10 chương** nội dung, từ nền tảng đến sản xuất | 📂 **88** dự án đi kèm (70+ chạy độc lập) | 🌐 **4 ngôn ngữ**: Trung / Anh / Tamil / Việt |
+| 📚 **10 chương** nội dung, từ nền tảng đến sản xuất | 📂 **88** dự án đi kèm (70+ chạy độc lập) | 🌐 **5 ngôn ngữ**: Trung / 台灣正體 / Anh / Tamil / Việt |
 | :---: | :---: | :---: |
 
 ## 📖 Sách điện tử
 
 > 📥 **Tải PDF trực tiếp** (toàn bộ nội dung, mã nguồn mở miễn phí):
 > - **Bản gốc tiếng Trung**：[`深入理解-AI-Agent-李博杰-v1.2.pdf`](book/深入理解-AI-Agent-李博杰-v1.2.pdf)
+> - **Trung phồn thể (Đài Loan)**（dịch cộng đồng, by [@tigercosmos](https://github.com/tigercosmos)）：[`深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf`](book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf)
 > - **Tiếng Anh**（dịch cộng đồng, by [@nsdevaraj](https://github.com/nsdevaraj)）：[`AI-Agents-in-Depth-Bojie-Li-v1.2.pdf`](book-en/AI-Agents-in-Depth-Bojie-Li-v1.2.pdf)
 > - **Tiếng Tamil**（dịch cộng đồng, by [@nsdevaraj](https://github.com/nsdevaraj)）：[`AI-Agents-in-Depth-Bojie-Li-v1.2-ta.pdf`](book-ta/AI-Agents-in-Depth-Bojie-Li-v1.2-ta.pdf)
 > - **Tiếng Việt**（dịch cộng đồng, by [@toanalien](https://github.com/toanalien)）：[`AI-Agents-in-Depth-Bojie-Li-v1.2-vi.pdf`](book-vi/AI-Agents-in-Depth-Bojie-Li-v1.2-vi.pdf)
 
-Mã nguồn tiếng Trung nằm trong [`book/`](book/); bản dịch Anh/Tamil/Việt là đóng góp cộng đồng (có thể chậm hơn bản gốc), nằm trong [`book-en/`](book-en/), [`book-ta/`](book-ta/), [`book-vi/`](book-vi/).
+Mã nguồn tiếng Trung nằm trong [`book/`](book/); các bản Trung phồn thể (Đài Loan)/Anh/Tamil/Việt là đóng góp cộng đồng (có thể chậm hơn bản gốc), nằm trong [`book-zhtw/`](book-zhtw/), [`book-en/`](book-en/), [`book-ta/`](book-ta/), [`book-vi/`](book-vi/).
 
 <details>
 <summary><b>🔧 Tự build PDF?</b> (cần pandoc / xelatex / ElegantBook)</summary>
@@ -133,7 +134,7 @@ Sách và mã đi kèm hoàn toàn mã nguồn mở. Rất hoan nghênh Pull Req
 | 🐛 **Cải tiến code & sửa bug** | Dự án đi kèm mạnh mẽ hơn, dễ dùng hơn, gần sản xuất hơn |
 | 🧪 **Dự án thực hành mới** | Bổ sung/thay thế cài đặt tốt hơn cho thí nghiệm, hoặc đóng góp ví dụ mới |
 | 🎨 **Cải tiến hình vẽ** | Biểu đồ trong `book/images/` rõ và đẹp hơn (do `book/gen_*_figs.py` tạo) |
-| 🌐 **Bản dịch ngôn ngữ mới** | Hoan nghênh dịch sang nhiều ngôn ngữ; xem tiếng Anh (`book-en/`), Tamil (`book-ta/`), Việt (`book-vi/`) |
+| 🌐 **Bản dịch ngôn ngữ mới** | Hoan nghênh dịch sang nhiều ngôn ngữ; xem Trung phồn thể/Đài Loan (`book-zhtw/`), tiếng Anh (`book-en/`), Tamil (`book-ta/`), Việt (`book-vi/`) |
 
 Trước khi gửi, hãy chạy thí nghiệm liên quan để xác nhận tái hiện; có thể mở issue thảo luận trước.
 

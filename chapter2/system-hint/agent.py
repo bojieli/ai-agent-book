@@ -844,18 +844,28 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
                 )
                 
                 message = response.choices[0].message
-                
-                # Check for final answer
-                if message.content and "FINAL ANSWER:" in message.content:
-                    final_answer = message.content.split("FINAL ANSWER:")[1].strip()
-                    logger.info(f"Final answer found: {final_answer[:100]}...")
+                has_tool_calls = bool(getattr(message, "tool_calls", None))
+
+                # Terminal path: a text reply with no tool calls ends the loop,
+                # even without the FINAL ANSWER: marker (e.g. a plain "hi"
+                # reply). Previously only "FINAL ANSWER:" broke the loop, so
+                # plain replies were re-sent for up to max_iterations.
+                if not has_tool_calls:
                     self.conversation_history.append(message.model_dump())
+                    content = (message.content or "").strip()
+                    if content:
+                        final_answer = (content.split("FINAL ANSWER:", 1)[1].strip()
+                                        if "FINAL ANSWER:" in content else content)
+                        logger.info(f"Terminal text response (no tool calls); final answer: {final_answer[:100]}...")
+                    else:
+                        logger.warning("Empty model response with no tool calls; "
+                                       "stopping to avoid burning remaining iterations")
                     # Save final trajectory
                     self._save_trajectory(iteration, final_answer)
                     break
-                
+
                 # Handle tool calls
-                if hasattr(message, 'tool_calls') and message.tool_calls:
+                if has_tool_calls:
                     self.conversation_history.append(message.model_dump())
                     
                     for tool_call in message.tool_calls:
@@ -946,10 +956,14 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
                             "tool_call_id": tool_call.id,
                             "content": tool_content
                         })
-                    
-                elif message.content:
-                    # Regular assistant message
-                    self.conversation_history.append(message.model_dump())
+
+                    # If the same turn also tagged FINAL ANSWER: (unusual with
+                    # tool calls), still stop after recording the tool results.
+                    if message.content and "FINAL ANSWER:" in message.content:
+                        final_answer = message.content.split("FINAL ANSWER:", 1)[1].strip()
+                        logger.info(f"Final answer found alongside tool calls: {final_answer[:100]}...")
+                        self._save_trajectory(iteration, final_answer)
+                        break
                     
             except Exception as e:
                 logger.error(f"Error during task execution: {str(e)}")
