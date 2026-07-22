@@ -298,8 +298,11 @@ def save_and_push_model(trainer, output_dir, push_to_hub=False, hub_model_id=Non
     if push_to_hub:
         if hub_model_id is None:
             raise ValueError("需要提供 hub_model_id 才能推送到 Hub")
-        
+
         print(f"\n推送模型到 Hugging Face Hub: {hub_model_id}")
+        # Trainer.push_to_hub 从 args.hub_model_id 取仓库名；不设置的话会
+        # 忽略用户传入的 --hub_model_id，推到 output_dir 同名的默认仓库。
+        trainer.args.hub_model_id = hub_model_id
         trainer.push_to_hub(
             dataset_name="HuggingFaceH4/Multilingual-Thinking",
         )
