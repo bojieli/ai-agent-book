@@ -121,6 +121,16 @@ class KnowledgeBase:
         
         logger.info(f"Indexing GAIA validation data from {validation_file}")
         
+        # The index is persisted and reloaded by __init__ (_load_index), so
+        # without this every run appends another full copy of the dataset and
+        # search() starts returning the same document top_k times.
+        existing_ids = {
+            doc.get('task_id')
+            for doc in self.documents
+            if doc.get('source') == 'gaia_validation'
+        }
+        skipped = 0
+        
         try:
             with open(validation_file, 'r', encoding='utf-8') as f:
                 for line_num, line in enumerate(f, 1):
@@ -133,9 +143,14 @@ class KnowledgeBase:
                         level = data.get('Level', 0)
                         metadata = data.get('Annotator Metadata', {})
                         
+                        task_id = data.get('task_id', f'gaia_{line_num}')
+                        if task_id in existing_ids:
+                            skipped += 1
+                            continue
+                        
                         # Create experience document
                         experience = {
-                            'task_id': data.get('task_id', f'gaia_{line_num}'),
+                            'task_id': task_id,
                             'question': question,
                             'answer': answer,
                             'level': level,
@@ -148,6 +163,7 @@ class KnowledgeBase:
                         
                         # Add to index
                         self.add_experience(question, experience)
+                        existing_ids.add(task_id)
                         
                     except json.JSONDecodeError as e:
                         logger.error(f"Failed to parse line {line_num}: {e}")
@@ -156,6 +172,8 @@ class KnowledgeBase:
             
             # Save the index after bulk indexing
             self._save_index()
+            if skipped:
+                logger.info(f"Skipped {skipped} GAIA records already present in the index")
             logger.info(f"Successfully indexed {len(self.documents)} experiences from GAIA validation")
             
         except Exception as e:
