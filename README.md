@@ -71,8 +71,8 @@
 | **Kimi**（月之暗面） | <https://platform.moonshot.cn/> | Kimi 系列，Coding、Agent 能力强 |
 | **智谱 GLM** | <https://open.bigmodel.cn/> | GLM-5.2 等，Coding、Agent 能力强 |
 | **Siliconflow** | <https://siliconflow.cn/> | 各种开源模型（DeepSeek、Qwen 等） |
-| **火山引擎** | <https://www.volcengine.com/product/ark> | 字节豆包闭源模型，国内访问延迟低 |
-| **OpenRouter** | <https://openrouter.ai/> | 一站式访问 Gemini / Claude / GPT-5 等海外模型（官方 API 需海外 IP/支付方式，OpenAI 还需海外身份认证） |
+| **Krill AI** | <https://www.krill-ai.com/> | 一站式访问全球及国内主流模型（OpenAI、Claude、Gemini、Grok、Kimi、GLM、DeepSeek、Qwen、Minimax），提供全球与中国大陆访问节点 |
+| **OpenRouter** | <https://openrouter.ai/> | 一站式访问 Gemini / Claude / GPT-5 等海外模型，提供全球访问节点 |
 
 ## 📦 附录 · 外部仓库获取
 

@@ -70,8 +70,8 @@ Nên đăng ký API key từ vài nền tảng để thuận tiện học tập.
 | **Kimi** (Moonshot) | <https://platform.moonshot.cn/> | Kimi series, ngữ cảnh dài và khả năng Agent mạnh |
 | **Zhipu GLM** | <https://open.bigmodel.cn/> | GLM-4.6, tiếng Trung mạnh, hiệu năng/ch giá tốt |
 | **Siliconflow** | <https://siliconflow.cn/> | Các mô hình mở (DeepSeek, Qwen, v.v.) |
-| **Volcano Engine** | <https://www.volcengine.com/product/ark> | ByteDance Doubao (closed-source), độ trễ thấp trong nước |
-| **OpenRouter** | <https://openrouter.ai/> | Truy cập Gemini / Claude / GPT-5 v.v. (API chính thức cần IP/phương thức thanh toán ngoài; OpenAI còn cần xác thực danh tính ngoài) |
+| **Krill AI** | <https://www.krill-ai.com/> | Truy cập một điểm đến các mô hình chính toàn cầu và nội địa Trung Quốc (OpenAI, Claude, Gemini, Grok, Kimi, GLM, DeepSeek, Qwen, Minimax), với điểm truy cập toàn cầu và Trung Quốc đại lục |
+| **OpenRouter** | <https://openrouter.ai/> | Truy cập Gemini / Claude / GPT-5 v.v., với điểm truy cập toàn cầu |
 
 ## 📦 Phụ lục · Lấy kho ngoài
 

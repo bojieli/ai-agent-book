@@ -70,8 +70,8 @@
 | **Kimi** (Moonshot) | <https://platform.moonshot.cn/> | Kimi series, நீண்ட சூழல் மற்றும் Agent திறன் வலுவாக |
 | **Zhipu GLM** | <https://open.bigmodel.cn/> | GLM-4.6, சீன மொழி வலுவாக, செலவு-செயல்திறன் நல்லது |
 | **Siliconflow** | <https://siliconflow.cn/> | பல திறந்த மூல மாதிரிகள் (DeepSeek, Qwen போன்ற) |
-| **Volcano Engine** | <https://www.volcengine.com/product/ark> | ByteDance Doubao (மூடிய-மூல), சீனாவில் குறைந்த தாமதம் |
-| **OpenRouter** | <https://openrouter.ai/> | Gemini / Claude / GPT-5 ஒரே இடத்திலிருந்து (அதிகாரப்பூர்வ API-க்கு வெளிநாட்டு IP/கட்டணம் தேவை; OpenAI-க்கு வெளிநாட்டு ID சரிபார்ப்பும் தேவை) |
+| **Krill AI** | <https://www.krill-ai.com/> | உலகளாவிய மற்றும் சீன உள்நாட்டு முக்கிய மாதிரிகளை (OpenAI, Claude, Gemini, Grok, Kimi, GLM, DeepSeek, Qwen, Minimax) ஒரே இடத்திலிருந்து அணுகலாம்; உலகளாவிய மற்றும் சீனா நிலப்பரப்பு அணுகல் முனைகளுடன் |
+| **OpenRouter** | <https://openrouter.ai/> | Gemini / Claude / GPT-5 ஒரே இடத்திலிருந்து; உலகளாவிய அணுகல் முனைகளுடன் |
 
 ## 📦 பின்னிணைப்பு · வெளிப்புற களஞ்சியங்களைப் பெறுதல்
 
