@@ -74,7 +74,7 @@ _RULES = [
     (
         # 连接串中的口令，如 postgres://user:PASSWORD@host:5432/db
         "url_credential", "[REDACTED_URL_CRED]",
-        re.compile(r"://[^\s:/@]+:([^\s:/@]+)@"),
+        re.compile(r"://[^\s:/@]+:([^\s@]+)@"),
         1, None,
     ),
     (
