@@ -206,3 +206,25 @@ class TestBashTool:
         })
         assert result.data["exit_code"] == -1
         assert "timed out" in result.data["output"].lower()
+
+    def test_timeout_ms_zero_like_omit(self, system_state):
+        """timeout=0 must not skip the command (DataLoss via immediate 0s deadline)."""
+        tool = BashTool(system_state)
+        result = tool.execute({
+            "command": "echo zero-ok",
+            "timeout": 0,
+        })
+        assert result.success
+        assert result.data["exit_code"] == 0
+        assert "zero-ok" in result.data["output"]
+        assert "timed out" not in result.data["output"].lower()
+
+    def test_timeout_ms_negative_like_omit(self, system_state):
+        tool = BashTool(system_state)
+        result = tool.execute({
+            "command": "echo neg-ok",
+            "timeout": -1,
+        })
+        assert result.success
+        assert "neg-ok" in result.data["output"]
+        assert result.data["exit_code"] == 0
