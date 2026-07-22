@@ -291,6 +291,8 @@ def optimize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
             # Try to get unique values - will fail if unhashable
             num_unique = df[col].nunique()
             num_total = len(df[col])
+            if num_total == 0:
+                continue
             
             # If less than 50% unique values, convert to category
             if num_unique / num_total < 0.5:
@@ -301,7 +303,7 @@ def optimize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
             continue
     
     final_memory = df.memory_usage(deep=True).sum() / 1024**2
-    reduction = (1 - final_memory / initial_memory) * 100
+    reduction = 0.0 if initial_memory == 0 else (1 - final_memory / initial_memory) * 100
     
     print(f"Memory usage reduced from {initial_memory:.2f} MB to {final_memory:.2f} MB ({reduction:.1f}% reduction)")
     
