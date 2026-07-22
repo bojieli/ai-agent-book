@@ -59,6 +59,8 @@
       // Match against prefix with trailing slash stripped, so both
       // "/book-en/" and "/book-en" map to "en".
       var p = path.replace(/\/$/, "");
+      if (p === "" || p === "/index" || p === "/index.html") return "zh";
+      if (p === "/index.en" || p === "/index.en.html") return "en";
       var codes = Object.keys(cfg).sort(function (a, b) {
         return cfg[b].prefix.length - cfg[a].prefix.length;
       });
@@ -89,7 +91,8 @@
     // the same site base, or null if no translation applies.
     //
     // URL shapes we have to handle:
-    //   /                          → site home (per-language intro)
+    //   /                          → site home
+    //   /index.en/                 → English site home
     //   /book[-lang]/chapterN[.suffix]/  → chapter prose
     //   /chapterN/                 → experiment index, Chinese (README.md)
     //   /chapterN/README.<readmeSuffix>/ → experiment index, translated
@@ -100,8 +103,17 @@
       var src = cfg[fromCode];
       var dst = cfg[toCode];
 
-      // Site home → target language's introduction.
+      // Site home → English home for English, otherwise target language's
+      // introduction page. Only English has a localized homepage today.
       if (cleanPath === "/" || cleanPath === "/index.html") {
+        if (toCode === "zh") return "/";
+        if (toCode === "en") return "/index.en/";
+        return "/" + dst.prefix + "introduction" + (dst.suffix || "") + "/";
+      }
+
+      if (cleanPath === "/index.en/" || cleanPath === "/index.en" || cleanPath === "/index.en.html") {
+        if (toCode === "zh") return "/";
+        if (toCode === "en") return "/index.en/";
         return "/" + dst.prefix + "introduction" + (dst.suffix || "") + "/";
       }
 
