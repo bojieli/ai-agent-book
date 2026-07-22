@@ -44,8 +44,7 @@ def test_missing_evidence_loses_evidence_point():
     assert result["details"]["evidence"] == 0
 
 
-def test_null_evidence_loses_evidence_point_without_crash():
-    """Explicit JSON null evidence is treated like [], not TypeError on set(None)."""
+def test_null_evidence_loses_evidence_point():
     predictions, expected = reference_predictions()
     prediction = deepcopy(predictions[1])
     prediction["result"]["evidence"] = None
