@@ -100,7 +100,7 @@ LLM Agent 的一個獨特能力是**內部思考**——在採取實際行動之
 
 但這裡懸著一個更深的問題：如果模型持續變強，今天這些 Harness 會不會最終被模型「吃掉」？Rich Sutton 在《苦澀的教訓》（The Bitter Lesson）中回顧了 AI 研究七十年間反覆上演的一幕[^ch1-1]：研究者一次次把自己對領域的理解編碼進系統，短期見效，長期卻總是輸給能隨算力與資料規模持續擴充套件的通用方法——搜尋與學習。以此衡量，Harness 裡的約束、驗證與糾正，有多少屬於「人的先驗」，註定會被模型內化？本書的立場是八個字：**方向認同，節奏務實**。方向上，本書不懷疑模型會持續吃掉 Harness——工具呼叫、長程規劃都曾靠外部編排，如今已是模型的原生能力；但在節奏上，這個「吃」遠比直覺慢：訓練以月計，模型也無法一次內化真實業務中所有的約束與偏好，模型此刻的能力邊界，就是 Harness 此刻的價值所在。因此 Harness 工程不是對苦澀的教訓的抵抗，而是這一教訓在工程時間尺度上的實踐：模型還做不穩的，Harness 先補上；模型每內化一層，Harness 就卸下一層，轉而兜底新的能力前沿。這條主線將貫穿全書——第二章從上下文工程的角度給出務實的回答，第八章討論 Agent 如何自己去發現知識與能力的結構，後記再回到「模型會不會吃掉 Harness」的完整答案。
 
-[^ch1-1]: Sutton, Rich. "The Bitter Lesson", 2019. http://www.incompletenessideas.net/IncIdeas/BitterLesson.html
+[^ch1-1]: Sutton, Rich. "The Bitter Lesson", 2019. http://www.incompleteideas.net/IncIdeas/BitterLesson.html
 
 #### Agent 的學習機制：後訓練、上下文學習與外部化學習
 
