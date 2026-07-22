@@ -1,19 +1,14 @@
 /* ===========================================================================
-   深入理解 AI Agent — 把 Material 主题「去装饰」,复刻 icyfenix.cn 的扁平风
+   深入理解 AI Agent — 主题皮肤
    ===========================================================================
-   设计参考:实测 icyfenix.cn 的 computed style(2026-07)
-     - navbar 57px / 白底 / 1px 浅灰下划线
-     - sidebar 320px / 白底 / 1px 浅灰右边线
-     - 主文字色 #2c3e50(深蓝灰,而非纯黑)
-     - h1 41.6px
-     - 正文 16px / 1.7
-     - 链接默认与正文同色,hover 时变蓝(扁平、不张扬)
-   策略:不换主题(保留 Material 的搜索/多语言/暗色/i18n/分享卡等所有功能),
-   只用 CSS 关掉它的「卡片化」「阴影」「圆角」「紫色调」等装饰,
-   让页面回归「白底 + 左侧栏 + 文字」的扁平形态。
+   目标:在 Material for MkDocs 之上做一层「现代、克制、品牌化」的皮肤。
+     · 品牌色取自 logo 的靛蓝→紫罗兰渐变(#6366f1 → #8b5cf6)
+     · 首页(index.md)是一张「产品落地页」:渐变 Hero + 统计 + 特性 + 章节卡
+     · 正文阅读页保持干净、专注、易读,只做细节打磨
+     · 完整支持暗色模式与移动端
    =========================================================================== */
 
-/* ── 0. 设计 token(对齐 fenix 实测值) ─────────────────────────── */
+/* ── 0. 设计 token ─────────────────────────────────────────────── */
 
 :root {
   --md-text-font: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB",
@@ -22,434 +17,791 @@
   --md-code-font: "JetBrains Mono", "Fira Code", SFMono-Regular, Consolas,
                   Menlo, monospace;
 
-  /* fenix 调色板 */
-  --fenix-ink:        #2c3e50;   /* 主文字 + h1 + 链接默认色 */
-  --fenix-ink-soft:   #57606a;   /* 次级文字 */
-  --fenix-ink-mute:   #8b949e;   /* 弱化文字 */
-  --fenix-border:     #eaecef;   /* navbar/sidebar 的细分隔线 */
-  --fenix-link:       #3884fe;   /* fenix 实测的正文链接蓝 */
-  --fenix-link-hover: #42b983;   /* fenix 经典墨绿 hover */
-  --fenix-bg:         #ffffff;
-  --fenix-bg-soft:    #f6f8fa;
-  --fenix-code-bg:    rgba(27, 31, 35, 0.05);
-  --fenix-code-ink:   #476582;
+  /* 品牌 */
+  --brand-1:     #6366f1;               /* 靛蓝 */
+  --brand-2:     #8b5cf6;               /* 紫罗兰 */
+  --brand-3:     #a855f7;               /* 亮紫 */
+  --brand-ink:   #6d28d9;               /* 链接 / 强调文字 */
+  --brand-soft:  rgba(99, 102, 241, .10);
+  --brand-grad:  linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #a855f7 100%);
+
+  /* 中性色 */
+  --ink:        #24292f;
+  --ink-soft:   #57606a;
+  --ink-mute:   #8b949e;
+  --border:     #e8eaee;
+  --border-str: #d7dae0;
+  --bg:         #ffffff;
+  --bg-soft:    #f7f8fa;
+  --bg-sunken:  #f0f2f6;
+  --code-bg:    rgba(99, 102, 241, .07);
+  --code-ink:   #6d28d9;
+
+  --shadow-sm:  0 1px 2px rgba(20, 22, 30, .05);
+  --shadow-md:  0 6px 20px -6px rgba(20, 22, 30, .14);
+  --shadow-lg:  0 24px 60px -18px rgba(76, 44, 138, .38);
+  --radius:     14px;
 
   /* 让 Material 也用上这些 token */
-  --md-primary-fg-color:        #2c3e50;
+  --md-primary-fg-color:        #6d28d9;
   --md-primary-bg-color:        #ffffff;
-  --md-default-fg-color:        #2c3e50;
-  --md-default-fg-color--soft:  #57606a;
-  --md-accent-fg-color:         #42b983;
+  --md-accent-fg-color:         #7c3aed;
+  --md-default-fg-color:        #24292f;
+  --md-default-fg-color--light: #57606a;
+  --md-typeset-a-color:         #6d28d9;
 }
 
-/* ── 1. 关掉 Material 的卡片化、阴影、圆角 ────────────────────── */
+/* ── 1. 去掉 Material 的重阴影,统一到我们的调性 ───────────────── */
 
-/* 全局去掉 box-shadow —— 这是 Material 最显眼的装饰 */
 .md-header,
-.md-sidebar,
 .md-tabs,
-.md-search,
 .md-nav,
 .md-typeset .admonition,
 .md-typeset details,
-.md-typeset pre,
 .md-typeset table:not([class]) {
   box-shadow: none !important;
 }
 
-/* navbar:扁平、白底、单线分隔(对齐 fenix 的 57px / 1px #eaecef) */
+/* ── 2. 顶栏:半透明毛玻璃 + 细线分隔 ─────────────────────────── */
+
 .md-header {
-  background-color: var(--fenix-bg) !important;
-  border-bottom: 1px solid var(--fenix-border) !important;
-  color: var(--fenix-ink) !important;
-  height: 57px;
+  background: rgba(255, 255, 255, .82) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  backdrop-filter: saturate(180%) blur(12px);
+  color: var(--ink) !important;
+  border-bottom: 1px solid var(--border);
   box-shadow: none !important;
-  transition: none;
+  height: 3.2rem;
 }
-.md-header__title { color: var(--fenix-ink) !important; font-weight: 600; }
-.md-header__topic { color: var(--fenix-ink) !important; }
+.md-header__title { color: var(--ink) !important; font-weight: 600; }
+.md-header__topic { color: var(--ink) !important; }
+.md-header__button.md-logo :is(img, svg) { height: 1.7rem; width: auto; }
 
-/* 顶部 header 里的搜索框 —— 扁平化 */
+/* 搜索框 —— 圆角、柔和底 */
 .md-search__input {
-  background-color: var(--fenix-bg-soft) !important;
-  color: var(--fenix-ink) !important;
-  border-radius: 4px !important;
+  background: var(--bg-soft) !important;
+  color: var(--ink) !important;
+  border-radius: 10px !important;
 }
-.md-search__input::placeholder { color: var(--fenix-ink-mute); }
+.md-search__input::placeholder { color: var(--ink-mute); }
+.md-search__form { border-radius: 10px; }
 
-/* ── 2. 侧边栏:更宽、白底、单线分隔 ─────────────────────────── */
+/* GitHub 仓库信息条 */
+.md-header__source { color: var(--ink-soft); }
 
-.md-sidebar {
-  width: 320px;       /* fenix 的实测宽度 */
+/* 语言选择下拉 */
+.lang-select {
+  border-radius: 8px;
 }
-@media screen and (min-width: 1220px) {
-  .md-sidebar--primary {
-    border-right: 1px solid var(--fenix-border);
+
+/* ── 3. 侧边栏 ────────────────────────────────────────────────── */
+
+@media screen and (min-width: 76.25em) {
+  .md-sidebar--primary { width: 15.5rem; }
+  .md-sidebar--primary > .md-sidebar__scrollwrap {
+    border-right: 1px solid var(--border);
+    padding-right: .4rem;
   }
 }
 
-/* 侧边栏链接 —— 扁平、深蓝灰、无 hover 背景,只在 hover 时变墨绿 */
-.md-nav__item {
-  border-left: 2px solid transparent;
-  transition: border-color .12s;
-}
+.md-nav__item { border-radius: 8px; }
 .md-nav__link {
-  color: var(--fenix-ink) !important;
-  font-size: 0.84rem;
-  margin: 0;
-  padding: 6px 12px 6px 0;
-  transition: color .12s;
+  color: var(--ink) !important;
+  font-size: .74rem;
+  border-radius: 8px;
+  padding: .34rem .5rem;
+  margin: 1px 0;
+  transition: color .14s, background .14s;
 }
 .md-nav__link:hover,
 .md-nav__link:hover * {
-  color: var(--fenix-link-hover) !important;
+  color: var(--brand-ink) !important;
+  background: var(--brand-soft);
 }
-/* 章节折叠头(<label for="...">):必须让它的整个区域接收点击并显示手型光标,
-   否则用户的鼠标点击会落在 <li> 上而不是 label 上,checkbox 不会翻转,
-   章节看起来"点不开也收不起"。 */
+
+/* 章节折叠头(<label>)必须占满整条、显示手型、盖在 <li> 之上接收点击 */
 .md-sidebar--primary .md-nav__item--nested > label.md-nav__link {
   position: relative;
-  z-index: 2;                /* 在 <li> 之上接收点击 */
+  z-index: 2;
   cursor: pointer;
   display: flex;
   align-items: center;
-  width: 100%;               /* 占满整个章节条宽度,不只文字部分 */
+  width: 100%;
   box-sizing: border-box;
-  pointer-events: auto !important;   /* Material sets pointer-events:none on some labels */
+  pointer-events: auto !important;
 }
-/* 章节项本身不要拦截点击 — pointer-events: none 让点击穿透到 label */
 .md-sidebar--primary .md-nav__item--nested {
   position: relative;
   cursor: pointer;
 }
-/* 桌面端 sticky 站点标题(Material 默认 z-index:1)必须盖过章节
-   label(z-index:2),否则侧栏滚动时章节名会叠在站点标题上。 */
+/* 桌面端 sticky 站点标题必须盖过章节 label(否则滚动时叠字) */
 @media screen and (min-width: 76.25em) {
-  .md-nav--primary > .md-nav__title {
-    z-index: 3;
-  }
-}
-/* 当前激活的章节 —— 左侧一条墨绿色竖线(像 fenix 当前章节的视觉提示) */
-.md-nav__item--active {
-  border-left-color: var(--fenix-link-hover);
-}
-.md-nav__item--active > .md-nav__link {
-  color: var(--fenix-link-hover) !important;
-  font-weight: 500;
+  .md-nav--primary > .md-nav__title { z-index: 3; }
 }
 
-/* 章节分组标题(第1章/第2章...) —— 稍粗、深蓝灰 */
-.md-nav__title {
-  color: var(--fenix-ink) !important;
-  font-size: 0.78rem;
+/* 当前激活项 —— 品牌色胶囊 */
+.md-nav__item--active > .md-nav__link,
+.md-nav__link--active {
+  color: var(--brand-ink) !important;
+  background: var(--brand-soft);
   font-weight: 600;
-  letter-spacing: 0.02em;
 }
 
-/* ── 3. 正文排版 ─────────────────────────────────────────────── */
+.md-nav__title {
+  color: var(--ink) !important;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+/* 右侧 TOC */
+.md-nav--secondary .md-nav__link--active { color: var(--brand-ink) !important; }
+.md-sidebar--secondary .md-nav__link:hover { background: transparent; }
+
+/* ── 4. 正文排版(阅读页) ─────────────────────────────────────── */
 
 .md-typeset {
-  font-size: 0.78rem;          /* 中文密集排版,比 fenix 16px 略小更舒服 */
-  line-height: 1.65;
-  color: var(--fenix-ink);
+  font-size: .8rem;
+  line-height: 1.75;
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-
 .md-typeset p,
 .md-typeset ul,
 .md-typeset ol,
-.md-typeset blockquote {
-  margin-block: 0.9em;
-  orphans: 3;
-  widows: 3;
-}
+.md-typeset blockquote { margin-block: .95em; }
 
-/* h1 —— 章节标题(对齐 fenix 41.6px) */
 .md-typeset h1 {
-  color: var(--fenix-ink) !important;
-  font-weight: 600 !important;
-  font-size: 1.85rem !important;   /* ≈ 29.6px,比 fenix 略小,适合中文 */
-  letter-spacing: -0.01em;
-  margin-top: 0;
-  margin-bottom: 1.2rem;
-  padding-bottom: 0;
-  border: none;
+  color: var(--ink) !important;
+  font-weight: 700 !important;
+  font-size: 1.9rem !important;
+  letter-spacing: -.012em;
+  margin: 0 0 1.3rem;
+  line-height: 1.25;
 }
-/* h2 —— 简洁,只一条细分隔线 */
 .md-typeset h2 {
-  color: var(--fenix-ink);
-  font-weight: 600;
-  font-size: 1.55rem;
-  margin-top: 2.6rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.3rem;
-  border-left: none;
-  border-bottom: 1px solid var(--fenix-border);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin: 2.6rem 0 1rem;
+  padding-bottom: .35rem;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 4rem;
 }
-
-/* h3 —— 小标题,深蓝灰 */
 .md-typeset h3 {
-  color: var(--fenix-ink);
-  font-weight: 600;
-  font-size: 1.2rem;
-  margin-top: 1.8rem;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 1.18rem;
+  margin-top: 1.9rem;
+  scroll-margin-top: 4rem;
+}
+.md-typeset h2::before {
+  content: "";
+  display: inline-block;
+  width: .22rem;
+  height: 1rem;
+  margin-right: .5rem;
+  vertical-align: -.08rem;
+  border-radius: 3px;
+  background: var(--brand-grad);
 }
 
-/* ── 4. 链接 —— 默认与正文同色,hover 变墨绿(对齐 fenix) ────── */
+/* 段落内的加粗用品牌深色,提升信息层级 */
+.md-typeset strong { color: var(--ink); font-weight: 700; }
+
+/* ── 5. 链接 ──────────────────────────────────────────────────── */
 
 .md-typeset a,
-.md-typeset a:visited,
-.md-typeset a:-webkit-any-link {
-  color: var(--fenix-link) !important;
+.md-typeset a:visited {
+  color: var(--brand-ink) !important;
   text-decoration: none;
-  border-bottom: none;
-  transition: color .12s;
+  border-bottom: 1px solid transparent;
+  transition: border-color .14s, color .14s;
 }
 .md-typeset a:hover {
-  color: var(--fenix-link-hover) !important;
-  text-decoration: none;
-  border-bottom: none;
+  color: var(--brand-2) !important;
+  border-bottom-color: currentColor;
 }
+/* 标题里的锚点链接不要下划线 */
+.md-typeset :is(h1,h2,h3,h4) a:hover { border-bottom: none; }
 
-/* ── 5. 行内代码 + 代码块 —— 对齐 fenix 浅灰底 + 蓝灰字 ───────── */
+/* ── 6. 行内代码 + 代码块 ─────────────────────────────────────── */
 
 .md-typeset code {
-  color: var(--fenix-code-ink) !important;
-  background-color: var(--fenix-code-bg) !important;
-  padding: 0.15rem 0.35rem;
-  border-radius: 3px;
-  font-size: 0.85em;
+  color: var(--code-ink) !important;
+  background: var(--code-bg) !important;
+  padding: .12rem .38rem;
+  border-radius: 6px;
+  font-size: .84em;
   word-break: break-word;
 }
-/* 代码块<pre>:沿用 Material 的语法高亮主题,只调字号/边距。
-   注意:不要强行换深色背景,会破坏 Material 的浅色高亮配色。 */
+.md-typeset pre { margin: 1.1rem 0; }
 .md-typeset pre > code {
-  background: transparent;
-  color: inherit;
+  background: transparent !important;
+  color: inherit !important;
   padding: 0;
-  font-size: 0.82rem;
-  line-height: 1.55;
+  font-size: .78rem;
+  line-height: 1.6;
 }
-.md-typeset pre {
-  margin: 1rem 0;
-  border-radius: 4px;
-  /* 给代码块一个稳定的浅灰底,让它在正文里清晰可辨。
-     不要用 Material 默认的纯白(在白底正文里融成一团)。 */
-  background: var(--fenix-bg-soft) !important;
+.md-typeset .highlight,
+.md-typeset pre > code {
+  border-radius: 12px;
 }
+.md-typeset pre > code,
+.highlight pre {
+  background: var(--bg-soft) !important;
+  border: 1px solid var(--border);
+}
+.md-typeset .highlight > pre { border-radius: 12px; }
 
-/* ── 6. 表格 —— 去掉 Material 的强对比,扁平化 ─────────────────── */
+/* 复制按钮 */
+.md-clipboard { color: var(--ink-mute); }
+.md-clipboard:hover { color: var(--brand-ink); }
+
+/* ── 7. 表格 ──────────────────────────────────────────────────── */
 
 .md-typeset table:not([class]) {
-  border: 1px solid var(--fenix-border);
-  border-radius: 4px;
-  box-shadow: none !important;
-  font-size: 0.85rem;
-  display: table;
-  width: 100%;
-  border-collapse: collapse;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  font-size: .8rem;
+  border-collapse: separate;
   border-spacing: 0;
-  margin: 1.2rem 0;
+  margin: 1.3rem 0;
 }
 .md-typeset table:not([class]) th,
 .md-typeset table:not([class]) td {
-  padding: 8px 12px;           /* 行距更宽松 */
+  padding: .55rem .8rem;
   border: none;
   vertical-align: top;
 }
 .md-typeset table:not([class]) th {
-  background: var(--fenix-bg-soft);
-  color: var(--fenix-ink);
-  font-weight: 600;
-  border-bottom: 1px solid var(--fenix-border);
+  background: var(--bg-soft);
+  color: var(--ink);
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
   text-align: left;
 }
-.md-typeset table:not([class]) td {
-  border-top: 1px solid var(--fenix-border);
-}
-.md-typeset table:not([class]) tr:nth-child(even) {
-  background: var(--fenix-bg);     /* 偶数行不要花哨的灰条 */
-}
-.md-typeset table:not([class]) tr:hover td {
-  background: var(--fenix-bg-soft);   /* hover 时淡淡提示 */
-}
-/* 表格里的链接保持低视觉权重,不要满表蓝绿一片 */
-.md-typeset table:not([class]) a {
-  color: var(--fenix-link);
-}
-.md-typeset table:not([class]) a:hover {
-  color: var(--fenix-link-hover);
-}
+.md-typeset table:not([class]) td { border-top: 1px solid var(--border); }
+.md-typeset table:not([class]) tr:hover td { background: var(--brand-soft); }
 
-/* ── 7. 引用块 —— 极简左竖线,无背景填充 ───────────────────────── */
+/* ── 8. 引用块 + 提示框 ───────────────────────────────────────── */
 
 .md-typeset blockquote {
-  border-left: 3px solid var(--fenix-border);
-  background: transparent;
-  color: var(--fenix-ink-soft);
-  padding: 0.2rem 1rem;
-  border-radius: 0;
+  border-left: 3px solid var(--brand-2);
+  background: var(--brand-soft);
+  color: var(--ink-soft);
+  padding: .5rem 1rem;
+  border-radius: 0 10px 10px 0;
+}
+.md-typeset .admonition,
+.md-typeset details {
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 10px;
+  font-size: .8rem;
 }
 
-/* ── 8. 关掉首页 hero 区的紫色渐变(改回 fenix 那种纯净白底) ──── */
+/* ═══════════════════════════════════════════════════════════════
+   9. 首页落地页(.lp) —— 只作用于 index.md
+   ═══════════════════════════════════════════════════════════════ */
 
-.hero {
-  background: var(--fenix-bg);
-  border: none;
-  border-radius: 0;
-  padding: 4rem 1rem 2rem;
+/* 首页隐藏两侧栏后,让内容占满整幅并居中;min-width:0 允许在 flex 布局里
+   收缩到视口宽度以内(否则内部网格的最小轨道会把内容撑出横向滚动)。 */
+.md-content:has(.lp) { max-width: none; min-width: 0; }
+.md-content:has(.lp) .md-content__inner { margin: 0; padding: 0; min-width: 0; max-width: 100%; }
+.md-content:has(.lp) .md-content__inner::before { display: none; }
+/* 首页隐藏「编辑本页 / 查看源码」按钮 */
+.md-content:has(.lp) .md-content__button { display: none; }
+/* 兜底:落地页永不产生横向滚动 */
+.md-main:has(.lp) { overflow-x: hidden; }
+
+.lp {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.2rem 1rem 4rem;
+  overflow-x: clip;
+}
+.lp * { box-sizing: border-box; }
+
+/* ── Hero ─────────────────────────────────────────────────────── */
+.lp-hero {
+  position: relative;
+  margin: .6rem 0 3rem;
+  padding: clamp(2.6rem, 6vw, 4.6rem) clamp(1.2rem, 4vw, 3.2rem);
+  border-radius: 26px;
+  background: var(--brand-grad);
+  color: #fff;
   text-align: center;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  isolation: isolate;
 }
-.hero h1 {
-  color: var(--fenix-ink);
-  font-size: 3rem;
+/* 光晕 + 网格纹理 */
+.lp-hero__glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(60% 70% at 15% 0%, rgba(255,255,255,.30), transparent 60%),
+    radial-gradient(50% 60% at 100% 100%, rgba(168,85,247,.55), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.08), transparent 40%);
+}
+.lp-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: .5;
+  background-image:
+    linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 75%);
+  mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 75%);
+}
+.lp-hero__inner { position: relative; }
+
+.lp-eyebrow {
+  display: inline-block;
+  padding: .3rem .85rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,.16);
+  border: 1px solid rgba(255,255,255,.28);
+  color: #fff;
+  font-size: .72rem;
   font-weight: 600;
-  margin-bottom: 0.6rem;
+  letter-spacing: .01em;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
-.hero .hero-formula {
-  color: var(--fenix-link-hover);   /* 墨绿公式色 */
-  font-size: 1.2rem;
-  margin: 1rem 0 1.6rem;
+.lp-hero__title {
+  color: #fff !important;
+  font-size: clamp(2.1rem, 6.5vw, 3.6rem) !important;
+  font-weight: 800 !important;
+  line-height: 1.12;
+  margin: 1.1rem 0 .5rem !important;
+  letter-spacing: -.02em;
+  border: none !important;
+}
+.lp-hero__title::before { display: none !important; }
+.lp-hero__sub {
+  color: rgba(255,255,255,.9);
+  font-size: clamp(.9rem, 2.4vw, 1.12rem);
+  max-width: 40ch;
+  margin: 0 auto 1.5rem;
+  line-height: 1.6;
+}
+
+/* 公式胶囊 */
+.lp-formula {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .7rem 1.2rem;
+  border-radius: 14px;
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.3);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   font-family: var(--md-code-font);
+  margin-bottom: 1.9rem;
 }
-.hero .cta {
-  background: var(--fenix-ink);
-  color: var(--fenix-bg);
-  border-radius: 4px;            /* 不用胶囊形,扁平 */
-  padding: 8px 16px;
-  font-weight: 500;
-  font-size: 0.88rem;
-  border: none;
+.lp-formula__t {
+  color: #fff;
+  font-weight: 700;
+  font-size: clamp(.92rem, 2.6vw, 1.3rem);
+  padding: .1rem .55rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,.16);
 }
-.hero .cta:hover {
-  background: var(--fenix-link-hover);
-  opacity: 1;
-  transform: none;
-}
-.hero .cta.secondary {
-  background: transparent;
-  color: var(--fenix-ink);
-  border: 1px solid var(--fenix-border);
-}
-.hero .cta.secondary:hover {
-  border-color: var(--fenix-link-hover);
-  color: var(--fenix-link-hover);
+.lp-formula__op {
+  color: rgba(255,255,255,.85);
+  font-weight: 700;
+  font-size: clamp(.92rem, 2.6vw, 1.3rem);
 }
 
-/* ── 9. 章节卡片网格 —— 扁平化(去掉浮起+阴影) ────────────────── */
+/* CTA 按钮 */
+.lp-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .7rem;
+  justify-content: center;
+}
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .7rem 1.35rem;
+  border-radius: 12px;
+  font-size: .88rem;
+  font-weight: 700;
+  text-decoration: none !important;
+  border: 1px solid transparent;
+  transition: transform .14s, box-shadow .14s, background .14s, border-color .14s;
+  cursor: pointer;
+}
+.lp-btn__ic { font-size: 1.05em; line-height: 1; }
+.lp-btn--primary {
+  background: #fff;
+  color: var(--brand-ink) !important;
+  box-shadow: 0 8px 22px -8px rgba(0,0,0,.4);
+}
+.lp-btn--primary:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -10px rgba(0,0,0,.5); }
+.lp-btn--ghost {
+  background: rgba(255,255,255,.12);
+  color: #fff !important;
+  border-color: rgba(255,255,255,.42);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.lp-btn--ghost:hover { background: rgba(255,255,255,.24); transform: translateY(-2px); }
 
-/* 首页三列统计(10 章 / 88 实验 / 5 语言) */
-.stat-row {
+/* Hero 统计条 */
+.lp-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin: 1.4rem 0 2rem;
-  padding: 0;
+  gap: .8rem;
+  margin-top: 2.4rem;
 }
-@media (max-width: 720px) {
-  .stat-row { grid-template-columns: 1fr; }
+.lp-stat {
+  padding: 1rem .6rem;
+  border-radius: 14px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.22);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
-.stat-row p {
-  background: var(--fenix-bg);
-  border: 1px solid var(--fenix-border);
-  border-radius: 4px;
-  padding: 14px 16px;
-  margin: 0;
-  text-align: center;
-  font-size: 0.82rem;
-  color: var(--fenix-ink-soft);
-}
-.stat-row p strong {
+.lp-stat__num {
   display: block;
-  color: var(--fenix-ink);
-  font-size: 0.95rem;
-  margin-bottom: 3px;
-  font-weight: 600;
+  font-size: clamp(1.7rem, 5vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
 }
-
-/* 章节卡片网格(首页 + 各章实验索引页通用) */
-.exp-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1px;
-  background: var(--fenix-border);
-  border: 1px solid var(--fenix-border);
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 1.4rem 0;
-}
-/* Markdown 会把每个 exp-card 包一层 <p>:清零其边距并让卡片撑满
-   格子,否则模拟 1px 边框的灰底会从缝隙里透出成大块灰带。 */
-.exp-grid > p {
-  margin: 0;
-}
-.exp-card {
+.lp-stat__label {
   display: block;
-  height: 100%;
-  box-sizing: border-box;
-  background: var(--fenix-bg);
-  padding: 14px 16px;
-  text-decoration: none;
-  color: var(--fenix-ink);
-  border: none;
-  border-radius: 0;
-  transition: background .12s;
-}
-.exp-card:hover {
-  background: var(--fenix-bg-soft);
-  border-color: transparent;
-  transform: none;
-  box-shadow: none !important;
-}
-.exp-card .exp-title {
-  display: block;
-  color: var(--fenix-ink);
-  font-weight: 600;
-  font-size: 0.92rem;
-  margin-bottom: 6px;
+  margin-top: .4rem;
+  font-size: .72rem;
+  color: rgba(255,255,255,.82);
   line-height: 1.4;
 }
-.exp-card:hover .exp-title {
-  color: var(--fenix-link-hover);
+
+/* ── 通用 section ─────────────────────────────────────────────── */
+.lp-section { margin: 3.4rem 0; }
+.lp-h2 {
+  font-size: clamp(1.4rem, 4vw, 1.9rem);
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 .5rem;
+  letter-spacing: -.01em;
+  text-align: center;
+  border-bottom: none;
+  padding-bottom: 0;
 }
-.exp-card .exp-desc {
+.lp-h2::before { display: none; }        /* 首页标题不用左侧品牌竖条 */
+.lp-lead {
+  color: var(--ink-soft);
+  font-size: .9rem;
+  line-height: 1.7;
+  max-width: 62ch;
+  margin: 0 auto 1.8rem;
+  text-align: center;
+}
+
+/* ── 特性卡 ───────────────────────────────────────────────────── */
+.lp-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 1rem;
+}
+.lp-feature {
+  padding: 1.4rem 1.3rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  box-shadow: var(--shadow-sm);
+  transition: transform .16s, box-shadow .16s, border-color .16s;
+}
+.lp-feature:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--brand-2);
+}
+.lp-feature__ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 12px;
+  font-size: 1.5rem;
+  margin-bottom: .9rem;
+}
+.lp-feature__ic--a { background: rgba(99,102,241,.13); }
+.lp-feature__ic--b { background: rgba(139,92,246,.14); }
+.lp-feature__ic--c { background: rgba(168,85,247,.14); }
+.lp-feature__ic--d { background: rgba(56,189,248,.15); }
+.lp-feature__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 .4rem;
+}
+.lp-feature__desc {
+  font-size: .8rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* ── 章节卡 ───────────────────────────────────────────────────── */
+.lp-chapters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: .8rem;
+}
+.lp-ch {
+  display: flex;
+  align-items: flex-start;
+  gap: .9rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  text-decoration: none !important;
+  box-shadow: var(--shadow-sm);
+  transition: transform .16s, box-shadow .16s, border-color .16s;
+  position: relative;
+  overflow: hidden;
+}
+.lp-ch::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--brand-grad);
+  opacity: 0;
+  transition: opacity .16s;
+}
+.lp-ch:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--brand-2);
+}
+.lp-ch:hover::before { opacity: 1; }
+.lp-ch__badge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 10px;
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  font-weight: 800;
+  font-size: .95rem;
+  font-variant-numeric: tabular-nums;
+}
+.lp-ch--intro .lp-ch__badge { background: var(--bg-sunken); color: var(--ink-soft); }
+.lp-ch__body { flex: 1; min-width: 0; }
+.lp-ch__title {
   display: block;
-  color: var(--fenix-ink-soft);
-  font-size: 0.78rem;
+  font-size: .92rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.lp-ch:hover .lp-ch__title { color: var(--brand-ink); }
+.lp-ch__desc {
+  display: block;
+  margin-top: .28rem;
+  font-size: .76rem;
   line-height: 1.55;
+  color: var(--ink-soft);
+}
+.lp-ch__exp {
+  flex: none;
+  align-self: center;
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--ink-mute);
+  white-space: nowrap;
+  padding: .2rem .5rem;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
 }
 
-/* ── 10. 移动端调整 ─────────────────────────────────────────── */
+/* ── 语言 pills ───────────────────────────────────────────────── */
+.lp-langs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  justify-content: center;
+}
+.lp-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .5rem .9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+.lp-lang em {
+  font-style: normal;
+  font-size: .68rem;
+  font-weight: 600;
+  color: var(--ink-mute);
+}
+.lp-lang--primary {
+  border-color: var(--brand-2);
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+.lp-lang--primary em { color: var(--brand-2); }
 
+/* ── 结尾 CTA band ────────────────────────────────────────────── */
+.lp-cta-band {
+  margin: 3.6rem 0 0;
+  padding: clamp(2.4rem, 5vw, 3.4rem) 1.5rem;
+  border-radius: 26px;
+  text-align: center;
+  background:
+    radial-gradient(70% 120% at 50% 0%, rgba(139,92,246,.10), transparent 70%),
+    var(--bg-soft);
+  border: 1px solid var(--border);
+}
+.lp-cta-band__title {
+  font-size: clamp(1.5rem, 4.5vw, 2.1rem);
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 .5rem;
+}
+.lp-cta-band__sub {
+  color: var(--ink-soft);
+  font-size: .86rem;
+  margin: 0 0 1.6rem;
+}
+/* 结尾 CTA 里的按钮反色(在浅底上) */
+.lp-cta-band .lp-btn--primary {
+  background: var(--brand-grad);
+  color: #fff !important;
+  box-shadow: var(--shadow-md);
+}
+.lp-cta-band .lp-btn--ghost {
+  background: var(--bg);
+  color: var(--brand-ink) !important;
+  border-color: var(--border-str);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.lp-cta-band .lp-btn--ghost:hover { border-color: var(--brand-2); background: var(--brand-soft); }
+.lp-meta {
+  margin: 1.4rem 0 0;
+  font-size: .76rem;
+  color: var(--ink-mute);
+}
+.lp-meta a { color: var(--brand-ink) !important; text-decoration: none; border-bottom: 1px solid transparent; }
+.lp-meta a:hover { border-bottom-color: currentColor; }
+
+/* ── 进场动画 ─────────────────────────────────────────────────── */
+/* 纯 CSS 关键帧动画:总是收尾在「完全可见」状态,即使 JS 失败也不会把
+   内容卡在隐藏态。轻微错峰让首页有层次感。 */
+@keyframes lp-enter {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lp-reveal { animation: lp-enter .6s cubic-bezier(.22,.61,.36,1) both; }
+  .lp-reveal:nth-of-type(2) { animation-delay: .08s; }
+  .lp-reveal:nth-of-type(3) { animation-delay: .16s; }
+  .lp-reveal:nth-of-type(4) { animation-delay: .24s; }
+  .lp-reveal:nth-of-type(5) { animation-delay: .32s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-anim .lp-reveal { opacity: 1; transform: none; transition: none; }
+  .lp-btn, .lp-feature, .lp-ch { transition: none; }
+}
+
+/* ── 移动端 ───────────────────────────────────────────────────── */
+@media screen and (max-width: 720px) {
+  .lp-stats { grid-template-columns: 1fr; gap: .6rem; }
+  .lp-stat { display: flex; align-items: baseline; gap: .7rem; justify-content: center; }
+  .lp-stat__num { font-size: 1.9rem; }
+  .lp-stat__label { margin-top: 0; }
+  .lp-chapters { grid-template-columns: 1fr; }
+  .lp-btn { flex: 1 1 auto; justify-content: center; }
+}
 @media screen and (max-width: 600px) {
   .md-typeset { font-size: 15px; }
-  .md-typeset h1 { font-size: 2rem; }
-  .md-typeset h2 { font-size: 1.3rem; }
-  .hero { padding: 2.5rem 1rem 1.5rem; }
-  .hero h1 { font-size: 2rem; }
+  .lp-hero { border-radius: 20px; }
 }
 
-/* ── 11. 暗色模式同步 —— 保持 fenix 风格,只是反色 ──────────────── */
+/* ── 提升特异性,盖过 .md-typeset h1/h2/h3 的默认样式 ──────────── */
+/* 落地页内容被 MkDocs 包在 .md-typeset 里,标题元素会继承阅读页的
+   竖条/下划线/字号。用 .lp 前缀把它们改回落地页样式。 */
+.lp .lp-h2,
+.lp .lp-cta-band__title {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.lp .lp-h2::before,
+.lp .lp-cta-band__title::before { content: none; display: none; }
+.lp .lp-h2 { font-size: clamp(1.4rem, 4vw, 1.9rem); margin: 0 0 .5rem; }
+.lp .lp-cta-band__title { font-size: clamp(1.5rem, 4.5vw, 2.1rem); margin: 0 0 .5rem; }
+.lp .lp-feature__title { font-size: 1rem; margin: 0 0 .4rem; }
+.lp .lp-hero__title { margin: 1.1rem 0 .5rem; }
+
+/* ═══════════════════════════════════════════════════════════════
+   10. 暗色模式
+   ═══════════════════════════════════════════════════════════════ */
 
 [data-md-color-scheme="slate"] {
-  --fenix-ink:        #e6edf3;
-  --fenix-ink-soft:   #8b949e;
-  --fenix-ink-mute:   #6e7681;
-  --fenix-border:     #30363d;
-  --fenix-bg:         #0d1117;
-  --fenix-bg-soft:    #161b22;
-  --fenix-code-bg:    rgba(240, 246, 252, 0.08);
-  --fenix-code-ink:   #79c0ff;
-  --fenix-link:       #e6edf3;
-  --fenix-link-hover: #42b983;
+  --brand-ink:   #a78bfa;
+  --brand-soft:  rgba(139, 92, 246, .16);
+  --ink:        #e6edf3;
+  --ink-soft:   #9aa4b2;
+  --ink-mute:   #6e7681;
+  --border:     #262b33;
+  --border-str: #333a44;
+  --bg:         #0d1117;
+  --bg-soft:    #161b22;
+  --bg-sunken:  #1c222b;
+  --code-bg:    rgba(167, 139, 250, .14);
+  --code-ink:   #c4b5fd;
+
+  --md-primary-fg-color:  #a78bfa;
+  --md-accent-fg-color:   #c4b5fd;
+  --md-typeset-a-color:   #a78bfa;
+  --md-default-bg-color:  #0d1117;
 }
-[data-md-color-scheme="slate"] .md-header,
-[data-md-color-scheme="slate"] .md-sidebar--primary {
-  background-color: var(--fenix-bg) !important;
-  border-color: var(--fenix-border) !important;
+[data-md-color-scheme="slate"] .md-header {
+  background: rgba(13, 17, 23, .8) !important;
+  border-bottom-color: var(--border);
 }
-[data-md-color-scheme="slate"] .exp-card,
-[data-md-color-scheme="slate"] .hero {
-  background: var(--fenix-bg);
+[data-md-color-scheme="slate"] .md-search__input { background: var(--bg-soft) !important; }
+[data-md-color-scheme="slate"] .lp-feature,
+[data-md-color-scheme="slate"] .lp-ch,
+[data-md-color-scheme="slate"] .lp-lang { background: var(--bg-soft); }
+[data-md-color-scheme="slate"] .lp-cta-band {
+  background:
+    radial-gradient(70% 120% at 50% 0%, rgba(139,92,246,.16), transparent 70%),
+    var(--bg-soft);
 }
+[data-md-color-scheme="slate"] .md-typeset pre > code,
+[data-md-color-scheme="slate"] .highlight pre { background: #12161d !important; }
+/* Hero 渐变在暗色下同样好看,不改 */

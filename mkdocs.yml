@@ -122,6 +122,7 @@ markdown_extensions:
 extra_javascript:
   - extras/lang-switcher.js
   - extras/nav-collapse.js
+  - extras/landing.js
   - https://unpkg.com/mermaid@11/dist/mermaid.min.js
   - extras/mermaid-init.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
