@@ -154,9 +154,15 @@ You MUST analyze the context, user's questions and memories in detail, and provi
         """Get current memory context as a string"""
         if not self.config.enable_memory_context:
             return ""
-        
+
         context_parts = []
-        
+
+        # The background processor writes memory through its own manager
+        # instance; reload from disk so its updates are visible within the
+        # session (same reason main.py reloads after processing, and the
+        # same fix ConversationHistory got for issue #181).
+        self.memory_manager.load_memory()
+
         # Add memory summary
         memory_str = self.memory_manager.get_context_string()
         if memory_str:

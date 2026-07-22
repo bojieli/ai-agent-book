@@ -2,7 +2,7 @@
 
 [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-%E0%AE%AA%E0%AE%A4%E0%AE%BF%E0%AE%B5%E0%AE%BF%E0%AE%B1%E0%AE%95%E0%AF%8D-success.svg)](#-மின--புத்தகம்) [![Languages](https://img.shields.io/badge/மொழ%E0%AE%AA%E0%AF%86%E0%AE%AF%E0%AE%B0%E0%AF%8D%E0%AE%AA%E0%AF%81-5%20%E0%AE%AE%E0%AF%8A%E0%AE%B4%E0%AE%BF%E0%AE%95%E0%AE%B3%E0%AF%8D-informational.svg)](#-மின--புத்தகம்)
 
-**[中文](../../README.md) · [中文繁體](../zh-TW/README.md) · [English](../en/README.md) · [Tiếng Việt](../vi/README.md) · தமிழ் ← தற்போதைய**
+**[中文](../../README.md) · [中文繁體](../zh-TW/README.md) · [English](../en/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · தமிழ் ← தற்போதைய**
 
 **Agent = LLM + Context + Tools** — இந்த மையக் கோவையில் 10 அத்தியாயங்களில் AI Agent-ஐ கோட்பாடு முதல் பொறியியல் நடைமுறை வரை கொண்டு செல்கிறது. முழு உரை, விளக்கப்படங்கள் மற்றும் **88 துணை சோதனைகள்** அனைத்தும் திறந்த மூலமாகும்.
 

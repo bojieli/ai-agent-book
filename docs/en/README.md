@@ -1,12 +1,12 @@
 # AI Agents in Depth: Design Principles and Engineering Practice
 
-[![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-download-success.svg)](#-e-book) [![Languages](https://img.shields.io/badge/translations-5%20languages-informational.svg)](#-e-book)
+[![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-download-success.svg)](#-e-book) [![Languages](https://img.shields.io/badge/translations-6%20languages-informational.svg)](#-e-book)
 
-**[中文](../../README.md) · [中文繁體](../zh-TW/README.md) · English ← current · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md)**
+**[中文](../../README.md) · [中文繁體](../zh-TW/README.md) · English ← current · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md)**
 
 **Agent = LLM + Context + Tools** — This book builds on this core formula across 10 chapters, taking AI Agents from principles to engineering practice. The full text, illustrations, and **88 accompanying experiments** are all open source. You are welcome to run the experiments yourself.
 
-| 📚 **10 chapters** of text, from basics to production | 📂 **88** companion projects (70+ standalone) | 🌐 **5 languages**: CN / zh-TW / EN / TA / VI |
+| 📚 **10 chapters** of text, from basics to production | 📂 **88** companion projects (70+ standalone) | 🌐 **6 languages**: CN / zh-TW / EN / RU / TA / VI |
 | :---: | :---: | :---: |
 
 ## 📖 E-Book
@@ -15,10 +15,11 @@
 > - **Chinese (original)**: [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.epub)
 > - **Traditional Chinese (Taiwan)** (community translation, by [@tigercosmos](https://github.com/tigercosmos)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-TW.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-TW.epub)
 > - **English** (community translation, by [@nsdevaraj](https://github.com/nsdevaraj)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-en.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-en.epub)
+> - **Russian** (community translation, by [@ui99ru](https://github.com/ui99ru)): source in [`book-ru/`](../../book-ru/); build the PDF locally (`cd book-ru && bash build_pdf.sh`)
 > - **Tamil** (community translation, by [@nsdevaraj](https://github.com/nsdevaraj)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ta.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ta.epub)
 > - **Vietnamese** (community translation, by [@toanalien](https://github.com/toanalien)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-vi.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-vi.epub)
 
-Chinese text source is in [`book/`](../../book/); Traditional Chinese (Taiwan)/English/Tamil/Vietnamese versions are community contributions (may lag behind the Chinese original), located in [`book-zhtw/`](../../book-zhtw/), [`book-en/`](../../book-en/), [`book-ta/`](../../book-ta/), [`book-vi/`](../../book-vi/) respectively.
+Chinese text source is in [`book/`](../../book/); Traditional Chinese (Taiwan)/English/Russian/Tamil/Vietnamese versions are community contributions (may lag behind the Chinese original), located in [`book-zhtw/`](../../book-zhtw/), [`book-en/`](../../book-en/), [`book-ru/`](../../book-ru/), [`book-ta/`](../../book-ta/), [`book-vi/`](../../book-vi/) respectively.
 
 The shared builder produces EPUB 3 editions for Simplified Chinese, Traditional Chinese (Taiwan), English, Tamil, and Vietnamese. See the [EPUB build instructions](../../EPUB.md).
 

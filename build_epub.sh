@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build EPUB 3 editions from the Markdown sources.
-# Usage: ./build_epub.sh [all|zh-CN|zh-TW|en|ta|vi]
+# Usage: ./build_epub.sh [all|zh-CN|zh-TW|en|ru|ta|vi]
 
 set -euo pipefail
 
@@ -15,9 +15,9 @@ for command in pandoc pdftoppm python3; do
 done
 
 case "$SELECTION" in
-    all|zh-CN|zh-TW|en|ta|vi) ;;
+    all|zh-CN|zh-TW|en|ru|ta|vi) ;;
     *)
-        echo "Usage: $0 [all|zh-CN|zh-TW|en|ta|vi]" >&2
+        echo "Usage: $0 [all|zh-CN|zh-TW|en|ru|ta|vi]" >&2
         exit 2
         ;;
 esac
@@ -59,6 +59,16 @@ build_edition() {
             output="AI-Agents-in-Depth-Bojie-Li-v1.2.epub"
             title_label="Title Page"
             toc_label="Table of Contents"
+            chapters=(introduction.md chapter{1..10}.md afterword.md)
+            ;;
+        ru)
+            directory="book-ru"
+            title="Глубокое понимание AI Agent: принципы проектирования и инженерная практика"
+            author="Ли Боцзе (李博杰); русский перевод: ui99ru"
+            pdf="AI-Agents-in-Depth-ru.pdf"
+            output="AI-Agents-in-Depth-ru.epub"
+            title_label="Титульный лист"
+            toc_label="Содержание"
             chapters=(introduction.md chapter{1..10}.md afterword.md)
             ;;
         ta)
@@ -129,7 +139,7 @@ build_edition() {
 }
 
 if [ "$SELECTION" = "all" ]; then
-    for language in zh-CN zh-TW en ta vi; do
+    for language in zh-CN zh-TW en ru ta vi; do
         build_edition "$language"
     done
 else

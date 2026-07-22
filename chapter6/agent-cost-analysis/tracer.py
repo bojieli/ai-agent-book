@@ -17,6 +17,7 @@
     # records 里是此前真实运行录下的每一步 token 用量（canned token counts）
 """
 
+import math
 import time
 from dataclasses import dataclass, asdict, field
 from typing import List, Optional
@@ -31,7 +32,10 @@ def _percentile(values: List[float], q: float) -> float:
     xs = sorted(values)
     if len(xs) == 1:
         return xs[0]
-    rank = max(1, min(len(xs), int(round(q / 100.0 * len(xs) + 0.5))))
+    # 最近秩 = ceil(q/100 * N)。不能用 int(round(x + 0.5))：当 q/100*N 恰为
+    # 整数 k 时，round(k + 0.5) 的银行家舍入会得到 k+1（如 n=100、q=99 时
+    # 秩变成 100，把 p99 报成最大值）。
+    rank = max(1, min(len(xs), math.ceil(q / 100.0 * len(xs))))
     return xs[rank - 1]
 
 
