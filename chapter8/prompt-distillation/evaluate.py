@@ -16,11 +16,14 @@ from pathlib import Path
 from typing import List, Dict, Optional
 from collections import defaultdict
 
+from eval_metrics import parse_rate
+
 import torch
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 from tqdm import tqdm
+
 
 
 def load_model(model_path: str, base_model: str = "Qwen/Qwen3-30B-A3B-Instruct-2507"):
@@ -442,7 +445,8 @@ def main():
     print(f"  Total samples: {results['total']}")
     print(f"  Successfully predicted: {results['predicted']}")
     print(f"  Unparseable responses: {results['unparseable']}")
-    print(f"  Parse rate: {results['predicted']/results['total']*100:.2f}%")
+    rate = parse_rate(results["predicted"], results["total"])
+    print(f"  Parse rate: {rate * 100:.2f}%")
     
     if "accuracy" in results:
         print(f"\n  Overall Accuracy: {results['accuracy']*100:.2f}%")
@@ -460,7 +464,7 @@ def main():
             "total_samples": results["total"],
             "predicted": results["predicted"],
             "unparseable": results["unparseable"],
-            "parse_rate": results["predicted"]/results["total"] if results["total"] > 0 else 0,
+            "parse_rate": parse_rate(results["predicted"], results["total"]),
         },
         "predictions": results["predictions"],
     }
