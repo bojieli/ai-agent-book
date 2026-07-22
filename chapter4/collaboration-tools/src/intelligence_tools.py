@@ -76,7 +76,7 @@ Provide clean, well-documented Python code that solves the task."""
             "task": task_description,
             "code": code,
             "model": model,
-            "tokens_used": response.usage.total_tokens
+            "tokens_used": response.usage.total_tokens if response.usage else 0
         }
         
     except Exception as e:
@@ -130,7 +130,7 @@ Think through this problem step by step. Provide {reasoning_steps} clear reasoni
             "problem": problem,
             "reasoning": reasoning,
             "model": model,
-            "tokens_used": response.usage.total_tokens
+            "tokens_used": response.usage.total_tokens if response.usage else 0
         }
         
     except Exception as e:
