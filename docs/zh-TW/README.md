@@ -69,7 +69,6 @@
 | **Kimi**（月之暗面） | <https://platform.moonshot.cn/> | Kimi 系列，Coding、Agent 能力強 |
 | **智譜 GLM** | <https://open.bigmodel.cn/> | GLM-5.2 等，Coding、Agent 能力強 |
 | **Siliconflow** | <https://siliconflow.cn/> | 各種開源模型（DeepSeek、Qwen 等） |
-| **火山引擎** | <https://www.volcengine.com/product/ark> | 位元組豆包閉源模型，國內訪問延遲低 |
 | **Krill AI** | <https://www.krill-ai.com/> | 一站式訪問全球及國內主流模型（OpenAI、Claude、Gemini、Grok、Kimi、GLM、DeepSeek、Qwen、Minimax），提供全球與中國大陸訪問節點 |
 | **OpenRouter** | <https://openrouter.ai/> | 一站式訪問 Gemini / Claude / GPT-5 等海外模型，提供全球訪問節點 |
 
