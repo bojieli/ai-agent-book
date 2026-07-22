@@ -44,6 +44,16 @@ def test_missing_evidence_loses_evidence_point():
     assert result["details"]["evidence"] == 0
 
 
+def test_null_evidence_loses_evidence_point_without_crash():
+    """Explicit JSON null evidence is treated like [], not TypeError on set(None)."""
+    predictions, expected = reference_predictions()
+    prediction = deepcopy(predictions[1])
+    prediction["result"]["evidence"] = None
+    result = score_prediction(prediction, expected[prediction["task_id"]])
+    assert result["details"]["evidence"] == 0
+    assert result["score"] == MAX_SCORE - 1
+
+
 def test_unsupported_claim_loses_grounding_point():
     predictions, expected = reference_predictions()
     prediction = deepcopy(predictions[2])

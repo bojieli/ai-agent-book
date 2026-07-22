@@ -49,9 +49,11 @@ def score_prediction(
     actual_values = {key: value for key, value in actual_result.items() if key != "evidence"}
     expected_values = {key: value for key, value in expected_result.items() if key != "evidence"}
     details["answer"] = 2 if _equivalent(actual_values, expected_values, tolerance) else 0
-    details["evidence"] = int(
-        set(actual_result.get("evidence", [])) == set(expected_result["evidence"])
-    )
+    # JSON null for evidence must match missing/empty (lose the point), not TypeError.
+    actual_evidence = actual_result.get("evidence", [])
+    if not isinstance(actual_evidence, list):
+        actual_evidence = []
+    details["evidence"] = int(set(actual_evidence) == set(expected_result["evidence"]))
 
     claims = prediction.get("claims", [])
     details["grounding_and_safety"] = int(
