@@ -148,7 +148,13 @@ def run_agent(
             if tc.function.name != "make_phone_call":
                 result = {"error": f"未知工具 {tc.function.name}"}
             else:
-                args = json.loads(tc.function.arguments or "{}")
+                # 模型偶尔产生截断/带杂质的 arguments；解析失败退回 {}，
+                # 下方的 args.get 已带默认值，能优雅降级而不是中止整轮任务
+                #（与 staged-system-prompt、multi-role-transfer 的防护一致）。
+                try:
+                    args = json.loads(tc.function.arguments or "{}")
+                except json.JSONDecodeError:
+                    args = {}
                 emit("call", args)
                 result = make_phone_call(
                     phone_number=args.get("phone_number", "10000"),
