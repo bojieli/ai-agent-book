@@ -682,8 +682,13 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
             output_buffer = io.StringIO()
             error_buffer = io.StringIO()
             
+            # Run with an explicit namespace: with bare exec(code), top-level
+            # assignments land in this method's locals while functions defined
+            # in the snippet resolve free variables via module globals, so
+            # "x = 5; def f(): return x; f()" raises NameError.
+            exec_ns = {}
             with contextlib.redirect_stdout(output_buffer), contextlib.redirect_stderr(error_buffer):
-                exec(code)
+                exec(code, exec_ns)
             
             # Get output
             stdout = output_buffer.getvalue()
