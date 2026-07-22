@@ -37,9 +37,13 @@ class SimulatedUser:
         self._asked_count: Dict[str, int] = {}
 
     def _match(self, q: str) -> str:
+        # 两边都小写再比：关键词只在自己一侧 lower 时，英文问句里
+        # 大写开头的 "Move or Copy?" 会全部落空，退回泛化默认答案，
+        # 丢掉实现阶段依赖的关键需求。
+        q_lower = q.lower()
         best_reply, best_score = self.default_answer, 0
         for keywords, reply in self.playbook:
-            score = sum(1 for kw in keywords if kw.lower() in q)
+            score = sum(1 for kw in keywords if kw.lower() in q_lower)
             if score > best_score:
                 best_reply, best_score = reply, score
         return best_reply
