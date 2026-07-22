@@ -39,12 +39,24 @@ jobs:
           brew install --cask mactex-no-gui font-dejavu font-noto-sans-cjk-sc font-noto-sans-cjk-tc font-noto-serif-tamil
           echo "/Library/TeX/texbin" >> "$GITHUB_PATH"
 
+      # PingFang is an on-demand font since macOS Sequoia and is absent on fresh
+      # runners; without it rsvg-convert renders Chinese figure text in Hiragino
+      # Sans (Japanese glyph variants). Fetch it so CI output matches local builds.
+      - name: Download on-demand Apple fonts
+        run: swift .github/scripts/download_apple_fonts.swift "PingFang SC" "PingFang TC"
+
       - name: Build PDFs
         run: |
           set -e
           for dir in book book-zhtw book-en book-vi book-ta; do
             (cd "$dir" && bash build_pdf.sh)
           done
+
+      - name: Verify Chinese figure fonts
+        run: |
+          python3 .github/scripts/verify_pdf_fonts.py \
+            "book/深入理解-AI-Agent-李博杰-v1.2.pdf" \
+            "book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf"
 
       - name: Build EPUBs
         run: ./build_epub.sh all
