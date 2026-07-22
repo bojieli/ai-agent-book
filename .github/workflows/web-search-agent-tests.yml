@@ -34,6 +34,9 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
+      - name: Check formatting
+        run: python -m black --check tests
+
       - name: Run offline unit tests
         env:
           MOONSHOT_API_KEY: ""
