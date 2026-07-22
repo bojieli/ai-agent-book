@@ -223,9 +223,14 @@ def filter_data_parallel(df: pd.DataFrame,
     """
     if n_jobs == -1:
         n_jobs = min(cpu_count(), 4)  # Cap at 4 for filtering
+
+    if len(df) == 0:
+        return df.copy()
+
+    n_jobs = max(1, min(n_jobs, len(df)))
     
     # Split DataFrame into chunks
-    chunk_size = len(df) // n_jobs
+    chunk_size = max(1, len(df) // n_jobs)
     chunks = [df.iloc[i:i+chunk_size] for i in range(0, len(df), chunk_size)]
     
     def apply_filters(chunk):
