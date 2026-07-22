@@ -210,23 +210,26 @@ class TreasureHuntGame:
         
         self.moves += 1
         action = action.lower().strip()
-        
+        # The Nth move must still execute, so the limit is enforced after
+        # the action is dispatched (and also on the fumble early-return,
+        # which previously bypassed it and let episodes run past the cap).
+        out_of_moves = self.moves >= self.max_moves
+
         # Base reward with stochastic variation
         if self.stochastic:
             # Add small random variation to rewards
             reward = -0.5 + self.random_state.uniform(-0.1, 0.1)
-            
+
             # Small chance of action failure in stochastic mode
             if self.random_state.random() < 0.03:  # 3% chance
+                if out_of_moves:
+                    self.game_over = True
+                    return ("You fumble — and you've run out of moves! Game over.",
+                            reward - 10, True)
                 return "You fumble and need to try again.", reward - 0.2, False
         else:
             reward = -0.5  # Negative reward for each move to encourage efficiency
-        
-        # Check move limit
-        if self.moves >= self.max_moves:
-            self.game_over = True
-            return "You've run out of moves! Game over.", -10, True
-        
+
         # Parse action
         if action.startswith("go "):
             direction = action[3:]
@@ -276,7 +279,14 @@ class TreasureHuntGame:
             self.game_over = True
             reward += 100
             result += "\n\n🎉 VICTORY! You've collected the dragon's treasure!"
-        
+
+        # Enforce the move limit after the action executed: a winning move
+        # on the last allowed step still counts as a victory.
+        if not self.game_over and out_of_moves:
+            self.game_over = True
+            reward -= 10
+            result += "\n\nYou've run out of moves! Game over."
+
         return result, reward, self.game_over
     
     def _move(self, direction: str) -> Tuple[str, float]:
