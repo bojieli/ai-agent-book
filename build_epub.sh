@@ -44,7 +44,7 @@ build_edition() {
         zh-TW)
             directory="book-zhtw"
             title="深入理解 AI Agent：設計原理與工程實踐"
-            author="李博杰；台灣正體翻譯：tigercosmos"
+            author="李博杰；正體中文翻譯：tigercosmos"
             pdf="深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf"
             output="深入理解-AI-Agent-李博杰-v1.2-zhtw.epub"
             title_label="扉頁"

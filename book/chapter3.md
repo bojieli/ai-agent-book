@@ -631,7 +631,7 @@ viking://
 
 这里要和第二章的“上下文感知压缩”划清界限，二者名字相近但作用的时机和对象完全不同：本节的**上下文感知检索**发生在**索引期**，针对的是知识库里的**文本块**，做的是“补前缀、加背景”以提升可检索性；第二章的**上下文感知压缩**发生在**运行期**，针对的是当前会话的**对话历史**，做的是“按当前任务裁剪、丢弃无关内容”以节省窗口。一个在做加法（补上下文），一个在做减法（去冗余）。
 
-[^ch3-1]: Anthropic, “Contextual Retrieval” . https://www.anthropic.com/engineering/contextual-retrieval
+[^ch3-1]: Anthropic, “Contextual Retrieval”. https://www.anthropic.com/engineering/contextual-retrieval
 
 这种方法的巧妙之处在于同时增强了稀疏检索和稠密检索两种模式。对于 BM25 这样的稀疏检索，上下文前缀增加了丰富的、可精确匹配的关键词（“ACME”、“2025 年第二季度”）。对于向量嵌入这样的稠密检索，前缀注入了关键语义背景，使生成的向量表示能更精确地反映文本块的真实含义。
 

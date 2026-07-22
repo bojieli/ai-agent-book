@@ -2,13 +2,13 @@
 
 [![Đọc trực tuyến](https://img.shields.io/badge/🌐_Đọc_trực_tuyến-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-tải%20về-success.svg)](#-sách-điện-tử) [![Languages](https://img.shields.io/badge/dịch-6%20ngôn%20ngữ-informational.svg)](#-sách-điện-tử)
 
-**[中文](../../README.md) · [中文繁體](../zh-TW/README.md) · [English](../en/README.md) · [Русский](../ru/README.md) · Tiếng Việt ← hiện tại · [தமிழ்](../ta/README.md)**
+**[中文](../../README.md) · [正體中文](../zh-TW/README.md) · [English](../en/README.md) · [Русский](../ru/README.md) · Tiếng Việt ← hiện tại · [தமிழ்](../ta/README.md)**
 
 > 🌐 **[Đọc trực tuyến](https://bojieli.github.io/ai-agent-book/)** — Chuyển đổi ngôn ngữ, mục lục đóng/mở được, tìm kiếm toàn văn và liên kết trực tiếp đến các thí nghiệm kèm theo. Tự động xây dựng lại sau mỗi lần đẩy (push) lên main.
 
 **Agent = LLM + Context + Tools** — Cuốn sách xây dựng trên công thức cốt lõi này qua 10 chương, đưa AI Agent từ nguyên lý đến thực hành kỹ thuật. Toàn bộ nội dung, hình minh họa và **92 thí nghiệm đi kèm** đều là mã nguồn mở. Hoan nghênh bạn tự chạy các thí nghiệm.
 
-| 📚 **10 chương** nội dung, từ nền tảng đến sản xuất | 📂 **92** dự án đi kèm (70+ chạy độc lập) | 🌐 **6 ngôn ngữ**: Trung / 中文繁體 / Anh / Nga / Tamil / Việt |
+| 📚 **10 chương** nội dung, từ nền tảng đến sản xuất | 📂 **92** dự án đi kèm (70+ chạy độc lập) | 🌐 **6 ngôn ngữ**: Trung / 正體中文 / Anh / Nga / Tamil / Việt |
 | :---: | :---: | :---: |
 
 ## 📖 Sách điện tử

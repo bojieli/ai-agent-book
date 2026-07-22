@@ -437,7 +437,7 @@ Handling requires understanding. A general-purpose Agent's input doesn't come on
 
 Taking a customer refund request email as an example, the structured event looks like this:
 
-```javascript
+```json
 {
   "source": {"type": "email", "sender": "client@example.com"},
   "channel": "gmail_webhook",
