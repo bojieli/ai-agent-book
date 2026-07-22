@@ -52,6 +52,8 @@ class GrepTool(BaseTool):
         show_line_numbers = params.get("-n", False)
         multiline = params.get("multiline", False)
         head_limit = params.get("head_limit")
+        if head_limit is not None and head_limit < 0:
+            head_limit = None
         file_type = params.get("type")
         
         # Determine context
