@@ -379,8 +379,15 @@
   overflow: hidden;
   margin: 1.4rem 0;
 }
+/* Markdown 会把每个 exp-card 包一层 <p>:清零其边距并让卡片撑满
+   格子,否则模拟 1px 边框的灰底会从缝隙里透出成大块灰带。 */
+.exp-grid > p {
+  margin: 0;
+}
 .exp-card {
   display: block;
+  height: 100%;
+  box-sizing: border-box;
   background: var(--fenix-bg);
   padding: 14px 16px;
   text-decoration: none;
