@@ -20,6 +20,18 @@ from typing import Any, Callable
 # 复用 pine_voice 里的统一 client/模型解析（OPENAI_API_KEY 直连，缺失则回退 OpenRouter）。
 from pine_voice import make_phone_call, _get_client, default_model
 
+
+def _create_chat(**kwargs):
+    """推理模型（如 gpt-5.x）只接受默认 temperature，会拒绝自定义值；
+    失败时移除 temperature 重试一次（同 book-translation / voice-werewolf）。"""
+    try:
+        return _get_client().chat.completions.create(**kwargs)
+    except Exception as e:
+        if "temperature" not in str(e).lower() or "temperature" not in kwargs:
+            raise
+        kwargs.pop("temperature", None)
+        return _get_client().chat.completions.create(**kwargs)
+
 # 最多允许 Agent 发起几次工具调用（含追问/再拨），防止死循环。
 _MAX_STEPS = 6
 
@@ -122,7 +134,7 @@ def run_agent(
     ]
 
     for _ in range(_MAX_STEPS):
-        resp = _get_client().chat.completions.create(
+        resp = _create_chat(
             model=model,
             messages=messages,
             tools=_TOOLS,
@@ -180,7 +192,7 @@ def run_agent(
             "content": "请根据以上通话记录，立即给用户一份最终汇报，不要再打电话了。",
         }
     )
-    resp = _get_client().chat.completions.create(
+    resp = _create_chat(
         model=model, messages=messages, temperature=0.3
     )
     final = resp.choices[0].message.content or ""

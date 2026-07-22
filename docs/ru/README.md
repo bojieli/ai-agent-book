@@ -1,12 +1,14 @@
 # Глубокое понимание AI Agent: принципы проектирования и инженерная практика
 
-[![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C-success.svg)](#-электронная-книга) [![Languages](https://img.shields.io/badge/переводов-6%20языков-informational.svg)](#-электронная-книга)
+[![Читать онлайн](https://img.shields.io/badge/🌐_Читать_онлайн-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C-success.svg)](#-электронная-книга) [![Languages](https://img.shields.io/badge/переводов-6%20языков-informational.svg)](#-электронная-книга)
 
 **[中文](../../README.md) · [中文繁體](../zh-TW/README.md) · [English](../en/README.md) · Русский ← текущий · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md)**
 
-**Агент = LLM + Контекст + Инструменты** — книга строится вокруг этой базовой формулы и за 10 глав ведёт AI Agent от принципов к инженерной практике. Весь текст, иллюстрации и **88 сопутствующих экспериментов** открыты. Приглашаем прогнать эксперименты своими руками.
+> 🌐 **[Читать онлайн](https://bojieli.github.io/ai-agent-book/)** — Переключатель языков, сворачиваемое оглавление, полнотекстовый поиск и прямые ссылки на сопутствующие эксперименты. Сайт автоматически перестраивается при каждом пуше в main.
 
-| 📚 **10 глав** текста, от основ к продакшену | 📂 **88** сопутствующих проектов (70+ автономных) | 🌐 **6 языков**: CN / zh-TW / EN / **RU** / TA / VI |
+**Агент = LLM + Контекст + Инструменты** — книга строится вокруг этой базовой формулы и за 10 глав ведёт AI Agent от принципов к инженерной практике. Весь текст, иллюстрации и **92 сопутствующих эксперимента** открыты. Приглашаем прогнать эксперименты своими руками.
+
+| 📚 **10 глав** текста, от основ к продакшену | 📂 **92** сопутствующих проектов (70+ автономных) | 🌐 **6 языков**: CN / zh-TW / EN / **RU** / TA / VI |
 | :---: | :---: | :---: |
 
 ## 📖 Электронная книга
@@ -15,13 +17,13 @@
 > - **Китайский (оригинал)**: [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.epub)
 > - **Китайский традиционный (Тайвань)** (перевод сообщества, [@tigercosmos](https://github.com/tigercosmos)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-TW.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-TW.epub)
 > - **Английский** (перевод сообщества, [@nsdevaraj](https://github.com/nsdevaraj)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-en.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-en.epub)
-> - **Русский** (перевод сообщества, [@ui99ru](https://github.com/ui99ru)): исходник в [`book-ru/`](../../book-ru/); PDF собирается локально (`cd book-ru && bash build_pdf.sh`)
+> - **Русский** (перевод сообщества, [@ui99ru](https://github.com/ui99ru)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ru.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ru.epub)
 > - **Тамильский** (перевод сообщества, [@nsdevaraj](https://github.com/nsdevaraj)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ta.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ta.epub)
 > - **Вьетнамский** (перевод сообщества, [@toanalien](https://github.com/toanalien)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-vi.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-vi.epub)
 
 Исходник китайского текста — в [`book/`](../../book/); версии на традиционном китайском (Тайвань)/английском/русском/тамильском/вьетнамском — вклад сообщества (могут отставать от китайского оригинала), расположены в [`book-zhtw/`](../../book-zhtw/), [`book-en/`](../../book-en/), [`book-ru/`](../../book-ru/), [`book-ta/`](../../book-ta/), [`book-vi/`](../../book-vi/) соответственно.
 
-Общий сборщик собирает издания EPUB 3 для упрощённого китайского, традиционного китайского (Тайвань), английского, тамильского и вьетнамского. См. [инструкцию по сборке EPUB](../../EPUB.md).
+Общий сборщик собирает издания EPUB 3 для упрощённого китайского, традиционного китайского (Тайвань), английского, русского, тамильского и вьетнамского. См. [инструкцию по сборке EPUB](../../EPUB.md).
 
 <details>
 <summary><b>🔧 Собрать PDF самому?</b> (нужны pandoc / xelatex / ElegantBook)</summary>
@@ -48,11 +50,11 @@
 | 3 | 📚 **Память пользователя и базы знаний** | Кросс-сессионная память + внешние знания: пользовательская память, RAG, структурированные индексы, графы знаний | [Читать](../../book-ru/chapter3.md) | [13](../../chapter3/README.ru.md) |
 | 4 | 🛠️ **Инструменты** | Инструменты — руки агента: протокол MCP, инструменты восприятия/исполнения/сотрудничества, событийные асинхронные агенты, активное обнаружение инструментов | [Читать](../../book-ru/chapter4.md) | [7](../../chapter4/README.ru.md) |
 | 5 | 💻 **Кодинг-агент и генерация кода** | Код — «инструмент, создающий новые инструменты»; промышленный кодинг-агент целиком | [Читать](../../book-ru/chapter5.md) | [12](../../chapter5/README.ru.md) |
-| 6 | 🎯 **Оценка агентов** | Превращаем качество в сравнимые сигналы: среды, метрики, статзначимость, выбор на основе оценки | [Читать](../../book-ru/chapter6.md) | [10](../../chapter6/README.ru.md) |
-| 7 | 🧠 **Постобучение модели** | Три стадии предобучение/SFT/RL: когда выбирать SFT, а когда RL, внедрение вызова инструментов, эффективность выборки | [Читать](../../book-ru/chapter7.md) | [14](../../chapter7/README.ru.md) |
+| 6 | 🎯 **Оценка агентов** | Превращаем качество в сравнимые сигналы: среды, метрики, статзначимость, выбор на основе оценки | [Читать](../../book-ru/chapter6.md) | [11](../../chapter6/README.ru.md) |
+| 7 | 🧠 **Постобучение модели** | Три стадии предобучение/SFT/RL: когда выбирать SFT, а когда RL, внедрение вызова инструментов, эффективность выборки | [Читать](../../book-ru/chapter7.md) | [16](../../chapter7/README.ru.md) |
 | 8 | 🔄 **Самоэволюция агента** | Рост без изменения весов: обучение на опыте, от пользователя инструментов к их создателю | [Читать](../../book-ru/chapter8.md) | [6](../../chapter8/README.ru.md) |
 | 9 | 🎙️ **Мультимодальность и реальное время** | От текста к голосу, GUI, физическому миру: три голосовые парадигмы, Computer Use, робототехника | [Читать](../../book-ru/chapter9.md) | [7](../../chapter9/README.ru.md) |
-| 10 | 🤝 **Многоагентное взаимодействие** | Коллективный интеллект > индивидуального: фреймворки сотрудничества, разделение/изоляция контекста, эмерджентное «общество агентов» | [Читать](../../book-ru/chapter10.md) | [6](../../chapter10/README.ru.md) |
+| 10 | 🤝 **Многоагентное взаимодействие** | Коллективный интеллект > индивидуального: фреймворки сотрудничества, разделение/изоляция контекста, эмерджентное «общество агентов» | [Читать](../../book-ru/chapter10.md) | [7](../../chapter10/README.ru.md) |
 
 > 💡 **Читать** = читать текст главы на GitHub (markdown); **N** = число сопутствующих проектов, кликните для кода. Типы проектов (✅ автономный / 📖 воспроизведение / 🚧 проектный) поясняются в README каждой главы.
 >
@@ -72,12 +74,12 @@
 
 ## 📦 Приложение · Получение внешних репозиториев
 
-20 внешних репозиториев для бенчмарков, обучающих фреймворков и робо-платформ из глав 6, 7, 9, 10 **не включены** (из-за размера и лицензий) и должны быть склонированы в соответствующие каталоги.
+19 внешних репозиториев для бенчмарков, обучающих фреймворков и робо-платформ из глав 6, 7, 9, 10 **не включены** (из-за размера и лицензий) и должны быть склонированы в соответствующие каталоги.
 
 ### Скрипт клонирования одной командой
 
 <details>
-<summary><b>🔧 Развернуть команды клонирования</b> (20 внешних репозиториев)</summary>
+<summary><b>🔧 Развернуть команды клонирования</b> (19 внешних репозиториев)</summary>
 
 ```bash
 # Глава 6 · Бенчмарки оценки
@@ -96,7 +98,6 @@ git clone https://github.com/bojieli/AWorld.git                        chapter7/
 git clone https://github.com/bojieli/SFTvsRL.git                       chapter7/SFTvsRL
 git clone https://github.com/bojieli/verl.git                          chapter7/verl
 git clone https://github.com/thinking-machines-lab/tinker-cookbook.git chapter7/tinker-cookbook
-git clone https://github.com/bojieli/lighteval.git                     chapter7/Intuitor/lighteval
 git clone https://github.com/19PINE-AI/rlvp.git                        chapter7/RLVP/rlvp                       # Эксп. 7-14: код статьи RLVP
 git clone https://github.com/PRIME-RL/SimpleVLA-RL.git                 chapter7/SimpleVLA-RL/SimpleVLA-RL       # Эксп. 7-13: RL «зрение-язык-действие»
 
@@ -109,7 +110,7 @@ git clone https://github.com/19PINE-AI/TalkAct.git                     chapter10
 git clone https://github.com/joonspk-research/generative_agents.git    chapter10/generative_agents             # Эксп. 10-7: Stanford AI Town
 ```
 
-> Если README проекта указывает конкретный коммит, сделайте `git checkout` на эту версию для воспроизводимости. `use-computer-while-calling` из главы 10 вырос в самостоятельно поддерживаемый [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct); в этом репозитории оставлен лишь указатель-документ.
+> Если README проекта указывает конкретный коммит, сделайте `git checkout` на эту версию для воспроизводимости. `use-computer-while-calling` из главы 10 вырос в самостоятельно поддерживаемый [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct); этот каталог в репозиторий не входит — получите его командой клонирования выше.
 
 </details>
 
@@ -122,7 +123,7 @@ git clone https://github.com/joonspk-research/generative_agents.git    chapter10
 | 6-2 / 6-3 / 6-4 / 6-9 | 📝 Задание для читателя | Человеческий бенчмарк, оценка памяти, JSON Cards vs RAG, выбор памяти — адаптируйте `user-memory` / `user-memory-evaluation` / `contextual-retrieval` из главы 3 |
 | 5-12 | 📝 Задание для читателя | Агент, создающий агентов — начните с `chapter5/coding-agent` |
 | 7-8 | 📝 Задание для читателя | Дистилляция промптов — см. `chapter8/prompt-distillation` (переиспользование между главами) |
-| 7-9 | 📝 Задание для читателя | Дистилляция CoT `[Расширение]` — дизайн и критерии приёмки в книге, отдельного кода нет |
+| 7-9 | 📝 Задание для читателя | Дистилляция CoT `[Расширение]` — сопутствующая реализация см. в `chapter7/cot-distillation` (включая генерацию SFT-данных и верификатор на правилах) |
 | 6-11 | 🤖 Оценка в симуляции | OpenVLA + RoboTwin2 — см. README `chapter7/SimpleVLA-RL` по зависимостям обучения/среды VLA |
 | 9-8 / 9-9 | 🔧 Реальное железо | Телеуправление XLeRobot и управление LLM-агентом — нужна рука SO-100, [Teleop](https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html) · [LLM Agent](https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html) |
 | 9-10 | 🔧 Реальное железо | RGB zero-shot Sim2Real-захват — [`StoneT2000/lerobot-sim2real`](https://github.com/StoneT2000/lerobot-sim2real) (симуляция на чистом GPU; для развёртывания нужен SO-100) |

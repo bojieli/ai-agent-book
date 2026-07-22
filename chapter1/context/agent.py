@@ -138,9 +138,11 @@ class ToolRegistry:
             Dictionary with conversion result
         """
         try:
-            # Normalize currency codes (handle S$ notation)
-            from_currency = from_currency.replace("S$", "SGD").replace("$", "USD") if from_currency.startswith("S$") else from_currency
-            to_currency = to_currency.replace("S$", "SGD").replace("$", "USD") if to_currency.startswith("S$") else to_currency
+            # Normalize currency codes (handle S$ / $ notation). Must be
+            # unconditional: gated on startswith("S$"), the "$" -> USD
+            # replacement could never fire (no "$" survives the S$ replace).
+            from_currency = from_currency.upper().replace("S$", "SGD").replace("$", "USD")
+            to_currency = to_currency.upper().replace("S$", "SGD").replace("$", "USD")
             
             logger.info(f"Converting {amount} {from_currency} to {to_currency}")
             

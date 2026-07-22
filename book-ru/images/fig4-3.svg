@@ -47,20 +47,20 @@
 <text x="798" y="135.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">LLM определяет срочность</text>
 <line x1="630.0" y1="162" x2="630.0" y2="188" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <rect x="450" y="190" width="360" height="50" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="468" y="215.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Добавить в trace</text>
-<text x="798" y="215.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">Структурированный формат события</text>
+<text x="430.2" y="215.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Добавить в trace</text>
+<text x="835.8" y="215.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">Структурированный формат события</text>
 <line x1="630.0" y1="242" x2="630.0" y2="268" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <rect x="450" y="270" width="360" height="50" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="468" y="295.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">LLM inference</text>
-<text x="798" y="295.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">Наблюдать → Думать → Действовать</text>
+<text x="444.5" y="295.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">LLM inference</text>
+<text x="821.5" y="295.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">Наблюдать → Думать → Действовать</text>
 <line x1="630.0" y1="322" x2="630.0" y2="348" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <rect x="450" y="350" width="360" height="50" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="468" y="375.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Выполнение инструмента</text>
-<text x="798" y="375.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">Асинхронная/синхронная диспетчеризация</text>
+<text x="363.6" y="375.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Выполнение инструмента</text>
+<text x="877.4" y="375.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.45" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">Асинхронная/синхронная диспетчеризация</text>
 <line x1="630.0" y1="402" x2="630.0" y2="428" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <rect x="450" y="430" width="360" height="50" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
-<text x="468" y="455.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Обработка результата</text>
-<text x="798" y="455.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">Уведомить/ответить/сохранить</text>
+<text x="417.8" y="455.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Обработка результата</text>
+<text x="848.2" y="455.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">Уведомить/ответить/сохранить</text>
 <path d="M 810,450 Q 855.0,290.0 810,130" fill="none" stroke="#999999" stroke-width="2" stroke-dasharray="8,4" marker-end="url(#ah-light)"/>
 <text x="832.5" y="280.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Loop</text>
 </svg>

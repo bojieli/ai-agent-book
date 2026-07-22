@@ -27,13 +27,13 @@
 <text x="528" y="222" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">Критерии проверки:</text>
 <text x="528" y="238" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">  ✓ Граница переполнения текста</text>
 <text x="528" y="254" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">  ✓ Макет слишком перегружен</text>
-<text x="528" y="270" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">  ✓ Размер изображения подходящий</text>
+<text x="543" y="270" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">  ✓ Размер изображения подходящий</text>
 <text x="528" y="286" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">  ✗ Слайд 3: Текст выходит за правую колонку</text>
 <text x="528" y="302" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">  ✗ Слайд 7: Слишком плотный контент</text>
 <line x1="370" y1="200" x2="508" y2="150" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <text x="439.0" y="165.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle">Код Slidev</text>
 <line x1="508" y1="300" x2="370" y2="260" stroke="#333333" stroke-width="2" stroke-dasharray="8,4" marker-end="url(#ah)"/>
-<text x="439.0" y="270.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle">Предложения по изменению</text>
+<text x="424" y="270.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle">Предложения по изменению</text>
 <rect x="395" y="220" width="100" height="24" rx="12" fill="#999999" stroke="#333333" stroke-width="2"/>
 <text x="445.0" y="232.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="8" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-weight="bold">Итерация 2-3 раунда</text>
 <line x1="30" y1="365" x2="850" y2="365" stroke="#999999" stroke-width="2" stroke-dasharray="8,4"/>

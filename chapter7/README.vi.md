@@ -23,6 +23,7 @@
 | [orpheus](orpheus/) | ✅ | Huấn luyện năng lực sinh và hiểu âm nhạc của mô hình. |
 | `tinker-cookbook/` | 📖 | Tập hợp nhiều kỹ thuật thực dụng và best practice cho huấn luyện mô hình. |
 | [cot-distillation](cot-distillation/) | ✅ | Chưng cất quỹ đạo CoT từ các mô hình tiên phong như Claude qua OpenRouter; lọc bằng bộ kiểm chứng luật để tạo dữ liệu SFT (kèm Thí nghiệm 7-9). |
+| [RLVP](RLVP/) | 📖 | Nghiên cứu hậu huấn luyện RLVP (thưởng cho kết quả, phạt đường đi), dự án đi kèm Thí nghiệm 7-14; mã huấn luyện/đánh giá đầy đủ nằm trong kho bài báo riêng `19PINE-AI/rlvp`, cần tự clone. |
 
 ## Phân loại dự án
 

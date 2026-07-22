@@ -9,26 +9,26 @@
 <text x="38" y="145.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">user:</text>
 <text x="95" y="145.5" font-family="'Courier New', Courier, monospace" font-size="9" fill="#333333" text-anchor="start" dominant-baseline="central">"Помогите мне связаться с Xfinity для переговоров"</text>
 <rect x="30" y="166" width="350" height="35" rx="4" fill="#e8e8e8" stroke="#333333" stroke-width="2"/>
-<text x="38" y="183.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">assistant:</text>
-<text x="95" y="183.5" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">phone_call(Xfinity) → 1-я попытка</text>
+<text x="31.1" y="183.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">assistant:</text>
+<text x="101.9" y="183.5" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">phone_call(Xfinity) → 1-я попытка</text>
 <rect x="30" y="204" width="350" height="35" rx="4" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
 <text x="38" y="221.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">tool:</text>
 <text x="95" y="221.5" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">Результат: ожидание 45 минут, без подключения</text>
 <rect x="30" y="242" width="350" height="35" rx="4" fill="#e8e8e8" stroke="#333333" stroke-width="2"/>
-<text x="38" y="259.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">assistant:</text>
-<text x="95" y="259.5" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">web_search(&quot;Xfinity deals&quot;)</text>
+<text x="31.1" y="259.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">assistant:</text>
+<text x="101.9" y="259.5" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">web_search(&quot;Xfinity deals&quot;)</text>
 <rect x="30" y="280" width="350" height="35" rx="4" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
 <text x="38" y="297.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">tool:</text>
 <text x="95" y="297.5" font-family="'Courier New', Courier, monospace" font-size="9.5" fill="#333333" text-anchor="start" dominant-baseline="central">Результат: [большой объём результатов поиска...]</text>
 <rect x="30" y="318" width="350" height="35" rx="4" fill="#e8e8e8" stroke="#333333" stroke-width="2"/>
-<text x="38" y="335.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">assistant:</text>
-<text x="95" y="335.5" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">phone_call(Xfinity) → 2-я попытка</text>
+<text x="31.1" y="335.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">assistant:</text>
+<text x="101.9" y="335.5" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">phone_call(Xfinity) → 2-я попытка</text>
 <rect x="30" y="356" width="350" height="35" rx="4" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
 <text x="38" y="373.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">tool:</text>
 <text x="95" y="373.5" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">Результат: подключено, цена $65/мес</text>
 <rect x="30" y="394" width="350" height="35" rx="4" fill="#e8e8e8" stroke="#333333" stroke-width="2"/>
-<text x="38" y="411.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">assistant:</text>
-<text x="95" y="411.5" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">phone_call(Xfinity) → 3-я попытка</text>
+<text x="31.1" y="411.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">assistant:</text>
+<text x="101.9" y="411.5" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">phone_call(Xfinity) → 3-я попытка</text>
 <rect x="30" y="432" width="350" height="35" rx="4" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
 <text x="38" y="449.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">tool:</text>
 <text x="95" y="449.5" font-family="'Courier New', Courier, monospace" font-size="9.5" fill="#333333" text-anchor="start" dominant-baseline="central">Результат: подтверждено снижение цены до $59/мес</text>
@@ -55,8 +55,8 @@
 <text x="465" y="357" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">Проверка ограничения: лимит достигнут (3/3) ✗</text>
 <text x="465" y="377" font-family="'Courier New', Courier, monospace" font-size="9.5" fill="#333333" text-anchor="start" dominant-baseline="central">TODO: [✓]Связаться с Xfinity [✓]Подтвердить снижение цены</text>
 <text x="465" y="397" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">Текущее время: 2025-09-14 10:30</text>
-<text x="465" y="417" font-family="'Courier New', Courier, monospace" font-size="10.5" fill="#333333" text-anchor="start" dominant-baseline="central">Текущий статус: ожидание подтверждения пользователя</text>
-<text x="790" y="415" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="end" dominant-baseline="central" font-weight="bold">&lt;/agent_status&gt;</text>
+<text x="366.8" y="417" font-family="'Courier New', Courier, monospace" font-size="6" fill="#333333" text-anchor="start" dominant-baseline="central">Текущий статус: ожидание подтверждения пользователя</text>
+<text x="817" y="415" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="end" dominant-baseline="central" font-weight="bold">&lt;/agent_status&gt;</text>
 <text x="625.0" y="445" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">→ Модель напрямую читает уточнённый статус</text>
 <text x="625.0" y="465" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Точно следует ограничениям, без лишних вызовов</text>
 <text x="415.0" y="300" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">VS</text>

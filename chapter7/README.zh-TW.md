@@ -23,6 +23,7 @@
 | [orpheus](orpheus/) | ✅ | 訓練模型的音樂生成與理解能力 |
 | `tinker-cookbook/` | 📖 | 收集各種模型訓練的實用技巧與最佳實踐 |
 | [cot-distillation](cot-distillation/) | ✅ | 經 OpenRouter 呼叫 Claude 等前沿模型蒸餾 CoT 軌跡，規則驗證器過濾後生成 SFT 資料（實驗 7-9 配套） |
+| [RLVP](RLVP/) | 📖 | 獎勵結果、懲罰路徑（RLVP）後訓練研究（實驗 7-14 配套）；完整訓練/評估程式碼在獨立論文倉庫 `19PINE-AI/rlvp`，需自行克隆 |
 
 ## 專案型別說明
 

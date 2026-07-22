@@ -432,22 +432,39 @@ class LearningAgent:
                 description=f"Learned workflow for: {self.task}",
                 initial_url=self.captured_steps[0].get('url') if self.captured_steps else None
             )
-            
+
+            # Template the captured literals with the learning task's
+            # parameters: captured steps store the exact values typed during
+            # learning, and parameterize() only substitutes {placeholder}
+            # tokens — without this step a replay would silently re-send the
+            # learning run's recipient/subject/content.
+            example_params = self._extract_task_parameters(self.task, workflow)
+            workflow.example_parameters = dict(example_params)
+
             # Convert captured steps to workflow steps
             for step_data in self.captured_steps:
+                parameters = dict(step_data['parameters'])
+                for key, value in parameters.items():
+                    if isinstance(value, str):
+                        for param_key, param_value in example_params.items():
+                            pv = str(param_value)
+                            if pv and pv in value:
+                                value = value.replace(pv, f"{{{param_key}}}")
+                        parameters[key] = value
+
                 step = WorkflowStep(
                     action_type=step_data['type'],
-                    parameters=step_data['parameters']
+                    parameters=parameters
                 )
-                
+
                 # Add element info if available
                 if step_data.get('element_info'):
                     element_info = step_data['element_info']
                     step.xpath = element_info.get('xpath')
                     step.element_attributes = element_info.get('attributes', {})
-                
+
                 workflow.add_step(step)
-            
+
             # Save to knowledge base
             self.knowledge_base.save_workflow(workflow)
             

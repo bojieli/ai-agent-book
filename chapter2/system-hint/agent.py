@@ -711,9 +711,14 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
             elif not os.path.isabs(working_dir):
                 working_dir = os.path.join(self.current_directory, working_dir)
             
-            # Update current directory if 'cd' command
-            if command.strip().startswith('cd '):
-                new_dir = command.strip()[3:].strip()
+            # Update current directory if the command is a PURE 'cd'.
+            # Compound commands like `cd proj && make` must fall through to
+            # the subprocess below (which runs with cwd=working_dir) —
+            # intercepting them here would treat "proj && make" as the
+            # directory name and fail with "Directory not found".
+            stripped = command.strip()
+            if stripped.startswith('cd ') and not any(t in stripped for t in ('&&', ';', '|')):
+                new_dir = stripped[3:].strip()
                 if not os.path.isabs(new_dir):
                     new_dir = os.path.join(self.current_directory, new_dir)
                 

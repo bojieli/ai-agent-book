@@ -38,7 +38,7 @@
 <text x="423.0" y="223" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">  company: &quot;TechCorp&quot;</text>
 <text x="423.0" y="241" font-family="'Courier New', Courier, monospace" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central">  title: "Старший инженер"</text>
 <text x="423.0" y="259" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central">  team_size: 5</text>
-<text x="507.5" y="305.9" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Плюсы: частичные обновления</text>
+<text x="487" y="305.9" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Плюсы: частичные обновления</text>
 <text x="507.5" y="323.4" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Минусы: жёсткая классификация</text>
 <rect x="610.0" y="130" width="185" height="50" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
 <text x="702.5" y="148" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Adv. JSON Cards</text>
@@ -49,7 +49,7 @@
 <text x="618.0" y="223" font-family="'Courier New', Courier, monospace" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central"> title: "Старший инженер",</text>
 <text x="618.0" y="241" font-family="'Courier New', Courier, monospace" font-size="8.5" fill="#333333" text-anchor="start" dominant-baseline="central"> backstory: «Самопредставление»,</text>
 <text x="618.0" y="259" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central"> ts: &quot;09-14&quot;}</text>
-<text x="702.5" y="305.9" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Плюсы: устранение неоднозначности +</text>
+<text x="708.1" y="305.9" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11.09" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Плюсы: устранение неоднозначности +</text>
 <text x="702.5" y="323.4" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">трассируемость</text>
 <text x="702.5" y="340.9" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Минусы: высокая стоимость генерации</text>
 <rect x="40" y="420" width="740" height="180" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
