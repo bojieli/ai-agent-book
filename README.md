@@ -1,15 +1,5 @@
 # 深入理解 AI Agent：设计原理与工程实践
 
-<p align="center">
-  <a href="https://bojieli.github.io/ai-agent-book/">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.png" />
-      <source media="(prefers-color-scheme: light)" srcset="assets/hero-light.png" />
-      <img alt="深入理解 AI Agent — 在线阅读" src="assets/hero-light.png" width="100%" />
-    </picture>
-  </a>
-</p>
-
 [![在线阅读](https://img.shields.io/badge/🌐_在线阅读-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![PDF](https://img.shields.io/badge/PDF-%E4%B8%8B%E8%BD%BD-success.svg)](#-电子书) [![Languages](https://img.shields.io/badge/翻译-6%20种%20语言-informational.svg)](#-电子书)
 
 **中文** ← 当前 · [正体中文](docs/zh-TW/README.md) · [English](docs/en/README.md) · [Русский](docs/ru/README.md) · [Tiếng Việt](docs/vi/README.md) · [தமிழ்](docs/ta/README.md)
