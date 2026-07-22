@@ -4,6 +4,7 @@ An agent that demonstrates advanced trajectory management with system hints,
 including timestamps, tool call tracking, TODO lists, and detailed error messages.
 """
 
+import codecs
 import json
 import os
 import sys
@@ -572,9 +573,12 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
                             "file_path": file_path,
                             "is_binary": True
                         }
-                    # Also check if it's valid UTF-8
+                    # Also check if it's valid UTF-8. Decode incrementally with
+                    # final=False so a multi-byte character split by the
+                    # 1024-byte read boundary is not mistaken for binary content
+                    # (every CJK character is 3 bytes, so this is common).
                     try:
-                        chunk.decode('utf-8')
+                        codecs.getincrementaldecoder('utf-8')().decode(chunk, False)
                     except UnicodeDecodeError:
                         return {
                             "success": False,
