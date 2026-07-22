@@ -42,6 +42,11 @@ def load_model(model_path: str, base_model: str = "Qwen/Qwen3-30B-A3B-Instruct-2
     return model, tokenizer
 
 
+def format_pred_label(pred_label: Optional[str]) -> str:
+    """Display token for progress lines when the model reply is unparseable."""
+    return pred_label or "??"
+
+
 def parse_language_label(response: str) -> Optional[str]:
     """Extract the language label from model response."""
     # Try to match common patterns
@@ -134,14 +139,14 @@ def evaluate_model(
             display_sentence = sentence if len(sentence) <= 60 else sentence[:57] + "..."
             
             print(f"{status_color} [{idx+1:4d}/{len(test_sentences)}] "
-                  f"Pred: {pred_label:>2s} | GT: {gt_label:>2s} | "
+                  f"Pred: {format_pred_label(pred_label):>2s} | GT: {gt_label:>2s} | "
                   f"Acc: {correct}/{total} ({correct/total*100:5.1f}%) | "
                   f"{display_sentence}")
         else:
             # No ground truth - just show prediction
             display_sentence = sentence if len(sentence) <= 60 else sentence[:57] + "..."
             print(f"  [{idx+1:4d}/{len(test_sentences)}] "
-                  f"Pred: {pred_label:>2s} | "
+                  f"Pred: {format_pred_label(pred_label):>2s} | "
                   f"{display_sentence}")
     
     print("="*80)
