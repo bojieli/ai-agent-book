@@ -21,6 +21,14 @@ def prepare_animation_data(history_df: pd.DataFrame, top_n: int = 15) -> dict:
     """
     # Get all unique dates
     dates = sorted(history_df['date'].unique())
+    if len(dates) == 0:
+        return {
+            'frames': [],
+            'total_frames': 0,
+            'top_n': top_n,
+            'start_date': None,
+            'end_date': None,
+        }
     
     # For each date, get top N models
     frames = []
