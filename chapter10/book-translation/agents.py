@@ -245,7 +245,9 @@ def glossary_agent(client, tracker, book_text, source_lang="英文", target_lang
     # 模型偶尔输出 JSON 数组等合法但非对象的 JSON；此时无法取 glossary，按空表处理。
     if not isinstance(data, dict):
         return []
-    return data.get("glossary", [])
+    # JSON null glossary must behave like omit ([]); .get(..., []) does not.
+    glossary = data.get("glossary") or []
+    return glossary if isinstance(glossary, list) else []
 
 
 def translation_agent(client, tracker, chapter_text, glossary, chapter_name,
