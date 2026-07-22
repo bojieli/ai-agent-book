@@ -155,7 +155,7 @@ async def _wait_for_admin_response(request_id: str, timeout_seconds: int) -> Dic
         timeout = timedelta(seconds=timeout_seconds)
         
         while datetime.now() - start_time < timeout:
-            request = _pending_requests.get(request_id, timeout=30)
+            request = _pending_requests.get(request_id)
             
             if not request:
                 return {
