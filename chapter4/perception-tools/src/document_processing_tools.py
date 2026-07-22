@@ -274,7 +274,7 @@ async def extract_csv_content(
             "rows": len(df),
             "columns": len(df.columns),
             "column_names": df.columns.tolist(),
-            "data": df.head(100).to_dict(orient="records"),  # First 100 rows
+            "data": df.to_dict(orient="records"),
             "preview": df.head(10).to_string(),
             "truncated": len(df) == max_rows
         }
