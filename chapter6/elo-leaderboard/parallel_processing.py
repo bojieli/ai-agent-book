@@ -123,15 +123,18 @@ def calculate_pairwise_win_rates_chunk(args: Tuple) -> List[dict]:
         total = len(matches)
         
         for _, row in matches.iterrows():
+            # Arena data has four winner values; any non-win outcome
+            # ('tie' and 'tie (bothbad)') is worth 0.5, matching the
+            # serial calculate_win_rate_matrix_from_data.
             if row['model_a'] == model_a:
                 if row['winner'] == 'model_a':
                     wins_a += 1
-                elif row['winner'] == 'tie':
+                elif row['winner'] != 'model_b':
                     wins_a += 0.5
             else:  # model_a is model_b in the row
                 if row['winner'] == 'model_b':
                     wins_a += 1
-                elif row['winner'] == 'tie':
+                elif row['winner'] != 'model_a':
                     wins_a += 0.5
         
         win_rate = wins_a / total if total > 0 else 0.5
@@ -189,8 +192,11 @@ def calculate_win_rate_matrix_parallel(df: pd.DataFrame,
     # Flatten results
     all_results = [item for chunk in results_chunks for item in chunk]
     
-    # Build matrix
-    win_rates = {model: {opponent: 0.5 for opponent in models} for model in models}
+    # Build matrix. Pairs with no data stay NaN (the serial version's
+    # convention) — 0.5 would misreport "no data" as an even record;
+    # the diagonal is 0.5 by definition.
+    win_rates = {model: {opponent: (0.5 if opponent == model else np.nan)
+                         for opponent in models} for model in models}
     
     for result in all_results:
         model_a = result['model_a']
