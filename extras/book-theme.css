@@ -104,6 +104,24 @@
 .md-nav__link:hover * {
   color: var(--fenix-link-hover) !important;
 }
+/* 章节折叠头(<label for="...">):必须让它的整个区域接收点击并显示手型光标,
+   否则用户的鼠标点击会落在 <li> 上而不是 label 上,checkbox 不会翻转,
+   章节看起来"点不开也收不起"。 */
+.md-sidebar--primary .md-nav__item--nested > label.md-nav__link {
+  position: relative;
+  z-index: 2;                /* 在 <li> 之上接收点击 */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  width: 100%;               /* 占满整个章节条宽度,不只文字部分 */
+  box-sizing: border-box;
+  pointer-events: auto !important;   /* Material sets pointer-events:none on some labels */
+}
+/* 章节项本身不要拦截点击 — pointer-events: none 让点击穿透到 label */
+.md-sidebar--primary .md-nav__item--nested {
+  position: relative;
+  cursor: pointer;
+}
 /* 当前激活的章节 —— 左侧一条墨绿色竖线(像 fenix 当前章节的视觉提示) */
 .md-nav__item--active {
   border-left-color: var(--fenix-link-hover);

@@ -81,4 +81,19 @@ find "$DEST/chapter"* -type f -name '*.md' -print0 \
 # macOS sed needs the backup suffix above; clean up the .bak files.
 find "$DEST" -name '*.md.bak' -delete
 
+# Per-language experiment index pages (chapterN/README.<lang>.md) contain
+# relative links like [exp](local_llm_serving/) that resolve correctly on
+# the Chinese URL /chapterN/ but break on the translated URL
+# /chapterN/README.<lang>/ (they'd resolve to /chapterN/README.<lang>/exp/,
+# which 404s). Rewrite those relative links to be relative to /chapterN/
+# by prefixing ../ — this makes them resolve to /chapterN/<exp>/ in any
+# language edition.
+#
+# Only touches README.<lang>.md (not README.md, where the links already work),
+# and only relative links that don't start with . / # http or contain :
+find "$DEST/chapter"* -type f -name 'README.[a-zA-Z-]*.md' -print0 \
+  | xargs -0 sed -i.bak -E \
+      -e 's|\]\(([a-zA-Z][a-zA-Z0-9_-]*)/\)|](../\1/)|g'
+find "$DEST" -name '*.md.bak' -delete
+
 echo "Assembled docs into $DEST"

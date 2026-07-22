@@ -1,5 +1,5 @@
-site_name: 深入理解 AI Agent
-site_description: 深入理解 AI Agent：设计原理与工程实践 — 在线阅读版
+site_name: AI Agents in Depth
+site_description: AI Agents in Depth — Design Principles and Engineering Practice. An open-source book covering AI Agents from theory to production, with 10 chapters and 88 companion experiments.
 site_url: https://bojieli.github.io/ai-agent-book
 repo_url: https://github.com/bojieli/ai-agent-book
 repo_name: bojieli/ai-agent-book
@@ -52,13 +52,19 @@ theme:
     - navigation.instant.progress # show a loading bar on slow swaps
     - navigation.tracking        # URL changes with scroll
     - navigation.sections        # group nav entries into titled sections
-    - navigation.expand          # expand the active chapter's subtree only
-    - navigation.indexes         # section index pages
+    # navigation.expand OFF — with it on, all chapter subtrees are force-
+    # expanded and can't be collapsed (clicking the title does nothing).
+    # Off = Material's default: only the active chapter is expanded, the
+    # rest are collapsed with a toggle arrow next to the title.
+    # navigation.indexes OFF — when on, Material renders the section title
+    # (e.g. "第1章 Agent基础知识") as an <a> link pointing at the section's
+    # index page, which means clicking the chapter name navigates instead
+    # of toggling. With it off, the chapter name is purely a collapse toggle.
     - navigation.top             # "back to top" button
     - navigation.footer          # prev/next pager in footer
     # ── Table of contents (right sidebar) ──────────────────────
     - toc.follow                 # TOC tracks scroll position
-    - toc.integrate              # fold TOC into left sidebar on mobile
+    - toc.integrate              # fold TOC into left sidebar (fenix-style)
     # ── Content ─────────────────────────────────────────────────
     - content.code.copy          # copy button on code blocks
     - content.code.annotate      # rendered annotations in code
@@ -114,6 +120,7 @@ markdown_extensions:
 
 extra_javascript:
   - extras/lang-switcher.js
+  - extras/nav-collapse.js
   - https://unpkg.com/mermaid@11/dist/mermaid.min.js
   - extras/mermaid-init.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
@@ -126,38 +133,52 @@ extra_css:
 # Each entry maps its prefix + suffix rules to rewrite URLs across editions.
 extra:
   languages:
-    zh: { label: 中文, prefix: book/,   default: true }
-    zhtw: { label: 繁體中文, prefix: book-zhtw/, suffix: .zhtw }
-    en: { label: English, prefix: book-en/ }
-    ta: { label: தமிழ், prefix: book-ta/, suffix: .ta }
-    vi: { label: Tiếng Việt, prefix: book-vi/, suffix: .vi }
+    # `prefix` and `suffix` apply to chapter prose (book*/chapterN[.suffix]/).
+    # `readmeSuffix` is the URL slug used for the per-language experiment
+    # index page (chapterN/README.<readmeSuffix>/), which mkdocs renders
+    # from the source file README.<suffix>.md.
+    zh:   { label: 中文,      prefix: book/,      default: true }
+    zhtw: { label: 繁體中文,   prefix: book-zhtw/, suffix: .zhtw,  readmeSuffix: zh-TW }
+    en:   { label: English,   prefix: book-en/,                   readmeSuffix: en }
+    ta:   { label: தமிழ்,      prefix: book-ta/,   suffix: .ta,   readmeSuffix: ta }
+    vi:   { label: Tiếng Việt, prefix: book-vi/,   suffix: .vi,   readmeSuffix: vi }
 
 nav:
   # Layout mirrors icyfenix.cn: the left sidebar is a clean chapter tree.
-  # Each chapter title links directly to the prose; the per-chapter
-  # experiment index lives one click deeper so the sidebar stays scannable
-  # instead of being flooded by 78 individual experiment entries.
+  # Each chapter is one expandable entry; under it: "正文" (the prose)
+  # and "配套实验" (the experiment index). Readers never see the chapter
+  # title repeated; experiments are clearly scoped to their chapter.
   - 首页: index.md
   - 引言: book/introduction.md
-  - 第1章 Agent基础知识: book/chapter1.md
-  - '第1章 · 配套实验': chapter1/README.md
-  - 第2章 上下文工程: book/chapter2.md
-  - '第2章 · 配套实验': chapter2/README.md
-  - 第3章 用户记忆和知识库: book/chapter3.md
-  - '第3章 · 配套实验': chapter3/README.md
-  - 第4章 工具: book/chapter4.md
-  - '第4章 · 配套实验': chapter4/README.md
-  - 第5章 CodingAgent与代码生成: book/chapter5.md
-  - '第5章 · 配套实验': chapter5/README.md
-  - 第6章 Agent的评估: book/chapter6.md
-  - '第6章 · 配套实验': chapter6/README.md
-  - 第7章 模型后训练: book/chapter7.md
-  - '第7章 · 配套实验': chapter7/README.md
-  - 第8章 Agent的自我进化: book/chapter8.md
-  - '第8章 · 配套实验': chapter8/README.md
-  - 第9章 多模态与实时交互: book/chapter9.md
-  - '第9章 · 配套实验': chapter9/README.md
-  - 第10章 多Agent协作: book/chapter10.md
-  - '第10章 · 配套实验': chapter10/README.md
+  - 第1章 Agent基础知识:
+      - 正文: book/chapter1.md
+      - 配套实验: chapter1/README.md
+  - 第2章 上下文工程:
+      - 正文: book/chapter2.md
+      - 配套实验: chapter2/README.md
+  - 第3章 用户记忆和知识库:
+      - 正文: book/chapter3.md
+      - 配套实验: chapter3/README.md
+  - 第4章 工具:
+      - 正文: book/chapter4.md
+      - 配套实验: chapter4/README.md
+  - 第5章 CodingAgent与代码生成:
+      - 正文: book/chapter5.md
+      - 配套实验: chapter5/README.md
+  - 第6章 Agent的评估:
+      - 正文: book/chapter6.md
+      - 配套实验: chapter6/README.md
+  - 第7章 模型后训练:
+      - 正文: book/chapter7.md
+      - 配套实验: chapter7/README.md
+  - 第8章 Agent的自我进化:
+      - 正文: book/chapter8.md
+      - 配套实验: chapter8/README.md
+  - 第9章 多模态与实时交互:
+      - 正文: book/chapter9.md
+      - 配套实验: chapter9/README.md
+  - 第10章 多Agent协作:
+      - 正文: book/chapter10.md
+      - 配套实验: chapter10/README.md
   - 后记: book/afterword.md
   - 思考题参考答案: book/思考题参考答案.md
