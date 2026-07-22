@@ -6,6 +6,7 @@ import subprocess
 import time
 import os
 import re
+import shlex
 import queue
 import threading
 from dataclasses import dataclass, field
@@ -63,7 +64,7 @@ class ShellSession:
         
         try:
             # Send command
-            full_command = f"cd {self.current_directory} && {command}\n"
+            full_command = f"cd {shlex.quote(self.current_directory)} && {command}\n"
             self.process.stdin.write(full_command)
             self.process.stdin.write("echo __CMD_DONE__$?\n")
             self.process.stdin.flush()

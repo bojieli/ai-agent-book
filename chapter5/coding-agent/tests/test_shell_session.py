@@ -40,3 +40,19 @@ class TestShellSessionMarker:
             assert "hello-after" in out
         finally:
             s.kill()
+
+    def test_execute_when_cwd_contains_spaces(self, temp_dir):
+        """ShellSession must quote cwd so paths with spaces do not break cd."""
+        space_dir = temp_dir / "dir with spaces"
+        space_dir.mkdir()
+        s = ShellSession(
+            session_id="test_cwd_spaces",
+            current_directory=str(space_dir),
+        )
+        try:
+            out, code = s.execute("pwd", timeout=10)
+            assert code == 0
+            assert "dir with spaces" in out
+            assert "too many arguments" not in out.lower()
+        finally:
+            s.kill()
