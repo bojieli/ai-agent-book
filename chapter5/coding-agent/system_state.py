@@ -3,7 +3,7 @@ System state tracking for the coding agent
 """
 
 import os
-import subprocess
+import platform
 from dataclasses import dataclass, field
 from typing import Dict, Any, List
 from datetime import datetime
@@ -20,8 +20,8 @@ class SystemState:
     # Byte offset already returned by BashOutput, per bash_id, so each call can
     # return "only new output since the last check" as the tool documents.
     bash_output_offsets: Dict[str, int] = field(default_factory=dict)
-    os_type: str = field(default_factory=lambda: os.uname().sysname)
-    python_version: str = field(default_factory=lambda: subprocess.getoutput("python3 --version"))
+    os_type: str = field(default_factory=lambda: platform.system())
+    python_version: str = field(default_factory=lambda: f"Python {platform.python_version()}")
     
     def get_system_hint(self) -> str:
         """Generate system hint message to append to context"""
