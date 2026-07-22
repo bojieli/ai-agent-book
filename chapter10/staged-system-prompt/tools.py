@@ -108,7 +108,14 @@ class Workspace:
             + self.files[path]
         )
         result = _run_python_source(harness)
-        ok = "Traceback" not in result and "Error" not in result
+        # PASS 需要：无 Traceback/Error 文本、未超时、且退出码为 0。
+        # 只做子串检查时，超时（"执行超时（>10s)"，不含任何标记词）和
+        # sys.exit(1)（"退出码: 1"）都会被误报为 PASS，误导审查阶段批准坏代码。
+        ok = (
+            "Traceback" not in result
+            and "Error" not in result
+            and "退出码: 0" in result
+        )
         verdict = "PASS" if ok else "FAIL"
         return f"[tests] 冒烟测试结果：{verdict}\n{result}"
 
