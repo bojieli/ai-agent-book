@@ -13,6 +13,8 @@ docs_dir: _web
 # `{#sec:foo}`, image `{height=55%}`) which Python-Markdown cannot parse.
 hooks:
   - scripts/mkdocs_pandoc_strip.py
+  - scripts/inject_chapter_titles.py
+  - scripts/seo_meta.py
 
 theme:
   name: material
@@ -90,8 +92,11 @@ plugins:
       type: date
       fallback_to_build_date: true
   # Auto-generate Open Graph / Twitter card images so links look rich when
-  # shared to WeChat / Twitter / Slack.
+  # shared to WeChat / Twitter / Slack. Cards are ON by default in 9.5+,
+  # but we set it explicitly so a future Material release flipping the
+  # default doesn't silently drop our social cards.
   - social:
+      cards: true
 
 markdown_extensions:
   - admonition
@@ -123,7 +128,11 @@ extra_javascript:
   - extras/nav-collapse.js
   - https://unpkg.com/mermaid@11/dist/mermaid.min.js
   - extras/mermaid-init.js
-  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  - extras/mathjax-loader.js
+  # MathJax is loaded by extras/mathjax-loader.js (not directly here) so it
+  # can use the `async` attribute. Loading it directly from extra_javascript
+  # blocks first paint — MathJax v3 is ~5 MB and there's no need for it to
+  # render synchronously.
 
 extra_css:
   - extras/lang-switcher.css
@@ -132,6 +141,9 @@ extra_css:
 # Language definitions for the switcher tab bar.
 # Each entry maps its prefix + suffix rules to rewrite URLs across editions.
 extra:
+  # Default Open Graph share image (1200x630). Used by scripts/seo_meta.py
+  # when a page doesn't specify its own via frontmatter `og_image:`.
+  default_og_image: assets/og-card.png
   languages:
     # `prefix` and `suffix` apply to chapter prose (book*/chapterN[.suffix]/).
     # `readmeSuffix` is the URL slug used for the per-language experiment
