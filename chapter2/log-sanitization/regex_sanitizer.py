@@ -74,7 +74,7 @@ _RULES = [
     (
         # 连接串中的口令，如 postgres://user:PASSWORD@host:5432/db
         "url_credential", "[REDACTED_URL_CRED]",
-        re.compile(r"://[^\s:/@]+:([^\s@]+)@"),
+        re.compile(r"://[^\s:/@]*:([^\s@]+)@"),
         1, None,
     ),
     (
@@ -84,7 +84,7 @@ _RULES = [
     ),
     (
         "github_token", "[REDACTED_GITHUB_TOKEN]",
-        re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}\b"),
+        re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{20,})\b"),
         0, None,
     ),
     (
@@ -111,9 +111,10 @@ _RULES = [
         "secret_assignment", "[REDACTED_SECRET]",
         re.compile(
             r"(?i)(?:password|passwd|pwd|secret|token|api[_-]?key|"
-            r"access[_-]?key|auth|credential)[\"']?\s*[=:]\s*[\"']?([^\s\"',}]{4,})"
+            r"access[_-]?key|auth|credential)[\"']?\s*[=:]\s*"
+            r"(?:\"([^\"]{4,})\"|'([^']{4,})'|([^\s\"',}]{4,}))"
         ),
-        1, None,
+        (1, 2, 3), None,
     ),
     (
         "email", "[REDACTED_EMAIL]",
@@ -184,8 +185,13 @@ def sanitize(text: str) -> Tuple[str, List[Dict]]:
     """
     candidates: List[Dict] = []
     for priority, (category, placeholder, pattern, group, validator) in enumerate(_RULES):
+        groups = group if isinstance(group, tuple) else (group,)
         for m in pattern.finditer(text):
-            start, end = m.span(group)
+            start = end = -1
+            for g in groups:
+                start, end = m.span(g)
+                if start >= 0:
+                    break
             if start < 0:  # 该捕获组未参与本次匹配
                 continue
             value = text[start:end]

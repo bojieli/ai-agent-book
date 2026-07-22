@@ -33,9 +33,20 @@ class BashOutputTool(BaseTool):
             return {"error": f"Bash job not found (no output log) for bash_id: {bash_id}"}
         
         try:
+            # Return only what has been appended since the last check, as the
+            # tool description promises. The offset is per bash_id and lives in
+            # SystemState so it survives across calls.
+            previous_offset = self.state.bash_output_offsets.get(bash_id, 0)
+            if os.path.getsize(log_file) < previous_offset:
+                # Log was truncated or rotated — start over rather than
+                # seeking past the end and returning nothing forever.
+                previous_offset = 0
+
             with open(log_file, 'r') as f:
+                f.seek(previous_offset)
                 output = f.read()
-            
+                self.state.bash_output_offsets[bash_id] = f.tell()
+
             if filter_pattern:
                 # Filter lines matching pattern
                 lines = output.split('\n')

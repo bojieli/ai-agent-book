@@ -22,6 +22,7 @@
 | [sesame](sesame/) | ✅ | Tập trung vào phương pháp huấn luyện và đánh giá cho nhiệm vụ mô hình hóa chuỗi. |
 | [orpheus](orpheus/) | ✅ | Huấn luyện năng lực sinh và hiểu âm nhạc của mô hình. |
 | `tinker-cookbook/` | 📖 | Tập hợp nhiều kỹ thuật thực dụng và best practice cho huấn luyện mô hình. |
+| [cot-distillation](cot-distillation/) | ✅ | Chưng cất quỹ đạo CoT từ các mô hình tiên phong như Claude qua OpenRouter; lọc bằng bộ kiểm chứng luật để tạo dữ liệu SFT (kèm Thí nghiệm 7-9). |
 
 ## Phân loại dự án
 

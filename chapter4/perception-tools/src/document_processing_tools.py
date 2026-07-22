@@ -274,7 +274,7 @@ async def extract_csv_content(
             "rows": len(df),
             "columns": len(df.columns),
             "column_names": df.columns.tolist(),
-            "data": df.head(100).to_dict(orient="records"),  # First 100 rows
+            "data": df.to_dict(orient="records"),
             "preview": df.head(10).to_string(),
             "truncated": len(df) == max_rows
         }
@@ -325,7 +325,10 @@ def parse_page_range(page_range: str, total_pages: int) -> list[int]:
         part = part.strip()
         if "-" in part:
             start, end = map(int, part.split("-"))
-            pages.extend(range(start - 1, min(end, total_pages)))
+            # Clamp both ends: the caller's guard is `page_num < total_pages`,
+            # which a negative index passes, and reader.pages[-1] is the LAST
+            # page -- so an unclamped start silently returns the wrong page.
+            pages.extend(range(max(0, start - 1), min(end, total_pages)))
         else:
             page_num = int(part) - 1
             if 0 <= page_num < total_pages:

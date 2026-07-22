@@ -23,12 +23,23 @@ def extract_answer_from_boxed(text: str) -> Optional[str]:
     # 确保是字符串
     text = str(text)
     
-    # 匹配 \\boxed{number}，这个模式同时匹配 \boxed{} 和 \(\boxed{}\)
-    match = re.search(r'\\boxed\{([^}]+)\}', text)
-    if match:
-        return match.group(1).strip()
-    
-    return None
+    # Balanced braces so nested LaTeX like \boxed{\frac{1}{2}} is not truncated.
+    marker = "\\boxed{"
+    start = text.find(marker)
+    if start < 0:
+        return None
+    i = start + len(marker)
+    depth = 1
+    while i < len(text) and depth:
+        ch = text[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+        i += 1
+    if depth != 0:
+        return None
+    return text[start + len(marker) : i - 1].strip()
 
 
 def extract_answer_from_gsm8k_format(text: str) -> Optional[str]:
@@ -189,7 +200,11 @@ def evaluate_from_parquet(parquet_path: str, verbose: bool = False):
                 continue
         
         # 提取模型输出
-        model_output = sample_data.get('text', [''])[0] if isinstance(sample_data.get('text'), list) else sample_data.get('text', '')
+        text_field = sample_data.get('text', [''])
+        if isinstance(text_field, list):
+            model_output = text_field[0] if text_field else ''
+        else:
+            model_output = text_field if text_field is not None else ''
         
         # 确保 model_output 是字符串
         if isinstance(model_output, bytes):

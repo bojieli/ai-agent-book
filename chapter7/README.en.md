@@ -22,6 +22,7 @@
 | [sesame](sesame/) | ✅ | Focuses on training and evaluation methods for sequence modeling tasks. |
 | [orpheus](orpheus/) | ✅ | Trains models for music generation and understanding. |
 | `tinker-cookbook/` | 📖 | Collects various practical tips and best practices for model training. |
+| [cot-distillation](cot-distillation/) | ✅ | Distills CoT trajectories from frontier models like Claude via OpenRouter; rule-verified and converted into SFT data (companion to Experiment 7-9). |
 ## Project Types
 
 | Icon | Type | Meaning |

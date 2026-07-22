@@ -150,21 +150,26 @@ class LearningAgent:
             Dictionary containing action data, or None if extraction fails
         """
         try:
-            action_dict = action.model_dump() if hasattr(action, 'model_dump') else {}
-            
+            # exclude_unset is essential: a plain model_dump() emits a key
+            # for EVERY registered action (None for the unset ones), which
+            # made the first branch match every action and drop it on
+            # None.get(...). browser-use itself reads action names the same
+            # way (see browser_use/agent/service.py).
+            action_dict = action.model_dump(exclude_unset=True) if hasattr(action, 'model_dump') else {}
+
             # Determine action type
             action_type = None
             parameters = {}
             element_info = None
-            
+
             # Parse different action types
             if 'go_to_url' in action_dict:
                 action_type = ActionType.NAVIGATE
                 parameters = {'url': action_dict['go_to_url'].get('url')}
-            
-            elif 'click_element' in action_dict:
+
+            elif 'click_element_by_index' in action_dict:
                 action_type = ActionType.CLICK
-                click_data = action_dict['click_element']
+                click_data = action_dict['click_element_by_index']
                 parameters = {
                     'while_holding_ctrl': click_data.get('while_holding_ctrl', False)
                 }
@@ -206,9 +211,9 @@ class LearningAgent:
                     'num_pages': scroll_data.get('num_pages', 1)
                 }
             
-            elif 'upload_file' in action_dict:
+            elif 'upload_file_to_element' in action_dict:
                 action_type = ActionType.UPLOAD_FILE
-                upload_data = action_dict['upload_file']
+                upload_data = action_dict['upload_file_to_element']
                 parameters = {
                     'path': upload_data.get('path', '')
                 }
@@ -306,6 +311,11 @@ class LearningAgent:
                 # If replay failed, fall back to learning mode
                 if not result['success']:
                     logger.warning("Replay failed, falling back to learning mode")
+                    # The LLM loop is about to run, so this is no longer a
+                    # replay run. Leaving the flag set makes the summary log and
+                    # the demos report "0 LLM calls / Nx faster" for a run that
+                    # actually made real LLM calls.
+                    self.metrics['replay_used'] = False
                     result = await self._run_with_learning(max_steps)
             
             else:

@@ -9,7 +9,7 @@
 | 项目 | 类型 | 一句话说明 |
 | --- | :--: | --- |
 | [learning-from-experience](learning-from-experience/) | ✅ | 对比 Q-learning 与基于 LLM 的上下文学习，复现 Shunyu Yao 的 "The Second Half"：LLM 以 250–400 倍样本效率超越传统 RL |
-| [web-search-agent](web-search-agent/) | ✅ | Kimi K2 模型即 Agent，具备基础深度搜索能力，能进行多轮搜索和信息整合 |
+| [web-search-agent](web-search-agent/) | ✅ | Kimi K3 模型即 Agent，具备基础深度搜索能力，能进行多轮搜索和信息整合 |
 | [search-codegen](search-codegen/) | ✅ | GPT-5 原生工具集成，综合利用网络搜索与代码沙盒实现复杂分析 |
 | [context](context/) | ✅ | 系统性消融实验展示 Agent 上下文各组件的重要性；支持 SiliconFlow Qwen、字节 Doubao、月之暗面 Kimi 等多提供商 |
 

@@ -202,8 +202,11 @@ def get_time_slices(df: pd.DataFrame, interval: str = 'W') -> list:
     min_date = df['datetime'].min()
     max_date = df['datetime'].max()
     
+    # Pandas 2.2+ removed 'M' (month-end); keep the documented monthly alias.
+    freq = "ME" if interval == "M" else interval
+
     # Generate date ranges
-    date_ranges = pd.date_range(start=min_date, end=max_date, freq=interval)
+    date_ranges = pd.date_range(start=min_date, end=max_date, freq=freq)
     
     slices = []
     for end_date in date_ranges:

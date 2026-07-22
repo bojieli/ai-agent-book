@@ -22,6 +22,7 @@
 | [sesame](sesame/) | ✅ | 專注於序列建模任務的訓練和評估方法 |
 | [orpheus](orpheus/) | ✅ | 訓練模型的音樂生成與理解能力 |
 | `tinker-cookbook/` | 📖 | 收集各種模型訓練的實用技巧與最佳實踐 |
+| [cot-distillation](cot-distillation/) | ✅ | 經 OpenRouter 呼叫 Claude 等前沿模型蒸餾 CoT 軌跡，規則驗證器過濾後生成 SFT 資料（實驗 7-9 配套） |
 
 ## 專案型別說明
 
