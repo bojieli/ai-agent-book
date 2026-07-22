@@ -72,12 +72,12 @@
 
 ## 📦 附录 · 外部仓库获取
 
-第 6、7、9、10 章的评测基准、训练框架、机器人平台等 20 个外部仓库**未内置**（出于体积与版权），需要自行克隆到对应目录。
+第 6、7、9、10 章的评测基准、训练框架、机器人平台等 19 个外部仓库**未内置**（出于体积与版权），需要自行克隆到对应目录。
 
 ### 一键克隆脚本
 
 <details>
-<summary><b>🔧 展开克隆命令</b>（共 20 个外部仓库）</summary>
+<summary><b>🔧 展开克隆命令</b>（共 19 个外部仓库）</summary>
 
 ```bash
 # 第 6 章 · 评测基准
@@ -96,7 +96,6 @@ git clone https://github.com/bojieli/AWorld.git                        chapter7/
 git clone https://github.com/bojieli/SFTvsRL.git                       chapter7/SFTvsRL
 git clone https://github.com/bojieli/verl.git                          chapter7/verl
 git clone https://github.com/thinking-machines-lab/tinker-cookbook.git chapter7/tinker-cookbook
-git clone https://github.com/bojieli/lighteval.git                     chapter7/Intuitor/lighteval
 git clone https://github.com/19PINE-AI/rlvp.git                        chapter7/RLVP/rlvp                       # 实验 7-14 RLVP 论文代码
 git clone https://github.com/PRIME-RL/SimpleVLA-RL.git                 chapter7/SimpleVLA-RL/SimpleVLA-RL       # 实验 7-13 视觉-语言-动作 RL
 
