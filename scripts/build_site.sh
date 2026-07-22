@@ -13,6 +13,9 @@ mkdir -p "$DEST"
 # Site homepage (root index.md).
 cp "$ROOT/index.md" "$DEST/index.md"
 
+# robots.txt at the site root (points crawlers at the auto-generated sitemap).
+[ -f "$ROOT/robots.txt" ] && cp "$ROOT/robots.txt" "$DEST/robots.txt"
+
 # The language editions, each with its images/ subfolder.
 for lang in book book-en book-ta book-vi book-zhtw; do
   mkdir -p "$DEST/$lang"
@@ -50,6 +53,7 @@ find "$DEST" -type f \
   ! -name '*.jpeg' \
   ! -name '*.js' \
   ! -name '*.css' \
+  ! -name '*.txt' \
   -delete
 
 # Drop bulk data files that some experiments bundle as their dataset but

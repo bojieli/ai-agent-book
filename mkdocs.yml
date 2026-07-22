@@ -13,6 +13,7 @@ docs_dir: _web
 # `{#sec:foo}`, image `{height=55%}`) which Python-Markdown cannot parse.
 hooks:
   - scripts/mkdocs_pandoc_strip.py
+  - scripts/seo_meta.py
 
 theme:
   name: material
