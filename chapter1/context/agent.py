@@ -763,7 +763,11 @@ Important: When you have gathered all necessary information and computed the fin
                         tool_msg = {
                             "role": "tool",
                             "tool_call_id": tool_call.id,
-                            "content": json.dumps(result)
+                            # default=str: code_interpreter returns the raw
+                            # namespace in `variables`, which can hold sets,
+                            # dict views etc. that json can't encode — that
+                            # must not abort the whole task.
+                            "content": json.dumps(result, default=str)
                         }
                     else:
                         tool_msg = {
