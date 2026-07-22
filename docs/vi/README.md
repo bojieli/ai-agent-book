@@ -2,7 +2,7 @@
 
 [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-tải%20về-success.svg)](#-sách-điện-tử) [![Languages](https://img.shields.io/badge/dịch-5%20ngôn%20ngữ-informational.svg)](#-sách-điện-tử)
 
-**[中文](../../README.md) · [中文繁體](../zh-TW/README.md) · [English](../en/README.md) · Tiếng Việt ← hiện tại · [தமிழ்](../ta/README.md)**
+**[中文](../../README.md) · [中文繁體](../zh-TW/README.md) · [English](../en/README.md) · [Русский](../ru/README.md) · Tiếng Việt ← hiện tại · [தமிழ்](../ta/README.md)**
 
 **Agent = LLM + Context + Tools** — Cuốn sách xây dựng trên công thức cốt lõi này qua 10 chương, đưa AI Agent từ nguyên lý đến thực hành kỹ thuật. Toàn bộ nội dung, hình minh họa và **88 thí nghiệm đi kèm** đều là mã nguồn mở. Hoan nghênh bạn tự chạy các thí nghiệm.
 
