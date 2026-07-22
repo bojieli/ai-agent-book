@@ -17,8 +17,9 @@ function markdownToText(markdown) {
   text = text.replace(/^#+\s*/gm, '');
   
   // Remove bold and italic markers
+  // Keep snake_case identifiers; only strip markdown __bold__ markers.
   text = text.replace(/\*\*/g, '').replace(/\*/g, '')
-    .replace(/__/g, '').replace(/_/g, '');
+    .replace(/__/g, '');
   
   // Remove blockquotes
   text = text.replace(/^>\s*/gm, '');
@@ -186,5 +187,6 @@ function preprocessSentence(sentence, language = 'en') {
 }
 
 module.exports = {
-  preprocessSentence
+  preprocessSentence,
+  markdownToText,
 };
