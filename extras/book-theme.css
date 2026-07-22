@@ -122,6 +122,13 @@
   position: relative;
   cursor: pointer;
 }
+/* 桌面端 sticky 站点标题(Material 默认 z-index:1)必须盖过章节
+   label(z-index:2),否则侧栏滚动时章节名会叠在站点标题上。 */
+@media screen and (min-width: 76.25em) {
+  .md-nav--primary > .md-nav__title {
+    z-index: 3;
+  }
+}
 /* 当前激活的章节 —— 左侧一条墨绿色竖线(像 fenix 当前章节的视觉提示) */
 .md-nav__item--active {
   border-left-color: var(--fenix-link-hover);
