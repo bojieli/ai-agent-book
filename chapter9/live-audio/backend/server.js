@@ -228,7 +228,13 @@ class ConnectionHandler {
       const vadResults = await this.vad.processAudioChunk(audioChunk);
       
       for (const result of vadResults) {
-        if (result.type === 'speech_end') {
+        if (result.type === 'speech_start') {
+          // Barge-in: tell the client to stop playing the current answer.
+          this.ws.send(JSON.stringify({
+            type: 'speech_start',
+            timestamp: result.timestamp
+          }));
+        } else if (result.type === 'speech_end') {
           // Speech segment ended, process with STT
           await this.processSpeechSegment(result.audioData, result.duration);
         }
