@@ -57,7 +57,7 @@ class ShellSession:
         self.process = None
         self.start()
     
-    def execute(self, command: str, timeout: int = 120) -> Tuple[str, int]:
+    def execute(self, command: str, timeout: float = 120) -> Tuple[str, int]:
         """Execute command in the persistent shell"""
         self.start()
         

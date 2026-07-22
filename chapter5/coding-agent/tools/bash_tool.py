@@ -62,7 +62,7 @@ class BashTool(BaseTool):
             }
         else:
             # Execute command synchronously
-            output, exit_code = session.execute(command, timeout=int(timeout))
+            output, exit_code = session.execute(command, timeout=timeout)
             
             # Update system state directory
             self.state.current_directory = session.current_directory
