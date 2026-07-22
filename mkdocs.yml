@@ -1,5 +1,5 @@
 site_name: AI Agents in Depth
-site_description: AI Agents in Depth — Design Principles and Engineering Practice. An open-source book covering AI Agents from theory to production, with 10 chapters and 88 companion experiments.
+site_description: AI Agents in Depth — Design Principles and Engineering Practice. An open-source book covering AI Agents from theory to production, with 10 chapters and 92 companion experiments.
 site_url: https://bojieli.github.io/ai-agent-book
 repo_url: https://github.com/bojieli/ai-agent-book
 repo_name: bojieli/ai-agent-book
@@ -13,6 +13,7 @@ docs_dir: _web
 # `{#sec:foo}`, image `{height=55%}`) which Python-Markdown cannot parse.
 hooks:
   - scripts/mkdocs_pandoc_strip.py
+  - scripts/seo_meta.py
 
 theme:
   name: material
@@ -138,7 +139,7 @@ extra:
     # index page (chapterN/README.<readmeSuffix>/), which mkdocs renders
     # from the source file README.<suffix>.md.
     zh:   { label: 中文,      prefix: book/,      default: true }
-    zhtw: { label: 繁體中文,   prefix: book-zhtw/, suffix: .zhtw,  readmeSuffix: zh-TW }
+    zhtw: { label: 正體中文,   prefix: book-zhtw/, suffix: .zhtw,  readmeSuffix: zh-TW }
     en:   { label: English,   prefix: book-en/,                   readmeSuffix: en }
     ta:   { label: தமிழ்,      prefix: book-ta/,   suffix: .ta,   readmeSuffix: ta }
     vi:   { label: Tiếng Việt, prefix: book-vi/,   suffix: .vi,   readmeSuffix: vi }

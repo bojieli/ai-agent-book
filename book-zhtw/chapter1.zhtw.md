@@ -100,7 +100,7 @@ LLM Agent 的一個獨特能力是**內部思考**——在採取實際行動之
 
 但這裡懸著一個更深的問題：如果模型持續變強，今天這些 Harness 會不會最終被模型「吃掉」？Rich Sutton 在《苦澀的教訓》（The Bitter Lesson）中回顧了 AI 研究七十年間反覆上演的一幕[^ch1-1]：研究者一次次把自己對領域的理解編碼進系統，短期見效，長期卻總是輸給能隨算力與資料規模持續擴充套件的通用方法——搜尋與學習。以此衡量，Harness 裡的約束、驗證與糾正，有多少屬於「人的先驗」，註定會被模型內化？本書的立場是八個字：**方向認同，節奏務實**。方向上，本書不懷疑模型會持續吃掉 Harness——工具呼叫、長程規劃都曾靠外部編排，如今已是模型的原生能力；但在節奏上，這個「吃」遠比直覺慢：訓練以月計，模型也無法一次內化真實業務中所有的約束與偏好，模型此刻的能力邊界，就是 Harness 此刻的價值所在。因此 Harness 工程不是對苦澀的教訓的抵抗，而是這一教訓在工程時間尺度上的實踐：模型還做不穩的，Harness 先補上；模型每內化一層，Harness 就卸下一層，轉而兜底新的能力前沿。這條主線將貫穿全書——第二章從上下文工程的角度給出務實的回答，第八章討論 Agent 如何自己去發現知識與能力的結構，後記再回到「模型會不會吃掉 Harness」的完整答案。
 
-[^ch1-1]: Sutton, Rich. "The Bitter Lesson", 2019. http://www.incompletenessideas.net/IncIdeas/BitterLesson.html
+[^ch1-1]: Sutton, Rich. "The Bitter Lesson", 2019. http://www.incompleteideas.net/IncIdeas/BitterLesson.html
 
 #### Agent 的學習機制：後訓練、上下文學習與外部化學習
 
@@ -400,6 +400,10 @@ GPT-5.6 是「模型即 Agent」概念的一個成熟例項——網路搜尋、
 **輸出側**護欄在響應返回使用者之前檢查。**PII 篩選器**審查輸出中的個人身份資訊（如身分證號、手機號），防止不必要暴露；**輸出驗證**則透過內容檢查確保回覆與品牌價值一致。
 
 某些機制（如基於規則的正則過濾）既可以用在輸入側也可以用在輸出側，上文按最常見的部署位置歸類。
+
+分類器護欄的一個代表性工業實踐是 Anthropic 的 Constitutional Classifiers[^ch1-3]。其核心機制有三點：一是**規則驅動**——用自然語言寫成的「憲法」（明確規定哪些內容允許、哪些禁止）生成合成訓練資料，訓練輸入輸出分類器；二是**上下文聯合判斷**——新一代系統把使用者提問和模型回答放在一起檢查，因為有些回答單獨看毫無問題（如「如何使用食品調味料」），只有對照提問才能發現「食品調味料」其實是化學試劑的暗語；三是**兩級篩查**——先用一個極輕量的探針（直接讀取模型內部啟用，幾乎零成本）檢查所有對話，發現可疑之處再交給更強的分類器複審，而不是直接拒絕。這樣第一級即使誤報較多也不影響使用者體驗，成本也大大降低。
+
+[^ch1-3]: Anthropic. "Next-generation Constitutional Classifiers: More efficient protection against universal jailbreaks", 2026. https://www.anthropic.com/research/next-generation-constitutional-classifiers；論文：Cunningham et al., "Constitutional Classifiers++: Efficient Production-Grade Defenses against Universal Jailbreaks", arXiv:2601.04603
 
 #### 人工干預
 

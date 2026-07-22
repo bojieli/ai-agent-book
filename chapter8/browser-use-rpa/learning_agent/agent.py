@@ -150,21 +150,26 @@ class LearningAgent:
             Dictionary containing action data, or None if extraction fails
         """
         try:
-            action_dict = action.model_dump() if hasattr(action, 'model_dump') else {}
-            
+            # exclude_unset is essential: a plain model_dump() emits a key
+            # for EVERY registered action (None for the unset ones), which
+            # made the first branch match every action and drop it on
+            # None.get(...). browser-use itself reads action names the same
+            # way (see browser_use/agent/service.py).
+            action_dict = action.model_dump(exclude_unset=True) if hasattr(action, 'model_dump') else {}
+
             # Determine action type
             action_type = None
             parameters = {}
             element_info = None
-            
+
             # Parse different action types
             if 'go_to_url' in action_dict:
                 action_type = ActionType.NAVIGATE
                 parameters = {'url': action_dict['go_to_url'].get('url')}
-            
-            elif 'click_element' in action_dict:
+
+            elif 'click_element_by_index' in action_dict:
                 action_type = ActionType.CLICK
-                click_data = action_dict['click_element']
+                click_data = action_dict['click_element_by_index']
                 parameters = {
                     'while_holding_ctrl': click_data.get('while_holding_ctrl', False)
                 }
@@ -206,9 +211,9 @@ class LearningAgent:
                     'num_pages': scroll_data.get('num_pages', 1)
                 }
             
-            elif 'upload_file' in action_dict:
+            elif 'upload_file_to_element' in action_dict:
                 action_type = ActionType.UPLOAD_FILE
-                upload_data = action_dict['upload_file']
+                upload_data = action_dict['upload_file_to_element']
                 parameters = {
                     'path': upload_data.get('path', '')
                 }
@@ -427,22 +432,39 @@ class LearningAgent:
                 description=f"Learned workflow for: {self.task}",
                 initial_url=self.captured_steps[0].get('url') if self.captured_steps else None
             )
-            
+
+            # Template the captured literals with the learning task's
+            # parameters: captured steps store the exact values typed during
+            # learning, and parameterize() only substitutes {placeholder}
+            # tokens — without this step a replay would silently re-send the
+            # learning run's recipient/subject/content.
+            example_params = self._extract_task_parameters(self.task, workflow)
+            workflow.example_parameters = dict(example_params)
+
             # Convert captured steps to workflow steps
             for step_data in self.captured_steps:
+                parameters = dict(step_data['parameters'])
+                for key, value in parameters.items():
+                    if isinstance(value, str):
+                        for param_key, param_value in example_params.items():
+                            pv = str(param_value)
+                            if pv and pv in value:
+                                value = value.replace(pv, f"{{{param_key}}}")
+                        parameters[key] = value
+
                 step = WorkflowStep(
                     action_type=step_data['type'],
-                    parameters=step_data['parameters']
+                    parameters=parameters
                 )
-                
+
                 # Add element info if available
                 if step_data.get('element_info'):
                     element_info = step_data['element_info']
                     step.xpath = element_info.get('xpath')
                     step.element_attributes = element_info.get('attributes', {})
-                
+
                 workflow.add_step(step)
-            
+
             # Save to knowledge base
             self.knowledge_base.save_workflow(workflow)
             

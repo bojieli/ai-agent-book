@@ -41,11 +41,14 @@ def load_model(model_path: str, base_model: str = "Qwen/Qwen3-30B-A3B-Instruct-2
     
     return model, tokenizer
 
+def compute_parse_rate(predicted: int, total: int) -> float:
+    """Parseable prediction rate; empty total is 0.0 (not ZeroDivisionError)."""
+    return predicted / total if total > 0 else 0.0
+
 
 def format_pred_label(pred_label: Optional[str]) -> str:
     """Display token for progress lines when the model reply is unparseable."""
     return pred_label or "??"
-
 
 def parse_language_label(response: str) -> Optional[str]:
     """Extract the language label from model response."""
@@ -71,7 +74,6 @@ def parse_language_label(response: str) -> Optional[str]:
         return response
     
     return None
-
 
 def evaluate_model(
     model,
@@ -126,8 +128,11 @@ def evaluate_model(
         pred_label = parse_language_label(response)
         predictions.append(pred_label)
         
-        # Check correctness and show real-time progress
-        if ground_truth_labels and idx < len(ground_truth_labels):
+        # Check correctness and show real-time progress. Rows without ground
+        # truth (teacher never labeled the sentence) are excluded from the
+        # accuracy denominator — counting them as wrong deflated the reported
+        # fidelity by exactly the unmatched fraction.
+        if ground_truth_labels and idx < len(ground_truth_labels) and ground_truth_labels[idx] is not None:
             gt_label = ground_truth_labels[idx]
             is_correct = pred_label == gt_label
             if is_correct:
@@ -175,7 +180,6 @@ def evaluate_model(
     
     return results
 
-
 def build_confusion_matrix(predictions: List[str], ground_truth: List[str], 
                            sentences: List[str]) -> Dict:
     """
@@ -184,18 +188,20 @@ def build_confusion_matrix(predictions: List[str], ground_truth: List[str],
     Returns:
         Dict with confusion matrix, per-language stats, and error examples
     """
-    # Get all unique labels
-    all_labels = sorted(set(ground_truth) | set(p for p in predictions if p))
-    
+    # Get all unique labels (rows without ground truth are excluded)
+    all_labels = sorted(set(g for g in ground_truth if g is not None) | set(p for p in predictions if p))
+
     # Initialize confusion matrix
     confusion = defaultdict(lambda: defaultdict(int))
     per_language_stats = defaultdict(lambda: {"correct": 0, "total": 0, "errors": []})
-    
+
     # Build matrix
     for idx, (pred, gt, sentence) in enumerate(zip(predictions, ground_truth, sentences)):
+        if gt is None:
+            continue
         if pred is None:
             pred = "None"
-        
+
         confusion[gt][pred] += 1
         per_language_stats[gt]["total"] += 1
         
@@ -247,7 +253,6 @@ def build_confusion_matrix(predictions: List[str], ground_truth: List[str],
         "worst_performing_languages": sorted_languages[:5],  # Top 5 worst
         "all_languages_sorted": sorted_languages,  # All languages sorted by accuracy
     }
-
 
 def print_confusion_matrix(confusion_data: Dict):
     """Pretty print confusion matrix and analysis."""
@@ -317,7 +322,6 @@ def print_confusion_matrix(confusion_data: Dict):
                 print(f"     - Predicted {pred_lang} (should be {lang}): {sentence_preview}")
     
     print("\n" + "="*80)
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -399,12 +403,14 @@ def main():
                         assistant_content = messages[1].get("content", "")
                         sentence_to_label[user_content] = assistant_content
         
-        # Match test sentences to ground truth labels
+        # Match test sentences to ground truth labels. None = no ground truth
+        # for this sentence; such rows are skipped in accuracy and the
+        # confusion matrix instead of being scored as wrong under a phantom
+        # "?" language.
         for sentence in test_sentences:
-            label = sentence_to_label.get(sentence)
-            ground_truth.append(label if label else "?")
-        
-        matched = sum(1 for gt in ground_truth if gt != "?")
+            ground_truth.append(sentence_to_label.get(sentence))
+
+        matched = sum(1 for gt in ground_truth if gt is not None)
         print(f"Matched {matched}/{len(test_sentences)} test sentences to training data")
         
         if matched == 0:
@@ -442,7 +448,8 @@ def main():
     print(f"  Total samples: {results['total']}")
     print(f"  Successfully predicted: {results['predicted']}")
     print(f"  Unparseable responses: {results['unparseable']}")
-    print(f"  Parse rate: {results['predicted']/results['total']*100:.2f}%")
+    rate = compute_parse_rate(results["predicted"], results["total"])
+    print(f"  Parse rate: {rate * 100:.2f}%")
     
     if "accuracy" in results:
         print(f"\n  Overall Accuracy: {results['accuracy']*100:.2f}%")
@@ -460,7 +467,7 @@ def main():
             "total_samples": results["total"],
             "predicted": results["predicted"],
             "unparseable": results["unparseable"],
-            "parse_rate": results["predicted"]/results["total"] if results["total"] > 0 else 0,
+            "parse_rate": compute_parse_rate(results["predicted"], results["total"]),
         },
         "predictions": results["predictions"],
     }
@@ -519,7 +526,6 @@ def main():
         json.dump(output, f, indent=2, ensure_ascii=False)
     print(f"\n📁 Complete results saved to: {args.output_file}")
     print(f"   Includes: predictions, confusion matrix, per-language stats, error examples")
-
 
 if __name__ == "__main__":
     main()

@@ -23,12 +23,23 @@ def extract_answer_from_boxed(text: str) -> Optional[str]:
     # 确保是字符串
     text = str(text)
     
-    # 匹配 \\boxed{number}，这个模式同时匹配 \boxed{} 和 \(\boxed{}\)
-    match = re.search(r'\\boxed\{([^}]+)\}', text)
-    if match:
-        return match.group(1).strip()
-    
-    return None
+    # Balanced braces so nested LaTeX like \boxed{\frac{1}{2}} is not truncated.
+    marker = "\\boxed{"
+    start = text.find(marker)
+    if start < 0:
+        return None
+    i = start + len(marker)
+    depth = 1
+    while i < len(text) and depth:
+        ch = text[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+        i += 1
+    if depth != 0:
+        return None
+    return text[start + len(marker) : i - 1].strip()
 
 
 def extract_answer_from_gsm8k_format(text: str) -> Optional[str]:
@@ -179,14 +190,15 @@ def evaluate_from_parquet(parquet_path: str, verbose: bool = False):
         sample_id = row['sample_id']
         sample_data = row['sample']
         
-        # 转换 sample_id 为整数（如果它是字符串）
-        if isinstance(sample_id, str):
-            try:
-                sample_id = int(sample_id)
-            except ValueError:
-                if verbose:
-                    print(f"⚠️  样本 {sample_id}: 无法转换为整数")
-                continue
+        # 转换 sample_id 为原生 int：parquet 的数值列返回 np.int64，
+        # 直接放进结果里会让最后的 json.dump 抛
+        # "Object of type int64 is not JSON serializable"，把 -o 输出截断。
+        try:
+            sample_id = int(sample_id)
+        except (TypeError, ValueError):
+            if verbose:
+                print(f"⚠️  样本 {sample_id}: 无法转换为整数")
+            continue
         
         # 提取模型输出
         text_field = sample_data.get('text', [''])

@@ -122,6 +122,13 @@
   position: relative;
   cursor: pointer;
 }
+/* 桌面端 sticky 站点标题(Material 默认 z-index:1)必须盖过章节
+   label(z-index:2),否则侧栏滚动时章节名会叠在站点标题上。 */
+@media screen and (min-width: 76.25em) {
+  .md-nav--primary > .md-nav__title {
+    z-index: 3;
+  }
+}
 /* 当前激活的章节 —— 左侧一条墨绿色竖线(像 fenix 当前章节的视觉提示) */
 .md-nav__item--active {
   border-left-color: var(--fenix-link-hover);
@@ -372,8 +379,15 @@
   overflow: hidden;
   margin: 1.4rem 0;
 }
+/* Markdown 会把每个 exp-card 包一层 <p>:清零其边距并让卡片撑满
+   格子,否则模拟 1px 边框的灰底会从缝隙里透出成大块灰带。 */
+.exp-grid > p {
+  margin: 0;
+}
 .exp-card {
   display: block;
+  height: 100%;
+  box-sizing: border-box;
   background: var(--fenix-bg);
   padding: 14px 16px;
   text-decoration: none;

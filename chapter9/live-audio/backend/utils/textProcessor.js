@@ -143,7 +143,10 @@ function pronounceSpecialCharacters(text, isCodeBlock = false) {
 function pronounceNumbers(text, language) {
   if (language.startsWith('zh')) return text;
 
-  return text.replace(/(\d+\.?\d*)/g, match => {
+  // Only consume the '.' when it is a real decimal point (digits follow).
+  // The old /(\d+\.?\d*)/ also matched "42." at the end of a sentence, which
+  // ate the period and emitted a dangling "point".
+  return text.replace(/\d+(?:\.\d+)?/g, match => {
     const num = parseFloat(match);
     if (isNaN(num)) return match;
     

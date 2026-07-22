@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build EPUB 3 editions from the Markdown sources.
-# Usage: ./build_epub.sh [all|zh-CN|zh-TW|en|ta|vi]
+# Usage: ./build_epub.sh [all|zh-CN|zh-TW|en|ru|ta|vi]
 
 set -euo pipefail
 
@@ -15,9 +15,9 @@ for command in pandoc pdftoppm python3; do
 done
 
 case "$SELECTION" in
-    all|zh-CN|zh-TW|en|ta|vi) ;;
+    all|zh-CN|zh-TW|en|ru|ta|vi) ;;
     *)
-        echo "Usage: $0 [all|zh-CN|zh-TW|en|ta|vi]" >&2
+        echo "Usage: $0 [all|zh-CN|zh-TW|en|ru|ta|vi]" >&2
         exit 2
         ;;
 esac
@@ -44,7 +44,7 @@ build_edition() {
         zh-TW)
             directory="book-zhtw"
             title="深入理解 AI Agent：設計原理與工程實踐"
-            author="李博杰；台灣正體翻譯：tigercosmos"
+            author="李博杰；正體中文翻譯：tigercosmos"
             pdf="深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf"
             output="深入理解-AI-Agent-李博杰-v1.2-zhtw.epub"
             title_label="扉頁"
@@ -59,6 +59,16 @@ build_edition() {
             output="AI-Agents-in-Depth-Bojie-Li-v1.2.epub"
             title_label="Title Page"
             toc_label="Table of Contents"
+            chapters=(introduction.md chapter{1..10}.md afterword.md)
+            ;;
+        ru)
+            directory="book-ru"
+            title="Глубокое понимание AI Agent: принципы проектирования и инженерная практика"
+            author="Ли Боцзе (李博杰); русский перевод: ui99ru"
+            pdf="AI-Agents-in-Depth-ru.pdf"
+            output="AI-Agents-in-Depth-ru.epub"
+            title_label="Титульный лист"
+            toc_label="Содержание"
             chapters=(introduction.md chapter{1..10}.md afterword.md)
             ;;
         ta)
@@ -129,7 +139,7 @@ build_edition() {
 }
 
 if [ "$SELECTION" = "all" ]; then
-    for language in zh-CN zh-TW en ta vi; do
+    for language in zh-CN zh-TW en ru ta vi; do
         build_edition "$language"
     done
 else
