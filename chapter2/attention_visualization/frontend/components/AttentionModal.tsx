@@ -94,8 +94,16 @@ export default function AttentionModal({ isOpen, onClose, tokens, attentionWeigh
     setIsRendering(true);
     setRenderError(null);
 
+    // A zoom / transform change re-runs this effect. Without cancelling, the
+    // previous rAF chain keeps painting the same canvas at its stale cellSize
+    // while the new one resizes (and so clears) the bitmap, superimposing two
+    // differently-scaled heatmaps.
+    let cancelled = false;
+    let rafId = 0;
+
     // Use requestAnimationFrame for smooth rendering
-    requestAnimationFrame(() => {
+    rafId = requestAnimationFrame(() => {
+      if (cancelled) return;
       try {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -149,6 +157,7 @@ export default function AttentionModal({ isOpen, onClose, tokens, attentionWeigh
         let currentRow = 0;
 
         const drawChunk = () => {
+          if (cancelled) return;
           const endRow = Math.min(currentRow + chunkSize, numRows);
           
           for (let i = currentRow; i < endRow; i++) {
@@ -183,7 +192,7 @@ export default function AttentionModal({ isOpen, onClose, tokens, attentionWeigh
           
           // Continue with next chunk if not done
           if (currentRow < numRows) {
-            requestAnimationFrame(drawChunk);
+            rafId = requestAnimationFrame(drawChunk);
           } else {
             // Drawing complete, add labels and legend
             drawLabelsAndLegend();
@@ -268,6 +277,11 @@ export default function AttentionModal({ isOpen, onClose, tokens, attentionWeigh
         setIsRendering(false);
       }
     });
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+    };
 
   }, [isOpen, tokens, attentionWeights, zoomLevel, transformMethod, transformAttention]);
 

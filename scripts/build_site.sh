@@ -13,6 +13,9 @@ mkdir -p "$DEST"
 # Site homepage (root index.md).
 cp "$ROOT/index.md" "$DEST/index.md"
 
+# robots.txt at the site root (points crawlers at the auto-generated sitemap).
+[ -f "$ROOT/robots.txt" ] && cp "$ROOT/robots.txt" "$DEST/robots.txt"
+
 # The language editions, each with its images/ subfolder.
 for lang in book book-en book-ta book-vi book-zhtw; do
   mkdir -p "$DEST/$lang"
@@ -50,6 +53,7 @@ find "$DEST" -type f \
   ! -name '*.jpeg' \
   ! -name '*.js' \
   ! -name '*.css' \
+  ! -name '*.txt' \
   -delete
 
 # Drop bulk data files that some experiments bundle as their dataset but
@@ -91,9 +95,14 @@ find "$DEST" -name '*.md.bak' -delete
 #
 # Only touches README.<lang>.md (not README.md, where the links already work),
 # and only relative links that don't start with . / # http or contain :
+#
+# The "back to main README" links ](../docs/<locale>/README.md) point into
+# docs/, which is never copied into the site's docs_dir — MkDocs leaves the
+# raw href and it 404s. Map them to ../../ (the site home) instead.
 find "$DEST/chapter"* -type f -name 'README.[a-zA-Z-]*.md' -print0 \
   | xargs -0 sed -i.bak -E \
-      -e 's|\]\(([a-zA-Z][a-zA-Z0-9_-]*)/\)|](../\1/)|g'
+      -e 's|\]\(([a-zA-Z][a-zA-Z0-9_-]*)/\)|](../\1/)|g' \
+      -e 's|\]\(\.\./docs/[a-zA-Z-]+/README\.md\)|](../../)|g'
 find "$DEST" -name '*.md.bak' -delete
 
 echo "Assembled docs into $DEST"

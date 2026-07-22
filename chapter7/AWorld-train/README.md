@@ -377,9 +377,10 @@ sudo apt-get install -y build-essential git wget
 # 3. 安装 PyTorch（匹配 CUDA 版本）
 pip install torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu121
 
-# 4. 克隆 AWorld 仓库
-git clone https://github.com/inclusionAI/AWorld.git ~/AWorld
-cd ~/AWorld
+# 4. 克隆 AWorld 仓库（与主 README 一键克隆脚本一致；bojieli/AWorld 为本书
+#    锁定的 fork，也可改用上游 inclusionAI/AWorld）
+git clone https://github.com/bojieli/AWorld.git chapter7/AWorld
+cd chapter7/AWorld
 
 # 5. 安装 VeRL 和依赖（会自动安装 transformers、vllm、deepspeed 等）
 cd /path/to/verl

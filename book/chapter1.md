@@ -100,7 +100,7 @@ LLM Agent 的一个独特能力是**内部思考**——在采取实际行动之
 
 但这里悬着一个更深的问题：如果模型持续变强，今天这些 Harness 会不会最终被模型“吃掉”？Rich Sutton 在《苦涩的教训》（The Bitter Lesson）中回顾了 AI 研究七十年间反复上演的一幕[^ch1-1]：研究者一次次把自己对领域的理解编码进系统，短期见效，长期却总是输给能随算力与数据规模持续扩展的通用方法——搜索与学习。以此衡量，Harness 里的约束、验证与纠正，有多少属于“人的先验”，注定会被模型内化？本书的立场是八个字：**方向认同，节奏务实**。方向上，本书不怀疑模型会持续吃掉 Harness——工具调用、长程规划都曾靠外部编排，如今已是模型的原生能力；但在节奏上，这个“吃”远比直觉慢：训练以月计，模型也无法一次内化真实业务中所有的约束与偏好，模型此刻的能力边界，就是 Harness 此刻的价值所在。因此 Harness 工程不是对苦涩的教训的抵抗，而是这一教训在工程时间尺度上的实践：模型还做不稳的，Harness 先补上；模型每内化一层，Harness 就卸下一层，转而兜底新的能力前沿。这条主线将贯穿全书——第二章从上下文工程的角度给出务实的回答，第八章讨论 Agent 如何自己去发现知识与能力的结构，后记再回到“模型会不会吃掉 Harness”的完整答案。
 
-[^ch1-1]: Sutton, Rich. "The Bitter Lesson", 2019. http://www.incompletenessideas.net/IncIdeas/BitterLesson.html
+[^ch1-1]: Sutton, Rich. "The Bitter Lesson", 2019. http://www.incompleteideas.net/IncIdeas/BitterLesson.html
 
 #### Agent 的学习机制：后训练、上下文学习与外部化学习
 
@@ -400,6 +400,10 @@ GPT-5.6 是“模型即 Agent”概念的一个成熟实例——网络搜索、
 **输出侧**护栏在响应返回用户之前检查。**PII 过滤器**审查输出中的个人身份信息（如身份证号、手机号），防止不必要暴露；**输出验证**则通过内容检查确保回复与品牌价值一致。
 
 需要注意的是，某些机制（如基于规则的正则过滤）既可以用在输入侧也可以用在输出侧，上文按最常见的部署位置归类。
+
+分类器护栏的一个代表性工业实践是 Anthropic 的 Constitutional Classifiers[^ch1-3]。其核心机制有三点：一是**规则驱动**——用自然语言写成的"宪法"（明确规定哪些内容允许、哪些禁止）生成合成训练数据，训练输入输出分类器；二是**上下文联合判断**——新一代系统把用户提问和模型回答放在一起检查，因为有些回答单独看毫无问题（如"如何使用食品调味料"），只有对照提问才能发现"食品调味料"其实是化学试剂的暗语；三是**两级筛查**——先用一个极轻量的探针（直接读取模型内部激活，几乎零成本）检查所有对话，发现可疑之处再交给更强的分类器复审，而不是直接拒绝。这样第一级即使误报较多也不影响用户体验，成本也大大降低。
+
+[^ch1-3]: Anthropic. "Next-generation Constitutional Classifiers: More efficient protection against universal jailbreaks", 2026. https://www.anthropic.com/research/next-generation-constitutional-classifiers；论文：Cunningham et al., "Constitutional Classifiers++: Efficient Production-Grade Defenses against Universal Jailbreaks", arXiv:2601.04603
 
 #### 人工干预
 
