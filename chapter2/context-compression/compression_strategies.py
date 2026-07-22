@@ -156,7 +156,7 @@ class ContextCompressor:
 Focus on information relevant to: {query}
 
 Original content:
-{content[:10000]}  # Limit for history compression
+{content[:10000]}
 
 Requirements:
 1. Keep all important facts, names, dates, and affiliations
@@ -279,7 +279,7 @@ Title: {result.get('title', 'N/A')}
 URL: {result.get('url', 'N/A')}
 
 Content:
-{original_content[:5000]}  # Limit to prevent token overflow
+{original_content[:5000]}
 
 Provide a concise summary:"""
 
@@ -490,7 +490,7 @@ Analyze the following search results and provide a focused summary that directly
 Focus on extracting information most relevant to answering: {query}
 
 Search Results:
-{combined_content}  # Already limited per page
+{combined_content}
 
 Requirements:
 1. Focus only on information relevant to the query
@@ -601,7 +601,7 @@ Content: {limited_content}
 Analyze the following search results and provide a focused summary with citations.
 
 Search Results (with source IDs):
-{combined_content}  # Already limited per page
+{combined_content}
 
 Requirements:
 1. Focus on information relevant to: {query}

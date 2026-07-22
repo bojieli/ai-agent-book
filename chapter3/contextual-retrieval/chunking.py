@@ -265,7 +265,7 @@ class DocumentIndexer:
                             "chunk_index": chunk["chunk_index"],
                             "char_count": chunk["char_count"]
                         }
-                    }
+                    }, timeout=30
                 )
                 response.raise_for_status()
                 indexed_count += 1
@@ -326,14 +326,14 @@ class DocumentIndexer:
                 response = requests.post(
                     f"{self.kb_config.dify_base_url}/datasets/{self.kb_config.dify_dataset_id}/documents",
                     headers=headers,
-                    json=payload
+                    json=payload, timeout=30
                 )
             else:
                 # Create new document
                 response = requests.post(
                     f"{self.kb_config.dify_base_url}/documents",
                     headers=headers,
-                    json=payload
+                    json=payload, timeout=30
                 )
             
             response.raise_for_status()

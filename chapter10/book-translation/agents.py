@@ -336,7 +336,9 @@ def manager_decision(client, tracker, task, file_index, report):
     content = llm_chat(
         client, tracker, "Manager", messages, json_mode=True, note="调度决策"
     )
-    return _loads_lenient(content)
+    # 模型偶尔输出 JSON 数组或其他非 dict 结构（同 glossary_agent 的防护）
+    data = _loads_lenient(content)
+    return data if isinstance(data, dict) else {}
 
 
 # ============================================================================
@@ -503,7 +505,11 @@ def run_orchestration(chapters, out_dir, *, source_lang="英文", target_lang="�
         client, tracker, manager_context["task"],
         manager_context["file_index"], report_summary
     )
-    revise = decision.get("revise", [])
+    # dict.get 的默认值只在键缺失时生效；显式的 "revise": null 会返回 None，
+    # 直接迭代会 TypeError（与 issues:null 同类，见 test_null_issues.py）
+    revise = decision.get("revise") or []
+    if isinstance(revise, str):
+        revise = [revise]
     emit(f"Manager 决策 ✓：需修订章节 {revise or '无'}")
 
     for name in revise:

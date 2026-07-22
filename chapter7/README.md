@@ -22,6 +22,8 @@
 | [sesame](sesame/) | ✅ | 专注于序列建模任务的训练和评估方法 |
 | [orpheus](orpheus/) | ✅ | 训练模型的音乐生成与理解能力 |
 | `tinker-cookbook/` | 📖 | 收集各种模型训练的实用技巧与最佳实践 |
+| [cot-distillation](cot-distillation/) | ✅ | 经 OpenRouter 调用 Claude 等前沿模型蒸馏 CoT 轨迹，规则验证器过滤后生成 SFT 数据（实验 7-9 配套） |
+| [RLVP](RLVP/) | 📖 | 奖励结果、惩罚路径（RLVP）后训练研究（实验 7-14 配套）；完整训练/评估代码在独立论文仓库 `19PINE-AI/rlvp`，需自行克隆 |
 
 ## 项目类型说明
 
