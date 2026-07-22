@@ -190,14 +190,15 @@ def evaluate_from_parquet(parquet_path: str, verbose: bool = False):
         sample_id = row['sample_id']
         sample_data = row['sample']
         
-        # 转换 sample_id 为整数（如果它是字符串）
-        if isinstance(sample_id, str):
-            try:
-                sample_id = int(sample_id)
-            except ValueError:
-                if verbose:
-                    print(f"⚠️  样本 {sample_id}: 无法转换为整数")
-                continue
+        # 转换 sample_id 为原生 int：parquet 的数值列返回 np.int64，
+        # 直接放进结果里会让最后的 json.dump 抛
+        # "Object of type int64 is not JSON serializable"，把 -o 输出截断。
+        try:
+            sample_id = int(sample_id)
+        except (TypeError, ValueError):
+            if verbose:
+                print(f"⚠️  样本 {sample_id}: 无法转换为整数")
+            continue
         
         # 提取模型输出
         text_field = sample_data.get('text', [''])
