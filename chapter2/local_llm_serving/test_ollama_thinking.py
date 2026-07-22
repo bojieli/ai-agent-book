@@ -28,9 +28,18 @@ def test_streaming_yields_ollama_thinking_field():
 
     chunks = list(agent.chat_stream("hello", use_tools=False, temperature=0.1))
 
-    assert fake_client.last_kwargs["think"] is True
-    assert {"type": "thinking", "content": "Need current data. "} in chunks
-    assert {"type": "content", "content": "Final answer."} in chunks
+    assert fake_client.last_kwargs.get("think") is True
+
+    thinking_event = {"type": "thinking", "content": "Need current data. "}
+    content_event = {"type": "content", "content": "Final answer."}
+
+    assert thinking_event in chunks
+    assert content_event in chunks
+
+    # Verify ordering: thinking must be emitted before final content
+    assert chunks.index(thinking_event) < chunks.index(content_event), \
+        f"thinking (at index {chunks.index(thinking_event)}) should come " \
+        f"before content (at index {chunks.index(content_event)})"
 
 
 if __name__ == "__main__":
