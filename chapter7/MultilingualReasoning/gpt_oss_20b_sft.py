@@ -512,10 +512,18 @@ def main():
             hub_model_id=args.hub_model_id,
         )
         
-        print("\n训练完成！建议重启内核以释放 GPU 显存后再进行推理。")
-    
-    # 推理模式
-    if args.mode == "inference":
+        if args.mode == "full":
+            # full 模式继续跑推理：先释放训练占用的显存，
+            # 再按推理路径从 output_dir 重新加载已保存的模型。
+            del trainer
+            del model
+            torch.cuda.empty_cache()
+            print("\n训练完成！已释放训练显存，继续运行推理示例。")
+        else:
+            print("\n训练完成！建议重启内核以释放 GPU 显存后再进行推理。")
+
+    # 推理模式（inference 单独运行；full 在训练后接着运行）
+    if args.mode in ["inference", "full"]:
         if not os.path.exists(args.output_dir):
             print(f"错误: 未找到模型目录 {args.output_dir}")
             print("请先运行训练或指定正确的模型路径")
