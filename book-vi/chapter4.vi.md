@@ -439,7 +439,7 @@ Phiên bản Agent có thể gặp phải nhiều sự kiện cùng lúc: tin nh
 
 Lấy email yêu cầu hoàn tiền của khách hàng làm ví dụ, hình thức cụ thể của sự kiện có cấu trúc như sau:
 
-```javascript
+```json
 {
   "source": {"type": "email", "sender": "client@example.com"},
   "channel": "gmail_webhook",

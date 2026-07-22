@@ -439,7 +439,7 @@ PineClaw 的解决方案是引入 **Channel 机制**——在 OpenClaw 的 Gatew
 
 以一封客户退款请求邮件为例，结构化事件的具体形式如下：
 
-```javascript
+```json
 {
   "source": {"type": "email", "sender": "client@example.com"},
   "channel": "gmail_webhook",
