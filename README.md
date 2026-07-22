@@ -122,7 +122,7 @@ git clone https://github.com/joonspk-research/generative_agents.git    chapter10
 | 6-2 / 6-3 / 6-4 / 6-9 | 📝 读者练习 | 人肉基准、记忆评估、JSON Cards vs RAG、记忆选型——改造复用第 3 章 `user-memory` / `user-memory-evaluation` / `contextual-retrieval` |
 | 5-12 | 📝 读者练习 | 能创造 Agent 的 Agent——基于 `chapter5/coding-agent` 自举扩展 |
 | 7-8 | 📝 读者练习 | Prompt 蒸馏——落地实现见 `chapter8/prompt-distillation`（跨章复用） |
-| 7-9 | 📝 读者练习 | CoT 蒸馏 `[扩展]`——书中给出实验设计与验收标准，无专属代码 |
+| 7-9 | 📝 读者练习 | CoT 蒸馏 `[扩展]`——配套实现见 `chapter7/cot-distillation`（含 SFT 数据生成与规则验证器） |
 | 6-11 | 🤖 仿真评估 | OpenVLA + RoboTwin2——VLA 训练/环境依赖见 `chapter7/SimpleVLA-RL` 的 README |
 | 9-8 / 9-9 | 🔧 真实硬件 | XLeRobot 遥操作与 LLM Agent 控制——需 SO-100 机械臂，[Teleop](https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html) · [LLM Agent](https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html) |
 | 9-10 | 🔧 真实硬件 | RGB 零样本 Sim2Real 抓取——[`StoneT2000/lerobot-sim2real`](https://github.com/StoneT2000/lerobot-sim2real)（仿真可纯 GPU，部署需 SO-100） |
