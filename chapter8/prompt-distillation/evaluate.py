@@ -59,7 +59,10 @@ def parse_language_label(response: str) -> Optional[str]:
     
     response = response.strip().lower()
     for pattern in patterns:
-        match = re.search(pattern, response)
+        # response is lower-cased above, so the mixed-case "Final Answer:" /
+        # "Language:" patterns only match case-insensitively — without this
+        # they are unreachable and such answers score as unparseable.
+        match = re.search(pattern, response, re.IGNORECASE)
         if match:
             return match.group(1)
     
