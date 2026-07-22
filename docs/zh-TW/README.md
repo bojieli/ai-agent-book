@@ -71,12 +71,12 @@
 
 ## 📦 附錄 · 外部倉庫獲取
 
-第 6、7、9、10 章的評測基準、訓練框架、機器人平台等 20 個外部倉庫**未內建**（出於體積與版權），需要自行克隆到對應目錄。
+第 6、7、9、10 章的評測基準、訓練框架、機器人平台等 19 個外部倉庫**未內建**（出於體積與版權），需要自行克隆到對應目錄。
 
 ### 一鍵克隆指令碼
 
 <details>
-<summary><b>🔧 展開克隆命令</b>（共 20 個外部倉庫）</summary>
+<summary><b>🔧 展開克隆命令</b>（共 19 個外部倉庫）</summary>
 
 ```bash
 # 第 6 章 · 評測基準
@@ -95,7 +95,6 @@ git clone https://github.com/bojieli/AWorld.git                        chapter7/
 git clone https://github.com/bojieli/SFTvsRL.git                       chapter7/SFTvsRL
 git clone https://github.com/bojieli/verl.git                          chapter7/verl
 git clone https://github.com/thinking-machines-lab/tinker-cookbook.git chapter7/tinker-cookbook
-git clone https://github.com/bojieli/lighteval.git                     chapter7/Intuitor/lighteval
 git clone https://github.com/19PINE-AI/rlvp.git                        chapter7/RLVP/rlvp                       # 實驗 7-14 RLVP 論文程式碼
 git clone https://github.com/PRIME-RL/SimpleVLA-RL.git                 chapter7/SimpleVLA-RL/SimpleVLA-RL       # 實驗 7-13 視覺-語言-動作 RL
 
@@ -108,7 +107,7 @@ git clone https://github.com/19PINE-AI/TalkAct.git                     chapter10
 git clone https://github.com/joonspk-research/generative_agents.git    chapter10/generative_agents             # 實驗 10-7 斯坦福 AI 小鎮
 ```
 
-> 各專案 README 如標註了特定 commit，請按說明 `git checkout` 到對應版本以保證復現一致。第 10 章 `use-computer-while-calling` 已發展為獨立維護的 [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct)，本倉庫只保留指向它的說明文件。
+> 各專案 README 如標註了特定 commit，請按說明 `git checkout` 到對應版本以保證復現一致。第 10 章 `use-computer-while-calling` 已發展為獨立維護的 [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct)，本倉庫不內建該目錄，用上面的克隆命令獲取。
 
 </details>
 
@@ -121,7 +120,7 @@ git clone https://github.com/joonspk-research/generative_agents.git    chapter10
 | 6-2 / 6-3 / 6-4 / 6-9 | 📝 讀者練習 | 人肉基準、記憶評估、JSON Cards vs RAG、記憶選型——改造複用第 3 章 `user-memory` / `user-memory-evaluation` / `contextual-retrieval` |
 | 5-12 | 📝 讀者練習 | 能創造 Agent 的 Agent——基於 `chapter5/coding-agent` 自舉擴充套件 |
 | 7-8 | 📝 讀者練習 | Prompt 蒸餾——落地實現見 `chapter8/prompt-distillation`（跨章複用） |
-| 7-9 | 📝 讀者練習 | CoT 蒸餾 `[擴充套件]`——書中給出實驗設計與驗收標準，無專屬程式碼 |
+| 7-9 | 📝 讀者練習 | CoT 蒸餾 `[擴充套件]`——配套實現見 `chapter7/cot-distillation`（含 SFT 資料生成與規則驗證器） |
 | 6-11 | 🤖 模擬評估 | OpenVLA + RoboTwin2——VLA 訓練/環境依賴見 `chapter7/SimpleVLA-RL` 的 README |
 | 9-8 / 9-9 | 🔧 真實硬體 | XLeRobot 遙操作與 LLM Agent 控制——需 SO-100 機械臂，[Teleop](https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html) · [LLM Agent](https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html) |
 | 9-10 | 🔧 真實硬體 | RGB 零樣本 Sim2Real 抓取——[`StoneT2000/lerobot-sim2real`](https://github.com/StoneT2000/lerobot-sim2real)（模擬可純 GPU，部署需 SO-100） |

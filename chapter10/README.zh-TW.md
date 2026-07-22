@@ -8,7 +8,7 @@
 
 | 專案 | 型別 | 一句話說明 |
 | --- | :--: | --- |
-| `use-computer-while-calling/` | 📖 | 電話 Agent（Node.js）與瀏覽器 Agent（Python）經 WebSocket 直接通訊無協調器並行協作；程式碼已獨立為 [TalkAct](https://github.com/19PINE-AI/TalkAct)，本目錄僅保留說明 |
+| `use-computer-while-calling/` | 📖 | 電話 Agent（Node.js）與瀏覽器 Agent（Python）經 WebSocket 直接通訊無協調器並行協作；程式碼已獨立為 [TalkAct](https://github.com/19PINE-AI/TalkAct)，本倉庫不內建該目錄（克隆命令見主 README 附錄） |
 | [staged-system-prompt](staged-system-prompt/) | ✅ | 同一 Coding Agent 在需求澄清/實現/審查三階段載入不同提示詞與工具集，對話歷史跨階段共享，審查不透過可回退 |
 | [multi-role-transfer](multi-role-transfer/) | ✅ | 共享上下文下的鏈式 handoff：多角色各有獨立提示詞與工具，透過 `transfer_to_agent` 自主切換 |
 | [book-translation](book-translation/) | ✅ | 管理者模式拆分翻譯給術語表/翻譯/審校專職 Agent，Manager 只存索引、譯文全落盤，上下文基本恆定 |

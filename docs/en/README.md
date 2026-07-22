@@ -72,12 +72,12 @@ It is recommended to apply for API keys from several platforms for convenient le
 
 ## 📦 Appendix · Obtaining External Repositories
 
-The 20 external repos for benchmarks, training frameworks, and robot platforms in Chapters 6, 7, 9, 10 are **not bundled** (due to size and licensing) and must be cloned into the corresponding directories.
+The 19 external repos for benchmarks, training frameworks, and robot platforms in Chapters 6, 7, 9, 10 are **not bundled** (due to size and licensing) and must be cloned into the corresponding directories.
 
 ### One-shot Clone Script
 
 <details>
-<summary><b>🔧 Expand clone commands</b> (20 external repos)</summary>
+<summary><b>🔧 Expand clone commands</b> (19 external repos)</summary>
 
 ```bash
 # Chapter 6 · Evaluation Benchmarks
@@ -96,7 +96,6 @@ git clone https://github.com/bojieli/AWorld.git                        chapter7/
 git clone https://github.com/bojieli/SFTvsRL.git                       chapter7/SFTvsRL
 git clone https://github.com/bojieli/verl.git                          chapter7/verl
 git clone https://github.com/thinking-machines-lab/tinker-cookbook.git chapter7/tinker-cookbook
-git clone https://github.com/bojieli/lighteval.git                     chapter7/Intuitor/lighteval
 git clone https://github.com/19PINE-AI/rlvp.git                        chapter7/RLVP/rlvp                       # Exp 7-14 RLVP paper code
 git clone https://github.com/PRIME-RL/SimpleVLA-RL.git                 chapter7/SimpleVLA-RL/SimpleVLA-RL       # Exp 7-13 vision-language-action RL
 
@@ -109,7 +108,7 @@ git clone https://github.com/19PINE-AI/TalkAct.git                     chapter10
 git clone https://github.com/joonspk-research/generative_agents.git    chapter10/generative_agents             # Exp 10-7 Stanford AI Town
 ```
 
-> If a project README specifies a particular commit, `git checkout` to that version for reproducibility. Chapter 10's `use-computer-while-calling` has evolved into the independently maintained [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct); this repo only keeps a pointer doc.
+> If a project README specifies a particular commit, `git checkout` to that version for reproducibility. Chapter 10's `use-computer-while-calling` has evolved into the independently maintained [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct); this repo does not bundle that directory — use the clone command above to fetch it.
 
 </details>
 
@@ -122,7 +121,7 @@ The experiments below have no dedicated clone command but specific reproduction 
 | 6-2 / 6-3 / 6-4 / 6-9 | 📝 Reader exercise | Human benchmark, memory eval, JSON Cards vs RAG, memory selection — adapt Chapter 3's `user-memory` / `user-memory-evaluation` / `contextual-retrieval` |
 | 5-12 | 📝 Reader exercise | Agent that creates Agents — bootstrap from `chapter5/coding-agent` |
 | 7-8 | 📝 Reader exercise | Prompt distillation — see `chapter8/prompt-distillation` (cross-chapter reuse) |
-| 7-9 | 📝 Reader exercise | CoT distillation `[Extension]` — design and acceptance criteria in book, no dedicated code |
+| 7-9 | 📝 Reader exercise | CoT distillation `[Extension]` — companion implementation at `chapter7/cot-distillation` (including SFT data generation and a rule verifier) |
 | 6-11 | 🤖 Simulation eval | OpenVLA + RoboTwin2 — see `chapter7/SimpleVLA-RL` README for VLA training/env deps |
 | 9-8 / 9-9 | 🔧 Real hardware | XLeRobot teleoperation and LLM Agent control — requires SO-100 arm, [Teleop](https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html) · [LLM Agent](https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html) |
 | 9-10 | 🔧 Real hardware | RGB zero-shot Sim2Real grasping — [`StoneT2000/lerobot-sim2real`](https://github.com/StoneT2000/lerobot-sim2real) (simulation runs on pure GPU; deployment needs SO-100) |

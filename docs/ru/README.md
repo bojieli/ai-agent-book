@@ -72,12 +72,12 @@
 
 ## 📦 Приложение · Получение внешних репозиториев
 
-20 внешних репозиториев для бенчмарков, обучающих фреймворков и робо-платформ из глав 6, 7, 9, 10 **не включены** (из-за размера и лицензий) и должны быть склонированы в соответствующие каталоги.
+19 внешних репозиториев для бенчмарков, обучающих фреймворков и робо-платформ из глав 6, 7, 9, 10 **не включены** (из-за размера и лицензий) и должны быть склонированы в соответствующие каталоги.
 
 ### Скрипт клонирования одной командой
 
 <details>
-<summary><b>🔧 Развернуть команды клонирования</b> (20 внешних репозиториев)</summary>
+<summary><b>🔧 Развернуть команды клонирования</b> (19 внешних репозиториев)</summary>
 
 ```bash
 # Глава 6 · Бенчмарки оценки
@@ -96,7 +96,6 @@ git clone https://github.com/bojieli/AWorld.git                        chapter7/
 git clone https://github.com/bojieli/SFTvsRL.git                       chapter7/SFTvsRL
 git clone https://github.com/bojieli/verl.git                          chapter7/verl
 git clone https://github.com/thinking-machines-lab/tinker-cookbook.git chapter7/tinker-cookbook
-git clone https://github.com/bojieli/lighteval.git                     chapter7/Intuitor/lighteval
 git clone https://github.com/19PINE-AI/rlvp.git                        chapter7/RLVP/rlvp                       # Эксп. 7-14: код статьи RLVP
 git clone https://github.com/PRIME-RL/SimpleVLA-RL.git                 chapter7/SimpleVLA-RL/SimpleVLA-RL       # Эксп. 7-13: RL «зрение-язык-действие»
 
@@ -109,7 +108,7 @@ git clone https://github.com/19PINE-AI/TalkAct.git                     chapter10
 git clone https://github.com/joonspk-research/generative_agents.git    chapter10/generative_agents             # Эксп. 10-7: Stanford AI Town
 ```
 
-> Если README проекта указывает конкретный коммит, сделайте `git checkout` на эту версию для воспроизводимости. `use-computer-while-calling` из главы 10 вырос в самостоятельно поддерживаемый [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct); в этом репозитории оставлен лишь указатель-документ.
+> Если README проекта указывает конкретный коммит, сделайте `git checkout` на эту версию для воспроизводимости. `use-computer-while-calling` из главы 10 вырос в самостоятельно поддерживаемый [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct); этот каталог в репозиторий не входит — получите его командой клонирования выше.
 
 </details>
 
@@ -122,7 +121,7 @@ git clone https://github.com/joonspk-research/generative_agents.git    chapter10
 | 6-2 / 6-3 / 6-4 / 6-9 | 📝 Задание для читателя | Человеческий бенчмарк, оценка памяти, JSON Cards vs RAG, выбор памяти — адаптируйте `user-memory` / `user-memory-evaluation` / `contextual-retrieval` из главы 3 |
 | 5-12 | 📝 Задание для читателя | Агент, создающий агентов — начните с `chapter5/coding-agent` |
 | 7-8 | 📝 Задание для читателя | Дистилляция промптов — см. `chapter8/prompt-distillation` (переиспользование между главами) |
-| 7-9 | 📝 Задание для читателя | Дистилляция CoT `[Расширение]` — дизайн и критерии приёмки в книге, отдельного кода нет |
+| 7-9 | 📝 Задание для читателя | Дистилляция CoT `[Расширение]` — сопутствующая реализация см. в `chapter7/cot-distillation` (включая генерацию SFT-данных и верификатор на правилах) |
 | 6-11 | 🤖 Оценка в симуляции | OpenVLA + RoboTwin2 — см. README `chapter7/SimpleVLA-RL` по зависимостям обучения/среды VLA |
 | 9-8 / 9-9 | 🔧 Реальное железо | Телеуправление XLeRobot и управление LLM-агентом — нужна рука SO-100, [Teleop](https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html) · [LLM Agent](https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html) |
 | 9-10 | 🔧 Реальное железо | RGB zero-shot Sim2Real-захват — [`StoneT2000/lerobot-sim2real`](https://github.com/StoneT2000/lerobot-sim2real) (симуляция на чистом GPU; для развёртывания нужен SO-100) |

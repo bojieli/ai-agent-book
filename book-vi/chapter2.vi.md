@@ -1011,7 +1011,7 @@ Trước khi thảo luận về chiến lược nén cụ thể, cần phải gi
 
 > **Thử nghiệm 2-9 ★★★: So sánh các chiến lược nén ngữ cảnh**
 >
-> Chúng tôi thiết kế một nhiệm vụ nghiên cứu: xác định và theo dõi tình trạng nghề nghiệp của người đồng sáng lập OpenAI. Nhiệm vụ này yêu cầu tổng hợp thông tin nhiều bước, nội dung được tìm kiếm trả về có độ dài rất khác nhau (từ hàng nghìn đến hàng trăm nghìn ký tự) và có tiêu chí thành công rõ ràng. Bằng cách sử dụng Kimi K3 (mô hình suy luận, ngữ cảnh gốc ~1 triệu mã thông báo; thử nghiệm này cố tình giới hạn ngân sách ngữ cảnh ở cửa sổ 128K để kích hoạt nén), chúng tôi đã triển khai sáu chiến lược:
+> Chúng tôi thiết kế một nhiệm vụ nghiên cứu: xác định và theo dõi tình trạng nghề nghiệp của người đồng sáng lập OpenAI. Nhiệm vụ này yêu cầu tổng hợp thông tin nhiều bước, nội dung được tìm kiếm trả về có độ dài rất khác nhau (từ hàng nghìn đến hàng trăm nghìn ký tự) và có tiêu chí thành công rõ ràng. Bằng cách sử dụng Kimi K3 (mô hình tư duy, ngữ cảnh gốc ~1 triệu mã thông báo; thử nghiệm này cố tình giới hạn ngân sách ngữ cảnh ở cửa sổ 128K để kích hoạt nén), chúng tôi đã triển khai sáu chiến lược:
 >
 > **Policy 1: Không nén** - Giữ nguyên kết quả ban đầu của tất cả các lệnh gọi công cụ. Nhiều tìm kiếm tích lũy trả về khoảng 367.000 ký tự (7 lệnh gọi công cụ, trung bình mỗi lệnh có khoảng 52.000 ký tự). Đến lần lặp thứ năm, ngữ cảnh tích lũy đã vượt quá giới hạn 128K (khoảng 165.000 mã thông báo), tính năng chống tràn được kích hoạt và tác vụ không thành công. Chỉ cần một vài tìm kiếm là có thể sử dụng hết cửa sổ 128K.
 >

@@ -72,12 +72,12 @@
 
 ## 📦 பின்னிணைப்பு · வெளிப்புற களஞ்சியங்களைப் பெறுதல்
 
-அத்தியாயம் 6, 7, 9, 10-இல் உள்ள benchmark, பயிற்சி framework, ரோபோ தளங்களுக்கான 20 வெளிப்புற களஞ்சியங்கள் **சேர்க்கப்படவில்லை** (அளவு மற்றும் உரிமம் காரணமாக), தாங்களாகவே clone செய்ய வேண்டும்.
+அத்தியாயம் 6, 7, 9, 10-இல் உள்ள benchmark, பயிற்சி framework, ரோபோ தளங்களுக்கான 19 வெளிப்புற களஞ்சியங்கள் **சேர்க்கப்படவில்லை** (அளவு மற்றும் உரிமம் காரணமாக), தாங்களாகவே clone செய்ய வேண்டும்.
 
 ### ஒரே நேரத்தில் clone ச்கிரிப்ட்
 
 <details>
-<summary><b>🔧 clone கட்டளைகளை விரிவாக்கு</b> (20 வெளிப்புற களஞ்சியங்கள்)</summary>
+<summary><b>🔧 clone கட்டளைகளை விரிவாக்கு</b> (19 வெளிப்புற களஞ்சியங்கள்)</summary>
 
 ```bash
 # அத்தியாயம் 6 · மதிப்பீட்டு Benchmarks
@@ -96,7 +96,6 @@ git clone https://github.com/bojieli/AWorld.git                        chapter7/
 git clone https://github.com/bojieli/SFTvsRL.git                       chapter7/SFTvsRL
 git clone https://github.com/bojieli/verl.git                          chapter7/verl
 git clone https://github.com/thinking-machines-lab/tinker-cookbook.git chapter7/tinker-cookbook
-git clone https://github.com/bojieli/lighteval.git                     chapter7/Intuitor/lighteval
 git clone https://github.com/19PINE-AI/rlvp.git                        chapter7/RLVP/rlvp                       # Exp 7-14 RLVP paper code
 git clone https://github.com/PRIME-RL/SimpleVLA-RL.git                 chapter7/SimpleVLA-RL/SimpleVLA-RL       # Exp 7-13 vision-language-action RL
 
@@ -109,7 +108,7 @@ git clone https://github.com/19PINE-AI/TalkAct.git                     chapter10
 git clone https://github.com/joonspk-research/generative_agents.git    chapter10/generative_agents             # Exp 10-7 Stanford AI Town
 ```
 
-> ஏதேனும் திட்ட README குறிப்பிட்ட commit-ஐ குறிப்பிட்டால், மறு உருவாக்கத்திற்கு அந்த பதிப்பிற்கு `git checkout` செய்யவும். அத்தியாயம் 10 `use-computer-while-calling` தனியாக பராமரிக்கப்படும் [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct)-ஆக வளர்ந்துள்ளது; இந்த களஞ்சியம் அதை நோக்கிய ஆவணத்தை மட்டும் வைத்துள்ளது.
+> ஏதேனும் திட்ட README குறிப்பிட்ட commit-ஐ குறிப்பிட்டால், மறு உருவாக்கத்திற்கு அந்த பதிப்பிற்கு `git checkout` செய்யவும். அத்தியாயம் 10 `use-computer-while-calling` தனியாக பராமரிக்கப்படும் [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct)-ஆக வளர்ந்துள்ளது; இந்த களஞ்சியம் அந்த அடைவை உள்ளடக்காது—மேலே உள்ள clone கட்டளையைப் பயன்படுத்தி அதைப் பெறவும்.
 
 </details>
 
@@ -122,7 +121,7 @@ git clone https://github.com/joonspk-research/generative_agents.git    chapter10
 | 6-2 / 6-3 / 6-4 / 6-9 | 📝 வாசகர் பயிற்சி | மனித benchmark, நினைவக மதிப்பீடு, JSON Cards vs RAG, நினைவக தேர்வு — அத்தியாயம் 3 `user-memory` / `user-memory-evaluation` / `contextual-retrieval` மாற்றியமைத்தல் |
 | 5-12 | 📝 வாசகர் பயிற்சி | ஏஜென்ட்களை உருவாக்கும் ஏஜென்ட் — `chapter5/coding-agent`-இலிருந்து bootstrap |
 | 7-8 | 📝 வாசகர் பயிற்சி | Prompt distillation — `chapter8/prompt-distillation` பார்க்கவும் (அத்தியாயங்களுக்கு இடையே மறுபயன்பாடு) |
-| 7-9 | 📝 வாசகர் பயிற்சி | CoT distillation `[நீட்டிப்பு]` — புத்தகத்தில் வடிவமைப்பு மற்றும் ஏற்பு அளவுகோல்கள், தனி குறியீடு இல்லை |
+| 7-9 | 📝 வாசகர் பயிற்சி | CoT distillation `[நீட்டிப்பு]` — துணை செயலாக்கம் `chapter7/cot-distillation`-இல் (SFT தரவு உருவாக்கம் மற்றும் விதி சரிபார்ப்பாளர் உட்பட) |
 | 6-11 | 🤖 சோதனை மதிப்பீடு | OpenVLA + RoboTwin2 — VLA training/env சார்புகளுக்கு `chapter7/SimpleVLA-RL` README பார்க்கவும் |
 | 9-8 / 9-9 | 🔧 உண்மையான வன்பொருள் | XLeRobot teleoperation மற்றும் LLM Agent control — SO-100 arm தேவை, [Teleop](https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html) · [LLM Agent](https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html) |
 | 9-10 | 🔧 உண்மையான வன்பொருள் | RGB zero-shot Sim2Real grasping — [`StoneT2000/lerobot-sim2real`](https://github.com/StoneT2000/lerobot-sim2real) (சோதனை pure GPU-இல்; வரிசைப்படுத்த SO-100 தேவை) |
