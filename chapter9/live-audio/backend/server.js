@@ -750,7 +750,7 @@ class ConnectionHandler {
           url: config.TTS_API_URL,
           data: {
             "model": (config.TTS_PROVIDERS?.[config.TTS_PROVIDER]?.model) || "FunAudioLLM/CosyVoice2-0.5B",
-            "input": text,
+            "input": processedText,
             "voice": (config.TTS_PROVIDERS?.[config.TTS_PROVIDER]?.voice) || "FunAudioLLM/CosyVoice2-0.5B:diana",
             "response_format": "mp3",
             "sample_rate": 32000,
