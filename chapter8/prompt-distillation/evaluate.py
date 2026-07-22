@@ -16,14 +16,11 @@ from pathlib import Path
 from typing import List, Dict, Optional
 from collections import defaultdict
 
-from eval_metrics import parse_rate
-
 import torch
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 from tqdm import tqdm
-
 
 
 def load_model(model_path: str, base_model: str = "Qwen/Qwen3-30B-A3B-Instruct-2507"):
@@ -44,11 +41,14 @@ def load_model(model_path: str, base_model: str = "Qwen/Qwen3-30B-A3B-Instruct-2
     
     return model, tokenizer
 
+def compute_parse_rate(predicted: int, total: int) -> float:
+    """Parseable prediction rate; empty total is 0.0 (not ZeroDivisionError)."""
+    return predicted / total if total > 0 else 0.0
+
 
 def format_pred_label(pred_label: Optional[str]) -> str:
     """Display token for progress lines when the model reply is unparseable."""
     return pred_label or "??"
-
 
 def parse_language_label(response: str) -> Optional[str]:
     """Extract the language label from model response."""
@@ -74,7 +74,6 @@ def parse_language_label(response: str) -> Optional[str]:
         return response
     
     return None
-
 
 def evaluate_model(
     model,
@@ -178,7 +177,6 @@ def evaluate_model(
     
     return results
 
-
 def build_confusion_matrix(predictions: List[str], ground_truth: List[str], 
                            sentences: List[str]) -> Dict:
     """
@@ -251,7 +249,6 @@ def build_confusion_matrix(predictions: List[str], ground_truth: List[str],
         "all_languages_sorted": sorted_languages,  # All languages sorted by accuracy
     }
 
-
 def print_confusion_matrix(confusion_data: Dict):
     """Pretty print confusion matrix and analysis."""
     print("\n" + "="*80)
@@ -320,7 +317,6 @@ def print_confusion_matrix(confusion_data: Dict):
                 print(f"     - Predicted {pred_lang} (should be {lang}): {sentence_preview}")
     
     print("\n" + "="*80)
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -445,7 +441,7 @@ def main():
     print(f"  Total samples: {results['total']}")
     print(f"  Successfully predicted: {results['predicted']}")
     print(f"  Unparseable responses: {results['unparseable']}")
-    rate = parse_rate(results["predicted"], results["total"])
+    rate = compute_parse_rate(results["predicted"], results["total"])
     print(f"  Parse rate: {rate * 100:.2f}%")
     
     if "accuracy" in results:
@@ -464,7 +460,7 @@ def main():
             "total_samples": results["total"],
             "predicted": results["predicted"],
             "unparseable": results["unparseable"],
-            "parse_rate": parse_rate(results["predicted"], results["total"]),
+            "parse_rate": compute_parse_rate(results["predicted"], results["total"]),
         },
         "predictions": results["predictions"],
     }
@@ -523,7 +519,6 @@ def main():
         json.dump(output, f, indent=2, ensure_ascii=False)
     print(f"\n📁 Complete results saved to: {args.output_file}")
     print(f"   Includes: predictions, confusion matrix, per-language stats, error examples")
-
 
 if __name__ == "__main__":
     main()
