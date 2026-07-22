@@ -84,7 +84,7 @@ _RULES = [
     ),
     (
         "github_token", "[REDACTED_GITHUB_TOKEN]",
-        re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}\b"),
+        re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{20,})\b"),
         0, None,
     ),
     (
