@@ -1,8 +1,10 @@
 # 深入理解 AI Agent：設計原理與工程實踐
 
-[![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-%E4%B8%8B%E8%BD%BD-success.svg)](#-電子書) [![Languages](https://img.shields.io/badge/翻譯-5%20種%20語言-informational.svg)](#-電子書)
+[![線上閱讀](https://img.shields.io/badge/🌐_線上閱讀-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/book-zhtw/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-%E4%B8%8B%E8%BC%89-success.svg)](#-電子書) [![Languages](https://img.shields.io/badge/翻譯-5%20種%20語言-informational.svg)](#-電子書)
 
 **[中文](../../README.md) · 中文繁體 ← 當前 · [English](../en/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md)**
+
+> 🌐 **[線上閱讀](https://bojieli.github.io/ai-agent-book/book-zhtw/)** — 支援多語言切換、章節摺疊、全文搜尋、配套實驗直達,每次 main 分支推送後自動重新構建。
 
 **Agent = LLM + 上下文 + 工具**——本書圍繞這個核心公式，用 10 章把 AI Agent 從原理講到工程實戰。全書正文、配圖、**92 個配套實驗**全部開源，歡迎親手把實驗跑一遍。
 

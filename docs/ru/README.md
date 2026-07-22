@@ -1,8 +1,10 @@
 # Глубокое понимание AI Agent: принципы проектирования и инженерная практика
 
-[![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C-success.svg)](#-электронная-книга) [![Languages](https://img.shields.io/badge/переводов-6%20языков-informational.svg)](#-электронная-книга)
+[![Читать онлайн](https://img.shields.io/badge/🌐_Читать_онлайн-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C-success.svg)](#-электронная-книга) [![Languages](https://img.shields.io/badge/переводов-6%20языков-informational.svg)](#-электронная-книга)
 
 **[中文](../../README.md) · [中文繁體](../zh-TW/README.md) · [English](../en/README.md) · Русский ← текущий · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md)**
+
+> 🌐 **[Читать онлайн](https://bojieli.github.io/ai-agent-book/)** — Переключатель языков, сворачиваемое оглавление, полнотекстовый поиск и прямые ссылки на сопутствующие эксперименты. Сайт автоматически перестраивается при каждом пуше в main.
 
 **Агент = LLM + Контекст + Инструменты** — книга строится вокруг этой базовой формулы и за 10 глав ведёт AI Agent от принципов к инженерной практике. Весь текст, иллюстрации и **92 сопутствующих эксперимента** открыты. Приглашаем прогнать эксперименты своими руками.
 

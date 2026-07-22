@@ -1,8 +1,10 @@
 # AI Agents in Depth: Design Principles and Engineering Practice
 
-[![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-download-success.svg)](#-e-book) [![Languages](https://img.shields.io/badge/translations-6%20languages-informational.svg)](#-e-book)
+[![Read online](https://img.shields.io/badge/🌐_Read_online-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/book-en/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-download-success.svg)](#-e-book) [![Languages](https://img.shields.io/badge/translations-6%20languages-informational.svg)](#-e-book)
 
 **[中文](../../README.md) · [中文繁體](../zh-TW/README.md) · English ← current · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md)**
+
+> 🌐 **[Read online](https://bojieli.github.io/ai-agent-book/book-en/)** — Multi-language switcher, collapsible chapter tree, full-text search, and direct links to companion experiments. Auto-rebuilt on every push to main.
 
 **Agent = LLM + Context + Tools** — This book builds on this core formula across 10 chapters, taking AI Agents from principles to engineering practice. The full text, illustrations, and **92 accompanying experiments** are all open source. You are welcome to run the experiments yourself.
 
