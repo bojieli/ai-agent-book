@@ -131,6 +131,7 @@ extra:
     en: { label: English, prefix: book-en/ }
     ta: { label: தமிழ், prefix: book-ta/, suffix: .ta }
     vi: { label: Tiếng Việt, prefix: book-vi/, suffix: .vi }
+    ja: { label: 日本語, prefix: book-ja/, suffix: .ja }
 
 nav:
   # Layout mirrors icyfenix.cn: the left sidebar is a clean chapter tree.

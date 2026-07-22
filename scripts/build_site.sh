@@ -14,7 +14,7 @@ mkdir -p "$DEST"
 cp "$ROOT/index.md" "$DEST/index.md"
 
 # The language editions, each with its images/ subfolder.
-for lang in book book-en book-ta book-vi book-zhtw; do
+for lang in book book-en book-ta book-vi book-zhtw book-ja; do
   mkdir -p "$DEST/$lang"
   cp -R "$ROOT/$lang" "$DEST/"
 done

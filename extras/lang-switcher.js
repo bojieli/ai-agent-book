@@ -15,20 +15,20 @@
   // Keyed by the Chinese label in mkdocs.yml; values per target language.
   // When on a non-default language, sidebar text is replaced from this map.
   var NAV_I18N = {
-    "首页":         { en: "Home",                               ta: "முகப்பு",                          vi: "Trang chủ",        zhtw: "首頁" },
-    "引言":         { en: "Introduction",                       ta: "அறிமுகம்",                          vi: "Giới thiệu",       zhtw: "引言" },
-    "第1章 Agent基础知识": { en: "Chapter 1 · Agent Basics",     ta: "அதி. 1 · AI ஏஜெண்ட் அடிப்படைகள்",     vi: "Chương 1 · Nền tảng AI Agent", zhtw: "第 1 章 · Agent 基礎知識" },
-    "第2章 上下文工程":     { en: "Chapter 2 · Context Engineering", ta: "அதி. 2 · சூழல் பொறியியல்",          vi: "Chương 2 · Kỹ thuật ngữ cảnh",   zhtw: "第 2 章 · 上下文工程" },
-    "第3章 用户记忆和知识库": { en: "Chapter 3 · User Memory & Knowledge Base", ta: "அதி. 3 · பயனர் நினைவகம் & அறிவுத்தளம்", vi: "Chương 3 · Bộ nhớ & Cơ sở kiến thức", zhtw: "第 3 章 · 使用者記憶和知識庫" },
-    "第4章 工具":           { en: "Chapter 4 · Tools",            ta: "அதி. 4 · கருவிகள்",                  vi: "Chương 4 · Công cụ",             zhtw: "第 4 章 · 工具" },
-    "第5章 CodingAgent与代码生成": { en: "Chapter 5 · Coding Agent & Code Generation", ta: "அதி. 5 · குறியீட்டு ஏஜெண்ட் & குறியீடு உருவாக்கம்", vi: "Chương 5 · Coding Agent & Tạo mã", zhtw: "第 5 章 · Coding Agent 與程式碼生成" },
-    "第6章 Agent的评估":    { en: "Chapter 6 · Evaluating Agents", ta: "அதி. 6 · ஏஜெண்ட் மதிப்பீடு",          vi: "Chương 6 · Đánh giá Agent",        zhtw: "第 6 章 · Agent 的評估" },
-    "第7章 模型后训练":     { en: "Chapter 7 · Model Post-Training", ta: "அதி. 7 · மாதிரி பிந்தைய பயிற்சி",  vi: "Chương 7 · Post-training mô hình", zhtw: "第 7 章 · 模型後訓練" },
-    "第8章 Agent的自我进化": { en: "Chapter 8 · Agent Self-Evolution", ta: "அதி. 8 · ஏஜெண்ட் சுய-பரிணாமம்",    vi: "Chương 8 · Tự tiến hóa của Agent",  zhtw: "第 8 章 · Agent 的自我進化" },
-    "第9章 多模态与实时交互": { en: "Chapter 9 · Multimodal & Real-Time", ta: "அதி. 9 · பல்முக & நிகழ்நேரம்",     vi: "Chương 9 · Đa phương thức & Thời gian thực", zhtw: "第 9 章 · 多模態與即時互動" },
-    "第10章 多Agent协作":   { en: "Chapter 10 · Multi-Agent Collaboration", ta: "அதி. 10 · பல-ஏஜெண்ட் ஒத்துழைப்பு", vi: "Chương 10 · Đa Agent cộng tác",  zhtw: "第 10 章 · 多 Agent 協作" },
-    "后记":         { en: "Afterword",                          ta: "பின்னுரை",                          vi: "Lời bạt",            zhtw: "後記" },
-    "思考题参考答案": { en: "Reference Answers",                ta: "பதில் வழிகாட்டி",                    vi: "Đáp án tham khảo",    zhtw: "思考題參考答案" }
+    "首页":         { en: "Home",                               ta: "முகப்பு",                          vi: "Trang chủ",        zhtw: "首頁",        ja: "ホーム" },
+    "引言":         { en: "Introduction",                       ta: "அறிமுகம்",                          vi: "Giới thiệu",       zhtw: "引言",        ja: "はじめに" },
+    "第1章 Agent基础知识": { en: "Chapter 1 · Agent Basics",     ta: "அதி. 1 · AI ஏஜெண்ட் அடிப்படைகள்",     vi: "Chương 1 · Nền tảng AI Agent", zhtw: "第 1 章 · Agent 基礎知識", ja: "第1章 · Agent の基礎知識" },
+    "第2章 上下文工程":     { en: "Chapter 2 · Context Engineering", ta: "அதி. 2 · சூழல் பொறியியல்",          vi: "Chương 2 · Kỹ thuật ngữ cảnh",   zhtw: "第 2 章 · 上下文工程", ja: "第2章 · コンテキストエンジニアリング" },
+    "第3章 用户记忆和知识库": { en: "Chapter 3 · User Memory & Knowledge Base", ta: "அதி. 3 · பயனர் நினைவகம் & அறிவுத்தளம்", vi: "Chương 3 · Bộ nhớ & Cơ sở kiến thức", zhtw: "第 3 章 · 使用者記憶和知識庫", ja: "第3章 · ユーザーメモリと知識ベース" },
+    "第4章 工具":           { en: "Chapter 4 · Tools",            ta: "அதி. 4 · கருவிகள்",                  vi: "Chương 4 · Công cụ",             zhtw: "第 4 章 · 工具", ja: "第4章 · ツール" },
+    "第5章 CodingAgent与代码生成": { en: "Chapter 5 · Coding Agent & Code Generation", ta: "அதி. 5 · குறியீட்டு ஏஜெண்ட் & குறியீடு உருவாக்கம்", vi: "Chương 5 · Coding Agent & Tạo mã", zhtw: "第 5 章 · Coding Agent 與程式碼生成", ja: "第5章 · Coding Agent とコード生成" },
+    "第6章 Agent的评估":    { en: "Chapter 6 · Evaluating Agents", ta: "அதி. 6 · ஏஜெண்ட் மதிப்பீடு",          vi: "Chương 6 · Đánh giá Agent",        zhtw: "第 6 章 · Agent 的評估", ja: "第6章 · Agent の評価" },
+    "第7章 模型后训练":     { en: "Chapter 7 · Model Post-Training", ta: "அதி. 7 · மாதிரி பிந்தைய பயிற்சி",  vi: "Chương 7 · Post-training mô hình", zhtw: "第 7 章 · 模型後訓練", ja: "第7章 · モデルのポストトレーニング" },
+    "第8章 Agent的自我进化": { en: "Chapter 8 · Agent Self-Evolution", ta: "அதி. 8 · ஏஜெண்ட் சுய-பரிணாமம்",    vi: "Chương 8 · Tự tiến hóa của Agent",  zhtw: "第 8 章 · Agent 的自我進化", ja: "第8章 · Agent の自己進化" },
+    "第9章 多模态与实时交互": { en: "Chapter 9 · Multimodal & Real-Time", ta: "அதி. 9 · பல்முக & நிகழ்நேரம்",     vi: "Chương 9 · Đa phương thức & Thời gian thực", zhtw: "第 9 章 · 多模態與即時互動", ja: "第9章 · マルチモーダルとリアルタイム対話" },
+    "第10章 多Agent协作":   { en: "Chapter 10 · Multi-Agent Collaboration", ta: "அதி. 10 · பல-ஏஜெண்ட் ஒத்துழைப்பு", vi: "Chương 10 · Đa Agent cộng tác",  zhtw: "第 10 章 · 多 Agent 協作", ja: "第10章 · マルチ Agent 協調" },
+    "后记":         { en: "Afterword",                          ta: "பின்னுரை",                          vi: "Lời bạt",            zhtw: "後記",        ja: "あとがき" },
+    "思考题参考答案": { en: "Reference Answers",                ta: "பதில் வழிகாட்டி",                    vi: "Đáp án tham khảo",    zhtw: "思考題參考答案", ja: "演習問題の解答例" }
   };
 
   // ── helpers ───────────────────────────────────────────────
