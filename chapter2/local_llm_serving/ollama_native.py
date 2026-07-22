@@ -106,7 +106,8 @@ class OllamaNativeAgent:
                 model=self.model,
                 messages=self.conversation_history,
                 tools=tools,
-                options={"temperature": temperature}
+                options={"temperature": temperature},
+                think=True
             )
             
             # Check if model made tool calls
@@ -139,7 +140,8 @@ class OllamaNativeAgent:
                     model=self.model,
                     messages=self.conversation_history,
                     tools=tools,  # IMPORTANT: Keep tools available
-                    options={"temperature": temperature}
+                    options={"temperature": temperature},
+                    think=True
                 )
                 
                 final_content = final_response.get('message', {}).get('content', '')
@@ -201,7 +203,8 @@ class OllamaNativeAgent:
                     messages=self.conversation_history,
                     tools=tools,
                     options={"temperature": temperature},
-                    stream=True
+                    stream=True,
+                    think=True
                 )
                 
                 collected_content = []
@@ -214,7 +217,11 @@ class OllamaNativeAgent:
                 for chunk in stream_response:
                     # Extract message content from chunk
                     message_chunk = chunk.get('message', {})
+                    thinking_chunk = message_chunk.get('thinking', '')
                     content_chunk = message_chunk.get('content', '')
+                    
+                    if thinking_chunk:
+                        yield {"type": "thinking", "content": thinking_chunk}
                     
                     if content_chunk:
                         collected_content.append(content_chunk)
