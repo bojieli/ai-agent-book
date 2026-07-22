@@ -109,7 +109,7 @@ git clone https://github.com/19PINE-AI/TalkAct.git                     chapter10
 git clone https://github.com/joonspk-research/generative_agents.git    chapter10/generative_agents             # 实验 10-7 斯坦福 AI 小镇
 ```
 
-> 各项目 README 如标注了特定 commit，请按说明 `git checkout` 到对应版本以保证复现一致。第 10 章 `use-computer-while-calling` 已发展为独立维护的 [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct)，本仓库只保留指向它的说明文档。
+> 各项目 README 如标注了特定 commit，请按说明 `git checkout` 到对应版本以保证复现一致。第 10 章 `use-computer-while-calling` 已发展为独立维护的 [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct)，本仓库不内置该目录，用上面的克隆命令获取。
 
 </details>
 
