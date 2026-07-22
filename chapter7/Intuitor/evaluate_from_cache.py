@@ -189,7 +189,11 @@ def evaluate_from_parquet(parquet_path: str, verbose: bool = False):
                 continue
         
         # 提取模型输出
-        model_output = sample_data.get('text', [''])[0] if isinstance(sample_data.get('text'), list) else sample_data.get('text', '')
+        text_field = sample_data.get('text', [''])
+        if isinstance(text_field, list):
+            model_output = text_field[0] if text_field else ''
+        else:
+            model_output = text_field if text_field is not None else ''
         
         # 确保 model_output 是字符串
         if isinstance(model_output, bytes):
