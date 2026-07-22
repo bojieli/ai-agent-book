@@ -111,9 +111,10 @@ _RULES = [
         "secret_assignment", "[REDACTED_SECRET]",
         re.compile(
             r"(?i)(?:password|passwd|pwd|secret|token|api[_-]?key|"
-            r"access[_-]?key|auth|credential)[\"']?\s*[=:]\s*[\"']?([^\s\"',}]{4,})"
+            r"access[_-]?key|auth|credential)[\"']?\s*[=:]\s*"
+            r"(?:\"([^\"]{4,})\"|'([^']{4,})'|([^\s\"',}]{4,}))"
         ),
-        1, None,
+        (1, 2, 3), None,
     ),
     (
         "email", "[REDACTED_EMAIL]",
@@ -184,8 +185,13 @@ def sanitize(text: str) -> Tuple[str, List[Dict]]:
     """
     candidates: List[Dict] = []
     for priority, (category, placeholder, pattern, group, validator) in enumerate(_RULES):
+        groups = group if isinstance(group, tuple) else (group,)
         for m in pattern.finditer(text):
-            start, end = m.span(group)
+            start = end = -1
+            for g in groups:
+                start, end = m.span(g)
+                if start >= 0:
+                    break
             if start < 0:  # 该捕获组未参与本次匹配
                 continue
             value = text[start:end]
