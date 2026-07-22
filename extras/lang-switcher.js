@@ -93,7 +93,9 @@
     // URL shapes we have to handle:
     //   /                          → site home
     //   /index.en/                 → English site home
-    //   /book[-lang]/chapterN[.suffix]/  → chapter prose
+    //   /book[-lang]/introduction[.suffix]/ → front matter prose
+    //   /book[-lang]/chapterN[.suffix]/     → chapter prose
+    //   /book[-lang]/afterword[.suffix]/    → back matter prose
     //   /chapterN/                 → experiment index, Chinese (README.md)
     //   /chapterN/README.<readmeSuffix>/ → experiment index, translated
     //   /chapterN/<exp>/           → individual experiment, Chinese only
@@ -118,6 +120,14 @@
       }
 
       var pp = cleanPath.replace(/^\//, "").replace(/\/$/, "");
+
+      // Front/back matter prose: introduction and afterword use the same
+      // prefix/suffix convention as chapters but don't contain a chapterN.
+      var bookPageRe = new RegExp("^" + escapeRe(src.prefix) + "(introduction|afterword)" + escapeRe(src.suffix || "") + "$");
+      var bookPageMatch = pp.match(bookPageRe);
+      if (bookPageMatch) {
+        return "/" + dst.prefix + bookPageMatch[1] + (dst.suffix || "") + "/";
+      }
 
       // Chapter prose: <srcPrefix>chapterN[<srcSuffix>]
       // E.g. /book/chapter1/  or  /book-zhtw/chapter1.zhtw/
