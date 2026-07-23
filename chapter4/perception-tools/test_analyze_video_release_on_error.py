@@ -10,29 +10,41 @@ import json
 import os
 import sys
 import types
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+import cv2
+import numpy as np
+import pytest
 
-# Optional runtime deps for importing the chapter module in unit tests.
-sys.modules.setdefault("dotenv", types.SimpleNamespace(load_dotenv=lambda: None))
-mcp = types.ModuleType("mcp")
-mcp_types = types.ModuleType("mcp.types")
+SRC = os.path.join(os.path.dirname(__file__), "src")
 
 
-class TextContent:
+class _TextContent:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
 
-mcp_types.TextContent = TextContent
-sys.modules["mcp"] = mcp
-sys.modules["mcp.types"] = mcp_types
+@pytest.fixture
+def media_processing_tools(monkeypatch):
+    """Import the chapter module with its optional runtime deps stubbed only for
+    the duration of the test. monkeypatch restores sys.modules / sys.path
+    afterwards, so we never permanently overwrite a real `mcp` / `dotenv` (or
+    leave a partial stub in the global cache for other tests to pick up)."""
+    monkeypatch.syspath_prepend(SRC)
+    monkeypatch.setitem(
+        sys.modules, "dotenv", types.SimpleNamespace(load_dotenv=lambda: None)
+    )
+    mcp = types.ModuleType("mcp")
+    mcp_types = types.ModuleType("mcp.types")
+    mcp_types.TextContent = _TextContent
+    monkeypatch.setitem(sys.modules, "mcp", mcp)
+    monkeypatch.setitem(sys.modules, "mcp.types", mcp_types)
+    # Force a fresh import under the stubs even if another test already imported
+    # the module; monkeypatch restores the original entry on teardown.
+    monkeypatch.delitem(sys.modules, "media_processing_tools", raising=False)
+    import media_processing_tools
 
-import cv2
-import numpy as np
-
-import media_processing_tools
-from media_processing_tools import analyze_video_ai
+    return media_processing_tools
 
 
 class _FakeCapture:
@@ -64,9 +76,12 @@ class _FakeCapture:
         self.released = True
 
 
-def test_analyze_video_ai_releases_capture_when_vision_call_raises(monkeypatch):
+def test_analyze_video_ai_releases_capture_when_vision_call_raises(
+    media_processing_tools, monkeypatch
+):
+    mpt = media_processing_tools
     fake = _FakeCapture()
-    monkeypatch.setattr(media_processing_tools.cv2, "VideoCapture", lambda _path: fake)
+    monkeypatch.setattr(mpt.cv2, "VideoCapture", lambda _path: fake)
 
     def _boom(**kwargs):
         raise RuntimeError("vision backend unavailable")
@@ -74,16 +89,12 @@ def test_analyze_video_ai_releases_capture_when_vision_call_raises(monkeypatch):
     client = types.SimpleNamespace(
         chat=types.SimpleNamespace(completions=types.SimpleNamespace(create=_boom))
     )
-    monkeypatch.setattr(
-        media_processing_tools, "_make_vision_client", lambda: (client, "fake-model")
-    )
+    monkeypatch.setattr(mpt, "_make_vision_client", lambda: (client, "fake-model"))
     # validate_file_path would reject a non-existent path before we reach the
     # capture; stub it to pass the path through unchanged.
-    from pathlib import Path
+    monkeypatch.setattr(mpt, "validate_file_path", lambda p: Path(p))
 
-    monkeypatch.setattr(media_processing_tools, "validate_file_path", lambda p: Path(p))
-
-    result = asyncio.run(analyze_video_ai("some_clip.mp4", num_frames=2))
+    result = asyncio.run(mpt.analyze_video_ai("some_clip.mp4", num_frames=2))
     payload = json.loads(result.text)
 
     assert payload["success"] is False
