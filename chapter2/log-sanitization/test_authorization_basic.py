@@ -23,3 +23,18 @@ def test_bearer_still_redacted():
     assert token not in text
     assert "[REDACTED_BEARER_TOKEN]" in text
     assert any(h["category"] == "bearer_token" for h in hits)
+
+
+def test_english_basic_prose_not_redacted():
+    prose = "Basic knowledge of Python is required."
+    text, hits = sanitize(prose)
+    assert text == prose
+    assert not any(h["category"] == "basic_auth" for h in hits)
+
+
+def test_www_authenticate_basic_realm_not_treated_as_credential():
+    # Challenge header names the scheme; it does not carry the password blob.
+    line = 'WWW-Authenticate: Basic realm="api"'
+    text, hits = sanitize(line)
+    assert text == line
+    assert not any(h["category"] == "basic_auth" for h in hits)

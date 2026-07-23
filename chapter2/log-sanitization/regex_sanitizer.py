@@ -110,7 +110,8 @@ _RULES = [
     ),
     (
         "basic_auth", "[REDACTED_BASIC_AUTH]",
-        re.compile(r"(?i)\bBasic\s+([A-Za-z0-9+/=]{4,})"),
+        # Require Authorization: so English "Basic knowledge …" is not redacted.
+        re.compile(r"(?i)\bAuthorization\s*:\s*Basic\s+([A-Za-z0-9+/=]{4,})"),
         1, None,
     ),
     (
