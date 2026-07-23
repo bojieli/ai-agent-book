@@ -20,7 +20,7 @@
 - [✨ Quick Start](#-quick-start)
 - [📊 Training Process Details](#-training-process-details)
 - [🔍 Important Concept Explanations](#-important-concept-explanations)
-- [⚠️ Notes](#️-notes)
+- [⚠️ Notes](#important-notes)
 - [🌻 Acknowledgments](#-acknowledgments)
 - [📨 Contact](#-contact)
 - [📝 TODO](#-todo)
@@ -297,7 +297,9 @@ Same as Step 1.1 in Option 1.
 
 Same as Step 1.2 in Option 1.
 
-#### Step 2.3: Install RoboTwin 2.0Refer to the official [RoboTwin 2.0 Installation Guide](https://robotwin-platform.github.io/doc/usage/robotwin-install.html#1-dependencies):
+#### Step 2.3: Install RoboTwin 2.0
+
+Refer to the official [RoboTwin 2.0 Installation Guide](https://robotwin-platform.github.io/doc/usage/robotwin-install.html#1-dependencies):
 
 ```bash
 # Install system dependencies
@@ -343,7 +345,7 @@ cd SimpleVLA-RL
 
 # Apply RoboTwin modifications
 bash copy_overwrite_robotwin2.sh <your_robotwin_path> <your_simplevlarl_path>
-# Example: bash copy_overwrite_robotwin2.sh /mnt/petrelfs/SimpleVLA-RL /mnt/petrelfs/RoboTwin
+# Example: bash copy_overwrite_robotwin2.sh /mnt/petrelfs/RoboTwin /mnt/petrelfs/SimpleVLA-RL
 ```
 
 ---
@@ -593,7 +595,7 @@ Training Step i
 ├─ 6. Policy Update (PPO)
 │   ├─ Mini-batch loop
 │   ├─ Calculate policy loss (with clipping)
-```│   ├─ Backpropagation
+│   ├─ Backpropagation
 │   └─ Gradient Clipping and Optimizer Update
 │
 ├─ 7. Validation (every 4 steps)
@@ -953,7 +955,9 @@ Or submit an issue on [GitHub Issues](https://github.com/PRIME-RL/SimpleVLA-RL/i
 
 # 📝 TODO
 
-## Model Support- ✅ Support for OpenVLA and OpenVLA-OFT
+## Model Support
+
+- ✅ Support for OpenVLA and OpenVLA-OFT
 - ⏳ Support for Pi0 fast tokenizer
 - ⏳ Support for more VLA architectures (RT-1, RT-2)
 
@@ -990,7 +994,7 @@ Also, please cite the RoboTwin 2.0 benchmark:
 ```bibtex
 @article{robotwin2025,
   title={RoboTwin 2.0: A Scalable Data Generator and Benchmark with Strong Domain Randomization for Robust Bimanual Robotic Manipulation},
-  author={...},
+  author={Chen, Tianxing and Chen, Zanxin and Chen, Baijun and Cai, Zijian and Liu, Yibin and Li, Zixuan and Liang, Qiwei and Lin, Xianliang and Ge, Yiheng and Gu, Zhenyu and Deng, Weiliang and Guo, Yubin and Nian, Tian and Xie, Xuanbing and Chen, Qiangyu and Su, Kailun and Xu, Tianling and Liu, Guodong and Hu, Mengkang and Gao, Huan-ang and Wang, Kaixuan and Liang, Zhixuan and Qin, Yusen and Yang, Xiaokang and Luo, Ping and Mu, Yao},
   journal={arXiv preprint arXiv:2506.18088},
   year={2025}
 }

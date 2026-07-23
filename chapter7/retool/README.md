@@ -140,7 +140,7 @@ Key training configuration parameters include:
 
 During training, the loss value, learning rate, and execution time for each step are output. A typical training log looks like this:
 
-```
+```text
 step:1 - train/loss:0.8078852891921997 - train/lr(1e-3):0.0002702702702702703 - train/time(s):14.796027898788452
 step:2 - train/loss:0.7787683010101318 - train/lr(1e-3):0.0005405405405405405 - train/time(s):7.293778896331787
 step:3 - train/loss:0.7899439334869385 - train/lr(1e-3):0.0008108108108108109 - train/time(s):6.083798885345459
@@ -150,7 +150,7 @@ It can be observed that the initial step takes longer due to various initializat
 
 By the 3rd epoch, the loss has significantly decreased:
 
-```
+```text
 step:127 - train/loss:0.1943996697664261 - train/lr(1e-3):0.00832235736719411 - train/time(s):6.062393665313721
 step:128 - train/loss:0.1821298599243164 - train/lr(1e-3):0.008287170670328432 - train/time(s):6.20814323425293
 ```
@@ -163,7 +163,7 @@ Based on actual testing, with an 8x H200 GPU configuration, each step takes appr
 
 After training completes, the terminal outputs a summary. You can click the wandb link to view detailed training information.
 
-```
+```text
 Total time for train steps: 2627.97s
 Final validation metrics: {'val/loss': 0.019425522536039352}
 Epoch 6/6:  98%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎  | 61/62 [09:53<00:09,  9.73s/it]
@@ -258,7 +258,7 @@ curl 'http://localhost:8080/run_code' \
 
 If the service is running correctly, it will output the following result.
 
-```
+```json
 {"status":"Success","message":"","compile_result":null,"run_result":{"status":"Finished","execution_time":0.2835578918457031,"return_code":0,"stdout":"Expression: x**2 + 2*x + 1\nFactored: (x + 1)**2\nSolution to x^2 - 4 = 0: [-2, 2]\nDerivative of x^3 + 2x^2 + x: 3*x**2 + 4*x + 1\nIntegral of x^2: x**3/3\n\nSympy test completed successfully!\n","stderr":""},"executor_pod_name":null,"files":{}}
 ```
 
@@ -342,7 +342,7 @@ Through the wandb interface, you can visualize the change curves of these metric
 
 During RL training, you can observe the real-time interaction between the model and the SandboxFusion code sandbox. The training logs clearly show the complete cycle of the model generating code, the sandbox executing it, and returning results. Below is a typical log output from the SandboxFusion service during training:
 
-```
+````text
 2025-10-01 08:10:56 [debug] start processing python request with code ```
 import math
 
@@ -381,7 +381,7 @@ print(f"z = {z}")
 ``` and files []...(memory_limit: 1024MB) [sandbox.server.sandbox_api]
 2025-10-01 08:11:07 [debug] running command python /tmp/tmpbk3a7frj/tmp12g7qyuf.py [sandbox.runners.base]
 2025-10-01 08:11:07 [debug] stop running command python /tmp/tmpbk3a7frj/tmp12g7qyuf.py [sandbox.runners.base]
-```
+````
 
 These logs illustrate several important characteristics of RL training. First, the model generates diverse code snippets when handling different types of math problems, ranging from simple numerical calculations (using the `math` module) to complex algorithm implementations (using standard libraries like `itertools`). Second, each code request is executed in an isolated temporary directory, ensuring the security and independence of the execution environment. The sandbox creates unique temporary files for each execution (e.g., `tmp1y8y74j1.py`) and cleans them up immediately after execution, preventing state contamination.
 
@@ -393,7 +393,7 @@ Notably, each code request has a memory limit set (memory_limit: 1024MB), which 
 
 When RL training starts, the system outputs detailed initialization and verification information. First, the AgentLoopWorker initialization log shows the configuration of the code interpreter tool:
 
-```
+````text
 (AgentLoopWorker pid=235550) Performing class-level ToolAgentLoop initialization [repeated 7x across cluster]
 (AgentLoopWorker pid=235550) {
 (AgentLoopWorker pid=235550)   "type": "function",
@@ -413,13 +413,13 @@ When RL training starts, the system outputs detailed initialization and verifica
 (AgentLoopWorker pid=235550)   }
 (AgentLoopWorker pid=235550) }
 (AgentLoopWorker pid=235550) Initialized tools: {'code_interpreter': <recipe.retool.retool.CustomSandboxFusionTool object at 0x7b4207c44c20>}
-```
+````
 
 These logs indicate that the system is initializing 8 AgentLoopWorkers (corresponding to 8 GPUs), each configured with the same code interpreter tool. The tool definition uses a standard function-calling format, including the tool name, description, and parameter specification. "repeated 7x across cluster" indicates that this initialization process is repeated across the 7 worker processes other than the main process, ensuring configuration consistency across all processes in distributed training.
 
 Next is the initial validation phase (val_before_train), which is a baseline performance evaluation before RL training. The system generates multiple responses (30) on the AIME 2025 validation set and calculates various statistical metrics:
 
-```
+```text
 (TaskRunner pid=221183) Initial validation metrics:
   'val-core/aime_2025/acc/mean@30': 0.1856 (average accuracy 18.56%)
   'val-core/aime_2025/acc/best@30/mean': 0.6362 (best answer accuracy 63.62%)
@@ -447,7 +447,7 @@ During generation, the system uses the vllm inference engine, configured with in
 
 Tool call decoding errors may occur during training, which is normal:
 
-```
+```text
 (AgentLoopWorker pid=235547) ERROR:2025-10-01 08:14:21,179:Failed to decode tool call: Invalid \escape: line 2 column 135 (char 135)
 (AgentLoopWorker pid=235547) ERROR:2025-10-01 08:14:28,934:Failed to decode tool call: Extra data: line 2 column 228 (char 228)
 (AgentLoopWorker pid=235548) ERROR:2025-10-01 08:15:37,582:Failed to decode tool call: Invalid \escape: line 2 column 480 (char 480)

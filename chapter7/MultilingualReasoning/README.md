@@ -133,7 +133,7 @@ print(conversation)
 
 #### Formatting Example
 
-```
+```text
 <|start|>system<|message|>You are ChatGPT, a large language model trained by OpenAI.
 Knowledge cutoff: 2024-06
 Current date: 2025-10-03
@@ -261,7 +261,7 @@ The following examples show how the model performs multilingual reasoning using 
 
 This example demonstrates cross-lingual reasoning ability: the user asks in Spanish, the model thinks in German, and then answers in English.
 
-```
+```text
 Generating response...
 Reasoning language: German
 User question: ¿Cuál es el capital de Australia?
@@ -270,7 +270,17 @@ User question: ¿Cuál es el capital de Australia?
 Knowledge cutoff: 2024-06
 Current date: 2025-10-03
 
-Reasoning: medium### 🌏 Important Note on Chinese Reasoning
+Reasoning: medium
+
+# Valid channels: analysis, commentary, final. Channel must be included for every message.<|end|><|start|>developer<|message|># Instructions
+
+reasoning language: German
+
+<|end|><|start|>user<|message|>¿Cuál es el capital de Australia?<|end|><|start|>assistant<|channel|>analysis<|message|>Okay, der Benutzer fragt nach der Hauptstadt von Australien. Die Hauptstadt Australiens ist Canberra, nicht Sydney oder Melbourne. Ich sollte die direkte Frage klar und präzise beantworten.<|end|><|start|>assistant<|channel|>final<|message|>The capital of Australia is Canberra.<|return|>
+--------------------------------------------------------------------------------
+```
+
+### 🌏 Important Note on Chinese Reasoning
 
 **⚠️ Zero-shot Generalization Demonstration**
 
@@ -419,7 +429,10 @@ messages = [
 
 # Output (formatted text)
 <|start|>system<|message|>You are ChatGPT...
-<|start|>developer<|message|>reasoning language: Chinese<|end|>This process includes:
+<|start|>developer<|message|>reasoning language: Chinese<|end|>
+```
+
+This process includes:
 - Adding special tokens (`<|start|>`, `<|end|>`, `<|message|>`, `<|channel|>`, etc.)
 - Injecting the default system prompt
 - Correctly handling developer and system messages

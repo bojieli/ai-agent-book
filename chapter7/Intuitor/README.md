@@ -451,11 +451,11 @@ According to the paper, the main evaluation benchmarks are:
 
 | Benchmark | lighteval Task Name | Type | Purpose |
 |------|----------------|------|------|
-| **GSM8K** | `leaderboard|gsm8k|0` | Mathematical Reasoning | In-domain Performance |
-| **MATH500** | `leaderboard|math500|0` | Advanced Mathematics | In-domain Performance |
-| **LiveCodeBench** | `leaderboard|lcb|0` | Code Generation | Out-of-domain Generalization |
-| **CRUXEval-O** | `leaderboard|cruxeval|0` | Code Reasoning | Out-of-domain Generalization |
-| **MMLU-Pro** | `leaderboard|mmlu_pro|0` | General Knowledge | General Capability |
+| **GSM8K** | `leaderboard\|gsm8k\|0` | Mathematical Reasoning | In-domain Performance |
+| **MATH500** | `leaderboard\|math500\|0` | Advanced Mathematics | In-domain Performance |
+| **LiveCodeBench** | `leaderboard\|lcb\|0` | Code Generation | Out-of-domain Generalization |
+| **CRUXEval-O** | `leaderboard\|cruxeval\|0` | Code Reasoning | Out-of-domain Generalization |
+| **MMLU-Pro** | `leaderboard\|mmlu_pro\|0` | General Knowledge | General Capability |
 | **AlpacaEval** | Requires separate tool | Instruction Following | Dialogue Ability |
 
 **Note**: AlpacaEval requires evaluation using its [official tool](https://github.com/tatsu-lab/alpaca_eval), as it needs GPT-4 as a judge.

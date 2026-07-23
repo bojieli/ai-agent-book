@@ -18,7 +18,7 @@
   - [Efficiency vs. Accuracy Trade-off](#efficiency-vs-accuracy-trade-off)
 - [Operation Guide](#operation-guide)
 - [Key Findings](#key-findings)
-- [References](#references)
+- [Reference Resources](#reference-resources)
 
 ---
 
@@ -70,7 +70,7 @@ Where:
 - $\pi_{\text{ref}}$ is the reference model (original reasoning model)
 - $\delta$ is the allowable performance degradation (set to 0.05 in this experiment)
 
-**Core idea**: Maximize reward while ensuring overall performance does not fall below the reference model (allowing a slight degradation $\delta$). Since NoThinking uses fewer tokens, the KL divergence term encourages the model to choose NoThinking when possible.
+**Core idea**: Maximize reward while ensuring overall performance does not fall below the reference model (allowing a slight degradation $\delta$). The separate sampling strategy below exposes the model to both Thinking and NoThinking responses; the constrained objective shown here does not itself include a KL-divergence or token-cost term.
 
 #### 2. Importance Sampling Strategy
 

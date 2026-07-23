@@ -169,7 +169,7 @@ for update in range(self.num_updates):
 
 Even with `save_every: 1` set in the configuration file, training will throw an error:
 
-```
+```text
 TypeError: unsupported operand type(s) for %: 'int' and 'NoneType'
 ```
 
@@ -278,7 +278,9 @@ GPS_TO_PANO="${BASE_DIR}/nyc_1k_routes/gps_pano_mapping.pkl"
 STREETVIEWS="${BASE_DIR}/nyc_1k_routes/street_views/"
 ```
 
-**Expected Output**:```
+**Expected Output**:
+
+```text
 Parsed instruction: ['First, turn right to face north.', ...]
 Collecting Trajectories: 100%|████████| 256/256 [40:25<00:00]
 PPO Training Epoch 0/4: 100%|████████| 256/256 [05:12<00:00]
@@ -539,7 +541,7 @@ env_config:
 
   platform_cfg:
     STREET_VIEW:
-```      SIZE: [640, 640]             # Single street view size
+      SIZE: [640, 640]             # Single street view size
       HEADING: 0                   # Default heading
       PITCH: 0                     # Pitch angle
       FOV: 90                      # Field of view
@@ -582,7 +584,7 @@ def collect_trajectories(self):
             obs_image = convert_to_2x2_grid(obs)  # [2400, 2400, 3]
 
             # VLM forward pass
-            values, io_dict, output_text, action_log_prob = \
+            values, io_dict, output_text, action_log_prob, action_tokens = \
                 actor_critic.act_oneline(
                     inputs=(obs_image, prompt),
                     temperature=0.2,
@@ -601,7 +603,7 @@ def collect_trajectories(self):
             action_log_prob=action_log_prob,
             value=values,
             reward=reward,
-            mask=1-done
+            mask=1-int(done or truncated)
         )
 
         running_reward += reward
@@ -993,7 +995,7 @@ def process_input(self, obs, prompt):
         add_generation_prompt=True
     )
 
-    # 2. Process image + text```python
+    # 2. Process image + text
     inputs = self.processor(
         obs,           # PIL Image
         input_text,    # Formatted prompt
@@ -1013,7 +1015,7 @@ def process_input(self, obs, prompt):
 
 ### 10.5 Vision Encoder Processing Flow
 
-```
+```text
 Input Image (2405×2405×3)
     ↓
 Llama-3.2-Vision Processor
@@ -1315,7 +1317,9 @@ def ppo_update(self, rollouts):
 
     Each epoch iterates over all 256 samples (mini_batch_size=1)
     """
-    advantages = compute_advantages(rollouts)
+    advantages = rollouts.compute_returns(next_value)
+    grad_accum_steps = 128
+    optimizer.zero_grad()
 
     for epoch in range(4):  # ppo_epoch = 4
         for sample_idx in range(256):  # num_steps = 256
@@ -1327,9 +1331,10 @@ def ppo_update(self, rollouts):
             advantage = advantages[sample_idx]
 
             # 2. Re-evaluate (with gradients)
-            new_value, new_action_log_prob = actor_critic.evaluate_actions(
+            new_value, new_action_log_prob, entropy = actor_critic.evaluate_actions(
                 **obs_batch['io_dict']
             )
+            entropy_loss = -entropy.mean()
 
             # 3. Compute probability ratio
             ratio = torch.exp(new_action_log_prob - old_action_log_prob)
@@ -1360,16 +1365,17 @@ def ppo_update(self, rollouts):
                    entropy_loss * entropy_coef)      # 0.01
 
             # 7. Backward & Update
-            accelerator.backward(loss)
+            accelerator.backward(loss / grad_accum_steps)
 
-            if accelerator.sync_gradients:
+            should_step = ((sample_idx + 1) % grad_accum_steps == 0 or
+                           sample_idx + 1 == 256)
+            if should_step:
                 accelerator.clip_grad_norm_(
                     actor_critic.parameters(),
                     max_grad_norm  # 0.01
                 )
-
-            optimizer.step()
-            optimizer.zero_grad()
+                optimizer.step()
+                optimizer.zero_grad()
 ```
 
 ### 11.4 Model Architecture
@@ -1428,7 +1434,7 @@ class VLMPolicy(nn.Module):
         """
         with torch.no_grad():
             # 1. Generation
-```            outputs = self.base.generate(
+            outputs = self.base.generate(
                 **inputs,
                 max_new_tokens=self.max_new_tokens,
                 temperature=self.temperature,
@@ -1595,13 +1601,9 @@ GPU 1:
 
 3. **Optimizer Step**
    ```
-   Each GPU updates its assigned parameter partition:
-   GPU 0: θ[0:N/8] ← θ[0:N/8] - lr × ∂L/∂θ[0:N/8]
-   GPU 1: θ[N/8:2N/8] ← θ[N/8:2N/8] - lr × ∂L/∂θ[N/8:2N/8]
-   ...
-
-   Then All-Gather:
-   All GPUs broadcast their updated parameters to reconstruct the full model
+   Each GPU updates its partition of optimizer states using its gradient
+   partition. Model parameters remain fully replicated on every GPU, and the
+   updated parameter values are synchronized across the data-parallel group.
    ```
 
 **Key Communication Operations**:
@@ -1615,13 +1617,10 @@ GPU 1:
    Time Complexity: O(N/P) where P=8
    ```
 
-2. **All-Gather** (Parameter Reconstruction)
+2. **Parameter Synchronization**
    ```
-   Input: 1/8 of parameters on each GPU
-   Operation: Collect and broadcast
-   Output: Each GPU gets the full parameters
-
-   Time Complexity: O(N/P)
+   ZeRO-2 does not partition model parameters. Each GPU retains a complete
+   parameter replica while optimizer states and gradients are sharded.
    ```
 
 #### 11.5.4 Optimizer Offload Mechanism
@@ -1707,7 +1706,7 @@ downcast_bf16: 'yes'
 | FP16 | 16 | 5 | 10 | ±6.5×10⁴ | Medium |
 
 **Advantages of BF16**:
-- ✓ Memory halved: 22 GB → 11 GB
+- ✓ Memory halved: 44 GB → 22 GB
 - ✓ Computation accelerated: ~2× on H800
 - ✓ Large dynamic range: Same as FP32 (prevents overflow)- ✓ No loss scaling needed (simpler than FP16)
 
@@ -1997,7 +1996,7 @@ PORT=$((RANDOM % 10000 + 1000))
 
 # Data Path (using absolute paths)
 BASE_DIR="/root/SFTvsRL_Data/VIRL_routes"
-```ROUTE_INFO="${BASE_DIR}/nyc_1k_routes/route_infos.json"
+ROUTE_INFO="${BASE_DIR}/nyc_1k_routes/route_infos.json"
 GPS_TO_PANO="${BASE_DIR}/nyc_1k_routes/gps_pano_mapping.pkl"
 STREETVIEWS="${BASE_DIR}/nyc_1k_routes/street_views/"
 
@@ -2239,7 +2238,9 @@ DS_SKIP_CUDA_CHECK=1 accelerate launch \
 
 Based on the paper's Figure 1 and experimental data:
 
-#### 14.1.1 In-Distribution Performance| Model | Per-Step Accuracy | Success Rate |
+#### 14.1.1 In-Distribution Performance
+
+| Model | Per-Step Accuracy | Success Rate |
 |------|-------------------|--------------|
 | SFT | ~85% | ~60% |
 | RL (PPO) | ~90% | ~75% |
@@ -2416,7 +2417,7 @@ Reason: SFT overfitting is too deep; RL cannot correct it
   ```bash
   git clone https://github.com/bojieli/SFTvsRL.git
   ```
-- Detailed explanation in [Section 4.3](#43-official-code-bug-and-fix)
+- Detailed explanation in [Section 4.3](#43-official-code-bugs-and-fixes)
 
 **Q1: Why is RL training so slow?**
 - Requires online interaction with the environment (256 steps × 15 updates = 3,840 interactions)
@@ -2466,7 +2467,8 @@ Confirm the following before running evaluation:
   - [ ] In-Dist & Rule OOD: `/root/SFTvsRL_Data/VIRL_routes/nyc_1k_routes/`
   - [ ] Visual OOD: `/root/SFTvsRL_Data/VIRL_routes/VLN_mini/`
 - [ ] **Modify the evaluation script**:
-  - [ ] Update `CKPT_NAME="train_ckpt/virl_vl/checkpoint-epoch-14"`  - [ ] Confirm `BASE_DIR="/root/SFTvsRL_Data/VIRL_routes"`
+  - [ ] Update `CKPT_NAME="train_ckpt/virl_vl/checkpoint-epoch-14"`
+  - [ ] Confirm `BASE_DIR="/root/SFTvsRL_Data/VIRL_routes"`
   - [ ] Select the correct `ROUTE_INFO` path based on the evaluation type
 
 ---
@@ -3787,7 +3789,7 @@ def compute_returns(self, next_value, gamma=0.9, gae_lambda=0.95):
 #### 11.3.2 PPO Loss 计算代码
 
 ```python
-def ppo_update(self, rollouts):
+def ppo_update(self, rollouts, next_value):
     """
     PPO 训练：4 epochs × 256 samples
     

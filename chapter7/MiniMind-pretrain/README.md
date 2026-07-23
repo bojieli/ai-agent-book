@@ -12,7 +12,7 @@
 > ```
 > This document records the algorithmic improvements (QK-Norm + Muon) and experimental results made on this basis; training requires a GPU, please follow the upstream repository instructions to reproduce.
 
-train tokenizer -> pretraining -> SFT (preference + knowledge distillation) -> RLHF (DPO)
+train tokenizer -> pretraining -> SFT (preference + knowledge distillation) -> Preference Optimization (DPO)
 
 ## The Power of Algorithmic Improvements
 
@@ -372,7 +372,8 @@ MiniMind model parameters: 104.03M (million)
 
 
 👶: How does Lu Xun's "Diary of a Madman" criticize feudal ethics?
-```🤖️: Lu Xun's "Diary of a Madman" is a literary work that opposes feudal ethics. In this work, the protagonist is a mental patient who is given a fate of self-destruction and begins to destroy himself. However, the novel also depicts the cruelty and depravity of feudal ethics. In the novel, Lu Xun uses his critique of feudal ethics to reflect on this system. He believes that feudal ethics is not only a critique of feudal ethics but also a rebellion against society. In the novel, Lu Xun's "Diary of a Madman" criticizes the oppression and enslavement of feudal ethics and raises questions about feudal ethics. He believes that feudal ethics is a corruption of human nature and an exploitation of feudal ethics. In addition, the novel also criticizes the critique of modern culture by feudal ethics. Lu Xun believes that feudal ethics is a kind of "banned book," prohibiting the publication and dissemination of literary works and requiring public plagiarism. This behavior seriously violates the legitimacy of feudal ethics and severely damages the image of feudal ethics. In summary, Lu Xun's "Diary of a Madman" criticizes the oppression and enslavement of feudal ethics and raises questions about feudal ethics. This critique reflects the corruption and moral decay within Chinese feudal society, as well as the critique of modern culture by feudal ethics.
+```
+🤖️: Lu Xun's "Diary of a Madman" is a literary work that opposes feudal ethics. In this work, the protagonist is a mental patient who is given a fate of self-destruction and begins to destroy himself. However, the novel also depicts the cruelty and depravity of feudal ethics. In the novel, Lu Xun uses his critique of feudal ethics to reflect on this system. He believes that feudal ethics is not only a critique of feudal ethics but also a rebellion against society. In the novel, Lu Xun's "Diary of a Madman" criticizes the oppression and enslavement of feudal ethics and raises questions about feudal ethics. He believes that feudal ethics is a corruption of human nature and an exploitation of feudal ethics. In addition, the novel also criticizes the critique of modern culture by feudal ethics. Lu Xun believes that feudal ethics is a kind of "banned book," prohibiting the publication and dissemination of literary works and requiring public plagiarism. This behavior seriously violates the legitimacy of feudal ethics and severely damages the image of feudal ethics. In summary, Lu Xun's "Diary of a Madman" criticizes the oppression and enslavement of feudal ethics and raises questions about feudal ethics. This critique reflects the corruption and moral decay within Chinese feudal society, as well as the critique of modern culture by feudal ethics.
 
 👶: I have had a cough for two weeks. Do I need to go to the hospital for a check-up?
 🤖️: If the cough has persisted for two weeks, the doctor may recommend further examinations. These examinations include hearing tests, lung CT scans, and chest X-rays to assess the condition of the respiratory system. If your cough lasts more than two weeks, the doctor may suggest you go to the hospital for a visit.

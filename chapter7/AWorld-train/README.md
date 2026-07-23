@@ -19,14 +19,14 @@
   - [Important Note on This Educational Experiment](#important-note-on-this-educational-experiment)
   - [Core Features](#core-features)
 - [GAIA Environment Tool Ecosystem](#gaia-environment-tool-ecosystem)
-  - [Web Interaction Tools](#-web-interaction-tools-3-servers-9-tools)
-  - [Document Processing Tools](#-document-processing-tools-5-servers-12-tools)
+  - [Web Interaction Tools](#-web-interaction-tools-3-servers-27-documented-tools)
+  - [Document Processing Tools](#-document-processing-tools-5-servers-9-documented-tools)
   - [Multimedia Processing Tools](#-multimedia-processing-tools-3-servers-12-tools)
   - [Intelligent Reasoning Tools](#-intelligent-reasoning-tools-3-servers-6-tools)
-  - [Code Execution Tools](#-code-execution-tools-3-servers-24-tools)
+  - [Code Execution Tools](#-code-execution-tools-3-servers-15-documented-tools)
   - [File System Tools](#-file-system-tools-1-server-14-tools)
   - [Excel Processing Tools](#-excel-processing-tools-1-server-29-tools)
-  - [Knowledge Retrieval Tools](#-knowledge-retrieval-tools-3-servers-11-tools)
+  - [Knowledge Retrieval Tools](#-knowledge-retrieval-tools-3-servers-15-documented-tools)
   - [Tool Statistics Summary](#tool-statistics-summary)
 - [Core Architecture](#core-architecture)
 - [Quick Start](#quick-start)
@@ -83,7 +83,7 @@ Therefore, this project adopts an education-friendly configuration, using Qwen3-
 
 According to the [paper](https://arxiv.org/abs/2508.20404) and MCP Server implementation, AWorld provides comprehensive tool support for GAIA tasks, totaling **26 MCP servers** and **126 tool functions**. Below is the complete list of tools by category:
 
-### 🌐 Web Interaction Tools (3 Servers, 9 Tools)
+### 🌐 Web Interaction Tools (3 Servers, 27 Documented Tools)
 
 #### 1. Google Search Server (`googlesearch-server`)
 - `search_google`: Perform web searches using the Google Custom Search API
@@ -114,7 +114,7 @@ Provides **23 fine-grained browser control tools**:
 
 ---
 
-### 📄 Document Processing Tools (5 Servers, 12 Tools)
+### 📄 Document Processing Tools (5 Servers, 9 Documented Tools)
 
 #### 4. Documents CSV Server (`documents-csv-server`)
 - `extract_csv_content`: Extract and analyze CSV file content (supports Markdown/JSON output formats)
@@ -185,7 +185,7 @@ Provides **23 fine-grained browser control tools**:
 
 ---
 
-### 💻 Code Execution Tools (3 Servers, 24 Tools)
+### 💻 Code Execution Tools (3 Servers, 15 Documented Tools)
 
 #### 15. Terminal Server (`terminal-server`)
 - `execute_command`: Execute terminal commands (Python, bash, system commands)
@@ -201,7 +201,8 @@ Provides **23 fine-grained browser control tools**:
 **Advantage**: Completely isolated execution environment, preventing malicious code from affecting the main system
 
 #### 17. Terminal Controller (`terminal-controller`)
-Provides **10 advanced terminal management tools**:- `execute_command`, `get_command_history`, `get_current_directory`, `change_directory`
+Provides **10 advanced terminal management tools**:
+- `execute_command`, `get_command_history`, `get_current_directory`, `change_directory`
 - `list_directory`, `write_file`, `read_file`
 - `insert_file_content`, `delete_file_content`, `update_file_content`
 
@@ -247,7 +248,7 @@ Provides enterprise-grade Excel operations:
 
 ---
 
-### 🔍 Knowledge Retrieval Tools (3 Servers, 11 Tools)
+### 🔍 Knowledge Retrieval Tools (3 Servers, 15 Documented Tools)
 
 #### 20. Wikipedia Server (`wiki-server`)
 - `search_wikipedia`: Search Wikipedia entries
@@ -276,7 +277,7 @@ Provides enterprise-grade Excel operations:
 
 ---
 
-### 📥 Other Utility Tools (3 Servers, 3 Tools)
+### 📥 Other Utility Tools (3 Servers, at Least 4 Documented Tools)
 
 #### 23. Download Server (`download-server`)
 - `download_file`: Download a network file to local storage
@@ -295,16 +296,19 @@ Provides enterprise-grade Excel operations:
 
 | Category | Servers | Tools | Key Capabilities |
 |----------|---------|-------|------------------|
-| **Web Interaction** | 3 | 32 | Search, intelligent browsing, fine-grained control |
-| **Document Processing** | 5 | 12 | CSV, Word, PPT, PDF, TXT |
-| **Multimedia** | 5 | 14 | Audio transcription, OCR, image/video analysis |
+| **Web Interaction** | 3 | 27 documented | Search, intelligent browsing, fine-grained control |
+| **Document Processing** | 5 | 9 documented | CSV, Word, PPT, PDF, TXT |
+| **Multimedia** | 5 | 12 | Audio transcription, OCR, image/video analysis |
 | **Intelligent Reasoning** | 3 | 6 | Code generation, complex reasoning, verification |
-| **Code Execution** | 3 | 36 | Terminal commands, sandbox execution, file management |
+| **Code Execution** | 3 | 15 documented | Terminal commands, sandbox execution, file management |
 | **File System** | 1 | 14 | Complete file operation capabilities |
 | **Excel** | 1 | 29 | Enterprise-grade spreadsheet processing |
-| **Knowledge Retrieval** | 3 | 11 | Wikipedia, ArXiv, historical web pages |
-| **Other** | 2 | 3 | File download, webpage reading |
-| **Total** | **26** | **126** | **Covers all capabilities required by GAIA** |
+| **Knowledge Retrieval** | 3 | 15 | Wikipedia, ArXiv, historical web pages |
+| **Other** | 3 | At least 4 documented | File download, webpage reading |
+
+Counts in this table reflect the interfaces explicitly enumerated above. The
+upstream MCP configuration is the source of truth for complete totals,
+especially for servers whose individual interfaces are not listed here.
 
 ### Tool Call Examples (from Training Logs)
 
@@ -424,7 +428,7 @@ OPENAI_API_KEY=sk-your-openai-key
 
 # Google Search API (for googlesearch-server)
 GOOGLE_API_KEY=your-google-api-key
-```GOOGLE_CSE_ID=your-search-engine-id
+GOOGLE_CSE_ID=your-search-engine-id
 
 # E2B API (for code execution sandbox)
 E2B_API_KEY=your-e2b-api-key
@@ -494,7 +498,7 @@ from train.adapter.verl.common import get_agent_tool_env_and_servers
 class GaiaAgentLoop(AworldAgentLoop):
     """Custom Agent Loop for GAIA tasks"""
 
-    def build_agents(self):
+    async def build_agents(self):
         # Get MCP environment configuration and list of available servers
         gaia_env_config, gaia_env_servers = get_agent_tool_env_and_servers()
 
@@ -502,8 +506,8 @@ class GaiaAgentLoop(AworldAgentLoop):
         return Agent(
             conf=AgentConfig(
                 # LLM server address is dynamically managed by VeRL
-                llm_base_url=self.get_llm_server_address(),
-                llm_model_name=self.get_llm_server_model_name(),
+                llm_base_url=await self.get_llm_server_address(),
+                llm_model_name=await self.get_llm_server_model_name(),
                 llm_api_key="dummy",  # No real API key needed for VeRL internal communication
             ),
             name="gaia_super_agent",
@@ -658,7 +662,8 @@ train_files=$DATA_ROOT/datasets/train.parquet
 test_files=$DATA_ROOT/datasets/test.parquet
 
 # ============ Custom Configuration ============
-path_to_train="/root/AWorld/train"agent_loop_config_path=${path_to_train}/examples/train_gaia_with_aworld_verl/agent.yaml
+path_to_train="/root/AWorld/train"
+agent_loop_config_path=${path_to_train}/examples/train_gaia_with_aworld_verl/agent.yaml
 reward_fn_file_path=${path_to_train}/examples/train_gaia_with_aworld_verl/metrics/gaia_reward_function.py
 reward_fn_name=gaia_reward_func
 
@@ -1121,7 +1126,8 @@ def dense_reward_func(data_source, solution_str, ground_truth, extra_info=None):
     num_tool_calls = solution_str.count("Tool call:")
     reward += min(num_tool_calls * 0.1, 0.5)  # Max 0.5 points
 
-    # 2. Reasoning quality reward (based on CoT)    if "<think>" in solution_str and "</think>" in solution_str:
+    # 2. Reasoning quality reward (based on CoT)
+    if "<think>" in solution_str and "</think>" in solution_str:
         reward += 0.2  # Reward for having a reasoning process
 
     # 3. Final answer reward (main score)
