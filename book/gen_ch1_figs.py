@@ -63,7 +63,7 @@ def fig1_4():
     s.text(130, 135, '✗ 无需手写 ReAct 循环', size=FS_SMALL, anchor='middle')
     s.text(130, 160, '✓ 模型自主决策全流程', size=FS_SMALL, anchor='middle')
 
-    s.save(f'{OUT}/fig1-3.svg')  # ReAct 执行过程 → 图1-3
+    s.save(f'{OUT}/fig1-4.svg')  # “模型即 Agent”架构 → 图1-4
 
 
 def fig1_1():
@@ -116,7 +116,7 @@ def fig1_1():
     s.text(410, 455, '学习速度', size=FS_SMALL, fill='text_light')
     s.text(760, 455, '快（毫秒）', size=FS_SMALL, fill='text_light', anchor='end')
 
-    s.save(f'{OUT}/fig1-4.svg')  # 三种学习范式 → 图1-4
+    s.save(f'{OUT}/fig1-1.svg')  # 三种学习范式 → 图1-1
 
 
 def fig1_2():
@@ -171,7 +171,7 @@ def fig1_2():
         s.text(result_x + 80, y + 28, result, size=FS_SMALL,
                fill='text' if '✓' in result else ('text_light' if '△' in result else 'dark'))
 
-    s.save(f'{OUT}/fig1-1.svg')  # 上下文消融实验 → 图1-1
+    s.save(f'{OUT}/fig1-2.svg')  # 上下文消融实验 → 图1-2
 
 
 def fig1_3():
@@ -258,7 +258,7 @@ def fig1_3():
     s.text(685, 500, '结构化轨迹', size=FS_SMALL, bold=True)
     s.text(685, 525, 'user / assistant / tool', size=FS_TINY, fill='text_light')
 
-    s.save(f'{OUT}/fig1-2.svg')  # Agent 轨迹 → 图1-2
+    s.save(f'{OUT}/fig1-3.svg')  # Agent 轨迹 → 图1-3
 
 
 def fig1_wf_chaining():
@@ -308,7 +308,7 @@ def fig1_wf_chaining():
     for sx, txt in snippets:
         s.text(sx, snippet_y, txt, size=FS_TINY, fill='text_light', anchor='start')
 
-    s.save(f'{OUT}/fig1-5.svg')
+    s.save(f'{OUT}/fig1-10.svg')  # 提示链工作流（本章未引用）→ 图1-10
 
 
 def fig1_wf_routing():
@@ -510,7 +510,7 @@ def fig1_5():
     # Done arrow
     s.arrow(330, 312, 330, 358, label='done = True')
 
-    s.save(f'{OUT}/fig1-10.svg')
+    s.save(f'{OUT}/fig1-5.svg')  # 自主 Agent 执行循环 → 图1-5
 
 
 if __name__ == '__main__':

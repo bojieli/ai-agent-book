@@ -63,7 +63,7 @@ def fig1_4():
     s.text(130, 135, '✗ No need to manually write ReAct loop', size=FS_SMALL, anchor='middle')
     s.text(130, 160, '✓ Model autonomously decides the entire process', size=FS_SMALL, anchor='middle')
 
-    s.save(f'{OUT}/fig1-3.svg')  # ReAct execution process → Figure 1-3
+    s.save(f'{OUT}/fig1-4.svg')  # "Model as Agent" architecture → Figure 1-4
 
 
 def fig1_1():
@@ -116,7 +116,7 @@ def fig1_1():
     s.text(410, 455, 'Learning Speed', size=FS_SMALL, fill='text_light')
     s.text(760, 455, 'Fast (Milliseconds)', size=FS_SMALL, fill='text_light', anchor='end')
 
-    s.save(f'{OUT}/fig1-4.svg')  #Three Learning Paradigms → Figure 1-4
+    s.save(f'{OUT}/fig1-1.svg')  # Three Learning Paradigms → Figure 1-1
 
 
 def fig1_2():
@@ -177,7 +177,7 @@ def fig1_2():
         s.text(result_x + 90, y + 28, result, size=FS_SMALL, anchor='middle',
                fill='text' if '✓' in result else ('text_light' if '△' in result else 'dark'))
 
-    s.save(f'{OUT}/fig1-1.svg')  # Context ablation experiment → Figure 1-1
+    s.save(f'{OUT}/fig1-2.svg')  # Context ablation experiment → Figure 1-2
 
 
 def fig1_3():
@@ -264,7 +264,7 @@ def fig1_3():
     s.text(685, 500, 'Structured trajectory', size=FS_SMALL, bold=True)
     s.text(685, 525, 'user / assistant / tool', size=FS_TINY, fill='text_light')
 
-    s.save(f'{OUT}/fig1-2.svg')  # Agent trajectory → Figure 1-2
+    s.save(f'{OUT}/fig1-3.svg')  # Agent trajectory → Figure 1-3
 
 
 def fig1_wf_chaining():
@@ -314,7 +314,7 @@ def fig1_wf_chaining():
     for sx, txt in snippets:
         s.text(sx, snippet_y, txt, size=FS_TINY, fill='text_light', anchor='start')
 
-    s.save(f'{OUT}/fig1-5.svg')
+    s.save(f'{OUT}/fig1-10.svg')  # Prompt chaining workflow (unused in chapter) → Figure 1-10
 
 
 def fig1_wf_routing():
@@ -516,7 +516,7 @@ def fig1_5():
     # Done arrow
     s.arrow(330, 312, 330, 358, label='done = True')
 
-    s.save(f'{OUT}/fig1-10.svg')
+    s.save(f'{OUT}/fig1-5.svg')  # Autonomous Agent execution loop → Figure 1-5
 
 
 if __name__ == '__main__':
