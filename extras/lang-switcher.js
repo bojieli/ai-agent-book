@@ -206,6 +206,24 @@
         }
       }
 
+      // Translate the drawer's per-chapter sub-nav headers. When a chapter
+      // subtree is opened on mobile, Material shows the chapter title again
+      // as <label class="md-nav__title">第2章 …</label>; those labels are
+      // plain text (not .md-nav__link), so the loop above misses them. The
+      // site-name title at the top is not in NAV_I18N and stays untouched.
+      var subTitles = document.querySelectorAll(".md-sidebar--primary .md-nav__title");
+      for (var st = 0; st < subTitles.length; st++) {
+        var stNodes = subTitles[st].childNodes;
+        for (var sn = 0; sn < stNodes.length; sn++) {
+          var node = stNodes[sn];
+          if (node.nodeType !== 3) continue;
+          var key = node.textContent.trim();
+          if (key && NAV_I18N[key] && NAV_I18N[key][targetCode]) {
+            node.textContent = NAV_I18N[key][targetCode];
+          }
+        }
+      }
+
       // Translate the right-sidebar TOC title. Only replace the text node —
       // the label also contains the (mobile-only) back-arrow icon span.
       if (TOC_TITLE[targetCode]) {
