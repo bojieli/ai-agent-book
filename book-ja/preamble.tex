@@ -157,14 +157,23 @@
 % ── Inline code: keep it tight ───────────────────────────────────
 \setlength{\parindent}{2em}
 
-% 本文の日本語フォント：ローカル macOS は Hiragino Mincho ProN / Hiragino Sans、
-% CI（Apple フォントなし）は Noto Serif CJK JP / Noto Sans CJK JP。
-\IfFontExistsTF{Hiragino Mincho ProN}{%
+% 本文の日本語フォント。本書にはコード例や中国語の固有名詞（例: 硅基流动＝SiliconFlow）
+% など簡体字が含まれるため、全 CJK を網羅する Noto Serif/Sans CJK JP を最優先にする。
+% Hiragino Mincho ProN は簡体字（录/输/动 など）を持たず豆腐化するため最後のフォールバック。
+\IfFontExistsTF{Noto Serif CJK JP}{%
+  \setCJKmainfont[AutoFakeBold=2.5]{Noto Serif CJK JP}%
+  \setCJKsansfont[AutoFakeBold=2.5]{Noto Sans CJK JP}%
+  \setCJKmonofont[AutoFakeBold=2.5]{Noto Sans CJK JP}%
+}{\IfFontExistsTF{Noto Sans CJK JP}{%
+  \setCJKmainfont[AutoFakeBold=2.5]{Noto Sans CJK JP}%
+  \setCJKsansfont[AutoFakeBold=2.5]{Noto Sans CJK JP}%
+  \setCJKmonofont[AutoFakeBold=2.5]{Noto Sans CJK JP}%
+}{%
   \setCJKmainfont[AutoFakeBold=2.5]{Hiragino Mincho ProN}%
   \setCJKsansfont[AutoFakeBold=2.5]{Hiragino Sans}%
   \setCJKmonofont[AutoFakeBold=2.5]{Hiragino Mincho ProN}%
-}{%
-  \setCJKmainfont[AutoFakeBold=2.5]{Noto Serif CJK JP}%
-  \setCJKsansfont[AutoFakeBold=2.5]{Noto Sans CJK JP}%
-  \setCJKmonofont[AutoFakeBold=2.5]{Noto Serif CJK JP}%
-}
+}}
+
+% ElegantBook には lang=jp が無いため lang=cn を用いる（CJK 組版に必要）。ただし
+% 目次ラベルだけは中国語「目录」ではなく日本語「目次」に上書きする。
+\AtBeginDocument{\renewcommand{\contentsname}{目次}}
