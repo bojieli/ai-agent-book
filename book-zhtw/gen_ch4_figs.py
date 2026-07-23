@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 """Generate all SVG illustrations for Chapter 4 (工具).
 
-Figures (12 total):
+Figures (11 total):
   fig4-1:  MCP protocol sequence diagram (concrete message payloads)
-  fig4-2:  Sub-Agent context preparation (4 strategies with examples)
-  fig4-3:  Event-driven architecture (real event sources & payloads)
-  fig4-4:  Async event processing (cancellation/queued/parallel timing)
-  fig4-5:  Exp 4.4 — Event-driven agent architecture
-  fig4-6:  Sync-async model contradiction (training vs deployment)
-  fig4-7:  Exp 4.5 — Async agent with interruption
-  fig4-8:  Tool discovery hierarchy (server→tool matching)
-  fig4-9:  KV cache optimization (system prompt stability)
-  fig4-10: Tool self-evolution pipeline (multi-stage)
-  fig4-11: Exp 4.7 — Self-evolving agent pipeline
-  fig4-12: Voyager learning cycle (curriculum + skill library)
+  fig4-2:  Event-driven architecture (real event sources & payloads)
+  fig4-3:  Async event processing (cancellation/queued/parallel timing)
+  fig4-4:  Exp 4.4 — Event-driven agent architecture
+  fig4-5:  Sync-async model contradiction (training vs deployment)
+  fig4-6:  Exp 4.5 — Async agent with interruption
+  fig4-7:  Tool discovery hierarchy (server→tool matching)
+  fig4-8:  KV cache optimization (system prompt stability)
+  fig4-9:  Tool self-evolution pipeline (multi-stage)
+  fig4-10: Exp 4.7 — Self-evolving agent pipeline
+  fig4-11: Voyager learning cycle (curriculum + skill library)
 """
 
 import os
@@ -126,75 +125,6 @@ def fig4_1():
 # ──────────────────────── fig4-2 ────────────────────────
 
 def fig4_2():
-    """Sub-Agent 上下文準備（四策略對比）"""
-    w, h = 880, 530
-    svg = SVG(w, h)
-    svg.text(w / 2, 30, "Sub-Agent 上下文傳遞策略", size=FS_TITLE, bold=True)
-
-    strategies = [
-        ("最小化傳遞", "dark",
-         '"查詢訂單號 12345 的狀態"',
-         "零上下文 → 隱私安全"),
-        ("手動篩選傳遞", "medium",
-         '"使用者地區: 美國\\n摘要: 詢問退款"',
-         "顯式選擇 → 可控"),
-        ("自動裁剪傳遞", "light",
-         '"使用者資訊 + 最近3輪\\n+ 相關工具結果"',
-         "規則驅動 → 平衡"),
-        ("LLM 生成上下文", "code_bg",
-         '"LLM 分析軌跡\\n→ 結構化上下文物件"',
-         "最智慧 → 額外1次呼叫"),
-    ]
-
-    col_w = 190
-    gap = 18
-    start_x = (w - 4 * col_w - 3 * gap) / 2
-
-    # Main Agent at top
-    svg.box(w / 2 - 100, 55, 200, 44, "Main Agent", fill='medium', bold=True)
-    svg.text(w / 2, 118, "如何為 Sub-Agent 準備上下文？", size=FS_SMALL, fill='text_light')
-
-    for i, (title, fill, example, note) in enumerate(strategies):
-        x = start_x + i * (col_w + gap)
-        top_y = 145
-
-        svg.arrow(w / 2, 99, x + col_w / 2, top_y - 2)
-
-        svg.rect(x, top_y, col_w, 36, fill=fill)
-        tc = 'white' if fill in ('dark', 'darker') else 'text'
-        svg.text(x + col_w / 2, top_y + 18, title, size=FS_SMALL, bold=True, fill=tc)
-
-        svg.rect(x, top_y + 46, col_w, 80, fill='code_bg', stroke='dark', rx=4)
-        for j, line in enumerate(example.split('\\n')):
-            svg.mono(x + 8, top_y + 70 + j * 20, line, size=FS_TINY)
-
-        svg.text(x + col_w / 2, top_y + 150, note, size=FS_TINY, fill='text_light')
-
-        svg.box(x + 15, top_y + 175, col_w - 30, 36, "Sub-Agent", fill='light', font_size=FS_SMALL)
-
-    # Bottom: decision guide
-    svg.line(30, 395, w - 30, 395, color='dark', dash=True)
-    svg.text(w / 2, 418, "選擇指南", size=FS_BODY, bold=True)
-
-    guides = [
-        ("簡單高頻呼叫", "查天氣、計算器", "→ 最小化"),
-        ("中等複雜度", "資料查詢、檔案處理", "→ 自動裁剪"),
-        ("複雜任務", "生成報告、客戶服務", "→ LLM 生成"),
-    ]
-    gx = 80
-    for label, example, rec in guides:
-        svg.rect(gx, 438, 230, 70, fill='light')
-        svg.text(gx + 115, 458, label, size=FS_SMALL, bold=True)
-        svg.text(gx + 115, 478, example, size=FS_TINY, fill='text_light')
-        svg.text(gx + 115, 498, rec, size=FS_SMALL, bold=True, fill='darker')
-        gx += 260
-
-    svg.save(os.path.join(OUT, 'fig4-2.svg'))
-
-
-# ──────────────────────── fig4-3 ────────────────────────
-
-def fig4_3():
     """事件驅動架構（具體事件源和載荷）"""
     w, h = 880, 540
     svg = SVG(w, h)
@@ -266,12 +196,12 @@ def fig4_3():
     # Feedback loop
     svg.arrow_curved(ag_x + step_w, 450, ag_x + step_w, 130, curve=-50, label="迴圈", dash=True, color='dark')
 
-    svg.save(os.path.join(OUT, 'fig4-3.svg'))
+    svg.save(os.path.join(OUT, 'fig4-2.svg'))
 
 
-# ──────────────────────── fig4-4 ────────────────────────
+# ──────────────────────── fig4-3 ────────────────────────
 
-def fig4_4():
+def fig4_3():
     """非同步事件處理：三種策略時序對比"""
     w, h = 880, 580
     svg = SVG(w, h)
@@ -345,12 +275,12 @@ def fig4_4():
     svg.text(tl_x0 + tl_w * 0.66, y3 + 82, "→ 立即回覆使用者", size=FS_TINY, fill='text_light')
     svg.text(tl_x0 + tl_w * 0.50, y3 + 115, "標記: [與主任務並行]", size=FS_TINY, fill='text_light')
 
-    svg.save(os.path.join(OUT, 'fig4-4.svg'))
+    svg.save(os.path.join(OUT, 'fig4-3.svg'))
 
 
-# ──────────────────────── fig4-5 ────────────────────────
+# ──────────────────────── fig4-4 ────────────────────────
 
-def fig4_5():
+def fig4_4():
     """實驗 4.4：事件驅動 Agent 架構"""
     w, h = 880, 480
     svg = SVG(w, h)
@@ -428,12 +358,12 @@ def fig4_5():
     for i, item in enumerate(items):
         svg.text(805, 160 + i * 55, item, size=FS_SMALL)
 
-    svg.save(os.path.join(OUT, 'fig4-5.svg'))
+    svg.save(os.path.join(OUT, 'fig4-4.svg'))
 
 
-# ──────────────────────── fig4-6 ────────────────────────
+# ──────────────────────── fig4-5 ────────────────────────
 
-def fig4_6():
+def fig4_5():
     """同步-非同步模型矛盾"""
     w, h = 880, 520
     svg = SVG(w, h)
@@ -503,12 +433,12 @@ def fig4_6():
              "根本解法：下一代模型需在非同步環境中透過 RL 訓練",
              size=FS_SMALL, fill='white', bold=True)
 
-    svg.save(os.path.join(OUT, 'fig4-6.svg'))
+    svg.save(os.path.join(OUT, 'fig4-5.svg'))
 
 
-# ──────────────────────── fig4-7 ────────────────────────
+# ──────────────────────── fig4-6 ────────────────────────
 
-def fig4_7():
+def fig4_6():
     """實驗 4.5：帶打斷能力的非同步 Agent"""
     w, h = 880, 520
     svg = SVG(w, h)
@@ -576,12 +506,12 @@ def fig4_7():
              "關鍵: 佔位符注入 + 非同步完成事件 + cancel_tool(task_id) API",
              size=FS_TINY)
 
-    svg.save(os.path.join(OUT, 'fig4-7.svg'))
+    svg.save(os.path.join(OUT, 'fig4-6.svg'))
 
 
-# ──────────────────────── fig4-8 ────────────────────────
+# ──────────────────────── fig4-7 ────────────────────────
 
-def fig4_8():
+def fig4_7():
     """工具發現層次結構（server→tool 匹配）"""
     w, h = 880, 540
     svg = SVG(w, h)
@@ -647,12 +577,12 @@ def fig4_8():
     svg.rect(180, 468, 520, 30, fill='code_bg', stroke='dark', rx=4)
     svg.mono(190, 483, "返回 Top-3: list_contributors, get_repo_stats, get_commit_history", size=12)
 
-    svg.save(os.path.join(OUT, 'fig4-8.svg'))
+    svg.save(os.path.join(OUT, 'fig4-7.svg'))
 
 
-# ──────────────────────── fig4-9 ────────────────────────
+# ──────────────────────── fig4-8 ────────────────────────
 
-def fig4_9():
+def fig4_8():
     """KV 快取最佳化（系統提示詞穩定性）"""
     w, h = 880, 560
     svg = SVG(w, h)
@@ -733,12 +663,12 @@ def fig4_9():
         svg.text(500, cy, naive, size=FS_TINY, fill='text_light')
         svg.text(740, cy, opt, size=FS_TINY, fill='text_light')
 
-    svg.save(os.path.join(OUT, 'fig4-9.svg'))
+    svg.save(os.path.join(OUT, 'fig4-8.svg'))
 
 
-# ──────────────────────── fig4-10 ────────────────────────
+# ──────────────────────── fig4-9 ────────────────────────
 
-def fig4_10():
+def fig4_9():
     """工具自我進化流水線（多階段）"""
     w, h = 880, 500
     svg = SVG(w, h)
@@ -812,12 +742,12 @@ def fig4_10():
     svg.rect(200, 430, 480, 35, fill='medium')
     svg.text(w / 2, 448, "工具層 + 知識層 + 策略層 → 越用越熟練", size=FS_SMALL, bold=True)
 
-    svg.save(os.path.join(OUT, 'fig4-10.svg'))
+    svg.save(os.path.join(OUT, 'fig4-9.svg'))
 
 
-# ──────────────────────── fig4-11 ────────────────────────
+# ──────────────────────── fig4-10 ────────────────────────
 
-def fig4_11():
+def fig4_10():
     """實驗 4.7：Agent 從網路上尋找工具，自我進化"""
     w, h = 880, 480
     svg = SVG(w, h)
@@ -891,12 +821,12 @@ def fig4_11():
              "跳過搜尋/評估/測試階段 → 成本降低 90%+",
              size=FS_TINY)
 
-    svg.save(os.path.join(OUT, 'fig4-11.svg'))
+    svg.save(os.path.join(OUT, 'fig4-10.svg'))
 
 
-# ──────────────────────── fig4-12 (Voyager, was fig4_voyager) ────────
+# ──────────────────────── fig4-11 (Voyager, was fig4_voyager) ────────
 
-def fig4_12():
+def fig4_11():
     """Voyager 學習迴圈（課程+技能庫+迭代提示）"""
     w, h = 880, 520
     svg = SVG(w, h)
@@ -962,7 +892,7 @@ def fig4_12():
 
     svg.arrow_curved(120, 380, 150, 245, curve=60, label="已有技能", dash=True, color='dark')
 
-    svg.save(os.path.join(OUT, 'fig4-12.svg'))
+    svg.save(os.path.join(OUT, 'fig4-11.svg'))
 
 
 # ──────────────────────── main ────────────────────────
@@ -970,10 +900,10 @@ def fig4_12():
 def main():
     os.makedirs(OUT, exist_ok=True)
     figs = [
-        fig4_1, fig4_2, fig4_3, fig4_4, fig4_5, fig4_6,
-        fig4_7, fig4_8, fig4_9, fig4_10, fig4_11, fig4_12,
+        fig4_1, fig4_2, fig4_3, fig4_4, fig4_5,
+        fig4_6, fig4_7, fig4_8, fig4_9, fig4_10, fig4_11,
     ]
-    # Note: fig4_11 = Exp 4.7 self-evolving agent, fig4_12 = Voyager
+    # Note: fig4_10 = Exp 4.7 self-evolving agent, fig4_11 = Voyager
     # (ordered by chapter appearance)
     for fn in figs:
         fn()

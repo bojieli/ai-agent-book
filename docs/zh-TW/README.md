@@ -48,7 +48,7 @@
 
 | 章 | 主題 | 一句話核心 | 正文 | 程式碼 |
 | :--: | --- | --- | :--: | :--: |
-| 1 | 🚀 **Agent 基礎知識** | 「模型即 Agent」新典範 + **Agent = LLM + 上下文 + 工具**；Harness 工程才是競爭力 | [讀](../../book-zhtw/chapter1.zhtw.md) | [4](../../chapter1/README.zh-TW.md) |
+| 1 | 🚀 **Agent 基礎知識** | **Agent = LLM + 上下文 + 工具**；Harness 工程才是競爭力 | [讀](../../book-zhtw/chapter1.zhtw.md) | [4](../../chapter1/README.zh-TW.md) |
 | 2 | 🎯 **上下文工程** | 上下文決定能力上限：KV Cache、提示工程、Agent Skills、上下文壓縮 | [讀](../../book-zhtw/chapter2.zhtw.md) | [9](../../chapter2/README.zh-TW.md) |
 | 3 | 📚 **使用者記憶和知識庫** | 跨會話記住使用者、接入外部知識：使用者記憶、RAG、結構化索引、知識圖譜 | [讀](../../book-zhtw/chapter3.zhtw.md) | [13](../../chapter3/README.zh-TW.md) |
 | 4 | 🛠️ **工具** | 工具是 Agent 的雙手：MCP 協議、感知/執行/協作三類工具、事件驅動非同步 Agent、主動工具發現 | [讀](../../book-zhtw/chapter4.zhtw.md) | [7](../../chapter4/README.zh-TW.md) |

@@ -1,6 +1,6 @@
 # 第 1 章 · Agent 基础知识
 
-> 「模型即 Agent」新范式 + **Agent = LLM + 上下文 + 工具**；Harness 工程才是竞争力
+> **Agent = LLM + 上下文 + 工具**；Harness 工程才是竞争力
 
 ← [返回主目录](../README.md) · 📖 [读本章正文](../book/chapter1.md)
 

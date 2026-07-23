@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """Generate all SVG illustrations for Chapter 4 (Tools).
 
-Figures (12 total):
+Figures (11 total):
   fig4-1:  MCP protocol sequence diagram (concrete message payloads)
-  fig4-2:  Sub-Agent context preparation (4 strategies with examples)
-  fig4-3:  Event-driven architecture (real event sources & payloads)
-  fig4-4:  Async event processing (cancellation/queued/parallel timing)
-  fig4-5:  Exp 4.4 — Event-driven agent architecture
-  fig4-6:  Sync-async model contradiction (training vs deployment)
-  fig4-7:  Exp 4.5 — Async agent with interruption
-  fig4-8:  Tool discovery hierarchy (server→tool matching)
-  fig4-9:  KV cache optimization (system prompt stability)
-  fig4-10: Tool self-evolution pipeline (multi-stage)
+  fig4-2:  Event-driven architecture (real event sources & payloads)
+  fig4-3:  Async event processing (cancellation/queued/parallel timing)
+  fig4-4:  Exp 4.4 — Event-driven agent architecture
+  fig4-5:  Sync-async model contradiction (training vs deployment)
+  fig4-6:  Exp 4.5 — Async agent with interruption
+  fig4-7:  Tool discovery hierarchy (server→tool matching)
+  fig4-8:  KV cache optimization (system prompt stability)
+  fig4-9: Tool self-evolution pipeline (multi-stage)
   fig4-11: Exp 4.7 — Self-evolving agent pipeline
   fig4-12: Voyager learning cycle (curriculum + skill library)
 """
@@ -126,75 +125,6 @@ def fig4_1():
 # ──────────────────────── fig4-2 ────────────────────────
 
 def fig4_2():
-    """Sub-Agent context preparation (comparison of 4 strategies)"""
-    w, h = 880, 530
-    svg = SVG(w, h)
-    svg.text(w / 2, 30, "Sub-Agent へのコンテキスト受け渡し戦略", size=FS_TITLE, bold=True)
-
-    strategies = [
-        ("最小限の受け渡し", "dark",
-         '"注文番号 12345 のステータスを照会"',
-         "コンテキストゼロ → プライバシーとセキュリティ"),
-        ("手動でのフィルタリングと受け渡し", "medium",
-         '"ユーザー地域: US\\n要約: 返金に関する問い合わせ"',
-         "明示的な選択 → 制御可能"),
-        ("自動トリミングと受け渡し", "light",
-         '"ユーザー情報 + 直近3ターン\\n+ 関連するツール結果"',
-         "ルール駆動 → バランス型"),
-        ("LLM 生成コンテキスト", "code_bg",
-         '"LLM が軌跡を分析\\n→ 構造化コンテキストオブジェクト"',
-         "最も高度 → 呼び出し1回追加"),
-    ]
-
-    col_w = 190
-    gap = 18
-    start_x = (w - 4 * col_w - 3 * gap) / 2
-
-    # Main Agent at top
-    svg.box(w / 2 - 100, 55, 200, 44, "メイン Agent", fill='medium', bold=True)
-    svg.text(w / 2, 118, "Sub-Agent 用のコンテキストをどう準備するか？", size=FS_SMALL, fill='text_light')
-
-    for i, (title, fill, example, note) in enumerate(strategies):
-        x = start_x + i * (col_w + gap)
-        top_y = 145
-
-        svg.arrow(w / 2, 99, x + col_w / 2, top_y - 2)
-
-        svg.rect(x, top_y, col_w, 36, fill=fill)
-        tc = 'white' if fill in ('dark', 'darker') else 'text'
-        svg.text(x + col_w / 2, top_y + 18, title, size=FS_SMALL, bold=True, fill=tc)
-
-        svg.rect(x, top_y + 46, col_w, 80, fill='code_bg', stroke='dark', rx=4)
-        for j, line in enumerate(example.split('\\n')):
-            svg.mono(x + 8, top_y + 70 + j * 20, line, size=FS_TINY)
-
-        svg.text(x + col_w / 2, top_y + 150, note, size=FS_TINY, fill='text_light')
-
-        svg.box(x + 15, top_y + 175, col_w - 30, 36, "Sub-Agent", fill='light', font_size=FS_SMALL)
-
-    # Bottom: decision guide
-    svg.line(30, 395, w - 30, 395, color='dark', dash=True)
-    svg.text(w / 2, 418, "選択ガイド", size=FS_BODY, bold=True)
-
-    guides = [
-        ("単純で高頻度の呼び出し", "天気確認、電卓", "→ 最小限"),
-        ("中程度の複雑さ", "データ照会、ファイル処理", "→ 自動トリミング"),
-        ("複雑なタスク", "レポート生成、カスタマーサービス", "→ LLM 生成"),
-    ]
-    gx = 80
-    for label, example, rec in guides:
-        svg.rect(gx, 438, 230, 70, fill='light')
-        svg.text(gx + 115, 458, label, size=FS_SMALL, bold=True)
-        svg.text(gx + 115, 478, example, size=FS_TINY, fill='text_light')
-        svg.text(gx + 115, 498, rec, size=FS_SMALL, bold=True, fill='darker')
-        gx += 260
-
-    svg.save(os.path.join(OUT, 'fig4-2.svg'))
-
-
-# ──────────────────────── fig4-3 ────────────────────────
-
-def fig4_3():
     """Event-driven architecture (specific event source and payload)"""
     w, h = 880, 540
     svg = SVG(w, h)
@@ -266,12 +196,12 @@ def fig4_3():
     # Feedback loop
     svg.arrow_curved(ag_x + step_w, 450, ag_x + step_w, 130, curve=45, label="ループ", dash=True, color='dark')
 
-    svg.save(os.path.join(OUT, 'fig4-3.svg'))
+    svg.save(os.path.join(OUT, 'fig4-2.svg'))
 
 
-# ──────────────────────── fig4-4 ────────────────────────
+# ──────────────────────── fig4-3 ────────────────────────
 
-def fig4_4():
+def fig4_3():
     """Async event handling: timing comparison of three strategies"""
     w, h = 880, 580
     svg = SVG(w, h)
@@ -345,12 +275,12 @@ def fig4_4():
     svg.text(tl_x0 + tl_w * 0.635, y3 + 82, "→ ユーザーへ即座に返信", size=FS_TINY, fill='text_light', anchor='start')
     svg.text(tl_x0 + tl_w * 0.50, y3 + 115, "タグ: [メインタスクと並列]", size=FS_TINY, fill='text_light')
 
-    svg.save(os.path.join(OUT, 'fig4-4.svg'))
+    svg.save(os.path.join(OUT, 'fig4-3.svg'))
 
 
-# ──────────────────────── fig4-5 ────────────────────────
+# ──────────────────────── fig4-4 ────────────────────────
 
-def fig4_5():
+def fig4_4():
     """Experiment 4.4: Event-driven Agent Architecture"""
     w, h = 880, 480
     svg = SVG(w, h)
@@ -428,12 +358,12 @@ def fig4_5():
     for i, item in enumerate(items):
         svg.text(805, 160 + i * 55, item, size=FS_SMALL)
 
-    svg.save(os.path.join(OUT, 'fig4-5.svg'))
+    svg.save(os.path.join(OUT, 'fig4-4.svg'))
 
 
-# ──────────────────────── fig4-6 ────────────────────────
+# ──────────────────────── fig4-5 ────────────────────────
 
-def fig4_6():
+def fig4_5():
     """sync-async model contradiction"""
     w, h = 880, 520
     svg = SVG(w, h)
@@ -503,12 +433,12 @@ def fig4_6():
              "根本的な解決策: 次世代モデルは非同期環境で RL によって学習させる必要がある",
              size=FS_SMALL, fill='white', bold=True)
 
-    svg.save(os.path.join(OUT, 'fig4-6.svg'))
+    svg.save(os.path.join(OUT, 'fig4-5.svg'))
 
 
-# ──────────────────────── fig4-7 ────────────────────────
+# ──────────────────────── fig4-6 ────────────────────────
 
-def fig4_7():
+def fig4_6():
     """Experiment 4.5: Asynchronous Agent with Interruption Capability"""
     w, h = 880, 520
     svg = SVG(w, h)
@@ -576,12 +506,12 @@ def fig4_7():
              "要点: プレースホルダー注入 + 非同期完了イベント + cancel_tool(task_id) API",
              size=FS_TINY)
 
-    svg.save(os.path.join(OUT, 'fig4-7.svg'))
+    svg.save(os.path.join(OUT, 'fig4-6.svg'))
 
 
-# ──────────────────────── fig4-8 ────────────────────────
+# ──────────────────────── fig4-7 ────────────────────────
 
-def fig4_8():
+def fig4_7():
     """Tool discovery hierarchy (server→tool matching)"""
     w, h = 880, 540
     svg = SVG(w, h)
@@ -647,12 +577,12 @@ def fig4_8():
     svg.rect(180, 468, 520, 30, fill='code_bg', stroke='dark', rx=4)
     svg.mono(190, 483, "Top-3 を返却: list_contributors, get_repo_stats, get_commit_history", size=12)
 
-    svg.save(os.path.join(OUT, 'fig4-8.svg'))
+    svg.save(os.path.join(OUT, 'fig4-7.svg'))
 
 
-# ──────────────────────── fig4-9 ────────────────────────
+# ──────────────────────── fig4-8 ────────────────────────
 
-def fig4_9():
+def fig4_8():
     """KV Cache Optimization (System Prompt Stability)"""
     w, h = 880, 560
     svg = SVG(w, h)
@@ -733,12 +663,12 @@ def fig4_9():
         svg.text(500, cy, naive, size=FS_TINY, fill='text_light')
         svg.text(740, cy, opt, size=FS_TINY, fill='text_light')
 
-    svg.save(os.path.join(OUT, 'fig4-9.svg'))
+    svg.save(os.path.join(OUT, 'fig4-8.svg'))
 
 
-# ──────────────────────── fig4-10 ────────────────────────
+# ──────────────────────── fig4-9 ────────────────────────
 
-def fig4_10():
+def fig4_9():
     """Tool Self-Evolution Pipeline (Multi-Stage)"""
     w, h = 880, 500
     svg = SVG(w, h)
@@ -812,7 +742,7 @@ def fig4_10():
     svg.rect(200, 430, 480, 35, fill='medium')
     svg.text(w / 2, 448, "ツール層 + 知識層 + 戦略層 → 使うほど熟練", size=FS_SMALL, bold=True)
 
-    svg.save(os.path.join(OUT, 'fig4-10.svg'))
+    svg.save(os.path.join(OUT, 'fig4-9.svg'))
 
 
 # ──────────────────────── fig4-11 ────────────────────────
@@ -970,8 +900,8 @@ def fig4_12():
 def main():
     os.makedirs(OUT, exist_ok=True)
     figs = [
-        fig4_1, fig4_2, fig4_3, fig4_4, fig4_5, fig4_6,
-        fig4_7, fig4_8, fig4_9, fig4_10, fig4_11, fig4_12,
+        fig4_1, fig4_2, fig4_3, fig4_4, fig4_5,
+        fig4_6, fig4_7, fig4_8, fig4_9, fig4_11, fig4_12,
     ]
     # Note: fig4_11 = Exp 4.7 self-evolving agent, fig4_12 = Voyager
     # (ordered by chapter appearance)

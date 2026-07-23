@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 """Generate all SVG illustrations for Chapter 4 (Tools).
 
-Figures (12 total):
+Figures (11 total):
   fig4-1:  MCP protocol sequence diagram (concrete message payloads)
-  fig4-2:  Sub-Agent context preparation (4 strategies with examples)
-  fig4-3:  Event-driven architecture (real event sources & payloads)
-  fig4-4:  Async event processing (cancellation/queued/parallel timing)
-  fig4-5:  Exp 4.4 — Event-driven agent architecture
-  fig4-6:  Sync-async model contradiction (training vs deployment)
-  fig4-7:  Exp 4.5 — Async agent with interruption
-  fig4-8:  Tool discovery hierarchy (server→tool matching)
-  fig4-9:  KV cache optimization (system prompt stability)
-  fig4-10: Tool self-evolution pipeline (multi-stage)
-  fig4-11: Exp 4.7 — Self-evolving agent pipeline
-  fig4-12: Voyager learning cycle (curriculum + skill library)
+  fig4-2:  Event-driven architecture (real event sources & payloads)
+  fig4-3:  Async event processing (cancellation/queued/parallel timing)
+  fig4-4:  Exp 4.4 — Event-driven agent architecture
+  fig4-5:  Sync-async model contradiction (training vs deployment)
+  fig4-6:  Exp 4.5 — Async agent with interruption
+  fig4-7:  Tool discovery hierarchy (server→tool matching)
+  fig4-8:  KV cache optimization (system prompt stability)
+  fig4-9:  Tool self-evolution pipeline (multi-stage)
+  fig4-10: Exp 4.7 — Self-evolving agent pipeline
+  fig4-11: Voyager learning cycle (curriculum + skill library)
 """
 
 import os
@@ -126,75 +125,6 @@ def fig4_1():
 # ──────────────────────── fig4-2 ────────────────────────
 
 def fig4_2():
-    """Sub-Agent context preparation (comparison of 4 strategies)"""
-    w, h = 880, 530
-    svg = SVG(w, h)
-    svg.text(w / 2, 30, "Sub-Agent context passing strategies", size=FS_TITLE, bold=True)
-
-    strategies = [
-        ("Minimal passing", "dark",
-         '"Query the status of order number 12345"',
-         "Zero context → privacy and security"),
-        ("Manual filtering and passing", "medium",
-         '"User region: US\\nSummary: Inquiry about refund"',
-         "Explicit selection → controllable"),
-        ("Automatic trimming and passing", "light",
-         '"User info + last 3 rounds\\n+ relevant tool results"',
-         "Rule-driven → balanced"),
-        ("LLM-generated context", "code_bg",
-         '"LLM analyzes trajectory\\n→ structured context object"',
-         "Most intelligent → 1 extra call"),
-    ]
-
-    col_w = 190
-    gap = 18
-    start_x = (w - 4 * col_w - 3 * gap) / 2
-
-    # Main Agent at top
-    svg.box(w / 2 - 100, 55, 200, 44, "Main Agent", fill='medium', bold=True)
-    svg.text(w / 2, 118, "How to prepare context for Sub-Agent?", size=FS_SMALL, fill='text_light')
-
-    for i, (title, fill, example, note) in enumerate(strategies):
-        x = start_x + i * (col_w + gap)
-        top_y = 145
-
-        svg.arrow(w / 2, 99, x + col_w / 2, top_y - 2)
-
-        svg.rect(x, top_y, col_w, 36, fill=fill)
-        tc = 'white' if fill in ('dark', 'darker') else 'text'
-        svg.text(x + col_w / 2, top_y + 18, title, size=FS_SMALL, bold=True, fill=tc)
-
-        svg.rect(x, top_y + 46, col_w, 80, fill='code_bg', stroke='dark', rx=4)
-        for j, line in enumerate(example.split('\\n')):
-            svg.mono(x + 8, top_y + 70 + j * 20, line, size=FS_TINY)
-
-        svg.text(x + col_w / 2, top_y + 150, note, size=FS_TINY, fill='text_light')
-
-        svg.box(x + 15, top_y + 175, col_w - 30, 36, "Sub-Agent", fill='light', font_size=FS_SMALL)
-
-    # Bottom: decision guide
-    svg.line(30, 395, w - 30, 395, color='dark', dash=True)
-    svg.text(w / 2, 418, "Selection guide", size=FS_BODY, bold=True)
-
-    guides = [
-        ("Simple high-frequency calls", "Check weather, calculator", "→ Minimal"),
-        ("Medium complexity", "Data query, file processing", "→ Automatic trimming"),
-        ("Complex tasks", "Generate report, customer service", "→ LLM generation"),
-    ]
-    gx = 80
-    for label, example, rec in guides:
-        svg.rect(gx, 438, 230, 70, fill='light')
-        svg.text(gx + 115, 458, label, size=FS_SMALL, bold=True)
-        svg.text(gx + 115, 478, example, size=FS_TINY, fill='text_light')
-        svg.text(gx + 115, 498, rec, size=FS_SMALL, bold=True, fill='darker')
-        gx += 260
-
-    svg.save(os.path.join(OUT, 'fig4-2.svg'))
-
-
-# ──────────────────────── fig4-3 ────────────────────────
-
-def fig4_3():
     """Event-driven architecture (specific event source and payload)"""
     w, h = 880, 540
     svg = SVG(w, h)
@@ -266,12 +196,12 @@ def fig4_3():
     # Feedback loop
     svg.arrow_curved(ag_x + step_w, 450, ag_x + step_w, 130, curve=45, label="Loop", dash=True, color='dark')
 
-    svg.save(os.path.join(OUT, 'fig4-3.svg'))
+    svg.save(os.path.join(OUT, 'fig4-2.svg'))
 
 
-# ──────────────────────── fig4-4 ────────────────────────
+# ──────────────────────── fig4-3 ────────────────────────
 
-def fig4_4():
+def fig4_3():
     """Async event handling: timing comparison of three strategies"""
     w, h = 880, 580
     svg = SVG(w, h)
@@ -345,12 +275,12 @@ def fig4_4():
     svg.text(tl_x0 + tl_w * 0.635, y3 + 82, "→ Reply to user immediately", size=FS_TINY, fill='text_light', anchor='start')
     svg.text(tl_x0 + tl_w * 0.50, y3 + 115, "Tag: [Parallel with main task]", size=FS_TINY, fill='text_light')
 
-    svg.save(os.path.join(OUT, 'fig4-4.svg'))
+    svg.save(os.path.join(OUT, 'fig4-3.svg'))
 
 
-# ──────────────────────── fig4-5 ────────────────────────
+# ──────────────────────── fig4-4 ────────────────────────
 
-def fig4_5():
+def fig4_4():
     """Experiment 4.4: Event-driven Agent Architecture"""
     w, h = 880, 480
     svg = SVG(w, h)
@@ -428,12 +358,12 @@ def fig4_5():
     for i, item in enumerate(items):
         svg.text(805, 160 + i * 55, item, size=FS_SMALL)
 
-    svg.save(os.path.join(OUT, 'fig4-5.svg'))
+    svg.save(os.path.join(OUT, 'fig4-4.svg'))
 
 
-# ──────────────────────── fig4-6 ────────────────────────
+# ──────────────────────── fig4-5 ────────────────────────
 
-def fig4_6():
+def fig4_5():
     """sync-async model contradiction"""
     w, h = 880, 520
     svg = SVG(w, h)
@@ -503,12 +433,12 @@ def fig4_6():
              "Fundamental solution: next-generation models need to be trained via RL in asynchronous environments",
              size=FS_SMALL, fill='white', bold=True)
 
-    svg.save(os.path.join(OUT, 'fig4-6.svg'))
+    svg.save(os.path.join(OUT, 'fig4-5.svg'))
 
 
-# ──────────────────────── fig4-7 ────────────────────────
+# ──────────────────────── fig4-6 ────────────────────────
 
-def fig4_7():
+def fig4_6():
     """Experiment 4.5: Asynchronous Agent with Interruption Capability"""
     w, h = 880, 520
     svg = SVG(w, h)
@@ -576,12 +506,12 @@ def fig4_7():
              "Key: placeholder injection + async completion event + cancel_tool(task_id) API",
              size=FS_TINY)
 
-    svg.save(os.path.join(OUT, 'fig4-7.svg'))
+    svg.save(os.path.join(OUT, 'fig4-6.svg'))
 
 
-# ──────────────────────── fig4-8 ────────────────────────
+# ──────────────────────── fig4-7 ────────────────────────
 
-def fig4_8():
+def fig4_7():
     """Tool discovery hierarchy (server→tool matching)"""
     w, h = 880, 540
     svg = SVG(w, h)
@@ -647,12 +577,12 @@ def fig4_8():
     svg.rect(180, 468, 520, 30, fill='code_bg', stroke='dark', rx=4)
     svg.mono(190, 483, "Return Top-3: list_contributors, get_repo_stats, get_commit_history", size=12)
 
-    svg.save(os.path.join(OUT, 'fig4-8.svg'))
+    svg.save(os.path.join(OUT, 'fig4-7.svg'))
 
 
-# ──────────────────────── fig4-9 ────────────────────────
+# ──────────────────────── fig4-8 ────────────────────────
 
-def fig4_9():
+def fig4_8():
     """KV Cache Optimization (System Prompt Stability)"""
     w, h = 880, 560
     svg = SVG(w, h)
@@ -733,12 +663,12 @@ def fig4_9():
         svg.text(500, cy, naive, size=FS_TINY, fill='text_light')
         svg.text(740, cy, opt, size=FS_TINY, fill='text_light')
 
-    svg.save(os.path.join(OUT, 'fig4-9.svg'))
+    svg.save(os.path.join(OUT, 'fig4-8.svg'))
 
 
-# ──────────────────────── fig4-10 ────────────────────────
+# ──────────────────────── fig4-9 ────────────────────────
 
-def fig4_10():
+def fig4_9():
     """Tool Self-Evolution Pipeline (Multi-Stage)"""
     w, h = 880, 500
     svg = SVG(w, h)
@@ -812,12 +742,12 @@ def fig4_10():
     svg.rect(200, 430, 480, 35, fill='medium')
     svg.text(w / 2, 448, "Tool layer + Knowledge layer + Strategy layer → more proficient with use", size=FS_SMALL, bold=True)
 
-    svg.save(os.path.join(OUT, 'fig4-10.svg'))
+    svg.save(os.path.join(OUT, 'fig4-9.svg'))
 
 
-# ──────────────────────── fig4-11 ────────────────────────
+# ──────────────────────── fig4-10 ────────────────────────
 
-def fig4_11():
+def fig4_10():
     """Experiment 4.7: Agent searches for tools on the web, self-evolves"""
     w, h = 880, 480
     svg = SVG(w, h)
@@ -891,12 +821,12 @@ def fig4_11():
              "Skip search/evaluation/testing phases → cost reduction 90%+",
              size=FS_TINY)
 
-    svg.save(os.path.join(OUT, 'fig4-11.svg'))
+    svg.save(os.path.join(OUT, 'fig4-10.svg'))
 
 
-# ──────────────────────── fig4-12 (Voyager, was fig4_voyager) ────────
+# ──────────────────────── fig4-11 (Voyager, was fig4_voyager) ────────
 
-def fig4_12():
+def fig4_11():
     """Voyager learning loop (curriculum + skill library + iterative prompting)"""
     w, h = 880, 520
     svg = SVG(w, h)
@@ -962,7 +892,7 @@ def fig4_12():
 
     svg.arrow_curved(120, 380, 150, 245, curve=60, label="Existing skills", dash=True, color='dark')
 
-    svg.save(os.path.join(OUT, 'fig4-12.svg'))
+    svg.save(os.path.join(OUT, 'fig4-11.svg'))
 
 
 # ──────────────────────── main ────────────────────────
@@ -971,9 +901,9 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     figs = [
         fig4_1, fig4_2, fig4_3, fig4_4, fig4_5, fig4_6,
-        fig4_7, fig4_8, fig4_9, fig4_10, fig4_11, fig4_12,
+        fig4_7, fig4_8, fig4_9, fig4_10, fig4_11,
     ]
-    # Note: fig4_11 = Exp 4.7 self-evolving agent, fig4_12 = Voyager
+    # Note: fig4_10 = Exp 4.7 self-evolving agent, fig4_11 = Voyager
     # (ordered by chapter appearance)
     for fn in figs:
         fn()

@@ -27,7 +27,7 @@ Table 4-1 Invocation Direction and Target of Action for the Five Tool Categories
 
 **Execution Tools** are the means by which an Agent changes the external world. Examples include command-line tools (`shell_exec`), code interpreter tools (`code_interpreter`), file writing tools (`write_file`), file editing tools (`edit_file`), and email sending tools (`send_email`). Unlike perception tools, the cost of errors in execution tools can be extremely high, making security constraints the core of their design.
 
-**Collaboration Tools** are the means by which an Agent collaborates with other Agents and humans. Examples include spawning a sub-agent (`spawn_subagent`), sending a message to a sub-agent (`send_message_to_subagent`), and canceling a sub-agent (`cancel_subagent`). The simplest reason an Agent needs collaboration is parallelism—researching several OpenAI co-founders at once, for example. The deeper reason is specialization: giving different tasks different models, tools, prompts, and contexts to get better results. Chapter 10 will further discuss multi-agent architectures.
+**Collaboration Tools** are the means by which an Agent collaborates with other Agents and humans. Examples include spawning a sub-agent (`spawn_subagent`), sending a message to a sub-agent (`send_message_to_subagent`), canceling a sub-agent (`cancel_subagent`), and discovering the Agents available in the system (`list_agents`). The simplest reason an Agent needs collaboration is parallelism—researching several OpenAI co-founders at once, for example. The deeper reason is specialization: giving different tasks different models, tools, prompts, and contexts to get better results. Chapter 10 will further discuss multi-agent architectures.
 
 **Event-Triggered Tools** are the means by which the external world drives an Agent's actions. Examples include setting a timer (`set_timer`), monitoring background command-line tasks (`monitor_shell`), and connecting to external event sources (`connect_channel`). These tools involve two moments: **Registration**, where the Agent actively invokes the tool to declare which events it cares about; and **Triggering**, where an external event asynchronously calls back to wake the Agent so it can start processing—this is the meaning of "Agent registers, external triggers" in Table 4-1. Without event-triggered tools, an Agent can only passively respond when a user initiates a conversation, unable to act autonomously at a specified time or react to external events like new emails or system alerts.
 
@@ -295,27 +295,11 @@ The core value of sub-agents lies in **specialization through division of labor*
 
 **Output format must be standardized.** A uniform JSON structure reduces the parsing burden on the main Agent and makes error handling more reliable.
 
-**Preparing Context for Sub-Agents.**
-
-
-![Figure 4-2: Sub-Agent Context Passing Strategies](images/fig4-2.svg)
-
-
-When the main Agent calls a sub-agent, how much context should it pass along? Too little starves the sub-agent of information; too much wastes tokens, adds comprehension burden, and risks leaking private information. Four strategies, in order of increasing sophistication:
-
-**Minimal Passing**: The sub-agent only receives the call parameters (e.g., "Query the status of order 12345"), completely unaware of the previous conversation history. This method protects privacy but may lead to insufficient information.
-
-**Manual Selective Passing**: The main Agent explicitly specifies the context to be shared (e.g., "User's region: USA", "Conversation summary: User inquires about refund policy"). This is more flexible but increases the design complexity of the prompt.
-
-**Automatic Context Pruning**: The system rules automatically filter the context (e.g., "User's basic info + last 3 rounds of conversation + relevant tool results"). This balances information sufficiency and efficiency but requires pre-defined pruning rules.
-
-**LLM-Generated Context**: An additional LLM call is made, taking the main Agent's trajectory, business-rule prompts, and the sub-agent's task description as input to dynamically generate a structured context object. This is the most flexible and intelligent method. Business rules can include privacy protection ("Do not pass payment information") and compression strategies ("Only pass summary if more than 10 rounds"), but it incurs the cost of an extra LLM call.
-
-In practice, choose based on complexity: simple, high-frequency calls (check weather, calculator) use minimal passing; complex tasks (generate reports, customer service) use LLM-generated context; moderately complex tasks use automatic context pruning as the default.
-
 **Collaboration Mechanisms Between Agents.**
 
-Built on primitive tools for spawning (`spawn_subagent`), communicating (`send_message_to_subagent`), and canceling (`cancel_subagent`), various collaboration modes can be supported: **Synchronous Call** (wait for the sub-agent to return, suitable for quick tasks), **Asynchronous Call** (receive a task ID immediately and an event notification upon completion), **Streaming Collaboration** (the sub-agent continuously sends incremental messages, suitable for scenarios where the process itself is valuable), and **Multi-turn Interaction** (a conversational collaboration where the sub-agent proactively asks questions and the main Agent responds). This chapter focuses on the shared tool interfaces for these modes and the context passing strategies discussed above; choosing the collaboration mode and organizing the topology and division of labor among multiple Agents falls under the scope of multi-agent collaboration architecture, detailed in Chapter 10.
+The interfaces of collaboration tools can be distilled into three groups of primitives. **First, spawning and canceling**: `spawn_subagent` creates a sub-agent and assigns it a task; `cancel_subagent` terminates it promptly once the task has lost its purpose (the user changed their mind, another sub-agent already found the answer), avoiding further token waste. **Second, message passing**: `send_message_to_subagent` sends supplementary instructions or follow-up questions to a sub-agent while it is running, and the sub-agent can send messages back to the main Agent to report progress or request clarification. **Third, discovery**: in a system running multiple Agents at once, `list_agents` enumerates the currently available Agents along with their responsibility descriptions and running status, letting an Agent find potential collaborators—the same idea as MCP using `tools/list` to enumerate available tools, except what is enumerated here are Agents.
+
+Built on top of these primitives, various collaboration modes can be supported: **Synchronous Call** (wait for the sub-agent to return, suitable for quick tasks), **Asynchronous Call** (receive a task ID immediately and an event notification upon completion), **Streaming Collaboration** (the sub-agent continuously sends incremental messages, suitable for scenarios where the process itself is valuable), and **Multi-turn Interaction** (a conversational collaboration where the sub-agent proactively asks questions and the main Agent responds). This chapter focuses on the shared tool interfaces for these modes; what context to pass when calling a sub-agent, which collaboration mode to choose, and how to organize the topology and division of labor among multiple Agents fall under the scope of multi-agent collaboration architecture, detailed in Chapter 10.
 
 **The Art of Human Intervention.**
 
@@ -331,14 +315,14 @@ Although AI Agents are becoming increasingly powerful, human intervention remain
 >
 > **Sub-Agent Management Tools.**
 >
-> - **Spawn Sub-Agent** (`spawn_subagent`), **Send Message** (`send_message_to_subagent`), **Cancel Sub-Agent** (`cancel_subagent`): Supports both synchronous and asynchronous calling modes; asynchronous mode returns a task ID
+> - **Spawn Sub-Agent** (`spawn_subagent`), **Send Message** (`send_message_to_subagent`), **Cancel Sub-Agent** (`cancel_subagent`), **Get Result** (`get_subagent_status`): Supports both synchronous and asynchronous calling modes; asynchronous mode returns a task ID immediately, and the result is retrieved by ID after the task completes
 >
 > **Human Collaboration Tools.**
 >
 > - **Request Admin Assistance** (`request_human_approval`, `request_human_input`): Request approval or additional information before key decisions, supporting timeouts and default behaviors
 > - **Notification Tools** (`send_im_notification`, `send_email_notification`, `send_slack_message`): Multi-channel notifications
 >
-> **Experiment Requirements**: design intelligent collaboration strategies—implement at least two context-passing strategies for sub-agents (e.g., minimal passing and LLM-generated context) and compare their effects; write system prompts so the Agent recognizes when HITL is needed and proactively requests confirmation or input; implement timeout mechanisms and multi-channel notifications.
+> **Experiment Requirements**: design intelligent collaboration strategies—implement at least two ways of passing context to sub-agents and compare their effects, such as minimal passing (pass only the task parameters) and LLM-generated context (make an extra LLM call to distill a handoff context from the main Agent's trajectory); write system prompts so the Agent recognizes when HITL is needed and proactively requests confirmation or input; implement timeout mechanisms and multi-channel notifications.
 
 ## Event-Driven Asynchronous Agents
 
@@ -354,9 +338,9 @@ Let's start with an analogy to explain why asynchrony is needed. Synchronous mea
 
 The asynchronous paradigm, however, collides with a fundamental fact about current LLMs: their training assumes synchrony—after a tool call, the next message must be the tool result—while real deployment demands asynchrony: users interrupt at will, tasks progress concurrently, and external events arrive before a tool returns. This "synchronous training / asynchronous deployment" contradiction runs through every engineering trade-off in the rest of this section.
 
-To solve this, we need an **event-driven asynchronous Agent architecture**. Technically, this means the system no longer actively and repeatedly checks for "new messages" (this is polling, which is inefficient), but instead automatically triggers processing logic when a new message arrives. All inputs, outputs, thought processes, and external interactions are uniformly modeled as an event stream—a sequence of event records arranged on a timeline. Figure 4-3 shows the overall architecture of an event-driven asynchronous Agent, illustrating the relationship between event sources, the event queue, and the Agent processing flow.
+To solve this, we need an **event-driven asynchronous Agent architecture**. Technically, this means the system no longer actively and repeatedly checks for "new messages" (this is polling, which is inefficient), but instead automatically triggers processing logic when a new message arrives. All inputs, outputs, thought processes, and external interactions are uniformly modeled as an event stream—a sequence of event records arranged on a timeline. Figure 4-2 shows the overall architecture of an event-driven asynchronous Agent, illustrating the relationship between event sources, the event queue, and the Agent processing flow.
 
-![Figure 4-3: Event-Driven Asynchronous Agent Architecture](images/fig4-3.svg)
+![Figure 4-2: Event-Driven Asynchronous Agent Architecture](images/fig4-2.svg)
 
 ### OpenClaw and the Real-World Need for Event-Driven Architecture
 
@@ -426,6 +410,8 @@ Event-triggered tools allow the world to wake the Agent, user communication tool
 
 A single Agent instance may face multiple events concurrently: a new message from the user, a result from a tool, a timer expiring, a collaboration request from another Agent. How these events are handled efficiently and correctly directly impacts performance and user experience.
 
+The skeleton of this mechanism is the **event loop** from concurrent programming. Think of an asynchronous Agent as a long-running loop: each round takes a batch of events off the input queue, appends them to the trajectory, invokes the LLM once, executes the tools it decides to call, then returns to the top of the loop to wait for the next batch of events—the same structure as a Go goroutine reading messages from a channel and processing them round by round inside a `for { select { ... } }`. This model has one crucial property: **events are consumed only at the boundaries of each loop iteration**. While the LLM is reasoning or a tool is executing, a newly arrived event cannot inject itself out of nowhere and disrupt the current step; it waits in the queue until the round reaches a **safe point** (the end of a stretch of reasoning, a tool return) and is then handled as a batch. Cancellation follows the same discipline: rather than forcibly cutting off at an arbitrary moment, the Agent checks "have I been asked to stop?" at a safe point—which is exactly the role played by `ctx.Done()` in Go (Chapter 10 uses the same context idiom to discuss a parent Agent's cascading cancellation of its sub-agents). Once this is understood, the three processing strategies below differ only in how they treat the safe point: let the event wait for the next naturally occurring safe point (queued), proactively force a safe point early (cancellation), or simply spin up a separate loop and not wait for the main loop's safe point at all (parallel).
+
 **Structured Event Modeling.**
 
 Handling requires understanding. A general-purpose Agent's input doesn't come only from the user—a third-party message is not sent by the user to the Agent, yet the Agent must understand it, weigh its importance, and decide whether to step in. This requires modeling each input as a **structured event** rich with semantics:
@@ -452,9 +438,9 @@ Only when these dimensions are clearly modeled as structured events can the Agen
 
 Humans juggling multiple tasks adapt their strategy to urgency: an emergency makes them drop what they're doing; a routine to-do goes on the list for later. An Agent's event handling should show the same intelligence.
 
-![Figure 4-4: Three Strategies for Asynchronous Event Processing](images/fig4-4.svg)
+![Figure 4-3: Three Strategies for Asynchronous Event Processing](images/fig4-3.svg)
 
-**Cancellation-Based Processing** is used for urgent events. When an urgent event arrives (e.g., the user clicks "stop" or a supervisory system sends a high-priority instruction): (1) Stop the current operation—if the LLM is reasoning, immediately cancel the streaming response; if a synchronous tool is executing, send a cancel signal; (2) Drain the pending queue by removing all pending events; (3) Append those events together with the urgent event to the end of the trajectory; (4) Immediately re-invoke the LLM with the updated complete trajectory as input to assess the situation. For example, if the user inputs "Stop! I said the wrong thing" while the Agent is about to perform a potentially erroneous operation, the Agent will immediately see this new input, re-understand the true intent, and thus avoid executing the wrong action.
+**Cancellation-Based Processing** is used for urgent events; its essence is **forcing a safe point early** for the urgent event: proactively interrupting the current step to turn this instant into a boundary at which the new event can be consumed. When an urgent event arrives (e.g., the user clicks "stop" or a supervisory system sends a high-priority instruction): (1) Stop the current operation—if the LLM is reasoning, immediately cancel the streaming response; if a synchronous tool is executing, send a cancel signal; (2) Drain the pending queue by removing all pending events; (3) Append those events together with the urgent event to the end of the trajectory; (4) Immediately re-invoke the LLM with the updated complete trajectory as input to assess the situation. For example, if the user inputs "Stop! I said the wrong thing" while the Agent is about to perform a potentially erroneous operation, the Agent will immediately see this new input, re-understand the true intent, and thus avoid executing the wrong action.
 
 **Queued Processing** is used for routine events. When a non-urgent event arrives (e.g., an asynchronous tool returns a result or the user sends supplementary information): (1) Add the event to the end of the queue without interrupting the current operation; (2) Wait for the current operation to complete—let the LLM finish reasoning, let the synchronous tool finish executing; (3) When any tool call completes and returns a `tool.result`, check the queue. If the queue is non-empty, append all events to the trajectory at once; (4) The LLM processes the updated trajectory comprehensively. This enables batch processing, improving efficiency—for example, while the Agent is waiting for a search tool result, the user adds "only show results from the last month." This supplementary information enters the queue, and when the search results return, both events are presented to the LLM together, avoiding unnecessary round trips.
 
@@ -473,7 +459,7 @@ The following experiment, an event-driven email processing Agent, implements the
 > **Experiment 4-4 ★★★: Event-Driven Email Processing Agent**
 >
 >
-> ![Figure 4-5: Experiment 4-4 Event-Driven Agent Architecture](images/fig4-5.svg)
+> ![Figure 4-4: Experiment 4-4 Event-Driven Agent Architecture](images/fig4-4.svg)
 >
 >
 > This experiment builds the simplest event-driven Agent: an **Automated Email Processing Assistant**. The Agent monitors the email inbox, and whenever a new email arrives, it automatically triggers a processing workflow—classification, summarization, draft reply, and notifying the user if necessary. This is the most intuitive introductory scenario for an event-driven Agent: an external event (new email arrival) triggers a complete Agent thinking cycle.
@@ -560,10 +546,10 @@ Add a summary at the end: "There are 4 unprocessed events above, including 1 too
 ### Deeper Contradictions and Future Directions
 
 
-![Figure 4-6: Synchronous Training Paradigm vs. Asynchronous Deployment Reality](images/fig4-6.svg)
+![Figure 4-5: Synchronous Training Paradigm vs. Asynchronous Deployment Reality](images/fig4-5.svg)
 
 
-Ultimately, the placeholders, asynchronous tool interfaces, and status bar markers from the previous sections are all using prompt engineering to patch the same "synchronous training / asynchronous deployment" contradiction (Figure 4-6)—the cause of this contradiction has been detailed at the beginning of this section, so we do not repeat it here; instead, we focus on the fundamental solution.
+Ultimately, the placeholders, asynchronous tool interfaces, and status bar markers from the previous sections are all using prompt engineering to patch the same "synchronous training / asynchronous deployment" contradiction (Figure 4-5)—the cause of this contradiction has been detailed at the beginning of this section, so we do not repeat it here; instead, we focus on the fundamental solution.
 
 **Anticipating Model Evolution: From Synchronous to Asynchronous.**
 
@@ -586,7 +572,7 @@ But the more critical half of this research concerns **training**, and it answer
 > **Experiment 4-5 ★★★: Asynchronous Agent with Parallel Execution and Interruption Capabilities**
 >
 >
-> ![Figure 4-7: Experiment 4-5 Asynchronous Agent Interruption and Recovery](images/fig4-7.svg)
+> ![Figure 4-6: Experiment 4-5 Asynchronous Agent Interruption and Recovery](images/fig4-6.svg)
 >
 >
 > Building on the simple event queue of Experiment 4-4, this experiment moves into the hard parts of asynchronous Agents: **parallel tool execution, execution cancellation, and state management**. The Agent no longer just processes events one by one; it needs to manage multiple concurrent tasks simultaneously, handle interruptions and recoveries, and make dynamic decisions based on real-time state.
@@ -612,19 +598,19 @@ The traditional approach injects every tool's schema into the system prompt at o
 
 [^mcp-zero-2025]: Fei, X., et al. *MCP-Zero: Active Tool Discovery for Autonomous LLM Agents.* arXiv:2506.01056, 2025.
 
-![Figure 4-8: Hierarchical Tool Matching (Two-Level Semantic Search: Server-Level → Tool-Level)](images/fig4-8.svg)
+![Figure 4-7: Hierarchical Tool Matching (Two-Level Semantic Search: Server-Level → Tool-Level)](images/fig4-7.svg)
 
 **Hierarchical Matching and Fallback.** Efficient matching exploits the hierarchy already present in how tools are organized. In protocols like MCP, tools are grouped by **server** (like apps on a phone, each bundling a set of related functions), so matching can run in two layers: locate the relevant servers by capability description, then match specific tools within them. That shrinks the search space from "thousands of tools" to "dozens of servers × dozens of tools each," saving compute and cutting cross-domain semantic confusion. In engineering terms this rests on an embedding index built offline and updated incrementally. And when both layers' candidates score below threshold, the system should return an explicit "not found," prompting the Agent to rephrase and retry, to improvise with basic tools, or to create a new tool outright (the subject of Chapter 8).
 
-![Figure 4-9: KV Cache Optimization for Dynamic Tool Loading](images/fig4-9.svg)
+![Figure 4-8: KV Cache Optimization for Dynamic Tool Loading](images/fig4-8.svg)
 
 **Dynamic Loading and KV Cache.** Proactive discovery carries a subtle engineering cost: dynamically loading tools **invalidates the KV Cache**—put all the tool definitions in the static prefix, and every newly loaded tool invalidates the whole cache. The fix matches Chapter 2's discussion of Skill injection position: append the variable part (the new tool's complete schema) at the end of the context, keeping the static prefix stable and the KV Cache fully reusable, with only a short list of tool names maintained in the Agent's status bar. This pattern is now natively supported by the major APIs and has become the default architecture of mainstream frameworks: the OpenAI Responses API provides a `tool_search` tool and a `defer_loading: true` flag, with loaded schemas appended at the end of the context as `tool_search_output` items so the prefix cache keeps hitting; Claude Code defers MCP tools by default (injected on demand via `tool_reference` blocks, with only tool names and server instructions kept at session start); and Codex CLI's `tool_search` (BM25 retrieval) is an always-on architecture rather than an optional feature. A dynamic tool environment also asks more of the model itself—weaker models struggle with tool definitions appearing at a non-standard position mid-context and tend to emit malformed calls (mismatched JSON brackets, missing parameters), often needing dedicated reinforcement learning training (see Chapter 7).
 
 One easily misunderstood point is worth clarifying: "appended at the end" happens only on the turn when the tool is discovered. From then on, the schema block stays fixed at its original position in the trajectory—new messages in later turns are appended **after** it, and it becomes ordinary history, rather than being moved again to the newest end on every turn (if it were re-injected each turn, it would indeed need re-prefilling every time, and the cache would be pointless). Both APIs guarantee this: OpenAI requires subsequent requests to preserve the `tool_search_output` item's position, and the same tool never needs loading again across turns; Anthropic expands the `tool_reference` block inline at its original position in the conversation history, and the official documentation states that the cache keeps hitting on every subsequent turn. Only two situations actually cause recomputation: the Prompt Cache TTL expiring (which recomputes the entire prefix together—not a cost specific to tool definitions), and modifying, removing, or reordering the loaded tool set (which invalidates the cache from that point on).
 
-![Figure 4-10: Context Structure After Dynamic Discovery—Tool Schemas Scattered Across the Trajectory](images/fig4-10.svg)
+![Figure 4-9: Context Structure After Dynamic Discovery—Tool Schemas Scattered Across the Trajectory](images/fig4-9.svg)
 
-Figure 4-10 shows the full picture after several rounds of dynamic discovery: the static prefix holds only the system prompt, core tools, and the tool-search meta-tool, while the schemas discovered along the way are scattered across the trajectory, pinned where they were first injected and served from cache as ordinary history on later turns. This also means "tool definitions must sit at the very front of the context" is no longer an iron rule—the prefix is still static and append-only; tool definitions have simply gained the ability to enter the trajectory on demand. The cost is that the model must be post-trained to understand tool definitions scattered throughout the context.
+Figure 4-9 shows the full picture after several rounds of dynamic discovery: the static prefix holds only the system prompt, core tools, and the tool-search meta-tool, while the schemas discovered along the way are scattered across the trajectory, pinned where they were first injected and served from cache as ordinary history on later turns. This also means "tool definitions must sit at the very front of the context" is no longer an iron rule—the prefix is still static and append-only; tool definitions have simply gained the ability to enter the trajectory on demand. The cost is that the model must be post-trained to understand tool definitions scattered throughout the context.
 
 Plainly, the whole declare-match-inject machinery works, but it requires substantial engineering: an embedding index to maintain offline, KV Cache invalidation to manage, dedicated training for weaker models. The shared premise underneath it all is treating every tool as a **formal definition addressed to the model**—registered, retrieved, injected. The Skills mechanism in the next section drops that premise for something lighter.
 
@@ -665,7 +651,7 @@ The five categories of tools each have distinct design emphases:
 
 - **Perception tools**: Key considerations include granularity trade-offs, context-aware summarization, and interface design such as pagination and explicit truncation; their read-only nature makes them naturally suited for caching and parallelism.
 - **Execution tools**: Key considerations include hierarchical security protection, Proposer-Reviewer mechanisms (pre-approval and post-validation), and the Sidecar mechanism.
-- **Collaboration tools**: Key considerations include sub-agent context management and a learning loop with human intervention.
+- **Collaboration tools**: Key considerations include sub-agent lifecycle primitives (create, message, cancel, discover) and a learning loop with human intervention.
 - **Event-triggered tools**: Key considerations include filtering of trigger conditions and design of event payloads, enabling the world to proactively wake the Agent.
 - **User communication tools**: Key considerations include asynchronous messaging patterns, multi-channel selection, and user re-engagement; virtual identities and isolated execution environments provide the identity foundation for Agents to act independently.
 
@@ -682,6 +668,5 @@ The next chapter asks a question more fundamental than "how does an Agent use to
 3. ★★ In the MCP ecosystem, different MCP servers may provide tools with highly overlapping functionality. When an Agent faces multiple tools from different sources that are functionally similar, how should it choose? If tools with the same name from different sources behave slightly differently (e.g., one returns a summary, another returns the full text), can the Agent perceive and exploit this difference?
 4. ★★★ When an Agent interacts with the external world on behalf of a user, it essentially faces an identity choice: use an independent virtual identity (dedicated email and phone number) to act as a third party, or directly operate the user's personal accounts as the user? The former allows autonomous background operation, but third parties may not trust a non-human identity; the latter has more complete context and permissions but introduces authorization, trust, and security-boundary issues. In what scenarios do you think each mode should be chosen?
 5. ★★ In queue-based event processing, models tend to focus only on the last event. This chapter mitigates this through Agent status bar markers and summarization. But if the queue has 20 events backlogged (10 tool results + 5 user messages + 5 system alerts), how would you organize the presentation order and format of these events so that the model does not miss key information?
-6. ★★★ There are four strategies for context passing to sub-agents (minimal/manual/automatic/LLM-generated). Too little context causes the sub-agent to "execute blindly," while too much context introduces noise and privacy risks. Design an adaptive context-passing mechanism that automatically selects the appropriate strategy based on task type and sensitivity.
-7. ★★ This chapter proposes an "execute-validate-feedback" loop (e.g., automatically running a linter after writing code). To what other tool scenarios could this "immediate post-operation automatic validation" pattern be applied? Are there operations where the cost or risk of validation itself exceeds that of the operation, making this pattern infeasible?
-8. ★★ This chapter raises the "tool explosion" problem—an Agent's selection accuracy degrades when facing thousands of tools. Besides proactive tool discovery, what other approaches exist? Consider drawing on how human experts cope with a vast collection of available tools.
+6. ★★ This chapter proposes an "execute-validate-feedback" loop (e.g., automatically running a linter after writing code). To what other tool scenarios could this "immediate post-operation automatic validation" pattern be applied? Are there operations where the cost or risk of validation itself exceeds that of the operation, making this pattern infeasible?
+7. ★★ This chapter raises the "tool explosion" problem—an Agent's selection accuracy degrades when facing thousands of tools. Besides proactive tool discovery, what other approaches exist? Consider drawing on how human experts cope with a vast collection of available tools.
