@@ -19,7 +19,7 @@ This experiment uses a single "Coding Agent" to chain together three phases:
 
 ## Architecture
 
-```
+```text
 demo.py                Entry point: run all three phases with one command (task = "write a Python script to organize the Downloads folder")
 agent.py               StagedAgent: phase state machine + tool call loop + cross-phase shared context + execution log
 tools.py               Schemas and real implementations for three tool sets (virtual workspace / real code execution / linter / complexity analysis)
@@ -87,7 +87,7 @@ The following is an excerpt from a real run (`python demo.py`, `gpt-5.6-luna`, r
 (In this run, the requirements clarification phase repeatedly asked about case-sensitivity rules, triggered 1 review fallback, and ultimately hit the total step limit
 safety valve to end — a common outcome in real runs, see "Limitations" below):
 
-```
+```text
 Model: openai/gpt-5.6-luna  | base_url: https://openrouter.ai/api/v1
 
 ======================================================================

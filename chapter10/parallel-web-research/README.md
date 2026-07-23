@@ -22,7 +22,7 @@ the focus is entirely on the coordination mechanism — **message bus, parallel 
 
 ## Architecture and Mechanism
 
-```
+```text
                          ┌────────────────────────────┐
                          │   Coordinator (Main Coordinator)  │
                          │  · Parallel dispatch task_assigned  │
@@ -108,7 +108,7 @@ python demo.py --output result.json        # Write conclusion to JSON file
 Corresponds to the experiment requirement in the book "Record and compare parallel/serial time differences." `--compare` runs the **serial baseline**
 (fetch one by one via `await source.fetch()` + judgment, stop on hit) with the **exact same source set** after the parallel demo; the time is **actually measured**, not estimated. Example output (default 10 sources, offline judgment):
 
-```
+```text
 5) Parallel execution wall-clock time: 1.57s (including convergence quiet period)
 ------------------------------------------------------------------------------
 Parallel vs Serial Wall-Clock Comparison (--compare, serial baseline is actual measurement)
@@ -124,14 +124,14 @@ Serial must sequentially fetch baike-wiki→news-portal before reaching the fast
 
 **(a) Message bus publish/subscribe is working** — each enveloped message is printed:
 
-```
+```text
 BUS [t=  0.00s #3  ] coordinator -> worker-02   | task_assigned  | {"question": "...", "source": "geo-journal"}
 BUS [t=  0.00s #13 ]   worker-02 -> coordinator | status_update  | {"state": "Executing", ...}
 ```
 
 **(b) N child agents execute in parallel + main agent refreshes state table in real-time**:
 
-```
+```text
 ── Task State Table (worker-02 -> Executing) ──
    worker-00  source=baike-wiki   state=Executing   | Starting source fetch
    worker-02  source=geo-journal  state=Executing   | Starting source fetch
@@ -140,7 +140,7 @@ BUS [t=  0.00s #13 ]   worker-02 -> coordinator | status_update  | {"state": "Ex
 
 **(c) Cascading termination** — after hit, broadcast terminate, other child agents ack and exit gracefully:
 
-```
+```text
 BUS [t=0.60s #41 ] coordinator -> ALL         | terminate | {"reason":"answer_found","winner":"worker-02"}
 BUS [t=0.67s #43 ]   worker-09 -> coordinator | ack       | {"acked":"terminate","source":"map-service"}
 [ack] worker-09 confirmed termination (1 acked)
@@ -149,7 +149,7 @@ BUS [t=0.67s #43 ]   worker-09 -> coordinator | ack       | {"acked":"terminate"
 
 **(d) Race condition: even if hits occur almost simultaneously, only one settlement and one round of termination broadcast**:
 
-```
+```text
 BUS [t=0.60s #37 ]   worker-02 -> coordinator | result | {"found":true, "answer":"...Mount Everest...8848 meters..."}
 BUS [t=0.60s #38 ]   worker-04 -> coordinator | result | {"found":true, "answer":"...Mount Everest...8848.86 meters..."}
 [Settlement] First hit from worker-02 — lock settlement, broadcast one round of terminate.
@@ -159,13 +159,15 @@ BUS [t=0.60s #38 ]   worker-04 -> coordinator | result | {"found":true, "answer"
 `demo.py` has an **assertion-based self-check** at the end: `terminate broadcast rounds == 1`, `only one settlement == True`,
 `winner is not empty`. Passing proves the mechanism is correct:
 
-```
+```text
 4) Terminate broadcast rounds: 1 (should be 1, proving only one round broadcast)
    Late/concurrent duplicate hits ignored: ['worker-04']
 [Self-check passed] Single settlement + single round termination broadcast + cascading ack all meet expectations.
 ```
 
-## Limitations and NotesThis experiment focuses on the **coordination mechanism** (message bus / parallel dispatch / cascading termination / race-condition handling), all of which are real implementations. However, to enable offline execution and automated verification, the following three aspects have been simplified, which are known limitations:
+## Limitations and Notes
+
+This experiment focuses on the **coordination mechanism** (message bus / parallel dispatch / cascading termination / race-condition handling), all of which are real implementations. However, to enable offline execution and automated verification, the following three aspects have been simplified, which are known limitations:
 
 - **Limitation · Simulated source is not a real browser**: No real browser is launched; the source is controllable simulated data plus delays. To connect to a real Computer Use, simply replace the "fetch one step + judge" logic inside `WorkerAgent.run()` with real browser operations—the coordination layer requires no changes.
 - **Limitation · Race conditions rely on identical delays for stable reproduction**: The two correct sources, `geo-journal` and `forum-qa`, are artificially set to the same delay to reliably trigger "simultaneous hits." In real environments, race conditions are sporadic, but the locking + idempotent settlement logic works equally well for sporadic races and does not depend on this artificial setting.

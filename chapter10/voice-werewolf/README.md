@@ -38,7 +38,7 @@ The "God's perspective" true identity table is only printed for human observatio
 
 ## Judge Orchestration (Day/Night Cycle)
 
-```
+```text
 Phase 0 Assign identities: privately send each person their identity; only broadcast "teammate identities" to werewolves
 Each round:
   Night: Werewolves collectively choose a kill target (werewolf consensus only enters werewolf context)
@@ -82,7 +82,7 @@ Running will print sequentially: each phase's process (with information isolatio
 
 ## File Description
 
-```
+```text
 voice-werewolf/
 ├── demo.py              # Entry point: run a complete game + print audit table + automatically verify information isolation
 ├── werewolf/
@@ -103,7 +103,7 @@ The information isolation implementation is in `game.py`'s three delivery primit
 
 Night (private actions, all with visibility annotations):
 
-```
+```text
 【Round 1 · Night】Close your eyes, it's night.
   [Visible only to Judge + Werewolves] Werewolf P1 proposes to kill → P3
   [Visible only to Judge + Werewolves] Werewolf P6 proposes to kill → P3
@@ -115,7 +115,7 @@ Night (private actions, all with visibility annotations):
 
 Daytime: Seer P4 immediately reveals and reports the investigation (Round 1 daytime, public speech enters everyone's context):
 
-```
+```text
   P4 (speech): I am the Seer, last night I investigated P1 and found them to be a Werewolf. The peaceful night does not affect the investigation result. Today, please prioritize voting for P1; if P1 counter-claims, ask them to explain their specific investigation information and logic.
   —— Voting Phase ——
   → Voting result: P1 is banished, their true identity is 【Werewolf】. Vote count: P1=5 votes, P4=2 votes
@@ -125,7 +125,7 @@ Round 2 night, the Seer investigates P6 and finds them to be a Werewolf, the Wit
 
 Information Isolation Automatic Verification (excerpt):
 
-```
+```text
 [Check 1] 『Werewolf teammate identities』only enters werewolf context: Passed ✓
    - Any non-werewolf context contains teammate identities? False (should be False)
 [Check 2] 『Seer investigation result』only enters Seer(P4) context: Passed ✓

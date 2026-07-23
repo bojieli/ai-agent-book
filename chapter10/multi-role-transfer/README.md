@@ -18,7 +18,7 @@ and control is **autonomously handed off** between roles via a `transfer_to_agen
 
 ## Architecture
 
-```
+```text
                         Shared conversation history (user/assistant/tool messages, retained throughout)
                                        ▲   ▲
    On each LLM call:                    │   │
@@ -108,7 +108,7 @@ to actually run a Fibonacci script via `execute_python`, then `writing`/`triage`
 
 Expected autonomous handoff chain:
 
-```
+```text
 triage → research → data_analysis → writing
 ```
 
@@ -128,7 +128,7 @@ making it clear at a glance how "different specialized roles take turns on the s
 
 The following is a key excerpt from an actual `python demo.py` run (`model=gpt-5.6-luna`, routed via OpenRouter), unedited and unembellished:
 
-```
+```text
 === Role Roster (5 specialized roles) ===
 • triage — Front-desk triage (default entry)
     Tool set: ['transfer_to_agent']
