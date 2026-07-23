@@ -345,12 +345,13 @@ class ContextAwareAgent:
             # V4 Flash: OpenAI-compatible; tool calling + thinking mode.
             # Legacy deepseek-chat / deepseek-reasoner aliases deprecated 2026-07-24.
             "deepseek": (deepseek_base, "deepseek-v4-flash"),
+            "zhipu": ("https://open.bigmodel.cn/api/paas/v4", "glm-5.2"),
             "openrouter": ("https://openrouter.ai/api/v1", "openai/gpt-5.6-luna"),
         }
         if self.provider not in provider_defaults:
             raise ValueError(
                 f"Unsupported provider: {provider}. Use 'siliconflow', 'doubao', "
-                "'kimi', 'moonshot', 'deepseek', or 'openrouter'"
+                "'kimi', 'moonshot', 'deepseek', 'zhipu', or 'openrouter'"
             )
         base_url, default_model = provider_defaults[self.provider]
         resolved_model = model or default_model

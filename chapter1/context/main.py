@@ -795,7 +795,7 @@ def interactive_mode(api_key: str, provider: str = "siliconflow", model: str = N
     current_api_key = api_key
     
     # Available providers
-    available_providers = ["siliconflow", "doubao", "kimi", "moonshot", "deepseek"]
+    available_providers = ["siliconflow", "doubao", "kimi", "moonshot", "deepseek", "zhipu"]
     
     print("\n" + "="*60)
     print("INTERACTIVE MODE - Context-Aware Agent")
@@ -1087,7 +1087,7 @@ def main():
     )
     parser.add_argument(
         "--provider",
-        choices=["siliconflow", "doubao", "kimi", "moonshot", "deepseek", "openrouter"],
+        choices=["siliconflow", "doubao", "kimi", "moonshot", "deepseek", "zhipu", "openrouter"],
         default="doubao",
         help="LLM 提供商（默认：doubao；openrouter 或缺失主 key 时经 OpenRouter 兜底）"
     )
@@ -1122,6 +1122,8 @@ def main():
         api_key = os.getenv("MOONSHOT_API_KEY")
     elif args.provider == "deepseek":
         api_key = os.getenv("DEEPSEEK_API_KEY")
+    elif args.provider == "zhipu":
+        api_key = os.getenv("ZHIPU_API_KEY")
     else:
         logger.error(f"Unknown provider: {args.provider}")
         sys.exit(1)
