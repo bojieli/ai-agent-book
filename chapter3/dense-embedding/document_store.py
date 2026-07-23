@@ -130,7 +130,7 @@ class DocumentStore:
         """
         docs = list(self.documents.values())
         
-        if limit:
+        if limit is not None:
             docs = docs[:limit]
         
         if self.logger:
