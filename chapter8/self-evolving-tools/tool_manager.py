@@ -27,8 +27,13 @@ def normalize_schema(params) -> dict:
     """
     if not isinstance(params, dict):
         return {"type": "object", "properties": {}}
-    if params.get("type") == "object" and "properties" in params:
-        return params
+    if params.get("type") == "object":
+        # Bare {"type":"object"} (no properties) is a valid empty-object schema.
+        # Do not treat the "type" key itself as a property name.
+        out = {"type": "object", "properties": params.get("properties") or {}}
+        if "required" in params:
+            out["required"] = params["required"]
+        return out
     if "properties" in params:  # 有 properties 但 type 缺失/错误
         out = {"type": "object", "properties": params["properties"]}
         if "required" in params:
