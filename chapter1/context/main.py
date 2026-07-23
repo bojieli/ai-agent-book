@@ -1109,7 +1109,7 @@ def main():
     parser.add_argument(
         "--api-key",
         type=str,
-        help="LLM 提供商的 API Key（也可通过环境变量 SILICONFLOW_API_KEY/ARK_API_KEY/MOONSHOT_API_KEY/DEEPSEEK_API_KEY/ZHIPU_API_KEY 设置）"
+        help="LLM 提供商的 API Key（也可通过环境变量 SILICONFLOW_API_KEY/ARK_API_KEY/MOONSHOT_API_KEY/DEEPSEEK_API_KEY/ZHIPU_API_KEY 设置；缺失主 key 时可用 OPENROUTER_API_KEY 兜底）"
     )
     parser.add_argument(
         "--output",
