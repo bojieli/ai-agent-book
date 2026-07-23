@@ -62,6 +62,12 @@ def extract_answer_from_gsm8k_format(text: str) -> Optional[str]:
     return None
 
 
+def _format_normalized_number(num: float) -> str:
+    if num.is_integer():
+        return str(int(num))
+    return str(num)
+
+
 def normalize_number(text: str) -> Optional[str]:
     """标准化数字格式：去除逗号、空格、LaTeX 符号等"""
     if not text:
@@ -73,6 +79,28 @@ def normalize_number(text: str) -> Optional[str]:
     
     # 确保是字符串
     text = str(text)
+
+    # Evaluate \frac{a}{b} before brace stripping (else "\frac{6}{2}" becomes "frac62").
+    frac = re.search(r'\\(?:d)?frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}', text)
+    if frac:
+        try:
+            num = float(frac.group(1).replace(",", "").strip())
+            den = float(frac.group(2).replace(",", "").strip())
+            if den != 0:
+                return _format_normalized_number(num / den)
+        except ValueError:
+            pass
+
+    # Plain a/b (e.g. boxed "6/2") before taking the first digit run alone.
+    slash = re.fullmatch(r'\s*(-?\d+(?:\.\d+)?)\s*/\s*(-?\d+(?:\.\d+)?)\s*', text)
+    if slash:
+        try:
+            num = float(slash.group(1))
+            den = float(slash.group(2))
+            if den != 0:
+                return _format_normalized_number(num / den)
+        except ValueError:
+            pass
     
     # 去除 LaTeX 符号
     text = text.replace("\\,", "")
@@ -86,14 +114,8 @@ def normalize_number(text: str) -> Optional[str]:
     match = re.search(r'-?\d+\.?\d*', text)
     if match:
         num_str = match.group(0)
-        # 转换为浮点数再转回字符串，以标准化格式
         try:
-            num = float(num_str)
-            # 如果是整数，返回整数格式
-            if num.is_integer():
-                return str(int(num))
-            else:
-                return str(num)
+            return _format_normalized_number(float(num_str))
         except ValueError:
             return None
     
