@@ -446,13 +446,20 @@ def main(argv=None):
         )
     print("-" * 78)
     summary_line = f"{'准确率':<5}{'':<26}{'':>7}"
-    if run_cot:
-        summary_line += f"{cot_correct}/{n} = {cot_correct/n:5.0%}".rjust(14)
-    if run_code:
-        summary_line += f"{code_correct}/{n} = {code_correct/n:5.0%}".rjust(18)
+    # Empty --problems JSON is valid; avoid ZeroDivisionError on the rate line.
+    if n == 0:
+        if run_cot:
+            summary_line += f"{cot_correct}/{n} =   N/A".rjust(14)
+        if run_code:
+            summary_line += f"{code_correct}/{n} =   N/A".rjust(18)
+    else:
+        if run_cot:
+            summary_line += f"{cot_correct}/{n} = {cot_correct/n:5.0%}".rjust(14)
+        if run_code:
+            summary_line += f"{code_correct}/{n} = {code_correct/n:5.0%}".rjust(18)
     print(summary_line)
     print("=" * 78)
-    if run_cot and run_code:
+    if n and run_cot and run_code:
         print(
             f"\n结论：纯 CoT 准确率 {cot_correct/n:.0%}，代码辅助准确率 {code_correct/n:.0%}，"
             f"提升 {(code_correct-cot_correct)/n:+.0%}。"
