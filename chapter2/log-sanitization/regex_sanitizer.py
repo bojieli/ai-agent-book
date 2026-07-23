@@ -9,7 +9,7 @@
   - 私钥 / 证书（PEM 块）
   - JWT
   - 云厂商与第三方密钥（AWS AKIA、GitHub、Slack、Google、OpenAI 风格 sk-）
-  - HTTP Authorization: Bearer 令牌
+  - HTTP Authorization: Bearer / Basic 令牌
   - 配置中的口令 / 密钥赋值（password=..., token: ... 等）
   - 邮箱地址
   - 信用卡号（Luhn 校验）
@@ -109,6 +109,11 @@ _RULES = [
         1, None,
     ),
     (
+        "basic_auth", "[REDACTED_BASIC_AUTH]",
+        re.compile(r"(?i)\bBasic\s+([A-Za-z0-9+/=]{4,})"),
+        1, None,
+    ),
+    (
         "secret_assignment", "[REDACTED_SECRET]",
         re.compile(
             r"(?i)(?:password|passwd|pwd|secret|token|api[_-]?key|"
@@ -165,6 +170,7 @@ CATEGORY_LABELS = {
     "google_api_key": "Google API Key",
     "api_key": "API Key (sk-)",
     "bearer_token": "Bearer 令牌",
+    "basic_auth": "Basic 认证",
     "secret_assignment": "口令 / 密钥赋值",
     "email": "邮箱地址",
     "credit_card": "信用卡号",
