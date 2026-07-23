@@ -14,6 +14,7 @@ on:
       - 'book-en/**'
       - 'book-ta/**'
       - 'book-vi/**'
+      - 'book-ja/**'
       - 'build_epub.sh'
       - 'epub.css'
       - 'flatten_epub_toc.py'
@@ -39,6 +40,14 @@ jobs:
           brew install --cask mactex-no-gui font-dejavu font-noto-sans-cjk-sc font-noto-sans-cjk-tc font-noto-serif-tamil
           echo "/Library/TeX/texbin" >> "$GITHUB_PATH"
 
+      # WIP: Japanese fonts for the (still unvalidated) ja PDF build. Non-fatal so
+      # a bad cask name can never break the release build for the other languages.
+      - name: Install Japanese fonts (WIP)
+        continue-on-error: true
+        run: |
+          brew install --cask font-noto-sans-cjk-jp || true
+          brew install --cask font-noto-serif-cjk-jp || brew install --cask font-noto-serif-cjk || true
+
       - name: Build PDFs
         run: |
           set -e
@@ -46,8 +55,19 @@ jobs:
             (cd "$dir" && bash build_pdf.sh)
           done
 
+      # WIP: ja PDF is not yet validated (ElegantBook has no lang=jp). Kept as a
+      # separate non-fatal step so a failure never blocks the other languages.
+      - name: Build Japanese PDF (WIP, non-fatal)
+        continue-on-error: true
+        run: (cd book-ja && bash build_pdf.sh)
+
       - name: Build EPUBs
         run: ./build_epub.sh all
+
+      # WIP: ja EPUB depends on the ja PDF above; non-fatal, not part of `all`.
+      - name: Build Japanese EPUB (WIP, non-fatal)
+        continue-on-error: true
+        run: ./build_epub.sh ja
 
       - name: Upload to the rolling latest release
         env:
@@ -65,4 +85,7 @@ jobs:
           cp book-en/AI-Agents-in-Depth-Bojie-Li-v1.2.epub       "$out/AI-Agents-in-Depth-en.epub"
           cp book-ta/AI-Agents-in-Depth-Bojie-Li-v1.2-ta.epub    "$out/AI-Agents-in-Depth-ta.epub"
           cp book-vi/AI-Agents-in-Depth-Bojie-Li-v1.2-vi.epub    "$out/AI-Agents-in-Depth-vi.epub"
+          # WIP: ja artifacts are copied only if the (non-fatal) ja build produced them.
+          cp book-ja/AI-Agents-in-Depth-Bojie-Li-v1.2-ja.pdf     "$out/AI-Agents-in-Depth-ja.pdf"  || echo "ja PDF not built yet (WIP) — skipping"
+          cp book-ja/AI-Agents-in-Depth-Bojie-Li-v1.2-ja.epub    "$out/AI-Agents-in-Depth-ja.epub" || echo "ja EPUB not built yet (WIP) — skipping"
           gh release upload latest "$out"/* --clobber --repo "${{ github.repository }}"
