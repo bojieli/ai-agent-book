@@ -58,8 +58,7 @@ class MultiEditTool(BaseTool):
                 new_string = edit["new_string"]
                 replace_all = edit.get("replace_all", False)
                 
-                # Empty old_string is only for creating a new file (tools.json);
-                # on an existing file it would wipe contents (Edit rejects this).
+                # Empty old_string only valid when creating a new file (tools.json / Edit parity).
                 if old_string == "":
                     if creating_new and i == 0:
                         content = new_string
