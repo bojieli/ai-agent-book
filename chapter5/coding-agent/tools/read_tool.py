@@ -86,10 +86,13 @@ class ReadTool(BaseTool):
                 formatted_lines.append(f"{i:6d}|{line_content}")
             
             content = "\n".join(formatted_lines)
-            
-            if not content:
+
+            # tools.json: empty-file warning only when the file has no contents.
+            if total_lines == 0:
                 content = "File is empty."
-            
+            elif not selected_lines:
+                content = "No lines in selected range."
+
             return {
                 "file_path": str(file_path),
                 "total_lines": total_lines,
