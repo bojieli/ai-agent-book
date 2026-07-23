@@ -45,7 +45,9 @@ def compute_mle_elo(df: pd.DataFrame,
         observed=False
     )
     
-    # Handle ties (including "tie (bothbad)")
+    # Handle ties (including "tie (bothbad)"). Symmetrize only after aligning to
+    # the full model square; (pivot + pivot.T) on a one-sided A×B pivot zeroes
+    # every cell via pandas index/column alignment.
     if sum(df["winner"].isin(["tie", "tie (bothbad)"])) == 0:
         ptbl_tie = pd.DataFrame(0, index=ptbl_a_win.index, columns=ptbl_a_win.columns)
     else:
@@ -57,7 +59,6 @@ def compute_mle_elo(df: pd.DataFrame,
             fill_value=0,
             observed=False
         )
-        ptbl_tie = (ptbl_tie + ptbl_tie.T).fillna(0)
     
     ptbl_b_win = pd.pivot_table(
         df[df["winner"] == "model_b"],
@@ -73,6 +74,7 @@ def compute_mle_elo(df: pd.DataFrame,
     ptbl_a_win = ptbl_a_win.reindex(index=models, columns=models, fill_value=0)
     ptbl_b_win = ptbl_b_win.reindex(index=models, columns=models, fill_value=0)
     ptbl_tie = ptbl_tie.reindex(index=models, columns=models, fill_value=0)
+    ptbl_tie = ptbl_tie + ptbl_tie.T
 
     # Compute win matrix (A wins * 2 + B wins * 2 + ties)
     ptbl_win = (ptbl_a_win * 2 + ptbl_b_win.T * 2 + ptbl_tie).fillna(0)
