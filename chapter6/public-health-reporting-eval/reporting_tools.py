@@ -27,7 +27,6 @@ class ReportingEnvironment:
                 row: dict[str, Any] = dict(raw_row)
                 for field in INTEGER_FIELDS:
                     raw = row[field]
-                    # Blank / whitespace cells are common in CSV exports; treat as 0.
                     row[field] = int(raw) if str(raw).strip() else 0
                 self.rows.append(row)
 
