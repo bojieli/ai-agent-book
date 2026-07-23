@@ -446,17 +446,16 @@ def main(argv=None):
         )
     print("-" * 78)
     summary_line = f"{'准确率':<5}{'':<26}{'':>7}"
-    # Empty --problems JSON is valid; avoid ZeroDivisionError on the rate line.
-    if n == 0:
-        if run_cot:
-            summary_line += f"{cot_correct}/{n} =   N/A".rjust(14)
-        if run_code:
-            summary_line += f"{code_correct}/{n} =   N/A".rjust(18)
-    else:
-        if run_cot:
-            summary_line += f"{cot_correct}/{n} = {cot_correct/n:5.0%}".rjust(14)
-        if run_code:
-            summary_line += f"{code_correct}/{n} = {code_correct/n:5.0%}".rjust(18)
+
+    def _rate_cell(correct: int, width: int) -> str:
+        if n == 0:
+            return f"{correct}/{n} =   N/A".rjust(width)
+        return f"{correct}/{n} = {correct / n:5.0%}".rjust(width)
+
+    if run_cot:
+        summary_line += _rate_cell(cot_correct, 14)
+    if run_code:
+        summary_line += _rate_cell(code_correct, 18)
     print(summary_line)
     print("=" * 78)
     if n and run_cot and run_code:
