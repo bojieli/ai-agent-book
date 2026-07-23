@@ -22,10 +22,3 @@ def test_missing_dimension_still_zero():
 def test_empty_string_score_rejected():
     with pytest.raises(ValueError):
         _rubric_dimension_total({"error_handling": ""})
-
-
-def test_pristine_int_none_raises():
-    """Old pattern int(rubric.get(d, 0)) still blows up on explicit null."""
-    rubric = {"error_handling": None}
-    with pytest.raises(TypeError):
-        int(rubric.get("error_handling", 0))
