@@ -1,6 +1,6 @@
 # 第 1 章 · Agent 基礎知識
 
-> 「模型即 Agent」新典範 + **Agent = LLM + 上下文 + 工具**；Harness 工程才是競爭力
+> **Agent = LLM + 上下文 + 工具**；Harness 工程才是競爭力
 
 ← [返回主目錄](../docs/zh-TW/README.md) · 📖 [讀本章正文](../book/chapter1.md)
 

@@ -47,7 +47,7 @@ The book revolves around the core formula **Agent = LLM + Context + Tools**, wit
 
 | Ch | Topic | One-line Summary | Text | Code |
 | :--: | --- | --- | :--: | :--: |
-| 1 | 🚀 **Agent Fundamentals** | "Model as Agent" paradigm + **Agent = LLM + Context + Tools**; Harness engineering is the real competitive edge | [Read](../../book-en/chapter1.md) | [4](../../chapter1/README.en.md) |
+| 1 | 🚀 **Agent Fundamentals** | **Agent = LLM + Context + Tools**; Harness engineering is the real competitive edge | [Read](../../book-en/chapter1.md) | [4](../../chapter1/README.en.md) |
 | 2 | 🎯 **Context Engineering** | Context caps Agent ability: KV Cache, prompt engineering, Agent Skills, context compression | [Read](../../book-en/chapter2.md) | [9](../../chapter2/README.en.md) |
 | 3 | 📚 **User Memory & Knowledge Bases** | Cross-session user memory + external knowledge: user memory, RAG, structured indexes, knowledge graphs | [Read](../../book-en/chapter3.md) | [13](../../chapter3/README.en.md) |
 | 4 | 🛠️ **Tools** | Tools are the Agent's hands: MCP protocol, perception/execution/collaboration tools, event-driven async Agents, proactive tool discovery | [Read](../../book-en/chapter4.md) | [7](../../chapter4/README.en.md) |
