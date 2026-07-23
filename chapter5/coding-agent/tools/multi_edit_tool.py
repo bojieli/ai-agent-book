@@ -58,12 +58,15 @@ class MultiEditTool(BaseTool):
                 new_string = edit["new_string"]
                 replace_all = edit.get("replace_all", False)
                 
-                if old_string == "" and i == 0:
-                    # File creation case
-                    content = new_string
-                    results.append({"edit": i + 1, "action": "created", "success": True})
-                    continue
-                
+                # Empty old_string is only for creating a new file (tools.json);
+                # on an existing file it would wipe contents (Edit rejects this).
+                if old_string == "":
+                    if creating_new and i == 0:
+                        content = new_string
+                        results.append({"edit": i + 1, "action": "created", "success": True})
+                        continue
+                    return {"error": "old_string cannot be empty"}
+
                 if old_string not in content:
                     return {
                         "error": f"Edit #{i + 1} failed: String not found",
