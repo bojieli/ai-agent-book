@@ -8,11 +8,12 @@ import demo as cfm
 
 
 class _Resp:
-    choices = [
-        SimpleNamespace(
-            message=SimpleNamespace(content="FINAL ANSWER: 1", tool_calls=None)
-        )
-    ]
+    def __init__(self):
+        self.choices = [
+            SimpleNamespace(
+                message=SimpleNamespace(content="FINAL ANSWER: 1", tool_calls=None)
+            )
+        ]
 
 
 class _Completions:
