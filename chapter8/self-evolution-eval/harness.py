@@ -133,6 +133,12 @@ def _parse_judge_json(text: str) -> Optional[dict]:
     return None
 
 
+def _rubric_dimension_total(rubric: dict) -> int:
+    """Sum 0-3 rubric dims; missing/None count as 0 (not other falsy JSON)."""
+    dims = ["error_handling", "input_validation", "documentation", "robustness"]
+    return sum(int(v) if v is not None else 0 for v in (rubric.get(d) for d in dims))
+
+
 def layer3_tool_quality(task: dict, trajectory: dict, judge_model: Optional[str] = None) -> dict:
     created = trajectory.get("created_tools", [])
     if not created:
@@ -163,7 +169,7 @@ def layer3_tool_quality(task: dict, trajectory: dict, judge_model: Optional[str]
         return {"score": 0.0, "rubric": None, "judge_text": raw, "detail": "judge 输出无法解析为 JSON。"}
 
     dims = ["error_handling", "input_validation", "documentation", "robustness"]
-    total = sum(int(rubric.get(d) or 0) for d in dims)
+    total = _rubric_dimension_total(rubric)
     score = round(total / (3 * len(dims)), 3)
     return {
         "score": score,
