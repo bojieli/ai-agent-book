@@ -87,7 +87,7 @@ class WebSearchAgent:
         """
         # 优先使用传入的 api_key，否则从环境变量获取
         # Moonshot 为主，OpenRouter 为通用兜底（当 MOONSHOT_API_KEY 缺失时启用）
-        from config import resolve_llm_backend
+        from config import resolve_llm_backend, Config
         primary_key = api_key or os.environ.get("MOONSHOT_API_KEY") or os.environ.get("KIMI_API_KEY")
         resolved_key, resolved_base_url, model, self.using_openrouter = \
             resolve_llm_backend(primary_key, base_url, model)
@@ -100,7 +100,9 @@ class WebSearchAgent:
 
         self.client = OpenAI(
             api_key=resolved_key,
-            base_url=resolved_base_url
+            base_url=resolved_base_url,
+            # 应用配置的搜索超时，避免后端挂起时请求默认阻塞约 10 分钟
+            timeout=Config.SEARCH_TIMEOUT,
         )
         self.model = model
         self.verbose = verbose
@@ -269,6 +271,20 @@ class WebSearchAgent:
                             "name": tool_call_name,
                             "content": tool_content
                         })
+                elif finish_reason == "length":
+                    # 输出预算（max_tokens）耗尽导致截断：返回已生成内容并明确标注，
+                    # 而不是把半截答案当作完整答案，也不误报“无法获取足够信息”
+                    # （content 为空时，思考过程已耗尽整个预算）。
+                    partial = (choice.message.content or "").strip()
+                    logger.warning("回答因达到 max_tokens 上限被截断 (finish_reason=length)")
+                    note = "（注意：回答因达到 max_tokens 上限被截断，请增大 max_tokens 后重试。）"
+                    final = f"{partial}\n\n{note}" if partial else note
+                    self._emit({"iteration": iteration, "type": "answer", "content": final})
+                    self.conversation_history.append({
+                        "role": "assistant",
+                        "content": partial or final
+                    })
+                    return final
                 else:
                     # 获得最终答案
                     if choice.message.content:
