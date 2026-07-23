@@ -14,7 +14,7 @@ uvicorn>=0.24.0
 python-weather>=2.0.0
 
 # For Ollama support (Mac/local development)
-ollama>=0.1.0
+ollama>=0.5.1
 
 # For additional tools
 PyPDF2>=3.0.0

@@ -63,7 +63,7 @@ def fig1_4():
     s.text(130, 135, '✗ 無需手寫 ReAct 迴圈', size=FS_SMALL, anchor='middle')
     s.text(130, 160, '✓ 模型自主決策全流程', size=FS_SMALL, anchor='middle')
 
-    s.save(f'{OUT}/fig1-3.svg')  # ReAct 執行過程 → 圖1-3
+    s.save(f'{OUT}/fig1-4.svg')  # 「模型即 Agent」架構 → 圖1-4
 
 
 def fig1_1():
@@ -116,7 +116,7 @@ def fig1_1():
     s.text(410, 455, '學習速度', size=FS_SMALL, fill='text_light')
     s.text(760, 455, '快（毫秒）', size=FS_SMALL, fill='text_light', anchor='end')
 
-    s.save(f'{OUT}/fig1-4.svg')  # 三種學習正規化 → 圖1-4
+    s.save(f'{OUT}/fig1-1.svg')  # 三種學習正規化 → 圖1-1
 
 
 def fig1_2():
@@ -126,8 +126,8 @@ def fig1_2():
 
     s.text(W / 2, 30, '上下文消融實驗設計', size=FS_TITLE, bold=True)
 
-    # Column headers（順序與正文實驗 1-1 移除順序一致）
-    components = ['系統提示詞', '工具定義', '工具執行結果', '思考過程', '歷史訊息']
+    # Column headers（標籤已縮短以避免溢出）
+    components = ['系統指令', '工具定義', '推理過程', '歷史記錄', '工具結果']
     comp_w = 105
     comp_gap = 10
     total_comp = len(components) * comp_w + (len(components) - 1) * comp_gap
@@ -146,9 +146,9 @@ def fig1_2():
     conditions = [
         ('完整基線', [True, True, True, True, True], '✓ 正常工作'),
         ('無工具定義', [True, False, True, True, True], '✗ 無法呼叫工具'),
-        ('無工具執行結果', [True, True, False, True, True], '✗ 盲目迴圈'),
-        ('無思考過程', [True, True, True, False, True], '△ 決策不連貫'),
-        ('無歷史訊息', [True, True, True, True, False], '△ 重複操作'),
+        ('無推理過程', [True, True, False, True, True], '△ 決策不連貫'),
+        ('無歷史記錄', [True, True, True, False, True], '△ 重複操作'),
+        ('無工具結果', [True, True, True, True, False], '✗ 盲目迴圈'),
     ]
 
     for j, (label, flags, result) in enumerate(conditions):
@@ -171,7 +171,7 @@ def fig1_2():
         s.text(result_x + 80, y + 28, result, size=FS_SMALL,
                fill='text' if '✓' in result else ('text_light' if '△' in result else 'dark'))
 
-    s.save(f'{OUT}/fig1-1.svg')  # 上下文消融實驗 → 圖1-1
+    s.save(f'{OUT}/fig1-2.svg')  # 上下文消融實驗 → 圖1-2
 
 
 def fig1_3():
@@ -258,7 +258,7 @@ def fig1_3():
     s.text(685, 500, '結構化軌跡', size=FS_SMALL, bold=True)
     s.text(685, 525, 'user / assistant / tool', size=FS_TINY, fill='text_light')
 
-    s.save(f'{OUT}/fig1-2.svg')  # Agent 軌跡 → 圖1-2
+    s.save(f'{OUT}/fig1-3.svg')  # Agent 軌跡 → 圖1-3
 
 
 def fig1_wf_chaining():
@@ -308,7 +308,7 @@ def fig1_wf_chaining():
     for sx, txt in snippets:
         s.text(sx, snippet_y, txt, size=FS_TINY, fill='text_light', anchor='start')
 
-    s.save(f'{OUT}/fig1-5.svg')
+    s.save(f'{OUT}/fig1-10.svg')  # 提示鏈工作流（本章未引用）→ 圖1-10
 
 
 def fig1_wf_routing():
@@ -392,24 +392,25 @@ def fig1_wf_orchestrator():
     s.rect(270, 105, 280, 38, fill='#e8e8e8', rx=4)
     s.text(410, 124, '"分析 Issue → 定位檔案 → 分配子任務"', size=FS_TINY)
 
-    # Workers
+    # Workers（Worker 3 首行較長，字號縮小以避免溢出）
     workers = [
-        (40, 'Worker 1', '修改 auth.py\n新增 OAuth2 支援', '讀取/編輯\n檔案工具'),
-        (290, 'Worker 2', '修改 api.py\n新增新端點', '讀取/編輯\n檔案工具'),
-        (540, 'Worker 3', '編寫 test_auth.py\n測試用例', '執行測試\n工具'),
+        (40, 'Worker 1', '修改 auth.py\n新增 OAuth2 支援', '讀取/編輯\n檔案工具', None),
+        (290, 'Worker 2', '修改 api.py\n新增新端點', '讀取/編輯\n檔案工具', None),
+        (540, 'Worker 3', '編寫 test_auth.py\n測試用例', '執行測試\n工具', FS_SMALL - 1),
     ]
 
     wy = 220
     ww = 230
     wh = 55
-    for wx, title, task, tools in workers:
-        s.box(wx, wy, ww, wh, f'{title}：{task}', fill='light', font_size=FS_SMALL)
+    for wx, title, task, tools, first_fs in workers:
+        s.box(wx, wy, ww, wh, f'{title}：{task}', fill='light', font_size=FS_SMALL,
+              first_line_font_size=first_fs)
         s.box(wx + 20, wy + wh + 10, ww - 40, 40, tools, fill='code_bg', font_size=FS_TINY)
         s.arrow(410, 157, wx + ww / 2, wy - 2)
 
     # Synthesize
     s.box(260, 370, 300, 55, '編排器：合併結果 → 驗證一致性', fill='medium', font_size=FS_SMALL)
-    for wx, _, _, _ in workers:
+    for wx, _, _, _, _ in workers:
         s.arrow(wx + ww / 2, wy + wh + 52, 410, 368)
 
     s.save(f'{OUT}/fig1-8.svg')
@@ -510,7 +511,7 @@ def fig1_5():
     # Done arrow
     s.arrow(330, 312, 330, 358, label='done = True')
 
-    s.save(f'{OUT}/fig1-10.svg')
+    s.save(f'{OUT}/fig1-5.svg')  # 自主 Agent 執行迴圈 → 圖1-5
 
 
 if __name__ == '__main__':

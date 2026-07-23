@@ -29,22 +29,25 @@ class MultiEditTool(BaseTool):
         edits = params.get("edits")
         if edits is None:
             edits = []
-        
+
+        creating_new = False
         if not file_path.exists():
-            # Check if this is a file creation (first edit has empty old_string)
+            # Defer create/write until every edit succeeds (atomic).
             if edits and edits[0]["old_string"] == "":
+                creating_new = True
                 try:
                     file_path.parent.mkdir(parents=True, exist_ok=True)
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write("")
                 except Exception as e:
                     return {"error": f"Error creating file: {str(e)}"}
             else:
                 return {"error": f"File not found: {file_path}"}
         
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            if creating_new:
+                content = ""
+            else:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
             
             original_content = content
             results = []

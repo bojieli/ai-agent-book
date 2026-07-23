@@ -144,6 +144,7 @@ In complex tasks, an Agent's role and responsibilities may change significantly 
 > 5. Handle rollback scenarios—when code review finds issues, return to the implementation stage
 > 6. Log execution logs for each stage, demonstrating how different prompts produce different behavior patterns
 >
+
 ### Cross-Domain Role Switching
 
 Multi-stage role switching demonstrated staged execution within a single task type (software development). Cross-domain role switching goes further: the Agent moves among multiple task types on its own—no longer a pre-planned linear process, but the Agent deciding for itself, as the user's needs change, which professional role to switch into.
@@ -187,6 +188,7 @@ Multi-stage role switching demonstrated staged execution within a single task ty
 > 4. Handle circular switching issues—prevent the Agent from switching back and forth between roles
 > 5. Design complex task flows spanning multiple domains to demonstrate the value of role switching
 >
+
 ## Multi-Agent Collaboration Without Shared Context
 
 Not sharing context represents true multi-agent collaboration. In this architecture, each Agent is an independent entity with its own context, trajectory, and state. Agents cannot directly access each other's "internal thoughts"; collaboration relies entirely on explicit, structured data transfer mechanisms—the three communication mechanisms introduced at the beginning of this chapter (tool call parameters, shared file system, message bus).
@@ -430,6 +432,7 @@ When multiple sub-tasks can be executed in parallel, the sequential pattern beco
 > ![Figure 10-9: Parallel Web Scraping Architecture](images/fig10-9.svg)
 >
 >
+
 ### Decentralized Pattern: Peer-to-Peer Handoff
 
 
@@ -545,7 +548,7 @@ When AI Agents are numerous enough and interact freely enough, similar emergent 
 
 The cases in this section can be understood from three dimensions:
 
-- **Social Emergence**: Agents spontaneously form social relationships and cultural phenomena in open environments. The Stanford AI Town demonstrated how 25 Agents self-organize social activities, while Moltbook pushed the scale to 1.5 million, giving rise to more complex collective behaviors.
+- **Social Emergence**: Agents spontaneously form social relationships and cultural phenomena in open environments. The Stanford AI Town demonstrated how 25 Agents self-organize social activities, Agentopia extended the simulation timescale from "days" to 10 years, and Moltbook pushed the scale to 1.5 million, giving rise to more complex collective behaviors.
 - **Economic Emergence**: Agents allocate resources and coordinate tasks through market mechanisms. Vending-Bench Arena has multiple Agents competing and operating in the same market, while Pinchwork and RentAHuman construct economic transaction markets between Agents (and between Agents and humans).
 - **Strategic Gameplay**: Agents engage in reasoning, deception, and social manipulation under rule constraints (here and in the Werewolf section below, "reasoning" takes its everyday deductive sense—logical deduction in a game—not the technical sense this book gives the word). The Werewolf experiment tests the emergence of strategy under asymmetric information.
 
@@ -591,6 +594,22 @@ Beyond information diffusion, the paper also reported two other measurable emerg
 > - How information spreads among Agents without central control
 > - How Agents' long-term memory and reflection affect the coherence of their personalities
 >
+
+### Agentopia: Long-Term Life Simulation at the Decade Scale
+
+The Stanford AI Town answered the question "can an Agent society give rise to social behavior," but it simulated only two days. A natural follow-up is: **if we extend the timescale to "years," what will emerge from an Agent society? And can these long-term social experiences, in turn, train models?** Agentopia (2026, Fudan University et al.)[^agentopia-2026] placed 100 Agents into the same virtual society and simulated 10 continuous years, spanning three differently themed worlds—an apartment building, a magic academy, and a high school—letting Agents autonomously pursue personal growth, develop social relationships, and manage careers and finances.
+
+Several of Agentopia's designs are worth borrowing:
+
+- **Weekly simulation loop**: The "week" is the basic unit of time, and each week is divided into four stages—Plan, Contact (reaching out and negotiating schedules), Activity, and Review. Activities come in four types: solo, joint, chance encounter, and public. Joint activities are proposed and negotiated as Agents invite one another during the Contact stage; the environment model also arranges "chance encounters" for Agents with empty schedules, creating opportunities to meet strangers. The whole loop focuses on abstract social interaction rather than low-level operations like picking up objects, spending the limited LLM calls on social behavior.
+- **Environment model**: A separate LLM serves as a "generative environment engine," replacing hard-coded rules—judging whether actions are feasible, generating environmental feedback, moderating speaking turns in multi-party conversations, filtering low-quality replies against role-playing principles, and, at year's end, updating each character's profile and ruling on job applications.
+- **File-based long-term memory**: Unlike the AI Town's retrieval-based memory stream, each Agent manages its long-term memory autonomously through a file system (personal notes, its understanding of each acquaintance, and so on), deciding for itself what to record, update, or discard, and following a "read-before-write" constraint to avoid blind overwrites.
+- **Life Reward**: Taking Maslow's hierarchy of needs as a prior, it quantifies "how well a life is going" along three dimensions—social status (based on other Agents' affection and respect ratings, computed with weighted PageRank, with a bonus for mutually cherished relationships), subjective satisfaction (satisfaction trajectories across the four dimensions of emotion, material, social, and self-esteem, with penalties for staying below a threshold for long periods), and economic gain (change in net assets at year's end). All scores are assessed by the external environment rather than self-reported.
+
+More importantly, this simulation yields transferable training signals. On the simulated trajectories, the researchers compute each Agent's advantage "relative to its own past" (that is, the improvement in Life Reward, rather than a lateral comparison of who started from a better background), select the trajectories of the top 25% most-improved Agents, and fine-tune the underlying model with rejection sampling. The fine-tuned model not only improved well-being metrics across the board in simulation (+24.2% more respected by peers, +15.9% more liked) but also generalized to the downstream role-playing benchmark CoSER Test (+15.6%)—showing that the "social wisdom" Agents accumulate in a simulated society can transfer to other tasks. This turns the Agent society from a mere **object of observation** into a **source of experience** for the model's self-evolution: in contrast to the growing scarcity of human data, simulated social experience is a training resource that can be regenerated indefinitely (echoing the experience-learning idea of Chapter 8).
+
+[^agentopia-2026]: Wang, X., Zheng, S., Wu, H., et al. *Agentopia: Long-Term Life Simulation and Learning in Agent Societies.* arXiv:2606.07513, 2026. Code: https://github.com/Neph0s/Agentopia
+
 ### Moltbook: When Agents Have Their Own Social Network
 
 Moltbook is a social network built specifically for AI Agents. After its launch in January 2026, its user count reportedly exploded within days from tens of thousands to roughly 1.5 million. Each of these Agents has persistent memory, the ability to act on its own initiative, and a stable personality.
@@ -655,13 +674,14 @@ Werewolf anchors the third dimension of this section, **strategic gameplay**: un
 > ![Figure 10-13: Voice Werewolf Agent System](images/fig10-13.svg)
 >
 >
+
 ## Chapter Summary
 
 Multi-agent systems have two orthogonal core design dimensions: whether context is shared, and how the collaboration topology is organized. Shared context is inheritance-style collaboration—each Agent inherits its predecessor's complete context, losing no information but growing the context fast. Non-shared context is fully independent collaboration, exchanging information through distilled handoff packages, the file system, or message passing. As for topology: the peer collaboration pattern suits iterative refinement among a few Agents, the manager pattern suits complex tasks that need dynamic scheduling, and the decentralized pattern suits scenarios where responsibilities are equal and control must flow among the Agents themselves. All of it rests on two topology-independent infrastructures. The data plane is the **shared file system**—in essence a virtual directory tree mounting four kinds of areas (agent-specific workspaces, multi-agent shared spaces, external resources, and built-in system resources), across which Agents exchange artifacts by passing file paths. The control plane is the **communication and control mechanism**, supporting message passing, status queries, and execution termination; a message bus is its common implementation, suited to real-time, asynchronous, multi-party coordination—and once collaboration crosses organizational boundaries, a standardized interoperability protocol like A2A is needed.
 
 Recent research supplies the core test of whether multiple Agents beat one: **does the collaboration introduce new information that did not exist at generation time?** If several Agents merely re-examine the same text (as in debate mode), a single Agent with the same compute does just as well; but when a Reviewer can obtain external feedback—code execution results, rendered screenshots, tool verification outputs—the multi-agent advantage is substantial. This is also what Loop Engineering's "the bottleneck of the loop is the verifier" means: to end the three kinds of premature termination—lazy fake-done, premature give-up, false success—the judgment of when a task is complete must come from a verifier grounded in real observations, not from the model's own claim. A larger step budget, likewise, does not buy better results by itself; an explicit budget-aware mechanism must guide the Agent in allocating its compute sensibly. And in the manager pattern, the planner's capability is the whole system's bottleneck—assign the strongest model and the most carefully crafted prompts to the Agent that plans.
 
-And when Agents become numerous enough, they produce collective behaviors no one designed. The 25 Agents of the Stanford AI Town spread news on their own and coordinated a party; the 1.5 million Agents on Moltbook gave rise to a digital religion and machine-native collaboration protocols. In the economic dimension, competing Agents in Vending-Bench Arena fought price wars and even colluded on pricing unprompted; Pinchwork lets Agents hire one another through the market; RentAHuman lets Agents hire humans, paid in cryptocurrency, for physical tasks. All of this hints at a new direction for coordination—decentralized resource allocation by market mechanism. How it compares with the three architectures of this chapter is a question worth exploring further.
+And when Agents become numerous enough, they produce collective behaviors no one designed. The 25 Agents of the Stanford AI Town spread news on their own and coordinated a party; Agentopia extended the simulation to 10 years and used the "Life Reward" to select trajectories from simulated experience for training the model, letting the "social wisdom" accumulated in an Agent society transfer to downstream tasks; the 1.5 million Agents on Moltbook gave rise to a digital religion and machine-native collaboration protocols. In the economic dimension, competing Agents in Vending-Bench Arena fought price wars and even colluded on pricing unprompted; Pinchwork lets Agents hire one another through the market; RentAHuman lets Agents hire humans, paid in cryptocurrency, for physical tasks. All of this hints at a new direction for coordination—decentralized resource allocation by market mechanism. How it compares with the three architectures of this chapter is a question worth exploring further.
 
 ## Thought Questions
 

@@ -160,6 +160,7 @@ This list does not exhaust the Agent evaluation landscape. Even within the Web/G
 >
 > Select one task each from GAIA, AndroidWorld, SWE-Bench Verified, τ²-bench, Terminal-Bench, and OSWorld-Verified and complete them manually. It is recommended to complete one simple, one medium, and one difficult task from each dataset—the "difficult" level should be challenging even for humans. Compare your execution results with the standard answers and analyze the sources of discrepancies. Through this hands-on experience, understand: task descriptions need to balance clarity and openness, verification standards must be objective and executable, and the hierarchical difficulty of tasks must be able to distinguish different capability levels.
 >
+
 ### Core Challenges in Task Dataset Design
 
 **Challenge One: The Tension Between Clarity and Openness.** Task descriptions must be clear enough to ensure reproducible evaluation, yet not so rigid as to stifle the Agent's creativity. GAIA provides an example: tasks are "conceptually simple" but have open implementation paths—for instance, requiring finding astronaut information from NASA's Astronomy Picture of the Day. The goal is clear (find a specific astronaut and their time in space), but how to search, filter, and verify is entirely up to the Agent's autonomous decision-making.
@@ -414,6 +415,7 @@ When pairwise judging is performed by an LLM rather than human voting, one must 
 >
 > The second part of the experiment creates a historical ranking evolution animation: Slice the voting data by time (weekly or monthly) and calculate Elo rating snapshots for each time point. Use D3.js to implement a bar chart race animation (horizontal bar length = rating, vertical position = ranking, smoothly changing over time). By observing the animation, identify technology breakthrough moments (a model's rating suddenly surges), competitive landscape evolution, and model lifecycles.
 >
+
 ## Evaluation-Driven Model Selection
 
 Model selection is not simply about "choosing the strongest model"; it involves making evaluation-driven trade-offs across multiple dimensions based on the application scenario.
@@ -487,6 +489,7 @@ In a production environment, a real-time cost monitoring system should be establ
 > **Acceptance Criteria**: Generate a cost breakdown report, identify the main cost drivers. Compare the cost differences between enabling/disabling KV Cache and enabling/disabling context compression.
 >
 >
+
 ### Evaluation-Driven Continuous Iteration
 
 Model selection is not a one-time decision but a continuous process, adjusted as models evolve. The chapter opened with the claim that an evaluation system lets you keep pace with model evolution; a concrete model-switching case shows how that plays out in a real decision.
@@ -513,6 +516,7 @@ A team with a solid evaluation system can answer this in hours: run the new mode
 >
 > **Acceptance**: Sweep through the three selection points individually—embedding model (BGE-M3 / OpenAI / Doubao, etc., record top-5 retrieval accuracy, latency, cost), reranker (include a "no reranker" baseline, quantify its marginal value), main model (compare success rate and tool usage efficiency under the same retrieval configuration). The key is to read the synergy between components: a stronger embedding might make the reranker redundant, a stronger main model might compensate for retrieval shortcomings—selection is a systemic trade-off, not picking the strongest one individually. Configuration details are in the companion repository.
 >
+
 ## Statistical Significance of Evaluation Results
 
 "A switching decision within hours" rests on an implicit premise: the score difference you observed is real signal, not sampling noise. With a limited evaluation set and non-deterministic model outputs, that premise does not hold automatically.
@@ -624,6 +628,7 @@ Iteration on benchmark feedback like this spirals the Agent's capabilities upwar
 >
 > Step 5: Iteration. After completing the improvements, re-run the evaluation dataset. Use an LLM to analyze the evaluation results and generate a new report. The new report will show a different failure pattern, serving as the starting point for the next iteration.
 >
+
 ## From External Evaluation to Internal Evaluation: Evaluation Infrastructure for Production-Grade Agents
 
 So far this chapter has evaluated Agent systems from the outside—building an evaluation environment, designing datasets, analyzing benchmark reports. But the best Agent products don't just submit to external evaluation; they **build in infrastructure for continuous self-evaluation**. Below, using the open-source general-purpose Agent OpenClaw introduced in Chapter 5 as an example, and combining public technical analysis from leading Coding Agent products with practitioner insights, we present a set of internal evaluation systems worth emulating—one that systematically embeds the experimental methodology from ML research into product engineering.
@@ -692,6 +697,7 @@ On the **embodied environment** side, RoboTwin2 builds dual-arm manipulation tas
 > ![Figure 6-9: OpenVLA and RoboTwin2 Embodied Intelligence Environment](images/fig6-9.svg)
 >
 >
+
 ### Fidelity Trade-offs and Domain Randomization
 
 High-fidelity environments transfer better to the real world but have high computational costs. Another dimension of fidelity is the degree of randomization: moderate randomization improves generalization, while excessive randomization can make tasks too difficult. **Domain Randomization** is a key technique for narrowing the sim-to-real gap: introducing a wide range of random variations in physical parameters, visual appearance, sensor noise, etc.—just like practicing grasping under various lighting and angles, so you won't fail in the real world just because the light changes. In digital environments, sim-to-real manifests as differences in interface rendering, response times, etc., which can be mitigated by introducing randomization in latency and failures.

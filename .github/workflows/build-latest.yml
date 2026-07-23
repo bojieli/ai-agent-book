@@ -12,6 +12,7 @@ on:
       - 'book/**'
       - 'book-zhtw/**'
       - 'book-en/**'
+      - 'book-ru/**'
       - 'book-ta/**'
       - 'book-vi/**'
       - 'book-ja/**'
@@ -19,6 +20,7 @@ on:
       - 'epub.css'
       - 'flatten_epub_toc.py'
       - '.github/workflows/build-latest.yml'
+      - '.github/scripts/**'
   workflow_dispatch:
 
 permissions:
@@ -40,6 +42,20 @@ jobs:
           brew install --cask mactex-no-gui font-dejavu font-noto-sans-cjk-sc font-noto-sans-cjk-tc font-noto-serif-tamil
           echo "/Library/TeX/texbin" >> "$GITHUB_PATH"
 
+      # PingFang is an on-demand font since macOS Sequoia and is absent on fresh
+      # runners (only an unusable reserved UI copy exists); without it
+      # rsvg-convert renders Chinese figure text in a fallback font (Japanese
+      # glyph variants). Fetch the real font from Apple's asset CDN and index it
+      # for fontconfig.
+      - name: Install PingFang fonts
+        run: |
+          bash .github/scripts/install_apple_fonts.sh
+          fc-cache -f
+
+      # PANGOCAIRO_BACKEND=fontconfig: pango's CoreText backend on the runners
+      # cannot use the freshly installed user font and silently substitutes
+      # another CJK font in SVG figures; the fontconfig backend picks it up.
+
       # WIP: Japanese fonts for the (still unvalidated) ja PDF build. Non-fatal so
       # a bad cask name can never break the release build for the other languages.
       - name: Install Japanese fonts (WIP)
@@ -49,11 +65,19 @@ jobs:
           brew install --cask font-noto-serif-cjk-jp || brew install --cask font-noto-serif-cjk || true
 
       - name: Build PDFs
+        env:
+          PANGOCAIRO_BACKEND: fontconfig
         run: |
           set -e
-          for dir in book book-zhtw book-en book-vi book-ta; do
+          for dir in book book-zhtw book-en book-ru book-vi book-ta; do
             (cd "$dir" && bash build_pdf.sh)
           done
+
+      - name: Verify Chinese figure fonts
+        run: |
+          python3 .github/scripts/verify_pdf_fonts.py \
+            "book/深入理解-AI-Agent-李博杰-v1.2.pdf" \
+            "book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf"
 
       # WIP: ja PDF is not yet validated (ElegantBook has no lang=jp). Kept as a
       # separate non-fatal step so a failure never blocks the other languages.
@@ -78,11 +102,13 @@ jobs:
           cp "book/深入理解-AI-Agent-李博杰-v1.2.pdf"              "$out/AI-Agents-in-Depth-zh-CN.pdf"
           cp "book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.pdf"   "$out/AI-Agents-in-Depth-zh-TW.pdf"
           cp book-en/AI-Agents-in-Depth-Bojie-Li-v1.2.pdf        "$out/AI-Agents-in-Depth-en.pdf"
+          cp book-ru/AI-Agents-in-Depth-ru.pdf                   "$out/AI-Agents-in-Depth-ru.pdf"
           cp book-ta/AI-Agents-in-Depth-Bojie-Li-v1.2-ta.pdf     "$out/AI-Agents-in-Depth-ta.pdf"
           cp book-vi/AI-Agents-in-Depth-Bojie-Li-v1.2-vi.pdf     "$out/AI-Agents-in-Depth-vi.pdf"
           cp "book/深入理解-AI-Agent-李博杰-v1.2.epub"             "$out/AI-Agents-in-Depth-zh-CN.epub"
           cp "book-zhtw/深入理解-AI-Agent-李博杰-v1.2-zhtw.epub"   "$out/AI-Agents-in-Depth-zh-TW.epub"
           cp book-en/AI-Agents-in-Depth-Bojie-Li-v1.2.epub       "$out/AI-Agents-in-Depth-en.epub"
+          cp book-ru/AI-Agents-in-Depth-ru.epub                  "$out/AI-Agents-in-Depth-ru.epub"
           cp book-ta/AI-Agents-in-Depth-Bojie-Li-v1.2-ta.epub    "$out/AI-Agents-in-Depth-ta.epub"
           cp book-vi/AI-Agents-in-Depth-Bojie-Li-v1.2-vi.epub    "$out/AI-Agents-in-Depth-vi.epub"
           # WIP: ja artifacts are copied only if the (non-fatal) ja build produced them.

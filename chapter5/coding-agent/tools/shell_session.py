@@ -6,6 +6,7 @@ import subprocess
 import time
 import os
 import re
+import shlex
 import queue
 import threading
 from dataclasses import dataclass, field
@@ -57,13 +58,13 @@ class ShellSession:
         self.process = None
         self.start()
     
-    def execute(self, command: str, timeout: int = 120) -> Tuple[str, int]:
+    def execute(self, command: str, timeout: float = 120) -> Tuple[str, int]:
         """Execute command in the persistent shell"""
         self.start()
         
         try:
             # Send command
-            full_command = f"cd {self.current_directory} && {command}\n"
+            full_command = f"cd {shlex.quote(self.current_directory)} && {command}\n"
             self.process.stdin.write(full_command)
             self.process.stdin.write("echo __CMD_DONE__$?\n")
             self.process.stdin.flush()

@@ -1,6 +1,6 @@
 ---
 title: 深入理解 AI Agent
-description: 围绕核心公式 Agent = LLM + 上下文 + 工具,用 10 章把 AI Agent 从原理讲到工程实战的开源技术书。正文、配图、88 个配套实验全部开源。
+description: 围绕核心公式 Agent = LLM + 上下文 + 工具,用 10 章把 AI Agent 从原理讲到工程实战的开源技术书。正文、配图、92 个配套实验全部开源。
 ---
 
 <div class="hero" markdown>
@@ -19,25 +19,8 @@ description: 围绕核心公式 Agent = LLM + 上下文 + 工具,用 10 章把 A
 
 📥 [中文 PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.pdf){.cta}
 📚 [中文 EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.epub){.cta}
-⭐ [GitHub Star](https://github.com/bojieli/ai-agent-book){.cta .secondary}
 
 </div>
-
-</div>
-
----
-
-## 这本书讲什么
-
-围绕核心公式 **Agent = LLM + 上下文 + 工具**,用 10 章把 AI Agent 从原理讲到工程实战。**全书正文、配图、88 个配套实验全部开源**,欢迎亲手把实验跑一遍。
-
-<div class="stat-row" markdown>
-
-📊 **10 章** 正文 · 从基础到生产
-
-📂 **88 个** 配套实验 · 70+ 可独立运行
-
-🌐 **6 种** 语言 · 中 / 繁 / 英 / 泰 / 越 / 日
 
 </div>
 
@@ -115,9 +98,9 @@ description: 围绕核心公式 Agent = LLM + 上下文 + 工具,用 10 章把 A
 
 使用顶部导航栏的语言 Tab 切换:
 
-| 中文 | 繁體中文 | English | தமிழ் | Tiếng Việt | 日本語 |
-|:---:|:---:|:---:|:---:|:---:|:---:|
-| ✅ 原版 | 社区翻译 | 社区翻译 | 社区翻译 | 社区翻译 | 社区翻译 |
+| 中文 | 正體中文 | English | Русский | தமிழ் | Tiếng Việt | 日本語 |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| ✅ 原版 | 社区翻译 | 社区翻译 | 社区翻译 | 社区翻译 | 社区翻译 | 社区翻译 |
 
 ---
 

@@ -77,13 +77,17 @@ class ConversationHistory:
         """Save conversation history to storage"""
         try:
             os.makedirs(os.path.dirname(self.history_file) or ".", exist_ok=True)
-            with open(self.history_file, 'w', encoding='utf-8') as f:
+            # Write to a temp file then atomically replace: a crash mid-dump
+            # must not truncate the only copy of the persisted data.
+            tmp_file = self.history_file + '.tmp'
+            with open(tmp_file, 'w', encoding='utf-8') as f:
                 data = {
                     'user_id': self.user_id,
                     'updated_at': datetime.now().isoformat(),
                     'conversations': [turn.to_dict() for turn in self.conversations]
                 }
                 json.dump(data, f, indent=2, ensure_ascii=False)
+            os.replace(tmp_file, self.history_file)
             logger.info(f"Saved {len(self.conversations)} conversation turns")
         except Exception as e:
             logger.error(f"Error saving conversation history: {e}")
@@ -210,7 +214,7 @@ class DifySearchClient:
             response = requests.post(
                 url,
                 headers=self.headers,
-                json={'documents': [document]}
+                json={'documents': [document]}, timeout=30
             )
             
             if response.status_code == 200:
@@ -263,7 +267,7 @@ class DifySearchClient:
             response = requests.post(
                 url,
                 headers=self.headers,
-                json=payload
+                json=payload, timeout=30
             )
             
             if response.status_code == 200:

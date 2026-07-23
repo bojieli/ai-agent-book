@@ -82,7 +82,8 @@ class SVG:
             f'fill="{c_fill}" stroke="{c_stroke}" stroke-width="{STROKE_W}"{d}/>'
         )
 
-    def box(self, x, y, w, h, label, fill='light', sublabel=None, bold=False, font_size=FS_BODY):
+    def box(self, x, y, w, h, label, fill='light', sublabel=None, bold=False, font_size=FS_BODY,
+            first_line_font_size=None):
         self.rect(x, y, w, h, fill=fill)
         fw = 'bold' if bold else 'normal'
         lines = label.split('\n')
@@ -93,6 +94,8 @@ class SVG:
         for i, line in enumerate(lines):
             ly = start_y + i * font_size * 1.3
             fs = font_size - 2 if (sublabel and i == total - 1) else font_size
+            if first_line_font_size and i == 0:
+                fs = first_line_font_size
             fc = COLORS['text_light'] if (sublabel and i == total - 1) else COLORS['text']
             w2 = 'bold' if (bold and i == 0 and not sublabel) else ('bold' if bold else 'normal')
             self.elems.append(

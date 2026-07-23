@@ -52,12 +52,16 @@ class GrepTool(BaseTool):
         show_line_numbers = params.get("-n", False)
         multiline = params.get("multiline", False)
         head_limit = params.get("head_limit")
+        if head_limit is not None and head_limit < 0:
+            head_limit = None
         file_type = params.get("type")
         
         # Determine context
         if context_around:
             context_before = context_around
             context_after = context_around
+        context_before = max(0, int(context_before))
+        context_after = max(0, int(context_after))
         
         # Compile regex
         regex_flags = re.MULTILINE if multiline else 0

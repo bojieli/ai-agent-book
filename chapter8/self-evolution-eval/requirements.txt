@@ -3,3 +3,4 @@
 # （youtube-transcript-api、yfinance 等）只是"参考方案"，被测 Agent 才会去安装，评估器不需要。
 openai>=1.30.0
 python-dotenv>=1.0.0
+pytest>=8.0.0
