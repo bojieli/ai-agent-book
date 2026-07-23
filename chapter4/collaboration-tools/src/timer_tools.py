@@ -345,6 +345,12 @@ async def _run_recurring_timer(
             return
 
         occurrence = timer_data.get("occurrences", 0)
+
+        # max_occurrences=0 means "never fire" (None means infinite).
+        if max_occurrences is not None and occurrence >= max_occurrences:
+            timer_data["status"] = "completed"
+            await _save_timers()
+            return
         
         while True:
             await asyncio.sleep(interval_seconds)
@@ -362,7 +368,8 @@ async def _run_recurring_timer(
             await _trigger_timer_callback(timer_data)
 
             # Persist the terminal state, not an active record at the limit.
-            if max_occurrences and occurrence >= max_occurrences:
+            # Use `is not None`: max_occurrences=0 means "never fire", not infinite.
+            if max_occurrences is not None and occurrence >= max_occurrences:
                 timer_data["status"] = "completed"
                 logger.info(f"Recurring timer {timer_id} completed after {occurrence} occurrences")
 
@@ -421,7 +428,7 @@ async def _load_timers():
 
                     max_occurrences = timer_data.get("max_occurrences")
                     occurrences = timer_data.get("occurrences", 0)
-                    if max_occurrences and occurrences >= max_occurrences:
+                    if max_occurrences is not None and occurrences >= max_occurrences:
                         # Older versions persisted the final occurrence before
                         # changing the in-memory status to completed.
                         timer_data["status"] = "completed"
