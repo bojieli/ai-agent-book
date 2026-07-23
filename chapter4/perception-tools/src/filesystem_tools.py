@@ -43,6 +43,8 @@ async def read_file(
         with open(path, 'r', encoding=encoding, errors='ignore') as f:
             content = f.read()
         
+        if max_length < 0:
+            max_length = len(content)
         truncated = len(content) > max_length
         if truncated:
             content = content[:max_length]

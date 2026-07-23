@@ -54,7 +54,7 @@ def compute_mle_elo(df: pd.DataFrame,
             fill_value=0,
             observed=False
         )
-        ptbl_tie = ptbl_tie + ptbl_tie.T
+        ptbl_tie = (ptbl_tie + ptbl_tie.T).fillna(0)
     
     ptbl_b_win = pd.pivot_table(
         df[df["winner"] == "model_b"],
@@ -65,8 +65,14 @@ def compute_mle_elo(df: pd.DataFrame,
         observed=False
     )
     
+    # Align pivots on the full model universe (small samples otherwise leave NaNs).
+    models = sorted(set(df["model_a"]) | set(df["model_b"]))
+    ptbl_a_win = ptbl_a_win.reindex(index=models, columns=models, fill_value=0)
+    ptbl_b_win = ptbl_b_win.reindex(index=models, columns=models, fill_value=0)
+    ptbl_tie = ptbl_tie.reindex(index=models, columns=models, fill_value=0)
+
     # Compute win matrix (A wins * 2 + B wins * 2 + ties)
-    ptbl_win = ptbl_a_win * 2 + ptbl_b_win.T * 2 + ptbl_tie
+    ptbl_win = (ptbl_a_win * 2 + ptbl_b_win.T * 2 + ptbl_tie).fillna(0)
     
     # Map models to indices
     models = pd.Series(np.arange(len(ptbl_win.index)), index=ptbl_win.index)

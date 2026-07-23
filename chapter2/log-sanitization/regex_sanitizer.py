@@ -60,9 +60,10 @@ def _cn_id_ok(value: str) -> bool:
 _RULES = [
     (
         "private_key", "[REDACTED_PRIVATE_KEY]",
+        # Truncated PEM (BEGIN without END) must still redact through EOF.
         re.compile(
             r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----"
-            r"[\s\S]*?-----END (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----"
+            r"[\s\S]*?(?:-----END (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----|(?=\Z))"
         ),
         0, None,
     ),

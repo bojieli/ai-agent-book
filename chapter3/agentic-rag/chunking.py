@@ -70,7 +70,7 @@ class DocumentChunker:
                 for sent in sentences:
                     if len(sent) > self.config.max_chunk_size:
                         # Force split very long sentences
-                        for i in range(0, len(sent), self.config.chunk_size):
+                        for i in range(0, len(sent), max(1, self.config.chunk_size)):
                             sub_chunk = sent[i:i + self.config.chunk_size]
                             chunks.append(self._create_chunk(sub_chunk, doc_id, len(chunks)))
                     else:
@@ -107,7 +107,7 @@ class DocumentChunker:
         """Simple size-based chunking"""
         chunks = []
         
-        for i in range(0, len(text), self.config.chunk_size - self.config.chunk_overlap):
+        for i in range(0, len(text), max(1, self.config.chunk_size - self.config.chunk_overlap)):
             chunk_text = text[i:i + self.config.chunk_size]
             
             if len(chunk_text) >= self.config.min_chunk_size:

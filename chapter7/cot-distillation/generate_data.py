@@ -199,7 +199,9 @@ async def main():
     total_out = sum((r["usage"] or {}).get("completion_tokens", 0) for r in records)
     n_err = sum(1 for r in records if r["error"])
     print(f"\n{'=' * 50}")
-    print(f"验证通过：{len(passed)}/{len(records)}（{len(passed) / len(records) * 100:.1f}%）")
+    # Empty problems JSONL yields zero records; avoid ZeroDivisionError on the rate.
+    pass_rate = (len(passed) / len(records) * 100) if records else 0.0
+    print(f"验证通过：{len(passed)}/{len(records)}（{pass_rate:.1f}%）")
     print(f"API 出错：{n_err}  无思维链返回：{sum(1 for r in records if not r['reasoning'])}")
     print(f"Token 消耗：输入 {total_in}，输出 {total_out}")
     print(f"SFT 数据已写入：{args.sft_output}")

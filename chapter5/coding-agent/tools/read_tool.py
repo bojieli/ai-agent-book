@@ -69,7 +69,12 @@ class ReadTool(BaseTool):
             
             # Apply offset and limit
             total_lines = len(lines)
-            selected_lines = lines[offset:offset + limit] if offset or limit < total_lines else lines
+            if offset < 0:
+                offset = 0
+            if limit < 0:
+                selected_lines = lines[offset:]
+            else:
+                selected_lines = lines[offset:offset + limit] if offset or limit < total_lines else lines
             
             # Format with line numbers (1-indexed)
             formatted_lines = []

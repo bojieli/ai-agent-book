@@ -135,7 +135,8 @@ class LocalFileTools:
                 }
             
             # Determine end line
-            if size is None:
+            if size is None or size < 0:
+                # Negative size is a common "read all" sentinel; avoid lines[i:-n].
                 end = total_lines
             else:
                 end = min(offset + size, total_lines)

@@ -41,9 +41,10 @@ function numberToWords(num) {
   const ones = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
   const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
   const teens = ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
-  const scales = ['', 'thousand', 'million', 'billion'];
+  const scales = ['', 'thousand', 'million', 'billion', 'trillion', 'quadrillion'];
 
   if (num === 0) return 'zero';
+  if (!Number.isFinite(num)) return String(num);
 
   function convertGroup(n) {
     let result = '';
@@ -74,7 +75,8 @@ function numberToWords(num) {
   while (num > 0) {
     const group = num % 1000;
     if (group !== 0) {
-      result = convertGroup(group) + scales[groupIndex] + ' ' + result;
+      const scale = scales[groupIndex] || '';
+      result = convertGroup(group) + scale + ' ' + result;
     }
     num = Math.floor(num / 1000);
     groupIndex++;
@@ -188,5 +190,6 @@ function preprocessSentence(sentence, language = 'en') {
 
 module.exports = {
   preprocessSentence,
+  numberToWords,
   markdownToText,
 };

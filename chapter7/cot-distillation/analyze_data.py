@@ -17,8 +17,14 @@ def main():
 
     think_lens, answer_lens = [], []
     n_reflect = 0
+    n_skipped_short = 0
     for s in samples:
-        assistant = s["messages"][1]["content"]
+        messages = s.get("messages") or []
+        # Incomplete SFT rows (user-only / truncated export) must not IndexError.
+        if len(messages) < 2:
+            n_skipped_short += 1
+            continue
+        assistant = messages[1]["content"]
         m = re.search(r"<think>\n?(.*?)\n?</think>", assistant, re.DOTALL)
         think = m.group(1) if m else ""
         think_lens.append(len(think))
@@ -37,7 +43,10 @@ def main():
 
     stats(think_lens, "思考链长度（字符）")
     stats(answer_lens, "完整回答长度（字符）")
-    print(f"含反思/验算行为的样本：{n_reflect}/{len(samples)}")
+    n_scored = len(samples) - n_skipped_short
+    print(f"含反思/验算行为的样本：{n_reflect}/{n_scored}")
+    if n_skipped_short:
+        print(f"跳过 messages 不足 2 条的样本：{n_skipped_short}")
 
     try:
         with open(args.raw, encoding="utf-8") as f:

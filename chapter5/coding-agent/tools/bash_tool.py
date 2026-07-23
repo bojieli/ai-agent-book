@@ -28,7 +28,8 @@ class BashTool(BaseTool):
         """
         command = params["command"]
         timeout_ms = params.get("timeout")
-        if timeout_ms is None:
+        # None/<=0: treat like omit. Exact 0 used to become timeout=0s and drop all output.
+        if timeout_ms is None or timeout_ms <= 0:
             timeout_ms = 120000
         timeout = timeout_ms / 1000  # Convert ms to seconds
         run_in_background = params.get("run_in_background", False)
