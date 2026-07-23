@@ -264,7 +264,18 @@ class WebSearchAgent:
                     # 执行每个工具调用
                     for tool_call in choice.message.tool_calls:
                         tool_call_name = tool_call.function.name
-                        tool_call_arguments = json.loads(tool_call.function.arguments)
+                        try:
+                            tool_call_arguments = json.loads(
+                                tool_call.function.arguments or "{}"
+                            )
+                        except json.JSONDecodeError:
+                            # Models sometimes emit slightly invalid JSON; match
+                            # chapter4 async-agent and keep the ReAct loop alive.
+                            tool_call_arguments = {}
+                            logger.warning(
+                                "工具参数不是合法 JSON，已按空对象继续: %r",
+                                tool_call.function.arguments,
+                            )
 
                         logger.info(f"执行工具: {tool_call_name}, 参数: {tool_call_arguments}")
                         # 行动：记录一次工具调用

@@ -191,3 +191,29 @@ def test_agent_loop_marks_truncated_partial_answer(make_choice):
     # bare partial), so get_conversation_history() doesn't lose the semantics.
     assert instance.conversation_history[-1]["role"] == "assistant"
     assert "截断" in instance.conversation_history[-1]["content"]
+
+
+def test_agent_loop_survives_malformed_tool_arguments_json(
+    monkeypatch, make_choice
+):
+    """Slightly invalid tool JSON must not abort the ReAct loop."""
+    from types import SimpleNamespace
+
+    bad_call = SimpleNamespace(
+        id="call-bad",
+        function=SimpleNamespace(
+            name="$web_search",
+            arguments='{"query": "moonshot",}',  # trailing comma
+        ),
+    )
+    tool_choice = make_choice(finish_reason="tool_calls", tool_calls=[bad_call])
+    answer_choice = make_choice(content="recovered answer")
+    instance = build_agent(tool_choice, answer_choice)
+    search = Mock(return_value={"ok": True})
+    monkeypatch.setattr(agent_module, "search_impl", search)
+
+    answer = instance.search_and_answer("what is caching?")
+
+    assert answer == "recovered answer"
+    search.assert_called_once_with({})
+    assert any(step["type"] == "action" for step in instance.get_trace())
