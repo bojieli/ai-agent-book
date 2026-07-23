@@ -17,6 +17,14 @@ export default function AttentionModal({ isOpen, onClose, tokens, attentionWeigh
   const [zoomLevel, setZoomLevel] = useState(1);
   const [transformMethod, setTransformMethod] = useState<'none' | 'log' | 'log10' | 'sqrt' | 'power' | 'power-extreme' | 'exclude-sink'>('log10');
 
+  // The attention matrix has one row per OUTPUT token, while `tokens` is the
+  // full input+output sequence. So matrix row i corresponds to
+  // tokens[rowTokenOffset + i], where rowTokenOffset is the context (input)
+  // length. Labeling row i with tokens[i] would show an input token where the
+  // attending output token belongs. Degrades to 0 if tokens is already
+  // output-only.
+  const rowTokenOffset = Math.max(0, tokens.length - Math.min(tokens.length, attentionWeights.length));
+
   // Zoom controls
   const handleZoomIn = useCallback(() => {
     setZoomLevel(prev => Math.min(prev * 1.2, 10));
@@ -220,7 +228,8 @@ export default function AttentionModal({ isOpen, onClose, tokens, attentionWeigh
               if (i < numRows) {
                 ctx.save();
                 ctx.textAlign = 'right';
-                const rowLabel = tokens[i].length > 15 ? tokens[i].substring(0, 15) + '...' : tokens[i];
+                const rowTok = tokens[rowTokenOffset + i] ?? '';
+                const rowLabel = rowTok.length > 15 ? rowTok.substring(0, 15) + '...' : rowTok;
                 ctx.fillText(rowLabel, margin.left - 5, margin.top + i * cellSize + cellSize / 2);
                 ctx.restore();
               }
@@ -459,7 +468,7 @@ export default function AttentionModal({ isOpen, onClose, tokens, attentionWeigh
             }}
           >
             <div>Weight: {hoveredCell.value.toFixed(4)}</div>
-            <div>From [{hoveredCell.row}]: {tokens[hoveredCell.row]?.substring(0, 20)}</div>
+            <div>From [{hoveredCell.row}]: {tokens[rowTokenOffset + hoveredCell.row]?.substring(0, 20)}</div>
             <div>To [{hoveredCell.col}]: {tokens[hoveredCell.col]?.substring(0, 20)}</div>
           </div>
         )}
