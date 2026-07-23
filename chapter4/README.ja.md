@@ -2,7 +2,7 @@
 
 > ツールは Agent の手である。ツールの分類と一般的な設計原則、MCP プロトコルとツール選択の課題、3 種類のツール（知覚、実行、協調）、イベント駆動の非同期 Agent について論じる。
 
-← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter4.md)
+← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter4.ja.md)
 
 ## 付随プロジェクト
 

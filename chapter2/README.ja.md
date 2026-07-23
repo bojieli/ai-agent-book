@@ -2,7 +2,7 @@
 
 > コンテキストは Agent 能力の上限を決定する。LLM API のコンテキスト構造、KV Cache に優しい設計、プロンプトエンジニアリング、動的プロンプトと Agent Skills、ステータスバーのメタ情報、コンテキスト圧縮戦略について掘り下げる。
 
-← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter2.md)
+← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter2.ja.md)
 
 ## 付随プロジェクト
 

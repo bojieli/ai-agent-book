@@ -2,7 +2,7 @@
 
 > 知覚と行動をテキストから音声、GUI、そして物理世界へと拡張する。3 つの音声パラダイム（カスケード型/エンドツーエンドの全モーダル型/全二重型）、ストリーミング音声の知覚と合成、Computer Use、そしてロボット操作。
 
-← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter9.md)
+← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter9.ja.md)
 
 ## 付随プロジェクト
 

@@ -2,7 +2,7 @@
 
 > 集団的知性は個々の知性を超えうる。マルチ Agent の分類フレームワーク、それが本当に単一の Agent を上回るのはいつか、コンテキストを共有する協調と共有しない協調、失敗モード、そして創発する「Agent 社会」。
 
-← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter10.md)
+← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter10.ja.md)
 
 ## 付随プロジェクト
 

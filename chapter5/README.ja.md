@@ -2,7 +2,7 @@
 
 > コードは「新しいツールを作り出せるツール」であり、汎用 Agent のメタ能力である。プロダクショングレードの Coding Agent を例に、この最も強力な汎用ツールの完全な実装を示す。
 
-← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter5.md)
+← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter5.ja.md)
 
 ## 付随プロジェクト
 

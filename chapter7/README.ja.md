@@ -2,7 +2,7 @@
 
 > 事前学習、SFT、RL の 3 段階を包括的に見渡す。SFT と RL のどちらを選ぶか、RLHF、アルゴリズムの比較、データと環境、そしてモデルにツール呼び出しを教えサンプル効率を高めるための最先端の探求。
 
-← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter7.md)
+← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter7.ja.md)
 
 ## 付随プロジェクト
 
