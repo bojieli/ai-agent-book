@@ -188,8 +188,15 @@ def build_confusion_matrix(predictions: List[str], ground_truth: List[str],
     Returns:
         Dict with confusion matrix, per-language stats, and error examples
     """
-    # Get all unique labels (rows without ground truth are excluded)
-    all_labels = sorted(set(g for g in ground_truth if g is not None) | set(p for p in predictions if p))
+    # Get all unique labels (rows without ground truth are excluded).
+    # Pair each prediction with its ground truth, then surface unparseable
+    # predictions (pred is None, counted as the "None" column below) as an
+    # explicit label. Otherwise confusion_matrix_2d drops that column and a
+    # true-label row's cells no longer sum to that language's total.
+    labeled = [(p, g) for p, g in zip(predictions, ground_truth) if g is not None]
+    all_labels = sorted(set(g for _, g in labeled) | set(p for p, _ in labeled if p))
+    if any(p is None for p, _ in labeled):
+        all_labels = all_labels + ["None"]
 
     # Initialize confusion matrix
     confusion = defaultdict(lambda: defaultdict(int))

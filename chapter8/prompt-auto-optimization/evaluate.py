@@ -10,7 +10,7 @@
 """
 
 import json
-from config import get_client, get_model, TEMPERATURE
+from config import get_client, get_model, get_temperature
 from airline_env import run_agent
 
 
@@ -34,7 +34,7 @@ def _judge_handled(user_message: str, rubric: str, agent_reply: str) -> bool:
     resp = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
-        temperature=TEMPERATURE,
+        temperature=get_temperature(),
         response_format={"type": "json_object"},
     )
     try:
