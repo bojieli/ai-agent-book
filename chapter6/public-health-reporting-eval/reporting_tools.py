@@ -27,7 +27,17 @@ class ReportingEnvironment:
                 row: dict[str, Any] = dict(raw_row)
                 for field in INTEGER_FIELDS:
                     raw = row[field]
-                    row[field] = int(raw) if str(raw).strip() else 0
+                    text = str(raw).strip()
+                    if not text:
+                        row[field] = 0
+                        continue
+                    # Excel/CSV often writes whole counts as 10.0
+                    num = float(text)
+                    if not float(num).is_integer():
+                        raise ValueError(
+                            f"non-integer value for {field}: {raw!r}"
+                        )
+                    row[field] = int(num)
                 self.rows.append(row)
 
     def _select(self, **filters: str) -> list[dict[str, Any]]:
