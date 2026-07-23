@@ -125,7 +125,10 @@ class ConversationHistory:
         Returns:
             List of recent conversation turns
         """
-        return self.conversations[-limit:] if self.conversations else []
+        # limit<=0 must return []: Python's list[-0:] is list[0:] (the full list).
+        if limit <= 0 or not self.conversations:
+            return []
+        return self.conversations[-limit:]
     
     def get_session_turns(self, session_id: str) -> List[ConversationTurn]:
         """
