@@ -18,7 +18,7 @@ This experiment demonstrates an automated closed loop: **Human feedback → Codi
 
 ## 2. Method and Flow
 
-```
+```text
 Initial prompt ──Evaluation──► Exposes "excessive transfer" problem
                                   │
                Human feedback ───┤
@@ -87,7 +87,7 @@ The optimized working copy is written to `runtime/system_prompt_working.txt` (au
 
 The table below shows results from one real run (`gpt-5.6-luna`, full 10 cases):
 
-```
+```text
 Accuracy Comparison (Holdout set = existing correct behavior must not degrade; Boundary set = excessive transfer should improve)
 ==========================================================================
 System Prompt Version               Holdout Set             Boundary Set
@@ -125,7 +125,8 @@ A natural question: **If the model is stronger, is this "automatic prompt rewrit
 ## 6. How to Adapt / Extend and Limitations
 
 - **Change model / provider**: `LLM_PROVIDER` can switch between `openai` / `moonshot` / `ark` (all compatible with OpenAI interface), `LLM_MODEL` overrides the model name, `LLM_TEMPERATURE` adjusts sampling temperature (default 0, see `config.py` / `env.example`).
-- **Change task / input**: The evaluation case set is in `airline_env.py`'s `CASES` (divided into `holdout` / `boundary` groups); the human feedback driving optimization is `HUMAN_FEEDBACK` at the top of `demo.py`; the initial and manual control prompts are under `prompts/` — modify these to apply the closed loop to your own scenario.- **Limitation**: The environment is a simplified simulation for educational purposes, with tools returning fixed mock data; the focus is on the closed loop of "human-feedback-driven automatic prompt optimization" rather than a full reproduction of tau-bench. The specific accuracy may vary by ±1 test case depending on the model version and sampling.
+- **Change task / input**: The evaluation case set is in `airline_env.py`'s `CASES` (divided into `holdout` / `boundary` groups); the human feedback driving optimization is `HUMAN_FEEDBACK` at the top of `demo.py`; the initial and manual control prompts are under `prompts/` — modify these to apply the closed loop to your own scenario.
+- **Limitation**: The environment is a simplified simulation for educational purposes, with tools returning fixed mock data; the focus is on the closed loop of "human-feedback-driven automatic prompt optimization" rather than a full reproduction of tau-bench. The specific accuracy may vary by ±1 test case depending on the model version and sampling.
 
 ---
 
@@ -154,7 +155,7 @@ A natural question: **If the model is stronger, is this "automatic prompt rewrit
 
 ## 2. 方法与流程
 
-```
+```text
 初始 prompt ──评测──► 暴露"过度转接"问题
                           │
               人类反馈 ───┤
@@ -233,7 +234,7 @@ python demo.py --dry-run # 离线自检：只打印配置与选中用例，不�
 
 下表为一次真实运行（`gpt-5.6-luna`，完整 10 用例）的结果：
 
-```
+```text
 正确率对比（保留任务集 = 既有正确行为不能退化；边界案例集 = 过度转接应改善）
 ==========================================================================
 系统提示词版本                   保留任务集(holdout)      边界案例集(boundary)

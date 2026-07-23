@@ -23,7 +23,7 @@ The entire process emphasizes **hallucination control**: all numbers and conclus
 
 ## Self-Evolution Pipeline
 
-```
+```text
 Analyze task
   → search_tools (first check if a reusable tool already exists in the library)
       Hit ─────────────────► Directly call that tool to answer (tool reuse)
@@ -75,7 +75,7 @@ python demo.py --help      # View all parameters
 
 **Without an API key / no internet access**, use `python demo.py --offline` for a mechanism self-check—it uses a purely offline, deterministic tool (calculating the number of days between two dates) to run through the complete loop: task one `search_tools` miss → `create_tool` (with pre-save validation) → register → call; task two `search_tools` hit → **direct reuse**, no reinventing the wheel; and additionally demonstrates that the pre-save validation gate will reject a "broken tool that doesn't run" from entering the library. The self-check runs in a temporary directory and **will not pollute** your real `tool_library/`. A real offline run output:
 
-```
+```text
 [Validation Gate] Attempting to register a broken tool that will crash (with test_args)...
   Result: success=False  ->  Tool registration pre-validation failed: run(**test_args) did not return successfully...
   ✅ Pre-save validation blocked the broken tool (not stored), consistent with 'Don't save bad programs'.
@@ -101,7 +101,7 @@ Did the pre-save validation gate block the broken tool: Yes ✅
 
 **Task One · NVDA** (Self-Evolution, Note Error Recovery):
 
-```
+```text
 [step 1] search_tools("stock price")      -> 0 hits (tool library empty)
 [step 2] web_search("open source python library stock price") -> yfinance · PyPI ...
 [step 3] read_webpage(pypi.org/project/yfinance) / github.com/ranaroussi/yfinance
@@ -114,7 +114,7 @@ Did the pre-save validation gate block the broken tool: Yes ✅
 
 **Task Two · AAPL** (Tool Reuse, No Re-Searching/Creating):
 
-```
+```text
 [step 1] search_tools("stock price")  -> hit get_stock_price (reuse!)
 [step 2] get_stock_price(ticker="AAPL") -> {latest_price: 330.48, change_percentage: 4.51}
 [Final Answer] Apple (AAPL) latest stock price $330.48, +4.51% compared to one week ago.
@@ -173,7 +173,7 @@ This experiment **executes model-generated code** and **installs third-party pac
 
 ## 自我进化流水线
 
-```
+```text
 分析任务
   → search_tools（先查工具库是否已有可复用工具）
       命中 ─────────────────► 直接调用该工具作答（工具复用）
@@ -232,7 +232,7 @@ python demo.py --help      # 查看全部参数
 任务二 `search_tools` 命中→**直接复用**，不再造轮子；并额外演示存前验证闸门会拒绝一个「跑不通的坏工具」入库。
 自检在临时目录里进行，**不会污染**你真实的 `tool_library/`。一次真实的离线运行输出：
 
-```
+```text
 [验证闸门] 尝试注册一个运行会崩溃的坏工具（附 test_args）...
   结果: success=False  ->  工具注册前验证失败：run(**test_args) 没有成功返回...
   ✅ 存前验证挡住了坏工具（未入库），符合『别把坏程序存进去』。
@@ -259,7 +259,7 @@ python demo.py --help      # 查看全部参数
 
 **任务一 · NVDA**（自我进化，注意错误恢复）：
 
-```
+```text
 [step 1] search_tools("stock price")      -> 命中 0 个（工具库为空）
 [step 2] web_search("open source python library stock price") -> yfinance · PyPI ...
 [step 3] read_webpage(pypi.org/project/yfinance) / github.com/ranaroussi/yfinance
@@ -272,7 +272,7 @@ python demo.py --help      # 查看全部参数
 
 **任务二 · AAPL**（工具复用，未重新搜索/创建）：
 
-```
+```text
 [step 1] search_tools("stock price")  -> 命中 get_stock_price（复用！）
 [step 2] get_stock_price(ticker="AAPL") -> {latest_price: 330.48, change_percentage: 4.51}
 [最终回答] Apple(AAPL) 最新股价 330.48 美元，与一周前相比 +4.51%。

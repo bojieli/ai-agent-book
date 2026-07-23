@@ -26,7 +26,7 @@ We want to internalize this detailed prompt:
 > "Classify the language of the provided text into these labels: ar, de, el, en, es, fr, hi, ru, tr, ur, vi, zh, ot. Use these rules: Devanagari script → hi, Greek script → el, Cyrillic script → ru..." *(2000+ tokens)*
 
 **Before distillation (Teacher with thinking + prompt):**
-```
+```text
 System: <2000+ token detailed prompt>
 User: 一生、バンドしてくれる？
 Assistant: <thinking>Let me analyze the script... These are Han characters... Based on rule X...</thinking>ja
@@ -34,7 +34,7 @@ Assistant: <thinking>Let me analyze the script... These are Han characters... Ba
 ```
 
 **After distillation (Student, no thinking, no prompt):**
-```
+```text
 User: 一生、バンドしてくれる？
 Assistant: ja
 ⏱️  Response time: ~0.1 seconds (20-30x faster!)
@@ -203,7 +203,7 @@ python evaluate.py --model_path ./models/my_custom_model
 - Test file: `./example-data/multilingual.txt`
 
 **Real-time Output Example:**
-```
+```text
 Evaluating model...
 ================================================================================
 ✓ [   1/2100] Pred: ar | GT: ar | Acc: 1/1 (100.0%) | وقال، ماما، لقد عدت للمنزل.
@@ -376,7 +376,7 @@ on the serving stack and must be measured on GPU — `compare.py` deliberately d
 
 ## Project Structure
 
-```
+```text
 prompt-distillation/
 ├── README.md                          # This file
 ├── requirements.txt                   # Python dependencies
@@ -583,13 +583,13 @@ This project follows the same license as the TRL library (Apache 2.0).
 
 # 使用 Hugging Face TRL 进行快速蒸馏
 
-该项目演示了**即时蒸馏** - 一种将知识从**具有长提示**的思维模型提炼为**无提示的非思维模型**的技术，从而使响应速度显着加快。
+该项目演示了**即时蒸馏** - 一种将知识从**具有长提示**的思维模型提炼为**无提示的非思维模型**的技术，从而使响应速度显著加快。
 
 ## 🎯 主要目标
 
 从以下内容中提取推理能力：
-- **老师**：Qwen3-30B-A3B-**思考**-2507，详细2000+代币提示
-- **学生**：Qwen3-30B-A3B-**指导**-2507 无任何提示
+- **老师**：Qwen3-30B-A3B-**Thinking**-2507，详细2000+代币提示
+- **学生**：Qwen3-30B-A3B-**Instruct**-2507 无任何提示
 
 **主要优点：**
 - ⚡ **响应时间更快** - 无需思考开销，无需长时间的提示处理
@@ -599,7 +599,7 @@ This project follows the same license as the TRL library (Apache 2.0).
 
 ## 什么是快速蒸馏？
 
-提示蒸馏（也称为**上下文蒸馏**）是一种训练方法，使法学硕士将长而复杂的提示内化为其参数。在这个实验中，我们还通过从思维模型提炼为非思维模型来消除思维开销。
+提示蒸馏（也称为**上下文蒸馏**）是一种训练方法，使大语言模型将长而复杂的提示内化为其参数。在这个实验中，我们还通过从思维模型提炼为非思维模型来消除思维开销。
 
 **示例 - 语言分类：**
 
@@ -607,7 +607,7 @@ This project follows the same license as the TRL library (Apache 2.0).
 > “将所提供文本的语言分类为以下标签：ar、de、el、en、es、fr、hi、ru、tr、ur、vi、zh、ot。使用这些规则：梵文脚本 → hi、希腊脚本 → el、西里尔脚本 → ru...” *（2000+ 个标记）*
 
 **蒸馏前（老师思考+提示）：**
-```
+```text
 System: <2000+ token detailed prompt>
 User: 一生、バンドしてくれる？
 Assistant: <thinking>Let me analyze the script... These are Han characters... Based on rule X...</thinking>ja
@@ -615,7 +615,7 @@ Assistant: <thinking>Let me analyze the script... These are Han characters... Ba
 ```
 
 **蒸馏后（学生，无思考，无提示）：**
-```
+```text
 User: 一生、バンドしてくれる？
 Assistant: ja
 ⏱️  Response time: ~0.1 seconds (20-30x faster!)
@@ -638,20 +638,20 @@ Assistant: ja
 
 |参数|价值|来源 |
 |-----------|-------|--------|
-| **教师模型** | Qwen3-30B-A3B-**思考**-2507 |具备思考能力+长提示|
-| **学生模型** | Qwen3-30B-A3B-**使用说明**-2507 |大小相同，无需思考，无需提示 |
-| **LoRA 排名** | 32 | 32修补匠|
+| **教师模型** | Qwen3-30B-A3B-**Thinking**-2507 |具备思考能力+长提示|
+| **学生模型** | Qwen3-30B-A3B-**Instruct**-2507 |大小相同，无需思考，无需提示 |
+| **LoRA 排名** | 32 | 32 Tinker |
 | **洛拉阿尔法** | 16 | 16标准|
-| **学习率** | 2e-4 | 2e-4开放人工智能 |
-| **LR 时间表** |余弦_with_min_lr |开放人工智能 |
-| **最低 LR 率** | 0.1 | 0.1开放人工智能 |
-| **批量大小** |每个 GPU 4 个 |开放人工智能 |
-| **梯度累积** | 4 步骤 |开放人工智能 |
+| **学习率** | 2e-4 | 2e-4 OpenAI |
+| **LR 时间表** |余弦_with_min_lr | OpenAI |
+| **最低 LR 率** | 0.1 | 0.1 OpenAI |
+| **批量大小** |每个 GPU 4 个 | OpenAI |
+| **梯度累积** | 4 步骤 | OpenAI |
 | **最大长度** | 2048 | 2048 OpenAI（学生只需要简短的上下文）|
-| **历元数** | 1 |开放人工智能 |
-| **温度** | 0.15 | 0.15修补匠（数据生成）|
-| **预热比率** | 0.03 | 0.03开放人工智能 |
-| **梯度检查点** |真实|开放人工智能 |
+| **历元数** | 1 | OpenAI |
+| **温度** | 0.15 | 0.15 Tinker（数据生成）|
+| **预热比率** | 0.03 | 0.03 OpenAI |
+| **梯度检查点** |真实| OpenAI |
 
 **关键设计选择**：我们为教师和学生使用相同的 30B 模型。区别在于：
 - **老师**：思维模型+2000+代币提示→慢而准
@@ -672,7 +672,7 @@ Assistant: ja
 
 ### 先决条件
 
-1.安装所需的依赖项：
+1. 安装所需的依赖项：
 
 ```bash
 pip install -r requirements.txt
@@ -692,7 +692,7 @@ export WANDB_API_KEY=your_api_key_here
 
 ### 系统要求
 
--Python 3.10+
+- Python 3.10+
 - PyTorch 2.0+
 - CUDA 12.1+（用于 GPU 加速）
 - **GPU**：H100 80GB（适用于 30B 型号）或任何具有 24GB+ 的 GPU（适用于较小型号）
@@ -784,7 +784,7 @@ python evaluate.py --model_path ./models/my_custom_model
 - 测试文件：`./example-data/multilingual.txt`
 
 **实时输出示例：**
-```
+```text
 Evaluating model...
 ================================================================================
 ✓ [   1/2100] Pred: ar | GT: ar | Acc: 1/1 (100.0%) | وقال، ماما، لقد عدت للمنزل.
@@ -944,8 +944,8 @@ python compare.py --num_examples 20 --output_file ./comparison_results.json
 
 |尺寸|老师（长提示+思考）|学生（无提示）|改变|
 |-----------|----------------------------------|---------------------|--------|
-|平均输入令牌/调用| 984.9 | 984.9 24.7 | 24.7 **−97.5%（≈40×更少）** |
-|输入令牌总数（2,100 例）| 2,068,204 | 2,068,204 51,913 | −97.5% |
+|平均输入令牌/调用| 984.9 | 24.7 | **−97.5%（≈40×更少）** |
+|输入令牌总数（2,100 例）| 2,068,204 | 51,913 | −97.5% |
 |任务质量（与老师达成一致）| 100%（参考）| **95.19%** (1999/2100) | −4.8 个百分点 |
 
 在按输入代币计费的 API 上，这种输入减少大致降低了成本
@@ -957,7 +957,7 @@ python compare.py --num_examples 20 --output_file ./comparison_results.json
 
 ## 项目结构
 
-```
+```text
 prompt-distillation/
 ├── README.md                          # This file
 ├── requirements.txt                   # Python dependencies
@@ -980,13 +980,13 @@ prompt-distillation/
 本次实验的主要创新在于从**思维模型**提炼为**非思维模型**：
 
 1. **思维模型（老师）**：
-- Qwen3-30B-A3B-**思考**-2507
+- Qwen3-30B-A3B-**Thinking**-2507
 - 使用显式推理：`<thinking>...</thinking>`
 - 需要长提示和详细说明
 - 更慢但更准确
 
 2. **非思考模型（学生）**：
-- Qwen3-30B-A3B-**指导**-2507
+- Qwen3-30B-A3B-**Instruct**-2507
 - 没有思考标签，直接回应
 - 生产中无需提示
 - **推理速度加快 20-30 倍**
@@ -1025,7 +1025,7 @@ TRL 提供与 LoRA 相同的监督微调功能，但具有更加用户友好的 
 
 ### 训练配置
 
-- **框架**：Huging Face TRL SFTTrainer
+- **框架**：Hugging Face TRL SFTTrainer
 - **LoRA**：应用于所有线性层以提高内存效率
 - **梯度检查点**：启用以节省内存
 - **混合精度**：bfloat16 可在现代 GPU 上实现更快的训练
@@ -1043,7 +1043,7 @@ TRL 提供与 LoRA 相同的监督微调功能，但具有更加用户友好的 
 - 提示：相同语言分类提示
 
 **增强：**
-- **学生模型**：Qwen3-30B-A3B-**指导**（非思维变体）
+- **学生模型**：Qwen3-30B-A3B-**Instruct**（非思维变体）
 - 消除思维开销以加快推理速度
 - 相同的模型大小，但无需推理标记即可直接响应
 - 比生产中的思维模型快 20-30 倍
@@ -1053,7 +1053,7 @@ TRL 提供与 LoRA 相同的监督微调功能，但具有更加用户友好的 
 **为什么这样更好：**
 - 原始修补方法：仅提取提示
 - 我们的方法：**提炼即时和思考过程**
-- 结果：推理速度显着加快，且没有质量损失
+- 结果：推理速度显著加快，且没有质量损失
 
 ## 预期结果
 
@@ -1070,7 +1070,7 @@ TRL 提供与 LoRA 相同的监督微调功能，但具有更加用户友好的 
 默认`tiktoken o200k_base`计数器，学生处理**≈40×更少的输入
 每次调用代币**（984.9 → 24.7，减少 97.5%），同时保留 **95.19%**
 与老师的标注一致。请参阅*用法 → 步骤 4* 下的表格了解
-完全崩溃。
+完整明细。
 
 这使得蒸馏模型对于**生产部署**具有吸引力，其中输入
 成本很重要。注意：挂钟延迟取决于服务堆栈和硬件，
@@ -1154,6 +1154,6 @@ TRL 提供与 LoRA 相同的监督微调功能，但具有更加用户友好的 
 
 ## 致谢
 
-- 原始修补程序食谱实施
-- 拥抱脸部TRL框架
+- 原始 Tinker Cookbook 实现
+- Hugging Face TRL 框架
 - 阿里云Qwen模型家族

@@ -14,7 +14,7 @@ This project implements a browser automation Agent with learning capabilities. T
 
 ## Architecture Design
 
-```
+```text
 browser-use-rpa/
 ├── browser-use/          # Browser-use core library (unmodified)
 ├── learning_agent/       # Learning Agent wrapper layer
@@ -143,7 +143,7 @@ Run `demo_email.py` and observe the first phase:
 - Execution time and step count are displayed
 
 **Example output:**
-```
+```text
 📚 PHASE 1: LEARNING - First Email Task
 Task: Send email to test@example.com
 🚀 Starting learning phase...
@@ -164,7 +164,7 @@ Continue observing the second phase:
 - Execution speed is significantly improved
 
 **Example output:**
-```
+```text
 🚀 PHASE 2: REPLAY - Second Email Task
 Task: Send email to another@example.com
 🔄 Starting replay phase...
@@ -282,7 +282,7 @@ This project is developed based on browser-use and follows its open-source licen
 
 ## 架构设计
 
-```
+```text
 browser-use-rpa/
 ├── browser-use/          # Browser-use 核心库（未修改）
 ├── learning_agent/       # 学习Agent封装层
@@ -414,7 +414,7 @@ python demo_weather.py
 - 显示执行时间和步骤数
 
 **示例输出：**
-```
+```text
 📚 PHASE 1: LEARNING - First Email Task
 Task: Send email to test@example.com
 🚀 Starting learning phase...
@@ -435,7 +435,7 @@ Task: Send email to test@example.com
 - 执行速度显著提升
 
 **示例输出：**
-```
+```text
 🚀 PHASE 2: REPLAY - Second Email Task
 Task: Send email to another@example.com
 🔄 Starting replay phase...
