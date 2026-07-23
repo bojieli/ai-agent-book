@@ -7,6 +7,9 @@
 \IfFontExistsTF{Hiragino Sans}{\newunicodechar{★}{{\fontspec{Hiragino Sans}★}}}{\IfFontExistsTF{Noto Sans CJK JP}{\newunicodechar{★}{{\fontspec{Noto Sans CJK JP}★}}}{\newunicodechar{★}{{\fontspec{DejaVu Sans}★}}}}
 \newunicodechar{✓}{{\fallbackfont ✓}}
 \newunicodechar{✗}{{\fallbackfont ✗}}
+% ― (U+2015 HORIZONTAL BAR) は日本語のダッシュ「――」として多用するが Latin 本文
+% フォント（lmroman）に無いため、CJK 対応の fallbackfont（Noto Sans CJK JP）で描画する。
+\newunicodechar{―}{{\fallbackfont ―}}
 \newunicodechar{₀}{{\fallbackfont ₀}}
 \newunicodechar{₁}{{\fallbackfont ₁}}
 \newunicodechar{₂}{{\fallbackfont ₂}}
