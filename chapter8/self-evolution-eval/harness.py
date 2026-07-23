@@ -163,7 +163,7 @@ def layer3_tool_quality(task: dict, trajectory: dict, judge_model: Optional[str]
         return {"score": 0.0, "rubric": None, "judge_text": raw, "detail": "judge 输出无法解析为 JSON。"}
 
     dims = ["error_handling", "input_validation", "documentation", "robustness"]
-    total = sum(int(rubric.get(d, 0)) for d in dims)
+    total = sum(int(rubric.get(d) or 0) for d in dims)
     score = round(total / (3 * len(dims)), 3)
     return {
         "score": score,
