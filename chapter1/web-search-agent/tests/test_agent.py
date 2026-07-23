@@ -193,9 +193,7 @@ def test_agent_loop_marks_truncated_partial_answer(make_choice):
     assert "截断" in instance.conversation_history[-1]["content"]
 
 
-def test_agent_loop_survives_malformed_tool_arguments_json(
-    monkeypatch, make_choice
-):
+def test_agent_loop_survives_malformed_tool_arguments_json(monkeypatch, make_choice):
     """Slightly invalid tool JSON must not abort the ReAct loop."""
     from types import SimpleNamespace
 
