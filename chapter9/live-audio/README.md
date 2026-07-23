@@ -385,7 +385,7 @@ MIT
 - **提供商工厂**：支持动态创建和切换提供商
 
 ### 数据流
-```
+```text
 用户语音 → WebSocket → 后端 VAD → 多提供商 STT → 多提供商 LLM → TTS → 音频响应
 ```
 
@@ -427,7 +427,7 @@ sudo apt install ffmpeg
 
 ## 项目结构
 
-```
+```text
 /backend
 - server.js: 集成提供商的主 WebSocket 服务器
 - config.js: 多提供商配置设置
@@ -445,7 +445,7 @@ sudo apt install ffmpeg
 - package.json: 后端依赖和脚本
 ```
 
-```
+```text
 /frontend
 - pages/: Next.js 页面
   - index.tsx: 主应用界面

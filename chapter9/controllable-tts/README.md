@@ -19,7 +19,7 @@ This environment lacks a usable Fish Audio key, so **OpenAI TTS** is used instea
 | Control markers select reference voice | Control markers parsed -> select `(emotion, speed, style)` profile |
 
 - Preferred model **`gpt-4o-mini-tts`**: Supports the `instructions` parameter, allowing precise control of emotion/speech rate/tone with a Chinese prompt, closest to the semantics of "control marker → stylized speech".
-- If the preferred model is unavailable, the code **automatically falls back to `tts-1`**: Does not support instructions, instead uses multiple voices + `speed` parameter + text-level pauses as an approximation.
+- If the preferred model is unavailable, the code **automatically falls back to `tts-1`**: Does not support instructions; keeps the same fixed `voice` (alloy) and approximates style with the `speed` parameter + text/silence pauses.
 
 **Must use a direct OpenAI Key**: This experiment only uses the TTS speech synthesis endpoint (`gpt-4o-mini-tts` / `tts-1`). These audio endpoints are only available through direct OpenAI connection—OpenRouter only handles chat completions and has no audio synthesis endpoint, so it cannot fall back to `OPENROUTER_API_KEY`. Offline viewing of the voice library/marker mapping (`--list-voices` / `--dump-mapping`) does not require any key.
 
@@ -31,9 +31,10 @@ This environment lacks a usable Fish Audio key, so **OpenAI TTS** is used instea
 
 | Marker | Chinese Form | Effect |
 | --- | --- | --- |
-| `[EMO:neutral\|happy\|frustrated\|thinking]` | `[EMO=neutral\|happy\|frustrated\|thinking]` | Switch emotion |
-| `[SPEED:normal\|fast\|slow]` / `[SPEED:0.8x]` | `[SPEED=normal\|fast\|slow]` | Switch speech rate |
-| `[STYLE:formal\|casual]` | `[STYLE=formal\|casual]` | Switch tone |
+| `[EMO:neutral\|happy\|frustrated\|thinking]` | `[情感=中性\|高兴\|沮丧\|思考]` | Switch emotion |
+| `[SPEED:normal\|fast\|slow]` / `[SPEED:0.8x]` | `[语速=正常\|快\|慢]` | Switch speech rate |
+| `[STYLE:formal\|casual]` | `[风格=正式\|轻松]` | Switch tone |
+
 The three dimensions combine to form a profile in the reference voice library (e.g., `happy_fast_formal`), which is then assembled into an `instructions` prompt for `gpt-4o-mini-tts`.
 
 ### Inline Markers (one-time events)
@@ -42,10 +43,12 @@ The three dimensions combine to form a profile in the reference voice library (e
 | --- | --- |
 | `[THINKING]` | Switch to "thinking/slow/formal" reference voice + insert 0.5s pause |
 | `[SEARCHING]` | Same as above, 0.4s pause (searching hesitation) |
-| `[PAUSE]` / `<pause>` / `[停顿]` | Insert 0.5s silence || `[BREATH]` / `<breath>` | Insert 0.4s breathing pause |
+| `[PAUSE]` / `<pause>` / `[停顿]` | Insert 0.5s silence |
+| `[BREATH]` / `<breath>` | Insert 0.4s breathing pause |
 | `[SIGH]` / `<sigh>` | Sigh onomatopoeia "Ahh—" + 0.3s pause |
 | `[LAUGH:small]` / `<laugh>` | Light laugh onomatopoeia "Haha," (cheerful tone) |
 | `<emphasis>…</emphasis>` / `[强调]…[/强调]` | Append "emphasize" prompt for the wrapped text |
+
 ### Reference Voice Library
 
 `voice_library.py` generates **24 profiles** from the Cartesian product of emotion(4) × speech rate(3) × style(2), all with a fixed `voice=alloy` (consistent timbre), differing only in `instructions`. Can be viewed by running it standalone:
@@ -77,14 +80,15 @@ Common parameters (`python demo.py --help`):
 | Parameter | Effect |
 | --- | --- |
 | `--quick` | Only run the three-configuration comparison (A/B/C), skip the 5 style variants, reducing TTS calls and time |
-| `--text text` | Only synthesize this custom text (can embed control markers, e.g., `[emotion=happy][THINKING]…`) || `--emotion / --speed / --style` | Specify emotion/speech rate/tone for `--text` (equivalent to adding corresponding state markers before the text) |
+| `--text text` | Only synthesize this custom text (can embed control markers, e.g., `[EMO:happy][THINKING]…`) |
+| `--emotion / --speed / --style` | Specify emotion/speech rate/tone for `--text` (equivalent to adding corresponding state markers before the text) |
 | `-o / --output path` | Output mp3 path for `--text` mode (default `output/custom.mp3`) |
 | `--list-voices` | **Offline** (no API key needed): Print the complete reference voice library (24 profiles and their instructions) |
 | `--dump-mapping` | **Offline** (no API key needed): Print the control marker → action mapping table, and demonstrate the parsing process on example text |
 
 ## Example Expected Output (Real Excerpt)
 
-```
+```text
 Preferred model: gpt-4o-mini-tts (automatically falls back to tts-1 if unavailable)
 
 Comparison experiment: Same text with control markers, three configurations
@@ -141,8 +145,8 @@ Comparing the ffprobe durations of the three configurations reveals the differen
 
 - 首选模型 **`gpt-4o-mini-tts`**：支持 `instructions` 参数，可用一段中文提示词精确
   控制情感/语速/口吻，最贴近「控制标记 → 风格化语音」的语义。
-- 若首选模型不可用，代码**自动兜底到 `tts-1`**：不支持 instructions，改用多 voice +
-  `speed` 参数 + 文本级停顿近似。
+- 若首选模型不可用，代码**自动兜底到 `tts-1`**：不支持 instructions，仍用固定 `voice`（alloy），
+  改用 `speed` 参数 + 文本/静音停顿近似。
 
 **必须用 OpenAI 直连 Key**：本实验只用 TTS 语音合成端点（`gpt-4o-mini-tts` / `tts-1`），
 这类音频端点只有 OpenAI 直连才有——OpenRouter 只做聊天补全、无音频合成端点，故无法回退到
@@ -217,7 +221,7 @@ python demo.py                            # 生成 output/*.mp3
 
 ## 预期输出示例（真实节选）
 
-```
+```text
 首选模型: gpt-4o-mini-tts（不可用时自动兜底 tts-1）
 
 对比实验：同一段带控制标记的文本，三种配置

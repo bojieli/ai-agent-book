@@ -14,7 +14,7 @@ The top layer is a standard **ReAct Agent**: given a natural language task (e.g.
 
 A production-grade phone voice API (such as the [PineClaw Voice API](https://pineclaw.com/), developed by the author's team) encapsulates an entire phone call as **a single tool call**:
 
-```
+```python
 record = make_phone_call(phone_number, goal, context)
 ```
 
@@ -111,7 +111,7 @@ There are two independent layers of simulation in this experiment; do not confus
 
 ## Expected Output Example (Real Excerpt)
 
-```
+```text
 [Agent calls tool make_phone_call] Parameters:
     phone_number = 10010
     goal         = Inquire about the reason for the extra 50 yuan on this month's broadband bill and request a refund for the erroneous charge.
@@ -171,7 +171,7 @@ Note: The IVR menu, employee ID, confirmation number, etc., are **simulated scen
 生产级电话语音 API（如 [PineClaw Voice API](https://pineclaw.com/)，作者团队开发）
 把一整通电话封装成**一次工具调用**：
 
-```
+```python
 record = make_phone_call(phone_number, goal, context)
 ```
 
@@ -279,7 +279,7 @@ python demo.py --help                                          # 查看全部参
 
 ## 预期输出示例（真实节选）
 
-```
+```text
 [Agent 调用工具 make_phone_call] 入参:
     phone_number = 10010
     goal         = 查询本月宽带账单多扣的50元原因，并要求处理误扣。

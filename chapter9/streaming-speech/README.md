@@ -16,7 +16,8 @@ The phenomenon from the original experiment in the book: in a sentence with a pa
   **OpenAI Whisper (`whisper-1`)**, reading the `OPENAI_API_KEY`.
 - Choosing Whisper is appropriate: like Qwen2-Audio, it is a **non-streaming model that takes the entire segment as input** – the encoder needs the full audio segment to start working and is **non-incremental** (each longer prefix requires re-encoding from scratch).
   Therefore, "slicing by increasing prefixes and recognizing each slice" perfectly reproduces the mechanism and cost of "simulated streaming" described in the book.
-- The test audio is synthesized on the fly using **OpenAI TTS (`tts-1`)**. The sentence contains time information "两点半" (two thirty). When the first half is truncated, it is prone to incomplete/erroneous recognition.- **Must use a direct OpenAI Key**: This experiment only uses audio endpoints (ASR `whisper-1` / TTS `tts-1`). These endpoints are only available via direct OpenAI connection – OpenRouter only handles chat completions and has no audio endpoints, so it cannot fall back to `OPENROUTER_API_KEY`. If you only want to verify the chunking/timing logic, use `python demo.py --offline`, which requires no Key.
+- The test audio is synthesized on the fly using **OpenAI TTS (`tts-1`)**. The sentence contains time information "两点半" (two thirty). When the first half is truncated, it is prone to incomplete/erroneous recognition.
+- **Must use a direct OpenAI Key**: This experiment only uses audio endpoints (ASR `whisper-1` / TTS `tts-1`). These endpoints are only available via direct OpenAI connection – OpenRouter only handles chat completions and has no audio endpoints, so it cannot fall back to `OPENROUTER_API_KEY`. If you only want to verify the chunking/timing logic, use `python demo.py --offline`, which requires no Key.
 
 Compared to true streaming models (e.g., Qwen3-Omni using chunked/causal encoders), the latency numbers in this demo only reflect the overhead of "chunk granularity + re-encoding each chunk from scratch" and do not equal the first-packet latency of true streaming; this is also explained in the book.
 
@@ -35,7 +36,7 @@ Compared to true streaming models (e.g., Qwen3-Omni using chunked/causal encoder
 cd chapter9/streaming-speech
 pip install -r requirements.txt          # Also requires ffmpeg on the machine: brew install ffmpeg
 cp env.example .env                       # Fill in OPENAI_API_KEY (or directly export)
-python demo.py                             # Default: TTS synthesis + 0.5s granularity real Whisper streaming recognition
+python demo.py                             # Default: TTS synthesis + 0.5s granularity simulated-streaming (growing-prefix) recognition via real Whisper calls
 python demo.py --quick                     # Increase chunk granularity to 1.5s, reducing Whisper calls to ~1/3
 python demo.py --sentence "..." --chunk-step 0.5   # Custom test sentence and chunk granularity
 python demo.py --audio my.wav              # Use an existing audio file as input, skip TTS synthesis
@@ -61,7 +62,7 @@ Common parameters (`python demo.py --help`):
 ## Real Run Output (Excerpt, for Reference)
 
 A real run (sentence: "Please help me reschedule tomorrow afternoon's meeting to 2:30, the location is still Conference Room 3, and don't forget to notify everyone.", total duration 7.75s) per-chunk recognition:
-```
+```text
 Chunk#01  Audio Prefix  0.5s | Recognition: Could you please                         ← Premature truncation: misrecognition + incomplete
 Chunk#03  Audio Prefix  1.5s | Recognition: Could you please reschedule tomorrow afternoon's
 Chunk#05  Audio Prefix  2.5s | Recognition: ...to two o'clock                       ← Time only half heard
@@ -71,7 +72,7 @@ Chunk#12  Audio Prefix  6.0s | Recognition: ...the location is still in Conferen
 Chunk#14  Audio Prefix  7.0s | Recognition: ...don't forget to notify me                   ← Another premature misjudgment (should be "notify everyone")
 Chunk#16  Audio Prefix  7.8s | Recognition: ...don't forget to notify everyone (Complete and correct)
 Full Segment Recognition (wait for complete audio): Could you please reschedule tomorrow afternoon's meeting to 2:30 PM? The location is still Conference Room 3. Don't forget to notify everyone.  Wait time: 7.75s (recording) + 2.25s (inference)
-First available streaming recognition: Only ~0.5s of audio needed to produce a partial result, obtaining the first version 7.2s earlier than the full segment.
+First available streaming recognition: Only ~0.5s of audio needed to produce a partial result, obtaining the first version 7.25s earlier than the full segment.
 ```
 
 It can be seen: streaming chunking advances the latency of the "first partial result" from "after recording the full sentence (7.75s)" to "after receiving 0.5s of audio", but the cost is **premature decision misrecognitions** in early chunks like "你帮我→你们" (you help me → you all), "三号会议室→四川" (Conference Room 3 → Sichuan), "通知大家→通知我" (notify everyone → notify me), which gradually converge as audio accumulates. Full segment recognition is the most accurate but has the highest latency. This is the **latency vs. accuracy trade-off** of streaming speech perception.
@@ -136,7 +137,7 @@ It can be seen: streaming chunking advances the latency of the "first partial re
 cd chapter9/streaming-speech
 pip install -r requirements.txt          # 另需本机 ffmpeg：brew install ffmpeg
 cp env.example .env                       # 填入 OPENAI_API_KEY（或直接 export）
-python demo.py                             # 默认：TTS 合成 + 0.5s 粒度真实 Whisper 流式识别
+python demo.py                             # 默认：TTS 合成 + 0.5s 粒度、真实调用 Whisper 的模拟流式（递增前缀）识别
 python demo.py --quick                     # 分块粒度放大到 1.5s，Whisper 调用减到约 1/3
 python demo.py --sentence "..." --chunk-step 0.5   # 自定义测试句与分块粒度
 python demo.py --audio my.wav              # 用现成音频作输入，跳过 TTS 合成
@@ -164,7 +165,7 @@ python demo.py --help                      # 查看全部参数
 一次真实运行（句子：「麻烦你帮我把明天下午的会议改到两点半，地点还是在三号会议室，
 别忘了通知大家。」，整段 7.75s）的逐块识别：
 
-```
+```text
 块#01  音频前缀  0.5s | 识别：麻烦你们                         ← 过早截断：误识别 + 不完整
 块#03  音频前缀  1.5s | 识别：麻烦你帮我把明天下午的
 块#05  音频前缀  2.5s | 识别：...改到两点                       ← 时间只听到一半
@@ -176,7 +177,7 @@ python demo.py --help                      # 查看全部参数
 
 整段识别（等完整音频）：麻烦你帮我把明天下午的会议改到两点半 地点还是在三号会议室 别忘了通知大家
   需等待：7.75s（录完）+ 2.25s（推理）
-流式首个可用识别：仅需约 0.5s 音频即产出部分结果，比整段提前 7.2s 拿到第一版
+流式首个可用识别：仅需约 0.5s 音频即产出部分结果，比整段提前 7.25s 拿到第一版
 ```
 
 可见：流式分块把「首个部分结果」的延迟从「录完整句（7.75s）之后」提前到「收到 0.5s 音频」，

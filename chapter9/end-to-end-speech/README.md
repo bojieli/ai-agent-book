@@ -71,15 +71,15 @@ Requires `ffprobe`/`ffplay` (for validation, listening to audio): `brew install 
 
 ## Example Expected Output (Real Excerpt)
 
-```
-Paradigm 1: End-to-End Speech Reasoning (backend=gpt-audio, model=gpt-audio)
+```text
+Paradigm 2: End-to-End Speech Reasoning (backend=gpt-audio, model=gpt-audio)
 Form: Audio in → Single model "listens→thinks→speaks" → Audio out (single call, no separate ASR/LLM/TTS stages)
 [Single Stage] End-to-End (listens→thinks→speaks, single model call)  |  Latency=7.21s
     Speech answer transcription (produced incidentally by the model, not an intermediate text stage): Let's calculate: Xiao Ming has 12 yuan, buys 3 pencils... finally has no money left.
     ffprobe validation: {'format': 'wav', 'duration(seconds)': 20.75, ...}
 End-to-End Total Latency (single model forward pass): 7.21s
 
-Paradigm 2 (Comparison Baseline): Cascaded Pipeline ASR → LLM → TTS
+Paradigm 1 (Comparison Baseline): Cascaded Pipeline ASR → LLM → TTS
 [Stage 1] ASR Speech Recognition  |  Model=whisper-1  |  Latency=1.35s
 [Stage 2] LLM Reasoning          |  Model=gpt-5.6-luna  |  Latency=1.92s
 [Stage 3] TTS Speech Synthesis   |  Model=tts-1  |  Latency=3.66s
@@ -95,7 +95,7 @@ End-to-End vs Cascaded: Real Latency Comparison
 
 For the same sentence "Alright, that's it then. I have no objections." (TTS synthesized, relatively flat emotion), the responses from the two paths:
 
-```
+```text
 [Stage 1] ASR Speech Recognition  |  whisper-1  → 「Alright, that's it then. I have no objections.」   ← The cascaded LLM only receives this plain text
 
 Responses from both paths to the same audio segment (allowing direct comparison of whether "how it was said" was heard):
@@ -202,15 +202,15 @@ CLI 全部参数见 `python demo.py --help`：`--task`、`--question`、`--audio
 
 ## 预期输出示例（真实节选）
 
-```
-范式一：端到端语音思考（后端=gpt-audio，模型=gpt-audio）
+```text
+范式二：端到端语音思考（后端=gpt-audio，模型=gpt-audio）
 形态：音频进 → 单模型「听→想→说」→ 音频出（一次调用，无独立 ASR/LLM/TTS 段）
 [单阶段] 端到端（听→想→说，单模型一次调用）  |  延迟=7.21s
     语音答案转写（模型顺带产出，非中间文本阶段）：咱们先算一下：小明有12块钱，买了3支铅笔……最后不剩钱了。
     ffprobe 校验：{'格式': 'wav', '时长(秒)': 20.75, ...}
 端到端总延迟（单模型一次前向）：7.21s
 
-范式二（对照基线）：级联流水线 ASR → LLM → TTS
+范式一（对照基线）：级联流水线 ASR → LLM → TTS
 [阶段 1] ASR 语音识别  |  模型=whisper-1  |  延迟=1.35s
 [阶段 2] LLM 思考      |  模型=gpt-5.6-luna  |  延迟=1.92s
 [阶段 3] TTS 语音合成  |  模型=tts-1  |  延迟=3.66s
@@ -226,7 +226,7 @@ CLI 全部参数见 `python demo.py --help`：`--task`、`--question`、`--audio
 
 同一句「行吧，那就这样吧，我没什么意见。」（TTS 合成，情感偏平），两条路的回答：
 
-```
+```text
 [阶段 1] ASR 语音识别  |  whisper-1  → 「行吧,那就这样吧,我没什么意见」   ← 级联 LLM 只拿得到这行纯文本
 
 两条路对同一段音频的回答（可直观对比是否「听到了怎么说」）：
