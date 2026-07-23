@@ -323,8 +323,15 @@ def parse_page_range(page_range: str, total_pages: int) -> list[int]:
     
     for part in page_range.split(","):
         part = part.strip()
+        if not part:
+            # Trailing/duplicate commas (e.g. "1,3," or "1,,3") are common in
+            # LLM tool args; skip empty segments instead of int("").
+            continue
         if "-" in part:
-            start, end = map(int, part.split("-"))
+            bounds = part.split("-")
+            if len(bounds) != 2 or not bounds[0] or not bounds[1]:
+                raise ValueError(f"Invalid page range segment: {part!r}")
+            start, end = int(bounds[0]), int(bounds[1])
             # Clamp both ends: the caller's guard is `page_num < total_pages`,
             # which a negative index passes, and reader.pages[-1] is the LAST
             # page -- so an unclamped start silently returns the wrong page.
