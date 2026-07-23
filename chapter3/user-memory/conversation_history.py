@@ -150,6 +150,10 @@ class ConversationHistory:
         Returns:
             List of matching conversation turns
         """
+        # limit=0 means zero matches (like `head -0`), not "stop after first match".
+        if limit <= 0:
+            return []
+
         # Try vector search with Dify if available
         if self.dify_client:
             return self.dify_client.search_conversations(query, self.user_id, limit)
