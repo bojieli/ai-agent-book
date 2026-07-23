@@ -922,6 +922,8 @@ def interactive_mode(api_key: str, provider: str = "siliconflow", model: str = N
                         print(f"  - {p}: Moonshot Kimi K3 model{status}")
                     elif p == "deepseek":
                         print(f"  - deepseek: DeepSeek V4 model{status}")
+                    elif p == "zhipu":
+                        print(f"  - zhipu: Zhipu GLM model{status}")
             
             elif user_input.lower().startswith('provider '):
                 new_provider = user_input[9:].strip().lower()
@@ -946,6 +948,11 @@ def interactive_mode(api_key: str, provider: str = "siliconflow", model: str = N
                         new_api_key = os.getenv("DEEPSEEK_API_KEY")
                         if not new_api_key:
                             print("❌ DEEPSEEK_API_KEY not set in environment")
+                            continue
+                    elif new_provider == "zhipu":
+                        new_api_key = os.getenv("ZHIPU_API_KEY")
+                        if not new_api_key:
+                            print("❌ ZHIPU_API_KEY not set in environment")
                             continue
                     
                     # Update current settings
@@ -1008,6 +1015,9 @@ def interactive_mode(api_key: str, provider: str = "siliconflow", model: str = N
                 elif current_provider == "deepseek":
                     key_status = "✅ Set" if os.getenv("DEEPSEEK_API_KEY") else "❌ Not set"
                     print(f"  API Key (DEEPSEEK_API_KEY): {key_status}")
+                elif current_provider == "zhipu":
+                    key_status = "✅ Set" if os.getenv("ZHIPU_API_KEY") else "❌  Not set"
+                    print(f"  API Key (ZHIPU_API_KEY): {key_status}")
             
             elif user_input:
                 # Execute task
@@ -1099,7 +1109,7 @@ def main():
     parser.add_argument(
         "--api-key",
         type=str,
-        help="LLM 提供商的 API Key（也可通过环境变量 SILICONFLOW_API_KEY/ARK_API_KEY/MOONSHOT_API_KEY/DEEPSEEK_API_KEY 设置）"
+        help="LLM 提供商的 API Key（也可通过环境变量 SILICONFLOW_API_KEY/ARK_API_KEY/MOONSHOT_API_KEY/DEEPSEEK_API_KEY/ZHIPU_API_KEY 设置）"
     )
     parser.add_argument(
         "--output",
@@ -1140,7 +1150,7 @@ def main():
         else:
             logger.error(
                 "No API key found. Set the provider key "
-                "(ARK_API_KEY/SILICONFLOW_API_KEY/MOONSHOT_API_KEY/DEEPSEEK_API_KEY) or "
+                "(ARK_API_KEY/SILICONFLOW_API_KEY/MOONSHOT_API_KEY/DEEPSEEK_API_KEY/ZHIPU_API_KEY) or "
                 "OPENROUTER_API_KEY (universal fallback)."
             )
             sys.exit(1)
