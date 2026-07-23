@@ -925,8 +925,11 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
             output_buffer = io.StringIO()
             error_buffer = io.StringIO()
             
+            # Use one namespace so functions defined by the snippet can resolve
+            # names assigned earlier in the same snippet.
+            exec_ns = {}
             with contextlib.redirect_stdout(output_buffer), contextlib.redirect_stderr(error_buffer):
-                exec(code)
+                exec(code, exec_ns)
             
             stdout = output_buffer.getvalue()
             stderr = error_buffer.getvalue()
