@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Build EPUB 3 editions from the Markdown sources.
-# Usage: ./build_epub.sh [all|zh-CN|zh-TW|en|ta|vi]
+# Usage: ./build_epub.sh [all|zh-CN|zh-TW|en|ta|vi|ja]
+# Note: `all` does NOT include ja yet — the Japanese PDF/EPUB pipeline is not
+# validated in CI. Build it explicitly with `./build_epub.sh ja` once the
+# Japanese fonts and `book-ja/build_pdf.sh` output are confirmed to work.
 
 set -euo pipefail
 
@@ -15,9 +18,9 @@ for command in pandoc pdftoppm python3; do
 done
 
 case "$SELECTION" in
-    all|zh-CN|zh-TW|en|ta|vi) ;;
+    all|zh-CN|zh-TW|en|ta|vi|ja) ;;
     *)
-        echo "Usage: $0 [all|zh-CN|zh-TW|en|ta|vi]" >&2
+        echo "Usage: $0 [all|zh-CN|zh-TW|en|ta|vi|ja]" >&2
         exit 2
         ;;
 esac
@@ -80,6 +83,16 @@ build_edition() {
             title_label="Trang tiêu đề"
             toc_label="Mục lục"
             chapters=(introduction.vi.md glossary.vi.md chapter{1..10}.vi.md afterword.vi.md)
+            ;;
+        ja)
+            directory="book-ja"
+            title="AI Agent 徹底解説：設計原理とエンジニアリング実践"
+            author="李博杰；日本語訳：Ikko Eltociear Ashimine"
+            pdf="AI-Agents-in-Depth-Bojie-Li-v1.2-ja.pdf"
+            output="AI-Agents-in-Depth-Bojie-Li-v1.2-ja.epub"
+            title_label="扉"
+            toc_label="目次"
+            chapters=(introduction.ja.md chapter{1..10}.ja.md afterword.ja.md)
             ;;
     esac
 
