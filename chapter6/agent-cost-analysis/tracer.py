@@ -86,23 +86,38 @@ class Tracer:
         latency = time.time() - t0
 
         usage = resp.usage
+        # Some OpenAI-compatible providers omit usage (null); match from_records coercion.
+        if usage is None:
+            span = Span(
+                step=step,
+                tool=tool,
+                kind="llm",
+                tool_ctx_tokens=tool_ctx_tokens,
+                latency_s=latency,
+                cost_usd=0.0,
+            )
+            self.spans.append(span)
+            return resp
+
         # cached_tokens 藏在 prompt_tokens_details 里，注意做防御式读取
         cached = 0
         details = getattr(usage, "prompt_tokens_details", None)
         if details is not None:
             cached = getattr(details, "cached_tokens", 0) or 0
 
+        prompt_tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
+        completion_tokens = int(getattr(usage, "completion_tokens", 0) or 0)
         span = Span(
             step=step,
             tool=tool,
             kind="llm",
-            prompt_tokens=usage.prompt_tokens,
+            prompt_tokens=prompt_tokens,
             cached_tokens=cached,
-            completion_tokens=usage.completion_tokens,
+            completion_tokens=completion_tokens,
             tool_ctx_tokens=tool_ctx_tokens,
             latency_s=latency,
             cost_usd=self.pricing.cost_usd(
-                usage.prompt_tokens, cached, usage.completion_tokens),
+                prompt_tokens, cached, completion_tokens),
         )
         self.spans.append(span)
         return resp
