@@ -21,6 +21,8 @@
 | [tts-quality-eval](tts-quality-eval/) | ✅ | Dùng nhiều cấu hình TTS (model/voice/speed khác nhau) để tổng hợp cùng một nhóm văn bản thử thách, sau đó dùng LLM-as-a-Judge đa phương thức chấm điểm từng chiều theo Rubric (độ rõ/naturalness, v.v.), tổng hợp thành bảng so sánh cấu hình có thể tái hiện. |
 | [public-health-reporting-eval](public-health-reporting-eval/) | ✅ | Sử dụng dữ liệu tổng hợp nhân tạo theo phong cách DHIS2 để đánh giá khách quan lời gọi công cụ, độ chính xác tính toán, trích dẫn bằng chứng và các tuyên bố không có căn cứ của Agent báo cáo y tế công cộng. |
 
+> 📖 Các benchmark bên ngoài (tên đặt trong dấu backtick) cần tự clone riêng. [`android-world/`](android-world/) (có gạch nối) là **ghi chú phân tích đánh giá T3A** trong repo này (xem [README](android-world/README.md) của nó), không phải cùng đường dẫn với mã nguồn benchmark `android_world/` bên ngoài.
+
 ## Phân loại dự án
 
 | Biểu tượng | Loại | Ý nghĩa |

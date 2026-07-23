@@ -21,7 +21,7 @@
 | [tts-quality-eval](tts-quality-eval/) | ✅ | 多種 TTS 設定合成挑戰文字，LLM-as-a-Judge 按 Rubric 逐維度打分，輸出可復現對比表 |
 | [public-health-reporting-eval](public-health-reporting-eval/) | ✅ | 基於合成 DHIS2 風格彙總資料，客觀評估公共衛生報告 Agent 的工具呼叫、計算準確性、證據引用與無依據聲明 |
 
-> 📖 表中帶反引號的外部基準需自行克隆，命令見文末《附錄 · 外部倉庫取得》。[`android-world/`](android-world/)（連字號）是本倉庫內的 **T3A 評估分析筆記**（見該目錄 [README](android-world/README.md)），與外部 `android_world/` 基準原始碼不是同一路徑。
+> 📖 表中帶反引號的外部基準需自行克隆。[`android-world/`](android-world/)（連字號）是本倉庫內的 **T3A 評估分析筆記**（見該目錄 [README](android-world/README.md)），與外部 `android_world/` 基準原始碼不是同一路徑。
 
 ## 專案型別說明
 

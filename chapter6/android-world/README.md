@@ -3,6 +3,8 @@
 > Companion material for *AI Agents in Depth*, Chapter 6 — **Experiment 6-10: Evaluate and improve on AndroidWorld**.  
 > 配套《深入理解 AI Agent》第 6 章 **实验 6-10 ★★★：AndroidWorld 的评估和改进**。
 
+← [Chapter 6 index / 返回第 6 章目录](../README.md) · 📖 [Read the chapter / 读本章正文](../../book/chapter6.md)（[EN](../../book-en/chapter6.md)）
+
 ---
 
 ## English
@@ -15,7 +17,7 @@ This folder is **not** a copy of the [AndroidWorld](https://github.com/google-re
 | --- | --- |
 | [`t3a_summary.md`](t3a_summary.md) | High-level report: per-task outcomes + capability-tag × difficulty matrix, strengths/weaknesses |
 | [`t3a_failed_analysis.md`](t3a_failed_analysis.md) | Failure taxonomy with root-cause write-ups (transcription, complex UI, math/counting, etc.) |
-| [`t3a.md`](t3a.md) | Full step traces for runs (including successes): Observation → Thought → Action style logs |
+| [`t3a.md`](t3a.md) | Full step traces for runs (including successes): per-step `Action` / `Reason` / `Summary` records |
 | [`t3a_failed.md`](t3a_failed.md) | Step traces focused on failed tasks (useful for root-cause replay) |
 
 If you need to **run** the benchmark yourself, clone and follow the upstream project (see [Reproduce the benchmark](#reproduce-the-benchmark-optional) below). This directory is primarily for **reading and analysis**.
@@ -27,7 +29,7 @@ If you need to **run** the benchmark yourself, clone and follow the upstream pro
 
 ### Snapshot results (from the included report)
 
-Numbers below come from [`t3a_summary.md`](t3a_summary.md) (116 tasks, one trial each in the dump):
+Numbers below come from [`t3a_summary.md`](t3a_summary.md) (116 tasks, one trial each; agent `t3a_claude4_sonnet`, run on 2025-07-02):
 
 | Metric | Value (approx.) |
 | --- | --- |
@@ -126,7 +128,7 @@ Reading order if you only study the notes: **`t3a_summary.md` → `t3a_failed_an
 | --- | --- |
 | [`t3a_summary.md`](t3a_summary.md) | 总览：逐任务结果 + 能力标签 × 难度矩阵、优势与短板 |
 | [`t3a_failed_analysis.md`](t3a_failed_analysis.md) | 失败分类与根因（转录、复杂 UI、数学/计数等） |
-| [`t3a.md`](t3a.md) | 完整逐步轨迹（含成功案例）：观察 → 思考 → 行动 |
+| [`t3a.md`](t3a.md) | 完整逐步轨迹（含成功案例）：每步记录 `Action` / `Reason` / `Summary` |
 | [`t3a_failed.md`](t3a_failed.md) | 失败任务轨迹（适合回放根因） |
 
 若要**自己跑**基准，请按上游仓库克隆与配置（见下文[复现基准](#复现基准可选)）。本目录以**阅读与分析**为主。
@@ -138,7 +140,7 @@ Reading order if you only study the notes: **`t3a_summary.md` → `t3a_failed_an
 
 ### 结果快照（来自随附报告）
 
-数据摘自 [`t3a_summary.md`](t3a_summary.md)（116 个任务，该 dump 中每任务 1 次 trial）：
+数据摘自 [`t3a_summary.md`](t3a_summary.md)（116 个任务，每任务 1 次 trial；Agent 为 `t3a_claude4_sonnet`，运行于 2025-07-02）：
 
 | 指标 | 约值 |
 | --- | --- |
