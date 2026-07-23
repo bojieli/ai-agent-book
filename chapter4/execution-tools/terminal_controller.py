@@ -56,6 +56,11 @@ class TerminalController:
             self.command_history.append(command)
             if len(self.command_history) > self.max_history:
                 self.command_history.pop(0)
+
+            # timeout<=0: treat like omit (default 30s). Exact 0 makes subprocess
+            # raise TimeoutExpired before the command can finish.
+            if timeout is None or timeout <= 0:
+                timeout = 30
             
             # Execute command
             result = subprocess.run(
