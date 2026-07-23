@@ -1,3 +1,51 @@
+## English
+
+# CoT Distillation: Collecting SFT Data from Frontier Cloud Models
+
+This experiment builds a small, auditable pipeline for collecting chain-of-thought supervised fine-tuning data from teacher models. It supports OpenAI-compatible endpoints, Anthropic, and OpenRouter, validates generated answers, and writes accepted samples as JSONL.
+
+## Method
+
+The pipeline loads problems, asks a selected teacher model to produce worked solutions, extracts the final answer, and keeps only samples that pass answer validation. The output can then be used as SFT data for a smaller student model.
+
+## Choosing a teacher model
+
+The default does not have to be a closed-source model. A strong open model served through an OpenAI-compatible endpoint is often cheaper, easier to reproduce, and sufficient for data collection. Closed models remain useful as comparison teachers.
+
+## Run
+
+```bash
+pip install -r requirements.txt
+cp env.example .env
+
+# Small smoke test with two problems
+python collect.py --limit 2
+
+# Collect the full set of 24 AIME problems
+python collect.py
+
+# Inspect dataset statistics
+python stats.py output/sft_data.jsonl
+```
+
+Provider, model, concurrency, retry, and output settings can be configured through command-line arguments and environment variables. See `python collect.py --help` for the complete list.
+
+## Output
+
+Each accepted JSONL row contains the problem, messages, teacher metadata, extracted answer, reference answer, and validation result. Failed or invalid generations are recorded separately so collection runs remain auditable.
+
+## AIME comparison
+
+The included notes compare three teachers over 24 AIME problems, covering answer accuracy, accepted sample counts, token use, latency, and estimated cost. Results depend on model versions and provider conditions, so rerun the experiment before making a production choice.
+
+## Archived simple Chinese problems
+
+Earlier easy Chinese arithmetic samples are retained as historical artifacts. They are useful for smoke testing but are not a meaningful reasoning benchmark.
+
+---
+
+## 中文
+
 # CoT 蒸馏：从前沿云模型采集 SFT 数据
 
 配套书中**实验 7-9（思维链蒸馏）**。SFT 的第一步是拿到高质量示范数据，而获取
