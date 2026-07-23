@@ -32,6 +32,9 @@ def compute_mle_elo(df: pd.DataFrame,
     Returns:
         Series of Elo ratings indexed by model name
     """
+    # Empty battle frame (e.g. --num-battles 0 or fully filtered input) is valid.
+    if df is None or len(df) == 0:
+        return pd.Series(dtype=float)
     # Create pivot tables for wins
     ptbl_a_win = pd.pivot_table(
         df[df["winner"] == "model_a"],
