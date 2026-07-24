@@ -567,8 +567,7 @@ TODAY'S DATE: {date_string}"""
                         try:
                             function_args = json.loads(raw_args)
                         except json.JSONDecodeError:
-                            # Models sometimes emit slightly invalid JSON; match
-                            # chapter1 web-search-agent and keep the ReAct loop alive.
+                            # Tolerate bad tool-arg JSON; keep the loop alive.
                             function_args = {}
                             logger.warning(
                                 "工具参数不是合法 JSON，已按空对象继续: %r",
