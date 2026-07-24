@@ -28,7 +28,7 @@ BASE_URL = os.environ.get("OPENAI_BASE_URL")  # 可选，兼容自建/代理端�
 
 
 def _report_issues(report: dict) -> list:
-    """Null/non-list issues → []; drop non-dict entries so callers can use .get."""
+    """Return issue dicts; null/non-list → []; skip non-dict entries."""
     if not isinstance(report, dict):
         return []
     issues = report.get("issues")
