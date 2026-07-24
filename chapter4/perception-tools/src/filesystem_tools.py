@@ -120,51 +120,70 @@ async def grep_search(
         logging.info(f"🔍 Searching for pattern '{pattern}' in {dir_path}")
         
         results = []
-        # max_results=0 means zero hits (like `head -0`), not "stop after first match".
-        if max_results > 0:
-            flags = re.IGNORECASE if not case_sensitive else 0
-            regex = re.compile(pattern, flags)
+        if max_results <= 0:
+            action_response = ActionResponse(
+                success=True,
+                message={
+                    "pattern": pattern,
+                    "results": results,
+                    "total_found": 0,
+                    "truncated": False,
+                },
+                metadata={
+                    "directory": str(dir_path),
+                    "file_pattern": file_pattern,
+                    "recursive": recursive,
+                },
+            )
+            return TextContent(
+                type="text",
+                text=json.dumps(action_response.model_dump()),
+            )
 
-            if recursive:
-                files = dir_path.rglob(file_pattern)
-            else:
-                files = dir_path.glob(file_pattern)
+        flags = re.IGNORECASE if not case_sensitive else 0
+        regex = re.compile(pattern, flags)
 
-            for file_path in files:
-                if not file_path.is_file():
-                    continue
+        if recursive:
+            files = dir_path.rglob(file_pattern)
+        else:
+            files = dir_path.glob(file_pattern)
 
-                try:
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        for line_num, line in enumerate(f, 1):
-                            if regex.search(line):
-                                results.append({
-                                    "file": str(file_path.relative_to(dir_path)),
-                                    "line_number": line_num,
-                                    "line": line.strip(),
-                                    "absolute_path": str(file_path)
-                                })
+        for file_path in files:
+            if not file_path.is_file():
+                continue
 
-                                if len(results) >= max_results:
-                                    break
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    for line_num, line in enumerate(f, 1):
+                        if regex.search(line):
+                            results.append({
+                                "file": str(file_path.relative_to(dir_path)),
+                                "line_number": line_num,
+                                "line": line.strip(),
+                                "absolute_path": str(file_path)
+                            })
 
-                    if len(results) >= max_results:
-                        break
+                            if len(results) >= max_results:
+                                break
 
-                except Exception as e:
-                    logging.warning(f"Error reading {file_path}: {e}")
-                    continue
-        
+                if len(results) >= max_results:
+                    break
+
+            except Exception as e:
+                logging.warning(f"Error reading {file_path}: {e}")
+                continue
+
         logging.info(f"✅ Found {len(results)} matches")
-        
+
         action_response = ActionResponse(
             success=True,
             message={
                 "pattern": pattern,
                 "results": results,
                 "total_found": len(results),
-                "truncated": max_results > 0 and len(results) >= max_results
+                "truncated": len(results) >= max_results
             },
+
             metadata={
                 "directory": str(dir_path),
                 "file_pattern": file_pattern,
