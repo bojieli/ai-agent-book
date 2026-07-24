@@ -175,7 +175,7 @@ def customize(client, model, frontend_dir: Path, requirement: str) -> dict:
     args = json.loads(msg.tool_calls[0].function.arguments)
 
     # 安全校验：只允许改写白名单内的文件。
-    files = args.get("files") or []
+    files = [f for f in (args.get("files") or []) if isinstance(f, dict)]
     for f in files:
         path = f.get("path")
         if path not in EDITABLE_FILES:
