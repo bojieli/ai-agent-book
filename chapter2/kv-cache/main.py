@@ -22,6 +22,7 @@ from agent import KVCacheAgent, KVCacheMode, AgentMetrics, compare_implementatio
 # (The non-reasoning moonshot-v1-* models do NOT report cached_tokens, so they
 # cannot demonstrate the cache effect.)
 DEFAULT_MODEL = "kimi-k2.6"
+DEFAULT_ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 # Configure logging
 logging.basicConfig(
@@ -186,7 +187,7 @@ For each project:
 Start with chapter1 projects, then move to chapter2. Be thorough in your analysis."""
 
 
-def run_single_mode(api_key: str, mode: str, task: str = None, root_dir: str = "../..",
+def run_single_mode(api_key: str, mode: str, task: str = None, root_dir: str = DEFAULT_ROOT_DIR,
                     model: str = DEFAULT_MODEL, output: str = None):
     """
     Run agent in a single mode
@@ -360,7 +361,7 @@ def select_mode_interactive():
             print("\n\nExiting...")
             sys.exit(0)
 
-def run_comparison(api_key: str, task: str = None, root_dir: str = "../..",
+def run_comparison(api_key: str, task: str = None, root_dir: str = DEFAULT_ROOT_DIR,
                    model: str = DEFAULT_MODEL, output: str = None,
                    cache_price_ratio: float = 0.1):
     """
@@ -476,8 +477,8 @@ def main():
     parser.add_argument("--cache-price-ratio", type=float, default=0.1,
                         help="成本估算中缓存 token 相对正常 token 的计费比例（默认：0.1，即缓存读取按一折计），仅作示意")
     parser.add_argument("--task", type=str, help="自定义任务描述（默认：分析并总结项目代码）")
-    parser.add_argument("--root-dir", type=str, default="../..",
-                        help="文件工具的根目录（默认：../.. 即仓库根，供 Agent 读取代码）")
+    parser.add_argument("--root-dir", type=str, default=DEFAULT_ROOT_DIR,
+                        help="文件工具的根目录（默认：仓库根目录，供 Agent 读取代码）")
     parser.add_argument("--interactive", action="store_true", default=True,
                         help="交互式菜单选择策略（默认开启）")
     parser.add_argument("--no-interactive", dest="interactive", action="store_false",
