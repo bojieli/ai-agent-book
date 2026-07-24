@@ -749,7 +749,29 @@ Important: When you have gathered all necessary information and computed the fin
                 messages.append(assistant_msg)
                 for tool_call in message.tool_calls:
                     function_name = tool_call.function.name
-                    function_args = json.loads(tool_call.function.arguments)
+                    raw_args = tool_call.function.arguments or "{}"
+                    try:
+                        function_args = json.loads(raw_args)
+                    except json.JSONDecodeError as exc:
+                        # Malformed/truncated args must not abort the turn: the
+                        # assistant message with tool_calls is already recorded,
+                        # so bailing would leave tool_call_id unanswered.
+                        err = (
+                            f"Invalid tool arguments (not valid JSON): {exc}. "
+                            f"Raw arguments: {raw_args[:500]}"
+                        )
+                        logger.warning(err)
+                        self.trajectory.tool_calls.append(ToolCall(
+                            tool_name=function_name,
+                            arguments={},
+                            result={"error": err},
+                        ))
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps({"error": err}),
+                        })
+                        continue
 
                     logger.info(f"Executing tool: {function_name} with args: {function_args}")
 
