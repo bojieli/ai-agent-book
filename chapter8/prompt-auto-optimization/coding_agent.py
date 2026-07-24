@@ -60,7 +60,7 @@ def _apply_one(content: str, old_str: str, new_str: str) -> tuple[str, str | Non
 
 
 def _apply_edits_from_args(working: str, args: dict) -> tuple[str, int, list, list]:
-    """Apply edits; null edits → []; skip non-dict entries with an error."""
+    """Apply edits; null edits → []; skip non-dict entries."""
     edits = args.get("edits")
     if edits is None:
         edits = []
