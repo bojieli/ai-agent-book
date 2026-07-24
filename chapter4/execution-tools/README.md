@@ -124,7 +124,7 @@ Global flags (before the subcommand):
 **Offline operation**: `list`, `demo`, and `code`/`shell`/`write`/`edit` with approval/summarize/non-Python verify off need no API key. API key is needed for: LLM pre-approval, LLM summarization of long output, non-Python syntax checks. `calendar` and `pr` also need their external credentials.
 
 > **Warning — `--no-approval`**: this flag bypasses the LLM pre-approval check for dangerous operations. Use it only in controlled local demos (e.g. a throwaway workspace). Never combine it with real workspaces or destructive commands.
-
+>
 > **Long-output truncation and persistence**: when `code_interpreter` / `virtual_terminal` output exceeds the threshold (default 200 lines or 10000 characters), the tool keeps only the first and last 50 lines in context, writes the full output to a temp file, and returns the path in `stdout_file` / `stderr_file`. This path does **not** depend on an LLM and works offline.
 
 #### Running the MCP Server
@@ -136,6 +136,8 @@ python server.py
 #### Using with MCP Client
 
 ```python
+import asyncio
+
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
@@ -164,6 +166,9 @@ async def use_tools():
             result = await session.call_tool("virtual_terminal", {
                 "command": "ls -la"
             })
+
+
+asyncio.run(use_tools())
 ```
 
 #### Testing Individual Tools
@@ -316,7 +321,7 @@ python cli.py edit --path notes.txt --search hello --replace world
 长输出的 LLM 总结、非 Python 语法校验。`calendar` 与 `pr` 还额外需要相应外部凭据。
 
 > **警告 —— `--no-approval`**：该开关会绕过危险操作的 LLM 事前审批，仅适用于受控的本地演示（如一次性临时工作区）。切勿在真实工作区中使用，也不要与破坏性命令搭配使用。
-
+>
 > **长输出的截断与持久化**：当 `code_interpreter` / `virtual_terminal` 的输出
 > 超过阈值（默认 200 行或 10000 字符）时，工具只在上下文中保留头尾各 50 行，
 > 完整输出落盘到临时文件，并在返回值的 `stdout_file` / `stderr_file` 字段给出路径。
@@ -331,6 +336,8 @@ python server.py
 #### 配合 MCP 客户端
 
 ```python
+import asyncio
+
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
@@ -359,6 +366,9 @@ async def use_tools():
             result = await session.call_tool("virtual_terminal", {
                 "command": "ls -la"
             })
+
+
+asyncio.run(use_tools())
 ```
 
 #### 测试单个工具
