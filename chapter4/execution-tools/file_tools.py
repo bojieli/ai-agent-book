@@ -147,8 +147,7 @@ class FileTools:
                 "error": f"Failed to read file: {str(e)}"
             }
 
-        # Empty search is always "found" (`"" in text` is True) and
-        # str.replace("", x, 1) inserts at the start — reject instead of corrupting.
+        # Empty search matches everywhere; reject instead of inserting at start.
         if search == "":
             return {
                 "success": False,
