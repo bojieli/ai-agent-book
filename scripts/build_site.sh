@@ -12,7 +12,6 @@ mkdir -p "$DEST"
 
 # Site homepage (root index.md).
 cp "$ROOT/index.md" "$DEST/index.md"
-[ -f "$ROOT/index.en.md" ] && cp "$ROOT/index.en.md" "$DEST/index.en.md"
 
 # robots.txt at the site root (points crawlers at the auto-generated sitemap).
 [ -f "$ROOT/robots.txt" ] && cp "$ROOT/robots.txt" "$DEST/robots.txt"

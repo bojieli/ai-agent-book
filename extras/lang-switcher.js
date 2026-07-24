@@ -66,8 +66,6 @@
       // Match against prefix with trailing slash stripped, so both
       // "/book-en/" and "/book-en" map to "en".
       var p = path.replace(/\/$/, "");
-      if (p === "" || p === "/index" || p === "/index.html") return "zh";
-      if (p === "/index.en" || p === "/index.en.html") return "en";
       var codes = Object.keys(cfg).sort(function (a, b) {
         return cfg[b].prefix.length - cfg[a].prefix.length;
       });
@@ -98,11 +96,8 @@
     // the same site base, or null if no translation applies.
     //
     // URL shapes we have to handle:
-    //   /                          → site home
-    //   /index.en/                 → English site home
-    //   /book[-lang]/introduction[.suffix]/ → front matter prose
-    //   /book[-lang]/chapterN[.suffix]/     → chapter prose
-    //   /book[-lang]/afterword[.suffix]/    → back matter prose
+    //   /                          → site home (per-language intro)
+    //   /book[-lang]/chapterN[.suffix]/  → chapter prose
     //   /chapterN/                 → experiment index, Chinese (README.md)
     //   /chapterN/README.<readmeSuffix>/ → experiment index, translated
     //   /chapterN/<exp>/           → individual experiment, Chinese only
@@ -112,29 +107,12 @@
       var src = cfg[fromCode];
       var dst = cfg[toCode];
 
-      // Site home → English home for English, otherwise target language's
-      // introduction page. Only English has a localized homepage today.
+      // Site home → target language's introduction.
       if (cleanPath === "/" || cleanPath === "/index.html") {
-        if (toCode === "zh") return "/";
-        if (toCode === "en") return "/index.en/";
-        return "/" + dst.prefix + "introduction" + (dst.suffix || "") + "/";
-      }
-
-      if (cleanPath === "/index.en/" || cleanPath === "/index.en" || cleanPath === "/index.en.html") {
-        if (toCode === "zh") return "/";
-        if (toCode === "en") return "/index.en/";
         return "/" + dst.prefix + "introduction" + (dst.suffix || "") + "/";
       }
 
       var pp = cleanPath.replace(/^\//, "").replace(/\/$/, "");
-
-      // Front/back matter prose: introduction and afterword use the same
-      // prefix/suffix convention as chapters but don't contain a chapterN.
-      var bookPageRe = new RegExp("^" + escapeRe(src.prefix) + "(introduction|afterword)" + escapeRe(src.suffix || "") + "$");
-      var bookPageMatch = pp.match(bookPageRe);
-      if (bookPageMatch) {
-        return "/" + dst.prefix + bookPageMatch[1] + (dst.suffix || "") + "/";
-      }
 
       // Chapter prose: <srcPrefix>chapterN[<srcSuffix>]
       // E.g. /book/chapter1/  or  /book-zhtw/chapter1.zhtw/
@@ -186,41 +164,6 @@
       return p.slice(0, idx);
     }
 
-    function collectPathCandidates(href, resolvedPath, base) {
-      var candidates = [];
-
-      function push(path) {
-        if (!path) return;
-        if (path.charAt(0) !== "/") path = "/" + path;
-        for (var i = 0; i < candidates.length; i++) {
-          if (candidates[i] === path) return;
-        }
-        candidates.push(path);
-      }
-
-      function add(value) {
-        if (!value) return;
-        var clean = value.split(/[?#]/)[0].replace(/\\/g, "/");
-        if (!clean) return;
-        while (clean.indexOf("../") === 0) clean = clean.slice(3);
-        while (clean.indexOf("./") === 0) clean = clean.slice(2);
-        if (base && base !== "/" && clean.indexOf(base) === 0) {
-          clean = "/" + clean.slice(base.length).replace(/^\//, "");
-        }
-        push(clean);
-
-        var knownPathRe = /(?:^|\/)((?:book(?:-[a-z]+)?|chapter\d+)(?:\/[^?#]*)?)/g;
-        var match;
-        while ((match = knownPathRe.exec(clean))) {
-          push(match[1]);
-        }
-      }
-
-      add(resolvedPath);
-      if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href)) add(href);
-      return candidates;
-    }
-
     // ── sidebar rewriting (links + text) ──────────────────────
 
     function rewriteSidebar(targetCode) {
@@ -247,12 +190,12 @@
           try {
             var u = new URL(href, location.href);
             if (u.origin === location.origin) {
-              var candidates = collectPathCandidates(href, u.pathname, base);
-              for (var j = 0; j < candidates.length; j++) {
-                var translated = translatePath(candidates[j], defCode, targetCode);
+              var linkPath = u.pathname;
+              if (linkPath.indexOf(base) === 0) {
+                var linkRel = "/" + linkPath.slice(base.length).replace(/^\//, "");
+                var translated = translatePath(linkRel, defCode, targetCode);
                 if (translated) {
                   el.setAttribute("href", base + translated.replace(/^\//, ""));
-                  break;
                 }
               }
             }
