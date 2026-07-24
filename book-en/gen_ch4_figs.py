@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate all SVG illustrations for Chapter 4 (Tools).
 
-Figures (11 total):
+Figures (9 total):
   fig4-1:  MCP protocol sequence diagram (concrete message payloads)
   fig4-2:  Event-driven architecture (real event sources & payloads)
   fig4-3:  Async event processing (cancellation/queued/parallel timing)
@@ -10,9 +10,7 @@ Figures (11 total):
   fig4-6:  Exp 4.5 — Async agent with interruption
   fig4-7:  Tool discovery hierarchy (server→tool matching)
   fig4-8:  KV cache optimization (system prompt stability)
-  fig4-9:  Tool self-evolution pipeline (multi-stage)
-  fig4-10: Exp 4.7 — Self-evolving agent pipeline
-  fig4-11: Voyager learning cycle (curriculum + skill library)
+  fig4-9:  Context structure after dynamic tool discovery (schemas scattered in trajectory)
 """
 
 import os
@@ -669,230 +667,55 @@ def fig4_8():
 # ──────────────────────── fig4-9 ────────────────────────
 
 def fig4_9():
-    """Tool Self-Evolution Pipeline (Multi-Stage)"""
-    w, h = 880, 500
+    """动态发现后的上下文结构：工具 schema 散落在轨迹各处"""
+    w, h = 880, 580
     svg = SVG(w, h)
-    svg.text(w / 2, 30, "Agent Self-Evolution: From Requirements to Tools", size=FS_TITLE, bold=True)
+    svg.text(w / 2, 30, "动态发现后的上下文结构：工具 schema 散落在轨迹各处", size=FS_TITLE, bold=True)
 
-    # Pipeline stages
-    stages = [
-        ("① Requirement Identification", 'medium', [
-            "Task: YouTube Subtitle Extraction",
-            "Agent: Current tools insufficient",
-            "→ Initiate self-evolution",
-        ]),
-        ("② Web Search", 'light', [
-            "search: youtube transcript",
-            "python library",
-            "→ Found 3 candidate libraries",
-        ]),
-        ("③ GitHub Exploration", 'light', [
-            "Visit jdepoix/youtube-",
-            "transcript-api repository",
-            "→ Read README + Examples",
-        ]),
-        ("④ Learning and Testing", 'light', [
-            "code_interpreter test:",
-            "from youtube_transcript",
-            "  _api import ...",
-        ]),
-        ("⑤ Tool Encapsulation", 'medium', [
-            "Create MCP tool:",
-            "get_youtube_transcript",
-            "(video_id) → text",
-        ]),
+    col_x, col_w = 40, 520
+
+    # 静态前缀组
+    svg.rect(20, 50, col_w + 40, 118, fill='white', stroke='border', dash=True)
+    svg.text(36, 72, "静态前缀（字节级不变，KV Cache 持续命中）", size=FS_SMALL, bold=True, anchor='start')
+    svg.rect(col_x, 84, col_w, 34, fill='medium')
+    svg.text(col_x + col_w / 2, 101, "System Prompt", size=FS_SMALL, bold=True)
+    svg.rect(col_x, 124, col_w, 34, fill='medium')
+    svg.text(col_x + col_w / 2, 141, "核心工具定义：web_search, code_interpreter, tool_search", size=FS_TINY, bold=True)
+
+    # 轨迹组
+    svg.rect(20, 180, col_w + 40, 386, fill='white', stroke='border', dash=True)
+    svg.text(36, 202, "轨迹（只增不改，新内容追加在末尾）", size=FS_SMALL, bold=True, anchor='start')
+
+    blocks = [
+        ("User：查询 NVDA 股价", 'light', False),
+        ("Assistant：tool_search_call(股价)", 'light', False),
+        ("tool_search_output → 注入 get_stock_quote 完整 schema", '#d8e8d8', True),
+        ("Assistant：调用 get_stock_quote → Tool Result", 'light', False),
+        ("User：分析 GitHub 仓库的贡献者", 'light', False),
+        ("Assistant：tool_search_call(GitHub)", 'light', False),
+        ("tool_search_output → 注入 list_contributors 等 schema", '#d8e8d8', True),
+        ("Assistant：调用 → Tool Result → 回复", 'light', False),
+        ("…… 本轮最新内容", 'light', False),
     ]
+    by = 214
+    star_ys = []
+    for label, fill, star in blocks:
+        bh = 40 if star else 30
+        svg.rect(col_x, by, col_w, bh, fill=fill)
+        svg.text(col_x + col_w / 2, by + bh / 2, label, size=FS_TINY, bold=star)
+        if star:
+            star_ys.append(by + bh / 2)
+        by += bh + 6
 
-    stage_w, stage_h = 155, 145
-    gap = 12
-    total_w = len(stages) * stage_w + (len(stages) - 1) * gap
-    sx = (w - total_w) / 2
-
-    for i, (title, fill, details) in enumerate(stages):
-        x = sx + i * (stage_w + gap)
-        svg.rect(x, 60, stage_w, stage_h, fill=fill)
-        svg.text(x + stage_w / 2, 82, title, size=FS_SMALL, bold=True)
-        svg.line(x + 10, 94, x + stage_w - 10, 94, color='dark')
-        for j, line in enumerate(details):
-            svg.mono(x + 8, 114 + j * 20, line, size=11)
-        if i < len(stages) - 1:
-            svg.arrow(x + stage_w + 2, 60 + stage_h / 2, x + stage_w + gap - 2, 60 + stage_h / 2)
-
-    # Tool registry at bottom
-    svg.arrow(w / 2, 205, w / 2, 240)
-
-    svg.rect(120, 240, w - 240, 50, fill='dark')
-    svg.text(w / 2, 265, "⑥ Register to tool library → reuse directly in future", size=FS_BODY, fill='white', bold=True)
-
-    # Reuse scenario
-    svg.arrow(w / 2, 290, w / 2, 320)
-    svg.rect(60, 320, w - 120, 160, fill='white', stroke='border', dash=True)
-    svg.text(w / 2, 345, "Tool reuse: next time encountering similar task", size=FS_BODY, bold=True)
-
-    svg.rect(80, 365, 340, 50, fill='code_bg', stroke='dark', rx=4)
-    svg.mono(90, 382, "Agent: \"I need to extract YouTube subtitles\"", size=FS_TINY)
-    svg.mono(90, 400, "→ search_tools(\"youtube transcript\")", size=FS_TINY)
-
-    svg.arrow(420, 390, 460, 390)
-
-    svg.rect(460, 365, 330, 50, fill='light')
-    svg.text(625, 382, "Hit! get_youtube_transcript", size=FS_SMALL, bold=True)
-    svg.text(625, 402, "Skip search and creation, call directly", size=FS_TINY, fill='text_light')
-
-    svg.rect(200, 430, 480, 35, fill='medium')
-    svg.text(w / 2, 448, "Tool layer + Knowledge layer + Strategy layer → more proficient with use", size=FS_SMALL, bold=True)
+    # 右侧注释
+    for sy in star_ys:
+        svg.arrow(col_x + col_w + 2, sy, 592, sy, dash=True)
+    svg.text(600, star_ys[0] - 12, "首次出现：prefill 一次（缓存写入）", size=FS_TINY, anchor='start', bold=True)
+    svg.text(600, star_ys[0] + 10, "此后作为普通历史命中缓存", size=FS_TINY, anchor='start', fill='text_light')
+    svg.text(600, star_ys[1] - 12, "不得移除/重排已加载工具", size=FS_TINY, anchor='start', bold=True)
+    svg.text(600, star_ys[1] + 10, "否则缓存从变动点起失效", size=FS_TINY, anchor='start', fill='text_light')
 
     svg.save(os.path.join(OUT, 'fig4-9.svg'))
-
-
-# ──────────────────────── fig4-10 ────────────────────────
-
-def fig4_10():
-    """Experiment 4.7: Agent searches for tools on the web, self-evolves"""
-    w, h = 880, 480
-    svg = SVG(w, h)
-    svg.text(w / 2, 30, "Experiment 4.7: Self-evolving Agent pipeline", size=FS_TITLE, bold=True)
-
-    # Top: minimal base tools
-    svg.rect(30, 60, w - 60, 48, fill='medium')
-    svg.text(w / 2, 76, "Basic tools (minimal set)", size=FS_SMALL, bold=True)
-    base_tools = ["web_search", "read_webpage", "code_interpreter", "create_tool", "search_tools"]
-    btx = 65
-    for t in base_tools:
-        tw = len(t) * 8 + 20
-        _pill(svg, btx, 82, tw, 22, t, fill='dark', font_size=11, bold=True)
-        btx += tw + 10
-
-    # Task input
-    svg.arrow(w / 2, 108, w / 2, 135)
-    svg.rect(100, 135, w - 200, 45, fill='code_bg', stroke='dark', rx=4)
-    svg.mono(110, 150,
-             "Task: \"NVDA latest stock price? Change from a week ago?\" → Agent: No financial tools!",
-             size=FS_TINY)
-    svg.mono(110, 168,
-             "→ Identify capability gap → Initiate self-evolution",
-             size=FS_TINY)
-
-    # Evolution pipeline
-    svg.arrow(w / 2, 180, w / 2, 210)
-
-    pipe_y = 210
-    pipe_stages = [
-        ("web_search", "Search candidate solutions", 'light',
-         ["\"python stock price API\"",
-          "→ yfinance, Alpha Vantage..."]),
-        ("read_webpage", "Evaluate solutions", 'light',
-         ["yfinance: free, no API key required",
-          "Alpha Vantage: requires registration..."]),
-        ("code_interpreter", "Test and verify", 'light',
-         ["import yfinance as yf",
-          "yf.Ticker('NVDA').history()"]),
-        ("create_tool", "Encapsulate and register", 'medium',
-         ["name: get_stock_data",
-          "schema: {ticker, period}"]),
-    ]
-
-    pw = 190
-    pgap = 15
-    total_pw = len(pipe_stages) * pw + (len(pipe_stages) - 1) * pgap
-    px = (w - total_pw) / 2
-    for i, (tool, desc, fill, details) in enumerate(pipe_stages):
-        svg.rect(px, pipe_y, pw, 120, fill=fill)
-        _pill(svg, px + 10, pipe_y + 8, pw - 20, 22, tool, fill='dark', font_size=11, bold=True)
-        svg.text(px + pw / 2, pipe_y + 48, desc, size=FS_SMALL, bold=True)
-        for j, line in enumerate(details):
-            svg.mono(px + 8, pipe_y + 70 + j * 18, line, size=11)
-        if i < len(pipe_stages) - 1:
-            svg.arrow(px + pw + 2, pipe_y + 60, px + pw + pgap - 2, pipe_y + 60)
-        px += pw + pgap
-
-    # Tool registry
-    svg.arrow(w / 2, 330, w / 2, 360)
-    svg.rect(200, 360, w - 400, 44, fill='dark')
-    svg.text(w / 2, 382, "Tool library: get_stock_data registered", size=FS_BODY, fill='white', bold=True)
-
-    # Reuse
-    svg.arrow(w / 2, 404, w / 2, 430)
-    svg.rect(100, 430, w - 200, 40, fill='code_bg', stroke='dark', rx=4)
-    svg.mono(110, 442,
-             "Reuse verification: \"Query TSLA stock price\" → search_tools hit → directly call get_stock_data",
-             size=FS_TINY)
-    svg.mono(110, 458,
-             "Skip search/evaluation/testing phases → cost reduction 90%+",
-             size=FS_TINY)
-
-    svg.save(os.path.join(OUT, 'fig4-10.svg'))
-
-
-# ──────────────────────── fig4-11 (Voyager, was fig4_voyager) ────────
-
-def fig4_11():
-    """Voyager learning loop (curriculum + skill library + iterative prompting)"""
-    w, h = 880, 520
-    svg = SVG(w, h)
-    svg.text(w / 2, 30, "Voyager: Agent architecture for continuous learning", size=FS_TITLE, bold=True)
-
-    svg.rect(20, 65, 260, 180, fill='white', stroke='border', dash=True)
-    svg.text(150, 88, "Automatic curriculum generator", size=FS_BODY, bold=True)
-    curriculum = [
-        "Input: current state + existing skills",
-        "Output: next exploration goal",
-        "",
-        "Example goal sequence:",
-        "  Chop tree → Craft wooden planks",
-        "  → Craft wooden pickaxe → Mine stone",
-        "  → Craft furnace → Smelt iron ingots",
-    ]
-    for i, line in enumerate(curriculum):
-        svg.mono(32, 112 + i * 20, line, size=12)
-
-    svg.rect(600, 65, 260, 180, fill='white', stroke='border', dash=True)
-    svg.text(730, 88, "Iterative prompting mechanism", size=FS_BODY, bold=True)
-    iterative = [
-        "Collect feedback on failure:",
-        "  - Environment observation (error message)",
-        "  - Self-verification result",
-        "",
-        "Integrate into LLM Prompt",
-        "→ Guide code improvement",
-        "→ Iterate multiple times until success",
-    ]
-    for i, line in enumerate(iterative):
-        svg.mono(612, 112 + i * 20, line, size=12)
-
-    svg.arrow(280, 155, 370, 155, label="Goal")
-    svg.arrow(560, 155, 600, 155, label="Feedback")
-
-    svg.rect(370, 110, 190, 80, fill='medium')
-    svg.text(465, 140, "Agent execution", size=FS_BODY, bold=True)
-    svg.text(465, 165, "GPT-4 code generation", size=FS_SMALL, fill='text_light')
-
-    svg.arrow(465, 190, 465, 260)
-    svg.text(510, 230, "Success → Extract", size=FS_SMALL, fill='text_light')
-
-    svg.rect(120, 260, 640, 240, fill='white', stroke='border', dash=True)
-    svg.text(440, 283, "Skill Library — core of externalized learning", size=FS_BODY, bold=True)
-
-    skills = [
-        ("chopTree()", "Chop tree\nBasic skill", "function chopTree() {\n  bot.dig(nearest('log'));\n}"),
-        ("craftPlanks()", "Craft wooden planks\nCall chopTree", "function craftPlanks() {\n  chopTree(); craft('planks');\n}"),
-        ("craftPickaxe()", "Craft wooden pickaxe\nCombine multiple skills", "function craftPickaxe() {\n  craftPlanks(); craft('stick');\n  craft('wooden_pickaxe');\n}"),
-    ]
-    skx = 140
-    for name, desc, code in skills:
-        svg.rect(skx, 305, 190, 175, fill='light')
-        svg.text(skx + 95, 325, name, size=FS_SMALL, bold=True)
-        for j, dl in enumerate(desc.split('\n')):
-            svg.text(skx + 95, 347 + j * 18, dl, size=FS_TINY, fill='text_light')
-
-        svg.rect(skx + 10, 385, 170, 80, fill='code_bg', stroke='dark', rx=4)
-        for j, cl in enumerate(code.split('\n')):
-            svg.mono(skx + 18, 400 + j * 18, cl, size=11)
-        skx += 215
-
-    svg.arrow_curved(120, 380, 150, 245, curve=60, label="Existing skills", dash=True, color='dark')
-
-    svg.save(os.path.join(OUT, 'fig4-11.svg'))
 
 
 # ──────────────────────── main ────────────────────────
@@ -900,11 +723,9 @@ def fig4_11():
 def main():
     os.makedirs(OUT, exist_ok=True)
     figs = [
-        fig4_1, fig4_2, fig4_3, fig4_4, fig4_5, fig4_6,
-        fig4_7, fig4_8, fig4_9, fig4_10, fig4_11,
+        fig4_1, fig4_2, fig4_3, fig4_4, fig4_5,
+        fig4_6, fig4_7, fig4_8, fig4_9,
     ]
-    # Note: fig4_10 = Exp 4.7 self-evolving agent, fig4_11 = Voyager
-    # (ordered by chapter appearance)
     for fn in figs:
         fn()
         print(f"  ✓ {fn.__name__}: {fn.__doc__}")

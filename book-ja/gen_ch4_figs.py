@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate all SVG illustrations for Chapter 4 (Tools).
 
-Figures (11 total):
+Figures (9 total):
   fig4-1:  MCP protocol sequence diagram (concrete message payloads)
   fig4-2:  Event-driven architecture (real event sources & payloads)
   fig4-3:  Async event processing (cancellation/queued/parallel timing)
@@ -10,9 +10,7 @@ Figures (11 total):
   fig4-6:  Exp 4.5 — Async agent with interruption
   fig4-7:  Tool discovery hierarchy (server→tool matching)
   fig4-8:  KV cache optimization (system prompt stability)
-  fig4-9: Tool self-evolution pipeline (multi-stage)
-  fig4-11: Exp 4.7 — Self-evolving agent pipeline
-  fig4-12: Voyager learning cycle (curriculum + skill library)
+  fig4-9:  Context structure after dynamic tool discovery (schemas scattered in trajectory)
 """
 
 import os
@@ -669,230 +667,55 @@ def fig4_8():
 # ──────────────────────── fig4-9 ────────────────────────
 
 def fig4_9():
-    """Tool Self-Evolution Pipeline (Multi-Stage)"""
-    w, h = 880, 500
+    """动态发现后的上下文结构：工具 schema 散落在轨迹各处"""
+    w, h = 880, 580
     svg = SVG(w, h)
-    svg.text(w / 2, 30, "Agent の自己進化: 要求からツールへ", size=FS_TITLE, bold=True)
+    svg.text(w / 2, 30, "动态发现后的上下文结构：工具 schema 散落在轨迹各处", size=FS_TITLE, bold=True)
 
-    # Pipeline stages
-    stages = [
-        ("① 要求の特定", 'medium', [
-            "タスク: YouTube 字幕抽出",
-            "Agent: 現在のツールでは不十分",
-            "→ 自己進化を開始",
-        ]),
-        ("② Web 検索", 'light', [
-            "search: youtube transcript",
-            "python library",
-            "→ 候補ライブラリを3件発見",
-        ]),
-        ("③ GitHub の探索", 'light', [
-            "訪問: jdepoix/youtube-",
-            "transcript-api リポジトリ",
-            "→ README + サンプルを読む",
-        ]),
-        ("④ 学習とテスト", 'light', [
-            "code_interpreter でテスト:",
-            "from youtube_transcript",
-            "  _api import ...",
-        ]),
-        ("⑤ ツールのカプセル化", 'medium', [
-            "MCP ツールを作成:",
-            "get_youtube_transcript",
-            "(video_id) → text",
-        ]),
+    col_x, col_w = 40, 520
+
+    # 静态前缀组
+    svg.rect(20, 50, col_w + 40, 118, fill='white', stroke='border', dash=True)
+    svg.text(36, 72, "静态前缀（字节级不变，KV Cache 持续命中）", size=FS_SMALL, bold=True, anchor='start')
+    svg.rect(col_x, 84, col_w, 34, fill='medium')
+    svg.text(col_x + col_w / 2, 101, "System Prompt", size=FS_SMALL, bold=True)
+    svg.rect(col_x, 124, col_w, 34, fill='medium')
+    svg.text(col_x + col_w / 2, 141, "核心工具定义：web_search, code_interpreter, tool_search", size=FS_TINY, bold=True)
+
+    # 轨迹组
+    svg.rect(20, 180, col_w + 40, 386, fill='white', stroke='border', dash=True)
+    svg.text(36, 202, "轨迹（只增不改，新内容追加在末尾）", size=FS_SMALL, bold=True, anchor='start')
+
+    blocks = [
+        ("User：查询 NVDA 股价", 'light', False),
+        ("Assistant：tool_search_call(股价)", 'light', False),
+        ("tool_search_output → 注入 get_stock_quote 完整 schema", '#d8e8d8', True),
+        ("Assistant：调用 get_stock_quote → Tool Result", 'light', False),
+        ("User：分析 GitHub 仓库的贡献者", 'light', False),
+        ("Assistant：tool_search_call(GitHub)", 'light', False),
+        ("tool_search_output → 注入 list_contributors 等 schema", '#d8e8d8', True),
+        ("Assistant：调用 → Tool Result → 回复", 'light', False),
+        ("…… 本轮最新内容", 'light', False),
     ]
+    by = 214
+    star_ys = []
+    for label, fill, star in blocks:
+        bh = 40 if star else 30
+        svg.rect(col_x, by, col_w, bh, fill=fill)
+        svg.text(col_x + col_w / 2, by + bh / 2, label, size=FS_TINY, bold=star)
+        if star:
+            star_ys.append(by + bh / 2)
+        by += bh + 6
 
-    stage_w, stage_h = 155, 145
-    gap = 12
-    total_w = len(stages) * stage_w + (len(stages) - 1) * gap
-    sx = (w - total_w) / 2
-
-    for i, (title, fill, details) in enumerate(stages):
-        x = sx + i * (stage_w + gap)
-        svg.rect(x, 60, stage_w, stage_h, fill=fill)
-        svg.text(x + stage_w / 2, 82, title, size=FS_SMALL, bold=True)
-        svg.line(x + 10, 94, x + stage_w - 10, 94, color='dark')
-        for j, line in enumerate(details):
-            svg.mono(x + 8, 114 + j * 20, line, size=11)
-        if i < len(stages) - 1:
-            svg.arrow(x + stage_w + 2, 60 + stage_h / 2, x + stage_w + gap - 2, 60 + stage_h / 2)
-
-    # Tool registry at bottom
-    svg.arrow(w / 2, 205, w / 2, 240)
-
-    svg.rect(120, 240, w - 240, 50, fill='dark')
-    svg.text(w / 2, 265, "⑥ ツールライブラリに登録 → 今後は直接再利用", size=FS_BODY, fill='white', bold=True)
-
-    # Reuse scenario
-    svg.arrow(w / 2, 290, w / 2, 320)
-    svg.rect(60, 320, w - 120, 160, fill='white', stroke='border', dash=True)
-    svg.text(w / 2, 345, "ツールの再利用: 次回類似タスクに遭遇したとき", size=FS_BODY, bold=True)
-
-    svg.rect(80, 365, 340, 50, fill='code_bg', stroke='dark', rx=4)
-    svg.mono(90, 382, "Agent: \"YouTube 字幕を抽出したい\"", size=FS_TINY)
-    svg.mono(90, 400, "→ search_tools(\"youtube transcript\")", size=FS_TINY)
-
-    svg.arrow(420, 390, 460, 390)
-
-    svg.rect(460, 365, 330, 50, fill='light')
-    svg.text(625, 382, "ヒット！ get_youtube_transcript", size=FS_SMALL, bold=True)
-    svg.text(625, 402, "検索と作成をスキップし、直接呼び出し", size=FS_TINY, fill='text_light')
-
-    svg.rect(200, 430, 480, 35, fill='medium')
-    svg.text(w / 2, 448, "ツール層 + 知識層 + 戦略層 → 使うほど熟練", size=FS_SMALL, bold=True)
+    # 右侧注释
+    for sy in star_ys:
+        svg.arrow(col_x + col_w + 2, sy, 592, sy, dash=True)
+    svg.text(600, star_ys[0] - 12, "首次出现：prefill 一次（缓存写入）", size=FS_TINY, anchor='start', bold=True)
+    svg.text(600, star_ys[0] + 10, "此后作为普通历史命中缓存", size=FS_TINY, anchor='start', fill='text_light')
+    svg.text(600, star_ys[1] - 12, "不得移除/重排已加载工具", size=FS_TINY, anchor='start', bold=True)
+    svg.text(600, star_ys[1] + 10, "否则缓存从变动点起失效", size=FS_TINY, anchor='start', fill='text_light')
 
     svg.save(os.path.join(OUT, 'fig4-9.svg'))
-
-
-# ──────────────────────── fig4-11 ────────────────────────
-
-def fig4_11():
-    """Experiment 4.7: Agent searches for tools on the web, self-evolves"""
-    w, h = 880, 480
-    svg = SVG(w, h)
-    svg.text(w / 2, 30, "実験 4.7: 自己進化する Agent のパイプライン", size=FS_TITLE, bold=True)
-
-    # Top: minimal base tools
-    svg.rect(30, 60, w - 60, 48, fill='medium')
-    svg.text(w / 2, 76, "基本ツール（最小セット）", size=FS_SMALL, bold=True)
-    base_tools = ["web_search", "read_webpage", "code_interpreter", "create_tool", "search_tools"]
-    btx = 65
-    for t in base_tools:
-        tw = len(t) * 8 + 20
-        _pill(svg, btx, 82, tw, 22, t, fill='dark', font_size=11, bold=True)
-        btx += tw + 10
-
-    # Task input
-    svg.arrow(w / 2, 108, w / 2, 135)
-    svg.rect(100, 135, w - 200, 45, fill='code_bg', stroke='dark', rx=4)
-    svg.mono(110, 150,
-             "タスク: \"NVDA の最新株価は？1週間前からの変動は？\" → Agent: 金融ツールがない！",
-             size=FS_TINY)
-    svg.mono(110, 168,
-             "→ 能力ギャップを特定 → 自己進化を開始",
-             size=FS_TINY)
-
-    # Evolution pipeline
-    svg.arrow(w / 2, 180, w / 2, 210)
-
-    pipe_y = 210
-    pipe_stages = [
-        ("web_search", "候補となる解決策を検索", 'light',
-         ["\"python stock price API\"",
-          "→ yfinance, Alpha Vantage..."]),
-        ("read_webpage", "解決策を評価", 'light',
-         ["yfinance: 無料、API キー不要",
-          "Alpha Vantage: 登録が必要..."]),
-        ("code_interpreter", "テストと検証", 'light',
-         ["import yfinance as yf",
-          "yf.Ticker('NVDA').history()"]),
-        ("create_tool", "カプセル化して登録", 'medium',
-         ["name: get_stock_data",
-          "schema: {ticker, period}"]),
-    ]
-
-    pw = 190
-    pgap = 15
-    total_pw = len(pipe_stages) * pw + (len(pipe_stages) - 1) * pgap
-    px = (w - total_pw) / 2
-    for i, (tool, desc, fill, details) in enumerate(pipe_stages):
-        svg.rect(px, pipe_y, pw, 120, fill=fill)
-        _pill(svg, px + 10, pipe_y + 8, pw - 20, 22, tool, fill='dark', font_size=11, bold=True)
-        svg.text(px + pw / 2, pipe_y + 48, desc, size=FS_SMALL, bold=True)
-        for j, line in enumerate(details):
-            svg.mono(px + 8, pipe_y + 70 + j * 18, line, size=11)
-        if i < len(pipe_stages) - 1:
-            svg.arrow(px + pw + 2, pipe_y + 60, px + pw + pgap - 2, pipe_y + 60)
-        px += pw + pgap
-
-    # Tool registry
-    svg.arrow(w / 2, 330, w / 2, 360)
-    svg.rect(200, 360, w - 400, 44, fill='dark')
-    svg.text(w / 2, 382, "ツールライブラリ: get_stock_data を登録", size=FS_BODY, fill='white', bold=True)
-
-    # Reuse
-    svg.arrow(w / 2, 404, w / 2, 430)
-    svg.rect(100, 430, w - 200, 40, fill='code_bg', stroke='dark', rx=4)
-    svg.mono(110, 442,
-             "再利用の検証: \"TSLA の株価を照会\" → search_tools ヒット → get_stock_data を直接呼び出し",
-             size=FS_TINY)
-    svg.mono(110, 458,
-             "検索/評価/テストの各フェーズをスキップ → コスト90%以上削減",
-             size=FS_TINY)
-
-    svg.save(os.path.join(OUT, 'fig4-11.svg'))
-
-
-# ──────────────────────── fig4-12 (Voyager, was fig4_voyager) ────────
-
-def fig4_12():
-    """Voyager learning loop (curriculum + skill library + iterative prompting)"""
-    w, h = 880, 520
-    svg = SVG(w, h)
-    svg.text(w / 2, 30, "Voyager: 継続学習のための Agent アーキテクチャ", size=FS_TITLE, bold=True)
-
-    svg.rect(20, 65, 260, 180, fill='white', stroke='border', dash=True)
-    svg.text(150, 88, "自動カリキュラム生成器", size=FS_BODY, bold=True)
-    curriculum = [
-        "入力: 現在の状態 + 既存スキル",
-        "出力: 次の探索目標",
-        "",
-        "目標シーケンスの例:",
-        "  木を伐る → 木材を作る",
-        "  → 木のツルハシを作る → 石を採掘",
-        "  → かまどを作る → 鉄インゴットを製錬",
-    ]
-    for i, line in enumerate(curriculum):
-        svg.mono(32, 112 + i * 20, line, size=12)
-
-    svg.rect(600, 65, 260, 180, fill='white', stroke='border', dash=True)
-    svg.text(730, 88, "反復的プロンプティング機構", size=FS_BODY, bold=True)
-    iterative = [
-        "失敗時のフィードバックを収集:",
-        "  - 環境の観察（エラーメッセージ）",
-        "  - 自己検証の結果",
-        "",
-        "LLM プロンプトに統合",
-        "→ コード改善を導く",
-        "→ 成功するまで複数回反復",
-    ]
-    for i, line in enumerate(iterative):
-        svg.mono(612, 112 + i * 20, line, size=12)
-
-    svg.arrow(280, 155, 370, 155, label="目標")
-    svg.arrow(560, 155, 600, 155, label="フィードバック")
-
-    svg.rect(370, 110, 190, 80, fill='medium')
-    svg.text(465, 140, "Agent 実行", size=FS_BODY, bold=True)
-    svg.text(465, 165, "GPT-4 によるコード生成", size=FS_SMALL, fill='text_light')
-
-    svg.arrow(465, 190, 465, 260)
-    svg.text(510, 230, "成功 → 抽出", size=FS_SMALL, fill='text_light')
-
-    svg.rect(120, 260, 640, 240, fill='white', stroke='border', dash=True)
-    svg.text(440, 283, "スキルライブラリ — 外部化された学習の中核", size=FS_BODY, bold=True)
-
-    skills = [
-        ("chopTree()", "木を伐る\n基本スキル", "function chopTree() {\n  bot.dig(nearest('log'));\n}"),
-        ("craftPlanks()", "木材を作る\nchopTree を呼ぶ", "function craftPlanks() {\n  chopTree(); craft('planks');\n}"),
-        ("craftPickaxe()", "木のツルハシを作る\n複数スキルを組み合わせ", "function craftPickaxe() {\n  craftPlanks(); craft('stick');\n  craft('wooden_pickaxe');\n}"),
-    ]
-    skx = 140
-    for name, desc, code in skills:
-        svg.rect(skx, 305, 190, 175, fill='light')
-        svg.text(skx + 95, 325, name, size=FS_SMALL, bold=True)
-        for j, dl in enumerate(desc.split('\n')):
-            svg.text(skx + 95, 347 + j * 18, dl, size=FS_TINY, fill='text_light')
-
-        svg.rect(skx + 10, 385, 170, 80, fill='code_bg', stroke='dark', rx=4)
-        for j, cl in enumerate(code.split('\n')):
-            svg.mono(skx + 18, 400 + j * 18, cl, size=11)
-        skx += 215
-
-    svg.arrow_curved(120, 380, 150, 245, curve=60, label="既存スキル", dash=True, color='dark')
-
-    svg.save(os.path.join(OUT, 'fig4-12.svg'))
 
 
 # ──────────────────────── main ────────────────────────
@@ -901,10 +724,8 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     figs = [
         fig4_1, fig4_2, fig4_3, fig4_4, fig4_5,
-        fig4_6, fig4_7, fig4_8, fig4_9, fig4_11, fig4_12,
+        fig4_6, fig4_7, fig4_8, fig4_9,
     ]
-    # Note: fig4_11 = Exp 4.7 self-evolving agent, fig4_12 = Voyager
-    # (ordered by chapter appearance)
     for fn in figs:
         fn()
         print(f"  ✓ {fn.__name__}: {fn.__doc__}")
