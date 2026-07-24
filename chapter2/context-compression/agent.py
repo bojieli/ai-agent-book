@@ -563,7 +563,16 @@ TODAY'S DATE: {date_string}"""
                     
                     for tool_call in message['tool_calls']:
                         function_name = tool_call['function']['name']
-                        function_args = json.loads(tool_call['function']['arguments'])
+                        raw_args = tool_call['function'].get('arguments') or "{}"
+                        try:
+                            function_args = json.loads(raw_args)
+                        except json.JSONDecodeError:
+                            # Tolerate bad tool-arg JSON; keep the loop alive.
+                            function_args = {}
+                            logger.warning(
+                                "工具参数不是合法 JSON，已按空对象继续: %r",
+                                raw_args,
+                            )
                         
                         print(f"\n🔧 Executing: {function_name}")
                         print(f"   Args: {function_args}")
