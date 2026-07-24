@@ -216,7 +216,7 @@ Remember: Your credibility depends on providing accurate, well-cited information
         
         # Add conversation history (limited)
         history_limit = self.config.agent.conversation_history_limit
-        # limit<=0 means no history: Python's list[-0:] is list[0:] (the full list).
+        # limit<=0 → no history; list[-0:] would include all turns.
         if history_limit > 0:
             if len(self.conversation_history) > history_limit:
                 messages.extend(self.conversation_history[-history_limit:])
