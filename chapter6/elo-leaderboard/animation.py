@@ -47,7 +47,8 @@ def prepare_animation_data(history_df: pd.DataFrame, top_n: int = 15) -> dict:
                 'name': row.model,
                 'rating': float(row.rating),
                 'matches': int(row.matches),
-                'wins': int(row.wins)
+                # Elo ties credit 0.5 wins; int() would truncate those to 0.
+                'wins': float(row.wins)
             })
         
         frames.append(frame)
