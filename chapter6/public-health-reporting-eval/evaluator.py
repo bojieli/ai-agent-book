@@ -44,7 +44,6 @@ def score_prediction(
         "arguments": int(prediction.get("arguments") == expected["arguments"]),
     }
 
-    # JSON null for result: same as missing (LLM omit-as-null), like evidence below.
     actual_result = prediction.get("result", {})
     if not isinstance(actual_result, dict):
         actual_result = {}
