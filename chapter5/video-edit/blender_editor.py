@@ -132,7 +132,14 @@ def _plan_fields(plan: dict):
         if etype == "subtitle":
             subtitle = eff.get("text", "")
         elif etype == "slowmo":
-            slowmo = float(eff.get("factor", 2.0))
+            # LLM may emit factor:null; skip like non-positive (ffmpeg sibling).
+            raw = eff.get("factor", 2.0)
+            if raw is None:
+                continue
+            factor = float(raw)
+            if factor <= 0:
+                continue
+            slowmo = factor
     return start, end, subtitle, slowmo
 
 
