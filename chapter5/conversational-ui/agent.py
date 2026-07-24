@@ -176,8 +176,7 @@ def customize(client, model, frontend_dir: Path, requirement: str) -> dict:
     try:
         args = json.loads(raw_args)
     except json.JSONDecodeError:
-        # Models sometimes emit slightly invalid JSON; match chapter1
-        # web-search-agent and degrade to empty edits instead of aborting.
+        # Tolerate bad apply_edits JSON; degrade to empty edits.
         args = {}
 
     # 安全校验：只允许改写白名单内的文件。
