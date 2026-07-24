@@ -55,7 +55,7 @@ def save_text(name, text):
 
 
 def _review_issues(review: dict) -> list:
-    """Null/non-list issues → []; drop non-dict entries so callers can use .get."""
+    """Return issue dicts; null/non-list → []; skip non-dict entries."""
     issues = review.get("issues")
     if issues is None:
         return []
