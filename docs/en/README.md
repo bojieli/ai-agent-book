@@ -44,7 +44,7 @@ The shared builder produces EPUB 3 editions for Simplified Chinese, Traditional 
 
 ## 📑 Content Overview (Chapters 1–10)
 
-The book is organized into three parts: Chapter 1 establishes the foundation; Chapters 2 through 7 unpack the three pillars of Context, Tools, and Models; Chapters 8 through 10 cover advanced topics and applications.
+The book revolves around the core formula **Agent = LLM + Context + Tools**, with ten chapters building progressively:
 
 | Ch | Topic | One-line Summary | Text | Code |
 | :--: | --- | --- | :--: | :--: |
