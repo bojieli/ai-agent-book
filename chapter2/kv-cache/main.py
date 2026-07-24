@@ -176,14 +176,14 @@ def run_report(inputs: List[str] = None, cache_price_ratio: float = 0.1) -> None
 
 def create_summary_task() -> str:
     """Create a task that requires reading multiple files"""
-    return """Please analyze and summarize all the projects in the week1 and week2 directories.
+    return """Please analyze and summarize all the projects in the chapter1 and chapter2 directories.
 For each project:
 1. Find all Python files
 2. Read the main files and understand the functionality
 3. Identify the key features and purpose
 4. Provide a comprehensive summary
 
-Start with week1 projects, then move to week2. Be thorough in your analysis."""
+Start with chapter1 projects, then move to chapter2. Be thorough in your analysis."""
 
 
 def run_single_mode(api_key: str, mode: str, task: str = None, root_dir: str = "../..",
@@ -195,7 +195,7 @@ def run_single_mode(api_key: str, mode: str, task: str = None, root_dir: str = "
         api_key: API key for Kimi
         mode: KV cache mode to use
         task: Custom task (optional)
-        root_dir: Root directory for file operations (default: "../.." = /projects from kv-cache dir)
+        root_dir: Root directory for file operations (default: "../.." = repository root)
         model: Model to use
         output: Output path for the result JSON (optional; auto-named if omitted)
     """
@@ -369,7 +369,7 @@ def run_comparison(api_key: str, task: str = None, root_dir: str = "../..",
     Args:
         api_key: API key for Kimi
         task: Custom task (optional)
-        root_dir: Root directory for file operations (default: "../.." = /projects from kv-cache dir)
+        root_dir: Root directory for file operations (default: "../.." = repository root)
         model: Model to use for all modes
         output: Output path for the comparison JSON (optional; auto-named if omitted)
         cache_price_ratio: Assumed price of a cached token vs a normal token (cost column)
