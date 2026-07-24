@@ -60,20 +60,22 @@ def _apply_one(content: str, old_str: str, new_str: str) -> tuple[str, str | Non
 
 
 def _apply_edits_from_args(working: str, args: dict) -> tuple[str, int, list, list]:
-    """Apply apply_edits tool args to working text. JSON null edits like omit ([])."""
+    """Apply edits; null edits → []; skip non-dict entries with an error."""
     edits = args.get("edits")
     if edits is None:
         edits = []
     errors = []
     applied = 0
     for e in edits:
+        if not isinstance(e, dict):
+            errors.append(f"edit 必须是对象，收到 {type(e).__name__}")
+            continue
         working, err = _apply_one(working, e.get("old_str", ""), e.get("new_str", ""))
         if err:
             errors.append(err)
         else:
             applied += 1
     return working, applied, errors, edits
-
 
 def optimize_prompt(prompt_path: str, feedback: str, max_rounds: int = 3, verbose: bool = True) -> dict:
     """
