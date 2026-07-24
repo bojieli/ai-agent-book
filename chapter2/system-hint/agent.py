@@ -888,9 +888,7 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
                         try:
                             function_args = json.loads(raw_args)
                         except json.JSONDecodeError as exc:
-                            # Malformed/truncated args must not abort the turn: the
-                            # assistant message with tool_calls is already in
-                            # history, so bailing would leave tool_call_id unanswered.
+                            # Keep the turn alive on bad tool-arg JSON.
                             err = (
                                 f"Invalid tool arguments (not valid JSON): {exc}. "
                                 f"Raw arguments: {raw_args[:500]}"
