@@ -20,7 +20,9 @@ from browser_use import Agent, Browser
 from browser_use.agent.views import AgentOutput, ActionResult
 from browser_use.browser.views import BrowserStateSummary
 
-from .workflow import Workflow, WorkflowStep, ActionType
+from .workflow import (
+    Workflow, WorkflowStep, ActionType, StatePredicate, PredicateType,
+)
 from .knowledge_base import KnowledgeBase
 from .replay import WorkflowReplayer
 
@@ -45,6 +47,7 @@ class LearningAgent:
                  browser: Optional[Browser] = None,
                  knowledge_base_path: str = "./knowledge_base",
                  headless: bool = False,
+                 validation_reset: Optional[Any] = None,
                  **agent_kwargs):
         """
         Initialize the learning agent.
@@ -55,12 +58,16 @@ class LearningAgent:
             browser: Browser instance (optional)
             knowledge_base_path: Path to store learned workflows
             headless: Whether to run browser in headless mode for replay
+            validation_reset: Sync or async callback that resets the target
+                sandbox before validating a candidate workflow. Without it,
+                candidates are audited but never published for reuse.
             **agent_kwargs: Additional arguments for browser-use Agent
         """
         self.task = task
         self.llm = llm
         self.browser = browser
         self.headless = headless
+        self.validation_reset = validation_reset
         
         # Initialize knowledge base
         self.knowledge_base = KnowledgeBase(knowledge_base_path)
@@ -297,13 +304,18 @@ class LearningAgent:
                 
                 result = await self._run_with_replay(match.workflow)
                 
-                # Update metrics
-                self.knowledge_base.update_workflow_metrics(
-                    match.workflow.workflow_id,
-                    success=result['success'],
-                    execution_time=result['execution_time'],
-                    model_calls_saved=result['model_calls_saved']
-                )
+                # A state-predicate failure means the page or API changed.
+                # Remove this version from retrieval before falling back.
+                if result['success']:
+                    self.knowledge_base.update_workflow_metrics(
+                        match.workflow.workflow_id,
+                        success=True,
+                        execution_time=result['execution_time'],
+                        model_calls_saved=result['model_calls_saved']
+                    )
+                else:
+                    reason = result.get('failed_predicate') or '; '.join(result.get('errors', []))
+                    self.knowledge_base.invalidate_workflow(match.workflow.workflow_id, reason)
                 
                 self.metrics['replay_used'] = True
                 self.metrics['success'] = result['success']
@@ -465,10 +477,62 @@ class LearningAgent:
 
                 workflow.add_step(step)
 
-            # Save to knowledge base
-            self.knowledge_base.save_workflow(workflow)
-            
-            logger.info(f"Saved learned workflow with {len(workflow.steps)} steps")
+            # Derive conservative predicates from captured page state. A
+            # production extractor can add richer text and state assertions.
+            for step in workflow.steps:
+                selector = f"xpath={step.xpath}" if step.xpath else step.css_selector
+                if selector and step.action_type in {
+                    ActionType.CLICK, ActionType.INPUT_TEXT,
+                    ActionType.SELECT_OPTION, ActionType.UPLOAD_FILE,
+                }:
+                    step.preconditions.append(StatePredicate(
+                        PredicateType.ELEMENT_VISIBLE,
+                        expected=True,
+                        selector=selector,
+                        description="target element must be visible before action",
+                    ))
+                if step.action_type == ActionType.NAVIGATE and step.parameters.get('url'):
+                    step.postconditions.append(StatePredicate(
+                        PredicateType.URL_CONTAINS,
+                        expected=step.parameters['url'],
+                        description="navigation must reach the requested URL",
+                    ))
+
+            last_url = self.captured_steps[-1].get('url') if self.captured_steps else None
+            if last_url:
+                workflow.final_predicates.append(StatePredicate(
+                    PredicateType.URL_CONTAINS,
+                    expected=last_url,
+                    description="workflow must finish on the observed final page",
+                ))
+
+            # First-run success creates only a candidate. Publication requires
+            # an explicit environment reset and a full independent replay.
+            self.knowledge_base.save_candidate(workflow)
+            if self.validation_reset is None:
+                logger.warning(
+                    "Workflow remains candidate: no validation_reset callback was supplied"
+                )
+                return
+
+            import inspect
+            reset_result = self.validation_reset()
+            if inspect.isawaitable(reset_result):
+                await reset_result
+            await self.replayer.setup()
+            try:
+                validation = await self.replayer.replay_workflow(workflow)
+            finally:
+                await self.replayer.cleanup()
+            if validation['success']:
+                workflow.mark_validated()
+                self.knowledge_base.publish_validated(workflow)
+                logger.info("Validated and published workflow with %s steps", len(workflow.steps))
+            else:
+                logger.warning(
+                    "Candidate replay failed and was not published: %s",
+                    validation.get('failed_predicate') or validation.get('errors'),
+                )
         
         except Exception as e:
             logger.error(f"Failed to save learned workflow: {e}")
