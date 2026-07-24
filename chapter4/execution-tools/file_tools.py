@@ -146,6 +146,14 @@ class FileTools:
                 "success": False,
                 "error": f"Failed to read file: {str(e)}"
             }
+
+        # Empty search is always "found" (`"" in text` is True) and
+        # str.replace("", x, 1) inserts at the start — reject instead of corrupting.
+        if search == "":
+            return {
+                "success": False,
+                "error": "Search text cannot be empty"
+            }
         
         # Check if search text exists
         if search not in current_content:
