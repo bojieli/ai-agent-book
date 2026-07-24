@@ -25,7 +25,6 @@ def main():
             n_skipped_short += 1
             continue
         assistant_msg = messages[1]
-        # Explicit null / missing content must not TypeError on re.search.
         if not isinstance(assistant_msg, dict):
             n_skipped_short += 1
             continue
