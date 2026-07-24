@@ -120,39 +120,40 @@ async def grep_search(
         logging.info(f"🔍 Searching for pattern '{pattern}' in {dir_path}")
         
         results = []
-        flags = re.IGNORECASE if not case_sensitive else 0
-        regex = re.compile(pattern, flags)
-        
-        # Determine which files to search
-        if recursive:
-            files = dir_path.rglob(file_pattern)
-        else:
-            files = dir_path.glob(file_pattern)
-        
-        for file_path in files:
-            if not file_path.is_file():
-                continue
-            
-            try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    for line_num, line in enumerate(f, 1):
-                        if regex.search(line):
-                            results.append({
-                                "file": str(file_path.relative_to(dir_path)),
-                                "line_number": line_num,
-                                "line": line.strip(),
-                                "absolute_path": str(file_path)
-                            })
-                            
-                            if len(results) >= max_results:
-                                break
-                
-                if len(results) >= max_results:
-                    break
-                    
-            except Exception as e:
-                logging.warning(f"Error reading {file_path}: {e}")
-                continue
+        # max_results=0 means zero hits (like `head -0`), not "stop after first match".
+        if max_results > 0:
+            flags = re.IGNORECASE if not case_sensitive else 0
+            regex = re.compile(pattern, flags)
+
+            if recursive:
+                files = dir_path.rglob(file_pattern)
+            else:
+                files = dir_path.glob(file_pattern)
+
+            for file_path in files:
+                if not file_path.is_file():
+                    continue
+
+                try:
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        for line_num, line in enumerate(f, 1):
+                            if regex.search(line):
+                                results.append({
+                                    "file": str(file_path.relative_to(dir_path)),
+                                    "line_number": line_num,
+                                    "line": line.strip(),
+                                    "absolute_path": str(file_path)
+                                })
+
+                                if len(results) >= max_results:
+                                    break
+
+                    if len(results) >= max_results:
+                        break
+
+                except Exception as e:
+                    logging.warning(f"Error reading {file_path}: {e}")
+                    continue
         
         logging.info(f"✅ Found {len(results)} matches")
         
@@ -162,7 +163,7 @@ async def grep_search(
                 "pattern": pattern,
                 "results": results,
                 "total_found": len(results),
-                "truncated": len(results) >= max_results
+                "truncated": max_results > 0 and len(results) >= max_results
             },
             metadata={
                 "directory": str(dir_path),
