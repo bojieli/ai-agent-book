@@ -80,6 +80,9 @@ cd ../retrieval-pipeline
 python main.py
 # http://localhost:4242
 
+# Back in this project directory (or a second terminal):
+cd ../contextual-retrieval
+
 # Index with contextual enhancement
 python index_local_laws_contextual.py
 python index_local_laws_contextual.py --no-contextual
@@ -173,8 +176,13 @@ python compare_retrieval.py --help
 pip install -r requirements.txt
 cp env.example .env
 
+# 另开一个终端运行完整检索流水线：
 cd ../retrieval-pipeline
 python main.py
+# http://localhost:4242
+
+# 回到本项目目录（或新开一个终端）：
+cd ../contextual-retrieval
 
 python index_local_laws_contextual.py
 python index_local_laws_contextual.py --no-contextual

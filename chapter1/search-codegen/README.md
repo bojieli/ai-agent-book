@@ -283,10 +283,10 @@ The agent tracks token usage for each request:
 - Completion tokens: Output token count
 - Total tokens: Combined usage
 
-Monitor costs based on OpenRouter's pricing:
+Monitor costs based on OpenRouter's pricing for `openai/gpt-5.6-sol` (verified 2026-07-24; check the [model page](https://openrouter.ai/openai/gpt-5.6-sol) for current rates):
 
-- Input: $1.25 per million tokens
-- Output: $10 per million tokens
+- Input: $5 per million tokens
+- Output: $30 per million tokens
 
 ### Troubleshooting
 
@@ -591,10 +591,10 @@ python main.py --mode test --test basic
 - Completion tokens：输出  
 - Total tokens：合计  
 
-可参考 OpenRouter 定价监控成本：
+可参考 OpenRouter 上 `openai/gpt-5.6-sol` 的定价监控成本（2026-07-24 核对；最新价格见[模型页](https://openrouter.ai/openai/gpt-5.6-sol)）：
 
-- 输入：$1.25 / 百万 tokens  
-- 输出：$10 / 百万 tokens  
+- 输入：$5 / 百万 tokens  
+- 输出：$30 / 百万 tokens  
 
 ### 故障排查
 

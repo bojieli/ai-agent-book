@@ -84,7 +84,7 @@ python demo.py          # interactive demo
 
 ### Offline evaluation CLI (`evaluate.py`)
 
-`test_client.py` / `demo.py` need ports 4240–4242. **`evaluate.py` runs the full pipeline in one process, offline**.
+`test_client.py` / `demo.py` need ports 4240–4242. **`evaluate.py` runs the full pipeline in one process — no service startup needed, and fully offline once the models are cached**. Note: the first run still downloads the dense/rerank models from HuggingFace, so initial execution requires network access.
 
 ```bash
 python evaluate.py --help          # Chinese help
@@ -104,7 +104,7 @@ python evaluate.py --output result.json
 | fuse | RRF + weighted (`fusion.py`) | ✅ pure Python |
 | rerank | `BAAI/bge-reranker-base` (~1.1GB first download) | ✅ once cached |
 
-> `--no-dense` needs no ML model. Dense/rerank download from HuggingFace on first run; `--offline` uses local cache. On Apple Silicon, MPS `NaN` is detected and falls back to CPU.
+> `--no-dense` needs no ML model. Dense/rerank models download from HuggingFace on first run (network required); after that they run from local cache, and `--offline` forces loading from the local cache only. On Apple Silicon, MPS `NaN` is detected and falls back to CPU.
 
 ### Real output (reproduced)
 
