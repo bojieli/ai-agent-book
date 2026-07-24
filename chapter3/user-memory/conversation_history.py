@@ -125,7 +125,7 @@ class ConversationHistory:
         Returns:
             List of recent conversation turns
         """
-        # limit<=0 must return []: Python's list[-0:] is list[0:] (the full list).
+        # limit<=0 → []; list[-0:] would return the full list.
         if limit <= 0 or not self.conversations:
             return []
         return self.conversations[-limit:]
