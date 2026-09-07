@@ -76,6 +76,15 @@ PROVIDERS: dict[str, Provider] = {
         key_vars=("KRILL_API_KEY",),
         base_url_var="KRILL_BASE_URL",
     ),
+    "atlascloud": Provider(
+        name="atlascloud",
+        base_url="https://api.atlascloud.ai/v1",
+        default_model="openai/gpt-4.1-mini",
+        key_vars=("ATLASCLOUD_API_KEY",),
+        base_url_var="ATLASCLOUD_BASE_URL",
+        # Atlas Cloud serves models from multiple vendors under namespaced ids.
+        namespaces_models=True,
+    ),
     "openrouter": Provider(
         name="openrouter",
         base_url=OPENROUTER_BASE_URL,
