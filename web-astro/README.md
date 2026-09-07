@@ -35,10 +35,16 @@ npm test
 - Language switcher keeps readers on the homepage or Chapter 1 in their chosen edition.
 - Editorial homepage with an animated agent loop and all 10 chapters.
 - The loop supports pause/play, manual steps, reduced motion, and off-screen suspension.
-- Chapter reader with book navigation, an active section outline, and a mobile menu.
+- Chapter reader with book navigation and an active section outline.
+- A persistent reading bar on phones and tablets keeps sections, highlights, text sizing,
+  and focus mode available while scrolling.
 - Light/dark themes, adjustable text size, focus mode, and chapter progress.
-- Expandable figures, captions, code copying, tables, and linked footnotes.
+- Figures support zoom, Fit, scrolling/dragging, and opening the original image.
+- Text sizing scales prose, code blocks, and tables.
+- Captions, code copying, tables, and linked footnotes.
 - Select a passage to highlight it; revisit or remove it in My highlights.
+- Undo restores removed highlights with their saved notes and drafts, newest removal first.
+  Undo history stays in the current page until you navigate away or reload.
 - Highlights and plain-text notes save in IndexedDB on this browser, with JSON backup export/import.
 - Choose Add note on a selection or click a highlight to edit it. Save note commits
   the note; unfinished drafts are stored separately and restored after closing or reloading.
@@ -46,8 +52,10 @@ npm test
   conflicting notes are kept as separate entries rather than overwritten.
 - Fonts are self-hosted. No accounts, external font requests, or AI services.
 
-Theme and text-size preferences stay in the browser's local storage. The reader
-does not save reading position yet. Highlights are scoped to this book, language,
+Theme, text size, and reading position stay in browser local storage. Reading
+position uses a section and relative offset for each language edition. The homepage
+offers Continue reading; normal chapter links start normally and section links
+take precedence. A reminder on the chapter page can resume your previous position. Highlights are scoped to this book, language,
 and chapter; clearing site data removes them, and private browsing may discard
 them on exit. They do not sync across devices or site origins. Export a backup
 before switching browsers or moving from localhost to a hosted preview.

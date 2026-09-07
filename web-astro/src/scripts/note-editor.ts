@@ -61,6 +61,7 @@ export function createNoteEditor(
     if (saving) event.preventDefault();
   });
   dialog.addEventListener('close', async () => {
+    const editedId = editing?.id;
     editing = undefined;
     const reopen = returnToList;
     await writes;
@@ -77,7 +78,17 @@ export function createNoteEditor(
       if (reopen) {
         listDialog.showModal();
         get('close-highlights').focus();
-      } else get('open-highlights').focus({ preventScroll: true });
+      } else {
+        const mark = [
+          ...document.querySelectorAll<HTMLElement>('mark.reader-highlight'),
+        ].find((el) =>
+          el.dataset.highlightIds?.split(' ').includes(editedId ?? ''),
+        );
+        if (mark) {
+          mark.tabIndex = 0;
+          mark.focus({ preventScroll: true });
+        } else get('open-highlights').focus({ preventScroll: true });
+      }
       if (failedDrafts.size)
         notify(
           t(

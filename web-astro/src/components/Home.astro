@@ -45,20 +45,35 @@ const { chapters, chapterPath } = getBook(locale);
           }
         </h1>
         <p class="hero-subtitle">
-          {t('Design principles.')}<br />{t('Engineering practice.')}
+          {t('Design principles.')}<br />{' '}{t('Engineering practice.')}
         </p>
         <p class="hero-description">
-          {t('Understand how agents work.')}<br />{
-            t('Learn to build systems that do.')
+          {
+            t(
+              'For developers and curious builders learning how AI agents work.',
+            )
+          }
+        </p>
+        <p class="hero-prerequisite">
+          {
+            t(
+              'Basic programming helps with the experiments. Chapter 1 introduces the concepts.',
+            )
           }
         </p>
         <div class="hero-actions">
-          <a class="button button-primary" href={chapterPath}
-            >{t('Start reading')} <Icon name="arrow" /></a
+          <a
+            class="button button-primary"
+            href={chapterPath}
+            data-continue-reading={t('Continue reading')}
+            data-chapter-key={`ai-agents-in-depth:${locale}:chapter1`}
+            ><span data-reading-label>{t('Start reading')}</span>
+            <Icon name="arrow" /></a
           ><a class="text-link" href="#contents"
             >{t('Explore the book')} <span aria-hidden="true">↓</span></a
           >
         </div>
+        <p id="continue-reading-info" hidden></p>
         <p class="hero-credit">
           {locale === 'en' ? 'By ' : '作者：'}<a
             href="https://github.com/bojieli"
@@ -77,7 +92,9 @@ const { chapters, chapterPath } = getBook(locale);
     <div class="book-facts page-width">
       <span
         ><strong>10</strong> {t('chapters, from foundations to systems')}</span
-      ><span><strong>15</strong> {t('language editions')}</span><span
+      ><span
+        ><strong>3</strong> {t('preview languages · 15 book editions')}</span
+      ><span
         ><span class="fact-symbol" aria-hidden="true">↗</span>
         {t('Open source. Open to everyone.')}</span
       >
@@ -153,4 +170,8 @@ const { chapters, chapterPath } = getBook(locale);
       >Apache 2.0 <Icon name="external" size={14} /></a
     >
   </footer>
+  <script>
+    import { initContinueReading } from '../scripts/reading-position';
+    initContinueReading();
+  </script>
 </Layout>

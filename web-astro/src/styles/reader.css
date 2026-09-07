@@ -351,7 +351,7 @@
 .prose h3,
 .prose h4 {
   font-family: var(--sans);
-  scroll-margin-top: 105px;
+  scroll-margin-top: 5px;
   line-height: 1.35;
   letter-spacing: -0.03em;
   text-wrap: balance;
@@ -417,7 +417,7 @@
   padding: 27px 24px;
   border-radius: 4px;
   overflow-x: auto;
-  font-size: 0.75rem;
+  font-size: calc(var(--reading-size) * 0.777778);
   line-height: 1.8;
   margin: 1.5em 0 2em;
   tab-size: 2;
@@ -464,7 +464,7 @@
   overflow-x: auto;
   border-collapse: collapse;
   font-family: var(--sans);
-  font-size: 0.75rem;
+  font-size: calc(var(--reading-size) * 0.777778);
   line-height: 1.7;
   margin: 2em 0;
   border: 1px solid var(--line);
@@ -543,7 +543,7 @@
   margin: 2rem 0 1rem;
 }
 .prose .footnotes li {
-  scroll-margin-top: 100px;
+  scroll-margin-top: 4px;
 }
 .prose .footnotes li p {
   margin-bottom: 0.5em;
@@ -671,28 +671,82 @@
   max-height: 94dvh;
   border: 1px solid var(--line);
   border-radius: 5px;
-  padding: 58px 24px 20px;
+  padding: 12px 16px 20px;
   background: var(--bg);
   color: var(--ink);
   overflow: auto;
 }
-.figure-dialog > .icon-button {
-  position: absolute;
-  right: 12px;
-  top: 10px;
+.figure-viewer-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.figure-viewer-toolbar button,
+.figure-viewer-toolbar a {
+  min-height: 40px;
+  min-width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+.figure-viewer-toolbar button:hover,
+.figure-viewer-toolbar a:hover {
+  background: var(--surface);
+}
+.figure-viewer-toolbar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.figure-viewer-toolbar output {
+  min-width: 3.5em;
+  font-size: 0.8rem;
+  text-align: center;
+}
+.figure-viewer-toolbar #close-figure {
+  margin-left: auto;
 }
 .figure-canvas {
   background: #fff;
   border-radius: 3px;
-  text-align: center;
-  padding: 15px;
+  padding: 16px;
+  height: min(60dvh, 680px);
   overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y pinch-zoom;
 }
 .figure-canvas img {
-  max-height: 70dvh;
+  display: block;
   width: auto;
-  max-width: 100%;
-  object-fit: contain;
+  max-width: none;
+  max-height: none;
+  height: auto;
+  margin-inline: auto;
+}
+.figure-canvas[data-zoomed='true'] {
+  cursor: grab;
+}
+.figure-canvas[data-dragging='true'] {
+  cursor: grabbing;
+  user-select: none;
+}
+.figure-viewer-hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 10px 0;
+}
+@media (max-width: 480px) {
+  .figure-viewer-toolbar {
+    gap: 5px;
+  }
+  .figure-viewer-toolbar a {
+    order: 2;
+  }
 }
 .figure-dialog > p {
   font-size: 0.8125rem;
@@ -827,13 +881,9 @@
   .prose pre {
     margin-inline: -8px;
     padding-inline: 18px;
-    font-size: 0.75rem;
   }
   .prose figure img {
     padding: 5px;
-  }
-  .prose table {
-    font-size: 0.75rem;
   }
   .prose th,
   .prose td {
@@ -860,10 +910,7 @@
     font-size: 0.75rem;
   }
   .figure-dialog {
-    padding: 55px 12px 15px;
-  }
-  .figure-canvas {
-    padding: 5px;
+    padding: 12px;
   }
 }
 
@@ -889,4 +936,155 @@
 }
 [data-theme='dark'] .copy-code:hover {
   background: var(--hover-bg);
+}
+
+.reader-sections {
+  display: none;
+}
+.resume-reading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  font-size: 0.8125rem;
+}
+.resume-reading[hidden] {
+  display: none;
+}
+.resume-reading > div {
+  flex: 1;
+  min-width: 0;
+}
+.resume-reading p {
+  color: var(--muted);
+  margin: 5px 0 0;
+  line-height: 1.5;
+}
+#resume-reading-button {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px;
+  white-space: nowrap;
+}
+#dismiss-resume {
+  min-width: 32px;
+  min-height: 40px;
+}
+.dialog-outline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dialog-outline a {
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-radius: 5px;
+}
+.dialog-outline .subsection {
+  padding-left: 26px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.dialog-outline a:hover,
+.dialog-outline a[aria-current] {
+  background: var(--surface);
+  color: var(--ink);
+}
+.dialog-book-chapters {
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.dialog-book-chapters summary {
+  padding: 10px 0;
+  cursor: pointer;
+  font-weight: 600;
+}
+@media (max-width: 1000px) {
+  .reader-header .mobile-menu {
+    display: inline-flex;
+  }
+  .reader-page {
+    padding-bottom: calc(74px + env(safe-area-inset-bottom));
+  }
+  .reader-controls {
+    position: fixed;
+    z-index: 30;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: clamp(8px, 3vw, 24px);
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+    box-shadow: 0 -3px 18px #00000008;
+  }
+  .reader-controls[hidden] {
+    display: none;
+  }
+  .reader-controls > button,
+  .reader-controls summary {
+    min-height: 42px;
+  }
+  .reader-sections {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .reader-controls .settings-panel {
+    top: auto;
+    bottom: calc(100% + 12px);
+    right: -40px;
+  }
+  .reader-controls .focus-toggle {
+    white-space: nowrap;
+  }
+  .reader-controls .highlights-toggle {
+    white-space: nowrap;
+  }
+  .highlight-selection {
+    z-index: 40;
+  }
+}
+@media (max-width: 480px) {
+  .resume-reading {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .resume-reading > div {
+    flex-basis: calc(100% - 42px);
+    order: 0;
+  }
+  #dismiss-resume {
+    order: 1;
+  }
+  #resume-reading-button {
+    order: 2;
+  }
+  .reader-controls {
+    gap: 12px;
+    padding-inline: 10px;
+    font-size: 0.75rem;
+  }
+  .reader-controls .highlights-toggle {
+    font-size: 0.75rem;
+  }
+}
+@media (max-width: 360px) {
+  .reader-controls {
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+  .reader-sections svg,
+  .reader-controls .highlights-toggle > svg,
+  .reader-controls .focus-toggle svg {
+    display: none;
+  }
 }

@@ -77,6 +77,14 @@ const t = translator(locale);
     </p>
   </div>
   <p id="highlight-dialog-status" role="status"></p>
+  <div id="highlight-undo" class="highlight-undo" hidden>
+    <div>
+      <p id="highlight-undo-message" role="status"></p><p class="undo-help">
+        {t('Undo is available until you leave or reload this page.')}
+      </p>
+    </div>
+    <button id="undo-highlight" type="button">{t('Undo')}</button>
+  </div>
   <p id="highlights-empty">{t('Your saved passages will appear here.')}</p>
   <ol id="highlights-list"></ol>
 </dialog>

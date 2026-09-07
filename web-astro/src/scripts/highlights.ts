@@ -10,6 +10,7 @@ import {
   openHighlights,
   importHighlights,
   readHighlights,
+  removeHighlight,
   writeHighlights,
 } from '../lib/highlight-store';
 
@@ -34,6 +35,15 @@ export async function initHighlights() {
   const excluded = 'pre, figure, button, script, style, .footnotes';
   let db: IDBDatabase | undefined;
   let records: Annotation[] = [];
+  const removed: Annotation[] = [];
+  const undoPanel = element('highlight-undo');
+  const undo = element<HTMLButtonElement>('undo-highlight');
+  function updateUndo() {
+    undoPanel.hidden = removed.length === 0;
+    element('highlight-undo-message').textContent = removed.length
+      ? `${t('Highlight and any notes removed.')} (${removed.length})`
+      : '';
+  }
   let noteEditor: ReturnType<typeof createNoteEditor> | undefined;
   let pending: Annotation | null = null;
   let busy = false;
@@ -228,10 +238,11 @@ export async function initHighlights() {
       );
       remove.addEventListener('click', async () => {
         const rowIndex = [...list.children].indexOf(li);
-        await mutate(
-          () => writeHighlights(db!, [], record.id),
-          t('Highlight removed.'),
-        );
+        await mutate(async () => {
+          const deleted = await removeHighlight(db!, record.id);
+          if (deleted) removed.push(deleted);
+          updateUndo();
+        }, t('Highlight and any notes removed.'));
         const nextRow =
           list.children[Math.min(rowIndex, list.children.length - 1)];
         (
@@ -264,6 +275,7 @@ export async function initHighlights() {
     if (busy || !db) return;
     busy = true;
     save.disabled = true;
+    undo.disabled = true;
     try {
       await action();
       hideSelection();
@@ -279,8 +291,20 @@ export async function initHighlights() {
     } finally {
       busy = false;
       save.disabled = false;
+      undo.disabled = false;
     }
   }
+  undo.addEventListener('click', async () => {
+    const record = removed.at(-1);
+    if (!record || busy || !db) return;
+    await mutate(async () => {
+      // A fresh ID avoids overwriting a record restored or imported in another tab.
+      await writeHighlights(db!, [{ ...record, id: crypto.randomUUID() }]);
+      removed.pop();
+      updateUndo();
+    }, t('Highlight and notes restored.'));
+    if (undoPanel.hidden) element('close-highlights').focus();
+  });
   toggle.hidden = false;
   toggle.addEventListener('click', () => {
     hideSelection();

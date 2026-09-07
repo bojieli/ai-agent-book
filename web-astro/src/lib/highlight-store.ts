@@ -99,3 +99,22 @@ export function importHighlights(
     tx.onerror = () => reject(tx.error);
   });
 }
+
+// Capture the latest note/draft and delete in one transaction, so Undo restores
+// what was actually removed even if another tab updated it after the list loaded.
+export function removeHighlight(
+  db: IDBDatabase,
+  id: string,
+): Promise<Annotation | undefined> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('highlights', 'readwrite');
+    const store = tx.objectStore('highlights');
+    const request = store.get(id);
+    request.onsuccess = () => {
+      if (request.result) store.delete(id);
+    };
+    tx.oncomplete = () => resolve(request.result);
+    tx.onabort = () => reject(tx.error);
+    tx.onerror = () => reject(tx.error);
+  });
+}

@@ -81,6 +81,15 @@ const outline = getHeadings().filter(
             class="reader-controls"
             hidden
           >
+            <button
+              id="open-sections"
+              class="reader-sections"
+              type="button"
+              aria-controls="chapter-navigation"
+              aria-expanded="false"
+              ><Icon name="menu" size={17} /><span>{t('Sections')}</span
+              ></button
+            >
             <Highlights locale={locale} />
             <details class="reading-settings">
               <summary aria-label={t('Reading settings')}
@@ -112,6 +121,23 @@ const outline = getHeadings().filter(
           </div>
         </div>
       </header>
+      <div id="resume-reading" class="resume-reading" hidden>
+        <div>
+          <strong>{t('Pick up where you left off')}</strong><p
+            id="resume-reading-section"
+          >
+          </p>
+        </div>
+        <button id="resume-reading-button" type="button"
+          >{t('Continue reading')}</button
+        >
+        <button
+          id="dismiss-resume"
+          type="button"
+          aria-label={t('Dismiss reading reminder')}
+          ><Icon name="close" size={16} /></button
+        >
+      </div>
       <details class="mobile-outline">
         <summary
           >{t('In this chapter')} <span aria-hidden="true">+</span></summary
@@ -186,45 +212,97 @@ const outline = getHeadings().filter(
     aria-labelledby="navigation-title"
   >
     <div class="dialog-heading">
-      <h2 id="navigation-title">{t('The book')}</h2><button
+      <h2 id="navigation-title">{t('In this chapter')}</h2><button
         class="icon-button"
         id="close-navigation"
         type="button"
         aria-label={t('Close chapter navigation')}><Icon name="close" /></button
       >
-    </div><nav
-      class="chapter-navigation"
-      aria-label={t('Mobile chapter navigation')}
-    >
+    </div>
+    <nav class="dialog-outline" aria-label={t('Chapter sections')}>
       {
-        chapters.map((chapter) => (
+        outline.map((heading) => (
           <a
-            class:list={{ active: chapter.number === 1 }}
-            aria-current={chapter.number === 1 ? 'page' : undefined}
-            href={chapter.href}
+            href={`#${heading.slug}`}
+            class:list={{ subsection: heading.depth === 3 }}
           >
-            <span>{chapter.title}</span>
-            {chapter.external && <Icon name="external" size={14} />}
+            {heading.text}
           </a>
         ))
       }
-    </nav><a class="back-to-book" href={`${edition.home}#contents`}
+    </nav>
+    <details class="dialog-book-chapters">
+      <summary>{t('The book')}</summary><nav
+        class="chapter-navigation"
+        aria-label={t('Mobile chapter navigation')}
+      >
+        {
+          chapters.map((chapter) => (
+            <a
+              class:list={{ active: chapter.number === 1 }}
+              aria-current={chapter.number === 1 ? 'page' : undefined}
+              href={chapter.href}
+            >
+              <span>{chapter.title}</span>
+              {chapter.external && <Icon name="external" size={14} />}
+            </a>
+          ))
+        }
+      </nav>
+    </details><a class="back-to-book" href={`${edition.home}#contents`}
       >← {t('Back to the book')}</a
     >
   </dialog>
   <dialog class="figure-dialog" aria-labelledby="figure-caption">
-    <button
-      class="icon-button"
-      id="close-figure"
-      type="button"
-      aria-label={t('Close expanded figure')}><Icon name="close" /></button
-    ><div class="figure-canvas"><img id="expanded-figure" alt="" /></div><p
-      id="figure-caption"
+    <div
+      class="figure-viewer-toolbar"
+      role="group"
+      aria-label={t('Diagram zoom')}
     >
+      <button id="figure-zoom-out" type="button" aria-label={t('Zoom out')}
+        >−</button
+      >
+      <output
+        id="figure-zoom-level"
+        aria-live="polite"
+        aria-label={t('Zoom level')}>100%</output
+      >
+      <button id="figure-zoom-in" type="button" aria-label={t('Zoom in')}
+        >+</button
+      >
+      <button id="figure-fit" type="button">{t('Fit')}</button>
+      <a id="figure-original" target="_blank" rel="noopener"
+        >{t('Open original')}</a
+      >
+      <button
+        class="icon-button"
+        id="close-figure"
+        type="button"
+        aria-label={t('Close expanded figure')}><Icon name="close" /></button
+      >
+    </div>
+    <div
+      class="figure-canvas"
+      tabindex="0"
+      role="region"
+      aria-label={t('Diagram viewport')}
+      aria-describedby="figure-viewer-hint"
+    >
+      <img id="expanded-figure" alt="" draggable="false" />
+    </div>
+    <p id="figure-viewer-hint" class="figure-viewer-hint">
+      {
+        t(
+          'Zoom in, then scroll or drag to explore. Fit shows the whole diagram.',
+        )
+      }
     </p>
+    <p id="figure-caption"></p>
   </dialog>
   <script>
     import { browserTranslator } from '../lib/i18n';
+    import { initReadingPosition } from '../scripts/reading-position';
+    import { initFigureViewer } from '../scripts/figure-viewer';
     const t = browserTranslator();
     const root = document.documentElement;
     const controls = document.querySelector<HTMLElement>('.reader-controls');
@@ -278,26 +356,39 @@ const outline = getHeadings().filter(
       '#chapter-navigation',
     )!;
     mobileMenu.hidden = false;
-    mobileMenu.addEventListener('click', () => {
-      navigation.showModal();
-      mobileMenu.setAttribute('aria-expanded', 'true');
-    });
+    const sectionMenu =
+      document.querySelector<HTMLButtonElement>('#open-sections')!;
+    for (const trigger of [mobileMenu, sectionMenu])
+      trigger.addEventListener('click', () => {
+        navigation.showModal();
+        mobileMenu.setAttribute('aria-expanded', 'true');
+        sectionMenu.setAttribute('aria-expanded', 'true');
+      });
     document
       .querySelector('#close-navigation')
       ?.addEventListener('click', () => navigation.close());
-    navigation.addEventListener('close', () =>
-      mobileMenu.setAttribute('aria-expanded', 'false'),
+    navigation.addEventListener('close', () => {
+      mobileMenu.setAttribute('aria-expanded', 'false');
+      sectionMenu.setAttribute('aria-expanded', 'false');
+    });
+    navigation.querySelectorAll('a').forEach((a) =>
+      a.addEventListener('click', () => {
+        navigation.close();
+        if (a.getAttribute('href')?.startsWith('#')) {
+          const target = document.getElementById(
+            decodeURIComponent(a.hash.slice(1)),
+          );
+          if (target)
+            requestAnimationFrame(() => {
+              target.tabIndex = -1;
+              target.focus({ preventScroll: true });
+            });
+        }
+      }),
     );
-    navigation
-      .querySelectorAll('a')
-      .forEach((a) => a.addEventListener('click', () => navigation.close()));
     const figureDialog =
       document.querySelector<HTMLDialogElement>('.figure-dialog')!;
-    const expandedImage =
-      document.querySelector<HTMLImageElement>('#expanded-figure')!;
-    document
-      .querySelector('#close-figure')
-      ?.addEventListener('click', () => figureDialog.close());
+    const openFigure = initFigureViewer();
     [figureDialog, navigation].forEach((dialog) =>
       dialog.addEventListener('click', (event) => {
         const rect = dialog.getBoundingClientRect();
@@ -323,10 +414,7 @@ const outline = getHeadings().filter(
       img.replaceWith(button);
       button.append(img);
       button.addEventListener('click', () => {
-        expandedImage.src = img.currentSrc || img.src;
-        expandedImage.alt = img.alt;
-        document.querySelector('#figure-caption')!.textContent = img.alt;
-        figureDialog.showModal();
+        openFigure(img, button);
       });
     });
     document.querySelectorAll<HTMLPreElement>('.prose pre').forEach((pre) => {
@@ -377,6 +465,15 @@ const outline = getHeadings().filter(
         if (index === active) link.setAttribute('aria-current', 'location');
         else link.removeAttribute('aria-current');
       });
+      document
+        .querySelectorAll<HTMLAnchorElement>('.dialog-outline a')
+        .forEach((link) => {
+          const selected =
+            active >= 0 &&
+            decodeURIComponent(link.hash.slice(1)) === sections[active]?.id;
+          if (selected) link.setAttribute('aria-current', 'location');
+          else link.removeAttribute('aria-current');
+        });
       ticking = false;
     };
     const scheduleReading = () => {
@@ -389,5 +486,6 @@ const outline = getHeadings().filter(
     addEventListener('resize', scheduleReading);
     new ResizeObserver(scheduleReading).observe(content);
     updateReading();
+    initReadingPosition();
   </script>
 </Layout>

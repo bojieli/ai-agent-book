@@ -328,5 +328,43 @@
   "An open-source book on the design principles and engineering practice of AI agents.": [
     "一本关于 AI Agent 设计原理与工程实践的开源书。",
     "一本關於 AI Agent 設計原理與工程實踐的開源書。"
-  ]
+  ],
+  "Diagram zoom": ["图片缩放", "圖片縮放"],
+  "Zoom out": ["缩小", "縮小"],
+  "Zoom in": ["放大", "放大"],
+  "Zoom level": ["缩放比例", "縮放比例"],
+  "Fit": ["适应窗口", "符合視窗"],
+  "Open original": ["打开原图", "開啟原圖"],
+  "Diagram viewport": ["图片浏览区域", "圖片瀏覽區域"],
+  "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": [
+    "放大后可滚动或拖动查看。「适应窗口」显示整张图片。",
+    "放大後可捲動或拖曳查看。「符合視窗」顯示整張圖片。"
+  ],
+  "Undo": ["撤销", "復原"],
+  "Undo is available until you leave or reload this page.": [
+    "离开或刷新此页面前，均可撤销删除。",
+    "離開或重新整理此頁面前，均可復原刪除。"
+  ],
+  "Highlight and any notes removed.": [
+    "划线及其笔记已移除。",
+    "畫線及其筆記已移除。"
+  ],
+  "Highlight and notes restored.": ["划线和笔记已恢复。", "畫線和筆記已還原。"],
+  "For developers and curious builders learning how AI agents work.": [
+    "写给想理解 AI Agent 的开发者与探索者。",
+    "寫給想理解 AI Agent 的開發者與探索者。"
+  ],
+  "Basic programming helps with the experiments. Chapter 1 introduces the concepts.": [
+    "具备基础编程知识更方便动手实验；第 1 章从概念讲起。",
+    "具備基礎程式設計知識更方便動手實驗；第 1 章從概念講起。"
+  ],
+  "Continue reading": ["继续阅读", "繼續閱讀"],
+  "preview languages · 15 book editions": [
+    "种预览语言 · 全书有 15 种语言版本",
+    "種預覽語言 · 全書有 15 種語言版本"
+  ],
+  "Sections": ["本章目录", "本章目錄"],
+  "Pick up where you left off": ["接着上次的位置读", "接著上次的位置讀"],
+  "Dismiss reading reminder": ["关闭阅读提醒", "關閉閱讀提醒"],
+  "Open reading navigation": ["打开阅读导航", "開啟閱讀導覽"]
 }

@@ -718,3 +718,61 @@ img {
     min-height: 38px;
   }
 }
+
+.hero-prerequisite {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  max-width: 34em;
+  margin: -14px 0 24px;
+}
+#continue-reading-info {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 12px 0 0;
+  line-height: 1.5;
+}
+@media (max-width: 760px) {
+  .home-hero {
+    padding-block: 28px 24px;
+    gap: 24px;
+  }
+  .hero-copy .eyebrow {
+    margin-bottom: 18px;
+  }
+  .hero-copy h1 {
+    font-size: clamp(3.5rem, 12vw, 5rem);
+    margin-bottom: 18px;
+  }
+  .hero-subtitle {
+    font-size: 1.125rem;
+    margin-bottom: 14px;
+  }
+  .hero-subtitle br {
+    display: none;
+  }
+  .hero-description {
+    max-width: none;
+    margin-bottom: 18px;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+  .hero-prerequisite {
+    margin: -6px 0 18px;
+  }
+  .hero-credit {
+    margin-top: 18px;
+  }
+  .home-hero .agent-motion {
+    width: 100%;
+    max-width: 300px;
+    margin-inline: auto;
+  }
+  .book-facts {
+    gap: 12px;
+    padding-block: 18px;
+  }
+  .contents-section {
+    padding-top: 40px;
+  }
+}
