@@ -1,11 +1,9 @@
-import { readFile, mkdir, copyFile } from 'node:fs/promises';
+import editions from '../src/lib/editions.json' with { type: 'json' };
+import { layoutAgentLoop } from './agent-loop-figure.mjs';
+import { readFile, mkdir, copyFile, writeFile } from 'node:fs/promises';
 const root = new URL('../../', import.meta.url);
 let count = 0;
-for (const [directory, suffix] of [
-  ['book-en', ''],
-  ['book', ''],
-  ['book-zhtw', '.zhtw'],
-]) {
+for (const { directory, suffix } of Object.values(editions)) {
   const markdown = await readFile(
     new URL(`${directory}/chapter1${suffix}.md`, root),
     'utf8',
@@ -21,7 +19,15 @@ for (const [directory, suffix] of [
       import.meta.url,
     );
     await mkdir(new URL('./', destination), { recursive: true });
-    await copyFile(new URL(`${directory}/${image}`, root), destination);
+    const original = new URL(`${directory}/${image}`, root);
+    if (image === 'images/fig1-1.svg') {
+      await writeFile(
+        destination,
+        layoutAgentLoop(await readFile(original, 'utf8')),
+      );
+    } else {
+      await copyFile(original, destination);
+    }
     count++;
   }
 }

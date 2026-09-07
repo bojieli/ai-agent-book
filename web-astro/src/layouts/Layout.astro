@@ -2,7 +2,7 @@
 import '@fontsource-variable/manrope';
 import '@fontsource-variable/newsreader';
 import '../styles/global.css';
-import { translator, type Locale } from '../lib/i18n';
+import { translator, editions, getMessages, type Locale } from '../lib/i18n';
 interface Props {
   title: string;
   locale?: Locale;
@@ -19,7 +19,7 @@ const t = translator(locale);
 ---
 
 <!doctype html>
-<html lang={locale}>
+<html lang={locale} dir={editions[locale].dir}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -44,6 +44,12 @@ const t = translator(locale);
   <body class:list={[{ 'reader-page': reader }]}>
     <a class="skip-link" href="#main-content">{t('Skip to content')}</a>
     <slot />
+    <script
+      is:inline
+      id="book-ui-messages"
+      type="application/json"
+      set:html={JSON.stringify(getMessages(locale)).replaceAll('<', '\\u003c')}
+    />
     <script>
       import { browserTranslator } from '../lib/i18n';
       const t = browserTranslator();

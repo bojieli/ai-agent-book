@@ -1,0 +1,137 @@
+{
+  "en": {
+    "name": "English",
+    "home": "/",
+    "chapter": "/book-en/chapter1/",
+    "directory": "book-en",
+    "suffix": "",
+    "pdf": "en",
+    "dir": "ltr"
+  },
+  "zh-CN": {
+    "name": "简体中文",
+    "home": "/zh-CN/",
+    "chapter": "/book/chapter1/",
+    "directory": "book",
+    "suffix": "",
+    "pdf": "zh-CN",
+    "dir": "ltr"
+  },
+  "zh-TW": {
+    "name": "繁體中文",
+    "home": "/zh-TW/",
+    "chapter": "/book-zhtw/chapter1.zhtw/",
+    "directory": "book-zhtw",
+    "suffix": ".zhtw",
+    "pdf": "zh-TW",
+    "dir": "ltr"
+  },
+  "es": {
+    "name": "Español",
+    "home": "/es/",
+    "chapter": "/book-es/chapter1.es/",
+    "directory": "book-es",
+    "suffix": ".es",
+    "pdf": "es",
+    "dir": "ltr"
+  },
+  "id": {
+    "name": "Bahasa Indonesia",
+    "home": "/id/",
+    "chapter": "/book-id/chapter1/",
+    "directory": "book-id",
+    "suffix": "",
+    "pdf": "id",
+    "dir": "ltr"
+  },
+  "ru": {
+    "name": "Русский",
+    "home": "/ru/",
+    "chapter": "/book-ru/chapter1/",
+    "directory": "book-ru",
+    "suffix": "",
+    "pdf": "ru",
+    "dir": "ltr"
+  },
+  "ta": {
+    "name": "தமிழ்",
+    "home": "/ta/",
+    "chapter": "/book-ta/chapter1.ta/",
+    "directory": "book-ta",
+    "suffix": ".ta",
+    "pdf": "ta",
+    "dir": "ltr"
+  },
+  "vi": {
+    "name": "Tiếng Việt",
+    "home": "/vi/",
+    "chapter": "/book-vi/chapter1.vi/",
+    "directory": "book-vi",
+    "suffix": ".vi",
+    "pdf": "vi",
+    "dir": "ltr"
+  },
+  "ja": {
+    "name": "日本語",
+    "home": "/ja/",
+    "chapter": "/book-ja/chapter1.ja/",
+    "directory": "book-ja",
+    "suffix": ".ja",
+    "pdf": "ja",
+    "dir": "ltr"
+  },
+  "ko": {
+    "name": "한국어",
+    "home": "/ko/",
+    "chapter": "/book-ko/chapter1.ko/",
+    "directory": "book-ko",
+    "suffix": ".ko",
+    "pdf": "ko",
+    "dir": "ltr"
+  },
+  "ar": {
+    "name": "العربية",
+    "home": "/ar/",
+    "chapter": "/book-ar/chapter1.ar/",
+    "directory": "book-ar",
+    "suffix": ".ar",
+    "pdf": "ar",
+    "dir": "rtl"
+  },
+  "tr": {
+    "name": "Türkçe",
+    "home": "/tr/",
+    "chapter": "/book-tr/chapter1.tr/",
+    "directory": "book-tr",
+    "suffix": ".tr",
+    "pdf": "tr",
+    "dir": "ltr"
+  },
+  "hu": {
+    "name": "Magyar",
+    "home": "/hu/",
+    "chapter": "/book-hu/chapter1/",
+    "directory": "book-hu",
+    "suffix": "",
+    "pdf": "hu",
+    "dir": "ltr"
+  },
+  "he": {
+    "name": "עברית",
+    "home": "/he/",
+    "chapter": "/book-he/chapter1.he/",
+    "directory": "book-he",
+    "suffix": ".he",
+    "pdf": "he",
+    "dir": "rtl"
+  },
+  "pt-BR": {
+    "name": "Português (Brasil)",
+    "home": "/pt-BR/",
+    "chapter": "/book-ptbr/chapter1.ptbr/",
+    "directory": "book-ptbr",
+    "suffix": ".ptbr",
+    "pdf": "ptbr",
+    "dir": "ltr"
+  }
+}

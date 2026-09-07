@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import { unified } from '@astrojs/markdown-remark';
+import { agentPseudocode } from './src/lib/agent-pseudocode.mjs';
 import { bookMarkdown, bookFootnotes } from './src/lib/book-markdown.mjs';
 
 export default defineConfig({
@@ -11,6 +12,6 @@ export default defineConfig({
       remarkPlugins: [bookMarkdown],
       rehypePlugins: [bookFootnotes],
     }),
-    shikiConfig: { theme: 'github-dark' },
+    shikiConfig: { theme: 'github-dark', langs: [agentPseudocode] },
   },
 });

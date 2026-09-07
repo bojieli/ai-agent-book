@@ -1,10 +1,6 @@
 import { editions, translator, type Locale } from './i18n';
 const chapterSources = import.meta.glob<string>(
-  [
-    '../../../book-en/chapter*.md',
-    '../../../book/chapter*.md',
-    '../../../book-zhtw/chapter*.md',
-  ],
+  ['../../../book/chapter*.md', '../../../book-*/chapter*.md'],
   {
     query: '?raw',
     import: 'default',
@@ -54,9 +50,11 @@ export function getBook(locale: Locale) {
       `../../../${edition.directory}/chapter1${edition.suffix}.md`
     ];
   // CJK prose has no spaces between words; estimate characters and Latin words separately.
-  const cjk = firstChapter.match(/[\u3400-\u9fff]/g)?.length ?? 0;
+  const cjk =
+    firstChapter.match(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/g)?.length ??
+    0;
   const words = firstChapter
-    .replace(/[\u3400-\u9fff]/g, ' ')
+    .replace(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/g, ' ')
     .split(/\s+/)
     .filter(Boolean).length;
   const readingMinutes = Math.max(1, Math.ceil(cjk / 400 + words / 220));

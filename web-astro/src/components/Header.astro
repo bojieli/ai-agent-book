@@ -11,7 +11,11 @@ const edition = editions[locale];
 ---
 
 <header class:list={['site-header', { 'reader-header': reader }]}>
-  <a class="brand" href={edition.home} aria-label={t('AI Agents in Depth')}
+  <a
+    class="brand"
+    dir="ltr"
+    href={edition.home}
+    aria-label={t('AI Agents in Depth')}
     ><span class="brand-mark" aria-hidden="true">a<span>i</span></span><span
       >AI Agents<span class="brand-secondary">in Depth</span></span
     ></a
@@ -25,9 +29,9 @@ const edition = editions[locale];
   </nav>
   <div class="header-tools">
     <details class="language-picker">
-      <summary aria-label={t('Language')}
+      <summary aria-label={t('Language')} title={edition.name}
         ><span aria-hidden="true">◎</span>
-        {edition.name}
+        <span class="current-language">{edition.name}</span>
         <span aria-hidden="true">⌄</span></summary
       >
       <nav aria-label={t('Language')}>
@@ -39,6 +43,7 @@ const edition = editions[locale];
               }
               lang={language}
               hreflang={language}
+              dir={editions[language].dir}
               aria-current={language === locale ? 'page' : undefined}
             >
               {editions[language].name}

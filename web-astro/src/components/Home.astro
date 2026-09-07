@@ -4,7 +4,7 @@ import Header from '../components/Header.astro';
 import AgentArchitecture from '../components/AgentArchitecture.astro';
 import Icon from '../components/Icon.astro';
 import { getBook, repo } from '../lib/book';
-import { translator, editions, type Locale } from '../lib/i18n';
+import { translator, editions, locales, type Locale } from '../lib/i18n';
 const { locale = 'en' } = Astro.props as { locale?: Locale };
 const t = translator(locale);
 const edition = editions[locale];
@@ -33,7 +33,7 @@ const { chapters, chapterPath } = getBook(locale);
                   <span class="serif-title">in Depth.</span>
                 </>
               </>
-            ) : (
+            ) : locale.startsWith('zh') ? (
               <>
                 深入理解
                 <>
@@ -41,6 +41,10 @@ const { chapters, chapterPath } = getBook(locale);
                   <span class="serif-title">AI Agent.</span>
                 </>
               </>
+            ) : (
+              <span class="localized-book-title">
+                {t('AI Agents in Depth')}
+              </span>
             )
           }
         </h1>
@@ -75,16 +79,9 @@ const { chapters, chapterPath } = getBook(locale);
         </div>
         <p id="continue-reading-info" hidden></p>
         <p class="hero-credit">
-          {locale === 'en' ? 'By ' : '作者：'}<a
-            href="https://github.com/bojieli"
-            >{locale === 'en' ? 'Bojie Li' : '李博杰'}</a
-          >{
-            locale === 'en'
-              ? ' & the open-source community'
-              : locale === 'zh-CN'
-                ? '与开源社区'
-                : '與開源社群'
-          }
+          {t('By')}{' '}<a href="https://github.com/bojieli"
+            >{locale.startsWith('zh') ? '李博杰' : 'Bojie Li'}</a
+          >{' '}{t('and the open-source community')}
         </p>
       </div>
       <AgentArchitecture locale={locale} />
@@ -92,8 +89,7 @@ const { chapters, chapterPath } = getBook(locale);
     <div class="book-facts page-width">
       <span
         ><strong>10</strong> {t('chapters, from foundations to systems')}</span
-      ><span
-        ><strong>3</strong> {t('preview languages · 15 book editions')}</span
+      ><span><strong>{locales.length}</strong> {t('language editions')}</span
       ><span
         ><span class="fact-symbol" aria-hidden="true">↗</span>
         {t('Open source. Open to everyone.')}</span

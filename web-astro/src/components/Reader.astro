@@ -138,9 +138,9 @@ const outline = getHeadings().filter(
           ><Icon name="close" size={16} /></button
         >
       </div>
-      <details class="mobile-outline">
+      <details class="mobile-outline" open>
         <summary
-          >{t('In this chapter')} <span aria-hidden="true">+</span></summary
+          >{t('In this chapter')} <span aria-hidden="true"></span></summary
         ><nav aria-label={t('Chapter sections')}>
           {
             headings.map((heading) => (
@@ -149,6 +149,20 @@ const outline = getHeadings().filter(
           }
         </nav>
       </details>
+      <script is:inline>
+        {
+          const outline = document.currentScript.previousElementSibling;
+          const key = 'book-chapter-outline-open';
+          try {
+            outline.open = localStorage.getItem(key) !== 'false';
+          } catch {}
+          outline.addEventListener('toggle', () => {
+            try {
+              localStorage.setItem(key, String(outline.open));
+            } catch {}
+          });
+        }
+      </script>
       <article
         class="prose"
         id="chapter-content"
@@ -282,6 +296,7 @@ const outline = getHeadings().filter(
       >
     </div>
     <div
+      dir="ltr"
       class="figure-canvas"
       tabindex="0"
       role="region"

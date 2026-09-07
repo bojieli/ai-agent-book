@@ -1,0 +1,27 @@
+---
+import Reader from '../../components/Reader.astro';
+import { editions, locales } from '../../lib/i18n';
+import type { MarkdownInstance } from 'astro';
+const sources = import.meta.glob<MarkdownInstance<Record<string, unknown>>>(
+  ['../../../../book*/chapter1.md', '../../../../book*/chapter1.*.md'],
+  { eager: true },
+);
+export function getStaticPaths() {
+  return locales.map((locale) => {
+    const edition = editions[locale];
+    return {
+      params: {
+        edition: edition.directory,
+        chapter: `chapter1${edition.suffix}`,
+      },
+      props: { locale },
+    };
+  });
+}
+const { locale } = Astro.props;
+const edition = editions[locale];
+const chapter =
+  sources[`../../../../${edition.directory}/chapter1${edition.suffix}.md`];
+---
+
+<Reader locale={locale} chapter={chapter} />

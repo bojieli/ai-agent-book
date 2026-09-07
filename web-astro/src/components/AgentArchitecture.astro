@@ -1,5 +1,5 @@
 ---
-import { translator, type Locale } from '../lib/i18n';
+import { editions, translator, type Locale } from '../lib/i18n';
 const { locale = 'en' } = Astro.props as { locale?: Locale };
 const t = translator(locale);
 const stages = [
@@ -32,6 +32,7 @@ const stages = [
   </div>
   <div
     class="agent-scene"
+    dir="ltr"
     role="img"
     aria-label={t(
       'Context supplies observations to the LLM. The model chooses tools, which act on the environment. Feedback from the environment returns to context.',
@@ -85,7 +86,9 @@ const stages = [
     <div class="model-core">
       <div class="core-inner"><strong>LLM</strong></div>
     </div>
-    <span class="model-label">{t('Reasoning engine')}</span>
+    <span class="model-label" dir={editions[locale].dir}
+      >{t('Reasoning engine')}</span
+    >
     <div class="context-node side-node">
       <svg
         class="context-visual node-visual"
@@ -107,7 +110,9 @@ const stages = [
         <path d="M18 23h33M18 29h25M18 35h17"></path>
         <circle class="incoming-observation" cx="72" cy="29" r="7"
         ></circle><path class="incoming-mark" d="M69 29h6m-3-3v6"></path>
-      </svg><strong>{t('Context')}</strong><span class="node-description"
+      </svg><strong>{t('Context')}</strong><span
+        class="node-description"
+        dir={editions[locale].dir}
         >{t('Task · history')}<br />{t('observations')}</span
       >
     </div>
@@ -136,14 +141,15 @@ const stages = [
             cy="30"
             r="2"></circle></g
         >
-      </svg><strong>{t('Tools')}</strong><span class="node-description"
-        >{t('Search · code')}<br />APIs</span
+      </svg><strong>{t('Tools')}</strong><span
+        class="node-description"
+        dir={editions[locale].dir}>{t('Search · code')}<br />APIs</span
       >
     </div>
     <span class="flow-label observations-label">{t('Observations')}</span><span
       class="flow-label actions-label">{t('Actions')}</span
     >
-    <div class="environment-label">
+    <div class="environment-label" dir={editions[locale].dir}>
       <svg
         class="world-visual"
         viewBox="0 0 110 30"
@@ -1024,6 +1030,74 @@ const stages = [
     .motion-play {
       min-width: 66px;
       padding-inline: 9px;
+    }
+  }
+
+  /* Translation length must not change the diagram geometry or hide controls. */
+  .motion-heading {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+  .motion-controls {
+    flex-wrap: wrap;
+  }
+  .stage-buttons {
+    max-width: 100%;
+  }
+  .stage-buttons button {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .step-dot {
+    flex-shrink: 0;
+  }
+  .side-node strong {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .node-description {
+    white-space: normal;
+  }
+  .environment-label {
+    width: 72%;
+    white-space: normal;
+    text-align: center;
+  }
+  .model-label {
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 760px) {
+    .stage-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      width: 100%;
+    }
+    .stage-buttons button {
+      gap: 4px;
+    }
+    .loop-caption {
+      margin-top: 65px;
+    }
+  }
+  @media (max-width: 420px) {
+    /* Keep the four architecture nodes legible; the caption explains the arrows. */
+    .side-node {
+      width: 30%;
+    }
+    .side-node strong {
+      font-size: 0.8125rem;
+      letter-spacing: normal;
+    }
+    .node-description,
+    .flow-label {
+      display: none;
+    }
+    .stage-buttons button {
+      font-size: 0.6875rem;
+      padding-inline: 4px;
+    }
+    .stage-buttons .step-dot {
+      display: none;
     }
   }
 </style>

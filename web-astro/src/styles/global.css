@@ -776,3 +776,105 @@ img {
     padding-top: 40px;
   }
 }
+
+/* Native names stay readable in a scrollable menu across all editions. */
+.language-picker nav {
+  min-width: 230px;
+  max-height: min(65dvh, 500px);
+  overflow-y: auto;
+  right: auto;
+  inset-inline-end: 0;
+}
+.language-picker .current-language {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hero-copy h1:has(.localized-book-title) {
+  font-size: clamp(2.6rem, 4.8vw, 4.8rem);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+:root:lang(ja) {
+  --sans:
+    'Manrope Variable', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  --serif: 'Newsreader Variable', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+}
+:root:lang(ko) {
+  --sans:
+    'Manrope Variable', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --serif: 'Newsreader Variable', 'AppleMyungjo', 'Batang', serif;
+}
+:root:lang(ta) {
+  --sans: 'Manrope Variable', 'Tamil Sangam MN', 'Noto Sans Tamil', sans-serif;
+  --serif: 'Tamil MN', 'Noto Serif Tamil', serif;
+}
+:root:lang(ar) {
+  --sans: 'Geeza Pro', 'Noto Sans Arabic', sans-serif;
+  --serif: 'Geeza Pro', 'Noto Naskh Arabic', serif;
+}
+:root:lang(he) {
+  --sans: 'Arial Hebrew', Arial, sans-serif;
+  --serif: 'New Peninim MT', 'Noto Serif Hebrew', serif;
+}
+:lang(ta) .hero-copy h1,
+[dir='rtl'] .hero-copy h1 {
+  letter-spacing: normal;
+  line-height: 1.3;
+}
+[dir='rtl'] .eyebrow,
+[dir='rtl'] .rail-label,
+:lang(ta) .eyebrow,
+:lang(ta) .rail-label {
+  letter-spacing: normal;
+}
+[dir='rtl'] .header-nav {
+  direction: rtl;
+}
+[dir='rtl'] .hero-actions svg,
+[dir='rtl'] .chapter-card > svg {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .brand {
+  text-align: left;
+}
+@media (max-width: 760px) {
+  .hero-actions {
+    flex-wrap: wrap;
+    gap: 16px 22px;
+  }
+  .language-picker .current-language {
+    max-width: 110px;
+  }
+  .hero-copy h1:has(.localized-book-title) {
+    font-size: clamp(2.3rem, 9vw, 3.8rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .header-tools,
+  .language-picker {
+    min-width: 0;
+  }
+  .header-tools {
+    margin-inline-start: auto;
+  }
+  .header-tools .icon-button {
+    flex-shrink: 0;
+  }
+  .language-picker .current-language {
+    min-width: 0;
+    max-width: clamp(52px, calc(100vw - 285px), 110px);
+  }
+}
+@media (max-width: 480px) {
+  .language-picker nav {
+    position: fixed;
+    top: 64px;
+    left: 12px;
+    right: 12px;
+    inset-inline-end: 12px;
+    min-width: 0;
+  }
+}

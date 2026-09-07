@@ -1,9 +1,10 @@
 # Astro reading prototype
 
 A local design exploration for **AI Agents in Depth**, built with plain Astro.
-The homepage and complete Chapter 1 are implemented in English, Simplified Chinese,
-and Traditional Chinese. All other chapter
-links lead to the existing online edition.
+The homepage and complete Chapter 1 are implemented in all 15 maintained editions:
+English, Simplified Chinese, Traditional Chinese, Spanish, Indonesian, Russian,
+Tamil, Vietnamese, Japanese, Korean, Arabic, Turkish, Hungarian, Hebrew, and
+Brazilian Portuguese. Other chapters link to the existing online edition.
 
 ## Run locally
 
@@ -17,8 +18,8 @@ npm run dev
 
 Open the URL printed by Astro (normally `http://127.0.0.1:4321`). The chapter is
 at `/book-en/chapter1/`, matching its existing online path. Use the header language
-switcher to view Chinese homepages at `/zh-CN/` and `/zh-TW/`, and Chapter 1 at
-`/book/chapter1/` and `/book-zhtw/chapter1.zhtw/`. Astro 7 runs the
+switcher to choose an edition. Homepages use locale paths such as `/ja/`, `/ar/`,
+and `/pt-BR/`; Chapter 1 keeps each edition’s existing book path. Astro 7 runs the
 server in the background; stop it with `npx astro dev stop` from this directory.
 
 ```sh
@@ -68,10 +69,11 @@ JavaScript; enhanced controls are shown when their scripts initialize.
 
 ## Source boundaries
 
-Each Chapter 1 route imports its tracked Markdown directly from `book-en/`,
-`book/`, or `book-zhtw/`. Shared `Home.astro` and `Reader.astro` components render
-the editions; `src/lib/i18n.ts` defines edition routes and `translations.json`
-contains interface text. `src/lib/book.ts` reads chapter titles through Vite's raw imports.
+Each Chapter 1 route imports its tracked Markdown directly from the corresponding
+`book/` or `book-*/` directory. Shared `Home.astro` and `Reader.astro` components
+render the editions. `src/lib/editions.json` defines routes, source directories,
+PDF suffixes, and text direction; `src/lib/locales/<locale>.json` contains interface
+text. The browser receives only the current edition’s interface dictionary. `src/lib/book.ts` reads chapter titles through Vite's raw imports.
 There is no second editable copy of the book text.
 
 `src/lib/book-markdown.mjs` adapts the web rendering: it removes the duplicated
@@ -81,8 +83,11 @@ footnotes, and highlighted code. Only Chapter 1's syntax has been validated;
 Pandoc attributes, math, and Mermaid in other chapters need migration work.
 
 `npm run dev` and `npm run build` copy Chapter 1's seven referenced images
-per edition (21 total) into ignored generated public directories. Rerun the
-command when source images change. The original Markdown, assets, MkDocs
+per edition (105 total) into ignored generated public directories. Rerun the
+command when source images change. Figure 1-1 is generated with a taller web layout
+and wrapping labels, preserving all 18 labels from each source SVG. Its XHTML
+labels target modern browsers; the tracked SVG remains the portable PDF/MkDocs
+source. The other six figures per edition are copied unchanged. The original Markdown, assets, MkDocs
 configuration, PDF pipeline, and root dependencies are untouched.
 
 The existing repository license applies. The book is by Bojie Li; translation
@@ -90,10 +95,13 @@ credits and source history remain available in `docs/en/README.md` and Git.
 
 ## Prototype limits
 
-- Three prototype editions; other chapters open the matching existing edition.
-- The book has 15 editions; the remaining languages and search are not prototyped yet.
+- All 15 maintained source editions cover the homepage and Chapter 1; other chapters
+  open the matching existing edition. Search is not prototyped yet.
+- Additional MkDocs browser-translation languages without tracked source editions
+  are not included. New interface translations need native-speaker editorial review.
 - Explicit language URLs are authoritative; no automatic language redirects.
-- Chinese typography uses system fonts; it may vary across operating systems.
+- Arabic and Hebrew use right-to-left layouts; code and diagram coordinates remain
+  left-to-right. Non-Latin typography uses system font fallbacks and can vary by OS.
 - No deployment configuration or publishing workflow; this preview is local only.
 - Root hosting paths are assumed. A GitHub Pages subpath needs an explicit base
   URL migration before deployment.

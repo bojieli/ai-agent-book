@@ -142,8 +142,8 @@
 }
 #highlights-list blockquote {
   margin: 0 0 12px;
-  padding-left: 14px;
-  border-left: 3px solid #c6a34b;
+  padding-inline-start: 14px;
+  border-inline-start: 3px solid #c6a34b;
   font: 400 1.1rem/1.6 var(--serif);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -235,8 +235,8 @@
   max-height: 150px;
   overflow-y: auto;
   margin: 8px 0 24px;
-  padding-left: 14px;
-  border-left: 3px solid #c6a34b;
+  padding-inline-start: 14px;
+  border-inline-start: 3px solid #c6a34b;
   font: 400 1.15rem/1.55 var(--serif);
   overflow-wrap: anywhere;
 }
