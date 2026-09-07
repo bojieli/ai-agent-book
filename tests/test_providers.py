@@ -22,6 +22,8 @@ from agentbook.providers.registry import supported_providers
 from agentbook.providers.resolution import build_openrouter_backend
 
 PROVIDER_KEY_VARS = [
+    "ATLASCLOUD_API_KEY",
+    "ATLASCLOUD_BASE_URL",
     "DASHSCOPE_API_KEY",
     "DASHSCOPE_BASE_URL",
     "SILICONFLOW_API_KEY",
@@ -174,6 +176,27 @@ def test_krill_base_url_override(monkeypatch):
     monkeypatch.setenv("KRILL_API_KEY", "test-krill-key")
     monkeypatch.setenv("KRILL_BASE_URL", "https://krill-gateway.example/v1")
     assert resolve_backend("krill").base_url == "https://krill-gateway.example/v1"
+
+
+def test_atlascloud_key_uses_multi_model_gateway_directly(monkeypatch):
+    monkeypatch.setenv("ATLASCLOUD_API_KEY", "test-atlascloud-key")
+    backend = resolve_backend("atlascloud")
+    assert backend.api_key == "test-atlascloud-key"
+    assert backend.base_url == "https://api.atlascloud.ai/v1"
+    assert backend.model == "openai/gpt-4.1-mini"
+    assert backend.provider == "atlascloud"
+    assert backend.using_openrouter is False
+
+
+def test_atlascloud_namespaces_bare_model_ids(monkeypatch):
+    monkeypatch.setenv("ATLASCLOUD_API_KEY", "test-atlascloud-key")
+    assert resolve_backend("atlascloud", model="gpt-4o").model == "openai/gpt-4o"
+
+
+def test_atlascloud_base_url_override(monkeypatch):
+    monkeypatch.setenv("ATLASCLOUD_API_KEY", "test-atlascloud-key")
+    monkeypatch.setenv("ATLASCLOUD_BASE_URL", "https://atlas.example/v1")
+    assert resolve_backend("atlascloud").base_url == "https://atlas.example/v1"
 
 
 def test_explicit_krill_provider_is_not_hijacked_for_gpt5(monkeypatch):
@@ -350,6 +373,7 @@ def test_supported_providers_covers_registry_and_aliases():
     assert "openai" in SUPPORTED_PROVIDERS
     assert "gemini" in SUPPORTED_PROVIDERS
     assert "krill" in SUPPORTED_PROVIDERS
+    assert "atlascloud" in SUPPORTED_PROVIDERS
 
 
 def test_fallback_key_is_not_reusable_as_a_provider_key(monkeypatch):
