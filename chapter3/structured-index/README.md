@@ -18,7 +18,7 @@ Two advanced approaches for large technical documents (e.g. Intel® SDM-style ma
 
 ### Features
 
-**RAPTOR:** multi-level abstraction; recursive summaries; leaf→root search; GMM clustering; UMAP.
+**RAPTOR:** multi-level abstraction; recursive summaries; root→leaf search; GMM clustering; UMAP.
 
 **GraphRAG:** LLM entity/relation extract; community detection; community summaries; multi-strategy search; **`GraphRAGIndexer.multi_hop_search`** for “how is A connected to B” questions flat vector search cannot express.
 
@@ -188,7 +188,7 @@ Backend for agentic-rag style projects; see related chapter labs.
 
 ### 功能
 
-**RAPTOR：** 多层抽象、递归摘要、自叶到根检索、GMM 聚类、UMAP。  
+**RAPTOR：** 多层抽象、递归摘要、自根到叶检索、GMM 聚类、UMAP。  
 **GraphRAG：** LLM 抽实体关系、社区发现、社区摘要、多策略检索、**多跳关系遍历**（扁平向量难以表达的「A 与 B 如何相连」）。  
 **HTTP API：** 构建/查询、上传、异步大文档、混合检索、状态统计。
 
