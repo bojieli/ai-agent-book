@@ -99,7 +99,6 @@
   "Add note": "הוספת הערה",
   "YOUR READING NOTES": "הערות הקריאה שלכם",
   "Close highlights": "סגירת ההדגשות",
-  "Chapter 1 · Saved in this browser": "פרק 1 · נשמר בדפדפן הזה",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "בחרו טקסט כדי להדגיש אותו או להוסיף הערה. לחצו על הדגשה כדי לערוך את ההערה שלה. ייצאו גיבוי כדי לשמור את ההדגשות וההערות בעת מחיקת נתוני הדפדפן או מעבר למכשיר אחר.",
   "Export backup": "ייצוא גיבוי",
   "Import backup": "ייבוא גיבוי",
@@ -166,7 +165,6 @@
   "Zoom in": "הגדלה",
   "Zoom level": "רמת הגדלה",
   "Fit": "התאמה",
-  "Open original": "פתיחת המקור",
   "Diagram viewport": "אזור תצוגת התרשים",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "הגדילו ואז גללו או גררו כדי לחקור. האפשרות התאמה מציגה את התרשים כולו.",
   "Undo": "ביטול",
@@ -184,5 +182,8 @@
   "By": "מאת",
   "and the open-source community": "וקהילת הקוד הפתוח",
   "Footnotes": "הערות שוליים",
-  "Back to reference": "חזרה למקום ההפניה"
+  "Back to reference": "חזרה למקום ההפניה",
+  "Open image": "פתיחת תמונה",
+  "Wrap lines": "גלישת שורות",
+  "Chapter {chapter} · Saved in this browser": "פרק {chapter} · נשמר בדפדפן הזה"
 }

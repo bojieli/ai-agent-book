@@ -99,7 +99,6 @@
   "Add note": "Adicionar nota",
   "YOUR READING NOTES": "SUAS NOTAS DE LEITURA",
   "Close highlights": "Fechar destaques",
-  "Chapter 1 · Saved in this browser": "Capítulo 1 · Salvo neste navegador",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "Selecione um texto para destacá-lo ou adicionar uma nota. Clique em um destaque para editar sua nota. Exporte um backup para preservar seus destaques e notas se limpar os dados do navegador ou trocar de dispositivo.",
   "Export backup": "Exportar backup",
   "Import backup": "Importar backup",
@@ -166,7 +165,6 @@
   "Zoom in": "Aumentar zoom",
   "Zoom level": "Nível de zoom",
   "Fit": "Ajustar",
-  "Open original": "Abrir original",
   "Diagram viewport": "Área de visualização do diagrama",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "Amplie e depois role ou arraste para explorar. Ajustar mostra o diagrama inteiro.",
   "Undo": "Desfazer",
@@ -184,5 +182,8 @@
   "By": "Por",
   "and the open-source community": "e a comunidade de código aberto",
   "Footnotes": "Notas de rodapé",
-  "Back to reference": "Voltar à referência"
+  "Back to reference": "Voltar à referência",
+  "Open image": "Abrir imagem",
+  "Wrap lines": "Quebrar linhas",
+  "Chapter {chapter} · Saved in this browser": "Capítulo {chapter} · Salvo neste navegador"
 }

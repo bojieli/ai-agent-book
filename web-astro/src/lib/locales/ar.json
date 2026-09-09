@@ -99,7 +99,6 @@
   "Add note": "إضافة ملاحظة",
   "YOUR READING NOTES": "ملاحظات القراءة",
   "Close highlights": "إغلاق التظليلات",
-  "Chapter 1 · Saved in this browser": "الفصل الأول · محفوظ في هذا المتصفح",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "حدّد نصًا لتظليله أو إضافة ملاحظة. انقر على التظليل لتعديل ملاحظته. صدّر نسخة احتياطية للاحتفاظ بتظليلاتك وملاحظاتك عند مسح بيانات المتصفح أو تغيير الجهاز.",
   "Export backup": "تصدير نسخة احتياطية",
   "Import backup": "استيراد نسخة احتياطية",
@@ -166,7 +165,6 @@
   "Zoom in": "تكبير",
   "Zoom level": "مستوى التكبير",
   "Fit": "ملاءمة",
-  "Open original": "فتح الأصل",
   "Diagram viewport": "منطقة عرض المخطط",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "كبّر ثم مرّر أو اسحب لاستكشاف المخطط. يعرض خيار «ملاءمة» المخطط كاملًا.",
   "Undo": "تراجع",
@@ -184,5 +182,8 @@
   "By": "تأليف",
   "and the open-source community": "ومجتمع المصادر المفتوحة",
   "Footnotes": "الحواشي",
-  "Back to reference": "العودة إلى موضع الإحالة"
+  "Back to reference": "العودة إلى موضع الإحالة",
+  "Open image": "فتح الصورة",
+  "Wrap lines": "التفاف الأسطر",
+  "Chapter {chapter} · Saved in this browser": "الفصل {chapter} · محفوظ في هذا المتصفح"
 }

@@ -1,9 +1,15 @@
 ---
 import { translator, editions, locales, type Locale } from '../lib/i18n';
 import Icon from './Icon.astro';
+import machineTranslation from '../lib/machine-translation.json';
 import { repo } from '../lib/book';
-const { reader = false, locale = 'en' } = Astro.props as {
+const {
+  reader = false,
+  locale = 'en',
+  chapterNumber = 1,
+} = Astro.props as {
   reader?: boolean;
+  chapterNumber?: number;
   locale?: Locale;
 };
 const t = translator(locale);
@@ -22,7 +28,7 @@ const edition = editions[locale];
   >
   <nav class="header-nav" aria-label={t('Main navigation')}>
     <a href={`${edition.home}#contents`}>{t('The book')}</a>
-    <a class="desktop-link" href={`${repo}/tree/main/chapter1`}
+    <a class="desktop-link" href={`${repo}/tree/main/chapter${chapterNumber}`}
       >{t('Experiments')} <Icon name="external" size={15} /></a
     >
     <a href={repo}>GitHub <Icon name="external" size={15} /></a>
@@ -39,7 +45,9 @@ const edition = editions[locale];
           locales.map((language) => (
             <a
               href={
-                reader ? editions[language].chapter : editions[language].home
+                reader
+                  ? `/${editions[language].directory}/chapter${chapterNumber}${editions[language].suffix}/`
+                  : editions[language].home
               }
               lang={language}
               hreflang={language}
@@ -48,6 +56,24 @@ const edition = editions[locale];
             >
               {editions[language].name}
               <span aria-hidden="true">{language === locale ? '✓' : ''}</span>
+            </a>
+          ))
+        }
+        <div class="machine-language-heading" dir="auto">
+          机器翻译 / Machine translation<br /><small
+            >未经审核 / Not vetted</small
+          >
+        </div>
+        {
+          machineTranslation.languages.map((language) => (
+            <a
+              data-machine-language={language.name}
+              href={`${reader ? `/book-en/chapter${chapterNumber}/` : editions.en.home}?translate=${language.locale}`}
+              lang={language.locale}
+              dir={'dir' in language ? language.dir : 'ltr'}
+            >
+              {language.label}
+              <small aria-hidden="true">MT</small>
             </a>
           ))
         }

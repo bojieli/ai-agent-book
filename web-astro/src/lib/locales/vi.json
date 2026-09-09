@@ -99,7 +99,6 @@
   "Add note": "Thêm ghi chú",
   "YOUR READING NOTES": "GHI CHÚ ĐỌC SÁCH CỦA BẠN",
   "Close highlights": "Đóng đoạn đánh dấu",
-  "Chapter 1 · Saved in this browser": "Chương 1 · Đã lưu trong trình duyệt này",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "Chọn văn bản để đánh dấu hoặc thêm ghi chú. Nhấp vào đoạn đánh dấu để sửa ghi chú. Xuất bản sao lưu để giữ lại các đoạn đánh dấu và ghi chú khi bạn xóa dữ liệu trình duyệt hoặc đổi thiết bị.",
   "Export backup": "Xuất bản sao lưu",
   "Import backup": "Nhập bản sao lưu",
@@ -166,7 +165,6 @@
   "Zoom in": "Phóng to",
   "Zoom level": "Mức thu phóng",
   "Fit": "Vừa khung",
-  "Open original": "Mở bản gốc",
   "Diagram viewport": "Vùng hiển thị sơ đồ",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "Phóng to rồi cuộn hoặc kéo để khám phá. Chọn Vừa khung để xem toàn bộ sơ đồ.",
   "Undo": "Hoàn tác",
@@ -184,5 +182,8 @@
   "By": "Tác giả",
   "and the open-source community": "và cộng đồng mã nguồn mở",
   "Footnotes": "Chú thích",
-  "Back to reference": "Về vị trí tham chiếu"
+  "Back to reference": "Về vị trí tham chiếu",
+  "Open image": "Mở hình ảnh",
+  "Wrap lines": "Ngắt dòng",
+  "Chapter {chapter} · Saved in this browser": "Chương {chapter} · Đã lưu trong trình duyệt này"
 }

@@ -99,7 +99,6 @@
   "Add note": "Добавить заметку",
   "YOUR READING NOTES": "ВАШИ ЗАМЕТКИ К КНИГЕ",
   "Close highlights": "Закрыть выделения",
-  "Chapter 1 · Saved in this browser": "Глава 1 · Сохранено в этом браузере",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "Выберите текст, чтобы выделить его или добавить заметку. Нажмите на выделение, чтобы изменить заметку. Экспортируйте резервную копию, чтобы сохранить выделения и заметки при очистке данных браузера или смене устройства.",
   "Export backup": "Экспорт копии",
   "Import backup": "Импорт копии",
@@ -166,7 +165,6 @@
   "Zoom in": "Увеличить",
   "Zoom level": "Уровень масштаба",
   "Fit": "Вписать",
-  "Open original": "Открыть оригинал",
   "Diagram viewport": "Область просмотра схемы",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "Увеличьте схему, затем прокручивайте или перетаскивайте её. Кнопка «Вписать» показывает схему целиком.",
   "Undo": "Отменить",
@@ -184,5 +182,8 @@
   "By": "Автор:",
   "and the open-source community": "и сообщество открытого исходного кода",
   "Footnotes": "Сноски",
-  "Back to reference": "Вернуться к ссылке"
+  "Back to reference": "Вернуться к ссылке",
+  "Open image": "Открыть изображение",
+  "Wrap lines": "Перенос строк",
+  "Chapter {chapter} · Saved in this browser": "Глава {chapter} · Сохранено в этом браузере"
 }

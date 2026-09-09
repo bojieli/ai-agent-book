@@ -103,6 +103,8 @@ export function initFigureViewer() {
     index = 0;
     fitWidth = 0;
     image.style.width = '';
+    image.dataset.figureLight = source.dataset.figureLight ?? source.src;
+    image.dataset.figureDark = source.dataset.figureDark ?? source.src;
     image.src = source.currentSrc || source.src;
     image.alt = source.alt;
     get<HTMLAnchorElement>('figure-original').href = image.src;

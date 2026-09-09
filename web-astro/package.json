@@ -18,7 +18,10 @@
     "@astrojs/markdown-remark": "^7.3.0",
     "@fontsource-variable/manrope": "^5.3.0",
     "@fontsource-variable/newsreader": "^5.3.0",
-    "astro": "^7.3.1"
+    "astro": "^7.3.1",
+    "katex": "^0.18.7",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

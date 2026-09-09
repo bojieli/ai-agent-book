@@ -1,5 +1,6 @@
 export interface ReadingPosition {
   version: 1;
+  updatedAt?: number;
   chapter: string;
   section: string;
   sectionTitle: string;
@@ -17,6 +18,8 @@ export function parsePosition(
     if (
       !p ||
       p.version !== 1 ||
+      (p.updatedAt !== undefined &&
+        (!Number.isFinite(p.updatedAt) || p.updatedAt < 0)) ||
       p.chapter !== chapter ||
       typeof p.section !== 'string' ||
       p.section.length > 500 ||

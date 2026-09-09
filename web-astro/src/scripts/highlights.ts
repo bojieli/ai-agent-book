@@ -1,3 +1,4 @@
+import { machineLanguage } from '../lib/machine-language';
 import { browserTranslator } from '../lib/i18n';
 import { createNoteEditor } from './note-editor';
 import {
@@ -15,6 +16,7 @@ import {
 } from '../lib/highlight-store';
 
 export async function initHighlights() {
+  if (machineLanguage(new URL(location.href))) return;
   const t = browserTranslator();
   const article = document.querySelector<HTMLElement>('#chapter-content');
   if (!article) return;
@@ -32,7 +34,7 @@ export async function initHighlights() {
   const dialogStatus = element<HTMLParagraphElement>('highlight-dialog-status');
   const exportButton = element<HTMLButtonElement>('export-highlights');
   const importInput = element<HTMLInputElement>('import-highlights');
-  const excluded = 'pre, figure, button, script, style, .footnotes';
+  const excluded = 'pre, figure, button, script, style, .footnotes, .katex';
   let db: IDBDatabase | undefined;
   let records: Annotation[] = [];
   const removed: Annotation[] = [];
@@ -494,7 +496,7 @@ export async function initHighlights() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `ai-agent-book-${document.documentElement.lang}-chapter1-highlights.json`;
+      link.download = `ai-agent-book-${document.documentElement.lang}-${chapterKey.split(':').at(-1)}-highlights.json`;
       document.body.append(link);
       link.click();
       link.remove();

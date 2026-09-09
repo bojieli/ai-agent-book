@@ -7,14 +7,19 @@ import { getBook, repo } from '../lib/book';
 import { translator, editions, type Locale } from '../lib/i18n';
 import type { MarkdownInstance } from 'astro';
 interface Props {
+  sectionLinks: Record<string, Record<string, string>>;
+  chapterNumber: number;
   locale: Locale;
   chapter: MarkdownInstance<Record<string, unknown>>;
 }
-const { locale, chapter } = Astro.props;
+const { locale, chapter, sectionLinks, chapterNumber } = Astro.props;
 const { Content, getHeadings } = chapter;
 const t = translator(locale);
 const edition = editions[locale];
-const { chapters, readingMinutes } = getBook(locale);
+const { chapters, readingMinutes } = getBook(locale, chapterNumber);
+const current = chapters[chapterNumber - 1];
+const previous = chapters[chapterNumber - 2];
+const next = chapters[chapterNumber];
 import '../styles/reader.css';
 const headings = getHeadings().filter((heading) => heading.depth === 2);
 const outline = getHeadings().filter(
@@ -24,10 +29,16 @@ const outline = getHeadings().filter(
 
 <Layout
   locale={locale}
-  title={`${chapters[0].title} — ${t('AI Agents in Depth')}`}
+  title={`${current.title} — ${t('AI Agents in Depth')}`}
   reader
 >
-  <Header locale={locale} reader />
+  <Header locale={locale} reader chapterNumber={chapterNumber} />
+  <script
+    is:inline
+    id="section-language-links"
+    type="application/json"
+    set:html={JSON.stringify(sectionLinks).replaceAll('<', '\\u003c')}
+  />
   <div class="reading-progress" aria-hidden="true">
     <div id="reading-progress-bar"></div>
   </div>
@@ -41,8 +52,10 @@ const outline = getHeadings().filter(
         {
           chapters.map((chapter) => (
             <a
-              class:list={{ active: chapter.number === 1 }}
-              aria-current={chapter.number === 1 ? 'page' : undefined}
+              class:list={{ active: chapter.number === chapterNumber }}
+              aria-current={
+                chapter.number === chapterNumber ? 'page' : undefined
+              }
               href={chapter.href}
             >
               <span>{chapter.title}</span>
@@ -52,7 +65,7 @@ const outline = getHeadings().filter(
         }
       </nav>
       <div class="rail-bottom">
-        <a href={`${repo}/tree/main/chapter1`}
+        <a href={`${repo}/tree/main/chapter${chapterNumber}`}
           ><Icon name="book" size={17} />
           {t('Companion experiments')}
           <Icon name="external" size={14} /></a
@@ -66,16 +79,16 @@ const outline = getHeadings().filter(
       <div class="reader-topline">
         <a href={`${edition.home}#contents`}>{t('The book')}</a><span
           aria-hidden="true">/</span
-        ><span>{t('Chapter 01')}</span><span class="reading-time"
-          >{readingMinutes} {t('min read')}</span
+        ><span>{t('Chapter 01').replace('01', current.label)}</span><span
+          class="reading-time">{readingMinutes} {t('min read')}</span
         >
       </div>
       <header class="chapter-heading">
         <p class="eyebrow">
-          <span class="chapter-badge">01</span>
-          {t('Foundations')}
+          <span class="chapter-badge">{current.label}</span>
+          {chapterNumber === 1 ? t('Foundations') : current.title}
         </p>
-        <h1>{chapters[0].title}</h1>
+        <h1>{current.title}</h1>
         <div class="chapter-toolbar">
           <span>{t('From principles to practice')}</span><div
             class="reader-controls"
@@ -90,7 +103,7 @@ const outline = getHeadings().filter(
               ><Icon name="menu" size={17} /><span>{t('Sections')}</span
               ></button
             >
-            <Highlights locale={locale} />
+            <Highlights locale={locale} chapterNumber={chapterNumber} />
             <details class="reading-settings">
               <summary aria-label={t('Reading settings')}
                 ><span class="type-icon">Aa</span><span class="setting-label"
@@ -166,36 +179,43 @@ const outline = getHeadings().filter(
       <article
         class="prose"
         id="chapter-content"
-        data-chapter-key={`ai-agents-in-depth:${locale}:chapter1`}
+        data-chapter-key={`ai-agents-in-depth:${locale}:chapter${chapterNumber}`}
       >
         <Content />
       </article>
       <div class="chapter-end">
         <span class="eyebrow">{t('Put it into practice')}</span><h2>
-          {t('Make your first agent.')}
+          {
+            chapterNumber === 1
+              ? t('Make your first agent.')
+              : t('Companion experiments')
+          }
         </h2><p>
           {
             t(
               'Explore the chapter’s companion experiments and see these ideas in code.',
             )
           }
-        </p><a class="button button-primary" href={`${repo}/tree/main/chapter1`}
+        </p><a
+          class="button button-primary"
+          href={`${repo}/tree/main/chapter${chapterNumber}`}
           >{t('Explore the experiments')} <Icon name="external" /></a
         >
       </div>
       <nav class="chapter-pager" aria-label={t('Previous and next chapters')}>
-        <a href={edition.home}
-          ><span>← &nbsp; {t('BACK TO')}</span><strong>{t('The book')}</strong
+        <a href={previous?.href ?? edition.home}
+          ><span>← &nbsp; {t('BACK TO')}</span><strong
+            >{previous?.title ?? t('The book')}</strong
           ></a
-        ><a href={chapters[1].href}
-          ><span>{t('UP NEXT')} &nbsp; ↗</span><strong
-            >02 &nbsp; {chapters[1].title}</strong
+        ><a href={next.href}
+          ><span>{t('UP NEXT')} &nbsp; {next.external ? '↗' : '→'}</span><strong
+            >{next.label} &nbsp; {next.title}</strong
           ></a
         >
       </nav>
       <footer class="reader-footer">
         <a
-          href={`${repo}/blob/main/${edition.directory}/chapter1${edition.suffix}.md`}
+          href={`${repo}/blob/main/${edition.directory}/chapter${chapterNumber}${edition.suffix}.md`}
           >{t('View chapter source')} <Icon name="external" size={13} /></a
         ><span>{t('AI Agents in Depth')} · {edition.name}</span>
       </footer>
@@ -253,8 +273,10 @@ const outline = getHeadings().filter(
         {
           chapters.map((chapter) => (
             <a
-              class:list={{ active: chapter.number === 1 }}
-              aria-current={chapter.number === 1 ? 'page' : undefined}
+              class:list={{ active: chapter.number === chapterNumber }}
+              aria-current={
+                chapter.number === chapterNumber ? 'page' : undefined
+              }
               href={chapter.href}
             >
               <span>{chapter.title}</span>
@@ -286,7 +308,7 @@ const outline = getHeadings().filter(
       >
       <button id="figure-fit" type="button">{t('Fit')}</button>
       <a id="figure-original" target="_blank" rel="noopener"
-        >{t('Open original')}</a
+        >{t('Open image')}</a
       >
       <button
         class="icon-button"
@@ -334,7 +356,7 @@ const outline = getHeadings().filter(
     const applySize = () => {
       root.style.setProperty(
         '--reading-size',
-        `${1.125 * sizes[sizeIndex]}rem`,
+        `${1.0625 * sizes[sizeIndex]}rem`,
       );
       sizeOutput.value = `${Math.round(sizes[sizeIndex] * 100)}%`;
       smaller.disabled = sizeIndex === 0;
@@ -417,6 +439,20 @@ const outline = getHeadings().filter(
           dialog.close();
       }),
     );
+    const syncFigureTheme = () => {
+      const dark = document.documentElement.dataset.theme === 'dark';
+      document
+        .querySelectorAll<HTMLImageElement>('img[data-figure-light]')
+        .forEach((img) => {
+          const src = dark ? img.dataset.figureDark : img.dataset.figureLight;
+          if (src && img.getAttribute('src') !== src) img.src = src;
+        });
+    };
+    syncFigureTheme();
+    new MutationObserver(syncFigureTheme).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
     document.querySelectorAll<HTMLImageElement>('.prose img').forEach((img) => {
       const button = document.createElement('button');
       button.className = 'figure-zoom';
@@ -437,12 +473,36 @@ const outline = getHeadings().filter(
       wrapper.className = 'code-block';
       pre.replaceWith(wrapper);
       wrapper.append(pre);
+      const toolbar = document.createElement('div');
+      toolbar.className = 'code-toolbar';
+      wrapper.prepend(toolbar);
+      const wrap = document.createElement('button');
+      wrap.className = 'copy-code';
+      wrap.type = 'button';
+      wrap.textContent = t('Wrap lines');
+      const defaultWrap =
+        [
+          'jsonc',
+          'agent-pseudocode',
+          'agent-instructions',
+          'book-example',
+          'xml',
+        ].includes(pre.dataset.language ?? '') ||
+        (pre.dataset.language === 'python' &&
+          pre.textContent?.startsWith('query = "Refund process"'));
+      pre.classList.toggle('wrap-code', defaultWrap);
+      wrap.setAttribute('aria-pressed', String(defaultWrap));
+      wrap.addEventListener('click', () => {
+        const enabled = pre.classList.toggle('wrap-code');
+        wrap.setAttribute('aria-pressed', String(enabled));
+      });
+      toolbar.append(wrap);
       const button = document.createElement('button');
       button.className = 'copy-code';
       button.type = 'button';
       button.textContent = t('Copy');
       button.setAttribute('aria-label', t('Copy code'));
-      wrapper.append(button);
+      toolbar.append(button);
       button.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText(pre.textContent ?? '');
@@ -464,6 +524,12 @@ const outline = getHeadings().filter(
       document.getElementById(decodeURIComponent(link.hash.slice(1))),
     );
     let ticking = false;
+    const languageSections: Record<string, Record<string, string>> = JSON.parse(
+      document.getElementById('section-language-links')?.textContent ?? '{}',
+    );
+    const languageLinks = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>('.language-picker a'),
+    );
     const updateReading = () => {
       const rect = content.getBoundingClientRect();
       const fraction = Math.max(
@@ -488,6 +554,26 @@ const outline = getHeadings().filter(
             decodeURIComponent(link.hash.slice(1)) === sections[active]?.id;
           if (selected) link.setAttribute('aria-current', 'location');
           else link.removeAttribute('aria-current');
+        });
+      languageLinks.forEach((link) => {
+        const slug =
+          active >= 0
+            ? languageSections[sections[active]?.id ?? '']?.[link.lang]
+            : undefined;
+        const url = new URL(link.href);
+        url.hash = slug ?? '';
+        link.href = url.href;
+      });
+      document
+        .querySelectorAll<HTMLAnchorElement>('[data-machine-language]')
+        .forEach((link) => {
+          const slug =
+            active >= 0
+              ? languageSections[sections[active]?.id ?? '']?.en
+              : undefined;
+          const url = new URL(link.href);
+          url.hash = slug ?? '';
+          link.href = url.href;
         });
       ticking = false;
     };

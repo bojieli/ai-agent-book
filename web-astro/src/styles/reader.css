@@ -447,12 +447,29 @@
   position: relative;
 }
 .code-block pre {
-  padding-top: 48px;
+  margin-top: 0;
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+}
+.code-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-top: 1.5em;
+  background: #24292e;
+  border-radius: 4px 4px 0 0;
+}
+.prose pre.wrap-code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.copy-code[aria-pressed='true'] {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
 }
 .copy-code {
-  position: absolute;
-  top: 10px;
-  right: 12px;
   color: #c6ccc2;
   border: 1px solid #555e50;
   border-radius: 3px;
@@ -1216,3 +1233,17 @@
 [dir='rtl'] .reading-progress > div {
   transform-origin: right;
 }
+
+.prose .katex { font-size: 1em; }
+.prose .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.3em 0; }
+.prose .katex { direction: ltr; }
+
+/* One presentation frame for vector diagrams and unchanged raster evidence. */
+.prose figure img, .prose p > img, .figure-canvas {
+  background: #f7f9fc;
+  border-radius: 8px;
+}
+.prose figure img, .prose p > img { padding: 8px; }
+[data-theme='dark'] .prose figure img,
+[data-theme='dark'] .prose p > img,
+[data-theme='dark'] .figure-canvas { background: #171e29; }

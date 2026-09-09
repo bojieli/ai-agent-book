@@ -1,3 +1,4 @@
+import { availableChapters } from './available-chapters.mjs';
 import { editions, translator, type Locale } from './i18n';
 const chapterSources = import.meta.glob<string>(
   ['../../../book/chapter*.md', '../../../book-*/chapter*.md'],
@@ -22,7 +23,7 @@ const descriptions = [
   'Turn execution experience into lasting improvements.',
   'Coordinate agents, share context, and divide complex work.',
 ];
-export function getBook(locale: Locale) {
+export function getBook(locale: Locale, chapterNumber = 1) {
   const edition = editions[locale];
   const t = translator(locale);
   const chapterPath = edition.chapter;
@@ -38,16 +39,15 @@ export function getBook(locale: Locale) {
       label: String(number).padStart(2, '0'),
       title,
       description: t(descriptions[index]),
-      href:
-        number === 1
-          ? chapterPath
-          : `${originalSite}/${edition.directory}/chapter${number}${edition.suffix}/`,
-      external: number !== 1,
+      href: availableChapters.includes(number)
+        ? `/${edition.directory}/chapter${number}${edition.suffix}/`
+        : `${originalSite}/${edition.directory}/chapter${number}${edition.suffix}/`,
+      external: !availableChapters.includes(number),
     };
   });
   const firstChapter =
     chapterSources[
-      `../../../${edition.directory}/chapter1${edition.suffix}.md`
+      `../../../${edition.directory}/chapter${chapterNumber}${edition.suffix}.md`
     ];
   // CJK prose has no spaces between words; estimate characters and Latin words separately.
   const cjk =

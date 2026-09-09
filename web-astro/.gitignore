@@ -5,3 +5,5 @@ dist/
 !.prettierignore
 public/book/
 public/book-*/
+
+public/figures/book/

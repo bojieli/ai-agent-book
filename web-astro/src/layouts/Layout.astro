@@ -2,6 +2,7 @@
 import '@fontsource-variable/manrope';
 import '@fontsource-variable/newsreader';
 import '../styles/global.css';
+import 'katex/dist/katex.min.css';
 import { translator, editions, getMessages, type Locale } from '../lib/i18n';
 interface Props {
   title: string;
@@ -44,6 +45,10 @@ const t = translator(locale);
   <body class:list={[{ 'reader-page': reader }]}>
     <a class="skip-link" href="#main-content">{t('Skip to content')}</a>
     <slot />
+    <script>
+      import { initMachineTranslation } from '../scripts/machine-translation';
+      initMachineTranslation();
+    </script>
     <script
       is:inline
       id="book-ui-messages"

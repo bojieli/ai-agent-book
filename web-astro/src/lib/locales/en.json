@@ -99,7 +99,6 @@
   "Add note": "Add note",
   "YOUR READING NOTES": "YOUR READING NOTES",
   "Close highlights": "Close highlights",
-  "Chapter 1 · Saved in this browser": "Chapter 1 · Saved in this browser",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.",
   "Export backup": "Export backup",
   "Import backup": "Import backup",
@@ -166,7 +165,6 @@
   "Zoom in": "Zoom in",
   "Zoom level": "Zoom level",
   "Fit": "Fit",
-  "Open original": "Open original",
   "Diagram viewport": "Diagram viewport",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.",
   "Undo": "Undo",
@@ -184,5 +182,8 @@
   "By": "By",
   "and the open-source community": "and the open-source community",
   "Footnotes": "Footnotes",
-  "Back to reference": "Back to reference"
+  "Back to reference": "Back to reference",
+  "Open image": "Open image",
+  "Wrap lines": "Wrap lines",
+  "Chapter {chapter} · Saved in this browser": "Chapter {chapter} · Saved in this browser"
 }

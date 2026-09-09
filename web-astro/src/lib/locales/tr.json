@@ -99,7 +99,6 @@
   "Add note": "Not ekle",
   "YOUR READING NOTES": "OKUMA NOTLARINIZ",
   "Close highlights": "Vurguları kapat",
-  "Chapter 1 · Saved in this browser": "Bölüm 1 · Bu tarayıcıda kayıtlı",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "Vurgulamak veya not eklemek için metni seçin. Notunu düzenlemek için bir vurguya tıklayın. Tarayıcı verilerini temizlediğinizde veya cihaz değiştirdiğinizde vurgularınızı ve notlarınızı korumak için bir yedek dışa aktarın.",
   "Export backup": "Yedeği dışa aktar",
   "Import backup": "Yedeği içe aktar",
@@ -166,7 +165,6 @@
   "Zoom in": "Yakınlaştır",
   "Zoom level": "Yakınlaştırma düzeyi",
   "Fit": "Sığdır",
-  "Open original": "Özgününü aç",
   "Diagram viewport": "Diyagram görüntüleme alanı",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "Yakınlaştırın, ardından keşfetmek için kaydırın veya sürükleyin. Sığdır, diyagramın tamamını gösterir.",
   "Undo": "Geri al",
@@ -184,5 +182,8 @@
   "By": "Yazar:",
   "and the open-source community": "ve açık kaynak topluluğu",
   "Footnotes": "Dipnotlar",
-  "Back to reference": "Referansa dön"
+  "Back to reference": "Referansa dön",
+  "Open image": "Görseli aç",
+  "Wrap lines": "Satırları kaydır",
+  "Chapter {chapter} · Saved in this browser": "Bölüm {chapter} · Bu tarayıcıda kayıtlı"
 }

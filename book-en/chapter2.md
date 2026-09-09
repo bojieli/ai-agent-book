@@ -1,10 +1,10 @@
 # Context Engineering
 
-Chapter 1 compared context to an Agent's "eyes": an Agent can make decisions only from the information it sees. The design and management of context is called **Context Engineering**. Context is all the information the AI actually "sees" whenever you interact with it. It includes not only the conversation history, but also developer-written rules of behavior (system instructions), descriptions of external capabilities available to the AI (tool descriptions), and other information. From the Harness perspective introduced in Chapter 1, context engineering is a core implementation of the Harness's "Context and Tools" layer: it determines what information the Agent sees at each decision point and how that information is structured. A well-designed context is an efficient information-supply system that lets the Agent apply its general reasoning ability fully to a concrete task.
+As Chapter 1 explained, an agent can only act on the information available to it. Designing and managing that information is called **context engineering**. Context is all the information the AI actually "sees" whenever you interact with it. It includes not only the conversation history, but also developer-written rules of behavior (system instructions), descriptions of external capabilities available to the AI (tool descriptions), and other information. From the Harness perspective introduced in Chapter 1, context engineering is a core implementation of the Harness's "Context and Tools" layer: it determines what information the Agent sees at each decision point and how that information is structured. Well-designed context provides the information the Agent needs to apply its reasoning abilities to a specific task.
 
 ![Figure 2-1: Overview of the Context Window Composition](images/fig2-1.svg)
 
-## Context: The Ceiling of Agent Capability
+## Context: What Determines an Agent’s Capabilities
 
 Large language models achieve strong results on standardized benchmarks, but often disappoint in real-world business settings. That is because concrete tasks require background information—such as product architecture, business rules, and internal conventions—that a general-purpose model simply does not know.
 
@@ -250,7 +250,9 @@ If the user wants more information (for example, by asking "What about Tokyo?"),
 
 ### Implementing the Agent's Core Loop in Code
 
-Now that the JSON structure is clear, we can connect the steps above in Python. The following is a minimal Agent implementation built around a single loop: This chapter deliberately keeps this full API loop as a protocol reference; other chapters use Python-style skeleton code to explain mechanisms.
+Now that the JSON structure is clear, we can connect these steps in Python. The following minimal Agent implementation uses a single loop.
+
+This chapter includes the full API loop as a reference for the protocol. Other chapters use simplified Python-style code to explain how individual mechanisms work.
 
 ```python
 from openai import OpenAI
@@ -396,7 +398,7 @@ request.tools = stable_tools
 response = call_model(request)
 ```
 
-Keep the system prompt and core tool definitions as stable as possible; compress old tool outputs only in batches as the budget approaches; and place the current state at the tail of the trajectory so the model does not have to re-derive it from a long history.
+Keep the system prompt and core tool definitions as stable as possible; compress older tool outputs in batches as context usage approaches the token budget; and place the current state at the tail of the trajectory so the model does not have to re-derive it from a long history.
 
 > **Experiment 2-1 ★: Local LLM Service Deployment and Tool Calling**
 >
@@ -424,7 +426,7 @@ Keep the system prompt and core tool definitions as stable as possible; compress
 >
 > **Parallel Tool Calls**: In the Vancouver time and weather example from this section, the model found no dependency between the two sub-problems, so it generated two tool call requests in one output. The Agent framework can detect this and execute both tools in parallel, reducing total latency.
 >
-> **Model's Termination Judgment**: When the Agent framework sends back the tool results, the model determines whether it has enough information to answer the user. If so, it outputs the final reply without requesting another tool call; otherwise, it issues additional tool calls and begins another ReAct round.
+> **Deciding When to Stop**: When the Agent framework sends back the tool results, the model determines whether it has enough information to answer the user. If so, it outputs the final reply without requesting another tool call; otherwise, it issues additional tool calls and begins another ReAct round.
 >
 > **Experiment Summary.**
 >
@@ -575,7 +577,7 @@ Claude Code illustrates a broader pattern: when Prompt Cache has significant eco
 
 The core insight is that **caching economics is not a post-hoc optimization but an upfront architectural constraint.** The earlier this constraint is incorporated into the architecture, the lower the subsequent engineering cost.
 
-### KV Cache Is Not Necessarily One-Shot: Editable, Composable "Notes"
+### Rethinking KV Cache: Editable, Composable "Notes"
 
 (The following is optional advanced material from current research. It can be skipped on first reading without affecting the rest of this chapter; the three practical conclusions above are the foundation.)
 
@@ -667,9 +669,9 @@ This process design helps the model track which stage it is in, what the current
 
 ### Translating Business Rules into Executable Instructions
 
-When building production-grade Agent systems, the most easily overlooked—and most critical—piece is **business rule refinement**. This is not a technical problem but a product-design problem, and it demands deep involvement from product managers.
+When building production-grade Agent systems, one of the most critical and easily overlooked steps is **turning business policies into precise decision rules**. This is not a technical problem but a product-design problem, and it demands deep involvement from product managers.
 
-Consider an Agent that helps users make phone calls to resolve billing issues: the user tells the Agent they want to lower a subscription fee or request a refund, and the Agent automatically calls customer service to complete the negotiation. The billing system design for such a service is a typical case of business rule refinement. The product manager's core requirement is "if it does not work, refund," encouraging users to try while preventing abuse. The team designed three billing models:
+Consider an Agent that helps users make phone calls to resolve billing issues: the user tells the Agent they want to lower a subscription fee or request a refund, and the Agent automatically calls customer service to complete the negotiation. Designing the billing system for such a service illustrates why these rules need to be precise. The product manager's core requirement is "refund the service fee if the task is unsuccessful," encouraging users to try while preventing abuse. The team designed three billing models:
 
 - **Commission on savings**: The Agent negotiates on behalf of the user, taking a cut, e.g., 20% of the money saved.
 - **Fixed service fee**: For tasks that do not involve saving money, such as booking a restaurant, charge a fixed fee based on complexity.
@@ -699,7 +701,7 @@ In addition to the system prompt, another important static component in the API 
 
 Claude Code's tool definitions show that each tool description is carefully designed with usage boundaries ("NEVER invoke grep or rg as a Bash command"), concrete examples (`timezone: 'America/New_York'`), performance tips ("Batch your tool calls together"), and relationships between tools ("Use the Read tool at least once before editing"). Chapter 4 discusses the design principles and best practices for tool definitions in detail.
 
-Tool definitions usually form a static prefix with the system prompt. Most LLM APIs send the `tools` field with every request, and providers cache it with the rest of the prefix. Since 2026, however, APIs have begun to support progressive disclosure natively. OpenAI's Responses API provides a `tool_search` tool and a `defer_loading: true` flag[^ch2-toolsearch-oai], allowing the model to load full schemas on demand through `tool_search_call` → `tool_search_output`. Anthropic provides Tool Search through `tool_reference` blocks, while Claude Code defers MCP tools by default: only tool names and server instructions are injected at session start, and full schemas are added after the model searches for them[^ch2-toolsearch-cc]. Codex CLI similarly uses `tool_search` with BM25 retrieval as part of its default architecture[^ch2-toolsearch-codex]. All these mechanisms follow the same pattern as the third Skills approach: the static prefix contains only tool names and brief descriptions, while the full schema is **appended to the end of the context** on demand and becomes part of the trajectory.
+Tool definitions usually form a static prefix with the system prompt. Most LLM APIs send the `tools` field with every request, and providers cache it with the rest of the prefix. Since 2026, however, APIs have begun to support progressive disclosure natively. OpenAI's Responses API provides a `tool_search` tool and a `defer_loading: true` flag[^ch2-toolsearch-oai], allowing the model to load full schemas on demand through `tool_search_call` → `tool_search_output`. Anthropic provides Tool Search through `tool_reference` blocks, while Claude Code defers MCP tools by default: only tool names and server instructions are injected at session start, and full schemas are added after the model searches for them[^ch2-toolsearch-cc]. Codex CLI similarly uses `tool_search` with BM25 retrieval as part of its default architecture[^ch2-toolsearch-codex]. All these mechanisms follow the same progressive-disclosure principle as Skills: the static prefix contains only tool names and brief descriptions, while the full schema is **appended to the end of the context** on demand and becomes part of the trajectory.
 
 [^ch2-toolsearch-oai]: OpenAI, "Tool search", Responses API documentation. https://developers.openai.com/api/docs/guides/tools-tool-search
 [^ch2-toolsearch-cc]: Anthropic, "Scale with MCP tool search", Claude Code documentation. https://code.claude.com/docs/en/mcp
@@ -786,14 +788,14 @@ The metadata's `description` field is important for routing. Keep it short enoug
 [^ch2-4]: Anthropic, "PPTX Skill", 2025. https://github.com/anthropics/skills/
 [^ch2-cc-skill-inject]: Claude Code Docs, [“How Claude Code uses prompt caching”](https://code.claude.com/docs/en/prompt-caching), “Invoking skills and commands”: “Skills and commands inject their instructions as user messages at the point of invocation.” For the division between explicit and model-driven triggering, see Agent Skills, [“How to add skills support to your agent”](https://agentskills.io/client-implementation/adding-skills-support), “User-explicit activation”: the harness intercepts the slash command and injects the content, so the model does not have to take an activation action itself.
 
-**Layer 3 (Details)**: File references allow deeper navigation into more detailed sub-documents. The main file references `html2pptx.md` (detailed workflow for creating PowerPoint from HTML templates), `reference.md` (format technical details), and others. The Agent selectively reads relevant sub-documents based on specific needs.
+**Layer 3 (Details)**: File references allow deeper navigation into more detailed sub-documents. The main file references `html2pptx.md` (detailed workflow for creating PowerPoint from HTML templates), `reference.md` (technical details of the file format), and others. The Agent selectively reads relevant sub-documents based on specific needs.
 
 ### How to Write a Usable Skill
 
 The runtime structure solves “when to load” and “how much to load”; the content still needs to turn experience into instructions a model can execute. A useful Skill should tell a new team member what task it applies to, what order to follow, when to stop and ask for confirmation, and what counts as complete.
 
 Based on the writing guidance in Baoyu's *A Visual Guide to Skills*[^ch2-baoyu-remove-ai-writing-flavor], start with four parts:
-- **Role and reader**: who the Skill serves, what task it covers, and what quality the output should meet;
+- **Role and reader**: who the Skill serves, which tasks it covers, and what quality standards its output must meet;
 - **Core principles**: three to five important judgments, with positive and negative examples for key principles;
 - **Prohibitions**: common errors, out-of-scope actions, and confusing wording, including legitimate exceptions;
 - **References**: glossaries, templates, examples, and more detailed subdocuments. Prefer rules written as “scope + action + exception + verification” over an ever-growing list of forbidden words.
@@ -816,7 +818,7 @@ When assessing Skill context cost, separate the metadata catalog from the full S
 - **Claude Code conceptually**: it exposes a small catalog as runtime context and appends the full instructions at the point where the Skill is invoked. “System prompt” can describe the logical stable instruction layer, but it should not be read as a claim that every client uses an API `system` role. Figure 2-12 shows the model-triggered case, where the trajectory contains the full round trip: a `Skill(skill: "pptx")` tool_use, a placeholder tool_result, and then the body appended as a separate user message. When the user types `/pptx` directly, the client expands it locally, so that pair of tool messages never appears and only the final user message remains.
 - **Codex conceptually**: during turn-context construction it renders the Skills catalog in developer context; an explicitly selected Skill is injected as user context marked with `<skill>`. Skills from other sources may be read on demand through tools.[^ch2-codex-skills]
 
-Harnesses evolve quickly, so their concrete representations may change. The stable design principle is **a small catalog kept discoverable and the full body loaded on demand**. This is what lets Skills combine dynamic loading with controlled context cost. The following two figures show the design from two perspectives: the position of Skills in the trajectory and the evolution of the KV Cache. To make the effect of this design concrete, the following two figures trace, from two perspectives, where Skills sit in the trajectory and how the KV Cache evolves.
+Harnesses evolve quickly, so their concrete representations may change. The stable design principle is **a small catalog kept discoverable and the full body loaded on demand**. This is what lets Skills combine dynamic loading with controlled context cost. The following two figures show where Skills appear in the trajectory and how the KV Cache evolves as they are loaded.
 
 ![Figure 2-12: Complete Structure of the Agent Trajectory After Enabling Skills](images/fig2-12.svg){height=55%}
 
@@ -832,18 +834,18 @@ From a context-management perspective, the Skills mechanism is highly KV Cache-f
 >
 > **Experiment Goal**: Verify the Agent's ability to complete complex tasks by dynamically loading specialized domain Skills.
 >
-> Use Claude Code + PPTX Skill to generate a 10–15 slide presentation from a PDF of an academic paper. The Agent's execution flow demonstrates the progressive loading process:
+> Use Claude Code—or another runtime that supports a Skills metadata catalog and on-demand loading, such as Kimi Code—with Anthropic's official PPTX Skill to generate a 10–15 slide presentation from an academic paper PDF. The experiment tests the Skill; readers can substitute a compatible runtime without needing Anthropic credentials. The Agent's execution flow demonstrates progressive loading:
 >
-> 1. Sees the PPTX Skill description in the Skill metadata list at the end of the context
+> 1. Finds the PPTX Skill in the runtime’s metadata catalog, which is available before the full instructions are loaded
 > 2. Identifies that the task requires this Skill
-> 3. Loads the complete `SKILL.md` via the Skill tool to obtain the core workflow
+> 3. Invokes the Skill or reads `SKILL.md` to load its core workflow
 > 4. Selectively loads `html2pptx.md` for detailed methods
 > 5. Uses bundled tool scripts (e.g., `scripts/thumbnail.py`) for preview generation, and template files as a design starting point
 >
 > **Acceptance Criteria**: The generated PowerPoint covers the paper's main content (title page, problem background, method overview, key results, conclusion), includes at least 3 figures extracted from the paper that are consistent with the text descriptions, and has correct formatting that opens properly in PowerPoint or compatible software.
 >
 
-> **Experiment 2-7 ★★: Creating a "De-AI-ified" Writing Skill from Personal Samples**
+> **Experiment 2-7 ★★: Creating a Writing Skill That Avoids Generic AI Phrasing**
 >
 > **Experiment Goal**: Generate a loadable, inspectable writing Skill from a small set of human-written samples, and observe whether it can reproduce the author's main stylistic preferences in new articles.
 >
@@ -982,7 +984,7 @@ Maintaining the status bar requires attention to two points:
 
 1. **Maintain the status bar with code whenever possible. If an LLM is unavoidable, extract items one by one and aggregate them with code; never ask it to perform a batch count in one shot**. Experiments find that **models trust the status bar almost unconditionally**: write “3 calls made,” and the model accepts three without recalculating. LLMs are already prone to counting errors, which also makes the **status-bar poisoning** risk mentioned earlier worth taking seriously.
 
-2. **Do not delete the original context**. A status bar is a **lossy projection** of the original context: it precomputes only the dimensions you expected to be queried. If the bar is sufficient—as it is for counting and state tracking—you can delete the raw record and save many tokens. But if even one question falls outside the dimensions represented there, accuracy collapses when only the status bar remains.
+2. **Be cautious when deleting the original context.** A status bar is a **lossy projection** of the original context: it precomputes only the dimensions you expected to be queried. If the bar is sufficient—as it is for counting and state tracking—you can delete the raw record and save many tokens. But if even one question falls outside the dimensions represented there, accuracy collapses when only the status bar remains.
 
 The Agent Status Bar is one form of **context compression**. The next section introduces additional context-compression techniques.
 
@@ -1029,7 +1031,7 @@ Before discussing specific compression strategies, we need to resolve an apparen
 
 The key is understanding the **timing and location** of compression. Compression does not modify the context during a single API call; instead, it occurs **between two API calls**, when the Agent framework preprocesses the message list:
 
-1.  **System Prompt and Tool Definitions are never touched**—this is the "static prefix" at the very front of the context, and the KV Cache is continuously cached.
+1.  **System Prompt and Tool Definitions are never touched**—this is the "static prefix" at the very front of the context, and the cached prefix remains reusable.
 2.  **The target of compression is the tool results in the conversation history**—when the Agent framework replaces the original tool output with a compressed summary, the cache after the replacement point becomes invalid, but the cache before it remains valid.
 3.  **This is a conscious trade-off**: without compression, the context expands beyond the window limit and the task fails outright; with it, some cache is lost, but context length stays under control and information density rises. Therefore, the frequency of compression needs to be weighed—frequent compression will frequently break the cache. It is best to perform batch compression when the context approaches the threshold, rather than compressing every round.
 
@@ -1076,8 +1078,8 @@ We have already analyzed the three motivations for compression—controlling len
 
 - **Non-Uniform Distribution of Information Value**: Key decision points, such as personnel lists, have greater value than supporting evidence, such as news details; supporting evidence, in turn, has greater value than redundant noise, such as navigation bars and footer ads.
 - **Semantic Integrity**: "Sutskever left OpenAI in May 2024" cannot be compressed to "Sutskever left"—the time and company name are critical, non-negotiable information.
-- **Task Relevance**: The same content should yield different compression results for different tasks, such as "find the list of founders" versus "learn about personal background."
-- **Compression is Understanding**: Effective compression requires deep semantic understanding—capturing the core meaning of the context with more refined expression. Moreover, the results of explicit compression are reviewable and reusable across sessions.
+- **Task Relevance**: The same content should yield different compression results for different tasks, such as "find the list of founders" versus "learn about personal background." More generally, retrieval tasks need breadth, analytical tasks need depth, and creative tasks need material that sparks ideas. Ideally, the Agent should adapt its compression strategy to the task.
+- **Compression is Understanding**: Effective compression requires deep semantic understanding, so the model performing it should be close to the main model in capability. This creates a recursive architecture in which one model calls another. The resulting summaries can be reviewed and reused across sessions.
 
 Although compression adds computational overhead because each compression requires an extra LLM call, its return on investment can be extremely high relative to the resulting token-cost savings and improvements in task success. Experiments show that context-aware compression reduces token usage by over 75%.
 

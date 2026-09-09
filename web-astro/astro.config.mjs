@@ -1,6 +1,13 @@
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { defineConfig } from 'astro/config';
 import { unified } from '@astrojs/markdown-remark';
-import { agentPseudocode } from './src/lib/agent-pseudocode.mjs';
+import {
+  agentPseudocode,
+  agentInstructions,
+  bookExample,
+  bookTree,
+} from './src/lib/agent-pseudocode.mjs';
 import { bookMarkdown, bookFootnotes } from './src/lib/book-markdown.mjs';
 
 export default defineConfig({
@@ -9,9 +16,25 @@ export default defineConfig({
   devToolbar: { enabled: false },
   markdown: {
     processor: unified({
-      remarkPlugins: [bookMarkdown],
-      rehypePlugins: [bookFootnotes],
+      remarkPlugins: [remarkMath, bookMarkdown],
+      rehypePlugins: [bookFootnotes, [rehypeKatex, { strict: false }]],
     }),
-    shikiConfig: { theme: 'github-dark', langs: [agentPseudocode] },
+    shikiConfig: {
+      theme: 'github-dark',
+      langs: [agentPseudocode, agentInstructions, bookExample, bookTree],
+      transformers: [
+        {
+          // Keep teaching annotations readable on the dark code surface.
+          name: 'readable-comments',
+          span(node) {
+            if (typeof node.properties.style === 'string')
+              node.properties.style = node.properties.style.replace(
+                /#6a737d/gi,
+                '#9DA7B3',
+              );
+          },
+        },
+      ],
+    },
   },
 });

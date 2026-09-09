@@ -1,3 +1,5 @@
+import { availableChapters } from '../lib/available-chapters.mjs';
+import { machineLanguage } from '../lib/machine-language';
 import {
   loadPosition,
   positionKey,
@@ -5,6 +7,7 @@ import {
 } from '../lib/reading-position';
 
 export function initReadingPosition() {
+  if (machineLanguage(new URL(location.href))) return;
   const article = document.getElementById('chapter-content');
   const chapter = article?.dataset.chapterKey;
   if (!article || !chapter) return;
@@ -28,6 +31,7 @@ export function initReadingPosition() {
     const nextTop = blocks[index + 1] ? top(blocks[index + 1]) : end;
     return {
       version: 1,
+      updatedAt: Date.now(),
       chapter: chapter!,
       section: current === article ? '' : current.id,
       sectionTitle:
@@ -119,6 +123,7 @@ export function initReadingPosition() {
 }
 
 export function initContinueReading() {
+  if (machineLanguage(new URL(location.href))) return;
   const link = document.querySelector<HTMLAnchorElement>(
     '[data-continue-reading]',
   );
@@ -128,10 +133,23 @@ export function initContinueReading() {
   const path = link.getAttribute('href')!;
   const info = document.getElementById('continue-reading-info')!;
   const update = () => {
-    const saved = loadPosition(link.dataset.chapterKey!);
+    const candidates = availableChapters
+      .map((number) => ({
+        number,
+        saved: loadPosition(
+          link.dataset.chapterKey!.replace(/chapter1$/, `chapter${number}`),
+        ),
+      }))
+      .filter((entry) => entry.saved && entry.saved.progress > 0.005)
+      .sort((a, b) => (b.saved!.updatedAt ?? 0) - (a.saved!.updatedAt ?? 0));
+    const latest = candidates[0];
+    const saved = latest?.saved;
+    const resumePath = latest
+      ? path.replace('chapter1', `chapter${latest.number}`)
+      : path;
     const continuing = saved && saved.progress > 0.005;
     label.textContent = continuing ? link.dataset.continueReading! : original;
-    link.href = continuing ? `${path}?resume=1` : path;
+    link.href = continuing ? `${resumePath}?resume=1` : path;
     info.hidden = !continuing;
     info.textContent = continuing
       ? `${saved.sectionTitle} · ${Math.round(saved.progress * 100)}%`

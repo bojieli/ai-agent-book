@@ -99,7 +99,6 @@
   "Add note": "குறிப்புச் சேர்",
   "YOUR READING NOTES": "உங்கள் வாசிப்புக் குறிப்புகள்",
   "Close highlights": "சிறப்புக்குறிகளை மூடு",
-  "Chapter 1 · Saved in this browser": "அத்தியாயம் 1 · இந்த உலாவியில் சேமிக்கப்பட்டது",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "உரையைத் தேர்ந்தெடுத்து சிறப்புக்குறியிடுங்கள் அல்லது குறிப்புச் சேருங்கள். சிறப்புக்குறியைச் சொடுக்கி அதன் குறிப்பைத் திருத்தலாம். உலாவித் தரவை அழிக்கும் முன்போ சாதனத்தை மாற்றும் முன்போ, சிறப்புக்குறிகளையும் குறிப்புகளையும் பாதுகாக்கக் காப்புப்பிரதியை ஏற்றுமதி செய்யுங்கள்.",
   "Export backup": "காப்புப்பிரதியை ஏற்றுமதி செய்",
   "Import backup": "காப்புப்பிரதியை இறக்குமதி செய்",
@@ -166,7 +165,6 @@
   "Zoom in": "பெரிதாக்கு",
   "Zoom level": "பெரிதாக்க அளவு",
   "Fit": "பொருத்து",
-  "Open original": "மூலத்தைத் திற",
   "Diagram viewport": "வரைபடக் காட்சிப்பகுதி",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "பெரிதாக்கிய பின் உருட்டியோ இழுத்தோ ஆராயுங்கள். «பொருத்து» என்பதைத் தேர்ந்தெடுத்தால் முழு வரைபடமும் தெரியும்.",
   "Undo": "செயல்தவிர்",
@@ -184,5 +182,8 @@
   "By": "எழுதியவர்",
   "and the open-source community": "மற்றும் திறந்த மூலச் சமூகம்",
   "Footnotes": "அடிக்குறிப்புகள்",
-  "Back to reference": "மேற்கோள் இடத்திற்குத் திரும்பு"
+  "Back to reference": "மேற்கோள் இடத்திற்குத் திரும்பு",
+  "Open image": "படத்தைத் திற",
+  "Wrap lines": "வரிகளை மடக்கு",
+  "Chapter {chapter} · Saved in this browser": "அத்தியாயம் {chapter} · இந்த உலாவியில் சேமிக்கப்பட்டது"
 }

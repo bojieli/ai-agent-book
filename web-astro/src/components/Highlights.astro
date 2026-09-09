@@ -2,7 +2,10 @@
 import { translator, type Locale } from '../lib/i18n';
 import Icon from './Icon.astro';
 import '../styles/highlights.css';
-const { locale = 'en' } = Astro.props as { locale?: Locale };
+const { locale = 'en', chapterNumber = 1 } = Astro.props as {
+  locale?: Locale;
+  chapterNumber?: number;
+};
 const t = translator(locale);
 ---
 
@@ -50,7 +53,14 @@ const t = translator(locale);
       aria-label={t('Close highlights')}><Icon name="close" /></button
     >
   </div>
-  <p class="highlights-intro">{t('Chapter 1 · Saved in this browser')}</p>
+  <p class="highlights-intro">
+    {
+      t('Chapter {chapter} · Saved in this browser').replace(
+        '{chapter}',
+        String(chapterNumber),
+      )
+    }
+  </p>
   <p class="highlights-help">
     {
       t(

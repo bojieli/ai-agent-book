@@ -99,7 +99,6 @@
   "Add note": "Tambah catatan",
   "YOUR READING NOTES": "CATATAN BACAAN ANDA",
   "Close highlights": "Tutup sorotan",
-  "Chapter 1 · Saved in this browser": "Bab 1 · Tersimpan di peramban ini",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "Pilih teks untuk menyorotnya atau menambahkan catatan. Klik sorotan untuk mengedit catatannya. Ekspor cadangan agar sorotan dan catatan Anda tetap tersimpan saat menghapus data peramban atau berganti perangkat.",
   "Export backup": "Ekspor cadangan",
   "Import backup": "Impor cadangan",
@@ -166,7 +165,6 @@
   "Zoom in": "Perbesar",
   "Zoom level": "Tingkat pembesaran",
   "Fit": "Sesuaikan",
-  "Open original": "Buka asli",
   "Diagram viewport": "Area tampilan diagram",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "Perbesar, lalu gulir atau seret untuk menjelajah. Sesuaikan menampilkan seluruh diagram.",
   "Undo": "Urungkan",
@@ -184,5 +182,8 @@
   "By": "Oleh",
   "and the open-source community": "dan komunitas sumber terbuka",
   "Footnotes": "Catatan kaki",
-  "Back to reference": "Kembali ke rujukan"
+  "Back to reference": "Kembali ke rujukan",
+  "Open image": "Buka gambar",
+  "Wrap lines": "Bungkus baris",
+  "Chapter {chapter} · Saved in this browser": "Bab {chapter} · Tersimpan di peramban ini"
 }

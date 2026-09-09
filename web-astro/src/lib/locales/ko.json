@@ -99,7 +99,6 @@
   "Add note": "메모 추가",
   "YOUR READING NOTES": "내 독서 메모",
   "Close highlights": "하이라이트 닫기",
-  "Chapter 1 · Saved in this browser": "1장 · 이 브라우저에 저장됨",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "텍스트를 선택해 하이라이트하거나 메모를 추가하세요. 하이라이트를 클릭하면 메모를 편집할 수 있습니다. 브라우저 데이터를 지우거나 기기를 바꿀 때 하이라이트와 메모를 보관하려면 백업을 내보내세요.",
   "Export backup": "백업 내보내기",
   "Import backup": "백업 가져오기",
@@ -166,7 +165,6 @@
   "Zoom in": "확대",
   "Zoom level": "확대 비율",
   "Fit": "맞춤",
-  "Open original": "원본 열기",
   "Diagram viewport": "다이어그램 표시 영역",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "확대 후 스크롤하거나 드래그해 살펴보세요. ‘맞춤’을 선택하면 전체 다이어그램을 볼 수 있습니다.",
   "Undo": "실행 취소",
@@ -184,5 +182,8 @@
   "By": "저자",
   "and the open-source community": "및 오픈 소스 커뮤니티",
   "Footnotes": "각주",
-  "Back to reference": "참조 위치로 돌아가기"
+  "Back to reference": "참조 위치로 돌아가기",
+  "Open image": "이미지 열기",
+  "Wrap lines": "줄 바꿈",
+  "Chapter {chapter} · Saved in this browser": "{chapter}장 · 이 브라우저에 저장됨"
 }

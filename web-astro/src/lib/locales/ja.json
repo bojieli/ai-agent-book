@@ -99,7 +99,6 @@
   "Add note": "メモを追加",
   "YOUR READING NOTES": "読書メモ",
   "Close highlights": "ハイライトを閉じる",
-  "Chapter 1 · Saved in this browser": "第1章・このブラウザに保存",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "文章を選択すると、ハイライトやメモを追加できます。ハイライトをクリックするとメモを編集できます。ブラウザのデータを消去したり端末を変えたりする前に、バックアップを書き出してハイライトとメモを保管してください。",
   "Export backup": "バックアップを書き出す",
   "Import backup": "バックアップを読み込む",
@@ -166,7 +165,6 @@
   "Zoom in": "拡大",
   "Zoom level": "拡大率",
   "Fit": "全体表示",
-  "Open original": "原寸を開く",
   "Diagram viewport": "図の表示領域",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "拡大してからスクロールまたはドラッグすると、図の各部分を確認できます。「全体表示」で図全体を表示します。",
   "Undo": "元に戻す",
@@ -184,5 +182,8 @@
   "By": "著者",
   "and the open-source community": "とオープンソースコミュニティ",
   "Footnotes": "脚注",
-  "Back to reference": "参照元に戻る"
+  "Back to reference": "参照元に戻る",
+  "Open image": "画像を開く",
+  "Wrap lines": "行を折り返す",
+  "Chapter {chapter} · Saved in this browser": "第{chapter}章・このブラウザに保存"
 }

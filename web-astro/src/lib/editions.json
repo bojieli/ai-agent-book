@@ -1,7 +1,7 @@
 {
   "en": {
     "name": "English",
-    "home": "/",
+    "home": "/en/",
     "chapter": "/book-en/chapter1/",
     "directory": "book-en",
     "suffix": "",
@@ -10,7 +10,7 @@
   },
   "zh-CN": {
     "name": "简体中文",
-    "home": "/zh-CN/",
+    "home": "/",
     "chapter": "/book/chapter1/",
     "directory": "book",
     "suffix": "",

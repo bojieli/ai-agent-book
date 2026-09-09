@@ -99,7 +99,6 @@
   "Add note": "Jegyzet hozzáadása",
   "YOUR READING NOTES": "OLVASÁSI JEGYZETEID",
   "Close highlights": "Kiemelések bezárása",
-  "Chapter 1 · Saved in this browser": "1. fejezet · Ebben a böngészőben mentve",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "Jelölj ki szöveget a kiemeléshez vagy jegyzet hozzáadásához. Kattints egy kiemelésre a jegyzet szerkesztéséhez. Exportálj biztonsági másolatot, hogy a kiemeléseid és jegyzeteid a böngészőadatok törlése vagy eszközváltás után is megmaradjanak.",
   "Export backup": "Másolat exportálása",
   "Import backup": "Másolat importálása",
@@ -166,7 +165,6 @@
   "Zoom in": "Nagyítás",
   "Zoom level": "Nagyítás mértéke",
   "Fit": "Illesztés",
-  "Open original": "Eredeti megnyitása",
   "Diagram viewport": "Ábra nézete",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "Nagyíts, majd görgess vagy húzd az ábrát a felfedezéshez. Az Illesztés a teljes ábrát mutatja.",
   "Undo": "Visszavonás",
@@ -184,5 +182,8 @@
   "By": "Szerző:",
   "and the open-source community": "és a nyílt forrású közösség",
   "Footnotes": "Lábjegyzetek",
-  "Back to reference": "Vissza a hivatkozáshoz"
+  "Back to reference": "Vissza a hivatkozáshoz",
+  "Open image": "Kép megnyitása",
+  "Wrap lines": "Sortördelés",
+  "Chapter {chapter} · Saved in this browser": "{chapter}. fejezet · Ebben a böngészőben mentve"
 }

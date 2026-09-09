@@ -99,7 +99,6 @@
   "Add note": "新增筆記",
   "YOUR READING NOTES": "你的閱讀筆記",
   "Close highlights": "關閉畫線清單",
-  "Chapter 1 · Saved in this browser": "第 1 章 · 儲存在此瀏覽器",
   "Select text to highlight it or add a note. Click a highlight to edit its note. Export a backup to keep your highlights and notes if you clear browser data or change devices.": "選取文字後畫線或新增筆記，點擊畫線可編輯筆記。清除瀏覽器資料或更換裝置前，請匯出備份。備份僅包含目前語言版本。",
   "Export backup": "匯出備份",
   "Import backup": "匯入備份",
@@ -166,7 +165,6 @@
   "Zoom in": "放大",
   "Zoom level": "縮放比例",
   "Fit": "符合視窗",
-  "Open original": "開啟原圖",
   "Diagram viewport": "圖片瀏覽區域",
   "Zoom in, then scroll or drag to explore. Fit shows the whole diagram.": "放大後可捲動或拖曳查看。「符合視窗」顯示整張圖片。",
   "Undo": "復原",
@@ -184,5 +182,8 @@
   "By": "作者：",
   "and the open-source community": "與開源社群",
   "Footnotes": "註釋",
-  "Back to reference": "返回引用"
+  "Back to reference": "返回引用",
+  "Open image": "開啟圖片",
+  "Wrap lines": "自動換行",
+  "Chapter {chapter} · Saved in this browser": "第 {chapter} 章 · 儲存在此瀏覽器"
 }
