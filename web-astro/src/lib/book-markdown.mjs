@@ -1,3 +1,4 @@
+import { availableChapters } from './available-chapters.mjs';
 import { figurePaths, originalFigureLabels } from './figure-paths.mjs';
 import { sourceEdition } from './edition-source.mjs';
 import { readFileSync } from 'node:fs';
@@ -82,6 +83,15 @@ export function bookMarkdown() {
           node.lang = 'book-example';
         if (node.value.startsWith('viking://')) node.lang = 'book-tree';
       }
+      // The localized Chapter 5 tool trace mixes narration with tool calls.
+      if (
+        node.type === 'code' &&
+        node.lang === 'text' &&
+        /chapter5(?:\.[a-z]+)?\.md$/.test(file.path) &&
+        node.value.includes('Grep(') &&
+        node.value.includes('Write(')
+      )
+        node.lang = 'book-example';
       // Dollar amounts are prose, not TeX. Keep money examples literal.
       if (node.type === 'inlineMath' && /^\d/.test(node.value)) {
         node.type = 'text';
@@ -175,10 +185,13 @@ export function bookMarkdown() {
         node.type === 'link' &&
         !/^(?:[a-z][a-z\d+.-]*:|#|\/)/i.test(node.url)
       ) {
-        if (/^chapter[123](?:\.[a-z]+)?\.md(?:#|$)/.test(node.url)) {
+        const chapterLink = node.url.match(
+          /^chapter(\d+)(?:\.[a-z]+)?\.md(?=#|$)/,
+        );
+        if (chapterLink && availableChapters.includes(Number(chapterLink[1]))) {
           node.url = node.url.replace(
-            /^chapter[123](?:\.[a-z]+)?\.md/,
-            `/${directory}/${node.url.match(/^chapter[123]/)[0]}${suffix}/`,
+            chapterLink[0],
+            `/${directory}/chapter${chapterLink[1]}${suffix}/`,
           );
         } else {
           const resolved = new URL(node.url, `${originalSite}/${directory}/`);

@@ -237,12 +237,6 @@ Perception tools often face the challenge of returning far more information than
 > - **Public Data Sources**: Free APIs for weather, stock prices, exchange rates, Wikipedia, ArXiv papers, etc.
 > - **Private Data Sources**: Personal data requiring authorization, such as calendars and Notion
 > Most of these tools are based on free, open APIs and can be used without registration. There are already many ready-made perception tool servers available in the MCP ecosystem. Chapter 5 will demonstrate that most of these capabilities can be covered by seven core tools combined with Skill documents.
->
-> **Experiment 4-3 ★★: Multimodal Information Extraction—Comparing Three Technical Paradigms**
->
-> The `multimodal-agent` project compares and evaluates all three strategies in a common framework. Using `demo.py`, give the same multimodal file (such as a PDF report containing charts) and the same question to each mode and compare their behavior.
->
-> The results clearly expose the trade-offs. **Native multimodal mode** performs best on chart analysis and document layout because it understands visual and spatial information directly. **Extract-to-text mode** is the most cost-effective for text-heavy documents but cannot answer queries that require visual information. **Tool-based mode** is flexible in interactive settings: it handles most initial queries cheaply and invokes more expensive deep analysis as needed, though it is weaker than native mode when end-to-end deep understanding is required in a single pass.
 
 ### Multimodal Perception
 

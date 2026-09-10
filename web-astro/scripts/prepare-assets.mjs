@@ -1,5 +1,6 @@
 import { availableChapters } from '../src/lib/available-chapters.mjs';
 import editions from '../src/lib/editions.json' with { type: 'json' };
+import { layoutToolDiscovery } from './tool-discovery-figure.mjs';
 import { layoutContextWindow } from './context-window-figure.mjs';
 import { layoutAgentLoop } from './agent-loop-figure.mjs';
 import { styleFigure, frameRaster } from './figure-style.mjs';
@@ -44,7 +45,18 @@ for (const { directory, suffix } of Object.values(editions)) {
         vector = layoutAgentLoop(bytes.toString());
       else if (image === 'images/fig2-1.svg')
         vector = layoutContextWindow(bytes.toString());
+      else if (image === 'images/fig4-4.svg')
+        vector = layoutToolDiscovery(bytes.toString(), {
+          rtl: ['book-ar', 'book-he'].includes(directory),
+        });
       else if (image.endsWith('.svg')) vector = bytes.toString();
+      // The source's bottom banner extends past y=600. Add breathing room
+      // to the web canvas without changing labels, geometry, or the raw SVG.
+      if (image === 'images/fig5-1.svg')
+        vector = vector.replace(
+          /viewBox="0 40 980 (560|568)" width="980" height="\1"/,
+          'viewBox="0 40 980 580" width="980" height="580"',
+        );
       const paths = figurePaths(directory, image);
       for (const theme of ['light', 'dark']) {
         const target = new URL(`../public${paths[theme]}`, import.meta.url);

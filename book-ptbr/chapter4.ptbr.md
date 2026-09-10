@@ -237,12 +237,6 @@ Essas ferramentas frequentemente precisam lidar com um volume de informações m
 > - **Fontes privadas de dados**: dados pessoais que exigem autorização, como calendários e Notion
 >
 > A maioria dessas ferramentas se baseia em APIs gratuitas e abertas que podem ser usadas sem cadastro. O ecossistema MCP já oferece muitos servidores prontos de ferramentas de percepção. O Capítulo 5 demonstrará que sete ferramentas centrais, combinadas com documentos de skills, podem abranger a maior parte desses recursos.
->
-> **Experimento 4-3 ★★: extração de informações multimodais — comparação entre três paradigmas técnicos**
->
-> O projeto `multimodal-agent` compara e avalia as três estratégias em uma estrutura comum. Por meio de `demo.py`, o mesmo arquivo multimodal — como um relatório em PDF com gráficos — e a mesma pergunta são fornecidos a cada modo, permitindo comparar seu comportamento.
->
-> Os resultados evidenciam claramente as vantagens e limitações de cada abordagem. O **modo multimodal nativo** apresenta o melhor desempenho na análise de gráficos e na compreensão do layout de documentos, pois entende diretamente as informações visuais e espaciais. O **modo de extração para texto** oferece a melhor relação custo-benefício para documentos predominantemente textuais, mas não consegue responder a consultas que exigem informações visuais. O **modo baseado em ferramentas** é flexível em cenários interativos: processa a maioria das consultas iniciais a baixo custo e recorre a análises aprofundadas mais caras quando necessário, embora tenha desempenho inferior ao modo nativo quando uma compreensão aprofundada de ponta a ponta precisa ocorrer em uma única etapa.
 
 ### Percepção multimodal
 

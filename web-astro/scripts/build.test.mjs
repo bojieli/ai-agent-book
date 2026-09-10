@@ -1,3 +1,4 @@
+import { availableChapters } from '../src/lib/available-chapters.mjs';
 import { figurePaths } from '../src/lib/figure-paths.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,9 +21,9 @@ const editions = Object.entries(editionData).map(([lang, edition]) => ({
 const pages = editions.flatMap((edition) =>
   [
     edition.home,
-    edition.chapter,
-    edition.chapter.replace('chapter1', 'chapter2'),
-    edition.chapter.replace('chapter1', 'chapter3'),
+    ...availableChapters.map((number) =>
+      edition.chapter.replace('chapter1', `chapter${number}`),
+    ),
   ].map((route) => ({
     route,
     html: readFileSync(join(dist, route, 'index.html'), 'utf8'),
@@ -61,7 +62,7 @@ test('Chapter 1 retains its sections, code, tables, figures, and footnotes', () 
   assert.match(article, /Contextual adaptation/);
 });
 
-test('All 60 generated pages resolve local assets, links, and fragments', () => {
+test('All generated pages resolve local assets, links, and fragments', () => {
   for (const page of pages) {
     const pageIds = [...page.html.matchAll(/\bid="([^"]+)"/g)].map(
       (match) => match[1],
@@ -221,7 +222,7 @@ test('Chinese footnotes keep separate citation URLs and translated navigation', 
 
 test('All 15 maintained editions have complete UI catalogs and isolated browser messages', () => {
   assert.equal(editions.length, 15);
-  assert.equal(pages.length, 60);
+  assert.equal(pages.length, editions.length * (availableChapters.length + 1));
   const catalogs = Object.fromEntries(
     editions.map(({ lang }) => [
       lang,
@@ -405,7 +406,7 @@ test('Chapter 2 visual replacements preserve originals and highlight teaching ex
 
 test('Every chapter figure has two styled variants and an untouched original', () => {
   for (const edition of editions)
-    for (const number of [1, 2, 3]) {
+    for (const number of availableChapters) {
       const markdown = readFileSync(
         new URL(
           `../../${edition.directory}/chapter${number}${edition.suffix}.md`,
@@ -432,104 +433,203 @@ test('Every chapter figure has two styled variants and an untouched original', (
         for (const theme of ['light', 'dark']) {
           assert.ok(existsSync(join(dist, paths[theme])));
           assert.ok(html.includes(`data-figure-${theme}="${paths[theme]}"`));
+          if (image === 'images/fig4-4.svg') {
+            const original = readFileSync(
+              new URL(`../../${edition.directory}/${image}`, import.meta.url),
+              'utf8',
+            );
+            const variant = readFileSync(join(dist, paths[theme]), 'utf8');
+            assert.equal(count(variant, 'foreignObject'), 2);
+            for (const [, label] of original.matchAll(
+              /<text\b[^>]*>([\s\S]*?)<\/text>/g,
+            ))
+              assert.ok(
+                variant.includes(label),
+                `Missing diagram label in ${edition.lang}`,
+              );
+            assert.equal(
+              readFileSync(join(dist, paths.original), 'utf8'),
+              original,
+            );
+          }
         }
       }
     }
 });
 
-test('Chapter 3 preserves code, figures, headings, and reader navigation in all editions', async () => {
-  const { fromMarkdown } = await import('mdast-util-from-markdown');
-  const decode = (s) =>
-    s
-      .replace(/&#x([0-9a-f]+);/gi, (_, n) =>
-        String.fromCodePoint(parseInt(n, 16)),
-      )
-      .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-      .replace(
-        /&(lt|gt|quot|apos|amp);/g,
-        (_, n) => ({ lt: '<', gt: '>', quot: '"', apos: "'", amp: '&' })[n],
+for (const chapterNumber of [3, 4, 5])
+  test(`Chapter ${chapterNumber} preserves code, figures, headings, and reader navigation in all editions`, async () => {
+    const { fromMarkdown } = await import('mdast-util-from-markdown');
+    const decode = (s) =>
+      s
+        .replace(/&#x([0-9a-f]+);/gi, (_, n) =>
+          String.fromCodePoint(parseInt(n, 16)),
+        )
+        .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+        .replace(
+          /&(lt|gt|quot|apos|amp);/g,
+          (_, n) => ({ lt: '<', gt: '>', quot: '"', apos: "'", amp: '&' })[n],
+        );
+    for (const edition of editions) {
+      const route = edition.chapter.replace(
+        'chapter1',
+        `chapter${chapterNumber}`,
       );
-  for (const edition of editions) {
-    const route = edition.chapter.replace('chapter1', 'chapter3');
-    const html = readFileSync(join(dist, route, 'index.html'), 'utf8');
-    const markdown = readFileSync(
-      new URL(
-        `../../${edition.directory}/chapter3${edition.suffix}.md`,
-        import.meta.url,
-      ),
-      'utf8',
-    );
-    const article = html.match(/<article\b[^>]*>([\s\S]*?)<\/article>/)[1];
-    const code = [],
-      headings = [];
-    function visit(node) {
-      if (node.type === 'code') code.push(node.value);
-      if (node.type === 'heading' && node.depth === 3) headings.push(node);
-      node.children?.forEach(visit);
-    }
-    visit(fromMarkdown(markdown));
-    const rendered = [
-      ...article.matchAll(
-        /<pre\b[^>]*>\s*<code\b[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/g,
-      ),
-    ].map((m) => decode(m[1].replace(/<[^>]*>/g, '')).replace(/\n$/, ''));
-    assert.deepEqual(rendered, code, `Code altered in ${edition.lang}`);
-    if (edition.lang === 'en') {
-      assert.equal((article.match(/data-language="book-example"/g) || []).length, 3);
-      assert.equal((article.match(/data-language="book-tree"/g) || []).length, 1);
-      assert.equal((article.match(/data-language="python"/g) || []).length, 5);
-      assert.ok(article.includes('Python-style pseudocode'));
-    }
-    assert.equal(count(article, 'img'), 15, edition.lang);
-    assert.equal(count(article, 'h3'), headings.length, edition.lang);
-    assert.ok(!article.includes('katex-error'), edition.lang);
-    assert.ok(article.includes('class="katex"'), edition.lang);
-    assert.equal(
-      (article.match(/class="katex-display"/g) || []).length,
-      (markdown.match(/^(?:> )?\$\$.+\$\$\s*$/gm) || []).length,
-      edition.lang,
-    );
-    assert.ok(
-      html.includes(
-        `data-chapter-key="ai-agents-in-depth:${edition.lang}:chapter3"`,
-      ),
-    );
-    assert.ok(
-      html.includes(
-        `href="${edition.chapter.replace('chapter1', 'chapter2')}"`,
-      ),
-    );
-    assert.ok(
-      html.includes(
-        `https://bojieli.github.io/ai-agent-book/${edition.directory}/chapter4${edition.suffix}/`,
-      ),
-    );
-    for (const target of editions)
+      const html = readFileSync(join(dist, route, 'index.html'), 'utf8');
+      const markdown = readFileSync(
+        new URL(
+          `../../${edition.directory}/chapter${chapterNumber}${edition.suffix}.md`,
+          import.meta.url,
+        ),
+        'utf8',
+      );
+      const article = html.match(/<article\b[^>]*>([\s\S]*?)<\/article>/)[1];
+      const code = [],
+        inlineCode = [],
+        headings = [],
+        images = [];
+      function visit(node) {
+        if (node.type === 'code') code.push(node.value);
+        if (node.type === 'inlineCode') inlineCode.push(node.value);
+        if (node.type === 'image') images.push(node.url);
+        if (node.type === 'heading' && node.depth === 3) headings.push(node);
+        node.children?.forEach(visit);
+      }
+      visit(fromMarkdown(markdown));
+      const rendered = [
+        ...article.matchAll(
+          /<pre\b[^>]*>\s*<code\b[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/g,
+        ),
+      ].map((m) => decode(m[1].replace(/<[^>]*>/g, '')).replace(/\n$/, ''));
+      assert.deepEqual(rendered, code, `Code altered in ${edition.lang}`);
+      if (chapterNumber === 4) {
+        const renderedInline = [
+          ...article.matchAll(/<code\b[^>]*>([\s\S]*?)<\/code>/g),
+        ].map((match) => decode(match[1]));
+        assert.deepEqual(
+          renderedInline.sort(),
+          inlineCode.sort(),
+          `Inline code altered in ${edition.lang}`,
+        );
+        assert.equal(count(article, 'table'), 2, edition.lang);
+        for (const level of [2, 4]) {
+          const expected = [
+            ...markdown.matchAll(new RegExp(`^#{${level}}\\s+`, 'gm')),
+          ].length;
+          assert.equal(
+            count(article, `h${level}`),
+            expected + (level === 2 ? 1 : 0),
+            edition.lang,
+          );
+        }
+        for (const [, id] of markdown.matchAll(/^\[\^([^\]]+)\]:/gm))
+          assert.ok(
+            ids(article).has(`user-content-fn-${id}`),
+            `Missing footnote ${id}`,
+          );
+      }
+      if (chapterNumber === 5) {
+        assert.equal(
+          (article.match(/data-language="book-example"/g) || []).length,
+          1,
+          edition.lang,
+        );
+        assert.equal(
+          (article.match(/data-language="python"/g) || []).length,
+          1,
+          edition.lang,
+        );
+        assert.equal(count(article, 'table'), 1, edition.lang);
+        for (const [, id] of markdown.matchAll(/^\[\^([^\]]+)\]:/gm))
+          assert.ok(
+            ids(article).has(`user-content-fn-${id}`),
+            `Missing footnote ${id}`,
+          );
+      }
+      if (edition.lang === 'en' && chapterNumber === 3) {
+        assert.equal(
+          (article.match(/data-language="book-example"/g) || []).length,
+          3,
+        );
+        assert.equal(
+          (article.match(/data-language="book-tree"/g) || []).length,
+          1,
+        );
+        assert.equal(
+          (article.match(/data-language="python"/g) || []).length,
+          5,
+        );
+        assert.ok(article.includes('Python-style pseudocode'));
+      }
+      assert.equal(count(article, 'img'), images.length, edition.lang);
+      assert.equal(count(article, 'h3'), headings.length, edition.lang);
+      assert.ok(!article.includes('katex-error'), edition.lang);
+      if (chapterNumber === 3)
+        assert.ok(article.includes('class="katex"'), edition.lang);
+      assert.equal(
+        (article.match(/class="katex-display"/g) || []).length,
+        (markdown.match(/^(?:> )?\$\$.+\$\$\s*$/gm) || []).length,
+        edition.lang,
+      );
       assert.ok(
         html.includes(
-          `href="${target.chapter.replace('chapter1', 'chapter3')}"`,
+          `data-chapter-key="ai-agents-in-depth:${edition.lang}:chapter${chapterNumber}"`,
         ),
       );
-    const mappings = JSON.parse(
-      html.match(
-        /<script\b[^>]*id="section-language-links"[^>]*>([\s\S]*?)<\/script>/,
-      )[1],
-    );
-    for (const translations of Object.values(mappings))
-      for (const [locale, slug] of Object.entries(translations)) {
-        const target = editions.find((e) => e.lang === locale);
+      assert.ok(
+        html.includes(
+          `href="${edition.chapter.replace('chapter1', `chapter${chapterNumber - 1}`)}"`,
+        ),
+      );
+      assert.ok(
+        html.includes(
+          `href="${availableChapters.includes(chapterNumber + 1) ? '' : 'https://bojieli.github.io/ai-agent-book'}/${edition.directory}/chapter${chapterNumber + 1}${edition.suffix}/"`,
+        ),
+      );
+      for (const target of editions)
         assert.ok(
-          ids(
-            readFileSync(
-              join(
-                dist,
-                target.chapter.replace('chapter1', 'chapter3'),
-                'index.html',
-              ),
-              'utf8',
-            ),
-          ).has(slug),
+          html.includes(
+            `href="${target.chapter.replace('chapter1', `chapter${chapterNumber}`)}"`,
+          ),
         );
-      }
+      const mappings = JSON.parse(
+        html.match(
+          /<script\b[^>]*id="section-language-links"[^>]*>([\s\S]*?)<\/script>/,
+        )[1],
+      );
+      for (const translations of Object.values(mappings))
+        for (const [locale, slug] of Object.entries(translations)) {
+          const target = editions.find((e) => e.lang === locale);
+          assert.ok(
+            ids(
+              readFileSync(
+                join(
+                  dist,
+                  target.chapter.replace('chapter1', `chapter${chapterNumber}`),
+                  'index.html',
+                ),
+                'utf8',
+              ),
+            ).has(slug),
+          );
+        }
+    }
+  });
+
+test('Chapter 5 architecture banner fits its web canvas in every edition', () => {
+  for (const edition of editions) {
+    const paths = figurePaths(edition.directory, 'images/fig5-1.svg');
+    for (const theme of ['light', 'dark']) {
+      const svg = readFileSync(join(dist, paths[theme]), 'utf8');
+      const [, top, height] = svg.match(/viewBox="0 (\d+) 980 (\d+)"/);
+      const [, bottomY, bannerHeight] = svg.match(
+        /<rect x="60" y="(566)" width="860" height="(38)"/,
+      );
+      assert.ok(
+        Number(top) + Number(height) >
+          Number(bottomY) + Number(bannerHeight) + 1,
+        edition.lang,
+      );
+    }
   }
 });
