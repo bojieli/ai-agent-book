@@ -92,6 +92,20 @@ export function bookMarkdown() {
         node.value.includes('Write(')
       )
         node.lang = 'book-example';
+      // Chapter 6 mixes event traces, HTML element listings, and action flows.
+      // Highlight their structure without changing the localized source text.
+      if (
+        node.type === 'code' &&
+        /chapter6(?:\.[a-z]+)?\.md$/.test(file.path)
+      ) {
+        if (node.lang === 'text') node.lang = 'book-interaction';
+        // Japanese and Turkish label the JSON event envelope as JavaScript.
+        if (
+          node.lang === 'javascript' &&
+          node.value.includes('"gmail_webhook"')
+        )
+          node.lang = 'json';
+      }
       // Dollar amounts are prose, not TeX. Keep money examples literal.
       if (node.type === 'inlineMath' && /^\d/.test(node.value)) {
         node.type = 'text';

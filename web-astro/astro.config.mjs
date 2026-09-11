@@ -7,6 +7,7 @@ import {
   agentInstructions,
   bookExample,
   bookTree,
+  bookInteraction,
 } from './src/lib/agent-pseudocode.mjs';
 import { bookMarkdown, bookFootnotes } from './src/lib/book-markdown.mjs';
 
@@ -21,7 +22,13 @@ export default defineConfig({
     }),
     shikiConfig: {
       theme: 'github-dark',
-      langs: [agentPseudocode, agentInstructions, bookExample, bookTree],
+      langs: [
+        agentPseudocode,
+        agentInstructions,
+        bookExample,
+        bookTree,
+        bookInteraction,
+      ],
       transformers: [
         {
           // Keep teaching annotations readable on the dark code surface.

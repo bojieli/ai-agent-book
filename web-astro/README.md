@@ -1,7 +1,7 @@
 # Astro reading prototype
 
 A local design exploration for **AI Agents in Depth**, built with plain Astro.
-The homepage and complete Chapters 1–5 are implemented in all 15 maintained editions:
+The homepage and complete Chapters 1–6 are implemented in all 15 maintained editions:
 English, Simplified Chinese, Traditional Chinese, Spanish, Indonesian, Russian,
 Tamil, Vietnamese, Japanese, Korean, Arabic, Turkish, Hungarian, Hebrew, and
 Brazilian Portuguese. Other chapters link to the existing online edition.
@@ -79,10 +79,10 @@ There is no second editable copy of the book text.
 `src/lib/book-markdown.mjs` adapts the web rendering: it removes the duplicated
 chapter heading, adds figure captions from existing alt text, and resolves image
 and relative page links. Astro's unified Markdown processor preserves GFM tables,
-footnotes, and highlighted code. Chapters 1–5 render code, footnotes, and math with KaTeX; print-only figure sizing is omitted. Mermaid and additional syntax in later chapters still need migration work.
+footnotes, and highlighted code. Chapters 1–6 render code, footnotes, and math with KaTeX; print-only figure sizing is omitted. Mermaid and additional syntax in later chapters still need migration work.
 
-`npm run dev` and `npm run build` copy Chapters 1–5’s referenced images
-(809 total: 54 per edition, except Spanish, whose source has 53) into ignored generated public directories. Rerun the
+`npm run dev` and `npm run build` copy Chapters 1–6’s referenced images
+(1,019 total: 68 per edition, except Spanish, whose source has 67) into ignored generated public directories. Rerun the
 command when source images change. Figure 1-1 is generated with a taller web layout
 and wrapping labels, preserving all 18 labels from each source SVG. Its XHTML
 labels target modern browsers; the tracked SVG remains the portable PDF/MkDocs
@@ -94,7 +94,7 @@ credits and source history remain available in `docs/en/README.md` and Git.
 
 ## Prototype limits
 
-- All 15 maintained source editions cover the homepage and Chapters 1–5; other chapters
+- All 15 maintained source editions cover the homepage and Chapters 1–6; other chapters
   open the matching existing edition. Search is not prototyped yet.
 - The same 21 optional machine-translation languages as MkDocs are available from English.
   They are clearly marked as unvetted. The pinned third-party script and service load
@@ -146,7 +146,7 @@ Nine new assets in `public/figures/chapter2-en/` replace figures 2-7, 2-9, 2-10,
 
 The new SVGs use wrapping XHTML text for browser layout. Figure 2-7 embeds the original PNG bytes and adds magnified viewports without regenerating experimental data. Cache diagrams distinguish reuse from free or permanent storage. Figure 2-16 keeps the recorded results and explains that the experiment’s logged character ratio includes formatting and excludes later windowed history compression (see `chapter2/context-compression/run_all_strategies.py` and `agent.py`). These SVGs are web assets; the existing PDF pipeline continues to use the originals.
 
-### Shared diagram style across Chapters 1–5
+### Shared diagram style across Chapters 1–6
 
 `figure-style.mjs` defines the common slate/blue palette, surfaces, rounded boxes, and connectors for both themes. `prepare-assets.mjs` generates light/dark presentation variants for all referenced chapter figures across all 15 editions under ignored `public/figures/book/`. Source labels and geometry are preserved, using the existing reflowed layouts for figures 1-1 and 2-1 and the authored English Chapter 2 replacements where available. Experimental heatmap cell colors and embedded raster data are protected.
 
@@ -155,3 +155,5 @@ Original source URLs now always serve byte-for-byte originals, including figures
 Figure 4-4 wraps its four side annotations in the generated web variants to prevent clipping across languages. `scripts/tool-discovery-figure.mjs` retains every source label; the original SVG remains unchanged for MkDocs and PDF.
 
 Figure 5-1’s web canvas includes extra bottom padding so the final banner is not clipped. Its source geometry and raw SVG remain unchanged. The Spanish Chapter 5 source omits Figure 5-11; the reader preserves that source difference. Chapter 5’s tool-call walkthrough uses the shared transcript highlighting, while its side-by-side reasoning comparison retains plain text to preserve column alignment.
+
+Chapter 6 highlights JSON event envelopes and localized event traces, element listings, and action sequences. Teaching traces wrap by default and retain their original text for copying. All 14 figures per edition use shared light/dark styling with links to the unchanged originals.

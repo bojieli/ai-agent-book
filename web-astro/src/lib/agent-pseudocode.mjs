@@ -75,3 +75,15 @@ export const bookTree = {
     { name: 'punctuation.separator', match: '[├└─│]+' },
   ],
 };
+
+// Localized interaction traces: event IDs, element tags, and action sequences.
+export const bookInteraction = {
+  name: 'book-interaction',
+  scopeName: 'text.book-interaction',
+  patterns: [
+    { name: 'entity.name.tag', match: '</?[A-Za-z_][^>]*>' },
+    { name: 'entity.name.function', match: '\\b[A-Za-z_][A-Za-z_0-9]*(?=\\()' },
+    { name: 'entity.name.tag', match: '^\\[[^\\]\\n]+\\]' },
+    ...bookExample.patterns,
+  ],
+};

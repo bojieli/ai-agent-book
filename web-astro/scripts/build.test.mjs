@@ -72,7 +72,10 @@ test('All generated pages resolve local assets, links, and fragments', () => {
       pageIds.length,
       `Duplicate IDs on ${page.route}`,
     );
-    for (const [, ref] of page.html.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
+    // Restrict attribute matching to actual tags: code examples can contain
+    // literal href/src strings whose opening angle brackets are escaped.
+    const tags = page.html.match(/<[A-Za-z][^>]*>/g)?.join('\n') ?? '';
+    for (const [, ref] of tags.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
       const url = new URL(ref, `https://preview.example${page.route}`);
       if (url.origin !== 'https://preview.example') continue;
       const path = join(
@@ -457,7 +460,7 @@ test('Every chapter figure has two styled variants and an untouched original', (
     }
 });
 
-for (const chapterNumber of [3, 4, 5])
+for (const chapterNumber of [3, 4, 5, 6])
   test(`Chapter ${chapterNumber} preserves code, figures, headings, and reader navigation in all editions`, async () => {
     const { fromMarkdown } = await import('mdast-util-from-markdown');
     const decode = (s) =>
@@ -540,6 +543,34 @@ for (const chapterNumber of [3, 4, 5])
           edition.lang,
         );
         assert.equal(count(article, 'table'), 1, edition.lang);
+        for (const [, id] of markdown.matchAll(/^\[\^([^\]]+)\]:/gm))
+          assert.ok(
+            ids(article).has(`user-content-fn-${id}`),
+            `Missing footnote ${id}`,
+          );
+      }
+      if (chapterNumber === 6) {
+        assert.equal(
+          (article.match(/data-language="book-interaction"/g) || []).length,
+          8,
+          edition.lang,
+        );
+        assert.equal(
+          (article.match(/data-language="json"/g) || []).length,
+          1,
+          edition.lang,
+        );
+        assert.equal(count(article, 'table'), 5, edition.lang);
+        for (const level of [2, 4]) {
+          const expected = [
+            ...markdown.matchAll(new RegExp(`^#{${level}}\\s+`, 'gm')),
+          ].length;
+          assert.equal(
+            count(article, `h${level}`),
+            expected + (level === 2 ? 1 : 0),
+            edition.lang,
+          );
+        }
         for (const [, id] of markdown.matchAll(/^\[\^([^\]]+)\]:/gm))
           assert.ok(
             ids(article).has(`user-content-fn-${id}`),
