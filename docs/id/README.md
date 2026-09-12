@@ -9,6 +9,10 @@
 
 **Agent = LLM + Konteks + Alat** — buku ini memakai rumus inti tersebut untuk membahas AI Agent, dari prinsip dasar hingga praktik rekayasa, dalam sepuluh bab. Naskah, ilustrasi, dan proyek pendampingnya tersedia sebagai sumber terbuka.
 
+> 📚 **Buku pendamping _Memahami AI Infra Secara Mendalam: Analisis Kuantitatif dan Desain Sistem_ kini sumber terbuka** — baca di [github.com/bojieli/ai-infra-book](https://github.com/bojieli/ai-infra-book)
+>
+> Mengembangkan aplikasi berbasis model dengan baik juga menuntut pemahaman tentang infrastruktur yang menjalankannya. Buku pendamping ini membahas AI Infra di balik pelatihan dan inferensi model: di mana parameter dan status konteks disimpan, bagaimana komputasi dijalankan, dan bagaimana beberapa akselerator bekerja sama.
+
 > 📢 **Perubahan pada versi 2.0 (dibandingkan 1.4):** Versi 2.0 menggabungkan bagian “interaksi asinkron” dari Bab 4 lama dengan materi tentang “Agent multimodal” dari Bab 9 lama, lalu menatanya ulang menjadi Bab 6 baru, “Interaksi: Perluasan Ruang Observasi dan Ruang Aksi”. Bab 6 lama (“Mengevaluasi Agent”), Bab 7 (“Pascapelatihan Model”), dan Bab 8 (“Evolusi Kontinual pada Agent”) masing-masing bergeser satu bab menjadi Bab 7, 8, dan 9.
 >
 > Jika Anda membaca PDF lama, sebaiknya [unduh PDF terbaru](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-id.pdf). Edisi baru juga memuat banyak koreksi dan penyesuaian isi; gunakan versi terbaru sebagai acuan.

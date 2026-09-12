@@ -9,6 +9,10 @@
 
 **Agent = LLM + Bağlam + Araçlar** — Bu kitap, bu temel formül etrafında 10 bölümde AI Agent'ları ilkelerden mühendislik pratiğine taşıyor. Tüm metin, görseller ve **93 eşlik eden deney** açık kaynak; deneyleri bizzat çalıştırmanız için sizi bekliyor.
 
+> 📚 **Kardeş kitap _Derinlemesine AI Infra: Nicel Analiz ve Sistem Tasarımı_ açık kaynak olarak yayımlandı** — [github.com/bojieli/ai-infra-book](https://github.com/bojieli/ai-infra-book)
+>
+> Model tabanlı uygulamaları iyi geliştirmek, üzerinde çalıştıkları altyapıyı da anlamayı gerektirir. Kardeş kitap, model eğitimi ve çıkarımını taşıyan AI Infra'yı ele alıyor: parametreler ve bağlam durumu nerede tutulur, hesaplama nasıl yürütülür ve birden çok hızlandırıcı nasıl birlikte çalışır.
+
 > 📢 **1.4'e kıyasla 2.0 sürümündeki değişiklikler:** 2.0 sürümü, eski 4. bölümdeki “eşzamansız etkileşim” kısmını eski 9. bölümdeki “çok modlu Agent” içeriğiyle birleştirerek yeni 6. bölüm “Etkileşim: Gözlem ve Eylem Uzaylarının Genişletilmesi” olarak yeniden düzenler. Eski 6. (“Agent'ın Değerlendirmesi”), 7. (“Model Post-Training”) ve 8. (“Agent'ın Sürekli Evrimi”) bölümler birer bölüm geriye kaydırılmış ve sırasıyla 7., 8. ve 9. bölümler olmuştur.
 >
 > Eski bir PDF okuyorsanız [en son PDF'yi indirmenizi](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.pdf) öneririz. Yeni sürüm ayrıca çok sayıda içerik düzeltmesi ve düzenlemesi içerir; lütfen en güncel sürümü kullanın.
