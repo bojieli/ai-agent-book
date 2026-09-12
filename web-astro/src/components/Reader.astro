@@ -1,0 +1,612 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Icon from '../components/Icon.astro';
+import Highlights from '../components/Highlights.astro';
+import { getBook, repo } from '../lib/book';
+import { translator, editions, type Locale } from '../lib/i18n';
+import type { MarkdownInstance } from 'astro';
+interface Props {
+  sectionLinks: Record<string, Record<string, string>>;
+  chapterNumber: number;
+  locale: Locale;
+  chapter: MarkdownInstance<Record<string, unknown>>;
+}
+const { locale, chapter, sectionLinks, chapterNumber } = Astro.props;
+const { Content, getHeadings } = chapter;
+const t = translator(locale);
+const edition = editions[locale];
+const { chapters, readingMinutes } = getBook(locale, chapterNumber);
+const current = chapters[chapterNumber - 1];
+const previous = chapters[chapterNumber - 2];
+const next = chapters[chapterNumber];
+import '../styles/reader.css';
+const headings = getHeadings().filter((heading) => heading.depth === 2);
+const outline = getHeadings().filter(
+  (heading) => heading.depth === 2 || heading.depth === 3,
+);
+---
+
+<Layout
+  locale={locale}
+  title={`${current.title} — ${t('AI Agents in Depth')}`}
+  reader
+>
+  <Header locale={locale} reader chapterNumber={chapterNumber} />
+  <script
+    is:inline
+    id="section-language-links"
+    type="application/json"
+    set:html={JSON.stringify(sectionLinks).replaceAll('<', '\\u003c')}
+  />
+  <div class="reading-progress" aria-hidden="true">
+    <div id="reading-progress-bar"></div>
+  </div>
+  <div class="reader-grid">
+    <aside class="chapter-rail" aria-label={t('Book chapters')}>
+      <a class="back-to-book" href={`${edition.home}#contents`}
+        ><span aria-hidden="true">←</span> {t('Back to the book')}</a
+      >
+      <p class="rail-label">{t('CONTENTS')}</p>
+      <nav class="chapter-navigation" aria-label={t('Chapter navigation')}>
+        {
+          chapters.map((chapter) => (
+            <a
+              class:list={{ active: chapter.number === chapterNumber }}
+              aria-current={
+                chapter.number === chapterNumber ? 'page' : undefined
+              }
+              href={chapter.href}
+            >
+              <span>{chapter.title}</span>
+              {chapter.external && <Icon name="external" size={12} />}
+            </a>
+          ))
+        }
+      </nav>
+      <div class="rail-bottom">
+        <a href={`${repo}/tree/main/chapter${chapterNumber}`}
+          ><Icon name="book" size={17} />
+          {t('Companion experiments')}
+          <Icon name="external" size={14} /></a
+        ><a
+          href={`${repo}/releases/download/latest/AI-Agents-in-Depth-${edition.pdf}.pdf`}
+          ><Icon name="download" size={17} /> {t('Download the book')}</a
+        >
+      </div>
+    </aside>
+    <main id="main-content" class="reading-main">
+      <div class="reader-topline">
+        <a href={`${edition.home}#contents`}>{t('The book')}</a><span
+          aria-hidden="true">/</span
+        ><span>{t('Chapter 01').replace('01', current.label)}</span><span
+          class="reading-time">{readingMinutes} {t('min read')}</span
+        >
+      </div>
+      <header class="chapter-heading">
+        <p class="eyebrow">
+          <span class="chapter-badge">{current.label}</span>
+          {chapterNumber === 1 ? t('Foundations') : current.title}
+        </p>
+        <h1>{current.title}</h1>
+        <div class="chapter-toolbar">
+          <span>{t('From principles to practice')}</span><div
+            class="reader-controls"
+            hidden
+          >
+            <button
+              id="open-sections"
+              class="reader-sections"
+              type="button"
+              aria-controls="chapter-navigation"
+              aria-expanded="false"
+              ><Icon name="menu" size={17} /><span>{t('Sections')}</span
+              ></button
+            >
+            <Highlights locale={locale} chapterNumber={chapterNumber} />
+            <details class="reading-settings">
+              <summary aria-label={t('Reading settings')}
+                ><span class="type-icon">Aa</span><span class="setting-label"
+                  >{t('Text size')}</span
+                ></summary
+              ><div class="settings-panel">
+                <span>{t('Text size')}</span><div>
+                  <button
+                    id="smaller-text"
+                    type="button"
+                    aria-label={t('Decrease text size')}>A−</button
+                  ><output id="text-size" aria-live="polite">100%</output
+                  ><button
+                    id="larger-text"
+                    type="button"
+                    aria-label={t('Increase text size')}>A+</button
+                  >
+                </div><button id="reset-text" type="button">{t('Reset')}</button
+                >
+              </div>
+            </details><button
+              id="focus-toggle"
+              class="focus-toggle"
+              aria-pressed="false"
+              type="button"
+              ><Icon name="focus" size={17} /><span>{t('Focus')}</span></button
+            >
+          </div>
+        </div>
+      </header>
+      <div id="resume-reading" class="resume-reading" hidden>
+        <div>
+          <strong>{t('Pick up where you left off')}</strong><p
+            id="resume-reading-section"
+          >
+          </p>
+        </div>
+        <button id="resume-reading-button" type="button"
+          >{t('Continue reading')}</button
+        >
+        <button
+          id="dismiss-resume"
+          type="button"
+          aria-label={t('Dismiss reading reminder')}
+          ><Icon name="close" size={16} /></button
+        >
+      </div>
+      <details class="mobile-outline" open>
+        <summary
+          >{t('In this chapter')} <span aria-hidden="true"></span></summary
+        ><nav aria-label={t('Chapter sections')}>
+          {
+            headings.map((heading) => (
+              <a href={`#${heading.slug}`}>{heading.text}</a>
+            ))
+          }
+        </nav>
+      </details>
+      <script is:inline>
+        {
+          const outline = document.currentScript.previousElementSibling;
+          const key = 'book-chapter-outline-open';
+          try {
+            outline.open = localStorage.getItem(key) !== 'false';
+          } catch {}
+          outline.addEventListener('toggle', () => {
+            try {
+              localStorage.setItem(key, String(outline.open));
+            } catch {}
+          });
+        }
+      </script>
+      <article
+        class="prose"
+        id="chapter-content"
+        data-chapter-key={`ai-agents-in-depth:${locale}:chapter${chapterNumber}`}
+      >
+        <Content />
+      </article>
+      <div class="chapter-end">
+        <span class="eyebrow">{t('Put it into practice')}</span><h2>
+          {
+            chapterNumber === 1
+              ? t('Make your first agent.')
+              : t('Companion experiments')
+          }
+        </h2><p>
+          {
+            t(
+              'Explore the chapter’s companion experiments and see these ideas in code.',
+            )
+          }
+        </p><a
+          class="button button-primary"
+          href={`${repo}/tree/main/chapter${chapterNumber}`}
+          >{t('Explore the experiments')} <Icon name="external" /></a
+        >
+      </div>
+      <nav class="chapter-pager" aria-label={t('Previous and next chapters')}>
+        <a href={previous?.href ?? edition.home}
+          ><span>← &nbsp; {t('BACK TO')}</span><strong
+            >{previous?.title ?? t('The book')}</strong
+          ></a
+        ><a href={next?.href ?? `${edition.home}#contents`}
+          ><span
+            >{next ? t('UP NEXT') : t('BACK TO')} &nbsp; {
+              next?.external ? '↗' : '→'
+            }</span
+          ><strong
+            >{next ? `${next.label} ${next.title}` : t('The book')}</strong
+          ></a
+        >
+      </nav>
+      <footer class="reader-footer">
+        <a
+          href={`${repo}/blob/main/${edition.directory}/chapter${chapterNumber}${edition.suffix}.md`}
+          >{t('View chapter source')} <Icon name="external" size={13} /></a
+        ><span>{t('AI Agents in Depth')} · {edition.name}</span>
+      </footer>
+    </main>
+    <aside class="outline-rail" aria-label={t('On this page')}>
+      <p class="rail-label">{t('IN THIS CHAPTER')}</p><nav
+        class="section-outline"
+        aria-label={t('On this page')}
+      >
+        {
+          outline.map((heading) => (
+            <a
+              class:list={{ subsection: heading.depth === 3 }}
+              href={`#${heading.slug}`}
+            >
+              {heading.text}
+            </a>
+          ))
+        }
+      </nav><a class="back-to-top" href="#main-content"
+        >{t('Back to top')} <span aria-hidden="true">↑</span></a
+      >
+    </aside>
+  </div>
+  <dialog
+    id="chapter-navigation"
+    class="navigation-dialog"
+    aria-labelledby="navigation-title"
+  >
+    <div class="dialog-heading">
+      <h2 id="navigation-title">{t('In this chapter')}</h2><button
+        class="icon-button"
+        id="close-navigation"
+        type="button"
+        aria-label={t('Close chapter navigation')}><Icon name="close" /></button
+      >
+    </div>
+    <nav class="dialog-outline" aria-label={t('Chapter sections')}>
+      {
+        outline.map((heading) => (
+          <a
+            href={`#${heading.slug}`}
+            class:list={{ subsection: heading.depth === 3 }}
+          >
+            {heading.text}
+          </a>
+        ))
+      }
+    </nav>
+    <details class="dialog-book-chapters">
+      <summary>{t('The book')}</summary><nav
+        class="chapter-navigation"
+        aria-label={t('Mobile chapter navigation')}
+      >
+        {
+          chapters.map((chapter) => (
+            <a
+              class:list={{ active: chapter.number === chapterNumber }}
+              aria-current={
+                chapter.number === chapterNumber ? 'page' : undefined
+              }
+              href={chapter.href}
+            >
+              <span>{chapter.title}</span>
+              {chapter.external && <Icon name="external" size={14} />}
+            </a>
+          ))
+        }
+      </nav>
+    </details><a class="back-to-book" href={`${edition.home}#contents`}
+      >← {t('Back to the book')}</a
+    >
+  </dialog>
+  <dialog class="figure-dialog" aria-labelledby="figure-caption">
+    <div
+      class="figure-viewer-toolbar"
+      role="group"
+      aria-label={t('Diagram zoom')}
+    >
+      <button id="figure-zoom-out" type="button" aria-label={t('Zoom out')}
+        >−</button
+      >
+      <output
+        id="figure-zoom-level"
+        aria-live="polite"
+        aria-label={t('Zoom level')}>100%</output
+      >
+      <button id="figure-zoom-in" type="button" aria-label={t('Zoom in')}
+        >+</button
+      >
+      <button id="figure-fit" type="button">{t('Fit')}</button>
+      <a id="figure-original" target="_blank" rel="noopener"
+        >{t('Open image')}</a
+      >
+      <button
+        class="icon-button"
+        id="close-figure"
+        type="button"
+        aria-label={t('Close expanded figure')}><Icon name="close" /></button
+      >
+    </div>
+    <div
+      dir="ltr"
+      class="figure-canvas"
+      tabindex="0"
+      role="region"
+      aria-label={t('Diagram viewport')}
+      aria-describedby="figure-viewer-hint"
+    >
+      <img id="expanded-figure" alt="" draggable="false" />
+    </div>
+    <p id="figure-viewer-hint" class="figure-viewer-hint">
+      {
+        t(
+          'Zoom in, then scroll or drag to explore. Fit shows the whole diagram.',
+        )
+      }
+    </p>
+    <p id="figure-caption"></p>
+  </dialog>
+  <script>
+    import { browserTranslator } from '../lib/i18n';
+    import { initReadingPosition } from '../scripts/reading-position';
+    import { initFigureViewer } from '../scripts/figure-viewer';
+    import { initReaderNavigation } from '../scripts/reader-navigation';
+    const t = browserTranslator();
+    const root = document.documentElement;
+    const controls = document.querySelector<HTMLElement>('.reader-controls');
+    if (controls) controls.hidden = false;
+    const sizes = [0.9, 1, 1.1, 1.2, 1.3];
+    let sizeIndex = 1;
+    try {
+      const saved = Number(localStorage.getItem('book-text-size') ?? 1);
+      if (sizes.includes(saved)) sizeIndex = sizes.indexOf(saved);
+    } catch {}
+    const smaller = document.querySelector<HTMLButtonElement>('#smaller-text')!;
+    const larger = document.querySelector<HTMLButtonElement>('#larger-text')!;
+    const sizeOutput = document.querySelector<HTMLOutputElement>('#text-size')!;
+    const applySize = () => {
+      root.style.setProperty(
+        '--reading-size',
+        `${1.0625 * sizes[sizeIndex]}rem`,
+      );
+      sizeOutput.value = `${Math.round(sizes[sizeIndex] * 100)}%`;
+      smaller.disabled = sizeIndex === 0;
+      larger.disabled = sizeIndex === sizes.length - 1;
+      try {
+        localStorage.setItem('book-text-size', String(sizes[sizeIndex]));
+      } catch {}
+    };
+    smaller.addEventListener('click', () => {
+      sizeIndex = Math.max(0, sizeIndex - 1);
+      applySize();
+    });
+    larger.addEventListener('click', () => {
+      sizeIndex = Math.min(sizes.length - 1, sizeIndex + 1);
+      applySize();
+    });
+    document.querySelector('#reset-text')?.addEventListener('click', () => {
+      sizeIndex = 1;
+      applySize();
+    });
+    applySize();
+    const focusToggle =
+      document.querySelector<HTMLButtonElement>('#focus-toggle')!;
+    focusToggle.addEventListener('click', () => {
+      const focused = root.classList.toggle('focus-reading');
+      focusToggle.setAttribute('aria-pressed', String(focused));
+      focusToggle.querySelector('span')!.textContent = focused
+        ? t('Exit focus')
+        : t('Focus');
+    });
+    const mobileMenu =
+      document.querySelector<HTMLButtonElement>('.mobile-menu')!;
+    const navigation = document.querySelector<HTMLDialogElement>(
+      '#chapter-navigation',
+    )!;
+    mobileMenu.hidden = false;
+    const sectionMenu =
+      document.querySelector<HTMLButtonElement>('#open-sections')!;
+    for (const trigger of [mobileMenu, sectionMenu])
+      trigger.addEventListener('click', () => {
+        navigation.showModal();
+        mobileMenu.setAttribute('aria-expanded', 'true');
+        sectionMenu.setAttribute('aria-expanded', 'true');
+      });
+    document
+      .querySelector('#close-navigation')
+      ?.addEventListener('click', () => navigation.close());
+    navigation.addEventListener('close', () => {
+      mobileMenu.setAttribute('aria-expanded', 'false');
+      sectionMenu.setAttribute('aria-expanded', 'false');
+    });
+    navigation.querySelectorAll('a').forEach((a) =>
+      a.addEventListener('click', () => {
+        navigation.close();
+        if (a.getAttribute('href')?.startsWith('#')) {
+          const target = document.getElementById(
+            decodeURIComponent(a.hash.slice(1)),
+          );
+          if (target)
+            requestAnimationFrame(() => {
+              target.tabIndex = -1;
+              target.focus({ preventScroll: true });
+            });
+        }
+      }),
+    );
+    const figureDialog =
+      document.querySelector<HTMLDialogElement>('.figure-dialog')!;
+    const openFigure = initFigureViewer();
+    [figureDialog, navigation].forEach((dialog) =>
+      dialog.addEventListener('click', (event) => {
+        const rect = dialog.getBoundingClientRect();
+        if (
+          event.target === dialog &&
+          (event.clientX < rect.left ||
+            event.clientX > rect.right ||
+            event.clientY < rect.top ||
+            event.clientY > rect.bottom)
+        )
+          dialog.close();
+      }),
+    );
+    const syncFigureTheme = () => {
+      const dark = document.documentElement.dataset.theme === 'dark';
+      document
+        .querySelectorAll<HTMLImageElement>('img[data-figure-light]')
+        .forEach((img) => {
+          const src = dark ? img.dataset.figureDark : img.dataset.figureLight;
+          if (src && img.getAttribute('src') !== src) img.src = src;
+        });
+    };
+    syncFigureTheme();
+    new MutationObserver(syncFigureTheme).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+    document.querySelectorAll<HTMLImageElement>('.prose img').forEach((img) => {
+      const button = document.createElement('button');
+      button.className = 'figure-zoom';
+      button.type = 'button';
+      button.setAttribute(
+        'aria-label',
+        `${t('Expand')} ${img.alt || t('figure')}`,
+      );
+      button.title = t('Expand figure');
+      img.replaceWith(button);
+      button.append(img);
+      button.addEventListener('click', () => {
+        openFigure(img, button);
+      });
+    });
+    document.querySelectorAll<HTMLPreElement>('.prose pre').forEach((pre) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'code-block';
+      pre.replaceWith(wrapper);
+      wrapper.append(pre);
+      const toolbar = document.createElement('div');
+      toolbar.className = 'code-toolbar';
+      wrapper.prepend(toolbar);
+      const wrap = document.createElement('button');
+      wrap.className = 'copy-code';
+      wrap.type = 'button';
+      wrap.textContent = t('Wrap lines');
+      const defaultWrap =
+        [
+          'jsonc',
+          'agent-pseudocode',
+          'agent-instructions',
+          'book-example',
+          'book-interaction',
+          'book-evaluation',
+          'xml',
+        ].includes(pre.dataset.language ?? '') ||
+        (pre.dataset.language === 'python' &&
+          pre.textContent?.startsWith('query = "Refund process"'));
+      pre.classList.toggle('wrap-code', defaultWrap);
+      wrap.setAttribute('aria-pressed', String(defaultWrap));
+      wrap.addEventListener('click', () => {
+        const enabled = pre.classList.toggle('wrap-code');
+        wrap.setAttribute('aria-pressed', String(enabled));
+      });
+      toolbar.append(wrap);
+      const button = document.createElement('button');
+      button.className = 'copy-code';
+      button.type = 'button';
+      button.textContent = t('Copy');
+      button.setAttribute('aria-label', t('Copy code'));
+      toolbar.append(button);
+      button.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(pre.textContent ?? '');
+          button.textContent = t('Copied');
+        } catch {
+          button.textContent = t('Select code to copy');
+        }
+        setTimeout(() => (button.textContent = t('Copy')), 1800);
+      });
+    });
+    const content = document.querySelector<HTMLElement>('#chapter-content')!;
+    const progress = document.querySelector<HTMLElement>(
+      '#reading-progress-bar',
+    )!;
+    const links = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>('.section-outline a'),
+    );
+    const readerNavigation = initReaderNavigation();
+    const sections = links.map((link) =>
+      document.getElementById(decodeURIComponent(link.hash.slice(1))),
+    );
+    let ticking = false;
+    const languageSections: Record<string, Record<string, string>> = JSON.parse(
+      document.getElementById('section-language-links')?.textContent ?? '{}',
+    );
+    const languageLinks = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>('.language-picker a'),
+    );
+    const machineLanguageLinks = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>('[data-machine-language]'),
+    );
+    const dialogLinks = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>('.dialog-outline a'),
+    );
+    let previousActive = -2;
+    const updateReading = (initial = false) => {
+      const rect = content.getBoundingClientRect();
+      const fraction = Math.max(
+        0,
+        Math.min(1, -rect.top / Math.max(1, rect.height - innerHeight)),
+      );
+      progress.style.transform = `scaleX(${fraction})`;
+      let active = -1;
+      sections.forEach((section, index) => {
+        if (section && section.getBoundingClientRect().top <= 160)
+          active = index;
+      });
+      if (active === previousActive) {
+        ticking = false;
+        return;
+      }
+      previousActive = active;
+      links.forEach((link, index) => {
+        if (index === active) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+      readerNavigation.setActiveOutline(
+        active >= 0 ? links[active] : null,
+        initial,
+      );
+      dialogLinks.forEach((link) => {
+        const selected =
+          active >= 0 &&
+          decodeURIComponent(link.hash.slice(1)) === sections[active]?.id;
+        if (selected) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+      languageLinks.forEach((link) => {
+        const slug =
+          active >= 0
+            ? languageSections[sections[active]?.id ?? '']?.[link.lang]
+            : undefined;
+        const url = new URL(link.href);
+        url.hash = slug ?? '';
+        link.href = url.href;
+      });
+      machineLanguageLinks.forEach((link) => {
+        const slug =
+          active >= 0
+            ? languageSections[sections[active]?.id ?? '']?.en
+            : undefined;
+        const url = new URL(link.href);
+        url.hash = slug ?? '';
+        link.href = url.href;
+      });
+      ticking = false;
+    };
+    const scheduleReading = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => updateReading());
+        ticking = true;
+      }
+    };
+    addEventListener('scroll', scheduleReading, { passive: true });
+    addEventListener('resize', scheduleReading);
+    new ResizeObserver(scheduleReading).observe(content);
+    updateReading(true);
+    initReadingPosition();
+  </script>
+</Layout>

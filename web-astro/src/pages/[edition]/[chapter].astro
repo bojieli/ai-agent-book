@@ -1,0 +1,80 @@
+---
+import { availableChapters } from '../../lib/available-chapters.mjs';
+import Reader from '../../components/Reader.astro';
+import { editions, locales } from '../../lib/i18n';
+import type { MarkdownInstance } from 'astro';
+const sources = import.meta.glob<MarkdownInstance<Record<string, unknown>>>(
+  [
+    '../../../../book*/chapter1.md',
+    '../../../../book*/chapter1.*.md',
+    '../../../../book*/chapter2.md',
+    '../../../../book*/chapter2.*.md',
+    '../../../../book*/chapter3.md',
+    '../../../../book*/chapter3.*.md',
+    '../../../../book*/chapter4.md',
+    '../../../../book*/chapter4.*.md',
+    '../../../../book*/chapter5.md',
+    '../../../../book*/chapter5.*.md',
+    '../../../../book*/chapter6.md',
+    '../../../../book*/chapter6.*.md',
+    '../../../../book*/chapter7.md',
+    '../../../../book*/chapter7.*.md',
+    '../../../../book*/chapter8.md',
+    '../../../../book*/chapter8.*.md',
+    '../../../../book*/chapter9.md',
+    '../../../../book*/chapter9.*.md',
+    '../../../../book*/chapter10.md',
+    '../../../../book*/chapter10.*.md',
+  ],
+  { eager: true },
+);
+export function getStaticPaths() {
+  return locales.flatMap((locale) =>
+    availableChapters.map((chapterNumber) => {
+      const edition = editions[locale];
+      return {
+        params: {
+          edition: edition.directory,
+          chapter: `chapter${chapterNumber}${edition.suffix}`,
+        },
+        props: { locale, chapterNumber },
+      };
+    }),
+  );
+}
+const { locale, chapterNumber } = Astro.props;
+const edition = editions[locale];
+const chapter =
+  sources[
+    `../../../../${edition.directory}/chapter${chapterNumber}${edition.suffix}.md`
+  ];
+const headings = chapter
+  .getHeadings()
+  .filter(({ depth }) => depth === 2 || depth === 3);
+const sectionLinks: Record<string, Record<string, string>> = {};
+for (const language of locales) {
+  const target = editions[language];
+  const translated = sources[
+    `../../../../${target.directory}/chapter${chapterNumber}${target.suffix}.md`
+  ]
+    .getHeadings()
+    .filter(({ depth }) => depth === 2 || depth === 3);
+  // Preserve the section when translated heading structures match.
+  // Otherwise fall back to the chapter rather than guessing a destination.
+  if (
+    translated.length !== headings.length ||
+    translated.some((heading, index) => heading.depth !== headings[index].depth)
+  )
+    continue;
+  headings.forEach((heading, index) => {
+    (sectionLinks[heading.slug] ??= {})[language] = translated[index].slug;
+  });
+}
+---
+
+<Reader
+  locale={locale}
+  chapter={chapter}
+  chapterNumber={chapterNumber}
+  sectionLinks={sectionLinks}
+/>

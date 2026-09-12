@@ -1,0 +1,107 @@
+---
+import { translator, editions, locales, type Locale } from '../lib/i18n';
+import Icon from './Icon.astro';
+import machineTranslation from '../lib/machine-translation.json';
+import { repo } from '../lib/book';
+const {
+  reader = false,
+  locale = 'en',
+  chapterNumber = 1,
+} = Astro.props as {
+  reader?: boolean;
+  chapterNumber?: number;
+  locale?: Locale;
+};
+const t = translator(locale);
+const edition = editions[locale];
+---
+
+<header class:list={['site-header', { 'reader-header': reader }]}>
+  <a
+    class="brand"
+    dir="ltr"
+    href={edition.home}
+    aria-label={t('AI Agents in Depth')}
+    ><span class="brand-mark" aria-hidden="true">a<span>i</span></span><span
+      >AI Agents<span class="brand-secondary">in Depth</span></span
+    ></a
+  >
+  <nav class="header-nav" aria-label={t('Main navigation')}>
+    <a href={`${edition.home}#contents`}>{t('The book')}</a>
+    <a class="desktop-link" href={`${repo}/tree/main/chapter${chapterNumber}`}
+      >{t('Experiments')} <Icon name="external" size={15} /></a
+    >
+    <a href={repo}>GitHub <Icon name="external" size={15} /></a>
+  </nav>
+  <div class="header-tools">
+    <details class="language-picker">
+      <summary aria-label={t('Language')} title={edition.name}
+        ><span aria-hidden="true">◎</span>
+        <span class="current-language">{edition.name}</span>
+        <span aria-hidden="true">⌄</span></summary
+      >
+      <nav aria-label={t('Language')}>
+        {
+          locales.map((language) => (
+            <a
+              href={
+                reader
+                  ? `/${editions[language].directory}/chapter${chapterNumber}${editions[language].suffix}/`
+                  : editions[language].home
+              }
+              lang={language}
+              hreflang={language}
+              dir={editions[language].dir}
+              aria-current={language === locale ? 'page' : undefined}
+            >
+              {editions[language].name}
+              <span aria-hidden="true">{language === locale ? '✓' : ''}</span>
+            </a>
+          ))
+        }
+        <div class="machine-language-heading" dir="auto">
+          机器翻译 / Machine translation<br /><small
+            >未经审核 / Not vetted</small
+          >
+        </div>
+        {
+          machineTranslation.languages.map((language) => (
+            <a
+              data-machine-language={language.name}
+              href={`${reader ? `/book-en/chapter${chapterNumber}/` : editions.en.home}?translate=${language.locale}`}
+              lang={language.locale}
+              dir={'dir' in language ? language.dir : 'ltr'}
+            >
+              {language.label}
+              <small aria-hidden="true">MT</small>
+            </a>
+          ))
+        }
+      </nav>
+    </details>
+    <button
+      class="icon-button theme-toggle"
+      type="button"
+      aria-label={t('Switch to dark theme')}
+      title={t('Switch color theme')}
+      hidden
+      ><span class="moon-icon"><Icon name="moon" /></span><span class="sun-icon"
+        ><Icon name="sun" /></span
+      ></button
+    >
+    {
+      reader && (
+        <button
+          class="icon-button mobile-menu"
+          type="button"
+          aria-label={t('Open reading navigation')}
+          aria-expanded="false"
+          aria-controls="chapter-navigation"
+          hidden
+        >
+          <Icon name="menu" />
+        </button>
+      )
+    }
+  </div>
+</header>
