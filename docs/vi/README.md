@@ -9,6 +9,10 @@
 
 **Agent = LLM + Context + Tools** — Cuốn sách xây dựng trên công thức cốt lõi này qua 10 chương, đưa AI Agent từ nguyên lý đến thực hành kỹ thuật. Toàn bộ nội dung, hình minh họa và **93 thí nghiệm đi kèm** đều là mã nguồn mở. Hoan nghênh bạn tự chạy các thí nghiệm.
 
+> 📚 **Cuốn sách song hành _Hiểu sâu về AI Infra: Phân tích định lượng và Thiết kế hệ thống_ đã được mã nguồn mở** — đọc tại [github.com/bojieli/ai-infra-book](https://github.com/bojieli/ai-infra-book)
+>
+> Để phát triển tốt các ứng dụng dựa trên mô hình, bạn còn cần hiểu hạ tầng mà chúng chạy trên đó. Cuốn sách song hành bàn về AI Infra đứng sau việc huấn luyện và suy luận mô hình: tham số và trạng thái ngữ cảnh nằm ở đâu, tính toán được thực thi ra sao, và nhiều bộ tăng tốc phối hợp với nhau như thế nào.
+
 > 📢 **Những thay đổi trong bản 2.0 (so với 1.4):** Bản 2.0 hợp nhất phần “tương tác bất đồng bộ” của Chương 4 cũ với nội dung về “Agent đa phương thức” của Chương 9 cũ, rồi tái cấu trúc thành Chương 6 mới, “Tương tác: mở rộng không gian quan sát và không gian hành động”. Các Chương 6 (“Đánh giá Agent”), 7 (“Post-training mô hình”) và 8 (“Sự tiến hóa liên tục của Agent”) trước đây đều lùi lại một chương, nay lần lượt là Chương 7, 8 và 9.
 >
 > Nếu bạn đang đọc một bản PDF cũ, chúng tôi khuyên bạn [tải PDF mới nhất](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-vi.pdf). Ấn bản mới còn có nhiều nội dung được sửa chữa và điều chỉnh; vui lòng sử dụng phiên bản mới nhất.

@@ -8,6 +8,10 @@
 
 **Agente = LLM + Contexto + Ferramentas** — o livro é construído em torno desta fórmula e apresenta, em dez capítulos, os princípios e a prática de engenharia de agentes de IA.
 
+> 📚 **O livro irmão _AI Infra em Profundidade: Análise Quantitativa e Design de Sistemas_ agora é open source** — leia em [github.com/bojieli/ai-infra-book](https://github.com/bojieli/ai-infra-book)
+>
+> Desenvolver boas aplicações baseadas em modelos também exige entender a infraestrutura sobre a qual elas rodam. O livro irmão trata da AI Infra por trás do treinamento e da inferência: onde ficam os parâmetros e o estado do contexto, como a computação é executada e como vários aceleradores trabalham juntos.
+
 > 📢 **Mudanças da versão 2.0 em relação à 1.4:** a versão 2.0 unifica a parte "Interação Assíncrona" do antigo capítulo 4 com o conteúdo sobre "Agentes Multimodais" do antigo capítulo 9, reorganizando-os como o novo capítulo 6, "Interação: Expansão dos Espaços de Observação e Ação". Os antigos capítulos 6 ("Avaliação de Agentes"), 7 ("Pós-treinamento de Modelos") e 8 ("Evolução Contínua de Agentes") foram deslocados em um capítulo cada, passando a ser, respectivamente, os capítulos 7, 8 e 9.
 >
 > Se você tem um PDF antigo, recomendamos [baixar a versão mais recente do PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ptbr.pdf). A nova edição também inclui diversas correções e ajustes de conteúdo; confie apenas na versão mais recente.

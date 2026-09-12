@@ -9,6 +9,10 @@
 
 **Ágens = NYM + Kontextus + Eszközök** — a könyv erre az alapképletre építve, tíz fejezeten keresztül vezet el az AI-ügynökök alapelveitől a mérnöki gyakorlatig. A teljes szöveg, az ábrák és a **104 kapcsolódó projekt** nyílt forráskódú.
 
+> 📚 **A testvérkötet, az _AI Infra mélységében: Kvantitatív elemzés és rendszertervezés_, immár nyílt forráskódú** — [github.com/bojieli/ai-infra-book](https://github.com/bojieli/ai-infra-book)
+>
+> A modellalapú alkalmazások jó fejlesztéséhez az is kell, hogy értsük az infrastruktúrát, amelyen futnak. A testvérkötet a modellek tanítását és következtetését hordozó AI Infrát tárgyalja: hol tárolódnak a paraméterek és a kontextus állapota, hogyan hajtódik végre a számítás, és hogyan működik együtt több gyorsító.
+
 > 📢 **A 2.0-s verzió változásai az 1.4-eshez képest:** A 2.0-s verzió a korábbi 4. fejezet „aszinkron interakció” részét és a korábbi 9. fejezet „multimodális ágensekről” szóló anyagát egyesíti, majd új 6. fejezetként, „Interakció: a megfigyelési és a cselekvési tér kiterjesztése” címmel rendezi át. A korábbi 6. („Ügynökök kiértékelése”), 7. („Modell poszt-tréning”) és 8. („Az ágensek folyamatos evolúciója”) fejezet egy-egy hellyel hátrébb került, így most rendre a 7., 8. és 9. fejezet.
 >
 > Ha egy régebbi PDF-et olvas, javasoljuk, hogy [töltse le a legújabb PDF-et](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-hu.pdf). Az új kiadás számos javítást és tartalmi módosítást is tartalmaz; kérjük, mindig a legfrissebb verziót használja.

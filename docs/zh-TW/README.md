@@ -9,6 +9,10 @@
 
 **Agent = LLM + 上下文 + 工具**——本書圍繞這個核心公式，用 10 章把 AI Agent 從原理講到工程實戰。全書正文、配圖、**93 個配套實驗**全部開源，歡迎親手把實驗跑一遍。
 
+> 📚 **姊妹篇《深入理解 AI Infra：量化分析與系統設計》已開源發布**，歡迎閱讀：[github.com/bojieli/ai-infra-book](https://github.com/bojieli/ai-infra-book)
+>
+> 要開發好基於模型的應用，還需要理解這類應用賴以運行的基礎設施。姊妹篇討論的就是支撐模型訓練與推理的 AI Infra：參數和上下文狀態存在哪裡，計算怎樣執行，多個加速器怎樣協作。
+
 > 📢 **2.0 版變更（相較 1.4 版）**：2.0 版將原第四章中的「非同步互動」部分與原第九章中有關「多模態 Agent」的內容合併，重組為新的第六章「互動：觀察與動作空間的擴展」。原第六章「Agent 的評估」、第七章「模型後訓練」和第八章「Agent 的持續進化」依次後移一章，現分別為第七、八、九章。
 >
 > 如果你看到的是舊版 PDF，建議[下載最新版 PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-TW.pdf)。新版還包含許多內容修正與調整，請以最新版為準。
