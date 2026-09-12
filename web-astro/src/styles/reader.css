@@ -25,6 +25,7 @@
   background: var(--interactive, #8ba43a);
 }
 .reader-grid {
+  --reader-rail-bottom: 0px;
   display: grid;
   grid-template-columns: 245px minmax(0, 1fr) 230px;
   max-width: 1600px;
@@ -34,11 +35,18 @@
 .chapter-rail {
   position: sticky;
   top: 78px;
-  height: calc(100dvh - 78px);
+  height: calc(100dvh - 78px - var(--reader-rail-bottom));
   overflow-y: auto;
   border-right: 1px solid var(--line);
   padding: 34px 18px 24px 24px;
   scrollbar-width: thin;
+}
+.chapter-rail,
+.outline-rail {
+  /* Reaching a navigation edge must not move the article beneath it. */
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 20px;
 }
 .back-to-book {
   display: flex;
@@ -250,7 +258,7 @@
 .outline-rail {
   position: sticky;
   top: 78px;
-  max-height: calc(100dvh - 78px);
+  max-height: calc(100dvh - 78px - var(--reader-rail-bottom));
   overflow-y: auto;
   scrollbar-width: thin;
   padding: 45px 24px 30px 8px;
@@ -1032,7 +1040,11 @@
   .reader-header .mobile-menu {
     display: inline-flex;
   }
-  .reader-page {
+  .reader-grid {
+    --reader-rail-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+  .reading-main {
+    /* Keep toolbar clearance inside the grid so sticky rails stay below the header. */
     padding-bottom: calc(100px + env(safe-area-inset-bottom));
   }
   .reader-controls {

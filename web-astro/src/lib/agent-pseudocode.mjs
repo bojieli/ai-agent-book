@@ -87,3 +87,17 @@ export const bookInteraction = {
     ...bookExample.patterns,
   ],
 };
+
+// Evaluation examples mix protected prose scopes with short data-flow traces.
+export const bookEvaluation = {
+  name: 'book-evaluation',
+  scopeName: 'text.book-evaluation',
+  patterns: [
+    { name: 'comment.line.number-sign', match: '^\\s*#.*$' },
+    { name: 'entity.name.function', match: '^[^:\\n]+(?=:)' },
+    { name: 'string.quoted.double', begin: '"', end: '"' },
+    { name: 'string.quoted.single', begin: "'", end: "'" },
+    { name: 'markup.inline.raw', match: '`[^`]+`' },
+    { name: 'keyword.operator', match: '→|=' },
+  ],
+};

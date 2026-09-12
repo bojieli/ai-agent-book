@@ -54,6 +54,15 @@ function color(hex, p, property) {
 }
 export function styleFigure(source, theme, { preserveHeatmap = false } = {}) {
   const protectedCells = [];
+  // Authored web layouts mark data-bearing geometry explicitly. Its colors
+  // carry values, so retain the complete group through palette conversion.
+  source = source.replace(
+    /<g data-preserve-colors="true">[\s\S]*?<\/g>/g,
+    (group) => {
+      protectedCells.push(group);
+      return `<!--DATA_CELL_${protectedCells.length - 1}-->`;
+    },
+  );
   if (preserveHeatmap)
     source = source.replace(
       /<rect\b[^>]*width="64"[^>]*height="64"[^>]*\/>|<text\b[^>]*>\d\.\d{2}<\/text>/g,

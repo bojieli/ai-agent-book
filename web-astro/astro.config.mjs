@@ -8,6 +8,7 @@ import {
   bookExample,
   bookTree,
   bookInteraction,
+  bookEvaluation,
 } from './src/lib/agent-pseudocode.mjs';
 import { bookMarkdown, bookFootnotes } from './src/lib/book-markdown.mjs';
 
@@ -28,6 +29,7 @@ export default defineConfig({
         bookExample,
         bookTree,
         bookInteraction,
+        bookEvaluation,
       ],
       transformers: [
         {

@@ -106,8 +106,32 @@ export function bookMarkdown() {
         )
           node.lang = 'json';
       }
-      // Dollar amounts are prose, not TeX. Keep money examples literal.
-      if (node.type === 'inlineMath' && /^\d/.test(node.value)) {
+      // Chapter 7's plain-text examples are scoped document samples and
+      // evaluation data flows rather than executable programs.
+      if (
+        node.type === 'code' &&
+        node.lang === 'text' &&
+        /chapter7(?:\.[a-z]+)?\.md$/.test(file.path)
+      )
+        node.lang = 'book-evaluation';
+      // Chapter 10's LoopX protocol is a localized action flow, not code.
+      if (
+        node.type === 'code' &&
+        node.lang === 'text' &&
+        /chapter10(?:\.[a-z]+)?\.md$/.test(file.path)
+      )
+        node.lang = 'book-interaction';
+      // Two unescaped prices in one paragraph can look like one TeX span: the
+      // second price's dollar sign closes the first. In that case the parsed
+      // span ends immediately before the next price's digits. Keep the exact
+      // source literal without reclassifying numeric formulas as currency.
+      if (
+        node.type === 'inlineMath' &&
+        /^\d/.test(node.value) &&
+        /\s/.test(node.value) &&
+        node.position?.end.offset != null &&
+        /^\d/.test(String(file.value).slice(node.position.end.offset))
+      ) {
         node.type = 'text';
         node.value = `$${node.value}$`;
         delete node.data;

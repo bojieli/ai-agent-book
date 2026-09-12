@@ -1,2 +1,2 @@
 // Chapters currently available in the Astro reader, in reading order.
-export const availableChapters = [1, 2, 3, 4, 5, 6];
+export const availableChapters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];

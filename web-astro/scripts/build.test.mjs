@@ -36,6 +36,21 @@ const count = (html, tag) =>
   [...html.matchAll(new RegExp(`<${tag}\\b`, 'g'))].length;
 const ids = (html) =>
   new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]));
+const displayMathCount = (markdown) => {
+  let count = 0,
+    open = false;
+  for (const line of markdown.split('\n')) {
+    const value = line.replace(/^>\s?/, '').trim();
+    if (!open && value.startsWith('$$')) {
+      if (value.length > 4 && value.endsWith('$$')) count++;
+      else open = true;
+    } else if (open && value.endsWith('$$')) {
+      count++;
+      open = false;
+    }
+  }
+  return count;
+};
 
 test('Chapter 1 retains its sections, code, tables, figures, and footnotes', () => {
   assert.equal(count(chapter, 'h1'), 1);
@@ -460,7 +475,7 @@ test('Every chapter figure has two styled variants and an untouched original', (
     }
 });
 
-for (const chapterNumber of [3, 4, 5, 6])
+for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
   test(`Chapter ${chapterNumber} preserves code, figures, headings, and reader navigation in all editions`, async () => {
     const { fromMarkdown } = await import('mdast-util-from-markdown');
     const decode = (s) =>
@@ -577,6 +592,152 @@ for (const chapterNumber of [3, 4, 5, 6])
             `Missing footnote ${id}`,
           );
       }
+      if (chapterNumber === 7) {
+        assert.equal(
+          (article.match(/data-language="book-evaluation"/g) || []).length,
+          2,
+          edition.lang,
+        );
+        assert.equal(
+          (article.match(/data-language="jsonc"/g) || []).length,
+          1,
+          edition.lang,
+        );
+        assert.equal(
+          (article.match(/data-language="yaml"/g) || []).length,
+          1,
+          edition.lang,
+        );
+        assert.equal(
+          (article.match(/data-language="python"/g) || []).length,
+          1,
+          edition.lang,
+        );
+        assert.equal(count(article, 'table'), 6, edition.lang);
+        for (const level of [2, 4]) {
+          const expected = [
+            ...markdown.matchAll(new RegExp(`^#{${level}}\\s+`, 'gm')),
+          ].length;
+          assert.equal(
+            count(article, `h${level}`),
+            expected + (level === 2 ? 1 : 0),
+            edition.lang,
+          );
+        }
+        for (const [, id] of markdown.matchAll(/^\[\^([^\]]+)\]:/gm))
+          assert.ok(
+            ids(article).has(`user-content-fn-${id}`),
+            `Missing footnote ${id}`,
+          );
+      }
+      if (chapterNumber === 8) {
+        assert.equal(
+          (article.match(/data-language="python"/g) || []).length,
+          5,
+          edition.lang,
+        );
+        assert.equal(count(article, 'table'), 6, edition.lang);
+        for (const level of [2, 4]) {
+          const expected = [
+            ...markdown.matchAll(new RegExp(`^#{${level}}\\s+`, 'gm')),
+          ].length;
+          assert.equal(
+            count(article, `h${level}`),
+            expected + (level === 2 ? 1 : 0),
+            edition.lang,
+          );
+        }
+        for (const [, id] of markdown.matchAll(/^\[\^([^\]]+)\]:/gm))
+          assert.ok(
+            ids(article).has(`user-content-fn-${id}`),
+            `Missing footnote ${id}`,
+          );
+      }
+      if (chapterNumber === 9) {
+        assert.equal(code.length, 0, edition.lang);
+        assert.equal(images.length, 5, edition.lang);
+        assert.equal(count(article, 'table'), 3, edition.lang);
+        for (const level of [2, 4]) {
+          const expected = [
+            ...markdown.matchAll(new RegExp(`^#{${level}}\\s+`, 'gm')),
+          ].length;
+          assert.equal(
+            count(article, `h${level}`),
+            expected + (level === 2 ? 1 : 0),
+            edition.lang,
+          );
+        }
+        const notes = [...markdown.matchAll(/^\[\^([^\]]+)\]:/gm)];
+        assert.equal(notes.length, 25, edition.lang);
+        for (const [, id] of notes)
+          assert.ok(
+            ids(article).has(`user-content-fn-${id}`),
+            `Missing footnote ${id} in ${edition.lang}`,
+          );
+        for (const image of images) {
+          const paths = figurePaths(edition.directory, image);
+          assert.deepEqual(
+            readFileSync(join(dist, paths.original)),
+            readFileSync(
+              new URL(`../../${edition.directory}/${image}`, import.meta.url),
+            ),
+          );
+          for (const theme of ['light', 'dark']) {
+            assert.ok(existsSync(join(dist, paths[theme])));
+            assert.ok(html.includes(`data-figure-${theme}="${paths[theme]}"`));
+          }
+        }
+      }
+      if (chapterNumber === 10) {
+        assert.equal(code.length, 5, edition.lang);
+        assert.equal(images.length, 11, edition.lang);
+        assert.equal(count(article, 'table'), 4, edition.lang);
+        assert.equal(count(article, 'figure'), 11, edition.lang);
+        assert.equal(count(article, 'figcaption'), 11, edition.lang);
+        for (const level of [2, 4]) {
+          const expected = [
+            ...markdown.matchAll(new RegExp(`^#{${level}}\\s+`, 'gm')),
+          ].length;
+          assert.equal(
+            count(article, `h${level}`),
+            expected + (level === 2 ? 1 : 0),
+            edition.lang,
+          );
+        }
+        for (const [, id] of markdown.matchAll(/^\[\^([^\]]+)\]:/gm)) {
+          assert.ok(
+            ids(article).has(`user-content-fn-${id}`),
+            `Missing Chapter 10 footnote ${id} in ${edition.lang}`,
+          );
+        }
+        for (const [language, expected] of [
+          ['book-interaction', 1],
+          ['python', 3],
+          ['javascript', 1],
+        ]) {
+          assert.equal(
+            (
+              article.match(new RegExp(`data-language="${language}"`, 'g')) ||
+              []
+            ).length,
+            expected,
+            edition.lang,
+          );
+        }
+        for (const image of images) {
+          const paths = figurePaths(edition.directory, image);
+          assert.deepEqual(
+            readFileSync(join(dist, paths.original)),
+            readFileSync(
+              new URL(`../../${edition.directory}/${image}`, import.meta.url),
+            ),
+          );
+          for (const theme of ['light', 'dark']) {
+            assert.ok(existsSync(join(dist, paths[theme])));
+            assert.ok(html.includes(`data-figure-${theme}="${paths[theme]}"`));
+          }
+        }
+      }
       if (edition.lang === 'en' && chapterNumber === 3) {
         assert.equal(
           (article.match(/data-language="book-example"/g) || []).length,
@@ -599,7 +760,7 @@ for (const chapterNumber of [3, 4, 5, 6])
         assert.ok(article.includes('class="katex"'), edition.lang);
       assert.equal(
         (article.match(/class="katex-display"/g) || []).length,
-        (markdown.match(/^(?:> )?\$\$.+\$\$\s*$/gm) || []).length,
+        displayMathCount(markdown),
         edition.lang,
       );
       assert.ok(
@@ -612,11 +773,23 @@ for (const chapterNumber of [3, 4, 5, 6])
           `href="${edition.chapter.replace('chapter1', `chapter${chapterNumber - 1}`)}"`,
         ),
       );
-      assert.ok(
-        html.includes(
-          `href="${availableChapters.includes(chapterNumber + 1) ? '' : 'https://bojieli.github.io/ai-agent-book'}/${edition.directory}/chapter${chapterNumber + 1}${edition.suffix}/"`,
-        ),
-      );
+      const pager = html.match(
+        /<nav\b[^>]*class="chapter-pager"[^>]*>([\s\S]*?)<\/nav>/,
+      )?.[1];
+      assert.ok(pager, `Missing chapter navigation in ${edition.lang}`);
+      if (chapterNumber === 10) {
+        assert.ok(
+          pager.includes(`href="${edition.home}#contents"`),
+          edition.lang,
+        );
+        assert.ok(!html.includes('chapter11'), edition.lang);
+      } else {
+        assert.ok(
+          pager.includes(
+            `href="${availableChapters.includes(chapterNumber + 1) ? '' : 'https://bojieli.github.io/ai-agent-book'}/${edition.directory}/chapter${chapterNumber + 1}${edition.suffix}/"`,
+          ),
+        );
+      }
       for (const target of editions)
         assert.ok(
           html.includes(

@@ -207,9 +207,13 @@ const outline = getHeadings().filter(
           ><span>← &nbsp; {t('BACK TO')}</span><strong
             >{previous?.title ?? t('The book')}</strong
           ></a
-        ><a href={next.href}
-          ><span>{t('UP NEXT')} &nbsp; {next.external ? '↗' : '→'}</span><strong
-            >{next.label} &nbsp; {next.title}</strong
+        ><a href={next?.href ?? `${edition.home}#contents`}
+          ><span
+            >{next ? t('UP NEXT') : t('BACK TO')} &nbsp; {
+              next?.external ? '↗' : '→'
+            }</span
+          ><strong
+            >{next ? `${next.label} ${next.title}` : t('The book')}</strong
           ></a
         >
       </nav>
@@ -340,6 +344,7 @@ const outline = getHeadings().filter(
     import { browserTranslator } from '../lib/i18n';
     import { initReadingPosition } from '../scripts/reading-position';
     import { initFigureViewer } from '../scripts/figure-viewer';
+    import { initReaderNavigation } from '../scripts/reader-navigation';
     const t = browserTranslator();
     const root = document.documentElement;
     const controls = document.querySelector<HTMLElement>('.reader-controls');
@@ -487,6 +492,7 @@ const outline = getHeadings().filter(
           'agent-instructions',
           'book-example',
           'book-interaction',
+          'book-evaluation',
           'xml',
         ].includes(pre.dataset.language ?? '') ||
         (pre.dataset.language === 'python' &&
@@ -521,6 +527,7 @@ const outline = getHeadings().filter(
     const links = Array.from(
       document.querySelectorAll<HTMLAnchorElement>('.section-outline a'),
     );
+    const readerNavigation = initReaderNavigation();
     const sections = links.map((link) =>
       document.getElementById(decodeURIComponent(link.hash.slice(1))),
     );
@@ -531,7 +538,14 @@ const outline = getHeadings().filter(
     const languageLinks = Array.from(
       document.querySelectorAll<HTMLAnchorElement>('.language-picker a'),
     );
-    const updateReading = () => {
+    const machineLanguageLinks = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>('[data-machine-language]'),
+    );
+    const dialogLinks = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>('.dialog-outline a'),
+    );
+    let previousActive = -2;
+    const updateReading = (initial = false) => {
       const rect = content.getBoundingClientRect();
       const fraction = Math.max(
         0,
@@ -543,19 +557,26 @@ const outline = getHeadings().filter(
         if (section && section.getBoundingClientRect().top <= 160)
           active = index;
       });
+      if (active === previousActive) {
+        ticking = false;
+        return;
+      }
+      previousActive = active;
       links.forEach((link, index) => {
         if (index === active) link.setAttribute('aria-current', 'location');
         else link.removeAttribute('aria-current');
       });
-      document
-        .querySelectorAll<HTMLAnchorElement>('.dialog-outline a')
-        .forEach((link) => {
-          const selected =
-            active >= 0 &&
-            decodeURIComponent(link.hash.slice(1)) === sections[active]?.id;
-          if (selected) link.setAttribute('aria-current', 'location');
-          else link.removeAttribute('aria-current');
-        });
+      readerNavigation.setActiveOutline(
+        active >= 0 ? links[active] : null,
+        initial,
+      );
+      dialogLinks.forEach((link) => {
+        const selected =
+          active >= 0 &&
+          decodeURIComponent(link.hash.slice(1)) === sections[active]?.id;
+        if (selected) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
       languageLinks.forEach((link) => {
         const slug =
           active >= 0
@@ -565,29 +586,27 @@ const outline = getHeadings().filter(
         url.hash = slug ?? '';
         link.href = url.href;
       });
-      document
-        .querySelectorAll<HTMLAnchorElement>('[data-machine-language]')
-        .forEach((link) => {
-          const slug =
-            active >= 0
-              ? languageSections[sections[active]?.id ?? '']?.en
-              : undefined;
-          const url = new URL(link.href);
-          url.hash = slug ?? '';
-          link.href = url.href;
-        });
+      machineLanguageLinks.forEach((link) => {
+        const slug =
+          active >= 0
+            ? languageSections[sections[active]?.id ?? '']?.en
+            : undefined;
+        const url = new URL(link.href);
+        url.hash = slug ?? '';
+        link.href = url.href;
+      });
       ticking = false;
     };
     const scheduleReading = () => {
       if (!ticking) {
-        requestAnimationFrame(updateReading);
+        requestAnimationFrame(() => updateReading());
         ticking = true;
       }
     };
     addEventListener('scroll', scheduleReading, { passive: true });
     addEventListener('resize', scheduleReading);
     new ResizeObserver(scheduleReading).observe(content);
-    updateReading();
+    updateReading(true);
     initReadingPosition();
   </script>
 </Layout>
