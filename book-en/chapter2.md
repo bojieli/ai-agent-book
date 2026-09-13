@@ -853,7 +853,7 @@ From a context-management perspective, the Skills mechanism is highly KV Cache-f
 >
 > **What This Experiment Shows**: The value of a Skill lies in externalizing personal experience into instructions that load on demand. A short, readable first draft that survives a real task is a better starting point for later iteration than listing dozens of rules up front.
 
-## Agent Status Bar: Managing Trajectories with Meta-Information
+## Agent Status Bar: Keeping the Model Aware of Task Progress
 
 ![Figure 2-14: Agent Status Bar Architecture](images/fig2-14.svg)
 

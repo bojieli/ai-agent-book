@@ -1,5 +1,5 @@
 import { availableChapters } from './available-chapters.mjs';
-import { figurePaths, originalFigureLabels } from './figure-paths.mjs';
+import { figurePaths, sourceFigureLabels } from './figure-paths.mjs';
 import { sourceEdition } from './edition-source.mjs';
 import { readFileSync } from 'node:fs';
 const originalSite = 'https://bojieli.github.io/ai-agent-book';
@@ -196,8 +196,7 @@ export function bookMarkdown() {
                       {
                         type: 'text',
                         value:
-                          originalFigureLabels[locale] ??
-                          originalFigureLabels.en,
+                          sourceFigureLabels[locale] ?? sourceFigureLabels.en,
                       },
                     ],
                     data: { hProperties: { title: node.children[0].alt } },

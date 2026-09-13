@@ -106,5 +106,5 @@ export function styleFigure(source, theme, { preserveHeatmap = false } = {}) {
 export function frameRaster(bytes, mime, width, height, theme) {
   const p = palettes[theme],
     padding = 24;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width + padding * 2}" height="${height + padding * 2}" viewBox="0 0 ${width + padding * 2} ${height + padding * 2}" role="img"><title>Original image, presented without pixel changes</title><rect width="100%" height="100%" rx="8" fill="${p.paper}"/><image x="${padding}" y="${padding}" width="${width}" height="${height}" href="data:${mime};base64,${bytes.toString('base64')}"/></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width + padding * 2}" height="${height + padding * 2}" viewBox="0 0 ${width + padding * 2} ${height + padding * 2}" role="img"><title>Source figure, presented without pixel changes</title><rect width="100%" height="100%" rx="8" fill="${p.paper}"/><image x="${padding}" y="${padding}" width="${width}" height="${height}" href="data:${mime};base64,${bytes.toString('base64')}"/></svg>`;
 }

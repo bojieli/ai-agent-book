@@ -1,3 +1,8 @@
+import { layoutMemoryFoundation } from './memory-foundation-layout.mjs';
+import { layoutRetrievalStructure } from './retrieval-structure-layout.mjs';
+import { layoutRetrievalWorkflow } from './retrieval-workflow-layout.mjs';
+import { layoutTrajectory } from './trajectory-figure.mjs';
+import { layoutContextFlow } from './context-flow-figures.mjs';
 import { availableChapters } from '../src/lib/available-chapters.mjs';
 import editions from '../src/lib/editions.json' with { type: 'json' };
 import { layoutToolDiscovery } from './tool-discovery-figure.mjs';
@@ -106,8 +111,36 @@ for (const [locale, { directory, suffix }] of Object.entries(editions)) {
         );
       } else if (image === 'images/fig1-1.svg')
         vector = layoutAgentLoop(bytes.toString());
+      else if (image === 'images/fig1-4.svg')
+        vector = layoutTrajectory(bytes.toString(), {
+          rtl: ['book-ar', 'book-he'].includes(directory),
+        });
       else if (image === 'images/fig2-1.svg')
         vector = layoutContextWindow(bytes.toString());
+      else if (/^images\/fig2-(2|3|4|5|8|11)\.svg$/.test(image))
+        vector = layoutContextFlow(
+          bytes.toString(),
+          Number(image.match(/fig2-(\d+)/)[1]),
+          { rtl: ['book-ar', 'book-he'].includes(directory) },
+        );
+      else if (/^images\/fig3-(1|3|4|5|7)\.svg$/.test(image))
+        vector = layoutMemoryFoundation(
+          bytes.toString(),
+          Number(image.match(/fig3-(\d+)/)[1]),
+          { rtl: ['book-ar', 'book-he'].includes(directory) },
+        );
+      else if (/^images\/fig3-(9|10|11|12)\.svg$/.test(image))
+        vector = layoutRetrievalStructure(
+          bytes.toString(),
+          Number(image.match(/fig3-(\d+)/)[1]),
+          { rtl: ['book-ar', 'book-he'].includes(directory) },
+        );
+      else if (/^images\/fig3-(13|14|15)\.svg$/.test(image))
+        vector = layoutRetrievalWorkflow(
+          bytes.toString(),
+          Number(image.match(/fig3-(\d+)/)[1]),
+          { rtl: ['book-ar', 'book-he'].includes(directory) },
+        );
       else if (image === 'images/fig4-4.svg')
         vector = layoutToolDiscovery(bytes.toString(), {
           rtl: ['book-ar', 'book-he'].includes(directory),

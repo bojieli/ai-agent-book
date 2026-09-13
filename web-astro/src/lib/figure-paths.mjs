@@ -9,20 +9,20 @@ export function figurePaths(directory, image) {
   };
 }
 
-export const originalFigureLabels = {
-  en: 'Original figure',
-  'zh-CN': '原始图片',
-  'zh-TW': '原始圖片',
-  ar: 'الصورة الأصلية',
-  es: 'Figura original',
-  he: 'האיור המקורי',
-  hu: 'Eredeti ábra',
-  id: 'Gambar asli',
-  ja: '元の図',
-  ko: '원본 그림',
-  'pt-BR': 'Figura original',
+export const sourceFigureLabels = {
+  en: 'Source figure',
+  'zh-CN': '来源图',
+  'zh-TW': '來源圖',
+  ar: 'الشكل المصدر',
+  es: 'Figura de origen',
+  he: 'איור המקור',
+  hu: 'Forrásábra',
+  id: 'Gambar sumber',
+  ja: '出典の図',
+  ko: '출처 그림',
+  'pt-BR': 'Figura de origem',
   ru: 'Исходный рисунок',
-  ta: 'அசல் படம்',
-  tr: 'Özgün görsel',
-  vi: 'Hình gốc',
+  ta: 'மூலப் படம்',
+  tr: 'Kaynak şekil',
+  vi: 'Hình nguồn',
 };
