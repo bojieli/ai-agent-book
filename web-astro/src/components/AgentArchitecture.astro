@@ -4,10 +4,6 @@ const { locale = 'en' } = Astro.props as { locale?: Locale };
 const t = translator(locale);
 const stages = [
   {
-    label: t('Observe'),
-    detail: t('Observations update the context available to the model.'),
-  },
-  {
     label: t('Reason'),
     detail: t('The model uses that context to choose its next action.'),
   },
@@ -16,6 +12,10 @@ const stages = [
     detail: t(
       'Tools act on the environment; the results become new observations.',
     ),
+  },
+  {
+    label: t('Observe'),
+    detail: t('Observations update the context available to the model.'),
   },
 ];
 ---
@@ -39,34 +39,21 @@ const stages = [
     )}
   >
     <svg class="circuit" viewBox="0 0 640 460" fill="none" aria-hidden="true">
-      <defs>
-        <marker
-          id="flow-arrow"
-          viewBox="0 0 10 10"
-          refX="8"
-          refY="5"
-          markerWidth="5"
-          markerHeight="5"
-          orient="auto"
-          ><path d="m2 1 6 4-6 4" stroke="currentColor" stroke-width="1.5"
-          ></path></marker
-        >
-      </defs>
-      <g class="circuit-paths" marker-end="url(#flow-arrow)">
-        <path data-route="observe" d="M275 382H116Q80 382 80 346V218"></path>
+      <g class="circuit-paths">
+        <path data-route="observe" d="M174 382H116Q80 382 80 346V252"></path>
         <path data-route="reason" d="M147 180H241"></path>
         <path data-route="select" d="M399 180H493"></path>
-        <path data-route="execute" d="M560 218V346Q560 382 524 382H365"></path>
+        <path data-route="execute" d="M560 252V346Q560 382 524 382H466"></path>
       </g>
       <g class="energy-paths" aria-hidden="true">
-        <path data-energy="0" pathLength="1" d="M275 382H116Q80 382 80 346V218"
+        <path data-energy="0" pathLength="1" d="M174 382H116Q80 382 80 346V252"
         ></path>
         <path data-energy="1" pathLength="1" d="M147 180H241"></path>
         <path data-energy="2" pathLength="1" d="M399 180H493"></path>
         <path
           data-energy="3"
           pathLength="1"
-          d="M560 218V346Q560 382 524 382H365"></path>
+          d="M560 252V346Q560 382 524 382H466"></path>
       </g>
       <g class="packet-stream" opacity="0" aria-hidden="true">
         {
@@ -77,6 +64,12 @@ const stages = [
             />
           ))
         }
+      </g>
+      <g class="flow-arrowheads" aria-hidden="true">
+        <path data-arrowhead="0" d="m76 258 4-6 4 6"></path>
+        <path data-arrowhead="1" d="m235 176 6 4-6 4"></path>
+        <path data-arrowhead="2" d="m487 176 6 4-6 4"></path>
+        <path data-arrowhead="3" d="m472 378-6 4 6 4"></path>
       </g>
       <g class="processing-waves" aria-hidden="true">
         <circle data-wave="0" cx="320" cy="180" r="88"></circle>
@@ -216,13 +209,23 @@ const stages = [
     const routes = ['observe', 'reason', 'select', 'execute'].map((name) =>
       panel.querySelector<SVGPathElement>(`[data-route="${name}"]`)!,
     );
-    const lengths = routes.map((path) => path.getTotalLength());
+    let lengths = routes.map((path) => path.getTotalLength());
+    const scene = panel.querySelector<HTMLElement>('.agent-scene')!;
+    const circuit = panel.querySelector<SVGSVGElement>('.circuit')!;
+    const core = panel.querySelector<HTMLElement>('.model-core')!;
+    const context = panel.querySelector<HTMLElement>('.context-node')!;
+    const tools = panel.querySelector<HTMLElement>('.tools-node')!;
+    const environment = panel.querySelector<HTMLElement>('.environment-label')!;
+    let coreRadius = 80;
     const packetStream = panel.querySelector<SVGGElement>('.packet-stream')!;
     const packets = [
       ...panel.querySelectorAll<SVGCircleElement>('[data-packet]'),
     ];
     const energyPaths = [
       ...panel.querySelectorAll<SVGPathElement>('[data-energy]'),
+    ];
+    const arrowheads = [
+      ...panel.querySelectorAll<SVGPathElement>('[data-arrowhead]'),
     ];
     const waves = [...panel.querySelectorAll<SVGCircleElement>('[data-wave]')];
     const buttons = [
@@ -237,13 +240,14 @@ const stages = [
     )!;
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
     let paused = reducedMotion.matches;
+    let animate = !reducedMotion.matches;
     const initialBounds = panel.getBoundingClientRect();
     let visible = initialBounds.bottom > 0 && initialBounds.top < innerHeight;
     let stage = 0;
-    let elapsed = 0;
+    const duration = 3600;
+    let elapsed = paused ? duration : 0;
     let previous = 0;
     let frame = 0;
-    const duration = 3600;
     const clamp = (value: number) => Math.max(0, Math.min(1, value));
     const ease = (value: number) => {
       const t = clamp(value);
@@ -251,8 +255,8 @@ const stages = [
     };
     const draw = () => {
       const progress = elapsed / duration;
-      const motion = !reducedMotion.matches;
-      let routeIndex = stage;
+      const motion = animate;
+      let routeIndex = 1;
       let travel = 0;
       let travelling = true;
       let contextEnergy = 0;
@@ -261,11 +265,6 @@ const stages = [
       let resultEnergy = 0;
       const reveal = [0, 0, 0, 0];
       if (stage === 0) {
-        travel = ease((progress - 0.06) / 0.66);
-        travelling = progress >= 0.06 && progress <= 0.72;
-        reveal[0] = travel;
-        contextEnergy = Math.sin(clamp((progress - 0.65) / 0.35) * Math.PI);
-      } else if (stage === 1) {
         travel = ease(progress / 0.3);
         travelling = progress <= 0.3;
         reveal[1] = travel;
@@ -274,7 +273,7 @@ const stages = [
           progress > 0.24
             ? Math.sin(clamp((progress - 0.24) / 0.76) * Math.PI)
             : 0;
-      } else {
+      } else if (stage === 1) {
         routeIndex = progress < 0.4 ? 2 : 3;
         travel =
           routeIndex === 2
@@ -285,6 +284,12 @@ const stages = [
         reveal[3] = ease((progress - 0.4) / 0.48);
         toolEnergy = Math.sin(clamp((progress - 0.2) / 0.25) * Math.PI);
         resultEnergy = Math.sin(clamp((progress - 0.82) / 0.18) * Math.PI);
+      } else {
+        routeIndex = 0;
+        travel = ease((progress - 0.06) / 0.66);
+        travelling = progress >= 0.06 && progress <= 0.72;
+        reveal[0] = travel;
+        contextEnergy = Math.sin(clamp((progress - 0.65) / 0.35) * Math.PI);
       }
       energyPaths.forEach((path, index) => {
         path.style.strokeDashoffset = String(1 - reveal[index]);
@@ -305,9 +310,9 @@ const stages = [
       });
       waves.forEach((wave, index) => {
         const t = clamp((progress - 0.28 - index * 0.2) / 0.48);
-        wave.setAttribute('r', String(84 + ease(t) * 42));
+        wave.setAttribute('r', String(coreRadius + 4 + ease(t) * 24));
         wave.style.opacity =
-          motion && stage === 1 ? String(Math.sin(t * Math.PI) * 0.65) : '0';
+          motion && stage === 0 ? String(Math.sin(t * Math.PI) * 0.65) : '0';
       });
       panel.style.setProperty(
         '--context-energy',
@@ -323,13 +328,71 @@ const stages = [
         String(motion ? resultEnergy : 0),
       );
     };
+    // HTML labels wrap independently of the SVG. Connect their actual bounds,
+    // and give the animated stroke exactly the same route as the visible arrow.
+    const layoutRoutes = () => {
+      const bounds = scene.getBoundingClientRect();
+      if (!bounds.width || !bounds.height) return;
+      const box = (element: HTMLElement) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          left: rect.left - bounds.left,
+          right: rect.right - bounds.left,
+          top: rect.top - bounds.top,
+          bottom: rect.bottom - bounds.top,
+          x: rect.left - bounds.left + rect.width / 2,
+          y: rect.top - bounds.top + rect.height / 2,
+        };
+      };
+      const c = box(context);
+      const tool = box(tools);
+      const world = box(environment);
+      // Ignore the model's animated scale when finding its resting boundary.
+      coreRadius = core.offsetWidth / 2;
+      const modelX = core.offsetLeft;
+      const modelY = core.offsetTop;
+      const gap = 10;
+      const bend = Math.min(22, (world.left - c.x) / 2);
+      const paths = [
+        `M${world.left - gap} ${world.y}H${c.x + bend}Q${c.x} ${world.y} ${c.x} ${world.y - bend}V${c.bottom + gap}`,
+        `M${c.right + gap} ${modelY}H${modelX - coreRadius - gap}`,
+        `M${modelX + coreRadius + gap} ${modelY}H${tool.left - gap}`,
+        `M${tool.x} ${tool.bottom + gap}V${world.y - bend}Q${tool.x} ${world.y} ${tool.x - bend} ${world.y}H${world.right + gap}`,
+      ];
+      circuit.setAttribute('viewBox', `0 0 ${bounds.width} ${bounds.height}`);
+      paths.forEach((path, index) => {
+        routes[index].setAttribute('d', path);
+        energyPaths[index].setAttribute('d', path);
+      });
+      lengths = routes.map((path) => path.getTotalLength());
+      const tips = [
+        `M${c.x - 3} ${c.bottom + gap + 5}l3-5 3 5`,
+        `M${modelX - coreRadius - gap - 5} ${modelY - 3}l5 3-5 3`,
+        `M${tool.left - gap - 5} ${modelY - 3}l5 3-5 3`,
+        `M${world.right + gap + 5} ${world.y - 3}l-5 3 5 3`,
+      ];
+      tips.forEach((path, index) => arrowheads[index].setAttribute('d', path));
+      waves.forEach((wave) => {
+        wave.setAttribute('cx', String(modelX));
+        wave.setAttribute('cy', String(modelY));
+      });
+      for (const [selector, node] of [
+        ['.observations-label', c],
+        ['.actions-label', tool],
+      ] as const) {
+        const label = panel.querySelector<HTMLElement>(selector)!;
+        label.style.top = `${Math.max(node.bottom + 12, (node.bottom + world.top - label.offsetHeight) / 2)}px`;
+      }
+      draw();
+    };
     const setStage = (next: number) => {
       stage = next;
       panel.dataset.stage = String(stage);
       routes.forEach((route, index) => {
-        route.dataset.active = String(
-          stage === 2 ? index >= 2 : index === stage,
-        );
+        const active =
+          stage === 0 ? index === 1 : stage === 1 ? index >= 2 : index === 0;
+        route.dataset.active = String(active);
+        arrowheads[index].dataset.active = String(active);
       });
       buttons.forEach((button, index) =>
         button.setAttribute('aria-pressed', String(index === stage)),
@@ -356,6 +419,7 @@ const stages = [
       frame = 0;
       previous = 0;
       panel.dataset.paused = String(paused);
+      panel.dataset.motion = animate ? 'full' : 'reduced';
       draw();
       playback.querySelector('.playback-label')!.textContent = paused
         ? t('Play')
@@ -370,7 +434,7 @@ const stages = [
     buttons.forEach((button, index) =>
       button.addEventListener('click', () => {
         // Selecting a stage keeps the current playback preference.
-        elapsed = paused ? duration * 0.5 : 0;
+        elapsed = paused ? duration : 0;
         setStage(index);
         draw();
         syncPlayback();
@@ -378,10 +442,16 @@ const stages = [
     );
     playback.addEventListener('click', () => {
       paused = !paused;
+      // Explicit Play opts into motion; the initial state respects the OS setting.
+      if (!paused) {
+        animate = true;
+        if (elapsed >= duration) elapsed = 0;
+      }
       syncPlayback();
     });
     reducedMotion.addEventListener('change', () => {
-      paused = reducedMotion.matches;
+      animate = !reducedMotion.matches;
+      if (reducedMotion.matches) paused = true;
       draw();
       syncPlayback();
     });
@@ -395,13 +465,18 @@ const stages = [
     ).observe(panel.querySelector('.agent-scene')!);
     panel.querySelector<HTMLElement>('.motion-controls')!.hidden = false;
     setStage(0);
-    draw();
+    const layoutObserver = new ResizeObserver(layoutRoutes);
+    [scene, context, tools, environment, core].forEach((node) =>
+      layoutObserver.observe(node),
+    );
+    layoutRoutes();
     syncPlayback();
   }
 </script>
 <style>
   .agent-motion {
     --signal: #768c3d;
+    --route: #adb99d;
     align-self: center;
     position: relative;
     min-width: 0;
@@ -427,7 +502,9 @@ const stages = [
   }
   .agent-scene {
     position: relative;
+    width: 100%;
     aspect-ratio: 640/460;
+    min-height: 330px;
     margin: 18px 0 0;
   }
   .circuit {
@@ -439,7 +516,7 @@ const stages = [
   }
 
   .circuit-paths {
-    stroke: #adb99d;
+    stroke: var(--route);
     transition: stroke 0.35s;
     stroke-width: 1.8;
     color: #899673;
@@ -526,14 +603,17 @@ const stages = [
     top: 67%;
     font-size: 0.75rem;
     color: var(--muted);
-    background: var(--bg);
-    padding: 3px 6px;
+    width: 27%;
+    padding: 0;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
   }
   .observations-label {
-    left: 4%;
+    left: calc(12.5% + 12px);
   }
   .actions-label {
-    right: 7%;
+    right: calc(12.5% + 12px);
+    text-align: right;
   }
   .environment-label {
     position: absolute;
@@ -559,7 +639,7 @@ const stages = [
     margin-top: 5px;
   }
 
-  [data-stage='1'] .model-core {
+  [data-stage='0'] .model-core {
     box-shadow:
       0 16px 35px -10px #48633466,
       0 0 0 10px #d8ed7a25,
@@ -737,12 +817,18 @@ const stages = [
       min-height: 38px;
     }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .packet-stream {
-      display: none;
-    }
-  }
 
+  .flow-arrowheads {
+    stroke: var(--route);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.4s;
+  }
+  .flow-arrowheads path[data-active='true'] {
+    stroke: var(--signal);
+    stroke-width: 2;
+  }
   .circuit-paths path {
     transition: stroke 0.4s;
   }
@@ -750,15 +836,15 @@ const stages = [
     stroke: #6e8b38;
     stroke-width: 2.4;
   }
-  [data-stage='0'] .context-node strong,
-  [data-stage='2'] .tools-node strong {
+  [data-stage='2'] .context-node strong,
+  [data-stage='1'] .tools-node strong {
     color: #587225;
   }
   :global([data-theme='dark']) .circuit-paths path[data-active='true'] {
     stroke: var(--signal);
   }
-  :global([data-theme='dark']) [data-stage='0'] .context-node strong,
-  :global([data-theme='dark']) [data-stage='2'] .tools-node strong {
+  :global([data-theme='dark']) [data-stage='2'] .context-node strong,
+  :global([data-theme='dark']) [data-stage='1'] .tools-node strong {
     color: var(--signal);
   }
   @media (max-width: 760px) {
@@ -778,13 +864,13 @@ const stages = [
     --model-energy: 0;
     --tool-energy: 0;
     --result-energy: 0;
-    --signal: #248f7e;
-  }
-  .agent-motion[data-stage='1'] {
     --signal: #86a32e;
   }
-  .agent-motion[data-stage='2'] {
+  .agent-motion[data-stage='1'] {
     --signal: #b87a38;
+  }
+  .agent-motion[data-stage='2'] {
+    --signal: #248f7e;
   }
   .energy-paths {
     stroke: var(--signal);
@@ -868,7 +954,8 @@ const stages = [
     stroke-width: 2;
   }
   :global([data-theme='dark']) .agent-motion {
-    --signal: #91bcff;
+    --signal: #bdb0ff;
+    --route: #7c879b;
   }
   :global([data-theme='dark']) .model-core {
     background: linear-gradient(145deg, #667791, #39465d 48%, #9aabc7);
@@ -876,7 +963,7 @@ const stages = [
       0 16px 34px -14px #080b1255,
       0 0 0 8px #a4c1ef0c;
   }
-  :global([data-theme='dark']) [data-stage='1'] .model-core {
+  :global([data-theme='dark']) [data-stage='0'] .model-core {
     box-shadow:
       0 16px 35px -10px #202c4866,
       0 0 0 10px #bdb0ff25,
@@ -901,30 +988,26 @@ const stages = [
   :global([data-theme='dark']) .node-visual {
     color: #9aa7bd;
   }
-  :global([data-theme='dark']) [data-stage='0'] .context-visual,
-  :global([data-theme='dark']) [data-stage='2'] .tools-visual {
+  :global([data-theme='dark']) [data-stage='2'] .context-visual,
+  :global([data-theme='dark']) [data-stage='1'] .tools-visual {
     color: var(--signal);
   }
-
   :global([data-theme='dark']) .agent-motion[data-stage='1'] {
-    --signal: #bdb0ff;
+    --signal: #efbd7f;
   }
   :global([data-theme='dark']) .agent-motion[data-stage='2'] {
-    --signal: #efbd7f;
+    --signal: #91bcff;
   }
   :global([data-theme='dark']) .circuit-paths path[data-active='true'] {
     stroke: var(--signal);
   }
-  @media (prefers-reduced-motion: reduce) {
-    .processing-waves,
-    .packet-stream,
-    .side-node::after,
-    .environment-label::after {
-      display: none;
-    }
-    .model-core {
-      transform: translate(-50%, -50%);
-    }
+  .agent-motion[data-motion='reduced'] :is(.processing-waves, .packet-stream),
+  .agent-motion[data-motion='reduced'] .side-node::after,
+  .agent-motion[data-motion='reduced'] .environment-label::after {
+    display: none;
+  }
+  .agent-motion[data-motion='reduced'] .model-core {
+    transform: translate(-50%, -50%);
   }
 
   .model-label {
@@ -963,13 +1046,13 @@ const stages = [
   .tools-visual g {
     transition: color 0.35s;
   }
-  [data-stage='0'] .context-visual {
+  [data-stage='2'] .context-visual {
     color: var(--signal);
   }
-  [data-stage='0'] .incoming-observation {
+  [data-stage='2'] .incoming-observation {
     fill: color-mix(in srgb, var(--signal) 15%, var(--bg));
   }
-  [data-stage='2'] .tools-visual {
+  [data-stage='1'] .tools-visual {
     color: var(--signal);
   }
   .world-visual {
@@ -1059,7 +1142,8 @@ const stages = [
     white-space: normal;
   }
   .environment-label {
-    width: 72%;
+    top: 74%;
+    width: 42%;
     white-space: normal;
     text-align: center;
   }
@@ -1082,7 +1166,7 @@ const stages = [
   @media (max-width: 420px) {
     /* Keep the four architecture nodes legible; the caption explains the arrows. */
     .side-node {
-      width: 30%;
+      width: 25%;
     }
     .side-node strong {
       font-size: 0.8125rem;
