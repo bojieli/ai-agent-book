@@ -1,114 +1,99 @@
-// Web-only Figure 7-8: separate the five improvement stages into roomy panels
-// and route the iteration loop through a dedicated outer gutter.
-// The tracked SVGs remain untouched and available through the original link.
-export function layoutImprovementCycle(source) {
-  const normalizedSource = source.replace(
-    /<text\b([^>]*)\/>/g,
-    '<text$1></text>',
+import {
+  evaluationKit,
+  row,
+  heading,
+  title,
+  edge,
+  panel,
+} from './evaluation-layout-kit.mjs';
+export function layoutImprovementCycle(source, options = {}) {
+  const k = evaluationKit(source, 8, 37, options),
+    leftX = 24,
+    rightX = 512,
+    w = 424;
+  const observationRows = [heading(0), row(1), row(2), row(3), row(4)];
+  const hypothesisRows = [
+    heading(5),
+    title(6),
+    row(7),
+    title(8),
+    row(9),
+    title(10),
+    row(11),
+  ];
+  const topH = Math.max(
+    panel(k, 0, 0, w, observationRows).h,
+    panel(k, 0, 0, w, hypothesisRows).h,
   );
-  const labels = [
-    ...normalizedSource.matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g),
-  ].map((match) =>
-    match[1]
-      .replace(/<tspan\b[^>]*>/g, '')
-      .replace(/<\/tspan>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim(),
+  let svg =
+    panel(k, leftX, 24, w, observationRows, { name: 'observation', min: topH })
+      .svg +
+    panel(k, rightX, 24, w, hypothesisRows, { name: 'hypothesis', min: topH })
+      .svg;
+  svg += edge(
+    'observation-hypothesis',
+    k.arrow(456, 24 + topH / 2, 504, 24 + topH / 2),
   );
-  if (labels.length !== 37 || labels.some((label) => /<[^>]+>/.test(label)))
-    throw new Error(
-      'Figure 7-8 source structure changed; review its web layout.',
-    );
-
-  const label = (
-    index,
-    x,
-    y,
-    width,
-    height,
-    {
-      size = 18,
-      weight = 400,
-      mono = false,
-      align = 'center',
-      muted = false,
-    } = {},
-  ) => `<foreignObject data-label="${index}" x="${x}" y="${y}" width="${width}" height="${height}">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="height:100%;display:flex;align-items:center;justify-content:${align === 'center' ? 'center' : 'flex-start'};font-family:${mono ? "'Courier New',monospace" : "Arial,'Helvetica Neue',Helvetica,sans-serif"};font-size:${size}px;font-weight:${weight};line-height:1.25;color:${muted ? '#666666' : '#333333'};overflow-wrap:anywhere;white-space:${mono ? 'pre-wrap' : 'normal'};text-align:${align}"><div dir="auto" style="width:100%">${labels[index]}</div></div>
-  </foreignObject>`;
-  const card = (x, y, width, height, fill = '#f0f0f0') =>
-    `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="10" fill="${fill}" stroke="#7386a0" stroke-width="2"/>`;
-  const arrow = (x1, y1, x2, y2) =>
-    `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#333333" stroke-width="2.5" marker-end="url(#arrowhead)"/>`;
-  const hypothesisRow = (
-    chip,
-    detail,
-    y,
-  ) => `${card(590, y, 145, 45, '#d0d0d0')}
-    ${label(chip, 600, y + 3, 125, 39, { size: 14, weight: 700 })}
-    ${label(detail, 750, y, 295, 45, { size: 14, mono: true, align: 'start' })}`;
-  const experimentCard = (
-    heading,
-    result,
-    cost,
-    x,
-    fill,
-  ) => `${card(x, 376, 235, 142, fill)}
-    ${label(heading, x + 14, 385, 207, 38, { size: 17, weight: 700 })}
-    <line x1="${x + 18}" y1="430" x2="${x + 217}" y2="430" stroke="#999999" stroke-width="1.5"/>
-    ${label(result, x + 14, 438, 207, 35, { size: 15 })}
-    ${label(cost, x + 14, 476, 207, 31, { size: 14, muted: true })}`;
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 900" width="1120" height="900" role="img" aria-labelledby="title" style="background:#ffffff">
-  <title id="title">${labels[0]} · ${labels[12]} · ${labels[30]}</title>
-  <defs><marker id="arrowhead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0, 10 4, 0 8" fill="#333333"/></marker></defs>
-
-  ${card(30, 20, 500, 250)}
-  ${label(0, 52, 34, 456, 48, { size: 22, weight: 700 })}
-  <line x1="52" y1="91" x2="508" y2="91" stroke="#999999" stroke-width="1.5"/>
-  ${label(1, 55, 102, 450, 30, { size: 15, mono: true, align: 'start' })}
-  ${label(2, 55, 135, 450, 30, { size: 15, mono: true, align: 'start' })}
-  ${label(3, 55, 168, 450, 30, { size: 15, mono: true, align: 'start' })}
-  ${label(4, 55, 201, 450, 50, { size: 15, mono: true, align: 'start' })}
-
-  ${arrow(532, 145, 568, 145)}
-  ${card(570, 20, 500, 250)}
-  ${label(5, 592, 30, 456, 56, { size: 21, weight: 700 })}
-  <line x1="592" y1="94" x2="1048" y2="94" stroke="#999999" stroke-width="1.5"/>
-  ${hypothesisRow(6, 7, 105)}
-  ${hypothesisRow(8, 9, 158)}
-  ${hypothesisRow(10, 11, 211)}
-
-  ${arrow(820, 272, 820, 306)}
-  <rect x="30" y="311" width="1040" height="244" rx="10" fill="#ffffff" stroke="#7386a0" stroke-width="2" stroke-dasharray="8,6"/>
-  ${label(12, 55, 324, 990, 42, { size: 22, weight: 700 })}
-  ${experimentCard(13, 14, 15, 50, '#d0d0d0')}
-  ${experimentCard(16, 17, 18, 305, '#d0d0d0')}
-  ${experimentCard(19, 20, 21, 560, '#f0f0f0')}
-  ${experimentCard(22, 23, 24, 815, '#d0d0d0')}
-
-  ${arrow(290, 557, 290, 586)}
-  ${card(30, 591, 520, 220)}
-  ${label(25, 52, 598, 476, 56, { size: 21, weight: 700 })}
-  <line x1="52" y1="660" x2="528" y2="660" stroke="#999999" stroke-width="1.5"/>
-  ${label(26, 55, 663, 470, 36, { size: 14, mono: true, align: 'start' })}
-  ${label(27, 55, 699, 470, 36, { size: 14, mono: true, align: 'start' })}
-  ${label(28, 55, 735, 470, 36, { size: 14, mono: true, align: 'start' })}
-  ${label(29, 55, 771, 470, 36, { size: 14, mono: true, align: 'start' })}
-
-  ${arrow(552, 701, 588, 701)}
-  ${card(590, 591, 480, 220, '#d0d0d0')}
-  ${label(30, 612, 598, 436, 56, { size: 21, weight: 700 })}
-  <line x1="612" y1="660" x2="1048" y2="660" stroke="#999999" stroke-width="1.5"/>
-  ${label(31, 615, 663, 430, 36, { size: 14, mono: true, align: 'start' })}
-  ${label(32, 615, 699, 430, 36, { size: 14, mono: true, align: 'start' })}
-  ${label(33, 615, 735, 430, 36, { size: 14, mono: true, align: 'start' })}
-  ${label(34, 615, 771, 430, 36, { size: 14, mono: true, align: 'start' })}
-
-  <path d="M 1072 701 H 1095 V 145 H 1074" fill="none" stroke="#333333" stroke-width="2.5" marker-end="url(#arrowhead)"/>
-  ${label(35, 990, 278, 105, 28, { size: 15, weight: 700, muted: true })}
-
-  ${card(55, 833, 1010, 50, '#999999')}
-  ${label(36, 78, 838, 964, 40, { size: 16, weight: 700 })}
-</svg>`;
+  let y = 24 + topH;
+  svg += edge('hypothesis-experiment', k.arrow(724, y + 8, 724, y + 48));
+  y += 56;
+  const h = k.height(12, 864, { size: 20, bold: true });
+  let experiments = k.label(12, 48, y + 20, 864, h, { size: 20, bold: true }),
+    cy = y + 40 + h;
+  for (let r = 0; r < 2; r++) {
+    const groups = [0, 1].map((c) => [
+      title(13 + (r * 2 + c) * 3),
+      row(14 + (r * 2 + c) * 3),
+      row(15 + (r * 2 + c) * 3, { muted: true }),
+    ]);
+    const rh = Math.max(...groups.map((rows) => panel(k, 0, 0, 408, rows).h));
+    groups.forEach((rows, c) => {
+      experiments += panel(k, 48 + c * 432, cy, 408, rows, {
+        name: `experiment-${r * 2 + c}`,
+        min: rh,
+        fill: r === 1 && c === 0 ? '#f0f0f0' : '#d0d0d0',
+      }).svg;
+    });
+    cy += rh + 24;
+  }
+  svg += `<g data-experiments="true">${k.card(24, y, 912, cy - y, { fill: '#ffffff', dash: true })}${experiments}</g>`;
+  y = cy;
+  svg += edge('experiment-decision', k.arrow(236, y + 8, 236, y + 48));
+  y += 56;
+  const decisions = [heading(25), row(26), row(27), row(28), row(29)];
+  const iteration = [heading(30), row(31), row(32), row(33), row(34)];
+  const bottomH = Math.max(
+    panel(k, 0, 0, w, decisions).h,
+    panel(k, 0, 0, w, iteration).h,
+  );
+  svg +=
+    panel(k, leftX, y, w, decisions, { name: 'decision', min: bottomH }).svg +
+    panel(k, rightX, y, w, iteration, {
+      name: 'iteration',
+      min: bottomH,
+      fill: '#d0d0d0',
+    }).svg;
+  svg += edge(
+    'decision-iteration',
+    k.arrow(456, y + bottomH / 2, 504, y + bottomH / 2),
+  );
+  // Return to the hypothesis stage through a lane outside every panel.
+  svg += edge(
+    'iteration-hypothesis',
+    k.path(`M944 ${y + bottomH / 2} H976 V${24 + topH / 2} H944`),
+  );
+  const loopH = k.height(35, 384, { size: 14, bold: true });
+  svg += k.label(35, 532, y + bottomH + 20, 384, loopH, {
+    size: 14,
+    bold: true,
+  });
+  const footer = panel(
+    k,
+    24,
+    y + bottomH + 40 + loopH,
+    912,
+    [row(36, { bold: true })],
+    { name: 'methodology', fill: '#d0d0d0' },
+  );
+  return k.svg(svg + footer.svg, y + bottomH + 40 + loopH + footer.h + 24);
 }

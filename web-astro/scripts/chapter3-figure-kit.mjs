@@ -1,4 +1,4 @@
-// Shared typography and layout primitives for the web edition of Chapter 3.
+// Shared typography and layout primitives for the web editions of Chapters 3–7.
 // Source SVG text is kept as content; browser line wrapping replaces font shrinking.
 export function extractLabels(source, figure, allowedCounts) {
   const labels = [...source.matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g)].map(

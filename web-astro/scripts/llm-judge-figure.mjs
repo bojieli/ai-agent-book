@@ -1,110 +1,88 @@
-// Web-only Figure 7-5: route the three evidence sources through one input bus
-// and give structured scores and aggregation rules separate readable columns.
-// The tracked SVGs remain untouched and available through the original link.
-export function layoutLlmJudge(source) {
-  const normalizedSource = source.replace(
-    /<text\b([^>]*)\/>/g,
-    '<text$1></text>',
+import {
+  evaluationKit,
+  row,
+  heading,
+  title,
+  edge,
+  panel,
+} from './evaluation-layout-kit.mjs';
+export function layoutLlmJudge(source, options = {}) {
+  const k = evaluationKit(source, 5, 35, options);
+  const evidence = [
+    [heading(0), row(1), row(2), row(3, { min: 51 }), row(4)],
+    [heading(5), row(6), row([7, 8]), row(9)],
+    [heading(10), row(11), row(12), row(13), row(14)],
+  ];
+  const sourceH = Math.max(
+    ...evidence.map((rows) => panel(k, 0, 0, 296, rows).h),
   );
-  const labels = [
-    ...normalizedSource.matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g),
-  ].map((match) =>
-    match[1]
-      .replace(/<tspan\b[^>]*>/g, '')
-      .replace(/<\/tspan>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim(),
+  let svg = '';
+  evidence.forEach((rows, i) => {
+    svg += panel(k, 24 + i * 328, 24, 296, rows, {
+      name: `evidence-${i}`,
+      min: sourceH,
+      fill: i ? '#f0f0f0' : '#d0d0d0',
+    }).svg;
+  });
+  const bottom = 24 + sourceH,
+    busY = bottom + 40,
+    judgeY = bottom + 88;
+  for (const x of [172, 500, 828])
+    svg += k.path(`M${x} ${bottom + 8} V${busY}`, { arrow: false });
+  svg += `<g data-input-bus="true">${k.path(`M172 ${busY} H828`, { arrow: false })}</g>`;
+  svg += edge('evidence-judge', k.arrow(500, busY, 500, judgeY - 8));
+  const judge = panel(
+    k,
+    160,
+    judgeY,
+    680,
+    [heading(15), row(16, { muted: true })],
+    { name: 'judge', fill: '#d0d0d0' },
   );
-  if (labels.length !== 35 || labels.some((label) => /<[^>]+>/.test(label)))
-    throw new Error(
-      'Figure 7-5 source structure changed; review its web layout.',
-    );
-
-  const label = (
-    index,
-    x,
-    y,
-    width,
-    height,
-    {
-      size = 18,
-      weight = 400,
-      mono = false,
-      align = 'center',
-      muted = false,
-    } = {},
-  ) => `<foreignObject data-label="${index}" x="${x}" y="${y}" width="${width}" height="${height}">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="height:100%;display:flex;align-items:center;justify-content:${align === 'center' ? 'center' : 'flex-start'};font-family:${mono ? "'Courier New',monospace" : "Arial,'Helvetica Neue',Helvetica,sans-serif"};font-size:${size}px;font-weight:${weight};line-height:1.25;color:${muted ? '#666666' : '#333333'};overflow-wrap:anywhere;white-space:${mono ? 'pre-wrap' : 'normal'};text-align:${align}"><div dir="auto" style="width:100%">${labels[index]}</div></div>
-  </foreignObject>`;
-  const card = (x, y, width, height, fill = '#f0f0f0') =>
-    `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="10" fill="${fill}" stroke="#7386a0" stroke-width="2"/>`;
-  const divider = (x1, y, x2) =>
-    `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#999999" stroke-width="1.5"/>`;
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 820" width="1120" height="820" role="img" aria-labelledby="title" style="background:#ffffff">
-  <title id="title">${labels[15]} · ${labels[17]}</title>
-  <defs><marker id="arrowhead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0, 10 4, 0 8" fill="#333333"/></marker></defs>
-
-  ${card(30, 20, 330, 230, '#d0d0d0')}
-  ${label(0, 48, 34, 294, 42, { size: 23, weight: 700 })}
-  ${divider(48, 82, 342)}
-  ${label(1, 52, 92, 286, 32, { size: 16, mono: true, align: 'start' })}
-  ${label(2, 52, 124, 286, 32, { size: 16, mono: true, align: 'start' })}
-  ${label(3, 52, 156, 286, 40, { size: 16, mono: true, align: 'start' })}
-  ${label(4, 52, 200, 286, 32, { size: 16, mono: true, align: 'start' })}
-
-  ${card(395, 20, 330, 230)}
-  ${label(5, 413, 34, 294, 42, { size: 23, weight: 700 })}
-  ${divider(413, 82, 707)}
-  ${label(6, 417, 92, 286, 32, { size: 16, mono: true, align: 'start' })}
-  ${label(7, 417, 126, 286, 48, { size: 15, mono: true, align: 'start' })}
-  ${label(8, 417, 176, 286, 48, { size: 15, mono: true, align: 'start' })}
-  ${label(9, 417, 226, 286, 1, { size: 1 })}
-
-  ${card(760, 20, 330, 230)}
-  ${label(10, 778, 34, 294, 42, { size: 22, weight: 700 })}
-  ${divider(778, 82, 1072)}
-  ${label(11, 782, 92, 286, 38, { size: 15, mono: true, align: 'start' })}
-  ${label(12, 782, 132, 286, 32, { size: 16, mono: true, align: 'start' })}
-  ${label(13, 782, 164, 286, 32, { size: 16, mono: true, align: 'start' })}
-  ${label(14, 782, 196, 286, 40, { size: 16, mono: true, align: 'start' })}
-
-  <line x1="195" y1="252" x2="195" y2="280" stroke="#333333" stroke-width="2.5"/>
-  <line x1="560" y1="252" x2="560" y2="280" stroke="#333333" stroke-width="2.5"/>
-  <line x1="925" y1="252" x2="925" y2="280" stroke="#333333" stroke-width="2.5"/>
-  <line x1="195" y1="280" x2="925" y2="280" stroke="#333333" stroke-width="2.5"/>
-  <line x1="560" y1="280" x2="560" y2="310" stroke="#333333" stroke-width="2.5" marker-end="url(#arrowhead)"/>
-
-  <rect x="330" y="315" width="460" height="80" rx="10" fill="#7386a0" stroke="#333333" stroke-width="2"/>
-  ${label(15, 350, 324, 420, 35, { size: 22, weight: 700 })}
-  ${label(16, 350, 359, 420, 27, { size: 14, muted: true })}
-  <line x1="560" y1="397" x2="560" y2="430" stroke="#333333" stroke-width="2.5" marker-end="url(#arrowhead)"/>
-
-  <rect x="30" y="435" width="1060" height="355" rx="10" fill="#ffffff" stroke="#7386a0" stroke-width="2" stroke-dasharray="8,6"/>
-  ${label(17, 55, 450, 1010, 42, { size: 26, weight: 700 })}
-  ${card(55, 505, 500, 255, '#f5f5f5')}
-  ${label(18, 75, 518, 180, 48, { size: 16, mono: true, align: 'start' })}
-  ${label(19, 260, 518, 62, 48, { size: 20, weight: 700 })}
-  ${label(20, 328, 518, 205, 48, { size: 14, align: 'start', muted: true })}
-  ${divider(75, 570, 535)}
-  ${label(21, 75, 577, 180, 48, { size: 16, mono: true, align: 'start' })}
-  ${label(22, 260, 577, 62, 48, { size: 20, weight: 700 })}
-  ${label(23, 328, 577, 205, 48, { size: 14, align: 'start', muted: true })}
-  ${divider(75, 629, 535)}
-  ${label(24, 75, 636, 180, 48, { size: 16, mono: true, align: 'start' })}
-  ${label(25, 260, 636, 62, 48, { size: 18, weight: 700 })}
-  ${label(26, 328, 636, 205, 48, { size: 14, align: 'start', muted: true })}
-  ${divider(75, 688, 535)}
-  ${label(27, 75, 695, 180, 48, { size: 16, mono: true, align: 'start' })}
-  ${label(28, 260, 695, 62, 48, { size: 20, weight: 700 })}
-  ${label(29, 328, 695, 205, 48, { size: 14, align: 'start', muted: true })}
-
-  ${card(575, 505, 490, 255)}
-  ${label(30, 595, 518, 450, 42, { size: 22, weight: 700 })}
-  ${divider(595, 568, 1045)}
-  ${label(31, 597, 578, 446, 38, { size: 15, mono: true, align: 'start' })}
-  ${label(32, 597, 618, 446, 38, { size: 15, mono: true, align: 'start' })}
-  ${label(33, 597, 658, 446, 38, { size: 15, mono: true, align: 'start' })}
-  ${label(34, 597, 698, 446, 48, { size: 14, mono: true, align: 'start' })}
-</svg>`;
+  svg += judge.svg;
+  let y = judgeY + judge.h;
+  svg += edge('judge-output', k.arrow(500, y + 8, 500, y + 48));
+  y += 56;
+  const outputH = k.height(17, 904, { size: 20, bold: true });
+  let body = k.label(17, 48, y + 20, 904, outputH, { size: 20, bold: true }),
+    scoreY = y + 40 + outputH;
+  const rowHeights = Array.from(
+    { length: 4 },
+    (_, i) =>
+      Math.max(
+        k.height(18 + i * 3, 280, { size: 16, bold: true }),
+        k.height(19 + i * 3, 80, { size: 18, bold: true }),
+      ) +
+      k.height(20 + i * 3, 384, { size: 16 }) +
+      36,
+  );
+  const scoreH = rowHeights.reduce((a, b) => a + b, 0) + 20;
+  body += k.card(48, scoreY, 424, scoreH, { fill: '#f5f5f5' });
+  let cursor = scoreY + 16;
+  for (let i = 0; i < 4; i++) {
+    const label = 18 + i * 3,
+      th = Math.max(
+        k.height(label, 280, { size: 16, bold: true }),
+        k.height(label + 1, 80, { size: 18, bold: true }),
+      ),
+      dh = k.height(label + 2, 384, { size: 16 });
+    body += `<g data-score-row="${i}">${k.label(label, 68, cursor, 280, th, { size: 16, bold: true, align: 'start' })}${k.label(label + 1, 360, cursor, 80, th, { size: 18, bold: true })}${k.label(label + 2, 68, cursor + th + 8, 384, dh, { size: 16, muted: true, align: 'start' })}</g>`;
+    cursor += rowHeights[i];
+    if (i < 3) body += k.path(`M68 ${cursor - 12} H452`, { arrow: false });
+  }
+  const aggregation = panel(
+    k,
+    496,
+    scoreY,
+    456,
+    [heading(30), row(31), row(32), row(33), row(34)],
+    { name: 'aggregation', min: scoreH },
+  );
+  body += aggregation.svg;
+  const outHeight = 40 + outputH + Math.max(scoreH, aggregation.h) + 24;
+  return k.svg(
+    svg +
+      `<g data-output="structured">${k.card(24, y, 952, outHeight, { fill: '#ffffff', dash: true })}${body}</g>`,
+    y + outHeight + 24,
+  );
 }

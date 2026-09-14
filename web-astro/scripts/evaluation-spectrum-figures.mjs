@@ -1,111 +1,241 @@
-// Web presentation only. Keep the source labels and, for the fidelity plot,
-// the source point coordinates; move long descriptions to a numbered key.
-function sourceLabels(source, count) {
+// Web-only reflows for the Chapter 7 verification spectrum and simulation
+// fidelity chart. Every visible content label comes from the localized SVG.
+
+import { figureKit } from './chapter3-figure-kit.mjs';
+
+const specifications = {
+  4: { labels: 24, rect: 6, circle: 0, line: 4, path: 0, marker: 2 },
+  9: { labels: 28, rect: 0, circle: 6, line: 3, path: 0, marker: 2 },
+};
+
+const count = (source, tag) =>
+  (source.match(new RegExp(`<${tag}\\b`, 'g')) || []).length;
+
+function sourceLabels(source, figure) {
+  const specification = specifications[figure];
+  if (
+    !/<svg\b/.test(source) ||
+    !/<\/svg>\s*$/.test(source) ||
+    !['rect', 'circle', 'line', 'path', 'marker'].every(
+      (tag) => count(source, tag) === specification[tag],
+    )
+  )
+    throw new Error(
+      `Figure 7-${figure} source structure changed; review its web layout.`,
+    );
+
   const labels = [
     ...source
       .replace(/<text\b([^>]*)\/>/g, '<text$1></text>')
       .matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g),
-  ].map((m) =>
-    m[1]
+  ].map((match) =>
+    match[1]
       .replace(/<tspan\b[^>]*>/g, '')
       .replace(/<\/tspan>/g, ' ')
       .replace(/\s+/g, ' ')
       .trim(),
   );
-  if (labels.length !== count || labels.some((s) => /<[^>]+>/.test(s)))
+  if (
+    labels.length !== specification.labels ||
+    labels.some((label) => /<[^>]+>/.test(label))
+  )
     throw new Error(
-      'Evaluation spectrum source changed; review the web layout.',
+      `Figure 7-${figure} source labels changed; review its web layout.`,
     );
   return labels;
 }
-function text(
-  labels,
-  indices,
-  x,
-  y,
-  width,
-  height,
-  size = 18,
-  bold = false,
-  align = 'center',
-) {
-  return `<foreignObject x="${x}" y="${y}" width="${width}" height="${height}"><div xmlns="http://www.w3.org/1999/xhtml" style="height:100%;display:flex;flex-direction:column;justify-content:center;font-family:Arial,Helvetica,sans-serif;font-size:${size}px;line-height:1.3;font-weight:${bold ? 700 : 400};color:#333333;text-align:${align};overflow-wrap:anywhere">${indices.map((i) => `<div dir="auto" data-label="${i}">${labels[i]}</div>`).join('')}</div></foreignObject>`;
-}
-const card = (x, y, w, h) =>
-  `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="#f0f0f0" stroke="#7386a0" stroke-width="1.5"/>`;
-const defs =
-  '<defs><marker id="spectrum-arrow" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 4L0 8Z" fill="#333333"/></marker></defs>';
 
-export function layoutVerificationSpectrum(source) {
-  const labels = sourceLabels(source, 24);
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 640" width="1120" height="640" role="img" style="background:#ffffff">${defs}
-  ${text(labels, [0], 24, 12, 800, 50, 20, true, 'start')}
-  ${text(labels, [1], 870, 12, 220, 50, 20, true, 'end')}
-  <line x1="30" y1="76" x2="1090" y2="76" stroke="#333333" stroke-width="2" marker-end="url(#spectrum-arrow)"/>
-  ${[0, 1, 2, 3]
-    .map((c) => {
-      const x = 24 + c * 278,
-        i = 2 + c * 4;
-      return `${card(x, 100, 238, 290)}
-    ${text(labels, [i], x + 14, 108, 210, 64, 21, true)}
-    ${text(labels, [i + 1], x + 14, 176, 210, 64, 17)}
-    ${text(labels, [i + 2], x + 14, 242, 210, 64, 17)}
-    ${text(labels, [i + 3], x + 14, 308, 210, 64, 17)}
-    ${c < 3 ? `<line x1="${x + 246}" y1="245" x2="${x + 270}" y2="245" stroke="#7386a0" stroke-width="2" marker-end="url(#spectrum-arrow)"/>` : ''}`;
+export function layoutVerificationSpectrum(source, { rtl = false } = {}) {
+  const labels = sourceLabels(source, 4);
+  const kit = figureKit(labels, { rtl });
+  const cardWidth = 202;
+  const cardXs = [24, 274, 524, 774];
+  const innerWidth = cardWidth - 40;
+  const axisHeight = Math.max(
+    kit.height(0, 760, { size: 20, bold: true }),
+    kit.height(1, 160, { size: 20, bold: true }),
+  );
+  const axisY = 24;
+  const lineY = axisY + axisHeight + 12;
+  const cardY = lineY + 24;
+  const titleHeight = Math.max(
+    ...[2, 6, 10, 14].map((id) =>
+      kit.height(id, innerWidth, { size: 18, bold: true }),
+    ),
+  );
+  const bodyHeights = [0, 1, 2].map((row) =>
+    Math.max(
+      ...[3 + row, 7 + row, 11 + row, 15 + row].map((id) =>
+        kit.height(id, innerWidth, { size: 16, min: 28 }),
+      ),
+    ),
+  );
+  const cardHeight =
+    18 + titleHeight + 14 + bodyHeights.reduce((sum, h) => sum + h, 0) + 48;
+
+  const stages = [2, 6, 10, 14]
+    .map((title, stage) => {
+      const x = cardXs[stage];
+      let cursor = cardY + 18;
+      let result = `<g data-spectrum-stage="${stage}">${kit.card(x, cardY, cardWidth, cardHeight)}`;
+      result += kit.label(title, x + 20, cursor, innerWidth, titleHeight, {
+        size: 18,
+        bold: true,
+      });
+      cursor += titleHeight + 14;
+      for (let row = 0; row < 3; row++) {
+        result += kit.label(
+          title + row + 1,
+          x + 20,
+          cursor,
+          innerWidth,
+          bodyHeights[row],
+          { size: 16 },
+        );
+        cursor += bodyHeights[row] + 12;
+      }
+      return `${result}</g>`;
     })
-    .join('')}
-  ${[0, 1]
-    .map((c) => {
-      const x = 24 + c * 556,
-        i = 18 + c * 3;
-      return `${card(x, 414, 516, 205)}
-    ${text(labels, [i], x + 16, 422, 484, 43, 21, true)}
-    ${text(labels, [i + 1], x + 16, 470, 484, 68, 17)}
-    ${text(labels, [i + 2], x + 16, 544, 484, 64, 17)}`;
+    .join('');
+
+  const edges = cardXs
+    .slice(0, -1)
+    .map((x, stage) => {
+      const start = x + cardWidth + 8;
+      const end = cardXs[stage + 1] - 8;
+      const y = cardY + cardHeight / 2;
+      return `<g data-spectrum-edge="${stage}-${stage + 1}" data-start-x="${start}" data-end-x="${end}">${kit.arrow(start, y, end, y)}</g>`;
     })
-    .join('')}
-  </svg>`;
+    .join('');
+
+  const summaryY = cardY + cardHeight + 32;
+  const summaryWidth = 464;
+  const summaryInner = summaryWidth - 40;
+  const summaryTitleHeight = Math.max(
+    ...[18, 21].map((id) =>
+      kit.height(id, summaryInner, { size: 18, bold: true }),
+    ),
+  );
+  const summaryBodyHeight = Math.max(
+    ...[19, 22].map((id) => kit.height(id, summaryInner, { size: 16 })),
+  );
+  const summaryCaptionHeight = Math.max(
+    ...[20, 23].map((id) =>
+      kit.height(id, summaryInner, { size: 14, min: 25 }),
+    ),
+  );
+  const summaryHeight =
+    18 +
+    summaryTitleHeight +
+    10 +
+    summaryBodyHeight +
+    8 +
+    summaryCaptionHeight +
+    18;
+  const summaries = [18, 21]
+    .map((title, summary) => {
+      const x = summary === 0 ? 24 : 512;
+      let cursor = summaryY + 18;
+      return `<g data-spectrum-summary="${summary}">
+        ${kit.card(x, summaryY, summaryWidth, summaryHeight, { fill: '#f3f0e8' })}
+        ${kit.label(title, x + 20, cursor, summaryInner, summaryTitleHeight, { size: 18, bold: true })}
+        ${kit.label(title + 1, x + 20, (cursor += summaryTitleHeight + 10), summaryInner, summaryBodyHeight, { size: 16 })}
+        ${kit.label(title + 2, x + 20, (cursor += summaryBodyHeight + 8), summaryInner, summaryCaptionHeight, { size: 14, muted: true })}
+      </g>`;
+    })
+    .join('');
+
+  const content = `
+    ${kit.label(0, 24, axisY, 760, axisHeight, { size: 20, bold: true })}
+    ${kit.label(1, 816, axisY, 160, axisHeight, { size: 20, bold: true })}
+    <g data-spectrum-axis="true">${kit.arrow(24, lineY, 976, lineY)}</g>
+    ${stages}${edges}${summaries}`;
+  return kit.svg(content, summaryY + summaryHeight + 24);
 }
 
-export function layoutSimulationFidelity(source) {
-  const labels = sourceLabels(source, 28);
-  const circles = [...source.matchAll(/<circle\b[^>]*>/g)].map(([s]) => ({
-    x: Number(s.match(/\bcx="([^"]+)"/)?.[1]),
-    y: Number(s.match(/\bcy="([^"]+)"/)?.[1]),
-  }));
+function chartGeometry(source) {
+  const circles = [...source.matchAll(/<circle\b[^>]*>/g)].map(
+    ([element], index) => ({
+      element: element.replace(
+        '<circle',
+        `<circle data-chart-point="${index + 1}"`,
+      ),
+      x: Number(element.match(/\bcx="([^"]+)"/)?.[1]),
+      y: Number(element.match(/\bcy="([^"]+)"/)?.[1]),
+    }),
+  );
   if (
     circles.length !== 6 ||
     circles.some(({ x, y }) => !Number.isFinite(x) || !Number.isFinite(y))
   )
     throw new Error('Figure 7-9 point geometry changed.');
-  const trend = source.match(/<line\b[^>]*stroke-dasharray="8,4"[^>]*\/>/)?.[0];
+  const trend = source.match(
+    /<line\b[^>]*stroke-dasharray="8,4"[^>]*\/\s*>/,
+  )?.[0];
   if (!trend) throw new Error('Figure 7-9 trend line missing.');
+  return { circles, trend };
+}
+
+export function layoutSimulationFidelity(source, { rtl = false } = {}) {
+  const labels = sourceLabels(source, 9);
+  const { circles, trend } = chartGeometry(source);
+  const kit = figureKit(labels, { rtl });
+  const xAxisY = 420;
+  const xTitleHeight = kit.height(0, 700, { size: 20, bold: true });
+  const yTitleHeight = kit.height([1, 2, 3, 4, 5], 760, {
+    size: 16,
+    bold: true,
+  });
+  const pointKeys = circles
+    .map(
+      ({ x, y }, point) =>
+        `${kit.card(x + 10, y - 32, 26, 26, { fill: '#ffffff' })}<foreignObject data-point-key="${point + 1}" x="${x + 10}" y="${y - 32}" width="26" height="26"><div xmlns="http://www.w3.org/1999/xhtml" style="box-sizing:border-box;width:100%;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;line-height:26px;color:#333333;text-align:center">${point + 1}</div></foreignObject>`,
+    )
+    .join('');
+
   const groups = [
-    [6, 7, 8],
-    [9, 10, 11, 12],
-    [13, 14, 15, 16],
-    [17, 18, 19, 20],
-    [21, 22, 23, 24],
-    [25, 26, 27],
+    { title: [6], details: [7, 8] },
+    { title: [9, 10], details: [11, 12] },
+    { title: [13, 14], details: [15, 16] },
+    { title: [17, 18], details: [19, 20] },
+    { title: [21, 22], details: [23, 24] },
+    { title: [25], details: [26, 27] },
   ];
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 860" width="1120" height="860" role="img" style="background:#ffffff">${defs}
-    ${text(labels, [1, 2, 3, 4, 5], 24, 150, 156, 210, 20, true)}
-    <g transform="translate(100 -28)">
-      <line x1="100" y1="420" x2="860" y2="420" stroke="#333333" stroke-width="2" marker-end="url(#spectrum-arrow)"/>
-      <line x1="100" y1="420" x2="100" y2="65" stroke="#333333" stroke-width="2" marker-end="url(#spectrum-arrow)"/>
-      ${trend}
-      ${circles.map(({ x, y }, i) => `<circle data-point="${i + 1}" cx="${x}" cy="${y}" r="17" fill="#d0d0d0" stroke="#7386a0" stroke-width="2"/><text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#333333">${i + 1}</text>`).join('')}
-    </g>
-    ${text(labels, [0], 210, 400, 770, 48, 22, true)}
-    ${groups
-      .map(([heading, ...details], i) => {
-        const x = 24 + (i % 3) * 366,
-          y = 474 + Math.floor(i / 3) * 185;
-        return `${card(x, y, 340, 165)}
-      <circle cx="${x + 27}" cy="${y + 30}" r="15" fill="#d0d0d0" stroke="#7386a0"/><text x="${x + 27}" y="${y + 30}" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="17" fill="#333333">${i + 1}</text>
-      ${text(labels, [heading], x + 53, y + 8, 270, 43, 21, true, 'start')}
-      ${text(labels, details, x + 18, y + 56, 304, 98, 17, false, 'start')}`;
-      })
-      .join('')}
-    </svg>`;
+  const cardWidth = 301;
+  const innerWidth = cardWidth - 48;
+  const titleHeight = Math.max(
+    ...groups.map(({ title }) =>
+      kit.height(title, cardWidth - 86, { size: 18, bold: true }),
+    ),
+  );
+  const detailHeight = Math.max(
+    ...groups.map(({ details }) =>
+      kit.height(details, innerWidth, { size: 14, min: 46 }),
+    ),
+  );
+  const cardHeight = 18 + titleHeight + 10 + detailHeight + 18;
+  const cardY = xAxisY + xTitleHeight + 56;
+  const cards = groups
+    .map(({ title, details }, point) => {
+      const x = 24 + (point % 3) * 325.5;
+      const y = cardY + Math.floor(point / 3) * (cardHeight + 24);
+      return `<g data-fidelity-key="${point + 1}">
+        ${kit.card(x, y, cardWidth, cardHeight)}
+        <foreignObject data-key-number="${point + 1}" x="${x + 16}" y="${y + 16}" width="28" height="28"><div xmlns="http://www.w3.org/1999/xhtml" style="box-sizing:border-box;width:100%;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;line-height:28px;color:#333333;text-align:center">${point + 1}</div></foreignObject>
+        ${kit.label(title, x + 52, y + 18, cardWidth - 70, titleHeight, { size: 18, bold: true, align: 'start' })}
+        ${kit.label(details, x + 24, y + 18 + titleHeight + 10, innerWidth, detailHeight, { size: 14, muted: true, align: 'start' })}
+      </g>`;
+    })
+    .join('');
+  const totalHeight = cardY + cardHeight * 2 + 24 + 24;
+  const content = `
+    <g data-chart-axis="x">${kit.arrow(100, xAxisY, 860, xAxisY)}</g>
+    <g data-chart-axis="y">${kit.arrow(100, xAxisY, 100, 90)}</g>
+    <g data-chart-trend="true">${trend}</g>
+    <g data-chart-points="true">${circles.map(({ element }) => element).join('')}</g>
+    ${pointKeys}
+    ${kit.label([1, 2, 3, 4, 5], 100, 24, 760, yTitleHeight, { size: 16, bold: true })}
+    ${kit.label(0, 180, xAxisY + 12, 700, xTitleHeight, { size: 20, bold: true })}
+    ${cards}`;
+  return kit.svg(content, totalHeight);
 }

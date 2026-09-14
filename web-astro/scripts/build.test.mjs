@@ -451,19 +451,29 @@ test('Every chapter figure has two styled variants and an untouched original', (
         for (const theme of ['light', 'dark']) {
           assert.ok(existsSync(join(dist, paths[theme])));
           assert.ok(html.includes(`data-figure-${theme}="${paths[theme]}"`));
-          if (image === 'images/fig4-4.svg') {
+          if (
+            /^images\/fig(?:4-[1-4]|5-(?:[1-9]|10|11)|6-(?:[1-9]|1[0-4])|7-(?:[1-9]|10))\.svg$/.test(
+              image,
+            )
+          ) {
             const original = readFileSync(
               new URL(`../../${edition.directory}/${image}`, import.meta.url),
               'utf8',
             );
             const variant = readFileSync(join(dist, paths[theme]), 'utf8');
-            assert.equal(count(variant, 'foreignObject'), 2);
+            assert.ok(count(variant, 'foreignObject') > 2);
             for (const [, label] of original.matchAll(
-              /<text\b[^>]*>([\s\S]*?)<\/text>/g,
+              /<text\b[^>]*?(?:\/>|>([\s\S]*?)<\/text>)/g,
             ))
               assert.ok(
-                variant.includes(label),
-                `Missing diagram label in ${edition.lang}`,
+                variant.replace(/\s+/g, ' ').includes(
+                  (label ?? '')
+                    .replace(/<tspan\b[^>]*>/g, '')
+                    .replace(/<\/tspan>/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim(),
+                ),
+                `Missing diagram label in ${edition.lang}: ${image}: ${label}`,
               );
             assert.equal(
               readFileSync(join(dist, paths.original), 'utf8'),
@@ -825,15 +835,15 @@ test('Chapter 5 architecture banner fits its web canvas in every edition', () =>
     const paths = figurePaths(edition.directory, 'images/fig5-1.svg');
     for (const theme of ['light', 'dark']) {
       const svg = readFileSync(join(dist, paths[theme]), 'utf8');
-      const [, top, height] = svg.match(/viewBox="0 (\d+) 980 (\d+)"/);
-      const [, bottomY, bannerHeight] = svg.match(
-        /<rect x="60" y="(566)" width="860" height="(38)"/,
-      );
-      assert.ok(
-        Number(top) + Number(height) >
-          Number(bottomY) + Number(bannerHeight) + 1,
-        edition.lang,
-      );
+      const [, width, height] = svg.match(/viewBox="0 0 (\d+) (\d+)"/);
+      const banner = [
+        ...svg.matchAll(
+          /<foreignObject x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)">([\s\S]*?)<\/foreignObject>/g,
+        ),
+      ].find((match) => match[5].includes('data-source-label="40"'));
+      assert.ok(banner, `${edition.lang} architecture banner`);
+      assert.ok(Number(banner[1]) + Number(banner[3]) < Number(width));
+      assert.ok(Number(banner[2]) + Number(banner[4]) + 16 < Number(height));
     }
   }
 });

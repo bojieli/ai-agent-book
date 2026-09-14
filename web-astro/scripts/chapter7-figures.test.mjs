@@ -1,3 +1,6 @@
+import { layoutEvaluationEnvironments } from './evaluation-environments-figure.mjs';
+import { layoutLlmJudge } from './llm-judge-figure.mjs';
+import { layoutObservability } from './observability-figure.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -17,6 +20,9 @@ import { styleFigure } from './figure-style.mjs';
 
 const layouts = {
   1: layoutEvaluationOverview,
+  2: layoutEvaluationEnvironments,
+  5: layoutLlmJudge,
+  7: layoutObservability,
   3: layoutDualControl,
   4: layoutVerificationSpectrum,
   6: layoutPairwise,
@@ -30,7 +36,7 @@ const normalize = (s) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-test('Remaining Chapter 7 web figures retain every localized label in both themes', () => {
+test('All Chapter 7 web figures retain every localized label in both themes', () => {
   for (const { directory } of Object.values(editions))
     for (const [number, layout] of Object.entries(layouts)) {
       const source = readFileSync(
@@ -51,20 +57,9 @@ test('Remaining Chapter 7 web figures retain every localized label in both theme
       for (const theme of ['light', 'dark']) {
         const rendered = styleFigure(layout(source), theme);
         const actual = [
-          ...rendered.matchAll(
-            /<foreignObject\b([^>]*)>([\s\S]*?)<\/foreignObject>/g,
-          ),
+          ...rendered.matchAll(/data-source-label="\d+">([\s\S]*?)<\/span>/g),
         ]
-          .flatMap((m) =>
-            m[1].includes('data-label=')
-              ? [m[2].replace(/<[^>]+>/g, '')]
-              : [
-                  ...m[2].matchAll(
-                    /<div\b[^>]*data-label="\d+"[^>]*>([\s\S]*?)<\/div>/g,
-                  ),
-                ].map((d) => d[1]),
-          )
-          .map(normalize)
+          .map((m) => normalize(m[1]))
           .filter(Boolean)
           .sort();
         assert.deepEqual(

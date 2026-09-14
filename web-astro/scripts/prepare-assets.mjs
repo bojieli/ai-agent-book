@@ -1,3 +1,6 @@
+import { layoutAsyncArchitecture } from './async-architecture-layout.mjs';
+import { layoutVoiceArchitecture } from './voice-architecture-layout.mjs';
+import { layoutComputerUse } from './computer-use-layout.mjs';
 import { layoutMemoryFoundation } from './memory-foundation-layout.mjs';
 import { layoutRetrievalStructure } from './retrieval-structure-layout.mjs';
 import { layoutRetrievalWorkflow } from './retrieval-workflow-layout.mjs';
@@ -5,7 +8,12 @@ import { layoutTrajectory } from './trajectory-figure.mjs';
 import { layoutContextFlow } from './context-flow-figures.mjs';
 import { availableChapters } from '../src/lib/available-chapters.mjs';
 import editions from '../src/lib/editions.json' with { type: 'json' };
-import { layoutToolDiscovery } from './tool-discovery-figure.mjs';
+import { layoutToolProtocol } from './tool-protocol-layout.mjs';
+import { layoutToolCache } from './tool-cache-layout.mjs';
+import { layoutCodingCore } from './coding-core-layout.mjs';
+import { layoutCodingComparison } from './coding-comparison-layout.mjs';
+import { layoutCodingProduction } from './coding-production-layout.mjs';
+import { layoutCodingApplication } from './coding-application-layout.mjs';
 import { layoutContextWindow } from './context-window-figure.mjs';
 import { layoutAgentLoop } from './agent-loop-figure.mjs';
 import { layoutEvaluationEnvironments } from './evaluation-environments-figure.mjs';
@@ -141,30 +149,104 @@ for (const [locale, { directory, suffix }] of Object.entries(editions)) {
           Number(image.match(/fig3-(\d+)/)[1]),
           { rtl: ['book-ar', 'book-he'].includes(directory) },
         );
-      else if (image === 'images/fig4-4.svg')
-        vector = layoutToolDiscovery(bytes.toString(), {
+      else if (/^images\/fig4-(1|2)\.svg$/.test(image))
+        vector = layoutToolProtocol(
+          bytes.toString(),
+          Number(image.match(/fig4-(\d+)/)[1]),
+          {
+            rtl: ['book-ar', 'book-he'].includes(directory),
+          },
+        );
+      else if (/^images\/fig4-(3|4)\.svg$/.test(image))
+        vector = layoutToolCache(
+          bytes.toString(),
+          Number(image.match(/fig4-(\d+)/)[1]),
+          {
+            rtl: ['book-ar', 'book-he'].includes(directory),
+          },
+        );
+      else if (/^images\/fig5-(1|2)\.svg$/.test(image))
+        vector = layoutCodingCore(
+          bytes.toString(),
+          Number(image.match(/fig5-(\d+)/)[1]),
+          { rtl: ['book-ar', 'book-he'].includes(directory) },
+        );
+      else if (/^images\/fig5-(3|4)\.svg$/.test(image))
+        vector = layoutCodingComparison(
+          bytes.toString(),
+          Number(image.match(/fig5-(\d+)/)[1]),
+          { rtl: ['book-ar', 'book-he'].includes(directory) },
+        );
+      else if (/^images\/fig5-(5|6|7)\.svg$/.test(image))
+        vector = layoutCodingProduction(
+          bytes.toString(),
+          Number(image.match(/fig5-(\d+)/)[1]),
+          { rtl: ['book-ar', 'book-he'].includes(directory) },
+        );
+      else if (/^images\/fig5-(8|9|10|11)\.svg$/.test(image))
+        vector = layoutCodingApplication(
+          bytes.toString(),
+          Number(image.match(/fig5-(\d+)/)[1]),
+          { rtl: ['book-ar', 'book-he'].includes(directory) },
+        );
+      else if (/^images\/fig6-([1-5])\.svg$/.test(image))
+        vector = layoutAsyncArchitecture(
+          bytes.toString(),
+          Number(image.match(/fig6-(\d+)/)[1]),
+          { rtl: ['book-ar', 'book-he'].includes(directory) },
+        );
+      else if (/^images\/fig6-(6|7|8|9|10)\.svg$/.test(image))
+        vector = layoutVoiceArchitecture(
+          bytes.toString(),
+          Number(image.match(/fig6-(\d+)/)[1]),
+          { rtl: ['book-ar', 'book-he'].includes(directory) },
+        );
+      else if (/^images\/fig6-(11|12|13|14)\.svg$/.test(image))
+        vector = layoutComputerUse(
+          bytes.toString(),
+          Number(image.match(/fig6-(\d+)/)[1]),
+          { rtl: ['book-ar', 'book-he'].includes(directory) },
+        );
+      else if (image === 'images/fig7-2.svg')
+        vector = layoutEvaluationEnvironments(bytes.toString(), {
           rtl: ['book-ar', 'book-he'].includes(directory),
         });
-      else if (image === 'images/fig7-2.svg')
-        vector = layoutEvaluationEnvironments(bytes.toString());
       else if (image === 'images/fig7-5.svg')
-        vector = layoutLlmJudge(bytes.toString());
+        vector = layoutLlmJudge(bytes.toString(), {
+          rtl: ['book-ar', 'book-he'].includes(directory),
+        });
       else if (image === 'images/fig7-7.svg')
-        vector = layoutObservability(bytes.toString());
+        vector = layoutObservability(bytes.toString(), {
+          rtl: ['book-ar', 'book-he'].includes(directory),
+        });
       else if (image === 'images/fig7-4.svg')
-        vector = layoutVerificationSpectrum(bytes.toString());
+        vector = layoutVerificationSpectrum(bytes.toString(), {
+          rtl: ['book-ar', 'book-he'].includes(directory),
+        });
       else if (image === 'images/fig7-9.svg')
-        vector = layoutSimulationFidelity(bytes.toString());
+        vector = layoutSimulationFidelity(bytes.toString(), {
+          rtl: ['book-ar', 'book-he'].includes(directory),
+        });
       else if (image === 'images/fig7-1.svg')
-        vector = layoutEvaluationOverview(bytes.toString());
+        vector = layoutEvaluationOverview(bytes.toString(), {
+          rtl: ['book-ar', 'book-he'].includes(directory),
+        });
       else if (image === 'images/fig7-3.svg')
-        vector = layoutDualControl(bytes.toString());
+        vector = layoutDualControl(bytes.toString(), {
+          rtl: ['book-ar', 'book-he'].includes(directory),
+        });
       else if (image === 'images/fig7-6.svg')
-        vector = layoutPairwise(bytes.toString());
+        vector = layoutPairwise(bytes.toString(), {
+          rtl: ['book-ar', 'book-he'].includes(directory),
+        });
       else if (image === 'images/fig7-8.svg')
-        vector = layoutImprovementCycle(bytes.toString());
+        vector = layoutImprovementCycle(bytes.toString(), {
+          rtl: ['book-ar', 'book-he'].includes(directory),
+        });
       else if (image === 'images/fig7-10.svg')
-        vector = layoutEmbodiedEvaluation(bytes.toString());
+        vector = layoutEmbodiedEvaluation(bytes.toString(), {
+          rtl: ['book-ar', 'book-he'].includes(directory),
+        });
       else if (image === 'images/fig8-1.svg')
         vector = layoutRlInteraction(bytes.toString());
       else if (image === 'images/fig8-2.svg')
@@ -233,13 +315,6 @@ for (const [locale, { directory, suffix }] of Object.entries(editions)) {
       else if (image === 'images/fig10-11.svg')
         vector = layoutVoiceWerewolfSystem(bytes.toString());
       else if (image.endsWith('.svg')) vector = bytes.toString();
-      // The source's bottom banner extends past y=600. Add breathing room
-      // to the web canvas without changing labels, geometry, or the raw SVG.
-      if (image === 'images/fig5-1.svg')
-        vector = vector.replace(
-          /viewBox="0 40 980 (560|568)" width="980" height="\1"/,
-          'viewBox="0 40 980 580" width="980" height="580"',
-        );
       const paths = figurePaths(directory, image);
       for (const theme of ['light', 'dark']) {
         const target = new URL(`../public${paths[theme]}`, import.meta.url);
