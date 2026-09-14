@@ -339,13 +339,15 @@ Yakın zamandaki mühendislik pratiği bunu doğruluyor. LangChain'in Terminal B
 
 ### Etkili Agent'lar İnşa Etmenin Temel İlkeleri
 
-Anthropic'in deneyimine dayanarak, başarılı Agent sistemleri üç temel ilkeyi izler.
+Anthropic'in deneyimine dayanarak, başarılı Agent sistemleri üç temel ilkeyi izler[^ch1-anthropic-building-effective-agents].
 
 **Basit tutun.** En basit çözümle başlayın ve karmaşıklığı yalnızca gerçekten gerektiğinde ekleyin. Doğrudan API çağrıları karmaşık çerçevelerden daha iyidir; net kod akıllıca soyutlamadan daha iyidir—hata ayıklarken her ekstra soyutlama katmanı yeni bir kör noktadır.
 
 **Şeffaf tutun.** Agent'ın planlama adımlarını, yürütme günlüklerini ve karar trajectory'sini açıkça gösterin. Bu yalnızca bir hata ayıklama kolaylığı değildir; kullanıcı güveninin ön koşuludur—kara kutu içindeki bir hata dışarıdan ne bulunabilir ne de düzeltilebilir.
 
 **İyi bir araç arayüzü tasarlayın (ACI, Agent-Computer Interface).** ACI, arayüzü geleneksel API'lerde olduğu gibi programcının bakış açısından değil, Agent'ın bakış açısından—Agent'ın anlaması ve kullanması kolay olacak şekilde—tasarlamak demektir. Araç adları ve parametreleri sezgisel olmalı; yanlış kullanım ihtimali varsa, tasarım hatayı baştan imkânsız kılmalıdır: SIM kartın çentikli köşesi karta tepsiye yalnızca tek yönde girme olanağı verir ve mikrodalga fırın kapağı açıkken ısıtmayı reddeder. İmalat sektöründe bu "hataları tasarımla ortadan kaldırma" felsefesinin bir adı vardır: Toyota Üretim Sistemi'nden gelen **Poka-yoke**. Kötü tasarlanmış bir araç, en güçlü modeli bile sürekli hata yapmaya iter—arayüz, model ile araç arasındaki tek kanaldır ve belirsiz bir arayüz, model tarafından sistemik bir hataya dönüştürülerek büyütülür.
+
+[^ch1-anthropic-building-effective-agents]: Anthropic. "Building effective agents", Aralık 2024. https://www.anthropic.com/engineering/building-effective-agents
 
 Sonraki üç bölüm, Harness engineering içindeki bağımsız ama önemli üç konuyu ele alır: model seçimi, orkestrasyon kalıpları, guardrail'ler ve güvenlik. Hiçbiri Harness'in beş unsuruna doğrudan ait değildir, ama hiçbiri mühendislik pratiğinde göz ardı edilemez.
 
@@ -367,7 +369,7 @@ Model, Agent'ın zeka altyapısıdır ve doğru olanı seçmek çoğu zaman herh
 
 ### Orkestrasyon Kalıpları: Workflow ve Autonomous
 
-Orkestrasyon kalıpları, Harness'in "context ve tools" katmanını nasıl organize ettiğidir—LLM çağrıları arasında context'in nasıl aktığını, araçların nasıl zamanlandığını ve Agent'ın yürütme yolunun önceden mi sabitlendiğini yoksa anlık mı üretildiğini belirlerler. Agent orkestrasyonu basitten karmaşığa doğru evrildi ve her kalıbın kendi senaryoları ve ödünleşimleri vardır. Anthropic'in LLM Agent'ları inşa eden düzinelerce ekiple çalışma deneyiminde, en başarılı uygulamalar nadiren karmaşık çerçeveler kullanır; basit, birleştirilebilir kalıplar kullanırlar.
+Orkestrasyon kalıpları, Harness'in "context ve tools" katmanını nasıl organize ettiğidir—LLM çağrıları arasında context'in nasıl aktığını, araçların nasıl zamanlandığını ve Agent'ın yürütme yolunun önceden mi sabitlendiğini yoksa anlık mı üretildiğini belirlerler. Agent orkestrasyonu basitten karmaşığa doğru evrildi ve her kalıbın kendi senaryoları ve ödünleşimleri vardır. Anthropic'in LLM Agent'ları inşa eden düzinelerce ekiple çalışma deneyiminde[^ch1-anthropic-building-effective-agents], en başarılı uygulamalar nadiren karmaşık çerçeveler kullanır; basit, birleştirilebilir kalıplar kullanırlar.
 
 Bir LLM uygulaması inşa ederken basitten karmaşığa ilerleme ilkesini izleyin. Önce tek bir LLM çağrısını değerlendirin. Daha iyi prompt'lar ve bağlam içi örnekler sorunu çözüyorsa bir Agent sistemi devreye sokmayın. Çok adımlı işleme gerektiğinde, sabit alt görevlere açıkça ayrılabilen senaryolarda bir workflow kullanmayı düşünün. Yalnızca dinamik kararlara ve esnek yürütme yollarına ihtiyaç duyduğunuzda autonomous Agent'a başvurun. Agent sistemlerinin tipik olarak daha iyi görev performansı karşılığında gecikme ve maliyetten ödün verdiğini unutmayın; bu takasın buna değip değmediğini dikkatle tartın.
 

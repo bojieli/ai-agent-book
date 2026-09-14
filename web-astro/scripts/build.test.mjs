@@ -67,7 +67,7 @@ test('Chapter 1 retains its sections, code, tables, figures, and footnotes', () 
   const footnotes = [...source.matchAll(/^\s*(?:>\s*)?\[\^([^\]]+)\]:/gm)].map(
     (match) => match[1],
   );
-  assert.equal(footnotes.length, 8);
+  assert.equal(footnotes.length, 9);
   for (const note of footnotes)
     assert.ok(
       ids(article).has(`user-content-fn-${note}`),

@@ -339,13 +339,15 @@ Praktik rekayasa belakangan ini mendukung pandangan tersebut. Proyek LangChain d
 
 ### Prinsip Inti Membangun Agent yang Efektif
 
-Berdasarkan pengalaman Anthropic, sistem Agent yang sukses mengikuti tiga prinsip inti.
+Berdasarkan pengalaman Anthropic, sistem Agent yang sukses mengikuti tiga prinsip inti[^ch1-anthropic-building-effective-agents].
 
 **Tetap sederhana (Keep it simple).** Mulailah dengan solusi paling sederhana dan tambahkan kompleksitas hanya ketika benar-benar diperlukan. Pemanggilan API langsung lebih disukai daripada framework kompleks; kode yang jelas lebih disukai daripada abstraksi yang pintar—setiap lapisan abstraksi tambahan adalah blind spot baru selama debugging.
 
 **Tetap transparan (Keep it transparent).** Tunjukkan langkah-langkah perencanaan Agent, log eksekusi, dan trajectory keputusan dengan jelas. Ini bukan hanya untuk kemudahan debugging; ini adalah prasyarat bagi kepercayaan pengguna—error di dalam black box (kotak hitam) sulit untuk dilacak atau diperbaiki dari luar.
 
 **Rancang antarmuka tool yang terstruktur dengan baik (ACI, Agent-Computer Interface).** ACI berarti merancang antarmuka dari sudut pandang Agent—mudah dimengerti dan digunakan oleh Agent—bukan dari sudut pandang programmer seperti pada API tradisional. Nama tool dan parameter harus intuitif, dan ketika kemungkinan salah pakai ada, desain harus membuat kesalahan itu mustahil sejak awal: sudut kartu SIM yang terpotong membuatnya hanya dapat masuk ke baki dalam satu orientasi, dan microwave tidak mau memanaskan ketika pintunya terbuka. Manufaktur menyebut filosofi “meniadakan kesalahan melalui desain” ini sebagai **Poka-yoke**, sebuah istilah dari Toyota Production System. Tool yang dirancang dengan buruk dapat menyebabkan bahkan model yang paling kuat sekalipun gagal berulang kali: antarmuka (interface) adalah satu-satunya saluran antara model dan tool, dan antarmuka yang tidak jelas akan diperkuat menjadi error sistemik (systemic error).
+
+[^ch1-anthropic-building-effective-agents]: Anthropic. "Building effective agents", Desember 2024. https://www.anthropic.com/engineering/building-effective-agents
 
 Tiga bagian berikutnya membahas tiga topik yang berdiri sendiri namun penting dalam Harness engineering: model selection, orchestration pattern, serta guardrail dan safety. Tidak ada yang termasuk ke dalam lima elemen Harness proper (yang sesungguhnya), namun semuanya tidak dapat dihindari dalam praktik engineering.
 
@@ -367,7 +369,7 @@ Model adalah fondasi dari kecerdasan Agent, dan memilih yang tepat sering kali j
 
 ### Orchestration Pattern: Workflow vs. Autonomous
 
-Orchestration pattern (pola orkestrasi) adalah cara Harness mengatur lapisan "context and tool"-nya—ini menentukan bagaimana context mengalir di antara panggilan LLM, bagaimana tool dijadwalkan, dan apakah jalur eksekusi Agent ditetapkan di awal atau dihasilkan secara dinamis. Orkestrasi Agent telah berevolusi dari yang sederhana hingga yang kompleks, dan setiap pola memiliki use case (kasus penggunaan) dan trade-off yang sesuai. Dari pengalaman Anthropic saat bekerja dengan lusinan tim yang membangun LLM Agent, implementasi tersukses jarang menggunakan kerangka kerja (framework) yang kompleks; mereka menggunakan pola sederhana yang composable.
+Orchestration pattern (pola orkestrasi) adalah cara Harness mengatur lapisan "context and tool"-nya—ini menentukan bagaimana context mengalir di antara panggilan LLM, bagaimana tool dijadwalkan, dan apakah jalur eksekusi Agent ditetapkan di awal atau dihasilkan secara dinamis. Orkestrasi Agent telah berevolusi dari yang sederhana hingga yang kompleks, dan setiap pola memiliki use case (kasus penggunaan) dan trade-off yang sesuai. Dari pengalaman Anthropic saat bekerja dengan lusinan tim yang membangun LLM Agent[^ch1-anthropic-building-effective-agents], implementasi tersukses jarang menggunakan kerangka kerja (framework) yang kompleks; mereka menggunakan pola sederhana yang composable.
 
 Saat membangun aplikasi LLM, ikuti prinsip bergerak dari sederhana ke kompleks. Mulailah dengan mempertimbangkan satu panggilan LLM (single LLM call). Jika prompt yang lebih baik dan in-context examples (contoh dalam konteks) dapat menyelesaikan masalah, jangan memperkenalkan sistem Agent. Ketika pemrosesan multi-langkah diperlukan, pertimbangkan workflow (alur kerja) untuk skenario yang dapat dipecah dengan jelas menjadi sub-tugas tetap. Gunakan Autonomous Agent (Agent Otonom) hanya ketika keputusan dinamis dan jalur eksekusi yang fleksibel diperlukan. Ingatlah bahwa sistem Agent biasanya menukar latensi dan biaya demi kinerja tugas yang lebih baik, jadi pertimbangkan dengan cermat apakah pertukaran tersebut sepadan.
 

@@ -1,10 +1,10 @@
 # Agentes de IA em Profundidade: Princípios de Design e Prática de Engenharia
 
-[![PDF](https://img.shields.io/badge/PDF-Download-success.svg)](#livro-eletrônico) [![Leitura online](https://img.shields.io/badge/🌐_Leitura_online-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/index.ptbr/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![Languages](https://img.shields.io/badge/Traduções-15%20idiomas-informational.svg)](#livro-eletrônico)
+[![PDF](https://img.shields.io/badge/PDF-Download-success.svg)](#livro-eletrônico) [![Leitura online](https://img.shields.io/badge/🌐_Leitura_online-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/pt-BR/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![Languages](https://img.shields.io/badge/Traduções-15%20idiomas-informational.svg)](#livro-eletrônico)
 
 [中文](README.md) · [English](docs/en/README.md) · [Español](docs/es/README.md) · [Bahasa Indonesia](docs/id/README.md) · [العربية](docs/ar/README.md) · [繁體中文（台灣）](docs/zh-TW/README.md) · [Русский](docs/ru/README.md) · [Tiếng Việt](docs/vi/README.md) · [தமிழ்](docs/ta/README.md) · [日本語](docs/ja/README.md) · [Türkçe](docs/tr/README.md) · [한국어](docs/ko/README.md) · [Magyar](docs/hu/README.md) · [עברית](README.he.md) · **Português (Brasil)** ← atual
 
-> 📥 **[Download do PDF / EPUB](#livro-eletrônico)** (recomendado) — as edições em PDF e EPUB oferecem a melhor experiência de leitura. Também é possível [ler online](https://bojieli.github.io/ai-agent-book/index.ptbr/) com navegação completa, alternância entre idiomas e busca em texto integral.
+> 📥 **[Download do PDF / EPUB](#livro-eletrônico)** (recomendado) — as edições em PDF e EPUB oferecem a melhor experiência de leitura. Também é possível [ler online](https://bojieli.github.io/ai-agent-book/astro/pt-BR/) com navegação completa, alternância entre idiomas e destaques e notas.
 
 **Agente = LLM + Contexto + Ferramentas** — o livro é construído em torno desta fórmula e apresenta, em dez capítulos, os princípios e a prática de engenharia de agentes de IA.
 

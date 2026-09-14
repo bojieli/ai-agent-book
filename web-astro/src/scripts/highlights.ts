@@ -482,9 +482,12 @@ export async function initHighlights() {
       notify(t('Copy the selected backup text and save it as a .json file.'));
     }
   });
-  exportButton.addEventListener('click', () => {
+  exportButton.addEventListener('click', async () => {
     try {
-      const highlights = records;
+      // Other tabs can save notes while this tab's highlights dialog stays open.
+      const highlights = (await readHighlights(db!, chapterKey)).sort((a, b) =>
+        a.createdAt.localeCompare(b.createdAt),
+      );
       const json = JSON.stringify(
         { format: 'ai-agent-book-highlights', version: 2, highlights },
         null,

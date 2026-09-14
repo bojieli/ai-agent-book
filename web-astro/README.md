@@ -1,10 +1,37 @@
-# Astro reading prototype
+# Astro book reader
 
-A local design exploration for **AI Agents in Depth**, built with plain Astro.
+The web reader for **AI Agents in Depth**, built with plain Astro.
 The homepage and complete Chapters 1–10 are implemented in all 15 maintained editions:
 English, Simplified Chinese, Traditional Chinese, Spanish, Indonesian, Russian,
 Tamil, Vietnamese, Japanese, Korean, Arabic, Turkish, Hungarian, Hebrew, and
-Brazilian Portuguese. All ten chapters are available in the local reader.
+Brazilian Portuguese. All ten chapters are available in the reader.
+
+## Publishing
+
+The `deploy-pages` GitHub Actions workflow builds MkDocs and Astro on every push
+to `main` and on manual dispatch. Astro is included at `site/astro/` in the same
+Pages artifact as MkDocs and is published at
+[the Astro reader](https://bojieli.github.io/ai-agent-book/astro/).
+English starts at `/ai-agent-book/astro/en/`; the other editions use their own
+locale homepages. Existing MkDocs URLs and companion experiment pages remain available.
+Relevant pull requests run the builds and checks without deploying.
+
+Astro uses `/` locally. To reproduce the GitHub Pages build:
+
+```sh
+cd web-astro
+npm ci
+npm run check
+npm run build
+npm test
+ASTRO_BASE=/ai-agent-book/astro/ npm run build
+ASTRO_BASE=/ai-agent-book/astro/ npm run check:deployment
+```
+
+The existing test suite runs against the root build. The deployment check then
+verifies the prefixed build's page links, scripts, styles, fonts, figure variants,
+and README links for all 15 editions. `ASTRO_BASE` must match the directory where
+the generated `dist/` contents will be served; it does not change the on-disk layout.
 
 ## Run locally
 
@@ -103,10 +130,7 @@ credits and source history remain available in `docs/en/README.md` and Git.
 - Explicit language URLs are authoritative; no automatic language redirects.
 - Arabic and Hebrew use right-to-left layouts; code and diagram coordinates remain
   left-to-right. Non-Latin typography uses system font fallbacks and can vary by OS.
-- No deployment configuration or publishing workflow; this preview is local only.
-- Root hosting paths are assumed. A GitHub Pages subpath needs an explicit base
-  URL migration before deployment.
-- Preview pages use `noindex, nofollow` until a publishing decision is made.
+- Astro pages retain `noindex, nofollow`; the existing MkDocs site remains available to search engines.
 
 ## Figure review
 

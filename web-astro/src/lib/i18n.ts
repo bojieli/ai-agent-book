@@ -1,6 +1,16 @@
 import editionData from './editions.json';
+import { withBase } from './site-path.mjs';
 export type Locale = keyof typeof editionData;
-export const editions = editionData;
+export const editions = Object.fromEntries(
+  Object.entries(editionData).map(([locale, edition]) => [
+    locale,
+    {
+      ...edition,
+      home: withBase(edition.home),
+      chapter: withBase(edition.chapter),
+    },
+  ]),
+) as typeof editionData;
 export const locales = Object.keys(editions) as Locale[];
 const catalogs = import.meta.glob<Record<string, string>>('./locales/*.json', {
   eager: true,

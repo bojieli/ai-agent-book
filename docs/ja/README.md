@@ -1,5 +1,7 @@
 # AI Agent 徹底解説: 設計原理とエンジニアリング実践
 
+> 🌐 [オンラインで読む](https://bojieli.github.io/ai-agent-book/astro/ja/) — 言語切り替え、ハイライト、メモに対応しています。
+
 [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![PDF](https://img.shields.io/badge/PDF-download-success.svg)](#-電子書籍) [![Languages](https://img.shields.io/badge/translations-15%20languages-informational.svg)](#-電子書籍)
 [![Trending GitHub Project of the Day](https://img.shields.io/badge/GitHub%20Trending-Project%20of%20the%20Day-orange?logo=github)](https://github.com/trending)
 

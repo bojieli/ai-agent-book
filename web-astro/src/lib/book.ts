@@ -1,3 +1,4 @@
+import { withBase } from './site-path.mjs';
 import { availableChapters } from './available-chapters.mjs';
 import { editions, translator, type Locale } from './i18n';
 const chapterSources = import.meta.glob<string>(
@@ -40,7 +41,7 @@ export function getBook(locale: Locale, chapterNumber = 1) {
       title,
       description: t(descriptions[index]),
       href: availableChapters.includes(number)
-        ? `/${edition.directory}/chapter${number}${edition.suffix}/`
+        ? withBase(`/${edition.directory}/chapter${number}${edition.suffix}/`)
         : `${originalSite}/${edition.directory}/chapter${number}${edition.suffix}/`,
       external: !availableChapters.includes(number),
     };

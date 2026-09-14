@@ -339,13 +339,15 @@ Práticas recentes de engenharia corroboram essa visão. O trabalho da LangChain
 
 ### Princípios essenciais para criar agentes eficazes
 
-Com base na experiência da Anthropic, sistemas de agentes bem-sucedidos seguem três princípios essenciais.
+Com base na experiência da Anthropic, sistemas de agentes bem-sucedidos seguem três princípios essenciais[^ch1-anthropic-building-effective-agents].
 
 **Mantenha a simplicidade.** Comece pela solução mais simples e só acrescente complexidade quando for realmente necessário. Chamadas diretas de API são preferíveis a estruturas complexas; código claro é preferível a abstrações engenhosas, pois cada camada adicional de abstração cria um novo ponto cego durante a depuração.
 
 **Mantenha a transparência.** Mostre claramente as etapas de planejamento, os logs de execução e a trajetória de decisões do agente. Isso não apenas facilita a depuração, mas também é uma condição para conquistar a confiança do usuário: quando ocorre um erro dentro de uma caixa-preta, é difícil localizá-lo ou corrigi-lo externamente.
 
 **Projete uma interface de ferramentas bem estruturada (ACI, Agent-Computer Interface).** A ACI consiste em projetar a interface sob a perspectiva do agente — tornando-a fácil de entender e usar —, e não sob a perspectiva do programador, como ocorre nas APIs tradicionais. Os nomes e parâmetros das ferramentas devem ser intuitivos; quando houver risco de uso incorreto, o próprio design deve impossibilitar o erro desde o início. O canto chanfrado de um cartão SIM permite inseri-lo na bandeja em apenas uma orientação, e um forno de micro-ondas se recusa a aquecer enquanto a porta está aberta. Na indústria, essa filosofia de “eliminar erros por meio do design” é chamada de **Poka-yoke**, termo originado no Sistema Toyota de Produção. Uma ferramenta mal projetada pode fazer até mesmo o modelo mais avançado falhar repetidamente: a interface é o único canal entre o modelo e a ferramenta, e uma interface ambígua transforma-se em fonte de erros sistêmicos.
+
+[^ch1-anthropic-building-effective-agents]: Anthropic. "Building effective agents", dezembro de 2024. https://www.anthropic.com/engineering/building-effective-agents
 
 As próximas três seções abordam temas independentes, porém importantes, da engenharia de harness: seleção de modelos, padrões de orquestração, além de guardrails e segurança. Nenhum deles integra propriamente os cinco elementos do harness, mas todos são decisões inevitáveis na prática de engenharia.
 
@@ -367,7 +369,7 @@ O modelo é a base da inteligência do agente, e escolher o modelo certo costuma
 
 ### Padrões de orquestração: fluxo de trabalho ou autonomia
 
-Os padrões de orquestração definem como o Harness organiza a camada de “contexto e ferramentas”: eles determinam como o contexto flui entre as chamadas do LLM, como as ferramentas são acionadas e se o caminho de execução do agente é predefinido ou gerado dinamicamente. A orquestração de agentes evoluiu de abordagens simples para outras mais complexas, e cada padrão tem casos de uso e trade-offs próprios. Segundo a experiência da Anthropic em colaboração com dezenas de equipes que criam agentes baseados em LLM, as implementações mais bem-sucedidas raramente usam frameworks complexos; em vez disso, adotam padrões simples e combináveis.
+Os padrões de orquestração definem como o Harness organiza a camada de “contexto e ferramentas”: eles determinam como o contexto flui entre as chamadas do LLM, como as ferramentas são acionadas e se o caminho de execução do agente é predefinido ou gerado dinamicamente. A orquestração de agentes evoluiu de abordagens simples para outras mais complexas, e cada padrão tem casos de uso e trade-offs próprios. Segundo a experiência da Anthropic em colaboração com dezenas de equipes que criam agentes baseados em LLM[^ch1-anthropic-building-effective-agents], as implementações mais bem-sucedidas raramente usam frameworks complexos; em vez disso, adotam padrões simples e combináveis.
 
 Ao criar uma aplicação baseada em LLM, siga o princípio de avançar do simples para o complexo. Comece considerando uma única chamada ao LLM. Se prompts melhores e exemplos no contexto resolverem o problema, não introduza um sistema agêntico. Quando for necessário um processamento em várias etapas, considere um fluxo de trabalho para cenários que possam ser claramente decompostos em subtarefas fixas. Use um agente autônomo somente quando forem necessárias decisões dinâmicas e caminhos de execução flexíveis. Lembre-se de que sistemas agênticos geralmente trocam latência e custo por um desempenho melhor nas tarefas; avalie com cuidado se esse trade-off vale a pena.
 

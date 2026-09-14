@@ -339,13 +339,15 @@ A közelmúlt mérnöki gyakorlata alátámasztja ezt a nézetet. A LangChain mu
 
 ### A hatékony ügynökök építésének alapelvei
 
-Az Anthropic tapasztalatai alapján a sikeres ügynökrendszerek három alapelvet követnek.
+Az Anthropic tapasztalatai alapján a sikeres ügynökrendszerek három alapelvet követnek[^ch1-anthropic-building-effective-agents].
 
 **Legyen egyszerű.** Kezdd a legegyszerűbb megoldással, és csak akkor adj hozzá bonyolultságot, ha valóban szükséges. A közvetlen API-hívások előnyösebbek az összetett keretrendszerekkel szemben; a tiszta kód jobb, mint a ravasz absztrakció – minden extra absztrakciós réteg új vakfolt a hibakeresés során.
 
 **Legyen átlátható.** Mutasd meg az ügynök tervezési lépéseit, végrehajtási naplóit és döntési trajektóriáját világosan. Ez nemcsak a hibakeresés kényelme; előfeltétele a felhasználói bizalomnak – egy fekete doboz belsejében lévő hibát nehéz megtalálni vagy kívülről kijavítani.
 
 **Tervezz jól strukturált eszközinterfészt (ACI, Agent-Computer Interface).** Az ACI azt jelenti, hogy az interfészt az ügynök szemszögéből tervezzük – könnyen érthető és használható legyen az ügynök számára –, nem a programozó szemszögéből, mint a hagyományos API-knál. Az eszközök nevei és paraméterei legyenek intuitívak, és ahol valószínű a helytelen használat, a tervezés tegye lehetetlenné a hibát már a kezdetektől: egy SIM-kártya bemetszett sarka csak egy irányban engedi a tálcába csúsztatni, és a mikrohullámú sütő nem hajlandó működni, amíg az ajtaja nyitva van. A gyártásban ezt a "hibák kitervezésének" filozófiáját "Poka-yoke"-nak hívják, ami a Toyota Termelési Rendszerből származik. Egy rosszul megtervezett eszköz még a legerősebb modellt is ismételt kudarcra késztetheti: az interfész az egyetlen csatorna a modell és az eszköz között, és egy homályos interfész szisztémás hibává erősödik fel.
+
+[^ch1-anthropic-building-effective-agents]: Anthropic. "Building effective agents", 2024. december. https://www.anthropic.com/engineering/building-effective-agents
 
 A következő három rész a Harness-mérnökség három szabadon álló, de fontos témáját tárgyalja: modellválasztás, összehangolási minták, valamint védőkorlátok és biztonság. Egyik sem tartozik szorosan az öt Harness-elem közé, de a mérnöki gyakorlatban mindegyik elkerülhetetlen.
 
@@ -367,7 +369,7 @@ A modell az ügynök intelligenciájának alapja, és a megfelelő kiválasztás
 
 ### Összehangolási minták: Munkafolyamat vs. Autonóm
 
-Az összehangolási minták (orchestration patterns) határozzák meg, hogy a Harness hogyan szervezi a "kontextus és eszközök" rétegét – meghatározzák, hogyan áramlik a kontextus az LLM-hívások között, hogyan ütemeződnek az eszközök, és hogy az ügynök végrehajtási útvonala előre rögzített vagy dinamikusan generált-e. Az ügynök-összehangolás az egyszerűtől az összetett felé fejlődött, és minden mintának vannak megfelelő használati esetei és kompromisszumai. Az Anthropic tapasztalatai szerint, akik tucatnyi, LLM-ügynököket építő csapattal dolgoztak együtt, a legsikeresebb implementációk ritkán használnak összetett keretrendszereket; egyszerű, kombinálható mintákat használnak.
+Az összehangolási minták (orchestration patterns) határozzák meg, hogy a Harness hogyan szervezi a "kontextus és eszközök" rétegét – meghatározzák, hogyan áramlik a kontextus az LLM-hívások között, hogyan ütemeződnek az eszközök, és hogy az ügynök végrehajtási útvonala előre rögzített vagy dinamikusan generált-e. Az ügynök-összehangolás az egyszerűtől az összetett felé fejlődött, és minden mintának vannak megfelelő használati esetei és kompromisszumai. Az Anthropic tapasztalatai szerint, akik tucatnyi, LLM-ügynököket építő csapattal dolgoztak együtt[^ch1-anthropic-building-effective-agents], a legsikeresebb implementációk ritkán használnak összetett keretrendszereket; egyszerű, kombinálható mintákat használnak.
 
 Amikor LLM-alkalmazást építesz, kövesd az egyszerűtől az összetett felé haladás elvét. Először egyetlen LLM-hívást mérlegelj. Ha jobb promptokkal és kontextusbeli példákkal megoldható a probléma, ne vezess be ügynökrendszert. Ha több lépésre van szükség, az egyértelműen rögzített alfeladatokra bontható esetekben fontold meg egy munkafolyamat (workflow) használatát. Autonóm ügynököt (autonomous Agent) csak akkor használj, ha dinamikus döntésekre és rugalmas végrehajtási útvonalakra van szükség. Ne feledd: az ügynökrendszerek jellemzően késleltetést és költséget cserélnek jobb feladatteljesítményre, ezért alaposan mérlegeld, hogy megéri-e ez a csere.
 

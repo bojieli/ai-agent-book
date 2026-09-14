@@ -1,6 +1,7 @@
 ---
 import { translator, editions, locales, type Locale } from '../lib/i18n';
 import Icon from './Icon.astro';
+import { withBase } from '../lib/site-path.mjs';
 import machineTranslation from '../lib/machine-translation.json';
 import { repo } from '../lib/book';
 const {
@@ -46,7 +47,9 @@ const edition = editions[locale];
             <a
               href={
                 reader
-                  ? `/${editions[language].directory}/chapter${chapterNumber}${editions[language].suffix}/`
+                  ? withBase(
+                      `/${editions[language].directory}/chapter${chapterNumber}${editions[language].suffix}/`,
+                    )
                   : editions[language].home
               }
               lang={language}
@@ -68,7 +71,7 @@ const edition = editions[locale];
           machineTranslation.languages.map((language) => (
             <a
               data-machine-language={language.name}
-              href={`${reader ? `/book-en/chapter${chapterNumber}/` : editions.en.home}?translate=${language.locale}`}
+              href={`${reader ? withBase(`/book-en/chapter${chapterNumber}/`) : editions.en.home}?translate=${language.locale}`}
               lang={language.locale}
               dir={'dir' in language ? language.dir : 'ltr'}
             >

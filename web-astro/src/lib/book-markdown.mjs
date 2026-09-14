@@ -1,11 +1,12 @@
 import { availableChapters } from './available-chapters.mjs';
 import { figurePaths, sourceFigureLabels } from './figure-paths.mjs';
 import { sourceEdition } from './edition-source.mjs';
+import { withBase } from './site-path.mjs';
 import { readFileSync } from 'node:fs';
 const originalSite = 'https://bojieli.github.io/ai-agent-book';
 
 // Adapt the web view only. The tracked book remains the shared PDF/website source.
-export function bookMarkdown() {
+export function bookMarkdown({ base = '/' } = {}) {
   return (tree, file) => {
     const { directory, suffix, locale } = sourceEdition(file.path);
     if (tree.children[0]?.type === 'heading' && tree.children[0].depth === 1) {
@@ -191,7 +192,10 @@ export function bookMarkdown() {
                   { type: 'text', value: ' · ' },
                   {
                     type: 'link',
-                    url: figurePaths(directory, node.children[0].url).original,
+                    url: withBase(
+                      figurePaths(directory, node.children[0].url).original,
+                      base,
+                    ),
                     children: [
                       {
                         type: 'text',
@@ -212,11 +216,11 @@ export function bookMarkdown() {
           ...node.data,
           hProperties: {
             ...node.data?.hProperties,
-            'data-figure-light': paths.light,
-            'data-figure-dark': paths.dark,
+            'data-figure-light': withBase(paths.light, base),
+            'data-figure-dark': withBase(paths.dark, base),
           },
         };
-        node.url = paths.light;
+        node.url = withBase(paths.light, base);
       }
       if (
         node.type === 'link' &&
@@ -228,7 +232,7 @@ export function bookMarkdown() {
         if (chapterLink && availableChapters.includes(Number(chapterLink[1]))) {
           node.url = node.url.replace(
             chapterLink[0],
-            `/${directory}/chapter${chapterLink[1]}${suffix}/`,
+            withBase(`/${directory}/chapter${chapterLink[1]}${suffix}/`, base),
           );
         } else {
           const resolved = new URL(node.url, `${originalSite}/${directory}/`);

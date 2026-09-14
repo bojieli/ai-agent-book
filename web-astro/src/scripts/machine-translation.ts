@@ -1,3 +1,4 @@
+import { withBase } from '../lib/site-path.mjs';
 import { machineLanguage } from '../lib/machine-language';
 import config from '../lib/machine-translation.json';
 
@@ -68,7 +69,8 @@ export function initMachineTranslation() {
     const target = new URL(link.href);
     if (
       target.origin === location.origin &&
-      (target.pathname.startsWith('/book-en/') || target.pathname === '/en/')
+      (target.pathname.startsWith(withBase('/book-en/')) ||
+        target.pathname === withBase('/en/'))
     ) {
       target.searchParams.set('translate', language.locale);
       link.href = target.href;
