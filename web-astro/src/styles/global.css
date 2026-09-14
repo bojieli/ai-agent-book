@@ -118,13 +118,17 @@ img {
 }
 .site-header {
   height: 92px;
+  border-bottom: 1px solid var(--line);
+}
+.site-header-inner {
+  width: 100%;
+  height: 100%;
   max-width: 1600px;
-  margin: auto;
+  margin-inline: auto;
   display: flex;
   align-items: center;
   gap: 3rem;
   padding: 0 48px;
-  border-bottom: 1px solid var(--line);
 }
 .brand {
   display: flex;
@@ -463,16 +467,11 @@ img {
   font-weight: 750;
   color: var(--ink);
 }
-@media (min-width: 1600px) {
-  .site-header {
-    border-inline: 1px solid var(--line);
-  }
-}
 @media (max-width: 1100px) {
   .page-width {
     padding-inline: 36px;
   }
-  .site-header {
+  .site-header-inner {
     padding-inline: 30px;
     gap: 20px;
   }
@@ -498,6 +497,8 @@ img {
 @media (max-width: 760px) {
   .site-header {
     height: 76px;
+  }
+  .site-header-inner {
     padding-inline: 20px;
   }
   .brand {
@@ -604,7 +605,7 @@ img {
   .header-nav a:first-child {
     display: none;
   }
-  .site-header {
+  .site-header-inner {
     gap: 10px;
   }
   .hero-actions {
