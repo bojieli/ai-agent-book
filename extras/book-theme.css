@@ -414,6 +414,43 @@ html[lang="ko"] {
   border-radius: 0;
 }
 
+/* ── 7b. 图 + 图注 —— 编号与说明必须是可见正文 ───────────────────
+   scripts/mkdocs_figure_captions.py 在构建期把每张独立成行的图片包成
+   <figure class="md-typeset-figure">,并把作者写在 alt 里的图号与图题
+   ("图0-2 全书结构…" / "Figure 0-2: …") 放进 <figcaption>。此前正文只
+   渲染图片,在线阅读时图号完全看不到。
+   Material 自带 figure/figcaption 样式(width: fit-content + 居中),这里
+   只覆写图注本身:正文字号、弱化颜色、去掉 Material 的斜体与 480px 上限,
+   让它读起来像书里的图题而不是一句斜体旁白。
+   类名选择器(.md-typeset-figure / figcaption)比 Material 的 .md-typeset
+   figure 更具体,所以无需 !important。 */
+.md-typeset .md-typeset-figure {
+  width: auto;
+  margin: 1.4em 0 1.6em;
+  text-align: center;
+}
+
+.md-typeset .md-typeset-figure figcaption {
+  max-width: 100%;
+  margin: 0.55em 0 0;
+  color: var(--fenix-ink-soft);
+  font-size: 0.82em;
+  font-style: normal;
+  line-height: 1.5;
+}
+
+/* 暗色模式下改用 slate 的弱化色(与 --fenix-ink-soft 覆盖保持一致) */
+[data-md-color-scheme="slate"] .md-typeset .md-typeset-figure figcaption {
+  color: var(--md-default-fg-color--light);
+}
+
+/* 阿拉伯语/希伯来语版本:Material 的 [dir=rtl] 会把整页正文改成右对齐,
+   图注（以及图片）必须重新居中。 */
+html[dir="rtl"] .md-typeset .md-typeset-figure,
+html[dir="rtl"] .md-typeset .md-typeset-figure figcaption {
+  text-align: center;
+}
+
 /* ── 8. 关掉首页 hero 区的紫色渐变(改回 fenix 那种纯净白底) ──── */
 
 .hero {
