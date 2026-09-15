@@ -71,6 +71,11 @@ SELECTION_NOTES = [
     "（经典扩散式文生图，接受 SD 风格提示词）。",
     "改写节点 LLM：Moonshot kimi-k3（OpenAI 兼容接口）；kimi-k3 只允许 temperature=1，"
     "显式传其他值被 400 拒绝（见第 1 轮失败记录）。",
+    "本次对照（百炼社区版专属域名）：工作流与原生_gptimage 两臂的生图节点统一为"
+    " qwen-image-3.0（OpenAI 兼容 /images/generations 同步接口；该域名无万相异步任务"
+    "接口，WORKFLOW_IMAGE_API=openai_sync）。改写节点 kimi-k3 亦经同一端点提供"
+    "（KIMI_BASE_URL 指向社区端点）。原生路线 A（Gemini）无凭据未运行，作为 provider"
+    "替换记录在案；两臂共用同一生图模型后，路线间唯一变量是改写节点本身。",
 ]
 
 MIME_EXT = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
@@ -135,8 +140,8 @@ def main() -> int:
     parser.add_argument(
         "--route",
         choices=ALL_ROUTES + ["all"],
-        default="all",
-        help="只跑某条路线（默认 all：全部三条路线）",
+        action="append",
+        help="只跑某条路线（可重复传多个；默认 all：全部三条路线）",
     )
     parser.add_argument(
         "--requirement",
@@ -146,12 +151,12 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if not Config.validate():
-        return 1
-
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_dir = PROJECT_DIR / "outputs" / run_id
-    routes = ALL_ROUTES if args.route == "all" else [args.route]
+    routes = ALL_ROUTES if not args.route else args.route
+
+    if not Config.validate(routes):
+        return 1
     requirements = [
         r for r in REQUIREMENTS if not args.requirement or r["id"] in args.requirement
     ]

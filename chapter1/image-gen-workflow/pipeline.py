@@ -227,6 +227,64 @@ def generate_image_wanx(
     return r.content, mime, [submit, poll, dl]
 
 
+def generate_image_openai_sync(
+    prompt: str, negative_prompt: str = ""
+) -> Tuple[bytes, str, List[Dict[str, Any]]]:
+    """经 OpenAI 兼容 /images/generations 同步生图（百炼社区版专属域名路径）。
+
+    与 generate_image_wanx 返回值同构：(图片字节, mime, call records)。
+    qwen-image-3.0 等通过 compatible-mode 暴露的模型走此接口；该域名没有
+    万相异步任务接口（404）。size 参数格式为 "1024x1024"，兼容 "1024*1024"
+    写法时统一归一化。
+    """
+    url = f"{Config.DASHSCOPE_BASE_URL.rstrip('/')}/images/generations"
+    size = Config.WANX_SIZE.replace("*", "x")
+    body: Dict[str, Any] = {
+        "model": Config.WANX_MODEL,
+        "prompt": prompt,
+        "size": size,
+        "n": 1,
+        "watermark": False,
+    }
+    if negative_prompt:
+        body["negative_prompt"] = negative_prompt
+
+    call = _new_call_record("dashscope", Config.WANX_MODEL, url)
+    call["request"] = dict(body)
+    t0 = time.monotonic()
+    try:
+        r = requests.post(
+            url,
+            headers={
+                "Authorization": f"Bearer {Config.DASHSCOPE_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json=body,
+            timeout=300,
+        )
+        resp = r.json()
+        call["response_id"] = str(resp.get("created") or "") or None
+        call["usage"] = resp.get("usage") or {}
+        if r.status_code != 200 or not resp.get("data"):
+            raise RuntimeError(f"生图失败 HTTP {r.status_code}: {resp}")
+        image_url = resp["data"][0]["url"]
+        _finish(call, t0)
+    except Exception as e:
+        call["status"] = "error"
+        call["error"] = f"{type(e).__name__}: {e}"
+        _finish(call, t0)
+        raise
+
+    dl = _new_call_record("dashscope", Config.WANX_MODEL, image_url.split("?")[0])
+    t0 = time.monotonic()
+    r = requests.get(image_url, timeout=60)
+    r.raise_for_status()
+    mime = r.headers.get("Content-Type", "image/png").split(";")[0]
+    dl["response_bytes"] = len(r.content)
+    _finish(dl, t0)
+    return r.content, mime, [call, dl]
+
+
 # ---------------------------------------------------------------------------
 # 原生路线：Gemini 3 Pro Image（Nano Banana 2）原生图像生成
 # ---------------------------------------------------------------------------
@@ -352,9 +410,14 @@ def run_workflow_route(requirement: str) -> Dict[str, Any]:
     rewrite, rec = rewrite_prompt(requirement)
     nodes.append({"node": "rewrite", "call": rec, "output": rewrite})
 
-    image_bytes, mime, recs = generate_image_wanx(
-        rewrite["prompt"], rewrite["negative_prompt"]
-    )
+    if Config.WORKFLOW_IMAGE_API == "openai_sync":
+        image_bytes, mime, recs = generate_image_openai_sync(
+            rewrite["prompt"], rewrite["negative_prompt"]
+        )
+    else:
+        image_bytes, mime, recs = generate_image_wanx(
+            rewrite["prompt"], rewrite["negative_prompt"]
+        )
     nodes.append(
         {
             "node": "image_generate",

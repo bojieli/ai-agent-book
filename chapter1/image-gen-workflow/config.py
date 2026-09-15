@@ -35,6 +35,10 @@ class Config:
     )
     WANX_MODEL: str = os.getenv("WANX_MODEL", "wan2.2-t2i-flash")
     WANX_SIZE: str = os.getenv("WANX_SIZE", "1024*1024")
+    # 生图接口形态：wanx_async（经典异步任务接口，官方 DashScope 端点）或
+    # openai_sync（OpenAI 兼容 /images/generations 同步接口；百炼社区版专属域名
+    # 只暴露后者，实测 /services/aigc/text2image/image-synthesis 返回 404）
+    WORKFLOW_IMAGE_API: str = os.getenv("WORKFLOW_IMAGE_API", "wanx_async")
 
     # ---- 工作流路线生图工具（首选，实测不可用）：SiliconFlow ----
     SILICONFLOW_API_KEY: str = os.getenv("SILICONFLOW_API_KEY", "")
@@ -61,12 +65,23 @@ class Config:
     TASK_POLL_TIMEOUT: float = float(os.getenv("TASK_POLL_TIMEOUT", "180"))
 
     @classmethod
-    def required_env(cls) -> List[str]:
-        return ["KIMI_API_KEY", "DASHSCOPE_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY"]
+    def required_env(cls, routes: List[str] | None = None) -> List[str]:
+        """只要求实际要跑的路线所依赖的凭据（默认三条路线全查）。"""
+        routes = routes or ["workflow", "native", "native_gptimage"]
+        needed: List[str] = []
+        if "workflow" in routes:
+            needed += ["KIMI_API_KEY", "DASHSCOPE_API_KEY"]
+        if "native" in routes:
+            needed += ["GEMINI_API_KEY"]
+        if "native_gptimage" in routes:
+            needed += ["OPENAI_API_KEY"]
+        return needed
 
     @classmethod
-    def validate(cls) -> bool:
-        missing = [name for name in cls.required_env() if not getattr(cls, name)]
+    def validate(cls, routes: List[str] | None = None) -> bool:
+        missing = [
+            name for name in cls.required_env(routes) if not getattr(cls, name)
+        ]
         if missing:
             print(f"错误: 缺少环境变量: {', '.join(missing)}")
             print("请参考 env.example 配置后重试。")
