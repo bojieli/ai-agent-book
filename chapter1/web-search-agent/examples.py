@@ -2,7 +2,6 @@
 高级示例 - 展示 Web Search Agent 的各种用法
 """
 
-import asyncio
 import json
 from typing import List, Dict, Any
 from agent import WebSearchAgent, is_failure_answer

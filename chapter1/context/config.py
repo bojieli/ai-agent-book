@@ -29,7 +29,6 @@ try:
         canonical_provider as _canonical_provider,
         map_model_to_openrouter,
         resolve_backend,
-        resolve_llm_backend,
     )
 except ImportError:  # pragma: no cover - exercised only without the package
     import sys as _sys
@@ -44,7 +43,6 @@ except ImportError:  # pragma: no cover - exercised only without the package
         canonical_provider as _canonical_provider,
         map_model_to_openrouter,
         resolve_backend,
-        resolve_llm_backend,
     )
 
 

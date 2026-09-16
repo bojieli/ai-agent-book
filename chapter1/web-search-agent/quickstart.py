@@ -6,7 +6,6 @@
 import os
 import sys
 from agent import WebSearchAgent
-from config import Config
 
 # 彩色输出
 class Colors:
