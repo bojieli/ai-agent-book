@@ -655,7 +655,7 @@ Current Memory Context will be provided with each message."""
                     tools=self._get_tools_description(),
                     tool_choice="auto",
                     temperature=_reasoning_safe_temperature(self.model, 0.3),
-                    max_tokens=4096,
+                    max_tokens=Config.MODEL_MAX_TOKENS,
                     stream=True  # Enable streaming
                 )
                 
@@ -922,7 +922,7 @@ Current Memory Context will be provided with each message."""
                 model=self.model,
                 messages=self.conversation,
                 temperature=_reasoning_safe_temperature(self.model, 0.3),
-                max_tokens=4096,
+                max_tokens=Config.MODEL_MAX_TOKENS,
                 stream=True
             )
             

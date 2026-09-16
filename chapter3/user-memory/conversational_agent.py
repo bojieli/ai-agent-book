@@ -35,7 +35,7 @@ class ConversationConfig:
     enable_conversation_history: bool = True
     max_memory_context: int = 10
     temperature: float = 0.7
-    max_tokens: int = 4096
+    max_tokens: int = Config.MODEL_MAX_TOKENS
 
 
 class ConversationalAgent:
