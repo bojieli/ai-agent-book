@@ -100,10 +100,13 @@ MOONSHOT_API_KEY=your-api-key-here
 
 **Universal OpenRouter fallback**: if neither `MOONSHOT_API_KEY` nor
 `KIMI_API_KEY` is set but `OPENROUTER_API_KEY` is, requests go through
-OpenRouter using `OPENROUTER_MODEL` (default `openai/gpt-5.6-luna`). Moonshot
-Formula declarations and Fibers are not exposed through OpenRouter, so fallback
-mode answers from model knowledge without live Formula search. It is useful for
-interface diagnostics only and cannot satisfy Experiment 1-2 acceptance.
+OpenRouter. The requested model id is mapped to its OpenRouter equivalent
+(the default `kimi-k3` becomes `moonshotai/kimi-k2.6`); `OPENROUTER_MODEL`
+is only honored when no model id is requested at all (default
+`openai/gpt-5.6-luna`). Moonshot Formula declarations and Fibers are not
+exposed through OpenRouter, so fallback mode answers from model knowledge
+without live Formula search. It is useful for interface diagnostics only and
+cannot satisfy Experiment 1-2 acceptance.
 
 #### 3. Run the Agent
 
@@ -251,7 +254,8 @@ Includes:
 - **Kimi API**: Moonshot Kimi K3 (`kimi-k3`), a reasoning model with native web search
 - **Built-in tool calling**: Kimi `$web_search` built-in function
 - **Iterative search**: up to 5 rounds until information is sufficient
-- **Context management**: full dialogue history for multi-turn chat
+- **Context management**: each question is independent -- `search_and_answer`
+  resets conversation history every call, so there is no cross-question memory
 - **Temperature control**: adjustable creativity
 
 #### Strengths
@@ -381,7 +385,7 @@ MOONSHOT_API_KEY=your-api-key-here
 
 **注意**: 为了向后兼容，系统也支持使用 `KIMI_API_KEY` 环境变量。
 
-**通用兜底（OpenRouter）**: 若未设置 `MOONSHOT_API_KEY`/`KIMI_API_KEY` 但设置了 `OPENROUTER_API_KEY`，请求会自动改走 OpenRouter，使用 `OPENROUTER_MODEL`（默认 `openai/gpt-5.6-luna`）。**重要限制**：Kimi 内置的 `$web_search` 工具是 Moonshot 专有能力，在 OpenRouter 上不可用——因此兜底模式下模型仅凭自身知识作答，**没有实时联网搜索**。如需真正的联网搜索，请使用 Moonshot 主 key。
+**通用兜底（OpenRouter）**: 若未设置 `MOONSHOT_API_KEY`/`KIMI_API_KEY` 但设置了 `OPENROUTER_API_KEY`，请求会自动改走 OpenRouter。请求的模型 id 会被映射为 OpenRouter 等价 id（默认的 `kimi-k3` 会变成 `moonshotai/kimi-k2.6`）；仅当**未指定模型**时才使用 `OPENROUTER_MODEL`（默认 `openai/gpt-5.6-luna`）。**重要限制**：Kimi 内置的 `$web_search` 工具是 Moonshot 专有能力，在 OpenRouter 上不可用——因此兜底模式下模型仅凭自身知识作答，**没有实时联网搜索**。如需真正的联网搜索，请使用 Moonshot 主 key。
 
 #### 3. 运行 Agent
 
@@ -408,7 +412,7 @@ python main.py --help
 python main.py --provider offline-demo
 ```
 
-**交互模式**（持续对话）：
+**交互模式**（每次提问独立，`search_and_answer` 会重置对话历史，无跨问题上下文）：
 
 ```bash
 python main.py
@@ -529,7 +533,7 @@ python examples.py
 - **Kimi API**: 使用 Moonshot AI 的最新 Kimi K3 模型（`kimi-k3`，原生联网搜索的推理模型）
 - **内置工具调用**: 利用 Kimi 的 `$web_search` 内置函数
 - **迭代式搜索**: 支持多轮搜索直到获得充分信息（最多 5 次迭代）
-- **上下文管理**: 维护完整对话历史，支持连续对话
+- **上下文管理**: 每次提问独立（`search_and_answer` 会重置对话历史，无跨问题记忆）
 - **温度控制**: 支持调整生成内容的创造性（temperature 参数）
 
 #### 优势

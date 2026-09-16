@@ -273,7 +273,7 @@ def main():
     """运行所有示例"""
     
     if not Config.validate():
-        print("请先设置 KIMI_API_KEY 环境变量")
+        print("请先设置 MOONSHOT_API_KEY（或 KIMI_API_KEY）环境变量")
         return
     
     examples = [

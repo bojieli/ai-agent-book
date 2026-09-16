@@ -31,7 +31,7 @@ def _save_output(path: str, payload: dict):
 
 def run_interactive_mode(agent: WebSearchAgent, output: Optional[str] = None):
     """
-    交互式模式 - 持续与 Agent 对话
+    交互式模式 - 每次提问独立（search_and_answer 会重置对话历史，无跨问题上下文）
 
     Args:
         agent: WebSearchAgent 实例
@@ -42,7 +42,6 @@ def run_interactive_mode(agent: WebSearchAgent, output: Optional[str] = None):
     print("="*60)
     print("输入您的问题，Agent 将自动搜索并回答")
     print("输入 'quit' 或 'exit' 退出")
-    print("输入 'clear' 清空对话历史")
     print("="*60 + "\n")
 
     while True:
