@@ -17,6 +17,8 @@ import math
 from datetime import datetime
 from concurrent.futures import TimeoutError
 
+from calc_sandbox import safe_eval
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -261,17 +263,14 @@ class ToolRegistry:
         try:
             logger.info(f"Calculating: {expression}")
             
-            # Sanitize expression - only allow safe mathematical operations
-            allowed_names = {
-                k: v for k, v in math.__dict__.items() if not k.startswith("__")
-            }
-            allowed_names.update({"abs": abs, "round": round, "min": min, "max": max})
-            
-            # Replace common operations for clarity
+            # Sanitize the syntax tree, not just the builtins dict: an empty
+            # __builtins__ still permits attribute access, so the old eval()
+            # sandbox was escapable via ().__class__ ... . The AST whitelist
+            # in calc_sandbox.py rejects those node shapes before the
+            # interpreter sees them. Keep the caret-to-power rewrite so
+            # existing prompts are unchanged.
             expression = expression.replace("^", "**")
-            
-            # Evaluate the expression
-            result = eval(expression, {"__builtins__": {}}, allowed_names)
+            result = safe_eval(expression)
             
             return {
                 "expression": expression,
