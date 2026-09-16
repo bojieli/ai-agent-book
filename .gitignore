@@ -77,3 +77,15 @@ ablation_study_results.png
 /chapter7/user-memory-system-evaluation/results/checkpoints/*
 !/chapter7/user-memory-system-evaluation/results/checkpoints/7_11/
 !/chapter7/user-memory-system-evaluation/results/checkpoints/7_11/**
+
+# Chapter 1 experiment re-run payloads. gitignore only affects untracked
+# paths, so the canonical tracked evidence (latest.json, timestamped real_*/
+# and runs/ manifests + receipts) stays in Git untouched; these rules stop a
+# reader's fresh re-run output (new timestamped validation dirs, logs, pkls)
+# from being accidentally committed next to it. image-gen-workflow outputs/
+# is already handled by that experiment's local .gitignore.
+chapter1/context/validation/*
+chapter1/web-search-agent/validation/*
+chapter1/search-codegen/validation/*
+chapter1/image-gen-workflow/validation/*
+chapter1/learning-from-experience/validation/*
