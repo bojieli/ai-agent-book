@@ -74,12 +74,12 @@ cp chapter1/image-gen-workflow/env.example .env   # 填入各 API Key（或 expo
 cd chapter1/image-gen-workflow
 pip install -r requirements.txt   # google-genai openai requests python-dotenv
 
-# 标准运行：全部 5 句需求 × 4 条路线（workflow/native/native_gemini_pro/native_gptimage）
+# 标准运行：全部 5 句需求 × 3 条路线（workflow/native/native_gptimage）
 python main.py
 
 # 只跑某条路线 / 某句需求
 python main.py --route workflow
-python main.py --route native_gemini_pro
+python main.py --route native_gptimage
 python main.py --requirement windowsill-plant
 
 # 离线测试（不发真实请求）
