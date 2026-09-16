@@ -447,10 +447,14 @@ The console prints two tables: a per-run **ablation study results** table and a 
 #### Automated Regression Tests
 
 ```bash
-python -m pytest tests
+python -m pytest .
 ```
 
-Manual provider/API smoke scripts live under `tests/manual/` and require the corresponding API keys.
+`pytest .` collects both the `tests/` package and the top-level regression
+tests (`test_grounding.py`, `test_experiment_1_1.py`,
+`test_main_result_semantics.py`) that pin the experiment's claims. Manual
+provider/API smoke scripts live under `tests/manual/` and require the
+corresponding API keys.
 
 ### Understanding Results
 
@@ -997,10 +1001,13 @@ python main.py --mode ablation --cases 3
 #### 自动化回归测试
 
 ```bash
-python -m pytest tests
+python -m pytest .
 ```
 
-需要真实 API Key 的手动提供商/API 冒烟脚本放在 `tests/manual/`。
+`pytest .` 同时收集 `tests/` 目录与顶层回归测试（`test_grounding.py`、
+`test_experiment_1_1.py`、`test_main_result_semantics.py`），这些测试钉住
+实验的核心结论。需要真实 API Key 的手动提供商/API 冒烟脚本放在
+`tests/manual/`。
 
 ### 结果解读
 

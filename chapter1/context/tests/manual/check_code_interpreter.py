@@ -6,8 +6,8 @@ Test the code_interpreter tool with the agent
 import os
 from agent import ContextAwareAgent, ContextMode
 
-def test_code_interpreter():
-    """Test code interpreter integration"""
+def check_code_interpreter():
+    """Manual smoke test of the code_interpreter tool (requires a live agent/API)."""
     
     print("\n" + "="*60)
     print("🧪 CODE INTERPRETER TEST")
@@ -122,4 +122,4 @@ result = {
 
 
 if __name__ == "__main__":
-    test_code_interpreter()
+    check_code_interpreter()
