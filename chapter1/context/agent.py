@@ -15,7 +15,6 @@ import pypdf
 from io import BytesIO
 import math
 from datetime import datetime
-from concurrent.futures import TimeoutError
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -904,8 +903,12 @@ Important: When you have gathered all necessary information and computed the fin
                 # Note: We do NOT modify the system prompt anymore.
                 # The context is already built into the conversation through tool history
                     
-            except TimeoutError:
-                logger.error("Request timed out after 60 seconds")
+            # The OpenAI SDK raises APITimeoutError (not the builtin
+            # TimeoutError) when the request exceeds the configured 180s
+            # timeout below; catch it explicitly so timeouts are reported
+            # as timeouts instead of falling through to the generic path.
+            except (openai.APITimeoutError, requests.exceptions.Timeout) as exc:
+                logger.error(f"Request timed out after 180 seconds: {exc}")
                 return {
                     "error": "Request timed out. The model is taking too long to respond. Try a simpler task or different provider.",
                     "trajectory": self.trajectory,
