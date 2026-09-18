@@ -15,6 +15,8 @@ from typing import Dict, Any, Optional, List
 from enum import Enum
 import logging
 
+from config import Config
+
 logger = logging.getLogger(__name__)
 
 
@@ -288,6 +290,31 @@ class LanguageExecutor:
             return True
         except Exception:
             return False
+
+    def _is_docker_available(self) -> bool:
+        """Return whether both the Docker CLI and daemon are available."""
+        if not shutil.which("docker"):
+            return False
+        try:
+            result = subprocess.run(
+                ["docker", "info"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return False
+        return result.returncode == 0
+
+    def _temporary_dir(self, prefix: str):
+        """Create an execution directory inside the configured workspace."""
+        base_dir = Path(self.workspace_dir).resolve() / ".execution-tmp"
+        base_dir.mkdir(parents=True, exist_ok=True)
+        return tempfile.TemporaryDirectory(
+            prefix=prefix,
+            dir=base_dir,
+            ignore_cleanup_errors=True,
+        )
     
     async def _run_python(
         self,
@@ -298,7 +325,7 @@ class LanguageExecutor:
         files: Dict[str, str]
     ) -> Dict[str, Any]:
         """Execute Python code."""
-        with tempfile.TemporaryDirectory(prefix='python_', ignore_cleanup_errors=True) as tmp_dir:
+        with self._temporary_dir(prefix='python_') as tmp_dir:
             self._write_files(tmp_dir, files)
             code_file = os.path.join(tmp_dir, 'main.py')
             with open(code_file, 'w', encoding='utf-8') as f:
@@ -307,19 +334,24 @@ class LanguageExecutor:
             # Run untrusted Python in a real container boundary when Docker is
             # available: no network, read-only rootfs, bounded memory/CPU/PIDs,
             # and only the one ephemeral work directory mounted writable.
-            if shutil.which("docker"):
-                mount = shlex.quote(f"{tmp_dir}:/workspace:rw")
+            if self._is_docker_available():
+                image = Config.PYTHON_DOCKER_IMAGE
+                mount = shlex.quote(
+                    "type=bind,"
+                    f"source={Path(tmp_dir).resolve().as_posix()},"
+                    "target=/workspace"
+                )
                 command = (
                     "docker run --rm --network none --memory 256m --cpus 1 "
                     "--pids-limit 64 --read-only "
                     "--tmpfs /tmp:rw,nosuid,nodev,noexec,size=16m "
-                    f"-v {mount} -w /workspace python:3.11-slim "
+                    f"--mount {mount} -w /workspace {shlex.quote(image)} "
                     "python -I -B -u main.py"
                 )
                 result = await self._run_command(command, timeout, stdin, tmp_dir)
                 result["sandbox"] = {
                     "kind": "docker",
-                    "image": "python:3.11-slim",
+                    "image": image,
                     "network": "none",
                     "rootfs": "read-only",
                     "memory": "256m",

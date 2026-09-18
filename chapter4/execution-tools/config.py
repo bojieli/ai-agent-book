@@ -81,6 +81,11 @@ class Config:
     
     # Workspace Configuration
     WORKSPACE_DIR: Path = Path(os.getenv("WORKSPACE_DIR", os.getcwd()))
+
+    # Code execution sandbox image. Override this with a prebuilt image that
+    # contains scientific packages when Docker sandboxing should support imports
+    # such as numpy/pandas without running untrusted code on the host.
+    PYTHON_DOCKER_IMAGE: str = os.getenv("PYTHON_DOCKER_IMAGE", "python:3.11-slim")
     
     @classmethod
     def get_api_key(cls, provider: str) -> Optional[str]:

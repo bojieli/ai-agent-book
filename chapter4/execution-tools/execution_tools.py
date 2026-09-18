@@ -12,7 +12,7 @@ from llm_helper import LLMHelper
 from config import Config
 from multilang_executor import LanguageExecutor, ExecutionStatus, find_bash, BASH_MISSING_ERROR
 
-# Long-output handling thresholds (see "长输出的截断与持久化" in chapter 4).
+# Long-output handling thresholds (see "Long-output truncation and persistence" in chapter 4).
 # When output exceeds either threshold, keep the head and tail few lines in the
 # context and persist the full output to a temp file for later retrieval.
 MAX_OUTPUT_LINES = 200
@@ -99,9 +99,11 @@ class ExecutionTools:
         if language is None:
             language = "python"
         language = language.lower()
+        if language == "python3":
+            language = "python"
         
         # Verify syntax first (only for Python for now)
-        if Config.AUTO_VERIFY_CODE and language in ['python', 'python3']:
+        if Config.AUTO_VERIFY_CODE and language == 'python':
             is_valid, error_msg = self.llm_helper.verify_code_syntax(code, language)
             if not is_valid:
                 return {
