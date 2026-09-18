@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 44 820 443" width="820" height="443" style="background:#ffffff">
-<title>圖 2-10 KV Cache 字首複用機制</title>
-<desc>三次請求對比 KV Cache 的字首複用：請求 1 建立快取；請求 2 因字首不變而命中快取；請求 3 把動態時間戳放在系統提示詞最前面，導致變動點之後的全部 token 重新計算與計費。</desc>
+<title>圖 2-10 Prompt Cache：跨請求複用字首的 KV Cache</title>
+<desc>三次請求對比 Prompt Cache 對字首 KV Cache 的跨請求複用：請求 1 建立快取；請求 2 因字首不變而命中快取；請求 3 把動態時間戳放在系統提示詞最前面，導致變動點之後的全部 token 重新計算與計費。</desc>
 <defs><marker id="ah-light" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#999999"/></marker></defs>
 <text x="40" y="70" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">請求 1</text>
 <rect x="40" y="85" width="455" height="40" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
@@ -17,10 +17,10 @@
 <rect x="660" y="170" width="120" height="40" rx="6" fill="#e8e8e8" stroke="#333333" stroke-width="2"/>
 <text x="720" y="190" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">→ 生成回答</text>
 <line x1="267.5" y1="127" x2="267.5" y2="168" stroke="#999999" stroke-width="2" marker-end="url(#ah-light)"/>
-<text x="279.5" y="147.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="start" dominant-baseline="central">KV 複用</text>
+<text x="279.5" y="147.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="start" dominant-baseline="central">Prompt Cache 命中：字首 KV 複用</text>
 <line x1="267.5" y1="212" x2="267.5" y2="253" stroke="#999999" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#ah-light)"/>
 <text x="255.5" y="232.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="end" dominant-baseline="central">系統提示變了</text>
-<text x="279.5" y="232.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="start" dominant-baseline="central">KV 複用中斷</text>
+<text x="279.5" y="232.5" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="start" dominant-baseline="central">Prompt Cache 失效：字首 KV 重算</text>
 <text x="40" y="240" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">請求 3</text>
 <rect x="40" y="255" width="455" height="40" rx="6" fill="#ffffff" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
 <text x="267.5" y="275" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">"Time: 10:30:45" + System Prompt + Tools（快取失效 ✗）</text>
