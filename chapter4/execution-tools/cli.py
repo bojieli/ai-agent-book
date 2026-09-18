@@ -35,9 +35,11 @@ import argparse
 import asyncio
 import json
 import os
+import shlex
 import sys
 import tempfile
 import textwrap
+from pathlib import Path
 
 
 # ---------------------------------------------------------------------------
@@ -199,6 +201,13 @@ def cmd_demo(args: argparse.Namespace) -> int:
     校验结果。演示同时覆盖四个安全机制：linter 校验、危险命令 fail-safe 审批、
     长输出截断与持久化。整个流程默认离线运行（关闭 LLM 总结）。
     """
+    # bash 是 code_interpreter / virtual_terminal 的执行外壳。纯 Windows 环境没有
+    # bash 时，后面的步骤 4～7 都会失败，这里先给出明确提示（见 README 的 Windows 说明）。
+    from multilang_executor import find_bash, BASH_MISSING_ERROR
+    if find_bash() is None:
+        print(f"错误：{BASH_MISSING_ERROR}", file=sys.stderr)
+        return 1
+
     # 演示放在独立临时工作区，避免污染当前目录。
     workspace = tempfile.mkdtemp(prefix="exec_tools_demo_")
     os.environ["WORKSPACE_DIR"] = workspace
@@ -268,7 +277,8 @@ def cmd_demo(args: argparse.Namespace) -> int:
         # 5. virtual_terminal：用 shell 校验数据文件
         section("5. virtual_terminal：用 shell 校验数据文件")
         r = await exec_tools.virtual_terminal(
-            command=f"wc -w {workspace}/data.txt && echo '--- 词数统计完成 ---'"
+            # 正斜杠 + 引号：Windows 的临时目录路径含反斜杠和空格，直接拼进 bash 命令会被当作转义。
+            command=f"wc -w {shlex.quote(Path(workspace).as_posix())}/data.txt && echo '--- 词数统计完成 ---'"
         )
         print(f"结果：success={r['success']}, returncode={r.get('returncode')}")
         print("stdout:")

@@ -66,6 +66,8 @@ cd chapter4/execution-tools
 # python -m pip install -r requirements.txt
 ```
 
+> **Windows note**: `code_interpreter` and `virtual_terminal` run commands through `bash`. On Windows, either run the project inside WSL, or install [Git for Windows](https://gitforwindows.org/) so that `bash` (Git Bash) is on your `PATH`. Without `bash`, both tools return a clear error instead of crashing, and `python cli.py demo` stops at startup with the same message.
+
 ### Configuration
 
 1. Copy `env.example` to `.env`:
@@ -311,6 +313,8 @@ cd chapter4/execution-tools
 # 精确复现旧版单项目环境，含可选科学计算/机器学习/表格处理依赖：
 # python -m pip install -r requirements.txt
 ```
+
+> **Windows 用户注意**：`code_interpreter` 与 `virtual_terminal` 通过 `bash` 执行命令。在 Windows 上请在 WSL 中运行本项目，或安装 [Git for Windows](https://gitforwindows.org/) 让 `bash`（Git Bash）位于 `PATH` 中。找不到 `bash` 时，两个工具会返回明确的错误而不是崩溃，`python cli.py demo` 也会在启动时给出同样的提示。
 
 ### 配置
 

@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional, Tuple
 from contextlib import redirect_stdout, redirect_stderr
 from llm_helper import LLMHelper
 from config import Config
-from multilang_executor import LanguageExecutor, ExecutionStatus
+from multilang_executor import LanguageExecutor, ExecutionStatus, find_bash, BASH_MISSING_ERROR
 
 # Long-output handling thresholds (see "长输出的截断与持久化" in chapter 4).
 # When output exceeds either threshold, keep the head and tail few lines in the
@@ -227,11 +227,22 @@ class ExecutionTools:
                         "error": f"Command execution not approved: {reason}"
                     }
         
-        # Execute command
+        # Execute command. POSIX keeps the platform shell. Windows has no POSIX
+        # shell of its own, so run the command through bash (Git Bash or WSL) as
+        # `bash -c`, which is what the shell examples in the book assume.
+        if os.name == "nt":
+            bash = find_bash()
+            if bash is None:
+                return {"success": False, "error": BASH_MISSING_ERROR}
+            popen_args: Any = [bash, "-c", command]
+            use_shell = False
+        else:
+            popen_args = command
+            use_shell = True
         try:
             result = subprocess.run(
-                command,
-                shell=True,
+                popen_args,
+                shell=use_shell,
                 capture_output=True,
                 text=True,
                 timeout=timeout,

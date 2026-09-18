@@ -9,6 +9,8 @@ import time
 import base64
 import psutil
 import shlex
+import sys
+from pathlib import Path
 from typing import Dict, Any, Optional, List
 from enum import Enum
 import logging
@@ -34,6 +36,25 @@ async def get_all_output(stream) -> str:
     except Exception as e:
         logger.debug(f"Error reading output: {e}")
         return ""
+
+
+BASH_MISSING_ERROR = (
+    "bash not found: code_interpreter and virtual_terminal run commands through bash. "
+    "On Windows, run the project inside WSL or install Git for Windows so that "
+    "`bash` (Git Bash) is on PATH."
+)
+
+
+def find_bash() -> Optional[str]:
+    """Locate the bash used to run tool commands, or None when there is none.
+
+    POSIX keeps the historical /bin/bash. Windows has no bash of its own, so
+    the only candidates are a bash.exe on PATH: Git for Windows, MSYS2, or the
+    WSL launcher.
+    """
+    if os.name != "nt" and os.path.exists("/bin/bash"):
+        return "/bin/bash"
+    return shutil.which("bash")
 
 
 def kill_process_tree(pid: int):
@@ -150,16 +171,22 @@ class LanguageExecutor:
     ) -> Dict[str, Any]:
         """Run a shell command and return results with proper process management."""
         process = None
+        bash = find_bash()
+        if bash is None:
+            logger.error(BASH_MISSING_ERROR)
+            return {"status": ExecutionStatus.ERROR, "error": BASH_MISSING_ERROR}
         try:
             logger.debug(f'Running command: {command[:100]}...')
-            
-            process = await asyncio.create_subprocess_shell(
-                command,
+
+            # `bash -c` through exec rather than create_subprocess_shell(executable=...):
+            # with shell=True Windows always wraps the command in `cmd.exe /c`, so a
+            # replacement executable would be handed cmd's arguments instead.
+            process = await asyncio.create_subprocess_exec(
+                bash, '-c', command,
                 stdin=asyncio.subprocess.PIPE if stdin else None,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=cwd,
-                executable='/bin/bash'
             )
             
             # Write stdin if provided
@@ -301,7 +328,10 @@ class LanguageExecutor:
                 }
             else:
                 result = await self._run_command(
-                    f'python3 -I -B -u {shlex.quote(code_file)}',
+                    # The interpreter running this tool, as a forward-slash path so the
+                    # command also parses under Git Bash on Windows.
+                    f'{shlex.quote(Path(sys.executable).as_posix())} -I -B -u '
+                    f'{shlex.quote(Path(code_file).as_posix())}',
                     timeout,
                     stdin,
                     tmp_dir
@@ -630,7 +660,7 @@ class LanguageExecutor:
             os.chmod(code_file, 0o755)
             
             result = await self._run_command(
-                f'bash {code_file}',
+                f'bash {shlex.quote(Path(code_file).as_posix())}',
                 timeout,
                 stdin,
                 tmp_dir
