@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 40 820 530" width="820" height="530" style="background:#ffffff">
 <title>그림 1-5 “모델이 곧 에이전트” 아키텍처—네이티브 도구 호출</title>
-<desc>LLM은 서버 측 Harness가 실행하는 폐루프 안에서 web_search, code_interpreter 같은 네이티브 도구를 호출한다. 사용자 입력과 최종 출력은 폐루프 바깥에 있고, 폐루프 안에서는 사고·행동·관찰 세 노드가 ReAct 루프를 이룬다.</desc>
+<desc>LLM은 서버 측 Harness가 실행하는 폐루프 안에서 web_search, code_interpreter 같은 네이티브 도구를 호출한다. 사용자 입력과 최종 출력은 폐루프 바깥에 있고, 폐루프 안에서는 사고·행동·관찰 세 노드가 ReAct 루프를 이룬다. "클라이언트가 ReAct 루프를 작성할 필요 없음"은 Responses API 경로(실험 1-3)에만 해당한다. Kimi K3 경로(실험 1-2)에서는 도구가 서버 측에서 실행되지만 루프는 여전히 클라이언트 코드가 구동한다.</desc>
 <defs><marker id="ah" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker><marker id="ah-light" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#999999"/></marker></defs>
 
 <rect x="260" y="70" width="300" height="100" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
@@ -26,7 +26,7 @@
 <text x="140" y="273.7" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">비트코인 추세 검색</text>
 
 <rect x="15" y="310" width="790" height="170" rx="8" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
-<text x="410" y="328" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold">ReAct 루프(서버 측 Harness가 폐루프로 실행)</text>
+<text x="410" y="328" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold">ReAct 루프(Responses API 경로: 서버 측 Harness가 폐루프로 실행)</text>
 
 <line x1="140" y1="292" x2="140" y2="380" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 
@@ -55,9 +55,8 @@
 
 <rect x="15" y="70" width="230" height="120" rx="8" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
 <text x="27" y="88" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="bold">기존 프레임워크와의 차이</text>
-<text x="30" y="109.4" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ 오케스트레이션은 서버 측 Harness가</text>
-<text x="30" y="123.7" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">담당</text>
-<text x="30" y="143" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ 클라이언트가 ReAct 루프를 작성할 필</text>
-<text x="30" y="157.3" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">요 없음</text>
-<text x="30" y="176.6" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ 모델이 도구 호출을 자율 결정</text>
+<text x="30" y="110" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ 모델이 도구 호출을 자율 결정</text>
+<text x="30" y="133" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ 도구는 서버 측에서 실행</text>
+<text x="30" y="156" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ Responses API: 루프도 서버 측</text>
+<text x="30" y="179" font-family="Arial, 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">※ Kimi 경로: 루프는 클라이언트가 구동</text>
 </svg>

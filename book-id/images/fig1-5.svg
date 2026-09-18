@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 40 820 530" width="820" height="530" style="background:#ffffff">
 <title>Gambar 1-5: Arsitektur &quot;Model sebagai Agent&quot;—Pemanggilan Tool Native</title>
-<desc>LLM memanggil tool native seperti web_search dan code_interpreter di dalam loop tertutup yang dijalankan Harness sisi server. Input pengguna dan output akhir berada di luar loop itu; di dalamnya, pikiran, aksi, dan observasi membentuk siklus ReAct.</desc>
+<desc>LLM memanggil tool native seperti web_search dan code_interpreter di dalam loop tertutup yang dijalankan Harness sisi server. Input pengguna dan output akhir berada di luar loop itu; di dalamnya, pikiran, aksi, dan observasi membentuk siklus ReAct. "Klien tak perlu menulis loop ReAct" hanya berlaku untuk jalur Responses API (Eksperimen 1-3); pada jalur Kimi K3 (Eksperimen 1-2) tool berjalan di sisi server, tetapi loop masih dijalankan oleh kode klien.</desc>
 <defs><marker id="ah" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker><marker id="ah-light" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#999999"/></marker></defs>
 
 <rect x="260" y="70" width="300" height="100" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
@@ -26,7 +26,7 @@
 <text x="140" y="273.7" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">sebulan terakhir</text>
 
 <rect x="15" y="310" width="790" height="170" rx="8" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
-<text x="410" y="328" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold">Loop ReAct (eksekusi loop tertutup oleh Harness sisi server)</text>
+<text x="410" y="328" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold">Loop ReAct (jalur Responses API: eksekusi loop tertutup oleh Harness sisi server)</text>
 
 <line x1="140" y1="292" x2="140" y2="380" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 
@@ -56,9 +56,8 @@
 <rect x="15" y="70" width="230" height="120" rx="8" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
 <text x="27" y="80.8" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="bold">Perbedaan dengan framework</text>
 <text x="27" y="95.2" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="bold">tradisional</text>
-<text x="30" y="109.4" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ Orkestrasi ditangani Harness sisi</text>
-<text x="30" y="123.7" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">server</text>
-<text x="30" y="143" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ Klien tak perlu menulis loop ReAct</text>
-<text x="30" y="162.3" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ Model menentukan panggilan tool</text>
-<text x="30" y="176.6" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">sendiri</text>
+<text x="30" y="110" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ Model menentukan panggilan tool</text>
+<text x="30" y="133" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ Tool dieksekusi di sisi server</text>
+<text x="30" y="156" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ Responses API: loop di sisi server</text>
+<text x="30" y="179" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">※ Jalur Kimi: klien menjalankan loop</text>
 </svg>

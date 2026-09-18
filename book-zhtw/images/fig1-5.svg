@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 40 820 530" width="820" height="530" style="background:#ffffff">
 <title>圖 1-5 「模型即 Agent」 架構——原生工具呼叫</title>
-<desc>LLM 透過服務端 Harness 閉環呼叫 web_search 與 code_interpreter 等原生工具。使用者輸入與最終輸出位於服務端閉環之外，閉環內部為思考、行動、觀察三個節點構成的 ReAct 迴圈。</desc>
+<desc>LLM 透過服務端 Harness 閉環呼叫 web_search 與 code_interpreter 等原生工具。使用者輸入與最終輸出位於服務端閉環之外，閉環內部為思考、行動、觀察三個節點構成的 ReAct 迴圈。「用戶端無需手寫 ReAct 迴圈」僅對 Responses API 路徑（實驗 1-3）成立；實驗 1-2 的 Kimi K3 路徑中，工具在服務端執行，但迴圈仍由用戶端程式碼驅動。</desc>
 <defs><marker id="ah" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker><marker id="ah-light" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#999999"/></marker></defs>
 
 <rect x="260" y="70" width="300" height="100" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
@@ -26,7 +26,7 @@
 <text x="140" y="273.7" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">的比特幣走勢</text>
 
 <rect x="15" y="310" width="790" height="170" rx="8" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
-<text x="410" y="328" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold">ReAct 迴圈（服務端 Harness 閉環執行）</text>
+<text x="410" y="328" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold">ReAct 迴圈（Responses API 路徑：服務端 Harness 閉環執行）</text>
 
 <line x1="140" y1="292" x2="140" y2="380" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 
@@ -55,7 +55,8 @@
 
 <rect x="15" y="70" width="230" height="120" rx="8" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
 <text x="27" y="88" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="bold">與傳統框架的區別</text>
-<text x="30" y="119.8" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ 編排由服務端 Harness 託管</text>
-<text x="30" y="143" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ 用戶端無需手寫 ReAct 迴圈</text>
-<text x="30" y="166.2" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ 模型自主決定工具呼叫</text>
+<text x="30" y="110" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ 模型自主決定工具呼叫</text>
+<text x="30" y="133" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ 工具在服務端執行</text>
+<text x="30" y="156" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">✓ Responses API：迴圈在服務端</text>
+<text x="30" y="179" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="normal">※ Kimi 路徑：用戶端仍驅動迴圈</text>
 </svg>
