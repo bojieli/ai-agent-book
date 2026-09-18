@@ -1,5 +1,10 @@
 """Unit tests for model mapping and provider selection."""
 
+import os
+import subprocess
+import sys
+from pathlib import Path
+
 import pytest
 from config import map_model_to_openrouter, resolve_llm_backend
 
@@ -76,3 +81,32 @@ def test_gpt5_prefers_openrouter_when_both_keys_exist(monkeypatch):
 def test_provider_resolution_requires_a_key():
     with pytest.raises(ValueError, match="No API key found"):
         resolve_llm_backend(None, "https://moonshot.test/v1", "kimi-k3")
+
+
+def _resolved_base_url(env_overrides):
+    """Read ``Config.KIMI_BASE_URL`` in a fresh interpreter.
+
+    It is a class attribute evaluated at import time, so probing it without a
+    module reload needs its own process.
+    """
+    completed = subprocess.run(
+        [sys.executable, "-c", "import config; print(config.Config.KIMI_BASE_URL)"],
+        cwd=Path(__file__).resolve().parents[1],
+        env={**os.environ, **env_overrides},
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return completed.stdout.strip()
+
+
+def test_kimi_base_url_is_read_from_the_environment():
+    """env.example and the README document KIMI_BASE_URL, so it must take effect."""
+    assert _resolved_base_url({"KIMI_BASE_URL": "https://proxy.example.com/v1"}) == (
+        "https://proxy.example.com/v1"
+    )
+
+
+def test_blank_kimi_base_url_keeps_the_public_endpoint():
+    """A present-but-empty value means "not configured", not "no endpoint"."""
+    assert _resolved_base_url({"KIMI_BASE_URL": ""}) == "https://api.moonshot.cn/v1"

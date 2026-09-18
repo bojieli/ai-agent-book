@@ -304,7 +304,7 @@ def _rate_limit_error():
 
 
 def test_timeout_answer_names_the_budget_and_the_429_suspect():
-    """"Request timed out." alone reads like a network fault; the reader has
+    """ "Request timed out." alone reads like a network fault; the reader has
     to be told which knob to turn and that 429 retries can burn the budget."""
     instance = build_agent()
     instance._request_timeout = 180

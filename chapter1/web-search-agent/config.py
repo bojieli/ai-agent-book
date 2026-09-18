@@ -48,7 +48,11 @@ class Config:
     if not MOONSHOT_API_KEY:
         MOONSHOT_API_KEY = os.getenv("KIMI_API_KEY", "")
     
-    KIMI_BASE_URL: str = "https://api.moonshot.cn/v1"
+    # 空值视为「未配置」，与共享注册表 Provider.resolved_base_url() 一致，
+    # 避免 .env 里留空的 KIMI_BASE_URL 把端点清空。
+    KIMI_BASE_URL: str = (
+        os.getenv("KIMI_BASE_URL", "").strip() or "https://api.moonshot.cn/v1"
+    )
     
     # 模型配置
     DEFAULT_MODEL: str = "kimi-k3"  # 使用最新的 Kimi K3 模型
