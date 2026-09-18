@@ -29,6 +29,7 @@ def _reasoning_safe_temperature(model, requested=1.0):
 # experiment runnable from a checkout where agentbook is not installed.
 try:
     from agentbook.providers import (
+        PROVIDERS,
         SUPPORTED_PROVIDERS,
         map_model_to_openrouter,
         resolve_backend,
@@ -41,6 +42,7 @@ except ImportError:  # pragma: no cover - exercised only without the package
         0, str(__import__("pathlib").Path(__file__).resolve().parents[2])
     )
     from agentbook.providers import (
+        PROVIDERS,
         SUPPORTED_PROVIDERS,
         map_model_to_openrouter,
         resolve_backend,
@@ -67,7 +69,7 @@ class LLMAgent:
     def __init__(self,
                  api_key: str = None,
                  model: str = "kimi-k3",  # Kimi K3 (see 实验 7-2)
-                 base_url: str = "https://api.moonshot.cn/v1",
+                 base_url: str | None = None,
                  temperature: float = 0.7,
                  max_experiences: int = 50,
                  provider: str | None = None):
@@ -77,7 +79,11 @@ class LLMAgent:
         Args:
             api_key: Provider API key (or set the provider's env var)
             model: Model name (defaults to the selected provider's model)
-            base_url: API base URL
+            base_url: API base URL. Defaults to the kimi provider's own
+                resolution order -- the KIMI_BASE_URL environment variable,
+                then the public Moonshot endpoint -- so a proxy or regional
+                endpoint configured for the rest of the book is honoured here
+                too.
             temperature: Sampling temperature for generation
             max_experiences: Maximum number of experiences to store
         """
@@ -101,8 +107,14 @@ class LLMAgent:
             self.provider = backend.provider
         else:
             primary_key = api_key or os.getenv("MOONSHOT_API_KEY")
+            # Honour the kimi provider's base-URL override (KIMI_BASE_URL) so a
+            # proxy or regional endpoint is not silently replaced by the public
+            # one, which would send the reader's key to the wrong host and come
+            # back as an authentication error. The dashscope branch above gets
+            # the same behaviour from resolve_backend.
+            primary_base_url = base_url or PROVIDERS["kimi"].resolved_base_url()
             self.api_key, resolved_base_url, self.model, self.using_openrouter = \
-                resolve_llm_backend(primary_key, base_url, model)
+                resolve_llm_backend(primary_key, primary_base_url, model)
             self.provider = "openrouter" if self.using_openrouter else "moonshot"
         self.base_url = resolved_base_url
         if self.using_openrouter:
