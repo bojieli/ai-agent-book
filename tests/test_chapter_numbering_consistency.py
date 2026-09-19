@@ -6,8 +6,8 @@ The checks cover the public chapter index, build-version metadata, the issue
 
 from __future__ import annotations
 
+import html
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -137,3 +137,25 @@ def test_chapter_overviews_do_not_link_obsolete_run_ids():
         content = read(path)
         for fragment in fragments:
             assert fragment not in content, (path, fragment)
+
+
+def test_introduction_overview_figure_uses_current_chapter_numbers():
+    """fig0-1 must agree with fig0-2 on where each chapter sits.
+
+    The figure was corrected in #1111 (issue #1079); this locks the 2.0
+    numbering in so the stale 1.4 numbers cannot drift back unnoticed.
+    fig0-1 stores its text as numeric character references, so it is
+    unescaped before matching.
+    """
+    overview_figure = html.unescape(read("book/images/fig0-1.svg"))
+
+    assert "第 7 章 评估" in overview_figure
+    assert "第 8 章 后训练" in overview_figure
+    assert "第 6 章 交互" in overview_figure
+    assert "第 9 章 持续进化" in overview_figure
+    assert "第 10 章 多 Agent" in overview_figure
+
+    assert "第 6 章 评估" not in overview_figure
+    assert "第 7 章 后训练" not in overview_figure
+    assert "第 8 章 自我进化" not in overview_figure
+    assert "第 9 章 多模态" not in overview_figure
