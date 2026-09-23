@@ -98,6 +98,7 @@
   padding-left: 7px;
 }
 .rail-number {
+  flex: none;
   font-size: 0.75rem;
   padding-top: 2px;
   font-weight: 600;

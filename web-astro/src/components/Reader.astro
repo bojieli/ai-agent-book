@@ -57,8 +57,14 @@ const outline = getHeadings().filter(
                 chapter.number === chapterNumber ? 'page' : undefined
               }
               href={chapter.href}
+              aria-label={`${chapter.label}. ${chapter.title}`}
             >
-              <span>{chapter.title}</span>
+              <>
+                <span class="rail-number" aria-hidden="true">
+                  {chapter.label}
+                </span>
+                <span>{chapter.title}</span>
+              </>
               {chapter.external && <Icon name="external" size={12} />}
             </a>
           ))
@@ -282,8 +288,14 @@ const outline = getHeadings().filter(
                 chapter.number === chapterNumber ? 'page' : undefined
               }
               href={chapter.href}
+              aria-label={`${chapter.label}. ${chapter.title}`}
             >
-              <span>{chapter.title}</span>
+              <>
+                <span class="rail-number" aria-hidden="true">
+                  {chapter.label}
+                </span>
+                <span>{chapter.title}</span>
+              </>
               {chapter.external && <Icon name="external" size={14} />}
             </a>
           ))
