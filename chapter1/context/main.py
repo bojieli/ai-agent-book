@@ -1240,7 +1240,7 @@ def main():
         sys.exit(1)
 
     api_key = args.api_key or ""
-    if backend.using_openrouter and not args.api_key:
+    if backend.using_openrouter and backend.provider != "openrouter" and not args.api_key:
         logger.info(
             f"{args.provider} API key not set; falling back to OpenRouter "
             "(OPENROUTER_API_KEY). Set the provider key to use it directly."
