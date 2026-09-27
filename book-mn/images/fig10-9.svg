@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 40 890 515" width="890" height="515" style="background:#ffffff">
+<defs><marker id="ah" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker><marker id="ah-light" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#999999"/></marker></defs>
+
+<rect x="26" y="55" width="150" height="230" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
+<text x="101" y="75" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="8.6" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Бүтээгдэхүүний менежер</text>
+<text x="34" y="97" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Оролт: Хэрэглэгчийн шаардлагын тайлбар</text>
+<rect x="34" y="113" width="134" height="68" rx="3" fill="#f5f5f5" stroke="#333333" stroke-width="2"/>
+<text x="40" y="127" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12.0" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Гаралт:</text>
+<text x="40" y="143" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Функцийн жагсаалт + эрэмбэ</text>
+<text x="40" y="159" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7.3" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Хэрэглэгчийн түүх (5 зүйл)</text>
+<text x="40" y="175" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9.5" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Хүлээн авах шалгуур</text>
+<rect x="34" y="223" width="134" height="30" rx="12" fill="#999999" stroke="#333333" stroke-width="2"/>
+<text x="101" y="238" font-family="'Courier New', Courier, monospace" font-size="9.5" fill="#ffffff" text-anchor="middle" dominant-baseline="central">docs/PRD.md</text>
+<line x1="186" y1="170" x2="198" y2="170" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+
+<rect x="198" y="55" width="150" height="230" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text x="273" y="75" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.8" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Архитектор</text>
+<text x="206" y="97" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9.5" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Оролт: PRD.md</text>
+<rect x="206" y="113" width="134" height="68" rx="3" fill="#f5f5f5" stroke="#333333" stroke-width="2"/>
+<text x="212" y="127" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12.0" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Гаралт:</text>
+<text x="212" y="143" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Технологийн stack: FastAPI+React</text>
+<text x="212" y="159" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7.3" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">API тодорхойлолт (OpenAPI)</text>
+<text x="212" y="175" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7.7" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Өгөгдлийн сангийн schema</text>
+<rect x="206" y="223" width="134" height="30" rx="12" fill="#999999" stroke="#333333" stroke-width="2"/>
+<text x="273" y="238" font-family="'Courier New', Courier, monospace" font-size="9.5" fill="#ffffff" text-anchor="middle" dominant-baseline="central">docs/design.md</text>
+<line x1="358" y1="170" x2="370" y2="170" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+
+<rect x="370" y="55" width="150" height="230" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text x="445" y="75" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12.9" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Төслийн менежер</text>
+<text x="378" y="97" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9.5" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Оролт: design.md</text>
+<rect x="378" y="113" width="134" height="68" rx="3" fill="#f5f5f5" stroke="#333333" stroke-width="2"/>
+<text x="384" y="127" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12.0" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Гаралт:</text>
+<text x="384" y="143" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Ажлын жагсаалт + хуваарилалт</text>
+<text x="384" y="159" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Файлын түвшний хуваарилалт</text>
+<text x="384" y="175" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Модулийн хамаарлын дараалал</text>
+<rect x="378" y="223" width="134" height="30" rx="12" fill="#999999" stroke="#333333" stroke-width="2"/>
+<text x="445" y="238" font-family="'Courier New', Courier, monospace" font-size="9.5" fill="#ffffff" text-anchor="middle" dominant-baseline="central">docs/tasks.md</text>
+<line x1="530" y1="170" x2="542" y2="170" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+
+<rect x="542" y="55" width="150" height="230" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text x="617" y="75" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.8" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Инженер ×3</text>
+<text x="550" y="97" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="8.6" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Оролт: tasks.md + design.md</text>
+<rect x="550" y="113" width="134" height="68" rx="3" fill="#f5f5f5" stroke="#333333" stroke-width="2"/>
+<text x="556" y="127" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12.0" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Гаралт:</text>
+<text x="556" y="143" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Модуль A: Хэрэглэгчийн үйлчилгээ</text>
+<text x="556" y="159" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Модуль B: Захиалгын үйлчилгээ</text>
+<text x="556" y="175" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Модуль C: Төлбөрийн үйлчилгээ</text>
+<rect x="550" y="223" width="134" height="30" rx="12" fill="#999999" stroke="#333333" stroke-width="2"/>
+<text x="617" y="238" font-family="'Courier New', Courier, monospace" font-size="9.5" fill="#ffffff" text-anchor="middle" dominant-baseline="central">src/*.py</text>
+<line x1="702" y1="170" x2="714" y2="170" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+
+<rect x="714" y="55" width="150" height="230" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
+<text x="789" y="75" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.8" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">QA инженер</text>
+<text x="722" y="97" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9.5" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Оролт: src/ + PRD.md</text>
+<rect x="722" y="113" width="134" height="68" rx="3" fill="#f5f5f5" stroke="#333333" stroke-width="2"/>
+<text x="728" y="127" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12.0" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">Гаралт:</text>
+<text x="728" y="143" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9.5" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Unit тест (pytest)</text>
+<text x="728" y="159" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="8.6" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Интеграцийн тест (API)</text>
+<text x="728" y="175" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7.3" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Алдааны тайлан → Инженер</text>
+<rect x="722" y="223" width="134" height="30" rx="12" fill="#999999" stroke="#333333" stroke-width="2"/>
+<text x="789" y="238" font-family="'Courier New', Courier, monospace" font-size="9.0" fill="#ffffff" text-anchor="middle" dominant-baseline="central">docs/test_report.md</text>
+<path d="M 789,293 Q 703,346 617,293" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="8,4" marker-end="url(#ah)"/>
+<text x="703" y="300" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.8" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Алдаа засвар</text>
+
+<rect x="30" y="335" width="830" height="50" rx="4" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
+<text x="445" y="351" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.8" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Хамтын төслийн хавтас</text>
+<text x="445" y="371" font-family="'Courier New', Courier, monospace" font-size="9.5" fill="#333333" text-anchor="middle" dominant-baseline="central">docs/PRD.md   docs/design.md   docs/tasks.md   src/*.py   docs/test_report.md</text>
+
+<rect x="30" y="400" width="830" height="130" rx="4" fill="#f5f5f5" stroke="#333333" stroke-width="2"/>
+<text x="445" y="418" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="17.2" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">MetaGPT-ийн үндсэн загвар</text>
+<text x="42" y="442" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.8" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">▸ Стандартчилсан баримтууд</text>
+<text x="270" y="442" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="10.8" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Дүр бүр тогтсон форматаар гаргана; дараагийн шатанд эргэцүүлэл бус формат хэрэгтэй</text>
+<text x="42" y="466" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.8" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">▸ Интерфэйс салгалт</text>
+<text x="270" y="466" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="10.8" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Илүү хүчтэй Product Mgr сольж болно; PRD формат хадгалбал дараагийн шат өөрчлөгдөхгүй</text>
+<text x="42" y="490" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.8" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">▸ Менежергүй</text>
+<text x="270" y="490" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12.0" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Удирдлага DAG-аар урсана: Product Mgr→Architect→Project Mgr→Engineer→QA</text>
+<text x="42" y="514" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.8" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">▸ Алдааны суваг</text>
+<text x="270" y="514" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12.0" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">QA алдаа → тайланг модулиар нь Инженерт буцаах → давталтат засвар</text>
+</svg>

@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+"""Репозиторт хадгалагдсан SVG-ийн доторх гарчгийг арилгаж, дээд талын хоосон зайг тайрна.
+
+Академик бичлэгийн жишгээр зургийн өөрийн дотор гарчиг байдаггүй
+(гарчгийг үндсэн текстэд бичдэг). Энэ скрипт `images/` хавтасны SVG файлуудыг
+болгоомжтой боловсруулна.
+
+Шийдвэрлэх дүрэм (болгоомжтой):
+- Эхний <text> элемент font-size>=20, y<60, text-anchor=middle гурван нөхцөлийг
+  зэрэг хангаж байвал зургийн гарчиг гэж үзээд устгана. Дараа нь viewBox-ийн
+  дээд ирмэгийг доош шилжүүлж, өндрийг CROP_PX-ээр багасгана.
+- Бусад тохиолдолд файлыг өөрчлөхгүй.
+
+Ашиглах заавар: python3 strip_titles.py [--dry-run]
+"""
+
+import os
+import re
+import sys
+
+IMAGES_DIR = os.path.join(os.path.dirname(__file__), 'images')
+CROP_PX = 40
+
+TEXT_RE = re.compile(
+    r'<text\b([^>]*?)>(.*?)</text>',
+    flags=re.DOTALL,
+)
+ATTR_RE = re.compile(r'(\w[\w-]*)\s*=\s*"([^"]*)"')
+SVG_TAG_RE = re.compile(r'<svg\b([^>]*)>', flags=re.DOTALL)
+VIEWBOX_RE = re.compile(r'viewBox="([^"]+)"')
+HEIGHT_ATTR_RE = re.compile(r'\bheight="([^"]+)"')
+
+
+def parse_attrs(attr_str):
+    return {m.group(1): m.group(2) for m in ATTR_RE.finditer(attr_str)}
+
+
+def process_file(path, dry_run=False):
+    with open(path, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    # Эхний <text> элементийг ол
+    m = TEXT_RE.search(content)
+    if not m:
+        return 'no-text'
+    attrs = parse_attrs(m.group(1))
+    fs = float(attrs.get('font-size', '0') or 0)
+    y = float(attrs.get('y', '0') or 0)
+    anchor = attrs.get('text-anchor', '')
+    if not (fs >= 20 and y < 60 and anchor == 'middle'):
+        return 'no-title'
+
+    # <text> элементийг устга
+    new_content = content[: m.start()] + content[m.end():]
+
+    # viewBox болон өндрийг тохируул
+    svg_m = SVG_TAG_RE.search(new_content)
+    if not svg_m:
+        return 'no-svg-tag'
+    svg_attrs_str = svg_m.group(1)
+
+    def replace_viewbox(vbm):
+        parts = vbm.group(1).split()
+        if len(parts) != 4:
+            return vbm.group(0)
+        x0, y0, w, h = parts
+        try:
+            new_y0 = float(y0) + CROP_PX
+            new_h = float(h) - CROP_PX
+        except ValueError:
+            return vbm.group(0)
+        def fmt(v):
+            return str(int(v)) if v == int(v) else str(v)
+        return f'viewBox="{fmt(float(x0))} {fmt(new_y0)} {fmt(float(w))} {fmt(new_h)}"'
+
+    new_svg_attrs = VIEWBOX_RE.sub(replace_viewbox, svg_attrs_str)
+
+    def replace_height(hm):
+        try:
+            new_h = float(hm.group(1)) - CROP_PX
+            new_h_s = str(int(new_h)) if new_h == int(new_h) else str(new_h)
+            return f'height="{new_h_s}"'
+        except ValueError:
+            return hm.group(0)
+
+    new_svg_attrs = HEIGHT_ATTR_RE.sub(replace_height, new_svg_attrs, count=1)
+    new_content = new_content[:svg_m.start()] + f'<svg{new_svg_attrs}>' + new_content[svg_m.end():]
+
+    if not dry_run:
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+    return 'stripped'
+
+
+def main():
+    dry_run = '--dry-run' in sys.argv
+    counts = {'stripped': 0, 'no-title': 0, 'no-text': 0, 'no-svg-tag': 0}
+    examples = {k: [] for k in counts}
+    for name in sorted(os.listdir(IMAGES_DIR)):
+        if not name.endswith('.svg'):
+            continue
+        result = process_file(os.path.join(IMAGES_DIR, name), dry_run=dry_run)
+        counts[result] = counts.get(result, 0) + 1
+        if len(examples[result]) < 5:
+            examples[result].append(name)
+    mode = '[DRY-RUN]' if dry_run else '[APPLIED]'
+    print(f'{mode} summary:')
+    for k, v in counts.items():
+        print(f'  {k}: {v}  e.g. {examples[k]}')
+
+
+if __name__ == '__main__':
+    main()
