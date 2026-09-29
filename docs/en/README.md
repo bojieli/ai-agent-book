@@ -112,6 +112,7 @@ It is recommended to apply for API keys from several platforms for convenient le
 | **Siliconflow** | <https://siliconflow.cn/> | Various open-source models (DeepSeek, Qwen, etc.), fast access from mainland China | Mainland China |
 | **DeepSeek** | <https://platform.deepseek.com/> | Official DeepSeek API | Global + Mainland China |
 | **Atlas Cloud** | <https://www.atlascloud.ai/> | Access models from multiple vendors through an OpenAI-compatible API | Global |
+| **Cheaper Inference** | <https://cheaperinference.com/> | Access GPT, Claude, Gemini, DeepSeek, GLM and other models through an OpenAI-compatible API. Each model costs 15–60% less than the list price of its lab. | Global |
 | **Krill AI** | [www.krill-code.com](https://www.krill-code.com/register?invite=Q8D3L35725) | One-stop access to major global and China-domestic models (OpenAI, Claude, Gemini, Grok, Kimi, GLM, DeepSeek, Qwen, Minimax) | Global + Mainland China |
 | **OpenRouter** | <https://openrouter.ai/> | One-stop access to major global and China-domestic models (GPT, Claude, Gemini, Kimi, GLM, DeepSeek, Qwen, etc.) | Global |
 
