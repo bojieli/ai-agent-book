@@ -24,6 +24,8 @@ from agentbook.providers.resolution import build_openrouter_backend
 PROVIDER_KEY_VARS = [
     "ATLASCLOUD_API_KEY",
     "ATLASCLOUD_BASE_URL",
+    "CHEAPERINFERENCE_API_KEY",
+    "CHEAPERINFERENCE_BASE_URL",
     "DASHSCOPE_API_KEY",
     "DASHSCOPE_BASE_URL",
     "SILICONFLOW_API_KEY",
@@ -197,6 +199,57 @@ def test_atlascloud_base_url_override(monkeypatch):
     monkeypatch.setenv("ATLASCLOUD_API_KEY", "test-atlascloud-key")
     monkeypatch.setenv("ATLASCLOUD_BASE_URL", "https://atlas.example/v1")
     assert resolve_backend("atlascloud").base_url == "https://atlas.example/v1"
+
+
+def test_cheaperinference_key_uses_gateway_directly(monkeypatch):
+    monkeypatch.setenv("CHEAPERINFERENCE_API_KEY", "test-cheaperinference-key")
+    backend = resolve_backend("cheaperinference")
+    assert backend.api_key == "test-cheaperinference-key"
+    assert backend.base_url == "https://api.cheaperinference.com/v1"
+    assert backend.model == "gpt-5.4-mini"
+    assert backend.provider == "cheaperinference"
+    assert backend.using_openrouter is False
+
+
+def test_cheaperinference_keeps_bare_model_ids(monkeypatch):
+    monkeypatch.setenv("CHEAPERINFERENCE_API_KEY", "test-cheaperinference-key")
+    backend = resolve_backend("cheaperinference", model="claude-sonnet-5")
+    assert backend.model == "claude-sonnet-5"
+
+
+def test_cheaperinference_base_url_override(monkeypatch):
+    monkeypatch.setenv("CHEAPERINFERENCE_API_KEY", "test-cheaperinference-key")
+    monkeypatch.setenv("CHEAPERINFERENCE_BASE_URL", "https://ci-gateway.example/v1")
+    assert resolve_backend("cheaperinference").base_url == "https://ci-gateway.example/v1"
+
+
+def test_explicit_cheaperinference_provider_is_not_hijacked_for_gpt5(monkeypatch):
+    monkeypatch.setenv("CHEAPERINFERENCE_API_KEY", "test-cheaperinference-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
+    backend = resolve_backend("cheaperinference", model="gpt-5.4")
+    assert backend.api_key == "test-cheaperinference-key"
+    assert backend.base_url == "https://api.cheaperinference.com/v1"
+    assert backend.model == "gpt-5.4"
+    assert backend.using_openrouter is False
+
+
+def test_default_cheaperinference_provider_is_rerouted_for_gpt5(monkeypatch):
+    monkeypatch.setenv("CHEAPERINFERENCE_API_KEY", "test-cheaperinference-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
+    backend = resolve_backend("cheaperinference", model="gpt-5.4", chosen_by_reader=False)
+    assert backend.api_key == "test-openrouter-key"
+    assert backend.base_url == "https://openrouter.ai/api/v1"
+    assert backend.model == "openai/gpt-5.4"
+    assert backend.using_openrouter is True
+
+
+def test_cheaperinference_still_falls_back_when_its_key_is_missing(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
+    backend = resolve_backend("cheaperinference")
+    assert backend.api_key == "test-openrouter-key"
+    assert backend.base_url == "https://openrouter.ai/api/v1"
+    assert backend.model == "openai/gpt-5.4-mini"
+    assert backend.using_openrouter is True
 
 
 def test_explicit_krill_provider_is_not_hijacked_for_gpt5(monkeypatch):
@@ -374,6 +427,7 @@ def test_supported_providers_covers_registry_and_aliases():
     assert "gemini" in SUPPORTED_PROVIDERS
     assert "krill" in SUPPORTED_PROVIDERS
     assert "atlascloud" in SUPPORTED_PROVIDERS
+    assert "cheaperinference" in SUPPORTED_PROVIDERS
 
 
 def test_fallback_key_is_not_reusable_as_a_provider_key(monkeypatch):

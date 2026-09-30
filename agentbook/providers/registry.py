@@ -85,6 +85,13 @@ PROVIDERS: dict[str, Provider] = {
         # Atlas Cloud serves models from multiple vendors under namespaced ids.
         namespaces_models=True,
     ),
+    "cheaperinference": Provider(
+        name="cheaperinference",
+        base_url="https://api.cheaperinference.com/v1",
+        default_model="gpt-5.4-mini",
+        key_vars=("CHEAPERINFERENCE_API_KEY",),
+        base_url_var="CHEAPERINFERENCE_BASE_URL",
+    ),
     "openrouter": Provider(
         name="openrouter",
         base_url=OPENROUTER_BASE_URL,
