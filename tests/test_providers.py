@@ -22,6 +22,8 @@ from agentbook.providers.registry import supported_providers
 from agentbook.providers.resolution import build_openrouter_backend
 
 PROVIDER_KEY_VARS = [
+    "API_ROUTE_API_KEY",
+    "API_ROUTE_BASE_URL",
     "ATLASCLOUD_API_KEY",
     "ATLASCLOUD_BASE_URL",
     "DASHSCOPE_API_KEY",
@@ -176,6 +178,32 @@ def test_krill_base_url_override(monkeypatch):
     monkeypatch.setenv("KRILL_API_KEY", "test-krill-key")
     monkeypatch.setenv("KRILL_BASE_URL", "https://krill-gateway.example/v1")
     assert resolve_backend("krill").base_url == "https://krill-gateway.example/v1"
+
+
+@pytest.mark.parametrize("provider", ["api_route", "api-route"])
+@pytest.mark.parametrize("model", [None, "gpt-5.5", "deepseek-v4-flash"])
+def test_explicit_api_route_keeps_its_endpoint_and_model(monkeypatch, provider, model):
+    monkeypatch.setenv("API_ROUTE_API_KEY", "test-api-route-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
+    backend = resolve_backend(provider, model=model)
+    assert backend.api_key == "test-api-route-key"
+    assert backend.base_url == "https://global.api-route.com/v1"
+    assert backend.model == (model or "deepseek-v4-flash")
+    assert backend.provider == "api_route"
+    assert backend.using_openrouter is False
+
+
+def test_api_route_explicit_key_and_base_url_override(monkeypatch):
+    monkeypatch.setenv("API_ROUTE_API_KEY", "test-env-key")
+    monkeypatch.setenv("API_ROUTE_BASE_URL", "https://gateway.example/v1")
+    backend = resolve_backend("api_route", api_key="test-explicit-key")
+    assert backend.api_key == "test-explicit-key"
+    assert backend.base_url == "https://gateway.example/v1"
+
+
+def test_api_route_missing_key_names_its_credential():
+    with pytest.raises(ValueError, match="API_ROUTE_API_KEY"):
+        resolve_backend("api_route")
 
 
 def test_atlascloud_key_uses_multi_model_gateway_directly(monkeypatch):
