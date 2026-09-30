@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 274" width="880" height="274" style="background:#ffffff">
+<defs>
+<marker id="ax" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker>
+<marker id="ah-s" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 10 3.5, 0 7" fill="#666666"/></marker>
+</defs>
+<style>
+.t{font-family:Arial,'Helvetica Neue',Helvetica,'PingFang SC','Microsoft YaHei',sans-serif;fill:#333333;text-anchor:middle;dominant-baseline:central}
+.h{font-size:11.6px;font-weight:bold}
+.m{font-size:9.3px;fill:#666666}
+.n{font-size:9.3px;fill:#333333}
+.a{font-size:10.1px;fill:#333333}
+</style>
+
+<line x1="40" y1="26" x2="846" y2="26" stroke="#333333" stroke-width="2" marker-end="url(#ax)"/>
+<text class="t a" x="130" y="12">Ажлыг механикаар шалгах боломж: өндөр</text>
+<text class="t a" x="790" y="12">бага</text>
+
+<rect x="18" y="52" width="190" height="112" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="113" y="76">Детерминистик</text>
+<text class="t m" x="113" y="100">Цорын ганц эцсийн төлөв</text>
+<text class="t m" x="113" y="120">Тэнцсэн / унасан</text>
+<text class="t n" x="113" y="146">SWE-bench тест ажиллуулна</text>
+<line x1="212" y1="108" x2="232" y2="108" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)"/>
+
+<rect x="236" y="52" width="190" height="112" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="331" y="76">Шалгах жагсаалт</text>
+<text class="t m" x="331" y="100">Хэд хэдэн детерминистик шалгалт</text>
+<text class="t m" x="331" y="120">Зарласан үндэслэлээр нэгтгэнэ</text>
+<text class="t n" x="331" y="146">τ²-bench-ийн дөрвөн давхарга</text>
+<line x1="430" y1="108" x2="450" y2="108" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)"/>
+
+<rect x="454" y="52" width="190" height="112" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="549" y="76">Rubric + LLM</text>
+<text class="t m" x="549" y="100" style="font-size:8.4px">Хэмжээсүүд бий ч кодоор илэрхийлэхэд бэрх</text>
+<text class="t m" x="549" y="120">Хэмжээс бүрийн оноо ба үндэслэл</text>
+<text class="t n" x="549" y="146">Үйлчилгээний чанар, тайлан бичих</text>
+<line x1="648" y1="108" x2="668" y2="108" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)"/>
+
+<rect x="672" y="52" width="190" height="112" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="767" y="76">Хосоор</text>
+<text class="t m" x="767" y="100">Хэмжээсүүдийг ч тодорхойлоход бэрх</text>
+<text class="t m" x="767" y="120">Зөвхөн A ба B-г харьцуулан шүүнэ</text>
+<text class="t n" x="767" y="146">Chatbot Arena</text>
+
+<rect x="18" y="192" width="408" height="66" rx="6" fill="#f3f0e8" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="222" y="212">Детерминистик шалгалт</text>
+<text class="t m" x="222" y="234">Бүрэн давтагдахуйц, CI-д тохиромжтой, хямд</text>
+<text class="t m" x="222" y="250">Сул тал: зөв, бурууг шүүнэ; алдаа хаана байгааг хэлэхгүй</text>
+
+<rect x="454" y="192" width="408" height="66" rx="6" fill="#f3f0e8" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="658" y="212">Загварын үнэлгээ</text>
+<text class="t m" x="658" y="234">Оношлох хэмжээс өгч, assertion-аар шалгах боломжгүй ажлыг хамарна</text>
+<text class="t m" x="658" y="250">Сул тал: шүүгчийн өрөөсгөл ба хэлбэлзэл, өндөр үнэ</text>
+</svg>

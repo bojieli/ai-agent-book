@@ -1,0 +1,228 @@
+% ===== 《深入理解 AI Agent》 номын ElegantBook-ийн тусгай тохиргоо =====
+% Үндсэн тодотгох өнгө ElegantBook-ийн cyan сэдвээс ирнэ: \structurecolor = RGB(31,186,190)
+
+% ── Текст ба математикийн фонт: зохиогчийн өгүүлэлтэй нийцсэн Palatino хэв маяг ──
+% Өгүүллүүдийн урьдчилсан хэвлэлийн (arxiv.sty) загвар нь үндсэн бичвэр,
+% математикт mathpazo (Palatino), серифгүйд helvet[scaled=.90] ашигладаг.
+% Энд XeLaTeX-д тохирох хувилбаруудыг ашиглана: бичвэрт TeX Gyre Pagella
+% (Palatino), математикт TeX Gyre Pagella Math, серифгүйд TeX Gyre Heros
+% (Helvetica-гийн хувилбар). Үүнийг class-д даатгалгүй энд заавал тохируул:
+% pandoc-ийн template class ажилласны дараа фонтыг Latin Modern болгож өөрчилдөг
+% тул зөвхөн preamble түвшний тохиргоо үйлчилнэ. Class-ийн адил файлын нэрээр
+% ачаална: macOS fontconfig texmf-dist-ийг индексжүүлдэггүй тул бүлгийн нэрээр олдохгүй.
+\usepackage{unicode-math}
+\setmainfont{texgyrepagella}[
+  UprightFont = *-regular,
+  BoldFont = *-bold,
+  ItalicFont = *-italic,
+  BoldItalicFont = *-bolditalic,
+  Extension = .otf,
+  Scale = 1.0]
+\setsansfont{texgyreheros}[
+  UprightFont = *-regular,
+  BoldFont = *-bold,
+  ItalicFont = *-italic,
+  BoldItalicFont = *-bolditalic,
+  Extension = .otf,
+  Scale = 0.9]
+\setmathfont{texgyrepagella-math}[Extension = .otf]
+
+% ── Unicode тэмдэгтийн нөөц фонт (текст/моно фонтууд эдгээрийг агуулахгүй) ──
+\usepackage{newunicodechar}
+% macOS-д Arial Unicode MS / Heiti SC бий; Linux-д Apple-ийн эдгээр фонт байхгүй
+% тул бүтээлтийг хэвийн явуулахын тулд олон тэмдэг дэмждэг чөлөөт фонтоор орлуулна.
+\IfFontExistsTF{Arial Unicode MS}{\newfontfamily\fallbackfont{Arial Unicode MS}}{\newfontfamily\fallbackfont{DejaVu Sans}}
+\IfFontExistsTF{Heiti SC}{\newunicodechar{★}{{\fontspec{Heiti SC}★}}}{\newunicodechar{★}{{\fontspec{Noto Sans CJK SC}★}}}
+\newunicodechar{✓}{{\fallbackfont ✓}}
+\newunicodechar{✗}{{\fallbackfont ✗}}
+\newunicodechar{₀}{{\fallbackfont ₀}}
+\newunicodechar{₁}{{\fallbackfont ₁}}
+\newunicodechar{₂}{{\fallbackfont ₂}}
+\newunicodechar{₃}{{\fallbackfont ₃}}
+\newunicodechar{₄}{{\fallbackfont ₄}}
+\newunicodechar{₅}{{\fallbackfont ₅}}
+\newunicodechar{₆}{{\fallbackfont ₆}}
+\newunicodechar{₇}{{\fallbackfont ₇}}
+\newunicodechar{₈}{{\fallbackfont ₈}}
+\newunicodechar{₉}{{\fallbackfont ₉}}
+\newunicodechar{ⓐ}{{\fallbackfont ⓐ}}
+\newunicodechar{ⓑ}{{\fallbackfont ⓑ}}
+\newunicodechar{ⓒ}{{\fallbackfont ⓒ}}
+\newunicodechar{ⓓ}{{\fallbackfont ⓓ}}
+\newunicodechar{ⓔ}{{\fallbackfont ⓔ}}
+% Латин бичвэрийн фонтод байхгүй математик / тусгай тэмдэгтүүд
+\newunicodechar{≈}{{\fallbackfont ≈}}
+\newunicodechar{♠}{{\fallbackfont ♠}}
+\newunicodechar{♣}{{\fallbackfont ♣}}
+\newunicodechar{♥}{{\fallbackfont ♥}}
+\newunicodechar{♦}{{\fallbackfont ♦}}
+% Бичвэр доторх грек үсгүүд (энд Latin Modern тэдгээрийг дэмжихгүй)
+\newunicodechar{α}{{\fallbackfont α}}
+\newunicodechar{β}{{\fallbackfont β}}
+\newunicodechar{γ}{{\fallbackfont γ}}
+\newunicodechar{δ}{{\fallbackfont δ}}
+\newunicodechar{ε}{{\fallbackfont ε}}
+\newunicodechar{η}{{\fallbackfont η}}
+\newunicodechar{θ}{{\fallbackfont θ}}
+\newunicodechar{λ}{{\fallbackfont λ}}
+\newunicodechar{μ}{{\fallbackfont μ}}
+\newunicodechar{π}{{\fallbackfont π}}
+\newunicodechar{ρ}{{\fallbackfont ρ}}
+\newunicodechar{σ}{{\fallbackfont σ}}
+\newunicodechar{τ}{{\fallbackfont τ}}
+\newunicodechar{φ}{{\fallbackfont φ}}
+\newunicodechar{ω}{{\fallbackfont ω}}
+
+% ── Үлдсэн CJK тэмдэгтүүд ────────────────────────────────────────
+% Энэ нь англи хэвлэл боловч хятад үсгийн цөөн жишээ текст дотор үлдсэн:
+% хятад Token болгон хуваах, орчуулга, яриа таних зэрэг тохиолдлууд.
+% ctex/xeCJK-ийн хятад бичвэрийн бүх давхаргыг ачаалалгүйгээр зөвхөн эдгээр
+% код цэгийг CJK фонтоор дүрсэлнэ. macOS: Heiti SC;
+% Linux: Noto Sans CJK SC.
+\IfFontExistsTF{Heiti SC}{\newfontfamily\cjkfallback{Heiti SC}}{\newfontfamily\cjkfallback{Noto Sans CJK SC}}
+\newunicodechar{医}{{\cjkfallback 医}}
+\newunicodechar{图}{{\cjkfallback 图}}
+\newunicodechar{型}{{\cjkfallback 型}}
+\newunicodechar{模}{{\cjkfallback 模}}
+\newunicodechar{生}{{\cjkfallback 生}}
+\newunicodechar{解}{{\cjkfallback 解}}
+\newunicodechar{陈}{{\cjkfallback 陈}}
+\newunicodechar{两}{{\cjkfallback 两}}
+\newunicodechar{么}{{\cjkfallback 么}}
+\newunicodechar{了}{{\cjkfallback 了}}
+\newunicodechar{京}{{\cjkfallback 京}}
+\newunicodechar{代}{{\cjkfallback 代}}
+\newunicodechar{体}{{\cjkfallback 体}}
+\newunicodechar{北}{{\cjkfallback 北}}
+\newunicodechar{右}{{\cjkfallback 右}}
+\newunicodechar{大}{{\cjkfallback 大}}
+\newunicodechar{天}{{\cjkfallback 天}}
+\newunicodechar{左}{{\cjkfallback 左}}
+\newunicodechar{怎}{{\cjkfallback 怎}}
+\newunicodechar{思}{{\cjkfallback 思}}
+\newunicodechar{推}{{\cjkfallback 推}}
+\newunicodechar{智}{{\cjkfallback 智}}
+\newunicodechar{样}{{\cjkfallback 样}}
+\newunicodechar{概}{{\cjkfallback 概}}
+\newunicodechar{气}{{\cjkfallback 气}}
+\newunicodechar{点}{{\cjkfallback 点}}
+\newunicodechar{理}{{\cjkfallback 理}}
+\newunicodechar{的}{{\cjkfallback 的}}
+\newunicodechar{考}{{\cjkfallback 考}}
+\newunicodechar{能}{{\cjkfallback 能}}
+\newunicodechar{零}{{\cjkfallback 零}}
+
+% ── Код/тогтмол өргөнтэй фонт (код дахь хайрцаг зурах тэмдэгтүүдийг дэмжинэ) ──
+% Menlo бол macOS-ийн фонт; Linux-д DejaVu Sans Mono-г нөөцөөр ашиглана.
+\IfFontExistsTF{Menlo}{\setmonofont[Scale=0.86]{Menlo}}{\setmonofont[Scale=0.86]{DejaVu Sans Mono}}
+
+% ── tcolorbox (ElegantBook аль хэдийн ачаалсан; зөвхөн Library нэмнэ) ──
+\tcbuselibrary{skins,breakable}
+
+% ── TikZ (cover.tex дэх зах хүртэл дүүргэсэн хавтасны зурагт) ─────
+\usepackage{tikz}
+\usetikzlibrary{fadings}
+% Босоо бүдгэрэлт: дээд хэсэгт үл үзэгдэж, доод хэсэгт тодорно;
+% ингэснээр хавтасны зураг хар хөх гарчгийн зурваст жигд уусна.
+\tikzfading[name=titlefade, top color=transparent!100, bottom color=transparent!0]
+
+% Сэдвийн тодотгох өнгө: ElegantBook-ийн тод cyan-г гүн хар хөхөөр солино
+% (сонгодог, итгэл төрүүлэх техникийн номын өнгө аяс). Гарчиг, шугам, холбоос,
+% кодын хүрээ, хавтсыг удирдана. Энэ мөрийг өөрчилж номын өнгийг бүхэлд нь шинэчил.
+\definecolor{structurecolor}{RGB}{30,58,107}
+
+% Код/зургийн хүрээний тодотгох өнгө (дээрх сэдвийн өнгийг дагана)
+\colorlet{accent}{structurecolor}
+
+% Дотоод харилцан эшлэлийн холбоос (图N-M / 第N章) — товшигдох, бүдэг ногоовтор,
+% class-ийн нийтлэг linkcolor-оос тусдаа. crossref.lua ашиглана.
+\newcommand{\crossreflink}[2]{\hyperref[#1]{\textcolor{structurecolor}{#2}}}
+\colorlet{accentbg}{structurecolor!6}
+\colorlet{accentrule}{structurecolor!35}
+
+% ── Кодын блок дахь урт мөрийг таслах ───────────────────────────
+% pandoc нь ```lang блокт `Highlighting`-ээр fancyvrb-ийн Verbatim,
+% хэл заагаагүй блокт энгийн `verbatim` ашиглана; аль аль нь анхдагчаар
+% мөр таслахгүй тул урт мөр хуудаснаас халин гарна. fvextra нь breaklines нэмнэ;
+% хоёр орчныг мөр таслахаар дахин тодорхойлж, зайгүй хэсгийг Token дундаас
+% тасална (URL, урт таних тэмдэг, CJK тайлбар). Үргэлжилсэн мөр бүрийг ↳ тэмдэглэнэ.
+\usepackage{fvextra}
+\fvset{breaklines=true,breakanywhere=true,%
+  breaksymbolleft={\footnotesize\textcolor{accentrule}{$\hookrightarrow$}\,}}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\},breaklines,breakanywhere}
+
+% ── Кодын блок: O’Reilly хэв маягийн нарийн хүрээтэй хайрцаг ───────
+% БҮХ кодын блокт нэг хэв маяг хэрэглэж, өнгөөр ялгасан (```lang → Shaded)
+% болон энгийн (``` → verbatim) блокийг адил харагдуулна. Энгийн verbatim
+% хайрцагт fvextra Verbatim агуулна; \VerbatimEnvironment нь орчныг
+% \end{Verbatim} биш \end{verbatim} (гадаад орчны нэр)-д төгсгөнө.
+\newtcolorbox{codebox}{%
+  breakable, enhanced,
+  colback=black!3, colframe=accentrule,
+  boxrule=0.5pt, leftrule=2.5pt,
+  left=0.7em, right=0.6em, top=0.4em, bottom=0.4em,
+  arc=0.6mm,
+  before skip=0.7em, after skip=0.7em
+}
+\renewenvironment{Shaded}{\begin{codebox}}{\end{codebox}}
+\renewenvironment{verbatim}%
+  {\VerbatimEnvironment\begin{codebox}\begin{Verbatim}}%
+  {\end{Verbatim}\end{codebox}}
+
+% ── Туршилт ба асуултын тусгай хайрцаг (experiment_box.lua ашиглана) ──
+\newtcolorbox{experimentbox}{
+  breakable, enhanced,
+  colback=accentbg, colframe=accent,
+  boxrule=0.6pt, left=0.8em, right=0.8em, top=0.6em, bottom=0.6em,
+  arc=1mm, before skip=0.9em, after skip=0.9em
+}
+
+\newtcolorbox{questionbox}{
+  breakable, enhanced,
+  colback=accentbg, colframe=accent,
+  boxrule=0.8pt, left=0.9em, right=0.9em, top=0.9em, bottom=0.7em,
+  arc=1.2mm, before skip=0.9em, after skip=0.9em,
+  title={\sffamily\bfseries Гүнзгий бодох},
+  fonttitle=\normalsize\color{white},
+  coltitle=white,
+  attach boxed title to top left={xshift=1em, yshift=-\tcboxedtitleheight/2},
+  boxed title style={colback=accent, colframe=accent, arc=0.8mm, outer arc=0.8mm}
+}
+
+% ── Зургууд: эшлэл/асуултын хайрцагт багтахын тулд [H]-г албадна ──
+\usepackage{float}
+\let\origfigure\figure
+\let\origendfigure\endfigure
+\renewenvironment{figure}[1][htbp]{\origfigure[H]}{\origendfigure}
+\setkeys{Gin}{width=\linewidth,height=0.38\textheight,keepaspectratio}
+
+% ── Зургийн тайлбар: дугаарыг текстээр өгдөг тул автоматаар нэмэхгүй ──
+\usepackage{caption}
+% Серифгүй, тод, төвлөрсөн. Зургийн дугаар тайлбарын текстэд өөрт нь байна
+% (crossref.lua), тиймээс автомат «Figure N:» шошгыг дарна.
+\captionsetup{font={normalsize,sf,bf}, labelformat=empty, skip=4pt, justification=centering}
+
+% ── Эшлэлийн блок: зүүн талын ногоовтор зурвас (туршилт эшлэлээр дүрслэгдэнэ) ──
+\renewenvironment{quote}{%
+  \begin{tcolorbox}[
+    blanker, breakable,
+    borderline west={2.5pt}{0pt}{accent},
+    colback=accent!4,
+    left=1em, right=0.6em, top=0.5em, bottom=0.5em,
+    before skip=0.6em, after skip=0.6em
+  ]%
+}{%
+  \end{tcolorbox}%
+}
+
+% ── Inline кодыг авсаархан байлгана ─────────────────────────────
+\setlength{\parindent}{2em}
+
+% ElegantBook нь бүлгийн эхний хуудсанд ашиглагдах `plain` хуудасны хэв маягийг хоосолдог.
+% Энгийн хуудасны төвийн доод дугаартай адил эдгээр хуудсыг мөн дугаарлана.
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[C]{\color{structurecolor}\small\thepage}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \renewcommand{\footrulewidth}{0pt}%
+}
