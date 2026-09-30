@@ -12,6 +12,7 @@ import time
 import logging
 import threading
 from collections import defaultdict
+from contextlib import contextmanager
 from dataclasses import asdict
 from typing import Any, Callable, Optional
 from queue import Queue
@@ -59,10 +60,21 @@ class ObjectStore:
         self._reaction_thread: Optional[threading.Thread] = None
         self._reaction_log: list[dict] = []
         self._running = False
+        self._delete_context = threading.local()
         self._setup_db()
 
     def _get_conn(self):
         return psycopg2.connect(self.dsn)
+
+    @contextmanager
+    def _connection(self):
+        """Borrow the delete transaction without committing it in a helper."""
+        connection = getattr(self._delete_context, "connection", None)
+        if connection is not None:
+            yield connection
+        else:
+            with self._get_conn() as connection:
+                yield connection
 
     def _setup_db(self):
         with self._get_conn() as conn:
@@ -284,7 +296,27 @@ class ObjectStore:
 
     def delete(self, object_id: str, accessor: AccessContext,
                _reaction_depth: int = 0) -> bool:
-        """Delete an object. Full pipeline."""
+        """Delete a complete cascade atomically, then publish its reactions."""
+        if getattr(self._delete_context, "connection", None) is not None:
+            return self._delete_in_transaction(object_id, accessor, _reaction_depth)
+
+        reactions = []
+        with self._get_conn() as connection:
+            self._delete_context.connection = connection
+            self._delete_context.reactions = reactions
+            try:
+                result = self._delete_in_transaction(object_id, accessor, _reaction_depth)
+            finally:
+                del self._delete_context.connection
+                del self._delete_context.reactions
+        # The connection context commits on success or rolls back on any error.
+        # Nothing reaches the reaction worker until the entire cascade commits.
+        for obj, depth in reactions:
+            self._queue_reactions(obj, "after_delete", depth)
+        return result
+
+    def _delete_in_transaction(self, object_id: str, accessor: AccessContext,
+                               reaction_depth: int) -> bool:
         obj = self._load_object(object_id)
         if obj is None:
             raise ValueError(f"Object {object_id} not found")
@@ -304,7 +336,7 @@ class ObjectStore:
         self._check_permission(obj, accessor_with_owner, PrivilegeType.WRITE)
 
         # Tier 2: Object store mechanics — handle referential integrity
-        self._handle_delete_cascades(obj, accessor, _reaction_depth)
+        self._handle_delete_cascades(obj, accessor, reaction_depth)
 
         # Check for RESTRICT references from other objects
         self._check_restrict_references(obj)
@@ -313,7 +345,7 @@ class ObjectStore:
         self._delete_object(object_id)
 
         # Tier 3: Queue reactions
-        self._queue_reactions(obj, "after_delete", _reaction_depth)
+        self._delete_context.reactions.append((obj, reaction_depth))
 
         return True
 
@@ -427,7 +459,7 @@ class ObjectStore:
     def _handle_delete_cascades(self, obj: DataObject, accessor: AccessContext,
                                 reaction_depth: int):
         """Handle CASCADE and NULLIFY for child objects."""
-        with self._get_conn() as conn:
+        with self._connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 # Find children
                 cur.execute("SELECT * FROM objects WHERE parent_id = %s", (obj.id,))
@@ -469,7 +501,7 @@ class ObjectStore:
     def _find_referencing_objects(self, target_id: str, type_name: str,
                                   rel_name: str) -> list[DataObject]:
         """Find objects that reference the target via a given relationship."""
-        with self._get_conn() as conn:
+        with self._connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 # Check both content field and refs
                 cur.execute("""
@@ -604,7 +636,7 @@ class ObjectStore:
             conn.commit()
 
     def _update_object(self, obj: DataObject):
-        with self._get_conn() as conn:
+        with self._connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     UPDATE objects SET content = %s, updated_at = %s, refs = %s,
@@ -613,16 +645,14 @@ class ObjectStore:
                 """, (json.dumps(obj.content), obj.updated_at,
                       json.dumps(obj.references), obj.parent_id,
                       obj.org_id, obj.id))
-            conn.commit()
 
     def _delete_object(self, object_id: str):
-        with self._get_conn() as conn:
+        with self._connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("DELETE FROM objects WHERE id = %s", (object_id,))
-            conn.commit()
 
     def _load_object(self, object_id: str) -> Optional[DataObject]:
-        with self._get_conn() as conn:
+        with self._connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute("SELECT * FROM objects WHERE id = %s", (object_id,))
                 row = cur.fetchone()
