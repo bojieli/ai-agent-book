@@ -416,7 +416,9 @@ class ContextAwareAgent:
         resolved_base_url = backend.base_url
         self.model = backend.model
         self.using_openrouter = backend.using_openrouter
-        if self.using_openrouter:
+        # using_openrouter is also True when the reader asked for openrouter
+        # directly, which is not a reroute and needs no notice.
+        if self.using_openrouter and backend.provider != "openrouter":
             logger.info(
                 f"{self.provider} API key not set; routing via OpenRouter "
                 f"(model: {self.model})"
