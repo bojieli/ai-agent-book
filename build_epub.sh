@@ -252,3 +252,24 @@ if [ "$SELECTION" = "all" ]; then
 else
     build_edition "$SELECTION"
 fi
+
+
+echo "======================================================================================="
+echo "[CN] 如果打算在 Kindle 等电子阅读器上阅读，强烈推荐运行专用的后处理脚本！"
+echo "     该脚本会将书中的 LaTeX 公式和 SVG 图表渲染为 PNG，并彻底破除强制的固定 A4 版式限制。"
+echo "     处理后将完美自适应大屏小屏阅读器"
+echo "     使用方法："
+echo "       1. 安装依赖: pip install pymupdf"
+echo "       2. 执行脚本: python scripts/kindle_epub_patcher.py AI-Agents-in-Depth-zh-CN.epub"
+echo "======================================================================================="
+echo "[EN] If you plan to read on E-readers like Kindle, it is highly recommended to"
+echo "     run the dedicated post-processing script!"
+echo "     This script converts LaTeX formulas and SVGs into PNGs and removes fixed A4"
+echo "     layout restrictions."
+echo "     It produces a perfectly scalable version (adapts flawlessly to both large and"
+echo "     small screens)."
+echo "     Usage:"
+echo "       1. Install dependency: pip install pymupdf"
+echo "       2. Run the script:     python scripts/kindle_epub_patcher.py AI-Agents-in-Depth-zh-CN.epub"
+echo "======================================================================================="
+
