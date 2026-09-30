@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { tokenLabel } from './tokenLabel';
 
 interface PromptDisplayProps {
   prompt: string;
@@ -37,7 +38,7 @@ export default function PromptDisplay({ prompt, tokens, tokenCount }: PromptDisp
                 className="inline-block px-2 py-1 bg-blue-100 rounded text-sm font-mono hover:bg-blue-200 transition-colors cursor-default"
                 title={`Token ${idx + 1}`}
               >
-                {token}
+                {tokenLabel(token)}
               </span>
             ))}
           </div>
