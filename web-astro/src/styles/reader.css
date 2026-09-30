@@ -911,7 +911,7 @@
     padding: 20px 20px 1px;
   }
   .prose pre {
-    margin-inline: -8px;
+    /* Keep the code body aligned with its toolbar and article. */
     padding-inline: 18px;
   }
   .prose figure img {
