@@ -112,6 +112,7 @@ It is recommended to apply for API keys from several platforms for convenient le
 | **Siliconflow** | <https://siliconflow.cn/> | Various open-source models (DeepSeek, Qwen, etc.), fast access from mainland China | Mainland China |
 | **DeepSeek** | <https://platform.deepseek.com/> | Official DeepSeek API | Global + Mainland China |
 | **Atlas Cloud** | <https://www.atlascloud.ai/> | Access models from multiple vendors through an OpenAI-compatible API | Global |
+| **Opper** | <https://opper.ai/> | EU-hosted AI gateway, 700+ models from 50+ providers behind one OpenAI-compatible API | Global |
 | **Krill AI** | [www.krill-code.com](https://www.krill-code.com/register?invite=Q8D3L35725) | One-stop access to major global and China-domestic models (OpenAI, Claude, Gemini, Grok, Kimi, GLM, DeepSeek, Qwen, Minimax) | Global + Mainland China |
 | **OpenRouter** | <https://openrouter.ai/> | One-stop access to major global and China-domestic models (GPT, Claude, Gemini, Kimi, GLM, DeepSeek, Qwen, etc.) | Global |
 
