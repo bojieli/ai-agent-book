@@ -85,6 +85,15 @@ PROVIDERS: dict[str, Provider] = {
         # Atlas Cloud serves models from multiple vendors under namespaced ids.
         namespaces_models=True,
     ),
+    "opper": Provider(
+        name="opper",
+        base_url="https://api.opper.ai/v3/compat",
+        default_model="claude-sonnet-4-6",
+        key_vars=("OPPER_API_KEY",),
+        base_url_var="OPPER_BASE_URL",
+        # Opper serves many vendors' models under bare ids such as
+        # claude-sonnet-4-6, so ids are sent as given rather than namespaced.
+    ),
     "openrouter": Provider(
         name="openrouter",
         base_url=OPENROUTER_BASE_URL,

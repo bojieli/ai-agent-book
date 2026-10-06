@@ -24,6 +24,8 @@ from agentbook.providers.resolution import build_openrouter_backend
 PROVIDER_KEY_VARS = [
     "ATLASCLOUD_API_KEY",
     "ATLASCLOUD_BASE_URL",
+    "OPPER_API_KEY",
+    "OPPER_BASE_URL",
     "DASHSCOPE_API_KEY",
     "DASHSCOPE_BASE_URL",
     "SILICONFLOW_API_KEY",
@@ -197,6 +199,28 @@ def test_atlascloud_base_url_override(monkeypatch):
     monkeypatch.setenv("ATLASCLOUD_API_KEY", "test-atlascloud-key")
     monkeypatch.setenv("ATLASCLOUD_BASE_URL", "https://atlas.example/v1")
     assert resolve_backend("atlascloud").base_url == "https://atlas.example/v1"
+
+
+def test_opper_key_uses_multi_model_gateway_directly(monkeypatch):
+    monkeypatch.setenv("OPPER_API_KEY", "test-opper-key")
+    backend = resolve_backend("opper")
+    assert backend.api_key == "test-opper-key"
+    assert backend.base_url == "https://api.opper.ai/v3/compat"
+    assert backend.model == "claude-sonnet-4-6"
+    assert backend.provider == "opper"
+    assert backend.using_openrouter is False
+
+
+def test_opper_keeps_bare_model_ids(monkeypatch):
+    monkeypatch.setenv("OPPER_API_KEY", "test-opper-key")
+    backend = resolve_backend("opper", model="gemini-3.8-flash")
+    assert backend.model == "gemini-3.8-flash"
+
+
+def test_opper_base_url_override(monkeypatch):
+    monkeypatch.setenv("OPPER_API_KEY", "test-opper-key")
+    monkeypatch.setenv("OPPER_BASE_URL", "https://opper.example/v3/compat")
+    assert resolve_backend("opper").base_url == "https://opper.example/v3/compat"
 
 
 def test_explicit_krill_provider_is_not_hijacked_for_gpt5(monkeypatch):
@@ -374,6 +398,7 @@ def test_supported_providers_covers_registry_and_aliases():
     assert "gemini" in SUPPORTED_PROVIDERS
     assert "krill" in SUPPORTED_PROVIDERS
     assert "atlascloud" in SUPPORTED_PROVIDERS
+    assert "opper" in SUPPORTED_PROVIDERS
 
 
 def test_fallback_key_is_not_reusable_as_a_provider_key(monkeypatch):
