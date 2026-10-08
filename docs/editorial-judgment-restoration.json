@@ -2240,6 +2240,25 @@
             "inline_math": 0
           },
           "sha256": "566feac14ba6640be143c960fc39f6771ef35e0039672937087028482fc80cd2"
+        },
+        "chapter5": {
+          "status": "reviewed",
+          "notes": [
+            "第二轮完整逐句通读第五章全部 823 行，包括工作流程、Harness、恢复、搜索与编辑接口、安全、代码六类用途、实验和思考题。",
+            "核对文件编辑段保留 Apply Model 向确定性编辑演进、Cursor 引入 Search & Replace 的时间、字符串替换优先与行号/首尾锚点的适用条件；仅将额外模型分工改为双模型流程，使表述直观。",
+            "明确 Grep/Glob 直接读取当前工作区与省去嵌入索引维护的因果关系；理顺验收标准、恢复目标、错误回退、形式化转换和参考实现的表达。",
+            "保留全部技术趋势、选型理由和具体例子；图引用、实验标题、代码、公式、表格与思考题核对一致，未复核实验或改动插图。"
+          ],
+          "invariant_checks": {
+            "figures": 11,
+            "experiment_titles": 16,
+            "code_blocks": 2,
+            "formulas": 0,
+            "questions": 9,
+            "table_rows": 15,
+            "inline_math": 1
+          },
+          "sha256": "ef613d49c8895f3c5ff2e20c5c47d3aade5ed6bdaca8e6e83a41afaa033dad28"
         }
       }
     }
