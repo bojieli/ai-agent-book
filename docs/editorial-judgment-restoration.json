@@ -1913,7 +1913,7 @@
   },
   "full_book_passes": {
     "pass1": {
-      "status": "in_progress",
+      "status": "complete",
       "purpose": "逐段通读恢复后的全书，检查论证顺序、技术判断与前后文及章节间的一致性。",
       "chapters": {
         "introduction": {
@@ -2101,7 +2101,46 @@
             "table_rows": 29
           },
           "sha256": "1807c9a0a694437407dc1f24a69083aa568d29a5ed48f53bdbb6a4bd18bee792"
+        },
+        "afterword": {
+          "status": "reviewed",
+          "notes": [
+            "完整通读后记全部 67 行，核对两套公式、构建/评估/进化/协作的章节关系及模型与 Harness 分工。",
+            "保留实时交互与持续学习两朵乌云、小世界与大世界假设、模型吸收工程方法及业务反馈形成长期优势的作者判断。",
+            "合并大世界假设中知识随部署和偏好变化的重复解释，保留公司规范、PPT 风格和客户沟通三个例子。"
+          ],
+          "sha256": "d4edab553ad2123edd31eb7731328022b699509eb0851cb08e180dbfaffe1447"
+        },
+        "reference-answers": {
+          "status": "reviewed",
+          "notes": [
+            "完整通读参考答案全部 405 行，覆盖十章 93 题；逐章校验题干与正文一致。",
+            "保留此前恢复的 25 项解释与选择倾向，检查模型诊断、压缩、工具、评估、后训练和多 Agent 答案与正文相互对应。",
+            "知识重组明确候选通过检索回归再发布；异步结果采用调用与任务关联，状态响应后的完成通知与第六章协议一致。",
+            "评估答案区分每题一次的 McNemar 配对与同题重复运行的任务层汇总/聚类重采样，与第七章统计部分一致。",
+            "取消流程明确由子 Agent 执行清理并返回确认，避免主语含混。"
+          ],
+          "sha256": "a4055c3d6f3557ad76dd2d3f13d1ea3a6702a0d152259e47368d3f7efcd40c50"
         }
+      },
+      "verification": {
+        "reviewed_sections": 13,
+        "section_hashes_match": true,
+        "question_counts_by_chapter": [
+          10,
+          9,
+          9,
+          4,
+          9,
+          12,
+          9,
+          13,
+          7,
+          11
+        ],
+        "total_questions": 93,
+        "question_text_matches": true,
+        "scope": "前言、十章正文、后记、参考答案均已逐段通读；哈希与题干校验用于确认记录对应当前版本，不替代内容审读。"
       }
     },
     "pass2": {
