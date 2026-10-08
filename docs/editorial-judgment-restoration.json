@@ -2145,7 +2145,7 @@
       }
     },
     "pass2": {
-      "status": "in_progress",
+      "status": "complete",
       "purpose": "第一轮完成后重新完整通读，逐句检查中文表达、衔接和重复。",
       "baseline_commit": "870b07d8e2a7da761623c590ebdc94dc27d6d60c",
       "chapters": {
@@ -2354,7 +2354,62 @@
             "inline_math": 0
           },
           "sha256": "ceaabf46278045b83fcc4fa862961bf6ce53a833e10a0bb6b94ec8578a6cb62b"
+        },
+        "afterword": {
+          "status": "reviewed",
+          "notes": [
+            "第二轮完整逐句通读后记全部 67 行，包括两朵乌云、快慢路径、小世界与大世界、模型与 Harness 共同演进和应用团队的长期优势。",
+            "理顺决策变化与持续学习重要性的表达；保留作者预测、技术趋势、时间判断及所有案例数据。"
+          ],
+          "invariant_checks": {
+            "figures": 0,
+            "experiment_titles": 0,
+            "code_blocks": 0,
+            "formulas": 0,
+            "questions": 0,
+            "table_rows": 0,
+            "inline_math": 0
+          },
+          "sha256": "9b11ba0deafb69c44f8174c9a6ad8f632dcf4a1fb75f2272397c22d8f0c79c13"
+        },
+        "reference-answers": {
+          "status": "reviewed",
+          "notes": [
+            "第二轮完整逐句通读参考答案全部 405 行，覆盖十章 93 道题及其分析，检查与正文中的分工、协议、统计、训练和协作方法是否一致。",
+            "理顺跨层检索、否定条件、后台模型替换、吞吐量和训练问题分类的表达，将可观察的完成标准明确为可检查的完成标准。",
+            "保留信息优先、程序统计、文本知识维护、后台推理可替换、训练投入次序和 Manager 规划等建议及原因；全部题干和数字保持。"
+          ],
+          "invariant_checks": {
+            "figures": 0,
+            "experiment_titles": 0,
+            "code_blocks": 0,
+            "formulas": 0,
+            "questions": 93,
+            "table_rows": 0,
+            "inline_math": 1
+          },
+          "sha256": "54b1cff387686914be421954ed3a4565073b78f42b45a3c9880e270c93eb4405"
         }
+      },
+      "verification": {
+        "reviewed_sections": 13,
+        "section_hashes_match": true,
+        "question_counts_by_chapter": [
+          10,
+          9,
+          9,
+          4,
+          9,
+          12,
+          9,
+          13,
+          7,
+          11
+        ],
+        "total_questions": 93,
+        "question_text_matches": true,
+        "scope": "前言、十章正文、后记与参考答案均完成第二轮逐句通读；文件哈希与题干核对用于确认审阅记录对应当前内容，不代替正文阅读。",
+        "verified_against": "本次提交中的十三份正文文件；后续最终审计与 PDF 构建另行记录。"
       }
     }
   }
