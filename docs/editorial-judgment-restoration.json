@@ -2140,12 +2140,51 @@
         ],
         "total_questions": 93,
         "question_text_matches": true,
-        "scope": "前言、十章正文、后记、参考答案均已逐段通读；哈希与题干校验用于确认记录对应当前版本，不替代内容审读。"
+        "scope": "前言、十章正文、后记、参考答案均已逐段通读；哈希与题干校验用于确认记录对应当前版本，不替代内容审读。",
+        "verified_at_commit": "870b07d8e2a7da761623c590ebdc94dc27d6d60c"
       }
     },
     "pass2": {
-      "status": "pending",
-      "purpose": "第一轮完成后重新完整通读，逐句检查中文表达、衔接和重复。"
+      "status": "in_progress",
+      "purpose": "第一轮完成后重新完整通读，逐句检查中文表达、衔接和重复。",
+      "baseline_commit": "870b07d8e2a7da761623c590ebdc94dc27d6d60c",
+      "chapters": {
+        "introduction": {
+          "status": "reviewed",
+          "notes": [
+            "第二轮完整逐句阅读前言 111 行，包括成书过程、时间判断、使命、结构、阅读路线与致谢。",
+            "调整其他团队形成相近方法的语序，明确复现实验与比较结果两个动作，使评估作用的表达顺畅。",
+            "致谢改用提出意见、分享经验的自然表达；课程名称、日期、业务案例及实践—方法—原则判断保持。"
+          ],
+          "invariant_checks": {
+            "figures": 2,
+            "experiment_titles": 0,
+            "code_blocks": 0,
+            "formulas": 0,
+            "questions": 0,
+            "table_rows": 0
+          },
+          "sha256": "72b6e107fd5ca749924b55f09a9c69a6539deddac656a1f3c06e4d8ae56fad83"
+        },
+        "chapter1": {
+          "status": "reviewed",
+          "notes": [
+            "第二轮完整逐句阅读第一章 627 行，包括公式、消息示例、伪代码、实验、表格和思考题。",
+            "改写工具连接环境的生硬措辞，删去通用工具与专用工具分工前的空泛引语，保留完整的选择理由。",
+            "消除 Model 职责说明中的同义重复，调整模型选型的失败表述、任务成本量词和章末衔接。",
+            "保留所有恢复的技术趋势与判断；例子、数字、图示、公式、代码和题目保持不变。"
+          ],
+          "invariant_checks": {
+            "figures": 7,
+            "experiment_titles": 4,
+            "code_blocks": 4,
+            "formulas": 0,
+            "questions": 10,
+            "table_rows": 37
+          },
+          "sha256": "20ba8b55746959fcbe1bc8af950343733f7c927def6a4912dee5183a390f7261"
+        }
+      }
     }
   }
 }
