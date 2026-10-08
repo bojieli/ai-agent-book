@@ -1,5 +1,5 @@
 {
-  "status": "in_progress",
+  "status": "complete",
   "original_baseline": "dbc046eb",
   "revision_baseline": "41972cc8",
   "scope": "Restore technical trends, causal explanations, choices, and author judgments; preserve approved figures and experimental results. Review Chinese prose and integration in a second pass.",
@@ -2415,7 +2415,7 @@
     }
   },
   "final_audit": {
-    "status": "in_progress",
+    "status": "complete",
     "reviewed_restoration_items": 291,
     "method": "对照逐章原稿恢复记录与当前正文，逐项检查未逐字保留的段落是否经合并、分段或措辞调整仍保留原判断及因果；重点回查短字符串自动匹配错误的位置。",
     "findings": [
@@ -2424,9 +2424,112 @@
       "当前十三份正文未出现“不是”“而是”“并非”“各有优缺点”及免责声明用语；此项仅为措辞辅助检查，正文流畅性依据两轮完整阅读。",
       "相对本轮修订基线 41972cc8，book/images 内已确认插图无变化；实验记录未复核或重跑。"
     ],
-    "remaining": [
-      "最终 macOS PDF 构建、字体与图文页面核验",
-      "最终 PR 交付说明与产物链接"
-    ]
+    "remaining": [],
+    "verified_source_commit": "1168568aac145fbf207659f539370e99ee58f8f0",
+    "requirements": [
+      {
+        "requirement": "恢复原稿技术趋势、因果解释、选型倾向、时间判断与作者态度",
+        "evidence": "逐章原稿对照记录及 291 项恢复条目；最终再核对改写和分段后的内容，补回第六章两处具体理由。",
+        "status": "verified"
+      },
+      {
+        "requirement": "两轮完整通读，改顺技术中文与论述衔接",
+        "evidence": "full_book_passes 中两轮均覆盖前言、十章、后记和参考答案；第二轮十三份当前正文哈希全部匹配，最终两处补充另做相邻段落两次复读。",
+        "status": "verified"
+      },
+      {
+        "requirement": "保留例子、公式、算法、技术细节和明确主张",
+        "evidence": "逐章恢复记录、两轮 invariant_checks、RFC3339/E.164 和文件编辑演进重点复查；93 道题干与答案逐一对应。",
+        "status": "verified"
+      },
+      {
+        "requirement": "已确认插图、黑白灰度与 AI Infra 字体版式保持",
+        "evidence": "相对 41972cc8，book/images、preamble.tex、figure_size.lua、build_pdf.sh 均无变化；实际 macOS PDF 字体与图题检查通过。",
+        "status": "verified"
+      },
+      {
+        "requirement": "按章更新 PR，重新编译可审阅 PDF",
+        "evidence": "逐章提交已推送 PR #1173；最终 macOS 构建 37794952180 成功，产物 11559526507 对应最终正文提交。",
+        "status": "verified"
+      },
+      {
+        "requirement": "沿用编辑确认事实、课程名称与日期，不复核或重跑实验",
+        "evidence": "各章 retained_corrections、pass1/pass2 审读说明；当前实验数据及设计沿用已确认版本。",
+        "status": "verified"
+      }
+    ],
+    "macos_pdf": {
+      "pages": 306,
+      "bytes": 10447764,
+      "sha256": "370ddfc46d015b21e7f8ece097ad526ffc420cbb748a6ae36c25b46b7c2b047c",
+      "font_names": [
+        "ArialUnicodeMS",
+        "LMRoman10-Regular",
+        "LMRoman6-Regular",
+        "LMRoman7-Italic",
+        "LMRoman7-Regular",
+        "LMRoman8-Italic",
+        "LMRoman8-Regular",
+        "LMRoman9-Regular",
+        "LMRomanDemi10-Regular",
+        "LMSans9-Regular",
+        "LatinModernMath-Regular",
+        "Menlo-Bold",
+        "Menlo-Regular",
+        "STHeitiSC-Light",
+        "STHeitiSC-Medium",
+        "STSongti-SC-Regular",
+        "SourceHanSansCN-Bold",
+        "SourceHanSansCN-Regular"
+      ],
+      "caption_count": 114,
+      "missing_captions": [],
+      "outside_page_text": [],
+      "unembedded_fonts": [],
+      "key_figure_pages": {
+        "图1-4": 22,
+        "图1-5": 25,
+        "图1-6": 32,
+        "图2-1": 38,
+        "图5-1": 129,
+        "图5-2": 130,
+        "图5-3": 136,
+        "图8-16": 248,
+        "图10-9": 293
+      },
+      "anchor_pages": {
+        "用规范加实例说明参数": [
+          111
+        ],
+        "构建新的 Coding Agent 时": [
+          138
+        ],
+        "快模型说出口的建议": [
+          174
+        ],
+        "若模型生成未来画面": [
+          186
+        ],
+        "笔者优先选择推理模型作为起点": [
+          29
+        ]
+      },
+      "prose_paragraphs_checked": 2446,
+      "prose_signatures_checked": 9473,
+      "unmatched_paragraphs": [],
+      "run_url": "https://github.com/bojieli/ai-agent-book/actions/runs/37794952180",
+      "artifact_url": "https://github.com/bojieli/ai-agent-book/actions/runs/37794952180/artifacts/11559526507",
+      "source_commit": "1168568aac145fbf207659f539370e99ee58f8f0",
+      "missing_glyph_warnings": 0,
+      "overfull_warnings": 0,
+      "visually_reviewed_pdf_pages": [
+        111,
+        138,
+        174,
+        186
+      ],
+      "key_figure_visual_review": "图1-4、1-5、1-6、2-1、5-1、5-2、5-3、8-16、10-9 在前序 PDF 已逐页查看；最终对应九页渲染逐像素一致。",
+      "coverage_scope": "PDF 按既定构建包含前言、十章正文、后记；参考答案在书稿中单独维护。文字片段检查辅助确认编译完整性，不代替逐句审读。"
+    }
   }
 }
