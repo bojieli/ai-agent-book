@@ -2183,6 +2183,25 @@
             "table_rows": 37
           },
           "sha256": "20ba8b55746959fcbe1bc8af950343733f7c927def6a4912dee5183a390f7261"
+        },
+        "chapter2": {
+          "status": "reviewed",
+          "notes": [
+            "第二轮完整逐句通读第二章全部 1140 行，包括 API 示例、运行循环、缓存推导、实验、Skills、状态栏、压缩与思考题。",
+            "调整背景信息与模型能力比较的句式，保留必要背景优先于盲目升级模型的判断；缓存段明确复用的是计算结果。",
+            "调整 Skills 共用主系统机制、状态增量维护和分层压缩的语序，保留历史思考演进、固定示例优先、Skills 生态、压缩模型选择和子 Agent 隔离等立场与原因。",
+            "保留全部图示、代码块、实验标题、公式、表格和题目；沿用已确认的产品事实与实验结果，未复核或重跑实验。"
+          ],
+          "invariant_checks": {
+            "figures": 17,
+            "experiment_titles": 10,
+            "code_blocks": 15,
+            "formulas": 1,
+            "questions": 9,
+            "table_rows": 5,
+            "inline_math": 18
+          },
+          "sha256": "b333f41b31bdfd725603230f0f4dcb874b9b53318ba7f2b7011f23337729ee04"
         }
       }
     }
