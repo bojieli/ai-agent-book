@@ -2259,6 +2259,25 @@
             "inline_math": 1
           },
           "sha256": "ef613d49c8895f3c5ff2e20c5c47d3aade5ed6bdaca8e6e83a41afaa033dad28"
+        },
+        "chapter6": {
+          "status": "reviewed",
+          "notes": [
+            "第二轮完整逐句通读第六章全部 772 行，覆盖异步事件、沟通与身份、同步兼容与原生异步、语音三种范式、快慢分工、GUI 与机器人，以及实验与思考题。",
+            "明确异步函数和模型协议的职责、权限判断的执行主体及适配器转换事件的动作；将卸下修补逻辑改为移除兼容逻辑。",
+            "理顺语音交互演进、三维度比较和 Computer Use 效率目标的表达，明确机器人例子中 VLA 策略与动作原语的职责。",
+            "保留原生异步时间定位、可替换快慢分工、结构化定位优先、动态观测、动作预测和遥操作诊断等判断及理由；全部图引用、代码、公式、表格、实验标题和题目保持，未复核实验。"
+          ],
+          "invariant_checks": {
+            "figures": 14,
+            "experiment_titles": 14,
+            "code_blocks": 9,
+            "formulas": 1,
+            "questions": 12,
+            "table_rows": 34,
+            "inline_math": 4
+          },
+          "sha256": "c6295a22352816cc8c85d3ad8d8fc85057c02bf39e0c6ec910eae9236c29bfd4"
         }
       }
     }
