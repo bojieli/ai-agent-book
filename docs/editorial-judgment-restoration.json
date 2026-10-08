@@ -2335,6 +2335,25 @@
             "inline_math": 0
           },
           "sha256": "8ccb70b241a012cb68f989e88153c3afdf9b27b99bd758e47e4abe59096584a9"
+        },
+        "chapter10": {
+          "status": "reviewed",
+          "notes": [
+            "第二轮完整逐句通读第十章全部 682 行，覆盖上下文与控制关系、通信与取消、Loop 工程、三类协作拓扑、失败模式、社会模拟、实验和思考题。",
+            "明确任务分派与控制关系，理顺独立上下文、进度文件、书籍翻译分工、电话与电脑并行、去中心化等待和心跳诊断的表达。",
+            "保留 Skill 优先条件、Manager 规划投入、程序工作流、并发隔离、独立证据与群体协调等作者判断，案例、时间判断和数据保持。",
+            "全部图引用、实验标题、表格和思考题核对一致；未修改插图、复核实验记录或重跑实验。"
+          ],
+          "invariant_checks": {
+            "figures": 11,
+            "experiment_titles": 6,
+            "code_blocks": 0,
+            "formulas": 0,
+            "questions": 11,
+            "table_rows": 29,
+            "inline_math": 0
+          },
+          "sha256": "ceaabf46278045b83fcc4fa862961bf6ce53a833e10a0bb6b94ec8578a6cb62b"
         }
       }
     }
