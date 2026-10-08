@@ -4,7 +4,7 @@
 
 ## 第一次阅读的顺序
 
-1. [先看无需凭据的离线搜索轨迹，辨认思考、动作与观察 ](web-search-agent/README.md)。
+1. [先看无需凭据的离线搜索轨迹，辨认推理、动作与观测 ](web-search-agent/README.md)。
 2. [再在同一任务中移除一类上下文，分析行为变化 ](context/README.md)。
 3. [最后比较工作流中的额外步骤是否帮助满足用户需求 ](image-gen-workflow/README.md)。
 
@@ -36,9 +36,9 @@
 | 编号 | 项目 | 类型 | 一句话说明 |
 | :--: | --- | :--: | --- |
 | 1-1 | [context](context/) | ✅ | 系统性消融实验展示 Agent 上下文各组件的重要性；支持阿里云百炼直连 Qwen、SiliconFlow Qwen、字节 Doubao、月之暗面 Kimi 等多提供商 |
-| 1-2 | [web-search-agent](web-search-agent/) | ✅ | Kimi K3 模型即 Agent，具备基础深度搜索能力，能进行多轮搜索和信息整合 |
-| 1-3 | [search-codegen](search-codegen/) | ✅ | 模型自主多轮搜索 + 服务端代码执行的 Deep Research 闭环，先澄清意图再执行；官方 GPT-5.6 路径保留，阿里云百炼 qwen3.7-plus（hosted web_search + code_interpreter）实测通过东盟首都距离与比特币技术分析全部验收门 |
-| 1-4 | [image-gen-workflow](image-gen-workflow/) | ✅ | 具体/宽泛两类需求 × 工作流（kimi-k3 改写 + 通义万相）与原生（Gemini / GPT-Image 2）双路线真实对照：具体需求下原生更忠实（海报文案被改写节点丢进负面词），宽泛需求下改写的场景具象化带来想象力，但 GPT-Image 2 自己就能补观点——适配层被模型内化的实证 |
+| 1-2 | [web-search-agent](web-search-agent/) | ✅ | Kimi K3 决定查询与后续步骤，客户端 Harness 维护循环，Formula 服务执行搜索 |
+| 1-3 | [search-codegen](search-codegen/) | ✅ | 通过 Responses API 组织服务端托管搜索与代码执行；正文采用百炼 qwen3.7-plus 的首都距离和比特币分析记录，分别检查澄清、调用、计算与数据来源 |
+| 1-4 | [image-gen-workflow](image-gen-workflow/) | ✅ | 五组具体或宽泛需求，对比 Kimi 改写后调用通义万相与 Gemini、GPT-Image 2 直接生图；检查提示词改写是否保留文案等明确要求，并分别评价场景补充与最终图片 |
 | 7-1, 7-2 | [learning-from-experience](learning-from-experience/) | ✅ | 10,000 局 Q-learning + 100 局评估与官方 Kimi K3 第一局双臂实测已验收；[证据](learning-from-experience/validation/20260730_011704/evidence.json)记录 Kimi 17 步成功、零 fallback 及历史点估计差异 |
 
 ## 项目类型说明

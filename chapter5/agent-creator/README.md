@@ -1,6 +1,6 @@
 # 生成一个专用 Agent 需要交付什么
 
-让 Agent“再创建一个 Agent”，不是只写一段系统提示词。本实验从需求出发生成专用程序，并与复用已有框架的路径比较，学习如何判断生成结果是否真的可用。
+让 Agent“再创建一个 Agent”，需要交付提示词、工具、运行循环和可验证的行为。本实验从需求出发生成专用程序，并与复用已有框架的路径比较，学习如何判断生成结果是否真的可用。
 
 [English](#english)
 
@@ -14,7 +14,7 @@
 
 ### 比较从零生成与模板改造
 
-实验 5-13 要求同一个真实模型构造两个专用 Agent。第一条路线从零生成 Agent 循环、工具协议、领域工具、命令行入口和测试；第二条路线复制 `reference_agent`，保留已有的消息与工具循环，只修改领域提示、工具定义、实现、文档和测试。
+实验 5-16 要求同一个真实模型构造两个专用 Agent。第一条路线从零生成 Agent 循环、工具协议、领域工具、命令行入口和测试；第二条路线复制 `reference_agent`，保留已有的消息与工具循环，只修改领域提示、工具定义、实现、文档和测试。
 
 这样设计是为了区分两个问题：模型能否写出领域逻辑，以及它能否同时正确组织通用的 Agent 协议。模板路线减少了后一个问题的生成负担，但仍需证明新增的领域行为符合要求。
 
@@ -149,3 +149,7 @@ Generated paths are allowlisted, credentials are never placed in prompts or
 generated files, and live execution occurs only after structural and test gates.
 Generated domain tools still execute local code, so review them before using the
 output outside an isolated experiment directory.
+
+## 编辑核对记录
+
+本实验对应正文实验 5-16。历史台账记载两组均通过 39 项检查，模板路线创建成本较低；台账指向的 `runs/exp5-12-kimi-k3-20260730-v1/comparison.json` 在当前工作副本中缺失，尚未重新核验原始比较结果。正文保留实验设计与验收方法，具体历史成本数据待归档恢复后复核。

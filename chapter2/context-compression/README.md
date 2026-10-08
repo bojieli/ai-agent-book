@@ -22,41 +22,41 @@
 
 上下文窗口越来越大（128K+）时，高效管理上下文关乎：
 
-- **成本** — 减少 token  
-- **性能** — 更低延迟  
-- **可靠性** — 减少溢出错误  
-- **相关性** — 保留关键信息  
+- **成本** — 减少 token
+- **性能** — 更低延迟
+- **可靠性** — 减少溢出错误
+- **相关性** — 保留关键信息
 
 本实验实现并对比 **6** 种策略及其取舍。
 
 ### 压缩策略
 
 #### 1. 无压缩
-- 网页原文直接进入上下文  
-- 预期：几次工具调用后溢出失败  
-- 目的：展示基线问题  
+- 网页原文直接进入上下文
+- 预期：几次工具调用后溢出失败
+- 目的：展示基线问题
 
 #### 2. 非任务感知：逐页摘要
-- 每页单独 LLM 摘要再拼接  
-- 保留页内细节，可能丢跨页关系  
-- 多次 LLM 调用；适合来源彼此独立  
+- 每页单独 LLM 摘要再拼接
+- 保留页内细节，可能丢跨页关系
+- 多次 LLM 调用；适合来源彼此独立
 
 #### 3. 非任务感知：合并摘要
-- 先拼接全部网页再做一次总摘要  
-- 更利把握全局，可能丢页级归属  
-- 单次 LLM 调用；页多时可能撞限  
+- 先拼接全部网页再做一次总摘要
+- 更利把握全局，可能丢页级归属
+- 单次 LLM 调用；页多时可能撞限
 
 #### 4. 上下文感知摘要
-- 结合查询对全部搜索结果做聚焦摘要  
-- 相关性更好；多一次 LLM 调用  
+- 结合查询对全部搜索结果做聚焦摘要
+- 相关性更好；多一次 LLM 调用
 
 #### 5. 带引用的上下文感知摘要
-- 在 #4 基础上加引用与来源链接  
-- 利于追问；上下文略大  
+- 在 #4 基础上加引用与来源链接
+- 利于追问；上下文略大
 
 #### 6. 窗口化上下文
-- 最近一次工具调用保留全文，更早历史压缩  
-- 细节与效率折中  
+- 最近一次工具调用保留全文，更早历史压缩
+- 细节与效率折中
 - 只压缩尚未标记 `[COMPRESSED]` 的消息
 
 ### 脚本一览
@@ -78,10 +78,10 @@
 
 ### 定性预期
 
-1. 无压缩 → 溢出失败  
-2. 非任务感知 → 可能完成但丢细节  
-3. 上下文感知 → 体积与相关性较均衡  
-4. 带引用 → 最利于追问  
+1. 无压缩 → 溢出失败
+2. 非任务感知 → 可能完成但丢细节
+3. 上下文感知 → 体积与相关性较均衡
+4. 带引用 → 最利于追问
 5. 窗口化 → 长对话更高效
 
 <a id="learning-1"></a>
@@ -128,11 +128,11 @@ cp env.example .env
 
 `.env` 或 `config.py`：
 
-- `MODEL_NAME`（默认 kimi-k3）  
-- `MODEL_TEMPERATURE`（默认 0.3）  
-- `MAX_ITERATIONS`（默认 50）  
-- `MAX_WEBPAGE_LENGTH`（默认 50000）  
-- `SUMMARY_MAX_TOKENS`（默认 500）  
+- `MODEL_NAME`（默认 kimi-k3）
+- `MODEL_TEMPERATURE`（默认 0.3）
+- `MAX_ITERATIONS`（默认 50）
+- `MAX_WEBPAGE_LENGTH`（默认 50000）
+- `SUMMARY_MAX_TOKENS`（默认 500）
 - `CONTEXT_WINDOW_SIZE`（默认 128000；相对 K3 真实 ~1M 的故意收紧）
 
 <a id="learning-2"></a>
@@ -165,12 +165,12 @@ python run_all_strategies.py -s windowed
 python run_all_strategies.py --log-dir logs/k2 -m kimi-k2.5
 ```
 
-- 顺序跑所选策略  
-- 压缩摘要写入日志  
-- 默认流式  
-- 日志：`<log-dir>/strategy_run_TIMESTAMP.log`  
-- JSON：`<log-dir>/strategy_results_TIMESTAMP.json`  
-- 末尾对比摘要  
+- 顺序跑所选策略
+- 压缩摘要写入日志
+- 默认流式
+- 日志：`<log-dir>/strategy_run_TIMESTAMP.log`
+- JSON：`<log-dir>/strategy_results_TIMESTAMP.json`
+- 末尾对比摘要
 
 参数：`-s/--strategy`、`-m/--model`、`--log-dir`、`-n/--max-iterations`、`--list-strategies`。
 
@@ -213,14 +213,14 @@ if result['success']:
 
 成功率、执行时间、压缩比（压缩后/原始）、上下文溢出次数、工具调用次数、最终答案长度。
 
-### 实测结果（真实运行）
+### 历史运行汇总（原始记录待补核）
 
-真实端到端（无 mock）：实时 Serper + Moonshot 推理模型。
+原 README 将以下结果记为实时 Serper + Moonshot 的端到端运行。引用的原始 JSON 当前未在仓库及可用 Git 历史中找到；保留汇总供核对，补齐原始轨迹后再确认各项指标。
 
-- **模型：** `kimi-k3`（真实窗口约 1M；演示预算 `CONTEXT_WINDOW_SIZE = 128000`）  
-- **搜索：** 真实 Serper + 页面抓取  
-- **任务：** 识别并追踪约 11 位 OpenAI 联合创始人的职业状态  
-- **日期：** 2026-07-18 · `MAX_ITERATIONS=15` · 原始 JSON：`results/kimi_k3_real_20260718.json`  
+- **模型：** `kimi-k3`（该运行记录的模型名；演示预算 `CONTEXT_WINDOW_SIZE = 128000`）
+- **搜索：** 真实 Serper + 页面抓取
+- **任务：** 识别并追踪约 11 位 OpenAI 联合创始人的职业状态
+- **日期：** 2026-07-18 · `MAX_ITERATIONS=15` · 原始 JSON：`results/kimi_k3_real_20260718.json`
 
 | # | Strategy | Success | Iterations | Tokens | Compress | Overflows | Time |
 |---|----------|---------|-----------|--------|----------|-----------|------|
@@ -233,11 +233,13 @@ if result['success']:
 
 说明：
 
-- **无压缩**按设计在超过 128K 时失败（约第 5 轮）。  
-- **上下文感知摘要（#4）** token 最省（40,157 tokens，字符压缩 3.0%）。  
-- **逐页摘要（#2）**最慢（约 50 分钟）：推理模型对每页单独摘要。  
-- **窗口化（#6）**仅在用量跨过约 80% 预算时批量压缩未压缩工具消息；保留近期全文，字符「压缩比」约 100%，但在可完成任务的策略中总时间最短。  
-- 单次运行绝对值会波动；相对排序是关键 takeaway。
+- **无压缩**按设计在超过 128K 时失败（约第 5 轮）。
+- **上下文感知摘要（#4）** token 最省（40,157 tokens，字符压缩 3.0%）。
+- **逐页摘要（#2）**最慢（约 50 分钟）：推理模型对每页单独摘要。
+- **窗口化（#6）**仅在用量跨过约 80% 预算时批量压缩未压缩工具消息；汇总表中的总时间为生成最终回复的五组中最短。
+- `Success` 表示生成了最终回复，最终内容的完整性和准确性需另行评估。
+- 当前代码的 `Compress` 汇总工具调用对象中的字符长度；窗口化随后改写消息历史，未同步回写这些对象。因此该列不能直接解释为最终窗口的长度比。超过 100% 的历史值也需原始记录确认。
+- 策略选择需综合任务质量、摘要调用成本和后续模型用量；重复运行后再比较稳定性。
 
 ### 检查自己的解释
 
@@ -276,9 +278,9 @@ context-compression/
 
 ### 关键组件
 
-- **web_tools.py：** `search_web`（Serper + 抓取）、`fetch_webpage`、无 Key 时 mock  
-- **compression_strategies.py：** `ContextCompressor`、`CompressedContent`、动态压缩  
-- **agent.py：** 流式、工具、历史、窗口化压缩  
+- **web_tools.py：** `search_web`（Serper + 抓取）、`fetch_webpage`、无 Key 时 mock
+- **compression_strategies.py：** `ContextCompressor`、`CompressedContent`、动态压缩
+- **agent.py：** 流式、工具、历史、窗口化压缩
 - **experiment.py：** 自动跑、指标、对比表、JSON
 
 ### 研究任务
@@ -289,7 +291,7 @@ context-compression/
 
 ### 扩展
 
-新策略：枚举 → `ContextCompressor` → `compress_search_results()` → 实验 runner。  
+新策略：枚举 → `ContextCompressor` → `compress_search_results()` → 实验 runner。
 新任务：改 `agent.py` 系统提示、`web_tools.py` mock、工具描述。
 
 ---
@@ -310,13 +312,13 @@ context-compression/
 
 ### 故障排除
 
-- **无 Serper Key：** mock 仍可验证压缩逻辑  
-- **非基线策略仍溢出：** 降低 `MAX_WEBPAGE_LENGTH` / `SUMMARY_MAX_TOKENS` / 搜索 `num_results`  
+- **无 Serper Key：** mock 仍可验证压缩逻辑
+- **非基线策略仍溢出：** 降低 `MAX_WEBPAGE_LENGTH` / `SUMMARY_MAX_TOKENS` / 搜索 `num_results`
 - **偏慢：** `--no-streaming`、减小 `-n/--max-iterations`、改用 mock 搜索
 
 ## Notes / 说明
 
-- The 128K budget is intentional so compression/overflow behavior is visible even on models with larger real windows.  
+- The 128K budget is intentional so compression/overflow behavior is visible even on models with larger real windows.
 - 128K 预算是故意收紧的，以便在真实窗口更大的模型上仍能观察到压缩与溢出行为。
 
 ## English
@@ -327,42 +329,42 @@ Demonstrates and compares context compression strategies for LLM agents, using r
 
 As context windows grow (128K+), efficient context management matters for:
 
-- **Cost** — fewer tokens  
-- **Performance** — lower latency  
-- **Reliability** — fewer overflow errors  
-- **Relevance** — keep what matters  
+- **Cost** — fewer tokens
+- **Performance** — lower latency
+- **Reliability** — fewer overflow errors
+- **Relevance** — keep what matters
 
 This lab implements and compares **6** strategies and their trade-offs.
 
 ### Compression strategies
 
 #### 1. No compression
-- Full webpage content into context  
-- Expected: fails after a few tool calls (overflow)  
-- Purpose: baseline problem  
+- Full webpage content into context
+- Expected: fails after a few tool calls (overflow)
+- Purpose: baseline problem
 
 #### 2. Non-context-aware: individual summaries
-- Summarize each page with LLM, then concatenate  
-- Preserves page-specific detail; may lose cross-page links  
-- Multiple LLM calls; good when sources are independent  
+- Summarize each page with LLM, then concatenate
+- Preserves page-specific detail; may lose cross-page links
+- Multiple LLM calls; good when sources are independent
 
 #### 3. Non-context-aware: combined summary
-- Concatenate all pages, then one summary  
-- Better overall picture; may lose per-page attribution  
-- One LLM call; may hit limits with many pages  
+- Concatenate all pages, then one summary
+- Better overall picture; may lose per-page attribution
+- One LLM call; may hit limits with many pages
 
 #### 4. Context-aware summarization
-- Query-focused summary over all search results  
-- Better relevance; extra LLM call  
+- Query-focused summary over all search results
+- Better relevance; extra LLM call
 
 #### 5. Context-aware with citations
-- Like #4 plus citations / source links  
-- Better for follow-ups; slightly larger  
+- Like #4 plus citations / source links
+- Better for follow-ups; slightly larger
 
 #### 6. Windowed context
-- Full content for latest tool call; compress older history  
-- Balance detail vs efficiency  
-- Only compresses messages not already marked `[COMPRESSED]`  
+- Full content for latest tool call; compress older history
+- Balance detail vs efficiency
+- Only compresses messages not already marked `[COMPRESSED]`
 
 ### Installation
 
@@ -439,12 +441,12 @@ python run_all_strategies.py -s windowed
 python run_all_strategies.py --log-dir logs/k2 -m kimi-k2.5
 ```
 
-- Sequential strategies  
-- Compression summaries to log file  
-- Streaming by default  
-- Logs: `<log-dir>/strategy_run_TIMESTAMP.log`  
-- JSON: `<log-dir>/strategy_results_TIMESTAMP.json`  
-- End comparison summary  
+- Sequential strategies
+- Compression summaries to log file
+- Streaming by default
+- Logs: `<log-dir>/strategy_run_TIMESTAMP.log`
+- JSON: `<log-dir>/strategy_results_TIMESTAMP.json`
+- End comparison summary
 
 Flags: `-s/--strategy`, `-m/--model`, `--log-dir`, `-n/--max-iterations`, `--list-strategies`.
 
@@ -497,10 +499,10 @@ context-compression/
 
 ### Key components
 
-- **web_tools.py:** `search_web` (Serper + crawl), `fetch_webpage`, mock data without key  
-- **compression_strategies.py:** `ContextCompressor`, `CompressedContent`, dynamic compression  
-- **agent.py:** streaming, tools, history, windowed compression  
-- **experiment.py:** automated runs, metrics, comparison table, JSON  
+- **web_tools.py:** `search_web` (Serper + crawl), `fetch_webpage`, mock data without key
+- **compression_strategies.py:** `ContextCompressor`, `CompressedContent`, dynamic compression
+- **agent.py:** streaming, tools, history, windowed compression
+- **experiment.py:** automated runs, metrics, comparison table, JSON
 
 ### Metrics
 
@@ -508,20 +510,20 @@ Success rate, execution time, compression ratio (compressed/original size), cont
 
 ### Expected results (qualitative)
 
-1. No compression → overflow fail  
-2. Non-context-aware → may complete, miss detail  
-3. Context-aware → good size/relevance balance  
-4. With citations → best for follow-ups  
-5. Windowed → efficient for long multi-turn  
+1. No compression → overflow fail
+2. Non-context-aware → may complete, miss detail
+3. Context-aware → good size/relevance balance
+4. With citations → best for follow-ups
+5. Windowed → efficient for long multi-turn
 
-### Measured results (real run)
+### Historical run summary (raw evidence pending)
 
-Real end-to-end run (no mock): live Serper + Moonshot reasoning model.
+The original README attributes these results to a live Serper + Moonshot run. The cited JSON is absent from the current checkout and available Git history. The summary is retained for reconciliation with the original trajectories.
 
-- **Model:** `kimi-k3` (real window ~1M; demo budget `CONTEXT_WINDOW_SIZE = 128000`)  
-- **Search:** real Serper + page crawl  
-- **Task:** track current affiliations of ~11 OpenAI co-founders  
-- **Date:** 2026-07-18 · `MAX_ITERATIONS=15` · raw: `results/kimi_k3_real_20260718.json`  
+- **Model:** `kimi-k3` (model name recorded in the summary; demo budget `CONTEXT_WINDOW_SIZE = 128000`)
+- **Search:** real Serper + page crawl
+- **Task:** track current affiliations of ~11 OpenAI co-founders
+- **Date:** 2026-07-18 · `MAX_ITERATIONS=15` · raw: `results/kimi_k3_real_20260718.json`
 
 | # | Strategy | Success | Iterations | Tokens | Compress | Overflows | Time |
 |---|----------|---------|-----------|--------|----------|-----------|------|
@@ -534,28 +536,30 @@ Real end-to-end run (no mock): live Serper + Moonshot reasoning model.
 
 Notes:
 
-- **No compression** fails as designed past 128K (~5th iteration).  
-- **Context-aware summary (#4)** most token-efficient success (40,157 tokens, 3.0% char compression).  
-- **Individual summaries (#2)** slowest (~50 min): per-page summaries on a reasoning model.  
-- **Windowed (#6)** compresses only when usage crosses ~80% of budget; keeps recent full content → char “compression ratio” ~100% while still finishing fastest among compressing strategies.  
-- Single-run numbers vary; relative ordering is the takeaway.
+- **No compression** fails as designed past 128K (~5th iteration).
+- **Context-aware summary (#4)** most token-efficient success (40,157 tokens, 3.0% char compression).
+- **Individual summaries (#2)** slowest (~50 min): per-page summaries on a reasoning model.
+- **Windowed (#6)** compresses only when usage crosses ~80% of budget; has the shortest reported runtime among the five arms that generated a final response.
+- `Success` means a final response was generated; assess completeness and factual accuracy separately.
+- The current `Compress` calculation aggregates character lengths on tool-call objects. Windowed compression later rewrites message history without updating those objects, so this column does not measure the final window size ratio. Historical values above 100% also need raw-record verification.
+- Compare task quality, summarization cost and subsequent model usage across repeated runs.
 
 ### Configuration
 
 `.env` or `config.py`:
 
-- `MODEL_NAME` (default kimi-k3)  
-- `MODEL_TEMPERATURE` (default 0.3)  
-- `MAX_ITERATIONS` (default 50)  
-- `MAX_WEBPAGE_LENGTH` (default 50000)  
-- `SUMMARY_MAX_TOKENS` (default 500)  
-- `CONTEXT_WINDOW_SIZE` (default 128000; intentional cap vs K3’s real ~1M window)  
+- `MODEL_NAME` (default kimi-k3)
+- `MODEL_TEMPERATURE` (default 0.3)
+- `MAX_ITERATIONS` (default 50)
+- `MAX_WEBPAGE_LENGTH` (default 50000)
+- `SUMMARY_MAX_TOKENS` (default 500)
+- `CONTEXT_WINDOW_SIZE` (default 128000; intentional cap vs K3’s real ~1M window)
 
 ### Troubleshooting
 
-- **No Serper key:** mock data still exercises compression logic  
-- **Overflow on non-baseline strategies:** lower `MAX_WEBPAGE_LENGTH` / `SUMMARY_MAX_TOKENS` / search `num_results`  
-- **Slow:** `--no-streaming`, lower `-n/--max-iterations`, mock search  
+- **No Serper key:** mock data still exercises compression logic
+- **Overflow on non-baseline strategies:** lower `MAX_WEBPAGE_LENGTH` / `SUMMARY_MAX_TOKENS` / search `num_results`
+- **Slow:** `--no-streaming`, lower `-n/--max-iterations`, mock search
 
 ### Research task
 
@@ -565,7 +569,7 @@ Good because it needs many searches, accumulates text, stresses context manageme
 
 ### Extending
 
-New strategy: enum → `ContextCompressor` → `compress_search_results()` → experiment runner.  
+New strategy: enum → `ContextCompressor` → `compress_search_results()` → experiment runner.
 New task: system prompt in `agent.py`, mock data in `web_tools.py`, tool descriptions as needed.
 
 ---

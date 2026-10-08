@@ -29,20 +29,17 @@ a complete experiment and is reported as such.
 - **5-1:** eighteen cells (six provider pairs x three arms) ran against live
   Moonshot `kimi-k3`, Anthropic `claude-haiku-4-5-20251001`, and Google
   `gemini-3.5-flash`, with every request and raw response retained. The neutral
-  arm handed the half-finished trajectory over successfully in 6/6 pairs and
-  reached the correct total in all six; verbatim pass-through succeeded in 3/6
-  and stripping every reasoning block in 4/6, and all four failures carry the
-  vendor's original 4xx body. The overload that triggers the failover is
-  injected and labelled `injected: true`; the cross-vendor format rejections are
-  real. Two results are worth naming. Anthropic to Gemini passed under verbatim
-  pass-through and failed under stripping, because Gemini requires the
-  `thoughtSignature` field to be present but does not check who issued it, so a
-  pasted Claude signature is accepted while an honestly removed credential is
-  not. Redundant tool calls after the switch were 0 in all three arms, so the
-  manuscript's expected reduction was not observed: this task keeps its state in
-  the tool results, which every arm preserves. Carrying the portable reasoning
-  cost 4,183 input tokens against the stripping arm's 2,760 (+52%) on the two
-  pairs where all three arms completed, at an identical number of rounds.
+  arm completed in 6/6 pairs with the correct total; naive and strip completed
+  in 3/6 and 4/6 respectively. Rejected requests retain original 4xx bodies.
+  The runner switches directly after two completed tool calls. The `outage`
+  metadata describes a simulated 429/429/503 scenario; this run does not exercise
+  retry/backoff or a circuit-breaker implementation. Cross-vendor format
+  rejections are real. Acceptance of one converted request is an observation
+  about that request and service version, not a general conclusion about
+  opaque-field validation. Repeated calls after switching were 0 in all arms.
+  Task state was available in tool results. The neutral arm used 4,183 input
+  tokens against strip's 2,760 (+52%) on the two pairs where all arms completed,
+  at an identical number of rounds.
 - **5-2:** three providers x three break points x three repeats, cutting a live
   stream at a fixed character offset because a real disconnect does not land on
   a delta boundary. Prefix continuation is clearly cheaper than resending the
@@ -58,7 +55,8 @@ a complete experiment and is reported as such.
   reasoning break point, and Gemini's stream never exposes a partial tool call
   at all. One Anthropic cell failed with a real 400 because the cut landed on a
   space and the API rejects an assistant prefix ending in whitespace. Redundant
-  side effects were 0 in every cell.
+  query calls were 0 in every cell; the historical `duplicate_side_effects`
+  metric observes a read-only flight-price query, not real write-side effects.
 - **5-3:** all 30 unique AIME 2024 problems completed in both arms with zero
   provider errors, and every code trajectory called the real sandbox. Code was
   53.3% versus CoT 36.7%, but exact paired p=0.125.
@@ -114,8 +112,8 @@ a complete experiment and is reported as such.
   artifacts for all ten manuscript questions, and the database results were
   independently checked and browser-rendered without asking the model to copy
   result rows.
-- **5-14:** three real-model customization turns changed color, typography,
-  layout and component placement in a React/FastAPI app; Vite HMR was observed
+- **5-14:** three real-model customization turns changed color, typography
+  and title in a React/FastAPI app; Vite HMR was observed
   in-browser after every source mutation and a production build passed.
 - **5-15:** the copied PEDO implementation includes a deterministic PostgreSQL
   demo and core/scenario tests. A live Agent-generated-code campaign remains an
@@ -143,3 +141,10 @@ table above maps them to their current experiment numbers. For the same reason
 the retained Experiment 5-16 comparison directory is still named `exp5-12-...`,
 from a run that predates both renumberings. The protocol, source code, chapter
 text, and current index all identify it as Experiment 5-16.
+
+## Editorial artifact availability check
+
+- Experiment 5-8: 70 of 78 manifest artifacts match local hashes. Six Blender logs plus `final.mp4` and `negative_control.mp4` are missing from this checkout. Retained localization reports and execution/review receipts support the narrative; direct final-video reinspection awaits the archive.
+- Experiment 5-9: manifest measurements and provider receipts remain available, but all 13 listed `output/` artifacts are absent under both the run directory and project root. Geometry and image claims are attributed to the retained run records; archive recovery remains pending. Original manifests and receipts were preserved.
+
+- Experiment 5-16: the historical comparison directory and `comparison.json` are absent in this checkout and were not found in the editor archive. The historical summary above is retained as ledger provenance, not independently reverified raw evidence. The manuscript presents the design and acceptance criteria pending archive recovery.

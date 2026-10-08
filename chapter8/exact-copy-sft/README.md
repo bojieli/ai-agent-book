@@ -54,7 +54,7 @@ python tokenizer_audit.py
 
 本机 RTX PRO 6000 实测：1024 条训练样本、256 条留出样本、256 条边界样本，训练 2 个 epoch、Qwen3-8B bf16 LoRA。留出集 byte-exact accuracy 从基座 37.5% 提升到 78.9%，独立边界集为 80.1%；平均首次字节分歧位置分别为 54.0 和 54.2。
 
-另用 512 条留出/边界探针审计 3 个开源 tokenizer：Qwen3 与 Qwen2.5 round-trip 均为 80.1%，Mistral 为 100%，说明 tokenizer 层也必须单独设回归门禁。结果文件见 `validation/eval_base_eval.json`、`validation/eval_adapted_eval.json`、`validation/eval_adapted_boundary.json` 和 `validation/tokenizer_audit.json`。
+另用 512 条留出/边界探针审计 3 个开源 tokenizer：Qwen3 与 Qwen2.5 round-trip 均为 80.1%，Mistral 为 100%，说明 tokenizer 层也必须单独设回归门禁。模型边界集正确率与 tokenizer 往返率是不同指标；分析能力限制时，需逐条关联探针与错误位置，汇总百分比相同本身不足以确定模型上限。结果文件见 `validation/eval_base_eval.json`、`validation/eval_adapted_eval.json`、`validation/eval_adapted_boundary.json` 和 `validation/tokenizer_audit.json`。
 
 ### 检查自己的解释
 

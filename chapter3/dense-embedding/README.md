@@ -1,5 +1,12 @@
 # Vector Similarity Search Service (Dense Embedding) / 稠密向量相似性搜索服务
 
+## 实验 3-4：正文对应运行
+
+正式运行使用 Qwen3-Embedding-0.6B 的 1024 维真实文本向量，比较 300 篇文档、20 个查询的 top-10 近邻；两种索引相对精确搜索的召回率均为 1.0。ANNOY 在 Linux 容器中建索引约 13 ms，HNSW 在宿主机约 78 ms，运行环境不同；索引文件约 1.40 MB、1.02 MB，文件大小与运行内存分别计量。追加 60 篇文档时，ANNOY 重建索引，HNSW 增量插入。下文 3000 个合成向量的 CLI 示例用于观察参数影响，采用另一组数据。
+
+运行索引：[validation/latest.json](validation/latest.json)；结果与请求记录：[20260729T182946Z-3_4-2555ea60](validation/runs/20260729T182946Z-3_4-2555ea60/)。
+
+
 用户的问题与文档用词不同，仍可能表达相同含义。稠密检索把文本编码成向量，再根据向量之间的距离寻找候选内容。本实验让你分别观察语义表示和近似搜索的作用。
 
 [English](#english)

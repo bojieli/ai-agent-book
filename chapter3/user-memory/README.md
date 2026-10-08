@@ -1,5 +1,12 @@
 # User Memory System / 用户记忆系统
 
+## 实验 3-1、3-2：正文对应运行
+
+统一使用 60 个用例，每层 20 个，逐会话更新记忆后回答新问题。Simple Notes、Enhanced Notes、JSON Cards、Advanced JSON Cards 分别通过 48、52、51、49 个用例。生成与回答采用 Doubao Seed 1.6，独立评审采用 Moonshot。token 统计包含记忆维护、回答与评审调用；四种模式分别约为 110 万、99 万、113 万、155 万。
+
+运行索引：[validation/latest.json](validation/latest.json)；结果与请求记录：[20260730T043652Z-3_1_and_3_2-16200e94](validation/runs/20260730T043652Z-3_1_and_3_2-16200e94/)。
+
+
 保存全部聊天记录，不等于下次对话能用上相关信息。本实验把交互与后台记忆处理分开，学习怎样从对话提取候选事实、更新存储，并在后续回答中检索它们。
 
 [English](#english)

@@ -213,12 +213,18 @@ jobs:
           done
           exit $fail
 
-      - name: Verify Chinese figure fonts
-        if: github.ref == 'refs/heads/main'
+      - name: Verify Chinese review typography
+        if: inputs.edition == 'zh-CN' || github.ref == 'refs/heads/main'
         run: |
-          python3 .github/scripts/verify_pdf_fonts.py \
-            "book/深入理解-AI-Agent-李博杰-v2.0.pdf" \
-            "book-zhtw/深入理解-AI-Agent-李博杰-v2.0-zhtw.pdf"
+          cd book
+          python3 check_build_fonts.py
+          pdffonts 深入理解-AI-Agent-李博杰-v2.0.pdf > /tmp/zh-fonts.txt
+          grep -q Songti /tmp/zh-fonts.txt
+          grep -q SourceHanSans /tmp/zh-fonts.txt
+
+      - name: Verify traditional Chinese figure fonts
+        if: github.ref == 'refs/heads/main'
+        run: python3 .github/scripts/verify_pdf_fonts.py "book-zhtw/深入理解-AI-Agent-李博杰-v2.0-zhtw.pdf"
 
       - name: Build EPUBs
         env:

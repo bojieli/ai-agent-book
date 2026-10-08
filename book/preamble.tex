@@ -7,16 +7,16 @@
 \IfFontExistsTF{Heiti SC}{\newunicodechar{★}{{\fontspec{Heiti SC}★}}}{\IfFontExistsTF{Noto Sans CJK SC}{\newunicodechar{★}{{\fontspec{Noto Sans CJK SC}★}}}{\newunicodechar{★}{{\fontspec{DejaVu Sans}★}}}}
 \newunicodechar{✓}{{\fallbackfont ✓}}
 \newunicodechar{✗}{{\fallbackfont ✗}}
-\newunicodechar{₀}{{\fallbackfont ₀}}
-\newunicodechar{₁}{{\fallbackfont ₁}}
-\newunicodechar{₂}{{\fallbackfont ₂}}
-\newunicodechar{₃}{{\fallbackfont ₃}}
-\newunicodechar{₄}{{\fallbackfont ₄}}
-\newunicodechar{₅}{{\fallbackfont ₅}}
-\newunicodechar{₆}{{\fallbackfont ₆}}
-\newunicodechar{₇}{{\fallbackfont ₇}}
-\newunicodechar{₈}{{\fallbackfont ₈}}
-\newunicodechar{₉}{{\fallbackfont ₉}}
+\newunicodechar{₀}{\textsubscript{0}}
+\newunicodechar{₁}{\textsubscript{1}}
+\newunicodechar{₂}{\textsubscript{2}}
+\newunicodechar{₃}{\textsubscript{3}}
+\newunicodechar{₄}{\textsubscript{4}}
+\newunicodechar{₅}{\textsubscript{5}}
+\newunicodechar{₆}{\textsubscript{6}}
+\newunicodechar{₇}{\textsubscript{7}}
+\newunicodechar{₈}{\textsubscript{8}}
+\newunicodechar{₉}{\textsubscript{9}}
 \newunicodechar{ⓐ}{{\fallbackfont ⓐ}}
 \newunicodechar{ⓑ}{{\fallbackfont ⓑ}}
 \newunicodechar{ⓒ}{{\fallbackfont ⓒ}}
@@ -36,6 +36,7 @@
 \newunicodechar{ε}{{\fallbackfont ε}}
 \newunicodechar{η}{{\fallbackfont η}}
 \newunicodechar{θ}{{\fallbackfont θ}}
+\newunicodechar{κ}{\ensuremath{\kappa}}
 \newunicodechar{λ}{{\fallbackfont λ}}
 \newunicodechar{μ}{{\fallbackfont μ}}
 \newunicodechar{π}{{\fallbackfont π}}
@@ -46,7 +47,7 @@
 \newunicodechar{ω}{{\fallbackfont ω}}
 
 % ── Code/monospace font (covers box-drawing glyphs used in code) ──
-\setmonofont[Scale=0.86]{Menlo}
+\IfFontExistsTF{Menlo}{\setmonofont[Scale=0.86]{Menlo}}{\setmonofont[Scale=0.86]{DejaVu Sans Mono}}
 
 % ── tcolorbox (ElegantBook already loads it; just add libraries) ──
 \tcbuselibrary{skins,breakable}
@@ -121,25 +122,27 @@
   boxed title style={colback=accent, colframe=accent, arc=0.8mm, outer arc=0.8mm}
 }
 
-% ── Figures: force [H] so they can sit inside callout/quote boxes ─
+% ── Figures: float in body text; stay in place inside callout boxes ─
 \usepackage{float}
 \let\origfigure\figure
 \let\origendfigure\endfigure
-\renewenvironment{figure}[1][htbp]{\origfigure[H]}{\origendfigure}
-\setkeys{Gin}{width=\linewidth,height=0.38\textheight,keepaspectratio}
+\renewenvironment{figure}[1][htbp]{\ifinner\origfigure[H]\else\origfigure[!htbp]\fi}{\origendfigure}
+% Local image dimensions leave native formula boxes at their normal size.
+\setkeys{Gin}{width=!,height=!,keepaspectratio}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
+\renewcommand{\topfraction}{.85}
+\renewcommand{\bottomfraction}{.75}
+\renewcommand{\textfraction}{.12}
+\renewcommand{\floatpagefraction}{.85}
 
 % ── Figure captions: manual numbering in text, so suppress label ──
 \usepackage{caption}
-% Captions apply \sffamily, which switches Chinese to a CJK sans (Heiti SC).
-% The earlier fix used Scale=MatchLowercase, which scales CJK down to the Latin
-% x-height — wrong for Chinese, whose glyphs should sit at the nominal point
-% size (as they do in the body, which is why the body looks fine and only
-% captions were off). Render Heiti SC at nominal size (no MatchLowercase) with a
-% faux bold, so 中文 matches the Latin in captions. Injected into captions only;
-% headings and body are untouched.
-\IfFontExistsTF{Heiti SC}{\setCJKfamilyfont{capcjksf}[AutoFakeBold=2.5]{Heiti SC}}{\IfFontExistsTF{Noto Sans CJK SC}{\setCJKfamilyfont{capcjksf}[AutoFakeBold=2.5]{Noto Sans CJK SC}}{\setCJKfamilyfont{capcjksf}[AutoFakeBold=2.5]{DejaVu Sans}}}
+% Match AI Infra captions with pinned Source Han Sans at nominal CJK size.
+\setCJKfamilyfont{capcjksf}[Path=fonts/,Scale=1,BoldFont=SourceHanSansCN-Bold.otf]{SourceHanSansCN-Regular.otf}
 \DeclareCaptionFont{cjkmatch}{\CJKfamily{capcjksf}}
-\captionsetup{font={normalsize,sf,bf,cjkmatch}, labelformat=empty, skip=4pt, justification=centering}
+\captionsetup{font={small,sf,cjkmatch}, labelformat=empty, skip=4pt, justification=centering}
 
 % ── Blockquotes: teal left bar (experiments render as quotes) ────
 \renewenvironment{quote}{%
@@ -157,17 +160,14 @@
 % ── Inline code: keep it tight ───────────────────────────────────
 \setlength{\parindent}{2em}
 
-% 正文中文字体：本地 macOS 用 Songti SC / Heiti SC；CI（无 Apple 字体）用 Noto Sans CJK SC。
-% fontset=none 由 build_pdf.sh 传入，避免 ctex 自动选择已被移除的 ST 系列旧字体。
+% Match AI Infra: Songti body; real Source Han Sans bold/headings/captions.
 \IfFontExistsTF{Songti SC}{%
-  \setCJKmainfont[AutoFakeBold=2.5]{Songti SC}%
-  \setCJKsansfont[AutoFakeBold=2.5]{Heiti SC}%
-  \setCJKmonofont[AutoFakeBold=2.5]{Songti SC}%
+  \setCJKmainfont[Scale=1,BoldFont=SourceHanSansCN-Bold.otf,BoldFeatures={Path=fonts/}]{Songti SC}%
 }{%
-  \setCJKmainfont[AutoFakeBold=2.5]{Noto Sans CJK SC}%
-  \setCJKsansfont[AutoFakeBold=2.5]{Noto Sans CJK SC}%
-  \setCJKmonofont[AutoFakeBold=2.5]{Noto Sans CJK SC}%
+  \setCJKmainfont[Scale=1,BoldFont=SourceHanSansCN-Bold.otf,BoldFeatures={Path=fonts/}]{Noto Serif CJK SC}%
 }
+\setCJKsansfont[Path=fonts/,Scale=1,BoldFont=SourceHanSansCN-Bold.otf]{SourceHanSansCN-Regular.otf}
+\setCJKmonofont[Path=fonts/,Scale=1,BoldFont=SourceHanSansCN-Bold.otf]{SourceHanSansCN-Regular.otf}
 
 % ElegantBook empties the `plain` page style used on chapter-opening pages.
 % Keep those pages numbered, matching the centered footer on regular pages.
@@ -176,4 +176,15 @@
   \fancyfoot[C]{\color{structurecolor}\small\thepage}%
   \renewcommand{\headrulewidth}{0pt}%
   \renewcommand{\footrulewidth}{0pt}%
+}
+
+% Unnumbered sections must give TOC entries their own hyperlink destination.
+% ElegantBook's title formatting otherwise leaves the preceding anchor active.
+\let\booksection\section
+\RenewDocumentCommand{\section}{s o m}{%
+  \IfBooleanTF{#1}{%
+    \booksection*{#3}\phantomsection
+  }{%
+    \IfNoValueTF{#2}{\booksection{#3}}{\booksection[#2]{#3}}%
+  }%
 }

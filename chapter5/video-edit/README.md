@@ -1,4 +1,4 @@
-# Experiment 5-6: API-Driven Smart Video Editing / 实验 5-6：基于 API 的智能视频剪辑
+# Experiment 5-8: API Video Editing / 实验 5-8：基于 API 的智能视频剪辑
 
 “保留人物走进房间的那一段”包含视觉定位与时间范围选择。直接生成剪辑命令之前，Agent 必须先理解视频内容。本实验展示从自然语言需求到场景定位，再到媒体处理的过程。
 

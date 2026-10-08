@@ -490,6 +490,12 @@ The server implements a layered architecture:
 3. **Verification Layer**: Validates outputs and provides feedback
 4. **Integration Layer**: Connects to external services
 
+### 本章采用的实际运行范围
+
+实验 4-4 正式记录为 [`real_mcp_gui_20260802T093657Z`](validation/experiment_4_4/real_mcp_gui_20260802T093657Z/summary.json)，保存 20 次工具调用，15 项检查中通过 13 项。日历创建与邮件发送停在凭证预检；GitHub PR、Webhook、浏览器、桌面和 Android 模拟器均有实际调用记录。35 份 manifest 产物的哈希已核对一致。
+
+Python 编译检查和 JavaScript `node --check` 用于语法验证。图形界面记录展示浏览器导航与截图、Xvfb 中的键盘输入，以及 Android 设置页的打开、焦点核对和返回；这些是可供 Agent 使用的观测与动作接口。通用 Computer Use 或移动 Agent 的任务规划与循环可在其上继续实现。
+
 ### Real desktop and Android environments
 
 The exact Experiment 4-4 runner includes two action probes instead of treating

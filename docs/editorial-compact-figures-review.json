@@ -1,0 +1,383 @@
+{
+  "baseline": "c8a52a52",
+  "author_pronoun_replacements": 62,
+  "removed_explanatory_panels": 28,
+  "figures_with_text_changes": 19,
+  "compacted_figures": [
+    {
+      "figure": "fig1-6.svg",
+      "before_height": 944.0,
+      "after_height": 882.0,
+      "reduction_percent": 6.6
+    },
+    {
+      "figure": "fig10-1.svg",
+      "before_height": 1060.0,
+      "after_height": 863.0,
+      "reduction_percent": 18.6
+    },
+    {
+      "figure": "fig10-10.svg",
+      "before_height": 1090.0,
+      "after_height": 1029.0,
+      "reduction_percent": 5.6
+    },
+    {
+      "figure": "fig10-2.svg",
+      "before_height": 1062.0,
+      "after_height": 885.0,
+      "reduction_percent": 16.7
+    },
+    {
+      "figure": "fig10-3.svg",
+      "before_height": 1060.0,
+      "after_height": 823.0,
+      "reduction_percent": 22.4
+    },
+    {
+      "figure": "fig10-4.svg",
+      "before_height": 990.0,
+      "after_height": 862.0,
+      "reduction_percent": 12.9
+    },
+    {
+      "figure": "fig10-5.svg",
+      "before_height": 1080.0,
+      "after_height": 964.0,
+      "reduction_percent": 10.7
+    },
+    {
+      "figure": "fig10-6.svg",
+      "before_height": 1010.0,
+      "after_height": 769.0,
+      "reduction_percent": 23.9
+    },
+    {
+      "figure": "fig10-7.svg",
+      "before_height": 1130.0,
+      "after_height": 1053.0,
+      "reduction_percent": 6.8
+    },
+    {
+      "figure": "fig10-8.svg",
+      "before_height": 1120.0,
+      "after_height": 973.0,
+      "reduction_percent": 13.1
+    },
+    {
+      "figure": "fig10-9.svg",
+      "before_height": 1110.0,
+      "after_height": 893.0,
+      "reduction_percent": 19.5
+    },
+    {
+      "figure": "fig2-1.svg",
+      "before_height": 885.0,
+      "after_height": 841.0,
+      "reduction_percent": 5.0
+    },
+    {
+      "figure": "fig3-1.svg",
+      "before_height": 690.0,
+      "after_height": 660.0,
+      "reduction_percent": 4.3
+    },
+    {
+      "figure": "fig3-2.svg",
+      "before_height": 780.0,
+      "after_height": 735.0,
+      "reduction_percent": 5.8
+    },
+    {
+      "figure": "fig3-4.svg",
+      "before_height": 692.0,
+      "after_height": 662.0,
+      "reduction_percent": 4.3
+    },
+    {
+      "figure": "fig3-7.svg",
+      "before_height": 745.0,
+      "after_height": 682.0,
+      "reduction_percent": 8.5
+    },
+    {
+      "figure": "fig3-8.svg",
+      "before_height": 590.0,
+      "after_height": 508.0,
+      "reduction_percent": 13.9
+    },
+    {
+      "figure": "fig4-1.svg",
+      "before_height": 910.0,
+      "after_height": 883.0,
+      "reduction_percent": 3.0
+    },
+    {
+      "figure": "fig5-1.svg",
+      "before_height": 892.0,
+      "after_height": 869.0,
+      "reduction_percent": 2.6
+    },
+    {
+      "figure": "fig5-11.svg",
+      "before_height": 1070.0,
+      "after_height": 898.0,
+      "reduction_percent": 16.1
+    },
+    {
+      "figure": "fig5-2.svg",
+      "before_height": 1120.0,
+      "after_height": 890.0,
+      "reduction_percent": 20.5
+    },
+    {
+      "figure": "fig5-3.svg",
+      "before_height": 760.0,
+      "after_height": 568.0,
+      "reduction_percent": 25.3
+    },
+    {
+      "figure": "fig5-4.svg",
+      "before_height": 1010.0,
+      "after_height": 764.0,
+      "reduction_percent": 24.4
+    },
+    {
+      "figure": "fig5-5.svg",
+      "before_height": 850.0,
+      "after_height": 463.0,
+      "reduction_percent": 45.5
+    },
+    {
+      "figure": "fig5-6.svg",
+      "before_height": 1010.0,
+      "after_height": 983.0,
+      "reduction_percent": 2.7
+    },
+    {
+      "figure": "fig5-7.svg",
+      "before_height": 1030.0,
+      "after_height": 837.0,
+      "reduction_percent": 18.7
+    },
+    {
+      "figure": "fig5-9.svg",
+      "before_height": 1000.0,
+      "after_height": 978.0,
+      "reduction_percent": 2.2
+    },
+    {
+      "figure": "fig6-1.svg",
+      "before_height": 1010.0,
+      "after_height": 873.0,
+      "reduction_percent": 13.6
+    },
+    {
+      "figure": "fig6-10.svg",
+      "before_height": 1130.0,
+      "after_height": 1103.0,
+      "reduction_percent": 2.4
+    },
+    {
+      "figure": "fig6-11.svg",
+      "before_height": 720.0,
+      "after_height": 693.0,
+      "reduction_percent": 3.8
+    },
+    {
+      "figure": "fig6-12.svg",
+      "before_height": 1080.0,
+      "after_height": 986.0,
+      "reduction_percent": 8.7
+    },
+    {
+      "figure": "fig6-13.svg",
+      "before_height": 1200.0,
+      "after_height": 1157.0,
+      "reduction_percent": 3.6
+    },
+    {
+      "figure": "fig6-4.svg",
+      "before_height": 760.0,
+      "after_height": 723.0,
+      "reduction_percent": 4.9
+    },
+    {
+      "figure": "fig6-5.svg",
+      "before_height": 1010.0,
+      "after_height": 897.0,
+      "reduction_percent": 11.2
+    },
+    {
+      "figure": "fig6-9.svg",
+      "before_height": 1130.0,
+      "after_height": 1068.0,
+      "reduction_percent": 5.5
+    },
+    {
+      "figure": "fig7-1.svg",
+      "before_height": 930.0,
+      "after_height": 778.0,
+      "reduction_percent": 16.3
+    },
+    {
+      "figure": "fig7-10.svg",
+      "before_height": 1100.0,
+      "after_height": 1058.0,
+      "reduction_percent": 3.8
+    },
+    {
+      "figure": "fig7-3.svg",
+      "before_height": 790.0,
+      "after_height": 643.0,
+      "reduction_percent": 18.6
+    },
+    {
+      "figure": "fig7-4.svg",
+      "before_height": 655.0,
+      "after_height": 533.0,
+      "reduction_percent": 18.6
+    },
+    {
+      "figure": "fig8-11.svg",
+      "before_height": 875.0,
+      "after_height": 643.0,
+      "reduction_percent": 26.5
+    },
+    {
+      "figure": "fig8-14.svg",
+      "before_height": 745.0,
+      "after_height": 678.0,
+      "reduction_percent": 9.0
+    },
+    {
+      "figure": "fig8-16.svg",
+      "before_height": 1040.0,
+      "after_height": 643.0,
+      "reduction_percent": 38.2
+    },
+    {
+      "figure": "fig8-18.svg",
+      "before_height": 1280.0,
+      "after_height": 1256.0,
+      "reduction_percent": 1.9
+    },
+    {
+      "figure": "fig8-4.svg",
+      "before_height": 750.0,
+      "after_height": 598.0,
+      "reduction_percent": 20.3
+    },
+    {
+      "figure": "fig8-5.svg",
+      "before_height": 1080.0,
+      "after_height": 1033.0,
+      "reduction_percent": 4.4
+    },
+    {
+      "figure": "fig8-6.svg",
+      "before_height": 725.0,
+      "after_height": 558.0,
+      "reduction_percent": 23.0
+    },
+    {
+      "figure": "fig8-7.svg",
+      "before_height": 1050.0,
+      "after_height": 1018.0,
+      "reduction_percent": 3.0
+    },
+    {
+      "figure": "fig9-1.svg",
+      "before_height": 830.0,
+      "after_height": 758.0,
+      "reduction_percent": 8.7
+    },
+    {
+      "figure": "fig9-2.svg",
+      "before_height": 800.0,
+      "after_height": 700.0,
+      "reduction_percent": 12.5
+    },
+    {
+      "figure": "fig9-3.svg",
+      "before_height": 700.0,
+      "after_height": 453.0,
+      "reduction_percent": 35.3
+    },
+    {
+      "figure": "fig9-4.svg",
+      "before_height": 1000.0,
+      "after_height": 898.0,
+      "reduction_percent": 10.2
+    },
+    {
+      "figure": "fig9-5.svg",
+      "before_height": 1080.0,
+      "after_height": 903.0,
+      "reduction_percent": 16.4
+    }
+  ],
+  "preserved": "技术实例、字段、公式、流程节点、对比数据及图例；正文技术段落保留。图10-8图外性能摘要移入实验正文。",
+  "font_and_width": "沿用已确认的 Songti SC / Menlo / Source Han Sans；68% 版心图宽；灰度",
+  "validation": {
+    "referenced_figures": 114,
+    "outlined_vectors": 112,
+    "verified_technical_text": 112,
+    "reviewed_text_changes": 19,
+    "issues": [],
+    "technical_text_note": "112 幅图与基线逐字核对，明确列出的图外说明删改除外；清单见 editorial-figure-text-changes.json。"
+  },
+  "macos_pdf": {
+    "status": "complete",
+    "run_url": "https://github.com/bojieli/ai-agent-book/actions/runs/37777151792",
+    "pages": 297,
+    "bytes": 10397405,
+    "sha256": "2292194373ad117a51afff11d1cb4d3868543b08ad29d25f6a3eb339905a1f0e",
+    "caption_count": 114,
+    "missing_captions": [],
+    "outside_page_text": [],
+    "unembedded_fonts": [],
+    "font_names": [
+      "ArialUnicodeMS",
+      "LMRoman10-Regular",
+      "LMRoman6-Regular",
+      "LMRoman7-Italic",
+      "LMRoman7-Regular",
+      "LMRoman8-Italic",
+      "LMRoman8-Regular",
+      "LMRoman9-Regular",
+      "LMRomanDemi10-Regular",
+      "LMSans9-Regular",
+      "LatinModernMath-Regular",
+      "Menlo-Bold",
+      "Menlo-Regular",
+      "STHeitiSC-Light",
+      "STHeitiSC-Medium",
+      "STSongti-SC-Regular",
+      "SourceHanSansCN-Bold",
+      "SourceHanSansCN-Regular"
+    ],
+    "missing_glyph_warnings": 0,
+    "overfull_warnings": 0,
+    "key_figure_pages": {
+      "图1-4": 22,
+      "图1-5": 25,
+      "图1-6": 32,
+      "图2-1": 38,
+      "图5-1": 127,
+      "图5-2": 128,
+      "图5-3": 134,
+      "图5-5": 142,
+      "图8-16": 242,
+      "图10-9": 284
+    },
+    "artifact_url": "https://github.com/bojieli/ai-agent-book/actions/runs/37777151792/artifacts/11551351085",
+    "visual_review": "全书图示缩略图复核；最终 PDF 图5-1、5-2、5-3、8-16、10-9逐页检查。",
+    "printed_review_pages": {
+      "图5-1": 119,
+      "图5-2": 120,
+      "图5-3": 126
+    }
+  },
+  "build_source_commit": "0ef6a6d077280c9a3def6688e3a7686c99eecd5f"
+}

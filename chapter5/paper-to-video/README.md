@@ -1,4 +1,4 @@
-# Experiment 5-5: Paper Lecture Video / 实验 5-5：论文讲解视频的自动生成 ★★
+# Experiment 5-7: Paper Lecture Video / 实验 5-7：论文讲解视频的自动生成 ★★
 
 论文讲解视频需要把页面、口语化讲稿和音频放在同一条时间线上。本实验拆开这些环节，让你理解视频自动生成中内容组织与媒体处理各自承担什么工作。
 
@@ -20,7 +20,7 @@
 
 ### 完整实验的步骤与条件
 
-`campaign.py` 是实验 5-5 的正式运行器：它读取实验 5-4 固定真实论文活动中的 12 张
+`campaign.py` 是实验 5-7 的正式运行器：它读取实验 5-6 固定真实论文活动中的 12 张
 Slidev 截图与源码，用 Kimi K3 生成讲解词，再让 Qwen-VL-Max 对照真实页面像素逐页独立
 审核；通过后调用 Fish Audio S1 合成每页语音，最终用 ffmpeg 生成 5–15 分钟的 H.264/AAC
 视频。所有供应商调用都可续跑缓存；中断后不会用静音或占位内容冒充缺失页面。
@@ -79,7 +79,7 @@ python campaign.py --output validation/runs/my-real-run --workers 1
                      output/lecture.mp4
 ```
 
-- 本项目**自包含**，不依赖实验 5-4：内置一份《Attention Is All You Need》的论文要点，
+- 本项目**自包含**，不依赖实验 5-6：内置一份《Attention Is All You Need》的论文要点，
   用 PIL 直接渲染出 5 页幻灯片 PNG（也可替换为 5-4 的 Slidev 截图）。
 - 讲解词由 `gpt-5.6-luna` 生成；语音由 OpenAI `tts-1`（`voice=alloy`）合成。
 - 视频由 `ffmpeg` 合成：每页做一段 mp4，段时长等于该页音频时长，最后 concat 拼接，
@@ -231,8 +231,8 @@ On top of “paper → PPT”, the Agent generates **spoken lecture scripts** pe
 
 ### Canonical manuscript campaign
 
-`campaign.py` is the formal Experiment 5-5 runner. It consumes twelve real
-Slidev screenshots and source from the pinned Experiment 5-4 paper run, calls
+`campaign.py` is the formal Experiment 5-7 runner. It consumes twelve real
+Slidev screenshots and source from the pinned Experiment 5-6 paper run, calls
 Kimi K3 for narration, independently checks every narration against the actual
 slide pixels with Qwen-VL-Max, synthesizes every accepted page with Fish Audio
 S1, and produces a 5–15 minute H.264/AAC video. It checkpoints every provider
@@ -374,6 +374,6 @@ Logs print per-page “slide → script → audio duration”; end summary compa
 
 - Script + TTS call real OpenAI APIs (`TEXT_MODEL`, `TTS_MODEL`) and **bill**; full 5 pages ≈ 2–3 min video. Prefer `--check` then `--quick`.
 - Slides are static PIL (no animation/transitions); non-macOS may need `FONT_CANDIDATES` tweaks.
-- Page duration = audio only; no silence pads or BGM. For richer layout/transitions, prefer 5-4 Slidev screenshots as input.
+- Page duration = audio only; no silence pads or BGM. For richer layout/transitions, prefer 5-6 Slidev screenshots as input.
 
 ---

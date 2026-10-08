@@ -1,5 +1,12 @@
 # Contextual Retrieval System / 上下文感知检索系统
 
+## 实验 3-10：正文对应运行
+
+正式运行由 LLM 根据原文与目标块生成前缀，在相同 15 个查询上比较两套索引。BM25 recall@1 为 0.60 → 0.80，稠密检索为 0.867 → 0.933；混合检索 recall@5 为 0.933 → 1.0。下文离线 CLI 使用已准备的前缀，输出用于机制演示。正文另外引用的 Anthropic 49% / 67% 是其报告中的 top-20 检索失败率相对降幅，指标及测试资料与本项目分别记录。
+
+运行索引：[validation/latest.json](validation/latest.json)；结果与请求记录：[20260729T205807Z-3_10-35531780](validation/runs/20260729T205807Z-3_10-35531780/)。
+
+
 文档中的“该规定”或“上述方法”离开上下文后常常难以理解。本实验在建立索引前给片段补充简短背景，观察检索能否更准确地找到它。
 
 [English](#english)
@@ -68,7 +75,7 @@ python compare_retrieval.py --help
 失败率下降                    67%          0%          0%
 ```
 
-结论与书中一致：上下文前缀显著提升 top-1 召回（60% → 86.7%，失败率下降 67%）。`--method embedding` / `hybrid` 需 embedding API，脚本会提示并回退 BM25 离线结果。完整稠密+重排见 `contextual_tools.py`。
+这组离线示例的 top-1 召回从 60% 提高到 86.7%；相应的 1−recall@1 相对下降约 67%。正文采用页首所列的正式运行结果。`--method embedding` / `hybrid` 需 embedding API，脚本会提示并回退 BM25 离线结果。完整稠密+重排见 `contextual_tools.py`。
 
 ### 快速开始
 
@@ -206,7 +213,7 @@ Real run (22 Constitution / Prosecutor Law chunks, 15 queries, jieba):
 失败率下降                    67%          0%          0%
 ```
 
-Conclusion (matches the book): context prefixes lift top-1 recall (60% → 86.7%; failure rate 1−recall@1 down 67%). Gain is strongest at recall@1; `--query` shows how the prefix re-ranks the correct section first.
+In this offline example, top-1 recall rises from 60% to 86.7% (a 67% relative decrease in 1−recall@1). The manuscript uses the separate canonical live campaign described at the top of this page. Gain is strongest at recall@1; `--query` shows how the prefix re-ranks the correct section first.
 
 > `--method embedding` / `--method hybrid` need embedding APIs (not offline); the script falls back to BM25 offline results. Full dense + rerank lives in `contextual_tools.py`.  
 > Same logic is also in `ContextualChunker.compare_retrieval_methods()`.

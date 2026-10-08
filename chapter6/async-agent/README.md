@@ -15,7 +15,7 @@
 本目录是《深入理解 AI Agent》实验 6-2 的配套可运行代码，实现了设计文档
 [`agent_framework_design.md`](./agent_framework_design.md) 中描述的事件驱动异步 Agent 框架（Flux）的核心部分。
 
-在 4-5 的简单事件队列之上，本实验进入异步 Agent 的深水区，聚焦四件事：
+在实验 6-1 的简单事件队列之上，本实验进入异步 Agent 的深水区，聚焦四件事：
 **异步工具执行、事件队列与批量处理、打断机制、并行工具的取消与状态查询**。
 Agent 需要同时管理多个并发任务，处理打断与恢复，并根据实时状态动态决策。
 
@@ -27,7 +27,7 @@ Agent 需要同时管理多个并发任务，处理打断与恢复，并根据�
 - **LLM 场景（还原书中四个验证场景）**：Agent 的决策由真实 LLM（默认 OpenAI `gpt-5.6-luna`，
   function calling）完成，需要配置 API key。
 
-两条路径共用同一套异步运行时；长任务都用**模拟的异步"终端命令"**（带进度输出）实现，绝不真跑危险命令。
+运行时通过受限子进程执行分析任务，并从标准输出读取进度。`run_real_experiment.py` 直接调用任务管理器，以确定性脚本驱动四个场景；模型决策路径由 `runtime.py` 与 `demo.py` 提供。
 
 ### 一、架构
 
@@ -678,3 +678,9 @@ User: “run these three scripts at once; when the first finishes, query the oth
 - Terminal jobs are real allowlisted Python child processes. Arbitrary commands and shell syntax are rejected before task allocation.
 
 ---
+
+## 编辑核对：运行证据的范围
+
+正式四场景记录来自 `run_real_experiment.py`：该运行器直接调度 `TaskManager`，通过系统时钟回答时间，用固定模板生成日语 HTML，并按代码中的进度阈值取消子进程。它验证真实进程、批处理与恢复机制；模型是否选择正确工具并遵守多条指令，需要运行模型路径单独评估。记录中的逻辑 tick 为 0.15 秒，3%/2%/1% 是每 tick 的进度，实际墙钟时长见各任务回执。
+
+归档完整性：当前八项产物仅日语 HTML 与历史 manifest 哈希一致，其余七项 JSON 均有差异。现有文件用于核对实现与记录内容，原始归档一致性仍待追查；本次编辑保留原文件及哈希。

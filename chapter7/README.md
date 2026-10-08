@@ -2,6 +2,12 @@
 
 本章学习如何把“表现好不好”转成可解释的比较。先理解环境与评分，再定位失败，最后检查模型、记忆和系统成本的不同维度。
 
+## 本轮正文修订
+
+正文保留 14 个实验的设计与现有汇总，按教学顺序说明任务、判据、归因和改进。实验原始记录沿用归档版本，本轮不重新运行或追加核验。实验 7-7 的解释已区分业务动作与评分标签：旧标签集合会拒绝部分语义正确的回答，具体例子见配套 README。
+
+正文顺序为：7-1 双控环境、7-2 跨基准实践、7-3 Rubric、7-4 记忆方案对比、7-5 TTS、7-6 失败归因、7-7 前缀回归、7-8 配对排名、7-9 行动阈值、7-10 成本、7-11 服务性能、7-12 检索配置、7-13 AndroidWorld 改进、7-14 具身仿真。历史结果文件保留原编号。
+
 ## 第一次阅读的顺序
 
 1. [先读一条交互任务，区分回答质量与环境目标 ](tau2-bench-eval/README.md)。
@@ -18,7 +24,7 @@
 
 ## 如何阅读实验
 
-正文伪代码先建立 reset → run → snapshot → verifier → record 的评估闭环；实验目录再展开统计与证据：
+正文通过任务实例建立 reset → run → snapshot → verifier → record 的评估闭环；实验目录展开代码、配置与运行细节：
 
 - **Starter**：从 [tau2-bench-eval](tau2-bench-eval/) 跑一个固定任务，先看环境 reset、轨迹保存和结果 verifier；
 - **Builder**：阅读 [user-memory-system-evaluation](user-memory-system-evaluation/) 的 Rubric/证据 schema，再看 [elo-leaderboard](elo-leaderboard/) 的配对统计；
@@ -33,7 +39,7 @@
 | 7-1 | [tau2-bench-eval](tau2-bench-eval/) | ✅ | 已在固定上游提交上完成 5 个 telecom 双控任务：4/5 通过；保存原始轨迹、成本、内容哈希及错选线路导致漏做流量加油的失败分析 |
 | 7-1；7-2 的 τ²-bench 样本 | [`sierra-research/tau2-bench`](https://github.com/sierra-research/tau2-bench) → `chapter7/tau2-bench` | `8d005b0e5b9e4af0bc055886fa7f95fc86d1710e` | 正文要求重点观察新增的双控 telecom 领域：`tau2 run --domain telecom --agent-llm <model> --user-llm <model> --num-trials 1 --num-tasks 5` |
 | 7-1 原始 τ-bench 对照（仅溯源） | [论文](https://arxiv.org/abs/2406.12045) · [`sierra-research/tau-bench`](https://github.com/sierra-research/tau-bench/tree/59a200c6d575d595120f1cb70fea53cef0632f6b)；**不承诺本地 checkout** | `59a200c6d575d595120f1cb70fea53cef0632f6b` | 该历史版本入口：`python run.py --agent-strategy tool-calling --env retail --model gpt-4o --model-provider openai --user-model gpt-4o --user-model-provider openai --user-strategy llm --max-concurrency 10` |
-| 7-2 | [experiment-7-2-human-benchmark](experiment-7-2-human-benchmark/) | ✅ | Codex 作为人工操作员，预注册并完成 GAIA、AndroidWorld、SWE-bench Verified、τ²-bench、Terminal-Bench、OSWorld-Verified 各简单/中等/困难一题，共 18/18 个首轮正式结果：13 通过、5 失败；逐题保留任务、轨迹、官方评估及成败解释 |
+| 7-2 | [experiment-7-2-human-benchmark](experiment-7-2-human-benchmark/) | ✅ | Codex 作为操作代理，预注册并完成 GAIA、AndroidWorld、SWE-bench Verified、τ²-bench、Terminal-Bench、OSWorld-Verified 各简单/中等/困难一题，共 18/18 个首轮正式结果：13 通过、5 失败；逐题保留任务、轨迹、官方评估及成败解释 |
 | 7-2 | `terminal-bench/` | 📖 | Terminal-Bench 外部任务与执行框架；7-2 的三档人工操作结果与失败分析已收录于上行案例集 |
 | 7-2 | `SWE-bench/` | 📖 | SWE-bench Verified 外部代码修复基准；7-2 的三档补丁轨迹与官方 harness 结果已收录于上行案例集 |
 | 7-2 | `GAIA/` | 📖 | GAIA 外部数据集；7-2 的 Level 1/2/3 作答、核验与舍入失败边界已收录于上行案例集 |

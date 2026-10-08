@@ -1,4 +1,4 @@
-# Experiment 5-4: Paper → PPT (Proposer–Reviewer) / 实验 5-4：基于论文的 PPT 自动生成（提议者-审核者机制）
+# Experiment 5-6: Paper → PPT / 实验 5-6：基于论文的 PPT 自动生成
 
 生成幻灯片源码时看不出的布局问题，常常在渲染后才出现。本实验让提议者生成 Slidev 文稿，再让审核者查看实际页面，学习“生成、观察、修改”的迭代方法。
 

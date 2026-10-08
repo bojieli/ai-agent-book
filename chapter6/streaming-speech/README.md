@@ -114,3 +114,7 @@ pytest -q
 ## English
 
 This is actual Qwen2-Audio growing-prefix inference, not a Whisper substitute. Every `[0:t]` prefix is fully re-encoded and compared with a real 600ms-VAD + open-source Whisper pipeline on normal, long-pause, and noisy speech. CUDA uses the original model; Apple Silicon can use the published 4-bit MLX conversion of the same Qwen2-Audio architecture. The canonical v3 manifest binds raw responses, sources, audio, the Whisper checkpoint, and every Qwen snapshot file. Execution passed while the manuscript result bundle did not: only 2/6 claims reproduced, with 8.4–11.3s prefix inference and retained acoustic-event errors.
+
+### 归档材料复核（2026-10-07）
+
+本次只读复核中，manifest 列出的三个场景音频及三个运行产物哈希一致；原始输入 `audio/sentence.wav` 在当前工作树中缺失。模型缓存与运行源码另有各自的版本记录，场景音频是本次回看前缀输入的依据。历史 manifest 保持原样。

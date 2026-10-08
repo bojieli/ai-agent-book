@@ -54,6 +54,10 @@ return {
       if el.level == 1 and not el.classes:includes('unnumbered') then
         chap = chap + 1
         el.content:insert(pandoc.RawInline('latex', '\\label{' .. chap_label(chap) .. '}'))
+      elseif el.level == 1 and el.classes:includes('unnumbered') then
+        local title = pandoc.utils.stringify(el)
+        local running = title:match('^后记') and '后记' or title
+        return {el, pandoc.RawBlock('latex', '\\markboth{' .. running .. '}{' .. running .. '}')}
       end
       return el
     end,

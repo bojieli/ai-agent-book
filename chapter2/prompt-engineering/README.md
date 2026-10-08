@@ -28,17 +28,11 @@
 ./run_full_ablation.sh --quick   # 每组 3 任务冒烟
 ```
 
-### 预期排序
+### 正式对照结果
 
-1. **Baseline** — 最佳  
-2. **语气变化** — 通常对成功率影响不大  
-3. **Wiki 随机化** — 严重损害指令遵循  
-4. **无工具描述** — 大量参数错误 / 错误操作  
-5. **组合消融** — 最差
+实验 2-4 使用 Kimi K3，在相同十个航空客服任务上比较六种配置。通过数依次为：baseline 7、tone_trump 6、tone_casual 9、wiki_random 8、no_tool_desc 9、all_ablations 8。记录位于 `runs/exp2-4-kimi-k3-20260730-v7/comparison.json`。
 
-### 总结
-
-消融框架量化展示：提示工程不当时可出现 **30–80%** 的性能下滑；**结构与清晰度**最关键；专业性与一致性支撑有效 Agent 系统。记住：优秀的提示工程就是优秀的员工培训。
+阅读结果时逐任务对照轨迹，分别检查规则执行、工具选择与参数填写，并通过重复运行评估差异是否稳定。语气还需要单独评审表达质量。下方保留的四任务冒烟结果用于检查框架运行，与本次正式对照分开解释。
 
 ### 上游 τ-bench（内嵌）
 
@@ -144,7 +138,7 @@ no_tool_desc                      0.0%         0/  4        0.0%
 all_ablations                     0.0%         0/  4        0.0%
 ```
 
-> ⚠️ 每组 4 任务噪声极大——例如 `wiki_random` 偶然高于 baseline 不是真实结论。方向性信号（去掉工具描述 → 0%、全部叠加 → 0%、语气对成功率影响小）与实验 2-4 一致；要稳定量化请把 `--end-index` 提到 10 以上并多跑 `--seed`。以你自己的完整运行为准。
+> 此表为早期四任务冒烟记录。正式十任务对照见上文；应分别保留两组任务与运行条件，避免将冒烟排序推广为稳定结论。
 
 #### 基线（单配置）
 
@@ -413,7 +407,7 @@ no_tool_desc                      0.0%         0/  4        0.0%
 all_ablations                     0.0%         0/  4        0.0%
 ```
 
-> ⚠️ n=4 per arm is very noisy—e.g. `wiki_random` above baseline is chance, not a real finding. Directional signals (no tool desc → 0%, full stack → 0%, tone little effect on success) match 实验 2-4; for stable numbers use `--end-index` ≥ 10 and multiple `--seed`. Use **your** full runs, not these smoke digits.
+> This is an earlier four-task smoke run. Keep it separate from the canonical ten-task comparison above; inspect task-level traces and repeated runs before drawing conclusions about ordering.
 
 #### Baseline (single config)
 
@@ -500,13 +494,9 @@ python analyze_results.py --results-dir results_ablation --output summary.json
 
 > `--all` already prints the comparison table; `analyze_results.py` is for re-aggregating historical/manual runs. Bundled `results_ablation/*.json` are small debug samples (1–6 tasks)—**not** enough for statistical claims; use full runs (`--end-index` ≥ 10).
 
-### Expected ranking
+### Comparing the arms
 
-1. **Baseline** — best  
-2. **Tone variants** — usually little success-rate impact  
-3. **Wiki randomization** — hurts instruction following  
-4. **No tool descriptions** — many bad tool args / wrong ops  
-5. **Combined** — worst  
+The canonical ten-task run records 7, 6, 9, 8, 9, and 8 passes for baseline, Trump tone, casual tone, shuffled organization, no tool descriptions, and combined changes. Inspect task-level traces and repeated runs to assess which differences persist. Evaluate tone separately from business-state correctness.
 
 ### Key insights
 
@@ -548,7 +538,7 @@ python run_ablation.py ...
 
 ### Summary
 
-Ablations quantify prompt quality: poor structure/docs can cost **30–80%** performance. Structure and clarity dominate; professionalism and consistency support effective Agents. Good prompt engineering ≈ good employee training.
+Ablations compare specific changes under fixed task conditions. The canonical run records mixed outcomes across arms; evaluate business state, tool use, and tone separately, and use repeated runs to assess stability.
 
 ### Upstream τ-bench (bundled)
 

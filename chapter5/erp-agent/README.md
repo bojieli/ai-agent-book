@@ -1,4 +1,4 @@
-# Experiment 5-10: NL ERP Agent (NL → SQL, Artifact Mode) / 实验 5-10：自然语言交互的 ERP Agent（NL → SQL，artifact 模式）
+# 实验 5-13：自然语言交互的 ERP Agent
 
 用户问“研发部有多少在职员工”，系统需要理解业务词汇，并在数据库中执行精确查询。本实验让模型生成 SQL，再把执行和结果核对交给数据库与检查程序。
 

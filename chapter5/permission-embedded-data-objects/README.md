@@ -1,4 +1,4 @@
-# Experiment 5-12: Permission-Embedded Data Objects / 实验 5-12：权限内嵌的数据对象（★★★）
+# 实验 5-15：动态生成软件的权限内嵌数据对象（★★★）
 
 生成代码能够灵活处理数据，也增加了权限检查被遗漏的可能。本节学习怎样把访问约束放在独立的数据接口中，使调用方需要通过统一入口使用数据。
 
@@ -22,7 +22,7 @@
 
 项目是运行在 PostgreSQL 之上的 Python 中间层。`models.py` 定义数据对象、对象类型、权限规则和访问上下文；`store.py` 实现三层流水线：同步执行权限检查与校验器，完成持久化和引用完整性处理，再以受控深度异步执行 reactions（后果反应）。`scenarios/` 提供招聘、项目管理等带状态机、跨对象校验和多租户隔离的示例 schema。`run_targeted_eval.py` 则是可选的在线评测：让模型分别为裸 SQL 和 PEDO 接口生成代码，再用对抗性请求检查最终数据库状态。
 
-这个实验关注的不是生成的 handler 有没有写出一条正确的 `if`，而是同一请求到达稳定数据层后能否被可靠接受或拒绝。生成代码只能携带受限的 `AccessContext`，不能拿到可绕过规则的高权限数据库连接。
+阅读原型时，重点检查每个请求经过哪些规则、使用什么身份，以及最终保存了什么状态。`demo.py` 在同一进程中直接构造 `AccessContext`，用于模拟身份与演示接口；生产部署需要由认证入口建立身份，将生成代码与持有数据库凭证、策略管理能力的服务隔离。仓库当前保留实现和确定性示例，实验台账状态为 available，尚无完整运行验收记录。
 
 <a id="learning-1"></a>
 
@@ -113,10 +113,13 @@ The prototype is a Python middleware layer over PostgreSQL:
   generate code for raw SQL and PEDO APIs on adversarial prompts, then checks
   the resulting database state.
 
-The key comparison is not whether the generated handler contains a correct
-`if` statement. It is whether the same request is accepted or rejected when it
-reaches the stable data layer. The generated layer receives a scoped
-`AccessContext`; it does not receive a privileged database connection.
+The prototype demonstrates how requests pass through authorization, validation,
+persistence, and queued reactions. The teaching script constructs `AccessContext`
+values in-process to simulate identities. A deployment must bind identities at a
+trusted authentication boundary and isolate generated application code from the
+service holding database credentials and policy-management privileges. The
+experiment ledger currently records the implementation as available; a complete
+run acceptance record has not been retained.
 
 ### Run the deterministic demo
 

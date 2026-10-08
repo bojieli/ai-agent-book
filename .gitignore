@@ -89,3 +89,6 @@ chapter1/web-search-agent/validation/*
 chapter1/search-codegen/validation/*
 chapter1/image-gen-workflow/validation/*
 chapter1/learning-from-experience/validation/*
+
+# Local PDF/figure layout diagnostics
+/book/build/

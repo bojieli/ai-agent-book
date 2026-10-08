@@ -14,7 +14,7 @@
 
 ### 固定脚手架，才能比较模型的行动倾向
 
-实验 7-8 为不同模型提供相同的系统提示、用户任务、仓库、工具名称、JSON schema、工具结果、轮数上限与独立测试命令。默认还使用同一个 OpenRouter 兼容端点，减少提供商适配器的差别。中性提示不要求先读多少文件、先写计划或尽早编辑，因此可以观察模型自行选择的顺序。
+实验 7-9 为不同模型提供相同的系统提示、用户任务、仓库、工具名称、JSON schema、工具结果、轮数上限与独立测试命令。默认还使用同一个 OpenRouter 兼容端点，减少提供商适配器的差别。中性提示不要求先读多少文件、先写计划或尽早编辑，因此可以观察模型自行选择的顺序。
 
 三个小型仓库分别涉及局部 bug、跨文件身份信息修改和影响公共契约的缓存修复。每个用例初始测试都会失败，每次运行使用新的临时副本，结束后再独立运行测试。
 
@@ -83,7 +83,7 @@ python -m unittest discover -s chapter7/model-action-threshold/tests -v
 
 ## English
 
-# Experiment 7-8: Model action thresholds in a fixed coding harness
+# Experiment 7-9: Model action thresholds in a fixed coding harness
 
 This experiment tests whether an explore-first or implement-first tendency
 follows the **model** when the coding harness is held fixed. Both model

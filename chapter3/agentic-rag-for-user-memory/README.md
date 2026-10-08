@@ -1,5 +1,12 @@
 # Agentic RAG for User Memory / 面向用户记忆的 Agentic RAG
 
+## 实验 3-9：正文对应运行
+
+本章与实验 3-11 共用一次受控运行及 60 个用例。普通检索按每块八轮对话、重叠两轮分块，保留时间和会话元数据；每次取四块，最多执行三次搜索。普通组通过 47 个用例，三层分别为 19、15、13 个。车辆用例实际只执行一次 `scheduled car services` 查询，回答遗漏特斯拉。下文 offline-demo 的多步查询路径是机制示例，正式模型轨迹保存在本次运行记录中。
+
+运行索引：[validation/latest.json](validation/latest.json)；结果与请求记录：[20260729T214519Z-3_9-1bbf4623](validation/runs/20260729T214519Z-3_9-1bbf4623/)。
+
+
 用户问“按我上次的偏好安排吧”，相关偏好可能散落在多次对话中。本实验把 Agentic RAG 用在用户记忆上，学习怎样通过多步检索补齐背景。
 
 [English](#english)

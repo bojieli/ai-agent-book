@@ -138,3 +138,7 @@ python build_reference_library.py
 ## English
 
 This is real Fish Audio S1 zero-shot voice cloning. A builder renders a same-speaker 4×3×2 reference library, hashes all 24 clips, and the runtime selects those real clips through inline `ReferenceAudio`. Native S1 `(sighing)`, `(chuckling)`, `(gasping)`, and `(uncertain)` controls replace the former OpenAI/onomatopoeia approximation. `demo.py` produces and records the required no-marker, single-reference, and 24-reference comparison.
+
+### 归档材料复核（2026-10-07）
+
+24 条参考音和三组输出音频的哈希一致。`validation/audio_quality_study.json` 与 acceptance 中记录的哈希不同，听测汇总的归档一致性仍待核对。正文将其描述为模型评分下的配置比较，原始音频与历史验收记录均保持原样。

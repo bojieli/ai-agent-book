@@ -1,5 +1,12 @@
 # Structured Indexing: RAPTOR & GraphRAG / 结构化索引：RAPTOR 与 GraphRAG
 
+## 实验 3-7：正文对应运行
+
+正式运行从 Intel 手册选取 14 页，构建教学版层次摘要索引与实体关系索引，在 8 个问题上比较来源页覆盖。RAPTOR 侧生成三组摘要及根摘要，并从所有层检索；GraphRAG 侧使用实体邻域及社区摘要。两者平均来源页覆盖率均约为 95.8%。下文 ADDPS 离线示例展示一条预设多跳路径；正文的实测结论对应正式运行中的 CPUID、OSXSAVE、AVX 与 XCR0 等问题。
+
+运行索引：[validation/latest.json](validation/latest.json)；结果与请求记录：[20260729T200642Z-3_7-4d2d5f9c](validation/runs/20260729T200642Z-3_7-4d2d5f9c/)。
+
+
 有些问题只需一个段落，有些问题却要跨越多个章节。把文档切成平坦片段未必足够。本实验比较层次摘要与知识关系图，学习怎样为不同问题组织检索路径。
 
 [English](#english)

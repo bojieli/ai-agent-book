@@ -211,3 +211,7 @@ limit, final browser observation, screenshot hashes, and credential scan:
 ```bash
 python validate_run.py runs/<run-id> --latest validation/latest.json
 ```
+
+### 归档材料复核（2026-10-07）
+
+manifest 的 25 项产物中，22 项哈希一致；`acceptance.json`、`history.json` 和 `summary.json` 与归档哈希不同。截图与原始响应仍可用于检查动作和页面变化，汇总文件的一致性问题单独记录，历史哈希未重写。

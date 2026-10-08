@@ -1,6 +1,6 @@
 # 第 9 章 · Agent 的持续进化
 
-本章把评估接到更新过程。经验可以成为规则、提示词、工作流或代码，但每次更新都应有来源、独立验证和适用范围。
+本章从轨迹评价出发，介绍知识、指令、程序和参数四类更新载体，再把候选生成、独立验证、发布与整理连接成长期运行的学习闭环。
 
 ## 第一次阅读的顺序
 
@@ -16,7 +16,7 @@
 
 ## 如何阅读实验
 
-正文用 skeleton 说明验证、载体选择、候选发布/回滚和睡眠学习；项目代码按三层阅读：
+正文通过客服、浏览器工作流与记忆整理等案例，讲解轨迹诊断、更新位置选择、发布回滚与睡眠学习。项目代码可以按三个层次阅读：
 
 - **Starter**：从 [trajectory-verifier](trajectory-verifier/) 运行离线样例，先看三层 verifier 和证据输出；
 - **Builder**：再看 [self-modifying-agent](self-modifying-agent/) 的提案—回归—灰度—回滚循环，以及 [prompt-auto-optimization](prompt-auto-optimization/) 的最小 diff；

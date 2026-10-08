@@ -16,7 +16,7 @@
 
 让同一句口语化中文需求走两条路线，对照观察：
 
-1. **工作流路线中「改写」节点产出的提示词与原始需求的差异**——LLM 在这一节点做的不是智能决策，而是「翻译」：把自然语言适配成文生图模型能消化的输入格式；
+1. **工作流路线中「改写」节点产出的提示词与原始需求的差异**——LLM 在这一节点将需求整理成目标生图模型的输入，并可能补充构图与场景细节；
 2. **两条路线最终图片对原始需求的满足程度**。
 
 需求按口语化程度分两类对照：
@@ -45,7 +45,7 @@
                  输入改写后的 prompt / negative_prompt，输出图片
 
 原生路线 A（native）：
-  用户需求 ──> [Gemini gemini-3-pro-image（书稿所称 Nano Banana 2）]
+  用户需求 ──> [Gemini gemini-3-pro-image]
                  一次调用直接输出图片（response_modalities=["IMAGE"]）
 
 原生路线 B（native_gptimage）：
@@ -83,7 +83,7 @@ image-gen-workflow/
 
 ### 已有实验的模型选择与条件
 
-- **原生路线 A（native）**：**`gemini-3-pro-image`**（书稿所称 Nano Banana 2）——
+- **原生路线 A（native）**：**`gemini-3-pro-image`**——
   ListModels 实测可用，5 句需求全部一次成功（20260821T040450Z 轮）；早期轮次
   `agi-programmer` 偶发内容过滤（候选响应 content 为 None），重跑后恢复，非不可用。
 - **原生路线 B（native_gptimage）**：OpenAI **`gpt-image-2`**（GPT-Image 2，

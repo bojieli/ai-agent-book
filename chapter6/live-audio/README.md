@@ -714,3 +714,7 @@ For provider configuration, see [`backend/config.js.example`](backend/config.js.
 MIT
 
 ---
+
+### 归档材料复核（2026-10-07）
+
+完成记录 `backend/validation/real_pipeline_20260729_localwhisper_ark_fish/evidence.json` 引用的 `microphone_input.wav`、`vad_segment.wav` 与 `assistant_response.mp3` 在当前工作树中缺失。现存证据可核对各阶段配置、转录与服务返回记录；音频内容及其哈希复核需要补齐这三项原始产物。正文的流程教学保留，当前完成状态按记录归属说明，未新增音质或响应速度结论。

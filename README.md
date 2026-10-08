@@ -81,6 +81,15 @@
 
 ## 💻 运行配套实验
 
+先获取本书源码：
+
+```bash
+git clone https://github.com/bojieli/ai-agent-book.git
+cd ai-agent-book
+```
+
+也可以在仓库页面选择 **Code → Download ZIP** 下载。实验按章节组织在 `chapter1/` 至 `chapter10/` 中；查找“实验 X-Y”时，先打开对应的 `chapterX/README.md`，根据实验编号进入项目，再按项目 README 配置并运行。复现指南所需的外部仓库由相应 README 列出。
+
 项目统一支持 **Python 3.11–3.13**。请在仓库根目录按章节安装依赖；将 `ch1` 替换为 `ch2` ~ `ch10` 即可安装对应章节：
 
 ```bash

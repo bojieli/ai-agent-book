@@ -319,45 +319,31 @@ python run_exact_experiment.py --campaign-id my-qwen3-4b-run --resume
 `demo.py` and `offline_backend.py` remain useful teaching/CI paths, but their
 lightweight tool outputs and scripted model do not count as formal evidence.
 
-The completed canonical evidence is
-[`validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/summary.json`](validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/summary.json),
-with manifest SHA-256
-`88d622db4981207a9980c30abea4eb8dc2621161ded80be0cb2bb8582833153c`.
-All twelve gates passed. Control and treatment both selected every required
-capability and completed all three tasks (100% versus 100%), so the predicted
-accuracy/completion improvement was not observed. Treatment elapsed time was
-808.926 seconds versus 2,590.820 seconds for control (3.20× faster). Its
-initial system prompt was 1,251 tokens per task and it dynamically injected
-12,838 schema tokens across all tasks; control used 50,352 system-prompt tokens
-per task.
+### 正式运行记录与指标口径
 
-The pass does not hide weak-model detours. In the treatment Apple trajectory,
-Qwen made an irrelevant search and code call (leaving a 215-byte empty SVG)
-and attempted to finish twice before the completion gate forced discovery of
-the stock and news specialists. The arXiv trajectory also retained malformed
-actions and a redundant discovery. The first v2 terminal attempt additionally
-retains real 429/503/disconnect receipts under `failed_attempts/`; a single
-bounded resume archived it and retried only that incomplete task. Completed
-receipts are never replayed, and a third real attempt is refused.
+当前采用的运行是 [`rerun_20260825/summary.json`](validation/experiment_4_1/rerun_20260825/summary.json)，使用本地 Ollama `qwen3:4b` 和真实 MCP 服务提供的 127 个工具。其 manifest SHA-256 为 `e5a70588804b8bc1a5ba38c18fe7f4537e8284e62f745d8a6e03401833046dae`。此前的 `qwen3_4b_exact_v2_20260730T130600Z` 保留为历史记录；两次运行的目录规模、指标与轨迹应分别引用。
 
-`run_exact_experiment.py` 是实验 4-1 的正式运行器：从真实感知 MCP 读取 126 个完整
-schema，验证控制组超过 50K token，两组都使用本地 Ollama `qwen3:4b`，实验组用
-`all-MiniLM-L6-v2` 每次检索五个候选，并通过 MCP 调用真实公共 API 或本地进程执行所选
-工具。mock 结果不能通过正式门禁；中断后可用 `--resume` 续跑。`demo.py` 与离线后端仅作
-教学/CI 机制自检，不是正式验收证据。
+| 项目 | 全量加载 | 主动发现 |
+| --- | ---: | ---: |
+| 每任务初始系统提示词 token | 50,829 | 1,251 |
+| 股价与新闻任务追加的定义 token | 0 | 3,939 |
+| 论文检索与下载任务追加的定义 token | 0 | 1,853 |
+| 贡献者图表任务追加的定义 token | 0 | 2,632 |
+| 覆盖全部必需能力的任务 | 3/3 | 3/3 |
+| 适配层执行后通过产物检查的任务 | 3/3 | 3/3 |
+| 记录中的三任务耗时合计（秒） | 3,056.294 | 783.442 |
 
-正式证据为
-[`validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/summary.json`](validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/summary.json)，
-manifest SHA-256 为
-`88d622db4981207a9980c30abea4eb8dc2621161ded80be0cb2bb8582833153c`。
+以上 token 使用 `o200k` 分词器统一计数，描述的是文本规模，Qwen 的实际分词量应读取模型运行记录。全目录的 schema 文本为 50,597 token，系统提示词还包含任务规则等内容。新增定义量也应与累计推理输入量分开统计：已加载定义会随历史进入后续请求。
 
-12 项门禁全部通过；对照组与实验组均完成 3/3 任务，准确率均为 100%，因此正文
-预期的准确率/完成率提升并未出现。实验组用时 808.926 秒，对照组为
-2,590.820 秒（快 3.20×）；实验组每任务初始 system prompt 为 1,251 token，
-三任务合计动态注入 12,838 token，对照组每任务则为 50,352 token。
+运行器的 `grade_plan` 按每个任务的必需能力槽位计分：某槽位至少有一个工具被选中，就记为命中。回执中的 `accuracy=1.0` 表示全部必需能力均被覆盖；该指标不扣除无关调用，也不检查调用参数和最终答案。正文据此使用“必需能力覆盖”这一名称。
 
-成功轨迹仍保留了 Apple 任务的无关搜索/代码调用、215 字节空 SVG、两次过早结束，
-以及 arXiv 任务的格式错误和冗余发现；不把通过解读为“工具选择过程干净”。
+`_call_real_tool` 在执行前填写或替换参数：股票代码固定为 AAPL，新闻查询固定为 Apple AAPL stock，论文检索固定为 transformer，GitHub 仓库固定为 openai/openai-python；下载调用按搜索结果展开为三次下载，代码执行调用使用运行器根据贡献者数据生成的 SVG 绘图代码。因此，产物由模型选择能力与适配层组织执行共同完成。评估模型自主生成参数或程序时，需要另设保留原始参数的实验。
+
+`_finalize_execution` 检查必需能力是否执行成功，并检查三份 PDF 的数量、文件签名与大小，以及图表的 SVG 签名与大小。论文相关性、新闻对股价变动的解释、图表内容正确性及最终回答质量需要独立评估。现有十二项门禁记录的是上述执行合同的通过情况。
+
+当前运行仍出现解析错误：全量加载组三个任务分别为 1、1、2 次，主动发现组分别为 4、6、1 次（按股价、论文、贡献者顺序）。全量加载组的贡献者任务还包含重复查询和 `file_stat` 调用。主动发现组的股价任务选择了 `yfinance_quote` 与 `web_search`；旧记录中的空图表和过早结束属于先前运行，应查阅相应历史回执。表中耗时保留为本次运行记录，速度比较还受解析重试、模型运行环境、外部接口响应与执行适配层影响。
+
+复现时依次检查 catalog、模型决策、适配后的 MCP 参数与产物；若要比较端到端任务质量，应补充任务相关性、参数正确性、额外调用和最终回答的评价标准。
 
 ---
 

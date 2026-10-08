@@ -28,38 +28,42 @@ This ledger separates execution coverage from the manuscript hypothesis and from
 
 ## Experiment 4-1 — active tool discovery
 
-The canonical campaign `rerun_20260825` uses local Ollama `qwen3:4b`, 127
-complete schemas listed by the real perception MCP server, a 50,597-token
-schema catalog, a local `all-MiniLM-L6-v2` index, five-schema user-history
-injection with a cumulative status bar, and the three exact manuscript tasks in
-both arms. All twelve formal gates are true. Both groups selected every
-required capability and completed 3/3 tasks, so the manuscript's expected
-accuracy/completion improvement was **not observed**: both arms scored 100%.
-Active discovery was faster in this run (783.442 versus 3,056.294 seconds,
-3.90×) and exposed much less schema text (1,251 initial system tokens per
-treatment task plus 8,424 dynamic tokens across the group, versus 50,829 system
-tokens per control task).
+The canonical campaign `rerun_20260825` uses local Ollama `qwen3:4b`,
+127 complete schemas from the perception MCP server and an
+`all-MiniLM-L6-v2` index. Its manifest SHA-256 matches the table above.
+The schema catalog is 50,597 tokens under the experiment's `o200k` tokenizer;
+this is a common text-size estimate, not Qwen's native input-token count.
+The control system prompt contains 50,829 tokens per task. Treatment starts
+with 1,251 system tokens and injects 3,939, 1,853 and 2,632 schema tokens for
+the stock, arXiv and contributor tasks respectively.
 
-This campaign replaces `qwen3_4b_exact_v2_20260730T130600Z` as the canonical
-run. That earlier run was made with MCP SDK v1 (`server_version` 1.26.0) and its
-recorded manifest hash `ce9d6eda…` matched no file left in the directory, so it
-could no longer be verified. The runner had also stopped working entirely: the
-v2 migration in #630 covered only the perception experiment, leaving this runner
-on the v1 `serverInfo` attribute that v2 renamed to `server_info`. Both are fixed
-here, and the re-run reproduces the earlier campaign's qualitative finding —
-no accuracy uplift, a large speed and schema-exposure advantage. Note that the
-run requires `OLLAMA_FLASH_ATTENTION=0`: with flash attention enabled, ollama
-0.20.7 crashes its llama runner on Metal when the control arm's ~50K-token
-prompt is prefilled. That is a runtime workaround only; no experiment parameter
-was changed.
+All twelve recorded gates pass. `grade_plan` measures required capability-slot
+coverage: both arms cover all slots for all three tasks. It does not penalize
+extra calls or score parameter correctness. `_call_real_tool` supplies task
+constants, expands one download selection into three PDF downloads, and
+replaces model-supplied code with a deterministic contributor-chart program.
+Thus the three passing artifact checks in each arm establish execution with
+adapter assistance. `_finalize_execution` checks successful capability calls,
+PDF count/signatures/minimum sizes and SVG signature/minimum size; it does not
+evaluate paper relevance, causal news analysis or answer/chart correctness.
+The manuscript reports capability coverage and schema exposure, rather than
+an unqualified accuracy or autonomous-task-completion rate.
 
-The successful aggregate must not be read as clean treatment behavior. On the
-Apple task, Qwen first issued a vague discovery, malformed JSON, an irrelevant
-Google search and a real but irrelevant `code_interpreter` call that wrote a
-215-byte empty contributor chart; two premature finishes were rejected before
-it discovered and executed `yfinance_quote` and `search_news`. The recovered
-arXiv task retained two protocol parse errors and a redundant vague discovery.
-Those trajectories remain in the canonical receipts.
+Recorded totals are 3,056.294 seconds for control and 783.442 for treatment.
+They include model/runtime/API and parser-retry effects and are retained as
+run observations. In task order stock/arXiv/contributors, parse-error counts
+are 1/1/2 for control and 4/6/1 for treatment. The control contributor trace
+also repeats the contributor query and calls `file_stat`. Treatment selects
+`yfinance_quote` and `web_search` on the stock task. Earlier descriptions of an
+empty stock-task chart and premature finishes belonged to the prior July
+campaign and must not be attributed to this August rerun.
+
+The earlier `qwen3_4b_exact_v2_20260730T130600Z` campaign has 126 tools and
+separate receipts. Its previously recorded manifest hash `ce9d6eda…` matched
+no retained file. The rerun also followed a runner compatibility fix from
+`serverInfo` to `server_info`. The recorded runtime workaround was
+`OLLAMA_FLASH_ATTENTION=0` after an Ollama 0.20.7 Metal prefill failure with
+flash attention enabled. Historical files remain unchanged.
 
 Failed evidence is also preserved. The first exact campaign
 `qwen3_4b_exact_20260730T061700Z` completed but had treatment at only 1/3 tasks
@@ -84,9 +88,28 @@ Manuscript gates: a real MCP catalog covering search, multimodal understanding, 
 - Blocked: Google Calendar and Notion. No usable OAuth token or Notion integration credential exists in the environment. The failed calls and credential-free preflight are retained.
 - Failed provenance retained: the first DashScope attempt used the mainland endpoint with an international-region key and received 401; the corrected run uses `dashscope-intl.aliyuncs.com`.
 
+Experiment 4-2 integrity review: 45 regular-file entries verify. The remaining
+entry `fixtures/mutation_workspace/escape-link` is a `symlink-target` entry
+whose retained absolute target differs from its recorded 28-byte target hash.
+The link points into the original author's workspace and cannot resolve here.
+The historical link and manifest are retained unchanged; the regular-file
+receipts preserve the recorded isolation checks. Full 46-entry integrity is
+therefore pending reconciliation of this symlink provenance.
+
 ## Experiment 4-3 — multimodal processing
 
 Manuscript gates: run the same nontrivial image/PDF and questions through native multimodal, extract-to-text, and tool-on-demand paradigms, retaining real vision calls, tool-use traces, exact-answer quality, latency, usage, and an external judge for free-form output. The canonical run is retained under `multimodal-agent/validation/runs/20260729T185433Z-4_2-e028c9db/`.
+
+Editorial review of Experiment 4-3: the four artifact/question combinations
+use one chart as PNG and inside a PDF, with two questions each. Native vision
+and tool-on-demand each answer 4/4 completely; text extraction answers 0/4.
+All answering stages use `doubao-seed-1-6-250615`; Moonshot judges the answers.
+The tool path is prompted to inspect the image when exact values or spatial
+associations are missing. It makes decision/vision/final calls for every case.
+Reported means are 8.01/10.87/29.79 seconds respectively. Text extraction is
+included in text/tool timing, while PDF rendering precedes native timing.
+Both retained evidence-file hashes verify. These findings support the specific
+information-loss example used in the manuscript.
 
 ## Experiment 4-4 — execution MCP
 

@@ -27,7 +27,7 @@
 - 以 **sync**（等待结果）或 **async**（返回 `task_id`）模式 spawn 子 Agent
 - 向子 Agent 发送后续消息、取消运行中的子 Agent
 - **两种上下文传递策略**（可检查上下文文本与 token 数）：
-  - `minimal` — 只传任务 + 可选手选片段（最省、隐私好，可能饿死子 Agent）
+  - `minimal` — 传递任务与手工选择的必要字段，完整性取决于字段选择
   - `llm_generated` — 额外一次 LLM 调用，从父轨迹合成紧凑、隐私过滤的交接上下文
 - 子 Agent system prompt 使用带标签的上下文来源（`[FROM_MAIN_AGENT]` / `[FROM_USER]` / `[TOOL_RESULT]`）与标准化 JSON 输出
 
@@ -271,8 +271,11 @@ python quickstart.py
 export OPENAI_API_KEY=your-openai-api-key
 python subagent_comparison.py
 ```
-通常 `minimal` token 更少且不泄漏隐私字段，但子 Agent 可能返回 `need_info`；
-`llm_generated` 多一次 LLM 调用交接更丰富、经隐私过滤的上下文，便于子 Agent 完成任务。
+`minimal` 的开销取决于选中的字段；`llm_generated` 增加一次准备调用，需要检查摘要是否保留必要事实、是否包含未授权信息。两种方式都应按字段的实际内容实施权限与隐私检查。
+
+正式记录见 [`real_mcp_human_20260803_v2`](validation/experiment_4_5/real_mcp_human_20260803_v2/summary.json)。最小切片组只选择 `policy`，交接上下文为 56 token，缺少请求中的购买时间与金额，子 Agent 返回 `need_info`。摘要组按业务规则保留 `customer`、`request` 与 `policy`，交接为 151 token，额外准备调用为 643 token；子 Agent 根据“三天前、80 新元”判断符合“七天内、低于 100 新元”的政策。后续给最小组补充“商品未使用”，仍未补齐缺失字段，子 Agent 再次请求金额与时间。
+
+这组记录展示了字段选择对完成任务的影响。要比较两种策略本身，可再增加一个包含相同必要事实的手工切片组，比较回答、总用量与延迟。当前记录还覆盖生命周期、人工答复与超时；邮件、Telegram 与 Slack 的真实投递等待对应服务配置。历史文件中的实验编号 4-4 对应现稿实验 4-5。
 
 #### 与 Claude Desktop 联用
 
@@ -439,7 +442,7 @@ A comprehensive Model Context Protocol (MCP) server that provides collaboration 
 - Spawn sub-agents in **sync** (wait for result) or **async** (returns a `task_id`) mode
 - Send follow-up messages to a sub-agent and cancel a running one
 - **Two context-passing strategies**, made inspectable (context text + token count):
-  - `minimal` — pass only the task plus an optional hand-picked slice (cheapest, private, may starve the sub-agent)
+  - `minimal` — pass the task and a hand-picked slice; sufficiency depends on the selected fields
   - `llm_generated` — one extra LLM call synthesizes a compact, privacy-filtered hand-off context from the parent trajectory
 - Sub-agent system prompt uses labeled context sources (`[FROM_MAIN_AGENT]` / `[FROM_USER]` / `[TOOL_RESULT]`) and standardized JSON output
 
@@ -635,9 +638,7 @@ private data leaked, and each sub-agent's result). Requires `OPENAI_API_KEY`
 export OPENAI_API_KEY=your-openai-api-key
 python subagent_comparison.py
 ```
-Typically `minimal` uses far fewer tokens and never leaks private fields, but the
-sub-agent may return `need_info`; `llm_generated` spends one extra LLM call to
-hand off richer, privacy-filtered context so the sub-agent can complete the task.
+The minimal strategy depends on the selected fields; the generated strategy adds a preparation call and requires checks for omissions and unauthorized content. In the retained campaign, the minimal slice contains only the policy (56 context tokens), while the generated handoff includes the request facts (151 context tokens, plus 643 preparation tokens). The former asks for the missing amount and purchase date; the latter can apply the policy. A matched-information comparison should give both strategies the same necessary facts before comparing cost and quality.
 
 #### Using with Claude Desktop
 

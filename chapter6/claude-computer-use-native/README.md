@@ -130,3 +130,11 @@ retained under `validation/failed_attempts/`:
 These failures are not counted as the canonical result. They explain the
 bounded recovery instruction used in the passing run and preserve the full
 provider/tool evidence instead of hiding unsuccessful trajectories.
+
+### 归档材料复核（2026-10-07）
+
+归档 manifest 列出的 33 项产物逐项复核通过，包含原始响应及截图。核对过程只读取文件，未调用会重新生成 manifest 和 acceptance 的验证入口。
+
+### 输入节奏与命令超时配置
+
+原稿中的 12 ms 逐字符输入间隔和 120 s 命令超时保留为配置讨论示例，具体值应从所运行版本的工具实现读取。逐字符延迟影响文本输入节奏；命令等待超时影响调用何时返回，并不自动证明后台进程已经结束。当前归档以固定容器镜像与工具版本定位实现，正文保留这两项机制及状态检查要求。

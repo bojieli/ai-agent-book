@@ -162,3 +162,7 @@ book experiment. This evidence therefore establishes the bounded Experiment
 [`evidence.json`](validation/runs/exp7-1-openrouter-gpt41mini-telecom-20260802-v1/evidence.json)
 for machine-readable outcomes and [`manifest.json`](validation/runs/exp7-1-openrouter-gpt41mini-telecom-20260802-v1/manifest.json)
 for content hashes.
+
+### 任务与计分复核（2026-10-07）
+
+五条任务、运行轨迹及奖励重新对照，合计四题通过；当前 trajectories 与 evidence 两项文件均存在，但哈希与 manifest 记录不符。当前内容可用于逐条核对，归档一致性仍待确认；历史文件与哈希保持原样。正文的法国漫游案例保留两侧初始化、号码与线路映射、用户工具调用、275 Mbps 测速及最终两条断言。`reward_basis` 仅选择 `ENV_ASSERTION`，动作检查仍单独出现在结果中；过程规则未纳入总分由任务计分配置决定，二元奖励也可以组合过程条件。正文改用字段表解释任务，完整定义和消息编号留在归档中。
