@@ -7,7 +7,7 @@ import sys
 import argparse
 import logging
 from agent import ContextAwareAgent, ContextMode
-from config import PROVIDERS, SUPPORTED_PROVIDERS, canonical_provider, resolve_backend
+from config import Config, PROVIDERS, SUPPORTED_PROVIDERS, canonical_provider, resolve_backend
 from grounding import assess_groundedness, observation_quantities
 import json
 from pathlib import Path
@@ -1209,8 +1209,8 @@ def main():
     parser.add_argument(
         "--provider",
         choices=SUPPORTED_PROVIDERS,
-        default="doubao",
-        help="LLM 提供商（默认：doubao；openrouter 或缺失主 key 时经 OpenRouter 兜底；ollama 为本地免费）"
+        default=Config.LLM_PROVIDER,
+        help="LLM 提供商（默认读取 .env 的 LLM_PROVIDER，未设置时为 doubao；openrouter 或缺失主 key 时经 OpenRouter 兜底；ollama 为本地免费）"
     )
     parser.add_argument(
         "--model",
