@@ -85,6 +85,13 @@ PROVIDERS: dict[str, Provider] = {
         # Atlas Cloud serves models from multiple vendors under namespaced ids.
         namespaces_models=True,
     ),
+    "runcrate": Provider(
+        name="runcrate",
+        base_url="https://api.runcrate.ai/v1",
+        default_model="deepseek-ai/DeepSeek-V4.1-Flash",
+        key_vars=("RUNCRATE_API_KEY",),
+        base_url_var="RUNCRATE_BASE_URL",
+    ),
     "openrouter": Provider(
         name="openrouter",
         base_url=OPENROUTER_BASE_URL,
