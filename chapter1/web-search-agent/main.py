@@ -166,10 +166,10 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[list] = None):
+def main():
     """主函数：解析命令行参数并分发到相应模式"""
     parser = build_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     question = " ".join(args.query).strip()
 
     # 离线演示模式：无需 API Key，回放示例轨迹展示 ReAct 循环
