@@ -22,6 +22,8 @@ from agentbook.providers.registry import supported_providers
 from agentbook.providers.resolution import build_openrouter_backend
 
 PROVIDER_KEY_VARS = [
+    "RUNCRATE_API_KEY",
+    "RUNCRATE_BASE_URL",
     "ATLASCLOUD_API_KEY",
     "ATLASCLOUD_BASE_URL",
     "DASHSCOPE_API_KEY",
@@ -199,6 +201,27 @@ def test_atlascloud_base_url_override(monkeypatch):
     assert resolve_backend("atlascloud").base_url == "https://atlas.example/v1"
 
 
+def test_runcrate_key_uses_runcrate_endpoint_directly(monkeypatch):
+    monkeypatch.setenv("RUNCRATE_API_KEY", "test-runcrate-key")
+    backend = resolve_backend("runcrate")
+    assert backend.api_key == "test-runcrate-key"
+    assert backend.base_url == "https://api.runcrate.ai/v1"
+    assert backend.model == "deepseek-ai/DeepSeek-V4.1-Flash"
+    assert backend.provider == "runcrate"
+    assert backend.using_openrouter is False
+
+
+def test_runcrate_keeps_model_ids_unchanged(monkeypatch):
+    monkeypatch.setenv("RUNCRATE_API_KEY", "test-runcrate-key")
+    assert resolve_backend("runcrate", model="zai-org/GLM-5.3").model == "zai-org/GLM-5.3"
+
+
+def test_runcrate_base_url_override(monkeypatch):
+    monkeypatch.setenv("RUNCRATE_API_KEY", "test-runcrate-key")
+    monkeypatch.setenv("RUNCRATE_BASE_URL", "https://runcrate.example/v1")
+    assert resolve_backend("runcrate").base_url == "https://runcrate.example/v1"
+
+
 def test_explicit_krill_provider_is_not_hijacked_for_gpt5(monkeypatch):
     monkeypatch.setenv("KRILL_API_KEY", "test-krill-key")
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
@@ -374,6 +397,7 @@ def test_supported_providers_covers_registry_and_aliases():
     assert "gemini" in SUPPORTED_PROVIDERS
     assert "krill" in SUPPORTED_PROVIDERS
     assert "atlascloud" in SUPPORTED_PROVIDERS
+    assert "runcrate" in SUPPORTED_PROVIDERS
 
 
 def test_fallback_key_is_not_reusable_as_a_provider_key(monkeypatch):
