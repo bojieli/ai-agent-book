@@ -120,15 +120,20 @@ cd chapter2/prompt-engineering
 `--all` 在同一进程内依次跑基线 + 三个维度单独消融 + 全部叠加，打印成功率对比表，汇总写入 `--output`（默认 `log-dir/ablation_summary_<时间戳>.json`）。复现书中实验 2-4 最直接：
 
 ```bash
+export OPENAI_API_KEY="$MOONSHOT_API_KEY"
+export OPENAI_API_BASE="https://api.moonshot.cn/v1"
 python run_ablation.py \
-    --model gpt-5.6-luna \
+    --all \
+    --model kimi-k3 \
+    --user-model kimi-k3 \
+    --model-provider openai \
+    --user-model-provider openai \
+    --temperature 1 \
     --env airline \
-    --end-index 10 \
-    --all
-# 默认 OpenAI 直连（provider=openai），需 OPENAI_API_KEY。
-# 走 OpenRouter：模型写成带斜杠 id（如 openai/gpt-5），需 OPENROUTER_API_KEY。
-# 通用回退：裸 id（如 gpt-4o-mini）且未设 OPENAI_API_KEY、已设 OPENROUTER_API_KEY 时，
-#           自动前缀为 openai/gpt-4o-mini 并切到 openrouter。
+    --task-ids 0 1 2 3 4 5 6 7 8 9 \
+    --num-trials 1 \
+    --seed 20260730 \
+    --max-agent-steps 30
 ```
 
 **真实冒烟**表示例（`--model gpt-4o --env airline --end-index 4`，每组仅 4 任务，只用于展示表格形态）：
