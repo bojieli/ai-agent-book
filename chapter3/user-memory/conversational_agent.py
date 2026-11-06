@@ -12,7 +12,7 @@ from datetime import datetime
 import uuid
 from openai import OpenAI
 from config import Config, openrouter_model_id, PROVIDER_DEFAULT_MODELS
-from conversation_history import ConversationHistory, ConversationTurn
+from conversation_history import ConversationHistory
 from memory_manager import create_memory_manager, BaseMemoryManager, MemoryMode
 
 
@@ -180,26 +180,8 @@ You MUST analyze the context, user's questions and memories in detail, and provi
             context_parts.append(memory_str)
             context_parts.append("")
         
-        # Keep raw conversation turns scoped to the active session. Persisted
-        # turns from earlier sessions are input to the background memory
-        # processor, but the conversational agent should learn about those
-        # sessions only through the structured long-term memory above.
-        if self.conversation_history:
-            session_turns = self.conversation_history.get_session_turns(
-                self.session_id
-            )
-            
-            if session_turns:
-                context_parts.append("=== CURRENT SESSION HISTORY ===")
-                context_parts.append(f"Total turns: {len(session_turns)}")
-                context_parts.append("")
-                
-                for turn in session_turns:
-                    context_parts.append(f"[Session: {turn.session_id}, Turn {turn.turn_number}, Time: {turn.timestamp}]")
-                    context_parts.append(f"User: {turn.user_message}")
-                    context_parts.append(f"Assistant: {turn.assistant_message}")
-                    context_parts.append("")
-        
+        # The active session is already sent as role-tagged messages. Persisted
+        # turns are for the background processor, not an extra copy in the prompt.
         return "\n".join(context_parts)
     
     def get_conversation_context(self) -> List[Dict[str, str]]:
