@@ -2,6 +2,7 @@
 
 import os
 import sys
+from types import SimpleNamespace
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -31,8 +32,11 @@ def make_agent(history: ConversationHistory, session_id: str):
     return agent
 
 
-def test_memory_context_excludes_raw_turns_from_previous_sessions():
+def test_chat_sends_current_history_once_and_excludes_previous_sessions(tmp_path):
     history = ConversationHistory.__new__(ConversationHistory)
+    history.user_id = "test-user"
+    history.history_file = str(tmp_path / "history.json")
+    history.dify_client = None
     history.conversations = [
         ConversationTurn(
             "session-old",
@@ -40,24 +44,33 @@ def test_memory_context_excludes_raw_turns_from_previous_sessions():
             "I will remember that detail",
             "2026-07-28T10:00:00",
             1,
-        ),
-        ConversationTurn(
-            "session-current",
-            "What did we discuss in this session?",
-            "We discussed the current task",
-            "2026-07-29T10:00:00",
-            2,
-        ),
+        )
     ]
     agent = make_agent(history, "session-current")
+    agent.verbose = False
+    agent.model = "test-model"
+    agent.conversation = []
+    sent = []
 
-    context = agent._get_memory_context()
+    def complete(**kwargs):
+        sent.append(kwargs["messages"])
+        return [SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content="Done"))])]
 
-    assert "Preferred editor: VS Code" in context
-    assert "=== CURRENT SESSION HISTORY ===" in context
-    assert "What did we discuss in this session?" in context
-    assert "My private detail from the old session" not in context
-    assert "session-old" not in context
+    agent.client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=complete)))
+    assert agent.chat("Please remember this turn") == "Done"
+    assert agent.chat("What did we discuss?") == "Done"
+
+    previous_user, previous_assistant, current_user = sent[-1]
+    assert previous_user == {"role": "user", "content": "Please remember this turn"}
+    assert previous_assistant == {"role": "assistant", "content": "Done"}
+    assert current_user["content"].startswith("What did we discuss?")
+    assert "Preferred editor: VS Code" in current_user["content"]
+    assert "Please remember this turn" not in current_user["content"]
+    assert "My private detail from the old session" not in current_user["content"]
+    assert [turn.user_message for turn in history.get_session_turns("session-current")] == [
+        "Please remember this turn",
+        "What did we discuss?",
+    ]
 
 
 def test_new_session_uses_structured_memory_without_old_raw_history():
