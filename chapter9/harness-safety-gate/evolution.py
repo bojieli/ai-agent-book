@@ -41,7 +41,13 @@ FORBIDDEN_CALLS = {"eval", "exec", "compile", "open", "__import__", "input", "br
 _DESTRUCTIVE_SQL = re.compile(r"\b(DROP\s+TABLE|TRUNCATE)\b", re.IGNORECASE)
 _DELETE_FROM = re.compile(r"\bDELETE\s+FROM\b", re.IGNORECASE)
 _HAS_WHERE = re.compile(r"\bWHERE\b", re.IGNORECASE)
-_DANGEROUS_SHELL = re.compile(r"\brm\s+-[rf]+\b|\bmkfs\b|\bshutdown\b|\bdd\s+if=", re.IGNORECASE)
+# rm 的 -r/-f 可以和其他短参数合写（-rfv、-vrf），也可以写成长参数或排在其他参数之后；
+# 只在同一条命令内（不跨 ; & |）查找。
+_DANGEROUS_SHELL = re.compile(
+    r"\brm\s+(?:[^\s;&|]+\s+)*?(?:-[a-z]*[rf][a-z]*|--recursive|--force)(?!\w)"
+    r"|\bmkfs\b|\bshutdown\b|\bdd\s+if=",
+    re.IGNORECASE,
+)
 
 
 def _load_stable_dispatcher():
@@ -184,7 +190,13 @@ VERSION = "1.1.0-candidate"
 _DESTRUCTIVE_SQL = re.compile(r"\b(DROP\s+TABLE|TRUNCATE)\b", re.IGNORECASE)
 _DELETE_FROM = re.compile(r"\bDELETE\s+FROM\b", re.IGNORECASE)
 _HAS_WHERE = re.compile(r"\bWHERE\b", re.IGNORECASE)
-_DANGEROUS_SHELL = re.compile(r"\brm\s+-[rf]+\b|\bmkfs\b|\bshutdown\b|\bdd\s+if=", re.IGNORECASE)
+# rm 的 -r/-f 可以和其他短参数合写（-rfv、-vrf），也可以写成长参数或排在其他参数之后；
+# 只在同一条命令内（不跨 ; & |）查找。
+_DANGEROUS_SHELL = re.compile(
+    r"\brm\s+(?:[^\s;&|]+\s+)*?(?:-[a-z]*[rf][a-z]*|--recursive|--force)(?!\w)"
+    r"|\bmkfs\b|\bshutdown\b|\bdd\s+if=",
+    re.IGNORECASE,
+)
 
 # token -> 操作指纹；取出即作废，保证一次性
 _pending = {}
