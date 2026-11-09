@@ -121,6 +121,26 @@ class CandidateGateTest(unittest.TestCase):
         self.assertFalse(self.gate["requires_confirmation"]("sql_query", {"query": "DELETE FROM t WHERE id=1"}))
         self.assertFalse(self.gate["requires_confirmation"]("git_push", {"force": False}))
 
+    def test_recursive_rm_variants_require_confirmation(self):
+        # 参数顺序和写法不同的递归删除，与 rm -rf 一样不可逆，诊断与候选门禁都必须挂起。
+        destructive = [
+            "rm -rf build/",
+            "rm -rfv build/",
+            "rm -vrf build/",
+            "rm -Rf build/",
+            "rm -r -f build/",
+            "rm --recursive --force build/",
+            "rm -fr build/ && ls",
+        ]
+        for command in destructive:
+            args = {"command": command}
+            self.assertEqual(classify_risk("run_shell", args)[0], "dangerous_shell", command)
+            self.assertTrue(self.gate["requires_confirmation"]("run_shell", args), command)
+        for command in ("rm notes.txt", "ls -la", "git rm --cached notes.txt", "rm a.txt; ls -f"):
+            args = {"command": command}
+            self.assertIsNone(classify_risk("run_shell", args)[0], command)
+            self.assertFalse(self.gate["requires_confirmation"]("run_shell", args), command)
+
     def test_token_is_single_use_and_bound_to_operation(self):
         env = STABLE.default_env()
         calls = []
