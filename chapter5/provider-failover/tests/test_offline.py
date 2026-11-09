@@ -216,3 +216,38 @@ def test_duplicate_side_effect_is_counted_by_fingerprint():
     result = {"text": "", "tool_calls": [{"name": "get_flight_price", "arguments": {"city": "东京"}}]}
     assert judging.judge("reasoning", "resend", {}, result, executed)["duplicate_side_effects"] == 1
     assert judging.judge("reasoning", "resend", {}, result, "")["duplicate_side_effects"] == 0
+
+
+def _source_then_target(monkeypatch, target_failure):
+    """源厂商（Kimi）完成前两次工具调用，之后切到目标厂商并让它失败。"""
+    import providers
+    import run_handoff
+
+    calls = {"n": 0}
+
+    def fake_call(provider, payload):
+        if provider == KIMI:
+            calls["n"] += 1
+            name = ["get_flight_price", "get_hotel_price"][calls["n"] - 1]
+            return {"choices": [{"message": {"content": "", "tool_calls": [{
+                "id": f"c{calls['n']}", "type": "function",
+                "function": {"name": name, "arguments": '{"city":"东京"}'}}]}}]}
+        raise target_failure
+
+    monkeypatch.setattr(providers, "call", fake_call)
+    return run_handoff.run_pair(KIMI, ANTHROPIC, NAIVE)
+
+
+def test_handoff_rejection_is_recorded_as_vendor_error(monkeypatch):
+    from providers import ProviderError
+
+    body = '{"type":"error","error":{"message":"messages.1: thinking signature invalid"}}'
+    record = _source_then_target(monkeypatch, ProviderError(ANTHROPIC, 400, body))
+    assert record["handoff"] == {"status": 400, "error_body": body}
+    assert record["error"] == f"400: {body}"
+
+
+def test_connection_failure_after_switch_is_not_a_handoff_rejection(monkeypatch):
+    record = _source_then_target(monkeypatch, RuntimeError("三次尝试都没能连上：timeout"))
+    assert record["handoff"] is None
+    assert record["error"] == "三次尝试都没能连上：timeout"
