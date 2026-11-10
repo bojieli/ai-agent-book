@@ -85,6 +85,15 @@ PROVIDERS: dict[str, Provider] = {
         # Atlas Cloud serves models from multiple vendors under namespaced ids.
         namespaces_models=True,
     ),
+    "uberllm": Provider(
+        name="uberllm",
+        base_url="https://api.uberllm.dev/v1",
+        default_model="deepseek/deepseek-v4-flash",
+        key_vars=("UBERLLM_API_KEY",),
+        base_url_var="UBERLLM_BASE_URL",
+        # UberLLM serves models from multiple vendors under namespaced ids.
+        namespaces_models=True,
+    ),
     "openrouter": Provider(
         name="openrouter",
         base_url=OPENROUTER_BASE_URL,
