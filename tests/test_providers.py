@@ -27,6 +27,8 @@ PROVIDER_KEY_VARS = [
     "DASHSCOPE_API_KEY",
     "DASHSCOPE_BASE_URL",
     "SILICONFLOW_API_KEY",
+    "UBERLLM_API_KEY",
+    "UBERLLM_BASE_URL",
     "ARK_API_KEY",
     "MOONSHOT_API_KEY",
     "KIMI_API_KEY",
@@ -197,6 +199,27 @@ def test_atlascloud_base_url_override(monkeypatch):
     monkeypatch.setenv("ATLASCLOUD_API_KEY", "test-atlascloud-key")
     monkeypatch.setenv("ATLASCLOUD_BASE_URL", "https://atlas.example/v1")
     assert resolve_backend("atlascloud").base_url == "https://atlas.example/v1"
+
+
+def test_uberllm_key_uses_multi_model_gateway_directly(monkeypatch):
+    monkeypatch.setenv("UBERLLM_API_KEY", "test-uberllm-key")
+    backend = resolve_backend("uberllm")
+    assert backend.api_key == "test-uberllm-key"
+    assert backend.base_url == "https://api.uberllm.dev/v1"
+    assert backend.model == "deepseek/deepseek-v4-flash"
+    assert backend.provider == "uberllm"
+    assert backend.using_openrouter is False
+
+
+def test_uberllm_namespaces_bare_model_ids(monkeypatch):
+    monkeypatch.setenv("UBERLLM_API_KEY", "test-uberllm-key")
+    assert resolve_backend("uberllm", model="gpt-4o").model == "openai/gpt-4o"
+
+
+def test_uberllm_base_url_override(monkeypatch):
+    monkeypatch.setenv("UBERLLM_API_KEY", "test-uberllm-key")
+    monkeypatch.setenv("UBERLLM_BASE_URL", "https://uberllm.example/v1")
+    assert resolve_backend("uberllm").base_url == "https://uberllm.example/v1"
 
 
 def test_explicit_krill_provider_is_not_hijacked_for_gpt5(monkeypatch):
@@ -374,6 +397,7 @@ def test_supported_providers_covers_registry_and_aliases():
     assert "gemini" in SUPPORTED_PROVIDERS
     assert "krill" in SUPPORTED_PROVIDERS
     assert "atlascloud" in SUPPORTED_PROVIDERS
+    assert "uberllm" in SUPPORTED_PROVIDERS
 
 
 def test_fallback_key_is_not_reusable_as_a_provider_key(monkeypatch):
