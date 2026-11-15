@@ -129,6 +129,10 @@ def load_result_files(paths: List[str]) -> Dict[str, Any]:
             logger.warning(f"Skipping {path}: {e}")
             continue
 
+        if not isinstance(data, dict):
+            logger.warning("Skipping %s: expected a JSON object", path)
+            continue
+
         # A comparison_*.json holds many modes; a result_*.json holds one.
         if "mode" not in data and all(isinstance(v, dict) and "metrics" in v
                                       for v in data.values()):
