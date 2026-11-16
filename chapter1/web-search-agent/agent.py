@@ -412,11 +412,8 @@ class WebSearchAgent:
                     # 处理工具调用
                     logger.info(f"模型请求调用 {len(choice.message.tool_calls)} 个工具")
 
-                    # 添加助手的消息（包含工具调用）到历史。
-                    # 注意：必须把消息重建为纯 dict，而不是直接塞入 SDK 返回的
-                    # pydantic message 对象——后者会附带 reasoning_content / refusal
-                    # 等额外字段，回传给 Moonshot 时会触发 "tokenization failed" 400 错误。
-                    self.conversation_history.append({
+                    # 只回传模型服务接受的字段。
+                    assistant_message = {
                         "role": "assistant",
                         "content": choice.message.content or "",
                         "tool_calls": [
@@ -430,7 +427,21 @@ class WebSearchAgent:
                             }
                             for tc in choice.message.tool_calls
                         ],
-                    })
+                    }
+                    if self.search_provider == "parallel":
+                        # 工具结果会继续同一轮推理，保留模型返回的推理内容。
+                        assistant_message["content"] = choice.message.content
+                        reasoning_fields = (
+                            ("reasoning_details", "reasoning", "reasoning_content")
+                            if self.using_openrouter
+                            else ("reasoning_content",)
+                        )
+                        for field in reasoning_fields:
+                            value = getattr(choice.message, field, None)
+                            if value is not None:
+                                assistant_message[field] = value
+                                break
+                    self.conversation_history.append(assistant_message)
 
                     # 执行每个工具调用
                     for tool_call in choice.message.tool_calls:
