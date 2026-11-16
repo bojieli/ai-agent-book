@@ -84,6 +84,7 @@ def run_interactive_mode(agent: WebSearchAgent, output: Optional[str] = None):
                                       "answer": answer,
                                       "api_turns": agent.get_api_turns(),
                                       "provider": "openrouter" if agent.using_openrouter else "moonshot",
+                                      "search_provider": agent.search_provider,
                                       "model": agent.model,
                                       "base_url": agent.base_url})
 
@@ -126,6 +127,7 @@ def run_single_question(agent: WebSearchAgent, question: str,
                                   "answer": answer,
                                   "api_turns": agent.get_api_turns(),
                                   "provider": "openrouter" if agent.using_openrouter else "moonshot",
+                                  "search_provider": agent.search_provider,
                                   "model": agent.model,
                                   "base_url": agent.base_url})
     except Exception as e:
@@ -148,8 +150,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("query", nargs="*",
                         help="要提问的问题；省略则进入交互模式")
-    parser.add_argument("--provider", choices=["kimi", "offline-demo"], default="kimi",
+    parser.add_argument("--provider", choices=["kimi", "parallel", "offline-demo"], default="kimi",
                         help="搜索后端：kimi=调用 Kimi Formula web_search（需 API Key）；"
+                             "parallel=通过 Parallel MCP 联网搜索（需模型 API Key）；"
                              "offline-demo=离线回放示例轨迹（默认 kimi）")
     parser.add_argument("--model", default=Config.DEFAULT_MODEL,
                         help=f"使用的模型名称（默认 {Config.DEFAULT_MODEL}）")
@@ -204,6 +207,7 @@ def main(argv: Optional[list] = None):
             base_url=args.base_url,
             model=args.model,
             verbose=not args.quiet,
+            search_provider=args.provider,
         )
         logger.info("Agent 初始化成功")
     except Exception as e:
