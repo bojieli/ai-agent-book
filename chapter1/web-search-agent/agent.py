@@ -386,7 +386,7 @@ class WebSearchAgent:
         # Each independent question keeps its own real declaration receipt.
         self._formula_tools = None
         if self.search_provider == "parallel":
-            logger.info("Parallel 搜索：工具查询将发送至 https://mcp.parallel.ai/mcp")
+            logger.info("Parallel 搜索：模型生成的搜索词将匿名发给 Parallel。")
         else:
             logger.info("开始调用 Kimi 搜索工具...")
 

@@ -160,13 +160,13 @@ python main.py --help
 python main.py --provider offline-demo
 ```
 
-**通过 Parallel MCP 搜索**。如果用 `uv` 安装，在仓库根目录运行 `uv sync --locked --extra ch1 --extra mcp`；如果用本目录的 `requirements.txt` 安装，已包含 MCP SDK。
+**通过 [Parallel MCP](https://docs.parallel.ai/integrations/mcp/installation) 搜索。** 如果用 `uv`，在仓库根目录运行 `uv sync --locked --extra ch1 --extra mcp`。如果用 pip，在本实验目录运行 `python -m pip install -r requirements.txt`，其中包含 MCP SDK。
 
 ```bash
 python main.py --provider parallel --output result.json "请搜索 Python 3.13 官方发行说明，解释实验性的自由线程模式，并附上原文链接。"
 ```
 
-需要 `MOONSHOT_API_KEY` 或 `OPENROUTER_API_KEY` 来调用支持工具调用的模型。模型生成的搜索词会发到 `https://mcp.parallel.ai/mcp`，搜索本身无需 Parallel API Key。打开 `result.json`，在 `trace` 的 `observation` 步骤里找网页链接和原文摘录，再与答案中的引用对照。实验 1-2 的 Formula 验收仍使用 `kimi`。
+请选用支持工具调用的模型，并设置 `MOONSHOT_API_KEY` 或 `OPENROUTER_API_KEY`。模型调用的费用和配额以服务商为准。模型生成的搜索词会发到 `https://mcp.parallel.ai/mcp`，匿名搜索无需 Parallel API Key，并受匿名调用频率限制。打开 `result.json`，在 `trace` 的 `observation` 步骤里找网页链接和原文摘录，再与答案中的引用对照。实验 1-2 的 Formula 验收仍使用 `kimi`。
 
 **交互模式**（每次提问独立，`search_and_answer` 会重置对话历史，无跨问题上下文）：
 
@@ -340,8 +340,8 @@ Windows 的环境激活方式见下文“快速开始”。终端会依次展示
 - Author / 作者: AI Agent 实战训练营；version / 版本: 1.0.0.
 - Prefer `--provider offline-demo` first if you only want to see the ReAct shape without spending API quota.
   若只想先看 ReAct 形态、不消耗配额，优先运行 `--provider offline-demo`。
-- Moonshot Formula search uses a Moonshot key. Parallel MCP search uses the model key you already configured and sends searches anonymously.
-  Moonshot Formula 搜索需要 Moonshot Key。Parallel MCP 搜索使用已有的模型凭据，搜索请求以匿名方式发送。
+- Moonshot Formula search uses a Moonshot key. In Parallel mode, the agent uses the configured model key for inference and sends search queries to Parallel anonymously.
+  Moonshot Formula 搜索需要 Moonshot Key。在 Parallel 模式下，模型调用使用已配置的模型密钥，搜索请求以匿名方式发给 Parallel。
 
 ## English
 
@@ -468,13 +468,13 @@ python main.py --help
 python main.py --provider offline-demo
 ```
 
-**Search with Parallel MCP.** If you use `uv`, run `uv sync --locked --extra ch1 --extra mcp` at the repository root. The chapter's `requirements.txt` also includes the MCP SDK.
+**Search with [Parallel MCP](https://docs.parallel.ai/integrations/mcp/installation).** If you use `uv`, run `uv sync --locked --extra ch1 --extra mcp` at the repository root. If you use pip, run `python -m pip install -r requirements.txt` in the experiment directory to install the MCP SDK with the other dependencies.
 
 ```bash
 python main.py --provider parallel --output result.json "Find the official Python 3.13 release notes and cite the section on experimental free-threading."
 ```
 
-Set `MOONSHOT_API_KEY` or `OPENROUTER_API_KEY` for a model that supports tool calling. The agent sends the model's search terms to `https://mcp.parallel.ai/mcp` without a Parallel API key. Open `result.json` and compare the URLs and excerpts in the `observation` step with the citations in the answer. Use `kimi` for the Experiment 1-2 Formula acceptance check.
+Set `MOONSHOT_API_KEY` or `OPENROUTER_API_KEY` for a model that supports tool calling. Your model provider's pricing and quotas apply to inference. The agent sends the model's search terms to `https://mcp.parallel.ai/mcp` without a Parallel API key, subject to anonymous rate limits. Open `result.json` and compare the URLs and excerpts in the `observation` step with the citations in the answer. Use `kimi` for the Experiment 1-2 Formula acceptance check.
 
 **Interactive mode** (ongoing dialogue):
 
