@@ -16,6 +16,7 @@ import os
 import shutil
 import statistics
 import subprocess
+import sys
 import tempfile
 import time
 from dataclasses import asdict, dataclass, field
@@ -193,6 +194,8 @@ def changed_files(before: dict[str, str], repo: Path) -> list[str]:
 
 def run_test_command(repo: Path, command: list[str], timeout: int = 30) -> dict[str, Any]:
     started = time.monotonic()
+    if command and command[0] == "python":
+        command = [sys.executable, *command[1:]]
     try:
         completed = subprocess.run(
             command,
