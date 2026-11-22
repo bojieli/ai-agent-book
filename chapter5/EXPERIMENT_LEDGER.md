@@ -5,6 +5,10 @@ This ledger distinguishes a complete experiment from a supported hypothesis.
 manuscript has substantive evidence; a statistically negative result remains
 a complete experiment and is reported as such.
 
+Use the experiment number in the first column to find the current book exercise.
+Run directories retain the numbers used when the evidence was collected. For 5-16,
+the digest identifies an archived comparison outside Git. The [project guide](agent-creator/README.md#learning-3) explains the checks and how to reproduce the comparison.
+
 | Experiment | Canonical evidence | Status | `official_complete` | Hypothesis | Evidence SHA-256 |
 | --- | --- | --- | --- | --- | --- |
 | 5-1 | `provider-failover/validation/runs/exp5-1-handoff-20260824T150228Z/manifest.json` | passed | true | portability supported; redundant-call reduction not observed | `102f27e469fcc020667be93eec0e16d84dec7f454244a147401fd4f932b242be` |
