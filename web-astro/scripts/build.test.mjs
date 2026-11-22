@@ -708,7 +708,7 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
       if (chapterNumber === 10) {
         assert.equal(code.length, revised ? 1 : 5, edition.lang);
         assert.equal(images.length, 11, edition.lang);
-        assert.equal(count(article, 'table'), 4, edition.lang);
+        assert.equal(count(article, 'table'), edition.lang === 'zh-CN' ? 5 : 4, edition.lang);
         assert.equal(count(article, 'figure'), 11, edition.lang);
         assert.equal(count(article, 'figcaption'), 11, edition.lang);
         for (const level of [2, 4]) {
