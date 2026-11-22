@@ -12,6 +12,8 @@ from playwright.sync_api import sync_playwright
 
 OPF = "{http://www.idpf.org/2007/opf}"
 XHTML = "{http://www.w3.org/1999/xhtml}"
+SVG = "{http://www.w3.org/2000/svg}"
+XLINK = "{http://www.w3.org/1999/xlink}"
 MATH = "{http://www.w3.org/1998/Math/MathML}"
 CSS = b"""
 /* Reflow code and tables on narrow Kindle screens. */
@@ -19,6 +21,7 @@ body { overflow-wrap: break-word; }
 table { display: table; max-width: 100%; }
 pre, pre > code.sourceCode { white-space: pre-wrap; overflow-wrap: anywhere; }
 pre > code.sourceCode > span { display: inline; }
+img.kindle-cover { display: block; margin: 0 auto; max-width: 100%; max-height: 100vh; height: auto; }
 img.kindle-math { display: inline; vertical-align: middle; max-width: 100%; height: auto; }
 img.kindle-display { display: block; margin: 0.5em auto; }
 """
@@ -46,6 +49,23 @@ def render(page, markup):
     return figure.screenshot(), size["width"]
 
 
+def unwrap_pandoc_cover(doc, path, cover_paths):
+    """Expose the cover bitmap directly on readers without inline SVG support."""
+    cover = doc.find(f".//{XHTML}div[@id='cover-image']/{SVG}svg")
+    if cover is None or len(cover) != 1 or cover[0].tag != SVG + "image":
+        return False
+    href = cover[0].get(XLINK + "href") or cover[0].get("href")
+    if not href or member(path, href) not in cover_paths:
+        return False
+    image = ET.Element(XHTML + "img", src=href, alt=doc.findtext(f"{XHTML}head/{XHTML}title") or "Cover")
+    image.set("class", "kindle-cover")
+    if cover.get("id"):
+        image.set("id", cover.get("id"))
+    image.tail = cover.tail
+    cover.getparent().replace(cover, image)
+    return True
+
+
 def convert(source, destination, page):
     with ZipFile(source) as original:
         entries = {name: original.read(name) for name in original.namelist()}
@@ -70,6 +90,11 @@ def convert(source, destination, page):
         elif item.get("media-type") == "text/css":
             entries[path] += CSS
 
+    cover_paths = {
+        member(package, item.get("href")) for item in manifest.findall(OPF + "item")
+        if "cover-image" in item.get("properties", "").split()
+        and item.get("media-type") in {"image/jpeg", "image/png"}
+    }
     formula_cache = {}
     reserved_ids = {item.get("id") for item in manifest}
     for item in manifest.findall(OPF + "item"):
@@ -115,12 +140,13 @@ def convert(source, destination, page):
             image.tail = math.tail
             math.getparent().replace(math, image)
         properties = item.get("properties", "").split()
-        if "mathml" in properties:
-            properties.remove("mathml")
-            if properties:
-                item.set("properties", " ".join(properties))
-            else:
-                del item.attrib["properties"]
+        if unwrap_pandoc_cover(doc, path, cover_paths) and doc.find(f".//{SVG}svg") is None:
+            properties = [name for name in properties if name != "svg"]
+        properties = [name for name in properties if name != "mathml"]
+        if properties:
+            item.set("properties", " ".join(properties))
+        elif "properties" in item.attrib:
+            del item.attrib["properties"]
         entries[path] = ET.tostring(doc.getroottree(), encoding="utf-8", xml_declaration=True)
     entries[package] = ET.tostring(opf, encoding="utf-8", xml_declaration=True)
     with ZipFile(destination, "w", compression=ZIP_DEFLATED) as output:
