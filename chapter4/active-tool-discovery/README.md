@@ -10,11 +10,7 @@
 
 ## 模型怎样发现缺少的工具
 
-主动发现把工具目录视为可查询资源：先获取候选说明，再决定调用哪个工具。这样减少一次暴露的信息，但增加了查找步骤，也可能漏掉真正需要的工具。
-
-### 发现工具也是一次有成本的行动
-
-主动发现把“有哪些工具”变成运行时可以询问的问题。Agent 先看到少量发现接口，在任务需要时查找某类能力，再读取和调用具体工具。这能减少初始上下文，但也增加发现步骤；如果模型不知道该查什么，关键工具可能一直没有被找到。因此，下面的比较既保留 token 与调用统计，也要检查发现路径和任务结果。
+用户问：“苹果公司最近股价怎么样？有没有相关新闻能解释一下原因？”报价工具能回答前半句，要回答后半句，还得找到新闻工具。全量加载让模型一开始就看到整个目录；预筛选用用户的原话查一次目录；主动发现允许模型查过股价后，再专门为新闻查一次。做实验时，把每次检索给出的候选与实际调用的工具并排看，才能分清工具是没被找到，还是找到了却没被使用。
 
 ### 目的
 
@@ -71,17 +67,9 @@ demo.py            对同一组任务分别跑所选策略，打印 token / 延�
 **为什么用"文本注入 + 文本解析"而不是 OpenAI 原生 function calling？**
 两组都把 schema 作为文本交给模型，再从其回复解析 JSON 调用。这样可以保持调用格式一致，比较工具说明出现的位置和数量。若要判断原生 function calling 是否能减少选错工具，还需要在同一目录和任务上单独对照。
 
-**为什么嵌入检索能避免错选？** 通用工具 `web_search` 的描述"什么都能做"，语义被稀释；而专用工具
-（如 `search_news`）描述聚焦。对一个聚焦的 `need`（"获取特斯拉最近的新闻"），聚焦的专用工具余弦相似度
-更高、排在前面，通用工具往往进不了 top-k，于是根本不会被加载 —— 检索层天然起到了"精度过滤"作用。
+**怎样读一次检索的结果？** 在 `finance+news` 的离线轨迹中，预筛选列出的十个候选既有专用的 `get_stock_price`、`search_news`，也有通用的 `web_search`。候选来自相似度排序，通用工具也可能排在前面。先看候选里有没有办法完成任务，再读调用轨迹，看看模型用了哪一个。
 
-**检索预筛选为什么不够？** 检索预筛选（`run_retrieval_prefilter`）只按**初始查询**做一次语义匹配、
-一次性注入 top-n 工具。对"查股价 + 搜新闻"这类多步跨领域任务，初始查询的向量往往偏向第一个领域，
-第二个子任务需要的专用工具可能挤不进 top-n，模型执行到一半才发现"想调用的工具根本没在清单里"——
-这正是书中指出的一次性匹配的内在局限。
-
-主动发现把"发现"延后到执行中、按每个真实浮现的 `need` 分别检索，
-从而补齐这一缺口（离线自检里可直接观察到：检索预筛选在半数多步任务上漏掉了第二个工具，见下表）。
+**为什么还要允许再次查目录？** 如果第一次查找没找到报价接口，预筛选组只能从原来的清单里选。主动发现组可以把下一次查询缩小到“查询加密货币的实时价格”。两次查询会得到不同的候选；能否因此办成任务，要看检索结果和随后的调用。下面的离线对照给出了两种失败情形。
 
 <a id="learning-1"></a>
 
@@ -146,14 +134,9 @@ python demo.py --offline --output results/offline.json         # 导出结构化
 | 检索预筛选 | 4/8 | 4/8 | 1030 | 8236 | 0.006 |
 | 主动发现 | 8/8 | 8/8 | 974 | 7796 | 0.010 |
 
-离线自检要传达的**两个真实、可复现的结构性结论**：
+**先算目录开销。** 八个任务合计，全量组注入了 93,040 个工具定义 token，主动发现组注入了 7,796 个，前者约为后者的 11.9 倍。`injected_tokens` 只统计脚本加载的工具说明；要算整次任务的费用，还需要各轮的实际模型用量。保持八个任务不变，用 `--tool-set-size 20` 再跑一次。启动日志显示实际保留了 **27** 个工具，因为基础工具、通用工具和各题评分时接受的工具都要留下。此时两组分别注入 22,464 和 7,842 个 token，比值约为 **2.9**。
 
-1. **token 随工具集规模放大而分化**：全量注入固定 11,630 token/任务；检索预筛选与主动发现按需只注入
-   约 1,000 token（**~11.9× 精简**）。用 `--tool-set-size 20` 缩小工具集，差距收敛到 ~1.8×——印证"工具越多、
-   全量注入越吃亏"。
-2. **检索预筛选在多步跨领域任务上结构性漏工具**：一次性 top-10 检索在 8 个任务里有 4 个漏掉了第二个子任务
-   所需的专用工具（如 `academic(诱导)` 的 top-10 里根本没有 `arxiv_search`），模型执行到一半调不到工具 →
-   子任务失败；主动发现按每个真实浮现的 `need` 分别检索，8/8 补齐。
+**再查预筛选组哪四题没做完。** 在 `crypto+news` 和 `academic(诱导)` 中，十个候选分别缺少能完成加密货币报价、学术检索的工具。另两题却有可用工具：`forex+weather` 有评分规则认可的 `convert_currency`，脚本只调用了天气工具；`opinion(诱导)` 有可用的新闻工具，脚本一次也没调用。可以打开 `tools_library.py` 的 `required_slots` 核对每题接受哪些替代工具。四次失败中，两次需要改候选检索，另两次即使用原来的候选，也还有改进选择的余地。主动发现组在这套脚本化任务中完成了八题。
 
 ### 模型 ↔ 脚手架此消彼长（弱模型 gpt-4o-mini vs 强模型 gpt-5.6-luna，均为真实运行）
 
@@ -401,7 +384,7 @@ Native function-calling is heavily optimized for tool choice and rarely errs eve
 
 **Why does embedding retrieval reduce wrong picks?** Generic tools like `web_search` claim to “do everything,” so their semantics are diluted; specialized tools (e.g. `search_news`) have focused descriptions. For a focused `need` (“recent Tesla news”), specialized tools score higher and rank first; generics often never enter top-k and are never loaded—retrieval acts as a precision filter.
 
-**Why isn’t retrieval prefilter enough?** Prefilter (`run_retrieval_prefilter`) matches only the **initial query** once and injects top-n tools. On multi-step cross-domain tasks (e.g. stock price + news), the initial vector often favors the first domain; the second sub-task’s specialized tool may miss top-n. Active discovery defers discovery until each real `need` appears and retrieves separately (offline self-check shows prefilter missing the second tool on half of multi-step tasks—see table below).
+**Why isn’t retrieval prefilter enough?** Prefilter (`run_retrieval_prefilter`) matches only the **initial query** once and injects top-n tools. On multi-step cross-domain tasks (e.g. stock price + news), the initial vector often favors the first domain; the second sub-task’s specialized tool may miss top-n. Active discovery defers discovery until each real `need` appears and retrieves separately (see the candidate lists and calls in the offline comparison below below).
 
 ### How to run
 
@@ -449,7 +432,7 @@ First run builds tool embeddings and caches under `.cache/`. Full flags: `python
 - **Swap chat model**: `MODEL=gpt-4.1-mini python demo.py`; swap embeddings with `EMBED_MODEL=text-embedding-3-large` (cache rebuilds automatically when the embed signature changes).
 - **Swap provider / gateway**: chat and embeddings both use the OpenAI SDK; `OpenAI()` reads `OPENAI_BASE_URL`, so any **OpenAI-compatible** gateway works via `OPENAI_BASE_URL=https://your-gateway/v1` (endpoint must offer both chat and embeddings).
 - **Swap tasks / inputs**: edit `TASKS` in `tools_library.py` (each has `prompt` and scoring capability slots), or use `--tasks` / `--query`; grow/shrink the catalog in `ALL_TOOLS` in the same file.
-- **Offline self-check**: `--offline` uses `offline_backend.py` (local hash embeddings + scripted mock). Good for CI / offline / pipeline smoke tests. It reproduces token/latency structure and “prefilter misses second tool,” not real-model long-context choice behavior (see real gpt-5.6-luna results below).
+- **Offline self-check**: `--offline` uses `offline_backend.py` (local hash embeddings + scripted mock). Good for CI / offline / pipeline smoke tests. It reproduces token/latency structure and the distinction between missing candidates and unused alternatives, not real-model long-context choice behavior (see real gpt-5.6-luna results below).
 
 ### Offline mechanism self-check (`python demo.py --offline`)
 
@@ -463,8 +446,8 @@ One real `--offline` run (8 tasks × three strategies). **Token/latency are real
 
 Two **real, reproducible structural** takeaways:
 
-1. **Tokens diverge as catalog size grows**: full injection is fixed at 11,630 tokens/task; prefilter and discovery inject ~1,000 (**~11.9×** smaller). With `--tool-set-size 20` the gap shrinks to ~1.8×—confirming “more tools → full injection hurts more.”
-2. **Prefilter structurally misses tools on multi-step cross-domain tasks**: one-shot top-10 misses the second specialized tool on 4/8 tasks (e.g. `academic(诱导)` top-10 has no `arxiv_search`); active discovery retrieves per emerging `need` and hits 8/8.
+1. **Tokens diverge as catalog size grows**: full injection is fixed at 11,630 tokens/task; prefilter and discovery inject ~1,000 (**~11.9×** smaller). With `--tool-set-size 20`, the eight tasks require 27 tools after the base tools, generic tools, and accepted alternatives are retained. The totals are 22,464 and 7,842 definition tokens, a ratio of about 2.9.
+2. **Compare candidates with calls.** Prefilter missed a required capability in `crypto+news` and `academic(诱导)`. The other two failures had acceptable candidates: the mock router skipped `convert_currency` in `forex+weather` and made no news call in `opinion(诱导)`. Active discovery completed all eight scripted tasks.
 
 ### Conclusions (one real run, gpt-5.6-luna, 2026-07)
 
@@ -497,7 +480,7 @@ Two **real, reproducible structural** takeaways:
 4. **Boundaries**:
    - Control setup is “schemas as plain text + model emits JSON tool calls”; mock tools return placeholders, so conservative models may refuse—major source of low accuracy here.
    - With `temperature=1` only, per-task outcomes vary across runs; structural conclusions (token savings; full injection misusing generics on inducement tasks) stay directionally stable.
-   - For cleaner, reproducible mechanism checks (token/latency + prefilter missing second tool), use the `--offline` table above.
+   - For cleaner, reproducible mechanism checks (definition tokens, latency, and candidate coverage), use the `--offline` table above.
 
 > **One line:** On gpt-5.6-luna, active discovery’s steadiest win is still tokens (~19.7× this run); on vague inducement tasks, embedding retrieval keeps inflated generics (`web_search` / `google_search` / `universal_search`) out of the candidate set. Strong reasoners’ conservative “give up” behavior also lowers absolute accuracy for every strategy—read the table above as-is.
 
