@@ -32,7 +32,7 @@
 
 用一个直观的比喻，LLM 是“大脑”，上下文是“当前决策视野”，工具是“感官和手脚”。视野中包含环境信息、对话历史、记忆和知识，也包含系统指令、工具定义与任务状态。搜索、读取和截图带回信息，点击、写入和业务接口调用改变外部状态。图0-1 展示了这三类功能及其对应章节。
 
-![图0-1 Agent = LLM + 上下文 + 工具](images/fig0-1.svg)
+![图0-1 Agent = LLM + 上下文 + 工具](images/revised/fig0-1.svg)
 
 熟悉强化学习（Reinforcement Learning，RL）的读者，还可以借助策略、观测和动作理解这套分工。LLM 根据上下文选择下一步，其决策功能近似策略（Policy）；上下文承载这次决策使用的具体观测与历史；工具提供观测和动作接口。观测空间（Observation Space）描述可能获得哪些观测，动作空间（Action Space）描述允许采取哪些动作，两者刻画 Agent 与环境交互的范围。[^preface-spaces] 第一章将通过工具调用实例展开这些概念，并介绍 Model 与 Harness 在生产实现中的分工。
 
@@ -46,7 +46,7 @@
 
 全书共十章，围绕两个相衔接的问题展开。**第一部分“如何构建 Agent”**包括第一至六章，从基本概念讲到上下文、记忆与知识、工具、代码生成和交互。**第二部分“如何提升 Agent 能力”**包括第七至十章，先通过评估发现问题，再通过后训练、持续进化与多 Agent 协作，分别改进模型、单个 Agent 和多 Agent 系统。图0-2 展示了这条阅读主线。
 
-![图0-2 全书结构：构建 Agent 与提升 Agent 能力](images/fig0-2.svg)
+![图0-2 全书结构：构建 Agent 与提升 Agent 能力](images/revised/fig0-2.svg)
 
 - **第一章（AI Agent 入门）**通过产品与工具调用实例，介绍核心组成、运行循环、Harness 和编排方式，建立理解全书的概念框架。
 - **第二章（上下文工程）**是全书最关键的一章，讨论怎样组织模型当前需要的信息。从提示设计、按需加载讲到历史管理，并结合 KV Cache 解释这些方法如何影响回答质量与运行成本。
@@ -71,7 +71,14 @@
 
 > **配套代码仓库**：[ai-agent-book](https://github.com/bojieli/ai-agent-book)
 
-通过 Git 或仓库页面的 **Code → Download ZIP** 获取代码后，可以先在各章索引中查找实验编号，再阅读对应项目的运行说明。“复现指南”提供外部项目及获取方式，安装命令和目录说明集中放在 README 中。
+第一次做实验，可以从“实验 1-1：上下文的关键作用”开始。如果使用 Git，在终端运行：
+
+```bash
+git clone https://github.com/bojieli/ai-agent-book.git
+cd ai-agent-book
+```
+
+在仓库页面选择 **Code → Download ZIP** 并解压，也能得到同样的目录。从[第一章实验索引](https://github.com/bojieli/ai-agent-book/blob/main/chapter1/README.md)找到编号 1-1，打开 [context 实验说明](https://github.com/bojieli/ai-agent-book/blob/main/chapter1/context/README.md)。先看完整上下文时工具返回了什么，再看移除工具结果后模型在哪一步失去了依据。此后遇到“实验 X-Y”，都可以从仓库中的 `chapterX/README.md` 查到项目和运行方法。“复现指南”提供外部项目及获取方式，安装命令和目录说明集中放在 README 中。
 
 笔者强烈建议你动手运行这些实验。亲自检查一次错误的工具调用，比较两种上下文组织方式，或追踪一轮审核与修订，能帮助你理解书中的设计取舍，也更容易形成自己的判断。
 

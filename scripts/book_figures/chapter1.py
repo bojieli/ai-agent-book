@@ -226,7 +226,7 @@ def autonomous_loop():
 
 def n8n_print_view():
     """Embed the unaltered product screenshot in a grayscale SVG print view."""
-    original = (ROOT / 'n8n-workflow.png').read_bytes()
+    original = (ROOT.parent / 'n8n-workflow.png').read_bytes()
     width, height = struct.unpack('>II', original[16:24])
     encoded = base64.b64encode(original).decode('ascii')
     (ROOT / 'n8n-workflow-grayscale.svg').write_text(

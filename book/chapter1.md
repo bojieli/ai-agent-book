@@ -16,11 +16,17 @@
 
 这个比喻帮助我们记住三者的作用：模型作出决策，上下文提供依据，工具连接外部环境。同一个工具还可以兼具多种作用，例如命令行既能读取文件，也能运行程序并返回执行结果。
 
+设想读者问客服：“拆封后还能退货吗？”系统可以用**检索增强生成**（Retrieval-Augmented Generation，RAG）查找店铺的现行退货政策，再请模型依据条款回答。[^ch1-rag] 沿着一次查询，就能看清几个部件的职责。政策原文与索引保存在外部知识库中；检索工具用问题查到相关段落；Harness 将段落连同出处放进这一次请求的上下文；模型据此判断哪些条件适用于这笔订单。如果答案引用了旧政策，可以分别核对知识库的版本、工具返回的段落和最终送给模型的内容。第三章将用这种拆分来定位检索错误。
+
+[^ch1-rag]: Patrick Lewis 等，[Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401)，NeurIPS，2020。
+
 在强化学习和控制论中，Agent 与 Environment（环境）通过观测和动作形成闭环。环境向 Agent 返回观测，Agent 据此选择下一步动作；动作在环境中执行后，环境返回新的观测，供下一轮决策使用。图1-1 展示了这一交互过程，以及 Agent 内部的 Model–Harness 结构。
 
-![图1-1 Agent 与 Environment 的闭环交互，以及 Agent 内部的 Model–Harness 结构](images/fig1-1.svg)
+![图1-1 Agent 与 Environment 的闭环交互，以及 Agent 内部的 Model–Harness 结构](images/revised/fig1-1.svg)
 
-图的外层划分了 Agent 与环境的边界。文件、数据库、网页、用户、其他 Agent，以及物理或仿真世界，都可以成为它交互的环境。图的内层展示了生产实现的分工：**Model 负责理解、推理和决策；Harness 位于 Agent 边界内、Model 之外，负责组织上下文、工具接口、运行循环和状态，并实施约束、验证与纠正。** Harness 可以创建、隔离或代理环境；文件内容、进程状态等则随行动在环境中发生变化。
+图的外层划分了 Agent 与环境的边界。文件、数据库、网页、用户、其他 Agent，以及物理或仿真世界，都可以成为它交互的环境。图的内层展示了生产实现的分工：**Model 负责理解、推理和决策；Harness 位于 Agent 边界内、Model 之外，负责组织上下文、工具接口、运行循环和状态，并实施约束、验证与纠正。** Harness 可以创建、隔离或代理环境；文件内容、进程状态等则随行动在环境中发生变化。[^ch1-harness]
+
+[^ch1-harness]: 可参阅 LangChain 的 [The Anatomy of an Agent Harness](https://www.langchain.com/blog/the-anatomy-of-an-agent-harness) 与 Anthropic 的 [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)。有些实现把沙盒也计入 Harness；图1-1 单独画出环境，便于追踪动作实际改变了什么。
 
 因此，本书采用两套互补的分解方式：**“LLM + 上下文 + 工具”说明功能组成，“Model + Harness”说明生产实现。** 上下文由 Harness 组织后提供给 Model，工具调用由 Model 决策、Harness 校验和调度，再交给工具或环境执行。一个简单系统可以从上下文组装和工具调度起步，逐步补齐生产运行所需的约束、验证与纠正机制。
 
@@ -38,7 +44,7 @@
 
 Harness 把观测组织成上下文，接收模型生成的工具调用请求，再校验参数、调度执行。例如，模型可能知道如何分析账单，但当前账户的金额和套餐需要通过文件或服务接口读取；要替用户修改套餐，还需要相应的操作接口与授权。知识、任务数据和执行能力在这里各有作用。
 
-因此，**在底层模型固定时，重新定义或扩展观测空间与动作空间，往往是提升任务表现最主要的系统工程手段。** 把所需数据纳入上下文，或把所需操作封装为工具，就可能让 Agent 完成此前无法完成的任务。下面两个产品展示了这种能力扩展。
+因此，**在底层模型固定时，调整观测空间与动作空间，是提升任务表现的重要工程手段。** 模型漏看关键事实，可以把相关数据纳入上下文；模型经常选错相似工具，可以合并重复接口或只加载当前任务需要的工具。用同一组任务比较调整前后的行为，才能判断瓶颈在信息、决策还是执行。下面两个产品展示了这种能力扩展。
 
 **Manus：在同一任务中结合调研、编程与电脑操控。** Deep Research 擅长搜索与阅读，Coding Agent 可以编写和运行代码，Computer Use Agent 可以操作界面。Manus 将浏览器、文件系统、代码执行和命令行整合到云端沙盒中，使同一个 Agent 能先查资料，再处理文件和运行代码，最后通过浏览器完成操作。浏览器与文件读取增加了可获取的信息，代码和命令执行增加了可组合的操作。**笔者认为，这种组合是通用 Agent 的重要突破：同一个 Agent 可以跨越原来分离的产品边界，把获取资料、处理数据和执行操作串成完整任务。**
 
@@ -133,7 +139,7 @@ LLM 是 Agent 的决策核心。收到请求后，它先从用户的表述中识
 
 Agent 可以在不同位置、不同时间尺度上积累经验。图1-2 展示了三条路径：当前任务中的上下文适应、跨任务的外部产物更新，以及训练阶段的参数更新。
 
-![图1-2 Agent 能力更新的三个层次](images/fig1-2.svg)
+![图1-2 Agent 能力更新的三个层次](images/revised/fig1-2.svg)
 
 **上下文适应**发生在任务执行中。模型读到示例、任务状态或检索结果后，就能调整后续行为。例如，工具返回文件不存在，模型可以重新查找路径，再继续操作。这条路径响应快、成本低，效果取决于上下文窗口容量和信息组织方式。要让经验用于后续任务，还需要把相关信息保存并再次提供给模型。第二章将介绍上下文的组织方法。
 
@@ -163,7 +169,7 @@ Agent 可以在不同位置、不同时间尺度上积累经验。图1-2 展示�
 >
 > 实验设置完整基线和四组消融，每组最多运行五轮。移除历史推理信息时，每轮仍允许模型重新推理；移除工具定义时，请求不再提供可用工具；移除工具结果时，保留调用记录，隐藏返回内容；移除历史消息时，只保留系统提示词、工具定义和当前用户任务。图1-3 展示了五组条件及其结果。
 >
-> ![图1-3 实验 1-1——上下文消融实验设计](images/fig1-3.svg)
+> ![图1-3 实验 1-1——上下文消融实验设计](images/revised/fig1-3.svg)
 >
 > 在本次 Kimi K3 运行中，**完整基线**用三轮、四次工具调用完成任务，得到年度总收入 9,602,895.73 美元、季度平均收入 2,400,723.93 美元。**移除历史推理信息**后，也以相同轮数和调用次数得到正确结果：工具记录已经保存了换汇结果，模型可以据此重建下一步计算所需的信息。
 >
@@ -183,7 +189,7 @@ LLM、上下文和工具通过运行循环协同：模型读取上下文，生�
 
 在本节的基础实现中，**每轮上下文 = 相对稳定的前缀 + 累积的消息历史**。前缀包含系统提示词与工具定义，消息历史则随交互增加。继续以实验 1-1 的多币种收入汇总为例，图1-4 展示了三轮决策及其消息结构。
 
-![图1-4 Agent 轨迹——多币种汇总任务的 ReAct 循环](images/fig1-4.svg)
+![图1-4 Agent 轨迹——多币种汇总任务的 ReAct 循环](images/revised/fig1-4.svg)
 
 运行循环可以用下面的 Python 风格伪代码表示。Model 决定下一步，Harness 组装上下文并校验、调度调用，工具在环境中执行并返回观测。这里以模型停止请求工具作为结束条件，生产系统的验证与退出机制将在后文展开。
 
@@ -281,7 +287,7 @@ repeat:
 >
 > 在这两项任务中，搜索和代码执行都由服务端托管，模型根据返回结果决定后续行动，服务端 Harness 负责衔接各次调用。客户端发送任务并接收结果；遇到澄清问题时，再提交用户补充信息，接续已有上下文。图1-5 对比了这一结构与实验 1-2 的客户端循环，并用具体搜索、计算步骤展示两种分工。
 >
-> ![图1-5 模型主导的工具调用：客户端循环与服务端托管循环](images/fig1-5.svg)
+> ![图1-5 模型主导的工具调用：客户端循环与服务端托管循环](images/revised/fig1-5.svg)
 
 [^ch1-hosted]: 托管工具的接入方式参见[百炼代码解释器文档](https://help.aliyun.com/zh/model-studio/qwen-code-interpreter)。本实验的模型、调用次序与结果以配套运行记录为依据。
 
@@ -296,6 +302,10 @@ repeat:
 ## Harness 工程：模型之外的竞争力
 
 前面的实验展示了模型如何借助上下文与工具推进任务，也说明运行过程需要持续管理：缺少返回结果会导致重复调用，外部服务超时会中断数据获取，模型生成的答案还需要核对来源与计算过程。Harness 工程围绕这些问题，把一次次模型决策组织成可靠的任务执行。
+
+怎样判断一次退款真的成功了？模型可以根据对话预测出一句很像客服答复的“已退款”。今天的 LLM 采用联结主义的神经网络方法，从数据中学习 token 的条件概率，逐步生成回答或工具请求。[^ch1-connectionism] 即使解码设置使回答可以重复，付款系统的状态仍需要另外查询。这给 Harness 提出了具体要求：把模型提出的操作、工具实际执行的结果和最终告知用户的结论分别记录下来。
+
+[^ch1-connectionism]: 中国科学院学部人工智能咨询研究组，《人工智能赋能科学研究：人工智能学科体系》，科学出版社，2026，ISBN 978-7-03-084786-7，第 1 章第 1.1 节。
 
 前面用 LLM、上下文和工具解释了 Agent 的功能组成。落实到代码和服务时，Model 根据输入作出决策，Harness 负责组织输入、调度工具调用和处理反馈，工具或环境完成实际操作。本书用下面的公式概括这一分工，并将 Harness 的职责归纳为五项功能：
 
@@ -384,7 +394,7 @@ return Harness.report_incomplete(history)
 
 **当候选模型都已能胜任任务时，模型之外的工程实践往往决定产品差异。** LangChain 在 Terminal Bench 2.0 上的改进提供了一个具体例子：固定使用 GPT-5.2-Codex，通过调整 Harness，将得分从 52.8% 提高到 66.5%，当时的排名从三十名之外进入前五。改进包括完成前自检、重复操作检测、环境信息补充和推理预算分配。这里的提升来自对运行轨迹中失败模式的分析，以及据此反复修改、评估 Harness[^ch1-langchain-harness]。
 
-[^ch1-graph-engineering]: Josh C. Simmons，[We Are Entering the Graph Engineering Phase](https://www.drjoshcsimmons.com/writing/we-are-entering-the-graph-engineering-phase)，2026 年 7 月 4 日，讨论节点、类型化连接和可检查点状态。相关实践也见 [LangGraph](https://docs.langchain.com/oss/python/langgraph/overview)、[Microsoft Agent Framework 工作流](https://learn.microsoft.com/en-us/agent-framework/workflows/)等官方资料。
+[^ch1-graph-engineering]: Josh C. Simmons，[We Are Entering the Graph Engineering Phase](https://www.drjoshcsimmons.com/writing/we-are-entering-the-graph-engineering-phase)，2026 年 7 月 4 日，讨论节点、类型化连接和可检查点状态。相关实践也见 [LangGraph](https://docs.langchain.com/oss/python/langgraph/overview)、[Microsoft Agent Framework 工作流](https://learn.microsoft.com/en-us/agent-framework/workflows/)和 [Google ADK](https://adk.dev/workflows/) 的官方资料。
 
 [^ch1-langchain-harness]: Vivek Trivedy，[Improving Deep Agents with harness engineering](https://www.langchain.com/blog/improving-deep-agents-with-harness-engineering)，2026 年 2 月 17 日。分数与排名对应文中报告的模型、基准和测试设置。
 
@@ -480,7 +490,7 @@ Anthropic 将构建有效 Agent 的经验归纳为三个原则：保持简单、
 
 图1-6 展示了自主 Agent 的执行循环。模型读到观测后作出决策，有工具请求时执行行动并获取新观测，再进入下一轮。模型调用 `final_answer` 等最终输出工具，或返回不含工具调用的回复时，Harness 检查任务完成条件；通过验证后交付结果。错误次数超限或达到最大轮数时，则保存进度，报告未完成部分或转人工。
 
-![图1-6 自主 Agent 的执行循环](images/fig1-6.svg)
+![图1-6 自主 Agent 的执行循环](images/revised/fig1-6.svg)
 
 自主循环适合步骤数量随任务变化的场景，例如 Coding Agent 修复真实代码问题、Computer Use Agent 操作界面，以及反复搜索和分析的研究任务。SWE-bench 就以真实软件仓库中的问题衡量代码修复能力。此类任务的下一步常取决于刚刚得到的测试输出、界面状态或搜索结果。
 
@@ -490,7 +500,7 @@ Anthropic 将构建有效 Agent 的经验归纳为三个原则：保持简单、
 
 工作流和自主 Agent 可以组合使用：程序规定关键流程、验证条件和权限，在需要灵活判断的节点内运行自主 Agent。图1-7 中的 n8n 工作流编辑器展示了这种组织方式，开发者通过可视化节点连接业务操作，并可接入 AI Agent 节点，由模型选择其可用工具[^ch1-n8n]。
 
-![图1-7 n8n 工作流编辑器界面](images/n8n-workflow-grayscale.svg)
+![图1-7 n8n 工作流编辑器界面](images/revised/n8n-workflow-grayscale.svg)
 
 另一种方式是**先让自主 Agent 生成工作流，再执行经过检查的工作流**。Agent 根据任务设计拓扑并生成编排代码，运行系统验证代码、权限与输入后，再沿生成的路径执行。对于重复处理的数据或步骤，这能减少每次调度都调用模型的开销，同时保留任务开始时动态设计流程的灵活性。第十章将进一步讨论这种形态。
 

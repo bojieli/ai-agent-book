@@ -55,7 +55,7 @@ def main():
         for col in range(2):
             assert not axes[row, col].xaxis.label.get_window_extent(renderer).overlaps(
                 axes[row+1, col].title.get_window_extent(renderer)), 'Adjacent panel labels overlap'
-    fig.savefig(ROOT/'book/images/fig2-7.png',dpi=400,facecolor='white',bbox_inches='tight',pad_inches=.04)
+    fig.savefig(ROOT/'book/images/revised/fig2-7.png',dpi=400,facecolor='white',bbox_inches='tight',pad_inches=.04)
     plt.close(fig)
 
 if __name__ == '__main__':

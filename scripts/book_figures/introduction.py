@@ -2,7 +2,7 @@
 from html import escape
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2] / 'book' / 'images'
+ROOT = Path(__file__).resolve().parents[2] / 'book' / 'images' / 'revised'
 FONT = 'Source Han Sans CN'
 from typography import typeset
 

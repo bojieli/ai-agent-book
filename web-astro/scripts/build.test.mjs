@@ -348,7 +348,11 @@ test('Chapter 2 preserves all editions, figures, outlines, and chapter isolation
     );
     const content = html.match(/<article\b[^>]*>([\s\S]*?)<\/article>/)[1];
     assert.equal(count(content, 'img'), 17, edition.lang);
-    assert.equal(count(content, 'h3'), 32, edition.lang);
+    assert.equal(
+      count(content, 'h3'),
+      (markdown.match(/^### /gm) ?? []).length,
+      edition.lang,
+    );
     assert.ok(
       html.includes(
         `data-chapter-key="ai-agents-in-depth:${edition.lang}:chapter2"`,
@@ -514,6 +518,7 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
         'utf8',
       );
       const article = html.match(/<article\b[^>]*>([\s\S]*?)<\/article>/)[1];
+      const revised = edition.lang === 'zh-CN';
       const code = [],
         inlineCode = [],
         headings = [],
@@ -561,15 +566,15 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
       if (chapterNumber === 5) {
         assert.equal(
           (article.match(/data-language="book-example"/g) || []).length,
-          1,
+          revised ? 0 : 1,
           edition.lang,
         );
         assert.equal(
           (article.match(/data-language="python"/g) || []).length,
-          1,
+          revised ? 2 : 1,
           edition.lang,
         );
-        assert.equal(count(article, 'table'), 1, edition.lang);
+        assert.equal(count(article, 'table'), revised ? 3 : 1, edition.lang);
         for (const [, id] of markdown.matchAll(/^\[\^([^\]]+)\]:/gm))
           assert.ok(
             ids(article).has(`user-content-fn-${id}`),
@@ -587,7 +592,7 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
           1,
           edition.lang,
         );
-        assert.equal(count(article, 'table'), 5, edition.lang);
+        assert.equal(count(article, 'table'), revised ? 6 : 5, edition.lang);
         for (const level of [2, 4]) {
           const expected = [
             ...markdown.matchAll(new RegExp(`^#{${level}}\\s+`, 'gm')),
@@ -607,17 +612,17 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
       if (chapterNumber === 7) {
         assert.equal(
           (article.match(/data-language="book-evaluation"/g) || []).length,
-          2,
+          revised ? 0 : 2,
           edition.lang,
         );
         assert.equal(
           (article.match(/data-language="jsonc"/g) || []).length,
-          1,
+          revised ? 0 : 1,
           edition.lang,
         );
         assert.equal(
           (article.match(/data-language="yaml"/g) || []).length,
-          1,
+          revised ? 0 : 1,
           edition.lang,
         );
         assert.equal(
@@ -625,7 +630,7 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
           1,
           edition.lang,
         );
-        assert.equal(count(article, 'table'), 6, edition.lang);
+        assert.equal(count(article, 'table'), revised ? 11 : 6, edition.lang);
         for (const level of [2, 4]) {
           const expected = [
             ...markdown.matchAll(new RegExp(`^#{${level}}\\s+`, 'gm')),
@@ -701,7 +706,7 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
         }
       }
       if (chapterNumber === 10) {
-        assert.equal(code.length, 5, edition.lang);
+        assert.equal(code.length, revised ? 1 : 5, edition.lang);
         assert.equal(images.length, 11, edition.lang);
         assert.equal(count(article, 'table'), 4, edition.lang);
         assert.equal(count(article, 'figure'), 11, edition.lang);
@@ -723,9 +728,9 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
           );
         }
         for (const [language, expected] of [
-          ['book-interaction', 1],
-          ['python', 3],
-          ['javascript', 1],
+          ['book-interaction', revised ? 0 : 1],
+          ['python', revised ? 1 : 3],
+          ['javascript', revised ? 0 : 1],
         ]) {
           assert.equal(
             (
@@ -834,10 +839,26 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
 
 test('Chapter 5 architecture banner fits its web canvas in every edition', () => {
   for (const edition of editions) {
-    const paths = figurePaths(edition.directory, 'images/fig5-1.svg');
+    const revised = edition.lang === 'zh-CN';
+    const image = revised ? 'images/revised/fig5-1.svg' : 'images/fig5-1.svg';
+    const paths = figurePaths(edition.directory, image);
     for (const theme of ['light', 'dark']) {
       const svg = readFileSync(join(dist, paths[theme]), 'utf8');
       const [, width, height] = svg.match(/viewBox="0 0 (\d+) (\d+)"/);
+      if (revised) {
+        const original = readFileSync(join(dist, paths.original), 'utf8');
+        const labels = (source) =>
+          [...source.matchAll(/<g aria-label="([^"]+)"/g)].map(
+            (match) => match[1],
+          );
+        assert.ok(labels(original).length > 0);
+        assert.deepEqual(labels(svg), labels(original));
+        assert.equal(
+          svg.match(/viewBox="[^"]+"/)[0],
+          original.match(/viewBox="[^"]+"/)[0],
+        );
+        continue;
+      }
       const banner = [
         ...svg.matchAll(
           /<foreignObject x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)">([\s\S]*?)<\/foreignObject>/g,
