@@ -6,7 +6,7 @@
 
 ## 第一次做实验
 
-1. **先看一次角色交接。** [实验 10-1](multi-role-transfer/README.md)在同样的 30 道任务上比较切换角色和按需加载 Skill。两种做法各自通过了六道边界题，但 30 道完整任务中，前者通过 2 道，后者通过 15 道。读[对照报告](multi-role-transfer/validation/comparison/runs/exp10-1-qwen35flash-20260809-v2/REPORT.md)时，分别看交接是否按预期发生、最终任务是否办成，再看耗时和用量。
+1. **先看一次角色交接。** [实验 10-1](multi-role-transfer/README.md)里有一道投资简报题。先找出加载写作规程的那一步，再看用户最终收到哪段文字。为什么四种角色都出场了，简报却没有交付？读完一条轨迹，再看[30 对任务的汇总](multi-role-transfer/validation/comparison/runs/exp10-1-qwen35flash-20260809-v2/REPORT.md)，比较两种做法的通过率、耗时和用量。
 2. **再看两章书怎样交给多人翻译。** 打开[实验 10-2 的运行记录](book-translation/validation/real_20260730T061500Z_v4/evidence.json)，从两组的 `tracker.by_agent` 读起：单 Agent 最大一次请求用了 94,355 个输入 token，分工后最大一次请求是术语整理者的 49,807 个；完成整项工作的时间却从约 254 秒增至 271 秒。接着读 `markdown_fidelity`：第一单元原稿和协作译稿各有两个代码块、六幅插图，但代码内容和图片链接都未完全保留。交付时怎样逐项对照，可回到[翻译实验](book-translation/README.md)。
 3. **最后看并行搜索何时可以结束。** [实验 10-4](parallel-web-research/README.md)让多个浏览器会话同时查找目标。一个成员先找到后，管理者还要防止重复结算，并确认其余成员已停止。沿四会话测试的记录查看一次终止广播、三个确认和浏览器关闭事件，再用十站点的串行与并行计时比较速度。
 
@@ -16,7 +16,7 @@
 
 | 编号 | 项目 | 类型 | 一句话说明 |
 | :--: | --- | :--: | --- |
-| 10-1 | [multi-role-transfer](multi-role-transfer/) | ✅ | [正式 v2 对照](multi-role-transfer/validation/comparison/runs/exp10-1-qwen35flash-20260809-v2/REPORT.md)完成 30 对任务、12 条边界轨迹、289 份模型回执、31 份 Tavily 回执和 60 次异源盲测；修复 Skill 路径首步跳过 Skill 的 Harness 策略门后，Skill 确定性通过率 15/30、Transfer 2/30，结论与成本/延迟权衡均已由 manifest 固定 |
+| 10-1 | [multi-role-transfer](multi-role-transfer/) | ✅ | [正式 v2 对照](multi-role-transfer/validation/comparison/runs/exp10-1-qwen35flash-20260809-v2/REPORT.md)要求 Skill 路径先加载规程。按程序验收，加载 Skill 通过 15/30 项，切换角色通过 2/30 项；两组各通过 6/6 道边界题。报告保留了 289 份模型回执、31 份 Tavily 搜索回执，以及独立评审交换答案顺序后的 60 次盲评 |
 | 10-2 | [book-translation](book-translation/) | ✅ | [正式 ARK v4](book-translation/validation/real_20260730T061500Z_v4/evidence.json)在英文版第 1–2 章的 242,090 字节、23 图、14 代码块上完成 26 单元双臂对照：12/12 门禁、39 份原始裁判回执和 37 个溯源 hash 均通过；单次输入峰值从 94,355 降至 49,807 个 token，总用量降至单 Agent 的约 1/6.48且匿名质量 4.654 > 4.481，但慢 6.57%，宽泛术语一致率与 Markdown 精确保真也出现明确负结果 |
 | 10-3 | [autonomous-phone-registration](autonomous-phone-registration/)；固定并发的 [TalkAct 复现记录](talkact-reproduction/) | ✅ / 📖 | 主路径的 [WebRTC raw-v4](autonomous-phone-registration/validation/runs/exp10-3-webrtc-raw-20260731-v4/manifest.json)用真实 ARK 自主工具调用、Playwright、双向 RTP、本机 TTS/Whisper ASR 和一次 localhost 提交跑通 6 字段注册，9/9 行为门禁通过；固定拓扑基线的 [Anthropic-caller 运行](talkact-reproduction/validation/runs/exp10-3-talkact-anthropic-caller-20260803-v2/acceptance.json)保留 16/16 局并通过 17/17 门禁。两类证据分别验证自主启动与并行协作，不合并统计 |
 | 10-4 | [parallel-web-research](parallel-web-research/) | ✅ | [同一次真实验收运行](parallel-web-research/validation/runs/exp10-4-real-receipts-20260730-v2/manifest.json)覆盖 10 站点串并行与 4 会话级联：12/12 门禁通过、实测加速 1.872×、24 份完整浏览器观测、3 份带 response ID/usage 的 ARK 原始响应和 114 条总线事件均由运行时 manifest 绑定；7 个实际源码/输入 hash 与全部 artifact hash 已复核一致，凭据扫描为零 |
