@@ -36,8 +36,8 @@
 #### 上下文组件
 
 1. **Full Context** — 完整 Agent，保留全部组件
-2. **No History** — 缺少历史工具调用追踪
-3. **No Reasoning** — 无战略规划/思考过程
+2. **No History** — 每轮重新提供任务和工具定义，省去此前的对话与工具往返记录
+3. **No Reasoning** — 下一轮读不到之前回复中的推理字段，仍能根据工具结果重新推理
 4. **No Tool Calls** — 无法执行外部工具
 5. **No Tool Results** — 看不到工具执行结果
 
@@ -50,7 +50,9 @@
 
 ### 消融实验
 
-#### 已验收的 Kimi K3 真实执行（2026-08-25）
+#### 从 Kimi K3 的五组记录开始（2026-08-25）
+
+先打开[这次运行的完整记录](validation/real_20260825T025409Z/evidence.json)，找到 `arms` 中的 `full` 组。沿着 `tool_calls` 读前三次换汇的参数与结果，再看第四次计算怎样把三笔美元金额加到第一季度收入上。最后对照 `final_answer`。有了这条基线，再读下表就能看出每组在哪一步开始分岔。
 
 `run_experiment_1_1.py` 会按正文运行五个精确实验组，并保存每轮真实 API 的无凭据
 请求与响应，而不只是汇总表：
@@ -69,9 +71,7 @@ export DASHSCOPE_API_KEY=your_key_here
 python run_experiment_1_1.py --provider dashscope     # 使用 qwen3.7-plus
 ```
 
-验收产物见 [validation/latest.json](validation/latest.json)。只有既是标准配置
-（五组齐全、带约束的任务、静默隐藏工具结果）又通过验收的运行才会覆盖它；其余运行
-只写自己的时间戳目录，不会动被引用的证据。
+[最近一次通过验收的记录](validation/latest.json)会随新实验更新。只有五组齐全、采用带约束的任务、静默隐藏工具结果并通过运行验收时，程序才更新它。比较模型或核对书中的数字时，请使用带日期的归档。
 
 #### 怎么读一组实验
 
@@ -102,7 +102,7 @@ python run_experiment_1_1.py --provider dashscope     # 使用 qwen3.7-plus
 |---|---:|---:|---|---|
 | full | 3 | 4 | 否 | `correct` |
 | no history | 5（触顶） | 15 | 是 | `no_terminal_response` |
-| no reasoning | 3 | 4 | 否 | `correct` —— **测不出退化**；正文已不再作此断言 |
+| no reasoning | 3 | 4 | 否 | `correct`，保留的工具消息足以算出正确金额 |
 | no tool definitions | 1 | 0 | 否 | `no_unsupported_numbers` —— 声明会话中没有可用的换汇工具 |
 | no tool results | 5（触顶） | 9 | 是 | `no_terminal_response` —— 一直重调工具，始终没有收敛 |
 
@@ -175,7 +175,7 @@ python run_experiment_1_1.py --provider kimi --modes no_tool_results --hidden-re
 |-------------|---------------------------|----------|------|
 | **full** | 无（基线） | 完整成功执行 | 基线性能 |
 | **no_history** | 历史消息 (history) | 冗余操作、效率下降 | 可能重复调用工具 |
-| **no_reasoning** | 思考过程 (reasoning) | 方法无结构、易出错 | 缺少战略规划 |
+| **no_reasoning** | 以往回复中的推理字段 | 模型仍可用保留的工具结果继续计算 | 比较每轮调用的参数和最终金额，检查模型能否接续任务 |
 | **no_tool_calls** | 工具定义 (tool definitions) | 没有工具行动，但两种情况都会给出终止回答：要么拒绝，要么用记忆中的汇率作答 | 无法与外部世界交互；但回答看上去可能仍然完整 |
 | **no_tool_results** | 工具执行结果 (tool results) | 反复重调并试探工具，常常一直触到迭代上限 | 在没有反馈的情况下行动，且察觉不到这一点 |
 
@@ -473,12 +473,14 @@ python main.py --mode ablation --ablation-modes full no_history --output my_abla
 - **Execution Time**：完成任务总耗时
 - **Iterations**：Agent 与模型交互次数
 - **Tool Calls**：外部工具调用次数
-- **Reasoning Steps**：战略规划迭代次数
+- **Reasoning Steps**：记录到的非空推理文本条数。服务没有返回推理文本时，这一项也会为空
 
 #### 怎样判断实验结果
 
 先区分“程序给出了最终响应”和“任务做对了”。例如，模型可能没有查询汇率，便用记忆中的数字算出答案；
 程序虽然结束了，但这些数字未必有依据。阅读结果时，结合任务要求检查数字来源和工具记录。
+
+打开 [9 月 1 日 DeepSeek V4 Flash 的记录](validation/real_20260901T163146Z/evidence.json)，在同一模型内比较 `full` 与 `no_reasoning`。两组都完成了四次工具调用。找出第二季度那笔换汇的 `amount`：一组传入 2100000，另一组传入 2.1。试着解释为什么后者得到的 2.28 美元，即使再乘一百万也恢复不了原来的精度。然后回看 8 月的 Kimi 记录，判断移除历史推理字段是否每次都会引发同一种错误。
 
 比较不同上下文模式时，保持任务、模型和运行条件一致。重点看：哪些工具被调用、结果是否被模型看到、
 有没有重复操作、答案是否符合任务要求。运行时间和调用次数帮助解释成本，不能单独代表答案质量。
