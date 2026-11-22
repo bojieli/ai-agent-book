@@ -459,7 +459,21 @@ python cli.py demo --offline  # 离线演示（只跑文件系统 / 本地知识
 
 ## 检查返回值里有没有所需数据
 
-本地文件读取成功只能证明这条协议路径可用。扩展到网络工具时，还要区分无结果、权限不足、服务错误与解析错误，不能把所有失败都当作“模型没找到”。
+在本实验目录运行下面的代码。它按随书记录的索引找到三次调用，无须连接外部账号。
+
+```python
+import json
+from pathlib import Path
+
+index = json.loads(Path("validation/experiment_4_2/latest.json").read_text())
+receipts = Path(index["manifest"]).parent / "receipts"
+for name in ("05_document_reader_pdf", "27_calendar_events", "28_notion_search"):
+    row = json.loads((receipts / f"{name}.json").read_text())
+    result = row["payload"]
+    print(name, row["mcp_result_is_error"], result["success"], result["message"])
+```
+
+三条记录的 `mcp_result_is_error` 都是 `False`。打开 PDF 那条，`message` 里有页数和提取的文字，可以逐字对照样例文件。日历和 Notion 两条的 `payload.success` 都是 `False`，消息分别说明日历尚未完成身份验证、Notion 尚未配置密钥。服务器已经把原因送回客户端，助手仍然不知道用户有几条日程或笔记。即使把搜索词改得再准确，缺少凭据的问题也还在。若服务已获授权并成功返回空列表，才有依据说明这次查询范围内没有匹配项。
 
 ### 检查自己的解释
 
