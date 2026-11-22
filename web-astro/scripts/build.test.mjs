@@ -228,6 +228,13 @@ test('Chinese footnotes keep separate citation URLs and translated navigation', 
         `Merged or punctuated citation: ${href}`,
       );
     }
+    if (edition.lang === 'zh-CN') {
+      const footnotes = html.match(/<section[^>]*data-footnotes[^>]*>([\s\S]*?)<\/section>/)?.[1];
+      assert.ok(footnotes, 'Simplified Chinese chapter renders its footnotes');
+      for (const source of ['Google Drive Connector', 'OpenClaw 官方仓库', 'We Are Entering the Graph Engineering Phase'])
+        assert.ok(footnotes.includes(source), source);
+      continue;
+    }
     for (const url of [
       'https://manus.im/blog/manus-sandbox',
       'https://manus.im/blog/manus-google-drive-connector',
