@@ -117,14 +117,16 @@ class EvaluationResult(BaseModel):
     )
     veto_applied: bool = Field(default=False, description="Whether the hallucination veto was applied")
     
+    @property
+    def is_passed(self) -> bool:
+        """Use the evaluator verdict, or the historical 0.6 cutoff for older records."""
+        if self.passed is not None:
+            return self.passed
+        return self.reward >= 0.6
+
     def to_summary(self) -> str:
         """Generate a summary of the evaluation result."""
-        # Determine pass/fail based on reward threshold if not explicitly set
-        if self.passed is not None:
-            status = "PASSED" if self.passed else "FAILED"
-        else:
-            # Use 0.6 as default threshold for backward compatibility
-            status = "PASSED" if self.reward >= 0.6 else "FAILED"
+        status = "PASSED" if self.is_passed else "FAILED"
         summary = f"Test {self.test_id}: {status} (Reward: {self.reward:.2f})\n"
         summary += f"Reasoning: {self.reasoning}\n"
         if self.suggestions:
