@@ -87,7 +87,8 @@ def _needs_openrouter_for_gpt5(
     only with ``reasoning_effort="none"``, which is the one thing an agent
     experiment cannot give up. OpenRouter has neither restriction.
 
-    The exception is a reader who named ``openai`` or ``krill`` themselves:
+    The exception is a reader who named ``openai``, ``krill``, or ``api_route``
+    themselves:
     sending their prompts and their spend to a different provider against an
     explicit instruction is worse than the failure it avoids. A caller whose
     provider name is its own built-in default rather than the reader's choice
@@ -104,7 +105,7 @@ def _needs_openrouter_for_gpt5(
     """
     if not model.lower().startswith("gpt-5"):
         return False
-    return not (spec.name in {"openai", "krill"} and chosen_by_reader)
+    return not (spec.name in {"openai", "krill", "api_route"} and chosen_by_reader)
 
 
 def _missing_key_error(spec: Provider) -> ValueError:

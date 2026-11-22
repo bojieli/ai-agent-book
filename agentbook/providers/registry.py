@@ -76,6 +76,13 @@ PROVIDERS: dict[str, Provider] = {
         key_vars=("KRILL_API_KEY",),
         base_url_var="KRILL_BASE_URL",
     ),
+    "api_route": Provider(
+        name="api_route",
+        base_url="https://global.api-route.com/v1",
+        default_model="deepseek-v4-flash",
+        key_vars=("API_ROUTE_API_KEY",),
+        base_url_var="API_ROUTE_BASE_URL",
+    ),
     "atlascloud": Provider(
         name="atlascloud",
         base_url="https://api.atlascloud.ai/v1",
@@ -122,6 +129,7 @@ PROVIDERS: dict[str, Provider] = {
 
 # Provider names used interchangeably in the chapters, mapped to canonical ones.
 _ALIASES = {
+    "api-route": "api_route",
     "moonshot": "kimi",
     "ark": "doubao",
     "google": "gemini",

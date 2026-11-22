@@ -111,6 +111,7 @@ It is recommended to apply for API keys from several platforms for convenient le
 | **Zhipu GLM** | <https://open.bigmodel.cn/> | GLM-4.6 etc., strong Chinese ability, cost-effective | Mainland China |
 | **Siliconflow** | <https://siliconflow.cn/> | Various open-source models (DeepSeek, Qwen, etc.), fast access from mainland China | Mainland China |
 | **DeepSeek** | <https://platform.deepseek.com/> | Official DeepSeek API | Global + Mainland China |
+| **API Route** | <https://www.api-route.com/> | Access multiple models through an OpenAI-compatible API; use `--provider api_route` and `API_ROUTE_API_KEY`, with exact IDs from the [current catalog](https://www.api-route.com/pricing) | Global |
 | **Atlas Cloud** | <https://www.atlascloud.ai/> | Access models from multiple vendors through an OpenAI-compatible API | Global |
 | **Krill AI** | [www.krill-code.com](https://www.krill-code.com/register?invite=Q8D3L35725) | One-stop access to major global and China-domestic models (OpenAI, Claude, Gemini, Grok, Kimi, GLM, DeepSeek, Qwen, Minimax) | Global + Mainland China |
 | **OpenRouter** | <https://openrouter.ai/> | One-stop access to major global and China-domestic models (GPT, Claude, Gemini, Kimi, GLM, DeepSeek, Qwen, etc.) | Global |
