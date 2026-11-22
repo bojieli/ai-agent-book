@@ -244,17 +244,13 @@ def raptor():
         f.path([(x+120,185),(x+120,135),(450,135),(450,95)],True)
     for i in range(7):
         x=20+i*125;parent=[150,150,450,450,450,750,750][i]
-        f.box(x,370,110,70,'#ffffff');f.text(x+55,414,'文本块 '+str(i+1),20)
+        f.box(x,370,110,70,'#ffffff');f.text(x+55,397,'文本块',20);f.text(x+55,429,str(i+1),20)
         f.path([(x+55,370),(x+55,310),(parent,310),(parent,260)],True)
-    f.parts.append('<rect x="315" y="148" width="270" height="29" fill="white"/>')
-    f.text(450,171,'摘要向量 → 再聚类与摘要',21)
-    f.parts.append('<rect x="315" y="326" width="270" height="29" fill="white"/>')
-    f.text(450,349,'文本块向量 → 聚类与摘要',21)
     f.box(20,535,860,60,'#dedede');f.text(450,573,'原始文档',24,True)
     f.path([(450,535),(450,490),(75,490),(75,440)],True)
     for i in range(1,7):
         x=75+i*125;f.path([(450,490),(x,490),(x,440)],True)
-    f.text(540,522,'按边界分块',21)
+    f.text(655,522,'按边界分块',21)
     f.save('fig3-10.svg')
 
 

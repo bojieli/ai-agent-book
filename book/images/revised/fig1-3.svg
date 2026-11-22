@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="75.142mm" viewBox="0 0 900 638" role="img" aria-labelledby="title desc">
-<title id="title">实验 1-1——上下文消融实验设计</title><desc id="desc">五组条件均保留系统提示词和当前任务。工具定义、历史调用、历史推理与工具结果按各组条件保留或移除。</desc>
+<title id="title">实验 1-1 的完整基线与四组消融结果</title><desc id="desc">五组条件均保留系统提示词和当前任务。工具定义、历史调用、历史推理与工具结果按各组条件保留或移除。</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
 <rect width="900" height="638" fill="#ffffff" y="0" />
 <rect x="20" y="20" width="860" height="62" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />

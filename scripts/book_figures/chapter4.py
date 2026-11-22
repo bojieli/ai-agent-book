@@ -19,7 +19,7 @@ def mcp_sequence():
     message(310,'支持的协议版本与服务器能力',True)
     message(450,'tools/list')
     message(535,'工具定义：get_weather',True)
-    f.box(240,555,420,60,'#ffffff');f.text(450,581,'输入：城市（字符串）',20);f.text(450,608,'用途：查询指定城市天气',20)
+    f.box(240,555,420,60,'#ffffff');f.text(450,581,'location：城市名（字符串）',20);f.text(450,608,'用途：查询指定城市天气',20)
     message(720,'tools/call：get_weather')
     f.text(450,754,'arguments：{"location": "Beijing"}',20)
     message(850,'工具结果：Beijing，22°C，晴',True)

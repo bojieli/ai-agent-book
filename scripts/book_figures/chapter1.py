@@ -69,7 +69,7 @@ def learning_paths():
 
 
 def context_ablation():
-    f = Figure('实验 1-1——上下文消融实验设计', '五组条件均保留系统提示词和当前任务。工具定义、历史调用、历史推理与工具结果按各组条件保留或移除。', 680)
+    f = Figure('实验 1-1 的完整基线与四组消融结果', '五组条件均保留系统提示词和当前任务。工具定义、历史调用、历史推理与工具结果按各组条件保留或移除。', 680)
     f.box(20,20,860,62,'#dedede')
     f.text(450,61,'Kimi K3 · 2026 年 8 月 25 日',24,True)
     f.text(450,124,'各组都保留系统提示词和当前用户任务',22)
@@ -107,12 +107,12 @@ def revenue_trajectory():
     f.box(110,285,770,235,'#f2f2f2')
     f.text(495,320,'assistant.reasoning',22,True)
     f.text(495,355,'将 EUR、GBP、JPY 收入换算为 USD',21)
-    f.text(495,394,'assistant.tool_calls',22,True)
+    f.text(495,394,'assistant.tool_calls（首笔 ID：convert_currency_0）',22,True)
     f.text(495,430,'convert_currency(2100000, "EUR", "USD")',21)
     f.text(495,463,'convert_currency(1800000, "GBP", "USD")',21)
     f.text(495,496,'convert_currency(380000000, "JPY", "USD")',21)
     f.box(110,535,770,110,'#ffffff')
-    f.text(495,570,'tool：换汇结果',22,True)
+    f.text(495,570,'tool · 首笔 tool_call_id：convert_currency_0',22,True)
     f.text(495,605,'EUR → 2,282,608.70 USD；GBP → 2,278,481.01 USD',21)
     f.text(495,636,'JPY → 2,541,806.02 USD',21)
     f.text(60,700,'第 2 轮',20,True)

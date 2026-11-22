@@ -10,9 +10,13 @@ def contexts():
     left=[('需求分析师',['指令：确认需求与输入条件','工具：ask_question / save_req','用户：写一个 CSV 分析脚本','提问：需要处理哪些文件类型？']),('软件工程师',['指令：按已确认需求实现','工具：write_file / execute_code','写入 analyze.py','执行测试，读取结果']),('代码审查员',['指令：检查代码质量与安全性','工具：run_linter / run_tests','linter → 2 条警告','检查警告、测试与修复结果'])]
     right=[('Glossary Agent',['指令：识别术语与约定译法','工具：search_dict / write_file','产物：术语表 glossary.json']),('Translation Agent',['指令：按术语表翻译本章','工具：read_file / write_file','输入：章节 + 术语表 + 指南','产物：章节译文']),('Proofreading Agent',['指令：检查术语与行文','工具：read_file / write_file','输入：译文 + 术语表','产物：审校报告'])]
     for i in range(3):
-        y=65+i*270
+        y=65+i*315
         panel(f,20,y,410,*left[i],230);panel(f,470,y,410,*right[i],230)
-        if i<2:down(f,225,y+230,y+270);down(f,675,y+230,y+270)
+        if i < 2:
+            for x, label in [(65, ['沿用需求对话', '沿用对话与运行记录'][i]),
+                             (515, ['交付术语表', '交付译文与术语表'][i])]:
+                down(f, x, y+230, y+315)
+                f.text(x+163, y+282, label)
     f.save('fig10-1.svg')
 
 

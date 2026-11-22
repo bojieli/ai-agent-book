@@ -113,7 +113,7 @@ def latency():
 
 
 def queueing():
-    f=Figure('排队延迟曲线','M/M/1 示例中利用率与平均系统逗留时间的关系。',640)
+    f=Figure('利用率与平均总时间','M/M/1 示例中，请求从进入队列到完成服务的平均用时随利用率上升。',640)
     panel(f,120,20,720,'M/M/1 单服务台模型',['泊松到达 · 指数服务时间 · 平均服务时间 S = 1 s','ρ = λS < 1；平均总时间 W = S / (1 − ρ)'],145)
     ox,oy,w,h=130,545,690,310
     f.path([(ox,oy),(850,oy)],True);f.path([(ox,oy),(ox,205)],True)
@@ -121,6 +121,10 @@ def queueing():
         x=ox+rho*w;f.path([(x,oy),(x,oy+6)]);f.text(x,oy+35,str(rho),20)
     for val in [0,2,4,6,8,10]:
         y=oy-val*h/10;f.path([(ox-5,y),(ox,y)]);f.text(100,y+7,str(val),20)
+    # Service time is constant. The vertical gap up to the curve is queueing time.
+    service_y = oy - h / 10
+    f.parts.append(f'<path d="M {ox} {service_y} L {ox+w} {service_y}" fill="none" stroke="#777777" stroke-width="1.8" stroke-dasharray="7 5"/>')
+    f.text(675, service_y-8, '虚线：平均服务时间 1 s', 20)
     pts=[(ox+r*w,oy-h/10/(1-r)) for r in [i/100 for i in range(91)]]
     f.path(pts)
     for r,label,dx,dy in [(.5,'ρ = 0.5：W = 2 s',-5,-27),(.8,'ρ = 0.8：W = 5 s',-105,-20)]:
