@@ -10,17 +10,34 @@
 
 ## 理解问题与方法
 
-Skill 可以先暴露简短说明，再在被选中时提供操作步骤和辅助资源。这种渐进式加载把“发现能力”和“执行能力”分开。先用本地示例看文件如何生成，再在支持 Skill 的运行时中观察它何时读取说明。
+给 Agent 一篇《Attention Is All You Need》，请它做一份能在课上使用的幻灯片。它需要知道怎样读论文、取用原图、排版和检查成品。哪些说明要在接到任务时就给它，哪些可以等到制作幻灯片时再读？这就是本实验要观察的渐进式披露。
 
-### 目的
+### 先读书中实验的成品
 
-验证书中的核心命题：**Agent 通过「渐进式披露（Progressive Disclosure）」按需加载专业领域 Skill，即可完成复杂任务，而无需把所有知识一次性塞进系统提示词。**
+正式运行使用 Kimi Code CLI 和固定版本的 Anthropic PPTX Skill。打开[整套幻灯片的缩略图](runs/exp2-6-kimi-pptx-20260731-v1/workspace/output/full-deck-thumbnail.jpg)，找到讲 Transformer 架构的第 4 页，再对照[论文原文](runs/exp2-6-kimi-pptx-20260731-v1/workspace/attention-is-all-you-need.pdf)第 3 页的 Figure 1。要确认这幅图确实嵌进了演示文稿，可以在本实验目录执行：
 
-本 demo 让一个 Agent 从一篇（自带的）精简论文生成一份 8-12 页的 PowerPoint。Agent 启动时**只看到一份薄 Skill 目录**，当它识别出任务需要 `pptx` Skill 后，才逐层加载该 Skill 的完整流程、子文档与捆绑脚本，最后用 **python-pptx** 生成真实的 `.pptx` 文件。
+```bash
+python - <<'PYTHON'
+from pathlib import Path
+from zipfile import ZipFile
+
+work = Path("runs/exp2-6-kimi-pptx-20260731-v1/workspace")
+with ZipFile(work / "output/attention-is-all-you-need.pptx") as deck:
+    media = {deck.read(name) for name in deck.namelist() if name.startswith("ppt/media/")}
+    for figure in sorted((work / "source_visuals").glob("*.png")):
+        print(figure.name, "已嵌入" if figure.read_bytes() in media else "未找到")
+PYTHON
+```
+
+三幅图和一张表都能在成品中找到相同的图像数据。接下来换一个问题：Agent 怎么知道该用哪个脚本制作这些页面？[运行记录摘要](runs/exp2-6-kimi-pptx-20260731-v1/comparison.json)和[完整工具调用记录](runs/exp2-6-kimi-pptx-20260731-v1/kimi_stream.jsonl)保留了它选用 PPTX Skill、读取 `html2pptx.md`、调用制作脚本、检查缩略图的过程。可以先读摘要，再在原始记录里沿这些文件名查找对应的调用。[正式复现步骤](#official-run)给出了两种运行时的命令。
+
+### 在本地观察 Skill 如何逐层加载
+
+下面的 Python 示例让一个 Agent 从一篇（自带的）精简论文生成一份 8-12 页的 PowerPoint。Agent 启动时**只看到一份薄 Skill 目录**，当它识别出任务需要 `pptx` Skill 后，才逐层加载该 Skill 的完整流程、子文档与捆绑脚本，最后用 **python-pptx** 生成真实的 `.pptx` 文件。
 
 ### 与 Anthropic PPTX Skill 的关系
 
-书中原实验跑在 **Claude Code + Anthropic 官方 PPTX Skill** 上。由于当前环境的 Anthropic key 未必可用，本项目**自建了一套同构的 Skills 机制**来复现同样的思想，而非调用 Anthropic：
+正式实验直接使用官方 Skill。为方便读者逐行阅读加载逻辑，本地示例用 Python 写了一个小型加载器，把扫描目录、读取说明和调用脚本分成三个可观察的步骤。
 
 | 维度 | Anthropic PPTX Skill（书中） | 本项目（自建同构版） |
 |------|------------------------------|----------------------|
@@ -61,13 +78,13 @@ skills/
 
 ## 准备环境与输入
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+如果只想在本地看看生成的幻灯片，准备好 Python 依赖即可；`demo.py --offline` 会把示例材料写成 PPTX。要检查 Agent 有没有读对 Skill，则要看它读取文件的调用记录，单凭幻灯片无法判断。
 
 <a id="learning-2"></a>
 
 ## 按照步骤完成实验
 
-下方命令只根据示例材料生成幻灯片，不调用模型。先打开生成文件，了解输出格式。随后按下文准备真实论文和固定版本的 Skill，在所选运行时中完成论文到幻灯片的过程，并查看读取 Skill 的轨迹。
+安装依赖后，运行 `python demo.py --offline` 可以用预设内容生成幻灯片。要观察模型怎样选择工具，配置凭据后运行 `python demo.py`，对照终端打印的文件读取顺序与生成的幻灯片。
 
 ### 运行
 
@@ -199,6 +216,8 @@ python skills/pptx/scripts/generate_pptx.py papers/sample_outline.json output/de
 | `papers/sample_outline.json` | 内置幻灯片大纲（离线模式输入，同时是 payload schema 的范例） |
 | `tests/` | 工具分发安全性与生成器边界情况的离线回归测试 |
 | `output/presentation.pptx` | 生成的演示文稿（输出，运行后产生） |
+
+<a id="official-run"></a>
 
 ### Canonical manuscript reproduction / 正式复现实验
 

@@ -1,34 +1,50 @@
 # Active Tool Discovery / 主动工具发现
 
-把全部工具说明一次塞进上下文，既占空间，也增加选择难度。本实验比较全量提供、检索预筛选和主动发现，学习如何让 Agent 在需要时找到合适的能力。
+第一次做实验，可以先运行 `python demo.py --offline`：用 126 个教学工具比较全量加载、预筛选和主动发现，沿着调用轨迹观察模型每一步能看到哪些说明。要核对[正文实验 4-1 的结果](validation/experiment_4_1/rerun_20260825/summary.json)，请看下文的正式运行：`run_exact_experiment.py` 连接真实 MCP 服务，8 月 25 日的记录用 127 个工具比较全量加载与主动发现。
 
 [English](#english)
 
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4)。
+[模型怎样发现缺少的工具](#learning-0) · [选教学目录或正式运行记录](#learning-1) · [对照工具定义的加载顺序](#learning-2) · [检查必需工具是否入选](#learning-3) · [实现与正式运行](#learning-4)
 
 <a id="learning-0"></a>
 
-## 理解问题与方法
+## 模型怎样发现缺少的工具
 
-主动发现把工具目录视为可查询资源：先获取候选说明，再决定调用哪个工具。这样减少一次暴露的信息，但增加了查找步骤，也可能漏掉真正需要的工具。
-
-### 发现工具也是一次有成本的行动
-
-主动发现把“有哪些工具”变成运行时可以询问的问题。Agent 先看到少量发现接口，在任务需要时查找某类能力，再读取和调用具体工具。这能减少初始上下文，但也增加发现步骤；如果模型不知道该查什么，关键工具可能一直没有被找到。因此，下面的比较既保留 token 与调用统计，也要检查发现路径和任务结果。
+用户问：“苹果公司最近股价怎么样？有没有相关新闻能解释一下原因？”报价工具能回答前半句，后半句还得查报道，看看有没有能解释这次变动的消息。全量加载让模型一开始就看到整个目录；预筛选用用户的原话查一次目录；主动发现允许模型查过股价后，再专门为新闻查一次。做实验时，把每次检索给出的候选与实际调用的工具并排看，才能分清工具是没被找到，还是找到了却没被使用。
 
 ### 目的
 
 当一个 Agent 拥有上百个工具时，常见做法是把全部工具的 JSON schema 一次性塞进 system prompt。
-这会带来两个问题：
+做比较时，可以先问两个问题：
 
-1. **token 浪费**：126 个工具的完整 schema 约 **1.16 万 token**，每一步推理都要重复计费。
-2. **指令遵循退化**：措辞稍泛的任务下，模型会"广撒网"地把通用兜底工具（`web_search` /
-   `google_search` / `universal_search`）和专用工具一起调用，甚至用通用搜索替代专用工具
-   —— 即书中所说的"查股价却选了通用 web_search"。
+1. **目录占了多少输入**：教学目录中 126 个工具的完整 schema 约 **1.16 万 token**。如果每轮都传完整目录，这段文本会反复进入请求；实际费用取决于服务计价和前缀缓存。
+2. **模型会选错吗**：措辞稍泛的任务下，模型可能"广撒网"地把通用兜底工具（`web_search` /
+   `google_search` / `universal_search`）和专用工具一起调用，甚至用通用搜索替代专用工具。查股价的任务可以从这里入手：如果要求同时查询新闻，模型同时选报价工具和搜索工具就有理由；要看它有没有漏掉其中一项。
 
 **主动发现**只在 system 里保留少量基础工具 + 一个 `discover_tools(need)` 元工具。模型遇到能力缺口时，
 用自然语言描述需求，系统用嵌入相似度从工具库检索 3-5 个最相关的专用工具，把它们的 schema 作为
 **user message** 追加进对话（保护 system 前缀的 KV Cache），并更新状态栏可用工具列表。
+
+### 怎样分清是哪一步起了作用
+
+先看[8 月 25 日运行协议](validation/experiment_4_1/rerun_20260825/protocol.json)。全量组把整份定义放在系统提示里；发现组先用嵌入检索挑出最多五项，再把定义随一条用户消息追加到历史末尾，还多了搜索轮次、发现指令和状态栏。目录的 50,597 是用 o200k 编码算出的定义 token 数。正式脚本给 Ollama 请求设置了 `num_ctx=131072`；这个设置和 o200k 数值均不足以判定 Qwen 是否启用了 YaRN，或者模型是否因为超过原生窗口而退化。
+
+要研究**因果关系**，可以在同一模型、同一批题上另做以下配对试验。这些是后续实验设计，原报告只测了整套流程。
+
+| 想检验什么 | 怎样配对，记录什么 |
+| --- | --- |
+| 输入变长，还是可选工具变多？ | 固定正确工具及其位置，用填充文本拉长同一份目录；再固定模型分词器测得的总长度，把相同长度的填充换成无关工具定义。记录实际入模长度、截断情况和选错工具的次数，并用多种填充复查结果。 |
+| 检索器选得好，还是模型选得好？ | 先统计检索候选是否包含必需工具，再把保存的同一批候选交给模型选择。分别报告候选覆盖率，以及在必需工具入选条件下模型选对的比例。 |
+| 定义出现的位置有没有影响？ | 固定候选、指令和预算，分别提前或临近选择时提供同一份定义；保持消息角色一致。再固定位置单独比较角色，避免把新近程度与消息角色混为一谈。 |
+| 状态栏、发现提示和额外轮次各有什么用？ | 固定候选，依次只切换状态栏或发现指令；另给没有搜索动作的对照组同样多的推理机会。记录实用轮数、选择结果和总输入，再报告各项变化。 |
+
+**动手固定候选，只改顺序。** 在本实验目录运行 `python3 compare_candidate_order.py`，观察同一批五个候选。脚本从 8 月 25 日的股价任务回执取出原问题和第一次发现时的能力描述，再按工具名去归档目录读取完整定义。A 沿用检索器的顺序，B 把第一个候选移到最后；`yfinance_quote` 因此从第三位移到了第二位。
+
+```bash
+python3 compare_candidate_order.py --json > candidate-order-pair.json
+```
+
+文件里有两个完整的 Ollama 请求，可以逐项比较。系统指令、消息角色、模型选项、问题和每条定义完全一致，两条用户消息的 UTF-8 字节数也相同。两组都是新构造的单步选择题；归档中后续的动作和答案都没有放进题面。脚本只生成输入，不请求模型。字节数相等也不能代替模型分词计数。若以后把两份请求交给同一个模型实例，可以比较它选中了谁，再换几种轮换顺序、换题重复，观察结果是否随候选的位置而变。
 
 ### 机制
 
@@ -49,31 +65,21 @@ demo.py            对同一组任务分别跑所选策略，打印 token / 延�
 ```
 
 **为什么用"文本注入 + 文本解析"而不是 OpenAI 原生 function calling？**
-原生 function-calling 接口对工具选择做了很强的约束优化，即使上百个工具也极少选错，无法体现书中
-所述的"超长上下文指令遵循退化"。把 schema 当作纯文本塞进 prompt、让模型自己以 JSON 输出工具调用，
-才是控制组的真实机制，也才能观察到退化。这也正是书中"把 schema 注入 system prompt（几万 token）"的写法。
+两组都把 schema 作为文本交给模型，再从其回复解析 JSON 调用。这样可以保持调用格式一致，比较工具说明出现的位置和数量。若要判断原生 function calling 是否能减少选错工具，还需要在同一目录和任务上单独对照。
 
-**为什么嵌入检索能避免错选？** 通用工具 `web_search` 的描述"什么都能做"，语义被稀释；而专用工具
-（如 `search_news`）描述聚焦。对一个聚焦的 `need`（"获取特斯拉最近的新闻"），聚焦的专用工具余弦相似度
-更高、排在前面，通用工具往往进不了 top-k，于是根本不会被加载 —— 检索层天然起到了"精度过滤"作用。
+**怎样读一次检索的结果？** 在 `finance+news` 的离线轨迹中，预筛选列出的十个候选既有专用的 `get_stock_price`、`search_news`，也有通用的 `web_search`。候选来自相似度排序，通用工具也可能排在前面。先看候选里有没有办法完成任务，再读调用轨迹，看看模型用了哪一个。
 
-**检索预筛选为什么不够？** 检索预筛选（`run_retrieval_prefilter`）只按**初始查询**做一次语义匹配、
-一次性注入 top-n 工具。对"查股价 + 搜新闻"这类多步跨领域任务，初始查询的向量往往偏向第一个领域，
-第二个子任务需要的专用工具可能挤不进 top-n，模型执行到一半才发现"想调用的工具根本没在清单里"——
-这正是书中指出的一次性匹配的内在局限。
-
-主动发现把"发现"延后到执行中、按每个真实浮现的 `need` 分别检索，
-从而补齐这一缺口（离线自检里可直接观察到：检索预筛选在半数多步任务上漏掉了第二个工具，见下表）。
+**为什么还要允许再次查目录？** 如果第一次查找没找到报价接口，预筛选组只能从原来的清单里选。主动发现组可以把下一次查询缩小到“查询加密货币的实时价格”。两次查询会得到不同的候选；能否因此办成任务，要看检索结果和随后的调用。下面的离线对照给出了两种失败情形。
 
 <a id="learning-1"></a>
 
-## 准备环境与输入
+## 选教学目录或正式运行记录
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+离线演示使用 126 个教学工具；正文实验用了 127 个。先在离线轨迹里找出新工具的定义从哪一步进入上下文，再用正式记录核对股票查询用了哪些工具。
 
 <a id="learning-2"></a>
 
-## 按照步骤完成实验
+## 对照工具定义的加载顺序
 
 先运行离线演示，观察查询如何映射到候选工具。选一个需要多个能力的任务，记录每次发现了哪些说明。之后按下文配置模型与真实工具，比较三条路径。
 
@@ -128,14 +134,9 @@ python demo.py --offline --output results/offline.json         # 导出结构化
 | 检索预筛选 | 4/8 | 4/8 | 1030 | 8236 | 0.006 |
 | 主动发现 | 8/8 | 8/8 | 974 | 7796 | 0.010 |
 
-离线自检要传达的**两个真实、可复现的结构性结论**：
+**先算目录开销。** 八个任务合计，全量组注入了 93,040 个工具定义 token，主动发现组注入了 7,796 个，前者约为后者的 11.9 倍。`injected_tokens` 只统计脚本加载的工具说明；要算整次任务的费用，还需要各轮的实际模型用量。保持八个任务不变，用 `--tool-set-size 20` 再跑一次。启动日志显示实际保留了 **27** 个工具，因为基础工具、通用工具和各题评分时接受的工具都要留下。此时两组分别注入 22,464 和 7,842 个 token，比值约为 **2.9**。
 
-1. **token 随工具集规模放大而分化**：全量注入固定 11,630 token/任务；检索预筛选与主动发现按需只注入
-   约 1,000 token（**~11.9× 精简**）。用 `--tool-set-size 20` 缩小工具集，差距收敛到 ~1.8×——印证"工具越多、
-   全量注入越吃亏"。
-2. **检索预筛选在多步跨领域任务上结构性漏工具**：一次性 top-10 检索在 8 个任务里有 4 个漏掉了第二个子任务
-   所需的专用工具（如 `academic(诱导)` 的 top-10 里根本没有 `arxiv_search`），模型执行到一半调不到工具 →
-   子任务失败；主动发现按每个真实浮现的 `need` 分别检索，8/8 补齐。
+**再查预筛选组哪四题没做完。** 在 `crypto+news` 和 `academic(诱导)` 中，十个候选分别缺少能完成加密货币报价、学术检索的工具。另两题却有可用工具：`forex+weather` 有评分规则认可的 `convert_currency`，脚本只调用了天气工具；`opinion(诱导)` 有可用的新闻工具，脚本一次也没调用。可以打开 `tools_library.py` 的 `required_slots` 核对每题接受哪些替代工具。四次失败中，两次需要改候选检索，另两次即使用原来的候选，也还有改进选择的余地。主动发现组在这套脚本化任务中完成了八题。
 
 ### 模型 ↔ 脚手架此消彼长（弱模型 gpt-4o-mini vs 强模型 gpt-5.6-luna，均为真实运行）
 
@@ -192,7 +193,7 @@ python demo.py --offline --output results/offline.json         # 导出结构化
 
 <a id="learning-3"></a>
 
-## 分析结果与形成判断
+## 检查必需工具是否入选
 
 离线演示展示选择流程，不代表真实模型一定能选对。比较时同时检查工具覆盖、选择正确性、额外查找轮次和上下文消耗。
 
@@ -257,12 +258,12 @@ python demo.py --offline --output results/offline.json         # 导出结构化
 
 <a id="learning-4"></a>
 
-## 阅读实现与继续探索
+## 实现与正式运行
 
 ### 项目说明
 
-> Companion code for *AI Agents in Depth*, Chapter 4 — **Experiment 4-1 ★★★: Proactive Tool Discovery**. Compares full injection, retrieval prefilter, and active discovery on a 126-tool library.  
-> 配套《深入理解 AI Agent》第 4 章 **实验 4-1 ★★★：主动工具发现**。在 126 个跨领域工具上对比全量注入、检索预筛选与主动发现。
+> Companion code for *AI Agents in Depth*, Chapter 4 — **Experiment 4-1 ★★★: Proactive Tool Discovery**. The teaching demo compares three strategies on 126 tools. The August manuscript campaign compares full loading and active discovery on 127 MCP tools.
+> 配套《深入理解 AI Agent》第 4 章 **实验 4-1 ★★★：主动工具发现**。126 个教学工具用于观察三种策略；正文的 8 月运行从真实 MCP 服务读取 127 个工具，在相同三个任务上对比两种策略。
 
 ← [Chapter 4 index / 返回第 4 章目录](../README.md)
 
@@ -302,12 +303,7 @@ python demo.py --offline --output results/offline.json         # 导出结构化
 ### Canonical manuscript campaign / 正式实验活动
 
 `run_exact_experiment.py` replaces the mechanism-only demo for formal
-Experiment 4-1 acceptance. It obtains all 126 complete schemas from the real
-perception MCP server, proves the full-catalog control exceeds 50K measured
-tokens, uses local Ollama `qwen3:4b` for both arms, retrieves five candidates
-with `all-MiniLM-L6-v2`, and executes every selected tool through MCP against
-real public APIs/local processes. No mock tool result can satisfy a formal
-gate. Runs are resumable and store the gzipped catalog, model receipts, MCP
+Experiment 4-1 acceptance. It reads the current catalog from the perception MCP server. The August 25 run recorded 127 distinct schemas (50,597 tokens with the shared `o200k` tokenizer). Both arms used local Ollama `qwen3:4b`; active discovery retrieved five candidates with `all-MiniLM-L6-v2`. The runner checked required capabilities and artifacts from adapter-assisted MCP calls. Runs are resumable and store the gzipped catalog, model receipts, MCP
 receipts, artifacts, hashes, paired metrics, and an honest hypothesis result.
 
 ```bash
@@ -319,45 +315,35 @@ python run_exact_experiment.py --campaign-id my-qwen3-4b-run --resume
 `demo.py` and `offline_backend.py` remain useful teaching/CI paths, but their
 lightweight tool outputs and scripted model do not count as formal evidence.
 
-The completed canonical evidence is
-[`validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/summary.json`](validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/summary.json),
-with manifest SHA-256
-`88d622db4981207a9980c30abea4eb8dc2621161ded80be0cb2bb8582833153c`.
-All twelve gates passed. Control and treatment both selected every required
-capability and completed all three tasks (100% versus 100%), so the predicted
-accuracy/completion improvement was not observed. Treatment elapsed time was
-808.926 seconds versus 2,590.820 seconds for control (3.20× faster). Its
-initial system prompt was 1,251 tokens per task and it dynamically injected
-12,838 schema tokens across all tasks; control used 50,352 system-prompt tokens
-per task.
+### 正式运行记录与指标口径
 
-The pass does not hide weak-model detours. In the treatment Apple trajectory,
-Qwen made an irrelevant search and code call (leaving a 215-byte empty SVG)
-and attempted to finish twice before the completion gate forced discovery of
-the stock and news specialists. The arXiv trajectory also retained malformed
-actions and a redundant discovery. The first v2 terminal attempt additionally
-retains real 429/503/disconnect receipts under `failed_attempts/`; a single
-bounded resume archived it and retried only that incomplete task. Completed
-receipts are never replayed, and a third real attempt is refused.
+脚本在运行时读取工具目录。要知道这次一共读到了多少个不同的工具，可以查看目录回执的 `unique_tool_count`。当前采用的运行是 [`rerun_20260825/summary.json`](validation/experiment_4_1/rerun_20260825/summary.json)，使用本地 Ollama `qwen3:4b` 和真实 MCP 服务提供的 127 个工具。其 manifest SHA-256 为 `e5a70588804b8bc1a5ba38c18fe7f4537e8284e62f745d8a6e03401833046dae`。[7 月 30 日的目录回执](validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/catalog_receipt.json)记录的是 126 个真实工具、50,120 个 schema token；教学目录虽然也是 126 个工具，定义内容不同。核对旧运行的调用与产物时，应从[该次汇总](validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/summary.json)进入。
 
-`run_exact_experiment.py` 是实验 4-1 的正式运行器：从真实感知 MCP 读取 126 个完整
-schema，验证控制组超过 50K token，两组都使用本地 Ollama `qwen3:4b`，实验组用
-`all-MiniLM-L6-v2` 每次检索五个候选，并通过 MCP 调用真实公共 API 或本地进程执行所选
-工具。mock 结果不能通过正式门禁；中断后可用 `--resume` 续跑。`demo.py` 与离线后端仅作
-教学/CI 机制自检，不是正式验收证据。
+| 项目 | 全量加载 | 主动发现 |
+| --- | ---: | ---: |
+| 每任务初始系统提示词 token | 50,829 | 1,251 |
+| 股价与新闻任务追加的定义 token | 0 | 3,939 |
+| 论文检索与下载任务追加的定义 token | 0 | 1,853 |
+| 贡献者图表任务追加的定义 token | 0 | 2,632 |
+| 覆盖全部必需能力的任务 | 3/3 | 3/3 |
+| 适配层执行后通过产物检查的任务 | 3/3 | 3/3 |
+| 记录中的三任务耗时合计（秒） | 3,056.294 | 783.442 |
 
-正式证据为
-[`validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/summary.json`](validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/summary.json)，
-manifest SHA-256 为
-`88d622db4981207a9980c30abea4eb8dc2621161ded80be0cb2bb8582833153c`。
+以上 token 使用 `o200k` 分词器统一计数，描述的是文本规模，Qwen 的实际分词量应读取模型运行记录。全目录的 schema 文本为 50,597 token，系统提示词还包含任务规则等内容。新增定义量也应与累计推理输入量分开统计：已加载定义会随历史进入后续请求。
 
-12 项门禁全部通过；对照组与实验组均完成 3/3 任务，准确率均为 100%，因此正文
-预期的准确率/完成率提升并未出现。实验组用时 808.926 秒，对照组为
-2,590.820 秒（快 3.20×）；实验组每任务初始 system prompt 为 1,251 token，
-三任务合计动态注入 12,838 token，对照组每任务则为 50,352 token。
+先打开[苹果股价任务的主动发现回执](validation/experiment_4_1/rerun_20260825/treatment/apple_stock_news/receipt.json)。在 `discoveries[0].matches` 里从上往下数，实际调用的 `yfinance_quote` 排第三。再查 `initial_schema_names`，第二个实际调用的工具 `web_search` 从一开始就可用。这两次选择分别来自新发现的工具和已有工具。
 
-成功轨迹仍保留了 Apple 任务的无关搜索/代码调用、215 字节空 SVG、两次过早结束，
-以及 arXiv 任务的格式错误和冗余发现；不把通过解读为“工具选择过程干净”。
+现在遮住 `final_answer`，只看 `execution.receipts`。第一条工具回执足以复算涨幅：用（310.34 − 309.35）除以 309.35，约为 0.32%。第二条回执中的五个搜索摘要提供了哪些新闻线索？它们主要给出价格、成交量等行情。凭这些材料，可以向用户说明这次检索还没有找到涨价原因；要断定当天没有相关新闻，还需要更多证据。
+
+运行器的 `grade_plan` 按每个任务的必需能力槽位计分：某槽位至少有一个工具被选中，就记为命中。回执中的 `accuracy=1.0` 表示全部必需能力均被覆盖；该指标不扣除无关调用，也不检查调用参数和最终答案。正文据此使用“必需能力覆盖”这一名称。
+
+`_call_real_tool` 在执行前填写或替换参数：股票代码固定为 AAPL，新闻查询固定为 Apple AAPL stock，论文检索固定为 transformer，GitHub 仓库固定为 openai/openai-python；下载调用按搜索结果展开为三次下载，代码执行调用使用运行器根据贡献者数据生成的 SVG 绘图代码。因此，产物由模型选择能力与适配层组织执行共同完成。评估模型自主生成参数或程序时，需要另设保留原始参数的实验。
+
+`_finalize_execution` 检查必需能力是否执行成功，并检查三份 PDF 的数量、文件签名与大小，以及图表的 SVG 签名与大小。论文相关性、新闻对股价变动的解释、图表内容正确性及最终回答质量需要独立评估。现有十二项门禁记录的是上述执行合同的通过情况。
+
+当前运行仍出现解析错误：全量加载组三个任务分别为 1、1、2 次，主动发现组分别为 4、6、1 次（按股价、论文、贡献者顺序）。全量加载组的贡献者任务还包含重复查询和 `file_stat` 调用。主动发现组的股价任务选择了 `yfinance_quote` 与 `web_search`；旧记录中的空图表和过早结束属于先前运行，应查阅相应历史回执。表中耗时保留为本次运行记录，速度比较还受解析重试、模型运行环境、外部接口响应与执行适配层影响。
+
+复现时依次检查 catalog、模型决策、适配后的 MCP 参数与产物；若要比较端到端任务质量，应补充任务相关性、参数正确性、额外调用和最终回答的评价标准。
 
 ---
 
@@ -402,7 +388,7 @@ Native function-calling is heavily optimized for tool choice and rarely errs eve
 
 **Why does embedding retrieval reduce wrong picks?** Generic tools like `web_search` claim to “do everything,” so their semantics are diluted; specialized tools (e.g. `search_news`) have focused descriptions. For a focused `need` (“recent Tesla news”), specialized tools score higher and rank first; generics often never enter top-k and are never loaded—retrieval acts as a precision filter.
 
-**Why isn’t retrieval prefilter enough?** Prefilter (`run_retrieval_prefilter`) matches only the **initial query** once and injects top-n tools. On multi-step cross-domain tasks (e.g. stock price + news), the initial vector often favors the first domain; the second sub-task’s specialized tool may miss top-n. Active discovery defers discovery until each real `need` appears and retrieves separately (offline self-check shows prefilter missing the second tool on half of multi-step tasks—see table below).
+**Why isn’t retrieval prefilter enough?** Prefilter (`run_retrieval_prefilter`) matches only the **initial query** once and injects top-n tools. On multi-step cross-domain tasks (e.g. stock price + news), the initial vector often favors the first domain; the second sub-task’s specialized tool may miss top-n. Active discovery defers discovery until each real `need` appears and retrieves separately (see the candidate lists and calls in the offline comparison below below).
 
 ### How to run
 
@@ -450,7 +436,7 @@ First run builds tool embeddings and caches under `.cache/`. Full flags: `python
 - **Swap chat model**: `MODEL=gpt-4.1-mini python demo.py`; swap embeddings with `EMBED_MODEL=text-embedding-3-large` (cache rebuilds automatically when the embed signature changes).
 - **Swap provider / gateway**: chat and embeddings both use the OpenAI SDK; `OpenAI()` reads `OPENAI_BASE_URL`, so any **OpenAI-compatible** gateway works via `OPENAI_BASE_URL=https://your-gateway/v1` (endpoint must offer both chat and embeddings).
 - **Swap tasks / inputs**: edit `TASKS` in `tools_library.py` (each has `prompt` and scoring capability slots), or use `--tasks` / `--query`; grow/shrink the catalog in `ALL_TOOLS` in the same file.
-- **Offline self-check**: `--offline` uses `offline_backend.py` (local hash embeddings + scripted mock). Good for CI / offline / pipeline smoke tests. It reproduces token/latency structure and “prefilter misses second tool,” not real-model long-context choice behavior (see real gpt-5.6-luna results below).
+- **Offline self-check**: `--offline` uses `offline_backend.py` (local hash embeddings + scripted mock). Good for CI / offline / pipeline smoke tests. It reproduces token/latency structure and the distinction between missing candidates and unused alternatives, not real-model long-context choice behavior (see real gpt-5.6-luna results below).
 
 ### Offline mechanism self-check (`python demo.py --offline`)
 
@@ -464,8 +450,8 @@ One real `--offline` run (8 tasks × three strategies). **Token/latency are real
 
 Two **real, reproducible structural** takeaways:
 
-1. **Tokens diverge as catalog size grows**: full injection is fixed at 11,630 tokens/task; prefilter and discovery inject ~1,000 (**~11.9×** smaller). With `--tool-set-size 20` the gap shrinks to ~1.8×—confirming “more tools → full injection hurts more.”
-2. **Prefilter structurally misses tools on multi-step cross-domain tasks**: one-shot top-10 misses the second specialized tool on 4/8 tasks (e.g. `academic(诱导)` top-10 has no `arxiv_search`); active discovery retrieves per emerging `need` and hits 8/8.
+1. **Tokens diverge as catalog size grows**: full injection is fixed at 11,630 tokens/task; prefilter and discovery inject ~1,000 (**~11.9×** smaller). With `--tool-set-size 20`, the eight tasks require 27 tools after the base tools, generic tools, and accepted alternatives are retained. The totals are 22,464 and 7,842 definition tokens, a ratio of about 2.9.
+2. **Compare candidates with calls.** Prefilter missed a required capability in `crypto+news` and `academic(诱导)`. The other two failures had acceptable candidates: the mock router skipped `convert_currency` in `forex+weather` and made no news call in `opinion(诱导)`. Active discovery completed all eight scripted tasks.
 
 ### Conclusions (one real run, gpt-5.6-luna, 2026-07)
 
@@ -498,7 +484,7 @@ Two **real, reproducible structural** takeaways:
 4. **Boundaries**:
    - Control setup is “schemas as plain text + model emits JSON tool calls”; mock tools return placeholders, so conservative models may refuse—major source of low accuracy here.
    - With `temperature=1` only, per-task outcomes vary across runs; structural conclusions (token savings; full injection misusing generics on inducement tasks) stay directionally stable.
-   - For cleaner, reproducible mechanism checks (token/latency + prefilter missing second tool), use the `--offline` table above.
+   - For cleaner, reproducible mechanism checks (definition tokens, latency, and candidate coverage), use the `--offline` table above.
 
 > **One line:** On gpt-5.6-luna, active discovery’s steadiest win is still tokens (~19.7× this run); on vague inducement tasks, embedding retrieval keeps inflated generics (`web_search` / `google_search` / `universal_search`) out of the candidate set. Strong reasoners’ conservative “give up” behavior also lowers absolute accuracy for every strategy—read the table above as-is.
 

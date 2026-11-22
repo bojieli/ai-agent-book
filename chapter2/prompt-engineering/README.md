@@ -28,17 +28,11 @@
 ./run_full_ablation.sh --quick   # 每组 3 任务冒烟
 ```
 
-### 预期排序
+### 正式对照结果
 
-1. **Baseline** — 最佳  
-2. **语气变化** — 通常对成功率影响不大  
-3. **Wiki 随机化** — 严重损害指令遵循  
-4. **无工具描述** — 大量参数错误 / 错误操作  
-5. **组合消融** — 最差
+实验 2-4 使用 Kimi K3，在相同十个航空客服任务上比较六种配置。通过数依次为：baseline 7、tone_trump 6、tone_casual 9、wiki_random 8、no_tool_desc 9、all_ablations 8。记录位于 `runs/exp2-4-kimi-k3-20260730-v7/comparison.json`。
 
-### 总结
-
-消融框架量化展示：提示工程不当时可出现 **30–80%** 的性能下滑；**结构与清晰度**最关键；专业性与一致性支撑有效 Agent 系统。记住：优秀的提示工程就是优秀的员工培训。
+阅读结果时逐任务对照轨迹，分别检查规则执行、工具选择与参数填写，并通过重复运行评估差异是否稳定。语气还需要单独评审表达质量。下方保留的四任务冒烟结果用于检查框架运行，与本次正式对照分开解释。
 
 ### 上游 τ-bench（内嵌）
 
@@ -63,7 +57,7 @@ python run.py --agent-strategy tool-calling --env retail --model gpt-4o \
 
 ## 准备环境与输入
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+运行新的对照需要准备客服 Agent 和模拟用户所用的模型服务。先决定要做航空还是零售任务，同一组对照沿用同一个环境、任务范围和模型，只改变被考查的提示词。
 
 ### 安装
 
@@ -151,7 +145,7 @@ no_tool_desc                      0.0%         0/  4        0.0%
 all_ablations                     0.0%         0/  4        0.0%
 ```
 
-> ⚠️ 每组 4 任务噪声极大——例如 `wiki_random` 偶然高于 baseline 不是真实结论。方向性信号（去掉工具描述 → 0%、全部叠加 → 0%、语气对成功率影响小）与实验 2-4 一致；要稳定量化请把 `--end-index` 提到 10 以上并多跑 `--seed`。以你自己的完整运行为准。
+> 此表为早期四任务冒烟记录。正式十任务对照见上文；应分别保留两组任务与运行条件，避免将冒烟排序推广为稳定结论。
 
 #### 基线（单配置）
 
@@ -221,22 +215,48 @@ python run_ablation.py \
 
 ### 结果分析
 
-原始轨迹在 `results_ablation/`，含 **task_id**、**reward**（0/1）、**info**、**traj**、**ablation_config**。
+规则重排组通过了 8 题，基线通过了 7 题。只看总分，你可能以为重排之后有一道题从失败变成了成功。把两组按题号配对，会发现实际有三道题的结果变了。进入本实验目录，用 Python 读取正式运行的归档：
+
+```bash
+python - <<'PYTHON'
+import json
+from pathlib import Path
+
+run = Path("runs/exp2-4-kimi-k3-20260730-v7")
+
+def read_tasks(group):
+    path, = run.glob(f"tool-calling-kimi-k3-{group}_*.json")
+    records = json.loads(path.read_text())["results"]
+    return {record["task_id"]: record for record in records}
+
+baseline = read_tasks("baseline")
+reordered = read_tasks("wiki_random")
+for task_id in sorted(baseline):
+    before = baseline[task_id]["reward"]
+    after = reordered[task_id]["reward"]
+    if before != after:
+        print(f"任务 {task_id}：{before:g} → {after:g}")
+
+for name, tasks in [("基线", baseline), ("规则重排", reordered)]:
+    tools = [m["name"] for m in tasks[4]["traj"] if m["role"] == "tool"]
+    print(name, "→".join(tools))
+PYTHON
+```
+
+任务 0 和 2 都从 0 分变为 1 分，任务 4 却从 1 分降到 0 分。任务 4 的旅客想把纽约到芝加哥的机票改到自己名下，换到经济舱，还要托运三件行李。两组最后都成功转接了人工客服。沿工具记录往前读，基线调用了 `update_reservation_baggages` 更新行李；重排组改了乘客和航班，却没有调用行李更新工具。单看最后一条转接回执，读者就会漏掉这个差别。
+
+把 Agent 看成刚入职的聪明同事：给它整理业务规则、写明工具的用途和参数，最终是希望它能把这样的委托办完整。正式实验每种配置每题只跑了一次。这条轨迹能帮你找到值得复查的环节；要判断规则顺序是否让 Agent 更容易漏办行李，还需固定任务和模型，重复比较两组漏办的次数。
+
+### 汇总自己的运行结果
+
+`--all` 结束时会打印各组通过数。要事后汇总自己保存在 `results_ablation/` 的运行，可执行：
 
 ```bash
 python analyze_results.py
 python analyze_results.py --results-dir results_ablation --output summary.json
 ```
 
-> `--all` 结束时已打印对比表；`analyze_results.py` 用于事后重汇总。仓库内 `results_ablation/*.json` 为少量调试样本（1–6 任务），**不足以做统计结论**；请用完整运行（`--end-index` ≥ 10）。
-
-### 关键洞察
-
-把 Agent 看成聪明的新员工：
-
-1. **清晰指令至关重要** — 结构化信息、任务描述、工具用法  
-2. **上下文组织影响理解** — 逻辑排序、相关规则归并、优先级明确  
-3. **工具文档不可或缺** — 用途、参数、示例
+仓库在这个目录里保留了每组 1 至 6 题的调试样本。上面配对使用的十任务正式轨迹另存于 [v7 归档](runs/exp2-4-kimi-k3-20260730-v7/)。
 
 ### 检查自己的解释
 
@@ -420,7 +440,7 @@ no_tool_desc                      0.0%         0/  4        0.0%
 all_ablations                     0.0%         0/  4        0.0%
 ```
 
-> ⚠️ n=4 per arm is very noisy—e.g. `wiki_random` above baseline is chance, not a real finding. Directional signals (no tool desc → 0%, full stack → 0%, tone little effect on success) match 实验 2-4; for stable numbers use `--end-index` ≥ 10 and multiple `--seed`. Use **your** full runs, not these smoke digits.
+> This is an earlier four-task smoke run. Keep it separate from the canonical ten-task comparison above; inspect task-level traces and repeated runs before drawing conclusions about ordering.
 
 #### Baseline (single config)
 
@@ -507,13 +527,9 @@ python analyze_results.py --results-dir results_ablation --output summary.json
 
 > `--all` already prints the comparison table; `analyze_results.py` is for re-aggregating historical/manual runs. Bundled `results_ablation/*.json` are small debug samples (1–6 tasks)—**not** enough for statistical claims; use full runs (`--end-index` ≥ 10).
 
-### Expected ranking
+### Comparing the arms
 
-1. **Baseline** — best  
-2. **Tone variants** — usually little success-rate impact  
-3. **Wiki randomization** — hurts instruction following  
-4. **No tool descriptions** — many bad tool args / wrong ops  
-5. **Combined** — worst  
+The canonical ten-task run records 7, 6, 9, 8, 9, and 8 passes for baseline, Trump tone, casual tone, shuffled organization, no tool descriptions, and combined changes. Inspect task-level traces and repeated runs to assess which differences persist. Evaluate tone separately from business-state correctness.
 
 ### Key insights
 
@@ -555,7 +571,7 @@ python run_ablation.py ...
 
 ### Summary
 
-Ablations quantify prompt quality: poor structure/docs can cost **30–80%** performance. Structure and clarity dominate; professionalism and consistency support effective Agents. Good prompt engineering ≈ good employee training.
+Ablations compare specific changes under fixed task conditions. The canonical run records mixed outcomes across arms; evaluate business state, tool use, and tone separately, and use repeated runs to assess stability.
 
 ### Upstream τ-bench (bundled)
 

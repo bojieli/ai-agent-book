@@ -4,23 +4,17 @@
 
 [English](#english)
 
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+[一次调用留下哪些上下文](#learning-0) · [配置消融实验的模型](#learning-1) · [对照完整上下文与缺失的工具结果](#learning-2) · [沿算式定位差异](#learning-3) · [阅读消息组装代码](#learning-4) · [实验局限](#learning-5)
 
 <a id="learning-0"></a>
 
 <a id="中文"></a>
 
-## 理解问题与方法
+## 一次调用留下哪些上下文
 
-把一类信息从完整输入中移除，再比较行为，称为消融实验。这里分别考察历史消息、推理内容、工具定义和工具结果。它们承担不同职责：工具定义说明能做什么，工具结果说明刚才发生了什么；两者不能相互替代。
+这是书中的实验 1-1 ★★。假设你要接手一份年度收入汇总，前三笔换汇都已执行。交接时只给你工具说明，你知道该怎样查询；再给你调用记录，你能查到上一步换了哪种货币、金额是多少；等看到换汇工具返回的美元金额，才有了加总的依据。Agent 接手下一轮计算时也会遇到同样的问题。
 
-### 沿一轮调用理解四类上下文
-
-把 Agent 的一轮执行写成“读消息 → 选择动作 → 执行工具 → 读工具结果”。历史消息帮助它知道任务进展，工具定义帮助它选择动作，工具结果提供刚刚取得的事实。实验中的消融开关分别移除这些输入，因此应先读懂完整模式的轨迹，再观察移除信息以后哪里发生变化。推理文本与外部执行结果来源不同；不能把模型自己的解释当作工具已经执行的证据。
-
-### 概述
-
-对应书中**实验 1-1 ★★：上下文的关键作用**。Agent 可以读取 PDF、换算货币、计算表达式和执行 Python。你可以分别移除历史消息、推理内容、工具定义或工具结果，观察它怎样完成同一任务。下面的配置说明供你在跑通第一个对照后查阅。
+**消融实验**把同一个任务交给同一模型，每组从输入里移除一类信息，再观察模型接下来做什么。可以先从下表的完整模式出发，沿一次换汇比较三份真实请求。PDF 读取与 Python 执行等工具也可用于本项目的其他任务。
 
 ### 主要特性
 
@@ -36,8 +30,8 @@
 #### 上下文组件
 
 1. **Full Context** — 完整 Agent，保留全部组件
-2. **No History** — 缺少历史工具调用追踪
-3. **No Reasoning** — 无战略规划/思考过程
+2. **No History** — 每轮重新提供任务和工具定义，省去此前的对话与工具往返记录
+3. **No Reasoning** — 下一轮读不到之前回复中的推理字段，仍能根据工具结果重新推理
 4. **No Tool Calls** — 无法执行外部工具
 5. **No Tool Results** — 看不到工具执行结果
 
@@ -50,7 +44,9 @@
 
 ### 消融实验
 
-#### 已验收的 Kimi K3 真实执行（2026-08-25）
+#### 从 Kimi K3 的五组记录开始（2026-08-25）
+
+先打开[这次运行的完整记录](validation/real_20260825T025409Z/evidence.json)，找到 `arms` 中的 `full` 组。沿着 `tool_calls` 读前三次换汇的参数与结果，再看第四次计算怎样把三笔美元金额加到第一季度收入上。最后对照 `final_answer`。有了这条基线，再读下表就能看出每组在哪一步开始分岔。
 
 `run_experiment_1_1.py` 会按正文运行五个精确实验组，并保存每轮真实 API 的无凭据
 请求与响应，而不只是汇总表：
@@ -69,9 +65,7 @@ export DASHSCOPE_API_KEY=your_key_here
 python run_experiment_1_1.py --provider dashscope     # 使用 qwen3.7-plus
 ```
 
-验收产物见 [validation/latest.json](validation/latest.json)。只有既是标准配置
-（五组齐全、带约束的任务、静默隐藏工具结果）又通过验收的运行才会覆盖它；其余运行
-只写自己的时间戳目录，不会动被引用的证据。
+[最近一次通过验收的记录](validation/latest.json)会随新实验更新。只有五组齐全、采用带约束的任务、静默隐藏工具结果并通过运行验收时，程序才更新它。比较模型或核对书中的数字时，请使用带日期的归档。
 
 #### 怎么读一组实验
 
@@ -102,7 +96,7 @@ python run_experiment_1_1.py --provider dashscope     # 使用 qwen3.7-plus
 |---|---:|---:|---|---|
 | full | 3 | 4 | 否 | `correct` |
 | no history | 5（触顶） | 15 | 是 | `no_terminal_response` |
-| no reasoning | 3 | 4 | 否 | `correct` —— **测不出退化**；正文已不再作此断言 |
+| no reasoning | 3 | 4 | 否 | `correct`，保留的工具消息足以算出正确金额 |
 | no tool definitions | 1 | 0 | 否 | `no_unsupported_numbers` —— 声明会话中没有可用的换汇工具 |
 | no tool results | 5（触顶） | 9 | 是 | `no_terminal_response` —— 一直重调工具，始终没有收敛 |
 
@@ -175,7 +169,7 @@ python run_experiment_1_1.py --provider kimi --modes no_tool_results --hidden-re
 |-------------|---------------------------|----------|------|
 | **full** | 无（基线） | 完整成功执行 | 基线性能 |
 | **no_history** | 历史消息 (history) | 冗余操作、效率下降 | 可能重复调用工具 |
-| **no_reasoning** | 思考过程 (reasoning) | 方法无结构、易出错 | 缺少战略规划 |
+| **no_reasoning** | 以往回复中的推理字段 | 模型仍可用保留的工具结果继续计算 | 比较每轮调用的参数和最终金额，检查模型能否接续任务 |
 | **no_tool_calls** | 工具定义 (tool definitions) | 没有工具行动，但两种情况都会给出终止回答：要么拒绝，要么用记忆中的汇率作答 | 无法与外部世界交互；但回答看上去可能仍然完整 |
 | **no_tool_results** | 工具执行结果 (tool results) | 反复重调并试探工具，常常一直触到迭代上限 | 在没有反馈的情况下行动，且察觉不到这一点 |
 
@@ -223,9 +217,9 @@ python -m pytest .
 
 <a id="learning-1"></a>
 
-## 准备环境与输入
+## 配置消融实验的模型
 
-下面会用到模型服务。先按配置说明选择一个提供商，准备对应的模型名称、服务地址和 API Key，再运行小规模例子。一次完整运行的费用取决于模型、输入长度和调用次数。
+先用同一模型完成一道计算题，再移去工具结果重做。保留两次运行的模型名、输入和调用记录，才看得出差异是从哪一轮开始的。
 
 ### 支持的 LLM 提供商
 
@@ -274,13 +268,13 @@ python -m pytest .
 
 <a id="learning-2"></a>
 
-## 按照步骤完成实验
+## 对照完整上下文与缺失的工具结果
 
 先为所选提供商配置 API Key。下面以百炼为例，只运行一道计算题。读完终端中的工具调用，再把命令里的 `full` 改成 `no_tool_results` 重跑。保持任务和模型相同，才能把差异与上下文变化联系起来。
 
 ### 先做一个小规模观察
 
-以下命令从本实验目录执行。先完成前面的环境准备，再观察这条路径的输入和输出。
+在本实验目录运行下面的命令，把完整上下文这组的结果写入 `full.json`。重跑另一组时换一个输出文件名，保留两份记录以便对照。
 
 ```bash
 python main.py --mode single --provider dashscope --context-mode full --task "请调用计算器计算 (125 + 375) * 8，并给出结果。" --output full.json
@@ -460,9 +454,27 @@ python main.py --mode ablation --ablation-modes full no_history --output my_abla
 
 <a id="learning-3"></a>
 
-## 分析结果与形成判断
+## 沿算式定位差异
 
-算式的结果是 4000。先看模型有没有调用计算器，再看结果是否进入下一轮消息。即使两个答案都正确，也不能推断工具结果没有价值：简单算术可能被模型直接算对。如果没有发生工具调用，应换一个确实需要外部结果的任务。
+在实验目录运行下面的代码，不需要模型账号。先查执行记录里第一笔欧元换汇的结果，再读各组第二轮发给模型的消息。这里保留消息的原有顺序，用 `repr` 让空字符串也能看见。
+
+```python
+import json
+from pathlib import Path
+
+path = Path("validation/real_20260825T025409Z/evidence.json")
+for arm in json.loads(path.read_text())["arms"]:
+    if arm["mode"] not in {"full", "no_tool_results", "no_history"}:
+        continue
+    first = arm["tool_calls"][0]
+    messages = arm["api_turns"][1]["request"]["messages"]
+    replies = [m["content"] for m in messages if m["role"] == "tool"]
+    print(arm["mode"], first["result"]["converted_amount"], len(replies))
+    if replies:
+        print("第一条工具消息：", repr(replies[0]))
+```
+
+三组的换汇工具都把 210 万欧元换成了 2,282,608.70 美元。完整组第二轮有三条工具消息，第一条就带着这个数；隐藏结果组也有三条，但内容都是空字符串；移除历史组连这三条消息都看不到。现在再看为什么有的组反复换汇：从执行日志里能找到先前的结果，并不能保证模型作下一步决定时也读得到它。
 
 ### 结果解读
 
@@ -473,12 +485,14 @@ python main.py --mode ablation --ablation-modes full no_history --output my_abla
 - **Execution Time**：完成任务总耗时
 - **Iterations**：Agent 与模型交互次数
 - **Tool Calls**：外部工具调用次数
-- **Reasoning Steps**：战略规划迭代次数
+- **Reasoning Steps**：记录到的非空推理文本条数。服务没有返回推理文本时，这一项也会为空
 
 #### 怎样判断实验结果
 
 先区分“程序给出了最终响应”和“任务做对了”。例如，模型可能没有查询汇率，便用记忆中的数字算出答案；
 程序虽然结束了，但这些数字未必有依据。阅读结果时，结合任务要求检查数字来源和工具记录。
+
+打开 [9 月 1 日 DeepSeek V4 Flash 的记录](validation/real_20260901T163146Z/evidence.json)，在同一模型内比较 `full` 与 `no_reasoning`。两组都完成了四次工具调用。找出第二季度那笔换汇的 `amount`：一组传入 2100000，另一组传入 2.1。试着解释为什么后者得到的 2.28 美元，即使再乘一百万也恢复不了原来的精度。然后回看 8 月的 Kimi 记录，判断移除历史推理字段是否每次都会引发同一种错误。
 
 比较不同上下文模式时，保持任务、模型和运行条件一致。重点看：哪些工具被调用、结果是否被模型看到、
 有没有重复操作、答案是否符合任务要求。运行时间和调用次数帮助解释成本，不能单独代表答案质量。
@@ -489,7 +503,7 @@ python main.py --mode ablation --ablation-modes full no_history --output my_abla
 
 <a id="learning-4"></a>
 
-## 阅读实现与继续探索
+## 阅读消息组装代码
 
 ### 项目说明
 
@@ -634,7 +648,7 @@ Windows 的环境激活方式和其他安装方法见下文“快速开始”。
 
 <a id="learning-5"></a>
 
-## 排查问题与查阅资料
+## 实验局限
 
 ### 局限
 

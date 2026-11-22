@@ -4,30 +4,33 @@
 
 [English](#english)
 
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3)。
+[搜索材料怎样进入计算](#learning-0) · [检查请求与托管工具配置](#learning-1) · [对照直接计算与先澄清的任务](#learning-2) · [从服务端回执核对调用](#learning-3)
 
 <a id="learning-0"></a>
 
-## 理解问题与方法
+## 搜索材料怎样进入计算
 
 模型先决定需要哪些信息，再调用托管搜索和代码执行工具。搜索结果提供可追溯的数据，代码把数据转成可检查的计算。回答中的引用与计算过程应能对应起来，才能判断结论是怎样得到的。
 
-本项目使用正文所述的**精确协议**：Responses API、托管 `web_search` 与托管
-`code_interpreter`。验收依据是服务端返回的 `web_search_call` /
-`code_interpreter_call` 和 URL 引用，而不是代码里“声明了工具”或答案里
-“声称用过 Python”。
+从同一份[服务端回执](validation/runs/real_20260731T170529Z/receipts.json)读两道题。第一道给定十个东盟国家的首都，要求找出相距最近的一对；第二道要求分析比特币走势，起初没有指定数据源和指标。哪一道可以立即动手？在本实验目录运行下面的代码，只读归档，便能看到当时的区别。
 
-按作者批准的多提供商政策，验收不绑定官方 OpenAI 账号：官方 `gpt-5.6-sol` 路径
-完整保留（当前 Key 推理返回 `credit_balance_exhausted`，已在证据中如实记录），
-具备等价托管工具的提供商同样可以验收。2026-07-31 的正式运行用阿里云百炼
-`qwen3.7-plus`（DashScope Responses API）通过了全部验收门：东盟任务先搜索十个
-首都坐标、再用托管 Python 枚举 45 对大圆距离（吉隆坡—新加坡 316.35 km，与独立
-本地参考一致）；比特币任务先在不用任何工具的情况下澄清数据源与指标，再通过
-`previous_response_id` 继续，完成 3 轮模型主导的搜索与 4 次托管代码执行
-（MA7/MA20、RSI14、MACD、区间收益、最大回撤与走势图）。
+```python
+import json
+from pathlib import Path
 
-OpenRouter 只作为诊断
-路径明确保留，不会被包装成替代品。
+path = Path("validation/runs/real_20260731T170529Z/receipts.json")
+record = json.loads(path.read_text())
+run = next(run for run in record["turns"] if run["backend"] == "dashscope")
+for n, turn in enumerate(run["api_turns"], start=1):
+    calls = [item["type"] for item in turn["response"]["output"]
+             if item["type"] in {"web_search_call", "code_interpreter_call"}
+             and item.get("status") == "completed"]
+    print(n, calls)
+```
+
+第一行各有一次搜索和代码执行。十座首都共有 45 种配对，托管 Python 算出吉隆坡与新加坡相距约 316.35 公里，与本地大圆距离计算一致。第二行是空列表：模型先向用户澄清比特币数据源和指标。打开该轮的最终消息，就能读到模型请用户补充的条件。第三行才是接续澄清后的三次搜索和四次代码执行，涉及 MA7、MA20、RSI14、MACD、区间收益、最大回撤和走势图。可对照该次请求的 `previous_response_id` 检查它接续了哪次响应。
+
+这些回执来自 2026 年 7 月 31 日百炼 `qwen3.7-plus` 的 Responses API。官方 OpenAI 路线的 `gpt-5.6-sol` 请求当时返回 `credit_balance_exhausted`，相应配置与记录也保留下来。OpenRouter 在本实验中用于诊断。阅读自己的新运行时，先按后端和任务找对回执，再核对服务端完成的工具项及其 URL 引用。
 
 ### 搜索与计算分别提供什么证据
 
@@ -37,9 +40,9 @@ OpenRouter 只作为诊断
 
 <a id="learning-1"></a>
 
-## 准备环境与输入
+## 检查请求与托管工具配置
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+可以先读下方归档，再用 `--dry-run` 查看客户端打算发送哪些工具定义。要取得新的执行结果，选择支持这两种托管工具的后端，并按下面的示例配置凭据。
 
 ### 先检查请求，再选择一个后端
 
@@ -85,7 +88,7 @@ python main.py --backend openrouter --mode single --request "Search current news
 
 <a id="learning-2"></a>
 
-## 按照步骤完成实验
+## 对照直接计算与先澄清的任务
 
 先读 `example_request.py` 和下文中的请求示例，识别模型、工具、用户需求三个部分。再选一个支持相应托管工具的后端，完成凭据配置，运行单次查询。不要把“请求里写了工具名”当作工具确实执行过。
 
@@ -107,7 +110,7 @@ python -m py_compile agent.py config.py main.py run_experiment_1_3.py
 
 <a id="learning-3"></a>
 
-## 分析结果与形成判断
+## 从服务端回执核对调用
 
 在轨迹中寻找搜索、代码执行和最终答案三个环节。若使用城市距离问题，还应检查坐标来源、距离公式和参与比较的城市集合。一个格式漂亮的表格不足以证明计算正确；缺少的国家或错误坐标都会改变最近的一对。
 
@@ -115,7 +118,7 @@ python -m py_compile agent.py config.py main.py run_experiment_1_3.py
 
 2026-07-31 的记录由 DashScope `qwen3.7-plus` 完成：首都任务通过一次托管搜索批量取得十组坐标，再用托管 Python 枚举 45 对，得到吉隆坡—新加坡 316.35 km；比特币任务先澄清，再执行 3 轮搜索、4 次代码调用，计算 MA7/MA20、RSI14、MACD(12,26,9)、区间收益与最大回撤。
 
-同次记录中的 OpenAI 路线在工具执行前收到 `credit_balance_exhausted`，属于额度失败。DashScope 沙箱没有出站网络，收盘价来自搜索提取；图像文件留在沙箱内，接口只返回执行日志。先澄清的行为还依赖显式系统规则。这些限制与成功结果一起构成完整解释，不能用本地 Python 或另一条诊断路径的输出冒充托管执行结果。
+同次记录中的 OpenAI 路线在工具执行前收到 `credit_balance_exhausted`，属于额度失败。这次运行中，直接请求行情接口连续超时，模型随后把一组价格直接写入代码，并在报告中称数据整理自搜索材料。复核数据时，应将每个日期和价格逐项对回来源，检查是否符合用户指定的 CoinGecko 日线口径；调用完成与数据核验分别记录。图像文件留在沙箱内，接口只返回执行日志。先澄清的行为由显式系统规则引导。
 
 ### 检查自己的解释
 

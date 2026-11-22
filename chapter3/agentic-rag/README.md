@@ -1,20 +1,16 @@
 # Agentic RAG System / Agentic RAG 系统
 
-一次检索往往只能回答问题的一部分。Agentic RAG 让模型根据当前证据决定是否追加检索、改写问题或查看相关条目。本实验关注多步取证与一次性检索的区别。
+同一个问题交给两套问答程序：第一套用原问题检索一次就作答；第二套可以读完返回的片段，换个问法继续查。第二套多用了三次搜索，到底多找回了什么？本实验用同一份语料和同一个检索器，保留每轮的查询和返回片段，供你逐次核对。
 
 [English](#english)
 
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+[一次检索还缺哪条证据](#learning-0) · [准备语料与模型服务](#learning-1) · [比较固定检索与自主搜索](#learning-2) · [沿查询轨迹检查证据](#learning-3) · [实现与接口](#learning-4) · [排错与参考](#learning-5)
 
 <a id="learning-0"></a>
 
-## 理解问题与方法
+## 一次检索还缺哪条证据
 
-每次检索都会改变模型下一轮能看到的信息。关键不是“检索次数多”，而是新检索是否填补了明确的证据缺口。若没有停止条件，Agent 也可能反复查找同一内容。
-
-### 检索结果怎样决定下一步行动
-
-普通问答常在一次检索后直接回答；这里的 Agent 可以根据已有证据决定继续检索或停止。先为一个问题列出回答必须具备的事实，再沿轨迹检查每次查询是否补齐了缺口。多检索几次并不自动更好：重复查询、没有依据的停止以及对无关片段的过度解释，都需要在轨迹中定位。
+先看一次补查该怎样发起。一道题同时提到当前行为和先前记录，第一次检索可能主要返回关于当前行为的片段。此时模型可以把先前记录单独写成查询，再读新取回的材料。它也可能换了措辞，却仍然没有找到想看的条文。要区分这两种情况，既要读模型提交的查询，也要读工具实际返回的片段。
 
 ### 功能特性
 
@@ -24,9 +20,9 @@
 
 <a id="learning-1"></a>
 
-## 准备环境与输入
+## 准备语料与模型服务
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+先用 `compare_offline.py` 看同一问题能从本地语料找到什么。等你能指出尚缺哪条依据，再用 `campaign.py` 观察模型会不会为它发起下一次查询。
 
 ### 安装与配置
 
@@ -53,30 +49,38 @@ cd chapter3/agentic-rag
 
 <a id="learning-2"></a>
 
-## 按照步骤完成实验
+## 比较固定检索与自主搜索
 
-先阅读离线比较程序中的问题和目标证据，再运行下文中的离线路径。选一道需要多个片段的问题，按轮次记录找到什么、还缺什么。之后配置模型和知识库，比较真实生成过程。
+### 先在本地观察检索
 
-### 用法
-
-#### 0. 零依赖离线对比（推荐先跑）
+在 `chapter3/agentic-rag` 目录运行：
 
 ```bash
 python compare_offline.py
 ```
 
-实测证据召回表见 English 节：简单题两种范式均约 100%；复杂题 **8% → 100%**。也可用：
+这个程序只使用 Python 标准库。它读取随项目提供的法条和[七道标注题](evaluation/offline_qa.json)，把一次查询与预先写好的子查询作比较。看输出的最后一列：对于同时提到醉酒、重伤和前科的那道题，查询次数从 1 增至 3，标注法条的覆盖率从 1/3 增至 3/3。这里的子查询可以直接从题目文件中读到，适合观察改换检索词怎样改变结果。
+
+### 再看模型自己怎样搜索
+
+[正式运行记录](validation/runs/20260729T205807Z-3_8-7fcb32a5/evidence.json)同样使用这七道题和本地 BM25 索引（288 个文件、21,372 个片段）。单次组按原问题检索一次；多轮组由模型自己选择搜索词，每题最多执行 **4 次搜索**，每次最多返回 **5 个片段**。要复做这组对照，配置回答模型的 `ARK_API_KEY` 和评审模型的 `MOONSHOT_API_KEY`（或 `KIMI_API_KEY`），再运行：
+
+```bash
+python campaign.py --top-k 5 --max-searches 4
+```
+
+本次生成的结果保存在 `validation/runs/<运行编号>/` 中，[最近一次运行的索引](validation/latest.json)记录了运行编号与文件校验值。若只想对自己的一个问题尝试交互，可使用下面的入口。`--kb-type offline` 让检索在本机进行，生成回答仍需要已配置的模型服务。
 
 ```bash
 python main.py --kb-type offline --query "醉酒过失致人重伤且有盗窃前科如何量刑"
 python main.py --kb-type offline --query "故意杀人罪判几年" --mode compare
 ```
 
-#### 1–4. 流水线、索引、运行、评测
+### 接入其他检索服务、批量运行与评测
+
+使用本地检索流水线时，在另一个终端进入 `chapter3/retrieval-pipeline`，运行 `python main.py` 并保持服务运行。回到 `chapter3/agentic-rag`，按任务选择以下命令：
 
 ```bash
-cd ../retrieval-pipeline && python main.py
-
 python index_local_laws.py
 python index_local_laws.py --categories 宪法 民法典
 python main.py --index path/to/documents/ --chunk-size 2048
@@ -95,13 +99,42 @@ cd evaluation && python dataset_builder.py && python evaluate.py
 
 <a id="learning-3"></a>
 
-## 分析结果与形成判断
+## 沿查询轨迹检查证据
 
 离线证据召回反映是否找到了指定材料，不能替代回答正确性。对于示例法律文本，还应核对来源与适用条件；这里练习的是检索方法，不应把模型输出直接作为现实事务的处理依据。
 
 ### 结果解读
 
-检索层见 §0 表；生成层用 `evaluation/evaluate.py`（需 API）。Agentic 覆盖更全、更慢；Non-Agentic 更快、对复杂/歧义问题更弱。
+在正式记录的 `results` 里找到 `case.id = hard_4`。它的问题是“醉酒过失致人重伤且有盗窃前科，应如何量刑？”先看 `agentic_trajectory`：第一轮把题干中的词合并检索，第二轮查“醉酒 犯罪 量刑”，后两轮把重点放到前科与量刑。模型还提出过“累犯 认定 刑法”，此时四次搜索已经用完，工具返回预算耗尽。计算搜索次数时，只计真正执行的四次。[逐次调用记录](validation/runs/20260729T205807Z-3_8-7fcb32a5/receipts.json)
+
+可以只用 Python 标准库复算每一轮的收获。在本实验目录运行下面的代码，它按正式评测的口径，在返回片段中查找标注编号，并记住前几轮已经找到的编号。
+
+```python
+import json
+from pathlib import Path
+
+record = Path("validation/runs/20260729T205807Z-3_8-7fcb32a5/evidence.json")
+rows = json.loads(record.read_text(encoding="utf-8"))["results"]
+row = next(item for item in rows if item["case"]["id"] == "hard_4")
+gold = row["case"]["gold_articles"]
+found = set()
+for turn in row["agentic_trajectory"]:
+    for search in turn["searches"]:
+        texts = [chunk["text"] for chunk in search["results"]]
+        new = [ref for ref in gold if ref not in found and any(ref in text for text in texts)]
+        found.update(new)
+        print(search["query"], "→", "、".join(new) or "没有新增标注编号")
+```
+
+第一轮找到了第二百三十五条，接下来两次查询各返回五个片段，但都没有增加标注编号。直到第四轮搜“前科 量刑影响 刑法”，才在返回片段中找到了第六十五条。第五个查询只出现在模型的请求中，没有产生新的检索结果。
+
+再看两组各自的 `evidence`。该题预先标出三个法条编号。单次组命中第二百三十五条，覆盖率为 1/3；多轮组还找到第六十五条，覆盖率为 2/3。正式评分的实现是在返回片段的正文中寻找编号；离线演示则要求编号出现在片段开头。题目没有说明是否涉及驾驶，标注中却列有第一百三十三条之一。练习要回答的是“系统找到了哪些预先标注的编号”；要判断某条法律能否适用于真实个案，还要核对事实、条文出处和适用条件。这里不据此给出量刑意见。
+
+四道复杂题中，单次组的覆盖率分别为 0、0、0、1/3，多轮组为 1、1、1、2/3。**先按题计算，再对四题取平均**，得到 8.3% 和 91.7%；平均执行搜索次数分别为 1 和 3.5。三道简单题两组都只搜一次，目标编号也都找齐。离线演示中复杂组的 58% 和 100% 使用预先写好的查询和不同的命中规则，应在同一运行内作比较。
+
+该次运行的部分评审分数与文字解释不一致。例如 `hard_4` 两组的 `correctness` 均为 1，但评语包含“正确引用”“均表现良好”等判断。评分提示又以全 1 的 JSON 作为输出示例，可能形成锚定，具体原因仍需核验。原始记录保持不变；当前正文采用可从检索结果直接核对的法条覆盖、搜索次数和耗时，回答质量需按评分规则重新审查。`has_valid_citation` 只检查至少一个引用标识属于返回片段，并不验证引用是否支持相应结论。
+
+还可以用 `evaluation/evaluate.py` 检查生成层（需模型 API）。阅读评分时，对照回答、所引片段与评语逐项核实。
 
 ### 检查自己的解释
 
@@ -109,7 +142,7 @@ cd evaluation && python dataset_builder.py && python evaluate.py
 
 <a id="learning-4"></a>
 
-## 阅读实现与继续探索
+## 实现与接口
 
 ### 项目说明
 
@@ -127,7 +160,7 @@ Agentic：多轮检索+引用；Non-Agentic：单次检索注入 prompt。
 
 <a id="learning-5"></a>
 
-## 排查问题与查阅资料
+## 排错与参考
 
 ### 故障排查
 

@@ -4,11 +4,11 @@ Agent 生成一条命令，并不代表命令已经成功执行。本实验围�
 
 [English](#english)
 
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4)。
+[从写入请求到执行结果](#learning-0) · [选择本地或外部执行环境](#learning-1) · [运行写入与执行示例](#learning-2) · [对照回执和实际改动](#learning-3) · [执行器及校验代码](#learning-4)
 
 <a id="learning-0"></a>
 
-## 理解问题与方法
+## 从写入请求到执行结果
 
 执行层需要描述成功与失败，也要处理过长输出、保存结果和后续验证。模型生成的“完成了”只是一段文字；可靠判断应来自退出状态、文件变化或任务专用检查。
 
@@ -57,9 +57,9 @@ Agent 生成一条命令，并不代表命令已经成功执行。本实验围�
 
 <a id="learning-1"></a>
 
-## 准备环境与输入
+## 选择本地或外部执行环境
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+第一次可以只检查本地写文件：为一份语法正确的 Python 源码和一份语法错误的源码各找一条回执。需要创建外部日历事件或提交 PR 时，再准备相应账号的授权。
 
 ### 安装
 
@@ -137,7 +137,7 @@ AUTO_VERIFY_CODE=true
 
 <a id="learning-2"></a>
 
-## 按照步骤完成实验
+## 运行写入与执行示例
 
 先在可丢弃的工作目录中运行离线示例，观察一次文件或代码操作。阅读工具返回的状态与输出，再打开生成文件核对。熟悉这条路径后，才把同样的结果处理方式用于更复杂的任务。
 
@@ -245,17 +245,38 @@ python test_external_tools.py
 
 <a id="learning-3"></a>
 
-## 分析结果与形成判断
+## 对照回执和实际改动
 
-区分命令结束、执行成功和任务目标达成。输出被截断时，要知道完整结果保存在何处；错误消息也应保留足够信息，帮助决定修正参数还是停止操作。
+在本实验目录运行下面的代码，直接读[归档回执](validation/experiment_4_4/real_mcp_gui_20260802T093657Z/receipts)。三次调用分别是写入、拒绝写入和编辑。先猜一猜：一个文件因语法错误被拒绝，客户端还能收到格式正常的工具回执吗？
+
+```python
+import json
+from pathlib import Path
+
+folder = Path("validation/experiment_4_4/real_mcp_gui_20260802T093657Z/receipts")
+for name in ("01_python_valid_write", "02_python_invalid_rejected", "05_verified_edit"):
+    record = json.loads((folder / f"{name}.json").read_text())
+    result = record["payload"]
+    print(name, record["mcp_result_is_error"], result["success"], result["verification"])
+    print(result.get("diff_preview") or result.get("error") or result["bytes_written"])
+```
+
+第一条记录写入了 32 字节。第二条同样返回了 MCP 响应，其中却写着第一行语法错误，工具拒绝写入。第三条通过了语法校验；打开差异预览，会看到函数仍叫 `add`，返回值却从 `a + b` 改成了 `a - b`。如果任务要求这个函数做加法，还需要什么证据？可以给它输入 2 和 3，再检查结果是否为 5。这样就能分清工具接受编辑和程序满足需求这两个判断。
+
+
+### 这张账单可以发给用户了吗？
+
+[表格工具的回执](validation/experiment_4_4/real_mcp_gui_20260802T093657Z/receipts/13_excel_formula_screenshot.json)列出三个公式单元格。打开[工作簿](validation/experiment_4_4/real_mcp_gui_20260802T093657Z/workspace/invoice.xlsx)，D2 计算两份计算资源的费用（2 × 12.5），D3 计算三份存储资源的费用（3 × 7），D4 用 `SUM(D2:D3)` 求和。按这两行输入，合计应为 46。
+
+先只看[工具返回的截图](validation/experiment_4_4/real_mcp_gui_20260802T093657Z/workspace/invoice.png)，你能从图上读出 46 吗？再打开[同一次调用生成的 PDF](validation/experiment_4_4/real_mcp_gui_20260802T093657Z/workspace/invoice.pdf)，翻到第二页：金额列单独占了一页，25、21、46 都在这里。截图只取了第一页，因此总计标签旁边是空白。要把账单交给用户，可以先把打印宽度设为一页，重新导出，再检查两项费用和总计是否都与各自的行对齐。
 
 ### 检查自己的解释
 
-程序返回零退出码，但生成文件内容错误，应该由哪一层发现问题？
+假如把总计公式误写为 `SUM(D2:D2)`，调整打印宽度能发现什么，又该用哪两项输入核对金额？
 
 <a id="learning-4"></a>
 
-## 阅读实现与继续探索
+## 执行器及校验代码
 
 ### 项目说明
 
@@ -489,6 +510,12 @@ The server implements a layered architecture:
 2. **Tool Layer**: Implements individual tool logic
 3. **Verification Layer**: Validates outputs and provides feedback
 4. **Integration Layer**: Connects to external services
+
+### 本章采用的实际运行范围
+
+实验 4-4 正式记录为 [`real_mcp_gui_20260802T093657Z`](validation/experiment_4_4/real_mcp_gui_20260802T093657Z/summary.json)，保存 20 次工具调用，15 项检查中通过 13 项。日历创建与邮件发送停在凭证预检；GitHub PR、Webhook、浏览器、桌面和 Android 模拟器均有实际调用记录。35 份 manifest 产物的哈希已核对一致。
+
+Python 编译检查和 JavaScript `node --check` 用于语法验证。图形界面记录展示浏览器导航与截图、Xvfb 中的键盘输入，以及 Android 设置页的打开、焦点核对和返回；这些是可供 Agent 使用的观测与动作接口。通用 Computer Use 或移动 Agent 的任务规划与循环可在其上继续实现。
 
 ### Real desktop and Android environments
 

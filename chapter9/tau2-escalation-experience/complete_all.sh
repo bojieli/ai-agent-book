@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -uo pipefail
-EXP=/Users/boj/book/ai-agent-book/chapter9/tau2-escalation-experience
-TAU=/Users/boj/book/ai-agent-book/chapter7/tau2-bench
+EXP=$(cd "$(dirname "$0")" && pwd)
+TAU="$EXP/../../chapter7/tau2-bench"
 while pgrep -f 'run_arms.sh' >/dev/null; do sleep 10; done
 echo "[$(date +%T)] 首轮已结束，开始补齐"
 cd "$EXP"

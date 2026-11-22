@@ -1,4 +1,4 @@
-# Experiment 5-10: NL ERP Agent (NL → SQL, Artifact Mode) / 实验 5-10：自然语言交互的 ERP Agent（NL → SQL，artifact 模式）
+# 实验 5-13：自然语言交互的 ERP Agent
 
 用户问“研发部有多少在职员工”，系统需要理解业务词汇，并在数据库中执行精确查询。本实验让模型生成 SQL，再把执行和结果核对交给数据库与检查程序。
 
@@ -10,20 +10,14 @@
 
 ## 理解问题与方法
 
-模型产出的是查询语句，而不是凭记忆编造数据行。数据库执行语句后返回真实结果。正确理解“在职”“部门”等概念，需要同时知道表结构、字段取值和业务条件。
-
-### 概述
-
-把中文自然语言查询自动转成 SQL，由系统执行并直接呈现结果表。核心是 **artifact（制品）模式**：
-Agent 只负责「生成 SQL」这个制品，真正的数据查询交给数据库执行，**LLM 不亲自搬运数据**——
-既省 token、又避免大模型手算出错，几万行结果也能秒回。
+先看第二道题：“每个部门有多少在职员工？”模型读到表结构，知道离职日期保存在 `leave_date` 中，于是写出只保留该字段为空的记录、再按部门计数的 SQL。执行服务把这段 SQL 交给数据库，把结果交给页面。这个可以单独保存、检查和执行的查询，就是图 5-9 中的 **Artifact**。即使要展示几万行明细，页面也可以直接读取结果，省去模型逐行复述的时间和 token。
 
 ### 数据模型（两张表）
 
 - `employees`：员工ID、姓名、部门、级别（数字越大越高）、入职日期、离职日期（NULL = 在职）
 - `salaries`：员工ID、发薪日期（每月一条，`YYYY-MM-01`）、工资
 
-数据由 `seed.py` 用固定随机种子（42）生成、以「今天」为基准相对生成，**完全可复现**：
+数据由 `seed.py` 用固定随机种子（42）生成、按运行日期生成相对日期；要复算书中那次运行，可直接读取归档的两张数据表：
 约 40 名员工跨 5 个部门/多级别，含若干已离职者；工资按「入职基准 + 每年固定涨薪额」逐月生成，
 每人涨薪额互不相同（保证问题 9 排名唯一）；并刻意为一名在职员工删掉某月工资（制造问题 10 的「拖欠」）。
 
@@ -48,7 +42,7 @@ Agent 只负责「生成 SQL」这个制品，真正的数据查询交给数据�
 
 ### 关于数据库
 
-本项目用 **SQLite**（零依赖、可直接复现）。书中示例用 **PostgreSQL**，SQL 大体通用，
+本地演示 `demo.py` 使用 **SQLite**，书中的实验记录由 `campaign_postgres.py` 在 **PostgreSQL** 上生成。两者的查询思路相同，
 差异主要在日期函数：本项目用 SQLite 的 `strftime('%Y','now')`、`julianday()`、`date('now','-1 year')` 等；
 迁到 PostgreSQL 时对应换成 `EXTRACT(YEAR FROM now())`、`AGE()`/日期相减、`now() - interval '1 year'` 等即可。
 
@@ -56,7 +50,7 @@ Agent 只负责「生成 SQL」这个制品，真正的数据查询交给数据�
 
 ## 准备环境与输入
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+先用 `demo.py gold` 看十道业务题的参考查询及数据库返回值。这样即使还没有配置模型，也能挑一道题检查联表和聚合口径。
 
 <a id="learning-2"></a>
 
@@ -119,11 +113,22 @@ python demo.py ask "研发部现在有多少在职员工？"
 
 ## 分析结果与形成判断
 
-语法正确的 SQL 仍可能回答错问题。空结果也不一定代表没有数据，可能是条件写错。练习应使用样例数据库，并保留查询文本供核对。
+打开[查询与结果](validation/runs/20260729T210334Z-5_10-postgresql/queries_and_results.json)，找到第 2 题。SQL 中的 `WHERE leave_date IS NULL` 先排除已离职者，`GROUP BY department` 再把留下的员工按部门分组。结果里市场部有 9 人，研发部有 5 人。五个部门合计 34 人，而员工表共有 40 行。
 
-### 检查自己的解释
+可以在实验目录运行下面这段代码，直接从[员工表](validation/runs/20260729T210334Z-5_10-postgresql/employees.json)复算。把 `if` 条件去掉再算一次，看看把离职者也算进去，会让哪些部门的人数发生变化。
 
-如果模型查到了正确数量，却使用了错误的业务定义，这个结果能否接受？
+```python
+import json
+from collections import Counter
+from pathlib import Path
+
+folder = Path("validation/runs/20260729T210334Z-5_10-postgresql")
+employees = json.loads((folder / "employees.json").read_text())
+counts = Counter(e["department"] for e in employees if e["leave_date"] is None)
+print(dict(counts), sum(counts.values()))
+```
+
+最后对照[第 2 题的模型请求](validation/runs/20260729T210334Z-5_10-postgresql/receipts.json)和[浏览器显示的结果表](validation/runs/20260729T210334Z-5_10-postgresql/results.html)。请求里能找到员工表的字段和在职的判定条件；五行人数出现在数据库执行之后，由应用填入网页。如果用户改问“上个月末有多少人”，还要根据入职日和离职日重算当时的人数。简单地把今天的查询再运行一次，回答的仍是今天的问题。
 
 <a id="learning-4"></a>
 

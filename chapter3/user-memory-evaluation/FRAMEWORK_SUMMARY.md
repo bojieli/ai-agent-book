@@ -95,7 +95,7 @@ result = framework.submit_and_evaluate(
 )
 
 print(f"Reward: {result.reward:.3f}")  # Continuous score (0.0-1.0)
-print(f"Passed: {result.reward >= 0.6}")  # Pass threshold at 0.6
+print(f"Passed: {result.is_passed}")
 print(f"Reasoning: {result.reasoning}")
 ```
 

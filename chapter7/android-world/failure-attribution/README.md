@@ -22,7 +22,7 @@
 
 ## 准备环境与输入
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+先找到上一级目录的 `t3a_failed.md`，它是轨迹提取器的输入；自己生成的逐回合 JSON 应单独命名，以便随时回到原日志核对。
 
 <a id="learning-2"></a>
 
@@ -32,7 +32,7 @@
 
 ### 先做一个小规模观察
 
-以下命令从本实验目录执行。先完成前面的环境准备，再观察这条路径的输入和输出。
+下面在归因实验目录中读取上一级的日志，并把逐回合材料写入 `tutorial-trajectories.json`。挑一条轨迹时记下任务名，后面才能对照同一任务的人工归因。
 
 ```bash
 python extract_trajectories.py --log ../t3a_failed.md --out tutorial-trajectories.json

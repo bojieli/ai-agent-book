@@ -1,4 +1,4 @@
-# Multi-dimensional Model Benchmarking / 多维度模型性能基准 / 实验 7-10
+# Multi-dimensional Model Benchmarking / 多维度模型性能基准 / 实验 7-11
 
 “这个模型很快”可能指首字出现快，也可能指整段输出完成快。本实验在不同输入与输出长度下测量服务表现，学习避免用一个延迟数字概括全部体验。
 
@@ -16,7 +16,7 @@
 
 ## 准备环境与输入
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+准备一个已获授权的服务端点，先用 `campaign.py workload --smoke --requests 1` 对应的小规模命令校验配置。检查这一条请求的记录，再扩大请求数，避免把端点配置错误算成模型性能。
 
 <a id="learning-2"></a>
 
@@ -30,14 +30,14 @@
 
 短输入下的领先未必适用于长上下文。服务限额、重试和时间段也会影响结果，应与模型名称一起记录。用于调通接口的小样本不能作为稳定性能结论。
 
-### 多维度模型性能基准测试（实验 7-10 配套代码）
+### 多维度模型性能基准测试（实验 7-11 配套代码）
 
 对多个 OpenAI 兼容的 LLM API 提供商做横向基准测试，一条命令跑出
 **TTFT / 端到端延迟 / 吞吐 / 标准差 / p50 / p95 / p99 / 成功率** 的多维度对比表，
 为模型选型提供实测依据。还支持**并发压测**（逐档加压找限流点，看指标随并发的变化）
 与**离线自检**（`--mock` 合成数据，无需 key/网络即可验证指标聚合）。
 
-对应《深入理解 AI Agent》第 6 章 **实验 7-10：多维度模型性能基准测试**。
+对应《深入理解 AI Agent》第 7 章 **实验 7-11：多维度模型性能基准测试**。
 
 #### 目的
 
@@ -146,7 +146,7 @@ python demo.py --base-url https://api.deepseek.com --model deepseek-chat \
 
 ##### 并发压测：逐步加压找限流点
 
-书中实验 7-10 要求"通过逐步提升并发量来找到限流点，记录 RPM/TPM 上限"。
+书中实验 7-11 要求"通过逐步提升并发量来找到限流点，记录 RPM/TPM 上限"。
 `--concurrency-sweep` 对同一模型逐档加压，产出一张随并发变化的指标表
 （p50/p95/p99/std/成功率/RPS/聚合吞吐）：
 
@@ -255,7 +255,7 @@ Doubao/doubao-1.5-pro-32k | 10/10 (100%) | 1097ms   | 1409ms   | 2.32s      | 2.
 
 - **成本控制**：默认 `max_tokens=64`、`N=10`，全跑成本极低。调大参数前请留意计费。
 - **限流**：把并发或 N 调很大时可能触发提供商 RPM/TPM 限流，届时会以失败形式
-  计入可用性下降——这本身也是一种"实测限流阈值"的方式（书中实验 7-10 的一环）。
+  计入可用性下降——这本身也是一种"实测限流阈值"的方式（书中实验 7-11 的一环）。
 - **TTFT 与网络强相关**：跨境访问的服务 TTFT 会显著偏高，结论需结合部署地点解读。
 - **OpenRouter 回退**：未设置 `OPENAI_API_KEY` 时，`OpenAI/*` 条目自动经 OpenRouter 路由
   （需 `OPENROUTER_API_KEY`，`gpt-*` 映射为 `openai/*`）；`gpt-5.x` 只要有 `OPENROUTER_API_KEY`
@@ -269,7 +269,7 @@ Doubao/doubao-1.5-pro-32k | 10/10 (100%) | 1097ms   | 1409ms   | 2.32s      | 2.
 ## English
 
 This directory contains two layers. `demo.py` is the short interactive sampler;
-`campaign.py` is the **complete, resumable Experiment 7-10 campaign**. The latter
+`campaign.py` is the **complete, resumable Experiment 7-11 campaign**. The latter
 supports OpenAI-compatible, native Anthropic, and native Gemini APIs and records
 every real request in SQLite.
 

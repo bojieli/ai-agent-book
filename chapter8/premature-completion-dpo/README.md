@@ -63,7 +63,7 @@ python train_grpo_optional.py   # 可选分支，默认 Qwen/Qwen2.5-7B-Instruct
 
 ## 准备环境与输入
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+用 `python build_preference_data.py` 先生成偏好对，查看同一任务中哪一条回答过早宣告完成。训练和评估分别读取样本与模型权重；离线生成数据这一步不需要 GPU 或 API 密钥。
 
 ### 数据
 

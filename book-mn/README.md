@@ -26,4 +26,4 @@
 bash book-mn/build_pdf.sh
 ```
 
-PDF нь `book-mn/AI-Agents-in-Depth-Bojie-Li-v2.0-mn.pdf` файлд үүснэ.
+PDF нь `book-mn/AI-Agents-in-Depth-Bojie-Li-v3.0-mn.pdf` файлд үүснэ.

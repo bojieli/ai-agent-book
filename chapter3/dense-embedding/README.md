@@ -1,14 +1,22 @@
 # Vector Similarity Search Service (Dense Embedding) / 稠密向量相似性搜索服务
 
+## 实验 3-4：近似索引找回了几个真正的近邻？
+
+给定一个查询，先对库中每个向量计算相似度，记下最相近的 10 篇文档。再让索引从同一批向量里返回 10 篇。如果有 8 篇相同，这个查询的索引召回率就是 8/10。实验用 20 个查询分别计算这个比例，再取平均。即使每次都找到全部 10 篇，也仍需对照问题和文档内容判断它们能否回答问题。
+
+[正文所用运行记录](validation/runs/20260729T182946Z-3_4-2555ea60/evidence.json)使用 Qwen3-Embedding-0.6B，把按 20 个主题构造的 300 段文本和 20 个查询编码成 1024 维向量。先用 **240 段**建库，与这 240 段的精确 top-10 比较，两种索引的平均召回率都是 1.0。再加入剩余 **60 段**，ANNOY 重建，HNSW 增量插入；此时用全部 300 段重新计算精确近邻，两者的更新后召回率也都是 1.0。每个查询重复计时 5 次，召回率仍按 20 个不同查询统计。
+
+初建 240 段时，ANNOY 用时约 13 ms，HNSW 约 78 ms；序列化后的索引文件分别约 1.40 MB 和 1.02 MB。ANNOY 在 Linux 容器中运行，HNSW 在宿主机运行，若要比较哪种方法更快，需在相同环境下重新计时。文件大小只衡量落盘空间。可以在 [运行索引](validation/latest.json) 找到证据文件与对应版本。
+
 用户的问题与文档用词不同，仍可能表达相同含义。稠密检索把文本编码成向量，再根据向量之间的距离寻找候选内容。本实验让你分别观察语义表示和近似搜索的作用。
 
 [English](#english)
 
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+[向量表示与索引各影响什么](#learning-0) · [准备向量与索引后端](#learning-1) · [用精确近邻校验近似索引](#learning-2) · [解释召回率与查询耗时](#learning-3) · [实现与接口](#learning-4) · [排错与参考](#learning-5)
 
 <a id="learning-0"></a>
 
-## 理解问题与方法
+## 向量表示与索引各影响什么
 
 嵌入模型决定文本怎样映射到空间；索引决定怎样高效寻找邻近向量。ANNOY 和 HNSW 等近似索引通过减少搜索工作提高速度，但可能漏掉精确搜索会返回的邻居。索引召回与问答质量不是同一个指标。
 
@@ -28,22 +36,23 @@
 
 ### 架构
 
-（与 English 节相同示意图。）
+HTTP 服务先用嵌入模型把文档编码，再把向量和文档 ID 交给索引。查询时用同一模型编码问题，由索引找回近邻 ID，服务再按 ID 取出文档。
 
 ### 索引对比
 
-**ANNOY**：建索引快、内存低，适合静态/读多写少；删除需重建；用 `n_trees` 换精度。  
-**HNSW**：召回高、可增量与软删除；内存更高、建索引更慢；调 `M` / `ef_*`。
+**ANNOY** 使用多棵树搜索，适合建好后重复查询。增删文档后要重建索引；增加 `n_trees` 会改变索引体积、构建时间与召回。
+
+**HNSW** 通过近邻图搜索，支持增量插入与软删除。建图时可调邻接数 `M` 与构建搜索范围 `ef_construction`；查询时可改变 `ef_search`，比较多看一些候选能多找回多少近邻。
 
 ### 内存与优化
 
-模型约 2.3GB；每文档约 4KB（1024 维 float32）。ANNOY 提高 `n_trees`；HNSW 提高 `M` / `ef_*`；可用 FP16 加速。
+模型约 2.3GB；一个 1024 维 float32 向量占 4096 字节，另需计入文档、索引结构和程序的内存。ANNOY 提高 `n_trees`；HNSW 提高 `M` / `ef_*`；可用 FP16 加速。
 
 <a id="learning-1"></a>
 
-## 准备环境与输入
+## 准备向量与索引后端
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+比较两种索引时，给它们同一批向量、同一个查询和相同的返回条数。下面的 CLI 可以先算精确近邻，再比较近似搜索返回的文档编号。
 
 ### 安装
 
@@ -69,7 +78,7 @@ cd chapter3/dense-embedding
 # python -m pip install -r requirements.txt
 ```
 
-BGE-M3（约 2.3GB）首次运行自动下载。
+HTTP 服务默认使用 BGE-M3（约 2.3 GB）。首次加载需要下载或预先准备权重；下面的合成向量对照可以直接运行。
 
 ### 配置（`VEC_` 环境变量）
 
@@ -92,34 +101,38 @@ export VEC_HNSW_SPACE=cosine
 
 <a id="learning-2"></a>
 
-## 按照步骤完成实验
+## 用精确近邻校验近似索引
 
 先运行合成向量上的索引比较，不需要下载嵌入模型。理解速度与召回的关系后，再按下文准备本地嵌入模型，使用自然语言查询示例语料。保持模型相同，比较不同索引的返回结果。
 
 ### 命令行工具：稠密检索与 ANN 对比（cli.py，实验 3-4）
 
-除 HTTP 服务外，`cli.py` **开箱即用、可离线复现**，无需先启动服务：
+以下命令均在 `chapter3/dense-embedding` 目录运行，无需先启动 HTTP 服务。
 
-1. **稠密嵌入的语义能力**——小标注语料上算 `recall@k / precision@k / MRR`  
-2. **ANN 后端对比**（实验 3-4 重点）——复用 `indexing.py` 的 ANNOY / HNSW，相对**精确暴力检索**测召回、建索引耗时与查询延迟  
-
-#### 用法
+**先观察索引怎样取舍速度和召回。** 固定随机种子和合成向量，分别让 HNSW 搜索较少、较多候选。在同一台机器上对比输出文件中的 `compare_ann.hnsw`：
 
 ```bash
-# 1) 单条稠密查询（默认 "a cat playing"，需要嵌入模型）
-python cli.py -q "model distillation" -k 3
-
-# 2) 检索质量评测
-python cli.py --eval
-
-# 2') 离线复现：小模型（无需下载 2.3GB BGE-M3）
-python cli.py --embedding-model sentence-transformers/all-MiniLM-L6-v2 --eval
-
-# 3) ANN 后端对比（合成向量，完全离线）
+python cli.py --compare-ann --backend hnsw --hnsw-ef-search 20 -k 10 -o hnsw20.json
+python cli.py --compare-ann --backend hnsw --hnsw-ef-search 200 -k 10 -o hnsw200.json
+# 在同一组合成向量上再比较两种后端
 python cli.py --compare-ann -k 10
-python cli.py --compare-ann --backend hnsw --hnsw-ef-search 200 -k 10
+```
 
-# 自定义语料 / 标注 / 输出
+**要复做正文的文本向量实验**，使用 [benchmark.py](benchmark.py)。下面把权重固定到原记录中的版本，首次下载需要联网。如果本机 ANNOY 健康检查发现返回条数不足，脚本会启动 Docker，并在 Linux 容器内安装依赖。
+
+```bash
+hf download Qwen/Qwen3-Embedding-0.6B --revision 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3 --local-dir ./qwen3-embedding-0.6b
+python benchmark.py --model ./qwen3-embedding-0.6b --device cpu --docs 300 --top-k 10 --repeats 5 --seed 37
+```
+
+打开本次生成的 `validation/runs/<运行编号>/evidence.json`。在 `summary` 中比较两种索引的 `recall_at_k` 与 `incremental_update.recall_at_k_after_update`，分别对应初建与追加后的结果。脚本也会更新 `validation/latest.json`；本页开头的固定链接可随时对照原始记录。
+
+**要检验文档与问题在语义上是否相关**，改用带人工标注的查询。默认使用 BGE-M3，也可指定较小的 MiniLM。两者均需相应权重已下载才能断网运行。
+
+```bash
+python cli.py -q "model distillation" -k 3
+python cli.py --eval
+python cli.py --embedding-model sentence-transformers/all-MiniLM-L6-v2 --eval
 python cli.py --corpus my.json --labels my_labels.json --eval -o result.json
 ```
 
@@ -142,13 +155,23 @@ python cli.py --corpus my.json --labels my_labels.json --eval -o result.json
 
 #### 实测结果
 
-**稠密检索质量**（12 篇语料，`all-MiniLM-L6-v2`，离线）：
+**稠密检索质量**（12 篇文档、5 个有相关性标注的查询，`all-MiniLM-L6-v2`）。这里每个查询的召回率分母是该查询人工标出的相关文档数，precision@5 的分母是返回的 5 篇文档。5 个查询共标出了 8 个相关项，全部找回时，平均 precision@5 为 8/(5 × 5) = 0.32：
 
 ```
 宏平均  recall@5=1.000  precision@5=0.320  MRR=1.000
 ```
 
-查询 `a cat playing` 仍把仅含 `kitten` / `feline` 的文档排到第 1、2 名——相对 BM25（实验 3-5 会漏召回）的语义优势。
+具体看 `a cat playing`（一只正在玩耍的猫）。在上面的 MiniLM 示例中，两篇标为相关的文档排到了第一、二名。读一读原文：`doc_7` 描述小猫追着毛线球跑，`doc_8` 描述猫科动物在草丛中跟踪猎物。两篇都与猫有关，但如果用户要找的是“玩耍”的例子，第一篇更贴切。这道题把两篇都计为相关；读者若想评价动作是否吻合，还需把这条要求写进标注。
+
+实验 3-5 默认用 `cat` 在 10 篇文档里做关键词检索。要比较两种方法，先统一输入。下面在本实验目录导出稠密示例的 12 篇文档，再让 BM25 搜同一句话。两条查询命令均使用正文内容建立索引，标题只用于显示。
+
+```bash
+python -c 'import json; from cli import DEFAULT_CORPUS; print(json.dumps(DEFAULT_CORPUS))' > cat-corpus.json
+python ../sparse-embedding/cli.py --corpus cat-corpus.json -q "a cat playing" -k 5
+python cli.py --corpus cat-corpus.json --embedding-model sentence-transformers/all-MiniLM-L6-v2 -q "a cat playing" -k 5
+```
+
+在这 12 篇文档上，BM25 返回空列表。小猫那篇的标题是 `A Playful Kitten`，被索引的正文写的是 `kitten chased a ball of yarn`。核对检索结果时，先看系统究竟把文档的哪些字段送进了索引。
 
 **ANN 对比**（3000 条 128 维，100 查询，top-10）：
 
@@ -190,7 +213,7 @@ curl -X POST http://localhost:4240/search \
 
 <a id="learning-3"></a>
 
-## 分析结果与形成判断
+## 解释召回率与查询耗时
 
 合成向量实验只能解释索引行为，不能证明文本语义效果。文本查询还应检查相关片段是否被编码得足够接近，以及相似但事实不同的片段是否被误排在前面。
 
@@ -200,7 +223,7 @@ curl -X POST http://localhost:4240/search \
 
 <a id="learning-4"></a>
 
-## 阅读实现与继续探索
+## 实现与接口
 
 ### 项目说明
 
@@ -218,11 +241,11 @@ curl -X POST http://localhost:4240/search \
 
 <a id="learning-5"></a>
 
-## 排查问题与查阅资料
+## 排错与参考
 
 ### 故障排查
 
-内存不足 → 减小 batch、FP16、降低 `max_seq_length`、改用 ANNOY。建索引慢 → 降低 `ef_construction` / `n_trees`、用 GPU。检索差 → 提高 `n_trees` / `M` / `ef_search`。
+编码时内存不足，可以减小批量或输入长度，硬件支持时尝试 FP16。先分别计时编码和建索引：GPU 可以加速支持它的嵌入模型，本项目的 ANNOY 和 HNSW 索引使用 CPU。建索引慢，可调低 `ef_construction` 或 `n_trees`，再测召回损失。搜不到目标时，先用精确检索确认目标确实是近邻，再决定是否增加索引的搜索范围。
 
 ### 参考与许可
 

@@ -1,5 +1,12 @@
 # Chapter 7 experiment coverage ledger
 
+## Editorial revision scope
+
+The manuscript now preserves the 14 experiment designs and existing result summaries in teaching prose. At the author's request, this revision does not reopen raw-record verification, rerun experiments, or require missing archives to be supplied. The historical evidence table below retains its original status statements.
+
+Experiment 7-7 has a corrected interpretation: some saved failures arise from action-label and allowed-set mismatches despite appropriate behavior. The manuscript teaches how to distinguish semantic acceptance from protocol labels; the original scores and artifacts remain unchanged. Current prose numbers are 7-8 Elo, 7-9 action threshold, 7-10 cost, 7-11 service benchmarking, 7-12 retrieval matrix, 7-13 AndroidWorld improvement, and 7-14 embodied simulation.
+
+
 This ledger separates runnable code, pinned external sources, and direct
 acceptance evidence. A repository checkout, smoke test, or mechanism demo is
 never counted as completion of a broader manuscript experiment.

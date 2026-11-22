@@ -14,11 +14,11 @@
 
 ### 概述
 
-用带本地文件系统工具的 ReAct Agent，展示 **KV（Key-Value）Cache** 在六种实现模式（一种正确、五种错误）下的利用率差异。看似无害的改动可能让缓存失效，显著拖慢延迟并推高成本。
+用带本地文件系统工具的 ReAct Agent，展示 **KV（Key-Value）Cache** 在六种上下文组织模式（一组稳定基线、五组改动对照）下的利用率差异。看似无害的改动可能让缓存失效，显著拖慢延迟并推高成本。
 
 默认模型：Moonshot Kimi 系列（默认 `kimi-k2.6`），标准 OpenAI 工具调用格式。
 
-> **模型说明。** 线上 Moonshot 当前 Kimi 族（`kimi-k2.5` / `kimi-k2.6` / `kimi-k2.7*` / `kimi-k3`）均为*推理*模型：会吐 `reasoning_content`，且只接受 `temperature=1`（代码已自动处理）。它们**会上报** `cached_tokens`，本实验正依赖此指标。旧版非推理 `moonshot-v1-*` **不上报** `cached_tokens`，无法展示缓存效应。默认 `kimi-k2.6` 能报缓存命中且推理开销较轻（TTFT 噪声更小）。请以 **缓存命中率 / 缓存比例** 为稳健信号，TTFT 作辅助。
+> **怎样选模型。** 六组归档用的是 `kimi-k2.6`。代码对 Kimi 推理模型使用 `temperature=1`，并处理服务返回的 `reasoning_content`。实验依赖用量统计中的 `cached_tokens`；旧版 `moonshot-v1-*` 不提供这一指标。换模型时先看一条真实回复里有哪些统计字段。服务未报告的用量，应和明确报告为零的用量分开看。
 
 #### 什么是 KV Cache？
 
@@ -29,42 +29,41 @@ KV Cache 存储注意力机制中的键值对。对话上下文稳定时，可�
 - ReAct Agent + 标准 OpenAI 工具调用
 - 安全本地工具：`read_file`、`find`、`grep`
 - 工具失败以结果回传并继续执行
-- 六种模式：正确 + 五种反模式
-- 指标：TTFT、总时间、缓存命中/未命中、token
+- 六种模式：稳定基线 + 五组改动对照
+- 指标：每次请求等待完整回复的时间、任务总耗时、缓存命中与未命中次数、token 用量
 - 离线对比报告（`--report`）从已保存 JSON 生成——无需 API Key
 - 通过 `--cache-price-ratio` 做成本示意
 - 详细日志与智能收尾（无工具调用即视为最终答案）
 
 ### 实现模式
 
-#### 1. 正确实现（`correct`）
+#### 1. 稳定基线（`correct`）
 全程稳定上下文：固定系统提示、一致工具顺序、稳定消息格式、无无谓上下文改动。
 
 #### 2. 动态系统提示（`dynamic_system`）
-每次请求在系统提示中加时间戳 → 整表重建 → 缓存失效、TTFT 上升。
+每次请求更新系统消息中的时间戳，比较变化点前后的缓存复用情况。
 
 #### 3. 打乱工具列表（`shuffled_tools`）
-每次随机工具顺序 → 功能相同仍破坏缓存。
+每次随机调整工具顺序，检查序列变化对共同前缀的影响。
 
 #### 4. 动态用户资料（`dynamic_profile`）
-每轮把变化的用户额度塞进上下文 → 无关动态导致失效（常见生产反模式）。
+每轮更新用户额度，检查动态资料的位置与缓存命中范围。
 
 #### 5. 滑动窗口（`sliding_window`）
-只保留最近 5 条消息 → 看似更短，实则打断缓存连续性。
+保留最近六条历史消息，并回退到完整工具调用对的边界；检查历史裁剪对状态与缓存的影响。
 
 #### 6. 纯文本格式（`text_format`）
-历史写成纯文本而非结构化消息 → 破坏约定格式与缓存。
+将历史转为文本摘要，检查角色与调用关联的变化，以及任务执行和缓存结果。
 
 ### 关键实现细节
 
-错误模式要**真正**使 KV Cache 失效，必须在**每一轮迭代开始时**整表重建 messages。
+缓存复用取决于服务实际接收的序列。重新创建 Python 消息列表本身不会改变 token 前缀；消息内容、顺序、角色或工具序列化发生变化，才会影响对应位置之后的匹配。
 
-1. **CORRECT：** 首次构建 messages，之后只在同一列表上追加 assistant/tool → 前缀稳定 → 缓存生效。  
-2. **错误模式：** 每轮开始从对话历史重建整个 messages（轮内仍追加 tool 结果以保证 API 流正确）→ 下一轮从新列表开始 → 缓存失效。
+稳定基线持续追加 assistant/tool 消息；其他模式在下一轮构造请求时应用各自的变化。正式六组记录中，各配置仍有缓存命中。比较时同时检查 `cached_tokens`、输入规模与轨迹；程序的 `success` 表示生成最终回复，任务正确性需要另外检查。
 
-两模式在轮内都会追加 tool 结果；差异在于下一轮是否丢弃并重建列表。
+### 计时输出示例（沿用程序字段名）
 
-### 示例输出
+先看 [agent.py](agent.py) 在哪里启动和停止计时：它在发起非流式请求前读时钟，在拿到整份回复后再次读时钟。下面的 `TTFT` 是程序沿用的标签，实际量到的是这次请求等待完整回复的时间。要测用户看到第一个 token 前等了多久，需要改用流式响应并记录首个输出 token 的到达时间。
 
 ```
 📊 Performance Metrics:
@@ -102,7 +101,7 @@ kv-cache/
 
 ## 准备环境与输入
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+想看各策略原来用了多少输入 token，直接用 `--report` 读取已保存的结果就够了。如果想知道改动消息顺序会怎样影响缓存，则需要配置模型服务，重新发起请求。
 
 ### 安装
 
@@ -124,6 +123,10 @@ cd chapter2/kv-cache
 # 迁移期间仍支持单项目兼容路径：
 # python -m pip install -r requirements.txt
 
+# 到这里就可以重读书中使用的六份归档：
+python main.py --report --input 'result_*_20260718_kimi_k2_6.json'
+
+# 如果要重新运行模型，再配置凭据：
 cp env.example .env                  # 编辑 .env，填入 API Key
 # 或 export MOONSHOT_API_KEY="your-api-key-here"
 ```
@@ -220,7 +223,7 @@ MOONSHOT_API_KEY="your-key" python tests/manual/check_agent_error_recovery.py
 
 ## 分析结果与形成判断
 
-缓存命中量、延迟和价格是相关但不同的量。延迟还受网络与服务负载影响；费用计算取决于提供商如何计价。不要用一次更快的响应证明缓存有效，也不要把估算价格当作账单。
+先比较稳定基线和工具重排两行。两次任务的输入总量只差一个 token，表里的命中率又同为 100%，为什么一组复用了 768 个 token，另一组却只有 256 个？要回答这个问题，先弄清两列百分数各自用什么作分母。
 
 ### 把缓存命中与任务表现分开记录
 
@@ -228,18 +231,15 @@ MOONSHOT_API_KEY="your-key" python tests/manual/check_agent_error_recovery.py
 
 ### 指标说明
 
-**性能：** TTFT（按迭代；冷启动 vs 有缓存）、平均 TTFT、改善百分比、总时间、迭代次数、工具调用次数。
+**耗时。** 表中的 `1st TTFT` 是第一次请求等待完整回复的时间，`Avg TTFT` 是有计时记录的各次请求的平均值。总耗时还包括执行工具等开销。
 
 **缓存：** 缓存 token、命中、未命中、命中率。
 
 **Token：** 提示 / 补全 token；**缓存比例** = 来自缓存的 prompt token 占比。
 
-### 预期结果
+### 如何解释结果
 
-1. **正确实现：** 第一轮之后上报缓存 token；TTFT 更稳；稳定前缀由缓存服务。  
-2. **错误实现：** **缓存比例**崩塌（如打乱工具可将比例降到正确模式约 1/3）；TTFT 更高（text_format / 打乱工具可让首 token 延迟翻倍以上）；总时间更长（实测 `text_format` 可达约 2.4×）。
-
-> 推理模型上 TTFT 因隐藏思考 token 方差更大——**缓存比例**是最干净的证据。把动态数据接在**已稳定前缀末尾**（`dynamic_system` / `dynamic_profile`）只会从改动点起失效——前缀前半仍可能命中，因此标题缓存比例可能接近 `correct`，但总时间仍变差。教训：动态数据不要进入前缀。
+同时检查输入 token、缓存 token、迭代次数和实际轨迹。六组正式记录都有缓存命中，滑动窗口组在上限内未生成最终回复。时间戳之前的共同前缀仍可能复用，工具重排则会改变相应位置之后的序列。TTFT 还受生成过程、服务负载和网络影响，应与缓存指标结合分析。
 
 ### 对比表（对本目录已保存结果执行 `--report`）
 
@@ -256,21 +256,27 @@ sliding_window   5      2.234      3.649      14.704     2,224     1,510     100
 text_format      3      6.189      14.432     43.297     7,430     674       100.0   9.1      6,823      8.2
 ```
 
-解读：`shuffled_tools` 打乱靠前的工具定义 → **缓存比例 10.1% → 3.4%**，首 TTFT 约 2.3s → 7.8s。`text_format` 总时间约 **2.4×**。`sliding_window` 高比例只因提示词被截断（小提示词上的高比例 ≠ 高效运行）。
+稳定基线输入 7,567 个 token，复用 768 个，`Cache%` 为 10.1%。重排组输入 7,568 个，复用 256 个，这一比例降至 3.4%。再看 `Hit%` 的分母：[报告程序](main.py) 用命中次数除以已记为命中或未命中的次数。两组各运行三轮，基线记为两次命中、零次未命中，重排组记为一次命中、零次未命中。所以两行都显示 100%。归档没有为其余各轮给出命中判定。
 
-`Cache%` = 来自缓存的 prompt token 占比；`Hit%` = 出现任意缓存的*迭代*占比。用 `python main.py --compare` 重跑复现。
+基线的首次请求耗时约 2.3 秒，重排组约 7.8 秒，纯文本组的总耗时约为基线的 2.4 倍。这些数值包含模型生成回复的时间。若只想知道工具顺序对首 token 延迟有多大影响，可以在同一任务下固定消息、模型和生成设置，只改变工具顺序，多次记录首个输出 token 的到达时间。
 
-### 关键洞察
+最后看[滑动窗口的原始记录](result_sliding_window_20260718_kimi_k2_6.json)。缓存占比最高，达到 67.9%（1,510 / 2,224），但 `success` 为假。工具清单列出三次查找 Python 文件，接着读取了两个文件，用户要求的三句话总结却没有交付。记录里有五次工具调用、四条请求耗时，无法从清单还原每次调用属于哪一轮。想解释为什么重复查找，应在下次实验中保存每轮实际发出的消息，检查前三次查找时模型分别能看到什么。
 
-1. 稳定上下文至关重要  
-2. 顺序也重要（相同内容重排也会破缓存）  
-3. 前缀中避免动态元数据  
-4. 使用 API 期望的结构化消息格式  
-5. 完整历史往往比激进截断更利于缓存
+### 用同一次运行估算两种价格下的输入费用
+
+稳定基线一共输入 7,567 个 token。假设缓存输入按普通输入单价的一折计费，未命中的 6,799 个按原价计，命中的 768 个折合 76.8 个普通输入 token。两者相加是 6,875.8，取整便是表里的 `Bill.Tok`（6,876）。与全部按原价计算相比，输入费用省了约 9.1%。这笔估算只覆盖输入；[归档](result_correct_20260718_kimi_k2_6.json)里另有 620 个输出 token，估算整次任务的费用时还要按输出单价计入。
+
+现在把缓存输入单价改成普通输入的一半，重读同一个文件：
+
+```bash
+python main.py --report --input result_correct_20260718_kimi_k2_6.json --cache-price-ratio 0.5
+```
+
+这次仍有 768 个 token 命中缓存，但它们折合 384 个普通输入 token。`Bill.Tok` 变为 7,183，输入费用节省约 5.1%。两次报告读的是同一份用量记录，改变价格假设就能得到不同的节省比例。
 
 ### 检查自己的解释
 
-如果只在消息末尾追加状态信息，与每轮改写系统提示词中的状态，缓存表现会有什么不同？
+假设用户刚更新了额度。把新额度写在消息末尾，和回到系统提示里改写旧额度，哪一种能保留更长的共同前缀？先标出两次输入中第一个不同的 token，再想一想：即使前缀完全一致，还要从服务返回的哪个字段确认实际复用了多少 token？
 
 <a id="learning-4"></a>
 
@@ -300,7 +306,7 @@ text_format      3      6.189      14.432     43.297     7,430     674       100
 
 ### 故障排除
 
-- **正确模式 TTFT 仍高：** 首请求冷启动；检查 key / 网络 / 模型  
+- **正确模式 TTFT 仍高：** 先区分整次请求耗时和首 token 延迟，再检查输入长度、回复长度与网络状况
 - **缓存命中为零：** 使用会上报 `cached_tokens` 的当前 Kimi 模型（非 `moonshot-v1-*`）；确认上下文确实稳定  
 - **工具执行错误：** 权限、路径在 root 内、文件可读
 
@@ -321,7 +327,7 @@ text_format      3      6.189      14.432     43.297     7,430     674       100
 
 ### Overview
 
-A ReAct agent with local filesystem tools that shows how **KV (Key-Value) cache** utilization changes under six implementation patterns—one correct and five incorrect. Small-looking changes can invalidate cache and hurt latency and cost.
+A ReAct agent with local filesystem tools that shows how **KV (Key-Value) cache** utilization changes under six implementation patterns—one stable baseline and five controlled changes. Small-looking changes can invalidate cache and hurt latency and cost.
 
 Default model: Moonshot Kimi family (default `kimi-k2.6`), OpenAI tool-calling format.
 
@@ -348,28 +354,25 @@ KV cache stores attention key-value pairs. When conversation context stays stabl
 Stable context: fixed system prompt, consistent tool order, stable message format, no unnecessary context churn.
 
 #### 2. Dynamic system prompt (`dynamic_system`)
-Adds a timestamp to the system prompt every request → full context recreated → cache invalidation, higher TTFT.
+Updates a timestamp in the system message; inspect prefix reuse before and after the changed position.
 
 #### 3. Shuffled tools (`shuffled_tools`)
 Random tool order each request → cache break despite identical functionality.
 
 #### 4. Dynamic user profile (`dynamic_profile`)
-Changing user credits in context each iteration → invalidation for irrelevant dynamics (common production anti-pattern).
+Updates user credits in the context; compare the placement of changing state and the resulting shared prefix.
 
 #### 5. Sliding window (`sliding_window`)
-Keeps only the last 5 messages → appears shorter but breaks cache continuity; truncation can backfire.
+Starts with the last six historical messages and extends backward to retain complete tool-call pairs; inspect both retained state and prefix reuse.
 
 #### 6. Text format (`text_format`)
-History as plain text instead of structured messages → breaks expected format and cache use.
+Serializes history as text; inspect changes to role boundaries, call associations, task output, and cache reuse.
 
 ### Critical implementation detail
 
-For incorrect modes to properly invalidate KV cache, the **entire message list must be recreated at the start of each iteration**.
+Rebuilding a Python list does not itself invalidate a cache. Cache matching depends on the serialized sequence and model configuration. Changes to content, order, roles, and tool definitions can shorten the shared prefix.
 
-1. **CORRECT:** build messages once; keep appending assistant/tool messages to the same list → stable prefix → cache works.
-2. **Incorrect modes:** rebuild the full messages list from history at each iteration start (still append tool results *within* an iteration for API correctness) → next turn starts from a recreated list → cache invalidates.
-
-Both modes append tool results within an iteration so the API sees a complete turn. The difference is whether the list is thrown away and rebuilt at the next iteration boundary.
+The stable baseline appends messages; other arms apply their respective transformations before the next request. Every arm in the saved campaign reported some cached tokens. The `success` field records a final reply; answer correctness requires a separate check.
 
 ### Installation
 
@@ -478,12 +481,9 @@ MOONSHOT_API_KEY="your-key" python tests/manual/check_agent_error_recovery.py
 
 **Tokens:** prompt / completion tokens; **cache ratio** = share of prompt tokens served from cache.
 
-### Expected results
+### Interpreting results
 
-1. **Correct:** after the first iteration, cached tokens appear; steady TTFT; stable prefix served from cache.
-2. **Incorrect:** collapsing **cache ratio** (e.g. shuffled tools can drop ratio to ~1/3 of correct); higher TTFT (text_format / shuffle can more than double first-token latency); longer total time (up to ~2.4× for `text_format` in measured runs).
-
-> On reasoning models TTFT has extra variance from hidden thinking—**cache ratio** is the cleanest evidence. Appending dynamic data at the *end* of an otherwise-stable prefix (`dynamic_system` / `dynamic_profile`) only invalidates *from that point*—base prefix may still cache, so headline cache ratio can look close to `correct` while total time still regresses. Keep dynamic data out of the prefix entirely.
+Compare input tokens, cached tokens, iterations, and task traces together. All six saved arms reported cache hits; the sliding-window arm did not produce a final reply within its limit. Content before a changed timestamp may remain reusable. Tool reordering changes the sequence from the affected position onward. Interpret TTFT alongside cache metrics and execution conditions.
 
 ### Example output
 

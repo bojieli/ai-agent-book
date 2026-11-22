@@ -1,0 +1,85 @@
+{
+  "referenced_figures": 114,
+  "outlined_vectors": 112,
+  "unchanged_technical_text": 112,
+  "issues": [],
+  "baseline_commit": "c8719e6f5ceffa02fe924f13e86b8a62e70c37a4",
+  "build_source_commit": "c13d0f0032ee792f0cfa3604283d3c024d29bf3b",
+  "scope": "字体、插图尺寸与换行、PDF 排版；正文内容不变",
+  "reference": "ai-infra-book/book/preamble.tex 与 manuscripts/figure_style/fonts",
+  "font_profile": {
+    "body": "Songti SC",
+    "cjk_bold_headings_captions_figures": "Source Han Sans CN 2.005",
+    "code": "Menlo",
+    "figure_distribution": "SVG glyph outlines; editable technical text retained in Python generators"
+  },
+  "figure_width": "68% of available line width",
+  "technical_figure_height_limit": "190mm; retain vertical room for complete examples",
+  "vector_label_size": {
+    "normal": 26,
+    "bold": 28,
+    "unit": "900-unit-wide SVG viewBox"
+  },
+  "font_sha256": {
+    "SourceHanSansCN-Regular.otf": "e2bc8a2e7f37474b774fff8db758681ece40bb6947a90d571bce9dd60671a8e4",
+    "SourceHanSansCN-Bold.otf": "62383707c086a32f3afd5e293f34c7eff64c7fea31f579fdc6cbe34d920519a6"
+  },
+  "macos_pdf": {
+    "status": "complete",
+    "run_url": "https://github.com/bojieli/ai-agent-book/actions/runs/37763167760",
+    "pages": 300,
+    "bytes": 10735407,
+    "sha256": "1c6ebcd2bb8430698178cf8a39a73579abd77f4e5c29949b5c8cad11e41bd5b3",
+    "caption_count": 114,
+    "missing_captions": [],
+    "outside_page_text": [],
+    "unembedded_fonts": [],
+    "font_names": [
+      "ArialUnicodeMS",
+      "LMRoman10-Regular",
+      "LMRoman6-Regular",
+      "LMRoman7-Italic",
+      "LMRoman7-Regular",
+      "LMRoman8-Italic",
+      "LMRoman8-Regular",
+      "LMRoman9-Regular",
+      "LMRomanDemi10-Regular",
+      "LMSans9-Regular",
+      "LatinModernMath-Regular",
+      "Menlo-Bold",
+      "Menlo-Regular",
+      "STHeitiSC-Light",
+      "STHeitiSC-Medium",
+      "STSongti-SC-Regular",
+      "SourceHanSansCN-Bold",
+      "SourceHanSansCN-Regular"
+    ],
+    "missing_glyph_warnings": 0,
+    "overfull_warnings": 0,
+    "key_figure_pages": {
+      "图1-4": 22,
+      "图1-5": 25,
+      "图1-6": 32,
+      "图2-1": 38,
+      "图2-7": 53
+    },
+    "visual_review": "首章正文、四幅重点技术图及热力图；各章版面抽查",
+    "compatibility_warning": "ElegantBook/tcolorbox: Command \\@parboxrestore has changed",
+    "artifact_url": "https://github.com/bojieli/ai-agent-book/actions/runs/37763167760/artifacts/11542784603"
+  },
+  "browser_validation": {
+    "chapters": 13,
+    "images": 114,
+    "math": 147,
+    "broken_images": 0,
+    "math_errors": 0
+  },
+  "manuscript_changes": [],
+  "figures_with_unchanged_structure_counts": 112,
+  "existing_web_preview_issue": {
+    "workflow": "deploy-pages",
+    "error": "Figure 8-8 source structure changed; review its web layout.",
+    "observed_before_this_typography_revision": "https://github.com/bojieli/ai-agent-book/actions/runs/37750814750",
+    "scope": "网页旧图重排适配；本次 PDF 编译和图形校验独立通过"
+  }
+}

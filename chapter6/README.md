@@ -1,40 +1,29 @@
 # 第 6 章 · 交互：观察与动作空间的扩展
 
-本章同时扩展输入输出的模态与任务的时间结构。事件、语音、屏幕和机器人环境都要求系统区分观察、动作与完成状态。
+用户希望机票在 1200 元以内，客服报出的最低价是 1250 元。熟悉这位旅客以往的选择，助理有时可以直接预订；遇到一向严格控制预算的家庭，则要先问清是否愿意多花这 50 元。等回复时，前台仍能请客服查其他航班、询问退改条件。后台若收到新报价，就通知前台，由仍在通话的前台核实价格、接着办。这段对话把本章的两个问题放在了一起：等待期间还能做什么，谁掌握对外行动所需的最新信息？[正文里的机票案例](../book/chapter6.md#方案二快思考交互慢思考提醒)
 
-## 第一次阅读的顺序
+[返回主目录](../README.md) · [读第六章正文](../book/chapter6.md)
 
-1. [先用本地定时器理解事件怎样触发任务 ](agent-with-event-trigger/README.md)。
-2. [再观察等待、中断和恢复如何改变控制流程 ](async-agent/README.md)。
-3. [最后沿真实语音链路定位感知、决策与播放的延迟 ](live-audio/README.md)。
+## 第一次做实验
 
-读懂一个完整例子后，再查阅下面的全部项目与配置。比较实验时，把输入、模型、运行条件和结果放在一起记录；遇到历史输出，先确认它对应的版本与任务范围。
+1. **从一个定时提醒开始。** 在[实验 6-1](agent-with-event-trigger/README.md)中，每小时检查备份的定时器到点就发消息。先找到事件被分发的记录，再沿事件编号查工具结果：即使已经收到提醒，备份也可能还没检查。接着在[实验 6-2](async-agent/README.md)里用任务编号观察中断、取消和恢复。
+2. **在工具还没返回时改要求。** [实验 6-3](astra-async-steering/README.md)原本替 20 人找场地，预算 2000；查询已经发出，人数改为 10，预算也降到 1000。工具会返回整张场地表，助理用这一次查询就能重新选择。沿事件时间线核对两件事：服务端何时收到新要求，最后的回答是否选了符合新条件的 B 场地并引用了本次查询的回执。
+3. **把时间线延伸到声音。** 在[实验 6-4](live-audio/README.md)里，沿一段录音查找语音活动检测（VAD）、识别（ASR）、生成回答和合成语音（TTS）的记录。屏幕上出现第一个字时，扬声器可能还没开始播放。回到正文读全双工通话时，可以据此区分用户什么时候听到答复，以及对方开口后助理能否及时听见、插话或让出话头。
 
-> 从模态与时序两个维度扩展 Agent 的观察与动作空间：异步与事件驱动、语音交互、Computer Use 和机器人操作
-
-← [返回主目录](../README.md) · 📖 [读本章正文](../book/chapter6.md)
-
-## 如何阅读实验
-
-正文 skeleton 统一了“持续观察 → 受限动作 → 新观察 → 验收/抢占”的闭环；完整媒体、浏览器和机器人代码分层阅读：
-
-- **Starter**：从 [live-audio](live-audio/) 的级联入口理解 VAD → ASR → LLM → TTS；
-- **原生异步对照**：读完 6-1 / 6-2 后，运行 [6-3：Astra 异步工具与 steering](astra-async-steering/)，比较同步工具、原生异步与运行中追加用户要求；
-- **Builder**：再读 [computer-use-open-model](computer-use-open-model/) 的截图/动作/验证循环，以及 [gemini-xlerobot-navigation](gemini-xlerobot-navigation/) 的五个有边界技能；
-- **Maintainer**：最后检查取消、不可逆动作门禁、真实观察证据、硬件急停和 sim-to-real 评估。首次可跳过前端样式、模型下载和设备驱动。
+屏幕和机器人把同一个问题变得更直观：动作发出以后，怎样知道它生效了？在[电脑操作实验](computer-use-open-model/README.md)里比对动作前后的截图；在[桌面整理实验](gemini-xlerobot-navigation/README.md)里沿五项技能查每一步的观测、停止条件和硬件急停，再到[模拟与实物的视觉对照](rgb-sim2real-grasping/README.md)检查环境变化造成的误差。
 
 ## 配套项目
 
 | 编号 | 项目 | 类型 | 一句话说明 |
 | :--: | --- | :--: | --- |
-| 6-1 | [agent-with-event-trigger](agent-with-event-trigger/) | ✅ | FastAPI 事件驱动 Agent，原生异步集成前三组 MCP 工具，通过 HTTP API 接收 Web/IM/GitHub/定时器事件 |
+| 6-1 | [agent-with-event-trigger](agent-with-event-trigger/) | ✅ | 先用定时器观察事件入队和分发，再通过 FastAPI 从事件 ID 追到工具结果。HTTP 入口接收 Web、IM、GitHub 和定时提醒；真实邮箱实验的凭据检查见运行摘要 |
 | 6-2 | [async-agent](async-agent/) | ✅ | asyncio 单线程事件驱动框架 Flux：事件队列按紧急度分派、异步工具并行、运行中打断、长任务取消与状态查询 |
 | 6-3 | [astra-async-steering](astra-async-steering/) | ✅ | 比较同步工具、模型原生异步与回合中途引导，理解等待、用户更新和任务恢复之间的关系 |
-| 6-4 | [live-audio](live-audio/) | ✅ | [真实单轮证据](live-audio/backend/validation/real_pipeline_20260729_localwhisper_ark_fish/evidence.json)完成麦克风媒体 → Silero VAD → 本地 Whisper → ARK 流式 LLM → Fish S1；5 个媒体/模型 hash 当前均匹配，但证据本身没有顶层 hash manifest，且不代表并发或生产负载基准 |
+| 6-4 | [live-audio](live-audio/) | ✅ | 从[一轮麦克风录音的回放记录](live-audio/backend/validation/real_pipeline_20260729_localwhisper_ark_fish/evidence.json)追踪 Silero VAD、本地 Whisper、ARK 和 Fish S1。按串行执行顺序重算端点后的等待，比较收到首个文字 token、收到首批音频、用户听见回答三个时刻 |
 | 附加 | [phone-agent](phone-agent/) | ✅ | 使用稳定的非编号项目标识；[完整音频 canonical run](phone-agent/validation/runs/phone-agent-webrtc-audio-20260731-v1/manifest.json)跑通直接/ReAct 两组，并保留完整的 WebRTC、ASR、LLM 与 TTS 证据 |
-| 6-5 | [streaming-speech](streaming-speech/) | ✅ | [canonical 本地验收](streaming-speech/validation/runs/exp6-4-qwen2audio-whisper-provenance-20260730-v3/manifest.json)运行 Qwen2-Audio 递增前缀与 600ms VAD + Whisper：8/8 执行/溯源门禁通过，但预期行为只复现 2/6，实测前缀 8.4–11.3s，不能声称真流式低延迟 |
-| 6-6 | [end-to-end-speech](end-to-end-speech/) | ✅ | [真实本地运行](end-to-end-speech/validation/runs/exp6-5-minicpmo45-20260801-v1/evidence.json)在单张 RTX PRO 6000 上执行固定 revision 的 MiniCPM-o 4.5：端到端与自级联均为 3/4，但语义/副语言失败互补；真实 24kHz 语音输出及 [11/11 验收](end-to-end-speech/validation/runs/exp6-5-minicpmo45-20260801-v1/acceptance.json)已保留 |
-| 6-7 | [controllable-tts](controllable-tts/) | ✅ | 真实 Fish Audio S1 4×3×2=24 条参考音库与 A/B/C 媒体齐全；三次位置平衡的真实 Voxtral 音频盲评中 C 组最高且真人客服感 4.67/5，但 B>A 未复现；[验收](controllable-tts/validation/acceptance.json)将完成状态与负结果分开报告 |
+| 6-5 | [streaming-speech](streaming-speech/) | ✅ | [逐项运行记录](streaming-speech/validation/runs/exp6-4-qwen2audio-whisper-provenance-20260730-v3/manifest.json)比较两种听法：Qwen2-Audio 每次从头听一段更长的录音，另一组在 600 毫秒静音后用 Whisper 转写。前者 13 次推理每次耗时 8.4 至 11.3 秒。运行与来源检查八项均通过，六项行为预期只观察到两项 |
+| 6-6 | [end-to-end-speech](end-to-end-speech/) | ✅ | [同一模型的两组回答](end-to-end-speech/validation/runs/exp6-5-minicpmo45-20260801-v1/evidence.json)记录了 MiniCPM-o 4.5 在单张 RTX PRO 6000 上做四道题的结果。直接听录音和先转成文字都答对三题，但前者听出了两段同文录音一快一慢，后者只判对一段。另可查阅 24 kHz 语音输出和[原运行的 11 项检查](end-to-end-speech/validation/runs/exp6-5-minicpmo45-20260801-v1/acceptance.json)；当前复查时，三份脚本的哈希与归档版本有差异 |
+| 6-7 | [controllable-tts](controllable-tts/) | ✅ | 同一说话人用四种情绪、三档语速和两种风格组成 24 条参考音频，用来比较 Fish Audio S1 的三种合成设置。Voxtral 三次轮换顺序听评，多参考组的“真人客服感”得 4.67/5；单参考组的总均分反而低于无标记组。[逐次听评](controllable-tts/validation/audio_quality_study.json)和[验收记录](controllable-tts/validation/acceptance.json) |
 | 6-8 | [Anthropic 原生 Computer Use 记录](claude-computer-use-native/) + `claude-quickstarts/computer-use-demo/` | ✅ | [正式运行](claude-computer-use-native/validation/runs/exp6-7-anthropic-native-20260803-v2/acceptance.json)从固定源码本地构建镜像，用 `claude-sonnet-4-5-20250929` 完成 16 次真实响应与 15 个原生 `computer` 动作；Google reCAPTCHA 未交互，转向可见 Open-Meteo JSON 后回答 70.2°F、晴朗，全部确定性门禁通过 |
 | 6-9 | [computer-use-open-model](computer-use-open-model/) + `browser-use/` | ✅ | [正式开放模型运行](computer-use-open-model/validation/latest.json)使用 `qwen/qwen3-vl-32b-instruct`：Google CAPTCHA 后转 weather.com，16 步完成；16/16 API 响应模型一致、15 张截图、只读动作和答案 grounding 全部通过确定性验收 |
 | 6-10 | [xlerobot-teleoperation](xlerobot-teleoperation/) | ✅ | 真机遥操作 XLeRobot 整理桌面：把红色杯子放进托盘、把黄色废纸放进垃圾盒，最后重新观察并确认状态 |

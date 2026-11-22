@@ -1,30 +1,24 @@
 # 第 8 章 · 模型后训练
 
-本章把经验写入模型参数。学习重点是数据、训练目标与独立评估之间的关系；训练脚本正常结束，并不自动说明能力提高。
+编码助理改完文件就说“完成了”，可它还没跑过检查。要教会它在这种时候继续验证，该给它看一份正确示范，还是让它在两个下一步动作之间作选择？读本章实验时，先找出希望改变的那一步行为，再看训练样本提供了什么信号、哪些题能检验模型学到的东西。
 
-## 第一次阅读的顺序
+[返回主目录](../README.md) · [读第八章正文](../book/chapter8.md) · [各实验的运行记录](EXPERIMENT_LEDGER.md)
 
-1. [先用离线偏好对理解训练希望改变的行为 ](premature-completion-dpo/README.md)。
-2. [再检查教师轨迹怎样成为可用的监督数据 ](cot-distillation/README.md)。
-3. [最后结合小模型比较预训练、监督微调和偏好训练的分工 ](MiniMind-pretrain/README.md)。
+## 从一道题读懂训练和评估
 
-读懂一个完整例子后，再查阅下面的全部项目与配置。比较实验时，把输入、模型、运行条件和结果放在一起记录；遇到历史输出，先确认它对应的版本与任务范围。
+1. **先看模型何时该收尾。** 在[实验 8-17](premature-completion-dpo/README.md)里，同一段工作记录有两个候选动作：宣布完成，或继续检查。留出的 12 道未完成任务中，基座选对 3 道，DPO 训练后选对 11 道。还要看另外 8 道已经完成的任务：训练前后都选对 8 道。这组对照能检查模型是否连本来该收尾的任务也要继续做。这里比较的是两个固定候选的得分。
+2. **换成教师示范，再看学生学会了多少。** 在[实验 8-9](cot-distillation/README.md)中，教师做了 24 道数学题，有一道虽然写完了解题过程，最后答案却错了，筛选后只有 23 条示范进入训练。回到同一批题上，学生答对 2 道，训练前的基座答对 1 道。教师能解出多少、学生能复现多少、学生能否解出新题，是三个需要分别检验的问题。
+3. **按学习目标继续。** 想看同一个小模型经过预训练、监督微调和偏好训练后怎样回答问题，可以对照 [MiniMind 的分阶段输出](MiniMind-pretrain/README.md)。想看交互中第二步的训练信号从何而来，则可读 [RLVP](RLVP/README.md) 和 [SimpleVLA-RL](SimpleVLA-RL/README.md) 的轨迹、验证器与奖励字段。准备自己训练时，再按各项目的配置核对显存、数据划分和留出的评估题。
 
-> 预训练/Mid-training/SFT/RL 四阶段：长上下文课程与数据构造、SFT 协议固化、RL 环境与奖励、单轮到多轮和样本效率
+读完示范蒸馏后，可以接着读正文的[在轨蒸馏](../book/chapter8.md#在轨蒸馏让一次-rollout-产生密集监督)：学生自己写到某一步时，下一步该向哪位教师请教？MOPD 用数学题和代码题说明怎样按领域选择教师。另两种方法放在强化学习的算例里：[Never Give Up](../book/chapter8.md#rl-算法从-16-次-rollout-到一次参数更新)讨论一组尝试全错后，给难题追加采样预算有何用处；[score centering](../book/chapter8.md#训练与推理的数值差异)用两个动作解释采样策略与更新策略不一致时的梯度偏差。
 
-← [返回主目录](../README.md) · 📖 [读本章正文](../book/chapter8.md)
+## 与正文对应的概念
 
-逐实验的实现、外部源码与直接证据边界见 [验收台账](EXPERIMENT_LEDGER.md)。
-
-## 如何阅读实验
-
-正文用多组 text skeleton 分开说明 SFT masking、GRPO/PPO rollout、工具 token 屏蔽、RLVP 与蒸馏；完整训练框架和 CUDA 适配留在项目中：
-
-- **Starter**：从 [cot-distillation](cot-distillation/) 先跑 2 题采集/验证 smoke，再按 generate_data.py → train_student.py → evaluate_student.py 追踪；
-- **Builder**：按 [RLVP](RLVP/)、[SimpleVLA-RL](SimpleVLA-RL/) 的入口追踪 rollout、验证器和奖励字段；
-- **Maintainer**：最后检查数据隔离、checkpoint/环境 hash、显存配置、失败轨迹与留出集；不需要首轮读完 verl/。
-
-正文不要求把实验代码当作可复制的 SDK 教程；读者只需先能定位“哪段实现了正文 skeleton、哪段负责证据”。
+- Mid-training、SFT 与 RL 按知识、行为与反馈需求衔接；SFT 的示范同时包含格式、知识和行动策略。
+- ORM／PRM 分别指结果／过程奖励模型；程序验证器也可以提供结果或过程奖励。
+- 工具反馈作为模型上下文，策略损失覆盖模型生成的位置。
+- 在轨蒸馏由学生采样前缀、教师提供监督；完整分布与采样 token 的对数概率都是可用实现。
+- 精确复制的模型正确率和 tokenizer 往返率分别统计，失败归因需比较同一样本的信息链。
 
 ## 配套项目
 
@@ -44,7 +38,7 @@
 | 8-13 | [SimpleVLA-RL 配套说明](SimpleVLA-RL/) · `SimpleVLA-RL/SimpleVLA-RL/` | 📖 | `PRIME-RL/SimpleVLA-RL` 主仓与内嵌 `verl/` 已固定；OpenVLA-OFT、LIBERO/RoboTwin、checkpoint、Flash Attention、CUDA/driver 和 simulator assets 仍未形成经验证的完整依赖锁 |
 | 8-14 | [retool 配套说明](retool/) · `verl/` · `SandboxFusion/` | 📖 | ReTool 配方来自 `bojieli/verl`，实时代码执行依赖 `bojieli/SandboxFusion`；不是一个名为 `retool` 的独立源码仓库 |
 | 8-15 | [AWorld-train 配套说明](AWorld-train/) · `AWorld/` | 📖 | `bojieli/AWorld` 中的 GAIA MCP 沙盒与训练入口，`bojieli/verl` 为训练后端 |
-| 8-16 | [RLVP 配套说明](RLVP/) · `RLVP/rlvp/` | 📖 | 完整训练/评估代码来自固定到 `1ad30bc…` 的 `19PINE-AI/rlvp`；当前 checkout 缺失，训练未运行 |
+| 8-16 | [RLVP 配套说明](RLVP/) · `RLVP/rlvp/` | 📖 | 完整训练/评估代码来自固定到 `1ad30bc…` 的 `19PINE-AI/rlvp`；已在该版本的独立检出目录运行 19 项规则测试和 8 项奖励分配测试；完整 CUDA 训练尚未复现 |
 | 8-17 | [premature-completion-dpo](premature-completion-dpo/) | ✅ | 从"过早结束" bad case 到 DPO 修复的完整链路：bad case → 偏好对 → 7B+LoRA 单卡训练 → 未完成任务集与已完成任务保留集验证；本地 RTX PRO 6000 已完成训练，固定候选比较中未完成任务集选对率 25.0% → 91.7%，保留集保持 100% |
 | 8-18 | [curly-quote-sft](curly-quote-sft/) | ✅ | 中文弯引号作用域 Bad Case：人工审计合成数据 + 显式 Skill 正反规则 → Qwen3-8B bf16 LoRA SFT → 9 种代码语言和 10 种文章体裁回归；[manifest](curly-quote-sft/validation/manifest.json)；RTX PRO 6000 真实训练已完成，1024/256/256（训练/留出/边界），适配后 exact 96.9%/97.7%，保护区保持 100% |
 | 8-19 | [exact-copy-sft](exact-copy-sft/) | ✅ | `old_string`/特殊字符串精确复制 Bad Case：未见随机字符串、相似字符串选择和工具 JSON 参数 → Qwen3-8B bf16 LoRA SFT；[manifest](exact-copy-sft/validation/manifest.json)；RTX PRO 6000 真实训练已完成，1024/256/256（训练/留出/边界），byte-exact 基座 37.5%→适配 78.9%，边界 80.1%；另有 Qwen3/Qwen2.5/Mistral tokenizer 审计 |

@@ -1,6 +1,6 @@
-# Experiment 5-2: Code Tools for Logic / 实验 5-2：用代码生成工具提升逻辑思考能力
+# Experiment 5-4: Code Tools for Logic / 实验 5-4：用约束求解辅助逻辑推理
 
-骑士总说真话，无赖总说假话。人物增加后，只靠文字推演容易遗漏条件。本实验把这类谜题写成变量与约束，学习如何用求解器系统地检查可能答案。
+岛上有两位居民，A 说“B 是无赖”，B 说“我们两人都不是骑士”。骑士总说真话，无赖总说假话。先猜一猜谁是骑士，再想一想：如果把两句话直接交给程序，应该让程序检查什么？
 
 [English](#english)
 
@@ -10,24 +10,22 @@
 
 ## 理解问题与方法
 
-变量表示每个人的身份，约束表示身份与陈述之间必须满足的关系。求解器枚举或剪枝寻找满足全部约束的赋值。它保证的是形式化模型的解，前提是自然语言条件被正确翻译。
+### 从一句话写出一个约束
 
-### 概述
+假设 B 是骑士，那么 B 说的“我们两人都不是骑士”必须为真，其中却包括 B 自己，假设产生矛盾。于是 B 是无赖，他那句话必为假。A 说 B 是无赖，刚好说了真话，所以 A 是骑士。这个结果可以和本地题库中的第一题 `kk01` 核对。[查看原题](puzzles.json)
 
-本实验评估 Agent 通过**约束求解**代码来辅助逻辑思考的能力：为同一个 LLM 配备一个预装
-`python-constraint` 的 Code Interpreter，让它把「骑士与无赖」(Knights & Knaves) 逻辑谜题
-转化为形式化的**约束满足问题(CSP)**——识别变量(每个岛民是骑士还是无赖)、定义约束
-(“骑士说真话、无赖说假话”)，再调用求解器搜索满足所有约束的解。
+现在把推理交给程序。用布尔值 `a`、`b` 表示两人是否为骑士。A 的陈述写作 `not b`；要把说话人的身份与陈述联系起来，还得检查 `a == (not b)`。B 的陈述有两个条件，连起来是 `b == ((not a) and (not b))`。依次试完四种身份组合，只有 `(True, False)` 同时满足两式。人数增加时，可以让 `python-constraint` 搜索同样的布尔变量；把自然语言翻译成约束的工作仍然要做。
+
+### 把翻译和求解分开测
 
 我们用一组 12 道 K&K 谜题(2~5 人，均带唯一真值解)对比三种模式：
 
 - **纯思考(pure)**：LLM 只用自然语言链式推理，直接给答案；
 - **代码辅助(code)**：LLM 用 `run_python` 工具写约束模型并调求解器，再据结果作答；
 - **约束求解(solver)**：**离线基线**，直接用 `python-constraint` 求解结构化陈述，
-  不需要任何 API/网络——它是确定性求解器路径本身，理论上 100% 正确，用来验证
-  「把谜题翻译成约束程序并求解」这一核心论点(见下方真实运行结果)。
+  无需模型 API 或网络。它读取题库提供的结构化陈述，用已知真值检查求解步骤；代码辅助组还须由模型自行翻译题目。
 
-### 核心思想：为什么代码辅助更强
+### 怎样检验模型写下的约束
 
 K&K 谜题的关键建模规则只有一条——对每位居民 X 加一条**双条件(等价)约束**：
 
@@ -35,15 +33,13 @@ K&K 谜题的关键建模规则只有一条——对每位居民 X 加一条**�
 X 是骑士(True)  <=>  X 说的那句话为真
 ```
 
-即 `X == (该陈述的语义真值)`。把它交给确定性求解器**穷举**所有布尔组合，逻辑上不会出错；
-而纯思考在多人、含计数(“恰好两个骑士”)或自指(“我和 B 同类”)的谜题上，很容易在心算
-真值传播时出错。
+即 `X == (该陈述的语义真值)`。检查多人题时，可以分别问：程序录入了每个人的话吗？“恰好两个”有没有把说话人也算进去？即使求解器只找到一个解，也值得把这个解代回原文逐句核对。
 
 <a id="learning-1"></a>
 
 ## 准备环境与输入
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+先安装依赖里的 `python-constraint`，它就能在本地枚举居民身份、逐条检查陈述。只有改做模型解题的对照时才需要配置模型服务。
 
 <a id="learning-2"></a>
 
@@ -120,6 +116,28 @@ python build_puzzles.py --generate 20 --output my.json
 ## 分析结果与形成判断
 
 无解可能说明题目矛盾，也可能是翻译错误；多解则说明条件不足。不能因为得到一个答案就忽略其他满足条件的赋值。
+
+正式对照中，`doubao-seed-1-6-flash-250615` 在 84 道 K&K 题上直接推理答对 63 道，使用代码答对 33 道。逐题看，有 33 道只有纯推理组答对，也有 3 道只有代码组答对。每条代码轨迹都被标记为 `used_python_constraint`。[评分实现](demo.py)在提交的程序中查找导入 `constraint` 的语句；一段连语法检查都通不过的程序也可能得到这个标记。
+
+在实验目录中运行下面的代码，可以只用 Python 标准库复查两人题 `perturbed_leaf-p2-r006`。先检查模型提交的程序能否解析，再看它最终交回了什么。
+
+```python
+import ast
+import json
+from pathlib import Path
+
+report = json.loads(Path("validation/real_ark_doubao_flash_hf84_20260730.json").read_text())
+row = next(item for item in report["code"] if item["id"] == "perturbed_leaf-p2-r006")
+for turn, program in enumerate(row["codes"], 1):
+    try:
+        ast.parse(program)
+        print(turn, "语法通过")
+    except SyntaxError as error:
+        print(turn, error.msg, error.text.strip())
+print("最终答复", repr(row["text"]), "评分器读出的身份", row["pred"])
+```
+
+第一次提交把双条件写成 `james == not james`，第二次改对了这个表达式，打印结果的语句却少了右括号。读最后一次提交，逐一代入 James 是骑士和无赖两种情形：只有 James 是骑士、Sophia 是无赖能同时满足两条约束。回执记录了八轮工具调用，最终答复是空字符串，评分器没有读到任何身份。这里检查语法和手工代入可以解释失分；要证明某一轮求解器实际打印了什么，还需要那一轮的执行输出。
 
 ### 已有运行结果（一）：离线约束求解基线（`--mode solver`，无需 API）
 
@@ -243,16 +261,12 @@ for s in p.getSolutions():
 
 The canonical run uses the pinned revision of
 `K-and-K/perturbed-knights-and-knaves`, stratified across six perturbations and
-2–8 people (84 paired tasks). Every code trajectory invoked
-`python-constraint`, but observed accuracy was 39.3% for code assistance versus
+2–8 people (84 paired tasks). Every code trajectory contained a submitted import from the constraint library. This check also counts submissions that fail to parse. Observed accuracy was 39.3% for code assistance versus
 75.0% for pure reasoning (p=2.27e-7 in the opposite direction). The campaign is
 complete; the manuscript's >90% and significant-improvement hypothesis was not
 observed. Evidence: [`validation/real_ark_doubao_flash_hf84_20260730.json`](validation/real_ark_doubao_flash_hf84_20260730.json).
 
-正式活动固定 K&K 数据集版本，按六类扰动与 2–8 人规模分层抽取 84 道配对题。代码臂
-每题都调用了 `python-constraint`，但实测准确率为 39.3%，低于纯思考的 75.0%
-（p=2.27e-7，方向与预期相反）。因此下文离线求解器 100% 的表格只能证明确定性 CSP
-机制正确，不能替代真实 LLM 对照或正文的 >90% 验收结论。
+这次对照固定了 K&K 数据集版本，按六类扰动和 2–8 人的谜题规模分层抽取 84 道题。每道题的代码记录中都出现过导入求解库的语句，最终答对 33 道（39.3%）；同一模型直接推理答对 63 道（75.0%）。配对检验得到 p=2.27e-7，差异方向与实验原先预期的相反。原先设定的准确率目标是超过 90%。下文离线基线的满分来自另一项测试：输入已经写成结构化陈述，程序可以直接构造约束。语言模型读题、写出可运行的程序、交付答案这三步，要看上面的逐题记录。
 
 ---
 

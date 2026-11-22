@@ -403,7 +403,7 @@ class BatchEvaluator:
             report += "-" * 60 + "\n"
             
             # Structured rubric pass state already includes the hallucination veto.
-            passed = sum(1 for _, result in items if (result.passed if result.passed is not None else result.reward >= 0.8))
+            passed = sum(1 for _, result in items if result.is_passed)
             total = len(items)
             avg_reward = sum(result.reward for _, result in items) / total if total > 0 else 0
             
@@ -421,10 +421,10 @@ class BatchEvaluator:
             # Individual test results
             for test_case, result in items:
                 # Determine pass/fail based on reward or passed field
-                is_pass = result.passed if result.passed is not None else result.reward >= 0.8
+                is_pass = result.is_passed
                 status = "✓ PASS" if is_pass else "✗ FAIL"
                 report += f"  [{status}] {test_case.title} (Reward: {result.reward:.3f})\n"
-                if result.reward < 0.8:
+                if not is_pass or result.reward < 0.8:
                     report += f"    Reason: {result.reasoning}\n"
             
         # Overall summary
@@ -433,7 +433,7 @@ class BatchEvaluator:
         report += "=" * 80 + "\n"
         
         all_results = list(results.values())
-        total_passed = sum(1 for r in all_results if (r.passed if r.passed is not None else r.reward >= 0.8))
+        total_passed = sum(1 for r in all_results if r.is_passed)
         total_tests = len(all_results)
         overall_avg = sum(r.reward for r in all_results) / total_tests if total_tests > 0 else 0
         

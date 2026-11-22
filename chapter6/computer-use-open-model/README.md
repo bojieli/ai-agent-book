@@ -22,7 +22,7 @@
 
 ## 准备环境与输入
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+先安装 Python 依赖和 Playwright 的 Chromium。复核浏览器动作时可先走本地演示；要检验视觉模型能否读懂截图，再配置支持图片输入的模型端点。
 
 ### 安装固定版本的浏览器依赖
 
@@ -43,7 +43,7 @@ python -m playwright install chromium
 
 ### 先做一个小规模观察
 
-以下命令从本实验目录执行。先完成前面的环境准备，再观察这条路径的输入和输出。
+先用下列 `--dry-run` 入口检查本地调用路径。切换真实模型后，留意它看到的截图与执行后的新截图是否对应同一次操作。
 
 ```bash
 python main.py --dry-run
@@ -211,3 +211,7 @@ limit, final browser observation, screenshot hashes, and credential scan:
 ```bash
 python validate_run.py runs/<run-id> --latest validation/latest.json
 ```
+
+### 归档材料复核（2026-10-07）
+
+manifest 的 25 项产物中，22 项哈希一致；`acceptance.json`、`history.json` 和 `summary.json` 与归档哈希不同。截图与原始响应仍可用于检查动作和页面变化，汇总文件的一致性问题单独记录，历史哈希未重写。

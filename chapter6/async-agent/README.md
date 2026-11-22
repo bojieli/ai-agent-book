@@ -1,23 +1,18 @@
 # Asynchronous Agent with Parallel Execution and Interruption / 带并行执行和打断能力的异步 Agent
 
-一个工具调用需要很久时，Agent 是否必须完全停住？异步执行让系统同时管理多个未完成动作，还需要应对中途取消和恢复。本实验把这三件事分开演示。
+助理正在读文件，你先问“现在几点了”，过一会儿又说“停止分析”。第一句话只需要一个即时回答，第二句话却要让已经启动的进程退出。怎样看出这两句话在后台产生了不同的效果？
 
 [English](#english)
 
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+[后台进程怎样接回对话](#learning-0) · [选择离线演示或模型驱动场景](#learning-1) · [启动、查询和取消任务](#learning-2) · [用任务记录和报告核对结果](#learning-3) · [运行时实现](#learning-4) · [运行与排错](#learning-5)
 
 <a id="learning-0"></a>
 
-## 理解问题与方法
+## 后台进程怎样接回对话
 
-并行可以缩短独立任务的总等待时间，但依赖关系仍必须保持。取消需要让尚未完成的工作停止或不再影响状态；检查点则保存可恢复的信息，使新会话知道哪些动作已经发生。
+实验 6-1 把新消息放进事件队列。本实验再给每个后台任务一个编号，让“回答用户”和“管理进程”可以分开进行。用户问时间时，助手可以回答，正在分析文件的进程继续运行。用户发来“停止分析”时，这个演示把它当作紧急打断，要求停止当前模型回合和所有运行中的后台任务。如果有三个分析任务，只想停其中一个，就要向任务管理器指明它的编号。这样读日志时，你就能分辨是谁要求停止、要求停哪些任务，以及哪些进程最终真的退出了。
 
-本目录是《深入理解 AI Agent》实验 6-2 的配套可运行代码，实现了设计文档
-[`agent_framework_design.md`](./agent_framework_design.md) 中描述的事件驱动异步 Agent 框架（Flux）的核心部分。
-
-在 4-5 的简单事件队列之上，本实验进入异步 Agent 的深水区，聚焦四件事：
-**异步工具执行、事件队列与批量处理、打断机制、并行工具的取消与状态查询**。
-Agent 需要同时管理多个并发任务，处理打断与恢复，并根据实时状态动态决策。
+这里用的是事件驱动框架 Flux。[设计文档](./agent_framework_design.md)解释了为什么把消息分发和工具执行分开；下面的演示则让你看到并行执行、排队、打断、状态查询和检查点恢复各自留下什么记录。
 
 本目录提供两条使用路径：
 
@@ -27,7 +22,7 @@ Agent 需要同时管理多个并发任务，处理打断与恢复，并根据�
 - **LLM 场景（还原书中四个验证场景）**：Agent 的决策由真实 LLM（默认 OpenAI `gpt-5.6-luna`，
   function calling）完成，需要配置 API key。
 
-两条路径共用同一套异步运行时；长任务都用**模拟的异步"终端命令"**（带进度输出）实现，绝不真跑危险命令。
+运行时通过受限子进程执行分析任务，并从标准输出读取进度。`run_real_experiment.py` 直接调用任务管理器，以确定性脚本驱动四个场景；模型决策路径由 `runtime.py` 与 `demo.py` 提供。
 
 ### 一、架构
 
@@ -77,11 +72,13 @@ Agent 需要同时管理多个并发任务，处理打断与恢复，并根据�
 - **排队处理（Queued）**：非紧急事件（补充性指令）先进入 `pending` 缓冲，不打断正在进行的工作；
   当某个异步工具完成、产生 `async.result` 事件时，一次性把 `pending` 里的事件批量追加到轨迹，再触发一次 LLM。
 
-紧急度判定规则（简单可解释）：
+[消息分类器](./events.py)按以下顺序处理用户输入：
 
-1. 含打断关键词（取消/停止/stop…）→ `INTERRUPT`（取消式处理）
-2. 是一个提问（带问号或疑问词，如"现在几点了？"）→ `IMMEDIATE`（立即回应，但**不**打断后台任务）
-3. 其它补充性指令（如"用日语回复"）→ `DEFERRED`（排队，批量处理）
+1. 文本中含有“取消”“停止”或 `stop` 等关键词时，标为 `INTERRUPT`。这是整个运行时的打断信号。
+2. 其余消息若以问号结尾或含有疑问词，如“现在几点了？”，标为 `IMMEDIATE`，交给模型回答，后台任务继续。
+3. “用日语回复”之类的普通要求标为 `DEFERRED`。系统空闲时直接处理，忙碌时才放入 `pending`，等下一次异步结果到达后一起处理。
+
+试着预测“只取消 T3”会发生什么。分类器先匹配到“取消”，[运行时](./runtime.py)随即调用 `cancel_all()`。要观察按编号有选择地停止任务，可以打开第四个场景的[实际运行记录](./validation/experiment_6_2/real_subprocess_20260730T052500Z/scenarios/parallel_progress_threshold_cancellation.json)。T1 完成时，脚本查到 T2 已走到 68%，T3 走到 34%；按“不超过 50% 就取消”的条件，它只请求任务管理器取消 T3。`cancelled_ids` 里只有 T3，而 `completed_results` 同时保留 T1 和 T2 的结果。这里的选择由场景脚本根据进度作出。
 
 #### 异步工具
 
@@ -97,13 +94,13 @@ Agent 需要同时管理多个并发任务，处理打断与恢复，并根据�
 
 <a id="learning-1"></a>
 
-## 准备环境与输入
+## 选择离线演示或模型驱动场景
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+要观察进程是否真的停止，或检查两条要求是否一起交付，先读随附的场景记录即可。要观察模型在同一情形下会选择哪个工具，再按下文配置模型服务。
 
 <a id="learning-2"></a>
 
-## 按照步骤完成实验
+## 启动、查询和取消任务
 
 先运行并行演示，与串行用时比较。随后按下文依次运行中断和状态恢复示例，观察任务标识、取消事件与检查点内容。最后再接入模型，检查它怎样利用返回结果。
 
@@ -243,9 +240,33 @@ LLM_PROVIDER=ark LLM_MODEL=ep-xxxx python demo.py scenarios --scenario 1
 
 <a id="learning-3"></a>
 
-## 分析结果与形成判断
+## 用任务记录和报告核对结果
 
-演示中的加速取决于任务是否独立。恢复时还应检查重复动作和过期结果；一个已经取消的任务迟到返回，不应覆盖当前状态。
+### 用户说“取消”时，进程停了吗？
+
+在本实验目录里运行下面几行，从[取消与恢复的原始记录](validation/experiment_6_2/real_subprocess_20260730T052500Z/scenarios/interrupt_terminates_and_recovers.json)取出四个事件。先看发出打断时的任务编号，再看最后交回结果的是谁。
+
+```python
+import json
+from pathlib import Path
+
+folder = Path("validation/experiment_6_2/real_subprocess_20260730T052500Z/scenarios")
+record = json.loads((folder / "interrupt_terminates_and_recovers.json").read_text())
+for event in record["events"]:
+    if "event" in event:
+        print(event["elapsed_seconds"], event["event"],
+              event.get("task_id") or event.get("task_ids"))
+for task in record["tasks"]:
+    print(task["task_id"], task["status"], task["returncode"])
+```
+
+第 0.803 秒的 `user.interrupt` 表示脚本已发出取消请求，那一刻 T1 的进度是 18%。第 0.806 秒的 `process_cancelled` 才有退出证据：这个子进程的返回码为 −15，表示它被 SIGTERM 信号终止。第 0.807 秒记录的 `runtime_recovered` 表示新任务 T2 已启动；直到第 4.436 秒才出现 T2 的结果。再查 `completed_callbacks`，里面只有 T2。若今后在取消之后又收到一份结果，先核对任务编号，再决定它是否还适用于当前请求。
+
+### 两条要求都生效了吗？
+
+打开[排队事件记录](validation/experiment_6_2/real_subprocess_20260730T052500Z/scenarios/queued_batch_to_japanese_html.json)。从场景开始计时，第 0.503 秒收到“用日语回复”，第 0.703 秒收到“整理成网页”。在 `batch` 里可以找到三项：任务 T1 的结果，以及两条各出现一次的用户消息。此时能确认的是要求已经送达处理程序。
+
+再打开[本次交付的 HTML](validation/experiment_6_2/real_subprocess_20260730T052500Z/artifacts/scenario_2_report.html)。页面标有 `lang="ja"`，正文确实用日语报告了 679 行和 106193 字节。回到同一份 JSON，在 `tasks[0].result` 里核对行数和字节数，就能检查这页是否也用上了 T1 的分析结果。这里处理队列和生成报告的是确定性脚本；要考察模型能否自行把要求合起来，还要看模型驱动的场景。
 
 ### 三、离线演示的三项能力（真实测量输出）
 
@@ -290,7 +311,22 @@ LLM_PROVIDER=ark LLM_MODEL=ep-xxxx python demo.py scenarios --scenario 1
 [  5.52s] AGENT  | 已从打断中恢复，新任务 T4 正常完成：……
 ```
 
-打断只冻结被取消任务的进度，运行时本身无损，随后能立即接受并跑完新任务。
+读[一次实际取消的任务记录](validation/experiment_6_2/real_subprocess_20260730T052500Z/scenarios/interrupt_terminates_and_recovers.json)，先比较两个任务的编号，再看各自的进度与退出码。在实验目录执行：
+
+```bash
+python3 - <<'PYTHON'
+import json
+from pathlib import Path
+
+run = Path("validation/experiment_6_2/real_subprocess_20260730T052500Z/scenarios")
+record = json.loads((run / "interrupt_terminates_and_recovers.json").read_text())
+for task in record["tasks"]:
+    print(task["task_id"], task["command"], task["status"], task["progress"], task["returncode"])
+print("触发完成回调的任务：", record["completed_callbacks"])
+PYTHON
+```
+
+T1 的日志分析停在 18%，退出码是 −15（在这次运行的平台上表示收到了终止信号）。T2 执行的是另一个汇总任务，进度到了 100%，退出码是 0。完成回调里也只有 T2。这里看到的“恢复”，是运行时能够接下一个任务。判断原来的工作是否做完，要看 T1 自己的记录。
 
 #### 能力三：状态检查点持久化与恢复（`python demo.py state`）
 
@@ -308,7 +344,7 @@ LLM_PROVIDER=ark LLM_MODEL=ep-xxxx python demo.py scenarios --scenario 1
 ```
 
 轨迹与任务进度完整落盘并跨会话还原；运行中的任务恢复后标记为 `suspended`，保留最后已知进度，
-供上层决定「重跑」还是「按进度续跑」——这就是异步任务的状态管理。
+重新载入后，进度数字可以回答“上一次看到它走到了哪里”。若要从那个位置继续，还需要工作进程保存可读取的中间结果，或由外部服务提供能重新连接的任务句柄。本例的检查点只还原记录，新会话不会凭保存的 PID 重新控制旧进程。
 
 ### 四、四个 LLM 验证场景
 
@@ -338,7 +374,7 @@ Agent 执行长任务，用户发"取消"。框架立即取消当前执行流并
 
 <a id="learning-4"></a>
 
-## 阅读实现与继续探索
+## 运行时实现
 
 ### 项目说明
 
@@ -351,7 +387,7 @@ Agent 执行长任务，用户发"取消"。框架立即取消当前执行流并
 
 <a id="learning-5"></a>
 
-## 排查问题与查阅资料
+## 运行与排错
 
 ### 六、注意事项
 
@@ -678,3 +714,9 @@ User: “run these three scripts at once; when the first finishes, query the oth
 - Terminal jobs are real allowlisted Python child processes. Arbitrary commands and shell syntax are rejected before task allocation.
 
 ---
+
+## 编辑核对：运行证据的范围
+
+正式四场景记录来自 `run_real_experiment.py`：该运行器直接调度 `TaskManager`，通过系统时钟回答时间，用固定模板生成日语 HTML，并按代码中的进度阈值取消子进程。它验证真实进程、批处理与恢复机制；模型是否选择正确工具并遵守多条指令，需要运行模型路径单独评估。记录中的逻辑 tick 为 0.15 秒，3%/2%/1% 是每 tick 的进度，实际墙钟时长见各任务回执。
+
+归档完整性：当前八项产物仅日语 HTML 与历史 manifest 哈希一致，其余七项 JSON 均有差异。现有文件用于核对实现与记录内容，原始归档一致性仍待追查；本次编辑保留原文件及哈希。

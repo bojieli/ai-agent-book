@@ -14,7 +14,7 @@
 
 ### AdaptThink: 让推理模型学会何时思考
 
-> **历史非规范说明。** 本长篇说明保留作方法背景；其中取整趋势、横向比较和成本估算不属于实验 8-10 的规范结果。若与文首内容冲突，以训练报告及精确 step-300 表格为准。
+本实验使用一次历史训练的验证记录。读[训练报告](TRAINING_REPORT.md)时先比较第 0 步和第 300 步，再按模型选择的推理模式拆开看。报告选取的第 300 步早于运行终点：最后一条记录是第 410 步，训练随后中断。
 
 #### 📋 目录
 
@@ -73,28 +73,15 @@ AdaptThink 让模型学会在两种模式间智能切换：
 
 ##### 方法设计
 
-AdaptThink 通过两个核心组件实现自适应推理：
+###### 1. 同一道题，两种回答怎样计分？
 
-###### 1. 约束优化目标（Constrained Optimization）
+训练先给每道题找一个比较基准：参考模型用 Thinking 模式做这道题时，平均有多少次答对？记这个比例为 $b$，把当前回答的正确性记为 $a$（对为 1，错为 0）。固定版本的训练代码给 Thinking 样本的奖励是 $a-b$，给强制 NoThinking 样本的奖励是 $a-b+0.05$。[奖励计算代码](https://github.com/bojieli/AdaptThink/blob/9e588202ff56fe93cdbe49f5594cf895f7d6b7c2/src/adapt_think_reward_manager.py#L183-L189)
 
-$$\max_{\theta} \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta(y|x)} [r(x,y)] \quad \text{s.t.} \quad \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta(y|x)} [r(x,y)] \geq \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_{\text{ref}}(y|x)} [r(x,y)] - \delta$$
+假设参考模型在这道题上答对了四分之三，$b=0.75$。两种方式都答对时，Thinking 得 0.25，NoThinking 得 0.30；若直接回答答错了，它就只得 −0.70。这个 0.05 是给直接回答的奖励加成。训练后准确率能否保持，要用验证题另行测量。
 
-其中：
-- $r(x,y)$ 是奖励函数（基于答案准确性）
-- $\pi_{\text{ref}}$ 是参考模型（原始推理模型）
-- $\delta$ 是允许的性能降幅（本实验设为 0.05）
+###### 2. 模型还不会直接回答时，怎样收集样本？
 
-**核心思想**：在保证整体性能不低于参考模型（允许轻微降幅 $\delta$）的前提下，最大化奖励。下述独立采样策略让训练同时看到 Thinking 与 NoThinking 响应；这里展示的约束目标本身不含 KL 散度项或 token 成本项。
-
-###### 2. 重要性采样策略（Importance Sampling）
-
-在训练过程中，为了平衡 Thinking 和 NoThinking 样本：
-
-- **冷启动阶段**：模型倾向于使用 Thinking（因为这是其预训练行为）
-- **采样策略**：引入重要性采样，确保训练过程中既有 Thinking 也有 NoThinking 样本
-- **探索与利用**：让模型在整个训练过程中持续探索两种模式
-
-具体实现：对每个问题，同时采样 Thinking 和 NoThinking 响应，并根据其性能动态调整采样权重。
+如果起初几乎每次都展开推理，训练就很少看到直接作答的结果。这次配方为每道题采样 16 个回答，按 0.5 的比例指定两种模式，各收集 8 个。同一题两种做法都有机会被评分。既然模式是程序指定的，计算策略更新时也要计入实际采样概率：在第一个动作的位置，代码用采样器选择该模式的概率修正旧策略的对数概率。验证时再观察模型自己选择直接回答的比例。[训练配置](https://github.com/bojieli/AdaptThink/blob/9e588202ff56fe93cdbe49f5594cf895f7d6b7c2/scripts/run_adapt_think_1.5b_deepscaler_16k_delta0.05_btz128_lr2e-6.sh) · [概率修正](https://github.com/bojieli/AdaptThink/blob/9e588202ff56fe93cdbe49f5594cf895f7d6b7c2/src/adapt_think_core_algos.py#L88-L94)
 
 ###### 3. NoThinking 实现
 
@@ -168,93 +155,19 @@ Assistant: <think></think>[直接答案]
 
 ##### 训练过程分析
 
-###### 1. 响应长度的演变
+**先看同一套题上的前后变化。** 以 AIME2024 为例，平均回答长度从 12,119.51 个 token 降到 6,402.23 个，减少约 47.17%。这次验证对每道题采样 16 次，mean@16 衡量这些作答的平均正确率。把十六次里只要有一次答对就算成功，会得到另一个指标。这里记录的平均正确率从 31.46% 变为 31.04%，下降约 0.42 个百分点。回答变短和答对题目是两项单独的观察。
 
-从 WandB 图表 `response_length/mean` 和各数据集的响应长度可以观察到清晰的三阶段模式：
+**再看模型把哪些回答分到了哪一组。** 第 300 步，GSM8K、MATH500 和 AIME2024 的直接回答比例分别为 84.15%、83.80% 和 56.25%。相较前两套题，模型在 AIME 上更常展开推理；但就 AIME 自身而言，直接回答仍占多数。早期曲线中直接回答比例逐渐升高，可以用来定位策略发生变化的大致时段；具体到某一道题，还要查看当时的输出。
 
-```
-初始阶段 (Step 0-50):
-  - 整体平均响应长度：~5,500 tokens
-  - MATH500: ~5,000 tokens (几乎全部 Thinking)
-  - GSM8K: ~1,600 tokens (几乎全部 Thinking)
-  - AIME: ~12,000 tokens (复杂问题的长思考链)
-  - 模型延续预训练行为，对所有问题都进行思考
+| 第 300 步验证集 | 直接回答正确率 | 展开推理正确率 | 直接回答平均长度（token） | 展开推理平均长度（token） |
+|---|---:|---:|---:|---:|
+| GSM8K | 81.62% | 83.25% | 360 | 1,102 |
+| MATH500 | 82.34% | 79.01% | 1,090 | 4,095 |
+| AIME2024 | 28.68% | 40.96% | 4,393 | 8,927 |
 
-过渡阶段 (Step 50-150):
-  - 整体急剧下降至 ~4,000 tokens
-  - is_nothinking 比例开始上升（从 0 → 0.5+）
-  - NoThinking 准确率快速涌现（MATH500: 0 → 0.8）
-  - 模型学习区分问题难度的关键时期
+以 MATH500 为例，第 300 步直接回答组的准确率为 82.34%，展开推理组为 79.01%。模型自行选择模式，两组包含的题目可能难易不同。若要判断让同一道题展开推理是否有益，可以固定题目和模型，分别指定两种模式，多次作答，再按题配对比较。[分组准确率与长度](TRAINING_REPORT.md#conditional-step-300-aggregates)
 
-稳定阶段 (Step 150-300):
-  - 整体稳定在 ~3,000-3,500 tokens
-  - MATH500: 降至 ~1,800 tokens (80% NoThinking)
-  - GSM8K: 降至 ~500 tokens (85% NoThinking)
-  - AIME: 降至 ~9,000 tokens (55% NoThinking)
-  - NoThinking 路由已经形成；不同数据集的准确率并非都持续提升
-```
-
-**关键观察**：保留的汇总数据与难度敏感路由一致，但不能证明响应长度与逐题难度完美匹配。
-
-###### 2. 准确率的演变与 NoThinking 能力涌现
-
-**GSM8K（简单数学）**：
-- **报告选点 score/mean**：0.796816 → **0.818802**（+2.20 pp）
-- **nothinking_acc**：在 Step 150 左右从 0 快速上升至 **0.88-0.90**
-- **报告选点 is_nothinking**：**84.15%**
-- **关键发现**：step 300 汇总中，84.15% 的 GSM8K 样本使用 NoThinking
-
-**MATH500（中等数学）**：
-- **报告选点 score/mean**：0.8100 → **0.8180**（+0.80 pp）
-- **thinking_acc**：稳定在 0.5-0.65 之间（模型选择的困难题目）
-- **nothinking_acc**：在 Step 150 时快速涌现，从 0 跃升至 **0.8-0.85**（模型选择的简单题目）
-- **报告选点 is_nothinking**：**83.80%**
-- **关键发现**：step 300 汇总中，83.80% 的 MATH500 样本使用 NoThinking
-
-**AIME2024（困难数学）**：
-- **报告选点 score/mean@16**：0.314583 → **0.310417**（-0.42 pp）
-- **thinking_acc**：在 0.3-0.7 之间波动较大
-- **nothinking_acc**：从 0.3 逐渐提升至 0.4-0.6
-- **报告选点 is_nothinking/mean@16**：**56.25%**，低于另外两个数据集
-- **关键发现**：报告选点的 AIME 更常使用 Thinking，但准确率略有回退
-
-###### 2.1 NoThinking 能力的涌现现象
-
-从图表 `nothinking_acc/mean` 可以清晰观察到一个令人惊讶的现象：
-
-```
-Step 0-150:   nothinking_acc ≈ 0 或未定义（几乎没有 NoThinking 样本）
-Step 150:     急剧上升的拐点
-Step 150-300: nothinking_acc ≈ 0.8-0.85 (MATH500), 0.88-0.90 (GSM8K)
-```
-
-这种**突然涌现**（emergence）表明：
-- 模型不是简单地学习"何时跳过思考"
-- 而是真正学会了"不思考也能解决简单问题"的能力
-- 这是一种高层次的元学习（meta-learning）能力
-
-###### 3. 自适应行为的涌现
-
-从 `is_nothinking/mean` 指标可以看到不同数据集上的自适应行为清晰分层：
-
-```
-GSM8K:            84.15% NoThinking  ← 简单问题（小学数学）
-MATH500:          83.80% NoThinking  ← 中等难度（高中数学）
-AIME2024:         56.25% NoThinking  ← 困难问题（竞赛级）
-```
-
-**自适应模式的演变时间线**（以 MATH500 为例）：
-
-```
-Step 0-100:   is_nothinking ≈ 0-0.1 (几乎不使用 NoThinking)
-Step 100-150: is_nothinking 快速上升 0.1 → 0.6
-Step 150:     关键拐点，is_nothinking 跃升至 0.8
-Step 150-300: is_nothinking 稳定在 0.78-0.82
-```
-
-这一汇总分层与**难度敏感的推理模式选择**一致。由于没有逐题输出，它不能证明每道题的路由均正确，也不能证明 Step 150 发生了因果意义上的能力突变。
-
-###### 4. 历史曲线观察
+###### 历史曲线观察
 
 以下是历史 `adapt_think` 曲线的描述性观察。它们不能覆盖 W&B 最终的 `crashed` 状态，也不能证明因果意义上的训练阶段：
 
@@ -380,18 +293,18 @@ bash scripts/run_adapt_think_1.5b_deepscaler_16k_delta0.05_btz128_lr2e-6.sh
 
 ##### 评估
 
-下述命令是上游宣传的工作流，不是成功评估所选 checkpoint 的回执。使用前须修正 `-fl-` 与 `-fl4096` 的实验名差异，以及缺失的 `adapt_think_verl/` 目录层级。
+训练日志里有两类容易混淆的成绩。第 300 步表格取自训练期间的定期验证。要回答“单独载入第 300 步保存的模型，还能得到什么成绩”，需要从磁盘读取那一步的权重，转换后再评估。本书保留了验证日志和保存事件；独立评估还需要读者自己保存的检查点。
+
+在外部仓库根目录先找实际产物：
 
 ```bash
-# 转换检查点为 HF 格式
-bash scripts/convert_to_hf.sh
-
-# 运行评估
-bash scripts/run_eval_verl_hf.sh
-
-# 或直接评估已发布的 HF 模型
-bash scripts/run_eval_hf.sh
+find ./ckpts -type d -path '*/global_step_300/actor' -print
 ```
+
+1. **认准训练输出。** [训练脚本](https://github.com/bojieli/AdaptThink/blob/9e588202ff56fe93cdbe49f5594cf895f7d6b7c2/scripts/run_adapt_think_1.5b_deepscaler_16k_delta0.05_btz128_lr2e-6.sh)把权重写在 `ckpts/adapt_think_verl/<实验名>/` 下。它在拼实验名时引用了未定义变量，默认生成的名字中会出现 `-fl-`，而转换脚本预填的是 `-fl4096-`。若找到多份 `actor`，按本次训练的实验名选定一份。
+2. **转换同一步的权重。** 在 [convert_to_hf.sh](https://github.com/bojieli/AdaptThink/blob/9e588202ff56fe93cdbe49f5594cf895f7d6b7c2/scripts/convert_to_hf.sh) 中，把 `CKPT_PATH` 指向刚找到的 `actor`，把 `SAVE_PATH` 指向同一 `global_step_300` 下的 `HF` 目录。`HF_MODEL_PATH` 要填本地下载的对应基座目录：脚本最后还要从那里复制 `tokenizer_config.json` 和 `tokenizer.json`。填好后执行 `bash scripts/convert_to_hf.sh`。
+3. **核对评估对象。** 在 [run_eval_verl_hf.sh](https://github.com/bojieli/AdaptThink/blob/9e588202ff56fe93cdbe49f5594cf895f7d6b7c2/scripts/run_eval_verl_hf.sh) 中，把 `CKPT_DIR_LIST` 指向所选实验目录，保留 `STEPS=(300)`，再执行 `bash scripts/run_eval_verl_hf.sh`。脚本会在这个目录下拼出 `global_step_300/HF` 读取模型，并将评估结果另存。若运行 `scripts/run_eval_hf.sh`，默认加载的是列出的 1.5B 和 7B 基座，适合做基线比较。
+
 
 ---
 
@@ -557,7 +470,7 @@ step 300 的汇总结果在没有显式难度标签的情况下呈现出跨数�
 
 ## 准备环境与输入
 
-阅读训练命令前，先确认基础模型、数据文件、适配器输出位置和显存要求。把数据准备、训练和评估看作三个独立步骤：前一步得到的文件，是后一步需要核对的输入。
+从训练报告的 step 300 读起，表中列出了该检查点的训练时间和评测结果。仓库未分发这个检查点；要自行评估，须先按记录找到或训练出对应权重，并核实命令中的实验名与目录。
 
 <a id="learning-2"></a>
 
@@ -571,11 +484,9 @@ step 300 的汇总结果在没有显式难度标签的情况下呈现出跨数�
 
 同时观察正确率、选择推理的比例和生成长度。总体平均值可能掩盖困难问题退化，因此应分组分析，并将历史训练报告与自己运行的结果区分。
 
-### 阅读曲线时，先区分观察与解释
+### 怎样读这次实验的结果
 
-下面保留了配置、完整数值、图表与已有分析。先确认横轴表示训练步数还是实际耗时，再核对纵轴的计算口径、样本范围和对应检查点。训练奖励、验证得分、输出长度与资源占用描述不同方面，不能相互替代。
-
-比较两条曲线前，列出它们同时改变了哪些条件。如果模型、数据、采样数量或硬件一起变化，就需要进一步对照才能确定原因。某项统计稳定也不能单独证明整个系统可靠；把每个解释与它依据的观察对应起来，再决定下一次要控制哪个变量。
+在 step 300 的报告里，GSM8K 的平均生成长度缩短了 53.44%，正确率从 0.796816 升到 0.818802。再看 AIME2024 同一配置的 mean@16，分数略降。把简答题和难题分开看，才知道节省了多少推理、又在哪些题上付出了代价。
 
 ### 检查自己的解释
 

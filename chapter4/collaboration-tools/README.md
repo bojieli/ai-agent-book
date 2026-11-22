@@ -4,11 +4,11 @@
 
 [English](#english)
 
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+[把什么交给子任务或用户](#learning-0) · [配置协作服务](#learning-1) · [发起任务并接回回复](#learning-2) · [区分回复、超时和完成](#learning-3) · [工具实现](#learning-4) · [排错与参考](#learning-5)
 
 <a id="learning-0"></a>
 
-## 理解问题与方法
+## 把什么交给子任务或用户
 
 协作调用不仅传递一个问题，还需要明确上下文、预期结果和完成条件。过少的上下文使协作者无法判断，过多的上下文又增加成本和干扰。等待用户回复与等待子任务完成也应有不同的状态。
 
@@ -24,10 +24,10 @@
 - 完整虚拟浏览器能力
 
 #### 子 Agent 管理
-- 以 **sync**（等待结果）或 **async**（返回 `task_id`）模式 spawn 子 Agent
+- 同步委派会等到子 Agent 答复；异步委派立即返回 `task_id` 和 `subagent_id`，后续查询、补充消息和取消均传 `subagent_id`
 - 向子 Agent 发送后续消息、取消运行中的子 Agent
 - **两种上下文传递策略**（可检查上下文文本与 token 数）：
-  - `minimal` — 只传任务 + 可选手选片段（最省、隐私好，可能饿死子 Agent）
+  - `minimal` — 传递任务与手工选择的必要字段，完整性取决于字段选择
   - `llm_generated` — 额外一次 LLM 调用，从父轨迹合成紧凑、隐私过滤的交接上下文
 - 子 Agent system prompt 使用带标签的上下文来源（`[FROM_MAIN_AGENT]` / `[FROM_USER]` / `[TOOL_RESULT]`）与标准化 JSON 输出
 
@@ -110,9 +110,9 @@ collaboration-tools/
 
 <a id="learning-1"></a>
 
-## 准备环境与输入
+## 配置协作服务
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+先读随附的人工答复和超时记录，比较两次等待最后各得到什么。要接入真实通知渠道，再按所选服务准备凭据；本地拿到任务标识只能说明委托已经发出。
 
 ### 安装
 
@@ -206,7 +206,7 @@ OPENAI_MODEL=gpt-5.6-luna
 
 <a id="learning-2"></a>
 
-## 按照步骤完成实验
+## 发起任务并接回回复
 
 先列出工具目录，按用途区分子任务、人机协作和通知。再阅读下文中的本地演示，跟踪主任务何时等待、拿到什么结果、怎样恢复执行。通知类集成只在配置了明确接收对象后使用。
 
@@ -242,7 +242,7 @@ python main.py hitl approve --message "删除 1000 条记录？" --timeout 5 --a
 python main.py notify slack --message "部署完成"
 ```
 
-`demo` 会串联三类协作工具：① 委派子 Agent 审批退款并对比上下文策略；② 大额操作
+`demo` 会串联三类协作工具：① 委派子 Agent 核对退款条件并对比上下文策略；② 大额操作
 触发 HITL 审批（演示"超时前批准"与"超时保守默认"两种路径）；③ 向协作者多渠道通知结果。
 其中 **HITL 与通知路径完全离线可跑**；子 Agent 的真实执行与 `llm_generated` 策略需要
 `OPENAI_API_KEY`（未配置时会明确提示，命令仍可正常解析运行）。
@@ -271,8 +271,15 @@ python quickstart.py
 export OPENAI_API_KEY=your-openai-api-key
 python subagent_comparison.py
 ```
-通常 `minimal` token 更少且不泄漏隐私字段，但子 Agent 可能返回 `need_info`；
-`llm_generated` 多一次 LLM 调用交接更丰富、经隐私过滤的上下文，便于子 Agent 完成任务。
+`minimal` 的开销取决于选中的字段；`llm_generated` 增加一次准备调用，需要检查摘要是否保留必要事实、是否包含未授权信息。两种方式都应按字段的实际内容实施权限与隐私检查。
+
+正式记录见 [`real_mcp_human_20260803_v2`](validation/experiment_4_5/real_mcp_human_20260803_v2/summary.json)。最小切片组只选择 `policy`，交接上下文为 56 token，缺少请求中的购买时间与金额，子 Agent 返回 `need_info`。摘要组按业务规则保留 `customer`、`request` 与 `policy`，交接为 151 token，额外准备调用为 643 token；子 Agent 根据“三天前、80 新元”判断符合“七天内、低于 100 新元”的政策。后续给最小组补充“商品未使用”，仍未补齐缺失字段，子 Agent 再次请求金额与时间。
+
+不用启动服务也可以练习读回执。打开[最小切片的同步调用](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/01_minimal_sync.json)，先看调用参数里的 `parent_context`，再看 `payload.prepared_context`。父 Agent 手里有金额和购买时间，传给子 Agent 的文字里却只有店规。外层 `payload.status` 为 `completed`，内层 `payload.result` 的 `status` 为 `need_info`。如果负责下一步的是你，这时可以从父任务补齐两项事实，省去向用户再问一次。[后续消息](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/03_multi_turn_message.json)只补充了商品未使用，所以子 Agent 仍旧无法判断。
+
+再对照[异步启动](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/04_async_spawn.json)和[异步完成](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/45_async_status_41.json)。找出启动时返回的两个 ID，看看后一次查询的 `arguments.subagent_id` 对应哪一个。人工审批则用另一套标识：把[待办](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/49_hitl_pending.json)、[人工答复](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/50_hitl_human_response.json)和[调用方收到的批准](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/51_hitl_approval.json)按 `request_id` 对起来。最后打开[超时记录](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/52_hitl_timeout.json)，核对它的请求 ID 和 `timeout`。超时只说明期限内没有收到答复；前一条批准也只适用于它自己那项请求。
+
+这组记录展示了字段选择对完成任务的影响。要比较两种策略本身，可再增加一个包含相同必要事实的手工切片组，比较回答、总用量与延迟。当前记录还覆盖生命周期、人工答复与超时；邮件、Telegram 与 Slack 的真实投递等待对应服务配置。历史文件中的实验编号 4-4 对应现稿实验 4-5。
 
 #### 与 Claude Desktop 联用
 
@@ -356,7 +363,7 @@ await mcp_set_recurring_timer(
 
 <a id="learning-3"></a>
 
-## 分析结果与形成判断
+## 区分回复、超时和完成
 
 检查结果是否足以让主任务继续，而不只看协作者是否返回了一段文字。对于需要用户决定的事项，应能辨认决定是否真正收到，不能把等待时间当作同意。
 
@@ -366,7 +373,7 @@ await mcp_set_recurring_timer(
 
 <a id="learning-4"></a>
 
-## 阅读实现与继续探索
+## 工具实现
 
 ### 项目说明
 
@@ -379,7 +386,7 @@ await mcp_set_recurring_timer(
 
 <a id="learning-5"></a>
 
-## 排查问题与查阅资料
+## 排错与参考
 
 ### 故障排除
 
@@ -439,7 +446,7 @@ A comprehensive Model Context Protocol (MCP) server that provides collaboration 
 - Spawn sub-agents in **sync** (wait for result) or **async** (returns a `task_id`) mode
 - Send follow-up messages to a sub-agent and cancel a running one
 - **Two context-passing strategies**, made inspectable (context text + token count):
-  - `minimal` — pass only the task plus an optional hand-picked slice (cheapest, private, may starve the sub-agent)
+  - `minimal` — pass the task and a hand-picked slice; sufficiency depends on the selected fields
   - `llm_generated` — one extra LLM call synthesizes a compact, privacy-filtered hand-off context from the parent trajectory
 - Sub-agent system prompt uses labeled context sources (`[FROM_MAIN_AGENT]` / `[FROM_USER]` / `[TOOL_RESULT]`) and standardized JSON output
 
@@ -635,9 +642,7 @@ private data leaked, and each sub-agent's result). Requires `OPENAI_API_KEY`
 export OPENAI_API_KEY=your-openai-api-key
 python subagent_comparison.py
 ```
-Typically `minimal` uses far fewer tokens and never leaks private fields, but the
-sub-agent may return `need_info`; `llm_generated` spends one extra LLM call to
-hand off richer, privacy-filtered context so the sub-agent can complete the task.
+The minimal strategy depends on the selected fields; the generated strategy adds a preparation call and requires checks for omissions and unauthorized content. In the retained campaign, the minimal slice contains only the policy (56 context tokens), while the generated handoff includes the request facts (151 context tokens, plus 643 preparation tokens). The former asks for the missing amount and purchase date; the latter can apply the policy. A matched-information comparison should give both strategies the same necessary facts before comparing cost and quality.
 
 #### Using with Claude Desktop
 

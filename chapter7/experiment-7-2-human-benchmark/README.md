@@ -304,3 +304,7 @@ The five failures expose five different boundaries:
 5. **Episode protocol:** τ²-bench hard repaired the environment but exhausted the turn budget under a role-inverting local user simulator.
 
 That diversity is the main value of the exercise: “the answer looked right” is weaker than an official terminal result, and failures often occur at normalization, interaction, representation, secondary constraints, or protocol termination rather than at the apparent core task.
+
+### 正文对照复核（2026-10-07）
+
+正文实验 7-2 保留读者亲自执行任务的练习，并将已有 18 条案例明确归属为 Codex 操作记录。当前汇总复算为 13 项 passed、5 项 failed；18 个案例所引用的证据文件均存在。该检查确认计数与引用完整性，尚未据此重跑各基准评分器。GAIA 舍入差异与 AndroidWorld 页面状态案例保留为验证方法的教学例子。

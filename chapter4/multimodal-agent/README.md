@@ -1,16 +1,16 @@
 # Multimodal Agent — Three Extraction Paradigms / 多模态 Agent——三种抽取范式对比
 
-回答图表问题时，模型可以直接读取图像，也可以先通过工具提取文字和数据。本实验比较几种输入路径，学习选择方式时需要考虑哪些信息可能丢失。
+同一张季度收入图上，模型读出了最低收入 9500 万美元，却把季度答错了。要找原因，先看它收到的是整张图，还是从图里抽出来的一串文字。你可以在本地生成样例，打开归档回答，跟着这条错误一路查到输入。
 
 [English](#english)
 
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+[同一份图表怎样进入模型](#learning-0) · [选择已有样本与模型](#learning-1) · [对照三条信息提取路径](#learning-2) · [定位数值或季度在哪一步丢失](#learning-3) · [文件与模型接口](#learning-4) · [参考资料](#learning-5)
 
 <a id="learning-0"></a>
 
-## 理解问题与方法
+## 同一份图表怎样进入模型
 
-直接多模态输入保留视觉布局，文本抽取便于后续检索与计算，工具化分析还可以针对局部内容处理。每条路径都会改变模型看到的材料，因而不能只比较最终回答长度。
+先在原图中找到最低的柱子，读出柱顶的金额和正下方的季度。模型直接看图时，这两条线索在同一张图上；只读文字时，就要检查提取结果有没有保留两者的对应关系。第三条路径让模型在文字不足时调用工具回看图表。
 
 ### 功能——三种抽取模式
 
@@ -37,15 +37,15 @@ MultimodalAgent
 
 <a id="learning-1"></a>
 
-## 准备环境与输入
+## 选择已有样本与模型
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+先看同一张图对应的图片、提取文本和工具输出。等你能认出哪份材料保留了季度与数字的对应关系，再按下文配置要重跑的模型。
 
 ### 安装
 
 ```bash
-# 在仓库根目录使用统一的第 4 章环境
-uv sync --locked --python 3.12 --extra ch3
+# 在仓库根目录安装绘图、文档生成和模型接口依赖
+uv sync --locked --python 3.12 --extra viz --extra docs --extra providers
 
 # 切换目录前先激活环境：
 # macOS/Linux：
@@ -54,16 +54,15 @@ source .venv/bin/activate
 # Windows cmd：.venv\Scripts\activate.bat
 
 # 未安装 uv 时可用 pip 兜底：
-# python -m pip install -e ".[ch3]"
+# python -m pip install -e ".[viz,docs,providers]"
 
 cd chapter4/multimodal-agent
 
-# 精确复现旧版单项目环境，含 python-magic 文件类型检测：
+# 如需使用项目原有的依赖清单：
 # python -m pip install -r requirements.txt
 
+# 只做离线样例可跳过这一步。在线交互演示从 .env 读取所选服务的密钥。
 cp env.example .env
-# 编辑 API Key
-export $(cat .env | xargs)   # Unix 可选
 ```
 
 ### API Key
@@ -74,7 +73,7 @@ export $(cat .env | xargs)   # Unix 可选
 
 <a id="learning-2"></a>
 
-## 按照步骤完成实验
+## 对照三条信息提取路径
 
 先运行样例生成器，打开生成的图表与报告，人工确认正确答案。随后按下文配置模型，对同一文件提出同一问题，分别观察直接读取、提取文本和工具分析的过程。
 
@@ -86,7 +85,16 @@ export $(cat .env | xargs)   # Unix 可选
 python create_sample.py
 ```
 
-再对比三种范式（需视觉 API Key）：
+先自己看图，写下最低的季度、该季度的收入和第四季度比它高出的金额。装有 Tesseract 和 Poppler 时，可以在本地运行与归档相同的两条提取命令：
+
+```bash
+tesseract test_files/sample_chart.png stdout --psm 6
+pdftotext -layout test_files/sample_report.pdf -
+```
+
+先在 OCR 输出里找 95M，再试着只凭这些文字确定它属于哪个季度。接着读 PDF 的文本层，找一找哪句话能说明第四季度的走势、哪句话给出了金额。本机版本的 OCR 排版可能不同，可以对照[原始记录](validation/runs/20260729T185433Z-4_2-e028c9db/evidence.json)中两项材料的 `artifacts[].extracted_text`。没有安装这两个工具也能直接读记录做题。
+
+下面用交互演示程序比较三条路径，需要视觉模型的 API Key。书中汇总的十二个回答来自 [campaign.py](campaign.py) 对两种材料、两道问题和三条路径的固定对照。
 
 ```bash
 python demo.py \
@@ -95,7 +103,7 @@ python demo.py \
   --model gpt-5.6-luna
 ```
 
-各 CLI 均有中文 `--help`。
+要复跑书中的固定对照，请在本目录准备 Tesseract 和 Poppler（含 `pdftotext`、`pdftoppm`）。在环境中设置 `ARK_API_KEY` 或 `DOUBAO_API_KEY` 供回答模型使用，另设 `MOONSHOT_API_KEY` 供评审模型使用，然后运行 `python campaign.py`。如果密钥写在本目录的 `.env`，可用 `uv run --no-sync --env-file .env python campaign.py` 显式加载。新运行会生成自己的回执和用量记录。
 
 ### 用法
 
@@ -136,21 +144,35 @@ python test_multimodal.py
 
 <a id="learning-3"></a>
 
-## 分析结果与形成判断
+## 定位数值或季度在哪一步丢失
 
-如果读错数值，检查坐标轴、单位和图例有没有保留；如果漏掉关系，检查文本抽取是否丢失布局。示例正确不代表任意扫描件或复杂表格都适用。
+### 从输入内容定位错误
 
-### 区分抽取错误与理解错误
+先打开原始材料，记录问题需要用到的数值与对应关系，再比较各模式实际交给模型的内容。读错数值时，检查坐标轴、单位和图例；漏掉关系时，检查文本抽取是否保留布局。若所需信息已在抽取阶段丢失，应先改进提取或补充视觉输入；若信息完整，再分析模型的理解与引用。
 
-先打开原始文档，选一个包含表格、图像或复杂版面的页面，手工记录需要回答的信息。比较各抽取模式交给模型的实际内容：如果数字或布局关系已经在抽取时丢失，后续问答无法凭空补回。若抽取结果完整而回答仍然错误，再分析模型的理解与证据引用。
+### 已保存的三路径对照
 
-### 检查自己的解释
+正式记录见 [`evidence.json`](validation/runs/20260729T185433Z-4_2-e028c9db/evidence.json)，原始请求、响应与用量见同目录的 `receipts.json`。历史文件中的实验编号 `4-2` 对应当前书中的实验 4-3。
 
-哪些问题只需要文字，哪些问题必须保留版面或空间关系？
+本次使用 `doubao-seed-1-6-250615` 完成三条路径的回答，`moonshot-v1-8k` 对照参考答案评判。材料为同一组季度收入数据的 PNG 图表和含图 PDF，每种材料回答最高收入、最低收入及差额两个问题，共四个材料—问题组合。PDF 经页面渲染后进入视觉路径；文本路径分别使用 Tesseract OCR 和 `pdftotext -layout`。
+
+| 路径 | 完整答对 | 平均耗时（秒） | 回答模型调用数 | 输入 token 合计 | 输出 token 合计 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 直接看图 | 4/4 | 8.01 | 4 | 4,472 | 1,415 |
+| 提取为文本 | 0/4 | 10.87 | 4 | 854 | 1,932 |
+| 按需调用视觉工具 | 4/4 | 29.79 | 12 | 8,677 | 5,392 |
+
+用量由原始回执汇总，不含外部裁判。工具路径包含决策、视觉分析和最终回答三次调用，四个组合都调用了 `inspect_visual`。文本和工具路径的计时包含本地文本提取；直接看图的计时从模型调用前开始，PDF 页面渲染发生在此前。该表描述当前运行的计时口径。
+
+先比较文本组收到的两份材料。PNG 的 OCR 结果有 180M、150M、120M、95M，也混着纵轴刻度，季度标签另在末行。PDF 的文本层则只提到年中回落、最后一季反弹。前一种情况下，模型要判断哪个数属于哪一季；后一种情况下，它连可以拿来计算的金额都没有。
+
+工具路径的系统提示词明确要求：提取文本无法确定数值或空间对应时，调用视觉工具。这个设置用于展示补充视觉证据的过程。扩展实验时，可增加纯文字即可作答的问题，检验模型能否合理决定何时使用工具，并分别统计正确率、调用次数、输入输出用量和端到端耗时。
+
+读 `png:extract:lowest_gap` 这条回答：它报出 95M 和 85M，却把最低收入归给 Q1。核对时，把三项事实分开勾选：最低的是 Q3，它的收入为 95M，Q4 高出 85M。脚本的 `exact_correct` 只检查这三个标记是否出现；即使都出现了，仍要读完整句子，查清两个金额分别指什么。记录另附评审模型对照参考答案给出的判断。直接看图和工具路径均完整答对，文本路径均未完整答对。记录完整性检查已核对 `evidence.json` 与 `receipts.json` 的 manifest 哈希。
 
 <a id="learning-4"></a>
 
-## 阅读实现与继续探索
+## 文件与模型接口
 
 ### 项目说明
 
@@ -167,7 +189,7 @@ python test_multimodal.py
 
 <a id="learning-5"></a>
 
-## 排查问题与查阅资料
+## 参考资料
 
 ### 许可
 
@@ -210,8 +232,8 @@ MultimodalAgent
 ### Installation
 
 ```bash
-# From the repository root: use the shared Chapter 4 environment
-uv sync --locked --python 3.12 --extra ch3
+# From the repository root: install the plotting, document and provider extras
+uv sync --locked --python 3.12 --extra viz --extra docs --extra providers
 
 # Activate it before changing directories:
 # macOS/Linux:
@@ -220,16 +242,15 @@ source .venv/bin/activate
 # Windows cmd: .venv\Scripts\activate.bat
 
 # pip fallback when uv is not installed:
-# python -m pip install -e ".[ch3]"
+# python -m pip install -e ".[viz,docs,providers]"
 
 cd chapter4/multimodal-agent
 
-# Exact legacy parity path, including python-magic file sniffing:
+# To use the original project requirements instead:
 # python -m pip install -r requirements.txt
 
+# For the online interactive demo, enter the chosen provider key in .env.
 cp env.example .env
-# Edit .env with API keys
-export $(cat .env | xargs)   # optional on Unix
 ```
 
 ### Quick offline start (no API key)

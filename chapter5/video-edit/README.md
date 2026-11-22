@@ -1,32 +1,16 @@
-# Experiment 5-6: API-Driven Smart Video Editing / 实验 5-6：基于 API 的智能视频剪辑
+# Experiment 5-8: API Video Editing / 实验 5-8：基于 API 的智能视频剪辑
 
-“保留人物走进房间的那一段”包含视觉定位与时间范围选择。直接生成剪辑命令之前，Agent 必须先理解视频内容。本实验展示从自然语言需求到场景定位，再到媒体处理的过程。
+请从《Big Buck Bunny》预告片中剪出大白兔独自在草地上行走的镜头，把这段动作放慢到原时长的 1.5 倍，并在底部加上字幕 `BIG BUNNY`。成片里出现了这行字幕，你还要看什么，才能把它交给用户？
 
 [English](#english)
-
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
 
 <a id="learning-0"></a>
 
 ## 理解问题与方法
 
-视觉分析负责找出相关片段，代码负责执行裁剪或变速，审核环节检查结果。这样可以把“找错场景”与“剪辑参数错误”分开定位。不同输出工具的时间单位与边界规则也需要对应。
+先回到源片找镜头。负责定位的助手从视频中抽帧，找出兔子出现和离开的时间，再把区间交给提议者。这样，决定“剪哪几秒”时可以看很多张图；执行“怎样剪”时，只需时间码、字幕和变速参数。
 
-### 目的
-
-用户给一段含多个场景的视频 + 一句自然语言需求（如"把冲浪部分剪出来"），Agent 自动定位目标场景、**生成 Blender Python API 脚本**剪出片段并自我审查。
-
-验证三个核心机制在多媒体处理中的作用：
-
-1. **两步 Vision 定位**：Proposer 无法直接"看懂"视频，于是委托一个**视频分析子 Agent**，
-   用 ffmpeg 抽帧 + Vision LLM 读图来定位目标场景的时间边界。
-2. **代码生成（Blender Python API）**：Proposer 把剪辑计划翻译成一段调用 **Blender
-   Python API（bpy）** 的脚本——导入 / 裁剪 / 字幕 / 变速 / 渲染各对应一个 API 调用，
-   用 `blender --background --python edit.py` 无头执行。这正是书中"把视频编辑重构为
-   API 调用和代码生成问题"的落地。未装 Blender 时脚本照常生成（代码生成产物），
-   实际渲染回退到 ffmpeg（见下文"剪辑后端"）。
-3. **提议者-审核者（Proposer / Reviewer）**：Proposer 剪辑后无法自证效果，
-   由 Reviewer 抽取成片关键帧、用 Vision LLM 检查是否剪对，不合格则反馈、迭代。
+得到剪辑计划后，Blender 可以通过 Python 接口（bpy）导入素材、裁剪、加字幕、变速和渲染。两个入口在这里做法不同。快速演示 `demo.py` 把计划填入[脚本模板](blender_editor.py)，可以用 Blender 执行，也可以用 ffmpeg 剪出片段。白兔案例的[完整实验](campaign.py)让模型编写脚本，由 Blender 实际渲染。审核者随后看成片的关键帧，检查选中的主体和画面效果；定位有偏差时，还可以回到源片重新取帧。
 
 ### 两步定位原理
 
@@ -62,7 +46,7 @@ NL 需求 ──► Proposer 解析意图（目标场景 + 特效）
 
 ## 准备环境与输入
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+仓库保留了白兔案例的源片定位、抽帧和审核记录，可以先做下文的读图练习。自己动手剪第一段视频时，先跑 `demo.py --smoke`，它用本地生成的素材验证剪辑和字幕。要让模型根据一句话自行找场景，再配置视觉模型。
 
 ### 依赖
 
@@ -74,7 +58,7 @@ NL 需求 ──► Proposer 解析意图（目标场景 + 特效）
 
 ## 按照步骤完成实验
 
-先查看示例视频并手工记录目标场景的大致起止时间，再按下文准备 ffmpeg 或 Blender 路径。运行一个简单裁剪任务，比较模型定位、生成操作与实际成片；之后再尝试多步骤编辑。
+打开源片[第 10 秒的截图](validation/runs/exp5-6-real-blender-20260730-055102/frames/coarse/frame-010.00.png)和[第 20 秒的截图](validation/runs/exp5-6-real-blender-20260730-055102/frames/coarse/frame-020.00.png)。如果只看这两张，你能确定第 10 秒有没有兔子，可是能确定它何时离开吗？再看[细采样的连续截图](validation/runs/exp5-6-real-blender-20260730-055102/frames/fine/)，写下你愿意交给剪辑程序的起点和终点。
 
 ### 运行
 
@@ -110,7 +94,7 @@ python demo.py --help      # 查看全部参数
 常用参数（完整见 `--help`）：`--input/-i` 输入视频、`--output/-o` 成片路径、
 `--backend {auto,blender,ffmpeg}` 剪辑后端、`--text-model`/`--vision-model` 覆盖模型。
 
-一条命令即可跑通：生成/读取视频 → 两步定位 → 生成 bpy 脚本剪辑 → 审查 → 输出成片。
+运行结束时要看最后一次审核的 `pass`。演示达到轮数上限后也会把最后一版复制为成片；仅凭 `final.mp4` 存在，还无法判断这一版是否通过了审核。
 每次运行都会清空 `output/`，从干净状态开始（幂等可重复）。完整流程会多次调用
 Vision 模型（较慢/耗费额度）；只想验证链路时先跑 `--smoke`（零 API），或用 `--quick`。
 
@@ -119,6 +103,32 @@ Vision 模型（较慢/耗费额度）；只想验证链路时先跑 `--smoke`�
 ## 分析结果与形成判断
 
 检查是否漏掉动作开头或结尾、音轨是否同步、变速是否改变了用户要求的含义。视觉定位误差不会因为执行工具准确而自动消失。
+
+### 读一次真实成片：同样有字幕，为什么只通过了一版？
+
+这次任务要求从《Big Buck Bunny》预告片中剪出大白兔独自在阳光下草地上行走的镜头，让片段时长变为原来的 1.5 倍，并在底部加上 `BIG BUNNY`。打开[负对照帧](validation/runs/exp5-6-real-blender-20260730-055102/frames/negative-review/frame-002.25.png)与[修订后成片帧](validation/runs/exp5-6-real-blender-20260730-055102/frames/final-review-refinement-1/frame-002.29.png)，先遮住字幕看主体：前一张是片头制作方的英文文字，后一张是草地上的白兔。再看底部，两张都有所要求的字幕。负对照完成了字幕渲染，却截取了源片开头的错误场景。读者可以从[审核记录](validation/runs/exp5-6-real-blender-20260730-055102/review.json)追踪这次退回与修订。
+
+复核原运行的两份视频时，在各自的 **0.4、1.2、2.2 秒**抽帧：负对照的片头字样逐渐变清楚，三个时刻都没看到白兔；修订版三帧均有白兔，耳朵朝向和嘴部姿态随镜头变化。要核对放慢后的时长，还需回到[源片定位记录](validation/runs/exp5-6-real-blender-20260730-055102/localization.json)：修订版选取源片 9.25 至 11.00 秒，按要求应为 `(11.00 − 9.25) × 1.5 = 2.625` 秒。`ffprobe` 实读成片为 2.645 秒，视频流为 25 fps、66 帧；负对照则为 4.501 秒、112 帧。两份文件都是 854 × 480 的 H.264 视频并含 AAC 音轨。要判断声画是否同步，还要连续播放，光看抽帧和编码信息不足以判断。
+
+拿到完整运行目录时，可在其中复查。普通仓库副本可直接使用上面的留存帧与 JSON；[清单](validation/runs/exp5-6-real-blender-20260730-055102/manifest.json)列有两个 MP4 的原始 SHA-256，可用于确认版本。
+
+```bash
+for clip in negative_control final; do
+  ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,nb_frames:format=duration "$clip.mp4"
+  for t in 0.4 1.2 2.2; do
+    ffmpeg -v error -ss "$t" -i "$clip.mp4" -frames:v 1 "$clip-$t.png"
+  done
+done
+```
+
+把这次选段与人工标注的 9.08 至 11.20 秒对照，能看出调整边界的代价：
+
+| 源片中的区间 | 起点与标注相差 | 终点与标注相差 |
+|---|---:|---:|
+| 每秒抽帧后选定 9.00 至 12.00 秒 | 提前 0.08 秒 | 晚了 0.80 秒 |
+| 根据审核意见改为 9.25 至 11.00 秒 | 晚了 0.17 秒 | 提前 0.20 秒 |
+
+第二次把末尾多留的画面剪掉了，同时也舍去了标注区间里开头和结尾的一小段。若用户特别想保留兔子迈出第一步的动作，下一次应到源片起点附近加密抽帧，检查被舍去的画面。
 
 ### 预期输出示例
 
@@ -184,10 +194,9 @@ Token 统计（子 Agent 隔离截图，主上下文不被污染）
 | `cut_round1.mp4` | 12.0s | 第 1 轮剪出的候选片段 |
 | `final.mp4` | 12.0s | 采用的成片（H.264 + AAC，1280x720@30fps） |
 
-Token 统计印证了核心结论：几十张截图（2934 tokens）只进入**子 Agent**的一次性
-上下文，主 Agent 的对话历史（573 tokens）几乎不受截图污染。
+这次演示把两步定位的调用单独计数，共用 2,934 token；提议者和审核者合计用 573 token。这里统计每组调用的输入加输出。定位时抽取的截图由子 Agent 阅读，审核者另外读取成片关键帧。若想量出分工究竟节省了多少，还需让同一个助手完成相同任务，记录它的用量作对照。
 （注：合成测试片仅显示"SURFING"字样而非真实冲浪画面，Reviewer 有时会据此判为
-不通过——这正是审核者按画面内容如实反馈的体现；换真实视频即无此现象。）
+不通过——这正是审核者按画面内容如实反馈的体现；真实视频的读图结果可对照上面的白兔案例。）
 
 ### 检查自己的解释
 
@@ -246,11 +255,7 @@ export TEXT_MODEL=gpt-5.6-luna
 - `--backend ffmpeg`：强制走 ffmpeg；
 - `--backend auto`（默认）：装了 Blender 用 bpy，否则回退 ffmpeg。
 
-**关键点：无论哪个后端，Proposer 生成的 bpy 脚本都会落盘到 `output/edit_round*.py`**
-（`--smoke` 下为 `output/edit.py`）——即"生成 Blender Python API 代码"这一核心产物，
-可人工核对、也可拷到装了 Blender 的机器上执行。本机未安装 Blender，故本仓库的实际
-渲染由 ffmpeg 完成并验证；bpy 脚本已通过 `py_compile` 语法校验，但**未在真实 Blender
-上跑过渲染**（装好 Blender 后即可用 `--backend blender` 端到端执行）。
+快速演示会把脚本写入 `output/edit_round*.py`；运行 `--smoke` 时，文件名是 `output/edit.py`。前面的冒烟示例走了 ffmpeg 后端，保留的 bpy 脚本通过了语法检查。要看模型写出的脚本在 Blender 上如何执行，可以对照白兔案例留存的[各次脚本](validation/runs/exp5-6-real-blender-20260730-055102/scripts/)与[运行清单](validation/runs/exp5-6-real-blender-20260730-055102/manifest.json)。那次实际使用的是 Blender 4.3.2。
 
 两种后端的取舍：
 

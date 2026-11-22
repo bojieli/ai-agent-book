@@ -1,6 +1,6 @@
-# 并行收集资料时怎样保持证据一致
+# 怎样并行查找教师资料，并在找到后停止搜索
 
-查阅多个来源可以并行进行，但最后仍需要判断它们是否描述同一个对象。本实验让多个浏览器工作者各自读取来源，再把有出处的结果交给管理者整理。
+要从十个斯坦福大学页面中找到 Andrew Ng 的资料，一个办法是依次打开页面，找到就停；另一个办法是让十个工作者同时开始。后者可能更快，却多了一个问题：一位工作者找到有出处的资料时，谁来通知另外九位收手，又怎样知道浏览器已经关闭？
 
 [English](#english)
 
@@ -10,27 +10,23 @@
 
 ## 理解问题与方法
 
-独立浏览器上下文减少工作者互相影响，任务标识与消息总线帮助管理者追踪进度。并行减少等待，但不会自动解决同名对象、冲突资料或来源质量问题。
+每位工作者负责一个网址，用独立的 Playwright Chromium 浏览器上下文打开页面。先认清程序什么时候会用到模型：它读取渲染后的文字，忽略大小写查找目标姓名；页面里没有这个名字，就直接报告未找到。只有名字出现时，才把材料交给模型抽取教师信息。因此，即使打开了十个页面，也未必会发出十次模型请求。这个筛选条件也有代价：只写姓名缩写或别名的页面可能被跳过。
 
-本实现不再使用“可控字符串 + 模拟延迟”。每个同构子 Agent 都拥有独立 Playwright Chromium context，访问真实大学网站、读取实际渲染内容，再由真实 LLM 做证据约束抽取。Manager 维护状态表、错误隔离、超时、加锁单次结算、级联终止、ack 与资源关闭审计；默认还会在同一批网站上实跑串行基线。
+### 两位工作者同时报告找到目标，听谁的？
 
-### 让多个检索任务并行，同时维护唯一结果
-
-Manager 为每个真实大学 URL 启动一个同构 worker；每个 worker 拥有独立的 Playwright Chromium context，读取渲染文本，再让真实模型抽取有证据支持的教师信息。状态通过带时间戳的异步消息总线回传。
-
-一个网站超时或结构不同，不应停止其他 worker。第一个 `target_found` 必须在 `asyncio.Lock` 保护下结算，只允许一次 terminate 广播；较晚返回的命中仍要记录。导航和抽取都与停止事件竞争，未胜出的 worker 在安全位置取消、确认并关闭 context。
+工作者通过带时间戳的消息报告任务进度。Manager 维护各站点的状态，某个站点超时、访问失败，都要单独记录，其余站点可以继续。第一个有效的 `target_found` 到达时，Manager 在 `asyncio.Lock` 保护下登记胜出者，广播一次停止通知。迟到的命中仍会留下记录。接下来还要核对两件事：其余工作者是否确认了通知，各自的浏览器上下文是否已经关闭。正在导航或等待模型返回的工作者也要响应停止事件。
 
 <a id="learning-1"></a>
 
 ## 准备环境与输入
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+把待查的人名和候选网站分开准备，并保留每个网站的原始地址。串行和并行两次都使用同一组来源，否则完成时间的差别也可能来自站点数量或速度。
 
 <a id="learning-2"></a>
 
 ## 按照步骤完成实验
 
-先阅读站点配置和目标名称，明确每个工作者负责的来源。按下文准备浏览器与模型后，从少量来源开始，跟踪启动、返回、追问与终止消息，再检查汇总是否保留出处。
+先阅读站点配置和目标名称，明确每个工作者负责的来源。按下文准备浏览器与模型后，从少量来源开始，跟踪任务分派、命中、停止通知和确认消息，再检查汇总是否保留出处。
 
 ### 先选少量网站，再比较同一组任务的调度方式
 
@@ -64,7 +60,7 @@ python run_official_experiment.py --run-id exp10-4-real-receipts-YYYYMMDD-vN
 ```
 
 ```bash
-python demo.py --target 'Professor Name' --sites-json sites.example.json --agents 3
+python demo.py --target 'Andrew Ng' --sites-json sites.example.json --agents 3
 ```
 
 `cascade-stress.example.json` 使用同一个真实目标页面的不同查询 URL，以便观察几乎同时命中时的竞争。它是并发机制检查材料，不是多学校研究的数据集。
@@ -77,7 +73,7 @@ python demo.py --target 'Professor Name' --sites-json sites.example.json --agent
 
 ### 将加速、终止与资源关闭一起核对
 
-串行与并行必须访问同一批网站、使用同一抽取函数，才适合比较墙钟耗时。2026-07-29 的记录为并行 18.542 秒、串行 58.264 秒，约 3.142 倍；后续保留完整来源的运行为 1.872 倍。两者条件与记录时间不同，应分别解释，不能只选更高的数字。
+串行与并行必须访问同一批网站、使用同一抽取函数，才适合比较墙钟耗时。2026-07-29 的记录为并行 18.542 秒、串行 58.264 秒，约 3.142 倍；在[7 月 30 日的完整记录](validation/runs/exp10-4-real-receipts-20260730-v2/evidence.json)中，串行组在第十个页面找到目标，用了 44.971 秒；并行组用了 24.022 秒。两者相除得到 1.872 倍。串行代码每找到一个有效结果就退出。如果把命中页排到第一位，串行组就只访问一页，所以复现时除了保留网址，还要保留它们的顺序。两者条件与记录时间不同，应分别解释，不能只选更高的数字。
 
 完整运行还核对了 20 个正常比较 context 和 4 个级联测试 context 的关闭、一次终止广播、三个未胜出 worker 的确认，以及 24 份浏览器观察、3 份 ARK 响应和 114 个总线事件。阅读这些文件可以判断加速是否伴随任务遗漏或资源泄漏。
 
@@ -89,7 +85,7 @@ python demo.py --target 'Professor Name' --sites-json sites.example.json --agent
 
 # Experiment 10-4 · Parallel research with real browser sessions
 
-This implementation uses no simulated sources, canned content, or artificial source latency. The Manager dynamically launches one homogeneous worker per real university URL. Every worker owns an isolated Playwright Chromium browser context, navigates the live page, reads rendered text, and uses a real configured LLM endpoint for evidence-constrained profile extraction.
+This implementation uses no simulated sources, canned content, or artificial source latency. The Manager dynamically launches one homogeneous worker per real university URL. Every worker owns an isolated Playwright Chromium browser context, navigates the live page, reads rendered text, and calls the configured LLM for profile extraction only when the target name occurs in that text (case-insensitive).
 
 Implemented requirements:
 
@@ -103,7 +99,7 @@ Implemented requirements:
 
 ## Code map
 
-- **Run first:** python demo.py --target "Professor Name" --sites-json sites.example.json --agents 3.
+- **Run first:** python demo.py --target "Andrew Ng" --sites-json sites.example.json --agents 3.
 - **Start here:** agents.py::search_one and the Manager run path in run_official_experiment.py.
 - **Core behavior:** worker navigation/extraction, async message bus, first-target settlement and cancellation.
 - **State / protocol:** task IDs, status/result/terminate events, worker registry and manifest.
@@ -150,7 +146,7 @@ event stream, exact runtime source hashes, artifact hashes, and acceptance gates
 Use your own university school/directory list:
 
 ```bash
-python demo.py --target 'Professor Name' --sites-json sites.example.json --agents 3
+python demo.py --target 'Andrew Ng' --sites-json sites.example.json --agents 3
 ```
 
 `cascade-stress.example.json` repeats a real target-bearing Stanford profile under distinct query URLs solely to make near-simultaneous live hits and cancellation observable. It is a real-browser stress supplement, not the multi-school research dataset.

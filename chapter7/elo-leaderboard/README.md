@@ -1,89 +1,59 @@
-# Elo Rating Leaderboard from Pairwise Comparisons
+# 实验 7-8：从两两比较到模型排名
 
-评价生成答案时，人们有时更容易判断两者谁更好，而不是分别给出绝对分数。本实验从两两偏好数据出发，学习怎样估计相对能力以及排名的不确定性。
+同一道题有两份匿名回答，评审选了 A。这个选择能让 A 涨多少分？如果 A 刚刚赢过一位强手，又和一位新上榜的模型打平，它的分数还会上升吗？先算一场，再看上百万场比较怎样汇成一张榜。
 
 [English](#english)
-
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4)。
 
 <a id="learning-0"></a>
 
 ## 理解问题与方法
 
-Elo 根据对局结果逐步调整分数，Bradley–Terry 模型用胜率关系估计相对强度。两者都依赖比较数据覆盖；很少交手的模型，其排名通常更不稳定。
+在线 Elo 先用当前分差估计 A 对阵 B 的期望得分，再根据实际得分修正两者的评级。实现中胜、平、负分别得 1、0.5、0 分。沿用本实验的参数，更新规则为：
 
-该项目围绕**配对比较（pairwise）数据**构建 Elo/Bradley-Terry 排名流程，目标是用公开的模型对战投票数据（重点是 Chatbot Arena）形成可复现的模型排行榜与可视化分析。
-
-### 实验导向背景
-
-Elo 本质上用于“成对对局中的胜率”学习相对能力，最初用于棋类，现被广泛用于语言模型两两对比的排序。
-
-### 关键特性
-
-- 高性能实现：NumPy + Numba JIT + 并行处理。
-- 真实数据分析：接入大规模公开投票数据。
-- 胜率推断：可预测任意两个模型的胜率。
-- 历史追踪：可输出时间序列排行快照。
-- 交互可视化：支持静态图与动态动画。
-- 可扩展：可承接较大规模比赛集合。
-
-### 数学原理
-
-与 AndroidWorld 风格一致，评分来自 Bradley-Terry：
-
-```
-P(A 胜过 B) = 1 / (1 + 10^((R_B - R_A) / 400))
+```text
+E_A = 1 / (1 + 10^((R_B - R_A) / 400))
+R_A_new = R_A + K × (S_A - E_A)
 ```
 
-单步更新：
+假设 A、B 都从 1000 分起步，K 取 4。首场 A 胜，预期得分是 0.5，实际得 1，A 涨到 1002，B 降到 998。此时双方再打平，A 的预期已略高于 0.5，拿到半分反而会略微降分。在线更新会把每场结束时的分数带入下一场；另一条路线用 Bradley–Terry 模型对整批比较拟合相对强弱。两种做法都要考虑对手构成：若两组模型之间没有任何直接或间接交手，组内投票再多，也不能确定两组的相对位置。
 
-```
-R_A_new = R_A + K * (S_A - E_A)
-```
+本项目提供 NumPy、Numba 和并行计算实现，还能输出胜率估计、历史快照、静态图和交互动画。先用小样本理解评分，再读有时间范围的 Chatbot Arena 投票记录；旧版脚本及输出目录沿用实验调整编号前的 7-7。
 
 ### 三类对战源
 
 - `simulate`：合成对战（有真值），用于验证是否恢复出正确排序。
 - `arena`：离线加载 `arena_data.json`（约 2GB）；可用 `--sample` 抽样。
-- `llm`：调用 LLM 判断对战，带位置偏差消除；支持 `anthropic`、`openrouter` 和 `auto`。
+- `llm`：调用 LLM 判断对战，交换答案位置复评；支持 `anthropic`、`openrouter` 和 `auto`。
 
-`auto` 会优先使用 Anthropic key，失败时回退 OpenRouter；位置消偏策略与 A/B/tie 判定和后端无关。
+`auto` 按已配置的凭据选择服务：优先 Anthropic，未配置时再选 OpenRouter。若要在调用失败后改用另一家，可显式指定后端。无论用哪家，都将相同答案交换位置再评一次；两次意见不一致时记平局。因此平局数也可能包含对顺序敏感的判定。
 
 ### 两种核心评分方法
 
-- Bradley-Terry（推荐）：更稳定，适合正式排行。
+- Bradley–Terry：利用整批对局拟合模型间的分差，本次 Arena 归档以它作为正式排名。
 - Online Elo：更贴近课程里的机制讲解，速度快但对顺序敏感。
 
 ### 注意
 
-- `--sample`、`--pipeline`、`--top-n` 等参数见命令行帮助。
+- `--sample`、`pipeline`、`--top-n` 等参数见命令行帮助。
 - 建议先看 CLI 输出再对照 `leaderboard` 与可视化文件确认理解。
 
 <a id="learning-1"></a>
 
 ## 准备环境与输入
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+直接查看下方的归档榜单只需 Python 标准库。要模拟对战、重新拟合或绘图，再安装实验依赖。
 
 ### 安装与运行
 
 ```bash
-# 在仓库根目录使用统一的第 6 章环境
-uv sync --locked --python 3.12 --extra ch6
-
-# 切换目录前先激活环境：
-# macOS/Linux：
+# 从仓库根目录进入实验目录
+cd chapter7/elo-leaderboard
+uv venv --python 3.12
+uv pip install -r requirements.txt
 source .venv/bin/activate
 # Windows PowerShell：.\.venv\Scripts\Activate.ps1
 # Windows cmd：.venv\Scripts\activate.bat
-
-# 未安装 uv 时可用 pip 兜底：
-# python -m pip install -e ".[ch6]"
-
-cd chapter7/elo-leaderboard
-
-# 迁移期间仍支持单项目兼容路径：
-# python -m pip install -r requirements.txt
+# 也可使用 python -m venv .venv，激活后用 python -m pip install -r requirements.txt
 ```
 
 <a id="learning-2"></a>
@@ -95,16 +65,8 @@ cd chapter7/elo-leaderboard
 ### 测试
 
 ```bash
-# 在仓库根目录安装测试工具：
-uv sync --locked --python 3.12 --extra ch6 --extra dev
-
-# 切换目录前先激活环境：
-source .venv/bin/activate
-
-# 未安装 uv 时可用 pip 兜底：
-# python -m pip install -e ".[ch6,dev]"
-
-cd chapter7/elo-leaderboard
+# 在已激活的实验环境中执行
+uv pip install pytest
 python -m pytest tests
 ```
 
@@ -124,21 +86,67 @@ python cli.py   # 等价于 python cli.py pipeline
 
 ### 使用示例
 
-核心示例同上英文学：
-- `python cli.py battle ...`
-- `python cli.py elo ...`
-- `python cli.py leaderboard ...`
-- `python demo.py` / `python benchmark.py`
+在本实验目录运行两次评分。第一条命令只生成一份对局记录；后两条在同一份输入上比较在线更新和整批拟合。
+
+```bash
+out=$(mktemp -d)
+python cli.py battle --source simulate --num-battles 500 --seed 42 --output "$out/battles.json"
+python cli.py elo --input "$out/battles.json" --method online-elo
+python cli.py elo --input "$out/battles.json" --method bradley-terry --bootstrap 20
+```
+
+这组模拟里，名为 `gpt-4` 的选手参加了 117 场，两张表给出的得分率都是 70.1%（平局按半分计）。这个比例直接来自那份对局文件。两张表的评级却不同，因为一个逐场更新，另一个用所有比较拟合。这里的模型名只是模拟器里的选手标签。
 
 <a id="learning-3"></a>
 
 ## 分析结果与形成判断
 
-分数差不是绝对能力差，排名也会随任务分布和投票者偏好变化。应检查比较图是否连通、样本是否均衡，以及相邻名次是否有足够证据区分。
+打开[这次运行的汇总](validation/runs/exp7-7-arena-20260731-v1/summary.json)。原文件有 1,799,991 条记录。[筛选程序](validation/run_experiment.py)要求对局匿名、至少一轮，检查投票标签，并在存在去重抽样标记时只取入选记录。筛选后保留 1,670,250 场，涉及 129 个模型。保留的对局里有 281,121 次普通平局，还有 295,254 次投了“两者都差”。两种投票在相对得分上都让双方各得半分，但若想回答“用户对回答是否满意”，这两个标签值得分别统计。
+
+不下载原始投票文件也能检查归档榜单。运行以下命令，读出两种方法的第一名以及整批拟合第四、第五名的区间：
+
+```bash
+python3 - <<'PYTHON'
+import json
+from pathlib import Path
+
+run = Path("validation/runs/exp7-7-arena-20260731-v1")
+for method in ("online_elo", "bradley_terry"):
+    rows = json.loads((run / f"{method}.json").read_text())
+    print(method, rows[0]["model"])
+    if method == "bradley_terry":
+        for row in rows[3:5]:
+            print(row["model"], round(row["lower_ci"], 1), round(row["upper_ci"], 1))
+PYTHON
+```
+
+同一批截至 2024 年 8 月的投票，按时间逐场更新时排第一的是 `gemini-1.5-pro-api-0409-preview`，整批拟合时排第一的是 `chatgpt-4o-latest`。再看整批榜的第四、第五名：第四名的评分为 1163.0，区间为 1161.2～1166.6；第五名的评分为 1159.7，区间为 1156.0～1161.8。每个区间都来自 20 次重采样，单位是评分。两段区间有重叠，从这张汇总表还看不出两者在多少次重采样中交换了名次，因为表里没有保留同一轮的两个分数。
+
+要看这个区别，可以接着用前面生成的 500 场模拟对局。下面每轮有放回地抽取 500 场，重新拟合整张榜，再从**同一行**取出两位选手的评分。请在设置过 `out` 的同一个终端中运行：
+
+```bash
+python - "$out/battles.json" <<'PYTHON'
+import sys
+import pandas as pd
+from bradley_terry import compute_mle_elo, get_bootstrap_result
+
+battles = pd.read_json(sys.argv[1])
+scores = get_bootstrap_result(battles, compute_mle_elo, num_round=20)
+gap = scores["gpt-4"] - scores["claude-3-opus"]
+print("逐轮分差（前五轮）", gap.head().round(1).tolist())
+print("前者评分更高的轮数", int((gap > 0).sum()), "/", len(gap))
+ranks = scores.rank(axis=1, ascending=False, method="min")
+print("前者的名次分布", ranks["gpt-4"].value_counts().sort_index().to_dict())
+PYTHON
+```
+
+在上述随机种子下，前两轮分差约为 +55.2、+31.7，第三轮变为 −26.2。20 轮中，`gpt-4` 有 14 轮高于 `claude-3-opus`，但只拿了 13 次第一，另有 5 次第二和 2 次第三。分差的正负回答“两者谁在前面”；名次还取决于其他选手。最后一行按每轮全体选手的分数排名，并列时取共同的最高名次。20 轮适合看懂计算过程，用这组模拟结果解读真实 Arena 榜单还需要换成对应的投票数据。
+
+复核归档时要区分文件版本。[最初保存该榜单的提交](https://github.com/bojieli/ai-agent-book/tree/bb6cc547/chapter6/elo-leaderboard/validation/runs/exp6-6-arena-20260731-v1)可以通过当时的校验器。现有目录中，评分表的哈希仍然吻合；汇总 JSON 与原版逐字段比较，只改了实验编号。另外四份实现文件与当时版本的哈希不同。这里的读表练习使用归档评分，重新拟合则需要原始投票文件。
 
 ### 检查自己的解释
 
-两个模型的排名区间大量重叠时，榜单应该怎样呈现这种不确定性？
+假设 A 在每轮都排在 B 前面，A 的名次仍然可能从第一降到第二吗？试着写出第三位选手 C 在这两轮的名次，再想想单看 A、B 的分差能解释多少变化。
 
 <a id="learning-4"></a>
 
@@ -146,7 +154,7 @@ python cli.py   # 等价于 python cli.py pipeline
 
 ### 项目结构
 
-同上方英文学段落中的文件列表。
+[在线 Elo](elo_rating.py) 可以逐场跟踪预期得分与实际得分；[Bradley–Terry 拟合](bradley_terry.py)给出整批评分与重采样区间。[榜单图](validation/runs/exp7-7-arena-20260731-v1/leaderboard.png)和[历史快照动画](validation/runs/exp7-7-arena-20260731-v1/leaderboard_animation.html)使用同一归档期的结果。
 
 ## English
 

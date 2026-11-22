@@ -4,21 +4,20 @@
 除通过率外，还统计三项与提炼规则直接相关的行为指标：
 转人工率、误调用用户侧工具的次数、空参数调用次数。
 """
-import json, sys
+import argparse
+import json
 from pathlib import Path
-from collections import Counter
 
-SIM = Path("/Users/boj/book/ai-agent-book/chapter7/tau2-bench/data/simulations")
+SIM = Path(__file__).resolve().parents[2] / "chapter7/tau2-bench/data/simulations"
 USER_TOOLS = set(
     (Path(__file__).resolve().parent / "tool_inventory.txt")
     .read_text(encoding="utf-8").split("USER_TOOLS:")[1]
     .replace(chr(10), " ").replace(",", " ").split()
 )
 
-def stats(name):
-    f = SIM / f"{name}.json"
-    if not f.exists(): return None
-    sims = json.load(open(f, encoding="utf-8"))["simulations"]
+def stats(name, path):
+    with path.open(encoding="utf-8") as source:
+        sims = json.load(source)["simulations"]
     out = {"arm": name, "n": len(sims), "pass": 0, "escalated": 0,
            "misdirected_user_tool_calls": 0, "empty_arg_calls": 0,
            "tool_errors": 0, "by_task": {}}
@@ -43,8 +42,19 @@ def stats(name):
     return out
 
 def main():
-    arms = sys.argv[1:] or ["armA-baseline", "armB-evolved-v1", "armC-evolved-v2"]
-    res = [r for r in (stats(a) for a in arms) if r]
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--archived", action="store_true", help="读取随书轨迹，只打印统计结果")
+    parser.add_argument("arms", nargs="*", help="要比较的策略臂名称")
+    args = parser.parse_args()
+    arms = args.arms or ["armA-baseline", "armB-evolved-v1", "armC-evolved-v2"]
+    directory = Path(__file__).resolve().parent / "validation/runs" if args.archived else SIM
+    suffix = ".trajectories.json" if args.archived else ".json"
+    res = []
+    for arm in arms:
+        path = directory / (arm + suffix)
+        if not path.is_file():
+            parser.error(f"找不到轨迹 {path}。复算随书结果可使用 --archived。")
+        res.append(stats(arm, path))
     print(f"{'臂':22s} {'n':>4s} {'通过':>6s} {'通过率':>7s} {'转人工率':>8s} "
           f"{'误调用户工具':>12s} {'空参调用':>8s} {'工具报错':>8s}")
     for r in res:
@@ -66,8 +76,10 @@ def main():
             a_only = [t for t in common if a["by_task"][t] and not b["by_task"][t]]
             print(f"\n  {b['arm']} 修好而 {a['arm']} 失败: {len(b_only)} 条")
             print(f"  {a['arm']} 通过而 {b['arm']} 失败: {len(a_only)} 条")
-    json.dump(res, open("validation/arm_stats.json", "w", encoding="utf-8"),
-              ensure_ascii=False, indent=1)
+    if not args.archived:
+        output = Path(__file__).resolve().parent / "validation/arm_stats.json"
+        with output.open("w", encoding="utf-8") as target:
+            json.dump(res, target, ensure_ascii=False, indent=1)
 
 if __name__ == "__main__":
     main()

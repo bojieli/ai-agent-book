@@ -1,50 +1,18 @@
 # TTS Quality Evaluation Pipeline / TTS 质量评估流水线
 
-一段合成语音可能文字准确，却不自然；也可能声音悦耳，却漏掉词句。本实验把多家服务和不同配置放在同一文本集上，学习怎样分开评价这些维度。
-
 [English](#english)
 
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3)。
+## 实验 7-5：同一句话，怎样听出两种合成语音的区别？
+
+请让两种文字转语音（TTS）服务读同一句：“2026年第三季度营收增长了37.5%，同比提升12个百分点。”两段都读对了数字，是否就能给同样的质量分？一段可能停顿生硬，另一段可能流畅自然，却不像你指定的说话人。这个实验教你把这些判断拆开，说明每一分来自哪条证据，并用同样的方法比较不同服务、音色、模型或语速。历史结果把本实验记作 `7-6`，现行正文编号为 7-5。
 
 <a id="learning-0"></a>
 
-## 理解问题与方法
+### 先明确你要选什么声音
 
-客观测量与主观评分各有作用。时长、可懂度相关指标和风格评价需要对应明确标准，模型裁判也应检查是否真的依据音频，而不是只根据文本猜测。
+导航播报首先要读准地名和数字，一处关键错读就可能影响使用。有声书还要看停顿、重音、情绪是否适合上下文。若任务是模仿某位说话人，还要有该说话人的参考录音。给通用播报选音色时，听者觉得好听，与它是否恰好像某段参考，是两个问题。下面的评分表按这四种可听见的表现分别记录。
 
-<a id="learning-1"></a>
-
-## 准备环境与输入
-
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
-
-<a id="learning-2"></a>
-
-## 按照步骤完成实验
-
-先阅读评分表，选一段包含停顿和数字的短文本，人工说明怎样才算读对。按下文配置一条合成路径，试听并评分，再在另一配置上使用同一文本比较。
-
-<a id="learning-3"></a>
-
-## 分析结果与形成判断
-
-音量、采样率和播放条件会影响听感。比较服务时应尽量保持这些条件一致，并保留单项分数，避免总分掩盖严重漏读。
-
-### 实验 7-6：全自动 TTS 质量评估流水线
-
-配套《深入理解 AI Agent》第 6 章「实验 7-6 ★★：构建全自动 TTS 质量评估流水线」。
-
-用多个 **TTS provider / 配置**（OpenAI、ElevenLabs、Fish Audio、Minimax、豆包，或同
-一家的不同 model / voice / speed）合成同一组带挑战性的参考文本，再用
-**多模态 LLM-as-a-Judge** 的思路对合成语音按 **Rubric** 逐维度打分，最后汇总成一张
-**对比表**，反映不同 provider / 配置在准确性 / 自然度上的优劣。
-
-#### 目的
-
-回答工程中的实际问题：*同一段文本，`tts-1` 和 `tts-1-hd` 有多大差距？换 voice、把
-语速调到 1.5x 会牺牲多少质量？* 本 demo 把这类对比做成**一条命令跑通、可复现**的流水线。
-
-#### 评审维度与 Rubric
+#### 用同一张评分表听两段声音
 
 对每条合成语音，音频多模态评审模型同时接收**合成语音、原文、目标情感和固定参考语音**，按正文
 精确规定的四维 Rubric 逐项 1–5 分打分：
@@ -56,15 +24,28 @@
 | 情感表达 | 语调、语速和强调是否符合中性、兴奋、悲伤、疑问等目标情感 |
 | 音色一致性 | 与同时提供的固定参考语音比较说话人音色 |
 
-客观指标 **CER（字错误率）/ 字准确率**：把 Whisper 回译文本与原文归一化（去标点空白、
-统一大小写）后做字符级编辑距离，`CER = 编辑距离 / 参考字数`，`字准确率 = 1 - CER`。
-中文按**字级**计算（等价于书中 WER 的可懂度维度）。
+另一个可选检查是让 Whisper 把音频转回文字，去掉标点和空白、统一大小写，再计算字符级编辑距离。非空原文的 **CER（字错误率）** 等于编辑距离除以参考字数，代码中的字准确率为 `max(0, 1 - CER)`。例如，原文“还清欠款”被转成“还清贷款”，一个字不同，CER 为 1/4。这个量同时受到朗读和转写的影响，数字的写法也可能造成差异。书中的 WER 按词计，此处按字计。两者都不能单靠文字判断音色与韵律。
+
+<a id="learning-1"></a>
+
+### 先用现成录音做一次盲听
+
+无需账号即可完成这一段。请同伴将[候选一](validation/mistral_multimodal_20260730/tts1-alloy-1.0__num.mp3)与[候选二](validation/mistral_multimodal_20260730/fishaudio-s1-clone__num.mp3)打乱顺序，用同一设备和音量播放。先对照开头的原文记下漏字、错读和停顿，再按“中性”的目标听语气。最后播放[目标说话人的参考片段](../../chapter6/controllable-tts/reference_audio/neutral_normal_formal.mp3)，给音色相似程度打分。为每个判断写出一个可以重听核对的地方。
+
+打开[逐条结果](validation/mistral_multimodal_20260730/results.json)，在 `records` 中找两条 `sample: "num"` 的记录，按上面四个维度读 `scores`。裁判给两段的准确性都是 5，自然度都是 4；OpenAI 样本的情感表达和音色一致性是 3、2，Fish 样本是 4、3。看看你在哪一项与裁判意见不同，再对照该项 `reasons` 回听。评分分歧值得记录，下次校准裁判时可以把这对样本交给更多人独立听评。
+
+再试一次，把听辨范围缩小到两个字。打开多音字题的[第一段录音](validation/mistral_multimodal_20260730/tts1-alloy-1.0__polyphone.mp3)和[第二段录音](validation/mistral_multimodal_20260730/fishaudio-s1-clone__polyphone.mp3)，找到句末的“还得还清所有欠款”。前一个“还”表示仍然，读 hái；后一个表示偿还，读 huán。先分别记下听到的读音，听不清就标出位置。随后对照两条 `polyphone` 记录：两份准确性理由是一模一样的笼统判断，分数都是 5。该次运行没有启用 ASR，`cer` 的空值表示未测。即使另做转写，两种发音也可能都写成“还”，所以保留音频和具体字的位置，才能让别人复核一次读音判断。
+
+<a id="learning-2"></a>
+
+### 准备服务并运行自己的比较
+
+先固定一条文本，只换一个因素。例如，比较同一模型的两种音色，或保持音色不变，把语速调到 1.5 倍。比较两家服务时，同时记录模型、音色和语速，以便读者知道实际比较了哪两种配置。
 
 #### Provider 适配说明
 
 - **TTS 合成（多 provider）**：对应书中「接入主流服务：OpenAI、ElevenLabs、Fish Audio、
-  Minimax、豆包」。每个 provider 按各家公开 REST 接口实现（OpenAI 走官方 SDK，其余走内置
-  `urllib`，无额外依赖）。默认（不加 `--providers`）只跑 OpenAI 的 4 个配置，保证单个
+  Minimax、豆包」。OpenAI 和 Fish Audio 分别走各自的 SDK，其他适配器使用内置的 `urllib`。默认（不加 `--providers`）只跑 OpenAI 的 4 个配置，保证单个
   `OPENAI_API_KEY` 即可零配置跑通；`--providers openai,minimax,...` 做跨服务商横向对比。
   各 provider 所需环境变量与 voice 字段语义见 `python demo.py --list-providers`。
 
@@ -72,7 +53,7 @@
   |----------|----------|-----------|
   | `openai` | `OPENAI_API_KEY` | alloy/nova…；model=tts-1 / tts-1-hd / gpt-4o-mini-tts |
   | `elevenlabs` | `ELEVENLABS_API_KEY` | voice_id；model 默认 eleven_multilingual_v2 |
-  | `fishaudio` | `FISH_API_KEY`（别名 `FISHAUDIO_API_KEY`） | reference_id（留空用默认音色） |
+  | `fishaudio` | `FISH_API_KEY`（别名 `FISHAUDIO_API_KEY`） | reference_id（提供预设值，也可用 `FISH_REFERENCE_ID` 更换） |
   | `minimax` | `MINIMAX_API_KEY`（可选 `MINIMAX_REGION`） | voice_id；model 默认 speech-2.8-hd（另有 speech-2.8-turbo） |
   | `doubao` | `DOUBAO_APP_ID` + `DOUBAO_ACCESS_TOKEN` | voice_type |
 
@@ -81,9 +62,9 @@
   > 的行会被记为失败，**不中断整表**。
 - **诊断回退（非验收）**：可用 Whisper（`whisper-1`）把合成语音回译成文本算 CER，再用
   文本模型基于「转写文本 + 时长 + 语速 + CER」打分；该路径听不到音频，情感表达和音色
-  一致性会明确记为 0，因此不能作为实验 7-6 的完成证据。
+  一致性会明确记为 0，因此不能作为实验 7-5 的完成证据。
   转写时用简体中文提示语引导 Whisper 输出简体，避免繁体字形差异虚高 CER。
-  **凭据/回退**：TTS 合成与 Whisper 回译必须走 **OpenAI 直连**（`OPENAI_API_KEY`，
+  **凭据/回退**：本实验的 OpenAI TTS 合成与 Whisper 回译走 **OpenAI 直连**（`OPENAI_API_KEY`，
   OpenRouter 不提供音频/转写）；**仅 LLM Rubric 的 chat 评审支持 OpenRouter 回退**——
   `gpt-5.x` 直连需组织实名认证，故只要设置了 `OPENROUTER_API_KEY`，评审就优先走
   OpenRouter（`gpt-*` 映射为 `openai/*`）。
@@ -95,8 +76,7 @@
   可用 `TTS_AUDIO_JUDGE_MODEL` / `TTS_MISTRAL_AUDIO_JUDGE_MODEL` 覆盖模型。三条路径都会记录实际模型和脱敏的
   provider attempt，不会把 key 写入结果。
 
-> `--gemini` 才是正文方案。程序默认复用第 9 章固定的真实参考片段，并把参考片段与每条
-> 合成音频的 SHA-256 都写入结果。回译路径只是故障诊断，不能冒充音频评审。
+> 正文的四维听评使用 `--gemini`。历史结果和脚本默认值仍指向旧的 `chapter9` 路径；当前参考片段位于第 6 章。请按下方命令显式传入 `--reference-audio`。结果会记录参考片段及每段候选音频的 SHA-256，方便复核是否听了同一份材料。
 
 #### 文件
 
@@ -134,9 +114,9 @@ export OPENAI_API_KEY=your-openai-api-key
 python demo.py            # 诊断回退：4 个 OpenAI 配置 × 6 条语料
 python demo.py --quick   # 只用前 2 条语料，快速冒烟
 python demo.py --extra   # 额外加入 gpt-4o-mini-tts 配置
-python demo.py --providers openai,fishaudio --gemini --fresh
-python demo.py --providers openai,fishaudio --gemini --with-asr
-python demo.py --providers openai,fishaudio --gemini --limit 4
+python demo.py --providers openai,fishaudio --gemini --reference-audio ../../chapter6/controllable-tts/reference_audio/neutral_normal_formal.mp3 --fresh
+python demo.py --providers openai,fishaudio --gemini --reference-audio ../../chapter6/controllable-tts/reference_audio/neutral_normal_formal.mp3 --with-asr
+python demo.py --providers openai,fishaudio --gemini --reference-audio ../../chapter6/controllable-tts/reference_audio/neutral_normal_formal.mp3 --limit 4
 python demo.py --fresh   # 忽略已有音频全部重合成
 
 # 多 provider / 自定义输入（新增）
@@ -164,18 +144,25 @@ cd chapter7/tts-quality-eval
 python -m pytest tests
 ```
 
-#### 当前真实验收状态（2026-07-30）
+<a id="learning-3"></a>
+
+### 怎样解释四道题的成绩？
 
 [`validation/mistral_multimodal_20260730/results.json`](validation/mistral_multimodal_20260730/results.json)
 与同目录的 [`manifest.json`](validation/mistral_multimodal_20260730/manifest.json) 保存当前
 完整验收：OpenAI `tts-1/alloy` 与 Fish S1 两个真实合成 provider，覆盖数字、多音字、
 长句和兴奋情感四类文本，共 8/8 单元。
 
-每个单元把候选 MP3 与固定真实参考 MP3 一起交给
-Mistral `voxtral-small-latest`，四维分数均为 1–5 整数；Fish 四维均分为
-5.00/4.00/4.00/3.00，OpenAI 为 5.00/4.00/3.75/2.75。manifest 会复核结果、参考音频、
-八段候选音频和前序合成结果的 SHA-256；合成音频是前序真实 provider 运行的留存产物，
-不是在 OpenAI 余额耗尽后伪造的新合成。
+每个单元把候选 MP3 与固定参考 MP3 一起交给 Mistral `voxtral-small-latest`。下表每栏是四条记录的算术平均，单条记录按 1–5 分计。此次保存的听评没有启用 ASR，因此 CER 栏为空。
+
+| 合成配置 | 完成数 | 准确性 | 自然度 | 情感表达 | 音色一致性 |
+|---|---:|---:|---:|---:|---:|
+| OpenAI tts-1 / alloy | 4/4 | 5.00 | 4.00 | 3.75 | 2.75 |
+| Fish Audio S1 / 固定克隆音色 | 4/4 | 5.00 | 4.00 | 4.00 | 3.00 |
+
+均值相差 0.25，实际听到了多少差异？在这次结果里，两种配置的多音字、长句和兴奋语气三题在四个维度上逐项同分。差别都来自刚刚盲听的数字题：OpenAI 的情感表达在四题上是 3、4、4、4，平均为 3.75。参考片段来自 Fish S1 固定语音库，OpenAI 配置用的是预设音色 alloy。这里的 2.75 与 3.00 只比较谁更像这个参考。若要回答“哪个服务更适合播报”，请按用途分别看前三项，并补上更多文本和人工盲听；若要比较克隆能力，则给各家相同的目标说话人与参考条件，再比相似度。
+
+[清单](validation/mistral_multimodal_20260730/manifest.json)记录了结果、参考音频、八段候选音频和前序合成结果的 SHA-256。这一轮复用前序真实合成产物完成听评，故可以根据哈希核对候选来源。程序会按成功条数汇总，复查其他运行时应先看各配置完成数，再比较均分。
 
 早期 [`real_multimodal_20260730`](validation/real_multimodal_20260730/manifest.json) 与
 [`audio_fallback_probe_20260730`](validation/audio_fallback_probe_20260730/manifest.json)
@@ -189,7 +176,7 @@ Mistral `voxtral-small-latest`，四维分数均为 1–5 整数；Fish 四维�
 
 #### 健壮性
 
-- 缺 `OPENAI_API_KEY` 立即清晰报错退出；缺 `ffprobe` 给出安装提示。
+- 默认回译流程会在缺少 `OPENAI_API_KEY` 时提示并退出。双音频听评另行检查评审凭据与参考文件；缺 `ffprobe` 会影响时长探测。
 - 单个（配置, 语料）在合成/转写/评审任一步失败，只把该条记为失败，**不中断整表**，
   汇总表按成功条数聚合。
 - OpenAI 客户端带自动重试（`max_retries=5`）缓解偶发网络抖动。
@@ -198,7 +185,7 @@ Mistral `voxtral-small-latest`，四维分数均为 1–5 整数；Fish 四维�
 #### 局限
 
 - 不加 `--gemini` 的回译评审看不到音频，只是诊断模式；它会显式标记实验未验收。
-- 默认参考音频来自第 9 章 Fish S1 固定媒体库。更换参考说话人时必须通过
+- 此次结果的参考音频来自 Fish S1 固定媒体库（现归入第 6 章）。更换参考说话人时必须通过
   `--reference-audio` 明确提供，并保留结果中的内容哈希。
 - CER 依赖 Whisper 转写质量，Whisper 自身错误会引入噪声；数字/专名可能因书写形式
   （阿拉伯数字 vs 中文数字）产生非发音性差异。
@@ -206,7 +193,7 @@ Mistral `voxtral-small-latest`，四维分数均为 1–5 整数；Fish 四维�
 
 ### 检查自己的解释
 
-导航播报、有声书与客服回复，是否应该使用同样的评分权重？
+若产品要给客户朗读账单日期和金额，先写出不能接受的错读，再决定自然度与音色会怎样影响选择。如果一条数字题出现分歧，你会补哪些日期、金额、百分比和读法，使下次比较更能说明系统是否适合这项工作？
 
 ## English
 

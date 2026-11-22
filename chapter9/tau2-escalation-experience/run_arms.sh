@@ -2,8 +2,8 @@
 # 在 τ²-bench telecom 迁移集（114 条，与提炼集不相交）上跑三个对照臂。
 # 通过替换 main_policy.md 切换策略；每次运行前后记录 sha256，结束后恢复原文件。
 set -euo pipefail
-TAU=/Users/boj/book/ai-agent-book/chapter7/tau2-bench
-EXP=/Users/boj/book/ai-agent-book/chapter9/tau2-escalation-experience
+EXP=$(cd "$(dirname "$0")" && pwd)
+TAU="$EXP/../../chapter7/tau2-bench"
 POLICY=$TAU/data/tau2/domains/telecom/main_policy.md
 BACKUP=$(mktemp)
 cp "$POLICY" "$BACKUP"

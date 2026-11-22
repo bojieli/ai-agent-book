@@ -4,13 +4,17 @@
 
 [English](#english)
 
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+[读文件和读日历各得到什么](#learning-0) · [选择本地数据或外部服务](#learning-1) · [发现并调用感知工具](#learning-2) · [检查返回值里有没有所需数据](#learning-3) · [感知工具实现](#learning-4) · [参考资料](#learning-5)
 
 <a id="learning-0"></a>
 
-## 理解问题与方法
+## 读文件和读日历各得到什么
 
 MCP 提供统一的交互协议，但不同工具的数据来源和依赖仍然不同。工具声明说明参数格式，执行结果说明实际观察到了什么。服务启动成功、目录可见和一次调用成功是三个逐步验证的环节。
+
+可以先读两条用同一协议返回的记录。[读取 PDF 的回执](validation/experiment_4_2/real_mcp_dashscope_intl_20260730T070000Z/receipts/05_document_reader_pdf.json)里，`success` 为真，返回值还包含从样本文档提取的文字。打开[读取日历的回执](validation/experiment_4_2/real_mcp_dashscope_intl_20260730T070000Z/receipts/27_calendar_events.json)，调用同样收到了响应，但 `success` 为假，`error_type` 是 `missing_credentials`。据此可以判断，读文件的调用拿到了内容，日历工具则还需要用户授权。练习时先问“我要看到什么才能确认读到了数据”，再去检查相应字段。
+
+[整次运行的汇总](validation/experiment_4_2/real_mcp_dashscope_intl_20260730T070000Z/summary.json)中，搜索、多模态、文件系统、公开数据四类均通过，私有数据未通过，整次验收因此标为 `blocked`。这也解释了为什么在工具目录中看到日历和 Notion 的名称，仍要分别检查调用结果。
 
 为 AI Agent 提供多种感知与数据获取能力的综合 MCP（Model Context Protocol）服务器。
 
@@ -288,9 +292,9 @@ perception-tools/
 
 <a id="learning-1"></a>
 
-## 准备环境与输入
+## 选择本地数据或外部服务
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+先用 `python cli.py demo --offline` 查看本地文件和知识库。要查日历等私有数据时，再配置对应服务的授权。记录调用结果时，分别看协议有没有返回响应、响应里有没有读到所需内容。
 
 ### 安装
 
@@ -369,7 +373,7 @@ Xquik 是独立第三方服务，与 X Corp. 无隶属或认可关系。
 
 <a id="learning-2"></a>
 
-## 按照步骤完成实验
+## 发现并调用感知工具
 
 先按下文安装依赖，运行本地协议检查。它通过标准输入输出启动服务、列出工具，并读取本地示例文件。把客户端请求与返回内容对照后，再尝试需要网络或外部服务的感知工具。
 
@@ -453,9 +457,23 @@ python cli.py demo --offline  # 离线演示（只跑文件系统 / 本地知识
 
 <a id="learning-3"></a>
 
-## 分析结果与形成判断
+## 检查返回值里有没有所需数据
 
-本地文件读取成功只能证明这条协议路径可用。扩展到网络工具时，还要区分无结果、权限不足、服务错误与解析错误，不能把所有失败都当作“模型没找到”。
+在本实验目录运行下面的代码。它按随书记录的索引找到三次调用，无须连接外部账号。
+
+```python
+import json
+from pathlib import Path
+
+index = json.loads(Path("validation/experiment_4_2/latest.json").read_text())
+receipts = Path(index["manifest"]).parent / "receipts"
+for name in ("05_document_reader_pdf", "27_calendar_events", "28_notion_search"):
+    row = json.loads((receipts / f"{name}.json").read_text())
+    result = row["payload"]
+    print(name, row["mcp_result_is_error"], result["success"], result["message"])
+```
+
+三条记录的 `mcp_result_is_error` 都是 `False`。打开 PDF 那条，`message` 里有页数和提取的文字，可以逐字对照样例文件。日历和 Notion 两条的 `payload.success` 都是 `False`，消息分别说明日历尚未完成身份验证、Notion 尚未配置密钥。服务器已经把原因送回客户端，助手仍然不知道用户有几条日程或笔记。即使把搜索词改得再准确，缺少凭据的问题也还在。若服务已获授权并成功返回空列表，才有依据说明这次查询范围内没有匹配项。
 
 ### 检查自己的解释
 
@@ -463,7 +481,7 @@ python cli.py demo --offline  # 离线演示（只跑文件系统 / 本地知识
 
 <a id="learning-4"></a>
 
-## 阅读实现与继续探索
+## 感知工具实现
 
 ### 项目说明
 
@@ -476,7 +494,7 @@ python cli.py demo --offline  # 离线演示（只跑文件系统 / 本地知识
 
 <a id="learning-5"></a>
 
-## 排查问题与查阅资料
+## 参考资料
 
 ### 贡献
 

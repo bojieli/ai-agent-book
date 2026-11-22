@@ -1,28 +1,22 @@
 # 实验 6-5：Qwen2-Audio 递增前缀模拟流式感知
 
-一句话还没说完时，语音系统可能已经得到部分信息。本实验逐渐扩大音频前缀，观察转写与声学判断怎样随新片段变化，并与等待端点后再识别的路径比较。
+“麻烦你帮我把明天下午的会议改到两点半，地点……”对方停了近一秒，又接着说“还是在三号会议室，别忘了通知大家”。如果助理一听见停顿就开始答话，很可能错过后半句。先听听[带停顿的录音](validation/scenarios/long_pause.wav)，想一想：在哪一刻，你觉得可以接话了？
 
 [English](#english)
-
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3)。
 
 <a id="learning-0"></a>
 
 ## 理解问题与方法
 
-这里每次把从开头到当前时刻的音频重新送入模型，属于递增前缀的模拟方式。它能研究何时得到有用信息，但会重复编码，不能直接当作具有持续内部状态的原生流式实现。
+实验让两套程序听同一段话。一套每收到两秒新音频，就把从开头到当前位置的录音重新交给 Qwen2-Audio，要求它写下已经听见的文字和声学事件。另一套用语音活动检测（VAD）找端点：静音持续到 600 毫秒，就把前一段送给 Whisper 转写。前者可以在话还没说完时给出暂时的理解，代价是每次都要重新编码已经听过的声音；后者可以分段处理，但一句话里也会有停顿。
 
-本目录对应正文实验 6-5。运行器与已归档证据沿用历史标识 `exp6-4-*`，复核时按原路径读取。
-
-本项目实际运行 `Qwen/Qwen2-Audio-7B-Instruct`：每收到一个新块，就把 `[0:t]` 的完整累积音频再次送入 Qwen2-Audio，输出当前 transcript 和声学事件。它不是 Whisper 替代实现，也不会把这种全量重编码称作真流式。
-
-对照组是传统 600ms 端点 VAD + 开源 Whisper。三类场景均被测量：正常对话、含 900ms 中途停顿的长句、混入粉红背景噪声的对话。证据记录每个前缀的模型原始输出、单块延迟、最终 CER、事件 token，以及 VAD 分段点、Whisper 推理时长和 CER。
+从[原始录音](audio/sentence.wav)出发，实验准备了正常、插入 900 毫秒静音、混入粉红噪声三个版本。每个版本都保留了各次转写、处理耗时和最终字错率（CER）。读记录时留意两种时间：模型听到了录音的第几秒，以及处理这段输入花了多少秒。本实验用的是 `Qwen/Qwen2-Audio-7B-Instruct` 架构，运行文件沿用实验调整编号前的 `exp6-4-*` 标识。
 
 <a id="learning-1"></a>
 
 ## 准备环境与输入
 
-先核对本地模型、依赖与硬件条件。首次运行可能下载模型；确认模型能够加载后，再观察本实验关心的行为，避免把环境错误与模型表现混在一起。
+读者可以先用下文的[逐段对照练习](#learning-2)查看已有运行，无需安装模型。要自行生成识别结果，再准备下面的环境。
 
 ### 安装
 
@@ -37,7 +31,7 @@ source .venv/bin/activate
 # Windows cmd: .venv\Scripts\activate.bat
 
 # pip fallback when uv is not installed:
-# python -m pip install -e ".[ch9]"
+# python -m pip install -e ".[ch6]"
 
 cd chapter6/streaming-speech
 
@@ -45,29 +39,24 @@ cd chapter6/streaming-speech
 python -m pip install -r requirements.txt
 ```
 
-NVIDIA 路径使用原始 BF16 权重：
+下面是一条完整的 Apple Silicon 命令，使用 4-bit MLX 权重，语言模型量化，音频编码器和投影层保持 BF16。在 NVIDIA GPU 上，把同一条命令的 `--model` 和 `--device` 分别改为 `Qwen/Qwen2-Audio-7B-Instruct` 和 `cuda`，其余音频与问题可以保持一致。
 
 ```bash
-python demo.py --model Qwen/Qwen2-Audio-7B-Instruct --device cuda ...
-```
-
-Apple Silicon 可运行同一 Qwen2-Audio 架构的 4-bit MLX 量化权重（LLM 量化，音频编码器和 projector 保持 BF16）：
-
-```bash
-python prepare_scenarios.py audio/sentence.wav validation/scenarios
+run=$(mktemp -d validation/my-run.XXXXXX)
+python prepare_scenarios.py audio/sentence.wav "$run/scenarios"
 
 python demo.py \
   --model mlx-community/Qwen2-Audio-7B-Instruct-4bit --device mlx \
-  --chunk-seconds 2 --whisper-model tiny \
-  --audio validation/scenarios/normal.wav --scenario normal \
+  --chunk-seconds 2 --whisper-model tiny --evidence "$run/evidence.json" \
+  --audio "$run/scenarios/normal.wav" --scenario normal \
   --reference '麻烦你帮我把明天下午的会议改到两点半，地点还是在三号会议室，别忘了通知大家。' \
-  --audio validation/scenarios/long_pause.wav --scenario pause \
+  --audio "$run/scenarios/long_pause.wav" --scenario pause \
   --reference '麻烦你帮我把明天下午的会议改到两点半，地点还是在三号会议室，别忘了通知大家。' \
-  --audio validation/scenarios/background_noise.wav --scenario noise \
+  --audio "$run/scenarios/background_noise.wav" --scenario noise \
   --reference '麻烦你帮我把明天下午的会议改到两点半，地点还是在三号会议室，别忘了通知大家。'
 ```
 
-结果写入 `validation/latest.json`。`--skip-whisper` 只用于单独调试 Qwen，不能完成书中的对照验收。原始 BF16 模型约 16.8GB；MLX 量化权重约 6.6GB。
+这条命令把重建的录音和结果放进新目录。生成粉红噪声时没有固定随机种子；如需逐字复核书中的输出，可直接使用仓库保留的三个场景 WAV。`--skip-whisper` 只用于单独调试 Qwen，不能完成书中的对照验收。原始 BF16 模型约 16.8GB；MLX 量化权重约 6.6GB。
 
 保持上述科学设计不变并生成完整验收 manifest：
 
@@ -83,7 +72,27 @@ checkpoint、Qwen2-Audio snapshot 的每个文件（包括 6.56GB 权重）、13
 
 ## 按照步骤完成实验
 
-先听完整样例并阅读参考转写，再按下文准备本地音频模型。选择正常、长停顿或背景噪声中的一种场景，逐个前缀查看输出，记录第一次正确判断出现在什么位置。
+在本实验目录运行以下命令，查看长停顿样本的每一次判断。第一列是送入模型的音频长度，第二列是本次推理耗时。
+
+```bash
+python3 - <<'PYTHON'
+import json
+from pathlib import Path
+
+run = Path("validation/runs/exp6-4-qwen2audio-whisper-provenance-20260730-v3")
+cases = json.loads((run / "evidence.json").read_text())["cases"]
+case = next(item for item in cases if item["scenario"] == "pause")
+for step in case["qwen2_audio"]:
+    print(step["prefix_seconds"], round(step["inference_seconds"], 2),
+          step["transcript"], step["acoustic_events"])
+vad = case["whisper_vad"]
+print("首段末尾与作出分段判断的时刻：", vad["first_endpoint_audio_seconds"],
+      vad["first_decision_audio_seconds"])
+print("分段转写：", vad["segment_transcripts"])
+PYTHON
+```
+
+在录音时间轴上，首段末尾位于 4.04 秒，VAD 到 4.64 秒才作出判断，中间正好等了 600 毫秒。读一读两段转写，连起来才是完整的改会请求。再看另一套程序：只给前两秒音频，它已经写出了“明天下午的会议”，但这次推理本身用了约 8.41 秒。一个程序能根据半句话给出部分转写，并不能保证它赶得上说话人的速度。
 
 <a id="learning-3"></a>
 
@@ -93,15 +102,18 @@ checkpoint、Qwen2-Audio snapshot 的每个文件（包括 6.56GB 权重）、13
 
 ### 已有运行结果
 
-当前 canonical 记录是 [`validation/runs/exp6-4-qwen2audio-whisper-provenance-20260730-v3/manifest.json`](validation/runs/exp6-4-qwen2audio-whisper-provenance-20260730-v3/manifest.json)。
+本节引用的运行清单是 [`validation/runs/exp6-4-qwen2audio-whisper-provenance-20260730-v3/manifest.json`](validation/runs/exp6-4-qwen2audio-whisper-provenance-20260730-v3/manifest.json)。
 2026-07-30 在 Apple Silicon 上严格复跑 `mlx-community/Qwen2-Audio-7B-Instruct-4bit`；8/8
-执行与溯源门禁通过，但正文结果只复现 2/6。13 次前缀推理实测 8.4–11.3s，不能据此声称
+执行与溯源门禁通过，但六项行为预期只观察到两项。13 次前缀推理实测 8.4–11.3s，不能据此声称
 100–200ms；传统路径也未在三类输入上全部落入 800–1100ms。900ms 停顿被 VAD 分为两段，
 但 Qwen 漏报 `<|silence|>`；强噪声样本检出 `<|noise|>`，同时误报 `<|cough|>` 与
 `<|laughter|>`。这些负结果与所有原始响应都保留在验收记录中。2026-07-29 的 `latest.json`
-和 `latest_v2.json` 作为历史运行保留，不再承担 canonical 选择职责。
+和 `latest_v2.json` 作为历史运行保留，可供对照早期结果。
+
+仅核对已归档的文字和事件结果，可用下列第一条命令。第二条还要核对原运行的依赖与本地模型缓存；普通 Git 检出只带运行记录和音频。
 
 ```bash
+python -m pytest -q test_official_experiment.py::test_official_run_retains_raw_prefixes_and_negative_manuscript_results
 pytest -q
 ```
 
@@ -114,3 +126,7 @@ pytest -q
 ## English
 
 This is actual Qwen2-Audio growing-prefix inference, not a Whisper substitute. Every `[0:t]` prefix is fully re-encoded and compared with a real 600ms-VAD + open-source Whisper pipeline on normal, long-pause, and noisy speech. CUDA uses the original model; Apple Silicon can use the published 4-bit MLX conversion of the same Qwen2-Audio architecture. The canonical v3 manifest binds raw responses, sources, audio, the Whisper checkpoint, and every Qwen snapshot file. Execution passed while the manuscript result bundle did not: only 2/6 claims reproduced, with 8.4–11.3s prefix inference and retained acoustic-event errors.
+
+### 归档材料复核（2026-10-07）
+
+本次只读复核中，manifest 列出的三个场景音频及三个运行产物哈希一致；当时的工作树缺少原始输入。此次修订已从原实验工作区补回 `audio/sentence.wav`，其 SHA-256 与清单一致。模型缓存与运行源码另有各自的版本记录，场景音频是本次回看前缀输入的依据。历史 manifest 保持原样。

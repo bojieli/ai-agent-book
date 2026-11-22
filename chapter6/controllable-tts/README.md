@@ -1,139 +1,84 @@
-# 实验 6-7：Fish Audio S1 控制标记 TTS
+# 实验 6-7：用 Fish Audio S1 调节客服语音的表达
 
-相同一句话可以用不同语气说出，服务场景也可能要求不同速度。本实验把文本中的控制意图映射到参考语音，观察可控语音合成的实现方式。
+“太好了！您的订单已确认。让我查一下发货时间。预计明天下午送达。”同一位客服说这三句时，哪一句适合说快一点？在哪儿停一下，听众会觉得客服正在查订单？先听一遍[直接合成的版本](output/A_no_control_markers.mp3)，再听[逐段调节的版本](output/C_24_reference_library.mp3)，记下最容易听出区别的那几个字。
 
 [English](#english)
-
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [排查问题与查阅资料](#learning-5)。
 
 <a id="learning-0"></a>
 
 ## 理解问题与方法
 
-控制标记先被解析成情绪、语速和风格，再用于选择参考音频。合成模型根据文本与参考生成声音。标记解析正确与听感符合要求是两层验证，不能只检查输出文件是否存在。
+主模型在回答里标出要用的情绪、语速和风格，执行程序读这些标记，为不同片段挑选参考音频，把文字和参考音一起送给 Fish Audio S1。它使用 S1 的零样本参考音接口 `ReferenceAudio`。例如，“太好了”用的是高兴、快速、随意的组合，最后报送达时间时换回中性、正常语速和正式风格。可以先看程序选了哪条参考音，再听成片有没有传达出相应的变化。
 
-本项目实际调用 Fish Audio S1，不再使用 OpenAI TTS、固定 `alloy` voice 或拟声词替代。执行层把主 LLM 的控制标记映射到真实的 24 条参考语音，并通过 S1 的零样本 `ReferenceAudio` voice cloning 合成同一说话人、不同情绪/语速/风格的语音。
-
-参考库是严格的笛卡尔积：
+同一说话人的参考音覆盖三种可以分别调节的属性，每种组合对应一条录音：
 
 - 情绪：neutral / happy / frustrated / thinking；
 - 语速：normal / fast / slow；
 - 风格：formal / casual；
 - 总计：4 × 3 × 2 = 24 条。
 
-### Validation
-
-The regression tests are offline: they validate marker parsing and empty-segment handling without calling TTS APIs or ffmpeg concat.
-
-```bash
-# From the repository root, include dev tools for pytest
-uv sync --locked --python 3.12 --extra ch9 --extra dev
-
-# Activate it before changing directories:
-# macOS/Linux:
-source .venv/bin/activate
-# Windows PowerShell: .\.venv\Scripts\Activate.ps1
-# Windows cmd: .venv\Scripts\activate.bat
-
-cd chapter6/controllable-tts
-python -m pytest -q
-```
-
-| 配置 | ffprobe 时长 |
-| --- | ---: |
-| A 无控制标记 | 5.355s |
-| B 单一参考音克隆 | 5.904s |
-| C 24 条参考库 | 8.305s |
-
-脱敏证据在 `validation/latest.json`，包含 provider=`Fish Audio`、backend=`s1`、24 条库维度、解析轨迹、每段采用的 reference SHA-256 和输出 ffprobe 信息。生成音频在 `output/`，API key 与用户标识不会写入证据。
-
-`python evaluate_audio_quality.py` 会把 A/B/C 隐去配置名称，以三种轮换顺序交给真实音频理解模型直接聆听；支持 Gemini、OpenRouter 音频路由、DashScope Omni 和 Mistral Voxtral，并保存实际成功的 provider/model 及失败的前置尝试。
-
-每次都按自然度、情绪匹配、思考停顿、音色一致性和真人客服感五维评分，理由必须引用可听见证据；三次位置平衡用于降低顺序偏差。结果写入 `validation/audio_quality_study.json`。这是多模态模型听测，不冒充真人 MOS 面板。
-
-`python validate_artifacts.py` 会重新核对 24 条参考音的 hash/时长、A/B/C 输出媒体、正文示例的三次路由，以及听测的三种排列、逐项证据、音频 hash 和重算聚合结果，不会再次调用 API。严格审计写入 `validation/acceptance.json`。本次构建与 A/B/C 运行估计产生 30 次 Fish 请求（24+1+1+4）；SDK 未返回逐请求美元费用。验收把“实验已经完整执行”和“正文主观排序是否复现”分开报告，因此真实负结果也不会被伪装成未运行。
-
-2026-07-30 的真实听测使用 Mistral `voxtral-small-latest`。三次轮换位置后，多参考 C 组总均分 4.60、真人客服感 4.67，均为三组最高，支持“多参考更接近真人客服”；但完整的 `C > B > A` 排序没有复现：无标记 A 为 3.93，单参考 B 为 3.20。正式结论因此是“C 的主要优势复现，B 优于 A 未复现”，而不是把部分正结果改写为全部成功。逐次匿名映射、原始理由和聚合结果见 `validation/audio_quality_study.json`。
-
-```bash
-pytest -q
-```
-
----
+`[THINKING]` 产生 1.2s 思考停顿和 S1 `(uncertain)嗯……`；`[SIGH]`、`[LAUGH:small]`、`[BREATH]` 分别发送 S1 原生 `(sighing)`、`(chuckling)`、`(gasping)`，不再用“唉/哈哈”等文字冒充非语言音。所有 Fish 请求显式指定 `backend="s1"`。
 
 <a id="learning-1"></a>
 
 ## 准备环境与输入
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
-
-### 2. 三配置对照
+听已生成的录音只需打开文件。如果要自己做一遍合成，在仓库根目录准备第六章的 Python 环境，系统中还需安装 ffmpeg 和 ffprobe。
 
 ```bash
-# From the repository root: use the shared Chapter 9 core environment
-uv sync --locked --python 3.12 --extra ch9
-
-# Activate it before changing directories:
-# macOS/Linux:
+uv sync --locked --python 3.12 --extra ch6 --extra dev
 source .venv/bin/activate
-# Windows PowerShell: .\.venv\Scripts\Activate.ps1
-# Windows cmd: .venv\Scripts\activate.bat
-
-# pip fallback when uv is not installed:
-# python -m pip install -e ".[ch9]"
-
+# Windows PowerShell 用 .\.venv\Scripts\Activate.ps1，cmd 用 .\.venv\Scripts\activate.bat
+# 使用 pip 时，可在虚拟环境中执行 python -m pip install -e ".[ch6]"
 cd chapter6/controllable-tts
-
-# Install this experiment's Fish SDK runtime dependencies.
 python -m pip install -r requirements.txt
-
-# Requires ffmpeg/ffprobe installed on the system
-cp env.example .env                       # Fill in FISH_API_KEY and reference settings
-python demo.py                            # Generates output/*.mp3
+cp env.example .env
 ```
 
-同一文本生成：
+配置 `FISH_API_KEY` 与一个你拥有或获准克隆的 `FISH_BASE_REFERENCE_ID`。建库程序使用同一 基础音色 和 Fish S1 原生情感标记，合成 24 条约 5 秒的参考音；`reference_audio/manifest.json` 保存每条音频的情绪、语速、风格、转写、时长和 SHA-256。运行时会验证数量与 hash，缺任何一条都拒绝合成。
 
-- A `A_no_control_markers.mp3`：删除标记，直接使用 source `reference_id`；
-- B `B_single_reference.mp3`：全程仅用 neutral/normal/formal 一条参考音做零样本克隆；
-- C `C_24_reference_library.mp3`：逐段解析标记并在 24 条参考音中切换。
-
-`[THINKING]` 产生 1.2s 思考停顿和 S1 `(uncertain)嗯……`；`[SIGH]`、`[LAUGH:small]`、`[BREATH]` 分别发送 S1 原生 `(sighing)`、`(chuckling)`、`(gasping)`，不再用“唉/哈哈”等文字冒充非语言音。所有 Fish 请求显式指定 `backend="s1"`。
+```bash
+run=$(mktemp -d validation/my-run.XXXXXX)
+python build_reference_library.py --output-dir "$run/reference_audio"
+python demo.py --manifest "$run/reference_audio/manifest.json" \
+  --output-dir "$run/output" --evidence "$run/evidence.json"
+```
 
 <a id="learning-2"></a>
 
 ## 按照步骤完成实验
 
-先阅读标记格式与参考库的组织方式，按下文准备你拥有或获准使用的参考声音。选择同一句文本，只改变一个控制维度，生成后并排试听，再检查另外两个维度是否保持稳定。
+2026 年 7 月 29 日的三份成片使用相同的订单答复。先比较 A 和 B，两者都把标记删掉，整段文字一次合成；再比较 B 和 C，听“让我查一下”前后有什么变化。
+
+| 录音 | 合成时给 S1 的条件 | 成片时长 |
+|---|---|---:|
+| [A 无标记](output/A_no_control_markers.mp3) | 直接指定原声音色的 `reference_id` | 5.355 秒 |
+| [B 单一参考音](output/B_single_reference.mp3) | 整段用一条中性、正常语速、正式风格的参考音 | 5.904 秒 |
+| [C 按片段选参考音](output/C_24_reference_library.mp3) | 从 24 条参考音中选取相应组合，按标记加入停顿和填充音 | 8.305 秒 |
+
+沿着[解析记录](validation/latest.json)找 `[THINKING]`。它既切换了参考音，也插入了 1.2 秒静音和填充音。因此 C 比 B 长约 2.4 秒，不能把这段差值都算作语速变慢。若想单独检验语速，可以固定情绪、风格和停顿，只换 `SPEED` 标记，再听同一句话。
 
 <a id="learning-3"></a>
 
 ## 分析结果与形成判断
 
-情绪变化不应改变文字内容；语速变化也不应严重损害可懂度。应结合听感与音频测量，不能把文件时长变化直接等同于风格控制成功。
+先用自己的话描述差别，再看[模型听评记录](validation/audio_quality_study.json)。2026 年 7 月 30 日，Mistral Voxtral（`voxtral-small-latest`）听了三轮相同的录音。每轮隐去配置名，轮换播放顺序，请它从自然度、情绪匹配、思考停顿、音色一致性和真人客服感五方面打分，并给出听觉依据。三个位置都轮到一次，有助于观察顺序的影响；三轮评分都来自同一个模型。
 
-### 实际验证
+| 五分制均分 | A | B | C |
+|---|---:|---:|---:|
+| 五项总均分 | 3.93 | 3.20 | 4.60 |
+| 其中“真人客服感”一项 | 4.00 | 3.33 | 4.67 |
 
-2026-07-29 使用真实 Fish API 构建了 24 条参考音并运行 A/B/C 三组：
-
-### 检查自己的解释
-
-如果表达更有情绪却更难听清，如何根据任务决定这种变化是否值得保留？
+这段订单答复里，Voxtral 给逐段调节的 C 打分最高；它听 B 的整体感觉却不及 A。读者如果更喜欢 A，可以挑一句说明理由：听清送达时间、感到对方语气自然、察觉客服正在查询，是三个不同的判断。要了解真实来电者的偏好，还需邀请听众试听。
 
 <a id="learning-5"></a>
 
 ## 排查问题与查阅资料
 
-### 1. 构建真实参考语音库
-
-```bash
-cd chapter6/controllable-tts
-pip install -r requirements.txt
-cp env.example .env
-python build_reference_library.py
-```
-
-配置 `FISH_API_KEY` 与一个你拥有或获准克隆的 `FISH_BASE_REFERENCE_ID`。builder 使用同一 source timbre 和 Fish S1 原生情感标记，合成 24 条约 5 秒的参考音；`reference_audio/manifest.json` 保存每条音频的情绪、语速、风格、transcript、时长和 SHA-256。运行时会验证数量与 hash，缺任何一条都拒绝合成。
+- `python -m pytest -q` 可离线检查标记解析、参考音组合和音频拼接等环节。
+- `evaluate_audio_quality.py` 可通过 Gemini、OpenRouter 音频路由、DashScope Omni 或 Mistral Voxtral 重新听评，记录实际使用的服务和失败尝试。默认使用 `output/` 中的三份成片。
+- `validate_artifacts.py` 离线核对参考音和成片的哈希、时长、标记路由、听评排列与重算均分，结果写入 `validation/acceptance.json`。归档实验估计发出 30 次 Fish 请求（建库 24 次，三组分别为 1、1、4 次），SDK 没有给出逐次美元费用。
+- 复核历史文件时会遇到一处编号差异。[旧版听评文件](https://github.com/bojieli/ai-agent-book/blob/efbde98ad6a5367fc949e7608a3b6366439d5426/chapter6/controllable-tts/validation/audio_quality_study.json)的 SHA-256 与[原验收记录](validation/acceptance.json)吻合。逐字段对照，现存听评文件只改了 `experiment`（从 `9-5` 改为 `6-6`）；三轮原始评分、匿名映射和均分均相同。本书现行编号为 6-7。
 
 ## English
 

@@ -1,38 +1,49 @@
-# Agent End-to-End Cost Analysis / Agent 任务端到端成本分析（实验 7-9）
+# Agent End-to-End Cost Analysis / Agent 任务端到端成本分析（实验 7-10）
 
-模型单价较低，不一定意味着完成任务更便宜。多轮调用、重复读取历史和失败重试都可能增加总消耗。本实验把一条任务轨迹拆成逐次调用的成本。
+用户只提了一次退款申请，客服助理却要查订单、看物流、核对政策，再组织答复。为什么用户只问了一次，账上却有八次模型调用？翻开一轮的用量明细，先算清缓存命中怎样计价，再看八轮加起来能省多少。
 
 [English](#english)
-
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3)。
 
 <a id="learning-0"></a>
 
 ## 理解问题与方法
 
-输入、缓存输入和输出通常需要分别计量，再按给定单价计算。轨迹中的用量是测量数据，价格是计算假设；更换价格只会重算同一轨迹，不代表另一模型会产生相同用量。
+每轮请求都会把一部分历史再次送给模型。提供商返回的 `prompt_tokens` 包括命中缓存的输入，所以先从中减去 `cached_tokens`，余数按普通输入价计算。回复另按输出价计。工具返回的文字进入后续提示时已经算在输入中；统计它占了多少，是为了查明费用来源，再加一次就重复计费了。
 
 <a id="learning-1"></a>
 
 ## 准备环境与输入
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+仓库里的[退款任务轨迹](sample_trace.json)保存了四种设置各八轮的用量。初次学习可以用 Python 标准库复算，无需模型账号。四组用的是同一套预设订单、物流和政策资料，模型的输出长度和缓存命中量则可以不同。
 
 <a id="learning-2"></a>
 
 ## 按照步骤完成实验
 
-先运行已有轨迹的离线分析，找到成本最高的轮次。观察它是否重复输入了大量内容。随后使用下文中的自定义价格参数重算，理解价格与行为两个因素怎样分别影响总成本。
+在本实验目录运行下面的代码。取同时启用稳定前缀和压缩的 `both` 组，从第一轮查订单开始核对：
 
-### 实验 7-9：Agent 任务的端到端成本分析
+```bash
+python3 - <<'PYTHON'
+import json
+from pathlib import Path
 
-配套《深入理解 AI Agent》第 6 章「实验 7-9 ★：Agent 任务的端到端成本分析」。
+trace = json.loads(Path("sample_trace.json").read_text())
+group = next(row for row in trace["scenarios"] if row["key"] == "both")
+price = trace["pricing"]
+def call_cost(span):
+    cached = span["cached_tokens"]
+    ordinary = span["prompt_tokens"] - cached
+    return (ordinary * price["input"] + cached * price["cached"]
+            + span["completion_tokens"] * price["output"]) / 1_000_000
 
-对一个典型的多轮 Agent 任务（客服退款）做**全链路成本拆解**，用**自建的轻量 tracing / 可观测系统**记录每次 LLM 调用的输入/输出/缓存 token、时延与成本：按步骤聚合出「哪一步最贵」，按**成本构成**拆出「未缓存输入 / 缓存输入 / 输出各占多少、工具返回注入了多少 token」，并给出**单步成本分布（p50/p95/p99）**；再做完整 **2×2 A/B 对比**，量化 **KV-cache 复用** 与 **上下文压缩** 两个杠杆各自及叠加后的真实成本差异。
+print("第一轮费用：", format(call_cost(group["spans"][0]), ".8f"))
+print("八轮合计：", format(sum(call_cost(span) for span in group["spans"]), ".8f"))
+PYTHON
+```
 
-- 默认模型 **`gpt-5.6-luna`**（当前廉价旗舰），通过 openai Python SDK 调用。首选 `OPENAI_API_KEY`；未设置时**自动回退到 `OPENROUTER_API_KEY`**（走 OpenRouter 兼容端点，`gpt-*` 映射为 `openai/*`）。由于 `gpt-5.x` 直连 OpenAI 需组织实名认证，只要存在 `OPENROUTER_API_KEY` 就优先走 OpenRouter。
-- KV-cache 的节省是**真实**的：利用 OpenAI 的自动 prompt caching（前缀 ≥ 1024 token 且命中近期相同前缀时，`usage.prompt_tokens_details.cached_tokens > 0`，这部分输入按缓存价 5 折计费）。
-- 提供**离线模式**：不打模型，读入一份此前真实运行录下的 token 用量（`sample_trace.json`，canned token counts），用可配置单价**重新计算**成本/成本构成/A/B 对比表——无需 API key 即可复现全部表格，也可一键换算到其它模型定价。
+第一轮输入 1,056 个 token，其中 1,024 个命中缓存，只剩 32 个按普通输入计价；输出 139 个。代入归档单价（每百万 token 分别为 0.15、0.075、0.60 美元），这一轮是 0.00016500 美元。八轮相加才是这组的一次任务费用。下文按步骤列出哪一轮最贵，并用 p50、p95、p99 描述单步成本的分布。
+
+离线命令可以改价格、重算成本构成；在线命令用 OpenAI 兼容接口重新生成答复。运行器默认模型是 `gpt-5.6-luna`，而下面的归档样例使用 `gpt-4o-mini`。为了复算表中的数值，离线命令显式选用样例的模型预设。
 
 #### 文件
 
@@ -49,45 +60,29 @@
 #### 运行
 
 ```bash
-# 在仓库根目录使用统一的第 6 章环境
-uv sync --locked --python 3.12 --extra ch6
-
-# 切换目录前先激活环境：
-# macOS/Linux：
-source .venv/bin/activate
-# Windows PowerShell：.\.venv\Scripts\Activate.ps1
-# Windows cmd：.venv\Scripts\activate.bat
-
-# 未安装 uv 时可用 pip 兜底：
-# python -m pip install -e ".[ch6]"
-
+# 从仓库根目录进入实验目录
 cd chapter7/agent-cost-analysis
+python3 -m venv .venv
+source .venv/bin/activate
+# Windows PowerShell：.\.venv\Scripts\Activate.ps1；cmd：.venv\Scripts\activate.bat
+python -m pip install -r requirements.txt
 
-# 迁移期间仍支持单项目兼容路径：
-# python -m pip install -r requirements.txt
+# 离线复算四组历史结果
+python demo.py --offline --scenario all --model gpt-4o-mini
 
-# 在线（真实调用模型，需要 key）：默认跑 A(朴素)+B(优化) 两组
-export OPENAI_API_KEY=your-openai-api-key           # 或 export OPENROUTER_API_KEY=your-openrouter-api-key（自动回退）
-python demo.py
-
-# 离线（无需 key）：用内置 canned trace 复算全部表格
-python demo.py --offline --scenario all
+# 重新调用模型时，先配置 OPENAI_API_KEY 或 OPENROUTER_API_KEY
+python demo.py --live
 ```
 
-在线模式会真实调用 OpenAI，`--scenario all` 约几十次 chat completion，运行一两分钟。
+在线默认运行朴素组和同时启用两项优化的组；选 `--scenario all` 会运行全部四组，启用预热时另有预热调用。
 
 #### 测试
 
 自动化测试均为离线回归测试，不需要 API Key。
 
 ```bash
-# 在仓库根目录安装 pytest 所需的 dev extra：
-uv sync --locked --python 3.12 --extra ch6 --extra dev
-
-# pip 测试兜底路径：
-# python -m pip install -e ".[ch6,dev]"
-
-cd chapter7/agent-cost-analysis
+# 在已激活的实验环境中
+python -m pip install pytest
 python -m pytest tests
 ```
 
@@ -119,7 +114,7 @@ python -m pytest tests
 
 > 为聚焦「输入侧」两个杠杆，四组都用 `temperature=0` 且限制输出长度（`max_tokens=160`），让输出 token 成本近似为四组相等的固定项，避免模型生成长度的随机波动干扰对比。
 >
-> 工具环境是「受控」的（工具返回内容预设，真实系统里来自订单/物流/知识库后端），但**每一次 LLM 调用、每一份 token 用量、每一分成本都是真实打到 OpenAI 得到的**，保证可复现。
+> 工具环境是「受控」的（工具返回内容预设，真实系统里来自订单/物流/知识库后端），模型调用提供了逐轮 token 用量。表中的美元金额由这些用量和实验单价算出，便于读者更换假设重算。
 
 #### 真实运行输出（gpt-4o-mini）
 
@@ -206,25 +201,34 @@ B 优化(KV缓存+压缩)                   16035       6144    38.3%     1164  
 `sample_trace.json` 存的是上面这次真实运行的**逐步 token 用量（实测值）**；离线模式只做「按单价重算成本」这一步纯离线数学，因此无需 key 即可复现全部表格，还能一键换算到其它模型定价：
 
 ```bash
-python demo.py --offline --scenario all                 # 用 gpt-4o-mini 单价复算
+python demo.py --offline --scenario all --model gpt-4o-mini  # 用样例单价复算
 python demo.py --offline --scenario all --model gpt-4o  # 同一份 token 用量，换 gpt-4o 单价重算
 python demo.py --offline --price-input 0.20 --price-cached 0.10 --price-output 0.80
 ```
 
-换 `gpt-4o` 单价后，同一批 token 的四组总成本等比放大（结论与占比不变，A=$0.062930 → B=$0.044047，仍是 −30.0%）——这说明**成本优化的相对收益由 token 结构决定，与绝对单价无关**。
+为什么换成表里的 `gpt-4o` 预设后仍然节省 30.0%？这两个预设恰好把三档价格按同一倍数放大，A 从 0.003776 美元变为 0.062930 美元，B 从 0.002643 美元变为 0.044047 美元，比例自然不变。试着只改一档：让缓存输入也按每百万 0.15 美元计价，普通输入与输出价格保持原值。用同一份轨迹重算，A 仍是 0.00377580 美元，B 变为 0.00310365 美元，节省比例降到 17.8%。这才看得出缓存折扣对这项选择有多大影响。
 
 #### 注意事项
 
 - 具体数字每次在线运行会有小幅波动：OpenAI 的 prompt cache 是**尽力而为**的（按约 128 token 的块缓存、约 5–10 分钟过期、偶尔未命中），因此某些轮次可能出现 `cached_tokens=0`（如上面 B 组的 turn-2/turn-4）。`demo.py` 在正式计量前会先对 KV-cache 组跑一次「预热」把稳定前缀写入缓存，让命中更稳定；`--no-warmup` 可关闭。
-- 价格写在 `config.py`（`PRICING_PRESETS`），默认是 gpt-4o-mini 的公开单价（输入 \$0.15 / 缓存 \$0.075 / 输出 \$0.60 每百万 token）。**换模型**：用 `--model`（如 `--model gpt-4o`）或 `--price-*` 直接覆盖单价即可；缓存命中要求稳定前缀 ≥ 1024 token，换更强模型不影响该机制。
+- 单价预设见 `config.py` 的 `PRICING_PRESETS`。这里的历史样例按每百万 token 输入 0.15、缓存输入 0.075、输出 0.60 美元计算。用 `--model` 可选择预设，用 `--price-input`、`--price-cached`、`--price-output` 可分别指定三档价格。
 - 「工具返回注入」token 用 tiktoken 按当前模型的编码器离线估算（统计每轮输入里工具返回文本占多少 token），用于回答书中「一次工具返回可能占 2000-5000 token，且在后续每轮被反复计费」这一放大因素。
-- 凭据：首选 `OPENAI_API_KEY`；未设置时自动回退到 `OPENROUTER_API_KEY`（走 OpenRouter，`gpt-*` 映射为 `openai/*`）。`gpt-5.x` 直连需组织实名认证，故有 `OPENROUTER_API_KEY` 时优先走 OpenRouter。离线复算（`--offline`）无需任何 key。
+- 凭据选择由 `config.make_client_and_model` 决定：请求 `gpt-5` 开头的模型且配置了 OpenRouter 时优先走 OpenRouter；其余情况优先用 OpenAI，只有 OpenRouter 凭据时则走其兼容端点。离线复算不需要凭据。
 
 <a id="learning-3"></a>
 
 ## 分析结果与形成判断
 
-离线换单价不是跨模型性能实验。真实比较应让模型完成同一任务，再比较成功条件下的总支出、延迟和失败重试。
+换一份轨迹，组合起来最省钱的办法会变吗？打开 [Kimi K2.5 的逐轮记录](runs/exp7-9-kimi25-20260730-v2/report.json)，只比较稳定前缀的两组。下面按该次运行保存的三档单价复算，金额单位为美元。
+
+| 八轮合计 | 普通输入 token | 缓存输入 token | 输出 token | 模型费用 |
+|---|---:|---:|---:|---:|
+| 只稳定前缀（`kv`） | 4,729 | 14,779 | 1,266 | 0.008254 |
+| 稳定前缀并压缩历史（`both`） | 7,180 | 8,123 | 1,280 | 0.009058 |
+
+可以把两行相减来解释结果。缓存输入少了 6,656 个，普通输入却多了 2,451 个，输出也多了 14 个。用归档里 `pricing` 的三档单价分别乘这三项差额，合计多花约 0.000804 美元。总输入确实缩短了 4,205 个 token，只看总输入长度会漏掉两档输入的价差。
+
+正式表格只统计每组记录下来的八轮。在线脚本默认给启用缓存的组先跑一次完整预热，预热用量没有写入这八轮。若要回答“为了完成一笔退款，服务总共花了多少钱”，还要计入预热、失败尝试和重试的开销，并用实际办成的退款笔数作分母。本例用预设工具返回演示成本拆解，没有验证银行或商家实际退款。
 
 ### 检查自己的解释
 

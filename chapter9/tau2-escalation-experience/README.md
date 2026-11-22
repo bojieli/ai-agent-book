@@ -8,7 +8,7 @@
 
 ## 理解问题与方法
 
-提炼集负责发现规律，迁移集负责检查新任务是否受益。两者分开，才能减少对已有错误的记忆。规则还应描述适用条件，而不是把一个案例的具体步骤写成所有任务都要执行的命令。
+假设用户的手机无法上网。客服能查账户、查流量，却不能伸手操作用户的手机。如果失败记录里只写着“调用工具报错”，下一次该换一个工具，还是请用户在手机上操作？提炼规则时，知道谁能操作哪台设备，可能会改变答案。
 
 本实验对应第九章「将经验写成指令」。它检验一个具体问题：**当策略里关于
 「何时转人工」只有两句原则性描述时，能否从 Agent 自己的失败轨迹中提炼出
@@ -42,7 +42,7 @@
 
 ## 准备环境与输入
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+先按任务 ID 分清哪批案例用来提炼转接规则，哪批留给后续对照。检查一次转接时，同时读客服当时得到的信息和最终处理结果，免得把任何一次转人工都当成失误。
 
 ### 数据划分
 
@@ -66,14 +66,27 @@
 | B | 原始 + v1 规则 | 提炼器只看到失败摘要与报错文本 |
 | C | 原始 + v2 规则 | 提炼器额外看到 Agent 与用户各自的工具清单 |
 
-B 与 C 的差别只在**给提炼器看什么**，提炼模型、提示词模板、失败轨迹完全相同。
+两次提炼用的是同一个模型和同一批失败摘要。第二次请求在第一份提示的末尾追加了工具清单，还请模型想一想：客服调用了只有用户才能用的工具，该怎样取得所需的信息？第一版规则要求客服遇到“找不到工具”的错误后停止重试；第二版写得更具体，遇到手机端的检查，就引导用户在设备上完成。由于清单和提示一同加入，这次对照只能观察两者合用的效果。[第一版规则](validation/runs/exp9-2-tau2-escalation-v1/derived_rules.md) · [第二版规则](validation/runs/exp9-2-tau2-escalation-v2/derived_rules.md)
 
-### 复现
+### 先用随书轨迹复算
+
+从全书仓库根目录运行下面的命令。只需 Python 3，脚本会逐条读取三种策略留下的客服对话，按任务编号配对比较。
+
+```bash
+python3 chapter9/tau2-escalation-experience/analyze.py --archived
+```
+
+可以先挑一道从失败变为通过的题。到三份轨迹中搜索同一个任务编号 `[mobile_data_issue]airplane_mode_on|data_mode_off[PERSONA:None]`。这部手机开着飞行模式，同时关闭了移动数据。A 组的客服多次尝试调用用户端的 `check_network_status`，最后转了人工。C 组的客服也误调过手机工具，但接下来用户实际执行了 `toggle_airplane_mode` 和 `toggle_data`，随后在手机上测速，这次通过了评估。在消息的 `role` 字段里找出各次调用的发起者，就能理解为什么同一条通过的轨迹里也会记有误调。[A 组轨迹](validation/runs/armA-baseline.trajectories.json) · [C 组轨迹](validation/runs/armC-evolved-v2.trajectories.json)
+
+### 从头运行实验
 
 ```bash
 # 1. 安装 τ²-bench（不随本仓库分发）
 git clone https://github.com/sierra-research/tau2-bench.git chapter7/tau2-bench
-cd chapter7/tau2-bench && uv venv --python 3.12 && uv pip install -e .
+cd chapter7/tau2-bench
+# 使用归档轨迹记录的上游版本
+git checkout 8d005b0e5b9e4af0bc055886fa7f95fc86d1710e
+uv venv --python 3.12 && uv pip install -e .
 
 # 2. 跑提炼集基线，收集失败轨迹
 export VOLCENGINE_API_KEY=$ARK_API_KEY
@@ -101,7 +114,33 @@ python3 analyze.py
 
 ## 分析结果与形成判断
 
-转人工更少不一定更好，有些任务本来就需要转接。应同时检查任务解决、规则遵循和不必要转接，保留规则不适用的案例。
+先看同一批 114 道迁移题。原策略 A 通过 14 道，用失败摘要提炼规则的 B 通过 20 道，额外给提炼器看工具清单的 C 通过 22 道。逐题比较 A 和 C，原来通过的 14 道仍然通过，另外 8 道从失败变为通过。这是每种策略每题运行一次的结果，多次运行能否保持这个差距，还要另做验证。[逐题记录](validation/arm_stats.json)
+
+为什么要同时读工具调用记录？原策略下，客服误调用户侧工具 1049 次，C 组降到 163 次。这里数的是调用，同一道题可以出错多次。再看转人工，A 组有 104 道题发生过转接，C 组却有 111 道。可见这次增加的通过数不能简单归功于“少转人工”。要判定某一次转接是否合理，得回到那道题，查客服已经试过哪些操作、剩下的操作该由谁来做。[工具分工](tool_inventory.txt) · [运行记录](validation/runs/)
+
+可以只看第二版新通过的八道题。在本实验目录运行下面的代码，把任务得分与同一条轨迹中的转接调用对上：
+
+```python
+import json
+from pathlib import Path
+
+def trajectories(name):
+    path = Path("validation/runs") / f"{name}.trajectories.json"
+    return json.loads(path.read_text(encoding="utf-8"))["simulations"]
+
+baseline = {s["task_id"]: s["reward_info"]["reward"] for s in trajectories("armA-baseline")}
+for s in trajectories("armC-evolved-v2"):
+    if baseline[s["task_id"]] == 1 or s["reward_info"]["reward"] != 1:
+        continue
+    transferred = any(
+        call["name"] == "transfer_to_human_agents"
+        for message in s["messages"]
+        for call in message.get("tool_calls") or []
+    )
+    print("转过人工" if transferred else "未转人工", s["task_id"])
+```
+
+八题中，两题没有转人工，六题转过人工。先找任务名含 `airplane_mode_on|unseat_sim_card` 的那题，看用户在哪一步操作了手机。再挑一道转过人工的题，读转接之前的对话。这两类题都拿到了满分；评价客服是否尽到了职责，还得结合任务要求读它的处理过程。
 
 ### 检查自己的解释
 

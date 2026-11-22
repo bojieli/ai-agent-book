@@ -221,7 +221,7 @@ class InteractiveEvaluator:
     def _display_result(self, result: EvaluationResult):
         """Display a single evaluation result."""
         # Use reward for determining pass/fail if passed is not explicitly set
-        is_passed = result.passed if result.passed is not None else result.reward >= 0.6
+        is_passed = result.is_passed
         status_color = "green" if is_passed else "red"
         console.print(f"[{status_color}]Status: {'PASSED' if is_passed else 'FAILED'}[/{status_color}]")
         console.print(f"Reward: {result.reward:.3f}/1.000")
@@ -275,7 +275,7 @@ def run_demo_evaluation():
             result = framework.submit_and_evaluate(test_id, response)
             if result:
                 results[test_id] = result
-                is_passed = result.passed if result.passed is not None else result.reward >= 0.6
+                is_passed = result.is_passed
                 status = "✓ PASSED" if is_passed else "✗ FAILED"
                 console.print(f"{status} (Reward: {result.reward:.3f})")
     
@@ -463,7 +463,7 @@ def main():
 
         # Summary statistics
         if results:
-            passed = sum(1 for r in results.values() if (r.passed if r.passed is not None else r.reward >= 0.8))
+            passed = sum(1 for r in results.values() if r.is_passed)
             console.print(f"Passed: {passed}/{len(results)} ({100*passed/len(results):.1f}%)")
 
 

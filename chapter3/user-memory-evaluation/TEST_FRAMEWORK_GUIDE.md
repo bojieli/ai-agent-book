@@ -164,56 +164,25 @@ evaluation_criteria: |
 
 **Layer 3**: "The agent should recognize the passport expires in February 2025, the Japan trip is in January 2025, and proactively warn about the 6-month validity requirement."
 
-## Implementation Interface
+## Evaluate an agent on the disambiguation cases
+
+Supply your own agent with methods for loading a conversation history and answering a question. Start each case with a fresh agent so that facts from one user cannot affect the next case.
 
 ```python
-class MemoryEvaluationFramework:
-    def list_test_cases(self, layer: Optional[int] = None) -> List[TestCase]:
-        """List all available test cases, optionally filtered by layer"""
-        pass
-    
-    def get_test_case(self, test_id: str) -> TestCase:
-        """Retrieve a specific test case"""
-        pass
-    
-    def get_conversation_histories(self, test_id: str) -> List[Conversation]:
-        """Get all conversation histories for a test case"""
-        pass
-    
-    def get_user_question(self, test_id: str) -> str:
-        """Get the evaluation question for the test case"""
-        pass
-    
-    def evaluate_response(self, test_id: str, agent_response: str) -> EvaluationResult:
-        """Evaluate agent's response using LLM judge"""
-        pass
+from framework import UserMemoryEvaluationFramework
+
+framework = UserMemoryEvaluationFramework()
+for case in framework.list_test_cases(category="layer2"):
+    agent = make_agent()  # Your application's agent factory
+    agent.load_memories(framework.get_conversation_histories(case.test_id))
+    answer = agent.respond(case.user_question)
+    result = framework.submit_and_evaluate(case.test_id, answer)
+    print(case.test_id, "PASS" if result.is_passed else "FAIL")
+    print(f"Reward: {result.reward:.3f}")
+    print(result.reasoning)
 ```
 
-## Usage Example
-
-```python
-# Initialize framework
-framework = MemoryEvaluationFramework()
-
-# Get Layer 2 test cases
-layer2_tests = framework.list_test_cases(layer=2)
-
-# Run evaluation
-for test in layer2_tests:
-    # Provide conversation histories to agent
-    histories = framework.get_conversation_histories(test.test_id)
-    agent.load_memories(histories)
-    
-    # Get agent's response
-    question = framework.get_user_question(test.test_id)
-    response = agent.respond(question)
-    
-    # Evaluate
-    result = framework.evaluate_response(test.test_id, response)
-    print(f"{test.test_id}: {'PASS' if result.reward >= 0.6 else 'FAIL'}")
-    print(f"  Reward: {result.reward:.3f}/1.000")
-    print(f"  Feedback: {result.feedback}")
-```
+The following percentages illustrate degrees of completeness for people designing test cases. The implemented judge grades four dimensions and returns a separate pass verdict. See the [worked scoring examples](README.md#learning-3).
 
 ## Scoring Rubric
 

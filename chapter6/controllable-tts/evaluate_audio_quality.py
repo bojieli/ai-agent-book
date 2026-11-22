@@ -324,9 +324,14 @@ def aggregate(passes: list[dict[str, Any]]) -> dict[str, Any]:
     configurations: dict[str, Any] = {}
     for name, dimensions in scores.items():
         means = {dimension: sum(values) / len(values) for dimension, values in dimensions.items()}
+        # Keep the recorded left-to-right float addition across Python versions.
+        # Python 3.12 changed the float summation algorithm used by sum().
+        total = 0.0
+        for mean in means.values():
+            total += mean
         configurations[name] = {
             "dimension_means": means,
-            "overall_mean": sum(means.values()) / len(means),
+            "overall_mean": total / len(means),
             "rank_points": rank_points[name],
         }
     ordered = sorted(

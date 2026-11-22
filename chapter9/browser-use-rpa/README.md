@@ -62,7 +62,7 @@ python demo_email.py --quick --headless --model gpt-5.6
 
 ## 准备环境与输入
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+先运行本地的 `workflow_validation_demo.py`，指定一个页面条件，观察它改变后旧流程还能否通过检查。若要用浏览器执行真实步骤，再准备对应页面和模型环境。
 
 <a id="learning-2"></a>
 

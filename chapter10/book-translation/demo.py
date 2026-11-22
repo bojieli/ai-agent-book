@@ -330,12 +330,14 @@ def main():
     hr("核心对比表：管理者模式 vs 单 Agent 模式")
     o_tr, s_tr = orch["tracker"], single["tracker"]
     o_mgr_peak = orch["manager_context_peak"]
+    o_input_peak = max((call["prompt_tokens"] for call in o_tr.calls), default=0)
     # 管理者模式里，若把 Manager 当作 LLM Agent，它也有一次决策调用的上下文峰值
     o_mgr_llm_peak = o_tr.by_agent().get("Manager", {}).get("peak_context", 0)
     s_main_peak = single["main_context_peak"]
 
     rows = [
-        ("主/Manager 上下文峰值(tokens)", o_mgr_peak, s_main_peak),
+        ("最大一次 API 输入(tokens)", o_input_peak, s_main_peak),
+        ("Manager 本地状态峰值(估算)", o_mgr_peak, "—"),
         ("Manager LLM 决策调用上下文(tokens)", o_mgr_llm_peak, "—"),
         ("全流程总 token 消耗", o_tr.total_tokens(), s_tr.total_tokens()),
         ("术语内部一致率", f"{orch_cons['rate']*100:.0f}%", f"{single_cons['rate']*100:.0f}%"),
@@ -348,12 +350,9 @@ def main():
         print(f"{label:<32}{str(a):>16}{str(b):>16}")
     print("-" * 72)
 
-    if isinstance(s_main_peak, int) and o_mgr_peak and s_main_peak:
-        ratio = s_main_peak / o_mgr_peak
-        print(f"\n结论：单 Agent 主上下文峰值是管理者模式 Manager 上下文的 "
-              f"{ratio:.1f} 倍。")
-        print("Manager 只保存任务/计划/调用记录/文件索引，完整译文全部落盘到文件系统，")
-        print("因此无论书有多长，Manager 上下文都基本恒定 —— 这就是控制上下文膨胀的关键。")
+    if isinstance(s_main_peak, int) and o_input_peak and s_main_peak:
+        print(f"\n单 Agent 与管理者组的最大单次 API 输入之比为 {s_main_peak / o_input_peak:.2f}。")
+        print("Manager 的本地状态另计：译文写入文件，文件索引和调用记录随任务推进而增长。")
     print(f"\n产物目录：{args.out_dir}")
 
 

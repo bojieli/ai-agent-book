@@ -1,7 +1,8 @@
 #!/bin/bash
 # Build the complete book as a single PDF (ElegantBook design, teal/cyan theme).
 # Requirements: pandoc, xelatex, ElegantBook class, rsvg-convert (librsvg),
-#               fonts: Songti SC / Heiti SC (ctex), Menlo, Arial Unicode MS
+#               fonts: Songti SC (macOS review) or Noto Serif CJK SC (local draft);
+#                      Menlo or DejaVu Sans Mono; pinned Source Han Sans in fonts/
 # Usage: cd book && bash build_pdf.sh
 # Note: chapter/section numbers come from the document class; source headings
 #       carry no manual numbers (see git history for the de-numbering pass).
@@ -11,7 +12,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-OUT="深入理解-AI-Agent-李博杰-v2.0.pdf"
+OUT="深入理解-AI-Agent-李博杰-v3.0.pdf"
 CHAPTERS=(
     introduction.md
     chapter1.md
@@ -43,9 +44,12 @@ pandoc "${CHAPTERS[@]}" \
     --pdf-engine=xelatex \
     --lua-filter=crossref.lua \
     --lua-filter=experiment_box.lua \
+    --lua-filter=table_widths.lua \
+    --lua-filter=figure_size.lua \
     --toc \
     --toc-depth=3 \
     --number-sections \
+    --top-level-division=chapter \
     -V documentclass=elegantbook \
     -V classoption=lang=cn \
     -V classoption=nofont \

@@ -27,7 +27,7 @@ export extra_mem_bot=8000000
 #    immediately with the correct "not found" result.
 export MKTEXTFM=0
 
-OUT="AI-Agents-in-Depth-v2.0-ptbr.pdf"
+OUT="AI-Agents-in-Depth-v3.0-ptbr.pdf"
 CHAPTERS=(
     introduction.ptbr.md
     chapter1.ptbr.md

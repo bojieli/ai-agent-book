@@ -1,29 +1,20 @@
-# Experiment 5-5: Paper Lecture Video / 实验 5-5：论文讲解视频的自动生成 ★★
+# Experiment 5-7: Paper Lecture Video / 实验 5-7：论文讲解视频的自动生成 ★★
 
-论文讲解视频需要把页面、口语化讲稿和音频放在同一条时间线上。本实验拆开这些环节，让你理解视频自动生成中内容组织与媒体处理各自承担什么工作。
+播放一段论文讲解视频。旁白说“请看屏幕上半部分的 Key Contributions”，你抬眼时，画面应该停在哪一页？要让这样的指引起作用，讲稿先要说对页面上的内容，剪辑时还要让这张幻灯片留得足够久。这个实验把两件事分开检查。
 
 [English](#english)
-
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
 
 <a id="learning-0"></a>
 
 ## 理解问题与方法
 
-讲稿决定每页要说什么，TTS 决定音频，合成程序根据音频时长安排画面。若只给每页固定时长，讲解容易与页面错位；若机械照读页面，听众也可能难以理解。
-
-### 概述
-
-在“论文 → PPT”的基础上，Agent 为每一页幻灯片生成**口语化讲解词**（引导性叙述，
-而非逐条复述要点），调用 **TTS** 合成语音，再用 **ffmpeg** 把 PPT 截图与音频
-**逐页同步合成**为一段带旁白的讲解视频。
+从“论文 → PPT”得到每页的截图后，先为这一页写口语讲稿，让另一位审核者对照画面检查讲稿里提到的图、术语和位置。讲稿通过后再合成语音，用实际音频时长决定画面停留多久，最后拼接各页。这样，如果旁白指错了一张图，可以在合成语音之前改稿；如果旁白还没讲完画面就翻页，可以从这一页的视频片段查起。
 
 ### 完整实验的步骤与条件
 
-`campaign.py` 是实验 5-5 的正式运行器：它读取实验 5-4 固定真实论文活动中的 12 张
-Slidev 截图与源码，用 Kimi K3 生成讲解词，再让 Qwen-VL-Max 对照真实页面像素逐页独立
+`campaign.py` 是实验 5-7 的正式运行器：它读取实验 5-6 较早生成的 22 页稿（v2）。打开[选页配置](experiment_protocol.json)，按 `selected_pages` 从这份稿子取 12 张 Slidev 截图，最后一张是源稿第 21 页。实验 5-6 比较两种审核方式时用到的 20 页稿是 v9。运行器把选出的截图与相应源码交给模型，用 Kimi K3 生成讲解词，再让 Qwen-VL-Max 对照真实页面像素逐页独立
 审核；通过后调用 Fish Audio S1 合成每页语音，最终用 ffmpeg 生成 5–15 分钟的 H.264/AAC
-视频。所有供应商调用都可续跑缓存；中断后不会用静音或占位内容冒充缺失页面。
+视频。运行器会保存调用记录，中断后可以在同一输出目录继续。按下方命令重新生成，需要配置 `MOONSHOT_API_KEY`、`DASHSCOPE_API_KEY` 和 `FISH_API_KEY`。第一次阅读可以直接使用下文附的片段和测量记录。
 
 ```bash
 python campaign.py --output validation/runs/my-real-run --workers 1
@@ -47,7 +38,7 @@ python campaign.py --output validation/runs/my-real-run --workers 1
 
 ## 准备环境与输入
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+先用 `demo.py --check` 检查字体、ffmpeg 和 ffprobe，再决定需要测试哪一步。`--offline` 用静音音轨检验画面与时间轴；要判断真实旁白的读音，则需使用带语音的材料。
 
 ### 依赖
 
@@ -79,11 +70,11 @@ python campaign.py --output validation/runs/my-real-run --workers 1
                      output/lecture.mp4
 ```
 
-- 本项目**自包含**，不依赖实验 5-4：内置一份《Attention Is All You Need》的论文要点，
-  用 PIL 直接渲染出 5 页幻灯片 PNG（也可替换为 5-4 的 Slidev 截图）。
+- 本项目**自包含**，不依赖实验 5-6：内置一份《Attention Is All You Need》的论文要点，
+  用 PIL 直接渲染出 5 页幻灯片 PNG。
 - 讲解词由 `gpt-5.6-luna` 生成；语音由 OpenAI `tts-1`（`voice=alloy`）合成。
 - 视频由 `ffmpeg` 合成：每页做一段 mp4，段时长等于该页音频时长，最后 concat 拼接，
-  因此**每页展示时间与语音时长精确匹配**。
+  可以逐页测量编码后片段与原音频的实际时长差。
 
 ### 运行命令
 
@@ -151,7 +142,20 @@ ffprobe -v error -show_format -show_streams output/lecture.mp4
 
 ## 分析结果与形成判断
 
-分别检查文字是否适合口头讲解、声音是否清晰、页面切换是否跟随讲解。文件时长正常不能证明同步正确，应在句子和页面边界实际播放检查。
+### 跟着最后一页旁白核对画面
+
+打开[第 12 段视频](validation/runs/exp5-5-kimi-fish-qwen-20260730-v1/segments/page-12.mp4)和[对应的幻灯片](validation/runs/exp5-5-kimi-fish-qwen-20260730-v1/slides/page-12-source-21.png)。旁白先讲上半页的 Key Contributions，再转到下方的 Future Directions。听到“泛化到了成分句法分析”时，试着在画面上找到对应的英文条目。要是讲到了另一页才有的内容，即便音画时长完全相同，观众也会跟丢。
+
+再用 ffprobe 量同一页。在本实验目录执行：
+
+```bash
+run=validation/runs/exp5-5-kimi-fish-qwen-20260730-v1
+for file in "$run/audio/page-12.mp3" "$run/segments/page-12.mp4" "$run/lecture.mp4"; do
+  ffprobe -v error -show_entries format=filename,duration -of csv=p=0 "$file"
+done
+```
+
+第 12 页的原音频长 44.460 秒，合成的片段长 44.467 秒，相差约 6 毫秒。[逐页记录](validation/runs/exp5-5-kimi-fish-qwen-20260730-v1/comparison.json)的 `av_delta_seconds` 就是这两个容器时长差的绝对值。12 页中最大的差值为 0.024 秒。成片比各页原音频的总和长约 0.096 秒。要进一步检查切页时是否截断一句话，可以播放成片中相邻两页的交界处，听前一句有没有讲完，再看下一句指向哪张图。
 
 ### 预期输出示例
 
@@ -166,8 +170,7 @@ ffprobe -v error -show_format -show_streams output/lecture.mp4
   > 今天，我们将一起探讨一个改变了自然语言处理领域的重要研究——"Attention Is All You Need"……
   > 它完全依赖于注意力机制，摒弃了传统的循环和卷积结构。
 
-运行日志会逐页打印「幻灯片 → 讲解词 → 音频时长」，末尾汇总各页音频总时长与最终视频时长
-（二者应基本一致，说明每页展示时间与语音精确对齐）。
+运行日志会逐页打印「幻灯片 → 讲解词 → 音频时长」，末尾汇总各页音频总时长与最终视频时长。两者相近只能说明总时长大致吻合。如果两页旁白恰好互换，总时长仍然一样。
 
 ### 检查自己的解释
 
@@ -196,8 +199,7 @@ ffprobe -v error -show_format -show_streams output/lecture.mp4
   - `OPENAI_BASE_URL`：指向任何**兼容 OpenAI 协议**的自定义端点（自建网关、代理或
     第三方供应商）；配合对应的 `OPENAI_API_KEY` 即可切换后端。
 - **换输入（换论文 / PDF）**：用 `--slides my.json` 传入外部幻灯片内容，或直接编辑
-  `demo.py` 中的 `SLIDES` 列表（标题 / 副标题 / 要点）；若已有真实 PDF，可先用 5-4 的
-  「论文 → PPT」流程产出要点或 Slidev 截图，再喂给本脚本，其余流程不变。
+  `demo.py` 中的 `SLIDES` 列表（标题 / 副标题 / 要点）。若已有论文 PDF，可从[实验 5-6](../paper-to-ppt/)整理各页要点填入 JSON。要保留 Slidev 的原有排版，可参照 `campaign.py`，在选页配置中指定源稿和截图目录。
 - **自带讲解词**：用 `--script narr.json`（每页一段的字符串列表）跳过 LLM 生成，
   直接进入「TTS → 合成」，便于人工润色脚本后重跑。
 - **更长视频**：增加 `SLIDES` 页数或加长每页讲解词即可（单次 5~15 分钟）。
@@ -213,8 +215,7 @@ ffprobe -v error -show_format -show_streams output/lecture.mp4
   全量 5 页约生成 2~3 分钟视频。建议先 `--check` 自检、再 `--quick` 冒烟。
 - 幻灯片为 PIL 纯静态渲染（无动画/转场），中文字体依赖系统字体，非 macOS 需自行调整
   `FONT_CANDIDATES`。
-- 每页时长严格等于该页音频时长，不做静音停顿或背景音乐；如需更精细的排版与转场，
-  建议改用 5-4 的 Slidev 截图作为输入。
+- 演示按旁白时长安排静态画面。需要换成排版好的 Slidev 页面时，见上文使用截图的流程；需要增加转场或停顿时，要把增加的时间计入时间线。
 
 ---
 
@@ -231,8 +232,8 @@ On top of “paper → PPT”, the Agent generates **spoken lecture scripts** pe
 
 ### Canonical manuscript campaign
 
-`campaign.py` is the formal Experiment 5-5 runner. It consumes twelve real
-Slidev screenshots and source from the pinned Experiment 5-4 paper run, calls
+`campaign.py` is the formal Experiment 5-7 runner. It consumes twelve real
+Slidev screenshots and source from the pinned Experiment 5-6 paper run, calls
 Kimi K3 for narration, independently checks every narration against the actual
 slide pixels with Qwen-VL-Max, synthesizes every accepted page with Fish Audio
 S1, and produces a 5–15 minute H.264/AAC video. It checkpoints every provider
@@ -374,6 +375,6 @@ Logs print per-page “slide → script → audio duration”; end summary compa
 
 - Script + TTS call real OpenAI APIs (`TEXT_MODEL`, `TTS_MODEL`) and **bill**; full 5 pages ≈ 2–3 min video. Prefer `--check` then `--quick`.
 - Slides are static PIL (no animation/transitions); non-macOS may need `FONT_CANDIDATES` tweaks.
-- Page duration = audio only; no silence pads or BGM. For richer layout/transitions, prefer 5-4 Slidev screenshots as input.
+- Page duration = audio only; no silence pads or BGM. For richer layout/transitions, prefer 5-6 Slidev screenshots as input.
 
 ---

@@ -5,6 +5,10 @@ This ledger distinguishes a complete experiment from a supported hypothesis.
 manuscript has substantive evidence; a statistically negative result remains
 a complete experiment and is reported as such.
 
+Use the experiment number in the first column to find the current book exercise.
+Run directories retain the numbers used when the evidence was collected. For 5-16,
+the digest identifies an archived comparison outside Git. The [project guide](agent-creator/README.md#learning-3) explains the checks and how to reproduce the comparison.
+
 | Experiment | Canonical evidence | Status | `official_complete` | Hypothesis | Evidence SHA-256 |
 | --- | --- | --- | --- | --- | --- |
 | 5-1 | `provider-failover/validation/runs/exp5-1-handoff-20260824T150228Z/manifest.json` | passed | true | portability supported; redundant-call reduction not observed | `102f27e469fcc020667be93eec0e16d84dec7f454244a147401fd4f932b242be` |
@@ -29,20 +33,17 @@ a complete experiment and is reported as such.
 - **5-1:** eighteen cells (six provider pairs x three arms) ran against live
   Moonshot `kimi-k3`, Anthropic `claude-haiku-4-5-20251001`, and Google
   `gemini-3.5-flash`, with every request and raw response retained. The neutral
-  arm handed the half-finished trajectory over successfully in 6/6 pairs and
-  reached the correct total in all six; verbatim pass-through succeeded in 3/6
-  and stripping every reasoning block in 4/6, and all four failures carry the
-  vendor's original 4xx body. The overload that triggers the failover is
-  injected and labelled `injected: true`; the cross-vendor format rejections are
-  real. Two results are worth naming. Anthropic to Gemini passed under verbatim
-  pass-through and failed under stripping, because Gemini requires the
-  `thoughtSignature` field to be present but does not check who issued it, so a
-  pasted Claude signature is accepted while an honestly removed credential is
-  not. Redundant tool calls after the switch were 0 in all three arms, so the
-  manuscript's expected reduction was not observed: this task keeps its state in
-  the tool results, which every arm preserves. Carrying the portable reasoning
-  cost 4,183 input tokens against the stripping arm's 2,760 (+52%) on the two
-  pairs where all three arms completed, at an identical number of rounds.
+  arm completed in 6/6 pairs with the correct total; naive and strip completed
+  in 3/6 and 4/6 respectively. Rejected requests retain original 4xx bodies.
+  The runner switches directly after two completed tool calls. The `outage`
+  metadata describes a simulated 429/429/503 scenario; this run does not exercise
+  retry/backoff or a circuit-breaker implementation. Cross-vendor format
+  rejections are real. Acceptance of one converted request is an observation
+  about that request and service version, not a general conclusion about
+  opaque-field validation. Repeated calls after switching were 0 in all arms.
+  Task state was available in tool results. The neutral arm used 4,183 input
+  tokens against strip's 2,760 (+52%) on the two pairs where all arms completed,
+  at an identical number of rounds.
 - **5-2:** three providers x three break points x three repeats, cutting a live
   stream at a fixed character offset because a real disconnect does not land on
   a delta boundary. Prefix continuation is clearly cheaper than resending the
@@ -58,7 +59,8 @@ a complete experiment and is reported as such.
   reasoning break point, and Gemini's stream never exposes a partial tool call
   at all. One Anthropic cell failed with a real 400 because the cut landed on a
   space and the API rejects an assistant prefix ending in whitespace. Redundant
-  side effects were 0 in every cell.
+  query calls were 0 in every cell; the historical `duplicate_side_effects`
+  metric observes a read-only flight-price query, not real write-side effects.
 - **5-3:** all 30 unique AIME 2024 problems completed in both arms with zero
   provider errors, and every code trajectory called the real sandbox. Code was
   53.3% versus CoT 36.7%, but exact paired p=0.125.
@@ -87,16 +89,15 @@ a complete experiment and is reported as such.
 - **5-9:** the same flange spec (Ø80 × 10 mm, four M5 holes on a Ø60
   circle) went through both routes for real. Route A: Kimi `kimi-k2.5`
   wrote 17 lines of CadQuery, executed locally, exporting STEP + STL;
-  programmatic trimesh measurement showed zero deviation on every
-  dimension (hole diameter −0.001 mm is STL chord discretization; the
-  STEP B-rep is exact). Route B: a two-stage text→image→3D pipeline
-  (Gemini product render → `tencent/Hunyuan3D-2.1` public Hugging Face
-  Space `/shape_generation`, 9 receipts all `ok`) produced a unit-less
-  blob: outer diameter −99.4%, all four through-holes lost, axis
-  semantics absent. The M5→M6 change request cost route A one parameter
-  edit with zero LLM calls and zero drift elsewhere; route B required a
-  full regeneration, after which the outer diameter drifted +283% and
-  the flange axis flipped from Z to Y. The potted-plant control reversed
+  the M5 STL measured 80 mm across and 10 mm thick, with a mean hole
+  diameter of 5.499 mm on a 60 mm pitch circle. Route B used Gemini
+  to render the product and the public Hunyuan3D-2.1 Space to generate
+  the mesh. Its Z-normal midsection had no detected inner loops. The
+  mesh scale and orientation must be established before comparing
+  its dimensions with the drawing. Changing to M6 took one parameter
+  edit and no further LLM calls on route A (measured bore 6.499 mm).
+  Regenerating route B changed its maximum XY span from 0.519 to
+  1.988 in mesh coordinates. The potted-plant control reversed
   the ranking: Kimi vision scored procedural matplotlib greenery 3
   versus the diffusion image 8. DashScope (401) and SiliconFlow (402)
   were probed and abandoned, recorded in the README's honesty notes.
@@ -114,8 +115,8 @@ a complete experiment and is reported as such.
   artifacts for all ten manuscript questions, and the database results were
   independently checked and browser-rendered without asking the model to copy
   result rows.
-- **5-14:** three real-model customization turns changed color, typography,
-  layout and component placement in a React/FastAPI app; Vite HMR was observed
+- **5-14:** three real-model customization turns changed color, typography
+  and title in a React/FastAPI app; Vite HMR was observed
   in-browser after every source mutation and a production build passed.
 - **5-15:** the copied PEDO implementation includes a deterministic PostgreSQL
   demo and core/scenario tests. A live Agent-generated-code campaign remains an
@@ -143,3 +144,10 @@ table above maps them to their current experiment numbers. For the same reason
 the retained Experiment 5-16 comparison directory is still named `exp5-12-...`,
 from a run that predates both renumberings. The protocol, source code, chapter
 text, and current index all identify it as Experiment 5-16.
+
+## Editorial artifact availability check
+
+- Experiment 5-8: All 78 manifest entries were verified. The review checkout contains 70 matching artifacts. The original local run directory also contains the six Blender logs, `final.mp4`, and `negative_control.mp4`, all with the expected sizes and SHA-256 digests.
+- Experiment 5-9: All 13 artifacts listed in the manifest were verified by SHA-256 under `chapter5/cad-vs-diffusion/output/` in the original checkout. The manifest and provider receipts are available in Git. The 13 output files are local artifacts.
+
+- Experiment 5-16: the archived comparison was recovered from the local experiment directory in the original checkout. Its SHA-256 matches the digest in the table above. The recovered report confirms 39/39 quality points for each arm and the creator token and elapsed-time figures above. The report is not tracked in Git.

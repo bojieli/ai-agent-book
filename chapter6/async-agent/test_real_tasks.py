@@ -80,3 +80,22 @@ def test_cancel_terminates_real_child_process_and_freezes_progress(monkeypatch):
             os.kill(pid, 0)
 
     asyncio.run(scenario())
+
+
+def test_cancel_all_before_workers_start():
+    async def scenario():
+        async def on_complete(state):
+            pytest.fail(f"Unexpected completion for {state.task_id}")
+
+        manager = tasks.TaskManager(on_complete, lambda *_: None)
+        workers = [manager.start("python analyze_slow.py") for _ in range(2)]
+        assert manager.cancel_all() == [state.task_id for state in workers]
+        await asyncio.gather(*(state._task for state in workers), return_exceptions=True)
+        assert not manager.any_running()
+        for state in workers:
+            assert state.status == "cancelled"
+            assert state.pid is None
+            assert state.executable_receipt["cancelled"]
+            assert not manager.cancel(state.task_id)
+
+    asyncio.run(scenario())

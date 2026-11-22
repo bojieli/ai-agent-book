@@ -22,7 +22,7 @@
 
 ## 准备环境与输入
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+复核天气查询只需仓库中已有的动作记录、截图和 `validate_weather_run.py`；重新操作桌面才需要另行启动容器并配置模型服务。
 
 <a id="learning-2"></a>
 
@@ -130,3 +130,11 @@ retained under `validation/failed_attempts/`:
 These failures are not counted as the canonical result. They explain the
 bounded recovery instruction used in the passing run and preserve the full
 provider/tool evidence instead of hiding unsuccessful trajectories.
+
+### 归档材料复核（2026-10-07）
+
+归档 manifest 列出的 33 项产物逐项复核通过，包含原始响应及截图。核对过程只读取文件，未调用会重新生成 manifest 和 acceptance 的验证入口。
+
+### 输入节奏与命令超时配置
+
+原稿中的 12 ms 逐字符输入间隔和 120 s 命令超时保留为配置讨论示例，具体值应从所运行版本的工具实现读取。逐字符延迟影响文本输入节奏；命令等待超时影响调用何时返回，并不自动证明后台进程已经结束。当前归档以固定容器镜像与工具版本定位实现，正文保留这两项机制及状态检查要求。

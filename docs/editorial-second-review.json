@@ -1,0 +1,448 @@
+{
+  "baseline_commit": "2662c17ec098234694d7ce45f2c17ce9c7f0850d",
+  "requirements": [
+    "编译现稿完整PDF并逐项检查编辑问题",
+    "逐句语言审读两遍，第二遍独立检查衔接与节奏",
+    "对照原稿恢复作者判断与个人经验，并保留事实边界",
+    "保留技术细节、灰度插图、教学式叙述；不复核实验原始记录",
+    "更新PR并交付最终PDF"
+  ],
+  "passes": {
+    "introduction": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original_and_restored",
+      "method": "全文逐句审读后修改；重新通读修改稿检查句间、段间及下一章开头的衔接",
+      "changes": [
+        "恢复术语普及之前发现真实业务问题的作者判断",
+        "恢复人机协作参与知识创造的个人体验",
+        "保留第二章最关键、动手实验的强烈建议与原则穿越模型迭代的判断",
+        "把逐章介绍中的沿、进入等抽象连接改为明确的教学顺序",
+        "保留编辑确认的课程名称与时间"
+      ]
+    },
+    "chapter1": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original_and_restored",
+      "method": "全文逐句审读后修改；重新通读修改稿检查句间、段间及下一章开头的衔接",
+      "changes": [
+        "恢复模型此刻的能力边界就是Harness价值所在的判断",
+        "恢复行业从能做事走向可靠地做事的原稿表达",
+        "保留上下文和工具作为主要能力杠杆的判断并使用编辑确认的比喻",
+        "用换汇到搜索分析的任务变化衔接两个实验",
+        "保留全部代码块、消息字段、工具结果、实验数字和图片引用",
+        "消融小结分别说明三类信息与历史推理信息的作用",
+        "完善本章小结与第二章上下文工程的衔接"
+      ]
+    },
+    "chapter2": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original_and_restored",
+      "read_through_line": 1136,
+      "changes": [
+        "恢复端侧Agent更近的作者判断",
+        "恢复产品负责人主导业务规则设计的建议",
+        "强化聊天模板的基础地位与缓存作为架构约束的判断",
+        "保留作者预填充笔记与ContextDistill研究",
+        "改善API、缓存、状态栏、压缩与下一章的过渡",
+        "保留所有代码块、实验标题和图片引用"
+      ],
+      "method": "第一遍全文审读并对照原稿观点；第二遍重新通读全部正文、代码、实验、脚注和思考题，再检查第3章开头的衔接",
+      "checks": [
+        "代码块、插图引用、实验标题和思考题与本轮基线一致",
+        "延迟降低倍数改写为基线比例，保留原有数值含义",
+        "未复核实验原始记录"
+      ]
+    },
+    "chapter3": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original_and_restored",
+      "changes": [
+        "保留八项记忆能力为作者归纳的口径",
+        "恢复自然语言与结构化索引分层配合的主张",
+        "恢复Markdown与版本控制、知识变更作为PR的主张",
+        "强调提议者与审核者应具备工具和持续查询能力",
+        "保留作者User as Code和User as Engram研究，改善机制说明",
+        "保留记忆字段、算法、手算例子、实验结果和所有图片",
+        "改善记忆表示到检索、以及第3—4章的衔接"
+      ],
+      "method": "第一遍逐句审读并对照原稿作者表达；第二遍重新通读全部正文、代码、实验、脚注和思考题，并检查第4章开头的衔接",
+      "checks": [
+        "保留全部代码块、图片引用、实验标题和思考题",
+        "第二遍修改表示到计算、索引到知识组织、知识维护到工具接口的衔接",
+        "未复核实验原始记录"
+      ]
+    },
+    "chapter4": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original_and_restored",
+      "changes": [
+        "恢复围绕任务设计工具、优先通用执行器的作者主张",
+        "恢复边界条件与优先改进工具描述的判断",
+        "保留RFC3339、E.164、调用与返回的具体例子",
+        "恢复自动验证的作者建议，保留权限、幂等和取消等技术细节",
+        "改善能力封装、工具发现、感知、执行与协作之间的过渡"
+      ],
+      "method": "第一遍逐句审读并对照原稿主张；第二遍重新通读全部正文、实验、表格、脚注和思考题，并检查第5章开头的衔接",
+      "checks": [
+        "保留全部图片引用、实验标题、思考题和技术示例",
+        "第二遍明确代词指向、改进具体动作表述和章节过渡",
+        "未复核实验原始记录"
+      ]
+    },
+    "chapter5": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original_and_restored",
+      "changes": [
+        "保留代码生成作为通用Agent基础能力的主张",
+        "恢复持久化终端的设计取向及具体适用任务",
+        "恢复持久记忆放大提示注入影响的作者观察",
+        "恢复双Agent上下文管理优势与研究网站活文档的作者表达",
+        "保留内科指标比喻，解释与最终任务指标的关系",
+        "保留故障恢复、文件编辑、业务规则代码和全部实验技术细节",
+        "改善任务流程、六类代码用途与下一章异步交互的衔接"
+      ],
+      "method": "第一遍逐句审读并对照原稿主张与个人实践；第二遍重新通读全文、代码、表格、实验、脚注和思考题，并检查第6章开头的衔接",
+      "checks": [
+        "保留代码块、图片引用、实验标题和思考题",
+        "修正章首路线图与实际小节顺序的一致性",
+        "行号示例改为读取范围内的第142行",
+        "未复核实验原始记录"
+      ]
+    },
+    "chapter6": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original_and_restored",
+      "changes": [
+        "恢复主动服务需要及时事件通知的判断",
+        "恢复独立虚拟身份、轻量语义路由与快慢分工的设计取向",
+        "恢复改进AOI观测接口和移动端生态壁垒的作者判断",
+        "恢复任务规划与底层控制分工的建议",
+        "保留异步状态、语音延迟、坐标换算、机器人控制等例子和公式",
+        "改善各交互形态之间的过渡与具体动作表述"
+      ],
+      "method": "第一遍逐句审读并对照原稿判断；第二遍重新通读全文、消息示例、公式、表格、实验、脚注和思考题，并检查第7章开头的衔接",
+      "checks": [
+        "保留代码块、图片引用、实验标题和思考题",
+        "补清任务句柄、事件示例补充字段及回合中途引导的说明",
+        "修正Computer Use阅读路线与实际内容顺序的一致性",
+        "未复核实验原始记录"
+      ]
+    },
+    "chapter7": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original_and_restored",
+      "changes": [
+        "保留技术奇观与为未来模型开发产品的作者表达",
+        "恢复生产系统优先积累轨迹前缀回归的强判断及原因",
+        "恢复提示词变更按代码变更运行回归的主张",
+        "保留完整telecom案例、Rubric、统计公式、成本表和失败归因例子",
+        "改善评估结果到修复决策、评估到后训练的衔接",
+        "沿用现有实验材料，不追查或复核原始记录"
+      ],
+      "method": "第一遍逐句审读并对照原稿判断；第二遍重新通读正文、案例、表格、公式、实验、脚注和思考题，并检查第8章开头的衔接",
+      "checks": [
+        "保留图片引用、实验标题、思考题和统计公式",
+        "区分一次只调用一个工具的规则与调用顺序，补清失败线路案例的因果关系",
+        "未复核实验原始记录，未追查缺失文件"
+      ]
+    },
+    "chapter8": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original_and_restored",
+      "method": "第一遍逐句审读并对照原稿作者判断；第二遍重新通读全部正文、代码、公式、表格、实验、脚注和思考题，并检查第9章开头的衔接",
+      "changes": [
+        "保留数据和环境比算法更重要的主张，恢复环境保真度优先于算法选择的建议",
+        "恢复先验、环境、算法的工程优先级及预算受限时比较算法和架构的建议",
+        "保留作者时间感研究，恢复对反馈密度、样本效率和分布一致性的判断",
+        "保留全部训练伪代码、公式、GeneralPoints算例、参数与实验结果",
+        "拆分算法长句，改善状态、数据、训练信号之间的解释及章节过渡",
+        "未复核实验原始记录"
+      ],
+      "checks": [
+        "保留5个代码块、18幅图、19个实验、13道思考题和5组独立公式",
+        "保留Q-learning算例、GeneralPoints规则变化、GRPO组内优势、在轨蒸馏及精确复制数据",
+        "提前解释rollout，拆分GeneralPoints训练设计与输出格式分析，明确RLVR名称与路径惩罚对象",
+        "未复核实验原始记录"
+      ]
+    },
+    "chapter9": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original_and_restored",
+      "method": "第一遍逐句审读全部正文、表格、实验、脚注与思考题并对照原稿；第二遍重新通读全文，检查句间、段间和第10章开头的衔接",
+      "changes": [
+        "恢复持续进化是Agent最重要能力之一的判断",
+        "恢复像新员工一样从工作中长进、从聪明变得熟练的作者表达",
+        "恢复持续进化应遵循科学方法的主张",
+        "保留四种更新载体、工具职责、程序生命周期、插件组合、发现树回放和睡眠学习机制",
+        "改善评价到修复、知识到指令、经验到程序的表达，并补充第9—10章过渡"
+      ],
+      "checks": [
+        "保留5幅图、9个实验和7道思考题",
+        "保留转接规则、工作流变量、加速数据与插件技术术语",
+        "未复核实验原始记录"
+      ]
+    },
+    "chapter10": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original_and_restored",
+      "method": "第一遍逐句审读并对照原稿主张；第二遍重新通读全部正文、接口字段、表格、实验、脚注和思考题，并检查后记开头的衔接",
+      "changes": [
+        "保留群体智能与组织能力的作者判断",
+        "恢复Loop工程中的验证瓶颈、工程师设计循环的主张及Pine AI实践先于命名的背景",
+        "恢复管理Agent与管理技术团队的类比和技术基本功的判断",
+        "保留消息信封、状态查询、取消传播、并发登记和跨组织协议等技术细节",
+        "改善角色转换、工作流、独立上下文与社会模拟之间的表达"
+      ],
+      "checks": [
+        "保留11幅图、6个实验和11道思考题",
+        "保留Phone/Computer字段与任务状态、Go生命周期例子、工作流接口及实验数据",
+        "未复核实验原始记录"
+      ]
+    },
+    "afterword": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original_and_restored",
+      "method": "现稿和原稿全文对照，第一遍修改后重新通读全文，第二遍处理重复、句间和前后呼应",
+      "changes": [
+        "恢复活着的Agent、学习与适应终将成为模型最强能力的作者表达",
+        "恢复模型一层层吸收Harness能力、工程不断走向新前沿的判断",
+        "恢复业务反馈与模型迭代构成护城河，以及应用团队用Harness争取时间的建议",
+        "保留实时交互两条路线、具体推理速度、运行时职责与全部来源",
+        "完善两朵乌云到共同演进的过渡，结尾呼应前言的实践—方法—原则"
+      ]
+    },
+    "reference-answers": {
+      "pass1": "complete",
+      "pass2": "complete",
+      "author_voice": "compared_with_original",
+      "method": "两遍完整逐题通读全部405行，检查技术解释、语句衔接及与正文题目的对应",
+      "changes": [
+        "保留全部93道题与分析思路",
+        "明确累计输入量公式、调用额度、统计摘要及模块通信成本",
+        "改善经验版本、独立评估和多Agent协作等回答的具体表达"
+      ],
+      "checks": [
+        "93道题与十章末尾逐题一致",
+        "未复核实验原始记录"
+      ]
+    }
+  },
+  "pdf": {
+    "baseline": "initial_compile_saved",
+    "initial_pdf": "/tmp/agent-book-full-pdf-review/initial-full-book.pdf",
+    "initial_pages": 261,
+    "layout_revision_pages": 314,
+    "fixed": [
+      "Linux等宽字体回退",
+      "明确顶级标题为chapter，修正0.x章号",
+      "第6章公式分隔符",
+      "第7、8章公式内中文句号缺字",
+      "下标字符字体缺字",
+      "竖向图高度上限从0.38提升到0.68正文高度",
+      "前言不编号小节增加独立目录锚点，逐项跳转页核对通过",
+      "为全部表格计算显式列宽并折行，修复24处页面边界外文字"
+    ],
+    "remaining": [],
+    "final": "complete",
+    "checks": {
+      "pages": 316,
+      "out_of_page_text_spans": 0,
+      "missing_figure_numbers": [],
+      "latex_missing_glyph_warnings": 0,
+      "visual_samples": [
+        "图1-4竖向流程",
+        "框架平台表格",
+        "前言小节目录跳转"
+      ],
+      "figure_count": 114,
+      "toc_entries": 293,
+      "preface_toc_pdf_pages": [
+        9,
+        10,
+        11,
+        13,
+        13,
+        14
+      ]
+    },
+    "visual_review": {
+      "pages": 316,
+      "reviewed_page_ranges": [
+        [
+          1,
+          316
+        ]
+      ],
+      "method": "渲染全部316页并逐页视觉检查；最终页眉/表题修订后按像素比较，重新检查全部39个变化页面",
+      "changed_pages_reviewed": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        86,
+        93,
+        94,
+        98,
+        112,
+        125,
+        135,
+        202,
+        203,
+        209,
+        217,
+        221,
+        227,
+        228,
+        229,
+        230,
+        232,
+        246,
+        263,
+        264,
+        265,
+        266,
+        267,
+        270,
+        271,
+        272,
+        281,
+        282,
+        286,
+        287,
+        288,
+        289,
+        315,
+        316
+      ],
+      "findings_resolved": [
+        "前言及后记页眉继承上一部分标题",
+        "表题与表格首行分离"
+      ],
+      "layout_decision": "部分高图前页保留空白，维持图内技术信息及字号，不通过缩小整图压缩页数。"
+    },
+    "final_file": "book/深入理解-AI-Agent-李博杰-v2.0.pdf",
+    "sha256": "d29b431d5315246c41c28349d420eeb590f0e609355bc4d8a6379896a2bd5901",
+    "final_pages": 316
+  },
+  "editor_feedback_audit": {
+    "status": "complete",
+    "scope": "编辑13项意见对照全书审读结果；不复核实验原始记录",
+    "items": [
+      {
+        "number": 1,
+        "topic": "定位与方法—原则",
+        "sources": "book/introduction.md",
+        "evidence": "前言明确实践形成方法、评估检验方法、验证抽象沉淀原则；后记结尾呼应。",
+        "status": "addressed"
+      },
+      {
+        "number": 2,
+        "topic": "前言主线与使命",
+        "sources": "book/introduction.md",
+        "evidence": "使命聚焦基本结构、构建方法和能力边界；设计实体置于延伸思考文本框。",
+        "status": "addressed"
+      },
+      {
+        "number": 3,
+        "topic": "全书阅读地图",
+        "sources": "book/introduction.md",
+        "evidence": "逐章介绍与十章标题、主题和两部分阅读路线一致。",
+        "status": "addressed"
+      },
+      {
+        "number": 4,
+        "topic": "核心公式的功能组成",
+        "sources": "book/chapter1.md",
+        "evidence": "LLM、上下文、工具分别承担决策、信息组织及观测/行动接口。",
+        "status": "addressed"
+      },
+      {
+        "number": 5,
+        "topic": "功能比喻",
+        "sources": "book/introduction.md; book/chapter1.md",
+        "evidence": "统一为大脑、当前决策视野、感官和手脚；第2、4、6章按对应职责展开。",
+        "status": "addressed"
+      },
+      {
+        "number": 6,
+        "topic": "强化学习对应关系",
+        "sources": "book/chapter1.md; book/chapter6.md; book/chapter8.md",
+        "evidence": "具体观测和历史与空间定义分开，策略、工具接口和允许范围各有定义。",
+        "status": "addressed"
+      },
+      {
+        "number": 7,
+        "topic": "Model、Harness与环境",
+        "sources": "book/chapter1.md; book/chapter5.md; book/chapter10.md",
+        "evidence": "两套公式互补；Harness位于Agent内、Model外，环境承载外部状态，权限由执行机制落实。",
+        "status": "addressed"
+      },
+      {
+        "number": 8,
+        "topic": "观测、行动与开放式",
+        "sources": "book/chapter1.md; book/chapter6.md; book/chapter8.md",
+        "evidence": "专业交互使用观测；开放式指内容及组合难以穷举，同时保留接口、参数、权限与环境限制。",
+        "status": "addressed"
+      },
+      {
+        "number": 9,
+        "topic": "实验与循环说明",
+        "sources": "book/chapter1.md; book/images/fig1-3.svg",
+        "evidence": "完整基线与四组消融对应；ReAct作为典型实现，轨迹与历史消息区分；遵照作者要求沿用现有实验结果。",
+        "status": "addressed"
+      },
+      {
+        "number": 10,
+        "topic": "产品与工程判断",
+        "sources": "book/chapter1.md; book/afterword.md",
+        "evidence": "模型主导调用决策与实际执行分开；托管实验保留客户端/服务端职责；已移除K3连续200—300次调用的产品断言，保留有出处的模型介绍及作者工程判断。",
+        "status": "addressed"
+      },
+      {
+        "number": 11,
+        "topic": "五项功能与工程视角",
+        "sources": "book/chapter1.md; book/chapter10.md",
+        "evidence": "上下文管理、工具接口、约束、验证、纠正五项保留；五个工程视角按承载和组合解释。",
+        "status": "addressed"
+      },
+      {
+        "number": 12,
+        "topic": "正文、文本框与参考资料",
+        "sources": "book/introduction.md; book/chapter1.md; book/chapter4.md",
+        "evidence": "教学所需公式、参数示例与推理保留；旁支以文本框承载，来源用注释，实验完整运行细节留在README。",
+        "status": "addressed"
+      },
+      {
+        "number": 13,
+        "topic": "图文对应与灰度",
+        "sources": "book/images; book/chapter1.md; book/chapter2.md",
+        "evidence": "全书114幅图在PDF中完整显示；重点图1-4、1-5、1-6、2-1保留具体字段与机制；逐页检查灰度、箭头、图题和相邻文字。",
+        "status": "addressed"
+      }
+    ]
+  },
+  "author_voice_candidates": "/tmp/agent-book-author-voice-candidates.json",
+  "next": "作者审阅PR和PDF，按反馈继续迭代",
+  "html_checks": {
+    "files": 13,
+    "images": 114,
+    "math": 147,
+    "broken_images": 0,
+    "broken_footnotes": 0,
+    "math_errors": 0
+  },
+  "subsequent_typography_review": "editorial-typography-review.json"
+}

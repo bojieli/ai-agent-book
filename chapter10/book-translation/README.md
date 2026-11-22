@@ -1,6 +1,6 @@
 # 用分工与文件组织长文档翻译
 
-长书翻译很难把所有原文与译文一直放在管理者上下文中。本实验让不同角色负责翻译与检查，并用文件保存完整产物，学习如何控制协调成本。
+假设编辑要求全书把 token 译作“词元”。第一章交稿后，第二章的译者从哪里知道这个约定？要是审校发现漏改了一处，管理者需要重读整本书吗？这个实验用同一批原稿比较两种做法：让单个 Agent 在同一段对话里接着翻译，或者把术语、译稿和审校意见分别交给不同角色。
 
 [English](#english)
 
@@ -16,7 +16,7 @@
 
 ## 准备环境与输入
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+读计划时留意术语表、章节原文和译稿分别由谁提供。本地计划演示可先看交接顺序；要生成译文和审校意见，再准备模型服务与一个短章节。
 
 <a id="learning-2"></a>
 
@@ -26,16 +26,11 @@
 
 ### 实验 10-2：书籍翻译 Agent —— 管理者模式（Orchestration）
 
-配套代码，演示如何用**管理者模式**把长文档翻译拆给多个专职 Agent。核心是
-**上下文隔离**与**控制 Manager 上下文膨胀**：Manager 只保存任务、计划、各
-Agent 调用记录和文件索引，**完整译文全部落盘到文件系统**，因此无论书有多长，
-Manager 的上下文都基本恒定。
+先在实验目录运行 `python demo.py --dry-run`。找到计划里的第二章翻译任务，看看译者将拿到哪些材料，再看 Manager 的文件索引里留下了什么。译文落盘以后，下一章增加的是文件路径、进度与调用记录。章节越多，这些记录也会增长，但前一章的整份译文可以留在文件里。
 
-#### 目的
+#### 做完实验要能回答什么
 
-对比「单 Agent 一条对话翻完整本书」与「管理者模式多 Agent 协作」两种方案，用
-**真实 token 数**说明后者如何控制主/Manager 上下文膨胀，并用**共享术语表**保证
-全书术语一致。
+管理者传递文件能省下多少上下文？先比较 Manager 与单 Agent 的上下文峰值，再把各个角色的调用加起来，核对总 token 和耗时。术语则要做两种检查：一本书从头到尾沿用了同一种译法吗？这种译法符合编辑的指定用词吗？一个译者完全可能每次都用同一个词，却每次都偏离编辑要求。
 
 #### 架构：四种 Agent
 
@@ -48,11 +43,11 @@ Manager 的上下文都基本恒定。
 
 数据流：Manager 调度 Glossary → 逐章 Translation（共享同一份术语表文件）→
 Proofreading → Manager 依据报告决定是否把个别章节发回 Translation 修订。译文与
-术语表都通过**文件系统**传递，Manager 只在上下文里保存文件路径。
+术语表都通过**文件系统**传递，Manager 拿到文件索引和报告摘要。在四章演示中，审校报告会列出问题所在章节。若 Manager 决定返修，程序只取该章的问题说明，把它同原文、术语表再交给译者，生成的新译稿写回该章文件。
 
 关键设计：Manager 把「编辑部指定术语」（house style，如 token→词元、
 prompt→提示词、latency→时延）强制写入共享术语表，下发给每个 Translation Agent，
-从而把指定译法贯彻到全书。单 Agent 看不到术语表，只能用自己的默认译法。
+译者据此选词。单 Agent 对照组没有拿到这份约定。解读两组的指定译法遵从率时，要把这项输入差异算进去。
 
 #### 目录
 
@@ -90,7 +85,8 @@ cd chapter10/book-translation
 # python -m pip install -r requirements.txt
 
 cp env.example .env      # 填入 OPENAI_API_KEY
-python demo.py
+python demo.py --dry-run     # 只看计划，无需密钥
+python demo.py               # 配好模型后运行四章对照
 ```
 
 上面的四章小书只用于低成本入门，不是正文实验的正式验收对象。完整验收入口改用本仓库英文版技术书的第 1–2 章：它包含 242,090 字节正文、23 个真实插图引用和 14 个围栏代码块。runner 在 Markdown 安全边界把长章拆成有界翻译单元，分别调用 Agent 后再重组为完整章节；源码字节、图像目标、链接和代码块都会独立校验，不能用短摘要冒充翻译。
@@ -105,24 +101,33 @@ python run_official_experiment.py \
 
 ##### 2026-07-30 正式实跑结果
 
+历史记录沿用实验旧编号 10-3，对应本章实验 10-2。
+
 [v4 完整证据](validation/real_20260730T061500Z_v4/evidence.json)在英文版第 1–2 章上完成了 26 个 Markdown 安全翻译单元：242,090 字节、1,598 行、23 个插图引用、14 个围栏代码块。翻译组使用真实 ARK `doubao-seed-1-6-flash-250615`，匿名位置平衡裁判使用真实 ARK `doubao-seed-1-6-250615`；二者均显式关闭 thinking。12/12 执行与溯源门禁通过，[latest 指针](validation/latest.json)的证据 SHA-256 为 `9e765aa3d9b194346e1b9b5398018b99c369c2f8c79df231a433cc9e89ab1b5e`。
 
 | 实测指标 | 四角色管理者组 | 单 Agent 组 |
 | --- | ---: | ---: |
 | 翻译 API 调用 | 29 | 26 |
 | 翻译总 token | 203,277 | 1,317,808 |
-| 主上下文峰值 | 4,618 | 94,355 |
+| Manager 本地状态峰值（tiktoken 估算） | 4,618 | — |
+| 所有角色中最大一次 API 输入（回执） | 49,807（Glossary） | 94,355 |
 | 翻译墙钟时间 | 270.829 秒 | 254.127 秒 |
 | 匿名质量均分（5 分制） | 4.654 | 4.481 |
 | 裁判偏好单元数 | 15 | 11 |
 | 编辑部指定译法遵从率 | 75% | 0% |
 | 确定性字符串术语一致率 | 50% | 87.5% |
 
-这次结果支持“上下文隔离”而不是无条件支持“多 Agent 全面更优”：Manager 主上下文缩小 20.43 倍，翻译 token 减少 6.48 倍，匿名质量略高，但墙钟时间反而慢 6.57%。共享术语表显著提高指定译法遵从率，却没有保证更高的宽泛字符串一致率；`embedding` 也没有遵守指定的“嵌入向量”。
+打开证据文件的 `modes.orchestration.tracker.by_agent`，分别看四个角色的 `peak_context`。Manager 那次决策输入了 2,153 个 token，译者最大一次输入 2,857 个；通读两章的 Glossary 和审校者分别用了 49,807 和 46,885 个。表里的 4,618 是程序把 Manager 的状态写成 JSON 后在本地数出的峰值。用它去除单 Agent 请求的 94,355，得到的 20.43 混合了两种计数口径。直接比较两组最大一次 API 输入，单 Agent 约为管理者组的 1.89 倍。
+
+两组累计用量相差约 6.48 倍，回答的是另一个问题：翻完整批材料一共处理了多少 token？管理者组在这批材料上总用量较低，匿名质量均分略高，耗时却多了 6.57%。按程序的字符串匹配规则，管理者组的指定译法遵从率较高，宽泛字符串一致率较低。
+
+以 `embedding` 的 0/2 为例。在[术语表](validation/real_20260730T061500Z_v4/orchestration_parts/glossary.json)里，这条记录标明词性是名词，译作“嵌入向量”。但评分程序只读译稿：去掉代码后，只要某章出现“嵌入”或“嵌入向量”，就把该章计入分母；只要出现过“嵌入向量”，该章就得一分。两章都只命中了“嵌入”。
+
+读者可以打开[实跑时的原文快照](validation/real_20260730T061500Z_v4/source-snapshot.zip)，在 `book-en/chapter1.md` 里搜 `embedding the refund policy`，再到[第一章译稿](validation/real_20260730T061500Z_v4/orchestration/chapter1_zh.md)里搜“将退款政策嵌入上下文中”。这句话里的 `embedding` 表示一个动作，名词词条不适用。仅凭 0/2 就要求全章替换，会改坏这句话；仅凭[审校报告](validation/real_20260730T061500Z_v4/orchestration_parts/proofreading_report.json)的问题列表为空，也不能判定其他段落都译对了。
 
 结构保真同样出现真实负结果：两组都保留了代码块和插图的数量，却都改动了代码 payload 并增加了标题；管理者组还改动了插图目标，而单 Agent 组的插图目标序列保持不变。这里的 ✅ 表示完整对照与所有预注册测量已经执行，不表示每项质量假设都成立。
 
-裁判阶段共有 39 次带完整原始请求/响应 ID/usage/时延的回执，另有一次在回执机制加入前发生的已声明格式失败；14 个带回执响应未通过严格 schema，8 个仅把偏好字段重复嵌套的响应做了有标记的无损本地归一化，另一次通过独立的格式修复 API 调用展平，未重新评分。26 份回执、三个 checkpoint、四份重组译文、三个当前验收源码和负溯源标记共 37 个声明 hash 均已重算一致。
+裁判阶段共有 39 次带完整原始请求/响应 ID/usage/时延的回执，另有一次在回执机制加入前发生的已声明格式失败；14 个带回执响应未通过严格 schema，8 个仅把偏好字段重复嵌套的响应做了有标记的无损本地归一化，另一次通过独立的格式修复 API 调用展平，未重新评分。核对归档时，先看 26 份回执、三个 checkpoint、四份重组译文和一份失败记录。这 34 个文件今天仍可直接按清单校验。其余三个哈希标识当时的验收源码，可在[归档提交](https://github.com/bojieli/ai-agent-book/tree/6af52b4eeaa7fac2b7ec9e3490dc32ea9cc72ab4/chapter10/book-translation)核对。若要离线逐项复核，可以打开[本次运行的源码与原稿快照](validation/real_20260730T061500Z_v4/source-snapshot.zip)。包内路径与证据清单一致，其中保存了三个验收程序和两章英文原稿。当前的运行脚本和角色实现已经改过。要复核当时翻译了什么，还需对照记录中的输入哈希；其中英文第二章匹配[这版原稿](https://github.com/bojieli/ai-agent-book/blob/7ba736a065f8de8783f900abf919e6da1661b6d6/book-en/chapter2.md)。
 
 `python demo.py` 会先打印**四 Agent 协作的实时轨迹**（Manager 制定计划 → 调度
 Glossary → 逐章 Translation → Proofreading → 依报告决定修订），再打印各 Agent 的
@@ -188,18 +193,15 @@ python demo.py --dry-run
 
 | 指标 | 管理者模式 | 单 Agent |
 | --- | --- | --- |
-| 主/Manager 上下文峰值 (tokens) | **697** | **2320** |
+| Manager 本地状态峰值（估算） | 697 | — |
+| 单 Agent 最大一次请求输入 | — | 2,320 |
 | Manager LLM 决策调用上下文 (tokens) | 783 | — |
 | 全流程总 token | 11849 | 6886 |
 | 术语内部一致率 | 100% | 89% |
 | 指定术语遵从率 | **100%** | **53%** |
 | 参与 Agent 种类数 | 4 | 1 |
 
-1. **控制上下文膨胀**：单 Agent 的主上下文随章节累积，峰值达 2320 tokens；管理者
-   模式下 Manager 上下文峰值仅 697 tokens（约 3.3 倍差距）。更重要的是，Manager
-   上下文与书的长度**基本无关**（只加一行调用记录/文件索引），而单 Agent 的累积
-   上下文会随章节线性增长——书越长，差距越大。子 Agent 的上下文各自隔离、互不污染
-   （每个 Translation 实例峰值仅约 547 tokens）。
+1. **跟踪每个角色读了多少材料。** 四章演示中，单 Agent 最大一次请求输入了 2,320 个 token。Manager 决策时输入了 783 个，译者的输入峰值约为 547 个。另一个数 697 表示 Manager 本地状态的峰值。译稿越长，内容会继续写入文件；章节数增加时，文件索引和调用记录也会增长。
 2. **术语一致性**：管理者模式把编辑部指定术语写入共享术语表并强制下发，4 个指定
    术语在全书的遵从率 **100%**；单 Agent 看不到术语表，遵从率仅 **53%**。换用更强
    的 gpt-5.6-luna 后，单 Agent 会**自发**采用部分「常识译法」（token→词元、
@@ -242,12 +244,12 @@ python demo.py --dry-run
 # Experiment 10-2: Book Translation Agent — Orchestration Pattern
 
 Accompanying code demonstrating how to use the **Orchestration Pattern** to delegate long-document translation to multiple specialized agents. The core principles are
-**context isolation** and **controlling Manager context growth**: the Manager only stores tasks, plans, agent call records, and file indexes; **complete translations are all written to the file system**, so no matter how long the book is, the Manager's context remains essentially constant.
+**context isolation** and **controlling Manager context growth**: the Manager only stores tasks, plans, agent call records, and file indexes; **complete translations are all written to the file system**, so the manager tracks additional paths, progress, and call records as chapters accumulate without carrying every chapter’s text into the next request.
 
 ## Objective
 
 Compare the "single agent translating an entire book in one conversation" approach with the "orchestration pattern multi-agent collaboration" approach, using
-**real token counts** to show how the latter controls main/Manager context growth, and using a **shared glossary** to ensure terminology consistency throughout the book.
+**real token counts** to show how the latter controls main/Manager context growth, and using a **shared glossary** to measure consistency separately from adherence to the editor’s preferred terms.
 
 ## Architecture: Four Agents
 
@@ -356,14 +358,15 @@ python demo.py --dry-run
 
 | Metric | Orchestration Mode | Single Agent |
 | --- | --- | --- |
-| Main/Manager Context Peak (tokens) | **697** | **2320** |
+| Estimated peak serialized Manager state | 697 | — |
+| Largest single-agent API input | — | 2,320 |
 | Manager LLM Decision Call Context (tokens) | 783 | — |
 | Total Pipeline Tokens | 11849 | 6886 |
 | Internal Terminology Consistency Rate | 100% | 89% |
 | Specified Term Adherence Rate | **100%** | **53%** |
 | Number of Agent Types Involved | 4 | 1 |
 
-1. **Controlling Context Growth**: The single agent's main context accumulates with each chapter, peaking at 2320 tokens; in orchestration mode, the Manager's context peaks at only 697 tokens (approximately a 3.3x difference). More importantly, the Manager's context is **essentially independent** of the book's length (it only adds one line of call record/file index), while the single agent's cumulative context grows linearly with the number of chapters — the longer the book, the larger the gap. Sub-agents' contexts are isolated from each other, preventing cross-contamination (each Translation instance peaks at only about 547 tokens).
+1. **Read the per-role measurements.** The single agent's largest request contained 2,320 input tokens. The Manager decision used 783 input tokens, and the largest Translation input was about 547. The 697-token figure measures the Manager's serialized local state. Chapters add index entries and call records while the translations themselves stay in files.
 2. **Terminology Consistency**: The orchestration mode writes house style terms into the shared glossary and enforces them, achieving **100%** adherence for the 4 specified terms across the entire book; the single agent, unable to see the glossary, achieves only **53%** adherence. After switching to the more powerful gpt-5.6-luna, the single agent **spontaneously** adopts some "common sense translations" (token→词元, prompt→提示词 both matched the specified translations), but still acts independently for terms without a single standard (latency was translated as "延迟" throughout the book instead of the specified "时延", embedding as "嵌入" instead of "嵌入向量", with 0/4 and 0/3 adherence respectively). More critically, even the same term **drifts across chapters** for the single agent — token is translated as "词元" in some chapters and left as "token" in others, causing the internal consistency rate to drop to 89%; the orchestration mode, using the shared glossary, eliminates both types of issues (internal consistency 100%, adherence 100%).
 3. **Cost**: The orchestration mode uses significantly more tokens (11849 vs 6886, due to additional glossary extraction, proofreading, scheduling calls, and longer outputs from the reasoning model), in exchange for **controllable main context** and **enforceable terminology uniformity** — precisely the properties needed for long-document translation.
 

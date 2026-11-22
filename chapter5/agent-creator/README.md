@@ -1,6 +1,6 @@
 # 生成一个专用 Agent 需要交付什么
 
-让 Agent“再创建一个 Agent”，不是只写一段系统提示词。本实验从需求出发生成专用程序，并与复用已有框架的路径比较，学习如何判断生成结果是否真的可用。
+让 Agent“再创建一个 Agent”，需要交付提示词、工具、运行循环和可验证的行为。本实验从需求出发生成专用程序，并与复用已有框架的路径比较，学习如何判断生成结果是否真的可用。
 
 [English](#english)
 
@@ -14,7 +14,7 @@
 
 ### 比较从零生成与模板改造
 
-实验 5-13 要求同一个真实模型构造两个专用 Agent。第一条路线从零生成 Agent 循环、工具协议、领域工具、命令行入口和测试；第二条路线复制 `reference_agent`，保留已有的消息与工具循环，只修改领域提示、工具定义、实现、文档和测试。
+实验 5-16 要求同一个真实模型构造两个专用 Agent。第一条路线从零生成 Agent 循环、工具协议、领域工具、命令行入口和测试；第二条路线复制 `reference_agent/`，保留消息循环、命令行、通用检查工具和测试。模型填写一份领域规格，创建脚本据此定制提示词、工具定义和文档。
 
 这样设计是为了区分两个问题：模型能否写出领域逻辑，以及它能否同时正确组织通用的 Agent 协议。模板路线减少了后一个问题的生成负担，但仍需证明新增的领域行为符合要求。
 
@@ -23,6 +23,19 @@
 ## 准备环境与输入
 
 下面会用到模型服务。先按配置说明选择一个提供商，准备对应的模型名称、服务地址和 API Key，再运行小规模例子。一次完整运行的费用取决于模型、输入长度和调用次数。
+
+### 先用 Deep Agents 接一笔发布审核
+
+团队有两个待发布版本。构建都通过了，R17 的冒烟测试失败，R18 的冒烟测试通过。要让助理回答“能不能发布”，先给它一个只读工具：`inspect_release` 根据版本号读取示例检查记录，调用 `reference_agent/domain_tools.py` 中已有的规则，返回结论及失败项。模型只提交版本号，检查项的通过状态由工具读取。
+
+在本实验目录运行以下命令。首次运行时 uv 会安装脚本声明的 SDK，之后可以加 `--offline` 从本地缓存运行。默认模式使用固定模型消息，实际执行 Deep Agents 的调度和工具，整个过程无需 API Key。
+
+```bash
+uv run --no-project deepagents_release_review.py R17
+uv run --no-project deepagents_release_review.py R18
+```
+
+第一条工具回执应为 `REFUSED`，失败项为 `smoke`；第二条应为 `APPROVED`，失败项为空。先沿脚本里的 `create_deep_agent`、`inspect_release`、`ToolMessage` 找出调用从哪里发起、由谁判定、结果怎样交回。两次回放都正确，只能说明这条调用链能跑通。要观察模型是否主动查对版本、能否讲清拒绝原因，可在配置好供应商凭证后传入 `--model anthropic:模型标识`，用账户支持工具调用的实际模型名替换占位符，再把模型的解释与工具回执逐项比对。框架支持的模型及配置见 [Deep Agents 快速入门](https://docs.langchain.com/oss/python/deepagents/quickstart)。
 
 ### 安装依赖并配置创建者模型
 
@@ -43,7 +56,7 @@ python demo.py --output runs/release-agent
 
 ### 先做一个小规模观察
 
-以下命令从本实验目录执行。先完成前面的环境准备，再观察这条路径的输入和输出。
+在本目录运行下面的创建命令。把输出写入独立的 `runs/release-agent` 目录，运行结束后在那里找创建者交付的程序和测试。
 
 ```bash
 python demo.py --output runs/release-agent
@@ -71,7 +84,9 @@ python demo.py \
 
 两条路线依次经过相同的检查：必需文件与凭据扫描、Python AST/编译、`assistant.tool_calls → role=tool` 消息协议、循环次数限制、生成的 pytest 测试，以及生成 Agent 自身样例任务的真实 API 运行。前面几项通过只说明结构可用，最后一项才开始检验实际协作行为。
 
-`comparison.json` 同时记录生成耗时、token 用量、每项检查、真实轨迹与策略比较结果。先定位失败发生在哪一层，再解释哪种路线更合适。
+运行完成后，先在输出目录打开 `template/generation.json`，其中的 `artifact` 指向模型生成的 `domain_spec.json`。沿发布审核的例子追踪一个字段：规格中 `passing_values` 为 `["passed"]`，因此必检项标为 `skipped` 时，通用工具应返回拒绝以及该条记录的依据。`creator.py` 的 `_materialize_template` 用同一份规格写出 `system_prompt.md`、`tools.json` 和 `README.md`；对照模板与产物中的 `agent.py`、`domain_tools.py` 和测试，可以看到这些文件直接继承自参考实现。
+
+再看 `comparison.json` 中的 `quality_comparison` 和 `efficiency_comparison`。正式运行中，两个 Kimi K3 产物均通过 39/39 项确定性质量检查；模板与从零路线分别用了 1,181 和 381,814 个创建者 token，创建耗时约 24.7 秒和 5,412.8 秒。这回答了“生成这两个产物分别花了多少”；运行生成的 Agent 所用的模型费用另记。创建效率较高，但这次没有观察到模板在质量得分上胜出。
 
 ### 检查自己的解释
 
@@ -87,9 +102,9 @@ python demo.py \
 
 ## English
 
-# Experiment 5-13: An Agent That Creates Agents
+# Experiment 5-16: An Agent That Creates Agents
 
-This is the runnable companion for Chapter 5, Experiment 5-13. It implements the
+This is the runnable companion for Chapter 5, Experiment 5-16. It implements the
 book's complete comparison rather than merely pointing at `coding-agent` as a
 possible starting point.
 
@@ -97,9 +112,9 @@ The experiment asks the same real model to create two specialized Agents:
 
 1. **From scratch**: generate the Agent loop, tool protocol, domain tools, CLI,
    and tests with no reference implementation.
-2. **Template adaptation**: copy the proven `reference_agent`, preserve its
-   standard message/tool loop, and generate only the domain-specific prompt,
-   tool schemas, implementations, documentation, and tests.
+2. **Template adaptation**: copy `reference_agent/`, including the tool loop,
+   record checker, CLI, and tests. The model supplies `domain_spec.json`.
+   The creator uses it to write the system prompt, tool schema, and README.
 
 Both outputs pass the same gates:
 
@@ -149,3 +164,7 @@ Generated paths are allowlisted, credentials are never placed in prompts or
 generated files, and live execution occurs only after structural and test gates.
 Generated domain tools still execute local code, so review them before using the
 output outside an isolated experiment directory.
+
+## 编辑核对记录
+
+本实验现编号为 5-16，冻结的协议与历史目录沿用旧编号。上述结果已与归档 `runs/exp5-12-kimi-k3-20260730-v1/comparison.json` 核对，文件 SHA-256 与[第五章实验台账](../EXPERIMENT_LEDGER.md)中的记录一致。仓库提供复现代码与协议，完整的历史运行目录未纳入 Git。
