@@ -32,8 +32,8 @@
 
 | 编号 | 项目 | 类型 | 一句话说明 |
 | :--: | --- | :--: | --- |
-| 3-1, 3-2 | [user-memory](user-memory/) | ✅ | 长期用户记忆系统，让 Agent 记住偏好与历史交互、提供个性化服务 |
-| 3-1, 6-3 | [user-memory-evaluation](user-memory-evaluation/) | ✅ | 三层用户记忆评估集；实验 6-3 的四档多维 Rubric、逐维证据与幻觉一票否决 |
+| 3-1, 3-2 | [user-memory](user-memory/) | ✅ | 四种格式在同一组 60 个用例上的[运行记录](user-memory/validation/runs/20260730T043652Z-3_1_and_3_2-16200e94/evidence.json)，含记忆更新、回答与评分 |
+| 3-1、7-3 | [user-memory-evaluation](user-memory-evaluation/) | ✅ | 三层用户记忆评估集与离线评分示例；[第七章实验 7-3](../book/chapter7.md) 使用四档多维 Rubric、逐维证据与幻觉一票否决 |
 | 3-2 | [mem0](mem0/) · [memobase](memobase/) | ✅ | 用 mem0、Memobase 两个开源框架各实现一版用户记忆，作为实验 3-2 的对照实现 |
 | 3-3 | [log-sanitization](log-sanitization/) | ✅ | 智能日志脱敏系统，基于本地 Ollama 模型检测并脱敏日志中的密钥和 PII 敏感数据 |
 | 3-4 | [dense-embedding](dense-embedding/) | ✅ | 向量相似性搜索服务，对比 ANNOY（树）与 HNSW（图）两种 ANN 算法的权衡 |
@@ -42,7 +42,7 @@
 | 3-7 | [structured-index](structured-index/) | ✅ | 实现并对比 RAPTOR（递归抽象树）与 GraphRAG（知识图谱）两种结构化索引 |
 | 3-8 | [agentic-rag](agentic-rag/) | ✅ | 对比 Non-Agentic 与 Agentic RAG，展示 ReAct 主导的迭代检索在司法问答上的优势 |
 | 3-9 | [agentic-rag-for-user-memory](agentic-rag-for-user-memory/) | ✅ | 用 Agentic RAG 管理用户对话历史，实现跨会话记忆检索 |
-| 3-10 | [contextual-retrieval](contextual-retrieval/) | ✅ | 实现 Anthropic 的上下文感知检索，为分块生成前缀摘要，失败率降低 49–67% |
+| 3-10 | [contextual-retrieval](contextual-retrieval/) | ✅ | 用同一组 15 个查询比较原始分块与带前缀分块：本地实验中 BM25 的 recall@1 从 0.60 升至 0.80；正文另引的 49% 和 67% 来自 Anthropic 的 top-20 报告 |
 | 3-11 | [contextual-retrieval-for-user-memory](contextual-retrieval-for-user-memory/) | ✅ | 结合 Advanced JSON Cards 与上下文感知 RAG，形成双层记忆结构实现主动服务 |
 | 3-12 | [structured-knowledge-extraction](structured-knowledge-extraction/) | ✅ | 以司法判例跑通「因子发现 → 聚类原型 → 对话式建议」三段流水线 |
 

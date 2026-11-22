@@ -110,7 +110,7 @@ python main.py --mode batch --responses agent_responses.json
 字段：`test_id`、`category`、`title`、`conversation_histories`、`user_question`、`evaluation_criteria`、`expected_behavior`。
 
 - **`keyword-recall`**：离线关键事实召回  
-- **`llm-judge`**：实验 6-3 的结构化 Rubric（需 API）。逐维输出事实精确率、事实召回率、
+- **`llm-judge`**：第七章实验 7-3 的结构化 Rubric（需 API）。逐维输出事实精确率、事实召回率、
   思考正确性和主动性四档成绩、证据与边界案例；另设幻觉一票否决，触发后总分归零。
 
 通过阈值：`reward >= 0.6`。

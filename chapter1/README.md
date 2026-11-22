@@ -39,7 +39,7 @@
 | 1-2 | [web-search-agent](web-search-agent/) | ✅ | Kimi K3 决定查询与后续步骤，客户端 Harness 维护循环，Formula 服务执行搜索 |
 | 1-3 | [search-codegen](search-codegen/) | ✅ | 通过 Responses API 组织服务端托管搜索与代码执行；正文采用百炼 qwen3.7-plus 的首都距离和比特币分析记录，分别检查澄清、调用、计算与数据来源 |
 | 1-4 | [image-gen-workflow](image-gen-workflow/) | ✅ | 五组具体或宽泛需求，对比 Kimi 改写后调用通义万相与 Gemini、GPT-Image 2 直接生图；检查提示词改写是否保留文案等明确要求，并分别评价场景补充与最终图片 |
-| 7-1, 7-2 | [learning-from-experience](learning-from-experience/) | ✅ | 10,000 局 Q-learning + 100 局评估与官方 Kimi K3 第一局双臂实测已验收；[证据](learning-from-experience/validation/20260730_011704/evidence.json)记录 Kimi 17 步成功、零 fallback 及历史点估计差异 |
+| 8-1、8-2（第八章） | [learning-from-experience](learning-from-experience/) | ✅ | 10,000 局 Q-learning + 100 局评估与官方 Kimi K3 第一局双臂实测已验收；[证据](learning-from-experience/validation/20260730_011704/evidence.json)记录 Kimi 17 步成功、零 fallback 及历史点估计差异 |
 
 ## 项目类型说明
 
