@@ -313,7 +313,7 @@ lightweight tool outputs and scripted model do not count as formal evidence.
 
 ### 正式运行记录与指标口径
 
-脚本帮助中的“126”沿用早期说明；要确认某一次运行实际收到了多少工具，请查看该次目录回执的 `unique_tool_count`。当前采用的运行是 [`rerun_20260825/summary.json`](validation/experiment_4_1/rerun_20260825/summary.json)，使用本地 Ollama `qwen3:4b` 和真实 MCP 服务提供的 127 个工具。其 manifest SHA-256 为 `e5a70588804b8bc1a5ba38c18fe7f4537e8284e62f745d8a6e03401833046dae`。[7 月 30 日的目录回执](validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/catalog_receipt.json)记录的是 126 个真实工具、50,120 个 schema token；教学目录虽然也是 126 个工具，定义内容不同。核对旧运行的调用与产物时，应从[该次汇总](validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/summary.json)进入。
+脚本在运行时读取工具目录。要知道这次一共读到了多少个不同的工具，可以查看目录回执的 `unique_tool_count`。当前采用的运行是 [`rerun_20260825/summary.json`](validation/experiment_4_1/rerun_20260825/summary.json)，使用本地 Ollama `qwen3:4b` 和真实 MCP 服务提供的 127 个工具。其 manifest SHA-256 为 `e5a70588804b8bc1a5ba38c18fe7f4537e8284e62f745d8a6e03401833046dae`。[7 月 30 日的目录回执](validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/catalog_receipt.json)记录的是 126 个真实工具、50,120 个 schema token；教学目录虽然也是 126 个工具，定义内容不同。核对旧运行的调用与产物时，应从[该次汇总](validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/summary.json)进入。
 
 | 项目 | 全量加载 | 主动发现 |
 | --- | ---: | ---: |

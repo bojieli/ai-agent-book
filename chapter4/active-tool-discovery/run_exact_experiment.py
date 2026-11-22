@@ -3,7 +3,7 @@
 
 Unlike the original mechanism demo, this runner:
 
-* obtains 126 complete schemas from the perception MCP server via stdio;
+* reads the MCP server’s tool schemas via stdio and records the observed catalog size;
 * uses exactly local Ollama ``qwen3:4b`` for both groups;
 * asserts that the control catalog exceeds 50K measured tokens;
 * executes the selected tools through MCP against real APIs/local processes;
