@@ -80,6 +80,8 @@ cd ai-agent-book
 
 在仓库页面选择 **Code → Download ZIP** 并解压，也能得到同样的目录。从[第一章实验索引](https://github.com/bojieli/ai-agent-book/blob/main/chapter1/README.md)找到编号 1-1，打开 [context 实验说明](https://github.com/bojieli/ai-agent-book/blob/main/chapter1/context/README.md)。先看完整上下文时工具返回了什么，再看移除工具结果后模型在哪一步失去了依据。此后遇到“实验 X-Y”，都可以从仓库中的 `chapterX/README.md` 查到项目和运行方法。“复现指南”提供外部项目及获取方式，安装命令和目录说明集中放在 README 中。
 
+如果你正在维护一个已经上线的 Agent，可以先从第七章选一批真实任务做评估，再带着失败案例读第九章，尝试更新知识、指令或程序。若信息和工具已经给足，换了流程也难以纠正模型的行为，再回到第八章判断是否值得准备训练数据、更新模型参数。
+
 读完一章，不妨先挑一道思考题，把自己的判断和验证办法各写一句。例如，要判断一次工具调用为什么重复，你会先查哪条记录？试着从实验轨迹里找出它，再对照[按章编排的参考答案](https://github.com/bojieli/ai-agent-book/blob/main/book/reference-answers.md)。有不同解法时，拿同一份输入去试，看两种解释各自预言了什么结果。
 
 ## 前置知识 {.unnumbered}

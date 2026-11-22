@@ -24,6 +24,19 @@
 
 下面会用到模型服务。先按配置说明选择一个提供商，准备对应的模型名称、服务地址和 API Key，再运行小规模例子。一次完整运行的费用取决于模型、输入长度和调用次数。
 
+### 先用 Deep Agents 接一笔发布审核
+
+团队有两个待发布版本。构建都通过了，R17 的冒烟测试失败，R18 的冒烟测试通过。要让助理回答“能不能发布”，先给它一个只读工具：`inspect_release` 根据版本号读取示例检查记录，调用 `reference_agent/domain_tools.py` 中已有的规则，返回结论及失败项。模型只提交版本号，检查项的通过状态由工具读取。
+
+在本实验目录运行以下命令。首次运行时 uv 会安装脚本声明的 SDK，之后可以加 `--offline` 从本地缓存运行。默认模式使用固定模型消息，实际执行 Deep Agents 的调度和工具，整个过程无需 API Key。
+
+```bash
+uv run --no-project deepagents_release_review.py R17
+uv run --no-project deepagents_release_review.py R18
+```
+
+第一条工具回执应为 `REFUSED`，失败项为 `smoke`；第二条应为 `APPROVED`，失败项为空。先沿脚本里的 `create_deep_agent`、`inspect_release`、`ToolMessage` 找出调用从哪里发起、由谁判定、结果怎样交回。两次回放都正确，只能说明这条调用链能跑通。要观察模型是否主动查对版本、能否讲清拒绝原因，可在配置好供应商凭证后传入 `--model anthropic:模型标识`，用账户支持工具调用的实际模型名替换占位符，再把模型的解释与工具回执逐项比对。框架支持的模型及配置见 [Deep Agents 快速入门](https://docs.langchain.com/oss/python/deepagents/quickstart)。
+
 ### 安装依赖并配置创建者模型
 
 从仓库根目录执行下面的安装步骤，在 `.env` 中填写所选服务的凭据。`demo.py` 会调用真实模型生成两个版本，并进一步运行生成的 Agent；缺少凭据或真实运行失败时，默认命令会报错，不会自动用模拟结果替代。
@@ -43,7 +56,7 @@ python demo.py --output runs/release-agent
 
 ### 先做一个小规模观察
 
-以下命令从本实验目录执行。先完成前面的环境准备，再观察这条路径的输入和输出。
+在本目录运行下面的创建命令。把输出写入独立的 `runs/release-agent` 目录，运行结束后在那里找创建者交付的程序和测试。
 
 ```bash
 python demo.py --output runs/release-agent
