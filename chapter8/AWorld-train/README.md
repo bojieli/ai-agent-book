@@ -347,22 +347,14 @@ Result: {...historical Wikipedia content...}
 
 #### 核心架构
 
-AWorld Train 采用四阶段训练流水线：
+假设一道 GAIA 题需要先搜索资料，再从网页里核对一个数字。沿着一次工具调用读这张图：Agent 选了什么动作，环境返回了什么观察，这两项记录又怎样进入训练？
 
-![Architecture](../docs/imgs/train_env_agent_architecture.png)
+![AWorld 环境、Agent 与训练框架的连接关系](https://raw.githubusercontent.com/bojieli/AWorld/a52d61d6d483e66b22ef16970eae5bbf4f4ab2ec/docs/imgs/train_env_agent_architecture.png)
 
-```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│ Environment │───▶│    Agent    │───▶│   Adapter   │───▶│   Training  │
-│   Setup     │    │Construction │    │   Layer     │    │  Framework  │
-└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
-     (MCP)           (AWorld)            (VeRL)           (PPO/GRPO)
-```
-
-1. **环境配置**：部署 GAIA MCP Server，提供 20+ 工具能力
-2. **Agent 构建**：实现自定义 AgentLoop，定义决策逻辑
-3. **适配器集成**：统一接口，对接 RL 训练框架
-4. **训练执行**：配置奖励函数和超参数，启动训练任务
+1. **环境提供工具。** 部署 GAIA MCP Server 后，Agent 才能把一次搜索请求交给相应的工具，并取得结果。
+2. **Agent 决定下一步。** `AgentLoop` 把搜索结果接回对话，模型据此决定继续查证还是给出答案。这一轮的动作和观察都要留下来。
+3. **适配器整理交互记录。** 一道题可能查了几次才答完。适配器把各轮记录整理成训练框架能读取的轨迹，让训练代码取到模型实际生成的内容。
+4. **训练框架更新策略。** 给任务配置奖励函数和训练参数，再由 verl 执行 PPO 或 GRPO 等训练步骤。要检查一次更新的依据，可以沿轨迹追溯到当时的回答和工具结果。
 
 ---
 
