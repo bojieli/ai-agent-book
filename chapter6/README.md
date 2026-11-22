@@ -30,7 +30,7 @@
 | 6-1 | [agent-with-event-trigger](agent-with-event-trigger/) | ✅ | FastAPI 事件驱动 Agent，原生异步集成前三组 MCP 工具，通过 HTTP API 接收 Web/IM/GitHub/定时器事件 |
 | 6-2 | [async-agent](async-agent/) | ✅ | asyncio 单线程事件驱动框架 Flux：事件队列按紧急度分派、异步工具并行、运行中打断、长任务取消与状态查询 |
 | 6-3 | [astra-async-steering](astra-async-steering/) | ✅ | 比较同步工具、模型原生异步与回合中途引导，理解等待、用户更新和任务恢复之间的关系 |
-| 6-4 | [live-audio](live-audio/) | ✅ | [真实单轮证据](live-audio/backend/validation/real_pipeline_20260729_localwhisper_ark_fish/evidence.json)完成麦克风媒体 → Silero VAD → 本地 Whisper → ARK 流式 LLM → Fish S1；5 个媒体/模型 hash 当前均匹配，但证据本身没有顶层 hash manifest，且不代表并发或生产负载基准 |
+| 6-4 | [live-audio](live-audio/) | ✅ | 从[一轮麦克风录音的回放记录](live-audio/backend/validation/real_pipeline_20260729_localwhisper_ark_fish/evidence.json)追踪 Silero VAD、本地 Whisper、ARK 和 Fish S1。按串行执行顺序重算端点后的等待，比较收到首个文字 token、收到首批音频、用户听见回答三个时刻 |
 | 附加 | [phone-agent](phone-agent/) | ✅ | 使用稳定的非编号项目标识；[完整音频 canonical run](phone-agent/validation/runs/phone-agent-webrtc-audio-20260731-v1/manifest.json)跑通直接/ReAct 两组，并保留完整的 WebRTC、ASR、LLM 与 TTS 证据 |
 | 6-5 | [streaming-speech](streaming-speech/) | ✅ | [逐项运行记录](streaming-speech/validation/runs/exp6-4-qwen2audio-whisper-provenance-20260730-v3/manifest.json)比较两种听法：Qwen2-Audio 每次从头听一段更长的录音，另一组在 600 毫秒静音后用 Whisper 转写。前者 13 次推理每次耗时 8.4 至 11.3 秒。运行与来源检查八项均通过，六项行为预期只观察到两项 |
 | 6-6 | [end-to-end-speech](end-to-end-speech/) | ✅ | [同一模型的两组回答](end-to-end-speech/validation/runs/exp6-5-minicpmo45-20260801-v1/evidence.json)记录了 MiniCPM-o 4.5 在单张 RTX PRO 6000 上做四道题的结果。直接听录音和先转成文字都答对三题，但前者听出了两段同文录音一快一慢，后者只判对一段。另可查阅 24 kHz 语音输出和[原运行的 11 项检查](end-to-end-speech/validation/runs/exp6-5-minicpmo45-20260801-v1/acceptance.json)；当前复查时，三份脚本的哈希与归档版本有差异 |

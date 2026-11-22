@@ -362,7 +362,7 @@ function renderReport(e) {
     `- LLM: ${e.stages.llm.provider} / ${e.stages.llm.model}, TTFT ${e.stages.llm.first_token_seconds.toFixed(3)} s, total ${e.stages.llm.latency_seconds.toFixed(3)} s\n` +
     `- Response: ${e.stages.llm.response}\n` +
     `- TTS: ${e.stages.tts.provider} / ${e.stages.tts.model}, first byte ${e.stages.tts.first_audio_byte_seconds.toFixed(3)} s, total ${e.stages.tts.latency_seconds.toFixed(3)} s\n` +
-    `- Post-endpoint time to first audio byte: ${e.latency.post_endpoint_to_first_audio_byte_seconds.toFixed(3)} s\n\n` +
+    `- Post-endpoint stage-time estimate to first audio byte: ${e.latency.post_endpoint_to_first_audio_byte_seconds.toFixed(3)} s\n\n` +
     `## Strict gates\n\n${Object.entries(a.gates).map(([k,v]) => `- ${k}: **${v}**`).join('\n')}\n\n` +
     `${a.statement}\n`;
 }
@@ -411,7 +411,7 @@ async function main() {
     );
     evidence.latency = {
       post_endpoint_to_first_audio_byte_seconds:
-        evidence.stages.asr.latency_seconds + evidence.stages.llm.first_token_seconds + evidence.stages.tts.first_audio_byte_seconds,
+        evidence.stages.asr.latency_seconds + evidence.stages.llm.latency_seconds + evidence.stages.tts.first_audio_byte_seconds,
       complete_serial_pipeline_seconds: ['vad','asr','llm','tts'].reduce((n,k) => n + evidence.stages[k].latency_seconds, 0),
       measurement_clock: 'process.hrtime.bigint monotonic clock',
     };
