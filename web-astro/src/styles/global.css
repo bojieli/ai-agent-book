@@ -651,6 +651,34 @@ img {
 .language-picker summary::-webkit-details-marker {
   display: none;
 }
+.language-picker .language-mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  line-height: 0;
+}
+.language-picker .language-mark svg {
+  display: block;
+}
+.language-picker .language-chevron {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  width: 12px;
+  height: 12px;
+  line-height: 0;
+}
+.language-picker .language-chevron svg {
+  display: block;
+  transition: transform 0.15s ease;
+}
+.language-picker[open] .language-chevron svg {
+  transform: rotate(180deg);
+}
 .language-picker summary:hover,
 .language-picker[open] summary {
   background: var(--surface);

@@ -18,6 +18,7 @@ from transformers import (
     LogitsProcessor,
     GenerationConfig
 )
+from token_labels import decode_token_labels
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -106,7 +107,11 @@ class AttentionTracker(LogitsProcessor):
         # Track generated token
         if input_ids.shape[1] > self.context_length:
             last_token_id = input_ids[0, -1].item()
-            last_token = self.tokenizer.decode([last_token_id])
+            # Generation is still in progress, so the sequence is a growing
+            # prefix: leave pending UTF-8 bytes buffered for the next token.
+            last_token = decode_token_labels(
+                self.tokenizer, input_ids[0].tolist(), final=False
+            )[-1]
             current_position = input_ids.shape[1] - 1
             
             self.generated_tokens.append({
@@ -367,7 +372,7 @@ class AttentionVisualizationAgent:
         
         # Decode input tokens - store full sequence
         input_token_ids = inputs['input_ids'][0].tolist()
-        input_tokens = [self.tokenizer.decode([tid], skip_special_tokens=False) for tid in input_token_ids]
+        input_tokens = decode_token_labels(self.tokenizer, input_token_ids)
         
         logger.info(f"Input: {len(input_tokens)} tokens")
         
@@ -422,17 +427,16 @@ class AttentionVisualizationAgent:
         # Decode output
         generated_ids = outputs.sequences[0][context_length:]
         output_text = self.tokenizer.decode(generated_ids, skip_special_tokens=True)
-        # Keep special tokens in token list for accurate representation
-        output_tokens = [self.tokenizer.decode([tid], skip_special_tokens=False) for tid in generated_ids.tolist()]
-        
         # Get attention steps
         attention_steps = self.tracker.get_attention_steps()
         
-        logger.info(f"Generated {len(output_tokens)} tokens with {len(attention_steps)} attention steps")
+        logger.info(f"Generated {len(generated_ids)} tokens with {len(attention_steps)} attention steps")
         
         # Store all tokens (input + output) for complete sequence
         all_token_ids = outputs.sequences[0].tolist()
-        all_tokens = [self.tokenizer.decode([tid], skip_special_tokens=False) for tid in all_token_ids]
+        all_tokens = decode_token_labels(self.tokenizer, all_token_ids)
+        input_tokens = all_tokens[:context_length]
+        output_tokens = all_tokens[context_length:]
         
         result = GenerationResult(
             input_text=prompt,

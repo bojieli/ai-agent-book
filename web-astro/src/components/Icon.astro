@@ -10,7 +10,8 @@ interface Props {
     | 'focus'
     | 'book'
     | 'download'
-    | 'chevron';
+    | 'chevron'
+    | 'languages';
   size?: number;
 }
 const { name, size = 20 } = Astro.props;
@@ -25,6 +26,7 @@ const paths = {
   book: 'M12 5v15M12 5C9 3 5 3 3 4v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-2-1-6-1-9 1Z',
   download: 'M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5',
   chevron: 'm8 4 8 8-8 8',
+  languages: 'm5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1m15 20-5-10-5 10M14 18h6',
 };
 ---
 

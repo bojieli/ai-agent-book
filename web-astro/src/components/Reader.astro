@@ -497,10 +497,11 @@ const outline = getHeadings().filter(
       wrap.className = 'copy-code';
       wrap.type = 'button';
       wrap.textContent = t('Wrap lines');
+      // Pseudocode can contain side-by-side columns; preserve its whitespace
+      // and horizontal scrolling unless the reader explicitly enables wrapping.
       const defaultWrap =
         [
           'jsonc',
-          'agent-pseudocode',
           'agent-instructions',
           'book-example',
           'book-interaction',

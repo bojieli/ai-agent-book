@@ -2,7 +2,11 @@ import { withBase } from './site-path.mjs';
 import { availableChapters } from './available-chapters.mjs';
 import { editions, translator, type Locale } from './i18n';
 const chapterSources = import.meta.glob<string>(
-  ['../../../book/chapter*.md', '../../../book-*/chapter*.md'],
+  [
+    '../../../book/chapter*.md',
+    '../../../book-*/chapter*.md',
+    '!../../../book-mn/**',
+  ],
   {
     query: '?raw',
     import: 'default',

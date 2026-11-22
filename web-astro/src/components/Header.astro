@@ -38,9 +38,21 @@ const edition = editions[locale];
     <div class="header-tools">
       <details class="language-picker">
         <summary aria-label={t('Language')} title={edition.name}
-          ><span aria-hidden="true">◎</span>
+          ><span class="language-mark" aria-hidden="true"
+            ><Icon name="languages" size={15} /></span
+          >
           <span class="current-language">{edition.name}</span>
-          <span aria-hidden="true">⌄</span></summary
+          <span class="language-chevron" aria-hidden="true">
+            <svg viewBox="0 0 16 10" width="11" height="7" aria-hidden="true">
+              <path
+                d="M1.4 1.4 8 8.2 14.6 1.4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+            </svg>
+          </span></summary
         >
         <nav aria-label={t('Language')}>
           {

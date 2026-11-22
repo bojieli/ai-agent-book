@@ -4,10 +4,10 @@ Configuration module for Context-Aware Agent
 
 import os
 from typing import Optional
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Resolve the nearest .env from this module, including a repository-level fallback.
+load_dotenv(find_dotenv())
 
 
 def _reasoning_safe_temperature(model, requested=1.0):

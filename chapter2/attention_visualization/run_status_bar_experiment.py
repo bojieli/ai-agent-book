@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from token_labels import decode_token_labels
 
 
 ROOT = Path(__file__).resolve().parent
@@ -259,10 +260,9 @@ def generate_one(model, tokenizer, rendered: str, protocol, seed: int) -> dict[s
         "prompt_sha256": sha256_bytes(rendered.encode("utf-8")),
         "context_tokens": context_length,
         "generated_token_ids": generated_ids.detach().cpu().tolist(),
-        "generated_tokens": [
-            tokenizer.decode([int(token_id)], skip_special_tokens=False)
-            for token_id in generated_ids.detach().cpu().tolist()
-        ],
+        "generated_tokens": decode_token_labels(
+            tokenizer, output[0].detach().cpu().tolist()
+        )[context_length:],
         "output_text": text,
         "behavior": classify(text),
         "full_ids": output[0].detach().cpu(),

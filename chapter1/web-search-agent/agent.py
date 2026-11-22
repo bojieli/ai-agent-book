@@ -12,6 +12,8 @@ import os
 import requests
 import time
 
+from parallel_search import PARALLEL_SEARCH_TOOL, search_impl
+
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -51,21 +53,6 @@ def format_trace_step(step: Dict[str, Any], max_len: int = 500) -> str:
     if len(content) > max_len:
         content = content[:max_len] + f"…（省略 {len(content) - max_len} 字）"
     return f"{prefix}: {content}"
-
-
-def search_impl(arguments: Dict[str, Any]) -> Any:
-    """
-    When using the search tool provided by Moonshot AI, you just need to return the arguments as they are,
-    without any additional processing logic.
- 
-    But if you want to use other models and keep the internet search functionality, you just need to modify 
-    the implementation here (for example, calling search and fetching web page content), the function signature 
-    remains the same and still works.
- 
-    This ensures maximum compatibility, allowing you to switch between different models without making 
-    destructive changes to the code.
-    """
-    return arguments
 
 
 # search_and_answer 不抛异常，而是以字符串形式返回失败兜底文案。
@@ -111,9 +98,11 @@ class WebSearchAgent:
     kimi-k3 的当前官方路径是标准 ``function`` tool 声明加
     ``moonshot/web-search:latest`` Formula Fiber 执行。
     """
+    search_provider = "kimi"
     
     def __init__(self, api_key: str = None, base_url: str = "https://api.moonshot.cn/v1",
-                 model: str = "kimi-k3", verbose: bool = False):
+                 model: str = "kimi-k3", verbose: bool = False, *,
+                 search_provider: str = "kimi"):
         """
         初始化 Agent
 
@@ -122,14 +111,18 @@ class WebSearchAgent:
             base_url: API 基础 URL
             model: 使用的模型名称（默认 kimi-k3）
             verbose: 是否实时打印 ReAct 轨迹（思考/行动/观察）
+            search_provider: 搜索后端（kimi 或 parallel）
         """
+        if search_provider not in ("kimi", "parallel"):
+            raise ValueError(f"未知搜索后端: {search_provider}")
+        self.search_provider = search_provider
         # 优先使用传入的 api_key，否则从环境变量获取
         # Moonshot 为主，OpenRouter 为通用兜底（当 MOONSHOT_API_KEY 缺失时启用）
         from config import resolve_llm_backend, Config
         primary_key = api_key or os.environ.get("MOONSHOT_API_KEY") or os.environ.get("KIMI_API_KEY")
         resolved_key, resolved_base_url, model, self.using_openrouter = \
             resolve_llm_backend(primary_key, base_url, model)
-        if self.using_openrouter:
+        if self.using_openrouter and search_provider == "kimi":
             logger.info(
                 f"MOONSHOT_API_KEY 未设置，改用 OpenRouter 兜底（模型: {model}）。"
                 "注意：Moonshot Formula web_search 工具在 OpenRouter 上不可用，"
@@ -167,7 +160,9 @@ class WebSearchAgent:
             print(format_trace_step(step))
         
     def _get_tools(self) -> List[Dict[str, Any]]:
-        """Fetch and cache Kimi's authoritative Formula declaration."""
+        """返回搜索后端提供的工具定义。"""
+        if self.search_provider == "parallel":
+            return [PARALLEL_SEARCH_TOOL]
         if getattr(self, "using_openrouter", False):
             return []
         if self._formula_tools is not None:
@@ -300,6 +295,11 @@ class WebSearchAgent:
         """
         获取系统提示
         """
+        if self.search_provider == "parallel":
+            return (
+                "你是一个搜索助手。需要查证时，调用 web_search 搜索，使用简短、具体的关键词。"
+                "阅读返回的摘录，再决定是否继续搜索。回答时附上支撑结论的来源链接。"
+            )
         return f"""你是 Kimi，一个智能搜索助手。
 
 请按照以下步骤处理：
@@ -335,7 +335,7 @@ class WebSearchAgent:
         if str(self.model).lower() == "kimi-k3":
             kwargs["reasoning_effort"] = "max"
         tools = self._get_tools()
-        if tools:  # OpenRouter 兜底时无内置搜索工具，省略 tools 参数
+        if tools:
             kwargs["tools"] = tools
         started = time.monotonic()
         try:
@@ -385,7 +385,10 @@ class WebSearchAgent:
         self.api_turns = []
         # Each independent question keeps its own real declaration receipt.
         self._formula_tools = None
-        logger.info("开始调用 Kimi 搜索工具...")
+        if self.search_provider == "parallel":
+            logger.info("Parallel 搜索：模型生成的搜索词将匿名发给 Parallel。")
+        else:
+            logger.info("开始调用 Kimi 搜索工具...")
 
         try:
             finish_reason = None
@@ -409,11 +412,8 @@ class WebSearchAgent:
                     # 处理工具调用
                     logger.info(f"模型请求调用 {len(choice.message.tool_calls)} 个工具")
 
-                    # 添加助手的消息（包含工具调用）到历史。
-                    # 注意：必须把消息重建为纯 dict，而不是直接塞入 SDK 返回的
-                    # pydantic message 对象——后者会附带 reasoning_content / refusal
-                    # 等额外字段，回传给 Moonshot 时会触发 "tokenization failed" 400 错误。
-                    self.conversation_history.append({
+                    # 只回传模型服务接受的字段。
+                    assistant_message = {
                         "role": "assistant",
                         "content": choice.message.content or "",
                         "tool_calls": [
@@ -427,7 +427,21 @@ class WebSearchAgent:
                             }
                             for tc in choice.message.tool_calls
                         ],
-                    })
+                    }
+                    if self.search_provider == "parallel":
+                        # 工具结果会继续同一轮推理，保留模型返回的推理内容。
+                        assistant_message["content"] = choice.message.content
+                        reasoning_fields = (
+                            ("reasoning_details", "reasoning", "reasoning_content")
+                            if self.using_openrouter
+                            else ("reasoning_content",)
+                        )
+                        for field in reasoning_fields:
+                            value = getattr(choice.message, field, None)
+                            if value is not None:
+                                assistant_message[field] = value
+                                break
+                    self.conversation_history.append(assistant_message)
 
                     # 执行每个工具调用
                     for tool_call in choice.message.tool_calls:
@@ -450,7 +464,11 @@ class WebSearchAgent:
                         self._emit({"iteration": iteration, "type": "action",
                                     "tool": tool_call_name, "args": tool_call_arguments})
 
-                        if tool_call_name == "web_search":
+                        if tool_call_name == "web_search" and self.search_provider == "parallel":
+                            tool_result = search_impl(
+                                tool_call_arguments, timeout=self._request_timeout
+                            )
+                        elif tool_call_name == "web_search":
                             # Formula requires the original serialized
                             # arguments, even though the parsed copy above is
                             # retained for a readable ReAct trace.

@@ -67,7 +67,7 @@ jobs:
 
       - name: Install the package
         # This job runs all root tests, including the MkDocs source-link tests.
-        run: python -m pip install -e ".[dev]" "mkdocs>=1.6,<2"
+        run: python -m pip install -e ".[dev]" "mkdocs>=1.6,<2" "psycopg2-binary>=2.9"
 
       - name: Run registry tests
         env:

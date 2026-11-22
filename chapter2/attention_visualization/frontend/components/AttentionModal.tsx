@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as d3 from 'd3';
+import { tokenLabel } from './tokenLabel';
 
 interface AttentionModalProps {
   isOpen: boolean;
@@ -220,7 +221,8 @@ export default function AttentionModal({ isOpen, onClose, tokens, attentionWeigh
               ctx.save();
               ctx.translate(margin.left + i * cellSize + cellSize / 2, margin.top - 5);
               ctx.rotate(-Math.PI / 4);
-              const label = tokens[i].length > 15 ? tokens[i].substring(0, 15) + '...' : tokens[i];
+              const colTok = tokenLabel(tokens[i]);
+              const label = colTok.length > 15 ? colTok.substring(0, 15) + '...' : colTok;
               ctx.fillText(label, 0, 0);
               ctx.restore();
 
@@ -228,7 +230,7 @@ export default function AttentionModal({ isOpen, onClose, tokens, attentionWeigh
               if (i < numRows) {
                 ctx.save();
                 ctx.textAlign = 'right';
-                const rowTok = tokens[rowTokenOffset + i] ?? '';
+                const rowTok = tokenLabel(tokens[rowTokenOffset + i]);
                 const rowLabel = rowTok.length > 15 ? rowTok.substring(0, 15) + '...' : rowTok;
                 ctx.fillText(rowLabel, margin.left - 5, margin.top + i * cellSize + cellSize / 2);
                 ctx.restore();
@@ -468,8 +470,8 @@ export default function AttentionModal({ isOpen, onClose, tokens, attentionWeigh
             }}
           >
             <div>Weight: {hoveredCell.value.toFixed(4)}</div>
-            <div>From [{hoveredCell.row}]: {tokens[rowTokenOffset + hoveredCell.row]?.substring(0, 20)}</div>
-            <div>To [{hoveredCell.col}]: {tokens[hoveredCell.col]?.substring(0, 20)}</div>
+            <div>From [{hoveredCell.row}]: {tokenLabel(tokens[rowTokenOffset + hoveredCell.row]).substring(0, 20)}</div>
+            <div>To [{hoveredCell.col}]: {tokenLabel(tokens[hoveredCell.col]).substring(0, 20)}</div>
           </div>
         )}
 

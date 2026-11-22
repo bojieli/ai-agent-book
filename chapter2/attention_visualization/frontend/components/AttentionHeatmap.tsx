@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
+import { tokenLabel } from './tokenLabel';
 
 interface AttentionHeatmapProps {
   tokens: string[];
@@ -64,8 +65,8 @@ export default function AttentionHeatmap({ tokens, attentionWeights }: Attention
           .style('z-index', '1000');
 
         tooltip.html(`
-          <div>From: ${tokens[d.row] || 'N/A'}</div>
-          <div>To: ${tokens[d.col] || 'N/A'}</div>
+          <div>From: ${tokenLabel(tokens[d.row])}</div>
+          <div>To: ${tokenLabel(tokens[d.col])}</div>
           <div>Weight: ${d.value.toFixed(4)}</div>
         `)
           .style('left', `${event.pageX + 10}px`)
@@ -86,7 +87,7 @@ export default function AttentionHeatmap({ tokens, attentionWeights }: Attention
       .attr('transform', (d, i) => `rotate(-65,${i * cellSize + cellSize / 2},-5)`)
       .style('font-size', '10px')
       .style('fill', '#333')
-      .text(d => d.length > 15 ? d.substring(0, 15) + '...' : d);
+      .text(d => tokenLabel(d).length > 15 ? tokenLabel(d).substring(0, 15) + '...' : tokenLabel(d));
 
     // Add token labels on left
     g.selectAll('.row-label')
@@ -99,7 +100,7 @@ export default function AttentionHeatmap({ tokens, attentionWeights }: Attention
       .attr('alignment-baseline', 'middle')
       .style('font-size', '10px')
       .style('fill', '#333')
-      .text(d => d.length > 15 ? d.substring(0, 15) + '...' : d);
+      .text(d => tokenLabel(d).length > 15 ? tokenLabel(d).substring(0, 15) + '...' : tokenLabel(d));
 
     // Add color legend
     const legendWidth = 200;

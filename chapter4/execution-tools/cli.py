@@ -201,16 +201,18 @@ def cmd_demo(args: argparse.Namespace) -> int:
     校验结果。演示同时覆盖四个安全机制：linter 校验、危险命令 fail-safe 审批、
     长输出截断与持久化。整个流程默认离线运行（关闭 LLM 总结）。
     """
+    # 演示放在独立临时工作区，避免污染当前目录。
+    workspace = tempfile.mkdtemp(prefix="exec_tools_demo_")
+    os.environ["WORKSPACE_DIR"] = workspace
+
     # bash 是 code_interpreter / virtual_terminal 的执行外壳。纯 Windows 环境没有
     # bash 时，后面的步骤 4～7 都会失败，这里先给出明确提示（见 README 的 Windows 说明）。
+    # 注意：multilang_executor 会导入 config，而 config.WORKSPACE_DIR 在导入时求值；
+    # 必须在设置 WORKSPACE_DIR 之后再导入，否则 file/exec 工具会锁定到旧目录。
     from multilang_executor import find_bash, BASH_MISSING_ERROR
     if find_bash() is None:
         print(f"错误：{BASH_MISSING_ERROR}", file=sys.stderr)
         return 1
-
-    # 演示放在独立临时工作区，避免污染当前目录。
-    workspace = tempfile.mkdtemp(prefix="exec_tools_demo_")
-    os.environ["WORKSPACE_DIR"] = workspace
     # 离线运行：关闭需要 LLM 的输出总结（截断持久化不依赖 LLM）。
     if "AUTO_SUMMARIZE_COMPLEX_OUTPUT" not in os.environ:
         os.environ["AUTO_SUMMARIZE_COMPLEX_OUTPUT"] = "false"

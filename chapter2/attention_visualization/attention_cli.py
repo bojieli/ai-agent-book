@@ -41,6 +41,8 @@ import sys
 
 import numpy as np
 
+from token_labels import decode_token_labels
+
 
 DEFAULT_PROMPT = "北京 的 天气 怎么样"
 
@@ -216,8 +218,7 @@ def run(args) -> int:
         full_ids = inputs["input_ids"]
 
     token_ids = full_ids[0].tolist()
-    tokens = [agent.tokenizer.decode([tid], skip_special_tokens=False)
-              for tid in token_ids]
+    tokens = decode_token_labels(agent.tokenizer, token_ids)
     print(f"Sequence length: {len(tokens)} tokens "
           f"(prompt: {context_length}, generated: {len(tokens) - context_length})")
 
