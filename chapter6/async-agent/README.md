@@ -1,6 +1,6 @@
 # Asynchronous Agent with Parallel Execution and Interruption / 带并行执行和打断能力的异步 Agent
 
-一个工具调用需要很久时，Agent 是否必须完全停住？异步执行让系统同时管理多个未完成动作，还需要应对中途取消和恢复。本实验把这三件事分开演示。
+助理正在读文件，你先问“现在几点了”，过一会儿又说“停止分析”。第一句话只需要一个即时回答，第二句话却要让已经启动的进程退出。怎样看出这两句话在后台产生了不同的效果？
 
 [English](#english)
 
@@ -10,14 +10,9 @@
 
 ## 后台进程怎样接回对话
 
-并行可以缩短独立任务的总等待时间，但依赖关系仍必须保持。取消需要让尚未完成的工作停止或不再影响状态；检查点则保存可恢复的信息，使新会话知道哪些动作已经发生。
+实验 6-1 把新消息放进事件队列；本实验再给每个后台任务一个编号。这样一来，助手回答时间时，分析进程可以继续读文件。等到用户要求停止，运行时按编号找到任务，发出取消请求，最后检查子进程的退出状态。分析完成、用户插话和进程退出，都可能发生在不同的时刻。
 
-本目录是《深入理解 AI Agent》实验 6-2 的配套可运行代码，实现了设计文档
-[`agent_framework_design.md`](./agent_framework_design.md) 中描述的事件驱动异步 Agent 框架（Flux）的核心部分。
-
-在实验 6-1 的简单事件队列之上，本实验进入异步 Agent 的深水区，聚焦四件事：
-**异步工具执行、事件队列与批量处理、打断机制、并行工具的取消与状态查询**。
-Agent 需要同时管理多个并发任务，处理打断与恢复，并根据实时状态动态决策。
+这里用的是事件驱动框架 Flux。[设计文档](./agent_framework_design.md)解释了为什么把消息分发和工具执行分开；下面的演示则让你看到并行执行、排队、打断、状态查询和检查点恢复各自留下什么记录。
 
 本目录提供两条使用路径：
 
@@ -296,7 +291,22 @@ LLM_PROVIDER=ark LLM_MODEL=ep-xxxx python demo.py scenarios --scenario 1
 [  5.52s] AGENT  | 已从打断中恢复，新任务 T4 正常完成：……
 ```
 
-打断只冻结被取消任务的进度，运行时本身无损，随后能立即接受并跑完新任务。
+读[一次实际取消的任务记录](validation/experiment_6_2/real_subprocess_20260730T052500Z/scenarios/interrupt_terminates_and_recovers.json)，先比较两个任务的编号，再看各自的进度与退出码。在实验目录执行：
+
+```bash
+python3 - <<'PYTHON'
+import json
+from pathlib import Path
+
+run = Path("validation/experiment_6_2/real_subprocess_20260730T052500Z/scenarios")
+record = json.loads((run / "interrupt_terminates_and_recovers.json").read_text())
+for task in record["tasks"]:
+    print(task["task_id"], task["command"], task["status"], task["progress"], task["returncode"])
+print("触发完成回调的任务：", record["completed_callbacks"])
+PYTHON
+```
+
+T1 的日志分析停在 18%，退出码是 −15（在这次运行的平台上表示收到了终止信号）。T2 执行的是另一个汇总任务，进度到了 100%，退出码是 0。完成回调里也只有 T2。这里看到的“恢复”，是运行时能够接下一个任务。判断原来的工作是否做完，要看 T1 自己的记录。
 
 #### 能力三：状态检查点持久化与恢复（`python demo.py state`）
 
@@ -314,7 +324,7 @@ LLM_PROVIDER=ark LLM_MODEL=ep-xxxx python demo.py scenarios --scenario 1
 ```
 
 轨迹与任务进度完整落盘并跨会话还原；运行中的任务恢复后标记为 `suspended`，保留最后已知进度，
-供上层决定「重跑」还是「按进度续跑」——这就是异步任务的状态管理。
+重新载入后，进度数字可以回答“上一次看到它走到了哪里”。若要从那个位置继续，还需要工作进程保存可读取的中间结果，或由外部服务提供能重新连接的任务句柄。本例的检查点只还原记录，新会话不会凭保存的 PID 重新控制旧进程。
 
 ### 四、四个 LLM 验证场景
 

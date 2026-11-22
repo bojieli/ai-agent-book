@@ -229,20 +229,19 @@ class TaskManager:
 
     def cancel(self, task_id: str) -> bool:
         state = self._tasks.get(task_id)
-        if state and state.status == "running":
-            if state._task:
-                state._task.cancel()
-            return True
-        return False
+        if not state or state.status != "running" or state._task is None:
+            return False
+        if not state._task.cancel():
+            return False
+        if state.started_at is None:
+            # asyncio skips the coroutine body when cancelled before its first step.
+            state.status = "cancelled"
+            state.completed_at = time.time()
+            state.executable_receipt.update(cancelled=True, returncode=None, elapsed_seconds=None)
+        return True
 
     def cancel_all(self) -> list[str]:
-        cancelled = []
-        for task_id, state in self._tasks.items():
-            if state.status == "running":
-                if state._task:
-                    state._task.cancel()
-                cancelled.append(task_id)
-        return cancelled
+        return [task_id for task_id in self._tasks if self.cancel(task_id)]
 
     def any_running(self) -> bool:
         return any(state.status == "running" for state in self._tasks.values())
