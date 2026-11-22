@@ -119,7 +119,11 @@ python run_official_experiment.py \
 
 打开证据文件的 `modes.orchestration.tracker.by_agent`，分别看四个角色的 `peak_context`。Manager 那次决策输入了 2,153 个 token，译者最大一次输入 2,857 个；通读两章的 Glossary 和审校者分别用了 49,807 和 46,885 个。表里的 4,618 是程序把 Manager 的状态写成 JSON 后在本地数出的峰值。用它去除单 Agent 请求的 94,355，得到的 20.43 混合了两种计数口径。直接比较两组最大一次 API 输入，单 Agent 约为管理者组的 1.89 倍。
 
-两组累计用量相差约 6.48 倍，回答的是另一个问题：翻完整批材料一共处理了多少 token？管理者组在这批材料上总用量较低，匿名质量均分略高，耗时却多了 6.57%。共享术语表显著提高指定译法遵从率，却没有保证更高的宽泛字符串一致率；`embedding` 也没有遵守指定的“嵌入向量”。
+两组累计用量相差约 6.48 倍，回答的是另一个问题：翻完整批材料一共处理了多少 token？管理者组在这批材料上总用量较低，匿名质量均分略高，耗时却多了 6.57%。按程序的字符串匹配规则，管理者组的指定译法遵从率较高，宽泛字符串一致率较低。
+
+以 `embedding` 的 0/2 为例。在[术语表](validation/real_20260730T061500Z_v4/orchestration_parts/glossary.json)里，这条记录标明词性是名词，译作“嵌入向量”。但评分程序只读译稿：去掉代码后，只要某章出现“嵌入”或“嵌入向量”，就把该章计入分母；只要出现过“嵌入向量”，该章就得一分。两章都只命中了“嵌入”。
+
+读者可以打开[实跑时的原文快照](validation/real_20260730T061500Z_v4/source-snapshot.zip)，在 `book-en/chapter1.md` 里搜 `embedding the refund policy`，再到[第一章译稿](validation/real_20260730T061500Z_v4/orchestration/chapter1_zh.md)里搜“将退款政策嵌入上下文中”。这句话里的 `embedding` 表示一个动作，名词词条不适用。仅凭 0/2 就要求全章替换，会改坏这句话；仅凭[审校报告](validation/real_20260730T061500Z_v4/orchestration_parts/proofreading_report.json)的问题列表为空，也不能判定其他段落都译对了。
 
 结构保真同样出现真实负结果：两组都保留了代码块和插图的数量，却都改动了代码 payload 并增加了标题；管理者组还改动了插图目标，而单 Agent 组的插图目标序列保持不变。这里的 ✅ 表示完整对照与所有预注册测量已经执行，不表示每项质量假设都成立。
 
