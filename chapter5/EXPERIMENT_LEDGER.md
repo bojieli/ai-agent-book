@@ -85,16 +85,15 @@ a complete experiment and is reported as such.
 - **5-9:** the same flange spec (Ø80 × 10 mm, four M5 holes on a Ø60
   circle) went through both routes for real. Route A: Kimi `kimi-k2.5`
   wrote 17 lines of CadQuery, executed locally, exporting STEP + STL;
-  programmatic trimesh measurement showed zero deviation on every
-  dimension (hole diameter −0.001 mm is STL chord discretization; the
-  STEP B-rep is exact). Route B: a two-stage text→image→3D pipeline
-  (Gemini product render → `tencent/Hunyuan3D-2.1` public Hugging Face
-  Space `/shape_generation`, 9 receipts all `ok`) produced a unit-less
-  blob: outer diameter −99.4%, all four through-holes lost, axis
-  semantics absent. The M5→M6 change request cost route A one parameter
-  edit with zero LLM calls and zero drift elsewhere; route B required a
-  full regeneration, after which the outer diameter drifted +283% and
-  the flange axis flipped from Z to Y. The potted-plant control reversed
+  the M5 STL measured 80 mm across and 10 mm thick, with a mean hole
+  diameter of 5.499 mm on a 60 mm pitch circle. Route B used Gemini
+  to render the product and the public Hunyuan3D-2.1 Space to generate
+  the mesh. Its Z-normal midsection had no detected inner loops. The
+  mesh scale and orientation must be established before comparing
+  its dimensions with the drawing. Changing to M6 took one parameter
+  edit and no further LLM calls on route A (measured bore 6.499 mm).
+  Regenerating route B changed its maximum XY span from 0.519 to
+  1.988 in mesh coordinates. The potted-plant control reversed
   the ranking: Kimi vision scored procedural matplotlib greenery 3
   versus the diffusion image 8. DashScope (401) and SiliconFlow (402)
   were probed and abandoned, recorded in the README's honesty notes.
