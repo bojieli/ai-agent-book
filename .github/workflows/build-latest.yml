@@ -235,6 +235,14 @@ jobs:
           "$RUNNER_TEMP/epub-renderer/bin/python" -m playwright install chromium
           echo "$RUNNER_TEMP/epub-renderer/bin" >> "$GITHUB_PATH"
 
+      - name: Install Chinese reader-copy renderer
+        if: github.ref == 'refs/heads/main' || inputs.edition == 'all' || inputs.edition == 'zh-CN'
+        run: |
+          python3 -m venv "$RUNNER_TEMP/epub-renderer"
+          "$RUNNER_TEMP/epub-renderer/bin/python" -m pip install lxml playwright
+          "$RUNNER_TEMP/epub-renderer/bin/python" -m playwright install chromium
+          echo "$RUNNER_TEMP/epub-renderer/bin" >> "$GITHUB_PATH"
+
       - name: Build EPUBs
         env:
           EDITION: ${{ inputs.edition || 'all' }}

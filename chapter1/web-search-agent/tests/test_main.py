@@ -1,6 +1,9 @@
 """Tests for CLI parsing, offline dispatch, and JSON output."""
 
 import json
+import subprocess
+import sys
+from pathlib import Path
 
 import main as cli
 from config import Config
@@ -79,3 +82,13 @@ def test_offline_cli_uses_default_question_when_query_is_omitted(capsys):
 
     output = capsys.readouterr().out
     assert "Moonshot AI 的 Context Caching 是什么技术？" in output
+
+
+def test_script_entry_point_reads_command_line_arguments(tmp_path):
+    output = tmp_path / "result.json"
+    subprocess.run(
+        [sys.executable, str(Path(cli.__file__).resolve()), "脚本入口", "--provider",
+         "offline-demo", "--quiet", "--output", str(output)],
+        cwd=tmp_path, check=True, capture_output=True, text=True, timeout=30,
+    )
+    assert json.loads(output.read_text(encoding="utf-8"))["question"] == "脚本入口"
