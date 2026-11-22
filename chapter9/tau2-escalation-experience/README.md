@@ -68,7 +68,17 @@
 
 B 与 C 的差别只在**给提炼器看什么**，提炼模型、提示词模板、失败轨迹完全相同。
 
-### 复现
+### 先用随书轨迹复算
+
+从全书仓库根目录运行下面的命令。只需 Python 3，脚本会逐条读取三种策略留下的客服对话，按任务编号配对比较。
+
+```bash
+python3 chapter9/tau2-escalation-experience/analyze.py --archived
+```
+
+可以先挑一道从失败变为通过的题。到三份轨迹中搜索同一个任务编号 `[mobile_data_issue]airplane_mode_on|data_mode_off[PERSONA:None]`。这部手机开着飞行模式，同时关闭了移动数据。A 组的客服多次尝试调用用户端的 `check_network_status`，最后转了人工。C 组的客服也误调过手机工具，但接下来用户实际执行了 `toggle_airplane_mode` 和 `toggle_data`，随后在手机上测速，这次通过了评估。在消息的 `role` 字段里找出各次调用的发起者，就能理解为什么同一条通过的轨迹里也会记有误调。[A 组轨迹](validation/runs/armA-baseline.trajectories.json) · [C 组轨迹](validation/runs/armC-evolved-v2.trajectories.json)
+
+### 从头运行实验
 
 ```bash
 # 1. 安装 τ²-bench（不随本仓库分发）
