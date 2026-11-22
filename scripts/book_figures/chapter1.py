@@ -142,7 +142,7 @@ def hosted_tools():
     f.text(450,62,'后训练（包括强化学习）→ 模型的工具调用策略',24,True)
     f.box(20,115,860,410,'#ffffff')
     f.text(450,153,'实验 1-2：客户端组织搜索循环',25,True)
-    for x,title,body in [(40,'客户端 Harness','任务：核查成员资格\n与首都状态'),(330,'Kimi K3','查询决策\n补查缺失证据'),(620,'Formula 服务','web_search\n执行搜索')]:
+    for x,title,body in [(40,'客户端 Harness','核查成员资格\n与首都状态'),(330,'Kimi K3','查询决策\n补查缺失证据'),(620,'Formula 服务','web_search\n执行搜索')]:
         f.box(x,180,240,110,'#f2f2f2')
         f.text(x+120,211,title,22,True)
         f.text(x+120,245,body,20)
@@ -168,10 +168,10 @@ def hosted_tools():
     f.text(190,861,'读取任务与结果\n选择搜索或代码执行\n检查并调整下一步',20)
     f.box(480,785,360,115,'#ffffff')
     f.text(660,820,'web_search',23,True)
-    f.text(660,857,'BTC/USD 日线数据与来源\n返回相关资料',20)
+    f.text(660,857,'检索 BTC/USD 日线\n返回行情资料',20)
     f.box(480,930,360,140,'#ffffff')
     f.text(660,965,'code_interpreter',23,True)
-    f.text(660,1002,'价格序列 → 均线、RSI、MACD\n区间收益 · 最大回撤\n计算结果 · 沙盒内生成图表',20)
+    f.text(660,1002,'读入代码里的价格并绘图\n均线、RSI、MACD\n区间收益、最大回撤',20)
     f.path([(320,820),(480,820)],True)
     f.text(400,805,'查询',20)
     f.path([(480,885),(320,885)],True)
