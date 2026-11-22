@@ -685,7 +685,7 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
           );
         }
         const notes = [...markdown.matchAll(/^\[\^([^\]]+)\]:/gm)];
-        assert.equal(notes.length, 26, edition.lang);
+        assert.equal(notes.length, edition.lang === 'zh-CN' ? 29 : 26, edition.lang);
         for (const [, id] of notes)
           assert.ok(
             ids(article).has(`user-content-fn-${id}`),
