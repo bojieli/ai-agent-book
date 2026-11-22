@@ -132,7 +132,21 @@ python demo.py             # 跑通 因子发现 → 抽取 → 聚类 → 对�
 
 ## 用留出样本检验解释
 
-相似案例的归类不能直接推出因果规律。应使用未参与归纳的材料检查原型是否仍有解释力，并保留回到原文的路径。法律场景中的输出在这里仅用于研究知识组织方法。
+打开[留出样本的解释记录](validation/runs/20260730T044309Z-3_12-3ab8ec7b/evidence.json)，找到编号以 `ae51` 结尾的样本。生成器看到的是抽取字段与匹配原型，评审还会看到该样本的实际标签。可以在实验目录里用 Python 标准库读出两者各自依据的数字：
+
+```python
+import json
+from pathlib import Path
+
+path = Path("validation/runs/20260730T044309Z-3_12-3ab8ec7b/evidence.json")
+cases = json.loads(path.read_text())["heldout_advice"]
+case = next(c for c in cases if c["id"] == "cail2018-08f56c05f4baae51")
+prototype = case["prototype"]
+print(prototype["prototype_size"], prototype["sentence_months"])
+print(case["actual_label_months"], case["judge"]["numeric_fidelity"])
+```
+
+原型只有一条建模记录，五项刑期统计量都是 4 个月。生成器报告了这个数，并提醒读者样本少、部分特征也不吻合。最后一行依次打印 8 和 4：前者是留出样本的实际刑期（月），后者是独立模型给数字忠实度打的分（满分 4 分）。如果另设一道预测题，让程序直接用原型中位数作答，这一题的绝对误差就是 4 个月。用同一份材料评两种任务，计分依据也要跟着换。
 
 ### 先用合成数据理解流程
 
