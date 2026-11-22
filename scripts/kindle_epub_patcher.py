@@ -1,221 +1,148 @@
-"""
-# Amazon Kindle EPUB Reflowable Layout Patcher
-#
-# This script processes a Pandoc-generated EPUB file to ensure strict compatibility with Amazon's Send-to-Kindle (KFX) reflowable format.
-# 1. Replaces MathML tags with high-res PNG images via CodeCogs API, as Kindle rejects MathML.
-# 2. Converts all SVG images to PNG using PyMuPDF to prevent E016 Print Replica fallback.
-# 3. Strips hardcoded mobile font sizes and fixes `display: block` on tables in CSS.
-# 4. Injects word-wrap CSS to prevent long URLs or code strings from breaking the viewport.
-# 5. Removes Pandoc's inline `<style>` tags that force absolute positioning and non-wrapping code blocks.
-"""
-
-import sys
-import zipfile
-import os
-import re
-import urllib.request
-import urllib.parse
-import html
+"""Build a reflowable Kindle copy of a Pandoc EPUB using a local Chromium renderer."""
+import argparse
+import base64
+import posixpath
 import tempfile
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
+from zipfile import ZIP_DEFLATED, ZIP_STORED, ZipFile
 
-try:
-    import pymupdf
-except ImportError:
-    print("[ERROR] pymupdf is not installed. Please run: pip install pymupdf")
-    sys.exit(1)
+from lxml import etree as ET
+from playwright.sync_api import sync_playwright
 
-if len(sys.argv) < 2:
-    print("Usage: python make_epub_resizable.py <path_to_epub>")
-    sys.exit(1)
+OPF = "{http://www.idpf.org/2007/opf}"
+XHTML = "{http://www.w3.org/1999/xhtml}"
+MATH = "{http://www.w3.org/1998/Math/MathML}"
+CSS = b"""
+/* Reflow code and tables on narrow Kindle screens. */
+body { overflow-wrap: break-word; }
+table { display: table; max-width: 100%; }
+pre, pre > code.sourceCode { white-space: pre-wrap; overflow-wrap: anywhere; }
+pre > code.sourceCode > span { display: inline; }
+img.kindle-math { display: inline; vertical-align: middle; max-width: 100%; height: auto; }
+img.kindle-display { display: block; margin: 0.5em auto; }
+"""
 
-epub_path = sys.argv[1]
-if not epub_path.lower().endswith('.epub'):
-    print("[ERROR] The file must be an .epub file.")
-    sys.exit(1)
 
-out_epub_path = epub_path[:-5] + "-kindle-img.epub"
-math_cache = {}
-new_images = {} # { filename: bytes }
-manifest_additions = []
+def xml(data):
+    return ET.fromstring(data, ET.XMLParser(resolve_entities=False, no_network=True))
 
-print(f"Reading input EPUB: {epub_path}")
-print("1. Converting SVG to PNG...")
-print("2. Downloading LaTeX equations as PNGs...")
-print("3. Patching CSS and HTML layout bugs...")
 
-try:
-    with zipfile.ZipFile(epub_path, 'r') as z_in:
-        item_list = z_in.infolist()
-        
-        with zipfile.ZipFile(out_epub_path, 'w') as z_out:
-            # 1. Write mimetype first, strictly UNCOMPRESSED
-            for item in item_list:
-                if item.filename == 'mimetype':
-                    content = z_in.read(item.filename)
-                    z_out.writestr(item, content, compress_type=zipfile.ZIP_STORED)
-                    break
-                    
-            # 2. Process all other files
-            for item in item_list:
-                if item.filename == 'mimetype':
+def member(document, href):
+    return posixpath.normpath(posixpath.join(posixpath.dirname(document), unquote(href)))
+
+
+def render(page, markup):
+    page.set_content('<body style="margin:0;background:white"><span id="figure" '
+                     'style="display:inline-block;width:max-content;line-height:normal">'
+                     + markup + '</span></body>')
+    figure = page.locator("#figure")
+    image = figure.locator("img")
+    if image.count():
+        image.evaluate("img => img.decode()")
+    size = figure.bounding_box()
+    if not size or min(size["width"], size["height"]) <= 0:
+        raise ValueError("Could not measure the illustration")
+    return figure.screenshot(), size["width"]
+
+
+def convert(source, destination, page):
+    with ZipFile(source) as original:
+        entries = {name: original.read(name) for name in original.namelist()}
+    package = xml(entries["META-INF/container.xml"]).find(".//{*}rootfile").get("full-path")
+    opf = xml(entries[package])
+    manifest = opf.find(OPF + "manifest")
+    svg_paths = {}
+    for item in manifest.findall(OPF + "item"):
+        href = item.get("href")
+        path = member(package, href)
+        if item.get("media-type") == "image/svg+xml":
+            # Keep the original filename stem even when a same-named PNG already exists.
+            target = path + ".png"
+            if target in entries:
+                raise ValueError(f"PNG path already occupied: {target}")
+            data = base64.b64encode(entries[path]).decode("ascii")
+            entries[target], _ = render(page, f'<img src="data:image/svg+xml;base64,{data}">')
+            del entries[path]
+            item.set("href", href + ".png")
+            item.set("media-type", "image/png")
+            svg_paths[path] = target
+        elif item.get("media-type") == "text/css":
+            entries[path] += CSS
+
+    formula_cache = {}
+    reserved_ids = {item.get("id") for item in manifest}
+    for item in manifest.findall(OPF + "item"):
+        if item.get("media-type") != "application/xhtml+xml":
+            continue
+        path = member(package, item.get("href"))
+        doc = xml(entries[path])
+        for element in doc.iter():
+            for attr in ("src", "href", "{http://www.w3.org/1999/xlink}href", "data"):
+                value = element.get(attr)
+                if not value:
                     continue
-                    
-                content = z_in.read(item.filename)
-                
-                # Check if it's an HTML file to process MathML and rename SVGs
-                if item.filename.endswith('.xhtml') or item.filename.endswith('.html'):
-                    try:
-                        text = content.decode('utf-8')
-                        
-                        def math_replacer(match):
-                            tex = match.group(1)
-                            tex_unescaped = html.unescape(tex).strip()
-                            
-                            if tex_unescaped not in math_cache:
-                                math_id = f"math_{len(math_cache)+1:03d}"
-                                img_filename = f"media/{math_id}.png"
-                                
-                                url = 'https://latex.codecogs.com/png.image?%5Cdpi%7B150%7D%5Cbg_white%20' + urllib.parse.quote(tex_unescaped)
-                                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-                                try:
-                                    img_data = urllib.request.urlopen(req).read()
-                                    new_images[img_filename] = img_data
-                                    manifest_additions.append(f'<item id="{math_id}" href="{img_filename}" media-type="image/png" />')
-                                    math_cache[tex_unescaped] = img_filename
-                                except Exception as e:
-                                    return f" <code>{tex}</code> "
-                            else:
-                                img_filename = math_cache[tex_unescaped]
-                            
-                            if '/' in item.filename:
-                                depth = item.filename.count('/')
-                                rel_path = '../' * depth + img_filename
-                                if item.filename.startswith('EPUB/'):
-                                    rel_path = '../' * (depth - 1) + img_filename
-                            else:
-                                rel_path = img_filename
-                                
-                            return f'<img src="{rel_path}" alt="{html.escape(tex_unescaped)}" style="vertical-align: middle; max-width: 100%;" class="math-img" />'
+                link = urlsplit(value)
+                if not link.scheme and not link.netloc and member(path, link.path) in svg_paths:
+                    element.set(attr, link._replace(path=link.path + ".png").geturl())
 
-                        # Replace MathML blocks
-                        if '<math' in text:
-                            text = re.sub(
-                                r'<math[^>]*>.*?<annotation encoding="application/x-tex">(.*?)</annotation>.*?</math>',
-                                math_replacer,
-                                text,
-                                flags=re.DOTALL
-                            )
-                            text = re.sub(r'<math[^>]*>.*?</math>', r'', text, flags=re.DOTALL)
-                        
-                        # Fix Pandoc's inline <style> block that injects un-reflowable CSS
-                        if '<style' in text:
-                            text = text.replace('white-space: pre;', 'white-space: pre-wrap;')
-                            text = text.replace('position: relative;', '')
-                            text = text.replace('display: inline-block;', '')
-                            text = text.replace('overflow: auto;', 'overflow: visible;')
-                            
-                        # Replace all .svg references with .png
-                        text = text.replace('.svg', '.png')
-                        
-                        content = text.encode('utf-8')
-                    except UnicodeDecodeError:
-                        pass
-                
-                # Check if it's content.opf, inject manifest additions and fix SVGs
-                elif item.filename.endswith('.opf'):
-                    try:
-                        text = content.decode('utf-8')
-                        # Replace .svg with .png globally in the manifest
-                        text = text.replace('.svg', '.png')
-                        text = text.replace('media-type="image/svg+xml"', 'media-type="image/png"')
-                        pass # We will write this file at the end
-                    except UnicodeDecodeError:
-                        pass
-                
-                # Check if it's CSS
-                elif item.filename.endswith('.css'):
-                    try:
-                        text = content.decode('utf-8')
-                        if '@media (max-width: 30em)' in text:
-                            if 'word-wrap: break-word;' not in text:
-                                text = text.replace(
-                                    '  widows: 2;\n',
-                                    '  widows: 2;\n  word-wrap: break-word;\n  overflow-wrap: break-word;\n'
-                                )
-                            if 'body { font-size: 0.95em; }' in text:
-                                text = text.replace('  body { font-size: 0.95em; }\n', '')
-                                
-                        if 'table {' in text:
-                            text = re.sub(r'display:\s*block;\s*(/\*[^*]*\*/)?', '', text)
-                            text = re.sub(r'overflow-x:\s*auto;', '', text)
-                            
-                        content = text.encode('utf-8')
-                    except UnicodeDecodeError:
-                        pass
-                
-                # Convert SVG files to PNG
-                elif item.filename.endswith('.svg'):
-                    try:
-                        # Write SVG to a temp file
-                        temp_svg = tempfile.NamedTemporaryFile(delete=False, suffix=".svg")
-                        temp_svg.write(content)
-                        temp_svg.close()
-                        
-                        # Convert to PNG using PyMuPDF
-                        doc = pymupdf.open(temp_svg.name)
-                        # High DPI pixmap
-                        pix = doc[0].get_pixmap(matrix=pymupdf.Matrix(2, 2))
-                        temp_png = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-                        temp_png.close()
-                        pix.save(temp_png.name)
-                        
-                        # Read the converted PNG
-                        with open(temp_png.name, "rb") as f:
-                            png_content = f.read()
-                            
-                        os.unlink(temp_svg.name)
-                        os.unlink(temp_png.name)
-                        
-                        # Update the filename inside the ZIP
-                        new_item = zipfile.ZipInfo(item.filename.replace('.svg', '.png'))
-                        # Copy compression settings
-                        new_item.compress_type = zipfile.ZIP_DEFLATED
-                        z_out.writestr(new_item, png_content)
-                        continue
-                        
-                    except Exception as e:
-                        print(f"Failed to convert SVG {item.filename}: {e}")
-                        # Fallback: keep original but rename to PNG (will break, but better than crashing)
-                        new_item = zipfile.ZipInfo(item.filename.replace('.svg', '.png'))
-                        z_out.writestr(new_item, content)
-                        continue
-                
-                if not item.filename.endswith('.opf'):
-                    z_out.writestr(item, content, compress_type=zipfile.ZIP_DEFLATED)
-            
-            # Now write the new math images
-            for img_filename, img_data in new_images.items():
-                z_out.writestr(f"EPUB/{img_filename}", img_data, compress_type=zipfile.ZIP_STORED)
-                
-            # Finally, write the patched content.opf
-            for item in item_list:
-                if item.filename.endswith('.opf'):
-                    content = z_in.read(item.filename)
-                    text = content.decode('utf-8')
-                    # Apply the SVG renames
-                    text = text.replace('.svg', '.png')
-                    text = text.replace('media-type="image/svg+xml"', 'media-type="image/png"')
-                    
-                    if manifest_additions:
-                        inject_str = '\n    '.join(manifest_additions) + '\n  </manifest>'
-                        text = text.replace('</manifest>', inject_str)
-                    z_out.writestr(item, text.encode('utf-8'), compress_type=zipfile.ZIP_DEFLATED)
+        for math in doc.iter(MATH + "math"):
+            markup = ET.tostring(math, encoding="unicode", with_tail=False)
+            if markup not in formula_cache:
+                key = f"kindle-formula-{len(formula_cache) + 1}"
+                href = f"media/{key}.png"
+                target = member(package, href)
+                if target in entries or key in reserved_ids:
+                    raise ValueError(f"Formula name already in use: {key}")
+                entries[target], width = render(page, markup)
+                ET.SubElement(manifest, OPF + "item", id=key, href=href,
+                              attrib={"media-type": "image/png"})
+                formula_cache[markup] = target, width
+            target, width = formula_cache[markup]
+            image = ET.Element(XHTML + "img")
+            annotation = math.find('.//{*}annotation[@encoding="application/x-tex"]')
+            description = math.get("alttext") or (
+                annotation.text if annotation is not None else "".join(math.itertext())
+            )
+            if not description:
+                raise ValueError(f"Formula has no accessible text in {path}")
+            image.set("alt", description)
+            image.set("src", posixpath.relpath(target, posixpath.dirname(path)))
+            image.set("class", "kindle-math kindle-display" if math.get("display") == "block" else "kindle-math")
+            image.set("style", f"width: {width / 16:.3f}em")
+            if math.get("id"):
+                image.set("id", math.get("id"))
+            image.tail = math.tail
+            math.getparent().replace(math, image)
+        properties = item.get("properties", "").split()
+        if "mathml" in properties:
+            properties.remove("mathml")
+            if properties:
+                item.set("properties", " ".join(properties))
+            else:
+                del item.attrib["properties"]
+        entries[path] = ET.tostring(doc.getroottree(), encoding="utf-8", xml_declaration=True)
+    entries[package] = ET.tostring(opf, encoding="utf-8", xml_declaration=True)
+    with ZipFile(destination, "w", compression=ZIP_DEFLATED) as output:
+        output.writestr("mimetype", entries.pop("mimetype"), compress_type=ZIP_STORED)
+        for path, content in entries.items():
+            output.writestr(path, content)
 
-    print("-" * 50)
-    print(f"[SUCCESS] Kindle-ready EPUB with image-based Math and SVG-to-PNG converted!")
-    print(f"Output File: {out_epub_path}")
 
-except Exception as e:
-    print(f"[ERROR] An unexpected error occurred: {e}")
-    import traceback
-    traceback.print_exc()
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("source", type=Path)
+    args = parser.parse_args()
+    output = args.source.with_name(args.source.stem + "-kindle.epub")
+    with tempfile.TemporaryDirectory(dir=output.parent) as tmp, sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        page = browser.new_page(device_scale_factor=2, java_script_enabled=False, offline=True)
+        candidate = Path(tmp) / output.name
+        convert(args.source, candidate, page)
+        browser.close()
+        candidate.replace(output)
+    print(output)
+
+
+if __name__ == "__main__":
+    main()

@@ -33,3 +33,15 @@ or Arabic while their PDF pipelines are being validated. Build them explicitly
 with `./build_epub.sh ja` or `./build_epub.sh ar`.
 
 The builder writes each `.epub` beside its language's PDF. Generated EPUB files are ignored by Git.
+
+## Kindle reflowable edition
+
+For a Kindle copy, convert a book produced by the builder or downloaded from the release. The converter renders mathematical expressions and SVG diagrams locally using Chromium. It saves a separate `-kindle.epub` beside the source and retains the formula text as image descriptions.
+
+```bash
+python -m pip install lxml playwright
+python -m playwright install chromium
+python scripts/kindle_epub_patcher.py "book/深入理解-AI-Agent-李博杰-v2.0.epub"
+```
+
+Run `epubcheck` on the generated copy before distributing it. Font selection and layout can vary between reading devices.
