@@ -34,6 +34,8 @@
 
 打开[逐条结果](validation/mistral_multimodal_20260730/results.json)，在 `records` 中找两条 `sample: "num"` 的记录，按上面四个维度读 `scores`。裁判给两段的准确性都是 5，自然度都是 4；OpenAI 样本的情感表达和音色一致性是 3、2，Fish 样本是 4、3。看看你在哪一项与裁判意见不同，再对照该项 `reasons` 回听。评分分歧值得记录，下次校准裁判时可以把这对样本交给更多人独立听评。
 
+再试一次，把听辨范围缩小到两个字。打开多音字题的[第一段录音](validation/mistral_multimodal_20260730/tts1-alloy-1.0__polyphone.mp3)和[第二段录音](validation/mistral_multimodal_20260730/fishaudio-s1-clone__polyphone.mp3)，找到句末的“还得还清所有欠款”。前一个“还”表示仍然，读 hái；后一个表示偿还，读 huán。先分别记下听到的读音，听不清就标出位置。随后对照两条 `polyphone` 记录：两份准确性理由是一模一样的笼统判断，分数都是 5。该次运行没有启用 ASR，`cer` 的空值表示未测。即使另做转写，两种发音也可能都写成“还”，所以保留音频和具体字的位置，才能让别人复核一次读音判断。
+
 <a id="learning-2"></a>
 
 ### 准备服务并运行自己的比较
