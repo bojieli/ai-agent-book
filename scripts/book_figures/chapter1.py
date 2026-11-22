@@ -70,28 +70,26 @@ def learning_paths():
 
 def context_ablation():
     f = Figure('实验 1-1——上下文消融实验设计', '五组条件均保留系统提示词和当前任务。工具定义、历史调用、历史推理与工具结果按各组条件保留或移除。', 680)
-    f.box(150,20,600,65,'#dedede')
-    f.text(450,60,'固定输入：系统提示词 + 当前用户任务',23,True)
-    f.path([(450,85),(450,115)],True)
-    widths=[200,100,110,110,110,230]
-    xs=[20]
-    for w in widths: xs.append(xs[-1]+w)
-    headers=['实验条件','工具\n定义','历史\n调用','历史\n推理','工具\n结果','本次运行结果']
-    for j,h in enumerate(headers):
-        f.box(xs[j],115,widths[j],80,'#dedede')
-        f.text(xs[j]+widths[j]/2,146 if '\n' in h else 164,h,21,True)
-    rows=[
-        ('完整基线',['保留']*4,'正确完成\n3 轮 · 4 次调用'),
-        ('无历史推理',['保留','保留','移除','保留'],'正确完成\n3 轮 · 4 次调用'),
-        ('无工具定义',['移除','保留','保留','保留'],'告知缺少工具\n1 轮 · 0 次调用'),
-        ('无工具结果',['保留','保留','保留','移除'],'重复调用，达轮数上限\n5 轮 · 9 次调用'),
-        ('无历史消息',['保留','移除','移除','移除'],'重复换汇，达轮数上限\n5 轮 · 15 次调用'),
+    f.box(20,20,860,62,'#dedede')
+    f.text(450,61,'Kimi K3 · 2026 年 8 月 25 日',24,True)
+    f.text(450,124,'各组都保留系统提示词和当前用户任务',22)
+    fields = [(150,'移除的信息'), (414,'运行结果'), (666,'轮数'), (805,'调用次数')]
+    f.box(20,148,860,62,'#dedede')
+    for x, header in fields:
+        f.text(x,188,header,22,True)
+    rows = [
+        ('无（完整基线）','正确完成',3,4),
+        ('历史推理','正确完成',3,4),
+        ('工具定义','告知缺少工具',1,0),
+        ('工具结果','重复调用，达到上限',5,9),
+        ('全部历史消息','重复换汇，达到上限',5,15),
     ]
-    for i,(label,values,result) in enumerate(rows):
-        y=195+i*90
-        for j,value in enumerate([label]+values+[result]):
-            f.box(xs[j],y,widths[j],90,'#ffffff' if value=='移除' else '#f2f2f2')
-            f.text(xs[j]+widths[j]/2,y+(33 if '\n' in value else 53),value,20,j==0)
+    for i,(removed,outcome,rounds,calls) in enumerate(rows):
+        y=214+i*69
+        f.box(20,y,860,64,'#f2f2f2' if i==0 else '#ffffff')
+        for (x,_), value in zip(fields, [removed,outcome,str(rounds),str(calls)]):
+            f.text(x,y+40,value,20)
+    f.text(450,610,'全部历史消息包含历史工具调用、历史推理和工具结果。',20)
     f.save('fig1-3.svg')
 
 
@@ -197,14 +195,14 @@ def autonomous_loop():
     f.text(750,65,'停止运行',23,True)
     f.text(750,100,'保存进度\n报告未完成部分／转人工',20)
     f.path([(550,80),(630,80)],True)
-    f.text(590,65,'需停止',20)
+    f.text(590,54,'停止',20)
     f.path([(370,135),(370,205)],True)
     f.text(440,176,'可继续',20)
     f.box(190,205,360,110,'#f2f2f2')
     f.text(370,241,'推理与决策（Reasoning）',23,True)
     f.text(370,281,'“还需更多信息”／准备回答',21)
     f.path([(275,315),(275,385)],True)
-    f.text(320,359,'工具请求',20)
+    f.text(360,359,'工具请求',20)
     f.box(90,385,370,120,'#f2f2f2')
     f.text(275,426,'行动（Acting）',23,True)
     f.text(275,463,'web_search(...)\nHarness 校验并调度执行',20)
@@ -222,8 +220,8 @@ def autonomous_loop():
     f.text(727,550,'通过',20)
     f.box(520,580,320,85,'#dedede')
     f.text(680,631,'交付最终结果',23,True)
-    f.path([(840,445),(875,445),(875,790),(370,790),(370,705)],True)
-    f.text(670,775,'未通过：反馈差距，继续执行',21)
+    f.path([(840,445),(875,445),(875,790),(35,790),(35,642)])
+    f.text(450,755,'未通过：补入验收反馈，再检查运行预算',21)
     f.save('fig1-6.svg')
 
 

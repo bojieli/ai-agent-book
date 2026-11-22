@@ -71,7 +71,8 @@ def translation():
     down(f,675,420,465)
     panel(f,470,465,410,'Proofreading Agent',['按章节和索引读取材料','P3：注意力误译为“关注”','P8：长句拆分建议','输出：定位明确的审校报告'],220)
     panel(f,20,465,410,'译文修订',['译者读取对应章节反馈','结合原文核对术语','修改译文并记录版本','审校员复查修改结果'],220)
-    f.path([(470,590),(430,590)],True)
+    f.path([(470,547),(430,547)],True)
+    f.path([(430,641),(470,641)],True)
     panel(f,20,745,860,'共享产物',['术语表：glossary.json','章节译文：chapter{n}_zh.md','审校报告：review_report.md','翻译指南：translation_guide.md'],215)
     for x in [225,675]:down(f,x,685,745)
     f.save('fig10-5.svg')
@@ -80,12 +81,16 @@ def translation():
 def parallel():
     f=Figure('Manager 并行协调','并行成员状态、消息队列与后续任务依赖。',1010)
     panel(f,20,20,860,'Manager',['分配任务 · 接收事件 · 更新依赖 · 汇总结果'],110)
-    down(f,450,130,175)
-    panel(f,20,175,860,'消息队列 / 事件总线',['消息字段：type · source · target · task_id · payload'],110)
-    for x in [125,345,565,785]:down(f,x,285,335)
+    down(f,405,130,184)
+    f.path([(495,184),(495,130)],True)
+    panel(f,20,184,860,'消息队列 / 事件总线',['消息字段：type · source · target · task_id · payload'],110)
+    for x in [120,340,560,780]:
+        down(f,x-15,294,354)
+        f.path([(x+15,354),(x+15,294)],True)
+
     for i,(title,lines) in enumerate([('Agent 1',['资料收集','运行中']),('Agent 2',['数据分析','运行中']),('Agent 3',['图表生成','已完成']),('Agent 4',['格式校验','等待依赖'])]):
-        panel(f,20+i*220,335,200,title,lines,150)
-    panel(f,20,545,860,'事件与状态变化示例',['start_task → Agent 1：检索 arXiv，主题 LLM Agent','data_ready：Agent 1 → Agent 2，file: raw_data.json','task_completed ← Agent 3：图表已保存','start_task → Agent 4：depends_on: [agent_2, agent_3]'],220)
+        panel(f,20+i*220,354,200,title,lines,150)
+    panel(f,20,545,860,'下行派发任务，上行报告进展',['start_task → Agent 1：检索 arXiv，主题 LLM Agent','data_ready：Agent 1 → Agent 2，file: raw_data.json','task_completed ← Agent 3：图表已保存','start_task → Agent 4：depends_on: [agent_2, agent_3]'],220)
     f.save('fig10-6.svg')
 
 
@@ -93,16 +98,24 @@ def phone_computer():
     f=Figure('Phone 与 Computer 双 Agent 架构','两条独立运行循环通过结构化事件交换字段与执行结果。',1130)
     panel(f,20,20,410,'Phone Agent · Node.js',['WebRTC：双向语音','语音 → Silero VAD → ASR','LLM：理解意图与提取字段','TTS：合成追问和确认','持续处理通话事件'],245)
     panel(f,470,20,410,'Computer Agent · Python',['截图 → Vision LLM','读取表单与当前页面状态','规划字段与操作顺序','click / type / submit','读取页面反馈并验证'],245)
-    f.path([(675,265),(675,320),(225,320),(225,265)],True)
-    f.text(450,307,'发起通话：purpose / required_info',20)
-    panel(f,20,370,860,'WebSocket · 双向消息通道',['任务标识 · 消息类型 · 字段数据 · 当前状态'],110)
-    for x in [225,675]:
-        f.path([(x,265),(x,285),(10 if x==225 else 890,285),(10 if x==225 else 890,425),(20 if x==225 else 880,425)],True)
-    panel(f,20,530,410,'Phone → Computer',['info_collected','姓名：张三（示例）','已取得：姓名、联系方式','继续收集：证件号码'],220)
-    panel(f,470,530,410,'Computer → Phone',['fill_error / format_invalid','字段：证件号码','问题：位数与格式不符','请求：请用户再次确认'],220)
-    panel(f,470,805,410,'Phone Agent 的下一步',['向用户澄清所需字段','回读并确认识别结果','发送已确认的字段值','收集完成：task_completed'],220)
-    panel(f,20,805,410,'Computer Agent 的下一步',['按确认值更新表单','检查页面校验结果','按授权提交并核对回执','保存提交结果并结束任务'],220)
-    down(f,225,750,805);down(f,675,750,805)
+    panel(f,20,300,860,'WebSocket 双向通道',['每条消息携带任务标识、类型、字段数据及当前状态'],110)
+    phone, computer = 124, 776
+    f.text(phone, 462, '电话端', 26, True)
+    f.text(computer, 462, '电脑端', 26, True)
+    f.path([(phone,478),(phone,950)])
+    f.path([(computer,478),(computer,1052)])
+    for y, source, dest, label in [
+        (545,computer,phone,'发起通话：purpose / required_info'),
+        (630,phone,computer,'info_collected：姓名、联系方式'),
+        (715,phone,computer,'info_collected：取得证件号码'),
+        (800,computer,phone,'fill_error：证件号码格式不符'),
+        (885,phone,computer,'回读并确认，发送更正后的号码'),
+        (950,phone,computer,'task_completed：所需字段已收齐'),
+    ]:
+        f.text(450,y-15,label)
+        f.path([(source,y),(dest,y)],True)
+    f.box(300,1000,565,81)
+    f.text(582,1048,'电脑端核对页面，按授权提交并检查回执')
     f.save('fig10-7.svg')
 
 
@@ -155,7 +168,7 @@ def metagpt():
 
 
 def town():
-    f=Figure('AI 小镇架构','Isabella 的记忆条目、跨事件反思及一天计划示例。',1090)
+    f=Figure('AI 小镇架构','Isabella 的记忆条目、跨事件反思及一天计划示例。',1120)
     panel(f,20,20,860,'Isabella Rodriguez · Hobbs 咖啡馆店主',['性格：友善、热情 · 当前目标：筹备情人节派对'],110)
     down(f,450,130,175)
     panel(f,20,175,860,'记忆流 · 条目示例',['08:30 开店：重要性 4，近因性 0.60','09:15 与 Klaus 交谈：重要性 5，近因性 0.70','10:00 筹划派对：重要性 9，近因性 0.80','11:30 邀请 Maria：重要性 8，近因性 0.85','14:00 请 Maria 帮忙：重要性 7，近因性 0.90','检索：综合近因性、重要性及与当前问题的相关性'],280)
@@ -166,6 +179,8 @@ def town():
     f.path([(430,625),(470,625)],True)
     panel(f,20,805,860,'小镇中的社会互动',['25 个 Agent，模拟两天的生活','对话传播：派对邀请、Sam 竞选市长','记忆与关系：认出熟人、延续摄影项目的话题','行动：安排活动、邀请朋友、按约赴会'],220)
     down(f,675,745,805)
+    f.path([(675,1025),(675,1090),(7,1090),(7,325),(20,325)],True)
+    f.text(490,1075,'观察到新互动，追加记忆')
     f.save('fig10-10.svg')
 
 

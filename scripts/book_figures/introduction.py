@@ -73,35 +73,33 @@ def roadmap():
     f.text(220,60,'第一部分：如何构建 Agent',24,True)
     f.box(480,20,400,65,fill='#dedede')
     f.text(680,60,'第二部分：如何提升能力',24,True)
-    left=[
-        ('第 1 章 AI Agent 入门','概念框架 · ReAct · Harness'),
-        ('第 2 章 上下文工程','任务状态 · Prompt · 压缩'),
-        ('第 3 章 用户记忆和知识库','跨会话记忆 · RAG · 知识组织'),
-        ('第 4 章 工具','MCP · 感知与执行 · 安全'),
-        ('第 5 章 Coding Agent\n与通用 Agent','代码生成 · 通用能力 · 自举'),
-        ('第 6 章 交互','观测与动作空间的扩展'),
+    chapters = [
+        ('第 1 章 AI Agent 入门', '模型怎样调用工具？'),
+        ('第 2 章 上下文工程', '这一次决策需要哪些信息？'),
+        ('第 3 章 用户记忆和知识库', '上次谈过的事怎样找回来？'),
+        ('第 4 章 工具', '怎样查状态、办业务？'),
+        ('第 5 章 Coding Agent\n与通用 Agent', '能否写个程序来办这件事？'),
+        ('第 6 章 交互', '用户中途插话怎么办？'),
     ]
-    for i,(title,detail) in enumerate(left):
-        y=110+i*126
-        f.box(20,y,400,105)
-        f.text(220,y+32,title,22,True)
-        f.text(220,y+(90 if '\n' in title else 75),detail,20)
-        if i<5:f.path([(220,y+105),(220,y+126)],arrow=True)
+    for i, (chapter, question) in enumerate(chapters):
+        y = 110 + i*124
+        f.text(220, y+28, chapter, 22, True)
+        f.text(220, y+(100 if i == 4 else 70), question, 20)
+        if i < len(chapters)-1:
+            f.path([(20, y+114), (420, y+114)])
     f.box(480,110,400,115)
-    f.text(680,145,'第 7 章 Agent 的评估',22,True)
-    f.text(680,180,'环境 · 指标 · 统计',20)
-    f.text(680,211,'可度量的反馈',20)
-    f.path([(680,225),(680,247),(505,247),(505,755)])
-    for y,title,detail,level in [
-        (280,'第 8 章 模型后训练','SFT · RL · 奖励设计','模型参数'),
-        (485,'第 9 章 Agent 的持续进化','经验 · 更新 · 发布与回滚','单体系统'),
-        (690,'第 10 章 多 Agent 协作','分工 · 通信 · 协调','群体系统'),
+    f.text(680,153,'第 7 章 Agent 的评估',22,True)
+    f.text(680,204,'哪里出错？改过后有效吗？',20)
+    f.path([(680,225),(680,247),(500,247),(500,747)])
+    for y, chapter, question in [
+        (282,'第 8 章 模型后训练','怎样用训练更新模型？'),
+        (482,'第 9 章 持续进化','怎样用运行经验改进系统？'),
+        (682,'第 10 章 多 Agent 协作','多位成员怎样分工、交接？'),
     ]:
-        f.path([(505,y+65),(540,y+65)],arrow=True)
-        f.box(540,y,340,155)
-        f.text(710,y+38,title,21,True)
-        f.text(710,y+82,detail,20)
-        f.text(710,y+123,level,20)
+        f.path([(500,y+65),(522,y+65)],arrow=True)
+        f.box(522,y,358,130)
+        f.text(701,y+46,chapter,22,True)
+        f.text(701,y+94,question,20)
     f.save('fig0-2.svg')
 
 

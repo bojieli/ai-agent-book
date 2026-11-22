@@ -211,36 +211,28 @@ def bm25():
 
 
 def hybrid():
-    f=Figure('混合检索与重排序流水线','同一查询并行进入稠密与稀疏检索，合并候选后通过RRF融合，并可使用跨编码器重排序。图中分数为示例。',930)
-    f.box(240,20,420,80,'#dedede')
-    f.text(450,52,'用户查询',23,True)
-    f.text(450,84,'kitty behavior',22)
-    f.path([(450,100),(450,125),(225,125),(225,150)],True)
-    f.path([(450,125),(675,125),(675,150)],True)
-    branches=[(20,'稠密检索','语义：kitty ≈ cat / feline','余弦相似度（示例）',[
-        'doc3：feline habits and cat play','0.87','doc7：cat grooming patterns','0.82','doc1：pet care basics','0.71']),
-        (470,'稀疏检索 · BM25','词项：kitty / behavior','BM25 分数（示例）',[
-        'doc5：kitty litter training','8.4','doc9：kitty adoption guide','6.1','doc2：kitty behavior and health','3.2'])]
-    for x,title,mechanism,label,rows in branches:
-        f.box(x,150,410,380,'#ffffff')
-        f.text(x+205,190,title,24,True)
-        f.text(x+205,232,mechanism,21)
-        f.text(x+205,270,label,20)
-        for i in range(3):
-            f.text(x+205,317+i*72,rows[i*2],20)
-            f.text(x+205,346+i*72,rows[i*2+1],21,True)
-        f.path([(x+205,530),(x+205,560),(450,560)])
-    f.path([(450,560),(450,590)],True)
-    f.box(120,590,660,90,'#dedede')
-    f.text(450,624,'合并去重 → RRF 融合',24,True)
-    f.text(450,659,'6 个不同候选 → 按融合排名取前 5 个',22)
-    f.path([(450,680),(450,715)],True)
-    f.box(120,715,660,90)
-    f.text(450,750,'可选：跨编码器重排序',24,True)
-    f.text(450,785,'逐对输入“查询 + 候选文本”，重新评分',22)
-    f.path([(450,805),(450,840)],True)
-    f.box(240,840,420,65,'#ffffff')
-    f.text(450,882,'最终排序 Top-N',24,True)
+    f=Figure('混合检索与重排序流水线','实验 3-6 的 XR-7003 查询。两路检索分别计分，RRF 使用名次融合，重排后第一名不变，第二名改变。',750)
+    f.box(265,20,370,67,'#dedede')
+    f.text(450,63,'查询：XR-7003',25,True)
+    for x, title, ranking in [
+        (20,'稠密检索（列出前三名）','1. xr_7003   0.6179\n2. xr_7001   0.5327\n3. xr_7004   0.5177'),
+        (470,'稀疏检索 · BM25','1. xr_7003   3.3578'),
+    ]:
+        mid=x+205
+        f.path([(450,87),(450,115),(mid,115),(mid,140)],True)
+        f.box(x,140,410,215,'#ffffff')
+        f.text(mid,183,title,22,True)
+        f.text(mid,235,ranking,26)
+        f.path([(mid,355),(mid,383),(450,383)])
+    f.path([(450,383),(450,408)],True)
+    f.box(20,408,860,140,'#f2f2f2')
+    f.text(450,449,'RRF 按名次融合，同一文档合并计分',24,True)
+    f.text(450,494,'xr_7003：1/61 + 1/61 ≈ 0.0328，仍居首位',22)
+    f.text(450,531,'其后是 xr_7001、xr_7004',20)
+    f.path([(450,548),(450,597)],True)
+    f.box(20,597,860,130,'#ffffff')
+    f.text(450,640,'跨编码器：重新比较融合后的前十个候选',23,True)
+    f.text(450,692,'前三名：xr_7003、xr_7004、xr_7002',22)
     f.save('fig3-9.svg')
 
 
@@ -269,13 +261,15 @@ def raptor():
 def graph_memory():
     f=Figure('GraphRAG 实体—关系知识图谱','两个张医生有不同实体标识和关系。牙医地址沿用户、医生、医院、地址依次检索。',655)
     f.box(20,20,860,65,'#dedede');f.text(450,62,'查询：我的牙医所在医院的地址？',25,True)
-    f.box(340,120,220,60);f.text(450,160,'用户',25,True)
+    for x,person in [(20,'用户'),(470,'用户的父亲')]:
+        f.box(x,120,410,65)
+        f.text(x+205,164,person,24,True)
     for x,doctor,dept,relation,hospital in [
-        (20,'张医生-A','牙科','我的牙医','仁爱口腔医院'),
-        (470,'张医生-B','心内科','父亲的心脏科医生','华山医院 · 心血管中心')]:
+        (20,'张医生-A','牙科','看牙时找','仁爱口腔医院'),
+        (470,'张医生-B','心内科','看心脏病时找','华山医院 · 心血管中心')]:
         mid=x+205
-        f.path([(450,180),(450,210),(mid,210),(mid,280)],True)
-        f.text(mid+100,257,relation,22)
+        f.path([(mid,185),(mid,280)],True)
+        f.text(mid+108,244,relation,22)
         f.box(x,280,410,90,'#ffffff');f.text(mid,315,doctor,24,True);f.text(mid,350,'科室：'+dept,22)
         f.path([(mid,370),(mid,430)],True);f.text(mid+65,409,'就职于',21)
         f.box(x,430,410,70);f.text(mid,474,hospital,22,True)

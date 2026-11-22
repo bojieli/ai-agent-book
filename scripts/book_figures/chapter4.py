@@ -41,18 +41,20 @@ def hierarchical_discovery():
     f.path([(100,315),(100,345),(450,345),(450,390)],True)
     f.text(560,371,'Top-1：GitHub',21,True)
     f.box(20,390,860,50,'#dedede');f.text(450,424,'② 工具匹配 · GitHub 服务器内 26 个工具（示意）',22,True)
-    for i,(name,score,desc,chosen) in enumerate([
-        ('search_repositories','0.41','搜索仓库',False),
-        ('list_contributors','0.89','贡献者列表',True),
-        ('get_repo_stats','0.85','仓库统计',True),
-        ('create_issue','0.12','创建 Issue',False),
-        ('get_commit_history','0.67','提交历史',True)]):
-        y=460+i*70
-        f.box(80,y,740,55,'#dedede' if chosen else '#ffffff')
-        f.text(270,y+36,name,22,chosen);f.text(520,y+36,score,22,chosen);f.text(690,y+36,desc,22)
-    f.path([(450,795),(450,835)],True)
-    f.box(80,835,740,165,'#eeeeee');f.text(450,870,'返回 Top-3 工具定义',23,True)
-    f.text(450,907,'list_contributors',22);f.text(450,941,'get_repo_stats',22);f.text(450,975,'get_commit_history',22)
+    f.text(450,488,'按相似度降序排列，图中列出五项',22)
+    tools=[
+        ('list_contributors','0.89','贡献者列表'),
+        ('get_repo_stats','0.85','仓库统计'),
+        ('get_commit_history','0.67','提交历史'),
+        ('search_repositories','0.41','搜索仓库'),
+        ('create_issue','0.12','创建 Issue'),
+    ]
+    for i,(name,score,desc) in enumerate(tools):
+        y=520+i*78
+        chosen=i<3
+        f.box(50,y,800,62,'#dedede' if chosen else '#ffffff')
+        f.text(272,y+42,name,22,chosen);f.text(548,y+42,score,22,chosen);f.text(718,y+42,desc,22)
+    f.text(450,968,'灰底三项：随本次发现结果返回完整定义',22)
     f.save('fig4-2.svg')
 
 

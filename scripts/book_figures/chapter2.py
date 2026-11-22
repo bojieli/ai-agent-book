@@ -144,37 +144,30 @@ def context_layout():
 
 
 def attention_example():
-    f = Figure('注意力机制的直观理解', '四个语义单元示意：当前查询对各Key的权重为0.35、0.05、0.55、0.05；矩阵保留因果下三角。', 830)
-    f.text(450,40,'① 当前查询与四个 Key',25,True)
+    f=Figure('注意力机制的直观理解','因果注意力矩阵的每一行对应一个查询；取最后一行的权重，对四个位置的 Value 加权求和。',655)
     words=['北京','的','天气','怎么样']
-    weights=[0.35,0.05,0.55,0.05]
-    for j,(word,w) in enumerate(zip(words,weights)):
-        x=20+j*225
-        f.box(x,72,185,112,'#dedede' if j==2 else '#f2f2f2')
-        f.text(x+92.5,109,word,25,True)
-        f.text(x+92.5,154,f'Key · {w:.2f}',22)
-        f.path([(x+92.5,184),(x+92.5,219),(450,219)])
-    f.path([(450,267),(450,219)],True)
-    f.box(310,267,280,75)
-    f.text(450,297,'Query',21,True)
-    f.text(450,327,'怎么样',24)
-    f.text(450,395,'② 因果注意力矩阵',25,True)
-    f.text(475,434,'Key →',21)
-    f.text(78,491,'Query ↓',21)
     rows=[[1.0],[.3,.7],[.2,.1,.7],[.35,.05,.55,.05]]
-    for j,word in enumerate(words): f.text(290+j*145,479,word,22)
+    f.text(450,48,'各列对应提供 Key 的位置',24,True)
+    f.text(118,104,'Query 所在位置',20)
+    for j,word in enumerate(words):
+        f.text(290+j*145,104,word,22,True)
     for i,row in enumerate(rows):
-        y=505+i*76
-        f.text(125,y+45,words[i],22)
+        y=130+i*76
+        f.text(125,y+45,words[i],22,i==3)
         for j in range(4):
             x=220+j*145
             if j<=i:
-                value=row[j];shade=round(248-95*value);color=f'#{shade:02x}{shade:02x}{shade:02x}'
-                f.box(x,y,140,70,color)
-                f.text(x+70,y+44,f'{value:.2f}',22,True)
+                weight=row[j]
+                shade=round(248-95*weight)
+                f.box(x,y,140,70,f'#{shade:02x}{shade:02x}{shade:02x}')
+                f.text(x+70,y+44,f'{weight:.2f}',22,i==3)
             else:
                 f.box(x,y,140,70,'#ffffff')
                 f.text(x+70,y+44,'×',22)
+    f.text(450,470,'× 表示当前位置还看不到这一列',20)
+    f.box(20,503,860,127,'#f2f2f2')
+    f.text(450,546,'“怎么样”所在位置的输出（取最后一行）',23,True)
+    f.text(450,594,'0.35 V北京 + 0.05 V的 + 0.55 V天气 + 0.05 V怎么样',22)
     f.save('fig2-6.svg')
 
 
@@ -343,7 +336,7 @@ def status_position():
 
 
 def compression_results():
-    f=Figure('上下文压缩策略对比','六组既有运行汇总；token用量、字符比率、轮数及最终回复状态分列呈现。',570)
+    f=Figure('上下文压缩策略对比','六组既有运行汇总；token用量、字符比率、轮数及最终回复状态分列呈现。',675)
     headers=[(135,'策略'),(330,'累计 token'),(490,'字符比率'),(615,'轮数'),(765,'最终回复')]
     f.box(20,20,860,70,'#dedede')
     for x,label in headers:f.text(x,63,label,22,True)
@@ -351,6 +344,8 @@ def compression_results():
     for j,row in enumerate(rows):
         y=100+j*74;f.box(20,y,860,64,'#f2f2f2' if j%2==0 else '#ffffff')
         for (x,_),value in zip(headers,row):f.text(x,y+40,value,22)
+    f.text(450,590,'累计 token：主 Agent 各轮输入和输出之和',20)
+    f.text(450,635,'字符比率：处理后的字符数 ÷ 原始字符数',20)
     f.save('fig2-16.svg')
 
 
