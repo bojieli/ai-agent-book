@@ -5,7 +5,7 @@ import pytest
 
 pytest.importorskip("playwright.sync_api")
 pytest.importorskip("lxml.etree")
-import kindle_epub_patcher as patcher
+from scripts import kindle_epub_patcher as patcher
 
 
 def test_unannotated_math_and_source_text_survive(tmp_path, monkeypatch):
