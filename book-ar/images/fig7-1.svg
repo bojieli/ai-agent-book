@@ -10,57 +10,57 @@
 .m{font-size:13px}
 .n{font-size:11px;fill:#666666}
 
-.t,.l{direction:rtl;unicode-bidi:plaintext;font-family:'Noto Sans Arabic','Noto Sans',Arial,sans-serif}
-.c{font-family:'SF Mono',Menlo,Consolas,monospace;direction:ltr;unicode-bidi:plaintext}
+.t,.l{font-family:'Noto Sans Arabic','Noto Sans',Arial,sans-serif}
+.c{font-family:'SF Mono',Menlo,Consolas,monospace}
 
 </style>
 
 <rect x="100" y="20" width="690" height="56" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="445" y="40">① تعريف النجاح</text>
-<text class="t s" x="445" y="61">Pass@k يقيس سقف القدرة · Pass^k يقيس الموثوقية</text>
+<text class="t h" x="445" y="40" direction="rtl" unicode-bidi="plaintext">① تعريف النجاح</text>
+<text class="t s" x="445" y="61" direction="rtl" unicode-bidi="plaintext">Pass@k يقيس سقف القدرة · Pass^k يقيس الموثوقية</text>
 <line x1="445" y1="76" x2="445" y2="94" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 
 <rect x="100" y="96" width="690" height="102" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="445" y="116">② مصدر المهام</text>
+<text class="t h" x="445" y="116" direction="rtl" unicode-bidi="plaintext">② مصدر المهام</text>
 <rect x="116" y="130" width="206" height="54" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="219" y="147">معايير مرجعية عامة</text>
-<text class="t n" x="219" y="167">اقتباس الأساليب · غربلة خشنة</text>
+<text class="t m" x="219" y="147" direction="rtl" unicode-bidi="plaintext">معايير مرجعية عامة</text>
+<text class="t n" x="219" y="167" direction="rtl" unicode-bidi="plaintext">اقتباس الأساليب · غربلة خشنة</text>
 <rect x="342" y="130" width="206" height="54" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="445" y="147">مجموعة عمل ذاتية</text>
-<text class="t n" x="445" y="167">توزيع المهام الحقيقي</text>
+<text class="t m" x="445" y="147" direction="rtl" unicode-bidi="plaintext">مجموعة عمل ذاتية</text>
+<text class="t n" x="445" y="167" direction="rtl" unicode-bidi="plaintext">توزيع المهام الحقيقي</text>
 <rect x="568" y="130" width="206" height="54" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="671" y="147">عودة مسارات الإنتاج</text>
-<text class="t n" x="671" y="167">ناتج عزو الإخفاق</text>
+<text class="t m" x="671" y="147" direction="rtl" unicode-bidi="plaintext">عودة مسارات الإنتاج</text>
+<text class="t n" x="671" y="167" direction="rtl" unicode-bidi="plaintext">ناتج عزو الإخفاق</text>
 <line x1="445" y1="198" x2="445" y2="216" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 
 <rect x="100" y="218" width="690" height="106" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="445" y="238">③ أسلوب التحقق</text>
-<text class="t n" x="445" y="257">← بحسب درجة قابلية المهمة للتحقق آليًا →</text>
+<text class="t h" x="445" y="238" direction="rtl" unicode-bidi="plaintext">③ أسلوب التحقق</text>
+<text class="t n" x="445" y="257" direction="rtl" unicode-bidi="plaintext">← بحسب درجة قابلية المهمة للتحقق آليًا →</text>
 <rect x="116" y="268" width="142" height="44" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="187" y="282">مدقق حتمي</text>
-<text class="t n" x="187" y="300">SWE-bench</text>
+<text class="t m" x="187" y="282" direction="rtl" unicode-bidi="plaintext">مدقق حتمي</text>
+<text class="t n" x="187" y="300" direction="rtl" unicode-bidi="plaintext">SWE-bench</text>
 <line x1="262" y1="290" x2="284" y2="290" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)"/>
 <rect x="288" y="268" width="142" height="44" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="359" y="282">قائمة فحوص</text>
-<text class="t n" x="359" y="300">τ²-bench</text>
+<text class="t m" x="359" y="282" direction="rtl" unicode-bidi="plaintext">قائمة فحوص</text>
+<text class="t n" x="359" y="300" direction="rtl" unicode-bidi="plaintext">τ²-bench</text>
 <line x1="434" y1="290" x2="456" y2="290" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)"/>
 <rect x="460" y="268" width="142" height="44" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="531" y="282">Rubric + حكم نموذج</text>
-<text class="t n" x="531" y="300">مهام مفتوحة</text>
+<text class="t m" x="531" y="282" direction="rtl" unicode-bidi="plaintext">Rubric + حكم نموذج</text>
+<text class="t n" x="531" y="300" direction="rtl" unicode-bidi="plaintext">مهام مفتوحة</text>
 <line x1="606" y1="290" x2="628" y2="290" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)"/>
 <rect x="632" y="268" width="142" height="44" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="703" y="282">مقارنة زوجية</text>
-<text class="t n" x="703" y="300">Chatbot Arena</text>
+<text class="t m" x="703" y="282" direction="rtl" unicode-bidi="plaintext">مقارنة زوجية</text>
+<text class="t n" x="703" y="300" direction="rtl" unicode-bidi="plaintext">Chatbot Arena</text>
 <line x1="445" y1="324" x2="445" y2="342" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 
 <rect x="100" y="344" width="690" height="62" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="445" y="364">④ توظيف النتائج</text>
-<text class="t s" x="445" y="388">الدلالة الإحصائية ← عزو الإخفاق ← مهام الانحدار ← اختيار النموذج وتكرار الـHarness</text>
+<text class="t h" x="445" y="364" direction="rtl" unicode-bidi="plaintext">④ توظيف النتائج</text>
+<text class="t s" x="445" y="388" direction="rtl" unicode-bidi="plaintext">الدلالة الإحصائية ← عزو الإخفاق ← مهام الانحدار ← اختيار النموذج وتكرار الـHarness</text>
 
 <path d="M100 375 L52 375 L52 147 L96 147" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ah)"/>
-<text class="t n" x="52" y="262" transform="rotate(-90 52 262)">مهام الانحدار تصير حالات جديدة</text>
+<text class="t n" x="52" y="262" transform="rotate(-90 52 262)" direction="rtl" unicode-bidi="plaintext">مهام الانحدار تصير حالات جديدة</text>
 
 <rect x="100" y="424" width="690" height="46" rx="6" fill="#f3f0e8" stroke="#333333" stroke-width="2"/>
-<text class="t m" x="445" y="440" font-weight="bold">البنية الداعمة</text>
-<text class="t n" x="445" y="458">قابلية الرصد · بنية التقييم الداخلي (الاستئصال / AB / مفاتيح الميزات) · بيئة المحاكاة (الفصل الثامن)</text>
+<text class="t m" x="445" y="440" font-weight="bold" direction="rtl" unicode-bidi="plaintext">البنية الداعمة</text>
+<text class="t n" x="445" y="458" direction="rtl" unicode-bidi="plaintext">قابلية الرصد · بنية التقييم الداخلي (الاستئصال / AB / مفاتيح الميزات) · بيئة المحاكاة (الفصل الثامن)</text>
 </svg>
