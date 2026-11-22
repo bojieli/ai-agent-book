@@ -421,24 +421,29 @@ for prompt in batch:
     update(policy, group, advantages)
 ```
 
-而 PPO 的价值网络和裁剪目标可以写成：
+PPO 怎样用一批长短不同的轨迹更新策略？先在每条轨迹内部，从后往前计算各步的折扣回报。轨迹结束就停止累加，以免把下一道题的奖励算进来。再把所有轨迹中模型实际选择的动作放在一起，计算这批动作的平均损失。下面写出一次更新，省略多轮小批量优化。[PPO 原论文](https://arxiv.org/abs/1707.06347)
 
 ```python
+states, actions, returns = [], [], []
 for trajectory in rollouts:
-    returns = discounted_returns(trajectory.rewards)
-    values = value_model(trajectory.states)
-    advantages = returns - stop_gradient(values)
-    ratio = exp(policy.log_prob(trajectory.actions)
-                - old_policy.log_prob(trajectory.actions))
-    policy_loss = -mean(min(
-        ratio * advantages,
-        clip(ratio, 1 - epsilon, 1 + epsilon) * advantages
-    ))
-    value_loss = mean((value_model(trajectory.states) - returns) ** 2)
+    states.extend(trajectory.states)       # 每次选择动作之前的状态
+    actions.extend(trajectory.actions)     # 与状态逐项对应
+    returns.extend(discounted_returns(trajectory.rewards))
+
+returns = tensor(returns)
+values = value_model(states)
+advantages = returns - stop_gradient(values)
+ratio = exp(policy.log_prob(actions, given=states)
+            - old_policy.log_prob(actions, given=states))
+policy_loss = -mean(min(
+    ratio * advantages,
+    clip(ratio, 1 - epsilon, 1 + epsilon) * advantages
+))
+value_loss = mean((values - returns) ** 2)
 update(policy, value_model, policy_loss + value_coef * value_loss)
 ```
 
-GRPO 的“相对”来自同一 prompt 的组内比较；PPO 中的 `old_policy` 是生成这批 rollout 时冻结的策略快照，概率比衡量当前策略对这些动作的概率与采样时相差多少。裁剪通过代理目标抑制大步更新，实际策略变化还受学习率、更新轮数和梯度大小影响。环境决定模型能经历哪些状态，奖励提供比较依据，两者共同决定训练信号的质量。
+GRPO 的“相对”来自同一问题的多条回答；这里的 PPO 则用价值网络估计每个状态的预期回报。`old_policy` 是生成这批轨迹时冻结的策略。假设某步动作的优势为 1，当前策略给它的概率是采样时的 1.4 倍；取 `epsilon = 0.2`，代理目标中该项的贡献为 `min(1.4, 1.2) = 1.2`。继续提高这个动作的概率，已经不能从这一项获得额外收益。其他样本仍会影响参数，因此实际概率比并不保证落在裁剪区间内。环境决定模型能经历哪些状态，奖励提供比较依据，两者共同决定训练信号的质量。
 
 > **实验 8-10 ★★：AdaptThink——学会 “何时不思考”**
 >
