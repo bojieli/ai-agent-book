@@ -159,3 +159,48 @@ def test_parallel_cli_requires_a_model_key(monkeypatch):
 
     assert exit_info.value.code == 1
     model_client.assert_not_called()
+
+
+def test_mcp_transport_reads_structured_results_and_closes_session(monkeypatch):
+    pytest.importorskip("mcp")
+    from mcp.types import LATEST_PROTOCOL_VERSION
+    from parallel_search import search_impl
+
+    rows = [{"url": "https://example.org", "title": "Offline fixture"}]
+    closed_sessions = []
+
+    def respond(request):
+        if request.method == "DELETE":
+            closed_sessions.append(request.headers["Mcp-Session-Id"])
+            return httpx.Response(200)
+        if request.method == "GET":
+            return httpx.Response(405)
+        message = json.loads(request.content)
+        if "id" not in message:
+            return httpx.Response(202)
+        method = message["method"]
+        if method == "initialize":
+            value = {
+                "protocolVersion": LATEST_PROTOCOL_VERSION,
+                "capabilities": {"tools": {}},
+                "serverInfo": {"name": "offline", "version": "1"},
+            }
+        elif method == "tools/list":
+            value = {"tools": [{"name": "web_search", "inputSchema": {"type": "object"}}]}
+        else:
+            assert method == "tools/call"
+            assert message["params"]["arguments"]["search_queries"] == ["sample"]
+            value = {"content": [], "structuredContent": {"results": rows}}
+        return httpx.Response(
+            200,
+            headers={"Mcp-Session-Id": "offline"},
+            json={"jsonrpc": "2.0", "id": message["id"], "result": value},
+        )
+
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(
+        httpx, "AsyncClient",
+        lambda **kwargs: real_client(transport=httpx.MockTransport(respond), **kwargs),
+    )
+    assert search_impl({"query": "sample"}, timeout=3) == {"results": rows}
+    assert closed_sessions == ["offline"]

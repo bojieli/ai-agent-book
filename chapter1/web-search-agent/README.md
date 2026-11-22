@@ -160,7 +160,7 @@ python main.py --help
 python main.py --provider offline-demo
 ```
 
-**通过 [Parallel MCP](https://docs.parallel.ai/integrations/mcp/installation) 搜索。** 如果用 `uv`，在仓库根目录运行 `uv sync --locked --extra ch1 --extra mcp`。如果用 pip，在本实验目录运行 `python -m pip install -r requirements.txt`，其中包含 MCP SDK。
+**通过 [Parallel MCP](https://docs.parallel.ai/integrations/mcp/installation) 搜索。** 如果用 `uv`，在仓库根目录运行 `uv sync --locked --extra ch1 --extra mcp`。如果用 pip，在本实验目录运行 `python -m pip install -r requirements.txt "mcp>=1.28,<2"` 安装可选的 MCP SDK。
 
 ```bash
 python main.py --provider parallel --output result.json "请搜索 Python 3.13 官方发行说明，解释实验性的自由线程模式，并附上原文链接。"
@@ -468,7 +468,7 @@ python main.py --help
 python main.py --provider offline-demo
 ```
 
-**Search with [Parallel MCP](https://docs.parallel.ai/integrations/mcp/installation).** If you use `uv`, run `uv sync --locked --extra ch1 --extra mcp` at the repository root. If you use pip, run `python -m pip install -r requirements.txt` in the experiment directory to install the MCP SDK with the other dependencies.
+**Search with [Parallel MCP](https://docs.parallel.ai/integrations/mcp/installation).** If you use `uv`, run `uv sync --locked --extra ch1 --extra mcp` at the repository root. If you use pip, run `python -m pip install -r requirements.txt "mcp>=1.28,<2"` in the experiment directory to include the optional MCP SDK.
 
 ```bash
 python main.py --provider parallel --output result.json "Find the official Python 3.13 release notes and cite the section on experimental free-threading."
