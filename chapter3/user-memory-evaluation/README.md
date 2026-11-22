@@ -77,7 +77,7 @@ cp env.example .env
 python main.py --mode compare --metric keyword-recall
 ```
 
-实测表见 English 节。分数由 `fixtures/system_responses.example.json` **计算得出**；*Simple Notes* 在 L1 尚可、L2/L3 下降，*Advanced JSON Cards* 三层均稳。
+这条命令读取四组预先写好的[示例回答](fixtures/system_responses.example.json)，对有[关键事实标注](fixtures/gold_facts.json)的八道题评分。以机票题 `layer1_04_airline_booking` 为例，旅客要找的是确认号和往返座位号。Simple Notes 的回答只给出确认号 `PAC-778K4M`，漏了去程的 12C 和回程的 14C，得 1/3。JSON Cards 的回答写全了三项，得 3/3。读者可以改写一份回答再评分，观察少写一个座位号会怎样影响结果。这里比较的是示例回答；要衡量记忆系统在真实对话中的表现，还要让它自己写入记忆、检索并作答。
 
 ### 用法
 
@@ -109,11 +109,11 @@ python main.py --mode batch --responses agent_responses.json
 
 字段：`test_id`、`category`、`title`、`conversation_histories`、`user_question`、`evaluation_criteria`、`expected_behavior`。
 
-- **`keyword-recall`**：离线关键事实召回  
-- **`llm-judge`**：第七章实验 7-3 的结构化 Rubric（需 API）。逐维输出事实精确率、事实召回率、
-  思考正确性和主动性四档成绩、证据与边界案例；另设幻觉一票否决，触发后总分归零。
+**怎样算关键词题通过？** [离线评分器](metrics.py)用命中的标注事实数除以该题的事实总数，达到 0.8 就通过。机票题若只答对两项，得 2/3，仍未通过。调用评分器时若另传入提取的记忆文本，程序会在回答和记忆文本中一起查找关键词；单独评估用户实际看到了什么时，只传回答。
 
-通过阈值：`reward >= 0.6`。
+**模型裁判怎样判定通过？** 第七章实验 7-3 的[评分程序](evaluator.py)分别给事实精确率、事实召回率、推理正确性和主动性打 1 至 4 分，并保留依据。四项各自换算到 0 至 1 后取平均，得到综合分 `reward`。判定任务成功时，程序要求前三项各得至少 3 分；主动性计入综合分。裁判一旦判定有幻觉，就将综合分归零并判为失败。
+
+例如，简短而正确的回答若四项依次得 3、3、3、1 分，综合分是 0.5，任务仍通过。反过来，得 4、2、4、4 分的回答综合分是 0.75，却因为漏掉重要事实而未通过。查看报告时可以用 `passed` 判断任务是否完成，再用各项得分解释原因。
 
 ### 检查自己的解释
 
@@ -263,7 +263,7 @@ result = framework.submit_and_evaluate(
     extracted_memory=None
 )
 print(f"Reward: {result.reward:.3f}")
-print(f"Passed: {result.reward >= 0.6}")
+print(f"Passed: {result.passed}")
 print(f"Reasoning: {result.reasoning}")
 ```
 
