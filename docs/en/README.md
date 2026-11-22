@@ -117,6 +117,8 @@ It is recommended to apply for API keys from several platforms for convenient le
 | **Atlas Cloud** | <https://www.atlascloud.ai/> | Access models from multiple vendors through an OpenAI-compatible API | Global |
 | **Runcrate** | <https://runcrate.ai/> | Open-weight models (DeepSeek, Qwen, GLM, Kimi, etc.) through an OpenAI-compatible API | Global |
 | **Opper** | <https://opper.ai/> | EU-hosted AI gateway, 700+ models from 50+ providers behind one OpenAI-compatible API | Global |
+| **UberLLM** | <https://uberllm.dev/> | One key for models from multiple vendors (DeepSeek, Qwen, GPT, Claude, Gemini, etc.) through an OpenAI-compatible API, prepaid pay-as-you-go | Global |
+| **Cheaper Inference** | <https://cheaperinference.com/> | Access GPT, Claude, Gemini, DeepSeek, GLM and other models through an OpenAI-compatible API. | Global |
 | **Krill AI** | [www.krill-code.com](https://www.krill-code.com/register?invite=Q8D3L35725) | One-stop access to major global and China-domestic models (OpenAI, Claude, Gemini, Grok, Kimi, GLM, DeepSeek, Qwen, Minimax) | Global + Mainland China |
 | **OpenRouter** | <https://openrouter.ai/> | One-stop access to major global and China-domestic models (GPT, Claude, Gemini, Kimi, GLM, DeepSeek, Qwen, etc.) | Global |
 
