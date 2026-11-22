@@ -135,3 +135,20 @@ def test_original_wrong_amount_through_sandbox_and_verifier():
 def test_currency_when_receipt_provides_it(text, verdict):
     _, factual = report_for(text, result={"success": True, "refund_amount": 480, "currency": "USD"})
     assert factual["verdict"] == verdict
+
+
+@pytest.mark.parametrize("amount,actual,verdict", [
+    ("$480 million", 480, "fail"),
+    ("480 million dollars", 480_000_000, "pass"),
+    ("USD 0.48K", 480, "pass"),
+    ("1.2亿元", 120_000_000, "pass"),
+    ("￥1.2万", 1.2, "fail"),
+])
+def test_refund_scale_is_part_of_the_claim(amount, actual, verdict):
+    report, factual = report_for(
+        f"Your refund of {amount} has been processed.",
+        result={"success": True, "refund_amount": actual},
+    )
+    assert factual["verdict"] == verdict
+    if verdict == "fail":
+        assert not report["eligible_as_automatic_learning_signal"]

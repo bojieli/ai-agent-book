@@ -91,15 +91,24 @@ def _action_claim_evidence(claim: Dict[str, Any], calls: List[Dict[str, Any]]) -
     text = str(claim.get("text") or "")
     # Remove parsed values before checking for numeric details we cannot map.
     number = r"[+-]?\d+(?:,\d{3})*(?:\.\d+)?"
-    money = rf"(?:[$¥￥]|\b(?:USD|CNY|RMB)\s*)\s*({number})|({number})\s*(?:dollars?\b|yuan\b|元)"
-    amounts = [Decimal((a or b).replace(",", "")) for a, b in re.findall(money, text, re.IGNORECASE)]
-    units = set()
-    for match in re.finditer(money, text, re.IGNORECASE):
-        symbol = re.sub(number, "", match.group()).strip().lower()
-        units.add("USD" if symbol in {"$", "usd", "dollar", "dollars"} else "CNY")
+    powers = {"k": 3, "thousand": 3, "m": 6, "million": 6, "b": 9, "billion": 9,
+              "trillion": 12, "万": 4, "亿": 8}
+    scale = r"(?:thousand|million|billion|trillion|[kmb])(?![a-z])|[万亿]"
+    money = re.compile(
+        rf"(?P<prefix>[$¥￥]|\bUSD|\bCNY|\bRMB)\s*(?P<value>{number})(?:\s*(?P<scale>{scale}))?"
+        rf"|(?P<suffix_value>{number})(?:\s*(?P<suffix_scale>{scale}))?\s*(?P<suffix>dollars?\b|yuan\b|元)",
+        re.IGNORECASE,
+    )
+    amounts, units = [], set()
+    for match in money.finditer(text):
+        value = match["value"] or match["suffix_value"]
+        magnitude = (match["scale"] or match["suffix_scale"] or "").lower()
+        amounts.append(Decimal(f"{value.replace(',', '')}e{powers.get(magnitude, 0)}"))
+        unit = (match["prefix"] or match["suffix"]).lower()
+        units.add("USD" if unit in {"$", "usd", "dollar", "dollars"} else "CNY")
     dates = re.findall(r"\b\d{4}-\d{2}-\d{2}\b", text)
     orders = re.findall(r"\b[A-Z]+-\d+\b", text)
-    remainder = re.sub(money, "", text, flags=re.IGNORECASE)
+    remainder = money.sub("", text)
     remainder = re.sub(r"\b\d{4}-\d{2}-\d{2}\b|\b[A-Z]+-\d+\b", "", remainder)
     unknown_detail = bool(re.search(r"\d|[$¥￥]|\b(?:dollars?|yuan|USD|CNY|RMB)\b|元", remainder, re.IGNORECASE))
     if tool == "refund_order" and not amounts and re.search(r"\brefund\s+(?:of|for)\b", text, re.IGNORECASE):
