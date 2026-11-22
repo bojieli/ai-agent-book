@@ -207,7 +207,7 @@ LLM 是 Agent 的决策核心。收到请求后，它先从用户的表述中识
 
 ![图1-4 Agent 轨迹——多币种汇总任务的 ReAct 循环](images/revised/fig1-4.svg)
 
-欧元请求的 ID 是 `convert_currency_0`。Harness 校验参数并执行工具，再把同一 ID 写入工具消息的 `tool_call_id`。这样就能找到 2,282,608.70 美元这笔结果，再看第二轮求和时有没有用对。读完整记录还能看到汇率和工具执行时间。若任务要求按季末汇率结算，还要知道汇率的生效日期；执行时间只能说明工具何时运行。如果模型重复换汇，先检查第一次的工具结果有没有出现在下一轮请求里。[^ch1-context-runs]
+欧元请求的 ID 是 `convert_currency_0`。Harness 校验参数并执行工具，再把同一 ID 写入工具消息的 `tool_call_id`。这样就能找到 2,282,608.70 美元这笔结果，再看第二轮求和时有没有用对。这笔金额可以复算：实验的固定汇率表中，1 美元兑 0.92 欧元，2,100,000 除以 0.92，保留两位小数就得到这个数。工具返回的反向汇率 1.087 已经舍入，直接拿它乘以欧元金额会差 91.30 美元。若任务要求按季末汇率结算，还得另查当日汇率；记录里的时间戳只说明工具何时运行。如果模型重复换汇，先检查第一次的工具结果有没有出现在下一轮请求里。[^ch1-context-runs]
 
 运行循环可以用下面的 Python 风格伪代码表示。Model 决定下一步，Harness 组装上下文并校验、调度调用，工具在环境中执行并返回观测。这里以模型停止请求工具作为结束条件，生产系统的验证与退出机制将在后文展开。
 
@@ -228,7 +228,7 @@ repeat:
         history.append(observation)
 ```
 
-第一轮，模型读到四个季度的收入，判断欧元、英镑和日元收入需要换算，生成三次换汇请求。三种货币的换算互不依赖，可以并行执行。第二轮，换汇结果已经进入上下文，模型据此生成汇总代码。第三轮，计算结果返回，模型整理最终答案。下面按消息顺序写出这一过程，其中 `id` 与 `tool_call_id` 用于关联请求和返回值：
+下面按八月基线运行的顺序节录消息，保留原调用 ID 和参数名，换汇结果只列金额与币种，计算代码也作了简写。读到第二轮时，可以在求和式中逐项找出处：季度收入有四笔，为什么工具只返回了三个换算结果？
 
 ```text
 消息历史 = [
@@ -239,29 +239,29 @@ repeat:
   {role: "assistant",
    reasoning: "先将 EUR、GBP、JPY 收入换算为 USD。",
    tool_calls: [
-     {id: "fx_eur", name: "convert_currency",
-      args: {amount: 2100000, from: "EUR", to: "USD"}},
-     {id: "fx_gbp", name: "convert_currency",
-      args: {amount: 1800000, from: "GBP", to: "USD"}},
-     {id: "fx_jpy", name: "convert_currency",
-      args: {amount: 380000000, from: "JPY", to: "USD"}}
+     {id: "convert_currency_0", name: "convert_currency",
+      args: {amount: 2100000, from_currency: "EUR", to_currency: "USD"}},
+     {id: "convert_currency_1", name: "convert_currency",
+      args: {amount: 1800000, from_currency: "GBP", to_currency: "USD"}},
+     {id: "convert_currency_2", name: "convert_currency",
+      args: {amount: 380000000, from_currency: "JPY", to_currency: "USD"}}
    ]},
-  {role: "tool", tool_call_id: "fx_eur", content: "2282608.70 USD"},
-  {role: "tool", tool_call_id: "fx_gbp", content: "2278481.01 USD"},
-  {role: "tool", tool_call_id: "fx_jpy", content: "2541806.02 USD"},
+  {role: "tool", tool_call_id: "convert_currency_0", content: "2282608.70 USD"},
+  {role: "tool", tool_call_id: "convert_currency_1", content: "2278481.01 USD"},
+  {role: "tool", tool_call_id: "convert_currency_2", content: "2541806.02 USD"},
 
   # 第二轮：根据换汇结果计算
   {role: "assistant",
    reasoning: "四个季度均已换算为美元，求和后除以4。",
    tool_calls: [
-     {id: "sum", name: "code_interpreter",
+     {id: "code_interpreter_3", name: "code_interpreter",
       args: {code: """
         total = 2500000 + 2282608.70 + 2278481.01 + 2541806.02
         average = total / 4
         print(round(total, 2), round(average, 2))
       """}}
    ]},
-  {role: "tool", tool_call_id: "sum",
+  {role: "tool", tool_call_id: "code_interpreter_3",
    content: "9602895.73 2400723.93"},
 
   # 第三轮：交付结果
@@ -271,7 +271,7 @@ repeat:
 ]
 ```
 
-整个过程包含三次模型调用、四次工具调用。每次调用模型前，Harness 都将系统提示词与工具定义放在前部，再接上当前消息历史。这样，第二轮能读到第一轮的换汇结果，第三轮能读到第二轮的计算结果，任务进度便随上下文持续积累。
+第一季度的 250 万美元已经在用户消息里，可以直接参与求和。其余三笔取自工具返回的金额，四笔合计再除以 4，就能核对最后的季度平均值。这里共调用模型三次、工具四次：第一轮模型一次请求了三个互不依赖的换汇操作，第二轮请求运行汇总代码，第三轮直接回答用户。
 
 把执行过程记录成结构化轨迹，还能帮助开发者改进系统。开发者可以沿着用户请求、模型决策、调用参数和工具结果定位失败环节；汇总多条轨迹后，还可以识别重复操作、改进工具接口或优化决策路径。经过评价和筛选的经验可以写入知识库，也可以作为后训练数据，用于改进模型。第七至九章将分别介绍评估、后训练和持续进化。
 
