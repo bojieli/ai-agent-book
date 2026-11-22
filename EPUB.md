@@ -34,9 +34,11 @@ with `./build_epub.sh ja` or `./build_epub.sh ar`.
 
 The builder writes each `.epub` beside its language's PDF. Generated EPUB files are ignored by Git.
 
-## Kindle reflowable edition
+## Chinese reader-compatible edition
 
-For a Kindle copy, convert a book produced by the builder or downloaded from the release. The converter renders mathematical expressions and SVG diagrams locally using Chromium. It saves a separate `-kindle.epub` beside the source and retains the formula text as image descriptions.
+The [Chinese compatibility download](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN-kindle.epub) keeps prose reflowable and packages diagrams and formulas as PNGs for readers with limited SVG or MathML support. On macOS, open a downloaded EPUB in Books to read offline. To build both Chinese editions from the manuscript, install the dependencies below and run `./build_epub.sh zh-CN --with-reader-copy`. The rolling release uses the same option with `all`.
+
+To convert a single EPUB that you already have, use the last command below. The converter renders mathematical expressions and SVG diagrams locally using Chromium. It saves a separate `-kindle.epub` beside the source and retains the formula text as image descriptions.
 
 ```bash
 python -m pip install lxml playwright
