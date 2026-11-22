@@ -1,6 +1,6 @@
 # 实验 9-1：客服 Agent 的三层轨迹验证器
 
-用户满意度或一个总分，很难告诉我们 Agent 应该改哪一步。本实验把客服轨迹拆成结果、过程与表达三个层次，学习如何给改进提供可定位的证据。
+客服在第 2 轮对用户说：“已经为您完成退款。”打开[离线样例](sample_trajectories.json)，找到 `cs-false-promise`。订单仍是 `confirmed`，工具调用列表也是空的。只读客服最后一句、只查订单状态、把对话与调用记录放在一起看，这三种读法各能回答什么问题？
 
 建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3)。
 
@@ -8,11 +8,9 @@
 
 ## 理解问题与方法
 
-结果层核对环境最终状态，过程层检查规则和承诺是否与动作一致，质量层评价较开放的表达与变通。不同层需要不同验证方式，不能全部交给一个模糊评分。
+先问钱退了没有。结果层核对环境里的订单状态和金额；正常退款样例中，预期与实测都是已退款 480。再问客服当时凭什么说已经退了。过程层沿时间顺序查找工具回执，还要核对业务规则、隐私边界，以及客服承诺的动作是否执行过。最后才评措辞：答复是否说清楚了结果，原方案办不成时，有没有提出合规的替代办法？
 
-本实验对应正文的“从运行轨迹中获得学习信号”。它不把用户满意度或一个总分当作学习信号，而是依次核对环境结果、执行过程与语言质量，并在每个失败维度中保留证据轮次。
-
-`verifier.py` 实现三层结构：结果层读取最终订单状态；过程层检查业务规则、隐私、事实依据和承诺—行动一致性；质量层按“表达质量、合规变通”Rubric 评价开放性指标。示例默认使用确定性的 `HeuristicQualityJudge`，所以不需要 API Key；项目也提供遵循同一 `QualityJudge` 接口的真实 LLM 实现，下两层仍坚持使用环境真值和程序规则。
+三层共用[验证器入口](verifier.py)。结果和过程由程序核验；表达与变通按评分标准评价。默认示例使用确定性的 `HeuristicQualityJudge`，离线就能对照每项结论与依据。要尝试真实模型评审，可以替换实现同一个 `QualityJudge` 接口的质量评判器。
 
 `sample_trajectories.json` 包含正常退款、虚假承诺、违规泄露和过度拒绝四类轨迹，并带有专家标签。`calibration.py` 按维度报告违规识别的精确率、召回率与标签一致率。`demo.py` 还对比了只有一个总分的输出与带证据的多维诊断。
 
@@ -20,13 +18,7 @@
 
 ### 代码阅读顺序
 
-- **Run first:** python demo.py (deterministic HeuristicQualityJudge, no API key).
-- **Start here:** verifier.py composes the result, process and quality layers.
-- **Core behavior:** customer_service_env.py::run_case supplies environment truth; calibration.py compares dimensions with expert labels.
-- **State / protocol:** sample_trajectories.json, structured verdict schema and evidence turns.
-- **Verifier:** test_verifier.py plus calibration precision/recall; LLM quality judging never replaces the first two code gates.
-- **Experiment variable:** single scalar score versus dimensioned verdict with evidence/confidence.
-- **Skip on first pass:** provider client and demo formatting.
+在本目录运行 `python demo.py`。输出里有两条轨迹都得了 0.571，先记下它们的编号。接着打开 [verifier.py](verifier.py) 看每条轨迹在哪些维度失分，再用 [calibration.py](calibration.py) 对照专家标签。四条样例对应同一套判定格式；想改进其中一层，可以重跑样例，检查其他层的结论是否也发生变化。
 
 <a id="learning-1"></a>
 
@@ -84,7 +76,29 @@ python demo.py --judge llm --model gpt-5.6
 
 ## 分析结果与形成判断
 
-默认演示的质量层采用确定性方法，只用于解释结构。检查时既要看问题被识别出来，也要看正常行为是否被误判，并用专家标签校准。
+为什么两条轨迹都是 0.571？七个维度里，它们都通过了四项。看 `cs-false-promise`，订单本该退款却仍有效，助手也拿不出支持“已退款”的工具回执。看 `cs-policy-and-privacy`，订单本该保持有效却被退了款，而且发生了规则违规和隐私泄露。一次少做了，一次做过了。两者都要复核，应该改的环节却不同。
+
+可以在本目录用 Python 标准库把结论追到原始证据：
+
+```bash
+python3 - <<'PYTHON'
+import json
+from pathlib import Path
+from verifier import TrajectoryVerifier
+
+cases = json.loads(Path("sample_trajectories.json").read_text(encoding="utf-8"))
+verifier = TrajectoryVerifier()
+for case in cases:
+    if case["id"] in ("cs-false-promise", "cs-policy-and-privacy"):
+        report = verifier.evaluate(case)
+        print(case["id"], case["expected_outcome"], case["final_state"])
+        for item in report["dimensions"]:
+            if item["verdict"] == "fail":
+                print(item["dimension"], item["evidence"])
+PYTHON
+```
+
+结果层的依据可以直接是一对期望值与实测值。检查虚假承诺时，还要回到客服说这句话的那一轮，核对当时已有的调用记录。四条样例上的校准只说明程序在这些例子里与专家判断是否一致。
 
 ### 检查自己的解释
 
