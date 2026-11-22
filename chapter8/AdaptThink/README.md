@@ -293,18 +293,18 @@ bash scripts/run_adapt_think_1.5b_deepscaler_16k_delta0.05_btz128_lr2e-6.sh
 
 ##### 评估
 
-下述命令是上游宣传的工作流，不是成功评估所选 checkpoint 的回执。使用前须修正 `-fl-` 与 `-fl4096` 的实验名差异，以及缺失的 `adapt_think_verl/` 目录层级。
+训练日志里有两类容易混淆的成绩。第 300 步表格取自训练期间的定期验证。要回答“单独载入第 300 步保存的模型，还能得到什么成绩”，需要从磁盘读取那一步的权重，转换后再评估。本书保留了验证日志和保存事件；独立评估还需要读者自己保存的检查点。
+
+在外部仓库根目录先找实际产物：
 
 ```bash
-# 转换检查点为 HF 格式
-bash scripts/convert_to_hf.sh
-
-# 运行评估
-bash scripts/run_eval_verl_hf.sh
-
-# 或直接评估已发布的 HF 模型
-bash scripts/run_eval_hf.sh
+find ./ckpts -type d -path '*/global_step_300/actor' -print
 ```
+
+1. **认准训练输出。** [训练脚本](https://github.com/bojieli/AdaptThink/blob/9e588202ff56fe93cdbe49f5594cf895f7d6b7c2/scripts/run_adapt_think_1.5b_deepscaler_16k_delta0.05_btz128_lr2e-6.sh)把权重写在 `ckpts/adapt_think_verl/<实验名>/` 下。它在拼实验名时引用了未定义变量，默认生成的名字中会出现 `-fl-`，而转换脚本预填的是 `-fl4096-`。若找到多份 `actor`，按本次训练的实验名选定一份。
+2. **转换同一步的权重。** 在 [convert_to_hf.sh](https://github.com/bojieli/AdaptThink/blob/9e588202ff56fe93cdbe49f5594cf895f7d6b7c2/scripts/convert_to_hf.sh) 中，把 `CKPT_PATH` 指向刚找到的 `actor`，把 `SAVE_PATH` 指向同一 `global_step_300` 下的 `HF` 目录。`HF_MODEL_PATH` 要填本地下载的对应基座目录：脚本最后还要从那里复制 `tokenizer_config.json` 和 `tokenizer.json`。填好后执行 `bash scripts/convert_to_hf.sh`。
+3. **核对评估对象。** 在 [run_eval_verl_hf.sh](https://github.com/bojieli/AdaptThink/blob/9e588202ff56fe93cdbe49f5594cf895f7d6b7c2/scripts/run_eval_verl_hf.sh) 中，把 `CKPT_DIR_LIST` 指向所选实验目录，保留 `STEPS=(300)`，再执行 `bash scripts/run_eval_verl_hf.sh`。脚本会在这个目录下拼出 `global_step_300/HF` 读取模型，并将评估结果另存。若运行 `scripts/run_eval_hf.sh`，默认加载的是列出的 1.5B 和 7B 基座，适合做基线比较。
+
 
 ---
 
