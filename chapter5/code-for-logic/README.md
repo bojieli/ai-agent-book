@@ -117,7 +117,27 @@ python build_puzzles.py --generate 20 --output my.json
 
 无解可能说明题目矛盾，也可能是翻译错误；多解则说明条件不足。不能因为得到一个答案就忽略其他满足条件的赋值。
 
-正式对照中，`doubao-seed-1-6-flash-250615` 在 84 道 K&K 题上直接推理答对 63 道，使用代码答对 33 道。逐题看，有 33 道只有纯推理组答对，也有 3 道只有代码组答对。每条代码轨迹都调用了 `python-constraint`；判断哪一步出了错，还要回到题目、约束与最终作答逐项比较。
+正式对照中，`doubao-seed-1-6-flash-250615` 在 84 道 K&K 题上直接推理答对 63 道，使用代码答对 33 道。逐题看，有 33 道只有纯推理组答对，也有 3 道只有代码组答对。每条代码轨迹都被标记为 `used_python_constraint`。[评分实现](demo.py)在提交的程序中查找导入 `constraint` 的语句；一段连语法检查都通不过的程序也可能得到这个标记。
+
+在实验目录中运行下面的代码，可以只用 Python 标准库复查两人题 `perturbed_leaf-p2-r006`。先检查模型提交的程序能否解析，再看它最终交回了什么。
+
+```python
+import ast
+import json
+from pathlib import Path
+
+report = json.loads(Path("validation/real_ark_doubao_flash_hf84_20260730.json").read_text())
+row = next(item for item in report["code"] if item["id"] == "perturbed_leaf-p2-r006")
+for turn, program in enumerate(row["codes"], 1):
+    try:
+        ast.parse(program)
+        print(turn, "语法通过")
+    except SyntaxError as error:
+        print(turn, error.msg, error.text.strip())
+print("最终答复", repr(row["text"]), "评分器读出的身份", row["pred"])
+```
+
+第一次提交把双条件写成 `james == not james`，第二次改对了这个表达式，打印结果的语句却少了右括号。读最后一次提交，逐一代入 James 是骑士和无赖两种情形：只有 James 是骑士、Sophia 是无赖能同时满足两条约束。回执记录了八轮工具调用，最终答复是空字符串，评分器没有读到任何身份。这里检查语法和手工代入可以解释失分；要证明某一轮求解器实际打印了什么，还需要那一轮的执行输出。
 
 ### 已有运行结果（一）：离线约束求解基线（`--mode solver`，无需 API）
 
