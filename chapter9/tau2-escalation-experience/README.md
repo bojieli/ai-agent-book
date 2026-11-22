@@ -118,6 +118,30 @@ python3 analyze.py
 
 为什么要同时读工具调用记录？原策略下，客服误调用户侧工具 1049 次，C 组降到 163 次。这里数的是调用，同一道题可以出错多次。再看转人工，A 组有 104 道题发生过转接，C 组却有 111 道。可见这次增加的通过数不能简单归功于“少转人工”。要判定某一次转接是否合理，得回到那道题，查客服已经试过哪些操作、剩下的操作该由谁来做。[工具分工](tool_inventory.txt) · [运行记录](validation/runs/)
 
+可以只看第二版新通过的八道题。在本实验目录运行下面的代码，把任务得分与同一条轨迹中的转接调用对上：
+
+```python
+import json
+from pathlib import Path
+
+def trajectories(name):
+    path = Path("validation/runs") / f"{name}.trajectories.json"
+    return json.loads(path.read_text(encoding="utf-8"))["simulations"]
+
+baseline = {s["task_id"]: s["reward_info"]["reward"] for s in trajectories("armA-baseline")}
+for s in trajectories("armC-evolved-v2"):
+    if baseline[s["task_id"]] == 1 or s["reward_info"]["reward"] != 1:
+        continue
+    transferred = any(
+        call["name"] == "transfer_to_human_agents"
+        for message in s["messages"]
+        for call in message.get("tool_calls") or []
+    )
+    print("转过人工" if transferred else "未转人工", s["task_id"])
+```
+
+八题中，两题没有转人工，六题转过人工。先找任务名含 `airplane_mode_on|unseat_sim_card` 的那题，看用户在哪一步操作了手机。再挑一道转过人工的题，读转接之前的对话。这两类题都拿到了满分；评价客服是否尽到了职责，还得结合任务要求读它的处理过程。
+
 ### 检查自己的解释
 
 一条经验在旧环境中成立，但工具能力后来增强了，怎样决定它是否还应继续使用？
