@@ -19,13 +19,11 @@
 
 ## 从候选召回到重新排序
 
-流水线先召回候选，再融合不同来源的排名，最后重排。后续阶段通常只能处理已有候选，因此前面漏掉的文档难以靠重排补回。把最终指标拆到各阶段，才能知道应该改召回还是排序。
+先查一个型号 `XR-7003`。在本次归档中，BM25 只返回了精确匹配的 `xr_7003`；向量检索也把它排在第一，但第二名是相邻型号 `xr_7001`。这时若要合并两张名单，同一篇文档在两边都排第一，该怎样计分？
 
-### 一条查询如何经过四个阶段
+倒数排名融合（RRF）先看名次。排在第 $r$ 名的文档从这一路得到 $1/(60+r)$ 分，从第一名开始数。于是 `xr_7003` 得到 $1/61+1/61\approx0.0328$；`xr_7001` 只出现在向量检索的第二位，得到 $1/62\approx0.0161$。归档中两路检索给第一名的原始分分别是 3.3578 和 0.6179，手算这一步时根本用不到它们。加权融合采用另一种做法：先将各路分数归一化，再按权重相加。两种融合方案的输出可以在同一份记录里对照。
 
-以产品编号 `XR-7003` 为例，BM25 利用准确的编号匹配，稠密检索可能把相邻型号也排在前面。融合阶段汇总两路候选，重排阶段再对已经召回的候选逐项评分。重排不能找回从未进入候选集合的文档，因此应先检查召回，再分析排序。
-
-RRF 使用排名而不是直接相加两种检索器的原始分数。文档在第 `r` 名时，该路贡献为 `1 / (k + r)`；本例使用 `k=60`。加权融合则先处理分数量纲，再决定两路权重。下面两种方法的配置与输出都保留了，比较时只改变融合方法即可观察它们的差别。
+重排模型接下来逐篇读 RRF 名单上的候选。它把 `xr_7004` 提到第二，第一名仍是 `xr_7003`。对要找这个型号的用户，两种排序给出的首选相同。换成开头那道光合作用题，首选就变了。下面用归档对照这两类情况。
 
 ### 教学目标
 
@@ -83,7 +81,7 @@ cd chapter3/retrieval-pipeline
 
 ### 先做一个小规模观察
 
-如果想先读懂书中的结果，在本实验目录用 Python 标准库就能查看原始排名。下面选的是英文光合作用题；最后一列列出各方法排在前两位的文档。
+在本实验目录运行下面的命令，只用 Python 标准库就能读出两道光合作用题的排名。每行显示一种方法给出的前三篇文档，与本实验 recall@3 的截断位置相同。
 
 ```bash
 python - <<'PYCODE'
@@ -91,16 +89,16 @@ import json
 from pathlib import Path
 
 record = Path("validation/runs/20260729T183512Z-3_6-a398d0f7/evidence.json")
-report = json.loads(record.read_text(encoding="utf-8"))["report"]
-question = next(row for row in report["per_query"]
-                if row["query"] == "how vegetation turns light into food")
-print("标注答案", question["expected"])
-for method, result in question["methods"].items():
-    print(method, [doc["doc_id"] for doc in result["top"][:2]])
+rows = json.loads(record.read_text(encoding="utf-8"))["report"]["per_query"]
+for query in ("how vegetation turns light into food", "植物如何把阳光转化为食物"):
+    row = next(item for item in rows if item["query"] == query)
+    print(query, "标注答案", row["expected"])
+    for method, result in row["methods"].items():
+        print(method, [doc["doc_id"] for doc in result["top"][:3]])
 PYCODE
 ```
 
-标注文档是 `sem_photo`（光合作用）。BM25 把水循环排在它前面，稠密检索把光合作用排在首位。两篇文档在两路检索中恰好交换第一、第二名，等权 RRF 给它们相同的融合分数。这次输出把光合作用列在第一，但同分时这一先后本身不能说明哪篇更相关。加权融合按归一化分数计算，又把水循环排回第一。可以把代码中的查询换成“植物如何把阳光转化为食物”，观察哪一路完全没有返回候选。
+两道题都要找 `sem_photo`。先读英文题：BM25 把水循环排在它前面，向量检索把它放在第一，重排后它仍居首位。再读中文题：BM25 返回空列表，光合作用文档由向量检索找回，RRF 把它保留在第一。重排后，前面多了 `sem_readable`（编程语言）和 `doc_volcano`（火山）。如果界面只显示第一条，用户首先看到的是一篇讲编程语言的文档；如果显示三条，答案仍在其中。这正是这道题的倒数排名从 1 降到 1/3、recall@3 却保持为 1 的原因。
 
 要自己运行一次 BM25，完成前面的依赖安装，再运行下面的命令。
 
