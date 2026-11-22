@@ -219,13 +219,13 @@ jobs:
         run: |
           cd book
           python3 check_build_fonts.py
-          pdffonts 深入理解-AI-Agent-李博杰-v2.0.pdf > /tmp/zh-fonts.txt
+          pdffonts 深入理解-AI-Agent-李博杰-v3.0.pdf > /tmp/zh-fonts.txt
           grep -q Songti /tmp/zh-fonts.txt
           grep -q SourceHanSans /tmp/zh-fonts.txt
 
       - name: Verify traditional Chinese figure fonts
         if: github.ref == 'refs/heads/main'
-        run: python3 .github/scripts/verify_pdf_fonts.py "book-zhtw/深入理解-AI-Agent-李博杰-v2.0-zhtw.pdf"
+        run: python3 .github/scripts/verify_pdf_fonts.py "book-zhtw/深入理解-AI-Agent-李博杰-v3.0-zhtw.pdf"
 
       - name: Install Chinese reader-copy renderer
         if: github.ref == 'refs/heads/main' || inputs.edition == 'all' || inputs.edition == 'zh-CN'
@@ -283,37 +283,37 @@ jobs:
         run: |
           set -e
           out="$(mktemp -d)"
-          cp "book/深入理解-AI-Agent-李博杰-v2.0.pdf"              "$out/AI-Agents-in-Depth-zh-CN.pdf"
-          cp "book-zhtw/深入理解-AI-Agent-李博杰-v2.0-zhtw.pdf"   "$out/AI-Agents-in-Depth-zh-TW.pdf"
-          cp book-en/AI-Agents-in-Depth-Bojie-Li-v2.0.pdf        "$out/AI-Agents-in-Depth-en.pdf"
-          cp book-es/AI-Agents-en-Profundidad-Bojie-Li-v2.0-es.pdf "$out/AI-Agents-in-Depth-es.pdf"
-          cp book-id/AI-Agents-in-Depth-Bojie-Li-v2.0-id.pdf     "$out/AI-Agents-in-Depth-id.pdf"
-          cp book-ru/AI-Agents-in-Depth-v2.0-ru.pdf              "$out/AI-Agents-in-Depth-ru.pdf"
-          cp book-ta/AI-Agents-in-Depth-Bojie-Li-v2.0-ta.pdf     "$out/AI-Agents-in-Depth-ta.pdf"
-          cp book-vi/AI-Agents-in-Depth-Bojie-Li-v2.0-vi.pdf     "$out/AI-Agents-in-Depth-vi.pdf"
-          cp book-ar/AI-Agents-in-Depth-v2.0-ar.pdf               "$out/AI-Agents-in-Depth-ar.pdf"
-          cp book-tr/AI-Agents-in-Depth-Bojie-Li-v2.0-tr.pdf      "$out/AI-Agents-in-Depth-tr.pdf"
-          cp book-ko/AI-Agents-in-Depth-v2.0-ko.pdf                "$out/AI-Agents-in-Depth-ko.pdf"
-          cp book-hu/AI-Agents-in-Depth-v2.0-hu.pdf                "$out/AI-Agents-in-Depth-hu.pdf"
-          cp book-he/AI-Agents-in-Depth-v2.0-he.pdf                "$out/AI-Agents-in-Depth-he.pdf"
-          cp book-ptbr/AI-Agents-in-Depth-v2.0-ptbr.pdf            "$out/AI-Agents-in-Depth-ptbr.pdf"
-          cp "book/深入理解-AI-Agent-李博杰-v2.0.epub"             "$out/AI-Agents-in-Depth-zh-CN.epub"
-          cp "book/深入理解-AI-Agent-李博杰-v2.0-kindle.epub" "$out/AI-Agents-in-Depth-zh-CN-kindle.epub"
-          cp "book-zhtw/深入理解-AI-Agent-李博杰-v2.0-zhtw.epub"   "$out/AI-Agents-in-Depth-zh-TW.epub"
-          cp book-en/AI-Agents-in-Depth-Bojie-Li-v2.0.epub       "$out/AI-Agents-in-Depth-en.epub"
-          cp book-es/AI-Agents-en-Profundidad-Bojie-Li-v2.0-es.epub "$out/AI-Agents-in-Depth-es.epub"
-          cp book-id/AI-Agents-in-Depth-Bojie-Li-v2.0-id.epub    "$out/AI-Agents-in-Depth-id.epub"
-          cp book-ru/AI-Agents-in-Depth-v2.0-ru.epub             "$out/AI-Agents-in-Depth-ru.epub"
-          cp book-ta/AI-Agents-in-Depth-Bojie-Li-v2.0-ta.epub    "$out/AI-Agents-in-Depth-ta.epub"
-          cp book-vi/AI-Agents-in-Depth-Bojie-Li-v2.0-vi.epub    "$out/AI-Agents-in-Depth-vi.epub"
-          cp book-tr/AI-Agents-in-Depth-Bojie-Li-v2.0-tr.epub    "$out/AI-Agents-in-Depth-tr.epub"
-          cp book-ko/AI-Agents-in-Depth-v2.0-ko.epub               "$out/AI-Agents-in-Depth-ko.epub"
-          cp book-hu/AI-Agents-in-Depth-v2.0-hu.epub               "$out/AI-Agents-in-Depth-hu.epub"
-          cp book-he/AI-Agents-in-Depth-v2.0-he.epub               "$out/AI-Agents-in-Depth-he.epub"
-          cp book-ptbr/AI-Agents-in-Depth-v2.0-ptbr.epub            "$out/AI-Agents-in-Depth-ptbr.epub"
+          cp "book/深入理解-AI-Agent-李博杰-v3.0.pdf"              "$out/AI-Agents-in-Depth-zh-CN.pdf"
+          cp "book-zhtw/深入理解-AI-Agent-李博杰-v3.0-zhtw.pdf"   "$out/AI-Agents-in-Depth-zh-TW.pdf"
+          cp book-en/AI-Agents-in-Depth-Bojie-Li-v3.0.pdf        "$out/AI-Agents-in-Depth-en.pdf"
+          cp book-es/AI-Agents-en-Profundidad-Bojie-Li-v3.0-es.pdf "$out/AI-Agents-in-Depth-es.pdf"
+          cp book-id/AI-Agents-in-Depth-Bojie-Li-v3.0-id.pdf     "$out/AI-Agents-in-Depth-id.pdf"
+          cp book-ru/AI-Agents-in-Depth-v3.0-ru.pdf              "$out/AI-Agents-in-Depth-ru.pdf"
+          cp book-ta/AI-Agents-in-Depth-Bojie-Li-v3.0-ta.pdf     "$out/AI-Agents-in-Depth-ta.pdf"
+          cp book-vi/AI-Agents-in-Depth-Bojie-Li-v3.0-vi.pdf     "$out/AI-Agents-in-Depth-vi.pdf"
+          cp book-ar/AI-Agents-in-Depth-v3.0-ar.pdf               "$out/AI-Agents-in-Depth-ar.pdf"
+          cp book-tr/AI-Agents-in-Depth-Bojie-Li-v3.0-tr.pdf      "$out/AI-Agents-in-Depth-tr.pdf"
+          cp book-ko/AI-Agents-in-Depth-v3.0-ko.pdf                "$out/AI-Agents-in-Depth-ko.pdf"
+          cp book-hu/AI-Agents-in-Depth-v3.0-hu.pdf                "$out/AI-Agents-in-Depth-hu.pdf"
+          cp book-he/AI-Agents-in-Depth-v3.0-he.pdf                "$out/AI-Agents-in-Depth-he.pdf"
+          cp book-ptbr/AI-Agents-in-Depth-v3.0-ptbr.pdf            "$out/AI-Agents-in-Depth-ptbr.pdf"
+          cp "book/深入理解-AI-Agent-李博杰-v3.0.epub"             "$out/AI-Agents-in-Depth-zh-CN.epub"
+          cp "book/深入理解-AI-Agent-李博杰-v3.0-kindle.epub" "$out/AI-Agents-in-Depth-zh-CN-kindle.epub"
+          cp "book-zhtw/深入理解-AI-Agent-李博杰-v3.0-zhtw.epub"   "$out/AI-Agents-in-Depth-zh-TW.epub"
+          cp book-en/AI-Agents-in-Depth-Bojie-Li-v3.0.epub       "$out/AI-Agents-in-Depth-en.epub"
+          cp book-es/AI-Agents-en-Profundidad-Bojie-Li-v3.0-es.epub "$out/AI-Agents-in-Depth-es.epub"
+          cp book-id/AI-Agents-in-Depth-Bojie-Li-v3.0-id.epub    "$out/AI-Agents-in-Depth-id.epub"
+          cp book-ru/AI-Agents-in-Depth-v3.0-ru.epub             "$out/AI-Agents-in-Depth-ru.epub"
+          cp book-ta/AI-Agents-in-Depth-Bojie-Li-v3.0-ta.epub    "$out/AI-Agents-in-Depth-ta.epub"
+          cp book-vi/AI-Agents-in-Depth-Bojie-Li-v3.0-vi.epub    "$out/AI-Agents-in-Depth-vi.epub"
+          cp book-tr/AI-Agents-in-Depth-Bojie-Li-v3.0-tr.epub    "$out/AI-Agents-in-Depth-tr.epub"
+          cp book-ko/AI-Agents-in-Depth-v3.0-ko.epub               "$out/AI-Agents-in-Depth-ko.epub"
+          cp book-hu/AI-Agents-in-Depth-v3.0-hu.epub               "$out/AI-Agents-in-Depth-hu.epub"
+          cp book-he/AI-Agents-in-Depth-v3.0-he.epub               "$out/AI-Agents-in-Depth-he.epub"
+          cp book-ptbr/AI-Agents-in-Depth-v3.0-ptbr.epub            "$out/AI-Agents-in-Depth-ptbr.epub"
           # WIP: ja artifacts and the Arabic EPUB are copied only if their
           # non-fatal builds produced them.
-          cp book-ja/AI-Agents-in-Depth-Bojie-Li-v2.0-ja.pdf     "$out/AI-Agents-in-Depth-ja.pdf"  || echo "ja PDF not built yet (WIP) — skipping"
-          cp book-ja/AI-Agents-in-Depth-Bojie-Li-v2.0-ja.epub    "$out/AI-Agents-in-Depth-ja.epub" || echo "ja EPUB not built yet (WIP) — skipping"
-          cp book-ar/AI-Agents-in-Depth-v2.0-ar.epub              "$out/AI-Agents-in-Depth-ar.epub" || echo "ar EPUB not built yet (WIP) — skipping"
+          cp book-ja/AI-Agents-in-Depth-Bojie-Li-v3.0-ja.pdf     "$out/AI-Agents-in-Depth-ja.pdf"  || echo "ja PDF not built yet (WIP) — skipping"
+          cp book-ja/AI-Agents-in-Depth-Bojie-Li-v3.0-ja.epub    "$out/AI-Agents-in-Depth-ja.epub" || echo "ja EPUB not built yet (WIP) — skipping"
+          cp book-ar/AI-Agents-in-Depth-v3.0-ar.epub              "$out/AI-Agents-in-Depth-ar.epub" || echo "ar EPUB not built yet (WIP) — skipping"
           gh release upload latest "$out"/* --clobber --repo "${{ github.repository }}"

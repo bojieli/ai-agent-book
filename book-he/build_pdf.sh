@@ -25,7 +25,7 @@ fi
 
 export MKTEXTFM=0
 
-OUT="AI-Agents-in-Depth-v2.0-he.pdf"
+OUT="AI-Agents-in-Depth-v3.0-he.pdf"
 CHAPTERS=(
     introduction.he.md
     chapter1.he.md

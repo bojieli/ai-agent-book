@@ -12,7 +12,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-OUT="深入理解-AI-Agent-李博杰-v2.0.pdf"
+OUT="深入理解-AI-Agent-李博杰-v3.0.pdf"
 CHAPTERS=(
     introduction.md
     chapter1.md

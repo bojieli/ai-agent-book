@@ -43,7 +43,7 @@ To convert a single EPUB that you already have, use the last command below. The 
 ```bash
 python -m pip install lxml playwright
 python -m playwright install chromium
-python scripts/kindle_epub_patcher.py "book/深入理解-AI-Agent-李博杰-v2.0.epub"
+python scripts/kindle_epub_patcher.py "book/深入理解-AI-Agent-李博杰-v3.0.epub"
 ```
 
 Run `epubcheck` on the generated copy before distributing it. Font selection and layout can vary between reading devices.
