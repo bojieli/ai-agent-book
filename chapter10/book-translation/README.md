@@ -109,14 +109,17 @@ python run_official_experiment.py \
 | --- | ---: | ---: |
 | 翻译 API 调用 | 29 | 26 |
 | 翻译总 token | 203,277 | 1,317,808 |
-| 主上下文峰值 | 4,618 | 94,355 |
+| Manager 本地状态峰值（tiktoken 估算） | 4,618 | — |
+| 所有角色中最大一次 API 输入（回执） | 49,807（Glossary） | 94,355 |
 | 翻译墙钟时间 | 270.829 秒 | 254.127 秒 |
 | 匿名质量均分（5 分制） | 4.654 | 4.481 |
 | 裁判偏好单元数 | 15 | 11 |
 | 编辑部指定译法遵从率 | 75% | 0% |
 | 确定性字符串术语一致率 | 50% | 87.5% |
 
-这次结果支持“上下文隔离”而不是无条件支持“多 Agent 全面更优”：Manager 主上下文缩小 20.43 倍，翻译 token 减少 6.48 倍，匿名质量略高，但墙钟时间反而慢 6.57%。共享术语表显著提高指定译法遵从率，却没有保证更高的宽泛字符串一致率；`embedding` 也没有遵守指定的“嵌入向量”。
+打开证据文件的 `modes.orchestration.tracker.by_agent`，分别看四个角色的 `peak_context`。Manager 那次决策输入了 2,153 个 token，译者最大一次输入 2,857 个；通读两章的 Glossary 和审校者分别用了 49,807 和 46,885 个。表里的 4,618 是程序把 Manager 的状态写成 JSON 后在本地数出的峰值。用它去除单 Agent 请求的 94,355，得到的 20.43 混合了两种计数口径。直接比较两组最大一次 API 输入，单 Agent 约为管理者组的 1.89 倍。
+
+两组累计用量相差约 6.48 倍，回答的是另一个问题：翻完整批材料一共处理了多少 token？管理者组在这批材料上总用量较低，匿名质量均分略高，耗时却多了 6.57%。共享术语表显著提高指定译法遵从率，却没有保证更高的宽泛字符串一致率；`embedding` 也没有遵守指定的“嵌入向量”。
 
 结构保真同样出现真实负结果：两组都保留了代码块和插图的数量，却都改动了代码 payload 并增加了标题；管理者组还改动了插图目标，而单 Agent 组的插图目标序列保持不变。这里的 ✅ 表示完整对照与所有预注册测量已经执行，不表示每项质量假设都成立。
 
@@ -186,18 +189,15 @@ python demo.py --dry-run
 
 | 指标 | 管理者模式 | 单 Agent |
 | --- | --- | --- |
-| 主/Manager 上下文峰值 (tokens) | **697** | **2320** |
+| Manager 本地状态峰值（估算） | 697 | — |
+| 单 Agent 最大一次请求输入 | — | 2,320 |
 | Manager LLM 决策调用上下文 (tokens) | 783 | — |
 | 全流程总 token | 11849 | 6886 |
 | 术语内部一致率 | 100% | 89% |
 | 指定术语遵从率 | **100%** | **53%** |
 | 参与 Agent 种类数 | 4 | 1 |
 
-1. **控制上下文膨胀**：单 Agent 的主上下文随章节累积，峰值达 2320 tokens；管理者
-   模式下 Manager 上下文峰值仅 697 tokens（约 3.3 倍差距）。更重要的是，Manager
-   上下文与书的长度**基本无关**（只加一行调用记录/文件索引），而单 Agent 的累积
-   上下文会随章节线性增长——书越长，差距越大。子 Agent 的上下文各自隔离、互不污染
-   （每个 Translation 实例峰值仅约 547 tokens）。
+1. **跟踪每个角色读了多少材料。** 四章演示中，单 Agent 最大一次请求输入了 2,320 个 token。Manager 决策时输入了 783 个，译者的输入峰值约为 547 个。另一个数 697 表示 Manager 本地状态的峰值。译稿越长，内容会继续写入文件；章节数增加时，文件索引和调用记录也会增长。
 2. **术语一致性**：管理者模式把编辑部指定术语写入共享术语表并强制下发，4 个指定
    术语在全书的遵从率 **100%**；单 Agent 看不到术语表，遵从率仅 **53%**。换用更强
    的 gpt-5.6-luna 后，单 Agent 会**自发**采用部分「常识译法」（token→词元、
@@ -354,14 +354,15 @@ python demo.py --dry-run
 
 | Metric | Orchestration Mode | Single Agent |
 | --- | --- | --- |
-| Main/Manager Context Peak (tokens) | **697** | **2320** |
+| Estimated peak serialized Manager state | 697 | — |
+| Largest single-agent API input | — | 2,320 |
 | Manager LLM Decision Call Context (tokens) | 783 | — |
 | Total Pipeline Tokens | 11849 | 6886 |
 | Internal Terminology Consistency Rate | 100% | 89% |
 | Specified Term Adherence Rate | **100%** | **53%** |
 | Number of Agent Types Involved | 4 | 1 |
 
-1. **Controlling Context Growth**: The single agent's main context accumulates with each chapter, peaking at 2320 tokens; in orchestration mode, the Manager's context peaks at only 697 tokens (approximately a 3.3x difference). More importantly, the Manager's context is **essentially independent** of the book's length (it only adds one line of call record/file index), while the single agent's cumulative context grows linearly with the number of chapters — the longer the book, the larger the gap. Sub-agents' contexts are isolated from each other, preventing cross-contamination (each Translation instance peaks at only about 547 tokens).
+1. **Read the per-role measurements.** The single agent's largest request contained 2,320 input tokens. The Manager decision used 783 input tokens, and the largest Translation input was about 547. The 697-token figure measures the Manager's serialized local state. Chapters add index entries and call records while the translations themselves stay in files.
 2. **Terminology Consistency**: The orchestration mode writes house style terms into the shared glossary and enforces them, achieving **100%** adherence for the 4 specified terms across the entire book; the single agent, unable to see the glossary, achieves only **53%** adherence. After switching to the more powerful gpt-5.6-luna, the single agent **spontaneously** adopts some "common sense translations" (token→词元, prompt→提示词 both matched the specified translations), but still acts independently for terms without a single standard (latency was translated as "延迟" throughout the book instead of the specified "时延", embedding as "嵌入" instead of "嵌入向量", with 0/4 and 0/3 adherence respectively). More critically, even the same term **drifts across chapters** for the single agent — token is translated as "词元" in some chapters and left as "token" in others, causing the internal consistency rate to drop to 89%; the orchestration mode, using the shared glossary, eliminates both types of issues (internal consistency 100%, adherence 100%).
 3. **Cost**: The orchestration mode uses significantly more tokens (11849 vs 6886, due to additional glossary extraction, proofreading, scheduling calls, and longer outputs from the reasoning model), in exchange for **controllable main context** and **enforceable terminology uniformity** — precisely the properties needed for long-document translation.
 
