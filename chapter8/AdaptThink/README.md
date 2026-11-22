@@ -73,28 +73,15 @@ AdaptThink 让模型学会在两种模式间智能切换：
 
 ##### 方法设计
 
-AdaptThink 通过两个核心组件实现自适应推理：
+###### 1. 同一道题，两种回答怎样计分？
 
-###### 1. 约束优化目标（Constrained Optimization）
+训练先给每道题找一个比较基准：参考模型用 Thinking 模式做这道题时，平均有多少次答对？记这个比例为 $b$，把当前回答的正确性记为 $a$（对为 1，错为 0）。固定版本的训练代码给 Thinking 样本的奖励是 $a-b$，给强制 NoThinking 样本的奖励是 $a-b+0.05$。[奖励计算代码](https://github.com/bojieli/AdaptThink/blob/9e588202ff56fe93cdbe49f5594cf895f7d6b7c2/src/adapt_think_reward_manager.py#L183-L189)
 
-$$\max_{\theta} \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta(y|x)} [r(x,y)] \quad \text{s.t.} \quad \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta(y|x)} [r(x,y)] \geq \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_{\text{ref}}(y|x)} [r(x,y)] - \delta$$
+假设参考模型在这道题上答对了四分之三，$b=0.75$。两种方式都答对时，Thinking 得 0.25，NoThinking 得 0.30；若直接回答答错了，它就只得 −0.70。这个 0.05 是给直接回答的奖励加成。训练后准确率能否保持，要用验证题另行测量。
 
-其中：
-- $r(x,y)$ 是奖励函数（基于答案准确性）
-- $\pi_{\text{ref}}$ 是参考模型（原始推理模型）
-- $\delta$ 是允许的性能降幅（本实验设为 0.05）
+###### 2. 模型还不会直接回答时，怎样收集样本？
 
-**核心思想**：在保证整体性能不低于参考模型（允许轻微降幅 $\delta$）的前提下，最大化奖励。下述独立采样策略让训练同时看到 Thinking 与 NoThinking 响应；这里展示的约束目标本身不含 KL 散度项或 token 成本项。
-
-###### 2. 重要性采样策略（Importance Sampling）
-
-在训练过程中，为了平衡 Thinking 和 NoThinking 样本：
-
-- **冷启动阶段**：模型倾向于使用 Thinking（因为这是其预训练行为）
-- **采样策略**：引入重要性采样，确保训练过程中既有 Thinking 也有 NoThinking 样本
-- **探索与利用**：让模型在整个训练过程中持续探索两种模式
-
-具体实现：对每个问题，同时采样 Thinking 和 NoThinking 响应，并根据其性能动态调整采样权重。
+如果起初几乎每次都展开推理，训练就很少看到直接作答的结果。这次配方为每道题采样 16 个回答，按 0.5 的比例指定两种模式，各收集 8 个。同一题两种做法都有机会被评分。既然模式是程序指定的，计算策略更新时也要计入实际采样概率：在第一个动作的位置，代码用采样器选择该模式的概率修正旧策略的对数概率。验证时再观察模型自己选择直接回答的比例。[训练配置](https://github.com/bojieli/AdaptThink/blob/9e588202ff56fe93cdbe49f5594cf895f7d6b7c2/scripts/run_adapt_think_1.5b_deepscaler_16k_delta0.05_btz128_lr2e-6.sh) · [概率修正](https://github.com/bojieli/AdaptThink/blob/9e588202ff56fe93cdbe49f5594cf895f7d6b7c2/src/adapt_think_core_algos.py#L88-L94)
 
 ###### 3. NoThinking 实现
 
