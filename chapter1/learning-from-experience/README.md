@@ -22,7 +22,7 @@ Q-learning 用多次交互更新状态与动作的价值；LLM 则可以阅读�
 
 ### 你会看到什么
 
-运行 LLM 实验时，会看到**完整决策过程**：
+下面是一段日志示意。运行时可以对照模型收到的可选动作、它给出的理由和最后选中的动作：
 
 ```
 ============================================================
@@ -51,7 +51,7 @@ LLM DECISION PROCESS
 ✅ Chosen action: go north
 ```
 
-这种透明度展示了 LLM 如何学习与推理，有别于 Q-learning 的黑盒性质。
+模型写下的理由可以和下一步的游戏反馈对照。表格 Q-learning 则提供了另一种检查办法：给定更新前的 Q 值和环境返回的奖励，可以直接算出更新后的 Q 值。
 
 ### 游戏说明
 
@@ -73,7 +73,18 @@ LLM DECISION PROCESS
 
 ## 选择本地训练或模型对局
 
-先用本地 Q-learning 路线看状态、动作和奖励怎样改变动作价值。要研究语言模型从游戏中学到了什么，再看它下一步能读到哪些历史，或沿归档逐步回看第一局。
+先在本目录运行下面几行，复算图 8-4 的一步反馈。
+
+```python
+from game_environment import TreasureHuntGame
+
+game = TreasureHuntGame(stochastic=False)
+game.execute_action("go east")
+feedback, reward, done = game.execute_action("take red key")
+print(feedback, reward, done)
+```
+
+输出中的 4.5 已经扣除了这一步的代价，`False` 表示拿到钥匙后游戏还会继续。因此，算这一步的更新目标时，还要加上下一状态的折扣价值。图中的 0.25 和 0.63 是为演算选定的两个旧估计。要研究语言模型从游戏中学到了什么，再看它下一步能读到哪些历史，或沿归档逐步回看第一局。
 
 <a id="learning-2"></a>
 
