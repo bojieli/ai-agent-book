@@ -405,7 +405,24 @@ python client.py --event-type timer_trigger --message "检查每日备份"
 
 如果连续提交了两次请求，第二次看到的 `tool_calls_count` 可能包含第一次的调用。这个 Agent 会保留会话历史，默认轨迹文件也会在后续迭代中更新。要只分析第二次请求，可以在两次返回后分别保存轨迹，再比较新增的调用编号。一个事件 ID 能帮助辨认请求，却不能单独证明某项外部操作已经成功。
 
-书中还设计了真实邮箱实验。打开[邮箱运行摘要](validation/experiment_6_1/credential_probe_20260730T064500Z/summary.json)，可以看到当次凭据检查未通过，完整邮箱实验记为 `blocked`。阅读本地定时器的输出时，不能据此推断已经读到邮件。
+**再看一封会议邀请。** 假设对方约了 10:00 到 11:00，日历上已有一场从 09:30 开始的会。若这场会恰好在 10:00 结束，两场会首尾相接；若在 10:01 结束，它们就重叠了一分钟。可以在实验目录运行下面的例子，直接调用邮箱处理器使用的函数。两个时间段都用 UTC。
+
+```python
+from datetime import datetime, timezone
+from unipile_mailbox_experiment import event_overlaps
+
+def at(hour, minute):
+    return datetime(2026, 7, 30, hour, minute, tzinfo=timezone.utc)
+
+for minute, cancelled in [(0, False), (1, False), (1, True)]:
+    event = {"start": at(9, 30).isoformat(), "end": at(10, minute).isoformat(),
+             "is_cancelled": cancelled}
+    print(event_overlaps(event, at(10, 0), at(11, 0)))
+```
+
+结果依次为 `False`、`True`、`False`。最后一次保留了重叠的一分钟，但原会议已经取消。沿着[邮箱处理器](unipile_mailbox_experiment.py)里的 `_meeting` 往下读：它在所选日历里数出冲突，有冲突就拟婉拒信，没有冲突就拟接受信，并把草稿写入 `meeting_reply_draft.txt`。要判断邀请者是否已经收到答复，还得查发送记录。
+
+这段练习可以离线验证时间判断。要核实真实邮箱里那场会议，还需要读到日历服务返回的事件。[邮箱运行摘要](validation/experiment_6_1/credential_probe_20260730T064500Z/summary.json)显示，当次试跑停在凭据检查，尚无会议邀请的处理回执。
 
 ### 检查自己的解释
 
