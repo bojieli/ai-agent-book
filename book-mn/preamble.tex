@@ -2,6 +2,12 @@
 % Үндсэн тодотгох өнгө ElegantBook-ийн cyan сэдвээс ирнэ: \structurecolor = RGB(31,186,190)
 
 % Монгол кирилл үсэг, түүний дотор Ө, Ү-г дэмждэг TeX Live-ийн фонтууд.
+\AtBeginDocument{%
+  \renewcommand{\contentsname}{Агуулга}%
+  \renewcommand{\chaptername}{Бүлэг}%
+  \renewcommand{\figurename}{Зураг}%
+  \renewcommand{\tablename}{Хүснэгт}%
+  \hypersetup{pdflang={mn}}}
 \usepackage{unicode-math}
 \setmainfont{FreeSerif}[
   Extension=.otf, UprightFont=*, BoldFont=*Bold,

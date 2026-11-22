@@ -1,4 +1,4 @@
--- crossref.lua — номын дотоод эшлэл, холбоос (англи хэвлэл).
+-- crossref.lua — номын дотоод эшлэл, холбоос (монгол хэвлэл).
 --
 -- Одоогийн гараар өгсөн дугаарыг (Зураг N-M, Бүлэг N) хадгалж, текст дэх
 -- эшлэл бүрийг товшиж болох дотоод холбоос болгож, зураг ба бүлэг бүрд
@@ -58,7 +58,7 @@ return {
     -- pandoc 3.x: дан зураг нь тайлбарыг агуулдаг Figure блок болно.
     Figure = function(el)
       local cap = pandoc.utils.stringify(el.caption.long)
-      local n, m = cap:match('Figure%s*(%d+)%-(%d+)')
+      local n, m = cap:match('Зураг%s*(%d+)%-(%d+)')
       if n and m then
         el.identifier = fig_label(n, m)  -- LaTeX бичигч \label{fig:N-M} үүсгэнэ
       end
@@ -68,7 +68,7 @@ return {
     -- Өөрийн тайлбартай хэвээр үлдсэн inline зурагт зориулсан нөөц арга.
     Image = function(el)
       local cap = pandoc.utils.stringify(el.caption)
-      local n, m = cap:match('Figure%s*(%d+)%-(%d+)')
+      local n, m = cap:match('Зураг%s*(%d+)%-(%d+)')
       if n and m and el.identifier == '' then
         el.identifier = fig_label(n, m)
       end
@@ -85,20 +85,20 @@ return {
         local linked = false
         if el.t == 'Str' and i + 2 <= n
             and inlines[i + 1].t == 'Space' and inlines[i + 2].t == 'Str' then
-          local kind = 'Figure'
-          local pre = split_kw(el.text, 'Figure')
+          local kind = 'Зураг'
+          local pre = split_kw(el.text, 'Зураг')
           if not pre then
-            kind = 'Chapter'
-            pre = split_kw(el.text, 'Chapter')
+            kind = 'Бүлэг'
+            pre = split_kw(el.text, 'Бүлэг')
           end
           if pre then
             local numtext = inlines[i + 2].text
-            if kind == 'Figure' then
+            if kind == 'Зураг' then
               local a, b, suffix = numtext:match('^(%d+)%-(%d+)(.*)$')
               if a and ok_suffix(suffix) then
                 if pre ~= '' then out:insert(pandoc.Str(pre)) end
                 out:insert(pandoc.RawInline('latex',
-                  '\\crossreflink{' .. fig_label(a, b) .. '}{Figure ' .. a .. '-' .. b .. '}'))
+                  '\\crossreflink{' .. fig_label(a, b) .. '}{Зураг ' .. a .. '-' .. b .. '}'))
                 if suffix ~= '' then out:insert(pandoc.Str(suffix)) end
                 linked = true
               end
@@ -107,7 +107,7 @@ return {
               if a and ok_suffix(suffix) then
                 if pre ~= '' then out:insert(pandoc.Str(pre)) end
                 out:insert(pandoc.RawInline('latex',
-                  '\\crossreflink{' .. chap_label(a) .. '}{Chapter ' .. a .. '}'))
+                  '\\crossreflink{' .. chap_label(a) .. '}{Бүлэг ' .. a .. '}'))
                 if suffix ~= '' then out:insert(pandoc.Str(suffix)) end
                 linked = true
               end

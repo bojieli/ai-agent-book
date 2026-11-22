@@ -25,14 +25,14 @@ function Pandoc(doc)
     if block.t == "Header" then
       local text = pandoc.utils.stringify(block)
 
-      if text:match("^[Ee]xperiment%s?%d") then
+      if text:match("^Туршилт%s?%d") then
         if in_box then close_box() end
         box_level = block.level
         block.classes:insert("unnumbered")
         open_box("experimentbox")
         table.insert(new_blocks, block)
 
-      elseif text:match("^[Tt]hought [Qq]uestions") then
+      elseif block.level == 2 and text:match("асуултууд$") then
         if in_box then close_box() end
         box_level = block.level
         block.classes:insert("unnumbered")
