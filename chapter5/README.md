@@ -29,7 +29,7 @@
 | 5-13 | [erp-agent](erp-agent/) | ✅ | 中文自然语言转 SQL 由 DB 执行，artifact 模式让 LLM 只生成 SQL 制品不搬运数据，省 token 又防错 |
 | 5-14 | [conversational-ui](conversational-ui/) | ✅ | 自然语言提 UI 定制需求（颜色/字体/文案/布局），Agent 改 React 源码借 Vite HMR 即时生效 |
 | 5-15 | [permission-embedded-data-objects](permission-embedded-data-objects/) | ✅ | 在 PostgreSQL 之上的权限内嵌对象存储：应用层代码可以动态生成，但每次读写仍由数据层强制执行权限、校验、引用完整性和受控后果反应 |
-| 5-16 | [agent-creator](agent-creator/) | ✅ | 模板/从零双臂均已通过结构、编译、测试、真实 Kimi K3 任务和语义门禁；[正式对照](agent-creator/runs/exp5-12-kimi-k3-20260730-v1/comparison.json)完整结束。模板质量非劣且创建更高效，但正文预期的“质量与效率同时严格占优”未出现——这是已完成实验的诚实负结果，不是未完成状态 |
+| 5-16 | [agent-creator](agent-creator/) | ✅ | 用模板生成和从零生成的两个 Agent 在同一套质量检查中都得了 39/39 分。模板路线创建时用了 1,181 个 token，从零路线用了 381,814 个；生成后的任务运行开销另计。[查看检查步骤和两组结果](agent-creator/README.md#learning-3) |
 
 ## 正式实验验收
 
