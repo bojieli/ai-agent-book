@@ -1098,7 +1098,7 @@ messages: [
 >
 > 比较图2-16 的数字时，需要区分三个量：单次请求输入决定是否达到窗口预算，累计 token 反映多轮调用用量，字符压缩率描述被统计材料的处理后长度与原始长度之比。这里的累计用量来自主 Agent 各轮请求的输入和输出，生成摘要的独立模型请求未并入这个字段。若用无压缩基线作分母，$1-40{,}157/166{,}043$ 约为 76%，表示这两次运行的主 Agent 用量相差约四分之三。基线中途停止，另一组生成了回复，两者的搜索路径也不同，因而无法据此估计完成同一质量任务能省下多少总费用。
 >
-> 复现实验时，按配套说明配置模型与真实搜索服务，在实验目录执行 `python experiment.py -m kimi-k3 -n 15 -o results/reproduction.json`。读取各策略的 `metrics`：用 `total_compressed_size / total_original_size` 复算字符比率，再比较 `total_tokens` 与 `iterations`。无压缩基线也会为搜索正文补上标题、URL 等格式，因此处理后字符数可以略高于原文。实验程序以生成最终回复作为完成标记；人员是否齐全、职业状态是否准确、引用是否支持结论，则需要逐项核验最终内容。
+> 复现实验时，按配套说明配置模型与真实搜索服务，在实验目录执行 `python experiment.py -m kimi-k3 -n 15 -o results/reproduction.json`。读取各策略的 `metrics`：用 `total_compressed_size / total_original_size` 复算字符比率，再比较 `total_tokens` 与 `iterations`。无压缩基线也会为搜索正文补上标题、URL 等格式，因此处理后字符数可以略高于原文。实验程序只要收到最终回复，就把该组记为完成。试着在两份成品里查同一个人：带引用组把 Pamela Vagata 的任职机构写成 Pebblebed，窗口化组的汇总表却写成 Stripe。前一份回答提到了机构网站，但没有给出可打开的网页链接。遇到这种分歧，要回到有日期的来源，区分现职与曾任职位。单看两组都已完成，判断不了哪一份答对了。
 
 [^ch2-compression-results]: [六组运行的原始 JSON](https://github.com/bojieli/ai-agent-book/blob/db23b4c1a9bb444b2df4d176ab97317010bfcece/chapter2/context-compression/results/kimi_k3_real_20260718.json)保存了每种策略的统计字段、最终回答与时间戳，可直接复算字符比率。2026 年 7 月 18 日运行使用旧版保护条件；7 月 22 日的[窗口计数修正](https://github.com/bojieli/ai-agent-book/commit/aea4d72bce4b0029c46ccf57eb7a783edc79ae62)将累计输入改为最近一轮请求的输入。比较不同版本时应记录所用代码与搜索材料。
 

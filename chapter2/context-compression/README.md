@@ -242,6 +242,25 @@ for run in runs:
 - 当前代码的 `Compress` 汇总工具调用对象中的字符长度；窗口化随后改写消息历史，未同步回写这些对象。因此该列不能直接解释为最终窗口的长度比。例如窗口化组的两个计数是 1,128,824 与 1,102,382，相除确为 102.4%。
 - 策略选择需综合任务质量、摘要调用成本和后续模型用量；重复运行后再比较稳定性。
 
+### 同一个人的职业状态，两份回答一致吗？
+
+沿用上面读入的 `runs`，逐份检查交给用户的答案。先找 Pamela Vagata 在汇总表中的那一行，再查读者能否从回答中打开来源网页。
+
+```python
+import re
+
+for run in runs:
+    answer = run["final_answer"] or ""
+    if not answer:
+        continue
+    row = next(line for line in answer.splitlines()
+               if line.startswith("|") and "Pamela Vagata" in line)
+    print(run["metrics"]["strategy"], row)
+    print("正文中带 http(s) 的网址数：", len(re.findall(r"https?://", answer)))
+```
+
+五份回答都列出了她，四份的表格写着 Pebblebed，窗口化组写着 Stripe。五份最终回答里都没有以 `http://` 或 `https://` 开头的网址。带引用组虽然提到 Pebblebed 的网站，读者仍需自行定位页面。要评职业状态这一项，可以先找有日期的任职材料，再检查回答有没有把过去的工作写成现职。若还要判断差异是否由压缩造成，就要固定同一批网页，逐一对照原文、摘要和最终回答；这里各组的搜索过程也会变化。
+
 ### 检查自己的解释
 
 哪些信息适合被概括，哪些信息应该原样保留，例如精确数值、文件路径或工具调用标识？
