@@ -242,7 +242,25 @@ LLM_PROVIDER=ark LLM_MODEL=ep-xxxx python demo.py scenarios --scenario 1
 
 ## 用任务记录和报告核对结果
 
-演示中的加速取决于任务是否独立。恢复时还应检查重复动作和过期结果；一个已经取消的任务迟到返回，不应覆盖当前状态。
+### 用户说“取消”时，进程停了吗？
+
+在本实验目录里运行下面几行，从[取消与恢复的原始记录](validation/experiment_6_2/real_subprocess_20260730T052500Z/scenarios/interrupt_terminates_and_recovers.json)取出四个事件。先看发出打断时的任务编号，再看最后交回结果的是谁。
+
+```python
+import json
+from pathlib import Path
+
+folder = Path("validation/experiment_6_2/real_subprocess_20260730T052500Z/scenarios")
+record = json.loads((folder / "interrupt_terminates_and_recovers.json").read_text())
+for event in record["events"]:
+    if "event" in event:
+        print(event["elapsed_seconds"], event["event"],
+              event.get("task_id") or event.get("task_ids"))
+for task in record["tasks"]:
+    print(task["task_id"], task["status"], task["returncode"])
+```
+
+第 0.803 秒的 `user.interrupt` 表示脚本已发出取消请求，那一刻 T1 的进度是 18%。第 0.806 秒的 `process_cancelled` 才有退出证据：这个子进程的返回码为 −15，表示它被 SIGTERM 信号终止。第 0.807 秒记录的 `runtime_recovered` 表示新任务 T2 已启动；直到第 4.436 秒才出现 T2 的结果。再查 `completed_callbacks`，里面只有 T2。若今后在取消之后又收到一份结果，先核对任务编号，再决定它是否还适用于当前请求。
 
 ### 两条要求都生效了吗？
 
