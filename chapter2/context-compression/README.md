@@ -33,7 +33,7 @@
 
 #### 1. 无压缩
 - 网页原文直接进入上下文
-- 预期：几次工具调用后溢出失败
+- 观察原文逐轮累积时，哪一次请求最接近预算，以及程序何时停止
 - 目的：展示基线问题
 
 #### 2. 非任务感知：逐页摘要
@@ -68,21 +68,11 @@
 | `run_all_strategies.py` | 带逐轮详细日志 | `logs/` |
 | `quickstart.py` | 菜单封装（检查环境并启动） | 控制台 |
 
-均提供中文 `--help`。共用常用参数：
+如果想先比较两种方法，用 `experiment.py -s individual combined`。这个入口和 `run_all_strategies.py` 都支持用 `-s` 选择多个策略、用 `-n` 限制迭代轮数；`main.py` 每次演示一个策略，`quickstart.py` 则通过菜单选择入口。三个命令行入口都支持 `-m/--model`。策略别名为 `no_compression`、`individual`、`combined`、`context_aware`、`citations` 和 `windowed`。
 
-- `-s/--strategy` — 一种或多种策略（默认全部 6 种）；见列表或 `--list-strategies`
-- `-m/--model` — 覆盖 `MODEL_NAME`
-- `-n/--max-iterations` — 每策略最大工具调用轮数
+### 先想好怎样比较
 
-策略别名：`no_compression`、`individual`、`combined`、`context_aware`、`citations`、`windowed`。
-
-### 定性预期
-
-1. 无压缩 → 溢出失败
-2. 非任务感知 → 可能完成但丢细节
-3. 上下文感知 → 体积与相关性较均衡
-4. 带引用 → 最利于追问
-5. 窗口化 → 长对话更高效
+假设一条网页记录了某人加入一家公司的日期，另一条记录了离任日期。逐页摘要能否保留两个日期？合并摘要后还能分清哪个日期来自哪一页吗？带引用的摘要应当可以回查原文。试窗口化策略时，则可以观察同一条工具结果在刚读到和几轮之后分别保留了什么。比较时把这些问题与运行时间、输入长度一起记录。
 
 <a id="learning-1"></a>
 
@@ -213,9 +203,20 @@ if result['success']:
 
 成功率、执行时间、压缩比（压缩后/原始）、上下文溢出次数、工具调用次数、最终答案长度。
 
-### 历史运行汇总（原始记录待补核）
+### 从六组历史结果复算表格
 
-原 README 将以下结果记为实时 Serper + Moonshot 的端到端运行。引用的原始 JSON 当前未在仓库及可用 Git 历史中找到；保留汇总供核对，补齐原始轨迹后再确认各项指标。
+在本实验目录运行下面的代码即可读[原始结果](results/kimi_k3_real_20260718.json)。每组保存了统计字段、最终回答和时间戳。先读带引用的策略：原材料共 1,295,044 个字符，处理后有 52,891 个字符。下面的比值告诉你每 100 个原文字符留下了多少；要看引用能否支撑一条结论，还得读同一条记录里的 `final_answer`，找到具体说法再回查来源。
+
+```python
+import json
+from pathlib import Path
+
+runs = json.loads(Path("results/kimi_k3_real_20260718.json").read_text())
+for run in runs:
+    m = run["metrics"]
+    ratio = m["total_compressed_size"] / m["total_original_size"]
+    print(m["strategy"], m["iterations"], m["total_tokens"], f"{ratio:.1%}")
+```
 
 - **模型：** `kimi-k3`（该运行记录的模型名；演示预算 `CONTEXT_WINDOW_SIZE = 128000`）
 - **搜索：** 真实 Serper + 页面抓取
@@ -233,12 +234,12 @@ if result['success']:
 
 说明：
 
-- **无压缩**按设计在超过 128K 时失败（约第 5 轮）。
+- **无压缩**在第五轮停止。旧代码把多轮累计输入 165,227 与应用预算 128,000 比较。单轮请求是否达到预算，需要查看该轮输入。
 - **上下文感知摘要（#4）** token 最省（40,157 tokens，字符压缩 3.0%）。
 - **逐页摘要（#2）**最慢（约 50 分钟）：推理模型对每页单独摘要。
 - **窗口化（#6）**仅在用量跨过约 80% 预算时批量压缩未压缩工具消息；汇总表中的总时间为生成最终回复的五组中最短。
 - `Success` 表示生成了最终回复，最终内容的完整性和准确性需另行评估。
-- 当前代码的 `Compress` 汇总工具调用对象中的字符长度；窗口化随后改写消息历史，未同步回写这些对象。因此该列不能直接解释为最终窗口的长度比。超过 100% 的历史值也需原始记录确认。
+- 当前代码的 `Compress` 汇总工具调用对象中的字符长度；窗口化随后改写消息历史，未同步回写这些对象。因此该列不能直接解释为最终窗口的长度比。例如窗口化组的两个计数是 1,128,824 与 1,102,382，相除确为 102.4%。
 - 策略选择需综合任务质量、摘要调用成本和后续模型用量；重复运行后再比较稳定性。
 
 ### 检查自己的解释
@@ -516,9 +517,9 @@ Success rate, execution time, compression ratio (compressed/original size), cont
 4. With citations → best for follow-ups
 5. Windowed → efficient for long multi-turn
 
-### Historical run summary (raw evidence pending)
+### Historical run summary
 
-The original README attributes these results to a live Serper + Moonshot run. The cited JSON is absent from the current checkout and available Git history. The summary is retained for reconciliation with the original trajectories.
+The original README attributes these results to a live Serper + Moonshot run. The [archived run results](results/kimi_k3_real_20260718.json) contain metrics, final answers and timestamps for all six strategies.
 
 - **Model:** `kimi-k3` (model name recorded in the summary; demo budget `CONTEXT_WINDOW_SIZE = 128000`)
 - **Search:** real Serper + page crawl
@@ -536,12 +537,12 @@ The original README attributes these results to a live Serper + Moonshot run. Th
 
 Notes:
 
-- **No compression** fails as designed past 128K (~5th iteration).
+- **No compression** stopped in the fifth iteration when the historical guard compared cumulative input with the application budget.
 - **Context-aware summary (#4)** most token-efficient success (40,157 tokens, 3.0% char compression).
 - **Individual summaries (#2)** slowest (~50 min): per-page summaries on a reasoning model.
 - **Windowed (#6)** compresses only when usage crosses ~80% of budget; has the shortest reported runtime among the five arms that generated a final response.
 - `Success` means a final response was generated; assess completeness and factual accuracy separately.
-- The current `Compress` calculation aggregates character lengths on tool-call objects. Windowed compression later rewrites message history without updating those objects, so this column does not measure the final window size ratio. Historical values above 100% also need raw-record verification.
+- The current `Compress` calculation aggregates character lengths on tool-call objects. Windowed compression later rewrites message history without updating those objects, so this column does not measure the final window size ratio. The archived windowed counts give 1,128,824 / 1,102,382, or 102.4%.
 - Compare task quality, summarization cost and subsequent model usage across repeated runs.
 
 ### Configuration

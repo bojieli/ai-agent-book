@@ -1088,7 +1088,7 @@ messages: [
 >
 > 复现实验时，按配套说明配置模型与真实搜索服务，在实验目录执行 `python experiment.py -m kimi-k3 -n 15 -o results/reproduction.json`。读取各策略的 `metrics`：用 `total_compressed_size / total_original_size` 复算字符比率，再比较 `total_tokens` 与 `iterations`。无压缩基线也会为搜索正文补上标题、URL 等格式，因此处理后字符数可以略高于原文。实验程序以生成最终回复作为完成标记；人员是否齐全、职业状态是否准确、引用是否支持结论，则需要逐项核验最终内容。
 
-[^ch2-compression-results]: 六组历史数值可查[实验说明的实跑汇总](https://github.com/bojieli/ai-agent-book/blob/main/chapter2/context-compression/README.md)。2026 年 7 月 18 日运行使用旧版保护条件；7 月 22 日的[窗口计数修正](https://github.com/bojieli/ai-agent-book/commit/aea4d72bce4b0029c46ccf57eb7a783edc79ae62)将累计输入改为最近一轮请求的输入。比较不同版本时应记录所用代码与搜索材料。
+[^ch2-compression-results]: [六组运行的原始 JSON](https://github.com/bojieli/ai-agent-book/blob/db23b4c1a9bb444b2df4d176ab97317010bfcece/chapter2/context-compression/results/kimi_k3_real_20260718.json)保存了每种策略的统计字段、最终回答与时间戳，可直接复算字符比率。2026 年 7 月 18 日运行使用旧版保护条件；7 月 22 日的[窗口计数修正](https://github.com/bojieli/ai-agent-book/commit/aea4d72bce4b0029c46ccf57eb7a783edc79ae62)将累计输入改为最近一轮请求的输入。比较不同版本时应记录所用代码与搜索材料。
 
 ### 生产级的分层压缩机制
 
