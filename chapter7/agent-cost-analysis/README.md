@@ -201,7 +201,7 @@ B 优化(KV缓存+压缩)                   16035       6144    38.3%     1164  
 `sample_trace.json` 存的是上面这次真实运行的**逐步 token 用量（实测值）**；离线模式只做「按单价重算成本」这一步纯离线数学，因此无需 key 即可复现全部表格，还能一键换算到其它模型定价：
 
 ```bash
-python demo.py --offline --scenario all                 # 用 gpt-4o-mini 单价复算
+python demo.py --offline --scenario all --model gpt-4o-mini  # 用样例单价复算
 python demo.py --offline --scenario all --model gpt-4o  # 同一份 token 用量，换 gpt-4o 单价重算
 python demo.py --offline --price-input 0.20 --price-cached 0.10 --price-output 0.80
 ```
@@ -218,6 +218,15 @@ python demo.py --offline --price-input 0.20 --price-cached 0.10 --price-output 0
 <a id="learning-3"></a>
 
 ## 分析结果与形成判断
+
+换一份轨迹，组合起来最省钱的办法会变吗？打开 [Kimi K2.5 的逐轮记录](runs/exp7-9-kimi25-20260730-v2/report.json)，只比较稳定前缀的两组。下面按该次运行保存的三档单价复算，金额单位为美元。
+
+| 八轮合计 | 普通输入 token | 缓存输入 token | 输出 token | 模型费用 |
+|---|---:|---:|---:|---:|
+| 只稳定前缀（`kv`） | 4,729 | 14,779 | 1,266 | 0.008254 |
+| 稳定前缀并压缩历史（`both`） | 7,180 | 8,123 | 1,280 | 0.009058 |
+
+可以把两行相减来解释结果。缓存输入少了 6,656 个，普通输入却多了 2,451 个，输出也多了 14 个。用归档里 `pricing` 的三档单价分别乘这三项差额，合计多花约 0.000804 美元。总输入确实缩短了 4,205 个 token，只看总输入长度会漏掉两档输入的价差。
 
 正式表格只统计每组记录下来的八轮。在线脚本默认给启用缓存的组先跑一次完整预热，预热用量没有写入这八轮。若要回答“为了完成一笔退款，服务总共花了多少钱”，还要计入预热、失败尝试和重试的开销，并用实际办成的退款笔数作分母。本例用预设工具返回演示成本拆解，没有验证银行或商家实际退款。
 
