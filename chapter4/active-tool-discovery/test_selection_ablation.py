@@ -42,3 +42,18 @@ def test_length_calibration_uses_fresh_messages_and_scores_only_final_reply():
     assert row["prompt_tokens"] == 150 and row["correct"]
     assert [len(messages) for messages in calls] == [2, 2]
     assert calls[0][1] == calls[1][1]
+
+
+def test_truncated_reply_cannot_be_recorded_as_a_selection():
+    def respond(request):
+        return httpx.Response(200, json={
+            "model": ablation.MODEL, "prompt_eval_count": 100, "done_reason": "length",
+            "message": {"content": '{"tool":"stock_price"}'},
+        })
+
+    async def run():
+        async with httpx.AsyncClient(base_url="http://test", transport=httpx.MockTransport(respond)) as client:
+            await ablation.decision(client, ablation.TASKS[0], [{"name": "stock_price"}], "user", None, 41)
+
+    with pytest.raises(ValueError, match="Incomplete"):
+        asyncio.run(run())
