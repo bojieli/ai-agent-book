@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Build EPUB 3 editions from the Markdown sources.
 # Usage: ./build_epub.sh [all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr]
+# Add --with-reader-copy after all or zh-CN to also rasterize the Chinese edition.
 # Note: `all` does NOT include ja or ar while their PDF pipelines are being
 # validated. Build them explicitly with `./build_epub.sh ja|ar`.
 
@@ -8,6 +9,13 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 SELECTION="${1:-all}"
+READER_COPY="${2:-}"
+if [[ $# -gt 1 ]]; then
+    case "$#:$SELECTION:$READER_COPY" in
+        2:all:--with-reader-copy|2:zh-CN:--with-reader-copy) ;;
+        *) echo "Usage: $0 [edition] [--with-reader-copy (all or zh-CN only)]" >&2; exit 2 ;;
+    esac
+fi
 
 for command in pandoc pdftoppm python3; do
     if ! command -v "$command" >/dev/null 2>&1; then
@@ -238,11 +246,19 @@ build_edition() {
             "$edition_dir/$output" "$title_label" "$toc_label"
     fi
 
-    if command -v epubcheck >/dev/null 2>&1; then
-        epubcheck "$edition_dir/$output"
-    else
-        echo "Built $directory/$output (install epubcheck to validate it)."
+    local file
+    local -a outputs=("$output")
+    if [[ "$language" == "zh-CN" && "$READER_COPY" == "--with-reader-copy" ]]; then
+        python3 "$ROOT/scripts/kindle_epub_patcher.py" "$edition_dir/$output"
+        outputs+=("${output%.epub}-kindle.epub")
     fi
+    for file in "${outputs[@]}"; do
+        if command -v epubcheck >/dev/null 2>&1; then
+            epubcheck "$edition_dir/$file"
+        else
+            echo "Built $directory/$file (install epubcheck to validate it)."
+        fi
+    done
 }
 
 if [ "$SELECTION" = "all" ]; then

@@ -25,6 +25,7 @@ on:
       - 'book-he/**'
       - 'book-ptbr/**'
       - 'build_epub.sh'
+      - 'scripts/kindle_epub_patcher.py'
       - 'epub.css'
       - 'epub_external_links.lua'
       - 'flatten_epub_toc.py'
@@ -226,12 +227,22 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: python3 .github/scripts/verify_pdf_fonts.py "book-zhtw/深入理解-AI-Agent-李博杰-v2.0-zhtw.pdf"
 
+      - name: Install Chinese reader-copy renderer
+        if: github.ref == 'refs/heads/main' || inputs.edition == 'all' || inputs.edition == 'zh-CN'
+        run: |
+          python3 -m venv "$RUNNER_TEMP/epub-renderer"
+          "$RUNNER_TEMP/epub-renderer/bin/python" -m pip install lxml playwright
+          "$RUNNER_TEMP/epub-renderer/bin/python" -m playwright install chromium
+          echo "$RUNNER_TEMP/epub-renderer/bin" >> "$GITHUB_PATH"
+
       - name: Build EPUBs
         env:
           EDITION: ${{ inputs.edition || 'all' }}
         run: |
           if [ "$GITHUB_REF" = "refs/heads/main" ] || [ "$EDITION" = "all" ]; then
-            ./build_epub.sh all
+            ./build_epub.sh all --with-reader-copy
+          elif [ "$EDITION" = "zh-CN" ]; then
+            ./build_epub.sh zh-CN --with-reader-copy
           else
             ./build_epub.sh "$EDITION"
           fi
@@ -279,6 +290,7 @@ jobs:
           cp book-he/AI-Agents-in-Depth-v2.0-he.pdf                "$out/AI-Agents-in-Depth-he.pdf"
           cp book-ptbr/AI-Agents-in-Depth-v2.0-ptbr.pdf            "$out/AI-Agents-in-Depth-ptbr.pdf"
           cp "book/深入理解-AI-Agent-李博杰-v2.0.epub"             "$out/AI-Agents-in-Depth-zh-CN.epub"
+          cp "book/深入理解-AI-Agent-李博杰-v2.0-kindle.epub" "$out/AI-Agents-in-Depth-zh-CN-kindle.epub"
           cp "book-zhtw/深入理解-AI-Agent-李博杰-v2.0-zhtw.epub"   "$out/AI-Agents-in-Depth-zh-TW.epub"
           cp book-en/AI-Agents-in-Depth-Bojie-Li-v2.0.epub       "$out/AI-Agents-in-Depth-en.epub"
           cp book-es/AI-Agents-en-Profundidad-Bojie-Li-v2.0-es.epub "$out/AI-Agents-in-Depth-es.epub"
