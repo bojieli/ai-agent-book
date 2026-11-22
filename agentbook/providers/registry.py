@@ -108,6 +108,15 @@ PROVIDERS: dict[str, Provider] = {
         # Opper serves many vendors' models under bare ids such as
         # claude-sonnet-4-6, so ids are sent as given rather than namespaced.
     ),
+    "uberllm": Provider(
+        name="uberllm",
+        base_url="https://api.uberllm.dev/v1",
+        default_model="deepseek/deepseek-v4-flash",
+        key_vars=("UBERLLM_API_KEY",),
+        base_url_var="UBERLLM_BASE_URL",
+        # UberLLM serves models from multiple vendors under namespaced ids.
+        namespaces_models=True,
+    ),
     "openrouter": Provider(
         name="openrouter",
         base_url=OPENROUTER_BASE_URL,

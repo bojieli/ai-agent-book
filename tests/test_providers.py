@@ -33,6 +33,8 @@ PROVIDER_KEY_VARS = [
     "DASHSCOPE_API_KEY",
     "DASHSCOPE_BASE_URL",
     "SILICONFLOW_API_KEY",
+    "UBERLLM_API_KEY",
+    "UBERLLM_BASE_URL",
     "ARK_API_KEY",
     "MOONSHOT_API_KEY",
     "KIMI_API_KEY",
@@ -284,6 +286,37 @@ def test_opper_base_url_override(monkeypatch):
     assert resolve_backend("opper").base_url == "https://opper.example/v3/compat"
 
 
+def test_uberllm_key_uses_multi_model_gateway_directly(monkeypatch):
+    monkeypatch.setenv("UBERLLM_API_KEY", "test-uberllm-key")
+    backend = resolve_backend("uberllm")
+    assert backend.api_key == "test-uberllm-key"
+    assert backend.base_url == "https://api.uberllm.dev/v1"
+    assert backend.model == "deepseek/deepseek-v4-flash"
+    assert backend.provider == "uberllm"
+    assert backend.using_openrouter is False
+
+
+def test_uberllm_namespaces_bare_model_ids(monkeypatch):
+    monkeypatch.setenv("UBERLLM_API_KEY", "test-uberllm-key")
+    assert resolve_backend("uberllm", model="gpt-4o").model == "openai/gpt-4o"
+
+
+def test_explicit_uberllm_keeps_gpt5_requests_on_its_endpoint(monkeypatch):
+    monkeypatch.setenv("UBERLLM_API_KEY", "direct-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "fallback-key")
+    backend = resolve_backend("uberllm", model="gpt-5.4")
+    assert backend.api_key == "direct-key"
+    assert backend.provider == "uberllm"
+    assert backend.model == "openai/gpt-5.4"
+    assert backend.using_openrouter is False
+
+
+def test_uberllm_base_url_override(monkeypatch):
+    monkeypatch.setenv("UBERLLM_API_KEY", "test-uberllm-key")
+    monkeypatch.setenv("UBERLLM_BASE_URL", "https://uberllm.example/v1")
+    assert resolve_backend("uberllm").base_url == "https://uberllm.example/v1"
+
+
 def test_explicit_krill_provider_is_not_hijacked_for_gpt5(monkeypatch):
     monkeypatch.setenv("KRILL_API_KEY", "test-krill-key")
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
@@ -461,6 +494,7 @@ def test_supported_providers_covers_registry_and_aliases():
     assert "atlascloud" in SUPPORTED_PROVIDERS
     assert "runcrate" in SUPPORTED_PROVIDERS
     assert "opper" in SUPPORTED_PROVIDERS
+    assert "uberllm" in SUPPORTED_PROVIDERS
 
 
 def test_fallback_key_is_not_reusable_as_a_provider_key(monkeypatch):

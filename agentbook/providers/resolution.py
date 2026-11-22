@@ -104,7 +104,7 @@ def _needs_openrouter_for_gpt5(
     """
     if not model.lower().startswith("gpt-5"):
         return False
-    return not (spec.name in {"api_route", "krill", "openai", "opper"} and chosen_by_reader)
+    return not (spec.name in {"api_route", "krill", "openai", "opper", "uberllm"} and chosen_by_reader)
 
 
 def _missing_key_error(spec: Provider) -> ValueError:
