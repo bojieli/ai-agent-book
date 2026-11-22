@@ -1,13 +1,6 @@
 # User Memory System / 用户记忆系统
 
-## 实验 3-1、3-2：正文对应运行
-
-统一使用 60 个用例，每层 20 个，逐会话更新记忆后回答新问题。Simple Notes、Enhanced Notes、JSON Cards、Advanced JSON Cards 分别通过 48、52、51、49 个用例。生成与回答采用 Doubao Seed 1.6，独立评审采用 Moonshot。token 统计包含记忆维护、回答与评审调用；四种模式分别约为 110 万、99 万、113 万、155 万。
-
-运行索引：[validation/latest.json](validation/latest.json)；结果与请求记录：[20260730T043652Z-3_1_and_3_2-16200e94](validation/runs/20260730T043652Z-3_1_and_3_2-16200e94/)。
-
-
-保存全部聊天记录，不等于下次对话能用上相关信息。本实验把交互与后台记忆处理分开，学习怎样从对话提取候选事实、更新存储，并在后续回答中检索它们。
+用户先后谈过 Netflix、Disney+ 和 Max 三份订阅。等他想省点钱，问“我现在每个月都在付哪些订阅费”时，助手能不能列全？你可以直接翻看下方两份已经跑完的记录，沿着三次更新找出旧订阅是怎样留下或丢失的。随后再运行交互程序，看看后台如何从新对话中提取长期记忆。
 
 [English](#english)
 
@@ -123,6 +116,16 @@ python -c "from memory_manager import NotesMemoryManager; m=NotesMemoryManager('
 <a id="learning-3"></a>
 
 ## 分析结果与形成判断
+
+## 实验 3-1、3-2：正文对应运行
+
+统一使用 60 个用例，每层 20 个，逐会话更新记忆后回答新问题。Simple Notes、Enhanced Notes、JSON Cards、Advanced JSON Cards 分别通过 48、52、51、49 个用例。生成与回答采用 Doubao Seed 1.6，独立评审采用 Moonshot。token 统计包含记忆维护、回答与评审调用；四种模式分别约为 110 万、99 万、113 万、155 万。
+
+运行索引：[validation/latest.json](validation/latest.json)；结果与请求记录：[20260730T043652Z-3_1_and_3_2-16200e94](validation/runs/20260730T043652Z-3_1_and_3_2-16200e94/)。
+
+先对照同一道题的[增强笔记记录](validation/checkpoints/full-60x4/layer2_04_multiple_subscriptions--enhanced_notes.json)和[高级 JSON 卡片记录](validation/checkpoints/full-60x4/layer2_04_multiple_subscriptions--advanced_json_cards.json)。两份文件都按会话顺序保存了三次 `memory_states`。打开每一项的 `memory`，圈出其中还能找到的订阅。增强笔记在最后一次更新后仍保存了三家；高级卡片到第二次更新时已经找不到 Netflix，第三次更新后连 Disney+ 也消失了。再看 `answer`：两组都答对了 Max 的月费 19.99 美元，只有第一组列全了三家。这样就能把前两份订阅的遗漏定位到记忆更新这一步。
+
+[评分代码](run_evaluation.py)的 `judge_summary` 同时给出通过标记和综合分。以[宽带账号题](validation/checkpoints/full-60x4/layer1_05_internet_service--enhanced_notes.json)为例，打开 `result.judge` 可以读到 4、4、4、1 四项分数。前三项都达到 3 分，评审也没有标记重大事实错误，因此 `passed` 为真。主动性得 1 分，会拉低综合分：四项之和除以 16，得到 `reward = 0.8125`。如果评审标记了重大事实错误，程序会把综合分直接置零。
 
 检查系统是否把临时计划误写成永久偏好，或把模型自己的猜测保存成用户事实。回答提到了某条信息，也应能追溯到用户真正说过的内容。
 
