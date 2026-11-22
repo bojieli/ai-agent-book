@@ -117,6 +117,7 @@ uv run python chapter1/context/main.py
 | **DeepSeek** | <https://platform.deepseek.com/> | DeepSeek 官方 API | 全球 + 中国大陆 |
 | **API Route** | <https://www.api-route.com/> | 通过 OpenAI 兼容接口访问多种模型；使用 `--provider api_route` 和 `API_ROUTE_API_KEY`，模型 ID 以[当前目录](https://www.api-route.com/pricing)为准 | 全球 |
 | **Atlas Cloud** | <https://www.atlascloud.ai/> | 通过 OpenAI 兼容接口访问多个厂商的模型 | 全球 |
+| **Runcrate** | <https://runcrate.ai/> | 通过 OpenAI 兼容接口访问开源权重模型（DeepSeek、Qwen、GLM、Kimi 等） | 全球 |
 | **Krill AI** | [www.krill-code.com](https://www.krill-code.com/register?invite=Q8D3L35725) | 一站式访问全球及国内主流模型（OpenAI、Claude、Gemini、Grok、Kimi、GLM、DeepSeek、Qwen、Minimax） | 全球 + 中国大陆 |
 | **OpenRouter** | <https://openrouter.ai/> | 一站式访问全球及国内主流模型（GPT、Claude、Gemini、Kimi、GLM、DeepSeek、Qwen 等） | 全球 |
 
