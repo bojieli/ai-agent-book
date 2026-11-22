@@ -39,7 +39,7 @@ Anthropic 上下文感知检索的教学实现：在嵌入/建索引前为每个
 
 ## 选择已生成的前缀或重新生成
 
-离线对照已备好原文、片段和背景前缀。运行 `compare_retrieval.py --per-query` 就能比较同一问题的排名；要研究前缀本身怎样生成，再配置模型。
+离线对照使用随附的 [22 个文本块](document_store.json) 和 [15 个查询](evaluation/retrieval_eval.json)。运行 `compare_retrieval.py --per-query` 就能比较同一问题的排名；要研究前缀本身怎样生成，再配置模型。 使用这份已保存的前缀和 jieba 分词时，BM25 排第一的片段命中标注答案的查询由 9 道增至 13 道，前五名命中的查询则同为 14 道。页首正式运行重新生成了前缀，两个实验应各自对照自己的排名。
 
 <a id="learning-2"></a>
 
