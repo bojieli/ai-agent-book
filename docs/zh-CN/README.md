@@ -3,7 +3,7 @@
 [![PDF](https://img.shields.io/badge/PDF-%E4%B8%8B%E8%BD%BD-success.svg)](#-电子书) [![在线阅读](https://img.shields.io/badge/🌐_在线阅读-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![Languages](https://img.shields.io/badge/翻译-15%20种%20语言-informational.svg)](#-电子书)
 [![Trending GitHub Project of the Day](https://img.shields.io/badge/GitHub%20Trending-Project%20of%20the%20Day-orange?logo=github)](https://github.com/trending)
 
-**中文** ← 当前 · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md)
+**中文** ← 当前 · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md) · [Монгол](../../book-mn/README.md)
 
 > 📥 **[下载 PDF / EPUB](#-电子书)**（推荐）— 推荐使用 PDF / EPUB 离线阅读，排版最佳；也可[在线阅读](https://bojieli.github.io/ai-agent-book/astro/)（支持多语言切换、章节折叠、高亮与笔记，每次推送自动更新）。
 
@@ -13,7 +13,7 @@
 >
 > 要开发好基于模型的应用，还需要理解这类应用赖以运行的基础设施。姊妹篇讨论的就是支撑模型训练与推理的 AI Infra：参数和上下文状态存在哪里，计算怎样执行，多个加速器怎样协作。
 
-> 📢 **2.0 版变更（相较 1.4 版）**：本仓库书稿版本已由 1.4 升级为 2.0。2.0 版将原第四章中的“异步交互”部分与原第九章中关于“多模态 Agent”的内容合并，重组为新的第六章“交互：观察与动作空间的扩展”。原第六章“Agent 的评估”、第七章“模型后训练”和第八章“Agent 的持续进化”依次后移一章，现分别为第七、八、九章。
+> 📢 **3.0 版变更（相较 2.0 版）**：本版按教学体例重写前言、十章正文和后记，更新灰度插图、配套实验和思考题。第六章用机票改签讲解全双工语音与快慢模型分工，第七章从客服办事记录讲评估，第八章补充多教师蒸馏与强化学习的采样方法。完整改动见 [v3.0 改版说明](https://github.com/bojieli/ai-agent-book/pull/1173)。
 >
 > 如果你看到的是旧版 PDF，建议[下载最新版 PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.pdf)。新版还包含许多内容修正与调整，请以最新版为准。
 
@@ -34,10 +34,11 @@
 > - **阿拉伯语**（社区翻译，by [@TheSyBuilder](https://github.com/TheSyBuilder)）：[PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ar.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ar.epub)
 > - **土耳其语**（社区翻译，by [@memisemre](https://github.com/memisemre)）：[PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.epub)
 > - **韩语**（社区翻译，by [@JeongJaeSoon](https://github.com/JeongJaeSoon)）：[PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.epub)
+> - **蒙古语**（社区翻译，by [@ZERO1zx1](https://github.com/ZERO1zx1)）：[章节目录与源码](../../book-mn/README.md)
 >
 > 🌐 也可[在线阅读](https://bojieli.github.io/ai-agent-book/astro/)——支持多语言切换、章节折叠、高亮与笔记，以及配套实验直链。每次推送 main 自动重建。
 
-中文正文源码位于 [`book/`](../../book/)；英文/西班牙语/阿拉伯语/繁体中文（台湾）/俄语/泰米尔语/越南语/日语/土耳其语/韩语版为社区贡献（可能滞后于中文原版），分别位于 [`book-en/`](../../book-en/)、[`book-es/`](../../book-es/)、[`book-ar/`](../../book-ar/)、[`book-zhtw/`](../../book-zhtw/)、[`book-ru/`](../../book-ru/)、[`book-ta/`](../../book-ta/)、[`book-vi/`](../../book-vi/)、[`book-ja/`](../../book-ja/)、[`book-tr/`](../../book-tr/)、[`book-ko/`](../../book-ko/)。
+中文正文源码位于 [`book/`](../../book/)；英文/西班牙语/阿拉伯语/繁体中文（台湾）/俄语/泰米尔语/越南语/日语/土耳其语/韩语/蒙古语版为社区贡献（可能滞后于中文原版），分别位于 [`book-en/`](../../book-en/)、[`book-es/`](../../book-es/)、[`book-ar/`](../../book-ar/)、[`book-zhtw/`](../../book-zhtw/)、[`book-ru/`](../../book-ru/)、[`book-ta/`](../../book-ta/)、[`book-vi/`](../../book-vi/)、[`book-ja/`](../../book-ja/)、[`book-tr/`](../../book-tr/)、[`book-ko/`](../../book-ko/)、[`book-mn/`](../../book-mn/)。
 
 <details>
 <summary><b>🔧 自行编译 PDF / EPUB？</b>（PDF 需 pandoc / xelatex / ElegantBook）</summary>
