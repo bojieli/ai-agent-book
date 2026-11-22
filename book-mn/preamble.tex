@@ -1,30 +1,14 @@
 % ===== 《深入理解 AI Agent》 номын ElegantBook-ийн тусгай тохиргоо =====
 % Үндсэн тодотгох өнгө ElegantBook-ийн cyan сэдвээс ирнэ: \structurecolor = RGB(31,186,190)
 
-% ── Текст ба математикийн фонт: зохиогчийн өгүүлэлтэй нийцсэн Palatino хэв маяг ──
-% Өгүүллүүдийн урьдчилсан хэвлэлийн (arxiv.sty) загвар нь үндсэн бичвэр,
-% математикт mathpazo (Palatino), серифгүйд helvet[scaled=.90] ашигладаг.
-% Энд XeLaTeX-д тохирох хувилбаруудыг ашиглана: бичвэрт TeX Gyre Pagella
-% (Palatino), математикт TeX Gyre Pagella Math, серифгүйд TeX Gyre Heros
-% (Helvetica-гийн хувилбар). Үүнийг class-д даатгалгүй энд заавал тохируул:
-% pandoc-ийн template class ажилласны дараа фонтыг Latin Modern болгож өөрчилдөг
-% тул зөвхөн preamble түвшний тохиргоо үйлчилнэ. Class-ийн адил файлын нэрээр
-% ачаална: macOS fontconfig texmf-dist-ийг индексжүүлдэггүй тул бүлгийн нэрээр олдохгүй.
+% Монгол кирилл үсэг, түүний дотор Ө, Ү-г дэмждэг TeX Live-ийн фонтууд.
 \usepackage{unicode-math}
-\setmainfont{texgyrepagella}[
-  UprightFont = *-regular,
-  BoldFont = *-bold,
-  ItalicFont = *-italic,
-  BoldItalicFont = *-bolditalic,
-  Extension = .otf,
-  Scale = 1.0]
-\setsansfont{texgyreheros}[
-  UprightFont = *-regular,
-  BoldFont = *-bold,
-  ItalicFont = *-italic,
-  BoldItalicFont = *-bolditalic,
-  Extension = .otf,
-  Scale = 0.9]
+\setmainfont{FreeSerif}[
+  Extension=.otf, UprightFont=*, BoldFont=*Bold,
+  ItalicFont=*Italic, BoldItalicFont=*BoldItalic]
+\setsansfont{FreeSans}[
+  Extension=.otf, UprightFont=*, BoldFont=*Bold,
+  ItalicFont=*Oblique, BoldItalicFont=*BoldOblique]
 \setmathfont{texgyrepagella-math}[Extension = .otf]
 
 % ── Unicode тэмдэгтийн нөөц фонт (текст/моно фонтууд эдгээрийг агуулахгүй) ──
@@ -74,12 +58,13 @@
 \newunicodechar{ω}{{\fallbackfont ω}}
 
 % ── Үлдсэн CJK тэмдэгтүүд ────────────────────────────────────────
-% Энэ нь англи хэвлэл боловч хятад үсгийн цөөн жишээ текст дотор үлдсэн:
+% Энэ нь монгол хэвлэл боловч хятад үсгийн цөөн жишээ текст дотор үлдсэн:
 % хятад Token болгон хуваах, орчуулга, яриа таних зэрэг тохиолдлууд.
 % ctex/xeCJK-ийн хятад бичвэрийн бүх давхаргыг ачаалалгүйгээр зөвхөн эдгээр
 % код цэгийг CJK фонтоор дүрсэлнэ. macOS: Heiti SC;
 % Linux: Noto Sans CJK SC.
 \IfFontExistsTF{Heiti SC}{\newfontfamily\cjkfallback{Heiti SC}}{\newfontfamily\cjkfallback{Noto Sans CJK SC}}
+\newunicodechar{。}{{\cjkfallback 。}}
 \newunicodechar{医}{{\cjkfallback 医}}
 \newunicodechar{图}{{\cjkfallback 图}}
 \newunicodechar{型}{{\cjkfallback 型}}

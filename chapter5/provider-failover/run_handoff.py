@@ -65,14 +65,15 @@ def run_pair(source: str, target: str, arm: str) -> dict:
 
         try:
             response = step_once(current, trace, arm, log)
-        except RuntimeError as e:  # 连接层的问题，重试过了还是不行
-            record["error"] = str(e)[:300]
-            break
+        # ProviderError 是 RuntimeError 的子类，必须先捕获，否则会被下面的通用分支吞掉。
         except ProviderError as e:
             if switched and record["handoff"] is None:
                 # 切换后的第一个请求就被目标厂商拒了：这正是要测的那一类报错。
                 record["handoff"] = {"status": e.status, "error_body": e.body[:2000]}
             record["error"] = f"{e.status}: {e.body[:300]}"
+            break
+        except RuntimeError as e:  # 连接层的问题，重试过了还是不行
+            record["error"] = str(e)[:300]
             break
 
         if switched and record["handoff"] is None:

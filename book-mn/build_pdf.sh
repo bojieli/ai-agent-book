@@ -20,7 +20,7 @@
 # Дэлгэрэнгүйг preamble.tex файлаас үзнэ үү.
 #
 # Ашиглах заавар:
-#   cd book
+#   cd book-mn
 #   bash build_pdf.sh
 #
 # Тайлбар:
@@ -85,7 +85,7 @@ export MKTEXTFM=0
 # 2. Гаралтын PDF файлын нэр
 # ──────────────────────────────────────────────────────────────
 
-OUT="AI-Agents-in-Depth-Bojie-Li-v2.0.pdf"
+OUT="AI-Agents-in-Depth-Bojie-Li-v2.0-mn.pdf"
 
 
 # ──────────────────────────────────────────────────────────────
@@ -140,8 +140,8 @@ pandoc "${CHAPTERS[@]}" \
     -V classoption=cyan \
     -V classoption=device=normal \
     -V author="Bojie Li" \
-    --metadata title-meta="AI Agents in Depth: Design Principles and Engineering Practice" \
-    --metadata author-meta="Bojie Li (English translation: Devaraj)" \
+    --metadata title-meta="AI Agent-ийг гүнзгий ойлгох: Дизайны зарчим ба инженерчлэлийн практик" \
+    --metadata author-meta="Bojie Li (Монгол орчуулга: ZERO1zx1)" \
     -H preamble.tex \
     --include-before-body=cover.tex \
     --highlight-style=kate \

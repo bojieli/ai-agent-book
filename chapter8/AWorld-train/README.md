@@ -2140,7 +2140,9 @@ train_sp=8   # Sequence Parallel (Training)
 
 ---
 
-### GAIA MCP Server Output Example#### ✅ Normal Startup Output
+### GAIA MCP Server Output Example
+
+#### ✅ Normal Startup Output
 
 ```bash
 $ docker logs gaia-mcp-server-gaia-mcp-server-1 -f

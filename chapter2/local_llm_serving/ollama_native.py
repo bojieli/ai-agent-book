@@ -5,6 +5,7 @@ Uses Ollama's standard tool calling API (requires compatible models)
 
 import json
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any, Optional
 import ollama
@@ -120,7 +121,6 @@ class OllamaNativeAgent:
         if stream:
             return self.chat_stream(message, use_tools, temperature)
         
-        # Original non-streaming implementation continues below...
         # Add user message to history
         self.conversation_history.append({
             "role": "user",
@@ -130,21 +130,34 @@ class OllamaNativeAgent:
         # Prepare tools if enabled
         tools = self._convert_tools_to_ollama_format() if use_tools else None
         
+        # ReAct loop (same as chat_stream): stop when the model answers without tool calls
+        max_iterations = 10  # Prevent infinite loops
+
         try:
-            # Call Ollama with tools
-            response = self._chat_with_think_fallback(
-                model=self.model,
-                messages=self.conversation_history,
-                tools=tools,
-                options={"temperature": temperature},
-            )
-            
-            # Check if model made tool calls
-            message_content = response.get('message', {})
-            
-            # Handle tool calls if present
-            if 'tool_calls' in message_content:
-                tool_calls = message_content['tool_calls']
+            for _ in range(max_iterations):
+                response = self._chat_with_think_fallback(
+                    model=self.model,
+                    messages=self.conversation_history,
+                    tools=tools,  # Keep tools available on every turn
+                    options={"temperature": temperature},
+                )
+                message_content = response.get('message', {})
+                tool_calls = message_content.get('tool_calls')
+
+                if not tool_calls:
+                    # No tool calls - this is the final answer
+                    content = message_content.get('content', '') or ''
+                    # Clean response (remove <think> tags if present)
+                    content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
+                    assistant_message = {
+                        "role": "assistant",
+                        "content": content
+                    }
+                    if message_content.get('thinking'):
+                        assistant_message["thinking"] = message_content['thinking']
+                    self.conversation_history.append(assistant_message)
+                    return content
+
                 logger.info(f"Model requested {len(tool_calls)} tool call(s)")
 
                 # Add assistant's message with tool calls to history
@@ -167,45 +180,10 @@ class OllamaNativeAgent:
                         "tool_name": tool_call.get('function', {}).get('name', 'unknown'),
                         "content": result
                     })
-                
-                # Get final response with tool results (still include tools!)
-                final_response = self._chat_with_think_fallback(
-                    model=self.model,
-                    messages=self.conversation_history,
-                    tools=tools,  # IMPORTANT: Keep tools available
-                    options={"temperature": temperature},
-                )
-                
-                final_message = final_response.get('message', {})
-                final_content = final_message.get('content', '')
-                
-                # Clean response (remove <think> tags if present)
-                import re
-                final_content = re.sub(r'<think>.*?</think>', '', final_content, flags=re.DOTALL).strip()
-                
-                # Add final response to history
-                assistant_message = {
-                    "role": "assistant",
-                    "content": final_content
-                }
-                if final_message.get('thinking'):
-                    assistant_message["thinking"] = final_message['thinking']
-                self.conversation_history.append(assistant_message)
-                
-                return final_content
-            
-            else:
-                # No tool calls, just return the response
-                content = message_content.get('content', '')
-                assistant_message = {
-                    "role": "assistant",
-                    "content": content
-                }
-                if message_content.get('thinking'):
-                    assistant_message["thinking"] = message_content['thinking']
-                self.conversation_history.append(assistant_message)
-                return content
-                
+
+            logger.error("Maximum iterations reached in ReAct loop")
+            return "Error: Maximum iterations reached in ReAct loop"
+
         except Exception as e:
             logger.error(f"Error in chat: {e}")
             return f"Error: {e}"

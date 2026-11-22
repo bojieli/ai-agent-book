@@ -76,6 +76,13 @@ PROVIDERS: dict[str, Provider] = {
         key_vars=("KRILL_API_KEY",),
         base_url_var="KRILL_BASE_URL",
     ),
+    "api_route": Provider(
+        name="api_route",
+        base_url="https://global.api-route.com/v1",
+        default_model="deepseek-v4-flash",
+        key_vars=("API_ROUTE_API_KEY",),
+        base_url_var="API_ROUTE_BASE_URL",
+    ),
     "atlascloud": Provider(
         name="atlascloud",
         base_url="https://api.atlascloud.ai/v1",
@@ -84,6 +91,22 @@ PROVIDERS: dict[str, Provider] = {
         base_url_var="ATLASCLOUD_BASE_URL",
         # Atlas Cloud serves models from multiple vendors under namespaced ids.
         namespaces_models=True,
+    ),
+    "runcrate": Provider(
+        name="runcrate",
+        base_url="https://api.runcrate.ai/v1",
+        default_model="deepseek-ai/DeepSeek-V4.1-Flash",
+        key_vars=("RUNCRATE_API_KEY",),
+        base_url_var="RUNCRATE_BASE_URL",
+    ),
+    "opper": Provider(
+        name="opper",
+        base_url="https://api.opper.ai/v3/compat",
+        default_model="claude-sonnet-4-6",
+        key_vars=("OPPER_API_KEY",),
+        base_url_var="OPPER_BASE_URL",
+        # Opper serves many vendors' models under bare ids such as
+        # claude-sonnet-4-6, so ids are sent as given rather than namespaced.
     ),
     "openrouter": Provider(
         name="openrouter",
@@ -122,6 +145,7 @@ PROVIDERS: dict[str, Provider] = {
 
 # Provider names used interchangeably in the chapters, mapped to canonical ones.
 _ALIASES = {
+    "api-route": "api_route",
     "moonshot": "kimi",
     "ark": "doubao",
     "google": "gemini",
