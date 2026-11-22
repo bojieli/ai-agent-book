@@ -216,33 +216,39 @@ def coordinates():
     f.save('fig6-14.svg')
 
 
-def audio_architecture():
-    f=Figure('端到端多模态语音模型架构对比','转录级联、直接音频输入输出、模型内部模块与全双工时序。用户插话时，两条音频流短暂重叠，随后助手停下倾听。',1260)
-    panel(f,20,20,860,'转录级联',['音频 → VAD / 端点 → ASR → 文本 → LLM → 文本 → TTS','检查接口：转录、回复文本、合成音频'],135)
-    panel(f,20,195,860,'端到端音频路径',['音频与声学特征 → 模型 → 文本 / 音频输出','语速 · 音高 · 停顿 · 情绪 · 环境声'],135)
-    panel(f,20,370,410,'OpenAI Realtime',['音频输入与生成','server_vad / semantic_vad','轮次结束 → 触发响应','打断 → 生成与播放状态协调'],215)
-    panel(f,470,370,410,'Gemini Live',['音频输入与生成','自动活动检测 / 手动边界','检测用户活动与中途插话','已播与待播内容分别处理'],215)
-    panel(f,20,625,410,'Qwen3-Omni',['多模态输入 → Thinker（MoE）','Talker → 多码本语音 token','流式解码 → 首帧起输出'],195)
-    panel(f,470,625,410,'Step-Audio 2',['音频编码 → 语言模型','文本与音频 token → 语音','推理与工具调用参与对话'],195)
-    f.box(20,860,860,370,'#ffffff')
-    f.box(20,860,860,48,'#dedede')
-    f.text(450,893,'Moshi 双音频流：一次插话示意',23,True)
-    f.text(450,949,'两行共用时间轴，方框表示正在说话',20)
-    f.text(103,1013,'用户',20)
-    f.box(450,975,360,55,'#dedede')
-    f.text(630,1013,'“等等，是周五。”',20)
-    f.text(103,1088,'助手',20)
-    f.box(175,1050,385,55,'#ffffff')
-    f.text(367,1088,'“我帮您查周四的……”',20)
-    f.path([(450,1030),(450,1050)])
-    f.path([(560,1030),(560,1050)])
-    f.path([(175,1130),(815,1130)],True)
-    f.text(450,1170,'用户插话后，两人短暂重叠，随后助手停下倾听',20)
-    f.text(450,1209,'模型的文本流与输出音频协同生成，图中仅画音频',20)
+def duplex_timeline():
+    f = Figure('全双工交互中的 200 毫秒微轮次',
+               '上半部按时间对齐用户输入和助手输出。第二段里用户插话时助手仍在说话，第三段助手停下。下半部按模型处理顺序展开同一组输入和输出。', 410)
+    left, width = 166, 174
+    f.text(80, 60, '时间（ms）', 21)
+    f.path([(left, 65), (881, 65)], arrow=True)
+    for index in range(5):
+        x = left + index * width
+        f.path([(x, 60), (x, 72)])
+        f.text(x, 49, str(index * 200), 21)
+    for row, (label, chunks) in enumerate([
+        ('用户输入', ['静音', '“不”', '“周”', '“五”']),
+        ('助手输出', ['“周”', '“四”', '静音', '静音']),
+    ]):
+        y = 90 + row * 72
+        f.text(84, y + 39, label, 24, True)
+        for index, chunk in enumerate(chunks):
+            x = left + index * width
+            f.box(x + 2, y, width - 4, 58, '#ffffff' if chunk == '静音' else '#dedede')
+            f.text(x + width / 2, y + 39, chunk, 24)
+    f.text(450, 267, '同一段对话在模型中的处理顺序', 25, True)
+    for i in range(8):
+        x = 25 + 107 * i
+        label = ('入' if i % 2 == 0 else '出') + str(i // 2 + 1)
+        f.box(x, 295, 85, 58, '#dedede' if i % 2 == 0 else '#ffffff')
+        f.text(x + 42.5, 333, label, 23)
+        if i < 7:
+            f.path([(x + 86, 324), (x + 104, 324)], arrow=True)
+    f.text(450, 394, '入、出分别表示一块输入和输出，数字对应上方的时间格。', 21)
     f.save('fig6-9.svg')
 
 
 if __name__ == '__main__':
     events();strategies();email();cancellation();native_async()
-    speech_pipeline();latency();queueing();audio_architecture();cognition()
+    speech_pipeline();latency();queueing();duplex_timeline();cognition()
     computer_loop();computer_tools();grounding();coordinates()
