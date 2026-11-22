@@ -3,14 +3,11 @@ Configuration module for Context-Aware Agent
 """
 
 import os
-from pathlib import Path
 from typing import Optional
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 
-# Load this chapter's environment file regardless of the directory from which
-# the CLI is launched. Existing shell variables still take precedence because
-# python-dotenv's default is ``override=False``.
-load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
+# Resolve the nearest .env from this module, including a repository-level fallback.
+load_dotenv(find_dotenv())
 
 
 def _reasoning_safe_temperature(model, requested=1.0):

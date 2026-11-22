@@ -58,16 +58,6 @@ def _outcome(result: Dict[str, Any]) -> str:
     return "completed"
 
 
-# Load .env so API keys configured there are available via os.getenv.
-# (config.py calls load_dotenv() too, but main.py only imports agent, which
-#  does not import config, so we must trigger it here.)
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
-
 # How the groundedness verdict reads in a table cell.
 _GROUNDING_LABEL = {
     "grounded": "from task",
