@@ -111,7 +111,8 @@ test('Figure 8-13 stays guarded against changes to the source example', () => {
     sourceChapter,
     /假设 16 次尝试中有 4 次通过全部测试且没有修改测试文件，另外 12 次失败/,
   );
-  assert.match(sourceChapter, /前 4 条得到奖励 1，后 12 条得到奖励 0/);
+  assert.match(sourceChapter, /通过的 4 条得到奖励 1，其余 12 条得到奖励 0/);
+  assert.ok(sourceChapter.includes(`通过的是第 ${sourcePasses.join('、')} 条`));
   assert.match(sourceChapter, /平均成功率是 4\/16/);
 });
 
