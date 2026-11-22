@@ -1,26 +1,16 @@
 # 第 10 章 · 多 Agent 协作
 
-本章从上下文组织与协作拓扑出发，用角色切换、书籍翻译、电话与电脑协作、并行搜索和社会模拟，讲解任务分工、消息交接、结果验证与资源管理。
+把一本书分给多个 Agent 翻译，负责统稿的 Agent 只接收文件路径和进度，能省下多少上下文？全书会不会更早译完？这两个问题要看不同的记录。本章从角色切换讲到并行搜索和社会模拟，沿途考察每个 Agent 能看到什么、如何交接工作，以及谁来核对最后的结果。
 
-## 第一次阅读的顺序
+[返回主目录](../README.md) · [读第十章正文](../book/chapter10.md)
 
-1. [先比较角色切换与技能加载的行为边界 ](multi-role-transfer/README.md)。
-2. [再理解文件如何承载长产物而不占满管理者上下文 ](book-translation/README.md)。
-3. [最后用状态明确的多人任务观察消息与私有信息边界 ](voice-werewolf/README.md)。
+## 第一次做实验
 
-读懂一个完整例子后，再查阅下面的全部项目与配置。比较实验时，把输入、模型、运行条件和结果放在一起记录；遇到历史输出，先确认它对应的版本与任务范围。
+1. **先看一次角色交接。** [实验 10-1](multi-role-transfer/README.md)在同样的 30 道任务上比较切换角色和按需加载 Skill。两种做法各自通过了六道边界题，但 30 道完整任务中，前者通过 2 道，后者通过 15 道。读[对照报告](multi-role-transfer/validation/comparison/runs/exp10-1-qwen35flash-20260809-v2/REPORT.md)时，分别看交接是否按预期发生、最终任务是否办成，再看耗时和用量。
+2. **再看两章书怎样交给多人翻译。** 打开[实验 10-2 的运行记录](book-translation/validation/real_20260730T061500Z_v4/evidence.json)，从 `comparison` 读起：单 Agent 的上下文峰值为 94,355 个 token，分工后管理者的峰值为 4,618 个；完成整项工作的时间却从约 254 秒增至 271 秒。接着读 `markdown_fidelity`：第一单元原稿和协作译稿各有两个代码块、六幅插图，但代码内容和图片链接都未完全保留。交付时怎样逐项对照，可回到[翻译实验](book-translation/README.md)。
+3. **最后看并行搜索何时可以结束。** [实验 10-4](parallel-web-research/README.md)让多个浏览器会话同时查找目标。一个成员先找到后，管理者还要防止重复结算，并确认其余成员已停止。沿四会话测试的记录查看一次终止广播、三个确认和浏览器关闭事件，再用十站点的串行与并行计时比较速度。
 
-> 群体智能高于个体：协作框架、上下文共享/隔离、涌现的「Agent 社会」
-
-← [返回主目录](../README.md) · 📖 [读本章正文](../book/chapter10.md)
-
-## 如何阅读实验
-
-正文讲解消息信封、成员生命周期、独立审核与验证后的结果结算，实验目录提供完整并发实现：
-
-- **Starter**：从 [parallel-web-research](parallel-web-research/) 运行少量站点，先看 agents.py 的 worker、消息总线和验证；
-- **Builder**：阅读 [multi-role-transfer](multi-role-transfer/) 的共享上下文/Skill 对照，再看 [voice-werewolf](voice-werewolf/) 的法官状态与信息权限；
-- **Maintainer**：检查锁/幂等结算、取消 ack、消息 schema、资源关闭和 manifest。无需首轮逐行阅读浏览器或音频适配器。
+如果关心成员各自能看到哪些私有信息，可继续读[语音狼人杀](voice-werewolf/README.md)，对照法官掌握的完整状态与玩家在发言、投票时收到的消息。
 
 ## 配套项目
 
