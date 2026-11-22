@@ -4,27 +4,15 @@
 
 本章的 14 个实验沿着三类问题展开。实验 7-1 至 7-5 先问“什么算做好”：从双控环境、跨基准实践，走到评分细则、记忆方案和语音听感。实验 7-6 至 7-9 再问“分数为什么变了”：从失败归因和前缀回归，走到配对排名与行动阈值。实验 7-10 至 7-14 则把候选方案放回具体系统，比较成本、服务性能、检索配置，以及 AndroidWorld 和具身仿真中的任务表现。历史结果文件保留运行时的编号。
 
-## 第一次阅读的顺序
+[返回主目录](../README.md) · [读第七章正文](../book/chapter7.md) · [各实验的运行记录](EXPERIMENT_LEDGER.md)
 
-1. [先读一条交互任务，区分回答质量与环境目标](tau2-bench-eval/README.md)。
-2. [再用已有日志练习寻找最早失去依据的决策](android-world/failure-attribution/README.md)。
-3. [最后把成功条件、调用成本与延迟放在一起分析](agent-cost-analysis/README.md)。
+## 从一道零分题读懂评估
 
-读懂一个完整例子后，再查阅下面的全部项目与配置。比较实验时，把输入、模型、运行条件和结果放在一起记录；遇到历史输出，先确认它对应的版本与任务范围。
+1. **看评分器查了什么。** 在[实验 7-1](tau2-bench-eval/README.md)里，用户关掉了省流量模式，客服却查错线路，最终状态得了零分。先读任务的初始状态，再沿对话核对用户和客服各自做了什么，最后看程序取了哪些环境字段判分。
+2. **决定该改谁。** 到[失败归因实验](android-world/failure-attribution/README.md)沿日志找出最早失去依据的决策。再读[实验 7-7](user-memory-policy-eval/README.md)：有的业务动作在语义上正确，旧评分器接受的标签却漏掉了这个答案。前一种情形要检查 Agent 如何作出决策，后一种则应先校正评分依据。
+3. **比较两个候选方案。** 在[用户记忆评测](user-memory-system-evaluation/README.md)里核对回答引用的事实和裁判给出的理由，包括哪些错误会让整题失败。要比较排名，先到[配对评测](elo-leaderboard/README.md)查看同题投票和平局，再读[运行费用实验](agent-cost-analysis/README.md)，把成功条件、调用费用和延迟放在一起比较。
 
-← [返回主目录](../README.md) · 📖 [读本章正文](../book/chapter7.md)
-
-逐实验的正文要求、直接证据与未完成边界见 [验收台账](EXPERIMENT_LEDGER.md)。
-
-## 如何阅读实验
-
-正文通过任务实例建立 reset → run → snapshot → verifier → record 的评估闭环；实验目录展开代码、配置与运行细节：
-
-- **Starter**：从 [tau2-bench-eval](tau2-bench-eval/) 跑一个固定任务，先看环境 reset、轨迹保存和结果 verifier；
-- **Builder**：阅读 [user-memory-system-evaluation](user-memory-system-evaluation/) 的 Rubric/证据 schema，再看 [elo-leaderboard](elo-leaderboard/) 的配对统计；
-- **Maintainer**：检查 veto 规则、seed/任务配对、bootstrap 或 McNemar 实现、manifest hash 和失败样本。
-
-第一次读失败样本时，先问评分程序究竟检查了什么。实验 7-1 的用户关掉了省流量模式，客服却查错线路，最终状态得 0 分。实验 7-7 还会遇到另一种情况：业务动作在语义上正确，旧评分器的标签集合却没有接受这个答案。要改客服还是改评分器，取决于你在哪一步找到了差异。
+复查分数变化时，先确认两组用了相同的任务和随机种子，再按实验所用的方法核对配对统计、重采样区间或 McNemar 检验。原始轨迹和对应版本保存在各实验的运行记录中。
 
 ## 配套项目
 
