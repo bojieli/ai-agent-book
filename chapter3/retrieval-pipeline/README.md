@@ -83,7 +83,26 @@ cd chapter3/retrieval-pipeline
 
 ### 先做一个小规模观察
 
-以下命令从本实验目录执行。先完成前面的环境准备，再观察这条路径的输入和输出。
+如果想先读懂书中的结果，在本实验目录用 Python 标准库就能查看原始排名。下面选的是英文光合作用题；最后一列列出各方法排在前两位的文档。
+
+```bash
+python - <<'PYCODE'
+import json
+from pathlib import Path
+
+record = Path("validation/runs/20260729T183512Z-3_6-a398d0f7/evidence.json")
+report = json.loads(record.read_text(encoding="utf-8"))["report"]
+question = next(row for row in report["per_query"]
+                if row["query"] == "how vegetation turns light into food")
+print("标注答案", question["expected"])
+for method, result in question["methods"].items():
+    print(method, [doc["doc_id"] for doc in result["top"][:2]])
+PYCODE
+```
+
+标注文档是 `sem_photo`（光合作用）。BM25 把水循环排在它前面，稠密检索把光合作用排在首位。两篇文档在两路检索中恰好交换第一、第二名，等权 RRF 给它们相同的融合分数。这次输出把光合作用列在第一，但同分时这一先后本身不能说明哪篇更相关。加权融合按归一化分数计算，又把水循环排回第一。可以把代码中的查询换成“植物如何把阳光转化为食物”，观察哪一路完全没有返回候选。
+
+要自己运行一次 BM25，完成前面的依赖安装，再运行下面的命令。
 
 ```bash
 python evaluate.py --no-dense --no-rerank
@@ -147,7 +166,7 @@ python evaluate.py --output result.json
 
 ### 对照两次运行的输出
 
-下方是服务示例保留的另一组输出。先看它怎样处理相邻型号，再与本页开头的正式运行比较。在这组示例输出中，近似编码使稠密检索混淆了相邻型号，没有词面重叠的改写则使 BM25 难以命中。这里记录的 **Hybrid-RRF 各项指标为 1.00**，说明融合在这组小语料和查询上弥补了两路检索的部分弱点。它不能证明混合检索在其他语料上总能满分。加权融合还受到分数尺度的影响；要判断重排的增益，应继续使用更大的候选集合和不同类型的自然语言查询进行对照。
+下方是单进程评测脚本保留的另一组输出。先看它怎样处理相邻型号，再与本页开头的正式运行比较。在这组示例输出中，近似编码使稠密检索混淆了相邻型号，没有词面重叠的改写则使 BM25 难以命中。这里记录的 **Hybrid-RRF 各项指标为 1.00**，说明融合在这组小语料和查询上弥补了两路检索的部分弱点。它不能证明混合检索在其他语料上总能满分。加权融合还受到分数尺度的影响；要判断重排的增益，应继续使用更大的候选集合和不同类型的自然语言查询进行对照。
 
 单查询追踪：
 
