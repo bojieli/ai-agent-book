@@ -171,7 +171,7 @@ python ../sparse-embedding/cli.py --corpus cat-corpus.json -q "a cat playing" -k
 python cli.py --corpus cat-corpus.json --embedding-model sentence-transformers/all-MiniLM-L6-v2 -q "a cat playing" -k 5
 ```
 
-在这 12 篇文档上，BM25 返回空列表。小猫那篇标题里虽然有 `Playing`，被索引的正文却写的是 `kitten chased a ball of yarn`。核对检索结果时，先看系统究竟把文档的哪些字段送进了索引。
+在这 12 篇文档上，BM25 返回空列表。小猫那篇的标题是 `A Playful Kitten`，被索引的正文写的是 `kitten chased a ball of yarn`。核对检索结果时，先看系统究竟把文档的哪些字段送进了索引。
 
 **ANN 对比**（3000 条 128 维，100 查询，top-10）：
 
