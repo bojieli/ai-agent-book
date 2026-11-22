@@ -169,10 +169,10 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main():
-    """主函数：解析命令行参数并分发到相应模式"""
+def main(argv: Optional[list] = None):
+    """解析参数并分发到相应模式。脚本默认读取 sys.argv，调用方也可传入参数列表。"""
     parser = build_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     question = " ".join(args.query).strip()
 
     # 离线演示模式：无需 API Key，回放示例轨迹展示 ReAct 循环
