@@ -12,7 +12,7 @@
 
 ## 理解问题与方法
 
-用户问题进入对话后，模型可以提出工具调用。程序执行工具，把结果作为新的消息交回模型，随后开始下一轮。离线演示使用预先写好的轨迹，让你先看清控制流；真正联网时，搜索结果由 Moonshot 的 Formula 服务返回。
+用户问题进入对话后，模型可以提出工具调用。程序执行工具，把结果作为新的消息交回模型，随后开始下一轮。离线演示使用预先写好的轨迹，让你先看清控制流。联网时默认由 Moonshot Formula 搜索，也可以选用 Parallel MCP。
 
 ### 这个实验做什么
 
@@ -21,7 +21,7 @@
 
 ### 联网时发生了什么
 
-当前代码通过 Moonshot 的 Formula 接口使用 `web_search`。你不需要先读懂全部接口，
+默认路径通过 Moonshot 的 Formula 接口使用 `web_search`。你不需要先读懂全部接口，
 只需跟踪三步：
 
 1. 程序向服务端获取搜索工具的定义，并把定义交给模型。
@@ -74,7 +74,7 @@
 | `KIMI_BASE_URL` | API 基础 URL | `https://api.moonshot.cn/v1` |
 | `DEFAULT_MODEL` | 默认模型 | `kimi-k3` |
 | `MAX_SEARCH_ITERATIONS` | 最大搜索迭代次数（Config 中设置） | 5 |
-| `SEARCH_TIMEOUT` | 单次请求超时（秒），同时作用于 Formula 工具调用与 chat completion | 180 |
+| `SEARCH_TIMEOUT` | 模型和搜索请求的超时（秒） | 180 |
 | `temperature` | 控制生成内容的创造性 | 0.6 |
 
 <a id="learning-2"></a>
@@ -133,7 +133,7 @@ MOONSHOT_API_KEY=your-api-key-here
 
 **通用兜底（OpenRouter）**: 若未设置 `MOONSHOT_API_KEY`/`KIMI_API_KEY` 但设置了 `OPENROUTER_API_KEY`，请求会自动改走 OpenRouter。请求的模型 id 会被映射为 OpenRouter 等价 id（默认的 `kimi-k3` 会变成 `moonshotai/kimi-k2.6`）；仅当**未指定模型**时才使用 `OPENROUTER_MODEL`（默认 `openai/gpt-5.6-luna`）。
 
-**重要限制**：Kimi 内置的 `web_search` 工具是 Moonshot 专有能力，在 OpenRouter 上不可用——因此兜底模式下模型仅凭自身知识作答，**没有实时联网搜索**。如需真正的联网搜索，请使用 Moonshot 主 key。
+OpenRouter 上的默认 `--provider kimi` 模式仅使用模型自身知识。要用支持工具调用的 OpenRouter 模型联网搜索，可以选择 `--provider parallel`。
 
 #### 3. 运行 Agent
 
@@ -146,7 +146,7 @@ python main.py --help
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
 | `query` | 要提问的问题（位置参数）；省略则进入交互模式 | 无 |
-| `--provider` | 搜索后端：`kimi`（调用内置 `web_search`，需 API Key）/ `offline-demo`（离线示例轨迹） | `kimi` |
+| `--provider` | `kimi`（Moonshot Formula）、`parallel`（Parallel MCP）、`offline-demo`（离线示例轨迹） | `kimi` |
 | `--model` | 模型名称 | `kimi-k3` |
 | `--max-steps` | 最大 ReAct 迭代次数 | `5` |
 | `--base-url` | API 基础 URL | `https://api.moonshot.cn/v1` |
@@ -159,6 +159,14 @@ python main.py --help
 ```bash
 python main.py --provider offline-demo
 ```
+
+**通过 [Parallel MCP](https://docs.parallel.ai/integrations/mcp/installation) 搜索。** 如果用 `uv`，在仓库根目录运行 `uv sync --locked --extra ch1 --extra mcp`。如果用 pip，在本实验目录运行 `python -m pip install -r requirements.txt "mcp>=1.28,<2"` 安装可选的 MCP SDK。
+
+```bash
+python main.py --provider parallel --output result.json "请搜索 Python 3.13 官方发行说明，解释实验性的自由线程模式，并附上原文链接。"
+```
+
+请选用支持工具调用的模型，并设置 `MOONSHOT_API_KEY` 或 `OPENROUTER_API_KEY`。模型调用的费用和配额以服务商为准。模型生成的搜索词会发到 `https://mcp.parallel.ai/mcp`，匿名搜索无需 Parallel API Key，并受匿名调用频率限制。打开 `result.json`，在 `trace` 的 `observation` 步骤里找网页链接和原文摘录，再与答案中的引用对照。实验 1-2 的 Formula 验收仍使用 `kimi`。
 
 **交互模式**（每次提问独立，`search_and_answer` 会重置对话历史，无跨问题上下文）：
 
@@ -260,7 +268,7 @@ python examples.py
 - `_chat()`: 与 Kimi API 进行对话交互
 - `_get_system_prompt()`: 获取系统提示，定义 Agent 行为
 - `_get_tools()`: 定义可用的工具（`web_search`）
-- `search_impl()`: 搜索实现的抽象层，便于扩展
+- `search_impl()`: `parallel` 模式的搜索实现，返回带链接和摘录的资料
 - `format_trace_step()`: 将一条轨迹步骤渲染为可读文本
 - `run_offline_demo()`: 离线回放示例轨迹，无需 API Key 即可演示 ReAct 循环
 
@@ -332,8 +340,8 @@ Windows 的环境激活方式见下文“快速开始”。终端会依次展示
 - Author / 作者: AI Agent 实战训练营；version / 版本: 1.0.0.
 - Prefer `--provider offline-demo` first if you only want to see the ReAct shape without spending API quota.
   若只想先看 ReAct 形态、不消耗配额，优先运行 `--provider offline-demo`。
-- Live search requires a Moonshot key; OpenRouter fallback has no `$web_search`.
-  真正联网搜索必须使用 Moonshot Key；OpenRouter 兜底没有 `$web_search`。
+- Moonshot Formula search uses a Moonshot key. In Parallel mode, the agent uses the configured model key for inference and sends search queries to Parallel anonymously.
+  Moonshot Formula 搜索需要 Moonshot Key。在 Parallel 模式下，模型调用使用已配置的模型密钥，搜索请求以匿名方式发给 Parallel。
 
 ## English
 
@@ -431,10 +439,9 @@ MOONSHOT_API_KEY=your-api-key-here
 OpenRouter. The requested model id is mapped to its OpenRouter equivalent
 (the default `kimi-k3` becomes `moonshotai/kimi-k2.6`); `OPENROUTER_MODEL`
 is only honored when no model id is requested at all (default
-`openai/gpt-5.6-luna`). Moonshot Formula declarations and Fibers are not
-exposed through OpenRouter, so fallback mode answers from model knowledge
-without live Formula search. It is useful for interface diagnostics only and
-cannot satisfy Experiment 1-2 acceptance.
+`openai/gpt-5.6-luna`). With OpenRouter, the default `--provider kimi` answers
+from model knowledge. For live search with an OpenRouter model that supports
+tool calling, select `--provider parallel`.
 
 #### 3. Run the Agent
 
@@ -447,7 +454,7 @@ python main.py --help
 | Flag | Description | Default |
 |------|-------------|---------|
 | `query` | Question (positional); omit for interactive mode | none |
-| `--provider` | Backend: `kimi` (Moonshot Formula `web_search`, needs API key) / `offline-demo` (offline sample trace) | `kimi` |
+| `--provider` | `kimi` (Moonshot Formula), `parallel` (Parallel MCP), `offline-demo` (offline sample trace) | `kimi` |
 | `--model` | Model name | `kimi-k3` |
 | `--max-steps` | Max ReAct iterations | `5` |
 | `--base-url` | API base URL | `https://api.moonshot.cn/v1` |
@@ -460,6 +467,14 @@ python main.py --help
 ```bash
 python main.py --provider offline-demo
 ```
+
+**Search with [Parallel MCP](https://docs.parallel.ai/integrations/mcp/installation).** If you use `uv`, run `uv sync --locked --extra ch1 --extra mcp` at the repository root. If you use pip, run `python -m pip install -r requirements.txt "mcp>=1.28,<2"` in the experiment directory to include the optional MCP SDK.
+
+```bash
+python main.py --provider parallel --output result.json "Find the official Python 3.13 release notes and cite the section on experimental free-threading."
+```
+
+Set `MOONSHOT_API_KEY` or `OPENROUTER_API_KEY` for a model that supports tool calling. Your model provider's pricing and quotas apply to inference. The agent sends the model's search terms to `https://mcp.parallel.ai/mcp` without a Parallel API key, subject to anonymous rate limits. Open `result.json` and compare the URLs and excerpts in the `observation` step with the citations in the answer. Use `kimi` for the Experiment 1-2 Formula acceptance check.
 
 **Interactive mode** (ongoing dialogue):
 
@@ -486,7 +501,7 @@ python quickstart.py
 python examples.py
 ```
 
-> At runtime the agent prints a **ReAct trace**: 💭 think → 🔧 act (`web_search`) → 👀 observe (Formula output) → ✅ final answer. Use `agent.get_trace()` for a structured trace, or `--output` to save JSON.
+> At runtime the agent prints a **ReAct trace**: 💭 think → 🔧 act (`web_search`) → 👀 observe (search results) → ✅ final answer. Use `agent.get_trace()` for a structured trace, or `--output` to save JSON.
 
 ### Usage Examples
 
@@ -529,7 +544,7 @@ Includes:
 - `_chat()`: chat with the Kimi API
 - `_get_system_prompt()`: system prompt defining agent behavior
 - `_get_tools()`: tool definitions (`$web_search`)
-- `search_impl()`: search implementation layer (extension point)
+- `search_impl()`: returns source links and excerpts in `parallel` mode
 - `format_trace_step()`: render one trace step as readable text
 - `run_offline_demo()`: offline sample-trace replay (no API key)
 
@@ -572,7 +587,7 @@ Includes:
 | `KIMI_BASE_URL` | API base URL | `https://api.moonshot.cn/v1` |
 | `DEFAULT_MODEL` | Default model | `kimi-k3` |
 | `MAX_SEARCH_ITERATIONS` | Max search iterations (in Config) | 5 |
-| `SEARCH_TIMEOUT` | Per-request timeout in seconds, for both the Formula tool call and the chat completion | 180 |
+| `SEARCH_TIMEOUT` | Timeout in seconds for model and search requests | 180 |
 | `temperature` | Generation creativity | 0.6 |
 
 ### Technical Notes
