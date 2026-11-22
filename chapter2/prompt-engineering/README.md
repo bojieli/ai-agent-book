@@ -215,22 +215,48 @@ python run_ablation.py \
 
 ### 结果分析
 
-原始轨迹在 `results_ablation/`，含 **task_id**、**reward**（0/1）、**info**、**traj**、**ablation_config**。
+规则重排组通过了 8 题，基线通过了 7 题。只看总分，你可能以为重排之后有一道题从失败变成了成功。把两组按题号配对，会发现实际有三道题的结果变了。进入本实验目录，用 Python 读取正式运行的归档：
+
+```bash
+python - <<'PYTHON'
+import json
+from pathlib import Path
+
+run = Path("runs/exp2-4-kimi-k3-20260730-v7")
+
+def read_tasks(group):
+    path, = run.glob(f"tool-calling-kimi-k3-{group}_*.json")
+    records = json.loads(path.read_text())["results"]
+    return {record["task_id"]: record for record in records}
+
+baseline = read_tasks("baseline")
+reordered = read_tasks("wiki_random")
+for task_id in sorted(baseline):
+    before = baseline[task_id]["reward"]
+    after = reordered[task_id]["reward"]
+    if before != after:
+        print(f"任务 {task_id}：{before:g} → {after:g}")
+
+for name, tasks in [("基线", baseline), ("规则重排", reordered)]:
+    tools = [m["name"] for m in tasks[4]["traj"] if m["role"] == "tool"]
+    print(name, "→".join(tools))
+PYTHON
+```
+
+任务 0 和 2 都从 0 分变为 1 分，任务 4 却从 1 分降到 0 分。任务 4 的旅客想把纽约到芝加哥的机票改到自己名下，换到经济舱，还要托运三件行李。两组最后都成功转接了人工客服。沿工具记录往前读，基线调用了 `update_reservation_baggages` 更新行李；重排组改了乘客和航班，却没有调用行李更新工具。单看最后一条转接回执，读者就会漏掉这个差别。
+
+把 Agent 看成刚入职的聪明同事：给它整理业务规则、写明工具的用途和参数，最终是希望它能把这样的委托办完整。正式实验每种配置每题只跑了一次。这条轨迹能帮你找到值得复查的环节；要判断规则顺序是否让 Agent 更容易漏办行李，还需固定任务和模型，重复比较两组漏办的次数。
+
+### 汇总自己的运行结果
+
+`--all` 结束时会打印各组通过数。要事后汇总自己保存在 `results_ablation/` 的运行，可执行：
 
 ```bash
 python analyze_results.py
 python analyze_results.py --results-dir results_ablation --output summary.json
 ```
 
-> `--all` 结束时已打印对比表；`analyze_results.py` 用于事后重汇总。仓库内 `results_ablation/*.json` 为少量调试样本（1–6 任务），**不足以做统计结论**；请用完整运行（`--end-index` ≥ 10）。
-
-### 关键洞察
-
-把 Agent 看成聪明的新员工：
-
-1. **清晰指令至关重要** — 结构化信息、任务描述、工具用法  
-2. **上下文组织影响理解** — 逻辑排序、相关规则归并、优先级明确  
-3. **工具文档不可或缺** — 用途、参数、示例
+仓库在这个目录里保留了每组 1 至 6 题的调试样本。上面配对使用的十任务正式轨迹另存于 [v7 归档](runs/exp2-4-kimi-k3-20260730-v7/)。
 
 ### 检查自己的解释
 
