@@ -2,7 +2,8 @@
 # Build EPUB 3 editions from the Markdown sources.
 # Usage: ./build_epub.sh [all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr]
 # Add --with-reader-copy after all or zh-CN to also rasterize the Chinese edition.
-# The release workflow builds ja and ar separately after the main batch.
+# Note: `all` does NOT include ja or ar while their PDF pipelines are being
+# validated. Build them explicitly with `./build_epub.sh ja|ar`.
 
 set -euo pipefail
 
@@ -22,13 +23,6 @@ for command in pandoc pdftoppm python3; do
         exit 1
     fi
 done
-
-# Pandoc 3.7 uses the older option names. Newer versions warn when given them.
-pandoc_style_options=(--mathml --highlight-style=kate)
-pandoc_help="$(pandoc --help)"
-if [[ "$pandoc_help" == *--math-method* && "$pandoc_help" == *--syntax-highlighting* ]]; then
-    pandoc_style_options=(--math-method=mathml --syntax-highlighting=kate)
-fi
 
 case "$SELECTION" in
     all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr) ;;
@@ -231,8 +225,9 @@ build_edition() {
             --toc \
             --toc-depth=3 \
             --number-sections \
+            --mathml \
             --split-level=1 \
-            "${pandoc_style_options[@]}" \
+            --highlight-style=kate \
             --lua-filter="$ROOT/epub_external_links.lua" \
             --css="$ROOT/epub.css" \
             --epub-cover-image="$cover" \

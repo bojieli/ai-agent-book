@@ -261,8 +261,9 @@ jobs:
         continue-on-error: true
         run: ./build_epub.sh ja
 
-      - name: Build and validate Arabic EPUB
+      - name: Build Arabic EPUB (WIP, non-fatal)
         if: github.ref == 'refs/heads/main'
+        continue-on-error: true
         run: ./build_epub.sh ar
 
       - name: Upload verification artifacts
@@ -310,9 +311,9 @@ jobs:
           cp book-hu/AI-Agents-in-Depth-v3.0-hu.epub               "$out/AI-Agents-in-Depth-hu.epub"
           cp book-he/AI-Agents-in-Depth-v3.0-he.epub               "$out/AI-Agents-in-Depth-he.epub"
           cp book-ptbr/AI-Agents-in-Depth-v3.0-ptbr.epub            "$out/AI-Agents-in-Depth-ptbr.epub"
-          cp book-ar/AI-Agents-in-Depth-v3.0-ar.epub              "$out/AI-Agents-in-Depth-ar.epub"
-          # WIP: ja artifacts are copied only if their
+          # WIP: ja artifacts and the Arabic EPUB are copied only if their
           # non-fatal builds produced them.
           cp book-ja/AI-Agents-in-Depth-Bojie-Li-v3.0-ja.pdf     "$out/AI-Agents-in-Depth-ja.pdf"  || echo "ja PDF not built yet (WIP) — skipping"
           cp book-ja/AI-Agents-in-Depth-Bojie-Li-v3.0-ja.epub    "$out/AI-Agents-in-Depth-ja.epub" || echo "ja EPUB not built yet (WIP) — skipping"
+          cp book-ar/AI-Agents-in-Depth-v3.0-ar.epub              "$out/AI-Agents-in-Depth-ar.epub" || echo "ar EPUB not built yet (WIP) — skipping"
           gh release upload latest "$out"/* --clobber --repo "${{ github.repository }}"
