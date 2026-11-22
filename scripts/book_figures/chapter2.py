@@ -190,23 +190,22 @@ def template_sequence():
 
 
 def template_boundaries():
-    f=Figure('API 消息到模型 Token 流的转换','两条消息经模板序列化，角色和起止标记界定边界，assistant标记后开始生成。',550)
-    f.box(20,20,860,140)
-    f.text(450,56,'API 消息',24,True)
-    f.text(450,101,'{"role": "system", "content": "你是助手"}',22)
-    f.text(450,139,'{"role": "user", "content": "你好"}',22)
-    f.path([(450,160),(450,225)],True)
-    f.text(595,201,'Chat Template',21)
-    f.box(20,225,860,305,'#ffffff')
-    f.text(450,263,'模型输入',24,True)
-    for y,role,body in [(285,'system','你是助手'),(370,'user','你好')]:
-        f.box(40,y,240,55,'#dedede');f.text(160,y+36,'<|im_start|>'+role,20)
-        f.box(305,y,290,55);f.text(450,y+36,body,23)
-        f.box(620,y,240,55,'#dedede');f.text(740,y+36,'<|im_end|>',20)
-        f.path([(280,y+27),(305,y+27)],True);f.path([(595,y+27),(620,y+27)],True)
-    f.text(265,491,'<|im_start|>assistant',22,True)
-    f.path([(430,484),(525,484)],True)
-    f.text(665,491,'从此处开始生成',22)
+    f = Figure('Qwen3 模板中的用户消息与工具结果',
+               '同一段文字分别来自用户和工具。两段都以 user 标记开头，工具结果另有 tool_response 标签。', 490)
+    for x, title, role, lines in [
+        (20, '用户发来消息', 'user', ['<|im_start|>user', '温哥华 17.9 °C<|im_end|>']),
+        (460, '天气工具返回结果', 'tool', ['<|im_start|>user', '<tool_response>', '温哥华 17.9 °C', '</tool_response><|im_end|>']),
+    ]:
+        center = x + 210
+        f.box(x, 20, 420, 136, '#dedede')
+        f.text(center, 60, title, 25, True)
+        f.text(center, 102, f'role: "{role}"', 22)
+        f.text(center, 140, 'content: "温哥华 17.9 °C"', 22)
+        f.path([(center, 156), (center, 220)], True)
+        f.box(x, 220, 420, 200, '#ffffff')
+        for i, line in enumerate(lines):
+            f.text(center, 261 + i * 43, line, 22)
+    f.text(450, 469, '随后都以 <|im_start|>assistant 开始生成回复', 22)
     f.save('fig2-9.svg')
 
 

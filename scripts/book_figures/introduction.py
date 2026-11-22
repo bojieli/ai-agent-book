@@ -34,36 +34,22 @@ class Figure:
 
 def components():
     f = Figure('Agent = LLM + 上下文 + 工具',
-               '左列是三类功能，右列是对应章节；下方列出综合运用这些要素的章节。', 955)
-    f.box(20, 12, 860, 60, fill='#dedede')
-    f.text(450, 52, 'Agent（自主决策系统）= LLM + 上下文 + 工具', 28, True)
-    rows = [
-        (88, 150, 'LLM', '大脑', '理解 · 思考\n规划 · 决策',
-         '第 8 章 模型后训练', '工具调用决策\nSFT · 强化学习'),
-        (250, 210, '上下文', '当前决策视野', '指令 · 记忆 · 知识\n工具定义 · 轨迹 · 状态',
-         '第 2、3 章', '上下文工程 · 提示工程\nKV Cache · 压缩 · 用户记忆\n知识库 · RAG · 结构化索引\nAgentic RAG'),
-        (472, 174, '工具', '感官和手脚', '感知 · 执行\n协作 · 代码',
-         '第 4、5 章', '工具 · Coding Agent\nMCP · 工具安全\n代码即思考 · Agent 自举'),
+               '从一项账单委托开始，自上而下读。模型先决定查询账单，工具返回明细；明细进入上下文，模型据此决定下一步。', 680)
+    steps = [
+        ('上下文', '用户委托：查清本月多收的费用'),
+        ('LLM', '决定先查本月账单'),
+        ('工具', '账单接口返回一笔漫游费'),
+        ('上下文', '用户的委托和查到的明细都在这里'),
+        ('LLM', '决定向客服询问这笔漫游费的计费依据'),
     ]
-    for y, height, component, metaphor, functions, chapters, details in rows:
-        f.box(20, y, 410, height, fill='#f2f2f2')
-        f.box(438, y, 442, height, fill='#ffffff')
-        f.text(225, y+40, f'{component}（{metaphor}）', 28, True)
-        f.text(225, y+85, functions, 26)
-        f.text(659, y+40, chapters, 28, True)
-        f.text(659, y+85, details, 26)
-    f.text(450, 690, '整套系统的交互、评估、进化与协作', 28, True)
-    topics = [
-        ('第 6 章 交互', '多模态 · 语音 · Computer Use\n机器人 · 异步事件架构'),
-        ('第 7 章 评估', '环境 · 指标 · 数据 · 系统反馈'),
-        ('第 9 章 持续进化', '运行经验 · 持续更新 · 验证 · 发布 · 回滚'),
-        ('第 10 章 多 Agent 协作', '分工 · 通信 · 协作 · Agent 社会与经济'),
-    ]
-    for i, (chapter, details) in enumerate(topics):
-        y = 731 + i*51 + (38 if i else 0)
-        f.path([(20,y-29),(880,y-29)])
-        f.text(175, y, chapter, 26)
-        f.text(601, y, details, 26)
+    for i, (component, example) in enumerate(steps):
+        y = 20 + i * 134
+        f.box(24, y, 180, 90, fill='#dedede')
+        f.box(214, y, 660, 90, fill='#ffffff')
+        f.text(114, y + 56, component, 28, True)
+        f.text(544, y + 56, example, 26)
+        if i < len(steps) - 1:
+            f.path([(544, y + 90), (544, y + 130)], arrow=True)
     f.save('fig0-1.svg')
 
 
