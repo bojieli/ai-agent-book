@@ -120,13 +120,33 @@ for method in ("online_elo", "bradley_terry"):
 PYTHON
 ```
 
-同一批截至 2024 年 8 月的投票，按时间逐场更新时排第一的是 `gemini-1.5-pro-api-0409-preview`，整批拟合时排第一的是 `chatgpt-4o-latest`。读者不妨再看看整批榜的第四、第五名：两者的评分区间有重叠。这里每个区间来自 20 次重采样，只描述该模型分数的波动。若关心“两者的分差有多稳定”，应当在每次重采样中取同一对模型的分差，再看这组分差的分布。
+同一批截至 2024 年 8 月的投票，按时间逐场更新时排第一的是 `gemini-1.5-pro-api-0409-preview`，整批拟合时排第一的是 `chatgpt-4o-latest`。再看整批榜的第四、第五名：第四名的评分为 1163.0，区间为 1161.2～1166.6；第五名的评分为 1159.7，区间为 1156.0～1161.8。每个区间都来自 20 次重采样，单位是评分。两段区间有重叠，从这张汇总表还看不出两者在多少次重采样中交换了名次，因为表里没有保留同一轮的两个分数。
+
+要看这个区别，可以接着用前面生成的 500 场模拟对局。下面每轮有放回地抽取 500 场，重新拟合整张榜，再从**同一行**取出两位选手的评分。请在设置过 `out` 的同一个终端中运行：
+
+```bash
+python - "$out/battles.json" <<'PYTHON'
+import sys
+import pandas as pd
+from bradley_terry import compute_mle_elo, get_bootstrap_result
+
+battles = pd.read_json(sys.argv[1])
+scores = get_bootstrap_result(battles, compute_mle_elo, num_round=20)
+gap = scores["gpt-4"] - scores["claude-3-opus"]
+print("逐轮分差（前五轮）", gap.head().round(1).tolist())
+print("前者评分更高的轮数", int((gap > 0).sum()), "/", len(gap))
+ranks = scores.rank(axis=1, ascending=False, method="min")
+print("前者的名次分布", ranks["gpt-4"].value_counts().sort_index().to_dict())
+PYTHON
+```
+
+在上述随机种子下，前两轮分差约为 +55.2、+31.7，第三轮变为 −26.2。20 轮中，`gpt-4` 有 14 轮高于 `claude-3-opus`，但只拿了 13 次第一，另有 5 次第二和 2 次第三。分差的正负回答“两者谁在前面”；名次还取决于其他选手。最后一行按每轮全体选手的分数排名，并列时取共同的最高名次。20 轮适合看懂计算过程，用这组模拟结果解读真实 Arena 榜单还需要换成对应的投票数据。
 
 复核归档时要区分文件版本。[最初保存该榜单的提交](https://github.com/bojieli/ai-agent-book/tree/bb6cc547/chapter6/elo-leaderboard/validation/runs/exp6-6-arena-20260731-v1)可以通过当时的校验器。现有目录中，评分表的哈希仍然吻合；汇总 JSON 与原版逐字段比较，只改了实验编号。另外四份实现文件与当时版本的哈希不同。这里的读表练习使用归档评分，重新拟合则需要原始投票文件。
 
 ### 检查自己的解释
 
-两个模型的排名区间大量重叠时，榜单应该怎样呈现这种不确定性？
+假设 A 在每轮都排在 B 前面，A 的名次仍然可能从第一降到第二吗？试着写出第三位选手 C 在这两轮的名次，再想想单看 A、B 的分差能解释多少变化。
 
 <a id="learning-4"></a>
 
