@@ -1,6 +1,6 @@
 # Agentic RAG System / Agentic RAG 系统
 
-一次检索往往只能回答问题的一部分。Agentic RAG 让模型根据当前证据决定是否追加检索、改写问题或查看相关条目。本实验关注多步取证与一次性检索的区别。
+同一个问题交给两套问答程序：第一套用原问题检索一次就作答；第二套可以读完返回的片段，换个问法继续查。第二套多用了三次搜索，到底多找回了什么？本实验用同一份语料和同一个检索器，保留每轮的查询和返回片段，供你逐次核对。
 
 [English](#english)
 
@@ -10,11 +10,7 @@
 
 ## 一次检索还缺哪条证据
 
-每次检索都会改变模型下一轮能看到的信息。关键不是“检索次数多”，而是新检索是否填补了明确的证据缺口。若没有停止条件，Agent 也可能反复查找同一内容。
-
-### 检索结果怎样决定下一步行动
-
-普通问答常在一次检索后直接回答；这里的 Agent 可以根据已有证据决定继续检索或停止。先为一个问题列出回答必须具备的事实，再沿轨迹检查每次查询是否补齐了缺口。多检索几次并不自动更好：重复查询、没有依据的停止以及对无关片段的过度解释，都需要在轨迹中定位。
+先看一次补查该怎样发起。一道题同时提到当前行为和先前记录，第一次检索可能主要返回关于当前行为的片段。此时模型可以把先前记录单独写成查询，再读新取回的材料。它也可能换了措辞，却仍然没有找到想看的条文。要区分这两种情况，既要读模型提交的查询，也要读工具实际返回的片段。
 
 ### 功能特性
 
@@ -110,6 +106,27 @@ cd evaluation && python dataset_builder.py && python evaluate.py
 ### 结果解读
 
 在正式记录的 `results` 里找到 `case.id = hard_4`。它的问题是“醉酒过失致人重伤且有盗窃前科，应如何量刑？”先看 `agentic_trajectory`：第一轮把题干中的词合并检索，第二轮查“醉酒 犯罪 量刑”，后两轮把重点放到前科与量刑。模型还提出过“累犯 认定 刑法”，此时四次搜索已经用完，工具返回预算耗尽。计算搜索次数时，只计真正执行的四次。[逐次调用记录](validation/runs/20260729T205807Z-3_8-7fcb32a5/receipts.json)
+
+可以只用 Python 标准库复算每一轮的收获。在本实验目录运行下面的代码，它按正式评测的口径，在返回片段中查找标注编号，并记住前几轮已经找到的编号。
+
+```python
+import json
+from pathlib import Path
+
+record = Path("validation/runs/20260729T205807Z-3_8-7fcb32a5/evidence.json")
+rows = json.loads(record.read_text(encoding="utf-8"))["results"]
+row = next(item for item in rows if item["case"]["id"] == "hard_4")
+gold = row["case"]["gold_articles"]
+found = set()
+for turn in row["agentic_trajectory"]:
+    for search in turn["searches"]:
+        texts = [chunk["text"] for chunk in search["results"]]
+        new = [ref for ref in gold if ref not in found and any(ref in text for text in texts)]
+        found.update(new)
+        print(search["query"], "→", "、".join(new) or "没有新增标注编号")
+```
+
+第一轮找到了第二百三十五条，接下来两次查询各返回五个片段，但都没有增加标注编号。直到第四轮搜“前科 量刑影响 刑法”，才在返回片段中找到了第六十五条。第五个查询只出现在模型的请求中，没有产生新的检索结果。
 
 再看两组各自的 `evidence`。该题预先标出三个法条编号。单次组命中第二百三十五条，覆盖率为 1/3；多轮组还找到第六十五条，覆盖率为 2/3。正式评分的实现是在返回片段的正文中寻找编号；离线演示则要求编号出现在片段开头。题目没有说明是否涉及驾驶，标注中却列有第一百三十三条之一。练习要回答的是“系统找到了哪些预先标注的编号”；要判断某条法律能否适用于真实个案，还要核对事实、条文出处和适用条件。这里不据此给出量刑意见。
 
