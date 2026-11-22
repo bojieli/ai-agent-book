@@ -16,7 +16,7 @@ from run_exact_experiment import (
 CONTEXT = 8192
 MATCHED_TOKENS = 6144
 INSTRUCTION = ("Select the first tool to call for the task from the supplied schemas. "
-               "Return its exact name as a JSON string, or null if none is suitable.")
+               "Return a JSON object with a tool field containing its exact name, or null if none is suitable.")
 
 
 def candidates(catalog, receipt, task, seed):
@@ -50,6 +50,8 @@ async def decision(client, task, schemas, position, target, seed):
     for _ in range(5):
         chat = messages(task["prompt"], schemas, position, padding)
         request = dict(model=MODEL, messages=chat, stream=False, think=False,
+                       format={"type": "object", "properties": {"tool": {"type": ["string", "null"]}},
+                               "required": ["tool"], "additionalProperties": False},
                        options=dict(temperature=0, seed=seed, num_ctx=CONTEXT, num_predict=64))
         response = await client.post("/api/chat", json=request)
         response.raise_for_status()
@@ -65,10 +67,9 @@ async def decision(client, task, schemas, position, target, seed):
     else:
         raise ValueError(f"Could not match prompt length to {target} tokens")
     raw = data["message"]["content"]
-    try:
-        choice = json.loads(raw)
-    except ValueError:
-        choice = None
+    choice = json.loads(raw)["tool"]
+    if data.get("done_reason") == "length" or not isinstance(choice, (str, type(None))):
+        raise ValueError("Incomplete or invalid tool selection")
     names = [s["name"] for s in schemas]
     correct = task["slots"][0]
     return {

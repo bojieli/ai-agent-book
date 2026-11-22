@@ -31,7 +31,7 @@ def test_length_calibration_uses_fresh_messages_and_scores_only_final_reply():
         calls.append(messages)
         return httpx.Response(200, json={
             "model": ablation.MODEL, "prompt_eval_count": 100 + messages[0]["content"].count(" pad"),
-            "message": {"content": '"stock_price"' if len(calls) == 2 else '"other"'},
+            "message": {"content": json.dumps({"tool": "stock_price" if len(calls) == 2 else "other"})},
         })
 
     async def run():
