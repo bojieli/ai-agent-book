@@ -1,16 +1,14 @@
 # 在交互环境中评价客服 Agent
 
-客服回答看起来合理，后台状态却可能没有正确改变。τ²-bench 把用户交互、工具操作与任务结果放在同一环境中，适合学习怎样评价完整任务行为。
+用户打电话说手机上不了网。客服请他关闭省流量模式，他照做了。现在可以在工单上写“已解决”吗？先想一想，要给这次服务打分，你会核对哪条线路、谁做了什么，以及用户的手机最后能不能上网。
 
 [English](#english)
-
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3)。
 
 <a id="learning-0"></a>
 
 ## 理解问题与方法
 
-模拟用户提供需求，Agent 使用工具，环境根据状态判断任务完成情况。一次评价因此不只是给文本打分，还涉及工具参数、操作顺序和业务约束。用户模拟器的行为也会影响任务难度。
+τ²-bench 的电信环境让两方都能动手。客服可以查询账户、给指定线路补充流量；用户模拟器可以操作自己的设备。评估程序既能回看双方的工具调用，也能在通话结束后读取环境状态。一次配合成功可能只是解决问题的第一步，能得多少分还要看这道题选了哪些判据。
 
 ### 在共享环境中观察双方怎样解决问题
 
@@ -20,7 +18,7 @@
 
 ## 准备环境与输入
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+第一次做实验，可以先读仓库附的[五题轨迹](validation/runs/exp7-1-openrouter-gpt41mini-telecom-20260802-v1/trajectories.json)，按下文的 Python 练习复核分数。如果要让客服与模拟用户重新对话，再安装下面指定版本的框架。
 
 ### 准备固定版本的外部环境
 
@@ -84,7 +82,28 @@ PYTHON
 
 更值得细读的是失败题。用户给出的号码是 `555-123-2002`，Agent 却选择了 `L1001`；工具随后明确显示该线路对应 `555-123-2001`，它仍使用了这条线路的 3.2/5 GB 用量。虽然用户侧成功关闭了 Data Saver，Agent 没有检查正确的 `L1002`，也未补充要求的 2 GB 流量。71 条消息的轨迹最后转交人工，`refuel_data` 与后续三项环境断言失败。另一个过程问题是，它在一轮中发起了两个客户查询，而策略规定一次只能调用一个工具。
 
-这个例子同时包含用户侧成功和客服侧失败。上游检查中的格式与试验次数通过，但完整任务覆盖检查失败，因为排行榜要求覆盖整个 telecom 集合。这里的五题观察可以用于学习局部机制，不能作为全域排行榜结果。完整轨迹、`evidence.json` 和 `manifest.json` 的原始链接保留在本文英文部分。
+为什么关掉省流量模式仍得 0 分？在同一份轨迹里，`action_checks` 记录指定动作有没有出现，`env_assertions` 记录结束时的状态是否符合期望。用下面的命令并排读这两份结果：
+
+```bash
+python3 - <<'PYTHON'
+import json
+from pathlib import Path
+
+run = Path("validation/runs/exp7-1-openrouter-gpt41mini-telecom-20260802-v1")
+records = json.loads((run / "trajectories.json").read_text())["simulations"]
+failed = next(record for record in records if record["reward_info"]["reward"] == 0)
+score = failed["reward_info"]
+for check in score["action_checks"]:
+    print("动作", check["action"]["name"], check["action_match"])
+for check in score["env_assertions"]:
+    print("状态", check["env_assertion"]["func_name"], check["met"])
+print("计分依据", score["reward_breakdown"])
+PYTHON
+```
+
+两个指定动作匹配了一个。三个状态检查分别核对移动数据状态、网络速度和指定线路的补充流量，结果全部为假。`reward_basis` 在这五题里都只列出 `ENV_ASSERTION`。所以不能把匹配的一个动作算成半分；它的价值在于告诉你用户已经配合，下一步应沿客服选线路的过程查错。同样，一轮发起两次查询是另一个值得修的过程问题，但这次分数没有单独为它扣分。
+
+上游对记录格式和试验次数的检查通过，完整任务覆盖检查未通过：排行榜要求覆盖整个 telecom 集合。要复核本次五题的费用与覆盖范围，可读[运行汇总](validation/runs/exp7-1-openrouter-gpt41mini-telecom-20260802-v1/evidence.json)和[文件清单](validation/runs/exp7-1-openrouter-gpt41mini-telecom-20260802-v1/manifest.json)。
 
 ### 检查自己的解释
 
