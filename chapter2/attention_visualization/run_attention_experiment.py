@@ -18,6 +18,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from visualization import _configure_cjk_font
+from token_labels import decode_token_labels
 
 
 ROOT = Path(__file__).resolve().parent
@@ -139,7 +140,7 @@ def main() -> int:
         protocol["simple_prompt"], return_tensors="pt", add_special_tokens=False
     )["input_ids"].to(device)
     simple_matrices, layer_count, head_count = capture(model, simple, protocol["layers"])
-    simple_tokens = [tokenizer.decode([item], skip_special_tokens=False) for item in simple[0].tolist()]
+    simple_tokens = decode_token_labels(tokenizer, simple[0].tolist())
 
     messages = [
         {"role": "system", "content": "你是一个会展示简短思考过程的助手。"},
@@ -161,7 +162,7 @@ def main() -> int:
         )
     generated_matrices, _, _ = capture(model, generated, protocol["layers"])
     generated_ids = generated[0].tolist()
-    generated_tokens = [tokenizer.decode([item], skip_special_tokens=False) for item in generated_ids]
+    generated_tokens = decode_token_labels(tokenizer, generated_ids)
     regions = region_indices(generated_tokens, int(inputs["input_ids"].shape[1]))
 
     arrays = {}
