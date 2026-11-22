@@ -17,7 +17,7 @@
 - **分离架构**：对话 Agent 与后台记忆处理器解耦  
 - **多种记忆模式**：简单笔记 → 增强笔记 → JSON 卡片 → Advanced JSON Cards  
 - **多提供商**：Kimi、SiliconFlow、豆包、OpenRouter  
-- **React + 工具** 结构化记忆操作  
+- **ReAct + 工具** 结构化记忆操作
 - **流式输出**、**评测集成**、**按间隔后台更新**、**JSON 持久化**
 
 ### 架构
@@ -33,9 +33,7 @@
 3. **`json_cards`** — 层次化 JSON  
 4. **`advanced_json_cards`** — 含 backstory / person / relationship 等完整卡片
 
-### 说明
-
-记忆后台异步处理；工具调用可记录；支持流式；状态跨会话持久。教学材料。
+把上面的程序分工放回订阅例子：新消息先交给对话模块，后台处理器按配置的间隔整理本轮材料，写入持久化存储。要验证下一次会话还能不能读到 Netflix，得先等写入完成，再开新会话追问。若这里出了错，可以对照记忆操作记录，找出是哪一次更新改变了内容。
 
 ---
 
@@ -43,7 +41,7 @@
 
 ## 选择记忆格式与模型
 
-阅读上方两份订阅记录无需模型账号。如果要自己做一遍，先选笔记或 JSON 卡片，再配置模型；重复同一组对话，才便于找出哪次更新丢失了早先的订阅。
+阅读[三次更新后的订阅记录](#learning-3)无需模型账号。如果要自己做一遍，先选笔记或 JSON 卡片，再配置模型；重复同一组对话，才便于找出哪次更新丢失了早先的订阅。
 
 ### 安装
 
@@ -124,6 +122,12 @@ python -c "from memory_manager import NotesMemoryManager; m=NotesMemoryManager('
 运行索引：[validation/latest.json](validation/latest.json)；结果与请求记录：[20260730T043652Z-3_1_and_3_2-16200e94](validation/runs/20260730T043652Z-3_1_and_3_2-16200e94/)。
 
 先对照同一道题的[增强笔记记录](validation/checkpoints/full-60x4/layer2_04_multiple_subscriptions--enhanced_notes.json)和[高级 JSON 卡片记录](validation/checkpoints/full-60x4/layer2_04_multiple_subscriptions--advanced_json_cards.json)。两份文件都按会话顺序保存了三次 `memory_states`。打开每一项的 `memory`，圈出其中还能找到的订阅。增强笔记在最后一次更新后仍保存了三家；高级卡片到第二次更新时已经找不到 Netflix，第三次更新后连 Disney+ 也消失了。再看 `answer`：两组都答对了 Max 的月费 19.99 美元，只有第一组列全了三家。这样就能把前两份订阅的遗漏定位到记忆更新这一步。
+
+### 三次修改，说的是几笔转账？
+
+订阅题考查能否把三笔不同的费用列全。换成[转账更正题的三段原始对话](../user-memory-evaluation/test_cases/layer2/12_contradictory_financial_instructions.yaml)，三次来电改的是同一笔安排。9 月 15 日先约了 10 月 1 日转 85,000 美元；9 月 25 日改为 9 月 27 日转 100,000 美元；9 月 26 日又改为 10 月 1 日转 95,000 美元。用户问“现在安排的是哪一天、多少钱”，不能把三个金额都算进去；若问“为什么改回来”，就需要之前的记录。
+
+打开[增强笔记组的逐次更新](validation/checkpoints/full-60x4/layer2_12_contradictory_financial_instructions--enhanced_notes.json)，在 `memory_states` 第三项的 `memory` 里查找三个确认编号：`WT-89045`、`WT-89067` 和 `WT-89089` 都还在。先遮住 `answer`，试着只凭笔记指出当前有效的是哪一版，再和最终回答对照。它给出的是 10 月 1 日**已安排**转 95,000 美元。从对话能核对预约，至于后来有没有实际扣款，还需要届时的交易记录。四种记忆格式在这道题上都通过了评分。
 
 [评分代码](run_evaluation.py)的 `judge_summary` 同时给出通过标记和综合分。以[宽带账号题](validation/checkpoints/full-60x4/layer1_05_internet_service--enhanced_notes.json)为例，打开 `result.judge` 可以读到 4、4、4、1 四项分数。前三项都达到 3 分，评审也没有标记重大事实错误，因此 `passed` 为真。主动性得 1 分，会拉低综合分：四项之和除以 16，得到 `reward = 0.8125`。如果评审标记了重大事实错误，程序会把综合分直接置零。
 
