@@ -72,43 +72,47 @@ class TextProcessor:
             r"\b[a-zA-Z]+\b",
         ]
         
-        # Combine all patterns
-        combined_pattern = '|'.join(f'({p})' for p in patterns)
-        
-        # Extract all tokens
-        raw_tokens = re.findall(combined_pattern, text, re.IGNORECASE)
-        
-        # Flatten the results (findall with groups returns tuples)
+        # Stream whole matches in pattern precedence order.
+        combined_pattern = '|'.join(patterns)
         tokens = []
-        for match in raw_tokens:
-            token = next(t for t in match if t)  # Get the non-empty match
-            
-            # Preserve case for:
-            # - All uppercase words (API, USA)
-            # - Mixed case (JavaScript, PyTorch)
-            # - Codes with special chars
-            # - Numbers
-            # - Alphanumeric combinations (Python3, ES6)
-            if (token.isupper() and len(token) > 1) or \
-               any(c.isupper() for c in token[1:]) or \
-               any(c in '-_@.#+' for c in token) or \
-               any(c.isdigit() for c in token) or \
-               token.startswith('.'):
-                tokens.append(token)
-            else:
-                # Convert regular words to lowercase
-                tokens.append(token.lower())
+        raw_count = 0
+        # Cache only normalized spellings so case variants share one entry.
+        normalized_tokens = {}
+        cache_limit = 4096
+        matches = re.finditer(combined_pattern, text, re.IGNORECASE)
+        filter_stop_words = bool(remove_stop_words)
+        for match in matches:
+            raw_count += 1
+            token = match.group()
+            normalized = normalized_tokens.get(token)
+            if normalized is None:
+                # Preserve case for:
+                # - All uppercase words (API, USA)
+                # - Mixed case (JavaScript, PyTorch)
+                # - Codes with special chars
+                # - Numbers
+                # - Alphanumeric combinations (Python3, ES6)
+                if (token.isupper() and len(token) > 1) or \
+                   any(c.isupper() for c in token[1:]) or \
+                   any(c in '-_@.#+' for c in token) or \
+                   any(c.isdigit() for c in token) or \
+                   token.startswith('.'):
+                    normalized = token
+                else:
+                    normalized = token if token.islower() else token.lower()
+
+                if len(normalized_tokens) < cache_limit:
+                    normalized = normalized_tokens.setdefault(normalized, normalized)
+                else:
+                    normalized = normalized_tokens.get(normalized, normalized)
+
+            if not (filter_stop_words and normalized.islower() and normalized in self.stop_words):
+                tokens.append(normalized)
         
-        logger.debug(f"Found {len(tokens)} raw tokens")
+        del normalized_tokens
+        logger.debug(f"Found {raw_count} raw tokens")
         
-        if remove_stop_words:
-            # Only remove stop words from lowercase word tokens
-            filtered_tokens = []
-            for token in tokens:
-                # Keep if: not a lowercase word, or not in stop words
-                if not token.islower() or token not in self.stop_words:
-                    filtered_tokens.append(token)
-            tokens = filtered_tokens
+        if filter_stop_words:
             logger.debug(f"After removing stop words: {len(tokens)} tokens")
         
         return tokens

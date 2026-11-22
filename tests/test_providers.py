@@ -22,13 +22,21 @@ from agentbook.providers.registry import supported_providers
 from agentbook.providers.resolution import build_openrouter_backend
 
 PROVIDER_KEY_VARS = [
+    "API_ROUTE_API_KEY",
+    "API_ROUTE_BASE_URL",
+    "RUNCRATE_API_KEY",
+    "RUNCRATE_BASE_URL",
     "ATLASCLOUD_API_KEY",
     "ATLASCLOUD_BASE_URL",
+    "OPPER_API_KEY",
+    "OPPER_BASE_URL",
     "CHEAPERINFERENCE_API_KEY",
     "CHEAPERINFERENCE_BASE_URL",
     "DASHSCOPE_API_KEY",
     "DASHSCOPE_BASE_URL",
     "SILICONFLOW_API_KEY",
+    "UBERLLM_API_KEY",
+    "UBERLLM_BASE_URL",
     "ARK_API_KEY",
     "MOONSHOT_API_KEY",
     "KIMI_API_KEY",
@@ -180,6 +188,32 @@ def test_krill_base_url_override(monkeypatch):
     assert resolve_backend("krill").base_url == "https://krill-gateway.example/v1"
 
 
+@pytest.mark.parametrize("provider", ["api_route", "api-route"])
+@pytest.mark.parametrize("model", [None, "gpt-5.5", "deepseek-v4-flash"])
+def test_explicit_api_route_keeps_its_endpoint_and_model(monkeypatch, provider, model):
+    monkeypatch.setenv("API_ROUTE_API_KEY", "test-api-route-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
+    backend = resolve_backend(provider, model=model)
+    assert backend.api_key == "test-api-route-key"
+    assert backend.base_url == "https://global.api-route.com/v1"
+    assert backend.model == (model or "deepseek-v4-flash")
+    assert backend.provider == "api_route"
+    assert backend.using_openrouter is False
+
+
+def test_api_route_explicit_key_and_base_url_override(monkeypatch):
+    monkeypatch.setenv("API_ROUTE_API_KEY", "test-env-key")
+    monkeypatch.setenv("API_ROUTE_BASE_URL", "https://gateway.example/v1")
+    backend = resolve_backend("api_route", api_key="test-explicit-key")
+    assert backend.api_key == "test-explicit-key"
+    assert backend.base_url == "https://gateway.example/v1"
+
+
+def test_api_route_missing_key_names_its_credential():
+    with pytest.raises(ValueError, match="API_ROUTE_API_KEY"):
+        resolve_backend("api_route")
+
+
 def test_atlascloud_key_uses_multi_model_gateway_directly(monkeypatch):
     monkeypatch.setenv("ATLASCLOUD_API_KEY", "test-atlascloud-key")
     backend = resolve_backend("atlascloud")
@@ -199,6 +233,90 @@ def test_atlascloud_base_url_override(monkeypatch):
     monkeypatch.setenv("ATLASCLOUD_API_KEY", "test-atlascloud-key")
     monkeypatch.setenv("ATLASCLOUD_BASE_URL", "https://atlas.example/v1")
     assert resolve_backend("atlascloud").base_url == "https://atlas.example/v1"
+
+
+def test_runcrate_key_uses_runcrate_endpoint_directly(monkeypatch):
+    monkeypatch.setenv("RUNCRATE_API_KEY", "test-runcrate-key")
+    backend = resolve_backend("runcrate")
+    assert backend.api_key == "test-runcrate-key"
+    assert backend.base_url == "https://api.runcrate.ai/v1"
+    assert backend.model == "deepseek-ai/DeepSeek-V4.1-Flash"
+    assert backend.provider == "runcrate"
+    assert backend.using_openrouter is False
+
+
+def test_runcrate_keeps_model_ids_unchanged(monkeypatch):
+    monkeypatch.setenv("RUNCRATE_API_KEY", "test-runcrate-key")
+    assert resolve_backend("runcrate", model="zai-org/GLM-5.3").model == "zai-org/GLM-5.3"
+
+
+def test_runcrate_base_url_override(monkeypatch):
+    monkeypatch.setenv("RUNCRATE_API_KEY", "test-runcrate-key")
+    monkeypatch.setenv("RUNCRATE_BASE_URL", "https://runcrate.example/v1")
+    assert resolve_backend("runcrate").base_url == "https://runcrate.example/v1"
+
+
+def test_opper_key_uses_multi_model_gateway_directly(monkeypatch):
+    monkeypatch.setenv("OPPER_API_KEY", "test-opper-key")
+    backend = resolve_backend("opper")
+    assert backend.api_key == "test-opper-key"
+    assert backend.base_url == "https://api.opper.ai/v3/compat"
+    assert backend.model == "claude-sonnet-4-6"
+    assert backend.provider == "opper"
+    assert backend.using_openrouter is False
+
+
+def test_opper_keeps_bare_model_ids(monkeypatch):
+    monkeypatch.setenv("OPPER_API_KEY", "test-opper-key")
+    backend = resolve_backend("opper", model="gemini-3.8-flash")
+    assert backend.model == "gemini-3.8-flash"
+
+
+def test_explicit_opper_keeps_gpt5_requests_on_its_endpoint(monkeypatch):
+    monkeypatch.setenv("OPPER_API_KEY", "direct-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "fallback-key")
+    backend = resolve_backend("opper", model="gpt-5.4")
+    assert backend.api_key == "direct-key"
+    assert backend.provider == "opper"
+    assert backend.model == "gpt-5.4"
+    assert backend.using_openrouter is False
+
+
+def test_opper_base_url_override(monkeypatch):
+    monkeypatch.setenv("OPPER_API_KEY", "test-opper-key")
+    monkeypatch.setenv("OPPER_BASE_URL", "https://opper.example/v3/compat")
+    assert resolve_backend("opper").base_url == "https://opper.example/v3/compat"
+
+
+def test_uberllm_key_uses_multi_model_gateway_directly(monkeypatch):
+    monkeypatch.setenv("UBERLLM_API_KEY", "test-uberllm-key")
+    backend = resolve_backend("uberllm")
+    assert backend.api_key == "test-uberllm-key"
+    assert backend.base_url == "https://api.uberllm.dev/v1"
+    assert backend.model == "deepseek/deepseek-v4-flash"
+    assert backend.provider == "uberllm"
+    assert backend.using_openrouter is False
+
+
+def test_uberllm_namespaces_bare_model_ids(monkeypatch):
+    monkeypatch.setenv("UBERLLM_API_KEY", "test-uberllm-key")
+    assert resolve_backend("uberllm", model="gpt-4o").model == "openai/gpt-4o"
+
+
+def test_explicit_uberllm_keeps_gpt5_requests_on_its_endpoint(monkeypatch):
+    monkeypatch.setenv("UBERLLM_API_KEY", "direct-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "fallback-key")
+    backend = resolve_backend("uberllm", model="gpt-5.4")
+    assert backend.api_key == "direct-key"
+    assert backend.provider == "uberllm"
+    assert backend.model == "openai/gpt-5.4"
+    assert backend.using_openrouter is False
+
+
+def test_uberllm_base_url_override(monkeypatch):
+    monkeypatch.setenv("UBERLLM_API_KEY", "test-uberllm-key")
+    monkeypatch.setenv("UBERLLM_BASE_URL", "https://uberllm.example/v1")
+    assert resolve_backend("uberllm").base_url == "https://uberllm.example/v1"
 
 
 def test_cheaperinference_key_uses_gateway_directly(monkeypatch):
@@ -427,6 +545,9 @@ def test_supported_providers_covers_registry_and_aliases():
     assert "gemini" in SUPPORTED_PROVIDERS
     assert "krill" in SUPPORTED_PROVIDERS
     assert "atlascloud" in SUPPORTED_PROVIDERS
+    assert "runcrate" in SUPPORTED_PROVIDERS
+    assert "opper" in SUPPORTED_PROVIDERS
+    assert "uberllm" in SUPPORTED_PROVIDERS
     assert "cheaperinference" in SUPPORTED_PROVIDERS
 
 
