@@ -31,7 +31,7 @@
 
 ### 架构
 
-用户记忆用例 → 对话分块（约 20 轮 + 重叠 + 上下文增强）→ 外部流水线（4242）或本地 BM25 → Agentic Agent（ReAct 记忆工具）→ LLM 评估。
+项目默认把 20 轮对话切成一块，相邻块重叠两轮；本页引用的受控实验将窗口设为八轮。块中保存会话编号、时间和原文，方便从搜索结果追溯出处。助手通过记忆工具查询外部检索服务（4242 端口）或本地 BM25 索引，读完返回的片段后决定继续找还是作答，评审模型最后按题目要求检查回答。
 
 ### 关键概念
 
@@ -113,6 +113,29 @@ CLI 标志见 English 节；`python main.py --help` 含中文说明。
 ### 第二辆车在哪一步消失了
 
 先在车辆题的原始对话里标出两辆车，再看最后一次搜索到底取回了哪几段。如果特斯拉已经出现在命中片段里，重读回答，看看遗漏是在组织答案时发生的；如果片段里只提到一辆车，则回查查询词和分块位置。按这个顺序查，才知道下一次该改搜索还是改答题。
+
+### 换了查询词，找回的记忆有什么变化？
+
+保险变更题里有两个容易混淆的日期。用户在 9 月 15 日的通话中得知，新计划要到次年 1 月 1 日才生效。假如要回答“10 月份用哪份计划”，助手即使准确记得新计划的名称，也得把它说成即将发生的变更。检索结果排在前面，只说明片段与问题相关；要判断计划何时适用，还得读通知里的生效日期。
+
+这道题实际用了三次搜索。在实验目录运行下面的代码，按片段编号数一数每次多读到了多少材料。
+
+```python
+import json
+from pathlib import Path
+
+record = Path("validation/runs/20260729T214519Z-3_9-1bbf4623/evidence.json")
+rows = json.loads(record.read_text(encoding="utf-8"))["results"]
+case = next(row for row in rows if row["test_id"] == "layer2_20_healthcare_coverage_changes")
+seen = set()
+for turn in case["search_trajectory"]:
+    for call in turn["tool_calls"]:
+        chunks = [hit["chunk_id"] for hit in call["results"]]
+        print(call["query"], "返回", len(chunks), "新增", len(set(chunks) - seen))
+        seen.update(chunks)
+```
+
+三次各返回四个片段，新增数依次是 4、3、0。最后一次把查询改成了 `HMO transition issues`，前四个结果连顺序都和上一次相同。若关心的是哪一天起换用新计划，可以回到第一次搜索已经找到的保险通知，核对原话。搜索次数增加到三次，并没有带来三份独立的证明。
 
 ### 离线演示结果
 
