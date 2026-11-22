@@ -14,7 +14,7 @@
 
 ### 比较从零生成与模板改造
 
-实验 5-16 要求同一个真实模型构造两个专用 Agent。第一条路线从零生成 Agent 循环、工具协议、领域工具、命令行入口和测试；第二条路线复制 `reference_agent`，保留已有的消息与工具循环，只修改领域提示、工具定义、实现、文档和测试。
+实验 5-16 要求同一个真实模型构造两个专用 Agent。第一条路线从零生成 Agent 循环、工具协议、领域工具、命令行入口和测试；第二条路线复制 `reference_agent/`，保留消息循环、命令行、通用检查工具和测试。模型填写一份领域规格，创建脚本据此定制提示词、工具定义和文档。
 
 这样设计是为了区分两个问题：模型能否写出领域逻辑，以及它能否同时正确组织通用的 Agent 协议。模板路线减少了后一个问题的生成负担，但仍需证明新增的领域行为符合要求。
 
@@ -71,7 +71,9 @@ python demo.py \
 
 两条路线依次经过相同的检查：必需文件与凭据扫描、Python AST/编译、`assistant.tool_calls → role=tool` 消息协议、循环次数限制、生成的 pytest 测试，以及生成 Agent 自身样例任务的真实 API 运行。前面几项通过只说明结构可用，最后一项才开始检验实际协作行为。
 
-`comparison.json` 同时记录生成耗时、token 用量、每项检查、真实轨迹与策略比较结果。先定位失败发生在哪一层，再解释哪种路线更合适。
+运行完成后，先在输出目录打开 `template/generation.json`，其中的 `artifact` 指向模型生成的 `domain_spec.json`。沿发布审核的例子追踪一个字段：规格中 `passing_values` 为 `["passed"]`，因此必检项标为 `skipped` 时，通用工具应返回拒绝以及该条记录的依据。`creator.py` 的 `_materialize_template` 用同一份规格写出 `system_prompt.md`、`tools.json` 和 `README.md`；对照模板与产物中的 `agent.py`、`domain_tools.py` 和测试，可以看到这些文件直接继承自参考实现。
+
+再看 `comparison.json` 中的 `quality_comparison` 和 `efficiency_comparison`。正式运行中，两个 Kimi K3 产物均通过 39/39 项确定性质量检查；模板与从零路线分别用了 1,181 和 381,814 个创建者 token，创建耗时约 24.7 秒和 5,412.8 秒。这回答了“生成这两个产物分别花了多少”；运行生成的 Agent 所用的模型费用另记。创建效率较高，但这次没有观察到模板在质量得分上胜出。
 
 ### 检查自己的解释
 
@@ -87,9 +89,9 @@ python demo.py \
 
 ## English
 
-# Experiment 5-13: An Agent That Creates Agents
+# Experiment 5-16: An Agent That Creates Agents
 
-This is the runnable companion for Chapter 5, Experiment 5-13. It implements the
+This is the runnable companion for Chapter 5, Experiment 5-16. It implements the
 book's complete comparison rather than merely pointing at `coding-agent` as a
 possible starting point.
 
@@ -97,9 +99,9 @@ The experiment asks the same real model to create two specialized Agents:
 
 1. **From scratch**: generate the Agent loop, tool protocol, domain tools, CLI,
    and tests with no reference implementation.
-2. **Template adaptation**: copy the proven `reference_agent`, preserve its
-   standard message/tool loop, and generate only the domain-specific prompt,
-   tool schemas, implementations, documentation, and tests.
+2. **Template adaptation**: copy `reference_agent/`, including the tool loop,
+   record checker, CLI, and tests. The model supplies `domain_spec.json`.
+   The creator uses it to write the system prompt, tool schema, and README.
 
 Both outputs pass the same gates:
 
@@ -152,4 +154,4 @@ output outside an isolated experiment directory.
 
 ## 编辑核对记录
 
-本实验对应正文实验 5-16。历史台账记载两组均通过 39 项检查，模板路线创建成本较低；台账指向的 `runs/exp5-12-kimi-k3-20260730-v1/comparison.json` 在当前工作副本中缺失，尚未重新核验原始比较结果。正文保留实验设计与验收方法，具体历史成本数据待归档恢复后复核。
+本实验现编号为 5-16，冻结的协议与历史目录沿用旧编号。上述结果已与归档 `runs/exp5-12-kimi-k3-20260730-v1/comparison.json` 核对，文件 SHA-256 与[第五章实验台账](../EXPERIMENT_LEDGER.md)中的记录一致。仓库提供复现代码与协议，完整的历史运行目录未纳入 Git。

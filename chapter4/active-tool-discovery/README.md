@@ -1,6 +1,6 @@
 # Active Tool Discovery / 主动工具发现
 
-把全部工具说明一次塞进上下文，既占空间，也增加选择难度。本实验比较全量提供、检索预筛选和主动发现，学习如何让 Agent 在需要时找到合适的能力。
+第一次做实验，可以先运行 `python demo.py --offline`：用 126 个教学工具比较全量加载、预筛选和主动发现，沿着调用轨迹观察模型每一步能看到哪些说明。要核对[正文实验 4-1 的结果](validation/experiment_4_1/rerun_20260825/summary.json)，请看下文的正式运行：`run_exact_experiment.py` 连接真实 MCP 服务，8 月 25 日的记录用 127 个工具比较全量加载与主动发现。
 
 [English](#english)
 
@@ -21,10 +21,9 @@
 当一个 Agent 拥有上百个工具时，常见做法是把全部工具的 JSON schema 一次性塞进 system prompt。
 这会带来两个问题：
 
-1. **token 浪费**：126 个工具的完整 schema 约 **1.16 万 token**，每一步推理都要重复计费。
+1. **token 浪费**：教学目录中 126 个工具的完整 schema 约 **1.16 万 token**。如果每轮都传完整目录，这段文本会反复进入请求；实际费用取决于服务计价和前缀缓存。
 2. **指令遵循退化**：措辞稍泛的任务下，模型会"广撒网"地把通用兜底工具（`web_search` /
-   `google_search` / `universal_search`）和专用工具一起调用，甚至用通用搜索替代专用工具
-   —— 即书中所说的"查股价却选了通用 web_search"。
+   `google_search` / `universal_search`）和专用工具一起调用，甚至用通用搜索替代专用工具。查股价的任务可以从这里入手：如果要求同时查询新闻，模型同时选报价工具和搜索工具就有理由；要看它有没有漏掉其中一项。
 
 **主动发现**只在 system 里保留少量基础工具 + 一个 `discover_tools(need)` 元工具。模型遇到能力缺口时，
 用自然语言描述需求，系统用嵌入相似度从工具库检索 3-5 个最相关的专用工具，把它们的 schema 作为
@@ -49,9 +48,7 @@ demo.py            对同一组任务分别跑所选策略，打印 token / 延�
 ```
 
 **为什么用"文本注入 + 文本解析"而不是 OpenAI 原生 function calling？**
-原生 function-calling 接口对工具选择做了很强的约束优化，即使上百个工具也极少选错，无法体现书中
-所述的"超长上下文指令遵循退化"。把 schema 当作纯文本塞进 prompt、让模型自己以 JSON 输出工具调用，
-才是控制组的真实机制，也才能观察到退化。这也正是书中"把 schema 注入 system prompt（几万 token）"的写法。
+两组都把 schema 作为文本交给模型，再从其回复解析 JSON 调用。这样可以保持调用格式一致，比较工具说明出现的位置和数量。若要判断原生 function calling 是否能减少选错工具，还需要在同一目录和任务上单独对照。
 
 **为什么嵌入检索能避免错选？** 通用工具 `web_search` 的描述"什么都能做"，语义被稀释；而专用工具
 （如 `search_news`）描述聚焦。对一个聚焦的 `need`（"获取特斯拉最近的新闻"），聚焦的专用工具余弦相似度
@@ -261,8 +258,8 @@ python demo.py --offline --output results/offline.json         # 导出结构化
 
 ### 项目说明
 
-> Companion code for *AI Agents in Depth*, Chapter 4 — **Experiment 4-1 ★★★: Proactive Tool Discovery**. Compares full injection, retrieval prefilter, and active discovery on a 126-tool library.  
-> 配套《深入理解 AI Agent》第 4 章 **实验 4-1 ★★★：主动工具发现**。在 126 个跨领域工具上对比全量注入、检索预筛选与主动发现。
+> Companion code for *AI Agents in Depth*, Chapter 4 — **Experiment 4-1 ★★★: Proactive Tool Discovery**. The teaching demo compares three strategies on 126 tools. The August manuscript campaign compares full loading and active discovery on 127 MCP tools.
+> 配套《深入理解 AI Agent》第 4 章 **实验 4-1 ★★★：主动工具发现**。126 个教学工具用于观察三种策略；正文的 8 月运行从真实 MCP 服务读取 127 个工具，在相同三个任务上对比两种策略。
 
 ← [Chapter 4 index / 返回第 4 章目录](../README.md)
 
@@ -302,12 +299,7 @@ python demo.py --offline --output results/offline.json         # 导出结构化
 ### Canonical manuscript campaign / 正式实验活动
 
 `run_exact_experiment.py` replaces the mechanism-only demo for formal
-Experiment 4-1 acceptance. It obtains all 126 complete schemas from the real
-perception MCP server, proves the full-catalog control exceeds 50K measured
-tokens, uses local Ollama `qwen3:4b` for both arms, retrieves five candidates
-with `all-MiniLM-L6-v2`, and executes every selected tool through MCP against
-real public APIs/local processes. No mock tool result can satisfy a formal
-gate. Runs are resumable and store the gzipped catalog, model receipts, MCP
+Experiment 4-1 acceptance. It reads the current catalog from the perception MCP server. The August 25 run recorded 127 distinct schemas (50,597 tokens with the shared `o200k` tokenizer). Both arms used local Ollama `qwen3:4b`; active discovery retrieved five candidates with `all-MiniLM-L6-v2`. The runner checked required capabilities and artifacts from adapter-assisted MCP calls. Runs are resumable and store the gzipped catalog, model receipts, MCP
 receipts, artifacts, hashes, paired metrics, and an honest hypothesis result.
 
 ```bash
@@ -321,7 +313,7 @@ lightweight tool outputs and scripted model do not count as formal evidence.
 
 ### 正式运行记录与指标口径
 
-当前采用的运行是 [`rerun_20260825/summary.json`](validation/experiment_4_1/rerun_20260825/summary.json)，使用本地 Ollama `qwen3:4b` 和真实 MCP 服务提供的 127 个工具。其 manifest SHA-256 为 `e5a70588804b8bc1a5ba38c18fe7f4537e8284e62f745d8a6e03401833046dae`。此前的 `qwen3_4b_exact_v2_20260730T130600Z` 保留为历史记录；两次运行的目录规模、指标与轨迹应分别引用。
+脚本帮助中的“126”沿用早期说明；要确认某一次运行实际收到了多少工具，请查看该次目录回执的 `unique_tool_count`。当前采用的运行是 [`rerun_20260825/summary.json`](validation/experiment_4_1/rerun_20260825/summary.json)，使用本地 Ollama `qwen3:4b` 和真实 MCP 服务提供的 127 个工具。其 manifest SHA-256 为 `e5a70588804b8bc1a5ba38c18fe7f4537e8284e62f745d8a6e03401833046dae`。[7 月 30 日的目录回执](validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/catalog_receipt.json)记录的是 126 个真实工具、50,120 个 schema token；教学目录虽然也是 126 个工具，定义内容不同。核对旧运行的调用与产物时，应从[该次汇总](validation/experiment_4_1/qwen3_4b_exact_v2_20260730T130600Z/summary.json)进入。
 
 | 项目 | 全量加载 | 主动发现 |
 | --- | ---: | ---: |

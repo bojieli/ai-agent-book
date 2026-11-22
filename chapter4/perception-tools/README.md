@@ -12,6 +12,10 @@
 
 MCP 提供统一的交互协议，但不同工具的数据来源和依赖仍然不同。工具声明说明参数格式，执行结果说明实际观察到了什么。服务启动成功、目录可见和一次调用成功是三个逐步验证的环节。
 
+可以先读两条用同一协议返回的记录。[读取 PDF 的回执](validation/experiment_4_2/real_mcp_dashscope_intl_20260730T070000Z/receipts/05_document_reader_pdf.json)里，`success` 为真，返回值还包含从样本文档提取的文字。打开[读取日历的回执](validation/experiment_4_2/real_mcp_dashscope_intl_20260730T070000Z/receipts/27_calendar_events.json)，调用同样收到了响应，但 `success` 为假，`error_type` 是 `missing_credentials`。据此可以判断，读文件的调用拿到了内容，日历工具则还需要用户授权。练习时先问“我要看到什么才能确认读到了数据”，再去检查相应字段。
+
+[整次运行的汇总](validation/experiment_4_2/real_mcp_dashscope_intl_20260730T070000Z/summary.json)中，搜索、多模态、文件系统、公开数据四类均通过，私有数据未通过，整次验收因此标为 `blocked`。这也解释了为什么在工具目录中看到日历和 Notion 的名称，仍要分别检查调用结果。
+
 为 AI Agent 提供多种感知与数据获取能力的综合 MCP（Model Context Protocol）服务器。
 
 ### 功能
