@@ -286,9 +286,11 @@ Anthropic 2026 年的长程应用开发案例采用规划者、生成者和评�
 
 一种常用实现是把专门 Agent 注册为工具。Manager 通过工具接口传入任务、约束和必要材料，再接收结构化结果或任务标识。这样，搜索、文件操作与子任务委派可以采用相近的调用方式；长耗时子任务则另外管理进度、取消和重试。不同成员可以使用不同模型、提示词、工具与运行环境。新增成员时，除注册接口外，还要让 Manager 理解它的职责、输入要求和适用场景。
 
-可以用一个公开原型观察分工怎样影响用户体验。DeepSeek Harness 团队的 dsh-superagent 把外部事件归入 Thread（同一事项的一串消息）。同一 Thread 同时最多运行一个 Eval，用来判断这一批事件是否需要开始工作；一个 Thread 可以关联多个 Ticket，即分别跟踪的工作事项。Worker 在自己的执行环境里工作，Router 维持与用户沟通的入口。读者可以设想：一个修复尚在运行，用户又补了一条限制。先找到它对应的事项，才能把补充送给正在工作的成员；否则，再快的回复也可能留下一个仍按旧要求推进的任务。团队公开的是研究原型，其说明区分了代码已经实现的机制和设计文章讨论的方向。[^ch10-dsh-prototype]
+DeepSeek Harness 团队公开了一个面向单个 GitHub 仓库的研究原型 `dsh-superagent`。以修复导出文件的日期格式为例：维护者在 Issue 中提出要求，路由器（Router）按仓库规则判断能否接单。接单后，系统建立工单（Ticket），给执行者（Worker）分配独立的会话和工作目录。执行者可以在自己的目录中修改代码、运行测试；另一张工单可以同时推进，各自保留修改过程和测试结果。[^ch10-dsh-prototype]
 
-[^ch10-dsh-prototype]: DeepSeek Harness 团队，[dsh-superagent 研究原型](https://github.com/deepseek-ai/dsh-superagent-prototype/tree/8c32a9dc5d72c033816c6a8110b37f40cf94fba4)；Thread、Eval 与 Ticket 的关系见[领域模型](https://github.com/deepseek-ai/dsh-superagent-prototype/blob/8c32a9dc5d72c033816c6a8110b37f40cf94fba4/docs/001-domain.md)。
+假设维护者随后在原 Issue 中补充“只改 CSV，保留 JSON 的日期格式”。订阅这段讨论的在办工单会收到补充消息，执行者可以据此缩小改动范围，分别测试两种格式。完成后，它可以开一个拉取请求（PR），把链接和结果回贴到原 Issue。维护者在同一处就能看到最初的要求、后加的限制和待审核的修改；路由器也无需把每一条跟进消息重新拆成任务。
+
+[^ch10-dsh-prototype]: DeepSeek Harness 团队，[dsh-superagent 研究原型](https://github.com/deepseek-ai/dsh-superagent-prototype/tree/8c32a9dc5d72c033816c6a8110b37f40cf94fba4)。工单如何接收后续消息见[授权与订阅](https://github.com/deepseek-ai/dsh-superagent-prototype/blob/8c32a9dc5d72c033816c6a8110b37f40cf94fba4/docs/002-authorization.md)，执行会话与工作目录见[执行机制](https://github.com/deepseek-ai/dsh-superagent-prototype/blob/8c32a9dc5d72c033816c6a8110b37f40cf94fba4/docs/003-execution.md)。
 
 Manager 同时承担了较多决策责任。任务分解错误会影响后续执行，交接材料不足会造成反复询问，过多调用记录也会挤占上下文。设计时应保存简明的任务状态与产物索引，按需读取细节，并让子任务具有清楚的输入、输出和完成标准。
 
@@ -422,9 +424,9 @@ Claude Code 的动态 Workflow 工具提供了这样的实现。`agent()` 创建
 
 ### 去中心化模式
 
-去中心化协作将部分协调决策交给各个成员。专业成员需要频繁协商、下一步又依赖局部信息时，让成员自行接续工作，可以减少逐项等待 Manager 决策的时间。Agent 根据自己的职责和当前状态，决定何时交接任务、请求反馈或报告冲突。例如，工程师完成模块后通知测试者，架构师收到技术约束后与产品角色协商，成员通过这些局部交互共同推进任务。
+有了 Manager，为什么还要让成员自己决定找谁？设想测试者拿到刚写好的模块，发现产品需求与接口约定对同一个字段有两种解释。测试者可以把矛盾直接交给产品和架构两个角色，让双方各自说清依据，等约定改好再继续测试。这是分工，也是一种制衡。工程师交付模块、架构师征求产品意见、测试者提出异议，各自都能发起下一步。需要频繁协商时，逐项等待 Manager 转达会耽误工作。
 
-微服务设计中常用**编排**（orchestration）与**编舞**（choreography）作类比：前者由中心管理流程，后者由参与者根据事件与规则接续工作。分散协调可以减少对单一管理者的依赖，可靠运行还需要持久任务状态、重试、超时和接管机制，以处理成员或基础服务故障。
+借用微服务的说法，由一个中心安排步骤叫**编排**（orchestration），各方按约定的事件自行接续叫**编舞**（choreography）。还有一个实际差别：如果每次交接都要等 Manager，它的模型服务一旦停止响应，其他成员即使还能工作，也领不到下一步任务。分散协调能减少这种依赖；若负责接手的成员本身卡在一次工具调用里，仍要靠持久保存的任务状态、超时、重试和接管机制，让另一位成员知道从哪里继续。
 
 分析具体框架时，可以分别观察三个问题：谁决定下一步，成员通过什么接口交流，接收者得到哪些上下文。下面的 MetaGPT、AutoGen 群聊和 Swarm 各自展示了其中不同的组合。
 
