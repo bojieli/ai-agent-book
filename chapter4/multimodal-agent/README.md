@@ -1,6 +1,6 @@
 # Multimodal Agent — Three Extraction Paradigms / 多模态 Agent——三种抽取范式对比
 
-回答图表问题时，模型可以直接读取图像，也可以先通过工具提取文字和数据。本实验比较几种输入路径，学习选择方式时需要考虑哪些信息可能丢失。
+同一张季度收入图上，模型读出了最低收入 9500 万美元，却把季度答错了。要找原因，先看它收到的是整张图，还是从图里抽出来的一串文字。你可以在本地生成样例，打开归档回答，跟着这条错误一路查到输入。
 
 [English](#english)
 
@@ -10,7 +10,7 @@
 
 ## 同一份图表怎样进入模型
 
-直接多模态输入保留视觉布局，文本抽取便于后续检索与计算，工具化分析还可以针对局部内容处理。每条路径都会改变模型看到的材料，因而不能只比较最终回答长度。
+先在原图中找到最低的柱子，读出柱顶的金额和正下方的季度。模型直接看图时，这两条线索在同一张图上；只读文字时，就要检查提取结果有没有保留两者的对应关系。第三条路径让模型在文字不足时调用工具回看图表。
 
 ### 功能——三种抽取模式
 
@@ -44,8 +44,8 @@ MultimodalAgent
 ### 安装
 
 ```bash
-# 在仓库根目录使用统一的第 4 章环境
-uv sync --locked --python 3.12 --extra ch3
+# 在仓库根目录安装绘图、文档生成和模型接口依赖
+uv sync --locked --python 3.12 --extra viz --extra docs --extra providers
 
 # 切换目录前先激活环境：
 # macOS/Linux：
@@ -54,16 +54,15 @@ source .venv/bin/activate
 # Windows cmd：.venv\Scripts\activate.bat
 
 # 未安装 uv 时可用 pip 兜底：
-# python -m pip install -e ".[ch3]"
+# python -m pip install -e ".[viz,docs,providers]"
 
 cd chapter4/multimodal-agent
 
-# 精确复现旧版单项目环境，含 python-magic 文件类型检测：
+# 如需使用项目原有的依赖清单：
 # python -m pip install -r requirements.txt
 
+# 只做离线样例可跳过这一步。在线交互演示从 .env 读取所选服务的密钥。
 cp env.example .env
-# 编辑 API Key
-export $(cat .env | xargs)   # Unix 可选
 ```
 
 ### API Key
@@ -104,7 +103,7 @@ python demo.py \
   --model gpt-5.6-luna
 ```
 
-各 CLI 均有中文 `--help`。
+要复跑书中的固定对照，请在本目录准备 Tesseract 和 Poppler（含 `pdftotext`、`pdftoppm`）。在环境中设置 `ARK_API_KEY` 或 `DOUBAO_API_KEY` 供回答模型使用，另设 `MOONSHOT_API_KEY` 供评审模型使用，然后运行 `python campaign.py`。如果密钥写在本目录的 `.env`，可用 `uv run --no-sync --env-file .env python campaign.py` 显式加载。新运行会生成自己的回执和用量记录。
 
 ### 用法
 
@@ -165,7 +164,7 @@ python test_multimodal.py
 
 用量由原始回执汇总，不含外部裁判。工具路径包含决策、视觉分析和最终回答三次调用，四个组合都调用了 `inspect_visual`。文本和工具路径的计时包含本地文本提取；直接看图的计时从模型调用前开始，PDF 页面渲染发生在此前。该表描述当前运行的计时口径。
 
-PNG 的 OCR 结果保留了 180M、150M、120M、95M 等数值，却混入纵轴刻度并丢失季度对应关系，文本组把最高和最低收入都误配给 Q1。PDF 的文本层只有趋势说明，提取结果中没有图表的精确数值。两个视觉路径都恢复了正确关系：Q4 为 180M，Q3 为 95M，差额为 85M。
+先比较文本组收到的两份材料。PNG 的 OCR 结果有 180M、150M、120M、95M，也混着纵轴刻度，季度标签另在末行。PDF 的文本层则只提到年中回落、最后一季反弹。前一种情况下，模型要判断哪个数属于哪一季；后一种情况下，它连可以拿来计算的金额都没有。
 
 工具路径的系统提示词明确要求：提取文本无法确定数值或空间对应时，调用视觉工具。这个设置用于展示补充视觉证据的过程。扩展实验时，可增加纯文字即可作答的问题，检验模型能否合理决定何时使用工具，并分别统计正确率、调用次数、输入输出用量和端到端耗时。
 
@@ -233,8 +232,8 @@ MultimodalAgent
 ### Installation
 
 ```bash
-# From the repository root: use the shared Chapter 4 environment
-uv sync --locked --python 3.12 --extra ch3
+# From the repository root: install the plotting, document and provider extras
+uv sync --locked --python 3.12 --extra viz --extra docs --extra providers
 
 # Activate it before changing directories:
 # macOS/Linux:
@@ -243,16 +242,15 @@ source .venv/bin/activate
 # Windows cmd: .venv\Scripts\activate.bat
 
 # pip fallback when uv is not installed:
-# python -m pip install -e ".[ch3]"
+# python -m pip install -e ".[viz,docs,providers]"
 
 cd chapter4/multimodal-agent
 
-# Exact legacy parity path, including python-magic file sniffing:
+# To use the original project requirements instead:
 # python -m pip install -r requirements.txt
 
+# For the online interactive demo, enter the chosen provider key in .env.
 cp env.example .env
-# Edit .env with API keys
-export $(cat .env | xargs)   # optional on Unix
 ```
 
 ### Quick offline start (no API key)
