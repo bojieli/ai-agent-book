@@ -1,5 +1,125 @@
 # Agentic RAG for User Memory / 面向用户记忆的 Agentic RAG
 
+用户问“按我上次的偏好安排吧”，相关偏好可能散落在多次对话中。本实验把 Agentic RAG 用在用户记忆上，学习怎样通过多步检索补齐背景。
+
+[English](#english)
+
+建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+
+<a id="learning-0"></a>
+
+## 理解问题与方法
+
+检索一次得到的信息可能只是线索，例如某次旅行的时间。Agent 需要利用线索继续寻找预算、同行者或后续修改。原始对话提供出处，不能把一次检索到的旧偏好直接当成当前事实。
+
+### 学习目标
+
+1. 长对话分块索引  
+2. 对接外部混合检索流水线  
+3. 工具调用 + ReAct 的 Agentic RAG  
+4. LLM 自动打分评测记忆  
+5. 面向对话查询的检索优化  
+6. 跨项目评估框架集成
+
+### 架构
+
+用户记忆用例 → 对话分块（约 20 轮 + 重叠 + 上下文增强）→ 外部流水线（4242）或本地 BM25 → Agentic Agent（ReAct 记忆工具）→ LLM 评估。
+
+### 关键概念
+
+分块、混合检索、Agentic ReAct、自动 LLM 评测、上下文增强——与 English 节一致。
+
+<a id="learning-1"></a>
+
+## 准备环境与输入
+
+先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+
+### 前置条件
+
+Python 3.12 与根目录 `ch3` extra。**4242 流水线可选**；默认 `auto` 回退本地 BM25。仅 LLM 模式需 API Key。**`offline-demo` 无需 Key 与 4242。**
+
+### 安装与后端
+
+```bash
+# 在仓库根目录使用统一的第 3 章环境
+uv sync --locked --python 3.12 --extra ch3
+
+# 切换目录前先激活环境：
+# macOS/Linux：
+source .venv/bin/activate
+# Windows PowerShell：.venv\Scripts\Activate.ps1
+# Windows cmd：.venv\Scripts\activate.bat
+
+# 未安装 uv 时可用 pip 兜底：
+# python -m pip install -e ".[ch3]"
+
+cd chapter3/agentic-rag-for-user-memory
+
+# 迁移期间仍支持单项目兼容路径：
+# python -m pip install -r requirements.txt
+
+cp env.example .env
+
+# 可选
+cd ../retrieval-pipeline && python api_server.py
+```
+
+| 值 | 行为 |
+|----|------|
+| `auto` | 默认可达则用流水线，否则本地 BM25 |
+| `local` | 始终离线 BM25 |
+| `pipeline` | 始终 4242 |
+
+### 配置、用例层级、组件
+
+`config.py` 分块/索引/Agent 参数；L1/L2/L3 用例；`chunker` / `indexer` / `tools` / `agent` / `evaluator`。
+
+<a id="learning-2"></a>
+
+## 按照步骤完成实验
+
+先运行离线示例，比较多步路径与简单召回。对每个返回片段标记它回答了问题的哪一部分。再按下文接入模型和检索后端，用同一用户的多轮记录观察查询怎样变化。
+
+### 运行
+
+```bash
+python main.py --mode offline-demo
+python offline_demo.py
+python offline_demo.py --output results/offline_demo.json
+
+python test_pipeline.py
+python main.py
+python main.py --mode demo
+python main.py --mode batch --category layer1 --backend local
+```
+
+CLI 标志见 English 节；`python main.py --help` 含中文说明。
+
+<a id="learning-3"></a>
+
+## 分析结果与形成判断
+
+检查是否找齐了必要片段、是否混入其他用户的内容，以及后来的修改有没有覆盖旧信息。离线示例展示检索结构，真实模型是否会提出同样的查询，需要另行观察。
+
+### 沿失败样本区分三个环节
+
+如果回答没有使用应当使用的记忆，先检查记忆是否被正确写入，再检查它是否被召回，最后检查模型收到它以后是否正确理解。三个环节可能产生相同的最终错误，但修复方法不同。阅读下面的指标和输出时，保留问题、应使用的记忆、实际返回内容与回答，逐条核对后再汇总分数。
+
+### 离线演示结果
+
+`layer2_01_multiple_vehicles` 上 naive 证据召回 **50%**、agentic **100%**（见 English 表）。
+
+### 检查自己的解释
+
+用户先说喜欢海边，后来取消旅行计划，系统应保留哪些记忆，又应怎样避免过时建议？
+
+<a id="learning-4"></a>
+
+## 阅读实现与继续探索
+
+### 项目说明
+
 > Companion material for *AI Agents in Depth*, Chapter 3 — agentic multi-hop retrieval over conversation memory with offline demo and optional pipeline backend.  
 > 配套《深入理解 AI Agent》第 3 章——对话记忆上的 Agentic 多跳检索；含离线演示与可选检索流水线。
 
@@ -7,7 +127,35 @@
 
 ---
 
+<a id="learning-5"></a>
+
+## 排查问题与查阅资料
+
+### 故障排查
+
+Top-k 需同时设 `top_k` 与 `rerank_top_k`；流水线不可达时用 `--backend auto/local`；LLM 评测需有效 Key 与 `evaluation_criteria`。
+
+### 相关与许可
+
+见同章 `user-memory`、`user-memory-evaluation`、`agentic-rag`、`contextual-retrieval`。教学用途。
+
+---
+
+## Notes / 说明
+
+### OpenRouter 通用回退 / Universal OpenRouter fallback
+
+If primary keys are absent and `OPENROUTER_API_KEY` is set, chat LLM routes through OpenRouter with automatic model mapping. See `env.example`.
+
 ## English
+
+### Canonical live campaign
+
+`python campaign.py` launches the shared controlled Experiment 3-9/3-11
+campaign over all 60 authoritative YAML cases. Experiment 3-9 uses fixed-round
+windows and a live `search_user_memory` ReAct trajectory; raw retrieved chunks,
+agent-generated searches, layer scores, and independent judge receipts are
+retained. Canonical evidence is `validation/latest.json`.
 
 ### Learning objectives
 
@@ -39,7 +187,7 @@ User Memory Test Cases (60 cases, 3 layers)
 
 ### Prerequisites
 
-- Python 3.8+  
+- Python 3.12 with the root `ch3` extra
 - **Port 4242 pipeline is OPTIONAL.** Default `retrieval_backend="auto"`: use pipeline if reachable, else **built-in local BM25** (offline).  
 - API keys only for LLM modes (`batch` / `interactive` / `demo`).  
 - **`--mode offline-demo` needs NO API key and NO port 4242.**  
@@ -47,8 +195,23 @@ User Memory Test Cases (60 cases, 3 layers)
 ### Installation
 
 ```bash
+# From the repository root: use the shared Chapter 3 environment
+uv sync --locked --python 3.12 --extra ch3
+
+# Activate it before changing directories:
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+
+# pip fallback when uv is not installed:
+# python -m pip install -e ".[ch3]"
+
 cd chapter3/agentic-rag-for-user-memory
-pip install -r requirements.txt
+
+# Single-project compatibility path, still supported during migration:
+# python -m pip install -r requirements.txt
+
 cp env.example .env
 # Edit API keys
 ```
@@ -152,82 +315,3 @@ Success rate, LLM reward, iterations, tool calls, latency, index time.
 Educational curriculum materials.
 
 ---
-
-## 中文
-
-### 学习目标
-
-1. 长对话分块索引  
-2. 对接外部混合检索流水线  
-3. 工具调用 + ReAct 的 Agentic RAG  
-4. LLM 自动打分评测记忆  
-5. 面向对话查询的检索优化  
-6. 跨项目评估框架集成  
-
-### 架构
-
-用户记忆用例 → 对话分块（约 20 轮 + 重叠 + 上下文增强）→ 外部流水线（4242）或本地 BM25 → Agentic Agent（ReAct 记忆工具）→ LLM 评估。
-
-### 关键概念
-
-分块、混合检索、Agentic ReAct、自动 LLM 评测、上下文增强——与 English 节一致。
-
-### 前置条件
-
-Python 3.8+。**4242 流水线可选**；默认 `auto` 回退本地 BM25。仅 LLM 模式需 API Key。**`offline-demo` 无需 Key 与 4242。**
-
-### 安装与后端
-
-```bash
-cd chapter3/agentic-rag-for-user-memory
-pip install -r requirements.txt
-cp env.example .env
-
-# 可选
-cd ../retrieval-pipeline && python api_server.py
-```
-
-| 值 | 行为 |
-|----|------|
-| `auto` | 默认可达则用流水线，否则本地 BM25 |
-| `local` | 始终离线 BM25 |
-| `pipeline` | 始终 4242 |
-
-### 运行
-
-```bash
-python main.py --mode offline-demo
-python offline_demo.py
-python offline_demo.py --output results/offline_demo.json
-
-python test_pipeline.py
-python main.py
-python main.py --mode demo
-python main.py --mode batch --category layer1 --backend local
-```
-
-CLI 标志见 English 节；`python main.py --help` 含中文说明。
-
-### 离线演示结果
-
-`layer2_01_multiple_vehicles` 上 naive 证据召回 **50%**、agentic **100%**（见 English 表）。
-
-### 配置、用例层级、组件
-
-`config.py` 分块/索引/Agent 参数；L1/L2/L3 用例；`chunker` / `indexer` / `tools` / `agent` / `evaluator`。
-
-### 故障排查
-
-Top-k 需同时设 `top_k` 与 `rerank_top_k`；流水线不可达时用 `--backend auto/local`；LLM 评测需有效 Key 与 `evaluation_criteria`。
-
-### 相关与许可
-
-见同章 `user-memory`、`user-memory-evaluation`、`agentic-rag`、`contextual-retrieval`。教学用途。
-
----
-
-## Notes / 说明
-
-### OpenRouter 通用回退 / Universal OpenRouter fallback
-
-If primary keys are absent and `OPENROUTER_API_KEY` is set, chat LLM routes through OpenRouter with automatic model mapping. See `env.example`.

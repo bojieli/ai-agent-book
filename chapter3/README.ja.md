@@ -4,6 +4,16 @@
 
 ← [メイン README に戻る](../docs/ja/README.md) · 📖 [章の本文を読む](../book-ja/chapter3.ja.md)
 
+## 実験の読み方
+
+本文では短い mechanism skeleton で制御フローを説明し、実験ディレクトリには完全な SDK アダプター、ログ、テスト、受け入れ証拠を置きます。すべてのファイルを一行ずつ読む必要はありません。
+
+- **Starter:** 目的・最小コマンド・受け入れ条件から始め、まず [user-memory](user-memory/) / [retrieval-pipeline](retrieval-pipeline/);
+- **Builder:** エントリポイント、中心ループ、状態／メッセージ schema、ツール、検証器を追います。
+- **Maintainer:** 最後にテスト、証拠 manifest、失敗処理、rollback 経路、provider adapter を読みます。
+
+初読では認証情報、表示層、provider 互換層を飛ばし、数値を再現するときに戻ってください。
+
 ## 付随プロジェクト
 
 | 実験 | プロジェクト | 種類 | 説明 |
@@ -15,13 +25,12 @@
 | 3-4 | [dense-embedding](dense-embedding/) | ✅ | ベクトル類似度検索サービスを構築し、ANNOY（木ベース）と HNSW（グラフベース）の近似最近傍インデックスアルゴリズムを比較する。異なるインデックス戦略における性能、メモリ使用量、更新能力のトレードオフを示す。 |
 | 3-5 | [sparse-embedding](sparse-embedding/) | ✅ | BM25 アルゴリズムに基づくスパースベクトル検索エンジンをゼロから実装する。豊富なロギングと可視化インターフェースを提供し、単語頻度の重み計算や転置インデックスの原理など、検索エンジンの内部動作を理解できるようにする。 |
 | 3-6 | [retrieval-pipeline](retrieval-pipeline/) | ✅ | 密検索、スパース検索、ニューラル再ランキングを組み合わせた完全な検索パイプラインを構築する。入念に設計されたテストケースを通じて、異なるシナリオにおけるハイブリッド検索の相補的な利点を体系的に示す。 |
-| 3-7 | [multimodal-agent](multimodal-agent/) | ✅ | ネイティブマルチモーダル処理、テキストへの抽出、ツールベースの分析という 3 つのマルチモーダル処理戦略を比較する。統一されたフレームワーク内でのアブレーション（実験）を通じて、異なる技術的アプローチにおける忠実度、コスト、柔軟性のトレードオフを明らかにする。 |
-| 3-8 | [structured-index](structured-index/) | ✅ | RAPTOR（再帰的抽象ツリー）と GraphRAG（知識グラフ）という 2 つの構造化インデックスを実装・比較する。 |
-| 3-9 | [agentic-rag](agentic-rag/) | ✅ | 従来の Non-Agentic RAG と Agentic RAG の性能差を比較する。Agent が ReAct パターンを用いて反復的な情報検索を主導し、複雑な司法 Q&A を処理する際に回答品質を大幅に向上させる様子を示す。 |
-| 3-10 | [agentic-rag-for-user-memory](agentic-rag-for-user-memory/) | ✅ | Agentic RAG フレームワークをユーザーの会話履歴の管理に応用する。複数ターンの反復検索能力を活用してセッションを越えたメモリ検索を処理し、基本的な想起とクロスセッション検索能力を実現する。 |
-| 3-11 | [contextual-retrieval](contextual-retrieval/) | ✅ | Anthropic が提唱した contextual retrieval 技術を実装する。テキストチャンクに対して中核的なコンテキストを含む接頭辞の要約を生成することで、従来のチャンク分割手法のコンテキスト欠落問題を解決し、検索失敗率を 49〜67% 削減する。 |
-| 3-12 | [contextual-retrieval-for-user-memory](contextual-retrieval-for-user-memory/) | ✅ | contextual retrieval 技術をユーザーメモリの構築に応用する。Advanced JSON Cards と Contextual RAG を組み合わせて二層のメモリ構造を形成し、より高度なプロアクティブなサービス能力を実現する。 |
-| 3-13 | [structured-knowledge-extraction](structured-knowledge-extraction/) | ✅ | 司法判例を例に、「ボトムアップの要素発見 → 事案プロトタイプのクラスタリング → 対話型アドバイザリー Agent」という 3 段階のパイプラインを実装する。硬直的なフィールドを事前定義することなく、LLM が大量の事案から自律的に要素を発見し、それらをモジュール化されたスキーマ（中核要素 + 罪名固有の拡張要素）にまとめる。次に事案をいくつかのプロトタイプにクラスタリングし、各プロトタイプにおける各要素の重要度を計算する。Agent は新しい事案の事実を最も類似したプロトタイプにマッチさせ、要素の重要度に基づいて不足している情報を尋ね、エビデンスに基づく助言（法的免責事項付き）を提供する。 |
+| 3-7 | [structured-index](structured-index/) | ✅ | RAPTOR（再帰的抽象ツリー）と GraphRAG（知識グラフ）という 2 つの構造化インデックスを実装・比較する。 |
+| 3-8 | [agentic-rag](agentic-rag/) | ✅ | 従来の Non-Agentic RAG と Agentic RAG の性能差を比較する。Agent が ReAct パターンを用いて反復的な情報検索を主導し、複雑な司法 Q&A を処理する際に回答品質を大幅に向上させる様子を示す。 |
+| 3-9 | [agentic-rag-for-user-memory](agentic-rag-for-user-memory/) | ✅ | Agentic RAG フレームワークをユーザーの会話履歴の管理に応用する。複数ターンの反復検索能力を活用してセッションを越えたメモリ検索を処理し、基本的な想起とクロスセッション検索能力を実現する。 |
+| 3-10 | [contextual-retrieval](contextual-retrieval/) | ✅ | Anthropic が提唱した contextual retrieval 技術を実装する。テキストチャンクに対して中核的なコンテキストを含む接頭辞の要約を生成することで、従来のチャンク分割手法のコンテキスト欠落問題を解決し、検索失敗率を 49〜67% 削減する。 |
+| 3-11 | [contextual-retrieval-for-user-memory](contextual-retrieval-for-user-memory/) | ✅ | contextual retrieval 技術をユーザーメモリの構築に応用する。Advanced JSON Cards と Contextual RAG を組み合わせて二層のメモリ構造を形成し、より高度なプロアクティブなサービス能力を実現する。 |
+| 3-12 | [structured-knowledge-extraction](structured-knowledge-extraction/) | ✅ | 司法判例を例に、「ボトムアップの要素発見 → 事案プロトタイプのクラスタリング → 対話型アドバイザリー Agent」という 3 段階のパイプラインを実装する。硬直的なフィールドを事前定義することなく、LLM が大量の事案から自律的に要素を発見し、それらをモジュール化されたスキーマ（中核要素 + 罪名固有の拡張要素）にまとめる。次に事案をいくつかのプロトタイプにクラスタリングし、各プロトタイプにおける各要素の重要度を計算する。Agent は新しい事案の事実を最も類似したプロトタイプにマッチさせ、要素の重要度に基づいて不足している情報を尋ね、エビデンスに基づく助言（法的免責事項付き）を提供する。 |
 ## プロジェクトの種類
 
 | アイコン | 種類 | 意味 |

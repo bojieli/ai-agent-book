@@ -1,34 +1,50 @@
-# 第 7 章 · 模型後訓練
+# 第 7 章 · Agent 的評估
 
-> 預訓練/SFT/RL 三階段：何時選 SFT、何時選 RL，工具呼叫內化、樣本效率
+> 把表現變成可比較訊號：評估環境、指標、統計顯著性、評估驅動選型
 
 ← [返回主目錄](../docs/zh-TW/README.md) · 📖 [讀本章正文](../book/chapter7.md)
+
+## 如何閱讀實驗
+
+正文用短小的機制 skeleton 說明控制流；實驗目錄放完整的 SDK 適配、日誌、測試與驗收證據，不需要逐行讀完每個檔案。
+
+- **Starter:** 先讀目標、最小指令與驗收條件；可從 [tau2-bench-eval](tau2-bench-eval/);
+- **Builder:** 沿著入口、核心迴圈、狀態／訊息 schema、工具與驗證器閱讀。
+- **Maintainer:** 最後再看測試、證據 manifest、失敗處理、回滾路徑與 provider adapter。
+
+第一次閱讀可先跳過憑證載入、展示層和 provider 相容層；要重現數字時再回來查看。
 
 ## 配套專案
 
 | 編號 | 專案 | 型別 | 一句話說明 |
 | :--: | --- | :--: | --- |
-| 7-3, 7-4 | [MiniMind-pretrain](MiniMind-pretrain/) | 📖 | 從零預訓練小型 LLM/VLM，理解完整預訓練流程與關鍵技術 |
-| 7-5 | [continued-pretraining](continued-pretraining/) | ✅ | 在特定領域資料上持續預訓練，提升目標領域表現 |
-| 7-6 | [sesame](sesame/) | ✅ | Sesame CSM 語音 SFT：LoRA 微調 1B TTS 模型，用 `<laugh>`、`<sigh>` 等副語言標記控制表達 |
-| 7-6 | [orpheus](orpheus/) | ✅ | Orpheus 3B 語音 SFT：LoRA 微調 TTS 模型，拼接參考音訊實現跨句音色一致的聲音複刻 |
-| 7-7 | [MultilingualReasoning](MultilingualReasoning/) | ✅ | 訓練模型在多語言環境下的推理能力，提升跨語言任務表現 |
-| 7-9 | [cot-distillation](cot-distillation/) | ✅ | 經 OpenRouter 呼叫 Claude 等前沿模型蒸餾 CoT 軌跡，規則驗證器過濾後生成 SFT 資料（實驗 7-9 配套） |
-| 7-10 | [AdaptThink](AdaptThink/) | 📖 | 讓推理模型按問題難度自適應選 Thinking/NoThinking，約束最佳化 + 重要性取樣降成本 45–69% 同時提升準確率 |
-| 7-11 | `SFTvsRL/` | 📖 | 系統性對比監督微調與強化學習在不同任務上的效果與適用場景 |
-| 7-12 | [SpatialReasoning](SpatialReasoning/) | 📖 | 訓練模型的空間推理能力，處理位置、方向、距離等空間關係 |
-| 7-13 | [SimpleVLA-RL](SimpleVLA-RL/) | 📖 | 視覺-語言-動作 RL，讓模型理解視覺輸入並執行相應動作 |
-| 7-14 | [RLVP](RLVP/) | 📖 | 獎勵結果、懲罰路徑（RLVP）後訓練研究（實驗 7-14 配套）；完整訓練/評估程式碼在獨立論文倉庫 `19PINE-AI/rlvp`，需自行克隆 |
-| 7-15 | [retool](retool/) | 📖 | 多輪對話 + 程式碼沙箱提升數學推理，SFT→RL 兩階段；Qwen2.5-32B + AIME 2024 + DAPO + SandboxFusion |
-| 7-16 | `AWorld/` · [AWorld-train](AWorld-train/) | 📖 | 基於 AWorld 框架訓練具身 Agent，在虛擬環境中執行任務並從經驗中學習 |
-| — | `verl/` | 📖 | 為 LLM RLHF 設計的高效 RL 框架，支援 PPO/GRPO/DAPO 等 |
-| — | [Intuitor](Intuitor/) | ✅ | 訓練模型的直覺推理，快速做出合理判斷而不依賴詳細思考鏈 |
-| — | `tinker-cookbook/` | 📖 | 收集各種模型訓練的實用技巧與最佳實踐 |
+| 7-1 | `tau2-bench/` | 📖 | 專注評估 Agent 使用工具進行複雜推理（計算、搜尋、資料處理）的能力 |
+| 7-2 | `tau2-bench/` | 📖 | 人工完成 τ²-bench 分級任務並記錄軌跡。 |
+| 7-2 | `terminal-bench/` | 📖 | 測試 Agent 在真實終端機環境的端到端能力（編譯/訓練/部署），約 100 任務 + 執行框架 |
+| 7-2 | `SWE-bench/` | 📖 | 評估 LLM 解決真實 GitHub 問題的能力，含 SWE-bench/Lite/Verified/Multimodal 多個版本 |
+| 7-2 | `GAIA/` | 📖 | 評估下一代 LLM 的工具/搜尋/自主能力，450+ 個答案明確的非平凡問題，分 3 級難度 |
+| 7-2 | `OSWorld/` | 📖 | 評估 Agent 在完整 OS 環境執行複雜任務的能力：檔案管理、應用操作、系統設定 |
+| 7-2, 7-13 | `android_world/` | 📖 | 評估 Agent 在 Android 環境的應用導覽、UI 互動與任務完成能力（外部基準倉庫） |
+| 7-3 | [user-memory-evaluation](../chapter3/user-memory-evaluation/) | ✅ | 四級 Rubric 已在 180 條結構化評判上執行，保留證據並設置幻覺一票否決。 |
+| 7-4 | [user-memory-system-evaluation](user-memory-system-evaluation/) | ✅ | 在三個系統上執行 60 個案例，並完成成本核算。 |
+| 7-5 | [tts-quality-eval](tts-quality-eval/) | ✅ | 多種 TTS 設定合成挑戰文字，LLM-as-a-Judge 按 Rubric 逐維度打分，輸出可復現對比表 |
+| 7-6 | [android-world/failure-attribution](android-world/failure-attribution/) | ✅ | 對已保留的 T3A 日誌做離線失敗歸因。整體統計（自原始日誌重算）：53 個任務塊，其中 1 塊是基準自身 `initialize_task` 崩潰後跳過的，真正失敗為 52 條；24/52 是 Agent 自稱完成後被驗證器否掉；9 條目標必須依賴當前日期，其中僅 2 條拿到過它（且是順帶從表單預設值 `Sun, Oct 15` 讀到的）；自述 “畫面無變化” 一類觀察出現 55 次、涵蓋 18/52 條軌跡。抽樣標註 10 條，步號引用在建構時逐條核驗：9 條靜默失敗、7 條首錯發生在 assistant message，信賴度 5 高 / 4 中 / 1 低。本次為**第三輪**：第二輪把 10 條中的 7 條首錯步號前移，第三輪又訂正了兩項整體統計與一條記錄的偏差描述，每處改動連同理由保留。另含 3 個軌跡前綴迴歸任務與 3 處對 `t3a_failed_analysis.md` 的更正 |
+| 7-7 | [user-memory-policy-eval](user-memory-policy-eval/) | ✅ | 以真實 OpenRouter 呼叫與確定性政策檢查，在 JSON、Markdown 與類 Python 記憶表示上執行 11 個 trajectory-prefix 錯誤案例。 |
+| 7-8 | [elo-leaderboard](elo-leaderboard/) | ✅ | 基於 ELO 評分的 Agent 效能排行榜，透過對戰比較相對能力 |
+| 7-9 | [model-action-threshold](model-action-threshold/) | ✅ | 在同一個中性的 Coding Harness 下，比較 GPT-5.6-sol 與 Claude Sonnet 5 從探索轉入首次修改的門檻；18/18 個單元均無 API 錯誤完成，[manifest](model-action-threshold/results/exp7-8-action-threshold-20260731-v1/manifest.json) 以可驗證雜湊綁定軌跡與彙總 |
+| 7-10 | [agent-cost-analysis](agent-cost-analysis/) | ✅ | 多輪 Agent 任務（客服退款）全鏈路成本拆解 + KV-cache 友善設計/上下文壓縮的 A/B 節省量化 |
+| 7-11 | [model-benchmark](model-benchmark/) | 🚧 | 對多家 OpenAI 相容 API 橫向壓測 TTFT、p50/p95 延遲、吞吐與成功率，一條命令出對比表 |
+| 7-12 | [user-memory-system-evaluation](user-memory-system-evaluation/) | ✅ | 完整 4×3×2×60 矩陣保留 1,440/1,440 條真實軌跡，無錯誤或未計價使用，並具備完整檢索/任務指標、互動分析與通過的獨立驗證。 |
+| 7-13 | [android-world](android-world/) | 📖 | 本書對 T3A Agent 在 AndroidWorld 上的評估報告與失敗分析筆記（實驗 7-13 起點；非基準原始碼） |
+| 7-14 | [openvla-robotwin2-eval](openvla-robotwin2-eval/) | ✅ | 單 GPU 正式實驗完成每個 action-chunk 組 256 回合；chunk 1 為 0/256、chunk 25 為 26/256，並保留 512 個 rollout 雜湊。 |
+| — | [public-health-reporting-eval](public-health-reporting-eval/) | ✅ | 基於合成 DHIS2 風格彙總資料，客觀評估公共衛生報告 Agent 的工具呼叫、計算準確性、證據引用與無依據聲明 |
+
+> 📖 表中帶反引號的外部基準需自行克隆。[`android-world/`](android-world/)（連字號）是本倉庫內的 **T3A 評估分析筆記**（見該目錄 [README](android-world/README.md)），與外部 `android_world/` 基準原始碼不是同一路徑。
 
 ## 專案型別說明
 
 | 圖示 | 型別 | 含義 |
 | :--: | --- | --- |
-| ✅ | **可獨立執行** | 本倉庫自帶完整程式碼，配置好 API Key 即可執行 |
+| ✅ | **可獨立執行** | 本倉庫自帶完整程式碼，設定好 API Key 即可執行 |
 | 📖 | **復現指南** | 依賴需自行 `git clone` 的**外部倉庫**（訓練框架、評測基準等） |
 | 🚧 | **設計文件** | 僅包含架構與實現方案，可執行程式碼仍在完善中 |

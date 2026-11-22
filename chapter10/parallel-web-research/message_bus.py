@@ -3,7 +3,7 @@
 ================================
 
 模仿 Redis Pub/Sub 的语义，但完全跑在单进程的 asyncio 事件循环里，
-无需真正部署 Redis。它承担实验 10-6 里"中心协调"的通信底座：
+无需真正部署 Redis。它承担实验 10-4 里"中心协调"的通信底座：
 
 - 每条消息都封装在 ``Envelope`` 信封里，带上 sender_id / target / type / payload；
 - Agent 通过 ``subscribe()`` 拿到一个订阅句柄，按消息类型接收；
@@ -54,7 +54,10 @@ class Envelope:
     def short(self) -> str:
         """给日志用的紧凑单行表示。"""
         tgt = "ALL" if self.target == BROADCAST else self.target
-        body = json.dumps(self.payload, ensure_ascii=False)
+        try:
+            body = json.dumps(self.payload, ensure_ascii=False, default=str)
+        except Exception:
+            body = str(self.payload)
         if len(body) > 80:
             body = body[:77] + "..."
         return (
@@ -69,7 +72,7 @@ class Subscription:
     def __init__(self, owner_id: str, types: Optional[List[str]]):
         self.owner_id = owner_id
         # types 为 None 表示订阅所有类型
-        self.types = set(types) if types else None
+        self.types = set(types) if types is not None else None
         self.inbox: "asyncio.Queue[Envelope]" = asyncio.Queue()
 
     def accepts(self, env: Envelope) -> bool:

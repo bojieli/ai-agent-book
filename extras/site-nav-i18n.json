@@ -1,0 +1,340 @@
+{
+  "zh": {
+    "material_locale": "zh",
+    "nav": {
+      "首页": "首页",
+      "引言": "引言",
+      "第1章 Agent基础知识": "第1章 Agent基础知识",
+      "第2章 上下文工程": "第2章 上下文工程",
+      "第3章 用户记忆和知识库": "第3章 用户记忆和知识库",
+      "第4章 工具": "第4章 工具",
+      "第5章 CodingAgent与通用Agent": "第5章 CodingAgent与通用Agent",
+      "第6章 交互：观察与动作空间的扩展": "第6章 交互：观察与动作空间的扩展",
+      "第7章 Agent的评估": "第7章 Agent的评估",
+      "第8章 模型后训练": "第8章 模型后训练",
+      "第9章 Agent的持续进化": "第9章 Agent的持续进化",
+      "第10章 多Agent协作": "第10章 多Agent协作",
+      "后记": "后记",
+      "思考题参考答案": "思考题参考答案",
+      "配套实验": "配套实验"
+    },
+    "sidebar": { "show": "展开侧边栏", "hide": "隐藏侧边栏" },
+    "palette": { "light": "切换日间模式", "dark": "切换夜间模式" }
+  },
+  "zhtw": {
+    "material_locale": "zh-TW",
+    "nav": {
+      "首页": "首頁",
+      "引言": "引言",
+      "第1章 Agent基础知识": "第 1 章 · Agent 基礎知識",
+      "第2章 上下文工程": "第 2 章 · 上下文工程",
+      "第3章 用户记忆和知识库": "第 3 章 · 使用者記憶和知識庫",
+      "第4章 工具": "第 4 章 · 工具",
+      "第5章 CodingAgent与通用Agent": "第 5 章 · Coding Agent 與程式碼生成",
+      "第6章 交互：观察与动作空间的扩展": "第 6 章 · 互動：觀察與動作空間的擴展",
+      "第7章 Agent的评估": "第 7 章 · Agent 的評估",
+      "第8章 模型后训练": "第 8 章 · 模型後訓練",
+      "第9章 Agent的持续进化": "第 9 章 · Agent 的持續進化",
+      "第10章 多Agent协作": "第 10 章 · 多 Agent 協作",
+      "后记": "後記",
+      "思考题参考答案": "思考題參考答案",
+      "配套实验": "配套實驗"
+    },
+    "sidebar": { "show": "展開側邊欄", "hide": "隱藏側邊欄" },
+    "palette": { "light": "切換日間模式", "dark": "切換夜間模式" }
+  },
+  "en": {
+    "material_locale": "en",
+    "nav": {
+      "首页": "Home",
+      "引言": "Introduction",
+      "第1章 Agent基础知识": "Chapter 1 · Getting Started with AI Agents",
+      "第2章 上下文工程": "Chapter 2 · Context Engineering",
+      "第3章 用户记忆和知识库": "Chapter 3 · User Memory & Knowledge Base",
+      "第4章 工具": "Chapter 4 · Tools",
+      "第5章 CodingAgent与通用Agent": "Chapter 5 · Coding Agent & Code Generation",
+      "第6章 交互：观察与动作空间的扩展": "Chapter 6 · Interaction: Expanding the Observation and Action Spaces",
+      "第7章 Agent的评估": "Chapter 7 · Evaluating Agents",
+      "第8章 模型后训练": "Chapter 8 · Model Post-Training",
+      "第9章 Agent的持续进化": "Chapter 9 · Continual Evolution of Agents",
+      "第10章 多Agent协作": "Chapter 10 · Multi-Agent Collaboration",
+      "后记": "Afterword",
+      "思考题参考答案": "Reference Answers",
+      "配套实验": "Experiments"
+    },
+    "sidebar": { "show": "Show navigation", "hide": "Hide navigation" },
+    "palette": { "light": "Switch to light mode", "dark": "Switch to dark mode" }
+  },
+  "es": {
+    "material_locale": "es",
+    "nav": {
+      "首页": "Inicio",
+      "引言": "Introducción",
+      "第1章 Agent基础知识": "Capítulo 1 · Fundamentos de los Agentes de IA",
+      "第2章 上下文工程": "Capítulo 2 · Ingeniería de Contexto",
+      "第3章 用户记忆和知识库": "Capítulo 3 · Memoria de Usuario y Base de Conocimiento",
+      "第4章 工具": "Capítulo 4 · Herramientas",
+      "第5章 CodingAgent与通用Agent": "Capítulo 5 · Agente de Código y Generación de Código",
+      "第6章 交互：观察与动作空间的扩展": "Capítulo 6 · Interacción: la expansión de los espacios de observación y de acción",
+      "第7章 Agent的评估": "Capítulo 7 · Evaluación de Agentes",
+      "第8章 模型后训练": "Capítulo 8 · Posentrenamiento de Modelos",
+      "第9章 Agent的持续进化": "Capítulo 9 · Evolución Continua de los Agentes",
+      "第10章 多Agent协作": "Capítulo 10 · Colaboración Multiagente",
+      "后记": "Epílogo",
+      "思考题参考答案": "Respuestas de Referencia",
+      "配套实验": "Experimentos"
+    },
+    "sidebar": { "show": "Mostrar navegación", "hide": "Ocultar navegación" },
+    "palette": { "light": "Cambiar al modo claro", "dark": "Cambiar al modo oscuro" }
+  },
+  "id": {
+    "material_locale": "id",
+    "nav": {
+      "首页": "Beranda",
+      "引言": "Pendahuluan",
+      "第1章 Agent基础知识": "Bab 1 · Dasar-dasar Agent",
+      "第2章 上下文工程": "Bab 2 · Rekayasa Konteks",
+      "第3章 用户记忆和知识库": "Bab 3 · Memori Pengguna dan Basis Pengetahuan",
+      "第4章 工具": "Bab 4 · Alat",
+      "第5章 CodingAgent与通用Agent": "Bab 5 · Coding Agent dan Pembuatan Kode",
+      "第6章 交互：观察与动作空间的扩展": "Bab 6 · Interaksi: Perluasan Ruang Observasi dan Ruang Aksi",
+      "第7章 Agent的评估": "Bab 7 · Evaluasi Agent",
+      "第8章 模型后训练": "Bab 8 · Pascapelatihan Model",
+      "第9章 Agent的持续进化": "Bab 9 · Evolusi Berkelanjutan Agent",
+      "第10章 多Agent协作": "Bab 10 · Kolaborasi Multi-Agent",
+      "后记": "Penutup",
+      "思考题参考答案": "Jawaban Referensi",
+      "配套实验": "Eksperimen"
+    },
+    "sidebar": { "show": "Tampilkan navigasi", "hide": "Sembunyikan navigasi" },
+    "palette": { "light": "Beralih ke mode terang", "dark": "Beralih ke mode gelap" }
+  },
+  "ru": {
+    "material_locale": "ru",
+    "nav": {
+      "首页": "Главная",
+      "引言": "Введение",
+      "第1章 Agent基础知识": "Глава 1 · Введение в ИИ-агенты",
+      "第2章 上下文工程": "Глава 2 · Инженерия контекста",
+      "第3章 用户记忆和知识库": "Глава 3 · Память и база знаний",
+      "第4章 工具": "Глава 4 · Инструменты",
+      "第5章 CodingAgent与通用Agent": "Глава 5 · Кодинг-агент и генерация кода",
+      "第6章 交互：观察与动作空间的扩展": "Глава 6 · Взаимодействие: расширение пространства наблюдений и пространства действий",
+      "第7章 Agent的评估": "Глава 7 · Оценка агентов",
+      "第8章 模型后训练": "Глава 8 · Постобучение модели",
+      "第9章 Agent的持续进化": "Глава 9 · Непрерывная эволюция агентов",
+      "第10章 多Agent协作": "Глава 10 · Мультиагентное взаимодействие",
+      "后记": "Послесловие",
+      "思考题参考答案": "Ответы к вопросам",
+      "配套实验": "Эксперименты"
+    },
+    "sidebar": { "show": "Показать навигацию", "hide": "Скрыть навигацию" },
+    "palette": { "light": "Включить светлый режим", "dark": "Включить тёмный режим" }
+  },
+  "ta": {
+    "material_locale": "ta",
+    "nav": {
+      "首页": "முகப்பு",
+      "引言": "அறிமுகம்",
+      "第1章 Agent基础知识": "அத்தியாயம் 1 · AI ஏஜெண்ட் அடிப்படைகள்",
+      "第2章 上下文工程": "அத்தியாயம் 2 · சூழல் பொறியியல்",
+      "第3章 用户记忆和知识库": "அத்தியாயம் 3 · பயனர் நினைவகம் மற்றும் அறிவுத்தளம்",
+      "第4章 工具": "அத்தியாயம் 4 · கருவிகள்",
+      "第5章 CodingAgent与通用Agent": "அத்தியாயம் 5 · குறியீட்டு ஏஜெண்ட் மற்றும் குறியீடு உருவாக்கம்",
+      "第6章 交互：观察与动作空间的扩展": "அத்தியாயம் 6 · தொடர்பாடல்: அவதானிப்பு மற்றும் செயல் வெளிகளின் விரிவாக்கம்",
+      "第7章 Agent的评估": "அத்தியாயம் 7 · ஏஜெண்ட் மதிப்பீடு",
+      "第8章 模型后训练": "அத்தியாயம் 8 · மாதிரி பிந்தைய பயிற்சி",
+      "第9章 Agent的持续进化": "அத்தியாயம் 9 · ஏஜெண்டின் தொடர்ச்சியான பரிணாமம்",
+      "第10章 多Agent协作": "அத்தியாயம் 10 · பல-ஏஜெண்ட் கூட்டுச் செயல்பாடு",
+      "后记": "பின்னுரை",
+      "思考题参考答案": "குறிப்புப் பதில்கள்",
+      "配套实验": "சோதனைகள்"
+    },
+    "sidebar": { "show": "வழிசெலுத்தலைக் காட்டு", "hide": "வழிசெலுத்தலை மறை" },
+    "palette": { "light": "ஒளி பயன்முறைக்கு மாறு", "dark": "இருண்ட பயன்முறைக்கு மாறு" }
+  },
+  "vi": {
+    "material_locale": "vi",
+    "ui_overrides": {
+      "search.result.initializer": "Đang khởi tạo tìm kiếm",
+      "source.file.contributors": "Người đóng góp",
+      "tabs": "Thẻ"
+    },
+    "nav": {
+      "首页": "Trang chủ",
+      "引言": "Giới thiệu",
+      "第1章 Agent基础知识": "Chương 1 · Nền tảng AI Agent",
+      "第2章 上下文工程": "Chương 2 · Kỹ thuật ngữ cảnh",
+      "第3章 用户记忆和知识库": "Chương 3 · Bộ nhớ và Cơ sở kiến thức",
+      "第4章 工具": "Chương 4 · Công cụ",
+      "第5章 CodingAgent与通用Agent": "Chương 5 · Coding Agent và Tạo mã",
+      "第6章 交互：观察与动作空间的扩展": "Chương 6 · Tương tác: mở rộng không gian quan sát và không gian hành động",
+      "第7章 Agent的评估": "Chương 7 · Đánh giá Agent",
+      "第8章 模型后训练": "Chương 8 · Post-training mô hình",
+      "第9章 Agent的持续进化": "Chương 9 · Sự tiến hóa liên tục của Agent",
+      "第10章 多Agent协作": "Chương 10 · Cộng tác đa Agent",
+      "后记": "Lời bạt",
+      "思考题参考答案": "Đáp án tham khảo",
+      "配套实验": "Thí nghiệm"
+    },
+    "sidebar": { "show": "Hiện thanh điều hướng", "hide": "Ẩn thanh điều hướng" },
+    "palette": { "light": "Chuyển sang chế độ sáng", "dark": "Chuyển sang chế độ tối" }
+  },
+  "ja": {
+    "material_locale": "ja",
+    "nav": {
+      "首页": "ホーム",
+      "引言": "はじめに",
+      "第1章 Agent基础知识": "第1章 · AI Agent 入門",
+      "第2章 上下文工程": "第2章 · コンテキストエンジニアリング",
+      "第3章 用户记忆和知识库": "第3章 · ユーザーメモリと知識ベース",
+      "第4章 工具": "第4章 · ツール",
+      "第5章 CodingAgent与通用Agent": "第5章 · Coding Agent とコード生成",
+      "第6章 交互：观察与动作空间的扩展": "第6章 · 交互：観察空間と動作空間の拡張",
+      "第7章 Agent的评估": "第7章 · Agent の評価",
+      "第8章 模型后训练": "第8章 · モデルのポストトレーニング",
+      "第9章 Agent的持续进化": "第9章 · Agent の継続的進化",
+      "第10章 多Agent协作": "第10章 · マルチ Agent 協調",
+      "后记": "あとがき",
+      "思考题参考答案": "演習問題の解答例",
+      "配套实验": "実験"
+    },
+    "sidebar": { "show": "ナビゲーションを表示", "hide": "ナビゲーションを隠す" },
+    "palette": { "light": "ライトモードに切り替え", "dark": "ダークモードに切り替え" }
+  },
+  "ko": {
+    "material_locale": "ko",
+    "nav": {
+      "首页": "홈",
+      "引言": "들어가며",
+      "第1章 Agent基础知识": "제1장 · AI 에이전트 기초",
+      "第2章 上下文工程": "제2장 · 컨텍스트 엔지니어링",
+      "第3章 用户记忆和知识库": "제3장 · 사용자 메모리와 지식 베이스",
+      "第4章 工具": "제4장 · 도구",
+      "第5章 CodingAgent与通用Agent": "제5장 · 코딩 에이전트와 코드 생성",
+      "第6章 交互：观察与动作空间的扩展": "제6장 · 상호작용: 관찰 공간과 행동 공간의 확장",
+      "第7章 Agent的评估": "제7장 · 에이전트 평가",
+      "第8章 模型后训练": "제8장 · 모델 사후 학습",
+      "第9章 Agent的持续进化": "제9장 · 에이전트의 지속적 진화",
+      "第10章 多Agent协作": "제10장 · 멀티 에이전트 협업",
+      "后记": "맺음말",
+      "思考题参考答案": "생각해 볼 문제 참고 답안",
+      "配套实验": "실습"
+    },
+    "sidebar": { "show": "탐색 메뉴 표시", "hide": "탐색 메뉴 숨기기" },
+    "palette": { "light": "라이트 모드로 전환", "dark": "다크 모드로 전환" }
+  },
+  "ar": {
+    "material_locale": "ar",
+    "nav": {
+      "首页": "الرئيسية",
+      "引言": "المقدمة",
+      "第1章 Agent基础知识": "الفصل 1 · أساسيات الوكلاء",
+      "第2章 上下文工程": "الفصل 2 · هندسة السياق",
+      "第3章 用户记忆和知识库": "الفصل 3 · ذاكرة المستخدم وقاعدة المعرفة",
+      "第4章 工具": "الفصل 4 · الأدوات",
+      "第5章 CodingAgent与通用Agent": "الفصل 5 · وكيل البرمجة وتوليد الشيفرة",
+      "第6章 交互：观察与动作空间的扩展": "الفصل 6 · التفاعل: توسيع فضاء الملاحظة وفضاء الفعل",
+      "第7章 Agent的评估": "الفصل 7 · تقييم الوكلاء",
+      "第8章 模型后训练": "الفصل 8 · ما بعد تدريب النموذج",
+      "第9章 Agent的持续进化": "الفصل 9 · التطور المستمر للوكلاء",
+      "第10章 多Agent协作": "الفصل 10 · التعاون متعدد الوكلاء",
+      "后记": "الخاتمة",
+      "思考题参考答案": "إجابات الأسئلة",
+      "配套实验": "التجارب"
+    },
+    "sidebar": { "show": "إظهار التنقل", "hide": "إخفاء التنقل" },
+    "palette": { "light": "التبديل إلى الوضع الفاتح", "dark": "التبديل إلى الوضع الداكن" }
+  },
+  "tr": {
+    "material_locale": "tr",
+    "nav": {
+      "首页": "Ana Sayfa",
+      "引言": "Giriş",
+      "第1章 Agent基础知识": "Bölüm 1 · Yapay Zeka Ajanlarına Giriş",
+      "第2章 上下文工程": "Bölüm 2 · Context Engineering",
+      "第3章 用户记忆和知识库": "Bölüm 3 · Kullanıcı Belleği ve Bilgi Tabanı",
+      "第4章 工具": "Bölüm 4 · Araçlar",
+      "第5章 CodingAgent与通用Agent": "Bölüm 5 · Kodlama Agent'ı ve Kod Üretimi",
+      "第6章 交互：观察与动作空间的扩展": "Bölüm 6 · Etkileşim: Gözlem ve Eylem Uzaylarının Genişletilmesi",
+      "第7章 Agent的评估": "Bölüm 7 · Agent'ın Değerlendirmesi",
+      "第8章 模型后训练": "Bölüm 8 · Model Post-Training",
+      "第9章 Agent的持续进化": "Bölüm 9 · Agent'ın Sürekli Evrimi",
+      "第10章 多Agent协作": "Bölüm 10 · Çoklu Agent İş Birliği",
+      "后记": "Sonsöz",
+      "思考题参考答案": "Düşünce Soruları — Örnek Cevaplar",
+      "配套实验": "Deneyler"
+    },
+    "sidebar": { "show": "Navigasyonu göster", "hide": "Navigasyonu gizle" },
+    "palette": { "light": "Açık moda geç", "dark": "Koyu moda geç" }
+  },
+  "hu": {
+    "material_locale": "hu",
+    "ui_overrides": {
+      "source": "Ugrás a kódtárhoz"
+    },
+    "nav": {
+      "首页": "Kezdőlap",
+      "引言": "Bevezetés",
+      "第1章 Agent基础知识": "1. fejezet · Ismerkedés az AI-ügynökökkel",
+      "第2章 上下文工程": "2. fejezet · Kontextustervezés",
+      "第3章 用户记忆和知识库": "3. fejezet · Felhasználói memória és tudásbázis",
+      "第4章 工具": "4. fejezet · Eszközök",
+      "第5章 CodingAgent与通用Agent": "5. fejezet · Kódoló ágens és kódgenerálás",
+      "第6章 交互：观察与动作空间的扩展": "6. fejezet · Interakció: a megfigyelési és a cselekvési tér kiterjesztése",
+      "第7章 Agent的评估": "7. fejezet · Ügynökök kiértékelése",
+      "第8章 模型后训练": "8. fejezet · Modell poszt-tréning",
+      "第9章 Agent的持续进化": "9. fejezet · Az ágensek folyamatos evolúciója",
+      "第10章 多Agent协作": "10. fejezet · Többügynökös együttműködés",
+      "后记": "Utószó",
+      "思考题参考答案": "Válaszvázlatok a gondolatébresztő kérdésekhez",
+      "配套实验": "Kísérletek"
+    },
+    "sidebar": { "show": "Navigáció megjelenítése", "hide": "Navigáció elrejtése" },
+    "palette": { "light": "Váltás világos módra", "dark": "Váltás sötét módra" }
+  },
+  "he": {
+    "material_locale": "he",
+    "nav": {
+      "首页": "דף הבית",
+      "引言": "הקדמה",
+      "第1章 Agent基础知识": "פרק 1 · צעדים ראשונים עם סוכני AI",
+      "第2章 上下文工程": "פרק 2 · הנדסת הקשר",
+      "第3章 用户记忆和知识库": "פרק 3 · זיכרון משתמש ובסיס ידע",
+      "第4章 工具": "פרק 4 · כלים",
+      "第5章 CodingAgent与通用Agent": "פרק 5 · סוכן קוד ויצירת קוד",
+      "第6章 交互：观察与动作空间的扩展": "פרק 6 · אינטראקציה: הרחבת מרחבי התצפית והפעולה",
+      "第7章 Agent的评估": "פרק 7 · הערכת סוכנים",
+      "第8章 模型后训练": "פרק 8 · אימון־על של מודלים",
+      "第9章 Agent的持续进化": "פרק 9 · התפתחות מתמשכת של סוכנים",
+      "第10章 多Agent协作": "פרק 10 · שיתוף פעולה רב־סוכני",
+      "后记": "אחרית דבר",
+      "思考题参考答案": "תשובות לשאלות למחשבה",
+      "配套实验": "ניסויים נלווים"
+    },
+    "sidebar": { "show": "הצגת ניווט", "hide": "הסתרת ניווט" },
+    "palette": { "light": "מעבר למצב בהיר", "dark": "מעבר למצב כהה" }
+  },
+  "ptbr": {
+    "material_locale": "pt-BR",
+    "nav": {
+      "首页": "Página inicial",
+      "引言": "Introdução",
+      "第1章 Agent基础知识": "Capítulo 1 · Primeiros passos com agentes de IA",
+      "第2章 上下文工程": "Capítulo 2 · Engenharia de contexto",
+      "第3章 用户记忆和知识库": "Capítulo 3 · Memória do usuário e base de conhecimento",
+      "第4章 工具": "Capítulo 4 · Ferramentas",
+      "第5章 CodingAgent与通用Agent": "Capítulo 5 · Agente de código e geração de código",
+      "第6章 交互：观察与动作空间的扩展": "Capítulo 6 · Interação: expansão dos espaços de observação e ação",
+      "第7章 Agent的评估": "Capítulo 7 · Avaliação de agentes",
+      "第8章 模型后训练": "Capítulo 8 · Pós-treinamento de modelos",
+      "第9章 Agent的持续进化": "Capítulo 9 · Evolução contínua de agentes",
+      "第10章 多Agent协作": "Capítulo 10 · Colaboração multiagente",
+      "后记": "Posfácio",
+      "思考题参考答案": "Respostas das questões de reflexão",
+      "配套实验": "Experimentos"
+    },
+    "sidebar": { "show": "Mostrar navegação", "hide": "Ocultar navegação" },
+    "palette": { "light": "Mudar para o modo claro", "dark": "Mudar para o modo escuro" }
+  }
+}

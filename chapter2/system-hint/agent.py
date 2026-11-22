@@ -15,12 +15,8 @@ from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime, timedelta
-import requests
 from openai import OpenAI
 import traceback
-import tempfile
-import shutil
-from pathlib import Path
 
 try:
     from dotenv import load_dotenv
@@ -98,7 +94,7 @@ class SystemHintAgent:
         
         Args:
             api_key: API key for the LLM provider
-            provider: LLM provider ('kimi' for Kimi K3)
+            provider: LLM provider (including dashscope/qwen/bailian for Qwen)
             model: Optional model override
             config: System hint configuration
             verbose: If True, log full details
@@ -108,27 +104,30 @@ class SystemHintAgent:
         self.config = config or SystemHintConfig()
         
         # Configure client based on provider
-        if self.provider == "kimi" or self.provider == "moonshot":
+        if self.provider in {"dashscope", "qwen", "bailian"}:
+            from agentbook.providers import resolve_backend
+
+            backend = resolve_backend("dashscope", model=model, api_key=api_key)
+            self.client = OpenAI(api_key=backend.api_key, base_url=backend.base_url)
+            self.model = backend.model
+        elif self.provider == "kimi" or self.provider == "moonshot":
             # 默认 Moonshot/Kimi 官方端点；若传入 OpenRouter key（sk-or-…）则自动
             # 回退到 OpenRouter，并把 kimi-* 映射为 moonshotai/kimi-k2。
-            from openrouter_fallback import (
-                OPENROUTER_BASE_URL,
-                is_openrouter_key,
-                map_model_to_openrouter,
+            # 端点、key 与模型名映射统一由 agentbook 的 provider 注册表维护；
+            # “这把 key 属于谁”只有调用方知道，因此在此处判定后再交给注册表解析。
+            from agentbook.providers import is_openrouter_key, resolve_backend
+
+            target = "openrouter" if is_openrouter_key(api_key) else "kimi"
+            backend = resolve_backend(
+                target, model=model or "kimi-k3", api_key=api_key
             )
-            resolved_model = model or "kimi-k3"
-            if is_openrouter_key(api_key):
-                base_url = OPENROUTER_BASE_URL
-                resolved_model = map_model_to_openrouter(resolved_model)
-            else:
-                base_url = "https://api.moonshot.cn/v1"
             self.client = OpenAI(
-                api_key=api_key,
-                base_url=base_url
+                api_key=backend.api_key,
+                base_url=backend.base_url
             )
-            self.model = resolved_model
+            self.model = backend.model
         else:
-            raise ValueError(f"Unsupported provider: {provider}")
+            raise ValueError(f"Unsupported provider: {provider}. Use dashscope/qwen/bailian, kimi, or openrouter")
         
         # Initialize tracking
         self.tool_call_counts: Dict[str, int] = {}
@@ -592,7 +591,7 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
                             "file_path": file_path,
                             "is_binary": True
                         }
-            except Exception as e:
+            except Exception:
                 # If we can't read it as binary, probably permission issue
                 raise
             
@@ -607,6 +606,18 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
                     start_line = (begin_line - 1) if begin_line is not None else 0
                     if start_line < 0:
                         start_line = 0
+                    if total_lines == 0 and start_line == 0:
+                        return {
+                            "success": True,
+                            "file_path": file_path,
+                            "content": "",
+                            "size_bytes": 0,
+                            "total_lines": 0,
+                            "begin_line": 1,
+                            "end_line": 0,
+                            "lines_read": 0,
+                            "partial_read": True
+                        }
                     if start_line >= total_lines:
                         return {
                             "success": False,
@@ -653,7 +664,7 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
                         "lines": len(content.splitlines()),
                         "partial_read": False
                     }
-        except Exception as e:
+        except Exception:
             raise
     
     def _tool_write_file(self, file_path: str, content: str) -> Dict[str, Any]:
@@ -675,7 +686,7 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
                 "bytes_written": len(content.encode('utf-8')),
                 "lines_written": len(content.splitlines())
             }
-        except Exception as e:
+        except Exception:
             raise
     
     def _tool_code_interpreter(self, code: str) -> Dict[str, Any]:
@@ -705,7 +716,7 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
                 "stdout": stdout,
                 "stderr": stderr,
             }
-        except Exception as e:
+        except Exception:
             raise
     
     def _tool_execute_command(self, command: str, working_dir: Optional[str] = None) -> Dict[str, Any]:
@@ -759,7 +770,7 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
             }
         except subprocess.TimeoutExpired:
             raise TimeoutError(f"Command timed out after 30 seconds: {command}")
-        except Exception as e:
+        except Exception:
             raise
     
     def _tool_rewrite_todo_list(self, items: List[str]) -> Dict[str, Any]:
@@ -952,15 +963,16 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
                                     elif 'file_path' in result:
                                         logger.info(f"  ✅ Success: File operation on {result['file_path']}")
                                     else:
-                                        logger.info(f"  ✅ Success: Operation completed")
+                                        logger.info("  ✅ Success: Operation completed")
                                 elif result.get('success') is False:
                                     # Handle explicit failures (like binary file detection)
                                     if result.get('is_binary'):
                                         logger.info(f"  ⚠️ Binary file detected: {result.get('file_path', 'unknown')}")
                                     else:
-                                        logger.info(f"  ⚠️ Failed: {result.get('error', 'Unknown error')[:100]}")
+                                        err_msg = str(result.get('error') or 'Unknown error')
+                                        logger.info(f"  ⚠️ Failed: {err_msg[:100]}")
                                 else:
-                                    logger.info(f"  ✅ Success: Operation completed")
+                                    logger.info("  ✅ Success: Operation completed")
                             else:
                                 result_preview = str(result).replace('\n', ' ')[:150]
                                 logger.info(f"  ✅ Result: {result_preview}")

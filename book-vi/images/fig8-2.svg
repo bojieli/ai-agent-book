@@ -1,22 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 40 880 194" width="880" height="194" style="background:#ffffff">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 40 780 380" width="780" height="380" style="background:#ffffff">
 <defs><marker id="ah" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#333333" /></marker><marker id="ah-light" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#999999" /></marker></defs>
-<rect x="27.0" y="48" width="190" height="84" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2" />
-<text x="122.0" y="0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="18.03" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold"><tspan x="122" dy="62.74">trajectory</tspan><tspan x="122" dy="19.47">thành công</tspan></text>
-<text x="122.0" y="0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16.23" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold"><tspan x="122" dy="100.71">quá trình hoàn</tspan><tspan x="122" dy="17.53">thành nhiệm vụ</tspan></text>
-<rect x="239.0" y="48" width="190" height="84" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2" />
-<text x="334.0" y="0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14.58" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold"><tspan x="334" dy="60.87">Tóm tắt chiến</tspan><tspan x="334" dy="15.75">lược</tspan></text>
-<text x="334.0" y="0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.12" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold"><tspan x="334" dy="91.58">Chắt lọc thành</tspan><tspan x="334" dy="14.17">những bản tóm tắt</tspan><tspan x="334" dy="14.17">kiến ​​thức</tspan></text>
-<line x1="219.0" y1="90.0" x2="237.0" y2="90.0" stroke="#333333" stroke-width="2" marker-end="url(#ah)" />
-<rect x="451.0" y="48" width="190" height="84" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2" />
-<text x="546.0" y="0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="18.03" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold"><tspan x="546" dy="62.74">Cơ sở tóm tắt</tspan><tspan x="546" dy="19.47">kiến ​​thức</tspan></text>
-<text x="546.0" y="0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16.23" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold"><tspan x="546" dy="100.71">Xây dựng chỉ mục</tspan><tspan x="546" dy="17.53">ngữ nghĩa</tspan></text>
-<line x1="431.0" y1="90.0" x2="449.0" y2="90.0" stroke="#333333" stroke-width="2" marker-end="url(#ah)" />
-<rect x="663.0" y="48" width="190" height="84" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2" />
-<text x="758.0" y="62.99" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="18.52" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Lấy lại mũi tiêm</text>
-<text x="758.0" y="0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16.67" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold"><tspan x="758" dy="82">Agent được sử dụng</tspan><tspan x="758" dy="18">khi đưa ra quyết</tspan><tspan x="758" dy="18">định</tspan></text>
-<line x1="643.0" y1="90.0" x2="661.0" y2="90.0" stroke="#333333" stroke-width="2" marker-end="url(#ah)" />
-<line x1="758.0" y1="132" x2="758.0" y2="166" stroke="#333333" stroke-width="2" stroke-dasharray="8,4" />
-<line x1="758.0" y1="166" x2="122.0" y2="166" stroke="#333333" stroke-width="2" stroke-dasharray="8,4" />
-<line x1="122.0" y1="166" x2="122.0" y2="134" stroke="#333333" stroke-width="2" stroke-dasharray="8,4" marker-end="url(#ah)" />
-<text x="440.0" y="184" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Tái sử dụng kinh nghiệm lịch sử cho các nhiệm vụ tương tự</text>
+
+<rect x="55" y="175" width="130" height="50" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2" />
+<text x="120.0" y="200.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">tiền sảnh</text>
+<rect x="255" y="95" width="130" height="50" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2" />
+<text x="320.0" y="120.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">phòng lưu trữ</text>
+<rect x="255" y="255" width="130" height="50" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2" />
+<text x="320.0" y="0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal"><tspan x="320" dy="271.36">hành lang</tspan><tspan x="320" dy="17.28">phía bắc</tspan></text>
+<rect x="475" y="175" width="130" height="50" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2" />
+<text x="540.0" y="200.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">phòng bảo vệ</text>
+<rect x="635" y="175" width="130" height="50" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2" />
+<text x="700.0" y="200.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">phòng kho báu</text>
+<path d="M 183.13641498019763,189.6010610620851 Q 233.6463345290627,180.16485122599818 252.22120156537608,132.25589231968542" fill="none" stroke="#333333" stroke-width="2" marker-end="url(#ah)" />
+<text x="225.66257140092478" y="160.54666395844174" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Đông/lấy chìa khóa</text>
+<path d="M 183.13641498019763,210.3989389379149 Q 233.6463345290627,219.83514877400182 252.22120156537608,267.7441076803146" fill="none" stroke="#333333" stroke-width="2" marker-end="url(#ah)" />
+<text x="225.66257140092478" y="219.45333604155826" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Hướng Bắc (có chìa khóa)</text>
+<line x1="383.90595279721373" y1="129.56880576642772" x2="471.3950800853441" y2="188.72247891813876" stroke="#333333" stroke-width="2" marker-end="url(#ah)" />
+<text x="427.6505164412789" y="149.14564234228322" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle">Bắc→Tây</text>
+<line x1="383.90595279721373" y1="270.4311942335723" x2="471.3950800853441" y2="211.27752108186124" stroke="#333333" stroke-width="2" marker-end="url(#ah)" />
+<text x="427.6505164412789" y="230.85435765771678" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#666666" text-anchor="middle">Phía đông</text>
+<line x1="607" y1="200" x2="633" y2="200" stroke="#333333" stroke-width="2" marker-end="url(#ah)" />
+<text x="620" y="238" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="middle">Tấn công (Kiếm bạc)</text>
+<text x="700" y="155" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">R=+100</text>
+<text x="390" y="365" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Ngũ phân MDP: (S, A, P, R, γ)</text>
+<text x="390" y="390" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">S=5 trạng thái A={đông, tây, nam, bắc, chiếm, tấn công, tổng hợp} P(s'|s,a)=thuyết tất định γ=0.99</text>
 </svg>

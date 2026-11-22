@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Assemble the MkDocs docs directory (`_web/`) from the book Markdown sources.
-# Only Markdown + images are copied; code, PDFs and LaTeX sources are left out
-# so the generated site stays small. The original sources are never modified.
+# Reader-facing Markdown, images, frontend assets, and linked JSON evidence are
+# copied; code, PDFs and LaTeX sources are left out so the generated site stays
+# small. The original sources are never modified.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -13,11 +14,19 @@ mkdir -p "$DEST"
 # Site homepage (root index.md).
 cp "$ROOT/index.md" "$DEST/index.md"
 
+# Translated site homepages (root index.<lang>.md), when present. The
+# language switcher maps home <-> home for these editions (see
+# scripts/site_i18n.py, which lists them in the generated catalog).
+for home in "$ROOT"/index.*.md; do
+  [ -f "$home" ] || continue
+  cp "$home" "$DEST/$(basename "$home")"
+done
+
 # robots.txt at the site root (points crawlers at the auto-generated sitemap).
 [ -f "$ROOT/robots.txt" ] && cp "$ROOT/robots.txt" "$DEST/robots.txt"
 
 # The language editions, each with its images/ subfolder.
-for lang in book book-en book-ru book-ta book-vi book-zhtw book-ja book-ar book-tr; do
+for lang in book book-en book-es book-id book-ru book-ta book-vi book-zhtw book-ja book-ar book-tr book-ko book-hu book-he book-ptbr; do
   mkdir -p "$DEST/$lang"
   cp -R "$ROOT/$lang" "$DEST/"
 done
@@ -63,21 +72,10 @@ if [ -d "$ROOT/assets" ]; then
   cp -R "$ROOT/assets/." "$DEST/assets/"
 fi
 
-# Keep only Markdown and images; drop .tex/.py/.lua/.pdf/.sh etc.
-# -type l is included because cp -R preserves symlinks: a dangling symlink
-# (e.g. a wandb debug-internal.log pointing at a deleted run dir) is not
-# matched by -type f, survives the cleanup, and then crashes `mkdocs build`
-# when it tries to copy the dead link.
-find "$DEST" \( -type f -o -type l \) \
-  ! -name '*.md' \
-  ! -name '*.svg' \
-  ! -name '*.png' \
-  ! -name '*.jpg' \
-  ! -name '*.jpeg' \
-  ! -name '*.js' \
-  ! -name '*.css' \
-  ! -name '*.txt' \
-  -delete
+# Keep reader-facing site assets, including JSON experiment evidence linked
+# from chapter documentation. The helper is tested independently so changes to
+# the publication allowlist do not silently introduce broken links.
+python3 "$ROOT/scripts/clean_site_files.py" "$DEST"
 
 # Drop bulk data files that some experiments bundle as their dataset but
 # that don't belong in the reading site (hundreds of legal-doc markdown

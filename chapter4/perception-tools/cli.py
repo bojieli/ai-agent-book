@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-感知工具 MCP 服务器 —— 统一命令行入口（实验 4-1）。
+感知工具 MCP 服务器 —— 统一命令行入口（实验 4-2）。
 
 除了以 MCP stdio 协议对外提供服务（见 src/main.py），本文件提供一个不依赖
 MCP 客户端的命令行入口，方便直接列出、调用和演示各类感知工具：
@@ -33,7 +33,7 @@ from pathlib import Path
 SRC_DIR = Path(__file__).parent / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-# 五大类的中文标题（与书中实验 4-1 的分类一一对应）
+# 五大类的中文标题（与书中实验 4-2 的分类一一对应）
 CATEGORIES = {
     "search": "搜索",
     "multimodal": "多模态理解",
@@ -133,6 +133,9 @@ TOOLS: list[Tool] = [
          "搜索 ArXiv 学术论文", online=True),
     Tool("wayback_search", "public", "public_data_tools", "search_wayback",
          "在 Wayback Machine 查历史快照", online=True),
+    Tool("xquik_search_posts", "public", "xquik_tools", "search_x_posts",
+         "通过 Xquik 搜索 X 帖子并返回游标", online=True,
+         note="需 XQUIK_API_KEY 与有效订阅；按返回帖子计费"),
     Tool("location_search", "public", "public_data_tools", "search_location",
          "地名/地点地理编码（Nominatim，免费无 Key）", online=True),
     Tool("poi_search", "public", "public_data_tools", "search_poi",
@@ -461,7 +464,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="cli.py",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="感知工具 MCP 服务器的命令行入口（实验 4-1）。\n"
+        description="感知工具 MCP 服务器的命令行入口（实验 4-2）。\n"
                     "按五类感知场景组织：搜索 / 多模态理解 / 文件系统 / 公开数据源 / 私有数据源。",
         epilog="示例：\n"
                "  python cli.py list                         列出全部感知工具\n"

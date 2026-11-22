@@ -2,6 +2,7 @@
 
 # 核心依赖
 openai>=1.12.0  # OpenAI Python 客户端，用于调用 Kimi API
+requests>=2.31.0  # Kimi Formula declarations and Fiber execution
 python-dotenv>=1.0.0  # 环境变量管理
 
 # 可选依赖（用于高级功能）
@@ -10,6 +11,7 @@ rich>=13.7.0  # 美化终端输出
 tenacity>=8.2.3  # 重试机制
 
 # 开发依赖
+httpx>=0.27,<1  # 测试直接构造 HTTP 请求和响应，不依赖 SDK 的传递依赖
 pytest>=7.4.0  # 测试框架
 black>=23.0.0  # 代码格式化
 pylint>=3.0.0  # 代码检查

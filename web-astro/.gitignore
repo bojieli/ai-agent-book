@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.astro/
+!.prettierrc.json
+!.prettierignore
+public/book/
+public/book-*/
+
+public/figures/book/

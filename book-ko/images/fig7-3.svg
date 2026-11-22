@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 512" width="880" height="512" style="background:#ffffff">
+<defs>
+<marker id="ah" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker>
+<marker id="ah-s" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 10 3.5, 0 7" fill="#666666"/></marker>
+<marker id="ah-r" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="10 0, 0 3.5, 10 7" fill="#666666"/></marker>
+</defs>
+<style>
+.t{font-family:Arial,'Helvetica Neue',Helvetica,'PingFang SC','Microsoft YaHei',sans-serif;fill:#333333;text-anchor:middle;dominant-baseline:central}
+.l{font-family:Arial,'Helvetica Neue',Helvetica,'PingFang SC','Microsoft YaHei',sans-serif;fill:#333333;text-anchor:start;dominant-baseline:central}
+.h{font-size:17px;font-weight:bold}
+.m{font-size:13px}
+.n{font-size:11.5px;fill:#666666}
+.c{font-size:11.5px;fill:#666666;font-family:'SF Mono',Menlo,Consolas,monospace}
+</style>
+
+<!-- user simulator -->
+<rect x="40" y="20" width="270" height="86" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="175" y="40">사용자 시뮬레이터(LLM)</text>
+<text class="l n" x="56" y="62">known_info: John Smith / 555-123-2002 / 프랑스 체류</text>
+<text class="l n" x="56" y="80">task_instructions: 점진적 공개 · 감정 · 사실 접지</text>
+<text class="l n" x="56" y="96">수용 기준: excellent만 해결로 인정</text>
+
+<!-- Agent -->
+<rect x="570" y="20" width="270" height="86" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="705" y="40">Agent(평가 대상)</text>
+<text class="l n" x="586" y="62">입력: 티켓 + 도메인 정책</text>
+<text class="l n" x="586" y="80">비가시: 사용자 단말의 실제 상태</text>
+<text class="l n" x="586" y="96">유도만 가능, 대행은 불가</text>
+
+<!-- dialogue -->
+<line x1="316" y1="63" x2="560" y2="63" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)" marker-start="url(#ah-r)"/>
+<text class="t n" x="438" y="50">다중 턴 대화</text>
+<text class="t n" x="438" y="80">점진적 정보 공개</text>
+
+<!-- shared environment -->
+<rect x="40" y="146" width="800" height="150" rx="6" fill="#f3f0e8" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="440" y="166">공유 환경(이중 제어: 양쪽 모두 상태 변경 가능)</text>
+<rect x="60" y="182" width="370" height="98" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="245" y="200" font-weight="bold">단말 쪽 상태</text>
+<text class="l n" x="76" y="222">비행기 모드 ON · 로밍 OFF · 데이터 절약 · 잔여 데이터</text>
+<text class="l c" x="76" y="246">사용자 도구: toggle_airplane_mode / toggle_roaming</text>
+<text class="l c" x="76" y="266">　　　　　check_status_bar / run_speed_test</text>
+<rect x="450" y="182" width="370" height="98" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="635" y="200" font-weight="bold">통신사 쪽 데이터베이스</text>
+<text class="l n" x="466" y="222">고객 C1001 · 회선 L1001/L1002/L1003 · 요금제 · 청구</text>
+<text class="l c" x="466" y="246">Agent 도구: get_customer_by_phone / get_data_usage</text>
+<text class="l c" x="466" y="266">　　　　　　enable_roaming / refuel_data</text>
+
+<line x1="175" y1="106" x2="175" y2="178" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="705" y1="106" x2="705" y2="178" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+
+<!-- re-read note -->
+<rect x="40" y="306" width="800" height="34" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text class="t n" x="440" y="323">사용자의 toggle_roaming으로 환경이 바뀌었다. Agent는 도구를 다시 호출해야 결과를 안다 — 검증은 이 재확인까지 포괄한다</text>
+
+<!-- verification -->
+<rect x="40" y="356" width="800" height="136" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="440" y="376">과제 종료 후: 네 층 검사 + 집계 규칙</text>
+<rect x="56" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="147" y="408">env_assertions</text>
+<text class="t n" x="147" y="428">모바일 데이터 사용 가능</text>
+<text class="t n" x="147" y="444">속도 ≥ 200 / excellent</text>
+<rect x="254" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="345" y="408">actions</text>
+<text class="t n" x="345" y="428">toggle_airplane_mode</text>
+<text class="t n" x="345" y="444">requestor는 user여야 함</text>
+<rect x="452" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="543" y="408">communicate_info</text>
+<text class="t n" x="543" y="428">필요 정보를 전달했는가</text>
+<text class="t n" x="543" y="444">이 과제에서는 null</text>
+<rect x="650" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="741" y="408">nl_assertions</text>
+<text class="t n" x="741" y="428">자연어 층위 판정</text>
+<text class="t n" x="741" y="444">이 과제에서는 null</text>
+<text class="t n" x="440" y="474">reward_basis = ["ENV_ASSERTION"]　→　첫 층만 채택. 나머지는 기록되나 보상에는 미반영</text>
+</svg>

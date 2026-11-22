@@ -1,11 +1,11 @@
-"""Compare the two sub-agent context-passing strategies (实验 4-3「对比效果」).
+"""Compare the two sub-agent context-passing strategies (实验 4-5「对比效果」).
 
 Spawns a sub-agent under BOTH `minimal` and `llm_generated` strategies on the
 SAME task and prints the difference (context tokens handed off, extra
 preparation cost, whether private data leaked, and each sub-agent's result).
 
 Run:
-    export OPENAI_API_KEY=sk-...        # or OPENROUTER_API_KEY (default model: gpt-5.6-luna)
+    export OPENAI_API_KEY=your-openai-api-key        # or OPENROUTER_API_KEY (default model: gpt-5.6-luna)
     python subagent_comparison.py
 """
 

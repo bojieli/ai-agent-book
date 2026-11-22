@@ -1,20 +1,42 @@
-# Bölüm 9 · Çok Modluluk ve Gerçek Zamanlı Etkileşim
+# Bölüm 9 · Agent'ın Kendi Kendine Evrimi
 
-> Algı ve eylemi metinden sese, GUI'ye ve fiziksel dünyaya genişletir. Üç ses paradigması (aşamalı zincir/uçtan uca tam modlu/tam çift yönlü), akış tabanlı ses algısı ve sentezi, Computer Use ve robot manipülasyonu.
+> Ağırlıkları değiştirmeden büyüme. Üç öğrenme paradigması, deneyimden öğrenme ve "araç kullanıcısından" "araç yaratıcısına" giden yolculuk; Agent'ların "akıllı"dan "usta"ya ilerlemesini sağlar.
 
 ← [Ana README'ye dön](../README.tr.md) · 📖 [Bölüm metnini oku](../book-tr/chapter9.tr.md)
 
+## Deneyler nasıl okunur
+
+Metin, kontrol akışını açıklamak için kısa mekanizma skeleton'ları kullanır; deney dizininde tam SDK adaptörleri, günlükler, testler ve kabul kanıtı bulunur. Her dosyayı satır satır okumanız gerekmez.
+
+- **Starter:** Hedef, en kısa komut ve kabul koşullarıyla başlayın; önce [trajectory-verifier](trajectory-verifier/);
+- **Builder:** Giriş noktasını, ana döngüyü, durum/mesaj şemasını, araçları ve doğrulayıcıyı izleyin.
+- **Maintainer:** Son olarak testleri, kanıt manifestlerini, hata işlemeyi, rollback yollarını ve sağlayıcı adaptörlerini okuyun.
+
+İlk okumada kimlik bilgisi yükleme, sunum katmanı ve sağlayıcı uyumluluğunu atlayıp sayıları yeniden üretirken dönün.
+
 ## Eşlik Eden Projeler
 
-| Proje | Tür | Açıklama |
-| --- | :--: | --- |
-| [live-audio](live-audio/) | ✅ | Konuşmadan metne, AI diyaloğu ve metinden konuşmayı entegre eden gerçek zamanlı bir sesli sohbet demosu. Birden çok AI hizmet sağlayıcısını destekler (OpenAI, OpenRouter, ARK, Siliconflow), düşük gecikmeli bir konuşma deneyimi sunar. |
-| `browser-use/` | 📖 | Browser-Use, LLM'lerin karmaşık görevleri tamamlamak için bir tarayıcıyı kontrol etmesini sağlayan güçlü bir tarayıcı otomasyon çerçevesidir. Form doldurma, web gezinme ve veri çıkarımı gibi senaryoları destekler; GUI otomasyonunun (Computer Use) tipik bir uygulaması olarak hizmet eder. |
-| `claude-quickstarts/` | 📖 | Çeşitli kullanım senaryolarını kapsayan Claude API için hızlı başlangıç örnekleri ve en iyi uygulamalar. |
-| [phone-agent](phone-agent/) | ✅ | "Kullanıcı adına telefon görüşmeleriyle dış dünyayla etkileşim kuran" bir sesli ajanı gösterir: üst katman standart bir ReAct ajanıdır. Doğal dil görevi aldığında aramanın sayısını ve amacını özerk olarak belirler, tüm konuşmayı tamamlamak için bir `make_phone_call` aracını (bir telefon API soyutlamasına dayalı) çağırır, yapılandırılmış arama günlüğünü okur, gerektiğinde başka bir arama yaparak takip soruları sorar ve sonunda kullanıcıya rapor verir. |
-| [end-to-end-speech](end-to-end-speech/) | ✅ | Step-Audio R1'in uçtan uca ses düşüncesine ("dinle→düşün→konuş") karşılık gelir; gecikmeyi ve paralinguistik kaybı ASR→LLM→TTS zincirleme yaklaşımıyla karşılaştırır. |
-| [streaming-speech](streaming-speech/) | ✅ | Akış tabanlı ses algısının temel ödünleşimini gösterir: sürekli sesi giderek uzayan segmentlere ayırır ve ASR'ye besler. Alınan her segment, erken metin çıktısı için son derece düşük ilk parça gecikmesi sağlamak üzere bir "mevcut kısmi tanıma sonucu" üretir. Bedeli, cümlenin ikinci yarısının bağlamından yoksun olan erken parçaların hatalı olabilmesi, ses biriktikçe kademeli olarak yakınsamasıdır. Bu, "tanımadan önce tüm cümleyi bekleme"nin yüksek doğruluk/yüksek gecikmeli yaklaşımıyla tezat oluşturur. |
-| [controllable-tts](controllable-tts/) | ✅ | Ana LLM'in çıktısı kontrol tokenleri taşır (duygu/konuşma hızı/stil/duraklama/kahkaha). Yürütme katmanı bu tokenleri ayrıştırır, bunları bir referans konuşma kütüphanesindeki karşılık gelen stil profillerine eşler, ardından konuşmayı sentezler. Bu, "nerede duraklanacağı ve hangi tonun kullanılacağı" kararlarını LLM'e devreder, aynı metnin farklı stil ve duygularla sentezlenmesine olanak tanır. |
+| Deney | Proje | Tür | Açıklama |
+| :--: | --- | :--: | --- |
+| 9-1 | [trajectory-verifier](trajectory-verifier/) | ✅ | Deney 9-1: ortam sonuçlarını, süreç kurallarını ve dil rubriklerini, müşteri hizmetleri izlencelerine ilişkin kanıta dayalı tanılarda birleştirir. |
+| 9-2 | [tau2-escalation-experience](tau2-escalation-experience/) | ✅ | Deney 9-2: τ²-bench telecom üzerinde bir model 19 başarısız trajectory'den devir ve araç kullanım kuralları çıkarır; 114 görevlik aktarım kümesinde geçme oranı %12,3 → %19,3, regresyon yok; [kanıt](tau2-escalation-experience/validation/evidence.json) çıkarım makbuzunu, kol başına politika hash'lerini ve davranış metriklerini saklar |
+| 9-3 | [prompt-auto-optimization](prompt-auto-optimization/) | ✅ | İnsan geri bildirimine dayalı otomatik sistem istemi öğrenimi: tau-bench tarzı havayolu müşteri hizmetleri "aşırı aktarma" sorununu örnek alarak, bir Coding Agent sistem istem dosyasını okur, sorunlu kuralları belirler, kesin değişiklikler üretir ve istem dosyasını gerçekten yeniden yazar. Ardından değişiklikleri yeniden değerlendirir, "geri bildirim → yeniden yazma → doğrulama" döngüsü oluşturur. |
+| 9-4 | Metin içi deney | 🚧 | Deney 9-4: kullanıcı geri bildiriminden "gereksinim netleştirme + Spec onayı" Skill'i geliştirir; metin üç kollu A/B tasarımını, metrikleri ve yayın kapılarını verir, eşlik eden uygulama henüz eklenmemiştir. |
+| 9-5 | [browser-use-rpa](browser-use-rpa/) | ✅ | Tarayıcı otomasyonu için bir iş akışı kayıt sistemi uygular; tekrarlanan işlem dizilerini otomatik olarak parametreli araçlara kapsüller. Pahalı LLM çıkarımından kesin otomatik yürütmeye geçerek 3-5 kat hız artışı sağlar. |
+| 9-6 | [self-modifying-agent](self-modifying-agent/) | ✅ | Deney 9-6: yinelenen hatalar yeniden deneme/devre kesici kod yamalarını tetikler; ardından regresyon testleri, canary yayını ve geri alma gelir. |
+| 9-7 | [harness-safety-gate](harness-safety-gate/) | ✅ | Yüksek riskli işlemler için onay kapısı. |
+| 9-8 | [hermes-self-evolution](hermes-self-evolution/) | 📖 | Deney 9-8: Hermes'e kitabın tamamını ve kendi kaynağını verir; bir iyileştirme seçip kendini değiştirir ve her Reviewer reddini kabul edilene kadar yeni bir öğrenme turuna dönüştürür. |
+| 9-9 | [self-evolution-eval](self-evolution-eval/) | ✅ | Deney 9-9: öğrenme, aktarım, kural değişimi ve korumayı kapsayan uzun vadeli üç kollu değerlendirme; 3 seed × 14 sıralı görev boyunca 126 gerçek çağrının kanıtını saklar. |
+
+Yukarıdaki tüm deneyler API Key gerektirmeyen çevrimdışı giriş noktaları ve birim testleri sunar; gerçek model veya tarayıcı gerektiren genişletme yolları her projenin README dosyasında belgelenmiştir.
+
+## Tamamlayıcı Örnekler
+
+| Deney | Proje | İlişki |
+| :--: | --- | --- |
+| 8-8 | [prompt-distillation](../chapter8/prompt-distillation/) | Prompt damıtma ve parametreli öğrenmenin bölümler arası projesi; eğitim yöntemi 8. bölüme aittir |
+| — | [self-evolving-tools](self-evolving-tools/) | Alita tarzı araç keşfi, kapsülleme ve yeniden kullanım — "deneyimi programa yazmanın" tamamlayıcı örneği |
+| — | [ai-style-skill](ai-style-skill/) | Yazım geri bildirimini doğrulanabilir Skill'e dönüştürür; bölüm, kıvrımlı tırnak Skill'ini denetlenmiş sentetik veri ve sonradan eğitimle ilişkilendirir, exact-copy tokenizer/Harness hatalarını ayırır. |
 
 ## Proje Türleri
 

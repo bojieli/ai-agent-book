@@ -149,6 +149,14 @@ class GrepTool(BaseTool):
         
         if search_path.is_file():
             # Single file
+            filename = search_path.name
+            if file_type:
+                extensions = type_extensions.get(file_type, [])
+                if not any(fnmatch.fnmatch(filename, ext) for ext in extensions):
+                    return []
+            if glob_pattern:
+                if not (fnmatch.fnmatch(filename, glob_pattern) or fnmatch.fnmatch(str(search_path), glob_pattern)):
+                    return []
             files = [search_path]
         else:
             # Directory - walk recursively
@@ -268,10 +276,17 @@ class GrepTool(BaseTool):
                 
                 # Find matching lines
                 matching_line_numbers = []
-                for i, line in enumerate(lines):
-                    if regex.search(line):
-                        matching_line_numbers.append(i)
-                
+                if (regex.flags & re.DOTALL) or (regex.flags & re.MULTILINE):
+                    full_content = "".join(lines)
+                    for match in regex.finditer(full_content):
+                        start_pos, end_pos = match.span()
+                        start_line = full_content.count('\n', 0, start_pos)
+                        end_line = full_content.count('\n', 0, max(start_pos, end_pos - 1 if end_pos > start_pos else start_pos))
+                        matching_line_numbers.extend(range(start_line, end_line + 1))
+                else:
+                    for i, line in enumerate(lines):
+                        if regex.search(line):
+                            matching_line_numbers.append(i)
                 if not matching_line_numbers:
                     continue
                 

@@ -12,7 +12,6 @@ from datetime import datetime
 from typing import Dict, Any, List
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -32,7 +31,7 @@ class ExperimentRunner:
     def __init__(self, results_dir: str = "results"):
         """Initialize experiment runner."""
         self.results_dir = Path(results_dir)
-        self.results_dir.mkdir(exist_ok=True)
+        self.results_dir.mkdir(parents=True, exist_ok=True)
         
         # Create timestamp for this experiment run
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -174,10 +173,11 @@ class ExperimentRunner:
         print("="*70)
 
         # Check for API key
-        api_key = os.getenv("MOONSHOT_API_KEY")
+        provider = os.getenv("LLM_PROVIDER", "moonshot").lower()
+        api_key = os.getenv("DASHSCOPE_API_KEY") if provider in {"dashscope", "qwen", "bailian"} else os.getenv("MOONSHOT_API_KEY")
         if not api_key and not os.getenv("OPENROUTER_API_KEY"):
-            print("\n⚠️ Warning: MOONSHOT_API_KEY not set. Skipping LLM experiment.")
-            print("📝 Please set your Kimi API key: export MOONSHOT_API_KEY='your-key-here'")
+            print(f"\n⚠️ Warning: API key for provider '{provider}' not set. Skipping LLM experiment.")
+            print("📝 Set DASHSCOPE_API_KEY for dashscope/qwen/bailian or MOONSHOT_API_KEY for moonshot/kimi")
             print("🔗 Get your key at: https://platform.moonshot.cn/")
             print("💡 Or set OPENROUTER_API_KEY as a universal fallback.")
             return None
@@ -190,6 +190,7 @@ class ExperimentRunner:
         agent = LLMAgent(
             api_key=api_key,
             model=model,
+            provider=provider,
             temperature=0.7,
             max_experiences=50
         )
@@ -220,11 +221,21 @@ class ExperimentRunner:
         # Compile results
         results = {
             "method": "LLM In-Context Learning",
+            "provider": agent.provider,
+            "base_url": agent.base_url,
+            "model": agent.model,
+            "using_openrouter": agent.using_openrouter,
             "training_episodes": num_training_episodes,
+            "evaluation_episodes": num_eval_episodes,
             "training_time": training_time,
             "experiences_collected": train_results["experiences_collected"],
-            "api_calls": train_results["total_api_calls"],
-            "total_tokens": train_results["total_tokens"],
+            "api_calls": agent.api_calls,
+            "api_attempts": len(agent.api_records),
+            "api_errors": sum(1 for item in agent.api_records if item.get("error")),
+            "fallback_actions": sum(
+                1 for item in agent.api_records if item.get("fallback_used")
+            ),
+            "total_tokens": agent.total_tokens,
             "training_victories": train_results["total_victories"],
             "training_victory_rate": train_results["victory_rate"],
             "eval_victories": eval_results["victories"],
@@ -232,7 +243,11 @@ class ExperimentRunner:
             "eval_avg_reward": eval_results["avg_reward"],
             "eval_avg_steps": eval_results["avg_length"],
             "episode_rewards": train_results["episode_rewards"],
-            "episode_lengths": train_results["episode_lengths"]
+            "episode_lengths": train_results["episode_lengths"],
+            "training_trajectories": [
+                item for item in agent.episode_trajectories
+                if item["phase"] == "training"
+            ],
         }
         
         # Save experiences

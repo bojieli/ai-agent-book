@@ -8,7 +8,6 @@ import re
 import logging
 from collections import defaultdict, Counter
 from typing import List, Dict, Set, Tuple, Optional
-import json
 
 # Configure logging for educational purposes
 logging.basicConfig(
@@ -61,14 +60,16 @@ class TextProcessor:
             r'#[0-9A-Fa-f]{3,8}\b|0x[0-9A-Fa-f]+\b',
             # Numbers (including decimals)
             r'\b\d+(?:\.\d+)?\b',
+            # Words with apostrophes
+            r"\b[a-zA-Z]+'[a-zA-Z]+\b",
             # Acronyms and uppercase words (USA, NASA, API)
             r'\b[A-Z]{2,}\b',
             # Mixed case words (JavaScript, PyTorch)
             r'\b[A-Z][a-z]+[A-Z][a-zA-Z]*\b',
             # Alphanumeric combinations (Python3, ES6, 3DS)
             r'\b[A-Za-z]+\d+\b|\b\d+[A-Za-z]+\b',
-            # Regular words (including apostrophes)
-            r"\b[a-zA-Z]+(?:'[a-z]+)?\b",
+            # Regular words
+            r"\b[a-zA-Z]+\b",
         ]
         
         # Combine all patterns
@@ -147,6 +148,19 @@ class InvertedIndex:
         logger.info(f"Adding document {doc_id} to index")
         logger.debug(f"Document text: {text[:100]}..." if len(text) > 100 else f"Document text: {text}")
         
+        is_update = doc_id in self.documents
+        if is_update:
+            old_terms = set(self.term_frequency.get(doc_id, Counter()).keys())
+            for term in old_terms:
+                if term in self.index and doc_id in self.index[term]:
+                    self.index[term].remove(doc_id)
+                    if not self.index[term]:
+                        del self.index[term]
+                    if term in self.document_frequency:
+                        self.document_frequency[term] -= 1
+                        if self.document_frequency[term] <= 0:
+                            del self.document_frequency[term]
+
         # Store original document
         self.documents[doc_id] = text
         if metadata:
@@ -164,16 +178,13 @@ class InvertedIndex:
         
         logger.debug(f"Document {doc_id}: {len(tokens)} tokens, {len(term_freq)} unique terms")
         
-        # Update inverted index
         for term in term_freq:
+            if term not in self.index or doc_id not in self.index[term]:
+                self.document_frequency[term] = self.document_frequency.get(term, 0) + 1
             self.index[term].add(doc_id)
-            
-        # Update document frequency
-        for term in term_freq:
-            if doc_id not in self.index[term]:
-                self.document_frequency[term] += 1
         
-        self.total_documents += 1
+        if not is_update:
+            self.total_documents += 1
         self._update_statistics()
         
         logger.info(f"Document {doc_id} indexed successfully")
@@ -253,18 +264,40 @@ class BM25:
         
         logger.info(f"BM25 initialized with k1={k1}, b={b}, avgdl={self.avgdl:.2f}")
     
-    def calculate_idf(self, term: str) -> float:
-        """Calculate Inverse Document Frequency for a term"""
+    def calculate_raw_idf(self, term: str) -> float:
+        """Calculate the Robertson/Sparck Jones IDF printed in Chapter 3."""
         N = self.index.total_documents
         df = len(self.index.get_posting_list(term))
         
         if df == 0:
             return 0
         
-        # BM25 IDF formula
-        idf = math.log((N - df + 0.5) / (df + 0.5) + 1)
+        N = max(N, df)
+        val = (N - df + 0.5) / (df + 0.5)
+        if val <= 0:
+            return 0.0
+        return math.log(val)
+
+    def calculate_idf(self, term: str) -> float:
+        """Return RSJ IDF with a small floor for corpus-ubiquitous terms.
+
+        Raw RSJ IDF is negative when a term occurs in more than half of a tiny
+        corpus.  Letting that value flow into ranking perversely rewards a
+        document for matching fewer query terms.  Production BM25 variants
+        conventionally floor or smooth that edge case; the raw value remains
+        available through :meth:`calculate_raw_idf` for transparent teaching
+        and hand calculation.
+        """
+        df = len(self.index.get_posting_list(term))
+        if df == 0:
+            return 0
+        raw_idf = self.calculate_raw_idf(term)
+        idf = max(raw_idf, 1e-6)
         
-        logger.debug(f"IDF for '{term}': N={N}, df={df}, idf={idf:.4f}")
+        logger.debug(
+            f"IDF for '{term}': N={self.index.total_documents}, df={df}, "
+            f"raw_idf={raw_idf:.4f}, scoring_idf={idf:.4f}"
+        )
         return idf
     
     def calculate_term_score(self, term: str, doc_id: int) -> float:
@@ -281,6 +314,8 @@ class BM25:
         idf = self.calculate_idf(term)
         
         # BM25 term score formula
+        if self.avgdl == 0:
+            return 0.0
         numerator = tf * (self.k1 + 1)
         denominator = tf + self.k1 * (1 - self.b + self.b * (dl / self.avgdl))
         score = idf * (numerator / denominator)
@@ -329,7 +364,7 @@ class BM25:
             docs = self.index.get_posting_list(term)
 
             # If no exact match and term is not a number/code, try lowercase
-            if not docs and not term[0].isdigit() and '-' not in term:
+            if not docs and term and not term[0].isdigit() and '-' not in term:
                 lowered = term.lower()
                 docs = self.index.get_posting_list(lowered)
                 if docs:

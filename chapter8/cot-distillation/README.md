@@ -1,0 +1,289 @@
+# 从教师轨迹构造学生训练数据
+
+教师模型的回答可能包含有用步骤，也可能包含错误或冗余。本实验从生成、验证、筛选到训练学生，学习为什么蒸馏质量取决于数据处理，而不只是教师更强。
+
+[English](#english)
+
+建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4)。
+
+<a id="learning-0"></a>
+
+## 理解问题与方法
+
+教师轨迹先经过答案检查，再转成监督样本。训练时需要区分输入与目标词元，避免把不该预测的部分计入损失。学生评估使用未见题目，才能检查学到的是否超过样例记忆。
+
+### CoT 蒸馏：从前沿云模型采集 SFT 数据
+
+配套书中**实验 8-9（思维链蒸馏）**。SFT 的第一步是拿到高质量示范数据，而获取
+SFT 数据最高效的方式就是**蒸馏前沿模型**：通过大规模 API 调用，把教师模型的
+"思考 + 答案"轨迹采集下来，经规则验证器过滤后作为学生模型的训练数据
+（DeepSeek-R1 蒸馏小模型走的就是这条路线）。
+
+#### 方法
+
+三步流程（完整对应实验 8-9，而非只停在采集轨迹）：
+
+1. **采样任务**：`problems.jsonl` 内置 24 道 AIME 真题（1986–2024 年，按题号
+   难度分层抽样：P1–5/P6–10/P11–15 各 8 道，已剔除含图形的题），答案是
+   0–999 的整数，可以用规则验证器自动判对错。`problems_zh.jsonl` 另附 24 道
+   简单中文数学题（鸡兔同笼、工程问题等），适合低成本冒烟测试。
+2. **采集轨迹**：`generate_data.py` 通过 OpenRouter 调用教师模型
+   （默认 `anthropic/claude-opus-4.8`），开启 `reasoning` 参数获取思维链。
+   注意：Claude API 返回的是 **summarized thinking**（由单独的摘要模型改写，
+   逐 token 的原始思维链只存在于加密的 `signature` 字段中，API 不暴露），
+   且模型越新摘要越激进（见文末实测）。若需要逐 token 原文，
+   推荐直接用开放模型原生 API，例如 Kimi K3（见下文对照实验的运行参数）。
+3. **验证过滤**：用规则验证器核对 `Final Answer` 数值，只保留答对的轨迹，
+   写成 `问题 → <think>思考</think> + 最终答案` 的 messages 格式 SFT 数据。
+   错误的思考过程会被学生一并模仿，所以这一步不能省。
+4. **学生 SFT**：`train_student.py` 对提示 token 做 loss mask，只在教师的
+   `<think>…</think> + 最终答案` 上回传梯度；真实 CUDA 训练后写出 checkpoint、
+   数据 SHA、基模、GPU、超参数和训练指标。脚本没有 mock 或 CPU 假成功路径。
+5. **同集对照验收**：`evaluate_student.py` 在同一批题上运行未训练基线与学生，
+   并复用保存的真实 API 教师轨迹；报告三臂准确率、配对胜负、精确双侧检验、
+   教师能力恢复比例，以及反思/回溯/验算行为。只有学生显著优于基线且这些
+   行为在真实输出中出现时，机器可读结果才标为 `complete`。
+
+#### 教师模型怎么选：默认开源 SOTA，不必盯着闭源
+
+对绝大多数做后训练的人来说，**不需要**去蒸馏闭源模型的思维链。当前最先进的
+开源模型（DeepSeek V4、Kimi K3、GLM 5.2 等）与 SOTA 闭源模型的差距并没有
+想象中大；如果你要后训练的是 200B 及以下规模的模型，用开源 SOTA 模型当教师
+已经完全够用——教师的水平只需要"明显高于学生"，不需要"全球第一"。
+
+本目录保留 Claude 的采集结果，目的是做一个对照：**闭源 API 的
+summarized thinking 和开源模型的原始思维链，作为 SFT 数据到底有什么差别**。
+
+> 合规说明：本实验只使用各厂商官方 API 提供的 reasoning/thinking 能力获取思维链
+> （Claude 在 API 中返回 summarized thinking，Kimi K3、DeepSeek 等开放模型直接
+> 返回原始思维链），不涉及任何绕过厂商安全机制的手段。对闭源模型，
+> 蒸馏产物的使用需遵守对应服务商的条款。
+
+#### 运行
+
+```bash
+# 在仓库根目录使用统一的第 7 章环境
+uv sync --locked --python 3.12 --extra ch7
+
+# 切换目录前先激活环境：
+# macOS/Linux：
+source .venv/bin/activate
+# Windows PowerShell：.\.venv\Scripts\Activate.ps1
+# Windows cmd：.venv\Scripts\activate.bat
+
+# 未安装 uv 时可用 pip 兜底：
+# python -m pip install -e ".[ch7]"
+
+cd chapter8/cot-distillation
+
+# 迁移期间仍支持单项目兼容路径：
+# python -m pip install -r requirements.txt
+
+export OPENROUTER_API_KEY=your-openrouter-api-key
+
+# 小规模冒烟（2 道题）
+python generate_data.py --max_problems 2 \
+  --sft_output /tmp/smoke_sft.jsonl --raw_output /tmp/smoke_raw.jsonl
+
+# 全量采集（24 道 AIME 题；Opus 4.8 输出约 4 万 token，Kimi K3 约 6 万）
+python generate_data.py
+
+# 数据统计
+python analyze_data.py
+
+# 第二步：真实学生参数训练（需要 CUDA）
+python train_student.py --preflight
+python train_student.py \
+  --train-data data/sft_cot_distill_aime_kimi_k3.jsonl \
+  --base-model Qwen/Qwen2.5-1.5B-Instruct \
+  --output-dir checkpoints/cot-student
+
+# 第三步：基线 / 学生 / 教师同题对照
+python evaluate_student.py \
+  --baseline-model Qwen/Qwen2.5-1.5B-Instruct \
+  --student-model checkpoints/cot-student \
+  --teacher-data data/raw_trajectories_aime_kimi_k3.jsonl \
+  --output validation/experiment_8_9.json
+```
+
+常用参数：`--model` 换教师模型、`--base_url`/`--api_key_env` 换端点、
+`--reasoning_effort`（Opus 4.8 等自适应思考模型）与 `--reasoning_max_tokens`
+（Sonnet 4.5 等手动预算模型）控制思维链、`--concurrency` 并发数、
+`--max_retries` 失败重试次数（重试时自动升温换取不同轨迹）、
+`--request_timeout` 单请求硬超时（采集长思考模型时必备，见文末工程教训）。
+
+#### 输出
+
+| 文件 | 内容 |
+| --- | --- |
+| `data/sft_cot_distill_aime.jsonl` | Claude Opus 4.8 的 SFT 训练数据（messages 格式，思维链包在 `<think>` 标签内） |
+| `data/sft_cot_distill_aime_kimi_k3.jsonl` | Kimi K3 的 SFT 训练数据 |
+| `data/raw_trajectories_*.jsonl` | 全部原始轨迹（含未通过验证的），用于分析教师错误模式 |
+| `data/*_zh*.jsonl` | 中文简单题（`problems_zh.jsonl`）的归档采集结果 |
+| `train_student.py` | 真实 SFT 参数更新；提示 token mask、LoRA/全参训练和训练 manifest |
+| `evaluate_student.py` | 同题三臂评测、配对显著性与教师式行为验收 |
+
+当前仓库保存了 24/24 Kimi K3 AIME 完整轨迹。规则验证器接受其中 23 条进入 SFT；
+`aime-2016-9-I` 在原生 low-reasoning 控制下完成，但答案错误，因此被正确拒绝。
+第二步与第三步已在 RTX PRO 6000 Blackwell Workstation Edition 上完成
+真实 CUDA 训练：[`student_sft_preflight_20260801_gpu.json`](validation/student_sft_preflight_20260801_gpu.json)
+证明训练栈可用；[`training_manifest.json`](checkpoints/exp8-9-qwen25-1.5b-kimi-k3-20260801-v1/training_manifest.json)
+记录了 Qwen2.5-1.5B-Instruct + LoRA 的真实参数更新（3 epochs，约 27 秒，最终 loss
+2.17）；[`experiment_8_9_complete_20260803_v2.json`](validation/experiment_8_9_complete_20260803_v2.json)
+给出同题三臂对照：基线 1/24、学生 2/24、教师 23/24，配对检验 p=1.0 不显著，能力
+恢复比例约 4.5%。
+
+学生输出中确实出现了少量反思/验算行为，但总体与基线接近。
+实验执行与证据状态为 **complete**；配对提升不显著是本次实验的负结果，而不是缺失门禁。
+若要检验更强的蒸馏效果，下一轮应扩大已验证训练集后重新训练，而不是把负结果改写成成功。
+
+#### AIME 实测：三位教师的对照（24 题）
+
+| | Claude Sonnet 4.5 | Claude Opus 4.8 | Kimi K3 |
+| --- | --- | --- | --- |
+| 验证通过率 | 22/24 | 24/24 | 23/24 |
+| 思维链性质 | 摘要，近 1:1 保真 | 摘要，激进压缩 | 原始思维链直出 |
+| 原始/可见 token 比（精确对账） | 1.03–1.09 | **2.41** | **1.007** |
+| 可见思维链规模 | 中位 6.2k 字符 | 均值 536 token | 均值 2.5k token |
+| 无思维链的题 | 0 | 3（自适应思考跳过） | 0 |
+| `reasoning_tokens` 字段可信度 | 虚低至 55%–75%（OpenRouter 侧） | 同样虚低 | 准确（1.001） |
+
+token 对账方法：用模型自身 tokenizer（`max_tokens=1` 探针读 `prompt_tokens`）
+数出可见思维链与正文的 token 数，`completion_tokens − 正文 token` 即为计费的
+原始思考量。OpenRouter 返回的 `reasoning_tokens` 详情字段对 Claude 系统性虚低，
+做成本核算时不可直接采信。
+
+三个对后训练有直接意义的观察：
+
+1. **模型越新，思维链围墙越高。** 同是 Claude，Sonnet 4.5 的摘要还接近逐字，
+   Opus 4.8 已压到不足一半、且 3 道题完全不给思维链。思维链透明度在持续收紧。
+2. **教师能力 ≠ 可蒸馏性。** Opus 4.8 答对率最高，给出的蒸馏材料却最差
+   （摘要稀疏、截断、缺失）；Kimi K3 少对 1 题，但每条轨迹都是完整原文。
+   选教师要同时看"会不会做"和"给不给看"。
+3. **原始思维链含元噪声。** Kimi K3 的原文里有英文元思考、输出格式纠结
+   （曾在简单题上用 700+ token 争论该写 `16` 还是 `16%`）、中途自我打断。
+   答案验证器滤不掉这类噪声，用它做 SFT 前值得加一道清洗或重写。
+
+工程教训（也是书中"数据管线健壮性"的实例）：Kimi K3 在个别 AIME 题上思考
+超过 15 分钟（aime-2016-9-I 三次尝试均超 900 秒，最终放弃该题），且
+Moonshot 端会出现"停止发送但不关闭连接"的半开状态。采集 pipeline 必须：
+每题完成即落盘（本脚本增量写入 `raw_trajectories`）、用 `asyncio.wait_for`
+做硬超时（httpx 读超时对半开连接无效）、失败可重试。
+
+#### 中文简单题归档结果
+
+`problems_zh.jsonl`（24 道中学数学题）上两位教师均 24/24 通过，思维链短
+（Claude 摘要均值约 290 字符，Kimi 原文均值约 165 token），适合几分钟、
+几分钱成本验证 pipeline 是否工作，再切换到 AIME 或自己的目标分布。
+
+规模化的做法是把 `problems.jsonl` 换成目标分布的题目来源（如 GSM8K、MATH
+训练集），提高并发，并按书中"数据质量三维度"控制覆盖面、多样性与标注准确性。
+
+<a id="learning-1"></a>
+
+## 准备环境与输入
+
+下面会用到模型服务。先按配置说明选择一个提供商，准备对应的模型名称、服务地址和 API Key，再运行小规模例子。一次完整运行的费用取决于模型、输入长度和调用次数。
+
+<a id="learning-2"></a>
+
+## 按照步骤完成实验
+
+先只生成少量轨迹，人工核对题目、推理与答案。查看数据审计结果，确认错误样本怎样被处理，再按下文运行学生训练与成对评估。
+
+<a id="learning-3"></a>
+
+## 分析结果与形成判断
+
+最终答案正确不一定保证每个中间步骤都正确。还要观察教师轨迹是否包含反思或回溯，以及学生在新题上是否保持这种有用行为。
+
+### 检查自己的解释
+
+一条很长但正确的轨迹与一条简短正确的轨迹，哪条更适合学生？需要依据什么比较？
+
+<a id="learning-4"></a>
+
+## 阅读实现与继续探索
+
+### 代码阅读顺序
+
+- **Run first:** python generate_data.py --max_problems 2 (a bounded teacher-trajectory smoke).
+- **Start here:** generate_data.py produces raw and verified trajectories.
+- **Core behavior:** train_student.py masks prompt tokens and updates the student; evaluate_student.py runs the paired comparison.
+- **State / protocol:** JSONL messages, answer-validation fields, checkpoint directory and training manifest.
+- **Verifier:** exact answer validator, paired sign test and reflection/backtracking audit.
+- **Experiment variable:** teacher endpoint/model, sampling budget, student base model and LoRA settings.
+- **Skip on first pass:** provider retry code, tokenizer diagnostics and long raw trajectory files.
+
+## English
+
+# CoT Distillation: Collecting SFT Data from Frontier Cloud Models
+
+This experiment implements all three manuscript stages: auditable collection of
+verified teacher trajectories, a real student parameter-update run, and a
+paired baseline/student/teacher evaluation with explicit completion gates.
+
+## Method
+
+The pipeline loads problems, asks a selected teacher model to produce worked solutions, extracts the final answer, and keeps only samples that pass answer validation. `train_student.py` then masks prompt tokens and trains only on the teacher assistant trajectory; it emits a real checkpoint and a content-hashed training manifest. `evaluate_student.py` runs the baseline and trained student on the same problems, reuses the saved real teacher trajectories, computes an exact paired sign test, and audits reflection/backtracking/verification behavior.
+
+## Choosing a teacher model
+
+The default does not have to be a closed-source model. A strong open model served through an OpenAI-compatible endpoint is often cheaper, easier to reproduce, and sufficient for data collection. Closed models remain useful as comparison teachers.
+
+## Run
+
+```bash
+# From the repository root: use the shared Chapter 7 environment
+uv sync --locked --python 3.12 --extra ch7
+
+# Activate it before changing directories:
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .\.venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+
+# pip fallback when uv is not installed:
+# python -m pip install -e ".[ch7]"
+
+cd chapter8/cot-distillation
+
+# Single-project compatibility path, still supported during migration:
+# python -m pip install -r requirements.txt
+
+cp env.example .env
+
+# Small smoke test with two problems
+python generate_data.py --max_problems 2
+
+# Collect the full set of 24 AIME problems
+python generate_data.py
+
+# Inspect dataset statistics
+python analyze_data.py
+
+# Real parameter update (CUDA; no mock/CPU success fallback)
+python train_student.py --preflight
+python train_student.py --train-data data/sft_cot_distill_aime_kimi_k3.jsonl \
+  --output-dir checkpoints/cot-student
+
+# Same-problem baseline/student/teacher comparison
+python evaluate_student.py --student-model checkpoints/cot-student \
+  --teacher-data data/raw_trajectories_aime_kimi_k3.jsonl
+```
+
+Provider, model, concurrency, retry, and output settings can be configured through command-line arguments and environment variables. See `python generate_data.py --help` for the complete list.
+
+## Output
+
+Each accepted JSONL row contains the problem, messages, teacher metadata, extracted answer, reference answer, and validation result. Failed or invalid generations are recorded separately so collection runs remain auditable.
+
+## AIME comparison
+
+The included notes compare three teachers over 24 AIME problems, covering answer accuracy, accepted sample counts, token use, latency, and estimated cost. Results depend on model versions and provider conditions, so rerun the experiment before making a production choice.
+
+## Archived simple Chinese problems
+
+Earlier easy Chinese arithmetic samples are retained as historical artifacts. They are useful for smoke testing but are not a meaningful reasoning benchmark.
+
+---

@@ -8,9 +8,14 @@ import shutil
 import time
 import base64
 import psutil
+import shlex
+import sys
+from pathlib import Path
 from typing import Dict, Any, Optional, List
 from enum import Enum
 import logging
+
+from config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +38,25 @@ async def get_all_output(stream) -> str:
     except Exception as e:
         logger.debug(f"Error reading output: {e}")
         return ""
+
+
+BASH_MISSING_ERROR = (
+    "bash not found: code_interpreter and virtual_terminal run commands through bash. "
+    "On Windows, run the project inside WSL or install Git for Windows so that "
+    "`bash` (Git Bash) is on PATH."
+)
+
+
+def find_bash() -> Optional[str]:
+    """Locate the bash used to run tool commands, or None when there is none.
+
+    POSIX keeps the historical /bin/bash. Windows has no bash of its own, so
+    the only candidates are a bash.exe on PATH: Git for Windows, MSYS2, or the
+    WSL launcher.
+    """
+    if os.name != "nt" and os.path.exists("/bin/bash"):
+        return "/bin/bash"
+    return shutil.which("bash")
 
 
 def kill_process_tree(pid: int):
@@ -149,16 +173,22 @@ class LanguageExecutor:
     ) -> Dict[str, Any]:
         """Run a shell command and return results with proper process management."""
         process = None
+        bash = find_bash()
+        if bash is None:
+            logger.error(BASH_MISSING_ERROR)
+            return {"status": ExecutionStatus.ERROR, "error": BASH_MISSING_ERROR}
         try:
             logger.debug(f'Running command: {command[:100]}...')
-            
-            process = await asyncio.create_subprocess_shell(
-                command,
+
+            # `bash -c` through exec rather than create_subprocess_shell(executable=...):
+            # with shell=True Windows always wraps the command in `cmd.exe /c`, so a
+            # replacement executable would be handed cmd's arguments instead.
+            process = await asyncio.create_subprocess_exec(
+                bash, '-c', command,
                 stdin=asyncio.subprocess.PIPE if stdin else None,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=cwd,
-                executable='/bin/bash'
             )
             
             # Write stdin if provided
@@ -260,6 +290,31 @@ class LanguageExecutor:
             return True
         except Exception:
             return False
+
+    def _is_docker_available(self) -> bool:
+        """Return whether both the Docker CLI and daemon are available."""
+        if not shutil.which("docker"):
+            return False
+        try:
+            result = subprocess.run(
+                ["docker", "info"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return False
+        return result.returncode == 0
+
+    def _temporary_dir(self, prefix: str):
+        """Create an execution directory inside the configured workspace."""
+        base_dir = Path(self.workspace_dir).resolve() / ".execution-tmp"
+        base_dir.mkdir(parents=True, exist_ok=True)
+        return tempfile.TemporaryDirectory(
+            prefix=prefix,
+            dir=base_dir,
+            ignore_cleanup_errors=True,
+        )
     
     async def _run_python(
         self,
@@ -270,19 +325,50 @@ class LanguageExecutor:
         files: Dict[str, str]
     ) -> Dict[str, Any]:
         """Execute Python code."""
-        with tempfile.TemporaryDirectory(prefix='python_', ignore_cleanup_errors=True) as tmp_dir:
+        with self._temporary_dir(prefix='python_') as tmp_dir:
             self._write_files(tmp_dir, files)
             code_file = os.path.join(tmp_dir, 'main.py')
             with open(code_file, 'w', encoding='utf-8') as f:
                 f.write(code)
             
-            # Use python3 with unbuffered output
-            result = await self._run_command(
-                f'python3 -u {code_file}',
-                timeout,
-                stdin,
-                tmp_dir
-            )
+            # Run untrusted Python in a real container boundary when Docker is
+            # available: no network, read-only rootfs, bounded memory/CPU/PIDs,
+            # and only the one ephemeral work directory mounted writable.
+            if self._is_docker_available():
+                image = Config.PYTHON_DOCKER_IMAGE
+                mount = shlex.quote(
+                    "type=bind,"
+                    f"source={Path(tmp_dir).resolve().as_posix()},"
+                    "target=/workspace"
+                )
+                command = (
+                    "docker run --rm --network none --memory 256m --cpus 1 "
+                    "--pids-limit 64 --read-only "
+                    "--tmpfs /tmp:rw,nosuid,nodev,noexec,size=16m "
+                    f"--mount {mount} -w /workspace {shlex.quote(image)} "
+                    "python -I -B -u main.py"
+                )
+                result = await self._run_command(command, timeout, stdin, tmp_dir)
+                result["sandbox"] = {
+                    "kind": "docker",
+                    "image": image,
+                    "network": "none",
+                    "rootfs": "read-only",
+                    "memory": "256m",
+                    "cpus": 1,
+                    "pids_limit": 64,
+                }
+            else:
+                result = await self._run_command(
+                    # The interpreter running this tool, as a forward-slash path so the
+                    # command also parses under Git Bash on Windows.
+                    f'{shlex.quote(Path(sys.executable).as_posix())} -I -B -u '
+                    f'{shlex.quote(Path(code_file).as_posix())}',
+                    timeout,
+                    stdin,
+                    tmp_dir
+                )
+                result["sandbox"] = {"kind": "local-process", "degraded": True}
             result['language'] = 'python'
             return result
     
@@ -606,7 +692,7 @@ class LanguageExecutor:
             os.chmod(code_file, 0o755)
             
             result = await self._run_command(
-                f'bash {code_file}',
+                f'bash {shlex.quote(Path(code_file).as_posix())}',
                 timeout,
                 stdin,
                 tmp_dir

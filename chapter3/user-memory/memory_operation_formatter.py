@@ -32,20 +32,20 @@ def format_memory_operations(operations: List[Dict[str, Any]], verbose: bool = F
             'update': '📝',
             'delete': '🗑️'
         }
-        icon = icon_map.get(op['action'], '❓')
+        action = str(op.get('action') or 'unknown').lower()
+        icon = icon_map.get(action, '❓')
         
         # Main operation line
-        lines.append(f"{i}. {icon} {op['action'].upper()}")
+        lines.append(f"{i}. {icon} {action.upper()}")
         
-        # Content or memory ID
+        if op.get('memory_id'):
+            lines.append(f"   Memory ID: {op['memory_id']}")
         if op.get('content'):
             content = op['content']
             # Truncate if too long and not verbose
             if not verbose and len(content) > 100:
                 content = content[:97] + "..."
             lines.append(f"   Content: {content}")
-        elif op.get('memory_id'):
-            lines.append(f"   Memory ID: {op['memory_id']}")
         
         # Reason
         if op.get('reason'):

@@ -1,11 +1,264 @@
 # Log Sanitization / 日志脱敏
 
+日志能帮助定位错误，也可能包含账号、联系方式或凭据。本实验学习怎样识别并替换敏感字段，同时让剩余信息仍足以解释程序发生了什么。
+
+[English](#english)
+
+建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+
+<a id="learning-0"></a>
+
+## 理解问题与方法
+
+规则方法适合格式稳定的字段，模型方法可以利用上下文识别更复杂的信息。脱敏需要同时考虑漏检和过度删除：只追求遮盖得多，可能让错误时间、调用关系或状态信息也无法使用。
+
+### 概述
+
+演示如何从 Agent 的日志与工具输出中检测并脱敏敏感信息。提供**两种互补的脱敏引擎**：
+
+1. **离线规则引擎（regex，默认）** —— 纯正则表达式 + 校验算法（Luhn、身份证校验码），**无需 Ollama、无需网络、无需外部框架**，结果确定、速度快，适合作为日志落盘前的第一道防线。同时覆盖 Agent 场景中最常泄露的**密钥类**敏感信息（API Key、云厂商令牌、私钥、连接串口令）与传统 **PII**（身份证、手机号、信用卡、邮箱等）。
+2. **本地 LLM 引擎（llm）** —— 通过 Ollama 调用本地小模型（默认 `qwen3:0.6b`）语义识别 Level 3 PII。呼应本章「小模型也能胜任结构化任务」的论点，同时也暴露小模型的局限（例如可能返回带描述前缀的值而非原始字符串，导致回填失败）。
+
+> 想快速看效果，直接运行 `python main.py --demo`（离线，无需任何依赖）即可看到多个代表性样本的 before/after 对比与脱敏类别汇总。
+
+### Level 3 PII 类别（LLM 引擎）
+
+隐私架构中的高敏感信息，包括：社保号、信用卡、银行账号、病历号、诊断与治疗信息、处方、驾照、护照、金融 PIN、税号、医保 ID、生物特征数据等。
+
+### 功能
+
+- **离线规则引擎**：正则 + Luhn/身份证校验；覆盖密钥/机密与 PII；无需模型与网络
+- **本地 LLM**：Ollama + 小模型（默认 `qwen3:0.6b`）做隐私友好的 PII 检测
+- **内部推理**：通过 `<think>` 展示模型思考过程
+- **流式输出**：实时显示思考与检测进度
+- **性能指标**：TTFT、token 数、处理速度
+- **批量处理**：user-memory-evaluation 框架的 Layer 3 用例
+- **详细指标**：prefill / 输出时间与两阶段 tok/s
+
+### 输出结构
+
+脱敏日志与指标保存在 `output/` 目录：
+
+```
+output/
+├── <test_id>_sanitized.txt    # 脱敏后的对话文本
+├── <test_id>_summary.json     # 发现与替换的 PII 摘要
+├── performance_metrics.json   # 详细性能指标
+└── performance_summary.json   # 聚合性能统计
+```
+
+### 架构
+
+1. **regex_sanitizer.py**：离线规则脱敏（正则 + Luhn/身份证校验）  
+2. **samples.py**：离线演示用的代表性 Agent 日志样本  
+3. **config.py**：Ollama 模型与 PII 类别配置  
+4. **test_loader.py**：从 user-memory-evaluation 加载用例（支持模块，不是 pytest）
+5. **agent.py**：基于 Ollama 的 LLM 脱敏逻辑  
+6. **metrics.py**：性能指标采集与报告  
+7. **main.py**：入口与编排  
+8. **tests/**：离线 pytest 回归测试与手动加载器调试助手
+
+### 工作原理（LLM 路径）
+
+1. 从 user-memory-evaluation 加载对话历史  
+2. 将每段对话送入本地 Qwen3，用专用提示检测 Level 3 PII  
+3. 将检出值替换为 `[REDACTED]`  
+4. 采集性能指标  
+5. 将脱敏日志与性能摘要写入 `output/`
+
+### 隐私考量
+
+- 默认本地 Ollama 路径不向外部 API 发送数据  
+- 若走 OpenRouter 回退则会离开本机  
+- 脱敏日志使用占位符；任何原始 PII 日志都应妥善保管
+
+<a id="learning-1"></a>
+
+## 准备环境与输入
+
+先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+
+### 安装
+
+#### 1. 安装 Ollama（仅 LLM 路径需要）
+
+> **通用回退（OpenRouter）**：本实验默认用本地 Ollama 小模型。若 Ollama 不可用（未运行 / 不可达）且设置了 `OPENROUTER_API_KEY`，Agent 会自动改走 OpenRouter（默认托管模型 `openai/gpt-5.6-luna`）。想强制走回退做验证，可把 Ollama 指到一个不可达端口：`export OLLAMA_HOST=http://127.0.0.1:1`。
+
+**macOS:**
+```bash
+brew install ollama
+ollama serve  # 另开终端
+```
+
+**Linux:**
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+systemctl start ollama
+```
+
+**Windows:** 从 [ollama.com](https://ollama.com/download/windows) 下载
+
+> 说明：以下 Ollama 相关步骤仅在使用 `--mode llm`（本地 LLM 引擎）或运行 LLM 批量评测路径时才需要。离线规则引擎（`--demo`、`--input`）只依赖 Python 标准库，无需安装 Ollama。
+
+#### 2. 拉取模型
+```bash
+ollama pull qwen3:0.6b
+```
+
+0.6B 模型约需 500MB 磁盘；可按需换用 `qwen3:1.7b`、`qwen3:4b` 提升准确率。
+
+#### 3. 安装 Python 依赖
+```bash
+# 在仓库根目录使用统一的第 3 章环境
+uv sync --locked --python 3.12 --extra ch3
+
+# 切换目录前先激活环境：
+# macOS/Linux：
+source .venv/bin/activate
+# Windows PowerShell：.\.venv\Scripts\Activate.ps1
+# Windows cmd：.venv\Scripts\activate.bat
+
+# 未安装 uv 时可用 pip 兜底：
+# python -m pip install -e ".[ch3]"
+
+cd chapter3/log-sanitization
+
+# 迁移期间仍支持单项目兼容路径：
+# python -m pip install -r requirements.txt
+```
+
+<a id="learning-2"></a>
+
+## 按照步骤完成实验
+
+先运行规则脱敏示例，逐项对照输入与输出中的替换位置。使用人工构造的样例增加一种格式变化，再检查规则能否识别。需要比较模型方法时，按下文准备本地模型，继续使用同一组样例。
+
+### 离线规则引擎覆盖的敏感信息类别
+
+`regex_sanitizer.py` 按优先级处理以下类别（重叠时高优先级规则胜出），每类替换为带标签的占位符：
+
+| 类别 | 占位符 | 说明 |
+| --- | --- | --- |
+| 私钥 / 证书 | `[REDACTED_PRIVATE_KEY]` | PEM 私钥块 |
+| JWT | `[REDACTED_JWT]` | `eyJ...` 三段式令牌 |
+| 连接串凭据 | `[REDACTED_URL_CRED]` | `scheme://user:PASSWORD@host` |
+| AWS 访问密钥 | `[REDACTED_AWS_KEY]` | `AKIA...` |
+| GitHub / Slack / Google / OpenAI 密钥 | `[REDACTED_*_TOKEN]` / `[REDACTED_API_KEY]` | `ghp_`、`xoxb-`、`AIza`、`sk-` |
+| Bearer 令牌 | `[REDACTED_BEARER_TOKEN]` | `Authorization: Bearer ...` |
+| 口令 / 密钥赋值 | `[REDACTED_SECRET]` | `password=...`、`token: ...` 等 |
+| 邮箱 | `[REDACTED_EMAIL]` | |
+| 信用卡号 | `[REDACTED_CREDIT_CARD]` | 通过 Luhn 校验，降低误报 |
+| IBAN | `[REDACTED_IBAN]` | 国际银行账号 |
+| 美国社保号 | `[REDACTED_SSN]` | |
+| 身份证号 | `[REDACTED_ID_CARD]` | 中国大陆 18 位，含校验码验证 |
+| 手机号 | `[REDACTED_PHONE]` | 中国大陆 |
+| IP 地址 | `[REDACTED_IP]` | IPv4 |
+
+### 用法
+
+完整参数说明见 `python main.py --help`（中文）。
+
+#### 离线规则演示（推荐，无需 Ollama）
+```bash
+python main.py --demo
+```
+
+#### 脱敏任意日志文件（离线）
+```bash
+python main.py --input app.log                 # 结果写到 app.log.sanitized
+python main.py --input app.log -o cleaned.log  # 指定输出文件
+```
+
+也可以直接运行规则引擎模块，仅对内置样本做演示：
+```bash
+python regex_sanitizer.py
+```
+
+#### 离线验证
+
+```bash
+# 从仓库根目录开始；pytest 需要 dev 依赖。
+uv sync --locked --python 3.12 --extra ch3 --extra dev
+source .venv/bin/activate
+# Windows PowerShell: .\.venv\Scripts\Activate.ps1
+
+cd chapter3/log-sanitization
+python -m pytest tests
+python main.py --demo
+python regex_sanitizer.py
+```
+
+`tests/` 包含规则脱敏与 LLM 输出解析的离线回归测试。`test_loader.py` 刻意保留在项目根目录：它虽然以 `test_` 开头，但实际是 `main.py` 导入的用例加载支持模块，不是 pytest 文件。加载器调试助手位于 `tests/manual/loader_debug.py`。
+
+#### 使用本地 LLM 引擎
+```bash
+python main.py --demo --mode llm
+python main.py --input app.log --mode llm --model qwen3:1.7b
+```
+
+#### 处理全部 Layer 3 测试用例（LLM 批量评测路径）
+
+该路径固定使用 LLM，需要 Ollama 与 chapter3 评测框架：
+```bash
+python main.py
+```
+
+#### 指定用例 / 限制数量
+```bash
+python main.py --test-id layer3_13_emergency_medical_cascade
+python main.py --limit 3
+```
+
+#### 选择模型
+```bash
+python main.py --demo --mode llm --model qwen3:4b   # 默认 qwen3:0.6b
+```
+
+<a id="learning-3"></a>
+
+## 分析结果与形成判断
+
+检查敏感值是否仍能从其他字段推断出来，也检查排查错误所需的信息是否保留。示例上的高分不代表真实日志中所有敏感类型都已覆盖。
+
+### 性能指标
+
+**时间：** Prefill（TTFT）、输出时间、总时间（毫秒）  
+**Token：** 输入/输出数量；Prefill/输出速度（tok/s）  
+**脱敏：** 发现的 PII 条数；替换为 `[REDACTED]` 的次数
+
+### 检查自己的解释
+
+同一个用户标识多次出现时，怎样替换才能既保护身份，又保留跨行关联？
+
+<a id="learning-4"></a>
+
+## 阅读实现与继续探索
+
+### 项目说明
+
 > Companion material for *AI Agents in Depth*, Chapter 3 — intelligent log sanitization that redacts secrets and PII while preserving debug value.  
 > 配套《深入理解 AI Agent》第 3 章——在保留调试信息的同时检测并脱敏日志中的敏感数据。
 
 ← [Chapter 3 index / 返回第 3 章目录](../README.md)
 
 ---
+
+<a id="learning-5"></a>
+
+## 排查问题与查阅资料
+
+### 故障排除
+
+**找不到 Ollama：** 安装并运行 `ollama serve`  
+**找不到模型：** `ollama pull qwen3:0.6b`  
+**找不到评测框架：** 确认 loader 所期望的 `../user-memory-evaluation/`（或 chapter3 路径）存在
+
+---
+
+## Notes / 说明
+
+- Prefer `--demo` first; Ollama is optional for the rule path.  
+- 建议先跑 `--demo`；规则路径无需 Ollama。
 
 ## English
 
@@ -84,7 +337,22 @@ ollama pull qwen3:0.6b
 
 #### 3. Python deps
 ```bash
-pip install -r requirements.txt
+# From the repository root: use the shared Chapter 3 environment
+uv sync --locked --python 3.12 --extra ch3
+
+# Activate it before changing directories:
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .\.venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+
+# pip fallback when uv is not installed:
+# python -m pip install -e ".[ch3]"
+
+cd chapter3/log-sanitization
+
+# Single-project compatibility path, still supported during migration:
+# python -m pip install -r requirements.txt
 ```
 
 ### Usage
@@ -106,6 +374,22 @@ Rule engine alone on built-in samples:
 ```bash
 python regex_sanitizer.py
 ```
+
+#### Offline validation
+
+```bash
+# From the repository root; include dev tools for pytest.
+uv sync --locked --python 3.12 --extra ch3 --extra dev
+source .venv/bin/activate
+# Windows PowerShell: .\.venv\Scripts\Activate.ps1
+
+cd chapter3/log-sanitization
+python -m pytest tests
+python main.py --demo
+python regex_sanitizer.py
+```
+
+`tests/` contains offline regressions for sanitizer rules and LLM-output parsing. `test_loader.py` remains at the project root intentionally: despite its name, it is a support module imported by `main.py`, not a pytest file. The loader debug helper lives at `tests/manual/loader_debug.py`.
 
 #### Local LLM engine
 ```bash
@@ -154,10 +438,11 @@ output/
 1. **regex_sanitizer.py** — offline rule sanitizer  
 2. **samples.py** — offline demo samples  
 3. **config.py** — Ollama model and PII categories  
-4. **test_loader.py** — loads user-memory-evaluation cases  
+4. **test_loader.py** — loads user-memory-evaluation cases (support module, not pytest)
 5. **agent.py** — LLM sanitization via Ollama  
 6. **metrics.py** — metrics collection  
 7. **main.py** — entry / orchestration  
+8. **tests/** — offline pytest regressions plus manual loader debug helper
 
 ### How it works (LLM path)
 
@@ -180,182 +465,3 @@ output/
 **Evaluation framework not found:** expect `../user-memory-evaluation/` (or chapter3 path used by the loader)
 
 ---
-
-## 中文
-
-### 概述
-
-演示如何从 Agent 的日志与工具输出中检测并脱敏敏感信息。提供**两种互补的脱敏引擎**：
-
-1. **离线规则引擎（regex，默认）** —— 纯正则表达式 + 校验算法（Luhn、身份证校验码），**无需 Ollama、无需网络、无需外部框架**，结果确定、速度快，适合作为日志落盘前的第一道防线。同时覆盖 Agent 场景中最常泄露的**密钥类**敏感信息（API Key、云厂商令牌、私钥、连接串口令）与传统 **PII**（身份证、手机号、信用卡、邮箱等）。
-2. **本地 LLM 引擎（llm）** —— 通过 Ollama 调用本地小模型（默认 `qwen3:0.6b`）语义识别 Level 3 PII。呼应本章「小模型也能胜任结构化任务」的论点，同时也暴露小模型的局限（例如可能返回带描述前缀的值而非原始字符串，导致回填失败）。
-
-> 想快速看效果，直接运行 `python main.py --demo`（离线，无需任何依赖）即可看到多个代表性样本的 before/after 对比与脱敏类别汇总。
-
-### 离线规则引擎覆盖的敏感信息类别
-
-`regex_sanitizer.py` 按优先级处理以下类别（重叠时高优先级规则胜出），每类替换为带标签的占位符：
-
-| 类别 | 占位符 | 说明 |
-| --- | --- | --- |
-| 私钥 / 证书 | `[REDACTED_PRIVATE_KEY]` | PEM 私钥块 |
-| JWT | `[REDACTED_JWT]` | `eyJ...` 三段式令牌 |
-| 连接串凭据 | `[REDACTED_URL_CRED]` | `scheme://user:PASSWORD@host` |
-| AWS 访问密钥 | `[REDACTED_AWS_KEY]` | `AKIA...` |
-| GitHub / Slack / Google / OpenAI 密钥 | `[REDACTED_*_TOKEN]` / `[REDACTED_API_KEY]` | `ghp_`、`xoxb-`、`AIza`、`sk-` |
-| Bearer 令牌 | `[REDACTED_BEARER_TOKEN]` | `Authorization: Bearer ...` |
-| 口令 / 密钥赋值 | `[REDACTED_SECRET]` | `password=...`、`token: ...` 等 |
-| 邮箱 | `[REDACTED_EMAIL]` | |
-| 信用卡号 | `[REDACTED_CREDIT_CARD]` | 通过 Luhn 校验，降低误报 |
-| IBAN | `[REDACTED_IBAN]` | 国际银行账号 |
-| 美国社保号 | `[REDACTED_SSN]` | |
-| 身份证号 | `[REDACTED_ID_CARD]` | 中国大陆 18 位，含校验码验证 |
-| 手机号 | `[REDACTED_PHONE]` | 中国大陆 |
-| IP 地址 | `[REDACTED_IP]` | IPv4 |
-
-### Level 3 PII 类别（LLM 引擎）
-
-隐私架构中的高敏感信息，包括：社保号、信用卡、银行账号、病历号、诊断与治疗信息、处方、驾照、护照、金融 PIN、税号、医保 ID、生物特征数据等。
-
-### 功能
-
-- **离线规则引擎**：正则 + Luhn/身份证校验；覆盖密钥/机密与 PII；无需模型与网络
-- **本地 LLM**：Ollama + 小模型（默认 `qwen3:0.6b`）做隐私友好的 PII 检测
-- **内部推理**：通过 `<think>` 展示模型思考过程
-- **流式输出**：实时显示思考与检测进度
-- **性能指标**：TTFT、token 数、处理速度
-- **批量处理**：user-memory-evaluation 框架的 Layer 3 用例
-- **详细指标**：prefill / 输出时间与两阶段 tok/s
-
-### 安装
-
-#### 1. 安装 Ollama（仅 LLM 路径需要）
-
-> **通用回退（OpenRouter）**：本实验默认用本地 Ollama 小模型。若 Ollama 不可用（未运行 / 不可达）且设置了 `OPENROUTER_API_KEY`，Agent 会自动改走 OpenRouter（默认托管模型 `openai/gpt-5.6-luna`）。想强制走回退做验证，可把 Ollama 指到一个不可达端口：`export OLLAMA_HOST=http://127.0.0.1:1`。
-
-**macOS:**
-```bash
-brew install ollama
-ollama serve  # 另开终端
-```
-
-**Linux:**
-```bash
-curl -fsSL https://ollama.com/install.sh | sh
-systemctl start ollama
-```
-
-**Windows:** 从 [ollama.com](https://ollama.com/download/windows) 下载
-
-> 说明：以下 Ollama 相关步骤仅在使用 `--mode llm`（本地 LLM 引擎）或运行 LLM 批量评测路径时才需要。离线规则引擎（`--demo`、`--input`）只依赖 Python 标准库，无需安装 Ollama。
-
-#### 2. 拉取模型
-```bash
-ollama pull qwen3:0.6b
-```
-
-0.6B 模型约需 500MB 磁盘；可按需换用 `qwen3:1.7b`、`qwen3:4b` 提升准确率。
-
-#### 3. 安装 Python 依赖
-```bash
-pip install -r requirements.txt
-```
-
-### 用法
-
-完整参数说明见 `python main.py --help`（中文）。
-
-#### 离线规则演示（推荐，无需 Ollama）
-```bash
-python main.py --demo
-```
-
-#### 脱敏任意日志文件（离线）
-```bash
-python main.py --input app.log                 # 结果写到 app.log.sanitized
-python main.py --input app.log -o cleaned.log  # 指定输出文件
-```
-
-也可以直接运行规则引擎模块，仅对内置样本做演示：
-```bash
-python regex_sanitizer.py
-```
-
-#### 使用本地 LLM 引擎
-```bash
-python main.py --demo --mode llm
-python main.py --input app.log --mode llm --model qwen3:1.7b
-```
-
-#### 处理全部 Layer 3 测试用例（LLM 批量评测路径）
-
-该路径固定使用 LLM，需要 Ollama 与 chapter3 评测框架：
-```bash
-python main.py
-```
-
-#### 指定用例 / 限制数量
-```bash
-python main.py --test-id layer3_13_emergency_medical_cascade
-python main.py --limit 3
-```
-
-#### 选择模型
-```bash
-python main.py --demo --mode llm --model qwen3:4b   # 默认 qwen3:0.6b
-```
-
-### 输出结构
-
-脱敏日志与指标保存在 `output/` 目录：
-
-```
-output/
-├── <test_id>_sanitized.txt    # 脱敏后的对话文本
-├── <test_id>_summary.json     # 发现与替换的 PII 摘要
-├── performance_metrics.json   # 详细性能指标
-└── performance_summary.json   # 聚合性能统计
-```
-
-### 性能指标
-
-**时间：** Prefill（TTFT）、输出时间、总时间（毫秒）  
-**Token：** 输入/输出数量；Prefill/输出速度（tok/s）  
-**脱敏：** 发现的 PII 条数；替换为 `[REDACTED]` 的次数
-
-### 架构
-
-1. **regex_sanitizer.py**：离线规则脱敏（正则 + Luhn/身份证校验）  
-2. **samples.py**：离线演示用的代表性 Agent 日志样本  
-3. **config.py**：Ollama 模型与 PII 类别配置  
-4. **test_loader.py**：从 user-memory-evaluation 加载用例  
-5. **agent.py**：基于 Ollama 的 LLM 脱敏逻辑  
-6. **metrics.py**：性能指标采集与报告  
-7. **main.py**：入口与编排  
-
-### 工作原理（LLM 路径）
-
-1. 从 user-memory-evaluation 加载对话历史  
-2. 将每段对话送入本地 Qwen3，用专用提示检测 Level 3 PII  
-3. 将检出值替换为 `[REDACTED]`  
-4. 采集性能指标  
-5. 将脱敏日志与性能摘要写入 `output/`  
-
-### 隐私考量
-
-- 默认本地 Ollama 路径不向外部 API 发送数据  
-- 若走 OpenRouter 回退则会离开本机  
-- 脱敏日志使用占位符；任何原始 PII 日志都应妥善保管  
-
-### 故障排除
-
-**找不到 Ollama：** 安装并运行 `ollama serve`  
-**找不到模型：** `ollama pull qwen3:0.6b`  
-**找不到评测框架：** 确认 loader 所期望的 `../user-memory-evaluation/`（或 chapter3 路径）存在
-
----
-
-## Notes / 说明
-
-- Prefer `--demo` first; Ollama is optional for the rule path.  
-- 建议先跑 `--demo`；规则路径无需 Ollama。

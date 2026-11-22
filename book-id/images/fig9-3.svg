@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 410" width="1000" height="410" style="background:#ffffff">
+  <defs>
+    <style>
+      .t{font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;fill:#26343c}
+      .h{font-size:20px;font-weight:700}
+      .s{font-size:16px;fill:#52636d}
+      .box{fill:#f5f7f8;stroke:#33434d;stroke-width:2}
+      .accent{fill:#e8f1f5;stroke:#2f617a;stroke-width:2}
+    </style>
+  </defs>
+  <text x="500" y="30" text-anchor="middle" class="t h">Cara sebuah kemampuan direpresentasikan menentukan di mana ia diperbarui</text>
+
+  <rect x="35" y="72" width="220" height="126" rx="9" class="box"/>
+  <text x="145" y="105" text-anchor="middle" class="t h">Pengetahuan</text>
+  <text x="145" y="135" text-anchor="middle" class="t s" style="font-size:13.5px">Fakta, pengalaman, pengecualian</text>
+  <text x="145" y="164" text-anchor="middle" class="t s" style="font-size:14.5px">Markdown / basis pengetahuan</text>
+
+  <rect x="275" y="72" width="220" height="126" rx="9" class="box"/>
+  <text x="385" y="105" text-anchor="middle" class="t h">Instruksi</text>
+  <text x="385" y="135" text-anchor="middle" class="t s" style="font-size:11.5px">Prinsip penilaian yang bisa dibahasakan</text>
+  <text x="385" y="164" text-anchor="middle" class="t s">Prompt / Skill</text>
+
+  <rect x="515" y="72" width="220" height="126" rx="9" class="box"/>
+  <text x="625" y="105" text-anchor="middle" class="t h">Program</text>
+  <text x="625" y="135" text-anchor="middle" class="t s" style="font-size:12.5px">Alur deterministik dan batasan ketat</text>
+  <text x="625" y="164" text-anchor="middle" class="t s">Alat / Alur kerja / Harness</text>
+
+  <rect x="755" y="72" width="220" height="126" rx="9" class="accent"/>
+  <text x="865" y="105" text-anchor="middle" class="t h">Parameter</text>
+  <text x="865" y="135" text-anchor="middle" class="t s" style="font-size:9.5px">Persepsi berdimensi tinggi dan kebijakan implisit</text>
+  <text x="865" y="164" text-anchor="middle" class="t s">SFT / Distilasi / RL</text>
+
+  <line x1="145" y1="226" x2="865" y2="226" stroke="#33434d" stroke-width="2"/>
+  <path d="M145 218 V234 M865 218 V234" stroke="#33434d" stroke-width="2"/>
+  <text x="145" y="260" text-anchor="middle" class="t s">Mudah diperbarui, dapat dilacak</text>
+  <text x="865" y="260" text-anchor="middle" class="t s" style="font-size:14.5px">Terinternalisasi, biaya inferensi rendah</text>
+  <text x="500" y="289" text-anchor="middle" class="t h">Bukan tangga satu arah, melainkan empat pengusung yang saling melengkapi</text>
+
+  <rect x="145" y="320" width="710" height="58" rx="8" class="accent"/>
+  <text x="500" y="344" text-anchor="middle" class="t h" style="font-size:13.5px">Pertanyaan pertama: bisakah kemampuan itu dinyatakan penuh sebagai fakta, aturan bahasa, atau program?</text>
+  <text x="500" y="367" text-anchor="middle" class="t s" style="font-size:14.5px">Stabilitas, biaya, dan frekuensi pembaruan menentukan penerapannya, bukan bisa tidaknya diparameterkan</text>
+</svg>

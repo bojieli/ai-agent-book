@@ -235,7 +235,7 @@ FLIGHT_FORM_SCHEMA = {
 
 def _extract_destination(user_request):
     """从"去XX的机票"里粗抽目的地，作为表单常量随提交一起带回。抽不到就回落 None。"""
-    m = re.search(r"去(.+?)的?(?:机票|航班|票)", user_request)
+    m = re.search(r"去(.+?)(?:的?(?:单程|往返))?的?(?:机票|航班|票)", user_request)
     if m:
         return m.group(1).strip()
     return None
@@ -539,7 +539,7 @@ def summarize_offline(submitted):
     if submitted.get("cabin_class"):
         cabin = _CABIN_CN.get(submitted["cabin_class"], submitted["cabin_class"])
         bag = submitted.get("baggage_count")
-        bag_txt = f"，免费托运 {bag} 件" if bag not in (None, "", "0") else "，无免费托运"
+        bag_txt = f"，免费托运 {bag} 件" if bag not in (None, "", "0", 0) else "，无免费托运"
         lines.append(f"舱位：{cabin}{bag_txt}。")
     lines.append("正在为您检索航班...")
     return "\n".join(lines)
@@ -706,7 +706,7 @@ def main():
         note = f"（模型 {model}）"
     print("-" * 68)
     print(summary)
-    print(f"-" * 68 + f"  {note}")
+    print("-" * 68 + f"  {note}")
 
     # 结果汇总
     print("\n" + "=" * 68)

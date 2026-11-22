@@ -1,0 +1,62 @@
+# Data files
+*.json
+*.jsonl
+*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Generated visualizations
+*.png
+*.html
+!index.html
+
+# Canonical Experiment 7-7 evidence is intentionally versioned.  The public
+# Arena input remains ignored because it is ~2 GB; manifests bind it by URL,
+# byte size, record count, and SHA-256 instead.
+!validation/
+!validation/**/*.json
+!validation/**/*.png
+!validation/**/*.html
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs
+*.log

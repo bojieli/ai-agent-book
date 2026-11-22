@@ -1,0 +1,6 @@
+.env
+audio/
+__pycache__/
+*.pyc
+validation/scenarios/
+validation/noise_only.json

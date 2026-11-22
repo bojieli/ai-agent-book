@@ -1,29 +1,45 @@
-# Chapter 7 · Model Post-Training
+# Chapter 7 · Agent Evaluation
 
-> A comprehensive view of the three stages: pre-training, SFT, and RL. When to choose SFT vs. RL, RLHF, algorithm comparison, data and environments, and cutting-edge exploration into teaching models tool calling and improving sample efficiency.
+> Turns Agent performance into comparable signals. Covers evaluation environments, dataset design, metric systems, statistical significance, observability, evaluation-driven selection, and production-grade internal evaluation and simulation environments.
 
 ← [Back to main README](../docs/en/README.md) · 📖 [Read chapter text](../book-en/chapter7.md)
+
+## How to Read the Experiments
+
+The prose uses short mechanism skeletons to explain control flow; the experiment directory contains complete SDK adapters, logs, tests, and acceptance evidence. You do not need to read every file line by line.
+
+- **Starter:** Start with the goal, minimum command, and acceptance conditions; begin with [tau2-bench-eval](tau2-bench-eval/);
+- **Builder:** Follow the entry point, core loop, state/message schema, tools, and verifier.
+- **Maintainer:** Then read tests, evidence manifests, failure handling, rollback paths, and provider adapters.
+
+On a first pass, skip credential loading, presentation code, and provider-compatibility layers; return when reproducing a number.
 
 ## Companion Projects
 
 | Exp. | Project | Type | Description |
 | :--: | --- | :--: | --- |
-| 7-3, 7-4 | [MiniMind-pretrain](MiniMind-pretrain/) | 📖 | Pretrains a small language model from scratch to understand the complete pretraining process and key technologies. |
-| 7-5 | [continued-pretraining](continued-pretraining/) | ✅ | Performs continued pretraining on domain-specific data to improve model performance in the target domain. |
-| 7-6 | [sesame](sesame/) | ✅ | Sesame CSM speech SFT: LoRA fine-tuning of the 1B TTS model, controlling expression with paralinguistic tags like `<laugh>` and `<sigh>` |
-| 7-6 | [orpheus](orpheus/) | ✅ | Orpheus 3B speech SFT: LoRA fine-tuning of the TTS model, voice cloning via reference audio for cross-sentence timbre consistency |
-| 7-7 | [MultilingualReasoning](MultilingualReasoning/) | ✅ | Trains the reasoning ability of models in multiple language environments, improving performance on cross-lingual tasks. |
-| 7-9 | [cot-distillation](cot-distillation/) | ✅ | Distills CoT trajectories from frontier models like Claude via OpenRouter; rule-verified and converted into SFT data (companion to Experiment 7-9). |
-| 7-10 | [AdaptThink](AdaptThink/) | 📖 | Teaches reasoning models to adaptively choose their reasoning mode (Thinking vs NoThinking) based on problem difficulty. Through constrained optimization and importance sampling, it significantly reduces reasoning costs (45-69%) while improving accuracy. Based on the DeepSeek-R1-Distill-Qwen model, trained using the DAPO algorithm. |
-| 7-11 | `SFTvsRL/` | 📖 | Systematically compares the effectiveness of Supervised Fine-Tuning (SFT) and Reinforcement Learning (RL) on different tasks, analyzing the strengths, weaknesses, and suitable application scenarios of both methods. |
-| 7-12 | [SpatialReasoning](SpatialReasoning/) | 📖 | Focuses on training the spatial reasoning ability of models to handle problems involving spatial relationships such as position, direction, and distance. |
-| 7-13 | [SimpleVLA-RL](SimpleVLA-RL/) | 📖 | Combines vision, language, and action in reinforcement learning training, enabling models to understand visual input and execute corresponding actions. |
-| 7-14 | [RLVP](RLVP/) | 📖 | RLVP post-training research — reward the outcome, penalize the path (companion to Experiment 7-14); the full training/evaluation code lives in the separate paper repository `19PINE-AI/rlvp`, which you need to clone yourself. |
-| 7-15 | [retool](retool/) | 📖 | Uses multi-turn dialogue and a code sandbox to enhance the mathematical reasoning ability of large language models. Through a two-stage training process of SFT and RL, the model learns to use a code execution environment to assist in solving mathematical problems. Based on Qwen2.5-32B-Instruct, trained on the AIME 2024 dataset, using the DAPO algorithm and SandboxFusion sandbox. |
-| 7-16 | `AWorld/` · [AWorld-train](AWorld-train/) | 📖 | Trains embodied agents based on the AWorld framework, enabling agents to perform complex tasks in a virtual environment and learn from experience. |
-| — | `verl/` | 📖 | verl is an efficient reinforcement learning framework specifically designed for RLHF training of large language models, supporting various algorithms such as PPO, GRPO, and DAPO. |
-| — | [Intuitor](Intuitor/) | ✅ | Trains the intuitive reasoning ability of models, enabling them to make quick, reasonable judgments without requiring detailed chains of thought. |
-| — | `tinker-cookbook/` | 📖 | Collects various practical tips and best practices for model training. |
+| 7-1 | [tau2-bench-eval](tau2-bench-eval/) | ✅ | Retains a pinned five-task telecom campaign (4/5 passed), raw trajectories, costs, hashes, and analysis of the wrong-line failure that skipped data refueling. |
+| 7-2 | `tau2-bench/` | 📖 | Manually completes graded τ²-bench tasks and records their trajectories. |
+| 7-2 | `terminal-bench/` | 📖 | Terminal-Bench is a benchmark for testing AI Agent performance in real terminal environments. From compiling code to training models and setting up servers, it evaluates how Agents handle real end-to-end tasks. Includes a dataset of ~100 tasks and an execution framework, supporting various Agent implementations. |
+| 7-2 | `SWE-bench/` | 📖 | SWE-bench is a benchmark for evaluating the ability of large language models to solve real GitHub issues. Given a codebase and an issue description, the model must generate a patch that resolves the problem. Includes multiple versions: SWE-bench, SWE-bench Lite, SWE-bench Verified, and SWE-bench Multimodal. |
+| 7-2 | `GAIA/` | 📖 | GAIA aims to evaluate next-generation LLMs (those with tool augmentation, efficient prompting, search access, etc.). It contains 450+ non-trivial questions requiring varying degrees of tool use and autonomy, with unambiguous answers. Divided into 3 difficulty levels. |
+| 7-2 | `OSWorld/` | 📖 | Evaluates the ability of agents to perform complex tasks within a complete operating system environment, including file management, application operation, and system configuration. |
+| 7-2, 7-13 | `android_world/` | 📖 | Evaluates agent performance in an Android mobile environment, including app navigation, UI interaction, and task completion capabilities (external benchmark repo). |
+| 7-3 | [user-memory-evaluation](../chapter3/user-memory-evaluation/) | ✅ | Runs the four-level rubric over 180 structured judgments with evidence and a hallucination veto. |
+| 7-4 | [user-memory-system-evaluation](user-memory-system-evaluation/) | ✅ | Runs 60 cases across three systems with complete cost accounting. |
+| 7-5 | [tts-quality-eval](tts-quality-eval/) | ✅ | Synthesizes the same set of challenging texts using various TTS configurations (different model/voice/speed), then uses a multimodal LLM-as-a-Judge to score each dimension (clarity, naturalness, etc.) according to a Rubric, aggregating the results into a reproducible configuration comparison table. |
+| 7-6 | [android-world/failure-attribution](android-world/failure-attribution/) | ✅ | Offline failure attribution over the retained T3A log. Population, recomputed from the raw log: 53 task blocks, 1 skipped by the benchmark's own `initialize_task` crash, 52 real failures; 24/52 ended with the Agent declaring completion; 9 failures have goals requiring the current date and only 2 ever obtain it (incidentally, from a form default showing `Sun, Oct 15`); the self-reported "no visible effect" family occurs 55 times across 18/52 episodes. Ten episodes annotated with build-verified step-level citations — 9 silent failures, 7 of 10 first errors on an assistant message, 5 high / 4 medium / 1 low confidence. Third pass: the second moved 7 of 10 first-error steps earlier, the third corrected two population statistics and one record's description, every change retained with its rationale. Includes 3 trajectory-prefix regression tasks and 3 corrections to `t3a_failed_analysis.md` |
+| 7-7 | [user-memory-policy-eval](user-memory-policy-eval/) | ✅ | Runs 11 trajectory-prefix bad cases across JSON, Markdown, and Python-like memory encodings with real OpenRouter calls and deterministic policy checks. |
+| 7-8 | [elo-leaderboard](elo-leaderboard/) | ✅ | Implements an agent performance leaderboard based on the ELO rating system, evaluating the relative abilities of different agents through pairwise comparisons. |
+| 7-9 | [model-action-threshold](model-action-threshold/) | ✅ | Compares GPT-5.6-sol and Claude Sonnet 5 at the transition from exploration to the first edit under the same neutral Coding Harness; all 18/18 cells completed without API errors, and the [manifest](model-action-threshold/results/exp7-8-action-threshold-20260731-v1/manifest.json) binds the trajectories and summaries with verifiable hashes. |
+| 7-10 | [agent-cost-analysis](agent-cost-analysis/) | ✅ | Performs a full-chain cost breakdown for a typical multi-turn agent task (customer service refund): uses a custom lightweight tracing system to record input/output/cache tokens, latency, and cost for each LLM call, aggregates to identify "which step is the most expensive," and then uses A/B testing to quantify the real savings from KV-cache-friendly design and context compression. |
+| 7-11 | [model-benchmark](model-benchmark/) | 🚧 | Implements the multi-provider benchmark and strict analyzer, but retained evidence contains only smoke/readiness observations; the standard N=100 cells, rate ramp, Agent-cost phase, and 168-hour availability campaign remain incomplete. |
+| 7-12 | [user-memory-system-evaluation](user-memory-system-evaluation/) | ✅ | The full 4×3×2×60 matrix retained 1,440/1,440 real trajectories with zero errors or unpriced usage, complete retrieval/task metrics and interaction analysis, and an independently passing verifier. |
+| 7-13 | [android-world](android-world/) | 📖 | In-repo T3A evaluation report and failure analysis notes on AndroidWorld (starting point for Experiment 7-13; not the benchmark source). |
+| 7-14 | [openvla-robotwin2-eval](openvla-robotwin2-eval/) | ✅ | The retained single-GPU campaign completed 256 episodes per action-chunk arm; chunk 1 scored 0/256 and chunk 25 scored 26/256, with all 512 rollout identities hashed. |
+| — | [public-health-reporting-eval](public-health-reporting-eval/) | ✅ | Uses synthetic DHIS2-style aggregate data to objectively evaluate a public-health reporting agent's tool calls, calculation accuracy, evidence citations, and unsupported claims. |
+
+> Backtick-named external benchmarks must be cloned separately. [`android-world/`](android-world/) (hyphenated) is this repo's **T3A evaluation analysis notes** (see its [README](android-world/README.md)), not the same path as the external `android_world/` benchmark source.
 ## Project Types
 
 | Icon | Type | Meaning |

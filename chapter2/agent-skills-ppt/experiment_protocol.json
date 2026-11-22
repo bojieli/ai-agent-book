@@ -1,0 +1,65 @@
+{
+  "experiment_id": "2-6",
+  "protocol_version": "1.1.0",
+  "frozen_on": "2026-07-30",
+  "revised_on": "2026-07-31",
+  "authority": "book/chapter2.md:767",
+  "runtime": {
+    "agent": "Claude Code",
+    "model_alias": "sonnet",
+    "acceptance_policy": "Runtime-agnostic (author policy, 2026-07-31): acceptance is NOT gated on Anthropic/Claude Code. Any agent runtime + model that supports SKILL.md-style progressive disclosure may complete this experiment, because not every reader has an Anthropic key. The pinned official Anthropic PPTX Skill content, the real paper, and all artifact gates are unchanged; Claude Code remains the reference path for readers who have Anthropic credentials.",
+    "alternate_runtimes": {
+      "kimi": {
+        "agent": "Kimi Code CLI",
+        "binary": "kimi",
+        "binary_fallback": "~/.kimi-code/bin/kimi",
+        "model_alias": "kimi-code/k3",
+        "auth_environment_variables": ["KIMI_API_KEY", "MOONSHOT_API_KEY"],
+        "skills_flag": "--skills-dir",
+        "stream_format": "stream-json"
+      }
+    },
+    "official_skill_repository": "https://github.com/anthropics/skills.git",
+    "official_skill_revision": "69c0b1a0674149f27b61b2635f935524b6add202",
+    "skill_path": "skills/pptx",
+    "revision_reason": "This is the official revision whose PPTX Skill contains the html2pptx.md workflow named by the manuscript; later revision 4e6907a packages that guide as html2pptx.tgz."
+  },
+  "paper": {
+    "title": "Attention Is All You Need",
+    "authors": "Ashish Vaswani et al.",
+    "arxiv_id": "1706.03762",
+    "pdf_url": "https://arxiv.org/pdf/1706.03762",
+    "pdf_sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697"
+  },
+  "output": {
+    "minimum_slides": 10,
+    "maximum_slides": 15,
+    "required_sections": [
+      "title",
+      "problem/background",
+      "method/Transformer architecture",
+      "key results",
+      "conclusion"
+    ],
+    "minimum_paper_visuals": 3,
+    "visual_policy": "At least three images must be extracted or cropped from the source PDF, embedded in the deck, and listed with PDF page and source label in source_visuals/manifest.json."
+  },
+  "progressive_disclosure_gates": [
+    "the agent runtime discovers only PPTX Skill metadata before selection",
+    "the agent invokes the official pptx Skill and loads its complete SKILL.md",
+    "the agent reads the complete official html2pptx.md only after selecting the Skill",
+    "the agent uses the official scripts/html2pptx.js workflow",
+    "the agent invokes the official scripts/thumbnail.py preview workflow and visually inspects the result"
+  ],
+  "artifact_gates": [
+    "the source PDF hash matches the preregistered academic paper",
+    "the presentation is a valid ZIP/OOXML package and python-pptx reopens it",
+    "slide count is between 10 and 15 inclusive",
+    "the five required content sections are present",
+    "three or more source visual files are byte-identical to media embedded in the PPTX",
+    "each source visual has a PDF page, paper label, and caption in the visual manifest",
+    "a full-deck thumbnail grid exists",
+    "raw agent-runtime stream events, actual model, usage/cost where the runtime reports it, commands, hashes, and credential scan are retained"
+  ],
+  "claim_policy": "The bundled Python demo is a noncanonical mechanism illustration and cannot satisfy Experiment 2-6. Only a real agent-runtime run with the pinned official Skill and real paper can complete this protocol. The runtime may be Claude Code or an equivalent skills-capable runtime (for example Kimi Code CLI); the pinned official Anthropic PPTX Skill content and every artifact gate below apply identically to either runtime."
+}

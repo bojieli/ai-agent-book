@@ -22,16 +22,17 @@ logger = logging.getLogger(__name__)
 class InteractiveCLI:
     """Interactive command-line interface for GPT-5 Agent"""
     
-    def __init__(self):
+    def __init__(self, backend: str = None, model: str = None):
         """Initialize the CLI"""
-        if not Config.validate():
+        if not Config.validate(backend):
             raise ValueError("Invalid configuration. Please check your .env file")
-        
+        api_key, base_url, resolved_model = Config.resolve(backend, model)
         self.agent = GPT5NativeAgent(
-            api_key=Config.OPENROUTER_API_KEY,
-            base_url=Config.OPENROUTER_BASE_URL,
-            model=Config.MODEL_NAME
+            api_key=api_key,
+            base_url=base_url,
+            model=resolved_model,
         )
+        self.backend = backend or Config.BACKEND
         
         self.commands = {
             "/help": self.show_help,
@@ -213,7 +214,7 @@ Examples:
             if result["tool_calls"]:
                 print("🔧 Tools Used:")
                 for tool in result["tool_calls"]:
-                    print(f"  • {tool.tool_type.value}")
+                    print(f"  • {tool.get('type', 'unknown_tool')}")
                 print()
             
             # Display response
@@ -237,7 +238,7 @@ Examples:
         """Run the interactive CLI"""
         print("\n" + "="*60)
         print("     🤖 GPT-5 Native Tools Agent")
-        print("     Powered by OpenRouter API")
+        print(f"     Responses API backend: {self.backend}")
         print("="*60)
         
         self.show_help()
@@ -272,12 +273,13 @@ Examples:
 def _run_single(args):
     """执行单次请求（single / dry-run 模式），打印可读轨迹并按需保存结果。"""
     # dry-run 只组装请求体、不联网，因此无需真实 API Key
-    api_key = Config.OPENROUTER_API_KEY or ("sk-or-DRYRUN-PLACEHOLDER" if args.dry_run else "")
+    api_key, base_url, model = Config.resolve(args.backend, args.model)
+    api_key = api_key or ("DRYRUN-PLACEHOLDER" if args.dry_run else "")
 
     agent = GPT5NativeAgent(
         api_key=api_key,
-        base_url=Config.OPENROUTER_BASE_URL,
-        model=args.model or Config.MODEL_NAME
+        base_url=base_url,
+        model=model,
     )
 
     result = agent.process_request(
@@ -339,7 +341,7 @@ def main():
   python main.py --mode single --request "分析比特币近一月走势" --reasoning high --verbosity high
   python main.py --mode single --request "..." --output result.json
   python main.py --dry-run --request "..."          # 离线查看请求体（原生工具定义），无需 API Key
-  python main.py --mode test --test basic           # 运行指定测试用例
+  python main.py --mode test --test basic           # 运行指定联网手动用例
 """,
     )
 
@@ -347,12 +349,18 @@ def main():
         "--mode",
         choices=["interactive", "single", "test"],
         default="interactive",
-        help="运行模式：interactive 交互对话（默认）/ single 单次请求 / test 运行测试",
+        help="运行模式：interactive 交互对话（默认）/ single 单次请求 / test 联网手动用例",
     )
     parser.add_argument(
         "--request",
         type=str,
         help="single / dry-run 模式下的任务或查询内容",
+    )
+    parser.add_argument(
+        "--backend",
+        choices=["openai", "openrouter", "dashscope"],
+        default=Config.BACKEND,
+        help="Responses API backend; openai is the exact canonical path, dashscope is the eligible equivalent-provider path",
     )
     parser.add_argument(
         "--model",
@@ -362,7 +370,7 @@ def main():
     )
     parser.add_argument(
         "--reasoning",
-        choices=["low", "medium", "high"],
+        choices=["none", "low", "medium", "high", "xhigh", "max"],
         default="low",
         help="推理力度 Reasoning Effort（low/medium/high，默认 low）",
     )
@@ -391,7 +399,7 @@ def main():
     parser.add_argument(
         "--test",
         type=str,
-        help="test 模式下运行指定测试用例（basic/analysis/complex/code/reasoning/search_analyze/chain）",
+        help="test 模式下运行指定联网手动用例（basic/analysis/complex/code/reasoning/search_analyze/chain）",
     )
 
     args = parser.parse_args()
@@ -405,15 +413,15 @@ def main():
         return
 
     # 其余模式需要有效配置
-    if not Config.validate():
+    if not Config.validate(args.backend):
         print("❌ 配置错误！")
-        print("请创建 .env 文件并填入 OPENROUTER_API_KEY")
+        print("请配置所选 backend 对应的 OPENAI_API_KEY / OPENROUTER_API_KEY / DASHSCOPE_API_KEY")
         print("\n示例 .env：")
-        print("OPENROUTER_API_KEY=sk-or-v1-your-key-here")
+        print("DASHSCOPE_API_KEY=your-dashscope-api-key")
         sys.exit(1)
 
     if args.mode == "interactive":
-        cli = InteractiveCLI()
+        cli = InteractiveCLI(args.backend, args.model)
         cli.run()
 
     elif args.mode == "single":
@@ -423,7 +431,7 @@ def main():
         _run_single(args)
 
     elif args.mode == "test":
-        from test_agent import TestGPT5Agent, run_single_test
+        from tests.manual.agent_cases import TestGPT5Agent, run_single_test
 
         if args.test:
             run_single_test(args.test)

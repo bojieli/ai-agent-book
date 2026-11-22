@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="540" viewBox="0 0 880 540">
+  <title>Figura 6-5: Compatibilidad síncrona y asincronía nativa del modelo</title>
+  <desc>En la solución anterior, el entorno de ejecución ordena los eventos entrantes para que un modelo con interfaz síncrona participe en tareas asíncronas. Otra vía permite que el propio modelo comprenda ese ritmo: puede realizar otros trabajos mientras una herramienta se ejecuta y ajustar lo que hará después cuando el usuario añade requisitos. GPT-6 Astra ya admite llamadas asíncronas a herramientas (Async tool calling) y orientación durante el turno (Mid-turn steering), reflejando este cambio (Figura 6-5).</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#555" /></marker>
+    <style>
+      text{font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;fill:#333}
+      .title{font-size:20px;font-weight:700}
+      .label{font-size:17px;font-weight:600}
+      .small{font-size:15px}
+      .box{fill:#f4f4f4;stroke:#555;stroke-width:1.5}
+      .arrow{fill:none;stroke:#555;stroke-width:1.5;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="880" height="540" fill="#fff" />
+  <rect x="20" y="20" width="840" height="145" rx="8" fill="#fff" stroke="#777" stroke-dasharray="7 4" />
+  <text x="40" y="53" class="title">Compatibilidad: el entorno de ejecución organiza la asincronía</text>
+  <rect x="40" y="75" width="230" height="60" rx="5" class="box" />
+  <text x="155" y="100" text-anchor="middle" class="label">Tarea en segundo plano</text>
+  <text x="155" y="122" text-anchor="middle" class="small">Estado pendiente explícito</text>
+  <path d="M270 105 H313" class="arrow" />
+  <rect x="320" y="75" width="240" height="60" rx="5" class="box" />
+  <text x="440" y="100" text-anchor="middle" class="label">Recibir nuevos eventos</text>
+  <text x="440" y="122" text-anchor="middle" class="small" style="font-size:14.57px">Encolar, interrumpir o paralelizar</text>
+  <path d="M560 105 H603" class="arrow" />
+  <rect x="610" y="75" width="230" height="60" rx="5" class="box" />
+  <text x="725" y="100" text-anchor="middle" class="label">El modelo continúa</text>
+  <text x="725" y="122" text-anchor="middle" class="small">Entradas en turnos síncronos</text>
+
+  <rect x="20" y="185" width="840" height="250" rx="8" fill="#fff" stroke="#444" stroke-width="2" />
+  <text x="40" y="218" class="title">Asincronía nativa: comprender esperas y cambios durante la tarea</text>
+  <rect x="40" y="240" width="230" height="65" rx="5" class="box" />
+  <text x="155" y="267" text-anchor="middle" class="label">Iniciar una consulta lenta</text>
+  <text x="155" y="290" text-anchor="middle" class="small" style="font-size:14.47px">Buscar lugares para una reunión</text>
+  <path d="M270 272 H313" class="arrow" />
+  <rect x="320" y="240" width="240" height="65" rx="5" class="box" />
+  <text x="440" y="267" text-anchor="middle" class="label" style="font-size:16.87px">Trabajar durante la espera</text>
+  <text x="440" y="290" text-anchor="middle" class="small" style="font-size:14.20px">Preparar agenda y lista de tareas</text>
+  <path d="M560 272 H603" class="arrow" />
+  <rect x="610" y="240" width="230" height="65" rx="5" class="box" />
+  <text x="725" y="267" text-anchor="middle" class="label" style="font-size:16.80px">Decidir con los resultados</text>
+  <text x="725" y="290" text-anchor="middle" class="small" style="font-size:13.44px">Comparar lugares con datos reales</text>
+
+  <rect x="40" y="340" width="230" height="65" rx="5" class="box" />
+  <text x="155" y="367" text-anchor="middle" class="label" style="font-size:16.08px">El usuario añade requisitos</text>
+  <text x="155" y="390" text-anchor="middle" class="small" style="font-size:14.47px">Cambios de presupuesto o aforo</text>
+  <path d="M270 372 H313" class="arrow" />
+  <rect x="320" y="340" width="240" height="65" rx="5" class="box" />
+  <text x="440" y="367" text-anchor="middle" class="label" style="font-size:14.21px">Conservar el trabajo terminado</text>
+  <text x="440" y="390" text-anchor="middle" class="small" style="font-size:14.82px">Incorporar los nuevos requisitos</text>
+  <path d="M560 372 H603" class="arrow" />
+  <rect x="610" y="340" width="230" height="65" rx="5" class="box" />
+  <text x="725" y="367" text-anchor="middle" class="label" style="font-size:15.30px">Ajustar acciones posteriores</text>
+  <text x="725" y="390" text-anchor="middle" class="small" style="font-size:14.93px">Integrar datos y actualizaciones</text>
+
+  <rect x="20" y="455" width="840" height="65" rx="6" fill="#e9e9e9" />
+  <text x="440" y="482" text-anchor="middle" class="label">Modelo: entender cambios y ajustar planes. Entorno de ejecución: herramientas, estado y fuentes.</text>
+  <text x="440" y="506" text-anchor="middle" class="small">Recibir mensajes también exige reanudar tareas y controlar las acciones correctamente.</text>
+</svg>

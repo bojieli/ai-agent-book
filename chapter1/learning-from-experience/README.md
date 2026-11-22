@@ -1,11 +1,430 @@
 # Learning from Experience: RL vs LLM In-Context Learning / 从经验中学习：RL 与 LLM 上下文学习对比
 
-> Compares tabular Q-learning with LLM in-context learning on a treasure-hunt game with hidden mechanics (Shunyu Yao, “The Second Half”).  
-> 代码位于第 1 章项目树；对应书中 **实验 7-1 ★（Q-learning 在寻宝游戏中的表现）** 与 **实验 7-2 ★★（传统 RL 与 LLM Agent 的对比研究）**。
+面对规则不完全公开的寻宝游戏，Agent 必须从行动后果中学习。本项目把表格型 Q-learning 与 LLM 的上下文学习放在同一游戏中，帮助你区分“更新参数”和“把经验留在输入中”。
 
-← [Chapter 1 index / 返回第 1 章目录](../README.md) · 📖 [Read Chapter 7 / 读第 7 章正文](../../book/chapter7.md)（[EN](../../book-en/chapter7.md)）
+[English](#english)
+
+建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+
+<a id="learning-0"></a>
+
+## 理解问题与方法
+
+Q-learning 用多次交互更新状态与动作的价值；LLM 则可以阅读行动历史，提出关于游戏规则的解释，并据此选择下一步。二者使用的先验知识、训练投入和记忆形式不同，不能只比较一局游戏的分数。
+
+### 概述
+
+本实验对比传统强化学习（Q-learning）与基于 LLM 的上下文学习（in-context learning），复现 Shunyu Yao 博客 [“The Second Half”](https://ysymyth.github.io/The-Second-Half/) 中的核心洞见。
+
+目标：展示 LLM 如何通过**推理**泛化，而传统 RL 往往需要大量试错才能学到游戏机制。我们使用带有**隐藏机制**的文本寻宝游戏，智能体只能通过经验去发现规则。
+
+代码在 `chapter1/learning-from-experience/`，对应书中**实验 8-1** 与 **实验 8-2**（正文见第 8 章）。
+
+### 你会看到什么
+
+运行 LLM 实验时，会看到**完整决策过程**：
+
+```
+============================================================
+LLM DECISION PROCESS
+============================================================
+📊 Experiences in memory: 15
+🎮 Current room: hallway
+🎯 Available actions: 8
+
+💡 Recent successful patterns learned:
+   • take red key → +5.0 reward
+   • try crafting → +10.0 reward
+
+🤔 LLM is thinking...
+
+📝 LLM Reasoning:
+----------------------------------------
+  Based on my past experiences, I've learned that:
+  1. The red key opens the locked door to the guard room
+  2. Crafting rusty sword + magic crystal creates a silver sword
+  3. The silver sword can defeat the strong guard
+  
+  Since I have the silver sword and I'm in the hallway...
+----------------------------------------
+
+✅ Chosen action: go north
+```
+
+这种透明度展示了 LLM 如何学习与推理，有别于 Q-learning 的黑盒性质。
+
+### 游戏说明
+
+文本寻宝游戏，智能体需要：
+
+- 在多个房间间导航  
+- 收集物品与钥匙  
+- 使用合适武器击败守卫  
+- 通过经验发现隐藏机制  
+
+#### 隐藏机制（不对智能体公开）
+
+1. **颜色锁**：特定颜色钥匙开对应门  
+2. **武器有效性**：不同武器对不同敌人有效  
+3. **合成系统**：特定物品可合成更强物品  
+4. **药水效果**：消耗药水获得临时能力
+
+<a id="learning-1"></a>
+
+## 准备环境与输入
+
+本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+
+<a id="learning-2"></a>
+
+## 按照步骤完成实验
+
+先阅读游戏环境中的状态、动作与奖励定义，再用下文中的本地 Q-learning 路径观察训练前后的行为。随后配置 LLM 路径，跟踪一局中的观察如何改变下一步选择。本目录位于第一章项目树，相关学习实验的正文在第八章。
+
+### 快速开始
+
+#### 安装
+
+```bash
+# 推荐在仓库根目录使用统一的第 1 章环境
+uv sync --locked --extra ch1
+
+# 切换目录前先激活环境：
+# macOS/Linux：
+source .venv/bin/activate
+# Windows PowerShell：.venv\Scripts\Activate.ps1
+# Windows cmd：.venv\Scripts\activate.bat
+
+# 未安装 uv 时可用 pip 兜底：
+# python -m pip install -e ".[ch1]"
+
+# 进入本实验目录，后续命令都在这里运行
+cd chapter1/learning-from-experience
+
+# 迁移期间仍支持单项目兼容路径：
+# python -m pip install -r requirements.txt
+```
+
+- Q-learning 完全离线，**无需任何 API Key**。  
+- LLM 部分需要 Moonshot/Kimi API Key（或 OpenRouter 兜底）。  
+
+#### 配置 Kimi K3 API
+
+运行 LLM 实验需要 Kimi（Moonshot）API Key：
+
+1. 从 [Moonshot AI](https://platform.moonshot.cn/) 获取 Key  
+2. 设置环境变量：
+
+```bash
+export MOONSHOT_API_KEY="your-api-key-here"
+```
+
+或创建 `.env`：
+
+```bash
+echo "MOONSHOT_API_KEY=your-api-key-here" > .env
+```
+
+**通用兜底（OpenRouter）**：若未设置 `MOONSHOT_API_KEY` 但设置了 `OPENROUTER_API_KEY`，LLM 部分会自动改走 OpenRouter。由于 Kimi 模型在 OpenRouter 上不稳定可用，兜底时会使用 `OPENROUTER_MODEL`（默认 `openai/gpt-5.6-luna`）：
+
+```bash
+export OPENROUTER_API_KEY=your-openrouter-api-key
+python quick_demo.py   # MOONSHOT_API_KEY 缺失时自动经 OpenRouter 运行
+```
+
+### 运行实验
+
+#### 快速演示（观察 LLM 如何学习）
+
+```bash
+python quick_demo.py
+```
+
+会展示：
+
+- 每一步的完整思考过程  
+- 经验如何累积并影响后续决策  
+- 与传统 RL 在学习速度上的巨大差异  
+
+#### 命令行接口（`experiment.py`）
+
+`experiment.py` 提供带中文帮助的完整 CLI：
+
+```bash
+python experiment.py --help
+```
+
+主要参数：
+
+| 参数 | 说明 | 默认值 |
+| --- | --- | --- |
+| `--mode {both,qlearning,rl,llm}` | 运行哪种智能体：`qlearning`/`rl` 只跑 Q-learning（离线）、`llm` 只跑 LLM Agent、`both` 两者对比 | `both` |
+| `--rl-episodes` | Q-learning 训练局数（实验 8-1 用 10000） | `10000` |
+| `--llm-episodes` | LLM Agent 训练局数 | `20` |
+| `--eval-episodes` | Q-learning 训练后贪婪评估局数 | `100` |
+| `--checkpoint-interval` | 学习曲线采样间隔（每 N 局记录一次胜率/Q 表规模） | `1000` |
+| `--model` | LLM 模型名（也可用 `MOONSHOT_MODEL` 环境变量） | `kimi-k3` |
+| `--output` | 结果输出目录 | `results` |
+| `--seed` | 随机种子，用于复现 Q-learning 学习曲线 | 不固定 |
+| `--learning-rate` / `--discount` / `--epsilon-decay` / `--epsilon-min` | Q-learning 超参数 | `0.2 / 0.99 / 0.9995 / 0.1` |
+| `--stochastic` | 使用随机环境 | 确定性 |
+| `--skip-llm` | 兼容旧用法，等价于 `--mode qlearning` | — |
+
+#### 仅 Q-Learning（实验 8-1，离线，无需 API）
+
+```bash
+python experiment.py --mode qlearning --rl-episodes 10000 --seed 42
+```
+
+训练不到 3 秒即可完成，并打印**学习曲线表格**，直观展现智能体如何在近万局试错中从 0% 胜率逐步学会通关（见下文“实验结果”）。
+
+#### 完整对比（RL vs LLM，实验 8-2）
+
+```bash
+python experiment.py --mode both --model kimi-k3
+```
+
+严格复现正文协议并生成可验收证据，请运行：
+
+```bash
+python run_experiment_8_2.py
+```
+
+该入口固定运行 10,000 局 Q-learning、100 局贪婪评估和且仅一局官方
+Moonshot `kimi-k3` 首次尝试；OpenRouter 替代、API 错误、缺失原始响应
+ID/正文或任何 parser fallback 都会使验收失败。若模型调用已经完成、仅证据
+序列化失败，可运行 `python finalize_experiment_8_2.py <campaign-dir>`，直接从
+已保留的原始结果完成证据，不重复付费调用。
+
+流程：
+
+1. 训练 Q-learning 10000 局（约 3 秒）并打印学习曲线  
+2. 训练 LLM Agent 20 局，并展示详细推理  
+3. 评估双方  
+4. 生成对比图  
+5. 结果写入 `results/`  
+
+**说明**：`experiment.py` 是多局探索入口；正文规范入口只测第一局。2026-07-30
+验收运行包含 17 次串行推理调用，共耗时 416.11 秒，因此没有复现旧版
+“每局 1–2 分钟”的估计。
+
+#### 仅 LLM
+
+```bash
+python experiment.py --mode llm --llm-episodes 20
+```
+
+#### 交互式试玩
+
+```python
+from game_environment import TreasureHuntGame
+
+game = TreasureHuntGame()
+print(game.get_state_description())
+print("Available actions:", game.get_available_actions())
+
+# Try an action
+feedback, reward, done = game.execute_action("take rusty sword")
+print(f"Feedback: {feedback}")
+print(f"Reward: {reward}")
+```
+
+<a id="learning-3"></a>
+
+## 分析结果与形成判断
+
+重点记录是否找到目标、用了多少步，以及遇到新规则后如何调整。某次 LLM 很快成功，不代表它在所有地图上都更优；Q-learning 在熟悉地图上表现稳定，也不等于能直接适应新规则。比较时应保持地图分布与评估预算清楚。
+
+### 让比较回答一个明确的问题
+
+先固定地图、起点、终点和可用动作，分别记录两条路线看到的观察与取得的奖励。Q-learning 的训练轮数与 LLM 携带的历史长度代表不同的学习投入；保留这些信息，才能解释分数差异。下面的结果表展示的是特定游戏和设置下的观察。若想判断一种学习方式是否更能迁移，应更换地图或规则，并把新环境与用于形成策略的环境分开。
+
+### 需要通过对照检验的解释
+
+1. **样本效率**：LLM 用远少于传统 RL 的样例即可学习  
+2. **泛化**：LLM 用推理理解模式；RL 记忆状态-动作映射  
+3. **先验知识**：语言预训练为新任务推理提供强大先验  
+4. **隐藏机制发现**：LLM 可形成假设并检验；RL 往往需要穷尽式探索
+
+### 验证
+
+在干净环境中运行 pytest 前，先在仓库根目录安装 `dev` extra：
+
+```bash
+uv sync --locked --extra ch1 --extra dev
+
+# 切换目录前先激活环境：
+# macOS/Linux：
+source .venv/bin/activate
+# Windows PowerShell：.venv\Scripts\Activate.ps1
+# Windows cmd：.venv\Scripts\activate.bat
+
+cd chapter1/learning-from-experience
+python -m pytest tests
+```
+
+较长的 Q-learning 学习曲线检查是离线手动 smoke 脚本，不会被默认 pytest 收集：
+
+```bash
+python tests/manual/rl_learning_check.py --episodes 1000
+```
+
+### 实验结果
+
+#### 对比指标
+
+1. **样本效率** — 达到良好表现所需局数、学习速度  
+2. **性能** — 评估胜率、平均回报与回合长度  
+3. **计算成本** — 训练时间；内存（Q 表规模 vs. 经验存储）；LLM 的 API 调用  
+
+#### 可视化
+
+实验会生成对比图，包括：
+
+- 随时间的学习曲线  
+- 胜率演进  
+- 样本效率对比  
+- 关键洞察摘要  
+
+#### 预期结果
+
+##### Q-learning 学习曲线（本地实测，`--mode qlearning --rl-episodes 10000 --seed 42`）
+
+实测学习曲线（确定性环境，胜率按最近 1000 局滑动窗口统计，整段训练约 3 秒）：
+
+| Episodes | Victory rate | Q-table states | epsilon |
+| ---: | ---: | ---: | ---: |
+| 1000 | 0.3% | 123 | 0.606 |
+| 2000 | 0.0% | 123 | 0.368 |
+| 3000 | 0.1% | 126 | 0.223 |
+| 5000 | 0.1% | 128 | 0.100 |
+| 7000 | 97.0% | 138 | 0.100 |
+| 8000 | 99.6% | 138 | 0.100 |
+| 9000 | 99.8% | 139 | 0.100 |
+| 10000 | **98.1%** | 142 | 0.100 |
+
+规范运行训练后 100 局贪婪评估胜率为 **100%**，平均 12 步通关；Kimi K3
+第一局 17 步通关，保留 17/17 条官方响应，零 API 错误、零 fallback，共
+28,242 tokens。它复现了“第一局成功”的实质结论，但没有复现历史记录中的
+Kimi 恰好 18 步和 Q-learning 恰好 11 步。详见[规范证据](validation/20260730_011704/evidence.json)。
+
+##### RL vs LLM（实验 8-2 的对比结论）
+
+- **Q-Learning**：需要近 10000 局才达到稳定通关；把“门/钥匙/剑”当作无意义符号，只能靠统计式暴力探索。  
+- **LLM In-Context**：携带预训练先验，往往第一局就能在十几步内通关；靠推理理解游戏概念结构。  
+- **样本效率**：LLM 高出 2–3 个数量级；但单局推理慢（API 调用 ~1–2 分钟），Q-learning 跑 10000 局只需约 3 秒——权衡取决于交互成本，详见书中实验 8-2。
+
+### 检查自己的解释
+
+如果把学到的经验从 LLM 上下文中删掉，和重置 Q 表，分别会消除什么能力？
+
+<a id="learning-4"></a>
+
+## 阅读实现与继续探索
+
+### 项目说明
+
+> Compares tabular Q-learning with LLM in-context learning on a treasure-hunt game with hidden mechanics (Shunyu Yao, “The Second Half”).  
+> 代码位于第 1 章项目树；对应书中 **实验 8-1 ★（Q-learning 在寻宝游戏中的表现）** 与 **实验 8-2 ★★（传统 RL 与 LLM Agent 的对比研究）**。
+
+← [Chapter 1 index / 返回第 1 章目录](../README.md) · 📖 [Read Chapter 8 / 读第 8 章正文](../../book/chapter8.md)（[EN](../../book-en/chapter8.md)）
 
 ---
+
+### 项目结构
+
+```
+learning-from-experience/
+├── game_environment.py    # Text-based game with hidden mechanics
+├── rl_agent.py            # Q-learning implementation
+├── llm_agent.py           # LLM with in-context learning
+├── experiment.py          # Main experiment runner
+├── demo.py                # Interactive local game demo
+├── quick_demo.py          # Short LLM learning demo
+├── run_experiment_8_2.py  # 正文规范实测与验收门
+├── finalize_experiment_8_2.py # 仅补写证据，不重复 API 调用
+├── env.example            # Optional API-key template
+├── tests/
+│   ├── test_basic.py
+│   ├── test_zero_episodes.py
+│   ├── test_rl_progress_small_episodes.py
+│   └── manual/
+│       └── rl_learning_check.py
+├── requirements.txt       # Python dependencies
+├── README.md              # This file
+└── results/               # Experiment outputs (created on run)
+    └── [timestamp]/
+        ├── rl_agent.pkl           # Trained Q-learning agent
+        ├── llm_experiences.json   # LLM's collected experiences
+        ├── experiment_results.json # Numerical results
+        └── comparison_plots.png   # Visualization
+```
+
+### 技术细节
+
+#### Q-Learning Agent
+
+- **算法**：表格 Q-learning + ε-贪婪探索  
+- **状态表示**：房间、背包与游戏状态的哈希组合  
+- **学习率**：0.2（`--learning-rate`）  
+- **折扣因子**：0.99（`--discount`）  
+- **探索**：ε 从 1.0 起，按 `--epsilon-decay`（0.9995）衰减到 `--epsilon-min`（0.1）  
+
+#### LLM Agent（Kimi K3）
+
+- **模型**：`kimi-k3`（可用 `--model` 或 `MOONSHOT_MODEL` 覆盖）  
+- **推理模型**：Kimi K3 会在最终答案（`message.content`）前输出思维链（`message.reasoning_content`），因此代码使用较大的 `max_tokens=2048`，避免 `ACTION:` 行被思考预算截断。  
+- **学习方式**：上下文学习 + 经验记忆（最多 50 条）  
+- **上下文管理**：存储成功与失败经验  
+- **推理**：行动前提示模型基于过往经验推理  
+- **Temperature**：请求 0.7，但推理模型（Kimi K3、GPT-5）只接受 `temperature=1`，代码会自动强制为 `1`（见 `_reasoning_safe_temperature`）
+
+### 扩展实验
+
+#### 进一步研究思路
+
+1. **不同游戏**：尝试其他隐藏机制游戏  
+2. **混合方法**：RL 与 LLM 引导结合  
+3. **迁移学习**：测试向相似游戏的迁移  
+4. **消融研究**：去掉推理提示以隔离其影响  
+5. **其他 LLM**：对比不同语言模型  
+
+#### 修改游戏
+
+编辑 `game_environment.py` 可：
+
+- 增加房间与物品  
+- 设计更复杂的隐藏机制  
+- 调整难度与奖励  
+- 加入新类型谜题
+
+### 教学价值
+
+1. **先验的力量**：语言预训练如何提供有用知识  
+2. **推理 vs. 记忆**：不同学习路径  
+3. **样本效率**：为何对现实任务重要  
+4. **“The Second Half” 论点**：从“能否解决”转向“多高效”
+
+<a id="learning-5"></a>
+
+## 排查问题与查阅资料
+
+### 参考文献
+
+- [The Second Half](https://ysymyth.github.io/The-Second-Half/) — Shunyu Yao  
+- [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)  
+- Q-learning 原文：Watkins & Dayan (1992)  
+
+---
+
+## Notes / 说明
+
+- Project type: **✅ standalone runnable** (Q-learning offline; LLM needs API key).  
+  项目类型：**✅ 可独立运行**（Q-learning 离线；LLM 需 API Key）。  
+- For educational purposes; inspired by academic work on AI and RL.  
+  教学用途，灵感来自 AI 与强化学习相关研究。  
+- Feel free to add mechanics, other RL algorithms (DQN, PPO, …), providers, or richer metrics.  
+  欢迎增加隐藏机制、其他 RL 算法、提供商或更完善的评估指标。
 
 ## English
 
@@ -76,11 +495,23 @@ A text-based treasure hunt game where agents must:
 #### Installation
 
 ```bash
-# Navigate to the project directory
+# Recommended from the repository root: use the shared Chapter 1 environment
+uv sync --locked --extra ch1
+
+# Activate it before changing directories:
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+
+# pip fallback when uv is not installed:
+# python -m pip install -e ".[ch1]"
+
+# Enter this experiment directory for the commands below
 cd chapter1/learning-from-experience
 
-# Install dependencies
-pip install -r requirements.txt
+# Single-project compatibility path, still supported during migration:
+# python -m pip install -r requirements.txt
 ```
 
 - Q-learning runs fully offline with **no API key**.
@@ -94,7 +525,12 @@ To run the LLM experiments, you need a Kimi (Moonshot) API key:
 2. Set the environment variable:
 
 ```bash
+export LLM_PROVIDER="moonshot"  # or dashscope/qwen/bailian
 export MOONSHOT_API_KEY="your-api-key-here"
+# For Alibaba Cloud Model Studio / Bailian (Qwen), use:
+# export LLM_PROVIDER="dashscope"
+# export DASHSCOPE_API_KEY="your-dashscope-api-key-here"
+# export DASHSCOPE_MODEL="qwen3.7-plus"
 ```
 
 Or create a `.env` file:
@@ -106,7 +542,7 @@ echo "MOONSHOT_API_KEY=your-api-key-here" > .env
 **Universal OpenRouter fallback**: if `MOONSHOT_API_KEY` is unset but `OPENROUTER_API_KEY` is set, the LLM path routes through OpenRouter. Because Kimi models are not stably available on OpenRouter, the fallback uses `OPENROUTER_MODEL` (default `openai/gpt-5.6-luna`):
 
 ```bash
-export OPENROUTER_API_KEY=sk-or-v1-your-key-here
+export OPENROUTER_API_KEY=your-openrouter-api-key
 python quick_demo.py   # runs via OpenRouter when MOONSHOT_API_KEY is missing
 ```
 
@@ -137,7 +573,7 @@ Main parameters:
 | Parameter | Description | Default |
 | --- | --- | --- |
 | `--mode {both,qlearning,rl,llm}` | Which agent(s): `qlearning`/`rl` = Q-learning only (offline), `llm` = LLM Agent only, `both` = comparison | `both` |
-| `--rl-episodes` | Q-learning training episodes (Experiment 7-1 uses 10000) | `10000` |
+| `--rl-episodes` | Q-learning training episodes (Experiment 8-1 uses 10000) | `10000` |
 | `--llm-episodes` | LLM Agent training episodes | `20` |
 | `--eval-episodes` | Greedy evaluation episodes after Q-learning | `100` |
 | `--checkpoint-interval` | Learning-curve sample interval (every N episodes) | `1000` |
@@ -148,7 +584,7 @@ Main parameters:
 | `--stochastic` | Use stochastic environment | deterministic |
 | `--skip-llm` | Legacy alias for `--mode qlearning` | — |
 
-#### Q-Learning Only (Experiment 7-1, offline, no API)
+#### Q-Learning Only (Experiment 8-1, offline, no API)
 
 ```bash
 python experiment.py --mode qlearning --rl-episodes 10000 --seed 42
@@ -156,11 +592,25 @@ python experiment.py --mode qlearning --rl-episodes 10000 --seed 42
 
 Training finishes in under ~3 seconds and prints a **learning curve table** showing how the agent goes from ~0% win rate to mastery over nearly 10k episodes (see Results below).
 
-#### Full Comparison (RL vs LLM, Experiment 7-2)
+#### Full Comparison (RL vs LLM, Experiment 8-2)
 
 ```bash
 python experiment.py --mode both --model kimi-k3
 ```
+
+For the exact book protocol and acceptance-grade evidence, use the canonical
+runner. It executes the 10,000-episode Q-learning arm, 100 greedy evaluation
+episodes, and exactly one first-attempt official Moonshot Kimi K3 trajectory:
+
+```bash
+python run_experiment_8_2.py
+```
+
+The canonical runner rejects OpenRouter substitution, API errors, missing raw
+provider response IDs/content, and any parser fallback. It writes
+`validation/<timestamp>/evidence.json`; if only post-run serialization needs to
+be repaired, `finalize_experiment_8_2.py <campaign-dir>` finalizes the already
+saved raw campaign without repeating paid model calls.
 
 This will:
 
@@ -170,7 +620,10 @@ This will:
 4. Generate comparison plots
 5. Save results to the `results/` directory
 
-**Note**: LLM training shows the full reasoning process for the first 3 episodes and the last episode. Each LLM episode takes ~1–2 minutes (real API calls), matching the cost trade-off discussed in Experiment 7-2.
+**Note**: `experiment.py` is the exploratory multi-episode runner. The canonical
+book campaign is deliberately one first attempt. The accepted 2026-07-30 Kimi
+K3 attempt took 416.11 seconds for 17 sequential reasoning calls; the earlier
+“1–2 minutes per game” estimate was not reproduced on this route.
 
 #### LLM Only
 
@@ -193,6 +646,29 @@ print("Available actions:", game.get_available_actions())
 feedback, reward, done = game.execute_action("take rusty sword")
 print(f"Feedback: {feedback}")
 print(f"Reward: {reward}")
+```
+
+### Validation
+
+Install the `dev` extra from the repository root before running pytest in a clean environment:
+
+```bash
+uv sync --locked --extra ch1 --extra dev
+
+# Activate it before changing directories:
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+
+cd chapter1/learning-from-experience
+python -m pytest tests
+```
+
+The longer Q-learning learning-curve check is an offline manual smoke script, kept out of default pytest discovery:
+
+```bash
+python tests/manual/rl_learning_check.py --episodes 1000
 ```
 
 ### Experiment Results
@@ -220,22 +696,27 @@ Measured curve (deterministic env; victory rate as a sliding window over the las
 
 | Episodes | Victory rate | Q-table states | epsilon |
 | ---: | ---: | ---: | ---: |
-| 1000 | 0.1% | 124 | 0.606 |
-| 2000 | 0.0% | 129 | 0.368 |
-| 3000 | 0.0% | 130 | 0.223 |
-| 5000 | 0.0% | 132 | 0.100 |
-| 7000 | 0.0% | 138 | 0.100 |
-| 8000 | 0.0% | 140 | 0.100 |
-| 9000 | 9.3% | 143 | 0.100 |
-| 10000 | **99.8%** | 143 | 0.100 |
+| 1000 | 0.3% | 123 | 0.606 |
+| 2000 | 0.0% | 123 | 0.368 |
+| 3000 | 0.1% | 126 | 0.223 |
+| 5000 | 0.1% | 128 | 0.100 |
+| 7000 | 97.0% | 138 | 0.100 |
+| 8000 | 99.6% | 138 | 0.100 |
+| 9000 | 99.8% | 139 | 0.100 |
+| 10000 | **98.1%** | 142 | 0.100 |
 
-After training, greedy evaluation (`--eval-episodes 100`) reaches **100%** win rate, averaging 15 steps to clear. This is the core of Experiment 7-1: nearly zero wins for the first ~8000 episodes while exploring blindly; value signals need nearly 10k trials to propagate. (With free exploration variance, unseeded runs shift the inflection slightly but keep the same shape.)
+After training, the canonical greedy evaluation reaches **100%** win rate,
+averaging 12 steps. The accepted Kimi K3 arm won on its first attempt in 17
+steps with 17/17 real responses, zero API errors, zero fallbacks, and 28,242
+tokens. This reproduces the first-attempt conclusion but not the manuscript's
+historical point estimates of exactly 18 Kimi steps and an 11-step Q-learning
+solution. See the [canonical evidence](validation/20260730_011704/evidence.json).
 
-##### RL vs LLM (Experiment 7-2 conclusions)
+##### RL vs LLM (Experiment 8-2 conclusions)
 
 - **Q-Learning**: Needs ~10000 episodes for stable clears; treats “door / key / sword” as meaningless symbols and only explores statistically.
 - **LLM In-Context**: Carries pretrained priors; often clears in the first episode within tens of steps by reasoning about game concepts.
-- **Sample Efficiency**: LLM is 2–3 orders of magnitude more sample-efficient; but per-episode inference is slow (~1–2 min API), while Q-learning finishes 10000 episodes in ~3s—trade-off depends on interaction cost (see book Experiment 7-2).
+- **Sample Efficiency**: LLM is 2–3 orders of magnitude more sample-efficient; but per-episode inference is slow (~1–2 min API), while Q-learning finishes 10000 episodes in ~3s—trade-off depends on interaction cost (see book Experiment 8-2).
 
 ### Project Structure
 
@@ -245,6 +726,17 @@ learning-from-experience/
 ├── rl_agent.py            # Q-learning implementation
 ├── llm_agent.py           # LLM with in-context learning
 ├── experiment.py          # Main experiment runner
+├── demo.py                # Interactive local game demo
+├── quick_demo.py          # Short LLM learning demo
+├── run_experiment_8_2.py  # Exact real campaign + acceptance gates
+├── finalize_experiment_8_2.py # Evidence-only recovery; no API rerun
+├── env.example            # Optional API-key template
+├── tests/
+│   ├── test_basic.py
+│   ├── test_zero_episodes.py
+│   ├── test_rl_progress_small_episodes.py
+│   └── manual/
+│       └── rl_learning_check.py
 ├── requirements.txt       # Python dependencies
 ├── README.md              # This file
 └── results/               # Experiment outputs (created on run)
@@ -307,313 +799,3 @@ Edit `game_environment.py` to:
 - Original Q-learning paper: Watkins & Dayan (1992)
 
 ---
-
-## 中文
-
-### 概述
-
-本实验对比传统强化学习（Q-learning）与基于 LLM 的上下文学习（in-context learning），复现 Shunyu Yao 博客 [“The Second Half”](https://ysymyth.github.io/The-Second-Half/) 中的核心洞见。
-
-目标：展示 LLM 如何通过**推理**泛化，而传统 RL 往往需要大量试错才能学到游戏机制。我们使用带有**隐藏机制**的文本寻宝游戏，智能体只能通过经验去发现规则。
-
-代码在 `chapter1/learning-from-experience/`，对应书中**实验 7-1** 与 **实验 7-2**（正文见第 7 章）。
-
-### 要验证的关键洞察
-
-1. **样本效率**：LLM 用远少于传统 RL 的样例即可学习  
-2. **泛化**：LLM 用推理理解模式；RL 记忆状态-动作映射  
-3. **先验知识**：语言预训练为新任务推理提供强大先验  
-4. **隐藏机制发现**：LLM 可形成假设并检验；RL 往往需要穷尽式探索  
-
-### 你会看到什么
-
-运行 LLM 实验时，会看到**完整决策过程**：
-
-```
-============================================================
-LLM DECISION PROCESS
-============================================================
-📊 Experiences in memory: 15
-🎮 Current room: hallway
-🎯 Available actions: 8
-
-💡 Recent successful patterns learned:
-   • take red key → +5.0 reward
-   • try crafting → +10.0 reward
-
-🤔 LLM is thinking...
-
-📝 LLM Reasoning:
-----------------------------------------
-  Based on my past experiences, I've learned that:
-  1. The red key opens the locked door to the guard room
-  2. Crafting rusty sword + magic crystal creates a silver sword
-  3. The silver sword can defeat the strong guard
-  
-  Since I have the silver sword and I'm in the hallway...
-----------------------------------------
-
-✅ Chosen action: go north
-```
-
-这种透明度展示了 LLM 如何学习与推理，有别于 Q-learning 的黑盒性质。
-
-### 游戏说明
-
-文本寻宝游戏，智能体需要：
-
-- 在多个房间间导航  
-- 收集物品与钥匙  
-- 使用合适武器击败守卫  
-- 通过经验发现隐藏机制  
-
-#### 隐藏机制（不对智能体公开）
-
-1. **颜色锁**：特定颜色钥匙开对应门  
-2. **武器有效性**：不同武器对不同敌人有效  
-3. **合成系统**：特定物品可合成更强物品  
-4. **药水效果**：消耗药水获得临时能力  
-
-### 快速开始
-
-#### 安装
-
-```bash
-# Navigate to the project directory
-cd chapter1/learning-from-experience
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-- Q-learning 完全离线，**无需任何 API Key**。  
-- LLM 部分需要 Moonshot/Kimi API Key（或 OpenRouter 兜底）。  
-
-#### 配置 Kimi K3 API
-
-运行 LLM 实验需要 Kimi（Moonshot）API Key：
-
-1. 从 [Moonshot AI](https://platform.moonshot.cn/) 获取 Key  
-2. 设置环境变量：
-
-```bash
-export MOONSHOT_API_KEY="your-api-key-here"
-```
-
-或创建 `.env`：
-
-```bash
-echo "MOONSHOT_API_KEY=your-api-key-here" > .env
-```
-
-**通用兜底（OpenRouter）**：若未设置 `MOONSHOT_API_KEY` 但设置了 `OPENROUTER_API_KEY`，LLM 部分会自动改走 OpenRouter。由于 Kimi 模型在 OpenRouter 上不稳定可用，兜底时会使用 `OPENROUTER_MODEL`（默认 `openai/gpt-5.6-luna`）：
-
-```bash
-export OPENROUTER_API_KEY=sk-or-v1-your-key-here
-python quick_demo.py   # MOONSHOT_API_KEY 缺失时自动经 OpenRouter 运行
-```
-
-### 运行实验
-
-#### 快速演示（观察 LLM 如何学习）
-
-```bash
-python quick_demo.py
-```
-
-会展示：
-
-- 每一步的完整思考过程  
-- 经验如何累积并影响后续决策  
-- 与传统 RL 在学习速度上的巨大差异  
-
-#### 命令行接口（`experiment.py`）
-
-`experiment.py` 提供带中文帮助的完整 CLI：
-
-```bash
-python experiment.py --help
-```
-
-主要参数：
-
-| 参数 | 说明 | 默认值 |
-| --- | --- | --- |
-| `--mode {both,qlearning,rl,llm}` | 运行哪种智能体：`qlearning`/`rl` 只跑 Q-learning（离线）、`llm` 只跑 LLM Agent、`both` 两者对比 | `both` |
-| `--rl-episodes` | Q-learning 训练局数（实验 7-1 用 10000） | `10000` |
-| `--llm-episodes` | LLM Agent 训练局数 | `20` |
-| `--eval-episodes` | Q-learning 训练后贪婪评估局数 | `100` |
-| `--checkpoint-interval` | 学习曲线采样间隔（每 N 局记录一次胜率/Q 表规模） | `1000` |
-| `--model` | LLM 模型名（也可用 `MOONSHOT_MODEL` 环境变量） | `kimi-k3` |
-| `--output` | 结果输出目录 | `results` |
-| `--seed` | 随机种子，用于复现 Q-learning 学习曲线 | 不固定 |
-| `--learning-rate` / `--discount` / `--epsilon-decay` / `--epsilon-min` | Q-learning 超参数 | `0.2 / 0.99 / 0.9995 / 0.1` |
-| `--stochastic` | 使用随机环境 | 确定性 |
-| `--skip-llm` | 兼容旧用法，等价于 `--mode qlearning` | — |
-
-#### 仅 Q-Learning（实验 7-1，离线，无需 API）
-
-```bash
-python experiment.py --mode qlearning --rl-episodes 10000 --seed 42
-```
-
-训练不到 3 秒即可完成，并打印**学习曲线表格**，直观展现智能体如何在近万局试错中从 0% 胜率逐步学会通关（见下文“实验结果”）。
-
-#### 完整对比（RL vs LLM，实验 7-2）
-
-```bash
-python experiment.py --mode both --model kimi-k3
-```
-
-流程：
-
-1. 训练 Q-learning 10000 局（约 3 秒）并打印学习曲线  
-2. 训练 LLM Agent 20 局，并展示详细推理  
-3. 评估双方  
-4. 生成对比图  
-5. 结果写入 `results/`  
-
-**说明**：LLM 训练会对前 3 局与最后一局展示完整推理。每局 LLM 约 1–2 分钟（真实 API 调用），对应书中实验 7-2 讨论的成本权衡。
-
-#### 仅 LLM
-
-```bash
-python experiment.py --mode llm --llm-episodes 20
-```
-
-#### 交互式试玩
-
-```python
-from game_environment import TreasureHuntGame
-
-game = TreasureHuntGame()
-print(game.get_state_description())
-print("Available actions:", game.get_available_actions())
-
-# Try an action
-feedback, reward, done = game.execute_action("take rusty sword")
-print(f"Feedback: {feedback}")
-print(f"Reward: {reward}")
-```
-
-### 实验结果
-
-#### 对比指标
-
-1. **样本效率** — 达到良好表现所需局数、学习速度  
-2. **性能** — 评估胜率、平均回报与回合长度  
-3. **计算成本** — 训练时间；内存（Q 表规模 vs. 经验存储）；LLM 的 API 调用  
-
-#### 可视化
-
-实验会生成对比图，包括：
-
-- 随时间的学习曲线  
-- 胜率演进  
-- 样本效率对比  
-- 关键洞察摘要  
-
-#### 预期结果
-
-##### Q-learning 学习曲线（本地实测，`--mode qlearning --rl-episodes 10000 --seed 42`）
-
-实测学习曲线（确定性环境，胜率按最近 1000 局滑动窗口统计，整段训练约 3 秒）：
-
-| Episodes | Victory rate | Q-table states | epsilon |
-| ---: | ---: | ---: | ---: |
-| 1000 | 0.1% | 124 | 0.606 |
-| 2000 | 0.0% | 129 | 0.368 |
-| 3000 | 0.0% | 130 | 0.223 |
-| 5000 | 0.0% | 132 | 0.100 |
-| 7000 | 0.0% | 138 | 0.100 |
-| 8000 | 0.0% | 140 | 0.100 |
-| 9000 | 9.3% | 143 | 0.100 |
-| 10000 | **99.8%** | 143 | 0.100 |
-
-训练后贪婪评估（`--eval-episodes 100`）胜率为 **100%**，平均 15 步通关。这正是实验 7-1 的核心现象：前 8000 局几乎 0% 胜率、只在盲目探索，价值信号需要近万局试错才传播到位。（因随机探索有方差，未固定 `--seed` 时各次运行的拐点会略有不同，但整体形态一致。）
-
-##### RL vs LLM（实验 7-2 的对比结论）
-
-- **Q-Learning**：需要近 10000 局才达到稳定通关；把“门/钥匙/剑”当作无意义符号，只能靠统计式暴力探索。  
-- **LLM In-Context**：携带预训练先验，往往第一局就能在十几步内通关；靠推理理解游戏概念结构。  
-- **样本效率**：LLM 高出 2–3 个数量级；但单局推理慢（API 调用 ~1–2 分钟），Q-learning 跑 10000 局只需约 3 秒——权衡取决于交互成本，详见书中实验 7-2。  
-
-### 项目结构
-
-```
-learning-from-experience/
-├── game_environment.py    # Text-based game with hidden mechanics
-├── rl_agent.py            # Q-learning implementation
-├── llm_agent.py           # LLM with in-context learning
-├── experiment.py          # Main experiment runner
-├── requirements.txt       # Python dependencies
-├── README.md              # This file
-└── results/               # Experiment outputs (created on run)
-    └── [timestamp]/
-        ├── rl_agent.pkl           # Trained Q-learning agent
-        ├── llm_experiences.json   # LLM's collected experiences
-        ├── experiment_results.json # Numerical results
-        └── comparison_plots.png   # Visualization
-```
-
-### 技术细节
-
-#### Q-Learning Agent
-
-- **算法**：表格 Q-learning + ε-贪婪探索  
-- **状态表示**：房间、背包与游戏状态的哈希组合  
-- **学习率**：0.2（`--learning-rate`）  
-- **折扣因子**：0.99（`--discount`）  
-- **探索**：ε 从 1.0 起，按 `--epsilon-decay`（0.9995）衰减到 `--epsilon-min`（0.1）  
-
-#### LLM Agent（Kimi K3）
-
-- **模型**：`kimi-k3`（可用 `--model` 或 `MOONSHOT_MODEL` 覆盖）  
-- **推理模型**：Kimi K3 会在最终答案（`message.content`）前输出思维链（`message.reasoning_content`），因此代码使用较大的 `max_tokens=2048`，避免 `ACTION:` 行被思考预算截断。  
-- **学习方式**：上下文学习 + 经验记忆（最多 50 条）  
-- **上下文管理**：存储成功与失败经验  
-- **推理**：行动前提示模型基于过往经验推理  
-- **Temperature**：请求 0.7，但推理模型（Kimi K3、GPT-5）只接受 `temperature=1`，代码会自动强制为 `1`（见 `_reasoning_safe_temperature`）  
-
-### 扩展实验
-
-#### 进一步研究思路
-
-1. **不同游戏**：尝试其他隐藏机制游戏  
-2. **混合方法**：RL 与 LLM 引导结合  
-3. **迁移学习**：测试向相似游戏的迁移  
-4. **消融研究**：去掉推理提示以隔离其影响  
-5. **其他 LLM**：对比不同语言模型  
-
-#### 修改游戏
-
-编辑 `game_environment.py` 可：
-
-- 增加房间与物品  
-- 设计更复杂的隐藏机制  
-- 调整难度与奖励  
-- 加入新类型谜题  
-
-### 教学价值
-
-1. **先验的力量**：语言预训练如何提供有用知识  
-2. **推理 vs. 记忆**：不同学习路径  
-3. **样本效率**：为何对现实任务重要  
-4. **“The Second Half” 论点**：从“能否解决”转向“多高效”  
-
-### 参考文献
-
-- [The Second Half](https://ysymyth.github.io/The-Second-Half/) — Shunyu Yao  
-- [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)  
-- Q-learning 原文：Watkins & Dayan (1992)  
-
----
-
-## Notes / 说明
-
-- Project type: **✅ standalone runnable** (Q-learning offline; LLM needs API key).  
-  项目类型：**✅ 可独立运行**（Q-learning 离线；LLM 需 API Key）。  
-- For educational purposes; inspired by academic work on AI and RL.  
-  教学用途，灵感来自 AI 与强化学习相关研究。  
-- Feel free to add mechanics, other RL algorithms (DQN, PPO, …), providers, or richer metrics.  
-  欢迎增加隐藏机制、其他 RL 算法、提供商或更完善的评估指标。  

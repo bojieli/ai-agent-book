@@ -1,0 +1,5 @@
+---
+// Preserve the previously shared Chinese homepage URL.
+import { withBase } from '../../lib/site-path.mjs';
+return Astro.redirect(withBase('/'));
+---

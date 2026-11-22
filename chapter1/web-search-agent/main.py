@@ -1,7 +1,7 @@
 """
 主程序 - Web Search Agent 使用示例
 
-演示第一章的 ReAct 循环（Reasoning + Acting）：模型先思考，再调用 $web_search
+演示第一章的 ReAct 循环（Reasoning + Acting）：模型先思考，再调用 web_search
 行动，观察搜索结果后继续思考，直到综合出最终答案。运行时会逐步打印 ReAct 轨迹。
 """
 
@@ -31,7 +31,7 @@ def _save_output(path: str, payload: dict):
 
 def run_interactive_mode(agent: WebSearchAgent, output: Optional[str] = None):
     """
-    交互式模式 - 持续与 Agent 对话
+    交互式模式 - 每次提问独立（search_and_answer 会重置对话历史，无跨问题上下文）
 
     Args:
         agent: WebSearchAgent 实例
@@ -42,7 +42,6 @@ def run_interactive_mode(agent: WebSearchAgent, output: Optional[str] = None):
     print("="*60)
     print("输入您的问题，Agent 将自动搜索并回答")
     print("输入 'quit' 或 'exit' 退出")
-    print("输入 'clear' 清空对话历史")
     print("="*60 + "\n")
 
     while True:
@@ -82,7 +81,11 @@ def run_interactive_mode(agent: WebSearchAgent, output: Optional[str] = None):
             if output:
                 _save_output(output, {"question": user_input,
                                       "trace": agent.get_trace(),
-                                      "answer": answer})
+                                      "answer": answer,
+                                      "api_turns": agent.get_api_turns(),
+                                      "provider": "openrouter" if agent.using_openrouter else "moonshot",
+                                      "model": agent.model,
+                                      "base_url": agent.base_url})
 
         except KeyboardInterrupt:
             print("\n\n👋 检测到中断，退出程序")
@@ -120,7 +123,11 @@ def run_single_question(agent: WebSearchAgent, question: str,
         if output:
             _save_output(output, {"question": question,
                                   "trace": agent.get_trace(),
-                                  "answer": answer})
+                                  "answer": answer,
+                                  "api_turns": agent.get_api_turns(),
+                                  "provider": "openrouter" if agent.using_openrouter else "moonshot",
+                                  "model": agent.model,
+                                  "base_url": agent.base_url})
     except Exception as e:
         logger.error(f"处理问题时出错: {str(e)}")
         print(f"\n❌ 出错了: {str(e)}\n")
@@ -142,7 +149,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("query", nargs="*",
                         help="要提问的问题；省略则进入交互模式")
     parser.add_argument("--provider", choices=["kimi", "offline-demo"], default="kimi",
-                        help="搜索后端：kimi=调用 Kimi 内置 $web_search（需 API Key）；"
+                        help="搜索后端：kimi=调用 Kimi Formula web_search（需 API Key）；"
                              "offline-demo=离线回放示例轨迹（默认 kimi）")
     parser.add_argument("--model", default=Config.DEFAULT_MODEL,
                         help=f"使用的模型名称（默认 {Config.DEFAULT_MODEL}）")

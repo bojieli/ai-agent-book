@@ -1,11 +1,302 @@
 # Prompt Engineering Ablation (τ-bench) / 提示工程消融实验
 
+提示词不仅告诉模型任务是什么，还说明业务规则、工具用途和遇到困难时的处理方式。本实验通过改变提示词的部分内容，观察这些信息怎样影响一个客服 Agent 的决策。
+
+[English](#english)
+
+建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+
+<a id="learning-0"></a>
+
+## 理解问题与方法
+
+消融的关键是控制变量。语气、规则组织和工具描述属于不同维度；若同时换模型、改任务和改提示词，即使成功率变化，也难以判断原因。τ-bench 环境提供任务与结果检查，使比较不只依赖人工阅读回答。
+
+### 概述
+
+扩展 [τ-bench](https://arxiv.org/abs/2406.12045) 框架，增加三个关键消融维度，演示**提示工程：把 Agent 看成聪明的新员工**的重要性，并量化语气、指令组织、工具描述对任务成功率的影响。
+
+### 实验脚本
+
+完整套消融有两种等价方式：
+
+1. **Python 一键（推荐）：** `python run_ablation.py --env airline --end-index 10 --all`  
+2. **Bash 编排：** `run_full_ablation.sh` 逐个调用 `run_ablation.py` 再 `analyze_results.py`：
+
+```bash
+./run_full_ablation.sh --model gpt-5.6-luna --env airline --num-tasks 10
+./run_full_ablation.sh --quick   # 每组 3 任务冒烟
+```
+
+### 预期排序
+
+1. **Baseline** — 最佳  
+2. **语气变化** — 通常对成功率影响不大  
+3. **Wiki 随机化** — 严重损害指令遵循  
+4. **无工具描述** — 大量参数错误 / 错误操作  
+5. **组合消融** — 最差
+
+### 总结
+
+消融框架量化展示：提示工程不当时可出现 **30–80%** 的性能下滑；**结构与清晰度**最关键；专业性与一致性支撑有效 Agent 系统。记住：优秀的提示工程就是优秀的员工培训。
+
+### 上游 τ-bench（内嵌）
+
+本目录内嵌 τ-bench（工具-Agent-用户交互基准）。上游进展：[τ²-bench](https://github.com/sierra-research/tau2-bench) 含修复与 `telecom` 域。
+
+**论文：** [τ-bench](https://arxiv.org/abs/2406.12045)、[τ²-Bench](https://arxiv.org/abs/2506.07982)
+
+**原版（非消融）运行：**
+
+```bash
+python run.py --agent-strategy tool-calling --env retail --model gpt-4o \
+  --model-provider openai --user-model gpt-4o --user-model-provider openai \
+  --user-strategy llm --max-concurrency 10
+# 可选：--task-ids 2 4 6
+```
+
+用户模拟策略含 `llm`、`react`、`verify`、`reflection`。排行榜、自动错误识别、历史轨迹等见原版 τ-bench 文档。许可：`./LICENSE`。
+
+---
+
+<a id="learning-1"></a>
+
+## 准备环境与输入
+
+本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+
+### 安装
+
+```bash
+# 在仓库根目录使用统一的第 2 章环境
+uv sync --locked --python 3.12 --extra ch2
+
+# 切换目录前先激活环境：
+# macOS/Linux：
+source .venv/bin/activate
+# Windows PowerShell：.venv\Scripts\Activate.ps1
+# Windows cmd：.venv\Scripts\activate.bat
+
+# 未安装 uv 时可用 pip 兜底：
+# python -m pip install -e ".[ch2]"
+
+cd chapter2/prompt-engineering
+
+# 迁移期间仍支持单项目兼容路径：
+# python -m pip install -r requirements.txt
+```
+
+（旧文档可能写 `projects/week2/prompt-engineering`；请使用本仓库路径。）
+
+### 参数说明
+
+| 参数 | 说明 | 选项 |
+|------|------|------|
+| `--tone-style` | 维度一·语气风格 | default, trump, casual |
+| `--randomize-wiki` | 维度二·随机化 wiki 结构 | flag |
+| `--remove-tool-descriptions` | 维度三·移除工具描述 | flag |
+| `--all` | 一键完整消融并打印对比表 | flag |
+| `--output` | （仅 --all）汇总 JSON 路径 | string |
+| `--ablation-name` | 实验名称标识 | string |
+| `--env` | 环境 | airline, retail |
+| `--model` | 模型 | 如 gpt-4o-mini, gpt-4o |
+| `--model-provider` | 提供商（可选） | 自动：裸 id → openai，带 / → openrouter |
+| `--task-split` | 任务集 | train, test, dev |
+| `--start-index` / `--end-index` | 任务区间 | 整数 |
+| `--log-dir` | 结果目录 | string |
+
+<a id="learning-2"></a>
+
+## 按照步骤完成实验
+
+先在下文中了解任务环境和各组提示词差异，再阅读一次任务的规则与目标。配置模型后，从少量任务开始运行 `run_ablation.py`。对照完整轨迹，找出某条规则影响工具选择或业务操作的具体位置，再扩大样本。
+
+### 使用方法
+
+入口脚本均提供中文 `--help`：`python run_ablation.py --help`、`python analyze_results.py --help`。
+
+#### 一键完整消融并输出对比表（推荐）
+
+`--all` 在同一进程内依次跑基线 + 三个维度单独消融 + 全部叠加，打印成功率对比表，汇总写入 `--output`（默认 `log-dir/ablation_summary_<时间戳>.json`）。复现书中实验 2-4 最直接：
+
+```bash
+python run_ablation.py \
+    --model gpt-5.6-luna \
+    --env airline \
+    --end-index 10 \
+    --all
+# 默认 OpenAI 直连（provider=openai），需 OPENAI_API_KEY。
+# 走 OpenRouter：模型写成带斜杠 id（如 openai/gpt-5），需 OPENROUTER_API_KEY。
+# 通用回退：裸 id（如 gpt-4o-mini）且未设 OPENAI_API_KEY、已设 OPENROUTER_API_KEY 时，
+#           自动前缀为 openai/gpt-4o-mini 并切到 openrouter。
+```
+
+**真实冒烟**表示例（`--model gpt-4o --env airline --end-index 4`，每组仅 4 任务，只用于展示表格形态）：
+
+```
+Experiment                        Success Rate      Tasks        Relative
+----------------------------------------------------------------------
+wiki_random                      50.0%         2/  4      200.0%
+baseline                         25.0%         1/  4      100.0%  ⭐
+tone_trump                       25.0%         1/  4      100.0%
+tone_casual                      25.0%         1/  4      100.0%
+no_tool_desc                      0.0%         0/  4        0.0%
+all_ablations                     0.0%         0/  4        0.0%
+```
+
+> ⚠️ 每组 4 任务噪声极大——例如 `wiki_random` 偶然高于 baseline 不是真实结论。方向性信号（去掉工具描述 → 0%、全部叠加 → 0%、语气对成功率影响小）与实验 2-4 一致；要稳定量化请把 `--end-index` 提到 10 以上并多跑 `--seed`。以你自己的完整运行为准。
+
+#### 基线（单配置）
+
+```bash
+python run_ablation.py \
+    --model gpt-5.6-luna \
+    --env airline \
+    --task-split test \
+    --start-index 0 \
+    --end-index 10
+# 裸 id → OpenAI 直连；带 / 的 id → openrouter
+```
+
+#### 语气消融
+
+```bash
+python run_ablation.py \
+    --model gpt-5.6-luna \
+    --env airline \
+    --tone-style trump \
+    --ablation-name trump_tone
+
+python run_ablation.py \
+    --model gpt-5.6-luna \
+    --env airline \
+    --tone-style casual \
+    --ablation-name casual_tone
+```
+
+#### Wiki 随机化
+
+```bash
+python run_ablation.py \
+    --model gpt-5.6-luna \
+    --env airline \
+    --randomize-wiki \
+    --ablation-name wiki_random
+```
+
+#### 移除工具描述
+
+```bash
+python run_ablation.py \
+    --model gpt-5.6-luna \
+    --env airline \
+    --remove-tool-descriptions \
+    --ablation-name no_tool_desc
+```
+
+#### 组合消融
+
+```bash
+python run_ablation.py \
+    --model gpt-5.6-luna \
+    --env airline \
+    --tone-style casual \
+    --randomize-wiki \
+    --remove-tool-descriptions \
+    --ablation-name full_ablation
+```
+
+<a id="learning-3"></a>
+
+## 分析结果与形成判断
+
+回答礼貌不等于业务操作正确。检查任务最终状态、规则遵循和工具参数，再看总体成功率。少量任务中的领先可能来自随机性；复测应保持任务集一致，并报告多次运行的差异。
+
+### 结果分析
+
+原始轨迹在 `results_ablation/`，含 **task_id**、**reward**（0/1）、**info**、**traj**、**ablation_config**。
+
+```bash
+python analyze_results.py
+python analyze_results.py --results-dir results_ablation --output summary.json
+```
+
+> `--all` 结束时已打印对比表；`analyze_results.py` 用于事后重汇总。仓库内 `results_ablation/*.json` 为少量调试样本（1–6 任务），**不足以做统计结论**；请用完整运行（`--end-index` ≥ 10）。
+
+### 关键洞察
+
+把 Agent 看成聪明的新员工：
+
+1. **清晰指令至关重要** — 结构化信息、任务描述、工具用法  
+2. **上下文组织影响理解** — 逻辑排序、相关规则归并、优先级明确  
+3. **工具文档不可或缺** — 用途、参数、示例
+
+### 检查自己的解释
+
+若删除一段规则后成绩反而提高，可能是规则冗余、表达冲突，还是任务集没有覆盖它的作用？
+
+<a id="learning-4"></a>
+
+## 阅读实现与继续探索
+
+### 项目说明
+
 > Companion material for *AI Agents in Depth*, Chapter 2 — **Experiment 2-4 ★★: Ablation study in prompt engineering**.  
 > 配套《深入理解 AI Agent》第 2 章 **实验 2-4 ★★：提示工程的消融实验**。
 
 ← [Chapter 2 index / 返回第 2 章目录](../README.md)
 
 ---
+
+### 消融研究选项
+
+#### 1. 语气风格
+
+- **default**：标准专业语气（基线）  
+- **trump**：夸张、重复强调、自信表述  
+- **casual**：表情符号、俚语、轻松口吻  
+
+**原理：** 语气影响专业性与任务质量；过于随意或夸张可能降低信任、增加误解、损害执行准确度。
+
+#### 2. Wiki 规则随机化
+
+使用预生成的极度混乱版 wiki：
+
+- 移除章节标题与结构  
+- 每条规则加操作上下文前缀（如 “When booking flights”）  
+- 打乱成平面列表  
+- 破坏规则间逻辑关系  
+
+**原理：** 组织良好的指令像培训手册；极度随机化破坏层级、混淆规则边界、抬高误用与遗漏风险。
+
+#### 3. 工具描述移除
+
+- 工具与参数描述置空  
+- 检验「写清楚怎么用」的重要性  
+
+**原理：** 清晰工具说明像操作手册；去掉后误用上升、完成率下降。
+
+<a id="learning-5"></a>
+
+## 排查问题与查阅资料
+
+### 故障排除
+
+1. **ImportError**：确认目录与依赖  
+2. **API 错误**：密钥与配额  
+3. **内存**：降低 `--max-concurrency`  
+
+```bash
+export LITELLM_LOG=DEBUG
+python run_ablation.py ...
+```
+
+## Notes / 说明
+
+- Book experiment path is `run_ablation.py`; vanilla `run.py` is the upstream τ-bench entry.  
+- 书中实验主路径是 `run_ablation.py`；`run.py` 为上游 τ-bench 原版入口。  
+- Smoke tables in this README are not publishable success rates.  
+- 文中冒烟表不可当作可发表的成功率数字。
 
 ## English
 
@@ -44,8 +335,22 @@ Uses a pre-generated chaotic `wiki.md`:
 ### Installation
 
 ```bash
+# From the repository root: use the shared Chapter 2 environment
+uv sync --locked --python 3.12 --extra ch2
+
+# Activate it before changing directories:
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+
+# pip fallback when uv is not installed:
+# python -m pip install -e ".[ch2]"
+
 cd chapter2/prompt-engineering
-pip install -r requirements.txt
+
+# Single-project compatibility path, still supported during migration:
+# python -m pip install -r requirements.txt
 ```
 
 (Older docs may mention `projects/week2/prompt-engineering`; use this repo path.)
@@ -56,19 +361,44 @@ All entry scripts have Chinese `--help`: `python run_ablation.py --help`, `pytho
 
 #### One-shot full ablation + comparison table (recommended)
 
-`--all` runs baseline + each single-axis ablation + all combined in one process, prints a success-rate table, and writes summary stats to `--output` (default `log-dir/ablation_summary_<timestamp>.json`). Best way to reproduce book 实验 2-4:
+`--all` runs baseline + each single-axis ablation + all combined in one process, prints a success-rate table, and writes summary stats to `--output`. The frozen canonical protocol uses official Moonshot Kimi K3 for both the action model and user simulator, six arms, and the same ten τ-bench airline tasks in every arm:
 
 ```bash
+export OPENAI_API_KEY="$MOONSHOT_API_KEY"
+export OPENAI_API_BASE="https://api.moonshot.cn/v1"
 python run_ablation.py \
-    --model gpt-5.6-luna \
-    --env airline \
-    --end-index 10 \
-    --all
-# Default: OpenAI direct (provider=openai) → set OPENAI_API_KEY.
-# OpenRouter: use a slashed model id (e.g. openai/gpt-5) → openrouter + OPENROUTER_API_KEY.
-# Fallback: bare id (e.g. gpt-4o-mini) with no OPENAI_API_KEY but OPENROUTER_API_KEY set
-#           is rewritten to openai/gpt-4o-mini and routed via openrouter.
+  --all --model kimi-k3 --user-model kimi-k3 \
+  --model-provider openai --user-model-provider openai --temperature 1 \
+  --env airline --task-ids 0 1 2 3 4 5 6 7 8 9 \
+  --num-trials 1 --seed 20260730 --max-agent-steps 30 \
+  --max-concurrency 2 \
+  --log-dir runs/exp2-4-kimi-k3-YYYYMMDD-v1 \
+  --output runs/exp2-4-kimi-k3-YYYYMMDD-v1/comparison.json \
+  --no-verbose
 ```
+
+If a campaign stops, resume into a new evidence directory. The runner imports
+only prior task rows with nonempty provider response IDs/usage and no task
+error, records the source hash, and never regenerates them:
+
+```bash
+# Repeat every frozen option above, change --log-dir/--output to ...-v2, and add:
+--resume-from runs/exp2-4-kimi-k3-YYYYMMDD-v1
+```
+
+The rejected OpenAI-direct/OpenRouter preflights and any failed tasks remain
+evidence; they are not converted into zero-score model outcomes. Campaign
+completion requires every arm/task receipt, objective τ-bench scoring, hashes,
+usage/cost, and a clean credential scan, regardless of which hypothesis wins.
+
+The completed canonical run is
+`runs/exp2-4-kimi-k3-20260730-v7`: all 60 cells have real Kimi K3 action/user
+receipts and no transport or task errors. Its observed pass counts were
+baseline 7/10, Trump 6/10, casual 9/10, randomized organization 8/10,
+no-description 9/10, and all ablations 8/10. These results complete the
+preregistered experiment but do **not** reproduce the manuscript's historical
+“over 30%” and “45%” point estimates; `comparison.json` records that
+qualification instead of retrofitting a favorable claim.
 
 Example **real smoke** table (`--model gpt-4o --env airline --end-index 4`, only 4 tasks/group—illustrates table shape, not stable science):
 
@@ -238,238 +568,3 @@ python run.py --agent-strategy tool-calling --env retail --model gpt-4o \
 User strategies include `llm`, `react`, `verify`, `reflection`. See original τ-bench docs for leaderboards, auto error identification, and historical trajectories. License: `./LICENSE`.
 
 ---
-
-## 中文
-
-### 概述
-
-扩展 [τ-bench](https://arxiv.org/abs/2406.12045) 框架，增加三个关键消融维度，演示**提示工程：把 Agent 看成聪明的新员工**的重要性，并量化语气、指令组织、工具描述对任务成功率的影响。
-
-### 消融研究选项
-
-#### 1. 语气风格
-
-- **default**：标准专业语气（基线）  
-- **trump**：夸张、重复强调、自信表述  
-- **casual**：表情符号、俚语、轻松口吻  
-
-**原理：** 语气影响专业性与任务质量；过于随意或夸张可能降低信任、增加误解、损害执行准确度。
-
-#### 2. Wiki 规则随机化
-
-使用预生成的极度混乱版 wiki：
-
-- 移除章节标题与结构  
-- 每条规则加操作上下文前缀（如 “When booking flights”）  
-- 打乱成平面列表  
-- 破坏规则间逻辑关系  
-
-**原理：** 组织良好的指令像培训手册；极度随机化破坏层级、混淆规则边界、抬高误用与遗漏风险。
-
-#### 3. 工具描述移除
-
-- 工具与参数描述置空  
-- 检验「写清楚怎么用」的重要性  
-
-**原理：** 清晰工具说明像操作手册；去掉后误用上升、完成率下降。
-
-### 安装
-
-```bash
-cd chapter2/prompt-engineering
-pip install -r requirements.txt
-```
-
-（旧文档可能写 `projects/week2/prompt-engineering`；请使用本仓库路径。）
-
-### 使用方法
-
-入口脚本均提供中文 `--help`：`python run_ablation.py --help`、`python analyze_results.py --help`。
-
-#### 一键完整消融并输出对比表（推荐）
-
-`--all` 在同一进程内依次跑基线 + 三个维度单独消融 + 全部叠加，打印成功率对比表，汇总写入 `--output`（默认 `log-dir/ablation_summary_<时间戳>.json`）。复现书中实验 2-4 最直接：
-
-```bash
-python run_ablation.py \
-    --model gpt-5.6-luna \
-    --env airline \
-    --end-index 10 \
-    --all
-# 默认 OpenAI 直连（provider=openai），需 OPENAI_API_KEY。
-# 走 OpenRouter：模型写成带斜杠 id（如 openai/gpt-5），需 OPENROUTER_API_KEY。
-# 通用回退：裸 id（如 gpt-4o-mini）且未设 OPENAI_API_KEY、已设 OPENROUTER_API_KEY 时，
-#           自动前缀为 openai/gpt-4o-mini 并切到 openrouter。
-```
-
-**真实冒烟**表示例（`--model gpt-4o --env airline --end-index 4`，每组仅 4 任务，只用于展示表格形态）：
-
-```
-Experiment                        Success Rate      Tasks        Relative
-----------------------------------------------------------------------
-wiki_random                      50.0%         2/  4      200.0%
-baseline                         25.0%         1/  4      100.0%  ⭐
-tone_trump                       25.0%         1/  4      100.0%
-tone_casual                      25.0%         1/  4      100.0%
-no_tool_desc                      0.0%         0/  4        0.0%
-all_ablations                     0.0%         0/  4        0.0%
-```
-
-> ⚠️ 每组 4 任务噪声极大——例如 `wiki_random` 偶然高于 baseline 不是真实结论。方向性信号（去掉工具描述 → 0%、全部叠加 → 0%、语气对成功率影响小）与实验 2-4 一致；要稳定量化请把 `--end-index` 提到 10 以上并多跑 `--seed`。以你自己的完整运行为准。
-
-#### 基线（单配置）
-
-```bash
-python run_ablation.py \
-    --model gpt-5.6-luna \
-    --env airline \
-    --task-split test \
-    --start-index 0 \
-    --end-index 10
-# 裸 id → OpenAI 直连；带 / 的 id → openrouter
-```
-
-#### 语气消融
-
-```bash
-python run_ablation.py \
-    --model gpt-5.6-luna \
-    --env airline \
-    --tone-style trump \
-    --ablation-name trump_tone
-
-python run_ablation.py \
-    --model gpt-5.6-luna \
-    --env airline \
-    --tone-style casual \
-    --ablation-name casual_tone
-```
-
-#### Wiki 随机化
-
-```bash
-python run_ablation.py \
-    --model gpt-5.6-luna \
-    --env airline \
-    --randomize-wiki \
-    --ablation-name wiki_random
-```
-
-#### 移除工具描述
-
-```bash
-python run_ablation.py \
-    --model gpt-5.6-luna \
-    --env airline \
-    --remove-tool-descriptions \
-    --ablation-name no_tool_desc
-```
-
-#### 组合消融
-
-```bash
-python run_ablation.py \
-    --model gpt-5.6-luna \
-    --env airline \
-    --tone-style casual \
-    --randomize-wiki \
-    --remove-tool-descriptions \
-    --ablation-name full_ablation
-```
-
-### 实验脚本
-
-完整套消融有两种等价方式：
-
-1. **Python 一键（推荐）：** `python run_ablation.py --env airline --end-index 10 --all`  
-2. **Bash 编排：** `run_full_ablation.sh` 逐个调用 `run_ablation.py` 再 `analyze_results.py`：
-
-```bash
-./run_full_ablation.sh --model gpt-5.6-luna --env airline --num-tasks 10
-./run_full_ablation.sh --quick   # 每组 3 任务冒烟
-```
-
-### 结果分析
-
-原始轨迹在 `results_ablation/`，含 **task_id**、**reward**（0/1）、**info**、**traj**、**ablation_config**。
-
-```bash
-python analyze_results.py
-python analyze_results.py --results-dir results_ablation --output summary.json
-```
-
-> `--all` 结束时已打印对比表；`analyze_results.py` 用于事后重汇总。仓库内 `results_ablation/*.json` 为少量调试样本（1–6 任务），**不足以做统计结论**；请用完整运行（`--end-index` ≥ 10）。
-
-### 预期排序
-
-1. **Baseline** — 最佳  
-2. **语气变化** — 通常对成功率影响不大  
-3. **Wiki 随机化** — 严重损害指令遵循  
-4. **无工具描述** — 大量参数错误 / 错误操作  
-5. **组合消融** — 最差  
-
-### 关键洞察
-
-把 Agent 看成聪明的新员工：
-
-1. **清晰指令至关重要** — 结构化信息、任务描述、工具用法  
-2. **上下文组织影响理解** — 逻辑排序、相关规则归并、优先级明确  
-3. **工具文档不可或缺** — 用途、参数、示例  
-
-### 参数说明
-
-| 参数 | 说明 | 选项 |
-|------|------|------|
-| `--tone-style` | 维度一·语气风格 | default, trump, casual |
-| `--randomize-wiki` | 维度二·随机化 wiki 结构 | flag |
-| `--remove-tool-descriptions` | 维度三·移除工具描述 | flag |
-| `--all` | 一键完整消融并打印对比表 | flag |
-| `--output` | （仅 --all）汇总 JSON 路径 | string |
-| `--ablation-name` | 实验名称标识 | string |
-| `--env` | 环境 | airline, retail |
-| `--model` | 模型 | 如 gpt-4o-mini, gpt-4o |
-| `--model-provider` | 提供商（可选） | 自动：裸 id → openai，带 / → openrouter |
-| `--task-split` | 任务集 | train, test, dev |
-| `--start-index` / `--end-index` | 任务区间 | 整数 |
-| `--log-dir` | 结果目录 | string |
-
-### 故障排除
-
-1. **ImportError**：确认目录与依赖  
-2. **API 错误**：密钥与配额  
-3. **内存**：降低 `--max-concurrency`  
-
-```bash
-export LITELLM_LOG=DEBUG
-python run_ablation.py ...
-```
-
-### 总结
-
-消融框架量化展示：提示工程不当时可出现 **30–80%** 的性能下滑；**结构与清晰度**最关键；专业性与一致性支撑有效 Agent 系统。记住：优秀的提示工程就是优秀的员工培训。
-
-### 上游 τ-bench（内嵌）
-
-本目录内嵌 τ-bench（工具-Agent-用户交互基准）。上游进展：[τ²-bench](https://github.com/sierra-research/tau2-bench) 含修复与 `telecom` 域。
-
-**论文：** [τ-bench](https://arxiv.org/abs/2406.12045)、[τ²-Bench](https://arxiv.org/abs/2506.07982)
-
-**原版（非消融）运行：**
-
-```bash
-python run.py --agent-strategy tool-calling --env retail --model gpt-4o \
-  --model-provider openai --user-model gpt-4o --user-model-provider openai \
-  --user-strategy llm --max-concurrency 10
-# 可选：--task-ids 2 4 6
-```
-
-用户模拟策略含 `llm`、`react`、`verify`、`reflection`。排行榜、自动错误识别、历史轨迹等见原版 τ-bench 文档。许可：`./LICENSE`。
-
----
-
-## Notes / 说明
-
-- Book experiment path is `run_ablation.py`; vanilla `run.py` is the upstream τ-bench entry.  
-- 书中实验主路径是 `run_ablation.py`；`run.py` 为上游 τ-bench 原版入口。  
-- Smoke tables in this README are not publishable success rates.  
-- 文中冒烟表不可当作可发表的成功率数字。

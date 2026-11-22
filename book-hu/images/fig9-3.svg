@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 410" width="1000" height="410" style="background:#ffffff">
+  <defs>
+    <style>
+      .t{font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;fill:#26343c}
+      .h{font-size:20px;font-weight:700}
+      .s{font-size:16px;fill:#52636d}
+      .box{fill:#f5f7f8;stroke:#33434d;stroke-width:2}
+      .accent{fill:#e8f1f5;stroke:#2f617a;stroke-width:2}
+    </style>
+  </defs>
+  <text x="500" y="30" text-anchor="middle" class="t h">A képesség ábrázolásmódja dönti el, hol frissül</text>
+
+  <rect x="35" y="72" width="220" height="126" rx="9" class="box"/>
+  <text x="145" y="105" text-anchor="middle" class="t h">Tudás</text>
+  <text x="145" y="135" text-anchor="middle" class="t s" style="font-size:15.5px">Tények, tapasztalat, kivételek</text>
+  <text x="145" y="164" text-anchor="middle" class="t s">Markdown / tudásbázis</text>
+
+  <rect x="275" y="72" width="220" height="126" rx="9" class="box"/>
+  <text x="385" y="105" text-anchor="middle" class="t h">Utasítások</text>
+  <text x="385" y="135" text-anchor="middle" class="t s" style="font-size:15px">Szavakba önthető ítéleti elvek</text>
+  <text x="385" y="164" text-anchor="middle" class="t s">Prompt / Skill</text>
+
+  <rect x="515" y="72" width="220" height="126" rx="9" class="box"/>
+  <text x="625" y="105" text-anchor="middle" class="t h">Programok</text>
+  <text x="625" y="135" text-anchor="middle" class="t s" style="font-size:9.5px">Determinisztikus folyamatok és kemény korlátok</text>
+  <text x="625" y="164" text-anchor="middle" class="t s" style="font-size:12.5px">Eszközök / Munkafolyamat / Harness</text>
+
+  <rect x="755" y="72" width="220" height="126" rx="9" class="accent"/>
+  <text x="865" y="105" text-anchor="middle" class="t h">Paraméterek</text>
+  <text x="865" y="135" text-anchor="middle" class="t s" style="font-size:10.5px">Nagy dimenziós észlelés és rejtett stratégia</text>
+  <text x="865" y="164" text-anchor="middle" class="t s">SFT / Desztilláció / RL</text>
+
+  <line x1="145" y1="226" x2="865" y2="226" stroke="#33434d" stroke-width="2"/>
+  <path d="M145 218 V234 M865 218 V234" stroke="#33434d" stroke-width="2"/>
+  <text x="145" y="260" text-anchor="middle" class="t s" style="font-size:15.5px">Könnyen frissíthető, nyomon követhető</text>
+  <text x="865" y="260" text-anchor="middle" class="t s" style="font-size:14px">Beépült, alacsony következtetési költség</text>
+  <text x="500" y="289" text-anchor="middle" class="t h">Nem egyirányú létra, hanem négy egymást kiegészítő hordozó</text>
+
+  <rect x="145" y="320" width="710" height="58" rx="8" class="accent"/>
+  <text x="500" y="344" text-anchor="middle" class="t h" style="font-size:15.5px">Első kérdés: kifejezhető-e a képesség teljesen tényekkel, nyelvi szabályokkal vagy programmal?</text>
+  <text x="500" y="367" text-anchor="middle" class="t s">A telepítést a stabilitás, a költség és a frissítési gyakoriság dönti el, nem a paraméterezhetőség</text>
+</svg>

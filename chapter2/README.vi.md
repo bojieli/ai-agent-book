@@ -4,6 +4,16 @@
 
 ← [Về README chính](../docs/vi/README.md) · 📖 [Đọc nội dung chương](../book-vi/chapter2.vi.md)
 
+## Cách đọc các thí nghiệm
+
+Phần văn bản dùng skeleton cơ chế ngắn để giải thích luồng điều khiển; thư mục thí nghiệm chứa adapter SDK đầy đủ, log, kiểm thử và bằng chứng nghiệm thu. Không cần đọc từng tệp theo từng dòng.
+
+- **Starter:** Bắt đầu từ mục tiêu, lệnh tối thiểu và điều kiện nghiệm thu; hãy bắt đầu với [context-compression](context-compression/);
+- **Builder:** Lần theo điểm vào, vòng lặp lõi, schema trạng thái/tin nhắn, công cụ và verifier.
+- **Maintainer:** Sau đó đọc test, manifest bằng chứng, xử lý lỗi, đường rollback và adapter nhà cung cấp.
+
+Lần đầu có thể bỏ qua credential, lớp trình bày và tương thích provider; quay lại khi cần tái tạo số liệu.
+
 ## Dự án đi kèm
 
 | Thí nghiệm | Project | Type | Description |
@@ -14,6 +24,7 @@
 | 2-4 | [prompt-engineering](prompt-engineering/) | ✅ | Mở rộng framework Tau-Bench, dùng thí nghiệm ablation có hệ thống để định lượng ảnh hưởng của các yếu tố prompt engineering khác nhau lên hiệu năng Agent. Cho thấy giọng điệu, tổ chức chỉ dẫn, mô tả công cụ và các yếu tố khác ảnh hưởng thế nào tới tỷ lệ hoàn thành nhiệm vụ. |
 | 2-5 | [prompt-injection](prompt-injection/) | ✅ | Xây dựng thí nghiệm đối chứng với 3 kịch bản tấn công (tiêm trực tiếp, tiêm gián tiếp, tiêm qua bộ nhớ) × 4 cấu hình phòng thủ (không phòng thủ, gia cố prompt, đánh dấu nguồn, phòng thủ kết hợp), dùng quy tắc xác định để thống kê tỷ lệ tấn công thành công, trực quan cho thấy tỷ lệ tiêm lệnh giảm mạnh khi phòng thủ được chồng lớp. |
 | 2-6 | [agent-skills-ppt](agent-skills-ppt/) | ✅ | Tái hiện tư tưởng “tiết lộ tăng dần” của Agent Skills: khi khởi động, Agent chỉ thấy một thư mục Skill mỏng; sau khi nhận diện nhiệm vụ cần Skill `pptx`, nó mới tải dần quy trình đầy đủ, tài liệu chi tiết và script đóng gói, cuối cùng dùng python-pptx tạo file `.pptx` thật. |
+| 2-7 | Thí nghiệm văn bản | 🚧 | Tạo một Skill viết nhẹ từ các bài mẫu cá nhân, bao gồm điều kiện kích hoạt, quy tắc, ví dụ, phạm vi và bảo trì lặp lại. |
 | 2-8 | [system-hint](system-hint/) | ✅ | Nghiên cứu ảnh hưởng của System Hint tới hành vi Agent, khám phá cách tối ưu system prompt để nâng cao hiệu năng. |
 | 2-9 | [context-compression](context-compression/) | ✅ | Triển khai và so sánh nhiều chiến lược nén ngữ cảnh, bao gồm tóm tắt, trích xuất thông tin then chốt, nén ngữ nghĩa, v.v. Mục tiêu là giảm lượng token sử dụng trong khi vẫn giữ năng lực của Agent. |
 

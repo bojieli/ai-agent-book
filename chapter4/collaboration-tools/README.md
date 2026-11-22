@@ -1,11 +1,426 @@
 # Collaboration Tools MCP Server / 协作工具 MCP 服务器
 
-> Companion code for *AI Agents in Depth*, Chapter 4 — **Experiment 4-3 ★★**. MCP server: browser automation, sub-agents, HITL, multi-channel notifications, timers.  
-> 配套《深入理解 AI Agent》第 4 章 **实验 4-3 ★★**。协作 MCP 服务器：浏览器、子 Agent、HITL、多渠道通知、定时器。
+有些任务需要另一个 Agent，有些需要用户作出决定，还有些只是等待外部事件。本实验把这些协作方式作为工具，学习主 Agent 怎样交出任务并接收结果。
+
+[English](#english)
+
+建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+
+<a id="learning-0"></a>
+
+## 理解问题与方法
+
+协作调用不仅传递一个问题，还需要明确上下文、预期结果和完成条件。过少的上下文使协作者无法判断，过多的上下文又增加成本和干扰。等待用户回复与等待子任务完成也应有不同的状态。
+
+为 AI Agent 提供协作能力的综合 Model Context Protocol（MCP）服务器，涵盖浏览器自动化、人机协同、通知与定时器管理。
+
+### 功能
+
+#### 浏览器自动化（browser-use）
+- 导航 URL、管理标签页
+- 抽取网页内容
+- 用 AI Agent 执行高层浏览器任务
+- 截图
+- 完整虚拟浏览器能力
+
+#### 子 Agent 管理
+- 以 **sync**（等待结果）或 **async**（返回 `task_id`）模式 spawn 子 Agent
+- 向子 Agent 发送后续消息、取消运行中的子 Agent
+- **两种上下文传递策略**（可检查上下文文本与 token 数）：
+  - `minimal` — 只传任务 + 可选手选片段（最省、隐私好，可能饿死子 Agent）
+  - `llm_generated` — 额外一次 LLM 调用，从父轨迹合成紧凑、隐私过滤的交接上下文
+- 子 Agent system prompt 使用带标签的上下文来源（`[FROM_MAIN_AGENT]` / `[FROM_USER]` / `[TOOL_RESULT]`）与标准化 JSON 输出
+
+#### 人机协同（HITL）
+- 敏感操作请求管理员审批
+- 向人类管理员请求输入
+- 管理待处理审批
+- 可配置超时与通知渠道
+
+#### 邮件通知
+- 经 SMTP 或 SendGrid 发信
+- 支持 HTML
+- 抄送与附件
+- 灵活配置
+
+#### 即时通讯
+- Telegram bot
+- Slack webhook
+- Discord webhook
+- 可配置默认频道
+
+#### 定时器与调度
+- 一次性定时器
+- 循环定时器
+- 取消与管理
+- 持久化存储
+- 到期回调通知
+
+### 可用工具
+
+#### 浏览器工具
+- `mcp_browser_navigate` — 导航到 URL
+- `mcp_browser_get_content` — 获取页面内容
+- `mcp_browser_execute_task` — 执行 AI 驱动的浏览器任务
+- `mcp_browser_screenshot` — 截图
+- `mcp_browser_list_tabs` — 列出标签页
+
+#### 通知工具
+- `mcp_send_email` — 发送邮件
+- `mcp_send_telegram_message` — Telegram 消息
+- `mcp_send_slack_message` — Slack 消息
+- `mcp_send_discord_message` — Discord 消息
+
+#### 子 Agent 工具
+- `mcp_spawn_subagent` — 创建子 Agent（sync/async，`minimal`/`llm_generated` 上下文）
+- `mcp_send_message_to_subagent` — 向子 Agent 发后续消息
+- `mcp_cancel_subagent` — 取消子 Agent
+- `mcp_get_subagent_status` — 查询状态/结果（async）
+
+#### HITL 工具
+- `mcp_request_admin_approval` — 请求管理员审批
+- `mcp_request_admin_input` — 请求管理员输入
+- `mcp_respond_to_request` — 响应审批请求（管理员侧）
+- `mcp_list_pending_requests` — 列出待处理请求
+
+#### 定时器工具
+- `mcp_set_timer` — 一次性定时器
+- `mcp_set_recurring_timer` — 循环定时器
+- `mcp_cancel_timer` — 取消定时器
+- `mcp_list_timers` — 列出定时器
+- `mcp_get_timer_status` — 查询定时器状态
+
+### 架构
+
+服务器按模块组织：
+
+```
+collaboration-tools/
+├── src/
+│   ├── main.py              # MCP server entry point
+│   ├── config.py            # Configuration management
+│   ├── browser_tools.py     # Browser automation
+│   ├── notification_tools.py # Email & IM notifications
+│   ├── hitl_tools.py        # Human-in-the-loop
+│   └── timer_tools.py       # Timer management
+├── requirements.txt         # Python dependencies
+├── env.example             # Example configuration
+└── README.md               # This file
+```
+
+<a id="learning-1"></a>
+
+## 准备环境与输入
+
+先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+
+### 安装
+
+1. 从仓库根目录安装并激活统一的第 4 章环境：
+```bash
+# 在仓库根目录使用统一的第 4 章环境
+uv sync --locked --python 3.12 --extra ch4
+
+# 切换目录前先激活环境：
+# macOS/Linux：
+source .venv/bin/activate
+# Windows PowerShell：.venv\Scripts\Activate.ps1
+# Windows cmd：.venv\Scripts\activate.bat
+
+# 未安装 uv 时可用 pip 兜底：
+# python -m pip install -e ".[ch4]"
+
+cd chapter4/collaboration-tools
+
+# 精确复现旧版单项目环境，含直接 Playwright/pydantic-settings/scheduler 约束：
+# python -m pip install -r requirements.txt
+```
+
+2. 复制环境模板并配置：
+```bash
+cp env.example .env
+# Edit .env with your configuration
+```
+
+3. 安装 Playwright 浏览器（浏览器自动化）：
+```bash
+playwright install chromium
+```
+
+### 配置
+
+在 `.env` 中设置环境变量：
+
+#### 浏览器
+```env
+BROWSER_HEADLESS=false
+BROWSER_USER_DATA_DIR=~/.config/collaboration-tools/browser
+```
+
+#### 邮件
+```env
+# SMTP (Gmail example)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM_EMAIL=your-email@gmail.com
+
+# Or use SendGrid
+SENDGRID_API_KEY=your-sendgrid-api-key
+```
+
+#### 即时通讯
+```env
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+TELEGRAM_DEFAULT_CHAT_ID=your-chat-id
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR/WEBHOOK
+```
+
+#### HITL
+```env
+HITL_ADMIN_EMAIL=admin@example.com
+HITL_TIMEOUT_SECONDS=3600
+```
+
+#### 浏览器任务（AI Agent）
+```env
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_MODEL=gpt-5.6-luna
+```
+
+> **OpenRouter 通用兜底**：所有 LLM 入口（`spawn_subagent`、
+> intelligence 工具、browser-use）经 `src/llm_fallback.py` 解析凭据。
+> 未设置 `OPENAI_API_KEY` 但设置了 `OPENROUTER_API_KEY` 时，走
+> OpenRouter（`base_url=https://openrouter.ai/api/v1`，模型 id 映射为
+> `provider/model`，如 `gpt-5.6-luna` → `openai/gpt-5.6-luna`）。两者皆无时，
+> 子 Agent 以确定性离线模式运行（不编造输出）。
+
+### 依赖要求
+
+- 根目录 `ch4` 安装使用 Python 3.12（`browser-use` 要求 Python 3.11+）
+- OpenAI API key（浏览器 AI 任务）
+- 可选：邮件/IM 凭据
+- Playwright 浏览器（浏览器自动化）
+
+<a id="learning-2"></a>
+
+## 按照步骤完成实验
+
+先列出工具目录，按用途区分子任务、人机协作和通知。再阅读下文中的本地演示，跟踪主任务何时等待、拿到什么结果、怎样恢复执行。通知类集成只在配置了明确接收对象后使用。
+
+### 使用
+
+#### 命令行入口（`main.py`）
+
+不启动 MCP 服务器，也可以用统一的命令行入口列出、单独调用协作工具，或运行端到端演示。
+帮助信息为中文，`-h` 可查看任意子命令的参数：
+
+```bash
+python main.py --help            # 总览
+python main.py list              # 列出全部协作工具（子 Agent / HITL / 多渠道通知）
+python main.py demo              # 端到端协作演示：客服协调 Agent 处理一笔退款
+python main.py subagent -h       # 子 Agent 子命令帮助
+python main.py hitl -h           # HITL 子命令帮助
+python main.py notify -h         # 通知子命令帮助
+```
+
+常用示例：
+
+```bash
+# 对比两种上下文传递策略（minimal vs llm_generated）
+python main.py subagent compare
+
+# 创建子 Agent（同步、最小化上下文）
+python main.py subagent spawn --task "查询订单 A12345 状态" --strategy minimal --role 订单查询助手
+
+# 关键决策请求管理员批准；--auto-approve 在后台模拟管理员应答，便于离线演示闭环
+python main.py hitl approve --message "删除 1000 条记录？" --timeout 5 --auto-approve
+
+# 多渠道通知
+python main.py notify slack --message "部署完成"
+```
+
+`demo` 会串联三类协作工具：① 委派子 Agent 审批退款并对比上下文策略；② 大额操作
+触发 HITL 审批（演示"超时前批准"与"超时保守默认"两种路径）；③ 向协作者多渠道通知结果。
+其中 **HITL 与通知路径完全离线可跑**；子 Agent 的真实执行与 `llm_generated` 策略需要
+`OPENAI_API_KEY`（未配置时会明确提示，命令仍可正常解析运行）。
+
+#### 运行 MCP 服务器
+
+使用 stdio 传输启动：
+```bash
+python src/main.py
+```
+
+也可作为 MCP 服务器接入任意兼容客户端。
+
+#### 快速演示
+
+```bash
+python quickstart.py
+```
+
+#### 子 Agent 上下文策略对比
+
+对同一任务分别用**两种**上下文传递策略 spawn，并打印差异（交接 token、额外准备成本、
+是否泄漏隐私字段、各子 Agent 结果）。需要 `OPENAI_API_KEY`
+（默认模型 `gpt-5.6-luna`，可用 `OPENAI_MODEL` 覆盖）：
+```bash
+export OPENAI_API_KEY=your-openai-api-key
+python subagent_comparison.py
+```
+通常 `minimal` token 更少且不泄漏隐私字段，但子 Agent 可能返回 `need_info`；
+`llm_generated` 多一次 LLM 调用交接更丰富、经隐私过滤的上下文，便于子 Agent 完成任务。
+
+#### 与 Claude Desktop 联用
+
+在 Claude Desktop 配置（`claude_desktop_config.json`）中加入：
+
+```json
+{
+  "mcpServers": {
+    "collaboration-tools": {
+      "command": "python",
+      "args": ["/path/to/collaboration-tools/src/main.py"],
+      "env": {
+        "OPENAI_API_KEY": "your-key-here"
+      }
+    }
+  }
+}
+```
+
+### 使用示例
+
+#### 浏览器自动化
+```python
+# Navigate to a website
+await mcp_browser_navigate(url="https://example.com")
+
+# Execute a complex task
+await mcp_browser_execute_task(
+    task="Search for AI agent tutorials on Google and extract the top 5 results"
+)
+
+# Take a screenshot
+await mcp_browser_screenshot(full_page=True)
+```
+
+#### 通知
+```python
+# Send email
+await mcp_send_email(
+    to_email="user@example.com",
+    subject="Task Completed",
+    body="Your task has finished successfully!"
+)
+
+# Send Slack message
+await mcp_send_slack_message(
+    message="🎉 Deployment successful!"
+)
+```
+
+#### 人机协同
+```python
+# Request approval for sensitive action
+result = await mcp_request_admin_approval(
+    request_message="Delete 1000 records from database?",
+    urgent=True,
+    timeout_seconds=300
+)
+
+if result["approved"]:
+    # Proceed with action
+    pass
+```
+
+#### 定时器
+```python
+# Set a timer
+await mcp_set_timer(
+    duration_seconds=300,
+    timer_name="Check website",
+    callback_message="Time to check the website status"
+)
+
+# Set recurring timer
+await mcp_set_recurring_timer(
+    interval_seconds=3600,
+    max_occurrences=24,
+    timer_name="Hourly health check"
+)
+```
+
+<a id="learning-3"></a>
+
+## 分析结果与形成判断
+
+检查结果是否足以让主任务继续，而不只看协作者是否返回了一段文字。对于需要用户决定的事项，应能辨认决定是否真正收到，不能把等待时间当作同意。
+
+### 检查自己的解释
+
+把任务交给子 Agent 时，哪些背景必须提供，哪些信息可以让它自行查询？
+
+<a id="learning-4"></a>
+
+## 阅读实现与继续探索
+
+### 项目说明
+
+> Companion code for *AI Agents in Depth*, Chapter 4 — **Experiment 4-5 ★★**. MCP server: browser automation, sub-agents, HITL, multi-channel notifications, timers.  
+> 配套《深入理解 AI Agent》第 4 章 **实验 4-5 ★★**。协作 MCP 服务器：浏览器、子 Agent、HITL、多渠道通知、定时器。
 
 ← [Chapter 4 index / 返回第 4 章目录](../README.md)
 
 ---
+
+<a id="learning-5"></a>
+
+## 排查问题与查阅资料
+
+### 故障排除
+
+#### 浏览器问题
+若浏览器自动化失败：
+```bash
+# Reinstall Playwright browsers
+playwright install chromium --force
+```
+
+#### 邮件问题
+- Gmail 请使用 [应用专用密码](https://support.google.com/accounts/answer/185833)
+- 不要开启「不够安全的应用访问」（改用应用专用密码）
+
+#### Telegram 问题
+- 通过 [@BotFather](https://t.me/botfather) 创建 bot
+- 用 [@userinfobot](https://t.me/userinfobot) 获取 chat ID
+
+#### LangChain/Pydantic 问题
+若出现 "`ChatOpenAI` is not fully defined" 或 Pydantic 校验错误：
+- 这是 LangChain 与 Pydantic v2 的已知兼容问题
+- 修复：ChatOpenAI 仅在需要时按需初始化（`browser_execute_task`）
+- 简单导航不需要 OpenAI API key
+- 仅自主浏览器任务（`browser_execute_task`）需要 `OPENAI_API_KEY`
+
+### 许可证
+
+MIT License
+
+### 贡献
+
+欢迎提交 issue 或 pull request。
+
+---
+
+## Notes / 说明
+
+- HITL + notify paths in `python main.py demo` run offline without API keys.  
+- `python main.py demo` 中 HITL 与通知路径可离线、无需 API Key。  
+- Browser AI tasks and `llm_generated` sub-agent strategy need an LLM key.  
+- 浏览器 AI 任务与 `llm_generated` 子 Agent 策略需要 LLM Key。
 
 ## English
 
@@ -55,23 +470,33 @@ A comprehensive Model Context Protocol (MCP) server that provides collaboration 
 
 ### Installation
 
-1. Clone the repository and navigate to the project directory:
+1. Install and activate the shared Chapter 4 environment from the repository root:
 ```bash
+# From the repository root: use the shared Chapter 4 environment
+uv sync --locked --python 3.12 --extra ch4
+
+# Activate it before changing directories:
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+
+# pip fallback when uv is not installed:
+# python -m pip install -e ".[ch4]"
+
 cd chapter4/collaboration-tools
+
+# Exact legacy parity path, including direct Playwright/pydantic-settings/scheduler pins:
+# python -m pip install -r requirements.txt
 ```
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Copy the example environment file and configure it:
+2. Copy the example environment file and configure it:
 ```bash
 cp env.example .env
 # Edit .env with your configuration
 ```
 
-4. Install Playwright browsers (for browser automation):
+3. Install Playwright browsers (for browser automation):
 ```bash
 playwright install chromium
 ```
@@ -116,6 +541,9 @@ HITL_TIMEOUT_SECONDS=3600
 #### For Browser Tasks (AI Agent)
 ```env
 OPENAI_API_KEY=your-openai-api-key
+# Or use Alibaba Cloud Model Studio / Bailian (Qwen):
+# COLLAB_PROVIDER=dashscope  # qwen and bailian are aliases
+# DASHSCOPE_API_KEY=your-dashscope-api-key
 OPENAI_MODEL=gpt-5.6-luna
 ```
 
@@ -157,6 +585,28 @@ python main.py hitl approve --message "删除 1000 条记录？" --timeout 5 --a
 python main.py notify slack --message "部署完成"
 ```
 
+The formal Experiment 4-5 runner defaults to credential-free notification
+preflights. Use `--interactive-human` to pause on a real pending MCP approval
+and accept exactly one live `APPROVE` or `REJECT` line from standard input. Use
+`--real-notifications` only when email, Telegram, and Slack are all configured;
+the runner fails before creating a run directory if any channel is missing and
+redacts credentials and delivery identifiers from retained receipts. The
+context comparison deliberately retains a hard-coded, non-secret privacy canary
+in its input receipt so the validator can prove that it is absent from both
+prepared handoffs. `publication_authorized` records only whether MCP accepted a
+live approval to publish that run's validation artifact; it does not imply that
+the experiment passed or that `official_complete` is true.
+
+```bash
+python run_experiment_4_5.py \
+  --campaign-id real_mcp_human_example \
+  --interactive-human \
+  --human-timeout-seconds 14400
+
+python validate_experiment_4_5.py \
+  validation/experiment_4_5/real_mcp_human_example
+```
+
 `demo` chains three collaboration tool types: (1) delegate a sub-agent for refund approval and compare context strategies; (2) large action triggers HITL (approve-before-timeout vs conservative default-on-timeout); (3) multi-channel notify collaborators. **HITL and notify paths run fully offline**; real sub-agent execution and `llm_generated` need `OPENAI_API_KEY` (if unset, the command still parses and runs with a clear prompt).
 
 #### Running the MCP Server
@@ -182,7 +632,7 @@ print the difference (context tokens handed off, extra preparation cost, whether
 private data leaked, and each sub-agent's result). Requires `OPENAI_API_KEY`
 (default model `gpt-5.6-luna`, override with `OPENAI_MODEL`):
 ```bash
-export OPENAI_API_KEY=sk-...
+export OPENAI_API_KEY=your-openai-api-key
 python subagent_comparison.py
 ```
 Typically `minimal` uses far fewer tokens and never leaks private fields, but the
@@ -323,7 +773,7 @@ collaboration-tools/
 
 ### Requirements
 
-- Python 3.11+
+- Python 3.12 for the root `ch4` install (`browser-use` requires Python 3.11+)
 - OpenAI API key (for browser AI agent tasks)
 - Optional: Email/IM service credentials
 - Playwright browsers for browser automation
@@ -361,366 +811,3 @@ MIT License
 Contributions are welcome! Please feel free to submit issues or pull requests.
 
 ---
-
-## 中文
-
-为 AI Agent 提供协作能力的综合 Model Context Protocol（MCP）服务器，涵盖浏览器自动化、人机协同、通知与定时器管理。
-
-### 功能
-
-#### 浏览器自动化（browser-use）
-- 导航 URL、管理标签页
-- 抽取网页内容
-- 用 AI Agent 执行高层浏览器任务
-- 截图
-- 完整虚拟浏览器能力
-
-#### 子 Agent 管理
-- 以 **sync**（等待结果）或 **async**（返回 `task_id`）模式 spawn 子 Agent
-- 向子 Agent 发送后续消息、取消运行中的子 Agent
-- **两种上下文传递策略**（可检查上下文文本与 token 数）：
-  - `minimal` — 只传任务 + 可选手选片段（最省、隐私好，可能饿死子 Agent）
-  - `llm_generated` — 额外一次 LLM 调用，从父轨迹合成紧凑、隐私过滤的交接上下文
-- 子 Agent system prompt 使用带标签的上下文来源（`[FROM_MAIN_AGENT]` / `[FROM_USER]` / `[TOOL_RESULT]`）与标准化 JSON 输出
-
-#### 人机协同（HITL）
-- 敏感操作请求管理员审批
-- 向人类管理员请求输入
-- 管理待处理审批
-- 可配置超时与通知渠道
-
-#### 邮件通知
-- 经 SMTP 或 SendGrid 发信
-- 支持 HTML
-- 抄送与附件
-- 灵活配置
-
-#### 即时通讯
-- Telegram bot
-- Slack webhook
-- Discord webhook
-- 可配置默认频道
-
-#### 定时器与调度
-- 一次性定时器
-- 循环定时器
-- 取消与管理
-- 持久化存储
-- 到期回调通知
-
-### 安装
-
-1. 进入项目目录：
-```bash
-cd chapter4/collaboration-tools
-```
-
-2. 安装依赖：
-```bash
-pip install -r requirements.txt
-```
-
-3. 复制环境模板并配置：
-```bash
-cp env.example .env
-# Edit .env with your configuration
-```
-
-4. 安装 Playwright 浏览器（浏览器自动化）：
-```bash
-playwright install chromium
-```
-
-### 配置
-
-在 `.env` 中设置环境变量：
-
-#### 浏览器
-```env
-BROWSER_HEADLESS=false
-BROWSER_USER_DATA_DIR=~/.config/collaboration-tools/browser
-```
-
-#### 邮件
-```env
-# SMTP (Gmail example)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-SMTP_FROM_EMAIL=your-email@gmail.com
-
-# Or use SendGrid
-SENDGRID_API_KEY=your-sendgrid-api-key
-```
-
-#### 即时通讯
-```env
-TELEGRAM_BOT_TOKEN=your-telegram-bot-token
-TELEGRAM_DEFAULT_CHAT_ID=your-chat-id
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR/WEBHOOK
-```
-
-#### HITL
-```env
-HITL_ADMIN_EMAIL=admin@example.com
-HITL_TIMEOUT_SECONDS=3600
-```
-
-#### 浏览器任务（AI Agent）
-```env
-OPENAI_API_KEY=your-openai-api-key
-OPENAI_MODEL=gpt-5.6-luna
-```
-
-> **OpenRouter 通用兜底**：所有 LLM 入口（`spawn_subagent`、
-> intelligence 工具、browser-use）经 `src/llm_fallback.py` 解析凭据。
-> 未设置 `OPENAI_API_KEY` 但设置了 `OPENROUTER_API_KEY` 时，走
-> OpenRouter（`base_url=https://openrouter.ai/api/v1`，模型 id 映射为
-> `provider/model`，如 `gpt-5.6-luna` → `openai/gpt-5.6-luna`）。两者皆无时，
-> 子 Agent 以确定性离线模式运行（不编造输出）。
-
-### 使用
-
-#### 命令行入口（`main.py`）
-
-不启动 MCP 服务器，也可以用统一的命令行入口列出、单独调用协作工具，或运行端到端演示。
-帮助信息为中文，`-h` 可查看任意子命令的参数：
-
-```bash
-python main.py --help            # 总览
-python main.py list              # 列出全部协作工具（子 Agent / HITL / 多渠道通知）
-python main.py demo              # 端到端协作演示：客服协调 Agent 处理一笔退款
-python main.py subagent -h       # 子 Agent 子命令帮助
-python main.py hitl -h           # HITL 子命令帮助
-python main.py notify -h         # 通知子命令帮助
-```
-
-常用示例：
-
-```bash
-# 对比两种上下文传递策略（minimal vs llm_generated）
-python main.py subagent compare
-
-# 创建子 Agent（同步、最小化上下文）
-python main.py subagent spawn --task "查询订单 A12345 状态" --strategy minimal --role 订单查询助手
-
-# 关键决策请求管理员批准；--auto-approve 在后台模拟管理员应答，便于离线演示闭环
-python main.py hitl approve --message "删除 1000 条记录？" --timeout 5 --auto-approve
-
-# 多渠道通知
-python main.py notify slack --message "部署完成"
-```
-
-`demo` 会串联三类协作工具：① 委派子 Agent 审批退款并对比上下文策略；② 大额操作
-触发 HITL 审批（演示"超时前批准"与"超时保守默认"两种路径）；③ 向协作者多渠道通知结果。
-其中 **HITL 与通知路径完全离线可跑**；子 Agent 的真实执行与 `llm_generated` 策略需要
-`OPENAI_API_KEY`（未配置时会明确提示，命令仍可正常解析运行）。
-
-#### 运行 MCP 服务器
-
-使用 stdio 传输启动：
-```bash
-python src/main.py
-```
-
-也可作为 MCP 服务器接入任意兼容客户端。
-
-#### 快速演示
-
-```bash
-python quickstart.py
-```
-
-#### 子 Agent 上下文策略对比
-
-对同一任务分别用**两种**上下文传递策略 spawn，并打印差异（交接 token、额外准备成本、
-是否泄漏隐私字段、各子 Agent 结果）。需要 `OPENAI_API_KEY`
-（默认模型 `gpt-5.6-luna`，可用 `OPENAI_MODEL` 覆盖）：
-```bash
-export OPENAI_API_KEY=sk-...
-python subagent_comparison.py
-```
-通常 `minimal` token 更少且不泄漏隐私字段，但子 Agent 可能返回 `need_info`；
-`llm_generated` 多一次 LLM 调用交接更丰富、经隐私过滤的上下文，便于子 Agent 完成任务。
-
-#### 与 Claude Desktop 联用
-
-在 Claude Desktop 配置（`claude_desktop_config.json`）中加入：
-
-```json
-{
-  "mcpServers": {
-    "collaboration-tools": {
-      "command": "python",
-      "args": ["/path/to/collaboration-tools/src/main.py"],
-      "env": {
-        "OPENAI_API_KEY": "your-key-here"
-      }
-    }
-  }
-}
-```
-
-### 可用工具
-
-#### 浏览器工具
-- `mcp_browser_navigate` — 导航到 URL
-- `mcp_browser_get_content` — 获取页面内容
-- `mcp_browser_execute_task` — 执行 AI 驱动的浏览器任务
-- `mcp_browser_screenshot` — 截图
-- `mcp_browser_list_tabs` — 列出标签页
-
-#### 通知工具
-- `mcp_send_email` — 发送邮件
-- `mcp_send_telegram_message` — Telegram 消息
-- `mcp_send_slack_message` — Slack 消息
-- `mcp_send_discord_message` — Discord 消息
-
-#### 子 Agent 工具
-- `mcp_spawn_subagent` — 创建子 Agent（sync/async，`minimal`/`llm_generated` 上下文）
-- `mcp_send_message_to_subagent` — 向子 Agent 发后续消息
-- `mcp_cancel_subagent` — 取消子 Agent
-- `mcp_get_subagent_status` — 查询状态/结果（async）
-
-#### HITL 工具
-- `mcp_request_admin_approval` — 请求管理员审批
-- `mcp_request_admin_input` — 请求管理员输入
-- `mcp_respond_to_request` — 响应审批请求（管理员侧）
-- `mcp_list_pending_requests` — 列出待处理请求
-
-#### 定时器工具
-- `mcp_set_timer` — 一次性定时器
-- `mcp_set_recurring_timer` — 循环定时器
-- `mcp_cancel_timer` — 取消定时器
-- `mcp_list_timers` — 列出定时器
-- `mcp_get_timer_status` — 查询定时器状态
-
-### 使用示例
-
-#### 浏览器自动化
-```python
-# Navigate to a website
-await mcp_browser_navigate(url="https://example.com")
-
-# Execute a complex task
-await mcp_browser_execute_task(
-    task="Search for AI agent tutorials on Google and extract the top 5 results"
-)
-
-# Take a screenshot
-await mcp_browser_screenshot(full_page=True)
-```
-
-#### 通知
-```python
-# Send email
-await mcp_send_email(
-    to_email="user@example.com",
-    subject="Task Completed",
-    body="Your task has finished successfully!"
-)
-
-# Send Slack message
-await mcp_send_slack_message(
-    message="🎉 Deployment successful!"
-)
-```
-
-#### 人机协同
-```python
-# Request approval for sensitive action
-result = await mcp_request_admin_approval(
-    request_message="Delete 1000 records from database?",
-    urgent=True,
-    timeout_seconds=300
-)
-
-if result["approved"]:
-    # Proceed with action
-    pass
-```
-
-#### 定时器
-```python
-# Set a timer
-await mcp_set_timer(
-    duration_seconds=300,
-    timer_name="Check website",
-    callback_message="Time to check the website status"
-)
-
-# Set recurring timer
-await mcp_set_recurring_timer(
-    interval_seconds=3600,
-    max_occurrences=24,
-    timer_name="Hourly health check"
-)
-```
-
-### 架构
-
-服务器按模块组织：
-
-```
-collaboration-tools/
-├── src/
-│   ├── main.py              # MCP server entry point
-│   ├── config.py            # Configuration management
-│   ├── browser_tools.py     # Browser automation
-│   ├── notification_tools.py # Email & IM notifications
-│   ├── hitl_tools.py        # Human-in-the-loop
-│   └── timer_tools.py       # Timer management
-├── requirements.txt         # Python dependencies
-├── env.example             # Example configuration
-└── README.md               # This file
-```
-
-### 依赖要求
-
-- Python 3.11+
-- OpenAI API key（浏览器 AI 任务）
-- 可选：邮件/IM 凭据
-- Playwright 浏览器（浏览器自动化）
-
-### 故障排除
-
-#### 浏览器问题
-若浏览器自动化失败：
-```bash
-# Reinstall Playwright browsers
-playwright install chromium --force
-```
-
-#### 邮件问题
-- Gmail 请使用 [应用专用密码](https://support.google.com/accounts/answer/185833)
-- 不要开启「不够安全的应用访问」（改用应用专用密码）
-
-#### Telegram 问题
-- 通过 [@BotFather](https://t.me/botfather) 创建 bot
-- 用 [@userinfobot](https://t.me/userinfobot) 获取 chat ID
-
-#### LangChain/Pydantic 问题
-若出现 "`ChatOpenAI` is not fully defined" 或 Pydantic 校验错误：
-- 这是 LangChain 与 Pydantic v2 的已知兼容问题
-- 修复：ChatOpenAI 仅在需要时按需初始化（`browser_execute_task`）
-- 简单导航不需要 OpenAI API key
-- 仅自主浏览器任务（`browser_execute_task`）需要 `OPENAI_API_KEY`
-
-### 许可证
-
-MIT License
-
-### 贡献
-
-欢迎提交 issue 或 pull request。
-
----
-
-## Notes / 说明
-
-- HITL + notify paths in `python main.py demo` run offline without API keys.  
-- `python main.py demo` 中 HITL 与通知路径可离线、无需 API Key。  
-- Browser AI tasks and `llm_generated` sub-agent strategy need an LLM key.  
-- 浏览器 AI 任务与 `llm_generated` 子 Agent 策略需要 LLM Key。

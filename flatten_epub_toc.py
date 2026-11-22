@@ -29,20 +29,17 @@ def toc_item(identifier, href, label):
     return item
 
 
-def flatten_nav(data, title_label, toc_label, rtl=False):
+def flatten_nav(data, title_label, toc_label, rtl=False, language="ar"):
     root = ET.fromstring(data)
     if rtl:
         root.set("dir", "rtl")
-        root.set("{http://www.w3.org/XML/1998/namespace}lang", "ar")
+        root.set("{http://www.w3.org/XML/1998/namespace}lang", language)
     nav = next(
         element
         for element in root.iter(f"{{{XHTML}}}nav")
         if element.get(f"{{{EPUB}}}type") == "toc"
     )
     top_list = next(child for child in nav if child.tag == f"{{{XHTML}}}ol")
-    # 正文目录页保留扉页、目录两个条目（这里不动）。
-    top_list.insert(0, toc_item("toc-li-contents", "nav.xhtml#toc", toc_label))
-    top_list.insert(0, toc_item("toc-li-title-page", "text/title_page.xhtml", title_label))
 
     # 先删掉所有 section-header-number（让目录只显示标题文字，不带 1.1 / 1.1.1 编号）
     # 关键：pandoc 把编号放在 <span class="section-header-number">1.1</span> 里，
@@ -77,6 +74,10 @@ def flatten_nav(data, title_label, toc_label, rtl=False):
                     sub_classes.append("subsection")
                     sub_li.set("class", " ".join(sub_classes))
 
+    top_list.insert(0, toc_item("toc-li-contents", "nav.xhtml#toc", toc_label))
+    top_list.insert(0, toc_item("toc-li-title-page", "text/title_page.xhtml", title_label))
+    ET.register_namespace("", XHTML)
+    ET.register_namespace("epub", EPUB)
     return ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
 
@@ -91,11 +92,11 @@ def set_page_progression(data):
     return ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
 
-def set_xhtml_direction(data):
+def set_xhtml_direction(data, language="ar"):
     root = ET.fromstring(data)
     root.set("dir", "rtl")
-    root.set("lang", "ar")
-    root.set("{http://www.w3.org/XML/1998/namespace}lang", "ar")
+    root.set("lang", language)
+    root.set("{http://www.w3.org/XML/1998/namespace}lang", language)
     for name in ("pre", "code", "kbd", "samp"):
         for element in root.iter(f"{{{XHTML}}}{name}"):
             element.set("dir", "ltr")
@@ -149,14 +150,15 @@ def flatten_ncx(data, title_label, toc_label):
     return ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
 
-def rewrite_epub(path, title_label, toc_label, rtl=False):
+def rewrite_epub(path, title_label, toc_label, rtl=False, language="ar"):
     replacements = {}
     with zipfile.ZipFile(path) as source:
         names = set(source.namelist())
         if "EPUB/nav.xhtml" not in names or "EPUB/toc.ncx" not in names:
             raise RuntimeError("EPUB navigation files not found")
         replacements["EPUB/nav.xhtml"] = flatten_nav(
-            source.read("EPUB/nav.xhtml"), title_label, toc_label, rtl=rtl
+            source.read("EPUB/nav.xhtml"), title_label, toc_label,
+            rtl=rtl, language=language
         )
         replacements["EPUB/toc.ncx"] = flatten_ncx(
             source.read("EPUB/toc.ncx"), title_label, toc_label
@@ -172,7 +174,7 @@ def rewrite_epub(path, title_label, toc_label, rtl=False):
             for name in names:
                 if name.endswith(".xhtml"):
                     replacements[name] = set_xhtml_direction(
-                        replacements.get(name, source.read(name))
+                        replacements.get(name, source.read(name)), language=language
                     )
 
         directory = os.path.dirname(os.path.abspath(path))
@@ -189,9 +191,16 @@ def rewrite_epub(path, title_label, toc_label, rtl=False):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (4, 5):
+    if len(sys.argv) not in (4, 5, 6):
         raise SystemExit(
-            f"Usage: {sys.argv[0]} BOOK.epub TITLE_LABEL TOC_LABEL [rtl]"
+            f"Usage: {sys.argv[0]} BOOK.epub TITLE_LABEL TOC_LABEL [rtl [LANGUAGE]]"
         )
-    rtl = len(sys.argv) == 5 and sys.argv[4].lower() == "rtl"
-    rewrite_epub(sys.argv[1], sys.argv[2], sys.argv[3], rtl=rtl)
+    rtl = len(sys.argv) >= 5 and sys.argv[4].lower() == "rtl"
+    if len(sys.argv) == 6 and not rtl:
+        raise SystemExit(
+            f"Usage: {sys.argv[0]} BOOK.epub TITLE_LABEL TOC_LABEL [rtl [LANGUAGE]]"
+        )
+    language = sys.argv[5] if len(sys.argv) == 6 else "ar"
+    rewrite_epub(
+        sys.argv[1], sys.argv[2], sys.argv[3], rtl=rtl, language=language
+    )

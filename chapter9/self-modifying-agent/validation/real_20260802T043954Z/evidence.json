@@ -1,0 +1,678 @@
+{
+  "experiment": "9-6",
+  "executed_at": "2026-08-02T04:39:54.499339+00:00",
+  "execution_mode": "real_api_coding_agent_plus_model_external_release_harness",
+  "provider": "openrouter",
+  "model": "openai/gpt-5.6-sol",
+  "seed": 8501,
+  "input_artifacts": {
+    "stable_sha256": "fcd37db6ebb19ed2e2492f086365a9f8addfcc4410242151185a1481d130041a",
+    "trajectory_sha256": "1e4664c40e99a5fcba2e9462226d7c32b611c573be9f9ba479ed2d26f844b0c2",
+    "validator_sha256_before_generation": "8c354d347b9d5423568205ebe7a5905dd580955756238674d648b9e00e2f6bd5",
+    "validator_sha256_after_generation": "8c354d347b9d5423568205ebe7a5905dd580955756238674d648b9e00e2f6bd5",
+    "trusted_surface_sha256_before": {
+      "evolution.py": "8c354d347b9d5423568205ebe7a5905dd580955756238674d648b9e00e2f6bd5",
+      "candidate_sandbox.py": "0fdd0576479c86482d8944050c2dc8a4d92c9eb696abaff4982bf1ad8b072fb8",
+      "sandbox_runner.py": "bc971dfa909758152ccad386096841dd30a68f4621be6c8d9650a51d2e8c46eb",
+      "Dockerfile.sandbox": "8c71105f404373a92cdd5923a894b05e1358ab42873d08d3d349a9fd3d2a1ade"
+    },
+    "trusted_surface_sha256_after": {
+      "evolution.py": "8c354d347b9d5423568205ebe7a5905dd580955756238674d648b9e00e2f6bd5",
+      "candidate_sandbox.py": "0fdd0576479c86482d8944050c2dc8a4d92c9eb696abaff4982bf1ad8b072fb8",
+      "sandbox_runner.py": "bc971dfa909758152ccad386096841dd30a68f4621be6c8d9650a51d2e8c46eb",
+      "Dockerfile.sandbox": "8c71105f404373a92cdd5923a894b05e1358ab42873d08d3d349a9fd3d2a1ade"
+    }
+  },
+  "candidate_sandbox": {
+    "image": "ai-agent-book/self-modifying-agent-sandbox:2548a1de2baf",
+    "network": "none",
+    "root_filesystem": "read_only",
+    "user": "65534:65534",
+    "memory": "64m",
+    "cpus": 0.5,
+    "wall_clock_timeout_seconds": 8.0
+  },
+  "diagnosis": {
+    "change_required": true,
+    "target": "stable/retry_policy.py",
+    "target_component": "retry_and_circuit_breaker_control",
+    "source_case_ids": [
+      "run-payment-001",
+      "run-payment-002"
+    ],
+    "source_trajectories": [
+      {
+        "id": "run-payment-001",
+        "trajectory_sha256": "4a0b38498b006bf988279b0ff7984f04245db21ee0668986a49f3ca3f4969008",
+        "evidence": "The same declined payment was submitted four times."
+      },
+      {
+        "id": "run-payment-002",
+        "trajectory_sha256": "6407eb8005fb39702005d553963405329607b34e67acbb18901c79060dbe1e59",
+        "evidence": "A second task repeated the identical non-retryable call three times."
+      }
+    ],
+    "patterns": [
+      {
+        "cluster_id": "charge_card:PAYMENT_DECLINED",
+        "tool": "charge_card",
+        "error_code": "PAYMENT_DECLINED",
+        "source_case_ids": [
+          "run-payment-001",
+          "run-payment-002"
+        ],
+        "cross_trajectory_support": 2,
+        "total_redundant_calls": 5
+      }
+    ],
+    "reason": "The deterministic control policy ignores retryable=false and does not open the circuit for permanent errors. The root cause belongs in retry/circuit-breaker code, not a prompt.",
+    "change_contract": {
+      "expected_fix": [
+        "non-retryable tool-call attempts fall to one",
+        "the circuit opens on the first permanent failure"
+      ],
+      "potential_regressions": [
+        "temporary timeouts stop retrying",
+        "the five-failure circuit threshold changes for retryable errors",
+        "public function signatures change"
+      ]
+    }
+  },
+  "rejected_history_given_to_coding_agent": [
+    {
+      "candidate_sha256": "824bbfb244a7b17ac835706be588542a63ad03e0d737d6c9d5da719c969652d2",
+      "failed_checks": [
+        "temporary_recovery",
+        "old_task_regression",
+        "canary_ready"
+      ],
+      "rejection_reason": "failed gates: temporary_recovery, old_task_regression, canary_ready",
+      "failure": "disabled temporary-timeout retries"
+    }
+  ],
+  "behavior_metrics": {
+    "stable_buggy_baseline": {
+      "mean_nonretryable_calls": 3.5,
+      "temporary_error_recovery_rate": 1.0,
+      "old_task_regressions": 0
+    },
+    "deterministic": {
+      "mean_nonretryable_calls": 1.0,
+      "temporary_error_recovery_rate": 1.0,
+      "old_task_regressions": 0
+    },
+    "real_llm": {
+      "mean_nonretryable_calls": 1.0,
+      "temporary_error_recovery_rate": 1.0,
+      "old_task_regressions": 0
+    },
+    "rejected_control": {
+      "mean_nonretryable_calls": 1.0,
+      "temporary_error_recovery_rate": 0.0,
+      "old_task_regressions": 1
+    }
+  },
+  "comparison": {
+    "deterministic": {
+      "decision": "release_to_canary",
+      "checks": {
+        "static_compile": true,
+        "security_scan": true,
+        "sandbox_execution": true,
+        "public_api_compatible": true,
+        "failure_replay": true,
+        "nonretryable_circuit": true,
+        "temporary_recovery": true,
+        "old_task_regression": true,
+        "canary_ready": true,
+        "rollback_ready": true,
+        "protected_surfaces_unchanged": true
+      },
+      "patch_size": {
+        "added_lines": 7,
+        "deleted_lines": 3,
+        "changed_lines": 10
+      },
+      "behavior": {
+        "mean_nonretryable_calls": 1.0,
+        "temporary_error_recovery_rate": 1.0,
+        "old_task_regressions": 0
+      }
+    },
+    "real_llm": {
+      "decision": "release_to_canary",
+      "checks": {
+        "static_compile": true,
+        "security_scan": true,
+        "sandbox_execution": true,
+        "public_api_compatible": true,
+        "failure_replay": true,
+        "nonretryable_circuit": true,
+        "temporary_recovery": true,
+        "old_task_regression": true,
+        "canary_ready": true,
+        "rollback_ready": true,
+        "protected_surfaces_unchanged": true
+      },
+      "patch_size": {
+        "added_lines": 7,
+        "deleted_lines": 3,
+        "changed_lines": 10
+      },
+      "behavior": {
+        "mean_nonretryable_calls": 1.0,
+        "temporary_error_recovery_rate": 1.0,
+        "old_task_regressions": 0
+      }
+    },
+    "rejected_control": {
+      "decision": "reject_candidate",
+      "checks": {
+        "static_compile": true,
+        "security_scan": true,
+        "sandbox_execution": true,
+        "public_api_compatible": true,
+        "failure_replay": true,
+        "nonretryable_circuit": true,
+        "temporary_recovery": false,
+        "old_task_regression": false,
+        "canary_ready": false,
+        "rollback_ready": true,
+        "protected_surfaces_unchanged": true
+      },
+      "patch_size": {
+        "added_lines": 6,
+        "deleted_lines": 4,
+        "changed_lines": 10
+      },
+      "behavior": {
+        "mean_nonretryable_calls": 1.0,
+        "temporary_error_recovery_rate": 0.0,
+        "old_task_regressions": 1
+      }
+    }
+  },
+  "manifests": {
+    "deterministic": {
+      "artifact_type": "agent_control_code_patch",
+      "failure_cluster": [
+        {
+          "cluster_id": "charge_card:PAYMENT_DECLINED",
+          "tool": "charge_card",
+          "error_code": "PAYMENT_DECLINED",
+          "source_case_ids": [
+            "run-payment-001",
+            "run-payment-002"
+          ],
+          "cross_trajectory_support": 2,
+          "total_redundant_calls": 5
+        }
+      ],
+      "source_trajectories": [
+        {
+          "id": "run-payment-001",
+          "trajectory_sha256": "4a0b38498b006bf988279b0ff7984f04245db21ee0668986a49f3ca3f4969008",
+          "evidence": "The same declined payment was submitted four times."
+        },
+        {
+          "id": "run-payment-002",
+          "trajectory_sha256": "6407eb8005fb39702005d553963405329607b34e67acbb18901c79060dbe1e59",
+          "evidence": "A second task repeated the identical non-retryable call three times."
+        }
+      ],
+      "inferred_root_cause": "The deterministic control policy ignores retryable=false and does not open the circuit for permanent errors. The root cause belongs in retry/circuit-breaker code, not a prompt.",
+      "target_component": "retry_and_circuit_breaker_control",
+      "target_file": "stable/retry_policy.py",
+      "code_diff": "--- stable/retry_policy.py\n+++ candidate/retry_policy.py\n@@ -1,16 +1,20 @@\n \"\"\"Stable version 1.0.0. It intentionally contains the reproduced bug.\"\"\"\n \n-VERSION = \"1.0.0\"\n+VERSION = \"1.1.0-candidate\"\n MAX_RETRIES = 3\n CIRCUIT_BREAKER_THRESHOLD = 5\n-NON_RETRYABLE_CODES = {\"AUTH_DENIED\", \"INVALID_ARGUMENT\"}\n+NON_RETRYABLE_CODES = {\"AUTH_DENIED\", \"INVALID_ARGUMENT\", \"PAYMENT_DECLINED\"}\n \n \n def should_retry(error_code, retryable, attempt):\n     \"\"\"Return whether another tool call should be attempted.\"\"\"\n+    if not retryable or error_code in NON_RETRYABLE_CODES:\n+        return False\n     return attempt < MAX_RETRIES\n \n \n def should_open_circuit(consecutive_failures, *, error_code=\"\", retryable=True):\n-    \"\"\"Open after repeated failures.\"\"\"\n+    \"\"\"Open immediately for permanent errors; otherwise use the threshold.\"\"\"\n+    if not retryable or error_code in NON_RETRYABLE_CODES:\n+        return consecutive_failures >= 1\n     return consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD\n",
+      "impact_prediction": {
+        "non_retryable_calls": {
+          "before": "up to 4",
+          "after": 1
+        },
+        "temporary_timeout_recovery_rate": {
+          "before": 1.0,
+          "after": 1.0
+        }
+      },
+      "expected_fix": [
+        "non-retryable tool-call attempts fall to one",
+        "the circuit opens on the first permanent failure"
+      ],
+      "potential_regressions": [
+        "temporary timeouts stop retrying",
+        "the five-failure circuit threshold changes for retryable errors",
+        "public function signatures change"
+      ],
+      "stable_version": "fcd37db6ebb1",
+      "stable_sha256": "fcd37db6ebb19ed2e2492f086365a9f8addfcc4410242151185a1481d130041a",
+      "candidate_version": "b0fb4d1caf96",
+      "candidate_sha256": "b0fb4d1caf96c7aca16fc53d1dcf518345ea1a5b0aef9b60168f24534acf552c",
+      "rollback_version": "fcd37db6ebb1",
+      "rollback_sha256": "fcd37db6ebb19ed2e2492f086365a9f8addfcc4410242151185a1481d130041a",
+      "diff": "--- stable/retry_policy.py\n+++ candidate/retry_policy.py\n@@ -1,16 +1,20 @@\n \"\"\"Stable version 1.0.0. It intentionally contains the reproduced bug.\"\"\"\n \n-VERSION = \"1.0.0\"\n+VERSION = \"1.1.0-candidate\"\n MAX_RETRIES = 3\n CIRCUIT_BREAKER_THRESHOLD = 5\n-NON_RETRYABLE_CODES = {\"AUTH_DENIED\", \"INVALID_ARGUMENT\"}\n+NON_RETRYABLE_CODES = {\"AUTH_DENIED\", \"INVALID_ARGUMENT\", \"PAYMENT_DECLINED\"}\n \n \n def should_retry(error_code, retryable, attempt):\n     \"\"\"Return whether another tool call should be attempted.\"\"\"\n+    if not retryable or error_code in NON_RETRYABLE_CODES:\n+        return False\n     return attempt < MAX_RETRIES\n \n \n def should_open_circuit(consecutive_failures, *, error_code=\"\", retryable=True):\n-    \"\"\"Open after repeated failures.\"\"\"\n+    \"\"\"Open immediately for permanent errors; otherwise use the threshold.\"\"\"\n+    if not retryable or error_code in NON_RETRYABLE_CODES:\n+        return consecutive_failures >= 1\n     return consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD\n",
+      "patch_size": {
+        "added_lines": 7,
+        "deleted_lines": 3,
+        "changed_lines": 10
+      },
+      "checks": {
+        "static_compile": true,
+        "security_scan": true,
+        "sandbox_execution": true,
+        "public_api_compatible": true,
+        "failure_replay": true,
+        "nonretryable_circuit": true,
+        "temporary_recovery": true,
+        "old_task_regression": true,
+        "canary_ready": true,
+        "rollback_ready": true,
+        "protected_surfaces_unchanged": true
+      },
+      "failed_checks": [],
+      "canary_gate": {
+        "eligible": true,
+        "scope": "shadow traffic only; stable remains unchanged",
+        "rollback_trigger": "any non-retryable repeat or temporary-recovery regression"
+      },
+      "rollback_gate": {
+        "artifact_hash_matches_stable": true,
+        "rollback_version": "fcd37db6ebb1"
+      },
+      "provenance": {
+        "generator": "deterministic",
+        "model": null,
+        "api_calls": 0
+      },
+      "decision": "release_to_canary",
+      "rejection_reason": null
+    },
+    "real_llm": {
+      "artifact_type": "agent_control_code_patch",
+      "failure_cluster": [
+        {
+          "cluster_id": "charge_card:PAYMENT_DECLINED",
+          "tool": "charge_card",
+          "error_code": "PAYMENT_DECLINED",
+          "source_case_ids": [
+            "run-payment-001",
+            "run-payment-002"
+          ],
+          "cross_trajectory_support": 2,
+          "total_redundant_calls": 5
+        }
+      ],
+      "source_trajectories": [
+        {
+          "id": "run-payment-001",
+          "trajectory_sha256": "4a0b38498b006bf988279b0ff7984f04245db21ee0668986a49f3ca3f4969008",
+          "evidence": "The same declined payment was submitted four times."
+        },
+        {
+          "id": "run-payment-002",
+          "trajectory_sha256": "6407eb8005fb39702005d553963405329607b34e67acbb18901c79060dbe1e59",
+          "evidence": "A second task repeated the identical non-retryable call three times."
+        }
+      ],
+      "inferred_root_cause": "The deterministic control policy ignores retryable=false and does not open the circuit for permanent errors. The root cause belongs in retry/circuit-breaker code, not a prompt.",
+      "target_component": "retry_and_circuit_breaker_control",
+      "target_file": "stable/retry_policy.py",
+      "code_diff": "--- stable/retry_policy.py\n+++ candidate/retry_policy.py\n@@ -1,6 +1,6 @@\n-\"\"\"Stable version 1.0.0. It intentionally contains the reproduced bug.\"\"\"\n+\"\"\"Candidate version 1.0.1-rc.1 with permanent-failure handling.\"\"\"\n \n-VERSION = \"1.0.0\"\n+VERSION = \"1.0.1-rc.1\"\n MAX_RETRIES = 3\n CIRCUIT_BREAKER_THRESHOLD = 5\n NON_RETRYABLE_CODES = {\"AUTH_DENIED\", \"INVALID_ARGUMENT\"}\n@@ -8,9 +8,13 @@\n \n def should_retry(error_code, retryable, attempt):\n     \"\"\"Return whether another tool call should be attempted.\"\"\"\n+    if not retryable or error_code in NON_RETRYABLE_CODES:\n+        return False\n     return attempt < MAX_RETRIES\n \n \n def should_open_circuit(consecutive_failures, *, error_code=\"\", retryable=True):\n-    \"\"\"Open after repeated failures.\"\"\"\n+    \"\"\"Open immediately for permanent failures or after repeated temporary failures.\"\"\"\n+    if not retryable or error_code in NON_RETRYABLE_CODES:\n+        return consecutive_failures >= 1\n     return consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD\n",
+      "impact_prediction": {
+        "non_retryable_calls": {
+          "before": "up to 4",
+          "after": 1
+        },
+        "temporary_timeout_recovery_rate": {
+          "before": 1.0,
+          "after": 1.0
+        }
+      },
+      "expected_fix": [
+        "non-retryable tool-call attempts fall to one",
+        "the circuit opens on the first permanent failure"
+      ],
+      "potential_regressions": [
+        "temporary timeouts stop retrying",
+        "the five-failure circuit threshold changes for retryable errors",
+        "public function signatures change"
+      ],
+      "stable_version": "fcd37db6ebb1",
+      "stable_sha256": "fcd37db6ebb19ed2e2492f086365a9f8addfcc4410242151185a1481d130041a",
+      "candidate_version": "d6e79810003e",
+      "candidate_sha256": "d6e79810003e7d5f3e8d43ace0688e38033b08a4752bb0dfb9260d9bbe976b8f",
+      "rollback_version": "fcd37db6ebb1",
+      "rollback_sha256": "fcd37db6ebb19ed2e2492f086365a9f8addfcc4410242151185a1481d130041a",
+      "diff": "--- stable/retry_policy.py\n+++ candidate/retry_policy.py\n@@ -1,6 +1,6 @@\n-\"\"\"Stable version 1.0.0. It intentionally contains the reproduced bug.\"\"\"\n+\"\"\"Candidate version 1.0.1-rc.1 with permanent-failure handling.\"\"\"\n \n-VERSION = \"1.0.0\"\n+VERSION = \"1.0.1-rc.1\"\n MAX_RETRIES = 3\n CIRCUIT_BREAKER_THRESHOLD = 5\n NON_RETRYABLE_CODES = {\"AUTH_DENIED\", \"INVALID_ARGUMENT\"}\n@@ -8,9 +8,13 @@\n \n def should_retry(error_code, retryable, attempt):\n     \"\"\"Return whether another tool call should be attempted.\"\"\"\n+    if not retryable or error_code in NON_RETRYABLE_CODES:\n+        return False\n     return attempt < MAX_RETRIES\n \n \n def should_open_circuit(consecutive_failures, *, error_code=\"\", retryable=True):\n-    \"\"\"Open after repeated failures.\"\"\"\n+    \"\"\"Open immediately for permanent failures or after repeated temporary failures.\"\"\"\n+    if not retryable or error_code in NON_RETRYABLE_CODES:\n+        return consecutive_failures >= 1\n     return consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD\n",
+      "patch_size": {
+        "added_lines": 7,
+        "deleted_lines": 3,
+        "changed_lines": 10
+      },
+      "checks": {
+        "static_compile": true,
+        "security_scan": true,
+        "sandbox_execution": true,
+        "public_api_compatible": true,
+        "failure_replay": true,
+        "nonretryable_circuit": true,
+        "temporary_recovery": true,
+        "old_task_regression": true,
+        "canary_ready": true,
+        "rollback_ready": true,
+        "protected_surfaces_unchanged": true
+      },
+      "failed_checks": [],
+      "canary_gate": {
+        "eligible": true,
+        "scope": "shadow traffic only; stable remains unchanged",
+        "rollback_trigger": "any non-retryable repeat or temporary-recovery regression"
+      },
+      "rollback_gate": {
+        "artifact_hash_matches_stable": true,
+        "rollback_version": "fcd37db6ebb1"
+      },
+      "provenance": {
+        "generator": "real_llm_coding_agent",
+        "model": "openai/gpt-5.6-sol",
+        "provider": "openrouter",
+        "seed": 8501,
+        "api_calls": 1,
+        "receipt": {
+          "backend": {
+            "provider": "openrouter",
+            "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+            "credential_env": "OPENROUTER_API_KEY",
+            "model": "openai/gpt-5.6-sol",
+            "credential_value_recorded": false
+          },
+          "request": {
+            "model": "openai/gpt-5.6-sol",
+            "messages": [
+              {
+                "role": "user",
+                "content": "You are the Coding Agent in a controlled self-modification pipeline.\n\nModify only the supplied retry-policy module. Preserve both public function\nsignatures and retry behavior for temporary failures. Permanent failures\n(retryable=false or a listed permanent code) must not be retried and must open\nthe circuit on the first occurrence. Update VERSION to a candidate version.\nDo not import modules, access files, or alter validation/release logic.\n\nBefore the source, predict the intended impact. Return JSON only:\n{\"impact_prediction\": {\"non_retryable_calls\": {\"before\": \"up to 4\", \"after\": 1},\n\"temporary_timeout_recovery_rate\": {\"before\": 1.0, \"after\": 1.0}},\n\"source\": \"the complete Python module\"}\n\nFailure diagnosis:\n{\n  \"change_required\": true,\n  \"target\": \"stable/retry_policy.py\",\n  \"target_component\": \"retry_and_circuit_breaker_control\",\n  \"source_case_ids\": [\n    \"run-payment-001\",\n    \"run-payment-002\"\n  ],\n  \"source_trajectories\": [\n    {\n      \"id\": \"run-payment-001\",\n      \"trajectory_sha256\": \"4a0b38498b006bf988279b0ff7984f04245db21ee0668986a49f3ca3f4969008\",\n      \"evidence\": \"The same declined payment was submitted four times.\"\n    },\n    {\n      \"id\": \"run-payment-002\",\n      \"trajectory_sha256\": \"6407eb8005fb39702005d553963405329607b34e67acbb18901c79060dbe1e59\",\n      \"evidence\": \"A second task repeated the identical non-retryable call three times.\"\n    }\n  ],\n  \"patterns\": [\n    {\n      \"cluster_id\": \"charge_card:PAYMENT_DECLINED\",\n      \"tool\": \"charge_card\",\n      \"error_code\": \"PAYMENT_DECLINED\",\n      \"source_case_ids\": [\n        \"run-payment-001\",\n        \"run-payment-002\"\n      ],\n      \"cross_trajectory_support\": 2,\n      \"total_redundant_calls\": 5\n    }\n  ],\n  \"reason\": \"The deterministic control policy ignores retryable=false and does not open the circuit for permanent errors. The root cause belongs in retry/circuit-breaker code, not a prompt.\",\n  \"change_contract\": {\n    \"expected_fix\": [\n      \"non-retryable tool-call attempts fall to one\",\n      \"the circuit opens on the first permanent failure\"\n    ],\n    \"potential_regressions\": [\n      \"temporary timeouts stop retrying\",\n      \"the five-failure circuit threshold changes for retryable errors\",\n      \"public function signatures change\"\n    ]\n  }\n}\n\nPreviously rejected candidates (do not repeat their failure):\n[\n  {\n    \"candidate_sha256\": \"824bbfb244a7b17ac835706be588542a63ad03e0d737d6c9d5da719c969652d2\",\n    \"failed_checks\": [\n      \"temporary_recovery\",\n      \"old_task_regression\",\n      \"canary_ready\"\n    ],\n    \"rejection_reason\": \"failed gates: temporary_recovery, old_task_regression, canary_ready\",\n    \"failure\": \"disabled temporary-timeout retries\"\n  }\n]\n\nStable module:\n\"\"\"Stable version 1.0.0. It intentionally contains the reproduced bug.\"\"\"\n\nVERSION = \"1.0.0\"\nMAX_RETRIES = 3\nCIRCUIT_BREAKER_THRESHOLD = 5\nNON_RETRYABLE_CODES = {\"AUTH_DENIED\", \"INVALID_ARGUMENT\"}\n\n\ndef should_retry(error_code, retryable, attempt):\n    \"\"\"Return whether another tool call should be attempted.\"\"\"\n    return attempt < MAX_RETRIES\n\n\ndef should_open_circuit(consecutive_failures, *, error_code=\"\", retryable=True):\n    \"\"\"Open after repeated failures.\"\"\"\n    return consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD\n\n"
+              }
+            ],
+            "temperature": 0,
+            "seed": 8501,
+            "max_tokens": 1400,
+            "response_format": {
+              "type": "json_object"
+            }
+          },
+          "response": {
+            "id": "gen-1785645586-58eflec0vxlXmqNTlbkd",
+            "choices": [
+              {
+                "finish_reason": "stop",
+                "index": 0,
+                "message": {
+                  "content": "{\"impact_prediction\":{\"non_retryable_calls\":{\"before\":\"up to 4\",\"after\":1},\"temporary_timeout_recovery_rate\":{\"before\":1.0,\"after\":1.0}},\"source\":\"\\\"\\\"\\\"Candidate version 1.0.1-rc.1 with permanent-failure handling.\\\"\\\"\\\"\\n\\nVERSION = \\\"1.0.1-rc.1\\\"\\nMAX_RETRIES = 3\\nCIRCUIT_BREAKER_THRESHOLD = 5\\nNON_RETRYABLE_CODES = {\\\"AUTH_DENIED\\\", \\\"INVALID_ARGUMENT\\\"}\\n\\n\\ndef should_retry(error_code, retryable, attempt):\\n    \\\"\\\"\\\"Return whether another tool call should be attempted.\\\"\\\"\\\"\\n    if not retryable or error_code in NON_RETRYABLE_CODES:\\n        return False\\n    return attempt < MAX_RETRIES\\n\\n\\ndef should_open_circuit(consecutive_failures, *, error_code=\\\"\\\", retryable=True):\\n    \\\"\\\"\\\"Open immediately for permanent failures or after repeated temporary failures.\\\"\\\"\\\"\\n    if not retryable or error_code in NON_RETRYABLE_CODES:\\n        return consecutive_failures >= 1\\n    return consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD\\n\"}",
+                  "role": "assistant",
+                  "reasoning_details": [
+                    {
+                      "type": "reasoning.encrypted",
+                      "data": "gAAAAABqbsoVfzLT_630yuZzHKyd8nnXw_G6aqojKdjAmzVDbLd4Xn-Q3mIKe2go0qV-MzGTWKLAI49dpBvB7Rh_5pD2V7g9Lo20b0upq1QQnrlwSgTTkNNIU42VP09tK7BlainxGC3VjVQzoiDnzW1ycnev5uExeR6RMeYeK4OycCtSm432sFdjGobCDAkD63hztrlRR9LbpO5F_N-r9FE6XK9__6rPfpVxwssCnzw6UrJSIrAnY78EnxrZ5Brr_x7TS1DRWkKycysVRmdyH7lialKB5-VQqHVYnzGIDRmInx2z8Eb33a0oxFKoZ60wm4Dt51u3B4ZigQuSnm8qaL0C3e6Sx1CcMjqgkvAveoDqvPiRe2Jn99gGD1Zb2a4QuzpWFJoPBw0wP-5Ftr_9oeiXXIrC-iV6WcqW60nWo3T8QoE8AyL5xPhgkYOXTsWxB6eE8qhUcdfUkPI6Jb5WzJJV6aBYPE8VtUOt0a-kpKSs7VoHqBXZLKb6XBUJuRA1kNfD9-878znM_o0HLa-zeXAh0o5sRU3tm8JUFM2wTPC4vIW9j6MBneAnSAgPP5-ecZ8zNcfJwX8tGq6pv8m7t8fNw6hBFhweTz0H6nfP40ew75rl20hlSwzZpvhxNrqQ7sDEgHSS_pSeMEyy_3Q_3gJjRII-63s5oFCV6KA4J-3y6rTq8B8nBWCrmC6t6Wr154B8duIsKEj5XkwqJwJqVJ0ve0Zn1ajrnoT5U9koJ4gr8QQHjGGzeB8iWKYlXDj7U3DRnfFpDi2W9ITie15t9KGl4vgwLqGpC4W3Tw0ler9B1iI8RI4guTstB-P3kk1AL3Wy23w5NOZpvGtAFHmq0tTT2p7pevH_1vreX8VMrXpnR4TtRXS_ozgbJhg7SzikZYlL43F_6mpmJxxg5FvTaj_J2QEV-sXNu0HkYIk7SarA5ULcDflz05fperzFaKpc6DdXtar9Mufjhn24mX1a8799OAZbgS9h3vaFa0z-7cBUTfplDVVydBNxteka07DevlG9fxTQCi9KjhOhqMH3oadsDbiufIp2YeGz3bocIBTIhPVVUoL9ywJW7kwVIfDFUV_hONXVKfhjWjH-Q0O3BCPn76nmUnyDlZrrggLqm5YDLvulyRZzspRVryr4IcbOSC4tK3n8s4-v6zNsnPtszq7sSNyxoTqryCQlrifvFcYOZQw4Cc0CHiKwojD7vQsjy1q4m3If6IfRXDbK4kOdkajkOSj-ir9kNRu1r04fb6eMbIRZYmbkfoUkoT17fJT5ruSinGmvKs8B4MS8896hpzIXLaxmd_4rdg0j4byhJjvQHiIjVDVdc3icZT6RAuwGuv2VlkoH6gD4UsJTQY7TTzDCs96-add1yczyk9Az2B74qXLQgstAy3ubGDhM-QjmEMhU6fULqriEbJZSk-u-HYPVJ3CtJSHXFnviF3ur6FRQr1bvk4s0lrksXPOPmtR3Gg26UiPQET_JwsvafY_ttLJ2wbudPzhGSijztaphFjmnFWkH53xLNRMACNPi_fXuTXwcoSwIc0M_pa2MVooxFAlDsiNYhlyKfgYY9aB77RAmqfHx1movlyjgWJlQm1vvcngw3VxYHoG_kGu4fFQn5Kd2hC5rbrd4a4v3lPCzQkAKGTDqqsjYyH_H0lg4RkVYo-n_iGNWRlUI5blONowfxTXn4WS5oP7QGajw0WFbPI6FOcv3ISK8CJYCC_fjrtJoOia2OC1rVRzAqr1EuxWH6H_W9gQl0dae0CZUC_XTC8kZGvcKEC7hBz-u3OdRi4iycAYOPxlzMffE",
+                      "format": "openai-responses-v1",
+                      "id": "rs_09bdf9a0a95f7f05016a6eca1367a8819ebed6d613bbe9886e",
+                      "index": 0
+                    }
+                  ]
+                },
+                "native_finish_reason": "completed"
+              }
+            ],
+            "created": 1785645586,
+            "model": "openai/gpt-5.6-sol",
+            "object": "chat.completion",
+            "service_tier": "default",
+            "usage": {
+              "completion_tokens": 392,
+              "prompt_tokens": 839,
+              "total_tokens": 1231,
+              "completion_tokens_details": {
+                "audio_tokens": 0,
+                "reasoning_tokens": 128,
+                "image_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0,
+                "cache_write_tokens": 0,
+                "video_tokens": 0
+              },
+              "cost": 0.015955,
+              "is_byok": false,
+              "cost_details": {
+                "upstream_inference_cost": 0.015955,
+                "upstream_inference_prompt_cost": 0.004195,
+                "upstream_inference_completions_cost": 0.01176
+              }
+            },
+            "provider": "OpenAI"
+          },
+          "request_sha256": "80938ad7618b7a10cbf6a441221678a0e08a3acd88e03a9277b5b48c767b37b9",
+          "response_sha256": "0547761669dd89448a523da688652d900c055c104d208c20681a0055e19feeb3",
+          "elapsed_seconds": 4.693797,
+          "usage": {
+            "prompt_tokens": 839,
+            "completion_tokens": 392,
+            "total_tokens": 1231,
+            "provider_reported_cost_usd": 0.015955,
+            "cost_qualification": "provider-native usage.cost"
+          }
+        }
+      },
+      "decision": "release_to_canary",
+      "rejection_reason": null
+    },
+    "rejected_control": {
+      "artifact_type": "agent_control_code_patch",
+      "failure_cluster": [
+        {
+          "cluster_id": "charge_card:PAYMENT_DECLINED",
+          "tool": "charge_card",
+          "error_code": "PAYMENT_DECLINED",
+          "source_case_ids": [
+            "run-payment-001",
+            "run-payment-002"
+          ],
+          "cross_trajectory_support": 2,
+          "total_redundant_calls": 5
+        }
+      ],
+      "source_trajectories": [
+        {
+          "id": "run-payment-001",
+          "trajectory_sha256": "4a0b38498b006bf988279b0ff7984f04245db21ee0668986a49f3ca3f4969008",
+          "evidence": "The same declined payment was submitted four times."
+        },
+        {
+          "id": "run-payment-002",
+          "trajectory_sha256": "6407eb8005fb39702005d553963405329607b34e67acbb18901c79060dbe1e59",
+          "evidence": "A second task repeated the identical non-retryable call three times."
+        }
+      ],
+      "inferred_root_cause": "The deterministic control policy ignores retryable=false and does not open the circuit for permanent errors. The root cause belongs in retry/circuit-breaker code, not a prompt.",
+      "target_component": "retry_and_circuit_breaker_control",
+      "target_file": "stable/retry_policy.py",
+      "code_diff": "--- stable/retry_policy.py\n+++ candidate/retry_policy.py\n@@ -1,16 +1,18 @@\n \"\"\"Stable version 1.0.0. It intentionally contains the reproduced bug.\"\"\"\n \n-VERSION = \"1.0.0\"\n+VERSION = \"1.0.1-rejected\"\n MAX_RETRIES = 3\n CIRCUIT_BREAKER_THRESHOLD = 5\n NON_RETRYABLE_CODES = {\"AUTH_DENIED\", \"INVALID_ARGUMENT\"}\n \n \n def should_retry(error_code, retryable, attempt):\n-    \"\"\"Return whether another tool call should be attempted.\"\"\"\n-    return attempt < MAX_RETRIES\n+    \"\"\"Incorrect over-broad fix retained as a rejected candidate.\"\"\"\n+    return False\n \n \n def should_open_circuit(consecutive_failures, *, error_code=\"\", retryable=True):\n-    \"\"\"Open after repeated failures.\"\"\"\n+    \"\"\"Open immediately for permanent errors; otherwise use the threshold.\"\"\"\n+    if not retryable or error_code in NON_RETRYABLE_CODES:\n+        return consecutive_failures >= 1\n     return consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD\n",
+      "impact_prediction": {
+        "non_retryable_calls": {
+          "after": 1
+        },
+        "temporary_timeout_recovery_rate": {
+          "after": 0.0
+        }
+      },
+      "expected_fix": [
+        "non-retryable tool-call attempts fall to one",
+        "the circuit opens on the first permanent failure"
+      ],
+      "potential_regressions": [
+        "temporary timeouts stop retrying",
+        "the five-failure circuit threshold changes for retryable errors",
+        "public function signatures change"
+      ],
+      "stable_version": "fcd37db6ebb1",
+      "stable_sha256": "fcd37db6ebb19ed2e2492f086365a9f8addfcc4410242151185a1481d130041a",
+      "candidate_version": "824bbfb244a7",
+      "candidate_sha256": "824bbfb244a7b17ac835706be588542a63ad03e0d737d6c9d5da719c969652d2",
+      "rollback_version": "fcd37db6ebb1",
+      "rollback_sha256": "fcd37db6ebb19ed2e2492f086365a9f8addfcc4410242151185a1481d130041a",
+      "diff": "--- stable/retry_policy.py\n+++ candidate/retry_policy.py\n@@ -1,16 +1,18 @@\n \"\"\"Stable version 1.0.0. It intentionally contains the reproduced bug.\"\"\"\n \n-VERSION = \"1.0.0\"\n+VERSION = \"1.0.1-rejected\"\n MAX_RETRIES = 3\n CIRCUIT_BREAKER_THRESHOLD = 5\n NON_RETRYABLE_CODES = {\"AUTH_DENIED\", \"INVALID_ARGUMENT\"}\n \n \n def should_retry(error_code, retryable, attempt):\n-    \"\"\"Return whether another tool call should be attempted.\"\"\"\n-    return attempt < MAX_RETRIES\n+    \"\"\"Incorrect over-broad fix retained as a rejected candidate.\"\"\"\n+    return False\n \n \n def should_open_circuit(consecutive_failures, *, error_code=\"\", retryable=True):\n-    \"\"\"Open after repeated failures.\"\"\"\n+    \"\"\"Open immediately for permanent errors; otherwise use the threshold.\"\"\"\n+    if not retryable or error_code in NON_RETRYABLE_CODES:\n+        return consecutive_failures >= 1\n     return consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD\n",
+      "patch_size": {
+        "added_lines": 6,
+        "deleted_lines": 4,
+        "changed_lines": 10
+      },
+      "checks": {
+        "static_compile": true,
+        "security_scan": true,
+        "sandbox_execution": true,
+        "public_api_compatible": true,
+        "failure_replay": true,
+        "nonretryable_circuit": true,
+        "temporary_recovery": false,
+        "old_task_regression": false,
+        "canary_ready": false,
+        "rollback_ready": true,
+        "protected_surfaces_unchanged": true
+      },
+      "failed_checks": [
+        "temporary_recovery",
+        "old_task_regression",
+        "canary_ready"
+      ],
+      "canary_gate": {
+        "eligible": false,
+        "scope": "shadow traffic only; stable remains unchanged",
+        "rollback_trigger": "any non-retryable repeat or temporary-recovery regression"
+      },
+      "rollback_gate": {
+        "artifact_hash_matches_stable": true,
+        "rollback_version": "fcd37db6ebb1"
+      },
+      "provenance": {
+        "generator": "negative_control",
+        "api_calls": 0
+      },
+      "decision": "reject_candidate",
+      "rejection_reason": "failed gates: temporary_recovery, old_task_regression, canary_ready"
+    }
+  },
+  "raw_api_receipts": [
+    {
+      "backend": {
+        "provider": "openrouter",
+        "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+        "credential_env": "OPENROUTER_API_KEY",
+        "model": "openai/gpt-5.6-sol",
+        "credential_value_recorded": false
+      },
+      "request": {
+        "model": "openai/gpt-5.6-sol",
+        "messages": [
+          {
+            "role": "user",
+            "content": "You are the Coding Agent in a controlled self-modification pipeline.\n\nModify only the supplied retry-policy module. Preserve both public function\nsignatures and retry behavior for temporary failures. Permanent failures\n(retryable=false or a listed permanent code) must not be retried and must open\nthe circuit on the first occurrence. Update VERSION to a candidate version.\nDo not import modules, access files, or alter validation/release logic.\n\nBefore the source, predict the intended impact. Return JSON only:\n{\"impact_prediction\": {\"non_retryable_calls\": {\"before\": \"up to 4\", \"after\": 1},\n\"temporary_timeout_recovery_rate\": {\"before\": 1.0, \"after\": 1.0}},\n\"source\": \"the complete Python module\"}\n\nFailure diagnosis:\n{\n  \"change_required\": true,\n  \"target\": \"stable/retry_policy.py\",\n  \"target_component\": \"retry_and_circuit_breaker_control\",\n  \"source_case_ids\": [\n    \"run-payment-001\",\n    \"run-payment-002\"\n  ],\n  \"source_trajectories\": [\n    {\n      \"id\": \"run-payment-001\",\n      \"trajectory_sha256\": \"4a0b38498b006bf988279b0ff7984f04245db21ee0668986a49f3ca3f4969008\",\n      \"evidence\": \"The same declined payment was submitted four times.\"\n    },\n    {\n      \"id\": \"run-payment-002\",\n      \"trajectory_sha256\": \"6407eb8005fb39702005d553963405329607b34e67acbb18901c79060dbe1e59\",\n      \"evidence\": \"A second task repeated the identical non-retryable call three times.\"\n    }\n  ],\n  \"patterns\": [\n    {\n      \"cluster_id\": \"charge_card:PAYMENT_DECLINED\",\n      \"tool\": \"charge_card\",\n      \"error_code\": \"PAYMENT_DECLINED\",\n      \"source_case_ids\": [\n        \"run-payment-001\",\n        \"run-payment-002\"\n      ],\n      \"cross_trajectory_support\": 2,\n      \"total_redundant_calls\": 5\n    }\n  ],\n  \"reason\": \"The deterministic control policy ignores retryable=false and does not open the circuit for permanent errors. The root cause belongs in retry/circuit-breaker code, not a prompt.\",\n  \"change_contract\": {\n    \"expected_fix\": [\n      \"non-retryable tool-call attempts fall to one\",\n      \"the circuit opens on the first permanent failure\"\n    ],\n    \"potential_regressions\": [\n      \"temporary timeouts stop retrying\",\n      \"the five-failure circuit threshold changes for retryable errors\",\n      \"public function signatures change\"\n    ]\n  }\n}\n\nPreviously rejected candidates (do not repeat their failure):\n[\n  {\n    \"candidate_sha256\": \"824bbfb244a7b17ac835706be588542a63ad03e0d737d6c9d5da719c969652d2\",\n    \"failed_checks\": [\n      \"temporary_recovery\",\n      \"old_task_regression\",\n      \"canary_ready\"\n    ],\n    \"rejection_reason\": \"failed gates: temporary_recovery, old_task_regression, canary_ready\",\n    \"failure\": \"disabled temporary-timeout retries\"\n  }\n]\n\nStable module:\n\"\"\"Stable version 1.0.0. It intentionally contains the reproduced bug.\"\"\"\n\nVERSION = \"1.0.0\"\nMAX_RETRIES = 3\nCIRCUIT_BREAKER_THRESHOLD = 5\nNON_RETRYABLE_CODES = {\"AUTH_DENIED\", \"INVALID_ARGUMENT\"}\n\n\ndef should_retry(error_code, retryable, attempt):\n    \"\"\"Return whether another tool call should be attempted.\"\"\"\n    return attempt < MAX_RETRIES\n\n\ndef should_open_circuit(consecutive_failures, *, error_code=\"\", retryable=True):\n    \"\"\"Open after repeated failures.\"\"\"\n    return consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD\n\n"
+          }
+        ],
+        "temperature": 0,
+        "seed": 8501,
+        "max_tokens": 1400,
+        "response_format": {
+          "type": "json_object"
+        }
+      },
+      "response": {
+        "id": "gen-1785645586-58eflec0vxlXmqNTlbkd",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "{\"impact_prediction\":{\"non_retryable_calls\":{\"before\":\"up to 4\",\"after\":1},\"temporary_timeout_recovery_rate\":{\"before\":1.0,\"after\":1.0}},\"source\":\"\\\"\\\"\\\"Candidate version 1.0.1-rc.1 with permanent-failure handling.\\\"\\\"\\\"\\n\\nVERSION = \\\"1.0.1-rc.1\\\"\\nMAX_RETRIES = 3\\nCIRCUIT_BREAKER_THRESHOLD = 5\\nNON_RETRYABLE_CODES = {\\\"AUTH_DENIED\\\", \\\"INVALID_ARGUMENT\\\"}\\n\\n\\ndef should_retry(error_code, retryable, attempt):\\n    \\\"\\\"\\\"Return whether another tool call should be attempted.\\\"\\\"\\\"\\n    if not retryable or error_code in NON_RETRYABLE_CODES:\\n        return False\\n    return attempt < MAX_RETRIES\\n\\n\\ndef should_open_circuit(consecutive_failures, *, error_code=\\\"\\\", retryable=True):\\n    \\\"\\\"\\\"Open immediately for permanent failures or after repeated temporary failures.\\\"\\\"\\\"\\n    if not retryable or error_code in NON_RETRYABLE_CODES:\\n        return consecutive_failures >= 1\\n    return consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD\\n\"}",
+              "role": "assistant",
+              "reasoning_details": [
+                {
+                  "type": "reasoning.encrypted",
+                  "data": "gAAAAABqbsoVfzLT_630yuZzHKyd8nnXw_G6aqojKdjAmzVDbLd4Xn-Q3mIKe2go0qV-MzGTWKLAI49dpBvB7Rh_5pD2V7g9Lo20b0upq1QQnrlwSgTTkNNIU42VP09tK7BlainxGC3VjVQzoiDnzW1ycnev5uExeR6RMeYeK4OycCtSm432sFdjGobCDAkD63hztrlRR9LbpO5F_N-r9FE6XK9__6rPfpVxwssCnzw6UrJSIrAnY78EnxrZ5Brr_x7TS1DRWkKycysVRmdyH7lialKB5-VQqHVYnzGIDRmInx2z8Eb33a0oxFKoZ60wm4Dt51u3B4ZigQuSnm8qaL0C3e6Sx1CcMjqgkvAveoDqvPiRe2Jn99gGD1Zb2a4QuzpWFJoPBw0wP-5Ftr_9oeiXXIrC-iV6WcqW60nWo3T8QoE8AyL5xPhgkYOXTsWxB6eE8qhUcdfUkPI6Jb5WzJJV6aBYPE8VtUOt0a-kpKSs7VoHqBXZLKb6XBUJuRA1kNfD9-878znM_o0HLa-zeXAh0o5sRU3tm8JUFM2wTPC4vIW9j6MBneAnSAgPP5-ecZ8zNcfJwX8tGq6pv8m7t8fNw6hBFhweTz0H6nfP40ew75rl20hlSwzZpvhxNrqQ7sDEgHSS_pSeMEyy_3Q_3gJjRII-63s5oFCV6KA4J-3y6rTq8B8nBWCrmC6t6Wr154B8duIsKEj5XkwqJwJqVJ0ve0Zn1ajrnoT5U9koJ4gr8QQHjGGzeB8iWKYlXDj7U3DRnfFpDi2W9ITie15t9KGl4vgwLqGpC4W3Tw0ler9B1iI8RI4guTstB-P3kk1AL3Wy23w5NOZpvGtAFHmq0tTT2p7pevH_1vreX8VMrXpnR4TtRXS_ozgbJhg7SzikZYlL43F_6mpmJxxg5FvTaj_J2QEV-sXNu0HkYIk7SarA5ULcDflz05fperzFaKpc6DdXtar9Mufjhn24mX1a8799OAZbgS9h3vaFa0z-7cBUTfplDVVydBNxteka07DevlG9fxTQCi9KjhOhqMH3oadsDbiufIp2YeGz3bocIBTIhPVVUoL9ywJW7kwVIfDFUV_hONXVKfhjWjH-Q0O3BCPn76nmUnyDlZrrggLqm5YDLvulyRZzspRVryr4IcbOSC4tK3n8s4-v6zNsnPtszq7sSNyxoTqryCQlrifvFcYOZQw4Cc0CHiKwojD7vQsjy1q4m3If6IfRXDbK4kOdkajkOSj-ir9kNRu1r04fb6eMbIRZYmbkfoUkoT17fJT5ruSinGmvKs8B4MS8896hpzIXLaxmd_4rdg0j4byhJjvQHiIjVDVdc3icZT6RAuwGuv2VlkoH6gD4UsJTQY7TTzDCs96-add1yczyk9Az2B74qXLQgstAy3ubGDhM-QjmEMhU6fULqriEbJZSk-u-HYPVJ3CtJSHXFnviF3ur6FRQr1bvk4s0lrksXPOPmtR3Gg26UiPQET_JwsvafY_ttLJ2wbudPzhGSijztaphFjmnFWkH53xLNRMACNPi_fXuTXwcoSwIc0M_pa2MVooxFAlDsiNYhlyKfgYY9aB77RAmqfHx1movlyjgWJlQm1vvcngw3VxYHoG_kGu4fFQn5Kd2hC5rbrd4a4v3lPCzQkAKGTDqqsjYyH_H0lg4RkVYo-n_iGNWRlUI5blONowfxTXn4WS5oP7QGajw0WFbPI6FOcv3ISK8CJYCC_fjrtJoOia2OC1rVRzAqr1EuxWH6H_W9gQl0dae0CZUC_XTC8kZGvcKEC7hBz-u3OdRi4iycAYOPxlzMffE",
+                  "format": "openai-responses-v1",
+                  "id": "rs_09bdf9a0a95f7f05016a6eca1367a8819ebed6d613bbe9886e",
+                  "index": 0
+                }
+              ]
+            },
+            "native_finish_reason": "completed"
+          }
+        ],
+        "created": 1785645586,
+        "model": "openai/gpt-5.6-sol",
+        "object": "chat.completion",
+        "service_tier": "default",
+        "usage": {
+          "completion_tokens": 392,
+          "prompt_tokens": 839,
+          "total_tokens": 1231,
+          "completion_tokens_details": {
+            "audio_tokens": 0,
+            "reasoning_tokens": 128,
+            "image_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "audio_tokens": 0,
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost": 0.015955,
+          "is_byok": false,
+          "cost_details": {
+            "upstream_inference_cost": 0.015955,
+            "upstream_inference_prompt_cost": 0.004195,
+            "upstream_inference_completions_cost": 0.01176
+          }
+        },
+        "provider": "OpenAI"
+      },
+      "request_sha256": "80938ad7618b7a10cbf6a441221678a0e08a3acd88e03a9277b5b48c767b37b9",
+      "response_sha256": "0547761669dd89448a523da688652d900c055c104d208c20681a0055e19feeb3",
+      "elapsed_seconds": 4.693797,
+      "usage": {
+        "prompt_tokens": 839,
+        "completion_tokens": 392,
+        "total_tokens": 1231,
+        "provider_reported_cost_usd": 0.015955,
+        "cost_qualification": "provider-native usage.cost"
+      }
+    }
+  ],
+  "cost": {
+    "prompt_tokens": 839,
+    "completion_tokens": 392,
+    "total_tokens": 1231,
+    "provider_reported_cost_usd": 0.015955,
+    "cost_qualification": "provider-native usage.cost"
+  },
+  "candidate_acceptance_rate": 0.6666666666666666,
+  "gates": {
+    "cross_trajectory_support_met": true,
+    "root_cause_targets_control_code": true,
+    "real_coding_model_called": true,
+    "impact_prediction_precedes_validation": true,
+    "all_candidates_isolated": true,
+    "trusted_surfaces_unchanged": true,
+    "same_release_gate_for_both_generators": true,
+    "deterministic_candidate_release_to_canary": true,
+    "real_llm_candidate_release_to_canary": true,
+    "known_bad_candidate_rejected_and_retained": true,
+    "failure_replay_reduces_calls": true,
+    "temporary_recovery_preserved": true,
+    "old_task_regression_zero": true,
+    "canary_only_not_production": true,
+    "rollback_hash_pinned_to_stable": true,
+    "release_manifest_fields_complete": true
+  },
+  "accepted": true
+}

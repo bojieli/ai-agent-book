@@ -1,0 +1,90 @@
+# Experiment 8-16 reproduction anchor
+
+只奖励最终答案，可能鼓励策略采用不符合要求的过程。本项目把结果收益与路径中的违规分开考虑，学习怎样在后训练中表达过程约束。
+
+[English](#english)
+
+建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4)。
+
+<a id="learning-0"></a>
+
+## 理解问题与方法
+
+结果正确性与路径合规性是两组信号。惩罚规则必须具体、可检查，并考虑它会如何影响训练样本的相对评价。约束过强可能压制有效探索，过弱则可能无法改变行为。
+
+<a id="learning-1"></a>
+
+## 准备环境与输入
+
+阅读训练命令前，先确认基础模型、数据文件、适配器输出位置和显存要求。把数据准备、训练和评估看作三个独立步骤：前一步得到的文件，是后一步需要核对的输入。
+
+<a id="learning-2"></a>
+
+## 按照步骤完成实验
+
+先阅读下文中的规则和奖励分配检查，再按固定版本取得外部代码。训练之前比较几条“结果正确但过程不合规”和“过程合规但结果失败”的轨迹，确认评分符合任务意图。
+
+<a id="learning-3"></a>
+
+## 分析结果与形成判断
+
+违规率下降应与任务成功率一起看，还要检查是否出现大量放弃或输出退化。这里提供学习与复现入口，论文结果不等于本目录已经完成同样训练。
+
+### 实验 8-16：RLVP —— 奖励结果、惩罚路径
+
+> 📖 **本实验对应的完整训练/评估代码在独立论文仓库：[`github.com/19PINE-AI/rlvp`](https://github.com/19PINE-AI/rlvp)**
+>
+> RLVP（Reward the outcome, Penalize the path）是作者团队的一项后训练研究。书中第 7 章
+> 实验 8-16 报告的各项结果（违规率、miniF2F、全败组占比等）均来自该仓库的实验。由于训练
+> 依赖 GPU 集群、且代码随论文持续更新，本书主仓库不再重复内置，请直接前往上游仓库获取最新
+> 代码、配置与复现说明：
+
+```bash
+# 请使用本 README 顶部固定版本的 clone/fetch/detached-checkout/SHA 校验命令。
+```
+
+#### 与本章其它训练类实验的关系
+
+本目录与 `chapter8/AdaptThink`、`chapter8/retool`、`chapter8/AWorld-train` 等一样，属于
+**复现指南（KEEP-EXT）**：核心训练代码在外部仓库，按其 README 复现即可。书中对方法与结论的
+讲解见正文第 7 章「模型后训练」相应小节。
+
+### 检查自己的解释
+
+当所有候选轨迹都失败时，奖励设计还能否为改进提供有用区分？
+
+<a id="learning-4"></a>
+
+## 阅读实现与继续探索
+
+### 项目说明
+
+The book-owned guide is this directory; executable code belongs in `chapter8/RLVP/rlvp` and comes from [`19PINE-AI/rlvp`](https://github.com/19PINE-AI/rlvp). The current workspace has no such checkout. A read-only upstream audit fixed revision `1ad30bc7e338911fb733739393d92c420f4d8bee` and verified the entrypoints below; no RLVP training or evaluation was run.
+
+```bash
+git clone https://github.com/19PINE-AI/rlvp.git chapter8/RLVP/rlvp
+git -C chapter8/RLVP/rlvp fetch origin 1ad30bc7e338911fb733739393d92c420f4d8bee
+git -C chapter8/RLVP/rlvp checkout --detach 1ad30bc7e338911fb733739393d92c420f4d8bee
+git -C chapter8/RLVP/rlvp rev-parse HEAD
+test "$(git -C chapter8/RLVP/rlvp rev-parse HEAD)" = "1ad30bc7e338911fb733739393d92c420f4d8bee"
+```
+
+At this revision, the audited sequence is `python3 tests/test_rules.py && python3 tests/test_credit.py`, `python3 scripts/phase0_baseline.py`, `bash scripts/run_all.sh`, and `python3 scripts/eval_checkpoint.py results/run_c3/final c3_norules`. The full campaign requires CUDA. The chapter's reported paper results are not a current-workspace execution claim.
+
+## English
+
+# Experiment 8-16: RLVP —— Reward the Outcome, Penalize the Path
+
+> 📖 **The complete training/evaluation code corresponding to this experiment is in the standalone paper repository: [`github.com/19PINE-AI/rlvp`](https://github.com/19PINE-AI/rlvp)**
+>
+> RLVP (Reward the Outcome, Penalize the Path) is a post-training study by the author team. All results reported in Chapter 8, Experiment 8-16 of the book (violation rate, miniF2F, full-loss group proportion, etc.) come from experiments in that repository. Since training depends on GPU clusters and the code is continuously updated alongside the paper, the main book repository no longer duplicates it. Please go directly to the upstream repository for the latest code, configuration, and reproduction instructions:
+
+```bash
+# Use the pinned clone/fetch/detached-checkout/SHA-verification block above.
+```
+
+## Relationship with Other Training Experiments in This Chapter
+
+This directory, like `chapter8/AdaptThink`, `chapter8/retool`, and `chapter8/AWorld-train`, belongs to the **reproduction guide (KEEP-EXT)**: the core training code resides in an external repository; simply follow its README to reproduce. For an explanation of the method and conclusions, see the corresponding section on "Model Post-Training" in Chapter 8 of the book.
+
+---

@@ -33,8 +33,14 @@ class SemanticRouter:
     
     def _build_server_index(self):
         """Build TF-IDF index for servers."""
+        if not self.servers:
+            self.server_embeddings = None
+            return
         server_descriptions = [f"{s.name} {s.description}" for s in self.servers]
-        self.server_embeddings = self.server_vectorizer.fit_transform(server_descriptions)
+        try:
+            self.server_embeddings = self.server_vectorizer.fit_transform(server_descriptions)
+        except ValueError:
+            self.server_embeddings = None
     
     def _build_tool_indices(self):
         """Build TF-IDF indices for tools within each server."""
@@ -48,7 +54,10 @@ class SemanticRouter:
             ]
             
             vectorizer = TfidfVectorizer(stop_words='english')
-            embeddings = vectorizer.fit_transform(tool_descriptions)
+            try:
+                embeddings = vectorizer.fit_transform(tool_descriptions)
+            except ValueError:
+                embeddings = None
             
             self.tool_vectorizers[server.name] = vectorizer
             
@@ -135,9 +144,12 @@ class SemanticRouter:
         Returns:
             List of (server, similarity_score) tuples
         """
+        if not self.servers:
+            return []
+        if self.server_embeddings is None:
+            return [(server, 0.0) for server in self.servers[:top_k]]
         # Vectorize the request
         request_vector = self.server_vectorizer.transform([request])
-        
         # Calculate similarities with all servers
         similarities = cosine_similarity(request_vector, self.server_embeddings)[0]
         
@@ -159,14 +171,18 @@ class SemanticRouter:
         Returns:
             List of (tool, similarity_score) tuples
         """
-        if server.name not in self.tool_vectorizers:
+        if server.name not in self.tool_vectorizers or getattr(server, "_tool_embeddings", None) is None:
             return []
         
         vectorizer = self.tool_vectorizers[server.name]
         tool_embeddings = server._tool_embeddings
+        if tool_embeddings is None:
+            return []
         
         # Vectorize the request
         request_vector = vectorizer.transform([request])
+        if request_vector.getnnz() == 0:
+            return []
         
         # Calculate similarities with all tools in this server
         similarities = cosine_similarity(request_vector, tool_embeddings)[0]
@@ -248,11 +264,13 @@ class StructuredRequestParser:
         
         Returns dict with 'server' and 'tool' fields, or None if not found.
         """
-        if '<tool_request>' not in text or '</tool_request>' not in text:
+        if '<tool_request>' not in text:
             return None
         
         start = text.find('<tool_request>')
-        end = text.find('</tool_request>')
+        end = text.find('</tool_request>', start + len('<tool_request>'))
+        if end == -1:
+            return None
         request_text = text[start + len('<tool_request>'):end].strip()
         
         result = {}

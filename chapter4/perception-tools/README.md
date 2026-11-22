@@ -1,399 +1,16 @@
 # Perception Tools MCP Server / 感知工具 MCP 服务器
 
-> Companion code for *AI Agents in Depth*, Chapter 4 — **Experiment 4-1 ★★**. MCP perception tools: search, multimodal, filesystem, public/private data. Most free APIs need no key.  
-> 配套《深入理解 AI Agent》第 4 章 **实验 4-1 ★★**。感知 MCP 工具：搜索、多模态、文件系统、公开/私有数据。多数免费 API 无需 Key。
+模型要读取文件或查询资料，需要把现实中的数据变成结构化工具结果。本实验从 MCP 感知工具出发，学习客户端怎样发现工具、调用工具并理解返回值。
 
-← [Chapter 4 index / 返回第 4 章目录](../README.md)
+[English](#english)
 
----
+建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
 
-## English
+<a id="learning-0"></a>
 
-A comprehensive MCP (Model Context Protocol) server providing various perception and data retrieval capabilities for AI agents.
+## 理解问题与方法
 
-### Features
-
-> **✨ No API Keys Required!** Most features work out-of-the-box with free, open APIs.
-
-#### Search Tools
-- **Web Search**: DuckDuckGo search (free, no API key required)
-- **Knowledge Base Search**: Search local document collections
-- **File Download**: Download files from URLs with safety checks
-
-#### Multimodal Understanding Tools
-- **Web Page Reader**: Extract text and links from web pages
-- **Document Reader**: Extract content from PDF, DOCX, PPTX files
-- **Image Parser**: Parse and analyze image files
-- **Video Parser**: Extract metadata from video files
-
-#### File System Tools
-- **File Reader**: Read files with encoding support
-- **Grep Search**: Search for patterns in files (regex support)
-- **Text Summarization**: Summarize long text content
-
-#### Public Data Sources
-- **Weather**: Current weather via [Open-Meteo](https://open-meteo.com/) (free, no API key)
-- **Stock Prices**: Real-time stock data from Yahoo Finance (free, no API key)
-- **Crypto Prices**: Cryptocurrency prices via [CoinGecko](https://www.coingecko.com/) (free, no API key)
-- **Currency Conversion**: Convert between currencies (free, no API key)
-- **Location Search**: Geocoding via [Nominatim (OpenStreetMap)](https://nominatim.openstreetmap.org/) (free, no API key)
-- **POI Search**: Points of Interest via [Overpass API (OpenStreetMap)](https://overpass-api.de/) (free, no API key)
-- **Wikipedia**: Search and retrieve Wikipedia articles (free, no API key)
-- **ArXiv**: Search academic papers on ArXiv (free, no API key)
-- **Wayback Machine**: Access archived web pages (free, no API key)
-
-#### Private Data Sources
-- **Google Calendar**: Query calendar events
-- **Notion**: Search Notion workspace
-
-### Installation
-
-1. Clone the repository and navigate to the project directory:
-
-```bash
-cd chapter4/perception-tools
-```
-
-2. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-3. **No additional configuration required!** The server works out-of-the-box with free APIs.
-
-### Configuration
-
-#### Default Free APIs (No Setup Required)
-
-The following features work immediately without any API keys:
-- **Web Search**: DuckDuckGo
-- **Weather**: Open-Meteo  
-- **Stock Prices**: Yahoo Finance
-- **Crypto Prices**: CoinGecko
-- **Currency Conversion**: ExchangeRate-API
-- **Location Search**: Nominatim (OpenStreetMap)
-- **POI Search**: Overpass API (OpenStreetMap)
-- **Wikipedia**: Wikipedia API
-- **ArXiv**: ArXiv API
-- **Wayback Machine**: Internet Archive
-
-#### Optional Private Data Integrations
-
-##### Google Calendar
-For Google Calendar integration, you need to set up OAuth2:
-
-```bash
-pip install google-auth-oauthlib google-auth-httplib2 google-api-python-client
-```
-
-Follow the [Google Calendar API quickstart](https://developers.google.com/calendar/api/quickstart/python) to set up OAuth2 credentials.
-
-##### Notion
-1. Create a Notion integration at [notion.so/my-integrations](https://www.notion.so/my-integrations)
-2. Get your integration token
-3. Share your databases/pages with the integration
-4. Add `NOTION_API_KEY` to `.env`
-
-```bash
-pip install notion-client
-```
-
-### Usage
-
-#### Running the MCP Server
-
-```bash
-cd src
-python main.py
-```
-
-The server runs using stdio transport, suitable for integration with MCP clients.
-
-#### Command-Line Interface (`cli.py`)
-
-Besides serving over MCP stdio, the repo root provides a unified CLI `cli.py` to list, inspect, call, and demo perception tools without an MCP client. Tools are organized by the five Chapter 4 perception scenarios: search / multimodal / filesystem / public data / private data (**53 tools** currently).
-
-```bash
-# Help (Chinese)
-python cli.py --help
-
-# List all perception tools by five categories (--category for one class)
-python cli.py list
-python cli.py list --category filesystem
-
-# Parameter signature and call example for a tool
-python cli.py info weather
-
-# Call a tool; args as key=value; result is standard ActionResponse JSON
-python cli.py run grep 'pattern=async def' directory=src 'file_pattern=*.py'
-python cli.py run currency_converter amount=100 from_currency=USD to_currency=CNY
-
-# End-to-end demo: research-assistant perception flow (local + external info)
-python cli.py demo            # full demo (includes network steps)
-python cli.py demo --offline  # offline (filesystem / local KB only)
-```
-
-Notes:
-
-- Each tool is async and returns a unified `ActionResponse` (JSON); the CLI runs the event loop, parses JSON, and prints friendly output.
-- Tools are lazy-imported: `list` / `info` / offline `demo` still work if optional deps (e.g. `whisper`, `waybackpy`) are missing; modules load only when those tools are actually called.
-- Network tools are marked「联网」in `list`; tools needing auth/API keys are annotated accordingly.
-
-#### Using with MCP Clients
-
-Configure your MCP client (e.g., Claude Desktop) to connect to this server:
-
-```json
-{
-  "mcpServers": {
-    "perception-tools": {
-      "command": "python",
-      "args": ["/path/to/perception-tools/src/main.py"]
-    }
-  }
-}
-```
-
-### Available Tools
-
-#### Search Tools
-
-##### `web_search`
-Search the web using DuckDuckGo (free, no API key required).
-
-Parameters:
-- `query` (str): Search query string
-- `num_results` (int, default=5): Number of results (1-10)
-- `region` (str, default="wt-wt"): Region code (e.g., "us-en", "uk-en", "wt-wt" for worldwide)
-
-##### `download`
-Download a file from a URL.
-
-Parameters:
-- `url` (str): URL to download from
-- `output_path` (str): Local path to save the file
-- `overwrite` (bool, default=False): Overwrite existing file
-- `timeout` (int, default=180): Download timeout in seconds
-
-##### `knowledge_base_search`
-Search a local knowledge base directory.
-
-Parameters:
-- `query` (str): Search query
-- `knowledge_base_path` (str): Path to knowledge base directory
-- `top_k` (int, default=5): Number of top results
-
-#### Multimodal Understanding Tools
-
-##### `webpage_reader`
-Read and extract content from a webpage.
-
-Parameters:
-- `url` (str): URL of the webpage
-- `extract_text` (bool, default=True): Extract text content
-- `extract_links` (bool, default=False): Extract links
-
-##### `document_reader`
-Read and extract content from documents (PDF, DOCX, PPTX).
-
-Parameters:
-- `file_path` (str): Path to document file or URL
-- `extract_images` (bool, default=False): Extract images
-
-##### `image_parser`
-Parse and analyze image files.
-
-Parameters:
-- `image_path` (str): Path to image file or URL
-- `use_llm` (bool, default=True): Use LLM for analysis
-
-> **Vision LLM keys / OpenRouter fallback**: AI image/video analysis
-> (`analyze_image_ai` / `analyze_video_ai`) use `OPENAI_API_KEY` when set.
-> If it is absent but `OPENROUTER_API_KEY` is set, they transparently route
-> through OpenRouter (`base_url=https://openrouter.ai/api/v1`, model mapped to
-> `provider/model` form). Override the model via `PERCEPTION_VISION_MODEL`.
-> (Local Whisper transcription still needs `OPENAI_API_KEY` — OpenRouter has no
-> audio-transcription API.)
-
-##### `video_parser`
-Parse and extract metadata from video files.
-
-Parameters:
-- `video_path` (str): Path to video file or URL
-- `extract_frames` (bool, default=False): Extract sample frames
-- `frame_interval` (int, default=30): Frame extraction interval
-
-#### File System Tools
-
-##### `file_reader`
-Read a file and return its contents.
-
-Parameters:
-- `file_path` (str): Path to the file
-- `encoding` (str, default="utf-8"): File encoding
-- `max_length` (int, default=50000): Maximum characters to read
-
-##### `grep`
-Search for patterns in files (grep-like functionality).
-
-Parameters:
-- `pattern` (str): Regular expression pattern
-- `directory` (str): Directory to search in
-- `file_pattern` (str, default="*"): File pattern (e.g., *.py)
-- `recursive` (bool, default=True): Search recursively
-- `case_sensitive` (bool, default=False): Case-sensitive search
-- `max_results` (int, default=100): Maximum results
-
-##### `text_summarizer`
-Summarize long text content.
-
-Parameters:
-- `text` (str): Text to summarize
-- `max_length` (int, default=500): Target summary length
-- `use_llm` (bool, default=True): Use LLM for summarization
-
-#### Public Data Source Tools
-
-##### `weather`
-Get current weather information using Open-Meteo API (free, no API key required).
-
-Parameters:
-- `location` (str): City name (automatically geocoded)
-- `latitude` (float, optional): Latitude coordinate
-- `longitude` (float, optional): Longitude coordinate
-
-##### `stock_price`
-Get stock price and market information using Yahoo Finance (free, no API key required).
-
-Parameters:
-- `symbol` (str): Stock ticker symbol (e.g., AAPL, TSLA, GOOGL)
-- `interval` (str, default="1d"): Data interval
-
-##### `crypto_price`
-Get cryptocurrency price information using CoinGecko API (free, no API key required).
-
-Parameters:
-- `symbol` (str): Cryptocurrency symbol or ID (e.g., bitcoin, ethereum, btc, eth)
-- `vs_currency` (str, default="usd"): Target currency (usd, eur, gbp, etc.)
-
-##### `currency_converter`
-Convert between currencies.
-
-Parameters:
-- `amount` (float): Amount to convert
-- `from_currency` (str): Source currency code (e.g., USD)
-- `to_currency` (str): Target currency code (e.g., EUR)
-
-##### `wikipedia_search`
-Search Wikipedia and get article summary.
-
-Parameters:
-- `query` (str): Search query
-- `language` (str, default="en"): Wikipedia language
-- `sentences` (int, default=5): Summary sentence count
-
-##### `arxiv_search`
-Search ArXiv for academic papers.
-
-Parameters:
-- `query` (str): Search query
-- `max_results` (int, default=5): Maximum results
-- `sort_by` (str, default="relevance"): Sort method
-
-##### `wayback_search`
-Search Wayback Machine for archived web pages.
-
-Parameters:
-- `url` (str): URL to search for
-- `year` (int, optional): Filter by year
-- `limit` (int, default=10): Maximum snapshots
-
-##### `location_search`
-Search for locations using Nominatim (OpenStreetMap) API (free, no API key required).
-
-Parameters:
-- `query` (str): Location query (e.g., "Eiffel Tower", "New York", "Tokyo")
-- `limit` (int, default=5): Maximum number of results (1-50)
-- `country_code` (str, optional): Country code filter (e.g., "us", "gb", "fr")
-
-##### `poi_search`
-Search for Points of Interest near a location using Overpass API (free, no API key required).
-
-Parameters:
-- `query` (str): Type of POI (e.g., "restaurant", "cafe", "hospital", "atm", "hotel")
-- `latitude` (float): Center latitude coordinate
-- `longitude` (float): Center longitude coordinate
-- `radius` (int, default=1000): Search radius in meters
-- `limit` (int, default=10): Maximum number of results
-
-#### Private Data Source Tools
-
-##### `calendar_events`
-Get events from Google Calendar.
-
-Parameters:
-- `start_date` (str, optional): Start date (ISO format)
-- `end_date` (str, optional): End date (ISO format)
-- `calendar_id` (str, default="primary"): Calendar ID
-- `max_results` (int, default=10): Maximum events
-
-##### `notion_search`
-Search Notion workspace.
-
-Parameters:
-- `query` (str): Search query
-- `database_id` (str, optional): Specific database ID
-- `page_size` (int, default=10): Results per page
-
-### Architecture
-
-The project follows SOLID principles with a modular architecture:
-
-```
-perception-tools/
-├── src/
-│   ├── main.py                  # MCP server entry point
-│   ├── base.py                  # Base models and utilities
-│   ├── search_tools.py          # Search functionality
-│   ├── multimodal_tools.py      # Document/media processing
-│   ├── filesystem_tools.py      # File operations
-│   ├── public_data_tools.py     # Public APIs
-│   └── private_data_tools.py    # Private data sources
-├── requirements.txt             # Python dependencies
-├── env.example                  # Environment variables template
-└── README.md                    # This file
-```
-
-### Error Handling
-
-All tools return a standardized `ActionResponse` format:
-
-```json
-{
-  "success": true/false,
-  "message": "Result data or error message",
-  "metadata": {
-    "additional": "context information"
-  }
-}
-```
-
-### Contributing
-
-Contributions are welcome! Please ensure:
-1. Code follows KISS, DRY, and SOLID principles
-2. All tools return standardized ActionResponse format
-3. Proper error handling and logging
-4. Documentation for new tools
-
-### License
-
-This project is part of the AI Agent training camp materials.
-
----
-
-## 中文
+MCP 提供统一的交互协议，但不同工具的数据来源和依赖仍然不同。工具声明说明参数格式，执行结果说明实际观察到了什么。服务启动成功、目录可见和一次调用成功是三个逐步验证的环节。
 
 为 AI Agent 提供多种感知与数据获取能力的综合 MCP（Model Context Protocol）服务器。
 
@@ -427,124 +44,11 @@ This project is part of the AI Agent training camp materials.
 - **Wikipedia**：检索维基条目（免费，无需 Key）
 - **ArXiv**：学术论文检索（免费，无需 Key）
 - **Wayback Machine**：历史网页存档（免费，无需 Key）
+- **X 帖子搜索**：通过 Xquik 获取结构化帖子与翻页游标（可选，按量计费）
 
 #### 私有数据源
 - **Google Calendar**：查询日历事件
 - **Notion**：搜索 Notion 工作区
-
-### 安装
-
-1. 进入项目目录：
-
-```bash
-cd chapter4/perception-tools
-```
-
-2. 安装依赖：
-
-```bash
-pip install -r requirements.txt
-```
-
-3. **无需额外配置！** 服务器默认即可用免费 API 工作。
-
-### 配置
-
-#### 默认免费 API（无需配置）
-
-以下功能立即可用，无需任何 API Key：
-- **网络搜索**：DuckDuckGo
-- **天气**：Open-Meteo  
-- **股价**：Yahoo Finance
-- **加密货币**：CoinGecko
-- **汇率换算**：ExchangeRate-API
-- **地点搜索**：Nominatim（OpenStreetMap）
-- **POI 搜索**：Overpass API（OpenStreetMap）
-- **Wikipedia**：Wikipedia API
-- **ArXiv**：ArXiv API
-- **Wayback Machine**：Internet Archive
-
-#### 可选私有数据集成
-
-##### Google Calendar
-需要配置 OAuth2：
-
-```bash
-pip install google-auth-oauthlib google-auth-httplib2 google-api-python-client
-```
-
-按 [Google Calendar API quickstart](https://developers.google.com/calendar/api/quickstart/python) 配置凭据。
-
-##### Notion
-1. 在 [notion.so/my-integrations](https://www.notion.so/my-integrations) 创建集成
-2. 获取 integration token
-3. 将数据库/页面共享给该集成
-4. 在 `.env` 中加入 `NOTION_API_KEY`
-
-```bash
-pip install notion-client
-```
-
-### 使用
-
-#### 运行 MCP 服务器
-
-```bash
-cd src
-python main.py
-```
-
-服务器使用 stdio 传输，适合接入 MCP 客户端。
-
-#### 命令行接口（`cli.py`）
-
-除了以 MCP stdio 协议对外服务，仓库根目录提供了一个统一的命令行入口
-`cli.py`，无需 MCP 客户端即可直接列出、查看、调用和演示各类感知工具。
-工具按第四章「感知工具」的五类场景组织：搜索 / 多模态理解 / 文件系统 /
-公开数据源 / 私有数据源（当前共 53 个工具）。
-
-```bash
-# 查看帮助（中文）
-python cli.py --help
-
-# 按五类列出全部感知工具（可用 --category 只看某一类）
-python cli.py list
-python cli.py list --category filesystem
-
-# 查看某个工具的参数签名与调用示例
-python cli.py info weather
-
-# 直接调用某个工具，参数以 key=value 形式传入，结果为标准 ActionResponse JSON
-python cli.py run grep 'pattern=async def' directory=src 'file_pattern=*.py'
-python cli.py run currency_converter amount=100 from_currency=USD to_currency=CNY
-
-# 运行端到端演示：串联「本地资料 + 外部信息」的研究助手 Agent 感知流程
-python cli.py demo            # 完整演示（含联网步骤）
-python cli.py demo --offline  # 离线演示（只跑文件系统 / 本地知识库等不联网步骤）
-```
-
-说明：
-
-- 每个工具都是异步函数，返回统一的 `ActionResponse`（JSON）；CLI 负责运行事件
-  循环、解析 JSON 并友好打印。
-- 工具按需惰性导入：`list` / `info` / 离线 `demo` 在缺少可选依赖（如 `whisper`、
-  `waybackpy`）时仍可正常工作，只有真正调用相关工具时才导入对应模块。
-- 需要联网的工具在 `list` 中标注「联网」，需要授权/API Key 的工具标注了对应说明。
-
-#### 与 MCP 客户端联用
-
-在 MCP 客户端（如 Claude Desktop）中配置：
-
-```json
-{
-  "mcpServers": {
-    "perception-tools": {
-      "command": "python",
-      "args": ["/path/to/perception-tools/src/main.py"]
-    }
-  }
-}
-```
 
 ### 可用工具
 
@@ -699,6 +203,18 @@ CoinGecko 加密货币价格（免费，无需 Key）。
 - `year` (int, optional)：按年过滤
 - `limit` (int, default=10)：最大快照数
 
+##### `xquik_search_posts`
+通过 Xquik 搜索 X 帖子，API Key 不会暴露给 Agent。
+
+参数：
+- `query` (str)：X 搜索查询、Tweet ID 或 X 状态 URL
+- `limit` (int, default=10)：最大帖子数（1-100）
+- `cursor` (str, optional)：上一次响应返回的不透明游标
+- `query_type` (str, default="Latest")：`Latest` 或 `Top`
+
+需要 `XQUIK_API_KEY` 与有效 Xquik 订阅。每返回 1 条帖子消耗 1 credit。
+使用 `next_cursor` 翻页时请保持原查询不变。
+
 ##### `location_search`
 Nominatim（OpenStreetMap）地点搜索（免费，无需 Key）。
 
@@ -749,7 +265,8 @@ perception-tools/
 │   ├── multimodal_tools.py      # Document/media processing
 │   ├── filesystem_tools.py      # File operations
 │   ├── public_data_tools.py     # Public APIs
-│   └── private_data_tools.py    # Private data sources
+│   ├── private_data_tools.py    # Private data sources
+│   └── xquik_tools.py           # X 帖子搜索（按量计费）
 ├── requirements.txt             # Python dependencies
 ├── env.example                  # Environment variables template
 └── README.md                    # This file
@@ -768,6 +285,198 @@ perception-tools/
   }
 }
 ```
+
+<a id="learning-1"></a>
+
+## 准备环境与输入
+
+先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+
+### 安装
+
+1. 为实验 4-2 创建干净环境并安装 MCP v2 依赖：
+
+```bash
+cd chapter4/perception-tools
+python -m venv .venv
+# macOS/Linux：
+source .venv/bin/activate
+# Windows PowerShell：.venv\Scripts\Activate.ps1
+# Windows cmd：.venv\Scripts\activate.bat
+python -m pip install -r requirements.txt
+
+# 离线协议冒烟测试：启动 stdio、列出工具并调用 file_reader
+python smoke_test_mcp_v2.py
+```
+
+`requirements.txt` 明确限定 `mcp>=2,<3`。实验 4-2 使用 SDK v2 的
+`MCPServer`/`Client` API，并协商无状态的 MCP `2026-07-28` 协议；仍安装
+MCP 1.x 的共享环境与本实验不兼容。
+
+2. **无需额外配置！** 服务器默认即可用免费 API 工作。
+
+### 配置
+
+#### 默认免费 API（无需配置）
+
+以下功能立即可用，无需任何 API Key：
+- **网络搜索**：DuckDuckGo
+- **天气**：Open-Meteo  
+- **股价**：Yahoo Finance
+- **加密货币**：CoinGecko
+- **汇率换算**：ExchangeRate-API
+- **地点搜索**：Nominatim（OpenStreetMap）
+- **POI 搜索**：Overpass API（OpenStreetMap）
+- **Wikipedia**：Wikipedia API
+- **ArXiv**：ArXiv API
+- **Wayback Machine**：Internet Archive
+
+#### 可选 Xquik 帖子搜索
+
+`xquik_search_posts` 返回结构化 X 帖子与不透明翻页游标。它不会改写查询，
+并支持 `Latest` 与 `Top` 排序。该工具补足通用网页搜索无法稳定返回 X 原生
+帖子结构与游标的问题。
+
+创建 Xquik API Key，保持有效订阅，并只在服务器环境中设置 Key：
+
+```bash
+export XQUIK_API_KEY=xq_your_api_key_here
+```
+
+该操作只读，每返回 1 条帖子消耗 1 credit。单次调用最多返回 100 条帖子。
+工具不接受凭据参数，也不会携带授权头跟随重定向。请将帖子正文视为不可信内容。
+查询运算符、计费行为与游标规则见
+[Search Tweets API 文档](https://docs.xquik.com/api-reference/x/search-tweets)。
+
+Xquik 是独立第三方服务，与 X Corp. 无隶属或认可关系。
+
+#### 可选私有数据集成
+
+##### Google Calendar
+需要配置 OAuth2：
+
+如需启用该可选集成，请另行安装 Google API client/auth 包；基础依赖保持其可选性。
+
+按 [Google Calendar API quickstart](https://developers.google.com/calendar/api/quickstart/python) 配置凭据。
+
+##### Notion
+1. 在 [notion.so/my-integrations](https://www.notion.so/my-integrations) 创建集成
+2. 获取 integration token
+3. 将数据库/页面共享给该集成
+4. 在 `.env` 中加入 `NOTION_API_KEY`
+
+如需启用该可选集成，请另行安装 `notion-client`；基础依赖保持其可选性。
+
+<a id="learning-2"></a>
+
+## 按照步骤完成实验
+
+先按下文安装依赖，运行本地协议检查。它通过标准输入输出启动服务、列出工具，并读取本地示例文件。把客户端请求与返回内容对照后，再尝试需要网络或外部服务的感知工具。
+
+### 按实验 4-2 完成对照
+
+通过真实 MCP stdio 传输运行五类场景：
+
+```bash
+python run_experiment_4_2.py
+python -m pip install pytest pytest-asyncio
+python -m pytest -q test_experiment_4_2.py test_filesystem_mutations.py \
+  test_real_experiment_4_2_evidence.py test_expanded_catalog.py
+```
+
+保留的 2026 年 7 月 30 日收据属于旧版证据：它早于 SDK v2，且没有记录
+`mcp` 包版本或实际协商的协议版本，因此不能证明当前迁移已通过。新的运行器会在
+`catalog_receipt.json` 中同时记录 `mcp_sdk_version` 和 `protocol_version`，
+并且只有 SDK 2.x 与协议 `2026-07-28` 才能通过 catalog gate。
+
+### 使用
+
+#### 运行 MCP 服务器
+
+```bash
+cd src
+python main.py
+```
+
+服务器使用 stdio 传输，适合接入 MCP 客户端。
+
+#### 命令行接口（`cli.py`）
+
+除了以 MCP stdio 协议对外服务，仓库根目录提供了一个统一的命令行入口
+`cli.py`，无需 MCP 客户端即可直接列出、查看、调用和演示各类感知工具。
+工具按第四章「感知工具」的五类场景组织：搜索 / 多模态理解 / 文件系统 /
+公开数据源 / 私有数据源（当前共 54 个工具）。
+
+```bash
+# 查看帮助（中文）
+python cli.py --help
+
+# 按五类列出全部感知工具（可用 --category 只看某一类）
+python cli.py list
+python cli.py list --category filesystem
+
+# 查看某个工具的参数签名与调用示例
+python cli.py info weather
+
+# 直接调用某个工具，参数以 key=value 形式传入，结果为标准 ActionResponse JSON
+python cli.py run grep 'pattern=async def' directory=src 'file_pattern=*.py'
+python cli.py run currency_converter amount=100 from_currency=USD to_currency=CNY
+python cli.py run xquik_search_posts 'query=agent tooling' limit=10
+
+# 运行端到端演示：串联「本地资料 + 外部信息」的研究助手 Agent 感知流程
+python cli.py demo            # 完整演示（含联网步骤）
+python cli.py demo --offline  # 离线演示（只跑文件系统 / 本地知识库等不联网步骤）
+```
+
+说明：
+
+- 每个工具都是异步函数，返回统一的 `ActionResponse`（JSON）；CLI 负责运行事件
+  循环、解析 JSON 并友好打印。
+- 工具按需惰性导入：`list` / `info` / 离线 `demo` 在缺少可选依赖（如 `whisper`、
+  `waybackpy`）时仍可正常工作，只有真正调用相关工具时才导入对应模块。
+- 需要联网的工具在 `list` 中标注「联网」，需要授权/API Key 的工具标注了对应说明。
+
+#### 与 MCP 客户端联用
+
+在 MCP 客户端（如 Claude Desktop）中配置：
+
+```json
+{
+  "mcpServers": {
+    "perception-tools": {
+      "command": "python",
+      "args": ["/path/to/perception-tools/src/main.py"]
+    }
+  }
+}
+```
+
+<a id="learning-3"></a>
+
+## 分析结果与形成判断
+
+本地文件读取成功只能证明这条协议路径可用。扩展到网络工具时，还要区分无结果、权限不足、服务错误与解析错误，不能把所有失败都当作“模型没找到”。
+
+### 检查自己的解释
+
+一个工具返回空列表时，Agent 还需要哪些状态信息，才能决定重试还是承认没有结果？
+
+<a id="learning-4"></a>
+
+## 阅读实现与继续探索
+
+### 项目说明
+
+> Companion code for *AI Agents in Depth*, Chapter 4 — **Experiment 4-2 ★★**. MCP perception tools: search, multimodal, filesystem, public/private data. Most free APIs need no key.  
+> 配套《深入理解 AI Agent》第 4 章 **实验 4-2 ★★**。感知 MCP 工具：搜索、多模态、文件系统、公开/私有数据。多数免费 API 无需 Key。
+
+← [Chapter 4 index / 返回第 4 章目录](../README.md)
+
+---
+
+<a id="learning-5"></a>
+
+## 排查问题与查阅资料
 
 ### 贡献
 
@@ -789,3 +498,472 @@ perception-tools/
 - 首次可先跑 `python cli.py demo --offline`，避免重度联网步骤。  
 - Most public-data tools need no API key; vision LLM and Whisper paths may need keys.  
 - 多数公开数据工具无需 Key；视觉 LLM 与 Whisper 路径可能需要 Key。
+
+## English
+
+A comprehensive MCP (Model Context Protocol) server providing various perception and data retrieval capabilities for AI agents.
+
+### Features
+
+> **✨ No API Keys Required!** Most features work out-of-the-box with free, open APIs.
+
+#### Search Tools
+- **Web Search**: DuckDuckGo search (free, no API key required)
+- **Knowledge Base Search**: Search local document collections
+- **File Download**: Download files from URLs with safety checks
+
+#### Multimodal Understanding Tools
+- **Web Page Reader**: Extract text and links from web pages
+- **Document Reader**: Extract content from PDF, DOCX, PPTX files
+- **Image Parser**: Parse and analyze image files
+- **Video Parser**: Extract metadata from video files
+
+#### File System Tools
+- **File Reader**: Read files with encoding support
+- **Grep Search**: Search for patterns in files (regex support)
+- **Text Summarization**: Summarize long text content
+- **Directory Browser**: Bounded directory listing/tree operations
+- **Safe Move / Copy / Delete**: Relative paths only beneath an explicit
+  `PERCEPTION_MUTATION_ROOT`; traversal, absolute paths, and symlinks are
+  rejected, while delete/overwrite use reversible quarantine
+
+#### Public Data Sources
+- **Weather**: Current weather via [Open-Meteo](https://open-meteo.com/) (free, no API key)
+- **Stock Prices**: Real-time stock data from Yahoo Finance (free, no API key)
+- **Crypto Prices**: Cryptocurrency prices via [CoinGecko](https://www.coingecko.com/) (free, no API key)
+- **Currency Conversion**: Convert between currencies (free, no API key)
+- **Location Search**: Geocoding via [Nominatim (OpenStreetMap)](https://nominatim.openstreetmap.org/) (free, no API key)
+- **POI Search**: Points of Interest via [Overpass API (OpenStreetMap)](https://overpass-api.de/) (free, no API key)
+- **Wikipedia**: Search and retrieve Wikipedia articles (free, no API key)
+- **ArXiv**: Search academic papers on ArXiv (free, no API key)
+- **Wayback Machine**: Access archived web pages (free, no API key)
+- **X Post Search**: Search structured X posts through Xquik (optional, metered)
+
+#### Private Data Sources
+- **Google Calendar**: Query calendar events
+- **Notion**: Search Notion workspace
+
+### Installation
+
+1. Create a clean environment for Experiment 4-2 and install its MCP v2 dependencies:
+
+```bash
+cd chapter4/perception-tools
+python -m venv .venv
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+python -m pip install -r requirements.txt
+
+# Offline protocol smoke test: starts stdio, lists tools, and calls file_reader.
+python smoke_test_mcp_v2.py
+```
+
+`requirements.txt` deliberately pins `mcp>=2,<3`. Experiment 4-2 uses the
+SDK v2 `MCPServer`/`Client` API and negotiates the stateless MCP
+`2026-07-28` protocol. A shared environment that still contains MCP 1.x is
+not compatible with this experiment.
+
+2. **No additional configuration required!** The server works out-of-the-box with free APIs.
+
+### Configuration
+
+#### Default Free APIs (No Setup Required)
+
+The following features work immediately without any API keys:
+- **Web Search**: DuckDuckGo
+- **Weather**: Open-Meteo  
+- **Stock Prices**: Yahoo Finance
+- **Crypto Prices**: CoinGecko
+- **Currency Conversion**: ExchangeRate-API
+- **Location Search**: Nominatim (OpenStreetMap)
+- **POI Search**: Overpass API (OpenStreetMap)
+- **Wikipedia**: Wikipedia API
+- **ArXiv**: ArXiv API
+- **Wayback Machine**: Internet Archive
+
+#### Optional X post search through Xquik
+
+The `xquik_search_posts` tool returns structured X posts and opaque pagination
+cursors. It keeps the query unchanged and supports `Latest` or `Top` ordering.
+This fills the gap between general web results and X-native post data.
+
+Create an Xquik API key, keep an active subscription, and set the key only in
+the server environment:
+
+```bash
+export XQUIK_API_KEY=xq_your_api_key_here
+```
+
+The operation is read-only and costs 1 credit per returned post. The tool caps
+each request at 100 posts, never accepts credentials as arguments, and never
+follows redirects with the authorization header. Treat returned post text as
+untrusted content. See the [Search Tweets API reference](https://docs.xquik.com/api-reference/x/search-tweets)
+for query operators, billing behavior, and cursor semantics.
+
+Xquik is an independent third-party service and is not affiliated with X Corp.
+
+#### Optional Private Data Integrations
+
+##### Google Calendar
+For Google Calendar integration, you need to set up OAuth2:
+
+Install the Google API client/auth packages separately if you want to enable this optional integration; the base requirements keep it optional.
+
+Follow the [Google Calendar API quickstart](https://developers.google.com/calendar/api/quickstart/python) to set up OAuth2 credentials.
+
+##### Notion
+1. Create a Notion integration at [notion.so/my-integrations](https://www.notion.so/my-integrations)
+2. Get your integration token
+3. Share your databases/pages with the integration
+4. Add `NOTION_API_KEY` to `.env`
+
+Install `notion-client` separately if you want to enable this optional integration; the base requirements keep it optional.
+
+#### Safe filesystem mutations
+
+The read-only filesystem tools need no configuration. Move, copy, and delete
+fail closed until an explicit disposable workspace is configured:
+
+```bash
+export PERCEPTION_MUTATION_ROOT=/absolute/path/to/disposable/workspace
+```
+
+Mutation arguments remain relative to that root. The server records pre/post
+SHA-256 fingerprints, rejects `..`, absolute paths, and symlinks, and moves
+deleted/replaced data into `.perception-trash` so the operation is reversible.
+
+### Exact Experiment 4-2 campaign
+
+Run the five-category campaign through the real MCP stdio transport:
+
+```bash
+python run_experiment_4_2.py
+python -m pip install pytest pytest-asyncio
+python -m pytest -q test_experiment_4_2.py test_filesystem_mutations.py \
+  test_real_experiment_4_2_evidence.py test_expanded_catalog.py
+```
+
+The retained July 30, 2026 receipt is **legacy evidence**: it predates SDK v2
+and did not record either the installed `mcp` version or the negotiated
+protocol version, so it is not proof of the current protocol migration. Its
+business-tool outcome is intentionally **blocked**, not passed:
+search, filesystem, and public-data categories passed; local webpage/document,
+OCR, Whisper, and video parsing also passed; image/video AI analysis received
+OpenAI `insufficient_quota`, while Calendar and Notion lacked authorization.
+Those four calls remain failed evidence and cannot satisfy the corresponding
+category gates. New runs record `mcp_sdk_version` and `protocol_version` in
+`catalog_receipt.json`; the catalog gate accepts only SDK 2.x negotiated to
+`2026-07-28`.
+
+### Usage
+
+#### Running the MCP Server
+
+```bash
+cd src
+python main.py
+```
+
+The server runs using stdio transport, suitable for integration with MCP clients.
+
+#### Command-Line Interface (`cli.py`)
+
+Besides serving over MCP stdio, the repo root provides a unified CLI `cli.py` to list, inspect, call, and demo perception tools without an MCP client. Tools are organized by the five Chapter 4 perception scenarios: search / multimodal / filesystem / public data / private data (**54 tools** currently).
+
+```bash
+# Help (Chinese)
+python cli.py --help
+
+# List all perception tools by five categories (--category for one class)
+python cli.py list
+python cli.py list --category filesystem
+
+# Parameter signature and call example for a tool
+python cli.py info weather
+
+# Call a tool; args as key=value; result is standard ActionResponse JSON
+python cli.py run grep 'pattern=async def' directory=src 'file_pattern=*.py'
+python cli.py run currency_converter amount=100 from_currency=USD to_currency=CNY
+python cli.py run xquik_search_posts 'query=agent tooling' limit=10
+
+# End-to-end demo: research-assistant perception flow (local + external info)
+python cli.py demo            # full demo (includes network steps)
+python cli.py demo --offline  # offline (filesystem / local KB only)
+```
+
+Notes:
+
+- Each tool is async and returns a unified `ActionResponse` (JSON); the CLI runs the event loop, parses JSON, and prints friendly output.
+- Tools are lazy-imported: `list` / `info` / offline `demo` still work if optional deps (e.g. `whisper`, `waybackpy`) are missing; modules load only when those tools are actually called.
+- Network tools are marked「联网」in `list`; tools needing auth/API keys are annotated accordingly.
+
+#### Using with MCP Clients
+
+Configure your MCP client (e.g., Claude Desktop) to connect to this server:
+
+```json
+{
+  "mcpServers": {
+    "perception-tools": {
+      "command": "python",
+      "args": ["/path/to/perception-tools/src/main.py"]
+    }
+  }
+}
+```
+
+### Available Tools
+
+#### Search Tools
+
+##### `web_search`
+Search the web using DuckDuckGo (free, no API key required).
+
+Parameters:
+- `query` (str): Search query string
+- `num_results` (int, default=5): Number of results (1-10)
+- `region` (str, default="wt-wt"): Region code (e.g., "us-en", "uk-en", "wt-wt" for worldwide)
+
+##### `download`
+Download a file from a URL.
+
+Parameters:
+- `url` (str): URL to download from
+- `output_path` (str): Local path to save the file
+- `overwrite` (bool, default=False): Overwrite existing file
+- `timeout` (int, default=180): Download timeout in seconds
+
+##### `knowledge_base_search`
+Search a local knowledge base directory.
+
+Parameters:
+- `query` (str): Search query
+- `knowledge_base_path` (str): Path to knowledge base directory
+- `top_k` (int, default=5): Number of top results
+
+#### Multimodal Understanding Tools
+
+##### `webpage_reader`
+Read and extract content from a webpage.
+
+Parameters:
+- `url` (str): URL of the webpage
+- `extract_text` (bool, default=True): Extract text content
+- `extract_links` (bool, default=False): Extract links
+
+##### `document_reader`
+Read and extract content from documents (PDF, DOCX, PPTX).
+
+Parameters:
+- `file_path` (str): Path to document file or URL
+- `extract_images` (bool, default=False): Extract images
+
+##### `image_parser`
+Parse and analyze image files.
+
+Parameters:
+- `image_path` (str): Path to image file or URL
+- `use_llm` (bool, default=True): Use LLM for analysis
+
+> **Vision LLM keys / OpenRouter fallback**: AI image/video analysis
+> (`analyze_image_ai` / `analyze_video_ai`) use `OPENAI_API_KEY` when set.
+> If it is absent but `OPENROUTER_API_KEY` is set, they transparently route
+> through OpenRouter (`base_url=https://openrouter.ai/api/v1`, model mapped to
+> `provider/model` form). Override the model via `PERCEPTION_VISION_MODEL`.
+> (Local Whisper transcription still needs `OPENAI_API_KEY` — OpenRouter has no
+> audio-transcription API.)
+> Gemini is also supported through its OpenAI-compatible endpoint: set
+> `GEMINI_API_KEY`, `PERCEPTION_VISION_PROVIDER=gemini`, and optionally
+> `PERCEPTION_VISION_MODEL` (the campaign uses `gemini-2.5-flash`).
+
+##### `video_parser`
+Parse and extract metadata from video files.
+
+Parameters:
+- `video_path` (str): Path to video file or URL
+- `extract_frames` (bool, default=False): Extract sample frames
+- `frame_interval` (int, default=30): Frame extraction interval
+
+#### File System Tools
+
+##### `file_reader`
+Read a file and return its contents.
+
+Parameters:
+- `file_path` (str): Path to the file
+- `encoding` (str, default="utf-8"): File encoding
+- `max_length` (int, default=50000): Maximum characters to read
+
+##### `grep`
+Search for patterns in files (grep-like functionality).
+
+Parameters:
+- `pattern` (str): Regular expression pattern
+- `directory` (str): Directory to search in
+- `file_pattern` (str, default="*"): File pattern (e.g., *.py)
+- `recursive` (bool, default=True): Search recursively
+- `case_sensitive` (bool, default=False): Case-sensitive search
+- `max_results` (int, default=100): Maximum results
+
+##### `text_summarizer`
+Summarize long text content.
+
+Parameters:
+- `text` (str): Text to summarize
+- `max_length` (int, default=500): Target summary length
+- `use_llm` (bool, default=True): Use LLM for summarization
+
+#### Public Data Source Tools
+
+##### `weather`
+Get current weather information using Open-Meteo API (free, no API key required).
+
+Parameters:
+- `location` (str): City name (automatically geocoded)
+- `latitude` (float, optional): Latitude coordinate
+- `longitude` (float, optional): Longitude coordinate
+
+##### `stock_price`
+Get stock price and market information using Yahoo Finance (free, no API key required).
+
+Parameters:
+- `symbol` (str): Stock ticker symbol (e.g., AAPL, TSLA, GOOGL)
+- `interval` (str, default="1d"): Data interval
+
+##### `crypto_price`
+Get cryptocurrency price information using CoinGecko API (free, no API key required).
+
+Parameters:
+- `symbol` (str): Cryptocurrency symbol or ID (e.g., bitcoin, ethereum, btc, eth)
+- `vs_currency` (str, default="usd"): Target currency (usd, eur, gbp, etc.)
+
+##### `currency_converter`
+Convert between currencies.
+
+Parameters:
+- `amount` (float): Amount to convert
+- `from_currency` (str): Source currency code (e.g., USD)
+- `to_currency` (str): Target currency code (e.g., EUR)
+
+##### `wikipedia_search`
+Search Wikipedia and get article summary.
+
+Parameters:
+- `query` (str): Search query
+- `language` (str, default="en"): Wikipedia language
+- `sentences` (int, default=5): Summary sentence count
+
+##### `arxiv_search`
+Search ArXiv for academic papers.
+
+Parameters:
+- `query` (str): Search query
+- `max_results` (int, default=5): Maximum results
+- `sort_by` (str, default="relevance"): Sort method
+
+##### `wayback_search`
+Search Wayback Machine for archived web pages.
+
+Parameters:
+- `url` (str): URL to search for
+- `year` (int, optional): Filter by year
+- `limit` (int, default=10): Maximum snapshots
+
+##### `xquik_search_posts`
+Search X posts through Xquik without exposing the API key to the Agent.
+
+Parameters:
+- `query` (str): X search query, Tweet ID, or X status URL
+- `limit` (int, default=10): Maximum posts to return (1-100)
+- `cursor` (str, optional): Opaque cursor from the preceding response
+- `query_type` (str, default="Latest"): `Latest` or `Top`
+
+Requires `XQUIK_API_KEY` and an active Xquik subscription. Results are metered
+at 1 credit per returned post. Preserve the query when following `next_cursor`.
+
+##### `location_search`
+Search for locations using Nominatim (OpenStreetMap) API (free, no API key required).
+
+Parameters:
+- `query` (str): Location query (e.g., "Eiffel Tower", "New York", "Tokyo")
+- `limit` (int, default=5): Maximum number of results (1-50)
+- `country_code` (str, optional): Country code filter (e.g., "us", "gb", "fr")
+
+##### `poi_search`
+Search for Points of Interest near a location using Overpass API (free, no API key required).
+
+Parameters:
+- `query` (str): Type of POI (e.g., "restaurant", "cafe", "hospital", "atm", "hotel")
+- `latitude` (float): Center latitude coordinate
+- `longitude` (float): Center longitude coordinate
+- `radius` (int, default=1000): Search radius in meters
+- `limit` (int, default=10): Maximum number of results
+
+#### Private Data Source Tools
+
+##### `calendar_events`
+Get events from Google Calendar.
+
+Parameters:
+- `start_date` (str, optional): Start date (ISO format)
+- `end_date` (str, optional): End date (ISO format)
+- `calendar_id` (str, default="primary"): Calendar ID
+- `max_results` (int, default=10): Maximum events
+
+##### `notion_search`
+Search Notion workspace.
+
+Parameters:
+- `query` (str): Search query
+- `database_id` (str, optional): Specific database ID
+- `page_size` (int, default=10): Results per page
+
+### Architecture
+
+The project follows SOLID principles with a modular architecture:
+
+```
+perception-tools/
+├── src/
+│   ├── main.py                  # MCP server entry point
+│   ├── base.py                  # Base models and utilities
+│   ├── search_tools.py          # Search functionality
+│   ├── multimodal_tools.py      # Document/media processing
+│   ├── filesystem_tools.py      # File operations
+│   ├── public_data_tools.py     # Public APIs
+│   ├── private_data_tools.py    # Private data sources
+│   └── xquik_tools.py           # Metered X post search
+├── requirements.txt             # Python dependencies
+├── env.example                  # Environment variables template
+└── README.md                    # This file
+```
+
+### Error Handling
+
+All tools return a standardized `ActionResponse` format:
+
+```json
+{
+  "success": true/false,
+  "message": "Result data or error message",
+  "metadata": {
+    "additional": "context information"
+  }
+}
+```
+
+### Contributing
+
+Contributions are welcome! Please ensure:
+1. Code follows KISS, DRY, and SOLID principles
+2. All tools return standardized ActionResponse format
+3. Proper error handling and logging
+4. Documentation for new tools
+
+### License
+
+This project is part of the AI Agent training camp materials.
+
+---

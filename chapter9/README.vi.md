@@ -1,20 +1,42 @@
-# Chương 9 · Đa phương thức và tương tác thời gian thực
+# Chương 9 · Tự tiến hóa của Agent
 
-> mở rộng cảm nhận và hành động từ văn bản sang giọng nói, GUI và thế giới vật lý. Ba mô thức giọng nói (pipeline nối tầng/đa phương thức đầu cuối/full-duplex), cảm nhận và tổng hợp giọng nói dạng streaming, Computer Use và thao tác robot.
+> Agent vẫn có thể trưởng thành mà không cần sửa trọng số. Ba mô thức học tập: học từ kinh nghiệm, và từ “người dùng công cụ” thành “người tạo công cụ”, giúp Agent đi từ “thông minh” tới “thành thạo”.
 
 ← [Về README chính](../docs/vi/README.md) · 📖 [Đọc nội dung chương](../book-vi/chapter9.vi.md)
+
+## Cách đọc các thí nghiệm
+
+Phần văn bản dùng skeleton cơ chế ngắn để giải thích luồng điều khiển; thư mục thí nghiệm chứa adapter SDK đầy đủ, log, kiểm thử và bằng chứng nghiệm thu. Không cần đọc từng tệp theo từng dòng.
+
+- **Starter:** Bắt đầu từ mục tiêu, lệnh tối thiểu và điều kiện nghiệm thu; hãy bắt đầu với [trajectory-verifier](trajectory-verifier/);
+- **Builder:** Lần theo điểm vào, vòng lặp lõi, schema trạng thái/tin nhắn, công cụ và verifier.
+- **Maintainer:** Sau đó đọc test, manifest bằng chứng, xử lý lỗi, đường rollback và adapter nhà cung cấp.
+
+Lần đầu có thể bỏ qua credential, lớp trình bày và tương thích provider; quay lại khi cần tái tạo số liệu.
 
 ## Dự án đi kèm
 
 | Thí nghiệm | Project | Type | Description |
 | :--: | --- | :--: | --- |
-| 9-1 | [live-audio](live-audio/) | ✅ | Demo chat giọng nói thời gian thực, tích hợp speech-to-text, hội thoại AI và text-to-speech. Hỗ trợ nhiều nhà cung cấp dịch vụ AI (OpenAI, OpenRouter, ARK, Siliconflow), cung cấp trải nghiệm hội thoại độ trễ thấp. |
-| 9-2 | [phone-agent](phone-agent/) | ✅ | Minh họa Agent giọng nói “thay người dùng gọi điện tương tác với thế giới bên ngoài”: tầng trên là ReAct Agent tiêu chuẩn; sau khi nhận nhiệm vụ ngôn ngữ tự nhiên, nó tự xác định số điện thoại và mục tiêu cuộc gọi, gọi công cụ `make_phone_call` (dựa trên trừu tượng API giọng nói điện thoại) để hoàn tất toàn bộ cuộc gọi, đọc bản ghi cuộc gọi có cấu trúc, hỏi lại và gọi tiếp khi cần, cuối cùng báo cáo cho người dùng. |
-| 9-3 | [streaming-speech](streaming-speech/) | ✅ | Minh họa đánh đổi cốt lõi của cảm nhận giọng nói streaming: chia âm thanh liên tục thành các khối có độ dài tăng dần đưa vào ASR; mỗi khi nhận một đoạn nhỏ thì xuất “kết quả nhận dạng phần hiện tại” để có văn bản cực sớm với độ trễ gói đầu rất thấp. Cái giá là các khối ban đầu có thể sai do thiếu ngữ cảnh nửa sau câu; khi âm thanh tích lũy, kết quả dần hội tụ, đối chiếu với cách “đợi đủ cả câu rồi nhận dạng” có độ chính xác cao nhưng độ trễ cao. |
-| 9-4 | [end-to-end-speech](end-to-end-speech/) | ✅ | Tương ứng với mô thức suy nghĩ bằng giọng nói đầu-cuối của Step-Audio R1 (một mô hình duy nhất “nghe → nghĩ → nói”): chạy thông vòng kín “đầu vào giọng nói → suy nghĩ → đầu ra giọng nói”, đồng thời so sánh trực quan với mô thức nối tầng ASR→LLM→TTS về độ trễ và mất mát thông tin cận ngôn ngữ (cảm xúc/ngữ điệu/tốc độ nói). |
-| 9-5 | [controllable-tts](controllable-tts/) | ✅ | Cho đầu ra của LLM chính mang theo control tag (cảm xúc/tốc độ/phong cách/ngắt nghỉ/tiếng cười); tầng thực thi phân tích tag và ánh xạ sang profile phong cách tương ứng trong thư viện giọng tham chiếu rồi tổng hợp giọng nói. Quyết định “ngắt ở đâu, dùng giọng điệu nào” được giao cho LLM; cùng một đoạn văn bản có thể được tổng hợp thành nhiều phong cách và cảm xúc khác nhau. |
-| 9-6 | `claude-quickstarts/` | 📖 | Ví dụ khởi đầu nhanh và best practice cho Claude API, bao phủ nhiều ngữ cảnh sử dụng. |
-| 9-7 | `browser-use/` | 📖 | Browser-Use là framework tự động hóa trình duyệt mạnh mẽ, cho phép LLM điều khiển trình duyệt để hoàn thành nhiệm vụ phức tạp. Hỗ trợ điền form, điều hướng trang web, trích xuất dữ liệu và nhiều ngữ cảnh khác; đây là một triển khai điển hình của tự động hóa GUI (Computer Use). |
+| 9-1 | [trajectory-verifier](trajectory-verifier/) | ✅ | Thí nghiệm 9-1: kết hợp kết quả môi trường, quy tắc quá trình và rubric ngôn ngữ thành chẩn đoán trajectory chăm sóc khách hàng có bằng chứng |
+| 9-2 | [tau2-escalation-experience](tau2-escalation-experience/) | ✅ | Thí nghiệm 9-2: trên τ²-bench telecom, một mô hình rút ra các quy tắc chuyển tiếp và sử dụng công cụ từ 19 trajectory thất bại; tỷ lệ vượt qua trên tập chuyển giao 114 nhiệm vụ tăng từ 12,3% lên 19,3%, không có hồi quy; [bằng chứng](tau2-escalation-experience/validation/evidence.json) lưu biên nhận rút trích, hash chính sách từng nhánh và các chỉ số hành vi |
+| 9-3 | [prompt-auto-optimization](prompt-auto-optimization/) | ✅ | Thí nghiệm 9-3: sinh bản vá prompt tối thiểu từ trajectory thất bại, kiểm soát phát hành bằng tập biên và tập giữ lại |
+| 9-4 | Thí nghiệm trong sách | 🚧 | Thí nghiệm 9-4: tiến hóa Skill "làm rõ yêu cầu + xác nhận Spec" từ phản hồi người dùng; phần chính đưa ra thiết kế A/B ba nhánh, các chỉ số và cổng phát hành, phần triển khai đi kèm còn thiếu |
+| 9-5 | [browser-use-rpa](browser-use-rpa/) | ✅ | Thí nghiệm 9-5: biên dịch trajectory trình duyệt thành workflow có vị từ trạng thái (state predicates), được kiểm chứng bằng phát lại sau reset |
+| 9-6 | [self-modifying-agent](self-modifying-agent/) | ✅ | Thí nghiệm 9-6: lỗi lặp lại kích hoạt bản vá mã retry/circuit-breaker, kiểm thử hồi quy, phát hành canary và rollback |
+| 9-7 | [harness-safety-gate](harness-safety-gate/) | ✅ | Cổng xác nhận thao tác rủi ro cao |
+| 9-8 | [hermes-self-evolution](hermes-self-evolution/) | 📖 | Đưa cho Hermes toàn bộ cuốn sách và mã nguồn của chính nó; Hermes chọn một cải tiến, tự sửa mình và biến mỗi lần Reviewer từ chối thành một vòng học mới cho tới khi được chấp nhận |
+| 9-9 | [self-evolution-eval](self-evolution-eval/) | ✅ | Thí nghiệm 9-9: đánh giá tiến hóa dài hạn qua bốn giai đoạn — học, chuyển giao, thay đổi quy tắc và giữ vững |
+
+Tất cả thí nghiệm trên đều có lối chạy offline và unit test không cần API Key; các hướng mở rộng cần model thật hoặc trình duyệt được ghi trong README của từng dự án.
+
+## Trường hợp bổ sung
+
+| Thí nghiệm | Project | Quan hệ |
+| :--: | --- | --- |
+| 8-8 | [prompt-distillation](../chapter8/prompt-distillation/) | Dự án xuyên chương về chưng cất prompt và học tham số hóa; phương pháp huấn luyện thuộc Chương 8 |
+| — | [self-evolving-tools](self-evolving-tools/) | Khám phá, đóng gói và tái sử dụng công cụ kiểu Alita — trường hợp bổ sung của “viết kinh nghiệm thành chương trình” |
+| — | [ai-style-skill](ai-style-skill/) | Chuyển phản hồi viết thành Skill có thể kiểm chứng; chương nối Skill dấu ngoặc kép cong với dữ liệu tổng hợp đã kiểm toán và hậu huấn luyện, đồng thời tách lỗi tokenizer/Harness trong sao chép chính xác |
 
 ## Phân loại dự án
 

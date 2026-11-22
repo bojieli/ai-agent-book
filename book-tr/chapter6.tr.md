@@ -1,732 +1,773 @@
-# Agent'ın Değerlendirmesi
+# Etkileşim: Gözlem ve Eylem Uzaylarının Genişletilmesi
 
-Bir Agent sistemi kurarken geliştiriciler, çoğu zaman apaçık bir doğru yanıtı olmayan çok sayıda tasarım seçimiyle karşılaşır:
+Bölüm 1'de bir sav ortaya konmuştu: temel model sabitken, bir Agent'ın görev performansını yükseltmenin başlıca sistem mühendisliği yolu, çoğu zaman onun **gözlem uzayını** ve **eylem uzayını** yeniden tanımlamak ya da genişletmektir. Bölüm 2'den 5'e kadar olan kısım bu cümlenin karşılığını vermeye çalıştı: bağlam mühendisliği gözleme neyin gireceğine karar verir, bellek ve bilgi tabanları gözlemi oturumlar arasına uzatır, araçlar Agent'ın ne yapabileceğini tanımlar, kod üretimi ise ona yeni eylemleri kendi başına yaratma imkânı verir.
 
-- Hangi model kullanılmalı?
-- Modelin hangi araçları çağırabilmesi gerekir?
-- Bilgi tabanı hangi veriyi saklamalı, hangi yapıyla kurulmalı?
-- Kullanıcı belleği nasıl yapılmalı?
-- Modelin prompt'ları ve Skills'i nasıl organize edilmeli?
-- Harness'e hangi kısıtlar eklenmeli?
-- Değerlendirme sonuçları, Agent'ın sürekli evrimi için nasıl öğrenme sinyaline dönüştürülür?
+Ama bütün bu genişlemeler aynı önkabul altında gerçekleşti: **Agent ile dünya sırayla konuşur**. Kullanıcı bir cümlesini bitirir, Agent bir süre düşünür, birkaç araç çağırır ve yanıtlar; o düşünürken dünyanın hareketsiz durduğu varsayılır. Bu önkabul o kadar doğal görünür ki bir varsayım olarak yazıya bile nadiren dökülür.
 
-Değerlendirme, bu kararlara bilimsel bir dayanak sağlar: sistematik karşılaştırmalı deneylerle (tek bir değişkeni değiştirip etkideki değişimi gözlemlemek) ve ablation deneyleriyle (bileşenleri teker teker kapatıp genel performansın nasıl değiştiğini gözlemleyerek o bileşenin gerçek katkısını ölçmek), gerçek yetenek artışlarını yüzeysel dalgalanmalardan ayırabilir, küçük bir kazanç uğruna büyüğünü kaçırmaktan kurtulabilirsiniz. Yazılım mühendisliğindeki "ölçmediğinizi iyileştiremezsiniz" sözünde olduğu gibi, tekrarlanabilir bir değerlendirme sistemi kurulmadıkça Agent'ın yineleme yönü yalnızca sezgiye kalır.
+Bu bölümün kaldırmak istediği tam da o önkabuldür.
 
-Bölüm 1'de tanıtılan Harness engineering perspektifinden bakıldığında, değerlendirme Harness içinde "doğrulama" işlevinin merkezi rolünü üstlenir. Kilit kavrayış şudur: **değerlendirmenin nesnesi yalnızca model değil, modelle Harness'in bileşimi olmalıdır**. Aynı model farklı Harness'lerde çarpıcı biçimde farklı sonuçlar verebilir — bazı ekipler yalnızca Harness'i iyileştirerek aynı modelin terminal türü görevlerdeki performansını belirgin biçimde yükseltti (ayrıntılar için bkz. Bölüm 5). Bu şu anlama gelir: Agent değerlendirmede kötü performans gösterdiğinde iyileştirme yönü modeli değiştirmek değil, Harness'in bir bileşenini (prompt'lar, araç tasarımı, geri bildirim döngüleri) iyileştirmek olabilir. Sağlam bir değerlendirme sistemi, "model yeteneğinin yetersizliği" ile "Harness tasarım kusuru" gibi özünde farklı iki sorunu birbirinden ayırabilmelidir. **Bu iki sorunu ayırmanın yaygın yolu model değiştirme deneyidir (model swap)**: Harness sabit tutulur, yalnızca daha güçlü ya da daha zayıf bir model takılır ve puanın ne kadar oynadığına bakılır. Daha güçlü modelle puan yükselmiyorsa darboğaz Harness'tedir. Daha zayıf modelle puan sert biçimde düşüyor ve sonuçlar model yeteneğiyle birlikte büyük dalgalanmalar gösteriyorsa, en doğrudan okuma darboğazın modelin kendi yeteneğinde olduğu ve mevcut performansı esas olarak modelin belirlediğidir (bunun görevin doğası gereği zor olmasından mı, yoksa Harness'in modelin ön bilgisine aşırı yaslanmasından mı kaynaklandığı ayrıca incelenmelidir). Bunun, yukarıda anılan "ablation deneyi"nden farklı bir yöntem olduğuna dikkat edin: ablation **Harness'in bir bileşenini kapatıp** genel performansın nasıl değiştiğine bakar, model değiştirme ise **Harness'i sabit tutup yalnızca modeli değiştirir** — ilki Harness'in içinde hangi parçanın önemli olduğunu bulur, ikincisi darboğazın modelde mi Harness'te mi olduğunu ayırt eder.
+## İki Eksen: Kip ve Zamanlama
 
-Bir değerlendirme sisteminin değeri, modellerin hızla evrildiği bir çağda daha da belirginleşir. Model yetenekleri hızla ilerlemeye devam ediyor, ama yeni bir modelin kamuya açık benchmark'larda daha iyi sonuç vermesi, sizin özel göreviniz üzerinde de daha iyi olacağı anlamına gelmez — tam tersine performans gerilemesi (regression, yani yeni sürümün bazı yönlerden eskisinin gerisinde kalması) ortaya çıkabilir. Yalnızca kendi değerlendirme veri kümenizde yapılan eksiksiz bir test, veriye dayalı bir yükseltme kararı vermenizi sağlar. Dahası, sağlam bir değerlendirme sistemi "gelecekteki modeller için ürün geliştirmeyi" uygulanabilir bir stratejiye dönüştürür: mevcut model ticari kullanımı taşıyacak güçte olmasa bile, ürün geliştirmesini şimdiden tamamlayıp değerlendirme kümesini kurabilir, yeni modellerin performansını sürekli izleyebilir ve eşiği aşan ilk modelle hemen yayına çıkabilirsiniz.
+Gözlem uzayı ile eylem uzayını açtığımızda, her birinin genişletilebilecek iki yönü olduğu görülür.
 
-> **Bölüm Rehberi**
->
-> Bu bölüm eksiksiz bir değerlendirme sistemini üç katmanda kurar. Birinci katman **değerlendirme ortamıdır** ("nerede test edilir"): otomatik ve tekrarlanabilir bir test ortamının nasıl kurulacağı — araç çağırma tipi ve insan-makine etkileşimi tipi olmak üzere iki paradigma dahil. İkinci katman **değerlendirme yöntemleridir** ("nasıl karar verilir"): veri kümesi tasarım ilkelerinden ve değerlendirme metrikleri sisteminden (neyin ölçüleceği) LLM-as-a-Judge (büyük dil modelini hakem olarak kullanma) ile otomatik değerlendirmeye, oradan da ikili karşılaştırma ve model sıralamasına. Üçüncü katman **değerlendirmeye dayalı karar almadır** ("test edildikten sonra ne yapılır"): değerlendirme sonuçlarını model seçimi, mimari iyileştirme ve sürekli yineleme için eyleme dönük bir kılavuza çevirmek ve gözlenen puan farkının gerçekten güvenilir olup olmadığını istatistiksel anlamlılıkla karara bağlamak. Bunlara ek olarak bu bölüm observability'yi (gözlemlenebilirlik) ve üretim düzeyindeki Agent'ların iç değerlendirme altyapısını da tartışır, sonunda ise Bölüm 7'deki post-training'e bağlanan simülasyon ortamlarını tanıtır.
->
-> Bölüm boyunca süren temel fikir şudur: **bir değerlendirme sisteminin başlıca değeri mevcut sisteme puan vermek değil, model evrimini hızlı ve güvenilir biçimde takip etmenizi sağlamaktır**. Daha güçlü ya da daha ucuz bir model yayımlandığında, sağlam bir değerlendirme sistemine sahip ekip birkaç saat içinde geçiş kararını verebilir; böyle bir sistemi olmayan ekip ise yalnızca sezgisine güvenebilir veya topluluktan gelecek geri bildirimi bekleyebilir — rekabetin kızıştığı Agent pazarında bu hız farkı başarıyla başarısızlığı belirleyebilir.
+- **Kip**, gözlemin ve eylemin **biçimini** belirler: Agent yalnızca metin mi okur, yoksa ses de duyar, ekranı da görür, torku da algılar mı; yalnızca token mı üretir, yoksa konuşur, tıklar ve eklem de sürer mü.
+- **Zamanlama**, gözlemin ve eylemin **ritmini** belirler: gözlemi Agent kendisi mi almaya gider, yoksa dünya mı iter; eylem tek bir turda bitmek zorunda mıdır, yoksa turları aşabilir, ortasında kesilebilir ve daha acil bir şey tarafından öne geçilebilir mi.
 
-![Şekil 6-1: Değerlendirme Sisteminin Üç Katmanı](images/fig6-1.svg)
+Önceki bölümler bu iki uzayın **içeriğini** genişletmişti; bu bölüm ise **kipini** ve **zamanlamasını** genişletiyor:
 
-## Somut Bir Değerlendirme Örneği
+| | Gözlem uzayının genişlemesi | Eylem uzayının genişlemesi |
+|---|---|---|
+| **İçerik** (Bölüm 2–5) | Bağlam mühendisliği, bellek ve bilgi tabanları | Araçlar, kod üretimi |
+| **Kip** (bu bölüm) | Ses, ekran, fiziksel sensörler | Konuşma, tıklama, eklem hareketi |
+| **Zamanlama** (bu bölüm) | Dünyanın itmesi, sürekli akışlar | Turları aşan, kesilebilir, öne geçilebilir |
 
-Metodolojiye derinlemesine girmeden önce, eksiksiz bir örnek üzerinden sezgi kuralım. Bir müşteri hizmetleri Agent'ı kurduğumuzu ve onun iade taleplerini ele alma yeteneğini değerlendirmemiz gerektiğini varsayalım.
+**Sıra alma, ortamın bir özelliği değil, model ile arayüzünün bir etkileşim uzlaşımıdır.** İlk araç çağırma arayüzleri mesajları genellikle senkron turlar halinde düzenliyordu: soruyu yanıt izliyor, akıl yürütmeye devam etmeden önce araç sonuçları tamamlanıyordu. Gerçek ortam ise beklemez: model düşünürken e-posta gelir, kullanıcı cümleyi böler, sayfa iki ekran görüntüsü arasında değişir, robot kolu uzanırken bardak devrilir. Bu uzlaşım da değişiyor: Eylül 2026 itibarıyla GPT-6 Astra, yerleşik asenkron araç çağırmayı ve tur sırasında yeni kullanıcı talimatları eklemeyi destekliyor. Bu nedenle bölüm, hem yerleşik desteği hem de mevcut senkron arayüzlerle uyumluluğu ele alıyor.[^ch6-22][^ch6-23]
 
-**Test durumu**: Kullanıcı 3 gün önceki siparişi iade etmek istiyor (sipariş numarası #12345, tutar ¥299). Şirket politikası: 7 gün içinde tam iade yapılabilir.
-
-**Agent'ın trajectory'si**:
-
-```
-Kullanıcı: 3 gün önce aldığım kulaklığı iade etmek istiyorum, sipariş numarası 12345. (Bugün 2026-04-10)
-
-Agent (düşünüyor): Kullanıcı iade istiyor, önce sipariş bilgisini sorgulamam gerek.
-Agent → query_order(order_id="12345") aracını çağırır
-Araç döndürür: {status: "delivered", amount: 299, date: "2026-04-07", item: "Bluetooth kulaklık"}
-
-Agent (düşünüyor): Sipariş tarihi 2026-04-07, bugün 2026-04-10, arada 3 gün var; 7 günlük iade süresi içinde, tam iade koşullarını karşılıyor.
-Agent → process_refund(order_id="12345", amount=299) aracını çağırır
-Araç döndürür: {refund_id: "R-98765", status: "processing", eta: "3-5 iş günü"}
-
-Agent: Sizin için iade işlemini başlattım; #12345 numaralı siparişin (Bluetooth kulaklık, ¥299) tam iadesi işleniyor,
-      tutarın 3-5 iş günü içinde hesabınıza geçmesi bekleniyor. İade numarası R-98765, ilerlemeyi sorgulamak için kullanabilirsiniz.
-```
-
-**Rubric ile puanlama** (dört boyut, her boyut 1-4 puan). Tablo 6-1, bu müşteri hizmetleri iade görevi için bir puanlama örneği verir; Rubric'in bir Agent trajectory'sini nasıl denetlenebilir değerlendirme boyutlarına ayırdığını gösterir.
-
-Tablo 6-1 Müşteri Hizmetleri İade Görevi için Rubric Puanlama Örneği
-
-| Boyut | Ölçüt | Puan | Gerekçe |
-|--------------------|-----------------------------------|---------|-------------------------------|
-| İşlem doğruluğu | İade tutarı ve sipariş numarası doğru mu | 4 | Doğru sorgulama yapıp ¥299'luk tam iadeyi başlattı |
-| Politika uygunluğu | 7 günlük iade politikasına uyuluyor mu | 4 | Sipariş iade süresi içinde, politikaya uygun |
-| Bilgi eksiksizliği | Tutar, hesaba geçiş süresi ve iade numarası bildirildi mi | 4 | Üç kritik bilginin üçü de bildirildi |
-| Halüsinasyon tespiti (veto maddesi) | Var olmayan bilgi uyduruldu mu | Geçti | Tüm bilgiler araçların döndürdüğü sonuçlardan geliyor |
-
-Halüsinasyonun derecelendirilen bir puanlama boyutu değil de bir **veto maddesi** olarak listelenmesinin nedeni, kaliteye dik (ortogonal) olmasıdır: akıcı, ayrıntılı ve nazik bir yanıt yanlış bilgi içeriyorsa, kullanıcıya verdiği zarar kısa ama doğru bir yanıtınkinden çok daha büyüktür. (Veto mekanizmasının genel tasarımı için ilerideki "Rubric'in Dört İlkesi" bölümüne bakın.)
-
-Bu test durumu geçti. Ama iyi bir değerlendirme yalnızca başarı senaryolarını değil, sınırları ve tuzakları da ölçer: kullanıcı 15 gün önceki bir siparişi (iade süresi dolmuş) iade etmek istediğinde Agent bunu doğru biçimde reddedebiliyor mu? Kullanıcı "müşteri temsilcisi iadeyi zaten onayladı" dediğinde, Agent sistemde hiçbir kayıt yokken buna kolayca inanır mı? Agent'ların yetenek düzeyini asıl ayıran, işte bu sınır senaryolarıdır.
-
-Yukarıdaki akış — test durumlarını tanımlamak, Agent'ı çalıştırmak, Rubric ile puanlamak, sonuçları analiz etmek — değerlendirmenin temel iskeletidir. Bu bölümün geri kalanı her adımın tasarım yöntemini sırasıyla açacak.
-
-## Otomatik Değerlendirme Ortamı
-
-Agent değerlendirmesi, tekrar tekrar çalıştırılabilen otomatik bir ortam gerektirir — geliştirme aşamasında değişikliklerin etkisini hızlıca test edebilen bir ortam. Böyle bir ortamı kurmak üç soruyu yanıtlamayı gerektirir: ne değerlendirilecek (görev tanımı ve doğrulama ölçütleri), kime karşı değerlendirilecek (Agent'ın etkileşimde bulunduğu tarafın nasıl simüle edileceği) ve hangi ölçütle puanlanacak.
-
-### Değerlendirme Ortamının Temel Bileşenleri
-
-Bir değerlendirme ortamı beş öğeden oluşur — ilerideki alt bölümler bunlardan veri kümesi tasarımı ile puanlama ölçütü tasarımını ayrıntılandıracak:
-
-**Veri kümesi (Dataset)** görev kümesini tanımlar; başlangıç durumunu, hedef açıklamasını ve isteğe bağlı referans çözümleri içerir.
-
-**Ortam durumu (Environment State)** görev yürütülürken değişen bilgiyi tutar ve gerçekçilikle denetlenebilirlik arasında denge kurmalıdır. Örneğin müşteri hizmetleri değerlendirmesinde ortam durumu, veritabanındaki sipariş kayıtlarını ve kullanıcı hesap bakiyesini kapsar. Agent `process_refund`'u çağırdıktan sonra sipariş durumu 'delivered' değerinden 'refunded' değerine döner ve bakiye artar — işte bunlar "değişebilir bilgi"dir. "Gerçekçilik", durum değişimlerinin iş mantığına uygun olmasını gerektirir (iade tutarı sipariş tutarını aşamaz); "denetlenebilirlik" ise her testin aynı başlangıç durumuna sıfırlanabilmesini gerektirir.
-
-**Araç arayüzleri (Tools)** Agent'ın yürütebileceği işlemler kümesini tanımlar — araçlar aşırı yüksek düzeyli soyutlamalar ("kullanıcının sorununu çöz" gibi) değil, atomik işlemler (sipariş sorgulama, rezervasyon değiştirme, e-posta gönderme gibi) sunmalıdır; böylece Agent bu işlemleri planlayarak ve düşünerek birleştirmek zorunda kalır.
-
-**Puanlama ölçütü (Rubric)** Agent'ın performansını nicelleştirir; ikili (geçti/kaldı), sürekli (0 ile 100 arası puan) veya çok boyutlu (doğruluk, verimlilik ve güvenlik için ayrı ayrı puan) olabilir.
-
-**Yürütme protokolü (Interaction Protocol)** etkileşim biçimini ve sonlanma koşullarını belirler.
-
-![Şekil 6-2: Araç Çağırma Tipi ve İnsan-Makine Etkileşimi Tipi Değerlendirme Ortamları](images/fig6-2.svg)
-
-### Araç Çağırma Tipi Değerlendirme Ortamı
-
-Kod üretimi ve veri analizi gibi ağırlıklı olarak araç kullanımına dayanan görevlerde, Verifiers çerçevesi tipik bir tasarım kalıbı sergiler. Agent görevi önceden tanımlanmış araçları çağırarak tamamlar; doğrulama, insan etiketlemesine veya model değerlendirmesine dayanmadan, çalıştırılabilir ölçütler (testler geçiyor mu, yanıt eşleşiyor mu) üzerinden yapılır.
-
-Verifiers katmanlı bir ortam tasarımı getirir: `SingleTurnEnv` tek turluk görevler (basit soru-yanıt gibi) için uygundur, `ToolEnv` çok turlu tool calling'in otonom döngüsünü destekler, `StatefulToolEnv` ve `SandboxEnv` ise durumlu araçları ve uzun süre çalışan sandbox ortamlarını (kod yürütme gibi) destekler. Örneğin `SingleTurnEnv`, bir matematik sorusu sorup yanıtı doğrudan doğrulamaya uygundur; `ToolEnv`, birden fazla web sayfasında arama yapıp yanıtı sentezledikten sonra nihai sonucu doğrulamaya uygundur; `StatefulToolEnv`, veritabanı kayıtlarını değiştirip veritabanı durumundaki değişimi doğrulamaya uygundur; `SandboxEnv` ise sandbox içinde kod çalıştırıp çıktı dosyalarını denetlemeye uygundur. Tablo 6-2 bu ortam türlerini özetler; okuyucu görev durumu, tool calling ve izolasyon ihtiyacına göre uygun değerlendirme ortamını seçebilir.
-
-Tablo 6-2 Verifiers Ortam Türlerinin Karşılaştırması
-
-| Ortam türü | Durum koruma | Tool calling | Tipik kullanım |
+| Ölçek | Senaryo | Gözlem tarafındaki değişim | Eylem tarafındaki değişim |
 |---|---|---|---|
-| SingleTurnEnv | Yok | Yok | Tek turlu soru-yanıt, matematik soruları |
-| ToolEnv | Yok | Çok turlu | Arama + bilgi sentezi |
-| StatefulToolEnv | Var | Çok turlu | Veritabanı kayıtlarını değiştirme |
-| SandboxEnv | Var + izolasyon | Çok turlu | Kod yürütme ve test |
+| Saniye — gün | Asenkron ve olay güdümlü | Dünya Agent'ı uyandırır (e-posta, zamanlayıcı, geri çağrı) | Eylem turları aşar: önce başlat, sonrasını olay kapatsın |
+| 10 ms — 1 sn | Ses | Konuşurken dinlemek, cümlenin bitmesini beklemeden | Düşünürken konuşmak; kesilebilir, ortasında düzeltilebilir |
+| Saniye altı — saniye | Computer Use | Ekran iki kare arasında sürekli değişir | Eylemden sonra gerçekliğin hâlâ plana uyup uymadığı yeniden doğrulanmalı |
+| Milisaniye | Robot | Sensörler sürekli geri akar | Eylem parçalanır: her seferinde kısa bir dilim planlanır, öne geçilebilir |
 
-Çerçeve paralel örneklemeyi ve trajectory önbelleklemesini destekler; her değerlendirmenin eksiksiz trajectory'si (gözlem, eylem, ödül) sonradan analiz ve yeniden oynatma için saklanır.
+## Asenkron ve Olay Güdümlü: Dünya Kapınızı Çaldığında
 
-Ortamın ayrıca işlemlerin duruma bağımlılığını ele alması gerekir — bir aracın yürütme sonucu mevcut duruma bağlıdır; başarısızlık halinde basit bir hata bayrağı yerine açık hata mesajları verilmelidir ki Agent hatalarından öğrenip stratejisini ayarlayabilsin.
+Bölüm 4'te ele alınan algılama, yürütme ve işbirliği araçlarının tümünü Agent etkin biçimde çağırır. Peki Agent, herhangi bir anda gelebilecek dış olaylara nasıl yanıt vermelidir? Bunun için olay güdümlü asenkron bir mimari gerekir. Bölüm 1'de kalan iki araç sınıfı—olay tetikleme ve kullanıcı iletişimi araçları—da bu mimariye dayanır; bu yüzden burada birlikte ele alınır.
 
-### İnsan-Makine Etkileşimi Tipi Değerlendirme Ortamı
+Bu bölümde kiplik değişmiyor; hâlâ metin. Değişen tek şey zamanlama. Bu, önceki beş bölümün sıra tabanlı dünyasından atılan ilk adımdır.
 
-Birçok gerçek görev yalnızca tool calling içermez, insan kullanıcılarla diyalog da gerektirir. Bir müşteri hizmetleri Agent'ının belirsiz ifadeleri anlaması, ihtiyacı netleştirmesi, arka uç sistemleri sorgulaması ve bilgiyi kullanıcıya doğrulatması gerekir. Bu tür görevlerin değerlendirmesi temel bir zorlukla karşılaşır: otomatik bir ortamda gerçek kullanıcı nasıl simüle edilir?
+### Asenkronluk Neden Gereklidir
 
-Kilit tasarım ilkesi **kademeli bilgi açıklamadır (Progressive Information Disclosure)**; insan-makine etkileşimi tipi değerlendirmeyi geleneksel benchmark testlerinden ayıran temel fark budur. Çoğu benchmark en baştan bütün gereksinimi ortaya döker, oysa gerçek hayatta kullanıcılar ihtiyacını daha ilk anda net biçimde tarif edemez — genellikle yalnızca "uçuşumda bir sorun var galiba" ya da "internete bağlanamıyorum" derler. Agent'ın ihtiyacı proaktif sorularla netleştirmesi gerekir ve bu sürecin kendisi yeteneğin önemli bir göstergesidir. Bu yüzden değerlendirmede **simüle edilen kullanıcının tüm bilgileri asla en baştan Agent'a açılmamalıdır**; bilgi, diyalog boyunca ihtiyaç duyuldukça ve kademeli olarak verilmelidir.
+Asenkronluğun neden gerekli olduğunu açıklamak için bir benzetmeyle başlayalım. Senkron, "bir sonrakini yapabilmek için önce birini yapmak" anlamına gelirken, asenkron "birden fazla şeyin eş zamanlı olarak gerçekleşebilmesi" anlamına gelir. Geleneksel bir senkron Agent mimarisi, bir mağazadaki tek hatlı bir gişeye benzer—yalnızca bir seferde bir müşteriyi ele alabilir ve mevcut müşteriyle bitirdikten sonra ancak bir sonraki numarayı çağırır. Gerçekten akıllı bir asistan, daha çok esnek bir sekretere benzer—masada bekleyen birden fazla iş (e-postalar, telefon aramaları, ziyaretçiler) olduğunda, sekreter aciliyete göre hangisini önce ele alacağına karar verir ve yarı yolda daha acil bir göreve geçiş yapıp duraklayabilir. Senkron modda, Agent ya kullanıcıyla konuşmadan önce arka plan görevinin tamamlanmasını beklemek zorunda kalır, ya da yeni gelen bir olayı işlemeden önce konuşmanın bitmesini bekler. Gerçek bir asistan senaryosunun gerektirdiği temel yetenekleri sunamaz:
 
-τ-bench'in çözümü **kullanıcı simülasyonudur (User Simulation)**: kullanıcı rolünü başka bir LLM üstlenir ve önceden tanımlanmış talimatlara göre Agent'la konuşur. Simüle edilen kullanıcı bir görev talimatı alır ("yarınki uçuşumu iptal etmem gerekiyor" gibi), diyalog sırasında gerekli bilgiyi Agent'a adım adım açar, sorulara yanıt verir ve görev tamamlandığında bir sonlandırma sinyali gönderir. Prompt, simüle edilen kullanıcıdan "bütün bilgiyi tek seferde açıklamamasını, yalnızca o adım için gerekli olanı vermesini" ve "talimatta verilmemiş bilgiyi uydurmamasını" ister. Kullanıcı simülasyonunun tasarımı gerçekçilikle denetlenebilirlik arasında bir ödünleşim gerektirir: davranış gerçek bir kullanıcıya yakın olmalı (belirsiz ifadeler, eksik bilgi, ara sıra duygusal dalgalanmalar), aynı zamanda tekrarlanabilirliği güvenceye almak için belirli bir senaryoyu izlemelidir.
+- **Asenkron yürütme normdur**—Birçok görev uzun çalışma süreleri gerektirir ve kullanıcı etkileşimini bloke etmemelidir.
+- **Olay önceliğinin dinamik değerlendirilmesi**—Tüm olaylar eşit derecede önemli değildir. Agent akıllıca bir işleme stratejisi seçmelidir: mevcut işlemi iptal etmek (acil), bir kuyruğa eklemek (rutin) veya paralel işlemek (bağımsız hafif sorgu).
+- **Kesinti ve devam etmede akıcılık**—Kesintiye uğramış bir konuşma veya görev doğal biçimde devam edebilmelidir.
 
-Aşağıda kademeli bilgi açıklamalı çok turlu bir diyalog örneği verilmiştir (kullanıcı simülatörü sabit bir senaryoya göre hareket eder):
+Asenkron yaklaşımı bir LLM'e uygularken önce modelin ve API'nin bu mesaj zamanlamasını destekleyip desteklemediğini kontrol etmek gerekir. Bazı arayüzler devam etmeden önce araç sonuçlarının tamamlanmasını ister; bazıları ise araç beklemedeyken modelin çalışmasına ve üretim sırasında kullanıcı güncellemelerini almasına izin verir. İlk grup olay kuyruklarına, görev tutamaçlarına ve uyumluluk katmanına ihtiyaç duyar; ikinci grup yerleşik asenkron protokolü kullanabilir. Her ikisinde de uygulama olay kaynaklarını, araç yaşam döngüsünü ve sonuçların ait olduğu görevleri yönetmelidir. Kodda `asyncio` kullanılması, modelin yerleşik asenkron yeteneğe sahip olduğunu göstermez.
 
-> **Kullanıcı**: "Uçuşumla ilgili bir sorun var."
-> **Agent**: "Hangi uçuş olduğunu söyleyebilir misiniz?"
-> **Kullanıcı** (senaryoya göre açıklar): "Delta 123, yarın sabah San Francisco'dan New York'a."
-> **Agent**: "Sorun tam olarak nedir?"
-> **Kullanıcı** (senaryoya göre açıklar): "Uçuş süresi çok uzun, değişiklik yaptırmak istiyorum."
-> **Agent**: "Yeni uçuş için bir tercihiniz var mı?"
-> **Kullanıcı** (senaryoya göre açıklar): "Öğleden sonraki uçuşların hepsi olur."
+Bunun için, bir **olay güdümlü asenkron Agent mimarisine** ihtiyacımız var. Teknik olarak, bu, sistemin artık aktif ve tekrar tekrar "yeni mesajları" kontrol etmediği (bu polling'dir, verimsizdir), bunun yerine yeni bir mesaj geldiğinde işleme mantığını otomatik olarak tetiklediği anlamına gelir. Tüm girdiler, çıktılar, düşünce süreçleri ve dış etkileşimler tek biçimli olarak bir olay akışı—bir zaman çizelgesinde düzenlenmiş bir olay kayıtları dizisi—olarak modellenir. Şekil 6-1, olay güdümlü asenkron bir Agent'ın genel mimarisini gösterir, olay kaynakları, olay kuyruğu ve Agent işleme akışı arasındaki ilişkiyi resmeder.
 
-Kullanıcı simülatörü sabit bir senaryoyu (bilinen bilgi + açıklama kuralları) izler; böylece değerlendirmenin tekrarlanabilirliğini güvenceye alırken gerçek bir kullanıcının kademeli anlatım biçimini de taklit eder.
+![Şekil 6-1: Olay Güdümlü Asenkron Agent Mimarisi](images/fig6-1.svg)
 
-τ-bench, Agent'ın yapılandırılmış iş süreçlerindeki (havayolu müşteri hizmetleri, perakende müşteri hizmetleri gibi) performansını ölçen bir benchmark'tır. Denetimleri bileşen düzeyinde ve çok boyutludur: bir yandan veritabanının nihai durumunun doğru olup olmadığını kontrol eder (rezervasyon kaydının durumunun "iptal edildi"ye dönmesi gibi), diğer yandan Agent'ın diyalog sırasında gerekli kilit bilgileri verip vermediğini doğrular (iade tutarı ve hesaba geçiş süresi gibi; belirli dizeler veya kalıplar aranarak doğrulanır). Bu çifte doğrulama, işlem doğruluğunu ve iletişim etkinliğini aynı anda sınar. Ancak görev düzeyinde bu denetimler nihayetinde **sıfır ya da bir olan ikili bir ödüle** indirgenir: 1 puan almak için tüm denetimlerin geçmesi gerekir, herhangi biri geçmezse sonuç 0'dır. İkili ödül, Pass^k gibi güvenilirlik metriklerinin hesaplanmasını kolaylaştırır (bkz. ilerideki "Değerlendirme Metrikleri Sistemi" bölümü); bedeli ise "işlemi doğru yapıp kritik olmayan bir alanı atlamak" ile "tümüyle başarısız olmak"ın aynı puanı almasıdır.
+### OpenClaw'da Olay Güdümlü Mekanizmaların Uygulanması
 
-Geliştirilmiş sürüm olan **τ²-bench**'in temel katkısı puanlama inceliğinde değil, iki noktadadır: birincisi **çift kontrollü ortam (Dual-Control)** — artık yalnızca Agent araç çağıramaz, kullanıcı simülatörü de aynı paylaşılan ortam üzerinde işlem yapabilir (Agent kullanıcıya uçak modunu açmasını söyler ve kullanıcının işlemi ortam durumunu gerçekten değiştirir); bu, kullanıcının elini taşın altına koyması gereken teknik destek gibi gerçek senaryolara daha yakındır. İkincisi **daha kesin görev şartnameleri ve bileşimsel görev üretimi** — başarı koşullarındaki belirsizlik azalır ve somut görev örnekleri parametrelendirilip toplu olarak üretilebilir (ayrıntılı doğrulama boyutları için ilerideki "Doğrulanabilirlik ve Nesnellik Güvencesi" bölümüne bakın).
+Açık kaynak çerçevesi OpenClaw (mimarisi Bölüm 5'te ayrıntılı olarak ele alınacak), bir Gateway kontrol düzlemi aracılığıyla çok kanallı mesajları alır ve bunları Agent çalışma zamanına yönlendirir. Üç yerleşik otomasyon mekanizması sağlar:
 
-> **Deney 6-1 ★: τ²-bench'i Çalıştırmak ve τ-bench'ten Evrimini Karşılaştırmak**
->
-> Bu deney, τ²-bench değerlendirme çerçevesini çalıştırarak insan-makine etkileşimi tipi değerlendirme ortamlarının tasarım noktalarını anlamayı ve τ-bench ile τ²-bench arasındaki farkları karşılaştırarak değerlendirme veri kümelerinin nasıl yinelemeyle iyileştirildiğini kavramayı amaçlar.
->
-> Görev tanım dosyalarını derinlemesine okuyun: her görev bilinen bilgiyi (kullanıcının arka plan bilgisi), görev talimatlarını (bilginin nasıl kademeli açıklanacağını ve yanıt stratejisini yönlendirir) ve başarı koşullarını (veritabanının hedef durumu ve diyalogda mutlaka geçmesi gereken doğrulama bilgileri) içerir. Eksiksiz değerlendirme akışını çalıştırın, kullanıcı simülatörü ile Agent arasındaki çok turlu diyaloğu gözlemleyin ve tipik başarısızlık kalıplarını (politika ihlali, bilgi atlama, aşırı sıklıkta insan temsilciye aktarma vb.) analiz edin.
->
->
-> ![Şekil 6-3: τ²-bench Değerlendirme Mimarisi](images/fig6-3.svg)
->
->
-> τ-bench ile τ²-bench'in tasarım farklarını karşılaştırın: τ-bench'in ilk sürümünde kullanıcı talimatları fazla basitti (Agent yanıtı tahmin edebiliyordu), başarı koşulları yeterince kesin değildi (yanlış değerlendirmelere yol açıyordu) ve kullanıcı simülatörü fazla mekanikti. τ²-bench bu sorunlara karşı sistematik iyileştirmeler yaptı:
->
-> - **Daha ayrıntılı görev talimatları getirmek**: "olgusal dayanak gereksinimi" (Grounding) dahil, yani yanıtların ortamın gerçek durumuna dayanması zorunluluğu
-> - **Daha kesin değerlendirme ölçütleri**: örneğin "hız testi excellent döndürmedikçe sorun çözülmüş sayılmaz"
-> - **Daha gerçekçi kullanıcı simülatörü davranış kuralları**: kademeli bilgi açıklama, doğal duygusal dalgalanmalar
->
-> τ²-bench'e yeni eklenen telecom alanı görevlerine özellikle dikkat edin ve çift kontrollü ortam tasarımını kavrayın (yukarıda anlatıldığı gibi, kullanıcı ve Agent aynı paylaşılan ortamı birlikte kullanır).
->
+- **Hooks**: GitHub Actions'daki olay tetikleyicilerine benzer biçimde, oturum oluşturma ve sıfırlama gibi Agent yaşam döngüsündeki olaylara yanıt verir
+- **Cron (Zamanlanmış Zamanlayıcı)**: cron ifadelerine göre periyodik görevleri yürütür (Unix sistemlerinde zamanlanmış görevler için yaygın kullanılan bir söz dizimi, örn. `0 9 * * 5` her Cuma saat 9 anlamına gelir), örneğin her Cuma haftalık bir rapor oluşturmak veya her ayın başında veriyi özetlemek gibi
+- **Heartbeat (Kalp Atışı Arka Plan Süreci)**: Agent'ı her N dakikada bir uyandırarak dikkat gerektiren herhangi bir konu olup olmadığını kontrol eder, uyarı yorgunluğunu önlemek için yargı kullanır
 
-Araç çağırma tipi değerlendirme "gözlemlenebilir bir durum değişikliği tamamlandı mı" sorusuna odaklanırken, insan-makine etkileşimi tipi değerlendirme "kullanıcının kavrayışında veya kararında bir değişim sağlandı mı" sorusuna bakar — ilki Agent'ın eylem doğruluğunu, ikincisi iletişim stratejisinin isabetliliğini sınar.
+Bu üç mekanizma OpenClaw Agent'larına bir otonomi görünümü verir—kullanıcı çevrimdışı olsa bile, Agent zamanında rapor üretebilir, sistem durumunu kontrol edebilir ve rutin işleri halledebilir. Ancak daha yakından bakıldığında, temel bir sınırlama ortaya çıkar. Kesin olmak gerekirse: Gateway, yerleşik kanallardan (IM, web arayüzü) gelen mesajları zaten **push** tarzında ele alır—bunlar geldikleri anda Agent'a yönlendirilir. Ve üç otomasyon mekanizmasından yalnızca Cron ve Heartbeat, Agent'ın bir kullanıcı mesajı olmadan hareket etmesine izin verir ve ikisi de **zaman güdümlüdür**—Heartbeat sabit aralıklarla kontrol eder, Cron önceden belirlenmiş zamanlarda tetiklenir. Hooks yalnızca çerçevenin iç yaşam döngüsü olaylarına tepki verir ve dış dünyadan yeni değişiklikler getiremez. Gerçek boşluk şudur: yerleşik kanalların ötesindeki herhangi bir üçüncü taraf olay kaynağı için—yeni bir e-posta, veri gönderen bir dış API geri çağrısı, anlık dikkat talep eden acil bir bildirim—OpenClaw'ın anlık bir giriş yolu yoktur. Agent, olay gerçekleştiği anda yanıt veremez; en iyi ihtimalle bir sonraki Cron/Heartbeat tetiklenmesinde fark eder.
 
-Değerlendirme ortamlarının kurulması simülasyon ortamı tasarımına da temas eder — bir değerlendirme ortamının büyük ölçekli, tekrarlanan etkileşimleri desteklemesi gerektiğinde simülasyon ortamına dönüşür; bu bölümün sonunda kısaca ele alınacaktır.
+Asıl zayıf nokta şurada: yerleşik kanalların dışındaki üçüncü taraf olay kaynakları için—yeni bir e-postanın gelmesi, harici bir API geri çağrısının iletilmesi, hemen ele alınması gereken acil bir bildirim—OpenClaw'da anında bağlanacak bir kanal yoktur; bu yüzden Agent olay gerçekleşir gerçekleşmez tepki veremez, ancak bir sonraki Cron/Heartbeat döngüsünde fark edebilir.
 
-## Değerlendirme Görev Veri Kümelerinin Tasarımı
+Bu gecikme birçok senaryoda kabul edilemez. **PineClaw**'ı (Pine AI'ın OpenClaw eklentisi) örnek alalım: Pine AI, kullanıcı adına gerçek telefon aramaları yapan bir yapay zeka asistanıdır, tipik senaryolar fatura müzakeresi, abonelik iptali ve sigorta taleplerini ele almayı içerir. Bir kullanıcı bir OpenClaw Agent'ı aracılığıyla bir Pine telefon görevi başlattığında, Pine'ın sesli yapay zekası kullanıcı adına aramayı yapar, ama kullanıcının arama sırasında her an müdahale etmesi gerekebilir:
 
-Değerlendirme ortamı "sahne", veri kümesi ise "senaryodur" — senaryonun ne kadar iyi yazıldığı, değerlendirmenin değerini çoğu zaman sahnenin kendisinden daha fazla belirler. Kötü tasarlanmış bir veri kümesi kusursuz bir ortamda çalıştırılsa bile yalnızca gürültü üretir. Bu bölüm; GAIA, AndroidWorld, SWE-Bench Verified (Software Engineering Benchmark, yazılım mühendisliği benchmark'ı), τ-bench ve τ²-bench, Terminal-Bench, OSWorld ve OSWorld-Verified gibi benchmark'ların tasarım pratiğinden defalarca doğrulanmış birkaç ilke damıtıyor.
+- **Gerçek Zamanlı Kimlik Doğrulaması**: Müşteri hizmetleri temsilcisi hesap sahibinin kimliğini doğrulamak ister ve Pine, kullanıcının hemen bir güvenlik kodu veya OTP (Tek Kullanımlık Şifre) doğrulama kodu sağlamasına ihtiyaç duyar
+- **Üç Yönlü Arama Onayı**: Müşteri hizmetleri temsilcisi doğrudan hesap sahibiyle konuşmak ister ve Pine, kullanıcının birkaç saniye içinde telefonu yanıtlamasına ihtiyaç duyar
+- **İlerleme Senkronizasyonu ve Karar Onayı**: Müzakerede kritik bir noktada (örn. karşı taraf bir fiyat indirimi önerdiğinde), Pine kullanıcının kabul edip etmediğini onaylamasına ihtiyaç duyar
 
-Bu liste, Agent değerlendirmesinin haritasını tüketmiyor. Yalnızca Web/GUI kategorisinde bile farklı yönlere ağırlık veren birçok benchmark var: WebArena tümüyle yeniden üretilebilir bir web sitesi kümesi (e-ticaret, forum, kod barındırma vb.) kurarak "gerçek web sayfalarının" denetlenemezliğini bir sandbox'a kapatır; Mind2Web tam tersini yapar ve genelleme yeteneğini doğrudan yüzlerce gerçek web sitesi üzerinde ölçer; BrowseComp ise derin retrieval'a odaklanır — yanıtlar çok derine gizlenmiştir, bulmak için çok sıçramalı gezinme ve çapraz doğrulama gerekir. Tool calling boyutunda ise BFCL (Berkeley Function-Calling Leaderboard) gibi özel fonksiyon çağırma sıralamaları var. Bu bölümün amacı bütün benchmark'ları sıralamak değil; iki temel ortam paradigmasını (araç çağırma tipi ve insan-makine etkileşimi tipi) ve veri kümesi örneklerinin içinden geçen GUI işlem senaryolarını alıp tasarım ödünleşimlerini derinlemesine kazmak — paradigmaları kavradıktan sonra, herhangi bir yeni benchmark karşısında neyi ölçtüğünü, sızıntıya karşı ne kadar korunduğunu ve sonuçlarının nereye kadar genellenebileceğini hızla değerlendirebilirsiniz.
+Heartbeat'in periyodik polling'iyle—diyelim ki 5 dakikalık bir aralıkla—temsilci hâlâ doğrulama kodunu beklerken kullanıcı bildirimi alamayabilir; temsilci telefonu kapatır ve arama başarısız olur. Aralığı saniyelere kısaltmak ise sistemi yalnızca yararsız isteklerle doldururdu.
 
-> **Deney 6-2 ★: Benchmark Görevlerini Elle Yapmak**
->
-> GAIA, AndroidWorld, SWE-Bench Verified, τ²-bench, Terminal-Bench ve OSWorld-Verified'dan birer görev seçip kendi elinizle tamamlayın. Her veri kümesinden kolay, orta ve zor birer görev yapmanız önerilir — "zor" seviye insanlar için de zorlayıcıdır. Kendi sonuçlarınızı standart yanıtlarla karşılaştırın ve farkların kaynağını analiz edin. Bu birinci elden deneyimle şunları kavrayın: görev açıklamaları netlikle açıklık arasında denge kurmalıdır, doğrulama ölçütleri nesnel ve çalıştırılabilir olmalıdır, görev zorluğunun katmanlandırılması farklı yetenek düzeylerini ayırt edebilmelidir.
->
+PineClaw'ın çözümü bir **Channel mekanizması** tanıtmaktır—OpenClaw'ın Gateway'i ile Pine API'si arasında gerçek zamanlı bir olay kanalı kurmak. Bir arama bağlandığında, kullanıcı girdisi gerektirdiğinde veya arama bittiğinde gibi kilit olaylar gerçekleştiğinde, mesaj anında OpenClaw Agent'ına push edilir. Agent bunu hemen işler ve kullanıcıyı bilgilendirir, yanıt gecikmesini dakikalardan saniyelere indirir.
 
-### Görev Veri Kümesi Tasarımının Temel Zorlukları
+Bu durum, Agent çerçeveleri için olay güdümlü bir mimarinin temel değerini ortaya koyar: **gerçek "proaktif hizmet", yalnızca Agent'ın olayları periyodik olarak kontrol edebilmesini değil, aynı zamanda olayların da Agent'ı aktif olarak bilgilendirebilmesini gerektirir.** Tüm girdileri—kullanıcı mesajları, araç dönüşleri, dış geri çağrılar, zamanlanmış tetikleyiciler—bir olay akışında birleştirmek ve bir olay döngüsü aracılığıyla Agent'ın düşünmesini ve eylemlerini yönlendirmek, bu hedefe ulaşmanın mimari temelidir. Bu mimari altında, önce olaylarla doğrudan ilgili iki araç kategorisini, ayrıca Agent'ın bağımsız eylemlerini destekleyen sanal kimliği ve izole yürütme ortamını tanıtacağız, ardından olay işleme mekanizmasının belirli tasarımını tartışacağız.
 
-**Zorluk bir: netlikle açıklık arasındaki gerilim.** Görev açıklaması, değerlendirmenin tekrarlanabilirliğini güvenceye alacak kadar net olmalı, ama Agent'ın yaratıcılığını kısıtlayacak kadar da katı olmamalıdır. GAIA buna bir örnek sunar: görevler "kavramsal olarak basit", ama uygulama yolları açıktır — örneğin NASA'nın Günün Astronomi Fotoğrafı'ndaki astronotun bilgilerini bulmak istenir; hedef nettir (belirli bir astronotu ve uzayda geçirdiği süreyi bulmak), ama nasıl arama yapılacağı, nasıl eleneceği ve nasıl doğrulanacağı tamamen Agent'ın kendi kararına bırakılmıştır.
+### Olay Tetikleyici Araçlar
 
-**Zorluk iki: gerçekçilikle denetlenebilirlik dengesi.** Gerçek görevler belirsizlik ve gürültü içerir; bu, sağlamlığın görünür olmasını sağlar ama tekrarlanabilirliği de tehdit eder. SWE-Bench'in ilk sürümü doğrudan GitHub'daki gerçek issue'ları aldı; bu, gerçekçiliği güvenceye aldı ama görev açıklamalarının belirsiz, test durumlarının eksik ve değerlendirme ölçütlerinin öznel olmasına da yol açtı. SWE-Bench Verified, insan uzmanlarla sistematik bir doğrulama süreci getirdi ve bunlar arasından sorunu açık, testleri yeterli, çözümü belirgin 500 yüksek kaliteli görev seçti; böylece gerçekçiliği korurken denetlenebilirliği belirgin biçimde artırdı.
+Olay tetikleyici araçlar, dış olayların bir Agent'ın eylemlerini yönlendirdiği giriş noktalarıdır. Bunlar olmadan, bir Agent yalnızca düşünme, araç çağırma ve nihayet bir sonuç çıktısı verme döngüsünde çalışabilir, ardından kullanıcının bir sonraki girdisini bekler. Dünyadaki değişiklikleri bir Agent'ın işleyebileceği olaylara çevirmek için, üç yaygın olay tetikleyici araç türü vardır.
 
-**Zorluk üç: çeşitlilikle sistematikliğin uyumu.** Etkili bir veri kümesinin tipik durumları, sınır koşullarını ve hata tuzaklarını kapsaması, aynı zamanda sistematik bir organizasyonu olması gerekir; ancak böylece değerlendirme sonuçları belirli yetenek eksikliklerini teşhis edebilir. AndroidWorld'ün 116 görevi 20 gerçek uygulamaya yayılır ve her görev gerektirdiği temel yeteneklerle (çok adımlı planlama, görsel anlama, zamansal akıl yürütme) etiketlenmiştir; böylece değerlendirme sonuçları yalnızca genel bir başarı oranı vermez, belirli yetenek boyutlarındaki güçlü ve zayıf yanları da ortaya çıkarır. Daha da önemlisi, parametrelendirme mekanizmasıyla neredeyse sınırsız sayıda görev varyantı üretilebilir.
+**Zamanlayıcılar** (`set_timer`), fiziksel zamana bağlı olayları ele alır. Bir e-posta yanıtsız kalırsa, Agent bir süre sonra ilerleme hakkında sormak için takip etmelidir; bir arama çalışma saatleri dışında birine ulaşırsa, bir sonraki iş penceresinde yeniden denemelidir. Bunu desteklemek için, OpenClaw ve Claude Code gibi araçlar zamanlayıcı işlevselliği içerir, Agent'ın belirli bir fiziksel zamanda kendini uyandırmasına izin verir. **Tek seferlik zamanlayıcılar**, belirli bir son tarihi olan görevler için kullanılır: örneğin, bir kullanıcı Cumartesi günü "DMV'yi ara" diye isterse, Agent "gelecek Pazartesi saat 10:00'da DMV'yi ara" için bir zamanlayıcı ayarlar, bu da aramayı otomatik olarak tetikler. **Tekrarlayan zamanlayıcılar**, periyodik görevler için kullanılır: örneğin her saat sunucu sağlığını kontrol etmek veya her Cuma bir ilerleme raporu göndermek gibi. Ayrıca, bazı dış servisler proaktif ilerleme güncellemelerini desteklemez, Agent'ın durumu aktif olarak sorgulamasını gerektirir. Bu tür durumlarda, tekrarlanan sorgular için tekrarlayan bir zamanlayıcı gereklidir—önceki bölümdeki OpenClaw'daki Heartbeat mekanizması bunun sistemleştirilmiş bir biçimidir ve OpenClaw'ın "proaktif hizmet" yeteneğinin köküdür.
 
-**Zorluk dört: değerlendirme maliyetine karşı kapsam.** Karmaşık Agent görevleri tamamlanması dakikalar hatta saatler süren ve büyük miktarda token tüketen işlerdir. Veri kümesinin büyüklüğü, kapsayıcılıkla ekonomiklik arasında dengelenmelidir. GAIA, üç zorluk düzeyine ayrılmış 466 soruyu özenle seçer; hem birçok yetenek boyutunu kapsar hem de değerlendirmenin makul bir maliyetle tamamlanmasına izin verir. SWE-Bench Verified ise 2.294 sorudan 500 soruya indi (maliyet yaklaşık beşte dört azaldı; daha katı kalite ölçütleriyle sinyal-gürültü oranı yükseldi).
+**Arka Plan Görevi İzleme** (`monitor_shell`), asenkron olarak yürütülen araçlardan veya komut satırı görevlerinden gelen olayları ele alır. Bazı komut satırı görevleri uzun süre arka planda çalışır ve Agent'ın ilerlemesini takip etmesi gerekir. Agent "komut satırına dik dik bakarsa", ilerlemeyi sorgulamak için bir aracı tekrar tekrar çağırırsa, token yakar; görev tamamen bitene kadar yeniden düşünmeyi beklerse, kritik sorunları gelişirken kaçırır—ve komut askıda kalırsa, hiç müdahale edemez, tüm görevi durdurur. Claude Code bunu bir `monitor` aracı tanıtarak çözer, Agent'ın komut satırından yeni çıktıyı veya belirli anahtar kelimeler içeren çıktıyı izlemesine izin verir.
 
-**Zorluk beş: veri sızıntısını (Data Contamination) önlemek.** Büyük dil modelleri çağında veri sızıntısı, değerlendirmenin karşılaştığı ciddi bir zorluktur: değerlendirme verisi eğitim verisine karıştığında, değerlendirme genelleme yeteneğini değil ezberi ölçmeye başlar; tıpkı sınavdan önce yanıtları ezberlemek gibi — alınan not ne kadar yüksek olursa olsun gerçek düzeyi göstermez. Her benchmark farklı bir önleme stratejisi benimsedi: GAIA yanıtların benzersizliğine dayanır; sorular ancak birden fazla bilgi kaynağı birleştirilerek yanıtlanabilir ve bazı görevlerde özel olarak üretilmiş ek dosyalar (internette bulunmayan PDF/ses/görsel) bulunur, dolayısıyla tek bir web sayfası yanıtı doğrudan veremez. SWE-Bench Verified'ın kendisi, OpenAI'nin özgün SWE-Bench üzerinde elle kalite elemesi yaparak elde ettiği 500 soruluk bir alt kümedir ve zaman boyutlu bir sızıntı önleme tasarımı içermez; sızıntıyı gerçekten zamansal tazelikle önleyenler SWE-bench-Live gibi sonraki çalışmalardır — bunlar modelin eğitim kesim tarihinden sonra açılan issue'ları sürekli toplayarak değerlendirmeyi modelin eğitim külliyatının hep önünde tutar. τ²-bench önlemeyi dinamik parametre üretimiyle yapar; somut görev örnekleri (kullanıcı adı, sipariş numarası, tarih vb.) her seferinde rastgele üretilir. AndroidWorld'ün parametrelendirilmiş görev üretimi doğası gereği sızıntıya dirençlidir, çünkü doğrulama işlem dizisine değil nihai UI durumuna dayanır. Terminal-Bench ise kanarya tanımlayıcıları (canary GUID, yani küresel benzersiz tanımlayıcı — benzersiz bir izleme işareti) gömerek sızıntıyı saptanabilir kılar: model bu GUID'i içeren bir içerik üretebiliyorsa, benchmark verisi eğitim kümesine sızmış demektir.
+**Dış Olay Kanalları** (`connect_channel`), yeni e-postalar, API geri çağrıları veya IM mesajları gibi dış olayları Agent'a gerçek zamanlı olarak push eder. Önceki bölümdeki PineClaw'daki Channel mekanizması tipik bir uygulamadır.
 
-### Görev Açıklamalarının Kesinlik Tasarımı
+Tasarım açısından, olay tetikleyici araçlar ilgisiz olayların Agent'ı uyandırıp hesaplama kaynaklarını israf etmesini önlemek için net tetikleme koşulları ve filtreleme kuralları tanımlamalıdır. Olay yükü, Agent'ın uyandıktan sonra yapması gereken ek sorgu sayısını en aza indirmek için yeterli context bilgisi içermelidir.
 
-GAIA, yanıtın tekliğini net bilgi kaynağı kısıtları, zaman aralıkları, konu ve sorgu hedefi üzerinden güvenceye alır. Örneğin bir Level 3 görevi, belirli bir tarihteki NASA görselinden yola çıkıp görsel anlamayla astronotu tanımayı, astronotun bağlı olduğu grubu sorgulamayı, uzayda kaldığı süreyi hesaplamayı ve çıktıyı tam olarak biçimlendirmeyi ister ("soyadı, noktalı virgülle ayrılmış, binlik ayırıcılı"); her ayrıntı otomatik doğrulamaya hizmet eder — yalnızca biçim ve içerik birebir eşleşirse geçmiş sayılır.
+### Kullanıcı İletişim Araçları
 
-τ²-bench bağlamsallaştırılmış bir tasarım getirir; her görev birden çok katman bilgi içerir: yüzeydeki sorun ("mobil veri çalışmıyor"), performans beklentisi ("kesinlikle mükemmel bir hız istiyorum"), kısıt ("başka bir hızı kabul etmem") ve örtük duygu durumu. Kilit iyileştirme, "bilinen bilgi" ile "görev talimatlarını" birbirinden ayırmaktır: bilinen bilgi kullanıcının o an elinde tuttuğu olgulardır; görev talimatları ise simülatöre bilgiyi nasıl kademeli açacağını gösterir ve içinde "olgusal dayanak gereksinimi" (Grounding Requirement, yani yanıtların tool calling'in gerçekte döndürdüğü sonuçlara dayanması, uydurulmaması) bulunur.
+Kullanıcı iletişim araçları, Agent ile kullanıcı arasındaki iletişim kanallarının giderek çeşitlenmesine uyum sağlamak için ortaya çıktı. Birçok Agent (Claude Code, Manus gibi) yerel bir ReAct döngüsü kullanır: Agent'ın "söylediği" her şey, yani assistant mesajları, doğrudan kullanıcıya gönderilir ve kullanıcının Agent ile konuşabilmesi için uygulamada belirli bir oturumu açması gerekir. Kullanıcı bu oturum içinde çoğu zaman Agent'ın araç çağırma sürecini de görebilir.
 
-SWE-Bench Verified; sorun açıklaması, yeniden üretme adımları, beklenen/gerçekleşen davranış gibi yapılandırılmış alanlar içerir ve etiketleyiciler açıklamayla test durumlarının uyuştuğunu doğrular. Terminal-Bench'in görev açıklamalarındaki her öğe mekanik olarak doğrulanabilir: dosya yolu var mı, izin değerleri doğru mu, sertifika parametreleri, tarih biçimi vb. Örneğin "build-linux-kernel-qemu" görevi Linux çekirdeği 6.9'un kaynaktan derlenmesini, `start_kernel` içine özel bir printk eklenmesini, bir initramfs üretilmesini ve bunun QEMU'da çalıştırılmasını ister; başarı ölçütü, açılış günlüğünde özel mesajın görünmesidir — Agent çıktıyı taklit ederek işin içinden sıyrılamaz, tüm süreci gerçekten tamamlamak zorundadır.
+OpenClaw bu insan-makine iletişim paradigmasını kırar. Kullanıcının oturumun varlığını fark etmesi de, Agent'ın araç çağırma ayrıntılarıyla ilgilenmesi de gerekmez; kullanıcı bir mesaj gönderip Agent bir yanıt vermek yerine, kullanıcı da Agent da istediği an karşı tarafa mesaj gönderebilir. Bu yüzden birçok kişi OpenClaw'ın **"canlı bir insan hissi"** verdiğini söyler; tıpkı bir sekreter gibi metin mesajlarıyla kullanıcıyla eşzamansız iletişim kurar. OpenClaw, modelin ürettiği assistant mesajını doğrudan kullanıcıya sunmaz; mesaj göndermek için özel araçlar kullanır. Bu mesajlara görseller ve dosyalar eklenebilir, aciliyet derecesine göre anlık bildirim de iliştirilebilir.
 
-AndroidWorld **parametrelendirilmiş şablon** tasarımını benimser. Bir görev statik metin değil, dinamik olarak örneklenebilen bir şablondur ("`[CONTACT_NAME]` kişisinin telefon numarasını `[NEW_PHONE]` olarak değiştir" gibi) ve her değerlendirmede farklı parametre değerleri rastgele üretilir. Bunun üç yararı var:
+Metin tabanlı iletişimin ötesinde, giderek artan sayıda Agent, yapılandırılmış kart mesajları veya hatırlatma e-postaları gönderme gibi çok modlu iletişim yeteneklerine sahiptir. Bazı Agent'lar, bilgiyi kullanıcılara daha kullanıcı dostu bir şekilde sunmak için HTML veya diğer yöntemleri kullanarak etkileşimli arayüzler oluşturan üretici UI ile deneyler yapmaya başladı. Tasarım açısından, kullanıcı iletişim araçları asenkron mesajlaşmayı desteklemeli (kullanıcı çevrimiçi olmayabilir), okundu/okunmadı durumu izlemesi sağlamalı ve birden fazla kanal arasında mesaj tutarlılığını korumalıdır.
 
-- **Ezberi engeller**: parametre değerleri her seferinde farklıdır, sabit bir işlem dizisi yeniden oynatılamaz
-- **Veri çeşitliliğini artırır**: tek bir şablon neredeyse sınırsız sayıda örnek üretebilir
-- **Karşılaştırmalı deneyleri destekler**: bazı parametreler sabit tutulup yalnızca diğerleri değiştirilerek belirli bir etkenin etkisi hassas biçimde ölçülebilir
+**Çok Kanallı Kullanıcı İletişimi ve Geri Çağırma.**
 
-Doğrulama, işlem dizisine değil nihai UI durumuna dayanır (telefon numarası alanının beklenen değeri içerip içermediği gibi).
+**Bir Agent'ın yanıtı tek bir kanalla sınırlı olmamalıdır; bildirim mekanizması aynı zamanda bir kullanıcı geri çağırma mekanizması olarak da hizmet eder.** Mesaj gönderme anlık mesajlaşmaya, SMS'e, e-postaya, telefon aramalarına, push bildirimlerine ve diğer kanallara genişler. Agent, önemli mesajların kaçırılmamasını sağlarken gereksiz kesintilerden kaçınarak, aciliyet, kullanıcı durumu, içerik doğası ve kullanıcı tercihlerinin bir bileşimine dayanarak kanala karar verir.
 
-OSWorld'ün görevleri çoğunlukla "temiz" bir başlangıç durumundan değil, özenle yapılandırılmış ara durumlardan başlar; bu da gerçek kullanım senaryolarına daha yakındır. Görev açıklamalarının çok çözümlülüğü ("arka planı mora ayarla" isteğinde belirsizliği gidermek için somut bir renk kodu verilmelidir; "iki CSV'yi birleştir" isteğinde tek başlık/çift başlık gibi bütün makul yollar kabul edilmelidir) ve ortam belirsizliğini (sitelerin tarama engelleri, uygulama arayüzlerinin evrilmesi, zamanlama yarışları — OSWorld-Verified bunları çevrimdışı sayfa anlık görüntüleri, bağımlılık sürümlerini sabitleme ve açık bekleme koşulları gibi mekanizmalarla hafifletir) ele alması gerekir.
+Uzun süren görevler için, Agent tamamlandığında kullanıcının dikkatini geri çağırmak için proaktif olarak bilgilendirmelidir. Periyodik görevler için (günlük özetler veya haftalık raporlar gibi), bildirimler kullanıcı için düzenli bir etkileşim alışkanlığı oluşturmaya yardımcı olabilir.
 
-### Görev Karmaşıklığının Katmanlı Tasarımı
+Kullanıcı iletişim araçları "kullanıcıya nasıl ulaşılacağı" sorununu çözer. Ancak, Agent'ın bu kanallarda üstlendiği kimlik ve kullanıcı adına eylemleri gerçekleştirdiği ortam, bir sonraki bölümün konusu olan bir kimlik ve ortam altyapısı katmanı gerektirir.
 
-GAIA üç zorluk düzeyi tasarladı: Level 1 yalnızca 1-2 araç gerektirir (insanlar %93,9, GPT-4 %30,3), Level 2 çok adımlı düşünme gerektirir (%91,8 ve %9,7), Level 3 karmaşık bileşimler gerektirir (%87,3 ve %0). Katmanlı tasarımın teşhis değeri şuradadır: Level 1'deki başarısızlık temel araç kullanımı sorununa, Level 2 çok adımlı planlama ve bilgi bütünleştirme sorununa, Level 3 ise uzun dizili düşünme ve karmaşıklık yönetimi sorununa işaret eder — her katman farklı bir iyileştirme yönüne karşılık gelir (prompt engineering, planlama mekanizması, katmanlı mimari/post-training).
+### Sanal Kimlik ve İzole Yürütme Ortamı
 
-τ²-bench katmanlandırmayı iş karmaşıklığı üzerinden yapar: basit bilgi sorgularından çok adımlı süreçlere (uçuş değiştirmek için sorgulama, alternatifleri gösterme, onay alma, fiyat farkını hesaplama ve ödeme gerekir), oradan arıza teşhisine (birden fazla olası nedeni sistematik biçimde kontrol edip düzeltmeyi doğrulama) ve son olarak politika muhakemesine (politikaya uymayan talepleri ele alma) uzanır.
+Dördüncü bölüm, *Her* filmindeki Samantha'yı örnek alarak bir Agent'ın araçları kullanıp gerçek dijital dünyayla nasıl etkileşime girdiğini açıklar. Böyle bir genel amaçlı asistan elde etmek, kilit bir mimari seçime zorlar: Agent, kullanıcının kişisel hesaplarını doğrudan mı yönetmeli, yoksa kendi sanal kimliğine mi sahip olmalı? Doğrudan yönetim uygun görünür, ama tek bir Agent hatası veya ele geçirilmesi kullanıcının tüm dijital kimliğini açığa çıkarır. Daha güvenli yaklaşım, bir sekreterin kendi ofis telefonuna ve posta kutusuna sahip olması gibi, Agent'a özel iletişim hesapları, depolama ve hesaplama ortamlarından oluşan bağımsız bir sanal kimlik vermektir, böylece Agent kullanıcı adına açıkça çalışabilir. Açıkça beyan edilen bir kimlik güveni zayıflatmak bir yana, iletişimi daha gerçek kılar.
 
-Terminal-Bench katmanlandırmayı teknik alan × işlem karmaşıklığı olmak üzere iki boyutta yapar; görev kaydında 200'den fazla görev toplanmıştır (çekirdek değerlendirme kümesinin büyüklüğü sürümden sürüme değişir; örneğin 2.0 sürümü topluluk katkıları arasından 89 yüksek kaliteli görev seçmiştir). Görevler basit mlflow model kaydından orta düzeydeki 7z parola kırmaya, oradan zor olan git sunucusu + webserver çok bileşenli entegrasyonuna ve en zor olan FEAL diferansiyel kriptanalizine (kriptografi bilgisi ve 30 saniyelik zaman kısıtını karşılayacak algoritma optimizasyonu gerektirir) kadar uzanır.
+Sanal kimlikler izole yürütme ortamlarına dayanmalıdır. **Sanal bilgisayarlar** (VM'ler/konteynerler) ve **sanal telefonlar** (Android emülatörleri), Agent'a işletim sistemi düzeyinde izolasyon ve tam masaüstü/mobil işlem yetenekleri sağlar: Agent bunların içinde kendi kullanıcı hesabına, ana dizinine ve giriş kimlik bilgilerine sahiptir, tüm işlemleri izlenebilir ve denetlenebilir kılar; hatalı işlemler gerçekleştirilse bile, host sistemi ve kullanıcının gerçek cihazı etkilenmeden kalır. Bu, yürütme araçları bölümünde tartışılan sandbox kavramının "dijital kimlik" boyutuna bir uzantısıdır—sandbox'lar kod yürütmeyi izole eder, sanal bilgisayarlar ve telefonlar ise tüm dijital kimliği izole eder.
 
-### Doğrulanabilirlik ve Nesnellik Güvencesi
+Bağımsız bir kimlik ayrıca iki pratik zorluk sunar. Birincisi **otomasyon karşıtı mekanizmalardır**: birçok web sitesi otomatik erişimi engellemek için CAPTCHA'lar ve IP itibar kontrolleri kullanır. Veri merkezi IP'leri kullanan sanal ortamlar kolayca tanınır; pratikte, normal erişim genellikle bir konut proxy ağı (gerçek ev IP'lerini kullanan) yapılandırmayı gerektirir. İkincisi, **kullanıcının gerçek hesaplarına erişimdir**: bir görev kullanıcının kendisi olarak giriş yapmayı gerektirdiğinde, Human-in-the-Loop kimlik doğrulaması kullanın—kullanıcının kişisel olarak giriş yaptığı, Agent'ın çalıştırdığı eksiksiz arayüzü gördüğü ve kimlik doğrulamanın neden gerekli olduğunu anladığı bir VNC/RDP uzak masaüstü. Oturum token'ı daha sonra kullanıcıyı tekrar tekrar kesintiye uğratmamak için geçerlilik süresi içinde yeniden kullanılır, otonomi ve güvenliği dengeler.
 
-GAIA'nın yanıtları kısa ve nettir; katı biçim kuralları doğrulamanın tam dize eşleşmesiyle yapılmasını sağlar ve ikili sonuç (eşleşti ya da eşleşmedi) nesnel tekrarlanabilirliği güvenceye alır. Yanıtların nadirliği aynı zamanda hile önleyici bir işlev görür — son derece somut olguların eğitim verisinde birebir aynı biçimde bulunması pek olası değildir.
+Ana Agent ile sanal ortam arasındaki veri alışverişi bir **paylaşılan dosya sistemi** aracılığıyla gerçekleştirilir: ana Agent'ı, sanal bilgisayarı ve sanal telefonu bağlamak için birim bağlamaları (örn. `/workspace/shared`) kullanılır. Veri, içerik kopyalama yerine dosya yolu referanslarıyla geçirilir, context penceresi tüketimini önler. Örneğin, bir veri analizi görevinde: kullanıcı paylaşılan dizine bir CSV dosyası yükler, sanal bilgisayardaki Agent dosyayı okur, analiz yapar, grafikler üretir ve bunları paylaşılan dizine geri kaydeder. Ana Agent yalnızca grafiğin dosya yolunu kullanıcıya döndürmelidir—taraflar arasında geçirilen her zaman hafif bir yol dizesidir.
 
-SWE-Bench Verified doğrulamayı kodun çalıştırılabilirliği üzerinden yapar ve FAIL_TO_PASS (düzeltmeden önce başarısız, düzeltmeden sonra başarılı; sorunun çözüldüğünü kanıtlar) ile PASS_TO_PASS (düzeltmeden önce de sonra da başarılı; yeni bir bug eklenmediğini kanıtlar) arasında ayrım yaparak çifte doğrulama sağlar. Verified sürümü ayrıca testlerin kendi kalitesinin güvenilir olmasını, bazen geçip bazen kalan kararsız testlerin (flaky tests) bulunmamasını da güvenceye alır.
+Olay tetikleyici araçlar dünyanın Agent'ı uyandırmasına izin verir, kullanıcı iletişim araçları Agent'ın kullanıcıya ulaşmasına izin verir ve izole yürütme ortamlarına sahip sanal kimlikler Agent'ın bağımsız ve denetlenebilir biçimde hareket etmesine izin verir. Kalan soru şudur: birden fazla olay aynı Agent örneğinde eş zamanlı olarak birleştiğinde, bunlar nasıl ele alınmalıdır?
 
-τ²-bench'in doğrulama sistemi çok katmanlı denetimler içerir (katmanların sonuçları görev düzeyinde yine ikili bir ödüle indirgenir; başarı için hepsinin geçmesi gerekir):
+### Olay İşleme Mekanizması
 
-- **Veritabanı durumu denetimi**: rezervasyon kaydının durumu, iade kaydının oluşturulup oluşturulmadığı
-- **Diyalog içeriğinde anahtar kelime araması**: iade tutarının ve hesaba geçiş süresinin kullanıcıya doğrulatılıp doğrulatılmadığı
-- **Süreç uygunluğu**: tool calling dizisinin analizi; örneğin sipariş değiştirilmeden önce kullanıcının açık onayının alınıp alınmadığı
+Tek bir Agent örneği, eş zamanlı olarak birden fazla olayla karşılaşabilir: kullanıcıdan yeni bir mesaj, bir araçtan bir sonuç, süresi dolan bir zamanlayıcı, başka bir Agent'tan bir iş birliği isteği. Bu olayların ne kadar verimli ve doğru biçimde ele alındığı, performansı ve kullanıcı deneyimini doğrudan etkiler.
 
-τ²-bench'in çift kontrollü ortamı (bkz. yukarıdaki "İnsan-Makine Etkileşimi Tipi Değerlendirme Ortamı" bölümü) doğrulamaya bir boyut daha ekler: kullanıcı simülatörü ortam durumunu gerçekten değiştirdikten sonra Agent bu değişikliği tool calling ile gözlemleyip incelemesini buna göre sürdürmek zorundadır; böylece doğrulama, "Agent kullanıcı tarafındaki işlemin sonucunu gerçekten okudu mu" sorusunu da kapsar.
+Bu mekanizmanın iskeleti, eşzamanlı programlamadaki **olay döngüsüdür** (event loop). Asenkron bir Agent'ı uzun süre çalışan bir döngü olarak düşünün: her tur, girdi kuyruğundan bir grup olay alır, bunları trajectory'ye ekler, LLM'i bir kez çağırır, LLM'in karar verdiği araçları yürütür ve sonraki olay grubunu beklemek için döngünün başına döner—bu, bir Go goroutine'inin bir channel'dan mesaj okuyup bunları `for { select { ... } }` içinde tur tur işlemesiyle aynı yapıdır.
 
-OSWorld, tam işletim sistemi erişimine sahip 134 bağımsız değerlendirme fonksiyonuyla donatılmıştır; dosya sistemi yapısını, süreç durumlarını, ağ bağlantılarını ve uygulamaların iç durumunu derinlemesine denetleyebilir. Örneğin bir veritabanı işlemi görevinde değerlendirme betiği yalnızca rapor dosyasının var olup olmadığını doğrulamaz, doğrudan veritabanına bağlanıp SQL'in doğru çalıştırılıp çalıştırılmadığını da denetler; tarayıcı görevlerinde DOM ağacını analiz eder, cookie/localStorage'ı kontrol eder ve formun gerçekten geçerli olup olmadığını doğrulamak için arka uca doğrulama istekleri gönderir. Bu derin denetim, "yüzeyde tamamlanmış ama özünde hatalı" durumları yakalayabilir — örneğin Agent gönder düğmesine basmıştır, ama alanlar yanlış doldurulduğu için istek sunucu tarafından reddedilmiştir.
+Geleneksel senkron arayüz uygulamasında **olaylar her turun sınırlarında tüketilir**. LLM akıl yürütürken veya araç çalışırken yeni olaylar, bir düşünme bölümünün sonu ya da araç dönüşü gibi bir **güvenli noktaya** kadar kuyrukta bekler. Yerleşik asenkronluk, model düşünürken veya çıktı üretirken yeni gereksinimlerin alınmasına izin verir; işlemeye devam edilecek uygun anı sistem seçer. İki yaklaşımda da sınırlar vardır, ancak bunları farklı katmanlar yönetir. Aracı iptal etmek için yürütücünün iptal sinyaline yanıt vermesi gerekir; bu, Go'daki `ctx.Done()` denetimine benzer. “Dur” mesajı almak, gerçekleşmiş eylemleri kendiliğinden geri almaz.
 
-Terminal-Bench, Docker konteynerlerine dayalı standartlaştırılmış bir ortam üzerine kuruludur; dosya sistemi durumu denetimlerini (yol var mı, izin değerleri, içerik biçimi) program yürütme işlevselliğinin doğrulanmasıyla (build-linux-kernel-qemu görevinde QEMU'nun gerçekten başlatılıp özel printk mesajının aranması) birleştirir; canary GUID de sızıntıyı izlenebilir kılar.
+Bu ayrımla, önce senkron arayüzlerle uyumlu bir olay döngüsü üzerinden üç stratejiyi açıklayacağız: bir sonraki doğal güvenli noktayı beklemek (kuyruk), güvenli noktayı erkenden oluşturmak (iptal) ya da ana döngüyü beklemeden başka bir döngü başlatmak (paralel işleme). Yerleşik steering ile devam etme mekanizmasına daha sonra döneceğiz.
 
-### Görev Dağılımının Sistematik Tasarımı
+**Yapılandırılmış Olay Modellemesi.**
 
-Görev dağılımının yetenek boyutlarını, zorluk boyutlarını, senaryo boyutlarını ve sınır durumlarını sistematik biçimde kapsaması gerekir. GAIA genelliği hedefler — görevlerin çoğu reasoning, çok modluluk, gezinme ve araç kullanımının bileşimini gerektirir. τ²-bench özellikle "tuzak görevler" tasarlamıştır — örneğin kullanıcı "müşteri hizmetleri iptali onayladı" der ama iptal aslında politikaya uymamaktadır; böylece Agent'ın baskı ve yanıltma karşısında doğru muhakemesini koruyup koruyamadığı sınanır. OSWorld, işlem türü (dosya IO / masaüstü uygulaması / web uygulaması / uygulamalar arası akış) ile uygulama alanından oluşan iki boyutlu bir matrise dayanır ve üç işletim sistemine yayılır (araştırmalar işletim sistemleri arası yeteneklerin güçlü biçimde ilişkili olduğunu, bir sistemde öğrenilen yeteneğin diğerlerine aktarılabildiğini gösteriyor). Terminal-Bench ise sistem düşüncesini sınamak için "teknoloji yığınları arası bileşim görevleri" içerir (veri işleme + dosya işlemleri + Python mühendisliğini birleştiren yeniden parçalama görevi gibi).
-
-### Veri Kalitesi Kontrolü ve Yinelemeli İyileştirme
-
-SWE-Bench Verified, kalite kontrolünün örnek vakasıdır. OpenAI, özgün 2.294 görev arasından rastgele 1.699'unu insan değerlendirmesine soktu ve Python'a hâkim 93 geliştirici görevlendirdi. Etiketleyicilerin birden çok denetimi tamamlaması gerekiyordu: sorun açıklaması açık mı (neyin çözüleceği anlaşılıyor mu), test durumları eksiksiz mi (bütün yönleri ve sınır koşullarını kapsıyor mu), testler kararlı mı (ortamdan veya rastgelelikten kaynaklanan flaky test var mı), patch doğru mu (yeni hata ekliyor mu), zorluk makul mü. Katı elemenin sonunda yalnızca 500'ü geçti (%29) — bu yüksek eleme oranı, değerlendirme kalitesine yapılan zorunlu bir yatırımdır. Ayrıca standartlaştırılmış bir etiketleme kılavuzu oluşturup her denetim için somut ölçütler ve örnekler tanımladılar; böylece farklı etiketleyiciler arasındaki tutarlılığı güvenceye aldılar.
-
-τ²-bench, "bilinen bilgi" ile "görev talimatları" ayrımını (simülatör davranışını daha gerçekçi kılar) ve daha katı tamamlanma koşullarını ("yalnızca excellent çözülmüş sayılır; poor/fair/good kabul edilmez" gibi) getirerek "göstermelik düzeltmelerin" önüne geçer.
-
-OSWorld-Verified, yinelemeli iyileştirmenin örnek vakasıdır. OSWorld, Nisan 2024'te yayımlandıktan sonra hızla çok modlu Agent değerlendirmesinin önemli bir benchmark'ı haline geldi, ama 15 aylık yaygın kullanım sırasında 300'den fazla sorun açığa çıktı. Bu sorunlar dört gruba ayrılıyor: ortam sorunları (sitelerin tarama engelleri / CAPTCHA / dinamik içerik değişimleri), görev açıklaması sorunları (belirsiz ifadeler), doğrulama mantığı sorunları (fazla katı ya da fazla gevşek) ve başlangıç durumu sorunları (eksik yapılandırma). Hong Kong Üniversitesi ekibi yaklaşık 10 kişilik bir grup kurdu ve MoonShot AI, OpenAI, ByteDance Seed TARS, Anthropic, Simular gibi kuruluşlarla iki ay boyunca yakın iş birliği yaparak sistematik bir düzeltme çalışması yürüttü. Her sorun türü için bir düzeltme stratejisi belirlendi: ortam sorunları sürümleri sabitleyerek ve çevrimdışı yedekler alarak çözüldü, görev açıklamalarındaki belirsiz ifadeler yeniden yazılarak giderildi, doğrulama mantığı elle doğru referans çizgileri kurulup koşullar ayarlanarak dengelendi, başlangıç durumları ise bütünlük denetimleri eklenerek güçlendirildi.
-
-Değerlendirme altyapısı da yerel sanal makinelerden AWS bulut platformuna taşındı; esnek ölçeklendirme sayesinde paralellikte 50 kat hızlanma sağlandı (10 saati aşan süre birkaç dakikaya indi) ve Google Drive görevlerinin başlatılma başarı oranı %50'den %95'in üzerine çıktı. Tüm resmî değerlendirme trajectory verisi HuggingFace üzerinde herkese açıktır; böylece topluluk her ayrıntıyı inceleyebilir, sonuçları yeniden üretebilir ve sorunları saptayabilir — sürekli iyileştirmenin erdemli döngüsü böyle kurulur.
-
-Belirtmeye değer bir nokta: değerlendirme ortamlarıyla post-training ortamları çoğu zaman aynı kökten gelir; iyi tasarlanmış bir değerlendirme ortamı küçük bir dönüştürmeyle eğitim ortamına çevrilebilir — SWE-Gym, SWE-bench üzerine eğitim görevleri kurmanın temsilci örneğidir; τ²-bench ve AndroidWorld'ün parametrelendirilmiş şablonları ise toplu olarak devasa sayıda eğitim örneği üretebilir. Ancak net bir kırmızı çizgi çizmek gerekir: yeniden kullanılabilecek olan **ortamın kurgu mekanizmasıdır**; değerlendirme kümesindeki somut soruların kendisi eğitim verisinden kesin biçimde yalıtılmalıdır — bir değerlendirme sorusu eğitim kümesine girdiği anda ölçülen şey yetenek değil ezber olur (ayrıntılar için bkz. Bölüm 7).
-
-## Değerlendirme Metrikleri Sistemi
-
-"Hangi görevler üzerinde değerlendirme yapılacağı" belirlendikten sonra, "hangi boyutların ölçüleceği" sorusunu da yanıtlamak gerekir. Bu bölüm, Agent değerlendirmesinde sık kullanılan metrikleri başvurulabilir bir "metrik sözlüğünde" toplar — süreçten sonuca, kaliteden güvenliğe, her birinin tanımını ve kullanım alanını tek tek verir. Daha önce (örneğin τ-bench bölümünde) tekrar tekrar anılan Pass@k, Pass^k gibi metriklerin kesin tanımları da burada verilir.
-
-**Süreç metrikleri: kara kutudan beyaz kutuya.**
-
-Yalnızca nihai sonuca bakmak yeterli değildir; Agent'ın sonuca ulaşma süreci de aynı ölçüde önemlidir. **Eylem geçerlilik ve yetki oranı**, işlemler içinde hem geçerli hem de yetkili olanların payını ölçer — geçersiz işlemler arasında var olmayan bir aracı çağırmak ve yanlış parametre türü geçirmek vardır; yetki aşımı ise izin sınırlarının dışına çıkan davranışları anlatır. Yüksek bir oran, Agent'ın araç ekosistemini net biçimde kavradığını gösterir. **Tool calling doğruluk oranı** bir adım daha ileri gider ve parametrelerin anlamsal olarak da makul olmasını ister: arama aracının sorgu sözcükleri ihtiyacı doğru ifade etmeli, dosya işlemlerinin yolu doğru hedefi göstermelidir.
-
-**Yol verimliliği**, görevin ne kadar ekonomik tamamlandığını ölçer: adım sayısı (düşün-eyle-gözlemle döngüsünün tekrar sayısı), gereksiz eylemler (aynı anahtar kelimeyi tekrar tekrar aramak, aynı dosyayı defalarca okumak) ve geri dönüş sayısı (hatanın fark edilip düzeltilme sıklığı — ara sıra geri dönmek normaldir, ama sık geri dönüş ileriye dönük planlamanın yetersiz olduğunu gösterir). "Makul adım sayısını" tanımlamak için insan uzmanlardan veya sezgisel algoritmalardan bir referans çizgisi oluşturmak gerekir.
-
-**Retrieval kapsama oranı** bilgi toplama türü görevlere yöneliktir: Agent bilgi uzayını yeterince araştırdı mı? Yalnızca arama sonuçlarının ilk sayfasına bakıp aceleyle bir sonuca mı vardı? **Maliyet ve gecikme** ise istek sayısına, token harcamasına (girdi/çıktı maliyetleri ayrılmalı, KV Cache'in yeniden kullanımı hesaba katılmalıdır) ve duvar saati süresine (model çıkarımı + araç yürütme + ağ gecikmesi dahil) bakar; darboğazı bulmak için sürenin dağılımını izlemek gerekir.
-
-**Sonuç ve kalite metrikleri.**
-
-**Görev başarı oranı** en doğrudan sert metriktir ve katmanlı ölçütlerle tasarlanabilir (temel hedeflere mutlaka ulaşılmalıdır, ikincil hedefler kalite puanını etkiler). İstatistiksel yöntem açısından, sık karıştırılan iki metriği birbirinden ayırmak gerekir:
-
-- **Pass@k**: k denemeden **en az birinin** başarılı olma olasılığı; "Agent bunu yapabiliyor mu" sorusunu yanıtlar
-- **Pass^k**: k denemenin **tamamının** başarılı olma olasılığı; "Agent kararlı ve güvenilir mi" sorusunu yanıtlar
-- **Best@k**: k deneme içindeki **en iyi denemenin** puanı (başarılı olup olmadığı değil); "yeterli fırsat verildiğinde kalite tavanını" ölçer, çoğunlukla sürekli puanlaması olan açık uçlu görevlerde kullanılır
-
-Farkı somut bir sayıyla görelim: Agent'ın tek seferlik başarı oranı %60 olsun (yani Pass@1 = 0,6). Bu durumda 5 koşuda iki metrik şöyle çıkar: Pass@5 = 1 - 0,4^5 ≈ %99 (en az bir kez başarılı olması neredeyse kesin), Pass^5 = 0,6^5 ≈ %7,8 (hepsinin başarılı olma olasılığı çok düşük). İlki yetenek tavanını, ikincisi kararlılığı değerlendirir; ikisini karıştırmak yanlış yargılara götürür. Tablo 6-3 her iki metriğin kullanım alanlarını ve yanlış kullanım risklerini özetler; okuyucunun regresyon testi ile keşifsel değerlendirme arasında doğru metriği seçmesine yardımcı olur.
-
-Tablo 6-3 Pass@k ve Pass^k için Uygun Kullanım Senaryoları
-
-| Değerlendirme amacı | Hangi metrik kullanılmalı | Yanlış kullanımın sonucu |
-|-----------------------------|-----------------|--------------------------------------------------|
-| Kararlılığı doğrulamak (regresyon testi) | Pass^k | Pass@k kullanmak kararsızlığı gizler — beş denemede yalnızca bir kez başaran Agent bile "geçti" görünür |
-| Yetenek tavanını değerlendirmek (keşifsel görevler) | Pass@k veya Best@k | Pass^k kullanmak rastlantısal dalgalanmalar yüzünden yanlış alarm verir — her küçük değişiklik başarısız sayılır |
-
-**Güvenlik ve uyum metrikleri** üretim dağıtımında kritik önemdedir: hassas işlemlerin tetiklenmesi (veri silme / izin değiştirme / dışarıya iletişim gönderme), veri sızdırma (günlüklere parola yazdırma / özel dokümanları dış API'lere gönderme) ve kural dışı içerik — hepsi **sıfır tolerans ilkesine** tabi olmalıdır. Halüsinasyonun veto maddesiyle aynı mantık geçerlidir (bkz. ilerideki "Rubric'in Dört İlkesi"): tek bir ciddi güvenlik ihlali bütün değerlendirmeyi veto eder, diğer boyutlardaki üstün performans buna muafiyet sağlamaz.
-
-**Sağlamlık**, belirsizlik karşısındaki kararlılığı ölçer: rastgele tohum duyarlılığı (farklı başlangıç değerleriyle performans ne kadar değişiyor), sayfa değişikliklerine uyum (bir sitenin arayüz güncellemesi tam bir çökmeye yol açmamalıdır), API dalgalanmalarına tolerans (geçici arızalar, zaman aşımları ve biçim değişiklikleri zarifçe ele alınabiliyor mu) ve uzun süreli bellek paraziti (context'te biriken güncelliğini yitirmiş bilgi hatalı kararlara yol açıyor mu).
-
-**Yürütme trajectory'si ile nihai sonucun çifte kapsanması**. Değerlendirmede kolayca gözden kaçan bir ayrım şudur: Agent'ın yürütme sırasında "ne söylediği ve ne yaptığı" (yani Bölüm 1'de tanımlanan trajectory) ile "sistemin sonunda ne hale geldiği" (nihai sonuç, outcome) iki ayrı şeydir. Agent'ın "bilet alındı" demesi trajectory düzeyinde bir bilgidir; veritabanında gerçekten bir sipariş kaydının oluşması ise sonuç düzeyinde bir doğrulamadır. Yalnızca trajectory'ye bakmak "söyledi ama yapmadı" durumlarını kaçırır; yalnızca sonuca bakmak da ara adımların yoldan çıktığını göstermeyebilir. Anthropic bir keresinde şöyle bir örnek vermişti: bir uçak bileti rezervasyon Agent'ı yürütme sırasında havayolunun politikasındaki bir boşluğu fark edip kullanıcıya daha ucuz bir seçenek buldu — yalnızca önceden belirlenmiş yürütme yoluna göre puanlanırsa bu koşu başarısız sayılırdı; oysa nihai sonuç açısından bakıldığında kullanıcı daha iyi bir seçenek elde etmişti. Bu yüzden sistematik kör noktalardan kaçınmak için her iki değerlendirme türü de kapsanmalıdır.
-
-**İnsan eliyle örnekleme denetimi ve düşmanca inceleme.**
-
-Otomatik değerlendirme çoğu durumda güvenilir olsa bile düzenli insan eliyle örnekleme denetimi gerekir: farklı görev türlerini, başarılı/başarısız vakaları ve sınır puanların yakınındaki belirsiz vakaları kapsayacak biçimde — yalnızca sonuçları değil, puanlama gerekçelerinin isabetliliğini de gözden geçirerek. Bu denetim bir adım öteye götürülüp **değerlendirici kalibrasyonu** olarak sistemleştirilebilir: LLM değerlendiricilerini büyük ölçekte kullanmaya başlamadan önce, insan eliyle etiketlenmiş bir altın standart küme (örneğin görev türlerini ve zorluk düzeylerini kapsayan 100-200 vaka) oluşturulur; değerlendirici modelin (yani hakem rolündeki LLM'in; mekanizması için bkz. sonraki bölüm, LLM-as-a-Judge) insan etiketleriyle uyum oranı bu küme üzerinde ölçülür (basit uyum oranı ya da Cohen's kappa gibi bir uyum katsayısı; ikincisi rastgele tutturmadan gelen payı dışarıda bırakır). Değerlendirici model ancak önceden belirlenmiş bir eşiği (örneğin kappa'nın 0,7'nin üzerinde olması) aştıktan sonra büyük ölçekli değerlendirmede kullanılmalıdır; bundan sonra da değerlendirici model veya Rubric her güncellendiğinde altın standart küme üzerinde yeniden kalibre edilmelidir. Bu adım atlanırsa, LLM değerlendiricisinin verdiği puanlar insan yargısının güvenilir bir vekili değil, yalnızca "başka bir modelin görüşü" olur. **Düşmanca inceleme**, kırmızı takım (Red Teaming) yoluyla zorlayıcı vakaları bilerek kurgular: yüzeyde kusursuz görünen ama gizli hatalar içeren yanıtlar, anahtar kelime yığarak işin içinden sıyrılan yanıtlar ve değerlendirici modelin bilinen önyargılarını kullanarak hak etmediği yüksek puanı alan yanıtlar. **Çoklu hakem mekanizması** ise birden fazla bağımsız değerlendiricinin ayrı ayrı puan vermesini sağlar ve nihai sonucu ağırlıklı ortalama veya tutarlılık denetimiyle belirler — değerlendiriciler arasında ciddi bir görüş ayrılığı olduğunda vaka, ek insan incelemesi gerektiriyor diye işaretlenir.
-
-## Otomatik Değerlendirme Yöntemleri
-
-Değerlendirme ortamı, veri kümesi ve net bir metrik sistemi hazır olduğuna göre sıradaki temel soru şudur: nasıl puanlanacak? Doğru yanıtı belli olan görevlerde (matematik soruları, SQL sorguları gibi) basit bir ikili karar (doğru/yanlış) yeterlidir; ama açık uçlu görevlerde (müşteri hizmetleri diyalogları, rapor yazımı gibi) daha ince değerlendirme yöntemleri gerekir.
-
-Kodla otomatik doğrulama yalnızca standart yanıtı olan senaryoları kapsar; bu bölümün asıl konusu açık uçlu görevlerin puanlanmasıdır. Bunlardan ödül sinyalinin yoğunluk tasarımı (ikili ödülden süreç ödülüne, oradan üretken ödüle) ve ödül modellerinin eğitim yöntemleri, Bölüm 7'nin post-training bölümünde sistematik olarak tartışılmak üzere bırakılmıştır; bu bölüm daha temel bir soruyu yanıtlar: açık uçlu görevlerin çıktı kalitesi LLM ile otomatik olarak nasıl değerlendirilir?
-
-### LLM-as-a-Judge: Otomatik Değerlendirmenin Çekirdeği
-
-![Şekil 6-4: LLM-as-a-Judge Boru Hattı](images/fig6-4.svg)
-
-LLM-as-a-Judge'a neden ihtiyaç var? Açık uçlu görevlerde (rapor üretme, müşteri şikâyetlerini ele alma, yaratıcı içerik gibi) otomatik karşılaştırma yapılabilecek standart bir yanıt yoktur; insan değerlendirmesi ise pahalıdır ve ölçeklenmesi zordur. LLM-as-a-Judge, dil modelinin uzmanlarca tanımlanmış puanlama ölçütlerine (Rubric) göre değerlendirme yapmasını sağlayarak otomasyonun ölçeğiyle insan uzmanlığının yargısı arasında bir denge kurar. Ama bu yöntemin bilinen sınırları da var: değerlendirici modelin kendi önyargıları olabilir (en tipik olanı **uzunluk yanlılığıdır** — içerik daha doğru olmasa bile daha uzun ve daha ayrıntılı yanıtlara yüksek puan verme eğilimi) ve aynı girdi birden çok kez değerlendirildiğinde sonuçlar dalgalanabilir. Özellikle uzunluk yanlılığına karşı ayrıca önlem almaya değer; üç yaygın yöntem vardır: Rubric'te uzun uzadıya anlatımı açıkça cezalandırmak ve aynı tür görevler için yanıt uzunluğuna üst sınır koymak; ikili karşılaştırma yaparken iki adayın uzunluğunu önce birbirine yaklaştırıp sonra değerlendirmek; ve puanlarla yanıt uzunluğu arasındaki ilişkiyi düzenli olarak denetlemek — yüksek puanlar neredeyse her zaman uzun yanıtlara gidiyorsa, değerlendirme uzunluğun etkisine kapılmış demektir ve Rubric elden geçirilmelidir. Bu zorluklarla sistematik biçimde başa çıkmak için Rubric tasarımı aşağıdaki ilkelere uymalıdır:
-
-**Rubric (puanlama ölçütü): LLM değerlendirmesinin dayanağı.**
-
-**Rubric'in Dört İlkesi** (Scale AI, "Rubrics as Rewards"):
-
-(1) **Uzman rehberliğine dayanma** — Rubric alan bilgisini yansıtmalı, temel olguları ve akıl yürütme adımlarını yakalamalıdır. Örneğin tıbbi soru-yanıt için hazırlanan bir Rubric'in tanı ölçütlerini ve kaçınılması gereken tıbbi hataları içermesi gerekir; uzmanlık temeli olmayan bir Rubric yalnızca dilin akıcılığı gibi yüzeysel özellikleri yakalayabilir.
-
-(2) **Kapsayıcı olma** — olgusal doğruluğu, mantıksal tutarlılığı, eksiksizliği ve güvenliği kapsamalıdır; üstelik yalnızca olumlu ölçütleri tanımlamakla kalmayıp **tuzakları (Pitfall)** da açıkça belirtmelidir — yani yüksek riskli yaygın hataları; tıbbi tavsiyede doğrulanmamış bir tedaviyi önermek gibi.
-
-(3) **Ölçütlerin önem ağırlıklandırması** — ölçütler zorunlu (Essential), önemli, isteğe bağlı ve tuzak maddeleri olarak sınıflandırılır. Bu yapı **tek oyla veto mekanizmasını (Veto)** destekler: örneğin müşteri hizmetleri senaryosunda halüsinasyon (yanlış bilgi uydurma) tipik bir veto boyutudur — diğer boyutlardaki performans ne kadar üstün olursa olsun, yanlış bilgi ortaya çıktığı anda sonuç veto edilmelidir. Bu aynı zamanda anahtar kelime yığma biçimindeki reward hacking'e karşı da korur.
-
-(4) **Kendi kendine yeten değerlendirme** — her değerlendirme maddesi bağımsız olarak uygulanabilir olmalı, değerlendiricinin alan bilgisine bağlı olmamalıdır. "Yanıt derin bir kavrayış sergiliyor" gibi soyut ölçütlerden kaçınılmalı, bunun yerine "en az iki otoriter kuramdan alıntı yapıyor ve bunların sonucu nasıl desteklediğini doğru biçimde açıklıyor" gibi doğrulanabilir ölçütler kullanılmalıdır.
-
-Kilit pratik: her boyut için nesnel biçimde doğrulanabilir puan basamakları tanımlamak, belirsiz durumları ayırt etmeye yardımcı olacak somut örnekler ve **sınır vakaları** vermek. **Reward hacking'e** — yani Agent'ın görevi gerçekten tamamlamadan yüksek puana giden bir "kestirme yol" bulmasına — karşı proaktif önlem alınmalı; halüsinasyon, kullanıcıya yaranma, anahtar kelime yığma ve zor sorulardan kaçınma açıkça cezalandırılmalıdır. Rubric yinelemeli bir üründür — deneme kullanımıyla değerlendiriciler arasındaki görüş ayrılıkları toplanır, ölçüt adım adım iyileştirilir ve soyut ilkelerden ayrıntılı bir emsal derlemesine doğru evrilir.
-
-Aşağıda, kullanıcı belleği Agent'ı örneği üzerinden dört ilkeye uyan eksiksiz bir Rubric gösteriliyor. Test sorusu: "Kızımın çocuk doktoru kim?" (Yanıt, iki ayrı konuşma arasında ilişki kurmayı gerektirir: ilk konuşmada "kızımın adı Lily" denmiş, ikincisinde "Lily'yi Dr. Chen'e götürdüm" denmiştir.)
-
-```yaml
-rubric:
-  dimensions:
-    - name: Olgusal doğruluk
-      weight: essential        # Zorunlu madde
-      scoring:
-        4_Mükemmel: "Dr. Chen yanıtını doğru verir ve kızı Lily ile ilişkilendirir"
-        3_İyi: "Dr. Chen yanıtını doğru verir ama Lily'nin doktoru olduğunu belirtmez"
-        2_Geçer: "Doğru doktoru söyler ama yanında belirsiz ek bilgiler verir"
-        1_Başarısız: "Yanlış doktor adı verir veya bilmediğini söyler"
-
-    - name: Bilgi eksiksizliği
-      weight: important        # Önemli madde
-      scoring:
-        4_Mükemmel: "İlgili bilgileri kendiliğinden ekler (son muayene tarihi, tanı sonucu gibi)"
-        3_İyi: "Temel soruyu eksiksiz yanıtlar"
-        2_Geçer: "Temel soruyu yanıtlar ama elindeki ilişkili bilgileri atlar"
-        1_Başarısız: "Kritik bilgi eksik"
-
-    - name: Düşünme doğruluğu
-      weight: important
-      scoring:
-        4_Mükemmel: "'kızı = Lily' ve 'Lily için doktor = Dr. Chen' bilgilerini oturumlar arasında doğru ilişkilendirir"
-        3_İyi: "İlişkilendirme doğru ama düşünme yolu yeterince açık değil"
-        2_Geçer: "İlişkilendirmenin bir kısmı doğru"
-        1_Başarısız: "Yanlış ilişkilendirme (kullanıcının kendi doktorunu kızının doktoru sanmak gibi)"
-
-    - name: Halüsinasyon tespiti
-      weight: veto             # Veto maddesi: tetiklendiği anda toplam puan sıfırlanır
-      scoring:
-        pass: "Tüm bilgiler geçmiş konuşma kayıtlarına kadar izlenebilir"
-        fail: "Konuşmada geçmeyen bilgi uydurulmuş (hayali muayene tarihi, tanı sonucu gibi)"
-
-  edge_cases:
-    - "Kullanıcının birden fazla kızı varsa ve ayrı doktorlara gidiyorlarsa, hangi kızı olduğu sorulmalı"
-    - "Bellekte hem 'Dr. Chen' hem de '陈医生' (aynı adın Çince yazılışı) varsa, ikisi aynı kişi olarak tanınmalı"
+Ele alma, anlamayı gerektirir. Genel amaçlı bir Agent'ın girdisi yalnızca kullanıcıdan gelmez—üçüncü bir taraftan gelen bir mesaj Agent'a hiç yönelik değildi, ama Agent yine de bunu anlamalı, önemini tartmalı ve müdahale edip etmeyeceğine karar vermelidir. Bu, her girdiyi semantikle zengin bir **yapılandırılmış olay** olarak modellemeyi gerektirir:
+
+- **Kaynak (kim)**: Kullanıcının kendisi, bir kişi, bir yabancı, bir sistem bildirimi
+- **Kanal (nasıl)**: Telefon araması, SMS, anlık mesaj, e-posta, sosyal medya, zamanlayıcı tetikleyici, asenkron tool call sonucu, komut satırı izleme durumu güncellemesi
+- **İçerik (ne)**: Mesaj metni, duygusal ton, aciliyet, bir yanıt gerekip gerekmediği
+- **Bağlam (arka plan)**: Önceki bir konuşmaya yanıt mı yoksa yeni bir iletişim mi olduğu, mevcut görevle ilgisi
+
+Bir müşteri iade talebi e-postasını örnek alırsak, yapılandırılmış olay şöyle görünür:
+
+```javascript
+{
+  "source": {"type": "email", "sender": "client@example.com"},
+  "channel": "gmail_webhook",
+  "content": {"subject": "İade Talebi", "body": "Sipariş #12345, iade talep ediyorum..."},
+  "context": {"priority": "high", "customer_tier": "vip", "related_orders": ["#12345"]}
+}
 ```
 
-**İyi Rubric ile kötü Rubric**: yukarıdaki her puan basamağı, "belleğe dair derin bir kavrayış sergiliyor" gibi nesnel olarak yargılanamayacak betimlemeler yerine doğrulanabilir somut davranışlar ("Dr. Chen yanıtını doğru verir") tanımlıyor. Veto maddesi ise alt sınırı net çiziyor: diğer boyutların hepsi tam puan alsa bile, halüsinasyon görüldüğü anda sonuç doğrudan sıfırdır.
+Bu boyutlar yalnızca yapılandırılmış olaylar olarak net biçimde modellendiğinde, Agent çok taraflı iletişimde net bir bilişi koruyabilir, kullanıcı girdisini bir araç sonucuyla karıştırmaktan veya gizli talimatlar içeren bir araç sonucunu bir kullanıcı komutuyla karıştırmaktan (prompt injection) kaçınabilir. Çok iş parçacıklı context yönetiminin karmaşıklığı, Agent'ın birden fazla konuşma iş parçacığı arasındaki ilişkileri anlamasını da gerektirir—üçüncü bir taraftan gelen bir mesajın kullanıcının ruh halini nasıl etkilediği, kullanıcının rolünün farklı konuşmalar arasında nasıl değiştiği ve tavsiye sunmak için farklı iş parçacıklarından bilginin ne zaman sentezleneceği.
 
-Bu Rubric, Agent'ın gerçek yanıtıyla birlikte değerlendirici modele gönderilir; değerlendirici model her boyut için puan verip gerekçesini yazar. Birkaç düzine test durumu üzerinde çalıştırıldığında Agent'ın yetenek eksikleri sistematik biçimde ortaya çıkar — örneğin "oturumlar arası ilişkilendirme" boyutunun ortalaması yalnızca 2,1 ise, bu doğrudan bellek retrieval'ındaki veya bilgi ilişkilendirmesindeki yetersizliğe işaret eder.
+n8n gibi iş akışı platformlarının tetikleyici ekosistemi bunu açıkça gösterir: Webhook, zamanlayıcı, e-posta, veritabanı değişikliği, dosya izleme—her tetikleyici, Agent'ın dünyayı algıladığı bir "duyu organı"dır. Bu heterojen olaylar yapılandırılmış bir biçimde tek bir modele oturtulduğunda Agent, farklı kaynaklardan gelen uyaranları tutarlı bir biçimde işleyebilir; aşağıda ele alınan aciliyet belirleme ve işleme stratejileri de bu birleşik modellemenin üzerine kurulur.
 
-> **Deney 6-3 ★★: Rubric Tabanlı Bir Kullanıcı Belleği Değerlendirme Sistemi Kurmak**
->
-> **Ön koşul**: Bölüm 3'teki kullanıcı belleği deneyinin (`ch3/user-memory-evaluation`) tamamlanmış olması gerekir.
->
-> Bu deney, Bölüm 3'teki `ch3/user-memory-evaluation` çerçevesini dönüştürmenizi ve basit LLM-as-a-Judge'a dayanan mevcut puanlama mekanizmasını yapılandırılmış, çok boyutlu bir Rubric değerlendirme sistemine yükseltmenizi ister. Mevcut sistem tek bir LLM çağrısıyla geçti/kaldı sonucunu ve değerlendirme gerekçesini döndürür; yapılandırılmış teşhis yeteneğinden yoksundur.
->
-> Üç görev katmanının tamamına uygulanabilecek birleşik, çok boyutlu bir Rubric çerçevesi tasarlayın. Değerlendirme boyutları şunlardır: olgusal doğruluk (Precision, kesinlik — verilen bilgilerin ne kadarı doğru) sayıların/tarihlerin/adların bellekteki bilgiyle tutarlı olup olmadığını doğrular; olgusal eksiksizlik (Recall, geri çağırma — verilmesi gereken bilgilerin ne kadarı anıldı) ilgili bilgilerin tamamının verilip verilmediğini, kritik içeriğin atlanıp atlanmadığını doğrular; düşünme doğruluğu, bilgiler arasındaki ilişkilerin ve örtük mantığın doğru kavranıp kavranmadığını denetler; düşünme inisiyatifi, uygun anlarda doğrudan yanıtın ötesinde öneri veya risk uyarısı verilip verilmediğini değerlendirir; halüsinasyon tespiti ise bellekte bulunmayan bilgilerin uydurulmadığını güvenceye alır.
->
-> Dört basamaklı puanlama (Mükemmel/İyi/Geçer/Başarısız) kullanın; her basamağa soyut betimlemeler yerine somut karar ölçütleri koyun. Halüsinasyon boyutunu tek oyla veto maddesi yapın. Her boyut için örnekler ve sınır vakaları verin.
->
-> **Deney 6-4 ★★: Advanced JSON Cards ile RAG'ın Karşılaştırmalı Değerlendirmesi**
->
-> **Ön koşul**: Bölüm 3'teki kullanıcı belleği ve RAG deneylerinin (`ch3/user-memory`, `ch3/agentic-rag-for-user-memory`) tamamlanmış olması gerekir.
->
-> **Amaç**: Yapılandırılmış bellek ile yapılandırılmamış retrieval'ın üstünlük sınırlarını aynı değerlendirme kümesi üzerinde adil biçimde karşılaştırmak. Bölüm 3'teki iki projeyi yeniden kullanın ve `ch3/user-memory-evaluation` içindeki 60 test durumu üzerinde üç yapılandırmayı karşılaştırın — saf Advanced JSON Cards (yapılandırılmış kartlar sürekli context'te durur, retrieval gerekmez), saf RAG (konuşmalar parçalara ayrılıp vektör veritabanına konur, retrieval zorunludur) ve hibrit sistem (temel olgular sürekli context'te + özgün konuşmalar ihtiyaç halinde retrieval ile).
->
-> **Kabul ölçütü**: Üç karmaşıklık katmanında (temel hatırlama / çok oturumlu belirsizlik giderme / oturumlar arası gizli ilişkilendirme) başarı oranını, ortalama adım sayısını, tool calling sayısını, gecikmeyi ve maliyeti kaydedin; her yaklaşımın nerede çöktüğünü net biçimde anlatın — yapılandırma neyi kaybetti, retrieval neyi kaçırdı, hibrit gerçekten bir sinerji sağlıyor mu. Yapılandırma ayrıntıları ve test durumları için eşlik eden depoya bakın.
->
+**Aciliyete Dayalı Dinamik İşleme Stratejisi.**
 
-**Aynı aileden model sorunu ve çok kaynaklı değerlendirme.**
+Birden fazla görevi jonglörlük yapan insanlar stratejilerini aciliyete göre uyarlar: bir acil durum onları yaptıklarını bırakmaya zorlar; rutin bir yapılacak iş daha sonrası için listeye eklenir. Bir Agent'ın olay işlemesi aynı zekayı göstermelidir.
 
-Agent ile değerlendirici model aynı model ailesinden geldiğinde, Agent değerlendirici modelin tercihlerini ve kör noktalarını kullanmayı öğrenebilir.
+![Şekil 6-2: Asenkron Olay İşleme için Üç Strateji](images/fig6-2.svg)
 
-**Goodhart Yasası'nın (Goodhart's Law) söylediği tam olarak budur: bir ölçüt optimizasyon hedefi haline geldiğinde, iyi bir ölçüt olmaktan çıkar.** Agent belirli bir puanlama sistemi üzerinde ne kadar çok eğitilir veya ayarlanırsa, gerçekten yetenek kazanmak yerine o sistemin açıklarını kullanmaya o kadar eğilimli olur.
+**İptal Tabanlı İşleme**, acil olaylar için kullanılır. Acil bir olay geldiğinde (örn. kullanıcı "dur"a tıklar veya bir denetim sistemi yüksek öncelikli bir talimat gönderir): (1) Mevcut işlemi durdurun—LLM reasoning yapıyorsa, akış yanıtını hemen iptal edin; senkron bir araç yürütülüyorsa, bir iptal sinyali gönderin; (2) Bekleyen kuyruğu boşaltın, tüm olaylarını çıkarın; (3) Bu olayları acil olayla birlikte trajectory'nin sonuna ekleyin; (4) Durumu değerlendirmek için güncellenmiş eksiksiz trajectory'yi girdi olarak kullanarak LLM'i hemen yeniden çağırın. Örneğin, Agent potansiyel olarak hatalı bir işlem gerçekleştirmek üzereyken kullanıcı "Dur! Yanlış söyledim" diye girdi yaparsa, Agent bu yeni girdiyi hemen görecek, gerçek niyeti yeniden anlayacak ve böylece yanlış eylemi yürütmekten kaçınacaktır.
 
-Daha da sinsi olanı: Agent zamanla, değerlendirici modelin saptamakta iyi olmadığı hata türlerinden kaçınmayı öğrenir ve puanlama sisteminde her şey yolundaymış gibi görünür.
+**Kuyruğa Alınmış İşleme**, rutin olaylar için kullanılır. Acil olmayan bir olay geldiğinde (örn. asenkron bir araç bir sonuç döndürür veya kullanıcı ek bilgi gönderir): (1) Mevcut işlemi kesintiye uğratmadan olayı kuyruğun sonuna ekleyin; (2) Mevcut işlemin tamamlanmasını bekleyin—LLM'in reasoning'ini bitirmesine, senkron aracın yürütmesini bitirmesine izin verin; (3) Herhangi bir tool call tamamlanıp bir `tool.result` döndürdüğünde, kuyruğu kontrol edin. Kuyruk boş değilse, tüm olayları bir kerede trajectory'ye ekleyin; (4) LLM güncellenmiş trajectory'yi kapsamlı biçimde işler. Bu, verimliliği artıran toplu işlemeyi mümkün kılar—örneğin, Agent bir arama aracı sonucunu beklerken, kullanıcı "yalnızca geçen aydan sonuçları göster" ekler. Bu ek bilgi kuyruğa girer ve arama sonuçları döndüğünde, her iki olay da LLM'e birlikte sunulur, gereksiz gidiş-dönüşlerden kaçınılır.
 
-Hafifletme stratejisi **çok kaynaklı ve heterojen değerlendirmedir** — farklı model ailelerinden birden çok LLM ayrı ayrı değerlendirme yapar (örneğin Agent Claude ile çalışıyorsa değerlendirme GPT-5 ve Gemini ile yapılır). Farklı ailelerin önyargıları çoğu zaman birbirine diktir, dolayısıyla Agent'ın bütün değerlendiricileri aynı anda "kandırması" çok zordur. Herkesin aynı hedefi değerlendirdiğinden emin olmak için aynı Rubric kullanılır ve sonuçlar ağırlıklı ortalama veya tutarlılık denetimiyle birleştirilir. Dağıtım aşamasında hızlı değerlendirme için tek bir model kullanılabilir, ama kalite denetimi düzenli aralıklarla eksiksiz çok kaynaklı değerlendirmeyle yapılmalıdır.
+**Paralel İşleme**, bağımsız, hafif sorgular için kullanılır. Örneğin, Agent büyük miktarda veriyi analiz ederken, kullanıcı aniden "Bugün hava nasıl?" diye sorar. Bu tür sorguların üç özelliği vardır: ana görevle ilgisiz olmak, hızlı bir yanıt gerektirmek ve düşük yürütme maliyeti. Ne iptal tabanlı (önemli ana görevi kesintiye uğratırdı) ne de kuyruğa alınmış işleme (kullanıcıyı çok uzun beklemeye bırakırdı) uygundur. Sistem önce sorgunun bağımsızlığını ve karmaşıklığını değerlendirir, ardından bunu paralel bir reasoning oturumunda bağımsız olarak yürütür, bir yanıt üretmek için gerekli araçları çağırır ve hemen döndürür. Sorgu ve yanıt, LLM'in kafasının karışmasını önlemek için açıkça "ana görevle paralel olarak yürütüldü" olarak işaretlenerek ana görevin trajectory'sine eklenir.
 
-Çok kaynaklı değerlendirme "hangi modelle değerlendirileceği" sorusunu çözer; sırada "hangi modalitelerin değerlendirileceği" sorusu var — LLM-as-a-Judge'ın yeteneğini metinden sese, görüntüye ve videoya genişletmek, değerlendirme kapsamının bir başka boyutudur.
+**Aciliyet Belirleme.**
 
-**Çok modlu LLM-as-a-Judge.**
+Acil olaylar: Kullanıcı kesintisi (`user.interrupt`), denetleyici talimatı (`supervisor.instruction`), Agent'lar arası kesinti (`agent.interrupt`), acil olarak işaretlenmiş dış tetikleyiciler (örn. sistem uyarıları, ödeme başarısızlıkları).
 
-Çok modlu değerlendirme, LLM-as-a-Judge'ı ses, görüntü ve video alanlarına genişletir; yaygın dört yön aşağıdadır.
+Acil olmayan olaylar: Düzenli kullanıcı girdisi (`user.input`), Agent girdisi (`agent.input`), araç sonuçları (`tool.result`), zamanlayıcı tetikleyicileri (`timer.trigger`), düzenli dış tetikleyiciler.
 
-- **TTS değerlendirmesi** (TTS, yani Text-to-Speech, metinden konuşmaya): doğruluk, doğallık, ses tınısı tutarlılığı ve duygu ifadesi değerlendirilir. Bu boyutlar, geleneksel WER'in (Word Error Rate, kelime hata oranı) yakalamakta zorlandığı ezgi (prozodi) sorunlarını ortaya çıkarabilir.
-- **ASR değerlendirmesi** (ASR, yani Automatic Speech Recognition, konuşma tanıma): anlamsal etki değerlendirmesi yapılır — "bugünkü hava" ifadesinin yanlış tanınması zararsızdır, ama "bin lira gönder" ifadesinin "on bin" olması ciddi sonuçlar doğurabilir.
-- **UI değerlendirmesi**: **Proposer-Reviewer** (önerici-inceleyici) mekanizması kullanılarak metin taşması, renk kontrastı, düğme konumu gibi sorunlar denetlenir. Buradaki Proposer-Reviewer bir **değerlendirme yöntemi** olarak kullanılır; Bölüm 5'teki **üretim sistemi bileşeni** kullanımından farklıdır, ama temel mekanizma aynıdır — bir model üretir, başka bir model bağımsız olarak inceler.
-- **Video kurgu değerlendirmesi**: anahtar kareler üzerinden kesme başlangıç/bitiş noktalarının ve efekt uygulamalarının doğru olup olmadığı doğrulanır.
+Sabit kodlanmış kuralların sınırlamaları vardır; olayın semantiği işleme yöntemini belirler—"Hemen dur!" iptal tabanlı kullanır, "Bugün hava nasıl?" paralel kullanır, "Raporu Çince gönder" kuyruğa alınmış kullanır. **Bir olay geldiğinde hangi stratejinin benimseneceğine hızlıca karar veren bir olay yönlendiricisi olarak hafif bir sınıflandırma LLM'i kullanılması önerilir**.
 
-> **Deney 6-5 ★★: Tam Otomatik Bir TTS Kalite Değerlendirme Boru Hattı Kurmak**
->
-> Bu deney, eksiksiz bir çok modlu LLM-as-a-Judge TTS kalite değerlendirme sistemini sıfırdan tasarlayıp uygulamanızı ister.
->
-> Çok boyutlu bir TTS Rubric'i tasarlayın: doğruluk boyutu bütün metnin doğru okunup okunmadığını doğrular (atlama/yanlış okuma/ekleme yok); doğallık boyutu konuşmanın akıcı olup olmadığını değerlendirir (makine hissi ve doğal olmayan duraklamalar var mı, ezgi insan alışkanlıklarına uyuyor mu); duygu ifadesi boyutu tonun metnin duygusal rengine uyup uymadığını denetler (soru cümlelerinde tonun yükselmesi, ünlem cümlelerinde vurgu, hüzünlü içerikte yavaş tempo ve alçak ton); ses tınısı tutarlılığı boyutu ise elde referans bir kayıt varsa konuşmacı benzerliğini değerlendirir (çok modlu model, karşılaştırma için referans kaydı ve sentezlenen kaydı aynı anda alır).
->
-> Çeşitlilik içeren bir test derlemi oluşturun: farklı uzunluklar (tek cümle → uzun paragraf), türler (haber/öykü/diyalog), duygular (nötr/heyecanlı/hüzünlü) ve özel zorluklar (sayılar/özel adlar/çok sesletimli karakterler/ağız sözcükleri). Değerlendirme boru hattını uygulayın: TTS üretim modülü yaygın servislere bağlanır (OpenAI, ElevenLabs, Fish Audio, Minimax, Doubao); çok modlu değerlendirme modülü Gemini 3.5 Flash kullanarak sentezlenen kaydı, özgün metni, referans kaydı ve Rubric'i birlikte girdi alır, her boyut için puan verip ayrıntılı gerekçe yazar. Değerlendirme sonuçlarının dağılımını analiz edin ve farklı TTS modellerinin her boyuttaki güçlü ve zayıf yanlarını belirleyin — bazı modeller doğrulukta üstün ama doğallıkta zayıf olabilir, bazıları ise doğallığı yüksek olsa da özel sözcüklerde kolayca hata yapabilir.
->
+İptal noktası, aracın ya da akıl yürütmenin güvenle toparlanabileceği bir konum olmalıdır; tamamlanmamış araç sonucu açık bir yer tutucuyla temsil edilir, asla başarı gibi gösterilemez.
 
-Rubric'i elle tanımlamanın yanı sıra, değerlendirmeyi otomatikleştirmek için özel **üretken ödül modelleri** de eğitilebilir — bu, ödül modellerinin eğitim yöntemlerine girer ve Bölüm 7'de ayrıntılı olarak tartışılacaktır.
+Aşağıdaki deney, olay güdümlü bir e-posta işleme Agent'ı, yukarıda tartışılan olay işleme stratejilerini çalıştırılabilir bir uygulamaya dönüştürür.
 
-Gerçek model seçimlerinde sık karşılaştığımız soru şudur: "A mı daha iyi, B mi?" İkili karşılaştırma, mutlak puanlara dayanmayan bir değerlendirme yolu sunar.
-
-### İkili Karşılaştırma ve Model Sıralaması
-
-![Şekil 6-5: Elo Puanlaması ve İkili Karşılaştırmayla Sıralama](images/fig6-5.svg)
-
-**Elo puanlaması** (aslen satranç için tasarlanmış bir sıralama sistemi), çok sayıda ikili karşılaşma üzerinden modellerin göreli yeteneğini niceler: puan farkı ne kadar büyükse, güçlü olanın beklenen kazanma oranı o kadar yüksektir. Örneğin model A'nın puanı 1.200, model B'nin puanı 1.000 ise Elo sistemi A'nın kazanma oranını yaklaşık %76 olarak öngörür. B beklenmedik biçimde kazanırsa B daha çok puan kazanır, A daha çok puan kaybeder — sürpriz sonuçlar daha büyük bir düzeltme getirir ve bu mekanizma sıralamanın gerçek seviyeye hızla yakınsamasını sağlar. Arkasındaki istatistiksel temel **Bradley-Terry modelidir**: her model gizli bir "güç puanı" olarak soyutlanır ve ikili karşılaşmanın kazanma olasılığı iki puan arasındaki farkla belirlenir; Elo ise bu modelin çevrimiçi güncelleme biçimindeki mühendislik uygulamasıdır.
-
-Chatbot Arena anonim rastgele karşılaşmalar kullanır — kullanıcılar modelin kimliğini bilmeden daha iyi yanıtı körlemesine seçer ve sıralama milyonlarca oydan çıkarılır. Bu yöntemin üstünlüğü "mutlak bir ölçüt" tanımlamayı gerektirmemesidir; yalnızca insanın "A mı daha iyi, B mi?" yargısına ihtiyaç duyar. Ama bir sınırı da vardır: sıralama sonucu kullanıcıların ne sorduğuna bağlıdır — çok sayıda kullanıcı denk gelip programlama sorusu sorarsa, programlamada güçlü modeller sıralamada yükselir; bu da onların diğer görevlerdeki gerçek seviyesini yansıtmayabilir.
-
-İkili yargılama insan oyu yerine bir LLM tarafından yapıldığında ayrıca **konum yanlılığına (Position Bias)** karşı önlem almak gerekir — yargıç model, belirli bir konumda (genellikle önce) görünen adayı sistematik biçimde kayırır ve iki adayın içeriği tamamen yer değiştirse bile karar değişmeyebilir. Standart azaltma yöntemi **sırayı değiştirerek iki kez değerlendirmektir**: bir kez A önde, bir kez B önde değerlendirilir ve iki sonucun ortalaması alınır; daha katı bir yaklaşım ise yalnızca iki kararın uyuştuğu durumları saymak, uyuşmayanları beraberlik olarak kaydetmek veya insan incelemesine göndermektir. Chatbot Arena'nın yaptığı da özünde aynıdır — iki yanıtın gösterim konumu rastgeleleştirilir, böylece konum yanlılığı büyük örneklemde birbirini götürür.
-
-**Değerlendirmeden eğitime: ikili karşılaştırma sinyalinin aktarımı.** İkili karşılaştırma yalnızca bir değerlendirme aracı değil, post-training için de önemli bir sinyal kaynağıdır. Bölüm 7'de tanıtılacak olan **GRPO** (Group Relative Policy Optimization, grup göreli politika optimizasyonu) algoritması, tam da "hangisi daha iyi" biçimindeki yargılamayı model eğitimine taşır — temel fikri, aynı soru için birden çok aday yanıt örneklemek ve avantajı bunların mutlak puanlarından değil birbirlerine göre üstünlüklerinden kestirmektir; böylece PPO'da ayrıca eğitilmesi gereken değer ağının (critic; temel çizgiyi kestirmek için kullanılır) zahmetinden kurtulur. Dikkat: GRPO'nun elediği şey değer ağıdır, ödül sinyalinin kendisi değil; her adayın iyi mi kötü mü olduğunu yargılamak için hâlâ bir ödül modeline veya doğrulanabilir ödül kurallarına dayanır. Burada yalnızca bir işaret bırakıyoruz; algoritmanın tam türetimi, PPO/DPO ile karşılaştırması ve Agent post-training'inde hayata geçirilmesinin ayrıntıları Bölüm 7'ye kalıyor.
-
-> **Deney 6-6 ★★: İkili Karşılaştırma Verisinden Model Sıralaması Oluşturmak**
->
-> Bu deney, sıfırdan bir Elo rating hesaplama sistemi kurarak Bradley-Terry modelinin çok sayıda ikili karşılaştırmadan göreli yetenek puanlarını nasıl çıkardığını derinlemesine anlamayı amaçlar. Chatbot Arena'nın açık kaynak gerçek oy veri kümesi kullanılır (milyonlarca kullanıcı kör oyu içerir).
->
-> Elo rating yinelemeli güncelleme algoritmasını uygulayın: başlangıçta tüm modellerin puanı 1.000 olsun, oy kayıtları zaman sırasına göre işlensin. Her karşılaşmada, iki modelin mevcut puan farkına göre beklenen kazanma oranı hesaplanır, gerçek sonuç beklentiyle karşılaştırılır ve sabit bir öğrenme hızıyla ayarlanır — kazanan puan alır, kaybeden puan verir; ayarlamanın büyüklüğü beklentiden sapmayla orantılıdır (sürpriz bir yenilgi daha büyük bir puan değişimine yol açar). Nihai puana göre azalan sırada sıralayın ve ikili kazanma oranı matrisini hesaplayın; resmî sıralamayla karşılaştırıp sıralamanın kabaca tutarlı olduğunu doğrulamak yeterlidir. Puan puan örtüşme aramayın: Chatbot Arena resmî olarak Bradley-Terry en büyük olabilirlik uyarlaması kullanır (tüm karşılaşmalar için tek seferde çözüm üretir, oyların sırasından bağımsızdır); burada uygulanan ise çevrimiçi artımlı güncellemeli Elo'dur (sonuç, öğrenme hızı K faktöründen ve işleme sırasından etkilenir). İki algoritmanın genel sıralamada örtüşmesi beklenir, ama tek tek puanlar tam olarak aynı olmayacaktır.
->
-> Deneyin ikinci kısmında tarihsel sıralama evrimi animasyonu oluşturun: oy verisini zamana göre dilimleyin (haftalık veya aylık) ve her zaman noktası için bir Elo puanı anlık görüntüsü hesaplayın. D3.js ile çubuk grafik yarışı animasyonu uygulayın (yatay çubuk uzunluğu = puan, dikey konum = sıra; zamanla yumuşak biçimde değişir). Animasyonu izleyerek teknolojik atılım anlarını (bir modelin puanının aniden fırlaması), rekabet ortamının evrimini ve model yaşam döngülerini tespit edin.
->
-
-## Değerlendirme Güdümlü Model Seçimi
-
-Model seçimi basitçe "en güçlü modeli seçmek" değildir; uygulama senaryosuna göre birden çok boyut arasında değerlendirme güdümlü bir denge kurmaktır.
-
-### Seçimin Kilit Boyutları
-
-**Throughput** (verim) ile **gecikme**, birbirine karıştırılması kolay iki metrik ailesidir; ayrımı görmek için büyük model çıkarımının iki aşamada yürüdüğünü bilmek yeterlidir. **Prefill (ön doldurma)** tüm context'i tek seferde okur ve kullanıcının Enter'a basmasıyla ilk karakterin görünmesi arasındaki **ilk yanıt gecikmesini** belirler (sektörde **TTFT**, Time To First Token — İlk Token'a Kadar Geçen Süre — ile ölçülür): context uzadıkça prefill yavaşlar, TTFT büyür. **Decode (kod çözme)** ardından yanıtı token token üretir ve sonraki karakterlerin çıkış hızını (token/saniye) belirler; bu da doğrudan düşünme süresini belirler: saniyede 50 token üreten bir model 2.000 düşünme token'ı ürettiğinde yalnızca düşünmek için 40 saniye harcar.
-
-Bu iki aşamanın etrafında şekillenen başlıca throughput ve gecikme metrikleri şunlardır:
-
-- **Girdi throughput'u / çıktı throughput'u**: sırasıyla Prefill ve Decode hızına karşılık gelir.
-- **TTFT**: kuyrukta bekleme süresi artı Prefill süresine eşittir; kullanıcının algıladığı "tepki hızı" budur.
-- **Düşünme gecikmesi**: modellerin ürettiği düşünme token'ı sayısı arasında kat kat fark olabilir ve düşünme uzunluğu görev başarısıyla mutlaka doğru orantılı değildir — her modelin düşünme token'ı kullanımını ve karşılığında sağladığı faydayı yalnızca genel sıralamalara bakarak çıkarsamak yerine kendi iş yükünüzde ölçün.
-- **p95 kuyruk gecikmesi**: isteklerin %95'inin aşmayacağı gecikme. Gerçek kullanıcı deneyimini ortalamadan daha iyi yansıtır; ortalama, çok sayıda hızlı istekle aşağı çekilerek azınlıktaki kullanıcıların yaşadığı ciddi takılmaları gizler.
-
-**Maliyet**: girdi/çıktı/önbellek token'larının fiyatlandırması. Maliyet tek başına değerlendirilmemelidir — ucuz ama başarı oranı düşük bir model, sık sık yeniden denemek gerektiği için gerçekte daha pahalıya gelebilir. Görev başına ortalama maliyeti ve maliyet-performans oranını hesaplamak gerekir.
-
-**Performans**: Pass@1, Pass^k, Pass@k ve Best@k metriklerinin kesin tanımları önceki "Değerlendirme Metrikleri Sistemi" bölümünde verildi; burada yalnızca model seçimi bağlamında nasıl tercih yapılacağına değiniyoruz. Gündelik senaryolarda en çok kullanılan Pass@1'e (tek denemedeki ortalama başarı oranı) bakılır; kritik işlem senaryolarında Pass^k öne çıkar, çünkü orada "hiçbir seferinde hata yapmama" kararlılığı izlenir; keşif ağırlıklı görevlerde Pass@k veya Best@k tercih edilir, çünkü yeterli fırsat verildiğinde ulaşılan yetenek tavanı ölçülür; açık uçlu görevlerde ise çok boyutlu Rubric puanlaması kullanılır.
-
-**Hız limitleri ve güvenilirlik**: RPM (dakika başına istek) / TPM (dakika başına token) limitleri eşzamanlılık kapasitesini etkiler; bazı API'ler yoğun saatlerde kotayı dinamik olarak da değiştirir. Sağlamlık tarafında dağılım dışı veriye, düşmanca girdilere ve uzun süreli çalışma kararlılığına (mod çökmesi, dikkat dağılması gibi sorunların çıkıp çıkmadığına) dikkat edilmelidir.
-
-**Bütçe—yetenek eğrileri**: sabit bir bütçedeki tek bir puan, bir Agent'ın uzun soluklu işlerin altından kalkıp kalkamayacağına karar vermeye yetmez. Başarı oranının yanı sıra performansın duvar saati süresine, token'a, araç çağrısı sayısına veya hesaplama bütçesine göre nasıl değiştiğini gösteren eğriler de raporlanmalıdır. RE-Bench'in insan-makine karşılaştırması sorunu somutlaştırır: her ortam için 2 saatlik toplam bütçede en iyi Agent, insan uzmanların yaklaşık 4 katı puan almıştır; ama insanlar ek zamandan daha çok kazanmış, 8 saatte en iyi Agent'ı kıl payı geçmiş ve birden çok denemeye yayılan toplam 32 saatte onun yaklaşık 2 katı puan toplamıştır[^re-bench-2025]. Bu nedenle kısa bütçedeki üstünlük, doğrudan uzun süreli çalışma yeteneğine genellenemez; model seçiminde gerçek görev süresine yakın birkaç bütçe noktasında karşılaştırma yapmak zorunludur.
-
-Pratikte çok modelli bir iş birliği stratejisi benimsenebilir: maliyeti düşürmek için basit istekleri hafif modellere, kaliteyi güvenceye almak için karmaşık görevleri güçlü modellere vermek; ya da belirli alt görevleri (görüntü anlama, kod üretimi gibi) özel modellere bırakıp alt Agent mekanizmasıyla iş birliği kurmak. Bu tür heterojen bileşimlerin toplam faydasının, eklediği sistem karmaşıklığını aşıp aşmadığı değerlendirmeyle doğrulanmalıdır.
-
-### Agent Sistemlerinin Maliyet Analizi
-
-Maliyet, model seçiminde en kolay hafife alınan boyuttur. Agent'ınız üretime girdiyse ya da girmek üzereyse, bu bölümdeki maliyet analizini atlamayın.
-
-Bir önceki bölüm maliyeti model seçiminin kilit boyutlarından biri olarak saydı; ancak Agent senaryolarında maliyet, basit token fiyatlandırmasından çok daha karmaşıktır — çok turlu çıkarım, araç çağrıları ve context birikimi maliyeti doğrusal olmayan biçimde büyütür. Sistematik maliyet analizi, değerlendirme sisteminin vazgeçilmez bir parçası ve üretime alma için zorunlu bir ön koşuldur.
-
-**Maliyetin bileşenleri.**
-
-Bir Agent sisteminin maliyeti üç katmana ayrılabilir:
-
-**Model çıkarım maliyeti** en doğrudan bileşendir ve girdi token'ları ile çıktı token'larının tüketimiyle belirlenir. Ne var ki Agent senaryolarında sıkça gözden kaçan iki büyütücü etken vardır. Birincisi **context birikimi etkisidir**: Agent, LLM'i her çağırdığı turda önceki tüm konuşma geçmişini ve araç sonuçlarını birlikte gönderir (model ancak böyle context'i anlayabilir). KV Cache iyi kullanılmazsa (yani daha önce işlenmiş context önbelleğe alınıp yeniden hesaplama önlenmezse) maliyet çok hızlı artar: 1. turda 1.000 token, 2. turda 2.000 token, 3. turda 3.000 token gönderilir; toplam 3×1.000=3.000 değil, 1.000+2.000+3.000=6.000 olur ve tur sayısı arttıkça fark açılır. İkincisi **düşünme token'ı maliyetidir**: düşünmeyi destekleyen modeller çok sayıda düşünme token'ı üretir; bu token'lar kullanıcıya gösterilmese de faturaya aynen yansır.
-
-**Araç çağırma maliyeti**, dış API ücretlerini (arama motorları çağrı başına ücretlendirir, veritabanı sorguları hesaplama kaynağı tüketir), kod yürütmenin sandbox kaynaklarını ve kolayca gözden kaçan dolaylı bir kalemi kapsar: araç sonuçları context'e enjekte edildiğinde doğan token ücreti. Tek bir web aramasının döndürdüğü içerik 2.000-5.000 token yer kaplayabilir ve sonraki her çıkarım turunda girdi olarak tekrar tekrar faturalanır.
-
-**Altyapı maliyeti**, vektör veritabanı (RAG retrieval için), mesaj kuyrukları, ilişkisel veritabanları, log ve trace depolaması (observability için) gibi işletme giderlerini kapsar.
-
-Maliyetin doğrusal olmayan büyümesini somut bir örnekle gösterelim. Tablo 6-4, bu bölümün başındaki müşteri hizmetleri iade Agent'ını örnek alarak bir dizi örnek token fiyatı parametresiyle üç turluk çağrı maliyetini ayrıştırıyor; amaç, çok turlu context birikiminin ve önbellek isabetinin faturaya etkisini göstermektir.
-
-Tablo 6-4 Müşteri Hizmetleri İade Agent'ının Üç Turluk Maliyet Örneği
-
-| Tur | İşlem | Girdi token | Çıktı token | Tur maliyeti |
-|--------|-----------------------------------|-------------------------------|----------|---------|
-| 1 | System prompt + kullanıcı sorusu → siparişi sorgulamaya karar verir | 2.500 (2.000'i system prompt) | 150 | $0,0098 |
-| 2 | Önceki turun tamamı + araç sonucu → iade başlatmaya karar verir | 3.200 (2.000 önbellek isabeti) | 120 | $0,0060 |
-| 3 | Önceki turun tamamı + iade sonucu → kullanıcıya yanıt verir | 3.800 (3.200 önbellek isabeti) | 200 | $0,0058 |
-| **Toplam** | | **9.500** | **470** | **$0,022** |
-
-Not: Girdi için milyon token başına $3, çıktı için milyon token başına $15 örnek fiyatıyla hesaplanmıştır; önbellek isabeti alan kısmın girdi fiyatının %10'u üzerinden faturalandığı varsayılmıştır (indirimler sağlayıcıya göre değişir; örneğin Anthropic'te önbelleğe yazma girdi fiyatının yaklaşık 1,25 katı, okuma ise yaklaşık 0,1 katıdır — burada yalnızca okuma indirimi hesaba katılarak basitleştirilmiştir).
-
-Üç turluk çağrı toplam $0,022 — kulağa çok ucuz geliyor. Hiç önbellek olmasaydı üç turun girdi maliyeti yaklaşık $0,029, çıktıyla birlikte toplam yaklaşık $0,036 olurdu; bu örnekte önbellek girdi maliyetinin neredeyse yarısını kurtarmıştır ve bu, ilerideki "KV Cache girdi maliyetini %30-60 düşürebilir" deneyim aralığıyla uyumludur. Ama birkaç büyütücü etkene dikkat edin: düşünme modu açılırsa her turda fazladan 500-2.000 düşünme token'ı üretilir ve maliyet 3-5 katına çıkabilir; herhangi bir turda bir araç 5.000 token'lık bir web sayfası döndürürse sonraki her turda bu token'ların ücreti tekrar ödenir; Agent yolunu şaşırıp görevi ancak 10 turda bitirirse context 20.000+ token'a birikir ve maliyet yukarıdaki basit senaryoyu fersah fersah aşar. Dolayısıyla maliyet optimizasyonunun özü ucuz model seçmek değil, tur sayısını ve context büyümesini denetlemektir.
-
-**Maliyet optimizasyonu stratejileri.**
-
-Nicel açıdan bakıldığında girdi tarafında iş gören üç kaldıraç en etkili olanlardır: **KV Cache yeniden kullanımı** (ön eki sabit tutarak tekrar eden system prompt'un, araç tanımı'ların ve geçmiş turların önbellek fiyatından faturalanmasını sağlar; girdi token maliyetini %30-60 düşürebilir — yukarıdaki üç turluk örnekte önbellek, girdi ücretinin neredeyse yarısını kurtarmıştı), **context sıkıştırma** (geçmiş trajectory'leri sıkıştırmak, gereksiz araç sonuçlarını kırpmak; context'in büyüme hızını doğrudan denetler ve uzun görevlerde etkisi belirgindir) ve **katmanlı model yönlendirmesi** (basit istekler hafif modele, karmaşık düşünme güçlü modele gider). Bu üç yöntemin somut uygulanışı — ön ek kararlılığı tasarımı, sıkıştırma zamanlaması ve stratejisi, yönlendirme mekanizması — Bölüm 2'de ayrıntılı olarak ele alındı, burada tekrarlanmayacak. Bu bölüm, değerlendirme ve işletme bakış açısına özgü iki yöntemi ekliyor.
-
-**Asenkron toplu işleme**, gerçek zamanlı olmayan görevleri biriktirip toplu olarak işler ve API sağlayıcılarının toplu iş indirimlerinden yararlanır; kendi altyapınızda çalıştırıyorsanız düşük yoğunluklu saatlerde GPU kullanımını da artırır.
-
-**Maliyet izleme ve bütçe denetimi.**
-
-Üretim ortamında gerçek zamanlı bir maliyet izleme düzeni kurulmalıdır: token tüketimi ve API ücretleri görev türü, model, kullanıcı gibi boyutlara göre takip edilir. Aynı zamanda her görev için bir maliyet üst sınırı konmalıdır — Agent bir döngüye takıldığında veya fazla derine daldığında otomatik olarak sonlandırılır ve tek bir görevin anormal derecede yüksek ücret üretmesi engellenir.
-
-> **Deney 6-7 ★: Agent Görevlerinin Uçtan Uca Maliyet Analizi**
->
-> **Deney amacı**: Tipik Agent görevleri için baştan sona maliyet ayrıştırması yapmak, bir maliyet temel çizgisi oluşturmak ve optimizasyon stratejilerinin etkisini doğrulamak.
->
-> **Teknik yaklaşım**: Birkaç tipik görev seçin; LangSmith'i veya kendi kurduğunuz trace sistemini kullanarak her LLM çağrısının girdi/çıktı token sayısını, düşünme token'ı sayısını, araç çağrısı sayısını ve dönen sonuçların boyutunu, ayrıca uçtan uca gecikmeyi kaydedin. Her görev türü için ortalama maliyeti, maliyet dağılımını (p50/p95/p99) ve maliyet bileşenlerinin oranını hesaplayın.
->
-> **Kabul ölçütü**: Bir maliyet ayrıştırma raporu üretin ve başlıca maliyet sürücülerini belirleyin. KV Cache'in açık/kapalı olduğu ve context sıkıştırmanın açık/kapalı olduğu durumlar arasındaki maliyet farkını karşılaştırın.
+> **Deney 6-1 ★★★: Olay Güdümlü E-posta İşleme Agent'ı**
 >
 >
-
-### Değerlendirme Güdümlü Sürekli Yineleme
-
-Model seçimi tek seferlik bir karar değil, modeller evrildikçe dinamik olarak ayarlanması gereken sürekli bir süreçtir. Bölümün başında "bir değerlendirme sistemine sahip olmak, model evrimine hızla ayak uydurmayı sağlar" temel fikri ortaya konmuştu; şimdi somut bir model değiştirme vakasıyla bu sistemin gerçek bir kararda nasıl işlediğini gösterelim.
-
-Diyelim ki Agent sisteminiz şu anda Claude üzerine kurulu ve tool calling ile karmaşık orkestrasyonda çok iyi çalışıyor. Bir gün Gemini yeni bir model yayımlıyor; kamuya açık benchmark'lar birçok metrikte Claude'u geçtiğini ve üstelik daha ucuz olduğunu gösteriyor. Bu noktada karşınızdaki soru "Gemini, Claude'dan güçlü mü?" değil, "**benim özgül görevlerimde Gemini, Claude'dan iyi mi? Ne kadar iyi? Geçiş maliyeti nedir?**" sorusudur.
-
-Sağlam bir değerlendirme sistemine sahip bir ekip yanıtı birkaç saat içinde verebilir: yeni modeli kendi değerlendirme veri kümesinde çalıştırır; görev başarı oranını, tool calling doğruluğunu, gecikmeyi ve maliyeti karşılaştırır. Yeni modelin basit görevlerde gerçekten daha iyi ve daha ucuz olduğunu, ama karmaşık çok turlu araç orkestrasyonu içeren çekirdek senaryolarda başarı oranının %5 düştüğünü görebilirsiniz. Bu farkın gürültü bandını aştığını doğruladıktan sonra (aşağıdaki "Değerlendirme Sonuçlarının İstatistiksel Anlamlılığı" bölümüne bakın), kararınız körlemesine bir toptan geçiş değil, "maliyeti düşürmek için basit görevleri yeni modele taşı, kaliteyi güvenceye almak için karmaşık görevleri eski modelde tut" biçiminde farklılaştırılmış bir stratejiye dönüşür. Bu incelikte, veri güdümlü kararlar ancak önceden kurulmuş bir değerlendirme sistemiyle mümkündür.
-
-> **Deney 6-8 ★★: Çok Boyutlu Model Performans Kıyaslaması**
->
-> Yaygın LLM'ler ve farklı API sağlayıcıları üzerinde kapsamlı bir benchmark çalışması yaparak çok boyutlu bir model seçimi karar veritabanı oluşturun.
->
-> Test kapsamını seçin: GPT serisi, Claude serisi, Gemini serisi, Doubao serisi gibi kapalı kaynak SOTA modeller ve Qwen, Kimi, DeepSeek gibi açık kaynak modeller. Aynı modeli farklı API sağlayıcılarında (örneğin DeepSeek resmî API'si ile Siliconflow) test ederek üçüncü taraf performans izleme platformlarının (örneğin Artificial Analysis) sonuçlarını doğrulayın.
->
-> Standartlaştırılmış test iş yükleri tasarlayın: girdi throughput'u testi sabit uzunlukta context kullanır (8K/32K/128K token), çıktı throughput'u testi sabit uzunlukta yanıt üretimi ister (512/2048 token). Gecikme testi TTFT'yi (ilk token'ın üretilme süresi) ve uçtan uca gecikmeyi kapsar; düşünmeyi destekleyen modeller için düşünme uzunluğu ve düşünme gecikmesi ayrıca ölçülür. Her yapılandırma için en az 100 istek yapın ve standart sapma/p50/p95/p99 hesaplayın — yüksek gecikme varyansı, kullanıcı deneyiminin kararsız olduğu anlamına gelir.
->
-> API'nin erişilebilirliğini ve kararlılığını değerlendirin: bir hafta boyunca saatte bir yoklama yapın; başarı oranını, hata türlerini ve arıza sürelerini kaydedin. Arıza oranını, MTTR'yi (ortalama kurtarma süresi) ve en uzun kesintisiz erişilebilirlik süresini hesaplayın. Hız limitlerinin gerçek eşiklerini test edin — eşzamanlılığı kademeli olarak artırarak kısıtlama noktasını bulun ve RPM/TPM üst sınırlarını kaydedin. Bileşik maliyeti hesaplayın: fiyatlandırma bilgilerini toplayın (girdi/çıktı/önbellek token'larının birim fiyatları), KV Cache'in etkisini göz önüne alın ve tipik çok turlu Agent görevlerinin ortalama maliyetini hesaplayın.
->
-> **Deney 6-9 ★★: Kullanıcı Bellek Sistemlerinin Uçtan Uca Seçim Değerlendirmesi**
->
-> **Ön koşul**: Bölüm 3'teki bağlamsal retrieval veya agentic RAG deneyinin tamamlanmış olması gerekir.
->
-> **Amaç**: Bir kullanıcı belleği retrieval Agent'ı üzerinde baştan sona seçim değerlendirmesi yapmak; embedding modeli, reranker ve Agent'ın ana modeli olmak üzere üç seçim noktasının retrieval kalitesini, gecikmeyi ve maliyeti birlikte nasıl etkilediğini görmek. `ch3/contextual-retrieval-for-user-memory` veya `ch3/agentic-rag-for-user-memory` yeniden kullanılır ve 60 test durumu üzerinde karşılaştırma yapılır.
->
-> **Kabul**: Üç seçim noktasını sırayla tarayın — embedding modeli (BGE-M3 / OpenAI / Doubao vb.; top-5 retrieval doğruluğunu, gecikmeyi ve maliyeti kaydedin), reranker ("reranker kullanmama" temel çizgisi dahil; marjinal değerini nicelleştirin) ve ana model (aynı retrieval yapılandırmasında başarı oranını ve araç kullanım verimliliğini karşılaştırın). Asıl mesele bileşenler arasındaki etkileşimi okuyabilmektir: daha güçlü bir embedding reranker'i gereksiz kılabilir, daha güçlü bir ana model retrieval'daki eksikliği telafi edebilir — seçim, tek tek en güçlüyü almak değil, sistemsel bir dengedir. Yapılandırma ayrıntıları eşlik eden depodadır.
->
-
-## Değerlendirme Sonuçlarının İstatistiksel Anlamlılığı
-
-"Birkaç saat içinde geçiş kararı vermek" örtük bir varsayıma dayanır: gözlenen puan farkının örnekleme gürültüsü değil, gerçek bir sinyal olduğu. Değerlendirme kümesi sınırlı, model çıktıları da belirsiz olduğuna göre bu varsayım kendiliğinden geçerli olmaz.
-
-Gürültü bandını kabaca kestirmenin aracı **binom dağılımının standart hatasıdır** (standard error; başarı oranının örnekleme rastgeleliği yüzünden ne kadar dalgalandığını nitelendirir — değer büyüdükçe o başarı oranı o kadar güvenilmez demektir). n test durumunda ölçülen başarı oranı p ise standart hata yaklaşık √(p(1-p)/n) olur. Somut bir örnek: 100 durum ve %70 başarı oranında standart hata ≈ √(0,7×0,3/100) ≈ %4,6. Sezgisel olarak %95 güven aralığı (gerçek başarı oranının yaklaşık %95 olasılıkla içine düştüğü aralık) p ± 2 standart hata, yani %70 ± 9 yüzde puandır. Başka bir deyişle, "yeni model %73, eski model %70" gibi 3 yüzde puanlık bir fark tamamen gürültü bandının içinde kalır — iki başarı oranı birbirinden bağımsız kabul edilerek karşılaştırıldığında farkın standart hatası tek birininkinin yaklaşık √2 katıdır (burada yaklaşık %6,5). Ama şunu vurgulamak gerekir: bu √2, "iki ölçüm birbirinden bağımsızdır" varsayımının hesabıdır; sahada iki yapılandırma genellikle **aynı görev kümesi** üzerinde koşar ve örnekler bağımsız değildir. Bağımsızlık varsayımı yalnızca temkinli bir üst sınırdır ve "bu kadarcık fark ciddiye alınmaya değer mi?" sorusunu hızla yanıtlamaya yarar. Bu temkinli ölçüye göre bile %3'lük bir puan farkı, %6,5'lik gürültü mertebesinin çok altında kalır; buna dayanarak model değiştirmek yazı tura atmaktan pek farklı değildir.
-
-Agent değerlendirmesinde bir katman daha belirsizlik vardır: aynı model, aynı veri kümesi olsa bile iki çalıştırmanın sonuçları birbirinden kayar — sıcaklık örneklemesi, araçlardan dönen sonuçlardaki dalgalanma ve ortamın zamanlaması rastgelelik enjekte eder. Bu yüzden tek bir çalıştırmanın sayıları karar dayanağı olmamalı, **birden çok kez çalıştırılıp ortalaması alınmalıdır** (örneğin her yapılandırma için 3-5 koşu) ve hem ortalama hem de dalgalanma aralığı raporlanmalıdır. İleride anlatılan varsayımsal vakada her yapılandırmanın "5 kez (farklı rastgele tohumlarla) çalıştırılması" tam da bu nedenledir.
-
-Buradan pratik bir ilke çıkar: **puan farkı gürültü bandından küçükse geçiş kararı verilmez**. Ancak "geçmemeye" karar vermeden önce daha duyarlı ve daha doğru bir analiz yöntemine geçmek gerekir. Aynı görev kümesi üzerinde iki yapılandırma karşılaştırılıyorsa doğru varsayılan yaklaşım **eşleştirilmiş analizdir**: her soruda ikisinin kazanıp kaybettiği karşılaştırılır, yalnızca sonuçların ayrıştığı durumlara (biri doğru, biri yanlış) bakılır ve farkın anlamlı olup olmadığı McNemar testi benzeri bir yaklaşımla değerlendirilir. Eşleştirilmiş analiz "sorunun kendi zorluğu" gibi ortak bir gürültü kaynağını denklemden çıkardığı için aynı örneklem büyüklüğünde "iki bağımsız başarı oranını çıkarmaktan" çok daha duyarlıdır — önceki bağımsızlık varsayımına dayanan √2 kestirimi, internete bakmadan kafadan yapılabilen temkinli bir eleme süzgecinden ibarettir ve açıkça yetersiz kalan farkları hızla ayıklamaya yarar. Eşleştirilmiş analiz de farkı belirsiz gösteriyorsa ancak o zaman örneklemi büyütmeyi düşünün: standart hata 1/√n ile küçülür, yani örneklemi 100'den 400'e çıkarmak gürültü bandını ancak yarıya indirir ve örneklem büyütmek pahalıdır. Tersinden bakıldığında, bir iyileştirmenin beklenen kazancı zaten yalnızca 2-3 yüzde puansa ve değerlendirme kümenizde birkaç düzine durum varsa, bu değerlendirme iyileştirmenin işe yarayıp yaramadığını hiç ayırt edemez — o hâlde öncelik Agent'ı yinelemeye devam etmek değil, değerlendirme kümesini büyütmektir.
-
-Kolayca gözden kaçan bir tuzak daha var: **çoklu karşılaştırma**. Bir grup hipotezi paralel olarak doğruladığınızda "en az bir sonucun yanlış pozitif olma" olasılığı hipotez sayısıyla birlikte hızla birikir — her bir sonuç için %95 güven düzeyi kullanılsa bile, 6 hipoteze aynı anda bakıldığında en az bir yanlış pozitife takılma olasılığı 1 − 0,95^6 ≈ %26 olur. Paralel çalıştırılan hipotez sayısı arttıkça "her hâlükârda biri anlamlı görünür" rastlantısından kaçınmak zorlaşır. İki tür çözüm vardır: ya çok hipotezli durumlarda tek bir sonuç için güven eşiği sıkılaştırılır (örneğin Bonferroni tarzı, hipotez sayısına göre anlamlılık eşiği daraltılır) ya da çıkan olumlu sonuçlar bağımsız bir doğrulama koşusuyla tekrarlanır ve yalnızca yeniden üretilebilirse kabul edilir. İlerideki "Veriden Hipoteze" bölümünde H1–H4 olmak üzere gerçekten paralel dört hipotez doğrulanacak (H5 ve H6 koşullu olarak başlatıldığından ilk dördüyle aynı anda koşmuyor); bu da söz konusu tuzağın tipik bir örneğidir.
-
-Değerlendirme güdümlü kararlar yüksek kaliteli veriye dayanır ve bu veri, Agent'ın çalışma sürecinin sistematik biçimde kaydedilmesinden gelir — observability'nin çözmeye çalıştığı sorun tam da budur.
-
-## Agent'ın Observability'si
-
-Değerlendirme güdümlü kararlar (ister model seçimi ister sürekli yineleme olsun) yüksek kaliteli çalışma verisine dayanır. Aşağıda önce bu verinin sistematik olarak nasıl toplandığını (observability), ardından değerlendirme sonuçlarının sistem iyileştirmelerine nasıl dönüştürüleceğini ele alıyoruz.
-
-![Şekil 6-6: Observability Teknoloji Yığını](images/fig6-6.svg)
-
-Observability (gözlemlenebilirlik) kavramı dağıtık sistemler alanından ödünç alınmıştır: sistemin içini açıp ne yaptığını doğrudan göremezsiniz, yalnızca ürettiği loglardan, metriklerden ve trace verisinden ne olduğunu çıkarsayabilirsiniz — tıpkı hastanın içini doğrudan göremeyen bir hekimin ateş, tansiyon, görüntüleme gibi dışsal sinyallerden teşhis koyması gibi. Agent sistemleri bu işi daha da zorlaştırır: aynı girdi farklı çıktılar üretebilir, çok turlu çıkarım ve araç çağrıları yürütme yollarını son derece karmaşıklaştırır ve modelin "düşünme" süreci dışarıdan tamamen saydamsızdır.
-
-Observability'nin değeri önce **sorun teşhisindedir**: eksiksiz trajectory'ler geliştiricinin tüm süreci tahmine dayanmadan yeniden oynatmasına imkân verir. İkinci olarak **sürekli optimizasyonun** temelidir — hangi görevlerin çok turlu yineleme gerektirdiğini, hangi araçların başarı oranının en düşük olduğunu, hangi retrieval sorgularının hep boş sonuç döndürdüğünü görebilirsiniz. **Maliyet yönetiminde** ise Agent'ın çalışma maliyeti görevden göreve bir iki büyüklük mertebesi değişebildiğinden, trace verisi anormal derecede pahalı vakaları ortaya çıkarır. Son olarak biriken trajectory verisi, sonraki sistem optimizasyonları ve model iyileştirmeleri için de zemin sağlar.
-
-Agent observability'sinin veri temeli **trace'tir (izleme kaydı)** ve veri yapısı doğrudan dağıtık sistemlerin span ağacı modelinden gelir: bir görev yürütmesi bir trace'e karşılık gelir; içindeki her LLM çağrısı, her araç çağrısı ve her retrieval bir **span**'dir (girdi/çıktıyı, başlangıç-bitiş zamanını, token tüketimini ve hata bilgisini kaydeden yürütme birimi). Span'ler arasındaki ebeveyn-çocuk ilişkileri bir yürütme ağacı oluşturur — örneğin "Agent ana döngüsü" span'inin altında birkaç "LLM çağrısı" ve "araç çağrısı" alt span'i asılıdır. Bu katman için standartlaşmış protokoller hâlihazırda mevcuttur: **OpenTelemetry** genel amaçlı dağıtık trace standardıdır, **OpenInference** gibi belirtimler ise bunun üzerine LLM uygulamalarına özgü semantik kuralları tanımlar (prompt'ların, model parametrelerinin, token kullanımının vb. nasıl kaydedileceği). Standart protokol kullanmanın faydası toplama ile analizin birbirinden ayrılmasıdır — aynı trace verisi farklı analiz arka uçlarına bağlanabilir ve tek bir platforma kilitlenmekten kaçınılır.
-
-LangSmith bu alanın temsilci platformlarından biridir (benzer konumdaki Langfuse, Arize Phoenix gibi platformlar da vardır) ve observability, değerlendirme ile optimizasyonu kapalı bir döngüde birleştirir. Her yürütme bir trace oturumu oluşturur; içindeki model çağrıları, araç kullanımları ve bilgi retrieval'ları bağımsız yürütme birimleri olarak kaydedilir ve nedensellik ilişkileriyle bağlanarak bir yürütme ağacı oluşturur. Her birim eksiksiz girdi/çıktıyı, zaman bilgisini, maliyet verisini ve hata bilgisini kaydeder. Platform asenkron toplu veri toplama kullanır, böylece trace'in kendisi Agent'ın yanıt gecikmesini etkilemez.
-
-Platform ayrıca A/B testini (kullanıcı trafiğinin bir bölümünü yeni sürüme yönlendirir, metrikleri otomatik karşılaştırır, hızlı geri alma veya kademeli yaygınlaştırmayı destekler), prompt sürüm yönetimini (her sürüm çalışma zamanı performans verisiyle ilişkilendirilir) ve iş birliğine dayalı geliştirmeyi (ekip üyeleri trace verisini ve sorunlu vakaları paylaşabilir) destekler. Üretim ortamındaki devasa gerçek veri, sürekli iyileştirme için bir altın madenidir — beklenmedik senaryoları ortaya çıkarır ve en çok optimizasyona muhtaç işlevleri belirler.
-
-Observability verisinin en değerli varış noktası, **değerlendirme varlığına geri dönüşmesidir**. Pratik bir kapalı döngü şudur: üretim trajectory'lerinden başarısız ve şüpheli vakaları süzün → maskeleyin (kullanıcı gizliliği, anahtar gibi hassas alanları temizleyin) → değerlendirme kümesinin yeni test durumlarına ve regresyon testlerine dönüştürün. Böylece değerlendirme kümesi tek seferde kurulmuş statik bir derleme olmaktan çıkar; ürünle birlikte evrilen ve gerçek kullanıcı dağılımına yakın durmayı sürdüren canlı bir varlığa dönüşür — bugün canlıda açığa çıkan başarısızlık kalıbı, yarın o eşiği koruyan regresyon testi olur. Observability ile bu bölümün ana ekseni tam da burada birleşir: observability gerçek dünyada ne olduğunu "görmekten", değerlendirme ise bu gözlemleri tekrar tekrar sınanabilir ölçütlere sabitlemekten sorumludur.
-
-Observability'nin karşılaştığı birkaç tür zorluk vardır:
-
-- **Veri hacmi ile gizlilik arasındaki denge**: yüksek trafikli sistemler günde terabaytlarca trace verisi üretirken aynı zamanda veri koruma mevzuatına uymak zorundadır.
-- **Nedensel atfetmenin karmaşıklığı**: trajectory'lerden kök nedeni otomatik olarak saptamak hâlâ daha akıllı analiz algoritmaları gerektirir; öncü araştırmalar nedensel çıkarım ve karşıolgusal analiz deniyor, ama henüz olgunlaşmadı.
-- **Çoklu Agent sistemlerinde trace zorluğu**: birden çok Agent'a yayılan yürütme akışını izlemek, mikroservisler arası API çağrılarını izlemekten daha karmaşık ve daha anlam yüklüdür.
-- **Gerçek zamanlı koruma ile sonradan analiz arasındaki denge**: yüksek riskli senaryolar etkin koruma gerektirir, ama bu ek gecikme ve yanlış alarm getirir.
-
-ML teknolojisi araç zincirine daha derinden yerleştikçe, gelecekteki observability platformlarının anormallikleri otomatik olarak saptayıp kök nedeni bulması bekleniyor.
-
-Eksiksiz bir değerlendirme sistemi ve veri kümesi kurulduktan sonra kilit mesele, değerlendirme sonuçlarını somut sistem iyileştirmelerine dönüştürmektir.
-
-## Benchmark Raporlarından Sistem İyileştirmelerine
-
-**Aşağıdaki, öğretme amaçlı varsayımsal bir vakadır**; benchmark raporundan sistem iyileştirmelerine uzanan karar sürecinin tamamını somut verilerle anlatır. Veriler varsayımsaldır; amaç gerçek deney sonuçları raporlamak değil, yöntemi göstermektir.
-
-![Şekil 6-7: Benchmark'tan İyileştirmeye Kapalı Döngü](images/fig6-7.svg)
-
-Harness mühendisliği açısından bakıldığında bu bölüm özünde Harness'in yinelemeli optimizasyonunun yöntemini anlatır — değerlendirme verisiyle Harness'teki zayıf halkalar saptanır (context yetersiz mi? kısıt eksik mi? doğrulama yeterli değil mi? geri bildirim zamanında değil mi?), hedefli iyileştirmeler yapılır ve yeniden değerlendirilir; böylece Harness'in sürekli evrimini sağlayan kapalı bir döngü oluşur.
-
-Benchmark raporunu incelemeye başlamadan önce kolayca gözden kaçan bir ilke var: **Agent'ın performansı düştüğünde önce değerlendirme sisteminin kendisini kontrol edin, sonra Agent'a dokunun**. Yaygın bir yanılgı, puan düşer düşmez Agent kodunu değiştirmeye girişmek ve değerlendirme sisteminin kendisinin önce bozulmuş olabileceğini göz ardı etmektir — bozuk bir sinyale bakarak yön ayarlamak, daha ilk adımdan yanlış yöne gitmek demektir. Değerlendirme sistemindeki yaygın hata kaynakları şunlardır: çalışma ortamındaki kaynak yetersizliği yüzünden süreçlerin öldürülmesi (rastgele başarısızlık gibi görünür), puanlayıcının kendisindeki bir bug'ın doğru yanıtları başarısız sayması ve test durumlarının üretim senaryolarından kopması. Bunların hepsi sonuç rakamlarında modelin gerilemesiyle birebir aynı görünür; ancak eksiksiz trajectory'ler incelenerek ayırt edilebilirler.
-
-### Benchmark Raporunu Okumak: Sorun Keşfetme Sanatı
-
-Bir benchmark raporunun nasıl okunacağını somut bir vaka üzerinden anlatalım. Diyelim ki bir Agent'ı AndroidWorld üzerinde değerlendiriyoruz ve iki temel rapor tablosu elde ediyoruz: görev bazlı performans listesi ve yetenek etiketlerine göre ayrılmış performans matrisi. Raporun değeri toplam başarı oranı denen tek bir sayıda değil, ortaya çıkardığı yapısal zayıflıklardadır.
-
-Görev bazlı tablo net bir örüntü gösterir: rutin görevlerin çoğunda başarı oranı %100'e yakındır. Başarılan bu görevler ses kaydı, fotoğraf çekme, kişi yönetimi, not oluşturma, dosya işlemleri, sistem ayarları gibi yaygın senaryoları kapsar; ortalama on küsur adım gerektirir, en karmaşıkları ise onlarca adıma çıkar. Agent'ın bu kadar uzun işlem dizilerini sürdürüp başarıyla tamamlaması, standart senaryolardaki planlama ve yürütme yeteneğini kanıtlar.
-
-Başarısızlıklar ise birkaç bölgede yoğunlaşır: SMS yanıtlama, Wi-Fi açma/kapama ve durum doğrulama, yapılacaklar listesi sorgulama, Wi-Fi+Bluetooth birleşik işlemleri, VLC çalma listesi oluşturma. Görünüşte bu görevler birbiriyle ilgisizdir, ama yetenek etiketi matrisi ortak özelliklerini açığa çıkarır.
-
-**Yetenek etiketi matrisi** teşhisin anahtarıdır — tüm görevleri gerektirdikleri yeteneğe ve zorluğa göre çapraz sınıflandırır. Raporda genellikle başarı oranı çok düşük birkaç yetenek boyutu belirir: transcription (görüntü/videodan bilgi dökümü; görsel anlamadaki eksikliği açığa vurur), math_counting (sorun matematik yeteneğinin kendisinde değildir — güncel LLM'lerin matematiği çok güçlüdür — Agent'ın hesap gerektiğini fark edebilmesi, arayüzden sayıları çıkarabilmesi ve sonucu bir işlem dizisine eşleyebilmesindedir) ve complex_ui_understanding (standart UI kalıplarına ağır biçimde bağımlıdır; standart dışı bir yerleşimle karşılaşınca çöker).
-
-İki tabloyu birlikte okuyunca başarısızlık nedenleri netleşir: yapılacaklar listesi sorgusunun başarısızlığı, uygulamanın standart dışı UI tasarımı yüzünden Agent'ın görev listesini okuyup süzememesine işaret eder; Wi-Fi işlemlerinin başarısızlığı, sistem ayarları arayüzündeki denetim hiyerarşisinin Agent'ın anlama sınırını aşmasına işaret eder; VLC çalma listesi başarısızlığı ise profesyonel bir uygulamanın karmaşık arayüzünde Agent'ın oluşturma girişini bulamamasına işaret eder.
-
-### Veriden Hipoteze: İyileştirme Yol Haritası Kurmak
-
-**Yüzey düzeyi hipotezler** (maliyeti düşük, birbirinden bağımsız, paralel doğrulanabilir): H1, Wi-Fi işlemleri için sistem ayarlarında gezinme ipuçları ekler (Agent anahtarı çevirebiliyor olabilir, yalnızca giriş sayfasını bulamıyordur) ve ayar türü görevlerdeki yoğun başarısızlığı çözmesi beklenir; H2, yapılacaklar uygulaması için UI öğesi tanıma kuralları sağlar ve yapılacaklar türü görevlerdeki başarısızlığı çözmesi beklenir.
-
-**Orta düzey hipotezler** (bunlar da bağımsız ve paralelleştirilebilir): H3, çok kipli girdi hattını onarır — başarısız trajectory'ler yeniden oynatıldığında görüntülerin hatta düşürülmüş ya da metin açıklamasına çevrilmiş olabileceği görülür; böyle bir durumda en güçlü çok kipli model bile döküm çıkaramaz. H4, sayma türü başarısızlıkları çözmek için düşünmeyi genel olarak açar.
-
-**Derin düzey hipotezler** (doğrulama maliyeti yüksek; yalnızca yüzey ve orta düzey iyileştirmelerden sonra complex_ui başarı oranı hâlâ %40'ın altındaysa başlatılır): H5, görsel anlaması daha güçlü bir modele geçer (GPT-5); H6, ekran görüntüsüne ek olarak UI öğe ağacı bilgisi ekler (UI Automator'ın çıkardığı yapılandırılmış DOM ile ekran görüntüsünün çapraz doğrulanması). Bu ikisi 2×2 bir karşılaştırma deneyi kurabilir (Claude/GPT-5 × yalnızca ekran görüntüsü / ekran görüntüsü+öğe ağacı) ve "model yeteneği mi bilgi zenginliği mi daha kritik, ikisi arasında sinerji var mı?" sorusunu yanıtlar.
-
-Her yapılandırma, 116 görevlik tam küme üzerinde 5 kez (farklı rastgele tohumlarla) çalıştırılır; başarı oranı, ortalama adım sayısı ve yürütme süresi kaydedilir.
-
-### Sonuçtan Karara: Veri Güdümlü Dengeler
-
-Diyelim ki deney verileri şu sonuçları gösteriyor (**aşağıdaki verilerin tümü varsayımsaldır**): H1, ayar türü görevleri %0'dan %75'e çıkarır, girdi token'ları %8 artar; H3, transcription'ı %0'dan %80'e çıkarır, vision token'ları %15 artar, adım başına gecikme 1 saniye artar; H4, saymayı %0'dan %70'e çıkarır, ama adım başına gecikme 4 saniyeden 12 saniyeye çıkar ve maliyet 3 katına yükselir; H6, complex_ui'yi %17'den %52'ye çıkarır, token %30 artar, adım başına gecikme 2 saniye artar; H5 (GPT-5), complex_ui'yi %17'den %35'e çıkarır, ama adım başına gecikme 4 saniyeden 15 saniyeye çıkar.
-
-Karar, işe yarayan bütün iyileştirmeleri toptan benimsemek değildir:
-
-**H1+H3 kesinlikle devreye alınır**: H1 düşük maliyetli, yüksek getirili ve yan etkisizdir; H3 ise vision token maliyetini %15 ve gecikmeyi 1 saniye artırsa da transcription yeteneğini yoktan var eder ve "girdi hattının çok kipli bilgiyi düşürmesi" gibi mimari bir kusuru onarır — üstelik diğer görsel anlama görevlerini de yan fayda olarak iyileştirebilir.
-
-**H4 — düşünmenin genel olarak açılması kabul edilemez**: toplam başarı oranı %88'den %91'e çıksa da, yetenek etiketi dağılımı görevlerin yalnızca yaklaşık %8'inin sayma içerdiğini gösteriyor — azınlıktaki birkaç görev uğruna bütün görevlere 3 kat gecikme ve maliyet yüklemek, klasik bir "ceviz kırmak için balyoz kullanmak" örneğidir. Yine de H4, düşünmenin sayma görevlerinde işe yaradığını kanıtlar ve bir sonraki turda koşullu devreye alma için zemin hazırlar.
-
-**H6, H5'ten üstündür**: H5'te (GPT-5) adım başına gecikme 4 saniyeden 15 saniyeye fırlarken complex_ui yalnızca %35'e çıkıyor; bu da darboğazın modelin düşünme yeteneğinde değil, girdideki bilginin yeterli olup olmadığında olduğunu gösterir. H6 (öğe ağacı bilgisini eklemek) ise %30'luk token artışı ve 2 saniyelik gecikme karşılığında 35 yüzde puanlık bir iyileşme satın alır — çok daha kârlı bir alışveriştir. H5+H6 birleşimi en yüksek puanı alır (%68), ama görev süresi büyük ölçekli dağıtımda kabul edilemez; yalnızca kritik asenkron görevlerde (banka havalesi, tıbbi randevu) seçici olarak açılmaya uygundur, sıradan senaryolarda H6 yeterlidir.
-
-**H2 ölçeklenebilirlik sorunuyla karşı karşıyadır**: standart dışı her uygulama için özel kural yazmak sürdürülebilir değildir; ancak geçici bir çözüm olabilir, uzun vadede Agent'ın genelleme yeteneği güçlendirilmelidir.
-
-### Sürekli Yineleme: İlk İyileştirmeden Sistem Evrimine
-
-H1, H3 ve H6 iyileştirmeleri uygulandıktan sonra (H4 devreye alınmadı) Agent'ın AndroidWorld'deki başarı oranı %88'den %94'e çıktı. Benchmark'ın tamamı yeniden çalıştırıldığında yeni rapor farklı bir başarısızlık örüntüsü gösteriyor: transcription, ayar türü ve karmaşık UI görevlerinin hepsi belirgin biçimde iyileşmiş. Geriye kalan yaklaşık %6'lık başarısızlık, hâlâ çözülmemiş sayma görevlerinde, hâlâ dalgalanan Wi-Fi durum doğrulamasında (%0'dan %60'a çıktı ama kararsız) ve az sayıda yeni ortaya çıkan başarısızlıkta yoğunlaşıyor — bunlar prompt'un uzamasından ya da öğe ağacı bilgisinin fazlalığından ötürü modelin dikkatinin dağılmasından kaynaklanıyor olabilir.
-
-Yeni rapora ve H4 deneyinden çıkan içgörülere dayanarak yeni hipotezler kurulabilir. H7: düşünmeyi koşullu olarak açmak — görev başlamadan önce hızlı bir LLM çağrısıyla (yaklaşık 1-2 saniye) görev açıklaması çözümlenir ve düşünme modu yalnızca sayma veya karmaşık akıl yürütme içeren görevlerde açılır; böylece gecikme artışı gerçekten ihtiyaç duyan görevlerle sınırlanır. H8: eylem alanını genişletip karmaşık jestleri desteklemek (iki parmakla yakınlaştırma, basılı tutup sürükleme, çoklu dokunma) — geri kalan başarısız trajectory'ler yeniden oynatıldığında bazı görevlerin harita yakınlaştırma, görüntü kırpma, listede basılı tutma menüsü gibi işlemler gerektirdiği görülebilir.
-
-Benchmark geri bildirimine dayanan bu sürekli yineleme, Agent'ın yeteneklerini sarmal biçimde yukarı taşır. Benchmark tek seferlik bir sınav değil, sürekli bir yetenek kontrolüdür. Düzenli bir değerlendirme düzeni kurmak (örneğin haftada bir kez testin tamamını çalıştırmak) yeteneğin evrim eğrisini izlemeyi, gerilemeleri zamanında yakalamayı (yeni bir özellik bug getirmiştir), iyileştirmeleri doğrulamayı (optimizasyon gerçekten işe yaramıştır) ve bilgi biriktirmeyi (hangi tür iyileştirmeler genellikle işe yarar, hangileri kolayca ters teper) sağlar. Veri güdümlü, hipotez sınayan, sürekli yineleyen bu yöntem, Agent mühendisliğini deneyim güdümlü olmaktan çıkarıp bilimsel mühendisliğe taşıyan kilit yoldur.
-
-> **Deney 6-10 ★★★: AndroidWorld'de Değerlendirme ve İyileştirme**
->
-> Bu deney, değerlendirme raporundan sistem iyileştirmesine uzanan kapalı döngünün eksiksiz bir uygulamasıdır. Başlangıç noktası `ch6/android-world` içindeki AndroidWorld değerlendirme raporudur.
->
-> Birinci adım: teşhis. Görev bazlı tabloyu ve yetenek etiketi matrisini çapraz çözümleyerek yüzeydeki görev başarısızlıklarını derindeki yetenek eksikliklerine eşleyin. Başarı oranı beklenenin altında kalan yetenek etiketlerini ve başarısızlığın yoğunlaştığı görev bölgelerini belirleyin.
->
-> İkinci adım: hipotez kurma. Üç katmanlı çerçeveye göre (yüzey → orta → derin) iyileştirme hipotezleri oluşturun; her hipotez için beklenen başarı oranı artışı hedefini ve doğrulama yöntemini açıkça belirtin.
->
-> Üçüncü adım: aşamalı deney. Hipotezleri doğrulamak için kontrollü deneyler tasarlayın. Birinci aşamada düşük maliyetli yüzey hipotezlerini test edin (prompt optimizasyonu, araç açıklamalarının zenginleştirilmesi); ikinci aşamada orta düzey yetenek hipotezlerini test edin (girdi hattı değişikliği, düşünme modunun açılıp kapatılması). Belirli yetenek etiketlerine bağlı görevlerdeki iyileşme miktarını özellikle gözleyin ve aynı zamanda yan etkileri ölçün.
->
-> Dördüncü adım: veri güdümlü karar. Dağıtım kararını maliyet-fayda oranına göre verin — işe yarayan bütün iyileştirmeleri toptan benimsemek yerine, her iyileştirmenin uygulanma kapsamını, gecikme etkisini ve maliyet yükünü tartın. Düşük maliyetli ve yüksek getirili iyileştirmeler öncelikle devreye alınır, yüksek maliyetli olanlar kritik senaryolarla sınırlandırılır.
->
-> Beşinci adım: yineleme. İyileştirmeler tamamlandıktan sonra değerlendirme veri kümesini yeniden çalıştırın ve sonuçları bir LLM ile çözümleyip yeni bir rapor üretin. Yeni rapor farklı bir başarısızlık örüntüsü gösterecek ve bir sonraki yinelemenin başlangıç noktası olacaktır.
->
-
-## Dış Değerlendirmeden İç Değerlendirmeye: Üretim Düzeyinde Agent'lar için Değerlendirme Altyapısı
-
-Önceki bölümler Agent sistemlerinin dışarıdan nasıl değerlendirileceğini tartıştı — değerlendirme ortamı kurmak, veri kümesi tasarlamak, benchmark raporlarını çözümlemek. Ama en iyi Agent ürünleri yalnızca dışarıdan değerlendirilmekle kalmaz, **sürekli öz değerlendirme altyapısını da içlerine gömer**. Aşağıda, Bölüm 5'te tanıtılan açık kaynak genel amaçlı Agent OpenClaw örnek alınarak ve önde gelen Kodlama Agent'ı ürünlerine dair kamuya açık teknik çözümlemelerle sektör paylaşımları harmanlanarak örnek alınmaya değer bir iç değerlendirme sistemi sunuluyor — ML araştırmasının deney yöntemini sistematik biçimde ürün mühendisliğine gömen bir sistem.
-
-### Ablation Altyapısı: Her Özelliğin Gerçek Katkısını Anlamak
-
-ML araştırmacıları modelin hangi bileşenlerinin gerçekten önemli olduğunu anlamak için uzun süredir ablation study'den (ablasyon çalışması) yararlanır — ablasyon, bir bileşeni tek tek "sökmek" ve toplam performansın ne kadar düştüğüne bakmaktır. OpenClaw bu yöntemi ürün mühendisliğine taşır: sistemde, birçok ana özelliği (düşünme modu, context sıkıştırma, otomatik bellek, arka plan görevleri vb.) aynı anda devre dışı bırakabilen bir ana anahtar yerleşiktir ve böylece bir "çıplak model" temel çizgisi yaratılır. Bu, ekibin kilit bir soruyu yanıtlamasını sağlar: **bir özellik kullanıcı deneyimini gerçekten iyileştiriyor mu, yoksa yalnızca faydalı mı hissettiriyor?**
-
-Ablasyonu tek seferlik bir araştırma faaliyeti değil de rutin bir mühendislik pratiği hâline getirmenin birkaç pratik sonucu vardır. Birincisi, ablasyon anahtarı başlatma yolunun çok erken bir noktasında enjekte edilmelidir — herhangi bir modül düzeyi sabit yapılandırma değerini yakalamadan önce — ki bu da ablasyon altyapısının sonradan takılan bir eklenti değil, en baştan sistem mimarisine tasarlanması gerektiği anlamına gelir. İkincisi, ablasyon deneylerini düzenli olarak çalıştırmak (örneğin her büyük sürümden önce) "özellik borcunu" ortaya çıkarır — bir zamanlar işe yarayan, ama modeller evrildikçe artık gerekmeyen özellikleri. Üretim Agent'ı geliştiren her ekip için önerilen pratik şudur: **her ana özellik bağımsız olarak kapatılabilir olmalı ve ekip her özelliğin gerçek katkısını düzenli olarak doğrulamalıdır**.
-
-### AB Testi Yöntemi: Mekanizmayı Hedeften Ayırmak
-
-Olgun Agent ürünleri kendi davranışları üzerinde titiz AB testleri yürütür (yani kullanıcılar rastgele iki gruba ayrılır, bir grup eski sürümü, diğeri yeni sürümü kullanır ve iki grubun gerçek verisi karşılaştırılarak değişikliğin işe yarayıp yaramadığına karar verilir). İyi tasarlanmış bir Agent AB testi vakası, birkaç kilit yöntem ilkesini gösterir:
-
-**İkili değil, çok kollu.** Yalnızca "var" ile "yok"u karşılaştırmak yerine kademeli birden çok varyant tasarlanır (örneğin farklı sıkılıktaki prompt kısıtları test edilirken bir kontrol grubu ve giderek daha katı üç deney grubu kurulur). Bu tasarım doz-etki ilişkisini açığa çıkarır ve en uygun noktayı bulmaya yardım eder.
-
-**Mekanizma metriklerini hedef metriklerden ayırmak.** En kolay yapılan hata budur: değiştirdiğiniz şeyi optimizasyon hedefi sanmak. Örneğin "Agent'ın plan dosyasını kısaltmayı" test ediyorsanız, plan uzunluğu bir mekanizma metriğidir (doğrudan değiştirdiğiniz şey), ama hedef değildir. Gerçek hedef muhtemelen "oturum düzeyinde maliyeti düşürmektir". Plan dosyasını kısaltmak maliyeti düşürebilir, ama plan yeterince ayrıntılı olmadığı için daha çok düzenle-kontrol et-düzenle döngüsüne yol açıp toplam çıktı hacmini artırabilir de. Kendinize hep şunu sorun: **değiştirdiğim şey (mekanizma) ile gerçekten önemsediğim şey (hedef) aynı mı?** Değilse hedefi esas alın.
-
-**Guardrail metrikleri koymak.** Hedef metrik iyileşse bile kullanıcı memnuniyeti düşüyorsa, işlem sayısı artıyorsa veya hata oranı yükseliyorsa deney durdurulmalıdır. Guardrail metrikleri "kötüleşmemesi gereken alt sınırdır".
-
-**Temel çizgi istatistiklerini kaydetmek.** Örneklem büyüklüğü, dağılım yüzdelikleri ve korelasyon çözümlemesi (örneğin "ret oranı plan boyutuyla birlikte tek yönlü artıyor") deney sonuçlarının yorumlanması için gereken bağlamı sağlar. Temel çizgi olmadan deney sonucunun istatistiksel olarak anlamlı olup olmadığına karar veremezsiniz.
-
-### İki Katmanlı Feature Flag Sistemi
-
-Agent ürünleri daha ilk günden Feature Flag (özellik anahtarı) altyapısını tasarlamalıdır — özellik anahtarı, bir işlevin kullanıcıya açık mı kapalı mı olduğuna kodu yeniden dağıtmadan uzaktan karar veren bir anahtardır. Aynı anda üç amaca hizmet eder: deney, kademeli yayın ve acil durum sigortası.
-
-**Derleme zamanı anahtarları**, ilgili kodu derleme aşamasında ürünün içinden fiziksel olarak çıkarır. Yalnızca içeride kullanılan özellikler dış derlemelerde hiç var olmaz — tersine mühendislikle bile çıkarılmış işlev keşfedilemez. Bu aynı zamanda temiz bir ablasyon mekanizmasıdır: bir özelliği kapatmak, çalışma zamanında mantığı atlamak değildir; karşılık gelen kod fiziksel olarak yoktur.
-
-**Çalışma zamanı anahtarlarının** yapılandırması sunucudan indirilir ve yerel diskte bir kopyası önbelleğe alınır. Tasarım gereği, Agent'ın bir ağ isteğini bekleyip başlangıçta bloke olmasındansa biraz eski bir önbellek yapılandırmasının okunması yeğlenir. Somut gruplama kararları AB testi gruplarını atamak için bir deney platformu (örneğin GrowthBook) üzerinden verilir. Kilit bir tasarım ayrıntısı şudur: her özelliğin görülme olayı her oturumda en fazla bir kez kaydedilir; böylece yinelenen kayıtların deney verisini kirletmesi önlenir.
-
-Agent geliştiricileri için çıkarılacak ders: özellik anahtarları bir hata ayıklama aracı değil, **birinci sınıf vatandaş düzeyinde mimari bileşenlerdir**.
-
-### Prompt Duyarlılığı Değerlendirmesi
-
-System prompt, Agent davranışının çekirdek "kodudur", ama çoğu zaman sıradan kodla eşdeğer bir sürüm denetiminden ve regresyon testinden yoksundur. OpenClaw'ın yaklaşımı, belirtilen bir git sürümünde eksiksiz render edilmiş system prompt'u çıkarabilen özel bir araç sunmaktır — tüm dinamik koşullar açıldıktan sonraki nihai metni içerir. Bu, ekibin şu soruları kesin biçimde yanıtlamasını sağlar: **hangi commit prompt'u değiştirdi? Değerlendirme kümesine etkisi ne oldu?**
-
-Her Agent ekibi için önerilen pratikler: (1) system prompt deterministik biçimde render edilebilir olmalıdır (aynı yapılandırma girdisi her zaman aynı çıktıyı üretmelidir); (2) prompt'lar için sürümlenmiş anlık görüntü mekanizması kurulmalıdır; (3) her prompt değişikliğinde değerlendirme kümesi üzerinde regresyon testi çalıştırılmalıdır — tıpkı kod değişikliklerinin CI'dan geçmesi gerektiği gibi.
-
-### Değerlendirmenin Temeli Olarak Gizlilik Duyarlı Analitik
-
-Değerlendirme iyi veriye dayanır, ama Agent ürünlerinin işlediği şey çoğu zaman kullanıcının hassas içeriğidir. OpenClaw bu çelişkiyi tip sistemi üzerinden çözer: analitik arayüzü yalnızca özel bir tiple sarmalanmış değerleri kabul eder ve tip adının kendisi bir denetim izidir — açıkça "bunun kod ya da dosya yolu olmadığını doğruladım" beyanında bulunur. Bu tasarım, gizlilik kısıtını dokümante edilmiş bir kuraldan derleme zamanında zorlanan bir tip denetimine dönüştürür.
-
-Temel ilke şudur: **gizlilik kısıtlarını en baştan tasarıma koyun, sonradan takmayın**. Analitik sisteminiz veriyi güvenle toplayamıyorsa etkili bir değerlendirme de yapamazsınız. Gizlilik ile değerlendirme birbirine karşıt değildir — gizlilik duyarlı tasarım, *gerçekte neyi ölçmeniz gerektiğini* ciddi ciddi düşünmeye zorlar ve bu da daha isabetli değerlendirme metrikleri doğurur.
-
-### Dıştan İçe: Değerlendirme Düşüncesindeki Dönüşüm
-
-Bu bölümün özü şudur: **önceki bölümler size bir Agent'ı dışarıdan nasıl değerlendireceğinizi öğretti; bu bölüm ise en iyi Agent ürünlerinin kendilerini içeriden nasıl değerlendirdiğini gösteriyor**. Dış değerlendirme "Agent ne kadar iyi" sorusunu yanıtlar; iç değerlendirme altyapısı ise "onu hangi değişiklik iyileştirdi" sorusunu. Ablasyon deneyleri hangi özelliklerin gerçekten önemli olduğunu bulur, AB testleri her değişikliğin etkisini nicelleştirir, özellik anahtarları deney ve geri alma altyapısını sağlar, prompt duyarlılığı değerlendirmesi system prompt'u CI sistemine dahil eder, gizlilik duyarlı analitik ise veri toplamanın mevzuata uygunluğunu güvenceye alır. Bu beş bileşen birlikte değerlendirme güdümlü ürün mühendisliğini oluşturur — ara sıra bir değerlendirme yapmak değil, değerlendirmeyi her ürün kararının içine gömmek.
-
-## Simülasyon Ortamları: Değerlendirmeden Post-Training'e Uzanan Köprü
-
-Değerlendirmenin varış noktası puan vermek değil, iyileştirmedir. Bu bölüm iyileştirmenin iki yolunu şimdiden gösterdi: Harness'i ayarlamak (benchmark raporundan sistem iyileştirmesine) ve değerlendirmeyi ürün mühendisliğine gömmek (iç değerlendirme altyapısı). İyileştirmenin en güçlü biçimi ise eğitimdir — hedef "mevcut yeteneği ölçmekten" "yeni yetenek yetiştirmeye" genişlediğinde, özellikle Bölüm 7'de tartışılan post-training teknikleriyle, değerlendirme ortamının bir **simülasyon ortamına** evrilmesi gerekir: Agent'ın tekrar tekrar alıştırma yapabileceği ve otomatik olarak puanlanacağı sanal bir oyun alanı. Simülasyon ortamının değerlendirme ortamından temel farkları şunlardır: etkileşim sıklığı çok daha yüksektir (milyonlarca kez, binlerce kez değil), rastgeleleştirme gerekir (belirli yapılandırmaların ezberlenmesini önlemek için) ve anlık geri bildirim vermek zorundadır. Uygulama alanı açısından simülasyon ortamları dijital ortamlar (bilgi işleme görevleri) ve bedenlenmiş ortamlar (fiziksel dünyayı algılama ve manipüle etme) olmak üzere iki büyük gruba ayrılır.
-
-Bu köprünün iki ucu şöyle birleşir. Değerlendirme tarafında biriken varlıklar neredeyse kusursuz biçimde eğitim sinyaline dönüşebilir: açıkça tanımlanmış bir Rubric ya da doğrulayıcı, özünde bir **doğrulanabilir ödül (RLVR, Reinforcement Learning with Verifiable Rewards)** ödül fonksiyonudur — puanlama betiği doğrudan ödül betiğidir; testin geçip geçmediği, durumun ölçüte uyup uymadığı hem değerlendirmenin ölçütü hem de pekiştirmeli öğrenmenin getirisidir. Ama eğitim, değerlendirme aşamasında hiç dert edilmeyen yeni gereksinimler ortaya çıkarır. Birincisi **güvenilir reset semantiğidir**: eğitim milyonlarca episode koşar (bir episode, başlangıç durumundan görev sonuna kadarki eksiksiz bir etkileşim turudur) ve her episode ortamı belirli, temiz bir başlangıç durumuna sıfırlayabilmelidir; yoksa gradyan sinyali önceki turdan kalan artık durumla kirlenir. İkincisi **değerlendirmeninkinden çok daha yüksek throughput'tur**: değerlendirmede sonuca varmak için birkaç bin koşu yeterken, eğitimde kabul edilebilir bir duvar saati süresi içinde modele milyonlarca etkileşim beslenmelidir; ortamın paralellik derecesi ve tek örnek başına yükü, eğitimin yapılabilir olup olmadığını doğrudan belirler. Bu iki nokta — ödül fonksiyonuna dönüşen doğrulayıcılar ile eğitim ölçeğinde reset ve throughput — Bölüm 7'de açılacak.
-
-![Şekil 6-8: Simülasyon Sadakati Spektrumu](images/fig6-8.svg)
-
-**Dijital ortamlar** tarafında AWorld çerçevesi, GAIA görevleri için denetlenebilir bir MCP sunucu sandbox'ı kurar; 26 MCP sunucusu ve 126 araç fonksiyonu sağlayarak gerçek API'lere doğrudan erişmenin getirdiği yasaklanma ve denetlenemeyen yan etkilerden kaçınır. Tüm araç çağrıları yeniden oynatılabilir ve denetlenebilir. AWorld'ün dağıtık mimarisi, geleneksel seri yürütmedeki 7.695 saniyeyi 525 saniyeye indirir (14,6 kat hızlanma); ortamın durumsuz tasarımı sayesinde her örnek tamamen bağımsızdır ve verimli paralellik desteklenir.
-
-**Bedenlenmiş ortamlar** tarafında RoboTwin2, bir fizik motoru üzerine çift kollu manipülasyon görevleri kurar; genelleme yeteneğini artırmak için nesnelerin konumunu, yönelimini ve görünümünü rastgeleleştirir. Gözlem alanı çok kameralı görüntüyü ve eklem durumlarını içerir; gerçek zamanlı denetim, **eylem parçalama (Action Chunking)** ile — yani modelin birden çok ardışık eylemi tek seferde planlamasıyla — gerçekleştirilir (ayrıntısı Bölüm 9'da). OSWorld sanal makine anlık görüntüleriyle sıfırlanabilirliği sağlar, AndroidWorld ise mobil uygulama otomasyonuna odaklanır. İster dijital ister bedenlenmiş olsun, simülasyon ortamları da Bölüm 4'te tartışılan izole yürütme ortamlarına ve sanal kimlik mekanizmalarına (VM/konteyner izolasyonu, konut proxy'leri, Human-in-the-Loop kimlik doğrulama, paylaşılan dosya sistemleri) ihtiyaç duyar; burada tekrarlanmayacak.
-
-> **Deney 6-11 ★★: OpenVLA ve RoboTwin2 ile Bedenlenmiş Zeka Ortamını Yapılandırmak**
->
-> Robot manipülasyonu için bir simülasyon ortamı kurun. `ch7/SimpleVLA-RL` ile OpenVLA belgelerini okuyup görme-dil-eylem modelinin mimarisini anlayın (görme kodlayıcı + dil modeli + eylem kod çözücünün uçtan uca bütünleştirilmesi; görüntü ve metin ortak bir semantik uzaya izdüşürülür). RoboTwin2 ortamını yapılandırın; gözlem alanını (üç açılı RGB + 14 boyutlu eklem durumu) ve eylem alanını (14 boyutlu denetim vektörü) kavrayın. `move_can_pot` içindeki ortam rastgeleleştirme mekanizmasını ve uzamsal kısıt mantığını inceleyin. Önceden eğitilmiş modeli çalıştırıp değerlendirin; başarı oranını, tamamlanma süresini ve başarısızlık biçimlerini kaydedin, özellikle eylem parçalama mekanizmasının etkisine odaklanın.
+> ![Şekil 6-3: Deney 6-1 Olay Güdümlü Agent Mimarisi](images/fig6-3.svg)
 >
 >
-> ![Şekil 6-9: OpenVLA ve RoboTwin2 Bedenlenmiş Zeka Ortamı](images/fig6-9.svg)
+> Bu deney en basit olay güdümlü Agent'ı inşa eder: bir **Otomatik E-posta İşleme Asistanı**. Agent e-posta gelen kutusunu izler ve yeni bir e-posta her geldiğinde, otomatik olarak bir işleme iş akışını tetikler—sınıflandırma, özetleme, taslak yanıt ve gerekirse kullanıcıyı bilgilendirme. Bu, olay güdümlü bir Agent için en sezgisel giriş senaryosudur: bir dış olay (yeni e-posta gelişi) eksiksiz bir Agent düşünme döngüsünü tetikler.
+>
+> **Deney Amacı**: olay güdümlü mimarinin temel fikrini anlamak—Agent artık kullanıcı girdisini pasif olarak beklemez, dış olaylara yanıt olarak kendi başına hareket eder. Bu deney aracılığıyla, okuyucular olay kaynağı kaydının, olay kuyruğunun ve "olay gelir → Agent işler → sonuç iletilir" temel kapalı döngüsünde ustalaşacaktır.
+>
+> **Olay Kaynakları ve Olay Kuyruğu.**
+>
+> Sistem birden fazla olay kaynağı için birleşik erişimi destekler:
+>
+> - **E-posta Olayları** (`on_email_received`): Yeni bir e-posta geldiğinde, ya gelen kutusunu periyodik olarak kontrol ederek ya da push bildirimleri alarak tetiklenir.
+> - **IM/SMS Mesajları** (`on_im_message`, `on_sms_message`): Anlık mesajlaşma mesajlarıyla tetiklenir.
+> - **GitHub Olayları** (`on_github_pr_update`, `on_github_issue_update`): PR inceleme yorumları veya durum değişiklikleriyle tetiklenir.
+> - **Zamanlayıcı Tetikleyicileri** (`on_timer_expire`): Zamanlanmış görevlerle (örn. günlük özetler, haftalık rapor üretimi) tetiklenir.
+> - **Webhook'lar** (`on_webhook_received`): Dış sistemlerden gelen genel geri çağırmalar.
+> - **Sistem Olayları** (`on_user_inactive`, `on_process_timeout`, `on_resource_alert`): İç durum değişiklikleriyle tetiklenir.
+>
+> Tüm olaylar birleşik bir **olay kuyruğuna** girer ve varış sırasına göre sırayla işlenir. Her olay bağımsız bir Agent düşünme döngüsünü tetikler: Agent olay içeriğini okur, ilgili araçları çağırır (örn. bilgi tabanını sorgulamak, ekleri okumak, ilgili e-posta geçmişini aramak), bir işleme sonucu üretir (sınıflandırma etiketleri, özetler, taslak yanıtlar) ve nihayet bildirim araçları aracılığıyla kullanıcıyı bilgilendirir veya doğrudan bir eylem yürütür.
+>
+> **Doğrulama Senaryosu**: Agent'ı bir test posta kutusunu izlemek üzere yapılandırın. Üç e-posta almayı simüle edin—bir toplantı daveti, bir müşteri şikayeti ve bir pazarlama reklamı. Agent bunları sırayla işler: toplantı daveti için, takvim çakışmalarını otomatik olarak kontrol eder ve bir kabul/red yanıtı taslağı hazırlar; müşteri şikayeti için, kilit bilgiyi çıkarır, yüksek öncelikli olarak işaretler ve kullanıcıyı ele alması için bilgilendirir; pazarlama reklamı için, otomatik olarak arşivler. Tüm süreç kullanıcı müdahalesi gerektirmez.
+
+Deney 6-1, en basit olay güdümlü kalıbı gösterir—olaylar bir kuyruğa girer ve Agent bunları sırayla işler. Ancak, Agent'ın uzun süren araç yürütmeleri sırasında kesintilere yanıt vermesi veya birden fazla eş zamanlı görevi aynı anda yönetmesi gerektiğinde, basit bir olay kuyruğu yetersiz kalır. Şimdi, daha derin mühendislik zorluklarını tartışıyoruz.
+
+### Yerleşik asenkron destek olmadığında uyumluluk yaklaşımı
+
+Deney 6-1 yalnızca sıralı olayları işler: olaylar kuyruğa girer ve Agent bunları birer birer tamamlar. Seçilen model veya arayüz yerleşik asenkronluğu desteklemiyorsa, araç dönmeden gelen kullanıcı kesintisinin senkron biçimde ifade edilmesi gerekir. Burada bir uyumluluk yolu sunuyor, ardından GPT-6 Astra'nın yerleşik arayüzünü ele alıyoruz.
+
+Agent'ın bir e-posta hazırlarken kişi bilgilerini arayan bir araç çağırdığını düşünelim. Sonuç gelmeden kullanıcı, “Bekle, önce yarının hava durumuna bak” der. Arayüz, bekleyen çağrılara önce karşılık gelen sonuçların verilmesini gerektiriyorsa Agent, çağrı hâlâ açıkken yeni mesajı doğrudan işleyemez. Bu sınırlama seçilen protokol ve model birleşiminden kaynaklanır; tüm LLM'ler için geçerli bir kural değildir.
+
+**Senkron biçimle uyumlu asenkron uygulama.**
+
+Temel fikir şudur: **kesinti olmadan normal koşullarda, LLM'in standart bir senkron trajectory görmesine izin verin; yalnızca bir kesinti oluştuğunda, formatı düzeltmek için yer tutucular ekleyin**. İşte beş kilit kural:
+
+**Kural 1**: API'nin tamamladığı assistant mesajlarını ve araç çağrısı öğelerini zamanında kaydedin. Sunucunun yönettiği akıl yürütme durumunu sağlayıcının devam protokolüne göre koruyun; görünmeyen düşünce metnini kendiniz birleştirmeyin.
+
+**Kural 2**: Araç sonucunu yalnızca tool call tamamlandığında kaydedin. Trajectory yürütme sırasında "kısmen tamamlanmış" bir durumdadır.
+
+**Kural 3**: Araç yürütmesi sırasındaki kesintiler yer tutucular gerektirir. Bitmemiş araç için bir yer tutucu yanıt üretin (örn. "Araç arka planda çalışıyor, lütfen yeni olayı önceliklendirin"), kesinti olayını ekleyin ve LLM'i yeniden çağırın. LLM'in perspektifinden, asistan mesajının hâlâ eşleşen bir araç sonucu vardır.
+
+**Kural 4**: Yerleşik steering veya desteklenen bir tur içi devam arayüzü yoksa tamamlanmamış üretimi iptal edin; tamamlandığı doğrulanmış mesajları ve araç durumunu koruyun, yeni olayı ekleyip yeniden istekte bulunun. Kısmi çıktının veya gizli akıl yürütmenin geçerli bir önek olarak keyfî biçimde geri verilebileceğini varsaymayın.
+
+**Kural 5**: Kesintiye uğratmayan olaylar toplu işleme için kuyruğa girer. Yalnızca mevcut döngü tamamlandıktan sonra bir kerede eklenirler.
+
+Agent'ın bir e-posta taslağı hazırlarken kullanıcının hava durumunu sormak için kesintiye uğrattığı örneği kullanarak, bu beş kuralın işleyişi şöyledir:
+
+1. Agent, iletişim bilgisini aramak için `search_contacts`ı çağırır ve asistan mesajı hemen trajectory'ye yazılır (Kural 1).
+2. Arama aracı sonuçları döndürmeden önce, kullanıcı "Önce yarınki hava durumunu kontrol et" gönderir. Bu bir kullanıcı kesintisi olduğundan, sistem bitmemiş `search_contacts` için bir yer tutucu araç sonucu üretir ("Araç arka planda çalışıyor, lütfen yeni olayı önceliklendirin", Kural 3), ardından kullanıcının hava durumu sorgusunu trajectory'ye ekler ve LLM'i yeniden çağırır. Bu noktada, LLM'in gördüğü trajectory formatı tamamen geçerlidir—asistan mesajı ve araç sonucu mükemmel biçimde eşleşir.
+3. Hava durumu sorgusu tamamlandıktan ve kullanıcı yanıtlandıktan sonra, orijinal `search_contacts` sonucu gelir ve yeni bir olay olarak trajectory'ye eklenir (Kural 2). Agent iletişim bilgisini okur ve e-posta taslağı hazırlamaya devam eder.
+
+Bu yaklaşım, senkron arayüzün gerektirdiği çağrı-sonuç eşleşmesini korur. Yalnızca kesinti gerektiğinde açıkça “tamamlanmadı” diyen bir yer tutucu eklenir. Gerçek arka plan sonucu geldiğinde, kaynak ve görev kimliği içeren bir olay olarak yörüngeye girer. Yerleşik asenkronluğu destekleyen modellerde sistem, görevin bekleyen durumunu koruyup gerçek sonucu geldiğinde modele iletebilir.
+
+Yer tutucular anlamsal risk de taşır: model, “görev başladı” ile “görev tamamlandı” ifadelerini karıştırıp henüz gelmeyen sonuca bağlı bir karar verebilir. Açık görev durumu ve sonuç doğrulaması bu karışıklığı önlemeli; değerlendirme, henüz ulaşmamış verilerin uydurulup uydurulmadığını denetlemelidir. Tek bir başarısızlık, nedeni açıklanmamış bir eğitim sürecine bağlamak için yeterli değildir.
+
+**Görev tutamaçlarıyla asenkron anlamı ifade etmek.**
+
+Yerleşik asenkron protokol kullanılsın ya da kullanılmasın, **araç arayüzünün tasarımı asenkron anlamı açıkça ifade edebilir**. Senkron arayüzlerde özellikle yararlı bir yöntem, “görevi başlat” işlemini gerçek dönüş değeri olan tamamlanmış bir çağrı yapmaktır.
+
+Geleneksel araç tasarımı "çağırma tamamlanma anlamına gelir" semantiğini ima eder. Örneğin, `phone_call` adı "çağırma telefonu çevirecek ve arama bitene kadar bekleyip arama kaydını döndürecek" izlenimi verir. Asenkron paradigma altında, "başlatma" ve "tamamlanma" ayrılmalıdır:
+
+- `initiate_phone_call`: Bir telefon araması başlatır, hemen bir görev tanımlayıcısı ve başlangıç durumu döndürür (örn. "Arama başlatıldı, çevriliyor...")
+- Arama ilerlemesi olay bildirimleri (`phone_call_connected`, `phone_call_ended`) aracılığıyla iletilir
+
+Kilit nokta, aracın adının ve açıklamasının kendisinin asenkron semantiği iletmesi gerektiğidir. Model `initiate_phone_call`ı gördüğünde, dil anlama yetenekleri doğal olarak bunun "tamamlama" değil "başlatma" olduğunu çıkarsayacaktır. Araç açıklaması bunu daha da pekiştirmelidir: "Bu araç, bir alt Agent tarafından ele alınan bir telefon araması görevi başlatır. Başarılı başlatma üzerine hemen görev ID'sini döndürür, diğer işlerinize devam etmenize izin verir. Arama bittiğinde ayrı bir bildirim olayı gönderilecektir."
+
+**Kuyruk Tabanlı İşlemede Dikkat Dağınıklığı.**
+
+Olaylar toplu işlendiğinde model yalnızca son olaya yanıt verip önceki gereksinimleri atlayabilir. Yerleşik asenkronluk, mesajların yürütme sırasında ulaşıp ulaşamayacağını çözer; modelin tüm güncellemeleri birlikte kullandığı ayrıca kontrol edilmelidir.
+
+Müdahale iki düzeyde uygulanabilir:
+
+**Prompt Düzeyi**: Modeli bilgilendirin, "Birden fazla ardışık olay aldığınızda, lütfen tüm bilgiyi kapsamlı biçimde dikkate aldığınızdan emin olun."
+
+**Agent Durum Çubuğu İşaretleri**: Her olaydan önce açık işaretler ekleyin:
+
+```text
+[İşlenmemiş Olay 1/4] database_query'den araç sonucu: ...
+[İşlenmemiş Olay 2/4] Kullanıcı ek notu: Yalnızca Pekin verisine bak
+[İşlenmemiş Olay 3/4] Sistem hatırlatması: Rapor son tarihine 30 dakika kaldı
+[İşlenmemiş Olay 4/4] Kullanıcı soruyor: İlerleme nedir?
+```
+
+Sona bir özet ekleyin: "Yukarıda 4 işlenmemiş olay var, 1 araç sonucu, 2 kullanıcı mesajı ve 1 sistem hatırlatması dahil. Lütfen yanıtınızın tüm bilgiyi kapsadığından emin olun."
+
+> **Deney 6-2 ★★★: Paralel Yürütme ve Kesinti Yetenekleriyle Asenkron Agent**
 >
 >
+> ![Şekil 6-4: Deney 6-2 Asenkron Agent Kesintisi ve Kurtarma](images/fig6-4.svg)
+>
+>
+> Deney 6-1'deki basit olay kuyruğu üzerine kurulan bu deney, senkron arayüzlerle uyumlu bir çalışma zamanı kullanarak **paralel araç yürütme, yürütmeyi iptal etme ve durum yönetimini** uygular. Agent birden çok eşzamanlı görevi yönetmeli, kesintilerden sonra devam edebilmeli ve güncel duruma göre karar vermelidir. Astra'nın yerleşik arayüzüyle karşılaştırma Deney 6-3'tedir.
+>
+> **1. Asenkron Araç Yürütmesi**: Zaman alan araçların (en az 3-5 saniye) asenkron yürütülmesini destekler, başlatma üzerine hemen bir yer tutucu döndürür. **Doğrulama Senaryosu**: Agent uzun süren bir terminal komutu yürütür. Bu sırada, kullanıcı "Şu an saat kaç?" diye sorar. Agent hemen yanıt verir, ardından döndüğünde analiz sonucunu sunar.
+>
+> **2. Olay Kuyruğu ve Toplu İşleme**: Acil olmayan olayları biriktirir ve bunları toplu olarak trajectory'ye ekler. **Doğrulama Senaryosu**: Agent uzun bir görevi yürütüyor. Kullanıcı ardışık mesajlar gönderir: "Japonca yanıtlamayı unutma" ve "Bunu bir web sayfası olarak biçimlendir." Görev tamamlandığında, Agent tüm olayları bir kerede işler, Japonca bir web sayfası üretir.
+>
+> **3. Kesinti Mekanizması**: Bir kullanıcının "dur" komutu, yürütme akışını hemen sonlandırır ve asenkron aracı iptal eder. **Doğrulama Senaryosu**: Agent uzun bir görevi yürütüyor. Kullanıcı "İptal et" gönderir. Agent hemen durur ve trajectory kesinti olayını ve iptal işlemini kaydeder.
+>
+> **4. Paralel Araçlar için İptal ve Durum Sorgusu**: Bir asenkron araç tamamlandıktan sonra, gerçek sonuç yeni bir olay aracılığıyla konuşmaya enjekte edilir. Görev ID'si aracılığıyla iptal veya ilerleme sorgusunu destekler. **Doğrulama Senaryosu**: Kullanıcı "Bu üç betiği benim için eş zamanlı çalıştır. Hangisi önce biterse, kalan betiklerin ilerlemesini kontrol et. Herhangi biri %50'yi aşmadıysa, iptal et" diye ister. Üç betik, sırasıyla saniyede %3, %2 ve %1 hızlarında sürekli ilerleme çıktısı vererek analiz süreçlerini simüle eder. Agent, üç asenkron terminal komutunu eş zamanlı olarak başlatır. Saniyede %3'lük betik yaklaşık 33 saniyede bittiğinde, Agent kalan iki terminalin durumunu sorgular, birinin yaklaşık %66'da, diğerinin ise yaklaşık %33'te olduğunu bulur. Ardından %50'yi aşmayanı iptal eder. Her iki terminal de tamamlandıktan sonra, sonuçları eksiksiz bir rapor üretmek için entegre eder.
+>
 
-### Sadakat Dengeleri ve Alan Rastgeleleştirme
+### Modelin yerleşik asenkron yetenekleri: GPT-6 Astra
 
-Yüksek sadakatli ortamlar gerçek dünyaya daha iyi aktarılır, ama hesaplama yükleri büyüktür. Sadakatin bir başka boyutu rastgeleleştirme derecesidir: ölçülü rastgeleleştirme genelleme yeteneğini artırır, aşırısı ise görevi fazla zorlaştırır. **Alan rastgeleleştirme (Domain Randomization)**, simülasyon ile gerçeklik arasındaki farkı (sim-to-real gap) daraltmanın kilit tekniğidir: fiziksel parametrelerde, görsel görünümde, sensör gürültüsünde vb. geniş aralıklı rastgele değişimler devreye sokulur — tıpkı her türlü ışık ve açıda kavrama alıştırması yapmış olmak gibi; gerçek ortamda ışık değişti diye elden kaçırmazsınız. Dijital ortamlarda sim-to-real farkı arayüz render'i, yanıt süresi gibi noktalarda kendini gösterir ve gecikme ile başarısızlıkların rastgeleleştirilmesiyle hafifletilebilir.
+Önceki uyumluluk yaklaşımında çalışma zamanı, gelen olayların sırasını düzenleyerek senkron arayüzlü modelin asenkron görevlere katılmasını sağlar. Diğer yaklaşımda model bu etkileşim ritmini doğrudan anlar: araç çalışırken başka işler yapabilir, kullanıcı yeni gereksinimler eklediğinde sonraki işi değiştirebilir. GPT-6 Astra'nın desteklediği asenkron araç çağırma (Async tool calling) ve tur içi yönlendirme (Mid-turn steering), bu değişimi gösterir (Şekil 6-5).[^ch6-22][^ch6-23]
 
-Buraya gelindiğinde değerlendirme ortamı son evrimini tamamlamış olur: yeteneği ölçen bir sınav salonundan, yeteneği yetiştiren bir antrenman sahasına dönüşür. Bölüm 7, AWorld-train'in bu tür simülasyon ortamlarını nasıl eğitilebilir sahalara çevirdiğini ve bunun mühendislik zorluklarını anlatacak — bu bölümde kurulan değerlendirme sistemi ile simülasyon ortamları, post-training'in iki temel taşıdır.
+![Şekil 6-5: Senkron arayüz uyumluluğu ve modelin yerleşik asenkron yetenekleri](images/fig6-5.svg)
 
-[^re-bench-2025]: Wijk, Hjalmar, et al. *RE-Bench: Evaluating Frontier AI R&D Capabilities of Language Model Agents against Human Experts.* arXiv:2411.15114, 2025.
+**Asenkron araç çağırma, “eylemi başlatmak” ile “sonucu almak” adımlarını ayırır.** Agent uzun süren bir sorguyu başlattıktan sonra akıl yürütmeye devam edebilir, başka araçlar çağırabilir veya sonuca bağlı olmayan kısımları işleyebilir. Örneğin toplantı mekânlarını sorgularken gündemi ve hazırlık listesini oluşturabilir; bilgiler geldiğinde seçenekleri karşılaştırır. Esas olan bağımlılıkları ayırmaktır: bağımsız işler ilerler, sonuca ihtiyaç duyan kararlar sonuç gelene kadar bekler.
+
+**Tur içi yönlendirme, görev sürerken kullanıcının yönü düzeltmesini sağlar.** Agent hâlâ düşünürken veya yanıtını hazırlarken kullanıcı “bütçe azaldı” ya da “katılımcı sayısı değişti” diyebilir. Sistem tamamlanan işi korur ve yeni kısıtları sonraki işleme taşır; böylece Agent aynı görev içinde planını günceller. Güncellemeyi almakla uygulamak arasında gecikme olabilir, ancak kullanıcı değişikliği bildirmek için tam bir yanıtın bitmesini beklemez.
+
+Bu iki yetenek etkileşimin zamanlamasını genişletir: araç sonuçları ve kullanıcı gereksinimleri görev sırasında gelebilir. Sistem bunların kaynaklarını ayırt etmeli, tamamlanan ve bekleyen işleri hatırlamalıdır. Planı değiştirmek, çalışan araçları durdurmak veya gerçekleşmiş eylemleri geri almak anlamına gelmez; yürütme, iptal ve durum yönetimi çalışma zamanının sorumluluğundadır.
+
+Her model yerleşik asenkron yeteneklere sahip değildir. Agent tasarlarken modelin desteğine göre yerleşik etkileşim veya uyumluluk yaklaşımı seçilmeli; bütün sistemin geciken sonuçları, görev ortasındaki değişiklikleri ve göreve dönüşü doğru yönettiği doğrulanmalıdır. Asenkron eğitim bu yetenekleri geliştirebilir, ancak geliştiriciler mevcut modellerle bu etkileşimi şimdiden kurabilir.
+
+### Asenkron mesaj almaktan asenkron görevleri güvenilir biçimde işlemeye
+
+Yerleşik asenkronluk, mesajların yürütme sırasında alınmasını sağlar. Karmaşık görevlerin güvenilirliği, modelin bu mesajları nasıl kullandığına da bağlıdır. En az üç nokta denetlenmelidir:
+
+1. **Sonucun ait olduğu görev ve bekleme durumu**: Geciken sonuç doğru göreve bağlanıyor mu; sonuç yokken veri uydurulması önleniyor mu?
+2. **Göreve dönüş ve eylem kontrolü**: Yeni gereksinimler işlendiğinde asıl göreve dönülüyor mu; plan değişikliği ile yürütmeyi durdurma ayrılıyor mu?
+3. **Birden çok güncellemeyi birlikte kullanma**: Yalnızca son mesajı hatırlamak yerine bütçe ve katılımcı sayısı gibi kısıtlar birlikte gözetiliyor mu?
+
+Bu sorunlar için model asenkron ortamlarda eğitilebilir; sistem de açık görev durumu, olay kaynakları ve yürütme geri bildirimiyle geliştirilebilir. Değerlendirme iki katmanı kapsamalıdır: model değişikliği anladı mı ve sistem buna uygun yürüttü mü?
+
+> **Deney 6-3 ★★★: Modelin yerleşik asenkron yetenekleri ve tur içi yönlendirme**
+>
+> Bir toplantı için mekân seçin: Agent uzun süren sorguyu başlattıktan sonra sonuçtan bağımsız hazırlıkları tamamlar. Bu sırada kullanıcı bütçe ve katılımcı sayısı gereksinimlerini ekler. Sorgu tamamlandığında tüm kısıtlara göre mekân seçilir.
+>
+> GPT-6 Astra API'sini çağırarak senkron araçları, yerleşik asenkron araçları ve tur içi yönlendirmeyi karşılaştırın. Beklemenin başka işleri engelleyip engellemediğini, yeni gereksinimlerin sonraki planlara girip girmediğini ve sonuç geldiğinde asıl görevin sürdürülüp sürdürülmediğini gözlemleyin. Model yetenekleriyle çalışma zamanı orkestrasyonunun ayrı ayrı neyi çözdüğünü anlamak için yerleşik destek sunmayan bir modeli de kontrol olarak kullanın.
+
+Asenkronluk ve olay güdümlü yürütme, görev sürerken dünyanın Agent'ı uyandırmasını sağlar; yerleşik yönlendirme de kullanıcıya tam yanıt bitmeden güncelleme gönderme imkânı verir. Sonraki üç bölüm zaman ölçeğini daha da daraltır: ortam, modelin üretim hızı kadar hızlı veya daha hızlı değiştiğinde güncelleme almak yetmez; sistem zamanında tepki vermelidir.
+
+## Ses: En Doğal İnsan-Makine Arayüzü
+
+Ses, yalnızca metni sese çevirmek değildir. Konuşma yazmaktan yaklaşık dört kat hızlıdır ve elleri gözleri serbest bırakır; bu yüzden kullanıcı istediği anda araya girebildiği sürekli bir giriş-çıkış döngüsü oluşturur. Dikte konuşmayı metne çevirir; sesli Agent ise kullanıcıyla doğrudan iş birliği yapar. Her ikisi de daha önce tanıtılan whisper-coding çalışma biçimini destekler.
+
+Bu bölüm iki yönü ele alır: kullanıcının Agent ile konuşması ve Agent'ın kullanıcı adına dış dünyayla konuşması. Ses modeli Agent'ın neleri yanıtlayacağını belirler; etkileşim mimarisi ise doğru duyma, zamanında yanıt verme, doğal biçimde söz devretme, onayları ve araç çağrılarını bir görüşme sırasında tamamlama becerisini belirler.
+
+### Etkileşim zamanı: kaskaddan full-duplex'e
+
+OpenAI'nin GPT-Live tanıtımı üç ses etkileşimi paradigması tanımlar: kaskad, sıra tabanlı ve full-duplex[^ch6-12]. Bunlar eskiden yeniye basit bir geçiş değil, gecikme, maliyet ve gözlemlenebilirlik arasında farklı ödünleşimlerdir:
+
+| Paradigma | Temel yapı | Ana avantaj | Ana sınırlama |
+| --- | --- | --- | --- |
+| Kaskad | VAD → ASR → LLM → TTS | Modüller açık; değiştirmek ve hata ayıklamak kolay | Gecikme birikir, paralinguistik bilgi arayüzlerde kaybolur |
+| Uçtan uca Omni | Doğal ses girişi ve çıkışıyla sıra tabanlı etkileşim | Daha düşük gecikme; ton, duygu ve ortam sesi daha iyi korunur | Hâlâ sıra tabanlı; eğitim ve hata ayıklama daha pahalı |
+| Full-duplex | Doğal ses girişi ve çıkışıyla sürekli dinleme, konuşma ve karar verme | Üst üste konuşma, doğal kesme ve kesintisiz akış | Eğitim, kontrol ve değerlendirme daha karmaşıktır |
+
+Ortak hedef, insanların mutlaka sırayla konuşması ve VAD'nin kimin söz hakkına sahip olduğunu tahmin etmesi varsayımlarından kurtulmaktır. Kaskad ve Omni hâlâ etkileşimi turlara böler; full-duplex ise söz hakkını modelin sürekli verdiği bir karara dönüştürür.
+
+[^ch6-12]: OpenAI, *Introducing GPT-Live*, 2026-07-08. https://openai.com/index/introducing-gpt-live/ Kaskad / sıra tabanlı / full-duplex sınıflandırması, yazının ChatGPT Voice'un üç kuşağına dair özetinden gelir; “uçtan uca omnimodal (Omni)” terimi “turn-based voice models” kategorisine karşılık gelir.
+
+### Paradigma 1 · Kaskad boru hattı
+
+Ticari sesli yardımcıların çoğu hâlâ seri bir boru hattı kullanır (Şekil 6-6): VAD konuşmanın bitip bitmediğine karar verir, ASR sesi metne çevirir, LLM isteği anlayıp yanıtı üretir ve TTS bunu seslendirir. Modülerlik her parçayı ayrı ayrı geliştirmeyi kolaylaştırır, fakat her sınır bekleme ekler.
+
+![Şekil 6-6: Seri sesli Agent boru hattı](images/fig6-6.svg)
+
+| Modül | Rol | Tipik darboğaz |
+| --- | --- | --- |
+| VAD | Konuşmanın bittiğine karar vermek | Sessizlik eşiği yanıtı geciktirir ve turları yanlış böler |
+| ASR | Sesi metne çevirmek | Tanıma gecikmesi ve bağlam kaybı |
+| LLM | Anlamak, akıl yürütmek ve üretmek | İlk token süresi; reasoning ek bekleme getirir |
+| TTS | Metni konuşmaya çevirmek | İlk paket sentezi ve oynatma tamponu |
+
+Reasoning açılmamış kısa bir yanıtta VAD, ASR, LLM ve TTS beklemeleri seri olarak birikir (Şekil 6-7). Gerçek değerler girdi uzunluğuna, modele, donanıma, ağa ve yüke bağlıdır.
+
+![Şekil 6-7: Seri yanıt için gecikme şelalesi](images/fig6-7.svg)
+
+Üretim ortamındaki kuyruklanma boştaki gecikmeyi daha da büyütür (Şekil 6-8), ancak bu servis kapasite planlamasına girer; bu bölümde kuyruk modelleri ele alınmaz.
+
+![Şekil 6-8: Kuyruk gecikmesi eğrisi](images/fig6-8.svg)
+
+> **Deney 6-4 ★: Geleneksel bir sesli Agent inşa etmek**
+>
+> Mikrofonu, Silero VAD'ı, yerel Whisper'ı, akışlı bir LLM'i ve Fish S1 TTS'i WebSocket üzerinden bağlayarak kademeli baseline'ı kurun.
+
+#### Seriden akışlı algıya
+
+Şekil 6-7'nin tasvir ettiği, VAD+ASR+LLM+TTS'nin tamamen seri işlediği durumdur; bu seri algılama şemasının üç sorunu vardır:
+
+1. **Gecikme birikimi**: konuşmanın bittiğini onaylamak için bir sessizlik aralığının geçmesi beklenmelidir.
+2. **Bilgi kaybı**: sesli/sessiz ikili sinyali tereddüdü, duyguyu, onaylayıcı tepkileri ve ortam sesini ifade edemez.
+3. **Bağlamın kesilmesi**: e-posta adresleri, kişi isimleri ve özel adlar parçalara bölünerek tanınabilir ve hatalı çıkabilir.
+
+Bu sorunu çözmek için, modüler iş bölümünü korurken bir optimizasyon yolu **akışlı algıdır (streaming perception)**: her aşamanın artımlı sonuçları olabildiğince erken üretmesi sağlanır.
+
+- **ASR dinlerken çevirir**: VAD, kullanıcının konuşmaya başladığını tespit ettiğinde belirli aralıklarla ASR modeli çağrılır ve geçici bir transkript akış hâlinde üretilir; VAD konuşmanın bittiğini tespit ettiğinde nihai metin onaylanır.
+- **LLM speculative execution yapar**: geçici transkript üretilir üretilmez LLM'e gönderilir; nihai metin geçici transkriptle aynıysa LLM tekrar çağrılmaz, aksi hâlde önceki speculative execution'ın düşünmesi iptal edilip LLM yeniden çağrılır.
+- **LLM parça parça çıktı üretir**: seslendirmeye uygun ilk parça üretilir üretilmez, tam yanıt beklenmeden TTS'ye verilir.
+- **TTS artımlı sentez yapar**: ses parçalarını sürekli döndürerek sonraki üretim, sentez ve oynatmanın örtüşmesini sağlar.
+
+Gerçek bir streaming ASR, modelin bunu desteklemesini gerektirir. Whisper'ın kod çözmesi özbağlanımlı olsa da kodlayıcısı tam bir ses parçasını beklediği için doğrudan bir streaming model sayılamaz. LLM tabanlı streaming işitsel modeller sürekli sesten metin ve semantik olaylar çıkarabilir; "tanımayı" ve bir kısım "anlamayı" aynı modelin içine taşır. Konuşmanın başından o ana kadarki bağlamı korur, ayrıca marka adları, kişi isimleri ve özel adları işlemek için dünya bilgisinden yararlanabilir.
+
+Yalnızca "kullanıcı konuşmayı bitirdi mi" sorusu çözülmek isteniyorsa, sıra sonu kararı doğrudan akışlı tanıyıcıya yerleştirilebilir: model semantiği ve sessizliği birlikte değerlendirerek bir cümlenin tamamlanmış olup olmadığına karar verir. Uç nokta kararının eğitim etiketleri yalnızca karar anında görülebilen bilgileri kullanmalıdır; aksi hâlde "tanrı bakış açısıyla" verilmiş etiketler, çevrimiçi ortamda yeniden üretilemeyecek kararlar doğurur.
+
+Modelin ürettiği yalnızca metin değildir; akustik olay işaretleri de içerebilir:
+
+- **speak_start/end, interrupt**: konuşmanın başlangıcı/bitişi ve kesme niyeti;
+- **emotion**: duygu, tereddüt gibi durumlar;
+- **laugh, sigh, noise**: paralinguistik ve ortam sesleri.
+
+Bu işaretler metin token'larıyla birleşerek tek bir olay akışı oluşturur; Agent bunlara dayanarak tereddüdü, kesintiyi ve ortam değişikliklerini tanıyabilir, tüm sesi düz metne sıkıştırmak zorunda kalmaz.
+
+> **Deney 6-5 ★: Qwen2-Audio ile akışlı konuşma algısını simüle etmek**
+>
+> Qwen2-Audio kendi başına akışlı bir model değildir. Bu deney, büyüyen ses önekleriyle sürekli algıyı simüle eder ve 600 ms VAD + Whisper ile karşılaştırır.
+
+### Paradigma 2 · Uçtan uca omnimodal modeller (Omni)
+
+Kaskad akışlı algı kullansa bile dinleme, düşünme ve konuşma hâlâ ayrık arayüzler üzerinden birbirine devredilir; duygu, tonlama ve ortam sesi gibi bilgiler sese dönüştürülürken kaybolabilir. Omni çözümü aynı modelle sesi doğrudan dinler, yanıtı üretir ve sesi çıktı olarak verir; bu sayede söz konusu bilgileri koruma şansı vardır, ama eğitim maliyeti daha yüksektir (Şekil 6-9). Paradigma 1'deki kaskad çözümle karşılaştırıldığında, Omni'nin avantajı esas olarak gecikmede ve metin dışı bilginin anlaşılması ile üretilmesinde ortaya çıkar.
+
+Anlama tarafında, Omni modelleri sesteki duraklamaları algılayabilir. Üretim tarafında ise Omni modelleri şarkı söylemek veya bir cümleyi özel bir tonlamayla söylemek gibi çok daha zengin paralinguistik bilgiyi aktarabilir.
+
+Omni modelleri hâlâ sırayla konuşmayı varsayar ve genellikle söz hakkını VAD ile belirler. Bu yüzden kullanıcı bir sayı dizisi söylerken yaptığı kısa bir duraklama, yine de konuşmanın bittiği şeklinde yanlış yorumlanabilir.
+
+![Şekil 6-9: Uçtan uca omnimodal konuşma modeli karşılaştırması](images/fig6-9.svg)
+
+> **Deney 6-6 ★★: MiniCPM-o 4.5'i yerel çalıştırmak — uçtan uca ve öz-kaskad**
+>
+> MiniCPM-o 4.5'i thinking mode kapalı olarak yerelde çalıştırın; sesten doğrudan yanıtı, aynı modelin önce yazıya döküp sonra yanıtladığı self-cascade ile karşılaştırın. Bu, ses bilgisinin korunup korunmadığını ölçer; ilerideki **“konuşurken düşünme”yi değil**.
+
+### Paradigma 3 · Full-duplex etkileşimli modeller
+
+Omni hâlâ konuşmayı "kullanıcı konuşuyor" ve "model konuşuyor" diye iki döneme ayırır; oysa eşzamanlı çeviri gibi görevler ikisinin üst üste binmesini gerektirir. Bu yüzden tam çift yönlü (full-duplex) model artık sırayı önvarsaymaz: sürekli dinler, sürekli konuşur ve durmadan devam etmeye mi, duraklamaya mı, araya girmeye mi, yoksa bir araç çağırmaya mı karar verir.
+
+Araştırma tarafındaki öncüsü Kyutai'nin **Moshi** modelidir (2024). Kullanıcının ve modelin ses akışlarını paralel modeller; böylece üst üste konuşma ve söz kesme modelin doğal davranışı hâline gelir.
+
+Thinking Machines Lab bu hattı **etkileşim modeli (Interaction Model)** diye adlandırır[^ch6-14]: etkileşimlilik artık VAD gibi dış bir harness ile monte edilmez, modelin içine gömülüdür. Mikro-tur mekanizması kısa ses bloklarıyla kesintisiz ilerler; böylece sessizlik, üst üste binme ve söz kesme sürekli bağlam olarak korunur. Etkileşim modeli ayrıca tüm konuşmayı arka plandaki bir akıl yürütme modeline devredebilir ve kendisi sohbetin ipini elde tutmayı sürdürür; arka plandan sonuç döndüğünde ön plan onu uygun anda devreye sokar.
+
+[^ch6-14]: Thinking Machines Lab, “Interaction Models: A Scalable Approach to Human-AI Collaboration”, 2026-05. https://thinkingmachines.ai/blog/interaction-models/
+
+OpenAI'nin GPT-Live modeli ise tam çift yönlü hattı üretim ölçeğine taşır: model girdiyi sürekli işler ve çıktı üretir; kullanıcıyı bekleyebilir, onaylayıcı sesler çıkarabilir, sözü kesilebilir ve gerçek zamanlı çeviriyle başa çıkar. Etkileşim modeli gibi o da karmaşık görevleri arka plandaki bir modele devreder, ön plan ise sohbeti sürdürür.
+
+### Bilişsel zaman: gerçek zamanlı etkileşim ve derin düşünme
+
+Etkileşim kalitesi ile zekâ tavanı farklı boyutlardır. Ön plan modeli kullanıcı hâlâ hatta iken yanıt vermeli, arka plan modeli ise daha uzun düşünebilmelidir. Aşağıdaki üç tasarım doğrusal bir ilerleme değil, ödünleşimlerdir. İlk ikisi kaskad ya da Omni üzerine uygulanabilir; üçüncüsü ise derin düşünme ile gerçek zamanlı ifadeyi aynı modelin içinde birleştirir.
+
+#### Çözüm 1: dolgu için hızlı düşünme, yanıt için yavaş düşünme
+
+Hızlı düşünme birkaç yüz milisaniye içinde bir dolgu yanıtı verebilirken, yavaş düşünme arka planda daha derin bir çıkarımı tamamlar. Sorunu şudur: basit sorular iki kez işlenir, karmaşık sorularda ise tutarsızlık ortaya çıkabilir — hızlı model satın almayı önerir, yavaş model ardından paketin kilit bir özellikten yoksun olduğunu fark eder ve kullanıcı saniyeler içinde birbiriyle çelişen iki yanıt duyar. Kök neden, iki örneğin birbirinden bağımsız birer düşünme yapmış olmasıdır.
+
+
+![Şekil 6-10: Hızlı/yavaş düşünme mimarisi ve çözümlerin karşılaştırması](images/fig6-10.svg)
+
+
+#### Çözüm 2: etkileşim için hızlı düşünme, hatırlatma için yavaş düşünme
+
+İkinci çözümde arka plan modeli, durum çubuğu ya da özel bir arayüz üzerinden ön plan modeline öneri verir; ön plan sohbeti sürdürmeye ve nasıl ifade edeceğine karar vermeye devam eder. Bu, birinci çözümden daha kararlıdır ama iletişim yine dolaylıdır: ön plan öneriyi yanlış anlayabilir ve arka planın ara muhakemesini göremez; arka plan bitirmeden kullanıcı yeniden sorduğunda ön plan yalnızca kendi yeteneklerine dayanabilir. Doğal biçimde "sonucu bekleyebilir" ama gerçekten konuşurken düşünemez.
+
+#### Çözüm 3: düşünme ile ifadenin uçtan uca birleştirilmesi
+
+Üçüncü çözüm, düşünme yeteneğini doğrudan uçtan uca ses modelinin içine yerleştirir. Step-Audio R1 iki tamamlayıcı mekanizmayla iki sorunu çözer: **kipe demirlenmiş düşünme damıtması (MGRD)** modeli akustik özniteliklere dayanarak düşündürür, **MPS çift beyin mimarisi** ise tasarlama ile ifadeyi paralel yürütür. İlki "doğru düşünmeyi" güvence altına alır, ikincisi "zamanında konuşmayı" çözer.
+
+İdealde model duyguyu perde, ritim ve tonlamadan çıkarmalı, yalnızca deşifre metnine bakmamalıdır. MGRD gerçekten akustik özniteliklere atıf yapan düşünme süreçlerini süzer, bu veriyle modeli eğitir ve pekiştirmeli öğrenmeyle modelin düşünmeyi atlayıp doğrudan yanıtı tahmin etmesini engeller. MPS'de tasarlayan beyin sürekli düşünce parçaları üretir; ifade eden beyin bir parçayı alır almaz, verdiği yanıtla birleştirerek hemen konuşma üretir. İkisi bir boru hattı gibi paralel çalıştığı için, kullanıcının ilk cümleyi duyması adına düşünmenin tümüyle bitmesini beklemek gerekmez.
+
+#### Hızlı/yavaş düşünme ayrımı ile uçtan uca düşünme arasındaki ödünleşim
+
+Birleşik model "konuşurken düşünmeyi" en doğrudan biçimde gerçekleştirir; bedeli, düşünme ile gerçek zamanlı ifadenin birlikte yeniden eğitilmesi gerekmesidir. Ayrıştırılmış yolda arka plan beynini değiştirmek daha kolaydır. İkisi bir ödünleşimdir, birbirinin basit ikamesi değildir.
+
+Öncü reasoning modellerinin hızla ilerlediği günümüzde hızlı ve yavaş düşünmeyi ayırmanın önemli bir mühendislik avantajı vardır: yavaş modelin her yeni kuşağındaki ilerlemeyi doğrudan kullanabilir. Ön plandaki hızlı model yalnızca düşük gecikmeyle dinlemekten, yanıt vermekten ve sohbeti sürdürmekten sorumludur; arka plandaki yavaş model reasoning, planlama ve araç çağrılarını üstlenir. Daha güçlü bir reasoning modeli çıktığında bütün gerçek zamanlı ses sistemini yeniden eğitmek yerine yalnızca arka plan modeli değiştirilir. Birleşik yaklaşım reasoning ile etkileşimi aynı eğitim döngüsüne bağlar; bu yüzden her yükseltmede zekâ düzeyi, yanıt gecikmesi ve ifadenin doğallığı yeniden dengelenmelidir. Dolayısıyla hızlı/yavaş ayrımı yalnızca gecikmeye verilmiş bir taviz değil, etkileşim yeteneği ile zekâ tavanının ayrı ayrı gelişmesini sağlayan modüler bir tercihtir.
+
+Bu ayrım görev başarımından mutlaka ödün verileceği anlamına da gelmez. Ağustos 2026 itibarıyla hızlı/yavaş düşünmeyi ayıran Pine AI sesli Agent'ı, τ³-Voice Leaderboard'da Grok Voice ve GPT-Realtime-2 gibi sistemleri geçerek birinci oldu. Bu sonuç en azından, derin reasoning ile gerçek zamanlı konuşmayı birlikte sınayan görevlerde ayrıştırılmış mimarinin uçtan uca modellerden doğası gereği geri olmadığını gösterir.[^ch6-17]
+
+[^ch6-17]: Pine AI. “The Most Natural Human-Computer Interface Is Your Voice.” 2026-06-23 (2026-08-06 tarihinde güncellendi). https://www.19pine.ai/blog/pine-ai-the-most-natural-human-computer-interface-is-your-voice
+
+“Uçtan uca model” teriminin yaygın olarak iki anlamda kullanıldığını açıklığa kavuşturmak gerekir. İlki, önceki bölümde ele alınan **uçtan uca ses yoludur**: model sesi doğrudan alır ve ses üretir; birden çok modeli ayrık metin üzerinden birbirine bağlamaz. Omni ile Interaction Model bu anlamda uçtan ucadır, ancak Omni genellikle hâlâ sıra tabanlı ilerlerken Interaction Model dinlerken konuşabilir; mimarileri belirgin biçimde farklıdır. İkincisi, bu bölümde ele alınan **uçtan uca bilişsel mimaridir**: gerçek zamanlı etkileşim ile derin düşünme tek model içinde durum paylaşarak birlikte mi eğitilir, yoksa ön plandaki hızlı model ile arka plandaki yavaş model arasında mı bölünür? Bu iki eksen birbirinden bağımsızdır. Bir sistemin ses yolu uçtan uca iken bilişsel mimarisinde hızlı/yavaş ayrımını koruması mümkündür; Thinking Machines Lab'in karmaşık görevleri arka plan reasoning modeline devretmesi bu birleşimin bir örneğidir.
+
+### Daha insana benzeyen konuşma sentezi
+
+Geleneksel TTS, fazla pürüzsüz davranıp çok az duraklayarak makine kimliğini açığa vurabilir. Duraklamalar, dolgu sözcükleri ve ara sıra yinelenme, insan konuşmasında tereddüt ve düşünceyi işaret eder.
+
+Ana LLM, metne ek olarak **THINKING**, **EMO:happy** ve **SPEED:0.8x** gibi kontrol belirteçleri üretebilir; TTS bunları duraklamalara, prozodiye, konuşma hızına, kahkahaya, iç çekişe ve diğer sözsüz seslere eşler. Uygulama, kontrol belirteçlerini anlayacak şekilde eğitilmiş bir TTS ya da farklı duygular ve stiller için referans kliplerle ses klonlama olabilir.
+
+> **Deney 6-7 ★★: Fish Audio ile kontrol belirteç güdümlü TTS**
+>
+> Fish Audio S1 kullanarak çok referanslı bir ses kütüphanesi oluşturun ve üç yapılandırmayı karşılaştırın: kontrol belirteci yok, tek referans klip ve birden çok referans klip. Yürütme katmanı, belirteçlerden eşleşen duyguyu, konuşma hızını ve stili seçer.
+
+
+## Computer Use: GUI Otomasyonu Agent'ları
+
+Ses, zamanlama eksenini milisaniye düzeyine indirdi; ama gözlemi hâlâ tek boyutlu bir ses akışıdır. Computer Use aynı sorunu iki boyutlu ekrana taşır: gözlem sürekli değişen piksellere, eylem ise koordinatlar üzerindeki tıklama ve girdilere dönüşür. Ses senaryosunda vurgu "ne zaman konuşmalı" üzerindedir; Computer Use'da ise "bir sonraki adımda nereye tıklamalı" üzerinde — ve buna sesli etkileşimde hiç bulunmayan bir soru eklenir: eylem yürütüldükten sonra gerçeklik hâlâ planla uyumlu mudur?
+
+Computer Use (GUI otomasyonu Agent'ı olarak da anılır), yapay zekanın tıpkı bir insan gibi ekranı gözleyerek ve fare ile klavyeyi kullanarak yazılım çalıştırmasını sağlar — örneğin bilgi aramak için tarayıcı açmak, bir tablo yazılımına veri girmek veya sistem ayarlarında bir yapılandırmayı değiştirmek. Özünde bir **algılama-düşünme-eylem** döngüsü vardır (Şekil 6-11):
+
+1. Agent o anki ekranın görüntüsünü alır
+2. Çok modlu model ekran görüntüsünü ve görev talimatını alır, bir düşünme parçası ve somut bir eylem üretir
+3. Yürütme katmanı bu eylemi gerçek ortamda uygular (fareyi hareket ettirmek, tıklamak, metin girmek vb.)
+4. Arayüzün yanıt vermesini bekledikten sonra yeniden ekran görüntüsü alır ve döngünün bir sonraki turuna girer
+
+Burada **arayüzü anlamak** ile **görevi tamamlamak** birbirinden ayrılmalıdır. İlki çok modlu anlamaya daha yakındır ve tek bir ekran görüntüsü üzerinde soru-cevapla ölçülebilir; ikincisi ise modelin anlama ve eylem üretimini sayfa yüklenmesini, durum değişikliklerini, hatalı işlemleri ve geri döndürülemez sonuçları ele alan kapalı bir döngüye yerleştirmesini gerektirir. Dolayısıyla Computer Use'ın zorluğu yalnızca ekran görüntüsü hakkında doğru yanıt vermek değil, her adımdan sonra gerçeğin hâlâ planla uyuştuğunu yeniden doğrulamaktır.
+
+![Şekil 6-11: Computer Use Agent'ının algılama-düşünme-eylem döngüsü](images/fig6-11.svg)
+
+Bu döngüde üç kritik tasarım boyutu vardır: **action space** (eylem alanı — Agent'ın hangi işlemleri yürütebildiği), **görsel konumlandırma** (ekran görüntüsünde hedef öğenin nasıl bulunacağı) ve **model mimarisi** (ekran görüntüsünden doğru eylemin nasıl üretileceği).
+
+### Action Space Tasarımı
+
+Anthropic'in referans uygulaması eksiksiz etkileşim yeteneğini üç araç türüne ayırır (Şekil 6-12). Bu açık bir action-space tasarımıdır, ancak model sağlayıcılarının uyması gereken özel bir protokol değildir: Harness aynı ekran görüntülerini, eylem kısıtlarını ve yürütme sonuçlarını hedef modelin desteklediği mesajlara ve yapılandırılmış çıktılara çevirebildiği sürece Claude, açık ağırlıklı görsel modeller ve kendi barındırılan endpoint'ler aynı algılama-düşünme-eylem döngüsünü çalıştırabilir.
+
+
+![Şekil 6-12: Computer Use action space'i](images/fig6-12.svg)
+
+
+**GUI işlem aracı** (computer tool): Fare işlemleri arasında hareket ettirme (mouse_move), sol/sağ/orta tuş tıklaması, çift/üçlü tıklama, sürükleme (left_click_drag) ve daha ince taneli basma/bırakma (left_mouse_down/up) yer alır. Kaydırma (scroll) dört yönü destekler ve değiştirici tuşlarla birlikte kullanılabilir. Klavye işlemleri arasında karakter karakter yazma (type; gerçek klavye kullanımını taklit etmek için her karakter arasında 12 ms aralıkla), tuş kombinasyonları (key, örneğin Ctrl+C) ve tuşu basılı tutma (hold_key) bulunur. Algı eylemleri: ekran görüntüsü alma (screenshot), imleç konumunu okuma (cursor_position) ve bekleme (wait).
+
+**Komut yürütme aracı** (bash tool): Kalıcı bir bash terminal oturumu sağlar, 120 saniyelik zaman aşımına sahiptir, komutun tamamlanıp tamamlanmadığını bir nöbetçi (sentinel) dizesiyle tespit eder ve çağrılar arasında ortam durumunu korur (örneğin cd ile bir dizine geçildikten sonra bir sonraki çağrı da aynı dizinde başlar).
+
+**Dosya düzenleme aracı** (str_replace_editor): Dizi eşleştirmesi yoluyla güvenli düzenleme sağlar; görüntüleme, oluşturma, değiştirme, ekleme ve geri alma işlemlerini destekler. Dosyanın tamamının üzerine yazmaktan daha kesindir ve alakasız içeriği yanlışlıkla değiştirme olasılığı daha düşüktür.
+
+> **Deney 6-8 ★: Computer Use'ı Çalıştırma (Anthropic Referans Yolu veya Açık Model Yolu)**
+>
+> A Yolu Anthropic Computer Use Demo'yu kullanır. Konteyneri, tarayıcı, terminal ve diğer yaygın araçları içeren eksiksiz bir Ubuntu masaüstü ortamını paketler. Ön uç bir görev alırken, arka uç talimatları ve ekran görüntülerini Claude'a gönderir ve ardından modelin döndürdüğü fare, klavye, terminal veya düzenleme eylemlerini yürütür.
+>
+> B Yolu, [`chapter6/computer-use-open-model`](../chapter6/computer-use-open-model/) içindeki örnek kodu kullanır. Varsayılan olarak, barındırılan OpenRouter API'si üzerinden ya da kendi barındırdığınız vLLM/SGLang ve benzeri sistemler aracılığıyla açık ağırlıklı Qwen3-VL 32B Instruct modeliyle browser-use'u çalıştırır.
+
+### Görsel Konumlandırma (Grounding)
+
+Döngünün her turunda modelin ekran görüntüsü içinde hedef öğeyi doğru biçimde bulması gerekir — "Arama kutusu nerede?", "Gönder düğmesinin koordinatları ne?" İşte bu, görsel konumlandırma (Grounding) problemidir. Hâlihazırda başlıca **iki yaklaşım** vardır: birincisi konumlandırmayı bir **çoktan seçmeli soruya** dönüştürmek — önce arayüz öğelerini numaralandırarak işaretlemek, böylece modelin yalnızca birini seçmesi yeterli olur; ikincisi **saf koordinat tahmini** — modelin tıpkı bir insan gibi ekran görüntüsüne doğrudan "bakıp" koordinatı söylemesi. Çoktan seçmeli yaklaşımın da iki uygulama biçimi vardır: **saf görsel işaretleme** (orijinal Set-of-Mark; bir segmentasyon modeliyle piksel düzeyinde aday bölgeler çıkarılır) ve **yapısal öğe indeksleme** (DOM/Accessibility Tree; arayüzün kendi yapısı doğrudan okunur). Çoktan seçmeli yaklaşımın ortak avantajı, "ekran görüntüsünde düğmeyi bul ve koordinatını tahmin et" biçimindeki açık uçlu problemi "önceden işaretlenmiş öğelerden birini seç" biçimindeki kapalı uçlu bir probleme çevirmesidir — tıpkı sınavda çoktan seçmeli soruların boşluk doldurmaya göre daha kolay doğru yanıtlanması gibi, modelin "ekranın (350, 464) konumundaki düğmeye tıkla" demesi gerekmez, "[123]'e tıkla" demesi yeter. Koordinat çıktısı üretmek model için özellikle zorludur; doğru sonuç verebilmesi çok fazla eğitim gerektirir ve farklı ekran çözünürlüklerinde kolayca hataya düşer.
+
+**Set-of-Mark: görsel işaretleme yöntemi.**
+
+Orijinal Set-of-Mark (SoM), 2023'te Microsoft Research tarafından, başlangıçta GPT-4V'nin görsel konumlandırma yeteneğini açığa çıkarmak amacıyla önerildi. **Saf görsel** bir yöntemdir: görüntü segmentasyon modelleri (SAM, SEEM vb.) ekran görüntüsünde aday bölgeleri otomatik olarak çıkarır, her bölgenin üzerine numaralı bir işaret bindirilir; modelin gördüğü şey numaralandırılmış bir görüntüdür ve yalnızca numarayı söylemesi yeterlidir, sistem bunu ilgili bölgenin merkez koordinatına çevirir. Sürecin tamamı DOM'a ya da herhangi bir arayüz iç yapısına ihtiyaç duymaz; bu nedenle yerel masaüstü yazılımları ve oyun arayüzleri için de aynı ölçüde geçerlidir — yeter ki segmentasyon modeli aday bölgeleri çıkarabilsin.
+
+**Yapısal öğe indeksleme: SoM fikrinin Web üzerindeki yapısal uygulaması.**
+
+Arayüzün kendisi yapısal bilgi sunabildiğinde işaretleme çok daha kesin yapılabilir. Modern web sayfaları, render edilmeden önce zaten eksiksiz bir öğe yapısı (DOM ağacı) ve semantik roller (hangisi düğme, hangisi giriş kutusu) tanımlar; erişilebilirlik arayüzü (Accessibility Tree) birçok masaüstü uygulaması için benzer bilgiyi sağlar. Bir segmentasyon modelinin piksellerden "hangi bölge düğme" diye tahmin yürütmesindense, doğrudan arayüzün kendisine "tıklanabilir hangi öğelerin var?" diye sormak daha iyidir. browser-use projesinin temsil ettiği Web Agent çözümleri tam olarak bunu yapar: etkileşimli öğeleri DOM'dan numaralandırarak listeler; bu, SoM fikrinin Web üzerindeki yapısal uygulaması sayılabilir (Şekil 6-13). Süreç dört adımdan oluşur:
+
+1. Tarayıcının hata ayıklama arayüzü (CDP, Chrome DevTools Protocol) üzerinden sayfanın yapısal temsilini (DOM ağacı) ve erişilebilirlik bilgilerini elde etmek
+2. Hangi öğelerin etkileşimli olduğunu otomatik olarak tespit etmek (düğmeler, giriş kutuları, bağlantılar vb.)
+3. Her etkileşimli öğeye benzersiz bir ID atamak ve ekran görüntüsünde sınırlayıcı kutuları çizmek
+4. Aynı anda, her ID'ye karşılık gelen öğeyi tanımlayan bir metin listesi üretmek
+
+```text
+Screenshot: [Görseldeki kilit öğeler [1], [2], [3], [4] gibi ID'lerle işaretlenmiştir]
+
+Elements:
+[1] <input type="text" placeholder="Search" aria-label="Search" />
+[2] <button id="submit-btn" aria-label="Submit form" />
+[3] <input type="text" placeholder="Enter your name" value="" />
+[4] <a href="/docs" aria-label="Documentation" />
+```
+
+Modelin yalnızca bir ID numarası üretmesi yeterlidir; sistem otomatik olarak o öğenin merkez koordinatını kullanarak tıklamayı gerçekleştirir. Bu tür çözümler token tasarrufu sağlamaz (çünkü tüm işaretleme bilgisinin modele gönderilmesi gerekir), ama konumlandırması kesin ve kararlıdır; üstelik segmentasyon modelinin yol açabileceği atlanmış ve yanlış tespitleri de ortadan kaldırır.
+
+
+![Şekil 6-13: Set-of-Mark ile yapısal öğe indeksleme (browser-use uygulaması)](images/fig6-13.svg)
+
+**Saf koordinat tahmini.**
+
+Üçüncü yol hiçbir işaretleme yapmaz, doğrudan modelin koordinat üretmesini ister. **SeeClick** ve Claude'un computer use'u bunun temsilcileridir: devasa miktarda GUI ekran görüntüsü ve öğe konumu eşleşmesinden oluşan veriyle görsel modeller eğitilir ve modelin doğal dil betimlemelerini (örneğin "gönder düğmesine tıkla") doğrudan ekran görüntüsündeki kesin koordinatlara eşlemeyi öğrenmesi sağlanır — tıpkı bir insan kullanıcı gibi, tıklanacak yeri saf görme yoluyla bulur.
+
+Koordinat tahmini çözümlerinde modelin koordinatları kavrayışı, eğitim sırasında kullanılan çözünürlüğe yüksek oranda bağımlıdır (Şekil 6-14). Claude'un eğitiminde XGA (1024x768), WXGA (1280x800) ve FWXGA (1366x768) kullanılmıştır; girdi olarak verilen ekran görüntüsünün çözünürlüğü bunlarla uyuşmazsa modelin tahmin ettiği koordinatlar sistematik biçimde kayar — tıpkı küçük bir haritada ölçülen mesafeyi doğrudan büyük haritaya uygulamak gibi. Bu nedenle araç katmanında çift yönlü bir koordinat ölçekleme mekanizması gerekir ve hedef çözünürlük **en-boy oranına göre seçilmelidir**; aksi hâlde orantısız gerdirme görüntüyü bozar ve koordinat değerlendirmesini de saptırır. Örneğin gerçek ekran çözünürlüğü 2560×1440 (16:9) ise, Claude'un desteklediği üç seçenek arasından en-boy oranı 16:9'a en yakın olanı — FWXGA (1366×768) — seçilmelidir. Ekran görüntüsü orantılı biçimde 1366×768'e ölçeklenip modele verilir; model tıklama koordinatı olarak (683, 384) ürettiğinde bu değer ters yönde gerçek koordinata eşlenir: (683×2560/1366, 384×1440/768) ≈ (1280, 720). Buna karşılık 16:9'luk bir görüntü zorla 4:3'lük 1024×768'e gerdirilirse görüntü yatayda ezilir ve modelin tahmin ettiği koordinatlar sistematik olarak kayar.
+
+
+![Şekil 6-14: Çözünürlük eşleştirme ve çift yönlü koordinat ölçekleme](images/fig6-14.svg)
+
+
+Üç yol arasındaki seçim mantığı şöyle özetlenebilir: **yapısal bilgi elde edilebiliyorsa öncelikle DOM/Accessibility Tree indekslemesi kullanılmalıdır**; konumlandırması en kesin ve en kararlı olan budur. **Elde edilemiyorsa** (Photoshop gibi yerel masaüstü yazılımları, Canvas/WebGL ile render edilen arayüzler, oyunlar) **hem görsel işaretleme (orijinal SoM yolu) hem de koordinat tahmini kullanılabilir**. Görsel işaretleme konumlandırmayı çoktan seçmeli bir soruya dönüştürdüğü için, özel olarak eğitilmemiş genel amaçlı modellere daha dosttur; koordinat tahmini ise işaretleme adımını ortadan kaldırdığı için, GUI konumlandırma eğitimi almış modeller açısından daha doğrudandır. Küçük öğelerde ve yoğun arayüzlerde her ikisinin de doğruluğu hâlâ yetersizdir.
+
+> **Deney 6-9 ★: browser-use ile Otomatik Tarayıcı İşlemleri**
+>
+> Tarayıcı otomasyon çerçevesi Playwright'ı çok modlu bir modelle birleştirerek doğal dille yönlendirilen tarayıcı işlemlerini uygulayın. SoM görselleştirmesini açın ve her karardan önce açıklama kutuları bulunan bir ekran görüntüsü kaydedin.
+>
+> Test görevi “Google'ı açıp San Francisco hava durumunu ara”: başlangıçta ekran görüntüsü, etkileşimli öğeleri numaralanmış Google arama sayfasını gösterir. Model arama kutusunu seçer, “San Francisco weather today” yazar, aramayı gönderir ve sonuç sayfasından sıcaklık ile hava durumunu çıkarır.
+
+### Animasyon Görebilen, Ses Duyabilen Computer Use Agent'ı
+
+Computer Use algısı şimdiye kadar örtük bir varsayıma dayandı: **ekran sabittir**—ekran görüntüsü al, bir adım düşün, tıkla, sonra yeniden görüntü al. Gerçek ekranlar video oynatır, kısa ömürlü bildirimler gösterir ve toplantı sesleri verir. Gözlerini yalnızca 3–5 saniyede bir açan ve hiç kulağı olmayan bir Agent, iki kare arasında olanları göremez ve duyamaz.
+
+Burada asıl yeniden tasarlanması gereken şey "eylem arayüzü" değil, "**gözlem arayüzü**"dür[^ch6-9]. Temel fikir, sürekli ortam gözlemini modelin kolayca işleyebileceği ayrık olaylara dönüştüren bir Agent–bilgisayar gözlem arayüzü (AOI) kurmaktır. Bu, birkaç kilit teknik içerir: birincisi, **ekranın anahtar kare yakalaması** — küçük bir modelle ekranda anlamlı bir değişim olup olmadığına karar verilir, yalnızca belirgin değişimlerde ekran görüntüsü alınır; değişim sık olduğunda saniyede 1 kare almak bile iyi sonuç verir. İkincisi, **ses düzeyi kapılı konuşma dökümü** — ses varken konuşma tanıma çağrılır, tanınan metin bağlama eklenir, böylece Agent sesi "duyabilir". Üçüncüsü, **görüntüyü metinle betimlemek** — model yakaladığı ekran görüntüsünü tek bir cümleyle betimler; böylece orijinal görüntü daha sonra bağlamdan temizlense bile bu cümle bağlamda kalır ve çok modlu etkileşim geçmişinin sıkıştırılması sağlanır.
+
+[^ch6-9]: Bkz. Li, Bojie and Noah Shi. *Agent-Computer Observation Interfaces Enable Dynamic Computer Use.* arXiv:2606.29472, 2026.
+
+### Computer Use için Dünya Modelleri
+
+Bir önceki bölümdeki gözlem arayüzü "arada ne oldu" sorusunu çözer: anahtar kareler, konuşma dökümü ve kalıcı metin sayesinde Agent artık yalnızca birbirinden uzak iki ekran görüntüsünü görmez. Ama gözlem arayüzü planlama gecikmesini ortadan kaldırmaz. Agent hâlâ "ekran görüntüsü—düşün—tıkla" biçimindeki sıralı döngüyü çeviriyor ve her eylemden sonra yeniden gözlemleyip bir sonraki adımı düşünüyor. **OSWorld-Human** verimlilik çalışması gösteriyor ki görev sonunda başarılsa bile Agent'ın işlem adımları ve bekleme süresi insandan belirgin biçimde fazla; insan düzeyinde doğruluğa ulaşmak, kullanılabilir olmakla aynı şey değil.
+
+İnsan bilgisayarı kullanırken bir sonraki adımı tıkladıktan sonra düşünmeye başlamaz; önce eylemin sonucunu öngörür. Gerçekleşen değişim beklentiye uyuyorsa mevcut planla devam eder; ancak sayfa durumu beklenenden saptığında durup yeniden gözlemler ve yeniden planlar. Dünya modeli, Agent'ın harekete geçmeden önce masaüstünün neye dönüşebileceğini öngörmesini sağlar; böylece insana benzeyen bu "öngörülü yürütme" mümkün olur ve verimlilik belirgin biçimde artar.
+
+Masaüstü durumu yalnızca bir piksel görüntüsü değildir: pencereleri, odağı, kaydırma konumunu, giriş kutusu içeriğini, yükleme durumunu, izinleri ve ağ yanıtlarını da kapsar; eylemler ise tıklama, klavye girişi, kaydırma, sürükleme ve bekleme içerir. Computer Use'da kullanılabilecek bir dünya modeli en azından mevcut durumu kodlayabilmeli, aday eylemin yol açacağı durum değişimini öngörebilmeli ve bu öngörüyü bir sonraki adıma karar vermesi için planlayıcıya verebilmelidir:
+
+```text
+masaüstü durumu + click/type/scroll/wait ──> sonraki durumun gösterimi
+```
+
+Böylece Agent, gerçekten tıklamadan önce aday eylemlerin sonuçlarını karşılaştırabilir, sayfa yüklenirken bir sonraki adımı hazırlayabilir ve bir açılır pencere bir an görünüp kaybolduğunda durum farkından yararlanarak toparlanabilir. Örneğin görev "VS Code'da yeni bir Python dosyası oluştur ve hello world yaz" ise, model önce başarı hâlindeki dosya ağacının ve düzenleyicinin anahtar durumunu öngörebilir, sonra tıklama, yazma ve kaydetme eylemlerini seçebilir; görev bir dosyayı silmekse, yalıtılmış bir sanal masaüstünde geri alınamaz bir onay kutusunun çıkıp çıkmayacağını önceden öngörebilir ve gerektiğinde kullanıcıdan onay isteyebilir. Buradaki asıl mesele modele gerçekçi görünen bir gelecek ekran görüntüsü ürettirmek değil, görevi tamamlamak için gereken, denetlenebilir durum farklarını öngörmesini sağlamaktır.
+
+Temmuz 2026'da Induction Labs'in duyurduğu **Photon-1**, bu yolun bir gerçekleştirimini gösterdi: yalnızca 30.000 saatlik H200 GPU süresiyle bir computer use dünya modelinin ön eğitimini tamamladı. Her kareyi ayrık gizli token'lara sıkıştırıp bir eylemin ardından gelen sonraki durum gösterimini özbağlanımlı olarak öngörür; ön eğitim aşamasında ekran görüntülerini piksel piksel üretmez. Ayrıca bağlanan görüntü üreteci yalnızca gizli gösterimleri görselleştirmeye yarar, çıkarım için zorunlu bir bileşen değildir. Bir tohum ekran görüntüsü ve ardından gelen eylemler verildiğinde model masaüstü durumlarını kesintisiz biçimde "hayal edebilir"; sonra sanal makineler üzerindeki çevrim içi eğitimle computer-use eylemleri üretmeyi öğrenir.[^ch6-20]
+
+[^ch6-20]: David Li and Jonathan Li, Induction Labs, “Scaling Video Pretraining with Imagination Models,” 2026-07-23. https://www.inductionlabs.com/news/scaling-video-pretraining. Metinde geçen Photon-1 parametreleri, veri ölçeği, şirket içi benchmark sonuçları ve maliyet karşılaştırmaları şirketin açıkladığı verilerdir.
+
+### Mobil Taraf: Ekosistem Bariyerleri Teknolojiden Daha Zorlu
+
+Computer Use mobil tarafa da yayılıyor. Mobil ile masaüstü arasında teknik açıdan gerçek farklar vardır: action space genellikle artık "fare koordinatı + klavye" değildir, sistemin erişilebilirlik servisi API'si (örneğin Android'in AccessibilityService'i) üzerinden arayüz öğeleri okunur, tıklama ve metin girişi gönderilir; etkileşim biçimi de fare imlecinden dokunma hareketlerine döner ve koordinatın anlamı buna bağlı olarak değişir — aynı (x, y) noktasının parmakla tek dokunuş mu, uzun basma mı, yoksa bir kaydırma hareketinin başlangıç noktası mı olduğunu belirlemek için ayrıca bir hareket türü gerekir. Bölüm 7'da tanıtılan AndroidWorld gibi mobil benchmark'lar, Agent'ın gerçek uygulamalarda görev tamamlama yeteneğini tam da böyle bir action space üzerinde değerlendirir.
+
+Ama mobil tarafı asıl tıkayan şey çoğu zaman bu teknik farklar değil, ekosistem bariyerleridir. Bazı telefon üreticileri, tüketici sınıfı telefonlara yapay zeka asistanları entegre edip WeChat, Taobao, Alipay gibi gündelik uygulamaları otomatik olarak kullandırmayı denedi, ama kısa sürede platform kısıtlamalarına takıldı.
+
+Bu durum Computer Use'un karşılaştığı kendine özgü bir zorluğu açığa çıkarır: **ekosistem bariyerleri**. Engellemenin temelindeki neden bir iş modeli çatışmasıdır. Geleneksel internet uygulamalarının çekirdek gelir mantığı **trafik ve dikkattir**: kullanıcı akışı kaydırırken reklam görür, ürün ararken öneri algoritmasının yönlendirmesine uyar, sayfaları gezerken anlık satın alma kararı verir. Agent kullanıcının yerine işlem yaptığında ise bu gelir zinciri tamamen baypas edilir: yapay zeka reklamlara bakmaz, anlık alışveriş yapmaz, doğrudan hedefe gidip görevi bitirir ve çıkar. Reklam ve trafikten para kazanan platformlar için Agent'ın her işlemi, iş modelinin temelini aşındırır.
+
+Bu da Computer Use'un yalnızca CAPTCHA (doğrulama kodu) gibi teknik düzeydeki karşı önlemlerle değil, **yapısal bir çıkar çatışmasıyla** da karşı karşıya olduğu anlamına gelir. Bu çelişkiyi kısa vadede uzlaştırmak zordur ve Computer Use'un tüketici senaryolarında hayata geçmesini, salt teknik sorunlardan daha çetin bir engelle karşı karşıya bırakır.
+
+## Robot Manipülasyonu: XLeRobot ile Masa Toplama Örneği
+
+> **Bu bölüm nasıl okunmalı**: baştan sona tek bir görev kullanıyoruz——"kırmızı bardağı tepsiye koy, sarı kâğıt parçasını çöp kutusuna at, en sonunda bir kez daha gözlem yaparak masanın durumunu doğrula". Deney 6-10 ve 6-12 gerçek bir XLeRobot üzerinde yürütülür; kol, kalibrasyon, acil durdurma düzeneği ve yerinde bir gözetmen gerektirir. Deney 6-11, 6-13 ve 6-14 bunların yerel GPU'daki karşılıklarıdır. Gerçek donanım ile benzetim sonuçları ayrı ayrı raporlanır, ancak görevin amacı, eylemlerin anlamı ve başarı koşulları aynı tutulur.
+
+Robot manipülasyonu, "resme bakıp soruyu yanıtlamak"tan çok daha zor bir iştir. Model yalnızca sahneyi anlamakla kalmayıp gerçek dünyada sürekli eylemde bulunmak zorundadır ve her eylem bir sonraki anın durumunu değiştirir. XLeRobot bu farkı çok somut hâle getirir. Aynı kol, insan tarafından klavye, oyun kumandası veya VR donanımıyla uzaktan kumanda edilebilir; ya da kamera gözlemi ile sınırlı bir eylem aracı kümesi bir Agent'a devredilip onun kendi başına çağırması sağlanabilir. Donanım da görev de değişmez; değişen tek şey kimin kullandığıdır——birincisinde insan sürekli gözleyip düzeltir, ikincisinde ise modelin ve kontrol sisteminin aynı işi sonuna kadar götürmesi gerekir.
+
+Bu bölüm beş deneyi "masa toplama" üzerinden birbirine bağlar. Önce insan gerçek XLeRobot'u uzaktan kumanda eder; böylece yeterince yetkin bir operatörün elinde bu donanımın nereye kadar gidebildiği ölçülür. Ardından benzetimde aynı görev için ideal kontrol üst sınırı belirlenir. Sonra bir Agent'ın gerçek XLeRobot'u özerk biçimde kontrol etmesine izin verilir; algı, planlama ve hatadan toparlanmanın sonucu nasıl belirlediği gözlenir. Daha sonra aynı araç sözleşmesi benzetime taşınır ve üç strateji bir arada karşılaştırılır: açık çevrim yürütme, adım adım denetim ve dünya modeli. Son olarak arka plan, nesne görünümü, aydınlatma ve görsel gürültü değiştirilerek, benzetimde öğrenilen görsel politikanın yeni bir ortama uyum sağlayıp sağlayamadığına bakılır.
+
+Buradaki darboğaz genellikle bir statik soru-cevap ölçütü daha üretmek değil, sınırlı algı ve kontrol bant genişliğiyle modelin çevrimi kapalı tutmasını sağlamaktır. Kullanılabilir bir robot sistemi en azından şu dört soruyu yanıtlamalıdır:
+
+1. İnsan hangi görevi bitirmek istiyor?
+2. Sırada hangi alt görev var?
+3. Şu anki beceri somut olarak hangi eylemi üretiyor?
+4. Eylem yürütüldükten sonra gerçeklik hâlâ ilk plana uyuyor mu?
+
+Bu bölüm bu dört soruyu XLeRobot'un aynı kontrol çevrimine yerleştirir ve dört tekniğin hangi kısmı üstlendiğini gösterir: uzun ufuklu planlama bardağın mı yoksa kâğıdın mı önce ele alınacağına karar verir; VLA ya da eylem ilkelleri kavrama ve yerleştirmeyi yapar; dünya modeli bir eylemin sonuçlarını kestirir; benzetimden gerçekliğe geçiş ise eğitim videoları ile gerçek kamera ve eyleyiciler arasındaki farkı üstlenir. Üst düzey modelin yeterli bilgisi ve planlama yetisi zaten olsa bile, bu geri besleme halkasının tek bir eksik halkası sistemin görevi bitirememesine yeter.
+
+### Donanım ile Algoritmanın İş Bölümü
+
+XLeRobot'un yanıtlamaya en uygun olduğu ilk soru şudur: özerk masa toplama başarısız olduğunda, kolun kendisi mi beceremiyor, yoksa algoritma mı kolu kullanmayı bilmiyor? Burada yumuşatılmaması gereken bir olgu var: **XLeRobot gibi birkaç yüz dolarlık bir kol bile, uzaktan kumandayla, bu bölümdekine benzer çok adımlı ve birbirine bağlı bir masa görevini hâlihazırda tamamlayabiliyor**——insan kamera görüntüsüne bakarak kırmızı bardağı kavrayıp tepsiye koyuyor, sarı kâğıdı çöp kutusuna atıyor ve sonunda durumu bir kez daha denetliyor. Bu sonuç yalnızca "donanım kıl payı yetiyor" demek değildir; açık bir tanı kanıtıdır: **bu görev söz konusu olduğunda darboğaz donanımın kendisinde değil, algoritma tarafındadır.**
+
+Tanı yöntemi dolaysızdır. Kamera, kol, tutucu, masa düzeni ve başarı koşulları sabitken çevrimi önce insan devralır. İnsan nesne konumu kestirimini, eylem seçimini ve zamanlamayı sürekli düzeltir, kavrama başarısız olduğunda ne yapacağını da bilir. Özerk sistem ile insan arasındaki mesafe tam da bu kapalı çevrim yetisinde görünür. Elbette bu yargının menzili bu bölümdeki masa görevidir: donanımın bu görevin gerektirdiği yük, hassasiyet ve çalışma uzayı eşiklerini aştığını gösterir, ama birkaç yüz dolarlık bir kolun her açık ortamla ya da daha zor manipülasyonlarla baş edebileceği anlamına gelmez.
+
+XLeRobot birkaç uzaktan kumanda girişini destekler: klavye, Xbox kumandası, Switch Joy-Con ve VR donanımı. İnsan operatör, bir algoritmanın açıkça kodlaması gereken pek çok şeyi doğal olarak yapar: tutucu bardağa yaklaşırken yavaşlar, bardak kayarsa kavrama noktasını düzeltir, kâğıdı ilk seferde tutamazsa yeniden bakar ve nesne hedef bölgeye girdiğinde sonucu doğrular. Bu yüzden uzaktan kumanda yalnızca gösterim verisi toplamanın bir yolu değil, aynı zamanda "donanımı sabitleyip yalnızca operatörü değiştiren" bir tanı deneyidir.[^ch6-1]
+
+> **Deney 6-10 ★: Gerçek XLeRobot'u uzaktan kumanda ederek masayı toplamak**
+>
+> Gerçek bir XLeRobot'un çalışma alanına kırmızı bir bardak, bir tepsi, buruşturulmuş sarı bir kâğıt ve bir çöp kutusu yerleştirin. Operatör, kalibre edilmiş uzaktan kumanda yollarından biriyle sabit görevi yürütür: "kırmızı bardağı tepsiye koy, sarı kâğıt parçasını çöp kutusuna at, en sonunda bir kez daha gözlem yaparak masanın durumunu doğrula". En az birkaç tur yineleyin ve kamera görüntüsünü, operatör girdilerini, kolun durumunu, eylem sürelerini, kavrama hatalarını, yeniden deneme sayısını ve son durumu kaydedin.
+>
+> Kabul ölçütünü "sonunda masa temiz görünüyor"a indirmeyin. Kırmızı bardak tepsinin içinde, sarı kâğıt çöp kutusunun içinde olmalı; kol güvenli duruşuna dönmeli; süreç boyunca çarpışma, çalışma alanının dışına çıkma ya da doğrulanmadan işi insanın tamamlaması olmamalıdır.
+
+Gerçek donanımda uzaktan kumanda, görevin üst sınırını göstermenin en ikna edici yoludur; ama nesnelerin sayısını ve konumunu toplu hâlde değiştirmeye elverişli değildir. Yinelenebilir ve istatistiği alınabilir bir karşılaştırma elde etmek için, aynı "nesneleri yerine koyma" problemini iki boyutlu bir masa benzetimine taşıyoruz ve algıda yanılmayan, eylemi yanlış seçmeyen güçlü bir operatörün yerine ideal bir denetleyici koyuyoruz.
+
+> **Deney 6-11 ★: Benzetimde aynı görevin ideal kontrol üst sınırını ölçmek**
+>
+> İki boyutlu bir masa benzetiminde kırmızı bardağı, sarı kâğıdı ve bunların hedef bölgelerini rastgele yerleştirin; ideal denetleyici sırayla nesnelere yaklaşsın, onları kavrasın ve doğru konuma taşısın. Görüntü tanımaya ihtiyacı yoktur ve eylemi yanlış seçmez; dolayısıyla "algı da karar da doğruyken bu görev en azından nereye kadar gidebilir"i temsil eder.
+>
+> Görev başarı oranına, adım sayısına ve yol uzunluğuna bakın; ayrıca nesnelerin başlangıç konumunu ve görev ölçeğini değiştirerek bu ideal üst sınırın kararlı kalıp kalmadığını gözleyin. Deney 6-10 ile aynı başarı koşulları kullanılır, ama ölçülen şey eyleyicisiz bir benzetimdir: gerçek XLeRobot'un hareket ettiği anlamına gelmez. İkisi, sonraki özerk kontrol için iki taban çizgisi olacaktır——Deney 6-10 gerçek donanım üzerindeki insan kapalı çevrimi, Deney 6-11 ise benzetim ortamındaki ideal kapalı çevrimdir.
+
+### Robot Kontrolünün Temel Yapısı
+
+Bir robot sistemi genellikle farklı zaman ölçeklerindeki işleri ayırır.
+
+| Katman | Temel soru | Çıktı | Tipik zaman ölçeği |
+| --- | --- | --- | --- |
+| Görev amacı | İnsan neyi bitirmek istiyor | "Bardak ve kâğıt yerine" | Dakika mertebesi |
+| Uzun ufuklu planlama | Önce ne, sonra ne | Önce bardak, sonra kâğıt, en son denetim | Saniyeden dakikaya |
+| Temel beceri | Şimdi hangi durum değişimi sağlanıyor | `pick(red_cup)`, `place(red_cup, tray)` | Yaklaşık 1—3 sn |
+| VLA / beceri politikası | Bu beceri somut olarak nasıl hareket ediyor | XLeRobot tutucusunun kısa hareketi ya da sürekli yörüngesi | ~1—10 Hz çıkarım |
+| Alt düzey kontrol ve güvenlik katmanı | Nasıl kararlı ve gecikmesiz yürütülür | Eklem ya da uç işlevci kontrol büyüklükleri, hız sınırı ve acil durdurma | ~50—1000 Hz |
+
+Bu, yaygın bir mühendislik iş bölümüdür; tek model mimarisi değildir. VLA üst düzey yargının bir kısmını üstlenebilir ve planlayıcı kural tabanlı bir program, bir VLM ya da bir eniyileyici olabilir. Hangi gerçekleştirim seçilirse seçilsin, "görevin sırası" ile "şu andaki eylem" ayrılmalıdır; aksi hâlde üst düzey modelin çıkarım gecikmesi alt düzey kontrolü geriye çeker, alt düzeydeki yüksek frekanslı kontrol de üstteki modele bir yığın ilgisiz ayrıntıyı işletir. XLeRobot'ta model doğrudan rastgele eklem açıları üretmemelidir: yalnızca `pick`, `place`, `verify_state` ve `stop` gibi sınırları belirli becerileri seçer; kalibre edilmiş, hız sınırlı ve zaman aşımlı yürütücü ise bunları kolun gerçek hareketine çevirir.
+
+### Uzun Ufuklu Planlama ve Görev Ayrıştırma
+
+Kullanıcı "masayı toplar mısın" dediğinde sistem bu cümleyi olduğu gibi eylem modeline veremez. Planlayıcı önce sahnedeki nesneleri ve hedefleri sıralar, sırayı belirler, sonra her adım için başlangıç koşulunu, bitiş koşulunu ve risk sınırlarını yazar. Örneğin:
+
+```text
+Kırmızı bardağı ele al → Sarı kâğıdı kaldır → Masayı denetle
+```
+
+"Kırmızı bardağı ele al" ise iki eyleme ve bir denetime ayrışır:
+
+```text
+pick(red_cup) → place(red_cup, tray) → verify_state()
+```
+
+Tamamlanan her beceri bize doğrulanabilir bir düğüm bırakır. Kavrama başarısız olursa yalnızca o adım yinelenir. Biri nesneyi kaydırırsa ya da kullanıcı hedefi değiştirirse, yalnızca etkilenen sonraki adımlar yeniden planlanır; eski planın tamamı tekrarlanmaz. Ajana verilen araçlar da yeterince yalın olmalıdır: her çağrı tek bir iş yapar, hareket aralığı sabittir, zaman aşımı vardır ve yürütmeden hemen sonra yeniden gözlem yapılır.
+
+> **Deney 6-12 ★★: Gemini Robotics-ER 1.5 ile XLeRobot'un masayı özerk biçimde toplaması**
+>
+> Deney 6-10'deki gerçek XLeRobot'u, masa düzenini, görev yönergesini ve başarı koşullarını olduğu gibi bırakın; yalnızca insan operatörü bir Agent ile değiştirin. Gözlem ve planlamayı Gemini Robotics-ER 1.5 gibi bedenlenmiş bir akıl yürütme modeline bırakın ve RoboCrew tarzı bir ajan çevrimi üzerinden yalnızca beş aracı açın: `observe_scene`, `pick`, `place`, `verify_state` ve `stop`.[^ch6-2]
+>
+> Model önce masayı gözler, ele alma sırasını belirler, ardından XLeRobot'un kalibre edilmiş kavrama ve yerleştirme eylemlerini çağırır. Her beceriyi bitirdiğinde yeniden gözlem yapıp son koşulu denetlemek zorundadır. Kavrama başarısız olduğunda yalnızca o anki beceriyi yeniden denemesine izin verilir; kullanıcı dur dediğinde, nesne çalışma alanının dışına çıktığında ya da durum doğrulanamadığında `stop` çağırmak zorundadır. Model doğrudan rastgele eklem açıları üretemez ve yalnızca kendisi daha önce "bitti" dediği için gerçek doğrulamayı atlayamaz.
+>
+> Kabul ölçütü Deney 6-10 ile birebir aynıdır: bardak tepsinin içinde, kâğıt çöp kutusunun içinde, kol güvenli duruşta, çarpışma ve alan dışına çıkma yok. Fark şudur: özerk deneyde görevin anlamı modelin kendi gözleminden gelmeli, gerçek eylemler araç çağrılarından gelmeli ve son durum yeni bir gözlemle doğrulanmalıdır. İnsan yalnızca başlatabilir, acil durdurabilir ve güvenliği gözetebilir; yolun ortasında Agent'ın yerine eylemi tamamlayamaz. Ancak böyle olursa Deney 6-10 ile 6-12, "aynı donanım ve aynı görevde, modelin kapalı çevrimi insanınkine göre neyi eksik bırakıyor" sorusunu doğrudan karşılaştırabilir.
+
+Gerçek donanım deneyleri kalibrasyon hatalarını, kamera örtülmelerini ve tutucu başarısızlıklarını açığa çıkarır; ama çok sayıda arızayı güvenli ve denetimli biçimde yinelemeye elverişli değildir. Bundan sonraki benzetim deneyleri bu beş aracı ve görev durumunu birebir korur, yalnızca gerçek eyleyicileri hata enjekte edilebilen bir masa ortamıyla değiştirir; böylece açık çevrim yürütmenin, adım adım denetimin ve eylem kestiriminin ayrı ayrı ne kattığı ayrıştırılabilir.
+
+### VLA ile Kontrol
+
+VLA, Vision-Language-Action'ın kısaltmasıdır; yani "görme—dil—eylem modeli". Şu anki sahneyi ve tek bir beceri yönergesini alır, robotun bir sonraki adımda yürüteceği eylemi üretir:
+
+```text
+şu anki gözlem + beceri yönergesi → eylem
+```
+
+XLeRobot örneğinde üst düzey planlayıcı yalnızca `pick(red_cup)` sunar; bardağa hangi yönden yaklaşılacağına, tutucunun ne zaman kapanacağına ve kolun hangi yörüngeyle kaldırılacağına ise VLA ya da beceri politikası, o anki sahneye bakarak karar verir. Yürütme katmanı bu kısa hareketi bitirdiğinde masa yeniden görüntülenir ve ancak bardağın gerçekten kavrandığı doğrulandıktan sonra planlayıcının `place(red_cup, tray)` sunmasına izin verilir. Başka bir deyişle, araç çağrısı istenen durum değişimini tanımlar; VLA ise bu durum değişiminin sürekli eylemle nasıl gerçekleştirileceğini tanımlar.
+
+RT-2 ve OpenVLA sürekli eylemi ayrık token'lara böler ve tıpkı cümle üretir gibi teker teker çıkarır. π₀ öbür yolu temsil eder: doğrudan sürekli ve pürüzsüz eylem yörüngeleri üretir. İkisi arasında yalın bir üstünlük yoktur. Ayrık token'lar dil modelleriyle kolay eklemlenir; sürekli yörüngeler pürüzsüz hareketi anlatmaya daha uygundur. Asıl tercih, eylemin nasıl temsil edileceğidir; yalnızca modelin büyüklüğü değil.[^ch6-15]
+
+Büyük bir model genellikle saniyede yalnızca 1—10 kez çıkarım yapabilirken, geleneksel bir denetleyici saniyede onlarca ila binlerce kez güncellenebilir. Mühendislikte yaygın bir uygulama "eylem parçalama"dır (action chunking): model gelecekteki eylemlerin kısa bir dilimini tek seferde üretir, kontrol iş parçacığı bu dilimi yüksek frekansla yürütür ve model arkada bir sonraki dilimi hazırlar. Böylece çıkarım beklemesinin bir kısmı eylem yürütme süresinin içine gizlenir. Bedeli şudur: dilim uzadıkça hareket pürüzsüzleşir, ama model bu aralıkta daha az yeni sahne görür. XLeRobot bardağı almak için kolunu uzatırken bardak yolda çarpılıp kayarsa, eski görüntüden üretilmiş eylemleri yürütmeyi sürdürebilir. Dolayısıyla eylem parçalama, pürüzsüzlük ile tepki hızı arasında bir ödünleşimdir; bedelsiz bir hızlanma değil.
+
+### VLA'nın Sınırları
+
+"Uzun ufuklu planlama + VLA" kullanılabilir bir temel tasarımdır, ama gözden kaçması kolay birkaç sorun bırakır.
+
+- **Eğitim verisi kısıtlıdır**: robot gösterimleri, internetteki metin ve görüntülerden çok daha azdır. Modelin "bardak" sözcüğünü görmüş olması, her malzemeden ve her sürtünme koşulundan bardak gördüğü anlamına gelmez.
+- **Taklidi öğrenir ama sonucu bilmez**: davranış klonlama çoğunlukla "gösterici bir sonraki adımda ne yaptı"yı öğrenir; modelden "bu eylem neye yol açar"ı yanıtlamasını açıkça istemez.
+- **Her robot farklıdır**: serbestlik dereceleri, koordinat sistemleri, tutucular ve eyleyici gecikmeleri farklıysa, aynı eylemin başka bir makineye olduğu gibi taşınacağının güvencesi yoktur.
+- **Gözlem bayatlayabilir**: eylem dilimi yürütülmeye başladıktan sonra nesne kaydırılırsa, örtülürse ya da devrilirse, model hâlâ önceki kareye dayanarak karar veriyordur.
+
+Dolayısıyla bir dil modelinin "bardak"ı biliyor olması, sürtünmenin, temasın, sıvı çalkalanmasının ya da bir güç kablosunun gelecekteki durumu nasıl değiştireceğini bildiği anlamına gelmez. VLA çoğunlukla "şimdi ne yapmalı"yı yanıtlar; "yaptıktan sonra ne olabilir"i yargılamak için başka tür bir model gerekir.
+
+### Dünya Modelleri
+
+Dünya modeli, eylem sonuçlarının kestiricisi olarak anlaşılabilir. Öğrendiği şey şudur: şu anki durumda belli bir eylem yapılırsa bir sonraki andaki durum nasıl değişebilir.
+
+```text
+şu anki durum + aday eylem
+    → sonraki durumu ya da geleceğin bir parçasını kestir
+    → adayların sonuçlarını karşılaştır
+    → eylemi seç, yeniden planla ya da güvenle dur
+```
+
+Robotikte kullanılabilir bir dünya modeli en azından şu üç şeyi iyi yapmalıdır:
+
+- şu anki durumu anlamak;
+- farklı eylemlerin getirebileceği sonuçları kestirmek;
+- bu kestirimi planlayıcıya ya da denetleyiciye vererek seçime yardım etmek.
+
+Yalnızca video betimleyebilen bir VLM ya da yalnızca görüntü üretebilen bir model, kendiliğinden güvenilir bir robot dünya modeline dönüşmez. Eylemin ne olduğunu bilmeli ve bu eylemin nesneler ile çevre üzerindeki etkisini kestirebilmelidir. V-JEPA 2 geleceği içsel durumda kestirme yolunu temsil eder; World-Action Model ise "eylem—gelecekteki gözlem" ilişkisini açıkça öğrenir. Bunlar VLA ile birlikte kullanılabilir, onun yerini almak zorunda değildir.[^ch6-16]
+
+Gerçek bir sistemde dünya modelinin genellikle üç kullanımı vardır:
+
+1. **Hareket etmeden önce**: kavrama, itme ya da bekleme gibi aday eylemleri karşılaştırmak ve riski daha az olanı öne almak;
+2. **Yürütme sırasında**: gerçek gözlemi kestirimle karşılaştırmak, sapma bulunduğunda eylemi kısaltmak, durmak ya da yeniden planlamak;
+3. **Eğitim sırasında**: videodan, benzetim verisinden ve başarısız yörüngelerden durum değişimlerini öğrenmek, böylece gerçek makinedeki deneme yanılmayı azaltmak.
+
+XLeRobot'un masa görevine dönelim. Sarı kâğıt kısmen kırmızı bardağın altında kalıyorsa sistem aday becerileri karşılaştırabilir: "önce kâğıdı al", "önce bardağı kaydır" ya da "başka yönden kavra". Dünya modelinin gerçekçi robot videosu üretmesi gerekmez: hangi aday eylemin kâğıdın alınabileceği bir duruma daha çok yol açtığını ve hangisinin bardağı devirebileceğini kestirebilmesi, planlayıcının seçenekleri sıralamasına yardım etmeye yeter. Eylem yürütüldükten sonra gerçek kamera gözlemi hâlâ nihai olgudur: kestirim yalnızca seçime yardım eder, kabul denetiminin yerini almaz.
+
+Dünya modelinin verdiği şey kesin yanıtlar değil, "böyle yaparsam ne olabilir" konusunda karşılaştırılabilir kestirimlerdir. Ne kadar uzağa kestirilirse hata da o kadar büyüme eğilimindedir ve gerçekçi görünen bir gelecek sahnesi, gerçek temas ve sürtünme yasalarına uymak zorunda değildir. Bu yüzden gerçek bir sistem hâlâ kısa vadeli kestirime, gerçek zamanlı gözleme, belirsizlik kestirimine ve bağımsız bir donanım güvenlik denetleyicisine ihtiyaç duyar. Üretici dünya modelleri etkileşimli benzetim ve görselleştirme için kullanılabilir; ancak "video üretebilmek" ile "robotun eylemlerine yön verebilmek" birbirine karıştırılmamalıdır.[^ch6-21]
+
+> **Deney 6-13 ★★: Benzetimde üç özerk masa toplama çevriminin karşılaştırılması**
+>
+> Deney 6-12'daki görevi, hedef durumları, başarı koşullarını ve beş aracı olduğu gibi masa benzetimine taşıyın; yalnızca gerçek XLeRobot'un eyleyicilerini, kavrama sırasında ara sıra toparlanabilir geçici bir başarısızlık üreten, denetlenebilir bir benzetim yürütücüsüyle değiştirin. Böylece problem değişmeden üç strateji karşılaştırılabilir.
+>
+> **Açık çevrim yürütme** eylem dizisinin tamamını tek seferde üretir ve yolda yeniden gözlem yapmaz. **Adım adım denetim** her `pick` ve `place` sonrası durumu yeniden okur, başarısızlıkta yalnızca o anki beceriyi yineler. **Kestirimli yürütme** buna kısa vadeli bir dünya modeli ekler; aday becerilerin beklenen sonuçlarını karşılaştırdıktan sonra bir sonraki hamleyi seçer. Deney; görev başarı oranını, araç çağrısı ek yükünü ve hatadan toparlanma yetisini karşılaştırır ve son başarıların tümünün `verify_state`'ten gelen yeni bir gözlemle doğrulanıp doğrulanmadığını denetler.
+>
+> Bu deneyin amacı küçük bir benzetim dünya modelinin gerçek makinenin fizik modeline denk olduğunu göstermek değil, daha temel bir ilişkiyi sınamaktır: açık çevrim planlama tek bir yerel hatayı görevin sonuna kadar sürükler; adım adım denetim toparlanmaya izin verir; eylem kestirimi ise ayrıca aday becerileri sıralamaya yardım eder. İşin gerçekten bitip bitmediğine hâlâ çevreden gelen geri besleme karar verir.
+
+### Benzetim Ortamından Gerçek Robota
+
+Deney 6-13'un benzetimde kararlı olması, Deney 6-12'daki gerçek XLeRobot'un da aynı biçimde başarılı olacağı anlamına gelmez. Benzetimden gerçek makineye geçmek bir denetleyici daha değiştirmek değil, iki ortam arasındaki farkı üstlenmektir. Eğitim için uzaktan kumanda verisi, video verisi ve benzetim etkileşim verisi kullanılabilir; ama gerçekten sahaya çıkıldığında aynı kırmızı bardak, aynı sarı kâğıt, aynı tepsi ve aynı çöp kutusu farklı arka plan, aydınlatma, kamera konumu ve örtülme ilişkileri altında görünür; kol ise ayrıca başka bir sürtünmeyle, başka bir algılayıcı gürültüsüyle ve başka bir eyleyici gecikmesiyle karşılaşır. Bu farklar yeterince büyükse, benzetimde öğrenilen hareketler gerçeklikte işe yaramayabilir.
+
+> **Deney 6-14 ★★★: Aynı masa görevinde RGB ortamlar arası sınama**
+>
+> Benzetim ortamında "nesneyi karşılık gelen hedefe taşıma" temel problemini kullanmayı sürdürün ve her örneği masa toplama sürecindeki yerel bir karar olarak görün: RGB görüntüden, nesneye hangi yönden yaklaşılması gerektiğine ya da artık kavranıp kavranamayacağına karar vermek. Yapısı aynı olan dört görsel politika eğitin: biri yalnızca sabit sahneleri görsün; biri arka planı değiştirsin; biri nesne görünümünü değiştirsin; sonuncusu ise arka planı, görünümü, aydınlatmayı ve gürültüyü aynı anda değiştirsin.
+>
+> Tüm politikaları hem özgün ortamda hem de değiştirilmiş yeni ortamda sınayın ve görsel koşullar değişmeden önceki ve sonraki eylem kararı doğruluğunu karşılaştırın. Bu deneyin yanıtlamaya çalıştığı soru "benzetim artık gerçek XLeRobot ile aynı mı" değil, daha dar bir sorudur: eğitim sırasında sahne değişkenliğinin aralığını bilinçli olarak genişletmek, aynı bardak—tepsi ve kâğıt—çöp kutusu görevinin yeni bir kamera görüntüsüne uyum sağlamasına yardım eder mi? Sonuç iyileşse bile, gerçek makinede sahaya çıkmak yine de gerçek kamera kalibrasyonunu, eyleyici sınamalarını ve eksiksiz bir güvenlik kapalı çevrimini gerektirir.[^ch6-6]
 
 ## Bölüm Özeti
 
-Bu bölüm tek bir temel soru etrafında döndü: bir Agent'ın gerçekten iyileştiğine nasıl karar veririz? Yeniden üretilebilir bir test ortamı kurmaktan, sızıntı sınavını geçebilecek veri kümeleri tasarlamaya, LLM'i hakem olarak görevlendirmeye ve nihayet değerlendirme sonuçlarıyla model seçimini ve yinelemeyi yönetmeye kadar — bu zincirin her halkası vardığınız sonucun güvenilirliğini etkiler. Model seçiminde ayrıca tek bir puana değil, farklı kaynak bütçeleri altındaki yetenek artış eğrilerine bakılmalıdır. Üretim düzeyinde bir Agent'ın değerlendirmesi ara sıra girilen bir sınav değil, her ürün kararının içine gömülmüş sürekli bir doğrulamadır.
+**Modalite** ve **yürütme zamanlaması** eksenlerinde bakıldığında **asenkron ve olay güdümlü yürütme**, gözlemi “Agent'ın gidip alması”ndan “dünyanın itmesi”ne; eylemi “tur içinde bitirmek”ten “şimdi başlatıp sonraki olaylarla tamamlamak”a genişletir. **Ses**, ölçeği milisaniyelere indirir, sırayla konuşmaktan sürekli dinleyip konuşmaya ilerler ve gerçek zamanlı ön plan etkileşimini daha derin arka plan düşüncesinden ayırır. **Computer Use** döngüyü ekrana taşır; verimlilik, sürekli görsel anlama ve eylem sonrası durum doğrulaması da darboğaza dönüşür. **Robotik** onu fiziksel dünyaya taşır; action chunking akıcılık ile tepki hızı arasında denge kurar ve tamamlanma yine yeni bir gözlemle değerlendirilir.
 
-Temel yöntem: gözlem → hipotez → deney → doğrulama → yeni kavrayış → yeni hipotez. Bu döngü, Agent mühendisliğini deneyim güdümlü bir "simyadan" veri güdümlü bir bilimsel mühendisliğe taşır.
+Dört kısım aynı denetim iskeletini paylaşır:
 
-Bu bölümde tanıtılan değerlendirme sistemi eksiksiz bir kapalı döngü oluşturur: **değerlendirme ortamı** otomatik test altyapısını sağlar → **değerlendirme veri kümesi** test durumlarını tanımlar → **otomatik değerlendirme yöntemleri** (LLM-as-a-Judge ve Rubric) Agent'ın performansını puanlar → **benchmark çözümlemesi** iyileştirme yönlerini ortaya çıkarır → **sistem iyileştirmeleri** sorunları giderir → değerlendirme ortamı ve veri kümesi güncellenir ve yeni bir tur başlar.
+```text
+sürekli algıla
+  → mevcut durumu ve zamanlamayı değerlendir
+  → bir yanıt ya da eylem seç
+  → çıktının ortama girmesini sağla
+  → geri bildirimi gözlemle
+  → devam et, düzelt, yeniden dene, dur ya da yeniden planla
+```
 
-Bölüm 1'de tanıtılan Harness mühendisliği açısından bakıldığında, bu bölümdeki değerlendirme yöntemi Harness'in "doğrulama" işlevinin sistematik uygulanışıdır; "benchmark raporundan sistem iyileştirmesine" uzanan kapalı döngü ise Harness'in yinelemeli optimizasyonunun temel mekanizmasıdır. Bu bölüm "nasıl güvenilir ölçülür" sorusunu yanıtlıyor; Bölüm 8 bunun üzerine "çok boyutlu trajectory değerlendirmeleri nasıl yürütülebilir ve geri alınabilir sistem güncellemelerine çevrilir" sorusunu yanıtlayacak.
+Aynı temel öğeleri de paylaşırlar: uyandırma, güvenli noktalar, iptal, öncelikli kesme ve hızlı/yavaş ayrımı.
 
-Bu bölümde kurulan değerlendirme sistemi yalnızca mevcut sistemin optimizasyonuna hizmet etmez, sonraki iki bölüme de kilit bir zemin sağlar. Bölüm 7, değerlendirme ortamlarını ve verisini modelin post-training'i için girdiye çevirir; SFT ve RL ile etkileşim politikasını parametrelere yazar. Bölüm 8 ise üretim trajectory'lerinin çok boyutlu değerlendirmelerini bilgi, talimat, program veya parametre güncelleme adaylarına dönüştürür.
+Bu bölüm, “Agent inşa etme” kısmının son parçasını tamamladı: gözlem ve eylem uzayları artık içerik, kip ve zamanlama olmak üzere üç yönde de açılmış durumda. Ardından Bölüm 7, sistemin doğru kurulup kurulmadığını nasıl belirleyeceğimizi; Bölüm 8, post-training yoluyla model parametrelerinin nasıl güncelleneceğini ele alır. Bölüm 9 ise çalışma trajectory'lerini, değerlendirmeyi ve farklı güncelleme taşıyıcılarını sürekli evrim için kapalı bir döngü hâlinde düzenler. Bölüm 10, bu eksiksiz tek-Agent temelinden multi-Agent iş birliğine geçer.
+
+[^ch6-16]: Meta AI, “Introducing the V-JEPA 2 world model and new benchmarks for physical reasoning,” 2025-06-11. https://ai.meta.com/blog/v-jepa-2-world-model-benchmarks/; V-JEPA 2 technical report：arXiv:2506.09985, https://arxiv.org/abs/2506.09985
+[^ch6-21]: Jack Parker-Holder and Shlomi Fruchter, Google DeepMind, “Genie 3: A new frontier for world models,” 2025-08-05. https://deepmind.google/blog/genie-3-a-new-frontier-for-world-models/; Zachary Lin et al. *Cosmos World Foundation Model Platform for Physical AI.* arXiv:2501.03575, 2025. https://arxiv.org/abs/2501.03575 。
+[^ch6-1]: XLeRobot, “Teleop belgeleri”. https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html
+[^ch6-2]: Google DeepMind, “Gemini Robotics-ER 1.5”. https://deepmind.google/models/gemini-robotics/gemini-robotics-er/; XLeRobot, “LLM Agent ile kontrol”. https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html. XLeRobot'un üst kaynak örneği, modelin araç çağrılarıyla nasıl düzenlendiğini gösterir; bu bölüm aynı düzenleme ilkesini korur, ancak eylem araçlarını masa üzerinde kalibre edilmiş kavrama, yerleştirme, denetleme ve durdurma ilkelleriyle sınırlar.
+[^ch6-6]: LeRobot, “Sim2Real öğreticisi”. https://github.com/StoneT2000/lerobot-sim2real/blob/87d6c1d969f6e0ca4dc5697940804e231118a63a/docs/zero_shot_rgb_sim2real.md
+[^ch6-15]: Moo Jin Kim et al. *OpenVLA: An Open-Source Vision-Language-Action Model.* arXiv:2406.09246, 2024. https://arxiv.org/abs/2406.09246
+[^ch6-22]: OpenAI, “[Async tool calling](https://developers.openai.com/api/docs/guides/async-tool-calling)”; “[Using GPT-6 Astra](https://developers.openai.com/api/docs/guides/latest-model)”, kontrol tarihi: 2026-09-05.
+[^ch6-23]: OpenAI, “[Mid-turn steering](https://developers.openai.com/api/docs/guides/steering)”, kontrol tarihi: 2026-09-05.
 
 ## Düşünce Soruları
 
-1. ★★ LLM-as-a-Judge, bir dil modelinin çıktısını yine bir dil modeliyle değerlendirir. Bu "öz değerlendirmenin" sistematik kör noktaları var mıdır — örneğin model, belirli bir üsluptaki yanıtlara tutarlı biçimde yüksek puan verip bu tercih insan yargısıyla uyuşmayabilir mi? Böyle bir yanlılık nasıl tespit edilir ve düzeltilir?
-2. ★★★ Değerlendirme veri kümelerinin "sızıntıya dayanıklı" tasarımı kritik önemdedir. Ama açık kaynak ekosisteminde benchmark verisi bir kez kamuya açıldığında hızla eğitim verisine dahil edilir. Bu "kedi-fare oyununun" bir sonu var mı? Veri sızıntısına kökten direnen bir değerlendirme yöntemi tasarlayın.
-3. ★★ Scale AI'ın dört ölçütü (uzman rehberliğine dayanma, kapsamlı kapsama, standartlaştırılmış önem ağırlıkları, kendi kendine yeten değerlendirme) değerlendirmedeki öznelliği ortadan kaldırmayı amaçlar. Ne var ki bazı görev boyutları ("yanıt faydalı mı", "ton uygun mu" gibi) doğası gereği özneldir. Bu öznel boyutlar için güvenilir bir Rubric nasıl tasarlanır?
-4. ★★ τ-bench, gerçek kullanıcı davranışını simüle ederek Agent'ları değerlendirir. Ama simüle edilen kullanıcının kendisi de bir LLM'dir — bazı uç senaryoları (duygusal olarak taşkın ya da kendini net ifade edemeyen kullanıcılar gibi) sistematik biçimde hafife alabilir. Simüle edilen kullanıcının kalitesi nasıl doğrulanır?
-5. ★★ İkili karşılaştırma (Bradley-Terry modeli), tercihlerin geçişli olduğunu varsayar (A > B ve B > C ise A > C). Oysa insan tercihleri geçişliliği sıkça ihlal eder. Agent değerlendirmesinde geçişsiz tercihler hangi senaryolarda ortaya çıkabilir? Bu, sıralamanın güvenilirliğini nasıl etkiler?
-6. ★★ Bu bölüm "gözlem → hipotez → deney → doğrulama" biçiminde bilimsel bir yöntem öneriyor. Ama pratikte Agent'ın davranış uzayı devasadır ve tek bir hipotezi doğrulamak yüzlerce değerlendirme koşusu gerektirebilir. Sınırlı bir hesaplama bütçesi altında değerlendirmeden elde edilen bilgi miktarı nasıl en üst düzeye çıkarılır?
-7. ★ Bu bölümdeki varsayımsal vakada, düşünmenin genel olarak açılması (H4) toplam başarı oranını yükseltmesine rağmen gecikme ve maliyet yüzünden reddedildi ve sonunda koşullu açmaya (H7) evrildi. Hangi sinyaller (görev açıklamasının özellikleri, geçmiş başarısızlık örüntüleri, çalışma sırasındaki belirsizlik) "düşünme modu açılsın mı" yönlendirmesine dayanak olmaya uygundur? Düşünmenin tersine zarar verdiği Agent senaryoları var mıdır?
-8. ★★ τ-bench'in kullanıcı simülasyonu "kademeli bilgi açıklama" kullanır — bütün bilgi tek seferde verilmez, Agent'ın sorularına göre adım adım açıklanır. Bu tasarım değerlendirme sonuçlarını nasıl etkiler? Simüle edilen kullanıcının bilgi açıklama stratejisi gerçek kullanıcılardan belirgin biçimde farklıysa, değerlendirme sonuçları hâlâ güvenilir midir?
+1. ★★ Asenkron bir Agent mimarisinde, olay kuyruğu için öncelik stratejisi tasarım zamanında belirlenmelidir. Ama öncelik yargısının kendisi semantik anlayış gerektiriyorsa (örn. yeni bir mesajın mevcut görevden daha acil olup olmadığını belirlemek), bu yargıyı kim vermelidir—bir kural motoru mu yoksa başka bir LLM çağrısı mı? Her birinin maliyetleri nelerdir?
+2. ★★ Kuyruk tabanlı olay işlemede, modeller yalnızca son olaya odaklanma eğilimindedir. Bu bölüm bunu Agent durum çubuğu işaretleri ve özetleme yoluyla hafifletir. Ama kuyrukta 20 olay birikmişse (10 araç sonucu + 5 kullanıcı mesajı + 5 sistem uyarısı), modelin kilit bilgiyi kaçırmaması için bu olayların sunum sırasını ve formatını nasıl organize ederdiniz?
+3. ★★★ Bir Agent kullanıcı adına dış dünyayla etkileşime girdiğinde, özünde bir kimlik seçimiyle karşı karşıyadır: üçüncü bir taraf olarak hareket etmek için bağımsız bir sanal kimlik (özel e-posta ve telefon numarası) mı kullanmalı, yoksa kullanıcının kişisel hesaplarını kullanıcının kendisi olarak mı doğrudan işletmeli? Birincisi otonom arka plan işlemine izin verir, ama üçüncü taraflar insan olmayan bir kimliğe güvenmeyebilir; ikincisi daha eksiksiz context ve izinlere sahiptir ama güven yetkilendirmesi ve güvenlik sınırı sorunları getirir. Hangi senaryolarda her modun seçilmesi gerektiğini düşünüyorsunuz?
+4. ★★ Sesli Agent'ların uçtan uca modeli ASR-LLM-TTS zincirini tek bir modelde birleştirir; gecikmeyi düşürür ama modülerliği kaybeder. Uçtan uca model bir halkada (örneğin konuşma tanımada) hata yaparsa, hata ayıklamak ve düzeltmek seri boru hattına göre çok daha zordur. Uçtan uca bir sesli Agent'ın gözlemlenebilirlik (observability) sistemini nasıl tasarlardınız?
+5. ★ Step-Audio R1, MPS çift beyin mimarisiyle "düşünürken konuşma"yı gerçekleştiriyor. Ama insanlar "düşünürken konuşurken" sık sık iyi düşünülmemiş şeyler söyler, kendini düzeltir ya da dolgu sözcükleri kullanır. Agent'ın "düşünürken konuşması" insandaki bu özellikleri taklit etmeli mi?
+6. ★★ SoM (Set-of-Mark) ve onun yapısal türevi (DOM öğe indeksleme), Computer Use'un görsel konumlandırmasını açık uçlu koordinat tahmininden kapalı uçlu ID seçimine dönüştürür; ama her ikisi de önce arayüz öğelerinin tespit edilip işaretlenmesini gerektirir — ister segmentasyon modeliyle ister DOM'la olsun. Arayüzde standart dışı kontroller veya dinamik olarak değişen öğeler varsa, işaretleme eksik ya da hatalı olabilir. Bu durumda koordinat tahminine geri dönmeli mi?
+7. ★★ XLeRobot gibi birkaç yüz dolar seviyesindeki robot platformları teleoperasyon verisi toplamayı ucuzlattı. Ama teleoperasyon verisinin kalitesi büyük ölçüde operatörün becerisine bağlıdır. Deneyimsiz bir operatörün sağladığı veri, VLA modelinin eğitimini nasıl etkiler? Veri toplama aşamasında düşük kaliteli veriyi otomatik olarak nasıl elerdiniz?
+8. ★★★ Bu bölüm ses, Computer Use ve robotik olmak üzere üç etkileşim biçimini kapsadı. Bu üç biçimin ortak eğilimi, seri boru hattından uçtan uca modellere doğru evrilmek. Bu eğilim sürerse, beş yıl sonraki Agent etkileşim katmanı nasıl görünecek?
+9. ★★ DOM/Accessibility Tree öğe indekslemesi standart Web uygulamalarında belirgin sonuç veriyor, ama gitgide daha çok yazılım arayüzü (Canvas/WebGL render'ı, platformlar arası kendi çizen kontroller) erişilebilir yapısal bilgi sunmuyor ve geriye yalnızca görsel işaretleme ya da koordinat tahmini kalıyor. Sizce Computer Use saf görsel yola mı oynamalı, yoksa yapısal ve görsel iki yolu birden mi sürdürmeli? İki yolu birden sürdürmenin maliyeti ve getirisi nedir?
+10. ★★ VLA modelleri action chunking (eylem parçalama) kullanıyor — metinde anlatıldığı gibi, π₀'ın tipik yapılandırması 50 Hz frekansta 25-50 gelecek eylemi bir seferde üretmektir — ve böylece çıkarım gecikmesini yürütme süresinin içine saklıyor. Ama yürütme sırasında ortam ani biçimde değişirse (örneğin nesne yerinden alınırsa), önceden üretilmiş eylem dizisi geçersizleşir. Action chunking'in verimlilik avantajı ile ortam değişimlerine tepki hızı arasında dengeyi nasıl kurarsınız?
+11. ★★★ Bu bölümdeki üç senaryonun (ses, Computer Use, robotik) hepsi "algılama-düşünme-eylem" döngüsünün gecikme sorunuyla yüzleşiyor ve hepsi hızlı-yavaş düşünmenin paralelleştirilmesi yönünde evriliyor. Ses senaryosunda bu, "yanlış söylediysen sonra düzelt" biçiminde; Computer Use senaryosunda "önce tıkla sonra bak" biçiminde; robotik senaryosunda ise "bir adım at sonra bak" biçiminde ortaya çıkıyor. Hızlı düşünmeye dayanan bu eylemlerin geri döndürülemez sonuçlara yol açmamasını nasıl garanti edersiniz?
+12. ★★★ Bu bölümde aynı ilkel kümesi (uyandırma, güvenli nokta, iptal, öne geçme, hızlı/yavaş ayrımı) farklı zaman ölçeklerinde tekrar tekrar karşımıza çıktı. Bunlardan birini seçin ve olay güdümlü işlemede (saniye—gün) ve robot eylem parçalamada (milisaniye) uygulanışının nasıl farklılaştığını açıklayın. Bu farkı esas olarak ne belirliyor—ortamın değişim hızı, eylemin geri alınabilirliği, yoksa gözlem elde etmenin maliyeti mi?

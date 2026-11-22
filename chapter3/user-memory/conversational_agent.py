@@ -5,6 +5,7 @@ Memory updates are handled by a separate background process
 
 import json
 import logging
+import os
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
@@ -34,7 +35,7 @@ class ConversationConfig:
     enable_conversation_history: bool = True
     max_memory_context: int = 10
     temperature: float = 0.7
-    max_tokens: int = 4096
+    max_tokens: int = Config.MODEL_MAX_TOKENS
 
 
 class ConversationalAgent:
@@ -57,7 +58,7 @@ class ConversationalAgent:
         Args:
             user_id: Unique user identifier
             api_key: API key (defaults to env based on provider)
-            provider: LLM provider ('siliconflow', 'doubao', 'kimi', 'moonshot')
+            provider: LLM provider ('dashscope'/'qwen'/'bailian', 'siliconflow', 'doubao', 'kimi', 'moonshot')
             model: Model name (defaults to provider's default)
             config: Agent configuration
             memory_mode: Memory storage mode
@@ -70,6 +71,9 @@ class ConversationalAgent:
         
         # Determine provider
         self.provider = (provider or Config.PROVIDER).lower()
+        self.provider = {"qwen": "dashscope", "bailian": "dashscope"}.get(
+            self.provider, self.provider
+        )
         
         # Get API key for provider
         api_key = api_key or Config.get_api_key(self.provider)
@@ -88,7 +92,13 @@ class ConversationalAgent:
             )
 
         # Configure client based on provider
-        if self.provider == "siliconflow":
+        if self.provider == "dashscope":
+            self.client = OpenAI(
+                api_key=api_key,
+                base_url=Config.DASHSCOPE_BASE_URL
+            )
+            self.model = model or PROVIDER_DEFAULT_MODELS["dashscope"]
+        elif self.provider == "siliconflow":
             self.client = OpenAI(
                 api_key=api_key,
                 base_url="https://api.siliconflow.cn/v1"
@@ -99,7 +109,7 @@ class ConversationalAgent:
                 api_key=api_key,
                 base_url="https://ark.cn-beijing.volces.com/api/v3"
             )
-            self.model = model or "doubao-seed-1-6-thinking-250715"
+            self.model = model or os.getenv("ARK_MODEL", "doubao-seed-1-6-250615")
         elif self.provider == "kimi" or self.provider == "moonshot":
             self.client = OpenAI(
                 api_key=api_key,
@@ -115,7 +125,7 @@ class ConversationalAgent:
             self.model = model or "google/gemini-3.5-flash"
             # Supported models: google/gemini-3.5-flash, openai/gpt-5, anthropic/claude-sonnet-4
         else:
-            raise ValueError(f"Unsupported provider: {self.provider}. Use 'siliconflow', 'doubao', 'kimi', 'moonshot', or 'openrouter'")
+            raise ValueError(f"Unsupported provider: {self.provider}. Use 'dashscope'/'qwen'/'bailian', 'siliconflow', 'doubao', 'kimi', 'moonshot', or 'openrouter'")
         
         # Initialize memory manager (read-only access)
         self.memory_manager = create_memory_manager(user_id, memory_mode)
@@ -251,7 +261,7 @@ You MUST analyze the context, user's questions and memories in detail, and provi
                 logger.info("Streaming response...")
                 
             for chunk in stream:
-                if chunk.choices[0].delta.content:
+                if chunk.choices and chunk.choices[0].delta.content:
                     delta = chunk.choices[0].delta.content
                     assistant_message += delta
                     # Always stream output to show real-time response

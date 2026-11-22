@@ -1,17 +1,25 @@
 # فهم وكلاء الذكاء الاصطناعي بعمق: مبادئ التصميم والممارسة الهندسية
 
-[![PDF](https://img.shields.io/badge/PDF-تنزيل-success.svg)](#-الكتاب-الإلكتروني) [![القراءة عبر الإنترنت](https://img.shields.io/badge/🌐_قراءة_عبر_الإنترنت-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/) [![النجوم](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![الترخيص](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![اللغات](https://img.shields.io/badge/الترجمات-9%20لغات-informational.svg)](#-الكتاب-الإلكتروني)
+[![PDF](https://img.shields.io/badge/PDF-تنزيل-success.svg)](#-الكتاب-الإلكتروني) [![القراءة عبر الإنترنت](https://img.shields.io/badge/🌐_قراءة_عبر_الإنترنت-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/ar/) [![النجوم](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![الترخيص](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![اللغات](https://img.shields.io/badge/الترجمات-15%20لغة-informational.svg)](#-الكتاب-الإلكتروني)
 [![Trending GitHub Project of the Day](https://img.shields.io/badge/GitHub%20Trending-Project%20of%20the%20Day-orange?logo=github)](https://github.com/trending)
 
-**[中文](../../README.md) · [English](../en/README.md) · العربية ← الحالية · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md)**
+**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · العربية ← الحالية · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md)**
 
 > **ملاحظة حول الترجمة:** هذه ترجمة عربية كاملة، خضعت لمراجعة تحريرية وتقنية شملت سلامة المعنى، وطبيعية الأسلوب، واتساق المصطلحات، وبنية النص والرسوم.
 >
-> 📥 **[تنزيل PDF / EPUB](#-الكتاب-الإلكتروني)** (موصى به) — توفر نسختا PDF وEPUB أفضل تجربة قراءة؛ ويمكنك أيضًا [القراءة عبر الإنترنت](https://bojieli.github.io/ai-agent-book/) مع تبديل اللغات وشجرة الفصول والبحث في النص الكامل.
+> 📥 **[تنزيل PDF / EPUB](#-الكتاب-الإلكتروني)** (موصى به) — توفر نسختا PDF وEPUB أفضل تجربة قراءة؛ ويمكنك أيضًا [القراءة عبر الإنترنت](https://bojieli.github.io/ai-agent-book/astro/ar/) مع تبديل اللغات وشجرة الفصول والتمييز والملاحظات.
 
 **الوكيل = LLM + السياق + الأدوات** — تنظم هذه المعادلة فصول الكتاب العشرة، التي تنتقل من المبادئ إلى الممارسة الهندسية. والنص الكامل والرسوم و**93 تجربة مصاحبة** كلها مفتوحة المصدر، ويمكنك تشغيل التجارب بنفسك.
 
-| 📚 **10 فصول** من الأساسيات إلى الإنتاج | 📂 **93** مشروعًا مصاحبًا (أكثر من 70 مستقلاً) | 🌐 **9 لغات**: CN / EN / AR / zh-TW / RU / TA / VI / JA / TR |
+> 📚 **صدر الكتاب الشقيق _فهم بنية الذكاء الاصطناعي التحتية بعمق: التحليل الكمي وتصميم الأنظمة_ بمصدر مفتوح** — [github.com/bojieli/ai-infra-book](https://github.com/bojieli/ai-infra-book)
+>
+> لتطوير تطبيقات جيدة قائمة على النماذج، لا بدّ أيضًا من فهم البنية التحتية التي تعمل عليها. يتناول الكتاب الشقيق بنية الذكاء الاصطناعي التحتية التي تدعم تدريب النماذج والاستدلال بها: أين تُخزَّن المعاملات وحالة السياق، وكيف تُنفَّذ الحوسبة، وكيف تتعاون عدة مسرّعات.
+
+> 📢 **ما الذي تغيّر في الإصدار 2.0 مقارنةً بـ 1.4؟** يدمج الإصدار 2.0 قسم «التفاعل غير المتزامن» من الفصل الرابع السابق مع المحتوى المتعلق بـ«الوكلاء متعددي الوسائط» من الفصل التاسع السابق، ويعيد تنظيمهما في الفصل السادس الجديد «التفاعل: توسيع فضاء الملاحظة وفضاء الفعل». أما الفصول السابقة: السادس «تقييم الوكلاء»، والسابع «مرحلة ما بعد تدريب النموذج»، والثامن «التطور المستمر للوكلاء»، فقد أُزيح كل منها فصلًا واحدًا لتصبح الآن الفصول السابع والثامن والتاسع على التوالي.
+>
+> إذا كنت تقرأ نسخة PDF قديمة، فننصحك بـ[تنزيل أحدث نسخة PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ar.pdf). تتضمن الطبعة الجديدة أيضًا تصحيحات وتعديلات عديدة في المحتوى، لذا يُرجى اعتماد أحدث نسخة.
+
+| 📚 **10 فصول** من الأساسيات إلى الإنتاج | 📂 **93** مشروعًا مصاحبًا (أكثر من 70 مستقلاً) | 🌐 **15 لغة**: CN / EN / ES / ID / AR / zh-TW / RU / TA / VI / JA / TR / KO / HU / HE / PT-BR |
 | :---: | :---: | :---: |
 
 ## 📖 الكتاب الإلكتروني
@@ -19,6 +27,7 @@
 > 📥 **تنزيل** (موصى به؛ نص كامل، مجاني ومفتوح المصدر). تشير هذه الروابط دائمًا إلى أحدث إصدار لفرع `main`؛ الإصدارات الثابتة موجودة في صفحة [الإصدارات](https://github.com/bojieli/ai-agent-book/releases):
 > - **الصينية (الأصل)**: [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.epub)
 > - **الإنجليزية** (ترجمة المجتمع، بواسطة [@nsdevaraj](https://github.com/nsdevaraj) و[@whanyu1212](https://github.com/whanyu1212)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-en.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-en.epub)
+> - **الإسبانية** (ترجمة المجتمع، بواسطة [@santhreal](https://github.com/santhreal)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-es.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-es.epub)
 > - **الصينية التقليدية (تايوان)** (ترجمة المجتمع، بواسطة [@tigercosmos](https://github.com/tigercosmos)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-TW.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-TW.epub)
 > - **الروسية** (ترجمة المجتمع، بواسطة [@ui99ru](https://github.com/ui99ru)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ru.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ru.epub)
 > - **التاميلية** (ترجمة المجتمع، بواسطة [@nsdevaraj](https://github.com/nsdevaraj)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ta.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ta.epub)
@@ -26,16 +35,16 @@
 > - **اليابانية** (ترجمة المجتمع، بواسطة [@eltociear](https://github.com/eltociear)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ja.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ja.epub)
 > - **العربية** (ترجمة مجتمعية بواسطة [@TheSyBuilder](https://github.com/TheSyBuilder) — النسخة الحالية): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ar.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ar.epub)
 > - **التركية** (ترجمة المجتمع، بواسطة [@memisemre](https://github.com/memisemre)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.epub)
+> - **الكورية** (ترجمة المجتمع، بواسطة [@JeongJaeSoon](https://github.com/JeongJaeSoon)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.epub)
 >
-> 🌐 يمكنك أيضًا [القراءة عبر الإنترنت](https://bojieli.github.io/ai-agent-book/) عبر واجهة متعددة اللغات، وشجرة فصول قابلة للطي، وبحث في النص الكامل، وروابط مباشرة للتجارب المصاحبة. ويُعاد بناء الموقع تلقائيًا عند كل دفع إلى الفرع `main`.
+> 🌐 يمكنك أيضًا [القراءة عبر الإنترنت](https://bojieli.github.io/ai-agent-book/astro/ar/) عبر واجهة متعددة اللغات، وشجرة فصول قابلة للطي، وتمييز وملاحظات، وروابط مباشرة للتجارب المصاحبة. ويُعاد بناء الموقع تلقائيًا عند كل دفع إلى الفرع `main`.
 
-يوجد المصدر الصيني في [`book/`](../../book/)، وتوجد النسخة العربية الحالية في [`book-ar/`](../../book-ar/). أما النسخ الإنجليزية والصينية التقليدية والروسية والتاميلية والفيتنامية واليابانية والتركية فهي مساهمات مجتمعية قد تتأخر عن الأصل الصيني، وتوجد النسخة التركية في [`book-tr/`](../../book-tr/).
-
-ينتج سكربت البناء الموحّد كتب EPUB 3 باللغات التسع، ومنها العربية ذات اتجاه القراءة من اليمين إلى اليسار. راجع [تعليمات إنشاء EPUB](../../EPUB.md).
+يوجد المصدر الصيني في [`book/`](../../book/)، وتوجد النسخة العربية الحالية في [`book-ar/`](../../book-ar/). أما النسخ الإنجليزية والإسبانية والصينية التقليدية والروسية والتاميلية والفيتنامية واليابانية والتركية والكورية فهي مساهمات مجتمعية قد تتأخر عن الأصل الصيني، وتوجد في [`book-en/`](../../book-en/)، و[`book-es/`](../../book-es/)، و[`book-zhtw/`](../../book-zhtw/)، و[`book-ru/`](../../book-ru/)، و[`book-ta/`](../../book-ta/)، و[`book-vi/`](../../book-vi/)، و[`book-ja/`](../../book-ja/)، و[`book-tr/`](../../book-tr/)، و[`book-ko/`](../../book-ko/) على الترتيب.
 
 <details>
-<summary><b>🔧 بناء ملف PDF محليًا</b> (يتطلب pandoc وxelatex وElegantBook)</summary>
+<summary><b>🔧 بناء ملفات PDF / EPUB محليًا</b> (يتطلب PDF أدوات pandoc وxelatex وElegantBook)</summary>
 
+- **EPUB**: استخدم سكربت البناء الموحّد؛ راجع [تعليمات إنشاء EPUB](../../EPUB.md)
 - **مصدر النص العربي**: `book-ar/introduction.ar.md`، و`book-ar/chapter1.ar.md` إلى `book-ar/chapter10.ar.md`، و`book-ar/afterword.ar.md`
 - **البناء**: ثبّت pandoc وxelatex وفئة ElegantBook والخطوط المطلوبة، ثم شغّل:
 
@@ -55,13 +64,13 @@
 | :--: | --- | --- | :--: | :--: |
 | 1 | 🚀 **أساسيات الوكيل** | **الوكيل = LLM + السياق + الأدوات**; هندسة منظومة التشغيل هي الميزة التنافسية الحقيقية | [اقرأ](../../book-ar/chapter1.ar.md) | [4](../../chapter1/README.ar.md) |
 | 2 | 🎯 **هندسة السياق** | يحدد السياق سقف قدرة الوكيل: KV Cache، وهندسة الموجّهات، ومهارات الوكيل، وضغط السياق | [اقرأ](../../book-ar/chapter2.ar.md) | [9](../../chapter2/README.ar.md) |
-| 3 | 📚 **ذاكرة المستخدم وقواعد المعرفة** | ذاكرة المستخدم عبر الجلسات + المعرفة الخارجية: ذاكرة المستخدم، RAG، الفهارس المنظمة، الرسوم البيانية المعرفية | [اقرأ](../../book-ar/chapter3.ar.md) | [13](../../chapter3/README.ar.md) |
-| 4 | 🛠️ **الأدوات** | الأدوات هي أيدي الوكيل: بروتوكول MCP، وأدوات الإدراك/التنفيذ/التعاون، والوكلاء غير المتزامنين القائمين على الأحداث، والاكتشاف الاستباقي للأدوات | [اقرأ](../../book-ar/chapter4.ar.md) | [7](../../chapter4/README.ar.md) |
-| 5 | 💻 **وكيل البرمجة وتوليد الشفرة** | الشفرة «أداة تنشئ أدوات جديدة»؛ من وكيل البرمجة الأساسي إلى منظومة جاهزة للإنتاج | [اقرأ](../../book-ar/chapter5.ar.md) | [12](../../chapter5/README.ar.md) |
-| 6 | 🎯 **تقييم الوكيل** | تحويل الأداء إلى إشارات قابلة للمقارنة: البيئات، والمقاييس، والأهمية الإحصائية، والاختيار القائم على التقييم | [اقرأ](../../book-ar/chapter6.ar.md) | [11](../../chapter6/README.ar.md) |
-| 7 | 🧠 **مرحلة ما بعد تدريب النموذج** | التدريب المسبق وSFT وRL في ثلاث مراحل: متى نختار كل مسار، وكيف يستبطن النموذج استدعاء الأدوات، وكيف نحسن كفاءة العينات | [اقرأ](../../book-ar/chapter7.ar.md) | [16](../../chapter7/README.ar.md) |
-| 8 | 🔄 **التطور الذاتي للوكيل** | النمو دون تغيير الأوزان: التعلم من الخبرة، من مستخدم الأداة إلى منشئ الأداة | [اقرأ](../../book-ar/chapter8.ar.md) | [6](../../chapter8/README.ar.md) |
-| 9 | 🎙️ **تعدد الوسائط والتفاعل الآني** | من النص إلى الصوت والواجهات الرسومية والعالم المادي: ثلاثة نماذج صوتية، واستخدام الحاسوب، والتحكم في الروبوت | [اقرأ](../../book-ar/chapter9.ar.md) | [7](../../chapter9/README.ar.md) |
+| 3 | 📚 **ذاكرة المستخدم وقواعد المعرفة** | ذاكرة المستخدم عبر الجلسات + المعرفة الخارجية: ذاكرة المستخدم، RAG، الفهارس المنظمة، الرسوم البيانية المعرفية | [اقرأ](../../book-ar/chapter3.ar.md) | [12](../../chapter3/README.ar.md) |
+| 4 | 🛠️ **الأدوات** | الأدوات هي أيدي الوكيل: بروتوكول MCP، وأدوات الإدراك/التنفيذ/التعاون، والوكلاء غير المتزامنين القائمين على الأحداث، والاكتشاف الاستباقي للأدوات | [اقرأ](../../book-ar/chapter4.ar.md) | [8](../../chapter4/README.ar.md) |
+| 5 | 💻 **وكيل البرمجة وتوليد الشفرة** | الشفرة «أداة تنشئ أدوات جديدة»؛ من وكيل البرمجة الأساسي إلى منظومة جاهزة للإنتاج | [اقرأ](../../book-ar/chapter5.ar.md) | [13](../../chapter5/README.ar.md) |
+| 6 | 🎙️ **التفاعل: توسيع فضاء الملاحظة وفضاء الفعل** | توسيع فضاءَي الملاحظة والفعل عبر الوسائط والزمن: الأنظمة غير المتزامنة والموجهة بالأحداث، والصوت، واستخدام الحاسوب، والروبوتات | [اقرأ](../../book-ar/chapter6.ar.md) | [14](../../chapter6/README.ar.md) |
+| 7 | 🎯 **تقييم الوكلاء** | تحويل الأداء إلى إشارات قابلة للمقارنة: البيئات، والمقاييس، والأهمية الإحصائية، والاختيار القائم على التقييم | [اقرأ](../../book-ar/chapter7.ar.md) | [13](../../chapter7/README.ar.md) |
+| 8 | 🧠 **مرحلة ما بعد تدريب النموذج** | ثلاث مراحل—التدريب المسبق وSFT وRL: متى نختار SFT أو RL، وكيف يستبطن النموذج استدعاء الأدوات، وكيف نحسن كفاءة العينات | [اقرأ](../../book-ar/chapter8.ar.md) | [19](../../chapter8/README.ar.md) |
+| 9 | 🔄 **التطور المستمر للوكلاء** | استخراج إشارات التعلم من مسارات التنفيذ، وتحديث المعرفة والتعليمات والبرامج والمعلمات | [اقرأ](../../book-ar/chapter9.ar.md) | [9](../../chapter9/README.ar.md) |
 | 10 | 🤝 **التعاون متعدد الوكلاء** | الذكاء الجماعي أكبر من الفردي: أطر التعاون، ومشاركة السياق أو عزله، ومجتمعات الوكلاء الناشئة | [اقرأ](../../book-ar/chapter10.ar.md) | [7](../../chapter10/README.ar.md) |
 
 > 💡 **اقرأ** = افتح نص الفصل بصيغة Markdown على GitHub؛ و**N** = عدد المشاريع المصاحبة، ويمكن النقر عليه للوصول إلى الشفرة. تُشرح أنواع المشاريع (✅ مستقل / 📖 إعادة إنتاج / 🚧 تصميم) في ملف README الخاص بكل فصل.
@@ -78,23 +87,52 @@
 | **Zhipu GLM** | <https://open.bigmodel.cn/> | نماذج GLM، ومنها GLM-4.6، قوية في الصينية ومنافسة من حيث الكلفة | البر الرئيسي للصين |
 | **SiliconFlow** | <https://siliconflow.cn/> | مجموعة واسعة من النماذج المفتوحة، مثل DeepSeek وQwen، مع وصول سريع من الصين | البر الرئيسي للصين |
 | **DeepSeek** | <https://platform.deepseek.com/> | واجهة DeepSeek الرسمية | عالمي + البر الرئيسي للصين |
-| **Krill AI** | [www.krill-ai.com](https://www.krill-ai.com/register?invite=Q8D3L35725) | وصول موحد إلى نماذج عالمية وصينية، منها OpenAI وClaude وGemini وKimi وGLM وDeepSeek وQwen | عالمي + البر الرئيسي للصين |
+| **Krill AI** | [www.krill-code.com](https://www.krill-code.com/register?invite=Q8D3L35725) | وصول موحد إلى نماذج عالمية وصينية، منها OpenAI وClaude وGemini وKimi وGLM وDeepSeek وQwen | عالمي + البر الرئيسي للصين |
 | **OpenRouter** | <https://openrouter.ai/> | وصول موحد إلى عدد كبير من النماذج العالمية والمفتوحة | عالمي |
+
+## ❓ الأسئلة الشائعة
+
+**س: هل توجد نسخة PDF / EPUB؟ وهل أحتاج إلى بنائها بنفسي؟**
+لا حاجة لذلك. يسرد قسم [الكتاب الإلكتروني](#-الكتاب-الإلكتروني) روابط تنزيل PDF / EPUB بخمس عشرة لغة، وهي تشير دائمًا إلى أحدث بناء لفرع main؛ ويمكنك أيضًا [القراءة عبر الإنترنت](https://bojieli.github.io/ai-agent-book/). لا تحتاج إلى البناء بنفسك إلا إذا أردت تعديل نص الكتاب وإعادة تنسيقه.
+
+**س: ما المعرفة المسبقة اللازمة لقراءة هذا الكتاب؟**
+يشرح قسم «المتطلبات الأساسية» في المقدمة ذلك بالتفصيل: القدرة على قراءة وتعديل شفرة Python متوسطة التعقيد؛ وتجربة استخدام منتجات LLM مثل ChatGPT وClaude؛ والإلمام بأداة واحدة على الأقل من أدوات البرمجة بمساعدة الذكاء الاصطناعي (Claude Code أو Codex أو Cursor وغيرها)؛ ومعرفة أساسيات هندسة البرمجيات مثل سطر الأوامر وGit وJSON وREST API. وباستثناء التدريب اللاحق في الفصل الثامن، فإن متطلبات الكتاب من الرياضيات وتعلم الآلة منخفضة جدًا.
+
+**س: المعلومات كثيرة وأنساها بعد القراءة، فكيف أستوعبها؟**
+لا تقتصر على قراءة النص. الطريقة الموصى بها هي التطبيق العملي مع تجارب كل فصل — لا بقراءة الشفرة المصاحبة، بل بفهم مبادئ التصميم الواردة في الكتاب ثم إعادة تنفيذها من الصفر بمساعدة coding agent، ومراقبة المخرجات وتتبع ما لا يطابق التوقعات. كما أن أسئلة التأمل في نهاية كل فصل اختبار ذاتي جيد. وللاطلاع على مسار أكثر منهجية راجع [اقتراحات التعلم](LEARNING.md). وقد لخّص أحد القراء الأمر بدقة: اقرأ الكتاب أولًا حتى يصير رقيقًا، ثم حتى يصير سميكًا، ثم حتى يصير رقيقًا مرة أخرى.
+
+**س: هل يجب أن أفهم شفرة التجارب سطرًا بسطر؟**
+لا. فالشفرة المصاحبة للكتاب كلها من إنتاج coding agent بناءً على نص الكتاب، والمؤلف نفسه لا يقرأها سطرًا بسطر. المهم هو التفكير بوضوح في البنية والمكونات الأساسية ومبادئ التصميم، ثم ترك الذكاء الاصطناعي يكتب الشفرة ويشغّل الاختبارات ويصلح الأخطاء، بينما يتولى الإنسان التصميم الأولي والقبول النهائي.
+
+**س: هل توجد إجابات مرجعية لأسئلة التأمل؟**
+نعم: [`book/reference-answers.md`](../../book/reference-answers.md) ([النسخة الإلكترونية](https://bojieli.github.io/ai-agent-book/book/reference-answers/)). وهي إجابات مرجعية فقط لا إجابات نموذجية، ونرحب بمناقشة آرائك المختلفة في Discussions.
+
+**س: ما المشروع العملي الذي يمكنني إنجازه بعد الانتهاء من الكتاب؟**
+نوصي ببناء coding agent من الصفر على غرار Claude Code وCodex: تكفي الفصول 1–5 لبناء coding agent قابل للاستخدام؛ ويساعدك الفصلان 7 و9 على بناء مجموعة تقييم له والتحسين المستمر من حالات الفشل؛ ويتدخل الفصل 8 في النموذج نفسه؛ ويضيف الفصلان 6 و10 طرق تفاعل مثل الصوت وComputer Use إلى جانب التعاون متعدد الوكلاء. أما الجوانب الهندسية مثل التقييم والرصد والموثوقية فيمكنك البدء فيها من تجارب التقييم في الفصل 7: أنشئ أولًا مجموعة تقييم صغيرة من نحو اثنتي عشرة مهمة لوكيلك، ثم حسّنه انطلاقًا من حالات الفشل.
+
+**س: أين أطرح الأسئلة وأشارك في النقاش؟**
+- تصحيحات نص الكتاب وأخطاء التجارب ومشكلات الترجمة: افتح [Issue](https://github.com/bojieli/ai-agent-book/issues) مع ذكر الفصل والقسم والجملة الأصلية.
+- أسئلة القراءة ومناقشة أسئلة التأمل وتبادل الخبرات والتوصية بالمصادر: يُرجى استخدام [GitHub Discussions](https://github.com/bojieli/ai-agent-book/discussions).
+
+**س: وجدت خطأً وأريد تصحيحه، فماذا أفعل؟**
+نرحب بإرسال PR مباشرةً. النسخة الصينية [`book/`](../../book/) هي النسخة الأصلية، وتُزامَن اللغات الأخرى منها: عند تعديل النص يكفي تعديل النسخة الصينية والتوضيح في PR، وستُزامَن الترجمات دفعة واحدة بعد الدمج. للمزيد راجع [المساهمة](#-المساهمة).
 
 ## 💎 الرعاة
 
 شكرًا لـ **Krill AI** على رعاية المشروع. توفر المنصة بوابة API مستقرة وسريعة لنماذج GPT وClaude وGemini وعدد من النماذج الصينية، إلى جانب خيارات للمؤسسات والفوترة والدعم الفني واتصال WebSocket محسّن لخفض زمن وصول الرمز الأول.
 
-تقدم Krill عرضًا لقراء الكتاب: سجّل عبر [هذا الرابط](https://www.krill-ai.com/register?invite=Q8D3L35725)، ثم أدخل الرمز الترويجي `ai-agent-book` عند إضافة الرصيد للحصول على خصم 23% على أول خطة Codex.
+تقدم Krill عرضًا لقراء الكتاب: سجّل عبر [هذا الرابط](https://www.krill-code.com/register?invite=Q8D3L35725)، ثم أدخل الرمز الترويجي `ai-agent-book` عند إضافة الرصيد للحصول على خصم 23% على أول خطة Codex.
+
+> 🧪 تُسجَّل حالة تنفيذ التجارب والأدلة والبوابات المتبقية بصورة منفصلة في [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md)؛ ولا يُعد استنساخ الشفرة أو تثبيتها دليلاً على اكتمال التجربة.
 
 ## 📦 الملحق · جلب المستودعات الخارجية
 
-لا يتضمن هذا المستودع المستودعات الخارجية التسعة عشر الخاصة بالمعايير وأطر التدريب ومنصات الروبوتات في الفصول 6 و7 و9 و10، وذلك بسبب الحجم وشروط الترخيص. لذا يجب استنساخها في الأدلة المقابلة.
+لا يتضمن هذا المستودع المستودعات الخارجية الـ23 الخاصة بالمعايير وأطر التدريب ومنصات الروبوتات في الفصول 6 و7 و9 و10، وذلك بسبب الحجم وشروط الترخيص. لذا يجب استنساخها في الأدلة المقابلة.
 
 ### سكربت للاستنساخ دفعة واحدة
 
 <details>
-<summary><b>🔧 عرض أوامر الاستنساخ</b> (19 مستودعًا خارجيًا)</summary>
+<summary><b>🔧 عرض أوامر الاستنساخ</b> (23 مستودعًا خارجيًا)</summary>
 
 ```bash
 # Chapter 6 · Evaluation Benchmarks
@@ -112,6 +150,7 @@ git clone https://github.com/bojieli/AdaptThink.git                    chapter7/
 git clone https://github.com/bojieli/AWorld.git                        chapter7/AWorld
 git clone https://github.com/bojieli/SFTvsRL.git                       chapter7/SFTvsRL
 git clone https://github.com/bojieli/verl.git                          chapter7/verl
+git clone https://github.com/bojieli/SandboxFusion.git chapter7/SandboxFusion && git -C chapter7/SandboxFusion fetch origin 4a0d573ebd64c98234c190a9d1d49e4276199a0c && git -C chapter7/SandboxFusion checkout --detach 4a0d573ebd64c98234c190a9d1d49e4276199a0c && test "$(git -C chapter7/SandboxFusion rev-parse HEAD)" = "4a0d573ebd64c98234c190a9d1d49e4276199a0c"  # Exp 7-15 code sandbox
 git clone https://github.com/thinking-machines-lab/tinker-cookbook.git chapter7/tinker-cookbook
 git clone https://github.com/19PINE-AI/rlvp.git                        chapter7/RLVP/rlvp                       # Exp 7-14 RLVP paper code
 git clone https://github.com/PRIME-RL/SimpleVLA-RL.git                 chapter7/SimpleVLA-RL/SimpleVLA-RL       # Exp 7-13 vision-language-action RL
@@ -119,29 +158,18 @@ git clone https://github.com/PRIME-RL/SimpleVLA-RL.git                 chapter7/
 # Chapter 9 · Browser Automation & Claude Examples
 git clone https://github.com/browser-use/browser-use.git               chapter9/browser-use
 git clone https://github.com/anthropics/claude-quickstarts.git         chapter9/claude-quickstarts
+git clone https://github.com/Vector-Wangel/XLeRobot.git chapter9/XLeRobot && git -C chapter9/XLeRobot fetch origin 3d14695e40c9c68229c0aacffca6053c75cd3eb6 && git -C chapter9/XLeRobot checkout --detach 3d14695e40c9c68229c0aacffca6053c75cd3eb6 && test "$(git -C chapter9/XLeRobot rev-parse HEAD)" = "3d14695e40c9c68229c0aacffca6053c75cd3eb6"  # Exp 9-7/9-9 shared
+git clone https://github.com/Grigorij-Dudnik/RoboCrew.git chapter9/RoboCrew && git -C chapter9/RoboCrew fetch origin c749148f29bd14e61347f9fc3530c343fff0d994 && git -C chapter9/RoboCrew checkout --detach c749148f29bd14e61347f9fc3530c343fff0d994 && test "$(git -C chapter9/RoboCrew rev-parse HEAD)" = "c749148f29bd14e61347f9fc3530c343fff0d994"  # Exp 9-8/9-9; RoboCrew v0.3.1
+git clone https://github.com/StoneT2000/lerobot-sim2real.git chapter9/lerobot-sim2real && git -C chapter9/lerobot-sim2real fetch origin 87d6c1d969f6e0ca4dc5697940804e231118a63a && git -C chapter9/lerobot-sim2real checkout --detach 87d6c1d969f6e0ca4dc5697940804e231118a63a && test "$(git -C chapter9/lerobot-sim2real rev-parse HEAD)" = "87d6c1d969f6e0ca4dc5697940804e231118a63a"  # Exp 9-11
 
 # Chapter 10 · Dual-Agent Architecture (now independent TalkAct project) + Stanford AI Town
 git clone https://github.com/19PINE-AI/TalkAct.git                     chapter10/use-computer-while-calling
-git clone https://github.com/joonspk-research/generative_agents.git    chapter10/generative_agents             # Exp 10-7 Stanford AI Town
+git clone https://github.com/joonspk-research/generative_agents.git    chapter10/generative_agents             # Exp 10-5 Stanford AI Town
 ```
 
 > إذا حدد ملف README لمشروع ما معرّف commit بعينه، فنفّذ `git checkout` لذلك الإصدار لضمان قابلية إعادة النتائج. وقد تطور مشروع الفصل العاشر `use-computer-while-calling` إلى [19PINE-AI/TalkAct](https://github.com/19PINE-AI/TalkAct)، وهو يُصان بصورة مستقلة ولا يُضمَّن في هذا المستودع؛ استخدم أمر الاستنساخ أعلاه لجلبه.
 
 </details>
-
-### طرق أخرى لإعادة إنتاج التجارب
-
-التجارب أدناه لا تحتوي على أمر استنساخ مخصص ولكن لديها طرق استنساخ محددة:
-
-| التجربة | النوع | ملاحظات |
-| --- | :--: | --- |
-| 6-2 / 6-3 / 6-4 / 6-9 | 📝 تمرين القارئ | المعيار البشري، تقييم الذاكرة، بطاقات JSON مقابل RAG، اختيار الذاكرة - تكييف `user-memory` / `user-memory-evaluation` / `contextual-retrieval` للفصل الثالث |
-| 5-12 | 📝 تمرين القارئ | الوكيل الذي يقوم بإنشاء الوكلاء — التمهيد من `chapter5/coding-agent` |
-| 7-8 | 📝 تمرين القارئ | تقطير الموجّهات — راجع `chapter8/prompt-distillation` (إعادة استخدام بين الفصول) |
-| 7-9 | 📝 تمرين القارئ | تقطير CoT `[Extension]` — التنفيذ المصاحب في `chapter7/cot-distillation` (بما في ذلك إنشاء بيانات SFT ومتحقق القاعدة) |
-| 6-11 | 🤖 تقييم المحاكاة | OpenVLA + RoboTwin2 — راجع الملف التمهيدي `chapter7/SimpleVLA-RL` للتعرف على تدريب VLA/عمليات البيئة |
-| 9-8 / 9-9 | 🔧 أجهزة حقيقية | التشغيل عن بعد بواسطة XleRobot والتحكم في الوكيل LLM — يتطلب ذراع SO-100، [Teleop](https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html) · [LLM Agent](https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html) |
-| 9-10 | 🔧 أجهزة حقيقية | نقل Sim2Real من دون أمثلة باستخدام صور RGB — [`StoneT2000/lerobot-sim2real`](https://github.com/StoneT2000/lerobot-sim2real) (تعمل المحاكاة على وحدة معالجة الرسومات؛ ويتطلب النشر ذراع SO-100) |
 
 ## 🤝 المساهمة
 
@@ -153,7 +181,7 @@ git clone https://github.com/joonspk-research/generative_agents.git    chapter10
 | 🐛 **تحسينات على الكود وإصلاحات للأخطاء** | اجعل المشاريع المصاحبة أكثر قوة وقابلة للاستخدام وجاهزة للإنتاج |
 | 🧪 **مشاريع تدريبية جديدة** | إضافة/استبدال تطبيقات أفضل للتجارب، أو المساهمة بأمثلة جديدة |
 | 🎨 **تصميم الشكل** | تحسين مخططات SVG المحفوظة في المستودع ضمن `book/images/` مباشرةً |
-| 🌐 **ترجمات جديدة** | نرحب بالترجمات إلى المزيد من اللغات؛ انظر العربية (`book-ar/`)، والإنجليزية (`book-en/`)، والصينية التقليدية/تايوان (`book-zhtw/`)، والروسية (`book-ru/`)، والتاميلية (`book-ta/`)، والفيتنامية (`book-vi/`)، واليابانية (`book-ja/`)، والتركية (`book-tr/`) كمرجع |
+| 🌐 **ترجمات جديدة** | نرحب بالترجمات إلى المزيد من اللغات؛ انظر العربية (`book-ar/`)، والإنجليزية (`book-en/`)، والصينية التقليدية/تايوان (`book-zhtw/`)، والروسية (`book-ru/`)، والتاميلية (`book-ta/`)، والفيتنامية (`book-vi/`)، واليابانية (`book-ja/`)، والتركية (`book-tr/`)، والكورية (`book-ko/`) كمرجع |
 
 قبل إرسال مساهمتك، شغّل التجارب ذات الصلة للتأكد من قابلية إعادة النتائج. ويمكنك فتح issue لمناقشة الفكرة أولًا.
 

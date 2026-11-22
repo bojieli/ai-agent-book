@@ -1,4 +1,141 @@
-# Experiment 3-13: Extracting Latent Knowledge from Structured Data / 实验 3-13：从结构化数据中提取隐性知识
+# Experiment 3-12: Extracting Latent Knowledge from Structured Data / 实验 3-12：从结构化数据中提取隐性知识
+
+一批案例可能反复出现相同的影响因素，但这些因素未必已经被整理成表格。本实验以案例文本为材料，学习从发现字段到结构化抽取，再到归纳典型模式的过程。
+
+[English](#english)
+
+建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+
+<a id="learning-0"></a>
+
+## 理解问题与方法
+
+流程先提出候选因素，再把每份材料转成结构化记录，最后聚类并总结原型。每一步都可能引入误差：遗漏因素、抽取错误或不合适的聚类，都可能被后续摘要掩盖。
+
+### 这个旧版 demo 是什么
+
+演示如何让 Agent 不把知识库当成“只能检索的静态仓库”，而是**先把数据读懂、从数据本身归纳出结构化的决策逻辑，再基于这套逻辑回答问题**。
+
+以三类罪名（盗窃罪 / 故意伤害罪 / 诈骗罪）的判例为例，完整走通四段流水线：
+
+```
+判例文本 ──①自下而上因子发现──▶ 模块化 schema（核心+各罪名扩展）
+                                        │
+                            ②结构化抽取（用发现的 schema 抽因子）
+                                        │
+                            ③各罪名内聚类 ──▶ 案件原型 + 层次因子重要性
+                                        │
+        新案情 ──④对话 Agent（匹配最近原型、按重要性追问、给出建议）◀──┘
+```
+
+与“预定义僵化 schema + 回归黑箱”的做法相反，本实验的两个关键创新是：
+**因子不预设、由 LLM 从数据里自由归纳**；**判决经验不靠回归拟合刑期、而靠聚类出可解释的案件原型**。
+
+### 四段流水线
+
+**① 自下而上因子发现（`discovery.py`）**  
+不预先定义任何字段。把判例文本分批喂给 LLM，让它**自由列出**每一批案例中所有可能影响判决的因素；再用一次 LLM 调用把各批发现的原始因子**归并、去重、规范化**成一个模块化 schema：`core`（适用所有罪名的通用因子：自首、赔偿、认罪认罚、前科累犯……）+ `extensions`（各罪名特有扩展因子：盗窃→涉案金额/入户/团伙，故意伤害→伤害等级/持械/预谋，诈骗→金额/受害人数）。产出 `data/schema.json`（带缓存）。
+
+**② 结构化抽取（`extractor.py`）**  
+用发现出来的 schema，从每条判例抽取「核心 + 该罪名扩展」因子（LLM 结构化输出，`response_format=json_object`）。文本未提及的因子返回 `null`。抽取结果缓存到 `data/extracted.jsonl`，一次性抽取后重跑几乎免费。
+
+**③ 聚类成案件原型 + 层次因子重要性（`archetypes.py`）**  
+把因子翻译成数值向量：罪名 / 分类因子（如伤害等级）用 one-hot 开关位（不用 1/2/3，避免暗示大小关系）；金额 / 人数取 `ln` 压缩量纲；是非情节取 0/1。**在每个罪名内部**用 KMeans 聚类（k 由轮廓系数自动挑选），得到若干「案件原型」——例如故意伤害罪会自动聚出“轻微伤”、“轻伤”、“持械预谋致重伤”等典型模式。再算两级重要性：
+
+- **全局因子重要性**：每个因子在所有原型之间的区分度（簇间方差占比）→ 全局排序；
+- **原型内定义性因子**：每个原型相对全局最突出的因子 + 该原型典型刑期分布（中位 / 区间）。
+
+产出可读、自洽的 `data/archetypes.json`（含标准化参数与簇心）。
+
+**④ 对话式量刑建议 Agent（`advisor_agent.py`）**  
+把「案件原型 + 层次因子重要性」当决策逻辑：从用户口语描述抽取已知因子 → 对照**全局因子重要性**追问仍缺失的关键因子 → 把案件**匹配到最近的案件原型**（先按罪名圈定候选，再只在已知维度上比距离）→ 让 LLM 基于该原型的统计数据（典型刑期区间、定义性因子）给出一段有判例支持、可解释的建议（附法律免责声明）。所有刑期数字均来自原型统计，LLM 只负责讲清楚。
+
+<a id="learning-1"></a>
+
+## 准备环境与输入
+
+下面会用到模型服务。先按配置说明选择一个提供商，准备对应的模型名称、服务地址和 API Key，再运行小规模例子。一次完整运行的费用取决于模型、输入长度和调用次数。
+
+### 数据说明
+
+`data/cases.jsonl` 是**自带的小样本合成数据**（66 条，覆盖 3 类罪名），由 `generate_data.py` 用已知量刑公式加噪声生成：每条含自然语言 `fact`、结构化真值 `gold`、刑期 `label_months`。关键点是**因子在生成时被“写进”案情文本，发现阶段再从文本里把它们“读”回来**——因子发现完全不依赖生成时的字段列表，因此学到的模式来自数据本身。
+
+**真实目标数据集是 CAIL2018**（中文刑事判决，数百万条）。因体量太大不便随仓库分发才用合成小样本；换成真实数据只需把 `generate_data.py` 换成读取 CAIL 的 `data_*.json`（每行含 `fact`、`meta.accusation`、`meta.term_of_imprisonment`），产出同结构的 `cases.jsonl` 即可，发现 / 抽取 / 聚类 / 对话四段代码无需改动。
+
+<a id="learning-2"></a>
+
+## 按照步骤完成实验
+
+先阅读仓库自带的教学样例，人工标注几条你认为重要的因素，再配置模型运行 `demo.py`。比较模型发现的字段与人工标注，并检查几条记录如何归入同一原型。真实数据路径与教学数据路径的准备方式见下文的详细步骤。
+
+### 运行
+
+```bash
+# 在仓库根目录使用统一的第 3 章环境
+uv sync --locked --python 3.12 --extra ch3
+
+# 切换目录前先激活环境：
+# macOS/Linux：
+source .venv/bin/activate
+# Windows PowerShell：.venv\Scripts\Activate.ps1
+# Windows cmd：.venv\Scripts\activate.bat
+
+# 未安装 uv 时可用 pip 兜底：
+# python -m pip install -e ".[ch3]"
+
+cd chapter3/structured-knowledge-extraction
+
+# 迁移期间仍支持单项目兼容路径：
+# python -m pip install -r requirements.txt
+
+cp env.example .env        # 填入 OPENAI_API_KEY（默认模型 gpt-5.6-luna）
+python generate_data.py    # 可选：重新生成合成判例数据集（已自带 data/cases.jsonl）
+python demo.py             # 跑通 因子发现 → 抽取 → 聚类 → 对话建议 全流程
+```
+
+首次运行会调用 LLM 做因子发现（约 7 次）与逐条抽取（约 66 次），结果分别写入 `data/schema.json`、`data/extracted.jsonl`；再次运行直接命中缓存，几乎免费。
+
+### 真实运行输出（节选）
+
+```
+阶段 1 自下而上发现的 schema：
+  核心通用因子: prior_record 前科 / self_surrender 自首 / compensation 赔偿 /
+               guilty_plea 认罪认罚 / victim_reconciliation 谅解 ...
+  扩展·盗窃罪:  amount_stolen 盗窃金额 / gang_involvement 团伙 / use_of_weapon 持械
+  扩展·故意伤害罪: injury_level 伤害等级[轻微伤/轻伤二级/重伤二级] / premeditation 预谋 ...
+  扩展·诈骗罪:  amount_defrauded 诈骗金额 / victim_count 受害人数 / group_crime 团伙
+
+阶段 3 各罪名内聚类（k 由轮廓系数自动选）→ 共 12 个案件原型；全局因子重要性排序：
+  1. 罪名  2. 伤害等级=重伤  3. 诈骗金额  4. 盗窃金额  5. 团伙作案  6. 是否预谋 ...
+  ▸ 原型#0 [故意伤害罪] 中位 2 月：伤害等级=轻微伤(z=+2.5)
+  ▸ 原型#1 [故意伤害罪] 中位 42 月：伤害等级=重伤二级(z=+3.9)、预谋(z=+1.8) —— "持械预谋重伤"型
+  ▸ 原型#5 [盗窃罪]     中位 51 月：盗窃金额高、前科/累犯 100% ...
+
+阶段 4 对话：识别到盗窃案缺金额 → 按重要性追问金额/认罪/谅解 → 补全后匹配到 原型#6
+         （典型刑期中位 40 月、区间 24~50 月），并引用该原型的关键因子给出建议。
+```
+
+<a id="learning-3"></a>
+
+## 分析结果与形成判断
+
+相似案例的归类不能直接推出因果规律。应使用未参与归纳的材料检查原型是否仍有解释力，并保留回到原文的路径。法律场景中的输出在这里仅用于研究知识组织方法。
+
+### 先用合成数据理解流程
+
+以下文件早于本页开头的正式 CAIL2018 campaign，仅保留用于快速本地教学。
+合成案例与小规模运行只能说明机制，不能验收实验 3-12；正文验收只认
+`campaign.py` 及 `validation/latest.json`。
+
+### 检查自己的解释
+
+一个因素在训练样例里经常出现，却在新样例中无帮助，怎样判断它是规律还是数据偏差？
+
+<a id="learning-4"></a>
+
+## 阅读实现与继续探索
+
+### 项目说明
 
 > Companion material for *AI Agents in Depth*, Chapter 3 — judicial case analysis pipeline: bottom-up factor discovery → structured extraction → archetype clustering → conversational advisory Agent.  
 > 配套《深入理解 AI Agent》第 3 章——以司法判例分析为例：因子发现 → 结构化抽取 → 案件原型聚类 → 对话式建议 Agent。
@@ -7,9 +144,67 @@
 
 ---
 
+### 文件
+
+| 文件 | 作用 |
+|------|------|
+| `generate_data.py` | 合成多罪名小样本判例数据集 |
+| `discovery.py` | 阶段 ①：自下而上因子发现 → 模块化 schema |
+| `extractor.py` | 阶段 ②：用发现的 schema 做结构化抽取（带缓存） |
+| `archetypes.py` | 阶段 ③：各罪名内聚类成案件原型 + 层次因子重要性 |
+| `advisor_agent.py` | 阶段 ④：对话式量刑建议 Agent（匹配最近原型） |
+| `demo.py` | 全流程演示入口 |
+| `config.py` | OpenAI 客户端与模型配置 |
+
+<a id="learning-5"></a>
+
+## 排查问题与查阅资料
+
+### 局限与免责声明
+
+- 本项目**仅用于教学**，演示“从结构化数据中提取隐性知识”这一技术范式。
+- 数据为合成、因子集经简化，聚类也无法刻画真实司法量刑的复杂性与非线性。
+- **本项目的任何输出都不构成法律意见。** 真实案件量刑受法律条文、司法解释、地域政策与大量具体情节影响，请务必咨询专业律师，切勿据此做任何法律决策。
+
+---
+
+## Notes / 说明
+
+### OpenRouter 通用回退 / Universal OpenRouter fallback
+
+This experiment supports a **universal OpenRouter fallback** for its chat LLM.
+
+- If the primary provider key (e.g. `MOONSHOT_API_KEY` / `KIMI_API_KEY` / `OPENAI_API_KEY` / `DOUBAO_API_KEY` …) is present, behavior is unchanged.
+- Else if `OPENROUTER_API_KEY` is set, the chat LLM is automatically routed through OpenRouter (`https://openrouter.ai/api/v1`). Model names are mapped automatically: `gpt-*`/`o1-*` → `openai/…`, `claude-*` → `anthropic/claude-opus-4.8`, `kimi-*` → `moonshotai/kimi-k2.6`, ids already containing `/` are kept as-is, and other provider-native ids (e.g. `doubao-*`) fall back to `openai/gpt-5.6-luna`. Set `OPENROUTER_MODEL` to force a specific OpenRouter model id.
+- Else a clear error lists the accepted keys.
+
+Add `OPENROUTER_API_KEY=...` to your `.env` (see `env.example`) to enable it.
+
 ## English
 
-### What this experiment is
+### Canonical official-data campaign
+
+`python campaign.py` is the acceptance run. It reads the official CAIL2018
+archive (cache-only), deterministically materializes a bounded 420-case sample
+(360 train/60 held out across three charges), performs live bottom-up discovery
+and live modular extraction, selects per-charge clusters with silhouette
+diagnostics, and independently judges prototype-only held-out advice. The
+official URL/repository revision/archive SHA-256 and bytes, split, raw receipts,
+prototype statistics, leakage checks, and legal disclaimer gate are recorded
+under `validation/runs/<run-id>/`; `validation/latest.json` is canonical.
+
+The large `data/official/CAIL2018_ALL_DATA.zip` is intentionally ignored. Only
+the deterministic sample and validation evidence are versionable.
+
+### Legacy synthetic teaching path (not acceptance evidence)
+
+The files described below predate the canonical official-data campaign. They
+remain useful for a fast local walkthrough, but their synthetic cases and
+hand-sized run are mechanism illustrations only; they do not satisfy
+Experiment 3-12. Only `campaign.py` and `validation/latest.json` can close the
+manuscript experiment.
+
+### What this legacy demo is
 
 This lab shows how an Agent can treat a knowledge base not as a “static warehouse you only retrieve from,” but as data to **read, understand, and turn into structured decision logic**—then answer questions using that logic.
 
@@ -49,8 +244,24 @@ Uses “archetypes + hierarchical factor importance” as decision logic: extrac
 ### Run
 
 ```bash
-pip install -r requirements.txt
-cp env.example .env        # set OPENAI_API_KEY (default model gpt-5.6-luna)
+# From the repository root: use the shared Chapter 3 environment
+uv sync --locked --python 3.12 --extra ch3
+
+# Activate it before changing directories:
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+
+# pip fallback when uv is not installed:
+# python -m pip install -e ".[ch3]"
+
+cd chapter3/structured-knowledge-extraction
+
+# Single-project compatibility path, still supported during migration:
+# python -m pip install -r requirements.txt
+
+cp env.example .env        # set the selected provider key (OpenAI or DashScope/Bailian)
 python generate_data.py    # optional: regenerate synthetic cases (repo ships data/cases.jsonl)
 python demo.py             # full pipeline: discovery → extract → cluster → conversational advice
 ```
@@ -102,112 +313,3 @@ The **intended real dataset is CAIL2018** (Chinese criminal judgments, millions 
 - **No output constitutes legal advice.** Real sentencing depends on statutes, judicial interpretations, local policy, and many case-specific facts—consult a qualified lawyer; do not rely on this project for legal decisions.
 
 ---
-
-## 中文
-
-### 本实验是什么
-
-演示如何让 Agent 不把知识库当成“只能检索的静态仓库”，而是**先把数据读懂、从数据本身归纳出结构化的决策逻辑，再基于这套逻辑回答问题**。
-
-以三类罪名（盗窃罪 / 故意伤害罪 / 诈骗罪）的判例为例，完整走通四段流水线：
-
-```
-判例文本 ──①自下而上因子发现──▶ 模块化 schema（核心+各罪名扩展）
-                                        │
-                            ②结构化抽取（用发现的 schema 抽因子）
-                                        │
-                            ③各罪名内聚类 ──▶ 案件原型 + 层次因子重要性
-                                        │
-        新案情 ──④对话 Agent（匹配最近原型、按重要性追问、给出建议）◀──┘
-```
-
-与“预定义僵化 schema + 回归黑箱”的做法相反，本实验的两个关键创新是：
-**因子不预设、由 LLM 从数据里自由归纳**；**判决经验不靠回归拟合刑期、而靠聚类出可解释的案件原型**。
-
-### 四段流水线
-
-**① 自下而上因子发现（`discovery.py`）**  
-不预先定义任何字段。把判例文本分批喂给 LLM，让它**自由列出**每一批案例中所有可能影响判决的因素；再用一次 LLM 调用把各批发现的原始因子**归并、去重、规范化**成一个模块化 schema：`core`（适用所有罪名的通用因子：自首、赔偿、认罪认罚、前科累犯……）+ `extensions`（各罪名特有扩展因子：盗窃→涉案金额/入户/团伙，故意伤害→伤害等级/持械/预谋，诈骗→金额/受害人数）。产出 `data/schema.json`（带缓存）。
-
-**② 结构化抽取（`extractor.py`）**  
-用发现出来的 schema，从每条判例抽取「核心 + 该罪名扩展」因子（LLM 结构化输出，`response_format=json_object`）。文本未提及的因子返回 `null`。抽取结果缓存到 `data/extracted.jsonl`，一次性抽取后重跑几乎免费。
-
-**③ 聚类成案件原型 + 层次因子重要性（`archetypes.py`）**  
-把因子翻译成数值向量：罪名 / 分类因子（如伤害等级）用 one-hot 开关位（不用 1/2/3，避免暗示大小关系）；金额 / 人数取 `ln` 压缩量纲；是非情节取 0/1。**在每个罪名内部**用 KMeans 聚类（k 由轮廓系数自动挑选），得到若干「案件原型」——例如故意伤害罪会自动聚出“轻微伤”、“轻伤”、“持械预谋致重伤”等典型模式。再算两级重要性：
-
-- **全局因子重要性**：每个因子在所有原型之间的区分度（簇间方差占比）→ 全局排序；
-- **原型内定义性因子**：每个原型相对全局最突出的因子 + 该原型典型刑期分布（中位 / 区间）。
-
-产出可读、自洽的 `data/archetypes.json`（含标准化参数与簇心）。
-
-**④ 对话式量刑建议 Agent（`advisor_agent.py`）**  
-把「案件原型 + 层次因子重要性」当决策逻辑：从用户口语描述抽取已知因子 → 对照**全局因子重要性**追问仍缺失的关键因子 → 把案件**匹配到最近的案件原型**（先按罪名圈定候选，再只在已知维度上比距离）→ 让 LLM 基于该原型的统计数据（典型刑期区间、定义性因子）给出一段有判例支持、可解释的建议（附法律免责声明）。所有刑期数字均来自原型统计，LLM 只负责讲清楚。
-
-### 运行
-
-```bash
-pip install -r requirements.txt
-cp env.example .env        # 填入 OPENAI_API_KEY（默认模型 gpt-5.6-luna）
-python generate_data.py    # 可选：重新生成合成判例数据集（已自带 data/cases.jsonl）
-python demo.py             # 跑通 因子发现 → 抽取 → 聚类 → 对话建议 全流程
-```
-
-首次运行会调用 LLM 做因子发现（约 7 次）与逐条抽取（约 66 次），结果分别写入 `data/schema.json`、`data/extracted.jsonl`；再次运行直接命中缓存，几乎免费。
-
-### 真实运行输出（节选）
-
-```
-阶段 1 自下而上发现的 schema：
-  核心通用因子: prior_record 前科 / self_surrender 自首 / compensation 赔偿 /
-               guilty_plea 认罪认罚 / victim_reconciliation 谅解 ...
-  扩展·盗窃罪:  amount_stolen 盗窃金额 / gang_involvement 团伙 / use_of_weapon 持械
-  扩展·故意伤害罪: injury_level 伤害等级[轻微伤/轻伤二级/重伤二级] / premeditation 预谋 ...
-  扩展·诈骗罪:  amount_defrauded 诈骗金额 / victim_count 受害人数 / group_crime 团伙
-
-阶段 3 各罪名内聚类（k 由轮廓系数自动选）→ 共 12 个案件原型；全局因子重要性排序：
-  1. 罪名  2. 伤害等级=重伤  3. 诈骗金额  4. 盗窃金额  5. 团伙作案  6. 是否预谋 ...
-  ▸ 原型#0 [故意伤害罪] 中位 2 月：伤害等级=轻微伤(z=+2.5)
-  ▸ 原型#1 [故意伤害罪] 中位 42 月：伤害等级=重伤二级(z=+3.9)、预谋(z=+1.8) —— "持械预谋重伤"型
-  ▸ 原型#5 [盗窃罪]     中位 51 月：盗窃金额高、前科/累犯 100% ...
-
-阶段 4 对话：识别到盗窃案缺金额 → 按重要性追问金额/认罪/谅解 → 补全后匹配到 原型#6
-         （典型刑期中位 40 月、区间 24~50 月），并引用该原型的关键因子给出建议。
-```
-
-### 数据说明
-
-`data/cases.jsonl` 是**自带的小样本合成数据**（66 条，覆盖 3 类罪名），由 `generate_data.py` 用已知量刑公式加噪声生成：每条含自然语言 `fact`、结构化真值 `gold`、刑期 `label_months`。关键点是**因子在生成时被“写进”案情文本，发现阶段再从文本里把它们“读”回来**——因子发现完全不依赖生成时的字段列表，因此学到的模式来自数据本身。
-
-**真实目标数据集是 CAIL2018**（中文刑事判决，数百万条）。因体量太大不便随仓库分发才用合成小样本；换成真实数据只需把 `generate_data.py` 换成读取 CAIL 的 `data_*.json`（每行含 `fact`、`meta.accusation`、`meta.term_of_imprisonment`），产出同结构的 `cases.jsonl` 即可，发现 / 抽取 / 聚类 / 对话四段代码无需改动。
-
-### 文件
-
-| 文件 | 作用 |
-|------|------|
-| `generate_data.py` | 合成多罪名小样本判例数据集 |
-| `discovery.py` | 阶段 ①：自下而上因子发现 → 模块化 schema |
-| `extractor.py` | 阶段 ②：用发现的 schema 做结构化抽取（带缓存） |
-| `archetypes.py` | 阶段 ③：各罪名内聚类成案件原型 + 层次因子重要性 |
-| `advisor_agent.py` | 阶段 ④：对话式量刑建议 Agent（匹配最近原型） |
-| `demo.py` | 全流程演示入口 |
-| `config.py` | OpenAI 客户端与模型配置 |
-
-### 局限与免责声明
-
-- 本项目**仅用于教学**，演示“从结构化数据中提取隐性知识”这一技术范式。
-- 数据为合成、因子集经简化，聚类也无法刻画真实司法量刑的复杂性与非线性。
-- **本项目的任何输出都不构成法律意见。** 真实案件量刑受法律条文、司法解释、地域政策与大量具体情节影响，请务必咨询专业律师，切勿据此做任何法律决策。
-
----
-
-## Notes / 说明
-
-### OpenRouter 通用回退 / Universal OpenRouter fallback
-
-This experiment supports a **universal OpenRouter fallback** for its chat LLM.
-
-- If the primary provider key (e.g. `MOONSHOT_API_KEY` / `KIMI_API_KEY` / `OPENAI_API_KEY` / `DOUBAO_API_KEY` …) is present, behavior is unchanged.
-- Else if `OPENROUTER_API_KEY` is set, the chat LLM is automatically routed through OpenRouter (`https://openrouter.ai/api/v1`). Model names are mapped automatically: `gpt-*`/`o1-*` → `openai/…`, `claude-*` → `anthropic/claude-opus-4.8`, `kimi-*` → `moonshotai/kimi-k2.6`, ids already containing `/` are kept as-is, and other provider-native ids (e.g. `doubao-*`) fall back to `openai/gpt-5.6-luna`. Set `OPENROUTER_MODEL` to force a specific OpenRouter model id.
-- Else a clear error lists the accepted keys.
-
-Add `OPENROUTER_API_KEY=...` to your `.env` (see `env.example`) to enable it.

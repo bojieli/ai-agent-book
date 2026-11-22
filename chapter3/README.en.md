@@ -4,6 +4,16 @@
 
 ← [Back to main README](../docs/en/README.md) · 📖 [Read chapter text](../book-en/chapter3.md)
 
+## How to Read the Experiments
+
+The prose uses short mechanism skeletons to explain control flow; the experiment directory contains complete SDK adapters, logs, tests, and acceptance evidence. You do not need to read every file line by line.
+
+- **Starter:** Start with the goal, minimum command, and acceptance conditions; begin with [user-memory](user-memory/) / [retrieval-pipeline](retrieval-pipeline/);
+- **Builder:** Follow the entry point, core loop, state/message schema, tools, and verifier.
+- **Maintainer:** Then read tests, evidence manifests, failure handling, rollback paths, and provider adapters.
+
+On a first pass, skip credential loading, presentation code, and provider-compatibility layers; return when reproducing a number.
+
 ## Companion Projects
 
 | Exp. | Project | Type | Description |
@@ -15,13 +25,12 @@
 | 3-4 | [dense-embedding](dense-embedding/) | ✅ | Builds a vector similarity search service, comparing ANNOY (tree-based) and HNSW (graph-based) approximate nearest neighbor index algorithms. Demonstrates the trade-offs between different indexing strategies in terms of performance, memory usage, and update capability. |
 | 3-5 | [sparse-embedding](sparse-embedding/) | ✅ | Implements a sparse vector search engine based on the BM25 algorithm from scratch. Provides rich logging and visualization interfaces to understand the internal workings of the search engine, including term frequency weight calculation and inverted index principles. |
 | 3-6 | [retrieval-pipeline](retrieval-pipeline/) | ✅ | Builds a complete retrieval pipeline combining dense retrieval, sparse retrieval, and neural re-ranking. Systematically demonstrates the complementary advantages of hybrid retrieval in different scenarios through carefully designed test cases. |
-| 3-7 | [multimodal-agent](multimodal-agent/) | ✅ | Compares three multimodal processing strategies: native multimodal processing, extraction to text, and tool-based analysis. Reveals the trade-offs in fidelity, cost, and flexibility among different technical paths through ablation studies within a unified framework. |
-| 3-8 | [structured-index](structured-index/) | ✅ | Implements and compares two structured indexing approaches: RAPTOR (hierarchical trees with recursive summarization) and GraphRAG (knowledge graphs). |
-| 3-9 | [agentic-rag](agentic-rag/) | ✅ | Compare the performance differences between traditional Non-Agentic RAG and Agentic RAG. Show how an Agent, using the ReAct pattern, leads iterative information retrieval, significantly improving answer quality when handling complex judicial Q&A. |
-| 3-10 | [agentic-rag-for-user-memory](agentic-rag-for-user-memory/) | ✅ | Apply the Agentic RAG framework to manage user conversation history. Leverage multi-turn iterative search capabilities to handle memory retrieval across sessions, enabling basic recall and cross-session retrieval capabilities. |
-| 3-11 | [contextual-retrieval](contextual-retrieval/) | ✅ | Implement the contextual retrieval technique proposed by Anthropic. By generating prefix summaries containing core context for text chunks, it addresses the context loss problem of traditional chunking methods, reducing retrieval failure rates by 49-67%. |
-| 3-12 | [contextual-retrieval-for-user-memory](contextual-retrieval-for-user-memory/) | ✅ | Apply contextual retrieval techniques to user memory construction. Combine Advanced JSON Cards with Contextual RAG to form a dual-layer memory structure, enabling higher-level proactive service capabilities. |
-| 3-13 | [structured-knowledge-extraction](structured-knowledge-extraction/) | ✅ | Using judicial precedents as an example, implement a three-stage pipeline: "Bottom-up factor discovery → Case prototype clustering → Conversational advisory Agent". Without predefined rigid fields, the LLM autonomously discovers factors from a large number of cases and summarizes them into a modular schema (core factors + charge-specific extension factors). Cases are then clustered into several prototypes, and the importance of each factor for each prototype is calculated. The Agent matches new case facts to the most similar prototype, asks for missing information based on factor importance, and provides evidence-based advice (with a legal disclaimer). |
+| 3-7 | [structured-index](structured-index/) | ✅ | Implements and compares two structured indexing approaches: RAPTOR (hierarchical trees with recursive summarization) and GraphRAG (knowledge graphs). |
+| 3-8 | [agentic-rag](agentic-rag/) | ✅ | Compare the performance differences between traditional Non-Agentic RAG and Agentic RAG. Show how an Agent, using the ReAct pattern, leads iterative information retrieval, significantly improving answer quality when handling complex judicial Q&A. |
+| 3-9 | [agentic-rag-for-user-memory](agentic-rag-for-user-memory/) | ✅ | Apply the Agentic RAG framework to manage user conversation history. Leverage multi-turn iterative search capabilities to handle memory retrieval across sessions, enabling basic recall and cross-session retrieval capabilities. |
+| 3-10 | [contextual-retrieval](contextual-retrieval/) | ✅ | Implement the contextual retrieval technique proposed by Anthropic. By generating prefix summaries containing core context for text chunks, it addresses the context loss problem of traditional chunking methods, reducing retrieval failure rates by 49-67%. |
+| 3-11 | [contextual-retrieval-for-user-memory](contextual-retrieval-for-user-memory/) | ✅ | Apply contextual retrieval techniques to user memory construction. Combine Advanced JSON Cards with Contextual RAG to form a dual-layer memory structure, enabling higher-level proactive service capabilities. |
+| 3-12 | [structured-knowledge-extraction](structured-knowledge-extraction/) | ✅ | Using judicial precedents as an example, implement a three-stage pipeline: "Bottom-up factor discovery → Case prototype clustering → Conversational advisory Agent". Without predefined rigid fields, the LLM autonomously discovers factors from a large number of cases and summarizes them into a modular schema (core factors + charge-specific extension factors). Cases are then clustered into several prototypes, and the importance of each factor for each prototype is calculated. The Agent matches new case facts to the most similar prototype, asks for missing information based on factor importance, and provides evidence-based advice (with a legal disclaimer). |
 ## Project Types
 
 | Icon | Type | Meaning |

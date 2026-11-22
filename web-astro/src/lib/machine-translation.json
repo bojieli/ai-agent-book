@@ -1,0 +1,119 @@
+{
+  "label": "机器翻译 / Machine translation",
+  "source": "en",
+  "sourceLanguage": "english",
+  "service": "giteeAI",
+  "listener": false,
+  "failureTimeoutMs": 12000,
+  "cdn": "https://cdn.staticfile.net/translate.js/3.18.66/translate.js",
+  "integrity": "sha384-J3fM1QvC/Px5E8QNZj9KjrYuADHneSN4vCpv//WZPKUVzJocwGpZO/byDiEjaPCL",
+  "languages": [
+    {
+      "name": "french",
+      "label": "Français",
+      "locale": "fr"
+    },
+    {
+      "name": "deutsch",
+      "label": "Deutsch",
+      "locale": "de"
+    },
+    {
+      "name": "italian",
+      "label": "Italiano",
+      "locale": "it"
+    },
+    {
+      "name": "polish",
+      "label": "Polski",
+      "locale": "pl"
+    },
+    {
+      "name": "dutch",
+      "label": "Nederlands",
+      "locale": "nl"
+    },
+    {
+      "name": "ukrainian",
+      "label": "Українська",
+      "locale": "uk"
+    },
+    {
+      "name": "czech",
+      "label": "Čeština",
+      "locale": "cs"
+    },
+    {
+      "name": "romanian",
+      "label": "Română",
+      "locale": "ro"
+    },
+    {
+      "name": "greek",
+      "label": "Ελληνικά",
+      "locale": "el"
+    },
+    {
+      "name": "swedish",
+      "label": "Svenska",
+      "locale": "sv"
+    },
+    {
+      "name": "danish",
+      "label": "Dansk",
+      "locale": "da"
+    },
+    {
+      "name": "finnish",
+      "label": "Suomi",
+      "locale": "fi"
+    },
+    {
+      "name": "norwegian",
+      "label": "Norsk",
+      "locale": "no"
+    },
+    {
+      "name": "thai",
+      "label": "ไทย",
+      "locale": "th"
+    },
+    {
+      "name": "hindi",
+      "label": "हिन्दी",
+      "locale": "hi"
+    },
+    {
+      "name": "bengali",
+      "label": "বাংলা",
+      "locale": "bn"
+    },
+    {
+      "name": "malay",
+      "label": "Bahasa Melayu",
+      "locale": "ms"
+    },
+    {
+      "name": "filipino",
+      "label": "Filipino",
+      "locale": "fil"
+    },
+    {
+      "name": "swahili",
+      "label": "Kiswahili",
+      "locale": "sw"
+    },
+    {
+      "name": "urdu",
+      "label": "اردو",
+      "locale": "ur",
+      "dir": "rtl"
+    },
+    {
+      "name": "persian",
+      "label": "فارسی",
+      "locale": "fa",
+      "dir": "rtl"
+    }
+  ]
+}

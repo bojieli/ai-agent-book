@@ -94,16 +94,28 @@ def make_gpt5_openrouter_request(
             # Log usage (matching Go logging)
             if "usage" in response_data:
                 usage = response_data["usage"]
-                print(f"\nGPT-5 OpenRouter Usage:")
-                print(f"  Input: {usage.get('input_tokens', 0)} tokens", end="")
-                if "input_tokens_details" in usage:
-                    print(f" (cached: {usage['input_tokens_details'].get('cached_tokens', 0)})")
+                input_tokens = usage.get(
+                    "prompt_tokens", usage.get("input_tokens", 0)
+                )
+                output_tokens = usage.get(
+                    "completion_tokens", usage.get("output_tokens", 0)
+                )
+                input_details = usage.get(
+                    "prompt_tokens_details", usage.get("input_tokens_details")
+                )
+                output_details = usage.get(
+                    "completion_tokens_details", usage.get("output_tokens_details")
+                )
+                print("\nGPT-5 OpenRouter Usage:")
+                print(f"  Input: {input_tokens} tokens", end="")
+                if isinstance(input_details, dict):
+                    print(f" (cached: {input_details.get('cached_tokens', 0)})")
                 else:
                     print()
                     
-                print(f"  Output: {usage.get('output_tokens', 0)} tokens", end="")
-                if "output_tokens_details" in usage:
-                    print(f" (reasoning: {usage['output_tokens_details'].get('reasoning_tokens', 0)})")
+                print(f"  Output: {output_tokens} tokens", end="")
+                if isinstance(output_details, dict):
+                    print(f" (reasoning: {output_details.get('reasoning_tokens', 0)})")
                 else:
                     print()
                     
@@ -192,7 +204,7 @@ def main():
     
     if not api_key:
         print("\n❌ Error: OPENROUTER_API_KEY not found in environment")
-        print("Please set: export OPENROUTER_API_KEY=sk-or-v1-your-key-here")
+        print("Please set: export OPENROUTER_API_KEY=your-openrouter-api-key")
         return
     
     # Example prompts

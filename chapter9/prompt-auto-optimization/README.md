@@ -1,0 +1,148 @@
+# 实验 9-3：基于失败轨迹优化系统 Prompt
+
+让模型把提示词“润色一下”，很难知道变化是否有效。本实验从客服失败中提取诊断，再生成具体规则的最小修改，学习怎样评价提示词更新。
+
+建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4)。
+
+<a id="learning-0"></a>
+
+## 理解问题与方法
+
+补丁应说明由哪些案例触发、修改哪条规则以及预期改变什么行为。边界集检查问题是否改善，保留集检查旧任务是否退化。两类结果共同决定候选是否值得采用。
+
+本实验使用航空客服的“过度转接”案例，演示一条受控的 Prompt 学习链路：先评测运行轨迹，再把失败整理为结构化诊断，随后由 Coding Agent 生成最小补丁，最后用边界集与旧任务保留集决定待验证版本是否可以灰度发布。
+
+这与一次性人工提示工程的关键差别，不在于“让模型改写 Prompt”，而在于每个补丁都能回答三个问题：它由哪些失败案例触发、作用于哪条规则、为什么没有破坏旧行为。
+
+<a id="learning-1"></a>
+
+## 准备环境与输入
+
+本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+
+<a id="learning-2"></a>
+
+## 按照步骤完成实验
+
+先阅读一条过度转接案例与对应诊断，定位原提示中含糊的规则。按下文配置模型后生成候选补丁，比较修改前后文本，再查看两组评估的逐题变化。
+
+### 实验流程
+
+`evaluate.py` 运行保留集与边界集。`learning_signal.py` 将每条轨迹拆成规则遵从、任务解决和合规变通三个维度，并保留来源 case ID。`coding_agent.py` 读取结构化报告，对 Prompt 做精确的 `old_str → new_str` 编辑。`release_gate.py` 生成待验证 manifest，并执行四项发布检查：补丁非空、来源可追溯、保留集不退化、边界集确有改善。
+
+待验证补丁只写入 `runtime/system_prompt_working.txt`，不会覆盖 `prompts/system_prompt.txt`。门槛通过时，实验只返回 `release_to_canary`，表示允许灰度；未通过则返回 `reject_candidate`。
+
+```text
+失败轨迹 → 三维诊断 → 最小 Prompt diff → 待验证 manifest
+                                         ↓
+                         边界集改善 + 保留集不退化
+                                         ↓
+                              灰度发布或拒绝提案
+```
+
+### 运行
+
+完整实验需要一个 OpenAI 兼容的模型接口：
+
+```bash
+# 从仓库根目录开始：使用共享的第 9 章环境
+uv sync --locked --python 3.12 --extra ch9
+# Apple Silicon macOS 需要 macOS 14+（锁文件中的 bitsandbytes wheel 要求）；
+# 更早的 macOS 请使用下方单项目兼容路径。
+
+# 切换目录前先激活环境：
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .\.venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+
+# 未安装 uv 时可用 pip 兜底：
+# python -m pip install -e ".[ch9]"
+
+cd chapter9/prompt-auto-optimization
+
+# 迁移期间仍支持单项目兼容路径：
+# python -m pip install -r requirements.txt
+
+cp env.example .env
+export OPENAI_API_KEY=your_api_key_here
+python demo.py --quick --model gpt-5.6
+python demo.py --model gpt-5.6 --output output/run.json
+```
+
+以上两条命令会真实调用客服 Agent、LLM Judge 和 Coding Agent，并非 dry-run；`--quick` 只是减少评测案例数量。`python demo.py --dry-run` 仅检查模型配置和用例选择，不生成补丁，也不能作为实验结果。
+
+离线可以检查参数、诊断逻辑和发布门槛：
+
+```bash
+# 在仓库根目录安装包含 pytest 的测试环境：
+uv sync --locked --python 3.12 --extra ch9 --extra dev
+
+# 未安装 uv 时可用 pip 测试环境兜底：
+# python -m pip install -e ".[ch9,dev]"
+
+source .venv/bin/activate
+cd chapter9/prompt-auto-optimization
+
+python demo.py --dry-run
+python -m pytest tests
+```
+
+项目也保留人工调优版 `prompts/system_prompt_manual.txt` 作为对照。完整实验比较初始版、自动提案版和人工版在两组任务上的表现；具体准确率会随被测模型变化，是否发布则始终由显式门槛决定，而不是由 Coding Agent 自己决定。
+
+#### 完整实验运行（2026-07-30）
+
+正文的正式入口会强制使用完整的 5 条保留任务和 5 条边界任务，不接受 `--quick` 作为验收：
+
+```bash
+python run_experiment_9_3.py \
+  --provider ark \
+  --model doubao-seed-1-6-flash-250615 \
+  --rounds 3
+```
+
+机器可读证据位于 `validation/real_20260729T171101Z/evidence.json`，SHA-256 为
+`491b54ca5e10ea3b3154c014a44039e9520ae61880e4d46e7f667fa0aa2c4106`；
+`validation/latest.json` 指向同一内容。证据保存了 73 次无凭据原始 API 请求/响应、三份 Prompt 的逐例轨迹、Judge 理由、精确 `old_str → new_str` 编辑、来源 case ID、待验证 manifest、发布检查、Token 用量和耗时。
+
+本次真实结果如下：
+
+| Prompt | 保留集 | 过度转接边界集 |
+| --- | ---: | ---: |
+| 初始 Prompt | 5/5 | 0/5 |
+| 自动提案 | 5/5 | 2/5 |
+| 人工一次性调优 | 5/5 | 4/5 |
+
+自动提案满足“补丁非空且可审计、来源可追溯、边界集改善、保留集不退化”，因此结果是
+`release_to_canary`，不是覆盖稳定 Prompt 或直接全量发布。自动提案虽通过正文门槛，但仍明显弱于人工对照；证据没有把 2/5 描述成边界问题已全部解决。
+
+ARK 回执合计 73,456 个输入 Token、7,313 个输出 Token、80,769 个 Token。该接口没有返回货币费用字段，所以证据中的美元成本保持 `null`，没有用未固定的价目表猜算。
+
+<a id="learning-3"></a>
+
+## 分析结果与形成判断
+
+文字更顺不代表行为更好。空补丁、无法追溯来源的修改和只在旧失败样本上有效的修改都需要另行判断。工作副本与原始提示应分开保存。
+
+### 检查自己的解释
+
+一个补丁解决了边界案例，却让普通任务更容易拒绝，应该继续扩大补丁还是回退重找原因？
+
+<a id="learning-4"></a>
+
+## 阅读实现与继续探索
+
+### 文件说明
+
+| 文件 | 作用 |
+| --- | --- |
+| `airline_env.py` | 工具调用环境与保留/边界案例 |
+| `evaluate.py` | 运行 Agent，输出轨迹结果与处理判定 |
+| `learning_signal.py` | 从失败轨迹生成三维诊断和来源证据 |
+| `coding_agent.py` | 生成并应用可审计的最小 Prompt 编辑 |
+| `release_gate.py` | 待验证 manifest、回归门槛和发布决定 |
+| `demo.py` | 串联完整闭环并输出对照结果 |
+| `tests/` | 离线验证诊断、补丁应用、工具空值处理、接受和拒绝路径 |
+| `run_experiment_9_3.py` | 强制完整三组真实验收并保存原始回执与 `acceptance` |
+
+本实验使用无外部副作用的航空客服沙盒，以便三份 Prompt 在完全相同的状态和任务上重复执行。它完成了正文规定的实验对照，但不等同于生产航空系统验收；接入生产时仍须把规则遵从连接到正式政策与订单真值，并扩充专家校准和安全留出集。

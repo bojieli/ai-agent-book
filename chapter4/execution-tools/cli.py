@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""执行工具统一命令行入口（实验 4-2：执行工具 MCP 服务器）。
+"""执行工具统一命令行入口（实验 4-4：执行工具 MCP 服务器）。
 
 本文件提供一个 argparse 命令行界面，用于列出、单独调用每个执行工具，并运行
 一个端到端的离线演示。它复用 server.py 背后的同一批工具实现，因此命令行的
@@ -35,9 +35,11 @@ import argparse
 import asyncio
 import json
 import os
+import shlex
 import sys
 import tempfile
 import textwrap
+from pathlib import Path
 
 
 # ---------------------------------------------------------------------------
@@ -199,6 +201,13 @@ def cmd_demo(args: argparse.Namespace) -> int:
     校验结果。演示同时覆盖四个安全机制：linter 校验、危险命令 fail-safe 审批、
     长输出截断与持久化。整个流程默认离线运行（关闭 LLM 总结）。
     """
+    # bash 是 code_interpreter / virtual_terminal 的执行外壳。纯 Windows 环境没有
+    # bash 时，后面的步骤 4～7 都会失败，这里先给出明确提示（见 README 的 Windows 说明）。
+    from multilang_executor import find_bash, BASH_MISSING_ERROR
+    if find_bash() is None:
+        print(f"错误：{BASH_MISSING_ERROR}", file=sys.stderr)
+        return 1
+
     # 演示放在独立临时工作区，避免污染当前目录。
     workspace = tempfile.mkdtemp(prefix="exec_tools_demo_")
     os.environ["WORKSPACE_DIR"] = workspace
@@ -268,7 +277,8 @@ def cmd_demo(args: argparse.Namespace) -> int:
         # 5. virtual_terminal：用 shell 校验数据文件
         section("5. virtual_terminal：用 shell 校验数据文件")
         r = await exec_tools.virtual_terminal(
-            command=f"wc -w {workspace}/data.txt && echo '--- 词数统计完成 ---'"
+            # 正斜杠 + 引号：Windows 的临时目录路径含反斜杠和空格，直接拼进 bash 命令会被当作转义。
+            command=f"wc -w {shlex.quote(Path(workspace).as_posix())}/data.txt && echo '--- 词数统计完成 ---'"
         )
         print(f"结果：success={r['success']}, returncode={r.get('returncode')}")
         print("stdout:")
@@ -313,7 +323,7 @@ def cmd_demo(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="cli.py",
-        description="执行工具统一命令行入口（实验 4-2：执行工具 MCP 服务器）。",
+        description="执行工具统一命令行入口（实验 4-4：执行工具 MCP 服务器）。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent("""\
             示例：
@@ -330,7 +340,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     # 全局开关
-    parser.add_argument("--provider", help="LLM 提供商（覆盖 PROVIDER，如 kimi/doubao/siliconflow/openrouter）")
+    parser.add_argument("--provider", help="LLM 提供商（覆盖 PROVIDER，如 dashscope/qwen/bailian/kimi/doubao/siliconflow/openrouter）")
     parser.add_argument("--workspace", help="工作目录（覆盖 WORKSPACE_DIR，文件操作被限制在此目录内）")
     parser.add_argument("--no-approval", action="store_true", help="关闭危险操作的 LLM 事前审批")
     parser.add_argument("--no-verify", action="store_true", help="关闭写文件/代码的自动语法校验")

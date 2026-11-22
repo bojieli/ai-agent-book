@@ -1,31 +1,45 @@
-# Chapter 6 · Agent Evaluation
+# Chapter 6 · Interaction: Expanding the Observation and Action Spaces
 
-> Turns Agent performance into comparable signals. Covers evaluation environments, dataset design, metric systems, statistical significance, observability, evaluation-driven selection, and production-grade internal evaluation and simulation environments.
+> Extends perception and action from text to voice, GUI, and the physical world. Three voice paradigms (cascaded/end-to-end full-modal/full-duplex), streaming voice perception and synthesis, Computer Use, and robotic manipulation.
 
 ← [Back to main README](../docs/en/README.md) · 📖 [Read chapter text](../book-en/chapter6.md)
+
+## How to Read the Experiments
+
+The prose uses short mechanism skeletons to explain control flow; the experiment directory contains complete SDK adapters, logs, tests, and acceptance evidence. You do not need to read every file line by line.
+
+- **Starter:** Start with the goal, minimum command, and acceptance conditions; begin with [live-audio](live-audio/);
+- **Builder:** Follow the entry point, core loop, state/message schema, tools, and verifier.
+- **Maintainer:** Then read tests, evidence manifests, failure handling, rollback paths, and provider adapters.
+
+On a first pass, skip credential loading, presentation code, and provider-compatibility layers; return when reproducing a number.
 
 ## Companion Projects
 
 | Exp. | Project | Type | Description |
 | :--: | --- | :--: | --- |
-| 6-1, 6-2 | `tau2-bench/` | 📖 | Focuses on evaluating an agent's ability to use tools for complex reasoning, including scenarios such as computation, search, and data processing. |
-| 6-2 | `terminal-bench/` | 📖 | Terminal-Bench is a benchmark for testing AI Agent performance in real terminal environments. From compiling code to training models and setting up servers, it evaluates how Agents handle real end-to-end tasks. Includes a dataset of ~100 tasks and an execution framework, supporting various Agent implementations. |
-| 6-2 | `SWE-bench/` | 📖 | SWE-bench is a benchmark for evaluating the ability of large language models to solve real GitHub issues. Given a codebase and an issue description, the model must generate a patch that resolves the problem. Includes multiple versions: SWE-bench, SWE-bench Lite, SWE-bench Verified, and SWE-bench Multimodal. |
-| 6-2 | `GAIA/` | 📖 | GAIA aims to evaluate next-generation LLMs (those with tool augmentation, efficient prompting, search access, etc.). It contains 450+ non-trivial questions requiring varying degrees of tool use and autonomy, with unambiguous answers. Divided into 3 difficulty levels. |
-| 6-2 | `OSWorld/` | 📖 | Evaluates the ability of agents to perform complex tasks within a complete operating system environment, including file management, application operation, and system configuration. |
-| 6-2, 6-10 | `android_world/` | 📖 | Evaluates agent performance in an Android mobile environment, including app navigation, UI interaction, and task completion capabilities (external benchmark repo). |
-| 6-5 | [tts-quality-eval](tts-quality-eval/) | ✅ | Synthesizes the same set of challenging texts using various TTS configurations (different model/voice/speed), then uses a multimodal LLM-as-a-Judge to score each dimension (clarity, naturalness, etc.) according to a Rubric, aggregating the results into a reproducible configuration comparison table. |
-| 6-6 | [elo-leaderboard](elo-leaderboard/) | ✅ | Implements an agent performance leaderboard based on the ELO rating system, evaluating the relative abilities of different agents through pairwise comparisons. |
-| 6-7 | [agent-cost-analysis](agent-cost-analysis/) | ✅ | Performs a full-chain cost breakdown for a typical multi-turn agent task (customer service refund): uses a custom lightweight tracing system to record input/output/cache tokens, latency, and cost for each LLM call, aggregates to identify "which step is the most expensive," and then uses A/B testing to quantify the real savings from KV-cache-friendly design and context compression. |
-| 6-8 | [model-benchmark](model-benchmark/) | ✅ | Conducts a horizontal benchmark of multiple OpenAI-compatible LLM API providers. It uses a streaming interface to precisely measure Time to First Token (TTFT), calculates end-to-end latency percentiles (p50/p95), throughput, and success rate under concurrency. A single command produces a multi-dimensional comparison table, illustrating that model selection is a multi-faceted trade-off rather than just looking at a leaderboard. |
-| 6-10 | [android-world](android-world/) | 📖 | In-repo T3A evaluation report and failure analysis notes on AndroidWorld (starting point for Experiment 6-10; not the benchmark source). |
-| — | [public-health-reporting-eval](public-health-reporting-eval/) | ✅ | Uses synthetic DHIS2-style aggregate data to objectively evaluate a public-health reporting agent's tool calls, calculation accuracy, evidence citations, and unsupported claims. |
+| 6-1 | [agent-with-event-trigger](agent-with-event-trigger/) | ✅ | A modern event-driven Agent built with FastAPI, integrating all tools from the first three MCP servers by default. It uses a native asynchronous architecture for clean MCP tool loading and receives multi-source events (Web, Instant Messaging, GitHub, Timers, etc.) via HTTP API. Provides automatic API documentation (Swagger UI) and background monitoring capabilities. |
+| 6-2 | [async-agent](async-agent/) | ✅ | Implement the core of an event-driven asynchronous Agent framework (Flux) based on a single-threaded asyncio model: an inbox event queue dispatches tasks by urgency (interrupt/immediate/queue), supports parallel execution of asynchronous tools, allows interrupting the current turn during execution, and provides cancellation and status querying for simulated long-running tasks. Decision-making is performed by a real LLM (function calling). |
+| 6-3 | [astra-async-steering](astra-async-steering/) | ✅ | Compare synchronous tools, model-native asynchronous tools, and mid-turn steering to understand waiting, user updates, and task resumption. |
+| 6-4 | [live-audio](live-audio/) | ✅ | A real-time voice chat demo integrating speech-to-text, AI dialogue, and text-to-speech. Supports multiple AI service providers (OpenAI, OpenRouter, ARK, Siliconflow), providing a low-latency conversational experience. |
+| Add-on | [phone-agent](phone-agent/) | ✅ | The retained direct/ReAct campaign runs browser-microphone RTP through real local Whisper, a real external LLM and TTS back over downlink RTP; both arms pass 20/20 gates and independent hash validation. PSTN/E.164 is outside this local WebRTC acceptance scope. |
+| 6-5 | [streaming-speech](streaming-speech/) | ✅ | Demonstrates the core trade-off of streaming speech perception: chunk continuous audio into segments of increasing length and feed them to the ASR. Each received segment produces a "current partial recognition result" to achieve extremely low first-chunk latency for early text output. The cost is that early chunks, lacking the context of the latter half of the sentence, may be erroneous, gradually converging as audio accumulates. This contrasts with the high-accuracy/high-latency approach of "waiting for the entire sentence before recognition." |
+| 6-6 | [end-to-end-speech](end-to-end-speech/) | ✅ | A [real local run](end-to-end-speech/validation/runs/exp6-5-minicpmo45-20260801-v1/evidence.json) executed pinned MiniCPM-o 4.5 on one RTX PRO 6000: end-to-end and self-cascade both scored 3/4 with complementary semantic/paralinguistic failures; a real 24kHz speech output and [11/11 acceptance](end-to-end-speech/validation/runs/exp6-5-minicpmo45-20260801-v1/acceptance.json) are retained. |
+| 6-7 | [controllable-tts](controllable-tts/) | ✅ | Fish Audio S1 produced the 24-reference library and A/B/C media; a three-pass position-balanced Voxtral listening study rated the multi-reference arm highest and evaluated the near-human claim. The expected C > B > A ordering did not fully reproduce because A outscored B. |
+| 6-8 | [Anthropic native Computer Use record](claude-computer-use-native/) + `claude-quickstarts/computer-use-demo/` | ✅ | A [validated native run](claude-computer-use-native/validation/runs/exp6-7-anthropic-native-20260803-v2/acceptance.json) built the pinned Dockerfile locally and completed 16 real `claude-sonnet-4-5-20250929` responses plus 15 native `computer` actions. It did not interact with Google reCAPTCHA; visible Open-Meteo JSON grounded the final 70.2°F, clear-sky answer, and every deterministic gate passes. |
+| 6-9 | [computer-use-open-model](computer-use-open-model/) + `browser-use/` | ✅ | A real open-model visual browser run used `qwen/qwen3-vl-32b-instruct` for 16/16 calls, recovered from a Google CAPTCHA through weather.com, and retained 15 screenshots, the complete action trajectory, grounded answer evidence, and verified hashes. |
+| 6-10 | [xlerobot-teleoperation](xlerobot-teleoperation/) | 📖 | Real XLeRobot teleoperation for one desk-tidying task: put the red cup in the tray, put the yellow waste paper in the waste bin, then re-observe and verify the state. |
+| 6-11 | [xlerobot-teleoperation](xlerobot-teleoperation/) | 📖 | Simulator measurement of the ideal-control upper bound for the same desk task; it does not claim that the real robot has run. |
+| 6-12 | [gemini-xlerobot-navigation](gemini-xlerobot-navigation/) | 📖 | Gemini Robotics-ER 1.5 autonomously drives the real XLeRobot on the same desk-tidying task. |
+| 6-13 | [gemini-xlerobot-navigation](gemini-xlerobot-navigation/) | 📖 | Simulator comparison of open-loop, stepwise-checking, and predictive closed-loop strategies for the same task. |
+| 6-14 | [rgb-sim2real-grasping](rgb-sim2real-grasping/) | 📖 | RGB cross-environment test for the same desk task, varying backgrounds, object appearance, lighting, and visual noise. |
 
-> Backtick-named external benchmarks must be cloned separately. [`android-world/`](android-world/) (hyphenated) is this repo's **T3A evaluation analysis notes** (see its [README](android-world/README.md)), not the same path as the external `android_world/` benchmark source.
+Experiment numbers follow the current Chinese edition; archived runs retain their original identifiers. See the [numbering map](EXPERIMENT_LEDGER.md#current-numbering-and-archived-evidence).
+
 ## Project Types
 
 | Icon | Type | Meaning |
 | :--: | --- | --- |
 | ✅ | **Standalone** | Full code in this repo, runs after configuring API Key |
 | 📖 | **Reproduction Guide** | Detailed doc depending on **external repos** to `git clone` |
-| 🚧 | **Design Doc** | Architecture/implementation plan only, runnable code still WIP |
+| 🚧 | **In Progress** | An implementation exists, but required live execution, authorization, hardware, or manuscript acceptance evidence is incomplete |

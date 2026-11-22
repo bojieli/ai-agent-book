@@ -37,12 +37,28 @@ Judges use **deterministic rules** (secret leak / unauthorized tool call)—stab
 ### Run
 
 ```bash
-pip install -r requirements.txt
-cp env.example .env    # set OPENAI_API_KEY (OpenAI official API)
+# From the repository root: use the shared Chapter 2 environment
+uv sync --locked --python 3.12 --extra ch2
+
+# Activate it before changing directories:
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+
+# pip fallback when uv is not installed:
+# python -m pip install -e ".[ch2]"
+
+cd chapter2/prompt-injection
+
+# Single-project compatibility path, still supported during migration:
+# python -m pip install -r requirements.txt
+
+cp env.example .env    # set LLM_PROVIDER and its key (OpenAI or DashScope/Bailian)
 python demo.py         # default: all 3×4=12 combos, 4 trials each
 ```
 
-> **OpenRouter fallback:** If `OPENAI_API_KEY` is unset but `OPENROUTER_API_KEY` is set, requests go through OpenRouter (`gpt-*` → `openai/…`). With `OPENAI_API_KEY` set, behavior is unchanged.
+> **DashScope/Bailian:** Set `LLM_PROVIDER=dashscope` (or `qwen`/`bailian`) and `DASHSCOPE_API_KEY`; the default model is `qwen3.7-plus`. `DASHSCOPE_BASE_URL` supports international-region keys. OpenRouter remains available as a fallback.
 
 The program runs selected combos and prints an **attack × defense** success-rate matrix.
 
@@ -159,7 +175,23 @@ Stronger models may score 0% even on D1—another real finding—so the default 
 ### 运行
 
 ```bash
-pip install -r requirements.txt
+# 在仓库根目录使用统一的第 2 章环境
+uv sync --locked --python 3.12 --extra ch2
+
+# 切换目录前先激活环境：
+# macOS/Linux：
+source .venv/bin/activate
+# Windows PowerShell：.venv\Scripts\Activate.ps1
+# Windows cmd：.venv\Scripts\activate.bat
+
+# 未安装 uv 时可用 pip 兜底：
+# python -m pip install -e ".[ch2]"
+
+cd chapter2/prompt-injection
+
+# 迁移期间仍支持单项目兼容路径：
+# python -m pip install -r requirements.txt
+
 cp env.example .env    # 填入 OPENAI_API_KEY（OpenAI 官方接口）
 python demo.py         # 默认跑完全部 3×4=12 个组合，每组合 4 次
 ```
@@ -267,3 +299,13 @@ python demo.py --list                # 离线查看有哪些攻击/防御，不�
 
 - Success-rate tables are illustrative samples; re-run for your own numbers.  
 - 成功率表为示例采样结果，请以你自己的完整运行为准。
+
+## 从防御结果理解信任边界
+
+Agent 读取网页、文档和历史记录时，可能遇到看似在向它下命令的文本。本节从防御角度学习信任边界：被读取的内容提供任务资料，但不应因此获得改变系统权限的资格。
+
+防护不能只依赖模型判断文字是否可疑。资料来源、执行权限和用户授权是三个不同层面：模型可以总结外部文本，程序仍需独立检查写入或发送等动作是否被允许。把它们分开，才能避免一次误解直接变成实际操作。
+
+检查记录时，要区分“模型复述了外部文字”和“系统实际执行了越权动作”。也要观察正常任务是否被过度拒绝。某组测试没有失败，只说明覆盖到的情形下未观察到问题，不能推出面对任意输入都安全。
+
+如果模型误把文档中的句子当成指令，执行层还应有哪些条件，才能阻止未经授权的动作？

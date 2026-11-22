@@ -1,0 +1,50 @@
+{
+  "teacher": {
+    "provider": "moonshot",
+    "model": "kimi-k3",
+    "pricing": {
+      "input_per_million": 20.0,
+      "cached_input_per_million": 2.0,
+      "output_per_million": 100.0,
+      "currency": "CNY",
+      "source_url": "https://platform.kimi.com/docs/pricing/chat-k3.md",
+      "as_of": "2026-07-29",
+      "usd_per_currency_unit": 0.1477922077922078,
+      "fx_source_url": "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml",
+      "fx_as_of": "2026-07-29"
+    }
+  },
+  "train": {
+    "rows": 160,
+    "retained_receipts": 160,
+    "coverage": 1.0,
+    "valid_receipts": 160,
+    "unique_response_ids": 160,
+    "correct": 160,
+    "gold_accuracy": 1.0,
+    "observed_gold_accuracy": 1.0,
+    "prompt_tokens": 63569,
+    "completion_tokens": 12503,
+    "latency_seconds_total": 629.3293080376461,
+    "latency_seconds_mean": 3.9333081752352883,
+    "provider_cost_cny": 1.867344,
+    "provider_cost_usd": 0.27597889246753254
+  },
+  "test": {
+    "rows": 80,
+    "retained_receipts": 80,
+    "coverage": 1.0,
+    "valid_receipts": 80,
+    "unique_response_ids": 80,
+    "correct": 80,
+    "gold_accuracy": 1.0,
+    "observed_gold_accuracy": 1.0,
+    "prompt_tokens": 30898,
+    "completion_tokens": 6325,
+    "latency_seconds_total": 331.5117934176815,
+    "latency_seconds_mean": 4.143897417721019,
+    "provider_cost_cny": 0.9186840000000001,
+    "provider_cost_usd": 0.13577433662337665
+  },
+  "campaign_complete": true
+}

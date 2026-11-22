@@ -1,4 +1,290 @@
-# Experiment 3-12: Contextual Retrieval for User Memory / 实验 3-12：利用上下文感知检索增强用户记忆
+# Experiment 3-11: Contextual Retrieval for User Memory / 实验 3-11：利用上下文感知检索增强用户记忆
+
+“他已经改了时间”这样的句子离开对话很难理解，而单独保存“周三开会”又可能丢掉来源。本实验结合带背景的对话检索和结构化记忆卡片，学习两种表示如何互补。
+
+[English](#english)
+
+建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+
+<a id="learning-0"></a>
+
+## 理解问题与方法
+
+对话片段保留具体语境，记忆卡片便于查询相对稳定的事实。背景前缀帮助检索定位人物与事件；卡片则需要记录更新和冲突。两层信息应能相互核对，而不是各自形成一套无法追溯的结论。
+
+### 本实验是什么
+
+将上下文感知检索技术应用于用户记忆的构建，是解决传统对话历史分块所面临的核心痛点，并迈向更高层次记忆能力的关键。本项目实现了一个双层记忆系统，结合了：
+
+1. **上下文感知检索（Contextual RAG）**：对话历史的精准检索  
+2. **高级 JSON 卡片（Advanced JSON Cards）**：结构化的核心事实存储
+
+### 本项目采用的方法
+
+#### 1. 上下文增强的对话分块
+
+传统的对话分块会丢失上下文信息。例如，一段孤立的对话片段“好的，就订这个吧”本身毫无信息量。只有知道上文是在讨论“从上海到西雅图的、价格为500美元的单程机票”，这段对话才有意义。
+
+本系统在索引对话历史之前，增加了关键的“上下文生成”步骤：
+
+- 每个对话块都会调用 LLM 生成包含关键背景信息的前缀摘要  
+- 上下文包括时间、人物和意图等关键线索  
+- 极大提升了检索的准确性和相关性  
+
+#### 2. 双层记忆结构
+
+**Advanced JSON Cards（常驻记忆）**
+
+- 存储结构化的、总结性的核心事实  
+- 始终固定在 Agent 的上下文中  
+- 包含 backstory（信息来源）和 relationship（关联人员）等元数据  
+- 如：“用户 Jessica 的护照将于2025年2月18日过期”  
+
+**Contextual RAG（按需检索）**
+
+- 提供对非结构化的原始对话细节的精准访问  
+- 快速找到具体讨论的完整上下文  
+- 作为决策的“证据”支持  
+
+#### 3. LLM-Based Memory Extraction
+
+系统现在能够从对话中智能提取结构化记忆卡片：
+
+```python
+# 自动从对话生成记忆卡片
+cards = indexer._generate_summary_cards(chunks, conversation_id)
+
+# 生成的卡片示例：
+{
+    "category": "financial",
+    "card_key": "bank_account_primary", 
+    "backstory": "用户在开设账户时提供了银行信息",
+    "date_created": "2024-01-15 10:30:00",
+    "person": "John Smith (primary)",
+    "relationship": "primary account holder",
+    "bank_name": "Chase Bank",
+    "account_type": "checking",
+    "account_ending": "4567"
+}
+```
+
+<a id="learning-1"></a>
+
+## 准备环境与输入
+
+本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+
+### 安装与配置
+
+#### 1. 安装依赖
+
+```bash
+# 在仓库根目录使用统一的第 3 章环境
+uv sync --locked --python 3.12 --extra ch3
+
+# 切换目录前先激活环境：
+# macOS/Linux：
+source .venv/bin/activate
+# Windows PowerShell：.venv\Scripts\Activate.ps1
+# Windows cmd：.venv\Scripts\activate.bat
+
+# 未安装 uv 时可用 pip 兜底：
+# python -m pip install -e ".[ch3]"
+
+cd chapter3/contextual-retrieval-for-user-memory
+
+# 迁移期间仍支持单项目兼容路径：
+# python -m pip install -r requirements.txt
+```
+
+#### 2. 配置环境变量
+
+创建 `.env` 文件：
+
+```bash
+# LLM Provider Configuration
+MOONSHOT_API_KEY=your_api_key_here
+ARK_API_KEY=your_api_key_here
+SILICONFLOW_API_KEY=your_api_key_here
+DASHSCOPE_API_KEY=your_dashscope_api_key_here
+# DASHSCOPE_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+OPENAI_API_KEY=your_api_key_here
+
+# Default Provider
+LLM_PROVIDER=kimi  # Options: dashscope/qwen/bailian, kimi, doubao, siliconflow, openai
+
+# Model Settings
+LLM_MODEL=kimi-k3  # 或其他模型
+```
+
+#### 3. 启动检索管道服务
+
+```bash
+cd ../retrieval-pipeline
+python api_server.py
+```
+
+<a id="learning-2"></a>
+
+## 按照步骤完成实验
+
+先阅读 `contextual_compare.py` 中的对照方式，再选一组存在后续修正的对话。观察原始片段、补充背景和记忆卡片分别保存了什么。按下文准备后端后，再运行模型驱动的问答比较。
+
+### 使用示例
+
+#### 离线对比：上下文化到底有没有用？（无需 API，推荐先跑这个）
+
+本实验的核心论点是：**在把对话记忆块送入嵌入/索引前，先为每块生成一段『上下文前缀』，能提升脱离上下文的孤立片段（如『好的，就订这个吧』）的召回。** `--mode compare` 提供一个**完全离线、无需任何 API Key 或检索服务**的受控对照实验来量化这一点。
+
+它用同一份上下文，分别度量『不拼接（plain）』与『拼接后再索引（contextual）』两种方式的召回，变量只有『索引文本是否含上下文前缀』，因此结果直接反映上下文化本身的贡献。检索采用确定性的 BM25 词法检索（纯 Python、无第三方依赖）作为神经嵌入的离线代理；对照数据集见 [`memory_qa_eval.json`](memory_qa_eval.json)（受控教学集，可用 `--dataset` 替换）。
+
+```bash
+# 打印对比指标表（Recall@1 / Recall@3 / MRR）
+python main.py --mode compare
+# 等价于直接运行独立脚本：
+python contextual_compare.py
+
+# 对单条查询做 plain vs contextual 的 Top-K 检索对比
+python main.py --mode compare --query '我最后确认预订的那张机票是哪个航班？'
+
+# 保存完整结果（含逐查询名次明细）到 JSON
+python main.py --mode compare --output results/compare.json
+```
+
+实测输出（12 个记忆块、8 条查询的受控集）：
+
+```
+方法                            Recall@1  Recall@3       MRR
+--------------------------------------------------------------------
+Plain（直接索引原始块）               0.625     1.000     0.792
+Contextual（上下文化后索引）        0.750     1.000     0.875
+--------------------------------------------------------------------
+提升（Δ）                         +0.125    +0.000    +0.083
+```
+
+其中『我订的西雅图酒店确认了吗』这类查询，gold 记忆块（『可以，帮我订下来』）在 Plain 下排名第 3、上下文化后升到第 1——正是上下文前缀把孤立确认片段重新锚定回了『西雅图凯悦酒店』的情境。
+
+> 说明：这是一个**离线词法代理**，用于在无 API 环境下清晰地演示上下文化的机制与方向性收益。生产管线中，上下文前缀由 LLM 逐块生成、并用神经嵌入 + 混合检索索引（见下方 `--mode evaluate`），需要配置 API Key。
+
+#### 端到端评估（需 API / 检索服务）
+
+```bash
+# 交互式界面（默认）
+python main.py
+
+# 评估特定分类（需 LLM 与检索管道服务）
+python main.py --mode evaluate --category layer1
+
+# 关闭上下文化做对照，并指定模型与输出
+python main.py --mode evaluate --category layer1 --no-contextual --model gpt-5.6-luna --output results/plain_eval.json
+```
+
+完整命令行参数见 `python main.py --help`（含中文说明）。
+
+#### 交互式测试界面
+
+运行 `python main.py` 进入交互式界面：
+
+```
+Main Menu:
+1. 🚀 Demo Mode (Quick Start)
+2. 📚 Load & Index Conversations
+3. 🎴 Manage Memory Cards
+4. 🔍 Test Query
+5. 📊 Evaluate All Test Cases (by Category) [LLM Judge]
+6. 🎯 Evaluate Specific Test Case [LLM Judge]
+7. 📈 Show Statistics
+8. ⚙️  Configure Settings
+0. Exit
+```
+
+#### 评估输出示例
+
+```
+============================================================
+DEBUG: All Memory Cards in System
+============================================================
+
+[financial.bank_account_primary]
+{
+  "backstory": "用户开设银行账户时提供的信息",
+  "date_created": "2024-06-12 14:30:00",
+  "person": "Michael James Robertson (primary)",
+  "relationship": "primary account holder",
+  "bank_name": "First National Bank",
+  "account_number": "4429853327",
+  "routing_number": "123006800"
+}
+
+Total Memory Cards: 5
+============================================================
+
+LLM Judge Evaluation Results
+============================================================
+Reward: 1.000/1.000
+Passed: Yes
+Reasoning: The agent correctly provided the checking account number...
+============================================================
+```
+
+### 工作流程示例
+
+当用户询问“为我一月的东京之行，还有什么要准备的吗？”时：
+
+1. **事实回顾**：Agent 首先审视 Advanced JSON Cards 中的内容  
+   - 发现“东京之行”信息（1月25日出发）  
+   - 发现“护照信息”（2月18日过期）  
+
+2. **关联与推理**：通过对比核心事实  
+   - 识别出机票日期与护照过期日期接近的风险  
+
+3. **细节验证**：启动 RAG 检索  
+   - 搜索与“护照”和“东京机票”相关的对话片段  
+   - 获取原始讨论的所有细节  
+
+4. **主动服务**：结合两种记忆  
+   - 给出关键建议：“您的护照即将过期，强烈建议您立即加急办理续签”  
+
+5. **自动评估**：LLM Judge 评估答案  
+   - 评分：0.95/1.0  
+   - 理由：正确识别风险并给出适当建议
+
+<a id="learning-3"></a>
+
+## 分析结果与形成判断
+
+除了答案是否正确，还要检查引用的是哪次对话、记忆有没有时间条件，以及一条错误摘要是否被多层重复放大。更多记忆不一定更好，关键是能否取到当前问题需要的证据。
+
+### 沿失败样本区分三个环节
+
+如果回答没有使用应当使用的记忆，先检查记忆是否被正确写入，再检查它是否被召回，最后检查模型收到它以后是否正确理解。三个环节可能产生相同的最终错误，但修复方法不同。阅读下面的指标和输出时，保留问题、应使用的记忆、实际返回内容与回答，逐条核对后再汇总分数。
+
+### 最新更新
+
+#### LLM-Based Memory Card Generation
+- **自动提取**：使用 LLM 从对话中智能提取结构化记忆卡片  
+- **完整结构**：每张卡片包含 backstory、person、relationship 等必要字段  
+- **智能降级**：当 LLM 不可用时自动降级到关键词提取  
+
+#### LLM Judge Integration
+- **自动评估**：集成 LLM Judge 对 Agent 回答进行自动评分  
+- **双路径支持**：支持导入模块或直接 API 调用  
+- **详细反馈**：提供 0-1 分数、通过/失败状态和评估理由  
+
+#### Enhanced Debugging
+- **内存卡片可视化**：评估时自动打印所有记忆卡片的完整 JSON  
+- **测试用例排序**：按名称字母顺序显示测试用例  
+- **评估透明度**：清晰显示 LLM Judge 使用状态
+
+### 检查自己的解释
+
+如果卡片与原始对话冲突，应优先采用哪一个？系统应怎样向读者解释不确定性？
+
+<a id="learning-4"></a>
+
+## 阅读实现与继续探索
+
+### 项目说明
 
 > Companion material for *AI Agents in Depth*, Chapter 3 — dual-layer memory: Contextual RAG + Advanced JSON Cards.  
 > 配套《深入理解 AI Agent》第 3 章——双层记忆：上下文感知 RAG + Advanced JSON Cards。
@@ -7,7 +293,64 @@
 
 ---
 
+### 项目结构
+
+```
+contextual-retrieval-for-user-memory/
+├── contextual_chunking.py      # 上下文感知分块
+├── advanced_memory_manager.py  # 高级JSON卡片管理
+├── contextual_indexer.py       # 双层记忆索引器（含LLM提取）
+├── contextual_agent.py         # 结合双层记忆的Agent
+├── contextual_evaluator.py     # 评估框架（含LLM Judge）
+├── contextual_compare.py       # 离线对比脚本：上下文化 vs 原始块的召回（无需 API）
+├── memory_qa_eval.json         # 离线对比用的受控记忆问答对照集
+├── main.py                     # 主入口（argparse，含 --mode compare 离线对比）
+├── config.py                   # 配置管理
+├── chunker.py                  # 基础分块器
+├── tools.py                    # Agent工具
+└── requirements.txt            # 依赖项
+```
+
+<a id="learning-5"></a>
+
+## 排查问题与查阅资料
+
+### 参考资料
+
+- [Anthropic's Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval)
+- [RAG 技术综述](https://arxiv.org/abs/2005.11401)
+- [Memory Systems in AI Agents](https://arxiv.org/abs/2203.14680)
+- [LLM as Judge](https://arxiv.org/abs/2306.05685)
+
+### 许可证
+
+MIT License
+
+---
+
+## Notes / 说明
+
+### OpenRouter 通用回退 / Universal OpenRouter fallback
+
+This experiment supports a **universal OpenRouter fallback** for its chat LLM.
+
+- If the primary provider key (e.g. `MOONSHOT_API_KEY` / `KIMI_API_KEY` / `OPENAI_API_KEY` / `DOUBAO_API_KEY` …) is present, behavior is unchanged.
+- Else if `OPENROUTER_API_KEY` is set, the chat LLM is automatically routed through OpenRouter (`https://openrouter.ai/api/v1`). Model names are mapped automatically: `gpt-*`/`o1-*` → `openai/…`, `claude-*` → `anthropic/claude-opus-4.8`, `kimi-*` → `moonshotai/kimi-k2.6`, ids already containing `/` are kept as-is, and other provider-native ids (e.g. `doubao-*`) fall back to `openai/gpt-5.6-luna`. Set `OPENROUTER_MODEL` to force a specific OpenRouter model id.
+- Else a clear error lists the accepted keys.
+
+Add `OPENROUTER_API_KEY=...` to your `.env` (see `env.example`) to enable it.
+
 ## English
+
+### Canonical live campaign
+
+`python campaign.py` evaluates all 60 three-layer cases with a preregistered
+plain/contextual/dual-layer ablation. A live ReAct planner's exact queries are
+replayed across plain and contextual fixed-window indexes; the dual arm adds
+the live Advanced JSON Card checkpoint from Experiment 3-1. Prefixes, cards,
+raw chunks, trajectories, per-layer external-judge metrics, and credential-free
+receipts are retained under `validation/`; `validation/latest.json` is the
+canonical gate report.
 
 ### What this experiment is
 
@@ -105,7 +448,22 @@ contextual-retrieval-for-user-memory/
 #### 1. Install dependencies
 
 ```bash
-pip install -r requirements.txt
+# From the repository root: use the shared Chapter 3 environment
+uv sync --locked --python 3.12 --extra ch3
+
+# Activate it before changing directories:
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+
+# pip fallback when uv is not installed:
+# python -m pip install -e ".[ch3]"
+
+cd chapter3/contextual-retrieval-for-user-memory
+
+# Single-project compatibility path, still supported during migration:
+# python -m pip install -r requirements.txt
 ```
 
 #### 2. Environment variables
@@ -117,10 +475,12 @@ Create a `.env` file:
 MOONSHOT_API_KEY=your_api_key_here
 ARK_API_KEY=your_api_key_here
 SILICONFLOW_API_KEY=your_api_key_here
+DASHSCOPE_API_KEY=your_dashscope_api_key_here
+# DASHSCOPE_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
 OPENAI_API_KEY=your_api_key_here
 
 # Default Provider
-LLM_PROVIDER=kimi  # Options: kimi, doubao, siliconflow, openai
+LLM_PROVIDER=kimi  # Options: dashscope/qwen/bailian, kimi, doubao, siliconflow, openai
 
 # Model Settings
 LLM_MODEL=kimi-k3  # or another model
@@ -264,273 +624,3 @@ When the user asks “Anything else to prepare for my January Tokyo trip?”:
 MIT License
 
 ---
-
-## 中文
-
-### 本实验是什么
-
-将上下文感知检索技术应用于用户记忆的构建，是解决传统对话历史分块所面临的核心痛点，并迈向更高层次记忆能力的关键。本项目实现了一个双层记忆系统，结合了：
-
-1. **上下文感知检索（Contextual RAG）**：对话历史的精准检索  
-2. **高级 JSON 卡片（Advanced JSON Cards）**：结构化的核心事实存储  
-
-### 最新更新
-
-#### LLM-Based Memory Card Generation
-- **自动提取**：使用 LLM 从对话中智能提取结构化记忆卡片  
-- **完整结构**：每张卡片包含 backstory、person、relationship 等必要字段  
-- **智能降级**：当 LLM 不可用时自动降级到关键词提取  
-
-#### LLM Judge Integration  
-- **自动评估**：集成 LLM Judge 对 Agent 回答进行自动评分  
-- **双路径支持**：支持导入模块或直接 API 调用  
-- **详细反馈**：提供 0-1 分数、通过/失败状态和评估理由  
-
-#### Enhanced Debugging
-- **内存卡片可视化**：评估时自动打印所有记忆卡片的完整 JSON  
-- **测试用例排序**：按名称字母顺序显示测试用例  
-- **评估透明度**：清晰显示 LLM Judge 使用状态  
-
-### 核心创新
-
-#### 1. 上下文增强的对话分块
-
-传统的对话分块会丢失上下文信息。例如，一段孤立的对话片段“好的，就订这个吧”本身毫无信息量。只有知道上文是在讨论“从上海到西雅图的、价格为500美元的单程机票”，这段对话才有意义。
-
-本系统在索引对话历史之前，增加了关键的“上下文生成”步骤：
-
-- 每个对话块都会调用 LLM 生成包含关键背景信息的前缀摘要  
-- 上下文包括时间、人物和意图等关键线索  
-- 极大提升了检索的准确性和相关性  
-
-#### 2. 双层记忆结构
-
-**Advanced JSON Cards（常驻记忆）**
-
-- 存储结构化的、总结性的核心事实  
-- 始终固定在 Agent 的上下文中  
-- 包含 backstory（信息来源）和 relationship（关联人员）等元数据  
-- 如：“用户 Jessica 的护照将于2025年2月18日过期”  
-
-**Contextual RAG（按需检索）**
-
-- 提供对非结构化的原始对话细节的精准访问  
-- 快速找到具体讨论的完整上下文  
-- 作为决策的“证据”支持  
-
-#### 3. LLM-Based Memory Extraction
-
-系统现在能够从对话中智能提取结构化记忆卡片：
-
-```python
-# 自动从对话生成记忆卡片
-cards = indexer._generate_summary_cards(chunks, conversation_id)
-
-# 生成的卡片示例：
-{
-    "category": "financial",
-    "card_key": "bank_account_primary", 
-    "backstory": "用户在开设账户时提供了银行信息",
-    "date_created": "2024-01-15 10:30:00",
-    "person": "John Smith (primary)",
-    "relationship": "primary account holder",
-    "bank_name": "Chase Bank",
-    "account_type": "checking",
-    "account_ending": "4567"
-}
-```
-
-### 项目结构
-
-```
-contextual-retrieval-for-user-memory/
-├── contextual_chunking.py      # 上下文感知分块
-├── advanced_memory_manager.py  # 高级JSON卡片管理
-├── contextual_indexer.py       # 双层记忆索引器（含LLM提取）
-├── contextual_agent.py         # 结合双层记忆的Agent
-├── contextual_evaluator.py     # 评估框架（含LLM Judge）
-├── contextual_compare.py       # 离线对比脚本：上下文化 vs 原始块的召回（无需 API）
-├── memory_qa_eval.json         # 离线对比用的受控记忆问答对照集
-├── main.py                     # 主入口（argparse，含 --mode compare 离线对比）
-├── config.py                   # 配置管理
-├── chunker.py                  # 基础分块器
-├── tools.py                    # Agent工具
-└── requirements.txt            # 依赖项
-```
-
-### 安装与配置
-
-#### 1. 安装依赖
-
-```bash
-pip install -r requirements.txt
-```
-
-#### 2. 配置环境变量
-
-创建 `.env` 文件：
-
-```bash
-# LLM Provider Configuration
-MOONSHOT_API_KEY=your_api_key_here
-ARK_API_KEY=your_api_key_here
-SILICONFLOW_API_KEY=your_api_key_here
-OPENAI_API_KEY=your_api_key_here
-
-# Default Provider
-LLM_PROVIDER=kimi  # Options: kimi, doubao, siliconflow, openai
-
-# Model Settings
-LLM_MODEL=kimi-k3  # 或其他模型
-```
-
-#### 3. 启动检索管道服务
-
-```bash
-cd ../retrieval-pipeline
-python api_server.py
-```
-
-### 使用示例
-
-#### 离线对比：上下文化到底有没有用？（无需 API，推荐先跑这个）
-
-本实验的核心论点是：**在把对话记忆块送入嵌入/索引前，先为每块生成一段『上下文前缀』，能提升脱离上下文的孤立片段（如『好的，就订这个吧』）的召回。** `--mode compare` 提供一个**完全离线、无需任何 API Key 或检索服务**的受控对照实验来量化这一点。
-
-它用同一份上下文，分别度量『不拼接（plain）』与『拼接后再索引（contextual）』两种方式的召回，变量只有『索引文本是否含上下文前缀』，因此结果直接反映上下文化本身的贡献。检索采用确定性的 BM25 词法检索（纯 Python、无第三方依赖）作为神经嵌入的离线代理；对照数据集见 [`memory_qa_eval.json`](memory_qa_eval.json)（受控教学集，可用 `--dataset` 替换）。
-
-```bash
-# 打印对比指标表（Recall@1 / Recall@3 / MRR）
-python main.py --mode compare
-# 等价于直接运行独立脚本：
-python contextual_compare.py
-
-# 对单条查询做 plain vs contextual 的 Top-K 检索对比
-python main.py --mode compare --query '我最后确认预订的那张机票是哪个航班？'
-
-# 保存完整结果（含逐查询名次明细）到 JSON
-python main.py --mode compare --output results/compare.json
-```
-
-实测输出（12 个记忆块、8 条查询的受控集）：
-
-```
-方法                            Recall@1  Recall@3       MRR
---------------------------------------------------------------------
-Plain（直接索引原始块）               0.625     1.000     0.792
-Contextual（上下文化后索引）        0.750     1.000     0.875
---------------------------------------------------------------------
-提升（Δ）                         +0.125    +0.000    +0.083
-```
-
-其中『我订的西雅图酒店确认了吗』这类查询，gold 记忆块（『可以，帮我订下来』）在 Plain 下排名第 3、上下文化后升到第 1——正是上下文前缀把孤立确认片段重新锚定回了『西雅图凯悦酒店』的情境。
-
-> 说明：这是一个**离线词法代理**，用于在无 API 环境下清晰地演示上下文化的机制与方向性收益。生产管线中，上下文前缀由 LLM 逐块生成、并用神经嵌入 + 混合检索索引（见下方 `--mode evaluate`），需要配置 API Key。
-
-#### 端到端评估（需 API / 检索服务）
-
-```bash
-# 交互式界面（默认）
-python main.py
-
-# 评估特定分类（需 LLM 与检索管道服务）
-python main.py --mode evaluate --category layer1
-
-# 关闭上下文化做对照，并指定模型与输出
-python main.py --mode evaluate --category layer1 --no-contextual --model gpt-5.6-luna --output results/plain_eval.json
-```
-
-完整命令行参数见 `python main.py --help`（含中文说明）。
-
-#### 交互式测试界面
-
-运行 `python main.py` 进入交互式界面：
-
-```
-Main Menu:
-1. 🚀 Demo Mode (Quick Start)
-2. 📚 Load & Index Conversations
-3. 🎴 Manage Memory Cards
-4. 🔍 Test Query
-5. 📊 Evaluate All Test Cases (by Category) [LLM Judge]
-6. 🎯 Evaluate Specific Test Case [LLM Judge]
-7. 📈 Show Statistics
-8. ⚙️  Configure Settings
-0. Exit
-```
-
-#### 评估输出示例
-
-```
-============================================================
-DEBUG: All Memory Cards in System
-============================================================
-
-[financial.bank_account_primary]
-{
-  "backstory": "用户开设银行账户时提供的信息",
-  "date_created": "2024-06-12 14:30:00",
-  "person": "Michael James Robertson (primary)",
-  "relationship": "primary account holder",
-  "bank_name": "First National Bank",
-  "account_number": "4429853327",
-  "routing_number": "123006800"
-}
-
-Total Memory Cards: 5
-============================================================
-
-LLM Judge Evaluation Results
-============================================================
-Reward: 1.000/1.000
-Passed: Yes
-Reasoning: The agent correctly provided the checking account number...
-============================================================
-```
-
-### 工作流程示例
-
-当用户询问“为我一月的东京之行，还有什么要准备的吗？”时：
-
-1. **事实回顾**：Agent 首先审视 Advanced JSON Cards 中的内容  
-   - 发现“东京之行”信息（1月25日出发）  
-   - 发现“护照信息”（2月18日过期）  
-
-2. **关联与推理**：通过对比核心事实  
-   - 识别出机票日期与护照过期日期接近的风险  
-
-3. **细节验证**：启动 RAG 检索  
-   - 搜索与“护照”和“东京机票”相关的对话片段  
-   - 获取原始讨论的所有细节  
-
-4. **主动服务**：结合两种记忆  
-   - 给出关键建议：“您的护照即将过期，强烈建议您立即加急办理续签”  
-
-5. **自动评估**：LLM Judge 评估答案  
-   - 评分：0.95/1.0  
-   - 理由：正确识别风险并给出适当建议  
-
-### 参考资料
-
-- [Anthropic's Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval)
-- [RAG 技术综述](https://arxiv.org/abs/2005.11401)
-- [Memory Systems in AI Agents](https://arxiv.org/abs/2203.14680)
-- [LLM as Judge](https://arxiv.org/abs/2306.05685)
-
-### 许可证
-
-MIT License
-
----
-
-## Notes / 说明
-
-### OpenRouter 通用回退 / Universal OpenRouter fallback
-
-This experiment supports a **universal OpenRouter fallback** for its chat LLM.
-
-- If the primary provider key (e.g. `MOONSHOT_API_KEY` / `KIMI_API_KEY` / `OPENAI_API_KEY` / `DOUBAO_API_KEY` …) is present, behavior is unchanged.
-- Else if `OPENROUTER_API_KEY` is set, the chat LLM is automatically routed through OpenRouter (`https://openrouter.ai/api/v1`). Model names are mapped automatically: `gpt-*`/`o1-*` → `openai/…`, `claude-*` → `anthropic/claude-opus-4.8`, `kimi-*` → `moonshotai/kimi-k2.6`, ids already containing `/` are kept as-is, and other provider-native ids (e.g. `doubao-*`) fall back to `openai/gpt-5.6-luna`. Set `OPENROUTER_MODEL` to force a specific OpenRouter model id.
-- Else a clear error lists the accepted keys.
-
-Add `OPENROUTER_API_KEY=...` to your `.env` (see `env.example`) to enable it.

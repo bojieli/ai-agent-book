@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-agent-book.local/schemas/experiment-6-12-local-gpu.json",
+  "title": "Experiment 6-12 local GPU desktop manipulation planning evidence",
+  "type": "object",
+  "required": ["schema_version", "experiment_id", "status", "kind", "tool_contract", "metrics", "artifacts", "xlerobot_robocrew_extension", "blockers"],
+  "properties": {
+    "schema_version": {"const": "3.0"},
+    "experiment_id": {"const": "6-12"},
+    "status": {"const": "complete"},
+    "kind": {"const": "desktop_manipulation_planning"},
+    "tool_contract": {"type": "array"},
+    "metrics": {"type": "object"},
+    "artifacts": {"type": "array"},
+    "xlerobot_robocrew_extension": {"type": "object"},
+    "blockers": {"type": "array"}
+  },
+  "additionalProperties": true
+}

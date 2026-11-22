@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Env / secrets
+.env
+
+# Generated artifacts
+output/
+logs/
+checkpoints/
+*.log
+!experiment_protocol.json
+!validation/
+!validation/**

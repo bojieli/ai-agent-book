@@ -17,6 +17,11 @@ import re
 import sys
 import json
 import argparse
+import datetime as dt
+import hashlib
+import math
+import time
+from pathlib import Path
 
 try:
     from dotenv import load_dotenv
@@ -30,46 +35,25 @@ from sandbox import run_python
 # 配置：兼容多种可用的 OpenAI 协议 key（含通用 OpenRouter 兜底）
 # ---------------------------------------------------------------------------
 
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+# 每个 provider 的默认模型。端点、key 与模型名映射由 agentbook 的 provider
+# 注册表统一维护，实验这里只保留「默认用哪个模型」这一个自己的决定。
+DEFAULT_MODELS = {
+    "openai": "gpt-5.6-luna",
+    "openrouter": "openai/gpt-5.6-luna",
+    "moonshot": "kimi-k3",
+    "ark": "doubao-seed-1-6-250615",
+}
+
+# auto 模式下按此顺序挑第一个配了 key 的 provider。
+AUTO_KEY_VARS = {
+    "openai": "OPENAI_API_KEY",
+    "openrouter": "OPENROUTER_API_KEY",
+    "moonshot": "MOONSHOT_API_KEY",
+    "ark": "ARK_API_KEY",
+}
 
 
-def map_model_to_openrouter(model: str) -> str:
-    """把直连模型名映射为 OpenRouter 上的 id（非可映射 id 统一兜底到当前廉价旗舰）。"""
-    if not model or "/" in model:
-        return model or "openai/gpt-5.6-luna"
-    m = model.lower()
-    if m.startswith(("gpt-", "o1", "o3", "o4")):
-        return "openai/" + model
-    if m.startswith("claude"):
-        if "haiku" in m:
-            return "anthropic/claude-haiku-4.5"
-        if "sonnet" in m:
-            return "anthropic/claude-sonnet-4.6"
-        return "anthropic/claude-opus-4.8"
-    if m.startswith("gemini"):
-        return "google/" + model
-    # kimi / doubao / 其它非 OpenRouter 原生 id -> 统一兜底
-    return "openai/gpt-5.6-luna"
-
-
-def resolve_llm(api_key, base_url, model):
-    """通用 OpenRouter 兜底 + gpt-5.x 优先路由，返回 (api_key, base_url, model)。
-
-    - gpt-5.x / gpt-5.6* 且设置了 OPENROUTER_API_KEY 时优先走 OpenRouter
-      （直连 OpenAI 调用 gpt-5.6 需要组织实名认证）。
-    - 否则有直连 key 就保持直连不变。
-    - 否则有 OPENROUTER_API_KEY 就整体改走 OpenRouter。
-    - 都没有则原样返回，由调用方给出缺 key 的报错。
-    """
-    orkey = os.getenv("OPENROUTER_API_KEY")
-    m = (model or "").lower()
-    prefer_or = bool(orkey) and m.startswith("gpt-5")
-    if prefer_or or (not api_key and orkey):
-        return orkey, OPENROUTER_BASE_URL, map_model_to_openrouter(model)
-    return api_key, base_url, model
-
-
-def build_client_and_model(model_override=None):
+def build_client_and_model(model_override=None, provider="auto"):
     """根据环境变量构造 OpenAI 客户端与默认模型名。
 
     优先级：OPENAI_API_KEY > MOONSHOT_API_KEY > ARK_API_KEY，均缺失时走 OPENROUTER_API_KEY。
@@ -79,39 +63,40 @@ def build_client_and_model(model_override=None):
     # 延迟导入：离线自检（--selfcheck）不需要 openai，也不需要 API key。
     from openai import OpenAI
 
-    model = os.getenv("MODEL", "gpt-5.6-luna")
-    base_url = os.getenv("OPENAI_BASE_URL")
-    api_key = None
+    from agentbook.providers import resolve_backend
 
-    if os.getenv("OPENAI_API_KEY"):
-        api_key = os.getenv("OPENAI_API_KEY")
-    elif os.getenv("MOONSHOT_API_KEY"):
-        api_key = os.getenv("MOONSHOT_API_KEY")
-        base_url = base_url or "https://api.moonshot.cn/v1"
-        model = os.getenv("MODEL", "kimi-k3")
-    elif os.getenv("ARK_API_KEY"):
-        api_key = os.getenv("ARK_API_KEY")
-        base_url = base_url or "https://ark.cn-beijing.volces.com/api/v3"
-        model = os.getenv("MODEL", "doubao-seed-1-6-250615")
+    requested_model = model_override or os.getenv("MODEL")
+    # --provider 是读者的显式选择；auto 只是本实验的默认策略，所以后者允许注册表
+    # 把 gpt-5.x 改道到 OpenRouter（直连需组织实名认证，且不允许 function tools
+    # 与推理并存——本实验的 code 模式正是靠 function calling 跑沙箱）。
+    chosen_by_reader = provider != "auto"
+    if provider == "auto":
+        provider = next(
+            (name for name in ("openai", "openrouter", "moonshot", "ark")
+             if os.getenv(AUTO_KEY_VARS[name])),
+            "openai",
+        )
+    if provider not in DEFAULT_MODELS:
+        raise ValueError(f"unsupported provider: {provider}")
 
-    if model_override:
-        model = model_override
-
-    # 通用 OpenRouter 兜底：无直连 key（或默认走 gpt-5.x）时改走 OpenRouter。
-    api_key, base_url, model = resolve_llm(api_key, base_url, model)
-
-    if not api_key:
+    try:
+        backend = resolve_backend(
+            provider,
+            model=requested_model or DEFAULT_MODELS[provider],
+            chosen_by_reader=chosen_by_reader,
+        )
+    except ValueError as exc:
         raise SystemExit(
             "未找到 API key，请设置 OPENAI_API_KEY（或 MOONSHOT_API_KEY / ARK_API_KEY / OPENROUTER_API_KEY）。\n"
             "若只想验证沙箱与题库而不调用大模型，可运行：python demo.py --selfcheck"
-        )
+        ) from exc
 
     # 加上超时与重试：避免个别 API 调用长时间挂起导致整个评测卡死。
-    _kw = {"api_key": api_key, "timeout": 60.0, "max_retries": 3}
-    if base_url:
-        _kw["base_url"] = base_url
-    client = OpenAI(**_kw)
-    return client, model
+    client = OpenAI(
+        api_key=backend.api_key, base_url=backend.base_url, timeout=180.0, max_retries=5
+    )
+    # 记录进 evidence 的必须是实际走的通道，而不是最初挑中的那个名字。
+    return client, backend.model, "openrouter" if backend.using_openrouter else provider
 
 
 # ---------------------------------------------------------------------------
@@ -181,7 +166,7 @@ def extract_answer(text: str):
 # ---------------------------------------------------------------------------
 
 def solve(client, model, question, use_code, max_turns=8, verbose=False):
-    """求解单题，返回 (预测整数答案, 使用的工具代码列表, 最终文本)。"""
+    """Solve one task and retain credential-free tool/provider evidence."""
     system = CODE_SYSTEM if use_code else COT_SYSTEM
     messages = [
         {"role": "system", "content": system},
@@ -189,6 +174,8 @@ def solve(client, model, question, use_code, max_turns=8, verbose=False):
     ]
     tools = [RUN_PYTHON_TOOL] if use_code else None
     codes = []
+    tool_traces = []
+    provider_receipts = []
 
     for _ in range(max_turns):
         # 推理模型（kimi-k3 / gpt-5 / *thinking 等）不接受 temperature=0，且需更大 max_tokens 容纳思考
@@ -198,8 +185,30 @@ def solve(client, model, question, use_code, max_turns=8, verbose=False):
         kwargs = dict(model=model, messages=messages, **_rs)
         if tools:
             kwargs["tools"] = tools
+            # The treatment is code-assisted reasoning, so require at least
+            # one real sandbox call rather than merely advertising a tool the
+            # model may ignore. Later turns may choose whether another call is
+            # useful after seeing the first execution result.
+            kwargs["tool_choice"] = "required" if not codes else "auto"
         resp = client.chat.completions.create(**kwargs)
         msg = resp.choices[0].message
+        usage = getattr(resp, "usage", None)
+        provider_receipts.append({
+            "turn": len(provider_receipts) + 1,
+            "response_id": getattr(resp, "id", None),
+            "response_model": getattr(resp, "model", None),
+            "finish_reason": getattr(resp.choices[0], "finish_reason", None),
+            "usage": {
+                "prompt_tokens": getattr(usage, "prompt_tokens", None),
+                "completion_tokens": getattr(usage, "completion_tokens", None),
+                "total_tokens": getattr(usage, "total_tokens", None),
+                "cached_prompt_tokens": getattr(
+                    getattr(usage, "prompt_tokens_details", None),
+                    "cached_tokens", None,
+                ),
+            },
+            "tool_calls": len(getattr(msg, "tool_calls", None) or []),
+        })
 
         tool_calls = getattr(msg, "tool_calls", None)
         if tool_calls:
@@ -229,6 +238,11 @@ def solve(client, model, question, use_code, max_turns=8, verbose=False):
                     code = ""
                 codes.append(code)
                 result = run_python(code) if code else "[错误] 未提供 code"
+                tool_traces.append({
+                    "tool_call_id": tc.id,
+                    "code": code,
+                    "result": result,
+                })
                 if verbose:
                     print("\n--- 模型生成的代码 ---\n" + code)
                     print("--- 执行结果 ---\n" + result)
@@ -242,7 +256,10 @@ def solve(client, model, question, use_code, max_turns=8, verbose=False):
             continue  # 继续让模型基于工具结果推理
 
         # 没有工具调用 → 最终回答
-        return extract_answer(msg.content), codes, (msg.content or "")
+        return extract_answer(msg.content), codes, (msg.content or ""), {
+            "provider_receipts": provider_receipts,
+            "tool_traces": tool_traces,
+        }
 
     # 超过最大轮次，做最后一次强制收尾
     messages.append(
@@ -255,7 +272,26 @@ def solve(client, model, question, use_code, max_turns=8, verbose=False):
         model=model, messages=messages, **_rs
     )
     content = resp.choices[0].message.content or ""
-    return extract_answer(content), codes, content
+    usage = getattr(resp, "usage", None)
+    provider_receipts.append({
+        "turn": len(provider_receipts) + 1,
+        "response_id": getattr(resp, "id", None),
+        "response_model": getattr(resp, "model", None),
+        "finish_reason": getattr(resp.choices[0], "finish_reason", None),
+        "usage": {
+            "prompt_tokens": getattr(usage, "prompt_tokens", None),
+            "completion_tokens": getattr(usage, "completion_tokens", None),
+            "total_tokens": getattr(usage, "total_tokens", None),
+            "cached_prompt_tokens": getattr(
+                getattr(usage, "prompt_tokens_details", None), "cached_tokens", None
+            ),
+        },
+        "tool_calls": 0,
+    })
+    return extract_answer(content), codes, content, {
+        "provider_receipts": provider_receipts,
+        "tool_traces": tool_traces,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -340,6 +376,12 @@ def parse_args(argv=None):
         help="覆盖模型名（默认取环境变量 MODEL，再退化到供应商默认，如 gpt-5.6-luna）。",
     )
     parser.add_argument(
+        "--provider",
+        choices=["auto", "openai", "openrouter", "moonshot", "ark"],
+        default="auto",
+        help="explicit API provider; recorded in the saved evidence",
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         default=0,
@@ -351,6 +393,10 @@ def parse_args(argv=None):
         default=None,
         metavar="路径",
         help="把逐题结果与汇总写入指定的 JSON 文件。",
+    )
+    parser.add_argument(
+        "--resume", action="store_true",
+        help="resume successful per-arm task evidence from OUTPUT.checkpoint.json",
     )
     parser.add_argument(
         "--selfcheck",
@@ -377,6 +423,123 @@ def load_problems(path):
         return json.load(f)
 
 
+def _wilson(successes, total, z=1.959963984540054):
+    if total <= 0:
+        return [None, None]
+    p = successes / total
+    denominator = 1 + z * z / total
+    center = (p + z * z / (2 * total)) / denominator
+    half = z * math.sqrt(p * (1 - p) / total + z * z / (4 * total * total)) / denominator
+    return [center - half, center + half]
+
+
+def paired_statistics(rows):
+    """Two-sided exact McNemar/binomial comparison for the paired arms."""
+    cot_only = sum(r["cot_ok"] and not r["code_ok"] for r in rows)
+    code_only = sum(not r["cot_ok"] and r["code_ok"] for r in rows)
+    discordant = cot_only + code_only
+    if discordant:
+        tail = sum(math.comb(discordant, i) for i in range(min(cot_only, code_only) + 1))
+        p_value = min(1.0, 2 * tail / (2 ** discordant))
+    else:
+        p_value = 1.0
+    n = len(rows)
+    cot_ok = sum(r["cot_ok"] for r in rows)
+    code_ok = sum(r["code_ok"] for r in rows)
+    cot_accuracy = cot_ok / n if n > 0 else 0.0
+    code_accuracy = code_ok / n if n > 0 else 0.0
+    library_rate = sum(r["used_math_library"] for r in rows) / n if n > 0 else 0.0
+    return {
+        "test": "two-sided exact McNemar/binomial test on discordant pairs",
+        "n": n,
+        "contingency": {"cot_only": cot_only, "code_only": code_only,
+                        "discordant": discordant},
+        "cot_accuracy": cot_accuracy,
+        "code_accuracy": code_accuracy,
+        "accuracy_delta": code_accuracy - cot_accuracy,
+        "code_accuracy_wilson_95": _wilson(code_ok, n),
+        "p_value": p_value,
+        "math_library_use_rate": library_rate,
+        "acceptance": {
+            "code_significantly_higher_than_cot": (
+                code_accuracy > cot_accuracy and p_value < 0.05
+            ),
+            "at_least_one_generated_solution_used_sympy_numpy_or_scipy": library_rate > 0,
+            "every_code_arm_called_sandbox": all(r["tool_calls"] > 0 for r in rows),
+        },
+    }
+
+
+def campaign_completion(rows, mode, manifest):
+    """Separate protocol completion from the observed accuracy hypothesis.
+
+    A negative paired result is still a completed experiment. Completion is
+    therefore based on exact dataset coverage, successful provider evidence,
+    and actual sandbox execution; ``paired_statistics`` reports whether the
+    expected performance direction was reproduced.
+    """
+    observed_ids = [str(row.get("id")) for row in rows]
+    expected_urls = {
+        "https://artofproblemsolving.com/wiki/index.php/"
+        f"2024_AIME_{division}_Problems/Problem_{number}"
+        for division in ("I", "II")
+        for number in range(1, 16)
+    }
+    observed_urls = {
+        (row.get("source") or {}).get("problem_url") for row in rows
+    }
+    cot_required = mode in ("both", "cot")
+    code_required = mode in ("both", "code")
+    cot_complete = all(
+        bool(row.get("cot_evidence")) and not row.get("cot_error")
+        for row in rows
+    ) if cot_required else True
+    code_complete = all(
+        bool(row.get("code_evidence")) and not row.get("code_error")
+        for row in rows
+    ) if code_required else True
+    every_code_used_sandbox = all(
+        int(row.get("tool_calls") or 0) > 0 for row in rows
+    ) if code_required else True
+    manifest_is_exact = bool(
+        manifest
+        and manifest.get("dataset") == "HuggingFaceH4/aime_2024"
+        and manifest.get("revision")
+        == "2fe88a2f1091d5048c0f36abc874fb997b3dd99a"
+        and manifest.get("source_sha256")
+        == "26139847601a5037c237d5928b195e7260ca8074cf4f264b794af42847f79ccf"
+        and manifest.get("problems") == 30
+        and manifest.get("selection")
+        == "all published AIME I and AIME II 2024 problems"
+    )
+    exact_task_coverage = (
+        len(rows) == 30
+        and len(set(observed_ids)) == 30
+        and observed_urls == expected_urls
+    )
+    errors = [
+        {"id": row.get("id"), "arm": arm, "error": row.get(f"{arm}_error")}
+        for row in rows
+        for arm in ("cot", "code")
+        if row.get(f"{arm}_error")
+    ]
+    checks = {
+        "exact_pinned_aime_2024_manifest": manifest_is_exact,
+        "all_30_unique_aime_i_and_ii_tasks": exact_task_coverage,
+        "all_required_cot_trajectories_complete": cot_complete,
+        "all_required_code_trajectories_complete": code_complete,
+        "zero_provider_errors": not errors,
+        "every_code_trajectory_called_real_sandbox": every_code_used_sandbox,
+    }
+    return {
+        "status": "complete" if all(checks.values()) else "incomplete",
+        "checks": checks,
+        "expected_task_count": 30,
+        "observed_task_count": len(rows),
+        "provider_errors": errors,
+    }
+
+
 def main(argv=None):
     args = parse_args(argv)
 
@@ -388,11 +551,21 @@ def main(argv=None):
     if args.selfcheck:
         return run_selfcheck(problems, verbose=args.verbose)
 
-    client, model = build_client_and_model(model_override=args.model)
+    client, model, provider = build_client_and_model(
+        model_override=args.model, provider=args.provider
+    )
 
     run_cot = args.mode in ("both", "cot")
     run_code = args.mode in ("both", "code")
-    print(f"模型: {model}   题目数: {len(problems)}   模式: {args.mode}\n")
+    print(f"供应商: {provider}   模型: {model}   题目数: {len(problems)}   模式: {args.mode}\n")
+
+    checkpoint_path = Path(str(args.output) + ".checkpoint.json") if args.output else None
+    resumed = {}
+    if args.resume and checkpoint_path and checkpoint_path.is_file():
+        prior = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+        if prior.get("model") != model or prior.get("provider") != provider:
+            raise ValueError("resume rejected: provider/model changed")
+        resumed = {row["id"]: row for row in prior.get("rows", [])}
 
     rows = []
     cot_correct = code_correct = 0
@@ -400,18 +573,79 @@ def main(argv=None):
         q, truth = p["question"], p["answer"]
         print(f"[{p['id']:>2}] {p['topic']}  (真值={truth})")
 
-        cot_pred = code_pred = None
-        cot_ok = code_ok = False
-        n_calls = 0
+        row = resumed.get(p["id"], {
+            "id": p["id"], "topic": p["topic"], "answer": truth,
+            "question": q, "source": p.get("source"),
+        })
+
+        def persist_checkpoint():
+            if checkpoint_path is None:
+                return
+            ordered = [
+                row if item["id"] == p["id"] else item
+                for item in rows
+            ]
+            if not any(item["id"] == p["id"] for item in ordered):
+                ordered.append(row)
+            checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+            checkpoint_path.write_text(json.dumps({
+                "schema_version": "1.0", "experiment": "5-1",
+                "provider": provider, "model": model, "rows": ordered,
+            }, ensure_ascii=False, indent=2), encoding="utf-8")
+
         if run_cot:
-            cot_pred, _, _ = solve(client, model, q, use_code=False, verbose=args.verbose)
-            cot_ok = cot_pred == truth
-            cot_correct += cot_ok
+            if not row.get("cot_evidence") or row.get("cot_error"):
+                started = time.monotonic()
+                try:
+                    cot_pred, _, cot_text, cot_evidence = solve(
+                        client, model, q, use_code=False, verbose=args.verbose
+                    )
+                    row.update({
+                        "cot_pred": cot_pred, "cot_ok": cot_pred == truth,
+                        "cot_text": cot_text,
+                        "cot_duration_s": round(time.monotonic() - started, 3),
+                        "cot_evidence": cot_evidence, "cot_error": None,
+                    })
+                except Exception as exc:  # provider errors remain explicit and resumable
+                    row.update({
+                        "cot_pred": None, "cot_ok": False,
+                        "cot_duration_s": round(time.monotonic() - started, 3),
+                        "cot_error": f"{type(exc).__name__}: {exc}",
+                    })
+            persist_checkpoint()
         if run_code:
-            code_pred, codes, _ = solve(client, model, q, use_code=True, verbose=args.verbose)
-            code_ok = code_pred == truth
-            code_correct += code_ok
-            n_calls = len(codes)
+            if not row.get("code_evidence") or row.get("code_error"):
+                started = time.monotonic()
+                try:
+                    code_pred, codes, code_text, code_evidence = solve(
+                        client, model, q, use_code=True, verbose=args.verbose
+                    )
+                    row.update({
+                        "code_pred": code_pred, "code_ok": code_pred == truth,
+                        "code_text": code_text,
+                        "code_duration_s": round(time.monotonic() - started, 3),
+                        "generated_code": codes,
+                        "code_evidence": code_evidence, "code_error": None,
+                        "tool_calls": len(codes),
+                        "used_math_library": any(
+                            re.search(r"\b(sympy|numpy|scipy)\b", code, re.IGNORECASE)
+                            for code in codes
+                        ),
+                    })
+                except Exception as exc:
+                    row.update({
+                        "code_pred": None, "code_ok": False,
+                        "code_duration_s": round(time.monotonic() - started, 3),
+                        "code_error": f"{type(exc).__name__}: {exc}",
+                        "tool_calls": 0, "used_math_library": False,
+                    })
+            persist_checkpoint()
+
+        cot_pred, cot_ok = row.get("cot_pred"), bool(row.get("cot_ok"))
+        code_pred, code_ok = row.get("code_pred"), bool(row.get("code_ok"))
+        n_calls = int(row.get("tool_calls") or 0)
+        cot_correct += cot_ok if run_cot else 0
+        code_correct += code_ok if run_code else 0
 
         parts = []
         if run_cot:
@@ -422,18 +656,8 @@ def main(argv=None):
                 f"   (工具调用 {n_calls} 次)"
             )
         print("     " + "   |  ".join(parts))
-        rows.append(
-            {
-                "id": p["id"],
-                "topic": p["topic"],
-                "answer": truth,
-                "cot_pred": cot_pred,
-                "cot_ok": bool(cot_ok),
-                "code_pred": code_pred,
-                "code_ok": bool(code_ok),
-                "tool_calls": n_calls,
-            }
-        )
+        rows.append(row)
+        persist_checkpoint()
 
     # ---- 汇总表 ----
     n = len(problems)
@@ -472,15 +696,42 @@ def main(argv=None):
 
     # ---- 可选：写出 JSON 结果 ----
     if args.output:
+        problem_path = Path(args.problems)
+        if not problem_path.is_absolute():
+            problem_path = Path(__file__).resolve().parent / problem_path
+        manifest_path = problem_path.with_name(problem_path.stem + ".manifest.json")
+        manifest = (
+            json.loads(manifest_path.read_text(encoding="utf-8"))
+            if manifest_path.is_file() else None
+        )
         summary = {
+            "schema_version": "2.0",
+            "experiment": "5-1",
+            "generated_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
+            "provider": provider,
             "model": model,
             "mode": args.mode,
             "num_problems": n,
+            "dataset_manifest": manifest,
+            "dataset_manifest_sha256": (
+                hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+                if manifest_path.is_file() else None
+            ),
             "cot_correct": cot_correct if run_cot else None,
             "code_correct": code_correct if run_code else None,
             "rows": rows,
         }
-        with open(args.output, "w", encoding="utf-8") as f:
+        summary["completion"] = campaign_completion(
+            rows, args.mode, manifest
+        )
+        summary["official_complete"] = (
+            summary["completion"]["status"] == "complete"
+        )
+        if run_cot and run_code:
+            summary["paired_analysis"] = paired_statistics(rows)
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with output_path.open("w", encoding="utf-8") as f:
             json.dump(summary, f, ensure_ascii=False, indent=2)
         print(f"\n结果已写入：{args.output}")
 

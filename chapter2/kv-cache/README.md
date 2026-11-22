@@ -1,11 +1,321 @@
 # KV Cache Demonstration / KV Cache 与错误上下文管理模式
 
+两轮请求大部分内容相同，第二轮为什么有时仍然很慢？本实验从消息组织方式入手，观察缓存能否复用，以及看似无关的上下文改动怎样影响成本。
+
+[English](#english)
+
+建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3) → [阅读实现与继续探索](#learning-4) → [排查问题与查阅资料](#learning-5)。
+
+<a id="learning-0"></a>
+
+## 理解问题与方法
+
+因果模型在生成后续词元时可以复用前缀的计算。若每轮都改写前面的系统消息、重排工具定义或移动历史窗口，原来相同的前缀就可能变短。缓存复用关注的是实际输入序列，而不是两段文字在人看来是否意思相同。
+
+### 概述
+
+用带本地文件系统工具的 ReAct Agent，展示 **KV（Key-Value）Cache** 在六种实现模式（一种正确、五种错误）下的利用率差异。看似无害的改动可能让缓存失效，显著拖慢延迟并推高成本。
+
+默认模型：Moonshot Kimi 系列（默认 `kimi-k2.6`），标准 OpenAI 工具调用格式。
+
+> **模型说明。** 线上 Moonshot 当前 Kimi 族（`kimi-k2.5` / `kimi-k2.6` / `kimi-k2.7*` / `kimi-k3`）均为*推理*模型：会吐 `reasoning_content`，且只接受 `temperature=1`（代码已自动处理）。它们**会上报** `cached_tokens`，本实验正依赖此指标。旧版非推理 `moonshot-v1-*` **不上报** `cached_tokens`，无法展示缓存效应。默认 `kimi-k2.6` 能报缓存命中且推理开销较轻（TTFT 噪声更小）。请以 **缓存命中率 / 缓存比例** 为稳健信号，TTFT 作辅助。
+
+#### 什么是 KV Cache？
+
+KV Cache 存储注意力机制中的键值对。对话上下文稳定时，可复用这些缓存值，显著减少计算并改善 TTFT（首 token 延迟）。
+
+### 功能
+
+- ReAct Agent + 标准 OpenAI 工具调用
+- 安全本地工具：`read_file`、`find`、`grep`
+- 工具失败以结果回传并继续执行
+- 六种模式：正确 + 五种反模式
+- 指标：TTFT、总时间、缓存命中/未命中、token
+- 离线对比报告（`--report`）从已保存 JSON 生成——无需 API Key
+- 通过 `--cache-price-ratio` 做成本示意
+- 详细日志与智能收尾（无工具调用即视为最终答案）
+
+### 实现模式
+
+#### 1. 正确实现（`correct`）
+全程稳定上下文：固定系统提示、一致工具顺序、稳定消息格式、无无谓上下文改动。
+
+#### 2. 动态系统提示（`dynamic_system`）
+每次请求在系统提示中加时间戳 → 整表重建 → 缓存失效、TTFT 上升。
+
+#### 3. 打乱工具列表（`shuffled_tools`）
+每次随机工具顺序 → 功能相同仍破坏缓存。
+
+#### 4. 动态用户资料（`dynamic_profile`）
+每轮把变化的用户额度塞进上下文 → 无关动态导致失效（常见生产反模式）。
+
+#### 5. 滑动窗口（`sliding_window`）
+只保留最近 5 条消息 → 看似更短，实则打断缓存连续性。
+
+#### 6. 纯文本格式（`text_format`）
+历史写成纯文本而非结构化消息 → 破坏约定格式与缓存。
+
+### 关键实现细节
+
+错误模式要**真正**使 KV Cache 失效，必须在**每一轮迭代开始时**整表重建 messages。
+
+1. **CORRECT：** 首次构建 messages，之后只在同一列表上追加 assistant/tool → 前缀稳定 → 缓存生效。  
+2. **错误模式：** 每轮开始从对话历史重建整个 messages（轮内仍追加 tool 结果以保证 API 流正确）→ 下一轮从新列表开始 → 缓存失效。
+
+两模式在轮内都会追加 tool 结果；差异在于下一轮是否丢弃并重建列表。
+
+### 示例输出
+
+```
+📊 Performance Metrics:
+  • Time to First Token (TTFT): 0.823 seconds
+  • TTFT per iteration:
+      Iteration 1: 0.823s
+      Iteration 2: 0.234s (with cache)
+      ...
+  • TTFT Analysis:
+      First iteration: 0.823s
+      Last iteration: 0.192s
+      Average (after first): 0.203s
+      Improvement: 76.7%
+```
+
+### 架构
+
+```
+kv-cache/
+├── agent.py                # ReAct Agent + 各模式
+├── main.py                 # 实验入口 CLI
+├── tests/                  # 离线 pytest 回归测试
+│   └── manual/             # 真实 API 冒烟脚本，不被 pytest 收集
+├── requirements.txt
+├── README.md
+├── result_*.json           # 支持离线 --report 的保留结果
+└── kv_cache_demo.log
+```
+
+**组件：** `KVCacheAgent`、`LocalFileTools`、`KVCacheMode`、`AgentMetrics`。
+
+**错误处理：** 工具/参数错误以结果回传；失败后继续；拒绝根目录外访问。
+
+<a id="learning-1"></a>
+
+## 准备环境与输入
+
+先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+
+### 安装
+
+```bash
+# 在仓库根目录使用统一的第 2 章环境
+uv sync --locked --python 3.12 --extra ch2
+
+# 切换目录前先激活环境：
+# macOS/Linux：
+source .venv/bin/activate
+# Windows PowerShell：.venv\Scripts\Activate.ps1
+# Windows cmd：.venv\Scripts\activate.bat
+
+# 未安装 uv 时可用 pip 兜底：
+# python -m pip install -e ".[ch2]"
+
+cd chapter2/kv-cache
+
+# 迁移期间仍支持单项目兼容路径：
+# python -m pip install -r requirements.txt
+
+cp env.example .env                  # 编辑 .env，填入 API Key
+# 或 export MOONSHOT_API_KEY="your-api-key-here"
+```
+
+> **通用回退（OpenRouter）**：未设置 `MOONSHOT_API_KEY` / `KIMI_API_KEY` 时，只要配置了 `OPENROUTER_API_KEY`，实验会自动改走 OpenRouter（`kimi-*` 会映射为 `moonshotai/kimi-k2`）。设置了 Moonshot key 时行为完全不变。
+
+### 进阶配置
+
+```bash
+export MOONSHOT_API_KEY="your-key"
+export LOG_LEVEL="DEBUG"  # INFO, WARNING, ERROR
+```
+
+可在 `agent.py` 扩展 `KVCacheMode`，并实现 `_get_system_prompt()` / `_get_tools()` / `_format_messages()`。
+
+<a id="learning-2"></a>
+
+## 按照步骤完成实验
+
+先用下方命令读取目录中已有的结果，不发模型请求。对照缓存命中和输入量，再阅读 `agent.py` 中不同模式怎样构造消息。需要重新测量时，按下文配置模型，在同一任务上分别运行正确模式和一种改动模式。
+
+### 用法
+
+#### 交互模式（默认）
+
+```bash
+python main.py
+# 菜单：1–6 模式，7 全部对比，0 退出
+```
+
+#### 命令行参数
+
+中文 `--help`：`python main.py --help`。主要参数：
+
+| 参数 | 说明 |
+|------|------|
+| `--mode MODE` | 单个策略（correct / dynamic_system / shuffled_tools / dynamic_profile / sliding_window / text_format） |
+| `--compare` | 依次运行全部策略并打印横向对比表（需要 API Key） |
+| `--report` | **离线**：从已保存的 `result_*.json` / `comparison_*.json` 生成对比表，**无需 API Key** |
+| `--input ...` | 配合 `--report` 指定结果文件 / 通配符 / 目录（默认扫描当前目录） |
+| `--model MODEL` | 默认 `kimi-k2.6`（会上报 `cached_tokens` 的同族模型亦可） |
+| `--output PATH` | 结果 JSON 路径（默认按模式 + 时间戳命名） |
+| `--cache-price-ratio R` | 缓存 token 相对正常 token 的计费比例示意（默认 `0.1`） |
+| `--task`, `--root-dir` | 自定义任务 / 文件工具根目录 |
+
+```bash
+python main.py --mode correct
+python main.py --mode sliding_window --model kimi-k2.6 --output run.json
+python main.py --compare
+python main.py --no-interactive --mode correct
+```
+
+#### 离线对比报告（无需 API Key）
+
+```bash
+python main.py --report
+python main.py --report --input result_correct_*.json result_text_format_*.json
+python main.py --report --cache-price-ratio 0.5
+```
+
+对比表包含缓存命中率、缓存比例、TTFT、总时间，以及示意性的可计费 token / 节省比例。兼容旧版 `AgentMetrics(...)` 字符串指标与新版 dict 格式。
+
+> `Bill.Tok` / `Save%` 是实测 token 与 `--cache-price-ratio` 的透明函数——仅作成本示意，非某一厂商报价。
+
+#### 自定义任务
+
+```bash
+python main.py --mode correct --task "Read all README files and summarize their contents"
+python main.py --mode correct --root-dir ../.. --task "Analyze the project structure"
+```
+
+### 测试与手动检查
+
+离线回归测试位于 `tests/`，不需要 API Key：
+
+```bash
+uv sync --locked --python 3.12 --extra ch2 --extra dev
+source .venv/bin/activate
+cd chapter2/kv-cache
+python -m pytest tests
+```
+
+需要真实 API 的冒烟脚本和演示位于 `tests/manual/`。这些文件使用
+`check_*.py` 或 `demo_*.py` 命名，因此不会被 pytest 默认收集：
+
+```bash
+MOONSHOT_API_KEY="your-key" python tests/manual/demo_quick.py
+MOONSHOT_API_KEY="your-key" python tests/manual/check_tool_calling.py
+MOONSHOT_API_KEY="your-key" python tests/manual/check_cache_invalidation.py
+MOONSHOT_API_KEY="your-key" python tests/manual/check_agent_error_recovery.py
+```
+
+<a id="learning-3"></a>
+
+## 分析结果与形成判断
+
+缓存命中量、延迟和价格是相关但不同的量。延迟还受网络与服务负载影响；费用计算取决于提供商如何计价。不要用一次更快的响应证明缓存有效，也不要把估算价格当作账单。
+
+### 把缓存命中与任务表现分开记录
+
+先检查两次请求是否共享完全相同的前缀，再看缓存相关的 token 统计、首个响应的等待时间与总耗时。不同服务可能采用不同的计费与缓存报告方式，因此下面的对比表需要连同实现模式一起读。一次更快的请求也可能受到网络和服务负载影响；重复运行并保留输入长度，才能更有把握地解释缓存的作用。
+
+### 指标说明
+
+**性能：** TTFT（按迭代；冷启动 vs 有缓存）、平均 TTFT、改善百分比、总时间、迭代次数、工具调用次数。
+
+**缓存：** 缓存 token、命中、未命中、命中率。
+
+**Token：** 提示 / 补全 token；**缓存比例** = 来自缓存的 prompt token 占比。
+
+### 预期结果
+
+1. **正确实现：** 第一轮之后上报缓存 token；TTFT 更稳；稳定前缀由缓存服务。  
+2. **错误实现：** **缓存比例**崩塌（如打乱工具可将比例降到正确模式约 1/3）；TTFT 更高（text_format / 打乱工具可让首 token 延迟翻倍以上）；总时间更长（实测 `text_format` 可达约 2.4×）。
+
+> 推理模型上 TTFT 因隐藏思考 token 方差更大——**缓存比例**是最干净的证据。把动态数据接在**已稳定前缀末尾**（`dynamic_system` / `dynamic_profile`）只会从改动点起失效——前缀前半仍可能命中，因此标题缓存比例可能接近 `correct`，但总时间仍变差。教训：动态数据不要进入前缀。
+
+### 对比表（对本目录已保存结果执行 `--report`）
+
+一次 `--compare` 真实测得（`kimi-k2.6`，根目录为本文件夹，任务为查找 Python 文件 / 读 `main.py` + `agent.py` / 用 3 句话总结），再 `python main.py --report`：
+
+```
+Mode             Iters  1st TTFT   Avg TTFT   Total(s)   Prompt    Cached    Hit%    Cache%   Bill.Tok   Save%
+----------------------------------------------------------------------------------------------------------------
+correct          3      2.328      6.054      18.163     7,567     768       100.0   10.1     6,876      9.1
+dynamic_profile  3      2.206      5.986      17.962     7,652     768       100.0   10.0     6,961      9.0
+dynamic_system   3      2.497      8.085      24.260     7,639     768       100.0   10.1     6,948      9.0
+shuffled_tools   3      7.818      11.122     33.369     7,568     256       100.0   3.4      7,338      3.0
+sliding_window   5      2.234      3.649      14.704     2,224     1,510     100.0   67.9     865        61.1
+text_format      3      6.189      14.432     43.297     7,430     674       100.0   9.1      6,823      8.2
+```
+
+解读：`shuffled_tools` 打乱靠前的工具定义 → **缓存比例 10.1% → 3.4%**，首 TTFT 约 2.3s → 7.8s。`text_format` 总时间约 **2.4×**。`sliding_window` 高比例只因提示词被截断（小提示词上的高比例 ≠ 高效运行）。
+
+`Cache%` = 来自缓存的 prompt token 占比；`Hit%` = 出现任意缓存的*迭代*占比。用 `python main.py --compare` 重跑复现。
+
+### 关键洞察
+
+1. 稳定上下文至关重要  
+2. 顺序也重要（相同内容重排也会破缓存）  
+3. 前缀中避免动态元数据  
+4. 使用 API 期望的结构化消息格式  
+5. 完整历史往往比激进截断更利于缓存
+
+### 检查自己的解释
+
+如果只在消息末尾追加状态信息，与每轮改写系统提示词中的状态，缓存表现会有什么不同？
+
+<a id="learning-4"></a>
+
+## 阅读实现与继续探索
+
+### 项目说明
+
 > Companion material for *AI Agents in Depth*, Chapter 2 — **Experiment 2-3 ★★: Common but harmful context management patterns**.  
 > 配套《深入理解 AI Agent》第 2 章 **实验 2-3 ★★：常见的错误上下文管理模式**。
 
 ← [Chapter 2 index / 返回第 2 章目录](../README.md)
 
 ---
+
+### KV Cache 最佳实践
+
+1. 系统提示保持稳定  
+2. 工具顺序固定  
+3. 前缀中避免计数器/额度/时间戳  
+4. 使用正确的消息结构  
+5. 优先保持连续性，慎用激进截断  
+6. 从设计上考虑缓存友好
+
+<a id="learning-5"></a>
+
+## 排查问题与查阅资料
+
+### 故障排除
+
+- **正确模式 TTFT 仍高：** 首请求冷启动；检查 key / 网络 / 模型  
+- **缓存命中为零：** 使用会上报 `cached_tokens` 的当前 Kimi 模型（非 `moonshot-v1-*`）；确认上下文确实稳定  
+- **工具执行错误：** 权限、路径在 root 内、文件可读
+
+### 参考
+
+- [Kimi API Documentation](https://platform.moonshot.cn/docs/api-reference)
+- [ReAct Pattern Paper](https://arxiv.org/abs/2210.03629)
+- [Transformer KV Cache Explanation](https://huggingface.co/docs/transformers/kv_cache)
+
+---
+
+## Notes / 说明
+
+- Saved `result_*.json` in this directory enable offline `--report` without spending API quota.  
+- 本目录随附的 `result_*.json` 支持离线 `--report`，无需消耗 API 额度。
 
 ## English
 
@@ -64,8 +374,23 @@ Both modes append tool results within an iteration so the API sees a complete tu
 ### Installation
 
 ```bash
+# From the repository root: use the shared Chapter 2 environment
+uv sync --locked --python 3.12 --extra ch2
+
+# Activate it before changing directories:
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# Windows cmd: .venv\Scripts\activate.bat
+
+# pip fallback when uv is not installed:
+# python -m pip install -e ".[ch2]"
+
 cd chapter2/kv-cache
-pip install -r requirements.txt
+
+# Single-project compatibility path, still supported during migration:
+# python -m pip install -r requirements.txt
+
 cp env.example .env                  # edit .env with your key
 # Or export MOONSHOT_API_KEY="your-api-key-here"
 ```
@@ -122,6 +447,27 @@ The table compares cache hit rate, cache ratio, TTFT, total time, and illustrati
 ```bash
 python main.py --mode correct --task "Read all README files and summarize their contents"
 python main.py --mode correct --root-dir ../.. --task "Analyze the project structure"
+```
+
+### Tests and manual checks
+
+Offline regressions live under `tests/` and do not require API keys:
+
+```bash
+uv sync --locked --python 3.12 --extra ch2 --extra dev
+source .venv/bin/activate
+cd chapter2/kv-cache
+python -m pytest tests
+```
+
+Live smoke checks and demonstrations live under `tests/manual/`. They are not
+collected by pytest because their filenames use `check_*.py` or `demo_*.py`:
+
+```bash
+MOONSHOT_API_KEY="your-key" python tests/manual/demo_quick.py
+MOONSHOT_API_KEY="your-key" python tests/manual/check_tool_calling.py
+MOONSHOT_API_KEY="your-key" python tests/manual/check_cache_invalidation.py
+MOONSHOT_API_KEY="your-key" python tests/manual/check_agent_error_recovery.py
 ```
 
 ### Metrics
@@ -188,11 +534,12 @@ Reading: `shuffled_tools` reorders tool definitions near the front of the prefix
 kv-cache/
 ├── agent.py                # ReAct agent + modes
 ├── main.py                 # Experiment runner CLI
-├── demo_quick.py
-├── test_*.py
+├── tests/                  # offline pytest regressions
+│   └── manual/             # live/API smoke checks, not collected by pytest
 ├── requirements.txt
 ├── README.md
-└── *.log
+├── result_*.json           # retained receipts for offline --report
+└── kv_cache_demo.log
 ```
 
 **Components:** `KVCacheAgent`, `LocalFileTools`, `KVCacheMode`, `AgentMetrics`.
@@ -230,230 +577,3 @@ Extend `KVCacheMode` in `agent.py` and implement `_get_system_prompt()` / `_get_
 - [Transformer KV Cache Explanation](https://huggingface.co/docs/transformers/kv_cache)
 
 ---
-
-## 中文
-
-### 概述
-
-用带本地文件系统工具的 ReAct Agent，展示 **KV（Key-Value）Cache** 在六种实现模式（一种正确、五种错误）下的利用率差异。看似无害的改动可能让缓存失效，显著拖慢延迟并推高成本。
-
-默认模型：Moonshot Kimi 系列（默认 `kimi-k2.6`），标准 OpenAI 工具调用格式。
-
-> **模型说明。** 线上 Moonshot 当前 Kimi 族（`kimi-k2.5` / `kimi-k2.6` / `kimi-k2.7*` / `kimi-k3`）均为*推理*模型：会吐 `reasoning_content`，且只接受 `temperature=1`（代码已自动处理）。它们**会上报** `cached_tokens`，本实验正依赖此指标。旧版非推理 `moonshot-v1-*` **不上报** `cached_tokens`，无法展示缓存效应。默认 `kimi-k2.6` 能报缓存命中且推理开销较轻（TTFT 噪声更小）。请以 **缓存命中率 / 缓存比例** 为稳健信号，TTFT 作辅助。
-
-#### 什么是 KV Cache？
-
-KV Cache 存储注意力机制中的键值对。对话上下文稳定时，可复用这些缓存值，显著减少计算并改善 TTFT（首 token 延迟）。
-
-### 功能
-
-- ReAct Agent + 标准 OpenAI 工具调用
-- 安全本地工具：`read_file`、`find`、`grep`
-- 工具失败以结果回传并继续执行
-- 六种模式：正确 + 五种反模式
-- 指标：TTFT、总时间、缓存命中/未命中、token
-- 离线对比报告（`--report`）从已保存 JSON 生成——无需 API Key
-- 通过 `--cache-price-ratio` 做成本示意
-- 详细日志与智能收尾（无工具调用即视为最终答案）
-
-### 实现模式
-
-#### 1. 正确实现（`correct`）
-全程稳定上下文：固定系统提示、一致工具顺序、稳定消息格式、无无谓上下文改动。
-
-#### 2. 动态系统提示（`dynamic_system`）
-每次请求在系统提示中加时间戳 → 整表重建 → 缓存失效、TTFT 上升。
-
-#### 3. 打乱工具列表（`shuffled_tools`）
-每次随机工具顺序 → 功能相同仍破坏缓存。
-
-#### 4. 动态用户资料（`dynamic_profile`）
-每轮把变化的用户额度塞进上下文 → 无关动态导致失效（常见生产反模式）。
-
-#### 5. 滑动窗口（`sliding_window`）
-只保留最近 5 条消息 → 看似更短，实则打断缓存连续性。
-
-#### 6. 纯文本格式（`text_format`）
-历史写成纯文本而非结构化消息 → 破坏约定格式与缓存。
-
-### 关键实现细节
-
-错误模式要**真正**使 KV Cache 失效，必须在**每一轮迭代开始时**整表重建 messages。
-
-1. **CORRECT：** 首次构建 messages，之后只在同一列表上追加 assistant/tool → 前缀稳定 → 缓存生效。  
-2. **错误模式：** 每轮开始从对话历史重建整个 messages（轮内仍追加 tool 结果以保证 API 流正确）→ 下一轮从新列表开始 → 缓存失效。
-
-两模式在轮内都会追加 tool 结果；差异在于下一轮是否丢弃并重建列表。
-
-### 安装
-
-```bash
-cd chapter2/kv-cache
-pip install -r requirements.txt
-cp env.example .env                  # 编辑 .env，填入 API Key
-# 或 export MOONSHOT_API_KEY="your-api-key-here"
-```
-
-> **通用回退（OpenRouter）**：未设置 `MOONSHOT_API_KEY` / `KIMI_API_KEY` 时，只要配置了 `OPENROUTER_API_KEY`，实验会自动改走 OpenRouter（`kimi-*` 会映射为 `moonshotai/kimi-k2`）。设置了 Moonshot key 时行为完全不变。
-
-### 用法
-
-#### 交互模式（默认）
-
-```bash
-python main.py
-# 菜单：1–6 模式，7 全部对比，0 退出
-```
-
-#### 命令行参数
-
-中文 `--help`：`python main.py --help`。主要参数：
-
-| 参数 | 说明 |
-|------|------|
-| `--mode MODE` | 单个策略（correct / dynamic_system / shuffled_tools / dynamic_profile / sliding_window / text_format） |
-| `--compare` | 依次运行全部策略并打印横向对比表（需要 API Key） |
-| `--report` | **离线**：从已保存的 `result_*.json` / `comparison_*.json` 生成对比表，**无需 API Key** |
-| `--input ...` | 配合 `--report` 指定结果文件 / 通配符 / 目录（默认扫描当前目录） |
-| `--model MODEL` | 默认 `kimi-k2.6`（会上报 `cached_tokens` 的同族模型亦可） |
-| `--output PATH` | 结果 JSON 路径（默认按模式 + 时间戳命名） |
-| `--cache-price-ratio R` | 缓存 token 相对正常 token 的计费比例示意（默认 `0.1`） |
-| `--task`, `--root-dir` | 自定义任务 / 文件工具根目录 |
-
-```bash
-python main.py --mode correct
-python main.py --mode sliding_window --model kimi-k2.6 --output run.json
-python main.py --compare
-python main.py --no-interactive --mode correct
-```
-
-#### 离线对比报告（无需 API Key）
-
-```bash
-python main.py --report
-python main.py --report --input result_correct_*.json result_text_format_*.json
-python main.py --report --cache-price-ratio 0.5
-```
-
-对比表包含缓存命中率、缓存比例、TTFT、总时间，以及示意性的可计费 token / 节省比例。兼容旧版 `AgentMetrics(...)` 字符串指标与新版 dict 格式。
-
-> `Bill.Tok` / `Save%` 是实测 token 与 `--cache-price-ratio` 的透明函数——仅作成本示意，非某一厂商报价。
-
-#### 自定义任务
-
-```bash
-python main.py --mode correct --task "Read all README files and summarize their contents"
-python main.py --mode correct --root-dir ../.. --task "Analyze the project structure"
-```
-
-### 指标说明
-
-**性能：** TTFT（按迭代；冷启动 vs 有缓存）、平均 TTFT、改善百分比、总时间、迭代次数、工具调用次数。
-
-**缓存：** 缓存 token、命中、未命中、命中率。
-
-**Token：** 提示 / 补全 token；**缓存比例** = 来自缓存的 prompt token 占比。
-
-### 预期结果
-
-1. **正确实现：** 第一轮之后上报缓存 token；TTFT 更稳；稳定前缀由缓存服务。  
-2. **错误实现：** **缓存比例**崩塌（如打乱工具可将比例降到正确模式约 1/3）；TTFT 更高（text_format / 打乱工具可让首 token 延迟翻倍以上）；总时间更长（实测 `text_format` 可达约 2.4×）。
-
-> 推理模型上 TTFT 因隐藏思考 token 方差更大——**缓存比例**是最干净的证据。把动态数据接在**已稳定前缀末尾**（`dynamic_system` / `dynamic_profile`）只会从改动点起失效——前缀前半仍可能命中，因此标题缓存比例可能接近 `correct`，但总时间仍变差。教训：动态数据不要进入前缀。
-
-### 示例输出
-
-```
-📊 Performance Metrics:
-  • Time to First Token (TTFT): 0.823 seconds
-  • TTFT per iteration:
-      Iteration 1: 0.823s
-      Iteration 2: 0.234s (with cache)
-      ...
-  • TTFT Analysis:
-      First iteration: 0.823s
-      Last iteration: 0.192s
-      Average (after first): 0.203s
-      Improvement: 76.7%
-```
-
-### 对比表（对本目录已保存结果执行 `--report`）
-
-一次 `--compare` 真实测得（`kimi-k2.6`，根目录为本文件夹，任务为查找 Python 文件 / 读 `main.py` + `agent.py` / 用 3 句话总结），再 `python main.py --report`：
-
-```
-Mode             Iters  1st TTFT   Avg TTFT   Total(s)   Prompt    Cached    Hit%    Cache%   Bill.Tok   Save%
-----------------------------------------------------------------------------------------------------------------
-correct          3      2.328      6.054      18.163     7,567     768       100.0   10.1     6,876      9.1
-dynamic_profile  3      2.206      5.986      17.962     7,652     768       100.0   10.0     6,961      9.0
-dynamic_system   3      2.497      8.085      24.260     7,639     768       100.0   10.1     6,948      9.0
-shuffled_tools   3      7.818      11.122     33.369     7,568     256       100.0   3.4      7,338      3.0
-sliding_window   5      2.234      3.649      14.704     2,224     1,510     100.0   67.9     865        61.1
-text_format      3      6.189      14.432     43.297     7,430     674       100.0   9.1      6,823      8.2
-```
-
-解读：`shuffled_tools` 打乱靠前的工具定义 → **缓存比例 10.1% → 3.4%**，首 TTFT 约 2.3s → 7.8s。`text_format` 总时间约 **2.4×**。`sliding_window` 高比例只因提示词被截断（小提示词上的高比例 ≠ 高效运行）。
-
-`Cache%` = 来自缓存的 prompt token 占比；`Hit%` = 出现任意缓存的*迭代*占比。用 `python main.py --compare` 重跑复现。
-
-### 关键洞察
-
-1. 稳定上下文至关重要  
-2. 顺序也重要（相同内容重排也会破缓存）  
-3. 前缀中避免动态元数据  
-4. 使用 API 期望的结构化消息格式  
-5. 完整历史往往比激进截断更利于缓存  
-
-### 架构
-
-```
-kv-cache/
-├── agent.py                # ReAct Agent + 各模式
-├── main.py                 # 实验入口 CLI
-├── demo_quick.py
-├── test_*.py
-├── requirements.txt
-├── README.md
-└── *.log
-```
-
-**组件：** `KVCacheAgent`、`LocalFileTools`、`KVCacheMode`、`AgentMetrics`。
-
-**错误处理：** 工具/参数错误以结果回传；失败后继续；拒绝根目录外访问。
-
-### 进阶配置
-
-```bash
-export MOONSHOT_API_KEY="your-key"
-export LOG_LEVEL="DEBUG"  # INFO, WARNING, ERROR
-```
-
-可在 `agent.py` 扩展 `KVCacheMode`，并实现 `_get_system_prompt()` / `_get_tools()` / `_format_messages()`。
-
-### KV Cache 最佳实践
-
-1. 系统提示保持稳定  
-2. 工具顺序固定  
-3. 前缀中避免计数器/额度/时间戳  
-4. 使用正确的消息结构  
-5. 优先保持连续性，慎用激进截断  
-6. 从设计上考虑缓存友好  
-
-### 故障排除
-
-- **正确模式 TTFT 仍高：** 首请求冷启动；检查 key / 网络 / 模型  
-- **缓存命中为零：** 使用会上报 `cached_tokens` 的当前 Kimi 模型（非 `moonshot-v1-*`）；确认上下文确实稳定  
-- **工具执行错误：** 权限、路径在 root 内、文件可读  
-
-### 参考
-
-- [Kimi API Documentation](https://platform.moonshot.cn/docs/api-reference)
-- [ReAct Pattern Paper](https://arxiv.org/abs/2210.03629)
-- [Transformer KV Cache Explanation](https://huggingface.co/docs/transformers/kv_cache)
-
----
-
-## Notes / 说明
-
-- Saved `result_*.json` in this directory enable offline `--report` without spending API quota.  
-- 本目录随附的 `result_*.json` 支持离线 `--report`，无需消耗 API 额度。

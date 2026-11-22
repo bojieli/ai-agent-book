@@ -3,15 +3,25 @@ name: deploy-pages
 on:
   push:
     branches: [main]
+  pull_request:
+    paths:
+      - ".github/workflows/deploy-pages.yml"
+      - "scripts/**"
+      - "tests/test_homepage_index.py"
+      - "index*.md"
+      - "mkdocs.yml"
+      - "extras/**"
+      - "web-astro/**"
+      - "book*/**"
+      - "README*.md"
+      - "docs/*/README.md"
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'deploy' }}
   cancel-in-progress: false
 
 jobs:
@@ -32,16 +42,50 @@ jobs:
           python-version: "3.11"
       - name: Install MkDocs Material
         run: pip install -r requirements-docs.txt
+      - name: Test homepage generation
+        run: |
+          pip install pytest
+          python -m pytest tests/test_homepage_index.py -q
       - name: Assemble docs
         run: bash scripts/build_site.sh
       - name: Build site
         run: mkdocs build -d site
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web-astro/package-lock.json
+      - name: Install Astro dependencies
+        working-directory: web-astro
+        run: npm ci
+      - name: Check and test Astro
+        working-directory: web-astro
+        run: |
+          npm run check
+          npm run build
+          npm test
+      - name: Build Astro for GitHub Pages
+        working-directory: web-astro
+        env:
+          ASTRO_BASE: /${{ github.event.repository.name }}/astro/
+        run: |
+          npm run build
+          npm run check:deployment
+      - name: Include Astro in the Pages artifact
+        run: |
+          mkdir -p site/astro
+          cp -R web-astro/dist/. site/astro/
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
   deploy:
+    # Publishing is owned by the canonical repository; forks still verify builds.
+    if: github.repository == 'bojieli/ai-agent-book' && github.event_name != 'pull_request'
     needs: build
+    permissions:
+      pages: write
+      id-token: write
     runs-on: ubuntu-latest
     environment:
       name: github-pages

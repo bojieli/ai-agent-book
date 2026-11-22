@@ -5,19 +5,18 @@ Designed to demonstrate the importance of context through ablation studies.
 """
 
 import json
-import os
-import re
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 import requests
 from openai import OpenAI
-import PyPDF2
+import pypdf
 from io import BytesIO
 import math
 from datetime import datetime
-from concurrent.futures import TimeoutError
+
+from calc_sandbox import safe_eval
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -30,6 +29,17 @@ def _reasoning_safe_temperature(model, requested=1.0):
     providers (Doubao, DeepSeek, older Moonshot) are unchanged."""
     m = str(model or "").lower().replace("/", "-")
     return 1 if ("kimi-k3" in m or "gpt-5" in m) else requested
+
+
+# Two ways to take the tool results away, which are not the same experiment.
+# MARKER leaves a visible redaction: the model can see that an observation
+# exists and is being withheld, and can decide to stop and say so. EMPTY
+# withholds silently -- the message is there, as the API requires, but it
+# carries nothing, which is what "the tool results are missing" looks like to a
+# model that has no way to tell redaction from an unhelpful tool.
+HIDDEN_RESULT_MARKER = "[Tool result hidden due to context mode]"
+HIDDEN_RESULT_EMPTY = ""
+HIDDEN_RESULT_STYLES = {"marker": HIDDEN_RESULT_MARKER, "empty": HIDDEN_RESULT_EMPTY}
 
 
 class ContextMode(Enum):
@@ -55,6 +65,11 @@ class AgentTrajectory:
     """Tracks the agent's execution trajectory"""
     reasoning_steps: List[str] = field(default_factory=list)
     tool_calls: List[ToolCall] = field(default_factory=list)
+    # Exact, credential-free request/response evidence for every real model
+    # turn.  This is deliberately part of the trajectory: Experiment 1-1 is
+    # about what the model could see at decision time, so reconstructing the
+    # request after the fact is not acceptable evidence.
+    api_turns: List[Dict[str, Any]] = field(default_factory=list)
     context_mode: ContextMode = ContextMode.FULL
 
 
@@ -100,7 +115,7 @@ class ToolRegistry:
             
             # Parse the PDF content
             pdf_file = BytesIO(pdf_content)
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            pdf_reader = pypdf.PdfReader(pdf_file)
             
             text_content = []
             for page_num, page in enumerate(pdf_reader.pages, 1):
@@ -127,7 +142,7 @@ class ToolRegistry:
     @staticmethod
     def convert_currency(amount: float, from_currency: str, to_currency: str) -> Dict[str, Any]:
         """
-        Convert currency using live exchange rates
+        Convert currency using static exchange rates
         
         Args:
             amount: Amount to convert
@@ -138,16 +153,24 @@ class ToolRegistry:
             Dictionary with conversion result
         """
         try:
-            # Normalize currency codes (handle S$ / $ notation). Must be
-            # unconditional: gated on startswith("S$"), the "$" -> USD
-            # replacement could never fire (no "$" survives the S$ replace).
-            from_currency = from_currency.upper().replace("S$", "SGD").replace("$", "USD")
-            to_currency = to_currency.upper().replace("S$", "SGD").replace("$", "USD")
-            
-            logger.info(f"Converting {amount} {from_currency} to {to_currency}")
-            
-            # For demonstration, using fixed rates (in production, use a real API)
-            # These are example rates - you would normally fetch from an API
+            if isinstance(amount, str):
+                clean_amt = amount.replace(",", "").strip()
+                symbols_to_strip = sorted(
+                    [
+                        "USD$", "U.S.$", "US$", "$",
+                        "SGD$", "SG$", "S$",
+                        "AUD$", "AU$", "A$",
+                        "CAD$", "CA$", "C$",
+                        "€", "£", "₹",
+                    ],
+                    key=len,
+                    reverse=True,
+                )
+                for sym in symbols_to_strip:
+                    clean_amt = clean_amt.replace(sym, "")
+                amount = float(clean_amt.strip())
+            else:
+                amount = float(amount)
             exchange_rates = {
                 "USD": 1.0,
                 "EUR": 0.92,
@@ -160,6 +183,47 @@ class ToolRegistry:
                 "INR": 83.12,
                 "SGD": 1.34
             }
+
+            def _normalize_code(code: str) -> str:
+                if not isinstance(code, str):
+                    return str(code or "")
+                c = code.strip().upper()
+                symbols = {
+                    "$": "USD",
+                    "US$": "USD",
+                    "U.S.$": "USD",
+                    "USD$": "USD",
+                    "S$": "SGD",
+                    "SG$": "SGD",
+                    "SGD$": "SGD",
+                    "A$": "AUD",
+                    "AU$": "AUD",
+                    "AUD$": "AUD",
+                    "C$": "CAD",
+                    "CA$": "CAD",
+                    "CAD$": "CAD",
+                    "€": "EUR",
+                    "£": "GBP",
+                    "₹": "INR",
+                }
+                if c in symbols:
+                    return symbols[c]
+                if c.endswith("$"):
+                    prefix = c[:-1].strip()
+                    if prefix in exchange_rates:
+                        return prefix
+                    if prefix in ("US", "U.S."):
+                        return "USD"
+                    if prefix in ("AU", "A"):
+                        return "AUD"
+                    if prefix in ("CA", "C"):
+                        return "CAD"
+                return c
+
+            from_currency = _normalize_code(from_currency)
+            to_currency = _normalize_code(to_currency)
+            
+            logger.info(f"Converting {amount} {from_currency} to {to_currency}")
             
             if from_currency not in exchange_rates or to_currency not in exchange_rates:
                 return {"error": f"Unsupported currency: {from_currency} or {to_currency}"}
@@ -198,17 +262,14 @@ class ToolRegistry:
         try:
             logger.info(f"Calculating: {expression}")
             
-            # Sanitize expression - only allow safe mathematical operations
-            allowed_names = {
-                k: v for k, v in math.__dict__.items() if not k.startswith("__")
-            }
-            allowed_names.update({"abs": abs, "round": round, "min": min, "max": max})
-            
-            # Replace common operations for clarity
+            # Sanitize the syntax tree, not just the builtins dict: an empty
+            # __builtins__ still permits attribute access, so the old eval()
+            # sandbox was escapable via ().__class__ ... . The AST whitelist
+            # in calc_sandbox.py rejects those node shapes before the
+            # interpreter sees them. Keep the caret-to-power rewrite so
+            # existing prompts are unchanged.
             expression = expression.replace("^", "**")
-            
-            # Evaluate the expression
-            result = eval(expression, {"__builtins__": {}}, allowed_names)
+            result = safe_eval(expression)
             
             return {
                 "expression": expression,
@@ -320,48 +381,41 @@ class ContextAwareAgent:
     
     def __init__(self, api_key: str, context_mode: ContextMode = ContextMode.FULL, 
                  provider: str = "siliconflow", model: Optional[str] = None, 
-                 verbose: bool = True):
+                 verbose: bool = True,
+                 hidden_result_content: str = HIDDEN_RESULT_EMPTY):
         """
         Initialize the agent
         
         Args:
             api_key: API key for the LLM provider
             context_mode: Context mode for ablation studies
-            provider: LLM provider ('siliconflow', 'doubao', 'kimi', 'moonshot',
-                'deepseek', or 'openrouter')
+            provider: Any provider registered in ``agentbook.providers`` (for
+                example ``dashscope``/``qwen``, ``siliconflow``, ``doubao``,
+                ``kimi``, ``deepseek``, or ``openrouter``)
             model: Optional model override
             verbose: If True, log full HTTP requests and responses (default: True)
+            hidden_result_content: What replaces a tool result in the
+                NO_TOOL_RESULTS ablation. Defaults to withholding silently,
+                which is what removing the results means; pass
+                :data:`HIDDEN_RESULT_MARKER` to leave a visible redaction
+                instead. See :data:`HIDDEN_RESULT_STYLES`.
         """
         self.provider = provider.lower()
         self.verbose = verbose
+        self.hidden_result_content = hidden_result_content
 
-        # Provider -> (base_url, default_model)
-        deepseek_base = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-        provider_defaults = {
-            "siliconflow": ("https://api.siliconflow.cn/v1", "Qwen/Qwen3.5-397B-A17B"),
-            "doubao": ("https://ark.cn-beijing.volces.com/api/v3", "doubao-seed-1-6-thinking-250715"),
-            "kimi": ("https://api.moonshot.cn/v1", "kimi-k3"),
-            "moonshot": ("https://api.moonshot.cn/v1", "kimi-k3"),
-            # V4 Flash: OpenAI-compatible; tool calling + thinking mode.
-            # Legacy deepseek-chat / deepseek-reasoner aliases deprecated 2026-07-24.
-            "deepseek": (deepseek_base, "deepseek-v4-flash"),
-            "zhipu": ("https://open.bigmodel.cn/api/paas/v4", "glm-5.2"),
-            "openrouter": ("https://openrouter.ai/api/v1", "openai/gpt-5.6-luna"),
-        }
-        if self.provider not in provider_defaults:
-            raise ValueError(
-                f"Unsupported provider: {provider}. Use 'siliconflow', 'doubao', "
-                "'kimi', 'moonshot', 'deepseek', 'zhipu', or 'openrouter'"
-            )
-        base_url, default_model = provider_defaults[self.provider]
-        resolved_model = model or default_model
-
-        # Universal OpenRouter fallback: if the primary provider key is missing
-        # but OPENROUTER_API_KEY is present, route through OpenRouter with a
-        # mapped model id. Behavior is unchanged when the provider key is set.
-        from config import resolve_llm_backend
-        resolved_key, resolved_base_url, self.model, self.using_openrouter = \
-            resolve_llm_backend(api_key, base_url, resolved_model)
+        # Base URLs, default models and key lookup all live in the shared
+        # registry (agentbook/providers.py), so adding a provider there makes it
+        # usable here with no change. resolve_backend also applies the universal
+        # OpenRouter fallback: when the provider's own key is missing but
+        # OPENROUTER_API_KEY is set, the request routes through OpenRouter with a
+        # mapped model id. Behaviour is unchanged when the provider key is set.
+        from config import resolve_backend
+        backend = resolve_backend(self.provider, model=model, api_key=api_key)
+        resolved_key = backend.api_key
+        resolved_base_url = backend.base_url
+        self.model = backend.model
+        self.using_openrouter = backend.using_openrouter
         if self.using_openrouter:
             logger.info(
                 f"{self.provider} API key not set; routing via OpenRouter "
@@ -371,6 +425,7 @@ class ContextAwareAgent:
             api_key=resolved_key,
             base_url=resolved_base_url
         )
+        self.base_url = resolved_base_url
         
         self.context_mode = context_mode
         self.trajectory = AgentTrajectory(context_mode=context_mode)
@@ -402,13 +457,13 @@ Important: When you have gathered all necessary information and computed the fin
                 "type": "function",
                 "function": {
                     "name": "parse_pdf",
-                    "description": "Download and parse a PDF document from a URL to extract text content",
+                    "description": "Download and parse a PDF document from a URL or a file path to extract text content",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "url": {
                                 "type": "string",
-                                "description": "The URL of the PDF document to parse"
+                                "description": "The URL or file path of the PDF document to parse"
                             }
                         },
                         "required": ["url"]
@@ -494,6 +549,23 @@ Important: When you have gathered all necessary information and computed the fin
             msg_dict.pop('reasoning_content')
             
         return msg_dict
+
+    @staticmethod
+    def _reasoning_content(message) -> Optional[str]:
+        """Return provider reasoning text without assuming one SDK shape."""
+        value = getattr(message, "reasoning_content", None)
+        if value:
+            return str(value)
+        extra = getattr(message, "model_extra", None) or {}
+        value = extra.get("reasoning_content") or extra.get("reasoning")
+        if isinstance(value, dict):
+            value = value.get("content") or value.get("text")
+        return str(value) if value else None
+
+    @staticmethod
+    def _json_snapshot(value: Any) -> Any:
+        """Detach an API evidence object from later in-memory mutations."""
+        return json.loads(json.dumps(value, ensure_ascii=False, default=str))
     
     def _build_context(self) -> str:
         """
@@ -591,16 +663,14 @@ Important: When you have gathered all necessary information and computed the fin
         iteration, applying the NO_HISTORY ablation.
 
         For every mode except NO_HISTORY the full conversation history (the
-        accumulated trajectory) is returned unchanged. For NO_HISTORY a sliding
-        window is returned that keeps only:
-          - the system prompt (static prefix), and
-          - the latest user task plus the MOST RECENT ReAct step (the last
-            assistant message together with the tool results that follow it).
-        All earlier steps are dropped, so the agent "forgets" what it already
-        did and tends to repeat tool calls -- exactly the failure mode the book
-        attributes to missing 历史消息 (history). Keeping the last assistant
-        message together with its trailing tool messages preserves API validity
-        (tool results stay paired with their assistant tool_calls).
+        accumulated trajectory) is returned unchanged. For NO_HISTORY the
+        request contains only the static system prompt and the current user
+        task.  No assistant decision, tool call, or tool result from a previous
+        round is retained. This is the literal Experiment 1-1 ablation: the
+        model restarts the task on every inference and therefore tends to issue
+        the same first action repeatedly. A one-step sliding window would still
+        be history and would materially narrow the experiment described in the
+        manuscript.
 
         Returns:
             The message list to send to the model for this iteration.
@@ -612,20 +682,13 @@ Important: When you have gathered all necessary information and computed the fin
         # System prompt(s) are always kept as the static prefix.
         windowed = [m for m in messages if m.get("role") == "system"]
 
-        # Anchor on the latest user task.
+        # Anchor on the latest user task. Nothing after it is retained: those
+        # messages are precisely the previous-round history being ablated.
         user_indices = [i for i, m in enumerate(messages) if m.get("role") == "user"]
         if not user_indices:
             return windowed
         last_user_idx = user_indices[-1]
         windowed.append(messages[last_user_idx])
-
-        # Keep only the most recent step after the task: from the last assistant
-        # message to the end. Its tool results follow it, so the pairing stays
-        # valid while every earlier step is dropped.
-        tail = messages[last_user_idx + 1:]
-        assistant_rel = [i for i, m in enumerate(tail) if m.get("role") == "assistant"]
-        if assistant_rel:
-            windowed.extend(tail[assistant_rel[-1]:])
         return windowed
 
     @staticmethod
@@ -653,6 +716,17 @@ Important: When you have gathered all necessary information and computed the fin
 
         Returns:
             Task execution result
+
+        Result semantics:
+          - ``completed`` means the loop received a non-empty terminal text
+            response. It does not claim that the requested task was correct.
+          - ``task_success`` is ``None`` here because correctness is
+            task-specific and cannot be inferred from arbitrary natural
+            language prompts. Callers with a known rubric should compute it
+            from the final answer and trajectory.
+          - ``success`` is retained as a backwards-compatible alias for
+            ``completed``. New consumers should use ``completed`` or their
+            task-specific ``task_success`` value instead.
         """
         if max_iterations is None:
             try:
@@ -713,6 +787,21 @@ Important: When you have gathered all necessary information and computed the fin
 
                 # Call the model with tools
                 response = self.client.chat.completions.create(**create_kwargs)
+
+                response_dict = (
+                    response.model_dump() if hasattr(response, "model_dump")
+                    else response.dict() if hasattr(response, "dict")
+                    else {"raw_response": str(response)}
+                )
+                self.trajectory.api_turns.append({
+                    "iteration": iteration,
+                    "provider": self.provider,
+                    "resolved_model": self.model,
+                    "base_url": self.base_url,
+                    "using_openrouter": bool(getattr(self, "using_openrouter", False)),
+                    "request": self._json_snapshot(request_data),
+                    "response": self._json_snapshot(response_dict),
+                })
                 
                 # Log response if verbose
                 if self.verbose:
@@ -720,6 +809,9 @@ Important: When you have gathered all necessary information and computed the fin
                 
                 message = response.choices[0].message
                 has_tool_calls = bool(getattr(message, "tool_calls", None))
+                reasoning_content = self._reasoning_content(message)
+                if reasoning_content:
+                    self.trajectory.reasoning_steps.append(reasoning_content)
 
                 # --- Terminal path: text reply with no tool calls ---
                 # A normal chat turn ("hi" -> "Hello!") or a task answer without
@@ -796,7 +888,7 @@ Important: When you have gathered all necessary information and computed the fin
                         tool_msg = {
                             "role": "tool",
                             "tool_call_id": tool_call.id,
-                            "content": "[Tool result hidden due to context mode]"
+                            "content": self.hidden_result_content
                         }
                     messages.append(tool_msg)
 
@@ -810,35 +902,82 @@ Important: When you have gathered all necessary information and computed the fin
                 # Note: We do NOT modify the system prompt anymore.
                 # The context is already built into the conversation through tool history
                     
-            except TimeoutError as e:
-                logger.error(f"Request timed out after 60 seconds")
+            # The OpenAI SDK raises APITimeoutError (not the builtin
+            # TimeoutError) when the request exceeds the configured 180s
+            # timeout below; catch it explicitly so timeouts are reported
+            # as timeouts instead of falling through to the generic path.
+            except (openai.APITimeoutError, requests.exceptions.Timeout) as exc:
+                logger.error(f"Request timed out after 180 seconds: {exc}")
                 return {
                     "error": "Request timed out. The model is taking too long to respond. Try a simpler task or different provider.",
                     "trajectory": self.trajectory,
-                    "iterations": iteration
+                    "iterations": iteration,
+                    "completed": False,
+                    "task_success": False,
+                    "success": False,
+                    **self._backend_identity(),
                 }
             except Exception as e:
                 logger.error(f"Error during task execution: {str(e)}")
+                self.trajectory.api_turns.append({
+                    "iteration": iteration,
+                    "provider": self.provider,
+                    "resolved_model": self.model,
+                    "base_url": self.base_url,
+                    "using_openrouter": bool(getattr(self, "using_openrouter", False)),
+                    "error": {"class": type(e).__name__, "message": str(e)},
+                })
                 # Check if it's a timeout-related error
                 if "timeout" in str(e).lower() or "timed out" in str(e).lower():
                     return {
                         "error": "Request timed out. The model is taking too long to respond. Try a simpler task or different provider.",
                         "trajectory": self.trajectory,
-                        "iterations": iteration
+                        "iterations": iteration,
+                        "completed": False,
+                        "task_success": False,
+                        "success": False,
+                        **self._backend_identity(),
                     }
                 return {
                     "error": str(e),
                     "trajectory": self.trajectory,
-                    "iterations": iteration
+                    "iterations": iteration,
+                    "completed": False,
+                    "task_success": False,
+                    "success": False,
+                    **self._backend_identity(),
                 }
-        
+        completed = bool(final_answer and str(final_answer).strip())
         return {
             "final_answer": final_answer,
             "trajectory": self.trajectory,
             "iterations": iteration,
-            "success": final_answer is not None
+            "completed": completed,
+            "task_success": None,
+            # Backwards-compatible alias. This is terminal-response status,
+            # not a correctness judgment.
+            "success": completed,
+            **self._backend_identity(),
         }
     
+    def _backend_identity(self) -> Dict[str, Any]:
+        """Name the endpoint that answered -- or failed to.
+
+        A failed arm is still evidence, and evidence that does not say which
+        model was asked cannot be audited. The success path reports this
+        inline; the error paths return it through here, so a 404 on the wrong
+        model id stays legible in the record instead of showing up as a null.
+
+        Returns:
+            The provider, resolved model, base URL and OpenRouter flag.
+        """
+        return {
+            "provider": self.provider,
+            "model": self.model,
+            "base_url": self.base_url,
+            "using_openrouter": bool(getattr(self, "using_openrouter", False)),
+        }
+
     def reset(self):
         """Reset the agent's trajectory and conversation history"""
         self.trajectory = AgentTrajectory(context_mode=self.context_mode)

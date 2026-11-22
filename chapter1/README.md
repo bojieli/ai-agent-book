@@ -1,17 +1,45 @@
 # 第 1 章 · Agent 基础知识
 
+本章从一条可见的执行轨迹开始，理解模型怎样读取上下文、调用工具并利用结果继续工作。先学会解释一次运行，再讨论不同设计的优劣。
+
+## 第一次阅读的顺序
+
+1. [先看无需凭据的离线搜索轨迹，辨认思考、动作与观察 ](web-search-agent/README.md)。
+2. [再在同一任务中移除一类上下文，分析行为变化 ](context/README.md)。
+3. [最后比较工作流中的额外步骤是否帮助满足用户需求 ](image-gen-workflow/README.md)。
+
+读懂一个完整例子后，再查阅下面的全部项目与配置。比较实验时，把输入、模型、运行条件和结果放在一起记录；遇到历史输出，先确认它对应的版本与任务范围。
+
 > **Agent = LLM + 上下文 + 工具**；Harness 工程才是竞争力
 
 ← [返回主目录](../README.md) · 📖 [读本章正文](../book/chapter1.md)
+
+## 从哪里开始
+
+本章实验帮助你看清两件事：模型每轮能看到哪些信息，以及它如何调用工具、读取结果并继续回答。
+第一次阅读可以按下面的顺序进行：
+
+1. 打开 [web-search-agent](web-search-agent/)，先运行无需 API Key 的离线演示。
+   观察一次“思考 → 调用工具 → 读取结果 → 回答”的过程。演示中的搜索结果是预先编写的。
+2. 打开 [context](context/)，配置一个模型提供商，先运行单个任务，再移除一种上下文信息做对照。
+   比较工具调用和最终答案，看看变化发生在哪一步。
+3. 跑通后再读代码：从 `main.py` 找入口，在 `agent.py` 中跟踪消息如何组装、工具结果如何返回。
+   提供商适配、图表和测试可以稍后阅读。
+
+正文中的简化代码用于解释流程，实验目录中的代码负责实际运行。
+如果你要核对书中的实验结论，再查看 [实验记录](EXPERIMENT_LEDGER.md)：其中列出了运行条件、
+服务可用性和结果文件。例如，实验 1-1 的一次五组对照没有观察到“去掉推理内容必然退化”，
+因此不要把预期现象当作每次都能复现的结论。
 
 ## 配套项目
 
 | 编号 | 项目 | 类型 | 一句话说明 |
 | :--: | --- | :--: | --- |
-| 1-1 | [context](context/) | ✅ | 系统性消融实验展示 Agent 上下文各组件的重要性；支持 SiliconFlow Qwen、字节 Doubao、月之暗面 Kimi 等多提供商 |
+| 1-1 | [context](context/) | ✅ | 系统性消融实验展示 Agent 上下文各组件的重要性；支持阿里云百炼直连 Qwen、SiliconFlow Qwen、字节 Doubao、月之暗面 Kimi 等多提供商 |
 | 1-2 | [web-search-agent](web-search-agent/) | ✅ | Kimi K3 模型即 Agent，具备基础深度搜索能力，能进行多轮搜索和信息整合 |
-| 1-3 | [search-codegen](search-codegen/) | ✅ | GPT-5 原生工具集成，综合利用网络搜索与代码沙盒实现复杂分析 |
-| 7-1, 7-2 | [learning-from-experience](learning-from-experience/) | ✅ | 对比 Q-learning 与基于 LLM 的上下文学习，复现 Shunyu Yao 的 "The Second Half"：LLM 以 250–400 倍样本效率超越传统 RL |
+| 1-3 | [search-codegen](search-codegen/) | ✅ | 模型自主多轮搜索 + 服务端代码执行的 Deep Research 闭环，先澄清意图再执行；官方 GPT-5.6 路径保留，阿里云百炼 qwen3.7-plus（hosted web_search + code_interpreter）实测通过东盟首都距离与比特币技术分析全部验收门 |
+| 1-4 | [image-gen-workflow](image-gen-workflow/) | ✅ | 具体/宽泛两类需求 × 工作流（kimi-k3 改写 + 通义万相）与原生（Gemini / GPT-Image 2）双路线真实对照：具体需求下原生更忠实（海报文案被改写节点丢进负面词），宽泛需求下改写的场景具象化带来想象力，但 GPT-Image 2 自己就能补观点——适配层被模型内化的实证 |
+| 7-1, 7-2 | [learning-from-experience](learning-from-experience/) | ✅ | 10,000 局 Q-learning + 100 局评估与官方 Kimi K3 第一局双臂实测已验收；[证据](learning-from-experience/validation/20260730_011704/evidence.json)记录 Kimi 17 步成功、零 fallback 及历史点估计差异 |
 
 ## 项目类型说明
 

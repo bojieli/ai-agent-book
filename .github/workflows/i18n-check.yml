@@ -11,17 +11,36 @@ on:
   pull_request:
     paths:
       - "README.md"
+      - "README.he.md"
+      - "index*.md"
       - "docs/**"
       - "chapter*/README*.md"
+      - "book*/**"
+      - "mkdocs.yml"
+      - "extras/site-nav-i18n.json"
+      - "extras/lang-switcher.js"
+      - "extras/nav-collapse.js"
       - "scripts/check_i18n_consistency.py"
+      - "scripts/site_i18n.py"
+      - "tests/test_reference_answer_coverage.py"
       - ".github/workflows/i18n-check.yml"
   push:
     branches: [main]
     paths:
       - "README.md"
+      - "README.he.md"
+      - "index*.md"
       - "docs/**"
       - "chapter*/README*.md"
+      - "book*/**"
+      - "mkdocs.yml"
+      - "extras/site-nav-i18n.json"
+      - "extras/lang-switcher.js"
+      - "extras/nav-collapse.js"
       - "scripts/check_i18n_consistency.py"
+      - "scripts/site_i18n.py"
+      - "tests/test_reference_answer_coverage.py"
+      - ".github/workflows/i18n-check.yml"
   workflow_dispatch: {}
 
 permissions:
@@ -37,5 +56,14 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install static-site i18n dependency
+        run: pip install "mkdocs-material>=9.5,<10" pytest
+
+      - name: Check static-site navigation and UI translations
+        run: python scripts/site_i18n.py
+
       - name: Run i18n consistency check
         run: python scripts/check_i18n_consistency.py
+
+      - name: Check reference-answer coverage
+        run: python -m pytest tests/test_reference_answer_coverage.py -q

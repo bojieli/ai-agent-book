@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="540" viewBox="0 0 880 540">
+  <title>Gambar 6-5: Kompatibilitas antarmuka sinkron dan asinkroni native pada model</title>
+  <desc>Pada pendekatan kompatibilitas sebelumnya, runtime mengatur urutan masuknya peristiwa agar model berantarmuka sinkron dapat menangani tugas asinkron. Jalur lain membuat model memahami ritme tersebut secara native: ia dapat mengerjakan hal lain saat alat berjalan dan menyesuaikan pekerjaan berikutnya ketika pengguna menambahkan persyaratan. GPT-6 Astra sudah mendukung pemanggilan alat asinkron (Async tool calling) dan pengarahan di tengah giliran (Mid-turn steering), yang menunjukkan perubahan ini (Gambar 6-5).</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#555" /></marker>
+    <style>
+      text{font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;fill:#333}
+      .title{font-size:20px;font-weight:700}
+      .label{font-size:17px;font-weight:600}
+      .small{font-size:15px}
+      .box{fill:#f4f4f4;stroke:#555;stroke-width:1.5}
+      .arrow{fill:none;stroke:#555;stroke-width:1.5;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="880" height="540" fill="#fff" />
+  <rect x="20" y="20" width="840" height="145" rx="8" fill="#fff" stroke="#777" stroke-dasharray="7 4" />
+  <text x="40" y="53" class="title">Kompatibilitas: runtime mengatur pekerjaan asinkron</text>
+  <rect x="40" y="75" width="230" height="60" rx="5" class="box" />
+  <text x="155" y="100" text-anchor="middle" class="label" style="font-size:13.86px">Tugas berjalan di latar belakang</text>
+  <text x="155" y="122" text-anchor="middle" class="small">Tandai jelas: belum selesai</text>
+  <path d="M270 105 H313" class="arrow" />
+  <rect x="320" y="75" width="240" height="60" rx="5" class="box" />
+  <text x="440" y="100" text-anchor="middle" class="label" style="font-size:15.42px">Runtime menerima peristiwa</text>
+  <text x="440" y="122" text-anchor="middle" class="small" style="font-size:14.87px">Antrekan, interupsi, atau paralel</text>
+  <path d="M560 105 H603" class="arrow" />
+  <rect x="610" y="75" width="230" height="60" rx="5" class="box" />
+  <text x="725" y="100" text-anchor="middle" class="label">Model melanjutkan tugas</text>
+  <text x="725" y="122" text-anchor="middle" class="small" style="font-size:14.53px">Masukan tetap bergiliran sinkron</text>
+
+  <rect x="20" y="185" width="840" height="250" rx="8" fill="#fff" stroke="#444" stroke-width="2" />
+  <text x="40" y="218" class="title">Asinkroni native: memahami penantian dan perubahan saat tugas berjalan</text>
+  <rect x="40" y="240" width="230" height="65" rx="5" class="box" />
+  <text x="155" y="267" text-anchor="middle" class="label">Mulai kueri yang lama</text>
+  <text x="155" y="290" text-anchor="middle" class="small">Cari tempat rapat</text>
+  <path d="M270 272 H313" class="arrow" />
+  <rect x="320" y="240" width="240" height="65" rx="5" class="box" />
+  <text x="440" y="267" text-anchor="middle" class="label" style="font-size:16.87px">Bekerja sambil menunggu</text>
+  <text x="440" y="290" text-anchor="middle" class="small" style="font-size:13.21px">Susun agenda dan daftar persiapan</text>
+  <path d="M560 272 H603" class="arrow" />
+  <rect x="610" y="240" width="230" height="65" rx="5" class="box" />
+  <text x="725" y="267" text-anchor="middle" class="label">Putuskan saat hasil tiba</text>
+  <text x="725" y="290" text-anchor="middle" class="small">Bandingkan dengan data nyata</text>
+
+  <rect x="40" y="340" width="230" height="65" rx="5" class="box" />
+  <text x="155" y="367" text-anchor="middle" class="label" style="font-size:15.42px">Pengguna menambah syarat</text>
+  <text x="155" y="390" text-anchor="middle" class="small" style="font-size:14.87px">Anggaran atau peserta berubah</text>
+  <path d="M270 372 H313" class="arrow" />
+  <rect x="320" y="340" width="240" height="65" rx="5" class="box" />
+  <text x="440" y="367" text-anchor="middle" class="label" style="font-size:14.42px">Pertahankan pekerjaan selesai</text>
+  <text x="440" y="390" text-anchor="middle" class="small">Masukkan syarat baru ke tugas</text>
+  <path d="M560 372 H603" class="arrow" />
+  <rect x="610" y="340" width="230" height="65" rx="5" class="box" />
+  <text x="725" y="367" text-anchor="middle" class="label" style="font-size:16.22px">Sesuaikan tindakan berikut</text>
+  <text x="725" y="390" text-anchor="middle" class="small" style="font-size:14.31px">Gabungkan data dan pembaruan</text>
+
+  <rect x="20" y="455" width="840" height="65" rx="6" fill="#e9e9e9" />
+  <text x="440" y="482" text-anchor="middle" class="label">Model memahami perubahan dan merevisi rencana; runtime mengelola alat, status, dan sumber.</text>
+  <text x="440" y="506" text-anchor="middle" class="small">Menerima pesan juga memerlukan kelanjutan tugas dan kontrol tindakan yang benar.</text>
+</svg>

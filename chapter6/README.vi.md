@@ -1,27 +1,40 @@
-# Chương 6 · Đánh giá Agent
+# Chương 6 · Tương tác: mở rộng không gian quan sát và không gian hành động
 
-> biến biểu hiện của Agent thành tín hiệu có thể so sánh. Từ môi trường đánh giá, thiết kế bộ dữ liệu, hệ thống chỉ số, đến ý nghĩa thống kê, observability, chọn mô hình dựa trên đánh giá, cho tới đánh giá nội bộ và môi trường mô phỏng cấp sản xuất.
+> mở rộng cảm nhận và hành động từ văn bản sang giọng nói, GUI và thế giới vật lý. Ba mô thức giọng nói (pipeline nối tầng/đa phương thức đầu cuối/full-duplex), cảm nhận và tổng hợp giọng nói dạng streaming, Computer Use và thao tác robot.
 
 ← [Về README chính](../docs/vi/README.md) · 📖 [Đọc nội dung chương](../book-vi/chapter6.vi.md)
+
+## Cách đọc các thí nghiệm
+
+Phần văn bản dùng skeleton cơ chế ngắn để giải thích luồng điều khiển; thư mục thí nghiệm chứa adapter SDK đầy đủ, log, kiểm thử và bằng chứng nghiệm thu. Không cần đọc từng tệp theo từng dòng.
+
+- **Starter:** Bắt đầu từ mục tiêu, lệnh tối thiểu và điều kiện nghiệm thu; hãy bắt đầu với [live-audio](live-audio/);
+- **Builder:** Lần theo điểm vào, vòng lặp lõi, schema trạng thái/tin nhắn, công cụ và verifier.
+- **Maintainer:** Sau đó đọc test, manifest bằng chứng, xử lý lỗi, đường rollback và adapter nhà cung cấp.
+
+Lần đầu có thể bỏ qua credential, lớp trình bày và tương thích provider; quay lại khi cần tái tạo số liệu.
 
 ## Dự án đi kèm
 
 | Thí nghiệm | Project | Type | Description |
 | :--: | --- | :--: | --- |
-| 6-1, 6-2 | `tau2-bench/` | 📖 | Tập trung đánh giá năng lực Agent dùng công cụ để suy luận phức tạp, bao gồm tính toán, tìm kiếm, xử lý dữ liệu và các ngữ cảnh khác. |
-| 6-2 | `terminal-bench/` | 📖 | Terminal-Bench là benchmark kiểm thử biểu hiện của AI Agent trong môi trường terminal thực. Từ biên dịch mã đến huấn luyện mô hình, thiết lập server, benchmark đánh giá cách Agent xử lý các nhiệm vụ đầu-cuối thực tế. Bao gồm bộ dữ liệu khoảng 100 nhiệm vụ và framework thực thi, hỗ trợ nhiều triển khai Agent. |
-| 6-2 | `SWE-bench/` | 📖 | SWE-bench là benchmark đánh giá khả năng của mô hình ngôn ngữ lớn trong việc giải quyết các vấn đề GitHub thật. Với một codebase và mô tả issue, mô hình cần sinh patch có thể giải quyết vấn đề. Bao gồm nhiều phiên bản: SWE-bench, SWE-bench Lite, SWE-bench Verified và SWE-bench Multimodal. |
-| 6-2 | `GAIA/` | 📖 | GAIA nhằm đánh giá thế hệ LLM tiếp theo (LLM có năng lực tăng cường bằng công cụ, prompt hiệu quả, truy cập tìm kiếm, v.v.). Bao gồm hơn 450 câu hỏi phi tầm thường cần mức độ công cụ và tự chủ khác nhau, với đáp án rõ ràng không mơ hồ. Chia thành 3 cấp độ khó. |
-| 6-2 | `OSWorld/` | 📖 | Đánh giá năng lực của Agent khi thực thi nhiệm vụ phức tạp trong môi trường hệ điều hành đầy đủ, bao gồm quản lý file, thao tác ứng dụng và cấu hình hệ thống. |
-| 6-2, 6-10 | `android_world/` | 📖 | Đánh giá biểu hiện của Agent trong môi trường di động Android, bao gồm điều hướng ứng dụng, tương tác UI và khả năng hoàn thành nhiệm vụ (repo benchmark ngoài). |
-| 6-5 | [tts-quality-eval](tts-quality-eval/) | ✅ | Dùng nhiều cấu hình TTS (model/voice/speed khác nhau) để tổng hợp cùng một nhóm văn bản thử thách, sau đó dùng LLM-as-a-Judge đa phương thức chấm điểm từng chiều theo Rubric (độ rõ/naturalness, v.v.), tổng hợp thành bảng so sánh cấu hình có thể tái hiện. |
-| 6-6 | [elo-leaderboard](elo-leaderboard/) | ✅ | Triển khai bảng xếp hạng hiệu năng Agent dựa trên hệ thống điểm ELO, đánh giá năng lực tương đối của các Agent khác nhau thông qua so sánh đối đầu. |
-| 6-7 | [agent-cost-analysis](agent-cost-analysis/) | ✅ | Phân rã toàn tuyến chi phí của nhiệm vụ Agent nhiều vòng điển hình (hoàn tiền chăm sóc khách hàng): dùng tracing nhẹ tự xây để ghi lại token input/output/cache, độ trễ và chi phí của từng lần gọi LLM; tổng hợp “bước nào đắt nhất”, rồi dùng A/B để định lượng mức tiết kiệm thực của thiết kế thân thiện KV-cache + nén ngữ cảnh. |
-| 6-8 | [model-benchmark](model-benchmark/) | ✅ | Benchmark ngang nhiều nhà cung cấp LLM API tương thích OpenAI; dùng giao diện streaming để đo chính xác độ trễ token đầu tiên (TTFT), đo các phân vị độ trễ đầu-cuối (p50/p95), throughput và tỷ lệ thành công dưới tải đồng thời. Một lệnh tạo bảng so sánh đa chiều, cho thấy chọn mô hình là đánh đổi nhiều chiều chứ không chỉ nhìn bảng xếp hạng. |
-| 6-10 | [android-world](android-world/) | 📖 | Ghi chú phân tích báo cáo đánh giá T3A trên AndroidWorld trong repo này (điểm bắt đầu Thí nghiệm 6-10; không phải mã nguồn benchmark). |
-| — | [public-health-reporting-eval](public-health-reporting-eval/) | ✅ | Sử dụng dữ liệu tổng hợp nhân tạo theo phong cách DHIS2 để đánh giá khách quan lời gọi công cụ, độ chính xác tính toán, trích dẫn bằng chứng và các tuyên bố không có căn cứ của Agent báo cáo y tế công cộng. |
+| 6-1 | [agent-with-event-trigger](agent-with-event-trigger/) | ✅ | Agent hướng sự kiện hiện đại xây dựng trên FastAPI, mặc định tích hợp toàn bộ công cụ của ba MCP server phía trên. Dùng kiến trúc bất đồng bộ nguyên sinh để tải công cụ MCP rõ ràng; nhận sự kiện đa nguồn qua HTTP API (Web, tin nhắn tức thời, GitHub, timer, v.v.). Cung cấp tài liệu API tự động (Swagger UI) và khả năng giám sát nền. |
+| 6-2 | [async-agent](async-agent/) | ✅ | Triển khai lõi framework Agent bất đồng bộ hướng sự kiện (Flux) dựa trên asyncio một luồng: hàng đợi sự kiện inbox phân phối theo mức khẩn cấp (ngắt/ngay lập tức/xếp hàng), hỗ trợ công cụ bất đồng bộ chạy song song, ngắt turn hiện tại trong lúc đang chạy, đồng thời hủy và truy vấn trạng thái các tác vụ dài mô phỏng. Quyết định được thực hiện bởi LLM thật (function calling). |
+| 6-3 | [astra-async-steering](astra-async-steering/) | ✅ | So sánh công cụ đồng bộ, công cụ bất đồng bộ được mô hình hỗ trợ trực tiếp và việc điều chỉnh chỉ dẫn giữa lượt để hiểu thời gian chờ, cập nhật của người dùng và việc tiếp tục nhiệm vụ. |
+| 6-4 | [live-audio](live-audio/) | ✅ | Demo chat giọng nói thời gian thực, tích hợp speech-to-text, hội thoại AI và text-to-speech. Hỗ trợ nhiều nhà cung cấp dịch vụ AI (OpenAI, OpenRouter, ARK, Siliconflow), cung cấp trải nghiệm hội thoại độ trễ thấp. |
+| Add-on | [phone-agent](phone-agent/) | 🚧 | Đã triển khai đường direct/ReAct của SDK `pine-voice` chính thức, nhưng chưa có đích E.164 được ủy quyền và đồng ý. Preflight ghi rõ không quay số/không transcript; test double không phải nghiệm thu. |
+| 6-5 | [streaming-speech](streaming-speech/) | ✅ | Minh họa đánh đổi cốt lõi của cảm nhận giọng nói streaming: chia âm thanh liên tục thành các khối có độ dài tăng dần đưa vào ASR; mỗi khi nhận một đoạn nhỏ thì xuất “kết quả nhận dạng phần hiện tại” để có văn bản cực sớm với độ trễ gói đầu rất thấp. Cái giá là các khối ban đầu có thể sai do thiếu ngữ cảnh nửa sau câu; khi âm thanh tích lũy, kết quả dần hội tụ, đối chiếu với cách “đợi đủ cả câu rồi nhận dạng” có độ chính xác cao nhưng độ trễ cao. |
+| 6-6 | [end-to-end-speech](end-to-end-speech/) | ✅ | MiniCPM-o 4.5 ở revision cố định đã chạy cục bộ thật trên một RTX PRO 6000; end-to-end và self-cascade cùng đạt 3/4 nhưng lỗi ngữ nghĩa/cận ngôn ngữ bổ sung cho nhau, kèm âm thanh 24kHz và bằng chứng nghiệm thu. |
+| 6-7 | [controllable-tts](controllable-tts/) | 🚧 | Thư viện Fish Audio S1 thật 4×3×2 và media A/B/C đạt cổng cấu trúc; còn thiếu nghiên cứu nghe định tính và đánh giá “gần người thật”. |
+| 6-8 | `claude-quickstarts/computer-use-demo/` | 📖 | `anthropics/claude-quickstarts` bên ngoài ghim tại `9bcc95e…`; nội dung sách dùng Computer Use demo với desktop Ubuntu＋vòng Claude agent trong container, không phải toàn bộ quickstarts. |
+| 6-9 | `browser-use/` | 📖 | `browser-use/browser-use` bên ngoài ghim tại `ec9277c…`; visual CLI (`use_vision=True`) tìm thời tiết San Francisco trên Google và lưu trajectory action/screenshot. |
+| 6-10 | [xlerobot-teleoperation](xlerobot-teleoperation/) | 📖 | Teleoperation XLeRobot thật cho cùng một nhiệm vụ dọn bàn: đặt cốc đỏ vào khay, giấy vàng vào thùng rác, rồi quan sát lại và xác minh trạng thái. |
+| 6-11 | [xlerobot-teleoperation](xlerobot-teleoperation/) | 📖 | Đo giới hạn trên của điều khiển lý tưởng cho cùng nhiệm vụ trong simulator; không có nghĩa robot thật đã được chạy. |
+| 6-12 | [gemini-xlerobot-navigation](gemini-xlerobot-navigation/) | 📖 | Gemini Robotics-ER 1.5 tự chủ điều khiển XLeRobot thật để hoàn thành cùng nhiệm vụ dọn bàn. |
+| 6-13 | [gemini-xlerobot-navigation](gemini-xlerobot-navigation/) | 📖 | So sánh open-loop, kiểm tra từng bước và closed-loop dự đoán trong simulator cho cùng nhiệm vụ. |
+| 6-14 | [rgb-sim2real-grasping](rgb-sim2real-grasping/) | 📖 | Kiểm thử RGB xuyên môi trường cho cùng nhiệm vụ với nền, ngoại hình vật thể, ánh sáng và nhiễu thị giác thay đổi. |
 
-> 📖 Các benchmark bên ngoài (tên đặt trong dấu backtick) cần tự clone riêng. [`android-world/`](android-world/) (có gạch nối) là **ghi chú phân tích đánh giá T3A** trong repo này (xem [README](android-world/README.md) của nó), không phải cùng đường dẫn với mã nguồn benchmark `android_world/` bên ngoài.
+Số thí nghiệm theo bản tiếng Trung hiện tại; các lần chạy đã lưu trữ giữ nguyên mã định danh ban đầu. Xem [bảng đối chiếu số](EXPERIMENT_LEDGER.md#current-numbering-and-archived-evidence).
 
 ## Phân loại dự án
 
@@ -29,4 +42,4 @@
 | :--: | --- | --- |
 | ✅ | **Chạy độc lập** | Có mã đầy đủ trong kho, chạy được sau khi cấu hình API Key |
 | 📖 | **Hướng dẫn tái hiện** | Tài liệu chi tiết, cần `git clone` **kho ngoài** |
-| 🚧 | **Tài liệu thiết kế** | Chỉ có kiến trúc/phương án, mã chạy được đang hoàn thiện |
+| 🚧 | **Đang thực hiện** | Đã có triển khai, nhưng còn thiếu chạy live, ủy quyền, phần cứng hoặc bằng chứng nghiệm thu theo nội dung sách |
