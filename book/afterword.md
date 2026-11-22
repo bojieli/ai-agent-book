@@ -44,9 +44,9 @@
 
 拿出行助手做一次检验。手机上随手就能唤起它，解决的是**入口**问题。它记得你这次带孩子，知道转机时间不能太紧，体现的是**上下文**。它能查到合适的航班，能否出票还要看你给了什么**授权**、航空公司接受哪种办理方式。三者可以分别测试：换一台设备还能找到它吗？行程改变后它能解释推荐理由吗？撤回出票授权后，它还能帮你比价，同时及时停在付款之前吗？即使几个产品用的是同一个模型，这三个问题也可能得到不同答案。
 
-[^afterword-muse]: Meta，[Muse 发布说明](https://about.fb.com/news/2026/09/introducing-muse-personal-ai-agent/)与[浏览器使用说明](https://www.meta.com/en-gb/help/superintelligence/2124746764949121/)。
+[^afterword-muse]: Meta，Muse 发布说明与浏览器使用说明。
 
-[^porto-jarvis]: 李博杰，2026 年 11 月 10 日波尔图演讲《The Road to JARVIS: Where the Moats Are for Personal Agents》。[幻灯片 Markdown 源稿](https://01.me/files/road-to-jarvis-talk/slides.md)。
+[^porto-jarvis]: 李博杰，2026 年 11 月 10 日波尔图演讲《The Road to JARVIS: Where the Moats Are for Personal Agents》。
 
 ## 模型与 Agent 的共同演进 {.unnumbered}
 
@@ -78,8 +78,8 @@
 
 接下来，去造点什么吧。
 
-[^kelvin]: Lord Kelvin, *Nineteenth Century Clouds over the Dynamical Theory of Heat and Light*, 1901，根据 1900 年 4 月 27 日演讲整理。原文：https://gilles.montambaux.com/files/histoire-physique/Kelvin-1900-Nineteenth%20century%20clouds.pdf
+[^kelvin]: Lord Kelvin, *Nineteenth Century Clouds over the Dynamical Theory of Heat and Light*, 1901，根据 1900 年 4 月 27 日演讲整理。
 
-[^mimo]: 小米 MiMo, “MiMo-V2.5-Pro-UltraSpeed: Pushing 1T-Parameter Model Generation Speed to 1000 TPS”, 2026-06-08。文中介绍 FP4 量化、DFlash 块级并行推测解码与 TileRT 的协同设计。https://mimo.xiaomi.com/blog/mimo-tilert-1000tps
+[^mimo]: 小米 MiMo, “MiMo-V2.5-Pro-UltraSpeed: Pushing 1T-Parameter Model Generation Speed to 1000 TPS”, 2026-06-08。文中介绍 FP4 量化、DFlash 块级并行推测解码与 TileRT 的协同设计。
 
-[^taalas]: Taalas, “The path to ubiquitous AI” 与 HC1 产品说明，2026。HC1 采用 6nm 工艺，将 Llama 3.1 8B 固化到专用芯片，支持可配置上下文窗口与 LoRA 适配；更换基础模型涉及新的硬件实现。https://taalas.com/the-path-to-ubiquitous-ai/；https://taalas.com/products/
+[^taalas]: Taalas, “The path to ubiquitous AI” 与 HC1 产品说明，2026。HC1 采用 6nm 工艺，将 Llama 3.1 8B 固化到专用芯片，支持可配置上下文窗口与 LoRA 适配；更换基础模型涉及新的硬件实现。

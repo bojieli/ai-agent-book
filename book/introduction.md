@@ -70,7 +70,7 @@
 
 每章都安排了实验和思考题。实验采用“实验 X-Y”编号，X 表示章号，Y 表示章内顺序。星级表示难度：★ 适合入门，★★ 需要一定工程经验，★★★ 涉及开放性问题或复杂系统设计。大部分实验配有可运行代码，集中放在开源仓库中：
 
-> **配套代码仓库**：[ai-agent-book](https://github.com/bojieli/ai-agent-book)
+> **配套代码仓库**：`bojieli/ai-agent-book`
 
 第一次做实验，可以从“实验 1-1：上下文的关键作用”开始。如果使用 Git，在终端运行：
 
@@ -79,9 +79,9 @@ git clone https://github.com/bojieli/ai-agent-book.git
 cd ai-agent-book
 ```
 
-在仓库页面选择 **Code → Download ZIP** 并解压，也能得到同样的目录。从[第一章实验索引](https://github.com/bojieli/ai-agent-book/blob/main/chapter1/README.md)找到编号 1-1，打开 [context 实验说明](https://github.com/bojieli/ai-agent-book/blob/main/chapter1/context/README.md)。先看完整上下文时工具返回了什么，再看移除工具结果后模型在哪一步失去了依据。此后遇到“实验 X-Y”，都可以从仓库中的 `chapterX/README.md` 查到项目和运行方法。“复现指南”提供外部项目及获取方式，安装命令和目录说明集中放在 README 中。
+在仓库页面选择 **Code → Download ZIP** 并解压，也能得到同样的目录。从第一章实验索引（`chapter1/README.md`）找到编号 1-1，打开 `chapter1/context/README.md`。先看完整上下文时工具返回了什么，再看移除工具结果后模型在哪一步失去了依据。此后遇到“实验 X-Y”，都可以从仓库中的 `chapterX/README.md` 查到项目和运行方法。“复现指南”提供外部项目及获取方式，安装命令和目录说明集中放在 README 中。
 
-读完一章，不妨先挑一道思考题，把自己的判断和验证办法各写一句。例如，要判断一次工具调用为什么重复，你会先查哪条记录？试着从实验轨迹里找出它，再对照[按章编排的参考答案](https://github.com/bojieli/ai-agent-book/blob/main/book/reference-answers.md)。有不同解法时，拿同一份输入去试，看两种解释各自预言了什么结果。
+读完一章，不妨先挑一道思考题，把自己的判断和验证办法各写一句。例如，要判断一次工具调用为什么重复，你会先查哪条记录？试着从实验轨迹里找出它，再对照按章编排的参考答案（`book/reference-answers.md`）。有不同解法时，拿同一份输入去试，看两种解释各自预言了什么结果。
 
 ## 前置知识 {.unnumbered}
 
@@ -100,7 +100,7 @@ cd ai-agent-book
 - **机器学习基础（第八章）**：训练与推理、损失函数、梯度下降和过拟合，有助于理解模型更新过程。
 - **基础数学（第二、三、七、八章）**：向量与矩阵帮助理解嵌入和注意力，概率统计帮助理解评估指标与期望奖励。书中侧重直观解释和实际用途。
 - **Web 开发基础（第六章）**：HTTP、WebSocket 和前后端分工，有助于理解异步事件架构与实时语音通信。
-- **Transformer 基础（第二、八章）**：了解注意力与模型结构，有助于理解上下文计算和后训练。希望系统学习的读者，可以阅读《图解大模型：生成式 AI 原理与实战》（Jay Alammar、Maarten Grootendorst 著，李博杰译，图灵教育出品）。该书通过图解讲解 Transformer、预训练与微调，与本书的工程视角相互补充。[^preface-llm-book]
+- **Transformer 基础（第二、八章）**：了解注意力与模型结构，有助于理解上下文计算和后训练。希望系统学习的读者，可以阅读《图解大模型：生成式 AI 原理与实战》（Jay Alammar、Maarten Grootendorst 著，李博杰译，图灵教育出品）。该书通过图解讲解 Transformer、预训练与微调，与本书的工程视角相互补充。
 
 本书关注 **Agent 工程方法及其背后的系统设计原则**。你可以先通过实验建立直觉，再围绕遇到的问题补充知识；学习第八章时，则需要投入更多时间理解机器学习与数学概念。笔者希望这些实践能帮助你理解每项设计背后的理由。掌握了“为什么要这样设计”，就能在模型和产品不断变化时保持自己的判断，找到适合任务的构建方法。
 
@@ -114,7 +114,6 @@ cd ai-agent-book
 
 最要感谢笔者的家人，尤其是太太孟佳颖。她始终支持本书的写作，也为书稿提出了许多宝贵意见。
 
-[^preface-r1]: DeepSeek-AI, *DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning*, 2025. https://arxiv.org/abs/2501.12948。
-[^preface-spaces]: Gymnasium, “Spaces.” https://gymnasium.farama.org/api/spaces/。
-[^preface-sutton]: Richard Sutton 与 Dwarkesh Patel 的访谈，2025-09-26，“Succession to AI”部分。https://www.dwarkesh.com/p/richard-sutton。
-[^preface-llm-book]: 《图解大模型：生成式 AI 原理与实战》，O’Reilly 北京图书介绍。https://velocity.oreilly.com.cn/index.php?func=book&isbn=978-7-115-67083-0。
+[^preface-r1]: DeepSeek-AI, *DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning*, 2025.
+[^preface-spaces]: Gymnasium 文档的“Spaces”一节。
+[^preface-sutton]: Richard Sutton 与 Dwarkesh Patel 的访谈，2025-09-26，“Succession to AI”部分。

@@ -18,7 +18,7 @@
 
 假设你刚拆开包裹，想问客服：“拆封后还能退货吗？”系统可以用**检索增强生成**（Retrieval-Augmented Generation，RAG）查找店铺的现行退货政策，再请模型依据条款回答。[^ch1-rag] 沿着一次查询，就能看清几个部件的职责。政策原文与索引保存在外部知识库中；检索工具按问题查出相关段落，调用模型的程序再把段落连同出处放进这次请求。模型读到“拆封”一项，可以解释条款；如果条款还按商品类别区分，就得先问清你买的是什么。如果答案引用了旧政策，可以分别核对知识库的版本、工具返回的段落和最终送给模型的内容。第三章将用这种拆分来定位检索错误。
 
-[^ch1-rag]: Patrick Lewis 等，[Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401)，NeurIPS，2020。
+[^ch1-rag]: Patrick Lewis 等，Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks，NeurIPS，2020。
 
 在这次退货查询中，发起检索是 Agent 的动作，返回的条款是它从环境（Environment）中得到的观测。下一步是答复还是追问，取决于条款写了什么。这就构成了强化学习和控制论所说的闭环，如图1-1 所示。
 
@@ -26,7 +26,7 @@
 
 图的外层划分了 Agent 与环境的边界。文件、数据库、网页、用户、其他 Agent，以及物理或仿真世界，都可以成为它交互的环境。图的内层展示了生产实现的分工：**Model 负责理解、推理和决策；Harness 位于 Agent 边界内、Model 之外，负责组织上下文、工具接口、运行循环和状态，并实施约束、验证与纠正。** Harness 可以创建、隔离或代理环境；文件内容、进程状态等则随行动在环境中发生变化。[^ch1-harness]
 
-[^ch1-harness]: 可参阅 LangChain 的 [The Anatomy of an Agent Harness](https://www.langchain.com/blog/the-anatomy-of-an-agent-harness) 与 Anthropic 的 [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)。有些实现把沙盒也计入 Harness；图1-1 单独画出环境，便于追踪动作实际改变了什么。
+[^ch1-harness]: 可参阅 LangChain 的《The Anatomy of an Agent Harness》与 Anthropic 的《Effective harnesses for long-running agents》。有些实现把沙盒也计入 Harness；图1-1 单独画出环境，便于追踪动作实际改变了什么。
 
 因此，本书采用两套互补的分解方式：**“LLM + 上下文 + 工具”说明功能组成，“Model + Harness”说明生产实现。** 上下文由 Harness 组织后提供给 Model，工具调用由 Model 决策、Harness 校验和调度，再交给工具或环境执行。一个简单系统可以从上下文组装和工具调度起步，逐步补齐生产运行所需的约束、验证与纠正机制。
 
@@ -50,7 +50,7 @@
 
 **OpenClaw：把接口延伸到用户的数字生活。** OpenClaw 通过 WhatsApp、Telegram、Slack、Discord、iMessage 等消息渠道接收任务、返回结果，并用运行在用户设备上的 Gateway 连接消息渠道、模型和工具。配置相应工具并获得授权后，Agent 可以处理本地文件，也可以接入 Google Drive、Notion 等云服务。用户散布在账号与设备中的资料，由此能够进入同一任务的处理过程。早期 Manus 主要在云端沙盒中工作，用户需要上传文件；后来加入的 Google Drive 连接器和 My Computer 桌面功能，则进一步扩展了云文件与本地资源的访问范围。这些演进说明，产品能力的增长常常来自观测与动作接口的扩展[^ch1-agent-products]。
 
-[^ch1-agent-products]: 产品结构参见 Manus 官方的 [Sandbox 介绍](https://manus.im/blog/manus-sandbox)、[Google Drive Connector 介绍](https://manus.im/blog/manus-google-drive-connector)、[My Computer 介绍](https://manus.im/blog/manus-my-computer-desktop)，以及 [OpenClaw 官方仓库](https://github.com/openclaw/openclaw)与[工具文档](https://docs.openclaw.ai/tools)。连接器、工具配置与用户授权决定具体可访问的资源。
+[^ch1-agent-products]: 产品结构参见 Manus 官方的 Sandbox 介绍、Google Drive Connector 介绍、My Computer 介绍，以及 OpenClaw 官方仓库与工具文档。连接器、工具配置与用户授权决定具体可访问的资源。
 
 不同产品的任务各异，但都可以从决策依据、可用操作和执行策略三个方面理解：
 
@@ -62,7 +62,7 @@
 | **豆包等手机助手 Agent** | 手机截图、App 界面状态、系统反馈 | 点击、滑动、输入、打开 App | 理解需求→定位目标 App→执行操作→确认完成 |
 | **Pine AI 等个人办事 Agent** | 经授权读取的账户记录、账单、服务商资料 | 打电话、发邮件、填表单、与用户确认 | 收集信息→制定协商策略→联系服务商→谈判→汇报结果 |
 
-**一次委托如何变成可以执行的任务？** 笔者在 Pine 做个人办事助手时，发现用户经常只说一个目标，例如“帮我订去出差的机票，希望不超过 1200 元”。助手要先弄清日期、目的地以及这趟行程最看重什么，再收集缺少的资料，和用户谈清打算怎样办、哪些条件可以商量，随后才联系服务商。办事中得到的新情况还可能把任务带回前一步。[笔者对 Pine 办事流程的回顾](https://x.com/bojie_li/status/2123354635822047378)
+**一次委托如何变成可以执行的任务？** 笔者在 Pine 做个人办事助手时，发现用户经常只说一个目标，例如“帮我订去出差的机票，希望不超过 1200 元”。助手要先弄清日期、目的地以及这趟行程最看重什么，再收集缺少的资料，和用户谈清打算怎样办、哪些条件可以商量，随后才联系服务商。办事中得到的新情况还可能把任务带回前一步。
 
 假设客服查到的最低票价是 1250 元。模型会结合常识、这趟行程以及记得的用户习惯来判断。对一位正在出差、通常愿意为合适行程多花一点的用户，Pine 可能直接订下；换成一家人出游，且以往明确在意总开销，它可能先把差额告诉用户，继续请客服查别的航班。职业和出行人数本身都不足以推出偏好。用户如果事后补充“下次遇到超预算的票，先问我”，这条反馈就给下一次判断增加了比一般经验更具体的依据。
 
@@ -72,9 +72,9 @@
 
 科研任务也可以问同一个问题：凭什么认定有了进展？Google DeepMind 的 AlphaEvolve 搜索矩阵乘法算法时，模型提出候选程序，自动评估程序检验候选，再把有希望的方案留给后续搜索。研究团队报告，其中一种算法用 48 次标量乘法即可完成两个 $4\times 4$ 复数矩阵的乘法。“少做了几次乘法”有明确的计数对象，算法还要算出正确的矩阵乘积。给这类助手设计工具时，能让它取得候选算法的验证结果，才有依据决定下一轮搜索什么。[^ch1-alphaevolve]
 
-[^ch1-multica]: Multica，[在工单评论中点名 Agent](https://multica.ai/docs/mentioning-agents)。第十章讨论如何在协作中区分临时求助与责任移交。
+[^ch1-multica]: Multica，在工单评论中点名 Agent。第十章讨论如何在协作中区分临时求助与责任移交。
 
-[^ch1-alphaevolve]: Google DeepMind，[AlphaEvolve 研究说明](https://deepmind.google/blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/)，2025 年 5 月。这里的乘法次数指算法中的标量乘法次数，实际运行时间还取决于实现和硬件。
+[^ch1-alphaevolve]: Google DeepMind，AlphaEvolve 研究说明，2025 年 5 月。这里的乘法次数指算法中的标量乘法次数，实际运行时间还取决于实现和硬件。
 
 这些系统的动作空间具有**开放式**的特点。搜索词、输入文本、生成的代码和操作组合难以预先穷举，而每次行动仍受工具、参数、权限和运行环境限制。正因如此，一份可执行的计划需要为新观测留出改变下一步的余地。
 
@@ -147,7 +147,7 @@ LLM 是 Agent 的决策核心。收到请求后，它先从用户的表述中识
 >
 > 本书的立场是：**方向认同，节奏务实。** 模型会持续接管 Harness 中的部分决策职责，而一轮训练与部署需要时间，业务规则和用户偏好却不断变化。真实业务中的约束也很难一次全部写进模型参数。因此，模型暂时做不稳的环节，由 Harness 先补齐。**模型此刻的能力边界，就是 Harness 此刻的价值所在。** 这种分工会随模型能力变化：模型每掌握一类决策，Harness 就可以减少相应的编排，转而解决新的困难。权限执行、状态持久化和结果校验，则继续由运行系统落实。
 
-[^ch1-1]: Sutton, Rich. [The Bitter Lesson](http://www.incompleteideas.net/IncIdeas/BitterLesson.html), 2019。
+[^ch1-1]: Sutton, Rich. The Bitter Lesson, 2019。
 
 #### Agent 的学习机制：从上下文适应到持久更新
 
@@ -199,7 +199,7 @@ LLM 是 Agent 的决策核心。收到请求后，它先从用户的表述中识
 
 **ReAct**（Reasoning + Acting）是这种循环的一种典型实现，将推理与行动交替组织起来[^ch1-react]。模型先分析当前信息，选择行动，再根据工具返回的**观测**调整计划。在后面的示例中，我们用简短的 `reasoning` 字段表示每轮决策依据，帮助读者理解行动之间的联系。实际服务可能提供模型的解释或摘要，书中的简写也只供读者理解这段交互。即使每次解码都得到同一句解释，也不能由此还原模型内部怎样算出了答案。
 
-[^ch1-react]: Yao, Shunyu, et al. [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629), ICLR 2023。
+[^ch1-react]: Yao, Shunyu, et al. ReAct: Synergizing Reasoning and Acting in Language Models, ICLR 2023。
 
 任务执行时积累的决策、行动与观测序列，称为**轨迹**（trajectory）。消息历史是记录轨迹的一种方式：用户消息保存任务，模型回复保存决策与调用请求，工具消息保存执行结果。完整运行记录还可以包含时间、环境状态和验证结果，供调试与评估使用。
 
@@ -289,9 +289,9 @@ repeat:
 >
 > 训练可以把工具调用策略内化到模型参数中，搜索实现与结果回传由运行系统承担。这个分工同样适用于代码执行等工具：模型决定要运行什么，工具服务提供执行环境，Harness 组织调用与反馈。随着任务变长，还需要保存进度、处理失败并控制预算，才能让任务在多次调用之间持续推进。
 
-[^ch1-k3]: Kimi Team. [Kimi K3: Open Frontier Intelligence](https://arxiv.org/abs/2607.24653), 2026。模型结构、上下文长度及后训练方法见技术报告；服务接入见 [Kimi 官方工具说明](https://platform.kimi.ai/docs/guide/use-official-tools)。
+[^ch1-k3]: Kimi Team. Kimi K3: Open Frontier Intelligence, 2026。模型结构、上下文长度及后训练方法见技术报告；服务接入见 Kimi 官方工具说明。
 
-[^ch1-2]: 感谢读者 asdlem 在 [GitHub Issue #30](https://github.com/bojieli/ai-agent-book/issues/30) 中指出工具调用决策与工具执行机制需要分别说明。
+[^ch1-2]: 感谢读者 asdlem 在 配套仓库的第 30 号议题 中指出工具调用决策与工具执行机制需要分别说明。
 
 > **实验 1-3 ★：Responses API 的托管研究闭环**
 >
@@ -307,7 +307,7 @@ repeat:
 >
 > ![图1-5 模型主导的工具调用：客户端循环与服务端托管循环](images/revised/fig1-5.svg)
 
-[^ch1-hosted]: 托管工具的接入方式参见[百炼代码解释器文档](https://help.aliyun.com/zh/model-studio/qwen-code-interpreter)。本实验的模型、调用次序与结果以配套运行记录为依据。
+[^ch1-hosted]: 托管工具的接入方式参见百炼代码解释器文档。本实验的模型、调用次序与结果以配套运行记录为依据。
 
 > **接口补充：自由格式工具调用**
 >
@@ -315,7 +315,7 @@ repeat:
 >
 > 参数格式与执行位置是两个独立的设计选择。自由格式自定义工具仍由应用侧接收输入、校验、执行并回传结果；托管代码解释器则由服务端提供沙盒和执行循环。选择接口时，要分别确定输入格式、执行环境和循环由谁管理。
 
-[^ch1-custom]: OpenAI，[Function calling](https://developers.openai.com/api/docs/guides/function-calling)，其中的 Custom tools 一节介绍自由格式输入及调用结果回传。
+[^ch1-custom]: OpenAI，Function calling，其中的 Custom tools 一节介绍自由格式输入及调用结果回传。
 
 ## Harness 工程：模型之外的竞争力
 
@@ -392,7 +392,7 @@ return Harness.report_incomplete(history)
 
 **行业正在从“能做事”向“可靠地做事”转变，Harness 工程因此成为 Agent 系统的核心竞争力。**
 
-[^ch1-claude-harness]: Claude Code 官方文档：[权限配置](https://code.claude.com/docs/en/permissions)、[检查点](https://code.claude.com/docs/en/checkpointing)、[交互命令与上下文压缩](https://code.claude.com/docs/zh-CN/commands)。文件检查点的恢复范围由工具记录决定，外部服务中的状态需要相应的恢复机制。
+[^ch1-claude-harness]: Claude Code 官方文档：权限配置、检查点、交互命令与上下文压缩。文件检查点的恢复范围由工具记录决定，外部服务中的状态需要相应的恢复机制。
 
 ### 从提示工程到 Graph 工程：工程关注范围的扩展
 
@@ -412,15 +412,13 @@ return Harness.report_incomplete(history)
 
 **当候选模型都已能胜任任务时，模型之外的工程实践往往决定产品差异。** LangChain 在 Terminal Bench 2.0 上的改进提供了一个具体例子：固定使用 GPT-5.2-Codex，通过调整 Harness，将得分从 52.8% 提高到 66.5%，当时的排名从三十名之外进入前五。改进包括完成前自检、重复操作检测、环境信息补充和推理预算分配。这里的提升来自对运行轨迹中失败模式的分析，以及据此反复修改、评估 Harness[^ch1-langchain-harness]。
 
-[^ch1-graph-engineering]: Josh C. Simmons，[We Are Entering the Graph Engineering Phase](https://www.drjoshcsimmons.com/writing/we-are-entering-the-graph-engineering-phase)，2026 年 7 月 4 日，讨论节点、类型化连接和可检查点状态。相关实践也见 [LangGraph](https://docs.langchain.com/oss/python/langgraph/overview)、[Microsoft Agent Framework 工作流](https://learn.microsoft.com/en-us/agent-framework/workflows/)和 [Google ADK](https://adk.dev/workflows/) 的官方资料。
+[^ch1-graph-engineering]: Josh C. Simmons，We Are Entering the Graph Engineering Phase，2026 年 7 月 4 日，讨论节点、类型化连接和可检查点状态。相关实践也见 LangGraph、Microsoft Agent Framework 工作流和 Google ADK 的官方资料。
 
-[^ch1-langchain-harness]: Vivek Trivedy，[Improving Deep Agents with harness engineering](https://www.langchain.com/blog/improving-deep-agents-with-harness-engineering)，2026 年 2 月 17 日。分数与排名对应文中报告的模型、基准和测试设置。
+[^ch1-langchain-harness]: Vivek Trivedy，Improving Deep Agents with harness engineering，2026 年 2 月 17 日。分数与排名对应文中报告的模型、基准和测试设置。
 
 ### 构建有效 Agent 的核心原则
 
-动手设计前，先看用户究竟想把哪一步交出去。笔者做过一个购物实验：助手挑了十件商品，购买者起初一件也没看上。她原先希望商品好看、便宜，最好还没有差评。自己去逛淘宝，比较了一圈，她才逐渐拿定主意，愿意在哪一项上让步，最后选中的恰是原来十件里的一件。若只看最终成交，似乎第一次推荐就足够了。可在第一次看到清单时，她还没形成足以作决定的偏好。助手可以帮她核对规格、比较价格，也可以把有代表性的差异列出来，供她自己逛和选。[^ch1-shopping]
-
-[^ch1-shopping]: 笔者对这次选购的记录及对委托范围的讨论，见 https://x.com/bojie_li/status/2110595928365400496 。
+动手设计前，先看用户究竟想把哪一步交出去。笔者做过一个购物实验：助手挑了十件商品，购买者起初一件也没看上。她原先希望商品好看、便宜，最好还没有差评。自己去逛淘宝，比较了一圈，她才逐渐拿定主意，愿意在哪一项上让步，最后选中的恰是原来十件里的一件。若只看最终成交，似乎第一次推荐就足够了。可在第一次看到清单时，她还没形成足以作决定的偏好。助手可以帮她核对规格、比较价格，也可以把有代表性的差异列出来，供她自己逛和选。
 
 把同样的问题用在账单申诉上，答案就不同了。用户想弄清一笔收费，原本可能因为要排队等一小时而放弃；助手替他等待和核实，省下的恰好是他想省的时间。还有一些任务，个人原本独立做不到，例如不会编程的人借助助手做出一个自己需要的小工具。选择委托范围时，可以问用户：如果有人代劳，你最希望省去哪一步？又有哪一步，你希望亲自参与才有收获？
 
@@ -434,7 +432,7 @@ Anthropic 将构建有效 Agent 的经验归纳为三个原则：保持简单、
 
 这可以借鉴制造业中的**防呆**（Poka-yoke）方法。SIM 卡的缺角帮助用户辨认安装方向，微波炉的门联锁使设备在开门时停止加热。对应到工具设计，可以用枚举限制操作类型，用参数校验检查格式，用权限控制限制作用范围。模型通过工具定义和返回结果理解接口，含糊的说明会在多轮调用中反复造成误用；清楚的接口与执行约束则能从源头减少错误。
 
-[^ch1-anthropic-building-effective-agents]: Anthropic，[Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)，2024 年 12 月。
+[^ch1-anthropic-building-effective-agents]: Anthropic，Building effective agents，2024 年 12 月。
 
 接下来从模型选型、编排模式、护栏与安全三个方面展开设计取舍：选择模型决定可用的决策能力，编排组织执行路径，护栏把约束、验证与纠正落实到具体操作。
 
@@ -462,9 +460,7 @@ Anthropic 将构建有效 Agent 的经验归纳为三个原则：保持简单、
 
 以“从百万条聊天记录中提炼个人记忆”为例，一种设计会先切分对话，再依次安排提取、证据核验、身份解析、记忆整理和合并复核 Agent，最后建立事实图、覆盖账本与不可变版本。这些机制分别解决了实际问题，但一开始全部引入，会增加信息传递、状态同步和错误定位的负担。遇到新情况时，如果继续增加分支，原本可以由模型结合上下文完成的语义判断，就会逐渐变成难以维护的固定规则。
 
-更合适的起点，是给一个能力足够的 Agent 明确目标、必要上下文和可组合的工具，让它查证资料、比较说法并处理冲突；程序落实权限、原始材料保护和原子发布等必须始终成立的规则。评估反复发现某类稳定失败后，再加入专门验证器、独立 Agent 或确定性流程。**结构的复杂度应由业务约束和实际失败驱动。** Manus 用“Less structure, more intelligence.” 概括了这种取舍[^ch1-manus-less-structure]。
-
-[^ch1-manus-less-structure]: Manus，[官方网站](https://manus.im/)。
+更合适的起点，是给一个能力足够的 Agent 明确目标、必要上下文和可组合的工具，让它查证资料、比较说法并处理冲突；程序落实权限、原始材料保护和原子发布等必须始终成立的规则。评估反复发现某类稳定失败后，再加入专门验证器、独立 Agent 或确定性流程。**结构的复杂度应由业务约束和实际失败驱动。** Manus 用“Less structure, more intelligence.” 概括了这种取舍。
 
 #### 工作流模式：预定义的编排
 
@@ -492,7 +488,7 @@ Anthropic 将构建有效 Agent 的经验归纳为三个原则：保持简单、
 
 当图像生成服务能直接理解自然语言需求时，**笔者优先直接提交原始描述，省去仅为适配输入格式而增加的改写调用。** 每经过一次改写，约束就多一次被遗漏或改变的机会。宽泛需求需要构图探索，或系列图片需要统一风格时，再让改写节点承担这些明确的创作任务。下面的实验可以帮助读者区分这两种用途。
 
-[^ch1-image-prompt]: Stability AI，[Stable Diffusion API 参考](https://platform.stability.ai/docs/api-reference)，介绍文本提示词、负面提示词与风格等输入；官方[应用案例](https://stability.ai/customer-stories/hubspot-scales-image-generation-150-with-stability-ai-in-amazon-bedrock)展示了自然语言描述的使用。
+[^ch1-image-prompt]: Stability AI，Stable Diffusion API 参考，介绍文本提示词、负面提示词与风格等输入；官方应用案例展示了自然语言描述的使用。
 
 > **实验 1-4 ★：文生图工作流与直接生成的对照**
 >
@@ -528,7 +524,7 @@ Anthropic 将构建有效 Agent 的经验归纳为三个原则：保持简单、
 
 另一种方式是**先让自主 Agent 生成工作流，再执行经过检查的工作流**。Agent 根据任务设计拓扑并生成编排代码，运行系统验证代码、权限与输入后，再沿生成的路径执行。对于重复处理的数据或步骤，这能减少每次调度都调用模型的开销，同时保留任务开始时动态设计流程的灵活性。第十章将进一步讨论这种形态。
 
-[^ch1-n8n]: n8n，[AI Agent 节点文档](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent)。
+[^ch1-n8n]: n8n，AI Agent 节点文档。
 
 > **工具参考：Agent 框架与平台**
 >
@@ -550,9 +546,9 @@ Anthropic 将构建有效 Agent 的经验归纳为三个原则：保持简单、
 >
 > 对这些方案做取舍时，重点检查三个问题：任务状态能否看清，工具与权限能否控制，出错后能否恢复。满足这些要求后，再比较接入成本、部署方式、许可证和团队维护能力[^ch1-frameworks]。
 
-[^ch1-codex-harness]: OpenAI 官方文档：[Codex SDK](https://learn.chatgpt.com/docs/codex-sdk)、[Codex App Server](https://learn.chatgpt.com/docs/app-server)。
+[^ch1-codex-harness]: OpenAI 官方文档：Codex SDK、Codex App Server。
 
-[^ch1-frameworks]: 各框架的能力与接口见官方资料：[Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview)、[LangGraph](https://docs.langchain.com/oss/python/langgraph/overview)、[Dify Agent 节点](https://docs.dify.ai/en/cloud/use-dify/nodes/agent)、[CrewAI](https://docs.crewai.com/introduction)、[OpenClaw](https://github.com/openclaw/openclaw)、[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)、[Pi](https://github.com/earendil-works/pi)。n8n 的 Agent 节点见前文引用。
+[^ch1-frameworks]: 各框架的能力与接口见官方资料：Claude Agent SDK、LangGraph、Dify Agent 节点、CrewAI、OpenClaw、DeepSeek Harness、Pi。n8n 的 Agent 节点见前文引用。
 
 确定了任务怎样推进，还需要检查每一步能否执行、执行后是否符合要求。下面介绍的护栏，就把约束、验证与纠正落实到这些位置。
 
@@ -577,7 +573,7 @@ Anthropic 将构建有效 Agent 的经验归纳为三个原则：保持简单、
 
 Anthropic 的 **Constitutional Classifiers** 展示了分类器的另一种组织方式：用自然语言规则生成合成数据，训练对输入和输出的检查能力。后续系统将问题与回答联合判断，使分类器能结合对话理解含义；例如，单独看似普通的“食品调味料”表述，结合上下文可能实际指代化学试剂。为了降低计算开销，系统先用读取内部激活的轻量探针筛查，再将可疑对话交给更强的分类器组合复核。第一级负责筛选，最终判断由复核阶段完成，有助于兼顾成本与误拒绝率[^ch1-3]。
 
-[^ch1-3]: Anthropic，[Next-generation Constitutional Classifiers](https://www.anthropic.com/research/next-generation-constitutional-classifiers)，2026 年 1 月 9 日；Cunningham et al.，[Constitutional Classifiers++](https://arxiv.org/abs/2601.04603)。
+[^ch1-3]: Anthropic，Next-generation Constitutional Classifiers，2026 年 1 月 9 日；Cunningham et al.，Constitutional Classifiers++。
 
 **执行层**关注模型提出的操作能否生效。可以按可逆性、权限范围、财务影响与数据敏感度，为工具调用划分低、中、高风险，并结合实际参数动态检查。读取公开资料与修改账户信息需要不同的控制，高风险操作可以追加独立审查或人工确认。
 
@@ -613,7 +609,7 @@ Harness 的五项功能会在不同章节反复出现，下表列出主要展开
 
 Anthropic 的长时运行 Agent 案例展示了五项功能的配合：**初始化 Agent**设置环境并分解任务列表，后续**执行 Agent**逐项推进，每个会话结束时留下进度记录和可接续的产物。新会话读取这些记录后继续工作，测试与任务清单帮助系统判断还有哪些功能未完成。这种安排缓解了跨上下文交接困难和过早宣告完成的问题[^ch1-long-running]。第二章将从上下文组织开始，第五章进一步讨论 Coding Agent 的完整 Harness。
 
-[^ch1-long-running]: Anthropic，[Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)，2025 年 11 月 26 日。
+[^ch1-long-running]: Anthropic，Effective harnesses for long-running agents，2025 年 11 月 26 日。
 
 ## 贯穿全书的设计模式
 

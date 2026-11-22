@@ -36,7 +36,7 @@
 
 **工具应围绕 Agent 要完成的任务来设计。** 这种从 Agent 使用方式出发设计接口的思路称为 **ACI**（Agent-Computer Interface，Agent—计算机接口）。HCI 关注人如何与计算机交互，ACI 则关注模型如何选择操作、构造参数、理解反馈并纠正错误。本节从能力形式、工具描述和参数保真三个方面展开。
 
-[^ch4-tool-design]: Anthropic，[Writing effective tools for AI agents—using AI agents](https://www.anthropic.com/engineering/writing-tools-for-agents)，2025。
+[^ch4-tool-design]: Anthropic，*Writing effective tools for AI agents—using AI agents*，2025。
 
 ### 能力的表达形式：专用工具、通用执行器与 Skill
 
@@ -51,7 +51,7 @@
 
 **笔者建议优先采用通用工具，再按权限、参数和性能需求补充专用接口。** 例如，在沙盒中为 `code_interpreter` 配置 SymPy、NumPy 和 pandas，Agent 就能编写 Python 完成四则运算、符号计算、数组处理和数据分析。这能让模型充分发挥代码生成能力：一个解释器可以承载多种算法，也能组合已有库处理预先没有想到的新问题。模型负责生成代码，运行环境负责执行，并限制文件、网络和资源访问。
 
-即使采用专用工具，笔者也建议优先整合功能相近、经常一起使用的操作。接口过细，模型就要记住更多名称和分工，完成同一任务也需要更多次调用。整合时主要看**功能相似性**与**使用场景的重叠度**。例如，`extract_pdf_text`、`extract_docx_content`、`extract_pptx_content` 都接收文档并提取文本，可以整合为 `read_document`，通过 `file_type` 区分格式。模型只需选择统一入口，新增格式也可沿用参数与返回结构。若不同格式需要特有选项，则在接口中明确这些条件，或保留相应专用工具。
+即使采用专用工具，笔者也建议优先整合功能相近、经常一起使用的操作。接口过细，模型就要记住更多名称和分工，完成同一任务也需要更多次调用。整合时主要看**功能相似性** 与 **使用场景的重叠度**。例如，`extract_pdf_text`、`extract_docx_content`、`extract_pptx_content` 都接收文档并提取文本，可以整合为 `read_document`，通过 `file_type` 区分格式。模型只需选择统一入口，新增格式也可沿用参数与返回结构。若不同格式需要特有选项，则在接口中明确这些条件，或保留相应专用工具。
 
 以下四种情况尤其适合专用接口。
 
@@ -66,7 +66,7 @@ Skill 可以说明如何调用专用工具，也可以指导 Agent 使用 CLI。
 
 **Skill 便于业务人员直接编写和修改。** 熟悉业务的人可以自己写步骤，也可以从 Agent 起草的说明改起。流程顺序变了、某一步只适用于部分客户，或是需要换个例子，直接改说明文字即可，省去了改工具代码和重新部署接口的工作。按照 Agent Skills 规范，`SKILL.md` 的元数据采用规定格式，正文采用 Markdown，还可以附带脚本、参考文档和资源[^ch4-skill-format]。因此，维护时分别检查元数据能否加载、步骤是否清楚、脚本是否可执行；更新流程说明后，再回放相关任务。
 
-[^ch4-skill-format]: Agent Skills，[格式规范](https://agentskills.io/specification)，包括元数据、正文、附带资源与渐进式加载。
+[^ch4-skill-format]: Agent Skills，格式规范，包括元数据、正文、附带资源与渐进式加载。
 
 选择能力形式时，可以综合四个维度。
 
@@ -81,7 +81,7 @@ Skill 可以说明如何调用专用工具，也可以指导 Agent 使用 CLI。
 
 这类接口常称为 **Code Mode**。以 Cloudflare 的 MCP 服务器为例，模型先用 `search()` 写一段查询程序，从 OpenAPI 描述里找出所需端点和参数；接着用 `execute()` 提交调用这些端点的 JavaScript。比如要列出符合条件的 DNS 记录，程序可以逐页查询、过滤，只返回命中的记录。前一步省去了把整本接口手册放进上下文的开销，后一步省去了把每页结果送回模型的往返。执行身份能读哪些区域、能否修改记录，仍由服务端授权决定。[^ch4-code-mode]
 
-[^ch4-code-mode]: Cloudflare，[Code Mode 的 MCP 实现](https://blog.cloudflare.com/code-mode-mcp/)；Armin Ronacher 以 Pi 1.0 为例讨论了 [Harness 提供的工具与执行环境的分工](https://lucumr.pocoo.org/2026/10/6/codemode/)。
+[^ch4-code-mode]: Cloudflare，Code Mode 的 MCP 实现；Armin Ronacher 以 Pi 1.0 为例讨论了 Harness 提供的工具与执行环境的分工。
 
 ### 工具描述：说明用途、参数与反馈
 
@@ -101,9 +101,9 @@ Skill 可以说明如何调用专用工具，也可以指导 Agent 使用 CLI。
 
 可以用一组极小的对照来试写说明：给模型一条按文件名寻找合同的请求，再给一条在合同正文查条款的请求。先看它选了哪个工具，再检查参数；若两次都误选同一入口，给参数增加更复杂的 Schema 通常不能纠正工具名称与用途造成的混淆。
 
-[^ch4-json-schema]: JSON Schema，[对象类型与属性约束](https://json-schema.org/understanding-json-schema/reference/object)。模型接口支持的 Schema 关键字范围由相应服务规定。
+[^ch4-json-schema]: JSON Schema，对象类型与属性约束。模型接口支持的 Schema 关键字范围由相应服务规定。
 
-[^ch4-tool-examples]: Anthropic，[Introducing advanced tool use on the Claude Developer Platform](https://www.anthropic.com/engineering/advanced-tool-use)，2025 年 11 月 24 日，Tool Use Examples 部分。
+[^ch4-tool-examples]: Anthropic，*Introducing advanced tool use on the Claude Developer Platform*，2025 年 11 月 24 日，Tool Use Examples 部分。
 
 Agent 频繁选错工具时，笔者建议**优先检查工具描述**：几个工具是否使用近似名称，搜索范围是否清楚，参数是否缺少例子。用同一组失败任务回放修改后的描述，检查工具选择与传参是否改善。修改描述成本低，也便于针对具体失败逐项改进，值得作为调试的第一步。这套方法同样适用于 Skill 的名称、简介和操作说明。
 
@@ -155,14 +155,14 @@ MCP 的核心价值是让一份工具实现服务于多个 Agent 产品。统一
 
 Skill 附带的脚本、本地 MCP 服务器及远程服务，各有执行位置与权限范围。审查时检查代码来源、运行环境、文件和网络权限，以及凭证流向；外部提供的步骤若引导下载或运行其他程序，也应纳入这条检查链。平台扫描可提供辅助线索，运行隔离、最小权限和变更审核则直接控制实际执行。
 
-[^ch4-mcp-origin]: Anthropic，[Introducing the Model Context Protocol](https://www.anthropic.com/news/model-context-protocol)，2024 年 11 月 25 日。
-[^ch4-mcp-architecture]: MCP，[架构](https://modelcontextprotocol.io/specification/2026-07-28/architecture)与[协议概览](https://modelcontextprotocol.io/specification/2026-07-28)，2026-07-28 版本。
-[^ch4-mcp-tools]: MCP，[Tools](https://modelcontextprotocol.io/specification/2026-07-28/server/tools)，包括工具清单、输入输出 Schema 和调用结果。
-[^ch4-mcp-versioning]: MCP，[Versioning and Compatibility](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning)，说明逐请求元数据、能力发现与旧版握手的兼容方式。
-[^ch4-mcp-transports]: MCP，[传输概览](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports)及[2025-11-25 传输规范](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports)，后者说明 Streamable HTTP 对早期 HTTP+SSE 方案的替代关系。
-[^ch4-mcp-primitives]: MCP，[Resources](https://modelcontextprotocol.io/specification/2026-07-28/server/resources)与[Prompts](https://modelcontextprotocol.io/specification/2025-11-25/server/prompts)。
-[^ch4-skills-sh]: Vercel，[Introducing skills, the open agent skills ecosystem](https://vercel.com/changelog/introducing-skills-the-open-agent-skills-ecosystem)，2026 年 1 月 20 日；技能目录见 [skills.sh](https://skills.sh)。
-[^ch4-clawhub]: OpenClaw，[ClawHub 使用说明](https://docs.openclaw.ai/clawhub)。
+[^ch4-mcp-origin]: Anthropic，*Introducing the Model Context Protocol*，2024 年 11 月 25 日。
+[^ch4-mcp-architecture]: MCP 2026-07-28 版规范，架构和协议概览两节。
+[^ch4-mcp-tools]: MCP，Tools，包括工具清单、输入输出 Schema 和调用结果。
+[^ch4-mcp-versioning]: MCP，*Versioning and Compatibility*，说明逐请求元数据、能力发现与旧版握手的兼容方式。
+[^ch4-mcp-transports]: MCP，传输概览及 2025-11-25 传输规范，后者说明 Streamable HTTP 对早期 HTTP+SSE 方案的替代关系。
+[^ch4-mcp-primitives]: MCP，Resources 与 Prompts 两节。
+[^ch4-skills-sh]: Vercel，*Introducing skills, the open agent skills ecosystem*，2026 年 1 月 20 日。
+[^ch4-clawhub]: OpenClaw，ClawHub 使用说明。
 
 ## 工具太多怎么办：层次化组织与主动工具发现
 
@@ -176,9 +176,9 @@ Skill 附带的脚本、本地 MCP 服务器及远程服务，各有执行位置
 
 Pi 的早期设计则优先使用附带 README 的 CLI 工具，让 Agent 按需阅读用法，再通过命令行调用能力[^ch4-pi-no-mcp]。社区扩展 `pi-mcp-adapter` 将类似思路用于 MCP：默认向模型提供一个约 200 token 的代理工具，模型依次搜索工具、查看定义、发起调用；服务器延迟到首次调用时启动。Pi 后续的 0.99 版本也加入了内置 MCP 支持，并采用按需发现机制[^ch4-pi-mcp-adapter]。这些实现把协议接入与上下文加载分开处理：后端连接 MCP 服务，前端通过简短索引或代理接口帮助模型找到所需能力。
 
-[^ch4-cursor-discovery]: Cursor，[Dynamic context discovery](https://cursor.com/blog/dynamic-context-discovery)，2026 年 1 月 6 日。
-[^ch4-pi-no-mcp]: Mario Zechner，[What if you don’t need MCP at all?](https://mariozechner.at/posts/2025-11-02-what-if-you-dont-need-mcp/)，2025 年 11 月 2 日，介绍 CLI 与按需阅读文档的设计思路。
-[^ch4-pi-mcp-adapter]: [pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter)，项目 README 的代理工具、延迟启动及与 Pi 内置 MCP 的比较。
+[^ch4-cursor-discovery]: Cursor，*Dynamic context discovery*，2026 年 1 月 6 日。
+[^ch4-pi-no-mcp]: Mario Zechner，*What if you don’t need MCP at all?*，2025 年 11 月 2 日，介绍 CLI 与按需阅读文档的设计思路。
+[^ch4-pi-mcp-adapter]: pi-mcp-adapter，项目 README 的代理工具、延迟启动及与 Pi 内置 MCP 的比较。
 
 **按任务组织工具目录。** 当工具增多时，可以按获取信息的方式分组，让模型先定位类别，再选择具体接口：
 
@@ -199,8 +199,8 @@ Pi 的早期设计则优先使用附带 README 的 CLI 工具，让 Agent 按需
 
 工程中也可以保留 `web_search`、`code_interpreter` 等基础工具，再增加一个工具搜索接口。模型描述缺少的能力，搜索接口返回候选定义，模型随后调用。Anthropic 的 Tool Search Tool 采用这种按需发现方式：常用工具直接加载，其余工具通过 `defer_loading` 延迟加载。Anthropic 公布的内部 MCP 评估中，启用工具搜索后，Opus 4 的准确率从 49% 提升至 74%[^ch4-tool-search-eval]。
 
-[^mcp-zero-2025]: Xiang Fei、Xiawu Zheng、Hao Feng，[MCP-Zero: Proactive Toolchain Construction for LLM Agents from Scratch](https://arxiv.org/abs/2506.01056)，2025。约 98% 的开销降幅来自 APIBank 全工具集合设置，见论文表 1。
-[^ch4-tool-search-eval]: Anthropic，[Introducing advanced tool use on the Claude Developer Platform](https://www.anthropic.com/engineering/advanced-tool-use)，2025 年 11 月 24 日，Tool Search Tool 部分。
+[^mcp-zero-2025]: Xiang Fei、Xiawu Zheng、Hao Feng，*MCP-Zero: Proactive Toolchain Construction for LLM Agents from Scratch*，2025。约 98% 的开销降幅来自 APIBank 全工具集合设置，见论文表 1。
+[^ch4-tool-search-eval]: Anthropic，*Introducing advanced tool use on the Claude Developer Platform*，2025 年 11 月 24 日，Tool Search Tool 部分。
 
 **先找服务器，再找工具。** MCP 服务器通常围绕一个平台或业务提供一组工具。图4-2 的例子先按能力描述选中 GitHub 服务器，再从它的工具中挑出三个候选。同名操作可能分属不同平台，第一步就可以排除一批无关候选。但如果这一步漏掉了正确的服务器，下一步再仔细比较工具也找不回来。
 
@@ -228,13 +228,13 @@ Pi 的早期设计则优先使用附带 README 的 CLI 工具，让 Agent 按需
 >
 > **主动发现**：系统提示词只保留 `web_search`、`code_interpreter` 和 `discover_tools`。模型遇到能力缺口时，用自然语言描述需求，例如“我需要查询股票价格的能力”。`discover_tools` 通过向量相似度检索五个候选工具，把完整定义追加到对话历史，并更新状态栏中的可用工具名称。模型随后选择工具，继续完成任务。
 >
-> **运行结果**：按上述任务的顺序，主动发现组分别追加了 3,939、1,853、2,632 个 token 的工具定义。读者可在[这次运行的汇总](https://github.com/bojieli/ai-agent-book/blob/main/chapter4/active-tool-discovery/validation/experiment_4_1/rerun_20260825/summary.json)中把目录的 `schema_tokens_o200k` 与每个任务的 `dynamic_schema_injection_tokens` 对照。如果想知道整项任务花了多少 token，还要另计用户消息、发现工具的调用、输出和后续对话。两组都选中了各任务所需的能力，执行适配层负责填入任务参数、批量下载和生成绘图代码，最终通过工具调用与产物检查。这里统计的是必需能力的覆盖情况；参数生成、额外调用和答案质量需要分别评估。
+> **运行结果**：按上述任务的顺序，主动发现组分别追加了 3,939、1,853、2,632 个 token 的工具定义。读者可在实验 4-1 的汇总文件 `summary.json` 中把目录的 `schema_tokens_o200k` 与每个任务的 `dynamic_schema_injection_tokens` 对照。如果想知道整项任务花了多少 token，还要另计用户消息、发现工具的调用、输出和后续对话。两组都选中了各任务所需的能力，执行适配层负责填入任务参数、批量下载和生成绘图代码，最终通过工具调用与产物检查。这里统计的是必需能力的覆盖情况；参数生成、额外调用和答案质量需要分别评估。
 >
-> 看到工具定义变短，还要追问：模型是因为读得少而选得准，还是因为容易混淆的工具少了？原来的两组连筛选方法、消息位置、状态栏、发现提示和调用轮数也一起变了。配套的[单步选择实验](https://github.com/bojieli/ai-agent-book/blob/main/chapter4/active-tool-discovery/selection_ablation.py)把问题缩小到“第一步选哪个工具”。先保留同一批候选，在系统消息里加入填充文本，就可以看加长输入后选择是否改变。再保留这些候选，加入等量的干扰工具，同时减少填充文本，使两组输入都为 6,144 个 token。这样，正确工具仍在原来的候选集合里，可以单独考察多出几个干扰项会怎样。
+> 看到工具定义变短，还要追问：模型是因为读得少而选得准，还是因为容易混淆的工具少了？原来的两组连筛选方法、消息位置、状态栏、发现提示和调用轮数也一起变了。配套的单步选择实验（`selection_ablation.py`）把问题缩小到“第一步选哪个工具”。先保留同一批候选，在系统消息里加入填充文本，就可以看加长输入后选择是否改变。再保留这些候选，加入等量的干扰工具，同时减少填充文本，使两组输入都为 6,144 个 token。这样，正确工具仍在原来的候选集合里，可以单独考察多出几个干扰项会怎样。
 >
 > 如果改用随机抽取的短名单，先检查其中有没有能完成第一步的工具，再看模型选了谁。缺少正确工具应该回头查筛选环节；正确工具已经入选却没被选中，才需要检查模型读到的工具说明。这项对照只考第一步的选择，整项任务是否完成仍要回到调用记录和交付物去核对。
 >
-> [股票查询的逐步记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter4/active-tool-discovery/validation/experiment_4_1/rerun_20260825/treatment/apple_stock_news/receipt.json)里，用户其实问了两件事：股价变了多少，有什么新闻能解释这次变化？第一轮检索返回五个候选，模型选了排第三的 `yfinance_quote`。这次报价为 310.34 美元，较前收盘价 309.35 美元上涨约 0.32%，第一问可以直接验算。第二问用到了初始目录中已有的 `web_search`。它返回五条搜索结果，摘要主要列行情，没有给出能解释当日涨幅的具体事件。两种必需工具都选到了，所以能力覆盖得了满分；用户若想知道上涨原因，还得继续寻找有日期的报道。
+> 股票查询任务的逐步记录里，用户其实问了两件事：股价变了多少，有什么新闻能解释这次变化？第一轮检索返回五个候选，模型选了排第三的 `yfinance_quote`。这次报价为 310.34 美元，较前收盘价 309.35 美元上涨约 0.32%，第一问可以直接验算。第二问用到了初始目录中已有的 `web_search`。它返回五条搜索结果，摘要主要列行情，没有给出能解释当日涨幅的具体事件。两种必需工具都选到了，所以能力覆盖得了满分；用户若想知道上涨原因，还得继续寻找有日期的报道。
 
 ### Skills：把工具发现变成“按需查阅”
 
@@ -250,7 +250,7 @@ Pi 的早期设计则优先使用附带 README 的 CLI 工具，让 Agent 按需
 
 MCP 与 Skill Hub 也可以共同承担分发工作。Skill Hub 负责能力包的搜索、安装与更新；MCP 的 Skills 扩展支持客户端发现和读取服务器提供的 Skill[^ch4-skills-over-mcp]。同一套操作知识可以通过本地能力包加载，也可以通过支持该扩展的 MCP 服务提供。
 
-[^ch4-skills-over-mcp]: Model Context Protocol，[Skills Over MCP Charter](https://modelcontextprotocol.io/community/working-groups/skills-over-mcp)，说明 Skills 扩展的发现、分发与读取职责。
+[^ch4-skills-over-mcp]: Model Context Protocol，*Skills Over MCP Charter*，说明 Skills 扩展的发现、分发与读取职责。
 
 工具已经找到了，给模型返回什么才有用？仍以客户邮件为例，只返回文件名足以定位原信，要核对交货日期却还得读到原句。感知工具的设计就从这层差别开始。
 
@@ -270,7 +270,7 @@ MCP 与 Skill Hub 也可以共同承担分发工作。Skill Hub 负责能力包�
 
 感知工具还可以把读者肉眼能辨认的东西转换为可核对的观测。Coscientist 的研究者把红、黄、蓝三份色样放在孔板的三个已知位置，让助手判断每种颜色在哪个孔里。读板仪返回各波长的吸光数据，助手用 Python 找出吸收峰。到这里得到的是波长与孔位的对应关系，给每个孔写上颜色还需要解释这些峰。论文记录了一个细节：研究者提示助手考虑不同颜色怎样吸收光之后，它才正确辨认出三份色样。读这种轨迹时，可以分别标出仪器返回的数据、程序算出的峰值，以及人在哪一步提供了解释方向。[^ch4-coscientist-colours]
 
-[^ch4-coscientist-colours]: Boiko 等，*Autonomous chemical research with large language models*，Nature，2023。[原论文图 4 与实验说明](https://pmc.ncbi.nlm.nih.gov/articles/PMC10733136/)；[作者公开的简化实现与实验输出](https://github.com/gomesgroup/coscientist)。
+[^ch4-coscientist-colours]: Boiko 等，*Autonomous chemical research with large language models*，Nature，2023。实验安排见图 4 及作者公开的简化实现。
 
 > **实验 4-2 ★★：感知工具 MCP 服务器**
 >
@@ -284,7 +284,7 @@ MCP 与 Skill Hub 也可以共同承担分发工作。Skill Hub 负责能力包�
 >
 > 本次运行覆盖了前四类场景。先看文档读取：工具打开一页 PDF，返回了页数和提取的文字，可以拿原页核对。再看日历查询：它也返回了一份 MCP 响应，外层的错误标记为假，里面却写着 `success: false` 和 `missing_credentials`。助手据此能告诉用户“还没取得读取日历的授权”；若答“当天没有安排”，就把一次没有查成的请求当成了查询结果。Notion 查询也停在凭据配置这一步。
 >
-> 可以按[配套实验的三份回执](https://github.com/bojieli/ai-agent-book/blob/main/chapter4/perception-tools/README.md#learning-3)核对每次调用究竟拿到了什么，再练习如何给长结果分页、压缩输出，以及在读取私有数据前检查权限。第五章会讨论怎样用少量通用工具配合 Skill 组织这些能力。
+> 可以按本实验说明中列出的三份回执核对每次调用究竟拿到了什么，再练习如何给长结果分页、压缩输出，以及在读取私有数据前检查权限。第五章会讨论怎样用少量通用工具配合 Skill 组织这些能力。
 
 ### 多模态感知
 
@@ -300,7 +300,7 @@ MCP 与 Skill Hub 也可以共同承担分发工作。Skill Hub 负责能力包�
 
 PDF 通常先由输入处理层解析，或把页面渲染成图像后交给模型。保留页面图像有助于分析版面、图表和图文对应关系；长文档则需要控制页数、分辨率和切片方式，让任务所需的细节进入模型可处理的范围。
 
-[^ch4-vlm-architecture]: Bai 等，[Qwen-VL: A Versatile Vision-Language Model for Understanding, Localization, Text Reading, and Beyond](https://arxiv.org/abs/2308.12966)，2023；Liu 等，[Improved Baselines with Visual Instruction Tuning](https://arxiv.org/abs/2310.03744)，2023，分别介绍视觉编码器及其与语言模型的连接结构。
+[^ch4-vlm-architecture]: Bai 等，*Qwen-VL: A Versatile Vision-Language Model for Understanding, Localization, Text Reading, and Beyond*，2023；Liu 等，*Improved Baselines with Visual Instruction Tuning*，2023，分别介绍视觉编码器及其与语言模型的连接结构。
 
 #### 提取为文本
 
@@ -310,7 +310,7 @@ PDF 通常先由输入处理层解析，或把页面渲染成图像后交给模�
 
 提取结果需要保留任务所依赖的关系。普通 OCR 可能识别出图中的数字，却丢失数字与坐标轴标签的对应；只读取 PDF 文本层，也可能漏掉嵌入图片中的图表。版面分析和表格解析可以进一步保留段落顺序、行列结构或位置标记。若任务仍需辨认图形、颜色或空间关系，就应保留查看原图的入口。
 
-[^ch4-text-models]: Z.AI，[GLM-5.2 模型文档](https://docs.z.ai/guides/llm/glm-5.2)，输入模态为文本；DeepSeek，[DeepSeek-V4-Flash 模型卡](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash)，提供文本生成模型及其使用方式。
+[^ch4-text-models]: Z.AI，GLM-5.2 模型文档，输入模态为文本；DeepSeek，DeepSeek-V4-Flash 模型卡，提供文本生成模型及其使用方式。
 
 #### 工具化多模态分析
 
@@ -340,7 +340,7 @@ PDF 通常先由输入处理层解析，或把页面渲染成图像后交给模�
 
 有时，发现一件值得做的事和动手办理它，需要两种权限。OpenAI 在发布 **dots** 时讲过一位早期用户的经历：他的 dot 注意到他漏给一家刊物开发票，备好发票，等他同意后才发出去。按产品说明，用户没有交办新工作时，dot 可以在已连接的应用里主动查找线索；这个阶段的工具只能读，不能发消息、修改应用内容或操作浏览器。设计自己的助手时，也可以沿着这张发票划出边界：查到一笔漏开的款项，足以向用户提个醒；要把发票发给外部收件人，还得检查发送权限和这项委托的授权。[^ch4-dots]
 
-[^ch4-dots]: OpenAI，2026 年 9 月 29 日发布的 [Introducing dots](https://openai.com/index/introducing-dots/)，发票案例与后台主动查找的只读限制见发布说明。
+[^ch4-dots]: OpenAI，2026 年 9 月 29 日发布的 *Introducing dots*，发票案例与后台主动查找的只读限制见发布说明。
 
 **分层检查参数与权限。**
 
@@ -374,7 +374,7 @@ Claude Code 的 Auto Mode 提供了一个工具调用门控案例。Anthropic �
 
 界面可以先显示“正在检查操作权限”或“准备读取文件”，让用户了解当前进度；真正开始执行后，再更新为执行状态。这样既能及时反馈，也能准确区分等待、审批和执行。
 
-[^ch4-auto-mode]: Anthropic，[How we built Claude Code auto mode: a safer way to skip permissions](https://www.anthropic.com/engineering/claude-code-auto-mode)，2026 年 3 月 25 日，介绍权限分层、调用分类器及输入隔离方式。
+[^ch4-auto-mode]: Anthropic，*How we built Claude Code auto mode: a safer way to skip permissions*，2026 年 3 月 25 日，介绍权限分层、调用分类器及输入隔离方式。
 
 提议者—审核者描述职责分工，Sidecar 描述辅助模块与主循环的运行关系。审核者可以由 Sidecar 承担，Sidecar 也可以完成其他任务。表4-2 从本节讨论的典型用法比较两者。
 
@@ -419,16 +419,14 @@ Python 解释器和 Shell 等通用工具可以执行模型生成的程序。其
 
 本地开发、输入可信且任务范围明确时，可以从受限进程和工作区规则开始；需要执行来源不明的代码，或处理敏感凭证时，则应提高隔离级别，优先使用容器或具备独立内核的 microVM，并限制凭证暴露。任务只需读取资料，就可以只读挂载相关目录；需要写入产物，就单独提供输出空间。执行环境还应限制 CPU、内存、磁盘、进程数量和网络访问，并设置运行时限，便于终止失控任务和回收资源。
 
-选定隔离方式后，还有一个成本问题：这份环境要为谁、保留多久？笔者做第一个 Agent 时，一个 Go 服务就负责多个用户的并发请求。访问网页时调用无头浏览器，上传的文件可以放在 GCS 或 Google Drive，等任务需要时再取。按笔者当时的估算，如果给每位用户常备一台云端虚拟机，一个沙盒每月就可能花几十美元。即使用户这个月只来办一次事，环境也一直等着他。[^ch4-personal-sandbox]
+选定隔离方式后，还有一个成本问题：这份环境要为谁、保留多久？笔者做第一个 Agent 时，一个 Go 服务就负责多个用户的并发请求。访问网页时调用无头浏览器，上传的文件可以放在 GCS 或 Google Drive，等任务需要时再取。按笔者当时的估算，如果给每位用户常备一台云端虚拟机，一个沙盒每月就可能花几十美元。即使用户这个月只来办一次事，环境也一直等着他。
 
 可以把一项委托拆开算这笔账。假设用户今天上传账单，下周才请助理核对。需要保存一周的是账单和任务记录；若核对时要执行新生成的脚本，可以到那时才分配隔离环境，提供这次获准读取的文件，保存结果后回收。假设按实例运行时间计费，机器规格相同，核对本身用 10 分钟。让同一台机器空等七天再核对，要付 168 小时零 10 分钟的计算费。按需启动若要花 2 分钟准备环境，这次合计计费 12 分钟，两种方案都还要算上保存文件的费用。这里的 2 分钟和 10 分钟是算例，实际比较时可以从运行记录中读出。
 
 若用户下周要接着操作一个已经打开的桌面，光找回文件可能还不够。要把应用恢复到原来的页面，需要多久？能否恢复尚未保存的工作？回答了这两个问题，才知道是否值得把环境留下。第五章讨论命令行会话时，还会用到这一区别。
 
-[^ch4-personal-sandbox]: 李博杰，2026 年 11 月 15 日关于个人 Agent 沙盒成本与多用户服务的[实践记录](https://x.com/i/status/2121958983930163268)。
-
-[^ch4-docker-isolation]: Docker，[Docker Engine security](https://docs.docker.com/engine/security/)，说明命名空间、资源控制、内核与进程权限对容器隔离的影响。
-[^ch4-firecracker]: Firecracker，[Design](https://github.com/firecracker-microvm/firecracker/blob/main/docs/design.md)，介绍基于 KVM 的 microVM 架构。
+[^ch4-docker-isolation]: Docker，*Docker Engine security*，说明命名空间、资源控制、内核与进程权限对容器隔离的影响。
+[^ch4-firecracker]: Firecracker，Design，介绍基于 KVM 的 microVM 架构。
 
 **工具执行的可观测性。**
 
@@ -448,7 +446,7 @@ Python 解释器和 Shell 等通用工具可以执行模型生成的程序。其
 
 取消也需要明确约定。任务尚未开始时，可以从队列中移除；本地进程正在运行时，可以终止进程并回收资源；外部系统已接收请求时，则需要查询它是否支持取消、撤销或补偿。工具应返回当前状态，让 Agent 区分“停止等待”“已经终止”和“外部操作已完成”。
 
-[^ch4-idempotency]: Stripe，[Idempotent requests](https://docs.stripe.com/api/idempotent_requests)，说明幂等键、重复请求结果复用、参数一致性与保留期限。
+[^ch4-idempotency]: Stripe，*Idempotent requests*，说明幂等键、重复请求结果复用、参数一致性与保留期限。
 
 > **实验 4-4 ★★：执行工具 MCP 服务器**
 >

@@ -73,7 +73,7 @@ Agent 接着引导用户关闭飞行模式并开启设备漫游，状态栏显�
 
 比较两条轨迹，可以把最终分数展开为具体改进点：核对号码与线路映射，使用新证据修正判断，区分设备与后台状态，并验证所需充值是否完成。后文的失败归因会继续讨论怎样从长轨迹中找出这些关键转折。
 
-[^ch7-tau2-task]: Sierra Research，τ²-bench 的 [telecom 用户工具](https://github.com/sierra-research/tau2-bench/blob/8d005b0e5b9e4af0bc055886fa7f95fc86d1710e/src/tau2/domains/telecom/user_tools.py)与[评分入口](https://github.com/sierra-research/tau2-bench/blob/8d005b0e5b9e4af0bc055886fa7f95fc86d1710e/src/tau2/evaluator/evaluator.py)。案例内容及结果按配套保存的五题任务与运行轨迹整理。
+[^ch7-tau2-task]: Sierra Research 的 τ²-bench 在 telecom 域的 `user_tools.py` 中定义用户工具，评分入口为 `evaluator.py`。案例内容及结果按配套保存的五题任务与运行轨迹整理。
 
 ## 评估指标：成功的定义
 
@@ -108,7 +108,7 @@ $$
 
 再回头读实验 7-1 的 4/5。那五条轨迹分别属于五道题，每题都只有一张卡片，连一对都凑不出来。要估计这些任务的 Pass^2，需要给每道题增加独立运行，再分别计算和汇总。如果把 0.8 直接平方，等于额外假定这些题每次成功的概率都一样，且各次尝试相互独立；那是根据假设推算出来的数。
 
-[^ch7-tau2-metrics]: τ²-bench 固定实验版本中的[按任务统计 Pass^k 的实现](https://github.com/sierra-research/tau2-bench/blob/8d005b0e5b9e4af0bc055886fa7f95fc86d1710e/src/tau2/metrics/agent_metrics.py#L33-L84)。当成功次数少于 $k$ 时，全通过的组合数为零。
+[^ch7-tau2-metrics]: τ²-bench 的实验版本（修订号 8d005b0）在 `agent_metrics.py` 中逐题计算 Pass^k。当成功次数少于 $k$ 时，全通过的组合数为零。
 
 计算时需要保持统计单位一致。同一任务的五次采样，衡量这一任务的重复表现；生产中连续五个不同任务，还受到任务难度与流量分布影响。不同任务成功概率不同时，可以先计算各自的重复成功指标，再按任务权重汇总。共享状态、缓存或相同故障也会使多次运行相关，重复实验应记录这些条件。
 
@@ -116,13 +116,13 @@ $$
 
 PaperQA2 在 248 道 LitQA2 文献题上就可以选择“信息不足”。论文报告三轮运行的平均结果：系统给出实质答案时，正确率为 85.2%；按全题计算，正确率为 66.0%，另有 21.9% 选择信息不足。九名人类答题者对应的两项正确率为 73.8% 和 67.7%。论文报告第一项差异显著，第二项差异未达统计显著。读到“超过人类”这样的概括，可以回到表头，把数据集、分母和是否允许拒答补进结论。[^ch7-paperqa2-denominators]
 
-[^ch7-paperqa2-denominators]: Skarlinski 等，*Language Agents Achieve Superhuman Synthesis of Scientific Knowledge*，2024。[论文第 2 节及图 2](https://storage.googleapis.com/fh-public/paperqa/Language_Agents_Science.pdf)；[PaperQA 作者仓库](https://github.com/Future-House/paper-qa)。
+[^ch7-paperqa2-denominators]: Skarlinski 等，*Language Agents Achieve Superhuman Synthesis of Scientific Knowledge*，2024，见第 2 节及图 2。
 
 最终状态相同的两条轨迹也值得并排看。以查账单为例，甲一次查询后返回正确金额；乙因超时重查一次，也返回了正确金额。先用请求标识确认这两次查询是不是重试，再量等待时间和工具费用。若重试帮助恢复，这一步有用；若同一份结果已经成功送达又被重复查询，才值得检查模型为什么没有用上已有观测。这样读过程指标，既能找到浪费，也能保留必要的恢复动作。
 
 运行涉及写入或其他外部效果时，先为每次试验恢复规定的初始状态，在测试环境中完成操作并记录所有尝试。产品若允许失败后重试，就把重试次数、恢复步骤与执行成本一并纳入流程评估；原始失败记录继续保留，便于区分单次表现与恢复后的结果。
 
-[^ch7-long-running]: Anthropic，[Building a C compiler with a team of parallel Claudes](https://www.anthropic.com/engineering/building-c-compiler)，2026-02-05，介绍多实例协作、长程执行与测试反馈。
+[^ch7-long-running]: Anthropic，Building a C compiler with a team of parallel Claudes，2026-02-05，介绍多实例协作、长程执行与测试反馈。
 
 ## 评估环境
 
@@ -165,7 +165,7 @@ telecom 任务包含一个持续回应并操作设备的用户模拟器。代码
 
 例如，两条任务同时修改数据库时，运行器可以把各自的数据库标识注入工具调用，使每条轨迹操作对应的数据。执行失败时，工具应返回可用于下一步判断的信息，如对象不存在、参数不符合要求或服务超时。评估系统保存观测、调用、执行结果和奖励，分析时便能把错误定位到具体步骤。
 
-[^ch7-verifiers-env]: Prime Intellect，Verifiers v0.1.9 的 [ToolEnv](https://github.com/PrimeIntellect-ai/verifiers/blob/v0.1.9/verifiers/envs/tool_env.py) 与 [StatefulToolEnv](https://github.com/PrimeIntellect-ai/verifiers/blob/v0.1.9/verifiers/envs/stateful_tool_env.py)，展示多轮轨迹、工具分派与状态参数注入。
+[^ch7-verifiers-env]: Prime Intellect，Verifiers v0.1.9 的 ToolEnv 与 StatefulToolEnv，展示多轮轨迹、工具分派与状态参数注入。
 
 ## 评估数据集的设计
 
@@ -192,13 +192,13 @@ telecom 任务包含一个持续回应并操作设备的用户模拟器。代码
 
 设想用户打开支付应用，请助手“批准本月室友发来的全部收款请求”。假设有三笔待处理：室友本月的、这位室友上月的、同事本月的。第一笔应当获批，后两笔应当保持待处理。只查第一笔，连一个把三笔都批准的助手也能得满分；只查后两笔，一个什么也没做的助手也能过关。AppWorld 在模拟支付应用中出了这道题。设计验证器时，可以先根据操作前的数据圈出用户授权的那批请求，再查是否全部获批，最后从操作后的记录反查：助手还动了哪几笔？[^ch7-appworld-scope]
 
-[^ch7-appworld-scope]: Trivedi 等，*AppWorld*，ACL 2024，图 2 给出任务和验收条件。https://aclanthology.org/2024.acl-long.850/
+[^ch7-appworld-scope]: Trivedi 等，*AppWorld*，ACL 2024，图 2 给出任务和验收条件。
 
 科研搜索也可以交出一件容易核验的产物。FunSearch 要在八维空间中尽量多选一些点，每一维只能取 0、1 或 2，运算按模 3 进行，选出的点中任意三点都不能共线。研究者写好逐步选点的程序框架，让模型提出给候选点排序的函数，再用实际构造出的合法点集大小评分。论文发表时，已有构造能选出 496 个点，新程序交出了一份 512 个点的清单。[^ch7-funsearch-cap]
 
 你可以只下载清单，独立检查这个结果。先确认其中有 512 个不同的八维向量，每个坐标都在规定范围。再任选两个不同点 $a,b$，它们所在的直线只有三个点，第三点为 $c=-a-b \pmod{3}$。例如在二维取 $(0,0)$ 与 $(1,2)$，第三点就是 $(2,1)$。把同样的运算逐坐标应用于八维，遍历清单中的 130,816 对不同点，得到的第三点都没有出现在清单里。这足以证明至少能选 512 个点。要证明 513 个一定做不到，还需要上界证明；若要判断搜索通常能找到多大的集合，则要看多次运行的分布。论文附录图 A.3 给出了 140 次搜索的结果。
 
-[^ch7-funsearch-cap]: Romera-Paredes 等，*Mathematical discoveries from program search with large language models*，Nature，2023 年在线发表。[论文与补充材料](https://doi.org/10.1038/s41586-023-06924-6)；[作者公开的八维点集与验证用 notebook](https://github.com/google-deepmind/funsearch/tree/main/cap_set)。
+[^ch7-funsearch-cap]: Romera-Paredes 等，*Mathematical discoveries from program search with large language models*，Nature，2023 年在线发表。作者另行公开了八维点集和验证用的计算笔记本。
 
 **SWE-bench 的两类测试分别检查修复与回归。** `FAIL_TO_PASS` 是修复前失败、修复后应通过的测试；`PASS_TO_PASS` 是原先通过、修复后应继续通过的测试。前者检查指定问题，后者检查已有测试覆盖的行为是否保持。两类测试共同提供修复证据，其有效性取决于断言是否合理、覆盖是否充分，以及评估时使用的测试是否受保护。[^ch7-swe-verified]
 
@@ -208,7 +208,7 @@ telecom 任务包含一个持续回应并操作设备的用户模拟器。代码
 
 第五章讲过从订单核对销售额。如果助手交来的是一份二十个渠道的季度报表，从哪儿查起？腾讯 WorkBuddy Bench 有一道公开的对账题。两张工作表都是渠道数据，结算额看环比，要和上一季度比；回款额看同比，要和上年同一季度比。即使把两个基期都填成上一季度，表头和渠道数也可能完全正确。以结算表的“锦绣生活馆”为例，从明细中去掉重复行和缺少季度的记录，按渠道、季度汇总，可以算出成交总额从 1,569,231.00 增至 1,787,311.03，差额为 218,080.03。评分程序检查两张表的渠道覆盖情况，再抽查两个指定渠道的数值。读评测结果时要看清这一层：二十个渠道悉数列出，说明没有漏列渠道；抽查通过的两家才有逐项核对的数值证据。[^ch7-workbuddy-office]
 
-[^ch7-workbuddy-office]: 腾讯 WorkBuddy Bench 办公任务 `channel-period-compare-L4-017`。该版本数据包附原始工作簿、参考答案与评分程序。https://huggingface.co/datasets/tencent/workbuddy-bench/tree/3e8ad839685c589d83a1dd60fe2d15eabb75f27a
+[^ch7-workbuddy-office]: 腾讯 WorkBuddy Bench 办公任务 `channel-period-compare-L4-017`。所用数据包（修订号 3e8ad83）附原始工作簿、参考答案与评分程序。
 
 可以用一个时间敏感的任务检验验证器。假设用户要求某酒店房价降到 950 元以下时提醒。价格在 10:00 为 1000 元，10:10 降到 900 元，10:15 又回到 1000 元。10:12 发出一条含房型和预订入口的降价提醒，用户还有机会下单。每天发一条“尚未降价”，偏偏错过这五分钟，即使连续运行一周也没有完成委托。评分时分别记录符合条件的窗口数、窗口内及时提醒的次数，以及无变化时打扰用户的次数。如果评估者也只保存了每天一次的报价，漏掉的窗口根本数不出来。要测漏报，应先准备带时间戳的完整价格回放，再让待测系统按自己的频率去查。
 
@@ -268,11 +268,11 @@ Terminal-Bench 的任务跨度同样很大：模型注册涉及 MLflow 的使用
 
 起步时，可以使用公开基准与少量手写业务任务；上线后，应把真实错误和新业务场景作为回归用例的主要增量来源。这些任务直接来自用户遇到的问题，能够不断补上设计阶段遗漏的条件。任务集既要保留具有代表性的正常流量，也要覆盖少见但影响较大的边界情况，分别报告总体表现与重点风险场景的结果。
 
-[^ch7-swe-verified]: OpenAI，[Introducing SWE-bench Verified](https://openai.com/index/introducing-swe-bench-verified/)，2024，介绍测试分类、标注标准与人工筛选。
-[^ch7-osworld-design]: OSWorld，[项目介绍](https://osworld-v1.xlang.ai/)，介绍任务初始化与执行式评估，134 个评估函数为原始版本统计。
-[^ch7-gaia-design]: Grégoire Mialon 等，[GAIA: A Benchmark for General AI Assistants](https://arxiv.org/abs/2311.12983)，原始论文说明任务分级、答案规范及人类与模型配置。
-[^ch7-androidworld-design]: Christopher Rawles 等，[AndroidWorld: A Dynamic Benchmarking Environment for Autonomous Agents](https://arxiv.org/abs/2405.14573)，介绍参数化任务及设备状态验收。
-[^ch7-osworld-verified]: XLANG Lab，[Introducing OSWorld-Verified](https://xlang.ai/blog/osworld-verified)，2025，介绍社区反馈、初始化与验证器修订。
+[^ch7-swe-verified]: OpenAI，Introducing SWE-bench Verified，2024，介绍测试分类、标注标准与人工筛选。
+[^ch7-osworld-design]: OSWorld 项目说明列出了任务初始化与执行式评估，134 个评估函数为原始版本统计。
+[^ch7-gaia-design]: Grégoire Mialon 等，GAIA: A Benchmark for General AI Assistants，原始论文说明任务分级、答案规范及人类与模型配置。
+[^ch7-androidworld-design]: Christopher Rawles 等，AndroidWorld: A Dynamic Benchmarking Environment for Autonomous Agents，介绍参数化任务及设备状态验收。
+[^ch7-osworld-verified]: XLANG Lab，Introducing OSWorld-Verified，2025，介绍社区反馈、初始化与验证器修订。
 
 ## 自动化评估方法
 
@@ -417,7 +417,7 @@ AndroidWorld 的图片记账任务展示了另一条因果链：错误数据被�
 
 同样的问题也会出现在科研里。Denario 团队报告过一种故障：分析程序读不进给定的数据，系统有时会自行生成模拟数据继续分析，却没有告诉使用者。[^ch7-denario] 设想读者拿到由此生成的图，即使重跑脚本能画出一模一样的曲线，仍有一个问题没回答：这条曲线用的是哪批观测？找原因时，可以从画图所用的那列数值往回追，找到给它赋值的代码，再查这次运行究竟读到了哪个文件。读取失败原本还有补救机会，把模拟值当成观测值继续往下传，才让后面的结论失去了依据。
 
-[^ch7-denario]: Francisco Villaescusa-Navarro 等，*The Denario Project: Deep Knowledge Artificial Intelligence Agents for Scientific Discovery*，作者在论文中说明了输入读取失败时可能发生的数据替换。https://doi.org/10.1103/kk55-gc95 。
+[^ch7-denario]: Francisco Villaescusa-Navarro 等，*The Denario Project: Deep Knowledge Artificial Intelligence Agents for Scientific Discovery*，作者在论文中说明了输入读取失败时可能发生的数据替换。
 
 > **实验 7-6 ★★：对 AndroidWorld 失败轨迹做失败归因**
 >
@@ -528,9 +528,9 @@ Chatbot Arena 让用户匿名比较两个模型的回答。用户问题的分布
 >
 > 使用 Chatbot Arena 的公开投票快照实现在线 Elo。配套运行从约 180 万条原始对局中筛出 1,670,250 条。所有模型初始评分为 1000，按时间顺序读取对局，计算预期得分，以固定步长 $K=4$ 更新双方评分。其中有 281,121 场投了平局，另有 295,254 场投了“双方都差”。两种投票都给双方各记半分。若产品团队想知道多少次比较中用户对两份回答都不满意，就得保留后一种投票的原始标签。
 >
-> 在相同的数据筛选规则下，另用 Bradley–Terry 批量拟合评分，比较两种方法的排名相关性、前若干名重合度，以及分歧较大的模型。改变 $K$ 和对局顺序，检查在线更新如何影响排名。这批对局涉及 129 个模型，两种排行榜的前 20 名有 12 个重合。读[这次运行的筛选与计分记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter7/elo-leaderboard/validation/runs/exp7-7-arena-20260731-v1/summary.json)时，可先核对两种算法用的是不是同一批对局，再解释名次分歧。
+> 在相同的数据筛选规则下，另用 Bradley–Terry 批量拟合评分，比较两种方法的排名相关性、前若干名重合度，以及分歧较大的模型。改变 $K$ 和对局顺序，检查在线更新如何影响排名。这批对局涉及 129 个模型，两种排行榜的前 20 名有 12 个重合。读实验 7-7 的筛选与计分记录时，可先核对两种算法用的是不是同一批对局，再解释名次分歧。
 >
-> 试着读[两两得分矩阵](https://github.com/bojieli/ai-agent-book/blob/main/chapter7/elo-leaderboard/validation/runs/exp7-7-arena-20260731-v1/win_rate_matrix.json)中的一个空格。找 `chatgpt-4o-latest` 这一行和 `bard-jan-24-gemini-pro` 这一列，实测得分率为空：筛选后的记录里，两者没有直接交手。可它们都和别的模型比过，最终的在线 Elo 评分分别约为 1126.69 和 1094.21。将两数代回公式，前者的预期得分约为 0.547。要回答“用户在这两者之间实际选了谁”，仍得收集它们直接比较的投票。
+> 试着读两两得分矩阵（`win_rate_matrix.json`）中的一个空格。找 `chatgpt-4o-latest` 这一行和 `bard-jan-24-gemini-pro` 这一列，实测得分率为空：筛选后的记录里，两者没有直接交手。可它们都和别的模型比过，最终的在线 Elo 评分分别约为 1126.69 和 1094.21。将两数代回公式，前者的预期得分约为 0.547。要回答“用户在这两者之间实际选了谁”，仍得收集它们直接比较的投票。
 >
 > 配套记录按月生成累计快照，每个月的分数都利用此前已纳入的对局。如果改成只看最近四周，评分还会因为旧对局移出窗口而变化。重做时先选定一种口径，再解释名次升降。使用 D3.js 制作条形图动画，以长度表示评分、纵向位置表示排名。结合模型加入时间、对战数量、对手构成与任务分布，解释评分变化；对变化明显的位置，再回到具体数据检查原因。
 
@@ -649,7 +649,7 @@ Chatbot Arena 让用户匿名比较两个模型的回答。用户问题的分布
 >
 > 从配套矩阵中取一格看看：BGE-M3 嵌入、豆包语义重排、豆包作答。这一格做了 60 题，每题取回的前五条材料里都至少有一条相关，但在标为相关的所有片段中，前五条平均只找回约 47.8%（先逐题计算，再取平均）。最终回答通过评分规则的有 25 题。这 25 题也可以分层看：三层各有 20 题，依次通过 18、5、2 题。总分告诉我们该去哪里找失败案例，具体错在哪一步，还得打开那道题的记录。
 >
-> 例如，第一层有道题要求助手列出用户谈过的各项经营支出及金额。检索器找回了全部标注为相关的片段，这道题的 recall@5 是 1；评分记录却指出，答复漏列了居家办公这一项的 1,525 美元。这里要分清两种遗漏：一项算检索时漏了几段材料，另一项算回答时漏了哪些应答要点。排查这道题，先对照模型收到的原文和最后列出的清单，再决定下一步该改检索还是改答题方式。见[全矩阵结果](https://github.com/bojieli/ai-agent-book/blob/main/chapter7/user-memory-system-evaluation/results/full_7_11_60_case_matrix.json)。
+> 例如，第一层有道题要求助手列出用户谈过的各项经营支出及金额。检索器找回了全部标注为相关的片段，这道题的 recall@5 是 1；评分记录却指出，答复漏列了居家办公这一项的 1,525 美元。这里要分清两种遗漏：一项算检索时漏了几段材料，另一项算回答时漏了哪些应答要点。排查这道题，先对照模型收到的原文和最后列出的清单，再决定下一步该改检索还是改答题方式。各组的逐题得分见实验 7-12 的配套矩阵。
 
 
 ## 评估结果的统计显著性
@@ -752,7 +752,7 @@ AndroidWorld 上的 Agent 多次卡在 Wi-Fi 设置页。它是不知道接下�
 
 图7-8 的最后一步是回到 Pixel 6、API 33 的标准环境，在 116 项任务上各跑五次。团队给完整对照定了三个目标：保持成功率，token 用量控制在对照方案的 75% 以内，耗时控制在其 1.5 倍以内。要检验这三个目标，精简树和完整树都得用同一模型、同一批任务来跑。
 
-配套项目后来用本地 Qwen2.5-7B 跑完了精简树方案的 580 次测试。77 次结束时，应用状态获得满分；按更严格的成功条件，还需要 Agent 明确报告任务完成，同时满足两项的有 26 次（约 4.48%）。这两个数的差距提示我们，模型把事情办成以后，还得学会在正确的时候结束。四项 Wi-Fi 对照用的是豆包模型，580 次测试又只跑了精简树方案。因而可以从这份记录里查全套任务怎样失败，但要判断精简是否提高了成功率、节省了多少，还缺同条件下的完整树对照。见[配套项目的完整回归报告](https://github.com/bojieli/ai-agent-book/blob/main/chapter7/android-world/validation/candidate_h5c_api33_local_qwen_20260804/report.md)。
+配套项目后来用本地 Qwen2.5-7B 跑完了精简树方案的 580 次测试。77 次结束时，应用状态获得满分；按更严格的成功条件，还需要 Agent 明确报告任务完成，同时满足两项的有 26 次（约 4.48%）。这两个数的差距提示我们，模型把事情办成以后，还得学会在正确的时候结束。四项 Wi-Fi 对照用的是豆包模型，580 次测试又只跑了精简树方案。因而可以从这份记录里查全套任务怎样失败，但要判断精简是否提高了成功率、节省了多少，还缺同条件下的完整树对照。
 
 > **实验 7-13 ★★★：AndroidWorld 的评估和改进**
 >
@@ -798,7 +798,7 @@ A/B 测试将符合条件的用户、会话或任务分配给不同版本，比�
 
 账单协商又是另一种情形。有些人愿意接受减免，却不愿为此花一个小时打电话。如果只从已经打过电话的人里抽样，就看不到那些有了代办才愿意申请的人。可以在用户决定是否申请之前分组，一组可以使用代办，另一组按原来的方式办理。两组都以符合条件的用户总数作分母，分别统计有多少人提出申请、多少人最终核实费用已经减免。两组申请比例相差多少，能帮助估计代办让多少人多迈出了第一步；两组实际减免的比例则说明这一步使多少人获得了减免。至于生成幻灯片，有人做一份是为了讲给别人听，有人则借整理材料弄懂一个问题。设计评估前先问清用途；对后一种人，可以请他合上幻灯片，用自己的话解释原先没弄懂的地方。[^ch7-porto]
 
-[^ch7-porto]: 笔者在波尔图演讲《The Road to JARVIS》中讨论了购物、账单协商和制作幻灯片的不同动机。分组和回访是本节据此设计的评估示例。https://01.me/files/road-to-jarvis-talk/slides.md 。
+[^ch7-porto]: 笔者在波尔图演讲《The Road to JARVIS》中讨论了购物、账单协商和制作幻灯片的不同动机。分组和回访是本节据此设计的评估示例。
 
 ### 双层特性开关系统
 
@@ -850,7 +850,7 @@ OSWorld 的虚拟机快照和 AndroidWorld 的应用状态初始化，也服务�
 >
 > 研究 `move_can_pot` 任务的物体随机化与空间约束，配置与这些输入输出相匹配的预训练或适配后策略。固定任务条件，记录成功率、完成时间和失败类型。配套实验用同一份策略权重，每次都预测 25 个动作。一组只执行第一个动作就重新观测，另一组按预测序列最多执行 25 个动作再重新观测。这样只改执行方式，两组可以共用模型、任务和随机种子。
 >
-> 每组都做了 128 次分布内测试和 128 次分布外测试。只执行一个动作的组没有成功；执行长序列的组共成功 26 次，两类测试各 13 次。长序列在这项任务上占优，成功率也只有约 10%。回看失败录像时，可以先区分两种情况：夹爪是不是一开始就没对准？还是头几个动作正确，后面物体偏移了却未能及时调整？前者要检查初始观测和动作预测，后者才与重新观测的时机直接相关。见[配套运行记录](https://github.com/bojieli/ai-agent-book/tree/main/chapter7/openvla-robotwin2-eval/validation/runs/exp7-13-localgpu-20260803-v1)。
+> 每组都做了 128 次分布内测试和 128 次分布外测试。只执行一个动作的组没有成功；执行长序列的组共成功 26 次，两类测试各 13 次。长序列在这项任务上占优，成功率也只有约 10%。回看失败录像时，可以先区分两种情况：夹爪是不是一开始就没对准？还是头几个动作正确，后面物体偏移了却未能及时调整？前者要检查初始观测和动作预测，后者才与重新观测的时机直接相关。
 
 图7-10 中，策略根据相机图像和机器人状态算出动作，适配层把动作交给仿真器。直到下一帧图像返回，策略才能看到这次动作的后果。换策略时要逐一核对相机数量、状态输入和动作头。即使程序跑得通，动作的含义也可能已经变了。
 
@@ -889,6 +889,6 @@ OSWorld 的虚拟机快照和 AndroidWorld 的应用状态初始化，也服务�
 9. ★★ 用户模拟器按 Agent 提问逐步透露信息。怎样比较不同透露策略，并判断交互轮数、成功率和任务难度受到了什么影响？
 10. ★★ 用户交给科研助手三次观测值 2、5、8，要求画图并报告均值。读取日志显示文件打开失败，绘图程序随后用 4、5、6 生成了图，报告给出的均值是 5。现有检查只要求“图能打开、均值正确”。这个检查会给出什么结果？怎样修改验收与回归用例，才能发现数据被换过？
 
-[^ch7-rubrics]: Scale AI，Using Rubrics to Build Better Models，2025 年 9 月，https://scale.com/blog/rubrics-as-rewards 。四项准则用于组织评价标准；本节的一票否决条件和用户记忆判例按具体任务设计。
+[^ch7-rubrics]: Scale AI，Using Rubrics to Build Better Models，2025 年 9 月。四项准则用于组织评价标准；本节的一票否决条件和用户记忆判例按具体任务设计。
 
-[^ch7-arena-ranking]: LMArena，Arena Leaderboard Dataset，记录了 2024 年采用 Bradley–Terry 评分的历史，https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset 。本节实验使用固定的历史投票快照比较在线 Elo 与批量拟合。
+[^ch7-arena-ranking]: LMArena，Arena Leaderboard Dataset，记录了 2024 年采用 Bradley–Terry 评分的历史。本节实验使用固定的历史投票快照比较在线 Elo 与批量拟合。

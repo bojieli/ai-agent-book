@@ -52,7 +52,7 @@
 >
 > 阅读结果时，沿着“结论—证据—修复位置”检查每条诊断。例如，知识过期需要更新资料，参数缺失可以增加调用前检查，措辞重复则可能通过指令或训练改善。低置信度案例进入复查队列，确认后再作为学习材料。
 
-试着读一次[配套验证记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter9/trajectory-verifier/validation/real_20260729T165247Z/evidence.json)。这次用虚构账户资料构造了八条轨迹，正常退款、虚假承诺、隐私泄露和过度拒绝各两条。在轨迹 `real-normal-refund-01` 中，退款完成的证据是订单状态变成 `refunded`，且退款金额为 480。换一条轨迹，如果客服只说“已经退了”，能从哪里查到同样的证据？可以先遮住验证器的判断，沿着工具调用查一遍，再对照[实验说明](https://github.com/bojieli/ai-agent-book/blob/main/chapter9/trajectory-verifier/README.md)。
+试着核对实验 9-1 配套记录中的退款案例。这次用虚构账户资料构造了八条轨迹，正常退款、虚假承诺、隐私泄露和过度拒绝各两条。在轨迹 `real-normal-refund-01` 中，退款完成的证据是订单状态变成 `refunded`，且退款金额为 480。换一条轨迹，如果客服只说“已经退了”，能从哪里查到同样的证据？可以先遮住验证器的判断，沿着工具调用查一遍，再对照实验说明。
 
 八条轨迹各评七项，56 项判断里有 52 项与用例预设的专家标签相同，一致率约为 92.9%。剩下四处分歧里，有三处落在同一笔改签上。用户要求把不可退款的机票改到 10 月 3 日。客服核验了身份，查了三次订单，第 10 轮告诉用户已处理。订单状态却仍是 `confirmed`，调用记录里也没有改签操作。
 
@@ -127,7 +127,7 @@ Andrej Karpathy 用**系统提示学习（System Prompt Learning）**描述一�
 
 怎样知道新指令真的修好了上次的错误？假设用户指着一封误归档的客户来信说：“这封是客户在回复我，怎么也当成简报了？”开源邮件助理 Inbox Zero 提供了一个试跑工具。修订规则后，助理可以用邮件 ID 取回原信，按该账号当前启用的规则重新判断，查看哪些规则会命中、原因是什么、准备打什么标签或移入哪个文件夹。这一步只看拟执行的动作，邮箱保持原样，也不会生成回复草稿。[^ch9-inboxzero] 现在再挑一封真正的简报试一次：客户来信留在收件箱，简报仍照常归档，两封信一起说明这次修改是否守住了原有的分类边界。
 
-[^ch9-inboxzero]: Inbox Zero，[用指定邮件试跑规则的工具源码](https://github.com/elie222/inbox-zero/blob/097e4721b86d7db85a2238e74f21567b02f46d94/apps/web/utils/ai/assistant/tools/rules/test-rules-on-email-tool.ts#L32-L84)。
+[^ch9-inboxzero]: Inbox Zero 项目的 `test-rules-on-email-tool.ts` 实现了用指定邮件试跑规则的工具。
 
 #### 例子一：明确转接与工具使用的边界
 
@@ -145,7 +145,7 @@ Andrej Karpathy 用**系统提示学习（System Prompt Learning）**描述一�
 >
 > 沿用第七章的 telecom 环境，将提炼集与迁移集分开。先运行较弱模型收集失败轨迹，再让模型生成规则，追加到原政策中。在迁移集上比较原始版本与两个进化版本，三组只替换政策文件，保持用户模拟器一致。若还想分清第二版的额外收益来自工具清单，还是来自提示中“该由谁来做”的追问，可以固定提示只增减清单，再固定清单只改提示，比较各组生成的规则和迁移题表现。
 >
-> 用[随书轨迹](https://github.com/bojieli/ai-agent-book/tree/main/chapter9/tau2-escalation-experience)复算时，注意两种计数单位。基线有 104 道题发生过转接，第二版有 111 道；同一道题只要转过一次就计入。误调用户侧工具则按调用次数统计，从 1049 次降到 163 次。另一个指标数的是调用参数中至少有一个值为空字符串的次数，从 904 次降到 174 次；完全没传参数的调用不会被这项指标计入。每种策略在每道题上只运行了一次。
+> 用随书轨迹复算时，注意两种计数单位。基线有 104 道题发生过转接，第二版有 111 道；同一道题只要转过一次就计入。误调用户侧工具则按调用次数统计，从 1049 次降到 163 次。另一个指标数的是调用参数中至少有一个值为空字符串的次数，从 904 次降到 174 次；完全没传参数的调用不会被这项指标计入。每种策略在每道题上只运行了一次。
 
 航空客服也会出现过早转接。用户对退票费、改签费或行李政策提出异议后，Agent 应按适用政策查询、解释，并寻找允许的替代方案。在下面实验采用的规则中，普通政策争议继续由 Agent 处理，用户明确要求人工或出现指定安全情形时则调用 `transfer_to_human` 转接。将这组条件写成局部规则，再分别测试两类场景，就能检查转接边界。
 
@@ -155,7 +155,7 @@ Andrej Karpathy 用**系统提示学习（System Prompt Learning）**描述一�
 >
 > 先看旧任务有没有退步。五道保留题里，三道要求客服自行处理，两道要求转人工，三版指令都得了 5/5。再看用来提炼补丁的五道过早转接题，同一位模型评审给初始版、自动版、人工调优版分别判了 0、2、4 题通过。自动版改好的是特价票退票和超额行李两题。程序据此给出允许小范围试用的决定。要检验规则能否迁移，还得换一批没有参与提炼的新争议。
 >
-> 值得复查的是那道“免掉 200 元改签费”的题。人工调优版没有转接，却向乘客解释特价票能否退款，评审认可了“退还税费”这个建议，给了通过。把乘客的问题和客服的回答并排看：乘客还想改签，退税费能解释这笔改签费为什么要收吗？读到人工版的 4/5 时，这一分应留待人工复核。见[三组逐题记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter9/prompt-auto-optimization/validation/latest.json)。
+> 值得复查的是那道“免掉 200 元改签费”的题。人工调优版没有转接，却向乘客解释特价票能否退款，评审认可了“退还税费”这个建议，给了通过。把乘客的问题和客服的回答并排看：乘客还想改签，退税费能解释这笔改签费为什么要收吗？读到人工版的 4/5 时，这一分应留待人工复核。
 
 #### 例子二：根据用户反馈改进需求澄清 Skill
 
@@ -185,7 +185,7 @@ Andrej Karpathy 用**系统提示学习（System Prompt Learning）**描述一�
 
 [^gepa-2025]: Agrawal, L., et al. *GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning.* arXiv:2507.19457, 2025.
 
-[^karpathy-system-prompt-learning]: Karpathy, A. “We’re missing (at least one) major paradigm for LLM learning … system prompt learning?” X, May 11, 2025. https://x.com/karpathy/status/1921368644069765486
+[^karpathy-system-prompt-learning]: Karpathy, A. “We’re missing (at least one) major paradigm for LLM learning … system prompt learning?” X, May 11, 2025.
 
 ### 将经验写成程序
 
@@ -210,7 +210,7 @@ PreAct[^preact] 的重复任务实验报告了 8.5～13 倍的端到端加速。
 >
 > 从成功轨迹生成带参数和状态检查的工作流，与每次重新探索的基线比较完成率、模型调用与耗时。再改变页面结构或构造点击成功但任务未提交的状态，检查程序能否检测失效并回退。
 >
-> 在[使用本地邮件站点的运行记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter9/browser-use-rpa/validation/real_20260729T171233Z/evidence.json)中，首次探索调用模型 4 次，参数化回放调用 0 次，耗时分别约为 5.31 秒和 4.45 秒。浏览器操作和等待仍然存在。再看两个故障用例：正文为空时服务器拒绝发送；另一例中请求被接受，消息却没有保存。只检查“点击动作已执行”的版本两次都误报成功，检查提交后状态的版本两次都识别出了失败。这里比较的是这两个刻意构造的反例，不能据此估计线上故障率。
+> 在本地邮件站点的这次实验中，首次探索调用模型 4 次，参数化回放调用 0 次，耗时分别约为 5.31 秒和 4.45 秒。浏览器操作和等待仍然存在。再看两个故障用例：正文为空时服务器拒绝发送；另一例中请求被接受，消息却没有保存。只检查“点击动作已执行”的版本两次都误报成功，检查提交后状态的版本两次都识别出了失败。这里比较的是这两个刻意构造的反例，不能据此估计线上故障率。
 >
 > 独立回放通过后，将工作流连同适用版本发布到能力库。后续任务继续执行状态检查，异常则触发修订。这条链路让一次探索成为可以维护的流程记忆。
 
@@ -260,9 +260,9 @@ Cordis 用**可撤销效果（revertible effects）**描述带逆操作的上下
 
 插件更新也会影响上下文成本。工具定义或提示片段发生变化，后续请求与已有缓存前缀的共同部分可能缩短。设计更新时，应记录新增内容、加载范围及预期缓存影响，结合第二章的方法观察 KV Cache 命中与运行开销。
 
-[^dsh-2026]: DeepSeek AI, [*DeepSeek Harness*](https://github.com/deepseek-ai/deepseek-harness), 2026。插件组成见[架构说明](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/architecture.md)；动态运行器与持久插件的分工见[扩展说明](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/extensions/README.md)。该项目于 2026 年 8 月发布，本节围绕其开发者预览阶段的插件化设计展开。
+[^dsh-2026]: DeepSeek AI, *DeepSeek Harness*, 2026。插件组成见架构说明；动态运行器与持久插件的分工见扩展说明。该项目于 2026 年 8 月发布，本节围绕其开发者预览阶段的插件化设计展开。
 
-[^cordis-2026]: Shi, Yifan, Wei Zhang, and Tianyi Cui. [*A Programming Paradigm for Spatiotemporal Composability*](https://arxiv.org/abs/2608.25512), 2026。论文及更新入口见[项目仓库](https://github.com/cordiverse/paper)。
+[^cordis-2026]: Shi, Yifan, Wei Zhang, and Tianyi Cui. *A Programming Paradigm for Spatiotemporal Composability*, 2026，arXiv:2608.25512。
 
 检验一个新插件时，可以把同一份初始状态交给旧版和新版，比较插件接收的输入、产出的动作以及这些动作留下的外部状态。再把触发条件拿掉重跑一次：一项只应在特定场景生效的改动，在普通任务上也触发，就给原本正常的流程引入了副作用。保留这对任务，下次改动插件或路由时还可以继续复查。
 
@@ -290,7 +290,7 @@ Meta Context Engineering（MCE）进一步把内容更新与管理方法更新�
 
 例如，终端任务的第二条命令需要接着第一条命令执行，助手却找不到刚切换到的目录。可以先固定权重，只让 Harness 在两次调用间保留 shell 状态，再回放同一任务。如果这就修好了，已有证据支持的是执行环境的改进。若还要判断训练的贡献，可以固定修好的 Harness，对比更新前后的模型。两个环节一起改得到的总分，无法独自回答这个问题。
 
-[^ch9-rsigym]: 李博杰，[对 RSIGym 与实验环境的观察](https://x.com/i/status/2110768074676949172)；Evolvent AI，[RSIGym 的服务和三个改进方向](https://github.com/evolvent-ai/RSIGym/blob/c2cc090a2b683c764bf174acd03b0a0c80a099c2/README.md#improvement-tracks)。
+[^ch9-rsigym]: Evolvent AI 在 RSIGym 项目说明中列出了服务的评测方法和三个改进方向。
 
 搜索本身也有策略：从哪个候选继续探索，何时另开分支，投入多少并行 Worker，什么时候停止。评价这些决定通常需要多轮生成与执行。如果每比较一种搜索策略都重新运行全部任务，反馈成本会快速增加。
 
@@ -312,7 +312,7 @@ Meta Context Engineering（MCE）进一步把内容更新与管理方法更新�
 >
 > 读者 Grace 提出了一个问题：不给 Hermes 列改进清单，只给它本书十章和自己的源码，它会选什么来改？在这次运行中，Hermes 选择了轨迹记录。它想把工具实际返回的结果整理成可核查的证据，供下一次离线评价使用。它可以提出补丁，稳定版本和验收规则由独立权限保护。
 >
-> 第一版为什么被退回？测试用的工具结果与实际保存的格式不同。真实结果包在 XML 标签里，测试虽能通过，解析器却读不出这项证据。Hermes 在同一会话中收到反馈并修改；后续审查又找出了遗漏的保存路径，以及一次失败可能被计两次的问题。经过三轮退回，第四位独立审核者接受了候选补丁。至此可以回答“它能否根据证据改好自己的记录程序”；要回答“这些记录能否让后续任务办得更好”，仍需让新旧版本完成独立任务，比较质量、成本与原有能力。该次记录止于候选补丁获准，尚未合入 Hermes。[实验运行与审查记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter9/hermes-self-evolution/validation/exp9-8-hermes-gpt56luna-autonomous-20260802-v2/manifest.json)
+> 第一版为什么被退回？测试用的工具结果与实际保存的格式不同。真实结果包在 XML 标签里，测试虽能通过，解析器却读不出这项证据。Hermes 在同一会话中收到反馈并修改；后续审查又找出了遗漏的保存路径，以及一次失败可能被计两次的问题。经过三轮退回，第四位独立审核者接受了候选补丁。至此可以回答“它能否根据证据改好自己的记录程序”；要回答“这些记录能否让后续任务办得更好”，仍需让新旧版本完成独立任务，比较质量、成本与原有能力。该次记录止于候选补丁获准，尚未合入 Hermes。
 
 ## 构建可长期运行的持续进化闭环
 
@@ -330,7 +330,7 @@ Voyager[^voyager-2023]在 Minecraft 中展示了目标选择、技能积累与�
 
 这种过程可以概括为**假设—实验—评估—反馈**的发现循环。对 Agent 来说，候选补丁是一项可以检验的假设：它应当改善哪种行为，会影响哪些任务，运行结果是否支持预期？Jeff Dean 等人创办的 Discovery Loop 也将自动化完整实验循环作为目标，通过提出、执行和评价实验推进下一轮探索。[^ch1-discovery-loop] 笔者认为，Agent 的持续进化也应遵循这种科学方法：提出明确假设，用实际运行检验，再根据结果决定保留或修订哪些改动。
 
-[^ch1-discovery-loop]: Discovery Loop 的创始团队包括 Jeff Dean、Sanjay Ghemawat、Quoc Le 和 Oriol Vinyals，其[官方说明](https://www.discoveryloop.com/)提出自动化完整实验循环；2026 年 8 月 5 日的[投资方公告](https://radical.vc/articles/our-investment-in-discovery-loop/)介绍了其公益公司定位与并行实验方向。
+[^ch1-discovery-loop]: Discovery Loop 的创始团队包括 Jeff Dean、Sanjay Ghemawat、Quoc Le 和 Oriol Vinyals，其官方说明提出自动化完整实验循环；2026 年 8 月 5 日的投资方公告介绍了其公益公司定位与并行实验方向。
 
 评价持续进化的效果时，还需要分别检查**更新能力（harness-updating）**与**受益能力（harness-benefit）**。前者指系统能否产生有价值的持久改动，后者指任务 Agent 能否在合适时机找到并正确使用这些改动。Lin 等人的模型替换实验分析了两者与基础模型能力的关系。[^harness-benefit-2026]
 
@@ -361,7 +361,7 @@ Voyager[^voyager-2023]在 Minecraft 中展示了目标选择、技能积累与�
 >
 > 分别记录记住、迁移、更新和保持四类表现：新任务能否使用相关经验，规则改变后能否采用新版本，旧任务是否仍能完成。同时检查过程合规与成本，分析每种记忆更新机制的收益和代价。
 >
-> 这组实验为三种记忆方案各运行三个种子，每次依次做 14 项任务，共有 126 次模型调用。只追加与允许替换两组在迁移任务上的平均正确率都为 100%。只看这一栏，会以为两种做法没有区别。行李额度从 20 千克改成 23 千克时，第一次问新额度，两组都答错。允许替换的一组在收到这次反馈后改写了规则，第二次回答 23 千克；只追加的一组仍回答 20 千克。因此前一组在两个变更题上只答对了一半，随后检查新规则是否取代旧规则时却能达到 100%，只追加组的替换正确率为 0。退款和身份核验沿用旧规，两组的旧能力保持率均为 100%。沿[逐组统计结果](https://github.com/bojieli/ai-agent-book/blob/main/chapter9/self-evolution-eval/validation/real_seeded_campaign/evidence.json)回看这场对照，主动替换改善的是规则失效后的选择；首次学到的经验能否迁移，要看另一组任务。
+> 这组实验为三种记忆方案各运行三个种子，每次依次做 14 项任务，共有 126 次模型调用。只追加与允许替换两组在迁移任务上的平均正确率都为 100%。只看这一栏，会以为两种做法没有区别。行李额度从 20 千克改成 23 千克时，第一次问新额度，两组都答错。允许替换的一组在收到这次反馈后改写了规则，第二次回答 23 千克；只追加的一组仍回答 20 千克。因此前一组在两个变更题上只答对了一半，随后检查新规则是否取代旧规则时却能达到 100%，只追加组的替换正确率为 0。退款和身份核验沿用旧规，两组的旧能力保持率均为 100%。沿逐组统计结果回看这场对照，主动替换改善的是规则失效后的选择；首次学到的经验能否迁移，要看另一组任务。
 
 ### 开放式任务中的证据与评价
 
@@ -378,7 +378,7 @@ Trehan 与 Chopra 记录了四次从研究想法走向论文的自动科研尝�
 
 笔者写《深入理解 AI Infra》时，就遇到过工作做完了、稿子仍讲不清楚的情况。早先直接交给助手一份提纲，它能写满一章，却缺少值得解释的细节。后来先让它查论文与芯片的官方规格，从模型架构中读出矩阵形状，按这些输入编写性能计算工具，再一起调整提纲。这样审稿就有了两个抓手：遇到一个性能数字，可以顺着配置找到输入，重跑计算；遇到一段架构解释，则要问，这个数字能不能帮助读者理解作者为什么选择这项设计？即使算式完全正确，选错比较对象的一段文字仍要重写。前一类反馈可以变成自动检查，后一类要保留作者的批注，让下一稿有具体的判断依据。[^ch9-infra-writing]
 
-[^ch9-infra-writing]: [笔者的写作记录](https://x.com/bojie_li/status/2099525105126924576)叙述了先调研、再建模和多轮修订的过程。读者可以查看[配套计算工具、配置与测试](https://github.com/bojieli/ai-infra-book/tree/main/calculations)。
+[^ch9-infra-writing]: 《深入理解 AI Infra》的配套项目 ai-infra-book 在 `calculations/` 目录下保存了计算工具、配置和测试。
 
 例如，一个写作助手根据读者意见缩短了开篇。评估者可以在同一份稿件、相同篇幅要求下，将新旧两版匿名交给目标读者，请他们各自复述核心问题，并标出支持其理解的段落。若新版本更短却让读者找不到关键前提，字数的下降就不足以说明更新成功。把偏好理由和原文一起留存，下一轮才有机会区分读者群差异与稿件本身的问题。
 
@@ -417,13 +417,13 @@ Hermes 将长期信息分成几种载体：记录环境与约定的 `MEMORY.md`�
 - 将已被新证据推翻的知识移出默认检索范围，并保留必要的历史记录。
 - 根据回归结果维护参数版本；需要清理累积影响时，从原始基座重新训练 LoRA，并与现有版本比较。
 
-[^claude-code-memory]: Anthropic, “How Claude remembers your project”, 2026. https://code.claude.com/docs/en/memory
+[^claude-code-memory]: Anthropic, “How Claude remembers your project”, 2026.
 
-[^hermes-memory]: Nous Research, *Hermes Agent Documentation: Persistent Memory, Skills System, and Curator*, 2026. https://hermes-agent.nousresearch.com/docs/user-guide/features/memory ; https://hermes-agent.nousresearch.com/docs/user-guide/features/skills ; https://hermes-agent.nousresearch.com/docs/user-guide/features/curator
+[^hermes-memory]: Nous Research, *Hermes Agent Documentation: Persistent Memory, Skills System, and Curator*, 2026.
 
 [^voyager-2023]: Wang, G., et al. *Voyager: An Open-Ended Embodied Agent with Large Language Models.* arXiv:2305.16291, 2023.
 
-[^weng-harness-2026]: Weng, Lilian. “Harness Engineering for Self-Improvement.” *Lil’Log*, 2026. https://lilianweng.github.io/posts/2026-07-04-harness/
+[^weng-harness-2026]: Weng, Lilian. “Harness Engineering for Self-Improvement.” *Lil’Log*, 2026.
 
 [^ace-2026]: Zhang, Qizheng, et al. *Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models.* ICLR 2026. arXiv:2510.04618.
 
@@ -433,7 +433,7 @@ Hermes 将长期信息分成几种载体：记录环境与约定的 `MEMORY.md`�
 
 [^meta-harness-2026]: Lee, Yoonho, et al. *Meta-Harness: End-to-End Optimization of Model Harnesses.* arXiv:2603.28052, 2026.
 
-[^dream-rsi-2026]: Zheng, T., et al. *Dream-RSI: Recursive Self-Improvement through Evolving Worlds.* arXiv:2609.14858, 2026. https://arxiv.org/abs/2609.14858
+[^dream-rsi-2026]: Zheng, T., et al. *Dream-RSI: Recursive Self-Improvement through Evolving Worlds.* arXiv:2609.14858, 2026.
 
 [^ahe-2026]: Lin, Jiahang, et al. *Agentic Harness Engineering: Observability-Driven Automatic Evolution of Coding-Agent Harnesses.* arXiv:2604.25850, 2026.
 

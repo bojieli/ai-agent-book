@@ -58,19 +58,19 @@ Agent 也可以编写程序来制作文档和图表。Word、PPT 等办公文档
 
 如果把同一项任务交给千问办公，用户可以直接上传销售明细，让它分析数据、生成可视化报告。[^ch5-qwenwork] 报告里的柱状图画出来了，怎样验收？假设一笔订单收款 100 元，随后退款 20 元。先约定按实际收款减退款统计，再让 Agent 列出该订单计入季度净销售额的金额，应该是 80 元。对照原始明细、汇总表和最终图表，可以找出退款在哪一步被漏算。把样例留在交付材料里，下次更换季度或重新生成报告时，还能用它检查统计口径。
 
-[^ch5-qwenwork]: 千问办公帮助中心，[千问办公简介](https://qwenwork.cn/docs/product-introduction)，介绍上传数据文件、分析数据和生成可视化报告等功能。
+[^ch5-qwenwork]: 千问办公帮助中心，千问办公简介，介绍上传数据文件、分析数据和生成可视化报告等功能。
 
 文件系统把这些步骤连接起来：前一步保存的结果可以成为后一步的输入，程序也可以反复读取同一份数据。任务中断后，Agent 还能通过已保存的产物确认进展，继续处理未完成部分。
 
 中间结果还有一个用途：用户改问了一个相关问题，可以从合适的一步接着做。微软研究院的 Data Formulator 用各国发电数据演示了这一点。原表记录各类能源的发电量，分析者先得到各国逐年的可再生能源占比，再据此画排名图。若想看某国占比上升了多少，仅凭图上的名次，看不出两个年份相差多少个百分点。沿着界面保留的推导过程回到占比表，就可以取两年的值相减。设计这样的工具时，让每张图都能找到生成它的那张表，用户才有机会换个问题继续分析。[^ch5-data-formulator]
 
-[^ch5-data-formulator]: 微软研究院，[Data Formulator 的能源分析示例](https://www.microsoft.com/en-us/research/blog/data-formulator-exploring-how-ai-can-help-analysts-create-rich-data-visualizations/)及 [0.7.0 版图表与数据表的关联实现](https://github.com/microsoft/data-formulator/blob/1e12969cc0a51f27cd4eb49118798daabc6633e8/src/views/DataThread.tsx#L505-L522)。
+[^ch5-data-formulator]: 微软研究院，Data Formulator 的能源分析示例及 0.7.0 版图表与数据表的关联实现。
 
 **用文件保存记忆、知识与能力。** OpenClaw 的工作区采用 Markdown 文件保存多类信息：`MEMORY.md` 记录长期事实与决策，按日期组织的日志保存过程信息，`USER.md` 可用于用户偏好，Skill 文件则说明能力的使用方法[^ch5-openclaw-files]。**对于需要人和 Agent 共同维护的记忆，笔者优先采用可直接阅读的文件。** 用户能打开记录、纠正一条错误事实，也能通过 Git 查看来源、比较版本和回滚。按日期保存日志，让先后发生的事实保持明确的时间线；文件增多后，再用检索索引加快定位。记忆正文、时间记录和索引由此各自承担清楚的职责。
 
 Agent 的写文件能力也支持积累任务经验。例如，某次联系银行时发现验证身份需要开户行地址，可以把适用业务、信息来源与发生时间一并记下。经过核对的记录再整理为知识、操作说明或程序，后续任务便能复用。第九章将讨论这一持续进化过程。
 
-[^ch5-openclaw-files]: OpenClaw，[Agent workspace](https://docs.openclaw.ai/concepts/agent-workspace)与[Memory overview](https://docs.openclaw.ai/concepts/memory)，介绍工作区、文件记忆及检索机制。
+[^ch5-openclaw-files]: OpenClaw，*Agent workspace* 与 *Memory overview*，介绍工作区、文件记忆及检索机制。
 
 **根据任务形态安排 Coding 的位置。** 开放式调研、内容生成和数据处理经常遇到新的输入格式、接口与产物要求，代码生成适合成为执行核心。垂直客服等流程较稳定的系统，可以围绕业务状态、领域工具和对话策略组织运行，再用代码完成计算、转换与规则校验。两类系统都能利用 Coding 能力，其承担的职责随任务而变化。
 
@@ -90,7 +90,7 @@ Agent 的写文件能力也支持积累任务经验。例如，某次联系银�
 
 第二章提出，对远程协作友好的团队也更容易让 Agent 参与。具体到代码仓库，就是把决策写进设计文档，把任务背景写入 issue 和 PR，把内部经验整理成开发者指南。一个实用的检查问题是：**远程新人能否仅凭仓库和文档找到任务入口、运行测试并理解修改要求？**
 
-[^ch5-project-rules]: Anthropic，[How Claude remembers your project](https://code.claude.com/docs/en/memory)；Cursor，[Rules](https://cursor.com/docs/rules)，介绍项目指令及按范围加载的规则。
+[^ch5-project-rules]: Anthropic，*How Claude remembers your project*；Cursor，Rules，介绍项目指令及按范围加载的规则。
 
 **明确目标与验收条件。**
 
@@ -148,8 +148,8 @@ LangChain 的实践展示了如何根据失败轨迹改进 Harness：固定模�
 
 Anthropic 的长任务方案则将环境初始化与持续执行分开。初始化 Agent 建立任务清单和工作环境，后续 Coding Agent 逐项推进，保存代码、测试结果与进度。新会话读取这些产物后继续工作，减少跨上下文交接时的信息遗漏[^ch5-long-harness]。
 
-[^ch5-langchain-harness]: LangChain，[Improving Deep Agents with harness engineering](https://www.langchain.com/blog/improving-deep-agents-with-harness-engineering)，2026 年 2 月 17 日。
-[^ch5-long-harness]: Anthropic，[Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)，2025 年 11 月 26 日。
+[^ch5-langchain-harness]: LangChain，*Improving Deep Agents with harness engineering*，2026 年 2 月 17 日。
+[^ch5-long-harness]: Anthropic，*Effective harnesses for long-running agents*，2025 年 11 月 26 日。
 
 **把经验沉淀为系统设计原则。**
 
@@ -301,8 +301,8 @@ Harness 可以在会改变这些状态的操作后刷新摘要，并在下一次
 
 符号工具的效果取决于语言支持、项目配置和分析状态。Agent 可以用文本搜索补充查找字符串、注释或尚未被语言服务器解析的文件。实际任务中，已知错误消息就从文本搜索开始，已知文件类型就从路径匹配开始，只有功能描述时可以先做语义召回，确定符号后再追踪定义与引用。
 
-[^ch5-search]: Cursor，[Securely indexing large codebases](https://prod.cursor.com/blog/secure-codebase-indexing) 与 [Search](https://cursor.com/docs/agent/tools/search)，分别介绍嵌入索引方案与后续本地搜索机制。
-[^ch5-lsp]: Anthropic，[Code intelligence plugins](https://code.claude.com/docs/en/plugins/code-intelligence)，介绍通过 LSP 提供定义、引用与实时诊断。
+[^ch5-search]: Cursor，*Securely indexing large codebases* 与 Search，分别介绍嵌入索引方案与后续本地搜索机制。
+[^ch5-lsp]: Anthropic，*Code intelligence plugins*，介绍通过 LSP 提供定义、引用与实时诊断。
 
 ### Coding Agent 中的文件编辑工具
 
@@ -334,9 +334,9 @@ Harness 可以在会改变这些状态的操作后刷新摘要，并在下一次
 
 **构建新的 Coding Agent 时，笔者建议先从旧字符串到新字符串这样的简单、确定性编辑接口开始。** 原文定位明确，失败原因容易解释，差异也便于复核。模型能可靠生成局部修改后，Harness 就可以把更多工作交给确定性程序，省去额外的应用模型。大段删除需要压缩参数量时，再引入首尾锚点或基于快照的行号编辑。Codex 的 `apply_patch` 则展示了用受约束补丁表达多处修改的另一条直接编辑路线。文件版本检查、结构化错误和编辑后验证贯穿这些实现。
 
-[^ch5-direct-edit]: Anthropic，[Tools reference](https://code.claude.com/docs/en/tools-reference)，Edit 工具；Cursor，[0.50 更新记录](https://cursor.com/changelog/0-50)，2025 年 5 月 15 日，介绍 Search & Replace 的引入；[1.3 更新记录](https://cursor.com/changelog/1-3)同时记录 Search & Replace 与 Apply 的优化。
+[^ch5-direct-edit]: Anthropic，*Tools reference*，Edit 工具；Cursor，0.50 更新记录，2025 年 5 月 15 日，介绍 Search & Replace 的引入；1.3 更新记录同时记录 Search & Replace 与 Apply 的优化。
 
-[^ch5-apply]: Cursor，[Editing Files at 1000 Tokens per Second](https://cursor.com/blog/instant-apply)，介绍将修改描述应用到原文件的专用模型。
+[^ch5-apply]: Cursor，*Editing Files at 1000 Tokens per Second*，介绍将修改描述应用到原文件的专用模型。
 
 ### Coding Agent 的安全
 
@@ -376,9 +376,9 @@ Shell 命令由程序名、参数、重定向、管道及子表达式组合而�
 
 提示词可以进一步说明协作守则：保护委托方的私有信息，有时连某条记录是否存在也需要保密；对外解释只披露必要内容；区分内部底线与公开立场；在已授权范围内推进任务；面对重复请求时保持一致的授权标准。授权扩大或服务对象变化，应由可信渠道确认并同步更新运行时权限。模型由此获得明确的行为依据，工具与环境则落实实际访问边界。
 
-[^ch5-trifecta]: Simon Willison，[The lethal trifecta for AI agents: private data, untrusted content, and external communication](https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/)，2025 年 6 月 16 日。
-[^ch5-sandbox]: Anthropic，[Making Claude Code more secure and autonomous with sandboxing](https://www.anthropic.com/engineering/claude-code-sandboxing) 与 [How we contain Claude across products](https://www.anthropic.com/engineering/how-we-contain-claude)，介绍文件系统、网络及产品隔离边界。
-[^ch5-1]: Li, Bojie and Noah Shi，[Whose Side Is Your Agent On? Multi-Party Principal Loyalty in LLM Agents](https://arxiv.org/abs/2606.30383)，2026。
+[^ch5-trifecta]: Simon Willison，*The lethal trifecta for AI agents: private data, untrusted content, and external communication*，2025 年 6 月 16 日。
+[^ch5-sandbox]: Anthropic，*Making Claude Code more secure and autonomous with sandboxing* 与 *How we contain Claude across products*，介绍文件系统、网络及产品隔离边界。
+[^ch5-1]: Li, Bojie and Noah Shi，*Whose Side Is Your Agent On? Multi-Party Principal Loyalty in LLM Agents*，2026。
 
 ## 代码：通用 Agent 的元能力
 
@@ -429,7 +429,7 @@ only_phys = phys - both     # 8 人只选物理
 
 **Harness 该做多厚，取决于模型在具体任务上的能力边界。** 模型已能稳定完成的推理，额外求解步骤可能只增加开销；模型容易算错的部分，则值得交给确定性计算。但工具辅助还要求模型正确完成形式化转换，约束翻译出错会把原问题变成另一道题。即使约束修对了，助手也可能耗尽轮数，来不及交回答案。评估时，应分别检查题意理解、形式化建模、程序执行和答案解释，找到需要补强的那一步。同一套 Harness 配上不同模型，收益可能明显不同；模型升级后也应重新判断哪些辅助步骤仍然必要。
 
-[^ch5-wolfram]: Stephen Wolfram，[Wolfram|Alpha as the Way to Bring Computational Knowledge Superpowers to ChatGPT](https://writings.stephenwolfram.com/2023/01/wolframalpha-as-the-way-to-bring-computational-knowledge-superpowers-to-chatgpt/)，2023 年 1 月。
+[^ch5-wolfram]: Stephen Wolfram，*Wolfram|Alpha as the Way to Bring Computational Knowledge Superpowers to ChatGPT*，2023 年 1 月。
 
 ### 代码作为业务规则的约束
 
@@ -524,7 +524,7 @@ def cancel_reservation(
 >
 > 本次运行中，控制组完成 57 个任务，代码化组完成 55 个任务。分析时应同时检查两类情况：不符合条件的退款是否被阻止，符合条件的请求是否正确完成。工具拦截后的解释、下一步行动和最终业务状态，共同决定任务是否完成。读者可以沿着“政策—数据—调用—状态变化”核对每个案例，区分参数引导与执行校验各自的作用。
 
-[^ch5-tau]: Sierra Research，[τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains](https://github.com/sierra-research/tau-bench)，提供航空、电商场景的政策、工具和交互任务。
+[^ch5-tau]: Sierra Research，τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains，提供航空、电商场景的政策、工具和交互任务。
 
 ### 代码驱动的多媒体生成
 
@@ -540,7 +540,7 @@ def cancel_reservation(
 
 如果主办方给了一份往届报告作样稿，还可以直接沿用其中的页面结构。PPTAgent 先分析参考稿里各页的用途，再为新大纲挑选合适的参考页，用代码修改页内对象。比如新报告要讲实验结果，可以挑一张原本就用来并列展示两组结果的页面，替换其中的图和说明。这种复用也带来一项检查：两幅图都已换成本次实验的结果，旁边的段落会不会还在解释去年的实验？论文所用版本按元素和段落编号修改文本框；工具能找到正确的对象，内容是否对应仍要读者核对。[^ch5-pptagent]
 
-[^ch5-pptagent]: Zheng 等，[PPTAgent 论文](https://aclanthology.org/2025.emnlp-main.728/)与[论文版本的段落编辑接口](https://github.com/icip-cas/PPTAgent/blob/d53296bc0ddd73e81d51c523d20dd711c7f233f3/pptagent/apis.py#L402-L439)。
+[^ch5-pptagent]: Zheng 等，PPTAgent 论文，EMNLP 2025。论文配套代码在 `pptagent/apis.py` 中实现按段落编辑的接口。
 
 换对了文字和图片，排版仍可能出错。比如给图加了两行说明，编译能通过，文字却可能压住坐标轴。图5-5 中，审核者看到渲染后的截图，才能把这样的意见交回给负责排版的提议者。
 
@@ -553,7 +553,7 @@ def cancel_reservation(
 
 局部修改还需要说明修改哪一个对象。飞书幻灯片里的豆包工作允许用户选中页面元素，再通过浮动工具栏提出编辑要求。[^ch5-doubao-work] 假设同一页有两个文本框，一处是原始访谈引文，另一处是汇报人写的总结。用户选中总结，要求“压缩到两行”。选区给出了改动边界：验收时既要看总结有没有保留原意、能否排进两行，也要逐字核对旁边的引文。即使整页读起来更顺，顺手改写引文也会破坏这份报告的证据。
 
-[^ch5-doubao-work]: 飞书帮助中心，[在幻灯片中使用豆包工作](https://www.feishu.cn/hc/zh-CN/articles/735492278101-在幻灯片中使用豆包工作)。
+[^ch5-doubao-work]: 飞书帮助中心，在幻灯片中使用豆包工作。
 
 提议者修改后重新渲染，审核者检查新版本，并确认上一轮问题是否解决。循环设置两类退出条件：达到明确的内容与版式要求，或用完轮数、时间与费用预算，例如最多修改 5 轮。交付时保存当前版本及尚待处理的问题，便于后续审阅。
 
@@ -577,7 +577,7 @@ def cancel_reservation(
 >
 > ![图5-6 论文到讲解视频的端到端流水线](images/revised/fig5-6.svg)
 
-[^ch5-slidev]: Slidev，[Getting Started](https://sli.dev/guide/)，介绍基于 Markdown 和 Web 技术生成、展示与导出演示文稿。
+[^ch5-slidev]: Slidev，*Getting Started*，介绍基于 Markdown 和 Web 技术生成、展示与导出演示文稿。
 
 **视频编辑 Agent。**
 
@@ -593,9 +593,9 @@ Agent 可以先理解“把冲浪部分剪出来”这样的要求，再定位�
 >
 > 确定区间后，提议者生成 Blender Python 脚本，执行裁剪及所需的字幕、变速等操作。审核者查看预览，指出需要调整的边界和效果；修改通过后再输出完整成片。
 >
-> 实际剪的是一只大白兔独自在草地上走过的镜头。每 10 秒看一帧，模型把范围定在第 10 至 20 秒。若从第 10 秒直接下剪，镜头开头就会丢掉一截。于是程序把前后各放宽 5 秒，在第 5 至 25 秒间每秒看一帧，把候选区间缩到第 9 至 12 秒。审核者又发现片段夹带了相邻画面，修订后的区间为第 9.25 至 11.00 秒。对照人工标注的第 9.08 至 11.20 秒，开始晚了 0.17 秒，结束早了 0.20 秒，两端都达到了误差不超过 3 秒的要求。[逐轮定位记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter5/video-edit/validation/runs/exp5-6-real-blender-20260730-055102/localization.json)
+> 实际剪的是一只大白兔独自在草地上走过的镜头。每 10 秒看一帧，模型把范围定在第 10 至 20 秒。若从第 10 秒直接下剪，镜头开头就会丢掉一截。于是程序把前后各放宽 5 秒，在第 5 至 25 秒间每秒看一帧，把候选区间缩到第 9 至 12 秒。审核者又发现片段夹带了相邻画面，修订后的区间为第 9.25 至 11.00 秒。对照人工标注的第 9.08 至 11.20 秒，开始晚了 0.17 秒，结束早了 0.20 秒，两端都达到了误差不超过 3 秒的要求。
 >
-> 时间码只能检查剪在了哪里。把同一套字幕和慢动作放到一段故意选错的画面上，审核者还能认出错误吗？实验先让它检查第 0 至 3 秒的对照片段，再看修订后的渲染。读者可分别核对三个问题：画面里是否有指定的大白兔，底部字幕是否清楚，变速后的时长是否与剪辑计划一致。[对照与成片审核记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter5/video-edit/validation/runs/exp5-6-real-blender-20260730-055102/review.json)
+> 时间码只能检查剪在了哪里。把同一套字幕和慢动作放到一段故意选错的画面上，审核者还能认出错误吗？实验先让它检查第 0 至 3 秒的对照片段，再看修订后的渲染。读者可分别核对三个问题：画面里是否有指定的大白兔，底部字幕是否清楚，变速后的时长是否与剪辑计划一致。
 
 **3D 与工业零件：选择合适的生成方式。**
 
@@ -619,9 +619,9 @@ Agent 可以先理解“把冲浪部分剪出来”这样的要求，再定位�
 >
 > 怎样看出模型只改了指定的尺寸？对照修改前后导出的 STL，四个安装孔的平均直径从 5.499 mm 增至 6.499 mm；两件的外径都是 80 mm，厚度都是 10 mm，孔位圆直径按三位小数均为 60.000 mm。先看应该变的孔径，再看应当保留的尺寸，就能检验这次修改。生成模型路线的原始网格缺少明确的物理尺度。测量程序沿 Z 轴取中截面，没有找到孔的内环。要查明四个孔是否贯穿盘体，还需认出安装面，沿它的法向在不同深度取截面。重新生成后，整体形态和朝向都发生了变化。分析尺寸时，应分别检查尺度对齐、孔洞拓扑和局部几何，避免把无单位坐标直接当作毫米。
 >
-> 最后换一道题：要交付一张看起来自然的盆栽图片，该怎样验收？实验用 matplotlib 绘制一张盆栽，用 Gemini 生成另一张，再让同一个视觉模型按十分制评自然度。两张图分别得到 3 分和 8 分。这个分数回答的是评审模型觉得哪张图更像真实植物。回到法兰盘，即使产品图看起来像有四个孔，装配仍要在三维零件上核对孔的位置和直径。读者可以在[实验记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter5/cad-vs-diffusion/validation/runs/exp5-7-cad-vs-diffusion-20260821-015734-v1/manifest.json)中分别查到图片评语和网格测量结果。
+> 最后换一道题：要交付一张看起来自然的盆栽图片，该怎样验收？实验用 matplotlib 绘制一张盆栽，用 Gemini 生成另一张，再让同一个视觉模型按十分制评自然度。两张图分别得到 3 分和 8 分。这个分数回答的是评审模型觉得哪张图更像真实植物。回到法兰盘，即使产品图看起来像有四个孔，装配仍要在三维零件上核对孔的位置和直径。读者可以在本实验的 `manifest.json` 中分别查到图片评语和网格测量结果。
 
-[^ch5-cad]: CadQuery，[Importing and Exporting Files](https://cadquery.readthedocs.io/en/latest/importexport.html)，介绍 STEP、STL 等格式，并说明完整参数化信息保存在 CadQuery 的 Python 源码中。
+[^ch5-cad]: CadQuery，*Importing and Exporting Files*，介绍 STEP、STL 等格式，并说明完整参数化信息保存在 CadQuery 的 Python 源码中。
 
 ### 代码作为系统适配器
 
@@ -692,7 +692,7 @@ AG-UI（Agent–User Interaction）负责 Agent 与前端之间的事件交互�
 
 **对于包含数据、演示和持续更新结果的研究交付，笔者优先采用 HTML 网站。** 长篇线性 Markdown 汇报要求读者不断翻找上下文；交互式网页可以把说明、数据和演示放在同一个入口：读者查看图表，筛选感兴趣的样本，展开某项结果的细节，再操作演示理解系统行为。Agent 也可以随任务推进更新页面，使它持续记录当前成果与证据。
 
-以笔者的研究实践为例，每个研究项目都有一个交互式网站，把它同时作为研究过程中的活文档和最终交付物，并让 Agent 随实验推进持续补充内容[^ch5-4]。这些网站主要承担三项工作。
+以笔者的研究实践为例，每个研究项目都有一个交互式网站，把它同时作为研究过程中的活文档和最终交付物，并让 Agent 随实验推进持续补充内容。这些网站主要承担三项工作。
 
 一是**实验数据追溯**。页面将样本、提示词、模型回复和评分关联起来，支持逐条检查。这样可以对照数据构造与分布，发现格式问题，也可以检查回复与评分之间是否存在系统性偏差。
 
@@ -700,9 +700,7 @@ AG-UI（Agent–User Interaction）负责 Agent 与前端之间的事件交互�
 
 三是**运行原理展示**。介绍几个模块怎样配合时，页面可以让读者改动一个输入，查看中间状态，再把输出的变化和实验记录对照起来。
 
-工作持续几个小时，用户怎样抽空接手？笔者使用 Coding Agent 时，希望一句口头指令能准确送到经办的 Agent，想看成果时能随时打开，有了新版本或遇到需要我决定的问题时再来提醒。[^ch5-coding-handoff] 例如，两份报告正在同时生成。用户打开销售报告，指着第二张图说“这张按净收入重画”。界面应把当前报告和图表标识随指令一起送出。图改好了，通知可以直接打开新版；若“净收入”有两种可用口径，助理应把要选的两种口径列给用户。通知在这两种时刻都有用：用户点进去就能看结果或作决定。
-
-[^ch5-coding-handoff]: 李博杰，[使用 Coding Agent 时需要怎样的交互](https://x.com/i/status/2105965863329493286)。
+工作持续几个小时，用户怎样抽空接手？笔者使用 Coding Agent 时，希望一句口头指令能准确送到经办的 Agent，想看成果时能随时打开，有了新版本或遇到需要我决定的问题时再来提醒。 例如，两份报告正在同时生成。用户打开销售报告，指着第二张图说“这张按净收入重画”。界面应把当前报告和图表标识随指令一起送出。图改好了，通知可以直接打开新版；若“净收入”有两种可用口径，助理应把要选的两种口径列给用户。通知在这两种时刻都有用：用户点进去就能看结果或作决定。
 
 **澄清用户意图。**
 
@@ -722,8 +720,7 @@ AG-UI（Agent–User Interaction）负责 Agent 与前端之间的事件交互�
 >
 > 用同一份表单再试一步：填好返程日期后改选单程。页面藏起了返程输入框，提交的 JSON 却同时保留了单程和 8 月 18 日的返程日期。检查生成界面时，可以把这种操作也列为验收条件：客户端应清理失效的字段，服务端也要按当前行程类型复核提交的数据。
 
-[^ch5-ui-protocols]: [A2UI 官方文档](https://a2ui.org/)与 [AG-UI Overview](https://docs.ag-ui.com/introduction)，分别介绍声明式界面描述和 Agent—前端事件交互。
-[^ch5-4]: 笔者的[研究项目网站](https://01.me/research/)汇集了论文及配套交互式页面。
+[^ch5-ui-protocols]: A2UI 官方文档与 *AG-UI Overview*，分别介绍声明式界面描述和 Agent—前端事件交互。
 
 **生成 SQL 查询。**
 
@@ -772,8 +769,8 @@ Agent 可以从需求开始生成界面和交互逻辑，再根据用户操作�
 >
 > 本次运行记录了 Vite 的 HMR 事件，三轮修改均未发生整页导航，已有聊天状态得到保留，最终构建通过。这个例子展示了“需求—代码修改—热更新—浏览器检查”的迭代过程；扩展到布局或组件位置时，继续检查界面变化、状态保留和已有功能。
 
-[^ch5-imagine]: Anthropic，[Introducing Claude Sonnet 4.5](https://www.anthropic.com/news/claude-sonnet-4-5)，介绍随模型发布的临时研究预览 Imagine with Claude。
-[^ch5-hmr]: [Vite HMR API](https://vite.dev/guide/api-hmr) 与 [FastAPI CLI](https://fastapi.tiangolo.com/fastapi-cli/)，分别介绍前端热更新和开发服务器自动重载。
+[^ch5-imagine]: Anthropic，*Introducing Claude Sonnet 4.5*，介绍随模型发布的临时研究预览 Imagine with Claude。
+[^ch5-hmr]: *Vite HMR API* 与 *FastAPI CLI*，分别介绍前端热更新和开发服务器自动重载。
 
 **让权限边界独立于动态业务代码。**
 
@@ -795,7 +792,7 @@ Agent 可以从需求开始生成界面和交互逻辑，再根据用户操作�
 >
 > 原型通过 `AccessContext` 表达用户、角色与组织属性，教学脚本直接构造这些上下文来模拟不同身份。部署时由认证入口建立上下文，并将对象存储与生成代码分隔在明确的服务或权限边界两侧。练习可以先逐项阅读规则和确定性示例，再检查允许的操作、拒绝的操作及持久化结果，最后扩展到并发更新与后续反应的一致性。
 
-[^ch5-rls]: PostgreSQL，[Row Security Policies](https://www.postgresql.org/docs/current/ddl-rowsecurity.html)，介绍按角色和操作配置行级安全策略及其适用范围。
+[^ch5-rls]: PostgreSQL，*Row Security Policies*，介绍按角色和操作配置行级安全策略及其适用范围。
 
 ### 代码创造代码：Agent 自举
 
@@ -834,14 +831,14 @@ Agent 可以从需求开始生成界面和交互逻辑，再根据用户操作�
 >
 > ![图5-11 能创造 Agent 的 Agent 流水线](images/revised/fig5-11.svg)
 >
-> 第一次搭这种系统，可以先从[配套的 Deep Agents 发布审核练习](https://github.com/bojieli/ai-agent-book/tree/main/chapter5/agent-creator)入手。先把一个查询工具接给助理，用两个版本检查它能否找出失败的冒烟测试；等你能沿调用编号读懂一份回执，再看创建者怎样自己生成这样的专用 Agent。
+> 第一次搭这种系统，可以先从配套的 Deep Agents 发布审核练习入手。先把一个查询工具接给助理，用两个版本检查它能否找出失败的冒烟测试；等你能沿调用编号读懂一份回执，再看创建者怎样自己生成这样的专用 Agent。
 >
 > 两条路线使用相同的任务要求和验收条件。先检查产物结构、编译与测试，再检查标准消息中的工具调用与结果关联，最后运行真实模型任务和多轮交互，验证上下文裁剪、状态管理和调用次数限制。
 >
 > 保存的 Kimi K3 对照中，两组各通过 39/39 项确定性检查，也都通过了真实模型任务和多轮状态检查。模板路线创建时用了 1,181 token、约 25 秒，从零路线用了 381,814 token、约 90 分钟。这里省下的是创建开销；在同一份质量检查上两组得分相同。读者可以再换一个需要跨轮恢复的任务，先判断模板已有的工具能否表达新需求，再决定哪些代码和测试确实需要补写。
 >
 
-[^ch5-doctor]: OpenClaw，[Doctor](https://docs.openclaw.ai/gateway/doctor)，介绍配置与状态检查、迁移和修复功能。
+[^ch5-doctor]: OpenClaw，Doctor，介绍配置与状态检查、迁移和修复功能。
 
 ## 本章小结
 

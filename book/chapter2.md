@@ -26,9 +26,9 @@
 
 笔者听过翁家翌在 WhynotTV 的访谈后，将其中一个反复出现的观点概括为：**人和模型都依赖 Context。** 他从个人工作与团队协作谈到上下文的重要性：掌握完整背景的人更容易接续工作，团队成员之间的背景差异则会增加沟通与交接成本；AI 能获取的信息与人类员工也有明显差异[^ch2-weng]。在 Agent 系统中，我们也需要把相关知识、工作进展和环境反馈及时送到模型面前。
 
-[^ch2-linux]: Linux 内核官方文档，[How the development process works](https://kernel.org/doc/html/latest/process/2.Process.html)。
+[^ch2-linux]: Linux 内核官方文档，How the development process works。
 
-[^ch2-weng]: WhynotTV，《翁家翌：OpenAI，GPT，强化学习，Infra，后训练，天授，tuixue，开源，CMU，清华》，Podcast #4，[访谈原视频](https://www.bilibili.com/video/BV1darmBcE4A)。正文中的概括来自作者对访谈的理解。
+[^ch2-weng]: WhynotTV，《翁家翌：OpenAI，GPT，强化学习，Infra，后训练，天授，tuixue，开源，CMU，清华》，Podcast #4。正文中的概括来自作者对访谈的理解。
 
 ReAct 论文用一个形式化表达描述交互历史如何参与决策[^ch2-react]。在时刻 $t$，Agent 从环境收到观测 $o_t\in\mathcal{O}$，根据策略 $\pi(a_t\mid c_t)$ 选择动作 $a_t\in\mathcal{A}$，其中上下文为：
 
@@ -40,7 +40,7 @@ $$
 
 本章先采用无状态的请求方式：Harness 每轮组装消息和工具定义，再调用模型。完整消息历史便于保留任务进展；随着历史增长，可以通过检索、状态记录和压缩，把后续决策需要的信息留在窗口内。上下文布局、状态栏和压缩技术，都围绕同一个问题展开：怎样在预算内构造信息充分、便于使用的 $c_t$？
 
-[^ch2-react]: Yao, Shunyu, et al.，[ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)，ICLR 2023。
+[^ch2-react]: Yao, Shunyu, et al.，ReAct: Synergizing Reasoning and Acting in Language Models，ICLR 2023。
 
 下面从 API 请求入手，看这些信息如何送入模型。
 
@@ -61,7 +61,7 @@ $$
 
 四种消息角色加上 `tools` 字段，便对应第一章的五类上下文信息：系统提示词、用户消息、模型回复、工具结果，以及工具定义。角色帮助模型区分信息来源，工具定义帮助模型构造操作请求，执行权限则由 Harness 和环境落实。
 
-[^ch2-chat-api]: OpenAI，[Chat Completions API 参考](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)，介绍消息角色、工具定义与调用结果字段；Qwen，[Function Calling](https://github.com/QwenLM/Qwen3/blob/main/docs/source/framework/function_call.md)，介绍兼容服务中的工具调用与模板。
+[^ch2-chat-api]: OpenAI，Chat Completions API 参考，介绍消息角色、工具定义与调用结果字段；Qwen，Function Calling，介绍兼容服务中的工具调用与模板。
 
 ### 单轮对话：最简单的 API 调用
 
@@ -270,7 +270,7 @@ Harness 校验请求后调度两个工具，将返回值写成 `tool` 消息，�
 
 `call_id` 把一条回执对回一次函数调用。`previous_response_id` 指向上一次模型响应，让服务接续那一轮的上下文。两个编号指的对象不同。采用这种续接方式时，本轮仍需提供要继续使用的工具和顶层 `instructions`；上次请求的顶层指令不会随响应编号自动继承。模型可能继续请求工具，应用要读下一份 `output` 再决定是否结束。第一章实验 1-3 用的是服务端托管搜索；这里的两个自定义函数由应用实际执行。
 
-[^ch2-responses-loop]: OpenAI，[迁移到 Responses API](https://developers.openai.com/api/docs/guides/migrate-to-responses)、[函数调用](https://developers.openai.com/api/docs/guides/function-calling)及[创建响应的参数说明](https://developers.openai.com/api/reference/resources/responses/methods/create)。
+[^ch2-responses-loop]: OpenAI，迁移到 Responses API、函数调用及创建响应的参数说明。
 
 ### 用代码实现 Agent 的核心循环
 
@@ -481,7 +481,7 @@ Agent 的相邻请求通常共享大量信息：系统指令、工具定义，�
 
 在本节采用的因果注意力模型中，后续 token 的加入不会改变此前位置已经算出的状态。修改已有输入时，首个变化位置及其后面的状态需要重新计算；变化之前的前缀仍有复用机会。服务端还会根据缓存块大小、保留时间和运行配置决定实际命中范围。
 
-[^ch2-kv-basics]: Hugging Face，[How caching works](https://huggingface.co/docs/transformers/main/en/cache_explanation)，介绍逐层保存与复用 K、V 的机制。
+[^ch2-kv-basics]: Hugging Face，How caching works，介绍逐层保存与复用 K、V 的机制。
 
 > **实验 2-2 ★：注意力机制可视化**
 >
@@ -518,9 +518,9 @@ Agent 的相邻请求通常共享大量信息：系统指令、工具定义，�
 >
 > 热力图让我们能直接观察注意力权重如何分配。进一步判断某段信息的作用，可以删除、替换或移动它，再比较任务结果。上下文学习也由此变得具体：指令、示例和已有过程通过输入影响当前行为，模型参数在这次任务中保持不变。
 
-[^ch2-attention-sinks]: Xiao et al.，[Efficient Streaming Language Models with Attention Sinks](https://arxiv.org/abs/2309.17453)，ICLR 2024。
+[^ch2-attention-sinks]: Xiao et al.，Efficient Streaming Language Models with Attention Sinks，ICLR 2024。
 
-[^lost-in-the-middle]: Liu et al.，[Lost in the Middle: How Language Models Use Long Contexts](https://aclanthology.org/2024.tacl-1.9/)，TACL 2024。
+[^lost-in-the-middle]: Liu et al.，Lost in the Middle: How Language Models Use Long Contexts，TACL 2024。
 
 ### 从 API 消息到模型 Token：Chat Template
 
@@ -551,15 +551,15 @@ Qwen、Llama、Gemma 等模型家族各有自己的聊天模板。同一组 API 
 
 **模板还决定缓存所匹配的输入。** 同样的消息内容，经过不同模板、工具顺序或序列化方式处理，可能形成不同 token 前缀。要复用已有 KV，需要保持相关模型配置和前缀一致。调试缓存时，可以沿着“API 消息→模板输出→token 序列”逐层查找首个变化位置。
 
-[^ch2-qwen-template]: Qwen 官方模型的[分词器配置与聊天模板](https://huggingface.co/Qwen/Qwen3-0.6B/blob/main/tokenizer_config.json)，其中包含用户查询、推理内容与工具响应的处理逻辑。
+[^ch2-qwen-template]: Qwen3-0.6B 的分词器配置文件 `tokenizer_config.json` 保存了聊天模板，其中包含用户查询、推理内容与工具响应的处理逻辑。
 
-[^ch2-r1-template]: DeepSeek-R1 官方[聊天模板](https://huggingface.co/deepseek-ai/DeepSeek-R1/blob/main/tokenizer_config.json)在普通历史回答中保留 `</think>` 之后的内容；后续工具调用的推理回传规则见 DeepSeek 的 Thinking Mode 文档。
+[^ch2-r1-template]: DeepSeek-R1 官方聊天模板在普通历史回答中保留 `</think>` 之后的内容；后续工具调用的推理回传规则见 DeepSeek 的 Thinking Mode 文档。
 
-[^ch2-deepseek-thinking]: DeepSeek，[Thinking Mode](https://api-docs.deepseek.com/guides/thinking_mode/)。
+[^ch2-deepseek-thinking]: DeepSeek，Thinking Mode。
 
-[^ch2-kimi-thinking]: Moonshot AI，[Kimi K2.5 官方仓库](https://github.com/MoonshotAI/Kimi-K2.5)，Interleaved Thinking and Multi-Step Tool Call 一节。
+[^ch2-kimi-thinking]: Moonshot AI，Kimi K2.5 官方仓库，Interleaved Thinking and Multi-Step Tool Call 一节。
 
-[^ch2-glm-thinking]: Z.ai，[Thinking Mode](https://docs.z.ai/guides/capabilities/thinking-mode)，介绍交错思考、保留思考及端点默认设置。
+[^ch2-glm-thinking]: Z.ai，Thinking Mode，介绍交错思考、保留思考及端点默认设置。
 
 ### KV Cache 的原理与约束
 
@@ -589,7 +589,7 @@ Qwen、Llama、Gemma 等模型家族各有自己的聊天模板。同一组 API 
 >
 > **工具定义重排**每轮改变工具清单的顺序。名称和参数虽然相同，序列化后的 token 顺序已经变化。打开 Kimi K2.6 的运行报告，基线和重排组的 `Hit%` 都是 100%。两组真的复用了同样多的输入吗？基线三轮共输入 7,567 个 token，其中 768 个命中缓存；重排组也是三轮，7,568 个输入 token 中只有 256 个命中。用缓存 token 数除以输入 token 数，就得到 `Cache%` 一列的 10.1% 和 3.4%。另一列 `Hit%` 按有命中判定的请求计数：基线记了两次命中，重排组只记了一次，两组记下的未命中次数都是零。其余请求的命中情况，单凭这份记录无从判断。固定工具顺序可以避免前缀无故变化；若还关心排序是否影响模型选工具，就要另查实际调用。
 >
-> **滑动窗口**只保留最近一段历史。假设按十轮交互保留，第十五轮就可能读不到第二轮取得的关键文件内容。除了缩短共享前缀，裁剪还会改变模型能获取的事实和任务进度。配套实现以最近六条历史消息为起点，并向前补齐工具结果所对应的调用请求。滑动窗口组复用了 2,224 个输入 token 中的 1,510 个，缓存占比达到六组中最高的 67.9%。再看[这次运行的工具记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter2/kv-cache/result_sliding_window_20260718_kimi_k2_6.json)：模型三次查找文件，接着读取两个文件，却没有交付用户要求的三句话总结。要判断重复查找时是否已经丢失了先前的结果，还得看到每次请求实际保留的消息。设计裁剪策略时，应保留任务目标、必要证据和成对的调用记录，再决定哪些旧内容可以移出。
+> **滑动窗口**只保留最近一段历史。假设按十轮交互保留，第十五轮就可能读不到第二轮取得的关键文件内容。除了缩短共享前缀，裁剪还会改变模型能获取的事实和任务进度。配套实现以最近六条历史消息为起点，并向前补齐工具结果所对应的调用请求。滑动窗口组复用了 2,224 个输入 token 中的 1,510 个，缓存占比达到六组中最高的 67.9%。再看实验 2-3 滑动窗口组的工具记录：模型三次查找文件，接着读取两个文件，却没有交付用户要求的三句话总结。要判断重复查找时是否已经丢失了先前的结果，还得看到每次请求实际保留的消息。设计裁剪策略时，应保留任务目标、必要证据和成对的调用记录，再决定哪些旧内容可以移出。
 >
 > **文本格式化**把带角色的历史重新写成 `USER: ...`、`ASSISTANT: ...` 等文本。这样会改变模板中的消息边界和工具结构，模型需要从正文恢复原来的关系。本次文本组仍生成了最终回复，也有缓存命中；复核时应继续检查调用参数、证据使用和任务答案。接口提供的消息角色、调用 ID 和工具结果字段，有助于稳定传递这些关系。
 >
@@ -603,7 +603,7 @@ Qwen、Llama、Gemma 等模型家族各有自己的聊天模板。同一组 API 
 
 计费需要分别考虑写入和读取。一些 Claude 模型的缓存读取价为普通输入价的十分之一，首次写入则有额外费用。实际收益取决于前缀长度、复用次数和保留时间：多次使用的长前缀更容易摊薄写入成本，几乎不复用的内容则应按完整请求成本比较。系统可以记录缓存输入量、未缓存输入量与写入量，再按所用模型的价格计算。
 
-[^ch2-prompt-cache]: Anthropic，[Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)，介绍缓存匹配、隔离、有效期和计费。
+[^ch2-prompt-cache]: Anthropic，Prompt caching，介绍缓存匹配、隔离、有效期和计费。
 
 ### 缓存作为架构约束
 
@@ -623,7 +623,7 @@ Qwen、Llama、Gemma 等模型家族各有自己的聊天模板。同一组 API 
 
 中途切换模型时，服务还会检查目标模型是否能够读取原模型的推理块。客户端应保存原始历史，让服务按兼容规则处理；若客户端自行删除，后续切回原模型时也无法恢复这些记录。**要继续使用与前缀绑定的推理块，就应保持其前缀不变，把新状态追加在后面。** 这条规则同时影响缓存复用与推理信息的有效性，Harness 必须一起处理这两件事。
 
-[^ch2-preserved-thinking]: Anthropic，[Preserved thinking](https://platform.claude.com/docs/en/build-with-claude/preserved-thinking)，介绍模型、前缀绑定、失效处理及推理块裁剪规则；会话内更新接口见[Mid-conversation system messages and tool changes](https://platform.claude.com/docs/en/build-with-claude/mid-conversation-system-messages)。
+[^ch2-preserved-thinking]: Anthropic，Preserved thinking，介绍模型、前缀绑定、失效处理及推理块裁剪规则；会话内更新接口见Mid-conversation system messages and tool changes。
 
 ### 研究延伸：可编辑、可组合的 KV Cache
 
@@ -639,7 +639,7 @@ Qwen、Llama、Gemma 等模型家族各有自己的聊天模板。同一组 API 
 >
 > **笔者看好这条研究路线，因为它有望让上下文更新保留更多已有计算。** Agent 经常更新记忆字段、加入状态或替换工具定义；如果相关状态能像笔记一样修正和拼接，维护长上下文的代价就有机会显著降低。生产实现仍以稳定前缀为起点，可编辑、可组合的缓存则提供了进一步改进的方向。
 
-[^ch2-2]: Li, Bojie，[Models Take Notes at Prefill: KV Cache Can Be Editable and Composable](https://arxiv.org/abs/2606.17107)，2026。编辑、组合与在线缓存实验采用不同任务和指标，具体设置见论文。
+[^ch2-2]: Li, Bojie，Models Take Notes at Prefill: KV Cache Can Be Editable and Composable，2026。编辑、组合与在线缓存实验采用不同任务和指标，具体设置见论文。
 
 ### 从缓存机制到上下文内容的设计
 
@@ -759,9 +759,9 @@ OpenAI Responses API 用 `defer_loading: true` 标记延迟加载的工具。在
 
 工具定义加载进来后，还要确认模型能正确使用。接入时，可以用完整任务检验“发现工具—理解参数—发起调用—读取返回值”这条链路，检查模型能否利用会话中新增的定义。自托管模型可以先测试已有的工具调用能力，再依据错误决定是否调整模板、增加示例或进行训练。工具发现的完整讨论见第四章“工具太多怎么办”一节。
 
-[^ch2-toolsearch-oai]: OpenAI，Tool search，Responses API 文档。https://developers.openai.com/api/docs/guides/tools-tool-search
-[^ch2-toolsearch-cc]: Anthropic，Scale with MCP tool search，Claude Code 文档。https://code.claude.com/docs/en/mcp
-[^ch2-toolsearch-codex]: OpenAI Codex，Apps／Connectors 工具发现模板。https://github.com/openai/codex/blob/main/codex-rs/core/templates/search_tool/tool_description.md
+[^ch2-toolsearch-oai]: OpenAI，Tool search，Responses API 文档。
+[^ch2-toolsearch-cc]: Anthropic，Scale with MCP tool search，Claude Code 文档。
+[^ch2-toolsearch-codex]: OpenAI Codex，Apps／Connectors 工具发现模板。
 
 > **实验 2-4 ★★：提示工程的消融实验**
 >
@@ -779,7 +779,7 @@ OpenAI Responses API 用 `defer_loading: true` 标记延迟加载的工具。在
 >
 > 这套方法让提示词迭代有了具体依据：先明确要改善的错误，再只修改相关部分，同时检查原有任务是否保持。用表达样例评审风格，用任务状态核验业务规则，用调用记录检查工具说明，就能判断问题具体出在哪里。
 
-[^ch2-tau-bench]: Yao et al.，[τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains](https://arxiv.org/abs/2406.12045)，2024。
+[^ch2-tau-bench]: Yao et al.，τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains，2024。
 
 ### 提示注入：上下文安全的核心威胁
 
@@ -797,7 +797,7 @@ Skills 与运行时状态同样需要管理来源。安装第三方 Skill 时，
 
 执行层负责落实这些边界：工具访问范围由权限控制，文件与进程活动由沙盒约束，高风险操作按规则确认。即使模型提出了越权调用，Harness 和环境也应在执行前拦截。第四、五章将展开这些机制，第三章则讨论检索内容与长期记忆中的来源管理。
 
-[^ch2-injection-defense]: Anthropic，How we contain Claude across products。https://www.anthropic.com/engineering/how-we-contain-claude
+[^ch2-injection-defense]: Anthropic，How we contain Claude across products。
 
 > **实验 2-5 ★★：提示注入攻防实验**
 >
@@ -835,10 +835,10 @@ Skills 与运行时状态同样需要管理来源。安装第三方 Skill 时，
 
 **第三层是详细资料。** 复杂操作分散在专项文档中，主文件提供入口。本书所用版本中的 `html2pptx.md` 讲解如何通过 HTML 生成演示文稿，其他参考文档补充格式与编辑细节。Agent 按任务继续读取这些内容，并使用捆绑的脚本、素材和模板完成操作。
 
-[^ch2-3]: Anthropic，Equipping Agents for the Real World with Agent Skills，2025。https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills；Agent Skills，How to add skills support to your agent。https://agentskills.io/client-implementation/adding-skills-support
-[^ch2-4]: Anthropic，PPTX Skill。本书实验固定使用包含 HTML 转换流程的版本，具体版本与运行方法见配套实验 README。https://github.com/anthropics/skills/tree/69c0b1a0674149f27b61b2635f935524b6add202/skills/pptx
-[^ch2-codex-skills]: OpenAI，Build skills。https://developers.openai.com/codex/skills/；OpenAI Codex 公开仓库中的 Skills 实现。https://github.com/openai/codex/blob/main/codex-rs/ext/skills/src/extension.rs
-[^ch2-cc-skill-inject]: Claude Code，How Claude Code uses prompt caching，Invoking skills and commands。https://code.claude.com/docs/en/prompt-caching；Agent Skills，How to add skills support to your agent，User-explicit activation。https://agentskills.io/client-implementation/adding-skills-support
+[^ch2-3]: Anthropic，Equipping Agents for the Real World with Agent Skills，2025；Agent Skills，How to add skills support to your agent。
+[^ch2-4]: Anthropic，PPTX Skill。本书实验固定使用包含 HTML 转换流程的版本，具体版本与运行方法见配套实验 README。
+[^ch2-codex-skills]: OpenAI，Build skills；OpenAI Codex 公开仓库中的 Skills 实现。
+[^ch2-cc-skill-inject]: Claude Code，How Claude Code uses prompt caching，Invoking skills and commands；Agent Skills，How to add skills support to your agent，User-explicit activation。
 
 ### 如何编写一份可用的 Skill
 
@@ -859,7 +859,7 @@ Skill 还可以附带执行工具与模板。例如，PPTX Skill 将操作说明
 
 **设计交互方式时，优先沿用模型已经训练和适配过的模式。** 角色划分、工具结果格式和 Skill 加载方式，都影响模型如何接续任务。厂商提供的标准流程适合作为起点，能减少模型从陌生格式中重新推断含义的负担。随后用实际任务检查目录识别、按需读取、脚本调用和结果验证，再决定需要怎样调整。
 
-[^ch2-baoyu-remove-ai-writing-flavor]: 宝玉，《别再用提示词去 AI 味了，方向就是错的》，2026-02-14。https://baoyu.io/blog/2026-02-14/remove-ai-writing-flavor
+[^ch2-baoyu-remove-ai-writing-flavor]: 宝玉，《别再用提示词去 AI 味了，方向就是错的》，2026-02-14。
 
 ### Skills 在上下文中的位置
 
@@ -901,7 +901,6 @@ Skill 提供任务知识与操作流程，工具负责读取、执行和获取�
 >
 > 每轮修改集中解决几类明确问题，保留范文、生成稿和人工修改稿供后续比较。随着任务积累，Skill 中的规则就有了可追溯的写作依据，也更容易判断哪些经验值得保留。
 
-
 ## Agent 状态栏：通过元信息增强 Agent 轨迹管理
 
 用户催问：“能不能再打一次？”图2-14 左侧记录了三次拨号。第一次等了 45 分钟也没接通，第三次才谈到每月 59 美元。按本例的规则，每次拨号都占用一次额度；即使只接通两次，三次额度也已用完。Harness 可以把这类计数、办理进度和待确认事项整理成一份随消息更新的摘要，称为 **Agent 状态栏（Agent Status Bar）**。
@@ -936,13 +935,13 @@ Skill 提供任务知识与操作流程，工具负责读取、执行和获取�
 > </agent_status>
 > ```
 >
-> 每组运行三次。A 组两次明确拒绝继续拨打，一次归入其他输出；B 组三次均明确拒绝继续拨打。两组都没有出现被判定为违规继续拨号的输出。复现这组对照时，进入 `chapter2/attention_visualization`，运行 `python run_status_bar_experiment.py --output runs/status-bar-reproduction`。原记录沿用旧编号 2-7，可以在两组回复中检查模型是否说明次数限制、接下来准备怎么办。[两组输入与逐次结果](https://github.com/bojieli/ai-agent-book/blob/main/chapter2/attention_visualization/runs/exp2-7-qwen3-0.6b-20260730-v2/comparison.json)
+> 每组运行三次。A 组两次明确拒绝继续拨打，一次归入其他输出；B 组三次均明确拒绝继续拨打。两组都没有出现被判定为违规继续拨号的输出。复现这组对照时，进入 `chapter2/attention_visualization`，运行 `python run_status_bar_experiment.py --output runs/status-bar-reproduction`。原记录沿用旧编号 2-7，可以在两组回复中检查模型是否说明次数限制、接下来准备怎么办。这次运行的输入和逐次结果保存在实验目录的 `runs/exp2-7-qwen3-0.6b-20260730-v2/comparison.json` 中。
 >
 > 注意力图展示生成区域对历史通话、搜索结果、用户追问和状态栏的权重分布。阅读时应结合区域长度、模型层和对应输出分析，观察新增状态是否被使用，再将这些线索与行为结果对照。
 
 笔者与 Noah Shi 的 ContextDistill-Bench 研究进一步考察了预先提炼状态的收益[^ch2-8]。在该基准覆盖的状态查询中，较小模型也能通过显式状态获得较高准确率；前沿模型的思考量、延迟与查询成本可降低约一个数量级。例如，Claude 4 Sonnet 的每千次查询成本从约 35.46 美元降至 3.51 美元。对于状态摘要能够直接回答的问题，模型可以复用预先整理的结果，省去每次重新查找和推理的开销。**这一设计在事件发生时维护状态，省去了每次查询都要遍历历史的开销。** 摘要字段固定后，即使历史继续增长，查询也只需读取这几个字段。后文将讨论如何同时保留原始记录，以回答摘要之外的问题。
 
-[^ch2-8]: Li, Bojie and Noah Shi. *Distill, Don't Retrieve: Inference-Time Context Distillation for LLM Agent Reasoning.* 2026. https://01.me/research/context-distillation
+[^ch2-8]: Li, Bojie and Noah Shi. *Distill, Don't Retrieve: Inference-Time Context Distillation for LLM Agent Reasoning.* 2026.
 
 ### Agent 状态栏的构成
 
@@ -1017,7 +1016,7 @@ messages: [
 >
 > **系统状态感知**提供当前时间、工作目录、操作系统、Shell 和 Python 版本。实验中的命令工具会识别单独的目录切换操作，更新运行时维护的工作目录，再用于后续调用；复合命令中子进程的目录变化遵循对应进程的执行范围。环境字段也帮助模型选择可用工具，例如根据实际系统和已安装的软件选择 `apt` 或 `brew`。
 >
-> 本次 Kimi K3 对照中，各类任务各有五个案例。时间戳和组合配置均通过五项，对照组各通过三项；工具计数器与系统状态的开启、关闭两组均通过五项。TODO 配置通过零项，对照组通过一项；详细错误配置通过四项，对照组通过五项。要追查差异，可以先在 `system-hint` 项目的配对记录里选一组任务，再打开对应轨迹，看新增信息在哪一步被使用。原记录沿用旧编号 2-8。[五种技术与组合配置的对照结果](https://github.com/bojieli/ai-agent-book/blob/main/chapter2/system-hint/runs/exp2-8-kimi-k3-20260730-v1/comparison.json)
+> 本次 Kimi K3 对照中，各类任务各有五个案例。时间戳和组合配置均通过五项，对照组各通过三项；工具计数器与系统状态的开启、关闭两组均通过五项。TODO 配置通过零项，对照组通过一项；详细错误配置通过四项，对照组通过五项。要追查差异，可以先在 `system-hint` 项目的配对记录里选一组任务，再打开对应轨迹，看新增信息在哪一步被使用。原记录沿用旧编号 2-8，配对统计保存在该次运行的 `comparison.json` 中。
 >
 > 五项技术还可以围绕同一个问题配合：时间戳与计数器描述重试的频率，TODO 与系统状态说明当前目标和操作环境，错误信息解释上一次失败。以文件缺失为例，可以先核对目录，再列出可用文件，随后根据任务要求寻找替代材料，或记录阻塞原因。比较配置时，同时检查任务完成情况、调用次数和遗漏的子任务，才能判断新增信息带来的实际收益。
 
@@ -1039,7 +1038,7 @@ messages: [
 
 **支持长任务持续推进。** 一些模型在认为窗口即将耗尽时，会提前收尾，这种现象被称为**上下文焦虑（Context Anxiety）**。Anthropic 在 Sonnet 4.5 的长任务测试中发现，压缩后仍可能出现这种行为，因此采用结构化交接记录，重置上下文后继续执行[^ch2-7]。工程上可以比较原会话压缩与新会话交接，检查任务是否持续推进，以及交接是否遗漏必要状态。
 
-[^ch2-7]: Prithvi Rajasekaran，Harness design for long-running application development，Anthropic Engineering，2026。https://www.anthropic.com/engineering/harness-design-long-running-apps
+[^ch2-7]: Prithvi Rajasekaran，Harness design for long-running application development，Anthropic Engineering，2026。
 
 ### 把重复计算的结果整理为可用知识
 
@@ -1060,7 +1059,7 @@ messages: [
 
 上下文中的示例还会影响模型处理新问题的方式。Dherin 等人的研究从 Transformer 中注意力层与 MLP 的组合出发，将特定前向计算表示为与上下文相关的低秩权重更新，为上下文学习提供了一种理论解释[^ch2-6]。实际推理时，模型权重保持不变，示例通过当前输入影响输出。希望在后续会话复用这类经验，可以把它整理成记忆、示例或 Skill，再按任务加载；第九章将进一步讨论经验的积累方式。
 
-[^ch2-6]: Benoit Dherin et al.，Learning without training: The implicit dynamics of in-context learning，2025。https://arxiv.org/abs/2507.16003
+[^ch2-6]: Benoit Dherin et al.，Learning without training: The implicit dynamics of in-context learning，2025。
 
 ### 压缩与 KV Cache 的取舍
 
@@ -1100,7 +1099,7 @@ messages: [
 >
 > 复现实验时，按配套说明配置模型与真实搜索服务，在实验目录执行 `python experiment.py -m kimi-k3 -n 15 -o results/reproduction.json`。读取各策略的 `metrics`：用 `total_compressed_size / total_original_size` 复算字符比率，再比较 `total_tokens` 与 `iterations`。无压缩基线也会为搜索正文补上标题、URL 等格式，因此处理后字符数可以略高于原文。实验程序只要收到最终回复，就把该组记为完成。试着在两份成品里查同一个人：带引用组把 Pamela Vagata 的任职机构写成 Pebblebed，窗口化组的汇总表却写成 Stripe。前一份回答提到了机构网站，但没有给出可打开的网页链接。遇到这种分歧，要回到有日期的来源，区分现职与曾任职位。单看两组都已完成，判断不了哪一份答对了。
 
-[^ch2-compression-results]: [六组运行的原始 JSON](https://github.com/bojieli/ai-agent-book/blob/db23b4c1a9bb444b2df4d176ab97317010bfcece/chapter2/context-compression/results/kimi_k3_real_20260718.json)保存了每种策略的统计字段、最终回答与时间戳，可直接复算字符比率。2026 年 7 月 18 日运行使用旧版保护条件；7 月 22 日的[窗口计数修正](https://github.com/bojieli/ai-agent-book/commit/aea4d72bce4b0029c46ccf57eb7a783edc79ae62)将累计输入改为最近一轮请求的输入。比较不同版本时应记录所用代码与搜索材料。
+[^ch2-compression-results]: 实验 2-10 的结果文件 `kimi_k3_real_20260718.json` 保存了每种策略的统计字段、最终回答与时间戳，可直接复算字符比率。2026 年 7 月 18 日运行使用旧版保护条件；7 月 22 日的代码修订（提交 `aea4d72`）将累计输入改为最近一轮请求的输入。比较不同版本时应记录所用代码与搜索材料。
 
 ### 生产级的分层压缩机制
 
@@ -1114,9 +1113,8 @@ messages: [
 
 这几类机制可以分层配合：入口控制减少一次性的大输出，局部整理控制日常增长，阶段摘要和整体压缩为长任务保存交接信息。实现时还应保留一份可回查的原始轨迹，使摘要中的决定能够对应到实际执行记录。
 
-笔者读 dsh-superagent 时注意到一个细节：事件和工具结果可以先送来摘要和对象 ID，需要细节时再凭 ID 读取。[^ch2-dsh-ref] 假设后台跑完一组测试，只告诉前台“有两项失败”，前台能报告进度，却答不了用户接着问的“是不是昨天那两项？”如果摘要附有本次测试记录的标识，前台就可以取回失败用例的名字，与昨天的记录对照。设计摘要时，可以先试着追问这样一个问题：省下的那些细节，过一会儿还能从哪里找回来？
+笔者读 dsh-superagent 时注意到一个细节：事件和工具结果可以先送来摘要和对象 ID，需要细节时再凭 ID 读取。 假设后台跑完一组测试，只告诉前台“有两项失败”，前台能报告进度，却答不了用户接着问的“是不是昨天那两项？”如果摘要附有本次测试记录的标识，前台就可以取回失败用例的名字，与昨天的记录对照。设计摘要时，可以先试着追问这样一个问题：省下的那些细节，过一会儿还能从哪里找回来？
 
-[^ch2-dsh-ref]: 笔者对 dsh-superagent 事件、工具结果和对象标识的观察，见 https://x.com/bojie_li/status/2116751906513232316 。
 
 ### 压缩策略的设计原则
 
@@ -1153,7 +1151,7 @@ messages: [
 
 ## 思考题
 
-1. ★★★ 阅读实验 2-3 的滑动窗口运行记录：五次工具调用分别做了什么？要判断重复调用是否由历史裁剪造成，还需要记录什么、做什么对照？设计一种保留关键状态的裁剪方案，并说明它对前缀缓存的影响。 [滑动窗口实跑记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter2/kv-cache/result_sliding_window_20260718_kimi_k2_6.json)
+1. ★★★ 阅读实验 2-3 的滑动窗口运行记录：五次工具调用分别做了什么？要判断重复调用是否由历史裁剪造成，还需要记录什么、做什么对照？设计一种保留关键状态的裁剪方案，并说明它对前缀缓存的影响。 记录见 `chapter2/kv-cache/result_sliding_window_20260718_kimi_k2_6.json`。
 2. ★★ Qwen3 的 Chat Template 按最后一个真实用户查询的位置处理历史思考。若一次 ReAct 循环持续上百轮，你会如何管理逐渐增长的推理内容？请比较历史思考的裁剪、回传与前缀绑定协议，并说明 Harness 应如何适配。
 3. ★★ 假设要把约十五万字符的搜索材料压缩到两千字符，你会保留哪些事实、关系与来源？怎样检查摘要是否足以支持后续问题，又怎样恢复被省略的细节？
 4. ★★ 工具计数器漏记了一次调用，状态栏因此给出错误的剩余次数。请设计事件记录、汇总校验和执行层检查，说明如何发现并修复这种不一致。

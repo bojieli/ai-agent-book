@@ -191,7 +191,7 @@ Q-learning 的行为策略可以包含随机探索，而更新目标使用下一
 >
 > 这次寻宝训练取学习率 0.2、折扣因子 0.99，探索率 ε 从 1.0 逐渐降到 0.1。表格 Q-learning 采用 ε-贪婪探索：每一步以 ε 的概率随机选一个可用动作，其余时候从当前 Q 值最大的动作中选一个。记录每个阶段的胜率、访问状态数和通关步数。
 >
-> 阅读[寻宝实验的训练与评估记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter1/learning-from-experience/README.md)时，先把两个问题分开：训练期间，带随机探索的策略何时第一次找到宝藏？训练结束后，固定 Q 表、按贪婪策略行动能否稳定通关？前者反映模型如何发现路径，后者检验它能否依照学到的价值选择动作。比较胜率前，先核对它来自哪一种运行。
+> 阅读寻宝实验的训练与评估记录时，先把两个问题分开：训练期间，带随机探索的策略何时第一次找到宝藏？训练结束后，固定 Q 表、按贪婪策略行动能否稳定通关？前者反映模型如何发现路径，后者检验它能否依照学到的价值选择动作。比较胜率前，先核对它来自哪一种运行。
 >
 > 原稿所用的历史学习曲线中，前 1000 局尚未通关，Q 表包含 124 个状态；到 5000 局仍未稳定获胜，状态数为 133；7000～8000 局间，胜率由 34% 升至 96%；到 10000 局达到 100%，Q 表包含 145 个状态，并找到 11 步路径。
 >
@@ -293,8 +293,8 @@ LLM 可以在调用工具前生成一段中间计算，也可以直接输出调�
 
 要看这种差别会不会出现在实际材料里，可以进一步用 LongBench v2 的多文档、长对话或代码仓库题。要单独检查模型能否记住输出格式等要求，可以取 IFEval 中可验证的指令，放到较长材料的不同位置。比较两个模型时，两者看到的指令位置和干扰内容应保持一致，并注明这是自行构造的测试。最后再用端到端 Agent 任务检查这些能力能否配合起来。设计评估集时，可以逐项检查下面几个维度。[^ch8-longbench]
 
-[^ch8-ruler]: Hsieh 等，[RULER](https://arxiv.org/abs/2404.06654)，2024。
-[^ch8-longbench]: Bai 等，[LongBench v2](https://aclanthology.org/2025.acl-long.183/)，ACL 2025。论文给出了六类任务，共 503 道选择题。
+[^ch8-ruler]: Hsieh 等，RULER，2024。
+[^ch8-longbench]: Bai 等，LongBench v2，ACL 2025。论文给出了六类任务，共 503 道选择题。
 
 - **位置与检索**：单条或多条关键信息，位于开头、中间和结尾时能否找到。
 - **关系与推理**：跨段落、多文档关系追踪，矛盾消解与证据组合。
@@ -343,7 +343,7 @@ LLM 可以在调用工具前生成一段中间计算，也可以直接输出调�
 >
 > 可以分别比较两个变化：从大教师迁移到较小学生，以及从长推理输出迁移到直接回答。前者改变模型推理开销，后者减少生成量。固定任务与运行条件，测量学生相对教师的质量、首字延迟、总耗时和费用，再决定适合迁移的任务范围。
 >
-> 配套的[语言识别对照记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter8/prompt-distillation/validation/exp8-8-kimi3-smollm2-20260730/comparison.json)可以用来拆开“答对”和“输出符合格式”。教师在 160 条训练样本上生成示范，另外在 80 条测试记录上全部答对。未微调的学生在测试时一个输出也没被评分器解析，得分为零；微调后 80 条都能解析，76 条标签正确。比较前后时，先看有多少答案能取出标签，再看取出的标签是否正确。基线的零分本身无法区分“没认出语言”和“认出了却没按格式作答”。这组测试包含 75 段不同文本，训练、测试之间没有完全相同的文本。
+> 配套的语言识别对照记录可以用来拆开“答对”和“输出符合格式”。教师在 160 条训练样本上生成示范，另外在 80 条测试记录上全部答对。未微调的学生在测试时一个输出也没被评分器解析，得分为零；微调后 80 条都能解析，76 条标签正确。比较前后时，先看有多少答案能取出标签，再看取出的标签是否正确。基线的零分本身无法区分“没认出语言”和“认出了却没按格式作答”。这组测试包含 75 段不同文本，训练、测试之间没有完全相同的文本。
 >
 > 数据构造还要保留学生完成任务所需的条件。教师依赖最新工具结果时，可以把相应结果作为学生输入，或继续保留工具接口；教师存在系统性错误时，则通过独立验证过滤。
 >
@@ -383,7 +383,7 @@ LLM 可以在调用工具前生成一段中间计算，也可以直接输出调�
 
 可以用三个词元看清证据的边界。假设两条公开样本分词后分别为 `[10, 20]` 和 `[20, 30]`，去重得到 `{10, 20, 30}`。现在额外加入一条 `[30, 10]`，再算一次，集合完全相同。即使复核时每个编号都对得上，仍无法据此判断第三条样本是否用过，也无法排除某条评估题混入训练集。要追查到具体样本，还得保留数据版本、样本标识和划分记录。
 
-[^ch8-token-provenance]: 李博杰，[微调权重与训练数据的对照实验](https://x.com/i/status/2122536723041353841)。固定版本的[公开数据比对](https://github.com/bojieli/training-forensics/blob/0f86c42ce7b4df74e5032e3c84e096e85f68ec17/README.md#L200-L231)列出 s1 等模型的词元集合与预处理条件，[适用范围](https://github.com/bojieli/training-forensics/blob/0f86c42ce7b4df74e5032e3c84e096e85f68ec17/README.md#L715-L731)讨论嵌入权重共享和 LoRA 的影响。
+[^ch8-token-provenance]: 李博杰的 training-forensics 项目记录了 s1 等模型的词元集合与预处理条件，并讨论了嵌入权重共享和 LoRA 对比对方法的影响。
 
 以第七章的“过早结束”案例为例，在准备宣称完成的时刻截取前缀，将未经验证的完成声明记为 `rejected`，把先检查剩余目标、运行相关测试再作答的继续行为记为 `chosen`。偏好对可以用于 DPO；其中验证通过的继续行为，也可以单独作为 SFT 示范。保存当时的验收条件与可获得信息，模型才能学习何时继续、何时结束。
 
@@ -434,7 +434,7 @@ for prompt in batch:
     update(policy, group, advantages)
 ```
 
-PPO 怎样用一批长短不同的轨迹更新策略？先在每条轨迹内部，从后往前计算各步的折扣回报。轨迹结束就停止累加，以免把下一道题的奖励算进来。再把所有轨迹中模型实际选择的动作放在一起，计算这批动作的平均损失。下面写出一次更新，省略多轮小批量优化。[PPO 原论文](https://arxiv.org/abs/1707.06347)
+PPO 怎样用一批长短不同的轨迹更新策略？先在每条轨迹内部，从后往前计算各步的折扣回报。轨迹结束就停止累加，以免把下一道题的奖励算进来。再把所有轨迹中模型实际选择的动作放在一起，计算这批动作的平均损失。下面写出一次更新，省略多轮小批量优化。[^ch8-ppo-method]
 
 ```python
 states, actions, returns = [], [], []
@@ -521,7 +521,7 @@ PPO 与 GRPO 都遵循这个闭环，区别主要在 “拿谁来比较”。GRP
 
 如果乙题只是比较难，四次全错还说明不了模型永远做不出来。Never Give Up 把“下一批算力花在哪道题上”作为训练时的一个选择：先给每题一小组尝试，全对就跳过这一组，全错则以一定概率再采一组，也有机会就此停下。如果前四条全错，追加的一组中终于出现一个正确解，这道题就有了可供比较的正反例。异步采样让其他题继续进入训练。验证器和奖励都没变，难题却有了更多尝试的机会。比较这两种预算分配办法时，应在相同生成开销下分别看易题和难题的成绩。[^ch8-ngu]
 
-[^ch8-ngu]: Michael Noukhovitch 等，[*Learning to Solve Hard Problems in RL for LLMs by Never Giving Up*](https://arxiv.org/abs/2609.13443)，2026 年。文中的追加采样用于训练；已做对的题仍可在后续训练中再次抽到。
+[^ch8-ngu]: Michael Noukhovitch 等，*Learning to Solve Hard Problems in RL for LLMs by Never Giving Up*，2026 年。文中的追加采样用于训练；已做对的题仍可在后续训练中再次抽到。
 
 ### 为什么 LLM RL 通常优先 On-Policy
 
@@ -542,7 +542,7 @@ $$
 
 大规模 LLM 强化学习通常用 vLLM、SGLang 等推理引擎采样，再用 FSDP、Megatron 等训练系统计算对数概率和梯度。两侧即使加载相同权重，也可能因浮点精度、归约顺序、张量并行、批大小、KV Cache 和融合内核不同，为同一 token 算出略有差异的对数概率。此时，参数尚未更新，$\rho_t$ 就已偏离 1，训练与采样之间出现数值层面的策略差异。受控实验发现，微小的 token 级差异也可能导致训练崩溃。[^ch8-33][^ch8-sc]
 
-[^ch8-sc]: 固定一个前缀，只考虑 A、B 两种动作。旧策略选 A 和选 B 的概率都是 0.5，新策略选 A 的概率为 0.8。对控制 A 的 logit 来说，选 A、B 时新策略的对数概率梯度分别为 0.2、−0.8，按旧策略求平均得到 −0.3。即使给两个动作都加上同一份奖励，朴素更新的期望也会改变。Score centering 在这个前缀减去的是平均梯度；GRPO 在一组回答中减去的是平均奖励。见[原论文](https://arxiv.org/abs/2609.20807)。采样策略落后太远时，还可以用 [KL 正则](https://arxiv.org/abs/2611.21791)约束训练策略与产生样本的行为策略之间的距离。
+[^ch8-sc]: 固定一个前缀，只考虑 A、B 两种动作。旧策略选 A 和选 B 的概率都是 0.5，新策略选 A 的概率为 0.8。对控制 A 的 logit 来说，选 A、B 时新策略的对数概率梯度分别为 0.2、−0.8，按旧策略求平均得到 −0.3。即使给两个动作都加上同一份奖励，朴素更新的期望也会改变。Score centering 在这个前缀减去的是平均梯度；GRPO 在一组回答中减去的是平均奖励。推导见 score centering 论文（arXiv:2609.20807）。采样策略落后太远时，还可以用 KL 正则约束训练策略与产生样本的行为策略之间的距离（arXiv:2611.21791）。
 
 这种误差会沿计算过程放大：**对数概率误差 → 概率比偏差 → 长前缀累积 → 裁剪与优势加权变化 → 梯度和有效样本数变化**。例如，4,000 个 token 的对数概率比若都带有同方向的 $10^{-3}$ 偏差，轨迹级比率就会累积到 $e^4\approx54.6$。这个同向误差例子说明，长序列中的小偏差可以产生很大的累计影响。
 
@@ -687,7 +687,7 @@ Search-R1[^ch8-25]训练模型决定何时搜索、提交什么查询，并结�
 
 两次修复都通过了验收，其中一次却直接覆盖了本应先读取的文件。检查工具记录就能定位这个违规动作；要判断前面每一步对最终成功有多大贡献，则要困难得多。最简单的做法是给整条轨迹打一个分数 $R=O+\beta\Phi$：$O$ 是任务得分，$\Phi$ 汇总违规扣分或可验证的进展，$\beta$ 决定两者的相对权重。这样可以区分两次修复，但同一条轨迹里的每个动作都分到了同一个信号。
 
-如果知道哪一轮违规，还可以把扣分留给那一轮。看[配套实现的两条测试轨迹](https://github.com/19PINE-AI/rlvp/blob/1ad30bc7e338911fb733739393d92c420f4d8bee/tests/test_credit.py)：甲完成了任务，但第二轮违规；乙没有完成任务，两轮都合规。两条轨迹的结果分分别为 1 和 0，减去组均值后得到 +0.5 和 −0.5。每条轨迹有两轮动作，每轮各占 10 个动作 token。按实现中的 `c2` 配置，两种信号分开计数：
+如果知道哪一轮违规，还可以把扣分留给那一轮。看配套实现的两条测试轨迹：甲完成了任务，但第二轮违规；乙没有完成任务，两轮都合规。两条轨迹的结果分分别为 1 和 0，减去组均值后得到 +0.5 和 −0.5。每条轨迹有两轮动作，每轮各占 10 个动作 token。按实现中的 `c2` 配置，两种信号分开计数：
 
 ```python
 outcome_weight = (1 - 0.5) / 40  # 结果信号分摊到这批的全部 40 个动作 token
@@ -763,7 +763,7 @@ Thinking Machines Lab 的数学任务对照展示了约一个数量级的训练�
 
 这里有两个实际条件。第一，按上式计算逐 token 的 KL，需要能在学生给定的前缀上取得可对齐的教师概率。手里只有几份教师写好的完整答案，可以拿来做 SFT，却不足以算出这个损失。第二，验收时要把各领域的成绩拆开看。学生数学成绩上升、代码成绩下降时，一个上升的总平均数容易掩盖后者的退步。
 
-[^ch8-mopd]: Wenhan Ma 等，[*MOPD: Multi-Teacher On-Policy Distillation for Capability Integration in LLM Post-Training*](https://arxiv.org/abs/2606.30406)，2026 年。论文采用按领域训练的教师，在学生自己的轨迹上蒸馏。
+[^ch8-mopd]: Wenhan Ma 等，*MOPD: Multi-Teacher On-Policy Distillation for Capability Integration in LLM Post-Training*，2026 年。论文采用按领域训练的教师，在学生自己的轨迹上蒸馏。
 
 ### 在轨自蒸馏：用额外上下文构造教师
 
@@ -824,7 +824,7 @@ Agent 尚未运行测试便宣称完成，只改完三个需求中的两个便�
 >
 > 先看一道留出题。消息队列的消费者断线重连后会丢消息，助手修改了重连代码，工具只回报“文件已修改”。此刻该宣布修好，还是继续验证？实验给定两段候选回复，比较模型给哪一段打分更高。训练前，模型在 12 道未完成任务里选对 3 道（25.0%）；训练后选对 11 道（91.7%）。另有 8 道确实已经完成的任务，训练前后都选对了 8 道。
 >
-> 把候选回复拿走，让模型自己写下一步，结果就不同了。按实验的文本分类规则，未完成任务里过早宣布完成的从 1/12 降到 0/12；已完成任务里明确收尾的也从 6/8 降到 0/8。只看第一组，很容易以为问题已经修好。第二组却提醒我们，模型在两段现成的回复中认得何时该停，自己写回复时仍可能一味要求再查。回到丢消息的例子，还要让助手实际执行一次断线重连测试，检查重连后能否收到消息。说出“继续验证”和拿到验证结果，是两步。详见[训练与评估记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter8/premature-completion-dpo/validation/experiment_8_17_gpu_20260807.md)。
+> 把候选回复拿走，让模型自己写下一步，结果就不同了。按实验的文本分类规则，未完成任务里过早宣布完成的从 1/12 降到 0/12；已完成任务里明确收尾的也从 6/8 降到 0/8。只看第一组，很容易以为问题已经修好。第二组却提醒我们，模型在两段现成的回复中认得何时该停，自己写回复时仍可能一味要求再查。回到丢消息的例子，还要让助手实际执行一次断线重连测试，检查重连后能否收到消息。说出“继续验证”和拿到验证结果，是两步。
 
 ### 案例 2：中文引号
 
@@ -856,7 +856,7 @@ Agent 尚未运行测试便宣称完成，只改完三个需求中的两个便�
 >
 > 模型留出集的逐字节精确匹配率从 37.5% 提高到 78.9%，独立边界集为 80.1%；两组平均首次字节分歧位置分别为 54.0 和 54.2。另用留出与边界共 512 条探针比较三个 tokenizer，其中 Qwen3 与 Qwen2.5 的无损往返率均为 80.1%。
 >
-> 微调后多答对了 106 题，原先答对的题还都对吗？把同一道题的两份答案放在一起看，有 107 题由错变对，也有一题由对变错。留出集第一题要求交回一个 JSON 对象。基座模型抄对了 `old_string`，却多交了文件路径等字段；微调后只交回题目要求的字段，才拿到这一分。退步的那题（`eval-095`）要求原样复述两行文本，微调后的答案把两行连在一起，漏掉了中间的换行符。要判断实际编辑能否成功，还需把参数交给工具检验。读者可以按[实验 8-19 的逐题核对方法](https://github.com/bojieli/ai-agent-book/blob/main/chapter8/exact-copy-sft/README.md)复查这两题，并用另一条含组合重音的样本检查分词器的往返结果。
+> 微调后多答对了 106 题，原先答对的题还都对吗？把同一道题的两份答案放在一起看，有 107 题由错变对，也有一题由对变错。留出集第一题要求交回一个 JSON 对象。基座模型抄对了 `old_string`，却多交了文件路径等字段；微调后只交回题目要求的字段，才拿到这一分。退步的那题（`eval-095`）要求原样复述两行文本，微调后的答案把两行连在一起，漏掉了中间的换行符。要判断实际编辑能否成功，还需把参数交给工具检验。读者可以按实验 8-19 的逐题核对方法复查这两题，并用另一条含组合重音的样本检查分词器的往返结果。
 
 把这三个案例各写成一张诊断卡：保留失败之前模型真正看得到的输入，写出至少一个可接受动作，再写出一个“表面相似却不应照做”的对照。例如，编辑有冲突时应重读文件，而文件未变且修改已验证时允许结束。用前者训练、再用从未参与训练的同类与对照任务验收，才能检查模型学会的是条件判断，还是无论遇到什么都多做一步。
 
@@ -898,17 +898,19 @@ Agent 尚未运行测试便宣称完成，只改完三个需求中的两个便�
 
 过早收尾、改错编辑范围和无法精确复制字符串，都可以从一次失败追到具体的训练样本。修好这一题以后，还要用独立样本和原先能做对的任务回归验证。遇到下一批失败，哪些值得再训一次模型，哪些只需更新知识、指令或程序？这正是下一章要解决的选择。
 
-[^ch8-1]: Schulman, John and Thinking Machines Lab, [“LoRA Without Regret”](https://thinkingmachines.ai/blog/lora/), 2025.
-[^ch8-2]: 姚顺雨（Shunyu Yao），“The Second Half”，2025 年 4 月 10 日。https://ysymyth.github.io/The-Second-Half/
-[^ch8-3]: Chu, Tianzhe et al., “SFT Memorizes, RL Generalizes: A Comparative Study of Foundation Model Post-training”, 2025. arXiv:2501.17161. https://arxiv.org/abs/2501.17161
+[^ch8-ppo-method]: Schulman 等，*Proximal Policy Optimization Algorithms*，2017，arXiv:1707.06347。
+
+[^ch8-1]: Schulman, John and Thinking Machines Lab, “LoRA Without Regret”, 2025.
+[^ch8-2]: 姚顺雨（Shunyu Yao），“The Second Half”，2025 年 4 月 10 日。
+[^ch8-3]: Chu, Tianzhe et al., “SFT Memorizes, RL Generalizes: A Comparative Study of Foundation Model Post-training”, 2025. arXiv:2501.17161.
 [^ch8-4]: Ouyang, Long et al., “Training Language Models to Follow Instructions with Human Feedback”, OpenAI, 2022.
 [^ch8-5]: Gao, Leo, John Schulman, and Jacob Hilton, “Scaling Laws for Reward Model Overoptimization”, OpenAI, 2023.
 [^ch8-6]: Rafailov, Rafael et al., “Direct Preference Optimization: Your Language Model is Secretly a Reward Model”, 2023.
 [^ch8-7]: Lightman, Hunter et al., “Let's Verify Step by Step”, OpenAI, 2023.
 [^ch8-8]: Silver, David and Richard S. Sutton, “Welcome to the Era of Experience”, 2025.
-[^ch8-9]: Li, Bojie, and Noah Shi, “RLVP: Penalize the Path, Reward the Outcome”, 2026. arXiv:2607.07435. https://arxiv.org/abs/2607.07435
-[^ch8-10]: Thinking Machines Lab, “On-Policy Distillation”, 2025. https://thinkingmachines.ai/blog/on-policy-distillation/
-[^ch8-11]: Li, Bojie, and Noah Shi, “Agents That Sense Physical Time: Urgency, Persistence, and Vigilance as Missing Controls for LLM Agents”, 2026. https://01.me/research/physical-time-agent
+[^ch8-9]: Li, Bojie, and Noah Shi, “RLVP: Penalize the Path, Reward the Outcome”, 2026. arXiv:2607.07435.
+[^ch8-10]: Thinking Machines Lab, “On-Policy Distillation”, 2025.
+[^ch8-11]: Li, Bojie, and Noah Shi, “Agents That Sense Physical Time: Urgency, Persistence, and Vigilance as Missing Controls for LLM Agents”, 2026.
 [^ch8-12]: Kulikov, Ilia, et al. *Autodata: An Agentic Data Scientist to Create High Quality Synthetic Data.* arXiv:2606.25996, 2026.
 [^ch8-13]: Sun, Hao, et al. “ZeroSearch: Incentivize the Search Capability of LLMs without Searching”, 2025. arXiv:2505.04588.
 [^ch8-14]: “DreamGym: Scaling Agent Learning via Experience Synthesis”, 2025. arXiv:2511.03773.
@@ -918,21 +920,21 @@ Agent 尚未运行测试便宣称完成，只改完三个需求中的两个便�
 [^ch8-18]: Wei, Yifan, et al. “Towards Compositional Generalization of LLMs via Skill Taxonomy Guided Data Synthesis”, 2026. arXiv:2601.03676.
 [^ch8-19]: Zhu, Kaijie, et al. “TermiGen: High-Fidelity Environment and Robust Trajectory Synthesis for Terminal Agents”, 2026. arXiv:2602.07274.
 [^ch8-20]: Hua, Zhanbo, et al. “CLI-Universe: Towards Verifiable Task Synthesis Engine for Terminal Agents”, 2026. arXiv:2606.22883.
-[^ch8-21]: Kim, Moo Jin et al., “OpenVLA: An Open-Source Vision-Language-Action Model”, 2024. arXiv:2406.09246. https://arxiv.org/abs/2406.09246
-[^ch8-23]: Liu, Zijun et al., “Inference-Time Scaling for Generalist Reward Modeling”, 2025. arXiv:2504.02495. https://arxiv.org/abs/2504.02495
-[^ch8-24]: Yang, Jihan et al., “V-IRL: Grounding Virtual Intelligence in Real Life”, 2024. arXiv:2402.03310. https://arxiv.org/abs/2402.03310
-[^ch8-25]: Jin, Bowen et al., “Search-R1: Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning”, 2025. arXiv:2503.09516. https://arxiv.org/abs/2503.09516
-[^ch8-26]: Feng, Jiazhan et al., “ReTool: Reinforcement Learning for Strategic Tool Use in LLMs”, 2025. arXiv:2504.11536. https://arxiv.org/abs/2504.11536
-[^ch8-27]: Yu, Qiying et al., “DAPO: An Open-Source LLM Reinforcement Learning System at Scale”, 2025. arXiv:2503.14476. https://arxiv.org/abs/2503.14476
+[^ch8-21]: Kim, Moo Jin et al., “OpenVLA: An Open-Source Vision-Language-Action Model”, 2024. arXiv:2406.09246.
+[^ch8-23]: Liu, Zijun et al., “Inference-Time Scaling for Generalist Reward Modeling”, 2025. arXiv:2504.02495.
+[^ch8-24]: Yang, Jihan et al., “V-IRL: Grounding Virtual Intelligence in Real Life”, 2024. arXiv:2402.03310.
+[^ch8-25]: Jin, Bowen et al., “Search-R1: Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning”, 2025. arXiv:2503.09516.
+[^ch8-26]: Feng, Jiazhan et al., “ReTool: Reinforcement Learning for Strategic Tool Use in LLMs”, 2025. arXiv:2504.11536.
+[^ch8-27]: Yu, Qiying et al., “DAPO: An Open-Source LLM Reinforcement Learning System at Scale”, 2025. arXiv:2503.14476.
 [^ch8-28]: Pan, Jiayi et al., “Training Software Engineering Agents and Verifiers with SWE-Gym”, 2024. arXiv:2412.21139；Barres, Victor et al., “$\tau^2$-Bench: Evaluating Conversational Agents in a Dual-Control Environment”, 2025. arXiv:2506.07982；Rawles, Christopher et al., “AndroidWorld: A Dynamic Benchmarking Environment for Autonomous Agents”, 2024. arXiv:2405.14573.
-[^ch8-29]: storm, “长程智能体自我检查与早停行为：Reward Seeking 现象及其缓解措施”，青稞社区，2026 年 8 月 6 日。https://qingkeai.online/archives/Reward-Seeking；原文链接：https://zhuanlan.zhihu.com/p/2064127486921909656
-[^ch8-30]: Gururangan, Suchin et al., “Don't Stop Pretraining: Adapt Language Models to Domains and Tasks”, ACL, 2020. https://aclanthology.org/2020.acl-main.740/
-[^ch8-31]: Jiang, Zhengbao et al., “Instruction-tuned Language Models are Better Knowledge Learners”, ACL, 2024. https://aclanthology.org/2024.acl-long.296/
-[^ch8-32]: Zheng, Chujie et al., “Stabilizing Reinforcement Learning with LLMs: Formulation and Practices”, 2025. arXiv:2512.01374. https://arxiv.org/abs/2512.01374
-[^ch8-33]: Zhong, Tianle et al., “Diagnosing Training Inference Mismatch in LLM Reinforcement Learning”, 2026. arXiv:2605.14220. https://arxiv.org/abs/2605.14220
-[^ch8-34]: He, Horace and Thinking Machines Lab, “Defeating Nondeterminism in LLM Inference”, 2025. https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/
+[^ch8-29]: storm, “长程智能体自我检查与早停行为：Reward Seeking 现象及其缓解措施”，青稞社区，2026 年 8 月 6 日。
+[^ch8-30]: Gururangan, Suchin et al., “Don't Stop Pretraining: Adapt Language Models to Domains and Tasks”, ACL, 2020.
+[^ch8-31]: Jiang, Zhengbao et al., “Instruction-tuned Language Models are Better Knowledge Learners”, ACL, 2024.
+[^ch8-32]: Zheng, Chujie et al., “Stabilizing Reinforcement Learning with LLMs: Formulation and Practices”, 2025. arXiv:2512.01374.
+[^ch8-33]: Zhong, Tianle et al., “Diagnosing Training Inference Mismatch in LLM Reinforcement Learning”, 2026. arXiv:2605.14220.
+[^ch8-34]: He, Horace and Thinking Machines Lab, “Defeating Nondeterminism in LLM Inference”, 2025.
 
-[^ch8-speech-conditioning]: [Orpheus-TTS](https://github.com/canopyai/Orpheus-TTS) 的说明包含表达标记和文本—语音上下文条件；[Sesame CSM](https://github.com/SesameAILabs/csm) 的接口使用文本、说话人及音频片段生成后续语音。
+[^ch8-speech-conditioning]: Orpheus-TTS 的说明包含表达标记和文本—语音上下文条件；Sesame CSM 的接口使用文本、说话人及音频片段生成后续语音。
 
 ## 思考题
 

@@ -102,11 +102,9 @@ OpenClaw 的多渠道交互使用户能够像联系秘书一样发送消息、�
 
 即时通讯、短信、邮件、电话和应用推送，各自适合不同的紧急程度与内容形式。Agent 可以结合紧急程度、用户偏好、当前状态和消息长度选择渠道。需要立即确认的通话事件采用及时提醒，完整报告可以通过邮件或应用链接交付。
 
-笔者曾让助手盯 ATC 会议的酒店房价。每天同一时间，助手都会发来消息，说房价还没降到目标价。有一次房价短暂下跌，捕捉到这个窗口的却是笔者自己写的脚本。[^ch6-price-watch] 怎样验收这样的助手？拿一段已知价格变化的记录，分别记下价格越过门槛的时间、助手查到变化的时间，以及用户收到消息的时间。第一段延迟过长，应该改善价格订阅或轮询间隔；第二段延迟过长，就去检查通知。没有降价的日子，定时查询仍可照常运行，用户无需每天读一条内容相同的消息。第七章会用一段五分钟的降价窗口来检验这种提醒。
+笔者曾让助手盯 ATC 会议的酒店房价。每天同一时间，助手都会发来消息，说房价还没降到目标价。有一次房价短暂下跌，捕捉到这个窗口的却是笔者自己写的脚本。 怎样验收这样的助手？拿一段已知价格变化的记录，分别记下价格越过门槛的时间、助手查到变化的时间，以及用户收到消息的时间。第一段延迟过长，应该改善价格订阅或轮询间隔；第二段延迟过长，就去检查通知。没有降价的日子，定时查询仍可照常运行，用户无需每天读一条内容相同的消息。第七章会用一段五分钟的降价窗口来检验这种提醒。
 
 长任务完成时，通知把用户带回成果页面；每日总结与周报则按约定节奏发送。多渠道策略还应设置去重、静默时段和升级条件，例如首次提醒未获回应后，是否改用另一渠道。通知记录与任务状态关联，便于用户从收到的消息继续处理。
-
-[^ch6-price-watch]: 笔者使用酒店盯价助手的记录，见 https://x.com/bojie_li/status/2121925292239544667 。
 
 ### 虚拟身份与隔离执行环境
 
@@ -116,13 +114,11 @@ OpenClaw 的多渠道交互使用户能够像联系秘书一样发送消息、�
 
 以费用减免为例，助理可以用授权代表的身份联系商家。若客服要求本人做口头验证，可请用户加入三方通话，完成验证后由助理接续沟通。若商家将回拨用户，先把案件号、已谈妥的事项和需要核实的问题交给用户。向用户报告时，也要说清楚手中的证据：客服已口头答应减免，就记录这项承诺；后续查到账单更新，再报告费用已实际减免。
 
-笔者在北京补办美国银行的信用卡时，Pine 联系银行，安排了加急补卡，并争取到免收 15 美元加急费。[^ch6-replacement] 在通话结束时，助理已经可以报告银行受理了什么、同意免去哪笔费用。过几天用户若问“新卡到哪儿了”，就需要再查物流或请收件人确认。把这两次询问分开，就知道哪些事实能从银行得到，哪些要等下一方提供。
-
-[^ch6-replacement]: 笔者办理跨境补卡的记录，见 https://x.com/bojie_li/status/2109574900839256529 。
+笔者在北京补办美国银行的信用卡时，Pine 联系银行，安排了加急补卡，并争取到免收 15 美元加急费。 在通话结束时，助理已经可以报告银行受理了什么、同意免去哪笔费用。过几天用户若问“新卡到哪儿了”，就需要再查物流或请收件人确认。把这两次询问分开，就知道哪些事实能从银行得到，哪些要等下一方提供。
 
 虚拟电脑和虚拟手机提供持续运行的操作环境。虚拟机可以运行桌面系统，容器适合隔离进程与依赖，Android 模拟器承载移动应用。它们支持后台运行，也能减少自动操作对用户当前工作的干扰。隔离范围由网络、挂载、凭证和运行权限共同决定；这些配置同时影响 Agent 能够接触的数据与外部系统。
 
-假设你希望下班关机后由腾讯 WorkBuddy 企业版生成周报，而本周的销售表只存在办公电脑上。选择本地任务，助理可以读这张表，但电脑必须开机，客户端也要在线。选择云端任务，助理可以在你关机后继续工作，前提是先把允许用于周报的数据上传到任务，或放入云端任务能访问的资料库。如果销售表必须留在本机，就应安排在电脑在线时处理。[腾讯云的本地与云端任务说明](https://cloud.tencent.cn/document/product/1831/138797)
+假设你希望下班关机后由腾讯 WorkBuddy 企业版生成周报，而本周的销售表只存在办公电脑上。选择本地任务，助理可以读这张表，但电脑必须开机，客户端也要在线。选择云端任务，助理可以在你关机后继续工作，前提是先把允许用于周报的数据上传到任务，或放入云端任务能访问的资料库。如果销售表必须留在本机，就应安排在电脑在线时处理。
 
 网页和移动应用还可能要求身份验证、验证码或人工确认。接入时优先使用服务提供的 API 与授权方式；需要图形界面认证时，可以通过 VNC/RDP 远程桌面让用户亲自登录，并在认证期间暂停自动操作。用户完成后，系统检查会话状态，再恢复任务。令牌与会话按有效期保存，撤销授权或任务结束后按策略清理。
 
@@ -130,10 +126,10 @@ Agent 与虚拟环境之间可以通过**共享文件系统**交换数据。例�
 
 事件工具接收变化，沟通工具联系用户，虚拟身份和执行环境则让 Agent 能以明确身份开展操作。多个事件同时到达时，下一步就需要调度机制决定处理顺序，并维护各项任务的状态。
 
-[^ch6-dsh-threads]: DeepSeek，dsh-superagent 原型的[领域模型](https://github.com/deepseek-ai/dsh-superagent-prototype/blob/8c32a9dc5d72c033816c6a8110b37f40cf94fba4/docs/001-domain.md)和[授权与订阅规则](https://github.com/deepseek-ai/dsh-superagent-prototype/blob/8c32a9dc5d72c033816c6a8110b37f40cf94fba4/docs/002-authorization.md)。
-[^ch6-duet]: Anthropic，[Get started with Claude Duet](https://support.claude.com/en/articles/17631495-get-started-with-claude-duet)，介绍会前简报、任务页和主对话通知。
-[^ch6-cue]: Manus，[Introducing Manus 2.0](https://manus.im/en/blog/introducing-manus-2-0)，介绍 Cue 的独立电话号码、来电接听和通话摘要。
-[^ch6-automation]: OpenClaw，[Automation](https://docs.openclaw.ai/automation)，介绍内部 Hooks、定时调度、Heartbeat 与外部 Webhook 等自动化入口。
+[^ch6-dsh-threads]: DeepSeek，dsh-superagent 原型的领域模型和授权与订阅规则。
+[^ch6-duet]: Anthropic，*Get started with Claude Duet*，介绍会前简报、任务页和主对话通知。
+[^ch6-cue]: Manus，*Introducing Manus 2.0*，介绍 Cue 的独立电话号码、来电接听和通话摘要。
+[^ch6-automation]: OpenClaw，Automation，介绍内部 Hooks、定时调度、Heartbeat 与外部 Webhook 等自动化入口。
 
 ### 事件处理机制
 
@@ -191,7 +187,7 @@ Agent 与虚拟环境之间可以通过**共享文件系统**交换数据。例�
 
 概率也需要验收。假设上线前留出一批人工标好的消息，其中有 100 条被模型以约 90% 的概率判为“补充已有任务”。若实际只有 60 条确属该类，这个分数就不适合直接作为自动并入任务的门槛。可以把拿不准的消息交给主模型，再用另一批留出消息统计两项结果：少唤醒了多少次主模型，有多少本应处理的事项被误滤。两者一起决定这种分工是否合算。
 
-[^ch6-jev]: TypeSafe 的[发布说明](https://typesafe.ai/blog/introducing-system-one-models-and-jev)介绍了预定义输出、并行返回概率，以及以决策校准为目标的训练方法 RLCD。笔者在[重新看待 Jev 的原因](https://x.com/i/status/2108762471431623027)中讨论了判断成本怎样改变调用频率，在[关于事件驱动架构的笔记](https://x.com/bojie_li/status/2116751906513232316)中讨论了先用规则和判断模型筛选事件的分工。
+[^ch6-jev]: TypeSafe 在 Jev 的发布说明中介绍了预定义输出、并行返回概率，以及以决策校准为目标的训练方法 RLCD。
 
 ### 从邮件事件建立基本循环
 
@@ -258,7 +254,7 @@ Agent 与虚拟环境之间可以通过**共享文件系统**交换数据。例�
 > 1. **后台执行与即时响应。** 启动持续数秒的分析进程，立即返回任务标识；等待期间回答当前时间，完成后接收分析结果。检查回答时间是否早于后台任务完成时间。
 > 2. **队列与批处理。** 长任务期间依次补充“用日语回复”和“整理成网页”，任务完成后将结果与两条要求作为一个批次处理。脚本生成日语 HTML，读者可以检查要求是否齐全、是否重复入队。
 > 3. **取消与恢复。** 演示收到“停止分析”时，会打断仍在生成的模型回合，并要求所有运行中的后台任务停止。这次由脚本发出打断，当时只有一个分析进程 T1。第 0.803 秒，打断事件记下 T1 的进度为 18%；到第 0.806 秒，系统才记下它的退出码 −15。紧接着启动的 T2 是一项新任务。第 4.436 秒收到的是 T2 的结果，T1 没有触发完成回调。沿任务编号读这段记录，就能看清“已收到取消请求”和“进程已经退出”各自有什么依据。
-> 4. **并行任务与进度决策。** 同时启动三个分析进程，每个逻辑时间步分别推进 3%、2%、1%。在[这次运行](https://github.com/bojieli/ai-agent-book/blob/main/chapter6/async-agent/validation/experiment_6_2/real_subprocess_20260730T052500Z/scenarios/parallel_progress_threshold_cancellation.json)里，最快的 T1 完成时，查询回执显示 T2 已到 68%，T3 到了 34%。沿图6-4 看，进度不超过 50% 的任务会被取消。脚本只取消了 T3，最后收到了 T1 和 T2 的结果。这说明同一个运行时既能响应整批停止，也能保留仍有用的并行工作。运行器可缩短逻辑时间步，便于重复检查。
+> 4. **并行任务与进度决策。** 同时启动三个分析进程，每个逻辑时间步分别推进 3%、2%、1%。在本实验的并行进度记录里，最快的 T1 完成时，查询回执显示 T2 已到 68%，T3 到了 34%。沿图6-4 看，进度不超过 50% 的任务会被取消。脚本只取消了 T3，最后收到了 T1 和 T2 的结果。这说明同一个运行时既能响应整批停止，也能保留仍有用的并行工作。运行器可缩短逻辑时间步，便于重复检查。
 >
 > ![图6-4 实验 6-2 异步 Agent 打断与恢复](images/revised/fig6-4.svg)
 >
@@ -329,7 +325,7 @@ OpenAI 在 GPT-Live 的介绍中回顾了级联、轮次式音频模型和全双
 
 模型是否直接处理音频、输入输出是否流式、能否同时听说，是可以分别检查的能力。级联系统也可以加入流式模块与打断控制；端到端模型的交互节奏则取决于具体设计。比较时需要沿完整时间线检查输入、推理、合成与播放。
 
-[^ch6-12]: OpenAI，[Introducing GPT-Live](https://openai.com/index/introducing-gpt-live/)，2026-07-08，介绍级联、轮次式音频模型与全双工交互。
+[^ch6-12]: OpenAI，*Introducing GPT-Live*，2026-07-08，介绍级联、轮次式音频模型与全双工交互。
 
 ### 范式一 · 级联流水线（Cascading）
 
@@ -360,7 +356,7 @@ OpenAI 在 GPT-Live 的介绍中回顾了级联、轮次式音频模型和全双
 >
 > 复现时可以在“我想订”和“周五的”之间停一下，逐渐拉长停顿，再加一点背景声。对照录音、转写和助手的答复：如果后半句被另存成一段，先查端点判定；如果整句都在同一段录音里，转写却把“周五”写成了别的词，再查识别环节。
 >
-> Doubao 开始返回文字，离用户听见回答还有多久？[一轮录音回放的记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter6/live-audio/README.md#learning-3)里，转写用了 2.710 秒。Doubao 在请求发出后 0.749 秒返回第一个 token，到 0.792 秒才返回完整答复。回放程序等文字收齐，才交给 Fish S1 合成；又过了 2.819 秒，后端收到第一批音频。从端点判定后算起，把这三段串行耗时相加，约为 **6.321 秒**。归档报告写的是 6.279 秒，它用首个 token 的时间代替了生成整段答复的时间。
+> Doubao 开始返回文字，离用户听见回答还有多久？一轮录音回放的记录里，转写用了 2.710 秒。Doubao 在请求发出后 0.749 秒返回第一个 token，到 0.792 秒才返回完整答复。回放程序等文字收齐，才交给 Fish S1 合成；又过了 2.819 秒，后端收到第一批音频。从端点判定后算起，把这三段串行耗时相加，约为 **6.321 秒**。归档报告写的是 6.279 秒，它用首个 token 的时间代替了生成整段答复的时间。
 >
 > 图6-7 画的是一组示例时长。要用这段录音实测用户等了多久，还缺两个时刻：用户最后一次发声何时结束，浏览器何时开始播放。前者与端点判定之间还有静音等待，后者与后端收到音频之间还有传输和播放缓冲。把这两个时刻也记下来，才有依据和下一节的流式方案比较。
 
@@ -387,7 +383,7 @@ Whisper 的常规转录实现按音频窗口编码和解码[^ch6-whisper]。在�
 >
 > 可以继续改变前缀步长与停顿长度，记录字符错误率、端点位置、事件漏检与误报，以及每次推理耗时。比较原生流式实现时，再检查持续状态复用如何改变同一条时间线。
 
-[^ch6-whisper]: OpenAI，[Whisper](https://github.com/openai/whisper)，介绍音频窗口转录与模型实现。
+[^ch6-whisper]: OpenAI，Whisper，介绍音频窗口转录与模型实现。
 
 ### 范式二 · 端到端全模态模型（Omni）
 
@@ -419,12 +415,12 @@ Thinking Machines Lab 的**交互模型（Interaction Model）**采用多流、�
 
 GPT-Live 也采用持续听说与后台委派的组合：前台处理等待、附和、插话和实时翻译等交互，后台承担搜索、推理和较长任务[^ch6-12]。Harness 负责传递任务与结果、管理执行权限，并协调生成和播放状态。模型的连续交互能力与这些运行机制共同构成完整语音系统。
 
-[^ch6-moshi]: Kyutai，[Moshi: a speech-text foundation model for real-time dialogue](https://kyutai.org/assets/pdfs/Moshi.pdf)，2024，介绍用户与模型的并行音频流。
-[^ch6-14]: Thinking Machines Lab，[Interaction Models: A Scalable Approach to Human-AI Collaboration](https://thinkingmachines.ai/blog/interaction-models/)，介绍微轮次、多流交互与后台任务委派。
+[^ch6-moshi]: Kyutai，*Moshi: a speech-text foundation model for real-time dialogue*，2024，介绍用户与模型的并行音频流。
+[^ch6-14]: Thinking Machines Lab，*Interaction Models: A Scalable Approach to Human-AI Collaboration*，介绍微轮次、多流交互与后台任务委派。
 
 ### 认知时序：实时交互与深度思考
 
-做 Pine 语音助理时，笔者起初很看好 Moshi 的路线。电话里，客服说到半句，助理有时该等，有时该轻轻应一声；自己正在说话时，也要能听见对方插进来的更正。能把这些时机学好，对方才会觉得电话这头真有人在听。后来做需要查资料、调工具的通话，笔者才意识到，还得追问一句：从听懂问题，到说出查到的答案，中间转了几次手？[^ch6-voice-design]
+做 Pine 语音助理时，笔者起初很看好 Moshi 的路线。电话里，客服说到半句，助理有时该等，有时该轻轻应一声；自己正在说话时，也要能听见对方插进来的更正。能把这些时机学好，对方才会觉得电话这头真有人在听。后来做需要查资料、调工具的通话，笔者才意识到，还得追问一句：从听懂问题，到说出查到的答案，中间转了几次手？
 
 假设客服问“您想查的是周四上午那班吗？”若前台语音模型把查询交给后台推理模型，前台要先说清查哪班，后台据此调用工具、读回结果，再把消息交给前台。前台还要看客服刚才有没有补充条件，才知道这条结果该怎么说。在等候时间较长的任务里，这样分工有一个实在的好处：查票期间，前台仍听得见人说话。但哪怕工具本身很快，交接和返回也各要花时间。
 
@@ -433,8 +429,6 @@ GPT-Live 也采用持续听说与后台委派的组合：前台处理等待、�
 可以用同一段录音和同一份航班查询结果比较这两种安排。分别记下客服说完日期、查询发出、结果返回、助理开始报出有效报价的时刻。若助理在等候时说了“我查一下”，另记这一声回应的时间。再在查询途中插入一句“等等，我改到周五”，听它能否及时接话，以及最后报的是哪天的票价。图6-10 把这一问题展开为三种安排：先回应再深入回答、前台持续交互并接收后台建议，以及构思与表达按片段并行推进。
 
 ![图6-10 快/慢思考架构与方案对比](images/revised/fig6-10.svg)
-
-[^ch6-voice-design]: 笔者对全双工语音、工具调用延迟和语义端点的实践判断，见 https://x.com/bojie_li/status/2121903370609062376 。
 
 #### 方案一：快思考回应，慢思考回答
 
@@ -454,9 +448,7 @@ GPT-Live 也采用持续听说与后台委派的组合：前台处理等待、�
 
 这时，后台发来“原报价已更新”。前台先向客服核实新价格，再告诉用户。如果用户恰在此时回复“可以订”，这句回复对应的是此前发给他的 1250 元报价。前台要根据新的价格和已有授权判断是否需要再次确认。后台只提供信息，始终由前台跟客服交谈、作出承诺。给消息带上航班、价格适用条件和时间，前台才能识别哪一份报价已过期。
 
-把这段通话录成课堂用的模拟对话，试着在三个不同的时刻送入同一条后台消息“价格有变，请核实”。第一次，客服刚说“最低票价是……”，前台可以先听完金额。第二次，客服已报完价，正等答复，此时适合追问新价。第三次，旅客刚在电话里插话说“等等，我改一下日期”，先听清新日期，再决定还要不要核实原航班。回放时分别标出消息到达、前台停顿或开口、对方说完关键条件的时刻。同一句“好的”，说在客服介绍条款时可能只是表示在听，说在“我现在帮您出票？”之后就可能被听成同意购买。只看转写文本，会漏掉这样的差别。[^ch6-speech-timing]
-
-[^ch6-speech-timing]: 笔者关于何时插话、附和或继续听的实践记录，见 https://x.com/bojie_li/status/2104595829780816179 。本段为据此设计的模拟回放。
+把这段通话录成课堂用的模拟对话，试着在三个不同的时刻送入同一条后台消息“价格有变，请核实”。第一次，客服刚说“最低票价是……”，前台可以先听完金额。第二次，客服已报完价，正等答复，此时适合追问新价。第三次，旅客刚在电话里插话说“等等，我改一下日期”，先听清新日期，再决定还要不要核实原航班。回放时分别标出消息到达、前台停顿或开口、对方说完关键条件的时刻。同一句“好的”，说在客服介绍条款时可能只是表示在听，说在“我现在帮您出票？”之后就可能被听成同意购买。只看转写文本，会漏掉这样的差别。
 
 #### 方案三：构思与表达协同推进
 
@@ -468,8 +460,8 @@ Step-Audio 系列提供了两个相关例子。**模态锚定推理蒸馏（MGRD
 
 MGRD 与 MPS 分别对应“依据什么推理”和“何时表达”。前者需要检查推理是否利用了声音信息，后者需要同时测量首段响应、完整答案质量和前后表述的一致性。
 
-[^ch6-mgrd]: StepFun，[Step-Audio-R1 Technical Report](https://arxiv.org/abs/2511.15848)，介绍模态锚定推理蒸馏。
-[^ch6-mps]: StepFun，[Mind-Paced Speaking: A Dual-Brain Approach to Real-Time Reasoning in Spoken Language Models](https://arxiv.org/abs/2510.09592)与 [Step-Audio-R1.1 模型卡](https://huggingface.co/stepfun-ai/Step-Audio-R1.1)，介绍构思、表达两个模块及其在实时系统中的应用。
+[^ch6-mgrd]: StepFun，*Step-Audio-R1 Technical Report*，介绍模态锚定推理蒸馏。
+[^ch6-mps]: StepFun，*Mind-Paced Speaking: A Dual-Brain Approach to Real-Time Reasoning in Spoken Language Models* 与 Step-Audio-R1.1 模型卡，介绍构思、表达两个模块及其在实时系统中的应用。
 
 #### 模块分工与升级方式
 
@@ -483,7 +475,7 @@ Pine AI 的语音 Agent 采用前台快思考与后台慢思考配合的架构�
 
 理解这些组合时，可以区分三个设计维度：**音频通路**决定模型直接处理声音还是通过转录交接；**听说时序**决定输入输出按轮次还是并行推进；**认知分工**决定实时交互与深度推理如何共享状态、交换结果。系统可以直接处理音频并保持全双工，同时把复杂任务交给独立的后台模型。Thinking Machines Lab 的交互模型和 GPT-Live 都展示了这类组合。
 
-[^ch6-17]: Pine AI，[The Most Natural Human-Computer Interface Is Your Voice](https://www.19pine.ai/blog/pine-ai-the-most-natural-human-computer-interface-is-your-voice)，介绍快慢思考架构及其报告的语音任务评测结果。榜单名称按所引页面使用 τ²-bench voice。
+[^ch6-17]: Pine AI，*The Most Natural Human-Computer Interface Is Your Voice*，介绍快慢思考架构及其报告的语音任务评测结果。该报告将榜单称为 τ²-bench voice。
 
 ### 更像人的语音合成
 
@@ -585,14 +577,14 @@ $$
 >
 > 本实验用 Qwen3-VL 32B Instruct 驱动 browser-use，通过浏览器状态、元素信息和截图生成动作。任务是查询旧金山天气：定位搜索框，输入“San Francisco weather today”，提交查询，再提取温度和天气状况。
 >
-> [实验 6-9 的代码与运行说明](https://github.com/bojieli/ai-agent-book/blob/main/chapter6/computer-use-open-model/README.md)提供两条入口。有 OpenRouter 密钥时，可用托管的视觉模型；已有 vLLM、SGLang 等兼容服务时，可将 `OPEN_MODEL_BASE_URL` 和 `OPEN_MODEL_MODEL` 指向自己的端点与模型，并按服务要求设置密钥。两条路线都先在实验目录运行 `python main.py --dry-run`，查看配置，再按说明启动实际查询。只有后一次运行会产生可以逐步核对的浏览器动作与截图。
+> 实验 6-9 的代码与运行说明提供两条入口。有 OpenRouter 密钥时，可用托管的视觉模型；已有 vLLM、SGLang 等兼容服务时，可将 `OPEN_MODEL_BASE_URL` 和 `OPEN_MODEL_MODEL` 指向自己的端点与模型，并按服务要求设置密钥。两条路线都先在实验目录运行 `python main.py --dry-run`，查看配置，再按说明启动实际查询。只有后一次运行会产生可以逐步核对的浏览器动作与截图。
 >
 > 保存的运行完成了 16 步交互，并保留 15 张截图。Google 出现验证码后，任务改用 weather.com 获取结果。读者可以对照每轮页面信息、模型选择和执行结果，检查它如何继续完成查询。
 >
 > 比较两条 Computer Use 路径时，固定任务与验收条件，分别记录模型、接口、页面变化和恢复步骤。答案中的地点、时间、单位及数据来源，是核对查询结果的共同依据。
 
-[^ch6-computer-tools]: Anthropic，[Computer Use 工具文档](https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool)与[参考实现](https://github.com/anthropics/claude-quickstarts/tree/main/computer-use-demo)，介绍版本化动作接口、执行层与截图处理。
-[^ch6-som]: Microsoft，[Set-of-Mark Prompting](https://arxiv.org/abs/2310.11441)，2023；browser-use 的[DOM 服务实现](https://github.com/browser-use/browser-use/blob/main/browser_use/dom/service.py)提供结构化元素处理示例。
+[^ch6-computer-tools]: Anthropic，Computer Use 工具文档与参考实现，介绍版本化动作接口、执行层与截图处理。
+[^ch6-som]: Microsoft，*Set-of-Mark Prompting*，2023；browser-use 的 DOM 服务实现提供结构化元素处理示例。
 
 ### 能看动画、能听声音的 Computer Use Agent
 
@@ -608,7 +600,7 @@ $$
 
 采集频率取决于目标事件持续多久、处理成本和模型容量。文字描述也需要保留与任务相关的对象、位置和变化，避免把重要细节压掉。观测记录继续携带来源与时间，运行时据此判断哪些信息仍然有效。
 
-[^ch6-9]: Bojie Li、Noah Shi，[Agent-Computer Observation Interfaces Enable Dynamic Computer Use](https://arxiv.org/abs/2606.29472)，2026，介绍 AOI 及其组件消融。
+[^ch6-9]: Bojie Li、Noah Shi，*Agent-Computer Observation Interfaces Enable Dynamic Computer Use*，2026，介绍 AOI 及其组件消融。
 
 ### Computer Use 的世界模型
 
@@ -628,9 +620,9 @@ $$
 
 该方案进一步通过微调学习指令与动作格式：先预测希望到达的状态，再生成通向该状态的操作，并在虚拟机中通过在线训练改进任务表现。动作条件微调则用于预测给定操作后的桌面变化。这两种用途分别连接规划与模拟，展示了状态表示如何参与 Computer Use。
 
-[^ch6-osworld-human]: Reyna Abhyankar 等，[OSWorld-Human: Benchmarking the Efficiency of Computer-Use Agents](https://arxiv.org/abs/2506.16042)，分析任务轨迹与时间开销。
-[^ch6-20]: David Li、Jonathan Li，[Scaling Video Pretraining with Imagination Models](https://www.inductionlabs.com/news/scaling-video-pretraining)，Induction Labs，2026-07-23，介绍 Photon-1 的预训练、动作学习与状态模拟。
-[^ch6-21]: Google DeepMind，[Genie 3: A new frontier for world models](https://deepmind.google/blog/genie-3-a-new-frontier-for-world-models/)，2025-08-05；Zachary Lin 等，[Cosmos World Foundation Model Platform for Physical AI](https://arxiv.org/abs/2501.03575)，2025。
+[^ch6-osworld-human]: Reyna Abhyankar 等，*OSWorld-Human: Benchmarking the Efficiency of Computer-Use Agents*，分析任务轨迹与时间开销。
+[^ch6-20]: David Li、Jonathan Li，*Scaling Video Pretraining with Imagination Models*，Induction Labs，2026-07-23，介绍 Photon-1 的预训练、动作学习与状态模拟。
+[^ch6-21]: Google DeepMind，*Genie 3: A new frontier for world models*，2025-08-05；Zachary Lin 等，*Cosmos World Foundation Model Platform for Physical AI*，2025。
 
 ### 移动端：技术接口与生态协作
 
@@ -644,7 +636,7 @@ Android 的 `AccessibilityService` 可以在获准范围内读取界面信息并
 
 在工程设计中，可以把这些问题落实为明确的接入条件：哪些能力通过 API 提供，哪些需要用户在界面中完成，哪些任务可以持续授权。模型能力、产品接口与平台协作共同决定实际可用性，原型验证需要同时覆盖这几层。
 
-[^ch6-android]: Android Developers，[AccessibilityService](https://developer.android.com/reference/android/accessibilityservice/AccessibilityService)，介绍界面访问、动作与手势能力。
+[^ch6-android]: Android Developers，AccessibilityService，介绍界面访问、动作与手势能力。
 
 ## 机器人操作：以 XLeRobot 整理桌面为例
 
@@ -672,7 +664,7 @@ XLeRobot 支持用键盘、Xbox 手柄和 Switch Joy-Con 遥操作，VR 操作�
 >
 > 在二维桌面中随机生成物体位置与目标位置，让控制器直接读取坐标，依次接近物体、移动到对应目标，再处理下一个物体。改变初始位置和物体数量，比较成功率、完成步数与路径长度。
 >
-> 先跟踪一个物体的完整轨迹：控制器到达物体后进入搬运阶段，到达目标后才能累计完成数量。接着增加物体数量，检查每个物体都经过这两个到达条件。配套的二维模拟在五个随机种子下分别摆放 1、2、3、4 个物体，每种组合运行 512 回合，合计 10,240 回合全部完成。控制器可以直接读取坐标，移动物体也不依赖真实夹爪。这个结果先回答了“已知位置时，这套动作顺序能否归位”；再到真机上检查相机定位和夹取，才知道哪一步增加了难度。[二维控制记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter6/xlerobot-teleoperation/validation/runs/local-gpu/metrics.json)
+> 先跟踪一个物体的完整轨迹：控制器到达物体后进入搬运阶段，到达目标后才能累计完成数量。接着增加物体数量，检查每个物体都经过这两个到达条件。配套的二维模拟在五个随机种子下分别摆放 1、2、3、4 个物体，每种组合运行 512 回合，合计 10,240 回合全部完成。控制器可以直接读取坐标，移动物体也不依赖真实夹爪。这个结果先回答了“已知位置时，这套动作顺序能否归位”；再到真机上检查相机定位和夹取，才知道哪一步增加了难度。
 
 ### 机器人控制的基本结构
 
@@ -768,7 +760,7 @@ VLA 是 Vision-Language-Action 的缩写，即视觉—语言—动作模型。�
 >
 > 比较任务完成情况、工具调用次数和失败恢复过程。例如，废纸抓取失败后仍留在桌面上，直接执行放置会因没有拿起物体而失败；读取状态后重试抓取，才能继续放置。两种反馈策略在结束时调用 `verify_state` 检查归位状态。
 >
-> 先看没有注入故障的回合，三种策略都能完成。把故障注入概率调到 50%，每种策略都在三个种子上运行 384 回合（每个种子 128 回合）。开环仍然每回合调用 4 次工具，只有 205 回合完成。逐步检查和预测式执行都完成了全部 384 回合，平均都调用约 6.93 次。多花的调用让控制器能够发现抓空并恢复。在这项只注入一次可恢复故障的任务里，预测下一状态没有比直接检查再多挽回一个回合。[模拟闭环记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter6/gemini-xlerobot-navigation/validation/runs/local-gpu/metrics.json)
+> 先看没有注入故障的回合，三种策略都能完成。把故障注入概率调到 50%，每种策略都在三个种子上运行 384 回合（每个种子 128 回合）。开环仍然每回合调用 4 次工具，只有 205 回合完成。逐步检查和预测式执行都完成了全部 384 回合，平均都调用约 6.93 次。多花的调用让控制器能够发现抓空并恢复。在这项只注入一次可恢复故障的任务里，预测下一状态没有比直接检查再多挽回一个回合。
 
 ### 从仿真环境到真实机器人
 
@@ -784,7 +776,7 @@ VLA 是 Vision-Language-Action 的缩写，即视觉—语言—动作模型。�
 >
 > 训练四组结构相同的视觉策略：固定视觉条件、主要改变背景、主要改变物体外观，以及组合多种变化。将各组策略分别用于原始条件和包含新颜色、纹理、亮度与噪声的测试图像，比较方向判断准确率，并查看判断出错的图像。
 >
-> 每个测试域、每个种子都有 1,024 张合成图像。先比较三个种子的平均准确率：固定视觉条件训练的策略在原域为 93.03%，换到带新纹理和噪声的目标域（`target_realistic`）降到 54.82%；组合多种变化训练的策略，原域为 87.50%，在同一目标域却达到 76.11%。再看只随机化背景的一组，它在这个目标域只有 36.88%。可见，增加变化本身并不保证迁移；还要用不同测试域检查模型能否继续认出物体与目标的关系。[RGB 分域结果](https://github.com/bojieli/ai-agent-book/blob/main/chapter6/rgb-sim2real-grasping/validation/runs/local-gpu/metrics.json)
+> 每个测试域、每个种子都有 1,024 张合成图像。先比较三个种子的平均准确率：固定视觉条件训练的策略在原域为 93.03%，换到带新纹理和噪声的目标域（`target_realistic`）降到 54.82%；组合多种变化训练的策略，原域为 87.50%，在同一目标域却达到 76.11%。再看只随机化背景的一组，它在这个目标域只有 36.88%。可见，增加变化本身并不保证迁移；还要用不同测试域检查模型能否继续认出物体与目标的关系。
 >
 > 这些分数统计的是二维图像上的动作标签，其中的 `grasp` 只检查接近条件。扩展到真实抓取时，再加入相机标定、深度与姿态估计、接触控制，以及完整动作后的状态确认。[^ch6-6]
 
@@ -806,15 +798,15 @@ VLA 是 Vision-Language-Action 的缩写，即视觉—语言—动作模型。�
 
 这条流程可以帮助定位故障。若用户一插话，旧报价还在继续播，就检查谁负责唤醒前台、能否抢占播放，以及取消信号到了哪个安全点；若停得及时，却仍报出旧日期，则要沿着前后台的交接去查查询结果。改好后，怎样证明它在更多通电话里都能做对？从这里开始，全书转入能力改进。第七章先讲怎样设计任务、记录失败并比较改动，后训练、持续进化与多 Agent 协作都要用到这套评估方法。
 
-[^ch6-1]: XLeRobot，[Teleop 文档](https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html)。
-[^ch6-2]: Google DeepMind，[Gemini Robotics-ER 1.5](https://deepmind.google/blog/gemini-robotics-15-brings-ai-agents-into-the-physical-world/)。XLeRobot，[LLM Agent 控制](https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html)。XLeRobot 上游示例展示模型与工具调用的编排方式；本节保持同一编排原则，但把动作工具限定为经过标定的桌面抓取、放置、检查和停止原语。
-[^ch6-6]: LeRobot，[Sim2Real 教程](https://github.com/StoneT2000/lerobot-sim2real/blob/87d6c1d969f6e0ca4dc5697940804e231118a63a/docs/zero_shot_rgb_sim2real.md)。
-[^ch6-15]: Moo Jin Kim et al. *OpenVLA: An Open-Source Vision-Language-Action Model.* arXiv:2406.09246, 2024. https://arxiv.org/abs/2406.09246；RT-2 项目介绍：https://robotics-transformer2.github.io/；Physical Intelligence, “Our First Generalist Policy”：https://www.physicalintelligence.company/blog/pi0
-[^ch6-16]: Meta AI, “Introducing the V-JEPA 2 world model and new benchmarks for physical reasoning,” 2025-06-11. https://ai.meta.com/blog/v-jepa-2-world-model-benchmarks/；V-JEPA 2 技术报告：arXiv:2506.09985, https://arxiv.org/abs/2506.09985
-[^ch6-22]: OpenAI, “[Async tool calling](https://developers.openai.com/api/docs/guides/async-tool-calling)”；“[Using GPT-6 Astra](https://developers.openai.com/api/docs/guides/latest-model)”，核对日期：2026-09-05。
-[^ch6-23]: OpenAI, “[Mid-turn steering](https://developers.openai.com/api/docs/guides/steering)”，核对日期：2026-09-05。
+[^ch6-1]: XLeRobot，Teleop 文档。
+[^ch6-2]: Google DeepMind，*Gemini Robotics-ER 1.5*。XLeRobot，LLM Agent 控制。XLeRobot 上游示例展示模型与工具调用的编排方式；本节保持同一编排原则，但把动作工具限定为经过标定的桌面抓取、放置、检查和停止原语。
+[^ch6-6]: LeRobot，Sim2Real 教程。
+[^ch6-15]: Moo Jin Kim 等，*OpenVLA: An Open-Source Vision-Language-Action Model*，arXiv:2406.09246，2024。另见 RT-2 项目说明及 Physical Intelligence 的 *Our First Generalist Policy*。
+[^ch6-16]: Meta AI，*Introducing the V-JEPA 2 world model and new benchmarks for physical reasoning*，2025 年 6 月 11 日。技术报告编号为 arXiv:2506.09985。
+[^ch6-22]: OpenAI，“Async tool calling”；“Using GPT-6 Astra”，核对日期：2026-09-05。
+[^ch6-23]: OpenAI，“Mid-turn steering”，核对日期：2026-09-05。
 
-[^ch6-audio-architectures]: Qwen，[Qwen3-Omni Technical Report](https://arxiv.org/abs/2509.17765)；StepFun，[Step-Audio 2 Technical Report](https://arxiv.org/abs/2507.16632)；OpenAI，[Voice activity detection](https://developers.openai.com/api/docs/guides/realtime-vad)；Google，[Live API capabilities](https://ai.google.dev/gemini-api/docs/live-api/capabilities)。
+[^ch6-audio-architectures]: Qwen，*Qwen3-Omni Technical Report*；StepFun，*Step-Audio 2 Technical Report*；OpenAI，*Voice activity detection*；Google，*Live API capabilities*。
 
 ## 思考题
 

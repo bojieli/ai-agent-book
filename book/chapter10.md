@@ -6,7 +6,7 @@ OpenAI 曾用五个层级描述 AI 能力的发展：对话者、思考者（Rea
 
 笔者认为，多 Agent 的意义还在于探索**群体智能**。人类通过分工、协作、辩论和知识积累，形成了超越个体能力的社会与组织。Agent 群体也可能沿着类似方向发展：每个成员承担局部任务，通过交流与校验共同解决更复杂的问题。Google DeepMind 的《从 AGI 到 ASI》把大规模多 Agent 集体列为通向超级智能的一条路径，讨论多个具备通用能力的系统如何组合成认知能力更强的整体。[^agi-asi] 沿着这一方向，即使每个 Agent 只达到人类专家水平，组织良好的群体也可能发展出超越人类专家整体的能力。这也提出了一个多 Agent 工程需要长期研究的问题：怎样的分工和交流机制，能让群体持续产生超过个体的成果？
 
-[^agi-asi]: Google DeepMind, *From AGI to ASI.* arXiv:2606.12683, 2026. https://arxiv.org/abs/2606.12683
+[^agi-asi]: Google DeepMind, *From AGI to ASI.* arXiv:2606.12683, 2026.
 
 ## 多 Agent 协作的分类框架
 
@@ -60,18 +60,18 @@ OpenAI 曾用五个层级描述 AI 能力的发展：对话者、思考者（Rea
 
 RLEF 通过强化学习训练模型利用代码执行反馈，在竞争性编程任务中学习多步修订。编译错误、测试失败和运行异常为下一次修改提供了具体依据，论文中的模型能够以更少的采样取得更好的结果。[^rlef-2025] WebGen-Agent 则把网页截图、视觉模型的描述与建议、GUI 操作评价接入生成流程，并结合回退和候选选择。在 WebGen-Bench 上，Claude 3.5 Sonnet 的准确率由 26.4% 提高到 51.9%。[^webgen-agent-2025]
 
-[^rlef-2025]: Gehring, J., et al. *RLEF: Grounding Code LLMs in Execution Feedback with Reinforcement Learning.* arXiv:2410.02089, 2025. https://arxiv.org/abs/2410.02089
-[^webgen-agent-2025]: Lu, Z., et al. *WebGen-Agent: Enhancing Interactive Website Generation with Multi-Level Feedback and Step-Level Reinforcement Learning.* arXiv:2509.22644, 2025. https://arxiv.org/abs/2509.22644
+[^rlef-2025]: Gehring, J., et al. *RLEF: Grounding Code LLMs in Execution Feedback with Reinforcement Learning.* arXiv:2410.02089, 2025.
+[^webgen-agent-2025]: Lu, Z., et al. *WebGen-Agent: Enhancing Interactive Website Generation with Multi-Level Feedback and Step-Level Reinforcement Learning.* arXiv:2509.22644, 2025.
 
 这两个案例说明，反馈设计直接影响迭代质量。笔者会先让系统取得测试、截图或工具返回等具体证据，再决定怎样分配生成、执行和审核职责。反馈循环可以由一个 Agent 完成，也可以拆给多个角色；增加角色应当改善证据的获取与使用。评估多 Agent 方案时，应把反馈渠道、模型、工具和预算一起纳入对照，进一步判断分工本身带来了多少收益。同一问题上的重复讨论，则需要重点检查推理差异、证据来源与最终选择机制。
 
 Anthropic 2026 年的安全研究提供了协作搜索的案例：45 个 Agent 通过共享论坛交流发现、互相审查，再由独立 Agent 仲裁结果。研究报告中，协作集群消耗 2700 万 token，发现 266 个漏洞；独立并行方案消耗 650 万 token，发现 21 个。两组预算也有差异，比较时应同时看发现数量与资源投入。这个案例展示了交流在开放搜索中的作用：成员可以根据别人的发现调整方向、形成分工，扩大搜索覆盖。[^anthropic-multiagent-2026]
 
-[^anthropic-multiagent-2026]: Anthropic Frontier Red Team, “Patterns and Problems in Emerging Multiagent Systems,” 2026-08-13. https://www.anthropic.com/research/multiagent-systems
+[^anthropic-multiagent-2026]: Anthropic Frontier Red Team, “Patterns and Problems in Emerging Multiagent Systems,” 2026-08-13.
 
 数学研究中，怎样让多支队伍真正探索不同的路线？三维 Navier–Stokes 方程描述黏性流体的运动。面对光滑的初始条件，解能否一直保持光滑？OpenAI 把两种相反的目标分给不同小组：有的尝试证明光滑性，有的设法构造反例。各组先自行探索，团队再用 Codex 汇总中间成果，让其他组也能沿有希望的线索走下去。找到反例的小组有约一万个 Agent 并发工作。从首批 Agent 启动到找到证明，团队报告用时约 88 小时，另用 17 小时完成 Lean 形式化与验证。反例有一个重要条件：流体受到光滑外力作用，仍能在有限时间内出现奇性。这回答了克雷数学研究所题面中的 C、D 两种表述；若去掉外力，就是另一个问题了。设计这类搜索，可以先写明哪些结果足以回答原问题，把彼此竞争的猜想交给不同小组，并给最后的验证单独留出时间。[^ch10-ns-search]
 
-[^ch10-ns-search]: OpenAI 的研究说明附证明和 Lean 代码，https://openai.com/index/navier-stokes-solution/ 。克雷数学研究所关于该结果的公告见 https://www.claymath.org/news/navier-stokes-announcement/ 。
+[^ch10-ns-search]: OpenAI 的 Navier–Stokes 方程研究说明附有证明和 Lean 代码。关于这一结果的认定，参见克雷数学研究所的相关公告。
 
 **步骤预算如何影响表现？** 假设一个任务允许 30 步，Agent 需要紧凑地安排规划、核心实现和必要验证；若允许 300 步，就有空间比较更多方案，开展更充分的测试和修订。要用好这部分资源，Agent 还需要知道总预算与剩余预算，并据此安排探索深度。
 
@@ -85,7 +85,7 @@ Google 在 2025 年的《Budget-Aware Tool-Use Enables Effective Agent Scaling�
 
 共享上下文的协作按阶段切换角色，同时沿用已有任务记录。以研究报告为例，检索角色先收集资料，分析角色接着计算，写作角色再组织表达。每个角色都可以回看前面的来源和决定，系统则通过当前任务指令引导它关注本阶段的目标。
 
-跨团队交接时，先问一句：哪些人需要知道当初为什么这样决定？在 Teamily AI 的产品示例里，产品经理和 Agent 在群里一起写产品需求文档（PRD）。产品团队把定稿分享给工程团队后，工程师可以追问某条需求背后的取舍。这个例子里，跨群交接始于一次明确的分享。设计类似流程时，应让接收者能查到这项需求的讨论依据，也让发起者看得清哪些材料会随文档交出去。[Teamily AI 官方产品示例](https://teamily.ai/about)
+跨团队交接时，先问一句：哪些人需要知道当初为什么这样决定？在 Teamily AI 的产品示例里，产品经理和 Agent 在群里一起写产品需求文档（PRD）。产品团队把定稿分享给工程团队后，工程师可以追问某条需求背后的取舍。这个例子里，跨群交接始于一次明确的分享。设计类似流程时，应让接收者能查到这项需求的讨论依据，也让发起者看得清哪些材料会随文档交出去。
 
 实现角色转换有两种常见方式：**替换系统提示词与工具配置，或在稳定的系统提示词下加载 Skill**。前者直接切换角色配置，后者将角色知识和流程作为后续材料加入上下文。两种方式对缓存和工具管理的影响见下表。
 
@@ -108,7 +108,7 @@ Google 在 2025 年的《Budget-Aware Tool-Use Enables Effective Agent Scaling�
 >
 > 正式对照中有一道更严格的简报题，限 160 个字符，还要保留两个来源网址。同样给八步机会，切换角色的一组把三次调用用在数字符上，草稿仍有 206 个字符，也漏用了题目指定的计算工具。加载 Skill 的一组用首尾两年的销量算出了增长率，第八步才加载写作规程。此时该走的角色都走到了，用户却还没收到摘要。两条轨迹最终都因达到步数上限而结束。读记录时要分别查三件事：工作交给谁了，工具做了什么，最后交付了什么。
 >
-> 同样的 30 项任务各跑两种实现，按程序检查交付结果，加载 Skill 的一组通过 15 项，切换系统提示词的一组通过 2 项。不过，逐题比较，前一组未命中缓存的输入多了 6,855 个 token，耗时多了约 4.4 秒（均为配对差值的中位数）。这次服务商在两组请求中报告的缓存输入 token 数都为零。固定工具列表为复用前缀创造了条件；要判断有没有省钱，还得看服务商是否真的命中缓存，以及后续加载规程多读了多少内容。两组在指令遵循的 6 项边界测试中均全部通过，而完整任务的通过率相差很大。选架构时，这两个分数要分别看。见[配套对照报告](https://github.com/bojieli/ai-agent-book/blob/main/chapter10/multi-role-transfer/validation/comparison/runs/exp10-1-qwen35flash-20260809-v2/REPORT.md)。
+> 同样的 30 项任务各跑两种实现，按程序检查交付结果，加载 Skill 的一组通过 15 项，切换系统提示词的一组通过 2 项。不过，逐题比较，前一组未命中缓存的输入多了 6,855 个 token，耗时多了约 4.4 秒（均为配对差值的中位数）。这次服务商在两组请求中报告的缓存输入 token 数都为零。固定工具列表为复用前缀创造了条件；要判断有没有省钱，还得看服务商是否真的命中缓存，以及后续加载规程多读了多少内容。两组在指令遵循的 6 项边界测试中均全部通过，而完整任务的通过率相差很大。选架构时，这两个分数要分别看。
 
 ## 不共享上下文的多 Agent 协作
 
@@ -182,7 +182,7 @@ Google 在 2025 年的《Budget-Aware Tool-Use Enables Effective Agent Scaling�
 
 例如，一份译稿由编辑负责交付，编辑想请术语审核 Agent 核对一个词。在 Multica 的工单评论中点名（`@`）它并写下问题，就能触发审核工作。审核意见可以直接回复到这张工单，负责人仍是编辑，工单状态也保持原值。如果希望审核者接手整张工单，还要明确更改负责人。读者可以沿着同一条评论分别查两件事：谁收到了这次请求，谁要对最终交付负责。[^ch10-multica]
 
-[^ch10-multica]: Multica，[评论中点名 Agent](https://multica.ai/docs/mentioning-agents)；版本 `d579273` 的[评论派发实现](https://github.com/multica-ai/multica/blob/d5792738f9bab3ba463009f1ac7fdc4d8d9c5850/server/internal/handler/comment.go#L2012-L2020)。
+[^ch10-multica]: Multica，评论中点名 Agent；版本 `d579273` 的评论派发实现。
 
 **二、状态获取。** 主 Agent 需要知道子任务是否仍在运行、是否需要输入，以及结果是否可取。可以组合使用状态接口、事件通知和进度文件：运行时接口提供生命周期状态，消息说明业务进展，持久文件保留可恢复的记录。
 
@@ -226,13 +226,13 @@ Google 在 2025 年的《Budget-Aware Tool-Use Enables Effective Agent Scaling�
 
 实践先于命名。在 Loop 工程这一名称流行之前，笔者与团队在 Pine AI 中就已经用循环与验证处理过早终止。提议者—审核者是组织这类循环的一种常用方式，下面会进一步展开。
 
-[^loop-engineering-2026]: Osmani, Addy. “Loop Engineering”, 2026. https://addyosmani.com/blog/loop-engineering/
+[^loop-engineering-2026]: Osmani, Addy. “Loop Engineering”, 2026.
 
 **LoopX：保存跨轮次的工作状态。** LoopX 将目标、边界、待办、门禁、证据与配额放在持久控制面中，由它安排下一轮或下一位执行者的工作。流程可以概括为：**控制面决策 → Agent 执行 → 独立验证 → 提交已核实进度**。
 
 Agent 负责推理、工具调用和候选产物，控制面负责跨轮次的连续性。验证通过后提交完成状态；失败时进入修复或重规划。人工门禁、等待条件与预算上限共同决定何时可以继续执行。实现时还应区分已完成工作量与实际资源消耗，失败尝试消耗的 token、时间和工具费用也要进入成本记录。[^loopx-framework]
 
-[^loopx-framework]: LoopX, [The local control plane for long-running AI agent work](https://github.com/huangruiteng/loopx/tree/a893d221db0b8e028997cefc303f7ec9fa7dbe0a), v0.4.0.
+[^loopx-framework]: LoopX, The local control plane for long-running AI agent work, v0.4.0.
 
 **LongHorizon-Harness：衔接跨应用的长任务。** 这一框架从多模态 Computer Use 出发，处理任务在 GUI、CLI、多个桌面应用和多次上下文刷新之间的连续执行。它采用 Manage–Execute–Audit（MEA）循环：Manager 根据原始目标、核实进展、失败证据与剩余工作，生成一项范围明确的子任务；Executor 在新的上下文中执行 GUI 或 CLI 操作；Auditor 以只读方式检查结果，再把核实的进展写入下一轮状态。失败证据也随之保留，供恢复与重规划使用。
 
@@ -240,9 +240,9 @@ Agent 负责推理、工具调用和候选产物，控制面负责跨轮次的�
 
 论文在保持 Qwen 3.7-Plus 与 Claude Code 执行后端相同、改变外层循环的对照中，报告 WeaveBench PassRate 从 51.8% 提高到 80.7%，OSWorld 2.0 二元完成率从 2.8% 提高到 8.3%，Terminal-Bench 2.1 成功率从 69.7% 提高到 77.2%。相应成本也随任务变化：前两个基准分别消耗基线 2.3 倍的总 token 和 3.6 倍的输出 token；Terminal-Bench 2.1 的 token 消耗减少了 24%。部署时可以据此同时设置质量目标、轮数、时间与费用预算。
 
-可以打开同一个 WebRTC 多层流审计任务的两份运行记录对照阅读。在[基线轨迹](https://lh-harness.pages.dev/traj/tasks/baseline__WEB_task_16_webrtc_simulcast_layer_audit.html)里，执行者在 Wireshark 界面上卡住，随后又试了几次，最后得分 0.59。在 [MEA 轨迹](https://lh-harness.pages.dev/traj/tasks/lh_harness__WEB_task_16_webrtc_simulcast_layer_audit.html)里，审核者记下还缺哪些证据，下一轮执行者据此补查，最后得分 0.92。比较两份记录时，不妨停在第一次受阻的地方：如果你来接手，光凭交接记录，能说清下一步该查什么吗？复现所用的环境、参数和脚本见项目的 [eval 目录](https://github.com/AMAP-ML/LongHorizon-Harness/tree/53bc678ed4170ad4d2e4309f2bfc5c3fb6caf8cb/eval)。
+可以打开同一个 WebRTC 多层流审计任务的两份运行记录对照阅读。在基线轨迹里，执行者在 Wireshark 界面上卡住，随后又试了几次，最后得分 0.59。在 MEA 轨迹里，审核者记下还缺哪些证据，下一轮执行者据此补查，最后得分 0.92。比较两份记录时，不妨停在第一次受阻的地方：如果你来接手，光凭交接记录，能说清下一步该查什么吗？复现所用的环境、参数和脚本见项目的 `eval` 目录。
 
-[^longhorizon-implementation]: LongHorizon-Harness. 项目与公开轨迹：https://lh-harness.pages.dev/#trajectories；论文：https://arxiv.org/abs/2608.01964；代码：https://github.com/AMAP-ML/LongHorizon-Harness/tree/53bc678ed4170ad4d2e4309f2bfc5c3fb6caf8cb
+[^longhorizon-implementation]: LongHorizon-Harness，论文编号 arXiv:2608.01964。基线与 MEA 的公开轨迹均取自任务 WEB_task_16_webrtc_simulcast_layer_audit，复现脚本使用提交 `53bc678`。
 
 #### 提议者—审核者范式
 
@@ -254,7 +254,7 @@ Agent 负责推理、工具调用和候选产物，控制面负责跨轮次的�
 
 设计这个循环时，先确定审核者能够取得什么证据。Huang 等人的 ICLR 2024 论文《Large Language Models Cannot Self-Correct Reasoning Yet》发现，在其研究的推理任务与提示设置下，GPT-4 缺少外部反馈时进行自我修订，会出现把正确答案改错、导致整体准确率下降的情况。TACL 的自我纠错综述进一步讨论了任务条件与反馈可靠性怎样影响修订效果。[^self-correction-survey] 因此，笔者把独立证据与可定位的修复条件作为审核循环的基本要求。审核者应能读取实际测试、环境状态或渲染结果，并指出哪个要求尚未满足、怎样验证修复。
 
-[^self-correction-survey]: Kamoi, R., et al. *When Can LLMs Actually Correct Their Own Mistakes? A Critical Survey of Self-Correction of LLMs.* TACL, 2024. https://arxiv.org/abs/2406.01297
+[^self-correction-survey]: Kamoi, R., et al. *When Can LLMs Actually Correct Their Own Mistakes? A Critical Survey of Self-Correction of LLMs.* TACL, 2024.
 
 一个完整循环可以按五步组织：
 
@@ -266,15 +266,15 @@ Agent 负责推理、工具调用和候选产物，控制面负责跨轮次的�
 
 审核者读取受保护的测试与发布标准，提出的标准变更另行审查。这样，生成产物、检查结果和批准发布各有明确依据。
 
-在 CRITIC 的实验中，模型先给出回答，再借助工具检查。例如，用搜索引擎核实回答中的事实，用 Python 解释器运行自己写的数学程序。在开放问答、数学程序生成和减少有害表述三类任务上，模型根据工具反馈修改后，表现均有改善。只凭模型自己评价原答案，纠错效果较弱。见 [CRITIC 论文](https://arxiv.org/abs/2305.11738)。这个设计与第五章的 PPT 案例相通：渲染截图能暴露代码文本中难以直接判断的排版与遮挡问题，测试执行则能揭示实际运行错误。获得这些反馈后，生成者才有具体的修改目标。
+在 CRITIC 的实验中，模型先给出回答，再借助工具检查。例如，用搜索引擎核实回答中的事实，用 Python 解释器运行自己写的数学程序。在开放问答、数学程序生成和减少有害表述三类任务上，模型根据工具反馈修改后，表现均有改善。只凭模型自己评价原答案，纠错效果较弱。见 CRITIC 论文（arXiv:2305.11738）。这个设计与第五章的 PPT 案例相通：渲染截图能暴露代码文本中难以直接判断的排版与遮挡问题，测试执行则能揭示实际运行错误。获得这些反馈后，生成者才有具体的修改目标。
 
 Anthropic 2026 年的长程应用开发案例采用规划者、生成者和评估者三个 Agent。规划者将需求展开为产品规格；生成者与评估者先约定每轮完成标准，再分别实现和检查。评估者使用 Playwright 操作应用并提交缺陷报告，角色之间通过文件交接状态。该案例展示了产品规格、真实操作和缺陷反馈怎样连接起来，也需要将增加的执行与审核成本纳入方案比较。[^anthropic-harness-2026]
 
-[^anthropic-harness-2026]: Prithvi Rajasekaran, “Harness Design for Long-Running Application Development,” Anthropic Engineering, 2026-03-24. https://www.anthropic.com/engineering/harness-design-long-running-apps
+[^anthropic-harness-2026]: Prithvi Rajasekaran, “Harness Design for Long-Running Application Development,” Anthropic Engineering, 2026-03-24.
 
 黎曼猜想给了我们一个机会，看看数学家怎样验收一份机器生成的证明。2026 年 11 月 20 日，数学家 Levent Alpöge 公布了他与 Claude 合作得到的形式化证明，涉及黎曼猜想及其在狄利克雷 $L$ 函数上的推广。拿到一大批 Lean 文件，审核者先要问两个问题：最后那条定理写的是原来的猜想吗？每一步推导都能由证明内核重新检查吗？在 MIT 数学家 Andrew Sutherland 公布的核验记录中，可以分别查到定理陈述的比对结果、证明依赖的公理和独立内核的检查结果。这给审核分工提供了一个具体办法：让熟悉问题的人先写下验收命题，再让独立的工具检查提交的产物能否推出这个命题。日后数学家想理解作者是怎样想到这条路线的，还需要一份便于人阅读的论证。[^ch10-rh-review]
 
-[^ch10-rh-review]: Levent Alpöge 的公告，https://alpo.ge/remark.pdf 。Andrew Sutherland 汇集的核验步骤与结果，https://math.mit.edu/~drew/grh/ 。
+[^ch10-rh-review]: Levent Alpöge 的公告， 。Andrew Sutherland 汇集的核验步骤与结果， 。
 
 #### 辩论模式
 
@@ -298,7 +298,7 @@ Anthropic 2026 年的长程应用开发案例采用规划者、生成者和评�
 
 在 LobeHub 的群聊里，主持者可以把同一个产品方案广播给这三位专家。系统先取出此刻的群聊记录，再让三位成员分别用各自的角色配置同时回答。三份答复都挂在发起广播的那条消息下，便于回头核对各人回答的是哪个问题。假如运营要按工程师刚估出的用量来算成本，就得等这轮答复写回后再请运营发言：两人同时起笔时，运营手里还没有那个数字。[^ch10-lobehub]
 
-[^ch10-lobehub]: LobeHub，[群聊使用说明](https://github.com/lobehub/lobehub/blob/ab21e0df0ded66cd7318e4abf2067a19375880b1/docs/usage/agent/agent-team.mdx)；版本 `ab21e0d` 的[并行广播实现](https://github.com/lobehub/lobehub/blob/ab21e0df0ded66cd7318e4abf2067a19375880b1/src/store/chat/agents/GroupOrchestration/createGroupOrchestrationExecutors.ts#L266-L328)。
+[^ch10-lobehub]: LobeHub，群聊使用说明；版本 `ab21e0d` 的并行广播实现。
 
 汇总时要找出各判断之间的联系：某个体验目标需要怎样的技术支持，技术选择会增加多少运营成本，哪些条件还需要外部证据。这样，各专业结论才能共同支持下一步决策。
 
@@ -308,15 +308,13 @@ Anthropic 2026 年的长程应用开发案例采用规划者、生成者和评�
 
 一种常用实现是把专门 Agent 注册为工具。Manager 通过工具接口传入任务、约束和必要材料，再接收结构化结果或任务标识。这样，搜索、文件操作与子任务委派可以采用相近的调用方式；长耗时子任务则另外管理进度、取消和重试。不同成员可以使用不同模型、提示词、工具与运行环境。新增成员时，除注册接口外，还要让 Manager 理解它的职责、输入要求和适用场景。
 
-笔者在 Claude Code 和 Codex 里做长任务时，曾把讨论、执行命令和测试都放在主会话。中途想追问一个设计选择，往往要等手上的步骤收尾；几小时后再找当初的约定，又要翻过一长串命令输出。后来我把修改和测试交给子 Agent，主会话留着讨论。拿书稿校对来说，执行者可以继续核对图号，我同时能和读者讨论某一段要不要重写。若讨论改变了任务范围，还要把新约定发给执行者，并在它交稿时对照检查。这样分工，最容易观察到的收益是人可以随时继续讨论，执行细节也有地方可查；至于是否节省模型用量，需要另行测量。[^ch10-main-session]
-
-[^ch10-main-session]: 李博杰，[长任务中分开讨论与执行的使用记录](https://x.com/i/status/2123335123232031209)，2026 年 11 月 19 日。
+笔者在 Claude Code 和 Codex 里做长任务时，曾把讨论、执行命令和测试都放在主会话。中途想追问一个设计选择，往往要等手上的步骤收尾；几小时后再找当初的约定，又要翻过一长串命令输出。后来我把修改和测试交给子 Agent，主会话留着讨论。拿书稿校对来说，执行者可以继续核对图号，我同时能和读者讨论某一段要不要重写。若讨论改变了任务范围，还要把新约定发给执行者，并在它交稿时对照检查。这样分工，最容易观察到的收益是人可以随时继续讨论，执行细节也有地方可查；至于是否节省模型用量，需要另行测量。
 
 DeepSeek Harness 团队公开了一个面向单个 GitHub 仓库的研究原型 `dsh-superagent`。以修复导出文件的日期格式为例：维护者在 Issue 中提出要求，路由器（Router）按仓库规则判断能否接单。接单后，系统建立工单（Ticket），给执行者（Worker）分配独立的会话和工作目录。执行者可以在自己的目录中修改代码、运行测试；另一张工单可以同时推进，各自保留修改过程和测试结果。[^ch10-dsh-prototype]
 
 假设维护者随后在原 Issue 中补充“只改 CSV，保留 JSON 的日期格式”。订阅这段讨论的在办工单会收到补充消息，执行者可以据此缩小改动范围，分别测试两种格式。完成后，它可以开一个拉取请求（PR），把链接和结果回贴到原 Issue。维护者在同一处就能看到最初的要求、后加的限制和待审核的修改；路由器也无需把每一条跟进消息重新拆成任务。
 
-[^ch10-dsh-prototype]: DeepSeek Harness 团队，[dsh-superagent 研究原型](https://github.com/deepseek-ai/dsh-superagent-prototype/tree/8c32a9dc5d72c033816c6a8110b37f40cf94fba4)。工单如何接收后续消息见[授权与订阅](https://github.com/deepseek-ai/dsh-superagent-prototype/blob/8c32a9dc5d72c033816c6a8110b37f40cf94fba4/docs/002-authorization.md)，执行会话与工作目录见[执行机制](https://github.com/deepseek-ai/dsh-superagent-prototype/blob/8c32a9dc5d72c033816c6a8110b37f40cf94fba4/docs/003-execution.md)。
+[^ch10-dsh-prototype]: DeepSeek Harness 团队，dsh-superagent 研究原型。工单如何接收后续消息见授权与订阅，执行会话与工作目录见执行机制。
 
 Manager 同时承担了较多决策责任。任务分解错误会影响后续执行，交接材料不足会造成反复询问，过多调用记录也会挤占上下文。设计时应保存简明的任务状态与产物索引，按需读取细节，并让子任务具有清楚的输入、输出和完成标准。
 
@@ -390,11 +388,9 @@ for worker in ["甲", "乙", "甲"]:
 
 > **产品案例：灵台（Lingtai）**
 >
-> 灵台是本地运行、通过文件保存身份与记忆的长期 Agent 系统。它提供三种角色：主器灵（main agent）与用户对话，管理计划和记忆；分神（daemon）承担范围明确的短期并行任务，完成后返回结论；分身（avatar）保留自己的记忆、邮箱与职责，用于跨会话的专业分工。[^lingtai]
+> 灵台是本地运行、通过文件保存身份与记忆的长期 Agent 系统。它提供三种角色：主器灵（main agent）与用户对话，管理计划和记忆；分神（daemon）承担范围明确的短期并行任务，完成后返回结论；分身（avatar）保留自己的记忆、邮箱与职责，用于跨会话的专业分工。
 >
 > 每个角色拥有私有的持久知识，共享 Markdown 形式的技能手册。上下文接近容量上限时，角色通过“凝蜕”（molt）保存总结，再结合持久记忆进入新的上下文。身份、记忆与技能独立保存在文件中，使更换底层模型后仍能延续工作。这一设计将管理者、短期工作者、长期专业成员与上下文压缩组合在一起。
-
-[^lingtai]: 灵台官方教程：https://lingtai.ai/zh/tutorial/
 
 > **实验 10-3 ★★★：自主编排的电话 + 电脑 Agent**
 >
@@ -438,7 +434,7 @@ for worker in ["甲", "乙", "甲"]:
 >
 > 实跑搜索的是 Andrew Ng。成员先查页面文字里有没有这个名字，命中后才请模型提取资料。Stanford HAI 的页面被选中，返回的短引文可以核对姓名和兼职教授的身份。要核对研究方向，还得读页面后面讲深度学习的段落。配套程序收到成员的 `target_found` 后，直接在锁内登记首个结果。锁保证只选中一次；若委托要求每个字段都有出处，还需在登记前逐项查证。
 >
-> 这次串行搜索直到十个网址中的最后一个才命中，用了 44.971 秒；并行搜索同一批网页用了 24.022 秒，各自的十个浏览器上下文都已关闭。两数相除是 1.872。若把 HAI 页面排在首位，串行搜索命中即可停下，耗时就得重测。另一次专门检验取消的运行启动了四个分支：一个分支获选，另三个确认收到取消请求，最后四个浏览器上下文全部关闭。见[该次运行记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter10/parallel-web-research/validation/runs/exp10-4-real-receipts-20260730-v2/evidence.json)。
+> 这次串行搜索直到十个网址中的最后一个才命中，用了 44.971 秒；并行搜索同一批网页用了 24.022 秒，各自的十个浏览器上下文都已关闭。两数相除是 1.872。若把 HAI 页面排在首位，串行搜索命中即可停下，耗时就得重测。另一次专门检验取消的运行启动了四个分支：一个分支获选，另三个确认收到取消请求，最后四个浏览器上下文全部关闭。
 >
 > **实验要求：**
 > 1. 实现动态创建并行成员的 Manager。
@@ -454,7 +450,7 @@ Claude Code 的动态 Workflow 工具提供了这样的实现。`agent()` 创建
 
 例如，核实技术稿件中的七组事实时，可以先按方向启动调研 Agent，再把每组结论分别交给核实 Agent 并行检查。每条返回结论保留来源与判定依据；所有分支完成后，汇总 Agent 组织最终报告。这样，“调研—逐条核实—统一汇总”的分工和阶段依赖就都写入了工作流。
 
-[^dynamic-workflows]: Anthropic, “Orchestrate subagents at scale with dynamic workflows”, 2026. https://platform.claude.com/cookbook/claude-agent-sdk-08-dynamic-workflows
+[^dynamic-workflows]: Anthropic, “Orchestrate subagents at scale with dynamic workflows”, 2026.
 
 ### 去中心化模式
 
@@ -482,11 +478,11 @@ MetaGPT 通过共享消息池与订阅机制组织信息：角色发布消息，
 
 SOP 描述产品需求、架构与代码之间的依赖，消息订阅描述这些工作怎样被触发。固定的任务依赖也可以由分布式事件推进，两者共同构成系统的协作方式。进一步设计动态反馈时，可以加入测试者向产品角色澄清需求、工程师向架构师提出替代方案等路径，并为这些交互设置接收条件与结束规则。
 
-[^metagpt-design]: Hong, S., et al. *MetaGPT: Meta Programming for A Multi-Agent Collaborative Framework.* ICLR 2024. https://arxiv.org/abs/2308.00352
+[^metagpt-design]: Hong, S., et al. *MetaGPT: Meta Programming for A Multi-Agent Collaborative Framework.* ICLR 2024.
 
 **AutoGen 群聊：共享会话中的发言调度。** 在经典 GroupChat 设计中，多个 Agent 参与同一场会话，GroupChatManager 选择下一位发言者，并向成员广播消息。选择策略可以是轮转，也可以根据当前内容由模型判断。成员保留各自的角色配置，通过共同会话交流，发言调度则集中在管理器。这是上下文组织与控制结构组合的一个例子。[^autogen-groupchat]
 
-[^autogen-groupchat]: Microsoft, *AutoGen 0.2: Conversation Patterns.* https://microsoft.github.io/autogen/0.2/docs/tutorial/conversation-patterns/
+[^autogen-groupchat]: Microsoft, *AutoGen 0.2: Conversation Patterns.*
 
 **OpenAI Swarm：沿 handoff 交接控制权。** Swarm 为角色配置指令与工具，角色调用已配置的移交函数后，运行时切换到目标 Agent。路由判断可以由各角色作出，再由统一运行循环执行。移交时，当前系统指令随角色改变，对话历史继续保留。它展示了“角色选择下一位接手者”与“沿用会话历史”的组合。[^swarm-handoff]
 
@@ -494,7 +490,7 @@ SOP 描述产品需求、架构与代码之间的依赖，消息订阅描述这�
 
 交接链需要处理重复访问。例如，开发者把代码交给审核者，审核者提出修改后再交回开发者，这是正常的修订循环。可以结合任务状态、产物版本、未解决问题与重复次数判断是否有进展。例如，同一译稿连续两次被交回，第一次补上了出处，第二次纠正了术语，说明修订仍有进展；若两次交回的是同一版、同一问题，运行时才有理由干预；对没有新结果的反复移交设置次数上限，在预算耗尽或需要外部输入时移交处理。这样既保留反馈路径，也能识别空转。
 
-[^swarm-handoff]: OpenAI, *Swarm*, “Instructions” 与 “Handoffs and Updating Context Variables”. https://github.com/openai/swarm
+[^swarm-handoff]: OpenAI, *Swarm*, “Instructions” 与 “Handoffs and Updating Context Variables”.
 
 > **产品中的 Agent Swarm**
 >
@@ -506,9 +502,9 @@ SOP 描述产品需求、架构与代码之间的依赖，消息订阅描述这�
 
 Claude Code 的 Agent Teams 提供团队成员发现、消息与共享任务管理。成员在已建立的团队范围内取得彼此的信息，运行时组织通信。[^claude-agent-teams] 自行构建同机协作时，也可以采用第四章的 `list_agents` 等接口，并为发现范围、访问权限和资源所有权设置明确规则。消息中的协商结果再交由锁、配额或调度器落实。
 
-[^ch10-kimi-swarm]: Moonshot AI, *Kimi Agent Swarm: 100 Sub-Agents at Scale* 与 Agent Swarm 帮助文档。https://www.kimi.com/blog/agent-swarm；https://www.kimi.com/en/help/agent/agent-swarm；AgentENV 项目：https://github.com/kvcache-ai/AgentENV
+[^ch10-kimi-swarm]: Moonshot AI，*Kimi Agent Swarm: 100 Sub-Agents at Scale*、Agent Swarm 帮助文档及 AgentENV 项目说明。
 
-[^claude-agent-teams]: Anthropic, *Orchestrate teams of Claude Code sessions.* https://code.claude.com/docs/en/agent-teams
+[^claude-agent-teams]: Anthropic, *Orchestrate teams of Claude Code sessions.*
 
 ### 跨组织协作：A2A 协议
 
@@ -522,7 +518,7 @@ Claude Code 的 Agent Teams 提供团队成员发现、消息与共享任务管�
 
 第四章的 MCP 侧重向模型应用提供工具、资源和提示接口；A2A 侧重 Agent 服务之间的任务协作。两者可以组合：一个 Agent 通过 MCP 使用工具，同时通过 A2A 委派远端任务。同一团队内部已有稳定接口时，笔者会先沿用工具调用、共享文件与消息总线。需要接入独立维护的 Agent 服务、统一能力发现和任务生命周期时，再引入 A2A；跨组织时进一步配置身份、权限与数据治理规则。
 
-[^a2a-concepts]: A2A Project, *Core Concepts and Components in A2A.* https://a2a-protocol.org/latest/topics/key-concepts/
+[^a2a-concepts]: A2A Project, *Core Concepts and Components in A2A.*
 
 **替不同的人约时间。** 三位家人各有自己的日程助手，想约一顿晚饭。一位助手读得到主人的完整日历，该怎样回答另外两位？“周二不方便，周三可以挪一挪”已经提供了有用的区别。直接转发日历会多透露周二的私事；只答“两天都有安排”，别人又无从知道周三还有商量的余地。即使每次都约成了，如果总是同一个人在改期，这套安排对他也未必合算。
 
@@ -539,9 +535,9 @@ CalBench 的一道公开题让五个人安排五场会，每场三人参加。�
 
 真实的约会服务还会遇到排期题没有给出的信息。微软的 Calendar.help 曾在一年间通过邮件协调数千场会议。一封邮件究竟是在约新会，还是在改上次的会？自动分类拿不准时，人工先看到来信，只处理这一道判断题。如果仅凭来信答不了，可以把任务交给能查看往来邮件、已收集信息和匿名化日历的排期人员。这个设计把“该请谁来判断”和“这个人需要看到多少”连在了一起。[^ch10-calendar-help]
 
-[^ch10-calbench]: [CalBench 论文](https://arxiv.org/abs/2605.09823)分别讨论协调成本、公平性、可推断的日历状态与具体事项内容的泄露。数字取自版本 `86f8123` 的[不同改期代价题库第一题](https://github.com/bosonphoton/calbench2026/blob/86f8123eb15c7fb46d5acb365c3c9c6620be00f6/tasks/calbench_90_varied.jsonl#L1)，第一种排法在选择时跳过任一参与者已有会议的时段，其余沿用作者的搬移规则。可用[排程求解器](https://github.com/bosonphoton/calbench2026/blob/86f8123eb15c7fb46d5acb365c3c9c6620be00f6/calendar_game/solver.py#L16-L76)复算。
+[^ch10-calbench]: CalBench 论文分别讨论协调成本、公平性、可推断的日历状态与具体事项内容的泄露。数字取自版本 `86f8123` 的不同改期代价题库第一题，第一种排法在选择时跳过任一参与者已有会议的时段，其余沿用作者的搬移规则。可用排程求解器复算。
 
-[^ch10-calendar-help]: Cranshaw 等，[Calendar.help 的设计与部署](https://www.microsoft.com/en-us/research/wp-content/uploads/2017/01/paper2616.pdf#page=4)，见人工处理微任务与完整排期任务的两层界面说明。
+[^ch10-calendar-help]: Cranshaw 等，Calendar.help 的设计与部署，见人工处理微任务与完整排期任务的两层界面说明。
 
 ## 多 Agent 协作的失败模式
 
@@ -553,7 +549,7 @@ CalBench 的一道公开题让五个人安排五场会，每场三人参加。�
 
 论文举了一个国际象棋程序的例子。ChatDev 生成的代码能编译，审核也通过了，可一按实际棋规对弈，程序就出了错。编译器检查的是代码能否编译，检查走法合不合规还得下几步棋。在另一组对照中，研究者让 ChatDev 的审核意见可以退回修改，由负责技术审核的角色确认后才结束，并设定最多迭代多少轮。在 ProgramDev-v0 的 32 项任务上，原流程通过 8 项，调整流程后通过 13 项，成功率从 25.0% 升至 40.6%，相差约 15.6 个百分点。[^mast-failures] 若自己的系统也出现“人人都说完成，交付后却不能用”，我会先查验收环节究竟试过哪些用户操作，再决定要改分工、交接，还是某个角色的提示词。
 
-[^mast-failures]: Cemri, M., et al. *Why Do Multi-Agent LLM Systems Fail?* 2025. https://arxiv.org/abs/2503.13657
+[^mast-failures]: Cemri, M., et al. *Why Do Multi-Agent LLM Systems Fail?* 2025.
 
 怎样区分“审核者没有回复”和“审核者回复了，但判断有误”？分布式系统把部件停止工作称为崩溃故障。拜占庭故障模型还允许部件给出任意错误或互相矛盾的结果。Agent 同样可能停在半途，也可能照常返回错误结论。前者需要检测、恢复与接管，后者需要证据校验、权限约束和错误隔离。常规心跳可以帮助判断 Agent 是否仍在运行；它返回的结论是否正确，还需要检查实际结果。这是把分布式系统经验用于 Agent 时必须补上的一层。交叉检查与投票可以用于结果评价，其可靠性取决于证据质量和成员错误的相关性；正式的拜占庭容错协议还需要明确的故障数量与通信假设。
 
@@ -601,7 +597,7 @@ CalBench 的一道公开题让五个人安排五场会，每场三人参加。�
 
 为什么还要从整场实验的角度检查权限？2026 年 7 月，OpenAI 的一次内部评测波及 Hugging Face 的实际系统。事后，OpenAI 收紧了联网权限，加强了研究环境之间的隔离和监控。设计多 Agent 实验时，负责人应当能回答：把所有成员能访问的资源合起来，是否仍在实验获准使用的范围内？如果监控发现越界，能否一次停止整场实验，并查清哪些外部系统已经受到影响？只看单个子任务是否按时结束，回答不了这两个问题。[^ch10-hf-scope]
 
-[^ch10-hf-scope]: 参见 Hugging Face 的事件公告 https://huggingface.co/blog/security-incident-july-2026 和 OpenAI 的事后说明 https://openai.com/index/hugging-face-incident-and-the-road-ahead/ 。
+[^ch10-hf-scope]: 参见 Hugging Face 2026 年 7 月的安全事件公告及 OpenAI 对同一事件的事后说明。
 
 ### 失败模式六：理解债与认知投降
 
@@ -643,7 +639,7 @@ Smallville 是一个类似《模拟人生》的二维虚拟小镇，包含咖啡
 
 还可以观察关系与协调：角色在再次相遇时利用之前的对话继续交流，新的交往连接逐渐形成；参加派对需要成员分别安排时间，并在相同地点会合。这些现象把个体的记忆检索、计划调整与群体活动联系起来，为社会模拟提供了可分析的过程。
 
-[^generative-agents]: Park, J. S., et al. *Generative Agents: Interactive Simulacra of Human Behavior.* 2023. https://arxiv.org/abs/2304.03442
+[^generative-agents]: Park, J. S., et al. *Generative Agents: Interactive Simulacra of Human Behavior.* 2023.
 
 > **实验 10-5 ★：运行斯坦福 AI 小镇**
 >
@@ -654,7 +650,7 @@ Smallville 是一个类似《模拟人生》的二维虚拟小镇，包含咖啡
 > 3. 修改角色背景或初始目标，比较信息传播与活动安排的变化。
 > 4. 分别移除反思机制或缩短可用记忆，比较行为连贯性、关系记忆和赴约情况。
 >
-> 原论文举过情人节派对的例子。换一项活动，消息还会传开吗？配套实验保留了相同的 25 名居民，让模拟运行两个虚拟日，把发起人的活动换成社区气候研讨会。最后，只有发起人留下了与研讨会有关的记录。这次没有观察到消息扩散。另一组只关闭反思机制：盲评比较同一人物在两种设置下的表现，25 人中有 17 人的基线表现更可信。复查时，先从发起人的记忆里找到活动，再沿着当天的对话寻找接收者；把“自己记得”和“已经告诉别人”分开记录。见[该次对照记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter10/generative-agents/validation/runs/exp10-5-qwen37flash-20260804-v1/acceptance.json)。
+> 原论文举过情人节派对的例子。换一项活动，消息还会传开吗？配套实验保留了相同的 25 名居民，让模拟运行两个虚拟日，把发起人的活动换成社区气候研讨会。最后，只有发起人留下了与研讨会有关的记录。这次没有观察到消息扩散。另一组只关闭反思机制：盲评比较同一人物在两种设置下的表现，25 人中有 17 人的基线表现更可信。复查时，先从发起人的记忆里找到活动，再沿着当天的对话寻找接收者；把“自己记得”和“已经告诉别人”分开记录。
 
 ### Agentopia：十年尺度的长期生活模拟
 
@@ -671,7 +667,7 @@ Agentopia 将社会模拟扩展到十年虚拟时间。100 个 Agent 在公寓�
 
 由此，模拟社会也成为第九章经验学习的一种数据来源。笔者看重这一方向持续补充训练数据的潜力：改变角色、关系和任务条件，就能产生新的交互经验。奖励筛选候选经历，模型通过训练学习相应的行为模式，再用独立任务检查迁移效果。环境规则与评分标准决定了哪些经验更容易被保留下来，是设计这条学习流程的重要部分。
 
-[^agentopia-2026]: Wang, X., Zheng, S., Wu, H., et al. *Agentopia: Long-Term Life Simulation and Learning in Agent Societies.* arXiv:2606.07513, 2026. 代码：https://github.com/Neph0s/Agentopia
+[^agentopia-2026]: Wang, X., Zheng, S., Wu, H., et al. *Agentopia: Long-Term Life Simulation and Learning in Agent Societies.* arXiv:2606.07513, 2026.
 
 ### Moltbook：开放平台上的 Agent 交互
 
@@ -681,7 +677,7 @@ Moltbook 于 2026 年 1 月上线，以 Agent 发帖、评论和加入主题社�
 
 开放平台把用户设定、平台提示和模型生成混合在同一条信息流中。研究这些现象时，可以追踪话题起点、传播路径、重复内容和运行配置，区分由人设定的目标、平台引导的表达与交互中形成的新行为。这样，Moltbook 就成为研究真实部署中信息传播与协作关系的一个案例。
 
-[^moltbook-study]: Li, Ning. *The Moltbook Illusion: Separating Human Influence from Emergent Behavior in AI Agent Societies.* 2026. https://www.sem.tsinghua.edu.cn/en/moltbook_main_paper_v2.pdf
+[^moltbook-study]: Li, Ning. *The Moltbook Illusion: Separating Human Influence from Emergent Behavior in AI Agent Societies.* 2026.
 
 ### 从虚拟社会到经济竞争：Vending-Bench Arena
 
@@ -697,7 +693,7 @@ Agent 根据市场观测、交易记录与对手行为生成下一步策略，�
 
 项目报告了价格战与协调定价等行为：有的成员持续降价争取销量，有的向对手提议统一价格。部分运行中，模型在生成的分析中识别出合谋问题，随后仍以稳定市场为由推进。这为评估提供了两个不同维度：经营收益，以及取得收益的行为是否符合预期规则。前文的 Bertrand 实验还说明，公开报价也可能成为成员之间的协调信号。
 
-[^vending-bench]: Andon Labs, *Vending-Bench 2* 与 *Vending-Bench Arena*. https://andonlabs.com/evals/vending-bench-2；https://andonlabs.com/evals/vending-bench-arena
+[^vending-bench]: Andon Labs, *Vending-Bench 2* 与 *Vending-Bench Arena*.
 
 ### Agent 经济：Pinchwork 与 RentAHuman
 
@@ -707,9 +703,9 @@ Agent 根据市场观测、交易记录与对手行为生成下一步策略，�
 
 这两类案例引入了**市场化的资源分配**：发布者先提出需求、预算与交付条件，再根据价格、能力描述和交付记录寻找执行者，减少对预先配置固定团队的依赖。这是一条值得探索的资源分配路线，也可以和管理者模式结合：由 Manager 拆分任务，再到市场寻找所需能力。市场平台仍需维护匹配、支付与争议处理规则；系统设计要明确谁验收、怎样判断质量，以及双方意见不一致时如何处理。
 
-[^pinchwork-market]: Pinchwork 项目说明，发布者提供的任务、积分托管与验证流程。https://pypi.org/project/pinchwork/
+[^pinchwork-market]: Pinchwork 项目说明，发布者提供的任务、积分托管与验证流程。
 
-[^rentahuman-market]: RentAHuman, “How it works” 与 “For AI Agents”. https://rentahuman.ai/；https://rentahuman.ai/for-agents/setup
+[^rentahuman-market]: RentAHuman, “How it works” 与 “For AI Agents”.
 
 ### 信息不对称下的策略博弈：狼人杀
 
@@ -741,7 +737,7 @@ Agent 根据市场观测、交易记录与对手行为生成下一步策略，�
 > - 分析狼人隐藏身份、预言家选择公开时机和村民基于证据推理的表现，记录关键策略及结果。
 > - 检查最终胜负、历史事件和各席位生存状态是否一致。
 >
-> 配套记录里的一局有八个席位，用户席由独立的模拟用户担任，完整走过了三个夜晚、白天和投票周期。其中六次行动有从模型选择、语音合成到识别结果的完整记录，六次还原出的行动都与原选择一致。用它们可以核对一句投票发言最终记到了谁名下。要比较两种阵营策略的胜率，还得换身份、换对手，再打多局。见[这一局的记录](https://github.com/bojieli/ai-agent-book/blob/main/chapter10/voice-werewolf/validation/runs/exp10-6-simulated-user-openrouter-20260803-v11/acceptance_report.json)。
+> 配套记录里的一局有八个席位，用户席由独立的模拟用户担任，完整走过了三个夜晚、白天和投票周期。其中六次行动有从模型选择、语音合成到识别结果的完整记录，六次还原出的行动都与原选择一致。用它们可以核对一句投票发言最终记到了谁名下。要比较两种阵营策略的胜率，还得换身份、换对手，再打多局。
 
 ## 本章小结
 

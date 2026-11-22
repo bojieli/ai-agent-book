@@ -42,13 +42,13 @@ Extracted memories:
 
 个人助手 Today 的产品说明举过一个例子。用户说自己每周二、周四训练，准备跑半程马拉松。六周后，经用户授权接入的睡眠记录显示，他昨晚睡得很少。助手把这两条信息放在一起，建议挪一挪当天的高强度间歇训练。这里该记多久？训练计划在备赛期间都用得上，昨晚的睡眠记录要带上日期。即使用户接受了这次改期，下周四的训练仍按原计划安排，除非用户说以后都要改。Today 也把提出建议与更改日历分成两步，后一步需要用户确认。[^ch3-today]
 
-[^ch3-today]: Today 团队在[产品说明](https://today.ai/articles/blog/what-is-today)中以半马训练说明记忆与当天信息怎样配合。创始人在[设计说明](https://today.ai/articles/blog/meet-today)中说明了更改日历前的确认机制。
+[^ch3-today]: Today 团队在《What Is Today》中以半马训练说明记忆与当天信息怎样配合。创始人在《Meet Today》中解释了更改日历前的确认机制。
 
 ### 记忆能力的评估：三层次框架
 
 设计记忆系统时，需要先明确希望它完成哪些任务。公开基准 **LoCoMo**（Long-term Conversational Memory，长期对话记忆）包含平均约 300 轮、最多 35 个会话的长对话，通过问答、事件摘要和多模态对话生成考察记忆能力。问答分为五类。单跳题可以从一次会话中找到答案，多跳题需要把几次会话中的线索拼起来，时间推理题还要弄清事件发生的先后。开放域知识题要求把用户说过的话与外部知识结合起来。沿用订票的例子，用户只说过“下周去东京”，要回答“目的地使用哪种货币”，既要记得东京这条线索，也要知道当地使用日元。如果问的是用户从没说过的航班号，助手应该指出信息不足。能否识别这种无从作答的问题，正是对抗性题目所考查的能力。[^ch3-locomo]
 
-[^ch3-locomo]: Maharana 等，[LoCoMo 论文第 4.1 节](https://arxiv.org/html/2402.17753#S4.SS1)给出五类问答的定义。[作者项目页](https://snap-research.github.io/locomo/)提供数据与对话样例。
+[^ch3-locomo]: Maharana 等人的 LoCoMo 论文（arXiv:2402.17753）第 4.1 节给出五类问答的定义。作者项目页提供数据与对话样例。
 
 结合这类基准和记忆产品的实践，笔者将需要关注的能力归纳为八项：
 
@@ -198,7 +198,7 @@ alerts = passport_alerts(state, required_days=180)
 
 这样，新增行程或更新护照后就能重新检查相关约束。目的地、证件和行程规则决定参数，状态更新触发计算，结果再交给 Agent 向用户说明。
 
-[^uac]: Li, Bojie，[User as Code: Executable Memory for Personalized Agents](https://arxiv.org/abs/2606.16707)，2026。
+[^uac]: Li, Bojie，User as Code: Executable Memory for Personalized Agents，2026。
 
 ### 用户记忆的认知科学基础
 
@@ -236,15 +236,15 @@ v3 把自动提取改为一次 LLM 调用，只追加 **ADD** 记录。北京和
 
 这一演进说明，记忆系统可以把冲突判断从写入阶段移到读取阶段。写入时一旦误把两个人的经历合并，或把补充信息当成更正，后续回答就可能一直沿用错误的当前状态。追加保存让新旧证据都能参与判断，也减少了写入时逐条决策的模型调用。对于变化频繁、当下难以判断冲突的用户记忆，笔者倾向先保存事实及其时间和来源，再在回答具体问题时整理出有效状态。
 
-[^ch3-mem0-paper]: Chhikara 等，[Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory](https://arxiv.org/abs/2504.19413)，2025。
+[^ch3-mem0-paper]: Chhikara 等，Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory，2025。
 
-[^ch3-mem0-migration]: Mem0，[Open Source: Migrating to the New Memory Algorithm](https://docs.mem0.ai/migration/oss-v2-to-v3)。此处得分采用该迁移指南报告的评估口径。
+[^ch3-mem0-migration]: Mem0，Open Source: Migrating to the New Memory Algorithm。此处得分采用该迁移指南报告的评估口径。
 
 **Memobase：用户画像与事件记忆。** Memobase 将长期信息组织为两部分。**用户画像（profile）**按主题与子主题保存较稳定的属性，例如 `basic_info` 下的姓名、`interest` 下的兴趣、`work` 下的职位。开发者可以配置需要提取的槽位，控制画像的范围与粒度。**事件记忆（event memory）**记录用户经历及其时间，供系统回答“上次讨论预算是什么时候”这类问题。
 
 Memobase 先把新对话放入缓冲区，在缓冲区积累到指定规模，或会话空闲达到设定时长后批量处理，也可以在会话结束时显式触发。这样，多条消息共享一次整理流程，查询时则读取已经生成的画像和事件。异步更新减少了当前交互等待记忆提取的时间；需要立即使用最新事实时，可以等待本次处理完成[^ch3-memobase]。
 
-[^ch3-memobase]: Memobase，[官方项目说明](https://github.com/memodb-io/memobase)，包括画像字段、事件记忆、缓冲区和同步更新接口。
+[^ch3-memobase]: Memobase，官方项目说明，包括画像字段、事件记忆、缓冲区和同步更新接口。
 
 如果助手既要记得上次订票的经过，又要掌握用户的座位偏好和办理退票的流程，可以像图3-4 那样分别保存事件、事实和流程。每次接到任务，再把用得上的部分放进工作记忆。
 
@@ -353,7 +353,7 @@ $$
 
 **BGE-M3** 同时提供稠密、稀疏和多向量检索表示，并支持多语言与较长输入；本节采用其中的稠密表示说明单向量检索[^ch3-bge-m3]。模型可接受的长度影响分块方案：原始 BERT 的典型上限为 512 token，BGE-M3 支持到 8192 token。更长的输入预算使系统可以保留更多背景，块大小仍需结合主题边界和检索效果选择。
 
-[^ch3-bge-m3]: Chen 等的 [M3-Embedding 论文](https://arxiv.org/abs/2402.03216)介绍三种检索表示如何联合训练。另见 BAAI 的 [BGE-M3 模型说明](https://huggingface.co/BAAI/bge-m3)，包括表示方式、维度、输入长度和使用方法。
+[^ch3-bge-m3]: Chen 等的 M3-Embedding 论文（arXiv:2402.03216）介绍三种检索表示如何联合训练。另见 BAAI 的 BGE-M3 模型说明，包括表示方式、维度、输入长度和使用方法。
 
 > **实验 3-4 ★★：比较两种近似最近邻索引**
 >
@@ -376,7 +376,7 @@ $$
 >
 > 本次运行先用 240 段文本建库。对同样的 20 个查询，两种索引都找齐了精确搜索得到的前 10 个近邻。初次建库时，ANNOY 在 Linux 容器中构建约 13 毫秒，HNSW 在本机环境中构建约 78 毫秒；保存的索引分别约 1.40 MB 和 1.02 MB。再加入剩余 60 段，ANNOY 重新构建索引，HNSW 直接插入新向量。这时库中共有 300 段，原先的近邻也可能随之改变。在新库上重做精确搜索后，两种索引的平均召回率仍为 100%。定期批量刷新语料时，可以测试重建成本；持续接收新文档时，则重点测试插入延迟与更新后的召回。
 
-[^ch3-ann]: ANNOY 的静态索引、内存映射与搜索参数见 [官方说明](https://github.com/spotify/annoy)；HNSW 的增量接口与参数见 [hnswlib 官方说明](https://github.com/nmslib/hnswlib)。
+[^ch3-ann]: ANNOY 的静态索引、内存映射与搜索参数见 官方说明；HNSW 的增量接口与参数见 hnswlib 官方说明。
 
 **索引应按知识的更新方式来选。** 语料定期批量发布、多进程共享同一份只读索引时，笔者会先考虑 ANNOY；持续接收新文档、需要在线插入时，则优先考虑 HNSW。嵌入模型决定语义表示，索引决定这些表示能否以合适的延迟和更新成本投入使用，两者共同决定检索服务的效果。
 
@@ -454,7 +454,7 @@ $R_j$ 是第 $j$ 路结果，名次从 1 开始，文档未出现在某一路时
 
 这里常用的模型是**跨编码器（cross-encoder）**：把查询与候选文档一起输入，让两部分在模型内部交互，输出相关性分数。检索阶段的**双编码器（bi-encoder）**则分别编码查询和文档，文档向量可以提前计算，查询时只做向量搜索。前者适合处理规模有限的候选，后者适合在大量文档中初筛。可以类比简历筛选和面试：先根据已有特征缩小范围，再围绕具体要求深入比较。BGE Reranker v2 M3 是可用于这一环节的模型之一[^ch3-reranker]。
 
-[^ch3-reranker]: BAAI，[BGE Reranker v2 M3 模型说明](https://huggingface.co/BAAI/bge-reranker-v2-m3)，介绍查询—文档输入与相关性评分。
+[^ch3-reranker]: BAAI，BGE Reranker v2 M3 模型说明，介绍查询—文档输入与相关性评分。
 
 当相关材料已经进入候选池，却经常排在无关材料后面时，笔者会优先评估跨编码器重排序。它联合读取问题与文档，可以直接比较文档中的条件、限定词和细节是否符合问题要求。应选用适合当前语言和领域的模型，并用目标查询确认收益；重排模型选错，也可能把原本正确的结果挤下去。候选数量再根据收益和延迟调整。表3-3 列出三个常用指标。
 
@@ -472,7 +472,7 @@ $R_j$ 是第 $j$ 路结果，名次从 1 开始，文档未出现在某一路时
 >
 > 本实验在相同的 12 个标注查询上比较五种配置：稀疏检索、稠密检索、RRF 融合、加权融合，以及融合后重排序。查询覆盖语义相似、精确名称、多语言和技术代码，其中两道题分别用英文和中文询问植物怎样把阳光转化为食物。稠密模型采用 Qwen3-Embedding-0.6B，重排序采用 MS MARCO MiniLM 跨编码器，每路检索最多取 10 个候选，重排器处理 RRF 排在前面的最多 10 篇文档。召回率和 nDCG 只看最终排序的前 3 篇，MRR 则沿返回的列表寻找第一篇相关文档。
 >
-> 先打开[逐题排名](https://github.com/bojieli/ai-agent-book/blob/main/chapter3/retrieval-pipeline/validation/runs/20260729T183512Z-3_6-a398d0f7/evidence.json)，比较两道光合作用题的检索结果。英文题的目标文档仍排第一。中文题先返回编程语言和火山，第三篇才讲光合作用。每题只有一篇标注为相关的文档，两题在前三名里都找到了它，recall@3 都是 1。但中文题的首篇相关文档排第三，倒数排名只有 $1/3$。按本实验的计分方式，第三名的增益是 $1/\log_2(3+1)=0.5$，第一名的增益是 1，因此中文题的 nDCG@3 为 0.5。
+> 先打开实验 3-6 运行记录里的逐题排名，比较两道光合作用题的检索结果。英文题的目标文档仍排第一。中文题先返回编程语言和火山，第三篇才讲光合作用。每题只有一篇标注为相关的文档，两题在前三名里都找到了它，recall@3 都是 1。但中文题的首篇相关文档排第三，倒数排名只有 $1/3$。按本实验的计分方式，第三名的增益是 $1/\log_2(3+1)=0.5$，第一名的增益是 1，因此中文题的 nDCG@3 为 0.5。
 >
 > 再看全部 12 道题。重排后，除中文光合作用题外，另有一道关于回收堆内存的题，目标文档从第一退到了第二。其余十题都保住了首位，所以重排后的 MRR 是 $(10+1/2+1/3)/12\approx0.903$。作为对照，稠密检索和 RRF 的 MRR 都是 1。两者的 nDCG@3 也都是 1，重排后降到约 0.928。只看平均召回率就看不出这些名次变化：稀疏检索的 recall@3 为 0.833，其余四组都是 1。
 >
@@ -510,7 +510,7 @@ $R_j$ 是第 $j$ 路结果，名次从 1 开始，文档未出现在某一路时
 
 例如，“SSE2 支持在 128 位 XMM 寄存器中执行整数 SIMD 运算”和“SSE4.2 新增字符串比较指令”可以纳入“x86 SIMD 指令集演进”的摘要。细节问题可以匹配底层块，概览问题可以匹配高层摘要。查询既可以沿层次逐步深入，也可以把各层节点放在一起检索，选出最相关的一组。
 
-[^ch3-raptor]: Sarthi 等，[RAPTOR: Recursive Abstractive Processing for Tree-Organized Retrieval](https://arxiv.org/abs/2401.18059)，2024。
+[^ch3-raptor]: Sarthi 等，RAPTOR: Recursive Abstractive Processing for Tree-Organized Retrieval，2024。
 
 **GraphRAG** 利用实体、关系和社区摘要组织知识。它用“主体—关系—对象”这样的三元组记录一条关系，例如（中国，首都是，北京）或（张三，就职于，腾讯）。两条记录只要提到同一个实体，就可以在图中连起来。图3-11 里的两位医生都姓张。用户问“我的牙医所在医院的地址”时，系统该沿哪条关系查下去？
 
@@ -521,7 +521,7 @@ $R_j$ 是第 $j$ 路结果，名次从 1 开始，文档未出现在某一路时
 
 微软 GraphRAG 的索引流程先从文本单元提取实体和关系，再通过社区发现识别连接紧密的实体群，生成社区层次与摘要。查询某个实体时，局部搜索结合其关联信息和原文；查询整个语料的主题时，全局搜索利用社区摘要组织回答[^ch3-graphrag]。
 
-[^ch3-graphrag]: Microsoft GraphRAG，[索引与查询概览](https://microsoft.github.io/graphrag/)、[局部搜索](https://microsoft.github.io/graphrag/query/local_search/)和[全局搜索](https://microsoft.github.io/graphrag/query/global_search/)。
+[^ch3-graphrag]: Microsoft GraphRAG，索引与查询概览、局部搜索和全局搜索。
 
 关系表示还需要容纳条件和时间。例如，“如果下周还下雨，我就取消去海边，改去博物馆”，包含条件、有效时间和备选行动。如果只提取（用户，有计划，海滩旅行）和（用户，有备选计划，博物馆旅行），就会丢失切换条件。可以保留完整原句，并用条件节点、事件节点或结构化字段表示“下周下雨时”的约束，让关系回指原文。
 
@@ -551,13 +551,13 @@ $R_j$ 是第 $j$ 路结果，名次从 1 开始，文档未出现在某一路时
 
 URI 提供统一定位方式，物理存储与索引由服务管理。目录接口使 Agent 能按主题逐层浏览，也能把语义搜索限制在相关子树内。文件系统式的访问、内容存储和向量索引可以共同组成服务。
 
-[^ch3-openviking-uri]: OpenViking，[Viking URI](https://docs.openviking.ai/en/concepts/04-viking-uri)与[系统架构](https://docs.openviking.ai/en/concepts/01-architecture)。
+[^ch3-openviking-uri]: OpenViking，Viking URI与系统架构。
 
 OpenViking 将内容分为 **L0、L1、L2** 三个层次：L0 是简短摘要，供快速判断目录是否相关；L1 是目录概览，说明主要内容及导航入口；L2 是需要详细阅读的正文。目录级摘要和概览分别保存在 `.abstract.md` 与 `.overview.md` 中。当前文档给出的生成正文预算分别为 256 和 4000 个字符；这些预算控制摘要篇幅，实际存储长度还受完整句子处理等规则影响[^ch3-openviking-layers]。
 
 查询可以先读摘要定位，再读概览选择文件，最后加载原文。这与第二章 Skills 的渐进式披露相通：轻量目录支持发现，完整内容按任务需要加载。需要精确数值、条件或原始措辞时，应继续取回对应正文。
 
-[^ch3-openviking-layers]: OpenViking，[Context Layers (L0/L1/L2)](https://docs.openviking.ai/en/concepts/03-context-layers)。L0、L1 是目录级生成表示；L2 可为原始文件或解析后的正文。
+[^ch3-openviking-layers]: OpenViking，Context Layers (L0/L1/L2)。L0、L1 是目录级生成表示；L2 可为原始文件或解析后的正文。
 
 对于需要人和 Agent 共同维护的知识，笔者倾向于用 **Markdown 纯文本与版本控制**管理。人可以直接阅读、编辑和修正知识，Agent 也能使用同样的文件接口，在工作分支提出更新，经审核后再发布。版本控制保存每次修改的差异，也让错误更新可以撤回。会话结束时，用户偏好进入对应用户的记忆，操作经过进入任务记录。任务记录经过结果评价、跨轨迹归纳与后续验证后，可以进一步形成第九章讨论的经验。
 
@@ -654,7 +654,7 @@ OpenViking 将内容分为 **L0、L1、L2** 三个层次：L0 是简短摘要，
 
 它与第二章的上下文感知压缩可以配合使用：索引期为知识块补充背景，提高发现相关信息的机会；运行期根据当前任务整理已经取回的历史，控制输入长度。前者关注片段的可检索性，后者关注当前决策所需的信息与预算。
 
-[^ch3-1]: Anthropic，[Introducing Contextual Retrieval](https://www.anthropic.com/engineering/contextual-retrieval)，2024 年 9 月。
+[^ch3-1]: Anthropic，Introducing Contextual Retrieval，2024 年 9 月。
 
 > **实验 3-10 ★★：比较原始分块与上下文增强分块**
 >
@@ -710,7 +710,7 @@ OpenViking 将内容分为 **L0、L1、L2** 三个层次：L0 是简短摘要，
 >
 > 如果把原型检索用于对话，可以先询问哪些缺失事实可能影响匹配，再根据回答重新检索。要检验追问有没有用，应记录每次补齐了什么字段，比较追问前后的原型和解释。上述 12 条记录评的是已有材料上的解释，这项交互效果需要另外做实验。
 
-[^ch3-cail]: CAIL2018，[官方数据集项目](https://github.com/china-ai-law-challenge/CAIL2018)。配套实验从公开材料中抽样，使用样本内部划分开展建模与评估。
+[^ch3-cail]: CAIL2018，官方数据集项目。配套实验从公开材料中抽样，使用样本内部划分开展建模与评估。
 
 从案例到原型，知识库增加了一层可检索的统计表示。原文提供证据，字段支持计算，原型概括相似样本的共同特征；三者保留对应关系，才能在发现提取错误或样本偏差时回查和修正。
 
@@ -724,7 +724,7 @@ OpenViking 将内容分为 **L0、L1、L2** 三个层次：L0 是简短摘要，
 
 笔者与 Noah Shi 的一项初步研究把这个问题拆成两步。合照里有两个人，用户问“站在窗边的是上次见过的那位吗？”先要根据“窗边”找到用户指的那个人，再把这个人的图像与先前保存的样本比较。第一步选错了人，即使第二步认得很准，答的也是另一个问题。读者可以分别标注选中的区域与最后认出的身份，看看错误发生在哪里。论文还把姓名等可准确抄录的事实留在文本记忆里，使两类信息各有合适的取用方式。[^ch3-perceptmem]
 
-[^ch3-perceptmem]: 李博杰、Noah Shi，[Parametric Multimodal User Memory](https://arxiv.org/abs/2608.28609)；[公开实现与 PerceptMem 实验说明](https://github.com/19PINE-AI/multimodal-user-memory)。合照问题为教学示例。
+[^ch3-perceptmem]: 李博杰、Noah Shi，Parametric Multimodal User Memory；配套项目 `19PINE-AI/multimodal-user-memory` 收录了实现和 PerceptMem 实验。合照问题为教学示例。
 
 例如，一种设计若为每项记忆分配一个连续向量槽位，1000 个槽位就能保存 1000 项表示。所需空间还取决于向量维度和数值精度，识别质量则取决于训练与压缩方式。实现时可以比较单槽位与多槽位表示，以及直接检索原始图片或音频的效果，再决定每项记忆的预算。
 
@@ -732,7 +732,7 @@ OpenViking 将内容分为 **L0、L1、L2** 三个层次：L0 是简短摘要，
 
 笔者的 **User as Engram** 研究将文本事实写入 Engram 模型的局部记忆表，由共享适配器学习如何利用这些事实进行推理[^engram]。带哈希键的 N-gram 查找负责定位表项，门控机制将取回内容送入模型；每位用户保存局部表项，推理部分可以共享。论文在其文本事实实验中比较了直接回忆和间接推理，展示了如何分别管理每位用户的记忆内容与共享的推理能力。
 
-[^engram]: Li, Bojie，[User as Engram: Internalizing Per-User Memory as Local Parametric Edits](https://arxiv.org/abs/2606.19172)，2026。
+[^engram]: Li, Bojie，User as Engram: Internalizing Per-User Memory as Local Parametric Edits，2026。
 
 把这条路线扩展到多模态，还需要设计图像或音频表示的寻址、写入和读取机制，并验证跨模态查询能否触发正确记忆。这样的研究可以围绕四项指标展开：写入成本、存储容量、取用准确性，以及不同用户和不同记忆之间的干扰。
 
@@ -758,6 +758,6 @@ OpenViking 将内容分为 **L0、L1、L2** 三个层次：L0 是简短摘要，
 8. ★★★ 从案例中提取字段并聚类后，怎样判断原型有用？请区分聚类特征的重要性、结果预测能力与因果解释，并设计留出评估和专家复核流程。
 9. ★★★ 为 Markdown 用户记忆库设计增量更新与定期整理流程。若审核者与提议者使用相同模型，且审核者只能看到提议者挑选的片段，哪些错误容易遗漏？请从证据覆盖、工具权限和审核评估三个方面改进。
 
-[^ch3-glove]: Pennington 等，[GloVe: Global Vectors for Word Representation](https://nlp.stanford.edu/projects/glove/)，2014。
+[^ch3-glove]: Pennington 等，GloVe: Global Vectors for Word Representation，2014。
 
-[^ch3-sbert]: Reimers 与 Gurevych，[Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks](https://arxiv.org/abs/1908.10084)，2019。
+[^ch3-sbert]: Reimers 与 Gurevych，Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks，2019。
