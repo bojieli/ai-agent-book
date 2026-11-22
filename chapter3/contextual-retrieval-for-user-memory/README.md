@@ -27,7 +27,7 @@
 
 ### 本实验是什么
 
-将上下文感知检索技术应用于用户记忆的构建，是解决传统对话历史分块所面临的核心痛点，并迈向更高层次记忆能力的关键。本项目实现了一个双层记忆系统，结合了：
+用户隔了一周再问“酒店订了吗”，助理要找到当时的答复，还要知道说的是哪家酒店。这个系统从两个地方取材料：
 
 1. **上下文感知检索（Contextual RAG）**：对话历史的精准检索  
 2. **高级 JSON 卡片（Advanced JSON Cards）**：结构化的核心事实存储
@@ -42,7 +42,7 @@
 
 - 每个对话块都会调用 LLM 生成包含关键背景信息的前缀摘要  
 - 上下文包括时间、人物和意图等关键线索  
-- 极大提升了检索的准确性和相关性  
+- 把前缀与原文一起建索引，使查询中的地名、人物或事项有机会匹配到原本只有一句简短答复的片段
 
 #### 2. 双层记忆结构
 
@@ -147,21 +147,19 @@ python api_server.py
 
 #### 离线对比：上下文化到底有没有用？（无需 API，推荐先跑这个）
 
-本实验的核心论点是：**在把对话记忆块送入嵌入/索引前，先为每块生成一段『上下文前缀』，能提升脱离上下文的孤立片段（如『好的，就订这个吧』）的召回。** `--mode compare` 提供一个**完全离线、无需任何 API Key 或检索服务**的受控对照实验来量化这一点。
+打开[教学数据集](memory_qa_eval.json)，对照 `hotel_detail` 和 `hotel_confirm`。前一块有城市、酒店名、日期和报价，但说到的是推荐；后一块写着“可以，帮我订下来”和“已锁定房间”，却没说是哪家。用户问“我订的西雅图酒店确认了吗，是哪家？”时，两段材料各能回答哪一半？
 
-它用同一份上下文，分别度量『不拼接（plain）』与『拼接后再索引（contextual）』两种方式的召回，变量只有『索引文本是否含上下文前缀』，因此结果直接反映上下文化本身的贡献。检索采用确定性的 BM25 词法检索（纯 Python、无第三方依赖）作为神经嵌入的离线代理；对照数据集见 [`memory_qa_eval.json`](memory_qa_eval.json)（受控教学集，可用 `--dataset` 替换）。
+离线程序对同样的 12 个记忆块运行两次 BM25。第一遍只索引原文；第二遍把数据集里备好的背景说明加在相应原文前，再建索引。两遍都用原来的八条查询。这样可以单独检查前缀有没有改变目标块的排名，也可以用纯 Python 运行全部步骤。
 
 ```bash
 # 打印对比指标表（Recall@1 / Recall@3 / MRR）
-python main.py --mode compare
-# 等价于直接运行独立脚本：
 python contextual_compare.py
 
 # 对单条查询做 plain vs contextual 的 Top-K 检索对比
-python main.py --mode compare --query '我最后确认预订的那张机票是哪个航班？'
+python contextual_compare.py --query '我最后确认预订的那张机票是哪个航班？'
 
 # 保存完整结果（含逐查询名次明细）到 JSON
-python main.py --mode compare --output results/compare.json
+python contextual_compare.py --output results/compare.json
 ```
 
 实测输出（12 个记忆块、8 条查询的受控集）：
@@ -172,12 +170,12 @@ python main.py --mode compare --output results/compare.json
 Plain（直接索引原始块）               0.625     1.000     0.792
 Contextual（上下文化后索引）        0.750     1.000     0.875
 --------------------------------------------------------------------
-提升（Δ）                         +0.125    +0.000    +0.083
+差值（Δ）                         +0.125    +0.000    +0.083
 ```
 
-其中『我订的西雅图酒店确认了吗』这类查询，gold 记忆块（『可以，帮我订下来』）在 Plain 下排名第 3、上下文化后升到第 1——正是上下文前缀把孤立确认片段重新锚定回了『西雅图凯悦酒店』的情境。
+酒店确认题的目标块从第三升到第一，其余七题的目标块名次相同。只取第一块时，八题中命中的从五题变成六题，所以 Recall@1 增加 1/8；取前三块时，两种方法都能找到八题各自的目标，所以 Recall@3 没变。MRR 衡量第一个相关结果排得多靠前。只有酒店题的倒数排名从 1/3 变成 1，八题平均就增加了约 0.083。
 
-> 说明：这是一个**离线词法代理**，用于在无 API 环境下清晰地演示上下文化的机制与方向性收益。生产管线中，上下文前缀由 LLM 逐块生成、并用神经嵌入 + 混合检索索引（见下方 `--mode evaluate`），需要配置 API Key。
+再看机票确认题。加了前缀，目标块仍排第二。实际系统如果只取一块，仍可能错过确认记录；若取三块，还要检查回答模型能否把报价、用户决定和订单状态区分开。离线程序只把命中块排出先后。要检查助理最后怎么回答，可以读开头车辆用例的归档回答，或运行下面的端到端评估。
 
 #### 端到端评估（需 API / 检索服务）
 
@@ -516,15 +514,13 @@ It measures “plain” (no prefix) vs “contextual” (prefix then index) on t
 
 ```bash
 # Print comparison metrics (Recall@1 / Recall@3 / MRR)
-python main.py --mode compare
-# Equivalent standalone script:
 python contextual_compare.py
 
 # Single-query plain vs contextual Top-K
-python main.py --mode compare --query '我最后确认预订的那张机票是哪个航班？'
+python contextual_compare.py --query '我最后确认预订的那张机票是哪个航班？'
 
 # Save full results (per-query ranks) to JSON
-python main.py --mode compare --output results/compare.json
+python contextual_compare.py --output results/compare.json
 ```
 
 Measured output (12 memory chunks, 8 queries):
@@ -535,7 +531,7 @@ Measured output (12 memory chunks, 8 queries):
 Plain（直接索引原始块）               0.625     1.000     0.792
 Contextual（上下文化后索引）        0.750     1.000     0.875
 --------------------------------------------------------------------
-提升（Δ）                         +0.125    +0.000    +0.083
+差值（Δ）                         +0.125    +0.000    +0.083
 ```
 
 For queries like “is my Seattle hotel confirmed,” the gold chunk (“yes, book it”) ranks 3rd under Plain and 1st after contextualization—the prefix re-anchors an isolated confirmation to “Hyatt Seattle.”

@@ -156,18 +156,16 @@ def run_comparison(dataset_path: str, output_path: str = None, verbose: bool = T
         d1 = ctx_m["recall@1"] - plain_m["recall@1"]
         d3 = ctx_m["recall@3"] - plain_m["recall@3"]
         dm = ctx_m["mrr"] - plain_m["mrr"]
-        print(f"{'提升（Δ）':<26}{d1:>+10.3f}{d3:>+10.3f}{dm:>+10.3f}")
+        print(f"{'差值（Δ）':<26}{d1:>+10.3f}{d3:>+10.3f}{dm:>+10.3f}")
         print("=" * 68)
         print("\n逐查询名次（gold 在检索结果中的位次，越小越好；0 表示未召回）：")
         print(f"{'查询':<38}{'Plain':>8}{'Ctx':>8}")
         print("-" * 68)
-        pd = {x["q"]: x["rank"] for x in plain_d}
-        for x in ctx_d:
-            q = x["q"][:36]
-            print(f"{q:<38}{pd[x['q']]:>8}{x['rank']:>8}")
+        for plain_row, contextual_row in zip(plain_d, ctx_d):
+            query = plain_row["q"][:36]
+            print(f"{query:<38}{plain_row['rank']:>8}{contextual_row['rank']:>8}")
         print("=" * 68)
-        print("说明：孤立片段（如『好的，就订这个吧』）在 Plain 下缺乏可检索信号，")
-        print("上下文化后被『锚定』回其情境，因而召回名次明显提升。")
+        print("逐题对照目标块的两次排名，再看前一项或前三项是否包含所需的记录。")
 
     result = {
         "dataset": dataset_path,
@@ -230,6 +228,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--dataset", default=DEFAULT_DATASET,
                    help="记忆问答对照集 JSON 路径（默认：memory_qa_eval.json）")
+    p.add_argument("--query", help="只比较一条查询在两个索引中的前三个结果")
     p.add_argument("--output", default=None,
                    help="将对比结果（含逐查询明细）保存为 JSON 的路径（默认不保存）")
     p.add_argument("--quiet", action="store_true", help="仅输出结果 JSON，不打印表格")
@@ -238,7 +237,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 def main():
     args = build_arg_parser().parse_args()
-    run_comparison(args.dataset, output_path=args.output, verbose=not args.quiet)
+    if args.query:
+        result = single_query(args.dataset, args.query, verbose=not args.quiet)
+        if args.output:
+            path = Path(args.output)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    else:
+        result = run_comparison(args.dataset, output_path=args.output, verbose=not args.quiet)
+    if args.quiet:
+        print(json.dumps(result, ensure_ascii=False))
 
 
 if __name__ == "__main__":
