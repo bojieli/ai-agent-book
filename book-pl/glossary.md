@@ -1,8 +1,8 @@
 # Słownik roboczy polskiego przekładu
 
-Próbka obejmuje początek wprowadzenia, od opisu kursu po trzy przykłady z prac nad Pine. Podstawą przekładu jest [tekst chiński, wiersze 1–15](https://github.com/bojieli/ai-agent-book/blob/4d0077a59a6046fe79b53c3cbba6e877372b3d6a/book/introduction.md#L1-L15). Przy rozstrzyganiu wątpliwości pierwszeństwo ma wydanie chińskie; do wydania angielskiego można sięgnąć pomocniczo.
+Próbka obejmuje początek przedmowy, od opisu kursu po trzy przykłady z prac nad Pine. Podstawą przekładu jest [tekst chiński, wiersze 1–17](https://github.com/bojieli/ai-agent-book/blob/f0e27b17aebfb44196fec39d9779b61277faece9/book/introduction.md#L1-L17) oraz [przypis do pracy o DeepSeek-R1](https://github.com/bojieli/ai-agent-book/blob/f0e27b17aebfb44196fec39d9779b61277faece9/book/introduction.md#L113). Przy rozstrzyganiu wątpliwości pierwszeństwo ma wydanie chińskie; do wydania angielskiego można sięgnąć pomocniczo.
 
-Pomysł pilotażu i zakres słownika zaproponował Krzysztof Skomra w [zgłoszeniu nr 1088](https://github.com/bojieli/ai-agent-book/issues/1088). Ten roboczy przekład powstał z użyciem AI. Czeka na recenzję techniczną i językową, w tym ocenę proponowanych terminów przez polskojęzycznych czytelników. Pierwsza osoba we wprowadzeniu odnosi się do autora książki.
+Pomysł pilotażu i zakres słownika zaproponował Krzysztof Skomra w [zgłoszeniu nr 1088](https://github.com/bojieli/ai-agent-book/issues/1088). Ten roboczy przekład powstał z użyciem AI. Czeka na recenzję techniczną i językową, w tym ocenę proponowanych terminów przez polskojęzycznych czytelników. Pierwsza osoba w przedmowie odnosi się do autora książki.
 
 | Termin użyty w wydaniu chińskim | Termin angielski | Propozycja polska | Przykład lub uwaga |
 | --- | --- | --- | --- |
