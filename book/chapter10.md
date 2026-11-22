@@ -104,7 +104,7 @@ Google 在 2025 年的《Budget-Aware Tool-Use Enables Effective Agent Scaling�
 >
 > 两种实现读取同一份 `SKILL.md`。在一次角色交接前后，各取一份发给模型的请求，看看规程出现在哪条消息里，哪一段前缀还能复用。再核对两份摘要：销量来源可信吗？从 2021 年末到 2023 年末有两个增长期，年复合增长率算对了吗？这样可以分别判断角色切换的开销和最终的任务质量。
 >
-> 同样的 30 项任务各跑两种实现，按程序检查交付结果，加载 Skill 的一组通过 15 项，切换系统提示词的一组通过 2 项。不过，逐题比较，前一组未命中缓存的输入多了 6,855 个 token，耗时多了约 4.4 秒（均为配对差值的中位数）。请求开头的工具列表保持不动，整项任务仍可能读入更多新内容。见[配套对照报告](https://github.com/bojieli/ai-agent-book/blob/main/chapter10/multi-role-transfer/validation/comparison/runs/exp10-1-qwen35flash-20260809-v2/REPORT.md)。
+> 同样的 30 项任务各跑两种实现，按程序检查交付结果，加载 Skill 的一组通过 15 项，切换系统提示词的一组通过 2 项。不过，逐题比较，前一组未命中缓存的输入多了 6,855 个 token，耗时多了约 4.4 秒（均为配对差值的中位数）。这次服务商在两组请求中报告的缓存输入 token 数都为零。固定工具列表为复用前缀创造了条件；要判断有没有省钱，还得看服务商是否真的命中缓存，以及后续加载规程多读了多少内容。两组在指令遵循的 6 项边界测试中均全部通过，而完整任务的通过率相差很大。选架构时，这两个分数要分别看。见[配套对照报告](https://github.com/bojieli/ai-agent-book/blob/main/chapter10/multi-role-transfer/validation/comparison/runs/exp10-1-qwen35flash-20260809-v2/REPORT.md)。
 
 ## 不共享上下文的多 Agent 协作
 
