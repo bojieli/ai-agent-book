@@ -314,6 +314,8 @@ agent.reset_conversation()
 
 #### 添加自定义工具
 
+先在独立的工具注册表里试一次，不必启动模型。函数定义工具能做什么，参数说明则告诉模型怎样提出调用。
+
 ```python
 from tools import ToolRegistry
 
@@ -335,13 +337,16 @@ registry.register_tool(
         "required": ["param1", "param2"]
     }
 )
+print(registry.execute_tool("my_custom_tool", {"param1": "sample", "param2": 2}))
 ```
+
+这一步应打印 `Processed sample with 2`。要让正在运行的 Ollama 助手也能使用它，把示例中的 `registry = ToolRegistry()` 换成上一例助手所持有的 `registry = agent.agent.tool_registry`，再执行注册。此后调用 `agent.chat(..., stream=True)` 时就能检查模型有没有选中新工具。单独建的注册表只影响引用它的调用者。
 
 <a id="learning-3"></a>
 
 ## 分析结果与形成判断
 
-把模型回答、工具返回值和最终解释分开阅读。示例工具中的固定数据只能说明流程，不能作为实时天气信息。若调用失败，先定位模型服务、调用解析还是工具执行层，再决定修改哪一部分。
+把模型回答、工具返回值和最终解释分开阅读。天气工具查询 Open-Meteo，时间工具读取指定时区的时间，汇率工具使用模拟数据。解读一个数值时，先看它由哪个工具返回，再找数据来源和时间。若调用失败，先定位模型服务、调用解析还是工具执行层，再决定修改哪一部分。
 
 ### 检查自己的解释
 
