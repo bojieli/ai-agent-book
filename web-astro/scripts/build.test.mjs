@@ -67,12 +67,14 @@ test('Chapter 1 retains its sections, code, tables, figures, and footnotes', () 
   const footnotes = [...source.matchAll(/^\s*(?:>\s*)?\[\^([^\]]+)\]:/gm)].map(
     (match) => match[1],
   );
-  assert.equal(footnotes.length, 9);
-  for (const note of footnotes)
-    assert.ok(
-      ids(article).has(`user-content-fn-${note}`),
-      `Missing footnote ${note}`,
-    );
+  assert.ok(footnotes.length > 0, 'Chapter 1 includes source citations.');
+  const renderedFootnotes = [...ids(article)].filter((id) =>
+    id.startsWith('user-content-fn-'),
+  );
+  assert.deepEqual(
+    renderedFootnotes.sort(),
+    footnotes.map((note) => `user-content-fn-${note}`).sort(),
+  );
   assert.match(article, /Thought Questions/);
   assert.match(article, /Contextual adaptation/);
 });
