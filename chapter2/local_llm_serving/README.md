@@ -14,7 +14,7 @@
 
 ### 概述
 
-跨平台本地 LLM 工具调用演示，统一使用 OpenAI 兼容 API。默认根目录 `ch2` 安装显式使用 Ollama；Linux/WSL GPU 用户可额外安装 `vllm` extra 后显式运行 vLLM。
+输入同一句“温哥华现在几点，天气怎样？”，模型需要向客户端索取两类信息。用 `main.py --backend ollama` 时，客户端通过 Ollama 原生聊天接口与模型交谈；Linux/WSL 的 NVIDIA GPU 用户也可以安装 `vllm` extra，改用 vLLM 的 OpenAI 兼容接口。两条路径都要由客户端执行工具。运行前可用 `ollama list` 检查是否已有 `qwen3:0.6b`。Ollama 演示入口找不到这个模型时可能改用列表中的其他模型，应核对启动日志中的实际模型名。
 
 ### 功能
 
@@ -22,7 +22,7 @@
 - **后端路径：**
   - Linux/WSL2 + NVIDIA GPU，且已安装 `vllm` extra → **vLLM**
   - macOS、原生 Windows、无 GPU 的 Linux → **Ollama**
-- **仅标准工具调用**（OpenAI 兼容格式）
+- **结构化调用：** 模型给出工具名称和参数，客户端按后端的消息格式回传结果。
 - **内置工具：** 天气、时间、汇率、PDF、代码解释器等
 - **交互与单任务模式**
 - **流式输出：** 实时展示思考、工具调用与回复
@@ -34,6 +34,28 @@
 3. **convert_currency** — 模拟汇率
 4. **parse_pdf** — URL 或本地 PDF
 5. **code_interpreter** — 执行 Python
+
+### 先看温哥华这一问怎样答出来
+
+还没有安装模型也可以做这一步。在本实验目录运行以下命令，读取随书保存的[温哥华任务记录](runs/exp2-1-qwen3-0.6b-20260730-v2/evidence.json)。归档脚本 `run_experiment.py` 使用 Ollama 的 `/api/generate` 原始输出模式，保留模型发出的调用标记，再由实验程序解析；稍后运行交互演示时，你看到的是聊天接口已经解析过的事件。
+
+```bash
+python3 - <<'PYTHON'
+import json
+from pathlib import Path
+
+path = Path("runs/exp2-1-qwen3-0.6b-20260730-v2/evidence.json")
+case = json.loads(path.read_text())["tool_case"]
+for call in case["normalized_tool_calls"]:
+    print(call["name"], call["arguments"])
+for item in case["parallel_execution"]["results"]:
+    result = json.loads(item["result"])
+    print(item["call"]["name"], result)
+print(case["second_turn"]["raw_response"])
+PYTHON
+```
+
+先看请求。模型给时间工具填了时区 `America/Vancouver`，给天气工具填了城市 `Vancouver` 和单位 `celsius`。此时还没有气温。再看工具回执：时间工具给出当地时间 11:11:28，天气工具返回 17.9 °C。最后一段回复把时间报到分钟，气温仍是 17.9 °C。现在把自己的运行结果按同样的顺序读一遍：如果答案里的单位错了，最早是在哪一步变的？这些数值属于归档当天，换一天运行应核对当次回执。
 
 ### 流式模式
 
@@ -388,7 +410,7 @@ local_llm_serving/
 
 ### Overview
 
-Cross-platform demo of LLM tool calling via standard OpenAI-compatible APIs. The default root `ch2` install uses Ollama explicitly; Linux/WSL GPU users can add the `vllm` extra and run vLLM explicitly.
+The interactive Ollama backend uses native chat; the vLLM backend uses the OpenAI-compatible API. The default root `ch2` install uses Ollama explicitly; Linux/WSL GPU users can add the `vllm` extra and run vLLM explicitly.
 
 ### Features
 
@@ -396,7 +418,7 @@ Cross-platform demo of LLM tool calling via standard OpenAI-compatible APIs. The
 - **Backend paths:**
   - **vLLM** on Linux/WSL2 with NVIDIA GPU after installing the `vllm` extra
   - **Ollama** on macOS, native Windows, or Linux without GPU
-- **Standard tool calling** only (OpenAI-compatible format)
+- **Structured tool calls:** the client executes the requested tools and returns their results.
 - **Built-in tools:** weather, calculator, time, currency, PDF parse, code interpreter
 - **Interactive & single-task modes**
 - **Streaming:** real-time thinking, tool calls, and responses
