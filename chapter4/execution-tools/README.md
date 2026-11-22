@@ -264,11 +264,15 @@ for name in ("01_python_valid_write", "02_python_invalid_rejected", "05_verified
 第一条记录写入了 32 字节。第二条同样返回了 MCP 响应，其中却写着第一行语法错误，工具拒绝写入。第三条通过了语法校验；打开差异预览，会看到函数仍叫 `add`，返回值却从 `a + b` 改成了 `a - b`。如果任务要求这个函数做加法，还需要什么证据？可以给它输入 2 和 3，再检查结果是否为 5。这样就能分清工具接受编辑和程序满足需求这两个判断。
 
 
-区分命令结束、执行成功和任务目标达成。输出被截断时，要知道完整结果保存在何处；错误消息也应保留足够信息，帮助决定修正参数还是停止操作。
+### 这张账单可以发给用户了吗？
+
+[表格工具的回执](validation/experiment_4_4/real_mcp_gui_20260802T093657Z/receipts/13_excel_formula_screenshot.json)列出三个公式单元格。打开[工作簿](validation/experiment_4_4/real_mcp_gui_20260802T093657Z/workspace/invoice.xlsx)，D2 计算两份计算资源的费用（2 × 12.5），D3 计算三份存储资源的费用（3 × 7），D4 用 `SUM(D2:D3)` 求和。按这两行输入，合计应为 46。
+
+先只看[工具返回的截图](validation/experiment_4_4/real_mcp_gui_20260802T093657Z/workspace/invoice.png)，你能从图上读出 46 吗？再打开[同一次调用生成的 PDF](validation/experiment_4_4/real_mcp_gui_20260802T093657Z/workspace/invoice.pdf)，翻到第二页：金额列单独占了一页，25、21、46 都在这里。截图只取了第一页，因此总计标签旁边是空白。要把账单交给用户，可以先把打印宽度设为一页，重新导出，再检查两项费用和总计是否都与各自的行对齐。
 
 ### 检查自己的解释
 
-程序返回零退出码，但生成文件内容错误，应该由哪一层发现问题？
+假如把总计公式误写为 `SUM(D2:D2)`，调整打印宽度能发现什么，又该用哪两项输入核对金额？
 
 <a id="learning-4"></a>
 
