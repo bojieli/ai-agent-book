@@ -2,27 +2,17 @@
 
 本章把工具看作模型与环境之间的接口。感知提供观测，执行完成计算或改变状态，协作让任务在不同参与者之间继续。工具数量增加后，还需要解决发现与选择。
 
+← [返回主目录](../README.md) · [读本章正文](../book/chapter4.md)
+
+<a id="如何阅读实验"></a>
+
 ## 第一次阅读的顺序
 
-1. [先从本地文件读取理解工具协议与返回值 ](perception-tools/README.md)。
-2. [再观察一次动作如何执行、检查并返回结果 ](execution-tools/README.md)。
-3. [最后比较工具很多时的查找方式与上下文成本 ](active-tool-discovery/README.md)。
+1. 从[感知工具](perception-tools/README.md)读取一份本地文件。先找工具名称和参数，再到返回值里找文件内容。换成读取日历时，即使客户端收到响应，也可能只读到缺少授权的错误消息。
+2. 在[执行工具](execution-tools/README.md)目录运行 `python cli.py demo`，沿本地写入与编辑过程检查参数、操作风险和执行回执。遇到“校验通过”时，看看它实际检查的是语法、文件内容，还是用户要求的功能。
+3. 工具多了以后，比较[主动发现](active-tool-discovery/README.md)怎样检索候选并把选中的工具定义加入上下文。如果任务还需交给别人，去[协作工具](collaboration-tools/README.md)查看主 Agent 怎样接收答复或处理超时。
 
-读懂一个完整例子后，再查阅下面的全部项目与配置。比较实验时，把输入、模型、运行条件和结果放在一起记录；遇到历史输出，先确认它对应的版本与任务范围。
-
-> 工具是 Agent 的感官和手脚：MCP 协议，感知/执行/协作三类工具，以及工具规模化后的主动发现
-
-← [返回主目录](../README.md) · 📖 [读本章正文](../book/chapter4.md)
-
-## 如何阅读实验
-
-正文保留参数示例、协议交互、工具实现机制和设计取舍；完整运行命令、配置、原始记录与验收条件在以下项目：
-
-- **Starter**：从 [execution-tools](execution-tools/) 的 `python cli.py demo` 离线调用开始，先找 schema 校验、风险分类和结果验证；
-- **Builder**：阅读 [async-agent](../chapter6/async-agent/) 的 AgentRuntime._dispatcher、_handle_interrupt 与并行工具任务，再看 [active-tool-discovery](active-tool-discovery/) 的检索/追加 schema 路径；
-- **Maintainer**：检查权限策略、沙盒清理、取消确认、原始 provider 回执和 EXPERIMENT_LEDGER.md。
-
-首次可跳过 MCP transport、Web UI 和 provider 适配器；先运行再按上述入口读核心循环。
+跑通本地流程后，再看 MCP 传输、Web 界面和提供商适配。想追查打断与取消，可以接着读[第六章的异步运行时](../chapter6/async-agent/)中的 `AgentRuntime._dispatcher` 与 `_handle_interrupt`。核对生产环境的权限策略、沙盒清理、取消确认和服务端回执时，可从[实验记录](EXPERIMENT_LEDGER.md)找到对应场景。
 
 ## Skill 分发与安装入口
 
