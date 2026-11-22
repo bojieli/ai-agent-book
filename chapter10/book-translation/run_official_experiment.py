@@ -20,6 +20,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -749,7 +750,7 @@ def main() -> int:
     }
     artifact = {
         "schema_version": 1,
-        "experiment": "10-3",
+        "experiment": "10-2",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "source_book": {
             "identity": "AI Agents in Depth, English edition, Chapters 1-2",
@@ -834,11 +835,15 @@ def main() -> int:
             "it does not require the Manager workflow to win every metric."
         ),
     }
+    with ZipFile(output / "source-snapshot.zip", "w", compression=ZIP_DEFLATED) as snapshot:
+        for path in [*current_source_paths, *paths]:
+            snapshot.write(path, path.resolve().relative_to(REPO))
+
     evidence = output / "evidence.json"
     evidence.write_text(json.dumps(artifact, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     latest = HERE / "validation" / "latest.json"
     latest.write_text(json.dumps({
-        "experiment": "10-3",
+        "experiment": "10-2",
         "status": "complete" if artifact["experiment_execution_complete"] else "incomplete",
         "evidence": str(evidence.relative_to(HERE)),
         "evidence_sha256": sha256(evidence),

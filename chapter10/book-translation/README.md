@@ -101,6 +101,8 @@ python run_official_experiment.py \
 
 ##### 2026-07-30 正式实跑结果
 
+历史记录沿用实验旧编号 10-3，对应本章实验 10-2。
+
 [v4 完整证据](validation/real_20260730T061500Z_v4/evidence.json)在英文版第 1–2 章上完成了 26 个 Markdown 安全翻译单元：242,090 字节、1,598 行、23 个插图引用、14 个围栏代码块。翻译组使用真实 ARK `doubao-seed-1-6-flash-250615`，匿名位置平衡裁判使用真实 ARK `doubao-seed-1-6-250615`；二者均显式关闭 thinking。12/12 执行与溯源门禁通过，[latest 指针](validation/latest.json)的证据 SHA-256 为 `9e765aa3d9b194346e1b9b5398018b99c369c2f8c79df231a433cc9e89ab1b5e`。
 
 | 实测指标 | 四角色管理者组 | 单 Agent 组 |
@@ -118,7 +120,7 @@ python run_official_experiment.py \
 
 结构保真同样出现真实负结果：两组都保留了代码块和插图的数量，却都改动了代码 payload 并增加了标题；管理者组还改动了插图目标，而单 Agent 组的插图目标序列保持不变。这里的 ✅ 表示完整对照与所有预注册测量已经执行，不表示每项质量假设都成立。
 
-裁判阶段共有 39 次带完整原始请求/响应 ID/usage/时延的回执，另有一次在回执机制加入前发生的已声明格式失败；14 个带回执响应未通过严格 schema，8 个仅把偏好字段重复嵌套的响应做了有标记的无损本地归一化，另一次通过独立的格式修复 API 调用展平，未重新评分。核对归档时，先看 26 份回执、三个 checkpoint、四份重组译文和一份失败记录。这 34 个文件今天仍可直接按清单校验。其余三个哈希标识当时的验收源码，可在[归档提交](https://github.com/bojieli/ai-agent-book/tree/6af52b4eeaa7fac2b7ec9e3490dc32ea9cc72ab4/chapter10/book-translation)核对。当前的运行脚本和角色实现已经改过。要复核当时翻译了什么，还需对照记录中的输入哈希；其中英文第二章匹配[这版原稿](https://github.com/bojieli/ai-agent-book/blob/7ba736a065f8de8783f900abf919e6da1661b6d6/book-en/chapter2.md)。
+裁判阶段共有 39 次带完整原始请求/响应 ID/usage/时延的回执，另有一次在回执机制加入前发生的已声明格式失败；14 个带回执响应未通过严格 schema，8 个仅把偏好字段重复嵌套的响应做了有标记的无损本地归一化，另一次通过独立的格式修复 API 调用展平，未重新评分。核对归档时，先看 26 份回执、三个 checkpoint、四份重组译文和一份失败记录。这 34 个文件今天仍可直接按清单校验。其余三个哈希标识当时的验收源码，可在[归档提交](https://github.com/bojieli/ai-agent-book/tree/6af52b4eeaa7fac2b7ec9e3490dc32ea9cc72ab4/chapter10/book-translation)核对。若要离线逐项复核，可以打开[本次运行的源码与原稿快照](validation/real_20260730T061500Z_v4/source-snapshot.zip)。包内路径与证据清单一致，其中保存了三个验收程序和两章英文原稿。当前的运行脚本和角色实现已经改过。要复核当时翻译了什么，还需对照记录中的输入哈希；其中英文第二章匹配[这版原稿](https://github.com/bojieli/ai-agent-book/blob/7ba736a065f8de8783f900abf919e6da1661b6d6/book-en/chapter2.md)。
 
 `python demo.py` 会先打印**四 Agent 协作的实时轨迹**（Manager 制定计划 → 调度
 Glossary → 逐章 Translation → Proofreading → 依报告决定修订），再打印各 Agent 的

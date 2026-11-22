@@ -2,6 +2,7 @@ import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from zipfile import ZipFile
 
 import pytest
 import agents
@@ -201,7 +202,6 @@ def test_canonical_evidence_latest_pointer_and_all_declared_hashes_match():
     assert latest["evidence_sha256"] == hashlib.sha256(evidence_path.read_bytes()).hexdigest()
 
     groups = (
-        "current_acceptance_sources_sha256",
         "arm_and_judge_checkpoints_sha256",
         "reassembled_translation_outputs_sha256",
         "raw_judge_receipts_sha256",
@@ -212,14 +212,14 @@ def test_canonical_evidence_latest_pointer_and_all_declared_hashes_match():
         for group in groups
         for relative, digest in evidence["provenance"][group].items()
     }
-    assert len(declarations) == 37
-    assert all(
-        (repo / relative).is_file()
-        and hashlib.sha256((repo / relative).read_bytes()).hexdigest() == digest
-        for relative, digest in declarations.items()
-    )
+    sources = dict(evidence["provenance"]["current_acceptance_sources_sha256"])
+    assert len(declarations) + len(sources) == 37
+    for relative, digest in declarations.items():
+        assert hashlib.sha256((repo / relative).read_bytes()).hexdigest() == digest, relative
 
     for title, relative in evidence["source_book"]["paths"].items():
-        assert hashlib.sha256((repo / relative).read_bytes()).hexdigest() == (
-            evidence["source_book"]["sha256"][title]
-        )
+        sources[relative] = evidence["source_book"]["sha256"][title]
+    with ZipFile(evidence_path.with_name("source-snapshot.zip")) as snapshot:
+        assert sorted(snapshot.namelist()) == sorted(sources)
+        for relative, digest in sources.items():
+            assert hashlib.sha256(snapshot.read(relative)).hexdigest() == digest, relative
