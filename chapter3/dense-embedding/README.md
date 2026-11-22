@@ -161,7 +161,17 @@ python cli.py --corpus my.json --labels my_labels.json --eval -o result.json
 宏平均  recall@5=1.000  precision@5=0.320  MRR=1.000
 ```
 
-查询 `a cat playing` 仍把仅含 `kitten` / `feline` 的文档排到第 1、2 名——相对 BM25（实验 3-5 会漏召回）的语义优势。
+具体看 `a cat playing`（一只正在玩耍的猫）。在上面的 MiniLM 示例中，两篇标为相关的文档排到了第一、二名。读一读原文：`doc_7` 描述小猫追着毛线球跑，`doc_8` 描述猫科动物在草丛中跟踪猎物。两篇都与猫有关，但如果用户要找的是“玩耍”的例子，第一篇更贴切。这道题把两篇都计为相关；读者若想评价动作是否吻合，还需把这条要求写进标注。
+
+实验 3-5 默认用 `cat` 在 10 篇文档里做关键词检索。要比较两种方法，先统一输入。下面在本实验目录导出稠密示例的 12 篇文档，再让 BM25 搜同一句话。两条查询命令均使用正文内容建立索引，标题只用于显示。
+
+```bash
+python -c 'import json; from cli import DEFAULT_CORPUS; print(json.dumps(DEFAULT_CORPUS))' > cat-corpus.json
+python ../sparse-embedding/cli.py --corpus cat-corpus.json -q "a cat playing" -k 5
+python cli.py --corpus cat-corpus.json --embedding-model sentence-transformers/all-MiniLM-L6-v2 -q "a cat playing" -k 5
+```
+
+在这 12 篇文档上，BM25 返回空列表。小猫那篇标题里虽然有 `Playing`，被索引的正文却写的是 `kitten chased a ball of yarn`。核对检索结果时，先看系统究竟把文档的哪些字段送进了索引。
 
 **ANN 对比**（3000 条 128 维，100 查询，top-10）：
 
