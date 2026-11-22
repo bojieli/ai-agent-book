@@ -1,4 +1,4 @@
-# Mem0 Agent with Kimi K3 for LOCOMO Benchmark / Mem0 Agent 与 LOCOMO 评测
+# 用 Mem0 和 Kimi 观察跨会话记忆 / Exploring cross-session memory with Mem0 and Kimi
 
 引入记忆框架后，应用可以把信息提取与检索交给专门组件，但仍需理解框架实际保存了什么。本实验用 Mem0 连接对话与长期存储，观察一条信息怎样进入后续回答。
 
@@ -14,26 +14,27 @@
 
 ### 概述
 
-将 **Mem0** 记忆框架与 **Kimi** 语言模型结合，面向 LOCOMO 风格长上下文、多会话 / 多 Agent 任务：
+同一个用户先说住在北京，后来搬到上海。下一次问起住址时，Agent 能找回哪些记录？回答又采用了哪一条？本实验让同一用户和 Agent 跨会话使用 Mem0，分别检查事实写入、候选记忆和最终回答。课堂练习借用了 LoCoMo 的长程对话问题。原始 LoCoMo 提供已有的对话、问题和标注；这里的对话由本地脚本生成。[LoCoMo 数据集与任务说明](https://snap-research.github.io/locomo/)
 
-- 跨会话**持久记忆**  
-- Kimi 集成（实验中会限制上下文预算）  
-- LOCOMO 场景评测  
-- 多会话、多 Agent 共享记忆协作
+### 一轮对话怎样使用记忆
 
-### 功能
+`experiment.py` 会轮换协作规划、信息共享、多步解题、谈判、教学五类场景，在每个场景中生成多次会话，随机选择回答的 Agent。同一场景内用户标识固定；检索同时按用户和 Agent 标识过滤，同一 Agent 能跨会话读到自己的记录。每一轮先取最多五条相关记忆，将其与最近的对话放入模型输入，收到回答后，再把本轮问答交给 Mem0 提取事实。
 
-**核心：** Mem0 v3 的 ADD-only 抽取与混合检索；跨会话上下文保持；一致性、连贯性、时延、记忆利用率等指标；本地或云端记忆后端。
+本地模式使用 Mem0 OSS 的 v3 记忆管线（Python 依赖为 `mem0ai[nlp]>=2.0,<3`），由 SDK 执行仅追加的事实提取与混合检索。抽取和答题按配置使用语言模型，嵌入使用独立的 OpenAI 配置。也可以切换到 Mem0 Cloud，由服务端处理记忆。默认答题模型为 Moonshot 的 `kimi-k3`；使用下文的 OpenRouter 回退时，应在结果的 `config.kimi.model_name` 中核对实际配置。
 
-**LOCOMO 场景：** 协作规划、信息共享、多步解题、谈判、教与学。
+### 运行本地场景
 
-### LOCOMO 基准
+先用 `python experiment.py --scenarios 1 --output results/` 跑通一类场景。如果要轮换五类各两次，再运行：
 
 ```bash
 python experiment.py --scenarios 10 --output results/
 ```
 
-指标：一致性、连贯性、记忆保持、响应时间、上下文利用等。
+在输出目录打开 `locomo_results_*.json`，先读 `scenarios` 中一轮实际的提问与回答，再看汇总字段。文件名沿用旧名。脚本没有加载 LoCoMo 的对话、参考答案或官方评分器，输出不可用于复现论文分数。
+
+- **一致性和连贯性**是教学用的近似指标。前者检查英文回答中是否出现 `however`、`I was wrong` 等转折或纠正用语；后者按空格切词，计算提问中的词在回答里出现的比例。诚实纠错可能降低前一项，简单复述提问也可能抬高后一项。要判断是否记对事实，需要回查具体对话。
+- **生成耗时**（`avg_response_time`）只覆盖答题模型的生成调用；检索在计时前，写入在计时后。回答长度按字符计。
+- **记忆数量**（`memory_utilization`）是查询该场景用户时返回的条数，上限为 100。它可以帮助检查是否写入了记录。要测事实召回率，应另列应答事实，并逐条核对回答。
 
 ### 架构与后端
 
@@ -77,7 +78,8 @@ cp env.example .env
 - `KIMI_API_KEY`  
 - `MODEL_NAME`（默认 `kimi-k3`）——**原始 Moonshot 模型 id**，不要用 `provider/model` 斜杠形式  
 - `MEMORY_BACKEND`：`local` / `cloud`  
-- `MAX_TOKENS`（默认 128000）
+- `MAX_TOKENS`（默认 128000，作为聊天请求的生成上限）
+- `OPENAI_API_KEY`（本地后端的默认嵌入模型使用）
 
 <a id="learning-2"></a>
 
@@ -101,7 +103,7 @@ python quickstart.py
 python main.py --mode demo --user-id demo_user
 ```
 
-书中示例：先说住在北京，后来说搬到上海。Mem0 保留两条带时间的事实，由混合、时间感知检索优先返回当前事实。
+书中示例：先说住在北京，后来说搬到上海。检查存储中是否同时出现两次陈述，再看检索顺序和回答。若回答仍是北京，先查上海这条事实是否已写入、是否被检索到，再看模型如何判断先后。
 
 #### 直接记忆操作 CLI
 
@@ -128,7 +130,7 @@ python main.py --mode batch --input conversations.json --output results.json
 
 ## 分析结果与形成判断
 
-检查新增内容是否来自对话，检索是否命中了正确用户，以及旧事实是否仍影响回答。运行标准数据集时，还要区分记忆机制的效果和回答模型本身的能力。
+检查新增内容是否来自对话，检索是否命中了正确用户，以及旧事实是否仍影响回答。若要与第三章介绍的标准基准比较，还需单独接入相同数据、问题与评分方法。
 
 ### 检查自己的解释
 
@@ -141,7 +143,7 @@ python main.py --mode batch --input conversations.json --output results.json
 ### 项目说明
 
 > Companion material for *AI Agents in Depth*, Chapter 3 — Mem0 memory framework + Kimi for long-context multi-session memory (Experiment 3-2 comparison track).  
-> 配套《深入理解 AI Agent》第 3 章——Mem0 记忆框架 + Kimi，长上下文多会话记忆（实验 3-2 对照实现之一）。
+> 配套《深入理解 AI Agent》第 3 章——Mem0 记忆框架 + Kimi，长上下文多会话记忆（实验 3-2 的延伸练习）。
 
 ← [Chapter 3 index / 返回第 3 章目录](../README.md)
 
@@ -187,14 +189,14 @@ An agent that combines the **Mem0** memory framework with the **Kimi** language 
 
 - **Persistent memory** via Mem0 across sessions  
 - **Kimi** integration (experiment caps context budget below the model’s full window)  
-- **LOCOMO benchmark** scenarios  
+- locally generated multi-session scenarios
 - Multi-session and multi-agent collaboration with shared memory  
 
 ### Features
 
 **Core:** Mem0 v3 ADD-only extraction and hybrid retrieval; context preservation; metrics (consistency, coherence, latency, memory use); local or cloud memory backend.
 
-**LOCOMO scenarios:** collaborative planning; information sharing; multi-step problem solving; negotiation; teaching & learning.
+**Local scenarios:** collaborative planning; information sharing; multi-step problem solving; negotiation; teaching & learning.
 
 ### Installation
 
@@ -285,13 +287,13 @@ Batch input format:
 ]
 ```
 
-### LOCOMO benchmark
+### Local multi-session exercise
 
 ```bash
 python experiment.py --scenarios 10 --output results/
 ```
 
-Metrics: consistency, coherence, memory retention, response time, context utilization. Results JSON under `results/` with per-scenario and overall metrics.
+The runner uses local prompts and heuristic scores. It does not load or score the official LoCoMo dataset. Results under `results/` include per-scenario and overall metrics.
 
 ### Architecture
 
