@@ -78,4 +78,31 @@ python evaluate.py --model Qwen/Qwen3-8B --adapter output/adapter --label my_ada
 
 首次分歧位置从零开始；整段相同的答案会计入答案的完整字节数，因此这个平均值也受正确答案的数量和长度影响。另一个评分细节是脚本先对模型解码结果调用 `.strip()`，再与目标比较，因此这里的分数不能用于判断模型是否原样保留了答案首尾的空白。[评分实现](evaluate.py) · [基座留出集](validation/eval_base_eval.json) · [微调留出集](validation/eval_adapted_eval.json) · [微调边界集](validation/eval_adapted_boundary.json)
 
+把两份留出集成绩按题号配对，还能查到总分里看不见的退步。在实验目录运行：
+
+```bash
+python - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+
+def answers(model):
+    report = Path(f"validation/eval_{model}_eval.json")
+    return {r["id"]: r for r in json.loads(report.read_text(encoding="utf-8"))["rows"]}
+
+base, adapted = answers("base"), answers("adapted")
+assert base.keys() == adapted.keys()
+changes = Counter()
+for sample, before in base.items():
+    after = adapted[sample]
+    assert before["target"] == after["target"]
+    changes[before["exact"], after["exact"]] += 1
+    if before["exact"] > after["exact"]:
+        print(sample, repr(before["target"]), repr(after["prediction"]))
+print(sorted(changes.items()))
+PY
+```
+
+有 95 题两次都对，53 题两次都错，107 题由错变对，1 题由对变错。唯一退步的 `eval-095` 中，目标末尾是 `…Zq\nhZq`（这里用 `\n` 表示一个换行符），微调后的答案末尾却是 `…ZqhZq`。换行在字符串中间，因此评分脚本清理首尾空白的操作不会影响这道题。复测下一版模型时，可以把这道题与第一题一起保留，分别检查多行复制和 JSON 输出格式。
+
 最后回到开头的两个案例。512 条留出和边界探针中，Qwen3 与 Qwen2.5 分词器的编码—解码往返率均为 80.1%，Mistral 为 100%。这里测的是 `source` 经过分词器后能否还原；表中的 80.1% 测的是模型在 256 道边界题上生成的整段答案。试着找一条模型答错的题，像检查 `eval-000` 那样先比字段，再像检查 `eval-004` 那样比字节。同一个零分，可能对应不同的修复方法。
