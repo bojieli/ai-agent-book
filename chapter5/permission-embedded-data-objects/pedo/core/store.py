@@ -12,6 +12,7 @@ import time
 import logging
 import threading
 from collections import defaultdict
+from contextlib import contextmanager
 from dataclasses import asdict
 from typing import Any, Callable, Optional
 from queue import Queue
@@ -59,10 +60,21 @@ class ObjectStore:
         self._reaction_thread: Optional[threading.Thread] = None
         self._reaction_log: list[dict] = []
         self._running = False
+        self._delete_context = threading.local()
         self._setup_db()
 
     def _get_conn(self):
         return psycopg2.connect(self.dsn)
+
+    @contextmanager
+    def _connection(self):
+        """Borrow the delete transaction without committing it in a helper."""
+        connection = getattr(self._delete_context, "connection", None)
+        if connection is not None:
+            yield connection
+        else:
+            with self._get_conn() as connection:
+                yield connection
 
     def _setup_db(self):
         with self._get_conn() as conn:
@@ -196,11 +208,17 @@ class ObjectStore:
         """Create a new object. Full pipeline."""
         obj_type = self._get_type(obj.type_name)
 
+        # Resolve the target tenant before checking any parent or validators.
+        if not obj.org_id and accessor.org_id:
+            obj.org_id = accessor.org_id
+        self._check_tenant(obj, accessor)
+
         # Tier 1: Permission check
         if obj.parent_id:
             parent = self._load_object(obj.parent_id)
             if parent is None:
                 raise ReferentialIntegrityError(f"Parent {obj.parent_id} not found")
+            self._check_related_tenant(obj, parent, accessor)
             self._check_permission(parent, accessor, PrivilegeType.INSERT)
         else:
             # Top-level create: check type-level permission rules
@@ -209,8 +227,6 @@ class ObjectStore:
         # Set ownership
         if not obj.owner_id:
             obj.owner_id = accessor.user_id
-        if not obj.org_id and accessor.org_id:
-            obj.org_id = accessor.org_id
 
         obj.created_at = time.time()
         obj.updated_at = obj.created_at
@@ -222,7 +238,7 @@ class ObjectStore:
                 raise ValidationError(str(result))
 
         # Validate references
-        self._validate_references(obj, obj_type)
+        self._validate_references(obj, obj_type, accessor)
 
         # Tier 2: Object store mechanics
         self._store_object(obj)
@@ -284,7 +300,27 @@ class ObjectStore:
 
     def delete(self, object_id: str, accessor: AccessContext,
                _reaction_depth: int = 0) -> bool:
-        """Delete an object. Full pipeline."""
+        """Delete a complete cascade atomically, then publish its reactions."""
+        if getattr(self._delete_context, "connection", None) is not None:
+            return self._delete_in_transaction(object_id, accessor, _reaction_depth)
+
+        reactions = []
+        with self._get_conn() as connection:
+            self._delete_context.connection = connection
+            self._delete_context.reactions = reactions
+            try:
+                result = self._delete_in_transaction(object_id, accessor, _reaction_depth)
+            finally:
+                del self._delete_context.connection
+                del self._delete_context.reactions
+        # The connection context commits on success or rolls back on any error.
+        # Nothing reaches the reaction worker until the entire cascade commits.
+        for obj, depth in reactions:
+            self._queue_reactions(obj, "after_delete", depth)
+        return result
+
+    def _delete_in_transaction(self, object_id: str, accessor: AccessContext,
+                               reaction_depth: int) -> bool:
         obj = self._load_object(object_id)
         if obj is None:
             raise ValueError(f"Object {object_id} not found")
@@ -304,7 +340,7 @@ class ObjectStore:
         self._check_permission(obj, accessor_with_owner, PrivilegeType.WRITE)
 
         # Tier 2: Object store mechanics — handle referential integrity
-        self._handle_delete_cascades(obj, accessor, _reaction_depth)
+        self._handle_delete_cascades(obj, accessor, reaction_depth)
 
         # Check for RESTRICT references from other objects
         self._check_restrict_references(obj)
@@ -313,11 +349,24 @@ class ObjectStore:
         self._delete_object(object_id)
 
         # Tier 3: Queue reactions
-        self._queue_reactions(obj, "after_delete", _reaction_depth)
+        self._delete_context.reactions.append((obj, reaction_depth))
 
         return True
 
     # ── Tier 1: Permission Evaluation ──────────────────────────
+
+    def _check_tenant(self, obj: DataObject, accessor: AccessContext):
+        """Global objects use their rules; tenant objects require a matching org."""
+        if obj.org_id and obj.org_id != accessor.org_id and accessor.role != "system":
+            raise PermissionDeniedError(
+                f"Tenant isolation: accessor org {accessor.org_id} != object org {obj.org_id}")
+
+    def _check_related_tenant(self, obj: DataObject, target: DataObject,
+                              accessor: AccessContext):
+        """Allow shared global targets, but forbid links into another tenant."""
+        if target.org_id and target.org_id != obj.org_id and accessor.role != "system":
+            raise PermissionDeniedError(
+                f"Tenant isolation: object org {obj.org_id} != related object org {target.org_id}")
 
     def _check_permission(self, obj: DataObject, accessor: AccessContext,
                           privilege: PrivilegeType):
@@ -325,12 +374,7 @@ class ObjectStore:
         now = time.time()
         obj_type = self._get_type(obj.type_name)
 
-        # Built-in tenant isolation: if the object has an org_id and the accessor
-        # has a different org_id, deny access (unless the accessor is system)
-        if (obj.org_id and accessor.org_id and
-                obj.org_id != accessor.org_id and accessor.role != "system"):
-            raise PermissionDeniedError(
-                f"Tenant isolation: accessor org {accessor.org_id} != object org {obj.org_id}")
+        self._check_tenant(obj, accessor)
 
         # Collect rules: type-level rules + object-level overrides
         rules = obj.permission_rules if obj.permission_rules is not None else obj_type.permission_rules
@@ -408,7 +452,8 @@ class ObjectStore:
 
     # ── Tier 2: Object Store Mechanics ─────────────────────────
 
-    def _validate_references(self, obj: DataObject, obj_type: ObjectType):
+    def _validate_references(self, obj: DataObject, obj_type: ObjectType,
+                             accessor: AccessContext):
         """Validate that all declared references point to existing objects."""
         for rel in obj_type.relationships:
             ref_id = obj.references.get(rel.name) or obj.content.get(rel.name + "_id")
@@ -417,6 +462,13 @@ class ObjectStore:
                 if target is None:
                     raise ReferentialIntegrityError(
                         f"Referenced object {ref_id} for relationship {rel.name} not found")
+                self._check_related_tenant(obj, target, accessor)
+                # Validators may read the content id even when refs overrides it.
+                content_ref_id = obj.content.get(rel.name + "_id")
+                if content_ref_id and content_ref_id != ref_id:
+                    content_target = self._load_object(content_ref_id)
+                    if content_target is not None:
+                        self._check_related_tenant(obj, content_target, accessor)
                 if target.type_name != rel.target_type:
                     raise ReferentialIntegrityError(
                         f"Referenced object {ref_id} is type {target.type_name}, expected {rel.target_type}")
@@ -427,7 +479,7 @@ class ObjectStore:
     def _handle_delete_cascades(self, obj: DataObject, accessor: AccessContext,
                                 reaction_depth: int):
         """Handle CASCADE and NULLIFY for child objects."""
-        with self._get_conn() as conn:
+        with self._connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 # Find children
                 cur.execute("SELECT * FROM objects WHERE parent_id = %s", (obj.id,))
@@ -469,7 +521,7 @@ class ObjectStore:
     def _find_referencing_objects(self, target_id: str, type_name: str,
                                   rel_name: str) -> list[DataObject]:
         """Find objects that reference the target via a given relationship."""
-        with self._get_conn() as conn:
+        with self._connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 # Check both content field and refs
                 cur.execute("""
@@ -604,7 +656,7 @@ class ObjectStore:
             conn.commit()
 
     def _update_object(self, obj: DataObject):
-        with self._get_conn() as conn:
+        with self._connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     UPDATE objects SET content = %s, updated_at = %s, refs = %s,
@@ -613,16 +665,14 @@ class ObjectStore:
                 """, (json.dumps(obj.content), obj.updated_at,
                       json.dumps(obj.references), obj.parent_id,
                       obj.org_id, obj.id))
-            conn.commit()
 
     def _delete_object(self, object_id: str):
-        with self._get_conn() as conn:
+        with self._connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("DELETE FROM objects WHERE id = %s", (object_id,))
-            conn.commit()
 
     def _load_object(self, object_id: str) -> Optional[DataObject]:
-        with self._get_conn() as conn:
+        with self._connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute("SELECT * FROM objects WHERE id = %s", (object_id,))
                 row = cur.fetchone()
