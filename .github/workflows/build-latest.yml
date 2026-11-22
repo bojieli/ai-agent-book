@@ -24,6 +24,7 @@ on:
       - 'book-hu/**'
       - 'book-he/**'
       - 'book-ptbr/**'
+      - 'book-mn/**'
       - 'build_epub.sh'
       - 'scripts/kindle_epub_patcher.py'
       - 'epub.css'
@@ -55,6 +56,7 @@ on:
           - ar
           - he
           - ptbr
+          - mn
 
 permissions:
   contents: write
@@ -166,7 +168,7 @@ jobs:
         run: |
           set -u
           if [ "$GITHUB_REF" = "refs/heads/main" ] || [ "$EDITION" = "all" ]; then
-            main="book book-zhtw book-en book-es book-id book-ru book-vi book-ta book-ar book-tr book-ko book-hu book-he book-ptbr"
+            main="book book-zhtw book-en book-es book-id book-ru book-vi book-ta book-ar book-tr book-ko book-hu book-he book-ptbr book-mn"
             optional="book-ja"
           else
             # workflow_dispatch on a feature branch is a focused edition
@@ -187,6 +189,7 @@ jobs:
               ar) main="book-ar" ;;
               he) main="book-he" ;;
               ptbr) main="book-ptbr" ;;
+              mn) main="book-mn" ;;
               *) echo "::error::Unsupported edition: $EDITION"; exit 2 ;;
             esac
             optional=""
@@ -315,4 +318,6 @@ jobs:
           # non-fatal builds produced them.
           cp book-ja/AI-Agents-in-Depth-Bojie-Li-v3.0-ja.pdf     "$out/AI-Agents-in-Depth-ja.pdf"  || echo "ja PDF not built yet (WIP) — skipping"
           cp book-ja/AI-Agents-in-Depth-Bojie-Li-v3.0-ja.epub    "$out/AI-Agents-in-Depth-ja.epub" || echo "ja EPUB not built yet (WIP) — skipping"
+          cp book-mn/AI-Agents-in-Depth-Bojie-Li-v3.0-mn.pdf "$out/AI-Agents-in-Depth-mn.pdf"
+          cp book-mn/AI-Agents-in-Depth-Bojie-Li-v3.0-mn.epub "$out/AI-Agents-in-Depth-mn.epub"
           gh release upload latest "$out"/* --clobber --repo "${{ github.repository }}"

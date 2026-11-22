@@ -3,7 +3,7 @@
 [![PDF](https://img.shields.io/badge/PDF-다운로드-success.svg)](#-전자책) [![온라인으로 읽기](https://img.shields.io/badge/🌐_온라인으로_읽기-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/ko/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![Languages](https://img.shields.io/badge/번역-15개%20언어-informational.svg)](#-전자책)
 [![Trending GitHub Project of the Day](https://img.shields.io/badge/GitHub%20Trending-Project%20of%20the%20Day-orange?logo=github)](https://github.com/trending)
 
-**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · 한국어 ← 현재 · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md)**
+**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · 한국어 ← 현재 · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md) · [Монгол](../../book-mn/README.md)**
 
 > 📥 **[PDF / EPUB 다운로드](#-전자책)**(권장) — PDF와 EPUB 판본에서 가장 좋은 읽기 경험을 제공합니다. [온라인 판본](https://bojieli.github.io/ai-agent-book/astro/ko/)에서는 언어 전환, 접을 수 있는 장별 탐색, 강조 표시와 메모을 이용할 수 있습니다.
 
@@ -13,7 +13,7 @@
 >
 > 모델 기반 애플리케이션을 제대로 개발하려면 그것이 돌아가는 인프라도 이해해야 합니다. 자매편은 모델 학습과 추론을 떠받치는 AI 인프라를 다룹니다. 파라미터와 컨텍스트 상태가 어디에 저장되고, 연산이 어떻게 수행되며, 여러 가속기가 어떻게 협력하는지를 설명합니다.
 
-> 📢 **1.4 대비 2.0 버전의 변경 사항:** 2.0 버전은 기존 4장의 “비동기 상호작용” 부분과 기존 9장의 “멀티모달 에이전트” 내용을 합쳐, 새로운 6장 “상호작용: 관찰 공간과 행동 공간의 확장”으로 재구성했습니다. 기존 6장 “에이전트 평가”, 7장 “모델 사후 학습”, 8장 “에이전트의 지속적 진화”는 각각 한 장씩 뒤로 이동하여 현재 7장, 8장, 9장이 되었습니다.
+> 📢 **1.4 대비 2.0 및 3.0 버전의 변경 사항:** 2.0 및 3.0 버전은 기존 4장의 “비동기 상호작용” 부분과 기존 9장의 “멀티모달 에이전트” 내용을 합쳐, 새로운 6장 “상호작용: 관찰 공간과 행동 공간의 확장”으로 재구성했습니다. 기존 6장 “에이전트 평가”, 7장 “모델 사후 학습”, 8장 “에이전트의 지속적 진화”는 각각 한 장씩 뒤로 이동하여 현재 7장, 8장, 9장이 되었습니다.
 >
 > 이전 PDF를 읽고 계시다면 [최신 PDF를 다운로드](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.pdf)하시기를 권장합니다. 신판에는 많은 내용 수정과 조정도 포함되어 있으므로 최신 버전을 이용해 주세요.
 
@@ -34,6 +34,7 @@
 > - **일본어**([@eltociear](https://github.com/eltociear)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ja.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ja.epub)
 > - **아랍어**([@TheSyBuilder](https://github.com/TheSyBuilder)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ar.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ar.epub)
 > - **터키어**([@memisemre](https://github.com/memisemre)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.epub)
+> - **몽골어** (커뮤니티 번역: [@ZERO1zx1](https://github.com/ZERO1zx1)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.epub)
 >
 > 🌐 [온라인으로도 읽을 수 있습니다](https://bojieli.github.io/ai-agent-book/astro/ko/). `main` 브랜치가 갱신될 때마다 사이트가 자동으로 다시 빌드됩니다.
 

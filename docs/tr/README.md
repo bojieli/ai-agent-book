@@ -1,9 +1,9 @@
 # AI Agent'ları Derinlemesine Anlamak: Tasarım İlkeleri ve Mühendislik Pratiği
 
-[![PDF](https://img.shields.io/badge/PDF-indir-success.svg)](#-e-kitap) [![Çevrimiçi oku](https://img.shields.io/badge/🌐_Çevrimiçi_oku-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/tr/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![Languages](https://img.shields.io/badge/çeviri-15%20dil-informational.svg)](#-e-kitap)
+[![PDF](https://img.shields.io/badge/PDF-indir-success.svg)](#-e-kitap) [![Çevrimiçi oku](https://img.shields.io/badge/🌐_Çevrimiçi_oku-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/tr/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![Languages](https://img.shields.io/badge/çeviri-16%20dil-informational.svg)](#-e-kitap)
 [![Trending GitHub Project of the Day](https://img.shields.io/badge/GitHub%20Trending-Project%20of%20the%20Day-orange?logo=github)](https://github.com/trending)
 
-**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · Türkçe ← şu an · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md)**
+**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · Türkçe ← şu an · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md) · [Монгол](../../book-mn/README.md)**
 
 > 📥 **[PDF / EPUB indir](#-e-kitap)** (önerilir) — PDF / EPUB sürümleri en iyi okuma deneyimini sunar; kitabı [çevrimiçi](https://bojieli.github.io/ai-agent-book/astro/tr/) da okuyabilirsiniz.
 
@@ -13,7 +13,7 @@
 >
 > Model tabanlı uygulamaları iyi geliştirmek, üzerinde çalıştıkları altyapıyı da anlamayı gerektirir. Kardeş kitap, model eğitimi ve çıkarımını taşıyan AI Infra'yı ele alıyor: parametreler ve bağlam durumu nerede tutulur, hesaplama nasıl yürütülür ve birden çok hızlandırıcı nasıl birlikte çalışır.
 
-> 📢 **1.4'e kıyasla 2.0 sürümündeki değişiklikler:** 2.0 sürümü, eski 4. bölümdeki “eşzamansız etkileşim” kısmını eski 9. bölümdeki “çok modlu Agent” içeriğiyle birleştirerek yeni 6. bölüm “Etkileşim: Gözlem ve Eylem Uzaylarının Genişletilmesi” olarak yeniden düzenler. Eski 6. (“Agent'ın Değerlendirmesi”), 7. (“Model Post-Training”) ve 8. (“Agent'ın Sürekli Evrimi”) bölümler birer bölüm geriye kaydırılmış ve sırasıyla 7., 8. ve 9. bölümler olmuştur.
+> 📢 **1.4'e kıyasla 2.0 ve 3.0 sürümlerindeki değişiklikler:** 2.0 ve 3.0 sürümleri, eski 4. bölümdeki “eşzamansız etkileşim” kısmını eski 9. bölümdeki “çok modlu Agent” içeriğiyle birleştirerek yeni 6. bölüm “Etkileşim: Gözlem ve Eylem Uzaylarının Genişletilmesi” olarak yeniden düzenler. Eski 6. (“Agent'ın Değerlendirmesi”), 7. (“Model Post-Training”) ve 8. (“Agent'ın Sürekli Evrimi”) bölümler birer bölüm geriye kaydırılmış ve sırasıyla 7., 8. ve 9. bölümler olmuştur.
 >
 > Eski bir PDF okuyorsanız [en son PDF'yi indirmenizi](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.pdf) öneririz. Yeni sürüm ayrıca çok sayıda içerik düzeltmesi ve düzenlemesi içerir; lütfen en güncel sürümü kullanın.
 
@@ -34,6 +34,7 @@
 > - **Japonca** (topluluk çevirisi, by [@eltociear](https://github.com/eltociear)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ja.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ja.epub)
 > - **Türkçe** (topluluk çevirisi, by [@memisemre](https://github.com/memisemre)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.epub)
 > - **Korece** (topluluk çevirisi, by [@JeongJaeSoon](https://github.com/JeongJaeSoon)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.epub)
+> - **Moğolca** (topluluk çevirisi: [@ZERO1zx1](https://github.com/ZERO1zx1)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.epub)
 >
 > 🌐 Kitabı ayrıca [çevrimiçi okuyabilirsiniz](https://bojieli.github.io/ai-agent-book/astro/tr/) — dil değiştirici, katlanabilir bölüm ağacı, vurgular ve notlar ve eşlik eden deneylere doğrudan bağlantılar sunar.
 

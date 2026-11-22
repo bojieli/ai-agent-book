@@ -1,9 +1,9 @@
 # فهم وكلاء الذكاء الاصطناعي بعمق: مبادئ التصميم والممارسة الهندسية
 
-[![PDF](https://img.shields.io/badge/PDF-تنزيل-success.svg)](#-الكتاب-الإلكتروني) [![القراءة عبر الإنترنت](https://img.shields.io/badge/🌐_قراءة_عبر_الإنترنت-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/ar/) [![النجوم](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![الترخيص](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![اللغات](https://img.shields.io/badge/الترجمات-15%20لغة-informational.svg)](#-الكتاب-الإلكتروني)
+[![PDF](https://img.shields.io/badge/PDF-تنزيل-success.svg)](#-الكتاب-الإلكتروني) [![القراءة عبر الإنترنت](https://img.shields.io/badge/🌐_قراءة_عبر_الإنترنت-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/ar/) [![النجوم](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![الترخيص](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![اللغات](https://img.shields.io/badge/الترجمات-16%20لغة-informational.svg)](#-الكتاب-الإلكتروني)
 [![Trending GitHub Project of the Day](https://img.shields.io/badge/GitHub%20Trending-Project%20of%20the%20Day-orange?logo=github)](https://github.com/trending)
 
-**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · العربية ← الحالية · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md)**
+**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · العربية ← الحالية · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md) · [Монгол](../../book-mn/README.md)**
 
 > **ملاحظة حول الترجمة:** هذه ترجمة عربية كاملة، خضعت لمراجعة تحريرية وتقنية شملت سلامة المعنى، وطبيعية الأسلوب، واتساق المصطلحات، وبنية النص والرسوم.
 >
@@ -15,7 +15,7 @@
 >
 > لتطوير تطبيقات جيدة قائمة على النماذج، لا بدّ أيضًا من فهم البنية التحتية التي تعمل عليها. يتناول الكتاب الشقيق بنية الذكاء الاصطناعي التحتية التي تدعم تدريب النماذج والاستدلال بها: أين تُخزَّن المعاملات وحالة السياق، وكيف تُنفَّذ الحوسبة، وكيف تتعاون عدة مسرّعات.
 
-> 📢 **ما الذي تغيّر في الإصدار 2.0 مقارنةً بـ 1.4؟** يدمج الإصدار 2.0 قسم «التفاعل غير المتزامن» من الفصل الرابع السابق مع المحتوى المتعلق بـ«الوكلاء متعددي الوسائط» من الفصل التاسع السابق، ويعيد تنظيمهما في الفصل السادس الجديد «التفاعل: توسيع فضاء الملاحظة وفضاء الفعل». أما الفصول السابقة: السادس «تقييم الوكلاء»، والسابع «مرحلة ما بعد تدريب النموذج»، والثامن «التطور المستمر للوكلاء»، فقد أُزيح كل منها فصلًا واحدًا لتصبح الآن الفصول السابع والثامن والتاسع على التوالي.
+> 📢 **ما الذي تغيّر في الإصدارين 2.0 و3.0 مقارنةً بـ 1.4؟** يدمج الإصداران 2.0 و3.0 قسم «التفاعل غير المتزامن» من الفصل الرابع السابق مع المحتوى المتعلق بـ«الوكلاء متعددي الوسائط» من الفصل التاسع السابق، ويعيد تنظيمهما في الفصل السادس الجديد «التفاعل: توسيع فضاء الملاحظة وفضاء الفعل». أما الفصول السابقة: السادس «تقييم الوكلاء»، والسابع «مرحلة ما بعد تدريب النموذج»، والثامن «التطور المستمر للوكلاء»، فقد أُزيح كل منها فصلًا واحدًا لتصبح الآن الفصول السابع والثامن والتاسع على التوالي.
 >
 > إذا كنت تقرأ نسخة PDF قديمة، فننصحك بـ[تنزيل أحدث نسخة PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ar.pdf). تتضمن الطبعة الجديدة أيضًا تصحيحات وتعديلات عديدة في المحتوى، لذا يُرجى اعتماد أحدث نسخة.
 
@@ -36,6 +36,7 @@
 > - **العربية** (ترجمة مجتمعية بواسطة [@TheSyBuilder](https://github.com/TheSyBuilder) — النسخة الحالية): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ar.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ar.epub)
 > - **التركية** (ترجمة المجتمع، بواسطة [@memisemre](https://github.com/memisemre)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.epub)
 > - **الكورية** (ترجمة المجتمع، بواسطة [@JeongJaeSoon](https://github.com/JeongJaeSoon)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.epub)
+> - **المنغولية** (ترجمة مجتمعية من [@ZERO1zx1](https://github.com/ZERO1zx1)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.epub)
 >
 > 🌐 يمكنك أيضًا [القراءة عبر الإنترنت](https://bojieli.github.io/ai-agent-book/astro/ar/) عبر واجهة متعددة اللغات، وشجرة فصول قابلة للطي، وتمييز وملاحظات، وروابط مباشرة للتجارب المصاحبة. ويُعاد بناء الموقع تلقائيًا عند كل دفع إلى الفرع `main`.
 

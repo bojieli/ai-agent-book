@@ -1,6 +1,6 @@
 # Build the EPUB editions
 
-The repository can build EPUB 3 editions for Simplified Chinese, Traditional Chinese (Taiwan), English, Spanish, Indonesian, Arabic, Russian, Tamil, Vietnamese, Japanese, Turkish, Korean, and Hungarian from the same Markdown sources used by the PDF editions. Arabic EPUBs use RTL page progression while preserving LTR layout for code and mathematics.
+The repository can build EPUB 3 editions for Simplified Chinese, Traditional Chinese (Taiwan), English, Spanish, Indonesian, Arabic, Russian, Tamil, Vietnamese, Japanese, Turkish, Korean, Hungarian, Hebrew, Brazilian Portuguese, and Mongolian from the same Markdown sources used by the PDF editions. Arabic EPUBs use RTL page progression while preserving LTR layout for code and mathematics.
 
 Install [Pandoc](https://pandoc.org/), Poppler (`pdftoppm`), and optionally [EPUBCheck](https://www.w3.org/publishing/epubcheck/). The builder uses each PDF's first page as the corresponding EPUB cover. When EPUBCheck is available, the builder validates every generated book.
 
@@ -15,6 +15,7 @@ Build one language by passing its language code:
 ```bash
 ./build_epub.sh zh-CN
 ./build_epub.sh zh-TW
+./build_epub.sh mn
 ./build_epub.sh en
 ./build_epub.sh es
 ./build_epub.sh id

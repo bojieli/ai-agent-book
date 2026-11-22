@@ -1,8 +1,8 @@
 # Agentes de IA em Profundidade: Princípios de Design e Prática de Engenharia
 
-[![PDF](https://img.shields.io/badge/PDF-Download-success.svg)](#livro-eletrônico) [![Leitura online](https://img.shields.io/badge/🌐_Leitura_online-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/pt-BR/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![Languages](https://img.shields.io/badge/Traduções-15%20idiomas-informational.svg)](#livro-eletrônico)
+[![PDF](https://img.shields.io/badge/PDF-Download-success.svg)](#livro-eletrônico) [![Leitura online](https://img.shields.io/badge/🌐_Leitura_online-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/pt-BR/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![Languages](https://img.shields.io/badge/Traduções-16%20idiomas-informational.svg)](#livro-eletrônico)
 
-[中文](README.md) · [English](docs/en/README.md) · [Español](docs/es/README.md) · [Bahasa Indonesia](docs/id/README.md) · [العربية](docs/ar/README.md) · [繁體中文（台灣）](docs/zh-TW/README.md) · [Русский](docs/ru/README.md) · [Tiếng Việt](docs/vi/README.md) · [தமிழ்](docs/ta/README.md) · [日本語](docs/ja/README.md) · [Türkçe](docs/tr/README.md) · [한국어](docs/ko/README.md) · [Magyar](docs/hu/README.md) · [עברית](README.he.md) · **Português (Brasil)** ← atual
+[中文](README.md) · [English](docs/en/README.md) · [Español](docs/es/README.md) · [Bahasa Indonesia](docs/id/README.md) · [العربية](docs/ar/README.md) · [繁體中文（台灣）](docs/zh-TW/README.md) · [Русский](docs/ru/README.md) · [Tiếng Việt](docs/vi/README.md) · [தமிழ்](docs/ta/README.md) · [日本語](docs/ja/README.md) · [Türkçe](docs/tr/README.md) · [한국어](docs/ko/README.md) · [Magyar](docs/hu/README.md) · [עברית](README.he.md) · **Português (Brasil)** ← atual · [Монгол](book-mn/README.md)
 
 > 📥 **[Download do PDF / EPUB](#livro-eletrônico)** (recomendado) — as edições em PDF e EPUB oferecem a melhor experiência de leitura. Também é possível [ler online](https://bojieli.github.io/ai-agent-book/astro/pt-BR/) com navegação completa, alternância entre idiomas e destaques e notas.
 
@@ -12,7 +12,7 @@
 >
 > Desenvolver boas aplicações baseadas em modelos também exige entender a infraestrutura sobre a qual elas rodam. O livro irmão trata da AI Infra por trás do treinamento e da inferência: onde ficam os parâmetros e o estado do contexto, como a computação é executada e como vários aceleradores trabalham juntos.
 
-> 📢 **Mudanças da versão 2.0 em relação à 1.4:** a versão 2.0 unifica a parte "Interação Assíncrona" do antigo capítulo 4 com o conteúdo sobre "Agentes Multimodais" do antigo capítulo 9, reorganizando-os como o novo capítulo 6, "Interação: Expansão dos Espaços de Observação e Ação". Os antigos capítulos 6 ("Avaliação de Agentes"), 7 ("Pós-treinamento de Modelos") e 8 ("Evolução Contínua de Agentes") foram deslocados em um capítulo cada, passando a ser, respectivamente, os capítulos 7, 8 e 9.
+> 📢 **Mudanças das versões 2.0 e 3.0 em relação à 1.4:** as versões 2.0 e 3.0 unificam a parte "Interação Assíncrona" do antigo capítulo 4 com o conteúdo sobre "Agentes Multimodais" do antigo capítulo 9, reorganizando-os como o novo capítulo 6, "Interação: Expansão dos Espaços de Observação e Ação". Os antigos capítulos 6 ("Avaliação de Agentes"), 7 ("Pós-treinamento de Modelos") e 8 ("Evolução Contínua de Agentes") foram deslocados em um capítulo cada, passando a ser, respectivamente, os capítulos 7, 8 e 9.
 >
 > Se você tem um PDF antigo, recomendamos [baixar a versão mais recente do PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ptbr.pdf). A nova edição também inclui diversas correções e ajustes de conteúdo; confie apenas na versão mais recente.
 
@@ -22,6 +22,7 @@ A tradução completa para português do Brasil foi produzida por [Leonardo F. N
 
 - **Português (Brasil)** — tradução comunitária de [Leonardo F. Nascimento](https://github.com/leofn): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ptbr.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ptbr.epub)
 - **Original em chinês**: [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.epub)
+- **Mongol** (tradução comunitária de [@ZERO1zx1](https://github.com/ZERO1zx1)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.epub)
 
 ## Sumário
 

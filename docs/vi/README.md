@@ -1,9 +1,9 @@
 # Hiểu sâu về AI Agent: Nguyên lý thiết kế và thực hành kỹ thuật
 
-[![PDF](https://img.shields.io/badge/PDF-tải%20về-success.svg)](#-sách-điện-tử) [![Đọc trực tuyến](https://img.shields.io/badge/🌐_Đọc_trực_tuyến-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/vi/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![Languages](https://img.shields.io/badge/dịch-15%20ngôn%20ngữ-informational.svg)](#-sách-điện-tử)
+[![PDF](https://img.shields.io/badge/PDF-tải%20về-success.svg)](#-sách-điện-tử) [![Đọc trực tuyến](https://img.shields.io/badge/🌐_Đọc_trực_tuyến-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/vi/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![Languages](https://img.shields.io/badge/dịch-16%20ngôn%20ngữ-informational.svg)](#-sách-điện-tử)
 [![Trending GitHub Project of the Day](https://img.shields.io/badge/GitHub%20Trending-Project%20of%20the%20Day-orange?logo=github)](https://github.com/trending)
 
-**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · Tiếng Việt ← hiện tại · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md)**
+**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · Tiếng Việt ← hiện tại · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md) · [Монгол](../../book-mn/README.md)**
 
 > 📥 **[Tải PDF / EPUB](#-sách-điện-tử)** (khuyên dùng) — nên đọc sách qua bản PDF / EPUB để có trải nghiệm tốt nhất; bạn cũng có thể [đọc trực tuyến](https://bojieli.github.io/ai-agent-book/astro/vi/) (chuyển đổi ngôn ngữ, mục lục đóng/mở được, đánh dấu và ghi chú; tự động xây dựng lại sau mỗi lần đẩy lên main).
 
@@ -13,7 +13,7 @@
 >
 > Để phát triển tốt các ứng dụng dựa trên mô hình, bạn còn cần hiểu hạ tầng mà chúng chạy trên đó. Cuốn sách song hành bàn về AI Infra đứng sau việc huấn luyện và suy luận mô hình: tham số và trạng thái ngữ cảnh nằm ở đâu, tính toán được thực thi ra sao, và nhiều bộ tăng tốc phối hợp với nhau như thế nào.
 
-> 📢 **Những thay đổi trong bản 2.0 (so với 1.4):** Bản 2.0 hợp nhất phần “tương tác bất đồng bộ” của Chương 4 cũ với nội dung về “Agent đa phương thức” của Chương 9 cũ, rồi tái cấu trúc thành Chương 6 mới, “Tương tác: mở rộng không gian quan sát và không gian hành động”. Các Chương 6 (“Đánh giá Agent”), 7 (“Post-training mô hình”) và 8 (“Sự tiến hóa liên tục của Agent”) trước đây đều lùi lại một chương, nay lần lượt là Chương 7, 8 và 9.
+> 📢 **Những thay đổi trong bản 2.0 và 3.0 (so với 1.4):** Bản 2.0 và 3.0 hợp nhất phần “tương tác bất đồng bộ” của Chương 4 cũ với nội dung về “Agent đa phương thức” của Chương 9 cũ, rồi tái cấu trúc thành Chương 6 mới, “Tương tác: mở rộng không gian quan sát và không gian hành động”. Các Chương 6 (“Đánh giá Agent”), 7 (“Post-training mô hình”) và 8 (“Sự tiến hóa liên tục của Agent”) trước đây đều lùi lại một chương, nay lần lượt là Chương 7, 8 và 9.
 >
 > Nếu bạn đang đọc một bản PDF cũ, chúng tôi khuyên bạn [tải PDF mới nhất](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-vi.pdf). Ấn bản mới còn có nhiều nội dung được sửa chữa và điều chỉnh; vui lòng sử dụng phiên bản mới nhất.
 
@@ -34,6 +34,7 @@
 > - **Tiếng Nhật**（dịch cộng đồng, by [@eltociear](https://github.com/eltociear)）：[PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ja.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ja.epub)
 > - **Tiếng Thổ Nhĩ Kỳ**（dịch cộng đồng, by [@memisemre](https://github.com/memisemre)）：[PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.epub)
 > - **Tiếng Hàn**（dịch cộng đồng, by [@JeongJaeSoon](https://github.com/JeongJaeSoon)）：[PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.epub)
+> - **Tiếng Mông Cổ** (bản dịch cộng đồng của [@ZERO1zx1](https://github.com/ZERO1zx1)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.epub)
 >
 > 🌐 Bạn cũng có thể [đọc trực tuyến](https://bojieli.github.io/ai-agent-book/astro/vi/) — chuyển đổi ngôn ngữ, mục lục đóng/mở được, đánh dấu và ghi chú và liên kết trực tiếp đến các thí nghiệm kèm theo. Tự động xây dựng lại sau mỗi lần đẩy lên main.
 

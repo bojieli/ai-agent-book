@@ -1,9 +1,9 @@
 # 深入理解 AI Agent：設計原理與工程實踐
 
-[![PDF](https://img.shields.io/badge/PDF-%E4%B8%8B%E8%BC%89-success.svg)](#-電子書) [![線上閱讀](https://img.shields.io/badge/🌐_線上閱讀-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/zh-TW/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![Languages](https://img.shields.io/badge/翻譯-15%20種%20語言-informational.svg)](#-電子書)
+[![PDF](https://img.shields.io/badge/PDF-%E4%B8%8B%E8%BC%89-success.svg)](#-電子書) [![線上閱讀](https://img.shields.io/badge/🌐_線上閱讀-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/zh-TW/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![Languages](https://img.shields.io/badge/翻譯-16%20種%20語言-informational.svg)](#-電子書)
 [![Trending GitHub Project of the Day](https://img.shields.io/badge/GitHub%20Trending-Project%20of%20the%20Day-orange?logo=github)](https://github.com/trending)
 
-**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · 繁體中文（台灣） ← 當前 · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md)**
+**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · 繁體中文（台灣） ← 當前 · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md) · [Монгол](../../book-mn/README.md)**
 
 > 📥 **[下載 PDF / EPUB](#-電子書)**（推薦）— 推薦使用 PDF / EPUB 離線閱讀，排版最佳；也可[線上閱讀](https://bojieli.github.io/ai-agent-book/astro/zh-TW/)（支援多語言切換、章節摺疊、螢光標記與筆記，每次 main 分支推送後自動重新構建）。
 
@@ -13,7 +13,7 @@
 >
 > 要開發好基於模型的應用，還需要理解這類應用賴以運行的基礎設施。姊妹篇討論的就是支撐模型訓練與推理的 AI Infra：參數和上下文狀態存在哪裡，計算怎樣執行，多個加速器怎樣協作。
 
-> 📢 **2.0 版變更（相較 1.4 版）**：2.0 版將原第四章中的「非同步互動」部分與原第九章中有關「多模態 Agent」的內容合併，重組為新的第六章「互動：觀察與動作空間的擴展」。原第六章「Agent 的評估」、第七章「模型後訓練」和第八章「Agent 的持續進化」依次後移一章，現分別為第七、八、九章。
+> 📢 **2.0 和 3.0 版變更（相較 1.4 版）**：2.0 和 3.0 版將原第四章中的「非同步互動」部分與原第九章中有關「多模態 Agent」的內容合併，重組為新的第六章「互動：觀察與動作空間的擴展」。原第六章「Agent 的評估」、第七章「模型後訓練」和第八章「Agent 的持續進化」依次後移一章，現分別為第七、八、九章。
 >
 > 如果你看到的是舊版 PDF，建議[下載最新版 PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-TW.pdf)。新版還包含許多內容修正與調整，請以最新版為準。
 
@@ -34,6 +34,7 @@
 > - **日語**（社群翻譯，by [@eltociear](https://github.com/eltociear)）：[PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ja.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ja.epub)
 > - **土耳其語**（社群翻譯，by [@memisemre](https://github.com/memisemre)）：[PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.epub)
 > - **韓語**（社群翻譯，by [@JeongJaeSoon](https://github.com/JeongJaeSoon)）：[PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.epub)
+> - **蒙古語** (社群翻譯，by [@ZERO1zx1](https://github.com/ZERO1zx1)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.epub)
 >
 > 🌐 也可[線上閱讀](https://bojieli.github.io/ai-agent-book/astro/zh-TW/) — 支援多語言切換、章節摺疊、螢光標記與筆記、配套實驗直達，每次 main 分支推送後自動重新構建。
 

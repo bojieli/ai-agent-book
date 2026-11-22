@@ -1,9 +1,9 @@
 # Глубокое понимание AI Agent: принципы проектирования и инженерная практика
 
-[![PDF](https://img.shields.io/badge/PDF-%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C-success.svg)](#-электронная-книга) [![Читать онлайн](https://img.shields.io/badge/🌐_Читать_онлайн-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/ru/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![Languages](https://img.shields.io/badge/переводов-15%20языков-informational.svg)](#-электронная-книга)
+[![PDF](https://img.shields.io/badge/PDF-%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C-success.svg)](#-электронная-книга) [![Читать онлайн](https://img.shields.io/badge/🌐_Читать_онлайн-bojieli.github.io-success?style=flat-square)](https://bojieli.github.io/ai-agent-book/astro/ru/) [![Stars](https://img.shields.io/github/stars/bojieli/ai-agent-book?style=social)](https://github.com/bojieli/ai-agent-book) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../../LICENSE) [![Languages](https://img.shields.io/badge/переводов-16%20языков-informational.svg)](#-электронная-книга)
 [![Trending GitHub Project of the Day](https://img.shields.io/badge/GitHub%20Trending-Project%20of%20the%20Day-orange?logo=github)](https://github.com/trending)
 
-**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · [繁體中文（台灣）](../zh-TW/README.md) · Русский ← текущий · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md)**
+**[中文](../../README.md) · [English](../en/README.md) · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · [繁體中文（台灣）](../zh-TW/README.md) · Русский ← текущий · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md) · [Монгол](../../book-mn/README.md)**
 
 > 📥 **[Скачать PDF / EPUB](#-электронная-книга)** (рекомендуется) — рекомендуем читать книгу в PDF / EPUB, там лучшая вёрстка; также доступно [чтение онлайн](https://bojieli.github.io/ai-agent-book/astro/ru/) (переключатель языков, сворачиваемое оглавление, выделения и заметки; сайт автоматически перестраивается при каждом пуше в main).
 
@@ -13,7 +13,7 @@
 >
 > Чтобы хорошо разрабатывать приложения на основе моделей, нужно понимать и инфраструктуру, на которой они работают. Книга-спутник посвящена AI Infra, обеспечивающей обучение и инференс: где хранятся параметры и состояние контекста, как выполняются вычисления и как взаимодействуют несколько ускорителей.
 
-> 📢 **Что изменилось в версии 2.0 по сравнению с 1.4:** Версия 2.0 объединяет раздел «асинхронное взаимодействие» из прежней главы 4 с материалом о «мультимодальных агентах» из прежней главы 9 и перестраивает их в новую главу 6 «Взаимодействие: расширение пространства наблюдений и пространства действий». Прежние главы 6 «Оценка агентов», 7 «Постобучение модели» и 8 «Непрерывная эволюция агентов» сдвинулись на одну позицию и теперь являются главами 7, 8 и 9 соответственно.
+> 📢 **Что изменилось в версиях 2.0 и 3.0 по сравнению с 1.4:** Версии 2.0 и 3.0 объединяют раздел «асинхронное взаимодействие» из прежней главы 4 с материалом о «мультимодальных агентах» из прежней главы 9 и перестраивает их в новую главу 6 «Взаимодействие: расширение пространства наблюдений и пространства действий». Прежние главы 6 «Оценка агентов», 7 «Постобучение модели» и 8 «Непрерывная эволюция агентов» сдвинулись на одну позицию и теперь являются главами 7, 8 и 9 соответственно.
 >
 > Если вы читаете старую версию PDF, рекомендуем [скачать последнюю версию PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ru.pdf). В новом издании также много исправлений и содержательных изменений; пожалуйста, используйте актуальную версию.
 
@@ -34,6 +34,7 @@
 > - **Японский** (перевод сообщества, [@eltociear](https://github.com/eltociear)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ja.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ja.epub)
 > - **Турецкий** (перевод сообщества, [@memisemre](https://github.com/memisemre)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-tr.epub)
 > - **Корейский** (перевод сообщества, [@JeongJaeSoon](https://github.com/JeongJaeSoon)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-ko.epub)
+> - **Монгольский** (перевод сообщества, автор — [@ZERO1zx1](https://github.com/ZERO1zx1)): [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.pdf) · [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.epub)
 >
 > 🌐 Также доступно [чтение онлайн](https://bojieli.github.io/ai-agent-book/astro/ru/) — переключатель языков, сворачиваемое оглавление, выделения и заметки и прямые ссылки на сопутствующие эксперименты. Сайт автоматически перестраивается при каждом пуше в main.
 

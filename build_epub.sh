@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build EPUB 3 editions from the Markdown sources.
-# Usage: ./build_epub.sh [all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr]
+# Usage: ./build_epub.sh [all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr|mn]
 # Add --with-reader-copy after all or zh-CN to also rasterize the Chinese edition.
 # The release workflow builds ja and ar separately after the main batch.
 
@@ -31,9 +31,9 @@ if [[ "$pandoc_help" == *--math-method* && "$pandoc_help" == *--syntax-highlight
 fi
 
 case "$SELECTION" in
-    all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr) ;;
+    all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr|mn) ;;
     *)
-        echo "Usage: $0 [all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr]" >&2
+        echo "Usage: $0 [all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr|mn]" >&2
         exit 2
         ;;
 esac
@@ -187,6 +187,16 @@ build_edition() {
             toc_label="תוכן העניינים"
             chapters=(introduction.he.md chapter{1..10}.he.md afterword.he.md)
             ;;
+        mn)
+            directory="book-mn"
+            title="AI Agent-ийг гүнзгий ойлгох: Дизайны зарчим ба инженерчлэлийн практик"
+            author="Bojie Li; Монгол орчуулга: ZERO1zx1"
+            pdf="AI-Agents-in-Depth-Bojie-Li-v3.0-mn.pdf"
+            output="AI-Agents-in-Depth-Bojie-Li-v3.0-mn.epub"
+            title_label="Нүүр хуудас"
+            toc_label="Агуулга"
+            chapters=(introduction.md chapter{1..10}.md afterword.md)
+            ;;
         ptbr)
             directory="book-ptbr"
             title="Agentes de IA em Profundidade: Princípios de Design e Prática de Engenharia"
@@ -267,7 +277,7 @@ build_edition() {
 }
 
 if [ "$SELECTION" = "all" ]; then
-    for language in zh-CN zh-TW en es id ru ta vi tr ko hu he ptbr; do
+    for language in zh-CN zh-TW en es id ru ta vi tr ko hu he ptbr mn; do
         build_edition "$language"
     done
 else
