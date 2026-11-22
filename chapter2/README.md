@@ -33,14 +33,15 @@
 | 编号 | 项目 | 类型 | 一句话说明 |
 | :--: | --- | :--: | --- |
 | 2-1 | [local_llm_serving](local_llm_serving/) | ✅ | 跨平台本地 LLM 部署，自动选 vLLM/Ollama 后端，展示 0.6B 小模型也能有出色工具调用 |
-| 2-2, 2-8 | [attention_visualization](attention_visualization/) | ✅ | 可视化 LLM 完整 token 序列与注意力权重分布，理解模型如何处理上下文、推理与调用工具 |
+| 2-2 | [attention_visualization](attention_visualization/) | ✅ | 可视化 LLM 完整 token 序列与注意力权重分布，理解模型如何处理上下文、推理与调用工具 |
 | 2-3 | [kv-cache](kv-cache/) | ✅ | 探索不同上下文管理模式对 KV Cache 的影响，比较前缀变化、历史裁剪和消息格式对缓存与任务推进的影响 |
 | 2-4 | [prompt-engineering](prompt-engineering/) | ✅ | 扩展 Tau-Bench，量化语气风格、指令组织、工具描述等因素对任务完成率的影响 |
 | 2-5 | [prompt-injection](prompt-injection/) | ✅ | 3 种攻击场景 × 4 种防御配置的对照实验，记录各配置的行为与外部影响；本次 60 次运行均未达成注入目标 |
 | 2-6 | [agent-skills-ppt](agent-skills-ppt/) | ✅ | 固定 Anthropic 官方 PPTX Skill + 真实论文 PDF，运行时可为 Claude Code 或等价的 Kimi Code CLI（已实测通过：13 页演示文稿、4 张论文原图、完整渐进式披露轨迹），旧 python-pptx 同构 demo 不作为正文验收 |
 | 2-7 | 正文实验 | 🚧 | 从个人范文创建“去 AI 味”写作 Skill；练习 Skill 的触发条件、规则、示例、作用域与迭代维护，不依赖独立代码项目 |
+| 2-8 | [状态栏注意力对照](attention_visualization/README.md#status-bar-comparison) | ✅ | 在同一份催退款通话记录后加上或省略 3/3 提醒，对照两组回答和注意力图 |
 | 2-9 | [system-hint](system-hint/) | ✅ | 研究系统提示对 Agent 行为的影响，探索如何通过优化系统提示提升性能 |
-| 2-10 | [context-compression](context-compression/) | ✅ | 实现并对比摘要、关键信息提取、语义压缩等多种策略，比较六种压缩策略的用量、溢出与最终回复；历史汇总的原始记录待补核 |
+| 2-10 | [context-compression](context-compression/) | ✅ | 实现并对比摘要、关键信息提取、语义压缩等多种策略，比较六种压缩策略的用量、溢出与最终回复；可按[六组归档](context-compression/results/kimi_k3_real_20260718.json)核对最终回复与汇总用量 |
 
 ## 项目类型说明
 
