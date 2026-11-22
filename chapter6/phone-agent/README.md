@@ -1,16 +1,14 @@
 # 附加项目：完整音频链路的 WebRTC 电话 Agent
 
-语音 Agent 不应只读取文字模拟用户说话。本项目通过本地浏览器 WebRTC 通话，把麦克风音频送到识别、对话与合成模块，再将回复音频送回浏览器。
+预约牙科检查前，助理给用户打来一通电话，核对就诊时间和确认码。假如用户说了“周二下午三点”，屏幕字幕也显示“三点”，你还要检查哪一步，才能知道助理最后记对了？
 
 [English](#english)
-
-建议按以下顺序阅读：[理解问题与方法](#learning-0) → [准备环境与输入](#learning-1) → [按照步骤完成实验](#learning-2) → [分析结果与形成判断](#learning-3)。
 
 <a id="learning-0"></a>
 
 ## 理解问题与方法
 
-音频链路承载用户说的话，字幕只用于展示。把这两条通道分清，才能知道系统是否真正处理了声音。任务完成还需要用户确认关键内容，而不是模型自己宣布已经安排好。
+顺着一句回答走一遍：浏览器先把声音传给服务端，语音识别把它写成文字，对话模型从中提取用户确认的内容，随后把结果读回给用户。这里有三个可以对照的东西：服务端听到了什么，模型看到了什么，最后保存了什么。字幕显示的是这条链路上的文字，光看字幕会漏掉收音、传输和播报中的问题。
 
 本实验把“呼叫用户”实现为用户主动加入的本地浏览器 WebRTC 通话，不要求 PSTN、E.164 号码、电话运营商账户或公网 webhook。浏览器授权麦克风后向本地 `aiortc` peer 发送音频 RTP；服务端把实际收到的音频重采样并交给 Whisper ASR，把 ASR transcript 交给真实外部 LLM，再把 Agent 回复通过系统 TTS 合成为 PCM，送进 WebRTC 下行音轨。data channel 只传“音频提交”控制事件及 ASR/TTS 的无障碍字幕镜像，不提供用户语义。
 
@@ -27,7 +25,7 @@ browser microphone → WebRTC RTP → aiortc PCM buffer → Whisper ASR
 
 ## 准备环境与输入
 
-本项目包含多条路径。先选定要观察的流程，再阅读对应的依赖和输入要求。下文保留了各条路径的完整配置，运行时应保持模型、文件路径与所选入口一致。
+如果想先听一通完整的示例电话，可以直接拿下面留存的音频和记录做练习。要在自己的浏览器里加入通话，再配置麦克风、语音服务和对话模型。
 
 ### 安装与运行
 
@@ -59,18 +57,38 @@ uv run --extra ch6 python direct_call.py \
 
 ## 按照步骤完成实验
 
-按下文准备识别模型、TTS 与对话服务后，启动本地演示并在浏览器加入通话。先回答一个时间或确认信息，观察识别文本与实际声音是否一致，再听模型如何复述并请求确认。
+先听助理[开口询问](validation/runs/phone-agent-webrtc-audio-20260731-v1/media/react/agent_01.wav)，再听[服务端实际收到的回答](validation/runs/phone-agent-webrtc-audio-20260731-v1/media/react/microphone_rtp_asr_input.wav)。记下就诊时间和确认码，最后播放[助理的复述](validation/runs/phone-agent-webrtc-audio-20260731-v1/media/react/agent_02.wav)。如果听到的三段话对得上，可以进一步检查助理存下了什么。
+
+在本实验目录运行下面的命令，读取两通示例电话的归档记录。它只用 Python 标准库。
+
+```bash
+python3 - <<'PYTHON'
+import json
+from pathlib import Path
+
+run = Path("validation/runs/phone-agent-webrtc-audio-20260731-v1")
+for name in ("direct", "react"):
+    call = json.loads((run / f"{name}.json").read_text())
+    heard = next(turn["text"] for turn in call["transcript"]
+                 if turn["source"] == "asr.microphone_rtp")
+    saved = call["completion"]
+    print(name, heard)
+    print(saved["appointment_time"], saved["confirmation_number"], saved["result"])
+PYTHON
+```
+
+两组都记下周二下午三点。直接组的确认码是 Maple 7，ReAct 组是 Cedar 8。后一通的转写把 “confirmation code” 听成了 “confirmation called”，但号码本身保留了下来。现在可以回听这几个词，判断识别错误有没有传到最终记录。这里的 `complete_task` 只保存用户在电话中确认的内容；如果要证明诊所已经接受预约，还需要诊所一侧的回执。
 
 ### 直接调用与 ReAct 对照
 
-两组使用相同的浏览器麦克风 → ASR → LLM → TTS → 下行 RTP 路径，唯一实验变量是规划方式：
+两组共用浏览器麦克风、ASR、对话模型、TTS 和下行音轨。比较的是调用者提供了哪些信息，以及助手怎样据此准备开场提问。两通电话用了不同的确认码，ReAct 组的任务说明还明确要求询问时间与确认码，不能用这两次成功推算它独立发现信息缺失的成功率。
 
 | 组别 | 调用者输入 | 规划行为 |
 | --- | --- | --- |
 | 直接组（control） | 姓名、目标、上下文、指令四项全部填写 | 不调用规划 LLM，直接建立固定参数会话 |
 | ReAct 组（treatment） | 一段故意漏掉时间与确认码的自然语言任务 | 真实外部 LLM 留下 observation/reason/action 摘要，识别缺失字段并生成澄清话语 |
 
-两组在 Whisper 转录用户明确确认的时间和确认码后，都由真实外部 LLM 生成 `complete_task` 结构及最终播报。实验只保存“本地确认记录”，不会声称诊所或其他外部系统已经完成预约。
+
 
 <a id="learning-3"></a>
 
@@ -82,11 +100,10 @@ uv run --extra ch6 python direct_call.py \
 
 ```bash
 # 必须存在所选外部 LLM credential；其值不会写入证据
-uv run --extra ch6 python run_acceptance.py \
-  --output validation/runs/phone-agent-webrtc-audio-20260731-v1
+run="validation/runs/my-call-$(date +%Y%m%d-%H%M%S)"
+uv run --extra ch6 python run_acceptance.py --output "$run"
 
-uv run --extra ch6 python verify_acceptance.py \
-  validation/runs/phone-agent-webrtc-audio-20260731-v1
+uv run --extra ch6 python verify_acceptance.py "$run"
 
 uv run --extra ch6 --extra dev ruff check .
 uv run --extra ch6 --extra dev pytest -q
@@ -98,6 +115,8 @@ node --check static/app.js
 [`validation/runs/phone-agent-webrtc-audio-20260731-v1/`](validation/runs/phone-agent-webrtc-audio-20260731-v1/) 保留 direct/react 原始记录、对照结论、安全 fixture、服务端收到的 ASR WAV、Agent TTS WAV、日志与 manifest。`verify_acceptance.py` 独立重算源码/产物/LLM raw receipt hash，并拒绝缺文件、改媒体、改 response ID、无 usage、错误 transcript source 或任何 gate 降级。安全合成验收证明技术链路，不等同于真人可用性研究。
 
 ---
+
+要按当年的代码完整复核这通电话，可以使用[最初归档的版本](https://github.com/bojieli/ai-agent-book/tree/3833622c/chapter9/phone-agent/validation/runs/exp9-2-webrtc-audio-20260731-v1)。该版本的校验器和清单相互吻合。章节迁移后，当前目录的八份 WAV 和服务日志仍与清单里的哈希一致；两组通话 JSON 与对照 JSON 各自只改过 `experiment` 标识。复核新一次通话时，应当使用同次运行生成的清单和文件。
 
 ### 检查自己的解释
 

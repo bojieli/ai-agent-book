@@ -27,7 +27,7 @@ REQUIRED_ARTIFACTS = {
     "media/react/microphone_rtp_asr_input.wav",
 }
 REQUIRED_SOURCES = {
-    "book/chapter9.md",
+    "book/chapter6.md",
     "chapter6/README.md",
     "chapter6/phone-agent/README.md",
     "chapter6/phone-agent/agent.py",
@@ -156,7 +156,7 @@ def check_arm(name: str, record: dict[str, Any], run_dir: Path, failures: list[s
     checks = acceptance.get("checks") or {}
 
     if (
-        record.get("experiment") != "9-2"
+        record.get("experiment") != "phone-agent"
         or record.get("mode") != name
         or record.get("status") != "completed"
     ):

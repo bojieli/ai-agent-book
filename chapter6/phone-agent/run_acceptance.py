@@ -400,8 +400,8 @@ def main() -> int:
         HERE / "static" / "app.js",
         HERE / "static" / "style.css",
         HERE / "README.md",
-        ROOT / "chapter9" / "README.md",
-        ROOT / "book" / "chapter9.md",
+        ROOT / "chapter6" / "README.md",
+        ROOT / "book" / "chapter6.md",
         ROOT / "pyproject.toml",
         ROOT / "uv.lock",
     ]
