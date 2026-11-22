@@ -261,16 +261,12 @@ for s in p.getSolutions():
 
 The canonical run uses the pinned revision of
 `K-and-K/perturbed-knights-and-knaves`, stratified across six perturbations and
-2–8 people (84 paired tasks). Every code trajectory invoked
-`python-constraint`, but observed accuracy was 39.3% for code assistance versus
+2–8 people (84 paired tasks). Every code trajectory contained a submitted import from the constraint library. This check also counts submissions that fail to parse. Observed accuracy was 39.3% for code assistance versus
 75.0% for pure reasoning (p=2.27e-7 in the opposite direction). The campaign is
 complete; the manuscript's >90% and significant-improvement hypothesis was not
 observed. Evidence: [`validation/real_ark_doubao_flash_hf84_20260730.json`](validation/real_ark_doubao_flash_hf84_20260730.json).
 
-正式活动固定 K&K 数据集版本，按六类扰动与 2–8 人规模分层抽取 84 道配对题。代码臂
-每题都调用了 `python-constraint`，但实测准确率为 39.3%，低于纯思考的 75.0%
-（p=2.27e-7，方向与预期相反）。因此下文离线求解器 100% 的表格只能证明确定性 CSP
-机制正确，不能替代真实 LLM 对照或正文的 >90% 验收结论。
+这次对照固定了 K&K 数据集版本，按六类扰动和 2–8 人的谜题规模分层抽取 84 道题。每道题的代码记录中都出现过导入求解库的语句，最终答对 33 道（39.3%）；同一模型直接推理答对 63 道（75.0%）。配对检验得到 p=2.27e-7，差异方向与实验原先预期的相反。原先设定的准确率目标是超过 90%。下文离线基线的满分来自另一项测试：输入已经写成结构化陈述，程序可以直接构造约束。语言模型读题、写出可运行的程序、交付答案这三步，要看上面的逐题记录。
 
 ---
 

@@ -16,8 +16,8 @@
 | :--: | --- | :--: | --- |
 | 5-1 | [provider-failover](provider-failover/) | ✅ | 六种厂商组合 × 三种做法的真实接管：中立格式 6/6 切换成功并算对总额，原样直传 3/6、剥离思考 4/6，其余五次首个请求均返回 HTTP 400。对照 Anthropic → Gemini 的两次请求，观察删除凭证后发生了什么 |
 | 5-2 | [provider-failover](provider-failover/) | ✅ | 流式输出在思考／正文／参数三处被切断后的恢复对照：正文断点上续写省 15%~66% 输出 token，参数断点上却会拼出「合法但写错」的参数，元指令在每个单元上都比整轮重发更贵 |
-| 5-3 | [code-for-math](code-for-math/) | ✅ | 30 道 AIME 2024 同模型真实对照：代码臂全部调用沙箱（含 sympy/numpy/scipy），53.3% vs 纯 CoT 36.7%，但差异未达显著（p=0.125）；正式负结论与原始收据均保留 |
-| 5-4 | [code-for-logic](code-for-logic/) | ✅ | 固定版本 K&K 数据集 84 题真实对照：代码臂 100% 调用 `python-constraint`，实测 39.3% vs 纯思考 75.0%，未达到正文预期的 90%；完整负结论如实保留 |
+| 5-3 | [code-for-math](code-for-math/) | ✅ | 同一模型做 30 道 AIME 2024 题，直接推理答对 11 道，借助 Python 沙箱答对 16 道。配对检验得到 p=0.125。读两组答案不同的题，看看程序帮模型算对了哪一步 |
+| 5-4 | [code-for-logic](code-for-logic/) | ✅ | 同一模型做 84 道骑士与无赖谜题，直接推理答对 63 道，借助代码答对 33 道。每题提交的代码都出现过导入求解库的语句；跟着 James 和 Sophia 那道题，看程序能否执行、答案有没有交给用户 |
 | 5-5 | [small-model-codified-rules](small-model-codified-rules/) | ✅ | 本地 Qwen3-4B 的 60×2 配对 τ-bench 风格活动：代码化规则臂 91.7% vs 控制组 95.0%（p=0.6875），未显著提升；服务端真值、checklist 和完整 120 条轨迹均已验证 |
 | 5-6 | [paper-to-ppt](paper-to-ppt/) | ✅ | 固定真实论文 PDF 的 20 页双臂正式对照：三张原图均带页码/裁剪/变换/哈希来源；两组独立 Vision 均以 95 分通过，质量持平，但双 Agent 峰值上下文 24,186 vs 单 Agent 92,601（低 3.83×） |
 | 5-7 | [paper-to-video](paper-to-video/) | ✅ | 从实验 5-6 的 22 页旧稿选取 12 页，用 Kimi K3 写讲稿、Qwen-VL-Max 对照页面审核、Fish Audio S1 合成旁白。用 ffprobe 检查 513.010 秒的成片，再逐页比较原音频和视频片段时长，最大差值为 0.024 秒 |
