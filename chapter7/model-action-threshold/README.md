@@ -39,11 +39,11 @@ for event in case["events"]:
     if event["type"] == "tool":
         print(event["sequence"], event["tool"], event["result"].get("error", ""))
 print("首个受测补丁通过：", case["first_patch_test_passed"])
-print("首次补丁测试后尝试编辑的次数：", case["edits_after_first_test"])
+print("首次补丁测试后成功编辑的次数：", case["edits_after_first_test"])
 PYTHON
 ```
 
-第 7 个事件是 `write_file`。这个工具只创建新文件，目标已经存在，于是返回 `file already exists`。到第 9 个事件，模型改用 `replace_text` 才真正写入；第 11 个事件的测试通过。按“开始尝试”来算，前面有一次搜索、两次读文件，共三次工具调用。按“开始改动仓库”来算，还要把失败的写入算在前面。最后的返工数为零，表示受测补丁通过后没有再编辑，不能用它推断此前每次操作都成功了。
+第 7 个事件是 `write_file`。这个工具只创建新文件，目标已经存在，于是返回 `file already exists`。到第 9 个事件，模型改用 `replace_text` 才真正写入；第 11 个事件的测试通过。按“开始尝试”来算，前面有一次搜索、两次读文件，共三次工具调用。按“开始改动仓库”来算，还要把失败的写入算在前面。这条记录的返工数为零。读这个字段时要注意，只有首次受测补丁之后返回成功的编辑才计数。若要查模型后来是否还尝试过编辑、工具是否拒绝了它，得看逐条事件。
 
 ### 先运行中性条件，再单独做提示消融
 
@@ -71,11 +71,11 @@ uv run --no-project --with openai python chapter7/model-action-threshold/experim
 
 ## 分析结果与形成判断
 
-如果某模型探索更多但更少返工，额外步骤可能有价值。反过来，大量阅读也可能没有收集到必要信息。分析应结合独立测试结果与总成本。
+先只比较同一道缓存题。GPT-5.6-sol 在三次试验中，每次都先调用了六次工具，读过四份不同的文件才尝试编辑。Claude Sonnet 5 每次都是三次调用、两份文件。两者的首个受测补丁和最终独立测试都通过了。多读的两份文件有没有帮助？这六条轨迹能说明模型采取了不同做法；要判断那两份文件值不值得读，还得找出其中哪条信息可能改变补丁，并用能区分两种做法的任务复测。
 
 ### 把第一次编辑放回完整轨迹中
 
-同时记录首次编辑前的工具调用、耗时、读取/搜索次数和独立文件数；再看模型首次触发的测试是否通过、测试后的返工、总编辑次数、改动文件数、最终成功率、延迟与 token。更早编辑并不等于更高质量，更晚编辑也未必是必要探索。
+运行器在工具返回结果时给事件打时间戳，所以 `seconds_to_first_edit` 一直量到第一次编辑工具返回，包含这次调用的处理时间。若要单独分析模型迟迟没有发出请求的原因，还需记录派发时刻。再对照此前的读取与搜索次数、读过多少不同文件、首个受测补丁是否通过、此后成功编辑了几次、改动的文件数，以及最终独立测试、总耗时和 token 用量。更早编辑并不等于更高质量，更晚编辑也未必是必要探索。
 
 `config.json` 保存系统提示与工具 schema 的哈希，`observations.jsonl` 保留逐条轨迹，`summary.json` 汇总指标，`manifest.json` 核对这三个文件。完整记录应包含所有要求的单元且没有 API 错误；任务失败仍是有效观察，不能因结果不好而删除。
 
@@ -122,7 +122,7 @@ Primary process metrics:
 - tool calls and elapsed time before the first edit;
 - read/search calls and unique files read before the first edit;
 - whether the first model-triggered test run passes;
-- edits after the first test, total edits, and files changed;
+- successful edits after the first tested patch, edit attempts and successes, and files changed;
 - final test success, latency, and token usage.
 
 Time to first edit is not a quality score. Interpret it together with
