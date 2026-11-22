@@ -136,6 +136,8 @@ python run_ablation.py \
     --max-agent-steps 30
 ```
 
+也可以用 OpenRouter 做自选模型的对照：设置 `OPENROUTER_API_KEY`，并用带提供商前缀的模型 ID（如 `openai/gpt-5`）。裸 OpenAI 模型 ID（如 `gpt-4o-mini`）在只设置 OpenRouter Key 时会自动添加 `openai/` 前缀并切换到 OpenRouter。复现上面的冻结实验时使用 Moonshot 官方端点。
+
 **真实冒烟**表示例（`--model gpt-4o --env airline --end-index 4`，每组仅 4 任务，只用于展示表格形态）：
 
 ```
