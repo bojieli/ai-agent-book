@@ -66,7 +66,7 @@ print("平均孔径（mm）", round(result["hole_diameter_mm"], 3))
 PYTHON
 ```
 
-接着打开[两条路线的运行清单](validation/runs/exp5-7-cad-vs-diffusion-20260821-015734-v1/manifest.json)。先在 `route_a` 下对照 `initial.measurement` 和 `after_change.measurement`，找出改动的尺寸，再用同样的方法读 `route_b`。如果某个孔径读数为空，先查截面上找到了几个孔，再决定能从这个读数推出什么。
+接着打开[两条路线的运行清单](validation/runs/exp5-7-cad-vs-diffusion-20260821-015734-v1/manifest.json)。书中编号是 5-9，归档时用的是旧编号 5-7，清单里的 `experiment` 字段和目录名都沿用旧编号。先在 `route_a` 下对照 `initial.measurement` 和 `after_change.measurement`，找出改动的尺寸，再用同样的方法读 `route_b`。如果某个孔径读数为空，先查截面上找到了几个孔，再决定能从这个读数推出什么。
 
 <a id="learning-3"></a>
 
