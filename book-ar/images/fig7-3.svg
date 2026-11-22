@@ -12,69 +12,69 @@
 .n{font-size:10.5px;fill:#666666}
 .c{font-size:10.5px;fill:#666666;font-family:'SF Mono',Menlo,Consolas,monospace}
 
-.t,.l{direction:rtl;unicode-bidi:plaintext;font-family:'Noto Sans Arabic','Noto Sans',Arial,sans-serif}
-.c{font-family:'SF Mono',Menlo,Consolas,monospace;direction:ltr;unicode-bidi:plaintext}
+.t,.l{font-family:'Noto Sans Arabic','Noto Sans',Arial,sans-serif}
+.c{font-family:'SF Mono',Menlo,Consolas,monospace}
 
 </style>
 
 <!-- user simulator -->
 <rect x="40" y="20" width="270" height="86" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="175" y="40">محاكي المستخدم (LLM)</text>
-<text class="l n" x="56" y="62">known_info: John Smith / 555-123-2002 / في فرنسا</text>
-<text class="l n" x="56" y="80">task_instructions: كشف تدريجي · انفعال · ترسيخ</text>
-<text class="l n" x="56" y="96">القبول: excellent وحدها تُعد حلًّا</text>
+<text class="t h" x="175" y="40" direction="rtl" unicode-bidi="plaintext">محاكي المستخدم (LLM)</text>
+<text class="l n" x="56" y="62" direction="rtl" unicode-bidi="plaintext">known_info: John Smith / 555-123-2002 / في فرنسا</text>
+<text class="l n" x="56" y="80" direction="rtl" unicode-bidi="plaintext">task_instructions: كشف تدريجي · انفعال · ترسيخ</text>
+<text class="l n" x="56" y="96" direction="rtl" unicode-bidi="plaintext">القبول: excellent وحدها تُعد حلًّا</text>
 
 <!-- Agent -->
 <rect x="570" y="20" width="270" height="86" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="705" y="40">الوكيل (قيد التقييم)</text>
-<text class="l n" x="586" y="62">المدخل: تذكرة + سياسة النطاق</text>
-<text class="l n" x="586" y="80">غير مرئي: الحالة الحقيقية للجهاز</text>
-<text class="l n" x="586" y="96">يوجّه فقط ولا ينفّذ نيابةً عنه</text>
+<text class="t h" x="705" y="40" direction="rtl" unicode-bidi="plaintext">الوكيل (قيد التقييم)</text>
+<text class="l n" x="586" y="62" direction="rtl" unicode-bidi="plaintext">المدخل: تذكرة + سياسة النطاق</text>
+<text class="l n" x="586" y="80" direction="rtl" unicode-bidi="plaintext">غير مرئي: الحالة الحقيقية للجهاز</text>
+<text class="l n" x="586" y="96" direction="rtl" unicode-bidi="plaintext">يوجّه فقط ولا ينفّذ نيابةً عنه</text>
 
 <!-- dialogue -->
 <line x1="316" y1="63" x2="560" y2="63" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)" marker-start="url(#ah-r)"/>
-<text class="t n" x="438" y="50">حوار متعدد الأدوار</text>
-<text class="t n" x="438" y="80">كشف تدريجي للمعلومات</text>
+<text class="t n" x="438" y="50" direction="rtl" unicode-bidi="plaintext">حوار متعدد الأدوار</text>
+<text class="t n" x="438" y="80" direction="rtl" unicode-bidi="plaintext">كشف تدريجي للمعلومات</text>
 
 <!-- shared environment -->
 <rect x="40" y="146" width="800" height="150" rx="6" fill="#f3f0e8" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="440" y="166">بيئة مشتركة (تحكم مزدوج: الطرفان يغيّران الحالة)</text>
+<text class="t h" x="440" y="166" direction="rtl" unicode-bidi="plaintext">بيئة مشتركة (تحكم مزدوج: الطرفان يغيّران الحالة)</text>
 <rect x="60" y="182" width="370" height="98" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="245" y="200" font-weight="bold">حالة جانب الجهاز</text>
-<text class="l n" x="76" y="222">وضع الطيران ON · التجوال OFF · توفير البيانات · الرصيد</text>
-<text class="l c" x="76" y="246">أدوات المستخدم: toggle_airplane_mode / toggle_roaming</text>
-<text class="l c" x="76" y="266">      check_status_bar / run_speed_test</text>
+<text class="t m" x="245" y="200" font-weight="bold" direction="rtl" unicode-bidi="plaintext">حالة جانب الجهاز</text>
+<text class="l n" x="76" y="222" direction="rtl" unicode-bidi="plaintext">وضع الطيران ON · التجوال OFF · توفير البيانات · الرصيد</text>
+<text class="l c" x="76" y="246" direction="ltr" unicode-bidi="plaintext">أدوات المستخدم: toggle_airplane_mode / toggle_roaming</text>
+<text class="l c" x="76" y="266" direction="ltr" unicode-bidi="plaintext">      check_status_bar / run_speed_test</text>
 <rect x="450" y="182" width="370" height="98" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="635" y="200" font-weight="bold">قاعدة بيانات المشغّل</text>
-<text class="l n" x="466" y="222">العميل C1001 · الخطوط L1001/L1002/L1003 · الباقات · الفواتير</text>
-<text class="l c" x="466" y="246">أدوات الوكيل: get_customer_by_phone / get_data_usage</text>
-<text class="l c" x="466" y="266">      enable_roaming / refuel_data</text>
+<text class="t m" x="635" y="200" font-weight="bold" direction="rtl" unicode-bidi="plaintext">قاعدة بيانات المشغّل</text>
+<text class="l n" x="466" y="222" direction="rtl" unicode-bidi="plaintext">العميل C1001 · الخطوط L1001/L1002/L1003 · الباقات · الفواتير</text>
+<text class="l c" x="466" y="246" direction="ltr" unicode-bidi="plaintext">أدوات الوكيل: get_customer_by_phone / get_data_usage</text>
+<text class="l c" x="466" y="266" direction="ltr" unicode-bidi="plaintext">      enable_roaming / refuel_data</text>
 
 <line x1="175" y1="106" x2="175" y2="178" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 <line x1="705" y1="106" x2="705" y2="178" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 
 <!-- re-read note -->
 <rect x="40" y="306" width="800" height="34" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5" stroke-dasharray="5 4"/>
-<text class="t n" x="440" y="323">استدعاء toggle_roaming من المستخدم غيّر البيئة؛ على الوكيل استدعاء الأداة من جديد — والتحقق يغطي هذه القراءة</text>
+<text class="t n" x="440" y="323" direction="rtl" unicode-bidi="plaintext">استدعاء toggle_roaming من المستخدم غيّر البيئة؛ على الوكيل استدعاء الأداة من جديد — والتحقق يغطي هذه القراءة</text>
 
 <!-- verification -->
 <rect x="40" y="356" width="800" height="136" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="440" y="376">بعد المهمة: أربع طبقات فحص + قاعدة تجميع</text>
+<text class="t h" x="440" y="376" direction="rtl" unicode-bidi="plaintext">بعد المهمة: أربع طبقات فحص + قاعدة تجميع</text>
 <rect x="56" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="147" y="408">env_assertions</text>
-<text class="t n" x="147" y="428">بيانات الجوّال متاحة</text>
-<text class="t n" x="147" y="444">السرعة ≥ 200 / excellent</text>
+<text class="t m" x="147" y="408" direction="rtl" unicode-bidi="plaintext">env_assertions</text>
+<text class="t n" x="147" y="428" direction="rtl" unicode-bidi="plaintext">بيانات الجوّال متاحة</text>
+<text class="t n" x="147" y="444" direction="rtl" unicode-bidi="plaintext">السرعة ≥ 200 / excellent</text>
 <rect x="254" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="345" y="408">actions</text>
-<text class="t n" x="345" y="428">toggle_airplane_mode</text>
-<text class="t n" x="345" y="444">يجب أن يكون requestor هو user</text>
+<text class="t m" x="345" y="408" direction="rtl" unicode-bidi="plaintext">actions</text>
+<text class="t n" x="345" y="428" direction="rtl" unicode-bidi="plaintext">toggle_airplane_mode</text>
+<text class="t n" x="345" y="444" direction="rtl" unicode-bidi="plaintext">يجب أن يكون requestor هو user</text>
 <rect x="452" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="543" y="408">communicate_info</text>
-<text class="t n" x="543" y="428">هل أُبلغت المعلومات اللازمة</text>
-<text class="t n" x="543" y="444">null في هذه المهمة</text>
+<text class="t m" x="543" y="408" direction="rtl" unicode-bidi="plaintext">communicate_info</text>
+<text class="t n" x="543" y="428" direction="rtl" unicode-bidi="plaintext">هل أُبلغت المعلومات اللازمة</text>
+<text class="t n" x="543" y="444" direction="rtl" unicode-bidi="plaintext">null في هذه المهمة</text>
 <rect x="650" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
-<text class="t m" x="741" y="408">nl_assertions</text>
-<text class="t n" x="741" y="428">حكم على مستوى اللغة الطبيعية</text>
-<text class="t n" x="741" y="444">null في هذه المهمة</text>
-<text class="t n" x="440" y="474">reward_basis = ["ENV_ASSERTION"]  ←  الطبقة الأولى وحدها معتمدة؛ والباقي يُسجَّل ولا يدخل المكافأة</text>
+<text class="t m" x="741" y="408" direction="rtl" unicode-bidi="plaintext">nl_assertions</text>
+<text class="t n" x="741" y="428" direction="rtl" unicode-bidi="plaintext">حكم على مستوى اللغة الطبيعية</text>
+<text class="t n" x="741" y="444" direction="rtl" unicode-bidi="plaintext">null في هذه المهمة</text>
+<text class="t n" x="440" y="474" direction="rtl" unicode-bidi="plaintext">reward_basis = ["ENV_ASSERTION"]  ←  الطبقة الأولى وحدها معتمدة؛ والباقي يُسجَّل ولا يدخل المكافأة</text>
 </svg>

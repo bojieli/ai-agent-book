@@ -10,49 +10,49 @@
 .n{font-size:11px;fill:#333333}
 .a{font-size:12px;fill:#333333}
 
-.t,.l{direction:rtl;unicode-bidi:plaintext;font-family:'Noto Sans Arabic','Noto Sans',Arial,sans-serif}
-.c{font-family:'SF Mono',Menlo,Consolas,monospace;direction:ltr;unicode-bidi:plaintext}
+.t,.l{font-family:'Noto Sans Arabic','Noto Sans',Arial,sans-serif}
+.c{font-family:'SF Mono',Menlo,Consolas,monospace}
 
 </style>
 
 <line x1="40" y1="26" x2="846" y2="26" stroke="#333333" stroke-width="2" marker-end="url(#ax)"/>
-<text class="t a" x="130" y="12">قابلية المهمة للتحقق آليًا: عالية</text>
-<text class="t a" x="790" y="12">منخفضة</text>
+<text class="t a" x="130" y="12" direction="rtl" unicode-bidi="plaintext">قابلية المهمة للتحقق آليًا: عالية</text>
+<text class="t a" x="790" y="12" direction="rtl" unicode-bidi="plaintext">منخفضة</text>
 
 <rect x="18" y="52" width="190" height="112" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="113" y="76">مدقق حتمي</text>
-<text class="t m" x="113" y="100">حالة نهائية وحيدة قابلة للاستعلام</text>
-<text class="t m" x="113" y="120">ناجح / راسب</text>
-<text class="t n" x="113" y="146">SWE-bench يشغّل الاختبارات</text>
+<text class="t h" x="113" y="76" direction="rtl" unicode-bidi="plaintext">مدقق حتمي</text>
+<text class="t m" x="113" y="100" direction="rtl" unicode-bidi="plaintext">حالة نهائية وحيدة قابلة للاستعلام</text>
+<text class="t m" x="113" y="120" direction="rtl" unicode-bidi="plaintext">ناجح / راسب</text>
+<text class="t n" x="113" y="146" direction="rtl" unicode-bidi="plaintext">SWE-bench يشغّل الاختبارات</text>
 <line x1="212" y1="108" x2="232" y2="108" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)"/>
 
 <rect x="236" y="52" width="190" height="112" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="331" y="76">قائمة فحوص</text>
-<text class="t m" x="331" y="100">عدة فحوص حتمية</text>
-<text class="t m" x="331" y="120">يُجمَّع وفق الأساس المعلن</text>
-<text class="t n" x="331" y="146">طبقات τ²-bench الأربع</text>
+<text class="t h" x="331" y="76" direction="rtl" unicode-bidi="plaintext">قائمة فحوص</text>
+<text class="t m" x="331" y="100" direction="rtl" unicode-bidi="plaintext">عدة فحوص حتمية</text>
+<text class="t m" x="331" y="120" direction="rtl" unicode-bidi="plaintext">يُجمَّع وفق الأساس المعلن</text>
+<text class="t n" x="331" y="146" direction="rtl" unicode-bidi="plaintext">طبقات τ²-bench الأربع</text>
 <line x1="430" y1="108" x2="450" y2="108" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)"/>
 
 <rect x="454" y="52" width="190" height="112" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="549" y="76">Rubric + حكم نموذج</text>
-<text class="t m" x="549" y="100">أبعاد موجودة لا يحسمها كود</text>
-<text class="t m" x="549" y="120">درجات لكل بُعد مع التعليل</text>
-<text class="t n" x="549" y="146">جودة الخدمة، كتابة التقارير</text>
+<text class="t h" x="549" y="76" direction="rtl" unicode-bidi="plaintext">Rubric + حكم نموذج</text>
+<text class="t m" x="549" y="100" direction="rtl" unicode-bidi="plaintext">أبعاد موجودة لا يحسمها كود</text>
+<text class="t m" x="549" y="120" direction="rtl" unicode-bidi="plaintext">درجات لكل بُعد مع التعليل</text>
+<text class="t n" x="549" y="146" direction="rtl" unicode-bidi="plaintext">جودة الخدمة، كتابة التقارير</text>
 <line x1="648" y1="108" x2="668" y2="108" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)"/>
 
 <rect x="672" y="52" width="190" height="112" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="767" y="76">مقارنة زوجية</text>
-<text class="t m" x="767" y="100">حتى الأبعاد يصعب صوغها</text>
-<text class="t m" x="767" y="120">يحكم بين A وB فقط</text>
-<text class="t n" x="767" y="146">Chatbot Arena</text>
+<text class="t h" x="767" y="76" direction="rtl" unicode-bidi="plaintext">مقارنة زوجية</text>
+<text class="t m" x="767" y="100" direction="rtl" unicode-bidi="plaintext">حتى الأبعاد يصعب صوغها</text>
+<text class="t m" x="767" y="120" direction="rtl" unicode-bidi="plaintext">يحكم بين A وB فقط</text>
+<text class="t n" x="767" y="146" direction="rtl" unicode-bidi="plaintext">Chatbot Arena</text>
 
 <rect x="18" y="192" width="408" height="66" rx="6" fill="#f3f0e8" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="222" y="212">تحقق حتمي</text>
-<text class="t m" x="222" y="234">قابل لإعادة الإنتاج، يناسب CI، منخفض الكلفة</text>
-<text class="t m" x="222" y="250">الثمن: يحكم بالصواب لا بموضع الخلل</text>
+<text class="t h" x="222" y="212" direction="rtl" unicode-bidi="plaintext">تحقق حتمي</text>
+<text class="t m" x="222" y="234" direction="rtl" unicode-bidi="plaintext">قابل لإعادة الإنتاج، يناسب CI، منخفض الكلفة</text>
+<text class="t m" x="222" y="250" direction="rtl" unicode-bidi="plaintext">الثمن: يحكم بالصواب لا بموضع الخلل</text>
 
 <rect x="454" y="192" width="408" height="66" rx="6" fill="#f3f0e8" stroke="#333333" stroke-width="2"/>
-<text class="t h" x="658" y="212">حكم النموذج</text>
-<text class="t m" x="658" y="234">يعطي أبعادًا تشخيصية ويغطي ما لا يُصاغ تأكيدًا</text>
-<text class="t m" x="658" y="250">الثمن: تحيّز وتذبذب في الحكم، وكلفة أعلى</text>
+<text class="t h" x="658" y="212" direction="rtl" unicode-bidi="plaintext">حكم النموذج</text>
+<text class="t m" x="658" y="234" direction="rtl" unicode-bidi="plaintext">يعطي أبعادًا تشخيصية ويغطي ما لا يُصاغ تأكيدًا</text>
+<text class="t m" x="658" y="250" direction="rtl" unicode-bidi="plaintext">الثمن: تحيّز وتذبذب في الحكم، وكلفة أعلى</text>
 </svg>
