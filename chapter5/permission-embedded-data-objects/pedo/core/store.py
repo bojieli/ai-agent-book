@@ -196,11 +196,17 @@ class ObjectStore:
         """Create a new object. Full pipeline."""
         obj_type = self._get_type(obj.type_name)
 
+        # Resolve the target tenant before checking any parent or validators.
+        if not obj.org_id and accessor.org_id:
+            obj.org_id = accessor.org_id
+        self._check_tenant(obj, accessor)
+
         # Tier 1: Permission check
         if obj.parent_id:
             parent = self._load_object(obj.parent_id)
             if parent is None:
                 raise ReferentialIntegrityError(f"Parent {obj.parent_id} not found")
+            self._check_related_tenant(obj, parent, accessor)
             self._check_permission(parent, accessor, PrivilegeType.INSERT)
         else:
             # Top-level create: check type-level permission rules
@@ -209,8 +215,6 @@ class ObjectStore:
         # Set ownership
         if not obj.owner_id:
             obj.owner_id = accessor.user_id
-        if not obj.org_id and accessor.org_id:
-            obj.org_id = accessor.org_id
 
         obj.created_at = time.time()
         obj.updated_at = obj.created_at
@@ -222,7 +226,7 @@ class ObjectStore:
                 raise ValidationError(str(result))
 
         # Validate references
-        self._validate_references(obj, obj_type)
+        self._validate_references(obj, obj_type, accessor)
 
         # Tier 2: Object store mechanics
         self._store_object(obj)
@@ -319,18 +323,26 @@ class ObjectStore:
 
     # ── Tier 1: Permission Evaluation ──────────────────────────
 
+    def _check_tenant(self, obj: DataObject, accessor: AccessContext):
+        """Global objects use their rules; tenant objects require a matching org."""
+        if obj.org_id and obj.org_id != accessor.org_id and accessor.role != "system":
+            raise PermissionDeniedError(
+                f"Tenant isolation: accessor org {accessor.org_id} != object org {obj.org_id}")
+
+    def _check_related_tenant(self, obj: DataObject, target: DataObject,
+                              accessor: AccessContext):
+        """Allow shared global targets, but forbid links into another tenant."""
+        if target.org_id and target.org_id != obj.org_id and accessor.role != "system":
+            raise PermissionDeniedError(
+                f"Tenant isolation: object org {obj.org_id} != related object org {target.org_id}")
+
     def _check_permission(self, obj: DataObject, accessor: AccessContext,
                           privilege: PrivilegeType):
         """Evaluate permission filter chain. First match wins."""
         now = time.time()
         obj_type = self._get_type(obj.type_name)
 
-        # Built-in tenant isolation: if the object has an org_id and the accessor
-        # has a different org_id, deny access (unless the accessor is system)
-        if (obj.org_id and accessor.org_id and
-                obj.org_id != accessor.org_id and accessor.role != "system"):
-            raise PermissionDeniedError(
-                f"Tenant isolation: accessor org {accessor.org_id} != object org {obj.org_id}")
+        self._check_tenant(obj, accessor)
 
         # Collect rules: type-level rules + object-level overrides
         rules = obj.permission_rules if obj.permission_rules is not None else obj_type.permission_rules
@@ -408,7 +420,8 @@ class ObjectStore:
 
     # ── Tier 2: Object Store Mechanics ─────────────────────────
 
-    def _validate_references(self, obj: DataObject, obj_type: ObjectType):
+    def _validate_references(self, obj: DataObject, obj_type: ObjectType,
+                             accessor: AccessContext):
         """Validate that all declared references point to existing objects."""
         for rel in obj_type.relationships:
             ref_id = obj.references.get(rel.name) or obj.content.get(rel.name + "_id")
@@ -417,6 +430,13 @@ class ObjectStore:
                 if target is None:
                     raise ReferentialIntegrityError(
                         f"Referenced object {ref_id} for relationship {rel.name} not found")
+                self._check_related_tenant(obj, target, accessor)
+                # Validators may read the content id even when refs overrides it.
+                content_ref_id = obj.content.get(rel.name + "_id")
+                if content_ref_id and content_ref_id != ref_id:
+                    content_target = self._load_object(content_ref_id)
+                    if content_target is not None:
+                        self._check_related_tenant(obj, content_target, accessor)
                 if target.type_name != rel.target_type:
                     raise ReferentialIntegrityError(
                         f"Referenced object {ref_id} is type {target.type_name}, expected {rel.target_type}")
