@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { tokenLabel } from './tokenLabel';
 
 interface ResponseDisplayProps {
   response: string;
@@ -33,7 +34,7 @@ export default function ResponseDisplay({ response, tokens }: ResponseDisplayPro
                 className="inline-block px-2 py-1 bg-green-100 rounded text-sm font-mono hover:bg-green-200 transition-colors cursor-default"
                 title={`Token ${idx + 1}`}
               >
-                {token}
+                {tokenLabel(token)}
               </span>
             ))}
           </div>

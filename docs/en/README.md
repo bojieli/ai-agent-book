@@ -5,6 +5,8 @@
 
 **[中文](../../README.md) · English ← current · [Español](../es/README.md) · [Bahasa Indonesia](../id/README.md) · [العربية](../ar/README.md) · [繁體中文（台灣）](../zh-TW/README.md) · [Русский](../ru/README.md) · [Tiếng Việt](../vi/README.md) · [தமிழ்](../ta/README.md) · [日本語](../ja/README.md) · [Türkçe](../tr/README.md) · [한국어](../ko/README.md) · [Magyar](../hu/README.md) · [עברית](../../README.he.md) · [Português (Brasil)](../../README.ptbr.md)**
 
+[Mongolian edition (chapters and source)](https://github.com/bojieli/ai-agent-book/blob/main/book-mn/README.md)
+
 > 📥 **[Download PDF / EPUB](#-e-book)** (recommended) — the PDF / EPUB editions offer the best reading experience; you can also [read online](https://bojieli.github.io/ai-agent-book/astro/en/) (multi-language switcher, collapsible chapter tree, highlights and notes, auto-rebuilt on every push to main).
 
 **Agent = LLM + Context + Tools** — This book builds on this core formula across 10 chapters, taking AI Agents from principles to engineering practice. The full text, illustrations, and **93 accompanying experiments** are all open source. You are welcome to run the experiments yourself.
@@ -111,7 +113,12 @@ It is recommended to apply for API keys from several platforms for convenient le
 | **Zhipu GLM** | <https://open.bigmodel.cn/> | GLM-4.6 etc., strong Chinese ability, cost-effective | Mainland China |
 | **Siliconflow** | <https://siliconflow.cn/> | Various open-source models (DeepSeek, Qwen, etc.), fast access from mainland China | Mainland China |
 | **DeepSeek** | <https://platform.deepseek.com/> | Official DeepSeek API | Global + Mainland China |
+| **API Route** | <https://www.api-route.com/> | Access multiple models through an OpenAI-compatible API; use `--provider api_route` and `API_ROUTE_API_KEY`, with exact IDs from the [current catalog](https://www.api-route.com/pricing) | Global |
 | **Atlas Cloud** | <https://www.atlascloud.ai/> | Access models from multiple vendors through an OpenAI-compatible API | Global |
+| **Runcrate** | <https://runcrate.ai/> | Open-weight models (DeepSeek, Qwen, GLM, Kimi, etc.) through an OpenAI-compatible API | Global |
+| **Opper** | <https://opper.ai/> | EU-hosted AI gateway, 700+ models from 50+ providers behind one OpenAI-compatible API | Global |
+| **UberLLM** | <https://uberllm.dev/> | One key for models from multiple vendors (DeepSeek, Qwen, GPT, Claude, Gemini, etc.) through an OpenAI-compatible API, prepaid pay-as-you-go | Global |
+| **Cheaper Inference** | <https://cheaperinference.com/> | Access GPT, Claude, Gemini, DeepSeek, GLM and other models through an OpenAI-compatible API. | Global |
 | **Krill AI** | [www.krill-code.com](https://www.krill-code.com/register?invite=Q8D3L35725) | One-stop access to major global and China-domestic models (OpenAI, Claude, Gemini, Grok, Kimi, GLM, DeepSeek, Qwen, Minimax) | Global + Mainland China |
 | **OpenRouter** | <https://openrouter.ai/> | One-stop access to major global and China-domestic models (GPT, Claude, Gemini, Kimi, GLM, DeepSeek, Qwen, etc.) | Global |
 

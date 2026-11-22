@@ -25,6 +25,8 @@ const sources = import.meta.glob<MarkdownInstance<Record<string, unknown>>>(
     '../../../../book*/chapter9.*.md',
     '../../../../book*/chapter10.md',
     '../../../../book*/chapter10.*.md',
+    // The Mongolian community edition is available as Markdown and a local PDF.
+    '!../../../../book-mn/**',
   ],
   { eager: true },
 );
