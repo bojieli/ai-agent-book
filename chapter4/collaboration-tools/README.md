@@ -24,7 +24,7 @@
 - 完整虚拟浏览器能力
 
 #### 子 Agent 管理
-- 以 **sync**（等待结果）或 **async**（返回 `task_id`）模式 spawn 子 Agent
+- 同步委派会等到子 Agent 答复；异步委派立即返回 `task_id` 和 `subagent_id`，后续查询、补充消息和取消均传 `subagent_id`
 - 向子 Agent 发送后续消息、取消运行中的子 Agent
 - **两种上下文传递策略**（可检查上下文文本与 token 数）：
   - `minimal` — 传递任务与手工选择的必要字段，完整性取决于字段选择
@@ -242,7 +242,7 @@ python main.py hitl approve --message "删除 1000 条记录？" --timeout 5 --a
 python main.py notify slack --message "部署完成"
 ```
 
-`demo` 会串联三类协作工具：① 委派子 Agent 审批退款并对比上下文策略；② 大额操作
+`demo` 会串联三类协作工具：① 委派子 Agent 核对退款条件并对比上下文策略；② 大额操作
 触发 HITL 审批（演示"超时前批准"与"超时保守默认"两种路径）；③ 向协作者多渠道通知结果。
 其中 **HITL 与通知路径完全离线可跑**；子 Agent 的真实执行与 `llm_generated` 策略需要
 `OPENAI_API_KEY`（未配置时会明确提示，命令仍可正常解析运行）。
@@ -274,6 +274,10 @@ python subagent_comparison.py
 `minimal` 的开销取决于选中的字段；`llm_generated` 增加一次准备调用，需要检查摘要是否保留必要事实、是否包含未授权信息。两种方式都应按字段的实际内容实施权限与隐私检查。
 
 正式记录见 [`real_mcp_human_20260803_v2`](validation/experiment_4_5/real_mcp_human_20260803_v2/summary.json)。最小切片组只选择 `policy`，交接上下文为 56 token，缺少请求中的购买时间与金额，子 Agent 返回 `need_info`。摘要组按业务规则保留 `customer`、`request` 与 `policy`，交接为 151 token，额外准备调用为 643 token；子 Agent 根据“三天前、80 新元”判断符合“七天内、低于 100 新元”的政策。后续给最小组补充“商品未使用”，仍未补齐缺失字段，子 Agent 再次请求金额与时间。
+
+不用启动服务也可以练习读回执。打开[最小切片的同步调用](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/01_minimal_sync.json)，先看调用参数里的 `parent_context`，再看 `payload.prepared_context`。父 Agent 手里有金额和购买时间，传给子 Agent 的文字里却只有店规。外层 `payload.status` 为 `completed`，内层 `payload.result` 的 `status` 为 `need_info`。如果负责下一步的是你，这时可以从父任务补齐两项事实，省去向用户再问一次。[后续消息](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/03_multi_turn_message.json)只补充了商品未使用，所以子 Agent 仍旧无法判断。
+
+再对照[异步启动](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/04_async_spawn.json)和[异步完成](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/45_async_status_41.json)。找出启动时返回的两个 ID，看看后一次查询的 `arguments.subagent_id` 对应哪一个。人工审批则用另一套标识：把[待办](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/49_hitl_pending.json)、[人工答复](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/50_hitl_human_response.json)和[调用方收到的批准](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/51_hitl_approval.json)按 `request_id` 对起来。最后打开[超时记录](validation/experiment_4_5/real_mcp_human_20260803_v2/receipts/52_hitl_timeout.json)，核对它的请求 ID 和 `timeout`。超时只说明期限内没有收到答复；前一条批准也只适用于它自己那项请求。
 
 这组记录展示了字段选择对完成任务的影响。要比较两种策略本身，可再增加一个包含相同必要事实的手工切片组，比较回答、总用量与延迟。当前记录还覆盖生命周期、人工答复与超时；邮件、Telegram 与 Slack 的真实投递等待对应服务配置。历史文件中的实验编号 4-4 对应现稿实验 4-5。
 
