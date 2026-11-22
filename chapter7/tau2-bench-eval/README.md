@@ -66,6 +66,22 @@ uv pip install -e .
 
 已有记录中，五题均以 `user_stop` 正常结束，没有提供商错误；平均奖励和 Pass@1 为 0.80。提供商报告的总费用约为 $0.151312，其中客服 $0.112672，用户模拟器 $0.0386396。费用和分数属于这次运行条件。
 
+先用归档核对 0.80 的分母。在本实验目录运行下面的命令，只读已有轨迹，无需模型账号。每行依次打印试验编号、奖励和任务编号；对照最后一列，看这五次运行是否回答了同一道题。
+
+```bash
+python3 - <<'PYTHON'
+import json
+from pathlib import Path
+
+run = Path("validation/runs/exp7-1-openrouter-gpt41mini-telecom-20260802-v1")
+records = json.loads((run / "trajectories.json").read_text())["simulations"]
+for record in records:
+    print(record["trial"], record["reward_info"]["reward"], record["task_id"])
+PYTHON
+```
+
+你会看到五个不同的任务编号，奖励四个为 1，一个为 0。如果要回答“同一题连做两次，能否两次都成功”，应保留同一组任务，从相同初始状态分别重跑。把不同任务的两条记录拼在一起，衡量的是另一件事。
+
 更值得细读的是失败题。用户给出的号码是 `555-123-2002`，Agent 却选择了 `L1001`；工具随后明确显示该线路对应 `555-123-2001`，它仍使用了这条线路的 3.2/5 GB 用量。虽然用户侧成功关闭了 Data Saver，Agent 没有检查正确的 `L1002`，也未补充要求的 2 GB 流量。71 条消息的轨迹最后转交人工，`refuel_data` 与后续三项环境断言失败。另一个过程问题是，它在一轮中发起了两个客户查询，而策略规定一次只能调用一个工具。
 
 这个例子同时包含用户侧成功和客服侧失败。上游检查中的格式与试验次数通过，但完整任务覆盖检查失败，因为排行榜要求覆盖整个 telecom 集合。这里的五题观察可以用于学习局部机制，不能作为全域排行榜结果。完整轨迹、`evidence.json` 和 `manifest.json` 的原始链接保留在本文英文部分。
