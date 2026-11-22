@@ -77,7 +77,7 @@ def _assistant_text(trajectory: Dict[str, Any]) -> str:
 def _action_claim_evidence(claim: Dict[str, Any], calls: List[Dict[str, Any]]) -> tuple[str, str]:
     """Compare the sandbox's action facts with an actual prior successful call.
 
-    ponytail: this parses numeric money, sandbox order IDs and ISO dates only;
+    This parses numeric money, sandbox order IDs and ISO dates only;
     unfamiliar value wording needs review, rather than a general NLP parser.
     Legacy non-action annotations (such as fare policy) keep their old contract.
     """
@@ -93,6 +93,10 @@ def _action_claim_evidence(claim: Dict[str, Any], calls: List[Dict[str, Any]]) -
     number = r"[+-]?\d+(?:,\d{3})*(?:\.\d+)?"
     money = rf"(?:[$¥￥]|\b(?:USD|CNY|RMB)\s*)\s*({number})|({number})\s*(?:dollars?\b|yuan\b|元)"
     amounts = [Decimal((a or b).replace(",", "")) for a, b in re.findall(money, text, re.IGNORECASE)]
+    units = set()
+    for match in re.finditer(money, text, re.IGNORECASE):
+        symbol = re.sub(number, "", match.group()).strip().lower()
+        units.add("USD" if symbol in {"$", "usd", "dollar", "dollars"} else "CNY")
     dates = re.findall(r"\b\d{4}-\d{2}-\d{2}\b", text)
     orders = re.findall(r"\b[A-Z]+-\d+\b", text)
     remainder = re.sub(money, "", text, flags=re.IGNORECASE)
@@ -115,6 +119,15 @@ def _action_claim_evidence(claim: Dict[str, Any], calls: List[Dict[str, Any]]) -
             "refund_amount": result.get("refund_amount", result.get("amount")),
         }
         mismatch, unknown = [], []
+        # Historical sandbox receipts contain only the numeric amount.
+        # When a currency is present it is part of the evidence as well.
+        currency = result.get("currency")
+        if currency and units:
+            expected_unit = str(currency).upper()
+            if expected_unit == "RMB":
+                expected_unit = "CNY"
+            if units != {expected_unit}:
+                mismatch.append(f"currency: claimed={sorted(units)}, tool returned={currency}")
         for field, values in (("order_id", orders), ("new_date", dates), ("refund_amount", amounts)):
             if not values:
                 continue

@@ -126,3 +126,12 @@ def test_original_wrong_amount_through_sandbox_and_verifier():
     assert factual["verdict"] == "fail"
     assert report["release_recommendation"] == "reject"
     assert not report["eligible_as_automatic_learning_signal"]
+
+
+@pytest.mark.parametrize("text,verdict", [
+    ("Refunded USD 480.", "pass"),
+    ("Refunded 480 yuan.", "fail"),
+])
+def test_currency_when_receipt_provides_it(text, verdict):
+    _, factual = report_for(text, result={"success": True, "refund_amount": 480, "currency": "USD"})
+    assert factual["verdict"] == verdict
