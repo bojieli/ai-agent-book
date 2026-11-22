@@ -8,7 +8,7 @@ import json, sys
 from pathlib import Path
 from collections import Counter
 
-SIM = Path("/Users/boj/book/ai-agent-book/chapter7/tau2-bench/data/simulations")
+SIM = Path(__file__).resolve().parents[2] / "chapter7/tau2-bench/data/simulations"
 USER_TOOLS = set(
     (Path(__file__).resolve().parent / "tool_inventory.txt")
     .read_text(encoding="utf-8").split("USER_TOOLS:")[1]

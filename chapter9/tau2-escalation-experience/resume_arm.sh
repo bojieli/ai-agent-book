@@ -2,8 +2,8 @@
 # tau2 的 executor.map 遇到任一任务异常就整体中止；它支持断点续跑，
 # 这里反复续跑直到 114 条全部完成或连续两轮无进展。
 set -uo pipefail
-TAU=/Users/boj/book/ai-agent-book/chapter7/tau2-bench
-EXP=/Users/boj/book/ai-agent-book/chapter9/tau2-escalation-experience
+EXP=$(cd "$(dirname "$0")" && pwd)
+TAU="$EXP/../../chapter7/tau2-bench"
 POLICY=$TAU/data/tau2/domains/telecom/main_policy.md
 ARM=$1; POLICY_FILE=$2; TARGET=${3:-114}
 cp "$POLICY_FILE" "$POLICY"

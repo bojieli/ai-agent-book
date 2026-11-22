@@ -14,6 +14,12 @@ function Pandoc(doc)
       blocks:insert(pandoc.RawBlock("latex", "\\FloatBarrier"))
     end
     blocks:insert(block)
+    -- Keep an earlier illustration out of a list and its introductory paragraph.
+    local list = doc.blocks[i + 2]
+    if block.t == "Figure" and following and following.t == "Para" and list
+        and (list.t == "BulletList" or list.t == "OrderedList") then
+      blocks:insert(pandoc.RawBlock("latex", "\\FloatBarrier"))
+    end
   end
   doc.blocks = blocks
   return doc
