@@ -1,6 +1,6 @@
 # 实验 6-3：模型原生异步与回合中途引导
 
-模型已经开始挑选会议场地，用户又修改了人数或预算。这种更新不应等到错误方案执行完才处理。本实验用受控场地任务观察回合中途引导如何影响后续行为。
+会议原定 20 人参加，场地查询刚发出去，组织者就把人数改成了 10，预算也从 2000 降到 1000。助手该不该撤回查询？这取决于刚才到底查了什么。先读下面的场地表，替组织者选一次，再看看模型从哪一步开始按新条件做事。
 
 [会议条件在查询途中改变](#learning-0) · [先读归档，再选择是否联网](#learning-1) · [对照五组运行条件](#learning-2) · [沿事件核对新要求](#learning-3) · [协议与测量范围](#learning-5)
 
@@ -8,7 +8,7 @@
 
 ## 会议条件在查询途中改变
 
-中途引导不仅是追加一条消息，还涉及服务端是否接收更新、正在运行的任务是否感知，以及后续工具动作采用哪一版条件。模型与接口必须支持相应能力，普通同步调用不能自动获得它。
+试着分别回答两个问题：“新要求送到了吗？”可以查服务端的接收事件；“最后按什么要求选了场地？”要查最后一次回答里的预算、人数和场地。中途引导（steering）发生在原任务仍在进行时，两处记录之间还可能隔着一次工具返回。
 
 ← [第六章实验目录](../README.md) · [第六章正文](../../book/chapter6.md)
 
@@ -98,6 +98,8 @@ python summarize.py validation/runs/exp6-14-20260905-formal \
 
 假设模型漏掉预算更新，仍按 2000 元、10 人选场地，答案会变吗？A 和 B 都坐得下，B 较便宜，模型仍会选 B。因此只核对场地字母，查不出它是否记住预算。打开[第一次异步引导的验收记录](validation/runs/exp6-14-20260905-formal/01-async_steer/acceptance.json)，逐项读 `metrics.answer`：场地为 B、预算为 1000、人数为 10。再把其中的 `receipt` 与事件时间线上 `tool.ready` 带回的回执对照，检查最终回复是否拿到了这次查询的结果。
 
+再回到[查询工具的实现](experiment.py)。这次调用是 `lookup_venues({})`，没有人数和预算两个参数，返回值包含 A、B、C 的完整场地表。用户改条件后，旧调用仍能回答新问题：等原表返回，按新条件筛一遍即可。换一种工具试想：如果请求写的是“只返回坐得下 20 人的场地”，即使它如实返回了 A，助手能从这份结果里找出 B 吗？新人数放宽了容量限制，旧结果漏掉了现在合用的候选；此时需要按新范围补查。决定一次查询是否还能用，要同时看调用参数和返回范围。
+
 如果还想检验预算能否改变决策，可以另设一道题：维持 20 人，只把预算降到 1000 元。这时 A 超预算，B 和 C 都坐不下，合理的回答应指出没有合适场地。五组归档中没有这项对照，复用运行器时也要让判分程序接受“无可选场地”这个结果。
 
 ### 正式实测结果
@@ -134,6 +136,27 @@ python summarize.py validation/runs/exp6-14-20260905-formal \
 | 10.887 | 客户端 `response.create` | 使用原始工具 `call_id`，parent 指向最新 R2 |
 | 11.196 | `response.created`：R3 | 接收工具数据并接续任务 |
 | 12.575 | R3 `response.completed` | 同时满足新预算、新人数与真实回执，选 B |
+
+要自己核对哪一步是“送到”、哪一步才是“选定”，在本实验目录用 Python 标准库摘出同一次运行的关键事件：
+
+```bash
+python3 - <<'PYTHON'
+import json
+from pathlib import Path
+
+run = Path("validation/runs/exp6-14-20260905-formal/01-async_steer")
+keep = {"tool.started", "response.steer.accepted", "tool.ready", "response.completed"}
+for line in (run / "events.jsonl").read_text().splitlines():
+    row = json.loads(line)
+    event = row["event"]
+    if event["type"] in keep:
+        print(f"{row['t_s']:6.3f}", event["type"], event.get("call_id", ""))
+answer = json.loads((run / "acceptance.json").read_text())["metrics"]["answer"]
+print(answer)
+PYTHON
+```
+
+注意输出里出现了三次 `response.completed`。第一次发生时，工具连场地表都还没交回。若把这条事件直接显示成“场地已选好”，用户会提早近九秒看到完成提示。要宣布整个任务结束，还得核对最后一条回答是否满足新条件，且引用了原查询实际交回的回执。
 
 另见[第一次 reasoning 期间 steering 的事件](validation/runs/exp6-14-20260905-formal/01-steer_reasoning/events.jsonl)：reasoning 项在 2.190 秒开始，随后发送更新，3.824 秒收到 `incomplete(reason=steered)`，3.950 秒自动创建后继 response，7.763 秒完成最终答案。
 
