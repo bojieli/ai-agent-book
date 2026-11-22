@@ -44,7 +44,7 @@ _HAS_WHERE = re.compile(r"\bWHERE\b", re.IGNORECASE)
 # rm 的 -r/-f 可以和其他短参数合写（-rfv、-vrf），也可以写成长参数或排在其他参数之后；
 # 只在同一条命令内（不跨 ; & |）查找。
 _DANGEROUS_SHELL = re.compile(
-    r"\brm\s+(?:[^\s;&|]+\s+)*?(?:-[a-z]*[rf][a-z]*|--recursive|--force)(?!\w)"
+    r"\brm[ \t]+(?:(?!--(?:[ \t]|$))[^\s;&|]+[ \t]+)*?(?:-[a-z]*[rf][a-z]*|--recursive|--force)(?=$|[\s;&|])"
     r"|\bmkfs\b|\bshutdown\b|\bdd\s+if=",
     re.IGNORECASE,
 )
@@ -193,7 +193,7 @@ _HAS_WHERE = re.compile(r"\bWHERE\b", re.IGNORECASE)
 # rm 的 -r/-f 可以和其他短参数合写（-rfv、-vrf），也可以写成长参数或排在其他参数之后；
 # 只在同一条命令内（不跨 ; & |）查找。
 _DANGEROUS_SHELL = re.compile(
-    r"\brm\s+(?:[^\s;&|]+\s+)*?(?:-[a-z]*[rf][a-z]*|--recursive|--force)(?!\w)"
+    r"\brm[ \t]+(?:(?!--(?:[ \t]|$))[^\s;&|]+[ \t]+)*?(?:-[a-z]*[rf][a-z]*|--recursive|--force)(?=$|[\s;&|])"
     r"|\bmkfs\b|\bshutdown\b|\bdd\s+if=",
     re.IGNORECASE,
 )

@@ -136,7 +136,8 @@ class CandidateGateTest(unittest.TestCase):
             args = {"command": command}
             self.assertEqual(classify_risk("run_shell", args)[0], "dangerous_shell", command)
             self.assertTrue(self.gate["requires_confirmation"]("run_shell", args), command)
-        for command in ("rm notes.txt", "ls -la", "git rm --cached notes.txt", "rm a.txt; ls -f"):
+        for command in ("rm notes.txt", "ls -la", "git rm --cached notes.txt", "rm a.txt; ls -f",
+                        "rm a.txt\nls -f", "rm -- -f"):
             args = {"command": command}
             self.assertIsNone(classify_risk("run_shell", args)[0], command)
             self.assertFalse(self.gate["requires_confirmation"]("run_shell", args), command)
