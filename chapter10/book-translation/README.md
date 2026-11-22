@@ -1,6 +1,6 @@
 # 用分工与文件组织长文档翻译
 
-长书翻译很难把所有原文与译文一直放在管理者上下文中。本实验让不同角色负责翻译与检查，并用文件保存完整产物，学习如何控制协调成本。
+假设编辑要求全书把 token 译作“词元”。第一章交稿后，第二章的译者从哪里知道这个约定？要是审校发现漏改了一处，管理者需要重读整本书吗？这个实验用同一批原稿比较两种做法：让单个 Agent 在同一段对话里接着翻译，或者把术语、译稿和审校意见分别交给不同角色。
 
 [English](#english)
 
@@ -26,16 +26,11 @@
 
 ### 实验 10-2：书籍翻译 Agent —— 管理者模式（Orchestration）
 
-配套代码，演示如何用**管理者模式**把长文档翻译拆给多个专职 Agent。核心是
-**上下文隔离**与**控制 Manager 上下文膨胀**：Manager 只保存任务、计划、各
-Agent 调用记录和文件索引，**完整译文全部落盘到文件系统**，因此无论书有多长，
-Manager 的上下文都基本恒定。
+先在实验目录运行 `python demo.py --dry-run`。找到计划里的第二章翻译任务，看看译者将拿到哪些材料，再看 Manager 的文件索引里留下了什么。译文落盘以后，下一章增加的是文件路径、进度与调用记录。章节越多，这些记录也会增长，但前一章的整份译文可以留在文件里。
 
-#### 目的
+#### 做完实验要能回答什么
 
-对比「单 Agent 一条对话翻完整本书」与「管理者模式多 Agent 协作」两种方案，用
-**真实 token 数**说明后者如何控制主/Manager 上下文膨胀，并用**共享术语表**保证
-全书术语一致。
+管理者传递文件能省下多少上下文？先比较 Manager 与单 Agent 的上下文峰值，再把各个角色的调用加起来，核对总 token 和耗时。术语则要做两种检查：一本书从头到尾沿用了同一种译法吗？这种译法符合编辑的指定用词吗？一个译者完全可能每次都用同一个词，却每次都偏离编辑要求。
 
 #### 架构：四种 Agent
 
@@ -48,11 +43,11 @@ Manager 的上下文都基本恒定。
 
 数据流：Manager 调度 Glossary → 逐章 Translation（共享同一份术语表文件）→
 Proofreading → Manager 依据报告决定是否把个别章节发回 Translation 修订。译文与
-术语表都通过**文件系统**传递，Manager 只在上下文里保存文件路径。
+术语表都通过**文件系统**传递，Manager 拿到文件索引和报告摘要。在四章演示中，审校报告会列出问题所在章节。若 Manager 决定返修，程序只取该章的问题说明，把它同原文、术语表再交给译者，生成的新译稿写回该章文件。
 
 关键设计：Manager 把「编辑部指定术语」（house style，如 token→词元、
 prompt→提示词、latency→时延）强制写入共享术语表，下发给每个 Translation Agent，
-从而把指定译法贯彻到全书。单 Agent 看不到术语表，只能用自己的默认译法。
+译者据此选词。单 Agent 对照组没有拿到这份约定。解读两组的指定译法遵从率时，要把这项输入差异算进去。
 
 #### 目录
 
@@ -90,7 +85,8 @@ cd chapter10/book-translation
 # python -m pip install -r requirements.txt
 
 cp env.example .env      # 填入 OPENAI_API_KEY
-python demo.py
+python demo.py --dry-run     # 只看计划，无需密钥
+python demo.py               # 配好模型后运行四章对照
 ```
 
 上面的四章小书只用于低成本入门，不是正文实验的正式验收对象。完整验收入口改用本仓库英文版技术书的第 1–2 章：它包含 242,090 字节正文、23 个真实插图引用和 14 个围栏代码块。runner 在 Markdown 安全边界把长章拆成有界翻译单元，分别调用 Agent 后再重组为完整章节；源码字节、图像目标、链接和代码块都会独立校验，不能用短摘要冒充翻译。
@@ -122,7 +118,7 @@ python run_official_experiment.py \
 
 结构保真同样出现真实负结果：两组都保留了代码块和插图的数量，却都改动了代码 payload 并增加了标题；管理者组还改动了插图目标，而单 Agent 组的插图目标序列保持不变。这里的 ✅ 表示完整对照与所有预注册测量已经执行，不表示每项质量假设都成立。
 
-裁判阶段共有 39 次带完整原始请求/响应 ID/usage/时延的回执，另有一次在回执机制加入前发生的已声明格式失败；14 个带回执响应未通过严格 schema，8 个仅把偏好字段重复嵌套的响应做了有标记的无损本地归一化，另一次通过独立的格式修复 API 调用展平，未重新评分。26 份回执、三个 checkpoint、四份重组译文、三个当前验收源码和负溯源标记共 37 个声明 hash 均已重算一致。
+裁判阶段共有 39 次带完整原始请求/响应 ID/usage/时延的回执，另有一次在回执机制加入前发生的已声明格式失败；14 个带回执响应未通过严格 schema，8 个仅把偏好字段重复嵌套的响应做了有标记的无损本地归一化，另一次通过独立的格式修复 API 调用展平，未重新评分。核对归档时，先看 26 份回执、三个 checkpoint、四份重组译文和一份失败记录。这 34 个文件今天仍可直接按清单校验。其余三个哈希标识当时的验收源码，可在[归档提交](https://github.com/bojieli/ai-agent-book/tree/6af52b4eeaa7fac2b7ec9e3490dc32ea9cc72ab4/chapter10/book-translation)核对。当前的运行脚本和角色实现已经改过。要复核当时翻译了什么，还需对照记录中的输入哈希；其中英文第二章匹配[这版原稿](https://github.com/bojieli/ai-agent-book/blob/7ba736a065f8de8783f900abf919e6da1661b6d6/book-en/chapter2.md)。
 
 `python demo.py` 会先打印**四 Agent 协作的实时轨迹**（Manager 制定计划 → 调度
 Glossary → 逐章 Translation → Proofreading → 依报告决定修订），再打印各 Agent 的
@@ -242,12 +238,12 @@ python demo.py --dry-run
 # Experiment 10-2: Book Translation Agent — Orchestration Pattern
 
 Accompanying code demonstrating how to use the **Orchestration Pattern** to delegate long-document translation to multiple specialized agents. The core principles are
-**context isolation** and **controlling Manager context growth**: the Manager only stores tasks, plans, agent call records, and file indexes; **complete translations are all written to the file system**, so no matter how long the book is, the Manager's context remains essentially constant.
+**context isolation** and **controlling Manager context growth**: the Manager only stores tasks, plans, agent call records, and file indexes; **complete translations are all written to the file system**, so the manager tracks additional paths, progress, and call records as chapters accumulate without carrying every chapter’s text into the next request.
 
 ## Objective
 
 Compare the "single agent translating an entire book in one conversation" approach with the "orchestration pattern multi-agent collaboration" approach, using
-**real token counts** to show how the latter controls main/Manager context growth, and using a **shared glossary** to ensure terminology consistency throughout the book.
+**real token counts** to show how the latter controls main/Manager context growth, and using a **shared glossary** to measure consistency separately from adherence to the editor’s preferred terms.
 
 ## Architecture: Four Agents
 
