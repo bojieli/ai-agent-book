@@ -33,40 +33,37 @@ class Figure:
 
 
 def components():
-    f=Figure('Agent = LLM + 上下文 + 工具','三类功能要素及对应章节；评估覆盖整体系统，交互、持续进化与协作综合运用三类要素。',825)
-    f.box(320,20,260,80,fill='#dedede')
-    f.text(450,53,'Agent',26,True)
-    f.text(450,83,'自主决策系统',20)
-    f.path([(450,100),(450,125)])
-    f.path([(160,150),(160,125),(740,125),(740,150)])
-    f.path([(450,125),(450,150)])
-    columns=[
-        (20,'LLM','大脑','理解 · 思考\n规划 · 决策',
-         '第 8 章 模型后训练','工具调用决策\nSFT · 强化学习'),
-        (310,'上下文','当前决策视野','指令 · 记忆 · 知识\n工具定义 · 轨迹 · 状态',
-         '第 2、3 章','上下文工程 · 用户记忆\n知识库 · 提示工程\nKV Cache · 压缩\nRAG · 结构化索引\nAgentic RAG'),
-        (600,'工具','感官和手脚','感知 · 执行\n协作 · 代码',
-         '第 4、5 章','工具 · Coding Agent\nMCP · 工具安全\n代码即思考 · Agent 自举'),
+    f = Figure('Agent = LLM + 上下文 + 工具',
+               '左列是三类功能，右列是对应章节；下方列出综合运用这些要素的章节。', 955)
+    f.box(20, 12, 860, 60, fill='#dedede')
+    f.text(450, 52, 'Agent（自主决策系统）= LLM + 上下文 + 工具', 28, True)
+    rows = [
+        (88, 150, 'LLM', '大脑', '理解 · 思考\n规划 · 决策',
+         '第 8 章 模型后训练', '工具调用决策\nSFT · 强化学习'),
+        (250, 210, '上下文', '当前决策视野', '指令 · 记忆 · 知识\n工具定义 · 轨迹 · 状态',
+         '第 2、3 章', '上下文工程 · 提示工程\nKV Cache · 压缩 · 用户记忆\n知识库 · RAG · 结构化索引\nAgentic RAG'),
+        (472, 174, '工具', '感官和手脚', '感知 · 执行\n协作 · 代码',
+         '第 4、5 章', '工具 · Coding Agent\nMCP · 工具安全\n代码即思考 · Agent 自举'),
     ]
-    for x,title,metaphor,functions,chapters,details in columns:
-        f.box(x,150,280,395,fill='#ffffff')
-        f.box(x,150,280,165,fill='#dedede')
-        f.text(x+140,184,title,25,True)
-        f.text(x+140,218,metaphor,22,True)
-        f.text(x+140,253,functions,20)
-        f.text(x+140,351,chapters,22,True)
-        f.text(x+140,386,details,20)
-    f.box(20,565,860,72)
-    f.text(450,594,'第 7 章 Agent 的评估',22,True)
-    f.text(450,626,'环境 · 指标 · 数据 · 系统反馈',20)
-    for x,title,details in [
-        (20,'第 6 章 交互','多模态 · 语音\nComputer Use · 机器人\n异步事件架构'),
-        (310,'第 9 章 持续进化','运行经验 · 持续更新\n验证 · 发布 · 回滚'),
-        (600,'第 10 章 多 Agent 协作','分工 · 通信 · 协作\nAgent 社会与经济'),
-    ]:
-        f.box(x,650,280,150)
-        f.text(x+140,683,title,22,True)
-        f.text(x+140,718,details,20)
+    for y, height, component, metaphor, functions, chapters, details in rows:
+        f.box(20, y, 410, height, fill='#f2f2f2')
+        f.box(438, y, 442, height, fill='#ffffff')
+        f.text(225, y+40, f'{component}（{metaphor}）', 28, True)
+        f.text(225, y+85, functions, 26)
+        f.text(659, y+40, chapters, 28, True)
+        f.text(659, y+85, details, 26)
+    f.text(450, 690, '整套系统的交互、评估、进化与协作', 28, True)
+    topics = [
+        ('第 6 章 交互', '多模态 · 语音 · Computer Use\n机器人 · 异步事件架构'),
+        ('第 7 章 评估', '环境 · 指标 · 数据 · 系统反馈'),
+        ('第 9 章 持续进化', '运行经验 · 持续更新 · 验证 · 发布 · 回滚'),
+        ('第 10 章 多 Agent 协作', '分工 · 通信 · 协作 · Agent 社会与经济'),
+    ]
+    for i, (chapter, details) in enumerate(topics):
+        y = 731 + i*51 + (38 if i else 0)
+        f.path([(20,y-29),(880,y-29)])
+        f.text(175, y, chapter, 26)
+        f.text(601, y, details, 26)
     f.save('fig0-1.svg')
 
 

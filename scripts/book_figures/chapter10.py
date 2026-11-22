@@ -107,14 +107,38 @@ def phone_computer():
 
 
 def search_cancel():
-    f=Figure('并行 Web Scraping 架构','十个成员搜索、首个有效结果结算、取消与回执。',1120)
-    panel(f,20,20,860,'Manager',['目标：查找符合条件的教师','派发：10 个成员，各自搜索一个学院网站'],145)
-    down(f,450,165,205)
-    panel(f,20,205,860,'并行搜索成员',['Agent 1 … Agent 10：独立浏览器会话','Agent 1：计算机 · Agent 2：数学 · Agent 3：物理'],145)
-    panel(f,20,395,860,'协作时序示例',['0 s：Manager 启动 10 个搜索任务','12 s：Agent 2 返回无匹配，其余成员继续','18 s：Agent 3 发送 target_found，附候选与来源','Manager 验证候选 → 原子结算首个有效结果','18.1 s：广播 terminate，取消其余运行中的任务','19 s：收到取消回执，回收浏览器与任务资源'],280)
-    down(f,450,350,395)
-    panel(f,20,725,410,'有效结果示例',['姓名：张伟（示例）','院系：物理学院 · 职位：教授','方向：量子计算','附：来源页面与匹配依据'],220)
-    panel(f,470,725,410,'结束状态',['完成：已找到并验证目标','无匹配：已完成分配范围','超时：达到两分钟上限','取消：确认停止并释放资源'],220)
+    f = Figure('并行搜索的消息时序',
+               '十个成员并行搜索。Manager 验证首个有效候选后，向仍在搜索的成员发送取消，并等待回执。', 1040)
+    f.text(450, 42, '教学示例：十个成员并行查找一位教师', 30, True)
+    manager, math, physics, others = (138, 360, 568, 780)
+    for x, name in ((manager, 'Manager'), (math, '成员 2'), (physics, '成员 3'), (others, '其余成员')):
+        f.box(x - 91, 72, 182, 60)
+        f.text(x, 112, name, 26, True)
+    for x, label, end in ((manager, '协调', 710), (math, '数学学院', 337),
+                          (physics, '物理学院', 435), (others, '其他学院', 710)):
+        f.text(x, 170, label)
+        f.path([(x, 185), (x, end)])
+    # The three destinations share the same dispatch time.
+    f.text(249, 217, '派发任务')
+    for x in (math, physics, others):
+        f.path([(manager, 240), (x, 240)], True)
+    for y, time, source, dest, label in (
+        (240, '0 s', None, None, ''),
+        (337, '12 s', math, manager, '未找到'),
+        (435, '18 s', physics, manager, '报告候选及来源'),
+        (590, '18.1 s', manager, others, '发出取消请求（terminate）'),
+        (710, '19 s', others, manager, '关闭浏览器后返回确认'),
+    ):
+        f.text(62, y + 8, time)
+        if source is not None:
+            f.text((source + dest) / 2, y - 18, label)
+            f.path([(source, y), (dest, y)], True)
+    f.box(170, 462, 525, 66, fill='#eee')
+    f.text(432, 506, '核对来源，原子登记首个有效结果')
+    f.path([(manager, 495), (170, 495)])
+    panel(f, 30, 764, 840, '汇总时分别记录结束原因',
+          ['搜完未找到、匹配成功、确认取消，各有对应的记录。',
+           '超出两分钟仍未查完的成员，另记为超时。'], 155)
     f.save('fig10-8.svg')
 
 

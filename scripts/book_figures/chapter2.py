@@ -300,8 +300,7 @@ def skills_cache():
                 f.text(x+135,y+32,'—',22)
                 continue
             f.box(x,y,270,47,'#dedede' if j<old else '#ffffff')
-            f.text(x+104,y+31,label,20)
-            f.text(x+239,y+31,'复用' if j<old else '新增',20)
+            f.text(x+135,y+31,label,21)
     f.box(40,720,28,28,'#dedede');f.text(213,742,'可复用的稳定前缀',20)
     f.box(430,720,28,28,'#ffffff');f.text(590,742,'本次新增内容',20)
     f.save('fig2-13.svg')

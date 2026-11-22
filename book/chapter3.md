@@ -402,7 +402,7 @@ $\operatorname{TF}(t,d)$ 表示词 $t$ 在文档 $d$ 中的次数，$\operatorna
 
 $$\operatorname{Score}(Q,D)=\sum_i\operatorname{IDF}_{\mathrm{BM25}}(q_i)\cdot\frac{\operatorname{TF}(q_i,D)(k_1+1)}{\operatorname{TF}(q_i,D)+k_1\left(1-b+b\frac{|D|}{\operatorname{avgdl}}\right)}$$
 
-其中，$q_i$ 为查询词，$|D|$ 为文档长度，$\operatorname{avgdl}$ 为平均文档长度。$k_1$ 控制词频的饱和程度；$b$ 控制长度归一化强度，取 0 时关闭这一校正。图3-8 展示了两项机制如何共同影响分数。
+其中，$q_i$ 为查询词，$|D|$ 为文档长度，$\operatorname{avgdl}$ 为平均文档长度。$k_1$ 控制词频的饱和程度；$b$ 控制长度归一化强度，取 0 时关闭这一校正。图3-8 把这几项分开计算。先固定文档长度，让查询词从出现一次增加到三次，看看每多出现一次能多得多少分；再固定词频，只把文档长度加倍。最下面一行比较两个词在文档集合中有多常见。
 
 ![图3-8 BM25 评分机制](images/revised/fig3-8.svg)
 
