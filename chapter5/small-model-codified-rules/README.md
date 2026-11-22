@@ -1,8 +1,6 @@
 # 实验 5-5：小模型与代码化业务规则
 
-正文采用本地 Qwen3-4B 的 60 个固定案例配对运行：控制组完成 57 个，代码化组完成 55 个。实际政策为灵活票可退、基础经济舱按 24 小时窗口或航司原因判断，参数为 `expected_refundable`、`expected_reason`。正文的五条取消规则用于讲解接口结构；本实验使用这里列出的简化退款配置。下文的小样本运行保留为历史案例，完整配对结果见后文正式运行记录。
-
-客服 Agent 需要同时理解用户意图和遵守退款条件。若所有规则都写在提示词里，模型可能在复杂对话中漏掉一项。本实验比较自然语言规则与代码检查的作用。
+乘客 R009 的航班被航司从下午两点改到次日凌晨五点，乘客要求全额退款。客服说“我理解您的损失”是一回事，按下退款按钮又是另一回事。要决定是否退回这张 700 元客票，先找出工具必须核实的事实。
 
 [English](#english)
 
@@ -12,7 +10,27 @@
 
 ## 理解问题与方法
 
-适合代码化的是可明确判定的条件，例如状态、时间范围或资格。模型负责把用户需求映射到操作，代码负责检查操作是否满足规则。规则移入程序后，仍需要正确的数据和参数。
+### 用 R009 区分乘客诉求、模型判断和实际退款
+
+在实验的模拟预订库中，R009 是五天前购买的基础经济舱，状态为 `rescheduled_by_airline`（航司改签时刻）。按本实验的简化政策，基础票过了 24 小时，只在航司取消或记录为重大延误时可退。改了起飞时刻可以解释乘客的诉求，数据库里记录的航班状态才决定这笔退款能否执行。[任务原文和预订记录](tasks.py)
+
+从仓库根目录运行下面的例子，无需模型或 API Key。故意向工具传入模型可能做出的判断，再检查预订状态与退款金额。
+
+```bash
+cd chapter5/small-model-codified-rules
+python - <<'PYCODE'
+from airline_env import AirlineEnv
+from tasks import EXAMPLE_TASKS
+
+task = next(t for t in EXAMPLE_TASKS if t.reservation.reservation_id == "R009")
+env = AirlineEnv(task.reservation)
+result = env.cancel_reservation_codified("R009", expected_refundable=True,
+                                         expected_reason="airline_caused")
+print(result["status"], env.res.status, env.res.refund_issued)
+PYCODE
+```
+
+返回状态是 `rejected`，订单保持原状态，退款金额为零。`expected_refundable` 和 `expected_reason` 记录的是模型调用前的判断；计算能否退款时，程序重新以模拟数据库和服务端时钟为准。读下面的两组实验时，可以分别追问：模型会不会发起这次调用？如果它真的调用了，钱是否退了出去？
 
 ### 实验设计
 
@@ -50,11 +68,11 @@
 两组共用只读工具 `get_reservation`（返回真值，`hours_since_booking` 由服务端时钟算好，
 杜绝模型口算时间出错）。两组同时改变工具说明、可选参数和执行层校验，因此结果反映这一组合的效果。要分离各项贡献，需要增加消融组。执行层校验的有效性还依赖政策实现、可信状态与事务边界。
 
-#### 评测任务（8 个，可退 4 / 不可退 4）
+#### 先读八个样例，再跑六十个配对案例
 
 含正常任务与违规边界任务，覆盖：灵活票、24h 边界（5h / 26h）、航司取消、商务舱、
 用户谎称灵活票、轻微延误（非重大延误）、航司改签时刻（既非取消也非 ≥3h 延误）。
-见 `tasks.py`。
+这八个示例保存在 `tasks.py` 的 `EXAMPLE_TASKS` 中。命令行评测使用 `TASKS` 的 60 个案例，由 3 种舱位、5 个下单时间和 4 种航班状态交叉生成。
 
 #### 指标与判据（规则判据，确定性、可复现、零额外成本）
 
@@ -98,18 +116,17 @@ cd chapter5/small-model-codified-rules
 # 迁移期间仍支持单项目兼容路径：
 # python -m pip install -r requirements.txt
 
-cp env.example .env   # 填入 OPENAI_API_KEY（也可直接用环境变量）
-# 通用兜底：未配置 OPENAI_API_KEY 时，设置 OPENROUTER_API_KEY 即自动改走 OpenRouter
-#（小模型 gpt-5.6-luna 属 gpt-5.x，代码会自动优先走 OpenRouter：openai/gpt-5.6-luna；大模型基线同理）
-
-# 离线自检（无需 API Key）：直接看代码化守卫的校验逻辑
+# 离线自检：分别观察按真实政策放行与拒绝的案例
 python demo.py --selftest
 
-# 默认：跑全部 8 个 case，控制组 vs 实验组（均用小模型）
-python demo.py
+# 模型对照：先启动本地 Ollama 服务并获取模型
+ollama pull qwen3:4b
+python demo.py --quick -v             # 两组各跑前 4 题
+python demo.py                        # 两组各跑完整 60 题
 
-# 三方对照：加跑大模型基线臂，验证"小模型+规则 ≈ 大模型裸跑"
-python demo.py --big-model gpt-5.6-luna
+# 可选：选用支持工具调用的 OpenRouter 模型时，先设置 OPENROUTER_API_KEY
+# 下面在同一提供商上加跑第三组，比较小模型加规则与大模型纯提示的差异
+python demo.py --provider openrouter --small-model openai/gpt-4o-mini --big-model openai/gpt-5.6-luna --quick
 ```
 
 #### 命令行参数（`python demo.py --help` 看完整中文帮助）
@@ -117,8 +134,8 @@ python demo.py --big-model gpt-5.6-luna
 | 参数 | 说明 |
 |---|---|
 | `--mode {control,codified,both}` | 跑哪一组：不带/带 代码化规则，或两组都跑（默认 `both`） |
-| `--task ID [ID ...]` | 只跑 `task_id` 匹配子串的 case，如 `--task R009` 直取核心拦截样例 |
-| `--small-model NAME` | 小模型名（默认 `gpt-5.6-luna`，或用环境变量 `MODEL`） |
+| `--task ID [ID ...]` | 只跑 `task_id` 匹配子串的 case，如 `--task TB001` 只跑正式矩阵第一题；历史样例 R009 可按开头的 Python 示例运行 |
+| `--small-model NAME` | 小模型名（默认 `qwen3:4b`，或用环境变量 `MODEL`） |
 | `--big-model NAME` | 大模型基线名（可选；给定后加跑第三臂，或用环境变量 `BIG_MODEL`） |
 | `--quick` | 只跑前 4 个 case（省钱快看） |
 | `-v, --verbose` | 打印每步工具调用 |
@@ -133,6 +150,8 @@ python demo.py --big-model gpt-5.6-luna
 ## 分析结果与形成判断
 
 拒绝了违规操作，不等于已经帮助用户解决问题；应继续检查模型是否解释原因或提供可行选项。代码化规则也可能写错，因此需要独立于模型的规则用例。
+
+书中对本地 Ollama `qwen3:4b` 的正式比较使用 60 个固定案例。控制组完成 57 个，代码化组完成 55 个。两组表现不同的 6 个案例中，4 个只有控制组成功，2 个只有代码化组成功。执行层可以拦住一次错误退款；能否把所有该退的款也办成，还取决于客服有没有发起正确的操作。正文的五条取消规则用于讲解接口结构，本实验的计分采用上文列出的简化退款政策。
 
 ### 历史八题示例
 
@@ -188,7 +207,7 @@ python demo.py --big-model gpt-5.6-luna
 2. **服务端真值校验的必要性**：`gpt-5.6-luna` 的自我认知已相当准，但仍会在 R009 这类陷阱上出错——
    本次运行 `expected_*` 自报值与真值有 **20%（1/5）** 不一致（不同运行在 0%~20% 间波动）；若像控制组那样
    信任模型自报/自行判断，这个认知错误就会直接变成违规操作（R009 多退款）。想在无 Key 环境下确定性地
-   复现"守卫拦截"，可跑 `python demo.py --selftest`（对每个 case 灌入与真值相反的自报值，演示一律被拦截）。
+   复现"守卫拦截"，可跑 `python demo.py --selftest`（给每个案例传入与真值相反的自报值，观察工具按真实政策放行可退订单、拦截不可退订单）。
 
 ### 检查自己的解释
 
@@ -208,7 +227,7 @@ python demo.py --big-model gpt-5.6-luna
 ### 文件说明
 
 - `airline_env.py`：模拟数据库、代码化退款政策 `is_refundable`、两组的工具实现（天真 / 代码化校验）。
-- `tasks.py`：8 个评测任务及其政策真值。
+- `tasks.py`：8 个教学样例、60 个矩阵案例及其政策真值。
 - `agent.py`：OpenAI 工具调用循环，两组的系统提示与工具 schema（`run_agent` 支持 `model` 形参，供大模型基线臂复用控制组逻辑）。
 - `demo.py`：组装对照臂、跑评测、规则判据评分、打印 N 臂指标对比表 + 不一致比例 + 拦截实例；含 CLI（`--mode/--task/--small-model/--big-model/--output/--selftest`）与离线自检。
 - `requirements.txt` / `env.example`。
@@ -246,12 +265,9 @@ paired analysis are in
 
 ### 注意事项
 
-- 只用 `OPENAI_API_KEY`（默认小模型 `gpt-5.6-luna`，可用 `MODEL` / `--small-model` 覆盖；
-  大模型基线用 `BIG_MODEL` / `--big-model`）。成本极低（每臂 8 个 case，约几十次调用）。
-- 想在无 Key 环境下理解代码化守卫，直接 `python demo.py --selftest`。
-- 推理模型（`gpt-5.6-luna` 等 gpt-5/o 系列）不接受 `temperature=0`，代码会自动改用 `temperature=1`，
-  故次级指标（无效工具调用数、`expected_*` 不一致比例）会小幅波动，个别 case 走的路径偶有出入属正常，
-  但"实验组 ≥ 控制组、且实验组 8/8 无违规"的结论稳定成立。
+- 本地 Ollama 无需云端 Key。使用云端服务时，通过 `--provider` 选择 `openai`、`openrouter`、`moonshot` 或 `ark`，并设置相应凭据。`MODEL` / `--small-model` 和 `BIG_MODEL` / `--big-model` 分别指定比较的模型。
+- 只读代码化守卫的判断可以运行 `python demo.py --selftest`。联网调用的费用取决于所选模型和任务数；八题历史运行的调用规模不能直接套用到六十题矩阵上。
+- 历史演示的推理模型（如 `gpt-5.6-luna`）使用 `temperature=1`；无效调用和参数判断随轨迹波动。历史八题上实验组曾达到 8/8，正式六十题的两组成绩见上表和运行记录。
 - 服务端时钟固定为 `2026-07-17 12:00`（`airline_env.SERVER_NOW`），所有时间判断以它为准。
 
 ---
