@@ -124,6 +124,7 @@
 
 % ── Figures: float in body text; stay in place inside callout boxes ─
 \usepackage{float}
+\usepackage{placeins}
 \let\origfigure\figure
 \let\origendfigure\endfigure
 \renewenvironment{figure}[1][htbp]{\ifinner\origfigure[H]\else\origfigure[!htbp]\fi}{\origendfigure}
