@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 410" width="1000" height="410" style="background:#ffffff">
+  <defs>
+    <style>
+      .t{font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;fill:#26343c}
+      .h{font-size:14.6px;font-weight:700}
+      .s{font-size:10.3px;fill:#52636d}
+      .box{fill:#f5f7f8;stroke:#33434d;stroke-width:2}
+      .accent{fill:#e8f1f5;stroke:#2f617a;stroke-width:2}
+    </style>
+  </defs>
+  <text x="500" y="30" text-anchor="middle" class="t h">Чадамжийн дүрслэл нь хаана голчлон шинэчлэхийг шийднэ</text>
+
+  <rect x="35" y="72" width="220" height="126" rx="9" class="box"/>
+  <text x="145" y="105" text-anchor="middle" class="t h">Мэдлэг</text>
+  <text x="145" y="135" text-anchor="middle" class="t s" style="font-size:8.6px">Баримт, туршлага, онцгой тохиолдол</text>
+  <text x="145" y="164" text-anchor="middle" class="t s">Markdown / мэдлэгийн сан</text>
+
+  <rect x="275" y="72" width="220" height="126" rx="9" class="box"/>
+  <text x="385" y="105" text-anchor="middle" class="t h">Заавар</text>
+  <text x="385" y="135" text-anchor="middle" class="t s" style="font-size:9.0px">Үгээр илэрхийлж болох дүгнэх зарчим</text>
+  <text x="385" y="164" text-anchor="middle" class="t s">Prompt / Skill</text>
+
+  <rect x="515" y="72" width="220" height="126" rx="9" class="box"/>
+  <text x="625" y="105" text-anchor="middle" class="t h">Програм</text>
+  <text x="625" y="135" text-anchor="middle" class="t s" style="font-size:9.9px">Детерминистик урсгал ба хатуу хязгаарлалт</text>
+  <text x="625" y="164" text-anchor="middle" class="t s" style="font-size:8.6px">Хэрэгсэл / Ажлын урсгал / Туршилтын орчин</text>
+
+  <rect x="755" y="72" width="220" height="126" rx="9" class="accent"/>
+  <text x="865" y="105" text-anchor="middle" class="t h">Параметр</text>
+  <text x="865" y="135" text-anchor="middle" class="t s" style="font-size:8.2px">Өндөр хэмжээст хүртэхүй ба далд policy</text>
+  <text x="865" y="164" text-anchor="middle" class="t s">SFT / Нэрэлт / RL</text>
+
+  <line x1="145" y1="226" x2="865" y2="226" stroke="#33434d" stroke-width="2"/>
+  <path d="M145 218 V234 M865 218 V234" stroke="#33434d" stroke-width="2"/>
+  <text x="145" y="260" text-anchor="middle" class="t s" style="font-size:8.6px">Шинэчлэхэд хялбар, мөрдөх боломжтой</text>
+  <text x="865" y="260" text-anchor="middle" class="t s" style="font-size:8.6px">Дотоодчлогдсон, inference зардал бага</text>
+  <text x="500" y="289" text-anchor="middle" class="t h">Нэг чиглэлт шат биш, харилцан нөхөх дөрвөн тээгч</text>
+
+  <rect x="145" y="320" width="710" height="58" rx="8" class="accent"/>
+  <text x="500" y="344" text-anchor="middle" class="t h" style="font-size:9.5px">Эхний асуулт: чадамжийг баримт, хэлний дүрэм эсвэл програмаар бүрэн илэрхийлж чадах уу?</text>
+  <text x="500" y="367" text-anchor="middle" class="t s">Тогтвортой байдал, зардал, шинэчлэлийн давтамж нь нэвтрүүлэлтийг шийднэ</text>
+</svg>
