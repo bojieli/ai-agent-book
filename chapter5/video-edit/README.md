@@ -120,6 +120,23 @@ Vision 模型（较慢/耗费额度）；只想验证链路时先跑 `--smoke`�
 
 检查是否漏掉动作开头或结尾、音轨是否同步、变速是否改变了用户要求的含义。视觉定位误差不会因为执行工具准确而自动消失。
 
+### 读一次真实成片：同样有字幕，为什么只通过了一版？
+
+这次任务要求从《Big Buck Bunny》预告片中剪出大白兔独自在阳光下草地上行走的镜头，让片段时长变为原来的 1.5 倍，并在底部加上 `BIG BUNNY`。打开[负对照帧](validation/runs/exp5-6-real-blender-20260730-055102/frames/negative-review/frame-002.25.png)与[修订后成片帧](validation/runs/exp5-6-real-blender-20260730-055102/frames/final-review-refinement-1/frame-002.29.png)，先遮住字幕看主体：前一张是片头制作方的英文文字，后一张是草地上的白兔。再看底部，两张都有所要求的字幕。负对照完成了字幕渲染，却截取了源片开头的错误场景。读者可以从[审核记录](validation/runs/exp5-6-real-blender-20260730-055102/review.json)追踪这次退回与修订。
+
+复核原运行的两份视频时，在各自的 **0.4、1.2、2.2 秒**抽帧：负对照的片头字样逐渐变清楚，三个时刻都没看到白兔；修订版三帧均有白兔，耳朵朝向和嘴部姿态随镜头变化。要核对放慢后的时长，还需回到[源片定位记录](validation/runs/exp5-6-real-blender-20260730-055102/localization.json)：修订版选取源片 9.25 至 11.00 秒，按要求应为 `(11.00 − 9.25) × 1.5 = 2.625` 秒。`ffprobe` 实读成片为 2.645 秒，视频流为 25 fps、66 帧；负对照则为 4.501 秒、112 帧。两份文件都是 854 × 480 的 H.264 视频并含 AAC 音轨。要判断声画是否同步，还要连续播放，光看抽帧和编码信息不足以判断。
+
+拿到完整运行目录时，可在其中复查。普通仓库副本可直接使用上面的留存帧与 JSON；[清单](validation/runs/exp5-6-real-blender-20260730-055102/manifest.json)列有两个 MP4 的原始 SHA-256，可用于确认版本。
+
+```bash
+for clip in negative_control final; do
+  ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,nb_frames:format=duration "$clip.mp4"
+  for t in 0.4 1.2 2.2; do
+    ffmpeg -v error -ss "$t" -i "$clip.mp4" -frames:v 1 "$clip-$t.png"
+  done
+done
+```
+
 ### 预期输出示例
 
 #### `--smoke`（零 API，可复现）

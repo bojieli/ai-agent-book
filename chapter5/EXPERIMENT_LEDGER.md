@@ -144,7 +144,7 @@ text, and current index all identify it as Experiment 5-16.
 
 ## Editorial artifact availability check
 
-- Experiment 5-8: 70 of 78 manifest artifacts match local hashes. Six Blender logs plus `final.mp4` and `negative_control.mp4` are missing from this checkout. Retained localization reports and execution/review receipts support the narrative; direct final-video reinspection awaits the archive.
-- Experiment 5-9: manifest measurements and provider receipts remain available, but all 13 listed `output/` artifacts are absent under both the run directory and project root. Geometry and image claims are attributed to the retained run records; archive recovery remains pending. Original manifests and receipts were preserved.
+- Experiment 5-8: All 78 manifest entries were verified. The review checkout contains 70 matching artifacts. The original local run directory also contains the six Blender logs, `final.mp4`, and `negative_control.mp4`, all with the expected sizes and SHA-256 digests.
+- Experiment 5-9: All 13 artifacts listed in the manifest were verified by SHA-256 under `chapter5/cad-vs-diffusion/output/` in the original checkout. The manifest and provider receipts are available in Git. The 13 output files are local artifacts.
 
 - Experiment 5-16: the archived comparison was recovered from the local experiment directory in the original checkout. Its SHA-256 matches the digest in the table above. The recovered report confirms 39/39 quality points for each arm and the creator token and elapsed-time figures above. The report is not tracked in Git.
