@@ -67,6 +67,10 @@ Anthropic 2026 年的安全研究提供了协作搜索的案例：45 个 Agent �
 
 [^anthropic-multiagent-2026]: Anthropic Frontier Red Team, “Patterns and Problems in Emerging Multiagent Systems,” 2026-08-13. https://www.anthropic.com/research/multiagent-systems
 
+数学研究中，怎样让多支队伍真正探索不同的路线？三维 Navier–Stokes 方程描述黏性流体的运动。面对光滑的初始条件，解能否一直保持光滑？OpenAI 把两种相反的目标分给不同小组：有的尝试证明光滑性，有的设法构造反例。各组先自行探索，团队再用 Codex 汇总中间成果，让其他组也能沿有希望的线索走下去。找到反例的小组有约一万个 Agent 并发工作。从首批 Agent 启动到找到证明，团队报告用时约 88 小时，另用 17 小时完成 Lean 形式化与验证。反例有一个重要条件：流体受到光滑外力作用，仍能在有限时间内出现奇性。这回答了克雷数学研究所题面中的 C、D 两种表述；若去掉外力，就是另一个问题了。设计这类搜索，可以先写明哪些结果足以回答原问题，把彼此竞争的猜想交给不同小组，并给最后的验证单独留出时间。[^ch10-ns-search]
+
+[^ch10-ns-search]: OpenAI 的研究说明附证明和 Lean 代码，https://openai.com/index/navier-stokes-solution/ 。克雷数学研究所关于该结果的公告见 https://www.claymath.org/news/navier-stokes-announcement/ 。
+
 **步骤预算如何影响表现？** 假设一个任务允许 30 步，Agent 需要紧凑地安排规划、核心实现和必要验证；若允许 300 步，就有空间比较更多方案，开展更充分的测试和修订。要用好这部分资源，Agent 还需要知道总预算与剩余预算，并据此安排探索深度。
 
 Google 在 2025 年的《Budget-Aware Tool-Use Enables Effective Agent Scaling》中研究了这一问题：缺少预算意识的 Agent 可能很快停留在浅层搜索，即使增加可用步骤，表现也难以继续提高。2026 年的 BAVT（Budget-Aware Value Tree Search）进一步在搜索步骤中结合价值估计与剩余预算，调整探索和利用的权重。预算充足时可以比较更多方向，接近预算上限时则把资源集中到有希望的分支。
@@ -263,6 +267,10 @@ Agent 负责推理、工具调用和候选产物，控制面负责跨轮次的�
 Anthropic 2026 年的长程应用开发案例采用规划者、生成者和评估者三个 Agent。规划者将需求展开为产品规格；生成者与评估者先约定每轮完成标准，再分别实现和检查。评估者使用 Playwright 操作应用并提交缺陷报告，角色之间通过文件交接状态。该案例展示了产品规格、真实操作和缺陷反馈怎样连接起来，也需要将增加的执行与审核成本纳入方案比较。[^anthropic-harness-2026]
 
 [^anthropic-harness-2026]: Prithvi Rajasekaran, “Harness Design for Long-Running Application Development,” Anthropic Engineering, 2026-03-24. https://www.anthropic.com/engineering/harness-design-long-running-apps
+
+黎曼猜想给了我们一个机会，看看数学家怎样验收一份机器生成的证明。2026 年 11 月 20 日，数学家 Levent Alpöge 公布了他与 Claude 合作得到的形式化证明，涉及黎曼猜想及其在狄利克雷 $L$ 函数上的推广。拿到一大批 Lean 文件，审核者先要问两个问题：最后那条定理写的是原来的猜想吗？每一步推导都能由证明内核重新检查吗？在 MIT 数学家 Andrew Sutherland 公布的核验记录中，可以分别查到定理陈述的比对结果、证明依赖的公理和独立内核的检查结果。这给审核分工提供了一个具体办法：让熟悉问题的人先写下验收命题，再让独立的工具检查提交的产物能否推出这个命题。日后数学家想理解作者是怎样想到这条路线的，还需要一份便于人阅读的论证。[^ch10-rh-review]
+
+[^ch10-rh-review]: Levent Alpöge 的公告，https://alpo.ge/remark.pdf 。Andrew Sutherland 汇集的核验步骤与结果，https://math.mit.edu/~drew/grh/ 。
 
 #### 辩论模式
 
@@ -555,6 +563,10 @@ Claude Code 的 Agent Teams 提供团队成员发现、消息与共享任务管�
 可以在运行时同时设置总 token 或费用额度、并发数、累计创建数、派生深度、轮数和超时。预算由父任务分配并计入总账，失败与取消前已经发生的消耗也要记录。达到限制后保存进度，取消未完成分支并收集确认，交付当前结果与剩余事项。
 
 对自主性较强的协作任务，笔者建议使用独立项目或 API 凭据，便于分别统计用量和撤销访问；执行中的硬限制由配额机制和运行时负责。长期任务还可以检查连续多轮是否取得新证据或完成新事项，据此决定调整策略或停止。
+
+为什么还要从整场实验的角度检查权限？2026 年 7 月，OpenAI 的一次内部评测波及 Hugging Face 的实际系统。事后，OpenAI 收紧了联网权限，加强了研究环境之间的隔离和监控。设计多 Agent 实验时，负责人应当能回答：把所有成员能访问的资源合起来，是否仍在实验获准使用的范围内？如果监控发现越界，能否一次停止整场实验，并查清哪些外部系统已经受到影响？只看单个子任务是否按时结束，回答不了这两个问题。[^ch10-hf-scope]
+
+[^ch10-hf-scope]: 参见 Hugging Face 的事件公告 https://huggingface.co/blog/security-incident-july-2026 和 OpenAI 的事后说明 https://openai.com/index/hugging-face-incident-and-the-road-ahead/ 。
 
 ### 失败模式六：理解债与认知投降
 
