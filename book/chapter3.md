@@ -42,9 +42,9 @@ Extracted memories:
 
 ### 记忆能力的评估：三层次框架
 
-设计记忆系统时，需要先明确希望它完成哪些任务。公开基准 **LoCoMo**（Long-term Conversational Memory，长期对话记忆）包含平均约 300 轮、最多 35 个会话的长对话，通过问答、事件摘要和多模态对话生成考察记忆能力。其中问答又包含单跳、多跳、时间推理、常识或世界知识，以及对抗性问题[^ch3-locomo]。
+设计记忆系统时，需要先明确希望它完成哪些任务。公开基准 **LoCoMo**（Long-term Conversational Memory，长期对话记忆）包含平均约 300 轮、最多 35 个会话的长对话，通过问答、事件摘要和多模态对话生成考察记忆能力。问答分为五类。单跳题可以从一次会话中找到答案，多跳题需要把几次会话中的线索拼起来，时间推理题还要弄清事件发生的先后。开放域知识题要求把用户说过的话与外部知识结合起来。沿用订票的例子，用户只说过“下周去东京”，要回答“目的地使用哪种货币”，既要记得东京这条线索，也要知道当地使用日元。如果问的是用户从没说过的航班号，助手应该指出信息不足。能否识别这种无从作答的问题，正是对抗性题目所考查的能力。[^ch3-locomo]
 
-[^ch3-locomo]: Maharana 等，[Evaluating Very Long-Term Conversational Memory of LLM Agents](https://snap-research.github.io/locomo/)，2024。
+[^ch3-locomo]: Maharana 等，[LoCoMo 论文第 4.1 节](https://arxiv.org/html/2402.17753#S4.SS1)给出五类问答的定义。[作者项目页](https://snap-research.github.io/locomo/)提供数据与对话样例。
 
 结合这类基准和记忆产品的实践，笔者将需要关注的能力归纳为八项：
 
@@ -346,7 +346,7 @@ $$
 
 **BGE-M3** 同时提供稠密、稀疏和多向量检索表示，并支持多语言与较长输入；本节采用其中的稠密表示说明单向量检索[^ch3-bge-m3]。模型可接受的长度影响分块方案：原始 BERT 的典型上限为 512 token，BGE-M3 支持到 8192 token。更长的输入预算使系统可以保留更多背景，块大小仍需结合主题边界和检索效果选择。
 
-[^ch3-bge-m3]: BAAI，[BGE-M3 模型说明](https://huggingface.co/BAAI/bge-m3)，包括表示方式、维度、输入长度和使用方法。
+[^ch3-bge-m3]: Chen 等的 [M3-Embedding 论文](https://arxiv.org/abs/2402.03216)介绍三种检索表示如何联合训练。另见 BAAI 的 [BGE-M3 模型说明](https://huggingface.co/BAAI/bge-m3)，包括表示方式、维度、输入长度和使用方法。
 
 > **实验 3-4 ★★：比较两种近似最近邻索引**
 >
