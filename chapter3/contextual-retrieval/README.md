@@ -77,7 +77,29 @@ python compare_retrieval.py --help
 失败率下降                    67%          0%          0%
 ```
 
-这组离线示例的 top-1 召回从 60% 提高到 86.7%；相应的 1−recall@1 相对下降约 67%。正文采用页首所列的正式运行结果。`--method embedding` / `hybrid` 需 embedding API，脚本会提示并回退 BM25 离线结果。完整稠密+重排见 `contextual_tools.py`。
+### 同样是十五道题，为什么有两个首位召回率？
+
+用上面的 `--output result.json` 保存离线结果，再与正式运行逐题配对。离线脚本从 `document_store.json` 读取已经加好前缀的文本；正式运行的 `campaign.py` 根据文档和目标块重新生成了前缀。两份结果都可以复查：
+
+```bash
+python - <<'PYTHON'
+import json
+from pathlib import Path
+
+local = json.loads(Path("result.json").read_text())["contextual"]["per_query"]
+path = Path("validation/runs/20260729T205807Z-3_10-35531780/evidence.json")
+saved = json.loads(path.read_text())["results"]["contextual_bm25"]["per_query"]
+by_id = {row["id"]: row for row in saved}
+for row in local:
+    other = by_id[row["id"]]
+    if row["rank"] != other["rank"]:
+        print(row["id"], row["query"], "离线", row["rank"], "正式", other["rank"])
+PYTHON
+```
+
+两份排名只有两题不同。问宪法通过和修正时间的 `q01` 在离线示例中排第一，在正式记录中排第二。问全国人大常委会职权的 `q08` 分别排第十四和第十二，都未进入前五。因此，两份结果首位命中数相差的一题就是 `q01`：离线为 13/15（86.7%），正式为 12/15（80%）。离线表中的“失败率下降 67%”也可以按题数核算：与原始分块相比，首位漏检从六题减为两题，少了六题中的四题。
+
+这个离线脚本只实现了 BM25。指定 `--method embedding` 或 `hybrid` 时，它会提示并回退到 BM25；要查正式运行中的稠密与混合排名，可分别读上面同一份记录的 `contextual_dense` 和 `contextual_hybrid`。稠密检索与重排的实现见 [contextual_tools.py](contextual_tools.py)。
 
 ### 快速开始
 
