@@ -38,7 +38,7 @@ python campaign.py --output validation/runs/my-real-run --workers 1
 
 ## 准备环境与输入
 
-先从本地示例开始。依赖安装可能需要联网，但下面标明的离线路径不需要模型 API Key。若随后切换到真实模型，请再完成相应的服务配置。
+先用 `demo.py --check` 检查字体、ffmpeg 和 ffprobe，再决定需要测试哪一步。`--offline` 用静音音轨检验画面与时间轴；要判断真实旁白的读音，则需使用带语音的材料。
 
 ### 依赖
 

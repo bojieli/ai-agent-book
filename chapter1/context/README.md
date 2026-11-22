@@ -280,7 +280,7 @@ python -m pytest .
 
 ### 先做一个小规模观察
 
-以下命令从本实验目录执行。先完成前面的环境准备，再观察这条路径的输入和输出。
+在本实验目录运行下面的命令，把完整上下文这组的结果写入 `full.json`。重跑另一组时换一个输出文件名，保留两份记录以便对照。
 
 ```bash
 python main.py --mode single --provider dashscope --context-mode full --task "请调用计算器计算 (125 + 375) * 8，并给出结果。" --output full.json

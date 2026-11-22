@@ -85,7 +85,7 @@
 
 ### 先做一个小规模观察
 
-以下命令从本实验目录执行。先完成前面的环境准备，再观察这条路径的输入和输出。
+在本实验目录运行：
 
 ```bash
 python main.py --provider offline-demo --output demo.json
