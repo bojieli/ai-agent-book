@@ -393,7 +393,7 @@ Whisper 的常规转录实现按音频窗口编码和解码[^ch6-whisper]。在�
 
 这些声学特征会影响理解。例如，同一句“请在午饭前发来报告”，急促和缓慢的说法会给听者不同的感受。输出时，模型也可以通过停顿、重音和语调组织意思；唱歌或特定风格的表达，则取决于模型的训练与输出能力。
 
-端到端描述的是音频处理路径。采用轮次式交互的系统仍需判断用户何时结束发言，例如报电话号码时的一次停顿是否表示说完。需要分别检查端点判断是否准确、响应是否及时，以及哪些声音信息进入了决策。
+直接处理音频的系统也可以等用户说完再回答。比如用户报电话号码时停了一下，系统仍要判断他是否说完。再看图6-9 底部的两条音频流：助手还在说“周四”，用户已经开口纠正日期。两个方框重叠的那一小段，正是检验系统能否边说边听的地方。
 
 ![图6-9 端到端多模态语音模型架构对比](images/revised/fig6-9.svg)
 
@@ -804,9 +804,9 @@ VLA 是 Vision-Language-Action 的缩写，即视觉—语言—动作模型。�
 
 这条流程可以帮助定位故障。若用户一插话，旧报价还在继续播，就检查谁负责唤醒前台、能否抢占播放，以及取消信号到了哪个安全点；若停得及时，却仍报出旧日期，则要沿着前后台的交接去查查询结果。改好后，怎样证明它在更多通电话里都能做对？从这里开始，全书转入能力改进。第七章先讲怎样设计任务、记录失败并比较改动，后训练、持续进化与多 Agent 协作都要用到这套评估方法。
 
-[^ch6-1]: XLeRobot, “Teleop 文档”. https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html
-[^ch6-2]: Google DeepMind, “Gemini Robotics-ER 1.5”. https://deepmind.google/blog/gemini-robotics-15-brings-ai-agents-into-the-physical-world/；XLeRobot, “LLM Agent 控制”. https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html 。XLeRobot 上游示例展示模型与工具调用的编排方式；本节保持同一编排原则，但把动作工具限定为经过标定的桌面抓取、放置、检查和停止原语。
-[^ch6-6]: LeRobot, “Sim2Real 教程”. https://github.com/StoneT2000/lerobot-sim2real/blob/87d6c1d969f6e0ca4dc5697940804e231118a63a/docs/zero_shot_rgb_sim2real.md
+[^ch6-1]: XLeRobot，[Teleop 文档](https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html)。
+[^ch6-2]: Google DeepMind，[Gemini Robotics-ER 1.5](https://deepmind.google/blog/gemini-robotics-15-brings-ai-agents-into-the-physical-world/)。XLeRobot，[LLM Agent 控制](https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html)。XLeRobot 上游示例展示模型与工具调用的编排方式；本节保持同一编排原则，但把动作工具限定为经过标定的桌面抓取、放置、检查和停止原语。
+[^ch6-6]: LeRobot，[Sim2Real 教程](https://github.com/StoneT2000/lerobot-sim2real/blob/87d6c1d969f6e0ca4dc5697940804e231118a63a/docs/zero_shot_rgb_sim2real.md)。
 [^ch6-15]: Moo Jin Kim et al. *OpenVLA: An Open-Source Vision-Language-Action Model.* arXiv:2406.09246, 2024. https://arxiv.org/abs/2406.09246；RT-2 项目介绍：https://robotics-transformer2.github.io/；Physical Intelligence, “Our First Generalist Policy”：https://www.physicalintelligence.company/blog/pi0
 [^ch6-16]: Meta AI, “Introducing the V-JEPA 2 world model and new benchmarks for physical reasoning,” 2025-06-11. https://ai.meta.com/blog/v-jepa-2-world-model-benchmarks/；V-JEPA 2 技术报告：arXiv:2506.09985, https://arxiv.org/abs/2506.09985
 [^ch6-22]: OpenAI, “[Async tool calling](https://developers.openai.com/api/docs/guides/async-tool-calling)”；“[Using GPT-6 Astra](https://developers.openai.com/api/docs/guides/latest-model)”，核对日期：2026-09-05。

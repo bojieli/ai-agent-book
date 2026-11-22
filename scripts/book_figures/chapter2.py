@@ -91,7 +91,7 @@ def api_exchange():
     f.text(700,60,'响应 · 模型生成',24,True)
     f.box(540,100,320,160,'#ffffff')
     f.text(700,142,'assistant',23,True)
-    f.text(700,192,"Hi! I’m a coding assistant…",20)
+    f.text(700,192,"Hi! I'm a coding assistant…",20)
     f.save('fig2-2.svg')
 
 
@@ -172,20 +172,25 @@ def attention_example():
 
 
 def template_sequence():
-    f=Figure('Chat Template 的 Token 结构','保留北京天气示例与Qwen消息起止标记。',500)
-    f.box(20,20,375,460)
-    f.text(207,58,'结构化 API 消息',25,True)
-    for y,role,body in [(100,'system','You are a helpful assistant.'),(220,'user','北京今天天气怎么样？'),(340,'assistant','待生成')]:
-        f.box(40,y,335,100,'#ffffff')
-        f.text(207,y+35,role,23,True)
-        f.text(207,y+75,body,20)
-    f.path([(395,250),(500,250)],True)
-    f.text(447,205,'Chat',20)
-    f.text(447,234,'Template',20)
-    f.box(500,20,380,460,'#dedede')
-    f.text(690,58,'线性 token 序列',25,True)
-    lines=['<|im_start|>system','You are a helpful assistant.','<|im_end|>','<|im_start|>user','北京今天天气怎么样？','<|im_end|>','<|im_start|>assistant']
-    for j,line in enumerate(lines): f.text(690,114+j*49,line,20)
+    f = Figure('聊天模板将消息转换成 token 序列',
+               '请求包含系统指令与用户提问。模板标出两条消息的边界，再追加 assistant 起始标记供模型续写。', 510)
+    f.box(20,20,370,465)
+    f.text(205,64,'API 请求中的消息',25,True)
+    for y, role, body in [(125,'system','You are a helpful assistant.'),(275,'user','北京今天天气怎么样？')]:
+        f.box(34,y,342,110,'#ffffff')
+        f.text(205,y+40,role,23,True)
+        f.text(205,y+83,body,20)
+    f.text(451,210,'聊天',23)
+    f.text(451,250,'模板',23)
+    f.path([(390,275),(510,275)],True)
+    f.box(510,20,375,465,'#ffffff')
+    f.text(697,64,'模板输出',25,True)
+    for j, line in enumerate(['<|im_start|>system','You are a helpful assistant.','<|im_end|>',
+                              '<|im_start|>user','北京今天天气怎么样？','<|im_end|>']):
+        f.text(697,112+j*47,line,20)
+    f.box(526,368,343,98,'#dedede')
+    f.text(697,407,'<|im_start|>assistant',22,True)
+    f.text(697,447,'模型从这里开始续写',20)
     f.save('fig2-8.svg')
 
 
