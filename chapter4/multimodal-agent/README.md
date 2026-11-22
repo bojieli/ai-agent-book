@@ -86,7 +86,16 @@ export $(cat .env | xargs)   # Unix 可选
 python create_sample.py
 ```
 
-再对比三种范式（需视觉 API Key）：
+先自己看图，写下最低的季度、该季度的收入和第四季度比它高出的金额。装有 Tesseract 和 Poppler 时，可以在本地运行与归档相同的两条提取命令：
+
+```bash
+tesseract test_files/sample_chart.png stdout --psm 6
+pdftotext -layout test_files/sample_report.pdf -
+```
+
+先在 OCR 输出里找 95M，再试着只凭这些文字确定它属于哪个季度。接着读 PDF 的文本层，找一找哪句话能说明第四季度的走势、哪句话给出了金额。本机版本的 OCR 排版可能不同，可以对照[原始记录](validation/runs/20260729T185433Z-4_2-e028c9db/evidence.json)中两项材料的 `artifacts[].extracted_text`。没有安装这两个工具也能直接读记录做题。
+
+下面用交互演示程序比较三条路径，需要视觉模型的 API Key。书中汇总的十二个回答来自 [campaign.py](campaign.py) 对两种材料、两道问题和三条路径的固定对照。
 
 ```bash
 python demo.py \
@@ -160,7 +169,7 @@ PNG 的 OCR 结果保留了 180M、150M、120M、95M 等数值，却混入纵轴
 
 工具路径的系统提示词明确要求：提取文本无法确定数值或空间对应时，调用视觉工具。这个设置用于展示补充视觉证据的过程。扩展实验时，可增加纯文字即可作答的问题，检验模型能否合理决定何时使用工具，并分别统计正确率、调用次数、输入输出用量和端到端耗时。
 
-判分脚本检查参考答案中的季度与数字是否出现，并保留了外部裁判的解释；本轮已逐条复核十二个回答。直接看图和工具路径均完整答对，文本路径均未完整答对。记录完整性检查已核对 `evidence.json` 与 `receipts.json` 的 manifest 哈希。
+读 `png:extract:lowest_gap` 这条回答：它报出 95M 和 85M，却把最低收入归给 Q1。核对时，把三项事实分开勾选：最低的是 Q3，它的收入为 95M，Q4 高出 85M。脚本的 `exact_correct` 只检查这三个标记是否出现；即使都出现了，仍要读完整句子，查清两个金额分别指什么。记录另附评审模型对照参考答案给出的判断。直接看图和工具路径均完整答对，文本路径均未完整答对。记录完整性检查已核对 `evidence.json` 与 `receipts.json` 的 manifest 哈希。
 
 <a id="learning-4"></a>
 
