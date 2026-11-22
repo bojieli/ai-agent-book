@@ -104,9 +104,9 @@ def form():
 def sql():
     f=Figure('SQL 查询 Agent 流程','受控执行服务连接数据库与界面，模型按需解释聚合结果。',1000)
     panel(f,20,20,860,'用户问题',['每个部门有多少在职员工？'],110);down(f,450,130,170)
-    panel(f,20,170,860,'Agent 生成 SQL Artifact',['SELECT department, COUNT(*) AS count','FROM employees WHERE termination_date IS NULL','GROUP BY department;'],180);down(f,450,350,395)
+    panel(f,20,170,860,'Agent 生成 SQL Artifact',['SELECT department, COUNT(emp_id) AS active_count','FROM employees WHERE leave_date IS NULL','GROUP BY department;'],180);down(f,450,350,395)
     panel(f,20,395,860,'受控执行服务',['可信身份 · 表 / 列 / 行权限 · 查询结构检查','参数绑定 · 时间与行数预算 · 受限数据库连接'],150);f.path([(450,545),(450,565),(225,565),(225,585)],True)
-    panel(f,20,585,410,'数据库结果（示意）',['部门          在职人数','研发部             42','市场部             28'],190)
+    panel(f,20,585,410,'数据库结果（节选）',['部门          在职人数','市场部              9','研发部              5'],190)
     panel(f,470,585,410,'界面呈现',['直接渲染结果表格','按同一结果生成柱状图','保留筛选条件、单位与口径'],190)
     f.path([(430,680),(470,680)],True)
     panel(f,20,830,860,'按需解释',['将必要的聚合结果交给模型，解释差异或回答后续问题'],120)
