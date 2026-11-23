@@ -87,9 +87,13 @@ def main() -> int:
     print(text)
     if result.returncode != 0:
         return result.returncode
-    if "VERDICT: ACCEPT" in text and "VERDICT: REJECT" not in text:
+    # hermes chat -q 会回显 Query，而 acceptance_review.md 中同时引用了
+    # `VERDICT: ACCEPT` 与 `VERDICT: REJECT`；只认评审者自己输出的最后一行
+    # 裁决（与 finalize_evidence.py 的判定一致）。
+    verdicts = re.findall(r"^VERDICT: (ACCEPT|REJECT)$", text, re.MULTILINE)
+    if verdicts and verdicts[-1] == "ACCEPT":
         return 0
-    if "VERDICT: REJECT" in text:
+    if verdicts:
         return 3
     print("Reviewer did not emit a valid terminal verdict", file=sys.stderr)
     return 4
