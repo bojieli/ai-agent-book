@@ -163,6 +163,19 @@ def main():
     from make_test_video import make as make_test_video, GROUND_TRUTH
     from video_editor import apply_edit
 
+    # 外部输入须在清空 output/ 之前检查：位于 output/ 内的输入（如上次的
+    # final.mp4）会被下面的 rmtree 一并删除。
+    if args.input:
+        source_video = os.path.abspath(args.input)
+        if not os.path.isfile(source_video):
+            print(f"\n[错误] 输入视频不存在：{source_video}")
+            sys.exit(1)
+        out_root = os.path.realpath(OUT_DIR)
+        if os.path.commonpath([os.path.realpath(source_video), out_root]) == out_root:
+            print(f"\n[错误] 输入视频位于 output/ 内：{source_video}\n"
+                  f"  每次运行都会清空 {OUT_DIR}，请先把它复制到其他位置再用 -i 指定。")
+            sys.exit(1)
+
     # 幂等：每次从干净的 output/ 开始。
     if os.path.isdir(OUT_DIR):
         shutil.rmtree(OUT_DIR)
@@ -171,10 +184,6 @@ def main():
     ground_truth = None
     if args.input:
         banner("步骤 0 | 使用外部输入视频")
-        source_video = os.path.abspath(args.input)
-        if not os.path.isfile(source_video):
-            print(f"\n[错误] 输入视频不存在：{source_video}")
-            sys.exit(1)
         print(f"输入视频：{source_video}")
     else:
         banner("步骤 0 | 生成测试视频（4 个明显不同的场景）")
