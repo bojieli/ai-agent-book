@@ -25,6 +25,18 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+# 温度读数：数字后跟 °C/°F，或 degree(s) 加 C/F/Celsius/Fahrenheit。
+# 原来的 `degrees?\s*[CF]\b` 拒绝 "62 degrees Fahrenheit" 这类写全称的答案。
+TEMPERATURE = re.compile(
+    r"\b-?\d{1,3}\s*(?:°\s*[CF]\b|degrees?\s*(?:[CF]|Fahrenheit|Celsius)\b)",
+    re.I,
+)
+
+
+def has_temperature(text: str) -> bool:
+    return bool(TEMPERATURE.search(text))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("run_dir", type=Path)
@@ -45,9 +57,7 @@ def main() -> int:
     message_ids = [call["response"].get("message_id") for call in calls]
     request_ids = [call["response"].get("request_id") for call in calls]
     tool_ids = [action.get("tool_use_id") for action in actions]
-    temperature = bool(
-        re.search(r"\b-?\d{1,3}\s*(?:°\s*[CF]|degrees?\s*[CF])\b", final, re.I)
-    )
+    temperature = has_temperature(final)
     condition = bool(
         re.search(
             r"\b(?:sunny|clear|cloudy|overcast|fog(?:gy)?|rain(?:y)?|"
