@@ -3,6 +3,25 @@ from introduction import Figure
 from chapter5 import panel, down
 
 
+def ingress():
+    f=Figure('接入层：适配器、统一信封与接入日志','三类来源经各自的适配器写入接入日志，路由分派给运行时，回复经出站适配器回到会话渠道。',706)
+    for x,t,ls in [(20,'消息总线',['SQS · SNS · Kafka','确认 · 保留 · 重读']),(313,'回调',['支付服务 · GitHub','验签 · 可能重投']),(607,'会话渠道',['App 对话 · 企业微信','可回到原会话'])]:
+        panel(f,x,20,273,t,ls,136)
+    f.path([(156,156),(156,180),(744,180),(744,156)])
+    f.path([(450,156),(450,210)],True)
+    panel(f,20,210,860,'适配器（每个来源一个）',['验证来源 · 生成信封 · 按来源语义去重','写入接入日志之后，才确认来源'],136)
+    down(f,450,346,380)
+    panel(f,20,380,860,'接入日志',['只增不改 · 按线程分区 · 线程内有序','信封：来源 · 去重键 · 线程 · 关联对象 · 回复能力'],136)
+    f.path([(450,516),(450,533),(156,533),(156,550)],True)
+    panel(f,20,550,273,'路由',['分派到任务与会话','过期 · 合并 · 限流'],136)
+    panel(f,313,550,273,'运行时',['事件循环 · 任务状态','取消 · 恢复'],136)
+    panel(f,607,550,273,'出站适配器',['先记发送意图','收到回执再标记完成'],136)
+    f.path([(293,618),(313,618)],True)
+    f.path([(586,618),(607,618)],True)
+    f.path([(880,618),(894,618),(894,88),(880,88)],True)
+    f.save('fig6-ingress.svg')
+
+
 def events():
     f=Figure('事件驱动的异步 Agent 架构','事件源、可信路由、队列与工具结果回流。',1010)
     data=[('Email · on_email_reply',['from: alice@example.com','subject: Re:会议']),('Timer · on_timer_expire',['task_id: daily_report','scheduled: 09:00']),('Webhook · on_webhook',['repo: agent-lib','event: pr_merged']),('User · on_user_message',['text: 帮我查明天天气','channel: chat'])]
@@ -249,6 +268,6 @@ def duplex_timeline():
 
 
 if __name__ == '__main__':
-    events();strategies();email();cancellation();native_async()
+    ingress();events();strategies();email();cancellation();native_async()
     speech_pipeline();latency();queueing();duplex_timeline();cognition()
     computer_loop();computer_tools();grounding();coordinates()
