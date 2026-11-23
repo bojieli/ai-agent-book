@@ -146,7 +146,9 @@ class SafetyPolicyGate:
     def _fingerprint(self, tool_name: str, params: Dict[str, Any]) -> str:
         """Generate a canonical SHA256 fingerprint for a tool call and its parameters."""
         import json
-        clean_p = self._clean_params(params)
+        # 非 dict 参数（位置参数列表、裸字符串）整体参与指纹，
+        # 否则同一工具的所有非 dict 调用指纹相同，令牌可以确认另一次调用。
+        clean_p = self._clean_params(params) if isinstance(params, dict) else params
         canonical = json.dumps({"tool": tool_name.lower(), "params": clean_p}, sort_keys=True, ensure_ascii=False, default=str)
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
@@ -194,7 +196,8 @@ class SafetyPolicyGate:
     def inspect_path_traversal(self, params: Dict[str, Any]) -> Optional[str]:
         """Inspect parameters for path traversal vulnerabilities."""
         if not isinstance(params, dict):
-            return None
+            # 位置参数没有键名可区分路径和正文，全部检查（fail closed）。
+            return self._scan_path_strings(self._extract_string_values(params))
 
         path_keys = {"path", "filepath", "file_path", "file", "filename", "dir", "directory", 
                      "dest", "source", "target", "output", "input", "folder", "src", "dst", "location", "uri"}
@@ -209,6 +212,10 @@ class SafetyPolicyGate:
                 if k.lower() not in {"content", "text", "message", "body", "data", "prompt", "code", "script"}:
                     path_strings.extend(self._extract_string_values(v))
 
+        return self._scan_path_strings(path_strings)
+
+    def _scan_path_strings(self, path_strings: List[str]) -> Optional[str]:
+        """Return a violation message if any string looks like a traversal or sensitive path."""
         for s in path_strings:
             # Handle double URL-unquoting
             unquoted1 = urllib.parse.unquote(s)
@@ -240,12 +247,14 @@ class SafetyPolicyGate:
 
     def inspect_dangerous_commands(self, tool_name: str, params: Dict[str, Any]) -> Optional[str]:
         """Inspect parameters for dangerous bash/shell command patterns."""
-        if not isinstance(params, dict):
-            return None
         tool_name_lower = tool_name.lower()
         # Check command string parameters
         cmd_keys = {"command", "cmd", "script", "bash", "shell", "exec", "args", "input", "code"}
         cmd_strings = []
+        if not isinstance(params, dict):
+            # 位置参数没有键名可区分命令和正文，全部检查（fail closed）。
+            cmd_strings = self._extract_string_values(params)
+            params = {}
         for k, v in params.items():
             if k.lower() in cmd_keys or "command" in k.lower() or "shell" in k.lower() or "script" in k.lower() or "exec" in k.lower():
                 cmd_strings.extend(self._extract_string_values(v))
