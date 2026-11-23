@@ -133,6 +133,15 @@ PROVIDERS: dict[str, Provider] = {
         # WorldRouter serves many vendors' models under bare ids such as
         # claude-sonnet-5-5, so ids are sent as given rather than namespaced.
     ),
+    "onomeo": Provider(
+        name="onomeo",
+        base_url="https://onomeo.com/v1",
+        default_model="deepseek-v4.1-flash",
+        key_vars=("ONOMEO_API_KEY",),
+        base_url_var="ONOMEO_BASE_URL",
+        # onomeo serves many vendors' models under bare ids such as
+        # claude-sonnet-5.5, so ids are sent as given rather than namespaced.
+    ),
     "openrouter": Provider(
         name="openrouter",
         base_url=OPENROUTER_BASE_URL,

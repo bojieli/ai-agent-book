@@ -133,6 +133,7 @@ uv run python chapter1/context/main.py
 | **UberLLM** | <https://uberllm.dev/> | 一个 Key 通过 OpenAI 兼容接口访问多个厂商的模型（DeepSeek、Qwen、GPT、Claude、Gemini 等），按量预付 | 全球 |
 | **Cheaper Inference** | <https://cheaperinference.com/> | 通过 OpenAI 兼容接口访问 GPT、Claude、Gemini、DeepSeek、GLM 等模型。 | 全球 |
 | **WorldRouter** | <https://www.worldrouter.ai/> | 一个 Key 通过 OpenAI 兼容接口访问 Claude、GPT、Gemini、DeepSeek、Kimi、GLM 等模型，按量计费 | 全球 |
+| **onomeo** | <https://onomeo.com/> | 一个 Key 通过 OpenAI 兼容接口访问 Claude、GPT、Gemini、DeepSeek 等模型，另有免费模型，按量计费 | 全球 |
 | **Krill AI** | [www.krill-code.com](https://www.krill-code.com/register?invite=Q8D3L35725) | 一站式访问全球及国内主流模型（OpenAI、Claude、Gemini、Grok、Kimi、GLM、DeepSeek、Qwen、Minimax） | 全球 + 中国大陆 |
 | **OpenRouter** | <https://openrouter.ai/> | 一站式访问全球及国内主流模型（GPT、Claude、Gemini、Kimi、GLM、DeepSeek、Qwen 等） | 全球 |
 
