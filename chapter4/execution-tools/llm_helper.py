@@ -160,7 +160,11 @@ Respond in JSON format:
                                  time.perf_counter() - started)
 
             result = _parse_json_response(response.choices[0].message.content)
-            return result["approved"], result["reason"]
+            # 只有 JSON 布尔值 true 才算批准：字符串 "false" 在 Python 里为真值，
+            # 原样返回会让调用方的 `if not approved` 放行危险操作。
+            if not isinstance(result, dict):
+                return False, "Approval check failed: reviewer did not return a JSON object"
+            return result.get("approved") is True, str(result["reason"])
             
         except Exception as e:
             # If approval check fails, default to rejection for safety
