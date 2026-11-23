@@ -124,6 +124,15 @@ PROVIDERS: dict[str, Provider] = {
         key_vars=("CHEAPERINFERENCE_API_KEY",),
         base_url_var="CHEAPERINFERENCE_BASE_URL",
     ),
+    "worldrouter": Provider(
+        name="worldrouter",
+        base_url="https://inference-api.worldrouter.ai/v1",
+        default_model="deepseek-v4-flash",
+        key_vars=("WORLDROUTER_API_KEY",),
+        base_url_var="WORLDROUTER_BASE_URL",
+        # WorldRouter serves many vendors' models under bare ids such as
+        # claude-sonnet-5-5, so ids are sent as given rather than namespaced.
+    ),
     "openrouter": Provider(
         name="openrouter",
         base_url=OPENROUTER_BASE_URL,

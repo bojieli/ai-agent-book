@@ -104,7 +104,7 @@ def _needs_openrouter_for_gpt5(
     """
     if not model.lower().startswith("gpt-5"):
         return False
-    supported_gateways = {"api_route", "cheaperinference", "krill", "openai", "opper", "uberllm"}
+    supported_gateways = {"api_route", "cheaperinference", "krill", "openai", "opper", "uberllm", "worldrouter"}
     return not (chosen_by_reader and spec.name in supported_gateways)
 
 
