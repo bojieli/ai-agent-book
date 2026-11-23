@@ -705,19 +705,37 @@ Important: When you have completed all tasks, clearly state "FINAL ANSWER:" foll
             # "x = 5; def f(): return x; f()" raises NameError.
             # 以脚本方式运行：命名空间里没有 __name__ 时会从内置模块取到
             # 'builtins'，`if __name__ == "__main__":` 下的代码会被静默跳过。
-            exec_ns = {"__name__": "__main__"}
+            # 内置的 exit()/quit() 会先关闭 sys.stdin 再抛 SystemExit，交互模式下
+            # Agent 之后的 input() 会失败；换成 sys.exit，只结束这段代码。
+            exec_ns = {"__name__": "__main__", "exit": sys.exit, "quit": sys.exit}
+            exit_code = None
             with contextlib.redirect_stdout(output_buffer), contextlib.redirect_stderr(error_buffer):
-                exec(code, exec_ns)
-            
+                try:
+                    exec(code, exec_ns)
+                except SystemExit as e:
+                    # SystemExit 继承自 BaseException，上层的 except Exception 拦不住，
+                    # 不在这里处理的话，代码里的 exit()/sys.exit() 会让整个 Agent 进程退出。
+                    # 退出码与解释器一致：None 为 0，整数原样，其他值打印到 stderr 并记为 1。
+                    if e.code is None:
+                        exit_code = 0
+                    elif isinstance(e.code, int):
+                        exit_code = int(e.code)
+                    else:
+                        print(e.code, file=sys.stderr)
+                        exit_code = 1
+
             # Get output
             stdout = output_buffer.getvalue()
             stderr = error_buffer.getvalue()
-            
-            return {
-                "success": True,
+
+            result = {
+                "success": not exit_code,
                 "stdout": stdout,
                 "stderr": stderr,
             }
+            if exit_code is not None:
+                result["exit_code"] = exit_code
+            return result
         except Exception:
             raise
     
