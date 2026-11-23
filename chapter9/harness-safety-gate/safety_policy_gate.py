@@ -372,7 +372,9 @@ class SafetyPolicyGate:
         # 4. Inspect High-Risk Operation Confirmation
         is_high_risk, risk_reason = self.is_high_risk_operation(tool_name, params)
         if is_high_risk:
-            token_to_check = confirm_token or params.get("confirm_token")
+            # 与其他检查一致：params 不是 dict 时不从中读取 confirm_token。
+            params_token = params.get("confirm_token") if isinstance(params, dict) else None
+            token_to_check = confirm_token or params_token
             # Verify if user explicitly confirmed or valid confirmation token provided
             if user_confirmed:
                 return SafetyGateDecision(
