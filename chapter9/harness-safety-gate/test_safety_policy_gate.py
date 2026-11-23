@@ -238,5 +238,34 @@ class TestSafetyPolicyGateRollback(unittest.TestCase):
         self.assertFalse(decision.details["rollback_success"])
 
 
+class TestSafetyPolicyGateNonDictParams(unittest.TestCase):
+    """Non-dict params are guarded everywhere else in the gate; the confirm-token
+    lookup must not crash on them either."""
+
+    def setUp(self):
+        self.gate = SafetyPolicyGate()
+
+    def test_high_risk_tool_with_non_dict_params_requires_confirmation(self):
+        for params in (["a.txt"], "a.txt", 42):
+            with self.subTest(params=params):
+                decision = self.gate.validate_tool_call("delete_file", params)
+                self.assertFalse(decision.allowed)
+                self.assertTrue(decision.requires_confirmation)
+                self.assertEqual(decision.violation_type, "unconfirmed_high_risk_operation")
+                self.assertTrue(decision.confirmation_token)
+
+    def test_issued_token_confirms_the_same_non_dict_call(self):
+        first = self.gate.validate_tool_call("delete_file", ["a.txt"])
+        second = self.gate.validate_tool_call(
+            "delete_file", ["a.txt"], confirm_token=first.confirmation_token
+        )
+        self.assertTrue(second.allowed)
+        self.assertFalse(second.requires_confirmation)
+
+    def test_user_confirmed_non_dict_call_is_allowed(self):
+        decision = self.gate.validate_tool_call("delete_file", ["a.txt"], user_confirmed=True)
+        self.assertTrue(decision.allowed)
+
+
 if __name__ == "__main__":
     unittest.main()
