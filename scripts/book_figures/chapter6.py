@@ -3,6 +3,25 @@ from introduction import Figure
 from chapter5 import panel, down
 
 
+def ingress():
+    f=Figure('接入层：适配器、统一信封与接入日志','各来源经各自的适配器写入接入日志，路由分派给运行时，回复经出站适配器回到对话渠道。',720)
+    for x,t,ls in [(20,'对话渠道',['App · IM · 邮件','可回到原处答复']),(313,'回调',['支付服务 · GitHub','验签 · 可能重投']),(607,'消息总线',['SQS · Kafka','确认 · 保留 · 重读'])]:
+        panel(f,x,20,273,t,ls,136)
+    f.path([(156,156),(156,180),(744,180),(744,156)])
+    f.path([(450,156),(450,210)],True)
+    panel(f,20,210,860,'适配器（每个来源一个）',['验证来源 · 生成信封 · 按来源语义去重','写入接入日志之后，才确认来源'],136)
+    down(f,450,346,380)
+    panel(f,20,380,860,'接入日志',['只增不改 · 按线程分区 · 线程内有序','信封：来源 · 去重键 · 线程 · 关联对象 · 回复能力'],136)
+    f.path([(450,516),(450,533),(156,533),(156,550)],True)
+    panel(f,20,550,273,'路由',['分派到任务与会话','过期 · 合并 · 限流'],136)
+    panel(f,313,550,273,'运行时',['事件循环 · 任务状态','取消 · 恢复'],136)
+    panel(f,607,550,273,'出站适配器',['先记发送意图','收到回执再标记完成'],136)
+    f.path([(293,618),(313,618)],True)
+    f.path([(586,618),(607,618)],True)
+    f.path([(744,686),(744,704),(6,704),(6,88),(20,88)],True)
+    f.save('fig6-2.svg')
+
+
 def events():
     f=Figure('事件驱动的异步 Agent 架构','事件源、可信路由、队列与工具结果回流。',1010)
     data=[('Email · on_email_reply',['from: alice@example.com','subject: Re:会议']),('Timer · on_timer_expire',['task_id: daily_report','scheduled: 09:00']),('Webhook · on_webhook',['repo: agent-lib','event: pr_merged']),('User · on_user_message',['text: 帮我查明天天气','channel: chat'])]
@@ -37,7 +56,7 @@ def strategies():
         f.text(560,y+40,event,22,True)
         f.text(560,y+93,action,22)
         f.text(560,y+149,result,22)
-    f.save('fig6-2.svg')
+    f.save('fig6-3.svg')
 
 
 def email():
@@ -56,7 +75,7 @@ def email():
     f.path([(225,815),(225,832),(675,832),(675,815)])
     down(f,450,832,850)
     panel(f,20,850,860,'持久层',['对话历史 · 事件日志 · 定时任务','工具状态 · 审计追踪 · 邮件处理标记'],145)
-    f.save('fig6-3.svg')
+    f.save('fig6-4.svg')
 
 
 def cancellation():
@@ -68,7 +87,7 @@ def cancellation():
     panel(f,20,355,860,'接收 T1 完成事件 → 查询 T2、T3 进度',['T2 > 50%：继续运行','T3 ≤ 50%：cancel_tool(task_id) → 确认进程终止'],145)
     down(f,450,500,540)
     panel(f,20,540,860,'收集最终状态并生成报告',['T1、T2 返回完成结果，T3 返回取消记录','完成事件与原始任务标识关联；每项终态进入记录'],155)
-    f.save('fig6-4.svg')
+    f.save('fig6-5.svg')
 
 
 def native_async():
@@ -83,7 +102,7 @@ def native_async():
     f.path([(225,675),(225,710),(675,710),(675,675)])
     down(f,450,710,750)
     panel(f,20,750,860,'结果与更新共同进入决策',['按初始条件可选 A；按新条件选择 B','运行时管理工具状态；模型采用更新后的任务条件'],150)
-    f.save('fig6-5.svg')
+    f.save('fig6-6.svg')
 
 
 def speech_pipeline():
@@ -92,7 +111,7 @@ def speech_pipeline():
     for i,(t,ls) in enumerate(stages):
         y=20+i*180;panel(f,100,y,700,t,ls,145)
         if i<4:down(f,450,y+145,y+180)
-    f.save('fig6-6.svg')
+    f.save('fig6-7.svg')
 
 
 def latency():
@@ -109,7 +128,7 @@ def latency():
     for ms in [0,500,1000,1400]:
         x=x0+ms*scale;f.path([(x,505),(x,517)]);f.text(x,546,str(ms),20)
     f.text(540,585,'示例时间 / ms',22)
-    f.save('fig6-7.svg')
+    f.save('fig6-8.svg')
 
 
 def queueing():
@@ -130,7 +149,7 @@ def queueing():
     for r,label,dx,dy in [(.5,'ρ = 0.5：W = 2 s',-5,-27),(.8,'ρ = 0.8：W = 5 s',-105,-20)]:
         x=ox+r*w;y=oy-h/10/(1-r);f.box(x-3,y-3,6,6,'#333333');f.text(x+dx,y+dy,label,20)
     f.text(340,215,'平均总时间 W / s',22);f.text(700,620,'利用率 ρ',22)
-    f.save('fig6-8.svg')
+    f.save('fig6-9.svg')
 
 
 def cognition():
@@ -149,7 +168,7 @@ def cognition():
     panel(f,20,935,410,'Formulation Brain',['推进构思与推理','提供可表达的中间内容'],140)
     panel(f,470,935,410,'Articulation Brain',['结合此前输出组织表达','持续生成语音片段'],140)
     f.path([(430,1005),(470,1005)],True)
-    f.save('fig6-10.svg')
+    f.save('fig6-11.svg')
 
 
 def computer_loop():
@@ -162,7 +181,7 @@ def computer_loop():
     down(f,450,530,565)
     panel(f,65,565,770,'④ 读取动作后的状态',['重新截图：地址框获得焦点，还是弹出了登录框？'],100)
     f.path([(65,615),(25,615),(25,85),(65,85)],True)
-    f.save('fig6-11.svg')
+    f.save('fig6-12.svg')
 
 
 def computer_tools():
@@ -173,7 +192,7 @@ def computer_tools():
     panel(f,20,560,860,'图像与坐标转换',['实际屏幕 → 工具输出图像 → 模型坐标','逆变换 → 桌面坐标 → 执行器'],140)
     down(f,450,700,735)
     panel(f,20,735,860,'填写表单示例',['① screenshot：获取页面','② 模型定位姓名框 → mouse_move(324, 156)','③ left_click：获取输入焦点','④ type("John Smith")：输入姓名','⑤ 新截图：确认字段内容'],290)
-    f.save('fig6-12.svg')
+    f.save('fig6-13.svg')
 
 
 def grounding():
@@ -193,7 +212,7 @@ def grounding():
     panel(f,20,703,860,'执行器检查目标是否可见、可交互',['点击 Submit，再读取更新后的页面'],115)
     down(f,450,818,859)
     panel(f,20,859,860,'页面刷新，重新收集候选并编号',['滚动、插入元素也可能改变映射','缺少结构化信息时，结合视觉标注或坐标预测'],150)
-    f.save('fig6-13.svg')
+    f.save('fig6-14.svg')
 
 
 def coordinates():
@@ -213,7 +232,7 @@ def coordinates():
     panel(f,20,420,860,'按两个方向的实际比例换算',['x = 683 × 2560 / 1366 = 1280','y = 384 × 1440 / 768 = 720'],150)
     down(f,450,570,606)
     panel(f,20,606,860,'点击 (1280, 720)，重新截图检查结果',['有留白时先减填充偏移，再除缩放系数','有裁剪或多个屏幕时，再加对应的原点偏移'],145)
-    f.save('fig6-14.svg')
+    f.save('fig6-15.svg')
 
 
 def duplex_timeline():
@@ -245,10 +264,10 @@ def duplex_timeline():
         if i < 7:
             f.path([(x + 86, 324), (x + 104, 324)], arrow=True)
     f.text(450, 394, '入、出分别表示一块输入和输出，数字对应上方的时间格。', 21)
-    f.save('fig6-9.svg')
+    f.save('fig6-10.svg')
 
 
 if __name__ == '__main__':
-    events();strategies();email();cancellation();native_async()
+    ingress();events();strategies();email();cancellation();native_async()
     speech_pipeline();latency();queueing();duplex_timeline();cognition()
     computer_loop();computer_tools();grounding();coordinates()
