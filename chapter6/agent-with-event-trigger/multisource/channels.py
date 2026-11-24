@@ -56,9 +56,12 @@ class MailChannel:
             "in_reply_to": meta.get("in_reply_to"),
             "body": body,
         }
-        (self.sent / f"{uuid.uuid4().hex}.json").write_text(
-            json.dumps(mail, ensure_ascii=False), encoding="utf-8"
-        )
+        # Write under a name the lookup ignores, then rename: a crash leaves
+        # either a complete Sent record or none at all.
+        name = uuid.uuid4().hex
+        tmp = self.sent / f"{name}.partial"
+        tmp.write_text(json.dumps(mail, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(self.sent / f"{name}.json")
         return {"message_id": message_id}
 
     def find_sent(self, key: str) -> dict[str, Any] | None:

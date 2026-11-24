@@ -1,7 +1,7 @@
 {
   "experiment": "6-1-extension-multisource",
-  "campaign_id": "offline_fault_injection_20261124T073809Z",
-  "generated_at": "2026-11-24T07:38:11.282370+00:00",
+  "campaign_id": "offline_fault_injection_20261124T074134Z",
+  "generated_at": "2026-11-24T07:41:36.478191+00:00",
   "mode": "offline-scripted-responder",
   "environment": {
     "python": "3.12.15",
@@ -82,7 +82,7 @@
     "fault_2": {
       "first_run": {
         "killed": true,
-        "output": "FAULT-POINT sqs_after_log pid=79299"
+        "output": "FAULT-POINT sqs_after_log pid=83125"
       },
       "after_kill": {
         "events_with_dedupe_key": 1,
@@ -116,9 +116,9 @@
           "seq": 4,
           "actor": "sqs-adapter",
           "action": "appended",
-          "ref": "sqs:orders.fifo:msg:4f7f7c98-bccb-4f19-a207-b44f0627118b",
+          "ref": "sqs:orders.fifo:msg:1531803f-5d94-4b30-9993-f09e340f84fb",
           "detail": {
-            "event_id": "evt_848cb221ecc3",
+            "event_id": "evt_31a047fa4fba",
             "thread": "sqs:orders.fifo:group:order-67890",
             "thread_seq": 1
           }
@@ -127,9 +127,9 @@
           "seq": 5,
           "actor": "sqs-adapter",
           "action": "redelivered",
-          "ref": "sqs:orders.fifo:msg:4f7f7c98-bccb-4f19-a207-b44f0627118b",
+          "ref": "sqs:orders.fifo:msg:1531803f-5d94-4b30-9993-f09e340f84fb",
           "detail": {
-            "message_id": "4f7f7c98-bccb-4f19-a207-b44f0627118b",
+            "message_id": "1531803f-5d94-4b30-9993-f09e340f84fb",
             "receive_count": 2
           }
         },
@@ -137,9 +137,9 @@
           "seq": 6,
           "actor": "sqs-adapter",
           "action": "deduplicated",
-          "ref": "sqs:orders.fifo:msg:4f7f7c98-bccb-4f19-a207-b44f0627118b",
+          "ref": "sqs:orders.fifo:msg:1531803f-5d94-4b30-9993-f09e340f84fb",
           "detail": {
-            "event_id": "evt_848cb221ecc3",
+            "event_id": "evt_31a047fa4fba",
             "logged_at_seq": 2
           }
         },
@@ -147,9 +147,9 @@
           "seq": 7,
           "actor": "sqs-adapter",
           "action": "acked",
-          "ref": "sqs:orders.fifo:msg:4f7f7c98-bccb-4f19-a207-b44f0627118b",
+          "ref": "sqs:orders.fifo:msg:1531803f-5d94-4b30-9993-f09e340f84fb",
           "detail": {
-            "message_id": "4f7f7c98-bccb-4f19-a207-b44f0627118b"
+            "message_id": "1531803f-5d94-4b30-9993-f09e340f84fb"
           }
         }
       ],
@@ -194,7 +194,7 @@
           "status": "sent"
         },
         {
-          "idempotency_key": "reply-evt_848cb221ecc3",
+          "idempotency_key": "reply-evt_31a047fa4fba",
           "channel": "sms",
           "target": "+86 138 0000 0000",
           "status": "needs_manual_confirmation"
@@ -220,7 +220,7 @@
           "detail": {
             "channel": "chat",
             "receipt": {
-              "message_id": "chat_f119f9d7",
+              "message_id": "chat_265ab593",
               "replayed": true
             },
             "server_replayed_existing": true
@@ -229,7 +229,7 @@
         {
           "seq": 16,
           "action": "reply_needs_manual_confirmation",
-          "ref": "reply-evt_848cb221ecc3",
+          "ref": "reply-evt_31a047fa4fba",
           "detail": {
             "channel": "sms",
             "reason": "channel has no idempotency key and no sent-message lookup; not resent",

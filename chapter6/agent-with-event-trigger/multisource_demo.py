@@ -79,9 +79,7 @@ def seed_sources(workdir: Path) -> str:
         "carrier": "SF Express",
         "occurred_at": "2026-11-23T10:00:00+08:00",
     }
-    message_id = sqs.send(
-        json.dumps(body), group_id="order-67890", attributes={"SenderId": "order-service"}
-    )
+    message_id = sqs.send(json.dumps(body), group_id="order-67890", sender_id="order-service")
     sqs.close()
     return message_id
 

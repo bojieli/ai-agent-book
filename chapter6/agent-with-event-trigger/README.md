@@ -405,10 +405,10 @@ python multisource_demo.py --live --provider kimi   # 可选：用真实模型�
 | 来源 | 验证 | `dedupe_key` | `thread` | 确认 |
 |---|---|---|---|---|
 | Webhook（标准库 `http.server`，`127.0.0.1`） | HMAC-SHA256 签名，覆盖投递 ID 和正文 | 投递 ID | 退款单号 | 返回 HTTP 200 |
-| SQS（[`fake_sqs.py`](multisource/fake_sqs.py) 本地模拟 FIFO 队列） | 发送方白名单 | `MessageId` | `MessageGroupId` | 删除消息 |
-| 测试邮箱（本地目录 `INBOX/`、`Sent/`） | 邮件头中的 DKIM 结果 | `Message-ID` | 首个 `References` | 记录读取位置 |
+| SQS（[`fake_sqs.py`](multisource/fake_sqs.py) 本地模拟 FIFO 队列） | 队列记录的 `SenderId`（发布者不能自填）在白名单内 | `MessageId` | `MessageGroupId` | 删除消息 |
+| 测试邮箱（本地目录 `INBOX/`、`Sent/`） | DKIM 通过，且签名域与发件人域名一致 | `Message-ID` | 首个 `References` | 记录读取位置 |
 
-验证不通过或缺少必要字段的输入不写入接入日志，而是在审计表里记一条 `source_rejected`，同时照常确认来源，免得来源反复重投一条永远处理不了的消息。原始载荷按内容的 SHA-256 存放，重投不会覆盖已有事件引用的字节。
+验证不通过、缺少必要字段或事件类型不受支持的输入不写入接入日志，而是在审计表里记一条 `source_rejected`，同时照常确认来源，免得来源反复重投一条永远处理不了的消息。原始载荷按内容的 SHA-256 存放，重投不会覆盖已有事件引用的字节。
 
 接入日志是一个 SQLite 文件里的 `events` 表：触发器禁止更新和删除，`dedupe_key` 有唯一约束，`(thread, thread_seq)` 记录线程内顺序。来源进度（`source_progress`）、分派进度（`dispatch`）、任务状态（`task_state`）和发件箱（`outbox`）分表保存，与正文的三种进度一一对应；三类故障的证据写在只增不改的 `audit` 表里。
 

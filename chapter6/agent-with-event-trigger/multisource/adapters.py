@@ -17,6 +17,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import re
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
@@ -57,10 +58,14 @@ def sign(secret: str, delivery_id: str, body: bytes) -> str:
 
 
 WEBHOOK_FIELDS = ("type", "refund_id", "order_id", "occurred_at")
+WEBHOOK_TYPES = {"refund.succeeded"}
+MAX_BODY = 64 * 1024
 
 
 def webhook_envelope(workdir: Path, delivery_id: str, body: bytes) -> Envelope:
     payload = parse(body, WEBHOOK_FIELDS)
+    if payload["type"] not in WEBHOOK_TYPES:
+        raise Malformed(f"unsupported event type {payload['type']!r}")
     return Envelope(
         source={"type": "webhook", "sender": "payments", "verified": True},
         dedupe_key=f"webhook:payments:delivery:{delivery_id}",
@@ -77,7 +82,13 @@ def webhook_envelope(workdir: Path, delivery_id: str, body: bytes) -> Envelope:
 def make_webhook_server(workdir: Path, store: Store, secret: str, port: int = 0) -> HTTPServer:
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:
-            body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+            try:
+                length = int(self.headers.get("Content-Length", ""))
+            except ValueError:
+                length = -1
+            if not 0 <= length <= MAX_BODY:
+                return self._reply(400, {"error": "missing or invalid Content-Length"})
+            body = self.rfile.read(length)
             delivery_id = self.headers.get("X-Delivery-Id", "")
             signature = self.headers.get("X-Signature-256", "")
             if self.path != WEBHOOK_PATH:
@@ -105,6 +116,8 @@ def make_webhook_server(workdir: Path, store: Store, secret: str, port: int = 0)
             # The 2xx below is the ack. It is sent only after the log write.
             self._reply(200, {"event_id": event_id, "deduplicated": not appended})
 
+        timeout = 10  # seconds; a stalled client cannot hold the server forever
+
         def _reply(self, status: int, data: dict) -> None:
             out = json.dumps(data).encode()
             self.send_response(status)
@@ -128,13 +141,16 @@ SQS_ALLOWED_SENDERS = {"order-service"}
 
 
 SQS_FIELDS = ("event", "order_id", "carrier", "occurred_at")
+SQS_TYPES = {"order.shipped"}
 
 
 def sqs_envelope(workdir: Path, msg: dict) -> Envelope:
-    sender = msg["MessageAttributes"].get("SenderId", "")
+    sender = msg["Attributes"]["SenderId"]  # queue-owned, not publisher-supplied
     if sender not in SQS_ALLOWED_SENDERS:
         raise Malformed(f"sender {sender!r} is not on the allowlist")
     payload = parse(msg["Body"], SQS_FIELDS)
+    if payload["event"] not in SQS_TYPES:
+        raise Malformed(f"unsupported event type {payload['event']!r}")
     return Envelope(
         source={"type": "sqs", "sender": sender, "verified": True},
         dedupe_key=f"sqs:{SQS_QUEUE}:msg:{msg['MessageId']}",
@@ -187,6 +203,21 @@ def sqs_poll_once(workdir: Path, store: Store, sqs: FakeSQS, visibility_timeout:
 # --------------------------------------------------------------------------
 
 MAILBOX_SOURCE = "mailbox:INBOX"
+# Written by the (simulated) receiving mail server, e.g.
+# "mx.agent.example; dkim=pass header.d=customer.example"
+DKIM_PASS = re.compile(r"(?:^|;)\s*dkim=pass\s+header\.d=([A-Za-z0-9.-]+)\s*(?:;|$)")
+
+
+def dkim_aligned(sender: str, results: object) -> bool:
+    """A passing DKIM signature whose domain is the From address's domain."""
+    if not isinstance(results, str) or "@" not in sender:
+        return False
+    domain = sender.rsplit("@", 1)[1].lower()
+    return any(d.lower() == domain for d in DKIM_PASS.findall(results))
+
+
+def _str_list(value: object) -> bool:
+    return isinstance(value, list) and all(isinstance(v, str) for v in value)
 
 
 MAIL_FIELDS = ("message_id", "from", "subject", "body", "date")
@@ -195,16 +226,19 @@ MAIL_FIELDS = ("message_id", "from", "subject", "body", "date")
 def mail_envelope(workdir: Path, path: Path) -> Envelope:
     raw = path.read_bytes()
     mail = parse(raw, MAIL_FIELDS)
-    if "dkim=pass" not in str(mail.get("authentication_results", "")):
-        raise Malformed(f"no passing DKIM result for {mail['message_id']}")
+    if not dkim_aligned(mail["from"], mail.get("authentication_results")):
+        raise Malformed(f"no passing DKIM result for the sender of {mail['message_id']}")
     refs = mail.get("references") or [mail["message_id"]]
-    root = refs[0] if isinstance(refs, list) and isinstance(refs[0], str) else mail["message_id"]
+    orders = mail.get("orders", [])
+    if not _str_list(refs) or not _str_list(orders):
+        raise Malformed("references and orders must be lists of strings")
+    root = refs[0]
     return Envelope(
         source={"type": "mail", "sender": mail["from"], "verified": True},
         dedupe_key=f"mail:msgid:{mail['message_id']}",
         thread=f"mail:thread:{root}",
         kind="message",
-        correlation=[f"order:{o}" for o in mail.get("orders", [])],
+        correlation=[f"order:{o}" for o in orders],
         content={"type": "email", "subject": mail["subject"], "text": mail["body"]},
         raw_ref=save_raw(workdir, "mail", raw),
         reply={

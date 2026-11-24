@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -59,7 +60,7 @@ def save_raw(workdir: Path, source: str, raw: bytes) -> str:
     target = workdir / path
     if not target.exists():
         target.parent.mkdir(parents=True, exist_ok=True)
-        tmp = target.with_suffix(".tmp")
+        tmp = target.with_name(f"{target.name}.{uuid.uuid4().hex}.tmp")  # private per writer
         tmp.write_bytes(raw)
         tmp.replace(target)
     return path.as_posix()

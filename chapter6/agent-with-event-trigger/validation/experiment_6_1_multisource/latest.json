@@ -1,8 +1,8 @@
 {
   "experiment": "6-1-extension-multisource",
-  "campaign_id": "offline_fault_injection_20261124T073809Z",
+  "campaign_id": "offline_fault_injection_20261124T074134Z",
   "status": "passed",
   "gates_experiment_6_1": false,
-  "manifest": "validation/experiment_6_1_multisource/offline_fault_injection_20261124T073809Z/manifest.json",
-  "manifest_sha256": "79d5a53f4d1917938d9ec68391e64892ab79a867f834398934a835bd917f302d"
+  "manifest": "validation/experiment_6_1_multisource/offline_fault_injection_20261124T074134Z/manifest.json",
+  "manifest_sha256": "b725bbc518b259bc358b8df860ba112390305efa22adff33900b9f72870911e8"
 }

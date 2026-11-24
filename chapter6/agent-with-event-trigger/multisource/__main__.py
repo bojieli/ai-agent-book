@@ -23,6 +23,13 @@ from .store import Store
 DEFAULT_WEBHOOK_SECRET = "demo-webhook-secret"
 
 
+def positive_float(text: str) -> float:
+    value = float(text)
+    if not 0 < value < float("inf"):
+        raise argparse.ArgumentTypeError("must be a positive number of seconds")
+    return value
+
+
 def paths(workdir: Path) -> dict[str, Path]:
     return {
         "store": workdir / "agent.db",
@@ -45,7 +52,7 @@ def main(argv: list[str] | None = None) -> None:
             p.add_argument("--port", type=int, default=0, help="0 picks a free port")
         if name == "sqs-poll":
             p.add_argument("--once", action="store_true", help="receive at most one message")
-            p.add_argument("--visibility-timeout", type=float, default=1.0)
+            p.add_argument("--visibility-timeout", type=positive_float, default=1.0)
         if name == "runtime":
             p.add_argument(
                 "--live",

@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS outbox (
 );
 """
 
-TERMINAL_STEPS = {"done", "no_reply", "awaiting_human"}
+TERMINAL_STEPS = {"done", "no_reply", "awaiting_human", "draft_failed"}
 
 
 class Store:

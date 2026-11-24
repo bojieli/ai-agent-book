@@ -185,7 +185,7 @@ class Clock:
 def test_fake_sqs_visibility_timeout_and_receipt_handles(tmp_path):
     clock = Clock()
     sqs = FakeSQS(tmp_path / "sqs.db", clock=clock)
-    sqs.send("m1", group_id="g")
+    sqs.send("m1", group_id="g", sender_id="order-service")
     first = sqs.receive(visibility_timeout=30)
     assert first["ApproximateReceiveCount"] == 1
     assert sqs.receive(visibility_timeout=30) is None  # hidden while in flight
@@ -203,9 +203,9 @@ def test_fake_sqs_visibility_timeout_and_receipt_handles(tmp_path):
 def test_fake_sqs_fifo_group_is_delivered_in_order(tmp_path):
     clock = Clock()
     sqs = FakeSQS(tmp_path / "sqs.db", clock=clock)
-    sqs.send("g1-a", group_id="g1")
-    sqs.send("g1-b", group_id="g1")
-    sqs.send("g2-a", group_id="g2")
+    sqs.send("g1-a", group_id="g1", sender_id="order-service")
+    sqs.send("g1-b", group_id="g1", sender_id="order-service")
+    sqs.send("g2-a", group_id="g2", sender_id="order-service")
     a = sqs.receive(visibility_timeout=30)
     assert a["Body"] == "g1-a"
     # g1-b must wait for g1-a; another group is not blocked.
@@ -222,7 +222,7 @@ def test_sqs_ack_after_visibility_timeout_is_recorded_and_redelivery_deduplicate
     sqs = FakeSQS(tmp_path / "sqs.db", clock=clock)
     store = Store(tmp_path / "agent.db")
     body = {"event": "order.shipped", "order_id": "1", "carrier": "x", "occurred_at": "t"}
-    sqs.send(json.dumps(body), group_id="g", attributes={"SenderId": "order-service"})
+    sqs.send(json.dumps(body), group_id="g", sender_id="order-service")
 
     class SlowStore(Store):
         def append(self, env, actor):
@@ -302,11 +302,17 @@ def test_unverified_sqs_sender_and_mail_are_rejected_and_never_answered(tmp_path
     store = Store(tmp_path / "agent.db")
     sqs = FakeSQS(tmp_path / "sqs.db")
     body = {"event": "order.shipped", "order_id": "67890", "carrier": "x", "occurred_at": "t"}
-    sqs.send(json.dumps(body), group_id="g", attributes={"SenderId": "intruder"})
+    # The publisher claims to be the order service in its own attributes.
+    sqs.send(
+        json.dumps(body),
+        group_id="g",
+        sender_id="intruder",
+        attributes={"SenderId": "order-service"},
+    )
     sqs.send(
         json.dumps({"event": "order.shipped"}),
         group_id="h",
-        attributes={"SenderId": "order-service"},
+        sender_id="order-service",
     )  # allowed sender, missing fields
     while sqs_poll_once(tmp_path, store, sqs, visibility_timeout=30):
         pass
@@ -353,7 +359,7 @@ def test_mailbox_cursor_follows_numeric_uid_order(tmp_path):
             "subject": str(uid),
             "body": "",
             "date": "t",
-            "authentication_results": "dkim=pass",
+            "authentication_results": "mx; dkim=pass header.d=x",
         }
         (inbox / f"{uid}.json").write_text(json.dumps(mail))
     mailbox_poll(tmp_path, store, tmp_path / "mailbox")
@@ -381,3 +387,108 @@ def test_only_one_runtime_per_workdir(tmp_path):
     held.__exit__(None, None, None)
     with single_runtime(tmp_path):  # released on exit
         pass
+
+
+@pytest.mark.parametrize(
+    "results, ok",
+    [
+        ("mx.agent.example; dkim=pass header.d=customer.example", True),
+        ("mx.agent.example; dkim=pass header.d=CUSTOMER.example", True),
+        ("mx.agent.example; dkim=pass header.d=evil.example", False),
+        ("mx.agent.example; dkim=fail header.d=customer.example", False),
+        ("x-note: dkim=pass header.d=customer.example.evil", False),
+        (None, False),
+    ],
+)
+def test_dkim_must_pass_for_the_senders_own_domain(results, ok):
+    from multisource.adapters import dkim_aligned
+
+    assert dkim_aligned("li.lei@customer.example", results) is ok
+
+
+def test_mailbox_rejects_bad_orders_field_and_keeps_reading(tmp_path):
+    from multisource.adapters import mailbox_poll
+
+    store = Store(tmp_path / "agent.db")
+    inbox = tmp_path / "mailbox" / "INBOX"
+    inbox.mkdir(parents=True)
+    for uid, orders in ((1, None), (2, ["55501"])):
+        mail = {
+            "message_id": f"<m{uid}@x>",
+            "from": "a@x",
+            "subject": "s",
+            "body": "",
+            "date": "t",
+            "authentication_results": "mx; dkim=pass header.d=x",
+            "orders": orders,
+        }
+        (inbox / f"{uid}.json").write_text(json.dumps(mail))
+    assert mailbox_poll(tmp_path, store, tmp_path / "mailbox") == 2
+    assert len(store.audit_rows("source_rejected")) == 1
+    assert [e["envelope"]["correlation"] for e in store.events()] == [["order:55501"]]
+
+
+def test_unsupported_event_type_is_rejected_at_ingress(tmp_path):
+    from multisource.adapters import sign
+
+    store = Store(tmp_path / "agent.db")
+    body = json.dumps(
+        {"type": "order.shipped", "refund_id": "R", "order_id": "12345", "occurred_at": "t"}
+    ).encode()
+    assert post_once(tmp_path, store, body, "d1", sign("s3cret", "d1", body)) == 400
+    assert store.count_events() == 0
+
+
+def test_failed_draft_does_not_block_replay(tmp_path):
+    store = Store(tmp_path / "agent.db")
+    for thread, n in [("A", 1), ("A", 2), ("B", 1)]:
+        store.append(envelope(thread, n), "test")
+
+    class Flaky(ScriptedResponder):
+        def draft(self, env):
+            if env.content["subject"] == "A #1":
+                raise RuntimeError("model unavailable")
+            return super().draft(env)
+
+    Runtime(store, default_channels(tmp_path), Flaky()).run()
+    steps = dict(store.db.execute("SELECT event_id, step FROM task_state").fetchall())
+    assert steps[envelope("A", 1).id] == "draft_failed"
+    assert steps[envelope("A", 2).id] == steps[envelope("B", 1).id] == "done"
+    assert len(store.audit_rows("draft_failed")) == 1
+
+
+def test_webhook_rejects_bad_content_length(tmp_path):
+    import http.client
+
+    from multisource.adapters import WEBHOOK_PATH, make_webhook_server
+
+    store = Store(tmp_path / "agent.db")
+    server = make_webhook_server(tmp_path, store, "s3cret")
+    conn = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=10)
+    conn.putrequest("POST", WEBHOOK_PATH)
+    conn.putheader("Content-Length", "-5")
+    conn.endheaders()
+    server.handle_request()
+    assert conn.getresponse().status == 400
+    conn.close()
+    server.server_close()
+
+
+def test_sent_lookup_ignores_partial_writes(tmp_path):
+    from multisource.channels import MailChannel
+
+    mail = MailChannel(tmp_path / "mailbox")
+    mail.sent.mkdir(parents=True)
+    (mail.sent / "crashed.partial").write_text('{"message_id": "<rep')  # torn write
+    assert mail.find_sent("reply-x") is None
+    mail.send("a@x", "hi", "reply-x", {})
+    assert mail.find_sent("reply-x") == {"message_id": "<reply-x@agent.example>"}
+
+
+def test_fake_sqs_stats_match_receivable_fifo_heads(tmp_path):
+    clock = Clock()
+    sqs = FakeSQS(tmp_path / "sqs.db", clock=clock)
+    sqs.send("a", group_id="g", sender_id="s")
+    sqs.send("b", group_id="g", sender_id="s")
+    sqs.receive(visibility_timeout=30)
+    assert sqs.stats() == {"messages": 2, "in_flight": 1, "visible": 0}

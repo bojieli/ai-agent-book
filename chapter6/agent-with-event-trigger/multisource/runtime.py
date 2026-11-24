@@ -50,14 +50,15 @@ class ScriptedResponder:
     """Deterministic replies, so the fault scenarios run without an API key."""
 
     def draft(self, env: Envelope) -> str:
-        data = env.content.get("data", {})
-        kind = env.content["type"]
+        data = env.content.get("data") or {}
+        kind = env.content.get("type")
         if kind == "email":
-            return f"您好，已收到您关于“{env.content['subject']}”的来信，我们会在 24 小时内处理。"
+            subject = env.content.get("subject", "")
+            return f"您好，已收到您关于“{subject}”的来信，我们会在 24 小时内处理。"
         if kind == "refund.succeeded":
-            return f"订单 {data['order_id']} 的退款已经到账（退款单 {data['refund_id']}）。"
+            return f"订单 {data.get('order_id')} 的退款已经到账（退款单 {data.get('refund_id')}）。"
         if kind == "order.shipped":
-            return f"订单 {data['order_id']} 已发货，承运商 {data['carrier']}。"
+            return f"订单 {data.get('order_id')} 已发货，承运商 {data.get('carrier')}。"
         return f"已收到事件 {env.id}。"
 
 
@@ -237,7 +238,14 @@ class Runtime:
             self.store.audit(self.actor, "processed", env.id, {**position, "reply": None})
             return True
 
-        body = self.responder.draft(env)
+        try:
+            body = self.responder.draft(env)
+        except Exception as err:  # noqa: BLE001 - a model error must not block replay
+            # Nothing was sent, so this event can be retried by hand later; it
+            # must not stop every restart at the same place.
+            self._set_step(env.id, "draft_failed")
+            self.store.audit(self.actor, "draft_failed", env.id, {**position, "error": repr(err)})
+            return True
         key = f"reply-{env.id}"
         meta = {k: v for k, v in route.items() if k not in ("via", "target")}
         with self.store.transaction():  # the send intent, before the send
