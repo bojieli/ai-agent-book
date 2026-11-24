@@ -1,0 +1,303 @@
+{
+  "experiment": "6-1-extension-multisource",
+  "campaign_id": "offline_fault_injection_20261124T074757Z",
+  "generated_at": "2026-11-24T07:47:59.239233+00:00",
+  "mode": "offline-scripted-responder",
+  "environment": {
+    "python": "3.12.15",
+    "platform": "macOS-27.2.1-arm64-arm-64bit"
+  },
+  "sources": {
+    "mailbox": "local test mailbox (JSON files)",
+    "webhook": "stdlib http.server on 127.0.0.1, HMAC-SHA256",
+    "sqs": "local file-backed FIFO queue simulation (multisource/fake_sqs.py)"
+  },
+  "faults": "SIGKILL from the parent process at a named fault point",
+  "status": "passed",
+  "results": {
+    "fault_1": {
+      "responses": {
+        "first": [
+          200,
+          {
+            "event_id": "evt_f6d6e4bff802",
+            "deduplicated": false
+          }
+        ],
+        "second": [
+          200,
+          {
+            "event_id": "evt_f6d6e4bff802",
+            "deduplicated": true
+          }
+        ],
+        "forged_signature": [
+          401,
+          {
+            "error": "invalid signature"
+          }
+        ]
+      },
+      "events_with_dedupe_key": 1,
+      "audit": [
+        {
+          "seq": 1,
+          "actor": "webhook-adapter",
+          "action": "appended",
+          "ref": "webhook:payments:delivery:dlv_7f3a01",
+          "detail": {
+            "event_id": "evt_f6d6e4bff802",
+            "thread": "payments:refund:R-1",
+            "thread_seq": 1
+          }
+        },
+        {
+          "seq": 2,
+          "actor": "webhook-adapter",
+          "action": "deduplicated",
+          "ref": "webhook:payments:delivery:dlv_7f3a01",
+          "detail": {
+            "event_id": "evt_f6d6e4bff802",
+            "logged_at_seq": 1
+          }
+        },
+        {
+          "seq": 3,
+          "actor": "webhook-adapter",
+          "action": "source_rejected",
+          "ref": "delivery:dlv_forged",
+          "detail": {
+            "reason": "bad or missing HMAC signature"
+          }
+        }
+      ],
+      "checks": {
+        "both_deliveries_acked_2xx": true,
+        "second_delivery_deduplicated": true,
+        "one_event_in_log": true,
+        "dedup_recorded_in_audit": true,
+        "forged_signature_rejected": true
+      }
+    },
+    "fault_2": {
+      "first_run": {
+        "killed": true,
+        "output": "FAULT-POINT sqs_after_log pid=91850"
+      },
+      "after_kill": {
+        "events_with_dedupe_key": 1,
+        "queue": {
+          "messages": 1,
+          "in_flight": 1,
+          "visible": 0
+        }
+      },
+      "after_visibility_timeout": {
+        "queue": {
+          "messages": 1,
+          "in_flight": 0,
+          "visible": 1
+        }
+      },
+      "second_run": {
+        "killed": false,
+        "output": "sqs-poll done; queue {'messages': 0, 'in_flight': 0, 'visible': 0}"
+      },
+      "after_restart": {
+        "events_with_dedupe_key": 1,
+        "queue": {
+          "messages": 0,
+          "in_flight": 0,
+          "visible": 0
+        }
+      },
+      "audit": [
+        {
+          "seq": 4,
+          "actor": "sqs-adapter",
+          "action": "appended",
+          "ref": "sqs:orders.fifo:msg:43bf3c3e-62bc-4bef-897b-b206f2c26300",
+          "detail": {
+            "event_id": "evt_ed5fcd05b534",
+            "thread": "sqs:orders.fifo:group:order-67890",
+            "thread_seq": 1
+          }
+        },
+        {
+          "seq": 5,
+          "actor": "sqs-adapter",
+          "action": "redelivered",
+          "ref": "sqs:orders.fifo:msg:43bf3c3e-62bc-4bef-897b-b206f2c26300",
+          "detail": {
+            "message_id": "43bf3c3e-62bc-4bef-897b-b206f2c26300",
+            "receive_count": 2
+          }
+        },
+        {
+          "seq": 6,
+          "actor": "sqs-adapter",
+          "action": "deduplicated",
+          "ref": "sqs:orders.fifo:msg:43bf3c3e-62bc-4bef-897b-b206f2c26300",
+          "detail": {
+            "event_id": "evt_ed5fcd05b534",
+            "logged_at_seq": 2
+          }
+        },
+        {
+          "seq": 7,
+          "actor": "sqs-adapter",
+          "action": "acked",
+          "ref": "sqs:orders.fifo:msg:43bf3c3e-62bc-4bef-897b-b206f2c26300",
+          "detail": {
+            "message_id": "43bf3c3e-62bc-4bef-897b-b206f2c26300"
+          }
+        }
+      ],
+      "checks": {
+        "adapter_killed_at_fault_point": true,
+        "logged_but_not_deleted": true,
+        "message_visible_again": true,
+        "re_read_recorded": true,
+        "still_one_event_in_log": true,
+        "dedup_recorded_in_audit": true,
+        "deleted_after_second_log_write": true
+      }
+    },
+    "fault_3": {
+      "runtime_runs": [
+        {
+          "killed": true,
+          "returncode": -9
+        },
+        {
+          "killed": true,
+          "returncode": -9
+        },
+        {
+          "killed": true,
+          "returncode": -9
+        },
+        {
+          "killed": true,
+          "returncode": -9
+        },
+        {
+          "killed": false,
+          "returncode": 0
+        }
+      ],
+      "outbox": [
+        {
+          "idempotency_key": "reply-evt_f6d6e4bff802",
+          "channel": "chat",
+          "target": "app:conv:conv_88",
+          "status": "sent"
+        },
+        {
+          "idempotency_key": "reply-evt_ed5fcd05b534",
+          "channel": "sms",
+          "target": "+86 138 0000 0000",
+          "status": "needs_manual_confirmation"
+        },
+        {
+          "idempotency_key": "reply-evt_f588043a2550",
+          "channel": "mail",
+          "target": "li.lei@customer.example",
+          "status": "sent"
+        },
+        {
+          "idempotency_key": "reply-evt_9a1b3be5e1bf",
+          "channel": "mail",
+          "target": "li.lei@customer.example",
+          "status": "sent"
+        }
+      ],
+      "recovery_audit": [
+        {
+          "seq": 13,
+          "action": "reply_confirmed_by_idempotency_key",
+          "ref": "reply-evt_f6d6e4bff802",
+          "detail": {
+            "channel": "chat",
+            "receipt": {
+              "message_id": "chat_dad0b553",
+              "replayed": true
+            },
+            "server_replayed_existing": true
+          }
+        },
+        {
+          "seq": 16,
+          "action": "reply_needs_manual_confirmation",
+          "ref": "reply-evt_ed5fcd05b534",
+          "detail": {
+            "channel": "sms",
+            "reason": "channel has no idempotency key and no sent-message lookup; not resent",
+            "target": "+86 138 0000 0000"
+          }
+        },
+        {
+          "seq": 19,
+          "action": "reply_verified_not_resent",
+          "ref": "reply-evt_f588043a2550",
+          "detail": {
+            "channel": "mail",
+            "checked": "Sent folder",
+            "found": {
+              "message_id": "<reply-evt_f588043a2550@agent.example>"
+            },
+            "receipt": {
+              "message_id": "<reply-evt_f588043a2550@agent.example>"
+            }
+          }
+        },
+        {
+          "seq": 22,
+          "action": "reply_verified_not_resent",
+          "ref": "reply-evt_9a1b3be5e1bf",
+          "detail": {
+            "channel": "mail",
+            "checked": "Sent folder",
+            "found": {
+              "message_id": "<reply-evt_9a1b3be5e1bf@agent.example>"
+            },
+            "receipt": {
+              "message_id": "<reply-evt_9a1b3be5e1bf@agent.example>"
+            }
+          }
+        }
+      ],
+      "deliveries_per_channel": {
+        "mail": 2,
+        "chat": 1,
+        "sms": 1
+      },
+      "reply_order": [
+        [
+          "payments:refund:R-1",
+          1
+        ],
+        [
+          "sqs:orders.fifo:group:order-67890",
+          1
+        ],
+        [
+          "mail:thread:<complaint-55501@customer.example>",
+          1
+        ],
+        [
+          "mail:thread:<complaint-55501@customer.example>",
+          2
+        ]
+      ],
+      "checks": {
+        "runtime_killed_once_per_reply": true,
+        "final_run_completed": true,
+        "mail_verified_via_sent_folder_not_resent": true,
+        "chat_confirmed_by_idempotency_key_no_duplicate": true,
+        "sms_marked_for_manual_confirmation_not_resent": true,
+        "per_thread_order_kept": true
+      }
+    }
+  }
+}

@@ -16,7 +16,7 @@
 
 | 编号 | 项目 | 类型 | 一句话说明 |
 | :--: | --- | :--: | --- |
-| 6-1 | [agent-with-event-trigger](agent-with-event-trigger/) | ✅ | 先用定时器观察事件入队和分发，再通过 FastAPI 从事件 ID 追到工具结果。HTTP 入口接收 Web、IM、GitHub 和定时提醒；真实邮箱实验的凭据检查见运行摘要 |
+| 6-1 | [agent-with-event-trigger](agent-with-event-trigger/) | ✅ | 先用定时器观察事件入队和分发，再通过 FastAPI 从事件 ID 追到工具结果。HTTP 入口接收 Web、IM、GitHub 和定时提醒；真实邮箱实验的凭据检查见运行摘要。选做扩展 `multisource_demo.py` 离线演示 Webhook、SQS 与邮箱接入，以及三类故障注入 |
 | 6-2 | [async-agent](async-agent/) | ✅ | asyncio 单线程事件驱动框架 Flux：事件队列按紧急度分派、异步工具并行、运行中打断、长任务取消与状态查询 |
 | 6-3 | [astra-async-steering](astra-async-steering/) | ✅ | 比较同步工具、模型原生异步与回合中途引导，理解等待、用户更新和任务恢复之间的关系 |
 | 6-4 | [live-audio](live-audio/) | ✅ | 从[一轮麦克风录音的回放记录](live-audio/backend/validation/real_pipeline_20260729_localwhisper_ark_fish/evidence.json)追踪 Silero VAD、本地 Whisper、ARK 和 Fish S1。按串行执行顺序重算端点后的等待，比较收到首个文字 token、收到首批音频、用户听见回答三个时刻 |

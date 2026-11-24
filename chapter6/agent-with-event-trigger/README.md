@@ -389,6 +389,49 @@ python client.py --message "Create a Python hello world script"
 python client.py --event-type timer_trigger --message "检查每日备份"
 ```
 
+### 扩展（选做）：多来源接入与故障注入
+
+正文实验 6-1 的选做扩展在 [`multisource/`](multisource/) 中实现，离线运行，不需要 API Key：
+
+```bash
+cd chapter6/agent-with-event-trigger
+python multisource_demo.py                      # 临时目录，脚本化回复
+python multisource_demo.py --workdir runs/demo  # 保留 SQLite、邮箱和渠道文件，便于事后查看
+python multisource_demo.py --live --provider kimi   # 可选：用真实模型起草回复，需按上文在仓库根目录安装
+```
+
+三个来源各有一个适配器，都先验证来源、生成信封、写入接入日志，再确认来源：
+
+| 来源 | 验证 | `dedupe_key` | `thread` | 确认 |
+|---|---|---|---|---|
+| Webhook（标准库 `http.server`，`127.0.0.1`） | HMAC-SHA256 签名，覆盖投递 ID 和正文 | 投递 ID | 退款单号 | 返回 HTTP 200 |
+| SQS（[`fake_sqs.py`](multisource/fake_sqs.py) 本地模拟 FIFO 队列） | 队列记录的 `SenderId`（发布者不能自填）在白名单内 | `MessageId` | `MessageGroupId` | 删除消息 |
+| 测试邮箱（本地目录 `INBOX/`、`Sent/`） | DKIM 通过，且签名域与发件人域名一致 | `Message-ID` | 首个 `References` | 记录读取位置 |
+
+验证不通过、缺少必要字段或事件类型不受支持的输入不写入接入日志，而是在审计表里记一条 `source_rejected`，同时照常确认来源，免得来源反复重投一条永远处理不了的消息。原始载荷按内容的 SHA-256 存放，重投不会覆盖已有事件引用的字节。
+
+接入日志是一个 SQLite 文件里的 `events` 表：触发器禁止更新和删除，`dedupe_key` 有唯一约束，`(thread, thread_seq)` 记录线程内顺序。来源进度（`source_progress`）、分派进度（`dispatch`）、任务状态（`task_state`）和发件箱（`outbox`）分表保存，与正文的三种进度一一对应；三类故障的证据写在只增不改的 `audit` 表里。
+
+模拟 SQS 不是 AWS 服务。它保留了实验依赖的语义：接收后在可见性超时内隐藏消息，每次接收换一个接收句柄，过期句柄不能删除消息，未删除的消息超时后重新可见，同一消息组在前一条处理完之前不投递下一条。它存放在单独的文件里，代表外部服务，适配器进程被杀不会影响它。测试邮箱同样是本地模拟，与需要 Unipile 凭据的真实邮箱实验无关，不改变实验 6-1 的验收状态。
+
+故障由 [`faults.py`](multisource/faults.py) 注入：每个角色（Webhook 服务、SQS 轮询、邮箱轮询、运行时）都是独立进程，`MULTISOURCE_FAULT` 指定故障点；子进程到达故障点后打印标记并等待，父进程随即发送 `SIGKILL`，没有 `finally` 或缓冲写入能够执行。
+
+| 故障 | 注入方式 | 日志中的证据 |
+|---|---|---|
+| 1. 重复投递 | 用同一 `X-Delivery-Id` 签名 POST 两次；另 POST 一次错误签名 | `appended` → `deduplicated`；伪造请求 `source_rejected`，返回 401 |
+| 2. 确认前崩溃 | `sqs_after_log`：写入日志后、删除消息前杀掉 SQS 适配器 | `appended` → `redelivered`（`receive_count: 2`）→ `deduplicated` → `acked`；日志仍只有一条事件 |
+| 3. 回执前崩溃 | `runtime_after_send`：每次发出回复后、记录回执前杀掉运行时，共四次 | 邮件 `reply_verified_not_resent`（查已发送记录）；App 对话 `reply_confirmed_by_idempotency_key`（服务端按幂等键返回原消息）；短信 `reply_needs_manual_confirmation`（不重发） |
+
+运行时每次启动都从日志重放：先核对发件箱中有发送意图、没有回执的回复，再分派新事件，最后按线程逐条处理。发送前先在 `outbox` 记下发送意图和幂等键（`reply-<event_id>`），再调用渠道。核对时把“有意图、无回执”当作崩溃留下的发送，这只有在没有另一个运行时正在发送时才成立，所以同一工作目录只允许一个运行时（`runtime.lock` 上的 `flock`，进程被杀后由操作系统释放）。
+
+离线测试覆盖三类故障、线程内顺序、发件箱核对和模拟 SQS 的语义：
+
+```bash
+python -m pytest tests/test_multisource.py
+```
+
+规范运行记录见 [`validation/experiment_6_1_multisource/`](validation/experiment_6_1_multisource/)，其中 `summary.json` 保存每项检查和对应的审计记录，`manifest.json` 记录其 SHA-256。
+
 <a id="learning-3"></a>
 
 ## 分析结果与形成判断
@@ -487,6 +530,8 @@ agent-with-event-trigger/
 ├── agent.py                 # Event-triggered agent with system hints
 ├── event_types.py           # Event type definitions
 ├── event_loop_demo.py       # Offline event-loop demo (timer / recurring / file-watch triggers)
+├── multisource/             # Optional extension: Webhook/SQS/mailbox adapters, ingress log, faults
+├── multisource_demo.py      # Runs the three fault-injection scenarios offline
 ├── server.py                # FastAPI server (main entry point)
 ├── tests/                   # Automated regressions and manual live demos
 │   └── manual/
@@ -733,6 +778,35 @@ Every run writes a redacted, hash-manifested bundle under
 with the observed HTTP receipt; they are never treated as experiment evidence.
 The official endpoint versions used by the implementation are pinned in
 `experiment_protocol.json`.
+
+### Optional extension: multi-source ingress and fault injection
+
+The chapter's optional extension lives in [`multisource/`](multisource/) and runs offline with no API key:
+
+```bash
+python multisource_demo.py                          # temp workdir, scripted replies
+python multisource_demo.py --workdir runs/demo      # keep the SQLite files, mailbox and channel files
+python multisource_demo.py --live --provider kimi   # optional: real model; needs the repo-root install
+python -m pytest tests/test_multisource.py
+```
+
+A signed Webhook endpoint (stdlib `http.server`, HMAC-SHA256 over delivery ID and body), a local FIFO
+queue simulation with SQS semantics (`multisource/fake_sqs.py`: visibility
+timeout, receipt handles, redelivery, message-group order) and a local test
+mailbox each verify the source, build an envelope, append it to an
+append-only SQLite ingress log with a unique `dedupe_key`, and only then
+acknowledge the source; inputs that fail verification or validation are
+acked and recorded as `source_rejected` instead of logged. Source progress, dispatch progress, task state and the
+outbox are separate tables. Every role is its own OS process; faults are a
+`SIGKILL` from the parent at a named point (`MULTISOURCE_FAULT`):
+
+1. **Duplicate delivery** -- the same `X-Delivery-Id` posted twice gives one event and a `deduplicated` audit record.
+2. **Crash before ack** (`sqs_after_log`) -- the message becomes visible again, is re-read (`redelivered`, receive count 2), deduplicated, then deleted.
+3. **Crash before receipt** (`runtime_after_send`) -- on restart the runtime reconciles the outbox: mail is checked in the Sent folder (`reply_verified_not_resent`), app chat is re-sent with the same idempotency key and the server returns the original message, SMS has neither and is marked `reply_needs_manual_confirmation`.
+
+The simulated mailbox is separate from the real Unipile mailbox experiment and
+does not change its blocked status. The canonical run is under
+[`validation/experiment_6_1_multisource/`](validation/experiment_6_1_multisource/).
 
 ### Quick Start
 
@@ -1012,6 +1086,8 @@ agent-with-event-trigger/
 ├── agent.py                 # Event-triggered agent with system hints
 ├── event_types.py           # Event type definitions
 ├── event_loop_demo.py       # Offline event-loop demo (timer / recurring / file-watch triggers)
+├── multisource/             # Optional extension: Webhook/SQS/mailbox adapters, ingress log, faults
+├── multisource_demo.py      # Runs the three fault-injection scenarios offline
 ├── server.py                # FastAPI server (main entry point)
 ├── tests/                   # Automated regressions and manual live demos
 │   └── manual/

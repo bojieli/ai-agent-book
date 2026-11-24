@@ -7,6 +7,7 @@ the manuscript has substantive real evidence.
 | Experiment | Canonical run | Status | `official_complete` | Manifest SHA-256 |
 | --- | --- | --- | --- | --- |
 | 6-1 | `agent-with-event-trigger/validation/experiment_6_1/credential_probe_20260730T064500Z` | blocked | false | `3f689dfee915503f61ca30e9b590e24c8950496ca90fbf365def83805e877d0a` (stale, see note) |
+| 6-1 extension (选做) | `agent-with-event-trigger/validation/experiment_6_1_multisource/offline_fault_injection_20261124T074757Z` | passed (offline simulation) | n/a — does not gate 6-1 | `1026b650c2aa8fc43c6ae2f85ff31c2a0cf33e120d446f38f5abfc3215a29eed` |
 | 6-2 | `async-agent/validation/experiment_6_2/real_subprocess_20260730T052500Z` | passed | true | `fff6b43a2e3a0b706fdd68bca289119f726d3f827f3f4d837e97321f7d48a825` |
 | 6-3 | `astra-async-steering/validation/runs/exp6-14-20260905-formal` | passed | true | `bfece1666a63131e44c911908f4b0a07e6afffb719e8463b7507840d7d998c9e` |
 
@@ -22,6 +23,14 @@ Manuscript gates: three real inbound test-mailbox events processed FIFO: meeting
 
 - The campaign fetched and hashed all eight official Unipile Email/Calendar schema documents and made credential-redacted live API probes.
 - Blocked before mailbox mutation: the configured Unipile credential returns 401 with both documented `X-API-KEY` and diagnostic Bearer authentication. Therefore zero local/synthetic mail objects were substituted and no three-email success is claimed.
+
+### Optional extension — multi-source ingress and fault injection
+
+Manuscript gates (选做, not part of 6-1's completion): a Webhook endpoint and an SQS queue beside the test mailbox, each adapter verifying the source, building the envelope and writing the ingress log before acking; per-thread processing from the log; and three faults that each leave a log record — a duplicate Webhook delivery logged once, an SQS adapter killed between log write and delete whose message is re-read without a second event, and a runtime killed between send and receipt that replays without resending (idempotency key or sent-message lookup) or marks the reply for manual confirmation (channel with neither).
+
+- Code: `agent-with-event-trigger/multisource/`; demo `multisource_demo.py`; tests `tests/test_multisource.py`.
+- Canonical run `validation/experiment_6_1_multisource/offline_fault_injection_20261124T074757Z`: all 18 checks passed (fault 1: 5, fault 2: 7, fault 3: 6). The manifest records the SHA-256 of `summary.json`.
+- Scope: offline and deterministic. The SQS queue is a local file-backed FIFO simulation (`multisource/fake_sqs.py`) that keeps visibility timeout, receipt handles, redelivery and message-group order; it is not AWS. The test mailbox is a local directory, separate from the real Unipile mailbox above, so it does not change 6-1's `blocked` status. Replies come from a scripted responder; `--live` drafts them with a real model but was not used for the canonical run. Crashes are `SIGKILL`s from the parent process at named fault points, not exceptions.
 
 ## Experiment 6-2 — interruptible asynchronous agent
 
