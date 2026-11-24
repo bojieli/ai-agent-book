@@ -293,11 +293,15 @@ def fault_crash_before_receipt(workdir: Path, runtime_args: list[str]) -> dict:
         and deliveries["chat"] == 1,
         "sms_marked_for_manual_confirmation_not_resent": status.get("sms")
         == "needs_manual_confirmation"
-        and deliveries["sms"] == 1,
-        "per_thread_order_kept": all(
-            [s for t, s in order if t == thread] == sorted(s for t, s in order if t == thread)
-            for thread in {t for t, _ in order}
+        and deliveries["sms"] == 1
+        and any(
+            r["detail"]["channel"] == "sms"
+            for r in by_action.get("reply_needs_manual_confirmation", [])
         ),
+        # Both emails must land in one thread and be answered in order, across
+        # the runtime restarts between them.
+        "per_thread_order_kept": [s for t, s in order if t == f"mail:thread:{COMPLAINT_ID}"]
+        == [1, 2],
     }
     return evidence
 
@@ -424,6 +428,10 @@ def main() -> int:
     workdir = args.workdir or Path(tempfile.mkdtemp(prefix="exp6-1-multisource-"))
     if workdir.exists() and any(workdir.iterdir()):
         parser.error(f"--workdir {workdir} is not empty; pass a new directory")
+    if args.evidence_dir and args.evidence_dir.exists():
+        parser.error(
+            f"--evidence-dir {args.evidence_dir} exists; recorded runs are not overwritten"
+        )
     workdir.mkdir(parents=True, exist_ok=True)
     workdir = workdir.resolve()
     runtime_args = ["--live", "--provider", args.provider] if args.live else []

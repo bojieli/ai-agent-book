@@ -561,3 +561,36 @@ def test_empty_model_reply_becomes_draft_failed(tmp_path):
     Runtime(store, default_channels(tmp_path), live).run()
     assert store.db.execute("SELECT step FROM task_state").fetchone()[0] == "draft_failed"
     assert default_channels(tmp_path)["mail"].deliveries() == []
+
+
+def test_dkim_second_aligned_signature_counts():
+    from multisource.adapters import dkim_aligned
+
+    results = "mx; dkim=pass header.d=relay.example; dkim=pass header.d=customer.example"
+    assert dkim_aligned("li.lei@customer.example", results)
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [{"references": [""]}, {"references": {}}, {"subject": "\ud800"}],
+    ids=["blank-reference", "non-list-references", "lone-surrogate"],
+)
+def test_mailbox_rejects_bad_references_and_unencodable_text(tmp_path, extra):
+    from multisource.adapters import mailbox_poll
+
+    store = Store(tmp_path / "agent.db")
+    inbox = tmp_path / "mailbox" / "INBOX"
+    inbox.mkdir(parents=True)
+    mail = {
+        "message_id": "<m1@x>",
+        "from": "a@x",
+        "subject": "s",
+        "body": "",
+        "date": "t",
+        "authentication_results": "mx; dkim=pass header.d=x",
+        **extra,
+    }
+    (inbox / "1.json").write_text(json.dumps(mail))
+    assert mailbox_poll(tmp_path, store, tmp_path / "mailbox") == 1
+    assert store.count_events() == 0
+    assert len(store.audit_rows("source_rejected")) == 1

@@ -56,6 +56,10 @@ def parse(raw: bytes | str, required: tuple[str, ...], may_be_empty: tuple[str, 
     ]
     if missing:
         raise Malformed(f"missing, blank or non-string fields: {missing}")
+    try:  # e.g. an escaped lone surrogate decodes but cannot be stored
+        json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    except UnicodeEncodeError:
+        raise Malformed("payload contains text that is not valid UTF-8") from None
     return payload
 
 
@@ -215,7 +219,7 @@ def sqs_poll_once(workdir: Path, store: Store, sqs: FakeSQS, visibility_timeout:
 MAILBOX_SOURCE = "mailbox:INBOX"
 # Written by the (simulated) receiving mail server, e.g.
 # "mx.agent.example; dkim=pass header.d=customer.example"
-DKIM_PASS = re.compile(r"(?:^|;)\s*dkim=pass\s+header\.d=([A-Za-z0-9.-]+)\s*(?:;|$)")
+DKIM_PASS = re.compile(r"\s*dkim=pass\s+header\.d=([A-Za-z0-9.-]+)\s*")
 
 
 def dkim_aligned(sender: str, results: object) -> bool:
@@ -223,11 +227,15 @@ def dkim_aligned(sender: str, results: object) -> bool:
     if not isinstance(results, str) or "@" not in sender:
         return False
     domain = sender.rsplit("@", 1)[1].lower()
-    return any(d.lower() == domain for d in DKIM_PASS.findall(results))
+    for clause in results.split(";"):  # each result is checked on its own
+        m = DKIM_PASS.fullmatch(clause)
+        if m and m.group(1).lower() == domain:
+            return True
+    return False
 
 
 def _str_list(value: object) -> bool:
-    return isinstance(value, list) and all(isinstance(v, str) for v in value)
+    return isinstance(value, list) and all(isinstance(v, str) and v.strip() for v in value)
 
 
 MAIL_FIELDS = ("message_id", "from", "subject", "body", "date")
@@ -238,11 +246,11 @@ def mail_envelope(workdir: Path, path: Path) -> Envelope:
     mail = parse(raw, MAIL_FIELDS, may_be_empty=("subject", "body"))
     if not dkim_aligned(mail["from"], mail.get("authentication_results")):
         raise Malformed(f"no passing DKIM result for the sender of {mail['message_id']}")
-    refs = mail.get("references") or [mail["message_id"]]
+    refs = mail.get("references", [])
     orders = mail.get("orders", [])
     if not _str_list(refs) or not _str_list(orders):
-        raise Malformed("references and orders must be lists of strings")
-    root = refs[0]
+        raise Malformed("references and orders must be lists of non-blank strings")
+    root = refs[0] if refs else mail["message_id"]
     return Envelope(
         source={"type": "mail", "sender": mail["from"], "verified": True},
         dedupe_key=f"mail:msgid:{mail['message_id']}",

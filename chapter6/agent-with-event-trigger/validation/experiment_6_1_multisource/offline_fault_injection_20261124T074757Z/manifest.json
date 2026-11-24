@@ -1,0 +1,13 @@
+{
+  "experiment": "6-1-extension-multisource",
+  "campaign_id": "offline_fault_injection_20261124T074757Z",
+  "generated_at": "2026-11-24T07:47:59.239233+00:00",
+  "status": "passed",
+  "files": [
+    {
+      "path": "summary.json",
+      "bytes": 8198,
+      "sha256": "a1535ace682854a57739bd319e0601920156e7a0680b87fdc7134160da9b8de2"
+    }
+  ]
+}
