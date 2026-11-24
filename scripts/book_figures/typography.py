@@ -180,7 +180,7 @@ def typeset(source, name):
     height = move(old_height)
     root.set('viewBox', f'0 0 900 {height:g}')
     # Quantitative plots and spatial grids retain their coordinate scale.
-    if name not in {'fig6-7.svg', 'fig6-8.svg', 'fig8-3.svg'}:
+    if name not in {'fig6-8.svg', 'fig6-9.svg', 'fig8-3.svg'}:
         height = compact_vertical_space(root)
     root.set('width', '106mm'); root.set('height', f'{height*106/900:.3f}mm')
     proof = ROOT / 'book/build/figure-text'
