@@ -39,6 +39,8 @@ PROVIDER_KEY_VARS = [
     "UBERLLM_BASE_URL",
     "WORLDROUTER_API_KEY",
     "WORLDROUTER_BASE_URL",
+    "ONOMEO_API_KEY",
+    "ONOMEO_BASE_URL",
     "ARK_API_KEY",
     "MOONSHOT_API_KEY",
     "KIMI_API_KEY",
@@ -375,6 +377,38 @@ def test_worldrouter_base_url_override(monkeypatch):
     assert resolve_backend("worldrouter").base_url == "https://worldrouter.example/v1"
 
 
+def test_onomeo_key_uses_multi_model_gateway_directly(monkeypatch):
+    monkeypatch.setenv("ONOMEO_API_KEY", "test-onomeo-key")
+    backend = resolve_backend("onomeo")
+    assert backend.api_key == "test-onomeo-key"
+    assert backend.base_url == "https://onomeo.com/v1"
+    assert backend.model == "deepseek-v4.1-flash"
+    assert backend.provider == "onomeo"
+    assert backend.using_openrouter is False
+
+
+def test_onomeo_keeps_bare_model_ids(monkeypatch):
+    monkeypatch.setenv("ONOMEO_API_KEY", "test-onomeo-key")
+    backend = resolve_backend("onomeo", model="claude-sonnet-5.5")
+    assert backend.model == "claude-sonnet-5.5"
+
+
+def test_explicit_onomeo_keeps_gpt5_requests_on_its_endpoint(monkeypatch):
+    monkeypatch.setenv("ONOMEO_API_KEY", "direct-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "fallback-key")
+    backend = resolve_backend("onomeo", model="gpt-5.6-luna")
+    assert backend.api_key == "direct-key"
+    assert backend.provider == "onomeo"
+    assert backend.model == "gpt-5.6-luna"
+    assert backend.using_openrouter is False
+
+
+def test_onomeo_base_url_override(monkeypatch):
+    monkeypatch.setenv("ONOMEO_API_KEY", "test-onomeo-key")
+    monkeypatch.setenv("ONOMEO_BASE_URL", "https://onomeo.example/v1")
+    assert resolve_backend("onomeo").base_url == "https://onomeo.example/v1"
+
+
 def test_explicit_cheaperinference_provider_is_not_hijacked_for_gpt5(monkeypatch):
     monkeypatch.setenv("CHEAPERINFERENCE_API_KEY", "test-cheaperinference-key")
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
@@ -584,6 +618,7 @@ def test_supported_providers_covers_registry_and_aliases():
     assert "uberllm" in SUPPORTED_PROVIDERS
     assert "cheaperinference" in SUPPORTED_PROVIDERS
     assert "worldrouter" in SUPPORTED_PROVIDERS
+    assert "onomeo" in SUPPORTED_PROVIDERS
 
 
 def test_fallback_key_is_not_reusable_as_a_provider_key(monkeypatch):
