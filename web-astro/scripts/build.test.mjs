@@ -599,7 +599,7 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
           1,
           edition.lang,
         );
-        assert.equal(count(article, 'table'), revised ? 6 : 5, edition.lang);
+        assert.equal(count(article, 'table'), revised ? 8 : 5, edition.lang);
         for (const level of [2, 4]) {
           const expected = [
             ...markdown.matchAll(new RegExp(`^#{${level}}\\s+`, 'gm')),
