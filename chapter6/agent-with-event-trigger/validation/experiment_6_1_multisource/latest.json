@@ -1,0 +1,8 @@
+{
+  "experiment": "6-1-extension-multisource",
+  "campaign_id": "offline_fault_injection_20261124T073410Z",
+  "status": "passed",
+  "gates_experiment_6_1": false,
+  "manifest": "validation/experiment_6_1_multisource/offline_fault_injection_20261124T073410Z/manifest.json",
+  "manifest_sha256": "baba182ffb0feb201e1237a1c71af4059fc6c890a8c901e503336ef5bbe3fd2b"
+}
