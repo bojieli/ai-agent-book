@@ -404,9 +404,11 @@ python multisource_demo.py --live --provider kimi   # 可选：用真实模型�
 
 | 来源 | 验证 | `dedupe_key` | `thread` | 确认 |
 |---|---|---|---|---|
-| Webhook（标准库 `http.server`，`127.0.0.1`） | HMAC-SHA256 签名 | 投递 ID | 退款单号 | 返回 HTTP 200 |
+| Webhook（标准库 `http.server`，`127.0.0.1`） | HMAC-SHA256 签名，覆盖投递 ID 和正文 | 投递 ID | 退款单号 | 返回 HTTP 200 |
 | SQS（[`fake_sqs.py`](multisource/fake_sqs.py) 本地模拟 FIFO 队列） | 发送方白名单 | `MessageId` | `MessageGroupId` | 删除消息 |
 | 测试邮箱（本地目录 `INBOX/`、`Sent/`） | 邮件头中的 DKIM 结果 | `Message-ID` | 首个 `References` | 记录读取位置 |
+
+验证不通过或缺少必要字段的输入不写入接入日志，而是在审计表里记一条 `source_rejected`，同时照常确认来源，免得来源反复重投一条永远处理不了的消息。原始载荷按内容的 SHA-256 存放，重投不会覆盖已有事件引用的字节。
 
 接入日志是一个 SQLite 文件里的 `events` 表：触发器禁止更新和删除，`dedupe_key` 有唯一约束，`(thread, thread_seq)` 记录线程内顺序。来源进度（`source_progress`）、分派进度（`dispatch`）、任务状态（`task_state`）和发件箱（`outbox`）分表保存，与正文的三种进度一一对应；三类故障的证据写在只增不改的 `audit` 表里。
 
@@ -420,7 +422,7 @@ python multisource_demo.py --live --provider kimi   # 可选：用真实模型�
 | 2. 确认前崩溃 | `sqs_after_log`：写入日志后、删除消息前杀掉 SQS 适配器 | `appended` → `redelivered`（`receive_count: 2`）→ `deduplicated` → `acked`；日志仍只有一条事件 |
 | 3. 回执前崩溃 | `runtime_after_send`：每次发出回复后、记录回执前杀掉运行时，共四次 | 邮件 `reply_verified_not_resent`（查已发送记录）；App 对话 `reply_confirmed_by_idempotency_key`（服务端按幂等键返回原消息）；短信 `reply_needs_manual_confirmation`（不重发） |
 
-运行时每次启动都从日志重放：先核对发件箱中有发送意图、没有回执的回复，再分派新事件，最后按线程逐条处理。发送前先在 `outbox` 记下发送意图和幂等键（`reply-<event_id>`），再调用渠道。
+运行时每次启动都从日志重放：先核对发件箱中有发送意图、没有回执的回复，再分派新事件，最后按线程逐条处理。发送前先在 `outbox` 记下发送意图和幂等键（`reply-<event_id>`），再调用渠道。核对时把“有意图、无回执”当作崩溃留下的发送，这只有在没有另一个运行时正在发送时才成立，所以同一工作目录只允许一个运行时（`runtime.lock` 上的 `flock`，进程被杀后由操作系统释放）。
 
 离线测试覆盖三类故障、线程内顺序、发件箱核对和模拟 SQS 的语义：
 
@@ -788,12 +790,13 @@ python multisource_demo.py --live --provider kimi   # optional: draft replies wi
 python -m pytest tests/test_multisource.py
 ```
 
-A signed Webhook endpoint (stdlib `http.server`, HMAC-SHA256), a local FIFO
+A signed Webhook endpoint (stdlib `http.server`, HMAC-SHA256 over delivery ID and body), a local FIFO
 queue simulation with SQS semantics (`multisource/fake_sqs.py`: visibility
 timeout, receipt handles, redelivery, message-group order) and a local test
 mailbox each verify the source, build an envelope, append it to an
 append-only SQLite ingress log with a unique `dedupe_key`, and only then
-acknowledge the source. Source progress, dispatch progress, task state and the
+acknowledge the source; inputs that fail verification or validation are
+acked and recorded as `source_rejected` instead of logged. Source progress, dispatch progress, task state and the
 outbox are separate tables. Every role is its own OS process; faults are a
 `SIGKILL` from the parent at a named point (`MULTISOURCE_FAULT`):
 

@@ -17,7 +17,7 @@ from pathlib import Path
 from .adapters import WEBHOOK_PATH, mailbox_poll, make_webhook_server, sqs_poll_once
 from .channels import default_channels
 from .fake_sqs import FakeSQS
-from .runtime import LiveResponder, Runtime, ScriptedResponder
+from .runtime import LiveResponder, Runtime, ScriptedResponder, single_runtime
 from .store import Store
 
 DEFAULT_WEBHOOK_SECRET = "demo-webhook-secret"
@@ -73,7 +73,8 @@ def main(argv: list[str] | None = None) -> None:
         print(f"mailbox-poll read {n} new message(s)", flush=True)
     elif args.command == "runtime":
         responder = LiveResponder(args.provider, args.model) if args.live else ScriptedResponder()
-        Runtime(store, default_channels(args.workdir), responder).run()
+        with single_runtime(args.workdir):
+            Runtime(store, default_channels(args.workdir), responder).run()
         print("runtime pass complete", flush=True)
 
 

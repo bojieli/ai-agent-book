@@ -16,6 +16,8 @@ dispatch and task tables tell it what is already done.
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
+from pathlib import Path
 from typing import Any
 
 from .envelope import Envelope, utc_now
@@ -89,6 +91,30 @@ class LiveResponder:
 # --------------------------------------------------------------------------
 # The runtime
 # --------------------------------------------------------------------------
+
+
+class RuntimeAlreadyRunning(RuntimeError):
+    pass
+
+
+@contextmanager
+def single_runtime(workdir: Path):
+    """Allow one runtime per work directory.
+
+    Reconciliation treats a pending send as a crashed one. That is only true if
+    no other runtime is in the middle of sending it, so a second runtime must
+    not start. The OS drops an ``flock`` when its holder dies, even by SIGKILL,
+    so a crash never leaves a stale lock behind.
+    """
+    import fcntl  # POSIX; the experiment's fault injection assumes POSIX too
+
+    workdir.mkdir(parents=True, exist_ok=True)
+    with open(workdir / "runtime.lock", "w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RuntimeAlreadyRunning(f"another runtime holds {workdir}/runtime.lock") from None
+        yield
 
 
 class Runtime:
@@ -205,8 +231,8 @@ class Runtime:
             return False  # e.g. a reply still pending; never skip ahead in a thread
         env = Envelope.from_dict(json.loads(row["envelope"]))
         position = {"thread": env.thread, "thread_seq": row["thread_seq"], "task": row["task_id"]}
-        route = route_for(env)
-        if route is None:
+        route = None if not env.source.get("verified") else route_for(env)
+        if route is None:  # no reply path, or a sender we cannot vouch for
             self._set_step(env.id, "no_reply")
             self.store.audit(self.actor, "processed", env.id, {**position, "reply": None})
             return True

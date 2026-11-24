@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import platform
 import subprocess
 import sys
@@ -145,10 +146,11 @@ def fault_duplicate_delivery(workdir: Path) -> dict:
         assert server.stdout is not None
         url = server.stdout.readline().split()[1]
         body = webhook_body()
-        good = sign(DEFAULT_WEBHOOK_SECRET, body)
+        secret = os.environ.get("WEBHOOK_SECRET", DEFAULT_WEBHOOK_SECRET)  # as the server does
+        good = sign(secret, WEBHOOK_DELIVERY, body)
         first = post(url, body, WEBHOOK_DELIVERY, good)
         second = post(url, body, WEBHOOK_DELIVERY, good)  # the payment service retries
-        forged = post(url, body, "dlv_forged", sign("wrong-secret", body))
+        forged = post(url, body, "dlv_forged", sign(secret + "-wrong", "dlv_forged", body))
     finally:
         server.terminate()
         server.wait(timeout=10)

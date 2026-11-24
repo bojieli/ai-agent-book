@@ -49,12 +49,19 @@ class Envelope:
         return cls(**data)
 
 
-def save_raw(workdir: Path, source: str, name: str, raw: bytes) -> str:
-    """Keep the payload exactly as it arrived; the envelope points at it."""
-    safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in name)
-    path = Path("raw") / source / f"{safe}.bin"
-    (workdir / path).parent.mkdir(parents=True, exist_ok=True)
-    (workdir / path).write_bytes(raw)
+def save_raw(workdir: Path, source: str, raw: bytes) -> str:
+    """Keep the payload exactly as it arrived; the envelope points at it.
+
+    The path is the payload's SHA-256, so a later delivery can never overwrite
+    the bytes an earlier event refers to.
+    """
+    path = Path("raw") / source / f"{hashlib.sha256(raw).hexdigest()}.bin"
+    target = workdir / path
+    if not target.exists():
+        target.parent.mkdir(parents=True, exist_ok=True)
+        tmp = target.with_suffix(".tmp")
+        tmp.write_bytes(raw)
+        tmp.replace(target)
     return path.as_posix()
 
 

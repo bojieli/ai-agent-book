@@ -238,35 +238,146 @@ def test_sqs_ack_after_visibility_timeout_is_recorded_and_redelivery_deduplicate
     assert sqs.stats()["messages"] == 0
 
 
-def test_webhook_rejects_malformed_signed_payload(tmp_path):
+def post_once(tmp_path, store, body: bytes, delivery_id: str, signature: str) -> int:
+    """Serve one request on this thread (the store belongs to it, as in the CLI)."""
     import threading
     import urllib.error
     import urllib.request
 
-    from multisource.adapters import WEBHOOK_PATH, make_webhook_server, sign
+    from multisource.adapters import WEBHOOK_PATH, make_webhook_server
 
-    store = Store(tmp_path / "agent.db")
     server = make_webhook_server(tmp_path, store, "s3cret")
-    body = b'{"type": "refund.succeeded"}'  # missing refund_id, order_id, ...
     req = urllib.request.Request(
         f"http://127.0.0.1:{server.server_port}{WEBHOOK_PATH}",
         data=body,
         method="POST",
-        headers={"X-Delivery-Id": "d1", "X-Signature-256": sign("s3cret", body)},
+        headers={"X-Delivery-Id": delivery_id, "X-Signature-256": signature},
     )
-    errors = []
+    codes = []
 
     def client():
         try:
-            urllib.request.urlopen(req, timeout=10)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                codes.append(resp.status)
         except urllib.error.HTTPError as e:
-            errors.append(e.code)
+            codes.append(e.code)
 
     thread = threading.Thread(target=client, daemon=True)
     thread.start()
-    server.handle_request()  # the store belongs to this thread, as in the CLI
+    server.handle_request()
     thread.join(timeout=10)
     server.server_close()
-    assert errors == [400]
+    return codes[0]
+
+
+@pytest.mark.parametrize(
+    "body",
+    [b'{"type": "refund.succeeded"}', b"[1, 2]", b"null", b"not json"],
+    ids=["missing-fields", "array", "null", "not-json"],
+)
+def test_webhook_rejects_malformed_signed_payload(tmp_path, body):
+    from multisource.adapters import sign
+
+    store = Store(tmp_path / "agent.db")
+    assert post_once(tmp_path, store, body, "d1", sign("s3cret", "d1", body)) == 400
     assert store.count_events() == 0
     assert [r["action"] for r in store.audit_rows()] == ["source_rejected"]
+
+
+def test_webhook_signature_binds_the_delivery_id(tmp_path):
+    """Replaying a signed body under a new delivery id must not pass as new."""
+    from multisource.adapters import sign
+
+    store = Store(tmp_path / "agent.db")
+    body = multisource_demo.webhook_body()
+    signature = sign("s3cret", "d1", body)
+    assert post_once(tmp_path, store, body, "d1", signature) == 200
+    assert post_once(tmp_path, store, body, "d2", signature) == 401
+    assert store.count_events() == 1
+
+
+def test_unverified_sqs_sender_and_mail_are_rejected_and_never_answered(tmp_path):
+    from multisource.adapters import mailbox_poll, sqs_poll_once
+
+    store = Store(tmp_path / "agent.db")
+    sqs = FakeSQS(tmp_path / "sqs.db")
+    body = {"event": "order.shipped", "order_id": "67890", "carrier": "x", "occurred_at": "t"}
+    sqs.send(json.dumps(body), group_id="g", attributes={"SenderId": "intruder"})
+    sqs.send(
+        json.dumps({"event": "order.shipped"}),
+        group_id="h",
+        attributes={"SenderId": "order-service"},
+    )  # allowed sender, missing fields
+    while sqs_poll_once(tmp_path, store, sqs, visibility_timeout=30):
+        pass
+    inbox = tmp_path / "mailbox" / "INBOX"
+    inbox.mkdir(parents=True)
+    mail = {
+        "message_id": "<m1@x>",
+        "from": "a@x",
+        "subject": "s",
+        "body": "b",
+        "date": "t",
+        "authentication_results": "dkim=fail",
+    }
+    (inbox / "1.json").write_text(json.dumps(mail))
+    assert mailbox_poll(tmp_path, store, tmp_path / "mailbox") == 1
+    Runtime(store, default_channels(tmp_path), ScriptedResponder()).run()
+
+    assert store.count_events() == 0
+    assert len(store.audit_rows("source_rejected")) == 3
+    assert sqs.stats()["messages"] == 0  # rejected inputs are still acked
+    assert store.db.execute("SELECT COUNT(*) FROM outbox").fetchone()[0] == 0
+
+
+def test_runtime_skips_reply_for_unverified_envelope(tmp_path):
+    store = Store(tmp_path / "agent.db")
+    env = envelope("A", 1)
+    env.source["verified"] = False
+    store.append(env, "test")
+    Runtime(store, default_channels(tmp_path), ScriptedResponder()).run()
+    assert store.db.execute("SELECT step FROM task_state").fetchone()[0] == "no_reply"
+    assert store.db.execute("SELECT COUNT(*) FROM outbox").fetchone()[0] == 0
+
+
+def test_mailbox_cursor_follows_numeric_uid_order(tmp_path):
+    from multisource.adapters import mailbox_poll
+
+    store = Store(tmp_path / "agent.db")
+    inbox = tmp_path / "mailbox" / "INBOX"
+    inbox.mkdir(parents=True)
+    for uid in (2, 10):
+        mail = {
+            "message_id": f"<m{uid}@x>",
+            "from": "a@x",
+            "subject": str(uid),
+            "body": "",
+            "date": "t",
+            "authentication_results": "dkim=pass",
+        }
+        (inbox / f"{uid}.json").write_text(json.dumps(mail))
+    mailbox_poll(tmp_path, store, tmp_path / "mailbox")
+    assert [e["envelope"]["content"]["subject"] for e in store.events()] == ["2", "10"]
+    assert store.get_source_progress("mailbox:INBOX") == {"last_uid": 10}
+
+
+def test_raw_payload_is_content_addressed_and_never_overwritten(tmp_path):
+    from multisource.envelope import save_raw
+
+    first = save_raw(tmp_path, "webhook", b"one")
+    second = save_raw(tmp_path, "webhook", b"two")
+    assert first != second
+    assert (tmp_path / first).read_bytes() == b"one"
+    assert save_raw(tmp_path, "webhook", b"one") == first
+
+
+def test_only_one_runtime_per_workdir(tmp_path):
+    from multisource.runtime import RuntimeAlreadyRunning, single_runtime
+
+    held = single_runtime(tmp_path)
+    held.__enter__()
+    with pytest.raises(RuntimeAlreadyRunning), single_runtime(tmp_path):
+        pass
+    held.__exit__(None, None, None)
+    with single_runtime(tmp_path):  # released on exit
+        pass
