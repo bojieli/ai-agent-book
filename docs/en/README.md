@@ -122,6 +122,7 @@ It is recommended to apply for API keys from several platforms for convenient le
 | **Cheaper Inference** | <https://cheaperinference.com/> | Access GPT, Claude, Gemini, DeepSeek, GLM and other models through an OpenAI-compatible API. | Global |
 | **WorldRouter** | <https://www.worldrouter.ai/> | One key for Claude, GPT, Gemini, DeepSeek, Kimi, GLM and other models through an OpenAI-compatible API, pay as you go | Global |
 | **onomeo** | <https://onomeo.com/> | One key for Claude, GPT, Gemini, DeepSeek and other models through an OpenAI-compatible API, plus free models, pay as you go | Global |
+| **TeamoRouter** | <https://teamorouter.com/> | One key for Claude, GPT, Gemini, DeepSeek, GLM, Kimi, Qwen and other models through an OpenAI-compatible API, prepaid pay-as-you-go; pays by card, WeChat Pay, Alipay or USDT | Global |
 | **Krill AI** | [www.krill-code.com](https://www.krill-code.com/register?invite=Q8D3L35725) | One-stop access to major global and China-domestic models (OpenAI, Claude, Gemini, Grok, Kimi, GLM, DeepSeek, Qwen, Minimax) | Global + Mainland China |
 | **OpenRouter** | <https://openrouter.ai/> | One-stop access to major global and China-domestic models (GPT, Claude, Gemini, Kimi, GLM, DeepSeek, Qwen, etc.) | Global |
 
