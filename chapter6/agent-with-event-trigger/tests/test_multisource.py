@@ -492,3 +492,72 @@ def test_fake_sqs_stats_match_receivable_fifo_heads(tmp_path):
     sqs.send("b", group_id="g", sender_id="s")
     sqs.receive(visibility_timeout=30)
     assert sqs.stats() == {"messages": 2, "in_flight": 1, "visible": 0}
+
+
+def test_blank_message_ids_are_rejected_not_deduplicated(tmp_path):
+    from multisource.adapters import mailbox_poll
+
+    store = Store(tmp_path / "agent.db")
+    inbox = tmp_path / "mailbox" / "INBOX"
+    inbox.mkdir(parents=True)
+    for uid in (1, 2):
+        mail = {
+            "message_id": "  ",
+            "from": "a@x",
+            "subject": "s",
+            "body": "",
+            "date": "t",
+            "authentication_results": "mx; dkim=pass header.d=x",
+        }
+        (inbox / f"{uid}.json").write_text(json.dumps(mail))
+    mailbox_poll(tmp_path, store, tmp_path / "mailbox")
+    assert store.count_events() == 0
+    assert len(store.audit_rows("source_rejected")) == 2
+    assert not store.audit_rows("deduplicated")
+
+
+def test_chat_log_survives_unicode_line_separator(tmp_path):
+    from multisource.channels import ChatChannel
+
+    chat = ChatChannel(tmp_path)
+    first = chat.send("conv", "第一行 第二行", "k1", {})
+    assert chat.send("conv", "第一行 第二行", "k1", {})["message_id"] == first["message_id"]
+    assert len(chat.deliveries()) == 1
+
+
+def test_non_ascii_signature_gets_401(tmp_path):
+    import http.client
+
+    from multisource.adapters import WEBHOOK_PATH, make_webhook_server
+
+    store = Store(tmp_path / "agent.db")
+    server = make_webhook_server(tmp_path, store, "s3cret")
+    conn = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=10)
+    conn.putrequest("POST", WEBHOOK_PATH)
+    conn.putheader("Content-Length", "2")
+    conn.putheader("X-Delivery-Id", "d1")
+    conn.putheader("X-Signature-256", "sha256=é".encode("latin-1"))
+    conn.endheaders(b"{}")
+    server.handle_request()
+    assert conn.getresponse().status == 401
+    conn.close()
+    server.server_close()
+    assert [r["action"] for r in store.audit_rows()] == ["source_rejected"]
+
+
+def test_empty_model_reply_becomes_draft_failed(tmp_path):
+    from types import SimpleNamespace
+
+    from multisource.runtime import LiveResponder
+
+    live = LiveResponder.__new__(LiveResponder)  # skip provider resolution
+    live.model = "fake"
+    reply = SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="  "))])
+    live.client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=lambda **_: reply))
+    )
+    store = Store(tmp_path / "agent.db")
+    store.append(envelope("A", 1), "test")
+    Runtime(store, default_channels(tmp_path), live).run()
+    assert store.db.execute("SELECT step FROM task_state").fetchone()[0] == "draft_failed"
+    assert default_channels(tmp_path)["mail"].deliveries() == []

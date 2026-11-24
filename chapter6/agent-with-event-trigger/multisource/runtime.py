@@ -66,9 +66,15 @@ class LiveResponder:
     """Drafts the reply with a real model through ``agentbook.providers``."""
 
     def __init__(self, provider: str, model: str | None = None):
-        from openai import OpenAI
+        try:
+            from openai import OpenAI
 
-        from agentbook.providers import resolve_backend
+            from agentbook.providers import resolve_backend
+        except ImportError as err:
+            raise SystemExit(
+                f"--live needs the repository package ({err}). From the repository root run "
+                "`uv sync --locked --extra ch6 --extra ch4` or `pip install -e .`."
+            ) from None
 
         backend = resolve_backend(provider, model=model)
         self.client = OpenAI(api_key=backend.api_key, base_url=backend.base_url)
@@ -86,7 +92,10 @@ class LiveResponder:
                 {"role": "user", "content": json.dumps(env.content, ensure_ascii=False)},
             ],
         )
-        return (response.choices[0].message.content or "").strip()
+        text = (response.choices[0].message.content or "").strip()
+        if not text:  # never send a blank reply; the runtime records draft_failed
+            raise ValueError("model returned an empty reply")
+        return text
 
 
 # --------------------------------------------------------------------------
@@ -107,13 +116,19 @@ def single_runtime(workdir: Path):
     not start. The OS drops an ``flock`` when its holder dies, even by SIGKILL,
     so a crash never leaves a stale lock behind.
     """
-    import fcntl  # POSIX; the experiment's fault injection assumes POSIX too
-
     workdir.mkdir(parents=True, exist_ok=True)
-    with open(workdir / "runtime.lock", "w") as lock:
+    with open(workdir / "runtime.lock", "a+") as lock:
         try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
+            try:
+                import fcntl
+            except ImportError:  # Windows: msvcrt locks are also dropped when the process dies
+                import msvcrt
+
+                lock.seek(0)
+                msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
             raise RuntimeAlreadyRunning(f"another runtime holds {workdir}/runtime.lock") from None
         yield
 

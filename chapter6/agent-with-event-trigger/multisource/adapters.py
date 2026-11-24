@@ -37,17 +37,25 @@ class Malformed(ValueError):
     pass
 
 
-def parse(raw: bytes | str, required: tuple[str, ...]) -> dict:
-    """Parse a JSON object and check that the fields the runtime needs exist."""
+def parse(raw: bytes | str, required: tuple[str, ...], may_be_empty: tuple[str, ...] = ()) -> dict:
+    """Parse a JSON object and check that the fields the runtime needs exist.
+
+    Required fields must be non-blank strings unless listed in ``may_be_empty``:
+    a blank id would make distinct inputs collide on one dedupe key.
+    """
     try:
         payload = json.loads(raw)
     except ValueError as err:
         raise Malformed(f"not JSON: {err}") from None
     if not isinstance(payload, dict):
         raise Malformed("payload is not a JSON object")
-    missing = [f for f in required if not isinstance(payload.get(f), str)]
+    missing = [
+        f
+        for f in required
+        if not isinstance(payload.get(f), str) or (f not in may_be_empty and not payload[f].strip())
+    ]
     if missing:
-        raise Malformed(f"missing or non-string fields: {missing}")
+        raise Malformed(f"missing, blank or non-string fields: {missing}")
     return payload
 
 
@@ -94,7 +102,9 @@ def make_webhook_server(workdir: Path, store: Store, secret: str, port: int = 0)
             if self.path != WEBHOOK_PATH:
                 return self._reply(404, {"error": "not found"})
             expected = sign(secret, delivery_id, body)
-            if not delivery_id or not hmac.compare_digest(signature, expected):
+            # compare_digest needs ASCII strings; anything else is simply wrong.
+            ok = delivery_id and signature.isascii() and hmac.compare_digest(signature, expected)
+            if not ok:
                 store.audit(
                     "webhook-adapter",
                     "source_rejected",
@@ -225,7 +235,7 @@ MAIL_FIELDS = ("message_id", "from", "subject", "body", "date")
 
 def mail_envelope(workdir: Path, path: Path) -> Envelope:
     raw = path.read_bytes()
-    mail = parse(raw, MAIL_FIELDS)
+    mail = parse(raw, MAIL_FIELDS, may_be_empty=("subject", "body"))
     if not dkim_aligned(mail["from"], mail.get("authentication_results")):
         raise Malformed(f"no passing DKIM result for the sender of {mail['message_id']}")
     refs = mail.get("references") or [mail["message_id"]]

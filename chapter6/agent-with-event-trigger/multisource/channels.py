@@ -30,7 +30,10 @@ def _append_jsonl(path: Path, record: dict[str, Any]) -> None:
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+    # Split on "\n" only: splitlines() would also split inside a record on
+    # characters such as U+2028, which json.dumps(ensure_ascii=False) keeps.
+    text = path.read_text(encoding="utf-8")
+    return [json.loads(line) for line in text.split("\n") if line]
 
 
 class MailChannel:

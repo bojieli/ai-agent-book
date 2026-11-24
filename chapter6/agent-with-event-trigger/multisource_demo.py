@@ -208,8 +208,10 @@ def fault_crash_before_ack(workdir: Path, message_id: str) -> dict:
     redelivered = [a for a in evidence["audit"] if a["action"] == "redelivered"]
     evidence["checks"] = {
         "adapter_killed_at_fault_point": first["killed"],
+        # The message must still exist; whether it is still hidden depends on
+        # how long the kill took, so redelivery is checked separately below.
         "logged_but_not_deleted": after_kill["events_with_dedupe_key"] == 1
-        and after_kill["queue"]["in_flight"] == 1,
+        and after_kill["queue"]["messages"] == 1,
         "message_visible_again": visible_again["visible"] == 1,
         "re_read_recorded": bool(redelivered) and redelivered[0]["detail"]["receive_count"] == 2,
         "still_one_event_in_log": after_restart["events_with_dedupe_key"] == 1,
@@ -232,7 +234,10 @@ def fault_crash_before_receipt(workdir: Path, runtime_args: list[str]) -> dict:
         result = run_cli(
             ["runtime", "--workdir", str(workdir), *runtime_args], fault="runtime_after_send"
         )
-        runs.append({"killed": result["killed"], "returncode": result["returncode"]})
+        run = {"killed": result["killed"], "returncode": result["returncode"]}
+        if not result["killed"] and result["returncode"] != 0:
+            run["error"] = result["output"].strip()[-2000:]  # surface why it failed
+        runs.append(run)
         if not result["killed"]:
             break
 
@@ -340,8 +345,17 @@ def report(results: dict) -> None:
     print("\n== 故障 3：回执前崩溃（运行时发出回复后、记录回执前被 SIGKILL） ==")
     for i, run in enumerate(f3["runtime_runs"], 1):
         print(
-            f"    第 {i} 次启动运行时：{'在 runtime_after_send 处被杀' if run['killed'] else '正常结束'}"
+            f"    第 {i} 次启动运行时："
+            + (
+                "在 runtime_after_send 处被杀"
+                if run["killed"]
+                else "正常结束"
+                if run["returncode"] == 0
+                else f"异常退出（返回码 {run['returncode']}）"
+            )
         )
+        if "error" in run:
+            print("      " + run["error"].replace("\n", "\n      "))
     for o in f3["outbox"]:
         print(f"    outbox {o['idempotency_key']:<24} {o['channel']:<5} -> {o['status']}")
     print(f"    各渠道实际送达条数：{f3['deliveries_per_channel']}")

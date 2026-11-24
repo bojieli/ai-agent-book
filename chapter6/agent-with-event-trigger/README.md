@@ -397,7 +397,7 @@ python client.py --event-type timer_trigger --message "检查每日备份"
 cd chapter6/agent-with-event-trigger
 python multisource_demo.py                      # 临时目录，脚本化回复
 python multisource_demo.py --workdir runs/demo  # 保留 SQLite、邮箱和渠道文件，便于事后查看
-python multisource_demo.py --live --provider kimi   # 可选：用真实模型起草回复
+python multisource_demo.py --live --provider kimi   # 可选：用真实模型起草回复，需按上文在仓库根目录安装
 ```
 
 三个来源各有一个适配器，都先验证来源、生成信封、写入接入日志，再确认来源：
@@ -786,7 +786,7 @@ The chapter's optional extension lives in [`multisource/`](multisource/) and run
 ```bash
 python multisource_demo.py                          # temp workdir, scripted replies
 python multisource_demo.py --workdir runs/demo      # keep the SQLite files, mailbox and channel files
-python multisource_demo.py --live --provider kimi   # optional: draft replies with a real model
+python multisource_demo.py --live --provider kimi   # optional: real model; needs the repo-root install
 python -m pytest tests/test_multisource.py
 ```
 
