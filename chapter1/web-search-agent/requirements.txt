@@ -4,6 +4,7 @@
 openai>=1.12.0  # OpenAI Python 客户端，用于调用 Kimi API
 requests>=2.31.0  # Kimi Formula declarations and Fiber execution
 python-dotenv>=1.0.0  # 环境变量管理
+mcp>=1.28,<2  # Parallel MCP search on OpenRouter
 
 # 可选依赖（用于高级功能）
 aiohttp>=3.9.0  # 异步 HTTP 请求

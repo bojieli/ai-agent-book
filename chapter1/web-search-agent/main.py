@@ -40,7 +40,7 @@ def run_interactive_mode(agent: WebSearchAgent, output: Optional[str] = None):
     print("\n" + "="*60)
     print("🤖 Kimi Web Search Agent - 交互模式")
     print("="*60)
-    print("输入您的问题，Agent 将自动搜索并回答")
+    print("输入您的问题，Agent 会展示回答过程")
     print("输入 'quit' 或 'exit' 退出")
     print("="*60 + "\n")
 
@@ -66,7 +66,7 @@ def run_interactive_mode(agent: WebSearchAgent, output: Optional[str] = None):
                 continue
 
             # 显示思考中
-            print("\n🔍 Agent 正在搜索和思考（ReAct 轨迹如下）...\n")
+            print("\n🔍 Agent 正在处理问题（ReAct 轨迹如下）...\n")
 
             # 获取答案（verbose=True 时轨迹已在 agent 内实时打印）
             answer = agent.search_and_answer(user_input, max_iterations=Config.MAX_SEARCH_ITERATIONS)
@@ -150,10 +150,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("query", nargs="*",
                         help="要提问的问题；省略则进入交互模式")
-    parser.add_argument("--provider", choices=["kimi", "parallel", "offline-demo"], default="kimi",
-                        help="搜索后端：kimi=调用 Kimi Formula web_search（需 API Key）；"
-                             "parallel=通过 Parallel MCP 联网搜索（需模型 API Key）；"
-                             "offline-demo=离线回放示例轨迹（默认 kimi）")
+    parser.add_argument("--provider", choices=["kimi", "parallel", "offline-demo"],
+                        help="搜索后端：省略时直连 Kimi 用 Formula，OpenRouter 用 Parallel MCP。"
+                             "kimi=使用 Formula（OpenRouter 上只调用模型）；"
+                             "parallel=使用 Parallel MCP；offline-demo=离线回放示例轨迹。")
     parser.add_argument("--model", default=Config.DEFAULT_MODEL,
                         help=f"使用的模型名称（默认 {Config.DEFAULT_MODEL}）")
     parser.add_argument("--max-steps", type=int, default=Config.MAX_SEARCH_ITERATIONS,
