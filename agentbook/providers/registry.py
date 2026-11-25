@@ -142,6 +142,15 @@ PROVIDERS: dict[str, Provider] = {
         # onomeo serves many vendors' models under bare ids such as
         # claude-sonnet-5.5, so ids are sent as given rather than namespaced.
     ),
+    "teamorouter": Provider(
+        name="teamorouter",
+        base_url="https://api.teamorouter.com/v1",
+        default_model="deepseek-v4-flash",
+        key_vars=("TEAMOROUTER_API_KEY",),
+        base_url_var="TEAMOROUTER_BASE_URL",
+        # TeamoRouter serves many vendors' models under bare ids such as
+        # claude-sonnet-5-5, so ids are sent as given rather than namespaced.
+    ),
     "openrouter": Provider(
         name="openrouter",
         base_url=OPENROUTER_BASE_URL,
