@@ -1,0 +1,479 @@
+{
+  "run_id": "doubao-seeduplex-20261125-v1",
+  "date": "2026-11-25T11:41:01+08:00",
+  "front": {
+    "session_model": "1.2.6.1"
+  },
+  "tools_simulated": true,
+  "reps_per_probe": 5,
+  "results": {
+    "fc_basic": [
+      {
+        "function_call_emitted": true,
+        "args": [
+          {
+            "city": "杭州",
+            "date": "2026-11-26"
+          }
+        ],
+        "result_spoken": true,
+        "rep": 0,
+        "trace": "fc_basic-0.jsonl"
+      },
+      {
+        "function_call_emitted": true,
+        "args": [
+          {
+            "city": "杭州",
+            "date": "2026-11-26"
+          }
+        ],
+        "result_spoken": true,
+        "rep": 1,
+        "trace": "fc_basic-1.jsonl"
+      },
+      {
+        "function_call_emitted": true,
+        "args": [
+          {
+            "city": "杭州",
+            "date": "2026-11-26"
+          }
+        ],
+        "result_spoken": true,
+        "rep": 2,
+        "trace": "fc_basic-2.jsonl"
+      },
+      {
+        "function_call_emitted": true,
+        "args": [
+          {
+            "city": "杭州",
+            "date": "2026-11-26"
+          }
+        ],
+        "result_spoken": true,
+        "rep": 3,
+        "trace": "fc_basic-3.jsonl"
+      },
+      {
+        "function_call_emitted": true,
+        "args": [
+          {
+            "city": "杭州",
+            "date": "2026-11-26"
+          }
+        ],
+        "result_spoken": true,
+        "rep": 4,
+        "trace": "fc_basic-4.jsonl"
+      }
+    ],
+    "pending_silent": [
+      {
+        "tool_delay_s": 8.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "rep": 0,
+        "trace": "pending_silent-0.jsonl"
+      },
+      {
+        "tool_delay_s": 8.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "rep": 1,
+        "trace": "pending_silent-1.jsonl"
+      },
+      {
+        "tool_delay_s": 8.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "rep": 2,
+        "trace": "pending_silent-2.jsonl"
+      },
+      {
+        "tool_delay_s": 8.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "rep": 3,
+        "trace": "pending_silent-3.jsonl"
+      },
+      {
+        "tool_delay_s": 8.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "rep": 4,
+        "trace": "pending_silent-4.jsonl"
+      }
+    ],
+    "pending_change": [
+      {
+        "tool_delay_s": 8.0,
+        "barge_started_while_pending": true,
+        "barge_heard_by_asr": true,
+        "new_call_with_dec4": true,
+        "stale_dec3_result_spoken": false,
+        "dec4_result_spoken": true,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          },
+          {
+            "date": "2026-12-04",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 0,
+        "trace": "pending_change-0.jsonl"
+      },
+      {
+        "tool_delay_s": 8.0,
+        "barge_started_while_pending": true,
+        "barge_heard_by_asr": true,
+        "new_call_with_dec4": true,
+        "stale_dec3_result_spoken": false,
+        "dec4_result_spoken": true,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          },
+          {
+            "date": "2026-12-04",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 1,
+        "trace": "pending_change-1.jsonl"
+      },
+      {
+        "tool_delay_s": 8.0,
+        "barge_started_while_pending": true,
+        "barge_heard_by_asr": true,
+        "new_call_with_dec4": true,
+        "stale_dec3_result_spoken": false,
+        "dec4_result_spoken": true,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          },
+          {
+            "date": "2026-12-04",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 2,
+        "trace": "pending_change-2.jsonl"
+      },
+      {
+        "tool_delay_s": 8.0,
+        "barge_started_while_pending": true,
+        "barge_heard_by_asr": true,
+        "new_call_with_dec4": true,
+        "stale_dec3_result_spoken": false,
+        "dec4_result_spoken": true,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          },
+          {
+            "date": "2026-12-04",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 3,
+        "trace": "pending_change-3.jsonl"
+      },
+      {
+        "tool_delay_s": 8.0,
+        "barge_started_while_pending": true,
+        "barge_heard_by_asr": true,
+        "new_call_with_dec4": true,
+        "stale_dec3_result_spoken": false,
+        "dec4_result_spoken": true,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          },
+          {
+            "date": "2026-12-04",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 4,
+        "trace": "pending_change-4.jsonl"
+      }
+    ],
+    "pending_aside": [
+      {
+        "tool_delay_s": 14.0,
+        "aside_started_while_pending": true,
+        "aside_heard_by_asr": true,
+        "aside_answered_while_pending": true,
+        "audio_while_pending_after_aside": true,
+        "late_result_spoken": false,
+        "any_speech_after_late_result": false,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 0,
+        "trace": "pending_aside-0.jsonl"
+      },
+      {
+        "tool_delay_s": 14.0,
+        "aside_started_while_pending": true,
+        "aside_heard_by_asr": true,
+        "aside_answered_while_pending": true,
+        "audio_while_pending_after_aside": true,
+        "late_result_spoken": false,
+        "any_speech_after_late_result": false,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 1,
+        "trace": "pending_aside-1.jsonl"
+      },
+      {
+        "tool_delay_s": 14.0,
+        "aside_started_while_pending": true,
+        "aside_heard_by_asr": true,
+        "aside_answered_while_pending": true,
+        "audio_while_pending_after_aside": true,
+        "late_result_spoken": false,
+        "any_speech_after_late_result": false,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 2,
+        "trace": "pending_aside-2.jsonl"
+      },
+      {
+        "tool_delay_s": 14.0,
+        "aside_started_while_pending": true,
+        "aside_heard_by_asr": true,
+        "aside_answered_while_pending": true,
+        "audio_while_pending_after_aside": true,
+        "late_result_spoken": false,
+        "any_speech_after_late_result": false,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 3,
+        "trace": "pending_aside-3.jsonl"
+      },
+      {
+        "tool_delay_s": 14.0,
+        "aside_started_while_pending": true,
+        "aside_heard_by_asr": true,
+        "aside_answered_while_pending": true,
+        "audio_while_pending_after_aside": true,
+        "late_result_spoken": false,
+        "any_speech_after_late_result": false,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 4,
+        "trace": "pending_aside-4.jsonl"
+      }
+    ],
+    "inject_instructions_at_create": [
+      {
+        "injected_fact_used": true,
+        "answer": "记得，你的国航凤凰知音常旅客卡号是CA 8839 2201 57。",
+        "rep": 0,
+        "trace": "inject_instructions_at_create-0.jsonl"
+      },
+      {
+        "injected_fact_used": true,
+        "answer": "记得，你的国航凤凰知音常旅客卡号是CA 8839 2201 57。",
+        "rep": 1,
+        "trace": "inject_instructions_at_create-1.jsonl"
+      },
+      {
+        "injected_fact_used": true,
+        "answer": "记得，你的国航凤凰知音常旅客卡号是CA 8839 2201 57。",
+        "rep": 2,
+        "trace": "inject_instructions_at_create-2.jsonl"
+      },
+      {
+        "injected_fact_used": true,
+        "answer": "记得，你的国航凤凰知音常旅客卡号是CA 8839 2201 57。",
+        "rep": 3,
+        "trace": "inject_instructions_at_create-3.jsonl"
+      },
+      {
+        "injected_fact_used": true,
+        "answer": "记得，你的国航凤凰知音常旅客卡号是CA 8839 2201 57。",
+        "rep": 4,
+        "trace": "inject_instructions_at_create-4.jsonl"
+      }
+    ],
+    "inject_update_before_first_turn": [
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号，你可以告诉我，或者提供绑定的手机号、证件号帮你查询相关信息。",
+        "rep": 0,
+        "trace": "inject_update_before_first_turn-0.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号，这类信息属于个人隐私，也不会自动留存，你可以自己记在安全的地方或者对应航司APP里查看。",
+        "rep": 1,
+        "trace": "inject_update_before_first_turn-1.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号，这类私人信息需要你自己保管或者查看对应的会员卡、绑定的出行平台哦。",
+        "rep": 2,
+        "trace": "inject_update_before_first_turn-2.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号，这类敏感信息需要你自己保管或者通过对应航司的官方渠道查询哦。",
+        "rep": 3,
+        "trace": "inject_update_before_first_turn-3.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号，这类信息属于个人隐私，也不会自动留存，你可以自己记在安全的地方或者对应航司APP里查看。",
+        "rep": 4,
+        "trace": "inject_update_before_first_turn-4.jsonl"
+      }
+    ],
+    "inject_item_before_first_turn": [
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号，这类私人信息只有你自己或者对应的航空公司、平台的系统里能查到。",
+        "rep": 0,
+        "trace": "inject_item_before_first_turn-0.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号，这类个人敏感信息需要你自己妥善保管，或者通过对应航司的官方渠道查询。",
+        "rep": 1,
+        "trace": "inject_item_before_first_turn-1.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号，这类敏感信息需要你自己保管，或者通过对应航司的APP、客服查询哦。",
+        "rep": 2,
+        "trace": "inject_item_before_first_turn-2.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号哦，这类个人敏感信息需要你自己妥善保管，要是记不清可以联系对应航司查询。",
+        "rep": 3,
+        "trace": "inject_item_before_first_turn-3.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号，你可以告诉我具体号码，或者提供绑定的手机号、证件号帮你查询。",
+        "rep": 4,
+        "trace": "inject_item_before_first_turn-4.jsonl"
+      }
+    ],
+    "inject_update_after_turn": [
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号哦，这类私人卡号属于敏感信息，建议你自己妥善保管，或者通过对应航司的官方渠道查询绑定的卡号。",
+        "rep": 0,
+        "trace": "inject_update_after_turn-0.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的长旅客卡号哦，这类私人卡号属于敏感信息，建议你自己妥善保管，或者通过对应航司的官方渠道查询。",
+        "rep": 1,
+        "trace": "inject_update_after_turn-1.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号哦，这类私人信息需要你自己保管，或者通过对应的航空公司、平台账号查询。",
+        "rep": 2,
+        "trace": "inject_update_after_turn-2.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的长旅客卡号哦，这类私人卡号属于敏感信息，建议你自己妥善保管，或者通过对应航司的官方渠道查询。",
+        "rep": 3,
+        "trace": "inject_update_after_turn-3.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的长旅客卡号呢，这个属于个人私密信息，你可以自己妥善保管，或者咨询对应航司查询哦。",
+        "rep": 4,
+        "trace": "inject_update_after_turn-4.jsonl"
+      }
+    ],
+    "inject_item_after_turn": [
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号哦，这类私人敏感信息建议你自己妥善保管，或者对应航司的APP里查询。",
+        "rep": 0,
+        "trace": "inject_item_after_turn-0.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的长旅客卡号，这类私人信息需要你自己保管或者通过对应航司的官方渠道查询哦。",
+        "rep": 1,
+        "trace": "inject_item_after_turn-1.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号哦，这类隐私信息建议你自己妥善保管，或者通过对应航司的官方渠道查询留存的信息。",
+        "rep": 2,
+        "trace": "inject_item_after_turn-2.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的常旅客卡号哦，这类私人卡号属于敏感信息，建议你自己妥善保管，或者通过对应航司的官方渠道查询绑定的卡号。",
+        "rep": 3,
+        "trace": "inject_item_after_turn-3.jsonl"
+      },
+      {
+        "injected_fact_used": false,
+        "answer": "我没办法直接记住你的长旅客卡号哦，这类私人卡号属于敏感信息，建议你自己妥善保管，或者通过对应航司的官方渠道查询。",
+        "rep": 4,
+        "trace": "inject_item_after_turn-4.jsonl"
+      }
+    ]
+  }
+}

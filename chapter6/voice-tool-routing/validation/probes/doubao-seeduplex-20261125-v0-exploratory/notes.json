@@ -1,0 +1,192 @@
+{
+  "note": "Exploratory, hand-run probes made before probe_capabilities.py existed (2026-11-25). Wording: instructions '你是出行助理。今天是2026年11月25日，星期三。' plus '【运行时自动检索到的用户记忆】用户的国航常旅客卡号是 CA 8839 2201 57。'; question = fixtures/audio/memory.wav. probe1 = first function call; probe2-* = pending-call behaviour; probe3-<mode>-<n> = context injection. The files without a rep suffix are the very first single trials.",
+  "modes": {
+    "create": "fact in instructions at session.create",
+    "update": "session.update 0.5 s after create, before the first turn",
+    "item": "conversation.item.create user/assistant pair before the first turn",
+    "midupdate": "session.update after one completed voice turn",
+    "miditem": "conversation.item.create after one completed voice turn",
+    "updatewait": "session.update before the first turn, then 8 s wait"
+  },
+  "injection_results": {
+    "create": {
+      "used": 4,
+      "n": 4,
+      "rows": [
+        {
+          "trace": "probe3-create-1.jsonl",
+          "injected_fact_used": true,
+          "answer": "记得，你的国航常旅客卡号是CA 8839 2201 57。"
+        },
+        {
+          "trace": "probe3-create-2.jsonl",
+          "injected_fact_used": true,
+          "answer": "记得，你的国航常旅客卡号是 CA 8839 2201 57。"
+        },
+        {
+          "trace": "probe3-create-3.jsonl",
+          "injected_fact_used": true,
+          "answer": "记得，你的国航常旅客卡号是CA 8839 2201 57。"
+        },
+        {
+          "trace": "probe3-create-4.jsonl",
+          "injected_fact_used": true,
+          "answer": "记得，你的国航常旅客卡号是CA 8839 2201 57。"
+        }
+      ]
+    },
+    "item": {
+      "used": 0,
+      "n": 4,
+      "rows": [
+        {
+          "trace": "probe3-item-1.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接记住你的常旅客卡号，这类个人敏感信息需要你自己妥善保管，或者通过对应航司的APP、官网查询哦。"
+        },
+        {
+          "trace": "probe3-item-2.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接获取你的常旅客卡号，这类属于你的个人隐私信息，你可以自己核对留存的卡片或者账户记录。"
+        },
+        {
+          "trace": "probe3-item-3.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接记住你的常旅客卡号哦，这类私人信息建议你自己妥善保管，或者对应航司的APP、官网里可以查到。"
+        },
+        {
+          "trace": "probe3-item-4.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接记住你的常旅客卡号，这类个人敏感信息需要你自己妥善保管，你可以查看实体卡、对应航司APP或者订单记录来获取。"
+        }
+      ]
+    },
+    "probe3-item.jsonl": {
+      "used": 0,
+      "n": 1,
+      "rows": [
+        {
+          "trace": "probe3-item.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接记住你的常旅客卡号，这类敏感信息建议你自己妥善保管，或者通过对应航司的官方渠道查询哦。"
+        }
+      ]
+    },
+    "miditem": {
+      "used": 3,
+      "n": 3,
+      "rows": [
+        {
+          "trace": "probe3-miditem-5.jsonl",
+          "injected_fact_used": true,
+          "answer": "记得，你的国航常旅客卡号是CA 8839 2201 57。"
+        },
+        {
+          "trace": "probe3-miditem-6.jsonl",
+          "injected_fact_used": true,
+          "answer": "记得，你的国航常旅客卡号是CA 8839 2201 57。"
+        },
+        {
+          "trace": "probe3-miditem-7.jsonl",
+          "injected_fact_used": true,
+          "answer": "我记下来你提供的国航常旅客卡号CA 8839 2201 57了，之后你要是订国航航班、累积里程，都可以直接用这个号。"
+        }
+      ]
+    },
+    "midupdate": {
+      "used": 4,
+      "n": 4,
+      "rows": [
+        {
+          "trace": "probe3-midupdate-1.jsonl",
+          "injected_fact_used": true,
+          "answer": "记得的，你的国航常旅客卡号是CA 8839 2201 57，需要帮你关联订票或者查询里程的话都可以说。"
+        },
+        {
+          "trace": "probe3-midupdate-2.jsonl",
+          "injected_fact_used": true,
+          "answer": "记得，你的国航常旅客卡号是CA 8839 2201 57。"
+        },
+        {
+          "trace": "probe3-midupdate-3.jsonl",
+          "injected_fact_used": true,
+          "answer": "记得的，你的国航常旅客卡号是CA 8839 2201 57，需要帮你关联订机票或者累计里程吗？"
+        },
+        {
+          "trace": "probe3-midupdate-4.jsonl",
+          "injected_fact_used": true,
+          "answer": "记得的，你的国航常旅客卡号是CA 8839 2201 57，需要帮你关联订机票或者查询里程的话都可以说。"
+        }
+      ]
+    },
+    "probe3-midupdate.jsonl": {
+      "used": 1,
+      "n": 1,
+      "rows": [
+        {
+          "trace": "probe3-midupdate.jsonl",
+          "injected_fact_used": true,
+          "answer": "记得的，你的国航常旅客卡号是CA 8839 2201 57，需要帮你关联订机票或者累计里程都可以用。"
+        }
+      ]
+    },
+    "update": {
+      "used": 0,
+      "n": 4,
+      "rows": [
+        {
+          "trace": "probe3-update-1.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接记住你的常旅客卡号，这类个人敏感信息需要你自己保管，你可以回忆一下或者查看实体卡、绑定的出行APP来确认。"
+        },
+        {
+          "trace": "probe3-update-2.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接记住你的常旅客卡号，这类敏感信息建议你自己妥善保管，或者通过对应航司的官方渠道查询哦。"
+        },
+        {
+          "trace": "probe3-update-3.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接获取你的常旅客卡号，这类属于你的个人隐私信息，你可以自己查看对应航司的APP、实体卡或者订单记录来确认。"
+        },
+        {
+          "trace": "probe3-update-4.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接记住你的常旅客卡号，这类私人信息建议你存在自己的备忘录或者对应航司APP里，避免泄露。"
+        }
+      ]
+    },
+    "probe3-update.jsonl": {
+      "used": 0,
+      "n": 1,
+      "rows": [
+        {
+          "trace": "probe3-update.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接记住你的个人卡号这类隐私信息，你可以自己妥善保管，或者通过对应航司的APP、官网查询哦。"
+        }
+      ]
+    },
+    "updatewait": {
+      "used": 0,
+      "n": 3,
+      "rows": [
+        {
+          "trace": "probe3-updatewait-5.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接记住你的个人卡号这类隐私信息，你可以自己妥善保管，或者通过对应航司的APP、官网查询哦。"
+        },
+        {
+          "trace": "probe3-updatewait-6.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接获取你的常旅客卡号，这类属于你的个人隐私信息，只有你自己或者对应航司/平台的系统里能查到。"
+        },
+        {
+          "trace": "probe3-updatewait-7.jsonl",
+          "injected_fact_used": false,
+          "answer": "我没办法直接记住你的常旅客卡号，这类敏感个人信息需要你自己妥善保管，或者通过对应航司的APP、官网查询哦。"
+        }
+      ]
+    }
+  }
+}

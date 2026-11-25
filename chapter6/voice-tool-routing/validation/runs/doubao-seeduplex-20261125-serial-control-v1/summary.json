@@ -1,0 +1,289 @@
+{
+  "run_id": "doubao-seeduplex-20261125-serial-control-v1",
+  "started_at": "2026-11-25T12:30:57+08:00",
+  "front": {
+    "model": "豆包实时语音模型 3.0 (Seeduplex)",
+    "session_model": "1.2.6.1",
+    "endpoint": "wss://openspeech.bytedance.com/api/v3/duplex/realtime/dialogue",
+    "voice": "zh_female_xiaohe_jupiter_bigtts",
+    "credential_env": "DOUBAO_VOICE_API_KEY"
+  },
+  "back": null,
+  "sessions_ok": 20,
+  "sessions_failed": [],
+  "sessions_with_suspected_back_retry": [],
+  "sessions_with_turn_timeout": [],
+  "cells": {
+    "all_front/flight_search": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 7.627,
+            "p90": 8.451,
+            "min": 5.251,
+            "max": 9.429
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.68,
+            "p90": 1.788,
+            "min": 1.606,
+            "max": 1.795
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.87,
+            "p90": 0.88,
+            "min": 0.819,
+            "max": 0.921
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.068,
+            "p90": 2.461,
+            "min": 1.772,
+            "max": 2.506
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.199,
+            "p90": 1.586,
+            "min": 0.902,
+            "max": 1.635
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.339,
+            "p90": 1.757,
+            "min": 1.154,
+            "max": 3.824
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.747,
+            "p90": 4.733,
+            "min": 2.084,
+            "max": 4.885
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 16.985,
+            "p90": 17.192,
+            "min": 16.48,
+            "max": 17.57
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 92.0,
+            "p90": 92.0,
+            "min": 87.0,
+            "max": 92.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 92.0,
+          "p90": 92.0,
+          "min": 87.0,
+          "max": 92.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      }
+    },
+    "all_front/weather": {
+      "runs": 10,
+      "turns": {
+        "weather#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 2.806,
+            "p90": 3.752,
+            "min": 2.345,
+            "max": 8.816
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.887,
+            "p90": 1.044,
+            "min": 0.841,
+            "max": 1.984
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.58,
+            "p90": 1.928,
+            "min": 1.304,
+            "max": 2.527
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.633,
+            "p90": 0.917,
+            "min": 0.41,
+            "max": 0.922
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.044,
+            "p90": 1.623,
+            "min": 0.84,
+            "max": 6.087
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.2,
+            "p90": 0.2,
+            "min": 0.2,
+            "max": 0.2
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 7.795,
+            "p90": 8.001,
+            "min": 7.2,
+            "max": 8.01
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 38.0,
+            "p90": 41.0,
+            "min": 36.0,
+            "max": 41.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    }
+  }
+}

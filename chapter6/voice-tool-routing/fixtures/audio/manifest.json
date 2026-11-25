@@ -1,0 +1,66 @@
+{
+  "synthesis": {
+    "engine": "macOS say",
+    "voice": "Tingting",
+    "rate_wpm": 190,
+    "macos": "27.2.1",
+    "format": "16 kHz mono int16 WAV",
+    "normalisation": "voiced RMS -27.0 dBFS, silence trimmed to 20 ms"
+  },
+  "clips": {
+    "weather": {
+      "file": "weather.wav",
+      "say_text": "明天杭州天气怎么样？",
+      "seconds": 1.894,
+      "sha256": "23165f5aefa01f3d3c2550e474c3d95e6be9944f651b254e0ab2d95ccb3f53ee"
+    },
+    "memory": {
+      "file": "memory.wav",
+      "say_text": "你还记得我的常旅客卡号吗？",
+      "seconds": 2.377,
+      "sha256": "0927481197a51d6982e97e6ca4368c7aa76a18485517b053cac2821beaeb7851"
+    },
+    "web_search": {
+      "file": "web_search.wav",
+      "say_text": "帮我搜一下，从上海虹桥机场到国家会展中心，怎么走最快？",
+      "seconds": 5.923,
+      "sha256": "cc58cb4f55ea110a9e92e80987849d53e057f6fe320797db9e4f39488c9a2a47"
+    },
+    "flight_search": {
+      "file": "flight_search.wav",
+      "say_text": "帮我查一下十二月三号北京到上海的航班。",
+      "seconds": 3.842,
+      "sha256": "70777b1de28b73ea3af957d1e5a150289408ca0834ac5ac2ccdc337f1c4fe699"
+    },
+    "self_correction": {
+      "file": "self_correction.wav",
+      "say_text": "帮我查一下下周三[[slnc 700]]不，下周四，北京到上海的航班。",
+      "seconds": 5.619,
+      "sha256": "4cee5d23fa10696cab053fb0593996a70d6327bd8b8e8ab08a5956a37ca914c4"
+    },
+    "barge_change_date": {
+      "file": "barge_change_date.wav",
+      "say_text": "等一下，改成十二月四号的。",
+      "seconds": 2.542,
+      "sha256": "e82d4a37a248ad2c43c87ca529777da35f4b7802821c891d4797b2b93bba6c81"
+    },
+    "booking_select": {
+      "file": "booking_select.wav",
+      "say_text": "就订九点整起飞的那一班，经济舱，要可以退改的，再加一件二十三公斤的托运行李。乘机人和联系人都用我本人的信息。",
+      "seconds": 10.843,
+      "sha256": "f0d77cd41a5f9623fe97fd527adf96c88d72f5f7b314dd9bcdc6d9aabc751796"
+    },
+    "booking_confirm": {
+      "file": "booking_confirm.wav",
+      "say_text": "确认，下单吧。",
+      "seconds": 1.481,
+      "sha256": "06f76f38d44622466c311da95c327d476a44394629df8474cfddef158cac526c"
+    },
+    "booking_dictated": {
+      "file": "booking_dictated.wav",
+      "say_text": "就订九点整起飞的那一班，经济舱，要可以退改的，再加一件二十三公斤的托运行李。乘机人是我同事陈嘉怡，耳东陈，嘉奖的嘉，怡然的怡。她的护照号是，E，五八三零七一九四，手机号是，一三九，零零零零，七二四六。联系人用我本人的信息。",
+      "seconds": 23.494,
+      "sha256": "f27cb1c0c5e852dd42947a48263f23d134726f408f4b0089db47b4d04e03c6e0"
+    }
+  }
+}

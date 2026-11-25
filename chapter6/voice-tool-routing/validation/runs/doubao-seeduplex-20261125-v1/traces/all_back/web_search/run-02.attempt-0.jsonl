@@ -1,0 +1,186 @@
+{"t": 0.1021, "dir": "local", "type": "ws.connected", "logid": "2026112511435477797456C36BDC123FCE", "endpoint": "wss://openspeech.bytedance.com/api/v3/duplex/realtime/dialogue"}
+{"t": 0.1021, "dir": "up", "type": "session.create", "session": {"model": "1.2.6.1", "instructions": "你是一位中文语音出行助理，正在和用户通电话。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。\n规则：\n1. 涉及天气、航班、搜索、用户资料、订票的内容，必须通过工具得到，不要凭印象编造。\n2. 工具说明里标了“慢”的，调用前先说一句很短的话（例如“好的，我查一下”），然后立刻调用；标了“快”的直接调用，不用铺垫。\n3. 回答要口语化、简短。工具结果里的 speak 字段是给你口头说的；display 字段客户端会显示在用户屏幕上，不要逐条朗读。\n4. 订票会扣款，由后台助理办理：用户提出订票或补充订票条件时，把任务委派给后台；后台会返回需要向用户复述核对的内容，你照着复述并请用户确认；用户明确确认后，再委派后台下单。\n5. 你自己不能查询或办理任何事情，凡是需要工具的请求一律调用 delegate 交给后台助理，再把后台返回的话转述给用户。\n", "audio": {"input": {"format": {"type": "pcm", "rate": 16000}}, "output": {"format": {"type": "pcm_s16le", "rate": 24000}, "voice": "zh_female_xiaohe_jupiter_bigtts"}}, "tools": [{"type": "function", "name": "delegate", "description": "【慢，需要等待】把任务交给后台助理处理。后台助理能看到完整的通话记录，并且可以查天气、查用户记忆、联网搜索、查航班、订票。用一句话说清楚要办什么；后台办完会返回一段话，你把它转述给用户。", "parameters": {"type": "object", "properties": {"task": {"type": "string", "description": "要后台完成的任务，用自然语言描述，带上用户刚才提到的关键条件"}}, "required": ["task"]}}]}, "extension": {"asr": {}, "tts": {}, "dialog": {}}, "event_id": "evt_1"}
+{"t": 0.1632, "dir": "down", "type": "session.created", "event_id": "event_1", "session": {"id": "0ba7807b-f79e-4ecf-a1e3-e6082d16ef29"}}
+{"t": 1.1634, "dir": "local", "type": "step", "index": 0, "kind": "say", "clip": "web_search"}
+{"t": 1.1636, "dir": "local", "type": "user_audio.start", "clip": "web_search", "bytes": 189550}
+{"t": 1.8022, "dir": "down", "round_id": 1, "type": "conversation.item.input_audio_transcription.started", "event_id": "event_2", "item_id": "62821249780351490"}
+{"t": 1.8022, "dir": "down", "event_id": "event_3", "content_index": 0, "delta": "帮", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490"}
+{"t": 1.8963, "dir": "down", "content_index": 0, "delta": "帮我", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_4"}
+{"t": 2.1113, "dir": "down", "content_index": 0, "delta": "帮我搜", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_5"}
+{"t": 2.315, "dir": "down", "content_index": 0, "delta": "帮我搜一下", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_6"}
+{"t": 2.5051, "dir": "down", "content_index": 0, "delta": "帮我搜一下。", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_7"}
+{"t": 2.5451, "dir": "down", "content_index": 0, "delta": "帮我搜一下", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_8"}
+{"t": 3.2186, "dir": "down", "content_index": 0, "delta": "帮我搜一下从", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_9"}
+{"t": 3.4373, "dir": "down", "content_index": 0, "delta": "帮我搜一下从上海", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_10"}
+{"t": 4.0005, "dir": "down", "content_index": 0, "delta": "帮我搜一下从上海虹桥", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_11"}
+{"t": 4.3042, "dir": "down", "content_index": 0, "delta": "帮我搜一下从上海虹桥机场", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_12"}
+{"t": 4.6555, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_13", "content_index": 0, "delta": "帮我搜一下从上海虹桥机场到"}
+{"t": 5.0535, "dir": "down", "item_id": "62821249780351490", "event_id": "event_14", "content_index": 0, "delta": "帮我搜一下从上海虹桥机场到国家", "type": "conversation.item.input_audio_transcription.delta"}
+{"t": 5.5174, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_15", "content_index": 0, "delta": "帮我搜一下从上海虹桥机场到国家会展"}
+{"t": 5.7712, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_16", "content_index": 0, "delta": "帮我搜一下从上海虹桥机场到国家会展中心"}
+{"t": 5.9364, "dir": "down", "content_index": 0, "delta": "帮我搜一下从上海虹桥机场到国家会展中心。", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_17"}
+{"t": 5.9899, "dir": "down", "content_index": 0, "delta": "帮我搜一下从上海虹桥机场到国家会展中心", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_18"}
+{"t": 6.8034, "dir": "down", "event_id": "event_19", "content_index": 0, "delta": "帮我搜一下从上海虹桥机场到国家会展中心怎么走", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490"}
+{"t": 7.0835, "dir": "local", "type": "user_audio.end", "clip": "web_search"}
+{"t": 7.1154, "dir": "down", "content_index": 0, "delta": "帮我搜一下从上海虹桥机场到国家会展中心怎么走最快", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_20"}
+{"t": 7.3108, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_21", "content_index": 0, "delta": "帮我搜一下，从上海虹桥机场到国家会展中心怎么走最快？"}
+{"t": 7.35, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_22", "content_index": 0, "delta": "帮我搜一下从上海虹桥机场到国家会展中心怎么走最快"}
+{"t": 8.1093, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62821249780351490", "event_id": "event_23", "content_index": 0, "delta": "帮我搜一下，从上海虹桥机场到国家会展中心怎么走最快？"}
+{"t": 8.1117, "dir": "down", "type": "conversation.item.input_audio_transcription.completed", "item_id": "62821249780351490", "content_index": 1, "text": "帮我搜一下，从上海虹桥机场到国家会展中心怎么走最快？", "event_id": "event_24"}
+{"t": 8.1641, "dir": "down", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_25", "delta": "好的，"}
+{"t": 8.2317, "dir": "down", "delta": "我", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_26"}
+{"t": 8.2593, "dir": "down", "event_id": "event_27", "question_id": "62821249780351490", "response_id": "62821249780351234", "tts_type": "default", "type": "response.output_audio.started"}
+{"t": 8.2824, "dir": "down", "event_id": "event_28", "delta": "查一下", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta"}
+{"t": 8.4292, "dir": "down", "delta": "。", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_29"}
+{"t": 8.5151, "dir": "down", "delta": "\n", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_30"}
+{"t": 9.0775, "dir": "down", "event_id": "event_31", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 16384}
+{"t": 9.1003, "dir": "down", "delta": null, "event_id": "event_32", "type": "response.output_audio.delta", "audio_bytes": 20480}
+{"t": 9.1313, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_33", "audio_bytes": 18432}
+{"t": 9.6082, "dir": "down", "items": [{"call_id": "ce810f96-f98f-4cb6-8101-2e4f5f0243e7", "name": "delegate", "arguments": "{\"task\":\"查询从上海虹桥机场到国家会展中心最快的交通方式\"}"}], "type": "response.function_call_arguments.done", "event_id": "event_34"}
+{"t": 9.6084, "dir": "local", "type": "delegate.start", "call_id": "ce810f96-f98f-4cb6-8101-2e4f5f0243e7", "task": "查询从上海虹桥机场到国家会展中心最快的交通方式"}
+{"t": 9.6085, "dir": "local", "type": "back.context", "messages": [{"role": "system", "content": "你是语音出行助理的后台 Agent。前台的实时语音模型正在和用户通电话，它把任务委派给你。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。\n你会收到：通话记录（语音识别转写，可能有同音错字）、本次通话里已经执行过的工具调用及结果、前台委派的任务。\n规则：\n1. 用工具完成任务，不要编造。本次通话里已经有结果的查询不要重复调用。\n2. book_flight 会扣款并出票。只有当通话记录显示助理已经向用户复述过订单的航班、舱位、退改规则、行李、乘机人和票价，并且用户在复述之后明确确认，才能调用 book_flight。否则不要下单，而是返回一段需要前台向用户复述核对的内容，并请用户确认。\n3. 最后只输出一段给前台朗读的话：口语化、简短，不要 Markdown、不要列表、不要逐条念航班表（search_flights 的完整列表会自动显示在用户屏幕上）。\n乘机人和联系人资料用 memory_lookup 查。\n"}, {"role": "user", "content": "【通话记录（语音识别转写）】\n用户：帮我搜一下，从上海虹桥机场到国家会展中心怎么走最快？\n\n【本次通话已执行的工具调用】\n（无）\n\n【前台委派的任务】\n查询从上海虹桥机场到国家会展中心最快的交通方式"}], "call_id": "ce810f96-f98f-4cb6-8101-2e4f5f0243e7"}
+{"t": 11.4921, "dir": "local", "type": "back.llm_call", "step": 0, "seconds": 1.884, "usage": {"completion_tokens": 57, "prompt_tokens": 1538, "total_tokens": 1595, "completion_tokens_details": {"reasoning_tokens": 0}, "prompt_tokens_details": {"cached_tokens": 0}}, "content": "", "tool_calls": [{"name": "web_search", "arguments": "{\"query\": \"上海虹桥机场到国家会展中心 最快 交通方式 地铁\"}"}], "call_id": "ce810f96-f98f-4cb6-8101-2e4f5f0243e7"}
+{"t": 11.4921, "dir": "local", "type": "tool.call", "origin": "back", "name": "web_search", "args": {"query": "上海虹桥机场到国家会展中心 最快 交通方式 地铁"}, "nth": 0, "latency_s": 3.0, "simulated": true}
+{"t": 14.4922, "dir": "local", "type": "tool.result", "origin": "back", "name": "web_search", "nth": 0, "result": {"results": "【模拟搜索结果，共4条】\n1. 出行攻略｜虹桥机场到国家会展中心（上海）怎么走：两地都在虹桥商务区，直线距离约3公里。最快的公共交通是地铁2号线：在虹桥2号航站楼站上车，往徐泾东方向坐2站，经虹桥火车站到终点徐泾东站，车程约6分钟，票价3元；徐泾东站4、5、6号口出站就是会展中心南广场，步行约5分钟。算上进站和候车，门到门大约20分钟。地铁首班车约5点半，末班车约22点45分。如果从1号航站楼出发，要先坐机场免费摆渡车或地铁10号线到2号航站楼换乘，多花15分钟左右。\n2. 网约车与出租车：不堵车时走崧泽高架约10到15分钟，费用25到35元；但大型展会期间（如进博会、车展）会展中心周边实行交通管制，上下客点离展馆入口较远，早晚高峰可能要40分钟以上，司机也常常不愿意接短途单。\n3. 论坛讨论：有网友说展会期间地铁徐泾东站会限流，建议避开9点到10点的入场高峰；也有人推荐从虹桥火车站沿二层步廊步行到会展中心，大约25到30分钟，全程有顶棚，下雨也不怕。还有人提到71路中运量公交可以到会展中心附近，但要绕行，不推荐赶时间的人坐。\n4. 广告：会展中心周边酒店特惠，四星级酒店展期每晚680元起，含双早，提前预订享免费接送机服务。"}}
+{"t": 17.7179, "dir": "local", "type": "back.llm_call", "step": 1, "seconds": 3.226, "usage": {"completion_tokens": 126, "prompt_tokens": 1990, "total_tokens": 2116, "completion_tokens_details": {"reasoning_tokens": 0}, "prompt_tokens_details": {"cached_tokens": 0}}, "content": "从虹桥机场到国家会展中心，最快是坐地铁2号线：在虹桥2号航站楼站上车，往徐泾东方向坐2站，到终点徐泾东站下车，车程约6分钟，出站走5分钟就到会展中心南广场，门到门大概20分钟，票价3元。\n\n提醒一下，如果您是从1号航站楼出发，得先坐摆渡车或10号线到2号航站楼换乘，会多花15分钟左右。展会期间地铁站可能会限流，建议避开早上9点到10点的高峰。", "tool_calls": [], "call_id": "ce810f96-f98f-4cb6-8101-2e4f5f0243e7"}
+{"t": 17.7179, "dir": "local", "type": "delegate.end", "call_id": "ce810f96-f98f-4cb6-8101-2e4f5f0243e7", "speak": "从虹桥机场到国家会展中心，最快是坐地铁2号线：在虹桥2号航站楼站上车，往徐泾东方向坐2站，到终点徐泾东站下车，车程约6分钟，出站走5分钟就到会展中心南广场，门到门大概20分钟，票价3元。\n\n提醒一下，如果您是从1号航站楼出发，得先坐摆渡车或10号线到2号航站楼换乘，会多花15分钟左右。展会期间地铁站可能会限流，建议避开早上9点到10点的高峰。"}
+{"t": 17.718, "dir": "up", "type": "conversation.item.create", "items": [{"type": "message", "role": "tool", "call_id": "ce810f96-f98f-4cb6-8101-2e4f5f0243e7", "content": [{"type": "input_text", "text": "{\"speak\": \"从虹桥机场到国家会展中心，最快是坐地铁2号线：在虹桥2号航站楼站上车，往徐泾东方向坐2站，到终点徐泾东站下车，车程约6分钟，出站走5分钟就到会展中心南广场，门到门大概20分钟，票价3元。\\n\\n提醒一下，如果您是从1号航站楼出发，得先坐摆渡车或10号线到2号航站楼换乘，会多花15分钟左右。展会期间地铁站可能会限流，建议避开早上9点到10点的高峰。\"}"}]}], "event_id": "evt_2"}
+{"t": 18.6865, "dir": "down", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_35", "delta": "从虹桥机场"}
+{"t": 18.7381, "dir": "down", "delta": "到国家会展", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_36"}
+{"t": 18.7893, "dir": "down", "delta": "中心", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_37"}
+{"t": 18.8369, "dir": "down", "delta": "，", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_38"}
+{"t": 18.8622, "dir": "down", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_39", "delta": "最快是坐"}
+{"t": 18.8921, "dir": "down", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_40", "delta": "地铁2号线"}
+{"t": 18.9412, "dir": "down", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_41", "delta": "：", "question_id": "62821249780351490"}
+{"t": 18.9752, "dir": "down", "delta": "在", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_42"}
+{"t": 19.0317, "dir": "down", "delta": "虹桥2号", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_43"}
+{"t": 19.0434, "dir": "down", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_44", "delta": "航站楼站上车", "question_id": "62821249780351490"}
+{"t": 19.0966, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_45", "audio_bytes": 28672}
+{"t": 19.1406, "dir": "down", "delta": "，", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_46"}
+{"t": 19.1406, "dir": "down", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_47", "delta": "往"}
+{"t": 19.1772, "dir": "down", "type": "response.output_text.delta", "event_id": "event_48", "delta": "徐泾东", "question_id": "62821249780351490", "response_id": "62821249780351234"}
+{"t": 19.1773, "dir": "down", "delta": "方向坐2", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_49"}
+{"t": 19.2351, "dir": "down", "type": "response.output_text.delta", "event_id": "event_50", "delta": "站", "question_id": "62821249780351490", "response_id": "62821249780351234"}
+{"t": 19.2553, "dir": "down", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_51", "delta": "，"}
+{"t": 19.2769, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_52", "audio_bytes": 20480}
+{"t": 19.2769, "dir": "down", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_53", "delta": "到终点徐"}
+{"t": 19.3155, "dir": "down", "type": "response.output_text.delta", "event_id": "event_54", "delta": "泾东站下车", "question_id": "62821249780351490", "response_id": "62821249780351234"}
+{"t": 19.3494, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_55", "audio_bytes": 16384}
+{"t": 19.4233, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_56", "audio_bytes": 20480}
+{"t": 19.4833, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_57", "audio_bytes": 20480}
+{"t": 19.4833, "dir": "down", "delta": "，", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_58"}
+{"t": 19.5477, "dir": "down", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_59", "delta": "车程", "question_id": "62821249780351490"}
+{"t": 19.5477, "dir": "down", "delta": "约6分钟", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_60"}
+{"t": 19.5498, "dir": "down", "delta": "，出站走", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_61"}
+{"t": 19.6314, "dir": "down", "event_id": "event_62", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 8192}
+{"t": 19.7063, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_63", "audio_bytes": 30720}
+{"t": 19.7895, "dir": "down", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_64", "delta": "5"}
+{"t": 19.8104, "dir": "down", "delta": "分钟", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_65"}
+{"t": 19.8434, "dir": "down", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_66", "delta": "就到会展", "question_id": "62821249780351490"}
+{"t": 19.8599, "dir": "down", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_67", "delta": "中心南广场", "question_id": "62821249780351490"}
+{"t": 20.1021, "dir": "down", "event_id": "event_68", "delta": "，", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta"}
+{"t": 20.1433, "dir": "down", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_69", "delta": "门", "question_id": "62821249780351490"}
+{"t": 20.165, "dir": "down", "event_id": "event_70", "delta": "到门大概", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta"}
+{"t": 20.1953, "dir": "down", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_71", "delta": "20分钟", "question_id": "62821249780351490"}
+{"t": 20.2497, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_72", "audio_bytes": 18432}
+{"t": 20.2996, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_73", "audio_bytes": 18432}
+{"t": 20.4262, "dir": "down", "delta": "，", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_74"}
+{"t": 20.4711, "dir": "down", "delta": "票价", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_75"}
+{"t": 20.4712, "dir": "down", "delta": "3元。", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_76"}
+{"t": 20.5076, "dir": "down", "type": "response.output_text.delta", "event_id": "event_77", "delta": "\n如果是", "question_id": "62821249780351490", "response_id": "62821249780351234"}
+{"t": 20.6099, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_78", "audio_bytes": 20480}
+{"t": 20.7431, "dir": "down", "delta": "从", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_79"}
+{"t": 20.7856, "dir": "down", "event_id": "event_80", "delta": "1", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta"}
+{"t": 20.8282, "dir": "down", "type": "response.output_text.delta", "event_id": "event_81", "delta": "号航站楼出发", "question_id": "62821249780351490", "response_id": "62821249780351234"}
+{"t": 20.8302, "dir": "down", "delta": "，得先", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_82"}
+{"t": 21.0014, "dir": "down", "delta": null, "event_id": "event_83", "type": "response.output_audio.delta", "audio_bytes": 6144}
+{"t": 21.0577, "dir": "down", "event_id": "event_84", "delta": "坐", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta"}
+{"t": 21.1039, "dir": "down", "event_id": "event_85", "delta": "摆渡", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta"}
+{"t": 21.1655, "dir": "down", "delta": "车或1", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_86"}
+{"t": 21.1677, "dir": "down", "event_id": "event_87", "delta": "0号线到", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta"}
+{"t": 21.3893, "dir": "down", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_88", "delta": "2", "question_id": "62821249780351490"}
+{"t": 21.43, "dir": "down", "type": "response.output_text.delta", "event_id": "event_89", "delta": "号", "question_id": "62821249780351490", "response_id": "62821249780351234"}
+{"t": 21.4754, "dir": "down", "delta": "航站楼换乘，", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_90"}
+{"t": 21.4772, "dir": "down", "delta": "会多花", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_91"}
+{"t": 21.6467, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_92", "audio_bytes": 32768}
+{"t": 21.6953, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_93", "audio_bytes": 18432}
+{"t": 21.7354, "dir": "down", "event_id": "event_94", "delta": "1", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta"}
+{"t": 21.7375, "dir": "down", "type": "response.output_text.delta", "event_id": "event_95", "delta": "5", "question_id": "62821249780351490", "response_id": "62821249780351234"}
+{"t": 21.7465, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_96", "audio_bytes": 18432}
+{"t": 21.7899, "dir": "down", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_97", "delta": "分钟左右。"}
+{"t": 21.7923, "dir": "down", "delta": "展会期间地铁站", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_98"}
+{"t": 21.9025, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_99", "audio_bytes": 20480}
+{"t": 22.0213, "dir": "down", "event_id": "event_100", "delta": "可能", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta"}
+{"t": 22.0841, "dir": "down", "delta": "会", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_101"}
+{"t": 22.1037, "dir": "down", "delta": "限流，建议", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_102"}
+{"t": 22.1075, "dir": "down", "delta": "避开早上9", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_103"}
+{"t": 22.2376, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_104", "audio_bytes": 18432}
+{"t": 22.3695, "dir": "down", "delta": "点", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_105"}
+{"t": 22.3997, "dir": "down", "delta": "到", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_106"}
+{"t": 22.4214, "dir": "down", "delta": "10点", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_107"}
+{"t": 22.4601, "dir": "down", "response_id": "62821249780351234", "type": "response.output_text.delta", "event_id": "event_108", "delta": "的高峰。", "question_id": "62821249780351490"}
+{"t": 22.6666, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_109", "audio_bytes": 18432}
+{"t": 22.7377, "dir": "down", "text": "好的，我查一下。\n从虹桥机场到国家会展中心，最快是坐地铁2号线：在虹桥2号航站楼站上车，往徐泾东方向坐2站，到终点徐泾东站下车，车程约6分钟，出站走5分钟就到会展中心南广场，门到门大概20分钟，票价3元。\n如果是从1号航站楼出发，得先坐摆渡车或10号线到2号航站楼换乘，会多花15分钟左右。展会期间地铁站可能会限流，建议避开早上9点到10点的高峰。", "event_id": "event_110", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_text.done"}
+{"t": 22.8199, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_111", "audio_bytes": 20480}
+{"t": 22.8812, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_112", "audio_bytes": 18432}
+{"t": 22.9354, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_113", "audio_bytes": 20480}
+{"t": 22.9834, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_114", "audio_bytes": 18432}
+{"t": 23.0376, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_115", "audio_bytes": 14336}
+{"t": 23.0876, "dir": "down", "event_id": "event_116", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 24576}
+{"t": 23.1471, "dir": "down", "delta": null, "event_id": "event_117", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 23.2054, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_118", "audio_bytes": 18432}
+{"t": 23.2499, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_119", "audio_bytes": 20480}
+{"t": 23.3016, "dir": "down", "event_id": "event_120", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 14336}
+{"t": 23.3536, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_121", "audio_bytes": 24576}
+{"t": 23.4076, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_122", "audio_bytes": 18432}
+{"t": 23.4614, "dir": "down", "event_id": "event_123", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 18432}
+{"t": 23.5054, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_124", "audio_bytes": 8192}
+{"t": 23.5823, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_125", "audio_bytes": 30720}
+{"t": 23.6179, "dir": "down", "event_id": "event_126", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 20480}
+{"t": 23.6716, "dir": "down", "event_id": "event_127", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 18432}
+{"t": 23.7315, "dir": "down", "event_id": "event_128", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 18432}
+{"t": 23.7664, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_129", "audio_bytes": 20480}
+{"t": 23.8194, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_130", "audio_bytes": 18432}
+{"t": 23.8658, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_131", "audio_bytes": 10240}
+{"t": 23.9299, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_132", "audio_bytes": 28672}
+{"t": 23.9904, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_133", "audio_bytes": 18432}
+{"t": 24.0283, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_134", "audio_bytes": 18432}
+{"t": 24.086, "dir": "down", "event_id": "event_135", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 20480}
+{"t": 24.1433, "dir": "down", "event_id": "event_136", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 18432}
+{"t": 24.1966, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_137", "audio_bytes": 18432}
+{"t": 24.2395, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_138", "audio_bytes": 20480}
+{"t": 24.3923, "dir": "down", "delta": null, "event_id": "event_139", "type": "response.output_audio.delta", "audio_bytes": 36864}
+{"t": 24.4353, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_140", "audio_bytes": 20480}
+{"t": 24.473, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_141", "audio_bytes": 18432}
+{"t": 24.5017, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_142", "audio_bytes": 18432}
+{"t": 24.5675, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_143", "audio_bytes": 16384}
+{"t": 24.6216, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_144", "audio_bytes": 22528}
+{"t": 24.6797, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_145", "audio_bytes": 20480}
+{"t": 24.7417, "dir": "down", "delta": null, "event_id": "event_146", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 24.8024, "dir": "down", "delta": null, "event_id": "event_147", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 24.8447, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_148", "audio_bytes": 18432}
+{"t": 24.8964, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_149", "audio_bytes": 20480}
+{"t": 24.9595, "dir": "down", "delta": null, "event_id": "event_150", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 24.9961, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_151", "audio_bytes": 16384}
+{"t": 25.0613, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_152", "audio_bytes": 22528}
+{"t": 25.0966, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_153", "audio_bytes": 20480}
+{"t": 25.1633, "dir": "down", "delta": null, "event_id": "event_154", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 25.2017, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_155", "audio_bytes": 18432}
+{"t": 25.2651, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_156", "audio_bytes": 10240}
+{"t": 25.3165, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_157", "audio_bytes": 28672}
+{"t": 25.3674, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_158", "audio_bytes": 20480}
+{"t": 25.4136, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_159", "audio_bytes": 18432}
+{"t": 25.4609, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_160", "audio_bytes": 18432}
+{"t": 25.5208, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_161", "audio_bytes": 20480}
+{"t": 25.5712, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_162", "audio_bytes": 8192}
+{"t": 25.6244, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_163", "audio_bytes": 28672}
+{"t": 25.6743, "dir": "down", "delta": null, "event_id": "event_164", "type": "response.output_audio.delta", "audio_bytes": 20480}
+{"t": 25.7244, "dir": "down", "delta": null, "event_id": "event_165", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 25.768, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_166", "audio_bytes": 20480}
+{"t": 25.8263, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_167", "audio_bytes": 18432}
+{"t": 25.8726, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_168", "audio_bytes": 20480}
+{"t": 25.9156, "dir": "down", "delta": null, "event_id": "event_169", "type": "response.output_audio.delta", "audio_bytes": 11086}
+{"t": 25.9156, "dir": "down", "question_id": "62821249780351490", "response_id": "62821249780351234", "type": "response.output_audio.done", "event_id": "event_170"}
+{"t": 41.3135, "dir": "down", "type": "response.done", "event_id": "event_171", "response": {"usage": {"total_tokens": 7565, "input_tokens": 693, "output_tokens": 1086, "input_token_details": {"text_tokens": 321, "audio_tokens": 372, "image_tokens": 0, "cached_tokens": 5786, "cached_tokens_details": {"text_tokens": 5786, "audio_tokens": 0, "image_tokens": 0}}, "output_token_details": {"text_tokens": 286, "audio_tokens": 800}, "duration_details": {"vision_duration_ms": 0, "audio_duration_ms": 0}}}}
+{"t": 51.3058, "dir": "up", "type": "session.close", "event_id": "evt_3"}
+{"t": 51.3724, "dir": "down", "type": "session.closed", "event_id": "event_172"}

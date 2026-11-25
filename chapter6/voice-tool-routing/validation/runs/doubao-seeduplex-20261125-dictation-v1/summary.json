@@ -1,0 +1,1706 @@
+{
+  "run_id": "doubao-seeduplex-20261125-dictation-v1",
+  "started_at": "2026-11-25T11:51:30+08:00",
+  "front": {
+    "model": "豆包实时语音模型 3.0 (Seeduplex)",
+    "session_model": "1.2.6.1",
+    "endpoint": "wss://openspeech.bytedance.com/api/v3/duplex/realtime/dialogue",
+    "voice": "zh_female_xiaohe_jupiter_bigtts",
+    "credential_env": "DOUBAO_VOICE_API_KEY"
+  },
+  "back": {
+    "model": "volcengine_maas/deepseek-v4-pro",
+    "endpoint": "<private OpenAI-compatible gateway>",
+    "credential_env": "MIFY_API_KEY",
+    "thinking": "disabled",
+    "temperature": 0
+  },
+  "sessions_ok": 40,
+  "sessions_failed": [
+    {
+      "route": "all_front",
+      "scenario": "booking_dictated",
+      "run": 1,
+      "attempt": 0,
+      "status": "error",
+      "error": "TimeoutError('timed out during opening handshake')"
+    },
+    {
+      "route": "by_property_flight_back",
+      "scenario": "booking_dictated",
+      "run": 0,
+      "attempt": 0,
+      "status": "error",
+      "error": "ConnectionClosedError(None, None, None)"
+    },
+    {
+      "route": "by_property_flight_back",
+      "scenario": "booking_dictated",
+      "run": 4,
+      "attempt": 0,
+      "status": "invalidated",
+      "error": "back LLM client retried (HTTP 429/5xx): 1.584 s of delegated time not explained by logged calls"
+    }
+  ],
+  "sessions_with_suspected_back_retry": [],
+  "sessions_with_turn_timeout": [
+    "traces/all_back/booking_dictated/run-04.attempt-0.jsonl",
+    "traces/all_back/booking_dictated/run-09.attempt-0.jsonl",
+    "traces/by_property_flight_front/booking_dictated/run-09.attempt-0.jsonl"
+  ],
+  "cells": {
+    "all_back/booking_dictated": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 12.279,
+            "p90": 18.201,
+            "min": 10.661,
+            "max": 18.276
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.756,
+            "p90": 1.918,
+            "min": 1.622,
+            "max": 2.575
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.837,
+            "p90": 0.916,
+            "min": 0.751,
+            "max": 0.954
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.21,
+            "p90": 2.908,
+            "min": 1.784,
+            "max": 7.881
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.381,
+            "p90": 2.044,
+            "min": 0.936,
+            "max": 6.926
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.456,
+            "p90": 7.177,
+            "min": 1.12,
+            "max": 7.765
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 4.22,
+            "p90": 4.645,
+            "min": 2.76,
+            "max": 4.777
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 4.348,
+            "p90": 4.848,
+            "min": 3.587,
+            "max": 4.901
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.04,
+            "p90": 17.655,
+            "min": 16.49,
+            "max": 18.06
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 89.0,
+            "p90": 93.5,
+            "min": 88.0,
+            "max": 98.0
+          }
+        },
+        "booking_dictated#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 15.556,
+            "p90": 28.174,
+            "min": 1.924,
+            "max": 34.105
+          },
+          "no_answer": 0,
+          "filler_runs": 1,
+          "filler_audio_s": {
+            "n": 1,
+            "median": 5.455,
+            "p90": 5.455,
+            "min": 5.455,
+            "max": 5.455
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.009,
+            "p90": 2.911,
+            "min": 0.85,
+            "max": 5.297
+          },
+          "first_fc_s": {
+            "n": 7,
+            "median": 5.938,
+            "p90": 6.179,
+            "min": 5.661,
+            "max": 6.482
+          },
+          "fc_after_asr_s": {
+            "n": 7,
+            "median": 4.142,
+            "p90": 4.937,
+            "min": 0.64,
+            "max": 5.127
+          },
+          "answer_after_result_s": {
+            "n": 7,
+            "median": 1.761,
+            "p90": 11.694,
+            "min": 1.125,
+            "max": 21.604
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.02,
+            "p90": 0.04,
+            "min": 0,
+            "max": 0.22
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 7.706,
+            "p90": 14.339,
+            "min": 0,
+            "max": 19.58
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.1,
+            "min": 1.0,
+            "max": 5.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 1.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.1,
+            "min": 0.0,
+            "max": 3.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 27.14,
+            "p90": 36.931,
+            "min": 7.94,
+            "max": 41.08
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 167.0,
+            "p90": 200.9,
+            "min": 119.0,
+            "max": 227.0
+          }
+        },
+        "booking_confirm#2": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 19.257,
+            "p90": 23.596,
+            "min": 13.425,
+            "max": 27.366
+          },
+          "no_answer": 0,
+          "filler_runs": 2,
+          "filler_audio_s": {
+            "n": 2,
+            "median": 6.838,
+            "p90": 11.452,
+            "min": 1.07,
+            "max": 12.605
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.885,
+            "p90": 3.925,
+            "min": 0.813,
+            "max": 14.633
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 4.79,
+            "p90": 7.205,
+            "min": 2.322,
+            "max": 14.633
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 3.178,
+            "p90": 4.888,
+            "min": 0.0,
+            "max": 5.542
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.764,
+            "p90": 2.998,
+            "min": 1.224,
+            "max": 4.061
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.625,
+            "p90": 4.708,
+            "min": 2.065,
+            "max": 4.947
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 8.511,
+            "p90": 10.706,
+            "min": 5.272,
+            "max": 11.04
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.5,
+            "p90": 5.0,
+            "min": 4.0,
+            "max": 5.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.5,
+            "p90": 3.0,
+            "min": 2.0,
+            "max": 3.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.575,
+            "p90": 20.763,
+            "min": 6.58,
+            "max": 22.23
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 93.0,
+            "p90": 114.0,
+            "min": 35.0,
+            "max": 114.0
+          }
+        }
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 89.0,
+          "p90": 93.5,
+          "min": 88.0,
+          "max": 98.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      },
+      "booking": {
+        "runs_with_booking": 10,
+        "book_calls_total": 10,
+        "runs_booked_before_confirmation": 0,
+        "runs_with_duplicate_booking": 0,
+        "wrong_bookings": 1,
+        "runs_correct_booking_after_confirmation": 9,
+        "whole_args_exact": {
+          "true": 9,
+          "n": 10
+        },
+        "field_accuracy_by_source": {
+          "heard": {
+            "true": 40,
+            "n": 40
+          },
+          "heard_dictated": {
+            "true": 39,
+            "n": 40
+          },
+          "memory": {
+            "true": 30,
+            "n": 30
+          },
+          "search_result": {
+            "true": 20,
+            "n": 20
+          }
+        },
+        "field_accuracy": {
+          "offer_id": {
+            "true": 10,
+            "n": 10
+          },
+          "quoted_price_cny": {
+            "true": 10,
+            "n": 10
+          },
+          "cabin": {
+            "true": 10,
+            "n": 10
+          },
+          "fare_rule": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.extra_checked_pieces": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.weight_kg": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].name": {
+            "true": 9,
+            "n": 10
+          },
+          "passengers[0].id_type": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_number": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.name": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.email": {
+            "true": 10,
+            "n": 10
+          }
+        },
+        "readback_mentions_price": {
+          "true": 7,
+          "n": 10
+        },
+        "wrong_values": [
+          {
+            "passengers[0].name": "陈佳怡"
+          }
+        ]
+      }
+    },
+    "all_front/booking_dictated": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 8.075,
+            "p90": 17.694,
+            "min": 5.95,
+            "max": 18.848
+          },
+          "no_answer": 0,
+          "filler_runs": 8,
+          "filler_audio_s": {
+            "n": 8,
+            "median": 1.764,
+            "p90": 5.533,
+            "min": 1.605,
+            "max": 6.239
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.862,
+            "p90": 1.376,
+            "min": 0.81,
+            "max": 1.707
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.385,
+            "p90": 11.895,
+            "min": 1.728,
+            "max": 13.851
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.542,
+            "p90": 10.224,
+            "min": 0.918,
+            "max": 12.512
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.385,
+            "p90": 1.476,
+            "min": 1.202,
+            "max": 1.525
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 4.22,
+            "p90": 4.645,
+            "min": 2.76,
+            "max": 4.777
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.065,
+            "p90": 17.452,
+            "min": 16.23,
+            "max": 17.47
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 91.0,
+            "p90": 93.0,
+            "min": 87.0,
+            "max": 93.0
+          }
+        },
+        "booking_dictated#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 3.224,
+            "p90": 3.694,
+            "min": 2.519,
+            "max": 6.045
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.916,
+            "p90": 1.037,
+            "min": 0.835,
+            "max": 1.085
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.376,
+            "p90": 1.532,
+            "min": 1.118,
+            "max": 1.534
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.39,
+            "p90": 0.552,
+            "min": 0.215,
+            "max": 0.584
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.788,
+            "p90": 2.324,
+            "min": 1.229,
+            "max": 4.769
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.02,
+            "p90": 0.02,
+            "min": 0.02,
+            "max": 0.02
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 32.21,
+            "p90": 34.973,
+            "min": 26.75,
+            "max": 35.99
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 179.0,
+            "p90": 188.5,
+            "min": 170.0,
+            "max": 202.0
+          }
+        },
+        "booking_confirm#2": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 13.023,
+            "p90": 15.144,
+            "min": 10.733,
+            "max": 20.375
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.907,
+            "p90": 2.082,
+            "min": 0.818,
+            "max": 2.906
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 7.109,
+            "p90": 7.916,
+            "min": 6.89,
+            "max": 8.217
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 6.133,
+            "p90": 7.0,
+            "min": 3.984,
+            "max": 7.284
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.487,
+            "p90": 2.899,
+            "min": 1.206,
+            "max": 8.599
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.625,
+            "p90": 4.706,
+            "min": 2.065,
+            "max": 4.927
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 7.39,
+            "p90": 8.003,
+            "min": 4.95,
+            "max": 9.83
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 39.5,
+            "p90": 44.0,
+            "min": 37.0,
+            "max": 62.0
+          }
+        }
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 91.0,
+          "p90": 93.0,
+          "min": 87.0,
+          "max": 93.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      },
+      "booking": {
+        "runs_with_booking": 10,
+        "book_calls_total": 10,
+        "runs_booked_before_confirmation": 0,
+        "runs_with_duplicate_booking": 0,
+        "wrong_bookings": 0,
+        "runs_correct_booking_after_confirmation": 10,
+        "whole_args_exact": {
+          "true": 10,
+          "n": 10
+        },
+        "field_accuracy_by_source": {
+          "heard": {
+            "true": 40,
+            "n": 40
+          },
+          "heard_dictated": {
+            "true": 40,
+            "n": 40
+          },
+          "memory": {
+            "true": 30,
+            "n": 30
+          },
+          "search_result": {
+            "true": 20,
+            "n": 20
+          }
+        },
+        "field_accuracy": {
+          "offer_id": {
+            "true": 10,
+            "n": 10
+          },
+          "quoted_price_cny": {
+            "true": 10,
+            "n": 10
+          },
+          "cabin": {
+            "true": 10,
+            "n": 10
+          },
+          "fare_rule": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.extra_checked_pieces": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.weight_kg": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].name": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_type": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_number": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.name": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.email": {
+            "true": 10,
+            "n": 10
+          }
+        },
+        "readback_mentions_price": {
+          "true": 10,
+          "n": 10
+        },
+        "wrong_values": []
+      }
+    },
+    "by_property_flight_back/booking_dictated": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 12.211,
+            "p90": 14.827,
+            "min": 10.703,
+            "max": 25.518
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.669,
+            "p90": 4.754,
+            "min": 1.498,
+            "max": 23.916
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.828,
+            "p90": 1.735,
+            "min": 0.752,
+            "max": 7.158
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.841,
+            "p90": 3.458,
+            "min": 1.499,
+            "max": 7.522
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.9,
+            "p90": 1.519,
+            "min": 0.363,
+            "max": 1.875
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.381,
+            "p90": 1.629,
+            "min": 1.083,
+            "max": 1.881
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 4.22,
+            "p90": 4.645,
+            "min": 2.76,
+            "max": 4.777
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 4.519,
+            "p90": 5.961,
+            "min": 3.637,
+            "max": 13.03
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 16.365,
+            "p90": 16.979,
+            "min": 7.77,
+            "max": 19.13
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 87.0,
+            "p90": 88.5,
+            "min": 87.0,
+            "max": 102.0
+          }
+        },
+        "booking_dictated#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 11.558,
+            "p90": 16.671,
+            "min": 1.577,
+            "max": 21.547
+          },
+          "no_answer": 0,
+          "filler_runs": 1,
+          "filler_audio_s": {
+            "n": 1,
+            "median": 1.546,
+            "p90": 1.546,
+            "min": 1.546,
+            "max": 1.546
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.029,
+            "p90": 1.497,
+            "min": 0.781,
+            "max": 3.685
+          },
+          "first_fc_s": {
+            "n": 5,
+            "median": 6.799,
+            "p90": 8.849,
+            "min": 6.303,
+            "max": 9.197
+          },
+          "fc_after_asr_s": {
+            "n": 5,
+            "median": 5.814,
+            "p90": 7.96,
+            "min": 5.254,
+            "max": 8.416
+          },
+          "answer_after_result_s": {
+            "n": 5,
+            "median": 1.473,
+            "p90": 1.767,
+            "min": 1.222,
+            "max": 1.959
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 2.729,
+            "p90": 8.234,
+            "min": 0,
+            "max": 11.997
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 3.0,
+            "min": 1.0,
+            "max": 3.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 1.5,
+            "p90": 2.0,
+            "min": 1.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.5,
+            "p90": 1.0,
+            "min": 0.0,
+            "max": 1.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 28.17,
+            "p90": 35.055,
+            "min": 21.18,
+            "max": 37.08
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 151.5,
+            "p90": 190.9,
+            "min": 111.0,
+            "max": 199.0
+          }
+        },
+        "booking_confirm#2": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 17.254,
+            "p90": 19.457,
+            "min": 14.255,
+            "max": 20.605
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.884,
+            "p90": 1.842,
+            "min": 0.775,
+            "max": 2.234
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 5.488,
+            "p90": 5.802,
+            "min": 4.112,
+            "max": 5.81
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 4.534,
+            "p90": 4.732,
+            "min": 2.312,
+            "max": 4.834
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.325,
+            "p90": 1.759,
+            "min": 0.869,
+            "max": 1.986
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.625,
+            "p90": 4.706,
+            "min": 2.065,
+            "max": 4.927
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 6.115,
+            "p90": 9.234,
+            "min": 5.268,
+            "max": 9.961
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.41,
+            "p90": 20.927,
+            "min": 11.95,
+            "max": 22.61
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 96.0,
+            "p90": 109.7,
+            "min": 83.0,
+            "max": 116.0
+          }
+        }
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 87.0,
+          "p90": 88.5,
+          "min": 87.0,
+          "max": 102.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      },
+      "booking": {
+        "runs_with_booking": 10,
+        "book_calls_total": 10,
+        "runs_booked_before_confirmation": 0,
+        "runs_with_duplicate_booking": 0,
+        "wrong_bookings": 5,
+        "runs_correct_booking_after_confirmation": 5,
+        "whole_args_exact": {
+          "true": 5,
+          "n": 10
+        },
+        "field_accuracy_by_source": {
+          "heard": {
+            "true": 40,
+            "n": 40
+          },
+          "heard_dictated": {
+            "true": 35,
+            "n": 40
+          },
+          "memory": {
+            "true": 30,
+            "n": 30
+          },
+          "search_result": {
+            "true": 20,
+            "n": 20
+          }
+        },
+        "field_accuracy": {
+          "offer_id": {
+            "true": 10,
+            "n": 10
+          },
+          "quoted_price_cny": {
+            "true": 10,
+            "n": 10
+          },
+          "cabin": {
+            "true": 10,
+            "n": 10
+          },
+          "fare_rule": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.extra_checked_pieces": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.weight_kg": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].name": {
+            "true": 5,
+            "n": 10
+          },
+          "passengers[0].id_type": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_number": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.name": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.email": {
+            "true": 10,
+            "n": 10
+          }
+        },
+        "readback_mentions_price": {
+          "true": 5,
+          "n": 10
+        },
+        "wrong_values": [
+          {
+            "passengers[0].name": "陈佳宜"
+          },
+          {
+            "passengers[0].name": "陈佳怡"
+          },
+          {
+            "passengers[0].name": "陈佳怡"
+          },
+          {
+            "passengers[0].name": "陈佳怡"
+          },
+          {
+            "passengers[0].name": "陈佳怡"
+          }
+        ]
+      }
+    },
+    "by_property_flight_front/booking_dictated": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 8.296,
+            "p90": 11.878,
+            "min": 7.134,
+            "max": 19.756
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.769,
+            "p90": 4.756,
+            "min": 1.587,
+            "max": 4.807
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.882,
+            "p90": 1.202,
+            "min": 0.773,
+            "max": 1.299
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.404,
+            "p90": 5.831,
+            "min": 1.721,
+            "max": 12.388
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.413,
+            "p90": 4.766,
+            "min": 0.948,
+            "max": 11.197
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.406,
+            "p90": 2.837,
+            "min": 1.3,
+            "max": 3.635
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 4.22,
+            "p90": 4.645,
+            "min": 2.76,
+            "max": 4.777
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.19,
+            "p90": 17.457,
+            "min": 16.68,
+            "max": 17.52
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 92.0,
+            "p90": 93.0,
+            "min": 87.0,
+            "max": 93.0
+          }
+        },
+        "booking_dictated#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 18.626,
+            "p90": 28.492,
+            "min": 13.282,
+            "max": 42.717
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.008,
+            "p90": 3.842,
+            "min": 0.799,
+            "max": 12.0
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 7.715,
+            "p90": 10.144,
+            "min": 6.226,
+            "max": 19.814
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 6.537,
+            "p90": 7.841,
+            "min": 4.572,
+            "max": 8.085
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.493,
+            "p90": 6.852,
+            "min": 0.773,
+            "max": 8.953
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 7.408,
+            "p90": 18.957,
+            "min": 4.234,
+            "max": 20.09
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 3.0,
+            "p90": 3.0,
+            "min": 3.0,
+            "max": 3.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 33.8,
+            "p90": 41.543,
+            "min": 2.35,
+            "max": 46.07
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 177.5,
+            "p90": 227.5,
+            "min": 40.0,
+            "max": 259.0
+          }
+        },
+        "booking_confirm#2": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 19.094,
+            "p90": 28.579,
+            "min": 16.655,
+            "max": 37.918
+          },
+          "no_answer": 0,
+          "filler_runs": 2,
+          "filler_audio_s": {
+            "n": 2,
+            "median": 1.155,
+            "p90": 1.389,
+            "min": 0.864,
+            "max": 1.447
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.891,
+            "p90": 9.522,
+            "min": 0.811,
+            "max": 19.978
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 6.519,
+            "p90": 9.522,
+            "min": 4.641,
+            "max": 19.978
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 4.964,
+            "p90": 6.148,
+            "min": 0.0,
+            "max": 6.605
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.408,
+            "p90": 8.819,
+            "min": 1.175,
+            "max": 10.582
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.625,
+            "p90": 4.706,
+            "min": 2.065,
+            "max": 4.927
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 6.259,
+            "p90": 11.968,
+            "min": 5.149,
+            "max": 13.579
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 20.89,
+            "p90": 22.676,
+            "min": 15.99,
+            "max": 22.82
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 110.0,
+            "p90": 118.5,
+            "min": 85.0,
+            "max": 123.0
+          }
+        }
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 92.0,
+          "p90": 93.0,
+          "min": 87.0,
+          "max": 93.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      },
+      "booking": {
+        "runs_with_booking": 10,
+        "book_calls_total": 10,
+        "runs_booked_before_confirmation": 0,
+        "runs_with_duplicate_booking": 0,
+        "wrong_bookings": 4,
+        "runs_correct_booking_after_confirmation": 6,
+        "whole_args_exact": {
+          "true": 6,
+          "n": 10
+        },
+        "field_accuracy_by_source": {
+          "heard": {
+            "true": 40,
+            "n": 40
+          },
+          "heard_dictated": {
+            "true": 36,
+            "n": 40
+          },
+          "memory": {
+            "true": 30,
+            "n": 30
+          },
+          "search_result": {
+            "true": 20,
+            "n": 20
+          }
+        },
+        "field_accuracy": {
+          "offer_id": {
+            "true": 10,
+            "n": 10
+          },
+          "quoted_price_cny": {
+            "true": 10,
+            "n": 10
+          },
+          "cabin": {
+            "true": 10,
+            "n": 10
+          },
+          "fare_rule": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.extra_checked_pieces": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.weight_kg": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].name": {
+            "true": 6,
+            "n": 10
+          },
+          "passengers[0].id_type": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_number": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.name": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.email": {
+            "true": 10,
+            "n": 10
+          }
+        },
+        "readback_mentions_price": {
+          "true": 9,
+          "n": 10
+        },
+        "wrong_values": [
+          {
+            "passengers[0].name": "陈佳宜"
+          },
+          {
+            "passengers[0].name": "陈佳怡"
+          },
+          {
+            "passengers[0].name": "陈佳怡"
+          },
+          {
+            "passengers[0].name": "陈佳怡"
+          }
+        ]
+      }
+    }
+  }
+}

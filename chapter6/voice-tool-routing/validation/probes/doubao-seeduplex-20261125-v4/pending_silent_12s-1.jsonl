@@ -1,0 +1,116 @@
+{"t": 0.143, "dir": "local", "type": "ws.connected", "logid": "20261125114805E4715B8A23DE1A679D85", "endpoint": "wss://openspeech.bytedance.com/api/v3/duplex/realtime/dialogue"}
+{"t": 0.143, "dir": "up", "type": "session.create", "session": {"model": "1.2.6.1", "instructions": "你是一位中文语音出行助理，正在和用户通电话。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。需要查询时调用工具，不要编造。", "audio": {"input": {"format": {"type": "pcm", "rate": 16000}}, "output": {"format": {"type": "pcm_s16le", "rate": 24000}, "voice": "zh_female_xiaohe_jupiter_bigtts"}}, "tools": [{"type": "function", "name": "search_flights", "description": "【慢，2到5秒】查询某天的直飞航班。返回 speak（给你念的一句话摘要）和 display（完整航班表，客户端会自动显示在用户屏幕上，不需要逐条朗读；其中的 offer_id 和价格在订票时要用）。", "parameters": {"type": "object", "properties": {"origin": {"type": "string", "description": "出发城市，不带“市”字，例如 北京"}, "destination": {"type": "string", "description": "到达城市，不带“市”字，例如 上海"}, "date": {"type": "string", "description": "出发日期，格式 YYYY-MM-DD"}}, "required": ["origin", "destination", "date"]}}]}, "extension": {"asr": {}, "tts": {}, "dialog": {}}, "event_id": "evt_1"}
+{"t": 0.1969, "dir": "down", "type": "session.created", "event_id": "event_1", "session": {"id": "abd1ea51-16b0-4ee2-aaae-858e2e940d52"}}
+{"t": 1.1975, "dir": "local", "type": "user_audio.start", "clip": "flight_search", "bytes": 122940}
+{"t": 1.7993, "dir": "down", "item_id": "62892956537276162", "round_id": 1, "type": "conversation.item.input_audio_transcription.started", "event_id": "event_2"}
+{"t": 1.7993, "dir": "down", "delta": "帮", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_3", "content_index": 0}
+{"t": 1.8793, "dir": "down", "delta": "帮我", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_4", "content_index": 0}
+{"t": 2.1114, "dir": "down", "delta": "帮我查", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_5", "content_index": 0}
+{"t": 2.3363, "dir": "down", "content_index": 0, "delta": "帮我查一下", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_6"}
+{"t": 2.9994, "dir": "down", "content_index": 0, "delta": "帮我查一下十二月", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_7"}
+{"t": 3.3891, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_8", "content_index": 0, "delta": "帮我查一下十二月三号"}
+{"t": 4.0322, "dir": "down", "delta": "帮我查一下十二月三号北京", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_9", "content_index": 0}
+{"t": 4.1965, "dir": "down", "content_index": 0, "delta": "帮我查一下十二月三号北京到", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_10"}
+{"t": 4.6022, "dir": "down", "content_index": 0, "delta": "帮我查一下十二月三号北京到上海", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_11"}
+{"t": 4.7633, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_12", "content_index": 0, "delta": "帮我查一下十二月三号北京到上海的"}
+{"t": 4.989, "dir": "down", "content_index": 0, "delta": "帮我查一下十二月三号北京到上海的航班", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_13"}
+{"t": 5.0371, "dir": "local", "type": "user_audio.end", "clip": "flight_search"}
+{"t": 5.1684, "dir": "down", "delta": "帮我查一下 12 月 3 号北京到上海的航班。", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_14", "content_index": 0}
+{"t": 5.2312, "dir": "down", "content_index": 0, "delta": "帮我查一下十二月三号北京到上海的航班", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_15"}
+{"t": 5.8668, "dir": "down", "content_index": 0, "delta": "帮我查一下 12 月 3 号北京到上海的航班。", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62892956537276162", "event_id": "event_16"}
+{"t": 5.9153, "dir": "down", "text": "帮我查一下 12 月 3 号北京到上海的航班。", "event_id": "event_17", "type": "conversation.item.input_audio_transcription.completed", "item_id": "62892956537276162", "content_index": 1}
+{"t": 6.8243, "dir": "down", "items": [{"call_id": "b8f0c68a-aa18-446e-8442-40b5530fa651", "name": "search_flights", "arguments": "{\"date\":\"2026-12-03\",\"destination\":\"上海\",\"origin\":\"北京\"}"}], "type": "response.function_call_arguments.done", "event_id": "event_18"}
+{"t": 18.8246, "dir": "up", "type": "conversation.item.create", "items": [{"type": "message", "role": "tool", "call_id": "b8f0c68a-aa18-446e-8442-40b5530fa651", "content": [{"type": "input_text", "text": "{\"speak\": \"12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00从首都T2起飞，11:15到虹桥T2。完整列表已经显示在屏幕上。\"}"}]}], "event_id": "evt_2"}
+{"t": 19.3024, "dir": "down", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_19", "delta": "12月"}
+{"t": 19.3595, "dir": "down", "delta": "3日北京", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_20"}
+{"t": 19.5232, "dir": "down", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_21", "delta": "到"}
+{"t": 19.5563, "dir": "down", "delta": "上海", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_22"}
+{"t": 19.5746, "dir": "down", "delta": "有6个", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_23"}
+{"t": 19.6227, "dir": "down", "delta": "直飞航班", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_24"}
+{"t": 19.8743, "dir": "down", "delta": "，", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_25"}
+{"t": 19.8743, "dir": "down", "type": "response.output_audio.started", "event_id": "event_26", "question_id": "62892956537276162", "response_id": "62892956537275138", "tts_type": "default"}
+{"t": 19.9504, "dir": "down", "delta": "最早", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_27"}
+{"t": 19.9963, "dir": "down", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_28", "delta": "07:", "question_id": "62892956537276162"}
+{"t": 20.0506, "dir": "down", "delta": "30起飞", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_29"}
+{"t": 20.1464, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_30", "audio_bytes": 16384}
+{"t": 20.1784, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_31", "audio_bytes": 20480}
+{"t": 20.1805, "dir": "down", "delta": "，", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_32"}
+{"t": 20.2396, "dir": "down", "event_id": "event_33", "delta": "最晚", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta"}
+{"t": 20.2742, "dir": "down", "delta": "21:", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_34"}
+{"t": 20.3164, "dir": "down", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_35", "delta": "05起飞"}
+{"t": 20.3692, "dir": "down", "delta": null, "event_id": "event_36", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 20.5439, "dir": "down", "delta": "。", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_37"}
+{"t": 20.6244, "dir": "down", "type": "response.output_text.delta", "event_id": "event_38", "delta": "经济", "question_id": "62892956537276162", "response_id": "62892956537275138"}
+{"t": 20.6712, "dir": "down", "type": "response.output_text.delta", "event_id": "event_39", "delta": "舱", "question_id": "62892956537276162", "response_id": "62892956537275138"}
+{"t": 20.7191, "dir": "down", "delta": "最低68", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_40"}
+{"t": 20.7276, "dir": "down", "delta": null, "event_id": "event_41", "type": "response.output_audio.delta", "audio_bytes": 20480}
+{"t": 20.7679, "dir": "down", "delta": "0元", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_42"}
+{"t": 20.8925, "dir": "down", "delta": "，", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_43"}
+{"t": 20.996, "dir": "down", "delta": "是", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_44"}
+{"t": 21.0442, "dir": "down", "delta": "东航MU", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_45"}
+{"t": 21.0746, "dir": "down", "delta": "510", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_46"}
+{"t": 21.0805, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_47", "audio_bytes": 18432}
+{"t": 21.1788, "dir": "down", "event_id": "event_48", "delta": "3", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta"}
+{"t": 21.2785, "dir": "down", "type": "response.output_text.delta", "event_id": "event_49", "delta": "，", "question_id": "62892956537276162", "response_id": "62892956537275138"}
+{"t": 21.3084, "dir": "down", "delta": "09:", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_50"}
+{"t": 21.3502, "dir": "down", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_51", "delta": "00从"}
+{"t": 21.4624, "dir": "down", "delta": "首都", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_52"}
+{"t": 21.4823, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_53", "audio_bytes": 18432}
+{"t": 21.5353, "dir": "down", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_54", "delta": "T"}
+{"t": 21.5353, "dir": "down", "delta": null, "event_id": "event_55", "type": "response.output_audio.delta", "audio_bytes": 16384}
+{"t": 21.5744, "dir": "down", "type": "response.output_text.delta", "event_id": "event_56", "delta": "2出发", "question_id": "62892956537276162", "response_id": "62892956537275138"}
+{"t": 21.6142, "dir": "down", "delta": "，11", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_57"}
+{"t": 21.6652, "dir": "down", "delta": ":", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_58"}
+{"t": 21.7915, "dir": "down", "delta": "1", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_59"}
+{"t": 21.8468, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_60", "audio_bytes": 22528}
+{"t": 21.8596, "dir": "down", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_61", "delta": "5", "question_id": "62892956537276162"}
+{"t": 21.8981, "dir": "down", "event_id": "event_62", "delta": "到", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta"}
+{"t": 21.9527, "dir": "down", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_63", "delta": "虹桥T2"}
+{"t": 21.9987, "dir": "down", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_64", "delta": "，完整", "question_id": "62892956537276162"}
+{"t": 22.1072, "dir": "down", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_65", "delta": "航班"}
+{"t": 22.1986, "dir": "down", "delta": "表", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_66"}
+{"t": 22.2263, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_67", "audio_bytes": 18432}
+{"t": 22.2346, "dir": "down", "delta": "可以", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_68"}
+{"t": 22.2748, "dir": "down", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_69", "delta": "看屏幕上", "question_id": "62892956537276162"}
+{"t": 22.3241, "dir": "down", "delta": "的内容", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta", "event_id": "event_70"}
+{"t": 22.4504, "dir": "down", "event_id": "event_71", "delta": "。", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.delta"}
+{"t": 22.5423, "dir": "down", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_text.done", "text": "12月3日北京到上海有6个直飞航班，最早07:30起飞，最晚21:05起飞。经济舱最低680元，是东航MU5103，09:00从首都T2出发，11:15到虹桥T2，完整航班表可以看屏幕上的内容。", "event_id": "event_72"}
+{"t": 22.5833, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_73", "audio_bytes": 20480}
+{"t": 22.6369, "dir": "down", "delta": null, "event_id": "event_74", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 22.6922, "dir": "down", "delta": null, "event_id": "event_75", "type": "response.output_audio.delta", "audio_bytes": 12288}
+{"t": 22.7386, "dir": "down", "delta": null, "event_id": "event_76", "type": "response.output_audio.delta", "audio_bytes": 26624}
+{"t": 22.7919, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_77", "audio_bytes": 18432}
+{"t": 22.8563, "dir": "down", "delta": null, "event_id": "event_78", "type": "response.output_audio.delta", "audio_bytes": 20480}
+{"t": 22.9164, "dir": "down", "delta": null, "event_id": "event_79", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 22.9725, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_80", "audio_bytes": 16384}
+{"t": 23.0129, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_81", "audio_bytes": 22528}
+{"t": 23.0602, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_82", "audio_bytes": 18432}
+{"t": 23.1166, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_83", "audio_bytes": 20480}
+{"t": 23.1697, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_84", "audio_bytes": 18432}
+{"t": 23.2206, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_85", "audio_bytes": 18432}
+{"t": 23.2488, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_86", "audio_bytes": 20480}
+{"t": 23.2976, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_87", "audio_bytes": 18432}
+{"t": 23.3464, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_88", "audio_bytes": 18432}
+{"t": 23.4013, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_89", "audio_bytes": 20480}
+{"t": 23.4493, "dir": "down", "delta": null, "event_id": "event_90", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 23.5012, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_91", "audio_bytes": 2048}
+{"t": 23.5526, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_92", "audio_bytes": 36864}
+{"t": 23.6007, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_93", "audio_bytes": 18432}
+{"t": 23.6547, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_94", "audio_bytes": 20480}
+{"t": 23.6888, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_95", "audio_bytes": 18432}
+{"t": 23.7532, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_96", "audio_bytes": 18432}
+{"t": 23.8076, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_97", "audio_bytes": 20480}
+{"t": 23.8584, "dir": "down", "event_id": "event_98", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 18432}
+{"t": 23.9015, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_99", "audio_bytes": 20480}
+{"t": 23.9643, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_100", "audio_bytes": 18432}
+{"t": 24.0116, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_101", "audio_bytes": 8192}
+{"t": 24.0623, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_102", "audio_bytes": 30720}
+{"t": 24.1013, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_103", "audio_bytes": 18432}
+{"t": 24.1649, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_104", "audio_bytes": 20480}
+{"t": 24.2144, "dir": "down", "event_id": "event_105", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 18432}
+{"t": 24.2663, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_106", "audio_bytes": 20480}
+{"t": 24.3146, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_107", "audio_bytes": 16384}
+{"t": 24.3463, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_108", "audio_bytes": 13434}
+{"t": 24.3464, "dir": "down", "question_id": "62892956537276162", "response_id": "62892956537275138", "type": "response.output_audio.done", "event_id": "event_109"}
+{"t": 33.0382, "dir": "up", "type": "session.close", "event_id": "evt_3"}
+{"t": 33.7198, "dir": "down", "type": "session.closed", "event_id": "event_110"}

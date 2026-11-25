@@ -1,0 +1,113 @@
+{"t": 0.1616, "dir": "local", "type": "ws.connected", "logid": "20261125111800B1EE10E36F16ACBD6ED8", "endpoint": "wss://openspeech.bytedance.com/api/v3/duplex/realtime/dialogue"}
+{"t": 0.1616, "dir": "up", "type": "session.create", "session": {"model": "1.2.6.1", "instructions": "你是出行助理。今天是2026年11月25日，星期三。", "audio": {"input": {"format": {"type": "pcm", "rate": 16000}}, "output": {"format": {"type": "pcm_s16le", "rate": 24000}, "voice": "zh_female_xiaohe_jupiter_bigtts"}}, "tools": []}, "extension": {"asr": {}, "tts": {}, "dialog": {}}, "event_id": "evt_1"}
+{"t": 0.2116, "dir": "down", "type": "session.created", "event_id": "event_1", "session": {"id": "c8d4ba9f-b0e2-4077-80a1-8044c60be87f"}}
+{"t": 0.713, "dir": "local", "type": "user_audio.start", "clip": "weather", "bytes": 60600}
+{"t": 1.3535, "dir": "down", "item_id": "62856897212407810", "round_id": 1, "type": "conversation.item.input_audio_transcription.started", "event_id": "event_2"}
+{"t": 1.3578, "dir": "down", "event_id": "event_3", "content_index": 0, "delta": "明天", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212407810"}
+{"t": 1.8885, "dir": "down", "content_index": 0, "delta": "明天杭州", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212407810", "event_id": "event_4"}
+{"t": 2.3442, "dir": "down", "delta": "明天杭州天气", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212407810", "event_id": "event_5", "content_index": 0}
+{"t": 2.5849, "dir": "down", "item_id": "62856897212407810", "event_id": "event_6", "content_index": 0, "delta": "明天杭州天气怎么样", "type": "conversation.item.input_audio_transcription.delta"}
+{"t": 2.5928, "dir": "local", "type": "user_audio.end", "clip": "weather"}
+{"t": 2.77, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212407810", "event_id": "event_7", "content_index": 0, "delta": "明天杭州天气怎么样？"}
+{"t": 2.8281, "dir": "down", "content_index": 0, "delta": "明天杭州天气怎么样", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212407810", "event_id": "event_8"}
+{"t": 3.603, "dir": "down", "delta": "明天杭州天气怎么样？", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212407810", "event_id": "event_9", "content_index": 0}
+{"t": 3.613, "dir": "down", "type": "conversation.item.input_audio_transcription.completed", "item_id": "62856897212407810", "content_index": 1, "text": "明天杭州天气怎么样？", "event_id": "event_10"}
+{"t": 3.613, "dir": "down", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_11", "delta": "根据预报", "question_id": "62856897212407810"}
+{"t": 3.613, "dir": "down", "delta": "，20", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_12"}
+{"t": 3.6591, "dir": "down", "tts_type": "default", "type": "response.output_audio.started", "event_id": "event_13", "question_id": "62856897212407810", "response_id": "62856897212407042"}
+{"t": 3.661, "dir": "down", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_14", "delta": "2", "question_id": "62856897212407810"}
+{"t": 3.7094, "dir": "down", "delta": "6", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_15"}
+{"t": 3.7357, "dir": "down", "event_id": "event_16", "delta": "年", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta"}
+{"t": 3.7744, "dir": "down", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_17", "delta": "11月"}
+{"t": 3.825, "dir": "down", "type": "response.output_text.delta", "event_id": "event_18", "delta": "26日", "question_id": "62856897212407810", "response_id": "62856897212407042"}
+{"t": 3.9032, "dir": "down", "delta": "杭州", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_19"}
+{"t": 3.9787, "dir": "down", "delta": "大概率", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_20"}
+{"t": 4.0242, "dir": "down", "delta": "是多云到", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_21"}
+{"t": 4.0563, "dir": "down", "delta": "晴，气温", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_22"}
+{"t": 4.2302, "dir": "down", "delta": "在", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_23"}
+{"t": 4.2828, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_24", "audio_bytes": 16384}
+{"t": 4.2837, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_25", "audio_bytes": 14336}
+{"t": 4.3137, "dir": "down", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_26", "delta": "8", "question_id": "62856897212407810"}
+{"t": 4.3137, "dir": "down", "delta": "到18", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_27"}
+{"t": 4.3366, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_28", "audio_bytes": 24576}
+{"t": 4.3691, "dir": "down", "delta": "摄氏度", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_29"}
+{"t": 4.3883, "dir": "down", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_30", "delta": "之间，"}
+{"t": 4.5404, "dir": "down", "delta": "早晚", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_31"}
+{"t": 4.5775, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_32", "audio_bytes": 18432}
+{"t": 4.5775, "dir": "down", "delta": "温差", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_33"}
+{"t": 4.6426, "dir": "down", "delta": "大，出门", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_34"}
+{"t": 4.6426, "dir": "down", "delta": "可以备件", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_35"}
+{"t": 4.6919, "dir": "down", "type": "response.output_text.delta", "event_id": "event_36", "delta": "薄", "question_id": "62856897212407810", "response_id": "62856897212407042"}
+{"t": 4.7949, "dir": "down", "delta": null, "event_id": "event_37", "type": "response.output_audio.delta", "audio_bytes": 20480}
+{"t": 4.8383, "dir": "down", "delta": "外套", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_38"}
+{"t": 4.8959, "dir": "down", "delta": "。", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.delta", "event_id": "event_39"}
+{"t": 4.906, "dir": "down", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_text.done", "text": "根据预报，2026年11月26日杭州大概率是多云到晴，气温在8到18摄氏度之间，早晚温差大，出门可以备件薄外套。", "event_id": "event_40"}
+{"t": 5.0325, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_41", "audio_bytes": 18432}
+{"t": 5.0958, "dir": "down", "event_id": "event_42", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 18432}
+{"t": 5.1522, "dir": "down", "event_id": "event_43", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 20480}
+{"t": 5.2043, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_44", "audio_bytes": 20480}
+{"t": 5.2892, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_45", "audio_bytes": 18432}
+{"t": 5.315, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_46", "audio_bytes": 18432}
+{"t": 5.355, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_47", "audio_bytes": 14336}
+{"t": 5.4094, "dir": "down", "delta": null, "event_id": "event_48", "type": "response.output_audio.delta", "audio_bytes": 24576}
+{"t": 5.4559, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_49", "audio_bytes": 18432}
+{"t": 5.5237, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_50", "audio_bytes": 20480}
+{"t": 5.5765, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_51", "audio_bytes": 18432}
+{"t": 5.6574, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_52", "audio_bytes": 18432}
+{"t": 5.7023, "dir": "down", "event_id": "event_53", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 14336}
+{"t": 5.7632, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_54", "audio_bytes": 24576}
+{"t": 5.8142, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_55", "audio_bytes": 20480}
+{"t": 5.8639, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_56", "audio_bytes": 12288}
+{"t": 5.9381, "dir": "down", "delta": null, "event_id": "event_57", "type": "response.output_audio.delta", "audio_bytes": 26624}
+{"t": 5.9932, "dir": "down", "delta": null, "event_id": "event_58", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 6.0459, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_59", "audio_bytes": 20480}
+{"t": 6.0784, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_60", "audio_bytes": 18432}
+{"t": 6.1267, "dir": "down", "event_id": "event_61", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 11968}
+{"t": 6.1478, "dir": "down", "event_id": "event_62", "question_id": "62856897212407810", "response_id": "62856897212407042", "type": "response.output_audio.done"}
+{"t": 9.7132, "dir": "up", "type": "conversation.item.create", "items": [{"type": "message", "role": "user", "content": [{"type": "input_text", "text": "记一下，我的国航常旅客卡号是 CA 8839 2201 57。"}]}, {"type": "message", "role": "assistant", "content": [{"type": "input_text", "text": "好的，记住了。"}]}], "event_id": "evt_2"}
+{"t": 9.7691, "dir": "down", "type": "conversation.item.added", "items": [{"id": "62938200584196866", "role": "user", "timestamp": 1795576690370, "content": [{"type": "input_text", "text": "记一下，我的国航常旅客卡号是 CA 8839 2201 57。"}]}, {"id": "62938200584197122", "role": "assistant", "timestamp": 1795576690371, "content": [{"text": "好的，记住了。", "type": "input_text"}]}], "event_id": "event_63"}
+{"t": 10.7327, "dir": "local", "type": "user_audio.start", "clip": "memory", "bytes": 76078}
+{"t": 11.597, "dir": "down", "type": "response.done", "event_id": "event_64", "response": {"usage": {"total_tokens": 2442, "input_tokens": 72, "output_tokens": 334, "input_token_details": {"text_tokens": 0, "audio_tokens": 72, "image_tokens": 0, "cached_tokens": 2036, "cached_tokens_details": {"text_tokens": 2036, "audio_tokens": 0, "image_tokens": 0}}, "output_token_details": {"text_tokens": 79, "audio_tokens": 255}, "duration_details": {"vision_duration_ms": 0, "audio_duration_ms": 0}}}}
+{"t": 11.597, "dir": "down", "item_id": "62856897212411394", "round_id": 2, "type": "conversation.item.input_audio_transcription.started", "event_id": "event_65"}
+{"t": 11.9621, "dir": "down", "content_index": 0, "delta": "你还记得我的", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212411394", "event_id": "event_66"}
+{"t": 12.529, "dir": "down", "content_index": 0, "delta": "你还记得我的长", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212411394", "event_id": "event_67"}
+{"t": 12.7781, "dir": "down", "content_index": 0, "delta": "你还记得我的长旅客", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212411394", "event_id": "event_68"}
+{"t": 13.0928, "dir": "local", "type": "user_audio.end", "clip": "memory"}
+{"t": 13.1577, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212411394", "event_id": "event_69", "content_index": 0, "delta": "你还记得我的长旅客卡号"}
+{"t": 13.3482, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212411394", "event_id": "event_70", "content_index": 0, "delta": "你还记得我的长旅客卡号吗"}
+{"t": 13.4652, "dir": "down", "delta": "你还记得我的长旅客卡号吗？", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212411394", "event_id": "event_71", "content_index": 0}
+{"t": 13.5011, "dir": "down", "event_id": "event_72", "content_index": 0, "delta": "你还记得我的长旅客卡号吗", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62856897212411394"}
+{"t": 13.9541, "dir": "down", "item_id": "62856897212411394", "event_id": "event_73", "content_index": 0, "delta": "你还记得我的长旅客卡号吗？", "type": "conversation.item.input_audio_transcription.delta"}
+{"t": 13.9541, "dir": "down", "type": "conversation.item.input_audio_transcription.completed", "item_id": "62856897212411394", "content_index": 1, "text": "你还记得我的长旅客卡号吗？", "event_id": "event_74"}
+{"t": 14.0062, "dir": "down", "response_id": "62856897212412674", "type": "response.output_text.delta", "event_id": "event_75", "delta": "记得，你的", "question_id": "62856897212411394"}
+{"t": 14.0189, "dir": "down", "question_id": "62856897212411394", "response_id": "62856897212412674", "tts_type": "default", "type": "response.output_audio.started", "event_id": "event_76"}
+{"t": 14.0524, "dir": "down", "question_id": "62856897212411394", "response_id": "62856897212412674", "type": "response.output_text.delta", "event_id": "event_77", "delta": "国航常"}
+{"t": 14.177, "dir": "down", "type": "response.output_text.delta", "event_id": "event_78", "delta": "旅客", "question_id": "62856897212411394", "response_id": "62856897212412674"}
+{"t": 14.2796, "dir": "down", "delta": "卡号", "question_id": "62856897212411394", "response_id": "62856897212412674", "type": "response.output_text.delta", "event_id": "event_79"}
+{"t": 14.3284, "dir": "down", "delta": "是CA ", "question_id": "62856897212411394", "response_id": "62856897212412674", "type": "response.output_text.delta", "event_id": "event_80"}
+{"t": 14.3666, "dir": "down", "delta": "883", "question_id": "62856897212411394", "response_id": "62856897212412674", "type": "response.output_text.delta", "event_id": "event_81"}
+{"t": 14.5082, "dir": "down", "type": "response.output_text.delta", "event_id": "event_82", "delta": "9", "question_id": "62856897212411394", "response_id": "62856897212412674"}
+{"t": 14.6063, "dir": "down", "response_id": "62856897212412674", "type": "response.output_text.delta", "event_id": "event_83", "delta": " ", "question_id": "62856897212411394"}
+{"t": 14.6508, "dir": "down", "event_id": "event_84", "delta": "220", "question_id": "62856897212411394", "response_id": "62856897212412674", "type": "response.output_text.delta"}
+{"t": 14.7079, "dir": "down", "delta": "1 5", "question_id": "62856897212411394", "response_id": "62856897212412674", "type": "response.output_text.delta", "event_id": "event_85"}
+{"t": 14.746, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_86", "audio_bytes": 16384}
+{"t": 14.7548, "dir": "down", "event_id": "event_87", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 8192}
+{"t": 14.858, "dir": "down", "response_id": "62856897212412674", "type": "response.output_text.delta", "event_id": "event_88", "delta": "7", "question_id": "62856897212411394"}
+{"t": 14.9399, "dir": "down", "delta": "。", "question_id": "62856897212411394", "response_id": "62856897212412674", "type": "response.output_text.delta", "event_id": "event_89"}
+{"t": 14.9951, "dir": "down", "text": "记得，你的国航常旅客卡号是CA 8839 2201 57。", "event_id": "event_90", "question_id": "62856897212411394", "response_id": "62856897212412674", "type": "response.output_text.done"}
+{"t": 15.344, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_91", "audio_bytes": 28672}
+{"t": 15.3533, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_92", "audio_bytes": 20480}
+{"t": 15.4041, "dir": "down", "delta": null, "event_id": "event_93", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 15.4706, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_94", "audio_bytes": 20480}
+{"t": 15.5229, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_95", "audio_bytes": 18432}
+{"t": 15.5741, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_96", "audio_bytes": 18432}
+{"t": 15.6382, "dir": "down", "event_id": "event_97", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 20480}
+{"t": 15.6876, "dir": "down", "event_id": "event_98", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 18432}
+{"t": 15.7804, "dir": "down", "delta": null, "event_id": "event_99", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 15.8103, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_100", "audio_bytes": 20480}
+{"t": 15.8316, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_101", "audio_bytes": 6144}
+{"t": 15.8348, "dir": "down", "delta": null, "event_id": "event_102", "type": "response.output_audio.delta", "audio_bytes": 13500}
+{"t": 15.8348, "dir": "down", "question_id": "62856897212411394", "response_id": "62856897212412674", "type": "response.output_audio.done", "event_id": "event_103"}
+{"t": 20.2392, "dir": "down", "type": "response.done", "event_id": "event_104", "response": {"usage": {"total_tokens": 2429, "input_tokens": 454, "output_tokens": 183, "input_token_details": {"text_tokens": 328, "audio_tokens": 126, "image_tokens": 0, "cached_tokens": 1792, "cached_tokens_details": {"text_tokens": 1792, "audio_tokens": 0, "image_tokens": 0}}, "output_token_details": {"text_tokens": 55, "audio_tokens": 128}, "duration_details": {"vision_duration_ms": 0, "audio_duration_ms": 0}}}}
+{"t": 22.7135, "dir": "up", "type": "session.close", "event_id": "evt_3"}
+{"t": 22.7988, "dir": "down", "type": "session.closed", "event_id": "event_105"}

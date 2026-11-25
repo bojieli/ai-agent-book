@@ -1,0 +1,589 @@
+{
+  "experiment": "voice-tool-routing",
+  "run_id": "doubao-seeduplex-20261125-v1",
+  "started_at": "2026-11-25T11:34:37+08:00",
+  "front": {
+    "model": "豆包实时语音模型 3.0 (Seeduplex)",
+    "session_model": "1.2.6.1",
+    "endpoint": "wss://openspeech.bytedance.com/api/v3/duplex/realtime/dialogue",
+    "voice": "zh_female_xiaohe_jupiter_bigtts",
+    "credential_env": "DOUBAO_VOICE_API_KEY"
+  },
+  "back": {
+    "model": "volcengine_maas/deepseek-v4-pro",
+    "endpoint": "<private OpenAI-compatible gateway>",
+    "credential_env": "MIFY_API_KEY",
+    "thinking": "disabled",
+    "temperature": 0
+  },
+  "tools": {
+    "simulated": true,
+    "latency_seed": 20261125,
+    "fixed_today": "2026-11-25"
+  },
+  "routes": {
+    "all_front": {
+      "front_tools": [
+        "get_weather",
+        "memory_lookup",
+        "web_search",
+        "search_flights",
+        "book_flight"
+      ],
+      "delegate": false,
+      "back_tools": [],
+      "inject_memory": false,
+      "front_instructions": "你是一位中文语音出行助理，正在和用户通电话。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。\n规则：\n1. 涉及天气、航班、搜索、用户资料、订票的内容，必须通过工具得到，不要凭印象编造。\n2. 工具说明里标了“慢”的，调用前先说一句很短的话（例如“好的，我查一下”），然后立刻调用；标了“快”的直接调用，不用铺垫。\n3. 回答要口语化、简短。工具结果里的 speak 字段是给你口头说的；display 字段客户端会显示在用户屏幕上，不要逐条朗读。\n4. 订票会扣款。调用 book_flight 之前，必须先把航班、舱位、退改规则、行李、乘机人和票价向用户复述一遍，并且在复述之后听到用户明确说确认，才能调用；用户提出要订、但还没有对你的复述表示确认时，绝不能调用。乘机人和联系人资料要用 memory_lookup 查，不要让用户口述证件号。\n",
+      "back_instructions": null,
+      "front_tool_schemas": [
+        {
+          "type": "function",
+          "name": "get_weather",
+          "description": "【快，约0.2秒】查询某城市某一天的天气。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string",
+                "description": "城市名，不带“市”字，例如 杭州"
+              },
+              "date": {
+                "type": "string",
+                "description": "日期，格式 YYYY-MM-DD"
+              }
+            },
+            "required": [
+              "city",
+              "date"
+            ]
+          }
+        },
+        {
+          "type": "function",
+          "name": "memory_lookup",
+          "description": "【快，约0.02秒】查询关于这位用户的长期记忆。passenger_profile=本人乘机人资料（姓名、证件、手机、邮箱）；frequent_flyer=常旅客卡号；seat_preference=座位偏好。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "topic": {
+                "type": "string",
+                "enum": [
+                  "passenger_profile",
+                  "frequent_flyer",
+                  "seat_preference"
+                ],
+                "description": "记忆主题"
+              }
+            },
+            "required": [
+              "topic"
+            ]
+          }
+        },
+        {
+          "type": "function",
+          "name": "web_search",
+          "description": "【慢，约3秒】联网搜索，返回较长的网页摘要文本，需要你提炼后口头回答。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "搜索关键词"
+              }
+            },
+            "required": [
+              "query"
+            ]
+          }
+        },
+        {
+          "type": "function",
+          "name": "search_flights",
+          "description": "【慢，2到5秒】查询某天的直飞航班。返回 speak（给你念的一句话摘要）和 display（完整航班表，客户端会自动显示在用户屏幕上，不需要逐条朗读；其中的 offer_id 和价格在订票时要用）。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "origin": {
+                "type": "string",
+                "description": "出发城市，不带“市”字，例如 北京"
+              },
+              "destination": {
+                "type": "string",
+                "description": "到达城市，不带“市”字，例如 上海"
+              },
+              "date": {
+                "type": "string",
+                "description": "出发日期，格式 YYYY-MM-DD"
+              }
+            },
+            "required": [
+              "origin",
+              "destination",
+              "date"
+            ]
+          }
+        },
+        {
+          "type": "function",
+          "name": "book_flight",
+          "description": "【慢，2到5秒；有副作用：会扣款并出票】为用户下单订票。只能在向用户复述订单并得到明确确认之后调用。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "offer_id": {
+                "type": "string",
+                "description": "search_flights 结果中该航班的 offer_id，原样填写"
+              },
+              "cabin": {
+                "type": "string",
+                "enum": [
+                  "economy",
+                  "business"
+                ],
+                "description": "舱位"
+              },
+              "fare_rule": {
+                "type": "string",
+                "enum": [
+                  "basic",
+                  "flexible"
+                ],
+                "description": "basic=不可退改；flexible=可免费退改"
+              },
+              "quoted_price_cny": {
+                "type": "integer",
+                "description": "search_flights 结果中该航班、该舱位、该退改规则对应的票价（元）"
+              },
+              "baggage": {
+                "type": "object",
+                "description": "额外加购的托运行李；不加购则 extra_checked_pieces 为 0",
+                "properties": {
+                  "extra_checked_pieces": {
+                    "type": "integer",
+                    "description": "加购件数"
+                  },
+                  "weight_kg": {
+                    "type": "integer",
+                    "description": "每件重量（公斤）"
+                  }
+                },
+                "required": [
+                  "extra_checked_pieces",
+                  "weight_kg"
+                ]
+              },
+              "passengers": {
+                "type": "array",
+                "description": "乘机人列表",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "证件上的姓名"
+                    },
+                    "id_type": {
+                      "type": "string",
+                      "enum": [
+                        "id_card",
+                        "passport"
+                      ],
+                      "description": "证件类型"
+                    },
+                    "id_number": {
+                      "type": "string",
+                      "description": "证件号"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "description": "手机号，11位数字"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "id_type",
+                    "id_number",
+                    "phone"
+                  ]
+                }
+              },
+              "contact": {
+                "type": "object",
+                "description": "订单联系人",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "手机号，11位数字"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "phone",
+                  "email"
+                ]
+              }
+            },
+            "required": [
+              "offer_id",
+              "cabin",
+              "fare_rule",
+              "quoted_price_cny",
+              "baggage",
+              "passengers",
+              "contact"
+            ]
+          }
+        }
+      ]
+    },
+    "all_back": {
+      "front_tools": [],
+      "delegate": true,
+      "back_tools": [
+        "get_weather",
+        "memory_lookup",
+        "web_search",
+        "search_flights",
+        "book_flight"
+      ],
+      "inject_memory": false,
+      "front_instructions": "你是一位中文语音出行助理，正在和用户通电话。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。\n规则：\n1. 涉及天气、航班、搜索、用户资料、订票的内容，必须通过工具得到，不要凭印象编造。\n2. 工具说明里标了“慢”的，调用前先说一句很短的话（例如“好的，我查一下”），然后立刻调用；标了“快”的直接调用，不用铺垫。\n3. 回答要口语化、简短。工具结果里的 speak 字段是给你口头说的；display 字段客户端会显示在用户屏幕上，不要逐条朗读。\n4. 订票会扣款，由后台助理办理：用户提出订票或补充订票条件时，把任务委派给后台；后台会返回需要向用户复述核对的内容，你照着复述并请用户确认；用户明确确认后，再委派后台下单。\n5. 你自己不能查询或办理任何事情，凡是需要工具的请求一律调用 delegate 交给后台助理，再把后台返回的话转述给用户。\n",
+      "back_instructions": "你是语音出行助理的后台 Agent。前台的实时语音模型正在和用户通电话，它把任务委派给你。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。\n你会收到：通话记录（语音识别转写，可能有同音错字）、本次通话里已经执行过的工具调用及结果、前台委派的任务。\n规则：\n1. 用工具完成任务，不要编造。本次通话里已经有结果的查询不要重复调用。\n2. book_flight 会扣款并出票。只有当通话记录显示助理已经向用户复述过订单的航班、舱位、退改规则、行李、乘机人和票价，并且用户在复述之后明确确认，才能调用 book_flight。否则不要下单，而是返回一段需要前台向用户复述核对的内容，并请用户确认。\n3. 最后只输出一段给前台朗读的话：口语化、简短，不要 Markdown、不要列表、不要逐条念航班表（search_flights 的完整列表会自动显示在用户屏幕上）。\n乘机人和联系人资料用 memory_lookup 查。\n",
+      "front_tool_schemas": [
+        {
+          "type": "function",
+          "name": "delegate",
+          "description": "【慢，需要等待】把任务交给后台助理处理。后台助理能看到完整的通话记录，并且可以查天气、查用户记忆、联网搜索、查航班、订票。用一句话说清楚要办什么；后台办完会返回一段话，你把它转述给用户。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "task": {
+                "type": "string",
+                "description": "要后台完成的任务，用自然语言描述，带上用户刚才提到的关键条件"
+              }
+            },
+            "required": [
+              "task"
+            ]
+          }
+        }
+      ]
+    },
+    "by_property_flight_front": {
+      "front_tools": [
+        "get_weather",
+        "search_flights"
+      ],
+      "delegate": true,
+      "back_tools": [
+        "web_search",
+        "search_flights",
+        "book_flight"
+      ],
+      "inject_memory": true,
+      "front_instructions": "你是一位中文语音出行助理，正在和用户通电话。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。\n规则：\n1. 涉及天气、航班、搜索、用户资料、订票的内容，必须通过工具得到，不要凭印象编造。\n2. 工具说明里标了“慢”的，调用前先说一句很短的话（例如“好的，我查一下”），然后立刻调用；标了“快”的直接调用，不用铺垫。\n3. 回答要口语化、简短。工具结果里的 speak 字段是给你口头说的；display 字段客户端会显示在用户屏幕上，不要逐条朗读。\n4. 订票会扣款，由后台助理办理：用户提出订票或补充订票条件时，把任务委派给后台；后台会返回需要向用户复述核对的内容，你照着复述并请用户确认；用户明确确认后，再委派后台下单。\n5. 你能直接调用的工具只有列出来的这几个；其他需要查询或办理的事情调用 delegate 交给后台助理，再把后台返回的话转述给用户。用户记忆已经附在下面，可以直接使用，不需要再查。\n\n【运行时自动检索到的用户记忆，可直接使用】\n- 用户本人的乘机人资料：姓名 周明远；证件类型 护照(passport)；证件号 EK3927461；手机 13671928840；邮箱 zhou.mingyuan@example.com。\n- 用户的国航凤凰知音常旅客卡号是 CA 8839 2201 57。\n- 用户偏好靠过道的座位。\n",
+      "back_instructions": "你是语音出行助理的后台 Agent。前台的实时语音模型正在和用户通电话，它把任务委派给你。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。\n你会收到：通话记录（语音识别转写，可能有同音错字）、本次通话里已经执行过的工具调用及结果、前台委派的任务。\n规则：\n1. 用工具完成任务，不要编造。本次通话里已经有结果的查询不要重复调用。\n2. book_flight 会扣款并出票。只有当通话记录显示助理已经向用户复述过订单的航班、舱位、退改规则、行李、乘机人和票价，并且用户在复述之后明确确认，才能调用 book_flight。否则不要下单，而是返回一段需要前台向用户复述核对的内容，并请用户确认。\n3. 最后只输出一段给前台朗读的话：口语化、简短，不要 Markdown、不要列表、不要逐条念航班表（search_flights 的完整列表会自动显示在用户屏幕上）。\n\n【运行时自动检索到的用户记忆，可直接使用】\n- 用户本人的乘机人资料：姓名 周明远；证件类型 护照(passport)；证件号 EK3927461；手机 13671928840；邮箱 zhou.mingyuan@example.com。\n- 用户的国航凤凰知音常旅客卡号是 CA 8839 2201 57。\n- 用户偏好靠过道的座位。\n",
+      "front_tool_schemas": [
+        {
+          "type": "function",
+          "name": "get_weather",
+          "description": "【快，约0.2秒】查询某城市某一天的天气。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string",
+                "description": "城市名，不带“市”字，例如 杭州"
+              },
+              "date": {
+                "type": "string",
+                "description": "日期，格式 YYYY-MM-DD"
+              }
+            },
+            "required": [
+              "city",
+              "date"
+            ]
+          }
+        },
+        {
+          "type": "function",
+          "name": "search_flights",
+          "description": "【慢，2到5秒】查询某天的直飞航班。返回 speak（给你念的一句话摘要）和 display（完整航班表，客户端会自动显示在用户屏幕上，不需要逐条朗读；其中的 offer_id 和价格在订票时要用）。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "origin": {
+                "type": "string",
+                "description": "出发城市，不带“市”字，例如 北京"
+              },
+              "destination": {
+                "type": "string",
+                "description": "到达城市，不带“市”字，例如 上海"
+              },
+              "date": {
+                "type": "string",
+                "description": "出发日期，格式 YYYY-MM-DD"
+              }
+            },
+            "required": [
+              "origin",
+              "destination",
+              "date"
+            ]
+          }
+        },
+        {
+          "type": "function",
+          "name": "delegate",
+          "description": "【慢，需要等待】把任务交给后台助理处理。后台助理能看到完整的通话记录，并且可以联网搜索、订票。用一句话说清楚要办什么；后台办完会返回一段话，你把它转述给用户。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "task": {
+                "type": "string",
+                "description": "要后台完成的任务，用自然语言描述，带上用户刚才提到的关键条件"
+              }
+            },
+            "required": [
+              "task"
+            ]
+          }
+        }
+      ]
+    },
+    "by_property_flight_back": {
+      "front_tools": [
+        "get_weather"
+      ],
+      "delegate": true,
+      "back_tools": [
+        "web_search",
+        "search_flights",
+        "book_flight"
+      ],
+      "inject_memory": true,
+      "front_instructions": "你是一位中文语音出行助理，正在和用户通电话。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。\n规则：\n1. 涉及天气、航班、搜索、用户资料、订票的内容，必须通过工具得到，不要凭印象编造。\n2. 工具说明里标了“慢”的，调用前先说一句很短的话（例如“好的，我查一下”），然后立刻调用；标了“快”的直接调用，不用铺垫。\n3. 回答要口语化、简短。工具结果里的 speak 字段是给你口头说的；display 字段客户端会显示在用户屏幕上，不要逐条朗读。\n4. 订票会扣款，由后台助理办理：用户提出订票或补充订票条件时，把任务委派给后台；后台会返回需要向用户复述核对的内容，你照着复述并请用户确认；用户明确确认后，再委派后台下单。\n5. 你能直接调用的工具只有列出来的这几个；其他需要查询或办理的事情调用 delegate 交给后台助理，再把后台返回的话转述给用户。用户记忆已经附在下面，可以直接使用，不需要再查。\n\n【运行时自动检索到的用户记忆，可直接使用】\n- 用户本人的乘机人资料：姓名 周明远；证件类型 护照(passport)；证件号 EK3927461；手机 13671928840；邮箱 zhou.mingyuan@example.com。\n- 用户的国航凤凰知音常旅客卡号是 CA 8839 2201 57。\n- 用户偏好靠过道的座位。\n",
+      "back_instructions": "你是语音出行助理的后台 Agent。前台的实时语音模型正在和用户通电话，它把任务委派给你。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。\n你会收到：通话记录（语音识别转写，可能有同音错字）、本次通话里已经执行过的工具调用及结果、前台委派的任务。\n规则：\n1. 用工具完成任务，不要编造。本次通话里已经有结果的查询不要重复调用。\n2. book_flight 会扣款并出票。只有当通话记录显示助理已经向用户复述过订单的航班、舱位、退改规则、行李、乘机人和票价，并且用户在复述之后明确确认，才能调用 book_flight。否则不要下单，而是返回一段需要前台向用户复述核对的内容，并请用户确认。\n3. 最后只输出一段给前台朗读的话：口语化、简短，不要 Markdown、不要列表、不要逐条念航班表（search_flights 的完整列表会自动显示在用户屏幕上）。\n\n【运行时自动检索到的用户记忆，可直接使用】\n- 用户本人的乘机人资料：姓名 周明远；证件类型 护照(passport)；证件号 EK3927461；手机 13671928840；邮箱 zhou.mingyuan@example.com。\n- 用户的国航凤凰知音常旅客卡号是 CA 8839 2201 57。\n- 用户偏好靠过道的座位。\n",
+      "front_tool_schemas": [
+        {
+          "type": "function",
+          "name": "get_weather",
+          "description": "【快，约0.2秒】查询某城市某一天的天气。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string",
+                "description": "城市名，不带“市”字，例如 杭州"
+              },
+              "date": {
+                "type": "string",
+                "description": "日期，格式 YYYY-MM-DD"
+              }
+            },
+            "required": [
+              "city",
+              "date"
+            ]
+          }
+        },
+        {
+          "type": "function",
+          "name": "delegate",
+          "description": "【慢，需要等待】把任务交给后台助理处理。后台助理能看到完整的通话记录，并且可以联网搜索、查航班、订票。用一句话说清楚要办什么；后台办完会返回一段话，你把它转述给用户。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "task": {
+                "type": "string",
+                "description": "要后台完成的任务，用自然语言描述，带上用户刚才提到的关键条件"
+              }
+            },
+            "required": [
+              "task"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "scenarios": {
+    "weather": [
+      [
+        "say",
+        "weather",
+        0
+      ]
+    ],
+    "memory": [
+      [
+        "say",
+        "memory",
+        0
+      ]
+    ],
+    "web_search": [
+      [
+        "say",
+        "web_search",
+        0
+      ]
+    ],
+    "flight_search": [
+      [
+        "say",
+        "flight_search",
+        0
+      ]
+    ],
+    "self_correction": [
+      [
+        "say",
+        "self_correction",
+        0
+      ]
+    ],
+    "pending_change": [
+      [
+        "say_nowait",
+        "flight_search",
+        0
+      ],
+      [
+        "say_pending",
+        "barge_change_date",
+        1.0
+      ]
+    ],
+    "pending_aside": [
+      [
+        "say_nowait",
+        "flight_search",
+        0
+      ],
+      [
+        "say_pending",
+        "weather",
+        1.0
+      ]
+    ],
+    "booking": [
+      [
+        "say",
+        "flight_search",
+        0
+      ],
+      [
+        "say",
+        "booking_select",
+        0
+      ],
+      [
+        "say",
+        "booking_confirm",
+        0
+      ]
+    ]
+  },
+  "fixtures": {
+    "synthesis": {
+      "engine": "macOS say",
+      "voice": "Tingting",
+      "rate_wpm": 190,
+      "macos": "27.2.1",
+      "format": "16 kHz mono int16 WAV",
+      "normalisation": "voiced RMS -27.0 dBFS, silence trimmed to 20 ms"
+    },
+    "clips": {
+      "weather": {
+        "file": "weather.wav",
+        "say_text": "明天杭州天气怎么样？",
+        "seconds": 1.894,
+        "sha256": "23165f5aefa01f3d3c2550e474c3d95e6be9944f651b254e0ab2d95ccb3f53ee"
+      },
+      "memory": {
+        "file": "memory.wav",
+        "say_text": "你还记得我的常旅客卡号吗？",
+        "seconds": 2.377,
+        "sha256": "0927481197a51d6982e97e6ca4368c7aa76a18485517b053cac2821beaeb7851"
+      },
+      "web_search": {
+        "file": "web_search.wav",
+        "say_text": "帮我搜一下，从上海虹桥机场到国家会展中心，怎么走最快？",
+        "seconds": 5.923,
+        "sha256": "cc58cb4f55ea110a9e92e80987849d53e057f6fe320797db9e4f39488c9a2a47"
+      },
+      "flight_search": {
+        "file": "flight_search.wav",
+        "say_text": "帮我查一下十二月三号北京到上海的航班。",
+        "seconds": 3.842,
+        "sha256": "70777b1de28b73ea3af957d1e5a150289408ca0834ac5ac2ccdc337f1c4fe699"
+      },
+      "self_correction": {
+        "file": "self_correction.wav",
+        "say_text": "帮我查一下下周三[[slnc 700]]不，下周四，北京到上海的航班。",
+        "seconds": 5.619,
+        "sha256": "4cee5d23fa10696cab053fb0593996a70d6327bd8b8e8ab08a5956a37ca914c4"
+      },
+      "barge_change_date": {
+        "file": "barge_change_date.wav",
+        "say_text": "等一下，改成十二月四号的。",
+        "seconds": 2.542,
+        "sha256": "e82d4a37a248ad2c43c87ca529777da35f4b7802821c891d4797b2b93bba6c81"
+      },
+      "booking_select": {
+        "file": "booking_select.wav",
+        "say_text": "就订九点整起飞的那一班，经济舱，要可以退改的，再加一件二十三公斤的托运行李。乘机人和联系人都用我本人的信息。",
+        "seconds": 10.843,
+        "sha256": "f0d77cd41a5f9623fe97fd527adf96c88d72f5f7b314dd9bcdc6d9aabc751796"
+      },
+      "booking_confirm": {
+        "file": "booking_confirm.wav",
+        "say_text": "确认，下单吧。",
+        "seconds": 1.481,
+        "sha256": "06f76f38d44622466c311da95c327d476a44394629df8474cfddef158cac526c"
+      }
+    }
+  },
+  "implementation_sha256": {
+    "analyze.py": "77f01860bf41aa7463e62a756b4fa2b2ecff3e5c9243ef555f2925e1023dc4b8",
+    "back_agent.py": "7f0b3bbc67d7715917f787ee20b84636a034628b75c2cdfb99949a058d09a2c9",
+    "prepare_fixtures.py": "ac4f3ed380d464b1cb3d3232561c8cf1067cb0bda683ce8e360941507c4d6857",
+    "probe_capabilities.py": "a4d37c4626c15a4a45b74d2279f6feccd4e554cb5564ba0b2b48b507f8a707aa",
+    "realtime_front.py": "eac9a86c7de50974b20dcde0abe22a368bbd3cede3df50f8be9737c9d79f56c5",
+    "routes.py": "4131cefe8574b54ec759691a0c012bd25c46489462de1e8bc4c5191e9a4c19c8",
+    "run_experiment.py": "7f73c78ba6244cbf29144aa6ba230b8370ee60fc9bf543fbbb3701e22f89c41d",
+    "tools_sim.py": "3d6b70ac342f3926eec63e24b1f0c41eb1f66e97fb5ca58c6a21331b4bc35a49"
+  },
+  "git_commit_at_run": "f36d57f515ddc93867e45f23ce34fe4165335ff8",
+  "python": "3.12.15",
+  "websockets": "15.0.1",
+  "requested": {
+    "routes": [
+      "all_front",
+      "all_back",
+      "by_property_flight_front",
+      "by_property_flight_back"
+    ],
+    "scenarios": [
+      "weather",
+      "memory",
+      "web_search",
+      "flight_search",
+      "self_correction",
+      "pending_change",
+      "pending_aside",
+      "booking"
+    ],
+    "runs": 10,
+    "concurrency": 5
+  }
+}
