@@ -1,0 +1,1712 @@
+[
+ {
+  "route": "all_front",
+  "scenario": "flight_search",
+  "windows": [
+   {
+    "clip": "flight_search",
+    "start": 1.183,
+    "stop": 44.4772,
+    "speech_end": 5.0217,
+    "asr_text": "帮我查一下 12 月 3 号北京到上海的航班。",
+    "asr_done_s": 0.869,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 2.3,
+      "items": [
+       {
+        "name": "search_flights",
+        "args": {
+         "date": "2026-12-03",
+         "destination": "上海",
+         "origin": "北京"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 2.3,
+    "fc_after_asr_s": 1.431,
+    "first_fc_name": "search_flights",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 5.606,
+    "filler": true,
+    "filler_audio_s": 1.675,
+    "filler_text": "好的，我查一下。\n",
+    "answer_text_s": 6.467,
+    "answer_audio_s": 9.429,
+    "answer_after_result_s": 3.824,
+    "answer_text": "12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00首都T2起飞，11:15到虹桥T2，完整列表在屏幕上了。",
+    "answer_audio_seconds": 16.49,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 2.3,
+      "origin": "front",
+      "name": "search_flights",
+      "args": {
+       "date": "2026-12-03",
+       "destination": "上海",
+       "origin": "北京"
+      },
+      "latency_s": 3.305
+     }
+    ],
+    "tool_latency_s": 3.305,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "search_flights",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "date": "2026-12-03",
+    "destination": "上海",
+    "origin": "北京"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "readout": {
+   "spoken_chars": 87,
+   "speak_payload_chars": 91,
+   "display_payload_chars": 2568,
+   "flight_numbers_spoken": 1,
+   "display_rows": 6,
+   "offer_ids_spoken": 0,
+   "distinct_prices_spoken": 1,
+   "read_table_aloud": false
+  },
+  "run": 0,
+  "trace": "traces/all_front/flight_search/run-00.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "flight_search",
+  "windows": [
+   {
+    "clip": "flight_search",
+    "start": 1.2012,
+    "stop": 32.003299999999996,
+    "speech_end": 5.0404,
+    "asr_text": "帮我查一下 12 月 3 号北京到上海的航班。",
+    "asr_done_s": 0.87,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.772,
+      "items": [
+       {
+        "name": "search_flights",
+        "args": {
+         "date": "2026-12-03",
+         "destination": "上海",
+         "origin": "北京"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.772,
+    "fc_after_asr_s": 0.902,
+    "first_fc_name": "search_flights",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 6.294,
+    "filler": true,
+    "filler_audio_s": 1.615,
+    "filler_text": "好的，我查一下。\n",
+    "answer_text_s": 6.788,
+    "answer_audio_s": 7.448,
+    "answer_after_result_s": 1.154,
+    "answer_text": "12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00首都T2起飞，11:15到虹桥T2，完整航班表已经显示在屏幕上了。",
+    "answer_audio_seconds": 17.08,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.772,
+      "origin": "front",
+      "name": "search_flights",
+      "args": {
+       "date": "2026-12-03",
+       "destination": "上海",
+       "origin": "北京"
+      },
+      "latency_s": 4.519
+     }
+    ],
+    "tool_latency_s": 4.519,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "search_flights",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "date": "2026-12-03",
+    "destination": "上海",
+    "origin": "北京"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "readout": {
+   "spoken_chars": 92,
+   "speak_payload_chars": 91,
+   "display_payload_chars": 2568,
+   "flight_numbers_spoken": 1,
+   "display_rows": 6,
+   "offer_ids_spoken": 0,
+   "distinct_prices_spoken": 1,
+   "read_table_aloud": false
+  },
+  "run": 1,
+  "trace": "traces/all_front/flight_search/run-01.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "flight_search",
+  "windows": [
+   {
+    "clip": "flight_search",
+    "start": 1.3559,
+    "stop": 30.3215,
+    "speech_end": 5.1946,
+    "asr_text": "帮我查一下 12 月 3 号北京到上海的航班。",
+    "asr_done_s": 0.871,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.788,
+      "items": [
+       {
+        "name": "search_flights",
+        "args": {
+         "date": "2026-12-03",
+         "destination": "上海",
+         "origin": "北京"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.788,
+    "fc_after_asr_s": 0.918,
+    "first_fc_name": "search_flights",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 4.164,
+    "filler": true,
+    "filler_audio_s": 1.646,
+    "filler_text": "好的，我查一下。\n",
+    "answer_text_s": 4.849,
+    "answer_audio_s": 5.691,
+    "answer_after_result_s": 1.527,
+    "answer_text": "12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00首都T2起飞，11:15到虹桥T2，完整航班表已经显示在屏幕上了。",
+    "answer_audio_seconds": 16.96,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.789,
+      "origin": "front",
+      "name": "search_flights",
+      "args": {
+       "date": "2026-12-03",
+       "destination": "上海",
+       "origin": "北京"
+      },
+      "latency_s": 2.375
+     }
+    ],
+    "tool_latency_s": 2.375,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "search_flights",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "date": "2026-12-03",
+    "destination": "上海",
+    "origin": "北京"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "readout": {
+   "spoken_chars": 92,
+   "speak_payload_chars": 91,
+   "display_payload_chars": 2568,
+   "flight_numbers_spoken": 1,
+   "display_rows": 6,
+   "offer_ids_spoken": 0,
+   "distinct_prices_spoken": 1,
+   "read_table_aloud": false
+  },
+  "run": 2,
+  "trace": "traces/all_front/flight_search/run-02.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "flight_search",
+  "windows": [
+   {
+    "clip": "flight_search",
+    "start": 1.355,
+    "stop": 33.0248,
+    "speech_end": 5.1953,
+    "asr_text": "帮我查一下 12 月 3 号北京到上海的航班。",
+    "asr_done_s": 0.87,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 2.043,
+      "items": [
+       {
+        "name": "search_flights",
+        "args": {
+         "date": "2026-12-03",
+         "destination": "上海",
+         "origin": "北京"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 2.043,
+    "fc_after_asr_s": 1.173,
+    "first_fc_name": "search_flights",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 6.417,
+    "filler": true,
+    "filler_audio_s": 1.724,
+    "filler_text": "好的，我查一下。",
+    "answer_text_s": 6.99,
+    "answer_audio_s": 7.806,
+    "answer_after_result_s": 1.389,
+    "answer_text": "12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00首都T2起飞，11:15到虹桥T2，完整航班表已经在屏幕上显示了。",
+    "answer_audio_seconds": 17.57,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 2.044,
+      "origin": "front",
+      "name": "search_flights",
+      "args": {
+       "date": "2026-12-03",
+       "destination": "上海",
+       "origin": "北京"
+      },
+      "latency_s": 4.372
+     }
+    ],
+    "tool_latency_s": 4.372,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "search_flights",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "date": "2026-12-03",
+    "destination": "上海",
+    "origin": "北京"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "readout": {
+   "spoken_chars": 92,
+   "speak_payload_chars": 91,
+   "display_payload_chars": 2568,
+   "flight_numbers_spoken": 1,
+   "display_rows": 6,
+   "offer_ids_spoken": 0,
+   "distinct_prices_spoken": 1,
+   "read_table_aloud": false
+  },
+  "run": 3,
+  "trace": "traces/all_front/flight_search/run-03.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "flight_search",
+  "windows": [
+   {
+    "clip": "flight_search",
+    "start": 1.4083,
+    "stop": 29.8524,
+    "speech_end": 5.2458,
+    "asr_text": "帮我查一下 12 月 3 号北京到上海的航班。",
+    "asr_done_s": 0.819,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 2.144,
+      "items": [
+       {
+        "name": "search_flights",
+        "args": {
+         "date": "2026-12-03",
+         "destination": "上海",
+         "origin": "北京"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 2.144,
+    "fc_after_asr_s": 1.325,
+    "first_fc_name": "search_flights",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 4.397,
+    "filler": true,
+    "filler_audio_s": 1.654,
+    "filler_text": "好的，我查一下。",
+    "answer_text_s": 5.103,
+    "answer_audio_s": 5.71,
+    "answer_after_result_s": 1.313,
+    "answer_text": "12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00首都T2起飞，11:15到虹桥T2，完整航班表已经在屏幕上显示了。",
+    "answer_audio_seconds": 16.48,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 2.145,
+      "origin": "front",
+      "name": "search_flights",
+      "args": {
+       "date": "2026-12-03",
+       "destination": "上海",
+       "origin": "北京"
+      },
+      "latency_s": 2.251
+     }
+    ],
+    "tool_latency_s": 2.251,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "search_flights",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "date": "2026-12-03",
+    "destination": "上海",
+    "origin": "北京"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "readout": {
+   "spoken_chars": 92,
+   "speak_payload_chars": 91,
+   "display_payload_chars": 2568,
+   "flight_numbers_spoken": 1,
+   "display_rows": 6,
+   "offer_ids_spoken": 0,
+   "distinct_prices_spoken": 1,
+   "read_table_aloud": false
+  },
+  "run": 4,
+  "trace": "traces/all_front/flight_search/run-04.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "flight_search",
+  "windows": [
+   {
+    "clip": "flight_search",
+    "start": 1.3517,
+    "stop": 31.7253,
+    "speech_end": 5.1889,
+    "asr_text": "帮我查一下 12 月 3 号北京到上海的航班。",
+    "asr_done_s": 0.876,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 2.456,
+      "items": [
+       {
+        "name": "search_flights",
+        "args": {
+         "date": "2026-12-03",
+         "destination": "上海",
+         "origin": "北京"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 2.456,
+    "fc_after_asr_s": 1.58,
+    "first_fc_name": "search_flights",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 5.702,
+    "filler": true,
+    "filler_audio_s": 1.787,
+    "filler_text": "好的，我查一下。\n",
+    "answer_text_s": 6.281,
+    "answer_audio_s": 7.017,
+    "answer_after_result_s": 1.314,
+    "answer_text": "12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00从首都T2起飞，11:15到虹桥T2，完整列表已经显示在屏幕上了。",
+    "answer_audio_seconds": 17.11,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 2.457,
+      "origin": "front",
+      "name": "search_flights",
+      "args": {
+       "date": "2026-12-03",
+       "destination": "上海",
+       "origin": "北京"
+      },
+      "latency_s": 3.245
+     }
+    ],
+    "tool_latency_s": 3.245,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "search_flights",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "date": "2026-12-03",
+    "destination": "上海",
+    "origin": "北京"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "readout": {
+   "spoken_chars": 92,
+   "speak_payload_chars": 91,
+   "display_payload_chars": 2568,
+   "flight_numbers_spoken": 1,
+   "display_rows": 6,
+   "offer_ids_spoken": 0,
+   "distinct_prices_spoken": 1,
+   "read_table_aloud": false
+  },
+  "run": 5,
+  "trace": "traces/all_front/flight_search/run-05.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "flight_search",
+  "windows": [
+   {
+    "clip": "flight_search",
+    "start": 1.3604,
+    "stop": 33.0293,
+    "speech_end": 5.1989,
+    "asr_text": "帮我查一下 12 月 3 号北京到上海的航班。",
+    "asr_done_s": 0.869,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 2.093,
+      "items": [
+       {
+        "name": "search_flights",
+        "args": {
+         "date": "2026-12-03",
+         "destination": "上海",
+         "origin": "北京"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 2.093,
+    "fc_after_asr_s": 1.224,
+    "first_fc_name": "search_flights",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 6.979,
+    "filler": true,
+    "filler_audio_s": 1.685,
+    "filler_text": "好的，我查一下。",
+    "answer_text_s": 7.551,
+    "answer_audio_s": 8.342,
+    "answer_after_result_s": 1.363,
+    "answer_text": "12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00首都T2起飞，11:15到虹桥T2，完整航班表已经显示在屏幕上了。",
+    "answer_audio_seconds": 17.01,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 2.093,
+      "origin": "front",
+      "name": "search_flights",
+      "args": {
+       "date": "2026-12-03",
+       "destination": "上海",
+       "origin": "北京"
+      },
+      "latency_s": 4.885
+     }
+    ],
+    "tool_latency_s": 4.885,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "search_flights",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "date": "2026-12-03",
+    "destination": "上海",
+    "origin": "北京"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "readout": {
+   "spoken_chars": 92,
+   "speak_payload_chars": 91,
+   "display_payload_chars": 2568,
+   "flight_numbers_spoken": 1,
+   "display_rows": 6,
+   "offer_ids_spoken": 0,
+   "distinct_prices_spoken": 1,
+   "read_table_aloud": false
+  },
+  "run": 6,
+  "trace": "traces/all_front/flight_search/run-06.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "flight_search",
+  "windows": [
+   {
+    "clip": "flight_search",
+    "start": 1.3619,
+    "stop": 32.317,
+    "speech_end": 5.1997,
+    "asr_text": "帮我查一下 12 月 3 号北京到上海的航班。",
+    "asr_done_s": 0.871,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 2.506,
+      "items": [
+       {
+        "name": "search_flights",
+        "args": {
+         "date": "2026-12-03",
+         "destination": "上海",
+         "origin": "北京"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 2.506,
+    "fc_after_asr_s": 1.635,
+    "first_fc_name": "search_flights",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 6.695,
+    "filler": true,
+    "filler_audio_s": 1.795,
+    "filler_text": "好的，我查一下。",
+    "answer_text_s": 7.412,
+    "answer_audio_s": 8.144,
+    "answer_after_result_s": 1.449,
+    "answer_text": "12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00首都T2起飞，11:15到虹桥T2，完整列表在屏幕上了。",
+    "answer_audio_seconds": 16.48,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 2.506,
+      "origin": "front",
+      "name": "search_flights",
+      "args": {
+       "date": "2026-12-03",
+       "destination": "上海",
+       "origin": "北京"
+      },
+      "latency_s": 4.188
+     }
+    ],
+    "tool_latency_s": 4.188,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "search_flights",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "date": "2026-12-03",
+    "destination": "上海",
+    "origin": "北京"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "readout": {
+   "spoken_chars": 87,
+   "speak_payload_chars": 91,
+   "display_payload_chars": 2568,
+   "flight_numbers_spoken": 1,
+   "display_rows": 6,
+   "offer_ids_spoken": 0,
+   "distinct_prices_spoken": 1,
+   "read_table_aloud": false
+  },
+  "run": 7,
+  "trace": "traces/all_front/flight_search/run-07.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "flight_search",
+  "windows": [
+   {
+    "clip": "flight_search",
+    "start": 1.3583,
+    "stop": 32.668800000000005,
+    "speech_end": 5.1979,
+    "asr_text": "帮我查一下 12 月 3 号北京到上海的航班。",
+    "asr_done_s": 0.921,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.889,
+      "items": [
+       {
+        "name": "search_flights",
+        "args": {
+         "date": "2026-12-03",
+         "destination": "上海",
+         "origin": "北京"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.889,
+    "fc_after_asr_s": 0.968,
+    "first_fc_name": "search_flights",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 6.606,
+    "filler": true,
+    "filler_audio_s": 1.763,
+    "filler_text": "好的，我查一下。",
+    "answer_text_s": 7.142,
+    "answer_audio_s": 7.808,
+    "answer_after_result_s": 1.202,
+    "answer_text": "12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00首都T2起飞，11:15到虹桥T2，完整航班表已经显示在屏幕上了。",
+    "answer_audio_seconds": 17.15,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.889,
+      "origin": "front",
+      "name": "search_flights",
+      "args": {
+       "date": "2026-12-03",
+       "destination": "上海",
+       "origin": "北京"
+      },
+      "latency_s": 4.716
+     }
+    ],
+    "tool_latency_s": 4.716,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "search_flights",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "date": "2026-12-03",
+    "destination": "上海",
+    "origin": "北京"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "readout": {
+   "spoken_chars": 92,
+   "speak_payload_chars": 91,
+   "display_payload_chars": 2568,
+   "flight_numbers_spoken": 1,
+   "display_rows": 6,
+   "offer_ids_spoken": 0,
+   "distinct_prices_spoken": 1,
+   "read_table_aloud": false
+  },
+  "run": 8,
+  "trace": "traces/all_front/flight_search/run-08.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "flight_search",
+  "windows": [
+   {
+    "clip": "flight_search",
+    "start": 1.4088,
+    "stop": 29.7105,
+    "speech_end": 5.2478,
+    "asr_text": "帮我查一下 12 月 3 号北京到上海的航班。",
+    "asr_done_s": 0.87,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.942,
+      "items": [
+       {
+        "name": "search_flights",
+        "args": {
+         "date": "2026-12-03",
+         "destination": "上海",
+         "origin": "北京"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.942,
+    "fc_after_asr_s": 1.072,
+    "first_fc_name": "search_flights",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 4.028,
+    "filler": true,
+    "filler_audio_s": 1.606,
+    "filler_text": "好的，我查一下。\n",
+    "answer_text_s": 4.594,
+    "answer_audio_s": 5.251,
+    "answer_after_result_s": 1.223,
+    "answer_text": "12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00首都T2起飞，11:15到虹桥T2，完整列表已经显示在屏幕上了。",
+    "answer_audio_seconds": 16.72,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.942,
+      "origin": "front",
+      "name": "search_flights",
+      "args": {
+       "date": "2026-12-03",
+       "destination": "上海",
+       "origin": "北京"
+      },
+      "latency_s": 2.084
+     }
+    ],
+    "tool_latency_s": 2.084,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "search_flights",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "date": "2026-12-03",
+    "destination": "上海",
+    "origin": "北京"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "readout": {
+   "spoken_chars": 91,
+   "speak_payload_chars": 91,
+   "display_payload_chars": 2568,
+   "flight_numbers_spoken": 1,
+   "display_rows": 6,
+   "offer_ids_spoken": 0,
+   "distinct_prices_spoken": 1,
+   "read_table_aloud": false
+  },
+  "run": 9,
+  "trace": "traces/all_front/flight_search/run-09.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "weather",
+  "windows": [
+   {
+    "clip": "weather",
+    "start": 3.9366,
+    "stop": 24.8739,
+    "speech_end": 5.8122,
+    "asr_text": "明天杭州天气怎么样？",
+    "asr_done_s": 1.984,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 2.527,
+      "items": [
+       {
+        "name": "get_weather",
+        "args": {
+         "city": "杭州",
+         "date": "2026-11-26"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 2.527,
+    "fc_after_asr_s": 0.543,
+    "first_fc_name": "get_weather",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 2.73,
+    "filler": false,
+    "filler_audio_s": null,
+    "filler_text": "",
+    "answer_text_s": 3.348,
+    "answer_audio_s": 8.816,
+    "answer_after_result_s": 6.087,
+    "answer_text": "杭州明天多云转晴，9到17度，东北风3级，降水概率只有10%，出门挺舒服的。",
+    "answer_audio_seconds": 7.78,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 2.528,
+      "origin": "front",
+      "name": "get_weather",
+      "args": {
+       "city": "杭州",
+       "date": "2026-11-26"
+      },
+      "latency_s": 0.2
+     }
+    ],
+    "tool_latency_s": 0.2,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "get_weather",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "city": "杭州",
+    "date": "2026-11-26"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "run": 0,
+  "trace": "traces/all_front/weather/run-00.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "weather",
+  "windows": [
+   {
+    "clip": "weather",
+    "start": 1.3047,
+    "stop": 17.6735,
+    "speech_end": 3.1837,
+    "asr_text": "明天杭州天气怎么样？",
+    "asr_done_s": 0.844,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.453,
+      "items": [
+       {
+        "name": "get_weather",
+        "args": {
+         "city": "杭州",
+         "date": "2026-11-26"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.453,
+    "fc_after_asr_s": 0.609,
+    "first_fc_name": "get_weather",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 1.655,
+    "filler": false,
+    "filler_audio_s": null,
+    "filler_text": "",
+    "answer_text_s": 2.218,
+    "answer_audio_s": 2.74,
+    "answer_after_result_s": 1.085,
+    "answer_text": "杭州明天多云转晴，9到17度，东北风3级，降水概率只有10%，挺舒服的。",
+    "answer_audio_seconds": 7.41,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.453,
+      "origin": "front",
+      "name": "get_weather",
+      "args": {
+       "city": "杭州",
+       "date": "2026-11-26"
+      },
+      "latency_s": 0.2
+     }
+    ],
+    "tool_latency_s": 0.2,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "get_weather",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "city": "杭州",
+    "date": "2026-11-26"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "run": 1,
+  "trace": "traces/all_front/weather/run-01.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "weather",
+  "windows": [
+   {
+    "clip": "weather",
+    "start": 1.2059,
+    "stop": 17.6231,
+    "speech_end": 3.0834,
+    "asr_text": "明天杭州天气怎么样？",
+    "asr_done_s": 0.841,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.656,
+      "items": [
+       {
+        "name": "get_weather",
+        "args": {
+         "city": "杭州",
+         "date": "2026-11-26"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.656,
+    "fc_after_asr_s": 0.814,
+    "first_fc_name": "get_weather",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 1.858,
+    "filler": false,
+    "filler_audio_s": null,
+    "filler_text": "",
+    "answer_text_s": 2.322,
+    "answer_audio_s": 2.875,
+    "answer_after_result_s": 1.017,
+    "answer_text": "杭州明天多云转晴，9到17度，东北风3级，降水概率只有10%，挺舒服的。",
+    "answer_audio_seconds": 7.2,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.656,
+      "origin": "front",
+      "name": "get_weather",
+      "args": {
+       "city": "杭州",
+       "date": "2026-11-26"
+      },
+      "latency_s": 0.2
+     }
+    ],
+    "tool_latency_s": 0.2,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "get_weather",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "city": "杭州",
+    "date": "2026-11-26"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "run": 2,
+  "trace": "traces/all_front/weather/run-02.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "weather",
+  "windows": [
+   {
+    "clip": "weather",
+    "start": 1.3566,
+    "stop": 17.931,
+    "speech_end": 3.2357,
+    "asr_text": "明天杭州天气怎么样？",
+    "asr_done_s": 0.894,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.704,
+      "items": [
+       {
+        "name": "get_weather",
+        "args": {
+         "city": "杭州",
+         "date": "2026-11-26"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.704,
+    "fc_after_asr_s": 0.81,
+    "first_fc_name": "get_weather",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 1.905,
+    "filler": false,
+    "filler_audio_s": null,
+    "filler_text": "",
+    "answer_text_s": 2.373,
+    "answer_audio_s": 2.838,
+    "answer_after_result_s": 0.933,
+    "answer_text": "杭州明天多云转晴，9到17度，东北风3级，降水概率只有10%，挺舒服的。",
+    "answer_audio_seconds": 7.39,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.704,
+      "origin": "front",
+      "name": "get_weather",
+      "args": {
+       "city": "杭州",
+       "date": "2026-11-26"
+      },
+      "latency_s": 0.2
+     }
+    ],
+    "tool_latency_s": 0.2,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "get_weather",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "city": "杭州",
+    "date": "2026-11-26"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "run": 3,
+  "trace": "traces/all_front/weather/run-03.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "weather",
+  "windows": [
+   {
+    "clip": "weather",
+    "start": 1.4119,
+    "stop": 18.4907,
+    "speech_end": 3.2905,
+    "asr_text": "明天杭州天气怎么样？",
+    "asr_done_s": 0.879,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.501,
+      "items": [
+       {
+        "name": "get_weather",
+        "args": {
+         "city": "杭州",
+         "date": "2026-11-26"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.501,
+    "fc_after_asr_s": 0.622,
+    "first_fc_name": "get_weather",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 1.701,
+    "filler": false,
+    "filler_audio_s": null,
+    "filler_text": "",
+    "answer_text_s": 2.162,
+    "answer_audio_s": 2.775,
+    "answer_after_result_s": 1.074,
+    "answer_text": "杭州明天多云转晴，9到17度，东北风3级，降水概率只有10%，出门不用太担心下雨。",
+    "answer_audio_seconds": 8.0,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.501,
+      "origin": "front",
+      "name": "get_weather",
+      "args": {
+       "city": "杭州",
+       "date": "2026-11-26"
+      },
+      "latency_s": 0.2
+     }
+    ],
+    "tool_latency_s": 0.2,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "get_weather",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "city": "杭州",
+    "date": "2026-11-26"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "run": 4,
+  "trace": "traces/all_front/weather/run-04.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "weather",
+  "windows": [
+   {
+    "clip": "weather",
+    "start": 1.4244,
+    "stop": 18.2179,
+    "speech_end": 3.3039,
+    "asr_text": "明天杭州天气怎么样？",
+    "asr_done_s": 0.918,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.835,
+      "items": [
+       {
+        "name": "get_weather",
+        "args": {
+         "city": "杭州",
+         "date": "2026-11-26"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.835,
+    "fc_after_asr_s": 0.917,
+    "first_fc_name": "get_weather",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 2.038,
+    "filler": false,
+    "filler_audio_s": null,
+    "filler_text": "",
+    "answer_text_s": 2.499,
+    "answer_audio_s": 3.028,
+    "answer_after_result_s": 0.991,
+    "answer_text": "杭州明天多云转晴，9到17度，东北风3级，降水概率只有10%，挺舒服的。",
+    "answer_audio_seconds": 7.4,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.836,
+      "origin": "front",
+      "name": "get_weather",
+      "args": {
+       "city": "杭州",
+       "date": "2026-11-26"
+      },
+      "latency_s": 0.2
+     }
+    ],
+    "tool_latency_s": 0.2,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "get_weather",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "city": "杭州",
+    "date": "2026-11-26"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "run": 5,
+  "trace": "traces/all_front/weather/run-05.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "weather",
+  "windows": [
+   {
+    "clip": "weather",
+    "start": 1.3582,
+    "stop": 18.8848,
+    "speech_end": 3.2368,
+    "asr_text": "明天杭州天气怎么样？",
+    "asr_done_s": 0.94,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.861,
+      "items": [
+       {
+        "name": "get_weather",
+        "args": {
+         "city": "杭州",
+         "date": "2026-11-26"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.861,
+    "fc_after_asr_s": 0.922,
+    "first_fc_name": "get_weather",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 2.062,
+    "filler": false,
+    "filler_audio_s": null,
+    "filler_text": "",
+    "answer_text_s": 2.627,
+    "answer_audio_s": 3.189,
+    "answer_after_result_s": 1.127,
+    "answer_text": "杭州明天多云转晴，9到17度，东北风3级，降水概率只有10%，出门不用太担心下雨。",
+    "answer_audio_seconds": 8.01,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.862,
+      "origin": "front",
+      "name": "get_weather",
+      "args": {
+       "city": "杭州",
+       "date": "2026-11-26"
+      },
+      "latency_s": 0.2
+     }
+    ],
+    "tool_latency_s": 0.2,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "get_weather",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "city": "杭州",
+    "date": "2026-11-26"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "run": 6,
+  "trace": "traces/all_front/weather/run-06.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "weather",
+  "windows": [
+   {
+    "clip": "weather",
+    "start": 1.3586,
+    "stop": 17.8724,
+    "speech_end": 3.236,
+    "asr_text": "明天杭州天气怎么样？",
+    "asr_done_s": 0.894,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.304,
+      "items": [
+       {
+        "name": "get_weather",
+        "args": {
+         "city": "杭州",
+         "date": "2026-11-26"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.304,
+    "fc_after_asr_s": 0.41,
+    "first_fc_name": "get_weather",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 1.504,
+    "filler": false,
+    "filler_audio_s": null,
+    "filler_text": "",
+    "answer_text_s": 1.862,
+    "answer_audio_s": 2.345,
+    "answer_after_result_s": 0.84,
+    "answer_text": "杭州明天多云转晴，9到17度，东北风3级，降水概率只有10%，出门挺舒服的。",
+    "answer_audio_seconds": 7.81,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.304,
+      "origin": "front",
+      "name": "get_weather",
+      "args": {
+       "city": "杭州",
+       "date": "2026-11-26"
+      },
+      "latency_s": 0.2
+     }
+    ],
+    "tool_latency_s": 0.2,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "get_weather",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "city": "杭州",
+    "date": "2026-11-26"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "run": 7,
+  "trace": "traces/all_front/weather/run-07.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "weather",
+  "windows": [
+   {
+    "clip": "weather",
+    "start": 1.3572,
+    "stop": 18.1324,
+    "speech_end": 3.2356,
+    "asr_text": "明天杭州天气怎么样？",
+    "asr_done_s": 0.88,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.402,
+      "items": [
+       {
+        "name": "get_weather",
+        "args": {
+         "city": "杭州",
+         "date": "2026-11-26"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.402,
+    "fc_after_asr_s": 0.522,
+    "first_fc_name": "get_weather",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 1.603,
+    "filler": false,
+    "filler_audio_s": null,
+    "filler_text": "",
+    "answer_text_s": 2.167,
+    "answer_audio_s": 2.675,
+    "answer_after_result_s": 1.072,
+    "answer_text": "杭州明天多云转晴，9到17度，东北风3级，降水概率只有10%，出门挺舒服的。",
+    "answer_audio_seconds": 7.82,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.402,
+      "origin": "front",
+      "name": "get_weather",
+      "args": {
+       "city": "杭州",
+       "date": "2026-11-26"
+      },
+      "latency_s": 0.2
+     }
+    ],
+    "tool_latency_s": 0.2,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "get_weather",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "city": "杭州",
+    "date": "2026-11-26"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "run": 8,
+  "trace": "traces/all_front/weather/run-08.attempt-0.jsonl"
+ },
+ {
+  "route": "all_front",
+  "scenario": "weather",
+  "windows": [
+   {
+    "clip": "weather",
+    "start": 1.3171,
+    "stop": 18.4361,
+    "speech_end": 3.1965,
+    "asr_text": "明天杭州天气怎么样？",
+    "asr_done_s": 0.861,
+    "asr_rounds": 1,
+    "fc": [
+     {
+      "t": 1.504,
+      "items": [
+       {
+        "name": "get_weather",
+        "args": {
+         "city": "杭州",
+         "date": "2026-11-26"
+        }
+       }
+      ]
+     }
+    ],
+    "text_before_last_result": false,
+    "first_fc_s": 1.504,
+    "fc_after_asr_s": 0.643,
+    "first_fc_name": "get_weather",
+    "fc_before_speech_end": 0,
+    "last_upload_s": 1.706,
+    "filler": false,
+    "filler_audio_s": null,
+    "filler_text": "",
+    "answer_text_s": 2.167,
+    "answer_audio_s": 2.686,
+    "answer_after_result_s": 0.98,
+    "answer_text": "杭州明天多云转晴，9到17度，东北风3级，降水概率只有10%，出门不用太担心下雨。",
+    "answer_audio_seconds": 8.0,
+    "front_llm_calls": 2,
+    "back_llm_calls": 0,
+    "back_llm_seconds": 0,
+    "llm_calls": 2,
+    "tools": [
+     {
+      "t": 1.505,
+      "origin": "front",
+      "name": "get_weather",
+      "args": {
+       "city": "杭州",
+       "date": "2026-11-26"
+      },
+      "latency_s": 0.2
+     }
+    ],
+    "tool_latency_s": 0.2,
+    "delegate_tasks": []
+   }
+  ],
+  "trace_errors": [],
+  "back_unexplained_s": 0.0,
+  "call": {
+   "expected_tool": "get_weather",
+   "tool_expected_in_route": true,
+   "tool_called": true,
+   "n_calls": 1,
+   "first_call_exact": true,
+   "last_call_exact": true,
+   "first_call_args": {
+    "city": "杭州",
+    "date": "2026-11-26"
+   },
+   "called_by": "front"
+  },
+  "key_fact_in_answer": true,
+  "run": 9,
+  "trace": "traces/all_front/weather/run-09.attempt-0.jsonl"
+ }
+]

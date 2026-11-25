@@ -1,0 +1,3 @@
+websockets>=13,<16
+httpx>=0.27
+pytest>=7.4

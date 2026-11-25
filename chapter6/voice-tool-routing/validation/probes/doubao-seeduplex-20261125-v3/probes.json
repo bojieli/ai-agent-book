@@ -1,0 +1,155 @@
+{
+  "run_id": "doubao-seeduplex-20261125-v3",
+  "date": "2026-11-25T11:47:39+08:00",
+  "front": {
+    "session_model": "1.2.6.1"
+  },
+  "tools_simulated": true,
+  "reps_per_probe": 5,
+  "results": {
+    "pending_aside_reask": [
+      {
+        "tool_delay_s": 14.0,
+        "late_result_uploaded_before_reask": true,
+        "late_result_spoken_before_reask": false,
+        "new_call_after_reask": true,
+        "result_spoken_after_reask": false,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          },
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 0,
+        "trace": "pending_aside_reask-0.jsonl"
+      },
+      {
+        "tool_delay_s": 14.0,
+        "late_result_uploaded_before_reask": true,
+        "late_result_spoken_before_reask": false,
+        "new_call_after_reask": true,
+        "result_spoken_after_reask": false,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          },
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 1,
+        "trace": "pending_aside_reask-1.jsonl"
+      },
+      {
+        "tool_delay_s": 14.0,
+        "late_result_uploaded_before_reask": true,
+        "late_result_spoken_before_reask": false,
+        "new_call_after_reask": true,
+        "result_spoken_after_reask": false,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          },
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 2,
+        "trace": "pending_aside_reask-2.jsonl"
+      },
+      {
+        "tool_delay_s": 14.0,
+        "late_result_uploaded_before_reask": true,
+        "late_result_spoken_before_reask": false,
+        "new_call_after_reask": true,
+        "result_spoken_after_reask": false,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          },
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 3,
+        "trace": "pending_aside_reask-3.jsonl"
+      },
+      {
+        "tool_delay_s": 14.0,
+        "late_result_uploaded_before_reask": true,
+        "late_result_spoken_before_reask": false,
+        "new_call_after_reask": true,
+        "result_spoken_after_reask": false,
+        "calls": [
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          },
+          {
+            "date": "2026-12-03",
+            "destination": "上海",
+            "origin": "北京"
+          }
+        ],
+        "rep": 4,
+        "trace": "pending_aside_reask-4.jsonl"
+      }
+    ],
+    "push_speech": [
+      {
+        "audio_after_push": true,
+        "first_audio_after_push_s": 0.37,
+        "text_event_after_push": [],
+        "rep": 0,
+        "trace": "push_speech-0.jsonl"
+      },
+      {
+        "audio_after_push": true,
+        "first_audio_after_push_s": 0.379,
+        "text_event_after_push": [],
+        "rep": 1,
+        "trace": "push_speech-1.jsonl"
+      },
+      {
+        "audio_after_push": true,
+        "first_audio_after_push_s": 0.381,
+        "text_event_after_push": [],
+        "rep": 2,
+        "trace": "push_speech-2.jsonl"
+      },
+      {
+        "audio_after_push": true,
+        "first_audio_after_push_s": 0.351,
+        "text_event_after_push": [],
+        "rep": 3,
+        "trace": "push_speech-3.jsonl"
+      },
+      {
+        "audio_after_push": true,
+        "first_audio_after_push_s": 0.352,
+        "text_event_after_push": [],
+        "rep": 4,
+        "trace": "push_speech-4.jsonl"
+      }
+    ]
+  }
+}

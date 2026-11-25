@@ -1,0 +1,6236 @@
+{
+  "run_id": "doubao-seeduplex-20261125-v1",
+  "started_at": "2026-11-25T11:34:37+08:00",
+  "front": {
+    "model": "豆包实时语音模型 3.0 (Seeduplex)",
+    "session_model": "1.2.6.1",
+    "endpoint": "wss://openspeech.bytedance.com/api/v3/duplex/realtime/dialogue",
+    "voice": "zh_female_xiaohe_jupiter_bigtts",
+    "credential_env": "DOUBAO_VOICE_API_KEY"
+  },
+  "back": {
+    "model": "volcengine_maas/deepseek-v4-pro",
+    "endpoint": "<private OpenAI-compatible gateway>",
+    "credential_env": "MIFY_API_KEY",
+    "thinking": "disabled",
+    "temperature": 0
+  },
+  "sessions_ok": 320,
+  "sessions_failed": [
+    {
+      "route": "by_property_flight_back",
+      "scenario": "booking",
+      "run": 3,
+      "attempt": 0,
+      "status": "invalidated",
+      "error": "back LLM client retried (HTTP 429/5xx): 15.748 s of delegated time not explained by logged calls"
+    },
+    {
+      "route": "all_back",
+      "scenario": "booking",
+      "run": 5,
+      "attempt": 0,
+      "status": "invalidated",
+      "error": "back LLM client retried (HTTP 429/5xx): 15.68 s of delegated time not explained by logged calls"
+    },
+    {
+      "route": "by_property_flight_back",
+      "scenario": "pending_aside",
+      "run": 9,
+      "attempt": 0,
+      "status": "invalidated",
+      "error": "back LLM client retried (HTTP 429/5xx): 0.536 s of delegated time not explained by logged calls"
+    }
+  ],
+  "sessions_with_suspected_back_retry": [],
+  "sessions_with_turn_timeout": [
+    "traces/by_property_flight_front/pending_aside/run-05.attempt-0.jsonl",
+    "traces/by_property_flight_front/web_search/run-08.attempt-0.jsonl"
+  ],
+  "cells": {
+    "all_back/booking": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 11.487,
+            "p90": 13.446,
+            "min": 9.091,
+            "max": 13.921
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.671,
+            "p90": 1.97,
+            "min": 1.531,
+            "max": 2.137
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.84,
+            "p90": 1.241,
+            "min": 0.752,
+            "max": 1.349
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.99,
+            "p90": 2.445,
+            "min": 1.47,
+            "max": 2.761
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.094,
+            "p90": 1.483,
+            "min": 0.686,
+            "max": 1.532
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.417,
+            "p90": 1.744,
+            "min": 1.183,
+            "max": 4.111
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.173,
+            "p90": 4.526,
+            "min": 2.217,
+            "max": 4.738
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 4.34,
+            "p90": 5.0,
+            "min": 3.745,
+            "max": 5.609
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.04,
+            "p90": 17.679,
+            "min": 13.87,
+            "max": 19.29
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 90.5,
+            "p90": 98.8,
+            "min": 89.0,
+            "max": 106.0
+          }
+        },
+        "booking_select#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 10.777,
+            "p90": 13.17,
+            "min": 1.891,
+            "max": 16.016
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.931,
+            "p90": 1.076,
+            "min": 0.752,
+            "max": 1.087
+          },
+          "first_fc_s": {
+            "n": 9,
+            "median": 3.513,
+            "p90": 4.179,
+            "min": 2.691,
+            "max": 4.184
+          },
+          "fc_after_asr_s": {
+            "n": 9,
+            "median": 2.483,
+            "p90": 3.137,
+            "min": 1.938,
+            "max": 3.247
+          },
+          "answer_after_result_s": {
+            "n": 9,
+            "median": 1.377,
+            "p90": 3.303,
+            "min": 0.938,
+            "max": 7.978
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.02,
+            "p90": 0.02,
+            "min": 0,
+            "max": 0.02
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 5.546,
+            "p90": 7.344,
+            "min": 0,
+            "max": 7.995
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 1.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 1.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 0.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 27.115,
+            "p90": 29.99,
+            "min": 15.2,
+            "max": 34.85
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 146.0,
+            "p90": 173.3,
+            "min": 82.0,
+            "max": 194.0
+          }
+        },
+        "booking_confirm#2": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 17.191,
+            "p90": 25.557,
+            "min": 13.26,
+            "max": 27.771
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.923,
+            "p90": 1.667,
+            "min": 0.812,
+            "max": 2.318
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 3.835,
+            "p90": 5.085,
+            "min": 2.737,
+            "max": 5.161
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 2.876,
+            "p90": 3.558,
+            "min": 1.037,
+            "max": 4.241
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.409,
+            "p90": 2.11,
+            "min": 1.208,
+            "max": 3.491
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.001,
+            "p90": 4.28,
+            "min": 2.336,
+            "max": 4.886
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 8.649,
+            "p90": 15.316,
+            "min": 5.478,
+            "max": 20.185
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 5.1,
+            "min": 4.0,
+            "max": 6.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 3.1,
+            "min": 2.0,
+            "max": 4.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.915,
+            "p90": 20.609,
+            "min": 8.01,
+            "max": 22.67
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 90.5,
+            "p90": 106.8,
+            "min": 41.0,
+            "max": 114.0
+          }
+        }
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 90.5,
+          "p90": 98.8,
+          "min": 89.0,
+          "max": 106.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      },
+      "booking": {
+        "runs_with_booking": 10,
+        "book_calls_total": 10,
+        "runs_booked_before_confirmation": 0,
+        "runs_with_duplicate_booking": 0,
+        "wrong_bookings": 0,
+        "runs_correct_booking_after_confirmation": 10,
+        "whole_args_exact": {
+          "true": 10,
+          "n": 10
+        },
+        "field_accuracy_by_source": {
+          "heard": {
+            "true": 40,
+            "n": 40
+          },
+          "memory": {
+            "true": 70,
+            "n": 70
+          },
+          "search_result": {
+            "true": 20,
+            "n": 20
+          }
+        },
+        "field_accuracy": {
+          "offer_id": {
+            "true": 10,
+            "n": 10
+          },
+          "quoted_price_cny": {
+            "true": 10,
+            "n": 10
+          },
+          "cabin": {
+            "true": 10,
+            "n": 10
+          },
+          "fare_rule": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.extra_checked_pieces": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.weight_kg": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].name": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_type": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_number": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.name": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.email": {
+            "true": 10,
+            "n": 10
+          }
+        },
+        "readback_mentions_price": {
+          "true": 9,
+          "n": 10
+        },
+        "wrong_values": []
+      }
+    },
+    "all_back/flight_search": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 12.148,
+            "p90": 19.105,
+            "min": 9.165,
+            "max": 21.657
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.712,
+            "p90": 3.033,
+            "min": 1.539,
+            "max": 9.441
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.827,
+            "p90": 1.005,
+            "min": 0.77,
+            "max": 1.877
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.054,
+            "p90": 6.957,
+            "min": 1.705,
+            "max": 11.53
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.215,
+            "p90": 5.951,
+            "min": 0.896,
+            "max": 9.652
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.445,
+            "p90": 2.271,
+            "min": 1.258,
+            "max": 5.583
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.747,
+            "p90": 4.733,
+            "min": 2.084,
+            "max": 4.885
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 4.58,
+            "p90": 5.326,
+            "min": 3.917,
+            "max": 6.533
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.305,
+            "p90": 19.636,
+            "min": 16.47,
+            "max": 22.93
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 89.0,
+            "p90": 106.2,
+            "min": 88.0,
+            "max": 126.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 89.0,
+          "p90": 106.2,
+          "min": 88.0,
+          "max": 126.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      }
+    },
+    "all_back/memory": {
+      "runs": 10,
+      "turns": {
+        "memory#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 6.984,
+            "p90": 9.93,
+            "min": 6.117,
+            "max": 13.491
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.032,
+            "p90": 1.823,
+            "min": 0.983,
+            "max": 2.562
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.704,
+            "p90": 2.104,
+            "min": 1.487,
+            "max": 2.614
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.585,
+            "p90": 0.726,
+            "min": 0.052,
+            "max": 0.745
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.812,
+            "p90": 2.594,
+            "min": 1.488,
+            "max": 6.645
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.02,
+            "p90": 0.02,
+            "min": 0.02,
+            "max": 0.02
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 3.434,
+            "p90": 4.332,
+            "min": 2.943,
+            "max": 5.438
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 5.41,
+            "p90": 5.611,
+            "min": 3.16,
+            "max": 5.8
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 27.0,
+            "p90": 27.0,
+            "min": 27.0,
+            "max": 27.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "all_back/pending_aside": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "no_answer": 10,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.694,
+            "p90": 2.422,
+            "min": 1.544,
+            "max": 2.815
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.837,
+            "p90": 1.007,
+            "min": 0.815,
+            "max": 1.263
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.132,
+            "p90": 4.666,
+            "min": 1.591,
+            "max": 7.099
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.297,
+            "p90": 3.776,
+            "min": 0.769,
+            "max": 6.121
+          },
+          "answer_after_result_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "answer_chars": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "weather#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 6.526,
+            "p90": 9.254,
+            "min": 5.48,
+            "max": 18.608
+          },
+          "no_answer": 0,
+          "filler_runs": 1,
+          "filler_audio_s": {
+            "n": 1,
+            "median": 1.88,
+            "p90": 1.88,
+            "min": 1.88,
+            "max": 1.88
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.908,
+            "p90": 1.099,
+            "min": 0.763,
+            "max": 1.976
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.647,
+            "p90": 2.404,
+            "min": 1.279,
+            "max": 2.893
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.732,
+            "p90": 1.006,
+            "min": 0.29,
+            "max": 1.347
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.098,
+            "p90": 1.758,
+            "min": 0.025,
+            "max": 5.12
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 4.081,
+            "p90": 4.704,
+            "min": 2.69,
+            "max": 5.139
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 8.354,
+            "p90": 10.457,
+            "min": 7.033,
+            "max": 14.292
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 6.0,
+            "p90": 6.2,
+            "min": 6.0,
+            "max": 8.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.1,
+            "min": 2.0,
+            "max": 3.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.1,
+            "min": 4.0,
+            "max": 5.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 7.915,
+            "p90": 13.409,
+            "min": 7.39,
+            "max": 22.67
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 38.0,
+            "p90": 72.3,
+            "min": 36.0,
+            "max": 120.0
+          }
+        }
+      },
+      "pending": {
+        "barge_sent": 10,
+        "pending_when_barge_started": {
+          "true": 10,
+          "n": 10
+        },
+        "heard": {
+          "true": 10,
+          "n": 10
+        },
+        "took_effect": {
+          "true": 10,
+          "n": 10
+        },
+        "aside_answer_audio_s": {
+          "n": 10,
+          "median": 6.526,
+          "p90": 9.254,
+          "min": 5.48,
+          "max": 18.608
+        },
+        "aside_answered": {
+          "true": 10,
+          "n": 10
+        },
+        "original_flight_result_spoken": {
+          "true": 1,
+          "n": 10
+        },
+        "promised_flights_later": {
+          "true": 4,
+          "n": 10
+        }
+      }
+    },
+    "all_back/pending_change": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "no_answer": 10,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.766,
+            "p90": 3.633,
+            "min": 1.616,
+            "max": 6.461
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.863,
+            "p90": 1.055,
+            "min": 0.82,
+            "max": 1.196
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.141,
+            "p90": 4.147,
+            "min": 1.761,
+            "max": 8.958
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.29,
+            "p90": 3.093,
+            "min": 0.918,
+            "max": 7.762
+          },
+          "answer_after_result_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "answer_chars": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "barge_change_date#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 10.72,
+            "p90": 13.503,
+            "min": 9.001,
+            "max": 19.253
+          },
+          "no_answer": 0,
+          "filler_runs": 3,
+          "filler_audio_s": {
+            "n": 3,
+            "median": 1.717,
+            "p90": 1.902,
+            "min": 1.461,
+            "max": 1.948
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.947,
+            "p90": 1.122,
+            "min": 0.76,
+            "max": 1.219
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.758,
+            "p90": 2.286,
+            "min": 1.401,
+            "max": 2.718
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.881,
+            "p90": 1.167,
+            "min": 0.603,
+            "max": 1.499
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.222,
+            "p90": 2.294,
+            "min": 1.085,
+            "max": 8.294
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 6.834,
+            "p90": 8.737,
+            "min": 4.202,
+            "max": 8.974
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 8.433,
+            "p90": 9.667,
+            "min": 7.397,
+            "max": 9.81
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 6.0,
+            "p90": 6.0,
+            "min": 6.0,
+            "max": 6.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.62,
+            "p90": 18.248,
+            "min": 17.0,
+            "max": 18.32
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 92.0,
+            "p90": 96.1,
+            "min": 92.0,
+            "max": 97.0
+          }
+        }
+      },
+      "pending": {
+        "barge_sent": 10,
+        "pending_when_barge_started": {
+          "true": 10,
+          "n": 10
+        },
+        "heard": {
+          "true": 10,
+          "n": 10
+        },
+        "took_effect": {
+          "true": 10,
+          "n": 10
+        },
+        "corrected_answer_audio_s": {
+          "n": 10,
+          "median": 10.72,
+          "p90": 13.503,
+          "min": 9.001,
+          "max": 19.253
+        },
+        "new_search_for_dec4": {
+          "true": 10,
+          "n": 10
+        },
+        "spoke_dec4_result": {
+          "true": 10,
+          "n": 10
+        },
+        "spoke_stale_dec3_result": {
+          "true": 0,
+          "n": 10
+        },
+        "answered_new_call_before_its_result": {
+          "true": 0,
+          "n": 10
+        }
+      }
+    },
+    "all_back/self_correction": {
+      "runs": 10,
+      "turns": {
+        "self_correction#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 10.956,
+            "p90": 15.732,
+            "min": 10.52,
+            "max": 22.053
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.889,
+            "p90": 1.978,
+            "min": 1.608,
+            "max": 2.025
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.024,
+            "p90": 1.085,
+            "min": 0.927,
+            "max": 1.133
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.458,
+            "p90": 2.746,
+            "min": 1.865,
+            "max": 2.775
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.401,
+            "p90": 1.683,
+            "min": 0.921,
+            "max": 1.743
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.401,
+            "p90": 4.311,
+            "min": 1.172,
+            "max": 4.663
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.098,
+            "p90": 4.276,
+            "min": 2.102,
+            "max": 4.755
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 4.605,
+            "p90": 5.631,
+            "min": 3.877,
+            "max": 10.814
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 19.28,
+            "p90": 20.083,
+            "min": 17.29,
+            "max": 20.29
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 106.0,
+            "p90": 106.0,
+            "min": 90.0,
+            "max": 106.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 106.0,
+          "p90": 106.0,
+          "min": 90.0,
+          "max": 106.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      },
+      "correction": {
+        "called_pre_correction_date": {
+          "true": 0,
+          "n": 10
+        },
+        "fc_before_speech_end_runs": 0,
+        "asr_split_into_two_rounds_runs": 0,
+        "asr_kept_both_days": 10,
+        "final_answer_is_dec3": {
+          "true": 10,
+          "n": 10
+        }
+      }
+    },
+    "all_back/weather": {
+      "runs": 10,
+      "turns": {
+        "weather#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 6.955,
+            "p90": 7.316,
+            "min": 6.06,
+            "max": 7.321
+          },
+          "no_answer": 0,
+          "filler_runs": 9,
+          "filler_audio_s": {
+            "n": 9,
+            "median": 1.781,
+            "p90": 1.827,
+            "min": 1.619,
+            "max": 1.85
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.87,
+            "p90": 0.942,
+            "min": 0.831,
+            "max": 1.068
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.974,
+            "p90": 2.213,
+            "min": 1.619,
+            "max": 2.259
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.065,
+            "p90": 1.274,
+            "min": 0.788,
+            "max": 1.394
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.056,
+            "p90": 1.143,
+            "min": 0.862,
+            "max": 1.23
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.2,
+            "p90": 0.2,
+            "min": 0.2,
+            "max": 0.2
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 3.724,
+            "p90": 4.005,
+            "min": 2.888,
+            "max": 4.053
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 8.05,
+            "p90": 8.359,
+            "min": 7.13,
+            "max": 8.8
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 38.0,
+            "p90": 38.5,
+            "min": 36.0,
+            "max": 43.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "all_back/web_search": {
+      "runs": 10,
+      "turns": {
+        "web_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 10.802,
+            "p90": 17.561,
+            "min": 9.964,
+            "max": 25.934
+          },
+          "no_answer": 0,
+          "filler_runs": 5,
+          "filler_audio_s": {
+            "n": 5,
+            "median": 1.936,
+            "p90": 5.124,
+            "min": 1.72,
+            "max": 7.21
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.006,
+            "p90": 1.692,
+            "min": 0.934,
+            "max": 2.281
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.068,
+            "p90": 3.034,
+            "min": 1.631,
+            "max": 7.615
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.875,
+            "p90": 2.011,
+            "min": 0.0,
+            "max": 6.644
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.095,
+            "p90": 4.788,
+            "min": 0.853,
+            "max": 7.405
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.0,
+            "p90": 3.0,
+            "min": 3.0,
+            "max": 3.0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 4.784,
+            "p90": 6.395,
+            "min": 4.144,
+            "max": 13.247
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 31.035,
+            "p90": 31.514,
+            "min": 18.56,
+            "max": 31.82
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 163.0,
+            "p90": 165.0,
+            "min": 111.0,
+            "max": 165.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "all_front/booking": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 6.908,
+            "p90": 8.442,
+            "min": 5.948,
+            "max": 10.934
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.771,
+            "p90": 2.381,
+            "min": 1.622,
+            "max": 3.834
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.866,
+            "p90": 0.93,
+            "min": 0.788,
+            "max": 1.149
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.306,
+            "p90": 3.222,
+            "min": 1.91,
+            "max": 4.596
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.477,
+            "p90": 2.103,
+            "min": 1.122,
+            "max": 3.746
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.386,
+            "p90": 1.529,
+            "min": 1.064,
+            "max": 1.6
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.173,
+            "p90": 4.526,
+            "min": 2.217,
+            "max": 4.738
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.26,
+            "p90": 17.636,
+            "min": 16.47,
+            "max": 17.69
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 91.5,
+            "p90": 92.4,
+            "min": 91.0,
+            "max": 96.0
+          }
+        },
+        "booking_select#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 3.272,
+            "p90": 5.722,
+            "min": 2.596,
+            "max": 10.145
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.947,
+            "p90": 1.316,
+            "min": 0.711,
+            "max": 1.812
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.465,
+            "p90": 1.858,
+            "min": 1.091,
+            "max": 2.274
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.458,
+            "p90": 0.628,
+            "min": 0.0,
+            "max": 1.013
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.901,
+            "p90": 3.843,
+            "min": 1.163,
+            "max": 7.851
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.02,
+            "p90": 0.02,
+            "min": 0.02,
+            "max": 0.02
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 27.495,
+            "p90": 28.293,
+            "min": 23.88,
+            "max": 28.77
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 157.0,
+            "p90": 162.1,
+            "min": 139.0,
+            "max": 163.0
+          }
+        },
+        "booking_confirm#2": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 12.312,
+            "p90": 14.464,
+            "min": 10.744,
+            "max": 20.676
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.887,
+            "p90": 2.329,
+            "min": 0.764,
+            "max": 2.757
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 7.348,
+            "p90": 8.03,
+            "min": 6.973,
+            "max": 8.11
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 6.189,
+            "p90": 6.821,
+            "min": 4.854,
+            "max": 6.952
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.353,
+            "p90": 2.918,
+            "min": 1.237,
+            "max": 11.073
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 2.99,
+            "p90": 4.28,
+            "min": 2.336,
+            "max": 4.886
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 7.215,
+            "p90": 7.427,
+            "min": 7.0,
+            "max": 7.58
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 39.0,
+            "p90": 39.0,
+            "min": 37.0,
+            "max": 39.0
+          }
+        }
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 91.5,
+          "p90": 92.4,
+          "min": 91.0,
+          "max": 96.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      },
+      "booking": {
+        "runs_with_booking": 10,
+        "book_calls_total": 10,
+        "runs_booked_before_confirmation": 0,
+        "runs_with_duplicate_booking": 0,
+        "wrong_bookings": 0,
+        "runs_correct_booking_after_confirmation": 10,
+        "whole_args_exact": {
+          "true": 10,
+          "n": 10
+        },
+        "field_accuracy_by_source": {
+          "heard": {
+            "true": 40,
+            "n": 40
+          },
+          "memory": {
+            "true": 70,
+            "n": 70
+          },
+          "search_result": {
+            "true": 20,
+            "n": 20
+          }
+        },
+        "field_accuracy": {
+          "offer_id": {
+            "true": 10,
+            "n": 10
+          },
+          "quoted_price_cny": {
+            "true": 10,
+            "n": 10
+          },
+          "cabin": {
+            "true": 10,
+            "n": 10
+          },
+          "fare_rule": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.extra_checked_pieces": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.weight_kg": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].name": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_type": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_number": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.name": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.email": {
+            "true": 10,
+            "n": 10
+          }
+        },
+        "readback_mentions_price": {
+          "true": 10,
+          "n": 10
+        },
+        "wrong_values": []
+      }
+    },
+    "all_front/flight_search": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 7.794,
+            "p90": 17.026,
+            "min": 6.165,
+            "max": 21.473
+          },
+          "no_answer": 0,
+          "filler_runs": 9,
+          "filler_audio_s": {
+            "n": 9,
+            "median": 1.864,
+            "p90": 9.724,
+            "min": 1.457,
+            "max": 10.414
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.853,
+            "p90": 1.253,
+            "min": 0.777,
+            "max": 1.465
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.747,
+            "p90": 11.261,
+            "min": 1.728,
+            "max": 15.373
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.917,
+            "p90": 10.007,
+            "min": 0.903,
+            "max": 13.908
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.389,
+            "p90": 4.541,
+            "min": 1.131,
+            "max": 6.717
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.747,
+            "p90": 4.733,
+            "min": 2.084,
+            "max": 4.885
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.14,
+            "p90": 17.531,
+            "min": 16.44,
+            "max": 17.54
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 92.0,
+            "p90": 92.1,
+            "min": 87.0,
+            "max": 93.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 92.0,
+          "p90": 92.1,
+          "min": 87.0,
+          "max": 93.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      }
+    },
+    "all_front/memory": {
+      "runs": 10,
+      "turns": {
+        "memory#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 3.529,
+            "p90": 7.334,
+            "min": 3.168,
+            "max": 8.837
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.076,
+            "p90": 1.2,
+            "min": 1.006,
+            "max": 1.33
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.723,
+            "p90": 1.923,
+            "min": 1.357,
+            "max": 2.036
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.599,
+            "p90": 0.755,
+            "min": 0.351,
+            "max": 0.885
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.832,
+            "p90": 5.413,
+            "min": 1.387,
+            "max": 7.023
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.02,
+            "p90": 0.02,
+            "min": 0.02,
+            "max": 0.02
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 5.16,
+            "p90": 6.593,
+            "min": 0.34,
+            "max": 6.62
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 27.0,
+            "p90": 30.0,
+            "min": 27.0,
+            "max": 30.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "all_front/pending_aside": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "no_answer": 10,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.695,
+            "p90": 1.856,
+            "min": 1.444,
+            "max": 1.872
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.847,
+            "p90": 0.883,
+            "min": 0.793,
+            "max": 0.933
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.381,
+            "p90": 3.11,
+            "min": 1.674,
+            "max": 6.886
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.53,
+            "p90": 2.182,
+            "min": 0.851,
+            "max": 6.011
+          },
+          "answer_after_result_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.881,
+            "p90": 4.504,
+            "min": 2.49,
+            "max": 4.939
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "answer_chars": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "weather#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 3.052,
+            "p90": 4.134,
+            "min": 2.732,
+            "max": 6.246
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.897,
+            "p90": 0.939,
+            "min": 0.777,
+            "max": 1.065
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.774,
+            "p90": 1.949,
+            "min": 1.231,
+            "max": 2.291
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.95,
+            "p90": 1.087,
+            "min": 0.318,
+            "max": 1.226
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.041,
+            "p90": 1.749,
+            "min": 0.87,
+            "max": 4.814
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.2,
+            "p90": 0.2,
+            "min": 0.2,
+            "max": 0.2
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 7.095,
+            "p90": 8.422,
+            "min": 1.96,
+            "max": 8.62
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 34.0,
+            "p90": 44.0,
+            "min": 29.0,
+            "max": 44.0
+          }
+        }
+      },
+      "pending": {
+        "barge_sent": 10,
+        "pending_when_barge_started": {
+          "true": 10,
+          "n": 10
+        },
+        "heard": {
+          "true": 10,
+          "n": 10
+        },
+        "took_effect": {
+          "true": 10,
+          "n": 10
+        },
+        "aside_answer_audio_s": {
+          "n": 10,
+          "median": 3.052,
+          "p90": 4.134,
+          "min": 2.732,
+          "max": 6.246
+        },
+        "aside_answered": {
+          "true": 10,
+          "n": 10
+        },
+        "original_flight_result_spoken": {
+          "true": 0,
+          "n": 10
+        },
+        "promised_flights_later": {
+          "true": 0,
+          "n": 10
+        }
+      }
+    },
+    "all_front/pending_change": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "no_answer": 10,
+          "filler_runs": 9,
+          "filler_audio_s": {
+            "n": 9,
+            "median": 2.017,
+            "p90": 6.802,
+            "min": 1.461,
+            "max": 13.296
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.887,
+            "p90": 0.916,
+            "min": 0.766,
+            "max": 0.948
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.785,
+            "p90": 6.785,
+            "min": 1.668,
+            "max": 13.614
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.898,
+            "p90": 5.892,
+            "min": 0.901,
+            "max": 12.727
+          },
+          "answer_after_result_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.187,
+            "p90": 4.697,
+            "min": 2.144,
+            "max": 4.836
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "answer_chars": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "barge_change_date#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 9,
+            "median": 6.196,
+            "p90": 8.769,
+            "min": 4.776,
+            "max": 9.667
+          },
+          "no_answer": 1,
+          "filler_runs": 6,
+          "filler_audio_s": {
+            "n": 6,
+            "median": 1.658,
+            "p90": 1.982,
+            "min": 1.352,
+            "max": 2.057
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.979,
+            "p90": 1.068,
+            "min": 0.73,
+            "max": 1.369
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.27,
+            "p90": 2.822,
+            "min": 1.546,
+            "max": 3.342
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.325,
+            "p90": 1.839,
+            "min": 0.714,
+            "max": 2.307
+          },
+          "answer_after_result_s": {
+            "n": 9,
+            "median": 1.313,
+            "p90": 1.648,
+            "min": 0.094,
+            "max": 1.82
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.308,
+            "p90": 4.49,
+            "min": 2.058,
+            "max": 4.504
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 1.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 1.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 9,
+            "median": 17.74,
+            "p90": 18.028,
+            "min": 16.84,
+            "max": 18.26
+          },
+          "answer_chars": {
+            "n": 9,
+            "median": 92.0,
+            "p90": 92.0,
+            "min": 49.0,
+            "max": 92.0
+          }
+        }
+      },
+      "pending": {
+        "barge_sent": 10,
+        "pending_when_barge_started": {
+          "true": 10,
+          "n": 10
+        },
+        "heard": {
+          "true": 10,
+          "n": 10
+        },
+        "took_effect": {
+          "true": 8,
+          "n": 10
+        },
+        "corrected_answer_audio_s": {
+          "n": 8,
+          "median": 6.912,
+          "p90": 8.881,
+          "min": 4.776,
+          "max": 9.667
+        },
+        "new_search_for_dec4": {
+          "true": 10,
+          "n": 10
+        },
+        "spoke_dec4_result": {
+          "true": 8,
+          "n": 10
+        },
+        "spoke_stale_dec3_result": {
+          "true": 2,
+          "n": 10
+        },
+        "answered_new_call_before_its_result": {
+          "true": 2,
+          "n": 10
+        }
+      }
+    },
+    "all_front/self_correction": {
+      "runs": 10,
+      "turns": {
+        "self_correction#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 6.887,
+            "p90": 11.188,
+            "min": 5.597,
+            "max": 11.758
+          },
+          "no_answer": 0,
+          "filler_runs": 7,
+          "filler_audio_s": {
+            "n": 7,
+            "median": 1.948,
+            "p90": 3.552,
+            "min": 1.764,
+            "max": 5.106
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.023,
+            "p90": 1.552,
+            "min": 0.952,
+            "max": 2.794
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.601,
+            "p90": 4.201,
+            "min": 1.787,
+            "max": 5.436
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.582,
+            "p90": 2.643,
+            "min": 0.804,
+            "max": 2.65
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.448,
+            "p90": 2.862,
+            "min": 1.178,
+            "max": 3.075
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.098,
+            "p90": 4.276,
+            "min": 2.102,
+            "max": 4.755
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 16.615,
+            "p90": 17.281,
+            "min": 16.24,
+            "max": 17.29
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 91.0,
+            "p90": 93.0,
+            "min": 88.0,
+            "max": 93.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 91.0,
+          "p90": 93.0,
+          "min": 88.0,
+          "max": 93.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      },
+      "correction": {
+        "called_pre_correction_date": {
+          "true": 0,
+          "n": 10
+        },
+        "fc_before_speech_end_runs": 0,
+        "asr_split_into_two_rounds_runs": 0,
+        "asr_kept_both_days": 10,
+        "final_answer_is_dec3": {
+          "true": 10,
+          "n": 10
+        }
+      }
+    },
+    "all_front/weather": {
+      "runs": 10,
+      "turns": {
+        "weather#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 2.807,
+            "p90": 3.524,
+            "min": 2.652,
+            "max": 4.75
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.862,
+            "p90": 0.923,
+            "min": 0.804,
+            "max": 1.018
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.575,
+            "p90": 1.982,
+            "min": 1.353,
+            "max": 2.009
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.74,
+            "p90": 1.031,
+            "min": 0.517,
+            "max": 1.11
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.082,
+            "p90": 1.389,
+            "min": 0.88,
+            "max": 2.57
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.2,
+            "p90": 0.2,
+            "min": 0.2,
+            "max": 0.2
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 7.59,
+            "p90": 8.412,
+            "min": 5.55,
+            "max": 8.61
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 38.0,
+            "p90": 44.0,
+            "min": 33.0,
+            "max": 44.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "all_front/web_search": {
+      "runs": 10,
+      "turns": {
+        "web_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 6.047,
+            "p90": 10.36,
+            "min": 5.296,
+            "max": 13.209
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.993,
+            "p90": 2.69,
+            "min": 0.908,
+            "max": 2.899
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.628,
+            "p90": 2.979,
+            "min": 1.189,
+            "max": 3.697
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.473,
+            "p90": 0.903,
+            "min": 0.0,
+            "max": 2.548
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.55,
+            "p90": 3.918,
+            "min": 1.028,
+            "max": 7.309
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.0,
+            "p90": 3.0,
+            "min": 3.0,
+            "max": 3.0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 16.025,
+            "p90": 20.242,
+            "min": 14.74,
+            "max": 20.62
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 87.5,
+            "p90": 111.6,
+            "min": 83.0,
+            "max": 117.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "by_property_flight_back/booking": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 11.294,
+            "p90": 19.509,
+            "min": 9.816,
+            "max": 20.505
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.76,
+            "p90": 3.122,
+            "min": 1.609,
+            "max": 6.569
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.883,
+            "p90": 1.056,
+            "min": 0.801,
+            "max": 1.692
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.256,
+            "p90": 6.626,
+            "min": 1.733,
+            "max": 9.949
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.373,
+            "p90": 5.57,
+            "min": 0.91,
+            "max": 8.257
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.498,
+            "p90": 2.493,
+            "min": 1.254,
+            "max": 4.753
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.173,
+            "p90": 4.526,
+            "min": 2.217,
+            "max": 4.738
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 4.329,
+            "p90": 5.158,
+            "min": 3.527,
+            "max": 5.184
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.095,
+            "p90": 17.763,
+            "min": 15.94,
+            "max": 19.5
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 88.5,
+            "p90": 95.8,
+            "min": 84.0,
+            "max": 103.0
+          }
+        },
+        "booking_select#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 14.47,
+            "p90": 17.724,
+            "min": 10.099,
+            "max": 23.225
+          },
+          "no_answer": 0,
+          "filler_runs": 1,
+          "filler_audio_s": {
+            "n": 1,
+            "median": 1.788,
+            "p90": 1.788,
+            "min": 1.788,
+            "max": 1.788
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.007,
+            "p90": 1.461,
+            "min": 0.856,
+            "max": 1.57
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 5.801,
+            "p90": 7.527,
+            "min": 4.353,
+            "max": 8.337
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 4.581,
+            "p90": 6.013,
+            "min": 3.495,
+            "max": 7.325
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.292,
+            "p90": 1.777,
+            "min": 0.801,
+            "max": 2.048
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.3,
+            "min": 0,
+            "max": 3.0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 7.972,
+            "p90": 10.098,
+            "min": 2.978,
+            "max": 10.604
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 3.0,
+            "p90": 3.1,
+            "min": 3.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.1,
+            "min": 1.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 37.005,
+            "p90": 46.488,
+            "min": 22.8,
+            "max": 47.01
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 203.5,
+            "p90": 249.5,
+            "min": 117.0,
+            "max": 254.0
+          }
+        },
+        "booking_confirm#2": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 15.583,
+            "p90": 19.119,
+            "min": 14.475,
+            "max": 32.608
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.802,
+            "p90": 0.911,
+            "min": 0.676,
+            "max": 0.995
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 4.527,
+            "p90": 5.943,
+            "min": 2.87,
+            "max": 6.22
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 3.68,
+            "p90": 4.974,
+            "min": 2.194,
+            "max": 5.488
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.343,
+            "p90": 2.943,
+            "min": 0.991,
+            "max": 3.169
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 2.99,
+            "p90": 4.28,
+            "min": 2.336,
+            "max": 4.886
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 6.178,
+            "p90": 9.251,
+            "min": 5.283,
+            "max": 22.519
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.1,
+            "min": 4.0,
+            "max": 5.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.1,
+            "min": 2.0,
+            "max": 3.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 20.405,
+            "p90": 26.142,
+            "min": 16.95,
+            "max": 29.22
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 108.5,
+            "p90": 135.1,
+            "min": 86.0,
+            "max": 154.0
+          }
+        }
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 88.5,
+          "p90": 95.8,
+          "min": 84.0,
+          "max": 103.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      },
+      "booking": {
+        "runs_with_booking": 10,
+        "book_calls_total": 10,
+        "runs_booked_before_confirmation": 0,
+        "runs_with_duplicate_booking": 0,
+        "wrong_bookings": 0,
+        "runs_correct_booking_after_confirmation": 10,
+        "whole_args_exact": {
+          "true": 10,
+          "n": 10
+        },
+        "field_accuracy_by_source": {
+          "heard": {
+            "true": 40,
+            "n": 40
+          },
+          "memory": {
+            "true": 70,
+            "n": 70
+          },
+          "search_result": {
+            "true": 20,
+            "n": 20
+          }
+        },
+        "field_accuracy": {
+          "offer_id": {
+            "true": 10,
+            "n": 10
+          },
+          "quoted_price_cny": {
+            "true": 10,
+            "n": 10
+          },
+          "cabin": {
+            "true": 10,
+            "n": 10
+          },
+          "fare_rule": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.extra_checked_pieces": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.weight_kg": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].name": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_type": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_number": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.name": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.email": {
+            "true": 10,
+            "n": 10
+          }
+        },
+        "readback_mentions_price": {
+          "true": 10,
+          "n": 10
+        },
+        "wrong_values": []
+      }
+    },
+    "by_property_flight_back/flight_search": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 11.698,
+            "p90": 13.641,
+            "min": 9.451,
+            "max": 16.99
+          },
+          "no_answer": 0,
+          "filler_runs": 9,
+          "filler_audio_s": {
+            "n": 9,
+            "median": 1.734,
+            "p90": 3.318,
+            "min": 1.493,
+            "max": 4.714
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.824,
+            "p90": 1.081,
+            "min": 0.751,
+            "max": 1.166
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.002,
+            "p90": 3.086,
+            "min": 1.418,
+            "max": 4.795
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.176,
+            "p90": 2.154,
+            "min": 0.667,
+            "max": 3.629
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.373,
+            "p90": 1.561,
+            "min": 1.271,
+            "max": 1.879
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.747,
+            "p90": 4.733,
+            "min": 2.084,
+            "max": 4.885
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 4.151,
+            "p90": 5.989,
+            "min": 3.663,
+            "max": 6.419
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 16.58,
+            "p90": 17.132,
+            "min": 5.63,
+            "max": 17.24
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 87.0,
+            "p90": 89.0,
+            "min": 86.0,
+            "max": 89.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 87.0,
+          "p90": 89.0,
+          "min": 86.0,
+          "max": 89.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      }
+    },
+    "by_property_flight_back/memory": {
+      "runs": 10,
+      "turns": {
+        "memory#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 9,
+            "median": 1.85,
+            "p90": 4.011,
+            "min": 1.732,
+            "max": 8.262
+          },
+          "no_answer": 1,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.057,
+            "p90": 1.546,
+            "min": 0.998,
+            "max": 1.993
+          },
+          "first_fc_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "fc_after_asr_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "answer_after_result_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 9,
+            "median": 5.97,
+            "p90": 6.49,
+            "min": 0.34,
+            "max": 6.81
+          },
+          "answer_chars": {
+            "n": 9,
+            "median": 30.0,
+            "p90": 30.2,
+            "min": 30.0,
+            "max": 31.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 0,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 0,
+        "n": 0
+      },
+      "exact_over_all_runs": {
+        "true": 0,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 0.0,
+        "p90": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      }
+    },
+    "by_property_flight_back/pending_aside": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "no_answer": 10,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.742,
+            "p90": 3.01,
+            "min": 1.666,
+            "max": 8.475
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.869,
+            "p90": 0.909,
+            "min": 0.781,
+            "max": 1.101
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.157,
+            "p90": 3.938,
+            "min": 1.807,
+            "max": 9.935
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.288,
+            "p90": 3.038,
+            "min": 0.992,
+            "max": 8.834
+          },
+          "answer_after_result_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "answer_chars": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "weather#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 3.025,
+            "p90": 3.57,
+            "min": 2.679,
+            "max": 3.776
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.966,
+            "p90": 1.104,
+            "min": 0.756,
+            "max": 1.379
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.697,
+            "p90": 2.075,
+            "min": 1.514,
+            "max": 2.125
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.774,
+            "p90": 1.02,
+            "min": 0.562,
+            "max": 1.052
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.067,
+            "p90": 1.367,
+            "min": 0.153,
+            "max": 1.506
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 4.081,
+            "p90": 4.704,
+            "min": 2.69,
+            "max": 5.139
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 4.537,
+            "p90": 5.273,
+            "min": 3.424,
+            "max": 5.426
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 10.29,
+            "p90": 11.12,
+            "min": 5.58,
+            "max": 12.02
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 53.5,
+            "p90": 59.5,
+            "min": 28.0,
+            "max": 64.0
+          }
+        }
+      },
+      "pending": {
+        "barge_sent": 10,
+        "pending_when_barge_started": {
+          "true": 10,
+          "n": 10
+        },
+        "heard": {
+          "true": 10,
+          "n": 10
+        },
+        "took_effect": {
+          "true": 10,
+          "n": 10
+        },
+        "aside_answer_audio_s": {
+          "n": 10,
+          "median": 3.025,
+          "p90": 3.57,
+          "min": 2.679,
+          "max": 3.776
+        },
+        "aside_answered": {
+          "true": 10,
+          "n": 10
+        },
+        "original_flight_result_spoken": {
+          "true": 0,
+          "n": 10
+        },
+        "promised_flights_later": {
+          "true": 6,
+          "n": 10
+        }
+      }
+    },
+    "by_property_flight_back/pending_change": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "no_answer": 10,
+          "filler_runs": 9,
+          "filler_audio_s": {
+            "n": 9,
+            "median": 1.621,
+            "p90": 2.086,
+            "min": 1.478,
+            "max": 2.747
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.825,
+            "p90": 1.001,
+            "min": 0.774,
+            "max": 1.029
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.815,
+            "p90": 5.334,
+            "min": 1.455,
+            "max": 6.86
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.982,
+            "p90": 4.309,
+            "min": 0.665,
+            "max": 5.862
+          },
+          "answer_after_result_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "answer_chars": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "barge_change_date#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 11.2,
+            "p90": 12.888,
+            "min": 8.741,
+            "max": 15.391
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.851,
+            "p90": 0.998,
+            "min": 0.74,
+            "max": 1.009
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.673,
+            "p90": 2.018,
+            "min": 1.25,
+            "max": 2.169
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.845,
+            "p90": 1.114,
+            "min": 0.497,
+            "max": 1.16
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.466,
+            "p90": 1.896,
+            "min": 1.221,
+            "max": 3.651
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 6.834,
+            "p90": 8.737,
+            "min": 4.202,
+            "max": 8.974
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 8.553,
+            "p90": 10.633,
+            "min": 7.807,
+            "max": 10.99
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 6.0,
+            "p90": 6.0,
+            "min": 6.0,
+            "max": 6.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.33,
+            "p90": 18.142,
+            "min": 16.75,
+            "max": 19.42
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 91.5,
+            "p90": 93.0,
+            "min": 91.0,
+            "max": 102.0
+          }
+        }
+      },
+      "pending": {
+        "barge_sent": 10,
+        "pending_when_barge_started": {
+          "true": 10,
+          "n": 10
+        },
+        "heard": {
+          "true": 10,
+          "n": 10
+        },
+        "took_effect": {
+          "true": 10,
+          "n": 10
+        },
+        "corrected_answer_audio_s": {
+          "n": 10,
+          "median": 11.2,
+          "p90": 12.888,
+          "min": 8.741,
+          "max": 15.391
+        },
+        "new_search_for_dec4": {
+          "true": 10,
+          "n": 10
+        },
+        "spoke_dec4_result": {
+          "true": 10,
+          "n": 10
+        },
+        "spoke_stale_dec3_result": {
+          "true": 0,
+          "n": 10
+        },
+        "answered_new_call_before_its_result": {
+          "true": 0,
+          "n": 10
+        }
+      }
+    },
+    "by_property_flight_back/self_correction": {
+      "runs": 10,
+      "turns": {
+        "self_correction#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 11.519,
+            "p90": 15.638,
+            "min": 10.07,
+            "max": 21.669
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.951,
+            "p90": 3.671,
+            "min": 1.722,
+            "max": 12.303
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.046,
+            "p90": 1.964,
+            "min": 0.93,
+            "max": 2.221
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.465,
+            "p90": 5.037,
+            "min": 1.83,
+            "max": 12.552
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.419,
+            "p90": 3.342,
+            "min": 0.17,
+            "max": 10.331
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.292,
+            "p90": 1.495,
+            "min": 1.061,
+            "max": 1.633
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.098,
+            "p90": 4.276,
+            "min": 2.102,
+            "max": 4.755
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 4.415,
+            "p90": 5.003,
+            "min": 3.974,
+            "max": 7.322
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 18.825,
+            "p90": 19.165,
+            "min": 16.33,
+            "max": 19.39
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 104.0,
+            "p90": 104.1,
+            "min": 89.0,
+            "max": 105.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 104.0,
+          "p90": 104.1,
+          "min": 89.0,
+          "max": 105.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      },
+      "correction": {
+        "called_pre_correction_date": {
+          "true": 0,
+          "n": 10
+        },
+        "fc_before_speech_end_runs": 0,
+        "asr_split_into_two_rounds_runs": 0,
+        "asr_kept_both_days": 10,
+        "final_answer_is_dec3": {
+          "true": 10,
+          "n": 10
+        }
+      }
+    },
+    "by_property_flight_back/weather": {
+      "runs": 10,
+      "turns": {
+        "weather#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 3.146,
+            "p90": 3.476,
+            "min": 2.619,
+            "max": 3.828
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.891,
+            "p90": 0.925,
+            "min": 0.804,
+            "max": 0.942
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.756,
+            "p90": 1.959,
+            "min": 1.464,
+            "max": 2.017
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.869,
+            "p90": 1.048,
+            "min": 0.661,
+            "max": 1.122
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.115,
+            "p90": 1.621,
+            "min": 0.782,
+            "max": 1.713
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.2,
+            "p90": 0.2,
+            "min": 0.2,
+            "max": 0.2
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 7.3,
+            "p90": 7.835,
+            "min": 6.22,
+            "max": 7.97
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 36.0,
+            "p90": 38.1,
+            "min": 31.0,
+            "max": 39.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "by_property_flight_back/web_search": {
+      "runs": 10,
+      "turns": {
+        "web_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 11.671,
+            "p90": 17.096,
+            "min": 10.568,
+            "max": 22.338
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.007,
+            "p90": 1.355,
+            "min": 0.979,
+            "max": 2.751
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.018,
+            "p90": 2.616,
+            "min": 1.647,
+            "max": 2.751
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.881,
+            "p90": 1.266,
+            "min": 0.0,
+            "max": 1.548
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.546,
+            "p90": 5.92,
+            "min": 0.933,
+            "max": 10.952
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.0,
+            "p90": 3.0,
+            "min": 3.0,
+            "max": 3.0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 5.454,
+            "p90": 6.856,
+            "min": 4.206,
+            "max": 8.596
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 32.465,
+            "p90": 32.719,
+            "min": 14.62,
+            "max": 32.89
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 172.5,
+            "p90": 175.0,
+            "min": 85.0,
+            "max": 175.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "by_property_flight_front/booking": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 7.381,
+            "p90": 14.538,
+            "min": 5.353,
+            "max": 20.07
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.699,
+            "p90": 2.336,
+            "min": 1.51,
+            "max": 2.545
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.829,
+            "p90": 0.984,
+            "min": 0.789,
+            "max": 0.998
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.304,
+            "p90": 4.935,
+            "min": 1.7,
+            "max": 6.038
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.486,
+            "p90": 3.951,
+            "min": 0.911,
+            "max": 5.04
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.415,
+            "p90": 5.331,
+            "min": 1.236,
+            "max": 10.829
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.173,
+            "p90": 4.526,
+            "min": 2.217,
+            "max": 4.738
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.07,
+            "p90": 17.36,
+            "min": 16.5,
+            "max": 17.54
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 92.0,
+            "p90": 92.1,
+            "min": 87.0,
+            "max": 93.0
+          }
+        },
+        "booking_select#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 14.044,
+            "p90": 22.524,
+            "min": 11.913,
+            "max": 23.078
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.976,
+            "p90": 1.863,
+            "min": 0.876,
+            "max": 3.004
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 6.092,
+            "p90": 7.538,
+            "min": 5.436,
+            "max": 15.362
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 4.91,
+            "p90": 6.304,
+            "min": 3.088,
+            "max": 13.626
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.373,
+            "p90": 1.849,
+            "min": 0.919,
+            "max": 3.076
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 6.218,
+            "p90": 8.465,
+            "min": 4.828,
+            "max": 15.715
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 3.0,
+            "p90": 3.0,
+            "min": 3.0,
+            "max": 3.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 35.09,
+            "p90": 45.723,
+            "min": 21.38,
+            "max": 47.1
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 192.5,
+            "p90": 251.3,
+            "min": 159.0,
+            "max": 263.0
+          }
+        },
+        "booking_confirm#2": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 17.417,
+            "p90": 22.452,
+            "min": 13.6,
+            "max": 28.878
+          },
+          "no_answer": 0,
+          "filler_runs": 1,
+          "filler_audio_s": {
+            "n": 1,
+            "median": 1.299,
+            "p90": 1.299,
+            "min": 1.299,
+            "max": 1.299
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.881,
+            "p90": 2.469,
+            "min": 0.796,
+            "max": 10.161
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 5.728,
+            "p90": 8.293,
+            "min": 4.59,
+            "max": 10.161
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 4.632,
+            "p90": 5.112,
+            "min": 0.0,
+            "max": 7.072
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.29,
+            "p90": 1.88,
+            "min": 0.931,
+            "max": 3.557
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 2.99,
+            "p90": 4.28,
+            "min": 2.336,
+            "max": 4.886
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 6.114,
+            "p90": 10.849,
+            "min": 5.074,
+            "max": 14.494
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.1,
+            "min": 4.0,
+            "max": 5.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.1,
+            "min": 2.0,
+            "max": 3.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 22.39,
+            "p90": 24.491,
+            "min": 18.42,
+            "max": 25.4
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 116.5,
+            "p90": 121.9,
+            "min": 98.0,
+            "max": 130.0
+          }
+        }
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 92.0,
+          "p90": 92.1,
+          "min": 87.0,
+          "max": 93.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      },
+      "booking": {
+        "runs_with_booking": 10,
+        "book_calls_total": 10,
+        "runs_booked_before_confirmation": 0,
+        "runs_with_duplicate_booking": 0,
+        "wrong_bookings": 0,
+        "runs_correct_booking_after_confirmation": 10,
+        "whole_args_exact": {
+          "true": 10,
+          "n": 10
+        },
+        "field_accuracy_by_source": {
+          "heard": {
+            "true": 40,
+            "n": 40
+          },
+          "memory": {
+            "true": 70,
+            "n": 70
+          },
+          "search_result": {
+            "true": 20,
+            "n": 20
+          }
+        },
+        "field_accuracy": {
+          "offer_id": {
+            "true": 10,
+            "n": 10
+          },
+          "quoted_price_cny": {
+            "true": 10,
+            "n": 10
+          },
+          "cabin": {
+            "true": 10,
+            "n": 10
+          },
+          "fare_rule": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.extra_checked_pieces": {
+            "true": 10,
+            "n": 10
+          },
+          "baggage.weight_kg": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].name": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_type": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].id_number": {
+            "true": 10,
+            "n": 10
+          },
+          "passengers[0].phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.name": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.phone": {
+            "true": 10,
+            "n": 10
+          },
+          "contact.email": {
+            "true": 10,
+            "n": 10
+          }
+        },
+        "readback_mentions_price": {
+          "true": 10,
+          "n": 10
+        },
+        "wrong_values": []
+      }
+    },
+    "by_property_flight_front/flight_search": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 7.829,
+            "p90": 13.982,
+            "min": 5.19,
+            "max": 17.762
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 2.127,
+            "p90": 3.641,
+            "min": 1.592,
+            "max": 6.919
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.843,
+            "p90": 1.21,
+            "min": 0.759,
+            "max": 1.918
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.683,
+            "p90": 7.748,
+            "min": 1.749,
+            "max": 10.408
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.712,
+            "p90": 6.78,
+            "min": 0.927,
+            "max": 9.553
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.494,
+            "p90": 2.162,
+            "min": 1.356,
+            "max": 2.982
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.747,
+            "p90": 4.733,
+            "min": 2.084,
+            "max": 4.885
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.095,
+            "p90": 17.325,
+            "min": 16.41,
+            "max": 17.55
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 92.0,
+            "p90": 92.1,
+            "min": 87.0,
+            "max": 93.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 92.0,
+          "p90": 92.1,
+          "min": 87.0,
+          "max": 93.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      }
+    },
+    "by_property_flight_front/memory": {
+      "runs": 10,
+      "turns": {
+        "memory#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 1.907,
+            "p90": 2.339,
+            "min": 1.762,
+            "max": 2.622
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.034,
+            "p90": 1.269,
+            "min": 0.959,
+            "max": 1.887
+          },
+          "first_fc_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "fc_after_asr_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "answer_after_result_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 6.07,
+            "p90": 6.421,
+            "min": 5.78,
+            "max": 6.97
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 30.0,
+            "p90": 30.0,
+            "min": 30.0,
+            "max": 30.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 0,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 0,
+        "n": 0
+      },
+      "exact_over_all_runs": {
+        "true": 0,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 0.0,
+        "p90": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      }
+    },
+    "by_property_flight_front/pending_aside": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "no_answer": 10,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.724,
+            "p90": 2.336,
+            "min": 1.65,
+            "max": 5.121
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.859,
+            "p90": 1.193,
+            "min": 0.812,
+            "max": 1.393
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.44,
+            "p90": 3.031,
+            "min": 1.791,
+            "max": 5.666
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.494,
+            "p90": 2.045,
+            "min": 0.852,
+            "max": 4.273
+          },
+          "answer_after_result_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.881,
+            "p90": 4.504,
+            "min": 2.49,
+            "max": 4.939
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "answer_chars": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "weather#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 9,
+            "median": 3.016,
+            "p90": 3.503,
+            "min": 2.628,
+            "max": 4.727
+          },
+          "no_answer": 1,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.902,
+            "p90": 1.018,
+            "min": 0.736,
+            "max": 1.032
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.722,
+            "p90": 2.157,
+            "min": 1.417,
+            "max": 2.208
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.916,
+            "p90": 1.175,
+            "min": 0.562,
+            "max": 1.192
+          },
+          "answer_after_result_s": {
+            "n": 9,
+            "median": 1.01,
+            "p90": 1.597,
+            "min": 0.892,
+            "max": 2.376
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.2,
+            "p90": 0.2,
+            "min": 0.2,
+            "max": 0.2
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 1.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 1.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 9,
+            "median": 7.02,
+            "p90": 10.672,
+            "min": 5.99,
+            "max": 11.0
+          },
+          "answer_chars": {
+            "n": 9,
+            "median": 34.0,
+            "p90": 57.4,
+            "min": 29.0,
+            "max": 59.0
+          }
+        }
+      },
+      "pending": {
+        "barge_sent": 10,
+        "pending_when_barge_started": {
+          "true": 10,
+          "n": 10
+        },
+        "heard": {
+          "true": 10,
+          "n": 10
+        },
+        "took_effect": {
+          "true": 9,
+          "n": 10
+        },
+        "aside_answer_audio_s": {
+          "n": 9,
+          "median": 3.016,
+          "p90": 3.503,
+          "min": 2.628,
+          "max": 4.727
+        },
+        "aside_answered": {
+          "true": 9,
+          "n": 10
+        },
+        "original_flight_result_spoken": {
+          "true": 0,
+          "n": 10
+        },
+        "promised_flights_later": {
+          "true": 3,
+          "n": 10
+        }
+      }
+    },
+    "by_property_flight_front/pending_change": {
+      "runs": 10,
+      "turns": {
+        "flight_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "no_answer": 10,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.671,
+            "p90": 2.605,
+            "min": 1.486,
+            "max": 3.42
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.859,
+            "p90": 0.982,
+            "min": 0.772,
+            "max": 1.037
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.085,
+            "p90": 4.576,
+            "min": 1.673,
+            "max": 5.034
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.136,
+            "p90": 3.605,
+            "min": 0.873,
+            "max": 4.107
+          },
+          "answer_after_result_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.187,
+            "p90": 4.697,
+            "min": 2.144,
+            "max": 4.836
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 1.0,
+            "p90": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "answer_chars": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "barge_change_date#1": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 6.538,
+            "p90": 7.808,
+            "min": 4.987,
+            "max": 8.623
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.996,
+            "p90": 1.058,
+            "min": 0.688,
+            "max": 1.072
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.861,
+            "p90": 2.246,
+            "min": 1.45,
+            "max": 2.389
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.916,
+            "p90": 1.334,
+            "min": 0.415,
+            "max": 1.348
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.332,
+            "p90": 1.677,
+            "min": 0.989,
+            "max": 1.745
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.308,
+            "p90": 4.49,
+            "min": 2.058,
+            "max": 4.504
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.65,
+            "p90": 18.053,
+            "min": 17.41,
+            "max": 18.44
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 92.0,
+            "p90": 92.0,
+            "min": 92.0,
+            "max": 92.0
+          }
+        }
+      },
+      "pending": {
+        "barge_sent": 10,
+        "pending_when_barge_started": {
+          "true": 10,
+          "n": 10
+        },
+        "heard": {
+          "true": 10,
+          "n": 10
+        },
+        "took_effect": {
+          "true": 10,
+          "n": 10
+        },
+        "corrected_answer_audio_s": {
+          "n": 10,
+          "median": 6.538,
+          "p90": 7.808,
+          "min": 4.987,
+          "max": 8.623
+        },
+        "new_search_for_dec4": {
+          "true": 10,
+          "n": 10
+        },
+        "spoke_dec4_result": {
+          "true": 10,
+          "n": 10
+        },
+        "spoke_stale_dec3_result": {
+          "true": 0,
+          "n": 10
+        },
+        "answered_new_call_before_its_result": {
+          "true": 0,
+          "n": 10
+        }
+      }
+    },
+    "by_property_flight_front/self_correction": {
+      "runs": 10,
+      "turns": {
+        "self_correction#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 6.808,
+            "p90": 13.362,
+            "min": 5.914,
+            "max": 18.326
+          },
+          "no_answer": 0,
+          "filler_runs": 10,
+          "filler_audio_s": {
+            "n": 10,
+            "median": 1.822,
+            "p90": 2.899,
+            "min": 1.711,
+            "max": 5.316
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.97,
+            "p90": 1.162,
+            "min": 0.933,
+            "max": 1.173
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.256,
+            "p90": 4.456,
+            "min": 1.871,
+            "max": 8.199
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 1.289,
+            "p90": 3.284,
+            "min": 0.923,
+            "max": 7.038
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.437,
+            "p90": 6.638,
+            "min": 1.255,
+            "max": 10.063
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.098,
+            "p90": 4.276,
+            "min": 2.102,
+            "max": 4.755
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 17.095,
+            "p90": 17.273,
+            "min": 16.61,
+            "max": 17.48
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 92.0,
+            "p90": 92.0,
+            "min": 90.0,
+            "max": 92.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "readout": {
+        "spoken_chars": {
+          "n": 10,
+          "median": 92.0,
+          "p90": 92.0,
+          "min": 90.0,
+          "max": 92.0
+        },
+        "speak_payload_chars": 91,
+        "display_payload_chars": 2568,
+        "flight_numbers_spoken": {
+          "n": 10,
+          "median": 1.0,
+          "p90": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "offer_ids_spoken_runs": 0,
+        "read_table_aloud": {
+          "true": 0,
+          "n": 10
+        }
+      },
+      "correction": {
+        "called_pre_correction_date": {
+          "true": 0,
+          "n": 10
+        },
+        "fc_before_speech_end_runs": 0,
+        "asr_split_into_two_rounds_runs": 0,
+        "asr_kept_both_days": 10,
+        "final_answer_is_dec3": {
+          "true": 10,
+          "n": 10
+        }
+      }
+    },
+    "by_property_flight_front/weather": {
+      "runs": 10,
+      "turns": {
+        "weather#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 3.024,
+            "p90": 7.56,
+            "min": 2.511,
+            "max": 7.567
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 0.887,
+            "p90": 1.175,
+            "min": 0.8,
+            "max": 1.596
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 1.701,
+            "p90": 1.902,
+            "min": 1.212,
+            "max": 1.916
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.698,
+            "p90": 1.02,
+            "min": 0.202,
+            "max": 1.022
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 1.104,
+            "p90": 5.57,
+            "min": 0.927,
+            "max": 5.594
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 0.2,
+            "p90": 0.2,
+            "min": 0.2,
+            "max": 0.2
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0,
+            "max": 0
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 0.0,
+            "p90": 0.0,
+            "min": 0.0,
+            "max": 0.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 7.575,
+            "p90": 7.612,
+            "min": 6.8,
+            "max": 7.81
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 38.0,
+            "p90": 38.0,
+            "min": 33.0,
+            "max": 38.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "by_property_flight_front/web_search": {
+      "runs": 10,
+      "turns": {
+        "web_search#0": {
+          "n": 10,
+          "answer_audio_s": {
+            "n": 10,
+            "median": 10.975,
+            "p90": 12.368,
+            "min": 9.806,
+            "max": 16.385
+          },
+          "no_answer": 0,
+          "filler_runs": 0,
+          "filler_audio_s": {
+            "n": 0,
+            "median": null,
+            "p90": null,
+            "min": null,
+            "max": null
+          },
+          "asr_done_s": {
+            "n": 10,
+            "median": 1.022,
+            "p90": 1.213,
+            "min": 0.933,
+            "max": 1.953
+          },
+          "first_fc_s": {
+            "n": 10,
+            "median": 2.068,
+            "p90": 2.288,
+            "min": 1.716,
+            "max": 2.309
+          },
+          "fc_after_asr_s": {
+            "n": 10,
+            "median": 0.936,
+            "p90": 1.056,
+            "min": 0.356,
+            "max": 1.274
+          },
+          "answer_after_result_s": {
+            "n": 10,
+            "median": 0.994,
+            "p90": 1.84,
+            "min": 0.782,
+            "max": 4.217
+          },
+          "tool_latency_s": {
+            "n": 10,
+            "median": 3.0,
+            "p90": 3.0,
+            "min": 3.0,
+            "max": 3.0
+          },
+          "back_llm_seconds": {
+            "n": 10,
+            "median": 4.994,
+            "p90": 5.882,
+            "min": 3.917,
+            "max": 6.859
+          },
+          "llm_calls": {
+            "n": 10,
+            "median": 4.0,
+            "p90": 4.0,
+            "min": 4.0,
+            "max": 4.0
+          },
+          "front_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "back_llm_calls": {
+            "n": 10,
+            "median": 2.0,
+            "p90": 2.0,
+            "min": 2.0,
+            "max": 2.0
+          },
+          "answer_audio_seconds": {
+            "n": 10,
+            "median": 22.805,
+            "p90": 33.061,
+            "min": 8.32,
+            "max": 33.61
+          },
+          "answer_chars": {
+            "n": 10,
+            "median": 148.0,
+            "p90": 175.4,
+            "min": 110.0,
+            "max": 179.0
+          }
+        }
+      },
+      "tool_called": {
+        "true": 10,
+        "n": 10
+      },
+      "first_call_exact": {
+        "true": 10,
+        "n": 10
+      },
+      "exact_over_all_runs": {
+        "true": 10,
+        "n": 10
+      },
+      "key_fact_in_answer": {
+        "true": 10,
+        "n": 10
+      },
+      "n_calls": {
+        "n": 10,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    }
+  }
+}

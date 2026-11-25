@@ -1,0 +1,111 @@
+{"t": 0.146, "dir": "local", "type": "ws.connected", "logid": "20261125114534A3851A2B208646618136", "endpoint": "wss://openspeech.bytedance.com/api/v3/duplex/realtime/dialogue"}
+{"t": 0.146, "dir": "up", "type": "session.create", "session": {"model": "1.2.6.1", "instructions": "你是一位中文语音出行助理，正在和用户通电话。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。需要查询时调用工具，不要编造。\n【运行时自动检索到的用户记忆，可直接使用】用户的国航凤凰知音常旅客卡号是 CA 8839 2201 57。", "audio": {"input": {"format": {"type": "pcm", "rate": 16000}}, "output": {"format": {"type": "pcm_s16le", "rate": 24000}, "voice": "zh_female_xiaohe_jupiter_bigtts"}}, "tools": [{"type": "function", "name": "search_flights", "description": "【慢，2到5秒】查询某天的直飞航班。返回 speak（给你念的一句话摘要）和 display（完整航班表，客户端会自动显示在用户屏幕上，不需要逐条朗读；其中的 offer_id 和价格在订票时要用）。", "parameters": {"type": "object", "properties": {"origin": {"type": "string", "description": "出发城市，不带“市”字，例如 北京"}, "destination": {"type": "string", "description": "到达城市，不带“市”字，例如 上海"}, "date": {"type": "string", "description": "出发日期，格式 YYYY-MM-DD"}}, "required": ["origin", "destination", "date"]}}]}, "extension": {"asr": {}, "tts": {}, "dialog": {}}, "event_id": "evt_1"}
+{"t": 0.2076, "dir": "down", "type": "session.created", "event_id": "event_1", "session": {"id": "c80805ba-51b1-4c50-8493-56510b2abc80"}}
+{"t": 1.2087, "dir": "local", "type": "user_audio.start", "clip": "flight_search", "bytes": 122940}
+{"t": 1.8701, "dir": "down", "round_id": 1, "type": "conversation.item.input_audio_transcription.started", "event_id": "event_2", "item_id": "62877526051955714"}
+{"t": 1.8701, "dir": "down", "delta": "帮", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051955714", "event_id": "event_3", "content_index": 0}
+{"t": 1.9501, "dir": "down", "delta": "帮我", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051955714", "event_id": "event_4", "content_index": 0}
+{"t": 2.2073, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051955714", "event_id": "event_5", "content_index": 0, "delta": "帮我查"}
+{"t": 2.6078, "dir": "down", "item_id": "62877526051955714", "event_id": "event_6", "content_index": 0, "delta": "帮我查一下", "type": "conversation.item.input_audio_transcription.delta"}
+{"t": 3.0137, "dir": "down", "event_id": "event_7", "content_index": 0, "delta": "帮我查一下十二月", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051955714"}
+{"t": 3.4066, "dir": "down", "delta": "帮我查一下十二月三号", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051955714", "event_id": "event_8", "content_index": 0}
+{"t": 4.0759, "dir": "down", "content_index": 0, "delta": "帮我查一下十二月三号北京", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051955714", "event_id": "event_9"}
+{"t": 4.2083, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051955714", "event_id": "event_10", "content_index": 0, "delta": "帮我查一下十二月三号北京到"}
+{"t": 4.6361, "dir": "down", "content_index": 0, "delta": "帮我查一下十二月三号北京到上海", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051955714", "event_id": "event_11"}
+{"t": 4.7879, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051955714", "event_id": "event_12", "content_index": 0, "delta": "帮我查一下十二月三号北京到上海的"}
+{"t": 4.9858, "dir": "down", "event_id": "event_13", "content_index": 0, "delta": "帮我查一下十二月三号北京到上海的航班", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051955714"}
+{"t": 5.0486, "dir": "local", "type": "user_audio.end", "clip": "flight_search"}
+{"t": 5.1816, "dir": "down", "content_index": 0, "delta": "帮我查一下 12 月 3 号北京到上海的航班。", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051955714", "event_id": "event_14"}
+{"t": 5.2659, "dir": "down", "content_index": 0, "delta": "帮我查一下十二月三号北京到上海的航班", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051955714", "event_id": "event_15"}
+{"t": 5.9163, "dir": "down", "item_id": "62877526051955714", "event_id": "event_16", "content_index": 0, "delta": "帮我查一下 12 月 3 号北京到上海的航班。", "type": "conversation.item.input_audio_transcription.delta"}
+{"t": 5.9164, "dir": "down", "type": "conversation.item.input_audio_transcription.completed", "item_id": "62877526051955714", "content_index": 1, "text": "帮我查一下 12 月 3 号北京到上海的航班。", "event_id": "event_17"}
+{"t": 7.1505, "dir": "down", "type": "response.function_call_arguments.done", "event_id": "event_18", "items": [{"call_id": "c18f2c8c-8874-4450-a292-260015de31d5", "name": "search_flights", "arguments": "{\"date\":\"2026-12-03\",\"destination\":\"上海\",\"origin\":\"北京\"}"}]}
+{"t": 8.1686, "dir": "local", "type": "user_audio.start", "clip": "memory", "bytes": 76078}
+{"t": 8.4207, "dir": "down", "type": "response.done", "event_id": "event_19", "response": {"usage": {"total_tokens": 2960, "input_tokens": 54, "output_tokens": 62, "input_token_details": {"text_tokens": 0, "audio_tokens": 54, "image_tokens": 0, "cached_tokens": 2844, "cached_tokens_details": {"text_tokens": 2844, "audio_tokens": 0, "image_tokens": 0}}, "output_token_details": {"text_tokens": 62, "audio_tokens": 0}, "duration_details": {"vision_duration_ms": 0, "audio_duration_ms": 0}}}}
+{"t": 8.4207, "dir": "down", "event_id": "event_20", "item_id": "62877526051957506", "round_id": 2, "type": "conversation.item.input_audio_transcription.started"}
+{"t": 8.7851, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051957506", "event_id": "event_21", "content_index": 0, "delta": "你"}
+{"t": 9.0138, "dir": "down", "content_index": 0, "delta": "你还记得", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051957506", "event_id": "event_22"}
+{"t": 9.4137, "dir": "down", "content_index": 0, "delta": "你还记得我的", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051957506", "event_id": "event_23"}
+{"t": 9.9779, "dir": "down", "content_index": 0, "delta": "你还记得我的长", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051957506", "event_id": "event_24"}
+{"t": 10.0579, "dir": "down", "content_index": 0, "delta": "你还记得我的常", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051957506", "event_id": "event_25"}
+{"t": 10.2016, "dir": "down", "content_index": 0, "delta": "你还记得我的常旅客", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051957506", "event_id": "event_26"}
+{"t": 10.5278, "dir": "local", "type": "user_audio.end", "clip": "memory"}
+{"t": 10.5957, "dir": "down", "content_index": 0, "delta": "你还记得我的常旅客卡号", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051957506", "event_id": "event_27"}
+{"t": 10.7675, "dir": "down", "content_index": 0, "delta": "你还记得我的常旅客卡号吗", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051957506", "event_id": "event_28"}
+{"t": 10.8699, "dir": "down", "delta": "你还记得我的常旅客卡号吗？", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051957506", "event_id": "event_29", "content_index": 0}
+{"t": 10.9456, "dir": "down", "content_index": 0, "delta": "你还记得我的常旅客卡号吗", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051957506", "event_id": "event_30"}
+{"t": 11.3156, "dir": "down", "event_id": "event_31", "content_index": 0, "delta": "你还记得我的常旅客卡号吗？", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051957506"}
+{"t": 11.3156, "dir": "down", "event_id": "event_32", "type": "conversation.item.input_audio_transcription.completed", "item_id": "62877526051957506", "content_index": 1, "text": "你还记得我的常旅客卡号吗？"}
+{"t": 11.3837, "dir": "down", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_33", "delta": "记得，"}
+{"t": 11.4346, "dir": "down", "delta": "你的国航", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_34"}
+{"t": 11.4817, "dir": "down", "event_id": "event_35", "delta": "凤凰", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta"}
+{"t": 11.6188, "dir": "down", "delta": "知音", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_36"}
+{"t": 11.7262, "dir": "down", "delta": "常", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_37"}
+{"t": 11.7738, "dir": "down", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_38", "delta": "旅客卡号是", "question_id": "62877526051957506"}
+{"t": 11.8059, "dir": "down", "delta": "CA 8", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_39"}
+{"t": 11.9448, "dir": "down", "delta": "8", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_40"}
+{"t": 12.0463, "dir": "down", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_41", "delta": "3"}
+{"t": 12.0938, "dir": "down", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_42", "delta": "9 2"}
+{"t": 12.1489, "dir": "down", "delta": "201", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_43"}
+{"t": 12.2919, "dir": "down", "delta": " ", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_44"}
+{"t": 12.3742, "dir": "down", "delta": "5", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_45"}
+{"t": 12.422, "dir": "down", "delta": "7，后续", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_46"}
+{"t": 12.4338, "dir": "down", "response_id": "62877526051958530", "tts_type": "default", "type": "response.output_audio.started", "event_id": "event_47", "question_id": "62877526051957506"}
+{"t": 12.4645, "dir": "down", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_48", "delta": "订", "question_id": "62877526051957506"}
+{"t": 12.507, "dir": "down", "delta": "机票的时候", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_49"}
+{"t": 12.6497, "dir": "down", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_50", "delta": "可以", "question_id": "62877526051957506"}
+{"t": 12.7779, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_51", "audio_bytes": 16384}
+{"t": 12.8362, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_52", "audio_bytes": 20480}
+{"t": 12.8362, "dir": "down", "delta": "直接", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_53"}
+{"t": 12.8362, "dir": "down", "delta": "用这个累积", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_54"}
+{"t": 12.9139, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_55", "audio_bytes": 18432}
+{"t": 12.9139, "dir": "down", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.delta", "event_id": "event_56", "delta": "里程。"}
+{"t": 12.9139, "dir": "down", "text": "记得，你的国航凤凰知音常旅客卡号是CA 8839 2201 57，后续订机票的时候可以直接用这个累积里程。", "event_id": "event_57", "question_id": "62877526051957506", "response_id": "62877526051958530", "type": "response.output_text.done"}
+{"t": 12.967, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_58", "audio_bytes": 20480}
+{"t": 13.0359, "dir": "down", "event_id": "event_59", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 18432}
+{"t": 13.0929, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_60", "audio_bytes": 18432}
+{"t": 13.1501, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_61", "audio_bytes": 20480}
+{"t": 13.2096, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_62", "audio_bytes": 18432}
+{"t": 13.236, "dir": "down", "delta": null, "event_id": "event_63", "type": "response.output_audio.delta", "audio_bytes": 20480}
+{"t": 13.3117, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_64", "audio_bytes": 18432}
+{"t": 13.3417, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_65", "audio_bytes": 18432}
+{"t": 13.4138, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_66", "audio_bytes": 20480}
+{"t": 13.463, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_67", "audio_bytes": 18432}
+{"t": 13.52, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_68", "audio_bytes": 18432}
+{"t": 13.5659, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_69", "audio_bytes": 20480}
+{"t": 13.6175, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_70", "audio_bytes": 18432}
+{"t": 13.6788, "dir": "down", "event_id": "event_71", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 20480}
+{"t": 13.7237, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_72", "audio_bytes": 18432}
+{"t": 13.7942, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_73", "audio_bytes": 20480}
+{"t": 13.8239, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_74", "audio_bytes": 18432}
+{"t": 13.8816, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_75", "audio_bytes": 18432}
+{"t": 13.9337, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_76", "audio_bytes": 8192}
+{"t": 13.9617, "dir": "down", "delta": null, "event_id": "event_77", "type": "response.output_audio.delta", "audio_bytes": 12558}
+{"t": 13.9617, "dir": "down", "type": "response.output_audio.done", "event_id": "event_78", "question_id": "62877526051957506", "response_id": "62877526051958530"}
+{"t": 21.1507, "dir": "up", "type": "conversation.item.create", "items": [{"type": "message", "role": "tool", "call_id": "c18f2c8c-8874-4450-a292-260015de31d5", "content": [{"type": "input_text", "text": "{\"speak\": \"12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00从首都T2起飞，11:15到虹桥T2。完整列表已经显示在屏幕上。\"}"}]}], "event_id": "evt_2"}
+{"t": 22.0161, "dir": "down", "type": "response.done", "event_id": "event_79", "response": {"usage": {"total_tokens": 388, "input_tokens": 86, "output_tokens": 302, "input_token_details": {"text_tokens": 0, "audio_tokens": 86, "image_tokens": 0, "cached_tokens": 0, "cached_tokens_details": {"text_tokens": 0, "audio_tokens": 0, "image_tokens": 0}}, "output_token_details": {"text_tokens": 83, "audio_tokens": 219}, "duration_details": {"vision_duration_ms": 0, "audio_duration_ms": 0}}}}
+{"t": 30.5477, "dir": "local", "type": "user_audio.start", "clip": "flight_search", "bytes": 122940}
+{"t": 31.8716, "dir": "down", "type": "conversation.item.input_audio_transcription.started", "event_id": "event_80", "item_id": "62877526051961090", "round_id": 3}
+{"t": 31.8717, "dir": "down", "delta": "帮", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090", "event_id": "event_81", "content_index": 0}
+{"t": 31.8717, "dir": "down", "content_index": 0, "delta": "帮我", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090", "event_id": "event_82"}
+{"t": 32.0437, "dir": "down", "content_index": 0, "delta": "帮我查", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090", "event_id": "event_83"}
+{"t": 32.0437, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090", "event_id": "event_84", "content_index": 0, "delta": "帮我查一下"}
+{"t": 32.4856, "dir": "down", "item_id": "62877526051961090", "event_id": "event_85", "content_index": 0, "delta": "帮我查一下十二月", "type": "conversation.item.input_audio_transcription.delta"}
+{"t": 32.8599, "dir": "down", "content_index": 0, "delta": "帮我查一下十二月三号", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090", "event_id": "event_86"}
+{"t": 33.5193, "dir": "down", "content_index": 0, "delta": "帮我查一下十二月三号北京", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090", "event_id": "event_87"}
+{"t": 34.232, "dir": "down", "content_index": 0, "delta": "帮我查一下十二月三号北京到", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090", "event_id": "event_88"}
+{"t": 34.232, "dir": "down", "content_index": 0, "delta": "帮我查一下十二月三号北京到上海", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090", "event_id": "event_89"}
+{"t": 34.247, "dir": "down", "event_id": "event_90", "content_index": 0, "delta": "帮我查一下十二月三号北京到上海的", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090"}
+{"t": 34.3877, "dir": "local", "type": "user_audio.end", "clip": "flight_search"}
+{"t": 34.3929, "dir": "down", "event_id": "event_91", "content_index": 0, "delta": "帮我查一下十二月三号北京到上海的航班", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090"}
+{"t": 34.5403, "dir": "down", "content_index": 0, "delta": "帮我查一下 12 月 3 号北京到上海的航班。", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090", "event_id": "event_92"}
+{"t": 34.5889, "dir": "down", "event_id": "event_93", "content_index": 0, "delta": "帮我查一下十二月三号北京到上海的航班", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090"}
+{"t": 35.3302, "dir": "down", "content_index": 0, "delta": "帮我查一下 12 月 3 号北京到上海的航班。", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62877526051961090", "event_id": "event_94"}
+{"t": 35.3398, "dir": "down", "type": "conversation.item.input_audio_transcription.completed", "item_id": "62877526051961090", "content_index": 1, "text": "帮我查一下 12 月 3 号北京到上海的航班。", "event_id": "event_95"}
+{"t": 36.6337, "dir": "down", "items": [{"call_id": "a40866f1-1bd9-4445-acf7-0cfa42e08740", "name": "search_flights", "arguments": "{\"date\":\"2026-12-03\",\"destination\":\"上海\",\"origin\":\"北京\"}"}], "type": "response.function_call_arguments.done", "event_id": "event_96"}
+{"t": 45.6976, "dir": "down", "type": "response.done", "event_id": "event_97", "response": {"usage": {"total_tokens": 263, "input_tokens": 152, "output_tokens": 111, "input_token_details": {"text_tokens": 0, "audio_tokens": 152, "image_tokens": 0, "cached_tokens": 0, "cached_tokens_details": {"text_tokens": 0, "audio_tokens": 0, "image_tokens": 0}}, "output_token_details": {"text_tokens": 111, "audio_tokens": 0}, "duration_details": {"vision_duration_ms": 0, "audio_duration_ms": 0}}}}
+{"t": 45.6977, "dir": "down", "type": "conversation.item.input_audio_transcription.started", "event_id": "event_98", "item_id": "62877526051967234", "round_id": 4}
+{"t": 49.8171, "dir": "down", "type": "response.done", "event_id": "event_99", "response": {"usage": {"total_tokens": 93, "input_tokens": 28, "output_tokens": 65, "input_token_details": {"text_tokens": 0, "audio_tokens": 28, "image_tokens": 0, "cached_tokens": 0, "cached_tokens_details": {"text_tokens": 0, "audio_tokens": 0, "image_tokens": 0}}, "output_token_details": {"text_tokens": 65, "audio_tokens": 0}, "duration_details": {"vision_duration_ms": 0, "audio_duration_ms": 0}}}}
+{"t": 50.6346, "dir": "up", "type": "conversation.item.create", "items": [{"type": "message", "role": "tool", "call_id": "a40866f1-1bd9-4445-acf7-0cfa42e08740", "content": [{"type": "input_text", "text": "{\"speak\": \"12月3日北京到上海有6个直飞航班，最早07:30，最晚21:05。经济舱最低680元，是东航MU5103，09:00从首都T2起飞，11:15到虹桥T2。完整列表已经显示在屏幕上。\"}"}]}], "event_id": "evt_3"}
+{"t": 62.4017, "dir": "up", "type": "session.close", "event_id": "evt_4"}
+{"t": 62.5969, "dir": "down", "type": "session.closed", "event_id": "event_100"}

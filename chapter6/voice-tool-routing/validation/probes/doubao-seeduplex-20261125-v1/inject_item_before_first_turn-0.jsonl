@@ -1,0 +1,66 @@
+{"t": 0.169, "dir": "local", "type": "ws.connected", "logid": "20261125113853B2D6A8712CC7A1945028", "endpoint": "wss://openspeech.bytedance.com/api/v3/duplex/realtime/dialogue"}
+{"t": 0.1691, "dir": "up", "type": "session.create", "session": {"model": "1.2.6.1", "instructions": "你是一位中文语音出行助理，正在和用户通电话。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。需要查询时调用工具，不要编造。", "audio": {"input": {"format": {"type": "pcm", "rate": 16000}}, "output": {"format": {"type": "pcm_s16le", "rate": 24000}, "voice": "zh_female_xiaohe_jupiter_bigtts"}}, "tools": []}, "extension": {"asr": {}, "tts": {}, "dialog": {}}, "event_id": "evt_1"}
+{"t": 0.2228, "dir": "down", "type": "session.created", "event_id": "event_1", "session": {"id": "e95f1224-5362-4854-ba0f-ba3ddd03fcd9"}}
+{"t": 0.7229, "dir": "up", "type": "conversation.item.create", "items": [{"type": "message", "role": "user", "content": [{"type": "input_text", "text": "记一下，我的国航凤凰知音常旅客卡号是 CA 8839 2201 57。"}]}, {"type": "message", "role": "assistant", "content": [{"type": "input_text", "text": "好的，记住了。"}]}], "event_id": "evt_2"}
+{"t": 0.7819, "dir": "down", "type": "conversation.item.added", "items": [{"id": "62938200585101570", "role": "user", "timestamp": 1795577934282, "content": [{"type": "input_text", "text": "记一下，我的国航凤凰知音常旅客卡号是 CA 8839 2201 57。"}]}, {"role": "assistant", "timestamp": 1795577934283, "content": [{"text": "好的，记住了。", "type": "input_text"}], "id": "62938200585101826"}], "event_id": "event_2"}
+{"t": 1.7431, "dir": "local", "type": "user_audio.start", "clip": "memory", "bytes": 76078}
+{"t": 2.3729, "dir": "down", "item_id": "62926954903286274", "round_id": 1, "type": "conversation.item.input_audio_transcription.started", "event_id": "event_3"}
+{"t": 2.4071, "dir": "down", "event_id": "event_4", "content_index": 0, "delta": "你", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62926954903286274"}
+{"t": 2.5529, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62926954903286274", "event_id": "event_5", "content_index": 0, "delta": "你还记得"}
+{"t": 2.9648, "dir": "down", "content_index": 0, "delta": "你还记得我的", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62926954903286274", "event_id": "event_6"}
+{"t": 3.5408, "dir": "down", "content_index": 0, "delta": "你还记得我的长", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62926954903286274", "event_id": "event_7"}
+{"t": 3.7633, "dir": "down", "content_index": 0, "delta": "你还记得我的长旅客", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62926954903286274", "event_id": "event_8"}
+{"t": 4.1035, "dir": "local", "type": "user_audio.end", "clip": "memory"}
+{"t": 4.1912, "dir": "down", "content_index": 0, "delta": "你还记得我的长旅客卡号", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62926954903286274", "event_id": "event_9"}
+{"t": 4.3554, "dir": "down", "content_index": 0, "delta": "你还记得我的长旅客卡号吗", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62926954903286274", "event_id": "event_10"}
+{"t": 4.4618, "dir": "down", "content_index": 0, "delta": "你还记得我的长旅客卡号吗？", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62926954903286274", "event_id": "event_11"}
+{"t": 4.4915, "dir": "down", "event_id": "event_12", "content_index": 0, "delta": "你还记得我的长旅客卡号吗", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62926954903286274"}
+{"t": 4.9447, "dir": "down", "content_index": 0, "delta": "你还记得我的长旅客卡号吗？", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62926954903286274", "event_id": "event_13"}
+{"t": 4.953, "dir": "down", "type": "conversation.item.input_audio_transcription.completed", "item_id": "62926954903286274", "content_index": 1, "text": "你还记得我的长旅客卡号吗？", "event_id": "event_14"}
+{"t": 5.0428, "dir": "down", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_15", "delta": "我没办法直接", "question_id": "62926954903286274"}
+{"t": 5.0758, "dir": "down", "delta": "记住你的常", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_16"}
+{"t": 5.1992, "dir": "down", "delta": "旅客", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_17"}
+{"t": 5.3054, "dir": "down", "type": "response.output_text.delta", "event_id": "event_18", "delta": "卡号", "question_id": "62926954903286274", "response_id": "62926954903284994"}
+{"t": 5.3412, "dir": "down", "delta": "，", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_19"}
+{"t": 5.3412, "dir": "down", "question_id": "62926954903286274", "response_id": "62926954903284994", "tts_type": "default", "type": "response.output_audio.started", "event_id": "event_20"}
+{"t": 5.3803, "dir": "down", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_21", "delta": "这类私人", "question_id": "62926954903286274"}
+{"t": 5.4547, "dir": "down", "delta": "信息只有", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_22"}
+{"t": 5.4838, "dir": "down", "delta": "你", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_23"}
+{"t": 5.5634, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_24", "audio_bytes": 16384}
+{"t": 5.6088, "dir": "down", "delta": "自己", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_25"}
+{"t": 5.711, "dir": "down", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_26", "delta": "或者", "question_id": "62926954903286274"}
+{"t": 5.783, "dir": "down", "event_id": "event_27", "delta": "对应的", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta"}
+{"t": 5.8174, "dir": "down", "delta": "航空公司", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_28"}
+{"t": 5.8649, "dir": "down", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_29", "delta": "、"}
+{"t": 5.9218, "dir": "down", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_30", "delta": "平台"}
+{"t": 5.9649, "dir": "down", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_31", "delta": "的"}
+{"t": 5.9941, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_32", "audio_bytes": 20480}
+{"t": 5.9941, "dir": "down", "type": "response.output_text.delta", "event_id": "event_33", "delta": "系统", "question_id": "62926954903286274", "response_id": "62926954903284994"}
+{"t": 6.029, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_34", "audio_bytes": 18432}
+{"t": 6.0658, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_35", "audio_bytes": 18432}
+{"t": 6.1171, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_36", "audio_bytes": 20480}
+{"t": 6.1448, "dir": "down", "delta": "里", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_37"}
+{"t": 6.1812, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_38", "audio_bytes": 18432}
+{"t": 6.1958, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_39", "audio_bytes": 2048}
+{"t": 6.2393, "dir": "down", "delta": "能", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_40"}
+{"t": 6.2991, "dir": "down", "delta": "查到", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_41"}
+{"t": 6.3238, "dir": "down", "delta": "。", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.delta", "event_id": "event_42"}
+{"t": 6.3238, "dir": "down", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_text.done", "text": "我没办法直接记住你的常旅客卡号，这类私人信息只有你自己或者对应的航空公司、平台的系统里能查到。", "event_id": "event_43"}
+{"t": 6.4527, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_44", "audio_bytes": 26624}
+{"t": 6.4833, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_45", "audio_bytes": 20480}
+{"t": 6.5542, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_46", "audio_bytes": 18432}
+{"t": 6.6042, "dir": "down", "delta": null, "event_id": "event_47", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 6.6276, "dir": "down", "delta": null, "event_id": "event_48", "type": "response.output_audio.delta", "audio_bytes": 20480}
+{"t": 6.6734, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_49", "audio_bytes": 18432}
+{"t": 6.7337, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_50", "audio_bytes": 18432}
+{"t": 6.77, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_51", "audio_bytes": 20480}
+{"t": 6.8332, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_52", "audio_bytes": 18432}
+{"t": 6.893, "dir": "down", "delta": null, "event_id": "event_53", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 6.9341, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_54", "audio_bytes": 20480}
+{"t": 6.9588, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_55", "audio_bytes": 18432}
+{"t": 7.0061, "dir": "down", "event_id": "event_56", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 2048}
+{"t": 7.0063, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_57", "audio_bytes": 9996}
+{"t": 7.0063, "dir": "down", "question_id": "62926954903286274", "response_id": "62926954903284994", "type": "response.output_audio.done", "event_id": "event_58"}
+{"t": 13.5405, "dir": "down", "type": "response.done", "event_id": "event_59", "response": {"usage": {"total_tokens": 2436, "input_tokens": 128, "output_tokens": 260, "input_token_details": {"text_tokens": 44, "audio_tokens": 84, "image_tokens": 0, "cached_tokens": 2048, "cached_tokens_details": {"text_tokens": 2048, "audio_tokens": 0, "image_tokens": 0}}, "output_token_details": {"text_tokens": 71, "audio_tokens": 189}, "duration_details": {"vision_duration_ms": 0, "audio_duration_ms": 0}}}}
+{"t": 14.116, "dir": "up", "type": "session.close", "event_id": "evt_3"}
+{"t": 14.203, "dir": "down", "type": "session.closed", "event_id": "event_60"}

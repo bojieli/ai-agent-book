@@ -1,0 +1,267 @@
+{
+  "run_id": "doubao-seeduplex-20261125-v2",
+  "date": "2026-11-25T11:45:15+08:00",
+  "front": {
+    "session_model": "1.2.6.1"
+  },
+  "tools_simulated": true,
+  "reps_per_probe": 5,
+  "results": {
+    "inject_control": [
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 0,
+        "trace": "inject_control-0.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我需要查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 1,
+        "trace": "inject_control-1.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 2,
+        "trace": "inject_control-2.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 3,
+        "trace": "inject_control-3.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我需要查一下杭州明天的实时天气数据，稍等。",
+        "rep": 4,
+        "trace": "inject_control-4.jsonl"
+      }
+    ],
+    "inject_instructions_at_create": [
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，东北风3级，降水概率只有10%，整体挺舒服的，早晚可以备件薄外套。",
+        "rep": 0,
+        "trace": "inject_instructions_at_create-0.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，东北风3级，降水概率只有10%，整体比较舒适，早晚可以备件薄外套。",
+        "rep": 1,
+        "trace": "inject_instructions_at_create-1.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，东北风3级，降水概率只有10%，整体挺舒服的，早晚记得添件薄外套就行。",
+        "rep": 2,
+        "trace": "inject_instructions_at_create-2.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，东北风3级，降水概率只有10%，整体挺舒服的，早晚可以备件薄外套。",
+        "rep": 3,
+        "trace": "inject_instructions_at_create-3.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，东北风3级，降水概率只有10%，整体挺舒服的，早晚可以备件薄外套。",
+        "rep": 4,
+        "trace": "inject_instructions_at_create-4.jsonl"
+      }
+    ],
+    "inject_update_before_first_turn": [
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 0,
+        "trace": "inject_update_before_first_turn-0.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 1,
+        "trace": "inject_update_before_first_turn-1.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 2,
+        "trace": "inject_update_before_first_turn-2.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 3,
+        "trace": "inject_update_before_first_turn-3.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等哦。",
+        "rep": 4,
+        "trace": "inject_update_before_first_turn-4.jsonl"
+      }
+    ],
+    "inject_item_before_first_turn": [
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 0,
+        "trace": "inject_item_before_first_turn-0.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 1,
+        "trace": "inject_item_before_first_turn-1.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 2,
+        "trace": "inject_item_before_first_turn-2.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 3,
+        "trace": "inject_item_before_first_turn-3.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我帮你查一下2026年11月26日杭州的天气，稍等。",
+        "rep": 4,
+        "trace": "inject_item_before_first_turn-4.jsonl"
+      }
+    ],
+    "inject_update_after_turn": [
+      {
+        "fact_used": false,
+        "answer": "我需要查一下2026年11月26日杭州的实时天气数据，稍等。",
+        "rep": 0,
+        "trace": "inject_update_after_turn-0.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，东北风3级，降水概率只有10%，整体比较干爽舒适。",
+        "rep": 1,
+        "trace": "inject_update_after_turn-1.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，东北风3级，降水概率只有10%，整体挺舒服的，早晚可以备件薄外套。",
+        "rep": 2,
+        "trace": "inject_update_after_turn-2.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，东北风3级，降水概率只有10%，整体挺舒服的，出门不用太担心下雨。",
+        "rep": 3,
+        "trace": "inject_update_after_turn-3.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，东北风3级，降水概率只有10%，整体比较干爽舒适。",
+        "rep": 4,
+        "trace": "inject_update_after_turn-4.jsonl"
+      }
+    ],
+    "inject_item_after_turn": [
+      {
+        "fact_used": false,
+        "answer": "[查询杭州2026-11-26天气]",
+        "rep": 0,
+        "trace": "inject_item_after_turn-0.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "我帮你查下，2026年11月26日杭州是多云转晴，气温9到17℃，东北风3级，整体比较干爽，早晚温差大，出门可以搭件薄外套。",
+        "rep": 1,
+        "trace": "inject_item_after_turn-1.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，东北风3级，整体比较干爽，早晚温差大，出门可以搭件薄外套。",
+        "rep": 2,
+        "trace": "inject_item_after_turn-2.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天11月26日杭州是多云转晴，气温9到17摄氏度，东北风3级，整体比较干爽，早晚温差大，出门可以备件薄外套。",
+        "rep": 3,
+        "trace": "inject_item_after_turn-3.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，吹3级东北风，基本不会下雨，早晚温差有点大，出门可以搭件薄外套。",
+        "rep": 4,
+        "trace": "inject_item_after_turn-4.jsonl"
+      }
+    ],
+    "inject_update_after_turn_plain": [
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，吹3级东北风，降水概率只有10%，整体比较干爽舒适。",
+        "rep": 0,
+        "trace": "inject_update_after_turn_plain-0.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，吹3级东北风，降水概率只有10%，整体比较干爽舒适。",
+        "rep": 1,
+        "trace": "inject_update_after_turn_plain-1.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，东北风3级，降水概率只有10%，整体比较干爽舒适，早晚可以备件薄外套。",
+        "rep": 2,
+        "trace": "inject_update_after_turn_plain-2.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "我没办法获取实时的天气数据，你可以打开天气类APP或者航司、出行平台查询2026年11月26日杭州的具体天气情况。",
+        "rep": 3,
+        "trace": "inject_update_after_turn_plain-3.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天杭州是多云转晴，气温9到17度，吹3级东北风，降水概率只有10%，整体比较干爽舒适，早晚温差大可以备件薄外套。",
+        "rep": 4,
+        "trace": "inject_update_after_turn_plain-4.jsonl"
+      }
+    ],
+    "inject_item_after_turn_plain": [
+      {
+        "fact_used": true,
+        "answer": "明天是2026年11月26日，杭州多云转晴，气温9到17℃，东北风3级，整体比较干爽，早晚温差大，出门可以搭件薄外套。",
+        "rep": 0,
+        "trace": "inject_item_after_turn_plain-0.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "今天（11月25日）杭州是晴到多云，气温8到16度，风力不大，早晚偏凉，出门可以备件薄外套。如果是问后续几天，26日还是晴好为主，温度变化不大。",
+        "rep": 1,
+        "trace": "inject_item_after_turn_plain-1.jsonl"
+      },
+      {
+        "fact_used": false,
+        "answer": "今天（11月25日）杭州是晴到多云，气温8到16度，早晚偏凉，白天体感舒适，出门可以穿薄外套加内搭。",
+        "rep": 2,
+        "trace": "inject_item_after_turn_plain-2.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天11月26日杭州是多云转晴，气温9到17℃，东北风3级，整体比较干爽，早晚温差大，出门可以搭件薄外套。",
+        "rep": 3,
+        "trace": "inject_item_after_turn_plain-3.jsonl"
+      },
+      {
+        "fact_used": true,
+        "answer": "明天是11月26日，杭州多云转晴，气温9到17℃，东北风3级，整体比较干爽，早晚温差大，出门可以搭件薄外套。",
+        "rep": 4,
+        "trace": "inject_item_after_turn_plain-4.jsonl"
+      }
+    ]
+  }
+}

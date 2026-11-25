@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "checks": {
+    "experiment_name": true,
+    "front_is_seeduplex": true,
+    "back_model_recorded": true,
+    "tools_declared_simulated": true,
+    "every_cell_has_requested_runs": true,
+    "traces_present_and_real": true,
+    "no_credentials_in_evidence": true,
+    "secret_scan_had_keys_to_compare": true,
+    "no_raw_audio_in_traces": true,
+    "audio_fixtures_match_manifest": true,
+    "runtime_code_matches_run": true,
+    "summary_reproducible_from_traces": true,
+    "no_hidden_back_llm_retries_in_counted_sessions": true,
+    "no_local_paths_in_evidence": true
+  },
+  "sessions_ok": 20,
+  "sessions_failed": 0
+}

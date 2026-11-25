@@ -1,0 +1,53 @@
+{"t": 0.1595, "dir": "local", "type": "ws.connected", "logid": "2026112511345428BF8D0412575473E5F1", "endpoint": "wss://openspeech.bytedance.com/api/v3/duplex/realtime/dialogue"}
+{"t": 0.1596, "dir": "up", "type": "session.create", "session": {"model": "1.2.6.1", "instructions": "你是一位中文语音出行助理，正在和用户通电话。今天是2026年11月25日，星期三；明天是11月26日，星期四；下周三是12月2日，下周四是12月3日，下周五是12月4日。\n规则：\n1. 涉及天气、航班、搜索、用户资料、订票的内容，必须通过工具得到，不要凭印象编造。\n2. 工具说明里标了“慢”的，调用前先说一句很短的话（例如“好的，我查一下”），然后立刻调用；标了“快”的直接调用，不用铺垫。\n3. 回答要口语化、简短。工具结果里的 speak 字段是给你口头说的；display 字段客户端会显示在用户屏幕上，不要逐条朗读。\n4. 订票会扣款，由后台助理办理：用户提出订票或补充订票条件时，把任务委派给后台；后台会返回需要向用户复述核对的内容，你照着复述并请用户确认；用户明确确认后，再委派后台下单。\n5. 你能直接调用的工具只有列出来的这几个；其他需要查询或办理的事情调用 delegate 交给后台助理，再把后台返回的话转述给用户。用户记忆已经附在下面，可以直接使用，不需要再查。\n\n【运行时自动检索到的用户记忆，可直接使用】\n- 用户本人的乘机人资料：姓名 周明远；证件类型 护照(passport)；证件号 EK3927461；手机 13671928840；邮箱 zhou.mingyuan@example.com。\n- 用户的国航凤凰知音常旅客卡号是 CA 8839 2201 57。\n- 用户偏好靠过道的座位。\n", "audio": {"input": {"format": {"type": "pcm", "rate": 16000}}, "output": {"format": {"type": "pcm_s16le", "rate": 24000}, "voice": "zh_female_xiaohe_jupiter_bigtts"}}, "tools": [{"type": "function", "name": "get_weather", "description": "【快，约0.2秒】查询某城市某一天的天气。", "parameters": {"type": "object", "properties": {"city": {"type": "string", "description": "城市名，不带“市”字，例如 杭州"}, "date": {"type": "string", "description": "日期，格式 YYYY-MM-DD"}}, "required": ["city", "date"]}}, {"type": "function", "name": "search_flights", "description": "【慢，2到5秒】查询某天的直飞航班。返回 speak（给你念的一句话摘要）和 display（完整航班表，客户端会自动显示在用户屏幕上，不需要逐条朗读；其中的 offer_id 和价格在订票时要用）。", "parameters": {"type": "object", "properties": {"origin": {"type": "string", "description": "出发城市，不带“市”字，例如 北京"}, "destination": {"type": "string", "description": "到达城市，不带“市”字，例如 上海"}, "date": {"type": "string", "description": "出发日期，格式 YYYY-MM-DD"}}, "required": ["origin", "destination", "date"]}}, {"type": "function", "name": "delegate", "description": "【慢，需要等待】把任务交给后台助理处理。后台助理能看到完整的通话记录，并且可以联网搜索、订票。用一句话说清楚要办什么；后台办完会返回一段话，你把它转述给用户。", "parameters": {"type": "object", "properties": {"task": {"type": "string", "description": "要后台完成的任务，用自然语言描述，带上用户刚才提到的关键条件"}}, "required": ["task"]}}]}, "extension": {"asr": {}, "tts": {}, "dialog": {}}, "event_id": "evt_1"}
+{"t": 0.2238, "dir": "down", "type": "session.created", "event_id": "event_1", "session": {"id": "fc5c8de3-862e-4e40-8d77-d50b50644cfd"}}
+{"t": 0.2238, "dir": "local", "type": "memory.inject", "via": "session.create", "block": "【运行时自动检索到的用户记忆，可直接使用】\n- 用户本人的乘机人资料：姓名 周明远；证件类型 护照(passport)；证件号 EK3927461；手机 13671928840；邮箱 zhou.mingyuan@example.com。\n- 用户的国航凤凰知音常旅客卡号是 CA 8839 2201 57。\n- 用户偏好靠过道的座位。"}
+{"t": 1.2249, "dir": "local", "type": "step", "index": 0, "kind": "say", "clip": "memory"}
+{"t": 1.2251, "dir": "local", "type": "user_audio.start", "clip": "memory", "bytes": 76078}
+{"t": 1.9131, "dir": "down", "item_id": "62913337473984002", "round_id": 1, "type": "conversation.item.input_audio_transcription.started", "event_id": "event_2"}
+{"t": 1.9131, "dir": "down", "content_index": 0, "delta": "你", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62913337473984002", "event_id": "event_3"}
+{"t": 2.0513, "dir": "down", "event_id": "event_4", "content_index": 0, "delta": "你还记得", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62913337473984002"}
+{"t": 2.4656, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62913337473984002", "event_id": "event_5", "content_index": 0, "delta": "你还记得我的"}
+{"t": 3.0215, "dir": "down", "item_id": "62913337473984002", "event_id": "event_6", "content_index": 0, "delta": "你还记得我的长", "type": "conversation.item.input_audio_transcription.delta"}
+{"t": 3.2713, "dir": "down", "event_id": "event_7", "content_index": 0, "delta": "你还记得我的长旅客", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62913337473984002"}
+{"t": 3.5842, "dir": "local", "type": "user_audio.end", "clip": "memory"}
+{"t": 3.6869, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62913337473984002", "event_id": "event_8", "content_index": 0, "delta": "你还记得我的长旅客卡号"}
+{"t": 3.8829, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62913337473984002", "event_id": "event_9", "content_index": 0, "delta": "你还记得我的长旅客卡号吗"}
+{"t": 3.9353, "dir": "down", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62913337473984002", "event_id": "event_10", "content_index": 0, "delta": "你还记得我的长旅客卡号吗？"}
+{"t": 3.9969, "dir": "down", "event_id": "event_11", "content_index": 0, "delta": "你还记得我的长旅客卡号吗", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62913337473984002"}
+{"t": 4.5959, "dir": "down", "content_index": 0, "delta": "你还记得我的长旅客卡号吗？", "type": "conversation.item.input_audio_transcription.delta", "item_id": "62913337473984002", "event_id": "event_12"}
+{"t": 4.5991, "dir": "down", "type": "conversation.item.input_audio_transcription.completed", "item_id": "62913337473984002", "content_index": 1, "text": "你还记得我的长旅客卡号吗？", "event_id": "event_13"}
+{"t": 4.711, "dir": "down", "delta": "记得，你的", "question_id": "62913337473984002", "response_id": "62913337473982466", "type": "response.output_text.delta", "event_id": "event_14"}
+{"t": 4.7136, "dir": "down", "question_id": "62913337473984002", "response_id": "62913337473982466", "tts_type": "default", "type": "response.output_audio.started", "event_id": "event_15"}
+{"t": 4.7551, "dir": "down", "type": "response.output_text.delta", "event_id": "event_16", "delta": "国航凤凰", "question_id": "62913337473984002", "response_id": "62913337473982466"}
+{"t": 4.8231, "dir": "down", "type": "response.output_text.delta", "event_id": "event_17", "delta": "知音", "question_id": "62913337473984002", "response_id": "62913337473982466"}
+{"t": 4.9174, "dir": "down", "response_id": "62913337473982466", "type": "response.output_text.delta", "event_id": "event_18", "delta": "常", "question_id": "62913337473984002"}
+{"t": 4.9546, "dir": "down", "delta": "旅客卡号是", "question_id": "62913337473984002", "response_id": "62913337473982466", "type": "response.output_text.delta", "event_id": "event_19"}
+{"t": 5.0075, "dir": "down", "delta": "CA 8", "question_id": "62913337473984002", "response_id": "62913337473982466", "type": "response.output_text.delta", "event_id": "event_20"}
+{"t": 5.1074, "dir": "down", "response_id": "62913337473982466", "type": "response.output_text.delta", "event_id": "event_21", "delta": "8", "question_id": "62913337473984002"}
+{"t": 5.1824, "dir": "down", "delta": "3", "question_id": "62913337473984002", "response_id": "62913337473982466", "type": "response.output_text.delta", "event_id": "event_22"}
+{"t": 5.2336, "dir": "down", "delta": "9 2", "question_id": "62913337473984002", "response_id": "62913337473982466", "type": "response.output_text.delta", "event_id": "event_23"}
+{"t": 5.2795, "dir": "down", "type": "response.output_text.delta", "event_id": "event_24", "delta": "201", "question_id": "62913337473984002", "response_id": "62913337473982466"}
+{"t": 5.4559, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_25", "audio_bytes": 16384}
+{"t": 5.4559, "dir": "down", "delta": " ", "question_id": "62913337473984002", "response_id": "62913337473982466", "type": "response.output_text.delta", "event_id": "event_26"}
+{"t": 5.4714, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_27", "audio_bytes": 8192}
+{"t": 5.529, "dir": "down", "delta": "5", "question_id": "62913337473984002", "response_id": "62913337473982466", "type": "response.output_text.delta", "event_id": "event_28"}
+{"t": 5.5777, "dir": "down", "delta": "7。", "question_id": "62913337473984002", "response_id": "62913337473982466", "type": "response.output_text.delta", "event_id": "event_29"}
+{"t": 5.5796, "dir": "down", "question_id": "62913337473984002", "response_id": "62913337473982466", "type": "response.output_text.done", "text": "记得，你的国航凤凰知音常旅客卡号是CA 8839 2201 57。", "event_id": "event_30"}
+{"t": 5.9093, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_31", "audio_bytes": 28672}
+{"t": 5.9401, "dir": "down", "event_id": "event_32", "type": "response.output_audio.delta", "delta": null, "audio_bytes": 20480}
+{"t": 5.9878, "dir": "down", "delta": null, "event_id": "event_33", "type": "response.output_audio.delta", "audio_bytes": 18432}
+{"t": 6.0377, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_34", "audio_bytes": 18432}
+{"t": 6.0855, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_35", "audio_bytes": 20480}
+{"t": 6.1406, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_36", "audio_bytes": 20480}
+{"t": 6.1917, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_37", "audio_bytes": 14336}
+{"t": 6.2512, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_38", "audio_bytes": 22528}
+{"t": 6.3001, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_39", "audio_bytes": 14336}
+{"t": 6.3533, "dir": "down", "delta": null, "event_id": "event_40", "type": "response.output_audio.delta", "audio_bytes": 24576}
+{"t": 6.4046, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_41", "audio_bytes": 18432}
+{"t": 6.4486, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_42", "audio_bytes": 12288}
+{"t": 6.4894, "dir": "down", "type": "response.output_audio.delta", "delta": null, "event_id": "event_43", "audio_bytes": 19374}
+{"t": 6.4894, "dir": "down", "question_id": "62913337473984002", "response_id": "62913337473982466", "type": "response.output_audio.done", "event_id": "event_44"}
+{"t": 11.6469, "dir": "down", "type": "response.done", "event_id": "event_45", "response": {"usage": {"total_tokens": 3612, "input_tokens": 72, "output_tokens": 209, "input_token_details": {"text_tokens": 0, "audio_tokens": 72, "image_tokens": 0, "cached_tokens": 3331, "cached_tokens_details": {"text_tokens": 3331, "audio_tokens": 0, "image_tokens": 0}}, "output_token_details": {"text_tokens": 65, "audio_tokens": 144}, "duration_details": {"vision_duration_ms": 0, "audio_duration_ms": 0}}}}
+{"t": 14.7251, "dir": "up", "type": "session.close", "event_id": "evt_2"}
+{"t": 15.0768, "dir": "down", "type": "session.closed", "event_id": "event_46"}

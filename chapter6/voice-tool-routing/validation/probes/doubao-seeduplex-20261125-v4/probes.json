@@ -1,0 +1,156 @@
+{
+  "run_id": "doubao-seeduplex-20261125-v4",
+  "date": "2026-11-25T11:49:59+08:00",
+  "front": {
+    "session_model": "1.2.6.1"
+  },
+  "tools_simulated": true,
+  "reps_per_probe": 3,
+  "results": {
+    "pending_silent_10s": [
+      {
+        "tool_delay_s": 10.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 0,
+        "trace": "pending_silent_10s-0.jsonl"
+      },
+      {
+        "tool_delay_s": 10.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 1,
+        "trace": "pending_silent_10s-1.jsonl"
+      },
+      {
+        "tool_delay_s": 10.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 2,
+        "trace": "pending_silent_10s-2.jsonl"
+      }
+    ],
+    "pending_silent_12s": [
+      {
+        "tool_delay_s": 12.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 0,
+        "trace": "pending_silent_12s-0.jsonl"
+      },
+      {
+        "tool_delay_s": 12.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 1,
+        "trace": "pending_silent_12s-1.jsonl"
+      },
+      {
+        "tool_delay_s": 12.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 2,
+        "trace": "pending_silent_12s-2.jsonl"
+      }
+    ],
+    "pending_silent_14s": [
+      {
+        "tool_delay_s": 14.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 0,
+        "trace": "pending_silent_14s-0.jsonl"
+      },
+      {
+        "tool_delay_s": 14.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 1,
+        "trace": "pending_silent_14s-1.jsonl"
+      },
+      {
+        "tool_delay_s": 14.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 2,
+        "trace": "pending_silent_14s-2.jsonl"
+      }
+    ],
+    "pending_silent_16s": [
+      {
+        "tool_delay_s": 16.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 0,
+        "trace": "pending_silent_16s-0.jsonl"
+      },
+      {
+        "tool_delay_s": 16.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 1,
+        "trace": "pending_silent_16s-1.jsonl"
+      },
+      {
+        "tool_delay_s": 16.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 2,
+        "trace": "pending_silent_16s-2.jsonl"
+      }
+    ],
+    "pending_silent_20s": [
+      {
+        "tool_delay_s": 20.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 0,
+        "trace": "pending_silent_20s-0.jsonl"
+      },
+      {
+        "tool_delay_s": 20.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 1,
+        "trace": "pending_silent_20s-1.jsonl"
+      },
+      {
+        "tool_delay_s": 20.0,
+        "function_call_emitted": true,
+        "audio_while_pending": false,
+        "result_spoken_after_upload": true,
+        "new_round_started_without_user_speech_s_after_call": null,
+        "rep": 2,
+        "trace": "pending_silent_20s-2.jsonl"
+      }
+    ]
+  }
+}
