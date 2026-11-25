@@ -1,7 +1,7 @@
 # Chapter 6 experiment ledger
 
 Records for the two experiments that moved here from chapter 4 when chapter 6 (“Interaction”) was split
-out, plus the native-asynchronous-model experiment. Same convention as the chapter 4 ledger: `official_complete` is true only when every gate named by
+out, plus the native-asynchronous-model experiment and the voice tool-routing experiment. Same convention as the chapter 4 ledger: `official_complete` is true only when every gate named by
 the manuscript has substantive real evidence.
 
 | Experiment | Canonical run | Status | `official_complete` | Manifest SHA-256 |
@@ -10,6 +10,8 @@ the manuscript has substantive real evidence.
 | 6-1 extension (选做) | `agent-with-event-trigger/validation/experiment_6_1_multisource/offline_fault_injection_20261124T074757Z` | passed (offline simulation) | n/a — does not gate 6-1 | `1026b650c2aa8fc43c6ae2f85ff31c2a0cf33e120d446f38f5abfc3215a29eed` |
 | 6-2 | `async-agent/validation/experiment_6_2/real_subprocess_20260730T052500Z` | passed | true | `fff6b43a2e3a0b706fdd68bca289119f726d3f827f3f4d837e97321f7d48a825` |
 | 6-3 | `astra-async-steering/validation/runs/exp6-14-20260905-formal` | passed | true | `bfece1666a63131e44c911908f4b0a07e6afffb719e8463b7507840d7d998c9e` |
+| 6-7 | `voice-tool-routing/validation/runs/doubao-seeduplex-20261125-v1` | passed (simulated tools, real models) | true | `0e1ab1e799c9edf88812c016164f093878cb84745b64be303deca74fd528d75a` |
+| 6-7 extension (口述乘机人) | `voice-tool-routing/validation/runs/doubao-seeduplex-20261125-dictation-v1` | passed (simulated tools, real models) | n/a — does not gate 6-7 | `14f03dad25d86c7ef5ef85b58cb27704b1f4cd7837a416288201ffd915a2cf9c` |
 
 > **6-1's recorded hash no longer verifies.** The manifest's `experiment` field was relabelled 4-5 → 6-1
 > during the chapter-6 split, which changed the file, but neither this value nor the one in
@@ -51,6 +53,16 @@ retained wire events and replayable judgments; the three legacy-model cases
 require an explicit capability rejection. See the [companion README](astra-async-steering/README.md)
 for protocol details, measurements, and limits.
 
+## Experiment 6-7 — who calls the tools in a voice agent
+
+Manuscript gates: the same fixed recordings sent through four routes (all tools on the realtime front model; front delegates everything to a back text model; two "by tool property" splits), ten sessions per route and scenario, with latency, model-call counts, per-field argument accuracy, booking-before-confirmation, behaviour when the user speaks while a tool is pending, and how much of a flight table is read aloud.
+
+- Front: 豆包实时语音模型 3.0 (Seeduplex), `session.model = 1.2.6.1`, end-to-end mode. Back: `deepseek-v4-pro` via Volcengine Ark, thinking disabled, temperature 0. Run on 2026-11-25.
+- The five tools are deterministic simulations with injected latency (`tools_sim.py`); the recordings are synthesised with macOS `say`. Both are stated in the manifest and README; no model was replaced by a simulation.
+- Canonical run: 320 counted sessions; three attempts were discarded and re-run because the back client retried HTTP 429/5xx (recorded in `sessions.jsonl`). `validate_evidence.py` passes all checks, including reproducing `summary.json` from traces and a credential scan.
+- Extension run (dictated passenger, 40 sessions) and a concurrency-1 control (`doubao-seeduplex-20261125-serial-control-v1`, 20 sessions, all-front only) also pass the validator. Capability probes are under `validation/probes/`.
+- Run directories carry no experiment number, so later renumbering does not touch the evidence.
+
 ## Current numbering and archived evidence
 
 正文按阅读顺序编号。项目名称用于定位代码，运行目录及证据内部标识用于定位已经发生的实验；重新编号不改写既有记录、源码快照或哈希。以下“归档编号”只用于查阅历史记录，不是当前正文的编号。各项目 README 使用当前编号，既有运行器与验证器可继续使用原有证据标识。
@@ -63,14 +75,15 @@ for protocol details, measurements, and limits.
 | 6-4 | [传统语音 Agent](live-audio/) | 6-3 |
 | 6-5 | [流式语音感知](streaming-speech/) | 6-4 |
 | 6-6 | [端到端全模态语音](end-to-end-speech/) | 6-5 |
-| 6-7 | [控制标记 TTS](controllable-tts/) | 6-6 |
-| 6-8 | [Anthropic Computer Use](claude-computer-use-native/) | 6-7 |
-| 6-9 | [browser-use 开放模型](computer-use-open-model/) | 6-8 |
-| 6-10 | [XLeRobot 真机遥操作](xlerobot-teleoperation/) | 6-9 |
-| 6-11 | [模拟控制上限](xlerobot-teleoperation/) | 6-10 |
-| 6-12 | [XLeRobot 自主操作](gemini-xlerobot-navigation/) | 6-11 |
-| 6-13 | [模拟闭环比较](gemini-xlerobot-navigation/) | 6-12 |
-| 6-14 | [RGB 跨环境测试](rgb-sim2real-grasping/) | 6-13 |
+| 6-7 | [语音 Agent 的工具由前台还是后台调用](voice-tool-routing/) | —（2026-11-25 新增，运行目录不含编号） |
+| 6-8 | [控制标记 TTS](controllable-tts/) | 6-6 |
+| 6-9 | [Anthropic Computer Use](claude-computer-use-native/) | 6-7 |
+| 6-10 | [browser-use 开放模型](computer-use-open-model/) | 6-8 |
+| 6-11 | [XLeRobot 真机遥操作](xlerobot-teleoperation/) | 6-9 |
+| 6-12 | [模拟控制上限](xlerobot-teleoperation/) | 6-10 |
+| 6-13 | [XLeRobot 自主操作](gemini-xlerobot-navigation/) | 6-11 |
+| 6-14 | [模拟闭环比较](gemini-xlerobot-navigation/) | 6-12 |
+| 6-15 | [RGB 跨环境测试](rgb-sim2real-grasping/) | 6-13 |
 
 ## Editorial scope correction for 6-2
 
@@ -80,18 +93,18 @@ Artifact integrity check: only `artifacts/scenario_2_report.html` matches the re
 
 ## Editorial review of robotics experiments
 
-- 6-10 / 6-12：真机实践设计；归档未执行真实硬件。
-- 6-11：两个归档产物哈希通过，但控制器在同一循环内连续更新阶段，可能在到达物体后跳过到达目标的检查。成功率与路径长度暂不作为正文结论。详见配套 README；历史记录未改写。
-- 6-13：三个归档产物哈希通过。运行器直接读取离散状态，使用固定策略或小型预测网络；无 Gemini 调用。成功判断与物体—目标配对的覆盖范围见 README。
-- 6-14：五个归档产物哈希通过。图像由圆形物体和方框目标合成，指标为五类标签准确率；grasp 标签表示接近阈值。
+- 6-11 / 6-13：真机实践设计；归档未执行真实硬件。
+- 6-12：两个归档产物哈希通过，但控制器在同一循环内连续更新阶段，可能在到达物体后跳过到达目标的检查。成功率与路径长度暂不作为正文结论。详见配套 README；历史记录未改写。
+- 6-14：三个归档产物哈希通过。运行器直接读取离散状态，使用固定策略或小型预测网络；无 Gemini 调用。成功判断与物体—目标配对的覆盖范围见 README。
+- 6-15：五个归档产物哈希通过。图像由圆形物体和方框目标合成，指标为五类标签准确率；grasp 标签表示接近阈值。
 
 ## Audio and Computer Use artifact review
 
 - 6-4：输入、VAD 片段和输出音频共3项在当前工作树中缺失；运行记录中的哈希无法就地复核。
 - 6-5：3个场景音频与3个运行产物哈希一致，原始 `audio/sentence.wav` 缺失。
 - 6-6：4个输入音频与1个24kHz输出音频哈希一致。
-- 6-7：24条参考音与3个输出音频哈希一致，模型听测汇总与验收记录哈希不同。
-- 6-8：33项归档产物哈希一致。
-- 6-9：22项哈希一致，acceptance、history、summary三项哈希不同。
+- 6-8：24条参考音与3个输出音频哈希一致，模型听测汇总与验收记录哈希不同。
+- 6-9：33项归档产物哈希一致。
+- 6-10：22项哈希一致，acceptance、history、summary三项哈希不同。
 
 本次只读核对未重写任何归档或历史哈希。具体路径与解释见各项目 README。

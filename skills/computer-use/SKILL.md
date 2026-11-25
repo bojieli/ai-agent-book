@@ -66,8 +66,8 @@ description: >-
 
 ## 配套代码
 
-- `chapter6/claude-computer-use-native/` — 实验 6-8（Anthropic 原生路径）：容器化 Ubuntu 桌面中的官方 Computer Use Demo，`computer` / `bash` / 编辑器三类原生工具的真实运行与确定性验收记录。
-- `chapter6/computer-use-open-model/` — 实验 6-8/6-9（开放模型路径）：同一"截图 → 结构化动作 → 浏览器执行"循环，默认 Qwen3-VL 32B Instruct 驱动 browser-use，可接 OpenRouter 或自托管 vLLM/SGLang；含端点合格性契约（收截图、产出 Browser Use 动作 schema、每步一个动作、不静默替换模型）。
+- `chapter6/claude-computer-use-native/` — 实验 6-9（Anthropic 原生路径）：容器化 Ubuntu 桌面中的官方 Computer Use Demo，`computer` / `bash` / 编辑器三类原生工具的真实运行与确定性验收记录。
+- `chapter6/computer-use-open-model/` — 实验 6-9/6-10（开放模型路径）：同一"截图 → 结构化动作 → 浏览器执行"循环，默认 Qwen3-VL 32B Instruct 驱动 browser-use，可接 OpenRouter 或自托管 vLLM/SGLang；含端点合格性契约（收截图、产出 Browser Use 动作 schema、每步一个动作、不静默替换模型）。
 - 两个 companion 都保留了真实运行证据（截图哈希、动作轨迹、确定性验收），可作为自己实现时的证据门禁模板；其中原生路径还记录了一次撞上 Google reCAPTCHA 后按只读恢复指令改走公开天气 JSON 接口、全程未点击挑战的完整轨迹。
 - 语音相关（同为"时机"扩展，可作对照）：`chapter6/end-to-end-speech/`、`chapter6/streaming-speech/`、`chapter6/controllable-tts/`、`chapter6/live-audio/`、`chapter6/phone-agent/`。
 - 机器人相关（从屏幕像素到物理传感器）：`chapter6/gemini-xlerobot-navigation/`、`chapter6/rgb-sim2real-grasping/`、`chapter6/xlerobot-teleoperation/`。

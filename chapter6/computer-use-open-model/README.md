@@ -14,7 +14,7 @@
 
 ### 把模型接口与浏览器动作分开理解
 
-这个实现对应实验 6-8、6-9 中可更换提供商的路线：模型读取截图，返回结构化动作，浏览器执行一个动作，再把新观察送回模型。文档中的托管示例使用 OpenRouter 上的 `qwen/qwen3-vl-32b-instruct`；也可以连接自己的 vLLM、SGLang 或其他兼容服务。
+这个实现对应实验 6-9、6-10 中可更换提供商的路线：模型读取截图，返回结构化动作，浏览器执行一个动作，再把新观察送回模型。文档中的托管示例使用 OpenRouter 上的 `qwen/qwen3-vl-32b-instruct`；也可以连接自己的 vLLM、SGLang 或其他兼容服务。
 
 兼容端点需要接收包含截图的 OpenAI 风格消息，能通过原生 `json_schema` 或提示中的 schema 返回 Browser Use 动作，每轮提供足以选择一个浏览器动作的信息，并保留实际模型标识。“开放模型”描述权重与许可，OpenRouter 只是其中一条托管路线；通过同一个网关访问的不同模型仍是不同实验条件。
 
@@ -102,7 +102,7 @@ python validate_run.py runs/<run-id> --latest validation/latest.json
 
 # Open-model Computer Use companion
 
-This is the provider-portable arm for Experiments 6-8 and 6-9. It runs the
+This is the provider-portable arm for Experiments 6-9 and 6-10. It runs the
 same screenshot → structured action → browser execution loop without requiring
 an Anthropic or OpenAI model account. The documented hosted route uses the
 open-weight `qwen/qwen3-vl-32b-instruct` model through OpenRouter. The same
@@ -122,8 +122,8 @@ OpenRouter returned the requested `qwen/qwen3-vl-32b-instruct` model for all
 and completed in 16 steps. The deterministic validator matched the final
 64°F/Sunny answer to the retained browser observation, verified 15 screenshot
 hashes and the one-action-per-step read-only trajectory, and found no retained
-credential. This completes the Experiment 6-9 open-model arm only; the
-Anthropic-native Experiment 6-8 arm remains separate.
+credential. This completes the Experiment 6-10 open-model arm only; the
+Anthropic-native Experiment 6-9 arm remains separate.
 
 ## Endpoint contract
 

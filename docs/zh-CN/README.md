@@ -7,7 +7,7 @@
 
 > 📥 **[下载 PDF / EPUB](#-电子书)**（推荐）— 推荐使用 PDF / EPUB 离线阅读，排版最佳；也可[在线阅读](https://bojieli.github.io/ai-agent-book/astro/)（支持多语言切换、章节折叠、高亮与笔记，每次推送自动更新）。
 
-**Agent = LLM + 上下文 + 工具**——本书围绕这个核心公式，用 10 章把 AI Agent 从原理讲到工程实战。全书正文、配图、**109 个配套实验**全部开源，欢迎亲手把实验跑一遍。
+**Agent = LLM + 上下文 + 工具**——本书围绕这个核心公式，用 10 章把 AI Agent 从原理讲到工程实战。全书正文、配图、**110 个配套实验**全部开源，欢迎亲手把实验跑一遍。
 
 > 📚 **姊妹篇《深入理解 AI Infra：量化分析与系统设计》已开源发布**，欢迎阅读：[github.com/bojieli/ai-infra-book](https://github.com/bojieli/ai-infra-book)
 >
@@ -17,7 +17,7 @@
 >
 > 如果你看到的是旧版 PDF，建议[下载最新版 PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.pdf)。新版还包含许多内容修正与调整，请以最新版为准。
 
-| 📚 **10 章** 正文，从基础到生产 | 📂 **109 个** 配套实验（含本地项目与外部复现轨道） | 🌐 **15 种** 语言：中 / 英 / 西 / 印尼 / 阿 / 繁體中文（台灣） / 俄 / 泰米尔 / 越 / 日 / 土耳其 / 韩 / 匈牙利 / 希伯来 / 葡萄牙语（巴西） |
+| 📚 **10 章** 正文，从基础到生产 | 📂 **110 个** 配套实验（含本地项目与外部复现轨道） | 🌐 **15 种** 语言：中 / 英 / 西 / 印尼 / 阿 / 繁體中文（台灣） / 俄 / 泰米尔 / 越 / 日 / 土耳其 / 韩 / 匈牙利 / 希伯来 / 葡萄牙语（巴西） |
 | :---: | :---: | :---: |
 
 ## 📖 电子书
@@ -66,7 +66,7 @@
 | 3 | 📚 **用户记忆和知识库** | 跨会话记住用户、接入外部知识：用户记忆、RAG、结构化索引、知识图谱 | [读](../../book/chapter3.md) | [12](../../chapter3/README.md) |
 | 4 | 🛠️ **工具** | 工具是 Agent 的双手：MCP 协议、感知/执行/协作三类工具与主动工具发现 | [读](../../book/chapter4.md) | [5](../../chapter4/README.md) |
 | 5 | 💻 **Coding Agent 与通用 Agent** | 代码是「能创造新工具的工具」，生产级 Coding Agent 全景 | [读](../../book/chapter5.md) | [16](../../chapter5/README.md) |
-| 6 | 🎙️ **交互：观察与动作空间的扩展** | 从模态与时序两个维度扩展 Agent 的观察与动作空间：异步与事件驱动、语音交互、Computer Use 和机器人操作 | [读](../../book/chapter6.md) | [14](../../chapter6/README.md) |
+| 6 | 🎙️ **交互：观察与动作空间的扩展** | 从模态与时序两个维度扩展 Agent 的观察与动作空间：异步与事件驱动、语音交互、Computer Use 和机器人操作 | [读](../../book/chapter6.md) | [15](../../chapter6/README.md) |
 | 7 | 🎯 **Agent 的评估** | 把表现变成可比较信号：评估环境、指标、统计显著性、评估驱动选型 | [读](../../book/chapter7.md) | [14](../../chapter7/README.md) |
 | 8 | 🧠 **模型后训练** | 预训练/SFT/RL 三阶段：何时选 SFT、何时选 RL，工具调用内化、样本效率 | [读](../../book/chapter8.md) | [19](../../chapter8/README.md) |
 | 9 | 🔄 **Agent 的持续进化** | 从运行轨迹获得学习信号，更新知识、指令、程序与参数 | [读](../../book/chapter9.md) | [9](../../chapter9/README.md) |
@@ -163,9 +163,9 @@ Krill 为本书读者提供专属优惠：通过 [此链接](https://www.krill-c
 # 第 6 章 · GUI 与机器人外部复现轨道
 git clone https://github.com/browser-use/browser-use.git               chapter6/browser-use
 git clone https://github.com/anthropics/claude-quickstarts.git         chapter6/claude-quickstarts
-git clone https://github.com/Vector-Wangel/XLeRobot.git                chapter6/XLeRobot                       # 实验 6-10、6-12 共用
-git clone https://github.com/Grigorij-Dudnik/RoboCrew.git              chapter6/RoboCrew                       # 实验 6-11、6-12
-git clone https://github.com/StoneT2000/lerobot-sim2real.git           chapter6/lerobot-sim2real                # 实验 6-14
+git clone https://github.com/Vector-Wangel/XLeRobot.git                chapter6/XLeRobot                       # 实验 6-11、6-13 共用
+git clone https://github.com/Grigorij-Dudnik/RoboCrew.git              chapter6/RoboCrew                       # 实验 6-12、6-13
+git clone https://github.com/StoneT2000/lerobot-sim2real.git           chapter6/lerobot-sim2real                # 实验 6-15
 
 # 第 7 章 · 评估基准
 git clone https://github.com/google-research/android_world.git         chapter7/android_world
