@@ -1,4 +1,4 @@
-# 实验 6-7：用 Fish Audio S1 调节客服语音的表达
+# 实验 6-8：用 Fish Audio S1 调节客服语音的表达
 
 “太好了！您的订单已确认。让我查一下发货时间。预计明天下午送达。”同一位客服说这三句时，哪一句适合说快一点？在哪儿停一下，听众会觉得客服正在查订单？先听一遍[直接合成的版本](output/A_no_control_markers.mp3)，再听[逐段调节的版本](output/C_24_reference_library.mp3)，记下最容易听出区别的那几个字。
 
@@ -78,7 +78,7 @@ python demo.py --manifest "$run/reference_audio/manifest.json" \
 - `python -m pytest -q` 可离线检查标记解析、参考音组合和音频拼接等环节。
 - `evaluate_audio_quality.py` 可通过 Gemini、OpenRouter 音频路由、DashScope Omni 或 Mistral Voxtral 重新听评，记录实际使用的服务和失败尝试。默认使用 `output/` 中的三份成片。
 - `validate_artifacts.py` 离线核对参考音和成片的哈希、时长、标记路由、听评排列与重算均分，结果写入 `validation/acceptance.json`。归档实验估计发出 30 次 Fish 请求（建库 24 次，三组分别为 1、1、4 次），SDK 没有给出逐次美元费用。
-- 复核历史文件时会遇到一处编号差异。[旧版听评文件](https://github.com/bojieli/ai-agent-book/blob/efbde98ad6a5367fc949e7608a3b6366439d5426/chapter6/controllable-tts/validation/audio_quality_study.json)的 SHA-256 与[原验收记录](validation/acceptance.json)吻合。逐字段对照，现存听评文件只改了 `experiment`（从 `9-5` 改为 `6-6`）；三轮原始评分、匿名映射和均分均相同。本书现行编号为 6-7。
+- 复核历史文件时会遇到一处编号差异。[旧版听评文件](https://github.com/bojieli/ai-agent-book/blob/efbde98ad6a5367fc949e7608a3b6366439d5426/chapter6/controllable-tts/validation/audio_quality_study.json)的 SHA-256 与[原验收记录](validation/acceptance.json)吻合。逐字段对照，现存听评文件只改了 `experiment`（从 `9-5` 改为 `6-6`）；三轮原始评分、匿名映射和均分均相同。本书现行编号为 6-8。
 
 ## English
 

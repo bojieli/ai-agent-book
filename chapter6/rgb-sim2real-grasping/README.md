@@ -1,4 +1,4 @@
-# 实验 6-14：RGB 视觉策略的跨环境测试
+# 实验 6-15：RGB 视觉策略的跨环境测试
 
 看一眼[训练图](validation/runs/local-gpu/source_preview.png)，再看[测试图](validation/runs/local-gpu/target_preview.png)。即使背景和颜色都变了，你大概仍能指出圆点应该往哪个方向移动才能靠近方框。用固定配色训练出来的模型也能做到吗？我们用同一道五分类题，比较四种训练方式。
 
@@ -21,7 +21,7 @@
 
 ## 准备运行环境
 
-只读结果可以直接打开上面的图和表。亲自训练需要 Python、NumPy、Pillow，以及能使用 CUDA 或 Apple MPS 的 PyTorch。图片和标签由脚本在本地生成，无需下载基础模型或采集相机图像。仓内这次运行使用 Apple MPS 和 PyTorch 2.7.0。正文编号为 6-14，脚本和归档证据沿用早期编号 `6-13`。
+只读结果可以直接打开上面的图和表。亲自训练需要 Python、NumPy、Pillow，以及能使用 CUDA 或 Apple MPS 的 PyTorch。图片和标签由脚本在本地生成，无需下载基础模型或采集相机图像。仓内这次运行使用 Apple MPS 和 PyTorch 2.7.0。正文编号为 6-15，脚本和归档证据沿用早期编号 `6-13`。
 
 <a id="learning-2"></a>
 

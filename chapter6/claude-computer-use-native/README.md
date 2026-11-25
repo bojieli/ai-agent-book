@@ -14,7 +14,7 @@
 
 ### 原生工具协议与可移植路线的区别
 
-实验 6-8 使用 Anthropic 官方容器示例中的原生 Computer Use 协议；开放模型路线在实验 6-9 中单独比较。这里的脚本、验证器和已有记录沿用了 `exp6-7-*` 标识，阅读路径时要区分目录命名与当前书中编号。
+实验 6-9 使用 Anthropic 官方容器示例中的原生 Computer Use 协议；开放模型路线在实验 6-10 中单独比较。这里的脚本、验证器和已有记录沿用了 `exp6-7-*` 标识，阅读路径时要区分目录命名与当前书中编号。
 
 任务要求打开 Google，查询旧金山当天的天气，报告温度和天气状况，并保持只读、不登录。学习时先阅读一轮“截图 → 工具请求 → 新截图”，理解原生工具消息如何接入环境，再沿完整轨迹分析恢复和停止条件。
 
@@ -61,11 +61,11 @@ python3 chapter6/claude-computer-use-native/validate_weather_run.py \
 
 ## English
 
-# Experiment 6-8: Anthropic native Computer Use
+# Experiment 6-9: Anthropic native Computer Use
 
-This record covers the provider-specific arm of Experiment 6-8: Anthropic's
+This record covers the provider-specific arm of Experiment 6-9: Anthropic's
 native tool protocol in the official containerized Computer Use Demo. It is
-separate from the completed open-model Experiment 6-9 arm. The runner, validator,
+separate from the completed open-model Experiment 6-10 arm. The runner, validator,
 and retained evidence directories consistently use the `exp6-7-*` identifier.
 
 Current status: **complete for the bounded read-only task**. The canonical
