@@ -228,13 +228,14 @@ Remember: Your credibility depends on providing accurate, well-cited information
         
         return messages
     
-    def query(self, user_query: str, stream: bool = None) -> Any:
+    def query(self, user_query: str, stream: bool = None, *, raise_on_error: bool = False) -> Any:
         """
         Process a user query using the ReAct pattern.
         
         Args:
             user_query: The user's question
             stream: Whether to stream the response
+            raise_on_error: Propagate failures instead of returning an error message
             
         Returns:
             The agent's response (string or generator for streaming)
@@ -347,6 +348,8 @@ Remember: Your credibility depends on providing accurate, well-cited information
                         
             except Exception as e:
                 logger.error(f"Error in query processing: {e}")
+                if raise_on_error:
+                    raise
                 error_msg = f"Error processing query: {str(e)}"
                 if stream:
                     return self._stream_response(error_msg)
@@ -356,6 +359,8 @@ Remember: Your credibility depends on providing accurate, well-cited information
         # Max iterations reached
         logger.warning(f"Max iterations ({max_iterations}) reached")
         final_msg = "I need more iterations to fully answer your question. Please try rephrasing or breaking down your query."
+        if raise_on_error:
+            raise RuntimeError(final_msg)
         
         if stream:
             return self._stream_response(final_msg)
@@ -368,13 +373,14 @@ Remember: Your credibility depends on providing accurate, well-cited information
         for char in content:
             yield char
     
-    def query_non_agentic(self, user_query: str, stream: bool = None) -> Any:
+    def query_non_agentic(self, user_query: str, stream: bool = None, *, raise_on_error: bool = False) -> Any:
         """
         Non-agentic RAG mode: Simple retrieval + LLM response.
         
         Args:
             user_query: The user's question
             stream: Whether to stream the response
+            raise_on_error: Propagate failures instead of returning an error message
             
         Returns:
             The response (string or generator for streaming)
@@ -447,6 +453,8 @@ Please answer the question based only on the provided context. Include citations
                 
         except Exception as e:
             logger.error(f"Error in non-agentic query: {e}")
+            if raise_on_error:
+                raise
             error_msg = f"Error processing query: {str(e)}"
             if stream:
                 return self._stream_response(error_msg)
