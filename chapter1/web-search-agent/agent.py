@@ -102,7 +102,7 @@ class WebSearchAgent:
     
     def __init__(self, api_key: str = None, base_url: str = "https://api.moonshot.cn/v1",
                  model: str = "kimi-k3", verbose: bool = False, *,
-                 search_provider: str = "kimi"):
+                 search_provider: Optional[str] = "kimi"):
         """
         初始化 Agent
 
@@ -111,23 +111,27 @@ class WebSearchAgent:
             base_url: API 基础 URL
             model: 使用的模型名称（默认 kimi-k3）
             verbose: 是否实时打印 ReAct 轨迹（思考/行动/观察）
-            search_provider: 搜索后端（kimi 或 parallel）
+            search_provider: 搜索后端（kimi、parallel，或 None 表示根据模型后端选择）
         """
-        if search_provider not in ("kimi", "parallel"):
+        if search_provider not in (None, "kimi", "parallel"):
             raise ValueError(f"未知搜索后端: {search_provider}")
-        self.search_provider = search_provider
         # 优先使用传入的 api_key，否则从环境变量获取
         # Moonshot 为主，OpenRouter 为通用兜底（当 MOONSHOT_API_KEY 缺失时启用）
         from config import resolve_llm_backend, Config
         primary_key = api_key or os.environ.get("MOONSHOT_API_KEY") or os.environ.get("KIMI_API_KEY")
         resolved_key, resolved_base_url, model, self.using_openrouter = \
             resolve_llm_backend(primary_key, base_url, model)
-        if self.using_openrouter and search_provider == "kimi":
+        if search_provider is None:
+            search_provider = "parallel" if self.using_openrouter else "kimi"
+        self.search_provider = search_provider
+        if search_provider == "parallel":
+            logger.info("搜索后端：Parallel MCP。调用搜索工具时，模型生成的搜索词将匿名发给 Parallel。")
+        elif self.using_openrouter:
             logger.info(
-                f"MOONSHOT_API_KEY 未设置，改用 OpenRouter 兜底（模型: {model}）。"
-                "注意：Moonshot Formula web_search 工具在 OpenRouter 上不可用，"
-                "此模式下模型将仅凭自身知识作答，不做实时联网搜索。"
+                "模型后端：OpenRouter（%s）。Formula 在此不可用，联网搜索已关闭。", model
             )
+        else:
+            logger.info("搜索后端：Kimi Formula。")
 
         self.client = OpenAI(
             api_key=resolved_key,
@@ -385,10 +389,6 @@ class WebSearchAgent:
         self.api_turns = []
         # Each independent question keeps its own real declaration receipt.
         self._formula_tools = None
-        if self.search_provider == "parallel":
-            logger.info("Parallel 搜索：模型生成的搜索词将匿名发给 Parallel。")
-        else:
-            logger.info("开始调用 Kimi 搜索工具...")
 
         try:
             finish_reason = None

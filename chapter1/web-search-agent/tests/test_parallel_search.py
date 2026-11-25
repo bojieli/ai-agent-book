@@ -1,4 +1,4 @@
-"""Offline regression tests for the opt-in Parallel search route."""
+"""Offline regression tests for the Parallel search route."""
 
 import json
 from unittest.mock import Mock
@@ -11,9 +11,16 @@ import main as cli
 from config import Config
 
 
-@pytest.mark.parametrize("key_env", ["MOONSHOT_API_KEY", "OPENROUTER_API_KEY"])
+@pytest.mark.parametrize(
+    ("key_env", "provider_args"),
+    [
+        ("MOONSHOT_API_KEY", ["--provider", "parallel"]),
+        ("OPENROUTER_API_KEY", ["--provider", "parallel"]),
+        ("OPENROUTER_API_KEY", []),
+    ],
+)
 def test_parallel_cli_passes_search_evidence_to_the_model(
-    key_env, monkeypatch, tmp_path
+    key_env, provider_args, monkeypatch, tmp_path
 ):
     monkeypatch.setattr(
         Config, "MOONSHOT_API_KEY", "test-key" if key_env == "MOONSHOT_API_KEY" else ""
@@ -118,8 +125,7 @@ def test_parallel_cli_passes_search_evidence_to_the_model(
         cli.main(
             [
                 "Where are the official Python 3.13.0 release notes?",
-                "--provider",
-                "parallel",
+                *provider_args,
                 "--quiet",
                 "--output",
                 str(output),
@@ -136,6 +142,7 @@ def test_parallel_cli_passes_search_evidence_to_the_model(
     formula_declaration.assert_not_called()
     formula_execution.assert_not_called()
     payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["search_provider"] == "parallel"
     assert payload["answer"] == f"{excerpt} {url}"
     steps = [step for step in payload["trace"] if step["type"] != "thought"]
     assert [step["type"] for step in steps] == [
@@ -149,20 +156,20 @@ def test_parallel_cli_passes_search_evidence_to_the_model(
     assert json.loads(steps[3]["content"]) == results
 
 
-def test_parallel_cli_requires_a_model_key(monkeypatch):
+@pytest.mark.parametrize("provider_args", [[], ["--provider", "parallel"]])
+def test_online_cli_requires_a_model_key(provider_args, monkeypatch):
     monkeypatch.setattr(Config, "MOONSHOT_API_KEY", "")
     model_client = Mock()
     monkeypatch.setattr("agent.OpenAI", model_client)
 
     with pytest.raises(SystemExit) as exit_info:
-        cli.main(["question", "--provider", "parallel"])
+        cli.main(["question", *provider_args])
 
     assert exit_info.value.code == 1
     model_client.assert_not_called()
 
 
 def test_mcp_transport_reads_structured_results_and_closes_session(monkeypatch):
-    pytest.importorskip("mcp")
     from mcp.types import LATEST_PROTOCOL_VERSION
     from parallel_search import search_impl
 
@@ -170,6 +177,7 @@ def test_mcp_transport_reads_structured_results_and_closes_session(monkeypatch):
     closed_sessions = []
 
     def respond(request):
+        assert "authorization" not in request.headers
         if request.method == "DELETE":
             closed_sessions.append(request.headers["Mcp-Session-Id"])
             return httpx.Response(200)
@@ -186,7 +194,9 @@ def test_mcp_transport_reads_structured_results_and_closes_session(monkeypatch):
                 "serverInfo": {"name": "offline", "version": "1"},
             }
         elif method == "tools/list":
-            value = {"tools": [{"name": "web_search", "inputSchema": {"type": "object"}}]}
+            value = {
+                "tools": [{"name": "web_search", "inputSchema": {"type": "object"}}]
+            }
         else:
             assert method == "tools/call"
             assert message["params"]["arguments"]["search_queries"] == ["sample"]
@@ -199,7 +209,8 @@ def test_mcp_transport_reads_structured_results_and_closes_session(monkeypatch):
 
     real_client = httpx.AsyncClient
     monkeypatch.setattr(
-        httpx, "AsyncClient",
+        httpx,
+        "AsyncClient",
         lambda **kwargs: real_client(transport=httpx.MockTransport(respond), **kwargs),
     )
     assert search_impl({"query": "sample"}, timeout=3) == {"results": rows}

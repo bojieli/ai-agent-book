@@ -301,7 +301,7 @@ dev = [
 # ---------------------------------------------------------------------------
 # Chapter aggregates -- what a reader installs to run one chapter.
 # ---------------------------------------------------------------------------
-ch1  = ["agentbook[viz,docs]"]
+ch1  = ["agentbook[viz,docs]", "mcp>=1.28,<2"]
 ch2  = ["agentbook[viz,docs,web,serve,providers,tokens,torch]"]
 ch3  = ["agentbook[viz,docs,web,serve,rag,mem,analysis,torch,providers]"]
 ch4  = [

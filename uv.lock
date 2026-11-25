@@ -173,6 +173,7 @@ browser = [
 ch1 = [
     { name = "colorama" },
     { name = "matplotlib" },
+    { name = "mcp" },
     { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple" }, marker = "sys_platform != 'linux' or (extra == 'extra-9-agentbook-unsloth' and extra == 'extra-9-agentbook-vllm')" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple" }, marker = "(python_full_version < '3.13' and sys_platform == 'linux' and extra == 'extra-9-agentbook-vllm') or (python_full_version >= '3.13' and extra == 'extra-9-agentbook-unsloth' and extra == 'extra-9-agentbook-vllm') or (sys_platform != 'linux' and extra == 'extra-9-agentbook-unsloth' and extra == 'extra-9-agentbook-vllm')" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple" }, marker = "(python_full_version >= '3.13' and sys_platform == 'linux') or (sys_platform == 'linux' and extra == 'extra-9-agentbook-unsloth') or (sys_platform == 'linux' and extra != 'extra-9-agentbook-vllm') or (sys_platform != 'linux' and extra == 'extra-9-agentbook-unsloth' and extra == 'extra-9-agentbook-vllm')" },
@@ -763,6 +764,7 @@ requires-dist = [
     { name = "markdown", marker = "extra == 'dev'", specifier = ">=3.5,<4" },
     { name = "markdown", marker = "extra == 'rag'", specifier = ">=3.5" },
     { name = "matplotlib", marker = "extra == 'viz'", specifier = ">=3.8.0" },
+    { name = "mcp", marker = "extra == 'ch1'", specifier = ">=1.28,<2" },
     { name = "mcp", extras = ["cli"], marker = "extra == 'mcp'", specifier = ">=1.0" },
     { name = "mem0ai", extras = ["nlp"], marker = "extra == 'mem'", specifier = ">=2.0,<3" },
     { name = "memobase", marker = "python_full_version >= '3.11' and extra == 'mem'", specifier = ">=0.0.27" },
