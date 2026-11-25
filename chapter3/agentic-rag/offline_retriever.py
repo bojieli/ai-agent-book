@@ -35,7 +35,7 @@ def _tokenize(text: str) -> List[str]:
     """
     try:
         import jieba  # type: ignore
-        return [t for t in jieba.cut(text) if t.strip()]
+        return [t.lower() for t in jieba.cut(text) if t.strip()]
     except Exception:
         tokens: List[str] = []
         for m in re.findall(r"[a-zA-Z0-9]+|[一-鿿]+", text):
