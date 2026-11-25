@@ -113,7 +113,7 @@ class AgenticRAG:
 
 Remember: Your credibility depends on providing accurate, well-cited information from the knowledge base only."""
     
-    def _execute_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
+    def _execute_tool(self, tool_name: str, arguments: Dict[str, Any], *, raise_on_error: bool = False) -> Any:
         """Execute a tool and return the result"""
         try:
             if tool_name == "knowledge_base_search":
@@ -208,6 +208,8 @@ Remember: Your credibility depends on providing accurate, well-cited information
                 
         except Exception as e:
             logger.error(f"Tool execution error: {e}")
+            if raise_on_error:
+                raise
             return {"status": "error", "message": str(e)}
     
     def _build_messages(self, user_query: str) -> List[Dict[str, Any]]:
@@ -304,7 +306,9 @@ Remember: Your credibility depends on providing accurate, well-cited information
                             logger.info("#" * 80)
                         
                         # Execute tool
-                        result = self._execute_tool(tool_name, arguments)
+                        result = self._execute_tool(
+                            tool_name, arguments, raise_on_error=raise_on_error
+                        )
                         
                         # Log full tool result when verbose
                         if self.config.agent.verbose:

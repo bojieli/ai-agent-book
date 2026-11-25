@@ -80,7 +80,7 @@ class KnowledgeBaseTools:
                 raise ValueError(f"Unsupported knowledge base type: {self.config.type}")
         except Exception as e:
             logger.error(f"Error in knowledge base search: {e}")
-            return []
+            raise
     
     def _get_offline_retriever(self):
         """Lazily build the in-process BM25 retriever over the local corpus."""
@@ -146,13 +146,12 @@ class KnowledgeBaseTools:
             
         except requests.exceptions.RequestException as e:
             logger.error(f"Error connecting to local retrieval pipeline: {e}")
-            return []
+            raise
     
     def _search_dify(self, query: str) -> List[Dict[str, Any]]:
         """Search using Dify API"""
         if not self.config.dify_api_key:
-            logger.error("Dify API key not configured")
-            return []
+            raise ValueError("Dify API key not configured")
         
         try:
             headers = {
@@ -196,7 +195,7 @@ class KnowledgeBaseTools:
             
         except requests.exceptions.RequestException as e:
             logger.error(f"Error connecting to Dify API: {e}")
-            return []
+            raise
     
     def _search_raptor(self, query: str) -> List[Dict[str, Any]]:
         """Search using RAPTOR tree-based index"""
@@ -239,7 +238,7 @@ class KnowledgeBaseTools:
             
         except requests.exceptions.RequestException as e:
             logger.error(f"Error connecting to RAPTOR index: {e}")
-            return []
+            raise
     
     def _search_graphrag(self, query: str) -> List[Dict[str, Any]]:
         """Search using GraphRAG knowledge graph index"""
@@ -296,7 +295,7 @@ class KnowledgeBaseTools:
             
         except requests.exceptions.RequestException as e:
             logger.error(f"Error connecting to GraphRAG index: {e}")
-            return []
+            raise
     
     def get_document(self, doc_id: str) -> Dict[str, Any]:
         """
