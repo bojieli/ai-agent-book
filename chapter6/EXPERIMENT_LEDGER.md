@@ -75,7 +75,7 @@ Manuscript gates: the same fixed recordings sent through four routes (all tools 
 | 6-4 | [传统语音 Agent](live-audio/) | 6-3 |
 | 6-5 | [流式语音感知](streaming-speech/) | 6-4 |
 | 6-6 | [端到端全模态语音](end-to-end-speech/) | 6-5 |
-| 6-7 | [语音 Agent 的工具由谁来调](voice-tool-routing/) | —（2026-11-25 新增，运行目录不含编号） |
+| 6-7 | [语音 Agent 的工具由前台还是后台调用](voice-tool-routing/) | —（2026-11-25 新增，运行目录不含编号） |
 | 6-8 | [控制标记 TTS](controllable-tts/) | 6-6 |
 | 6-9 | [Anthropic Computer Use](claude-computer-use-native/) | 6-7 |
 | 6-10 | [browser-use 开放模型](computer-use-open-model/) | 6-8 |
