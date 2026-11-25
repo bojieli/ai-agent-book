@@ -1,48 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 470" width="1000" height="470" style="background:#ffffff">
-  <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#33434d"/></marker>
-    <style>
-      .t{font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;fill:#26343c}
-      .h{font-size:20px;font-weight:700}
-      .s{font-size:15px;fill:#52636d}
-      .box{fill:#f5f7f8;stroke:#33434d;stroke-width:2}
-      .accent{fill:#e8f1f5;stroke:#2f617a;stroke-width:2}
-      .line{fill:none;stroke:#33434d;stroke-width:2;marker-end:url(#arrow)}
-    </style>
-  </defs>
-  <text x="500" y="30" text-anchor="middle" class="t h">Онлайн-исполнение и офлайн-эволюция: рабочая версия не переписывается на ходу</text>
-
-  <rect x="28" y="80" width="944" height="118" rx="10" fill="#fafbfb" stroke="#7d8d96" stroke-width="1.5"/>
-  <text x="55" y="107" class="t h">Цикл онлайн-исполнения</text>
-  <rect x="220" y="114" width="150" height="58" rx="7" class="box"/>
-  <rect x="425" y="114" width="150" height="58" rx="7" class="box"/>
-  <rect x="630" y="114" width="150" height="58" rx="7" class="box"/>
-  <text x="295" y="149" text-anchor="middle" class="t s">Стабильный Agent</text>
-  <text x="500" y="149" text-anchor="middle" class="t s" style="font-size:10.5px">Решает реальные задачи</text>
-  <text x="705" y="149" text-anchor="middle" class="t s" style="font-size:9px">Пишет траектории и отклики</text>
-  <path d="M370 143 H423" class="line"/><path d="M575 143 H628" class="line"/>
-
-  <rect x="28" y="270" width="944" height="150" rx="10" fill="#f5f8fa" stroke="#2f617a" stroke-width="1.5"/>
-  <text x="55" y="298" class="t h">Цикл офлайн-эволюции</text>
-  <rect x="107" y="323" width="150" height="62" rx="7" class="accent"/>
-  <rect x="307" y="323" width="150" height="62" rx="7" class="accent"/>
-  <rect x="507" y="323" width="150" height="62" rx="7" class="accent"/>
-  <rect x="707" y="323" width="170" height="62" rx="7" class="accent"/>
-  <text x="182" y="349" text-anchor="middle" class="t s" style="font-size:10px">Агрегация и диагностика</text><text x="182" y="371" text-anchor="middle" class="t s" style="font-size:9.5px">Найти общую первопричину</text>
-  <text x="382" y="349" text-anchor="middle" class="t s" style="font-size:11px">Кандидат на изменение</text><text x="382" text-anchor="middle" class="t s" y="364.33" style="font-size:11.5px">Знания · Инструкции ·</text><text x="382" text-anchor="middle" class="t s" y="377.67" style="font-size:11.5px">Программы · Параметры</text>
-  <text x="582" text-anchor="middle" class="t s" y="342.33" style="font-size:11.5px">Регрессия и проверка</text><text x="582" text-anchor="middle" class="t s" y="355.67" style="font-size:11.5px">безопасности</text><text x="582" text-anchor="middle" class="t s" y="363.17" style="font-size:13.5px">Сохранить прежние</text><text x="582" text-anchor="middle" class="t s" y="378.83" style="font-size:13.5px">возможности</text>
-  <text x="792" text-anchor="middle" class="t s" y="340.59" style="font-size:14.5px">Канареечный выпуск,</text><text x="792" text-anchor="middle" class="t s" y="357.41" style="font-size:14.5px">мониторинг, откат</text><text x="792" y="371" text-anchor="middle" class="t s" style="font-size:9px">Повысить до нового стабильного</text>
-  <path d="M257 354 H305" class="line"/><path d="M457 354 H505" class="line"/><path d="M657 354 H705" class="line"/>
-
-  <!-- 轨迹向下进入离线诊断，使用两层之间的独立通道。 -->
-  <path d="M705 172 V232 H182 V321" class="line" stroke-dasharray="7 5"/>
-  <rect x="374" y="220" width="140" height="24" rx="4" fill="#ffffff"/>
-  <text x="444" text-anchor="middle" class="t s" y="229.46" style="font-size:13px">Версионированный</text><text x="444" text-anchor="middle" class="t s" y="244.54" style="font-size:13px">журнал опыта</text>
-
-  <!-- 新版本从右侧外环返回稳定版 Agent，不与轨迹通道交叉或重叠。 -->
-  <path d="M877 354 H986 V56 H295 V112" class="line" stroke-dasharray="7 5"/>
-  <rect x="572" y="44" width="156" height="24" rx="4" fill="#ffffff"/>
-  <text x="650" y="61" text-anchor="middle" class="t s" style="font-size:10px">Проверенная новая версия</text>
-
-  <text x="500" y="452" text-anchor="middle" class="t s">Корень доверия: права, аудит, проверка и откат не меняются обычным циклом эволюции</text>
-</svg>
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="155.584mm" viewBox="0 0 900 1321" role="img" aria-labelledby="title desc">
+<title id="title">Два цикла: онлайн-выполнение и офлайн-эволюция</title><desc id="desc">Слева — запрос по текущей версии и ожидание ответа, справа — обучение по журналам. Проверенная новая версия используется в следующих задачах.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
+<rect width="900" height="1321" fill="#ffffff" y="0" />
+<rect x="20" y="20" width="360" height="278" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="20" width="360" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="200" y="53" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="200" y="53">Онлайн-выполнение</tspan></text><text x="200" y="100" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="200" y="100">Обработать заявку</tspan><tspan x="200" y="126">по текущей версии</tspan></text><text x="200" y="184" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="200" y="184">Записать действия и ответы</tspan></text><text x="200" y="216" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="200" y="216">После завершения</tspan><tspan x="200" y="242">уведомить пользователя</tspan></text><rect x="520" y="20" width="360" height="278" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="520" y="20" width="360" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="700" y="53" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="700" y="53">Офлайн-эволюция</tspan></text><text x="700" y="100" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="700" y="100">Объединить</tspan><tspan x="700" y="126">траектории и</tspan><tspan x="700" y="152">диагностику</tspan></text><text x="700" y="184" font-size="23" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="700" y="184">Найти общую первопричину</tspan></text><rect x="20" y="481" width="360" height="282" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="481" width="360" height="76" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="200" y="514" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="200" y="514">Ожидать хода</tspan><tspan x="200" y="542">обработки</tspan></text><text x="200" y="589" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="200" y="589">Получить уведомление об</tspan><tspan x="200" y="615">изменении статуса</tspan></text><text x="200" y="647" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="200" y="647">или повторить</tspan><tspan x="200" y="673">запрос в</tspan><tspan x="200" y="699">назначенное</tspan><tspan x="200" y="725">время.</tspan></text><path d="M120 298 L120 481" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<text x="65" y="370" font-size="21" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="65" y="370">В</tspan><tspan x="65" y="395">обработке</tspan></text><path d="M278 481 L278 298" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<text x="334" y="443" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="334" y="443">Пробуждение</tspan></text><path d="M380 172 L520 172" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<text x="450" y="95" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="95">Журнал опыта</tspan></text><rect x="520" y="348" width="360" height="272" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="520" y="348" width="360" height="101" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="700" y="406" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="700" y="406">Предлагаемые</tspan><tspan x="700" y="434">изменения</tspan></text><text x="700" y="481" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="700" y="481">Знания · инструкции</tspan></text><text x="700" y="513" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="700" y="513">Программы · параметры</tspan></text><path d="M700 298 L700 348" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<path d="M700 620 L700 753" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="520" y="753" width="360" height="217" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="520" y="753" width="360" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="700" y="786" font-size="25" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="700" y="786">Независимая проверка</tspan></text><text x="700" y="833" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="700" y="833">Новые задачи и прежние</tspan><tspan x="700" y="859">возможности</tspan></text><text x="700" y="891" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="700" y="891">Регрессионные проверки и</tspan><tspan x="700" y="917">проверка безопасности</tspan></text><path d="M520 864 L485 864 L485 483 L520 483" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<text x="434" y="645" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="434" y="645">На доработку</tspan></text><path d="M700 970 L700 1025" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="520" y="1025" width="360" height="271" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="520" y="1025" width="360" height="76" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="700" y="1058" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="700" y="1058">Публикация и</tspan><tspan x="700" y="1086">мониторинг работы</tspan></text><text x="700" y="1159" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="700" y="1159">Поэтапный запуск ·</tspan><tspan x="700" y="1185">мониторинг результатов</tspan></text><text x="700" y="1217" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="700" y="1217">Перевести в стабильную</tspan><tspan x="700" y="1243">версию / откатить</tspan></text><path d="M520 1161 L8 1161 L8 172 L20 172" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<text x="260" y="1118" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="260" y="1118">Использовать новую версию в следующих</tspan><tspan x="260" y="1144">задачах</tspan></text></svg>

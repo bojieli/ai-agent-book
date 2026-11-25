@@ -14,7 +14,7 @@ cd "$SCRIPT_DIR"
 SRC_DIR="."
 OUT="AI-Agents-in-Depth-v3.0-ru.pdf"
 NAMES=(introduction chapter1 chapter2 chapter3 chapter4 chapter5 chapter6 \
-       chapter7 chapter8 chapter9 chapter10 afterword)
+       chapter7 chapter8 chapter9 chapter10 afterword reference-answers)
 
 CHAPTERS=()
 for n in "${NAMES[@]}"; do
@@ -65,7 +65,7 @@ pandoc "${CHAPTERS[@]}" \
     -V classoption=cyan \
     -V classoption=device=normal \
     -V author="Ли Боцзе (李博杰)" \
-    --metadata title-meta="Глубокое понимание AI Agent: принципы проектирования и инженерная практика" \
+    --metadata title-meta="AI-агенты изнутри: принципы проектирования и инженерная практика" \
     --metadata author-meta="Ли Боцзе" \
     -H preamble.tex \
     --include-before-body=cover.tex \

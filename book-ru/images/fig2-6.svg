@@ -1,55 +1,23 @@
-<svg xml:lang="ru" xmlns="http://www.w3.org/2000/svg" viewBox="0 40 760 570" width="760" height="570" style="background:#ffffff">
-<defs><marker id="ah" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker><marker id="ah-light" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#999999"/></marker></defs>
-<text x="40" y="78" font-family="'Noto Sans', Arial, sans-serif" font-size="15" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">① Веса внимания слова «какая» к каждому предыдущему слову</text>
-<rect x="60" y="96" width="150" height="66" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="135.0" y="118" font-family="'Noto Sans', Arial, sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Пекин</text>
-<text x="135.0" y="143" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Key · Вес 0.35</text>
-<rect x="228" y="96" width="150" height="66" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="303.0" y="118" font-family="'Noto Sans', Arial, sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">сегодня</text>
-<text x="303.0" y="143" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Key · Вес 0.05</text>
-<rect x="396" y="96" width="150" height="66" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
-<text x="471.0" y="118" font-family="'Noto Sans', Arial, sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">погода</text>
-<text x="471.0" y="143" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Key · Вес 0.55</text>
-<rect x="564" y="96" width="150" height="66" rx="6" fill="#f5f5f5" stroke="#999999" stroke-width="2"/>
-<text x="639.0" y="118" font-family="'Noto Sans', Arial, sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">какая</text>
-<text x="639.0" y="143" font-family="'Noto Sans', Arial, sans-serif" font-size="12" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Query (текущее)</text>
-<text x="380" y="192" font-family="'Noto Sans', Arial, sans-serif" font-size="11.5" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Оценка Query–Key → нормализация весов → взвешенная сумма Value (главным образом «погода»)</text>
-<text x="40" y="244" font-family="'Noto Sans', Arial, sans-serif" font-size="12" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">② Тепловая карта внимания: слово видит только себя и предыдущие слова (каузальный треугольник)</text>
-<text x="176" y="284" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">Key →</text>
-<text x="232.0" y="284" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Пекин</text>
-<text x="296.0" y="284" font-family="'Noto Sans', Arial, sans-serif" font-size="11" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">сегодня</text>
-<text x="360.0" y="284" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">погода</text>
-<text x="424.0" y="284" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">какая</text>
-<text x="110" y="428" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Query ↓</text>
-<text x="176" y="332.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">Пекин</text>
-<rect x="200" y="300" width="64" height="64" fill="#555555" stroke="#ffffff" stroke-width="2"/>
-<text x="232.0" y="332.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle" dominant-baseline="central">1.00</text>
-<rect x="264" y="300" width="64" height="64" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
-<rect x="328" y="300" width="64" height="64" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
-<rect x="392" y="300" width="64" height="64" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
-<text x="176" y="396.0" font-family="'Noto Sans', Arial, sans-serif" font-size="11" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">сегодня</text>
-<rect x="200" y="364" width="64" height="64" fill="#b0b0b0" stroke="#ffffff" stroke-width="2"/>
-<text x="232.0" y="396.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central">0.30</text>
-<rect x="264" y="364" width="64" height="64" fill="#555555" stroke="#ffffff" stroke-width="2"/>
-<text x="296.0" y="396.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle" dominant-baseline="central">0.70</text>
-<rect x="328" y="364" width="64" height="64" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
-<rect x="392" y="364" width="64" height="64" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
-<text x="176" y="460.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">погода</text>
-<rect x="200" y="428" width="64" height="64" fill="#b0b0b0" stroke="#ffffff" stroke-width="2"/>
-<text x="232.0" y="460.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central">0.20</text>
-<rect x="264" y="428" width="64" height="64" fill="#dcdcdc" stroke="#ffffff" stroke-width="2"/>
-<text x="296.0" y="460.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central">0.10</text>
-<rect x="328" y="428" width="64" height="64" fill="#555555" stroke="#ffffff" stroke-width="2"/>
-<text x="360.0" y="460.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle" dominant-baseline="central">0.70</text>
-<rect x="392" y="428" width="64" height="64" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
-<text x="176" y="524.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#666666" text-anchor="end" dominant-baseline="central" font-weight="normal">какая</text>
-<rect x="200" y="492" width="64" height="64" fill="#b0b0b0" stroke="#ffffff" stroke-width="2"/>
-<text x="232.0" y="524.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central">0.35</text>
-<rect x="264" y="492" width="64" height="64" fill="#dcdcdc" stroke="#ffffff" stroke-width="2"/>
-<text x="296.0" y="524.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central">0.05</text>
-<rect x="328" y="492" width="64" height="64" fill="#888888" stroke="#ffffff" stroke-width="2"/>
-<text x="360.0" y="524.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle" dominant-baseline="central">0.55</text>
-<rect x="392" y="492" width="64" height="64" fill="#dcdcdc" stroke="#ffffff" stroke-width="2"/>
-<text x="424.0" y="524.0" font-family="'Noto Sans', Arial, sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central">0.05</text>
-<text x="380" y="586" font-family="'Noto Sans', Arial, sans-serif" font-size="11.5" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="normal">Чем темнее ячейка, тем выше внимание; пустой верхний треугольник = будущие слова не видны</text>
-</svg>
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="80.207mm" viewBox="0 0 900 681" role="img" aria-labelledby="title desc">
+<title id="title">Наглядное представление механизма внимания</title><desc id="desc">Каждая строка матрицы причинного внимания соответствует одному Query. Веса последней строки задают взвешенную сумму Value в четырёх позициях.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
+<rect width="900" height="681" fill="#ffffff" y="0" />
+<text x="450" y="48" font-size="26" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="48">Столбцы соответствуют позициям, предоставляющим Key</tspan></text><text x="118" y="104" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="118" y="104">Позиция</tspan><tspan x="118" y="130">Query</tspan></text><text x="290" y="104" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="290" y="104">Пекин</tspan></text><text x="435" y="104" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="435" y="104">de</tspan></text><text x="580" y="104" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="580" y="104">погода</tspan></text><text x="725" y="104" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="725" y="104">какая</tspan></text><text x="125" y="201" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="125" y="201">Пекин</tspan></text><rect x="220" y="156" width="140" height="70" rx="6" fill="#999999" stroke="#333333" stroke-width="1.8" />
+<text x="290" y="200" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="290" y="200">1.00</tspan></text><rect x="365" y="156" width="140" height="70" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="435" y="200" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="435" y="200">×</tspan></text><rect x="510" y="156" width="140" height="70" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="580" y="200" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="580" y="200">×</tspan></text><rect x="655" y="156" width="140" height="70" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="725" y="200" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="725" y="200">×</tspan></text><text x="125" y="277" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="125" y="277">de</tspan></text><rect x="220" y="232" width="140" height="70" rx="6" fill="#dcdcdc" stroke="#333333" stroke-width="1.8" />
+<text x="290" y="276" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="290" y="276">0.30</tspan></text><rect x="365" y="232" width="140" height="70" rx="6" fill="#b6b6b6" stroke="#333333" stroke-width="1.8" />
+<text x="435" y="276" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="435" y="276">0.70</tspan></text><rect x="510" y="232" width="140" height="70" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="580" y="276" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="580" y="276">×</tspan></text><rect x="655" y="232" width="140" height="70" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="725" y="276" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="725" y="276">×</tspan></text><text x="125" y="353" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="125" y="353">погода</tspan></text><rect x="220" y="308" width="140" height="70" rx="6" fill="#e5e5e5" stroke="#333333" stroke-width="1.8" />
+<text x="290" y="352" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="290" y="352">0.20</tspan></text><rect x="365" y="308" width="140" height="70" rx="6" fill="#eeeeee" stroke="#333333" stroke-width="1.8" />
+<text x="435" y="352" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="435" y="352">0.10</tspan></text><rect x="510" y="308" width="140" height="70" rx="6" fill="#b6b6b6" stroke="#333333" stroke-width="1.8" />
+<text x="580" y="352" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="580" y="352">0.70</tspan></text><rect x="655" y="308" width="140" height="70" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="725" y="352" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="725" y="352">×</tspan></text><text x="125" y="429" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="125" y="429">какая</tspan></text><rect x="220" y="384" width="140" height="70" rx="6" fill="#d7d7d7" stroke="#333333" stroke-width="1.8" />
+<text x="290" y="428" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="290" y="428">0.35</tspan></text><rect x="365" y="384" width="140" height="70" rx="6" fill="#f3f3f3" stroke="#333333" stroke-width="1.8" />
+<text x="435" y="428" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="435" y="428">0.05</tspan></text><rect x="510" y="384" width="140" height="70" rx="6" fill="#c4c4c4" stroke="#333333" stroke-width="1.8" />
+<text x="580" y="428" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="580" y="428">0.55</tspan></text><rect x="655" y="384" width="140" height="70" rx="6" fill="#f3f3f3" stroke="#333333" stroke-width="1.8" />
+<text x="725" y="428" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="725" y="428">0.05</tspan></text><text x="450" y="496" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="496">× — текущей позиции этот столбец ещё недоступен</tspan></text><rect x="20" y="529" width="860" height="127" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="572" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="572">Выход в позиции «какая» — последняя строка</tspan></text><text x="450" y="620" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="620">0,35 V(Пекин) + 0,05 V(de) + 0,55 V(погода) + 0,05 V(какая)</tspan></text></svg>

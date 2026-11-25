@@ -1,55 +1,31 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 40 780 340" width="780" height="340" style="background:#ffffff">
-<defs>
-<marker id="ah" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker>
-<marker id="ah-light" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#999999"/></marker>
-</defs>
-
-<!-- Step ① Screenshot -->
-<rect x="30" y="55" width="190" height="185" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="125" y="78" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="18" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">① Скриншот</text>
-
-<rect x="55" y="95" width="140" height="90" rx="4" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
-<text x="125" y="115" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#666666" text-anchor="middle" dominant-baseline="central">Экран компьютера</text>
-<rect x="72" y="128" width="106" height="14" rx="2" fill="#e8e8e8" stroke="none"/>
-<rect x="72" y="146" width="80" height="14" rx="2" fill="#e8e8e8" stroke="none"/>
-<rect x="72" y="164" width="50" height="12" rx="2" fill="#d0d0d0" stroke="none"/>
-
-<text x="125" y="205" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#999999" text-anchor="middle" dominant-baseline="central">Десктоп / Браузер / Приложение</text>
-<text x="125" y="225" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="6.5" fill="#999999" text-anchor="middle" dominant-baseline="central">Сделать скриншот после стабилизации интерфейса</text>
-
-<line x1="220" y1="130" x2="283" y2="130" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
-<text x="252" y="118" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#666666" text-anchor="middle" dominant-baseline="central">Скриншот</text>
-
-<!-- Step ② Model Inference -->
-<rect x="295" y="55" width="190" height="185" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
-<text x="390" y="78" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="18" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">② Вывод модели</text>
-
-<text x="390" y="103" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Вход</text>
-<text x="390" y="121" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#666666" text-anchor="middle" dominant-baseline="central">Скриншот + инструкция задачи</text>
-<line x1="310" y1="137" x2="470" y2="137" stroke="#999999" stroke-width="1" stroke-dasharray="4,3"/>
-<text x="390" y="155" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Выход</text>
-<text x="390" y="175" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7.5" fill="#666666" text-anchor="middle" dominant-baseline="central">Мысль: «Поле поиска в центре экрана»</text>
-<text x="390" y="195" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="middle" dominant-baseline="central">Действие: click(512, 250)</text>
-<text x="390" y="215" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="middle" dominant-baseline="central">Действие: type("weather")</text>
-
-<line x1="485" y1="130" x2="548" y2="130" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
-<text x="517" y="118" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#666666" text-anchor="middle" dominant-baseline="central">Действие</text>
-
-<!-- Step ③ Execute Action -->
-<rect x="560" y="55" width="190" height="185" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="655" y="78" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">③ Выполнение действия</text>
-
-<text x="655" y="108" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Инструмент выполнения</text>
-<text x="655" y="130" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#666666" text-anchor="middle" dominant-baseline="central">xdotool / Playwright</text>
-<line x1="575" y1="147" x2="735" y2="147" stroke="#999999" stroke-width="1" stroke-dasharray="4,3"/>
-<text x="655" y="165" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="8" fill="#666666" text-anchor="middle" dominant-baseline="central">Мышь: перемещение, клик, перетаскивание</text>
-<text x="655" y="185" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9.5" fill="#666666" text-anchor="middle" dominant-baseline="central">Клавиатура: ввод, горячие клавиши</text>
-<text x="655" y="205" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="8.5" fill="#666666" text-anchor="middle" dominant-baseline="central">Прокрутка: Вверх / Вниз / Влево / Вправо</text>
-<text x="655" y="225" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#666666" text-anchor="middle" dominant-baseline="central">Ожидание: ответ интерфейса</text>
-
-<!-- Loop back -->
-<path d="M 655 240 L 655 280 L 125 280 L 125 248" stroke="#333333" stroke-width="2" fill="none" marker-end="url(#ah)"/>
-<text x="390" y="298" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="middle" dominant-baseline="central">④ Изменения состояния интерфейса → Ожидание стабильности → Следующий скриншот</text>
-<text x="390" y="325" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#999999" text-anchor="middle" dominant-baseline="central">Типичный сценарий: заполнение многошаговой формы может потребовать 10-20 циклов</text>
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="161.002mm" viewBox="0 0 900 1367" role="img" aria-labelledby="title desc">
+<title id="title">Сравнение архитектур и вариантов быстрого/медленного мышления</title><desc id="desc">Три схемы: подтверждение задачи, фоновые рекомендации, замысел и формулировка.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
+<rect width="900" height="1367" fill="#ffffff" y="0" />
+<rect x="20" y="20" width="860" height="100" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="20" width="860" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="53" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="53">① Быстрый отклик + медленный ответ</tspan></text><text x="450" y="100" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="100">Пользователь: Этот тариф мне подходит?</tspan></text><rect x="20" y="155" width="410" height="220" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="155" width="410" height="76" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="225" y="188" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="225" y="188">Немедленный отклик на</tspan><tspan x="225" y="216">переднем плане</tspan></text><text x="225" y="263" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="263">Я проверю функцию</tspan><tspan x="225" y="289">международного роуминга</tspan></text><text x="225" y="321" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="321">На простые вопросы можно</tspan><tspan x="225" y="347">ответить сразу</tspan></text><rect x="470" y="155" width="410" height="220" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="470" y="155" width="410" height="76" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="675" y="188" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="675" y="188">Углублённый анализ в</tspan><tspan x="675" y="216">фоне</tspan></text><text x="675" y="263" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="263">Проверка функций и цены</tspan></text><text x="675" y="321" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="321">Результат: нужного</tspan><tspan x="675" y="347">международного роуминга нет</tspan></text><path d="M225 375 L225 405 L675 405 L675 375" fill="none" stroke="#333333" stroke-width="1.8" />
+<path d="M450 405 L450 430" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="20" y="430" width="860" height="95" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="430" width="860" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="463" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="463">Итоговый ответ</tspan></text><text x="450" y="510" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="510">Дать совет после проверки; учитывать уже сказанное пользователю</tspan></text><rect x="20" y="565" width="860" height="126" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="565" width="860" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="598" font-size="25" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="598">② Диалог на переднем плане + фоновые рекомендации</tspan></text><text x="450" y="645" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="645">Пользователь уточняет условия → фоновая задача обновляется →</tspan><tspan x="450" y="671">рекомендации поступают в диалог</tspan></text><rect x="20" y="726" width="410" height="220" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="726" width="410" height="76" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="225" y="759" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="225" y="759">Диалог на переднем плане</tspan></text><text x="225" y="834" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="834">Принимать новые вопросы,</tspan><tspan x="225" y="860">сообщать о ходе работы</tspan></text><text x="225" y="892" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="892">Формулировать ответ с учётом</tspan><tspan x="225" y="918">текущей темы</tspan></text><rect x="470" y="726" width="410" height="220" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="470" y="726" width="410" height="76" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="675" y="759" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="675" y="759">Фоновое рассуждение и</tspan><tspan x="675" y="787">инструменты</tspan></text><text x="675" y="834" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="834">Передавать задачу, условия,</tspan><tspan x="675" y="860">доказательства и состояние</tspan></text><text x="675" y="892" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="892">Условия изменились → старая</tspan><tspan x="675" y="918">рекомендация недействительна</tspan></text><path d="M430 756 L470 756" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<path d="M470 885 L430 885" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="20" y="986" width="860" height="126" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="986" width="860" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="1019" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="1019">③ MPS: совместная работа над замыслом и формулировкой</tspan></text><text x="450" y="1066" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="1066">Step-Audio R1.1 · Продвижение по мере появления материалов и</tspan><tspan x="450" y="1092">выполнения работы</tspan></text><rect x="20" y="1147" width="410" height="192" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="1147" width="410" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="225" y="1180" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="225" y="1180">Formulation Brain</tspan></text><text x="225" y="1227" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="1227">Развивать замысел и</tspan><tspan x="225" y="1253">рассуждение</tspan></text><text x="225" y="1285" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="1285">Предоставлять промежуточный</tspan><tspan x="225" y="1311">материал для формулировки</tspan></text><rect x="470" y="1147" width="410" height="192" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="470" y="1147" width="410" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="675" y="1180" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="675" y="1180">Articulation Brain</tspan></text><text x="675" y="1227" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="1227">Формулировать ответ с учётом</tspan><tspan x="675" y="1253">предыдущего вывода</tspan></text><text x="675" y="1285" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="1285">Непрерывно генерировать</tspan><tspan x="675" y="1311">фрагменты речи</tspan></text><path d="M430 1217 L470 1217" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
 </svg>

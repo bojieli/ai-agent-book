@@ -99,13 +99,13 @@ build_edition() {
             ;;
         ru)
             directory="book-ru"
-            title="Глубокое понимание AI Agent: принципы проектирования и инженерная практика"
-            author="Ли Боцзе (李博杰); русский перевод: ui99ru"
+            title="AI-агенты изнутри: принципы проектирования и инженерная практика"
+            author="Ли Боцзе (李博杰); русский перевод: community edition, Илья Круглов"
             pdf="AI-Agents-in-Depth-v3.0-ru.pdf"
             output="AI-Agents-in-Depth-v3.0-ru.epub"
             title_label="Титульный лист"
             toc_label="Содержание"
-            chapters=(introduction.md chapter{1..10}.md afterword.md)
+            chapters=(introduction.md chapter{1..10}.md afterword.md reference-answers.md)
             ;;
         ta)
             directory="book-ta"

@@ -1,32 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 40 900 340" width="900" height="340" style="background:#ffffff">
-<defs><marker id="ah" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker><marker id="ah-light" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#999999"/></marker></defs>
-<rect x="30" y="44" width="370" height="46" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="215.0" y="55.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Неагентный RAG</text>
-<text x="215.0" y="81.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold" style="font-size:17.5px">Фиксированный шаг, однократный поиск</text>
-<rect x="80" y="110" width="270" height="44" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="215.0" y="132" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Запрос пользователя</text>
-<line x1="215.0" y1="156" x2="215.0" y2="174" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
-<rect x="80" y="174" width="270" height="44" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="215.0" y="196" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Поиск (однократный)</text>
-<line x1="215.0" y1="220" x2="215.0" y2="238" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
-<rect x="80" y="238" width="270" height="44" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="215.0" y="260" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal">Прямая генерация ответа</text>
-<rect x="500" y="44" width="370" height="46" rx="6" fill="#eef3f6" stroke="#333333" stroke-width="2"/>
-<text x="685.0" y="55.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Агентный RAG</text>
-<text x="685.0" y="81.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" fill="#666666" text-anchor="middle" dominant-baseline="central" font-weight="bold" style="font-size:16px">Итеративный поиск под управлением ReAct</text>
-<rect x="530" y="110" width="310" height="44" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="685.0" y="132" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal" style="font-size:11px">Мысль: разобрать запрос, выбрать ключевые слова</text>
-<line x1="685.0" y1="156" x2="685.0" y2="174" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
-<rect x="530" y="174" width="310" height="44" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="685.0" y="196" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal" style="font-size:15px">Действие: вызвать инструмент поиска</text>
-<line x1="685.0" y1="220" x2="685.0" y2="238" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
-<rect x="530" y="238" width="310" height="44" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
-<text x="685.0" y="260" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="normal" style="font-size:15px">Наблюдение: информации достаточно?</text>
-<line x1="840" y1="260" x2="858" y2="260" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
-<line x1="858" y1="260" x2="858" y2="196" stroke="#333333" stroke-width="2" stroke-dasharray="8,4"/>
-<line x1="858" y1="196" x2="840" y2="196" stroke="#333333" stroke-width="2" stroke-dasharray="8,4" marker-end="url(#ah)"/>
-<text x="862" y="228.0" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#666666" text-anchor="start" dominant-baseline="central" font-weight="normal">Нет</text>
-<line x1="685.0" y1="302" x2="685.0" y2="320" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
-<rect x="550" y="322" width="270" height="44" rx="6" fill="#dfeef0" stroke="#333333" stroke-width="2"/>
-<text x="685.0" y="344" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Да → синтезировать ответ</text>
-</svg>
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="120.604mm" viewBox="0 0 900 1024" role="img" aria-labelledby="title desc">
+<title id="title">RAG с однократным и продолженным поиском</title><desc id="desc">При первом поиске по вопросу об обмене найдено семейство продуктов. Однократный поиск отвечает лишь по имеющимся данным; многоэтапный уточняет условия по модели и дате.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
+<rect width="900" height="1024" fill="#ffffff" y="0" />
+<rect x="32" y="20" width="836" height="110" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="70" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="70">Можно ли обменять этот товар по гарантийным условиям</tspan><tspan x="450" y="98">прошлого месяца?</tspan></text><path d="M450 130 L450 164" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="150" y="164" width="600" height="136" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="208" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="208">Первый поиск данных о продукте</tspan></text><text x="450" y="250" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="250">Семейство продуктов найдено, но нет</tspan><tspan x="450" y="276">гарантийных условий за прошлый месяц</tspan></text><path d="M450 300 L450 330 L223 330 L223 368" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<path d="M450 330 L666 330 L666 368" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="36" y="368" width="374" height="93" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="223" y="411" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="223" y="411">Однократный поиск</tspan></text><path d="M223 461 L223 501" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="479" y="368" width="374" height="93" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="666" y="411" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="666" y="411">Агент решает, нужен ли</tspan><tspan x="666" y="439">дополнительный поиск</tspan></text><path d="M666 461 L666 501" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="36" y="501" width="374" height="188" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="223" y="546" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="223" y="546">Ответ по имеющимся</tspan><tspan x="223" y="574">данным</tspan></text><text x="223" y="622" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="223" y="622">Можно подтвердить лишь</tspan><tspan x="223" y="648">семейство продуктов</tspan></text><rect x="479" y="501" width="374" height="188" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="666" y="546" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="666" y="546">Проверка данных</tspan></text><text x="666" y="622" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="666" y="622">Достаточно ли условий для</tspan><tspan x="666" y="648">решения?</tspan></text><path d="M666 689 L666 744" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="479" y="744" width="374" height="210" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="666" y="790" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="666" y="790">Условий не хватает —</tspan><tspan x="666" y="818">искать дальше</tspan></text><text x="666" y="862" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="666" y="862">Поиск по модели и дате</tspan><tspan x="666" y="888">вступления в силу</tspan></text><path d="M853 833 L882 833 L882 582 L853 582" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<path d="M479 596 L442 596 L442 844 L410 844" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="36" y="744" width="374" height="258" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="223" y="789" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="223" y="789">Завершение поиска</tspan></text><text x="223" y="864" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="223" y="864">Ответ при достаточных</tspan><tspan x="223" y="890">данных</tspan></text><text x="223" y="954" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="223" y="954">Если бюджет исчерпан —</tspan><tspan x="223" y="980">указать, чего не хватает</tspan></text></svg>
