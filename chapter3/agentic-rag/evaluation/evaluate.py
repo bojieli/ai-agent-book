@@ -104,14 +104,11 @@ class RAGEvaluator:
         
         try:
             if mode == "agentic":
-                response = self.agent.query(test_case["question"], stream=False)
+                response = self.agent.query(test_case["question"], stream=False, raise_on_error=True)
             else:
-                response = self.agent.query_non_agentic(test_case["question"], stream=False)
+                response = self.agent.query_non_agentic(test_case["question"], stream=False, raise_on_error=True)
             
             elapsed_time = time.time() - start_time
-            
-            # Clear history for next test
-            self.agent.clear_history()
             
             # Evaluate response
             evaluation = self.evaluate_response(response, test_case)
@@ -130,6 +127,10 @@ class RAGEvaluator:
                 "error": str(e),
                 "elapsed_time": time.time() - start_time
             }
+        finally:
+            # Each evaluation case must start with an independent history,
+            # including after a provider or scoring failure.
+            self.agent.clear_history()
         
         return evaluation
     
