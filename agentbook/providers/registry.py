@@ -110,11 +110,11 @@ PROVIDERS: dict[str, Provider] = {
     ),
     "uberllm": Provider(
         name="uberllm",
-        base_url="https://api.uberllm.dev/v1",
+        base_url="https://api.martllm.com/v1",
         default_model="deepseek/deepseek-v4-flash",
         key_vars=("UBERLLM_API_KEY",),
         base_url_var="UBERLLM_BASE_URL",
-        # UberLLM serves models from multiple vendors under namespaced ids.
+        # MartLLM serves models from multiple vendors under namespaced ids.
         namespaces_models=True,
     ),
     "cheaperinference": Provider(
