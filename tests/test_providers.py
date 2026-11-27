@@ -298,7 +298,7 @@ def test_uberllm_key_uses_multi_model_gateway_directly(monkeypatch):
     monkeypatch.setenv("UBERLLM_API_KEY", "test-uberllm-key")
     backend = resolve_backend("uberllm")
     assert backend.api_key == "test-uberllm-key"
-    assert backend.base_url == "https://api.uberllm.dev/v1"
+    assert backend.base_url == "https://api.martllm.com/v1"
     assert backend.model == "deepseek/deepseek-v4-flash"
     assert backend.provider == "uberllm"
     assert backend.using_openrouter is False

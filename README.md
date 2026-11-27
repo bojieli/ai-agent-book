@@ -130,7 +130,7 @@ uv run python chapter1/context/main.py
 | **Atlas Cloud** | <https://www.atlascloud.ai/> | 通过 OpenAI 兼容接口访问多个厂商的模型 | 全球 |
 | **Runcrate** | <https://runcrate.ai/> | 通过 OpenAI 兼容接口访问开源权重模型（DeepSeek、Qwen、GLM、Kimi 等） | 全球 |
 | **Opper** | <https://opper.ai/> | 欧盟托管的 AI 网关，通过一个 OpenAI 兼容接口访问 50+ 厂商的 700+ 模型 | 全球 |
-| **UberLLM** | <https://uberllm.dev/> | 一个 Key 通过 OpenAI 兼容接口访问多个厂商的模型（DeepSeek、Qwen、GPT、Claude、Gemini 等），按量预付 | 全球 |
+| **MartLLM** | <https://martllm.com/> | 一个 Key 通过 OpenAI 兼容接口访问多个厂商的模型（DeepSeek、Qwen、GPT、Claude、Gemini 等），按量预付 | 全球 |
 | **Cheaper Inference** | <https://cheaperinference.com/> | 通过 OpenAI 兼容接口访问 GPT、Claude、Gemini、DeepSeek、GLM 等模型。 | 全球 |
 | **WorldRouter** | <https://www.worldrouter.ai/> | 一个 Key 通过 OpenAI 兼容接口访问 Claude、GPT、Gemini、DeepSeek、Kimi、GLM 等模型，按量计费 | 全球 |
 | **onomeo** | <https://onomeo.com/> | 一个 Key 通过 OpenAI 兼容接口访问 Claude、GPT、Gemini、DeepSeek 等模型，另有免费模型，按量计费 | 全球 |
