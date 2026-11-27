@@ -161,6 +161,15 @@ PROVIDERS: dict[str, Provider] = {
         # and vendor-prefixed ids (e.g. deepseek/deepseek-v4-1-flash-1017), so
         # ids are sent as given rather than rewritten.
     ),
+    "llmtr": Provider(
+        name="llmtr",
+        base_url="https://llmtr.com/v1",
+        default_model="qwen/qwen3.8-flash",
+        key_vars=("LLMTR_API_KEY",),
+        base_url_var="LLMTR_BASE_URL",
+        # LLMTR serves models under vendor-prefixed ids (e.g. qwen/qwen3.8-flash),
+        # so ids are sent as given rather than rewritten.
+    ),
     "openrouter": Provider(
         name="openrouter",
         base_url=OPENROUTER_BASE_URL,
