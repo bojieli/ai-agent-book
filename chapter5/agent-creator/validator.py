@@ -197,20 +197,28 @@ def _run(
     pythonpath = str(root)
     if inherited_pythonpath:
         pythonpath += os.pathsep + inherited_pythonpath
-    proc = subprocess.run(
-        command,
-        cwd=root,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        timeout=timeout,
-        env={
-            **os.environ,
-            **(extra_env or {}),
-            "PYTHONDONTWRITEBYTECODE": "1",
-            "PYTHONPATH": pythonpath,
-        },
-    )
+    try:
+        proc = subprocess.run(
+            command,
+            cwd=root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=timeout,
+            env={
+                **os.environ,
+                **(extra_env or {}),
+                "PYTHONDONTWRITEBYTECODE": "1",
+                "PYTHONPATH": pythonpath,
+            },
+        )
+    except subprocess.TimeoutExpired as exc:
+        # 超时只让这一道检查失败，不要把异常抛出 validate_agent 而跳过修复循环
+        output = exc.output or ""
+        if isinstance(output, bytes):
+            output = output.decode("utf-8", errors="replace")
+        output += f"\n[timed out after {timeout}s]"
+        return False, output[-100000:], round(time.perf_counter() - started, 3)
     return proc.returncode == 0, proc.stdout[-100000:], round(time.perf_counter() - started, 3)
 
 
