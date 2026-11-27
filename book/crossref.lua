@@ -87,5 +87,18 @@ return {
         return linkify(el.text)
       end
     end,
+
+    Link = function(el)
+      local ch, slug = el.target:match('^chapter(%d+)%.md#(.+)$')
+      if ch and slug then
+        el.target = '#' .. slug
+        return el
+      end
+      local ch_only = el.target:match('^chapter(%d+)%.md$')
+      if ch_only then
+        return pandoc.RawInline('latex',
+          '\\crossreflink{' .. chap_label(ch_only) .. '}{' .. pandoc.utils.stringify(el.content) .. '}')
+      end
+    end,
   }
 }

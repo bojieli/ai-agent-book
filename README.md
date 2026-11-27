@@ -13,9 +13,16 @@
 >
 > 要开发好基于模型的应用，还需要理解这类应用赖以运行的基础设施。姊妹篇讨论的就是支撑模型训练与推理的 AI Infra：参数和上下文状态存在哪里，计算怎样执行，多个加速器怎样协作。
 
-> 📢 **2.0 和 3.0 版变更（相较 1.4 版）**：本仓库书稿版本已由 1.4 升级为 2.0 和 3.0。2.0 和 3.0 版将原第四章中的“异步交互”部分与原第九章中关于“多模态 Agent”的内容合并，重组为新的第六章“交互：观察与动作空间的扩展”。原第六章“Agent 的评估”、第七章“模型后训练”和第八章“Agent 的持续进化”依次后移一章，现分别为第七、八、九章。
+> 📢 **2.0 和 3.0 版变更说明**：本仓库书稿版本已由 1.4 升级为 2.0 和 3.0。
+> - **2.0 版（相较 1.4 版，章节重组）**：将原第四章中的“异步交互”部分与原第九章中关于“多模态 Agent”的内容合并，重组为新的第六章“交互：观察与动作空间的扩展”。原第六章“Agent 的评估”、第七章“模型后训练”和第八章“Agent 的持续进化”依次后移一章，现分别为第七、八、九章（目前除中文原版与俄语版外，其余非中文社区翻译版对应 2.0 版结构）。
+> - **3.0 版（相较 2.0 版，中文原版实质性升级）**：完成全书出版级教学重订、技术事实与实验产物核验、**115 幅黑白灰度矢量插图重绘**，并新增/扩充了以下重点章节（已读 2.0 版的读者可直接点击跳转）：
+>   1. **第六章（异步接入层）**：[🌐 接入层：多种来源，一种事件](https://bojieli.github.io/ai-agent-book/astro/book/chapter6/#接入层多种来源一种事件) · [🌐 从邮件事件建立基本循环](https://bojieli.github.io/ai-agent-book/astro/book/chapter6/#从邮件事件建立基本循环)（多源 `IngressAdapter`、`dsh-superagent` 主/执行会话分离与工单机制）
+>   2. **第六章（语音双模型工具路由）**：[🌐 认知时序：实时交互与深度思考](https://bojieli.github.io/ai-agent-book/astro/book/chapter6/#认知时序实时交互与深度思考)（新增**实验 6-7「语音 Agent 的工具由前台还是后台调用」**，全书实验增至 110 个）
+>   3. **第三章（知识使用方式建模）**：[🌐 结构化索引：建立层次与关联](https://bojieli.github.io/ai-agent-book/astro/book/chapter3/#结构化索引建立层次与关联)（区分兼容规则约束与排他预案选择）
+>   4. **第二章（Preserved Thinking 与缓存边界）**：[🌐 KV Cache 与 Prompt Cache](https://bojieli.github.io/ai-agent-book/astro/book/chapter2/#kv-cache-与-prompt-cache两个层级的缓存) · [🌐 缓存作为架构约束](https://bojieli.github.io/ai-agent-book/astro/book/chapter2/#缓存作为架构约束)（补充修改历史前缀使保留思考链失效的机制）
+>   - 👉 **[查看 3.0 版相较 2.0 版的分章实质性变更清单](docs/CHANGELOG-v3.0.md)** · **[书内后记附录速查](book/afterword.md#附录30-版实质性变更与章节速查面向-20-版读者)**
 >
-> 如果你看到的是旧版 PDF，建议[下载最新版 PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.pdf)。新版还包含许多内容修正与调整，请以最新版为准。
+> 如果你看到的是旧版 PDF，建议[下载最新版 PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN.pdf)。
 
 | 📚 **10 章** 正文，从基础到生产 | 📂 **110 个** 配套实验（含本地项目与外部复现轨道） | 🌐 **15 种** 语言：中 / 英 / 西 / 印尼 / 阿 / 繁體中文（台灣） / 俄 / 泰米尔 / 越 / 日 / 土耳其 / 韩 / 匈牙利 / 希伯来 / 葡萄牙语（巴西） |
 | :---: | :---: | :---: |

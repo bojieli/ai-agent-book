@@ -74,6 +74,26 @@
 
 接下来，去造点什么吧。
 
+## 附录：3.0 版实质性变更与章节速查（面向 2.0 版读者） {.unnumbered}
+
+如果你已经读过本书 2.0 版，无需从头重读全部十章。3.0 版在保持十章总体框架不变的基础上，完成了全书出版级教学重订、115 幅黑白灰度矢量插图重绘、实验产物与技术事实核验，并在多个章节新增了架构小节与实验。下表汇总了各章**新增或有实质性扩充/修正**的小节，点击链接即可直接跳转到对应章节阅读：
+
+- **重点优先补读（全新小节与新实验）**
+  - **第六章（异步接入层）**：[接入层：多种来源，一种事件](chapter6.md#接入层多种来源一种事件)、[事件处理机制](chapter6.md#事件处理机制)与[从邮件事件建立基本循环](chapter6.md#从邮件事件建立基本循环)——新增多渠道 `IngressAdapter` 归一化、会话映射、乱序与幂等处理、`dsh-superagent` 主/执行会话分离与工单（Ticket）生命周期，配套新增图 6-1、两张接入层设计表、实验 6-1 多源故障注入扩展及思考题第 13 题。
+  - **第六章（语音双模型工具路由）**：[认知时序：实时交互与深度思考](chapter6.md#认知时序实时交互与深度思考)——新增**实验 6-7「语音 Agent 的工具由前台还是后台调用」**与思考题第 14 题，量化对比双模型语音架构下前台调用（$2L_f + T$）、后台调用（$2L_f + 2L_b + T$）与混合路由的端到端延迟、ASR 传话损耗及运行期记忆注入（原实验 6-7 至 6-14 顺延为 6-8 至 6-15）。
+  - **第三章（知识使用方式建模）**：[结构化索引：建立层次与关联](chapter3.md#结构化索引建立层次与关联)——在「为相关条目建立链接与索引」中新增知识使用方式建模，区分**兼容约束**（如品牌语气与隐私规范需同时生效）与**排他预案**（如不同票务状态下的互斥处理流程，须先核查状态再择一加载）。
+  - **第二章（Preserved Thinking 与缓存边界）**：[KV Cache 友好的上下文设计](chapter2.md#kv-cache-友好的上下文设计)——在[KV Cache 与 Prompt Cache：两个层级的缓存](chapter2.md#kv-cache-与-prompt-cache两个层级的缓存)与[缓存作为架构约束](chapter2.md#缓存作为架构约束)中补充 Claude Preserved Thinking 机制（修改历史前缀为何使已保留的思考链失效），并厘清追加上下文保持缓存有效的原因。
+- **各章实质性概念、实验与事实修订速查**
+  - **第一章（Agent 入门）**：[观测空间与动作空间：模型与世界的接口](chapter1.md#观测空间与动作空间模型与世界的接口)、[工具：Agent 的感官和手脚](chapter1.md#工具agent-的感官和手脚)、[上下文：Agent 的当前决策视野](chapter1.md#上下文agent-的当前决策视野)（统一全书观测空间与决策视野口径，补充 RAG 中模型与 Harness 的分工）；[从提示工程到 Graph 工程：工程关注范围的扩展](chapter1.md#从提示工程到-graph-工程工程关注范围的扩展)、[护栏与安全性](chapter1.md#护栏与安全性)、[Harness 五项功能与全书的对应](chapter1.md#harness-五项功能与全书的对应)（更新实验 1-2 Kimi K3 多轮搜索、实验 1-3 百炼 Responses API 托管闭环、实验 1-4 文生图工作流对照）。
+  - **第二章（上下文工程）**：[从 API 消息到模型 Token：Chat Template](chapter2.md#从-api-消息到模型-tokenchat-template)（核对 Qwen、DeepSeek、GLM、Claude 与 Codex 模板细节）；[提示工程：优化系统提示词](chapter2.md#提示工程优化系统提示词)（实验 2-3 至 2-6 对齐真实实验记录）；[Agent 状态栏：通过元信息增强 Agent 轨迹管理](chapter2.md#agent-状态栏通过元信息增强-agent-轨迹管理)（修正状态栏作用机制并补充方法局限）；[上下文压缩策略](chapter2.md#上下文压缩策略)（将上下文学习内部机制修正为“隐式的局部微调”，对齐实验 2-9 五案例压缩结果）。
+  - **第三章（用户记忆和知识库）**：[用户记忆的四种存储格式](chapter3.md#用户记忆的四种存储格式)、[记忆框架案例](chapter3.md#记忆框架案例)（对齐实验 3-2 四种记忆格式真实得分与 Mem0 官方基准）；[混合检索：合并两路结果再重排](chapter3.md#混合检索合并两路结果再重排)、[智能体化 RAG：由 Agent 控制检索过程](chapter3.md#智能体化-rag由-agent-控制检索过程)、[前沿探索：多模态与参数化记忆](chapter3.md#前沿探索多模态与参数化记忆)（显式报告检索失败并界定参数化记忆前提）。
+  - **第四章（工具）**：[工具设计的通用原则](chapter4.md#工具设计的通用原则)、[工具生态：MCP 与 Skill Hub](chapter4.md#工具生态mcp-与-skill-hub)、[层次化组织与按需加载](chapter4.md#层次化组织与按需加载)（对齐 MCP `Streamable HTTP` 规范，补充渐进式披露、工具描述优化与沙盒隔离的适用条件）。
+  - **第五章（Coding Agent 与通用 Agent）**：[Harness 工程在 Coding Agent 中的实践](chapter5.md#harness-工程在-coding-agent-中的实践)、[故障与错误恢复](chapter5.md#故障与错误恢复)、[Coding Agent 的安全](chapter5.md#coding-agent-的安全)（重构工具粒度取舍与沙盒安全边界）；[代码作为思考工具](chapter5.md#代码作为思考工具)、[代码作为业务规则的约束](chapter5.md#代码作为业务规则的约束)、[代码创造代码：Agent 自举](chapter5.md#代码创造代码agent-自举)（核对实验 5-1 至 5-15 真实数据与生产级权限差距）。
+  - **第七章（Agent 的评估）**：[从一条任务理解评估：τ²-bench 的 telecom 领域](chapter7.md#从一条任务理解评估τ²-bench-的-telecom-领域)、[端到端回归任务与轨迹前缀回归任务](chapter7.md#端到端回归任务与轨迹前缀回归任务)、[从外部评估到内部评估：生产级 Agent 的评估基础设施](chapter7.md#从外部评估到内部评估生产级-agent-的评估基础设施)（强化轨迹前缀回归优先级与基准核验）。
+  - **第八章（模型后训练）**：[何时选择 Mid-training、SFT 与 RL](chapter8.md#何时选择-mid-trainingsft-与-rl)、[单轮强化学习：记忆与泛化的对照](chapter8.md#单轮强化学习记忆与泛化的对照)（补齐 GeneralPoints 新旧计分算式与训练/环境优先级）；[路径约束与 RLVP](chapter8.md#路径约束与-rlvp)、[在轨自蒸馏：用额外上下文构造教师](chapter8.md#在轨自蒸馏用额外上下文构造教师)。
+  - **第九章（Agent 的持续进化）**：[将经验写成程序](chapter9.md#将经验写成程序)、[开放式任务中的证据与评价](chapter9.md#开放式任务中的证据与评价)、[持续进化的安全边界](chapter9.md#持续进化的安全边界)（校准 `dsh`/Cordis 动态组合边界，补齐思考题历史回放参考答案）。
+  - **第十章（多 Agent 协作）**：[多 Agent 何时优于单 Agent](chapter10.md#多-agent-何时优于单-agent)、[管理者模式：中心化协调](chapter10.md#管理者模式中心化协调)、[跨组织协作：A2A 协议](chapter10.md#跨组织协作a2a-协议)、[Moltbook：开放平台上的 Agent 交互](chapter10.md#moltbook开放平台上的-agent-交互)（校准并行加速比 1.872×、Swarm/A2A/MetaGPT 机制与社区指标）。
+
 [^kelvin]: Lord Kelvin, *Nineteenth Century Clouds over the Dynamical Theory of Heat and Light*, 1901，根据 1900 年 4 月 27 日演讲整理。
 
 [^mimo]: 小米 MiMo, “MiMo-V2.5-Pro-UltraSpeed: Pushing 1T-Parameter Model Generation Speed to 1000 TPS”, 2026-06-08。文中介绍 FP4 量化、DFlash 块级并行推测解码与 TileRT 的协同设计。
