@@ -9,8 +9,12 @@ const originalSite = 'https://bojieli.github.io/ai-agent-book';
 export function bookMarkdown({ base = '/' } = {}) {
   return (tree, file) => {
     const { directory, suffix, locale } = sourceEdition(file.path);
-    if (tree.children[0]?.type === 'heading' && tree.children[0].depth === 1) {
-      tree.children.shift();
+    // A translation credit may precede the title as an HTML comment.
+    const first = tree.children.findIndex(
+      (node) => !(node.type === 'html' && /^(?:\s*<!--[\s\S]*?-->)+\s*$/.test(node.value)),
+    );
+    if (tree.children[first]?.type === 'heading' && tree.children[first].depth === 1) {
+      tree.children.splice(first, 1);
     }
     const walk = (node) => {
       // Pandoc permits display equations with both $$ delimiters on one line.

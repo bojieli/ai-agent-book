@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="46.051mm" viewBox="0 0 900 391" role="img" aria-labelledby="title desc">
+<title id="title">Контекст каждого вызова модели агентом</title><desc id="desc">Относительно стабильные системные инструкции и определения инструментов, а также история сообщений, пополняемая по ходу диалога.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
+<rect width="900" height="391" fill="#ffffff" y="0" />
+<rect x="20" y="20" width="860" height="146" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="55" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="55">Относительно стабильный префикс</tspan></text><rect x="40" y="77" width="400" height="71" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="460" y="77" width="400" height="71" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="240" y="108" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="240" y="108">System Prompt · системные</tspan><tspan x="240" y="134">инструкции</tspan></text><text x="660" y="108" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="660" y="108">Tool Definitions · определения</tspan><tspan x="660" y="134">инструментов</tspan></text><rect x="20" y="196" width="860" height="175" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="231" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="231">История сообщений</tspan></text><rect x="40" y="258" width="130" height="85" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
+<text x="105" y="296" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="105" y="296">user</tspan></text><path d="M170 288 L212 288" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="212" y="258" width="130" height="85" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
+<text x="277" y="296" font-size="25" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="277" y="296">assistant</tspan></text><path d="M342 288 L384 288" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="384" y="258" width="130" height="85" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
+<text x="449" y="296" font-size="21" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="449" y="296">Результат</tspan><tspan x="449" y="321">tool</tspan></text><path d="M514 288 L556 288" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="556" y="258" width="130" height="85" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
+<text x="621" y="296" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="621" y="296">user</tspan></text><path d="M686 288 L728 288" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="728" y="258" width="130" height="85" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
+<text x="793" y="296" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="793" y="296">…</tspan></text></svg>

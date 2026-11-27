@@ -6,8 +6,8 @@ containing rectangle or the canvas. It is safe (positions are never moved) and
 idempotent (re-running makes no further changes).
 
 Usage:
-    python3 fit_svg_text.py                 # fix every images/*.svg
-    python3 fit_svg_text.py images/fig6-3.svg ...   # fix specific files
+    python3 fit_svg_text.py                 # fix every images/revised/*.svg
+    python3 fit_svg_text.py images/revised/fig6-3.svg ...   # fix specific files
 """
 import glob
 import os
@@ -16,7 +16,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from svg_lib import fit_overflow
 
-IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images')
+IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images', 'revised')
 
 
 def process(path):

@@ -25,6 +25,7 @@
   \IfFontExistsTF{Microsoft YaHei}{\newcommand{\cjkmain}{Microsoft YaHei}}{%
     \IfFontExistsTF{SimSun}{\newcommand{\cjkmain}{SimSun}}{%
       \IfFontExistsTF{Songti SC}{\newcommand{\cjkmain}{Songti SC}}{}}}}
+\IfFileExists{xeCJK.sty}{}{\let\cjkmain\undefined}
 \ifdefined\cjkmain
   \usepackage{xeCJK}
   \setCJKmainfont{\cjkmain}
@@ -34,6 +35,14 @@
 
 % ── Юникод-глифы, которых нет в основном шрифте ───────────────────
 \usepackage{newunicodechar}
+% Minimal TeX installations may have a CJK font but not xeCJK.
+\ifdefined\cjkmain\else
+  \IfFontExistsTF{Droid Sans Fallback}{%
+    \newfontfamily\bookhanfont{Droid Sans Fallback}
+    \newcommand{\bookhanglyph}[1]{\newunicodechar{#1}{{\bookhanfont #1}}}
+    \forcsvlist{\bookhanglyph}{李,博,杰,陈,耳,东,嘉,奖,怡,然,佳,宜}
+  }{}
+\fi
 % Segoe UI Symbol есть на всех Windows и покрывает ★ ♦ ✓ ✗ стрелки и т.п.
 \IfFontExistsTF{DejaVu Sans}{\newfontfamily\fallbackfont{DejaVu Sans}}{%
   \IfFontExistsTF{Segoe UI Symbol}{\newfontfamily\fallbackfont{Segoe UI Symbol}}{%
@@ -44,6 +53,8 @@
 \newunicodechar{✓}{{\fallbackfont ✓}}
 \newunicodechar{✗}{{\fallbackfont ✗}}
 \newunicodechar{≈}{{\fallbackfont ≈}}
+\newunicodechar{κ}{{\fallbackfont κ}}\newunicodechar{⁵}{{\fallbackfont ⁵}}
+\newunicodechar{℃}{{\fallbackfont ℃}}
 \newunicodechar{→}{{\fallbackfont →}}
 \newunicodechar{←}{{\fallbackfont ←}}
 \newunicodechar{↓}{{\fallbackfont ↓}}

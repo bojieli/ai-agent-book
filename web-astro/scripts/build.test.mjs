@@ -34,6 +34,7 @@ const article = chapter.match(/<article\b[^>]*>([\s\S]*?)<\/article>/)?.[1];
 assert.ok(article, 'The complete chapter must be rendered in an article.');
 const count = (html, tag) =>
   [...html.matchAll(new RegExp(`<${tag}\\b`, 'g'))].length;
+const usesRevisedManuscript = ({ lang }) => lang === 'zh-CN' || lang === 'ru';
 const ids = (html) =>
   new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]));
 const displayMathCount = (markdown) => {
@@ -525,7 +526,7 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
         'utf8',
       );
       const article = html.match(/<article\b[^>]*>([\s\S]*?)<\/article>/)[1];
-      const revised = edition.lang === 'zh-CN';
+      const revised = usesRevisedManuscript(edition);
       const code = [],
         inlineCode = [],
         headings = [],
@@ -692,7 +693,7 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
           );
         }
         const notes = [...markdown.matchAll(/^\[\^([^\]]+)\]:/gm)];
-        assert.equal(notes.length, edition.lang === 'zh-CN' ? 29 : 26, edition.lang);
+        assert.equal(notes.length, revised ? 29 : 26, edition.lang);
         for (const [, id] of notes)
           assert.ok(
             ids(article).has(`user-content-fn-${id}`),
@@ -715,7 +716,7 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
       if (chapterNumber === 10) {
         assert.equal(code.length, revised ? 1 : 5, edition.lang);
         assert.equal(images.length, 11, edition.lang);
-        assert.equal(count(article, 'table'), edition.lang === 'zh-CN' ? 5 : 4, edition.lang);
+        assert.equal(count(article, 'table'), revised ? 5 : 4, edition.lang);
         assert.equal(count(article, 'figure'), 11, edition.lang);
         assert.equal(count(article, 'figcaption'), 11, edition.lang);
         for (const level of [2, 4]) {
@@ -846,7 +847,7 @@ for (const chapterNumber of [3, 4, 5, 6, 7, 8, 9, 10])
 
 test('Chapter 5 architecture banner fits its web canvas in every edition', () => {
   for (const edition of editions) {
-    const revised = edition.lang === 'zh-CN';
+    const revised = usesRevisedManuscript(edition);
     const image = revised ? 'images/revised/fig5-1.svg' : 'images/fig5-1.svg';
     const paths = figurePaths(edition.directory, image);
     for (const theme of ['light', 'dark']) {
@@ -854,10 +855,11 @@ test('Chapter 5 architecture banner fits its web canvas in every edition', () =>
       const [, width, height] = svg.match(/viewBox="0 0 (\d+) (\d+)"/);
       if (revised) {
         const original = readFileSync(join(dist, paths.original), 'utf8');
+        const labelPattern = edition.lang === 'ru'
+          ? /<tspan\b[^>]*>([^<]+)<\/tspan>/g
+          : /<g aria-label="([^"]+)"/g;
         const labels = (source) =>
-          [...source.matchAll(/<g aria-label="([^"]+)"/g)].map(
-            (match) => match[1],
-          );
+          [...source.matchAll(labelPattern)].map((match) => match[1]);
         assert.ok(labels(original).length > 0);
         assert.deepEqual(labels(svg), labels(original));
         assert.equal(

@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="96.342mm" viewBox="0 0 900 818" role="img" aria-labelledby="title desc">
+<title id="title">Структура индекса HNSW</title><desc id="desc">Один узел обозначен одной буквой на всех слоях. Поиск начинается с верхнего слоя, спускается слой за слоем и расширяет кандидатов на нижнем. Тёмные стрелки показывают пример пути поиска.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
+<rect width="900" height="818" fill="#ffffff" y="0" />
+<rect x="20" y="20" width="860" height="221" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="245" y="54" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="245" y="54">Layer 2: мало узлов · дальние</tspan><tspan x="245" y="82">связи</tspan></text><path d="M200 160 L505 130" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M505 130 L755 135" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<circle cx="200" cy="160" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="200" y="193" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="200" y="193">A</tspan></text><circle cx="505" cy="130" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="505" y="137" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="505" y="137">D</tspan></text><circle cx="755" cy="135" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="755" y="142" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="755" y="142">F</tspan></text><rect x="20" y="261" width="860" height="208" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="245" y="295" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="245" y="295">Layer 1: больше узлов ·</tspan><tspan x="245" y="323">сужение области</tspan></text><path d="M200 401 L300 366" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M200 401 L505 371" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M300 366 L505 371" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M505 371 L620 411" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M505 371 L755 376" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M620 411 L755 376" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<circle cx="200" cy="401" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="200" y="408" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="200" y="408">A</tspan></text><circle cx="300" cy="366" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="300" y="373" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="300" y="373">B</tspan></text><circle cx="505" cy="371" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="505" y="378" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="505" y="378">D</tspan></text><circle cx="620" cy="411" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="620" y="418" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="620" y="418">E</tspan></text><circle cx="755" cy="376" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="755" y="383" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="755" y="383">F</tspan></text><rect x="20" y="489" width="860" height="233" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<text x="245" y="523" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="245" y="523">Layer 0: все узлы ·</tspan><tspan x="245" y="551">расширение кандидатов</tspan></text><path d="M200 629 L300 594" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M200 629 L235 684" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M200 629 L400 649" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M300 594 L400 649" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M300 594 L505 599" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M400 649 L505 599" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M400 649 L350 694" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M400 649 L485 689" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M505 599 L620 639" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M505 599 L485 689" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M620 639 L485 689" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M620 639 L755 604" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M620 639 L690 689" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M755 604 L690 689" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M235 684 L350 694" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M350 694 L485 689" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<path d="M485 689 L690 689" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<circle cx="200" cy="629" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="200" y="636" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="200" y="636">A</tspan></text><circle cx="300" cy="594" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="300" y="601" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="300" y="601">B</tspan></text><circle cx="400" cy="649" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="400" y="656" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="400" y="656">C</tspan></text><circle cx="505" cy="599" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="505" y="606" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="505" y="606">D</tspan></text><circle cx="620" cy="639" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="620" y="646" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="620" y="646">E</tspan></text><circle cx="755" cy="604" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="755" y="611" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="755" y="611">F</tspan></text><circle cx="235" cy="684" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="235" y="691" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="235" y="691">G</tspan></text><circle cx="350" cy="694" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="350" y="701" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="350" y="701">H</tspan></text><circle cx="485" cy="689" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="485" y="696" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="485" y="696">I</tspan></text><circle cx="690" cy="689" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<text x="690" y="696" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="690" y="696">J</tspan></text><path d="M221.89434303924287 157.846 L483.10565696075713 132.154" fill="none" stroke="#222222" stroke-width="4" marker-end="url(#arrow)" />
+<path d="M525.7789295275355 378.227 L599.2210704724645 403.773" fill="none" stroke="#222222" stroke-width="4" marker-end="url(#arrow)" />
+<path d="M637.9021363665481 651.787 L672.0978636334519 676.213" fill="none" stroke="#222222" stroke-width="4" marker-end="url(#arrow)" />
+<path d="M505 152 L505 349" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)" />
+<path d="M620 433 L620 617" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)" />
+<text x="105" y="164" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="105" y="164">Точка</tspan><tspan x="105" y="190">входа</tspan></text><path d="M140 158 L178 160" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<text x="450" y="767" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="767">Серые линии: рёбра соседства Сплошные стрелки: поиск в слое</tspan><tspan x="450" y="793">Пунктирные стрелки: спуск на слой</tspan></text></svg>
