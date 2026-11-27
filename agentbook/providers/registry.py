@@ -151,6 +151,16 @@ PROVIDERS: dict[str, Provider] = {
         # TeamoRouter serves many vendors' models under bare ids such as
         # claude-sonnet-5-5, so ids are sent as given rather than namespaced.
     ),
+    "straitly": Provider(
+        name="straitly",
+        base_url="https://api.straitly.ai/v1",
+        default_model="deepseek/deepseek-v4-1-flash-1017",
+        key_vars=("STRAITLY_API_KEY",),
+        base_url_var="STRAITLY_BASE_URL",
+        # Straitly serves models under both bare ids (e.g. claude-sonnet-5-5)
+        # and vendor-prefixed ids (e.g. deepseek/deepseek-v4-1-flash-1017), so
+        # ids are sent as given rather than rewritten.
+    ),
     "openrouter": Provider(
         name="openrouter",
         base_url=OPENROUTER_BASE_URL,
