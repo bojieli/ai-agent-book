@@ -260,11 +260,17 @@ class LanguageExecutor:
     
     def _write_files(self, tmp_dir: str, files: Dict[str, str]):
         """Write additional files to tmp directory."""
+        root = Path(tmp_dir).resolve()
         for filename, content in files.items():
             if not content or "IGNORE_THIS_FILE" in filename:
                 continue
-                
-            filepath = os.path.join(tmp_dir, filename)
+
+            # 文件名来自模型，必须留在临时目录内（拒绝 ../ 和绝对路径）
+            target = (root / filename).resolve()
+            if not target.is_relative_to(root):
+                logger.warning(f"Rejected file outside sandbox: {filename}")
+                continue
+            filepath = str(target)
             dirpath = os.path.dirname(filepath)
             
             if dirpath:
