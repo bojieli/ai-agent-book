@@ -147,7 +147,7 @@ python main.py --help
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
 | `query` | 要提问的问题（位置参数）；省略则进入交互模式 | 无 |
-| `--provider` | `kimi`（Formula；在 OpenRouter 上只调用模型）、`parallel`（Parallel MCP）、`offline-demo`（离线示例轨迹） | 直连 Kimi 为 `kimi`，OpenRouter 为 `parallel` |
+| `--provider` | `kimi`（Formula；在 OpenRouter 上只调用模型）、`parallel`（Parallel MCP）、`specstream`（SpecStream Search API，需要 `SPECSTREAM_API_KEY`）、`offline-demo`（离线示例轨迹） | 直连 Kimi 为 `kimi`，OpenRouter 为 `parallel` |
 | `--model` | 模型名称 | `kimi-k3` |
 | `--max-steps` | 最大 ReAct 迭代次数 | `5` |
 | `--base-url` | API 基础 URL | `https://api.moonshot.cn/v1` |
@@ -168,6 +168,8 @@ python main.py --output result.json "请搜索 Python 3.13 官方发行说明，
 ```
 
 程序启动时会显示搜索后端。只有模型调用搜索工具时，生成的搜索词才会发到 `https://mcp.parallel.ai/mcp`。匿名搜索无需 Parallel API Key，并受匿名调用频率限制。模型调用的费用和配额以服务商为准。打开 `result.json`，用 `provider` 和 `search_provider` 查看模型后端和搜索选项，在 `trace` 的 `observation` 步骤里把网页链接和原文摘录与答案引用对照。实验 1-2 的 Formula 验收使用直连 Kimi。
+
+**换一个搜索后端对比。** 设置 `SPECSTREAM_API_KEY` 后加上 `--provider specstream`，直连 Kimi 和 OpenRouter 都可以用。工具定义和 `observation` 里的结果结构与 Parallel 路线相同（`title`、`url`、`excerpts`），所以同一个问题可以分别用两个后端跑一遍，直接比较模型拿到的资料和最终引用。搜索词只在模型调用工具时发到 `https://api.specstream.ai/v1/web-search`，每次取 5 条结果。
 
 **交互模式**（每次提问独立，`search_and_answer` 会重置对话历史，无跨问题上下文）：
 
@@ -270,6 +272,7 @@ python examples.py
 - `_get_system_prompt()`: 获取系统提示，定义 Agent 行为
 - `_get_tools()`: 定义可用的工具（`web_search`）
 - `search_impl()`: `parallel` 模式的搜索实现，返回带链接和摘录的资料
+- `specstream_search.search_impl()`: `specstream` 模式的搜索实现，返回同样结构的资料
 - `format_trace_step()`: 将一条轨迹步骤渲染为可读文本
 - `run_offline_demo()`: 离线回放示例轨迹，无需 API Key 即可演示 ReAct 循环
 
@@ -456,7 +459,7 @@ python main.py --help
 | Flag | Description | Default |
 |------|-------------|---------|
 | `query` | Question (positional); omit for interactive mode | none |
-| `--provider` | `kimi` (Formula, or model-only on OpenRouter), `parallel` (Parallel MCP), `offline-demo` (offline sample trace) | `kimi` on direct Kimi, `parallel` on OpenRouter |
+| `--provider` | `kimi` (Formula, or model-only on OpenRouter), `parallel` (Parallel MCP), `specstream` (SpecStream Search API, needs `SPECSTREAM_API_KEY`), `offline-demo` (offline sample trace) | `kimi` on direct Kimi, `parallel` on OpenRouter |
 | `--model` | Model name | `kimi-k3` |
 | `--max-steps` | Max ReAct iterations | `5` |
 | `--base-url` | API base URL | `https://api.moonshot.cn/v1` |
@@ -477,6 +480,8 @@ python main.py --output result.json "Find the official Python 3.13 release notes
 ```
 
 The CLI displays the search backend at startup. It sends the model's search terms to `https://mcp.parallel.ai/mcp` only when the model calls the search tool. Anonymous search needs no Parallel API key and has its own rate limits. Your model provider's pricing and quotas apply to inference. In `result.json`, `provider` identifies the model backend and `search_provider` records the search choice. Compare the URLs and excerpts in the `observation` step with the citations in the answer. Use direct Kimi for the Experiment 1-2 Formula acceptance check.
+
+**Compare search backends.** Set `SPECSTREAM_API_KEY` and add `--provider specstream`, on direct Kimi or OpenRouter. The tool schema and the `observation` payload have the same shape as the Parallel route (`title`, `url`, `excerpts`), so you can run one question through both and compare what the model read with what it cited. Search terms go to `https://api.specstream.ai/v1/web-search` only when the model calls the tool, five results per call.
 
 **Interactive mode** (ongoing dialogue):
 
@@ -547,6 +552,7 @@ Includes:
 - `_get_system_prompt()`: system prompt defining agent behavior
 - `_get_tools()`: tool definitions (`$web_search`)
 - `search_impl()`: returns source links and excerpts in `parallel` mode
+- `specstream_search.search_impl()`: the same result shape in `specstream` mode
 - `format_trace_step()`: render one trace step as readable text
 - `run_offline_demo()`: offline sample-trace replay (no API key)
 

@@ -13,6 +13,7 @@ import requests
 import time
 
 from parallel_search import PARALLEL_SEARCH_TOOL, search_impl
+import specstream_search
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -111,10 +112,12 @@ class WebSearchAgent:
             base_url: API 基础 URL
             model: 使用的模型名称（默认 kimi-k3）
             verbose: 是否实时打印 ReAct 轨迹（思考/行动/观察）
-            search_provider: 搜索后端（kimi、parallel，或 None 表示根据模型后端选择）
+            search_provider: 搜索后端（kimi、parallel、specstream，或 None 表示根据模型后端选择）
         """
-        if search_provider not in (None, "kimi", "parallel"):
+        if search_provider not in (None, "kimi", "parallel", "specstream"):
             raise ValueError(f"未知搜索后端: {search_provider}")
+        if search_provider == "specstream" and not specstream_search.api_key():
+            raise ValueError(f"SpecStream 搜索需要设置 {specstream_search.API_KEY_ENV}")
         # 优先使用传入的 api_key，否则从环境变量获取
         # Moonshot 为主，OpenRouter 为通用兜底（当 MOONSHOT_API_KEY 缺失时启用）
         from config import resolve_llm_backend, Config
@@ -126,6 +129,8 @@ class WebSearchAgent:
         self.search_provider = search_provider
         if search_provider == "parallel":
             logger.info("搜索后端：Parallel MCP。调用搜索工具时，模型生成的搜索词将匿名发给 Parallel。")
+        elif search_provider == "specstream":
+            logger.info("搜索后端：SpecStream Search API。调用搜索工具时，模型生成的搜索词将发给 SpecStream。")
         elif self.using_openrouter:
             logger.info(
                 "模型后端：OpenRouter（%s）。Formula 在此不可用，联网搜索已关闭。", model
@@ -167,6 +172,8 @@ class WebSearchAgent:
         """返回搜索后端提供的工具定义。"""
         if self.search_provider == "parallel":
             return [PARALLEL_SEARCH_TOOL]
+        if self.search_provider == "specstream":
+            return [specstream_search.SPECSTREAM_SEARCH_TOOL]
         if getattr(self, "using_openrouter", False):
             return []
         if self._formula_tools is not None:
@@ -299,7 +306,7 @@ class WebSearchAgent:
         """
         获取系统提示
         """
-        if self.search_provider == "parallel":
+        if self.search_provider in ("parallel", "specstream"):
             return (
                 "你是一个搜索助手。需要查证时，调用 web_search 搜索，使用简短、具体的关键词。"
                 "阅读返回的摘录，再决定是否继续搜索。回答时附上支撑结论的来源链接。"
@@ -428,7 +435,7 @@ class WebSearchAgent:
                             for tc in choice.message.tool_calls
                         ],
                     }
-                    if self.search_provider == "parallel":
+                    if self.search_provider in ("parallel", "specstream"):
                         # 工具结果会继续同一轮推理，保留模型返回的推理内容。
                         assistant_message["content"] = choice.message.content
                         reasoning_fields = (
@@ -466,6 +473,10 @@ class WebSearchAgent:
 
                         if tool_call_name == "web_search" and self.search_provider == "parallel":
                             tool_result = search_impl(
+                                tool_call_arguments, timeout=self._request_timeout
+                            )
+                        elif tool_call_name == "web_search" and self.search_provider == "specstream":
+                            tool_result = specstream_search.search_impl(
                                 tool_call_arguments, timeout=self._request_timeout
                             )
                         elif tool_call_name == "web_search":

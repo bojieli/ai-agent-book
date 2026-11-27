@@ -150,10 +150,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("query", nargs="*",
                         help="要提问的问题；省略则进入交互模式")
-    parser.add_argument("--provider", choices=["kimi", "parallel", "offline-demo"],
+    parser.add_argument("--provider", choices=["kimi", "parallel", "specstream", "offline-demo"],
                         help="搜索后端：省略时直连 Kimi 用 Formula，OpenRouter 用 Parallel MCP。"
                              "kimi=使用 Formula（OpenRouter 上只调用模型）；"
-                             "parallel=使用 Parallel MCP；offline-demo=离线回放示例轨迹。")
+                             "parallel=使用 Parallel MCP；specstream=使用 SpecStream Search API"
+                             "（需要 SPECSTREAM_API_KEY）；offline-demo=离线回放示例轨迹。")
     parser.add_argument("--model", default=Config.DEFAULT_MODEL,
                         help=f"使用的模型名称（默认 {Config.DEFAULT_MODEL}）")
     parser.add_argument("--max-steps", type=int, default=Config.MAX_SEARCH_ITERATIONS,
