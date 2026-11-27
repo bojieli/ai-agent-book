@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="84.8mm" viewBox="0 0 900 720" role="img" aria-labelledby="title desc">
+<title id="title">Приём событий: адаптеры, единый конверт и входной журнал</title>
+<desc id="desc">Адаптеры записывают события в журнал. Маршрутизатор передаёт их среде выполнения, а исходящий адаптер возвращает ответ в исходный канал общения.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
+<rect width="900" height="720" fill="#ffffff" y="0" />
+<rect x="20" y="20" width="273" height="136" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="20" width="273" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="156.5" y="53" text-anchor="middle" font-family="DejaVu Sans" font-size="25" font-weight="700" fill="#292929">Каналы общения</text>
+<text x="156.5" y="100" text-anchor="middle" font-family="DejaVu Sans" font-size="19" font-weight="400" fill="#292929">Чат, мессенджер, почта</text>
+<text x="156.5" y="132" text-anchor="middle" font-family="DejaVu Sans" font-size="20" font-weight="400" fill="#292929">Ответ в том же канале</text>
+<rect x="313" y="20" width="273" height="136" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="313" y="20" width="273" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="449.5" y="53" text-anchor="middle" font-family="DejaVu Sans" font-size="24" font-weight="700" fill="#292929">Обратные вызовы</text>
+<text x="449.5" y="100" text-anchor="middle" font-family="DejaVu Sans" font-size="17" font-weight="400" fill="#292929">Платёжный сервис, GitHub</text>
+<text x="449.5" y="132" text-anchor="middle" font-family="DejaVu Sans" font-size="16" font-weight="400" fill="#292929">Подпись; возможны повторы</text>
+<rect x="607" y="20" width="273" height="136" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="607" y="20" width="273" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="743.5" y="53" text-anchor="middle" font-family="DejaVu Sans" font-size="24" font-weight="700" fill="#292929">Шина сообщений</text>
+<text x="743.5" y="100" text-anchor="middle" font-family="DejaVu Sans" font-size="26" font-weight="400" fill="#292929">SQS, Kafka</text>
+<text x="743.5" y="119" text-anchor="middle" font-family="DejaVu Sans" font-size="17" font-weight="400" fill="#292929"><tspan x="743.5">Подтверждение, хранение,</tspan><tspan x="743.5" dy="22">повторное чтение</tspan></text>
+<path d="M156 156 L156 180 L744 180 L744 156" fill="none" stroke="#333333" stroke-width="1.8" />
+<path d="M450 156 L450 210" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="20" y="210" width="860" height="136" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="210" width="860" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="243" text-anchor="middle" font-family="DejaVu Sans" font-size="28" font-weight="700" fill="#292929">По адаптеру на каждый источник</text>
+<text x="450" y="290" text-anchor="middle" font-family="DejaVu Sans" font-size="17" font-weight="400" fill="#292929">Проверить источник, сформировать конверт, исключить повторы по правилам источника</text>
+<text x="450" y="322" text-anchor="middle" font-family="DejaVu Sans" font-size="26" font-weight="400" fill="#292929">Подтвердить приём только после записи в журнал</text>
+<path d="M450 346 L450 380" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="20" y="380" width="860" height="136" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="380" width="860" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="413" text-anchor="middle" font-family="DejaVu Sans" font-size="28" font-weight="700" fill="#292929">Входной журнал</text>
+<text x="450" y="460" text-anchor="middle" font-family="DejaVu Sans" font-size="22" font-weight="400" fill="#292929">Только добавление; разделение по потокам; порядок внутри потока</text>
+<text x="450" y="492" text-anchor="middle" font-family="DejaVu Sans" font-size="18" font-weight="400" fill="#292929">Конверт: источник, ключ дедупликации, поток, связанные объекты, способ ответа</text>
+<path d="M450 516 L450 533 L156 533 L156 550" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="20" y="550" width="273" height="136" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="20" y="550" width="273" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="156.5" y="583" text-anchor="middle" font-family="DejaVu Sans" font-size="27" font-weight="700" fill="#292929">Маршрутизатор</text>
+<text x="156.5" y="630" text-anchor="middle" font-family="DejaVu Sans" font-size="20" font-weight="400" fill="#292929">Выбор задачи и сеанса</text>
+<text x="156.5" y="662" text-anchor="middle" font-family="DejaVu Sans" font-size="17" font-weight="400" fill="#292929">Срок, объединение, лимит</text>
+<rect x="313" y="550" width="273" height="136" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="313" y="550" width="273" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="449.5" y="583" text-anchor="middle" font-family="DejaVu Sans" font-size="23" font-weight="700" fill="#292929">Среда выполнения</text>
+<text x="449.5" y="630" text-anchor="middle" font-family="DejaVu Sans" font-size="18" font-weight="400" fill="#292929">Цикл событий, состояние</text>
+<text x="449.5" y="662" text-anchor="middle" font-family="DejaVu Sans" font-size="19" font-weight="400" fill="#292929">Отмена и возобновление</text>
+<rect x="607" y="550" width="273" height="136" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="607" y="550" width="273" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="743.5" y="583" text-anchor="middle" font-family="DejaVu Sans" font-size="21" font-weight="700" fill="#292929">Исходящий адаптер</text>
+<text x="743.5" y="630" text-anchor="middle" font-family="DejaVu Sans" font-size="23" font-weight="400" fill="#292929">Записать намерение</text>
+<text x="743.5" y="658" text-anchor="middle" font-family="DejaVu Sans" font-size="17" font-weight="400" fill="#292929"><tspan x="743.5">После подтверждения</tspan><tspan x="743.5" dy="21">отметить отправку</tspan></text>
+<path d="M293 618 L313 618" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<path d="M586 618 L607 618" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<path d="M744 686 L744 704 L6 704 L6 88 L20 88" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+</svg>

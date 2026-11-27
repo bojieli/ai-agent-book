@@ -1,23 +1,59 @@
-<?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="91.278mm" viewBox="0 0 900 775" role="img" aria-labelledby="title desc">
-<title id="title">Эксперимент 6-2. Прерывание и возобновление асинхронного агента</title><desc id="desc">Ход, отмена и итоги трёх реальных задач-подпроцессов.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
-<rect width="900" height="775" fill="#ffffff" y="0" />
-<rect x="20" y="20" width="860" height="100" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="20" y="20" width="860" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="450" y="53" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="53">Среда выполнения запускает три фоновые задачи</tspan></text><text x="450" y="100" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="100">Возврат task_id, сохранение статуса pending</tspan></text><path d="M150 120 L150 160" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<rect x="20" y="160" width="260" height="181" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="20" y="160" width="260" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="150" y="193" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="150" y="193">Задача T1</tspan></text><text x="150" y="240" font-size="23" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="150" y="240">+3% за каждый тик</tspan></text><text x="150" y="272" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="150" y="272">Завершается первой</tspan></text><path d="M450 120 L450 160" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<rect x="320" y="160" width="260" height="181" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="320" y="160" width="260" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="450" y="193" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="193">Задача T2</tspan></text><text x="450" y="240" font-size="23" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="240">+2% за каждый тик</tspan></text><text x="450" y="272" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="272">Фактический</tspan><tspan x="450" y="298">прогресс: 68%</tspan></text><path d="M750 120 L750 160" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<rect x="620" y="160" width="260" height="181" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="620" y="160" width="260" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="750" y="193" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="750" y="193">Задача T3</tspan></text><text x="750" y="240" font-size="23" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="750" y="240">+1% за каждый тик</tspan></text><text x="750" y="272" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="750" y="272">Фактический</tspan><tspan x="750" y="298">прогресс: 34%</tspan></text><path d="M150 341 L150 381" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<rect x="20" y="381" width="860" height="145" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="20" y="381" width="860" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="450" y="414" font-size="26" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="414">Событие завершения T1 → проверка прогресса T2 и T3</tspan></text><text x="450" y="461" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="461">T2 &gt; 50%: продолжить выполнение</tspan></text><text x="450" y="493" font-size="24" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="493">T3 ≤ 50%: cancel_tool(task_id) → подтвердить остановку процесса</tspan></text><path d="M450 526 L450 566" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<rect x="20" y="566" width="860" height="181" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="20" y="566" width="860" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="450" y="599" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="599">Сбор итоговых статусов и создание отчёта</tspan></text><text x="450" y="646" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="646">T1 и T2 возвращают результаты, T3 — запись об отмене</tspan></text><text x="450" y="678" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="678">Событие завершения связано с исходным ID задачи; конечный статус</tspan><tspan x="450" y="704">каждой задачи записывается</tspan></text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="540" viewBox="0 0 880 540">
+  <title>Рис. 6-5: Совместимость с синхронным интерфейсом и нативная асинхронность модели</title>
+  <desc>В предыдущем подходе среда выполнения упорядочивает поступающие события, позволяя модели с синхронным интерфейсом участвовать в асинхронных задачах. Другой путь — нативное понимание моделью такого ритма: пока инструмент работает, можно заниматься другими частями задачи, а новые требования пользователя позволяют скорректировать дальнейшую работу. GPT-6 Astra уже поддерживает асинхронные вызовы инструментов (Async tool calling) и изменение указаний в середине хода (Mid-turn steering), отражая этот сдвиг (Рис. 6-5).</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#555" /></marker>
+    <style>
+      text{font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;fill:#333}
+      .title{font-size:20px;font-weight:700}
+      .label{font-size:17px;font-weight:600}
+      .small{font-size:15px}
+      .box{fill:#f4f4f4;stroke:#555;stroke-width:1.5}
+      .arrow{fill:none;stroke:#555;stroke-width:1.5;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="880" height="540" fill="#fff" />
+  <rect x="20" y="20" width="840" height="145" rx="8" fill="#fff" stroke="#777" stroke-dasharray="7 4" />
+  <text x="40" y="53" class="title">Совместимость: среда выполнения организует асинхронную работу</text>
+  <rect x="40" y="75" width="230" height="60" rx="5" class="box" />
+  <text x="155" y="100" text-anchor="middle" class="label">Задача работает в фоне</text>
+  <text x="155" y="122" text-anchor="middle" class="small">Явная отметка: не завершено</text>
+  <path d="M270 105 H313" class="arrow" />
+  <rect x="320" y="75" width="240" height="60" rx="5" class="box" />
+  <text x="440" y="100" text-anchor="middle" class="label" style="font-size:15.36px">Принимать новые события</text>
+  <text x="440" y="122" text-anchor="middle" class="small">Очередь, пауза, параллелизм</text>
+  <path d="M560 105 H603" class="arrow" />
+  <rect x="610" y="75" width="230" height="60" rx="5" class="box" />
+  <text x="725" y="100" text-anchor="middle" class="label" style="font-size:15.27px">Модель продолжает задачу</text>
+  <text x="725" y="122" text-anchor="middle" class="small" style="font-size:14.36px">Входы по синхронным раундам</text>
+
+  <rect x="20" y="185" width="840" height="250" rx="8" fill="#fff" stroke="#444" stroke-width="2" />
+  <text x="40" y="218" class="title">Нативная асинхронность: понимать ожидание и изменения в ходе задачи</text>
+  <rect x="40" y="240" width="230" height="65" rx="5" class="box" />
+  <text x="155" y="267" text-anchor="middle" class="label" style="font-size:16.73px">Запустить долгий запрос</text>
+  <text x="155" y="290" text-anchor="middle" class="small">Найти площадку для встречи</text>
+  <path d="M270 272 H313" class="arrow" />
+  <rect x="320" y="240" width="240" height="65" rx="5" class="box" />
+  <text x="440" y="267" text-anchor="middle" class="label" style="font-size:14.37px">Работать во время ожидания</text>
+  <text x="440" y="290" text-anchor="middle" class="small" style="font-size:14.61px">Подготовить повестку и список</text>
+  <path d="M560 272 H603" class="arrow" />
+  <rect x="610" y="240" width="230" height="65" rx="5" class="box" />
+  <text x="725" y="267" text-anchor="middle" class="label" style="font-size:14.05px">Решить по получении данных</text>
+  <text x="725" y="290" text-anchor="middle" class="small" style="font-size:14.43px">Сравнить площадки по фактам</text>
+
+  <rect x="40" y="340" width="230" height="65" rx="5" class="box" />
+  <text x="155" y="367" text-anchor="middle" class="label" style="font-size:13.73px">Пользователь меняет условия</text>
+  <text x="155" y="390" text-anchor="middle" class="small" style="font-size:14.93px">Бюджет или число участников</text>
+  <path d="M270 372 H313" class="arrow" />
+  <rect x="320" y="340" width="240" height="65" rx="5" class="box" />
+  <text x="440" y="367" text-anchor="middle" class="label" style="font-size:15.64px">Сохранить готовую работу</text>
+  <text x="440" y="390" text-anchor="middle" class="small">Учесть новые требования</text>
+  <path d="M560 372 H603" class="arrow" />
+  <rect x="610" y="340" width="230" height="65" rx="5" class="box" />
+  <text x="725" y="367" text-anchor="middle" class="label" style="font-size:13.26px">Изменить следующие действия</text>
+  <text x="725" y="390" text-anchor="middle" class="small" style="font-size:13.00px">Объединить данные и обновления</text>
+
+  <rect x="20" y="455" width="840" height="65" rx="6" fill="#e9e9e9" />
+  <text x="440" y="482" text-anchor="middle" class="label" style="font-size:14.74px">Модель понимает изменения и правит план; среда выполнения ведёт инструменты, состояние и источники.</text>
+  <text x="440" y="506" text-anchor="middle" class="small">Приём сообщений требует также верного возобновления задач и управления действиями.</text>
+</svg>

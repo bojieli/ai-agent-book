@@ -1,16 +1,66 @@
-<?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="102.938mm" viewBox="0 0 900 874" role="img" aria-labelledby="title desc">
-<title id="title">Место вставки статуса Agent в список сообщений API</title><desc id="desc">Отмена тарифа Xfinity: после исходного диалога и уточнения пользователя Harness добавляет сводку текущего статуса.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
-<rect width="900" height="874" fill="#ffffff" y="0" />
-<rect x="20" y="20" width="860" height="95" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="450" y="54" font-size="27" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="54">Системные инструкции и определения инструментов</tspan></text><text x="450" y="93" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="93">system: правила поддержки tools: phone_call, web_search…</tspan></text><rect x="20" y="139" width="860" height="56" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
-<text x="135" y="174" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="135" y="174">user</tspan></text><text x="563" y="174" font-size="25" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="563" y="174">Помоги отменить тариф Xfinity</tspan></text><rect x="20" y="207" width="860" height="82" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
-<text x="135" y="242" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="135" y="242">assistant</tspan></text><text x="563" y="242" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="563" y="242">call_1 →</tspan><tspan x="563" y="268">phone_call(company="Xfinity")</tspan></text><rect x="20" y="301" width="860" height="82" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
-<text x="135" y="336" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="135" y="336">tool · call_1</tspan></text><text x="563" y="336" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="563" y="336">Запись звонка: срок договора ещё</tspan><tspan x="563" y="362">не истёк</tspan></text><rect x="20" y="395" width="860" height="82" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
-<text x="135" y="430" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="135" y="430">assistant</tspan></text><text x="563" y="430" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="563" y="430">Объяснить условия договора и</tspan><tspan x="563" y="456">дальнейшие шаги</tspan></text><rect x="20" y="489" width="860" height="56" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
-<text x="135" y="524" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="135" y="524">…</tspan></text><text x="563" y="524" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="563" y="524">Последующие звонки и поиск</tspan></text><rect x="20" y="557" width="860" height="82" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
-<text x="135" y="592" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="135" y="592">user</tspan></text><text x="563" y="592" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="563" y="592">Можно позвонить ещё раз и</tspan><tspan x="563" y="618">поторопить?</tspan></text><path d="M450 639 L450 670" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<rect x="20" y="670" width="860" height="140" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="450" y="703" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="703">user · сводка статуса от Harness</tspan></text><text x="450" y="741" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="741">&lt;agent_status&gt; Выполнено 3/3 звонка в Xfinity</tspan></text><text x="450" y="781" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="781">TODO: отменить тариф (in_progress) &lt;/agent_status&gt;</tspan></text><path d="M450 810 L450 842" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<text x="450" y="866" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="866">Модель продолжает генерацию</tspan></text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 40 820 460" width="820" height="460" style="background:#ffffff">
+<defs><marker id="ah" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker><marker id="ah-light" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#999999"/></marker></defs>
+
+
+<!-- messages array label -->
+<text x="40" y="60" font-family="'Courier New', Courier, monospace" font-size="16" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">messages: [</text>
+
+<!-- Row 1: system -->
+<rect x="50" y="78" width="480" height="32" rx="4" fill="#e8e8e8" stroke="#999999" stroke-width="1.5"/>
+<text x="62" y="94" font-family="'Courier New', Courier, monospace" font-size="9.5" fill="#333333" text-anchor="start" dominant-baseline="central">{ role: "system", content: "Ты агент поддержки клиентов телеком-оператора..." }</text>
+
+<!-- Row 2: tools -->
+<rect x="50" y="114" width="480" height="32" rx="4" fill="#e8e8e8" stroke="#999999" stroke-width="1.5"/>
+<text x="62" y="130" font-family="'Courier New', Courier, monospace" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central">инструменты: [cancel_plan, query_records, ...]</text>
+
+<!-- Bracket for "fixed" -->
+<path d="M 540,78 C 555,78 555,114 560,123 C 555,132 555,146 540,146" fill="none" stroke="#999999" stroke-width="1.5"/>
+<text x="570" y="112" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#666666" text-anchor="start" dominant-baseline="central">исправлено</text>
+<text x="570" y="130" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#666666" text-anchor="start" dominant-baseline="central">(KV Cache)</text>
+
+<!-- Row 3: user message -->
+<rect x="50" y="154" width="480" height="32" rx="4" fill="#dce9f5" stroke="#999999" stroke-width="1.5"/>
+<text x="62" y="170" font-family="'Courier New', Courier, monospace" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central">{ role: "user", content: "Помоги мне отменить тариф" }</text>
+
+<!-- Row 4: assistant tool_calls -->
+<rect x="50" y="190" width="480" height="32" rx="4" fill="#d9f0d9" stroke="#999999" stroke-width="1.5"/>
+<text x="62" y="206" font-family="'Courier New', Courier, monospace" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central">{ role: "assistant", tool_calls: [cancel_plan(...)] }</text>
+
+<!-- Row 5: tool result -->
+<rect x="50" y="226" width="480" height="32" rx="4" fill="#fdf6e3" stroke="#999999" stroke-width="1.5"/>
+<text x="62" y="242" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">{ role: "tool", content: "У этого тарифа есть срок действия договора..." }</text>
+
+<!-- Row 6: assistant text -->
+<rect x="50" y="262" width="480" height="32" rx="4" fill="#d9f0d9" stroke="#999999" stroke-width="1.5"/>
+<text x="62" y="278" font-family="'Courier New', Courier, monospace" font-size="10" fill="#333333" text-anchor="start" dominant-baseline="central">{ role: "assistant", content: "Your plan is within the contract period..." }</text>
+
+<!-- Ellipsis row -->
+<text x="280" y="306" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#999999" text-anchor="middle" dominant-baseline="central">... больше ходов диалога ...</text>
+
+<!-- Row 7: user follow-up -->
+<rect x="50" y="322" width="480" height="32" rx="4" fill="#dce9f5" stroke="#999999" stroke-width="1.5"/>
+<text x="62" y="338" font-family="'Courier New', Courier, monospace" font-size="11.5" fill="#333333" text-anchor="start" dominant-baseline="central">{ role: "user", content: "Затем помоги проверить записи звонков" }</text>
+<text x="570" y="338" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="start" dominant-baseline="central">уточнение от пользователя</text>
+
+<!-- Row 8: Agent status bar (highlighted) -->
+<rect x="50" y="362" width="480" height="48" rx="4" fill="#fff3cd" stroke="#e6a817" stroke-width="2.5"/>
+<text x="62" y="380" font-family="'Courier New', Courier, monospace" font-size="13" fill="#333333" text-anchor="start" dominant-baseline="central">{ role: "user", content: "&lt;agent_status&gt;</text>
+<text x="62" y="398" font-family="'Courier New', Courier, monospace" font-size="11" fill="#333333" text-anchor="start" dominant-baseline="central">  Вызвано 3/3 раз · TODO: Отменить план (в процессе)&lt;/agent_status&gt;" }</text>
+
+<!-- Arrow pointing to system hint -->
+<line x1="570" y1="386" x2="538" y2="386" stroke="#e6a817" stroke-width="2" marker-end="url(#ah)"/>
+<text x="578" y="378" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#c9a227" text-anchor="start" dominant-baseline="central" font-weight="bold">Вставка фреймворка агента</text>
+<text x="578" y="396" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#c9a227" text-anchor="start" dominant-baseline="central" font-weight="bold">строка состояния агента</text>
+
+<!-- Closing bracket -->
+<text x="40" y="428" font-family="'Courier New', Courier, monospace" font-size="16" fill="#333333" text-anchor="start" dominant-baseline="central" font-weight="bold">]</text>
+
+<!-- Generation position arrow and label -->
+<line x1="50" y1="422" x2="50" y2="450" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+<rect x="60" y="442" width="20" height="20" rx="2" fill="#d9f0d9" stroke="#999999" stroke-width="1"/>
+<text x="88" y="452" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#333333" text-anchor="start" dominant-baseline="central">модель начинает генерацию отсюда</text>
+
+<!-- Bottom note -->
+<rect x="50" y="472" width="720" height="22" rx="4" fill="#f5f5f5" stroke="none"/>
+<text x="410" y="483" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="14" fill="#666666" text-anchor="middle" dominant-baseline="central">← рядом с началом генерации модели, получает наивысший вес внимания</text>
+</svg>

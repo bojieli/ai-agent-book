@@ -26,7 +26,7 @@ done
 # ── SVG → PDF (pandoc не встраивает SVG в xelatex без конвертера) ──────────
 # Русские подписи в схемах вписаны заранее (svg_lib.fit_overflow); здесь только
 # растеризация в PDF. Идемпотентно: конвертируем лишь новые/изменённые файлы.
-IMG_DIR="$SRC_DIR/images"
+IMG_DIR="$SRC_DIR/images/revised"
 convert_one() {  # $1 = svg, $2 = pdf
     if command -v rsvg-convert >/dev/null 2>&1; then
         rsvg-convert -f pdf -o "$2" "$1"

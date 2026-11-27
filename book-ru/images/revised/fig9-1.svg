@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="95.400mm" viewBox="0 0 900 810" role="img" aria-labelledby="title desc">
+<title id="title">Общий цикл непрерывного развития агента</title><desc id="desc">Выполнение, оценка, подготовка обновлений, проверка и выпуск; обновление запускает следующий цикл.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
+<rect width="900" height="810" fill="#ffffff" y="0" />
+<rect x="70" y="20" width="760" height="130" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="70" y="20" width="760" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="53" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="53">Выполнение задачи</tspan></text><text x="450" y="100" font-size="23" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="100">Взаимодействие с пользователем, средой и инструментами</tspan></text><path d="M450 150 L450 186" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="70" y="186" width="760" height="156" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="70" y="186" width="760" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="219" font-size="27" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="219">Запись траектории и формирование сигналов</tspan></text><text x="450" y="266" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="266">Действия · результаты · обратная связь → оценка результата,</tspan><tspan x="450" y="292">процесса и качества</tspan></text><path d="M450 342 L450 378" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="70" y="378" width="760" height="130" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="70" y="378" width="760" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="411" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="411">Подготовка обновлений</tspan></text><text x="450" y="458" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="458">Знания · инструкции (Prompt / Skill) · программы · параметры</tspan></text><path d="M450 508 L450 544" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<rect x="70" y="544" width="760" height="156" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<rect x="70" y="544" width="760" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
+<text x="450" y="577" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="577">Проверка и выпуск</tspan></text><text x="450" y="624" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="624">Независимые задачи · регрессия · поэтапный выпуск ·</tspan><tspan x="450" y="650">мониторинг · откат</tspan></text><path d="M830 609 L865 609 L865 770 L35 770 L35 85 L70 85" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<text x="450" y="742" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="742">Новая версия переходит в следующий цикл</tspan></text></svg>

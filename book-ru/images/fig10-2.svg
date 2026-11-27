@@ -1,26 +1,81 @@
-<?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="138.389mm" viewBox="0 0 900 1175" role="img" aria-labelledby="title desc">
-<title id="title">Структура четырёх типов областей в виртуальной файловой системе агента</title><desc id="desc">Единый файловый интерфейс, четыре модели доступа и жизненного цикла, входы для пользователя и внешних ресурсов.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
-<rect width="900" height="1175" fill="#ffffff" y="0" />
-<rect x="20" y="20" width="410" height="136" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="20" y="20" width="410" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="225" y="53" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="225" y="53">Agent A / Agent B</tspan></text><text x="225" y="100" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="100">Доступ определяется ролью и</tspan><tspan x="225" y="126">задачей</tspan></text><rect x="470" y="20" width="410" height="136" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="470" y="20" width="410" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="675" y="53" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="675" y="53">Пользователь</tspan></text><text x="675" y="100" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="100">Загрузка материалов /</tspan><tspan x="675" y="126">скачивание результатов</tspan></text><path d="M225 156 L225 206" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<path d="M675 156 L675 206" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<rect x="20" y="206" width="860" height="145" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="20" y="206" width="860" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="450" y="239" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="450" y="239">Виртуальная файловая система</tspan></text><text x="450" y="286" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="286">Единый интерфейс: read_file · write_file · list_dir</tspan></text><text x="450" y="318" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="450" y="318">Монтирование и авторизация → доступ к разделам</tspan></text><path d="M225 351 L225 396" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<path d="M675 351 L675 396" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<rect x="20" y="396" width="410" height="395" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="20" y="396" width="410" height="108" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="225" y="429" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="225" y="429">Личная рабочая область ·</tspan><tspan x="225" y="457">Scratchpad</tspan></text><text x="225" y="536" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="536">Временные файлы · черновики ·</tspan><tspan x="225" y="562">журналы</tspan></text><text x="225" y="594" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="594">По умолчанию доступна только</tspan><tspan x="225" y="620">своему агенту</tspan></text><text x="225" y="652" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="652">Очищается вместе с</tspan><tspan x="225" y="678">экземпляром или архивируется</tspan><tspan x="225" y="704">по правилам</tspan></text><text x="225" y="736" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="736">Отдельный каталог для каждого</tspan><tspan x="225" y="762">экземпляра</tspan></text><rect x="470" y="396" width="410" height="395" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="470" y="396" width="410" height="108" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="675" y="429" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="675" y="429">Общая область · Shared</tspan></text><text x="675" y="489" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="675" y="489">Workspace</tspan></text><text x="675" y="536" font-size="25" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="536">Глоссарий · код · результаты</tspan></text><text x="675" y="594" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="594">Доступна авторизованным</tspan><tspan x="675" y="620">участникам и пользователю</tspan></text><text x="675" y="652" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="652">Хранится на протяжении задачи</tspan></text><text x="675" y="736" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="736">Проверка версий / блокировки /</tspan><tspan x="675" y="762">worktree</tspan></text><rect x="20" y="836" width="410" height="311" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="20" y="836" width="410" height="76" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="225" y="869" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="225" y="869">Подключённые внешние</tspan><tspan x="225" y="897">ресурсы</tspan></text><text x="225" y="944" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="944">Google Drive / Notion</tspan></text><text x="225" y="976" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="976">Адаптер обращается к API</tspan><tspan x="225" y="1002">исходной системы</tspan></text><text x="225" y="1034" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="1034">Чтение или запись по</tspan><tspan x="225" y="1060">разрешениям</tspan></text><text x="225" y="1092" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="1092">Тайм-ауты · кеширование ·</tspan><tspan x="225" y="1118">проверка версий</tspan></text><rect x="470" y="836" width="410" height="311" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="470" y="836" width="410" height="76" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="675" y="869" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="675" y="869">Встроенные системные</tspan><tspan x="675" y="897">ресурсы</tspan></text><text x="675" y="944" font-size="24" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="944">Skills · шаблоны · руководства</tspan></text><text x="675" y="976" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="976">Фиксированная версия · общий</tspan><tspan x="675" y="1002">доступ только для чтения</tspan></text><text x="675" y="1034" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="1034">Сначала каталог, затем чтение</tspan><tspan x="675" y="1060">по запросу</tspan></text><text x="675" y="1092" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="1092">Согласованность задачи при</tspan><tspan x="675" y="1118">смене версии</tspan></text><path d="M450 351 L450 806 L225 806 L225 836" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<path d="M450 806 L675 806 L675 836" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 40 780 460" width="780" height="460" style="background:#ffffff">
+<defs><marker id="ah" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker><marker id="ah-light" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#999999"/></marker></defs>
+
+<!-- Agents (left) -->
+<rect x="30" y="60" width="150" height="44" rx="6" fill="#e8e8e8" stroke="#333333" stroke-width="2"/>
+<text x="105" y="82" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Агент A</text>
+<rect x="30" y="118" width="150" height="44" rx="6" fill="#e8e8e8" stroke="#333333" stroke-width="2"/>
+<text x="105" y="140" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Агент B</text>
+
+<!-- Root: virtual filesystem -->
+<rect x="288" y="56" width="204" height="60" rx="8" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
+<text x="390" y="78" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Виртуальная файловая система /</text>
+<text x="390" y="100" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="8.5" fill="#555555" text-anchor="middle" dominant-baseline="central">Единый интерфейс: read_file · write_file · list_dir</text>
+
+<!-- User (right) -->
+<rect x="600" y="58" width="160" height="48" rx="6" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+<text x="680" y="78" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Пользователь</text>
+<text x="680" y="96" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#555555" text-anchor="middle" dominant-baseline="central">Загрузка / Скачивание</text>
+
+<!-- Agent -> root -->
+<line x1="180" y1="82" x2="284" y2="82" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="180" y1="140" x2="284" y2="100" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+
+<!-- User -> shared workspace (orthogonal, dashed) -->
+<polyline points="680,106 680,140 295,140 295,196" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#ah)"/>
+<text x="470" y="132" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#555555" text-anchor="middle" dominant-baseline="central">Загрузка / Скачивание</text>
+
+<!-- Root -> four regions (mount fan-out) -->
+<line x1="390" y1="118" x2="105" y2="196" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="390" y1="118" x2="485" y2="196" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="390" y1="118" x2="675" y2="196" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+<text x="210" y="168" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#999999" text-anchor="middle" dominant-baseline="central">Монтировать</text>
+
+<!-- Region 1: Scratchpad (stacked to imply per-agent) -->
+<rect x="26" y="206" width="170" height="185" rx="6" fill="#f7f7f7" stroke="#333333" stroke-width="1.5"/>
+<rect x="20" y="200" width="170" height="185" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text x="105" y="226" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="6.5" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Приватное рабочее пространство агента</text>
+<text x="105" y="250" font-family="'Courier New', Courier, monospace" font-size="12" fill="#444444" text-anchor="middle" dominant-baseline="central">/scratch/&lt;id&gt;</text>
+<text x="105" y="270" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#666666" text-anchor="middle" dominant-baseline="central">Черновик (Scratchpad)</text>
+<line x1="40" y1="284" x2="170" y2="284" stroke="#cccccc" stroke-width="1"/>
+<text x="105" y="303" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9" fill="#333333" text-anchor="middle" dominant-baseline="central">Приватно · только для агентов</text>
+<text x="105" y="324" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="7.5" fill="#333333" text-anchor="middle" dominant-baseline="central">Уничтожается вместе с экземпляром</text>
+<text x="105" y="345" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="6" fill="#333333" text-anchor="middle" dominant-baseline="central">Чтение/запись · без контроля конкурентности</text>
+<text x="105" y="372" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#666666" text-anchor="middle" dominant-baseline="central">Один на агента</text>
+
+<!-- Region 2: Shared Workspace (emphasis) -->
+<rect x="210" y="200" width="170" height="185" rx="6" fill="#d0d0d0" stroke="#333333" stroke-width="2"/>
+<text x="295" y="226" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="8" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Общее пространство мультиагентов</text>
+<text x="295" y="250" font-family="'Courier New', Courier, monospace" font-size="12" fill="#333333" text-anchor="middle" dominant-baseline="central">/workspace/shared</text>
+<text x="295" y="270" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="10.5" fill="#555555" text-anchor="middle" dominant-baseline="central">Общее рабочее пространство</text>
+<line x1="224" y1="284" x2="366" y2="284" stroke="#999999" stroke-width="1"/>
+<text x="295" y="303" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9" fill="#333333" text-anchor="middle" dominant-baseline="central">Видимо пользователю · Постоянно</text>
+<text x="295" y="324" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="5.5" fill="#333333" text-anchor="middle" dominant-baseline="central">Чтение/запись · требуется контроль конкурентности</text>
+<text x="295" y="345" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="8.5" fill="#333333" text-anchor="middle" dominant-baseline="central">Оптимистичная блокировка · worktree</text>
+
+<!-- Region 3: External mounted resources -->
+<rect x="400" y="200" width="170" height="185" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text x="485" y="226" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Внешние подключённые ресурсы</text>
+<text x="485" y="250" font-family="'Courier New', Courier, monospace" font-size="10.5" fill="#444444" text-anchor="middle" dominant-baseline="central">/mnt/gdrive · /mnt/notion</text>
+<text x="485" y="270" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#666666" text-anchor="middle" dominant-baseline="central">Через адаптер</text>
+<line x1="414" y1="284" x2="556" y2="284" stroke="#cccccc" stroke-width="1"/>
+<text x="485" y="303" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="9.5" fill="#333333" text-anchor="middle" dominant-baseline="central">Подлежит внешней авторизации</text>
+<text x="485" y="324" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="5.5" fill="#333333" text-anchor="middle" dominant-baseline="central">В основном только чтение · Запись с осторожностью</text>
+<text x="485" y="345" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="6.5" fill="#333333" text-anchor="middle" dominant-baseline="central">Высокая задержка · слабая консистентность</text>
+
+<!-- Region 4: Built-in system resources -->
+<rect x="590" y="200" width="170" height="185" rx="6" fill="#e8e8e8" stroke="#333333" stroke-width="2"/>
+<text x="675" y="226" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="10" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Встроенные ресурсы системы</text>
+<text x="675" y="250" font-family="'Courier New', Courier, monospace" font-size="12" fill="#444444" text-anchor="middle" dominant-baseline="central">/skills</text>
+<text x="675" y="270" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="10.5" fill="#666666" text-anchor="middle" dominant-baseline="central">Skills · Шаблоны · Руководства</text>
+<line x1="604" y1="284" x2="746" y2="284" stroke="#cccccc" stroke-width="1"/>
+<text x="675" y="303" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="10.5" fill="#333333" text-anchor="middle" dominant-baseline="central">Общий доступ · Только чтение</text>
+<text x="675" y="324" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="middle" dominant-baseline="central">Стабильно между сессиями</text>
+<text x="675" y="345" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#333333" text-anchor="middle" dominant-baseline="central">Прогрессивное раскрытие</text>
+
+<!-- External data source cloud under region 3 -->
+<rect x="400" y="418" width="170" height="42" rx="6" fill="#ffffff" stroke="#333333" stroke-width="2" stroke-dasharray="6,4"/>
+<text x="485" y="433" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="11" fill="#666666" text-anchor="middle" dominant-baseline="central">Внешние источники данных</text>
+<text x="485" y="450" font-family="Arial, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="12" fill="#333333" text-anchor="middle" dominant-baseline="central" font-weight="bold">Google Drive · Notion</text>
+<line x1="485" y1="416" x2="485" y2="387" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
 </svg>

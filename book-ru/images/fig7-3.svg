@@ -1,22 +1,76 @@
-<?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" width="106mm" height="103.762mm" viewBox="0 0 900 881" role="img" aria-labelledby="title desc">
-<title id="title">Среды оценки для вызова инструментов и диалога</title><desc id="desc">Примеры исполняемой задачи и диалога с симуляцией пользователя.</desc>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
-<rect width="900" height="881" fill="#ffffff" y="0" />
-<rect x="20" y="20" width="410" height="154" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="20" y="20" width="410" height="76" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="225" y="53" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="225" y="53">Вызов инструментов ·</tspan><tspan x="225" y="81">задача по коду</tspan></text><text x="225" y="128" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="128">Агент вызывает инструменты и</tspan><tspan x="225" y="154">читает результаты</tspan></text><rect x="470" y="20" width="410" height="154" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="470" y="20" width="410" height="76" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="675" y="53" font-size="27" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="675" y="53">Диалог · возврат билета</tspan></text><text x="675" y="128" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="128">Агент общается с пользователем</tspan><tspan x="675" y="154">и вызывает инструменты</tspan></text><rect x="20" y="214" width="410" height="294" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="20" y="214" width="410" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="225" y="247" font-size="27" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="225" y="247">Генерация и выполнение</tspan></text><text x="225" y="294" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="294">Определить fib(n)</tspan></text><text x="225" y="326" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="326">run_python: выполнить</tspan><tspan x="225" y="352">решение-кандидат</tspan></text><text x="225" y="384" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="384">Ответ инструмента: результат /</tspan><tspan x="225" y="410">ошибка</tspan></text><rect x="470" y="214" width="410" height="294" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="470" y="214" width="410" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="675" y="247" font-size="28" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="675" y="247">Многошаговый диалог</tspan></text><text x="675" y="294" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="294">Найти заказ BK-98712</tspan></text><text x="675" y="326" font-size="24" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="326">Инструмент: confirmed / UA123</tspan></text><text x="675" y="384" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="384">После подтверждения</tspan><tspan x="675" y="410">пользователь отменяет билет</tspan><tspan x="675" y="436">через агента</tspan></text><text x="675" y="468" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="468">Агент сообщает срок</tspan><tspan x="675" y="494">поступления возврата</tspan></text><path d="M225 174 L225 214" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<path d="M675 174 L675 214" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<path d="M225 508 L225 553" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<path d="M675 508 L675 553" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<rect x="20" y="553" width="410" height="300" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="20" y="553" width="410" height="76" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="225" y="586" font-size="27" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="225" y="586">Исполняемый валидатор</tspan></text><text x="225" y="661" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="661">fib(10) == 55</tspan></text><text x="225" y="693" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="693">fib(0) == 0</tspan></text><text x="225" y="725" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="725">Все заданные тесты пройдены →</tspan><tspan x="225" y="751">1</tspan></text><text x="225" y="783" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="225" y="783">Иначе → 0</tspan></text><rect x="470" y="553" width="410" height="300" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<rect x="470" y="553" width="410" height="76" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="675" y="586" font-size="24" font-family="DejaVu Sans" font-weight="700" text-anchor="middle" fill="#292929"><tspan x="675" y="586">Состояние и уведомления</tspan><tspan x="675" y="614">проверяются отдельно</tspan></text><text x="675" y="661" font-size="26" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="661">Заказ: статус cancelled</tspan></text><text x="675" y="693" font-size="24" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="693">Запись о возврате: сумма $150</tspan></text><text x="675" y="725" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="725">Диалог: сообщено о 3–5 рабочих</tspan><tspan x="675" y="751">днях</tspan></text><text x="675" y="783" font-size="22" font-family="DejaVu Sans" font-weight="400" text-anchor="middle" fill="#292929"><tspan x="675" y="783">Результаты объединяются по</tspan><tspan x="675" y="809">правилам задачи</tspan></text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 512" width="880" height="512" style="background:#ffffff">
+<defs>
+<marker id="ah" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker>
+<marker id="ah-s" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 10 3.5, 0 7" fill="#666666"/></marker>
+<marker id="ah-r" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="10 0, 0 3.5, 10 7" fill="#666666"/></marker>
+</defs>
+<style>
+.t{font-family:Arial,'Helvetica Neue',Helvetica,'PingFang SC','Microsoft YaHei',sans-serif;fill:#333333;text-anchor:middle;dominant-baseline:central}
+.l{font-family:Arial,'Helvetica Neue',Helvetica,'PingFang SC','Microsoft YaHei',sans-serif;fill:#333333;text-anchor:start;dominant-baseline:central}
+.h{font-size:15px;font-weight:bold}
+.m{font-size:12px}
+.n{font-size:10.5px;fill:#666666}
+.c{font-size:10.5px;fill:#666666;font-family:'SF Mono',Menlo,Consolas,monospace}
+</style>
+
+<!-- user simulator -->
+<rect x="40" y="20" width="270" height="86" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="175" y="40">Симулятор пользователя (LLM)</text>
+<text class="l n" x="56" y="62">known_info: John Smith / 555-123-2002 / во Франции</text>
+<text class="l n" x="56" y="80">task_instructions: раскрытие · эмоции · заземление</text>
+<text class="l n" x="56" y="96">Приёмка: решено только при excellent</text>
+
+<!-- Agent -->
+<rect x="570" y="20" width="270" height="86" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="705" y="40">Agent (оцениваемый)</text>
+<text class="l n" x="586" y="62">Вход: тикет + политика домена</text>
+<text class="l n" x="586" y="80">Не видно: реальное состояние устройства</text>
+<text class="l n" x="586" y="96">Может только направлять, но не действовать за него</text>
+
+<!-- dialogue -->
+<line x1="316" y1="63" x2="560" y2="63" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)" marker-start="url(#ah-r)"/>
+<text class="t n" x="438" y="50">Многоходовый диалог</text>
+<text class="t n" x="438" y="80">Постепенное раскрытие</text>
+
+<!-- shared environment -->
+<rect x="40" y="146" width="800" height="150" rx="6" fill="#f3f0e8" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="440" y="166">Общая среда (двойное управление: состояние меняют обе стороны)</text>
+<rect x="60" y="182" width="370" height="98" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="245" y="200" font-weight="bold">Состояние на стороне устройства</text>
+<text class="l n" x="76" y="222">Авиарежим ON · роуминг OFF · экономия · остаток трафика</text>
+<text class="l c" x="76" y="246">Инструменты пользователя: toggle_airplane_mode / toggle_roaming</text>
+<text class="l c" x="76" y="266">      check_status_bar / run_speed_test</text>
+<rect x="450" y="182" width="370" height="98" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="635" y="200" font-weight="bold">База данных оператора</text>
+<text class="l n" x="466" y="222">Клиент C1001 · линии L1001/L1002/L1003 · тарифы · счета</text>
+<text class="l c" x="466" y="246">Инструменты Agent: get_customer_by_phone / get_data_usage</text>
+<text class="l c" x="466" y="266">      enable_roaming / refuel_data</text>
+
+<line x1="175" y1="106" x2="175" y2="178" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="705" y1="106" x2="705" y2="178" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+
+<!-- re-read note -->
+<rect x="40" y="306" width="800" height="34" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text class="t n" x="440" y="323">toggle_roaming пользователя изменил среду; Agent обязан снова вызвать инструмент — проверка охватывает это перечитывание</text>
+
+<!-- verification -->
+<rect x="40" y="356" width="800" height="136" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="440" y="376">После задачи: четыре слоя проверок + правило агрегации</text>
+<rect x="56" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="147" y="408">env_assertions</text>
+<text class="t n" x="147" y="428">Мобильные данные доступны</text>
+<text class="t n" x="147" y="444">Скорость ≥ 200 / excellent</text>
+<rect x="254" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="345" y="408">actions</text>
+<text class="t n" x="345" y="428">toggle_airplane_mode</text>
+<text class="t n" x="345" y="444">requestor должен быть user</text>
+<rect x="452" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="543" y="408">communicate_info</text>
+<text class="t n" x="543" y="428">Донесена ли нужная информация</text>
+<text class="t n" x="543" y="444">в этой задаче null</text>
+<rect x="650" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="741" y="408">nl_assertions</text>
+<text class="t n" x="741" y="428">Суждение на уровне текста</text>
+<text class="t n" x="741" y="444">в этой задаче null</text>
+<text class="t n" x="440" y="474">reward_basis = ["ENV_ASSERTION"]  →  учитывается только первый слой; остальные пишутся в лог, но в награду не входят</text>
+</svg>
