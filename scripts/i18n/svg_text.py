@@ -30,6 +30,7 @@ spills out of its panel, or collides with another label. Fix what it reports.
 from __future__ import annotations
 
 import argparse
+import html as html_lib
 import json
 import math
 import re
@@ -41,6 +42,10 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 SVG_NS = 'http://www.w3.org/2000/svg'
+# Write the SVG namespace as the default one: `ns0:text` is valid XML but is not
+# an SVG <text> to anything that parses the file as HTML, which matters when a
+# reader or a measuring browser inlines the figure.
+ET.register_namespace('', SVG_NS)
 NS = f'{{{SVG_NS}}}'
 
 # Font stacks per script. Each lists the fonts the CI PDF build installs (see
@@ -89,6 +94,49 @@ ADVANCE = {
 }
 
 MIN_SCALE = 0.78  # never shrink a label below this fraction of its 3.0 size
+
+
+def measure_exactly(text: str, size: float, weight: int) -> float | None:
+    """Width of a label in the Chinese source font, when that font is available.
+
+    The 3.0 figures were typeset with Source Han Sans CN, so measuring the same
+    string with the same font and the same code reproduces the original anchor
+    exactly. Without fontTools installed this returns None and the caller falls
+    back to a character-class estimate.
+    """
+    try:
+        cache = measure_exactly.cache
+    except AttributeError:
+        cache = measure_exactly.cache = {}
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'book_figures'))
+            from typography import measure as font_measure  # noqa: PLC0415
+
+            cache['measure'] = font_measure
+        except Exception:  # fontTools or the fonts are missing
+            cache['measure'] = None
+    font_measure = cache.get('measure')
+    if font_measure is None:
+        return None
+    try:
+        return font_measure(text, size, weight)
+    except Exception:
+        return None
+
+
+def estimate_label_width(text: str, size: float, weight: int) -> float:
+    measured = measure_exactly(text, size, weight)
+    if measured is not None:
+        return measured
+    total = 0.0
+    for char in text:
+        if char == ' ':
+            total += 0.5 * size
+        elif ord(char) >= 0x2E80:
+            total += size
+        else:
+            total += 0.6 * size
+    return total
 
 
 def script_family(stack: str) -> str:
@@ -159,15 +207,16 @@ def extract(source: Path) -> dict:
         size = float(group.get('data-size', 26))
         left = min(x for x, _ in uses)
         right = max(x for x, _ in uses)
-        # The group is centred on its anchor and the last glyph occupies about
-        # one advance past its own translate() origin.
-        if group.get('fill'):
-            fill = group.get('fill')
-        else:
-            fill = '#292929'
+        # The anchor is the left origin plus half the whole label's width. The
+        # steps between translate() origins are the *earlier* glyph's advances,
+        # so they locate the left edge but never the right one: averaging the
+        # origins lands about half a glyph left of centre. Measure the string.
+        label = group.get('aria-label', '')
+        fill = group.get('fill') or '#292929'
         weight = 700 if '700' in (group.get('data-font') or '') else 400
+        label_width = estimate_label_width(label, size, weight)
         y = uses[0][1]
-        centre = (left + right) / 2
+        centre = left + label_width / 2
         budget = panel_budget(rects, centre, y)
         if budget is None:
             budget = 2 * min(centre - 10, width - 10 - centre)
@@ -180,7 +229,7 @@ def extract(source: Path) -> dict:
             'weight': weight,
             'fill': fill,
             'budget': round(budget, 1),
-            'original_width': round(right - left + size, 1),
+            'original_width': round(label_width, 1),
         })
 
     meta = {}
@@ -195,6 +244,62 @@ def extract(source: Path) -> dict:
         'desc': meta.get('desc', ''),
         'labels': labels,
     }
+
+
+def legacy_anchors(source: Path) -> dict[str, float]:
+    """The anchors `extract` produced before it measured label widths.
+
+    Averaging glyph origins put every label about half a glyph left of centre.
+    Recognising that exact value lets `recentre` correct the labels nobody has
+    touched while leaving a hand-adjusted one where its author put it.
+    """
+    root = ET.parse(source).getroot()
+    anchors = {}
+    for order, group in enumerate(el for el in root.iter(f'{NS}g') if el.get('aria-label')):
+        origins = [
+            float(match[1])
+            for use in group.iter(f'{NS}use')
+            if (match := re.search(r'translate\(([-\d.]+) ', use.get('transform', '')))
+        ]
+        if origins:
+            anchors[f'L{order}'] = (min(origins) + max(origins)) / 2
+    return anchors
+
+
+def recentre(source: Path, built: Path, out: Path) -> tuple[int, int]:
+    """Move unmodified labels in an already-built figure onto their true anchors."""
+    labels = extract(source)['labels']
+    legacy = legacy_anchors(source)
+    root = ET.parse(built).getroot()
+
+    # Match each text node to the Chinese label it came from: same legacy
+    # anchor, and a baseline at or a few lines below that label's. Translators
+    # sometimes merge or split labels, so nodes are matched one by one.
+    moved = kept = 0
+    for node in root.iter(f'{NS}text'):
+        if not (node.text or '').strip():
+            continue
+        x = float(node.get('x', 0))
+        y = float(node.get('y', 0))
+        candidates = [
+            label for label in labels
+            if abs(legacy.get(label['id'], -1e9) - x) < 0.5
+            and label['y'] - 2 <= y <= label['y'] + 4 * label['size']
+        ]
+        targets = {round(label['x'], 2) for label in candidates}
+        if len(targets) == 1:
+            node.set('x', f'{targets.pop():g}')
+            moved += 1
+        else:
+            kept += 1
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        + ET.tostring(root, encoding='unicode') + '\n',
+        encoding='utf-8',
+    )
+    return moved, kept
 
 
 def build(source: Path, translations: dict, out: Path, lang: str) -> None:
@@ -342,84 +447,145 @@ def render(svg: Path, png: Path, scale: float = 1.0) -> None:
         raise SystemExit(f'{svg}: rendering produced no PNG')
 
 
-def text_boxes(svg: Path, lang: str) -> tuple[list[dict], float, float]:
-    """Estimate every label's rendered box, and the figure's canvas size."""
+def estimated_problems(svg: Path, lang: str) -> list[dict]:
+    """Fallback when no browser is available: widths from the advance table."""
     stack_name, _ = LANGUAGES.get(lang, ('latin', 'ltr'))
     family = script_family(stack_name)
     root = ET.parse(svg).getroot()
-    _, _, view_w, view_h = root.get('viewBox', '0 0 0 0').split()
+    _, _, view_w, view_h = (float(v) for v in root.get('viewBox', '0 0 0 0').split())
+    rects = []
+    for rect in root.iter(f'{NS}rect'):
+        if 'x' not in rect.attrib or not rect.get('width'):
+            continue
+        x, y = float(rect.get('x', 0)), float(rect.get('y', 0))
+        w, h = float(rect.get('width', 0)), float(rect.get('height', 0))
+        if x <= 0 and y <= 0 and w >= view_w - 1:  # the canvas background
+            continue
+        rects.append((x, y, w, h))
     boxes = []
     for node in root.iter(f'{NS}text'):
         text = (node.text or '').strip()
         if not text:
             continue
         size = float(node.get('font-size', 26))
-        x = float(node.get('x', 0))
-        y = float(node.get('y', 0))
+        x, y = float(node.get('x', 0)), float(node.get('y', 0))
         width = estimate_width(text, size, family)
         anchor = node.get('text-anchor', 'start')
         left = x if anchor == 'start' else x - width / 2 if anchor == 'middle' else x - width
-        boxes.append({
-            'text': text,
-            'x': left,
-            'y': y - size * 0.8,
-            'width': width,
-            'height': size * 1.0,
-        })
-    return boxes, float(view_w), float(view_h)
+        boxes.append((text, left, y - size * 0.8, width, size))
+
+    problems = []
+    for text, x, y, w, h in boxes:
+        if x < -1 or y < -1 or x + w > view_w + 1 or y + h > view_h + 1:
+            problems.append({'kind': 'canvas', 'text': text})
+            continue
+        for rx, ry, rw, rh in rects:
+            if min(x + w, rx + rw) - max(x, rx) <= 1 or min(y + h, ry + rh) - max(y, ry) <= 1:
+                continue
+            over = max(rx - x, x + w - (rx + rw), ry - y, y + h - (ry + rh))
+            if over > 4:
+                problems.append({'kind': 'border', 'over': round(over), 'text': text})
+                break
+    for index, (text, x, y, w, h) in enumerate(boxes):
+        for other, ox, oy, ow, oh in boxes[index + 1:]:
+            same_baseline = abs((y + h) - (oy + oh)) < min(h, oh) * 0.35
+            if min(x + w, ox + ow) - max(x, ox) > 6 and min(y + h, oy + oh) - max(y, oy) > min(h, oh) * 0.45 and same_baseline:
+                problems.append({'kind': 'overlap', 'text': text, 'other': other})
+    return problems
+
+
+MEASURE_JS = r"""
+const svg = document.querySelector('svg');
+if (!svg) { document.body.setAttribute('data-result', 'NOSVG'); }
+else {
+const vb = svg.viewBox.baseVal;
+const rects = [...svg.querySelectorAll('rect')]
+  .filter(r => r.getAttribute('x') !== null && r.getAttribute('width') !== null)
+  .map(r => r.getBBox())
+  .filter(b => !(b.x <= 0 && b.y <= 0 && b.width >= vb.width - 1));
+const texts = [...svg.querySelectorAll('text')]
+  .filter(t => t.textContent.trim()).map(t => ({t: t.textContent.trim(), b: t.getBBox()}));
+const problems = [];
+for (const {t, b} of texts) {
+  if (b.x < -0.5 || b.y < -0.5 || b.x + b.width > vb.width + 0.5 || b.y + b.height > vb.height + 0.5)
+    problems.push({kind: 'canvas', text: t});
+  // A label must sit wholly inside or wholly outside every panel; partly
+  // inside means it crosses that panel's border.
+  for (const r of rects) {
+    const ix = Math.min(b.x + b.width, r.x + r.width) - Math.max(b.x, r.x);
+    const iy = Math.min(b.y + b.height, r.y + r.height) - Math.max(b.y, r.y);
+    if (ix <= 1 || iy <= 1) continue;
+    const over = Math.max(r.x - b.x, b.x + b.width - (r.x + r.width),
+                          r.y - b.y, b.y + b.height - (r.y + r.height));
+    if (over > 6) { problems.push({kind: 'border', over: Math.round(over), text: t}); break; }
+  }
+}
+for (let i = 0; i < texts.length; i++)
+  for (let j = i + 1; j < texts.length; j++) {
+    const a = texts[i].b, c = texts[j].b;
+    const w = Math.min(a.x + a.width, c.x + c.width) - Math.max(a.x, c.x);
+    const h = Math.min(a.y + a.height, c.y + c.height) - Math.max(a.y, c.y);
+    // Font boxes carry ascent and descent padding, so two labels a line apart
+    // overlap in bounding-box terms while their glyphs do not. Only flag a
+    // collision that eats into both boxes by a visible margin.
+    const sameBaseline = Math.abs((a.y + a.height) - (c.y + c.height)) < Math.min(a.height, c.height) * 0.35;
+    if (w > 2 && h > Math.min(a.height, c.height) * 0.45 && sameBaseline)
+      problems.push({kind: 'overlap', text: texts[i].t, other: texts[j].t});
+  }
+document.body.setAttribute('data-result', JSON.stringify(problems));
+}
+"""
+
+
+def measured_problems(svg: Path, binary: str) -> list[dict] | None:
+    """Real glyph boxes from a browser; None when it cannot be measured."""
+    markup = re.sub(r'^<\?xml[^>]*>\s*', '', svg.read_text(encoding='utf-8'))
+    with tempfile.TemporaryDirectory() as workspace:
+        page = Path(workspace) / 'measure.html'
+        page.write_text(
+            '<!doctype html><meta charset="utf-8"><body>' + markup
+            + '<script>' + MEASURE_JS + '</script></body>',
+            encoding='utf-8',
+        )
+        try:
+            result = subprocess.run(
+                [binary, '--headless', '--disable-gpu', '--no-sandbox',
+                 '--virtual-time-budget=3000', '--dump-dom', f'file://{page}'],
+                check=True, capture_output=True, text=True, timeout=120,
+            )
+        except (subprocess.SubprocessError, OSError):
+            return None
+    match = re.search(r'data-result="([^"]*)"', result.stdout)
+    if not match:
+        return None
+    value = html_lib.unescape(match.group(1))
+    if value == 'NOSVG':
+        return None
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return None
 
 
 def check(svgs: list[Path], lang: str) -> int:
     """Report labels that leave the canvas, spill out of their panel, or collide.
 
-    Widths are estimated rather than measured, so treat a hit as "look at this
-    figure" — confirm with ``render`` before rewriting anything.
+    Geometry comes from a headless browser laying out the real glyphs, in the
+    fonts this machine has. Without a browser it falls back to an estimate,
+    which is coarser: confirm anything it reports with ``render``.
     """
+    binary = chromium()
     failures = 0
     for svg in svgs:
-        root = ET.parse(svg).getroot()
-        rects = []
-        for rect in root.iter(f'{NS}rect'):
-            if 'x' not in rect.attrib or not rect.get('width'):
-                continue
-            x, y = float(rect.get('x', 0)), float(rect.get('y', 0))
-            w, h = float(rect.get('width', 0)), float(rect.get('height', 0))
-            if x <= 0 and y <= 0 and w >= 890:  # the canvas background
-                continue
-            rects.append({'x': x, 'y': y, 'width': w, 'height': h})
-        boxes, view_w, view_h = text_boxes(svg, lang)
-        problems = []
-        for box in boxes:
-            if box['x'] < -1 or box['y'] < -1 or box['x'] + box['width'] > view_w + 1 or box['y'] + box['height'] > view_h + 1:
-                problems.append(f'canvas: "{box["text"]}"')
-                continue
-            cx, cy = box['x'] + box['width'] / 2, box['y'] + box['height'] / 2
-            owners = sorted(
-                (rect for rect in rects
-                 if rect['x'] < cx < rect['x'] + rect['width'] and rect['y'] < cy < rect['y'] + rect['height']),
-                key=lambda rect: rect['width'] * rect['height'],
-            )
-            if not owners:
-                continue
-            rect = owners[0]
-            over = max(
-                rect['x'] - box['x'],
-                box['x'] + box['width'] - (rect['x'] + rect['width']),
-                rect['y'] - box['y'],
-                box['y'] + box['height'] - (rect['y'] + rect['height']),
-            )
-            if over > 4:
-                problems.append(f'box +{over:.0f}px: "{box["text"]}"')
-        for index, first in enumerate(boxes):
-            for second in boxes[index + 1:]:
-                overlap_w = min(first['x'] + first['width'], second['x'] + second['width']) - max(first['x'], second['x'])
-                overlap_h = min(first['y'] + first['height'], second['y'] + second['height']) - max(first['y'], second['y'])
-                if overlap_w > 6 and overlap_h > 4:
-                    problems.append(f'overlap: "{first["text"]}" ↔ "{second["text"]}"')
+        problems = measured_problems(svg, binary) if binary else None
+        if problems is None:
+            problems = estimated_problems(svg, lang)
         if problems:
             failures += 1
             for problem in problems:
-                print(f'{svg}: {problem}')
+                detail = f' +{problem["over"]}px' if 'over' in problem else ''
+                other = f' with "{problem["other"]}"' if 'other' in problem else ''
+                print(f'{svg}: {problem["kind"]}{detail}: "{problem["text"]}"{other}')
     print(f'{len(svgs) - failures}/{len(svgs)} figure(s) clean')
     return 1 if failures else 0
 
@@ -437,6 +603,11 @@ def main(argv: list[str]) -> int:
     build_cmd.add_argument('out', type=Path)
     build_cmd.add_argument('--lang', required=True)
 
+    recentre_cmd = sub.add_parser('recentre', help='fix label anchors in an already-built figure')
+    recentre_cmd.add_argument('svg', type=Path, help='Chinese source figure')
+    recentre_cmd.add_argument('built', type=Path, help='translated figure to correct in place')
+    recentre_cmd.add_argument('--out', type=Path)
+
     render_cmd = sub.add_parser('render', help='rasterise a figure for visual inspection')
     render_cmd.add_argument('svg', type=Path)
     render_cmd.add_argument('png', type=Path)
@@ -449,6 +620,10 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args(argv)
     if args.command == 'check':
         return check(args.svgs, args.lang)
+    if args.command == 'recentre':
+        moved, kept = recentre(args.svg, args.built, args.out or args.built)
+        print(f'{args.built.name}: {moved} label(s) recentred, {kept} left as adjusted')
+        return 0
     if args.command == 'extract':
         json.dump(extract(args.svg), sys.stdout, ensure_ascii=False, indent=2)
         sys.stdout.write('\n')
