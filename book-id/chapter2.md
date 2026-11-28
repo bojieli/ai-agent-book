@@ -1,26 +1,26 @@
 # Context Engineering
 
-Bab 1 mengibaratkan konteks sebagai "cakrawala keputusan saat ini" bagi Agent: setiap kali model mengambil keputusan, ia bertumpu pada informasi yang diterimanya pada saat itu. **Context engineering** (rekayasa konteks) bertugas memilih, menyusun, dan memperbarui informasi tersebut, yang meliputi instruksi sistem, definisi tool, permintaan pengguna, riwayat pesan, dan status tugas. Setiap kali hendak memanggil model, Harness harus merangkai latar belakang tugas dan perkembangan terbarunya menjadi input. Gambar 2-1 memperlihatkan komposisi context window dengan isi yang konkret.
+Bab 1 mengibaratkan konteks sebagai "bidang pandang keputusan saat ini" bagi Agent: setiap kali model mengambil keputusan, ia bertumpu pada informasi yang diterimanya pada saat itu. **Context engineering** (rekayasa konteks) bertugas memilih, menyusun, dan memperbarui informasi tersebut, yang meliputi instruksi sistem, definisi alat, permintaan pengguna, riwayat pesan, dan status tugas. Setiap kali hendak memanggil model, Harness harus merangkai latar belakang tugas dan perkembangan terbarunya menjadi input. Gambar 2-1 memperlihatkan komposisi jendela konteks dengan isi yang konkret.
 
-![Gambar 2-1 Gambaran umum komposisi context window](images/revised/fig2-1.svg)
+![Gambar 2-1 Gambaran umum komposisi jendela konteks](images/revised/fig2-1.svg)
 
 ## Konteks: Menerapkan Kemampuan Model pada Tugas Konkret
 
-Bayangkan seorang engineer berpengalaman yang baru bergabung dengan tim. Tugas pertamanya adalah "ubah konfigurasi sesuai standar kita". Ia mahir memprogram, tetapi belum tahu file mana yang menjadi sumber konfigurasi, field mana yang boleh diubah, dan bagaimana cara memverifikasinya. Sekalipun seluruh basis kode diserahkan kepadanya, ia tetap bisa mengubah file yang salah. Agent yang mengambil alih proyek asing juga kekurangan latar belakang semacam ini.
+Bayangkan seorang engineer berpengalaman yang baru bergabung dengan tim. Tugas pertamanya adalah "ubah konfigurasi sesuai standar kita". Ia mahir memprogram, tetapi belum tahu berkas mana yang menjadi sumber konfigurasi, field mana yang boleh diubah, dan bagaimana cara memverifikasinya. Sekalipun seluruh basis kode diserahkan kepadanya, ia tetap bisa mengubah berkas yang salah. Agent yang mengambil alih proyek asing juga kekurangan latar belakang semacam ini.
 
 Ambil contoh permintaan "Bantu saya memperbaiki bug ini". Coding Agent biasanya membutuhkan tiga jenis latar belakang:
 
-- **Konteks kode terkini**: struktur direktori, tanggung jawab modul, struktur data inti, dan standar penulisan kode. Misalnya, jika yang diubah adalah file konfigurasi yang dibangkitkan otomatis, perubahan itu akan tertimpa pada pembangkitan berikutnya meskipun sudah berlaku di mesin lokal. Hanya dengan mengetahui modul mana yang membangkitkan file tersebut, Agent dapat menemukan tempat yang semestinya diubah.
+- **Konteks kode terkini**: struktur direktori, tanggung jawab modul, struktur data inti, dan standar penulisan kode. Misalnya, jika yang diubah adalah berkas konfigurasi yang dibangkitkan otomatis, perubahan itu akan tertimpa pada pembangkitan berikutnya meskipun sudah berlaku di mesin lokal. Hanya dengan mengetahui modul mana yang membangkitkan berkas tersebut, Agent dapat menemukan tempat yang semestinya diubah.
 - **Aturan proses**: strategi percabangan Git, konvensi commit, alur code review, dan persyaratan CI/CD. Berdasarkan aturan ini Agent mengatur urutan perubahan, pengujian, dan commit, sedangkan sistem runtime menjalankan operasi tersebut sesuai izin yang berlaku.
 - **Informasi lingkungan**: konfigurasi pengembangan, cara terhubung ke database pengujian, cara deployment ke lingkungan pengujian, dan cara pengelolaan API key. Informasi ini membantu Agent memilih lingkungan eksekusi yang tepat serta memahami perbedaan antara lingkungan lokal dan lingkungan pengujian.
 
-Kode proyek dan database pengujian berada di luar konteks model. Dalam contoh konfigurasi yang dibangkitkan otomatis tadi, Agent baru tahu dari mana harus mulai mengubah setelah membaca skrip pembangkitnya melalui tool pencarian. **Kualitas konteks menentukan apakah model dapat menerapkan kemampuan yang sudah dimilikinya pada masalah yang sedang dihadapi.** **Untuk tugas yang bergantung pada banyak informasi latar belakang, model yang cukup mampu dengan konteks yang lengkap dan akurat dapat mengungguli model yang lebih kuat tetapi kekurangan bahan yang diperlukan.**
+Kode proyek dan database pengujian berada di luar konteks model. Dalam contoh konfigurasi yang dibangkitkan otomatis tadi, Agent baru tahu dari mana harus mulai mengubah setelah membaca skrip pembangkitnya melalui alat pencarian. **Kualitas konteks menentukan apakah model dapat menerapkan kemampuan yang sudah dimilikinya pada masalah yang sedang dihadapi.** **Untuk tugas yang bergantung pada banyak informasi latar belakang, model yang cukup mampu dengan konteks yang lengkap dan akurat dapat mengungguli model yang lebih kuat tetapi kekurangan bahan yang diperlukan.**
 
 **Membangun tim AI-native dimulai dengan mendokumentasikan pengetahuan kunci.** Jika alasan memilih suatu database dahulu hanya diingat oleh karyawan lama, dan perubahan aturan bisnis hanya pernah disebut dalam obrolan pribadi, rekan baru maupun Agent akan menghadapi masalah yang sama saat mengambil alih pekerjaan: dari kode terlihat apa yang dikerjakan tim, tetapi tidak terlihat mengapa dulu dikerjakan dengan cara itu.
 
 **Tim yang nyaman bekerja secara jarak jauh biasanya juga nyaman bagi Agent.** Para pengembang kernel Linux membahas patch dan bertukar hasil review melalui mailing list, sementara dokumen proses pengembangan menjelaskan cara mengirim, meninjau, dan menggabungkan patch[^ch2-linux]. Peserta baru yang menemukan perubahan yang mengejutkan dapat menelusuri patch-nya hingga ke perdebatan saat itu; Agent pun dapat memanfaatkan catatan yang sama ketika memeriksa latar belakang.
 
-Setelah mendengarkan wawancara Jiayi Weng di WhynotTV, penulis merangkum salah satu pandangannya sebagai berikut: **manusia dan model sama-sama bergantung pada Context.** Manusia dapat bertanya langsung kepada rekan yang ikut mengambil keputusan, sedangkan latar belakang apa yang dapat dibaca model bergantung pada catatan apa yang ditinggalkan tim dan pada isi yang dimasukkan Harness ke dalam permintaan kali ini.[^ch2-weng]
+Setelah mendengarkan wawancara Jiayi Weng di WhynotTV, penulis merangkum salah satu pandangannya sebagai berikut: **manusia dan model sama-sama bergantung pada konteks.** Manusia dapat bertanya langsung kepada rekan yang ikut mengambil keputusan, sedangkan latar belakang apa yang dapat dibaca model bergantung pada catatan apa yang ditinggalkan tim dan pada isi yang dimasukkan Harness ke dalam permintaan kali ini.[^ch2-weng]
 
 [^ch2-linux]: Dokumentasi resmi kernel Linux, How the development process works.
 
@@ -32,28 +32,28 @@ $$
 c_t=(o_1,a_1,\ldots,o_{t-1},a_{t-1},o_t)
 $$
 
-Ungkapan ini menunjukkan bahwa **langkah Agent berikutnya bergantung pada riwayat interaksi hingga saat ini.** Misalnya, file mana yang sudah diperiksa Agent dan galat apa yang dikembalikan tool akan memengaruhi pilihan langkah selanjutnya. Pada LLM Agent, input pengguna dan hasil tool menyediakan observasi, sedangkan tool call dan balasan ke luar mencatat action; instruksi sistem dan definisi tool melengkapinya dengan aturan tugas dan antarmuka yang tersedia.
+Ungkapan ini menunjukkan bahwa **langkah Agent berikutnya bergantung pada riwayat interaksi hingga saat ini.** Misalnya, berkas mana yang sudah diperiksa Agent dan galat apa yang dikembalikan alat akan memengaruhi pilihan langkah selanjutnya. Pada LLM Agent, input pengguna dan hasil alat menyediakan observasi, sedangkan pemanggilan alat dan balasan ke luar mencatat action; instruksi sistem dan definisi alat melengkapinya dengan aturan tugas dan antarmuka yang tersedia.
 
-Bab ini memakai pola permintaan stateless: pada setiap putaran Harness merangkai pesan dan definisi tool, lalu memanggil model. Riwayat pesan yang lengkap memudahkan pelestarian kemajuan tugas; ketika riwayat bertambah panjang, informasi yang dibutuhkan untuk keputusan berikutnya dapat tetap dipertahankan di dalam jendela melalui pencarian, pencatatan status, dan kompresi. Tata letak konteks, status bar, dan teknik kompresi semuanya berkisar pada satu pertanyaan: bagaimana memasukkan ke dalam $c_t$ informasi yang dibutuhkan model untuk langkah ini, di dalam konteks yang terbatas?
+Bab ini memakai pola permintaan stateless: pada setiap putaran Harness merangkai pesan dan definisi alat, lalu memanggil model. Riwayat pesan yang lengkap memudahkan penyimpanan kemajuan tugas; ketika riwayat bertambah panjang, informasi yang dibutuhkan untuk keputusan berikutnya dapat tetap dipertahankan di dalam jendela melalui pencarian, pencatatan status, dan kompresi. Tata letak konteks, bilah status, dan teknik kompresi semuanya berkisar pada satu pertanyaan: bagaimana memasukkan ke dalam $c_t$ informasi yang dibutuhkan model untuk langkah ini, di dalam konteks yang terbatas?
 
 [^ch2-react]: Yao, Shunyu, et al., ReAct: Synergizing Reasoning and Acting in Language Models, ICLR 2023.
 
 ## Bagaimana Agent Memanggil LLM: Memahami Struktur Konteks pada API
 
-Kita mulai dengan format pesan pada sebuah sapaan sederhana, lalu melihat bagaimana pertanyaan "jam berapa sekarang di Vancouver dan bagaimana cuacanya" memicu dua tool call. Bagian ini menggunakan antarmuka yang kompatibel dengan Chat Completions dan Qwen3-0.6B yang dijalankan secara lokal, kemudian merangkai seluruh putaran permintaan dengan Python[^ch2-chat-api].
+Kita mulai dengan format pesan pada sebuah sapaan sederhana, lalu melihat bagaimana pertanyaan "jam berapa sekarang di Vancouver dan bagaimana cuacanya" memicu dua pemanggilan alat. Bagian ini menggunakan antarmuka yang kompatibel dengan Chat Completions dan Qwen3-0.6B yang dijalankan secara lokal, kemudian merangkai seluruh putaran permintaan dengan Python[^ch2-chat-api].
 
 ### Empat Peran Pesan dalam Contoh
 
 **Daftar pesan** (`messages`) di dalam permintaan menyimpan informasi interaksi secara berurutan. Setiap pesan ditandai dengan **peran** (`role`) yang menunjukkan asal dan kegunaannya. Bagian ini menggunakan empat peran:
 
-- **system**: system prompt. Di sini peran ini membawa identitas, aturan perilaku, dan batasan yang diberikan developer, dan diletakkan di bagian depan daftar pesan. Sebagian antarmuka model menggunakan peran `developer` untuk instruksi dari developer.
+- **system**: system prompt. Di sini peran ini membawa identitas, aturan perilaku, dan batasan yang diberikan pengembang, dan diletakkan di bagian depan daftar pesan. Sebagian antarmuka model menggunakan peran `developer` untuk instruksi dari pengembang.
 - **user**: pesan pengguna, berisi tugas, pertanyaan lanjutan, dan permintaan tambahan.
-- **assistant**: balasan model, termasuk teks dan permintaan tool call. Dengan memasukkan kembali pesan-pesan ini ke input putaran berikutnya, model dapat membaca jawaban dan permintaan operasi sebelumnya.
-- **tool**: hasil eksekusi tool. Setelah menerima nilai kembalian, Harness menuliskannya sebagai pesan tool dan mengaitkannya dengan panggilan tertentu melalui `tool_call_id`.
+- **assistant**: balasan model, termasuk teks dan permintaan pemanggilan alat. Dengan memasukkan kembali pesan-pesan ini ke input putaran berikutnya, model dapat membaca jawaban dan permintaan operasi sebelumnya.
+- **tool**: hasil eksekusi alat. Setelah menerima nilai kembalian, Harness menuliskannya sebagai pesan alat dan mengaitkannya dengan panggilan tertentu melalui `tool_call_id`.
 
-Definisi tool diberikan melalui field `tools` di tingkat teratas permintaan, berisi nama, kegunaan, dan format parameter setiap tool yang tersedia.
+Definisi alat diberikan melalui field `tools` di tingkat teratas permintaan, berisi nama, kegunaan, dan format parameter setiap alat yang tersedia.
 
-Model menyusun permintaan panggilan berdasarkan definisi tool. Apakah operasi itu benar-benar dapat dijalankan ditentukan oleh Harness dan lingkungan runtime.
+Model menyusun permintaan panggilan berdasarkan definisi alat. Apakah operasi itu benar-benar dapat dijalankan ditentukan oleh Harness dan lingkungan runtime.
 
 [^ch2-chat-api]: OpenAI, referensi Chat Completions API, menjelaskan peran pesan, definisi tool, dan field hasil panggilan; Qwen, Function Calling, menjelaskan tool call dan template pada layanan yang kompatibel.
 
@@ -66,16 +66,16 @@ Pertama, lihat satu kali tanya jawab. Pengguna bertanya "Hello, who are you?"; H
 Berikut permintaan dan contoh balasannya dalam format antarmuka model lokal; komentar di dalam kode menandai asal setiap bagian:
 
 ```javascript
-// Harness 构造请求
+// Harness menyusun permintaan
 {
   "model": "Qwen3-0.6B",
   "messages": [
     {
-      "role": "system",                           // 开发者提供的指令
+      "role": "system",                           // Instruksi dari pengembang
       "content": "You are a helpful coding assistant. Follow user instructions."
     },
     {
-      "role": "user",                              // 用户输入
+      "role": "user",                              // Input pengguna
       "content": "Hello, who are you?"
     }
   ]
@@ -83,11 +83,11 @@ Berikut permintaan dan contoh balasannya dalam format antarmuka model lokal; kom
 ```
 
 ```javascript
-// API 返回响应
+// Respons yang dikembalikan API
 {
   "choices": [{
     "message": {
-      "role": "assistant",                         // 模型生成
+      "role": "assistant",                         // Dibangkitkan model
       "content": "Hi! I'm a coding assistant. I can help you write code, debug issues, and explain technical concepts. How can I help?"
     }
   }]
@@ -96,31 +96,31 @@ Berikut permintaan dan contoh balasannya dalam format antarmuka model lokal; kom
 
 Permintaan ini berisi satu pesan `system` dan satu pesan `user`, sedangkan `choices[0].message` pada respons menyimpan pesan `assistant` yang dihasilkan model. Pada antarmuka stateless yang dipakai di sini, **Harness bertanggung jawab menyediakan konteks yang dibutuhkan setiap panggilan**. Jika permintaan berikutnya hendak melanjutkan percakapan ini, riwayat yang relevan harus ikut disertakan.
 
-### Interaksi Multi-Putaran dengan Tool Call: Loop Inti Agent
+### Interaksi Multi-Putaran dengan Pemanggilan Alat: Loop Inti Agent
 
-Sekarang lihat pertanyaan yang membutuhkan tool: "What's the current time and weather in Vancouver?" Untuk menjawabnya, waktu dan cuaca setempat harus diperiksa terlebih dahulu. Pada Gambar 2-3, panggilan model pertama oleh Harness menghasilkan dua permintaan tool. Harness lalu menanyakan layanan waktu dan layanan cuaca, menambahkan kedua hasilnya ke riwayat pesan, dan memanggil model untuk kedua kalinya, barulah diperoleh jawaban bagi pengguna.
+Sekarang lihat pertanyaan yang membutuhkan alat: "What's the current time and weather in Vancouver?" Untuk menjawabnya, waktu dan cuaca setempat harus diperiksa terlebih dahulu. Pada Gambar 2-3, panggilan model pertama oleh Harness menghasilkan dua permintaan alat. Harness lalu menanyakan layanan waktu dan layanan cuaca, menambahkan kedua hasilnya ke riwayat pesan, dan memanggil model untuk kedua kalinya, barulah diperoleh jawaban bagi pengguna.
 
 ![Gambar 2-3 Urutan interaksi lengkap dua panggilan API model](images/revised/fig2-3.svg)
 
-Tool mana yang dijalankan lebih dulu? Tool waktu membutuhkan zona waktu, sedangkan tool cuaca membutuhkan kota dan skala suhu. Pengguna hanya menyebut Vancouver; berdasarkan itu model dalam contoh mengisi `America/Vancouver` dan `Vancouver`, dan memilih derajat Celsius. Pencarian cuaca tidak perlu menunggu hasil tool waktu, sehingga kedua permintaan dapat dikirim bersamaan.
+Alat mana yang dijalankan lebih dulu? Alat waktu membutuhkan zona waktu, sedangkan alat cuaca membutuhkan kota dan skala suhu. Pengguna hanya menyebut Vancouver; berdasarkan itu model dalam contoh mengisi `America/Vancouver` dan `Vancouver`, dan memilih derajat Celsius. Pencarian cuaca tidak perlu menunggu hasil alat waktu, sehingga kedua permintaan dapat dikirim bersamaan.
 
 **Panggilan API pertama — framework Agent mengirim permintaan awal:**
 
 ```javascript
-// 第一次模型调用：Harness 构造请求
+// Panggilan model pertama: Harness menyusun permintaan
 {
   "model": "Qwen3-0.6B",
   "messages": [
     {
-      "role": "system",                           // 开发者提供的指令
+      "role": "system",                           // Instruksi dari pengembang
       "content": "You are a helpful assistant. Use the provided tools to get real-time information when needed."
     },
     {
-      "role": "user",                              // 用户输入
+      "role": "user",                              // Input pengguna
       "content": "What's the current time and weather in Vancouver?"
     }
   ],
-  "tools": [                                       // 开发者定义的工具
+  "tools": [                                       // Alat yang didefinisikan pengembang
     {
       "type": "function",
       "function": {
@@ -154,18 +154,18 @@ Tool mana yang dijalankan lebih dulu? Tool waktu membutuhkan zona waktu, sedangk
 }
 ```
 
-Daftar `tools` ini didefinisikan developer sebelumnya, berisi nama, deskripsi, dan schema parameter. Dalam contoh ini, setiap putaran permintaan menyediakan dua tool yang sama; setelah membaca daftar tersebut dan pertanyaan pengguna, model memilih tool yang akan dipanggil dan mengisi parameternya.
+Daftar `tools` ini didefinisikan pengembang sebelumnya, berisi nama, deskripsi, dan schema parameter. Dalam contoh ini, setiap putaran permintaan menyediakan dua alat yang sama; setelah membaca daftar tersebut dan pertanyaan pengguna, model memilih alat yang akan dipanggil dan mengisi parameternya.
 
-**Model mengembalikan dua permintaan tool call:**
+**Model mengembalikan dua permintaan pemanggilan alat:**
 
 ```javascript
-// 模型返回工具调用请求
+// Model mengembalikan permintaan pemanggilan alat
 {
   "choices": [{
     "message": {
-      "role": "assistant",                         // 模型生成
-      "content": null,                             // 本轮没有文本回复
-      "tool_calls": [                              // 请求调用两个工具
+      "role": "assistant",                         // Dibangkitkan model
+      "content": null,                             // Putaran ini tanpa balasan teks
+      "tool_calls": [                              // Meminta pemanggilan dua alat
         {
           "id": "call_abc123",
           "type": "function",
@@ -188,27 +188,27 @@ Daftar `tools` ini didefinisikan developer sebelumnya, berisi nama, deskripsi, d
 }
 ```
 
-`tool_calls` pada respons berisi dua permintaan, masing-masing dengan `id`, nama tool, dan parameternya sendiri. `arguments` adalah string berenkode JSON; sisi eksekutor harus mem-parsing-nya terlebih dahulu, lalu memvalidasi field dan nilainya. **Model memutuskan apa yang dipanggil dan parameter apa yang diteruskan; Harness bertanggung jawab atas validasi dan penjadwalan; implementasi tool bertugas mengakses layanan waktu atau cuaca.**
+`tool_calls` pada respons berisi dua permintaan, masing-masing dengan `id`, nama alat, dan parameternya sendiri. `arguments` adalah string berenkode JSON; sisi eksekutor harus mem-parsing-nya terlebih dahulu, lalu memvalidasi field dan nilainya. **Model memutuskan apa yang dipanggil dan parameter apa yang diteruskan; Harness bertanggung jawab atas validasi dan penjadwalan; implementasi alat bertugas mengakses layanan waktu atau cuaca.**
 
-**Framework Agent menjalankan tool, lalu melakukan panggilan API kedua:**
+**Framework Agent menjalankan alat, lalu melakukan panggilan API kedua:**
 
-Setelah memvalidasi permintaan, Harness menjadwalkan kedua tool, menuliskan nilai kembaliannya sebagai pesan `tool`, lalu menyerahkan riwayat yang sudah ada beserta hasil baru tersebut kepada model:
+Setelah memvalidasi permintaan, Harness menjadwalkan kedua alat, menuliskan nilai kembaliannya sebagai pesan `tool`, lalu menyerahkan riwayat yang sudah ada beserta hasil baru tersebut kepada model:
 
 ```javascript
-// 第二次模型调用：追加工具结果
+// Panggilan model kedua: menambahkan hasil alat
 {
   "model": "Qwen3-0.6B",
   "messages": [
     {
-      "role": "system",                           // 保留第一次请求中的消息
+      "role": "system",                           // Pesan dari permintaan pertama dipertahankan
       "content": "You are a helpful assistant. Use the provided tools to get real-time information when needed."
     },
     {
-      "role": "user",                              // 保留第一次请求中的消息
+      "role": "user",                              // Pesan dari permintaan pertama dipertahankan
       "content": "What's the current time and weather in Vancouver?"
     },
     {
-      "role": "assistant",                         // 保留前一轮模型的调用请求
+      "role": "assistant",                         // Permintaan pemanggilan dari putaran sebelumnya dipertahankan
       "content": null,
       "tool_calls": [
         { "id": "call_abc123", "type": "function", "function": { "name": "get_current_time", "arguments": "{\"timezone\": \"America/Vancouver\"}" } },
@@ -216,41 +216,41 @@ Setelah memvalidasi permintaan, Harness menjadwalkan kedua tool, menuliskan nila
       ]
     },
     {
-      "role": "tool",                              // Harness 写入工具执行结果
+      "role": "tool",                              // Harness menuliskan hasil eksekusi alat
       "tool_call_id": "call_abc123",
       "content": "{\"timezone\": \"America/Vancouver\", \"datetime\": \"2025-09-13T05:18:47\", \"day_of_week\": \"Saturday\"}"
     },
     {
-      "role": "tool",                              // Harness 写入工具执行结果
+      "role": "tool",                              // Harness menuliskan hasil eksekusi alat
       "tool_call_id": "call_def456",
       "content": "{\"city\": \"Vancouver\", \"temperature\": 13.2, \"unit\": \"celsius\", \"conditions\": \"clear\", \"humidity\": 93}"
     }
   ],
-  "tools": [ ... ]                                 // 沿用前面的工具定义，此处省略
+  "tools": [ ... ]                                 // Memakai definisi alat sebelumnya, dihilangkan di sini
 }
 ```
 
-Telusuri permintaan kedua dengan mengikuti `call_def456`: pada pesan `assistant` sebelumnya, ini adalah nomor untuk kueri cuaca Vancouver; pesan `tool` sesudahnya mengembalikan 13,2 ℃ dan cuaca cerah dengan nomor yang sama. Sekalipun hasil cuaca tiba lebih dulu daripada hasil waktu, Harness tetap dapat mencocokkan hasil dengan permintaannya. Pada putaran ini model sekaligus membaca pertanyaan asli pengguna, dua kueri yang ia ajukan sendiri, dan data yang dikembalikan tool. Kini model dapat menjawab pengguna.
+Telusuri permintaan kedua dengan mengikuti `call_def456`: pada pesan `assistant` sebelumnya, ini adalah nomor untuk kueri cuaca Vancouver; pesan `tool` sesudahnya mengembalikan 13,2 ℃ dan cuaca cerah dengan nomor yang sama. Sekalipun hasil cuaca tiba lebih dulu daripada hasil waktu, Harness tetap dapat mencocokkan hasil dengan permintaannya. Pada putaran ini model sekaligus membaca pertanyaan asli pengguna, dua kueri yang ia ajukan sendiri, dan data yang dikembalikan alat. Kini model dapat menjawab pengguna.
 
-**Model menghasilkan balasan akhir berdasarkan hasil tool:**
+**Model menghasilkan balasan akhir berdasarkan hasil alat:**
 
 ```javascript
-// 模型生成最终回复
+// Model membangkitkan balasan akhir
 {
   "choices": [{
     "message": {
-      "role": "assistant",                         // 模型生成
+      "role": "assistant",                         // Dibangkitkan model
       "content": "It's currently 5:18 AM on Saturday, September 13, 2025 in Vancouver.\n\nWeather: 13.2°C with clear skies and 93% humidity. It's quite cool this morning - you might want to grab a jacket."
     }
   }]
 }
 ```
 
-Respons kedua memberikan teks akhir dan `tool_calls` kosong, sehingga loop contoh pun berakhir. Proses "panggil model → jalankan tool → kirim balik hasil → panggil model lagi" inilah wujud konkret loop eksekusi dari Bab 1 di tingkat API.
+Respons kedua memberikan teks akhir dan `tool_calls` kosong, sehingga loop contoh pun berakhir. Proses "panggil model → jalankan alat → kirim balik hasil → panggil model lagi" inilah wujud konkret loop eksekusi dari Bab 1 di tingkat API.
 
-Jika pengguna bertanya lagi, "Bagaimana dengan Tokyo?", Harness menambahkan pesan itu ke akhir riwayat dan memanggil model kembali. Model dapat meneruskan latar belakang tugas "mencari waktu dan cuaca saat ini" untuk membuat permintaan baru bagi Tokyo; setelah tool mengembalikan hasil, model menyusun jawaban baru.
+Jika pengguna bertanya lagi, "Bagaimana dengan Tokyo?", Harness menambahkan pesan itu ke akhir riwayat dan memanggil model kembali. Model dapat meneruskan latar belakang tugas "mencari waktu dan cuaca saat ini" untuk membuat permintaan baru bagi Tokyo; setelah alat mengembalikan hasil, model menyusun jawaban baru.
 
-**Jika memakai Responses API, bagaimana hasil tool dikembalikan?** Eksperimen lokal di atas menggunakan antarmuka yang kompatibel dengan Chat Completions. Untuk proyek baru yang memakai layanan OpenAI, yang direkomendasikan secara resmi adalah Responses API. Kembali ke contoh Vancouver: aplikasi meletakkan pertanyaan pengguna di `input` permintaan dan mendeklarasikan dua fungsi, waktu dan cuaca, di `tools`. `output` yang dikembalikan berupa sekumpulan entri bertipe. Jika di dalamnya muncul dua `function_call`, aplikasi membaca nama fungsi, parameter, dan `call_id` dari masing-masing entri, lalu menjalankan tool-nya satu per satu.[^ch2-responses-loop]
+**Jika memakai Responses API, bagaimana hasil alat dikembalikan?** Eksperimen lokal di atas menggunakan antarmuka yang kompatibel dengan Chat Completions. Untuk proyek baru yang memakai layanan OpenAI, yang direkomendasikan secara resmi adalah Responses API. Kembali ke contoh Vancouver: aplikasi meletakkan pertanyaan pengguna di `input` permintaan dan mendeklarasikan dua fungsi, waktu dan cuaca, di `tools`. `output` yang dikembalikan berupa sekumpulan entri bertipe. Jika di dalamnya muncul dua `function_call`, aplikasi membaca nama fungsi, parameter, dan `call_id` dari masing-masing entri, lalu menjalankan alatnya satu per satu.[^ch2-responses-loop]
 
 Misalkan nomor panggilan fungsi cuaca adalah `call_weather`. Maka `input` pada permintaan berikutnya dapat memuat tanda terima seperti di bawah; fungsi waktu juga harus mengembalikan hasilnya dengan nomornya sendiri.
 
@@ -258,15 +258,15 @@ Misalkan nomor panggilan fungsi cuaca adalah `call_weather`. Maka `input` pada p
 {"type": "function_call_output", "call_id": "call_weather", "output": "{\"temperature\": 13.2, \"unit\": \"celsius\"}"}
 ```
 
-`call_id` mencocokkan satu tanda terima dengan satu panggilan fungsi. `previous_response_id` menunjuk ke respons model sebelumnya, sehingga layanan dapat melanjutkan konteks putaran itu. Kedua nomor ini merujuk pada objek yang berbeda. Saat memakai cara penyambungan ini, putaran sekarang tetap harus menyediakan tool yang akan terus dipakai dan `instructions` di tingkat teratas; instruksi tingkat teratas dari permintaan sebelumnya tidak otomatis diwariskan melalui nomor respons. Model mungkin terus meminta tool, sehingga aplikasi harus membaca `output` berikutnya sebelum memutuskan apakah akan berhenti. Eksperimen 1-3 di Bab 1 memakai pencarian yang dikelola di sisi server; dua fungsi kustom di sini benar-benar dijalankan oleh aplikasi.
+`call_id` mencocokkan satu tanda terima dengan satu panggilan fungsi. `previous_response_id` menunjuk ke respons model sebelumnya, sehingga layanan dapat melanjutkan konteks putaran itu. Kedua nomor ini merujuk pada objek yang berbeda. Saat memakai cara penyambungan ini, putaran sekarang tetap harus menyediakan alat yang akan terus dipakai dan `instructions` di tingkat teratas; instruksi tingkat teratas dari permintaan sebelumnya tidak otomatis diwariskan melalui nomor respons. Model mungkin terus meminta alat, sehingga aplikasi harus membaca `output` berikutnya sebelum memutuskan apakah akan berhenti. Eksperimen 1-3 di Bab 1 memakai pencarian yang dikelola di sisi server; dua fungsi kustom di sini benar-benar dijalankan oleh aplikasi.
 
 [^ch2-responses-loop]: OpenAI, panduan migrasi ke Responses API, function calling, serta penjelasan parameter pembuatan respons.
 
 ### Mengimplementasikan Loop Inti Agent dengan Kode
 
-Dua pemanggilan `messages.append` di dalam loop masing-masing menyimpan balasan model dan hasil eksekusi tool. Waktu dan suhu sama-sama berasal dari Vancouver; jika kedua ID panggilan ditukar, pada putaran berikutnya model akan membaca bahwa "kueri waktu" mengembalikan 13,2 derajat Celsius.
+Dua pemanggilan `messages.append` di dalam loop masing-masing menyimpan balasan model dan hasil eksekusi alat. Waktu dan suhu sama-sama berasal dari Vancouver; jika kedua ID panggilan ditukar, pada putaran berikutnya model akan membaca bahwa "kueri waktu" mengembalikan 13,2 derajat Celsius.
 
-Contoh ini terhubung ke layanan yang kompatibel melalui OpenAI Python SDK. Alamat bawaannya adalah `http://localhost:8000/v1` di mesin lokal, cocok untuk layanan lokal yang sudah berjalan dan tidak memerlukan autentikasi. Nilai bawaan ini sesuai dengan backend vLLM pada Eksperimen 2-1. Jika memakai backend Ollama dari eksperimen tersebut, ubah alamatnya menjadi `http://localhost:11434/v1` dan nama modelnya menjadi `qwen3:0.6b`. Untuk terhubung ke layanan lain, atur variabel lingkungan `LLM_BASE_URL` dan `LLM_API_KEY` sesuai kebutuhan, dan samakan `model` di bawah dengan nama yang benar-benar di-deploy. Untuk sementara tool waktu dan cuaca memakai data tetap dari contoh sebelumnya agar mudah dibandingkan dengan pesan-pesannya; ganti implementasi kedua tool ini ketika menyambungkan data nyata.
+Contoh ini terhubung ke layanan yang kompatibel melalui OpenAI Python SDK. Alamat bawaannya adalah `http://localhost:8000/v1` di mesin lokal, cocok untuk layanan lokal yang sudah berjalan dan tidak memerlukan autentikasi. Nilai bawaan ini sesuai dengan backend vLLM pada Eksperimen 2-1. Jika memakai backend Ollama dari eksperimen tersebut, ubah alamatnya menjadi `http://localhost:11434/v1` dan nama modelnya menjadi `qwen3:0.6b`. Untuk terhubung ke layanan lain, atur variabel lingkungan `LLM_BASE_URL` dan `LLM_API_KEY` sesuai kebutuhan, dan samakan `model` di bawah dengan nama yang benar-benar di-deploy. Untuk sementara alat waktu dan cuaca memakai data tetap dari contoh sebelumnya agar mudah dibandingkan dengan pesan-pesannya; ganti implementasi kedua alat ini ketika menyambungkan data nyata.
 
 ```python
 import json
@@ -279,7 +279,7 @@ client = OpenAI(
     api_key=os.getenv("LLM_API_KEY", "EMPTY"),
 )
 
-# 工具定义：名称、用途和参数结构
+# Definisi alat: nama, kegunaan, dan struktur parameter
 tools = [
     {
         "type": "function",
@@ -312,7 +312,7 @@ tools = [
     },
 ]
 
-# 示例工具使用固定数据，参数与前面的温哥华查询一致。
+# Alat contoh memakai data tetap; parameternya sama dengan kueri Vancouver sebelumnya.
 def execute_tool(name, arguments):
     args = json.loads(arguments)
     if name == "get_current_time" and args == {"timezone": "America/Vancouver"}:
@@ -327,16 +327,16 @@ def execute_tool(name, arguments):
             "unit": "celsius", "conditions": "clear", "humidity": 93,
         }
     else:
-        result = {"error": "示例仅提供温哥华时间和摄氏天气数据"}
+        result = {"error": "Contoh ini hanya menyediakan data waktu Vancouver dan cuaca dalam Celsius"}
     return json.dumps(result, ensure_ascii=False)
 
-# 初始消息：指令与用户任务
+# Pesan awal: instruksi dan tugas pengguna
 messages = [
     {"role": "system", "content": "You are a helpful assistant. Use tools to get real-time information when needed."},
     {"role": "user", "content": "What's the current time and weather in Vancouver?"},
 ]
 
-# 运行循环：最多调用模型八轮
+# Loop eksekusi: model dipanggil paling banyak delapan putaran
 rounds = 0
 while rounds < 8:
     rounds += 1
@@ -345,28 +345,28 @@ while rounds < 8:
     )
     assistant_message = response.choices[0].message
 
-    # 保存模型回复，包括本轮的调用请求
+    # Simpan balasan model, termasuk permintaan pemanggilan pada putaran ini
     messages.append(assistant_message.model_dump(exclude_none=True))
 
-    # 本例在模型给出不含工具调用的回复时结束
+    # Contoh ini berakhir ketika model memberi balasan tanpa pemanggilan alat
     if not assistant_message.tool_calls:
         print(assistant_message.content)
         break
 
-    # 逐个执行并追加结果；独立调用也可以改为并行调度
+    # Jalankan satu per satu dan tambahkan hasilnya; panggilan yang independen juga dapat dijadwalkan paralel
     for tool_call in assistant_message.tool_calls:
         try:
             result = execute_tool(tool_call.function.name, tool_call.function.arguments)
         except json.JSONDecodeError:
-            result = json.dumps({"error": "工具参数需要有效的 JSON"})
+            result = json.dumps({"error": "Parameter alat harus berupa JSON yang valid"})
         messages.append({
             "role": "tool",
             "tool_call_id": tool_call.id,
             "content": result,
         })
-    # 下一轮使用追加了结果的消息列表
+    # Putaran berikutnya memakai daftar pesan yang sudah ditambah hasil
 else:
-    print("已达到轮数上限，任务尚未完成。")
+    print("Batas jumlah putaran tercapai, tugas belum selesai.")
 ```
 
 Misalkan pada putaran pertama model meminta waktu dan cuaca sekaligus. Loop `for` di sini akan mencari waktu lebih dulu dan menambahkan hasilnya ke `messages`, lalu mencari cuaca dan menambahkan hasil kedua. Setelah keduanya selesai dijalankan, barulah program kembali ke awal `while` dan mengirim permintaan model yang kedua. Dengan menjabarkan isi `messages` pada langkah-langkah ini, kita dapat melihat apa saja yang diterima model setiap kali.
@@ -374,19 +374,19 @@ Misalkan pada putaran pertama model meminta waktu dan cuaca sekaligus. Loop `for
 **Keadaan awal (sebelum panggilan ke-1):**
 ```text
 messages = [
-  { role: "system",  content: "You are a helpful assistant..." },     # 开发者写的
-  { role: "user",    content: "What's the current time and weather in Vancouver?" },  # 用户输入
+  { role: "system",  content: "You are a helpful assistant..." },     # ditulis pengembang
+  { role: "user",    content: "What's the current time and weather in Vancouver?" },  # input pengguna
 ]
 ```
 
-**Setelah panggilan model ke-1 dan eksekusi tool selesai:**
+**Setelah panggilan model ke-1 dan eksekusi alat selesai:**
 ```text
 messages = [
   { role: "system",    content: "..." },
   { role: "user",      content: "What's the current time..." },
-  { role: "assistant", tool_calls: [get_current_time, get_weather] },  # 模型生成的调用请求
-  { role: "tool",      tool_call_id: "call_abc123", content: "{time...}" },  # 工具执行后由 Harness 写入
-  { role: "tool",      tool_call_id: "call_def456", content: "{weather...}" },  # 工具执行后由 Harness 写入
+  { role: "assistant", tool_calls: [get_current_time, get_weather] },  # permintaan pemanggilan yang dibangkitkan model
+  { role: "tool",      tool_call_id: "call_abc123", content: "{time...}" },  # ditulis Harness setelah alat dijalankan
+  { role: "tool",      tool_call_id: "call_def456", content: "{weather...}" },  # ditulis Harness setelah alat dijalankan
 ]
 ```
 
@@ -398,19 +398,19 @@ messages = [
   { role: "assistant", tool_calls: [get_current_time, get_weather] },
   { role: "tool",      tool_call_id: "call_abc123", content: "{time...}" },
   { role: "tool",      tool_call_id: "call_def456", content: "{weather...}" },
-  { role: "assistant", content: "It's currently Saturday, Sep 13, 2025 in Vancouver..." },  # 最终回复
+  { role: "assistant", content: "It's currently Saturday, Sep 13, 2025 in Vancouver..." },  # balasan akhir
 ]
 ```
 
 ### Komposisi Konteks dari Sudut Pandang API
 
-Gambar 2-4 membagi satu permintaan menjadi dua bagian: prefiks dan riwayat pesan. Ketika kueri Vancouver tadi baru dikirim, riwayat hanya berisi pertanyaan pengguna dan percakapan sebelumnya. Setelah kedua kueri selesai, riwayat bertambah dengan tool call yang diajukan model dan dua hasil tool.
+Gambar 2-4 membagi satu permintaan menjadi dua bagian: prefiks dan riwayat pesan. Ketika kueri Vancouver tadi baru dikirim, riwayat hanya berisi pertanyaan pengguna dan percakapan sebelumnya. Setelah kedua kueri selesai, riwayat bertambah dengan pemanggilan alat yang diajukan model dan dua hasil alat.
 
 ![Gambar 2-4 Komposisi konteks setiap kali Agent memanggil model](images/revised/fig2-4.svg)
 
 Karena itu, bagian awal yang sama pada dua permintaan berturut-turut dapat terus memanjang hingga ke dalam riwayat pesan. Seberapa banyak komputasi lama yang dapat dipakai ulang pada panggilan berikutnya bergantung pada panjang prefiks ini.
 
-Harness di bawah ini meletakkan instruksi sistem dan definisi tool yang jarang berubah di depan, dan pada setiap putaran hanya menambahkan status terkini di akhir riwayat pesan. Jika riwayat terlalu panjang, Harness lebih dulu mengompresi pesan lama, baru kemudian merangkai permintaan.
+Harness di bawah ini meletakkan instruksi sistem dan definisi alat yang jarang berubah di depan, dan pada setiap putaran hanya menambahkan status terkini di akhir riwayat pesan. Jika riwayat terlalu panjang, Harness lebih dulu mengompresi pesan lama, baru kemudian merangkai permintaan.
 
 ```python
 stable_prefix = system_message
@@ -429,39 +429,39 @@ request.tools = stable_tools
 response = call_model(request)
 ```
 
-Saat mengompresi, pertahankan informasi yang dibutuhkan pekerjaan selanjutnya, seperti keputusan, batasan, kegagalan, dan rujukan, serta jaga keterkaitan antara permintaan panggilan dan hasil tool. Selain anggaran panjang, informasi yang berulang dan kedaluwarsa juga dapat memicu kompresi; strateginya akan dibahas pada paruh kedua bab ini.
+Saat mengompresi, pertahankan informasi yang dibutuhkan pekerjaan selanjutnya, seperti keputusan, batasan, kegagalan, dan rujukan, serta jaga keterkaitan antara permintaan panggilan dan hasil alat. Selain anggaran panjang, informasi yang berulang dan kedaluwarsa juga dapat memicu kompresi; strateginya akan dibahas pada paruh kedua bab ini.
 
-> **Eksperimen 2-1 ★: Deployment Layanan LLM Lokal dan Tool Call**
+> **Eksperimen 2-1 ★: Deployment Layanan LLM Lokal dan Pemanggilan Alat**
 >
-> Eksperimen ini menjalankan Qwen3-0.6B secara lokal dan, melalui tugas "mencari waktu dan cuaca di Vancouver", mengamati bagaimana pesan melewati model, parser, dan eksekutor tool. Gambar 2-5 memperlihatkan pembagian kerja antara layanan lokal dan klien: server memuat model, memproses input, dan membangkitkan balasan, sedangkan klien memelihara riwayat pesan, menjadwalkan tool, dan mengirim balik hasilnya.
+> Eksperimen ini menjalankan Qwen3-0.6B secara lokal dan, melalui tugas "mencari waktu dan cuaca di Vancouver", mengamati bagaimana pesan melewati model, parser, dan eksekutor alat. Gambar 2-5 memperlihatkan pembagian kerja antara layanan lokal dan klien: server memuat model, memproses input, dan membangkitkan balasan, sedangkan klien memelihara riwayat pesan, menjadwalkan alat, dan mengirim balik hasilnya.
 >
-> ![Gambar 2-5 Arsitektur tool call pada LLM lokal](images/revised/fig2-5.svg)
+> ![Gambar 2-5 Arsitektur pemanggilan alat pada LLM lokal](images/revised/fig2-5.svg)
 >
-> **Pertama, ikuti satu tugas secara utuh.** Dalam satu output, model meminta kueri waktu dan suhu sekaligus, dengan mengisi parameter seperti `America/Vancouver`, `Vancouver`, dan `celsius`. Klien menjalankan kedua tool secara paralel. Tanda terima pertama memberikan waktu setempat 11:11:28, dan tanda terima kedua memberikan suhu 17,9 °C. Setelah kedua hasil dikirim kembali ke model, model melaporkan waktu hingga satuan menit, menjawab bahwa suhunya 17,9 °C, lalu mengakhiri loop ini. Hasil ini menunjukkan bahwa model berparameter enam ratus juta sudah dapat memilih dua tool yang tepat untuk tugas ini, mengisi parameternya dengan benar, dan menjawab pengguna dengan nilai kembaliannya.
+> **Pertama, ikuti satu tugas secara utuh.** Dalam satu output, model meminta kueri waktu dan suhu sekaligus, dengan mengisi parameter seperti `America/Vancouver`, `Vancouver`, dan `celsius`. Klien menjalankan kedua alat secara paralel. Tanda terima pertama memberikan waktu setempat 11:11:28, dan tanda terima kedua memberikan suhu 17,9 °C. Setelah kedua hasil dikirim kembali ke model, model melaporkan waktu hingga satuan menit, menjawab bahwa suhunya 17,9 °C, lalu mengakhiri loop ini. Hasil ini menunjukkan bahwa model berparameter enam ratus juta sudah dapat memilih dua alat yang tepat untuk tugas ini, mengisi parameternya dengan benar, dan menjawab pengguna dengan nilai kembaliannya.
 >
-> **Selanjutnya, periksa kecocokan antara output mentah dan field API.** Mode berpikir Qwen3 dapat menghasilkan konten penalaran bertanda `<think>`, sedangkan permintaan tool memakai tanda panggilan yang sesuai. Setelah server mem-parsing-nya, klien dapat menerima field `thinking` atau field tool call secara terpisah. Susunan dan cara penyimpanan setiap bagian output ditentukan bersama oleh template model dan protokol layanan.
+> **Selanjutnya, periksa kecocokan antara output mentah dan field API.** Mode berpikir Qwen3 dapat menghasilkan konten penalaran bertanda `<think>`, sedangkan permintaan alat memakai tanda panggilan yang sesuai. Setelah server mem-parsing-nya, klien dapat menerima field `thinking` atau field pemanggilan alat secara terpisah. Susunan dan cara penyimpanan setiap bagian output ditentukan bersama oleh template model dan protokol layanan.
 >
-> **Kemudian, amati pemrosesan streaming.** Antarmuka dapat memperbarui status seperti "sedang berpikir", "memanggil tool", dan "menyusun jawaban" seiring datangnya event. Parameter tool biasanya tiba dalam beberapa potongan yang perlu dikumpulkan menjadi permintaan yang utuh; setelah protokol memastikan panggilan itu selesai dan pemeriksaan parameter, izin, serta dependensinya lolos, sistem runtime dapat mulai menjadwalkannya. Tool yang saling independen dapat dijalankan secara paralel, atau membentuk pipeline dengan pemrosesan output berikutnya.
+> **Kemudian, amati pemrosesan streaming.** Antarmuka dapat memperbarui status seperti "sedang berpikir", "memanggil alat", dan "menyusun jawaban" seiring datangnya peristiwa. Parameter alat biasanya tiba dalam beberapa potongan yang perlu dikumpulkan menjadi permintaan yang utuh; setelah protokol memastikan panggilan itu selesai dan pemeriksaan parameter, izin, serta dependensinya lolos, sistem runtime dapat mulai menjadwalkannya. Alat yang saling independen dapat dijalankan secara paralel, atau membentuk pipeline dengan pemrosesan output berikutnya.
 >
-> **Terakhir, bandingkan kecepatan dan cache.** Pada catatan run kali ini di Mac berprosesor Apple, kecepatan decoding rata-rata untuk tugas tool sekitar 107 token per detik. Token adalah satuan dasar teks yang diproses model; pemotongannya ditentukan oleh tokenizer, dan satu kata atau satu aksara Han dapat sesuai dengan satu atau beberapa token. Kecepatan decoding mencerminkan laju output setelah pembangkitan dimulai; lama pengguna menunggu juga dipengaruhi oleh latensi token pertama, panjang penalaran, dan waktu eksekusi tool.
+> **Terakhir, bandingkan kecepatan dan cache.** Pada catatan run kali ini di Mac berprosesor Apple, kecepatan decoding rata-rata untuk tugas alat sekitar 107 token per detik. Token adalah satuan dasar teks yang diproses model; pemotongannya ditentukan oleh tokenizer, dan satu kata atau satu aksara Han dapat sesuai dengan satu atau beberapa token. Kecepatan decoding mencerminkan laju output setelah pembangkitan dimulai; lama pengguna menunggu juga dipengaruhi oleh latensi token pertama, panjang penalaran, dan waktu eksekusi alat.
 >
 > Perbandingan cache memakai prefiks panjang yang sama, lalu menguji permintaan yang mempertahankan prefiks dan permintaan yang mengubah awal prefiks. Dari lima pasangan kali ini, permintaan yang mempertahankan prefiks lebih cepat pada empat pasangan; rata-rata latensi token pertama kedua kelompok masing-masing sekitar 1,30 detik dan 1,51 detik. Subbab berikutnya akan menjelaskan apa perbedaan komputasi di antara permintaan-permintaan ini.
 >
-> Eksperimen ini juga membuat penulis semakin optimistis terhadap Agent di perangkat: model kecil sudah mampu menyelesaikan tugas tool call semacam ini di perangkat milik pengguna sendiri. **Era Agent di perangkat datang lebih cepat daripada yang diperkirakan banyak orang.**
+> Eksperimen ini juga membuat penulis semakin optimistis terhadap Agent di perangkat: model kecil sudah mampu menyelesaikan tugas pemanggilan alat semacam ini di perangkat milik pengguna sendiri. **Era Agent di perangkat datang lebih cepat daripada yang diperkirakan banyak orang.**
 
 ## Desain Konteks yang Ramah KV Cache
 
-Permintaan-permintaan Agent yang berdekatan biasanya berbagi banyak informasi: instruksi sistem, definisi tool, dan interaksi yang telah terjadi sebelumnya. Jika mesin inferensi dapat memakai ulang hasil komputasi antara untuk isi tersebut, lebih banyak komputasi dapat dicurahkan untuk informasi baru. **KV Cache** menyimpan key (Key) dan value (Value) yang sudah dihitung dalam komputasi attention di setiap lapisan agar dapat dipakai oleh token berikutnya; **Prompt Cache** melangkah lebih jauh dengan memakai ulang cache prefiks yang memenuhi syarat di antara permintaan[^ch2-kv-basics].
+Permintaan-permintaan Agent yang berdekatan biasanya berbagi banyak informasi: instruksi sistem, definisi alat, dan interaksi yang telah terjadi sebelumnya. Jika mesin inferensi dapat memakai ulang hasil komputasi antara untuk isi tersebut, lebih banyak komputasi dapat dicurahkan untuk informasi baru. **KV Cache** menyimpan key (Key) dan value (Value) yang sudah dihitung dalam komputasi attention di setiap lapisan agar dapat dipakai oleh token berikutnya; **Prompt Cache** melangkah lebih jauh dengan memakai ulang cache prefiks yang memenuhi syarat di antara permintaan[^ch2-kv-basics].
 
-Ambil contoh Agent layanan pelanggan: agar model mengetahui waktu saat ini, developer menambahkan `Current time: {{now}}` di awal system prompt dan memperbaruinya pada setiap permintaan. Aturan bisnis dan definisi tool sesudahnya tidak berubah, tetapi input yang sebenarnya mulai berbeda sejak cap waktu tersebut. Pada layanan yang memakai ulang KV berdasarkan prefiks yang sama, hal ini membuat cap waktu dan seluruh bagian sesudahnya harus dihitung ulang, sehingga menambah waktu pemrosesan input dan biaya.
+Ambil contoh Agent layanan pelanggan: agar model mengetahui waktu saat ini, pengembang menambahkan `Current time: {{now}}` di awal system prompt dan memperbaruinya pada setiap permintaan. Aturan bisnis dan definisi alat sesudahnya tidak berubah, tetapi input yang sebenarnya mulai berbeda sejak cap waktu tersebut. Pada layanan yang memakai ulang KV berdasarkan prefiks yang sama, hal ini membuat cap waktu dan seluruh bagian sesudahnya harus dihitung ulang, sehingga menambah waktu pemrosesan input dan biaya.
 
-Jika waktu ditulis sebagai pesan tambahan, atau tool waktu dipanggil saat dibutuhkan, prefiks yang sudah ada dapat dipertahankan. Kedua tata letak memberikan informasi yang mirip, tetapi cakupan komputasi ulang yang dipicunya berbeda.
+Jika waktu ditulis sebagai pesan tambahan, atau alat waktu dipanggil saat dibutuhkan, prefiks yang sudah ada dapat dipertahankan. Kedua tata letak memberikan informasi yang mirip, tetapi cakupan komputasi ulang yang dipicunya berbeda.
 
 Ingat dulu tiga praktik berikut; prinsip dan eksperimen di bagian selanjutnya akan menjelaskannya satu per satu:
 
-1. **Jaga agar prefiks yang dapat dipakai ulang tetap stabil.** Instruksi sistem dan definisi tool yang sering dipakai menggunakan isi dan urutan yang pasti.
-2. **Tambahkan perubahan selama eksekusi di bagian belakang.** Waktu, saldo, jumlah panggilan, dan kemajuan tugas dapat diberikan melalui pesan baru atau hasil tool. Status terbaru harus mencantumkan saat mulai berlakunya, agar model dapat mengenali catatan mana yang berlaku untuk keputusan saat ini.
-3. **Susun pesan sesuai protokol model.** Gunakan peran, ID panggilan, dan format hasil tool yang benar, lalu biarkan chat template yang sesuai membangkitkan input model. Cache mencocokkan prefiks yang sudah diproses beserta konfigurasi terkait, dan protokol pesan juga menentukan bagaimana model mengenali instruksi, permintaan pengguna, dan nilai kembalian tool.
+1. **Jaga agar prefiks yang dapat dipakai ulang tetap stabil.** Instruksi sistem dan definisi alat yang sering dipakai menggunakan isi dan urutan yang pasti.
+2. **Tambahkan perubahan selama eksekusi di bagian belakang.** Waktu, saldo, jumlah panggilan, dan kemajuan tugas dapat diberikan melalui pesan baru atau hasil alat. Status terbaru harus mencantumkan saat mulai berlakunya, agar model dapat mengenali catatan mana yang berlaku untuk keputusan saat ini.
+3. **Susun pesan sesuai protokol model.** Gunakan peran, ID panggilan, dan format hasil alat yang benar, lalu biarkan chat template yang sesuai membangkitkan input model. Cache mencocokkan prefiks yang sudah diproses beserta konfigurasi terkait, dan protokol pesan juga menentukan bagaimana model mengenali instruksi, permintaan pengguna, dan nilai kembalian alat.
 
 Pada model dengan causal attention yang dipakai di bagian ini, penambahan token berikutnya tidak mengubah status yang sudah dihitung pada posisi sebelumnya. Ketika input yang sudah ada diubah, status pada posisi perubahan pertama dan seluruh posisi sesudahnya harus dihitung ulang; prefiks sebelum perubahan masih berpeluang dipakai ulang. Server juga menentukan cakupan hit yang sebenarnya berdasarkan ukuran blok cache, masa simpan, dan konfigurasi runtime.
 
@@ -489,14 +489,14 @@ Pada model dengan causal attention yang dipakai di bagian ini, penambahan token 
 >
 > Dari sini juga terlihat kegunaan cache K dan V: ketika pembangkitan terus berlanjut, posisi baru tetap membaca Key dan Value dari posisi yang sudah ada. Dengan menyimpan vektor-vektor ini, posisi baru dapat langsung memakainya untuk pencocokan dan agregasi, sehingga komputasi berulang untuk posisi historis dapat dihindari.
 >
-> Setelah memahami contoh bobot ini, kita memakai Qwen3-0.6B untuk melihat distribusi attention yang benar-benar dihitung model. Eksperimen ini mencatat sebuah kalimat pendek serta sebuah urutan pembangkitan yang berisi penalaran dan jawaban akhir, lalu membandingkan matriks attention di berbagai lapisan. Gambar 2-7 menampilkan lapisan 0, 13, dan 27: kolom kiri adalah kalimat pendek sembilan token, kolom kanan adalah urutan pembangkitan berukuran komputasi 17 × 23, dengan rentang posisi input, penalaran, dan jawaban ditandai. Skala abu-abu memakai skala logaritmik agar bobot attention yang kuat dan yang lemah sama-sama terlihat jelas.
+> Setelah memahami contoh bobot ini, kita memakai Qwen3-0.6B untuk melihat distribusi attention yang benar-benar dihitung model. Eksperimen ini mencatat sebuah kalimat pendek serta sebuah urutan pembangkitan yang berisi penalaran dan jawaban akhir, lalu membandingkan matriks attention di berbagai lapisan. Gambar 2-7 menampilkan lapisan 0, 13, dan 27: kolom kiri adalah kalimat pendek sembilan token, kolom kanan adalah urutan pembangkitan untuk menghitung 17 × 23, dengan rentang posisi input, penalaran, dan jawaban ditandai. Skala abu-abu memakai skala logaritmik agar bobot attention yang kuat dan yang lemah sama-sama terlihat jelas.
 >
 > ![Gambar 2-7 Visualisasi heatmap attention](images/revised/fig2-7.png)
 >
 > Saat membaca gambar, analisislah dengan mengikuti empat petunjuk:
 >
 > 1. **Attention sink.** Sebagian lapisan memberi bobot besar pada awal urutan, meskipun token di awal hanya membawa sedikit makna. Lihat kalimat pendek di kolom kiri Gambar 2-7. Setiap panel sudah merata-ratakan semua attention head pada lapisan yang sama. Ambil lagi rata-rata sembilan angka di kolom pertama matriks, maka diperoleh berapa bobot yang rata-rata diberikan sembilan posisi itu kepada token pertama. Untuk lapisan 0, 13, dan 27, nilainya masing-masing 14,7%, 73,9%, dan 83,2%. Pada urutan pembangkitan yang lebih panjang di kolom kanan, nilai ini untuk lapisan 13 menjadi 28,0%. Softmax mengharuskan bobot semua posisi berjumlah 1, sehingga model dapat mempelajari posisi penerima yang relatif stabil; StreamingLLM secara khusus meneliti fenomena ini dan perannya dalam inferensi streaming[^ch2-attention-sinks].
-> 2. **Wilayah penalaran.** Tandai rentang pembangkitan yang sesuai dengan `<think>`, lalu telusuri baris-baris tersebut untuk melihat prompt, keterangan tool, atau penalaran sebelumnya mana yang diperhatikan model. Bentuk segitiga berasal dari causal mask; yang mencerminkan perbedaan bobot antarposisi adalah pekat-tipis di dalam segitiga itu.
+> 2. **Wilayah penalaran.** Tandai rentang pembangkitan yang sesuai dengan `<think>`, lalu telusuri baris-baris tersebut untuk melihat prompt, keterangan alat, atau penalaran sebelumnya mana yang diperhatikan model. Bentuk segitiga berasal dari causal mask; yang mencerminkan perbedaan bobot antarposisi adalah pekat-tipis di dalam segitiga itu.
 > 3. **Wilayah jawaban.** Tandai pula rentang pembangkitan jawaban akhir, lalu bandingkan pembagian bobotnya terhadap input asli dan penalaran sebelumnya. Ini membantu menemukan informasi mana yang sudah ada yang masuk ke agregasi attention saat ini.
 > 4. **Perbedaan posisi.** *Lost in the Middle* mengamati, pada tanya jawab konteks panjang dan pencarian key-value, bahwa informasi di posisi tengah lebih sulit dimanfaatkan secara efektif[^lost-in-the-middle]. Secara rekayasa, berdasarkan temuan ini aturan yang selalu berlaku dapat diutamakan di bagian depan, sedangkan tujuan dan kemajuan saat ini diletakkan di bagian akhir.
 
@@ -506,32 +506,32 @@ Pada model dengan causal attention yang dipakai di bagian ini, penambahan token 
 
 ### Dari Pesan API ke Token Model: Chat Template
 
-Contoh API di depan berupa sekumpulan pesan berperan, sedangkan input pada gambar attention berupa deretan token. **Chat Template (template obrolan)** bertugas melakukan konversi ini: menambahkan tanda peran dan tanda batas pada pesan, menyusun keterangan tool dan nilai kembaliannya sesuai konvensi, lalu menyerahkannya ke tokenizer untuk dienkode. Bandingkan dua kolom pada Gambar 2-8: kolom kiri hanya mengirim instruksi sistem dan pertanyaan pengguna, lalu mengapa kolom kanan memiliki satu `assistant` tambahan? Itu adalah tanda awal yang ditambahkan template untuk balasan berikutnya. Tanda-tanda ini akan dipakai lagi ketika kita membahas tool call, penyimpanan informasi penalaran, dan cache hit.
+Contoh API di depan berupa sekumpulan pesan berperan, sedangkan input pada gambar attention berupa deretan token. **Chat Template (template obrolan)** bertugas melakukan konversi ini: menambahkan tanda peran dan tanda batas pada pesan, menyusun keterangan alat dan nilai kembaliannya sesuai konvensi, lalu menyerahkannya ke tokenizer untuk dienkode. Bandingkan dua kolom pada Gambar 2-8: kolom kiri hanya mengirim instruksi sistem dan pertanyaan pengguna, lalu mengapa kolom kanan memiliki satu `assistant` tambahan? Itu adalah tanda awal yang ditambahkan template untuk balasan berikutnya. Tanda-tanda ini akan dipakai lagi ketika kita membahas pemanggilan alat, penyimpanan informasi penalaran, dan cache hit.
 
 ![Gambar 2-8 Struktur token pada Chat Template](images/revised/fig2-8.svg)
 
 Keluarga model seperti Qwen, Llama, dan Gemma masing-masing memiliki chat template sendiri. Sekumpulan pesan API yang sama, jika diberikan ke model yang berbeda, dapat menghasilkan tanda peran dan tanda batas yang berbeda pula. Pada API terkelola, konversi biasanya dilakukan di server; jika men-deploy sendiri, layanan inferensi harus dikonfigurasi dengan template yang sesuai dengan modelnya.
 
-Misalkan pengguna mengirim kalimat "Vancouver 17,9 °C", dan tool cuaca kebetulan juga mengembalikan teks yang sama. Jika kedua pesan ini masing-masing diberikan ke template Qwen3-0.6B, diperoleh dua potong input seperti pada Gambar 2-9. Keduanya diawali `<|im_start|>user`; tanda mana yang menunjukkan bahwa teks berasal dari tool?
+Misalkan pengguna mengirim kalimat "Vancouver 17,9 °C", dan alat cuaca kebetulan juga mengembalikan teks yang sama. Jika kedua pesan ini masing-masing diberikan ke template Qwen3-0.6B, diperoleh dua potong input seperti pada Gambar 2-9. Keduanya diawali `<|im_start|>user`; tanda mana yang menunjukkan bahwa teks berasal dari alat?
 
-![Gambar 2-9 Pesan pengguna dan hasil tool pada template Qwen3](images/revised/fig2-9.svg)
+![Gambar 2-9 Pesan pengguna dan hasil alat pada template Qwen3](images/revised/fig2-9.svg)
 
-Kolom kanan memiliki sepasang tag `<tool_response>` tambahan. Template juga menentukan letak pertanyaan terakhir pengguna berdasarkan peran pesan: pada putaran sebelum pertanyaan itu, hanya isi jawaban yang dipertahankan; sesudahnya, interaksi tool masih dapat membawa informasi penalaran model[^ch2-qwen-template].
+Kolom kanan memiliki sepasang tag `<tool_response>` tambahan. Template juga menentukan letak pertanyaan terakhir pengguna berdasarkan peran pesan: pada putaran sebelum pertanyaan itu, hanya isi jawaban yang dipertahankan; sesudahnya, interaksi alat masih dapat membawa informasi penalaran model[^ch2-qwen-template].
 
-Misalnya, setelah memeriksa sebuah file, model masih harus melanjutkan analisis. Jika hasil tool dikirim kembali dengan peran `tool`, template dapat mengenalinya sebagai umpan balik tool dalam tugas yang sedang berjalan; jika hasil yang sama ditulis sebagai pesan `user` biasa, template dapat mengenalinya sebagai kueri baru dan mengubah cakupan penalaran sebelumnya yang dipertahankan. Ini seperti melanjutkan pengerjaan soal yang perlu menyimpan coretan perhitungan: Harness harus menyimpan field penalaran yang diminta layanan dan melanjutkan panggilan dengan struktur pesan yang benar.
+Misalnya, setelah memeriksa sebuah berkas, model masih harus melanjutkan analisis. Jika hasil alat dikirim kembali dengan peran `tool`, template dapat mengenalinya sebagai umpan balik alat dalam tugas yang sedang berjalan; jika hasil yang sama ditulis sebagai pesan `user` biasa, template dapat mengenalinya sebagai kueri baru dan mengubah cakupan penalaran sebelumnya yang dipertahankan. Ini seperti melanjutkan pengerjaan soal yang perlu menyimpan coretan perhitungan: Harness harus menyimpan field penalaran yang diminta layanan dan melanjutkan panggilan dengan struktur pesan yang benar.
 
-**Dari penalaran satu putaran menuju Agent jangka panjang, pemikiran historis berangsur menjadi status tugas yang harus dipelihara.** Chat template DeepSeek-R1 generasi awal membuang bagian pemikiran dari jawaban historis dan hanya mempertahankan jawaban akhir[^ch2-r1-template]; protokol tool call DeepSeek yang lebih baru justru mewajibkan informasi penalaran dikirim kembali. Setelah satu kali tanya jawab selesai, jawaban akhir mungkin sudah memuat informasi yang dibutuhkan putaran berikutnya; tetapi di tengah tugas tool, "mengapa file ini diperiksa" dan "hipotesis mana yang sudah disingkirkan" mungkin hanya tertulis dalam penalaran antara. Mempertahankan informasi ini membantu putaran berikutnya melanjutkan alur pikir yang sudah ada.
+**Dari penalaran satu putaran menuju Agent jangka panjang, pemikiran historis berangsur menjadi status tugas yang harus dipelihara.** Chat template DeepSeek-R1 generasi awal membuang bagian pemikiran dari jawaban historis dan hanya mempertahankan jawaban akhir[^ch2-r1-template]; protokol pemanggilan alat DeepSeek yang lebih baru justru mewajibkan informasi penalaran dikirim kembali. Setelah satu kali tanya jawab selesai, jawaban akhir mungkin sudah memuat informasi yang dibutuhkan putaran berikutnya; tetapi di tengah tugas alat, "mengapa berkas ini diperiksa" dan "hipotesis mana yang sudah disingkirkan" mungkin hanya tertulis dalam penalaran antara. Mempertahankan informasi ini membantu putaran berikutnya melanjutkan alur pikir yang sudah ada.
 
 **Cara pengiriman kembali informasi penalaran ditentukan oleh protokol model.** Saat melakukan integrasi, `content`, `tool_calls`, dan field penalaran yang disediakan layanan harus ditangani bersamaan. Beberapa skema berikut menunjukkan aturan penyambungan yang berbeda:
 
-- **Mode berpikir DeepSeek** mengembalikan penalaran melalui `reasoning_content`. Menurut protokol tool call-nya, jika permintaan menyertakan `tools`, permintaan berikutnya harus mengirim kembali seluruh penalaran historis, termasuk balasan model yang tidak memanggil tool; field yang hilang akan memicu galat 400. Untuk permintaan obrolan murni tanpa `tools`, layanan mengabaikan penalaran historis yang dikirim kembali[^ch2-deepseek-thinking].
-- **Interaksi berpikir dan tool pada Kimi** juga mengharuskan penalaran, permintaan tool, dan hasilnya dikelola di dalam loop eksekusi. Dalam contoh interleaved thinking pada Kimi K2.5, model dapat terus bernalar di antara beberapa tool call, dan klien menyimpan serta mengirim kembali pesan model sesuai protokolnya[^ch2-kimi-thinking].
+- **Mode berpikir DeepSeek** mengembalikan penalaran melalui `reasoning_content`. Menurut protokol pemanggilan alatnya, jika permintaan menyertakan `tools`, permintaan berikutnya harus mengirim kembali seluruh penalaran historis, termasuk balasan model yang tidak memanggil alat; field yang hilang akan memicu galat 400. Untuk permintaan obrolan murni tanpa `tools`, layanan mengabaikan penalaran historis yang dikirim kembali[^ch2-deepseek-thinking].
+- **Interaksi berpikir dan alat pada Kimi** juga mengharuskan penalaran, permintaan alat, dan hasilnya dikelola di dalam loop eksekusi. Dalam contoh interleaved thinking pada Kimi K2.5, model dapat terus bernalar di antara beberapa pemanggilan alat, dan klien menyimpan serta mengirim kembali pesan model sesuai protokolnya[^ch2-kimi-thinking].
 - **Preserved thinking pada GLM** dapat diaktifkan melalui `thinking.clear_thinking: false`, lalu `reasoning_content` dikirim kembali secara lengkap dan dalam urutan aslinya. Pengaturan bawaan Coding Plan berbeda dari API standar, sehingga klien harus memilih mode yang dibutuhkan secara eksplisit[^ch2-glm-thinking].
 - **Thinking block pada Claude** harus disimpan bersama tanda tangannya. Model yang mendukung preserved thinking juga memeriksa asal dan prefiks blok tersebut; aturan rincinya dibahas di subbab "Cache sebagai Batasan Arsitektur" nanti.
 
-Aturan-aturan ini memengaruhi tool call yang berurutan, dan juga memengaruhi pergantian model di tengah jalan. Saat berganti model, lapisan adapter harus mengubah permintaan tool, hasil, dan status tugas ke bentuk yang diterima antarmuka tujuan, lalu menangani informasi penalaran sesuai aturan model tujuan. Eksperimen 5-1 di Bab 5 akan membahas penyambungan trajectory semacam ini.
+Aturan-aturan ini memengaruhi pemanggilan alat yang berurutan, dan juga memengaruhi pergantian model di tengah jalan. Saat berganti model, lapisan adapter harus mengubah permintaan alat, hasil, dan status tugas ke bentuk yang diterima antarmuka tujuan, lalu menangani informasi penalaran sesuai aturan model tujuan. Eksperimen 5-1 di Bab 5 akan membahas penyambungan trajektori semacam ini.
 
-**Template juga menentukan input yang dicocokkan oleh cache.** Isi pesan yang sama, jika diproses dengan template, urutan tool, atau cara serialisasi yang berbeda, dapat menghasilkan prefiks token yang berbeda. Untuk memakai ulang KV yang sudah ada, konfigurasi model yang terkait dan prefiksnya harus tetap sama.
+**Template juga menentukan input yang dicocokkan oleh cache.** Isi pesan yang sama, jika diproses dengan template, urutan alat, atau cara serialisasi yang berbeda, dapat menghasilkan prefiks token yang berbeda. Untuk memakai ulang KV yang sudah ada, konfigurasi model yang terkait dan prefiksnya harus tetap sama.
 
 [^ch2-qwen-template]: File konfigurasi tokenizer Qwen3-0.6B, `tokenizer_config.json`, menyimpan chat template yang memuat logika penanganan kueri pengguna, konten penalaran, dan respons tool.
 
@@ -563,17 +563,17 @@ Untuk model dan konfigurasi komputasi yang sama, posisi sebelum $k$ hanya bergan
 
 > **Eksperimen 2-3 ★★: Perbandingan Cara Pengelolaan Konteks**
 >
-> Dalam eksperimen ini Agent menyelesaikan tugas yang sama dengan tool untuk menemukan, membaca, dan mencari file, lalu membandingkan satu baseline yang menambahkan secara stabil dengan lima jenis perubahan konteks. Baseline menjaga instruksi dan urutan tool tetap stabil, serta menambahkan pesan model dan hasil tool putaran demi putaran. Kelompok lainnya masing-masing mengubah instruksi, status, urutan tool, atau representasi riwayat, untuk mengamati bagaimana statistik cache dan jalannya tugas berubah.
+> Dalam eksperimen ini Agent menyelesaikan tugas yang sama dengan alat untuk menemukan, membaca, dan mencari berkas, lalu membandingkan satu baseline yang menambahkan secara stabil dengan lima jenis perubahan konteks. Baseline menjaga instruksi dan urutan alat tetap stabil, serta menambahkan pesan model dan hasil alat putaran demi putaran. Kelompok lainnya masing-masing mengubah instruksi, status, urutan alat, atau representasi riwayat, untuk mengamati bagaimana statistik cache dan jalannya tugas berubah.
 >
-> **System prompt dinamis** memperbarui waktu saat ini di instruksi sistem pada setiap putaran. Sebelum titik perubahan masih bisa ada prefiks bersama, tetapi input sejak informasi waktu itu harus dicocokkan atau dihitung ulang. Waktu dapat ditambahkan sebagai pesan baru, atau diambil sesuai kebutuhan melalui tool waktu, agar aturan bisnis yang selalu berlaku tetap dapat dipakai ulang.
+> **System prompt dinamis** memperbarui waktu saat ini di instruksi sistem pada setiap putaran. Sebelum titik perubahan masih bisa ada prefiks bersama, tetapi input sejak informasi waktu itu harus dicocokkan atau dihitung ulang. Waktu dapat ditambahkan sebagai pesan baru, atau diambil sesuai kebutuhan melalui alat waktu, agar aturan bisnis yang selalu berlaku tetap dapat dipakai ulang.
 >
-> **Konfigurasi pengguna dinamis** memperbarui sisa jumlah panggilan atau saldo akun di pesan bagian depan. Status itu sendiri merupakan informasi yang dibutuhkan tugas; inti desainnya terletak pada posisi pembaruan: menambahkan status terbaru di akhir dan mencantumkan waktu berlakunya dapat mempertahankan kemajuan sekaligus prefiks. Agent Status Bar di bagian selanjutnya akan memakai cara penyusunan ini.
+> **Konfigurasi pengguna dinamis** memperbarui sisa jumlah panggilan atau saldo akun di pesan bagian depan. Status itu sendiri merupakan informasi yang dibutuhkan tugas; inti desainnya terletak pada posisi pembaruan: menambahkan status terbaru di akhir dan mencantumkan waktu berlakunya dapat mempertahankan kemajuan sekaligus prefiks. Bilah status Agent di bagian selanjutnya akan memakai cara penyusunan ini.
 >
-> **Pengacakan urutan definisi tool** mengubah urutan daftar tool pada setiap putaran. Meskipun nama dan parameternya sama, urutan token setelah serialisasi sudah berubah. Buka laporan run Kimi K2.6: `Hit%` untuk baseline maupun kelompok pengacakan sama-sama 100%. Benarkah kedua kelompok memakai ulang input sebanyak yang sama? Baseline memasukkan total 7.567 token input dalam tiga putaran, 768 di antaranya cache hit; kelompok pengacakan juga tiga putaran, tetapi dari 7.568 token input hanya 256 yang hit. Jumlah token cache dibagi jumlah token input menghasilkan 10,1% dan 3,4% pada kolom `Cache%`. Kolom `Hit%` lainnya menghitung permintaan yang dinilai mengalami hit: baseline mencatat dua hit, kelompok pengacakan hanya satu, dan jumlah miss yang tercatat pada kedua kelompok sama-sama nol. Status hit permintaan sisanya tidak dapat dipastikan hanya dari catatan ini. Urutan tool yang tetap mencegah prefiks berubah tanpa alasan.
+> **Pengacakan urutan definisi alat** mengubah urutan daftar alat pada setiap putaran. Meskipun nama dan parameternya sama, urutan token setelah serialisasi sudah berubah. Buka laporan run Kimi K2.6: `Hit%` untuk baseline maupun kelompok pengacakan sama-sama 100%. Benarkah kedua kelompok memakai ulang input sebanyak yang sama? Baseline memasukkan total 7.567 token input dalam tiga putaran, 768 di antaranya cache hit; kelompok pengacakan juga tiga putaran, tetapi dari 7.568 token input hanya 256 yang hit. Jumlah token cache dibagi jumlah token input menghasilkan 10,1% dan 3,4% pada kolom `Cache%`. Kolom `Hit%` lainnya menghitung permintaan yang dinilai mengalami hit: baseline mencatat dua hit, kelompok pengacakan hanya satu, dan jumlah miss yang tercatat pada kedua kelompok sama-sama nol. Status hit permintaan sisanya tidak dapat dipastikan hanya dari catatan ini. Urutan alat yang tetap mencegah prefiks berubah tanpa alasan.
 >
-> **Sliding window** hanya mempertahankan riwayat terbaru. Jika yang dipertahankan sepuluh putaran interaksi, pada putaran kelima belas isi file penting yang diperoleh pada putaran kedua bisa jadi tidak terbaca lagi. Selain memperpendek prefiks bersama, pemangkasan juga mengubah fakta dan kemajuan tugas yang dapat diakses model. Implementasi pendampingnya bertitik tolak dari enam pesan riwayat terakhir, lalu menambahkan ke belakang permintaan panggilan yang berpasangan dengan hasil tool di dalamnya. Kelompok sliding window memakai ulang 1.510 dari 2.224 token input, dengan porsi cache 67,9%, tertinggi di antara keenam kelompok. Namun, lihat catatan tool kelompok sliding window pada Eksperimen 2-3: model mencari file tiga kali, lalu membaca dua file, tetapi tidak menyerahkan ringkasan tiga kalimat yang diminta pengguna.
+> **Sliding window** hanya mempertahankan riwayat terbaru. Jika yang dipertahankan sepuluh putaran interaksi, pada putaran kelima belas isi berkas penting yang diperoleh pada putaran kedua bisa jadi tidak terbaca lagi. Selain memperpendek prefiks bersama, pemangkasan juga mengubah fakta dan kemajuan tugas yang dapat diakses model. Implementasi pendampingnya bertitik tolak dari enam pesan riwayat terakhir, lalu menambahkan ke belakang permintaan panggilan yang berpasangan dengan hasil alat di dalamnya. Kelompok sliding window memakai ulang 1.510 dari 2.224 token input, dengan porsi cache 67,9%, tertinggi di antara keenam kelompok. Namun, lihat catatan alat kelompok sliding window pada Eksperimen 2-3: model mencari berkas tiga kali, lalu membaca dua berkas, tetapi tidak menyerahkan ringkasan tiga kalimat yang diminta pengguna.
 >
-> **Pemformatan teks** menulis ulang riwayat berperan menjadi teks seperti `USER: ...`, `ASSISTANT: ...`. Cara ini mengubah batas pesan dan struktur tool di dalam template, sehingga model harus memulihkan hubungan aslinya dari teks. Kali ini kelompok teks tetap menghasilkan balasan akhir dan juga mendapat cache hit. Peran pesan, ID panggilan, dan field hasil tool yang disediakan antarmuka membantu menyampaikan hubungan tersebut secara stabil.
+> **Pemformatan teks** menulis ulang riwayat berperan menjadi teks seperti `USER: ...`, `ASSISTANT: ...`. Cara ini mengubah batas pesan dan struktur alat di dalam template, sehingga model harus memulihkan hubungan aslinya dari teks. Kali ini kelompok teks tetap menghasilkan balasan akhir dan juga mendapat cache hit. Peran pesan, ID panggilan, dan field hasil alat yang disediakan antarmuka membantu menyampaikan hubungan tersebut secara stabil.
 >
 > Sekalipun program menyusun ulang daftar pesan, selama prefiks yang dikirim dan konfigurasi cache-nya sama, prefiks itu masih berpeluang dipakai ulang.
 >
@@ -593,17 +593,17 @@ Penagihan harus mempertimbangkan penulisan dan pembacaan secara terpisah. Pada s
 
 **Dalam sistem produksi, cache sudah menjadi batasan arsitektur.** Cara menyusun prompt, titik awal sub-Agent, dan cara memulihkan sesi semuanya memengaruhi seberapa banyak komputasi yang dapat dipakai ulang. **Batas cache harus diatur sejak awal desain.** Tentukan dulu isi mana yang dapat dibagi dan status mana yang akan berubah, lalu susun prompt dan struktur sesinya; cara ini mengurangi komputasi ulang berulang selama eksekusi. Jika struktur ini baru diubah setelah latensi dan biaya tugas jangka panjang menjadi masalah, perubahan itu sering kali merembet ke pengelolaan status, sub-Agent, dan pemulihan sesi.
 
-**Susun prefiks menurut tingkat kestabilannya.** Instruksi dan definisi tool yang dipakai bersama oleh banyak tugas dapat diletakkan di depan, disusul data pengguna, status sesi, dan observasi baru, yang dikelompokkan menurut cakupan berlakunya. Misalnya, sistem operasi memiliki dua pilihan, macOS/Linux; mode eksekusi dua pilihan, normal/debug; bahasa dua pilihan, Mandarin/Inggris; tiga kondisi independen ini menghasilkan paling banyak $2\times2\times2=8$ kombinasi prefiks. Meletakkan field yang sering berubah sesudah bagian bersama dapat memperbesar peluang pemakaian ulang prefiks bersama. Cakupan berbagi bagian bersama juga harus mematuhi batas organisasi, workspace, dan privasi layanan.
+**Susun prefiks menurut tingkat kestabilannya.** Instruksi dan definisi alat yang dipakai bersama oleh banyak tugas dapat diletakkan di depan, disusul data pengguna, status sesi, dan observasi baru, yang dikelompokkan menurut cakupan berlakunya. Misalnya, sistem operasi memiliki dua pilihan, macOS/Linux; mode eksekusi dua pilihan, normal/debug; bahasa dua pilihan, Mandarin/Inggris; tiga kondisi independen ini menghasilkan paling banyak $2\times2\times2=8$ kombinasi prefiks. Meletakkan field yang sering berubah sesudah bagian bersama dapat memperbesar peluang pemakaian ulang prefiks bersama. Cakupan berbagi bagian bersama juga harus mematuhi batas organisasi, workspace, dan privasi layanan.
 
-**Pilih titik awal yang dapat dipakai ulang untuk sub-Agent.** Jika sub-Agent mewarisi latar belakang tugas Agent induk, ia dapat memakai ulang prefiks yang identik di kedua pihak, lalu menambahkan subtugasnya sendiri. Prompt, urutan tool, model, dan konfigurasi terkait bersama-sama menentukan cakupan yang dapat dipakai ulang. Sub-Agent yang membutuhkan peran mandiri atau konteks terisolasi menyusun inputnya sesuai tugasnya, lalu memeriksa bagian bersama mana yang cocok untuk dibagi.
+**Pilih titik awal yang dapat dipakai ulang untuk sub-Agent.** Jika sub-Agent mewarisi latar belakang tugas Agent induk, ia dapat memakai ulang prefiks yang identik di kedua pihak, lalu menambahkan subtugasnya sendiri. Prompt, urutan alat, model, dan konfigurasi terkait bersama-sama menentukan cakupan yang dapat dipakai ulang. Sub-Agent yang membutuhkan peran mandiri atau konteks terisolasi menyusun inputnya sesuai tugasnya, lalu memeriksa bagian bersama mana yang cocok untuk dibagi.
 
-**Simpan isi yang sudah dikirim.** Setelah output tool berukuran besar dikompresi menjadi ringkasan atau pratinjau, versi yang benar-benar dikirim ke model harus disimpan. Saat sesi dipulihkan, memutar ulang catatan ini dapat membangun kembali urutan pesan yang konsisten; jika ringkasan dibangkitkan ulang setiap kali pemulihan, rumusan dan prefiksnya dapat berubah. Saat memperbarui ringkasan, terbitkan versi baru dan tetapkan dengan jelas dari titik mana cache akan dibangun ulang.
+**Simpan isi yang sudah dikirim.** Setelah output alat berukuran besar dikompresi menjadi ringkasan atau pratinjau, versi yang benar-benar dikirim ke model harus disimpan. Saat sesi dipulihkan, memutar ulang catatan ini dapat membangun kembali urutan pesan yang konsisten; jika ringkasan dibangkitkan ulang setiap kali pemulihan, rumusan dan prefiksnya dapat berubah. Saat memperbarui ringkasan, terbitkan versi baru dan tetapkan dengan jelas dari titik mana cache akan dibangun ulang.
 
 **Mempertahankan penalaran juga harus memenuhi batasan protokol.** Preserved thinking pada Claude memberikan contoh konkret untuk masalah ini. Dokumentasinya memakai mekanisme ini untuk mencegah distilasi: layanan memeriksa tanda tangan thinking block, model yang membangkitkannya, dan prefiksnya. Pada model yang mendukung pengikatan prefiks, seperti Claude Fable 5.1 dan Claude Opus 5.5, `system` tingkat teratas, `tools`, dan pesan-pesan sebelum blok tersebut bersama-sama membentuk cakupan validasi; mengubah isinya akan membuat blok itu dan thinking block sesudahnya tidak berlaku lagi[^ch2-preserved-thinking].
 
-Misalnya, menulis ulang waktu sistem setiap putaran, merender ulang informasi lingkungan di pesan pertama, atau memotong hasil tool lama di tempatnya, semuanya mengubah prefiks yang terikat pada blok penalaran berikutnya. Setelah validasi terpicu, API dapat mengembalikan galat 400, atau, sesuai konfigurasi `prefix_mismatch_behavior`, membuang blok yang tidak berlaku dan tetap memproses permintaan. Pada kasus kedua, model masih dapat memakai informasi tugas dan hasil tool yang dipertahankan, tetapi penalaran yang tidak berlaku tidak lagi ikut dalam input kali ini. Akun yang dibuat sejak 31 Agustus 2026 mengaktifkan validasi prefiks secara bawaan; cara mengaktifkannya untuk akun yang lebih lama dijelaskan dalam keterangan protokol.
+Misalnya, menulis ulang waktu sistem setiap putaran, merender ulang informasi lingkungan di pesan pertama, atau memotong hasil alat lama di tempatnya, semuanya mengubah prefiks yang terikat pada blok penalaran berikutnya. Setelah validasi terpicu, API dapat mengembalikan galat 400, atau, sesuai konfigurasi `prefix_mismatch_behavior`, membuang blok yang tidak berlaku dan tetap memproses permintaan. Pada kasus kedua, model masih dapat memakai informasi tugas dan hasil alat yang dipertahankan, tetapi penalaran yang tidak berlaku tidak lagi ikut dalam input kali ini. Akun yang dibuat sejak 31 Agustus 2026 mengaktifkan validasi prefiks secara bawaan; cara mengaktifkannya untuk akun yang lebih lama dijelaskan dalam keterangan protokol.
 
-Saat mengintegrasikan protokol semacam ini, jaga agar instruksi tingkat teratas dan himpunan tool dalam sesi tetap stabil, dan tambahkan perubahan status di bagian belakang. Jika instruksi atau tool perlu diperbarui di tengah jalan, gunakan antarmuka yang disediakan layanan tersebut, seperti pesan sistem di dalam sesi atau blok perubahan tool. Pemangkasan thinking block juga harus menjaga rentang yang bersambung dalam urutan aslinya: boleh dihapus dari depan atau dari belakang, atau dihapus seluruhnya; celah di tengah akan memengaruhi blok sesudahnya, dan blok yang sudah sengaja dihapus harus tetap terhapus.
+Saat mengintegrasikan protokol semacam ini, jaga agar instruksi tingkat teratas dan himpunan alat dalam sesi tetap stabil, dan tambahkan perubahan status di bagian belakang. Jika instruksi atau alat perlu diperbarui di tengah jalan, gunakan antarmuka yang disediakan layanan tersebut, seperti pesan sistem di dalam sesi atau blok perubahan alat. Pemangkasan thinking block juga harus menjaga rentang yang bersambung dalam urutan aslinya: boleh dihapus dari depan atau dari belakang, atau dihapus seluruhnya; celah di tengah akan memengaruhi blok sesudahnya, dan blok yang sudah sengaja dihapus harus tetap terhapus.
 
 Ketika model diganti di tengah jalan, layanan juga memeriksa apakah model tujuan dapat membaca blok penalaran dari model asal. Klien harus menyimpan riwayat aslinya dan membiarkan layanan menanganinya menurut aturan kompatibilitas; jika klien menghapusnya sendiri, catatan tersebut tidak dapat dipulihkan ketika nanti beralih kembali ke model asal.
 
@@ -621,7 +621,7 @@ Ketika model diganti di tengah jalan, layanan juga memeriksa apakah model tujuan
 >
 > Penambahan informasi koreksi juga dapat dipadukan dengan cache prefiks yang sudah ada. Pada benchmark online vLLM dalam makalah tersebut, kombinasi ini mempertahankan cache hit rate prefiks sekitar 98,5%, dan latensi token pertama p90 sekitar 1/398 hingga 1/53 dari baseline.
 >
-> **Penulis optimistis terhadap jalur riset ini karena berpotensi membuat pembaruan konteks mempertahankan lebih banyak komputasi yang sudah ada.** Agent sering memperbarui field memori, menambahkan status, atau mengganti definisi tool; jika status terkait dapat dikoreksi dan disambung seperti catatan, biaya memelihara konteks panjang berpeluang turun secara signifikan.
+> **Penulis optimistis terhadap jalur riset ini karena berpotensi membuat pembaruan konteks mempertahankan lebih banyak komputasi yang sudah ada.** Agent sering memperbarui field memori, menambahkan status, atau mengganti definisi alat; jika status terkait dapat dikoreksi dan disambung seperti catatan, biaya memelihara konteks panjang berpeluang turun secara signifikan.
 
 [^ch2-2]: Li, Bojie, Models Take Notes at Prefill: KV Cache Can Be Editable and Composable, 2026. Eksperimen editing, composition, dan cache online memakai tugas dan metrik yang berbeda; pengaturan rincinya dapat dilihat di makalah.
 
@@ -629,8 +629,8 @@ Ketika model diganti di tengah jalan, layanan juga memeriksa apakah model tujuan
 
 Setelah memahami bagaimana cache memakai ulang komputasi, berikutnya kita harus memutuskan apa yang dimasukkan ke input setiap putaran dan bagaimana isi itu diperbarui. Pembahasan selanjutnya terbagi menjadi tiga bagian:
 
-- **Prompt engineering dan Agent Skills**: pertama, rancang instruksi sistem dan definisi tool untuk menjelaskan tujuan, aturan, dan cara operasi; lalu muat pengetahuan domain sesuai kebutuhan melalui progressive disclosure. Pertahanan terhadap prompt injection berfokus pada sumber dan batas instruksi ketika konten eksternal masuk ke konteks.
-- **Agent Status Bar**: menyediakan status seperti kemajuan tugas, ringkasan observasi lingkungan, dan jumlah panggilan kepada model, sehingga mengurangi biaya menurunkannya kembali dari riwayat yang panjang. Ia seperti waktu, baterai, dan status jaringan di ponsel, yang membuat kondisi eksekusi saat ini selalu terlihat.
+- **Prompt engineering dan Agent Skills**: pertama, rancang instruksi sistem dan definisi alat untuk menjelaskan tujuan, aturan, dan cara operasi; lalu muat pengetahuan domain sesuai kebutuhan melalui progressive disclosure. Pertahanan terhadap prompt injection berfokus pada sumber dan batas instruksi ketika konten eksternal masuk ke konteks.
+- **Bilah status Agent**: menyediakan status seperti kemajuan tugas, ringkasan observasi lingkungan, dan jumlah panggilan kepada model, sehingga mengurangi biaya menurunkannya kembali dari riwayat yang panjang. Ia seperti waktu, baterai, dan status jaringan di ponsel, yang membuat kondisi eksekusi saat ini selalu terlihat.
 - **Kompresi konteks**: mempertahankan informasi yang dibutuhkan keputusan berikutnya ketika riwayat bertambah, memutuskan kapan kompresi dilakukan, bagaimana menyusun ringkasan, serta bagaimana menangani komputasi ulang cache dan kelanjutan tugas.
 
 ## Prompt Engineering: Mengoptimalkan System Prompt
@@ -650,56 +650,56 @@ Judul, daftar, dan tag dapat membantu menata prompt yang panjang. Judul Markdown
 Satu prompt dapat memadukan kedua cara penulisan ini:
 
 ```text
-# 工具使用规范
+# Aturan Penggunaan Alat
 
-## 文件操作
+## Operasi Berkas
 <file_operation>
-- 读取文件前检查路径是否存在
-- 修改已有文件前保存备份
+- Periksa apakah jalur ada sebelum membaca berkas
+- Simpan cadangan sebelum mengubah berkas yang sudah ada
 </file_operation>
 
-## 网络请求
+## Permintaan Jaringan
 <network_request>
-- 超时时间设置为 30 秒
-- 短暂故障最多重试 3 次
-- 有外部副作用的请求，重试前先确认执行状态
+- Atur batas waktu 30 detik
+- Untuk gangguan sesaat, coba ulang paling banyak 3 kali
+- Untuk permintaan yang berdampak eksternal, pastikan status eksekusinya sebelum mencoba ulang
 </network_request>
 ```
 
-Markdown menyediakan hierarki yang mudah dibaca, sedangkan `<file_operation>` dan `<network_request>` membatasi cakupan berlakunya aturan. Misalnya, "最多重试 3 次" (coba ulang paling banyak 3 kali) hanya berlaku untuk permintaan jaringan; saat mengubah file, yang berlaku adalah aturan pencadangan pada kelompok sebelumnya.
+Markdown menyediakan hierarki yang mudah dibaca, sedangkan `<file_operation>` dan `<network_request>` membatasi cakupan berlakunya aturan. Misalnya, "coba ulang paling banyak 3 kali" hanya berlaku untuk permintaan jaringan; saat mengubah berkas, yang berlaku adalah aturan pencadangan pada kelompok sebelumnya.
 
 ### Menata Aturan dengan Alur
 
 **Jika tugas memiliki tahapan yang jelas, utamakan penyusunan prompt berdasarkan alur.** Ambil contoh pengembalian dana: pesanan harus ditemukan dulu, baru kemudian dapat dinilai berdasarkan kebijakan pengembalian dana apakah uangnya boleh dikembalikan. Jika pesanan tidak ditemukan, minta pengguna melengkapi informasi seperti nomor pesanan; jika pesanan memenuhi syarat, barulah ajukan pengembalian dana. Jika aturan yang sama ditebar dalam daftar berisi ratusan butir, setiap langkah harus mencari ulang butir yang berlaku. Dengan menuliskan syarat input, urutan penanganan, dan jalan keluar untuk pengecualian pada tahap yang bersangkutan, model memiliki dasar untuk menilai di mana posisinya sekarang dan apa yang harus dilakukan berikutnya.
 
-Berikut contoh pemrosesan file yang merangkai pemeriksaan, klasifikasi, praproses, eksekusi, dan verifikasi menjadi satu prosedur operasi standar (SOP):
+Berikut contoh pemrosesan berkas yang merangkai pemeriksaan, klasifikasi, praproses, eksekusi, dan verifikasi menjadi satu prosedur operasi standar (SOP):
 
 ```text
-文件处理流程
+Alur Pemrosesan Berkas
 
-步骤 1：检查
-  确认文件存在且可以访问
-  文件不存在 → 记录错误，停止处理
+Langkah 1: Pemeriksaan
+  Pastikan berkas ada dan dapat diakses
+  Berkas tidak ada → catat galat, hentikan pemrosesan
   ↓
-步骤 2：分类
-  结合扩展名与文件内容确定类型
+Langkah 2: Klasifikasi
+  Tentukan jenis berkas dari ekstensi dan isinya
   ↓
-步骤 3：预处理
-  配置文件 → 先备份
-  大文件（>1 MB）→ 使用流式处理
+Langkah 3: Praproses
+  Berkas konfigurasi → cadangkan dulu
+  Berkas besar (>1 MB) → gunakan pemrosesan streaming
   ↓
-步骤 4：执行
-  按文件类型执行相应处理
+Langkah 4: Eksekusi
+  Jalankan pemrosesan sesuai jenis berkas
   ↓
-步骤 5：验证
-  检查处理后文件的完整性
+Langkah 5: Verifikasi
+  Periksa keutuhan berkas setelah diproses
 ```
 
-Setiap langkah memberikan satu tujuan lokal, dan aturan terkait diletakkan di bawah langkah tersebut. Jika file tidak ada, proses keluar pada tahap pemeriksaan; jika file konfigurasi perlu diubah, cadangan disimpan pada tahap praproses. Kemajuan eksekusi diberikan kepada model melalui riwayat pesan atau catatan status.
+Setiap langkah memberikan satu tujuan lokal, dan aturan terkait diletakkan di bawah langkah tersebut. Jika berkas tidak ada, proses keluar pada tahap pemeriksaan; jika berkas konfigurasi perlu diubah, cadangan disimpan pada tahap praproses. Kemajuan eksekusi diberikan kepada model melalui riwayat pesan atau catatan status.
 
 ### Merinci Aturan Bisnis: Menuliskan Ketentuan Produk dengan Jelas
 
-Untuk data pesanan yang sama, termasuk jenis permintaan apa, layanan mana yang berlaku, dan berapa biayanya, pertama-tama merupakan ketentuan bisnis yang harus ditegaskan oleh tim produk dan operasional. Implementasi teknisnya kemudian dibagi: prompt memberi tahu model field mana yang harus diperoleh dan layanan mana yang harus ditanya; tool dan sistem bisnis menjalankan penagihan dan batasan yang bersifat deterministik.
+Untuk data pesanan yang sama, termasuk jenis permintaan apa, layanan mana yang berlaku, dan berapa biayanya, pertama-tama merupakan ketentuan bisnis yang harus ditegaskan oleh tim produk dan operasional. Implementasi teknisnya kemudian dibagi: prompt memberi tahu model field mana yang harus diperoleh dan layanan mana yang harus ditanya; alat dan sistem bisnis menjalankan penagihan dan batasan yang bersifat deterministik.
 
 Ambil contoh Agent yang menelepon atas nama pengguna untuk menurunkan biaya langganan atau mengajukan pengembalian dana. Tim ingin menurunkan hambatan untuk mencoba dengan jaminan "jika gagal, uang kembali", sekaligus menetapkan cara penagihan yang jelas untuk tugas khusus. Dapat dirancang tiga jenis penagihan:
 
@@ -715,27 +715,27 @@ Tim juga harus memperkirakan seberapa besar peluang tugas itu berhasil. Permohon
 
 Perhitungan jumlah uang harus menegaskan satuan, dasar perhitungan, dan urutan pembulatan. Misalnya, biaya telepon diakumulasi 0,05 dolar AS per menit, lalu setelah dijumlahkan dibulatkan ke dolar bulat terdekat; jumlah penghematan didasarkan pada tagihan saat ini. Jika tagihan saat ini 150 dolar AS dan merchant mungkin menaikkannya menjadi 180 dolar AS tahun depan, potensi kenaikan yang terhindarkan karena harga saat ini dipertahankan harus ditangani dengan definisi yang telah disepakati sebelumnya, dan tidak boleh otomatis dihitung sebagai penghematan dari penurunan tagihan yang ada.
 
-Saran penulis: **biarkan pemilik produk memimpin desain aturan bisnis**, dengan memelihara definisi-definisi ini berdasarkan data produksi, umpan balik pengguna, dan pengalaman operasional; engineer kemudian menerapkannya ke prompt, parameter tool, logika penagihan, dan aturan validasi.
+Saran penulis: **biarkan pemilik produk memimpin desain aturan bisnis**, dengan memelihara definisi-definisi ini berdasarkan data produksi, umpan balik pengguna, dan pengalaman operasional; engineer kemudian menerapkannya ke prompt, parameter alat, logika penagihan, dan aturan validasi.
 
 ### Few-shot Examples: Menjelaskan Perilaku yang Diharapkan dengan Contoh
 
-Ketika persyaratan output sulit diungkapkan dengan beberapa aturan, **memberikan dua atau tiga contoh berkualitas tinggi lebih langsung daripada terus menumpuk penjelasan abstrak.** Cara ini disebut **few-shot examples (contoh beberapa-bidikan)**. Gaya tulisan tertentu, laporan terstruktur, dan nada layanan pelanggan semuanya cocok ditunjukkan dengan pasangan input dan output yang diharapkan. Model memakai contoh-contoh ini di dalam konteks saat ini untuk mengenali pola, lalu menerapkannya pada permintaan baru.
+Ketika persyaratan output sulit diungkapkan dengan beberapa aturan, **memberikan dua atau tiga contoh berkualitas tinggi lebih langsung daripada terus menumpuk penjelasan abstrak.** Cara ini disebut **few-shot examples** (contoh sedikit-sampel). Gaya tulisan tertentu, laporan terstruktur, dan nada layanan pelanggan semuanya cocok ditunjukkan dengan pasangan input dan output yang diharapkan. Model memakai contoh-contoh ini di dalam konteks saat ini untuk mengenali pola, lalu menerapkannya pada permintaan baru.
 
 Contoh dapat diletakkan di system prompt sebagai isi yang dibagi oleh banyak permintaan; dapat juga disusun sebagai pesan `user`/`assistant` peragaan yang dimuat di awal sesi. **Untuk memproses jenis tugas yang sama berulang kali, penulis lebih memilih kumpulan contoh tetap yang sudah diseleksi.** Contoh tetap juga menjaga prefiks tetap stabil. Jika tugasnya sangat beragam dan contoh tetap tidak dapat mencakupnya, barulah pertimbangkan pencarian contoh per tugas. Saat memakai pemilihan dinamis, instruksi bersama dapat dipertahankan lebih dulu, lalu contoh yang terpilih ditambahkan di bagian belakang.
 
 Dengan aturan penagihan tadi, dua contoh sudah cukup untuk menjelaskan batas yang mudah tertukar. Pengguna yang meminta asisten menegosiasikan biaya bulanan dari 80 dolar AS menjadi 60 dolar AS dapat dikenai komisi atas penghematan; pengguna yang meminta asisten menghentikan layanan berbiaya 80 dolar AS per bulan dikenai biaya tetap untuk pembatalan layanan.
 
-### Desain Definisi Tool
+### Desain Definisi Alat
 
-Definisi tool adalah buku petunjuk operasi bagi Agent. Model harus menilai kapan memanggil tool dari nama dan deskripsinya, lalu mengisi permintaan berdasarkan struktur parameternya. Definisi yang jelas harus membuat model tahu apa yang dapat dilakukan tool, input apa yang dibutuhkan, apa yang dikembalikan, dan syarat apa yang harus dipenuhi sebelum memanggilnya.
+Definisi alat adalah buku petunjuk operasi bagi Agent. Model harus menilai kapan memanggil alat dari nama dan deskripsinya, lalu mengisi permintaan berdasarkan struktur parameternya. Definisi yang jelas harus membuat model tahu apa yang dapat dilakukan alat, input apa yang dibutuhkan, apa yang dikembalikan, dan syarat apa yang harus dipenuhi sebelum memanggilnya.
 
-Informasi ini dapat ditulis sangat spesifik. Misalnya, tool pencarian dapat menyatakan "gunakan tool pencarian khusus untuk mencari isi file"; tool waktu dapat memberikan `timezone: "America/New_York"` untuk menunjukkan penulisan parameter yang sebenarnya; tool pembaca dapat mengingatkan "pembacaan yang saling independen dapat dipanggil sekaligus"; tool penyunting sebaiknya menjelaskan "baca dulu file sasaran, lalu sunting berdasarkan isinya saat ini". Keempat jenis keterangan ini masing-masing menjelaskan batas penggunaan, format parameter, efisiensi eksekusi, dan dependensi awal. Bab 4 akan membahas desain antarmuka tool dengan lebih banyak contoh.
+Informasi ini dapat ditulis sangat spesifik. Misalnya, alat pencarian dapat menyatakan "gunakan alat pencarian khusus untuk mencari isi berkas"; alat waktu dapat memberikan `timezone: "America/New_York"` untuk menunjukkan penulisan parameter yang sebenarnya; alat pembaca dapat mengingatkan "pembacaan yang saling independen dapat dipanggil sekaligus"; alat penyunting sebaiknya menjelaskan "baca dulu berkas sasaran, lalu sunting berdasarkan isinya saat ini". Keempat jenis keterangan ini masing-masing menjelaskan batas penggunaan, format parameter, efisiensi eksekusi, dan dependensi awal. Bab 4 akan membahas desain antarmuka alat dengan lebih banyak contoh.
 
-Jika jumlah tool sedikit, definisi `tools` lengkap dapat disertakan bersama permintaan, dengan nama, isi, dan urutannya dijaga tetap stabil pada putaran-putaran berikutnya. Jika jumlah tool bertambah, definisi lengkap akan memakan banyak konteks dan juga menambah beban model untuk membedakan tool yang mirip. Pada saat itu dapat dipakai **pemuatan sesuai kebutuhan**: model lebih dulu diberi tahu kemampuan apa saja yang ada, lalu schema lengkap tool yang relevan dicari dan dimuat ketika dibutuhkan. Skills di bagian berikutnya juga memakai cara penyusunan "sediakan katalog dulu, muat rinciannya kemudian" ini.
+Jika jumlah alat sedikit, definisi `tools` lengkap dapat disertakan bersama permintaan, dengan nama, isi, dan urutannya dijaga tetap stabil pada putaran-putaran berikutnya. Jika jumlah alat bertambah, definisi lengkap akan memakan banyak konteks dan juga menambah beban model untuk membedakan alat yang mirip. Pada saat itu dapat dipakai **pemuatan sesuai kebutuhan**: model lebih dulu diberi tahu kemampuan apa saja yang ada, lalu schema lengkap alat yang relevan dicari dan dimuat ketika dibutuhkan. Skills di bagian berikutnya juga memakai cara penyusunan "sediakan katalog dulu, muat rinciannya kemudian" ini.
 
-OpenAI Responses API menandai tool yang dimuat tertunda dengan `defer_loading: true`. Dalam alur pencarian tool yang dikelola klien, model mengeluarkan `tool_search_call`, dan klien mengembalikan definisi tool yang terpilih melalui `tool_search_output`; tool yang sering dipakai juga dapat disediakan langsung dan dipakai bersama tool yang dimuat tertunda[^ch2-toolsearch-oai]. Pada model dan konfigurasi layanan yang mendukung pencarian tool, Claude Code secara bawaan memuat tool MCP sesuai kebutuhan: di awal sesi hanya nama tool dan keterangan server yang diberikan, dan definisi lengkap dimuat setelah pencarian. Claude Code juga menyediakan mode ambang, yang mengaktifkan pemuatan tertunda setelah definisi tool mencapai porsi konteks tertentu[^ch2-toolsearch-cc]. Template penemuan tool Apps/Connectors di Codex memakai BM25 untuk mencari metadata tool, lalu menyediakan tool yang cocok untuk panggilan model berikutnya[^ch2-toolsearch-codex].
+OpenAI Responses API menandai alat yang dimuat tertunda dengan `defer_loading: true`. Dalam alur pencarian alat yang dikelola klien, model mengeluarkan `tool_search_call`, dan klien mengembalikan definisi alat yang terpilih melalui `tool_search_output`; alat yang sering dipakai juga dapat disediakan langsung dan dipakai bersama alat yang dimuat tertunda[^ch2-toolsearch-oai]. Pada model dan konfigurasi layanan yang mendukung pencarian alat, Claude Code secara bawaan memuat alat MCP sesuai kebutuhan: di awal sesi hanya nama alat dan keterangan server yang diberikan, dan definisi lengkap dimuat setelah pencarian. Claude Code juga menyediakan mode ambang, yang mengaktifkan pemuatan tertunda setelah definisi alat mencapai porsi konteks tertentu[^ch2-toolsearch-cc]. Template penemuan alat Apps/Connectors di Codex memakai BM25 untuk mencari metadata alat, lalu menyediakan alat yang cocok untuk panggilan model berikutnya[^ch2-toolsearch-codex].
 
-Pemuatan sesuai kebutuhan juga harus selaras dengan cache prefiks. Pada antarmuka yang mendukung penambahan definisi tool di dalam sesi, isi yang sudah ada tetap di tempatnya, dan definisi baru masuk ke konteks berikutnya bersama hasil penemuan. Dalam causal attention, K dan V setiap token hanya bergantung pada token itu sendiri dan isi sebelumnya, sehingga isi baru di akhir dapat mempertahankan syarat pemakaian ulang prefiks sebelumnya. Putaran-putaran berikutnya terus menambahkan pesan sesudah riwayat ini, dan definisi yang sudah dimuat tetap berada di posisi semula. Sebagian antarmuka memasukkan tool baru ke himpunan `tools` di awal permintaan. Akibatnya, pesan riwayat yang berada sesudah definisi baru itu harus dihitung ulang, meskipun isinya sama sekali tidak berubah.
+Pemuatan sesuai kebutuhan juga harus selaras dengan cache prefiks. Pada antarmuka yang mendukung penambahan definisi alat di dalam sesi, isi yang sudah ada tetap di tempatnya, dan definisi baru masuk ke konteks berikutnya bersama hasil penemuan. Dalam causal attention, K dan V setiap token hanya bergantung pada token itu sendiri dan isi sebelumnya, sehingga isi baru di akhir dapat mempertahankan syarat pemakaian ulang prefiks sebelumnya. Putaran-putaran berikutnya terus menambahkan pesan sesudah riwayat ini, dan definisi yang sudah dimuat tetap berada di posisi semula. Sebagian antarmuka memasukkan alat baru ke himpunan `tools` di awal permintaan. Akibatnya, pesan riwayat yang berada sesudah definisi baru itu harus dihitung ulang, meskipun isinya sama sekali tidak berubah.
 
 [^ch2-toolsearch-oai]: OpenAI, Tool search, dokumentasi Responses API.
 [^ch2-toolsearch-cc]: Anthropic, Scale with MCP tool search, dokumentasi Claude Code.
@@ -743,15 +743,15 @@ Pemuatan sesuai kebutuhan juga harus selaras dengan cache prefiks. Pada antarmuk
 
 > **Eksperimen 2-4 ★★: Eksperimen Ablasi Prompt Engineering**
 >
-> Dalam satu prompt, apa peran nada, penataan informasi, dan keterangan tool masing-masing? Eksperimen ini memakai tugas layanan pelanggan maskapai dari τ-bench sebagai pembanding. τ-bench membangun skenario interaksi melalui simulasi pengguna, tool bisnis, dan aturan, lalu memeriksa status tujuan setelah tugas selesai; maskapai dan ritel adalah dua domain tugas di dalamnya[^ch2-tau-bench].
+> Dalam satu prompt, apa peran nada, penataan informasi, dan keterangan alat masing-masing? Eksperimen ini memakai tugas layanan pelanggan maskapai dari τ-bench sebagai pembanding. τ-bench membangun skenario interaksi melalui simulasi pengguna, alat bisnis, dan aturan, lalu memeriksa status tujuan setelah tugas selesai; maskapai dan ritel adalah dua domain tugas di dalamnya[^ch2-tau-bench].
 >
-> Kali ini Kimi K3 dipakai sebagai model pelaksana dan model simulasi pengguna, dengan enam konfigurasi dijalankan pada sepuluh tugas layanan pelanggan maskapai yang sama. Baseline mempertahankan aturan terstruktur, deskripsi tool yang lengkap, dan nada profesional yang netral; konfigurasi lainnya masing-masing mengubah nada, mengacak penataan aturan, menghapus deskripsi tool, dan menambahkan satu kelompok perubahan gabungan.
+> Kali ini Kimi K3 dipakai sebagai model pelaksana dan model simulasi pengguna, dengan enam konfigurasi dijalankan pada sepuluh tugas layanan pelanggan maskapai yang sama. Baseline mempertahankan aturan terstruktur, deskripsi alat yang lengkap, dan nada profesional yang netral; konfigurasi lainnya masing-masing mengubah nada, mengacak penataan aturan, menghapus deskripsi alat, dan menambahkan satu kelompok perubahan gabungan.
 >
 > **Perbandingan nada** mempertahankan aturan tugas tetapi mengubah cara penyampaian. Gaya Trump memakai retorika yang berlebihan dan penuh percaya diri, misalnya "saya akan memesankan Anda penerbangan terbaik sepanjang sejarah"; gaya Casual memakai nada santai dan emoji.
 >
 > **Perbandingan penataan informasi** mempertahankan isi aturan tetapi mengacak judul dan urutannya.
 >
-> **Perbandingan deskripsi tool** mempertahankan nama, signature fungsi, dan struktur parameter, tetapi menghapus teks deskripsinya. Nama tool dan schema itu sendiri juga membawa informasi; kinerja setelah deskripsi dihapus bergantung pada apakah informasi yang tersisa cukup untuk mendukung tugas saat ini.
+> **Perbandingan deskripsi alat** mempertahankan nama, signature fungsi, dan struktur parameter, tetapi menghapus teks deskripsinya. Nama alat dan schema itu sendiri juga membawa informasi; kinerja setelah deskripsi dihapus bergantung pada apakah informasi yang tersisa cukup untuk mendukung tugas saat ini.
 >
 > Dari sepuluh tugas kali ini, baseline lolos tujuh, nada Trump dan Casual masing-masing lolos enam dan sembilan, penataan yang diacak lolos delapan, penghapusan deskripsi lolos sembilan, dan perubahan gabungan lolos delapan.
 
@@ -759,29 +759,29 @@ Pemuatan sesuai kebutuhan juga harus selaras dengan cache prefiks. Pada antarmuk
 
 ### Prompt Injection: Ancaman Inti terhadap Keamanan Konteks
 
-Untuk menyelesaikan tugas, Agent perlu membaca halaman web, email, dokumen, dan nilai kembalian tool. Isi-isi ini juga dapat menyisipkan instruksi yang berusaha mengubah tujuan tugas. **Prompt injection** memanfaatkan fakta bahwa instruksi dan bahan yang sedang diproses sama-sama masuk ke konteks model, untuk membujuk model memperlakukan isi dari sumber berkepercayaan rendah sebagai dasar tindakan. Misalnya, pengguna meminta ringkasan sebuah halaman web, tetapi halaman itu justru meminta Agent melakukan operasi lain yang tidak berkaitan dengan peringkasan. Sistem harus mempertahankan tujuan tugas pengguna dan memperlakukan permintaan di halaman web sebagai isi yang sedang dianalisis.
+Untuk menyelesaikan tugas, Agent perlu membaca halaman web, email, dokumen, dan nilai kembalian alat. Isi-isi ini juga dapat menyisipkan instruksi yang berusaha mengubah tujuan tugas. **Prompt injection** memanfaatkan fakta bahwa instruksi dan bahan yang sedang diproses sama-sama masuk ke konteks model, untuk membujuk model memperlakukan isi dari sumber berkepercayaan rendah sebagai dasar tindakan. Misalnya, pengguna meminta ringkasan sebuah halaman web, tetapi halaman itu justru meminta Agent melakukan operasi lain yang tidak berkaitan dengan peringkasan. Sistem harus mempertahankan tujuan tugas pengguna dan memperlakukan permintaan di halaman web sebagai isi yang sedang dianalisis.
 
-Tool call meneruskan penyimpangan semacam ini ke lingkungan luar. Ringkasan yang keliru dapat menyesatkan pengguna, sedangkan perubahan file, pengiriman email, dan pengungkapan data tanpa izin langsung mengubah status sistem. Saat menganalisis risiko, periksa lapis demi lapis mengikuti rantai "pintu masuk konten — penyusunan konteks — keputusan panggilan — eksekusi nyata": melalui tool apa konten eksternal masuk, apakah informasi sumbernya dipertahankan, operasi apa yang diminta model, dan apakah lapisan eksekusi mengizinkan operasi tersebut[^ch2-injection-defense].
+Pemanggilan alat meneruskan penyimpangan semacam ini ke lingkungan luar. Ringkasan yang keliru dapat menyesatkan pengguna, sedangkan perubahan berkas, pengiriman email, dan pengungkapan data tanpa izin langsung mengubah status sistem. Saat menganalisis risiko, periksa lapis demi lapis mengikuti rantai "pintu masuk konten — penyusunan konteks — keputusan panggilan — eksekusi nyata": melalui alat apa konten eksternal masuk, apakah informasi sumbernya dipertahankan, operasi apa yang diminta model, dan apakah lapisan eksekusi mengizinkan operasi tersebut[^ch2-injection-defense].
 
 Penyusunan konteks pertama-tama harus menjaga batas sumber dan izin:
 
 - **Penandaan sumber**. Ketika bahan eksternal masuk ke konteks, pertahankan sumbernya, entah halaman web, email, atau dokumen, dan bungkus isinya dengan batas yang jelas. Misalnya, `<external_content source="webpage">...</external_content>` menyatakan bahwa isinya adalah bahan dari halaman web. Tanda dan atributnya dibangkitkan oleh Harness, sedangkan teks eksternal diletakkan di area data yang terkendali.
-- **Peran terstruktur**. Aturan sistem, permintaan pengguna, dan hasil tool disampaikan secara terpisah sesuai konvensi antarmuka. Hasil tool berpasangan dengan ID panggilan, sehingga mudah ditelusuri dari mana isinya berasal. Ketika dirangkum atau diteruskan ke Agent lain, hubungan sumber ini juga harus dipertahankan.
+- **Peran terstruktur**. Aturan sistem, permintaan pengguna, dan hasil alat disampaikan secara terpisah sesuai konvensi antarmuka. Hasil alat berpasangan dengan ID panggilan, sehingga mudah ditelusuri dari mana isinya berasal. Ketika dirangkum atau diteruskan ke Agent lain, hubungan sumber ini juga harus dipertahankan.
 - **Pemeriksaan input**. Deteksi isi berbentuk instruksi yang menyimpang dari tugas, dan bersihkan isi tak relevan yang terbawa oleh proses parsing. Hasil pemeriksaan dapat dipakai oleh model dan lapisan eksekusi; keputusan otorisasi tetap didasarkan pada permintaan pengguna dan izin sistem.
 
-Skills dan status runtime juga perlu dikelola sumbernya. Saat memasang Skill pihak ketiga, periksa instruksi, dokumen rujukan, dan skrip yang dibundelnya, dan pastikan operasi yang dimintanya sesuai dengan kegunaannya. Kemajuan tugas, izin, dan hitungan di status bar harus dipelihara oleh runtime; fakta yang diekstrak dari halaman web tetap mempertahankan label sumber eksternalnya. Dengan begitu, setelah informasi dirangkum, dipindahkan, atau dimuat ulang, sistem tetap dapat mengenali batas kepercayaan aslinya.
+Skills dan status runtime juga perlu dikelola sumbernya. Saat memasang Skill pihak ketiga, periksa instruksi, dokumen rujukan, dan skrip yang dibundelnya, dan pastikan operasi yang dimintanya sesuai dengan kegunaannya. Kemajuan tugas, izin, dan hitungan di bilah status harus dipelihara oleh runtime; fakta yang diekstrak dari halaman web tetap mempertahankan label sumber eksternalnya. Dengan begitu, setelah informasi dirangkum, dipindahkan, atau dimuat ulang, sistem tetap dapat mengenali batas kepercayaan aslinya.
 
-Lapisan eksekusi bertugas menegakkan batas-batas ini: cakupan akses tool dikendalikan oleh izin, aktivitas file dan proses dibatasi oleh sandbox, dan operasi berisiko tinggi dikonfirmasi sesuai aturan. Sekalipun model mengajukan panggilan yang melampaui wewenang, Harness dan lingkungan harus mencegatnya sebelum dieksekusi. Bab 4 dan Bab 5 akan menguraikan mekanisme ini, sedangkan Bab 3 membahas pengelolaan sumber pada konten hasil pencarian dan memori jangka panjang.
+Lapisan eksekusi bertugas menegakkan batas-batas ini: cakupan akses alat dikendalikan oleh izin, aktivitas berkas dan proses dibatasi oleh sandbox, dan operasi berisiko tinggi dikonfirmasi sesuai aturan. Sekalipun model mengajukan panggilan yang melampaui wewenang, Harness dan lingkungan harus mencegatnya sebelum dieksekusi. Bab 4 dan Bab 5 akan menguraikan mekanisme ini, sedangkan Bab 3 membahas pengelolaan sumber pada konten hasil pencarian dan memori jangka panjang.
 
 [^ch2-injection-defense]: Anthropic, How we contain Claude across products.
 
 > **Eksperimen 2-5 ★★: Eksperimen Serangan dan Pertahanan Prompt Injection**
 >
-> Eksperimen ini memeriksa bagaimana sistem mempertahankan tujuan tugas dan izin operasi setelah konten eksternal masuk ke konteks. Eksperimen dilakukan di workspace terisolasi dengan data sintetis; pembacaan halaman web, penulisan file, dan output email semuanya memiliki catatan yang dapat diperiksa.
+> Eksperimen ini memeriksa bagaimana sistem mempertahankan tujuan tugas dan izin operasi setelah konten eksternal masuk ke konteks. Eksperimen dilakukan di workspace terisolasi dengan data sintetis; pembacaan halaman web, penulisan berkas, dan output email semuanya memiliki catatan yang dapat diperiksa.
 >
 > Tiga jenis skenario masing-masing mencakup permintaan langsung, isi halaman web, dan memori lintas sesi. Skenario permintaan langsung memeriksa apakah model mematuhi aturan output untuk informasi terlindung sintetis; skenario halaman web memeriksa apakah tugas peringkasan memicu penulisan tanpa izin; skenario memori memeriksa apakah bahan eksternal yang diubah menjadi memori memengaruhi operasi di sesi baru.
 >
-> Empat konfigurasi menambahkan pertahanan lapis demi lapis: baseline berisi aturan dasar perlindungan informasi dan konfirmasi operasi; kelompok kedua menambahkan petunjuk tentang batas sumber dan instruksi; kelompok ketiga juga menandai sumber konten eksternal; kelompok keempat menambahkan pemeriksaan otorisasi runtime yang memvalidasi izin untuk penulisan file dan pengiriman email.
+> Empat konfigurasi menambahkan pertahanan lapis demi lapis: baseline berisi aturan dasar perlindungan informasi dan konfirmasi operasi; kelompok kedua menambahkan petunjuk tentang batas sumber dan instruksi; kelompok ketiga juga menandai sumber konten eksternal; kelompok keempat menambahkan pemeriksaan otorisasi runtime yang memvalidasi izin untuk penulisan berkas dan pengiriman email.
 >
 > Run Kimi K3 kali ini mencakup tiga jenis skenario dan empat konfigurasi, dengan setiap kombinasi diulang lima kali, total enam puluh kali; tidak satu pun mencapai tujuan serangan yang telah ditetapkan.
 
@@ -799,15 +799,15 @@ Saat menangani pengembalian dana, model dapat lebih dulu menemukan panduan penge
 
 Mari kembali ke sepuluh barang dari Bab 1 untuk menilai informasi mana yang layak ditulis sebagai Skill. Misalkan pengguna ingin membandingkan harga akhir termasuk ongkos kirim; cukup memasukkan rincian dan alamat pengiriman kali ini ke konteks saat ini. Jika tim berulang kali membandingkan harga lintas merchant, cara menyamakan spesifikasi, membedakan harga satuan dan harga paket, serta menandai ongkos kirim yang belum diketahui dapat dirapikan menjadi sebuah Skill perbandingan harga. Lain kali, jika seseorang hanya ingin melihat model apa saja yang tersedia, katalognya tetap terlihat, sedangkan seluruh alur pengecekan harga dapat menunggu sampai pengguna benar-benar perlu membandingkan harga.
 
-**Lapisan pertama adalah metadata.** Setiap Skill mendeskripsikan dirinya dengan `SKILL.md`; YAML frontmatter di awal file dibatasi oleh `---` dan berisi `name` serta `description`. Runtime lebih dulu menyusun nama dan deskripsi menjadi katalog, agar model dapat menilai Skill mana yang dibutuhkan tugas saat ini. Susunan dan penyajian katalog dikelola oleh Harness, dan alur lengkapnya dimuat setelah Skill terpilih.
+**Lapisan pertama adalah metadata.** Setiap Skill mendeskripsikan dirinya dengan `SKILL.md`; YAML frontmatter di awal berkas dibatasi oleh `---` dan berisi `name` serta `description`. Runtime lebih dulu menyusun nama dan deskripsi menjadi katalog, agar model dapat menilai Skill mana yang dibutuhkan tugas saat ini. Susunan dan penyajian katalog dikelola oleh Harness, dan alur lengkapnya dimuat setelah Skill terpilih.
 
 **Deskripsi Skill pertama-tama harus ditulis sebagai syarat perutean.** Model harus memutuskan apakah akan memakainya sebelum memuat isinya, sehingga `description` harus lebih dulu menjelaskan kapan Skill berlaku dan kapan harus dilewati, baru kemudian merangkum apa yang dapat dilakukannya. Misalnya, "help with backend" cakupannya terlalu luas, sehingga hampir semua tugas backend bisa cocok; "menulis integration test untuk antarmuka HTTP yang sudah ada, mencakup autentikasi, validasi parameter, dan respons galat" memberikan cakupan yang jelas. Untuk tugas yang mudah tertukar, dapat ditambahkan syarat pengecualian, misalnya "tidak perlu dipakai jika hanya membahas rancangan antarmuka".
 
-**Lapisan kedua adalah alur inti.** Setelah Skill terpilih, runtime memasukkan instruksi lengkapnya ke konteks. Jika pengguna secara eksplisit mengetik perintah seperti `/pptx`, klien dapat langsung mencari dan memuatnya; jika model memilih sendiri, isinya diperoleh melalui tool Skill atau tool pembaca file. Cara pertama menghemat langkah model mengajukan panggilan aktivasi, sedangkan cara kedua menyimpan pemilihan dan pemuatan di dalam trajectory eksekusi.
+**Lapisan kedua adalah alur inti.** Setelah Skill terpilih, runtime memasukkan instruksi lengkapnya ke konteks. Jika pengguna secara eksplisit mengetik perintah seperti `/pptx`, klien dapat langsung mencari dan memuatnya; jika model memilih sendiri, isinya diperoleh melalui alat Skill atau alat pembaca berkas. Cara pertama menghemat langkah model mengajukan panggilan aktivasi, sedangkan cara kedua menyimpan pemilihan dan pemuatan di dalam trajektori eksekusi.
 
 Ambil contoh PPTX Skill yang dipakai dalam eksperimen buku ini. Keterangan intinya memperkenalkan beberapa jalur yang umum: mengekstrak teks presentasi dengan markitdown dari Microsoft, membongkar PPTX untuk melihat XML di dalamnya, serta memilih alur kerja untuk membuat presentasi baru atau menyunting presentasi yang sudah ada. Setelah membaca lapisan keterangan ini, model dapat memutuskan, sesuai tugas saat ini, bahan mana yang harus dibaca berikutnya dan jenis skrip apa yang harus dipanggil[^ch2-4].
 
-**Lapisan ketiga adalah bahan rinci.** Operasi yang rumit tersebar di dokumen-dokumen khusus, dan file utama menyediakan pintu masuknya. Pada versi yang dipakai buku ini, `html2pptx.md` menjelaskan cara membangkitkan presentasi melalui HTML, sementara dokumen rujukan lain melengkapi rincian format dan penyuntingan. Agent terus membaca isi ini sesuai tugasnya, dan memakai skrip, aset, serta templat yang dibundel untuk menyelesaikan operasi.
+**Lapisan ketiga adalah bahan rinci.** Operasi yang rumit tersebar di dokumen-dokumen khusus, dan berkas utama menyediakan pintu masuknya. Pada versi yang dipakai buku ini, `html2pptx.md` menjelaskan cara membangkitkan presentasi melalui HTML, sementara dokumen rujukan lain melengkapi rincian format dan penyuntingan. Agent terus membaca isi ini sesuai tugasnya, dan memakai skrip, aset, serta templat yang dibundel untuk menyelesaikan operasi.
 
 [^ch2-3]: Anthropic, Equipping Agents for the Real World with Agent Skills, 2025; Agent Skills, How to add skills support to your agent.
 [^ch2-4]: Anthropic, PPTX Skill. Eksperimen buku ini memakai versi tetap yang memuat alur konversi HTML; versi dan cara menjalankannya dapat dilihat di README eksperimen pendamping.
@@ -829,9 +829,9 @@ Aturan dapat ditulis menurut pola "cakupan, tindakan, pengecualian, cara verifik
 
 Sebagai permulaan, pilih tiga sampai lima artikel orisinal yang Anda sukai, minta Agent merangkum pilihan kata, pola kalimat, susunan paragraf, dan nadanya, lalu bangkitkan versi awal sekitar dua puluh baris. Selanjutnya, gunakan versi itu untuk menulis topik baru, dan biarkan penulis merevisinya kalimat demi kalimat. Perbedaan sebelum dan sesudah revisi memberikan umpan balik yang lebih konkret: kata mana yang berlebihan, kalimat mana yang perlu dipecah, di mana fakta kurang, dan di mana rincian teknis perlu dikembalikan. Rangkum revisi yang muncul berulang kali menjadi aturan, dan pertahankan contoh serta cakupan berlakunya.
 
-Skill juga dapat menyertakan tool eksekusi dan templat. Misalnya, PPTX Skill menyatukan keterangan operasi, skrip parsing, skrip pembangkit, dan aset tata letak, sehingga model dapat memanggil sumber daya yang sesuai dengan mengikuti keterangannya. Setiap Skill dapat diuji, diperbarui, dan dikelola versinya secara mandiri, dan anggota tim dapat terus menambahkan pengalaman pada alur yang sama. **Nilai jangka panjang Skills terletak pada kemampuannya membuat pengalaman domain dapat dikumpulkan secara tersebar, diterbitkan secara mandiri, dan dipakai ulang.** Saat memperluas kemampuan Agent, tim dapat memelihara Skill sesuai keahlian masing-masing, sehingga lambat laun terbentuk ekosistem paket perangkat lunak mirip pip dan npm. Skill-skill ini dapat berbagi mekanisme penemuan, pemuatan, dan eksekusi yang disediakan sistem utama.
+Skill juga dapat menyertakan alat eksekusi dan templat. Misalnya, PPTX Skill menyatukan keterangan operasi, skrip parsing, skrip pembangkit, dan aset tata letak, sehingga model dapat memanggil sumber daya yang sesuai dengan mengikuti keterangannya. Setiap Skill dapat diuji, diperbarui, dan dikelola versinya secara mandiri, dan anggota tim dapat terus menambahkan pengalaman pada alur yang sama. **Nilai jangka panjang Skills terletak pada kemampuannya membuat pengalaman domain dapat dikumpulkan secara tersebar, diterbitkan secara mandiri, dan dipakai ulang.** Saat memperluas kemampuan Agent, tim dapat memelihara Skill sesuai keahlian masing-masing, sehingga lambat laun terbentuk ekosistem paket perangkat lunak mirip pip dan npm. Skill-skill ini dapat berbagi mekanisme penemuan, pemuatan, dan eksekusi yang disediakan sistem utama.
 
-**Saat merancang cara interaksi, utamakan pola yang sudah dilatihkan dan disesuaikan pada model.** Pembagian peran, format hasil tool, dan cara memuat Skill semuanya memengaruhi bagaimana model melanjutkan tugas. Alur standar yang disediakan vendor cocok sebagai titik awal, karena mengurangi beban model untuk menyimpulkan ulang makna dari format yang asing.
+**Saat merancang cara interaksi, utamakan pola yang sudah dilatihkan dan disesuaikan pada model.** Pembagian peran, format hasil alat, dan cara memuat Skill semuanya memengaruhi bagaimana model melanjutkan tugas. Alur standar yang disediakan vendor cocok sebagai titik awal, karena mengurangi beban model untuk menyimpulkan ulang makna dari format yang asing.
 
 [^ch2-baoyu-remove-ai-writing-flavor]: 宝玉, 《别再用提示词去 AI 味了，方向就是错的》, 2026-02-14.
 
@@ -839,31 +839,31 @@ Skill juga dapat menyertakan tool eksekusi dan templat. Misalnya, PPTX Skill men
 
 Biaya konteks Skills terbagi atas katalog dan isi. Katalog membuat model dapat menemukan kemampuan yang tersedia, sedangkan isi menyediakan alur operasi setelah Skill terpilih. Spesifikasinya mewajibkan pemuatan sesuai kebutuhan, sedangkan peran pesan, pembungkus, dan cara pembaruan yang konkret diimplementasikan oleh Harness.
 
-Claude Code menambahkan instruksi Skill ke sesi sebagai pesan `user` di posisi pemanggilan[^ch2-cc-skill-inject]. Gambar 2-12 memperlihatkan salah satu susunan pesan ketika model memicu Skill sendiri: model lebih dulu mengeluarkan panggilan `Skill(skill: "pptx")`, menerima respons tool, lalu membaca isi Skill yang ditambahkan. Jika memakai tool aktivasi khusus, respons tool dapat berfungsi sebagai konfirmasi panggilan, dan isinya disuntikkan terpisah oleh Harness; jika memakai tool pembaca file biasa, isinya juga dapat langsung termuat di dalam hasil tool. Ketika pengguna secara eksplisit mengetik `/pptx`, klien dapat langsung menjabarkan instruksinya, sehingga menghemat langkah model mengajukan panggilan aktivasi.
+Claude Code menambahkan instruksi Skill ke sesi sebagai pesan `user` di posisi pemanggilan[^ch2-cc-skill-inject]. Gambar 2-12 memperlihatkan salah satu susunan pesan ketika model memicu Skill sendiri: model lebih dulu mengeluarkan panggilan `Skill(skill: "pptx")`, menerima respons alat, lalu membaca isi Skill yang ditambahkan. Jika memakai alat aktivasi khusus, respons alat dapat berfungsi sebagai konfirmasi panggilan, dan isinya disuntikkan terpisah oleh Harness; jika memakai alat pembaca berkas biasa, isinya juga dapat langsung termuat di dalam hasil alat. Ketika pengguna secara eksplisit mengetik `/pptx`, klien dapat langsung menjabarkan instruksinya, sehingga menghemat langkah model mengajukan panggilan aktivasi.
 
-![Gambar 2-12 Struktur lengkap Agent Trajectory setelah Skills diaktifkan](images/revised/fig2-12.svg){height=55%}
+![Gambar 2-12 Struktur lengkap trajektori Agent setelah Skills diaktifkan](images/revised/fig2-12.svg){height=55%}
 
 Implementasi Skills di Codex juga menyusun katalog kemampuan dan instruksi terpilih secara terpisah. Dalam kode sumber publiknya, sebagian katalog masuk ke konteks `developer`, sebagian lain diberikan bersama putaran saat ini dan lingkungan eksekusi; Skill yang dipilih secara eksplisit ditambahkan melalui potongan konteks pengguna. Sumber katalog dan lingkungan eksekusi yang tersedia memengaruhi susunan konkretnya[^ch2-codex-skills].
 
 Gambar 2-13 memperlihatkan pertumbuhan cache saat pemuatan sesuai kebutuhan, dengan permintaan yang belum memiliki cache yang dapat dipakai ulang sebagai titik awal. Katalog harus diproses saat pertama kali masuk ke permintaan, dan pemuatan isi untuk pertama kalinya juga menambah komputasi; ketika permintaan berikutnya mempertahankan prefiks yang sama, isi-isi ini berpeluang dibaca dari cache. Menambahkan isi baru di posisi pemanggilan dapat menjaga pesan-pesan sebelumnya tetap stabil. Keterangan yang sudah dimuat tetap berada di riwayat, dan jika perlu diperbarui, ditangani menurut strategi konteks runtime.
 
-![Gambar 2-13 Evolusi KV Cache seiring pertumbuhan Agent Trajectory](images/revised/fig2-13.svg)
+![Gambar 2-13 Evolusi KV Cache seiring pertumbuhan trajektori Agent](images/revised/fig2-13.svg)
 
-### Hubungan antara Skills dan Tool
+### Hubungan antara Skills dan Alat
 
-Skill menyediakan pengetahuan tugas dan alur operasi, sedangkan tool bertugas membaca, mengeksekusi, dan memperoleh hasil. Tujuh tool inti yang diperkenalkan di Bab 5 dapat dipadukan dengan berbagai Skill: tool pembaca file yang sama dapat membaca panduan presentasi maupun standar kode, dan eksekutor umum dapat menjalankan skrip yang sesuai. Dengan demikian, kemampuan khusus dapat diperluas melalui alur dan sumber daya, sementara himpunan tool dasar tetap relatif stabil.
+Skill menyediakan pengetahuan tugas dan alur operasi, sedangkan alat bertugas membaca, mengeksekusi, dan memperoleh hasil. Tujuh alat inti yang diperkenalkan di Bab 5 dapat dipadukan dengan berbagai Skill: alat pembaca berkas yang sama dapat membaca panduan presentasi maupun standar kode, dan eksekutor umum dapat menjalankan skrip yang sesuai. Dengan demikian, kemampuan khusus dapat diperluas melalui alur dan sumber daya, sementara himpunan alat dasar tetap relatif stabil.
 
-Tool khusus juga dapat dipakai bersama Skill. Pencarian tool yang dibahas sebelumnya bertugas menyediakan definisi tool sesuai kebutuhan, sedangkan Skill menjelaskan kapan memanggil, bagaimana merangkai, dan bagaimana memeriksa hasilnya. Keduanya sama-sama perlu mengendalikan jumlah informasi yang selalu ada dan mengatur posisi yang tepat untuk isi yang baru dimuat. Bab 4 akan membahas pertimbangan antara eksekutor umum dan tool khusus, dan Bab 9 lebih jauh membahas apakah pengalaman lebih cocok disimpan sebagai pengetahuan, instruksi, program, atau parameter model.
+Alat khusus juga dapat dipakai bersama Skill. Pencarian alat yang dibahas sebelumnya bertugas menyediakan definisi alat sesuai kebutuhan, sedangkan Skill menjelaskan kapan memanggil, bagaimana merangkai, dan bagaimana memeriksa hasilnya. Keduanya sama-sama perlu mengendalikan jumlah informasi yang selalu ada dan mengatur posisi yang tepat untuk isi yang baru dimuat. Bab 4 akan membahas pertimbangan antara eksekutor umum dan alat khusus, dan Bab 9 lebih jauh membahas apakah pengalaman lebih cocok disimpan sebagai pengetahuan, instruksi, program, atau parameter model.
 
 > **Eksperimen 2-6 ★★: Membuat Presentasi dari Makalah dengan Agent Skills**
 >
 > Eksperimen ini memakai *Attention Is All You Need* sebagai bahan untuk memperagakan bagaimana Agent memuat alur profesional pembuatan presentasi sesuai kebutuhan. Tugasnya adalah membangkitkan presentasi sepuluh sampai lima belas halaman dari PDF makalah, mencakup latar belakang masalah, metode, hasil utama, dan kesimpulan, serta memakai gambar dan tabel dari makalah untuk membantu penjelasan.
 >
-> Run kali ini memakai Kimi Code dan PPTX Skill resmi dari Anthropic. Agent lebih dulu menemukan PPTX Skill di katalog, membaca keterangan operasinya, lalu membaca panduan konversi HTML, memanggil tool pembangkit pendamping, dan akhirnya memeriksa tata letak melalui thumbnail dan render per halaman. Bahan yang dibaca pada setiap langkah melayani operasi berikutnya, dan alur pembuatan yang lengkap terbentang secara bertahap mengikuti tugas.
+> Run kali ini memakai Kimi Code dan PPTX Skill resmi dari Anthropic. Agent lebih dulu menemukan PPTX Skill di katalog, membaca keterangan operasinya, lalu membaca panduan konversi HTML, memanggil alat pembangkit pendamping, dan akhirnya memeriksa tata letak melalui thumbnail dan render per halaman. Bahan yang dibaca pada setiap langkah melayani operasi berikutnya, dan alur pembuatan yang lengkap terbentang secara bertahap mengikuti tugas.
 >
 > Naskah jadinya berisi tiga belas halaman, memuat diagram arsitektur, diagram mekanisme attention, tabel hasil eksperimen, dan gambar visualisasi attention dari makalah.
 >
-> Pemeriksaan setelah pembangkitan juga merupakan bagian dari alur kerja Skill. Dalam run ini sempat muncul subscript yang hilang, butir daftar yang tidak normal, jalur rujukan gambar yang salah, dan masalah presisi label angka; Agent memperbaikinya satu per satu berdasarkan hasil render dan pemeriksaan struktur. File akhirnya lolos pemeriksaan struktur, lalu dibuka ulang dan dirender dengan LibreOffice.
+> Pemeriksaan setelah pembangkitan juga merupakan bagian dari alur kerja Skill. Dalam run ini sempat muncul subscript yang hilang, butir daftar yang tidak normal, jalur rujukan gambar yang salah, dan masalah presisi label angka; Agent memperbaikinya satu per satu berdasarkan hasil render dan pemeriksaan struktur. Berkas akhirnya lolos pemeriksaan struktur, lalu dibuka ulang dan dirender dengan LibreOffice.
 
 > **Eksperimen 2-7 ★★: Membuat Skill Penulisan "Bebas Rasa AI" dari Contoh Tulisan Pribadi**
 >
@@ -871,13 +871,13 @@ Tool khusus juga dapat dipakai bersama Skill. Pencarian tool yang dibahas sebelu
 >
 > Pilih satu topik baru untuk dicoba, lalu biarkan penulis merevisinya kalimat demi kalimat. Bandingkan kedua versi dan temukan masalah yang muncul berulang, misalnya pilihan kata yang kabur, kalimat yang terlalu panjang, hubungan sebab-akibat yang dihilangkan, atau contoh konkret penunjang pemahaman yang terhapus. Cara revisi yang muncul berulang kali dapat dituliskan ke dalam Skill.
 
-## Agent Status Bar: Memperkuat Pengelolaan Trajectory Agent dengan Informasi Meta
+## Bilah Status Agent: Memperkuat Pengelolaan Trajektori Agent dengan Informasi Meta
 
-Pengguna mendesak: "Bisa telepon sekali lagi?" Bagian kiri Gambar 2-14 mencatat tiga kali panggilan. Panggilan pertama sudah menunggu 45 menit dan tetap tidak tersambung; baru pada panggilan ketiga tercapai harga 59 dolar AS per bulan. Menurut aturan dalam contoh ini, setiap panggilan memakai satu jatah; meskipun hanya dua yang tersambung, tiga jatah sudah habis. Harness dapat merapikan hitungan semacam ini, kemajuan penanganan, dan hal-hal yang menunggu konfirmasi menjadi ringkasan yang diperbarui bersama pesan, yang disebut **Agent Status Bar (bilah status Agent)**.
+Pengguna mendesak: "Bisa telepon sekali lagi?" Bagian kiri Gambar 2-14 mencatat tiga kali panggilan. Panggilan pertama sudah menunggu 45 menit dan tetap tidak tersambung; baru pada panggilan ketiga tercapai harga 59 dolar AS per bulan. Menurut aturan dalam contoh ini, setiap panggilan memakai satu jatah; meskipun hanya dua yang tersambung, tiga jatah sudah habis. Harness dapat merapikan hitungan semacam ini, kemajuan penanganan, dan hal-hal yang menunggu konfirmasi menjadi ringkasan yang diperbarui bersama pesan, yang disebut **bilah status Agent** (*Agent Status Bar*).
 
-![Gambar 2-14 Arsitektur Agent Status Bar](images/revised/fig2-14.svg)
+![Gambar 2-14 Arsitektur bilah status Agent](images/revised/fig2-14.svg)
 
-Ponsel menampilkan waktu, baterai, dan sinyal di bagian atas layar, sehingga orang cukup melirik untuk mengetahui keadaan saat ini. Ringkasan di sisi kanan gambar juga berperan serupa: setelah membaca "sudah mencapai batas" dan "menunggu konfirmasi pengguna", asisten dapat menyampaikan harga yang sudah disepakati kepada pengguna dan meminta pengguna memutuskan apakah akan menerimanya. Harness dapat melampirkan ringkasan ini saat mengembalikan hasil tool, atau menambahkan satu pesan status tersendiri.
+Ponsel menampilkan waktu, baterai, dan sinyal di bagian atas layar, sehingga orang cukup melirik untuk mengetahui keadaan saat ini. Ringkasan di sisi kanan gambar juga berperan serupa: setelah membaca "sudah mencapai batas" dan "menunggu konfirmasi pengguna", asisten dapat menyampaikan harga yang sudah disepakati kepada pengguna dan meminta pengguna memutuskan apakah akan menerimanya. Harness dapat melampirkan ringkasan ini saat mengembalikan hasil alat, atau menambahkan satu pesan status tersendiri.
 
 ### Dari Catatan Mentah ke Status Eksplisit
 
@@ -885,17 +885,17 @@ Bayangkan tugas layanan pelanggan lewat telepon: sistem mensyaratkan bahwa dalam
 
 Runtime dapat memperbarui hitungan setelah setiap panggilan dan langsung mengembalikan "ini panggilan ke-3 ke Xfinity, batas untuk tugas ini sudah tercapai". Keputusan berikutnya dapat langsung memakai hasil ini. Jumlah panggilan dipelihara oleh program, sedangkan model bertugas memutuskan, berdasarkan kemajuan tugas, apakah selanjutnya menunggu, mencari saluran lain, atau menjelaskan keadaan saat ini kepada pengguna; lapisan eksekusi sekaligus memeriksa permintaan panggilan berikutnya berdasarkan hitungan tersebut.
 
-Nilai rekayasanya di sini adalah **merapikan sejak awal status yang berulang kali dibutuhkan keputusan berikutnya**. Catatan panggilan yang lengkap tetap bertugas menyimpan isi percakapan dan jalannya penanganan, sedangkan status bar menyediakan statistik dan kemajuan yang sering dipakai untuk keputusan. **Statistik yang dipakai berulang kali sebaiknya dipelihara secara inkremental oleh kode.** Menemukan satu catatan di dalam konteks dan menghitung total dari seluruh catatan adalah dua pekerjaan yang berbeda. Menyimpan trajectory mentah tidak dengan sendirinya menghasilkan tabel statistik yang akurat dan siap dipakai kapan saja. Meminta model menelusuri dan menghitung ulang setiap kali tidak hanya menghabiskan token penalaran, tetapi juga memperbesar peluang terlewat atau terhitung ganda.
+Nilai rekayasanya di sini adalah **merapikan sejak awal status yang berulang kali dibutuhkan keputusan berikutnya**. Catatan panggilan yang lengkap tetap bertugas menyimpan isi percakapan dan jalannya penanganan, sedangkan bilah status menyediakan statistik dan kemajuan yang sering dipakai untuk keputusan. **Statistik yang dipakai berulang kali sebaiknya dipelihara secara inkremental oleh kode.** Menemukan satu catatan di dalam konteks dan menghitung total dari seluruh catatan adalah dua pekerjaan yang berbeda. Menyimpan trajektori mentah tidak dengan sendirinya menghasilkan tabel statistik yang akurat dan siap dipakai kapan saja. Meminta model menelusuri dan menghitung ulang setiap kali tidak hanya menghabiskan token penalaran, tetapi juga memperbesar peluang terlewat atau terhitung ganda.
 
 Penulis mengibaratkan konteks sebagai mesin pencari yang memerlukan "lapisan penyulingan" pendamping: catatan mentah memudahkan penelusuran balik, sedangkan status hasil penyulingan siap dipakai langsung. Hitungan, batas, dan status penyelesaian tugas yang sudah diverifikasi cocok dipelihara oleh kode; informasi yang memerlukan penilaian semantik dapat diekstrak butir demi butir terlebih dahulu, lalu dijumlahkan dan diverifikasi. Dengan begitu, setiap kali mengambil keputusan, model dapat melihat status saat ini sekaligus bukti yang diperlukan.
 
-Trajectory yang panjang juga mempersulit pencarian informasi kunci. Mengumpulkan tujuan, batasan, dan kemajuan terbaru di bagian belakang membuat model lebih mudah menemukan informasi yang dibutuhkan keputusan saat ini.
+Trajektori yang panjang juga mempersulit pencarian informasi kunci. Mengumpulkan tujuan, batasan, dan kemajuan terbaru di bagian belakang membuat model lebih mudah menemukan informasi yang dibutuhkan keputusan saat ini.
 
-> **Eksperimen 2-8 ★★: Mengamati Efek Agent Status Bar melalui Visualisasi Attention**
+> **Eksperimen 2-8 ★★: Mengamati Efek Bilah Status Agent melalui Visualisasi Attention**
 >
-> Eksperimen ini memakai Qwen3-0.6B dan menyusun trajectory pengembalian dana layanan pelanggan: Agent sudah menelepon Xfinity tiga kali, diselingi pencarian web, lalu pengguna bertanya, "Bisakah Anda menelepon lagi untuk mendesak mereka?" Aturan sistem membatasi paling banyak tiga panggilan ke setiap merchant dalam satu tugas.
+> Eksperimen ini memakai Qwen3-0.6B dan menyusun trajektori pengembalian dana layanan pelanggan: Agent sudah menelepon Xfinity tiga kali, diselingi pencarian web, lalu pengguna bertanya, "Bisakah Anda menelepon lagi untuk mendesak mereka?" Aturan sistem membatasi paling banyak tiga panggilan ke setiap merchant dalam satu tugas.
 >
-> Kedua kelompok input mempertahankan riwayat dan pertanyaan pengguna yang sama. Kelompok A langsung memakai trajectory mentah; kelompok B menambahkan status berikut di bagian akhir:
+> Kedua kelompok input mempertahankan riwayat dan pertanyaan pengguna yang sama. Kelompok A langsung memakai trajektori mentah; kelompok B menambahkan status berikut di bagian akhir:
 >
 > ```xml
 > <agent_status>
@@ -905,33 +905,33 @@ Trajectory yang panjang juga mempersulit pencarian informasi kunci. Mengumpulkan
 > </agent_status>
 > ```
 >
-> Setiap kelompok dijalankan tiga kali. Kelompok A dua kali dengan tegas menolak menelepon lagi, dan satu kali tergolong output lain; kelompok B tiga kali dengan tegas menolak menelepon lagi. Tidak ada kelompok yang menghasilkan output yang dinilai melanggar dengan terus menelepon. Untuk mereproduksi perbandingan ini, masuk ke `chapter2/attention_visualization`, lalu jalankan `python run_status_bar_experiment.py --output runs/status-bar-reproduction`. Input dan hasil per run kali ini disimpan di `runs/exp2-7-qwen3-0.6b-20260730-v2/comparison.json` dalam direktori eksperimen.
+> Setiap kelompok dijalankan tiga kali. Kelompok A dua kali dengan tegas menolak menelepon lagi, dan satu kali tergolong output lain; kelompok B tiga kali dengan tegas menolak menelepon lagi. Tidak satu pun kelompok menghasilkan output yang dinilai melanggar aturan karena tetap menelepon. Untuk mereproduksi perbandingan ini, masuk ke `chapter2/attention_visualization`, lalu jalankan `python run_status_bar_experiment.py --output runs/status-bar-reproduction`. Input dan hasil per run kali ini disimpan di `runs/exp2-7-qwen3-0.6b-20260730-v2/comparison.json` dalam direktori eksperimen.
 >
-> Gambar attention memperlihatkan distribusi bobot wilayah pembangkitan terhadap riwayat panggilan, hasil pencarian, pertanyaan pengguna, dan status bar.
+> Gambar attention memperlihatkan distribusi bobot wilayah pembangkitan terhadap riwayat panggilan, hasil pencarian, pertanyaan pengguna, dan bilah status.
 
-Riset ContextDistill-Bench yang dilakukan penulis bersama Noah Shi menelaah lebih jauh manfaat penyulingan status sejak awal[^ch2-8]. Pada kueri status yang dicakup benchmark tersebut, model yang lebih kecil pun dapat mencapai akurasi tinggi berkat status eksplisit; jumlah pemikiran, latensi, dan biaya kueri model frontier dapat turun sekitar satu orde besaran. Misalnya, biaya per seribu kueri Claude 4 Sonnet turun dari sekitar 35,46 dolar AS menjadi 3,51 dolar AS. **Desain ini memelihara status pada saat event terjadi, sehingga menghindari biaya menelusuri riwayat pada setiap kueri.** Setelah field ringkasan ditetapkan, sekalipun riwayat terus bertambah, kueri hanya perlu membaca beberapa field tersebut.
+Riset ContextDistill-Bench yang dilakukan penulis bersama Noah Shi menelaah lebih jauh manfaat penyulingan status sejak awal[^ch2-8]. Pada kueri status yang dicakup benchmark tersebut, model yang lebih kecil pun dapat mencapai akurasi tinggi berkat status eksplisit; jumlah pemikiran, latensi, dan biaya kueri model frontier dapat turun sekitar satu orde besaran. Misalnya, biaya per seribu kueri Claude 4 Sonnet turun dari sekitar 35,46 dolar AS menjadi 3,51 dolar AS. **Desain ini memelihara status pada saat peristiwa terjadi, sehingga menghindari biaya menelusuri riwayat pada setiap kueri.** Setelah field ringkasan ditetapkan, sekalipun riwayat terus bertambah, kueri hanya perlu membaca beberapa field tersebut.
 
 [^ch2-8]: Li, Bojie and Noah Shi. *Distill, Don't Retrieve: Inference-Time Context Distillation for LLM Agent Reasoning.* 2026.
 
-### Komposisi Agent Status Bar
+### Komposisi Bilah Status Agent
 
-Status bar biasanya memuat tiga jenis informasi, yang masing-masing menjawab "apa yang harus dikerjakan", "apa yang baru saja terjadi", dan "dalam keadaan apa sekarang".
+Bilah status biasanya memuat tiga jenis informasi, yang masing-masing menjawab "apa yang harus dikerjakan", "apa yang baru saja terjadi", dan "dalam keadaan apa sekarang".
 
 **Perencanaan tugas** mencatat tujuan, langkah, dan status penyelesaiannya. Tugas yang kompleks dapat dipecah menjadi daftar TODO, dengan setiap butir menyimpan statusnya dan dependensi yang diperlukan. Saat menangani langkah saat ini, model tetap dapat melihat kebutuhan asli, batasan inti, dan pekerjaan selanjutnya; setelah satu langkah selesai, daftar diperbarui.
 
-**Informasi side-channel dari event (side-channel information)** melengkapi latar belakang saat event terjadi, misalnya waktu, lokasi geografis, dan selang waktu sejak balasan terakhir. Metadata ini disimpan bersama event dan membantu model memahami urutan dan situasinya. Kalimat yang sama, "belum ada balasan", dapat memerlukan penanganan berbeda jika diucapkan dua menit atau dua hari setelah permohonan diajukan.
+**Informasi side-channel dari peristiwa** melengkapi latar belakang saat peristiwa terjadi, misalnya waktu, lokasi geografis, dan selang waktu sejak balasan terakhir. Metadata ini disimpan bersama peristiwa dan membantu model memahami urutan dan situasinya. Kalimat yang sama, "belum ada balasan", dapat memerlukan penanganan berbeda jika diucapkan dua menit atau dua hari setelah permohonan diajukan.
 
-**Ringkasan observasi atas keadaan lingkungan saat ini** menyediakan waktu saat ini, direktori kerja, jumlah tool call, dan peringatan anomali. Perannya mirip dengan tampilan direktori saat ini atau status eksekusi pada CLI dan GUI: memberi dasar yang jelas bagi operasi berikutnya. Misalnya, peringatan panggilan berulang dapat mendorong model memeriksa penyebab kegagalan, dan sisa anggaran membantunya memutuskan apakah akan terus mencari.
+**Ringkasan observasi atas keadaan lingkungan saat ini** menyediakan waktu saat ini, direktori kerja, jumlah pemanggilan alat, dan peringatan anomali. Perannya mirip dengan tampilan direktori saat ini atau status eksekusi pada CLI dan GUI: memberi dasar yang jelas bagi operasi berikutnya. Misalnya, peringatan panggilan berulang dapat mendorong model memeriksa penyebab kegagalan, dan sisa anggaran membantunya memutuskan apakah akan terus mencari.
 
-Metadata event biasanya tetap stabil setelah ditambahkan bersama event, sedangkan kemajuan tugas dan keadaan lingkungan terus berubah. Kedua jenis informasi ini harus ditulis ke riwayat sesuai cara pembaruannya masing-masing; berikut penjelasannya berdasarkan struktur pesan.
+Metadata peristiwa biasanya tetap stabil setelah ditambahkan bersama peristiwa, sedangkan kemajuan tugas dan keadaan lingkungan terus berubah. Kedua jenis informasi ini harus ditulis ke riwayat sesuai cara pembaruannya masing-masing; berikut penjelasannya berdasarkan struktur pesan.
 
-### Posisi Konkret Agent Status Bar di dalam Konteks
+### Posisi Konkret Bilah Status Agent di dalam Konteks
 
-Dalam contoh di bagian ini, Harness menambahkan satu pesan `user` di akhir daftar pesan untuk menyampaikan ringkasan status. `user` di sini adalah peran pesan pada API yang dipilih; isi statusnya dibangkitkan oleh runtime, dan kegunaannya dijelaskan melalui tag. Pada antarmuka lain, dapat juga dipakai blok konteks yang didukungnya, atau status diberikan bersama hasil tool yang bersangkutan. Jika memakai template yang telah dibahas sebelumnya, yang memangkas penalaran historis berdasarkan kueri pengguna yang sebenarnya, status runtime dapat diberikan bersama hasil tool agar template tetap mempertahankan informasi penalaran sesuai tugas saat ini.
+Dalam contoh di bagian ini, Harness menambahkan satu pesan `user` di akhir daftar pesan untuk menyampaikan ringkasan status. `user` di sini adalah peran pesan pada API yang dipilih; isi statusnya dibangkitkan oleh runtime, dan kegunaannya dijelaskan melalui tag. Pada antarmuka lain, dapat juga dipakai blok konteks yang didukungnya, atau status diberikan bersama hasil alat yang bersangkutan. Jika memakai template yang telah dibahas sebelumnya, yang memangkas penalaran historis berdasarkan kueri pengguna yang sebenarnya, status runtime dapat diberikan bersama hasil alat agar template tetap mempertahankan informasi penalaran sesuai tugas saat ini.
 
 Ikuti Gambar 2-15 untuk menemukan permintaan awal pengguna, lalu lihat di putaran mana status terbaru ditulis. Hanya dengan mempertahankan permintaan asli, setelah semua panggilan telepon selesai dua hal dapat diperiksa sekaligus: apa yang ingin diurus pengguna, dan sampai di mana penanganannya sekarang.
 
-![Gambar 2-15 Posisi penyisipan Agent Status Bar di dalam daftar pesan API](images/revised/fig2-15.svg)
+![Gambar 2-15 Posisi penyisipan bilah status Agent di dalam daftar pesan API](images/revised/fig2-15.svg)
 
 Urutan dalam gambar dapat dituliskan sebagai daftar pesan berikut. Agar mudah dibandingkan, putaran yang berulang dan sebagian field panggilan dihilangkan.
 
@@ -943,7 +943,7 @@ messages: [
   { role: "tool", tool_call_id: "call_1", content: "Call log..." }
   { role: "assistant", tool_calls: [{ id: "call_2", ... }] }
   { role: "tool", tool_call_id: "call_2", content: "Call log..." }
-  ...其余轮次...
+  ...putaran lainnya...
   { role: "user", content: "Can you call them again to follow up?" }
   { role: "user", content: "<agent_status>
       Current State:
@@ -960,37 +960,37 @@ Setelah pesan ini ditambahkan, urutan token di depannya tetap tidak berubah, seh
 
 ### Dua Implementasi Pembaruan Status dan Biaya Cache-nya
 
-Pada putaran berikutnya, mungkin satu butir TODO selesai, atau bertambah satu tool call. Harness harus memperbarui status, dan ada dua cara yang umum dipakai.
+Pada putaran berikutnya, mungkin satu butir TODO selesai, atau bertambah satu pemanggilan alat. Harness harus memperbarui status, dan ada dua cara yang umum dipakai.
 
-**Penggantian setiap putaran**: saat menyusun permintaan baru, status sebelumnya dihapus dan status terbaru ditambahkan di akhir. Konteks hanya menyimpan satu status terkini, sehingga mudah dipakai model. Misalnya, permintaan sebelumnya berisi "keterangan tugas, status A", dan kali ini "keterangan tugas, hasil tool, status B". Keterangan tugas masih bisa cache hit; hasil tool baru pertama kali dikirim, sehingga memang harus dihitung. Hanya jika permintaan sebelumnya masih memiliki pesan lain sesudah status A, penghapusan A membuat pesan-pesan tersebut kehilangan kecocokan prefiks semula. Dalam permintaan ini model hanya dapat melihat B. Jika perlu meninjau A, snapshot saat itu dapat diambil dari log eksekusi.
+**Penggantian setiap putaran**: saat menyusun permintaan baru, status sebelumnya dihapus dan status terbaru ditambahkan di akhir. Konteks hanya menyimpan satu status terkini, sehingga mudah dipakai model. Misalnya, permintaan sebelumnya berisi "keterangan tugas, status A", dan kali ini "keterangan tugas, hasil alat, status B". Keterangan tugas masih bisa cache hit; hasil alat baru pertama kali dikirim, sehingga memang harus dihitung. Hanya jika permintaan sebelumnya masih memiliki pesan lain sesudah status A, penghapusan A membuat pesan-pesan tersebut kehilangan kecocokan prefiks semula. Dalam permintaan ini model hanya dapat melihat B. Jika perlu meninjau A, snapshot saat itu dapat diambil dari log eksekusi.
 
-**Penambahan persisten**: catatan status yang sudah ada dipertahankan, dan setiap kali status baru ditambahkan di akhir. Prefiks riwayat tetap stabil, dan perubahan status mudah ditelusuri. Status lama lambat laun akan memakan konteks, sehingga waktu atau versinya harus jelas agar model menilai keadaan saat ini berdasarkan catatan terbaru. Cara Claude Code menambahkan pengingat perubahan file ke dalam sesi juga mencerminkan pola desain ini.
+**Penambahan persisten**: catatan status yang sudah ada dipertahankan, dan setiap kali status baru ditambahkan di akhir. Prefiks riwayat tetap stabil, dan perubahan status mudah ditelusuri. Status lama lambat laun akan memakan konteks, sehingga waktu atau versinya harus jelas agar model menilai keadaan saat ini berdasarkan catatan terbaru. Cara Claude Code menambahkan pengingat perubahan berkas ke dalam sesi juga mencerminkan pola desain ini.
 
-Jika status sangat pendek dan sesudahnya sudah ada banyak hasil tool yang di-cache, mempertahankan status lama bisa lebih hemat daripada menghitung ulang sufiks yang panjang; jika status cukup panjang dan sering diperbarui, penggantian dapat mengendalikan penumpukan status historis.
+Jika status sangat pendek dan sesudahnya sudah ada banyak hasil alat yang di-cache, mempertahankan status lama bisa lebih hemat daripada menghitung ulang sufiks yang panjang; jika status cukup panjang dan sering diperbarui, penggantian dapat mengendalikan penumpukan status historis.
 
 Titik impasnya dapat diperkirakan dengan model kasar: misalkan setiap status berukuran $S$ token, setiap penggantian membuat rata-rata $R$ token sufiks yang sudah di-cache sesudah status lama harus dihitung ulang (isi yang pertama kali dikirim pada putaran ini tidak dihitung), status disuntikkan sebanyak $N$ kali, dan harga input cache adalah $\alpha$ kali harga input biasa. Dengan mengabaikan biaya yang sama pada kedua skema, $C_{\text{ganti}} \approx (N-1)(1-\alpha)R$ dan $C_{\text{tambah}} \approx \alpha S N(N-1)/2$. Untuk $N>1$, jika $\alpha SN/2 < (1-\alpha)R$, perkiraan biaya penambahan persisten lebih rendah; sebaliknya, penggantian setiap putaran lebih hemat. Di sini harga input biasa dipakai sebagai satuan biaya: biaya tambahan pada skema penggantian adalah selisih harga karena sufiks yang semula dibaca dari cache harus diproses ulang, sedangkan biaya tambahan pada skema penambahan adalah biaya pembacaan berulang atas status-status historis.
 
 Contohnya, setiap kali disuntikkan status berukuran 100 token, total 10 kali, dan pembacaan cache dihitung sepersepuluh harga input biasa. Dengan skema penambahan, permintaan-permintaan berikutnya masing-masing membaca tambahan 1, 2, ……, 9 status lama, dengan biaya tambahan setara 450 token input biasa. Jika penggantian status membuat rata-rata 1.000 token yang sudah di-cache di belakangnya diproses ulang, biaya tambahan dari sembilan kali penggantian setara 8.100 token input biasa, sehingga penambahan lebih hemat. Jika status lama memang berada di ujung cache dan tidak ada isi yang di-cache sesudahnya, $R=0$ dalam rumus, dan penggantian langsung justru menghemat biaya setara 450 token tersebut.
 
-> **Eksperimen 2-9 ★★: Beberapa Teknik Agent Status Bar yang Berguna**
+> **Eksperimen 2-9 ★★: Beberapa Teknik Bilah Status Agent yang Berguna**
 >
-> Eksperimen ini mengimplementasikan lima teknik status bar yang dapat diaktifkan secara terpisah maupun dikombinasikan. Setiap teknik menyediakan satu jenis informasi konkret untuk membantu model memutuskan tindakan berikutnya.
+> Eksperimen ini mengimplementasikan lima teknik bilah status yang dapat diaktifkan secara terpisah maupun dikombinasikan. Setiap teknik menyediakan satu jenis informasi konkret untuk membantu model memutuskan tindakan berikutnya.
 >
-> **Pelacakan cap waktu** mencatat waktu event di pesan pengguna dan respons tool, misalnya `[2025-09-14 10:30:45]`. Waktu ditulis ke riwayat bersama event dan nilainya tidak berubah pada putaran berikutnya; waktu saat ini diperbarui bersama pesan status yang baru. Eksperimen ini juga menyediakan simulasi waktu untuk memeriksa apakah model dapat membedakan "file kemarin" dari "perubahan hari ini", dan apakah ia memahami lama waktu tunggu dengan benar.
+> **Pelacakan cap waktu** mencatat waktu peristiwa di pesan pengguna dan respons alat, misalnya `[2025-09-14 10:30:45]`. Waktu ditulis ke riwayat bersama peristiwa dan nilainya tidak berubah pada putaran berikutnya; waktu saat ini diperbarui bersama pesan status yang baru. Eksperimen ini juga menyediakan simulasi waktu untuk memeriksa apakah model dapat membedakan "berkas kemarin" dari "perubahan hari ini", dan apakah ia memahami lama waktu tunggu dengan benar.
 >
-> **Penghitung tool call** memakai dictionary untuk memelihara jumlah kumulatif panggilan setiap tool, dan menandai respons dengan `Tool call #3 for 'read_file'`. Dengan menggabungkannya dengan isi galat, model dapat menilai apakah perlu terus mencoba. Misalnya, setelah pembacaan pertama gagal, periksa jalurnya, lalu tampilkan isi direktori; setelah beberapa kali gagal, cari file pengganti atau jelaskan kepada pengguna bahwa file tersebut tidak ada. Jika jumlah percobaan ulang perlu dibatasi, runtime juga harus menegakkan batas itu berdasarkan hitungan.
+> **Penghitung pemanggilan alat** memakai dictionary untuk memelihara jumlah kumulatif panggilan setiap alat, dan menandai respons dengan `Tool call #3 for 'read_file'`. Dengan menggabungkannya dengan isi galat, model dapat menilai apakah perlu terus mencoba. Misalnya, setelah pembacaan pertama gagal, periksa jalurnya, lalu tampilkan isi direktori; setelah beberapa kali gagal, cari berkas pengganti atau jelaskan kepada pengguna bahwa berkas tersebut tidak ada. Jika jumlah percobaan ulang perlu dibatasi, runtime juga harus menegakkan batas itu berdasarkan hitungan.
 >
-> **Pengelolaan daftar TODO** menyediakan dua tool, `rewrite_todo_list` dan `update_todo_status`. Setiap butir berisi pengenal unik, isi, cap waktu, dan salah satu dari empat status: `pending`, `in_progress`, `completed`, `cancelled`. Daftar ini mengumpulkan "apa yang sudah dikerjakan, apa yang masih kurang" di satu tempat, mirip gagasan Manus yang menjaga tujuan tetap terlihat dengan menampilkan rencana tugas berulang kali.
+> **Pengelolaan daftar TODO** menyediakan dua alat, `rewrite_todo_list` dan `update_todo_status`. Setiap butir berisi pengenal unik, isi, cap waktu, dan salah satu dari empat status: `pending`, `in_progress`, `completed`, `cancelled`. Daftar ini mengumpulkan "apa yang sudah dikerjakan, apa yang masih kurang" di satu tempat, mirip gagasan Manus yang menjaga tujuan tetap terlihat dengan menampilkan rencana tugas berulang kali.
 >
-> **Informasi galat terperinci** menyediakan jenis dan deskripsi galat, JSON parameter panggilan, stack trace, dan saran perbaikan. Misalnya, ketika menemui `FileNotFoundError`, model dapat diingatkan untuk memeriksa nama file, direktori saat ini, dan jalur absolut. Parameter membantu menemukan input yang salah, stack trace membantu menemukan letak kegagalan, dan saran perbaikan memberi arah pemeriksaan berikutnya. Sebelum isi ini dikembalikan ke model, field sensitif seperti kredensial harus dibersihkan, dan panjang stack trace yang bertele-tele harus dibatasi.
+> **Informasi galat terperinci** menyediakan jenis dan deskripsi galat, JSON parameter panggilan, stack trace, dan saran perbaikan. Misalnya, ketika menemui `FileNotFoundError`, model dapat diingatkan untuk memeriksa nama berkas, direktori saat ini, dan jalur absolut. Parameter membantu menemukan input yang salah, stack trace membantu menemukan letak kegagalan, dan saran perbaikan memberi arah pemeriksaan berikutnya. Sebelum isi ini dikembalikan ke model, field sensitif seperti kredensial harus dibersihkan, dan panjang stack trace yang bertele-tele harus dibatasi.
 >
-> **Kesadaran status sistem** menyediakan waktu saat ini, direktori kerja, sistem operasi, Shell, dan versi Python. Tool perintah dalam eksperimen ini mengenali operasi pindah direktori yang berdiri sendiri, memperbarui direktori kerja yang dipelihara runtime, lalu memakainya untuk panggilan berikutnya; perubahan direktori oleh subproses dalam perintah majemuk mengikuti cakupan eksekusi proses yang bersangkutan. Field lingkungan juga membantu model memilih tool yang tersedia, misalnya memilih `apt` atau `brew` sesuai sistem yang sebenarnya dan perangkat lunak yang terpasang.
+> **Kesadaran status sistem** menyediakan waktu saat ini, direktori kerja, sistem operasi, Shell, dan versi Python. Alat perintah dalam eksperimen ini mengenali operasi pindah direktori yang berdiri sendiri, memperbarui direktori kerja yang dipelihara runtime, lalu memakainya untuk panggilan berikutnya; perubahan direktori oleh subproses dalam perintah majemuk mengikuti cakupan eksekusi proses yang bersangkutan. Field lingkungan juga membantu model memilih alat yang tersedia, misalnya memilih `apt` atau `brew` sesuai sistem yang sebenarnya dan perangkat lunak yang terpasang.
 >
-> Dalam perbandingan Kimi K3 kali ini, setiap jenis tugas memiliki lima kasus. Konfigurasi cap waktu dan konfigurasi gabungan masing-masing lolos lima, sedangkan kelompok pembandingnya masing-masing lolos tiga; kelompok penghitung tool dan status sistem, baik diaktifkan maupun dimatikan, sama-sama lolos lima. Konfigurasi TODO lolos nol, dan kelompok pembandingnya lolos satu; konfigurasi galat terperinci lolos empat, dan kelompok pembandingnya lolos lima.
+> Dalam perbandingan Kimi K3 kali ini, setiap jenis tugas memiliki lima kasus. Konfigurasi cap waktu dan konfigurasi gabungan masing-masing lolos lima, sedangkan kelompok pembandingnya masing-masing lolos tiga; kelompok penghitung alat dan status sistem, baik diaktifkan maupun dimatikan, sama-sama lolos lima. Konfigurasi TODO lolos nol, dan kelompok pembandingnya lolos satu; konfigurasi galat terperinci lolos empat, dan kelompok pembandingnya lolos lima.
 
-**Status bar sebaiknya dipelihara oleh kode sebisa mungkin.** Model akan langsung memakai statistik dan batasan di dalamnya, sehingga satu catatan keliru "sudah menelepon tiga kali" dapat mengubah tindakan berikutnya. Hitungan, waktu, dan transisi status diserahkan kepada program; jika diperlukan pemahaman semantik, minta model mengekstraknya butir demi butir terlebih dahulu, lalu biarkan kode menjumlahkan dan memverifikasinya, alih-alih meminta model menghitung seluruh riwayat panjang sekaligus. Pertahankan keterkaitan antara event mentah, hasil ekstraksi, dan status akhir, agar penghitungan ganda, catatan yang terlewat, dan kerancuan sumber mudah ditemukan.
+**Bilah status sebaiknya dipelihara oleh kode sebisa mungkin.** Model akan langsung memakai statistik dan batasan di dalamnya, sehingga satu catatan keliru "sudah menelepon tiga kali" dapat mengubah tindakan berikutnya. Hitungan, waktu, dan transisi status diserahkan kepada program; jika diperlukan pemahaman semantik, minta model mengekstraknya butir demi butir terlebih dahulu, lalu biarkan kode menjumlahkan dan memverifikasinya, alih-alih meminta model menghitung seluruh riwayat panjang sekaligus. Pertahankan keterkaitan antara peristiwa mentah, hasil ekstraksi, dan status akhir, agar penghitungan ganda, catatan yang terlewat, dan kerancuan sumber mudah ditemukan.
 
-Informasi apa yang dirangkum status bar harus dipilih sejak awal. Misalnya, "sudah menelepon tiga kali" cukup untuk menilai apakah masih boleh menelepon, tetapi tidak dapat menjawab "apa yang dijanjikan petugas layanan pada panggilan kedua". Untuk tugas lanjutan yang hanya memerlukan nilai statistik, riwayat dapat diganti dengan ringkasan status dan catatan mentah diarsipkan; ketika isi percakapan perlu diperiksa, teks aslinya dibaca melalui indeks. Desain field ringkasan menentukan pertanyaan mana yang dapat dijawab langsung, dan juga menentukan kapan perlu menelusuri kembali.
+Informasi apa yang dirangkum bilah status harus dipilih sejak awal. Misalnya, "sudah menelepon tiga kali" cukup untuk menilai apakah masih boleh menelepon, tetapi tidak dapat menjawab "apa yang dijanjikan petugas layanan pada panggilan kedua". Untuk tugas lanjutan yang hanya memerlukan nilai statistik, riwayat dapat diganti dengan ringkasan status dan catatan mentah diarsipkan; ketika isi percakapan perlu diperiksa, teks aslinya dibaca melalui indeks. Desain field ringkasan menentukan pertanyaan mana yang dapat dijawab langsung, dan juga menentukan kapan perlu menelusuri kembali.
 
 ## Strategi Kompresi Konteks
 
@@ -998,7 +998,7 @@ Sebuah tugas investigasi sudah membaca sepuluh halaman web yang panjang, dan mis
 
 ### Tiga Tujuan Kompresi
 
-**Mengendalikan panjang dan biaya.** Ambil contoh jendela 128K token; halaman web dan file yang panjang dapat menempati porsi yang cukup besar dari ruang itu. Harness harus menyisihkan anggaran untuk input berikutnya, output model, dan interaksi tool.
+**Mengendalikan panjang dan biaya.** Ambil contoh jendela 128K token; halaman web dan berkas yang panjang dapat menempati porsi yang cukup besar dari ruang itu. Harness harus menyisihkan anggaran untuk input berikutnya, output model, dan interaksi alat.
 
 **Merapikan pengetahuan yang dibutuhkan keputusan berikutnya.** Belasan putaran pencarian bisa berulang kali menyebut peristiwa yang sama, atau meninggalkan keterangan yang saling bertentangan. Merapikannya menjadi "A dan B sudah dipastikan, C masih kurang bukti" membuat model dapat melanjutkan pertanyaan yang belum selesai. Ringkasan harus mempertahankan hubungan antarfakta, sumber, dan pertanyaan yang belum terjawab, agar keputusan berikutnya memiliki dasar yang jelas.
 
@@ -1008,7 +1008,7 @@ Sebuah tugas investigasi sudah membaca sepuluh halaman web yang panjang, dan mis
 
 ### Merapikan Hasil Komputasi Berulang Menjadi Pengetahuan Siap Pakai
 
-Status bar memelihara hitungan dan kemajuan sejak awal, sedangkan ringkasan melangkah lebih jauh dengan merapikan fakta dan hubungan dalam teks panjang. Keduanya sama-sama merapikan informasi yang tercecer lebih awal, agar keputusan berikutnya dapat langsung memakainya.
+Bilah status memelihara hitungan dan kemajuan sejak awal, sedangkan ringkasan melangkah lebih jauh dengan merapikan fakta dan hubungan dalam teks panjang. Keduanya sama-sama merapikan informasi yang tercecer lebih awal, agar keputusan berikutnya dapat langsung memakainya.
 
 Lihat contoh inspeksi sebuah toko hewan peliharaan:
 
@@ -1031,9 +1031,9 @@ Contoh di dalam konteks juga memengaruhi cara model menangani masalah baru. Rise
 
 Kompresi biasanya terjadi di antara dua panggilan model. Berdasarkan sisa anggaran dan kemajuan tugas, Harness merapikan pesan yang dibutuhkan permintaan berikutnya, lalu mengirimkannya ke model. Mengganti riwayat akan mengubah prefiks, sehingga manfaat kompresi dan biaya membangun ulang cache harus dipertimbangkan bersamaan.
 
-Pertama, jaga agar instruksi sistem dan definisi tool yang masih berlaku tetap stabil. Keduanya berada di depan, sehingga kompresi riwayat sesudahnya tetap dapat memakai ulang bagian prefiks ini. Kedua, pilih objek kompresi yang konkret: hasil tool yang panjang dapat diganti dengan ringkasan, dan interaksi multi-putaran yang sudah selesai dapat digabung menjadi catatan tahap. Cache sebelum posisi penggantian masih dapat dipakai ulang, sedangkan isi pada posisi penggantian dan sesudahnya harus diproses menurut prefiks yang baru.
+Pertama, jaga agar instruksi sistem dan definisi alat yang masih berlaku tetap stabil. Keduanya berada di depan, sehingga kompresi riwayat sesudahnya tetap dapat memakai ulang bagian prefiks ini. Kedua, pilih objek kompresi yang konkret: hasil alat yang panjang dapat diganti dengan ringkasan, dan interaksi multi-putaran yang sudah selesai dapat digabung menjadi catatan tahap. Cache sebelum posisi penggantian masih dapat dipakai ulang, sedangkan isi pada posisi penggantian dan sesudahnya harus diproses menurut prefiks yang baru.
 
-**Kompresi riwayat sebaiknya dilakukan sekaligus dalam satu kelompok, agar segmen prefiks yang sama tidak ditulis ulang setiap putaran.** Setelah kompresi, input setiap putaran menjadi lebih pendek, tetapi panggilan kompresi dan komputasi ulang sufiks juga memakan sumber daya. Waktu pemicuannya dapat ditentukan dengan menggabungkan pemakaian jendela, perkiraan jumlah putaran berikutnya, dan tahap tugas: merapikan sekaligus setelah hasil tool yang panjang muncul berdekatan, atau menyimpan ringkasan serah terima setelah satu tahap selesai, sama-sama dapat mengurangi biaya mengubah riwayat terlalu sering. Saat mempertahankan beberapa putaran terakhir, periksa apakah tool call dan nilai kembaliannya tetap berpasangan, dan tuliskan status operasi yang belum selesai ke dalam ringkasan.
+**Kompresi riwayat sebaiknya dilakukan sekaligus dalam satu kelompok, agar segmen prefiks yang sama tidak ditulis ulang setiap putaran.** Setelah kompresi, input setiap putaran menjadi lebih pendek, tetapi panggilan kompresi dan komputasi ulang sufiks juga memakan sumber daya. Waktu pemicuannya dapat ditentukan dengan menggabungkan pemakaian jendela, perkiraan jumlah putaran berikutnya, dan tahap tugas: merapikan sekaligus setelah hasil alat yang panjang muncul berdekatan, atau menyimpan ringkasan serah terima setelah satu tahap selesai, sama-sama dapat mengurangi biaya mengubah riwayat terlalu sering. Saat mempertahankan beberapa putaran terakhir, periksa apakah pemanggilan alat dan nilai kembaliannya tetap berpasangan, dan tuliskan status operasi yang belum selesai ke dalam ringkasan.
 
 Saat mengompresi, protokol pengiriman kembali informasi penalaran juga harus diperiksa. Pada sebagian model, thinking historis terikat pada prefiks saat ia dibangkitkan. Jika riwayat sebelum blok-blok ini diganti, thinking yang dipertahankan dapat menjadi tidak cocok dengan prefiks yang baru. Dengan protokol semacam ini, sesi dapat dirapikan menjadi ringkasan, thinking lama yang terdampak dibersihkan, dan model melanjutkan penalaran dari ringkasan tersebut; dapat juga dipakai mekanisme kompresi atau penyuntingan konteks yang didukung server.
 
@@ -1045,7 +1045,7 @@ Lihat dulu ringkasan per item pada Gambar 2-16: jumlah karakter setelah diproses
 >
 > Eksperimen ini memakai Kimi K3 untuk meneliti status karier para pendiri bersama OpenAI. Tugasnya menuntut penyusunan daftar orang secara bertahap, pencarian riwayat dan perubahan jabatan, lalu pencocokan fakta terkait dengan sumbernya. Untuk mengamati kompresi dan penanganan luapan, eksperimen menetapkan anggaran konteks di sisi aplikasi sebesar 128.000 token, mempertahankan baseline tanpa kompresi, lalu membandingkan lima cara penanganan, masing-masing dijalankan paling banyak 15 putaran[^ch2-compression-results].
 >
-> **Strategi 1: Tanpa kompresi.** Hasil pencarian dan pembacaan halaman masuk ke riwayat secara utuh. Tujuh tool call menyumbang 367.246 karakter mentah. Program memicu proteksi dan berhenti pada putaran kelima, dengan pemakaian kumulatif Agent utama 166.043 token. Versi lama memicu proteksi berdasarkan jumlah token input semua permintaan, sehingga angka 165.227 dalam pesan galat merupakan input kumulatif. Sebagai contoh, segmen riwayat yang sama yang dikirim sekali di masing-masing dari tiga putaran permintaan akan terhitung tiga kali.
+> **Strategi 1: Tanpa kompresi.** Hasil pencarian dan pembacaan halaman masuk ke riwayat secara utuh. Tujuh pemanggilan alat menyumbang 367.246 karakter mentah. Program memicu proteksi dan berhenti pada putaran kelima, dengan pemakaian kumulatif Agent utama 166.043 token. Versi lama memicu proteksi berdasarkan jumlah token input semua permintaan, sehingga angka 165.227 dalam pesan galat merupakan input kumulatif. Sebagai contoh, segmen riwayat yang sama yang dikirim sekali di masing-masing dari tiga putaran permintaan akan terhitung tiga kali.
 >
 > **Strategi 2: Ringkasan per item.** Setiap hasil pencarian dirangkum tersendiri menjadi dua sampai tiga paragraf, mempertahankan isi utama setiap halaman. Cara ini mudah diproses secara paralel dan menjaga batas antarhalaman; ketika beberapa halaman membahas peristiwa yang sama, informasi yang berulang tetap masuk ke riwayat. Konfigurasi ini menghasilkan balasan akhir dalam dua belas putaran, dengan pemakaian kumulatif Agent utama 276.608 token dan rasio kompresi karakter 10,9%.
 >
@@ -1053,9 +1053,9 @@ Lihat dulu ringkasan per item pada Gambar 2-16: jumlah karakter setelah diproses
 >
 > **Strategi 4: Ringkasan sadar-konteks.** Saat mengompresi, kueri saat ini dan informasi yang sudah diketahui ikut diberikan, misalnya dengan menambahkan `Given the search query: {query}` dan `Current context: {context}` ke prompt. Berdasarkan itu model mempertahankan fakta yang relevan dengan pertanyaan saat ini dan mengutamakan pengisian celah dalam ringkasan yang sudah ada. Konfigurasi ini menghasilkan balasan akhir dalam tujuh putaran, dengan pemakaian kumulatif Agent utama 40.157 token dan rasio kompresi karakter 3,0%. Dalam salah satu kompresinya, sekitar seratus lima puluh ribu karakter dirapikan menjadi sekitar dua ribu karakter, dengan tetap mempertahankan nama orang dan perubahan jabatannya.
 >
-> **Strategi 5: Ringkasan sadar-konteks dengan kutipan.** Ringkasan yang relevan dengan tugas mempertahankan tautan sumber bagi setiap fakta. Konfigurasi ini menghasilkan balasan akhir dalam sepuluh putaran, dengan pemakaian kumulatif Agent utama 222.992 token. Jika dijumlahkan dari catatan tool, bahan setelah diproses berjumlah 52.891 karakter dan teks aslinya 1.295.044 karakter, sehingga perbandingannya sekitar 4,1%.
+> **Strategi 5: Ringkasan sadar-konteks dengan kutipan.** Ringkasan yang relevan dengan tugas mempertahankan tautan sumber bagi setiap fakta. Konfigurasi ini menghasilkan balasan akhir dalam sepuluh putaran, dengan pemakaian kumulatif Agent utama 222.992 token. Jika dijumlahkan dari catatan alat, bahan setelah diproses berjumlah 52.891 karakter dan teks aslinya 1.295.044 karakter, sehingga perbandingannya sekitar 4,1%.
 >
-> **Strategi 6: Windowing adaptif.** Pada tahap awal, bahan mentah dipertahankan; setelah input mencapai ambang, barulah dirapikan sekaligus. Eksperimen ini memakai tiga mekanisme: kompresi dipicu ketika melampaui 80% anggaran; hasil tool yang belum dikompresi dirangkum bersama; hasil yang sudah diproses diberi tanda `[COMPRESSED]` agar tidak dirangkum dua kali. Dengan anggaran 128.000 token dalam eksperimen ini, ambang pemicunya 102.400 token. Konfigurasi ini menghasilkan balasan akhir dalam tujuh putaran, dengan pemakaian kumulatif Agent utama 174.601 token. Catatan historis memicu ambang berdasarkan input kumulatif; belakangan program diubah untuk memeriksa ukuran input permintaan terakhir.
+> **Strategi 6: Windowing adaptif.** Pada tahap awal, bahan mentah dipertahankan; setelah input mencapai ambang, barulah dirapikan sekaligus. Eksperimen ini memakai tiga mekanisme: kompresi dipicu ketika melampaui 80% anggaran; hasil alat yang belum dikompresi dirangkum bersama; hasil yang sudah diproses diberi tanda `[COMPRESSED]` agar tidak dirangkum dua kali. Dengan anggaran 128.000 token dalam eksperimen ini, ambang pemicunya 102.400 token. Konfigurasi ini menghasilkan balasan akhir dalam tujuh putaran, dengan pemakaian kumulatif Agent utama 174.601 token. Catatan historis memicu ambang berdasarkan input kumulatif; belakangan program diubah untuk memeriksa ukuran input permintaan terakhir.
 >
 > Gambar 2-17 membandingkan input dan output keenam strategi.
 >
@@ -1069,17 +1069,17 @@ Lihat dulu ringkasan per item pada Gambar 2-16: jumlah karakter setelah diproses
 
 ### Mekanisme Kompresi Berlapis Tingkat Produksi
 
-Output tool mungkin perlu disimpan sementara secara utuh, langkah yang sudah selesai dapat diarsipkan, dan batasan saat ini harus tetap terlihat; lima jenis mekanisme di bawah ini masing-masing cocok untuk frekuensi pemakaian dan masa simpan yang berbeda.
+Output alat mungkin perlu disimpan sementara secara utuh, langkah yang sudah selesai dapat diarsipkan, dan batasan saat ini harus tetap terlihat; lima jenis mekanisme di bawah ini masing-masing cocok untuk frekuensi pemakaian dan masa simpan yang berbeda.
 
-1. **Pengendalian anggaran hasil tool**. Output berukuran besar disimpan di penyimpanan eksternal, dan konteks hanya menyimpan pratinjau ringkasan dan pintu masuk untuk membacanya. Begitu pratinjau masuk ke riwayat, isinya dijaga tetap stabil; jika diperlukan rincian lebih, potongan yang relevan dibaca dan hasilnya ditambahkan.
+1. **Pengendalian anggaran hasil alat**. Output berukuran besar disimpan di penyimpanan eksternal, dan konteks hanya menyimpan pratinjau ringkasan dan pintu masuk untuk membacanya. Begitu pratinjau masuk ke riwayat, isinya dijaga tetap stabil; jika diperlukan rincian lebih, potongan yang relevan dibaca dan hasilnya ditambahkan.
 2. **Pembersihan isi yang tidak relevan**. Bilah navigasi halaman web, footer yang berulang, dan sejenisnya dapat disaring sebelum hasil masuk ke konteks. Jika isi yang sudah masuk ke riwayat perlu dihapus, pastikan dulu apakah tugas dan rujukan berikutnya masih bergantung padanya, lalu hitung biaya cache akibat perubahan riwayat.
-3. **Penyuntingan konteks di lapisan API**. Layanan yang mendukung kemampuan ini dapat membersihkan hasil tool lama menurut aturan. Klien harus mengonfigurasi syarat pemicunya dan menangani informasi penyuntingan yang dikembalikan layanan. Cakupan pembersihan dan perilaku cache ditentukan oleh konvensi antarmuka, sehingga cocok diintegrasikan bersama pemantauan anggaran input.
+3. **Penyuntingan konteks di lapisan API**. Layanan yang mendukung kemampuan ini dapat membersihkan hasil alat lama menurut aturan. Klien harus mengonfigurasi syarat pemicunya dan menangani informasi penyuntingan yang dikembalikan layanan. Cakupan pembersihan dan perilaku cache ditentukan oleh konvensi antarmuka, sehingga cocok diintegrasikan bersama pemantauan anggaran input.
 4. **Ringkasan bergaya arsip**. Tujuan, operasi, hasil, dan pekerjaan yang belum selesai dicatat per putaran atau per tahap tugas, dengan mempertahankan urutan eksekusinya. Ini dapat dipahami sebagai catatan perubahan tugas: nantinya dapat ditelusuri pada langkah mana suatu keputusan diambil dan apa dasarnya.
 5. **Kompresi sesi secara menyeluruh**. Jika pembersihan lokal masih belum memenuhi anggaran, tujuan saat ini, batasan, fakta yang sudah dipastikan, keputusan kunci, dan pekerjaan berikutnya dirapikan menjadi ringkasan serah terima. Catatan sesi yang sudah ada dapat dirapikan lebih dulu, baru kemudian seluruh riwayat dirangkum. Jika kompresi gagal berturut-turut, batas percobaan ulang atau mekanisme circuit breaker menghentikan panggilan berulang, menyimpan status yang dapat dipulihkan, lalu memilih untuk memperkecil input atau menyerahkan penanganannya kepada manusia.
 
 Mekanisme-mekanisme ini dapat bekerja sama secara berlapis: pengendalian di pintu masuk mengurangi output besar sekali jadi, perapian lokal mengendalikan pertumbuhan sehari-hari, sedangkan ringkasan tahap dan kompresi menyeluruh menyimpan informasi serah terima untuk tugas jangka panjang.
 
-Saat membaca dsh-superagent, penulis memperhatikan satu detail: event dan hasil tool dapat lebih dulu dikirim sebagai ringkasan dan ID objek, lalu rinciannya dibaca dengan ID tersebut ketika dibutuhkan. Misalkan di latar belakang sekelompok pengujian selesai dijalankan, dan latar depan hanya diberi tahu "ada dua yang gagal"; latar depan dapat melaporkan kemajuan, tetapi tidak dapat menjawab pertanyaan lanjutan pengguna, "Apakah itu dua yang kemarin?" Jika ringkasan melampirkan pengenal catatan pengujian kali ini, latar depan dapat mengambil nama test case yang gagal dan membandingkannya dengan catatan kemarin.
+Saat membaca dsh-superagent, penulis memperhatikan satu detail: peristiwa dan hasil alat dapat lebih dulu dikirim sebagai ringkasan dan ID objek, lalu rinciannya dibaca dengan ID tersebut ketika dibutuhkan. Misalkan di latar belakang sekelompok pengujian selesai dijalankan, dan latar depan hanya diberi tahu "ada dua yang gagal"; latar depan dapat melaporkan kemajuan, tetapi tidak dapat menjawab pertanyaan lanjutan pengguna, "Apakah itu dua yang kemarin?" Jika ringkasan melampirkan pengenal catatan pengujian kali ini, latar depan dapat mengambil nama test case yang gagal dan membandingkannya dengan catatan kemarin.
 
 ### Prinsip Desain Strategi Kompresi
 
@@ -1096,28 +1096,28 @@ Keputusan arsitektur di masa awal, alasan di balik batasan, dan jalur yang gagal
 
 **Untuk tugas dengan batas serah terima yang jelas dan yang menghasilkan banyak bahan antara, penulis lebih memilih isolasi dengan sub-Agent.** Pencarian berskala besar akan membaca banyak bahan yang hanya berguna pada tahap eksplorasi; mengisolasinya lebih dulu dapat mengurangi gangguan berkelanjutan dari isi tersebut terhadap tugas utama. Agent utama menyerahkan tugas kepada sub-Agent yang memiliki konteks tersendiri; sub-Agent membaca hasil antara, lalu mengembalikan kesimpulan, lokasi bukti, dan pertanyaan yang belum terjawab. Dengan demikian, konteks Agent utama hanya perlu menyimpan informasi yang dibutuhkan keputusan berikutnya.
 
-Misalnya, untuk "menemukan fungsi yang menangani callback pembayaran", jika Agent utama mencarinya sendiri, ia mungkin harus membaca belasan file. Setelah diserahkan kepada sub-Agent pencarian, sub-Agent dapat diminta mengembalikan nama fungsi, modul tempatnya, titik pemanggilan, dan dasar penilaiannya. Balasannya dapat berupa "`handle_callback` di modul pembayaran bertugas menangani callback, dan ada dua titik pemanggilan lain", disertai rujukan yang dapat ditelusuri. Agent utama memutuskan berdasarkan hasil ini apakah perlu membaca kode terkait lebih lanjut.
+Misalnya, untuk "menemukan fungsi yang menangani callback pembayaran", jika Agent utama mencarinya sendiri, ia mungkin harus membaca belasan berkas. Setelah diserahkan kepada sub-Agent pencarian, sub-Agent dapat diminta mengembalikan nama fungsi, modul tempatnya, titik pemanggilan, dan dasar penilaiannya. Balasannya dapat berupa "`handle_callback` di modul pembayaran bertugas menangani callback, dan ada dua titik pemanggilan lain", disertai rujukan yang dapat ditelusuri. Agent utama memutuskan berdasarkan hasil ini apakah perlu membaca kode terkait lebih lanjut.
 
 Deskripsi tugas harus cukup lengkap: apa tujuannya, seberapa luas cakupan pencariannya, batasan apa yang harus dipatuhi, format apa yang harus dikembalikan, dan bagaimana menangani ambiguitas. Jika permintaan delegasi dan hasil yang dikembalikan sama-sama ditambahkan ke riwayat, prefiks asli Agent utama tetap dapat dipakai ulang.
 
-Bab 4 akan membahas desain antarmuka sub-Agent sebagai tool, dan Bab 10 lebih jauh membahas pembagian konteks dalam sistem multi-Agent.
+Bab 4 akan membahas desain antarmuka sub-Agent sebagai alat, dan Bab 10 lebih jauh membahas pembagian konteks dalam sistem multi-Agent.
 
 ## Ringkasan Bab
 
-Setelah asisten layanan pelanggan menyelesaikan panggilan ketiga, bagaimana pekerjaan dilanjutkan? Permintaan putaran berikutnya membawa tanda terima tool dari panggilan ini, yang dicocokkan dengan operasi panggilan melalui ID panggilan. Status bar memperbarui jumlah jatah yang terpakai menjadi tiga, dan mencantumkan syarat yang belum disepakati. Aturan sistem dan definisi tool tetap berada di prefiks yang stabil, dan Skill yang sesuai dimuat ketika suatu layanan perlu diurus. Dengan cara ini setiap field memiliki asal-usul, dan terlihat isi mana yang akan berubah pada panggilan berikutnya.
+Setelah asisten layanan pelanggan menyelesaikan panggilan ketiga, bagaimana pekerjaan dilanjutkan? Permintaan putaran berikutnya membawa tanda terima alat dari panggilan ini, yang dicocokkan dengan operasi panggilan melalui ID panggilan. Bilah status memperbarui jumlah jatah yang terpakai menjadi tiga, dan mencantumkan syarat yang belum disepakati. Aturan sistem dan definisi alat tetap berada di prefiks yang stabil, dan Skill yang sesuai dimuat ketika suatu layanan perlu diurus. Dengan cara ini setiap field memiliki asal-usul, dan terlihat isi mana yang akan berubah pada panggilan berikutnya.
 
-Ketika percakapan telepon berlarut-larut dan hasil tool makin banyak, panjang hasil dapat dibatasi, bagian yang sudah selesai dirapikan menjadi ringkasan bersumber, atau pekerjaan yang dapat diurus secara mandiri diserahkan kepada sub-Agent yang hanya mengembalikan kesimpulan dan buktinya.
+Ketika percakapan telepon berlarut-larut dan hasil alat makin banyak, panjang hasil dapat dibatasi, bagian yang sudah selesai dirapikan menjadi ringkasan bersumber, atau pekerjaan yang dapat diurus secara mandiri diserahkan kepada sub-Agent yang hanya mengembalikan kesimpulan dan buktinya.
 
 Setelah tugas ini selesai, hitungan tiga kali panggilan dapat diarsipkan bersama tugasnya. Namun, jika pengguna secara khusus berpesan "lain kali hubungi saya pada sore hari kerja", dan pesan itu hanya tertinggal di ringkasan panggilan, asisten yang menerima tugas berikutnya mungkin sama sekali tidak melihatnya. Bagaimana menyimpan informasi yang berguna dalam jangka panjang, dan bagaimana menemukannya kembali pada tugas yang tepat? Bab 3 membahas memori pengguna lintas tugas dan basis pengetahuan bersama.
 
 ## Pertanyaan Pemikiran
 
-1. ★★★ Bacalah catatan run sliding window pada Eksperimen 2-3: apa yang dilakukan masing-masing dari lima tool call? Untuk menilai apakah panggilan berulang disebabkan oleh pemangkasan riwayat, apa lagi yang perlu dicatat dan perbandingan apa yang perlu dilakukan? Rancanglah skema pemangkasan yang mempertahankan status kunci, dan jelaskan dampaknya terhadap cache prefiks. Catatannya ada di `chapter2/kv-cache/result_sliding_window_20260718_kimi_k2_6.json`.
+1. ★★★ Bacalah catatan run sliding window pada Eksperimen 2-3: apa yang dilakukan masing-masing dari lima pemanggilan alat? Untuk menilai apakah panggilan berulang disebabkan oleh pemangkasan riwayat, apa lagi yang perlu dicatat dan perbandingan apa yang perlu dilakukan? Rancanglah skema pemangkasan yang mempertahankan status kunci, dan jelaskan dampaknya terhadap cache prefiks. Catatannya ada di `chapter2/kv-cache/result_sliding_window_20260718_kimi_k2_6.json`.
 2. ★★ Chat Template Qwen3 menangani pemikiran historis berdasarkan posisi kueri pengguna sungguhan yang terakhir. Jika satu loop ReAct berlangsung hingga ratusan putaran, bagaimana Anda akan mengelola konten penalaran yang terus bertambah? Bandingkan pemangkasan, pengiriman kembali, dan protokol pengikatan prefiks untuk pemikiran historis, lalu jelaskan bagaimana Harness harus menyesuaikan diri.
 3. ★★ Misalkan sekitar seratus lima puluh ribu karakter bahan pencarian harus dikompresi menjadi dua ribu karakter. Fakta, hubungan, dan sumber apa yang akan Anda pertahankan? Bagaimana memeriksa apakah ringkasan cukup untuk mendukung pertanyaan berikutnya, dan bagaimana memulihkan rincian yang dihilangkan?
-4. ★★ Penghitung tool melewatkan satu panggilan, sehingga status bar memberikan sisa jatah yang salah. Rancanglah pencatatan event, verifikasi penjumlahan, dan pemeriksaan di lapisan eksekusi, lalu jelaskan bagaimana ketidakkonsistenan ini ditemukan dan diperbaiki.
-5. ★★ Eksperimen 2-4 membandingkan nada, penataan informasi, dan deskripsi tool. Jika system prompt dipelihara banyak orang dalam jangka panjang, bagaimana Anda akan mengelola versinya, memeriksa konflik aturan, dan mengevaluasi setiap perubahan dengan tugas regresi?
+4. ★★ Penghitung alat melewatkan satu panggilan, sehingga bilah status memberikan sisa jatah yang salah. Rancanglah pencatatan peristiwa, verifikasi penjumlahan, dan pemeriksaan di lapisan eksekusi, lalu jelaskan bagaimana ketidakkonsistenan ini ditemukan dan diperbaiki.
+5. ★★ Eksperimen 2-4 membandingkan nada, penataan informasi, dan deskripsi alat. Jika system prompt dipelihara banyak orang dalam jangka panjang, bagaimana Anda akan mengelola versinya, memeriksa konflik aturan, dan mengevaluasi setiap perubahan dengan tugas regresi?
 6. ★★★ Kasus toko hewan peliharaan mencakup pencarian satu catatan sekaligus statistik keseluruhan. Rancanglah catatan mentah, ringkasan statistik, dan perutean kueri agar sistem dapat menjawab kedua jenis pertanyaan secara efisien, dan jelaskan kapan ringkasan perlu diperbarui.
 7. ★★★ Sebuah Skill sudah ada di katalog, tetapi model tidak menyadari bahwa Skill itu cocok untuk tugas saat ini. Bagaimana Anda akan menelusuri masalahnya dari empat aspek: deskripsi, penataan katalog, pemicuan eksplisit, dan contoh evaluasi?
-8. ★★ Skill sudah berhasil dimuat, tetapi model melewatkan langkah verifikasi di dalamnya. Rancanglah eksperimen pembanding untuk membedakan masalah pada pemicuan, pemahaman, penggunaan tool, dan penilaian penyelesaian, lalu bandingkan kinerja berbagai model.
-9. ★★★ Sistem memiliki banyak tool, dan himpunan tool sering berubah. Bagaimana Anda akan mengatur posisi definisi tetap, katalog tool, hasil pemuatan sesuai kebutuhan, dan status runtime? Pertimbangkan sekaligus akurasi penemuan, anggaran konteks, dan cache hit.
+8. ★★ Skill sudah berhasil dimuat, tetapi model melewatkan langkah verifikasi di dalamnya. Rancanglah eksperimen pembanding untuk membedakan masalah pada pemicuan, pemahaman, penggunaan alat, dan penilaian penyelesaian, lalu bandingkan kinerja berbagai model.
+9. ★★★ Sistem memiliki banyak alat, dan himpunan alat sering berubah. Bagaimana Anda akan mengatur posisi definisi tetap, katalog alat, hasil pemuatan sesuai kebutuhan, dan status runtime? Pertimbangkan sekaligus akurasi penemuan, anggaran konteks, dan cache hit.

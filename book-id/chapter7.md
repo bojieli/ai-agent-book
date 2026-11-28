@@ -4,7 +4,7 @@ Enam bab pertama membahas cara membangun satu Agent: konteks, memori, basis peng
 
 Selama pengembangan, banyak pilihan perlu dibandingkan dengan tugas nyata: model mana yang dipakai, alat apa saja yang dibuka, isi dan indeks apa yang dipakai basis pengetahuan, bagaimana memori pengguna, *prompt*, dan Skills diatur, serta batasan apa yang perlu ditambahkan pada Harness. Pilihan-pilihan itu juga saling memengaruhi. Misalnya, deskripsi alat yang lebih rinci dapat mengurangi kesalahan parameter, tetapi juga dapat menambah beban konteks; menambahkan langkah verifikasi dapat menaikkan tingkat keberhasilan, sekaligus memperpanjang waktu penyelesaian.
 
-**Eksperimen komparatif** membandingkan berbagai alternatif pada tugas dan kondisi yang sama, lalu mencatat perubahan tingkat keberhasilan, waktu, dan biaya. **Eksperimen ablasi** mencabut atau menonaktifkan komponen seperti pemeringkatan ulang hasil penelusuran, ringkasan status, atau verifikasi hasil, lalu mengamati bagaimana kinerja sistem berubah. Dengan menetapkan secara jelas apa yang diubah pada tiap putaran, menjaga kondisi lain tetap sama, dan mengukur berulang kali, kita dapat secara bertahap mengaitkan pilihan rekayasa dengan hasil tugas. Penulis menganjurkan agar perbandingan dan ablasi menjadi bagian dari pengembangan sehari-hari. Bila hanya bersandar pada beberapa *trajectory* yang kebetulan lancar, keberhasilan yang kebetulan mudah dikira perbaikan, atau kita hanya melihat keuntungan pada satu jenis tugas dan luput melihat kemunduran pada tugas lain.
+**Eksperimen komparatif** membandingkan berbagai alternatif pada tugas dan kondisi yang sama, lalu mencatat perubahan tingkat keberhasilan, waktu, dan biaya. **Eksperimen ablasi** mencabut atau menonaktifkan komponen seperti pemeringkatan ulang hasil penelusuran, ringkasan status, atau verifikasi hasil, lalu mengamati bagaimana kinerja sistem berubah. Dengan menetapkan secara jelas apa yang diubah pada tiap putaran, menjaga kondisi lain tetap sama, dan mengukur berulang kali, kita dapat secara bertahap mengaitkan pilihan rekayasa dengan hasil tugas. Penulis menganjurkan agar perbandingan dan ablasi menjadi bagian dari pengembangan sehari-hari. Bila hanya bersandar pada beberapa trajektori yang kebetulan lancar, keberhasilan yang kebetulan mudah dikira perbaikan, atau kita hanya melihat keuntungan pada satu jenis tugas dan luput melihat kemunduran pada tugas lain.
 
 **Objek evaluasi semestinya Agent utuh yang tersusun dari model dan Harness.** Model menentukan cara memahami tugas dan memilih tindakan, sedangkan Harness mengatur konteks, menjadwalkan alat, memelihara status, dan menjalankan pemeriksaan. Model yang sama, bila dipasangkan dengan alat atau alur umpan balik yang berbeda, dapat memberikan hasil tugas yang berbeda. Coding Harness yang dibahas pada Bab 5 menyediakan skenario perbandingan semacam ini.
 
@@ -18,13 +18,13 @@ Bagaimana menuliskan syarat peluncuran menjadi satu perangkat evaluasi? Saat mem
 
 ![Gambar 7-1 Empat tahap sistem evaluasi Agent](images/revised/fig7-1.svg)
 
-## Memahami evaluasi lewat satu tugas: domain telecom pada τ²-bench
+## Memahami Evaluasi lewat Satu Tugas: Domain Telecom pada τ²-bench
 
 Mari mulai dari gangguan internet di sebuah ponsel. John Smith memakai nomor 555-123-2002, sedang berada di Prancis, dan bilah status ponselnya menampilkan "No Service". Ia ingin internetnya pulih dan baru menganggap gangguan selesai bila tes kecepatan menghasilkan excellent; ia bersedia mengisi 2,0 GB kuota data bila perlu, dan ingin mempertahankan paketnya yang sekarang.
 
 Kasus ini berasal dari domain telecom pada τ²-bench milik Sierra. Lingkungannya menyimulasikan sistem backend operator dan perangkat pengguna sekaligus; Agent layanan pelanggan dan simulator pengguna masing-masing membaca serta mengubah sebagian status itu melalui alat. Evaluasi perlu menelusuri interaksi kedua pihak untuk memeriksa bagaimana masalah ditemukan, bagaimana tindakan dijalankan, dan apakah jaringan akhirnya pulih.[^ch7-tau2-task]
 
-### Empat komponen definisi tugas
+### Empat Komponen Definisi Tugas
 
 Agar Agent layanan pelanggan lain dapat menangani soal yang sama, status ponsel dan akun harus dipulihkan lebih dulu, pengguna simulasi harus ikut menelusuri masalah dengan arahan yang sama, dan penilaian akhirnya memakai standar yang sama. Tabel berikut mencantumkan empat bagian definisi tugas. Saat membacanya, perhatikan satu perbedaan: penyusun soal mengetahui pengaturan awal ponsel, tetapi seberapa banyak yang diketahui petugas layanan dan pengguna ketika percakapan dimulai?
 
@@ -43,15 +43,15 @@ Agar Agent layanan pelanggan lain dapat menangani soal yang sama, status ponsel 
 
 **Pemeriksaan mana yang menentukan skor.** `actions` mencantumkan `toggle_airplane_mode` dan `toggle_roaming` di sisi pengguna. `env_assertions` memuat pemeriksaan status data seluler serta pemeriksaan tes kecepatan dengan parameter `expected_speed=200` dan `expected_desc="excellent"`. Format tugas juga menyediakan `communicate_info` dan `nl_assertions`, yang masing-masing menggambarkan informasi yang wajib disampaikan kepada pengguna dan asersi dalam bahasa alami; pada soal ini keduanya kosong.
 
-`reward_basis` soal ini memilih `ENV_ASSERTION`, sehingga imbalan total ditentukan oleh asersi lingkungan. Pemeriksaan tindakan boleh muncul dalam hasil, tetapi apakah ikut dihitung dalam skor total ditentukan oleh konfigurasi penilaian.
+`reward_basis` soal ini memilih `ENV_ASSERTION`, sehingga *reward* total ditentukan oleh asersi lingkungan. Pemeriksaan tindakan boleh muncul dalam hasil, tetapi apakah ikut dihitung dalam skor total ditentukan oleh konfigurasi penilaian.
 
-### Memeriksa hasil dengan menelusuri trajectory eksekusi
+### Memeriksa Hasil dengan Menelusuri Trajektori Eksekusi
 
 Eksekusi pendamping memilih lima tugas telecom, masing-masing dijalankan sekali; Agent layanan pelanggan dan simulator pengguna sama-sama memakai GPT-4.1 mini, dan pada akhirnya empat soal lolos. Berikut kita analisis dulu tugas roaming di Prancis di atas, lalu bandingkan dengan tugas yang gagal.
 
 > **Eksperimen 7-1 ★: Menjalankan τ²-bench dan membandingkan evolusinya dari τ-bench**
 >
-> Bacalah dulu skenario pengguna, aksi inisialisasi, dan syarat penilaian sebuah tugas, lalu jalankan satu interaksi lengkap. Sepanjang trajectory, tandai penelusuran oleh petugas, tindakan pengguna, perubahan status, dan hasil penerimaan, lalu periksa informasi mana yang menjadi dasar setiap keputusan.
+> Bacalah dulu skenario pengguna, aksi inisialisasi, dan syarat penilaian sebuah tugas, lalu jalankan satu interaksi lengkap. Sepanjang trajektori, tandai penelusuran oleh petugas, tindakan pengguna, perubahan status, dan hasil penerimaan, lalu periksa informasi mana yang menjadi dasar setiap keputusan.
 >
 > Saat membandingkan τ-bench dengan τ²-bench, perhatikan terutama apakah pengguna dapat mengubah lingkungan melalui alat, dan tuntutan koordinasi apa yang ditimbulkan perubahan itu bagi petugas.
 >
@@ -65,23 +65,23 @@ Selanjutnya simulator pengguna memanggil `check_network_status` dan `check_statu
 
 Inilah mekanisme **kendali ganda (Dual-Control)**: petugas menelusuri dan mengoperasikan backend operator, sedangkan simulator pengguna memiliki alat perangkat tersendiri, misalnya melihat bilah status, menyalakan atau mematikan mode pesawat, memasang ulang kartu SIM, dan menjalankan tes kecepatan. Kedua pihak mengoordinasikan tindakan lewat percakapan, dan lingkungan mencatat perubahan status yang ditimbulkan masing-masing.
 
-Agent kemudian menuntun pengguna mematikan mode pesawat dan menyalakan roaming perangkat, dan bilah status menampilkan sinyal 5G. Pengguna menjalankan `run_speed_test`, memperoleh hasil 275 Mbps dengan predikat Excellent, lalu memastikan masalah selesai. Kedua asersi lingkungan lolos, dan imbalan soal ini 1,0.
+Agent kemudian menuntun pengguna mematikan mode pesawat dan menyalakan roaming perangkat, dan bilah status menampilkan sinyal 5G. Pengguna menjalankan `run_speed_test`, memperoleh hasil 275 Mbps dengan predikat Excellent, lalu memastikan masalah selesai. Kedua asersi lingkungan lolos, dan *reward* soal ini 1,0.
 
-Trajectory yang berhasil ini juga menyingkap masalah proses. Kebijakan mengharuskan petugas memanggil satu alat setiap kali, tetapi Agent mengeluarkan `get_customer_by_phone` dan `get_customer_by_name` dalam satu pesan yang sama. Skor total tugas ini hanya memperhitungkan asersi lingkungan, sehingga perilaku itu tidak mengubah imbalan.
+Trajektori yang berhasil ini juga menyingkap masalah proses. Kebijakan mengharuskan petugas memanggil satu alat setiap kali, tetapi Agent mengeluarkan `get_customer_by_phone` dan `get_customer_by_name` dalam satu pesan yang sama. Skor total tugas ini hanya memperhitungkan asersi lingkungan, sehingga perilaku itu tidak mengubah *reward*.
 
-Dalam satu trajectory lain yang gagal, jalur yang salah pilih tidak pernah dikoreksi, sehingga penelusuran berikutnya ikut melenceng. Nomor pengguna tetap 555-123-2002, tetapi Agent memilih `L1001` dan terus menelusuri berdasarkan pemakaian 3,2/5 GB pada jalur itu. Alat sudah mengembalikan bahwa `L1001` berpadanan dengan 555-123-2001, tetapi Agent tetap tidak mengoreksi jalurnya; setelah beberapa putaran penelusuran yang tidak relevan, ia mengalihkan ke petugas manusia. Di sisi pengguna, mode hemat data berhasil dimatikan, tetapi pengisian kuota 2 GB yang diperlukan jalur yang benar, `L1002`, tidak pernah dijalankan, dan ketiga asersi lingkungan gagal semua.
+Dalam satu trajektori lain yang gagal, jalur yang salah pilih tidak pernah dikoreksi, sehingga penelusuran berikutnya ikut melenceng. Nomor pengguna tetap 555-123-2002, tetapi Agent memilih `L1001` dan terus menelusuri berdasarkan pemakaian 3,2/5 GB pada jalur itu. Alat sudah mengembalikan bahwa `L1001` berpadanan dengan 555-123-2001, tetapi Agent tetap tidak mengoreksi jalurnya; setelah beberapa putaran penelusuran yang tidak relevan, ia mengalihkan ke petugas manusia. Di sisi pengguna, mode hemat data berhasil dimatikan, tetapi pengisian kuota 2 GB yang diperlukan jalur yang benar, `L1002`, tidak pernah dijalankan, dan ketiga asersi lingkungan gagal semua.
 
-Dengan membandingkan kedua trajectory, skor akhir dapat diurai menjadi titik-titik perbaikan yang konkret: mencocokkan pemetaan nomor dan jalur, memakai bukti baru untuk mengoreksi penilaian, membedakan status perangkat dari status backend, dan memverifikasi bahwa pengisian kuota yang diperlukan benar-benar terlaksana. Bagian atribusi kegagalan nanti akan membahas lebih lanjut cara menemukan titik-titik balik penting itu dalam trajectory yang panjang.
+Dengan membandingkan kedua trajektori, skor akhir dapat diurai menjadi titik-titik perbaikan yang konkret: mencocokkan pemetaan nomor dan jalur, memakai bukti baru untuk mengoreksi penilaian, membedakan status perangkat dari status backend, dan memverifikasi bahwa pengisian kuota yang diperlukan benar-benar terlaksana. Bagian atribusi kegagalan nanti akan membahas lebih lanjut cara menemukan titik-titik balik penting itu dalam trajektori yang panjang.
 
-[^ch7-tau2-task]: τ²-bench dari Sierra Research mendefinisikan alat pengguna untuk domain telecom dalam `user_tools.py`, dengan titik masuk penilaian `evaluator.py`. Isi kasus dan hasilnya disusun dari lima soal beserta trajectory eksekusi yang disimpan di materi pendamping.
+[^ch7-tau2-task]: τ²-bench dari Sierra Research mendefinisikan alat pengguna untuk domain telecom dalam `user_tools.py`, dengan titik masuk penilaian `evaluator.py`. Isi kasus dan hasilnya disusun dari lima soal beserta trajektori eksekusi yang disimpan di materi pendamping.
 
-## Metrik evaluasi: definisi keberhasilan
+## Metrik Evaluasi: Definisi Keberhasilan
 
 Empat dari lima tugas lolos; itulah capaian keseluruhan eksekusi kali ini. Untuk mengambil keputusan produk berdasarkan angka itu, kita masih perlu memperjelas jenis tugas dan harga sebuah kegagalan. Layanan pelanggan untuk pengembalian dana harus terus-menerus menuntaskan pengembalian dana yang memenuhi syarat; saat menulis program, kita boleh membangkitkan beberapa implementasi lalu menyaring dengan pengujian versi yang dapat berjalan dan memberi hasil benar; dalam riset pun kita boleh mengajukan beberapa hipotesis lalu membiarkan peneliti mengujinya. Metrik evaluasi harus sesuai dengan cara pemakaian semacam ini.
 
-### Keajaiban teknis: mengukur kemampuan dengan banyak percobaan lewat Pass@k
+### Keajaiban Teknis: Mengukur Kemampuan dengan Banyak Percobaan lewat Pass@k
 
-Penulis menyebut sebagian demonstrasi Agent yang mengesankan sebagai **"keajaiban teknis"**: bila diberi cukup waktu dan kesempatan mencoba, sistem menuntaskan tugas yang sebelumnya sulit diselesaikan secara otomatis. Untuk pekerjaan yang bersifat penjelajahan, satu trajectory sukses yang sudah terverifikasi saja dapat bernilai. Metrik **Pass@k** sesuai dengan cara pemakaian ini: tugas yang sama dijalankan $k$ kali, dan dianggap berhasil asalkan setidaknya satu kali lolos. Untuk tugas dengan skor kontinu, kita juga dapat melaporkan skor tertinggi dari $k$ kali itu, yang disebut **Best@k**.
+Penulis menyebut sebagian demonstrasi Agent yang mengesankan sebagai "keajaiban teknis": bila diberi cukup waktu dan kesempatan mencoba, sistem menuntaskan tugas yang sebelumnya sulit diselesaikan secara otomatis. Untuk pekerjaan yang bersifat penjelajahan, satu trajektori sukses yang sudah terverifikasi saja dapat bernilai. Metrik **Pass@k** sesuai dengan cara pemakaian ini: tugas yang sama dijalankan $k$ kali, dan dianggap berhasil asalkan setidaknya satu kali lolos. Untuk tugas dengan skor kontinu, kita juga dapat melaporkan skor tertinggi dari $k$ kali itu, yang disebut **Best@k**.
 
 Misalnya, Anthropic pernah mengorganisasi beberapa instans Claude untuk bekerja sama membangun sebuah kompiler C, sebagai bukti bahwa eksekusi jangka panjang, umpan balik pengujian, dan pembagian tugas mampu menopang rekayasa yang rumit. Ketika peneliti mencari contoh tandingan matematis, mereka juga dapat membiarkan model mencoba berulang-ulang, lalu memverifikasi secara mandiri apakah salah satu contoh tandingan itu sahih. Tinjauan keamanan perangkat lunak dapat memeriksa ulang dugaan masalah yang dilaporkan model, dan penciptaan karya terbuka dapat memilih yang terbaik dari beberapa hasil.[^ch7-long-running]
 
@@ -89,7 +89,7 @@ Produk aplikasi pun memperlihatkan kemampuannya lewat tugas yang rumit. Manus me
 
 Menurut penulis, demonstrasi yang mampu menuntaskan jenis tugas baru merupakan faktor penting yang membuat produk-produk ini menarik pengguna.
 
-### Keandalan bisnis: berfokus pada Pass^k
+### Keandalan Bisnis: Berfokus pada Pass^k
 
 Alur bisnis biasanya menuntut setiap kali eksekusi menghasilkan keluaran yang benar. **Pass^k** mengukur keadaan ketika tugas yang sama dijalankan $k$ kali dan setiap kalinya lolos; bacalah sebagai "pass power k". Syarat lolos sebuah tugas dapat sekaligus mencakup hasil akhir, kepatuhan pada kebijakan, dan batasan hak akses; setiap eksekusi diperiksa dengan syarat yang sama.
 
@@ -106,7 +106,7 @@ Saat membaca sekelompok hasil nyata, rumus itu boleh dikesampingkan dulu. Misalk
 
 Catatan yang sama juga dapat menjawab pertanyaan yang lebih mudah dicek: dari lima eksekusi tadi, bila diambil dua sembarang, berapa proporsi pasangan yang lolos? Anggaplah setiap eksekusi sebagai satu kartu dan ambil dua kartu tanpa pengembalian; ada sepuluh pasangan. Hanya pasangan dua kartu gagal yang membuat kedua kali gagal, sehingga sembilan pasangan berhasil setidaknya sekali, dan perkiraan sampel Pass@2 adalah 9/10. Tiga kartu berhasil dapat membentuk tiga pasangan, sehingga perkiraan sampel Pass^2 adalah 3/10. τ²-bench menghitung kombinasi yang semuanya lolos per tugas persis seperti ini: satu soal dijalankan $n$ kali dengan $s$ kali berhasil, lalu dipilih $k$ kali; proporsi kombinasi yang semuanya lolos adalah $\binom{s}{k}/\binom{n}{k}$, dengan $1\le k\le n$.[^ch7-tau2-metrics]
 
-Sekarang baca kembali angka 4/5 pada Eksperimen 7-1. Kelima trajectory itu berasal dari lima soal yang berbeda; setiap soal hanya punya satu kartu, sehingga satu pasangan pun tidak bisa dibentuk. Untuk memperkirakan Pass^2 tugas-tugas ini, setiap soal harus diberi eksekusi independen tambahan, lalu dihitung dan dirangkum masing-masing. Mengkuadratkan 0,8 secara langsung sama saja dengan menambahkan asumsi bahwa peluang berhasil setiap soal sama dan setiap percobaan saling bebas.
+Sekarang baca kembali angka 4/5 pada Eksperimen 7-1. Kelima trajektori itu berasal dari lima soal yang berbeda; setiap soal hanya punya satu kartu, sehingga satu pasangan pun tidak bisa dibentuk. Untuk memperkirakan Pass^2 tugas-tugas ini, setiap soal harus diberi eksekusi independen tambahan, lalu dihitung dan dirangkum masing-masing. Mengkuadratkan 0,8 secara langsung sama saja dengan menambahkan asumsi bahwa peluang berhasil setiap soal sama dan setiap percobaan saling bebas.
 
 [^ch7-tau2-metrics]: Versi eksperimen τ²-bench (revisi 8d005b0) menghitung Pass^k per soal di dalam `agent_metrics.py`. Bila jumlah keberhasilan kurang dari $k$, jumlah kombinasi yang semuanya lolos adalah nol.
 
@@ -118,17 +118,17 @@ PaperQA2 boleh memilih "informasi tidak cukup" pada 248 soal literatur LitQA2. M
 
 [^ch7-paperqa2-denominators]: Skarlinski dkk., *Language Agents Achieve Superhuman Synthesis of Scientific Knowledge*, 2024, lihat Bagian 2 dan Gambar 2.
 
-Dua trajectory dengan status akhir yang sama bisa memakan biaya yang berbeda. Ambil contoh pengecekan tagihan: A langsung mengembalikan jumlah yang benar dengan satu kali penelusuran. B baru memberi jawaban yang sama setelah dua kali menelusuri. Kedua penelusuran membawa pengenal permintaan yang sama dan yang pertama sempat kehabisan waktu, artinya percobaan ulang membantu B memulihkan tugasnya. Seandainya hasil penelusuran pertama sudah berhasil sampai, penelusuran kedua hanya menambah waktu tunggu dan biaya alat dengan percuma.
+Dua trajektori dengan status akhir yang sama bisa memakan biaya yang berbeda. Ambil contoh pengecekan tagihan: A langsung mengembalikan jumlah yang benar dengan satu kali penelusuran. B baru memberi jawaban yang sama setelah dua kali menelusuri. Kedua penelusuran membawa pengenal permintaan yang sama dan yang pertama sempat kehabisan waktu, artinya percobaan ulang membantu B memulihkan tugasnya. Seandainya hasil penelusuran pertama sudah berhasil sampai, penelusuran kedua hanya menambah waktu tunggu dan biaya alat dengan percuma.
 
 Bila eksekusi melibatkan penulisan data atau efek eksternal lain, pulihkan dulu status awal yang ditetapkan untuk setiap percobaan, kerjakan tindakannya di lingkungan uji, dan catat semua percobaan. Jika produk mengizinkan percobaan ulang setelah gagal, masukkan jumlah percobaan ulang, langkah pemulihan, dan biaya eksekusinya ke dalam evaluasi alur; catatan kegagalan aslinya tetap disimpan agar kinerja sekali jalan dapat dibedakan dari hasil setelah pemulihan.
 
 [^ch7-long-running]: Anthropic, Building a C compiler with a team of parallel Claudes, 2026-02-05, memperkenalkan kerja sama banyak instans, eksekusi jangka panjang, dan umpan balik pengujian.
 
-## Lingkungan evaluasi
+## Lingkungan Evaluasi
 
 Misalkan kita hendak memeriksa ulang eksekusi tadi yang salah memilih jalur. Pemeriksa perlu melihat pengguna yang sama, dua jalur yang sama, dan paket awal yang sama. Jika eksekusi pertama sudah mengubah salah satu jalur, menjalankannya sekali lagi begitu saja tidak memungkinkan kita menilai apakah perubahan hasil berasal dari model atau dari basis data. Lingkungan evaluasi bertugas menyiapkan titik awal tugas, menyediakan antarmuka interaksi, mencatat prosesnya, dan memeriksa titik akhirnya.
 
-### Lima komponen penyusun
+### Lima Komponen Penyusun
 
 Dengan tugas telecom sebagai contoh, lingkungan evaluasi dapat diurai menjadi lima bagian.
 
@@ -142,7 +142,7 @@ Dengan tugas telecom sebagai contoh, lingkungan evaluasi dapat diurai menjadi li
 
 **Protokol eksekusi (Interaction Protocol)** mengatur giliran bicara, pemanggilan alat, dan penghentian. Simulator pengguna dapat mengeluarkan `###STOP###` untuk mengakhiri interaksi, dan *runner* juga menetapkan anggaran seperti jumlah giliran. Alasan berhenti dan skor tugas dicatat terpisah: setelah pengguna menghentikan percakapan, asersi lingkungan tetap bertugas menilai apakah sasaran tercapai; bila anggaran habis, status terakhir dan langkah yang belum selesai juga perlu disimpan.
 
-### Lingkungan evaluasi tipe interaksi manusia-komputer dan tipe pemanggilan alat
+### Lingkungan Evaluasi Tipe Interaksi Manusia-Komputer dan Tipe Pemanggilan Alat
 
 Tugas telecom memuat simulator pengguna yang terus menanggapi dan mengoperasikan perangkat. Sebaliknya, perbaikan kode, analisis data, dan penyelesaian soal matematika biasanya dimulai oleh instruksi tugas, lalu Agent terutama berinteraksi dengan alat. Kedua jenis lingkungan sama-sama membutuhkan tugas, status, antarmuka, penilaian, dan protokol eksekusi; bedanya terletak pada perlu tidaknya menyimulasikan lawan bicara dan bagaimana kedua pihak mengoordinasikan tindakan.
 
@@ -157,19 +157,19 @@ Tabel 7-1 Perbandingan tipe lingkungan Verifiers
 | Tipe lingkungan | Tanggung jawab utama | Penanganan alat dan status | Kasus penggunaan khas |
 |---|---|---|---|
 | `SingleTurnEnv` | Mengatur jawaban satu giliran | Dinilai setelah satu jawaban | Soal matematika, tanya jawab satu giliran |
-| `ToolEnv` | Mengatur interaksi alat multi-giliran | Menyimpan trajectory, mendistribusikan alat dan menerima hasil | Pencarian dan sintesis informasi |
+| `ToolEnv` | Mengatur interaksi alat multi-giliran | Menyimpan trajektori, mendistribusikan alat dan menerima hasil | Pencarian dan sintesis informasi |
 | `StatefulToolEnv` | Menghubungkan status eksekusi ke eksekusi alat | Melengkapi parameter alat atau memperbarui status berdasarkan status saat ini | Mengikat basis data atau pengenal sumber daya untuk tugas ini |
 | `SandboxEnv` | Mengelola lingkungan eksekusi terisolasi | Mengalokasikan sandbox untuk eksekusi dan memakai alat di dalamnya | Menjalankan kode, memeriksa berkas dan hasil pengujian |
 
-Misalnya, ketika dua tugas mengubah basis data secara bersamaan, *runner* dapat menyuntikkan pengenal basis data masing-masing ke dalam pemanggilan alat, sehingga setiap trajectory mengoperasikan data miliknya sendiri. Ketika eksekusi gagal, alat sebaiknya mengembalikan informasi yang berguna untuk keputusan berikutnya, misalnya objek tidak ada, parameter tidak memenuhi syarat, atau layanan kehabisan waktu. Sistem evaluasi menyimpan observasi, pemanggilan, hasil eksekusi, dan imbalan, sehingga saat dianalisis kesalahan dapat dilacak sampai ke langkah tertentu.
+Misalnya, ketika dua tugas mengubah basis data secara bersamaan, *runner* dapat menyuntikkan pengenal basis data masing-masing ke dalam pemanggilan alat, sehingga setiap trajektori mengoperasikan data miliknya sendiri. Ketika eksekusi gagal, alat sebaiknya mengembalikan informasi yang berguna untuk keputusan berikutnya, misalnya objek tidak ada, parameter tidak memenuhi syarat, atau layanan kehabisan waktu. Sistem evaluasi menyimpan observasi, pemanggilan, hasil eksekusi, dan *reward*, sehingga saat dianalisis kesalahan dapat dilacak sampai ke langkah tertentu.
 
-[^ch7-verifiers-env]: Prime Intellect, ToolEnv dan StatefulToolEnv pada Verifiers v0.1.9, memperlihatkan trajectory multi-giliran, distribusi alat, dan injeksi parameter status.
+[^ch7-verifiers-env]: Prime Intellect, ToolEnv dan StatefulToolEnv pada Verifiers v0.1.9, memperlihatkan trajektori multi-giliran, distribusi alat, dan injeksi parameter status.
 
-## Desain himpunan data evaluasi
+## Desain Himpunan Data Evaluasi
 
 Sekarang kita perluas lima soal telekomunikasi tadi menjadi himpunan evaluasi yang dapat memandu keputusan rilis. Jika semua soal tambahan berbunyi "aktifkan roaming untuk nomor tertentu", sistem bisa memperoleh skor tinggi meskipun tidak pernah belajar membedakan dua jalur dalam satu akun. Jika skor akan dipakai untuk memutuskan apakah Agent layanan pelanggan boleh diluncurkan, pemilihan soal harus mengacu pada tiket nyata, mencakup urusan rutin sekaligus soal sulit yang mudah membuat jalur tertukar, dan penilaiannya juga harus memeriksa jalur mana yang akhirnya diubah petugas. Setelah peluncuran, soal-soal ini masih harus dipelihara agar terus mencerminkan pekerjaan yang benar-benar diserahkan pengguna.
 
-### Perbandingan menyilang desain benchmark
+### Perbandingan Menyilang Desain Benchmark
 
 Tabel 7-2 menyandingkan enam benchmark menurut kemampuan, asal tugas, lingkungan eksekusi, dan cara verifikasi.
 
@@ -204,31 +204,31 @@ Anda cukup mengunduh daftarnya untuk memeriksa hasil ini secara mandiri. Pertama
 
 **Terminal-Bench menerima tugas rekayasa berdasarkan hasil eksekusi.** Kasus membangun kernel Linux merangkai modifikasi kode sumber, kompilasi, initramfs, dan booting di QEMU; Linux 6.9, `printk` kustom di dalam `start_kernel`, serta pesan dalam log boot semuanya menjadi titik pemeriksaan yang konkret.
 
-Bab 5 sudah membahas pencocokan angka penjualan dengan pesanan. Jika asisten menyerahkan laporan kuartalan untuk dua puluh kanal, dari mana pemeriksaan dimulai? Tencent WorkBuddy Bench memiliki satu soal rekonsiliasi yang terbuka untuk publik. Kedua lembar kerjanya berisi data kanal; nilai penyelesaian dilihat secara kuartal-ke-kuartal, dibandingkan dengan kuartal sebelumnya; nilai penerimaan pembayaran dilihat secara tahun-ke-tahun, dibandingkan dengan kuartal yang sama tahun lalu. Sekalipun kedua periode dasar sama-sama diisi kuartal sebelumnya, judul kolom dan jumlah kanal bisa saja tetap benar. Ambil contoh "锦绣生活馆" pada lembar penyelesaian: setelah baris duplikat dan rekaman tanpa kuartal dibuang dari rincian lalu dijumlahkan per kanal dan kuartal, total transaksinya naik dari 1.569.231,00 menjadi 1.787.311,03, dengan selisih 218.080,03. Program penilai memeriksa cakupan kanal pada kedua lembar, lalu mengambil sampel nilai dua kanal tertentu. Pemeriksaan cakupan kanal pada soal ini menjangkau kedua puluh kanal, sedangkan pemeriksaan nilai hanya menyentuh dua kanal yang terambil.[^ch7-workbuddy-office]
+Bab 5 sudah membahas pencocokan angka penjualan dengan pesanan. Jika asisten menyerahkan laporan kuartalan untuk dua puluh kanal, dari mana pemeriksaan dimulai? Tencent WorkBuddy Bench memiliki satu soal rekonsiliasi yang terbuka untuk publik. Kedua lembar kerjanya berisi data kanal; nilai penyelesaian dilihat secara kuartal-ke-kuartal, dibandingkan dengan kuartal sebelumnya; nilai penerimaan pembayaran dilihat secara tahun-ke-tahun, dibandingkan dengan kuartal yang sama tahun lalu. Sekalipun kedua periode dasar keliru diisi dengan kuartal sebelumnya, judul kolom dan jumlah kanal bisa saja tetap benar. Ambil contoh kanal "锦绣生活馆" (nama sebuah toko) pada lembar penyelesaian: setelah baris duplikat dan rekaman tanpa kuartal dibuang dari rincian lalu dijumlahkan per kanal dan kuartal, total transaksinya naik dari 1.569.231,00 menjadi 1.787.311,03, dengan selisih 218.080,03. Program penilai memeriksa cakupan kanal pada kedua lembar, lalu mengambil sampel nilai dua kanal tertentu. Pemeriksaan cakupan kanal pada soal ini menjangkau kedua puluh kanal, sedangkan pemeriksaan nilai hanya menyentuh dua kanal yang terambil.[^ch7-workbuddy-office]
 
 [^ch7-workbuddy-office]: Tugas perkantoran Tencent WorkBuddy Bench `channel-period-compare-L4-017`. Paket data yang dipakai (revisi 3e8ad83) menyertakan workbook asli, jawaban rujukan, dan program penilai.
 
 Verifier dapat diuji dengan tugas yang peka waktu. Misalkan pengguna meminta diingatkan ketika tarif sebuah hotel turun di bawah 950 yuan. Harganya 1000 yuan pukul 10.00, turun menjadi 900 yuan pukul 10.10, lalu kembali ke 1000 yuan pukul 10.15. Pengingat penurunan harga yang dikirim pukul 10.12 lengkap dengan tipe kamar dan tautan pemesanan masih memberi pengguna kesempatan memesan. Sistem yang setiap hari mengirim pesan "harga belum turun" tetapi justru melewatkan lima menit itu tidak menuntaskan permintaan, meskipun berjalan terus selama seminggu. Saat menilai, catat secara terpisah jumlah jendela waktu yang memenuhi syarat, jumlah pengingat yang tepat waktu di dalam jendela, dan berapa kali pengguna diganggu ketika tidak ada perubahan. Jika evaluator pun hanya menyimpan harga sekali sehari, jendela yang terlewat sama sekali tidak dapat dihitung. Untuk mengukur kelalaian pemberitahuan, siapkan dulu rekaman ulang harga lengkap dengan stempel waktu, lalu biarkan sistem yang diuji memeriksa dengan frekuensinya sendiri.
 
-### Pembagian tingkat kesulitan tugas
+### Pembagian Tingkat Kesulitan Tugas
 
 Himpunan tugas perlu mencakup berbagai tingkat kesulitan sekaligus menjelaskan dari mana kesulitan itu berasal. Tugas dasar memeriksa apakah kemampuan mengalami kemunduran, sedangkan tugas sulit menyisakan ruang ukur bagi kemajuan model berikutnya; bila semua soal cepat lolos, himpunan evaluasi sulit lagi memandu pemilihan model. Pembagian dapat dilakukan menurut ragam alat, panjang rangkaian tindakan, tingkat keterpencaran informasi, ketidakpastian lingkungan, atau keahlian khusus yang dibutuhkan, lalu dilihat dalam kondisi mana kinerja sistem merosot tajam.
 
-466 soal GAIA dibagi menjadi tiga tingkat. Tugas yang lebih mudah biasanya melibatkan sedikit alat dan langkah, sedangkan tugas yang lebih sulit menuntut pemaduan informasi bertahap dan kombinasi yang rumit. Dalam makalah aslinya, ketepatan anotator manusia pada ketiga tingkat masing-masing 93,9%, 91,8%, dan 87,3%; hasil GPT-4 dengan plugin untuk ketiga tingkat itu adalah 30,3%, 9,7%, dan 0%.[^ch7-gaia-design]
+Sebanyak 466 soal GAIA dibagi menjadi tiga tingkat. Tugas yang lebih mudah biasanya melibatkan sedikit alat dan langkah, sedangkan tugas yang lebih sulit menuntut pemaduan informasi bertahap dan kombinasi yang rumit. Dalam makalah aslinya, ketepatan anotator manusia pada ketiga tingkat masing-masing 93,9%, 91,8%, dan 87,3%; hasil GPT-4 dengan plugin untuk ketiga tingkat itu adalah 30,3%, 9,7%, dan 0%.[^ch7-gaia-design]
 
 Rentang tugas Terminal-Bench juga lebar: pendaftaran model melibatkan penggunaan MLflow, penerapan banyak komponen menuntut koordinasi layanan Git dan layanan Web, sedangkan pemulihan kata sandi dan analisis diferensial FEAL menambahkan pengetahuan algoritma khusus.
 
 Tugas bisnis juga perlu mencakup batas-batas kebijakan. Misalnya, ketika pengguna mengaku petugas sudah menyetujui pembatalan pesanan, sistem semestinya menelusuri otorisasi dan status pesanan, lalu memutuskan sesuai kebijakan apakah pesanan dibatalkan. Kasus semacam ini menguji cara Agent memakai bukti untuk menangani informasi yang saling bertentangan, dan dapat disandingkan dengan tugas penanganan normal.
 
-### Pencegahan kebocoran data
+### Pencegahan Kebocoran Data
 
 **Kombinasi banyak sumber dan lampiran khusus.** Jika model dapat menemukan soal beserta jawaban jadinya di hasil pencarian, seberapa banyak kemampuan pencarian dan penalaran yang dibuktikan oleh satu jawaban benar? GAIA mengurangi peluang itu dengan pencarian bertahap dan lampiran khusus. Misalnya, kenali dulu astronaut dari gambar astronomi pada tanggal tertentu, lalu cari kelompok astronaut tempatnya bernaung, bandingkan lama waktu para anggotanya di orbit, dan terakhir keluarkan nama belakang serta jumlah menit sesuai ketentuan. Titik koma, pembulatan angka, dan pemisah ribuan semuanya merupakan konvensi jawaban. PDF, audio, dan gambar yang dibuat khusus menambah ragam kombinasi masukan. Soal yang dipublikasikan bisa masuk ke materi pelatihan. Karena itu, sisihkan pula sekelompok soal khusus untuk evaluasi, dan catat soal mana yang sudah dipakai untuk pelatihan.[^ch7-gaia-design]
 
 **Instans berparameter.** AndroidWorld menyediakan logika inisialisasi, pemeriksaan eksekusi, dan pembersihan untuk setiap tugas, serta membangkitkan instans yang berbeda lewat parameter.[^ch7-androidworld-design] Misalnya, "ubah nomor telepon kontak `[CONTACT_NAME]` menjadi `[NEW_PHONE]`" dapat mengganti kontak dan nomornya sambil mempertahankan sasaran tindakannya. Perubahan parameter dapat memeriksa apakah model bertindak sesuai tugas saat ini; mengunci sebagian parameter dan mengubah sisanya juga memudahkan penelitian atas pengaruh faktor tertentu.
 
-**Pengenal kenari.** Berkas benchmark dapat menyisipkan canary GUID yang unik untuk membantu menemukan petunjuk bahwa data telah disalin atau tercampur ke korpus lain. Berkas tugas Terminal-Bench memakai penanda semacam ini. Saat menilai kebocoran, kita juga harus memeriksa apakah model pernah melihat pengenal itu di konteks saat ini atau di hasil pencarian, lalu memadukannya dengan pelacakan asal data; temuan penanda dapat memicu penyelidikan, tetapi kepemilikan data pelatihan memerlukan bukti lebih lanjut.
+**Penanda *canary*.** Berkas benchmark dapat menyisipkan *canary* GUID yang unik untuk membantu menemukan petunjuk bahwa data telah disalin atau tercampur ke korpus lain. Berkas tugas Terminal-Bench memakai penanda semacam ini. Saat menilai kebocoran, kita juga harus memeriksa apakah model pernah melihat penanda itu di konteks saat ini atau di hasil pencarian, lalu memadukannya dengan pelacakan asal data; temuan penanda dapat memicu penyelidikan, tetapi kepemilikan data pelatihan memerlukan bukti lebih lanjut.
 
-### Kendali mutu dan pemeliharaan jangka panjang
+### Kendali Mutu dan Pemeliharaan Jangka Panjang
 
 Jika soal telecom yang sama lolos kemarin dan gagal hari ini, selain memeriksa perubahan pada Agent, kita juga harus bisa menjawab: apakah jalur awalnya berubah? Apakah simulator pengguna masih bekerja sama menurut aturan yang sama? Apakah syarat penilaian masih menguji sasaran yang sama? Dengan menelusuri titik awal, interaksi, dan titik akhir sebuah eksekusi, kita dapat merumuskan lima pekerjaan pemeliharaan.
 
@@ -252,15 +252,15 @@ Misalnya, setelah struktur halaman web berubah, ekstraksi status perlu diperbaru
 >
 > Setelah selesai, analisislah: apakah soal itu memungkinkan beberapa tafsiran yang wajar, apakah verifier mencakup tafsiran-tafsiran itu, dan setelah hasil antara yang benar diperoleh, tindakan apa lagi yang harus diselesaikan agar lolos penerimaan.
 
-### Tiga asal himpunan evaluasi
+### Tiga Asal Himpunan Evaluasi
 
-Evaluasi di lingkungan produksi dapat memadukan benchmark publik, tugas bisnis buatan sendiri, dan trajectory produksi. Ketiganya memikul tanggung jawab yang berbeda dan bersama-sama mencakup ruang pemakaian sistem.
+Evaluasi di lingkungan produksi dapat memadukan benchmark publik, tugas bisnis buatan sendiri, dan trajektori produksi. Ketiganya memikul tanggung jawab yang berbeda dan bersama-sama mencakup ruang pemakaian sistem.
 
 **Benchmark publik** cocok untuk perbandingan awal antarmodel, dan juga menyediakan rujukan bagi desain tugas, pembangkitan berparameter, dan verifier. Penulis memakainya untuk menyaring kandidat model pada tahap awal, lalu memutuskan pemilihan model dan rilis berdasarkan hasil himpunan bisnis buatan sendiri.
 
 **Himpunan bisnis buatan sendiri** menyusun tugas di sekitar sasaran pengguna, alat, dan kebijakan yang nyata, dan dipakai untuk pemilihan model serta perbaikan Harness. Kita dapat meminjam struktur τ²-bench: konfigurasikan data domain, skenario pengguna, alat, dan pemeriksaan status, lalu kalibrasi tingkat kesulitan tugas dan perilaku simulator pengguna.
 
-**Aliran balik trajectory produksi** menemukan celah dari eksekusi nyata, misalnya koreksi dari pengguna, umpan balik negatif, status bisnis yang tidak wajar, atau kesalahan yang ditemukan lewat tinjauan trajectory. Setelah diproses dengan izin dan dianonimkan, penyebab kegagalannya dicek secara manual, kondisi tugas yang diperlukan dipulihkan, lalu dimasukkan ke himpunan regresi. Umpan balik pengguna adalah petunjuk untuk menemukan masalah; label penilaiannya harus dikonfirmasi dengan status yang sebenarnya.
+**Aliran balik trajektori produksi** menemukan celah dari eksekusi nyata, misalnya koreksi dari pengguna, umpan balik negatif, status bisnis yang tidak wajar, atau kesalahan yang ditemukan lewat tinjauan trajektori. Setelah diproses dengan izin dan dianonimkan, penyebab kegagalannya dicek secara manual, kondisi tugas yang diperlukan dipulihkan, lalu dimasukkan ke himpunan regresi. Umpan balik pengguna adalah petunjuk untuk menemukan masalah; label penilaiannya harus dikonfirmasi dengan status yang sebenarnya.
 
 Pada awalnya, kita dapat memakai benchmark publik dan sedikit tugas bisnis yang ditulis tangan; setelah peluncuran, kesalahan nyata dan skenario bisnis baru semestinya menjadi sumber utama tambahan kasus regresi. Tugas-tugas ini datang langsung dari masalah yang dialami pengguna, sehingga dapat terus menambal kondisi yang terlewat pada tahap desain.
 
@@ -270,11 +270,11 @@ Pada awalnya, kita dapat memakai benchmark publik dan sedikit tugas bisnis yang 
 [^ch7-androidworld-design]: Christopher Rawles dkk., AndroidWorld: A Dynamic Benchmarking Environment for Autonomous Agents, memperkenalkan tugas berparameter dan penerimaan berdasarkan status perangkat.
 [^ch7-osworld-verified]: XLANG Lab, Introducing OSWorld-Verified, 2025, memperkenalkan umpan balik komunitas serta revisi inisialisasi dan verifier.
 
-## Metode evaluasi otomatis
+## Metode Evaluasi Otomatis
 
 Evaluasi otomatis dimulai dengan memperjelas objek yang diperiksa. SWE-bench memeriksa perilaku kode lewat suite pengujian, AndroidWorld menelusuri status aplikasi, dan GAIA membandingkan jawaban setelah dinormalisasi menurut jenisnya. Pemeriksaan-pemeriksaan ini dapat dijalankan oleh program dan cocok dijalankan berulang kali. τ²-bench memadukan beberapa jenis kriteria: pemanggilan alat dan status lingkungan dapat dicocokkan langsung, sedangkan tuntutan dalam bahasa alami juga dapat diserahkan kepada model untuk dinilai. Satu tugas yang sama sering membutuhkan kedua jenis metode itu sekaligus.
 
-Pemeriksaan terprogram juga dapat memberikan informasi diagnostik. Ambil tugas telekomunikasi di awal bab ini: dengan memeriksa terpisah pengaturan roaming, sisa kuota data, dan tindakan pengisian, kita dapat mengetahui syarat mana yang belum terpenuhi. Untuk menemukan lebih jauh saat jalur salah dipilih, hasil pemeriksaan harus dihubungkan dengan trajectory pemanggilan.
+Pemeriksaan terprogram juga dapat memberikan informasi diagnostik. Ambil tugas telekomunikasi di awal bab ini: dengan memeriksa terpisah pengaturan roaming, sisa kuota data, dan tindakan pengisian, kita dapat mengetahui syarat mana yang belum terpenuhi. Untuk menemukan lebih jauh saat jalur salah dipilih, hasil pemeriksaan harus dihubungkan dengan trajektori pemanggilan.
 
 Keluaran terbuka menuntut tuntutan mutu ditulis lebih konkret. Balasan atas keluhan harus menjelaskan rencana penanganan dan sesuai dengan emosi serta masalah pelanggan; laporan riset harus mencakup fakta-fakta kunci dan kesimpulannya didukung sumber; jawaban memori harus mengaitkan orang, waktu, dan peristiwa dengan benar. Untuk tuntutan semacam ini, kita dapat memakai **Rubric (kriteria penilaian)** yang mencantumkan kriteria per butir, lalu membiarkan **LLM-as-a-Judge (penilaian oleh model)** memberi skor berdasarkan materinya.
 
@@ -282,7 +282,7 @@ Keluaran terbuka menuntut tuntutan mutu ditulis lebih konkret. Balasan atas kelu
 
 ![Gambar 7-4 Spektrum cara verifikasi: dari verifikasi deterministik ke penilaian oleh model](images/revised/fig7-4.svg)
 
-### LLM-as-a-Judge: mengubah tuntutan mutu menjadi penilaian per butir
+### LLM-as-a-Judge: Mengubah Tuntutan Mutu Menjadi Penilaian per Butir
 
 Pada Gambar 7-5, petugas layanan dengan tepat menyebutkan jumlah pengembalian dana dan perkiraan waktu dana masuk; mengapa kelengkapannya hanya mendapat 2 poin? Kriteria penilaian juga mensyaratkan penjelasan ke mana dana dikembalikan, dan jawabannya melewatkan "dikembalikan ke metode pembayaran semula". Model penilai harus sekaligus melihat tugas, kriteria penilaian, dan materi rujukan agar dapat menunjukkan butir mana yang terlewat.
 
@@ -300,7 +300,7 @@ Model penilai perlu dikalibrasi lebih dulu. Satu masalah yang umum adalah **bias
 
 (4) **Kriteria penilaian yang mandiri.** Tuliskan dalam butir penilaian fakta, syarat, dan rentang yang dapat diterima untuk membuat keputusan. Misalnya, "menjawab dengan benar alamat pelanggan saat ini" dapat diperinci menjadi "menjawab alamat Shanghai yang sudah diperbarui; alamat Beijing sudah tidak berlaku sejak percakapan berikutnya".
 
-Setiap dimensi juga memerlukan tingkatan skor dan kasus batas yang jelas. Lakukan dulu penilaian percobaan atas sekelompok jawaban, kumpulkan perbedaan pendapat antara manusia dan model serta antarpenilai, lalu tambahkan kasus rujukan. Misalnya, jawaban yang memuat kata kunci yang diminta tetapi mencampuradukkan pengalaman dua orang harus dikurangi skornya pada penilaian hubungan. Kasus rujukan seperti ini membantu menemukan **peretasan imbalan (Reward Hacking)**: sistem memperoleh skor tinggi, tetapi perilaku sebenarnya menyimpang dari sasaran tugas.
+Setiap dimensi juga memerlukan tingkatan skor dan kasus batas yang jelas. Lakukan dulu penilaian percobaan atas sekelompok jawaban, kumpulkan perbedaan pendapat antara manusia dan model serta antarpenilai, lalu tambahkan kasus rujukan. Misalnya, jawaban yang memuat kata kunci yang diminta tetapi mencampuradukkan pengalaman dua orang harus dikurangi skornya pada penilaian hubungan. Kasus rujukan seperti ini membantu menemukan ***reward hacking***: sistem memperoleh skor tinggi, tetapi perilaku sebenarnya menyimpang dari sasaran tugas.
 
 Berikut kita rancang Rubric lengkap untuk sebuah soal memori lintas sesi. Riwayat pertama berbunyi "Putri saya bernama Lily", riwayat kedua berbunyi "Dokter anak Lily adalah Dr. Chen, hari ini saya membawanya kontrol". Pengguna bertanya: "Siapa dokter anak putri saya?" Kedua riwayat bersama-sama mendukung jawaban "Dokter anak putri Anda, Lily, adalah Dr. Chen".
 
@@ -310,9 +310,9 @@ Berikut kita rancang Rubric lengkap untuk sebuah soal memori lintas sesi. Riwaya
 | Kelengkapan informasi: butir penting | Menjelaskan dengan jelas hubungan "Lily—dokter anak—Dr. Chen" | Menjawab nama dokter secara ringkas, sudah memenuhi pertanyaan saat ini | Hanya menjawab fasilitas kesehatan atau peristiwanya, tanpa nama dokter | Tidak memberikan informasi yang relevan |
 | Ketepatan pengaitan: butir penting | Jawaban mengaitkan kedua riwayat dengan benar dan, bila perlu penjelasan, mengutip dasar yang sesuai | Hubungan antartokoh dalam jawaban benar, tanpa menguraikan dasarnya | Menemukan tokoh yang relevan, tetapi hubungannya masih kabur | Mengaitkan dokter pengguna sendiri atau anak lain dengan Lily |
 
-**Deteksi halusinasi menjalankan veto mutlak tersendiri.** Fakta dalam jawaban harus didukung riwayat; bila tanggal kunjungan, hasil diagnosis, atau identitas dokter dikarang, jawaban dinyatakan gagal. Contoh ini menetapkan bahwa skor total menjadi nol bila veto terpicu. Ketepatan pengaitan dinilai berdasarkan jawaban, kutipan, dan trajectory yang dapat diamati; jawaban yang ringkas pun dapat menuntaskan tugas.
+**Deteksi halusinasi menjalankan veto mutlak tersendiri.** Fakta dalam jawaban harus didukung riwayat; bila tanggal kunjungan, hasil diagnosis, atau identitas dokter dikarang, jawaban dinyatakan gagal. Contoh ini menetapkan bahwa skor total menjadi nol bila veto terpicu. Ketepatan pengaitan dinilai berdasarkan jawaban, kutipan, dan trajektori yang dapat diamati; jawaban yang ringkas pun dapat menuntaskan tugas.
 
-Kasus batas menentukan apakah penilaian sanggup menangani percakapan nyata. Bila pengguna punya beberapa putri dan rujukan dalam pertanyaan tidak dapat dipastikan, perilaku yang benar adalah bertanya balik; bila riwayat sudah jelas menunjuk Lily, jawaban dapat langsung diberikan. Apakah "Dr. Chen" dan "陈医生" adalah orang yang sama harus dipastikan dengan memadukan nama alias, fasilitas, dan hubungan antartokoh dalam riwayat.
+Kasus batas menentukan apakah penilaian sanggup menangani percakapan nyata. Bila pengguna punya beberapa putri dan rujukan dalam pertanyaan tidak dapat dipastikan, perilaku yang benar adalah bertanya balik; bila riwayat sudah jelas menunjuk Lily, jawaban dapat langsung diberikan. Apakah "Dr. Chen" dan "陈医生" (sebutan "Dokter Chen" dalam aksara Tionghoa) adalah orang yang sama harus dipastikan dengan memadukan nama alias, fasilitas, dan hubungan antartokoh dalam riwayat.
 
 **Bila butir penilaiannya banyak, biarkan model penilai menilai lebih dulu.** Misalkan ada seribu jawaban dan setiap jawaban harus diperiksa pada dua puluh butir; artinya ada dua puluh ribu keputusan. Ambil hubungan antartokoh pada tabel: "Dr. Chen adalah dokter anak Lily" dan "Dr. Chen adalah dokter anak saya, Lily pernah menemani saya ke sana" memuat nama-nama yang sama, tetapi kesimpulannya berbeda. Alih-alih menulis aturan pencocokan satu per satu untuk nama, urutan kata, dan kata negasi, kriterianya dapat langsung ditulis sebagai satu kalimat: "Dengan mempertimbangkan pertanyaan dan kedua riwayat, apakah jawaban ini mengaitkan dokter tersebut dengan putri pengguna secara benar?" Serahkan materi tersebut, jawaban yang dinilai, dan kriterianya kepada model penilai seperti Jev, lalu biarkan ia memilih di antara "sesuai", "tidak sesuai", dan "tidak dapat diputuskan". Pertanyaan ini dapat mengenali jawaban yang salah menunjuk orang. Untuk membedakan empat tingkatan ketepatan pengaitan pada tabel, keempat kriteria tingkatan itu dapat langsung dijadikan pilihan, dengan "tidak dapat diputuskan" disisakan untuk pemeriksaan ulang. Berbagai dimensi dari jawaban yang sama dapat dinilai secara paralel, lalu program merangkum skor setiap butir dan menjalankan aturan yang jelas seperti veto halusinasi.
 
@@ -326,7 +326,7 @@ Untuk segera memakai cara penilaian ini, kita dapat langsung memanggil model pen
 >
 > Implementasinya tetap memakai Precision dan Recall sebagai nama ruas untuk dua dimensi pertama, tetapi yang dicatat adalah tingkatan Rubric. Untuk melaporkan presisi dan recall dalam arti statistik, perlu didefinisikan lebih lanjut satuan fakta yang dapat dihitung, lalu dihitung masing-masing proporsi fakta benar terhadap fakta yang diberikan dan proporsi fakta wajib yang tercakup terhadap seluruh fakta wajib.
 >
-> Saat membaca hasil eksperimen, lihat dulu apakah tugasnya lolos, baru kemudian berapa skornya. Tugas dianggap lolos asalkan ketepatan fakta, kelengkapan fakta, dan ketepatan pengaitan semuanya mencapai 3 poin dan veto halusinasi tidak terpicu. Imbalan kontinu juga memperhitungkan proaktivitas: keempat dimensi masing-masing dikonversi dengan $(s-1)/3$ lalu dirata-ratakan; bila terjadi halusinasi, imbalannya menjadi nol. Misalnya, pada Eksperimen 7-12 ada satu kelompok yang memakai penelusuran BGE-M3, melewati pemeringkatan ulang, dan dijawab oleh Doubao. Salah satu soal klaim asuransi di dalamnya memperoleh skor 3, 3, 3, dan 2 untuk keempat dimensi berturut-turut. Tugas itu lolos, dengan imbalan kontinu sekitar 0,583.
+> Saat membaca hasil eksperimen, lihat dulu apakah tugasnya lolos, baru kemudian berapa skornya. Tugas dianggap lolos asalkan ketepatan fakta, kelengkapan fakta, dan ketepatan pengaitan semuanya mencapai 3 poin dan veto halusinasi tidak terpicu. *Reward* kontinu juga memperhitungkan proaktivitas: keempat dimensi masing-masing dikonversi dengan $(s-1)/3$ lalu dirata-ratakan; bila terjadi halusinasi, *reward*-nya menjadi nol. Misalnya, pada Eksperimen 7-12 ada satu kelompok yang memakai penelusuran BGE-M3, melewati pemeringkatan ulang, dan dijawab oleh Doubao. Salah satu soal klaim asuransi di dalamnya memperoleh skor 3, 3, 3, dan 2 untuk keempat dimensi berturut-turut. Tugas itu lolos, dengan *reward* kontinu sekitar 0,583.
 
 > **Eksperimen 7-4 ★★: Evaluasi komparatif Advanced JSON Cards dan RAG**
 >
@@ -360,7 +360,7 @@ Penilaian multimodal memperluas alur yang sama ke audio, gambar, dan video. Mate
 
 - **Evaluasi TTS**: memeriksa ketepatan pembacaan, kealamian, ekspresi emosi, dan konsistensi warna suara. Word Error Rate (WER) terutama mencerminkan kesalahan tingkat kata pada teks hasil pengenalan; prosodi dan warna suara harus dinilai dengan mendengarkan audionya.
 - **Evaluasi ASR**: menilai dampak kesalahan pengenalan sesuai tugasnya. Misalnya, "transfer seribu" yang dikenali sebagai "sepuluh ribu" mengubah parameter tindakan; jumlah uang, tanggal, dan nama orang dapat dijadikan ruas kunci tersendiri, sementara kesalahan pada kata biasa juga perlu dinilai menurut konteksnya.
-- **Evaluasi UI**: memakai pola pengusul—peninjau untuk memeriksa teks yang meluber, kontras, dan posisi tombol pada tangkapan layar, serta memakai interaksi nyata untuk memeriksa apakah tombol dapat digunakan. Di sini mekanisme peninjauan dari Bab 5 dipakai untuk mengevaluasi hasil yang dibangkitkan.
+- **Evaluasi UI**: memakai pola pengusul–peninjau untuk memeriksa teks yang meluber, kontras, dan posisi tombol pada tangkapan layar, serta memakai interaksi nyata untuk memeriksa apakah tombol dapat digunakan. Di sini mekanisme peninjauan dari Bab 5 dipakai untuk mengevaluasi hasil yang dibangkitkan.
 - **Evaluasi penyuntingan video**: memakai keyframe untuk memeriksa isi gambar dan efek khusus, serta memakai potongan berkesinambungan di sekitar titik potong untuk memeriksa waktu mulai dan selesai, transisi, dan sinkronisasi gambar-suara. Rentang pengambilan sampel ditentukan menurut butir yang dinilai.
 
 > **Eksperimen 7-5 ★★: Membangun pipeline evaluasi mutu TTS yang sepenuhnya otomatis**
@@ -375,13 +375,13 @@ Eksperimen pendamping mengambil empat jenis sampel untuk masing-masing dari dua 
 
 Eksperimen ini juga memperlihatkan bagaimana audio rujukan memengaruhi sasaran penilaian. Audio rujukan dalam catatan berasal dari Fish S1, sehingga skor warna suara mengukur seberapa mirip suara sintetis dengan rekaman rujukan itu. Untuk membandingkan TTS umum, kita dapat melaporkan pembacaan, kealamian, dan gaya secara terpisah; untuk membandingkan kloning suara, setiap solusi harus meniru pembicara sasaran yang sama, dan skor kemiripan dikalibrasi dengan uji dengar manusia secara buta. Materi rujukan juga ikut mendefinisikan "apa yang dianggap baik": jawaban rujukan menetapkan isi yang harus dijawab, sedangkan gambar atau audio rujukan menyediakan ciri visual atau suara yang hendak dibandingkan.
 
-Rubric yang ditulis manusia dapat dengan cepat membangun dimensi diagnostik. Setelah skala evaluasi membesar, kita juga dapat melatih **model imbalan generatif** khusus untuk menjalankan penilaian; Bab 8 akan membahas metode pelatihannya. Selanjutnya, kita hubungkan penilaian per butir dengan trajectory eksekusi untuk mencari langkah-langkah konkret yang dapat diperbaiki.
+Rubric yang ditulis manusia dapat dengan cepat membangun dimensi diagnostik. Setelah skala evaluasi membesar, kita juga dapat melatih **reward model generatif** khusus untuk menjalankan penilaian; Bab 8 akan membahas metode pelatihannya. Selanjutnya, kita hubungkan penilaian per butir dengan trajektori eksekusi untuk mencari langkah-langkah konkret yang dapat diperbaiki.
 
-### Atribusi kegagalan: menemukan kesalahan pertama dari seluruh trajectory
+### Atribusi Kegagalan: Menemukan Kesalahan Pertama dari Seluruh Trajektori
 
-Setelah tugas gagal, sejajarkan dulu syarat penerimaan dengan trajectory eksekusi, lalu cari keputusan paling awal yang membuat tugas menyimpang dari sasarannya. Pekerjaan ini disebut **atribusi kegagalan (*failure attribution*)**. Catatan atribusi yang berguna memuat kategori kesalahan, langkah terkait, pemanggilan alat atau keluaran model, bukti yang mendukung penilaian, serta dampak sesudahnya. Pesan galat yang muncul paling akhir sering kali hanyalah akibat kesalahan sebelumnya; hanya dengan menelusuri mundur asal informasi dan perubahan status kita dapat menemukan letak yang layak diperbaiki.
+Setelah tugas gagal, sejajarkan dulu syarat penerimaan dengan trajektori eksekusi, lalu cari keputusan paling awal yang membuat tugas menyimpang dari sasarannya. Pekerjaan ini disebut **atribusi kegagalan (*failure attribution*)**. Catatan atribusi yang berguna memuat kategori kesalahan, langkah terkait, pemanggilan alat atau keluaran model, bukti yang mendukung penilaian, serta dampak sesudahnya. Pesan galat yang muncul paling akhir sering kali hanyalah akibat kesalahan sebelumnya; hanya dengan menelusuri mundur asal informasi dan perubahan status kita dapat menemukan letak yang layak diperbaiki.
 
-Masalah produksi terutama ditemukan lewat tiga jenis sinyal: koreksi eksplisit dari pengguna, penilaian buruk atau umpan balik negatif dari pengguna, serta anomali yang ditemukan oleh pemeriksaan status setelah kejadian, verifikasi berbasis aturan, atau tinjauan model. Penulis menyarankan pengembang membaca sendiri dengan cermat sekelompok trajectory bermasalah sebelum membangun alur atribusi massal. Klasifikasi kegagalan mengandung keputusan produk: perilaku mana yang memerlukan konfirmasi dan saran proaktif mana yang sudah melampaui batas harus lebih dulu diubah menjadi tuntutan yang jelas, barulah model anotasi dapat bekerja berdasarkan itu. Misalnya, batas antara "langsung menyelesaikan atas nama pengguna" dan "meminta konfirmasi pengguna dulu" bergantung pada otorisasi saat itu, dampak tindakan, dan kesepakatan produk. Model dapat membantu anotasi massal, sedangkan penanggung jawab produk dan rekayasa bertugas mengkalibrasi batas-batas itu.
+Masalah produksi terutama ditemukan lewat tiga jenis sinyal: koreksi eksplisit dari pengguna, penilaian buruk atau umpan balik negatif dari pengguna, serta anomali yang ditemukan oleh pemeriksaan status setelah kejadian, verifikasi berbasis aturan, atau tinjauan model. Penulis menyarankan pengembang membaca sendiri dengan cermat sekelompok trajektori bermasalah sebelum membangun alur atribusi massal. Klasifikasi kegagalan mengandung keputusan produk: perilaku mana yang memerlukan konfirmasi dan saran proaktif mana yang sudah melampaui batas harus lebih dulu diubah menjadi tuntutan yang jelas, barulah model anotasi dapat bekerja berdasarkan itu. Misalnya, batas antara "langsung menyelesaikan atas nama pengguna" dan "meminta konfirmasi pengguna dulu" bergantung pada otorisasi saat itu, dampak tindakan, dan kesepakatan produk. Model dapat membantu anotasi massal, sedangkan penanggung jawab produk dan rekayasa bertugas mengkalibrasi batas-batas itu.
 
 Dengan Coding Agent sebagai contoh, kita dapat memulai dari sembilan jenis masalah berikut. Seiring bertambahnya kasus, perinci subkelasnya, lalu tuliskan kriteria klasifikasi, contoh positif dan negatif, serta alur atribusinya ke dalam *prompt* atau Skill milik Agent anotasi.
 
@@ -401,37 +401,37 @@ Catatan atribusi harus membedakan **kesalahan langsung, hipotesis penyebab, dan 
 
 Untuk atribusi berskala besar, penulis lebih dulu memakai aturan untuk menemukan catatan eksekusi yang kemungkinan bermasalah, lalu meminta model menganalisis penyebabnya dengan memperhatikan langkah-langkah sebelum dan sesudahnya. Sinyal seperti apakah pengujian dijalankan atau apakah antarmuka berubah dapat diekstraksi dengan murah, sehingga pemanggilan model dipusatkan pada bagian yang memerlukan penilaian semantik. Misalnya, cocokkan pernyataan lolos uji dengan catatan eksekusi, tandai perubahan yang menyentuh asersi atau penanda lewati, dan periksa apakah perubahan schema disertai migrasi yang sesuai. Setelah itu model atau manusia menilai, berdasarkan sasaran tugas, apakah perubahan-perubahan itu wajar.
 
-#### Status akhir dan jawaban akhir diterima secara terpisah
+#### Status Akhir dan Jawaban Akhir Diterima secara Terpisah
 
 Yang diterima pengguna adalah jawaban akhir Agent, sedangkan yang tersimpan di sistem bisnis adalah status yang ditimbulkan tindakannya; keduanya perlu diperiksa. Bila pengembalian dana sudah diajukan, jumlah, status pemrosesan, dan langkah berikutnya harus disampaikan dengan tepat; bila tugas hanya selesai sebagian, apa yang sudah selesai dan apa yang masih tertunda harus dijelaskan butir demi butir. Pemeriksaan status lingkungan dan pemeriksaan pemberitahuan wajib dapat memakai butir penilaian yang terpisah, sehingga kesalahan eksekusi mudah dibedakan dari kesalahan penyampaian.
 
-Bayangkan sebuah asisten layanan pelanggan yang dititipi pengguna untuk meminta keringanan biaya kepada pedagang. Dalam panggilan, petugas pedagang berkata "biaya ini akan kami hapuskan"; rekamannya dapat membuktikan bahwa **petugas sudah berjanji secara lisan**. Tagihan akhirnya diterima oleh pengguna. Saat melapor kepada pengguna, kata kerja itu juga harus dipertahankan: "Petugas sudah berjanji memberikan keringanan." Menghitung tugas semacam ini ke dalam tingkat janji lisan cukup masuk akal. Untuk menghitung tingkat keringanan yang benar-benar terwujud, masih diperlukan tagihan baru atau konfirmasi lanjutan dari pengguna.
+Bayangkan sebuah asisten yang mengurus urusan layanan pelanggan atas nama pengguna dan dititipi untuk meminta keringanan biaya kepada pedagang. Dalam panggilan, petugas pedagang berkata "biaya ini akan kami hapuskan"; rekamannya dapat membuktikan bahwa **petugas sudah berjanji secara lisan**. Tagihan akhirnya diterima oleh pengguna. Saat melapor kepada pengguna, kata kerja itu juga harus dipertahankan: "Petugas sudah berjanji memberikan keringanan." Menghitung tugas semacam ini ke dalam tingkat janji lisan cukup masuk akal. Untuk menghitung tingkat keringanan yang benar-benar terwujud, masih diperlukan tagihan baru atau konfirmasi lanjutan dari pengguna.
 
 Satu titipan yang sama kadang perlu diserahterimakan di antara beberapa saluran. Jika pedagang akan langsung menelepon balik pengguna, asisten dapat lebih dulu mengirimkan kepada pengguna tujuan panggilan, hal-hal yang sudah disepakati, dan pertanyaan yang masih menunggu jawaban. Jika pedagang mensyaratkan verifikasi lisan oleh pemilik akun sendiri, asisten dapat menjelaskan apa yang perlu dilakukan pengguna, menyambungkan panggilan tiga arah, lalu melanjutkan urusan setelah verifikasi selesai. Bila menemui kode verifikasi sekali pakai, ikuti petunjuk kode itu, dan biarkan pengguna menyelesaikan verifikasinya di antarmuka tepercaya yang ditentukan pedagang. Bagaimana menilai tindakan-tindakan ini? Pada kasus panggilan balik, periksa apakah pengguna sudah menerima ringkasan serah terima sebelum mengangkat telepon; pada kasus verifikasi, periksa apakah pengguna dapat masuk pada tahap yang tepat dan apakah tugas dapat dilanjutkan setelah verifikasi.
 
 Tugas pencatatan pengeluaran dari gambar pada AndroidWorld memperlihatkan rantai sebab-akibat lain: data yang salah berhasil ditulis dengan lancar, lalu Agent menyatakan tugas selesai. Tugasnya meminta pengeluaran dalam gambar dicatat ke aplikasi pembukuan, dan T3A menuntaskan navigasi, pengisian, dan penyimpanan dalam 32 langkah. Keluaran langkah ke-8 sudah jelas menyatakan bahwa pengeluaran konkret dalam gambar tidak terlihat, tetapi ia tetap melanjutkan; pada langkah ke-11 muncul data tanpa sumber seperti "Coffee $4.50, Lunch $12.75", dan semua pengisian berikutnya dibangun di atas data itu. Ketika verifier akhir mencari rekaman Dress yang berpadanan dengan gambar, ternyata entri yang seharusnya ditulis tidak ada.
 
-Saat menganalisis trajectory ini, kita perlu memeriksa saluran observasi sekaligus strategi pengambilan keputusan. T3A menerima pohon elemen aksesibilitas, sementara piksel gambar tidak pernah masuk ke konteks model; karena itu tugas membaca gambar semestinya lebih dulu dilengkapi saluran tangkapan layar atau pengenalan teks. Mencatat masalah ini secara umum sebagai "model tidak bisa OCR" akan membuat tim mengganti model atau menambah data pelatihan, sementara masukan yang benar-benar kurang tetap terlewat. Dalam keadaan informasi yang tidak memadai, Agent juga semestinya memilih untuk mencari informasi atau melaporkan hambatan. Keputusan untuk terus maju pada langkah ke-8, data yang dikarang sesudahnya, dan pernyataan selesai di akhir masing-masing berpadanan dengan masalah yang berbeda dalam rantai sebab-akibat ini.
+Saat menganalisis trajektori ini, kita perlu memeriksa saluran observasi sekaligus strategi pengambilan keputusan. T3A menerima pohon elemen aksesibilitas, sementara piksel gambar tidak pernah masuk ke konteks model; karena itu tugas membaca gambar semestinya lebih dulu dilengkapi saluran tangkapan layar atau pengenalan teks. Mencatat masalah ini secara umum sebagai "model tidak bisa OCR" akan membuat tim mengganti model atau menambah data pelatihan, sementara masukan yang benar-benar kurang tetap terlewat. Dalam keadaan informasi yang tidak memadai, Agent juga semestinya memilih untuk mencari informasi atau melaporkan hambatan. Keputusan untuk terus maju pada langkah ke-8, data yang dikarang sesudahnya, dan pernyataan selesai di akhir masing-masing berpadanan dengan masalah yang berbeda dalam rantai sebab-akibat ini.
 
 Masalah yang sama juga muncul dalam riset. Tim Denario melaporkan satu jenis gangguan: ketika program analisis tidak dapat membaca data yang diberikan, sistem kadang membangkitkan data simulasi sendiri untuk melanjutkan analisis, tanpa memberi tahu penggunanya.[^ch7-denario] Bayangkan pembaca memperoleh grafik yang dihasilkan dengan cara itu; sekalipun menjalankan ulang skripnya menghasilkan kurva yang persis sama, masih ada satu pertanyaan yang belum terjawab: kurva ini memakai kelompok observasi yang mana? Untuk mencari penyebabnya, telusuri mundur dari kolom angka yang dipakai untuk menggambar, temukan kode yang memberinya nilai, lalu periksa berkas mana yang benar-benar terbaca pada eksekusi itu. Kegagalan membaca sebenarnya masih bisa diperbaiki; justru meneruskan nilai simulasi seolah-olah nilai observasi itulah yang membuat kesimpulan sesudahnya kehilangan dasar.
 
 [^ch7-denario]: Francisco Villaescusa-Navarro dkk., *The Denario Project: Deep Knowledge Artificial Intelligence Agents for Scientific Discovery*; para penulis menjelaskan dalam makalahnya penggantian data yang dapat terjadi ketika pembacaan masukan gagal.
 
-> **Eksperimen 7-6 ★★: Atribusi kegagalan pada trajectory gagal AndroidWorld**
+> **Eksperimen 7-6 ★★: Atribusi kegagalan pada trajektori gagal AndroidWorld**
 >
-> Gunakan catatan eksekusi T3A yang tersimpan untuk berlatih atribusi secara luring. Materinya memuat tindakan, penjelasan, ringkasan, dan hasil verifikasi akhir untuk setiap langkah, dengan 52 di antaranya merupakan trajectory tugas yang gagal. Selesaikan lima langkah berikut.
+> Gunakan catatan eksekusi T3A yang tersimpan untuk berlatih atribusi secara luring. Materinya memuat tindakan, penjelasan, ringkasan, dan hasil verifikasi akhir untuk setiap langkah, dengan 52 di antaranya merupakan trajektori tugas yang gagal. Selesaikan lima langkah berikut.
 >
-> Langkah pertama, ambil 10 trajectory gagal, terutama yang mencakup kegagalan senyap, yaitu pemanggilan alat tampak normal tetapi penerimaan akhir gagal, dan sertakan kasus dengan pesan galat yang terlihat sebagai pembanding. Anotasi pendamping memilih 9 trajectory kegagalan senyap dan 1 trajectory dengan kesalahan yang terlihat.
+> Langkah pertama, ambil 10 trajektori gagal, terutama yang mencakup kegagalan senyap, yaitu pemanggilan alat tampak normal tetapi penerimaan akhir gagal, dan sertakan kasus dengan pesan galat yang terlihat sebagai pembanding. Anotasi pendamping memilih 9 trajektori kegagalan senyap dan 1 trajektori dengan kesalahan yang terlihat.
 >
-> Langkah kedua, cocokkan dasar faktanya langkah demi langkah, tandai penyimpangan tugas yang paling awal, dan catat apakah penyimpangan itu terjadi pada pemanggilan alat atau keluaran model. Untuk kasus yang penyebabnya meragukan, bandingkan prefix trajectory yang berdekatan; bila tersedia status yang dapat dipulihkan, kita dapat melanjutkan dari prefix yang berbeda atau mengganti satu langkah untuk menguji hipotesis penyebabnya. Bila tugas masih dapat diselamatkan setelah suatu prefix, kesalahannya mungkin dapat dipulihkan; letak kesalahan pertama tetap ditentukan oleh penyejajaran fakta dan tindakan.
+> Langkah kedua, cocokkan dasar faktanya langkah demi langkah, tandai penyimpangan tugas yang paling awal, dan catat apakah penyimpangan itu terjadi pada pemanggilan alat atau keluaran model. Untuk kasus yang penyebabnya meragukan, bandingkan prefiks trajektori yang berdekatan; bila tersedia status yang dapat dipulihkan, kita dapat melanjutkan dari prefiks yang berbeda atau mengganti satu langkah untuk menguji hipotesis penyebabnya. Bila tugas masih dapat diselamatkan setelah suatu prefiks, kesalahannya mungkin dapat dipulihkan; letak kesalahan pertama tetap ditentukan oleh penyejajaran fakta dan tindakan.
 >
 > Langkah ketiga, tulis catatan atribusi terstruktur yang memuat nama tugas, nomor langkah, kategori kesalahan, model atau komponen sistem yang terlibat, bukti teks asli, penyebab utama dan akibatnya, serta tingkat keyakinan.
 >
 > Langkah keempat, bandingkan dengan catatan atribusi yang sudah ada, lalu catat perbedaan pendapat beserta bukti yang mendukung masing-masing penilaian. Misalnya, untuk tugas transkripsi gambar, periksa dulu apakah model menerima pikselnya, baru membahas kemampuan pengenalannya.
 >
-> Langkah kelima, pilih 3 trajectory yang kesalahan pertamanya terjadi pada keluaran model, ambil konteks dan status sebelum kesalahan pertama, tuliskan tindakan yang dapat diterima dan tindakan yang dilarang, lalu jadikan tugas regresi prefix.
+> Langkah kelima, pilih 3 trajektori yang kesalahan pertamanya terjadi pada keluaran model, ambil konteks dan status sebelum kesalahan pertama, tuliskan tindakan yang dapat diterima dan tindakan yang dilarang, lalu jadikan tugas regresi prefiks.
 
-#### Kesalahan format dokumen yang peka terhadap cakupan
+#### Kesalahan Format Dokumen yang Peka terhadap Cakupan
 
 Karakter yang sama memegang fungsi berbeda di posisi yang berbeda. Tanda kutip dalam teks berbahasa Tionghoa menandai kutipan, tanda kutip ganda dalam JSON merupakan bagian sintaksis, dan backtick Markdown membatasi kode. Ketika pengguna meminta format tanda kutip disesuaikan, evaluasi pertama-tama harus memperjelas wilayah mana yang boleh diubah.
 
@@ -444,9 +444,9 @@ Dokumen dapat diurai menjadi penggalan-penggalan bercakupan: teks Tionghoa (`ZH_
 | Tanda kutip dalam komentar kode berbahasa Tionghoa | Tangani teks komentar secara terpisah sesuai kesepakatan, dan jaga batas komentarnya |
 | `name = "status"` | Pertahankan batas sintaksis string, dan periksa apakah kodenya tetap dapat diurai |
 
-Regresi prefix memeriksa sekaligus gaya pada wilayah sasaran, tingkat keutuhan kutipan, sintaksis kode dan JSON, serta jarak suntingan pada teks di luar sasaran. Selama cakupannya belum jelas, langkah berikutnya yang dapat diterima meliputi membaca panduan format, memeriksa struktur dokumen, atau meminta klarifikasi yang diperlukan. Dengan begitu, perubahan minimal memiliki syarat penerimaan yang dapat dijalankan.
+Regresi prefiks memeriksa sekaligus gaya pada wilayah sasaran, tingkat keutuhan kutipan, sintaksis kode dan JSON, serta jarak suntingan pada teks di luar sasaran. Selama cakupannya belum jelas, langkah berikutnya yang dapat diterima meliputi membaca panduan format, memeriksa struktur dokumen, atau meminta klarifikasi yang diperlukan. Dengan begitu, perubahan minimal memiliki syarat penerimaan yang dapat dijalankan.
 
-#### Kesalahan penyalinan persis: menemukan perbedaan di sepanjang rantai penerusan string
+#### Kesalahan Penyalinan Persis: Menemukan Perbedaan di Sepanjang Rantai Penerusan String
 
 Alat penggantian persis biasanya mensyaratkan `old_string` cocok karakter demi karakter dengan isi berkas. Bila pencocokan gagal, kita dapat memeriksa di lapisan mana string itu berubah dengan menelusuri rantai berikut:
 
@@ -458,15 +458,15 @@ Probe minimal harus mencakup pengulangan langsung, ekstraksi dari konteks panjan
 
 Menempatkan probe yang sama di berbagai posisi rantai membantu mempersempit cakupan perbaikan. Jika perbedaan sudah muncul saat alat mengembalikan hasil, periksa pembacaan dan serialisasi; jika keluaran model benar tetapi yang diterima alat salah, periksa dekode dan protokolnya; jika model tetap membangkitkan string yang salah dalam konteks yang informasinya lengkap, kasus itu dapat dimasukkan ke data pelatihan kemampuan menyalin pada Bab 8. Perubahan bersamaan masih perlu diperiksa tersendiri lewat versi berkas atau pembacaan ulang.
 
-### Tugas regresi end-to-end dan tugas regresi prefix trajectory
+### Tugas Regresi End-to-End dan Tugas Regresi Prefiks Trajektori
 
-Setelah atribusi kegagalan selesai, tuliskan perilaku yang diharapkan sebagai **tugas regresi (*regression task*)** yang dapat dijalankan berulang. Regresi end-to-end dimulai dari status awal dan memeriksa alur kerja lengkap; regresi prefix trajectory membekukan konteks dan status sebelum suatu keputusan, lalu memusatkan pemeriksaan pada perilaku langkah berikutnya. Keduanya masing-masing menjawab "apakah seluruh tugas selesai" dan "apakah keputusan di titik ini memenuhi tuntutan".
+Setelah atribusi kegagalan selesai, tuliskan perilaku yang diharapkan sebagai **tugas regresi (*regression task*)** yang dapat dijalankan berulang. Regresi end-to-end dimulai dari status awal dan memeriksa alur kerja lengkap; regresi prefiks trajektori membekukan konteks dan status sebelum suatu keputusan, lalu memusatkan pemeriksaan pada perilaku langkah berikutnya. Keduanya masing-masing menjawab "apakah seluruh tugas selesai" dan "apakah keputusan di titik ini memenuhi tuntutan".
 
-**Tugas regresi end-to-end** menyediakan permintaan pengguna, lingkungan awal, dan anggaran eksekusi, membiarkan Agent berjalan sampai selesai, lalu memeriksa status akhir, keluaran yang wajib, dan batasan-batasannya. Tugas dari OSWorld, AndroidWorld, τ²-bench, dan sejenisnya dapat dipakai untuk regresi semacam ini. Menyimpan hasil pemeriksaan antara dan trajectory lengkap juga membantu menemukan letak kegagalan.
+**Tugas regresi end-to-end** menyediakan permintaan pengguna, lingkungan awal, dan anggaran eksekusi, membiarkan Agent berjalan sampai selesai, lalu memeriksa status akhir, keluaran yang wajib, dan batasan-batasannya. Tugas dari OSWorld, AndroidWorld, τ²-bench, dan sejenisnya dapat dipakai untuk regresi semacam ini. Menyimpan hasil pemeriksaan antara dan trajektori lengkap juga membantu menemukan letak kegagalan.
 
-**Tugas regresi prefix trajectory** menyediakan percakapan yang sudah ada, observasi alat, status tugas, dan informasi versi, lalu meminta Agent mengeluarkan langkah berikutnya atau sedikit tindakan lanjutan. Jenis ini cocok untuk pemeriksaan berfrekuensi tinggi atas batas strategi, pembangkitan parameter, dan pemulihan dari kesalahan, dan biaya eksekusinya biasanya lebih rendah. Bila tindakan perlu benar-benar dijalankan, snapshot lingkungan yang bersangkutan juga harus dipulihkan; bila hanya prefix teks yang diberikan, objek penerimaannya adalah tindakan yang diusulkan model.
+**Tugas regresi prefiks trajektori** menyediakan percakapan yang sudah ada, observasi alat, status tugas, dan informasi versi, lalu meminta Agent mengeluarkan langkah berikutnya atau sedikit tindakan lanjutan. Jenis ini cocok untuk pemeriksaan berfrekuensi tinggi atas batas strategi, pembangkitan parameter, dan pemulihan dari kesalahan, dan biaya eksekusinya biasanya lebih rendah. Bila tindakan perlu benar-benar dijalankan, snapshot lingkungan yang bersangkutan juga harus dipulihkan; bila hanya prefiks teks yang diberikan, objek penerimaannya adalah tindakan yang diusulkan model.
 
-**Untuk Agent kelas produksi yang menuntut keandalan tinggi, penulis berpendapat bahwa mengumpulkan tugas regresi prefix trajectory sering kali lebih penting daripada menambah tugas regresi end-to-end.** Tugas prefix membekukan konteks sebelum kesalahan terjadi, sehingga dapat langsung menguji keputusan di titik itu dan mudah dijalankan sering. Untuk terus mengumpulkan kasus semacam ini, pengembang perlu dengan sabar membangun sistem klasifikasi dan atribusi kegagalan. Inti regresi prefix adalah **himpunan tindakan yang dapat diterima**: berdasarkan status saat ini, beberapa langkah berikutnya yang wajar dapat diterima, seperti membaca aturan repositori, mencari informasi yang kurang, atau meminta klarifikasi pengguna, sekaligus dicantumkan tindakan yang akan menimbulkan masalah. Kategori tindakan harus berpadanan jelas dengan makna bisnisnya, agar label yang bersinonim tidak dikira perbedaan perilaku.
+**Untuk Agent kelas produksi yang menuntut keandalan tinggi, penulis berpendapat bahwa mengumpulkan tugas regresi prefiks trajektori sering kali lebih penting daripada menambah tugas regresi end-to-end.** Tugas prefiks membekukan konteks sebelum kesalahan terjadi, sehingga dapat langsung menguji keputusan di titik itu dan mudah dijalankan sering. Untuk terus mengumpulkan kasus semacam ini, pengembang perlu dengan sabar membangun sistem klasifikasi dan atribusi kegagalan. Inti regresi prefiks adalah **himpunan tindakan yang dapat diterima**: berdasarkan status saat ini, beberapa langkah berikutnya yang wajar dapat diterima, seperti membaca aturan repositori, mencari informasi yang kurang, atau meminta klarifikasi pengguna, sekaligus dicantumkan tindakan yang akan menimbulkan masalah. Kategori tindakan harus berpadanan jelas dengan makna bisnisnya, agar label yang bersinonim tidak dikira perbedaan perilaku.
 
 Dari klasifikasi kegagalan ke tugas regresi, kita dapat menyusun pemetaan berikut:
 
@@ -482,17 +482,17 @@ Dari klasifikasi kegagalan ke tugas regresi, kita dapat menyusun pemetaan beriku
 
 Data evaluasi ini juga menyediakan sasaran konkret bagi pascapelatihan model pada Bab 8 dan evolusi berkelanjutan Agent pada Bab 9.
 
-> **Eksperimen 7-7 ★★: Evaluasi batas prefix trajectory: beberapa representasi untuk konteks yang sama**
+> **Eksperimen 7-7 ★★: Evaluasi batas prefiks trajektori: beberapa representasi untuk konteks yang sama**
 >
-> Gabungkan memori pengguna, tugas saat ini, prefix trajectory, dan status lingkungan yang sudah diberikan kepada Agent menjadi kasus uji, lalu minta model mengeluarkan tindakan berikutnya yang dapat diamati. Kasus-kasus disusun menurut jenis masalah produksi seperti koreksi pengguna, penilaian buruk, dan audit setelah kejadian, mencakup perbedaan cakupan antara gaya makalah dan unggahan X, konflik antara preferensi worktree dan PR dengan aturan repositori, instruksi saat ini yang mengesampingkan preferensi lama, inferensi berkeyakinan rendah, konfirmasi sebelum penghapusan, serta pratinjau sebelum publikasi keluar.
+> Gabungkan memori pengguna, tugas saat ini, prefiks trajektori, dan status lingkungan yang sudah diberikan kepada Agent menjadi kasus uji, lalu minta model mengeluarkan tindakan berikutnya yang dapat diamati. Kasus-kasus disusun menurut jenis masalah produksi seperti koreksi pengguna, penilaian buruk, dan audit setelah kejadian, mencakup perbedaan cakupan antara gaya makalah dan unggahan X, konflik antara preferensi worktree dan PR dengan aturan repositori, instruksi saat ini yang mengesampingkan preferensi lama, inferensi berkeyakinan rendah, konfirmasi sebelum penghapusan, serta pratinjau sebelum publikasi keluar.
 >
 > Untuk kelompok ruas semantik yang sama, gunakan tiga representasi: JSON Cards, Markdown, dan Python-like. Gunakan aturan deterministik untuk memeriksa kategori keputusan, tindakan berikutnya, bukti yang diperlukan, tindakan yang dilarang, dan cara memakai memori.
 >
 > Eksekusi pendamping dijalankan oleh GPT 5.6 Sol untuk kombinasi 11 kasus uji dan 3 representasi, sebanyak 33 pemanggilan. Di bawah aturan penilaian asli, ketiga representasi sama-sama lolos 6/11, meskipun hasil per soalnya berbeda. Meninjau ulang jawaban-jawabannya menyingkap pengaruh aturan penilaian itu sendiri: sebelum penghapusan, model memilih bertanya kepada pengguna, tetapi `ask_user` tidak tercantum dalam label tindakan yang diizinkan untuk soal itu; ketika preferensi lama bertentangan dengan tuntutan saat ini, model memilih mengikuti tuntutan saat ini, tetapi label keputusan yang sesuai juga tidak masuk ke himpunan yang diizinkan.
 
-Kembali ke tugas roaming di awal bab. Jika dalam trajectory saat ini kedua jalur sama-sama memenuhi syarat, menanyakan nomor adalah tindakan yang wajar. Jika penyusun soal hanya menerima perubahan pada satu jalur tertentu, besar kemungkinan informasi yang baru diketahui setelah kejadian telah ditulis ke dalam jawaban baku. Soal end-to-end mengizinkan tindakan lanjutan berdasarkan balasan berikutnya, sedangkan soal prefix harus dinilai dengan bukti yang terlihat pada saat itu.
+Kembali ke tugas roaming di awal bab. Jika dalam trajektori saat ini kedua jalur sama-sama memenuhi syarat, menanyakan nomor adalah tindakan yang wajar. Jika penyusun soal hanya menerima perubahan pada satu jalur tertentu, besar kemungkinan informasi yang baru diketahui setelah kejadian telah ditulis ke dalam jawaban baku. Soal end-to-end mengizinkan tindakan lanjutan berdasarkan balasan berikutnya, sedangkan soal prefiks harus dinilai dengan bukti yang terlihat pada saat itu.
 
-### Perbandingan berpasangan dan peringkat model
+### Perbandingan Berpasangan dan Peringkat Model
 
 Setelah membaca dua jawaban atas satu soal terbuka yang sama, orang sering dapat mengatakan mana yang lebih mereka sukai. Dengan mengumpulkan banyak **perbandingan berpasangan** semacam ini, kita dapat memperkirakan skor relatif tiap model. Lihat dua jawaban pengembalian dana pada Gambar 7-6: yang satu menjelaskan jumlah dan waktunya, yang lain hanya mengatakan pengembalian dana akan diproses. Pemungutan suara memberi tahu kita jawaban mana yang lebih disetujui pembaca kali ini. Untuk mengonversi satu suara itu menjadi skor, kita juga perlu tahu seberapa jauh selisih skor kedua lawan sebelumnya.
 
@@ -512,7 +512,7 @@ $$
 
 Di sini $S_A$ adalah skor nyata, dan $K$ mengendalikan pengaruh satu pertandingan. Jika B menang secara mengejutkan, skor nyata A jauh di bawah harapan, sehingga pengurangannya besar; jika A menang sesuai harapan, perubahan skornya kecil. B diperbarui secara simetris dengan skor nyata dan skor harapannya sendiri. Setelah pertandingan terus diproses, skor akan mencerminkan hubungan preferensi dalam kumpulan data perbandingan ini.
 
-**Model Bradley–Terry** juga menjelaskan peluang menang-kalah dengan selisih kekuatan laten kedua peserta, dan dapat dicocokkan dengan kemungkinan maksimum atas seluruh kumpulan data perbandingan. Elo daring diperbarui pertandingan demi pertandingan, sehingga hasilnya dipengaruhi $K$ dan urutan masukan; pencocokan massal memperkirakan skor semua model peserta sekaligus di bawah data dan spesifikasi model yang tetap. Chatbot Arena mengadopsi metode peringkat Bradley–Terry pada 2024.[^ch7-arena-ranking]
+**Model Bradley–Terry** juga menjelaskan peluang menang-kalah dengan selisih kekuatan laten kedua peserta, dan parameternya dapat diestimasi dengan metode *maximum likelihood* atas seluruh kumpulan data perbandingan. Elo inkremental (*online*) diperbarui pertandingan demi pertandingan, sehingga hasilnya dipengaruhi $K$ dan urutan masukan; pencocokan massal memperkirakan skor semua model peserta sekaligus di bawah data dan spesifikasi model yang tetap. Chatbot Arena mengadopsi metode peringkat Bradley–Terry pada 2024.[^ch7-arena-ranking]
 
 Chatbot Arena meminta pengguna membandingkan jawaban dua model secara anonim. Preferensi siapa yang dicerminkan papan peringkat, dan kemampuan model yang mana yang disukai, bergantung pada siapa yang memberi suara, pertanyaan apa yang mereka ajukan, dan model mana yang berkesempatan saling berhadapan. Bila porsi pertanyaan pemrograman tinggi, skor keseluruhan akan lebih banyak mencerminkan kinerja pemrograman.
 
@@ -520,22 +520,22 @@ Penilaian oleh model juga dapat dipakai untuk perbandingan berpasangan. Dalam ha
 
 > **Eksperimen 7-8 ★★: Membangun papan peringkat model dari data perbandingan berpasangan**
 >
-> Gunakan snapshot suara publik Chatbot Arena untuk mengimplementasikan Elo daring. Eksekusi pendamping menyaring 1.670.250 pertandingan dari sekitar 1,8 juta pertandingan mentah. Semua model diberi skor awal 1000, pertandingan dibaca menurut urutan waktu, skor harapan dihitung, lalu skor kedua pihak diperbarui dengan langkah tetap $K=4$. Di antaranya, 281.121 pertandingan diberi suara seri, dan 295.254 pertandingan lain diberi suara "keduanya buruk". Kedua jenis suara itu sama-sama memberi setengah poin kepada masing-masing pihak. Jika tim produk ingin mengetahui dalam berapa kali perbandingan pengguna tidak puas dengan kedua jawaban, label asli jenis suara kedua harus dipertahankan.
+> Gunakan snapshot suara publik Chatbot Arena untuk mengimplementasikan Elo inkremental. Eksekusi pendamping menyaring 1.670.250 pertandingan dari sekitar 1,8 juta pertandingan mentah. Semua model diberi skor awal 1000, pertandingan dibaca menurut urutan waktu, skor harapan dihitung, lalu skor kedua pihak diperbarui dengan langkah tetap $K=4$. Di antaranya, 281.121 pertandingan diberi suara seri, dan 295.254 pertandingan lain diberi suara "keduanya buruk". Kedua jenis suara itu sama-sama memberi setengah poin kepada masing-masing pihak. Jika tim produk ingin mengetahui dalam berapa kali perbandingan pengguna tidak puas dengan kedua jawaban, label asli jenis suara kedua harus dipertahankan.
 >
 > Dengan aturan penyaringan data yang sama, cocokkan juga skor dengan Bradley–Terry secara massal, lalu bandingkan korelasi peringkat kedua metode, tingkat irisan beberapa peringkat teratas, dan model-model yang hasilnya paling berselisih. Ubah $K$ dan urutan pertandingan untuk memeriksa bagaimana pembaruan daring memengaruhi peringkat. Pertandingan-pertandingan ini melibatkan 129 model, dan 20 besar kedua papan peringkat beririsan pada 12 model.
 >
-> Cobalah membaca satu sel kosong dalam matriks skor berpasangan (`win_rate_matrix.json`). Cari baris `chatgpt-4o-latest` dan kolom `bard-jan-24-gemini-pro`: tingkat skor terukurnya kosong, karena dalam catatan yang sudah disaring keduanya tidak pernah berhadapan langsung. Namun keduanya pernah dibandingkan dengan model lain, dan skor Elo daring akhirnya masing-masing sekitar 1126,69 dan 1094,21. Dengan memasukkan kedua angka itu ke rumus, skor harapan yang pertama sekitar 0,547. Untuk menjawab "siapa yang benar-benar dipilih pengguna di antara keduanya", tetap harus dikumpulkan suara dari perbandingan langsung keduanya.
+> Cobalah membaca satu sel kosong dalam matriks skor berpasangan (`win_rate_matrix.json`). Cari baris `chatgpt-4o-latest` dan kolom `bard-jan-24-gemini-pro`: tingkat skor terukurnya kosong, karena dalam catatan yang sudah disaring keduanya tidak pernah berhadapan langsung. Namun keduanya pernah dibandingkan dengan model lain, dan skor Elo inkremental akhirnya masing-masing sekitar 1126,69 dan 1094,21. Dengan memasukkan kedua angka itu ke rumus, skor harapan yang pertama sekitar 0,547. Untuk menjawab "siapa yang benar-benar dipilih pengguna di antara keduanya", tetap harus dikumpulkan suara dari perbandingan langsung keduanya.
 >
 > Catatan pendamping membangkitkan snapshot kumulatif per bulan; skor setiap bulan memakai semua pertandingan yang sudah dimasukkan sebelumnya. Jika diubah menjadi hanya melihat empat minggu terakhir, skor juga akan berubah karena pertandingan lama keluar dari jendela. Saat mengulang eksperimen, pilih dulu satu cara hitung, baru jelaskan naik-turunnya peringkat. Gunakan D3.js untuk membuat animasi diagram batang, dengan panjang batang menyatakan skor dan posisi vertikal menyatakan peringkat. Jelaskan perubahan skor dengan memperhitungkan waktu masuknya model, jumlah pertandingan, komposisi lawan, dan sebaran tugas; untuk posisi yang berubah mencolok, kembalilah ke data konkret untuk memeriksa penyebabnya.
 
 
-## Pemilihan model berbasis evaluasi
+## Pemilihan Model Berbasis Evaluasi
 
 Pemilihan model harus menjawab satu pertanyaan konkret: dengan sebaran tugas, anggaran eksekusi, dan tuntutan keandalan saat ini, konfigurasi mana yang memberikan hasil keseluruhan lebih baik? Untuk itu, mutu penyelesaian, kecepatan respons, konsumsi sumber daya, dan kestabilan eksekusi harus diukur bersamaan.
 
-### Dimensi kunci pemilihan model
+### Dimensi Kunci Pemilihan Model
 
-Untuk memahami metrik kecepatan, kita dapat mulai dari dua tahap inferensi. **Prefill (pengisian awal)** memproses konteks masukan, sedangkan **Decode (dekode)** membangkitkan token berikutnya satu per satu. Masukan yang lebih panjang biasanya memerlukan lebih banyak komputasi prefill, sementara cache prefix, batching, dan implementasi inferensi akan mengubah waktu yang sebenarnya. Kecepatan dekode memengaruhi waktu selesainya keluaran: bila kecepatan pembangkitan stabil 50 token per detik, membangkitkan 2000 token pemikiran memerlukan sekitar 40 detik.
+Untuk memahami metrik kecepatan, kita dapat mulai dari dua tahap inferensi. **Prefill (pengisian awal)** memproses konteks masukan, sedangkan **Decode (dekode)** membangkitkan token berikutnya satu per satu. Masukan yang lebih panjang biasanya memerlukan lebih banyak komputasi prefill, sementara cache prefiks, batching, dan implementasi inferensi akan mengubah waktu yang sebenarnya. Kecepatan dekode memengaruhi waktu selesainya keluaran: bila kecepatan pembangkitan stabil 50 token per detik, membangkitkan 2000 token pemikiran memerlukan sekitar 40 detik.
 
 Saat mengukur, bedakan antara satu permintaan dan seluruh layanan, dan perjelas pula titik awal serta titik akhir pengukuran waktunya.
 
@@ -548,7 +548,7 @@ Saat mengukur, bedakan antara satu permintaan dan seluruh layanan, dan perjelas 
 | Latensi end-to-end | Dari permintaan atau tugas dimulai sampai selesai | Kontribusi gabungan dari beberapa pemanggilan model, eksekusi alat, percobaan ulang, dan pemulihan status |
 | Latensi ekor p95 | Persentil ke-95 sebaran latensi pada beban yang sama | Sekitar 95% sampel tidak melampaui nilai ini; dapat diamati bersama rata-rata dan p99 untuk melihat ekor panjangnya |
 
-Untuk model yang menyembunyikan proses pemikirannya, token pertama yang terlihat pengguna mungkin baru tiba setelah penalaran internal selesai. Eksperimen harus memberi nama terpisah untuk metrik waktu "konten streaming pertama" dan "jawaban terlihat pertama". Kecepatan 50 token/detik yang sama pun dapat berarti waktu tunggu pengguna yang sangat berbeda karena panjang pemikirannya berbeda. Untuk produk interaktif, penulis memberi perhatian khusus pada p95, p99, dan trajectory yang bersangkutan: banyaknya permintaan cepat dapat menurunkan rata-rata, tetapi segelintir tugas yang macet lama tetap sangat merusak pengalaman pengguna.
+Untuk model yang menyembunyikan proses pemikirannya, token pertama yang terlihat pengguna mungkin baru tiba setelah penalaran internal selesai. Eksperimen harus memberi nama terpisah untuk metrik waktu "konten streaming pertama" dan "jawaban terlihat pertama". Kecepatan 50 token/detik yang sama pun dapat berarti waktu tunggu pengguna yang sangat berbeda karena panjang pemikirannya berbeda. Untuk produk interaktif, penulis memberi perhatian khusus pada p95, p99, dan trajektori yang bersangkutan: banyaknya permintaan cepat dapat menurunkan rata-rata, tetapi segelintir tugas yang macet lama tetap sangat merusak pengalaman pengguna.
 
 **Biaya** harus dihitung per tugas yang diselesaikan. Catat biaya masukan, masukan yang di-cache, keluaran, dan alat, lalu rangkum biaya rata-rata beserta sebarannya. Model yang murah per pemanggilan tetapi sering mencoba ulang setelah gagal bisa jadi lebih mahal untuk menuntaskan satu tugas.
 
@@ -560,50 +560,50 @@ Untuk model yang menyembunyikan proses pemikirannya, token pertama yang terlihat
 
 Kolaborasi banyak model dapat membagi kerja menurut jenis tugas: model ringan menangani permintaan yang cocok untuknya, model yang lebih mampu menangani orkestrasi yang rumit, dan model khusus menangani pemahaman gambar atau pembangkitan kode. Router itu sendiri juga perlu dievaluasi. Misalnya, kalimat "mana yang lebih besar, 9.9 atau 9.11" sangat pendek, tetapi melibatkan pemahaman angka; "tempat cuci mobil berjarak 50 meter dari rumah, sebaiknya berjalan kaki atau menyetir ke sana" juga menuntut pertimbangan atas tujuan tugas. Hitung terpisah efek perutean yang benar, perutean yang salah, dan pemulihan lewat penerusan, lalu bandingkan mutu, latensi, dan biaya tugas lengkapnya dengan solusi satu model. Penulis baru akan memakai kombinasi model yang lebih rumit bila manfaat keseluruhannya cukup untuk menutupi kesalahan perutean dan biaya pemeliharaannya.
 
-### Strategi perilaku model
+### Strategi Perilaku Model
 
 Untuk tugas yang sama, model yang berbeda dapat mengambil jalur tindakan yang berbeda. Salah satu perbedaan khas pada Coding Agent adalah **ambang tindakan**: sebagian model membaca repositori secara luas sebelum mulai mengubah; sebagian lain membuat tambalan lebih dulu berdasarkan informasi lokal, lalu melengkapi pemahamannya lewat pengujian. Yang pertama mencurahkan lebih banyak waktu untuk penjelajahan, sedangkan yang kedua lebih mengandalkan umpan balik cepat untuk mengoreksi penilaian lokal.
 
-Kecenderungan ini dibentuk bersama oleh model dan Harness. *Prompt* sistem dapat mewajibkan pemeriksaan aturan lebih dulu, menjalankan pengujian lebih dulu, atau membatasi cakupan penjelajahan; pascapelatihan juga memengaruhi cara bertindak bawaan model. Trajectory SFT mencontohkan kapan membaca dan kapan mengubah, imbalan proses menilai jalur alat yang konkret, dan imbalan hasil memperkuat kombinasi perilaku dalam trajectory yang berhasil. Untuk mengamati kebiasaan-kebiasaan ini, perilaku antara harus dijadikan objek evaluasi.
+Kecenderungan ini dibentuk bersama oleh model dan Harness. *Prompt* sistem dapat mewajibkan pemeriksaan aturan lebih dulu, menjalankan pengujian lebih dulu, atau membatasi cakupan penjelajahan; pascapelatihan juga memengaruhi cara bertindak bawaan model. Trajektori SFT mencontohkan kapan membaca dan kapan mengubah, *reward* proses menilai jalur alat yang konkret, dan *reward* hasil memperkuat kombinasi perilaku dalam trajektori yang berhasil. Untuk mengamati kebiasaan-kebiasaan ini, perilaku antara harus dijadikan objek evaluasi.
 
 > **Eksperimen 7-9 ★★: Mengukur ambang tindakan model dalam Coding Harness yang tetap**
 >
-> Berikan kepada GPT-5.6-sol dan Claude Sonnet 5 *prompt* sistem, schema alat, repositori tugas, perintah pengujian, dan jumlah giliran maksimum yang sama, lalu panggil keduanya melalui titik masuk layanan kompatibel yang sama. *Prompt* netral membiarkan model menentukan sendiri urutan penjelajahan dan perubahan. Tiga basis kode kecil masing-masing mencakup bug lokal, normalisasi identitas lintas modul, dan perbaikan cache yang peka terhadap kontrak publik; setiap model menjalankan setiap soal secara independen tiga kali, sehingga diperoleh 18 trajectory.
+> Berikan kepada GPT-5.6-sol dan Claude Sonnet 5 *prompt* sistem, schema alat, repositori tugas, perintah pengujian, dan jumlah giliran maksimum yang sama, lalu panggil keduanya melalui titik masuk layanan kompatibel yang sama. *Prompt* netral membiarkan model menentukan sendiri urutan penjelajahan dan perubahan. Tiga basis kode kecil masing-masing mencakup bug lokal, normalisasi identitas lintas modul, dan perbaikan cache yang peka terhadap kontrak publik; setiap model menjalankan setiap soal secara independen tiga kali, sehingga diperoleh 18 trajektori.
 >
 > Catat pemanggilan alat, jumlah berkas berbeda yang dibaca, dan waktu yang berlalu sebelum percobaan penyuntingan pertama, lalu periksa tambalan pertama yang diuji, pengujian akhir, pengerjaan ulang, dan biaya total. Menurut rangkuman, sebelum percobaan penyuntingan pertama GPT-5.6-sol rata-rata memanggil alat 6,89 kali dan membaca 4,67 berkas, sedangkan Claude Sonnet 5 masing-masing 4,56 kali dan 3,56 berkas; pada tugas lintas modul jumlah berkas yang dibaca hampir sama, yaitu 7,00 dan 6,67. Tambalan pertama yang diuji dan pengujian akhir keduanya lolos; ketika alat penyuntingan pertama mengembalikan hasil, rata-rata sudah berlalu 15,01 detik dan 14,48 detik. *Runner* mencatat waktu saat alat mengembalikan hasil, sehingga kedua angka ini juga mencakup waktu alat memproses permintaan penyuntingan pertama.
 >
-> Mengapa waktu diukur sampai "percobaan penyuntingan"? Lihat trajectory kedua Claude Sonnet 5 pada soal perbaikan cache: ia mencari sekali, membaca dua berkas, lalu mencoba mengubah berkas yang sudah ada dengan alat yang hanya dapat membuat berkas baru. Alat menolak permintaan itu. Ia beralih ke alat penggantian teks untuk mengubah kode, dan pengujian pertamanya kemudian langsung lolos.
+> Mengapa waktu diukur sampai "percobaan penyuntingan"? Lihat trajektori kedua Claude Sonnet 5 pada soal perbaikan cache: ia mencari sekali, membaca dua berkas, lalu mencoba mengubah berkas yang sudah ada dengan alat yang hanya dapat membuat berkas baru. Alat menolak permintaan itu. Ia beralih ke alat penggantian teks untuk mengubah kode, dan pengujian pertamanya kemudian langsung lolos.
 >
 > Perbandingan ini memperlihatkan perbedaan jalur tindakan dalam kondisi yang tetap. Dengan menambahkan kondisi *prompt* "jelajahi dulu", kita dapat menyusun eksperimen silang "model × strategi *prompt*": membandingkan model pada *prompt* yang sama, dan membandingkan *prompt* pada model yang sama. Catat terpisah jumlah penjelajahan, pemanggilan alat paralel, dan latensi model, lalu nilai manfaat membaca tambahan atau menyunting lebih awal dengan memperhitungkan mutu akhirnya.
 
-### Analisis biaya sistem Agent
+### Analisis Biaya Sistem Agent
 
-Biaya Agent multi-giliran tersusun dari pemanggilan model, eksekusi alat, dan infrastruktur. Konteks terus menumpuk, dan informasi awal dapat muncul berulang kali dalam permintaan-permintaan berikutnya, sehingga biaya perlu diurai dari seluruh trajectory tugas.
+Biaya Agent multi-giliran tersusun dari pemanggilan model, eksekusi alat, dan infrastruktur. Konteks terus menumpuk, dan informasi awal dapat muncul berulang kali dalam permintaan-permintaan berikutnya, sehingga biaya perlu diurai dari seluruh trajektori tugas.
 
-**Biaya inferensi model** mencakup butir-butir tagihan seperti masukan, masukan yang di-cache, dan keluaran. Misalkan giliran ke-1, ke-2, dan ke-3 masing-masing bermasukan 1000, 2000, dan 3000 token; total masukannya 6000 token. Jika setiap giliran menambah panjang yang sama dan seluruh riwayat dipertahankan, total masukan tumbuh kira-kira secara kuadratik terhadap jumlah giliran. Cache prefix dapat memakai ulang komputasi yang sudah diproses, sedangkan potongan harga di API dihitung menurut aturan tagihan yang berlaku.
+**Biaya inferensi model** mencakup butir-butir tagihan seperti masukan, masukan yang di-cache, dan keluaran. Misalkan giliran ke-1, ke-2, dan ke-3 masing-masing bermasukan 1000, 2000, dan 3000 token; total masukannya 6000 token. Jika setiap giliran menambah panjang yang sama dan seluruh riwayat dipertahankan, total masukan tumbuh kira-kira secara kuadratik terhadap jumlah giliran. Cache prefiks dapat memakai ulang komputasi yang sudah diproses, sedangkan potongan harga di API dihitung menurut aturan tagihan yang berlaku.
 
 **Biaya pemanggilan alat** mencakup biaya layanan eksternal seperti pencarian dan akses basis data, serta sumber daya komputasi yang dipakai sandbox kode. Hasil alat juga menjadi masukan model: satu pencarian yang membawa pulang ribuan token lalu dipertahankan beberapa giliran akan menambah biaya masukan berkali-kali.
 
 **Biaya infrastruktur** mencakup basis data vektor, antrean pesan, basis data relasional, serta penyimpanan log dan trace. Setelah dibagi per tugas atau per penyewa, kita dapat menghitung lebih jauh biaya keseluruhan untuk menuntaskan satu operasi bisnis.
 
-Mari hitung satu neraca pemilihan model. Misalkan dua konfigurasi memproses kelompok 100 tugas yang sama: A berbiaya total 60 yuan dan berhasil 60 tugas, B berbiaya total 72 yuan dan berhasil 90 tugas. Per percobaan B lebih mahal, tetapi untuk setiap tugas yang berhasil diselesaikan A menghabiskan 1 yuan, sedangkan B 0,8 yuan. Pembilangnya di sini mencakup uang yang terpakai oleh percobaan yang gagal. Jika kedua kelompok memakai definisi keberhasilan yang berbeda, misalnya satu kelompok cukup mendapat janji dari petugas sedangkan kelompok lain harus memverifikasi tagihan, kedua harga satuan itu tidak dapat dibandingkan langsung.
+Mari berhitung untuk memilih model. Misalkan dua konfigurasi memproses kelompok 100 tugas yang sama: A berbiaya total 60 yuan dan berhasil 60 tugas, B berbiaya total 72 yuan dan berhasil 90 tugas. Per percobaan B lebih mahal, tetapi untuk setiap tugas yang berhasil diselesaikan A menghabiskan 1 yuan, sedangkan B 0,8 yuan. Pembilangnya di sini mencakup uang yang terpakai oleh percobaan yang gagal. Jika kedua kelompok memakai definisi keberhasilan yang berbeda, misalnya satu kelompok cukup mendapat janji dari petugas sedangkan kelompok lain harus memverifikasi tagihan, kedua harga satuan itu tidak dapat dibandingkan langsung.
 
-Eksperimen pendamping memakai alur pengembalian dana layanan pelanggan delapan giliran yang tetap, yang berturut-turut menyediakan hasil yang sudah disiapkan untuk pesanan, logistik, kebijakan, basis pengetahuan, pengendalian risiko, pengembalian dana, notifikasi, dan penutupan tiket, lalu meminta model membangkitkan jawaban berikutnya berdasarkan informasi tersebut. Eksperimen ini mengendalikan secara terpisah kestabilan prefix dan kompresi riwayat, sehingga terbentuk empat kelompok pembanding. Tabel 7-4 merangkum biaya pemanggilan model berdasarkan pemakaian gpt-4o-mini yang tercatat dan harga satuan pada saat itu.
+Eksperimen pendamping memakai alur pengembalian dana layanan pelanggan delapan giliran yang tetap, yang berturut-turut menyediakan hasil yang sudah disiapkan untuk pesanan, logistik, kebijakan, basis pengetahuan, pengendalian risiko, pengembalian dana, notifikasi, dan penutupan tiket, lalu meminta model membangkitkan jawaban berikutnya berdasarkan informasi tersebut. Eksperimen ini mengendalikan secara terpisah kestabilan prefiks dan kompresi riwayat, sehingga terbentuk empat kelompok pembanding. Tabel 7-4 merangkum biaya pemanggilan model berdasarkan pemakaian gpt-4o-mini yang tercatat dan harga satuan pada saat itu.
 
 Tabel 7-4 Biaya pemanggilan model pada alur tetap delapan giliran
 
 | Solusi | Token masukan | Token cache | Biaya model | Penghematan dibanding garis dasar |
 | --- | ---: | ---: | ---: | ---: |
-| Prefix tidak stabil, riwayat dipertahankan | 20.700 | 0 | $0.003776 | — |
-| Hanya prefix stabil | 20.386 | 13.568 | $0.002708 | 28,3% |
-| Hanya kompresi riwayat | 16.177 | 0 | $0.003115 | 17,5% |
-| Prefix stabil dan kompresi diaktifkan bersamaan | 16.035 | 6.144 | $0.002643 | 30,0% |
+| Prefiks tidak stabil, riwayat dipertahankan | 20.700 | 0 | $0,003776 | — |
+| Hanya prefiks stabil | 20.386 | 13.568 | $0,002708 | 28,3% |
+| Hanya kompresi riwayat | 16.177 | 0 | $0,003115 | 17,5% |
+| Prefiks stabil dan kompresi diaktifkan bersamaan | 16.035 | 6.144 | $0,002643 | 30,0% |
 
 Kolom token masukan mencakup bagian yang di-cache; saat menghitung tagihan, kolom itu harus dipisah menjadi masukan yang di-cache dan yang tidak. Pada kelompok garis dasar, masukan per giliran naik dari 1113 menjadi 3668 token, dan hasil alat menyumbang total 9544 token masukan selama delapan giliran; setelah kedua optimasi diaktifkan bersamaan, sumbangan hasil alat turun menjadi 5248 token.
 
-Dengan kedua optimasi diaktifkan bersama, penghematan terukur mencapai 30,0%. Kompresi memperpendek masukan berikutnya, tetapi juga dapat mengubah panjang prefix yang dapat dipakai ulang; panjang keluaran dan tingkat kena cache antareksekusi juga berubah. Karena itu, dua persentase penghematan yang diukur terpisah tidak boleh langsung dijumlahkan.
+Dengan kedua optimasi diaktifkan bersama, penghematan terukur mencapai 30,0%. Kompresi memperpendek masukan berikutnya, tetapi juga dapat mengubah panjang prefiks yang dapat dipakai ulang; panjang keluaran dan tingkat kena cache antareksekusi juga berubah. Karena itu, dua persentase penghematan yang diukur terpisah tidak boleh langsung dijumlahkan.
 
-**Optimasi biaya dan kendali eksekusi.** Di sisi masukan, prioritaskan perbandingan antara prefix stabil dan kompresi riwayat yang dibahas di Bab 2; di sisi model, bandingkan perutean berlapis yang dibahas sebelumnya dalam bab ini.
+**Optimasi biaya dan kendali eksekusi.** Di sisi masukan, prioritaskan perbandingan antara prefiks stabil dan kompresi riwayat yang dibahas di Bab 2; di sisi model, bandingkan perutean berlapis yang dibahas sebelumnya dalam bab ini.
 
 Tugas yang tidak real-time dapat memakai **pemrosesan batch asinkron**, yaitu menjadwalkan secara gabungan dalam jendela penyelesaian yang diizinkan dan memanfaatkan harga batch dari penyedia layanan. Pada penerapan lokal, tugas yang menunggu dapat dijadwalkan pada jam-jam ketika sumber daya lebih longgar untuk meningkatkan pemanfaatan perangkat.
 
@@ -613,9 +613,9 @@ Sistem produksi juga harus melacak biaya menurut jenis tugas, model, dan penggun
 >
 > Pelajari dulu pengukuran per pemanggilan dengan alur tetap delapan giliran, lalu ganti dengan beban kerja khas milik sendiri. Gunakan LangSmith atau sistem pelacakan buatan sendiri untuk mencatat token masukan, masukan yang di-cache, keluaran, dan pemikiran, jumlah pemanggilan alat dan ukuran hasilnya, serta latensi end-to-end permintaan dan tugas. Rangkum biaya model, alat, dan infrastruktur menurut definisi tagihan layanan.
 >
-> Tebak dulu: bila cache prefix sudah diaktifkan lalu riwayat dikompresi, apakah biaya model delapan giliran pasti lebih rendah? Dalam catatan pendamping Kimi K2.5, ketika hanya prefix yang distabilkan, 14.779 dari 19.508 token masukan ditagih dengan harga cache. Setelah riwayat juga dikompresi, total masukan turun menjadi 15.303 token, tetapi bagian yang ditagih dengan harga normal justru naik dari 4.729 menjadi 7.180 token. Bila keluaran ikut dihitung, biaya delapan giliran malah naik dari sekitar 0,00825 dolar AS menjadi 0,00906 dolar AS.
+> Tebak dulu: bila cache prefiks sudah diaktifkan lalu riwayat dikompresi, apakah biaya model delapan giliran pasti lebih rendah? Dalam catatan pendamping Kimi K2.5, ketika hanya prefiks yang distabilkan, 14.779 dari 19.508 token masukan ditagih dengan harga cache. Setelah riwayat juga dikompresi, total masukan turun menjadi 15.303 token, tetapi bagian yang ditagih dengan harga normal justru naik dari 4.729 menjadi 7.180 token. Bila keluaran ikut dihitung, biaya delapan giliran malah naik dari sekitar 0,00825 dolar AS menjadi 0,00906 dolar AS.
 
-### Iterasi berkelanjutan berbasis evaluasi
+### Iterasi Berkelanjutan Berbasis Evaluasi
 
 Himpunan evaluasi menjadikan penggantian model sebuah keputusan rekayasa yang dapat dijalankan berulang kali. Misalkan sistem saat ini memakai Claude dan tim ingin mengevaluasi Gemini yang baru dirilis; tetapkan dulu tugas, alat, anggaran, dan aturan penerimaan, lalu bandingkan tingkat keberhasilan, ketepatan pemanggilan, latensi, dan biaya.
 
@@ -644,7 +644,7 @@ Hasil perbandingan sering berbeda antartugas. Misalnya, model baru lebih murah d
 > Misalnya, pada lapis pertama ada soal yang meminta asisten mencantumkan setiap pengeluaran usaha yang pernah dibicarakan pengguna beserta jumlahnya. Penelusur menemukan kembali semua penggalan yang ditandai relevan, sehingga recall@5 soal ini adalah 1; namun catatan penilaian menunjukkan bahwa jawabannya melewatkan butir kerja dari rumah senilai 1.525 dolar AS. Di sini kita perlu membedakan dua jenis kelalaian: yang satu menghitung berapa penggalan materi yang terlewat saat penelusuran, yang lain menghitung poin jawaban mana yang terlewat saat menjawab.
 
 
-## Signifikansi statistik hasil evaluasi
+## Signifikansi Statistik Hasil Evaluasi
 
 Dalam laporan yang sama, dua konfigurasi masing-masing menjawab benar 70 dan 73 soal. Jika lain kali dipakai kelompok soal yang berbeda, apakah keunggulan tiga soal itu masih ada? Evaluasi hanya mencakup tugas yang terbatas, dan eksekusi Agent juga mengandung keacakan. Perkirakan dulu fluktuasi satu tingkat keberhasilan, lalu manfaatkan kinerja kedua konfigurasi pada soal yang sama untuk membandingkan selisihnya.
 
@@ -665,13 +665,13 @@ Alurnya secara konkret: tetapkan tugas dan kondisinya, jalankan kedua konfiguras
 Berikut perhitungan berpasangan yang didemonstrasikan dengan empat tugas. Kunci kamus mencatat tugas dan seed, sedangkan nilainya adalah hasil dari aturan penerimaan yang sama (1 berarti berhasil). Datanya disusun khusus untuk demonstrasi dan dapat langsung dijalankan di Python.
 
 ```python
-a = {("查订单", 7): 1, ("换地址", 7): 1,
-     ("查配送", 7): 0, ("改时段", 7): 0}
-b = {("查订单", 7): 1, ("换地址", 7): 0,
-     ("查配送", 7): 1, ("改时段", 7): 1}
+a = {("cek pesanan", 7): 1, ("ganti alamat", 7): 1,
+     ("cek pengiriman", 7): 0, ("ubah slot waktu", 7): 0}
+b = {("cek pesanan", 7): 1, ("ganti alamat", 7): 0,
+     ("cek pengiriman", 7): 1, ("ubah slot waktu", 7): 1}
 
 if a.keys() != b.keys():
-    raise ValueError("两个配置需要覆盖相同的任务和种子")
+    raise ValueError("Kedua konfigurasi harus mencakup tugas dan seed yang sama")
 
 changes = {key: b[key] - a[key] for key in a}
 gains = [task for (task, seed), diff in changes.items() if diff == 1]
@@ -680,7 +680,7 @@ print(gains, losses)
 print(f"{sum(changes.values()) / len(changes):+.0%}")
 ```
 
-Setelah dijalankan, B baru lolos pada "查配送" (memeriksa pengiriman) dan "改时段" (mengubah slot waktu), mundur pada "换地址" (mengganti alamat), dan bersih bertambah 1 soal; tingkat keberhasilan keseluruhan naik dari 50% menjadi 75%, selisih 25 poin persentase. Dengan hanya melihat skor total, regresi pada "换地址" akan terlewat.
+Setelah dijalankan, B baru lolos pada "cek pengiriman" dan "ubah slot waktu", mundur pada "ganti alamat", dan bersih bertambah 1 soal; tingkat keberhasilan keseluruhan naik dari 50% menjadi 75%, selisih 25 poin persentase. Dengan hanya melihat skor total, regresi pada "ganti alamat" akan terlewat.
 
 Ketika banyak model, *prompt*, dan parameter disaring sekaligus, **perbandingan berganda** juga harus ditangani. Kita dapat menetapkan lebih dulu metrik utama dan objek perbandingannya, menyesuaikan ambang signifikansi, atau menguji ulang konfigurasi pemenang dengan kelompok soal lain yang tidak ikut dalam penyaringan. Keputusan akhir mempertimbangkan sekaligus besarnya selisih, ketidakpastian statistik, dan nilai bisnis: apakah biaya yang dihemat cukup, apakah kegagalan kunci bertambah, dan apakah hasilnya muncul secara stabil pada sebaran tugas sasaran.
 
@@ -700,9 +700,9 @@ Pengumpulan data juga memerlukan desain rekayasa. Buffer asinkron dan pengiriman
 
 Data trace dapat menjawab beberapa jenis pertanyaan konkret: tugas mana yang berulang kali menelusuri tetapi tidak memperoleh informasi yang diperlukan, alat mana yang sering gagal, pemanggilan mana yang menyita sebagian besar waktu tunggu, dan tugas mana yang konsumsinya jauh lebih tinggi daripada tugas sejenis. Dengan melampirkan versi *prompt*, konfigurasi fitur, dan kelompok eksperimen ke trace, perilaku sebelum dan sesudah perubahan juga dapat dibandingkan.
 
-Aliran balik data membentuk siklus perbaikan berkelanjutan: saring kasus yang gagal dan mencurigakan, tangani privasi dan ruas sensitif, konfirmasi secara manual tuntutan tugas dan penyebab kegagalannya, lalu ubah menjadi kasus regresi end-to-end atau prefix. Dengan mempertahankan jenis tugas dan sumber sampelnya, kita dapat memelihara sekaligus himpunan evaluasi yang dekat dengan sebaran produksi dan himpunan khusus yang menyasar batas-batas berisiko tinggi.
+Aliran balik data membentuk siklus perbaikan berkelanjutan: saring kasus yang gagal dan mencurigakan, tangani privasi dan ruas sensitif, konfirmasi secara manual tuntutan tugas dan penyebab kegagalannya, lalu ubah menjadi kasus regresi end-to-end atau prefiks. Dengan mempertahankan jenis tugas dan sumber sampelnya, kita dapat memelihara sekaligus himpunan evaluasi yang dekat dengan sebaran produksi dan himpunan khusus yang menyasar batas-batas berisiko tinggi.
 
-## Dari laporan benchmark ke perbaikan sistem
+## Dari Laporan Benchmark ke Perbaikan Sistem
 
 Agent di AndroidWorld berkali-kali macet di halaman pengaturan Wi-Fi. Apakah ia tidak tahu harus mengetuk di mana berikutnya, atau sama sekali tidak dapat melihat kontrol itu? Ikuti Gambar 7-8 untuk melihat bagaimana tim memakai hasil satu eksperimen untuk memutuskan apa yang diperiksa berikutnya.
 
@@ -710,13 +710,13 @@ Agent di AndroidWorld berkali-kali macet di halaman pengaturan Wi-Fi. Apakah ia 
 
 **Bila skor turun, periksa dulu sistem evaluasinya, baru sesuaikan Agent.** Secara konkret, periksa apakah inisialisasi tugas berhasil, apakah sumber dayanya cukup, apakah verifier-nya benar, dan apakah kondisi pengujiannya berubah. Proses yang dihentikan karena batasan sumber daya dan jawaban benar yang salah dinilai oleh penilai sama-sama dapat tampak sebagai penurunan skor. Hanya dengan membedakan dulu masalah pada rantai pengukuran dari masalah pada perilaku model, kita dapat menentukan bagian mana yang harus diperbaiki berikutnya.
 
-### Membaca laporan: mencari pola kegagalan yang terpusat
+### Membaca Laporan: Mencari Pola Kegagalan yang Terpusat
 
-Laporan historis mencakup 116 tugas, masing-masing dijalankan sekali, dengan tingkat keberhasilan total sekitar 88%. Di antaranya, empat tugas pengaturan Wi-Fi memusatkan tiga kegagalan, dan trajectory-nya memperlihatkan navigasi berulang serta ketidakmampuan memastikan status. Dari situ dapat diajukan dua penjelasan awal: model kekurangan informasi navigasi, atau observasi saat ini tidak menampilkan antarmuka secara memadai.
+Laporan historis mencakup 116 tugas, masing-masing dijalankan sekali, dengan tingkat keberhasilan total sekitar 88%. Di antaranya, empat tugas pengaturan Wi-Fi memusatkan tiga kegagalan, dan trajektori-nya memperlihatkan navigasi berulang serta ketidakmampuan memastikan status. Dari situ dapat diajukan dua penjelasan awal: model kekurangan informasi navigasi, atau observasi saat ini tidak menampilkan antarmuka secara memadai.
 
-Tim mempersempit eksperimen berikutnya ke empat tugas Wi-Fi pada emulator API 35 untuk menguji kedua penjelasan itu dengan biaya lebih rendah. Skor total dipakai untuk memahami kinerja keseluruhan, sedangkan hasil per tugas dan trajectory-nya membantu menemukan gugus kegagalan yang layak diperbaiki lebih dulu.
+Tim mempersempit eksperimen berikutnya ke empat tugas Wi-Fi pada emulator API 35 untuk menguji kedua penjelasan itu dengan biaya lebih rendah. Skor total dipakai untuk memahami kinerja keseluruhan, sedangkan hasil per tugas dan trajektori-nya membantu menemukan gugus kegagalan yang layak diperbaiki lebih dulu.
 
-### Dari data ke hipotesis: mempersempit cakupan masalah selangkah demi selangkah
+### Dari Data ke Hipotesis: Mempersempit Cakupan Masalah Selangkah demi Selangkah
 
 Putaran pertama, H1, menambahkan petunjuk navigasi untuk pengaturan Wi-Fi dan tuntutan pemeriksaan status akhir. Tingkat keberhasilan tetap 25%, yang menunjukkan bahwa petunjuk ini tidak menambah jumlah keberhasilan pada keempat tugas saat ini.
 
@@ -724,7 +724,7 @@ Putaran kedua, H5, mengganti saluran informasi aksesibilitas yang tidak kompatib
 
 Setiap putaran pembanding mempertahankan model, parameter tugas, seed, batas jumlah langkah, dan kondisi emulator yang sama, serta mengatur urutan eksekusi secara berselang-seling.
 
-### Dari hasil ke keputusan: membandingkan mutu dan biaya bersamaan
+### Dari Hasil ke Keputusan: Membandingkan Mutu dan Biaya Bersamaan
 
 Tabel 7-5 merangkum hasil keempat tugas pada setiap putaran. H1 dan H5 masing-masing dibandingkan dengan solusi observasi asli, sedangkan H5C memakai pohon elemen UIAutomator lengkap sebagai pembanding.
 
@@ -738,7 +738,7 @@ Tabel 7-5 Tiga putaran eksperimen pada subhimpunan Wi-Fi AndroidWorld
 
 Mengapa observasi yang diubah lebih dulu? Saat gagal, program sudah membuka panel Internet, tetapi antarmuka lama sering hanya mengembalikan bilah status. Secermat apa pun model membaca petunjuk navigasi, ia tetap tidak dapat menemukan kontrol di halaman pengaturan. Setelah beralih ke pohon elemen lengkap, keempat tugas berhasil, tetapi rata-rata pemakaian token mencapai 2,498 kali kelompok pembanding, melampaui batas atas 1,5 kali yang ditetapkan untuk putaran ini. Karena itu putaran berikutnya mempertahankan teks, status, dan operasi yang dapat dijalankan pada kontrol, sambil mencoba menghapus kontainer kosong. Dalam satu kali perbandingan berpasangan ini, keempat tugas lolos baik sebelum maupun sesudah pemangkasan, dan rata-rata pemakaian turun dari 139.439,5 menjadi 70.557,5 token. Angka 0,506 dalam tabel adalah rasio kedua angka itu.
 
-### Iterasi berkelanjutan: membawa perbaikan lokal ke regresi lengkap
+### Iterasi Berkelanjutan: Membawa Perbaikan Lokal ke Regresi Lengkap
 
 Langkah terakhir pada Gambar 7-8 adalah kembali ke lingkungan standar Pixel 6 dan API 33, lalu menjalankan masing-masing dari 116 tugas sebanyak lima kali. Tim menetapkan tiga sasaran untuk perbandingan lengkap: tingkat keberhasilan dipertahankan, pemakaian token dikendalikan dalam 75% solusi pembanding, dan waktu eksekusi dikendalikan dalam 1,5 kalinya. Untuk menguji ketiga sasaran ini, pohon terpangkas dan pohon lengkap harus sama-sama dijalankan dengan model yang sama dan kelompok tugas yang sama.
 
@@ -748,7 +748,7 @@ Proyek pendamping kemudian menuntaskan 580 kali pengujian solusi pohon terpangka
 >
 > Mulailah dari laporan historis dan hasil berpasangan H1, H5, dan H5C, lalu selesaikan proses berikut.
 >
-> Langkah pertama, temukan gugus kegagalan dengan memadukan hasil per tugas dan label kemampuan, lalu baca trajectory-nya untuk membedakan masalah lingkungan, observasi, keputusan, eksekusi, dan penerimaan.
+> Langkah pertama, temukan gugus kegagalan dengan memadukan hasil per tugas dan label kemampuan, lalu baca trajektori-nya untuk membedakan masalah lingkungan, observasi, keputusan, eksekusi, dan penerimaan.
 >
 > Langkah kedua, telusuri dari gejala di permukaan sampai ke kondisi alur dan mekanisme sistem, ajukan hipotesis perbaikan, dan tuliskan perubahan yang diharapkan, metrik pengukuran, serta kemampuan yang mungkin mundur.
 >
@@ -758,11 +758,11 @@ Proyek pendamping kemudian menuntaskan 580 kali pengujian solusi pohon terpangka
 >
 > Langkah kelima, bawa perbaikan lokal ke regresi lengkap di lingkungan standar. Periksa sasaran mutu dan biaya dengan skema 116 tugas dan 5 seed, lalu putuskan cakupan rilis dan syarat rollback.
 
-## Dari evaluasi eksternal ke evaluasi internal: infrastruktur evaluasi untuk Agent kelas produksi
+## Dari Evaluasi Eksternal ke Evaluasi Internal: Infrastruktur Evaluasi untuk Agent Kelas Produksi
 
 Bagian-bagian sebelumnya sudah membahas lingkungan evaluasi, himpunan data, dan analisis laporan. Untuk memasukkan metode-metode ini ke pengembangan produk, diperlukan lebih jauh kemampuan kendali konfigurasi, pengelompokan eksperimen, pelacakan versi, dan pengumpulan data. Dengan begitu, setiap perubahan model, *prompt*, atau Harness dapat dikaitkan dengan kondisi eksperimen dan hasil eksekusi yang jelas.
 
-### Infrastruktur ablasi: membandingkan kontribusi fitur
+### Infrastruktur Ablasi: Membandingkan Kontribusi Fitur
 
 **Eksperimen ablasi (Ablation Study)** mengamati perubahan perilaku sistem dengan menonaktifkan atau mengganti suatu komponen. Untuk Agent, kita dapat mengendalikan secara terpisah anggaran pemikiran, kompresi konteks, memori otomatis, dan tugas latar belakang, atau menonaktifkan sekelompok fitur untuk membangun garis dasar rekayasa yang lebih sederhana.
 
@@ -772,7 +772,7 @@ Konfigurasi harus ditetapkan sebelum komponen membacanya. Jika sebuah modul meny
 
 Mengulang ablasi sebelum peningkatan model dan rilis versi penting dapat menemukan "utang fitur": suatu fungsi semula dipakai untuk menutupi kelemahan model, model baru sudah mampu menanganinya sendiri, tetapi fungsi itu tetap menambah pemanggilan, latensi, dan pekerjaan pemeliharaan.
 
-### Uji A/B: membedakan mekanisme perubahan dari sasaran bisnis
+### Uji A/B: Membedakan Mekanisme Perubahan dari Sasaran Bisnis
 
 Uji A/B membagikan pengguna, sesi, atau tugas yang memenuhi syarat ke versi yang berbeda, lalu membandingkan hasil eksekusi nyatanya. Tentukan dulu satuan pengelompokan acaknya, lalu jaga konfigurasi tetap konsisten di dalam satuan itu, agar pengguna yang sama atau tugas yang berturut-turut tidak berganti-ganti kondisi eksperimen.
 
@@ -788,7 +788,7 @@ Negosiasi tagihan adalah situasi yang berbeda lagi. Sebagian orang mau menerima 
 
 [^ch7-porto]: Dalam ceramah di Porto, *The Road to JARVIS*, penulis membahas berbagai motivasi dalam berbelanja, menegosiasikan tagihan, dan membuat slide presentasi. Pengelompokan dan wawancara lanjutan adalah contoh evaluasi yang dirancang bagian ini berdasarkan ceramah tersebut.
 
-### Sistem feature flag dua lapis
+### Sistem Feature Flag Dua Lapis
 
 **Penulis menyarankan agar feature flag dimasukkan ke dalam arsitektur sejak tahap awal produk.** Feature flag sekaligus melayani eksperimen, rilis bertahap, dan penanganan insiden, sehingga tim dapat membandingkan fitur-fitur utama secara terpisah dan segera memulihkan konfigurasi semula bila ditemukan kemunduran. Flag saat build dan flag saat runtime memikul tanggung jawab yang berbeda.
 
@@ -796,7 +796,7 @@ Negosiasi tagihan adalah situasi yang berbeda lagi. Sebagian orang mau menerima 
 
 **Flag saat runtime** menentukan fungsi mana yang dipakai pengguna atau tugas saat ini. Konfigurasinya dapat dikirim dari server, di-cache di klien, dan dikelompokkan melalui platform eksperimen seperti GrowthBook. Bayangkan sebuah flag yang mengendalikan apakah kemajuan tugas ditampilkan, dan ketika pengguna membuka asisten, layanan pengelompokan kebetulan tidak merespons. Penulis lebih memilih menjalankan dulu konfigurasi dari cache lokal terakhir yang masih berlaku, lalu memperbaruinya di latar belakang; pada peluncuran pertama atau bila cache sudah kedaluwarsa, pakai nilai bawaan yang sudah ditetapkan. Pengguna dapat langsung mulai bekerja begitu membuka asisten.
 
-### Evaluasi sensitivitas prompt
+### Evaluasi Sensitivitas Prompt
 
 *Prompt* sistem ikut menentukan perilaku Agent dan harus dikelola versinya bersama kode. Selain templatnya sendiri, teks akhir setelah diperluas secara dinamis juga perlu dicatat: daftar alat, aturan tugas, informasi lingkungan, dan konfigurasi pengguna semuanya dapat mengubah masukan yang sebenarnya.
 
@@ -804,23 +804,23 @@ Satu desain yang praktis adalah menyediakan titik masuk rendering khusus: dengan
 
 **Saran penulis: kelola perubahan *prompt* seperti perubahan kode, yaitu setiap modifikasi menjalankan regresi yang sesuai.** Untuk templat yang dampaknya luas, kita juga dapat mengubah urutan paragraf atau pilihan katanya untuk mengukur kepekaan sistem terhadap bentuk ungkapan, lalu memilih versi yang kinerjanya stabil.
 
-### Memasukkan perlindungan data ke dalam antarmuka analisis
+### Memasukkan Perlindungan Data ke dalam Antarmuka Analisis
 
-**Perlindungan data harus dirancang bersama pengumpulan data evaluasi.** Perjelas dulu pertanyaan apa yang hendak dijawab, baru putuskan ruas mana yang dikumpulkan; dengan begitu bahan diagnostik yang dapat dipakai terus tersedia. Menangani data sensitif belakangan sering berarti trajectory yang sudah ada sulit dipakai ulang dengan aman, dan seluruh alur pengumpulan harus dirancang ulang. Ruas terstruktur seperti kategori tugas, waktu, pemakaian, dan status sering kali sudah cukup untuk menjawab pertanyaan operasional utama; isi yang terperinci disamarkan dan dilindungi kendali akses sesuai keperluan diagnosis.
+**Perlindungan data harus dirancang bersama pengumpulan data evaluasi.** Perjelas dulu pertanyaan apa yang hendak dijawab, baru putuskan ruas mana yang dikumpulkan; dengan begitu bahan diagnostik yang dapat dipakai terus tersedia. Menangani data sensitif belakangan sering berarti trajektori yang sudah ada sulit dipakai ulang dengan aman, dan seluruh alur pengumpulan harus dirancang ulang. Ruas terstruktur seperti kategori tugas, waktu, pemakaian, dan status sering kali sudah cukup untuk menjawab pertanyaan operasional utama; isi yang terperinci disamarkan dan dilindungi kendali akses sesuai keperluan diagnosis.
 
 Sistem tipe dapat membantu membatasi aliran data. Misalnya, buat antarmuka analisis hanya menerima tipe "ruas yang boleh dikumpulkan" yang dibungkus khusus, pusatkan logika peninjauan atau penyamaran di titik masuk konstruksinya, dan batasi teks sembarang agar tidak langsung masuk ke sistem analisis. Pemeriksaan tipe dapat membatasi cara pemanggilan, tetapi isi ruasnya tetap harus diperiksa dengan aturan penanganan yang sesuai.
 
 Kemampuan-kemampuan ini bersama-sama menopang evaluasi berkelanjutan: ablasi memeriksa kontribusi komponen, uji A/B membandingkan efek produk, feature flag membekukan kondisi eksperimen, snapshot *prompt* melacak masukan perilaku, dan pengumpulan data menyediakan bahan bagi kesimpulan.
 
-## Lingkungan simulasi: jembatan dari evaluasi ke pascapelatihan
+## Lingkungan Simulasi: Jembatan dari Evaluasi ke Pascapelatihan
 
-Lingkungan evaluasi menyediakan tugas, antarmuka interaksi, dan cara penerimaan. Bila dipakai lebih jauh untuk pelatihan, mekanisme yang sama juga harus mendukung pengambilan sampel berulang, pembangkitan umpan balik, dan pengumpulan trajectory. **Lingkungan simulasi** memungkinkan Agent berinteraksi dalam kondisi yang dapat di-reset melalui model lingkungan atau sistem eksekusi yang terkendali; lingkungan ini dapat dipakai untuk evaluasi maupun pelatihan.
+Lingkungan evaluasi menyediakan tugas, antarmuka interaksi, dan cara penerimaan. Bila dipakai lebih jauh untuk pelatihan, mekanisme yang sama juga harus mendukung pengambilan sampel berulang, pembangkitan umpan balik, dan pengumpulan trajektori. **Lingkungan simulasi** memungkinkan Agent berinteraksi dalam kondisi yang dapat di-reset melalui model lingkungan atau sistem eksekusi yang terkendali; lingkungan ini dapat dipakai untuk evaluasi maupun pelatihan.
 
-Verifier dan Rubric di sisi evaluasi dapat ikut menyusun imbalan pelatihan. Verifier program memeriksa pengujian, status, dan batasan, sehingga cocok untuk menyediakan **imbalan yang dapat diverifikasi**; penilaian model berbasis Rubric menyediakan sinyal penilaian yang sesuai, tetapi biasnya perlu dikalibrasi dan peretasan imbalan harus dicegah. **RLVR (Reinforcement Learning with Verifiable Rewards)** berarti pembelajaran penguatan yang memakai imbalan yang dapat diverifikasi; metode pelatihannya akan diuraikan di Bab 8.
+Verifier dan Rubric di sisi evaluasi dapat ikut menyusun *reward* pelatihan. Verifier program memeriksa pengujian, status, dan batasan, sehingga cocok untuk menyediakan **reward yang dapat diverifikasi**; penilaian model berbasis Rubric menyediakan sinyal penilaian yang sesuai, tetapi biasnya perlu dikalibrasi dan *reward hacking* harus dicegah. **RLVR (Reinforcement Learning with Verifiable Rewards)** berarti pembelajaran penguatan yang memakai *reward* yang dapat diverifikasi; metode pelatihannya akan diuraikan di Bab 8.
 
 Pelatihan semakin menonjolkan tiga tuntutan rekayasa. Pertama, **reset** yang andal: setiap episode, yaitu satu interaksi lengkap dari status awal sampai berakhir, harus membangun ulang lingkungan sesuai parameter yang ditentukan dan membersihkan efek samping putaran sebelumnya. Kedua, pengacakan yang terkendali: latih dengan berbagai instans tugas, sambil mempertahankan sebaran evaluasi yang terpisah. Ketiga, throughput yang memadai: seiring bertambahnya skala interaksi, tingkat paralelisme lingkungan, penjadwalan model, dan biaya per instans bersama-sama menentukan kecepatan pelatihan. Umpan balik dapat diberikan di tengah langkah, atau dihitung sekaligus setelah episode selesai, tergantung pada tugas dan algoritma pelatihannya.
 
-Saat memilih lingkungan evaluasi, tanyakan dulu kesalahan jenis apa yang ingin diungkap. Pada tugas pengembalian dana di sisi kiri Gambar 7-9, pengembalian dana ganda sudah dapat ditemukan dengan pesanan simulasi; bila kekeliruannya terjadi saat mengklik tombol pengembalian dana, Agent harus mengoperasikan antarmuka aplikasi. Tugas menggenggam di sisi kanan bergantung pada jenis detail yang lain: bagaimana cangkir bergerak setelah tersentuh capit? Dalam simulasi, posisi cangkir dapat diubah berulang kali, lalu pada akhirnya diuji di robot sungguhan apakah latihan-latihan itu dapat ditransfer.
+Saat memilih lingkungan evaluasi, tanyakan dulu kesalahan jenis apa yang ingin diungkap. Pada tugas pengembalian dana di sisi kiri Gambar 7-9, pengembalian dana ganda sudah dapat ditemukan dengan pesanan simulasi; bila kekeliruannya terjadi saat mengklik tombol pengembalian dana, Agent harus mengoperasikan antarmuka aplikasi. Tugas menggenggam di sisi kanan bergantung pada jenis detail yang lain: bagaimana cangkir bergerak setelah tersentuh *gripper*? Dalam simulasi, posisi cangkir dapat diubah berulang kali, lalu pada akhirnya diuji di robot sungguhan apakah latihan-latihan itu dapat ditransfer.
 
 ![Gambar 7-9 Lingkungan evaluasi untuk bisnis digital dan manipulasi robot](images/revised/fig7-9.svg)
 
@@ -832,21 +832,21 @@ Snapshot mesin virtual OSWorld dan inisialisasi status aplikasi AndroidWorld jug
 
 > **Eksperimen 7-14 ★★: Mengonfigurasi lingkungan kecerdasan berwujud OpenVLA dan RoboTwin2**
 >
-> Baca penjelasan arsitektur dan antarmuka OpenVLA dan SimpleVLA-RL untuk memahami bagaimana pengodean visual, kondisi bahasa, dan keluaran tindakan saling terhubung. Konfigurasikan RoboTwin2 dan perjelas kebijakan serta antarmuka robot yang dipakai: dengan RGB tiga sudut pandang dan status sendi dua lengan sebanyak 14 dimensi sebagai konfigurasi observasi, cocokkan butir demi butir urutan sendi, ruas capit, dan cara normalisasinya ketika dipasangkan dengan vektor kendali sendi 14 dimensi.
+> Baca penjelasan arsitektur dan antarmuka OpenVLA dan SimpleVLA-RL untuk memahami bagaimana pengodean visual, kondisi bahasa, dan keluaran tindakan saling terhubung. Konfigurasikan RoboTwin2 dan perjelas kebijakan serta antarmuka robot yang dipakai: dengan RGB tiga sudut pandang dan status sendi dua lengan sebanyak 14 dimensi sebagai konfigurasi observasi, cocokkan butir demi butir urutan sendi, ruas *gripper*, dan cara normalisasinya ketika dipasangkan dengan vektor kendali sendi 14 dimensi.
 >
 > Pelajari pengacakan objek dan batasan ruang pada tugas `move_can_pot`, lalu konfigurasikan kebijakan prapelatihan atau hasil adaptasi yang sesuai dengan masukan dan keluaran tersebut. Tetapkan kondisi tugas, lalu catat tingkat keberhasilan, waktu penyelesaian, dan jenis kegagalan. Eksperimen pendamping memakai bobot kebijakan yang sama dan setiap kali memprediksi 25 tindakan. Satu kelompok hanya menjalankan tindakan pertama lalu mengamati ulang, sedangkan kelompok lain menjalankan sampai 25 tindakan sesuai urutan prediksi sebelum mengamati ulang. Dengan cara ini hanya cara eksekusinya yang diubah, sehingga kedua kelompok dapat berbagi model, tugas, dan seed acak.
 >
-> Setiap kelompok menjalankan 128 pengujian dalam sebaran dan 128 pengujian di luar sebaran. Kelompok yang hanya menjalankan satu tindakan tidak pernah berhasil; kelompok yang menjalankan urutan panjang berhasil 26 kali, masing-masing 13 kali untuk kedua jenis pengujian. Urutan panjang unggul pada tugas ini, tetapi tingkat keberhasilannya pun hanya sekitar 10%. Saat meninjau rekaman kegagalan, bedakan dulu dua keadaan: apakah capit sejak awal tidak tepat sasaran? Ataukah beberapa tindakan pertama benar, tetapi objek kemudian bergeser dan tidak sempat disesuaikan? Keadaan pertama menuntut pemeriksaan observasi awal dan prediksi tindakan; hanya keadaan kedua yang berkaitan langsung dengan waktu pengamatan ulang.
+> Setiap kelompok menjalankan 128 pengujian dalam sebaran dan 128 pengujian di luar sebaran. Kelompok yang hanya menjalankan satu tindakan tidak pernah berhasil; kelompok yang menjalankan urutan panjang berhasil 26 kali, masing-masing 13 kali untuk kedua jenis pengujian. Urutan panjang unggul pada tugas ini, tetapi tingkat keberhasilannya pun hanya sekitar 10%. Saat meninjau rekaman kegagalan, bedakan dulu dua keadaan: apakah *gripper* sejak awal tidak tepat sasaran? Ataukah beberapa tindakan pertama benar, tetapi objek kemudian bergeser dan tidak sempat disesuaikan? Keadaan pertama menuntut pemeriksaan observasi awal dan prediksi tindakan; hanya keadaan kedua yang berkaitan langsung dengan waktu pengamatan ulang.
 
 Pada Gambar 7-10, kebijakan menghitung tindakan dari gambar kamera dan status robot, lalu lapisan adaptasi menyerahkan tindakan itu ke simulator. Baru ketika gambar berikutnya kembali, kebijakan dapat melihat akibat tindakan tersebut. Saat mengganti kebijakan, cocokkan satu per satu jumlah kamera, masukan status, dan kepala tindakannya. Sekalipun programnya dapat berjalan, makna tindakannya mungkin sudah berubah.
 
 ![Gambar 7-10 Lingkungan kecerdasan berwujud OpenVLA dan RoboTwin2](images/revised/fig7-10.svg)
 
-### Pertukaran fidelitas dan pengacakan domain
+### Pertukaran Fidelitas dan Pengacakan Domain
 
-Fidelitas harus dipilih berdasarkan tugas sasaran. Tugas menggenggam memerlukan tabrakan, gesekan, dan kontak capit yang wajar, sedangkan tugas mengoperasikan antarmuka memerlukan status kontrol dan proses respons yang setia. Menambah detail biasanya juga menambah biaya sumber daya; kita dapat lebih dulu mengenali faktor kunci yang memengaruhi kebijakan, baru memutuskan tingkat ketelitian simulasinya.
+Fidelitas harus dipilih berdasarkan tugas sasaran. Tugas menggenggam memerlukan tabrakan, gesekan, dan kontak *gripper* yang wajar, sedangkan tugas mengoperasikan antarmuka memerlukan status kontrol dan proses respons yang setia. Menambah detail biasanya juga menambah biaya sumber daya; kita dapat lebih dulu mengenali faktor kunci yang memengaruhi kebijakan, baru memutuskan tingkat ketelitian simulasinya.
 
-**Pengacakan domain (Domain Randomization)** memperkenalkan kebijakan pada kondisi yang lebih luas dengan mengubah parameter fisik, tampilan visual, posisi objek, dan derau sensor. Rentang pengacakan harus mencakup variasi penerapan yang diperkirakan, sambil tetap menjaga tugas dapat diselesaikan. Misalnya, mengubah pencahayaan dan latar belakang membantu memeriksa apakah model bergantung pada petunjuk visual yang kebetulan; mengubah gesekan dan massa objek dapat memeriksa apakah tindakannya mampu menyesuaikan diri dengan perubahan dinamika.
+**Randomisasi domain (Domain Randomization)** memperkenalkan kebijakan pada kondisi yang lebih luas dengan mengubah parameter fisik, tampilan visual, posisi objek, dan derau sensor. Rentang pengacakan harus mencakup variasi penerapan yang diperkirakan, sambil tetap menjaga tugas dapat diselesaikan. Misalnya, mengubah pencahayaan dan latar belakang membantu memeriksa apakah model bergantung pada petunjuk visual yang kebetulan; mengubah gesekan dan massa objek dapat memeriksa apakah tindakannya mampu menyesuaikan diri dengan perubahan dinamika.
 
 Lingkungan digital juga memiliki kesenjangan antara simulasi dan eksekusi nyata, misalnya dalam rendering antarmuka, latensi layanan, dan pola kegagalan. Kita dapat memasukkan latensi, gangguan parsial, dan perubahan tata letak ke dalam lingkungan terkendali, lalu mengukur efek transfernya melalui evaluasi terpisah di lingkungan sasaran. Dengan demikian, lingkungan menyediakan kondisi yang dapat diulang bagi evaluasi sekaligus interaksi yang beragam bagi pascapelatihan.
 
@@ -854,9 +854,9 @@ Lingkungan digital juga memiliki kesenjangan antara simulasi dan eksekusi nyata,
 
 ## Ringkasan Bab
 
-Jika petugas layanan dan pengguna sama-sama berkata "sudah beres", apakah tugas kali ini dapat dianggap berhasil? Kembali ke gangguan roaming di awal bab: penerimaan harus melihat apakah hasil tes kecepatan di perangkat pengguna mencapai excellent seperti yang disepakati. Jika produk hanya memberi pengguna satu kesempatan untuk mengurus suatu hal, percobaan terbaik dari lima kali tidak dapat menggantikan kinerja percobaan pertama. Bila $k$ kali percobaan diizinkan, tiga cara bertanya juga harus dibedakan: berhasil setidaknya sekali (Pass@k), berapa skor percobaan terbaik (Best@k), atau berhasil setiap kali (Pass^k). Hanya setelah kriteria dipilih kita tahu tugas mana yang harus diambil dari benchmark publik, himpunan bisnis buatan sendiri, dan trajectory produksi, hasil mana yang dapat diperiksa oleh program, dan mana yang harus dinilai per butir dengan Rubric serta dikalibrasi oleh manusia.
+Jika petugas layanan dan pengguna sama-sama berkata "sudah beres", apakah tugas kali ini dapat dianggap berhasil? Kembali ke gangguan roaming di awal bab: penerimaan harus melihat apakah hasil tes kecepatan di perangkat pengguna mencapai excellent seperti yang disepakati. Jika produk hanya memberi pengguna satu kesempatan untuk mengurus suatu hal, percobaan terbaik dari lima kali tidak dapat menggantikan kinerja percobaan pertama. Bila $k$ kali percobaan diizinkan, tiga cara bertanya juga harus dibedakan: berhasil setidaknya sekali (Pass@k), berapa skor percobaan terbaik (Best@k), atau berhasil setiap kali (Pass^k). Hanya setelah kriteria dipilih kita tahu tugas mana yang harus diambil dari benchmark publik, himpunan bisnis buatan sendiri, dan trajektori produksi, hasil mana yang dapat diperiksa oleh program, dan mana yang harus dinilai per butir dengan Rubric serta dikalibrasi oleh manusia.
 
-Sebagian soal, meskipun sudah dinilai, tetap perlu dibaca lembar jawabannya. Pengguna dulu menyukai penjelasan singkat, tetapi kali ini secara eksplisit meminta langkah migrasi ditulis lengkap. Dengan menghentikan trajectory sebelum asisten mengambil keputusan, kita dapat menanyakan secara terpisah apa langkah berikutnya. Asisten memilih langsung menulis penjelasan lengkap, tetapi penilai menyatakannya gagal karena label keputusannya tidak ada di himpunan yang diizinkan. **Memperoleh sebuah informasi dan memakainya dengan benar untuk keputusan saat ini adalah dua kemampuan yang berbeda.** Prefix trajectory dapat memastikan apakah ia salah memakai memori, dan juga dapat mengungkap perilaku wajar mana yang terlewat oleh aturan penilaian; seberapa baik penjelasan yang diserahkan baru dapat diketahui dengan menjalankan tugas lengkapnya.
+Sebagian soal, meskipun sudah dinilai, tetap perlu dibaca lembar jawabannya. Pengguna dulu menyukai penjelasan singkat, tetapi kali ini secara eksplisit meminta langkah migrasi ditulis lengkap. Dengan menghentikan trajektori sebelum asisten mengambil keputusan, kita dapat menanyakan secara terpisah apa langkah berikutnya. Asisten memilih langsung menulis penjelasan lengkap, tetapi penilai menyatakannya gagal karena label keputusannya tidak ada di himpunan yang diizinkan. **Memperoleh sebuah informasi dan memakainya dengan benar untuk keputusan saat ini adalah dua kemampuan yang berbeda.** Prefiks trajektori dapat memastikan apakah ia salah memakai memori, dan juga dapat mengungkap perilaku wajar mana yang terlewat oleh aturan penilaian; seberapa baik penjelasan yang diserahkan baru dapat diketahui dengan menjalankan tugas lengkapnya.
 
 Saat membandingkan dua model atau dua Harness, tanyakan juga: apakah keduanya mengerjakan kelompok soal yang sama? Empat tugas Wi-Fi di AndroidWorld sama-sama lolos sebelum dan sesudah pohon antarmuka dipangkas, dan rata-rata pemakaian token hampir berkurang separuh. Setelah diperluas ke himpunan tugas lengkap, bila hanya ada catatan kelompok pohon terpangkas, kita dapat menghitung mutu, latensi, dan biayanya sendiri, tetapi tidak dapat menghitung berapa banyak penghematannya dibanding pohon lengkap.
 
@@ -865,7 +865,7 @@ Kegagalan juga menunjukkan arah bagi putaran pelatihan berikutnya. Jika petugas 
 ## Pertanyaan Pemikiran
 
 1. ★★ Model penilai mungkin menyukai jawaban yang lebih panjang, gaya tulisan tertentu, atau posisi tampilan tertentu. Bagaimana merancang sampel kontrol, uji pertukaran, dan himpunan kalibrasi manusia untuk membedakan mutu isi dari preferensi-preferensi tersebut?
-2. ★★★ Himpunan evaluasi publik dapat masuk ke data pelatihan. Bagaimana memadukan tugas baru, lingkungan berparameter, soal uji yang tidak dipublikasikan, dan sampel produksi untuk mengurangi pengaruh kontaminasi data terhadap kesimpulan? Petunjuk apa saja yang dapat diberikan oleh penanda canary?
+2. ★★★ Himpunan evaluasi publik dapat masuk ke data pelatihan. Bagaimana memadukan tugas baru, lingkungan berparameter, soal uji yang tidak dipublikasikan, dan sampel produksi untuk mengurangi pengaruh kontaminasi data terhadap kesimpulan? Petunjuk apa saja yang dapat diberikan oleh penanda *canary*?
 3. ★★ Berdasarkan empat prinsip panduan pakar, cakupan menyeluruh, pembobotan menurut kepentingan, dan kemandirian, rancanglah Rubric untuk "jawaban yang membantu" dan "nada yang pantas". Bagaimana memakai kasus batas untuk menangani perbedaan pendapat antarpenilai?
 4. ★★ τ²-bench memakai model untuk menyimulasikan pengguna. Bagaimana memeriksa apakah pengguna simulasi mengikuti pengaturan tugas, dan apakah ia dapat mencakup kondisi interaksi nyata seperti emosi, ambiguitas, dan informasi yang terlewat?
 5. ★★ Bradley–Terry menjelaskan preferensi berpasangan dengan kekuatan laten satu dimensi. Sebaran tugas atau kelompok pengguna mana yang dapat membentuk preferensi melingkar? Bagaimana memakai analisis per kelompok dan galat kecocokan model untuk menafsirkan papan peringkat?
@@ -877,4 +877,4 @@ Kegagalan juga menunjukkan arah bagi putaran pelatihan berikutnya. Jika petugas 
 
 [^ch7-rubrics]: Scale AI, Using Rubrics to Build Better Models, September 2025. Keempat prinsip dipakai untuk menyusun kriteria penilaian; syarat veto mutlak dan kasus rujukan memori pengguna di bagian ini dirancang sesuai tugas konkretnya.
 
-[^ch7-arena-ranking]: LMArena, Arena Leaderboard Dataset, mencatat riwayat penerapan skor Bradley–Terry pada 2024. Eksperimen di bagian ini memakai snapshot suara historis yang tetap untuk membandingkan Elo daring dengan pencocokan massal.
+[^ch7-arena-ranking]: LMArena, Arena Leaderboard Dataset, mencatat riwayat penerapan skor Bradley–Terry pada 2024. Eksperimen di bagian ini memakai snapshot suara historis yang tetap untuk membandingkan Elo inkremental dengan pencocokan massal.
