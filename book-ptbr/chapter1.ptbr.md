@@ -1,6 +1,6 @@
 # Introdução aos agentes de IA
 
-Quando você usa o Deep Research para investigar um tema, ele pesquisa e lê repetidas vezes e, ao final, organiza um relatório. O Manus consegue operar um navegador para concluir tarefas online; o assistente de celular Doubao consegue reservar passagens e enviar mensagens no próprio aparelho; o Pine AI consegue telefonar em nome do usuário e negociar com a operadora uma redução na conta. Todos esses são aplicações de agentes de IA.
+Quando você usa o Deep Research para investigar um tema, ele pesquisa e lê repetidas vezes e, ao final, organiza um relatório. O Manus consegue operar um navegador para concluir tarefas online; o assistente de celular Doubao consegue reservar passagens e enviar mensagens no próprio aparelho; o Pine AI consegue telefonar em nome do usuário e negociar com a operadora uma redução na conta. Todas essas são aplicações de agentes de IA.
 
 Quando você pede ao Cursor que corrija uma função, ele localiza a função, edita o arquivo e executa os testes. Se os testes continuam falhando, a mensagem de erro passa a orientar a modificação seguinte; só quando os testes passam ele tem evidências para relatar o resultado a você. A ordem desses três passos — buscar, editar e testar — pode ser escrita de antemão em um programa, mas qual linha alterar e para onde voltar depois de uma falha depende das informações obtidas durante a execução. Esse processo de escolher ações em função de um objetivo e, depois, ajustar o plano com base nos resultados também ocorre em tarefas como pesquisas e negociações por telefone.
 
@@ -10,7 +10,7 @@ Este livro resume em uma fórmula os três tipos de elemento funcional de um age
 
 - **O LLM é o cérebro do agente**: ele compreende a tarefa, planeja as etapas e escolhe as ações. O pré-treinamento fornece ao modelo competência linguística e conhecimento de mundo; o pós-treinamento molda, em seguida, comportamentos como seguir instruções, raciocinar e chamar ferramentas. O Capítulo 8 apresenta métodos de pós-treinamento, como o ajuste fino supervisionado e o aprendizado por reforço.
 - **O contexto é o campo de visão do agente no momento da decisão**: ele reúne as informações de que a decisão atual precisa, incluindo instruções, definições de ferramentas, observações do ambiente, memória do usuário, conhecimento do domínio, mensagens anteriores, o próprio estado do agente e o andamento da tarefa.
-- **As ferramentas são os sentidos e as mãos do agente**: por meio de interfaces, elas obtêm informações ou executam operações. O sistema de ferramentas abrange definições, protocolos de chamada e adaptadores; ele dá suporte tanto a operações de observação, como buscar, ler e capturar a tela, quanto a gravar dados, executar código, delegar trabalho a subagentes e se comunicar com o usuário.
+- **As ferramentas são os sentidos, as mãos e os pés do agente**: por meio de interfaces, elas obtêm informações ou executam operações. O sistema de ferramentas abrange definições, protocolos de chamada e adaptadores; ele dá suporte tanto a operações de observação, como buscar, ler e capturar a tela, quanto a gravar dados, executar código, delegar trabalho a subagentes e se comunicar com o usuário.
 
 Uma mesma ferramenta pode cumprir vários papéis. Quando o modelo lê um arquivo pela linha de comando, por exemplo, o conteúdo retornado passa a fundamentar a decisão seguinte; quando executa um programa pela linha de comando, pode também alterar o estado de arquivos ou processos.
 
@@ -20,7 +20,7 @@ Imagine que você acabou de abrir uma encomenda e quer perguntar ao atendimento:
 
 Nessa consulta sobre devolução, iniciar a recuperação é uma ação do agente, e as cláusulas retornadas são a observação que ele obtém do ambiente (Environment). Se o passo seguinte será responder ou fazer uma pergunta adicional depende do que as cláusulas dizem. Forma-se assim o circuito fechado de que falam o aprendizado por reforço e a teoria de controle, mostrado na Figura 1-1.
 
-![Figura 1-1: a interação em circuito fechado entre Agent e Environment e a estrutura Model–Harness dentro do agente](images/revised/fig1-1.svg)
+![Figura 1-1 A interação em circuito fechado entre Agent e Environment e a estrutura Model–Harness dentro do agente](images/revised/fig1-1.svg)
 
 A camada externa da figura traça a fronteira entre o agente e o ambiente. Arquivos, bancos de dados, páginas web, usuários, outros agentes e mundos físicos ou simulados podem fazer parte do ambiente com o qual ele interage. A camada interna mostra a divisão de trabalho em uma implementação de produção: **o Model compreende, raciocina e decide; o Harness fica dentro da fronteira do agente, mas fora do Model, e organiza o contexto, as interfaces de ferramentas, o ciclo de execução e o estado, além de aplicar restrições, verificações e correções.** O Harness pode criar, isolar ou intermediar o ambiente; já o conteúdo dos arquivos, o estado dos processos e coisas semelhantes mudam no ambiente à medida que as ações ocorrem.[^ch1-harness]
 
@@ -34,7 +34,7 @@ Quem conhece aprendizado por reforço pode ler a tabela abaixo a partir de três
 |-----------|-----------|----------------------------|----------------------------------------------|
 | **Cérebro** | LLM | **Política** (Policy) | Decide o que fazer em seguida com base nas informações atuais |
 | **Campo de visão da decisão** | Contexto | **Observações e histórico** | Organiza as informações retornadas pelo ambiente e o histórico existente como base para a decisão |
-| **Sentidos e mãos** | Ferramentas e adaptadores | **Interfaces de observação e de ação** | Definem como ler informações do ambiente, como emitir ações e o formato das chamadas e dos retornos |
+| **Sentidos, mãos e pés** | Ferramentas e adaptadores | **Interfaces de observação e de ação** | Definem como ler informações do ambiente, como emitir ações e o formato das chamadas e dos retornos |
 
 ### Espaços de observação e de ação: a interface entre o modelo e o mundo
 
@@ -64,9 +64,9 @@ As tarefas variam de produto para produto, mas todas podem ser entendidas a part
 
 **Como um pedido se transforma em uma tarefa executável?** Quando desenvolvi um assistente de tarefas pessoais na Pine, percebi que os usuários muitas vezes informam apenas um objetivo, como “compre minha passagem para a viagem de trabalho, de preferência por até 1.200 yuans”. Antes de contatar o prestador, o assistente precisa esclarecer as datas, o destino e o que mais importa nessa viagem, reunir os dados que faltam e combinar com o usuário como pretende agir e quais condições são negociáveis. As novas informações obtidas durante a execução podem ainda levar a tarefa de volta a uma etapa anterior.
 
-Suponha que a menor tarifa encontrada pelo atendente seja de 1.250 yuans. O modelo vai julgar com base no bom senso, na natureza da viagem e nos hábitos do usuário de que se lembra. Para quem está em viagem de trabalho e costuma aceitar gastar um pouco mais por um itinerário conveniente, a Pine pode comprar a passagem diretamente; se for uma viagem em família, de alguém que no passado deixou claro que se preocupa com o gasto total, ela pode primeiro informar a diferença ao usuário e pedir ao atendente que procure outros voos. Se o usuário acrescentar depois “da próxima vez que a passagem passar do orçamento, pergunte antes”, esse retorno dá à decisão seguinte uma base mais específica do que a experiência genérica.
+Suponha que a menor tarifa encontrada pelo atendente seja de 1.250 yuans. O modelo vai julgar com base no bom senso, na natureza da viagem e nos hábitos do usuário de que se lembra. Para quem está em viagem de trabalho e costuma aceitar gastar um pouco mais por um itinerário conveniente, o Pine pode comprar a passagem diretamente; se for uma viagem em família, de alguém que no passado deixou claro que se preocupa com o gasto total, ele pode primeiro informar a diferença ao usuário e pedir ao atendente que procure outros voos. Se o usuário acrescentar depois “da próxima vez que a passagem passar do orçamento, pergunte antes”, esse retorno dá à decisão seguinte uma base mais específica do que a experiência genérica.
 
-Em outro cenário, o atendente do banco propõe enviar documentos pelo correio para a casa do usuário, e o assistente se lembra de que o usuário está viajando pelo exterior. Desta vez, o que precisa mudar é a forma de entrega: o assistente pode explicar na hora a dificuldade de receber a correspondência e tentar obter o envio por e-mail. Agora considere um abatimento na fatura: o atendente promete por telefone, verbalmente, e o assistente pode relatar com precisão o compromisso assumido pela empresa; para confirmar que o valor foi de fato abatido, porém, ainda é necessária a fatura seguinte como nova observação. O espaço de ação de um assistente pode se estender a telefonemas reais, mas suas conclusões continuam limitadas pelo espaço de observação.
+Em outro cenário, o atendente do banco propõe enviar documentos pelo correio para a casa do usuário, e o assistente se lembra de que o usuário está viajando pelo exterior. Desta vez, o que precisa mudar é a forma de entrega: o agente que está na ligação pode explicar na hora a dificuldade de receber a correspondência e tentar obter o envio por e-mail. Agora considere um abatimento na fatura: o atendente promete por telefone, verbalmente, e o assistente pode relatar com precisão o compromisso assumido pela empresa; para confirmar que o valor foi de fato abatido, porém, ainda é necessária a fatura seguinte como nova observação. O espaço de ação de um assistente pode se estender a telefonemas reais, mas suas conclusões continuam limitadas pelo espaço de observação.
 
 Considerando o que é delegado, este livro trata de três tipos de aplicação: tarefas do dia a dia, trabalho colaborativo e pesquisa científica. Um mesmo assistente pode assumir tarefas de categorias diferentes; o que muda é quem lhe concede a autorização, o que ele pode alterar e quem faz a aceitação final. No escritório, quando um colega entrega o resultado de uma verificação, o ticket já pode ser fechado? Suponha que, em um ticket do Multica, o responsável pelo projeto mencione o assistente pedindo que confira uma diferença em uma planilha de orçamento. Esse comentário dispara a verificação, mas o ticket continua com o responsável original e mantém seu status. O assistente entrega os dois valores e suas fontes, respondendo à pergunta do colega; se o orçamento inteiro pode ser enviado ainda depende de o responsável avaliá-lo junto com as demais pendências.[^ch1-multica]
 
@@ -78,7 +78,7 @@ Também nas tarefas científicas cabe a mesma pergunta: com base em que se pode 
 
 O espaço de ação desses sistemas tem caráter **aberto**. Termos de busca, textos digitados, código gerado e combinações de operações dificilmente podem ser enumerados de antemão, embora cada ação continue limitada por ferramentas, parâmetros, permissões e ambiente de execução. Justamente por isso, um plano executável precisa deixar espaço para que novas observações mudem o próximo passo.
 
-### Ferramentas: os sentidos e as mãos do agente
+### Ferramentas: os sentidos, as mãos e os pés do agente
 
 As ferramentas transformam as decisões do modelo em leituras ou operações sobre o ambiente externo. Ferramentas de busca e de leitura trazem observações; ferramentas de gravação de arquivos, execução de comandos e afins concretizam ações. Pelos resultados retornados, o modelo fica sabendo o efeito da operação e decide se continua, tenta de novo ou encerra a tarefa.
 
@@ -101,20 +101,20 @@ A **chamada de ferramentas** (Tool Calling) é a capacidade do modelo de formula
 Tome como exemplo a consulta da previsão do tempo em Pequim. O modelo pode escrever o nome da cidade, mas a temperatura real só aparece no contexto depois que o Harness executa a consulta. Estas são as mensagens dos quatro passos dessa chamada:
 
 ```text
-第一步：声明工具                    第二步：模型决定调用
+Passo 1: declarar a ferramenta     Passo 2: o modelo decide chamar
 tools: [{                          assistant: {
   name: "get_weather",               tool_calls: [{
   parameters: {                        id: "call_1",
     city: "string"                     function: "get_weather",
-  }                                    arguments: {city: "北京"}
+  }                                    arguments: {city: "Pequim"}
 }]                                   }]
                                    }
 
-第三步：结果追加到上下文              第四步：模型基于结果回复
+Passo 3: resultado vai ao contexto Passo 4: o modelo responde com base nele
 tool: {                            assistant: {
-  tool_call_id: "call_1",              content: "北京今天 28°C，晴。"
-  content: '{"temp":28,"sky":"晴"}'  }
-}
+  tool_call_id: "call_1",            content: "Hoje em Pequim faz 28°C, céu limpo."
+  content: '{"temp":28,"sky":"limpo"}'
+}                                  }
 ```
 
 Nesse exemplo, `call_1` associa o valor retornado pela ferramenta ao pedido de chamada. O desenvolvedor descreve como a ferramenta deve ser chamada, escreve a função que consulta o tempo e devolve o resultado da consulta ao modelo; o modelo decide se vai chamar uma ferramenta, qual delas e com quais parâmetros. O Capítulo 2 apresenta em mais detalhes a estrutura das mensagens da API.
@@ -141,7 +141,7 @@ Quanto mais operações o modelo puder organizar por conta própria, maior o alc
 
 > **A evolução das capacidades do modelo e do Harness**
 >
-> Em “A amarga lição” (The Bitter Lesson), Rich Sutton revisita uma tendência de longo prazo da pesquisa em IA: os métodos de busca e de aprendizado capazes de aproveitar mais recursos computacionais acabam superando os métodos que dependem de muito projeto manual específico do domínio[^ch1-1]. Seguindo essa direção, decisões como a escolha de ferramentas e a organização das etapas, antes assumidas por fluxos externos, podem ser gradualmente internalizadas no modelo pelo treinamento.
+> Em “A lição amarga” (The Bitter Lesson), Rich Sutton revisita uma tendência de longo prazo da pesquisa em IA: os métodos de busca e de aprendizado capazes de aproveitar mais recursos computacionais acabam superando os métodos que dependem de muito projeto manual específico do domínio[^ch1-1]. Seguindo essa direção, decisões como a escolha de ferramentas e a organização das etapas, antes assumidas por fluxos externos, podem ser gradualmente internalizadas no modelo pelo treinamento.
 >
 > A posição deste livro é: **concordar com a direção, ser pragmático quanto ao ritmo.** O modelo continuará assumindo parte das responsabilidades decisórias do Harness, mas cada ciclo de treinamento e implantação leva tempo, enquanto as regras de negócio e as preferências dos usuários mudam o tempo todo. As restrições de um negócio real também dificilmente cabem, de uma só vez, nos parâmetros do modelo. Assim, as etapas que o modelo ainda não executa de forma estável são cobertas primeiro pelo Harness. **O limite atual das capacidades do modelo é exatamente onde está, hoje, o valor do Harness.** Essa divisão de trabalho muda à medida que o modelo evolui: cada vez que o modelo domina uma classe de decisões, o Harness pode reduzir a orquestração correspondente e passar a tratar de novas dificuldades. A aplicação de permissões, a persistência de estado e a validação de resultados continuam a cargo do sistema de execução.
 
@@ -151,7 +151,7 @@ Quanto mais operações o modelo puder organizar por conta própria, maior o alc
 
 Depois de um erro de ferramenta, o agente aprendeu, desta vez, a procurar o arquivo por outro caminho. Amanhã, em uma nova sessão, ele ainda se lembrará dessa lição? Acompanhando na Figura 1-2 onde essa experiência fica guardada, é possível distinguir três tipos de atualização.
 
-![Figura 1-2: três níveis de atualização das capacidades do agente](images/revised/fig1-2.svg)
+![Figura 1-2 Três níveis de atualização das capacidades do agente](images/revised/fig1-2.svg)
 
 A **adaptação ao contexto** ocorre durante a execução da tarefa. Ao ler exemplos, o estado da tarefa ou resultados de recuperação, o modelo pode ajustar seu comportamento seguinte. Se a ferramenta informa que o arquivo não existe, por exemplo, o modelo pode procurar o caminho novamente e continuar. Esse caminho responde rápido e custa pouco, e sua eficácia depende da capacidade da janela de contexto e da forma como as informações são organizadas. Para que a experiência sirva a tarefas futuras, é preciso salvar as informações relevantes e fornecê-las de novo ao modelo. O Capítulo 2 apresenta os métodos de organização do contexto.
 
@@ -179,9 +179,9 @@ O papel de cada tipo de informação na decisão pode ser examinado por um **est
 >
 > Peça a um agente que consolide a receita trimestral de uma empresa: no primeiro trimestre, US$ 2,5 milhões; no segundo, 2,1 milhões de euros; no terceiro, 1,8 milhão de libras; no quarto, 380 milhões de ienes. A tarefa exige converter as receitas para dólares com uma ferramenta de câmbio e, depois, usar uma ferramenta de cálculo para obter a receita anual total e a receita média trimestral, com duas casas decimais. Assim, o modelo precisa tanto escolher ferramentas quanto lembrar quais etapas já concluiu e quais valores recebeu.
 >
-> O experimento tem uma linha de base completa e quatro grupos de ablação, cada um com no máximo cinco rodadas. Ao remover as informações de raciocínio anteriores, o modelo continua podendo raciocinar de novo a cada rodada; ao remover as definições de ferramentas, a requisição deixa de oferecer ferramentas disponíveis; ao remover os resultados das ferramentas, os registros das chamadas são mantidos, mas o conteúdo retornado fica oculto; ao remover as mensagens anteriores, restam apenas o prompt de sistema, as definições de ferramentas e a tarefa atual do usuário. Tente prever primeiro: saber apenas que “a cotação do iene já foi consultada” e saber “quantos dólares valem 380 milhões de ienes” permitem, cada um, qual etapa do cálculo? A Figura 1-3 mostra os resultados dos cinco grupos.
+> O experimento tem uma linha de base completa e quatro grupos de ablação, cada um com no máximo cinco rodadas. Ao remover as informações de raciocínio anteriores, o modelo continua podendo raciocinar de novo a cada rodada; ao remover as definições de ferramentas, a requisição deixa de oferecer ferramentas disponíveis; ao remover os resultados das ferramentas, os registros das chamadas são mantidos, mas o conteúdo retornado fica oculto; ao remover as mensagens anteriores, restam apenas o prompt de sistema, as definições de ferramentas e a tarefa atual do usuário. Antes de continuar, tente prever: saber apenas que “a cotação do iene já foi consultada” permite fazer qual etapa do cálculo? E saber “quantos dólares valem 380 milhões de ienes”? A Figura 1-3 mostra os resultados dos cinco grupos.
 >
-> ![Figura 1-3: linha de base completa e os quatro grupos de ablação do Experimento 1-1](images/revised/fig1-3.svg)
+> ![Figura 1-3 Linha de base completa e os quatro grupos de ablação do Experimento 1-1](images/revised/fig1-3.svg)
 >
 > Na execução com o Kimi K3 em 25 de agosto de 2026, a **linha de base completa** concluiu a tarefa em três rodadas, com quatro chamadas de ferramentas, obtendo receita anual total de US$ 9.602.895,73 e receita média trimestral de US$ 2.400.723,93. **Sem as informações de raciocínio anteriores**, o modelo chegou ao resultado correto com o mesmo número de rodadas e de chamadas: os registros das ferramentas já guardavam os resultados do câmbio, e o modelo pôde reconstruir a partir deles as informações necessárias para o cálculo seguinte.
 >
@@ -203,7 +203,7 @@ A sequência de decisões, ações e observações acumulada durante a execuçã
 
 Na implementação básica desta seção, **o contexto de cada rodada = prefixo relativamente estável + histórico de mensagens acumulado**. O prefixo contém o prompt de sistema e as definições de ferramentas, e o histórico de mensagens cresce com a interação. A Figura 1-4 reproduz as três rodadas de mensagens do Experimento 1-1. Observe os três pedidos de câmbio da primeira rodada: qual resultado corresponde aos 2,1 milhões de euros do segundo trimestre?
 
-![Figura 1-4: trajetória do agente — o ciclo ReAct na tarefa de consolidação em várias moedas](images/revised/fig1-4.svg)
+![Figura 1-4 Trajetória do agente — o ciclo ReAct na tarefa de consolidação em várias moedas](images/revised/fig1-4.svg)
 
 O ID do pedido em euros é `convert_currency_0`. O Harness valida os parâmetros, executa a ferramenta e grava o mesmo ID no campo `tool_call_id` da mensagem da ferramenta. Assim, é possível localizar o resultado de US$ 2.282.608,70 e conferir se ele foi usado corretamente na soma da segunda rodada. Esse valor pode ser recalculado: na tabela de câmbio fixa do experimento, 1 dólar equivale a 0,92 euro; dividindo 2.100.000 por 0,92 e arredondando para duas casas, chega-se a esse número. A cotação inversa retornada pela ferramenta, 1,087, já está arredondada; multiplicá-la diretamente pelo valor em euros daria uma diferença de US$ 91,30.[^ch1-context-runs]
 
@@ -220,7 +220,7 @@ repeat:
     if decision has no tool call:
         return decision.answer
 
-    for call in decision.tool_calls:  # 相互独立的调用可并行执行
+    for call in decision.tool_calls:  # chamadas independentes entre si podem rodar em paralelo
         validated_call = Harness.validate(call)
         observation = Harness.dispatch(validated_call)
         history.append(observation)
@@ -229,13 +229,13 @@ repeat:
 A seguir, reproduzimos trechos das mensagens na ordem da execução de linha de base de agosto, mantendo os IDs de chamada e os nomes de parâmetros originais; os resultados do câmbio mostram apenas valor e moeda, e o código de cálculo foi abreviado. Ao chegar à segunda rodada, procure a origem de cada termo da soma: as receitas trimestrais são quatro, então por que a ferramenta retornou apenas três valores convertidos?
 
 ```text
-消息历史 = [
+histórico_de_mensagens = [
   {role: "user",
-   content: "Q1 250万美元，Q2 210万欧元，Q3 180万英镑，Q4 3.8亿日元。用工具换算为美元，计算年度总收入和季度平均收入。"},
+   content: "Q1: US$ 2,5 milhões; Q2: 2,1 milhões de euros; Q3: 1,8 milhão de libras; Q4: 380 milhões de ienes. Converta para dólares com as ferramentas e calcule a receita anual total e a média trimestral."},
 
-  # 第一轮：提出三个换汇请求
+  # 1ª rodada: três pedidos de câmbio
   {role: "assistant",
-   reasoning: "先将 EUR、GBP、JPY 收入换算为 USD。",
+   reasoning: "Primeiro converter para USD as receitas em EUR, GBP e JPY.",
    tool_calls: [
      {id: "convert_currency_0", name: "convert_currency",
       args: {amount: 2100000, from_currency: "EUR", to_currency: "USD"}},
@@ -248,9 +248,9 @@ A seguir, reproduzimos trechos das mensagens na ordem da execução de linha de 
   {role: "tool", tool_call_id: "convert_currency_1", content: "2278481.01 USD"},
   {role: "tool", tool_call_id: "convert_currency_2", content: "2541806.02 USD"},
 
-  # 第二轮：根据换汇结果计算
+  # 2ª rodada: calcular com base nos resultados do câmbio
   {role: "assistant",
-   reasoning: "第一季度原本就是美元，加上其余三笔换汇结果，求和后除以4。",
+   reasoning: "O 1º trimestre já está em dólares; somar com as três conversões e dividir por 4.",
    tool_calls: [
      {id: "code_interpreter_3", name: "code_interpreter",
       args: {code: """
@@ -262,10 +262,10 @@ A seguir, reproduzimos trechos das mensagens na ordem da execução de linha de 
   {role: "tool", tool_call_id: "code_interpreter_3",
    content: "9602895.73 2400723.93"},
 
-  # 第三轮：交付结果
+  # 3ª rodada: entregar o resultado
   {role: "assistant",
-   reasoning: "计算完成，按两位小数报告结果。",
-   content: "年度总收入为9,602,895.73美元，季度平均收入为2,400,723.93美元。"}
+   reasoning: "Cálculo concluído; informar o resultado com duas casas decimais.",
+   content: "A receita anual total é de US$ 9.602.895,73, e a receita média trimestral, de US$ 2.400.723,93."}
 ]
 ```
 
@@ -303,7 +303,7 @@ A tarefa de câmbio exigiu apenas algumas chamadas de ferramentas. Tarefas de bu
 >
 > Nas duas tarefas, a busca e a execução de código são hospedadas no servidor; o modelo decide as ações seguintes com base nos resultados retornados, e o Harness do servidor encadeia as chamadas. O cliente envia a tarefa e recebe os resultados; diante de um pedido de esclarecimento, envia as informações complementares do usuário, dando continuidade ao contexto existente. A Figura 1-5 compara essa estrutura com o ciclo do cliente do Experimento 1-2 e mostra as duas divisões de trabalho com etapas concretas de busca e de cálculo.
 >
-> ![Figura 1-5: chamada de ferramentas conduzida pelo modelo — ciclo no cliente e ciclo hospedado no servidor](images/revised/fig1-5.svg)
+> ![Figura 1-5 Chamada de ferramentas conduzida pelo modelo — ciclo no cliente e ciclo hospedado no servidor](images/revised/fig1-5.svg)
 
 [^ch1-hosted]: Para o acesso às ferramentas hospedadas, consulte a documentação do interpretador de código do Bailian. O modelo, a ordem das chamadas e os resultados deste experimento baseiam-se nos registros de execução complementares.
 
@@ -321,7 +321,7 @@ Duas aplicações de atendimento ao cliente usam o mesmo modelo e respondem ao u
 
 O modelo gerar uma frase e o sistema de pagamento mudar de estado são duas coisas que precisam ser verificadas separadamente. Os LLMs atuais seguem a abordagem conexionista das redes neurais: aprendem a partir dos dados a probabilidade condicional dos tokens e geram, passo a passo, respostas ou pedidos de ferramentas.[^ch1-connectionism] Mesmo que toda decodificação produzisse exatamente a mesma resposta, isso não diria se o dinheiro foi devolvido. A aplicação precisa enviar o pedido de operação para execução, registrar o resultado retornado pela ferramenta e entregá-lo ao modelo, conferindo a resposta final com base nele. Organizar essas etapas é o problema de que trata a engenharia de Harness.
 
-[^ch1-connectionism]: Grupo de Pesquisa Consultiva em Inteligência Artificial das Divisões Acadêmicas da Academia Chinesa de Ciências, *Inteligência artificial a serviço da pesquisa científica: o sistema disciplinar da inteligência artificial*, Science Press, 2026, ISBN 978-7-03-084786-7, Capítulo 1, Seção 1.1.
+[^ch1-connectionism]: Grupo de Pesquisa Consultiva em Inteligência Artificial das Divisões Acadêmicas da Academia Chinesa de Ciências, *Inteligência artificial a serviço da pesquisa científica: o sistema disciplinar da inteligência artificial* (em chinês), Science Press, 2026, ISBN 978-7-03-084786-7, Capítulo 1, Seção 1.1.
 
 Até aqui, explicamos a composição funcional do agente com o LLM, o contexto e as ferramentas. Na hora de transformá-la em código e serviços, o Model decide com base nas entradas, o Harness organiza as entradas, despacha as chamadas de ferramentas e trata o retorno, e as ferramentas ou o ambiente realizam as operações concretas. Este livro resume essa divisão de trabalho nas fórmulas abaixo e agrupa as responsabilidades do Harness em cinco funções:
 
@@ -337,11 +337,11 @@ Essa divisão de trabalho também ajuda a delimitar o sistema. Definições de f
 
 | Função | Responsabilidades e pontos de projeto | Exemplos práticos | Detalhes |
 | --- | --- | --- | --- |
-| **Context (gerenciamento de contexto)** | Selecionar e organizar as informações necessárias à decisão atual; guardar o progresso da tarefa e os fundamentos essenciais | Prompt de sistema, base de conhecimento, barra de estado do agente, consultas paralelas via Sidecar | Capítulos 2 e 3 |
+| **Context (gerenciamento de contexto)** | Selecionar e organizar as informações necessárias à decisão atual; guardar o progresso da tarefa e os fundamentos essenciais | Prompt de sistema, base de conhecimento, barra de status do agente, consultas paralelas via Sidecar | Capítulos 2 e 3 |
 | **Tools (interfaces de ferramentas)** | Oferecer interfaces de observação e de ação; nomes intuitivos, parâmetros com exemplos, retornos e erros claros | Ferramentas MCP, interpretador de código, ferramentas de busca | Capítulo 4 |
 | **Constrain (restrição)** | Liberar capacidades pelo princípio do menor privilégio e verificar, antes da execução, a operação, os parâmetros e o escopo da autorização | Escopo de acesso a arquivos, limite de valor de reembolso, aprovação de chamadas de ferramentas | Capítulo 4 |
 | **Verify (verificação)** | Conferir as operações com regras verificáveis, resultados de ferramentas e estado do ambiente; verificar também a origem e a validade dos dados | Linter, checagem de tipos, testes, conferência do status da transação | Capítulos 5 e 6 |
-| **Correct (correção)** | Escolher, conforme o tipo de erro, entre nova tentativa, continuação, compensação, reversão ou intervenção humana, limitando o número de recuperações | Nova tentativa silenciosa, continuação da geração, transferência para humano após o disjuntor | Capítulos 2 e 5 |
+| **Correct (correção)** | Escolher, conforme o tipo de erro, entre nova tentativa, continuação, compensação, reversão ou intervenção humana, limitando o número de recuperações | Nova tentativa silenciosa, continuação da geração, transferência para um humano após o disparo do disjuntor | Capítulos 2 e 5 |
 
 A restrição pode começar desativando por padrão as capacidades sensíveis: as que envolvem recursos sensíveis ou efeitos colaterais externos só são liberadas após autorização explícita, de forma semelhante a um aplicativo de celular que pede permissão para usar a câmera ou a localização. A verificação, por sua vez, precisa ligar as afirmações do modelo a evidências verificáveis. Por exemplo, o sucesso de um reembolso deve ser confirmado pelo status no sistema de transações; quando uma ferramenta retorna JSON, é preciso verificar ainda o tipo, o valor e a origem dos campos. Tanto a saída do modelo quanto o conteúdo de ferramentas externas podem ser afetados por informações erradas ou por injeção de prompt; a lógica de verificação confiável deve operar dentro de uma fronteira de execução independente.
 
@@ -378,17 +378,17 @@ return Harness.report_incomplete(history)
 
 Esse ciclo coloca a restrição antes da execução, a verificação no retorno das ferramentas e no fim da tarefa, e leva o resultado da correção de volta ao contexto. O Capítulo 2 detalha o ciclo de mensagens da API, e os Capítulos 4 e 5 apresentam a execução de ferramentas e a verificação automática.
 
-**Da demonstração à produção, o foco da engenharia se desloca de conectar contexto e ferramentas para a restrição, a verificação e a correção.** Uma demonstração pode exibir capacidades com algumas poucas tarefas concluídas sem problemas; um produto precisa entregar de forma contínua diante de entradas variadas, falhas de serviço e execuções prolongadas. Permissões, estado, verificação e recuperação passam, assim, a concentrar o investimento de engenharia. O Claude Code oferece um exemplo concreto: além de leitura e gravação de arquivos, execução de comandos e busca, ele dispõe de mecanismos como regras de permissão, compactação de contexto e checkpoints de arquivos. As regras de permissão determinam se é preciso pedir confirmação conforme o tipo de ferramenta, o escopo da operação e o modo selecionado; os checkpoints permitem restaurar as modificações de arquivos que registraram[^ch1-claude-harness]. No modo automático, o Claude Code ainda recorre a um classificador independente para revisar as chamadas de ferramentas. Há aqui um tipo de trabalho adequado a modelos de julgamento especializados como o Jev: o modelo principal precisa pensar em como concluir a tarefa, enquanto o modelo auxiliar só precisa responder a uma pergunta de escopo bem definido, como “esta operação ultrapassa o que o usuário acabou de pedir?”. O Capítulo 4 usa a aprovação de ferramentas para mostrar como dividir esse trabalho.
+**Da demonstração à produção, o foco da engenharia se desloca de conectar contexto e ferramentas para a restrição, a verificação e a correção.** Uma demonstração pode exibir capacidades com algumas poucas tarefas concluídas sem problemas; um produto precisa entregar de forma contínua diante de entradas variadas, falhas de serviço e execuções prolongadas. Permissões, estado, verificação e recuperação passam, assim, a concentrar o investimento de engenharia. O Claude Code oferece um exemplo concreto: além de leitura e gravação de arquivos, execução de comandos e busca, ele dispõe de mecanismos como regras de permissão, compressão de contexto e checkpoints de arquivos. As regras de permissão determinam se é preciso pedir confirmação conforme o tipo de ferramenta, o escopo da operação e o modo selecionado; os checkpoints permitem restaurar as modificações de arquivos que registraram[^ch1-claude-harness]. No modo automático, o Claude Code ainda recorre a um classificador independente para revisar as chamadas de ferramentas. Há aqui um tipo de trabalho adequado a modelos de julgamento especializados como o Jev: o modelo principal precisa pensar em como concluir a tarefa, enquanto o modelo auxiliar só precisa responder a uma pergunta de escopo bem definido, como “esta operação ultrapassa o que o usuário acabou de pedir?”. O Capítulo 4 usa a aprovação de ferramentas para mostrar como dividir esse trabalho.
 
 A partir desses mecanismos de produto, é possível resumir alguns trabalhos a considerar ao construir um Harness:
 
 - **Gerenciamento do estado do fluxo**: registrar em que etapa a execução está, quais operações já foram concluídas e quais resultados ainda aguardam confirmação.
-- **Compactação de contexto**: à medida que as informações crescem, preservar fatos essenciais, restrições e progresso, liberando espaço para as decisões seguintes.
+- **Compressão de contexto**: à medida que as informações crescem, preservar fatos essenciais, restrições e progresso, liberando espaço para as decisões seguintes.
 - **Classificação de permissões**: distinguir leituras, modificações, chamadas externas e outras operações, aplicando regras conforme o risco e o escopo da autorização.
 - **Disjuntor** (Circuit Breaker): ao atingir um limite de falhas consecutivas, interromper as novas tentativas, para evitar que a mesma falha continue consumindo recursos ou amplie seu impacto, como um disjuntor que desarma diante de uma falha elétrica.
 - **Recuperação de erros**: capturar exceções e, com base em checkpoints e no estado do ambiente, escolher entre voltar a um estado estável, tentar de novo ou devolver o controle a um humano.
 
-[^ch1-claude-harness]: Documentação oficial do Claude Code: configuração de permissões, checkpoints, comandos interativos e compactação de contexto. O alcance da restauração por checkpoints de arquivos depende do que a ferramenta registrou; o estado em serviços externos exige mecanismos de recuperação próprios.
+[^ch1-claude-harness]: Documentação oficial do Claude Code: configuração de permissões, checkpoints, comandos interativos e compressão de contexto. O alcance da restauração por checkpoints de arquivos depende do que a ferramenta registrou; o estado em serviços externos exige mecanismos de recuperação próprios.
 
 ### Da engenharia de prompts à engenharia de grafos: a ampliação do escopo da engenharia
 
@@ -396,11 +396,11 @@ Antes de trocar o prompt de uma tarefa que falhou, vale verificar onde a falha o
 
 A **engenharia de prompts** (Prompt Engineering) trata da formulação das instruções. A maneira de escrever os objetivos, as restrições e os exemplos da tarefa influencia diretamente como o modelo entende o pedido e gera o resultado.
 
-A **engenharia de contexto** (Context Engineering) vai além e organiza todas as informações que o modelo pode ver, incluindo instruções de sistema, definições de ferramentas, histórico da conversa e conhecimento externo. O prompt é apenas uma parte disso; recuperação, compactação e organização do estado também influenciam as decisões.
+A **engenharia de contexto** (Context Engineering) vai além e organiza todas as informações que o modelo pode ver, incluindo instruções de sistema, definições de ferramentas, histórico da conversa e conhecimento externo. O prompt é apenas uma parte disso; recuperação, compressão e organização do estado também influenciam as decisões.
 
 A **engenharia de Harness** trata da execução do modelo e de sua interação com o ambiente. Ela organiza a construção do contexto, o despacho de ferramentas, as permissões, a verificação e a recuperação de erros em um sistema executável, para que o modelo consiga concluir tarefas de forma contínua.
 
-A **engenharia de loops** (Loop Engineering) trata da operação autônoma contínua: quando uma rodada termina, quem identifica a próxima coisa a fazer, quando reiniciar, quando verificar os resultados e com que critério julgar que a tarefa está de fato concluída. O Capítulo 10 desenvolve essa perspectiva com sistemas de colaboração entre vários agentes.
+A **engenharia de Loop** (Loop Engineering) trata da operação autônoma contínua: quando uma rodada termina, quem identifica a próxima coisa a fazer, quando reiniciar, quando verificar os resultados e com que critério julgar que a tarefa está de fato concluída. O Capítulo 10 desenvolve essa perspectiva com sistemas de colaboração entre vários agentes.
 
 A **engenharia de grafos** (Graph Engineering) trata da combinação de várias unidades de execução. Ciclos de agentes, programas determinísticos e aprovações humanas podem ser nós; as arestas definem o roteamento e as dependências, o estado estruturado é passado entre os nós, e checkpoints são salvos nas fronteiras críticas. Discussões surgidas em 2026 passaram a usar esse nome para resumir esses problemas de orquestração[^ch1-graph-engineering].
 
@@ -440,7 +440,7 @@ A seguir, examinamos as decisões de projeto em três frentes: escolha do modelo
 
 **Modelos de pesos abertos oferecem margem para implantação e personalização.** Modelos como DeepSeek, Kimi e GLM podem ser usados em implantação própria ou em pós-treinamento, conforme as condições de licença de cada versão. A implantação privada facilita o controle do fluxo de dados, e o ajuste fino permite adaptar o modelo a tarefas específicas. **Para negócios em que a capacidade do modelo já basta e o volume de chamadas é estável, ou que exigem controle rigoroso do fluxo de dados, avalio primeiro as opções de pesos abertos.**
 
-No momento em que escrevo, minha avaliação empírica sobre a velocidade com que os modelos de pesos abertos alcançam os demais é que a diferença já caiu para menos de seis meses.
+No momento em que escrevo, minha impressão, com base na experiência, é que os modelos de pesos abertos já estão a menos de seis meses dos melhores modelos fechados.
 
 **Avalie em conjunto a capacidade do modelo, a interface do produto e as regras de uso.** Quando um mesmo modelo é oferecido por um produto de chat, um agente de programação ou uma API, as ferramentas disponíveis, as permissões e os limites de execução podem variar. Para atividades como segurança cibernética, destilação e extração de modelos, dados privados e operações de alto risco, é preciso ainda conferir, item por item, as regras de uso do serviço.
 
@@ -502,9 +502,9 @@ Um **agente autônomo** (Autonomous Agent) escolhe o próximo passo com base no 
 
 Se uma consulta falhar, o modelo pode alterar os parâmetros e tentar de novo, mudar a forma de consulta ou pedir mais informações ao usuário. O Harness registra cada tentativa e limita o tempo ou os recursos que a tarefa pode consumir.
 
-Os dois circuitos da Figura 1-6 passam pela verificação de orçamento. À esquerda, a ferramenta retornou um resultado; à direita, o modelo se prepara para encerrar, mas a verificação de aceitação descobre que falta algo. Quando o modelo chama uma ferramenta de saída final, como `final_answer`, ou retorna uma resposta sem chamadas de ferramentas, o Harness verifica se todos os resultados exigidos estão presentes. Só entrega se a verificação passar; se faltar algum produto necessário, o Harness informa ao modelo o que falta e o faz continuar. Diante de um erro irrecuperável, de erros acima do limite ou do número máximo de rodadas, ele salva o progresso, relata o que ficou por fazer ou transfere para um humano.
+Os dois circuitos da Figura 1-6 passam pela verificação de orçamento. À esquerda, a ferramenta retornou um resultado; à direita, o modelo se prepara para encerrar, mas a verificação de aceitação descobre que falta algo. Quando o modelo chama uma ferramenta de saída final, como `final_answer`, ou retorna uma resposta sem chamadas de ferramentas, o Harness verifica se todos os resultados exigidos estão presentes. Só entrega se a verificação passar; se faltar algum produto necessário, o Harness informa ao modelo o que falta e o faz continuar. Diante de um erro irrecuperável, quando os erros passam do limite ou quando se atinge o número máximo de rodadas, ele salva o progresso, relata o que ficou por fazer ou transfere para um humano.
 
-![Figura 1-6: o ciclo de execução de um agente autônomo](images/revised/fig1-6.svg)
+![Figura 1-6 O ciclo de execução de um agente autônomo](images/revised/fig1-6.svg)
 
 O ciclo autônomo é adequado a cenários em que o número de etapas varia conforme a tarefa, como agentes de programação corrigindo problemas reais de código, agentes de Computer Use operando interfaces e tarefas de pesquisa com buscas e análises repetidas. O SWE-bench, por exemplo, mede a capacidade de correção de código com problemas de repositórios de software reais. Nesse tipo de tarefa, o próximo passo muitas vezes depende da saída de teste, do estado da interface ou do resultado de busca que acabou de ser obtido.
 
@@ -512,7 +512,7 @@ O ciclo autônomo é adequado a cenários em que o número de etapas varia confo
 
 Fluxos de trabalho e agentes autônomos podem ser combinados: o programa define o processo crítico, as condições de verificação e as permissões, e um agente autônomo roda dentro dos nós que exigem julgamento flexível. Seguindo a linha contínua na parte superior da Figura 1-7, a mensagem do Telegram passa primeiro por uma verificação de tipo; mensagens de voz são convertidas em texto, e, por fim, o nó do Telegram envia a resposta. Agora observe as linhas tracejadas abaixo do AI Agent: ferramentas como Gmail e Google Calendar estão ligadas a esse nó, e qual delas chamar é decidido pelo modelo conforme o conteúdo da mensagem[^ch1-n8n].
 
-![Figura 1-7: interface do editor de fluxos de trabalho do n8n](images/revised/n8n-workflow-grayscale.svg)
+![Figura 1-7 Interface do editor de fluxos de trabalho do n8n](images/revised/n8n-workflow-grayscale.svg)
 
 Outra abordagem é **fazer o agente autônomo gerar primeiro o fluxo de trabalho e, depois, executar o fluxo já verificado**. O agente projeta a topologia de acordo com a tarefa e gera o código de orquestração; o sistema de execução valida o código, as permissões e as entradas e, só então, executa o caminho gerado. Para dados ou etapas processados repetidamente, isso reduz o custo de chamar o modelo a cada despacho, preservando a flexibilidade de projetar o fluxo dinamicamente no início da tarefa. O Capítulo 10 discute essa forma em mais detalhes.
 
@@ -587,7 +587,7 @@ A tabela abaixo lista as funções do Harness discutidas em cada capítulo e os 
 
 | Função do Harness | Capítulos principais | Conteúdo técnico | Preocupações de segurança e confiabilidade |
 | --- | --- | --- | --- |
-| Gerenciamento de contexto | Capítulo 2 | Engenharia de prompts, barra de estado, compactação de contexto, Agent Skills | Injeção de prompt, contaminação do contexto, perda de progresso |
+| Gerenciamento de contexto | Capítulo 2 | Engenharia de prompts, barra de status, compressão de contexto, Agent Skills | Injeção de prompt, contaminação do contexto, perda de progresso |
 | Gerenciamento de contexto (entre sessões) | Capítulo 3 | Memória do usuário, RAG, índices estruturados, Agentic RAG | Exposição de informações sensíveis, origem e privacidade |
 | Interfaces de ferramentas e restrição | Capítulo 4 | Classificação de ferramentas, controle de permissões, MCP, descoberta ativa de ferramentas | Operações incorretas, acesso não autorizado, operações irreversíveis |
 | Verificação | Capítulos 5 e 7 | Desenvolvimento orientado a testes, regras em código, avaliação de produtos | Fronteiras de identidade e responsabilidade, julgamento incorreto de resultados |
@@ -601,7 +601,7 @@ O caso de agentes de longa duração da Anthropic mostra as cinco funções trab
 
 [^ch1-long-running]: Anthropic, Effective harnesses for long-running agents, 26 de novembro de 2025.
 
-## Padrões de design que permeiam o livro
+## Padrões de projeto que permeiam o livro
 
 Imagine um agente encarregado de atualizar a política de atendimento ao cliente. O revisor precisa conseguir encontrar o texto original das cláusulas alteradas; ao executar, o modelo só precisa ver primeiro o índice da política; depois da atualização, ainda é preciso recuperar a versão antiga e verificar as perguntas que antes eram respondidas corretamente. Nessa única tarefa já aparecem vários dos padrões de design a seguir.
 
@@ -609,7 +609,7 @@ Imagine um agente encarregado de atualizar a política de atendimento ao cliente
 
 **Revelação progressiva (Progressive Disclosure)** fornece primeiro um índice ou resumo pesquisável e carrega os detalhes sob demanda. Isso controla o custo de contexto e ajuda o modelo a restringir primeiro o leque de escolhas. As Agent Skills do Capítulo 2 mantêm os metadados permanentemente no contexto e carregam o corpo sob demanda; a recuperação em camadas do Capítulo 3, a descoberta ativa de ferramentas e a paginação com truncamento do Capítulo 4 e a descoberta de agentes do Capítulo 10 adotam métodos semelhantes.
 
-**Somente acréscimos (Append-only)** expressa mudanças acrescentando registros, preservando o histórico para cache, replay e auditoria. No Capítulo 2, um prefixo estável favorece a reutilização do cache KV; quanto mais cedo ocorre a mudança, mais caches subsequentes costumam ser afetados. A memória baseada em eventos do Capítulo 3 registra mudanças de estado com novos eventos, e o Capítulo 4, ao acrescentar sob demanda schemas de ferramentas ao contexto seguinte, também aproveita a ideia de preservar o prefixo existente; o log de entrada do Capítulo 6 acrescenta a um mesmo registro os eventos das diversas fontes, para despacho, replay e investigação. Quando é preciso compactar ou atualizar o estado, pode-se gerar uma nova versão, guardando os registros necessários para rastreá-la.
+**Somente acréscimos (Append-only)** expressa mudanças acrescentando registros, preservando o histórico para cache, replay e auditoria. No Capítulo 2, um prefixo estável favorece a reutilização do cache KV; quanto mais cedo ocorre a mudança, mais caches subsequentes costumam ser afetados. A memória baseada em eventos do Capítulo 3 registra mudanças de estado com novos eventos, e o Capítulo 4, ao acrescentar sob demanda schemas de ferramentas ao contexto seguinte, também aproveita a ideia de preservar o prefixo existente; o log de entrada do Capítulo 6 acrescenta a um mesmo registro os eventos das diversas fontes, para despacho, replay e investigação. Quando é preciso comprimir ou atualizar o estado, pode-se gerar uma nova versão, guardando os registros necessários para rastreá-la.
 
 **Conjunto de fronteira + conjunto de retenção (Boundary Set + Retention Set)** valida uma modificação em duas direções: um conjunto reúne os problemas que se espera corrigir desta vez, e o outro, as tarefas que a versão antiga já resolvia corretamente. Por exemplo, depois de corrigir um tipo de erro nos parâmetros de uma ferramenta, é preciso testar de novo essas amostras com erro e também verificar as tarefas que antes eram concluídas. Testar apenas as amostras-alvo facilita confundir com progresso um sobreajuste a elas; testar apenas as capacidades existentes pode levar a aceitar uma modificação sem efeito algum. A avaliação de regressão do Capítulo 7, a separação entre treinamento e avaliação do Capítulo 8 e a validação de atualizações do Capítulo 9 usam esse tipo de contraste, verificando ao mesmo tempo ganhos e regressões.
 
@@ -634,7 +634,7 @@ Voltemos à ligação para comprar a passagem. Quando o atendente informa 1.250 
 ## Questões para reflexão
 
 1. ★★ Se você só pudesse priorizar a melhoria de um entre modelo, contexto e ferramentas, como decidiria onde vale mais a pena investir? Quais resultados de avaliação o fariam mudar de escolha?
-2. ★★★ Supondo que cada rodada acrescente aproximadamente a mesma quantidade de mensagens e que, a cada rodada, o modelo receba todo o histórico anterior, por que o volume acumulado de entrada cresce de forma aproximadamente quadrática com o número de rodadas? Que custos o cache, a compactação e o corte do histórico alteram, respectivamente?
+2. ★★★ Supondo que cada rodada acrescente aproximadamente a mesma quantidade de mensagens e que, a cada rodada, o modelo receba todo o histórico anterior, por que o volume acumulado de entrada cresce de forma aproximadamente quadrática com o número de rodadas? Que custos o cache, a compressão e o corte do histórico alteram, respectivamente?
 3. ★★ O modelo assume cada vez mais decisões de chamada de ferramentas, e o Harness também precisa dar suporte a tarefas mais longas e complexas. Como mudarão as responsabilidades de cada um? Quais mecanismos podem ser simplificados, e quais precisam ser reforçados?
 4. ★★ No experimento, a falta dos resultados das ferramentas provoca chamadas repetidas. Em um sistema de produção, que outras causas podem gerar ciclos semelhantes? Como detectá-los, recuperar-se deles e definir condições de término?
 5. ★ Escolha um produto de IA que você usa no dia a dia e liste as principais informações em seu contexto, as operações disponíveis e a estratégia de execução. Em que etapa ele falha com mais facilidade? Como você o melhoraria?

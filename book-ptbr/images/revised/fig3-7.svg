@@ -10,7 +10,7 @@
 <text x="200" y="139" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">A</text><circle cx="505" cy="102" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
 <text x="505" y="109" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">D</text><circle cx="755" cy="107" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
 <text x="755" y="114" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">F</text><rect x="20" y="207" width="860" height="180" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<text x="245" y="241" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="26.9" font-weight="700" fill="#292929">Layer 1: mais nós · área menor</text><path d="M200 319 L300 284" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<text x="245" y="241" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="22.6" font-weight="700" fill="#292929">Layer 1: mais nós · área menor</text><path d="M200 319 L300 284" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M200 319 L505 289" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M300 284 L505 289" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M505 289 L620 329" fill="none" stroke="#aaaaaa" stroke-width="2" />
@@ -22,7 +22,7 @@
 <text x="505" y="296" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">D</text><circle cx="620" cy="329" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
 <text x="620" y="336" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">E</text><circle cx="755" cy="294" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
 <text x="755" y="301" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">F</text><rect x="20" y="407" width="860" height="205" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<text x="245" y="441" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="23.4" font-weight="700" fill="#292929">Layer 0: todos os nós · candidatos</text><path d="M200 519 L300 484" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<text x="245" y="441" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="22.6" font-weight="700" fill="#292929">Layer 0: todos os nós · candidatos</text><path d="M200 519 L300 484" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M200 519 L235 574" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M200 519 L400 539" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M300 484 L400 539" fill="none" stroke="#aaaaaa" stroke-width="2" />

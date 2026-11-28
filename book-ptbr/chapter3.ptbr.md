@@ -6,7 +6,7 @@ A **memória do usuário** organiza as informações em torno de um usuário esp
 
 As duas precisam resolver como guardar as informações e como encontrá-las quando forem necessárias, e ambas enfrentam fatos conflitantes, conteúdo desatualizado e lacunas na recuperação. Recuperação vetorial, índices estruturados e compressão de conhecimento servem aos dois tipos de sistema. A Figura 3-1 mostra a organização do capítulo: primeiro, a representação e o gerenciamento da memória do usuário; depois, a geração aumentada por recuperação (RAG); por fim, a aplicação dos métodos de recuperação à memória entre sessões e a formas mais complexas de organizar o conhecimento.
 
-![Figura 3-1: mapa de conhecimentos do capítulo](images/revised/fig3-1.svg)
+![Figura 3-1 Mapa de conhecimentos do capítulo](images/revised/fig3-1.svg)
 
 ## Sistema de memória do usuário
 
@@ -95,7 +95,7 @@ Esses três tipos de registro trabalham em conjunto: a trajetória fornece a bas
 
 Se só é preciso alterar um endereço de e-mail, o ideal é encontrar diretamente esse item; se é preciso entender por que o endereço mudou, é necessário ler a história do que aconteceu. No canto superior esquerdo da Figura 3-2, e-mail, empresa e cargo ficam em registros separados; no canto superior direito, cargo, equipe e projeto aparecem escritos juntos. Observe os dois cartões de baixo: para atualizar o cargo no futuro, ou para saber quem foi ao cardiologista, que campo consultar em cada caso?
 
-![Figura 3-2: comparação de quatro estratégias de memória](images/revised/fig3-2.svg)
+![Figura 3-2 Comparação de quatro estratégias de memória](images/revised/fig3-2.svg)
 
 **Simple Notes** registra cada memória como um fato curto, por exemplo “E-mail do usuário: john@example.com”. Cada registro é fácil de ler e gravar; quando a localização é feita por uma chave estável em uma tabela hash, a consulta e a atualização costumam ter complexidade média O(1). Para buscar semanticamente em um grande volume de notas, é preciso ainda construir um índice de recuperação. Uma divisão fina demais também perde relações: se “trabalha na TechCorp como engenheiro sênior, responsável pelo desenvolvimento do sistema de recomendação” for dividido em três registros sem ligação — empresa, cargo e projeto —, depois será preciso descobrir de novo se pertencem ao mesmo emprego.
 
@@ -198,7 +198,7 @@ alerts = passport_alerts(state, required_days=180)
 
 Com os 180 dias do exemplo, o passaporte terá apenas 34 dias de validade na ida a Tóquio e já estará vencido no dia da partida para Paris. Quando o usuário renovar o passaporte, o programa pode recalcular as duas viagens com a nova data.
 
-[^uac]: Li, Bojie, User as Code: Executable Memory for Personalized agentes, 2026.
+[^uac]: Li, Bojie, User as Code: Executable Memory for Personalized Agents, 2026.
 
 ### Fundamentos da memória do usuário na ciência cognitiva
 
@@ -228,7 +228,7 @@ O usuário diz “ultimamente passei a sentar no corredor”, mas o registro ant
 
 **Mem0: mudando onde os conflitos são tratados.** O fluxo do artigo de 2025 e da v2 compara fatos novos e antigos na gravação; a v3, mais recente, passou a acrescentar fatos e usar recuperação híbrida. A Figura 3-3 compara os dois arranjos.
 
-![Figura 3-3: arquitetura de gerenciamento de memória do Mem0](images/revised/fig3-3.svg)
+![Figura 3-3 Arquitetura de gerenciamento de memória do Mem0](images/revised/fig3-3.svg)
 
 No fluxo inicial, o LLM extrai fatos candidatos da conversa, busca memórias existentes semelhantes e decide entre **ADD**, **UPDATE**, **DELETE** ou **NOOP**. Se o usuário diz primeiro “moro em Pequim” e depois “me mudei para Xangai”, o sistema pode atualizar a residência atual para Xangai. Assim, a consulta encontra facilmente fatos já organizados; a manutenção, porém, precisa distinguir corretamente correções, mudanças ao longo do tempo e pessoas diferentes, e guardar a justificativa de cada atualização para permitir a revisão quando se descobre um erro. O artigo propõe ainda uma variante de memória em grafo, o **Mem0-g**, que expressa conhecimento associado por meio de entidades e relações[^ch3-mem0-paper].
 
@@ -248,7 +248,7 @@ O Memobase coloca as novas conversas em um buffer e as processa em lote quando o
 
 Se o assistente precisa lembrar como foi a última reserva e também conhecer a preferência de assento do usuário e o procedimento de reembolso de passagens, pode guardar separadamente eventos, fatos e procedimentos, como na Figura 3-4. A cada tarefa, coloca na memória de trabalho apenas as partes úteis.
 
-![Figura 3-4: arquitetura de referência para a cooperação entre vários tipos de memória](images/revised/fig3-4.svg)
+![Figura 3-4 Arquitetura de referência para a cooperação entre vários tipos de memória](images/revised/fig3-4.svg)
 
 A memória episódica preserva sequências de eventos com metadados como carimbo de data e hora, marcação emocional e identificador da tarefa, o que permite combinar recuperação por data e por tema. Por exemplo, “a última vez que falamos de orçamento” exige ao mesmo tempo correspondência temática e ordenação temporal. A memória semântica guarda fatos e preferências extraídos dos eventos; a memória procedimental guarda procedimentos usados repetidamente.
 
@@ -289,19 +289,19 @@ Uma loja mudou sua política de reembolso, e um usuário pergunta: “Comprei um
 Comecemos pelo caso em que há uma única versão da política. A seguir, uma interface simplificada consulta o procedimento de reembolso da mesma loja; observe como os resultados da recuperação entram na resposta do modelo:
 
 ```python
-query = "退款流程"
+query = "procedimento de reembolso"
 results = retriever.search(query, top_k=2)
 # results = [
-#   "退款政策：订单签收后7天内可申请全额退款，需提供订单号。退款将在3–5个工作日内到账。",
-#   "退款操作：进入‘我的订单’，选择订单，点击‘申请退款’。"
+#   "Política de reembolso: reembolso integral em até 7 dias após o recebimento do pedido, mediante o número do pedido. O valor é creditado em 3–5 dias úteis.",
+#   "Como pedir reembolso: acesse ‘Meus pedidos’, selecione o pedido e clique em ‘Solicitar reembolso’."
 # ]
-answer = llm.generate(system="你是客服助手。", context=results, question=query)
-# 回答包含申请期限、所需信息、操作步骤和到账时间。
+answer = llm.generate(system="Você é um assistente de atendimento ao cliente.", context=results, question=query)
+# A resposta inclui o prazo para solicitar, as informações necessárias, as etapas e o prazo de crédito.
 ```
 
-Compare a Figura 3-5 com os dois resultados de recuperação no código: as etapas para solicitar o reembolso vêm de “Como pedir reembolso” (退款操作), e o prazo de 3–5 dias úteis para o crédito vem de “Política de reembolso” (退款政策). Se a recuperação trouxesse apenas as etapas, o modelo ainda teria base para dizer ao usuário quando o dinheiro vai cair? A questão tem a ver com a forma de dividir o manual em blocos.
+Compare a Figura 3-5 com os dois resultados de recuperação no código: as etapas para solicitar o reembolso vêm de “Como pedir reembolso”, e o prazo de 3–5 dias úteis para o crédito vem de “Política de reembolso”. Se a recuperação trouxesse apenas as etapas, o modelo ainda teria base para dizer ao usuário quando o dinheiro vai cair? A questão tem a ver com a forma de dividir o manual em blocos.
 
-![Figura 3-5: fluxo de consulta em RAG — recuperação, aumento e geração](images/revised/fig3-5.svg)
+![Figura 3-5 Fluxo de consulta em RAG — recuperação, aumento e geração](images/revised/fig3-5.svg)
 
 ### Divisão de documentos em blocos (Chunking)
 
@@ -347,7 +347,7 @@ A Figura 3-6 começa pelos vetores de palavras fixos. O **Word2Vec** aprende um 
 
 O **GloVe** conta as coocorrências entre palavras no corpus inteiro e aprende os vetores por meio de um objetivo de mínimos quadrados ponderados. O Word2Vec se concentra em uma tarefa de predição em janelas locais; o GloVe incorpora diretamente ao treinamento as estatísticas globais de coocorrência. Ambos aprendem representações fixas para o vocabulário[^ch3-glove].
 
-![Figura 3-6: evolução das técnicas de embedding denso](images/revised/fig3-6.svg)
+![Figura 3-6 Evolução das técnicas de embedding denso](images/revised/fig3-6.svg)
 
 Com modelos contextuais como o **BERT**, a representação de um mesmo token muda conforme a frase. Graças à autoatenção, o modelo pode usar pistas como “rasguei a manga da camisa” e “comprei um quilo de manga” para calcular representações diferentes para “manga” nas duas frases. Modelos de embedding para recuperação ainda precisam agregar as representações dos tokens em um vetor de consulta ou de documento e ser treinados de modo que os dois sejam comparáveis.
 
@@ -363,7 +363,7 @@ O **BGE-M3** oferece ao mesmo tempo representações densas, esparsas e multivet
 >
 > O ANNOY usa várias árvores de projeção aleatória para reduzir os candidatos; o HNSW usa um grafo de vizinhança hierárquico, que primeiro se aproxima rapidamente da região-alvo nas camadas superiores, esparsas, e depois busca nas camadas inferiores, mais densas. A Figura 3-7 mostra a estrutura hierárquica do HNSW.
 >
-> ![Figura 3-7: estrutura do índice HNSW](images/revised/fig3-7.svg)
+> ![Figura 3-7 Estrutura do índice HNSW](images/revised/fig3-7.svg)
 >
 > Tabela 3-2: escolhas de implementação do ANNOY e do HNSW
 >
@@ -406,7 +406,7 @@ $$\operatorname{Score}(Q,D)=\sum_i\operatorname{IDF}_{\mathrm{BM25}}(q_i)\cdot\f
 
 Aqui, $q_i$ é um termo da consulta, $|D|$ é o comprimento do documento e $\operatorname{avgdl}$ é o comprimento médio dos documentos. $k_1$ controla o grau de saturação da frequência; $b$ controla a intensidade da normalização pelo comprimento, e com $b=0$ essa correção fica desligada. A Figura 3-8 calcula esses termos separadamente. Primeiro, com o comprimento do documento fixo, o termo da consulta passa de uma para três ocorrências, para ver quanto cada ocorrência a mais acrescenta; depois, com a frequência fixa, apenas o comprimento do documento é dobrado. A última linha compara quão comuns são duas palavras na coleção de documentos.
 
-![Figura 3-8: mecanismo de pontuação do BM25](images/revised/fig3-8.svg)
+![Figura 3-8 Mecanismo de pontuação do BM25](images/revised/fig3-8.svg)
 
 Na primeira linha da figura, a segunda ocorrência aumenta o fator de frequência em cerca de 0,43, e a terceira só em cerca de 0,24: é a saturação da frequência. Na segunda linha, a mesma palavra aparece uma única vez, mas se destaca menos no documento mais longo, e a correção de comprimento reduz seu fator de frequência. Só multiplicando pelo IDF se obtém a contribuição dessa palavra para a pontuação total.
 
@@ -420,7 +420,7 @@ O numerador é o número de documentos que não contêm a palavra, e o denominad
 >
 > Este experimento implementa, em sequência, tokenização, tratamento de stopwords, índice invertido e pontuação. O tratamento de stopwords filtra palavras muito frequentes, como “的” e “了” em chinês. O **índice invertido** registra em que documentos cada palavra aparece e com que frequência; é como o índice remissivo no fim de um livro: buscando “TCP”, encontram-se as páginas 45, 112 e 203 e então se lê o conteúdo nessas posições.
 >
-> Calculemos à mão a consulta “modelo destilação”. Suponha um corpus de 10 documentos com comprimento médio de 250 palavras, $k_1=1.5$ e $b=0.75$. “Modelo” aparece em 3 documentos, com IDF de cerca de 0,762; “destilação” aparece em 2, com IDF de cerca de 1,224. A tabela abaixo lista, por palavra, os documentos atingidos, a frequência e o comprimento do documento. Substituindo esses valores na fórmula, obtém-se a contribuição de cada palavra para a pontuação de cada documento.
+> Calculemos à mão a consulta “destilação de modelo”. Suponha um corpus de 10 documentos com comprimento médio de 250 palavras, $k_1=1.5$ e $b=0.75$. “Modelo” aparece em 3 documentos, com IDF de cerca de 0,762; “destilação” aparece em 2, com IDF de cerca de 1,224. A tabela abaixo lista, por palavra, os documentos atingidos, a frequência e o comprimento do documento. Substituindo esses valores na fórmula, obtém-se a contribuição de cada palavra para a pontuação de cada documento.
 >
 > | Termo da consulta | Documento | Frequência TF | Comprimento do documento | Contribuição BM25 |
 > | --- | --- | ---: | ---: | ---: |
@@ -440,7 +440,7 @@ Para certas perguntas, é difícil listar de antemão todos os sinônimos. Uma q
 
 A **recuperação híbrida** busca trechos relevantes separadamente por palavras-chave e por vetores e então decide quais merecem ir para o modelo. Quando a base de conhecimento contém tanto identificadores exatos quanto descrições em linguagem natural, recomendo partir dela. Acompanhe o XR-7003 na Figura 3-9: as duas buscas o colocam em primeiro lugar, e na fusão ele recebe duas contribuições de posição. A reordenação troca o segundo colocado, e o primeiro modelo que o usuário vê continua correto.
 
-![Figura 3-9: pipeline de recuperação híbrida e reordenação](images/revised/fig3-9.svg)
+![Figura 3-9 Pipeline de recuperação híbrida e reordenação](images/revised/fig3-9.svg)
 
 A primeira etapa é a **recuperação paralela**: a consulta é enviada aos mecanismos denso e esparso, e cada um traz um lote de documentos possivelmente relevantes. As duas buscas podem usar o mesmo texto original ou pré-processá-lo conforme exige cada modelo.
 
@@ -508,15 +508,15 @@ Ao ler um relatório longo, “que campo preencher no pedido de manutenção” 
 
 O **RAPTOR** (Recursive Abstractive Processing for Tree-Organized Retrieval) parte dos blocos de texto: codifica cada bloco como vetor, agrupa-os por similaridade e gera um resumo para cada grupo. Tomando os resumos como um novo lote de blocos e repetindo as etapas, obtém-se a árvore da Figura 3-10. Seguindo as setas a partir dos blocos 3, 4 e 5, vê-se que eles geram juntos o resumo B; mais acima, os resumos dos grupos A, B e C convergem para o resumo global.[^ch3-raptor]
 
-![Figura 3-10: índice hierárquico em árvore do RAPTOR](images/revised/fig3-10.svg)
+![Figura 3-10 Índice hierárquico em árvore do RAPTOR](images/revised/fig3-10.svg)
 
-Por exemplo, “o SSE2 permite operações SIMD com inteiros em registradores XMM de 128 bits” e “o SSE4.2 acrescenta instruções de comparação de strings” podem entrar no resumo “evolução dos conjuntos de instruções SIMD x86”. Perguntas de detalhe casam com os blocos da base; perguntas de visão geral casam com os resumos de nível alto. A consulta pode descer pela hierarquia passo a passo ou buscar entre os nós de todos os níveis juntos e escolher o conjunto mais relevante.
+Por exemplo, “o SSE2 permite operações SIMD com inteiros em registradores XMM de 128 bits” e “o SSE4.2 acrescenta instruções de comparação de strings” podem entrar no resumo “evolução dos conjuntos de instruções SIMD x86”. Perguntas de detalhe casam com os blocos do nível inferior; perguntas de visão geral casam com os resumos de nível alto. A consulta pode descer pela hierarquia passo a passo ou buscar entre os nós de todos os níveis juntos e escolher o conjunto mais relevante.
 
 [^ch3-raptor]: Sarthi et al., RAPTOR: Recursive Abstractive Processing for Tree-Organized Retrieval, 2024.
 
 O **GraphRAG** organiza o conhecimento com entidades, relações e resumos de comunidades. Ele registra cada relação como uma tripla “sujeito — relação — objeto”, por exemplo (China, tem como capital, Pequim) ou (Zhang San, trabalha na, Tencent). Basta que dois registros mencionem a mesma entidade para que se liguem no grafo. Na Figura 3-11, os dois médicos se chamam Zhang. Quando o usuário pergunta “qual é o endereço do hospital do meu dentista”, por que relação o sistema deve seguir?
 
-![Figura 3-11: grafo de conhecimento de entidades e relações do GraphRAG](images/revised/fig3-11.svg)
+![Figura 3-11 Grafo de conhecimento de entidades e relações do GraphRAG](images/revised/fig3-11.svg)
 
 1. **Distinguir entidades homônimas na construção do grafo.** Um Dr. Zhang trata os dentes do usuário no Hospital Odontológico Ren'ai; o outro trata a doença cardíaca do pai do usuário no Hospital Huashan. Ao extrair entidades e consolidar registros, o sistema pode usar essas pistas para atribuir identificadores diferentes aos dois médicos. Os campos `person` e `relationship` vistos antes cumprem papel parecido. Decidir se `bank` numa frase significa margem de rio ou banco é desambiguação de sentido; decidir de qual Dr. Zhang um registro fala é desambiguação de entidades.
 2. **Seguir a cadeia de relações na consulta.** Partindo do usuário e avançando passo a passo por “usuário → médico → hospital → endereço”, as informações espalhadas por vários registros se juntam em uma resposta.
@@ -612,13 +612,13 @@ O resultado da reorganização também é submetido à revisão como mudança. R
 
 A primeira pergunta é se uma única busca basta. Para “qual é o telefone do pós-venda”, um manual de serviço vigente costuma trazer a resposta, e recomendo manter o caminho simples de uma busca seguida de geração. Se o usuário pergunta “o modelo que comprei pode ser trocado pelas condições de garantia do mês passado?”, a primeira busca encontra apenas a linha de produtos, o que ainda não permite saber quais eram as condições de troca no mês passado. Abrindo a recuperação como ferramenta, o agente pode usar as pistas da busca anterior para formular a seguinte. Essa abordagem, em que o agente decide se deve buscar mais e o que buscar em seguida, chama-se **RAG agêntica** (Agentic RAG). Na Figura 3-12, os dados de produto devolvidos pela primeira busca são exatamente os mesmos. Que pista a mais o caminho da direita usa para chegar às condições vigentes na época?
 
-![Figura 3-12: comparação entre RAG agêntica e RAG não agêntica](images/revised/fig3-12.svg)
+![Figura 3-12 Comparação entre RAG agêntica e RAG não agêntica](images/revised/fig3-12.svg)
 
 No ReAct, por exemplo, o modelo analisa primeiro a pergunta, escolhe uma consulta e chama `knowledge_base_search`; quando a ferramenta devolve a observação, o modelo avalia se as evidências bastam. Se faltam condições ou objetos relacionados, reescreve a consulta e continua buscando; se o material é suficiente, gera a resposta com base nas fontes. O Harness mantém o histórico, as chamadas de ferramentas e o orçamento e, ao atingir os limites, encerra a busca ou passa a pedir esclarecimentos.
 
 Veja agora a Figura 3-13. Mesmo que o backend da base de conhecimento passe de um índice vetorial para um grafo de relações, o modelo continua pedindo buscas pela mesma interface de ferramenta. Se o documento devolvido contiver justamente um trecho com instruções, o modelo pode segui-las?
 
-![Figura 3-13: arquitetura de um sistema de RAG agêntica](images/revised/fig3-13.svg)
+![Figura 3-13 Arquitetura de um sistema de RAG agêntica](images/revised/fig3-13.svg)
 
 **A fronteira de confiança do conteúdo recuperado.** Documentos externos podem conter textos que tentam alterar o comportamento do modelo, ou ter recebido fatos falsos antes de entrar na base. O primeiro caso é injeção indireta de prompt; o segundo, envenenamento da base de conhecimento. É preciso gerenciar ao mesmo tempo a origem do conteúdo e as permissões de execução: os resultados da busca levam fonte, versão e posição da citação e servem como evidência para a resposta; ações como transferências, exclusões e envio de mensagens para fora são validadas pelo Harness e pelo ambiente de execução com base na autorização do usuário. Revisão na entrada da base, rastreamento de origem e checagem de fatos limitam ainda mais a propagação de conhecimento errado. A marcação de origem apresentada no Capítulo 2 e as restrições de ferramentas do Capítulo 4 atuam juntas aqui.
 
@@ -650,7 +650,7 @@ O mesmo ciclo de recuperação serve também ao histórico do usuário. A seguir
 
 Voltemos ao relatório financeiro. Para consultar os resultados da empresa ACME no segundo trimestre de 2025, a consulta contém o nome da empresa e o ano, mas o trecho que diz “a receita da empresa cresceu 3%” não tem justamente essas duas palavras. Além de aumentar os blocos, pode-se manter o trecho curto e acrescentar à frente dele o contexto que falta. A **recuperação contextual** (Contextual Retrieval) gera, na indexação, um breve prefixo de contexto para cada trecho e usa o prefixo junto com o texto original na recuperação[^ch3-1]. A Figura 3-14 mostra esse processamento.
 
-![Figura 3-14: recuperação contextual](images/revised/fig3-14.svg)
+![Figura 3-14 Recuperação contextual](images/revised/fig3-14.svg)
 
 Por exemplo, o prefixo pode dizer: “Este trecho vem da seção de indicadores-chave de desempenho do relatório do segundo trimestre de 2025 da empresa ACME.” Na geração, fornecem-se o texto original e o bloco-alvo, e o modelo completa referências, datas e informações de seção que tenham base no texto. Com isso, o BM25 ganha termos que podem casar, como o nome da empresa e o trimestre, e o embedding denso também passa a representar o trecho com esse contexto.
 
@@ -692,7 +692,7 @@ O conhecimento também pode vir da organização de grandes volumes de casos. Em
 
 O processo tem duas etapas. A **extração de conhecimento** converte as descrições originais em registros estruturados, definindo com clareza o significado, os valores e a origem de cada campo; a **análise de padrões** usa estatística e agrupamento para encontrar casos semelhantes e seus traços em comum. A Figura 3-15 mostra o fluxo que vai da extração dos casos, passando pela codificação de atributos, até a recuperação de protótipos.
 
-![Figura 3-15: pipeline de extração de conhecimento estruturado](images/revised/fig3-15.svg)
+![Figura 3-15 Pipeline de extração de conhecimento estruturado](images/revised/fig3-15.svg)
 
 > **Experimento 3-12 ★★★: extração de fatores e protótipos de casos judiciais**
 >

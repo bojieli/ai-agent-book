@@ -2,7 +2,7 @@
 
 O Capítulo 1 comparou o contexto ao “campo de visão decisório” do agente: cada vez que o modelo faz um julgamento, ele se apoia nas informações que recebeu naquele momento. A **engenharia de contexto** (Context Engineering) cuida de selecionar, organizar e atualizar essas informações, o que inclui instruções de sistema, definições de ferramentas, solicitações do usuário, mensagens anteriores e o estado da tarefa. Antes de cada chamada ao modelo, o Harness precisa transformar o contexto da tarefa e o progresso mais recente em uma entrada. A Figura 2-1 mostra, com conteúdo concreto, como a janela de contexto é composta.
 
-![Figura 2-1: Visão geral da composição da janela de contexto](images/revised/fig2-1.svg)
+![Figura 2-1 Visão geral da composição da janela de contexto](images/revised/fig2-1.svg)
 
 ## Contexto: colocar a capacidade do modelo a serviço de uma tarefa concreta
 
@@ -20,11 +20,11 @@ O código do projeto e o banco de dados de teste ficam fora do contexto do model
 
 **Equipes que funcionam bem no trabalho remoto costumam ser também favoráveis aos agentes.** Os desenvolvedores do kernel Linux discutem patches e trocam comentários de revisão por listas de e-mail, e a documentação do processo de desenvolvimento explica como enviar, revisar e integrar patches[^ch2-linux]. Um novo participante que encontre uma alteração inesperada pode seguir o patch até a discussão da época; um agente que precise verificar o contexto também pode recorrer a esse registro.
 
-Depois de ouvir a entrevista de Jiayi Weng ao WhynotTV, o autor resumiu uma de suas ideias assim: **tanto pessoas quanto modelos dependem de Context.** Uma pessoa pode fazer uma pergunta a um colega que participou da decisão; já o contexto que o modelo consegue ler depende dos registros que a equipe deixou e do que o Harness colocou nesta solicitação.[^ch2-weng]
+Depois de ouvir a entrevista de Jiayi Weng ao WhynotTV, resumi uma de suas ideias assim: **tanto pessoas quanto modelos dependem de Context.** Uma pessoa pode fazer uma pergunta a um colega que participou da decisão; já o contexto que o modelo consegue ler depende dos registros que a equipe deixou e do que o Harness colocou nesta solicitação.[^ch2-weng]
 
 [^ch2-linux]: Documentação oficial do kernel Linux, How the development process works.
 
-[^ch2-weng]: WhynotTV, “翁家翌：OpenAI，GPT，强化学习，Infra，后训练，天授，tuixue，开源，CMU，清华”, Podcast #4.
+[^ch2-weng]: WhynotTV, “翁家翌：OpenAI，GPT，强化学习，Infra，后训练，天授，tuixue，开源，CMU，清华” (“Jiayi Weng: OpenAI, GPT, aprendizado por reforço, infraestrutura, pós-treinamento, Tianshou, tuixue, código aberto, CMU, Tsinghua”), Podcast #4.
 
 O artigo do ReAct usa uma expressão formal para descrever como o histórico de interação participa das decisões[^ch2-react]. No instante $t$, o agente recebe do ambiente uma observação $o_t\in\mathcal{O}$ e escolhe uma ação $a_t\in\mathcal{A}$ de acordo com a política $\pi(a_t\mid c_t)$, em que o contexto é:
 
@@ -40,7 +40,7 @@ Este capítulo adota primeiro o modo de solicitação sem estado: a cada rodada,
 
 ## Como os agentes chamam LLMs: a estrutura do contexto na API
 
-Começamos por um cumprimento para observar o formato das mensagens e, em seguida, vemos como a pergunta “que horas são e como está o tempo em Vancouver agora?” leva a duas chamadas de ferramentas. Esta seção usa uma interface compatível com Chat Completions e um Qwen3-0.6B executado localmente; ao final, um programa em Python encadeia as solicitações de cada rodada[^ch2-chat-api].
+Começamos por um cumprimento para observar o formato das mensagens e, em seguida, vemos como a pergunta “que horas são e como está o clima em Vancouver agora?” leva a duas chamadas de ferramentas. Esta seção usa uma interface compatível com Chat Completions e um Qwen3-0.6B executado localmente; ao final, um programa em Python encadeia as solicitações de cada rodada[^ch2-chat-api].
 
 ### Os quatro papéis de mensagem do exemplo
 
@@ -61,21 +61,21 @@ O modelo constrói as solicitações de chamada com base nas definições de fer
 
 Comecemos por uma pergunta e resposta. O usuário pergunta “Hello, who are you?”; o Harness envia ao modelo as instruções de sistema junto com a pergunta e lê a resposta. A Figura 2-2 mostra a correspondência entre solicitação e resposta.
 
-![Figura 2-2: Estrutura da solicitação e da resposta de uma chamada de turno único à API](images/revised/fig2-2.svg)
+![Figura 2-2 Estrutura da solicitação e da resposta de uma chamada de turno único à API](images/revised/fig2-2.svg)
 
 A seguir, a solicitação e uma resposta de exemplo no formato da interface do modelo local; os comentários no código indicam a origem de cada parte:
 
 ```javascript
-// Harness 构造请求
+// O Harness monta a solicitação
 {
   "model": "Qwen3-0.6B",
   "messages": [
     {
-      "role": "system",                           // 开发者提供的指令
+      "role": "system",                           // Instruções fornecidas pelo desenvolvedor
       "content": "You are a helpful coding assistant. Follow user instructions."
     },
     {
-      "role": "user",                              // 用户输入
+      "role": "user",                              // Entrada do usuário
       "content": "Hello, who are you?"
     }
   ]
@@ -83,11 +83,11 @@ A seguir, a solicitação e uma resposta de exemplo no formato da interface do m
 ```
 
 ```javascript
-// API 返回响应
+// Resposta devolvida pela API
 {
   "choices": [{
     "message": {
-      "role": "assistant",                         // 模型生成
+      "role": "assistant",                         // Gerado pelo modelo
       "content": "Hi! I'm a coding assistant. I can help you write code, debug issues, and explain technical concepts. How can I help?"
     }
   }]
@@ -98,29 +98,29 @@ A solicitação contém uma mensagem `system` e uma mensagem `user`; na resposta
 
 ### Interação em vários turnos com chamadas de ferramentas: o loop central do agente
 
-Vejamos agora uma pergunta que exige ferramentas: “What's the current time and weather in Vancouver?” Para respondê-la, é preciso primeiro obter a hora e o tempo locais. Na Figura 2-3, a primeira chamada do Harness ao modelo resulta em duas solicitações de ferramenta. O Harness consulta o serviço de horário e o serviço meteorológico, acrescenta os dois resultados ao histórico de mensagens e chama o modelo pela segunda vez; só então obtém a resposta para o usuário.
+Vejamos agora uma pergunta que exige ferramentas: “What's the current time and weather in Vancouver?” Para respondê-la, é preciso primeiro obter a hora e as condições do clima locais. Na Figura 2-3, a primeira chamada do Harness ao modelo resulta em duas solicitações de ferramenta. O Harness consulta o serviço de horário e o serviço meteorológico, acrescenta os dois resultados ao histórico de mensagens e chama o modelo pela segunda vez; só então obtém a resposta para o usuário.
 
-![Figura 2-3: Sequência completa de interação em duas chamadas à API do modelo](images/revised/fig2-3.svg)
+![Figura 2-3 Sequência completa de interação em duas chamadas à API do modelo](images/revised/fig2-3.svg)
 
-Qual das duas ferramentas é executada primeiro? A ferramenta de horário precisa de um fuso horário; a de clima, de uma cidade e de uma escala de temperatura. O usuário disse apenas Vancouver, e o modelo do exemplo preencheu `America/Vancouver` e `Vancouver` com base nisso, escolhendo graus Celsius. A consulta do tempo não precisa esperar o retorno da ferramenta de horário, então as duas consultas podem ser enviadas ao mesmo tempo.
+Qual das duas ferramentas é executada primeiro? A ferramenta de horário precisa de um fuso horário; a de clima, de uma cidade e de uma escala de temperatura. O usuário disse apenas Vancouver, e o modelo do exemplo preencheu `America/Vancouver` e `Vancouver` com base nisso, escolhendo graus Celsius. A consulta do clima não precisa esperar o retorno da ferramenta de horário, então as duas consultas podem ser enviadas ao mesmo tempo.
 
 **Primeira chamada à API — o framework do agente envia a solicitação inicial:**
 
 ```javascript
-// 第一次模型调用：Harness 构造请求
+// Primeira chamada ao modelo: o Harness monta a solicitação
 {
   "model": "Qwen3-0.6B",
   "messages": [
     {
-      "role": "system",                           // 开发者提供的指令
+      "role": "system",                           // Instruções fornecidas pelo desenvolvedor
       "content": "You are a helpful assistant. Use the provided tools to get real-time information when needed."
     },
     {
-      "role": "user",                              // 用户输入
+      "role": "user",                              // Entrada do usuário
       "content": "What's the current time and weather in Vancouver?"
     }
   ],
-  "tools": [                                       // 开发者定义的工具
+  "tools": [                                       // Ferramentas definidas pelo desenvolvedor
     {
       "type": "function",
       "function": {
@@ -159,13 +159,13 @@ Essa lista `tools` é definida previamente pelo desenvolvedor e contém nomes, d
 **O modelo retorna duas solicitações de chamada de ferramenta:**
 
 ```javascript
-// 模型返回工具调用请求
+// O modelo devolve solicitações de chamada de ferramenta
 {
   "choices": [{
     "message": {
-      "role": "assistant",                         // 模型生成
-      "content": null,                             // 本轮没有文本回复
-      "tool_calls": [                              // 请求调用两个工具
+      "role": "assistant",                         // Gerado pelo modelo
+      "content": null,                             // Nenhuma resposta em texto nesta rodada
+      "tool_calls": [                              // Pede a chamada de duas ferramentas
         {
           "id": "call_abc123",
           "type": "function",
@@ -188,27 +188,27 @@ Essa lista `tools` é definida previamente pelo desenvolvedor e contém nomes, d
 }
 ```
 
-O campo `tool_calls` da resposta contém duas solicitações, cada uma com seu próprio `id`, nome de ferramenta e parâmetros. `arguments` é uma string codificada em JSON; o lado que executa precisa primeiro decodificá-la e depois validar campos e valores. **O modelo decide o que chamar e com quais parâmetros; o Harness valida e agenda; a implementação da ferramenta acessa o serviço de horário ou de clima.**
+O campo `tool_calls` da resposta contém duas solicitações, cada uma com seu próprio `id`, nome de ferramenta e parâmetros. `arguments` é uma string codificada em JSON; o lado que executa precisa primeiro decodificá-la e depois validar campos e valores. **O modelo decide o que chamar e com quais parâmetros; o Harness valida e despacha; a implementação da ferramenta acessa o serviço de horário ou de clima.**
 
 **O framework do agente executa as ferramentas e faz a segunda chamada à API:**
 
-Depois de validar as solicitações, o Harness agenda as duas ferramentas, registra os valores retornados como mensagens `tool` e entrega ao modelo o histórico existente junto com os novos resultados:
+Depois de validar as solicitações, o Harness despacha as duas ferramentas, registra os valores retornados como mensagens `tool` e entrega ao modelo o histórico existente junto com os novos resultados:
 
 ```javascript
-// 第二次模型调用：追加工具结果
+// Segunda chamada ao modelo: acrescenta os resultados das ferramentas
 {
   "model": "Qwen3-0.6B",
   "messages": [
     {
-      "role": "system",                           // 保留第一次请求中的消息
+      "role": "system",                           // Mantém as mensagens da primeira solicitação
       "content": "You are a helpful assistant. Use the provided tools to get real-time information when needed."
     },
     {
-      "role": "user",                              // 保留第一次请求中的消息
+      "role": "user",                              // Mantém as mensagens da primeira solicitação
       "content": "What's the current time and weather in Vancouver?"
     },
     {
-      "role": "assistant",                         // 保留前一轮模型的调用请求
+      "role": "assistant",                         // Mantém as solicitações de chamada da rodada anterior
       "content": null,
       "tool_calls": [
         { "id": "call_abc123", "type": "function", "function": { "name": "get_current_time", "arguments": "{\"timezone\": \"America/Vancouver\"}" } },
@@ -216,30 +216,30 @@ Depois de validar as solicitações, o Harness agenda as duas ferramentas, regis
       ]
     },
     {
-      "role": "tool",                              // Harness 写入工具执行结果
+      "role": "tool",                              // O Harness grava o resultado da execução da ferramenta
       "tool_call_id": "call_abc123",
       "content": "{\"timezone\": \"America/Vancouver\", \"datetime\": \"2025-09-13T05:18:47\", \"day_of_week\": \"Saturday\"}"
     },
     {
-      "role": "tool",                              // Harness 写入工具执行结果
+      "role": "tool",                              // O Harness grava o resultado da execução da ferramenta
       "tool_call_id": "call_def456",
       "content": "{\"city\": \"Vancouver\", \"temperature\": 13.2, \"unit\": \"celsius\", \"conditions\": \"clear\", \"humidity\": 93}"
     }
   ],
-  "tools": [ ... ]                                 // 沿用前面的工具定义，此处省略
+  "tools": [ ... ]                                 // Mesmas definições de ferramentas de antes, omitidas aqui
 }
 ```
 
-Leia a segunda solicitação seguindo `call_def456`: na mensagem `assistant` anterior, esse é o identificador da consulta do tempo em Vancouver; a mensagem `tool` seguinte usa o mesmo identificador para devolver 13,2 ℃ e céu limpo. Mesmo que o tempo volte antes do horário, o Harness consegue casar cada resultado com sua solicitação. Nesta rodada, o modelo lê ao mesmo tempo a pergunta original do usuário, as duas consultas que ele próprio emitiu e os dados trazidos pelas ferramentas. Agora ele pode responder ao usuário.
+Leia a segunda solicitação seguindo `call_def456`: na mensagem `assistant` anterior, esse é o identificador da consulta do clima em Vancouver; a mensagem `tool` seguinte usa o mesmo identificador para devolver 13,2 ℃ e céu limpo. Mesmo que o resultado do clima chegue antes do resultado da hora, o Harness consegue casar cada resultado com sua solicitação. Nesta rodada, o modelo lê ao mesmo tempo a pergunta original do usuário, as duas consultas que ele próprio emitiu e os dados trazidos pelas ferramentas. Agora ele pode responder ao usuário.
 
 **O modelo gera a resposta final com base nos resultados das ferramentas:**
 
 ```javascript
-// 模型生成最终回复
+// O modelo gera a resposta final
 {
   "choices": [{
     "message": {
-      "role": "assistant",                         // 模型生成
+      "role": "assistant",                         // Gerado pelo modelo
       "content": "It's currently 5:18 AM on Saturday, September 13, 2025 in Vancouver.\n\nWeather: 13.2°C with clear skies and 93% humidity. It's quite cool this morning - you might want to grab a jacket."
     }
   }]
@@ -279,7 +279,7 @@ client = OpenAI(
     api_key=os.getenv("LLM_API_KEY", "EMPTY"),
 )
 
-# 工具定义：名称、用途和参数结构
+# Definições de ferramentas: nome, finalidade e estrutura dos parâmetros
 tools = [
     {
         "type": "function",
@@ -312,7 +312,7 @@ tools = [
     },
 ]
 
-# 示例工具使用固定数据，参数与前面的温哥华查询一致。
+# As ferramentas de exemplo usam dados fixos; os parâmetros coincidem com a consulta sobre Vancouver vista antes.
 def execute_tool(name, arguments):
     args = json.loads(arguments)
     if name == "get_current_time" and args == {"timezone": "America/Vancouver"}:
@@ -327,16 +327,16 @@ def execute_tool(name, arguments):
             "unit": "celsius", "conditions": "clear", "humidity": 93,
         }
     else:
-        result = {"error": "示例仅提供温哥华时间和摄氏天气数据"}
+        result = {"error": "O exemplo só fornece a hora de Vancouver e o clima em graus Celsius"}
     return json.dumps(result, ensure_ascii=False)
 
-# 初始消息：指令与用户任务
+# Mensagens iniciais: instruções e tarefa do usuário
 messages = [
     {"role": "system", "content": "You are a helpful assistant. Use tools to get real-time information when needed."},
     {"role": "user", "content": "What's the current time and weather in Vancouver?"},
 ]
 
-# 运行循环：最多调用模型八轮
+# Loop de execução: no máximo oito chamadas ao modelo
 rounds = 0
 while rounds < 8:
     rounds += 1
@@ -345,37 +345,37 @@ while rounds < 8:
     )
     assistant_message = response.choices[0].message
 
-    # 保存模型回复，包括本轮的调用请求
+    # Guarda a resposta do modelo, incluindo as solicitações de chamada desta rodada
     messages.append(assistant_message.model_dump(exclude_none=True))
 
-    # 本例在模型给出不含工具调用的回复时结束
+    # Este exemplo termina quando o modelo responde sem chamar ferramentas
     if not assistant_message.tool_calls:
         print(assistant_message.content)
         break
 
-    # 逐个执行并追加结果；独立调用也可以改为并行调度
+    # Executa uma a uma e acrescenta os resultados; chamadas independentes também poderiam ser despachadas em paralelo
     for tool_call in assistant_message.tool_calls:
         try:
             result = execute_tool(tool_call.function.name, tool_call.function.arguments)
         except json.JSONDecodeError:
-            result = json.dumps({"error": "工具参数需要有效的 JSON"})
+            result = json.dumps({"error": "Os argumentos da ferramenta precisam ser um JSON válido"})
         messages.append({
             "role": "tool",
             "tool_call_id": tool_call.id,
             "content": result,
         })
-    # 下一轮使用追加了结果的消息列表
+    # A rodada seguinte usa a lista de mensagens com os resultados acrescentados
 else:
-    print("已达到轮数上限，任务尚未完成。")
+    print("Limite de rodadas atingido; a tarefa não foi concluída.")
 ```
 
-Suponha que, na primeira rodada, o modelo peça ao mesmo tempo a hora e o tempo. O laço `for` consulta primeiro a hora e acrescenta o resultado a `messages`; depois consulta o tempo e acrescenta o segundo resultado. Só depois de executar as duas o programa volta ao início do `while` e envia a segunda solicitação ao modelo. Expandindo o conteúdo de `messages` nesses passos, vemos o que o modelo recebe a cada vez.
+Suponha que, na primeira rodada, o modelo peça simultaneamente a hora e o clima. O laço `for` consulta primeiro a hora e acrescenta o resultado a `messages`; depois consulta o clima e acrescenta o segundo resultado. Só depois de executar as duas o programa volta ao início do `while` e envia a segunda solicitação ao modelo. Expandindo o conteúdo de `messages` nesses passos, vemos o que o modelo recebe a cada vez.
 
 **Estado inicial (antes da 1ª chamada):**
 ```text
 messages = [
-  { role: "system",  content: "You are a helpful assistant..." },     # 开发者写的
-  { role: "user",    content: "What's the current time and weather in Vancouver?" },  # 用户输入
+  { role: "system",  content: "You are a helpful assistant..." },     # Escrito pelo desenvolvedor
+  { role: "user",    content: "What's the current time and weather in Vancouver?" },  # Entrada do usuário
 ]
 ```
 
@@ -384,9 +384,9 @@ messages = [
 messages = [
   { role: "system",    content: "..." },
   { role: "user",      content: "What's the current time..." },
-  { role: "assistant", tool_calls: [get_current_time, get_weather] },  # 模型生成的调用请求
-  { role: "tool",      tool_call_id: "call_abc123", content: "{time...}" },  # 工具执行后由 Harness 写入
-  { role: "tool",      tool_call_id: "call_def456", content: "{weather...}" },  # 工具执行后由 Harness 写入
+  { role: "assistant", tool_calls: [get_current_time, get_weather] },  # Solicitações de chamada geradas pelo modelo
+  { role: "tool",      tool_call_id: "call_abc123", content: "{time...}" },  # Gravado pelo Harness após a execução da ferramenta
+  { role: "tool",      tool_call_id: "call_def456", content: "{weather...}" },  # Gravado pelo Harness após a execução da ferramenta
 ]
 ```
 
@@ -398,7 +398,7 @@ messages = [
   { role: "assistant", tool_calls: [get_current_time, get_weather] },
   { role: "tool",      tool_call_id: "call_abc123", content: "{time...}" },
   { role: "tool",      tool_call_id: "call_def456", content: "{weather...}" },
-  { role: "assistant", content: "It's currently Saturday, Sep 13, 2025 in Vancouver..." },  # 最终回复
+  { role: "assistant", content: "It's currently Saturday, Sep 13, 2025 in Vancouver..." },  # Resposta final
 ]
 ```
 
@@ -406,7 +406,7 @@ messages = [
 
 A Figura 2-4 divide uma solicitação em duas partes: o prefixo e o histórico de mensagens. Quando a consulta sobre Vancouver acaba de ser enviada, o histórico contém apenas a pergunta do usuário e a conversa anterior. Depois que as duas consultas terminam, o histórico passa a incluir também as chamadas de ferramentas propostas pelo modelo e os dois resultados.
 
-![Figura 2-4: Composição do contexto em cada chamada do agente ao modelo](images/revised/fig2-4.svg)
+![Figura 2-4 Composição do contexto em cada chamada do agente ao modelo](images/revised/fig2-4.svg)
 
 Assim, o trecho inicial comum a duas solicitações consecutivas pode se estender até dentro do histórico de mensagens. Quanto cálculo antigo a próxima chamada consegue reaproveitar depende do comprimento desse prefixo.
 
@@ -433,27 +433,27 @@ Ao comprimir, preservam-se as informações de que o trabalho seguinte precisa, 
 
 > **Experimento 2-1 ★: implantação de um serviço de LLM local e chamada de ferramentas**
 >
-> Este experimento executa o Qwen3-0.6B localmente e, acompanhando a tarefa “consultar a hora e o tempo em Vancouver”, observa como as mensagens passam pelo modelo, pelo parser e pelo executor de ferramentas. A Figura 2-5 mostra a divisão de trabalho entre o serviço local e o cliente: o servidor carrega o modelo, processa a entrada e gera a resposta; o cliente mantém o histórico de mensagens, agenda as ferramentas e devolve os resultados.
+> Este experimento executa o Qwen3-0.6B localmente e, acompanhando a tarefa “consultar a hora e o clima em Vancouver”, observa como as mensagens passam pelo modelo, pelo parser e pelo executor de ferramentas. A Figura 2-5 mostra a divisão de trabalho entre o serviço local e o cliente: o servidor carrega o modelo, processa a entrada e gera a resposta; o cliente mantém o histórico de mensagens, despacha as ferramentas e devolve os resultados.
 >
-> ![Figura 2-5: Arquitetura local de chamada de ferramentas com LLM](images/revised/fig2-5.svg)
+> ![Figura 2-5 Arquitetura local de chamada de ferramentas com LLM](images/revised/fig2-5.svg)
 >
 > **Primeiro, acompanhe uma tarefa completa.** Na mesma saída, o modelo pede a consulta da hora e da temperatura, preenchendo parâmetros como `America/Vancouver`, `Vancouver` e `celsius`. O cliente executa as duas ferramentas em paralelo. O primeiro comprovante informa a hora local, 11:11:28; o segundo, a temperatura de 17,9 °C. Quando os dois resultados voltam ao modelo, ele informa a hora até os minutos, responde que a temperatura é de 17,9 °C e encerra o loop. Essa execução mostra que um modelo de seiscentos milhões de parâmetros já consegue escolher as duas ferramentas certas para essa tarefa, preencher os parâmetros e responder ao usuário com os valores retornados.
 >
 > **Em seguida, compare a saída bruta com os campos da API.** O modo de raciocínio do Qwen3 pode gerar conteúdo de raciocínio marcado com `<think>`, e as solicitações de ferramenta usam marcadores de chamada próprios. Depois que o servidor faz o parsing, o cliente pode receber um campo `thinking` separado ou campos de chamada de ferramenta. A disposição e a preservação de cada parte da saída são determinadas em conjunto pelo template do modelo e pelo protocolo do serviço.
 >
-> **Depois, observe o processamento em streaming.** A interface pode atualizar, conforme os eventos chegam, estados como “raciocinando”, “chamando ferramenta” e “gerando resposta”. Os parâmetros das ferramentas costumam chegar em vários fragmentos e precisam ser acumulados até formar a solicitação completa; quando o protocolo confirma que a chamada terminou e as verificações de parâmetros, permissões e dependências passam, o sistema de execução pode começar o agendamento. Ferramentas independentes podem ser executadas em paralelo e também formar um pipeline com o processamento da saída que vem a seguir.
+> **Depois, observe o processamento em streaming.** A interface pode atualizar, conforme os eventos chegam, estados como “raciocinando”, “chamando ferramenta” e “gerando resposta”. Os parâmetros das ferramentas costumam chegar em vários fragmentos e precisam ser acumulados até formar a solicitação completa; quando o protocolo confirma que a chamada terminou e as verificações de parâmetros, permissões e dependências passam, o sistema de execução pode começar a despachar a chamada. Ferramentas independentes podem ser executadas em paralelo e também formar um pipeline com o processamento da saída que vem a seguir.
 >
 > **Por fim, compare velocidade e cache.** No registro desta execução em um Mac com chip da Apple, a velocidade média de decodificação nas tarefas com ferramentas foi de cerca de 107 tokens por segundo. Token é a unidade básica com que o modelo processa texto; a segmentação exata é definida pelo tokenizador, e uma palavra ou um caractere chinês pode corresponder a um ou mais tokens. A velocidade de decodificação reflete a taxa de saída depois que a geração começa; o tempo de espera do usuário depende também da latência até o primeiro token, do comprimento do raciocínio e da duração das ferramentas.
 >
 > A comparação de cache usa o mesmo prefixo longo e testa, separadamente, solicitações que preservam o prefixo e solicitações que alteram seu início. Nos cinco pares desta execução, a solicitação que preservava o prefixo foi mais rápida em quatro; a latência média até o primeiro token foi de cerca de 1,30 segundo e 1,51 segundo, respectivamente. A próxima seção explica em que essas solicitações diferem em termos de cálculo.
 >
-> Este experimento também deixou o autor ainda mais otimista em relação aos agentes no dispositivo: modelos pequenos já conseguem concluir tarefas de chamada de ferramentas como esta no próprio aparelho do usuário. **A era dos agentes no dispositivo está mais próxima do que muitos imaginam.**
+> Este experimento também me deixou ainda mais otimista em relação aos agentes no dispositivo: modelos pequenos já conseguem concluir tarefas de chamada de ferramentas como esta no próprio aparelho do usuário. **A era dos agentes no dispositivo está mais próxima do que muitos imaginam.**
 
 ## Design de contexto favorável ao cache KV
 
 Solicitações consecutivas de um agente costumam compartilhar muitas informações: instruções de sistema, definições de ferramentas e as interações que já ocorreram. Se o motor de inferência conseguir reaproveitar os resultados intermediários desses trechos, sobra mais cálculo para as informações novas. O **cache KV** guarda as chaves (Key) e os valores (Value) já obtidos no cálculo de atenção de cada camada, para uso dos tokens seguintes; o **Prompt Cache** vai além e reaproveita entre solicitações o cache de prefixo que atende às condições exigidas[^ch2-kv-basics].
 
-Considere um agente de atendimento. Para que o modelo saiba a hora atual, o desenvolvedor insere `Current time: {{now}}` no início do prompt de sistema e o atualiza a cada solicitação. As regras de negócio e as definições de ferramentas que vêm depois ficam intactas, mas a entrada real passa a variar a partir do carimbo de tempo. Para um serviço que reaproveita o cache KV por prefixo idêntico, isso obriga a recalcular o carimbo e tudo o que vem depois dele, aumentando o tempo de processamento da entrada e o custo.
+Considere um agente de atendimento. Para que o modelo saiba a hora atual, o desenvolvedor insere `Current time: {{now}}` no início do prompt de sistema e o atualiza a cada solicitação. As regras de negócio e as definições de ferramentas que vêm depois ficam intactas, mas a entrada real passa a variar a partir do carimbo de data e hora. Para um serviço que reaproveita o cache KV por prefixo idêntico, isso obriga a recalcular o carimbo e tudo o que vem depois dele, aumentando o tempo de processamento da entrada e o custo.
 
 Basta registrar a hora como uma mensagem acrescentada ao final, ou consultar uma ferramenta de horário quando necessário, para preservar o prefixo existente. As duas disposições fornecem informações semelhantes, mas acionam extensões de recálculo diferentes.
 
@@ -483,7 +483,7 @@ No modelo com atenção causal adotado nesta seção, acrescentar tokens ao fina
 >
 > Percorra horizontalmente a última linha da Figura 2-6, em que as palavras aparecem traduzidas: a posição de “怎么样” (“como está”) atribui peso 0,55 a “天气” (“tempo”). É preciso multiplicar esse número pelo Value da posição de “tempo” e somar as contribuições das outras três posições para obter a saída dessa cabeça de atenção em “como está”. Já na linha de “tempo”, por que aparece um × à direita? Porque, ao calcular essa posição, a sequência ainda não havia chegado a “como está”.
 >
-> ![Figura 2-6: Compreensão intuitiva do mecanismo de atenção](images/revised/fig2-6.svg)
+> ![Figura 2-6 Compreensão intuitiva do mecanismo de atenção](images/revised/fig2-6.svg)
 >
 > Dispondo os pesos de cada posição em uma matriz, obtém-se o **mapa de calor da atenção**. Cada linha corresponde a uma Query e cada coluna a uma Key; a intensidade da cor indica o peso. A máscara causal permite que a posição atual leia a si mesma e as posições anteriores, e as posições bloqueadas aparecem marcadas com × na figura, com peso zero após o softmax. Essa estrutura vale tanto para o processamento da entrada quanto para a geração seguinte.
 >
@@ -491,11 +491,11 @@ No modelo com atenção causal adotado nesta seção, acrescentar tokens ao fina
 >
 > Depois de entender esses pesos esquemáticos, observe com o Qwen3-0.6B a distribuição de atenção que o modelo realmente calcula. O experimento registra uma frase curta e uma sequência de geração que contém raciocínio e resposta final, e compara as matrizes de atenção de diferentes camadas. A Figura 2-7 mostra as camadas 0, 13 e 27: a coluna da esquerda traz a frase de nove tokens e a da direita, a sequência de geração do cálculo de 17 × 23, com os intervalos de entrada, raciocínio e resposta assinalados. A escala de cinza é logarítmica, para que pesos fortes e fracos fiquem visíveis ao mesmo tempo.
 >
-> ![Figura 2-7: Visualização de mapas de calor de atenção](images/revised/fig2-7.png)
+> ![Figura 2-7 Visualização de mapas de calor de atenção](images/revised/fig2-7.png)
 >
 > A leitura pode seguir quatro pistas:
 >
-> 1. **Poço de atenção (Attention Sink).** Algumas camadas atribuem grande peso ao início da sequência, mesmo quando os tokens iniciais carregam pouco significado. Observe a frase curta na coluna da esquerda da Figura 2-7. Cada gráfico já traz a média das cabeças de atenção da mesma camada. Calculando a média dos nove números da primeira coluna da matriz, obtém-se quanto peso, em média, as nove posições destinam ao primeiro token. Nas camadas 0, 13 e 27, os valores são 14,7%, 73,9% e 83,2%. Na coluna da direita, com a sequência de geração mais longa, esse valor na camada 13 passa a 28,0%. O softmax exige que os pesos de todas as posições somem 1, e o modelo pode aprender posições de recepção relativamente estáveis; o StreamingLLM estudou esse fenômeno e seu papel na inferência em streaming[^ch2-attention-sinks].
+> 1. **Sumidouro de atenção (Attention Sink).** Algumas camadas atribuem grande peso ao início da sequência, mesmo quando os tokens iniciais carregam pouco significado. Observe a frase curta na coluna da esquerda da Figura 2-7. Cada gráfico já traz a média das cabeças de atenção da mesma camada. Calculando a média dos nove números da primeira coluna da matriz, obtém-se quanto peso, em média, as nove posições destinam ao primeiro token. Nas camadas 0, 13 e 27, os valores são 14,7%, 73,9% e 83,2%. Na coluna da direita, com a sequência de geração mais longa, esse valor na camada 13 passa a 28,0%. O softmax exige que os pesos de todas as posições somem 1, e o modelo pode aprender posições de recepção relativamente estáveis; o StreamingLLM estudou esse fenômeno e seu papel na inferência em streaming[^ch2-attention-sinks].
 > 2. **Região de raciocínio.** Marque o intervalo de geração correspondente a `<think>` e percorra essas linhas para ver a que prompts, descrições de ferramentas ou raciocínios anteriores o modelo prestou atenção. O triângulo vem da máscara causal; é a variação de intensidade dentro do triângulo que reflete as diferenças de peso entre as posições.
 > 3. **Região de resposta.** Marque em seguida o intervalo de geração da resposta final e compare a distribuição de pesos entre a entrada original e o raciocínio anterior. Isso ajuda a localizar quais informações existentes entraram na agregação de atenção atual.
 > 4. **Diferenças de posição.** Em tarefas de pergunta e resposta com contexto longo e de recuperação de chave-valor, “Lost in the Middle” observou que informações em posições intermediárias são mais difíceis de aproveitar[^lost-in-the-middle]. Na engenharia, isso sugere colocar as regras permanentes no início e o objetivo e o progresso atuais no final.
@@ -506,15 +506,15 @@ No modelo com atenção causal adotado nesta seção, acrescentar tokens ao fina
 
 ### Das mensagens da API aos tokens do modelo: o Chat Template
 
-O exemplo de API anterior é um conjunto de mensagens com papéis, enquanto a entrada nos mapas de atenção é uma sequência de tokens. O **Chat Template** (template de chat) faz essa conversão: insere nos marcadores de papel e de limite, organiza segundo a convenção as descrições de ferramentas e os valores retornados e então entrega tudo ao tokenizador. Compare as duas colunas da Figura 2-8: à esquerda foram enviados apenas as instruções de sistema e a pergunta do usuário; por que à direita aparece também um `assistant`? É o marcador inicial que o template acrescenta para a próxima resposta. Esses marcadores voltam a aparecer quando discutirmos chamadas de ferramentas, preservação de informações de raciocínio e acerto de cache.
+O exemplo de API anterior é um conjunto de mensagens com papéis, enquanto a entrada nos mapas de atenção é uma sequência de tokens. O **Chat Template** (template de chat) faz essa conversão: acrescenta às mensagens os marcadores de papel e de delimitação, organiza segundo a convenção as descrições de ferramentas e os valores retornados e então entrega tudo ao tokenizador. Compare as duas colunas da Figura 2-8: à esquerda foram enviados apenas as instruções de sistema e a pergunta do usuário; por que à direita aparece também um `assistant`? É o marcador inicial que o template acrescenta para a próxima resposta. Esses marcadores voltam a aparecer quando discutirmos chamadas de ferramentas, preservação de informações de raciocínio e acerto de cache.
 
-![Figura 2-8: Estrutura de tokens do Chat Template](images/revised/fig2-8.svg)
+![Figura 2-8 Estrutura de tokens do Chat Template](images/revised/fig2-8.svg)
 
 Famílias de modelos como Qwen, Llama e Gemma têm cada uma seu próprio template de chat. As mesmas mensagens de API entregues a modelos diferentes podem gerar marcadores de papel e de limite distintos. As APIs gerenciadas normalmente fazem a conversão no servidor; em implantações próprias, é preciso configurar no serviço de inferência o template correspondente ao modelo.
 
-Suponha que o usuário envie “温哥华 17.9 °C” (“Vancouver 17,9 °C”) e que a ferramenta de clima devolva exatamente o mesmo texto. Passando essas duas mensagens pelo template do Qwen3-0.6B, obtêm-se as duas entradas da Figura 2-9. Ambas começam com `<|im_start|>user`; qual marcador indica que o texto veio de uma ferramenta?
+Suponha que o usuário envie “Vancouver 17.9 °C” e que a ferramenta de clima devolva exatamente o mesmo texto. Passando essas duas mensagens pelo template do Qwen3-0.6B, obtêm-se as duas entradas da Figura 2-9. Ambas começam com `<|im_start|>user`; qual marcador indica que o texto veio de uma ferramenta?
 
-![Figura 2-9: Mensagem do usuário e resultado de ferramenta no template do Qwen3](images/revised/fig2-9.svg)
+![Figura 2-9 Mensagem do usuário e resultado de ferramenta no template do Qwen3](images/revised/fig2-9.svg)
 
 A coluna da direita ganha um par de tags `<tool_response>`. O template também localiza a última pergunta do usuário pelo papel da mensagem: nas rodadas anteriores a essa pergunta, apenas o conteúdo das respostas é mantido; depois dela, as interações com ferramentas podem incluir as informações de raciocínio do modelo[^ch2-qwen-template].
 
@@ -545,11 +545,11 @@ Essas regras afetam chamadas consecutivas de ferramentas e também a troca de mo
 
 ### Princípios e restrições do cache KV
 
-Ao processar uma solicitação, o modelo primeiro faz o **prefill (pré-preenchimento)** da entrada, calculando as representações dos tokens existentes, e então entra na **decode (decodificação)**, gerando os tokens seguintes um a um. O cache KV guarda, durante a decodificação, as K e V das posições existentes; o cache de prefixo entre solicitações reaproveita ainda o mesmo prefixo deixado pela solicitação anterior.
+Ao processar uma solicitação, o modelo primeiro faz o **prefill (pré-preenchimento)** da entrada, calculando as representações dos tokens existentes, e então entra na fase de **decode (decodificação)**, gerando os tokens seguintes um a um. O cache KV guarda, durante a decodificação, as K e V das posições existentes; o cache de prefixo entre solicitações reaproveita ainda o mesmo prefixo deixado pela solicitação anterior.
 
 Por exemplo, na sexta rodada o agente já acumulou 2.000 tokens de entrada. Se o serviço usar apenas o cache KV interno da solicitação atual, precisará processar primeiro esses 2.000 tokens e só depois aproveitar o cache para continuar gerando. Se o cache entre solicitações já contiver um trecho idêntico desse prefixo, o prefill pode continuar a partir da posição ainda não armazenada. A Figura 2-10 mostra esse reaproveitamento entre solicitações.
 
-![Figura 2-10: Prompt Cache — reaproveitamento do cache KV de prefixo entre solicitações](images/revised/fig2-10.svg)
+![Figura 2-10 Prompt Cache — reaproveitamento do cache KV de prefixo entre solicitações](images/revised/fig2-10.svg)
 
 **Acompanhe o crescimento do cache com quatro tokens.** Suponha que a entrada seja `[A, B, C, D]`. Ao processar a posição D, o modelo compara a Query de D com as Keys de A, B, C e D e depois agrega os Values deles com pesos. Depois do cálculo em todas as camadas, a representação final da posição D serve para prever o token seguinte, E. Nesse momento, as K e V de A a D já estão salvas em cada camada.
 
@@ -563,13 +563,13 @@ Para o mesmo modelo e a mesma configuração de cálculo, as posições anterior
 
 > **Experimento 2-3 ★★: comparação de formas de gerenciamento do contexto**
 >
-> Este experimento faz um agente usar ferramentas de descoberta, leitura e busca de arquivos para concluir a mesma tarefa, e compara uma linha de base com acréscimos estáveis a cinco alterações de contexto. A linha de base mantém estáveis as instruções e a ordem das ferramentas e acrescenta, a cada rodada, as mensagens do modelo e os resultados das ferramentas. Os demais grupos alteram, respectivamente, as instruções, o estado, a ordenação das ferramentas ou a representação do histórico, e observam como mudam as estatísticas de cache e o andamento da tarefa.
+> Este experimento faz um agente usar ferramentas de descoberta, leitura e busca de arquivos para concluir a mesma tarefa, e compara uma linha de base, que apenas acrescenta conteúdo de forma estável, com cinco variações do contexto. A linha de base mantém estáveis as instruções e a ordem das ferramentas e acrescenta, a cada rodada, as mensagens do modelo e os resultados das ferramentas. Os demais grupos alteram, respectivamente, as instruções, o estado, a ordenação das ferramentas ou a representação do histórico, e observam como mudam as estatísticas de cache e o andamento da tarefa.
 >
-> **O prompt de sistema dinâmico** atualiza a hora atual nas instruções de sistema de cada rodada. Antes da alteração ainda pode haver prefixo compartilhado, mas a entrada a partir da informação de horário precisa ser novamente correlacionada ou calculada. Registrar a hora como uma mensagem nova, ou obtê-la sob demanda por uma ferramenta de horário, permite que as regras de negócio permanentes continuem sendo reaproveitadas.
+> **O prompt de sistema dinâmico** atualiza a hora atual nas instruções de sistema de cada rodada. Antes da alteração ainda pode haver prefixo compartilhado, mas a entrada a partir da informação de horário precisa ser casada de novo com o cache ou recalculada. Registrar a hora como uma mensagem nova, ou obtê-la sob demanda por uma ferramenta de horário, permite que as regras de negócio permanentes continuem sendo reaproveitadas.
 >
 > **A configuração de usuário dinâmica** atualiza, nas mensagens iniciais, o número de chamadas restantes ou o saldo da conta. O estado em si é uma informação de que a tarefa precisa; o ponto de projeto está em onde atualizá-lo: acrescentar o estado mais recente ao final, indicando desde quando vale, preserva ao mesmo tempo o progresso e o prefixo. A barra de status do agente apresentada adiante adotará essa forma de organização.
 >
-> **A reordenação das definições de ferramentas** muda, a cada rodada, a ordem da lista de ferramentas. Apesar de nomes e parâmetros serem os mesmos, a ordem dos tokens depois da serialização já mudou. Abrindo o relatório de execução do Kimi K2.6, o `Hit%` da linha de base e o do grupo reordenado são ambos 100%. Os dois grupos realmente reaproveitaram a mesma quantidade de entrada? A linha de base teve 7.567 tokens de entrada em três rodadas, dos quais 768 vieram do cache; o grupo reordenado também teve três rodadas, com 7.568 tokens de entrada, dos quais apenas 256 vieram do cache. Dividindo os tokens de cache pelos tokens de entrada, chega-se aos 10,1% e 3,4% da coluna `Cache%`. A outra coluna, `Hit%`, conta as solicitações em que se verificou algum acerto: a linha de base registrou dois acertos e o grupo reordenado registrou um, e os erros contabilizados nos dois grupos foram zero. Quanto às demais solicitações, este registro sozinho não permite dizer se acertaram o cache. Manter a ordem das ferramentas fixa evita mudanças gratuitas no prefixo.
+> **A reordenação das definições de ferramentas** muda, a cada rodada, a ordem da lista de ferramentas. Apesar de nomes e parâmetros serem os mesmos, a ordem dos tokens depois da serialização já mudou. Abrindo o relatório de execução do Kimi K2.6, o `Hit%` da linha de base e o do grupo reordenado são ambos 100%. Os dois grupos realmente reaproveitaram a mesma quantidade de entrada? A linha de base teve 7.567 tokens de entrada em três rodadas, dos quais 768 vieram do cache; o grupo reordenado também teve três rodadas, com 7.568 tokens de entrada, dos quais apenas 256 vieram do cache. Dividindo os tokens de cache pelos tokens de entrada, chega-se aos 10,1% e 3,4% da coluna `Cache%`. A outra coluna, `Hit%`, conta as solicitações em que se verificou algum acerto: a linha de base registrou dois acertos e o grupo reordenado registrou um, e nenhum dos dois grupos registrou falhas de cache (misses). Quanto às demais solicitações, este registro sozinho não permite dizer se acertaram o cache. Manter a ordem das ferramentas fixa evita mudanças gratuitas no prefixo.
 >
 > **A janela deslizante** conserva apenas o trecho mais recente do histórico. Supondo uma retenção de dez rodadas de interação, na décima quinta rodada o agente já pode não conseguir ler o conteúdo do arquivo essencial obtido na segunda. Além de encurtar o prefixo compartilhado, o corte altera os fatos e o progresso da tarefa a que o modelo tem acesso. A implementação adotada parte das seis mensagens de histórico mais recentes e completa para trás as solicitações de chamada correspondentes aos resultados de ferramentas. O grupo da janela deslizante reaproveitou 1.510 dos 2.224 tokens de entrada, a maior proporção de cache entre os seis grupos: 67,9%. Vejamos também o registro de ferramentas do grupo da janela deslizante no Experimento 2-3: o modelo procura arquivos três vezes, lê em seguida dois arquivos, mas não entrega o resumo em três frases pedido pelo usuário.
 >
@@ -591,7 +591,7 @@ A cobrança precisa considerar separadamente a escrita e a leitura. Em alguns mo
 
 ### O cache como restrição arquitetural
 
-**Em sistemas de produção, o cache já se tornou uma restrição arquitetural.** A forma como o prompt é organizado, o ponto de partida dos subagentes e a maneira de retomar uma sessão influenciam quanto cálculo pode ser reaproveitado. **As fronteiras de cache devem ser planejadas desde o início.** Definir primeiro o que pode ser compartilhado e o que muda de estado e só então organizar o prompt e a estrutura da sessão reduz o recálculo repetido durante a execução. Ajustar essas estruturas quando a latência e o custo de tarefas longas já viraram problema costuma arrastar junto a gestão de estado, os subagentes e a retomada de sessões.
+**Em sistemas de produção, o cache já se tornou uma restrição arquitetural.** A forma como o prompt é organizado, o ponto de partida dos subagentes e a maneira de retomar uma sessão influenciam quanto cálculo pode ser reaproveitado. **As fronteiras de cache devem ser planejadas desde o início.** Definir primeiro o que pode ser compartilhado e quais estados vão mudar, e só então organizar o prompt e a estrutura da sessão reduz o recálculo repetido durante a execução. Ajustar essas estruturas quando a latência e o custo de tarefas longas já viraram problema costuma arrastar junto a gestão de estado, os subagentes e a retomada de sessões.
 
 **Organize o prefixo por grau de estabilidade.** As instruções e definições de ferramentas compartilhadas por várias tarefas podem ficar no início, seguidas dos dados do usuário, do estado da sessão e das observações novas, agrupados por âmbito de aplicação. Por exemplo, o sistema operacional tem duas opções, macOS e Linux; o modo de execução tem duas, normal e depuração; o idioma tem duas, chinês e inglês. Três condições independentes produzem no máximo $2\times2\times2=8$ combinações de prefixo. Colocar os campos mais voláteis depois da parte compartilhada amplia as chances de reaproveitar o prefixo comum. O âmbito de compartilhamento da parte comum deve respeitar ainda os limites de organização, de espaço de trabalho e de privacidade do serviço.
 
@@ -611,17 +611,17 @@ Ao trocar de modelo no meio do caminho, o serviço verifica ainda se o modelo de
 
 ### Aprofundamento em pesquisa: um cache KV editável e combinável
 
-> Todos os projetos anteriores reaproveitam cálculo casando prefixos. O autor quis investigar mais: seria possível editar e combinar diretamente as informações já guardadas no cache KV, para que o cache se adapte a mudanças de contexto? Em “Models Take Notes at Prefill”, o autor compara essa informação a “anotações” do modelo[^ch2-2]: depois que o prefill passa por várias camadas de atenção, o efeito de um campo já entrou nas representações das posições seguintes. Por exemplo, “cidade do usuário: Pequim” pode influenciar o julgamento posterior de localização; substituindo apenas as K e V desse campo, o estado seguinte ainda pode conservar conclusões derivadas da cidade antiga.
+> Todas as abordagens anteriores reaproveitam cálculo casando prefixos. Quis investigar mais: seria possível editar e combinar diretamente as informações já guardadas no cache KV, para que o cache se adapte a mudanças de contexto? Em “Models Take Notes at Prefill”, comparo essa informação a “anotações” do modelo[^ch2-2]: depois que o prefill passa por várias camadas de atenção, o efeito de um campo já entrou nas representações das posições seguintes. Por exemplo, “cidade do usuário: Pequim” pode influenciar o julgamento posterior de localização; substituindo apenas as K e V desse campo, o estado seguinte ainda pode conservar conclusões derivadas da cidade antiga.
 >
 > O artigo usa intervenções para separar o papel das K e V do próprio campo e o do estado posterior. Nas decisões testadas, a contribuição direta das K e V do campo ficou abaixo de 1%, e o efeito principal estava nas representações a jusante. Em torno dessas “anotações” deixadas a jusante, é possível explorar dois modos de aproveitar o cache.
 >
-> **Edição (Editing)** corrige explicitamente uma informação para levar o cálculo seguinte a atualizar um julgamento já formado. O artigo também verificou que, nas tarefas testadas com um modelo de 8B, quando existe uma cadeia de raciocínio explícita, editar o campo isoladamente consegue restaurar a decisão desejada com um custo de cálculo de cerca de 1% de uma recomputação completa; sem esse processo de raciocínio, o estado antigo a jusante pode continuar influenciando a decisão e dificultar a eficácia da alteração.
+> **Edição (Editing)** corrige explicitamente uma informação para levar o cálculo seguinte a atualizar um julgamento já formado. O artigo também verificou que, nas tarefas testadas com um modelo de 8B, quando existe uma cadeia de raciocínio explícita, editar o campo isoladamente consegue restaurar a decisão desejada com um custo de cálculo de cerca de 1% de uma recomputação completa; sem esse processo de raciocínio, o estado antigo a jusante pode continuar influenciando a decisão, de modo que a alteração do campo dificilmente surte efeito.
 >
 > **Composição (Composition)** conecta ao contexto novo um cache de habilidades previamente calculado. Em modelos que usam codificação posicional rotativa (RoPE), é preciso primeiro ajustar as representações de posição no cache e só então concatenar. Imagine renumerar uma página de anotações já escritas e anexá-la a outro material. O artigo comparou doze modelos, e a similaridade de cosseno dos logits entre a concatenação e a recomputação completa ficou entre 0,90 e 0,999; o reposicionamento do cache e a concatenação em si podem ser processados linearmente com o comprimento, reduzindo o recálculo de atenção sobre todo o contexto.
 >
 > Acrescentar informações de correção também pode conviver com o cache de prefixo existente. No benchmark online de vLLM do artigo, essa combinação preservou cerca de 98,5% da taxa de acerto do cache de prefixo, com latência p90 até o primeiro token entre cerca de 1/398 e 1/53 da linha de base.
 >
-> **O autor aposta nessa linha de pesquisa porque ela pode permitir que a atualização de contexto preserve mais cálculo já feito.** Agentes atualizam com frequência campos de memória, acrescentam estado ou substituem definições de ferramentas; se o estado correspondente puder ser corrigido e concatenado como anotações, o custo de manter contextos longos tem chance de cair de forma significativa.
+> **Aposto nessa linha de pesquisa porque ela pode permitir que a atualização de contexto preserve mais cálculo já feito.** Agentes atualizam com frequência campos de memória, acrescentam estado ou substituem definições de ferramentas; se o estado correspondente puder ser corrigido e concatenado como anotações, o custo de manter contextos longos tem chance de cair de forma significativa.
 
 [^ch2-2]: Li, Bojie, Models Take Notes at Prefill: KV Cache Can Be Editable and Composable, 2026. Os experimentos de edição, composição e cache online usam tarefas e métricas diferentes; os detalhes estão no artigo.
 
@@ -650,23 +650,23 @@ Títulos, listas e tags ajudam a organizar prompts longos. Títulos em Markdown 
 Um mesmo prompt pode combinar as duas formas:
 
 ```text
-# 工具使用规范
+# Normas de uso de ferramentas
 
-## 文件操作
+## Operações com arquivos
 <file_operation>
-- 读取文件前检查路径是否存在
-- 修改已有文件前保存备份
+- Antes de ler um arquivo, verifique se o caminho existe
+- Antes de alterar um arquivo existente, salve um backup
 </file_operation>
 
-## 网络请求
+## Solicitações de rede
 <network_request>
-- 超时时间设置为 30 秒
-- 短暂故障最多重试 3 次
-- 有外部副作用的请求，重试前先确认执行状态
+- Defina o tempo limite em 30 segundos
+- Em falhas temporárias, tente de novo no máximo 3 vezes
+- Em solicitações com efeitos colaterais externos, confirme o estado da execução antes de tentar de novo
 </network_request>
 ```
 
-O Markdown oferece uma hierarquia fácil de ler, e `<file_operation>` e `<network_request>` delimitam o âmbito de aplicação das regras. Por exemplo, “no máximo 3 tentativas” vale apenas para solicitações de rede; ao alterar arquivos, vale o grupo anterior, de regras de backup.
+O Markdown oferece uma hierarquia fácil de ler, e `<file_operation>` e `<network_request>` delimitam o âmbito de aplicação das regras. Por exemplo, “tente de novo no máximo 3 vezes” vale apenas para solicitações de rede; ao alterar arquivos, vale o grupo anterior, de regras de backup.
 
 ### Organizar as regras por processo
 
@@ -675,24 +675,24 @@ O Markdown oferece uma hierarquia fácil de ler, e `<file_operation>` e `<networ
 A seguir, um exemplo de processamento de arquivos que encadeia verificação, classificação, pré-processamento, execução e validação em um procedimento operacional padrão (SOP):
 
 ```text
-文件处理流程
+Fluxo de processamento de arquivos
 
-步骤 1：检查
-  确认文件存在且可以访问
-  文件不存在 → 记录错误，停止处理
+Passo 1: Verificação
+  Confirme que o arquivo existe e está acessível
+  Arquivo inexistente → registre o erro e interrompa
   ↓
-步骤 2：分类
-  结合扩展名与文件内容确定类型
+Passo 2: Classificação
+  Determine o tipo pela extensão e pelo conteúdo
   ↓
-步骤 3：预处理
-  配置文件 → 先备份
-  大文件（>1 MB）→ 使用流式处理
+Passo 3: Pré-processamento
+  Arquivo de configuração → faça backup antes
+  Arquivo grande (>1 MB) → use processamento em streaming
   ↓
-步骤 4：执行
-  按文件类型执行相应处理
+Passo 4: Execução
+  Execute o processamento adequado ao tipo de arquivo
   ↓
-步骤 5：验证
-  检查处理后文件的完整性
+Passo 5: Validação
+  Verifique a integridade do arquivo processado
 ```
 
 Cada passo tem um objetivo local, e as regras pertinentes ficam sob esse passo. Se o arquivo não existe, o processo termina na etapa de verificação; se um arquivo de configuração precisa ser alterado, o backup é salvo na etapa de pré-processamento. O progresso da execução chega ao modelo pelo histórico de mensagens ou por um registro de estado.
@@ -707,7 +707,7 @@ Tome como exemplo um agente que liga para empresas em nome do usuário para redu
 - **Taxa fixa por serviço**: em tarefas de serviço, como reservas em restaurantes, cobrar conforme o tipo ou a complexidade da tarefa.
 - **Adiantamento em tarefas difíceis**: para tarefas difíceis que atendam a condições específicas, informar de antemão o valor adiantado e a cláusula de não reembolso, e aceitar a tarefa depois da confirmação do usuário.
 
-Escrever apenas “escolha o tipo de cobrança adequado à situação da tarefa” deixa ambiguidades de classificação. “Me ajude a devolver a roupa que comprei no mês passado” envolve recuperar um valor já pago; “me ajude a cancelar minha assinatura da Netflix” envolve interromper pagamentos futuros. Os dois resultados podem ser amplamente entendidos como economia de dinheiro, mas a equipe pode limitar a comissão à negociação que reduz a fatura atual e adotar taxa fixa para reembolsos e cancelamentos de serviço.
+Escrever apenas “escolha o tipo de cobrança adequado à situação da tarefa” deixa ambiguidades de classificação. “Me ajude a devolver a roupa que comprei no mês passado” envolve recuperar um valor já pago; “me ajude a cancelar minha assinatura da Netflix” envolve interromper pagamentos futuros. Num sentido amplo, os dois resultados poderiam ser vistos como economia de dinheiro, mas a equipe pode limitar a comissão à negociação que reduz a fatura atual e adotar taxa fixa para reembolsos e cancelamentos de serviço.
 
 O prompt correspondente pode explicitar as fronteiras entre categorias: “NEVER use percentage_based_one_time for refunds and service cancellations. Use fixed_fee instead.” Ou seja, reembolsos e cancelamentos de serviço usam `fixed_fee`, e o modelo de comissão se aplica apenas à negociação que reduz a fatura atual.
 
@@ -715,13 +715,13 @@ A equipe também precisa estimar a chance de conseguir o resultado. Quais pedido
 
 O cálculo de valores exige unidades, base e ordem de arredondamento bem definidas. Por exemplo, as ligações custam US$ 0,05 por minuto, acumulados e arredondados para o dólar inteiro; a economia é medida em relação à fatura atual. Se a fatura atual é de US$ 150 e o comerciante pode subir para US$ 180 no ano que vem, o aumento potencial evitado por manter o preço atual deve ser tratado conforme o critério previamente acordado e não pode entrar automaticamente na economia obtida sobre a fatura atual.
 
-A recomendação do autor é que **o responsável pelo produto lidere o projeto das regras de negócio**, mantendo essas definições com base em dados de uso, retorno dos usuários e experiência de operações; cabe à engenharia levá-las ao prompt, aos parâmetros das ferramentas, à lógica de cobrança e às regras de validação.
+Minha recomendação é que **o responsável pelo produto lidere o projeto das regras de negócio**, mantendo essas definições com base em dados de uso, retorno dos usuários e experiência de operações; cabe à engenharia levá-las ao prompt, aos parâmetros das ferramentas, à lógica de cobrança e às regras de validação.
 
 ### Exemplos few-shot: mostrar o comportamento esperado com exemplos
 
-Quando o resultado desejado é difícil de expressar em poucas regras, **dois ou três exemplos de boa qualidade costumam ser mais diretos do que continuar acumulando explicações abstratas.** Essa prática se chama **aprendizado com poucos exemplos (few-shot examples)**. Estilos de texto específicos, relatórios estruturados e o tom do atendimento ao cliente se prestam bem a mostrar pares de entrada e saída esperada. O modelo aproveita esses exemplos no contexto atual para reconhecer padrões e aplicá-los a novas solicitações.
+Quando o resultado desejado é difícil de expressar em poucas regras, **dois ou três exemplos de boa qualidade costumam ser mais diretos do que continuar acumulando explicações abstratas.** Essa prática se chama **exemplos few-shot (few-shot examples)**. Estilos de texto específicos, relatórios estruturados e o tom do atendimento ao cliente se prestam bem a mostrar pares de entrada e saída esperada. O modelo aproveita esses exemplos no contexto atual para reconhecer padrões e aplicá-los a novas solicitações.
 
-Os exemplos podem ficar no prompt de sistema, como conteúdo compartilhado por várias solicitações, ou ser organizados como mensagens `user`/`assistant` de demonstração, carregadas no início da sessão. **Ao repetir o mesmo tipo de tarefa, o autor prefere usar um conjunto fixo de exemplos previamente selecionados.** Exemplos fixos também mantêm o prefixo estável. Só quando as tarefas variam muito e um conjunto fixo não cobre os casos vale considerar a recuperação por tarefa. Com seleção dinâmica, pode-se manter as instruções comuns e acrescentar ao final os exemplos escolhidos.
+Os exemplos podem ficar no prompt de sistema, como conteúdo compartilhado por várias solicitações, ou ser organizados como mensagens `user`/`assistant` de demonstração, carregadas no início da sessão. **Ao repetir o mesmo tipo de tarefa, prefiro usar um conjunto fixo de exemplos previamente selecionados.** Exemplos fixos também mantêm o prefixo estável. Só quando as tarefas variam muito e um conjunto fixo não cobre os casos vale considerar a recuperação por tarefa. Com seleção dinâmica, pode-se manter as instruções comuns e acrescentar ao final os exemplos escolhidos.
 
 Voltando às regras de cobrança anteriores, dois exemplos bastam para esclarecer as fronteiras que geram confusão. Se o usuário pede ao assistente para negociar uma mensalidade de US$ 80 para US$ 60, aplica-se a comissão sobre a economia; se pede para encerrar um serviço de US$ 80 por mês, aplica-se a taxa fixa de cancelamento.
 
@@ -791,11 +791,11 @@ Se um agente que atende reembolsos, altera código e organiza documentos anexar 
 
 Ao processar um reembolso, o modelo pode primeiro encontrar no catálogo o manual de reembolso, lê-lo e só então decidir se consulta a tabela de tarifas especiais que ele referencia. A Figura 2-11 aplica a mesma ideia à criação de apresentações: o modelo escolhe PPTX no catálogo, lê o fluxo para criar uma apresentação nova e só depois consulta o guia de conversão de HTML. Se a tarefa fosse editar uma apresentação existente, ele poderia seguir outro caminho e consultar a referência de XML.
 
-![Figura 2-11: Mecanismo de revelação progressiva das Skills](images/revised/fig2-11.svg)
+![Figura 2-11 Mecanismo de revelação progressiva das Skills](images/revised/fig2-11.svg)
 
 ### Skills: unidades combináveis de capacidade de domínio
 
-As **Agent Skills** empacotam, para reutilização, o método de trabalho, os materiais de referência, os scripts e os modelos de uma classe de tarefas. Um funcionário novo não precisa decorar no primeiro dia todos os manuais da empresa; da mesma forma, o modelo pode ler com atenção o capítulo pertinente apenas quando for executar a tarefa. Esse modo de carregamento se chama **revelação progressiva (Progressive Disclosure)**[^ch2-3].
+As **Agent Skills** empacotam, para reutilização, o método de trabalho, os materiais de referência, os scripts e os templates de uma classe de tarefas. Um funcionário novo não precisa decorar no primeiro dia todos os manuais da empresa; da mesma forma, o modelo pode ler com atenção o capítulo pertinente apenas quando for executar a tarefa. Esse modo de carregamento se chama **revelação progressiva (Progressive Disclosure)**[^ch2-3].
 
 Voltemos aos dez produtos do Capítulo 1 para decidir que informações merecem virar uma Skill. Se o usuário quer comparar o preço final com frete, basta que os detalhes e o endereço de entrega desta compra entrem no contexto atual. Se a equipe compara preços entre lojas com frequência, como alinhar especificações, distinguir preço unitário de preço de kit e indicar frete desconhecido pode ser organizado em uma Skill de comparação de preços. Da próxima vez que alguém quiser apenas ver os modelos disponíveis, o catálogo continua visível, e todo o fluxo de conferência de preços pode esperar até que o usuário precise comparar valores.
 
@@ -807,7 +807,7 @@ Voltemos aos dez produtos do Capítulo 1 para decidir que informações merecem 
 
 Na Skill de PPTX usada nos experimentos deste livro, por exemplo, as instruções principais apresentam alguns caminhos comuns: extrair o texto da apresentação com o markitdown, da Microsoft; descompactar o PPTX para ver o XML subjacente; e escolher entre os fluxos de criação e de edição de apresentações. Ao ler essa camada, o modelo consegue decidir, conforme a tarefa, qual material ler em seguida e que tipo de script chamar[^ch2-4].
 
-**A terceira camada são os materiais detalhados.** As operações complexas ficam espalhadas em documentos específicos, e o arquivo principal oferece a porta de entrada. Na versão usada neste livro, `html2pptx.md` explica como gerar apresentações a partir de HTML, e outros documentos de referência complementam detalhes de formato e edição. O agente continua lendo esse conteúdo conforme a tarefa e usa os scripts, recursos e modelos incluídos para concluir a operação.
+**A terceira camada são os materiais detalhados.** As operações complexas ficam espalhadas em documentos específicos, e o arquivo principal oferece a porta de entrada. Na versão usada neste livro, `html2pptx.md` explica como gerar apresentações a partir de HTML, e outros documentos de referência complementam detalhes de formato e edição. O agente continua lendo esse conteúdo conforme a tarefa e usa os scripts, recursos e templates incluídos para concluir a operação.
 
 [^ch2-3]: Anthropic, Equipping Agents for the Real World with Agent Skills, 2025; Agent Skills, How to add skills support to your agent.
 [^ch2-4]: Anthropic, PPTX Skill. Os experimentos deste livro usam uma versão fixa que inclui o fluxo de conversão de HTML; a versão e o modo de execução estão no README do experimento correspondente.
@@ -823,17 +823,17 @@ Para uma Skill de escrita, pode-se tomar como referência a abordagem de Baoyu, 
 - **Papel e público**: a quem a Skill atende, que tipos de tarefa abrange e qual é o padrão do texto final.
 - **Princípios centrais**: comece com três a cinco critérios de uso frequente, cada um com um exemplo concreto de antes e depois da reescrita.
 - **Erros comuns e limites**: registre problemas de expressão frequentes, ações que extrapolam a autorização e exceções.
-- **Materiais de referência**: glossário, modelos, textos de exemplo e orientações específicas, para consulta durante a execução.
+- **Materiais de referência**: glossário, templates, textos de exemplo e orientações específicas, para consulta durante a execução.
 
 As regras podem ser escritas seguindo “escopo, ação, exceção e forma de verificação”. Por exemplo, uma regra para encurtar frases longas deve dizer a que parágrafos se aplica, como dividir a frase e como verificar depois da divisão se condições e conclusões continuam completas.
 
 Para começar, escolha de três a cinco textos originais de que você goste e peça ao agente que identifique escolhas de palavras, construções frasais, organização dos parágrafos e tom, gerando uma primeira versão de cerca de vinte linhas. Use-a então em um tema novo e revise o resultado frase por frase. As diferenças entre as versões oferecem um retorno mais concreto: quais palavras sobram, quais frases precisam ser divididas, onde faltam fatos e onde é preciso devolver detalhes técnicos. Transforme as alterações recorrentes em regras, mantendo os exemplos e o âmbito de aplicação correspondentes.
 
-Uma Skill também pode trazer ferramentas e modelos de execução. A Skill de PPTX, por exemplo, reúne instruções de operação, scripts de análise, scripts de geração e recursos de layout, para que o modelo acione os recursos certos seguindo as instruções. Cada Skill pode ser testada, atualizada e versionada de forma independente, e os membros da equipe podem ir acrescentando experiência em torno do mesmo fluxo. **O valor de longo prazo das Skills está em permitir que a experiência de domínio seja acumulada de forma distribuída, publicada de forma independente e reaproveitada.** Ao ampliar as capacidades do agente, cada equipe pode manter as Skills em que é especialista, formando aos poucos um ecossistema de pacotes semelhante ao pip ou ao npm. Essas Skills podem compartilhar os mecanismos de descoberta, carregamento e execução oferecidos pelo sistema principal.
+Uma Skill também pode trazer ferramentas de execução e templates. A Skill de PPTX, por exemplo, reúne instruções de operação, scripts de análise, scripts de geração e recursos de layout, para que o modelo acione os recursos certos seguindo as instruções. Cada Skill pode ser testada, atualizada e versionada de forma independente, e os membros da equipe podem ir acrescentando experiência em torno do mesmo fluxo. **O valor de longo prazo das Skills está em permitir que a experiência de domínio seja acumulada de forma distribuída, publicada de forma independente e reaproveitada.** Ao ampliar as capacidades do agente, cada equipe pode manter as Skills em que é especialista, formando aos poucos um ecossistema de pacotes semelhante ao pip ou ao npm. Essas Skills podem compartilhar os mecanismos de descoberta, carregamento e execução oferecidos pelo sistema principal.
 
 **Ao projetar a forma de interação, prefira os padrões para os quais o modelo já foi treinado e adaptado.** A divisão de papéis, o formato dos resultados de ferramentas e o modo de carregar Skills afetam a forma como o modelo dá continuidade à tarefa. Os fluxos padrão oferecidos pelos fornecedores são bons pontos de partida e poupam o modelo de ter de inferir significados a partir de formatos desconhecidos.
 
-[^ch2-baoyu-remove-ai-writing-flavor]: Baoyu, “别再用提示词去 AI 味了，方向就是错的”, 2026-02-14.
+[^ch2-baoyu-remove-ai-writing-flavor]: Baoyu, “别再用提示词去 AI 味了，方向就是错的” (“Pare de usar prompts para tirar o ‘sabor de IA’: a direção está errada”), 2026-02-14.
 
 ### A posição das Skills no contexto
 
@@ -841,13 +841,13 @@ O custo de contexto das Skills tem duas partes: o catálogo e o corpo. O catálo
 
 O Claude Code adiciona as instruções da Skill à sessão como mensagem `user`, no ponto da invocação[^ch2-cc-skill-inject]. A Figura 2-12 mostra uma disposição de mensagens acionada pelo próprio modelo: primeiro ele emite a chamada `Skill(skill: "pptx")`, recebe a resposta da ferramenta e então lê o corpo da Skill acrescentado em seguida. Com uma ferramenta de ativação dedicada, a resposta da ferramenta pode servir de confirmação da chamada, e o corpo é injetado separadamente pelo Harness; com uma ferramenta comum de leitura de arquivos, o corpo pode vir diretamente no resultado da ferramenta. Quando o usuário digita explicitamente `/pptx`, o cliente pode expandir as instruções diretamente, dispensando o passo em que o modelo faz a chamada de ativação.
 
-![Figura 2-12: Estrutura completa da trajetória do agente com Skills ativadas](images/revised/fig2-12.svg){height=55%}
+![Figura 2-12 Estrutura completa da trajetória do agente com Skills ativadas](images/revised/fig2-12.svg){height=55%}
 
 A implementação de Skills do Codex também organiza separadamente o catálogo de capacidades e as instruções escolhidas. No código-fonte público, parte do catálogo entra no contexto `developer`, enquanto outras partes são fornecidas com a rodada atual e com o ambiente de execução; as Skills escolhidas explicitamente entram como fragmentos de contexto do usuário. A origem do catálogo e os ambientes de execução disponíveis influenciam a disposição exata[^ch2-codex-skills].
 
 A Figura 2-13 mostra o crescimento do cache com carregamento sob demanda, tomando como ponto de partida uma solicitação que ainda não tem cache reaproveitável. O catálogo precisa ser processado quando entra pela primeira vez na solicitação, e o primeiro carregamento do corpo também acrescenta cálculo; quando as solicitações seguintes mantêm o mesmo prefixo, esses conteúdos podem ser lidos do cache. Acrescentar o conteúdo novo no ponto da invocação mantém estáveis as mensagens anteriores. As instruções já carregadas permanecem no histórico e, se precisarem ser atualizadas, são tratadas segundo a política de contexto do ambiente de execução.
 
-![Figura 2-13: Evolução do cache KV à medida que a trajetória do agente cresce](images/revised/fig2-13.svg)
+![Figura 2-13 Evolução do cache KV à medida que a trajetória do agente cresce](images/revised/fig2-13.svg)
 
 ### A relação entre Skills e ferramentas
 
@@ -873,9 +873,9 @@ Ferramentas dedicadas também podem ser usadas junto com Skills. A busca de ferr
 
 ## Barra de status do agente: metainformações para gerenciar a trajetória
 
-O usuário insiste: “Dá para ligar mais uma vez?” O lado esquerdo da Figura 2-14 registra três ligações. Na primeira, a espera passou de 45 minutos sem que ninguém atendesse; só na terceira se chegou a US$ 59 por mês. Pela regra deste exemplo, cada discagem consome uma unidade da cota; mesmo que só duas ligações tenham sido atendidas, as três unidades já se esgotaram. O Harness pode reunir essas contagens, o andamento do atendimento e as pendências de confirmação em um resumo atualizado junto com as mensagens, chamado **barra de status do agente (Agent Status Bar)**.
+O usuário insiste: “Dá para ligar mais uma vez?” O lado esquerdo da Figura 2-14 registra três ligações. Na primeira, foram 45 minutos de espera sem que ninguém atendesse; só na terceira se chegou a US$ 59 por mês. Pela regra deste exemplo, cada discagem consome uma unidade da cota; mesmo que só duas ligações tenham sido atendidas, as três unidades já se esgotaram. O Harness pode reunir essas contagens, o andamento do atendimento e as pendências de confirmação em um resumo atualizado junto com as mensagens, chamado **barra de status do agente (Agent Status Bar)**.
 
-![Figura 2-14: Arquitetura da barra de status do agente](images/revised/fig2-14.svg)
+![Figura 2-14 Arquitetura da barra de status do agente](images/revised/fig2-14.svg)
 
 O celular mostra hora, bateria e sinal no alto da tela, e basta uma olhada para saber a situação. O resumo do lado direito da figura tem papel parecido: ao ler “limite atingido” e “aguardando confirmação do usuário”, o assistente consegue repassar ao usuário o preço já negociado e pedir que ele decida se aceita. O Harness pode anexar o resumo ao devolver o resultado da ferramenta ou acrescentar uma mensagem de status separada.
 
@@ -887,7 +887,7 @@ O ambiente de execução pode atualizar a contagem depois de cada chamada e devo
 
 O valor de engenharia aqui está em **organizar de antemão o estado de que as decisões seguintes precisam repetidamente**. O registro completo das ligações continua guardando o conteúdo das conversas e o histórico do atendimento; a barra de status fornece as estatísticas e o progresso usados com frequência nas decisões. **Estatísticas usadas repetidamente devem ser mantidas, de preferência, de forma incremental pelo código.** Encontrar um registro no contexto e calcular um total a partir de todos os registros são trabalhos diferentes. Guardar a trajetória bruta não produz automaticamente uma tabela estatística precisa e sempre disponível. Pedir ao modelo que percorra e conte tudo de novo a cada vez consome tokens de raciocínio e aumenta as chances de omissões e contagens duplicadas.
 
-O autor compara o contexto a um mecanismo de busca que precisa de uma “camada de destilação”: os registros brutos permitem rastrear a origem, e o estado destilado pode ser usado diretamente. Contagens, limites e o status de conclusão já verificado de uma tarefa são bem mantidos pelo código; informações que exigem julgamento semântico podem ser extraídas item a item e depois consolidadas e verificadas. Assim, a cada decisão o modelo vê ao mesmo tempo o estado atual e as evidências necessárias.
+Comparo o contexto a um mecanismo de busca que precisa de uma “camada de destilação”: os registros brutos permitem rastrear a origem, e o estado destilado pode ser usado diretamente. Contagens, limites e o status de conclusão já verificado de uma tarefa são bem mantidos pelo código; informações que exigem julgamento semântico podem ser extraídas item a item e depois consolidadas e verificadas. Assim, a cada decisão o modelo vê ao mesmo tempo o estado atual e as evidências necessárias.
 
 Trajetórias longas também tornam mais difícil achar as informações essenciais. Concentrar no final o objetivo, as restrições e o progresso mais recentes facilita ao modelo encontrar o que a decisão atual exige.
 
@@ -909,7 +909,7 @@ Trajetórias longas também tornam mais difícil achar as informações essencia
 >
 > Os mapas de atenção mostram a distribuição de pesos da região de geração sobre as ligações anteriores, os resultados de busca, a pergunta do usuário e a barra de status.
 
-A pesquisa ContextDistill-Bench, do autor com Noah Shi, examinou mais a fundo o ganho de destilar o estado de antemão[^ch2-8]. Nas consultas de estado cobertas pelo benchmark, modelos menores também alcançam precisão elevada graças ao estado explícito; nos modelos de fronteira, o volume de raciocínio, a latência e o custo das consultas caem cerca de uma ordem de grandeza. Por exemplo, o custo por mil consultas do Claude 4 Sonnet caiu de cerca de US$ 35,46 para US$ 3,51. **Esse projeto mantém o estado no momento em que os eventos ocorrem, eliminando o custo de percorrer o histórico a cada consulta.** Com os campos do resumo fixados, mesmo que o histórico continue crescendo, a consulta só precisa ler esses poucos campos.
+Minha pesquisa ContextDistill-Bench, com Noah Shi, examinou mais a fundo o ganho de destilar o estado de antemão[^ch2-8]. Nas consultas de estado cobertas pelo benchmark, modelos menores também alcançam precisão elevada graças ao estado explícito; nos modelos de fronteira, o volume de raciocínio, a latência e o custo das consultas caem cerca de uma ordem de grandeza. Por exemplo, o custo por mil consultas do Claude 4 Sonnet caiu de cerca de US$ 35,46 para US$ 3,51. **Esse projeto mantém o estado no momento em que os eventos ocorrem, eliminando o custo de percorrer o histórico a cada consulta.** Com os campos do resumo fixados, mesmo que o histórico continue crescendo, a consulta só precisa ler esses poucos campos.
 
 [^ch2-8]: Li, Bojie and Noah Shi. *Distill, Don't Retrieve: Inference-Time Context Distillation for LLM Agent Reasoning.* 2026.
 
@@ -931,7 +931,7 @@ No exemplo desta seção, o Harness acrescenta ao final das mensagens uma mensag
 
 Na Figura 2-15, localize a solicitação original do usuário e veja em que rodada está escrito o estado mais recente. Só preservando a solicitação original é possível conferir, depois das ligações, duas coisas ao mesmo tempo: o que o usuário quer resolver e em que ponto o atendimento está.
 
-![Figura 2-15: Posição de inserção da barra de status do agente na lista de mensagens da API](images/revised/fig2-15.svg)
+![Figura 2-15 Posição de inserção da barra de status do agente na lista de mensagens da API](images/revised/fig2-15.svg)
 
 A ordem mostrada na figura, escrita como lista de mensagens, fica assim. Para facilitar a comparação, rodadas repetidas e alguns campos de chamada foram omitidos.
 
@@ -943,7 +943,7 @@ messages: [
   { role: "tool", tool_call_id: "call_1", content: "Call log..." }
   { role: "assistant", tool_calls: [{ id: "call_2", ... }] }
   { role: "tool", tool_call_id: "call_2", content: "Call log..." }
-  ...其余轮次...
+  ...demais rodadas...
   { role: "user", content: "Can you call them again to follow up?" }
   { role: "user", content: "<agent_status>
       Current State:
@@ -976,17 +976,17 @@ Um exemplo: cada injeção de estado tem 100 tokens, há 10 injeções no total 
 >
 > Este experimento implementa cinco técnicas de barra de status, que podem ser ativadas separadamente ou combinadas. Cada técnica fornece um tipo específico de informação para ajudar o modelo a decidir a próxima ação.
 >
-> **O rastreamento de carimbos de tempo** registra nas mensagens do usuário e nas respostas das ferramentas a hora do evento, por exemplo `[2025-09-14 10:30:45]`. A hora é gravada no histórico com o evento e mantém o valor original nas rodadas seguintes; a hora atual é atualizada com as novas mensagens de status. O experimento oferece também uma simulação de tempo, para verificar se o modelo distingue “os arquivos de ontem” das “alterações de hoje” e se entende corretamente a duração das esperas.
+> **O rastreamento de carimbos de data e hora** registra nas mensagens do usuário e nas respostas das ferramentas a hora do evento, por exemplo `[2025-09-14 10:30:45]`. A hora é gravada no histórico com o evento e mantém o valor original nas rodadas seguintes; a hora atual é atualizada com as novas mensagens de status. O experimento oferece também uma simulação de tempo, para verificar se o modelo distingue “os arquivos de ontem” das “alterações de hoje” e se entende corretamente a duração das esperas.
 >
 > **O contador de chamadas de ferramentas** mantém em um dicionário o total de chamadas de cada ferramenta e marca nas respostas `Tool call #3 for 'read_file'`. Combinando a contagem com o conteúdo do erro, o modelo pode julgar se vale tentar de novo. Por exemplo, depois da primeira falha de leitura, verifica o caminho e lista o diretório; depois de várias falhas, procura um arquivo alternativo ou informa ao usuário que o arquivo está faltando. Quando é preciso limitar o número de tentativas, o ambiente de execução também deve impor o limite com base na contagem.
 >
-> **O gerenciamento da lista TODO** oferece duas ferramentas, `rewrite_todo_list` e `update_todo_status`. Cada item tem identificador único, conteúdo, carimbo de tempo e um dos quatro estados `pending`, `in_progress`, `completed` e `cancelled`. A lista concentra “o que foi feito e o que falta”, em linha com a ideia do Manus de manter o objetivo visível apresentando repetidamente o plano da tarefa.
+> **O gerenciamento da lista TODO** oferece duas ferramentas, `rewrite_todo_list` e `update_todo_status`. Cada item tem identificador único, conteúdo, carimbo de data e hora e um dos quatro estados `pending`, `in_progress`, `completed` e `cancelled`. A lista concentra “o que foi feito e o que falta”, em linha com a ideia do Manus de manter o objetivo visível apresentando repetidamente o plano da tarefa.
 >
 > **As informações detalhadas de erro** trazem tipo e descrição do erro, JSON dos parâmetros da chamada, pilha de chamadas e sugestões de correção. Diante de um `FileNotFoundError`, por exemplo, pode-se sugerir ao modelo conferir o nome do arquivo, o diretório atual e o caminho absoluto. Os parâmetros ajudam a localizar a entrada errada, a pilha ajuda a encontrar o ponto da falha e as sugestões indicam a direção da próxima verificação. Antes de devolver esse conteúdo ao modelo, é preciso limpar campos sensíveis, como credenciais, e controlar o tamanho de pilhas muito longas.
 >
 > **A percepção do estado do sistema** fornece hora atual, diretório de trabalho, sistema operacional, shell e versão do Python. A ferramenta de comandos do experimento reconhece operações isoladas de troca de diretório, atualiza o diretório de trabalho mantido pelo ambiente de execução e o usa nas chamadas seguintes; mudanças de diretório de subprocessos dentro de comandos compostos seguem o escopo de execução do processo correspondente. Os campos de ambiente também ajudam o modelo a escolher ferramentas disponíveis, por exemplo optar por `apt` ou `brew` conforme o sistema real e o software instalado.
 >
-> Na comparação desta execução com o Kimi K3, cada tipo de tarefa teve cinco casos. Os carimbos de tempo e a configuração combinada concluíram cinco casos cada, contra três de seus grupos de controle; o contador de ferramentas e o estado do sistema concluíram cinco tanto ativados quanto desativados. A configuração TODO concluiu zero, contra um do grupo de controle; a de erros detalhados concluiu quatro, contra cinco do grupo de controle.
+> Na comparação desta execução com o Kimi K3, cada tipo de tarefa teve cinco casos. Os carimbos de data e hora e a configuração combinada concluíram cinco casos cada, contra três de seus grupos de controle; o contador de ferramentas e o estado do sistema concluíram cinco tanto ativados quanto desativados. A configuração TODO concluiu zero, contra um do grupo de controle; a de erros detalhados concluiu quatro, contra cinco do grupo de controle.
 
 **A barra de status deve ser mantida pelo código sempre que possível.** O modelo usa diretamente as estatísticas e os limites que ela contém, e um “já liguei três vezes” errado pode mudar as ações seguintes. Contagens, horários e transições de estado ficam com o programa; quando é preciso compreensão semântica, o modelo extrai os itens um a um, e o código os consolida e verifica, evitando pedir ao modelo que conte de uma vez um histórico longo inteiro. Manter a correspondência entre os eventos originais, os resultados extraídos e o estado final facilita detectar contagens duplicadas, omissões e confusão de origem.
 
@@ -1013,7 +1013,7 @@ A barra de status mantém de antemão contagens e progresso; o resumo vai além 
 Veja o exemplo da inspeção de um pet shop:
 
 > Gaiola 1: gato preto. Gaiola 2: gato branco. Gaiola 3: gato preto. Gaiola 4: gato preto. Gaiola 5: gato branco.
-> …… (100 gaiolas no total, com 90 gatos pretos e 10 gatos brancos)
+> … (100 gaiolas no total, com 90 gatos pretos e 10 gatos brancos)
 
 Responder “que gato está na gaiola 37” exige localizar o registro correspondente; responder “quantos gatos pretos e quantos brancos há” exige consolidar todos os registros. Se o total for usado várias vezes depois, pode-se calcular e guardar de antemão “90 gatos pretos, 10 gatos brancos”, evitando recontar do zero a cada vez. Programas são adequados para esse tipo de consolidação determinística, e o modelo pode então responder às perguntas de negócio a partir das estatísticas.
 
@@ -1023,7 +1023,7 @@ Mesmo com espaço sobrando na janela, um contexto longo demais ou misturado pode
 
 **Mesmo com espaço na janela, convém organizar ativamente o conhecimento já usado repetidas vezes.** Se os julgamentos essenciais já podem ser consolidados e o modelo continua procurando-os seguidamente em um histórico longo, gasta-se cálculo continuamente e aumentam as omissões. Em tarefas de busca, pode-se guardar os fatos confirmados, as fontes e as questões pendentes; em tarefas de programação, as decisões de arquitetura, o escopo das alterações, os resultados dos testes e as causas das falhas.
 
-Os exemplos no contexto também influenciam a forma como o modelo lida com problemas novos. A pesquisa de Dherin e colaboradores parte da combinação entre a camada de atenção e o MLP do Transformer e representa um cálculo direto específico como uma atualização de pesos de baixo posto dependente do contexto, oferecendo uma explicação teórica para o aprendizado em contexto[^ch2-6]. Na inferência real, os pesos do modelo não mudam, e os exemplos influenciam a saída por meio da entrada atual. Para reaproveitar esse tipo de experiência em sessões posteriores, pode-se organizá-la como memória, exemplos ou Skill e carregá-la conforme a tarefa; o Capítulo 9 aprofunda a forma de acumular experiência.
+Os exemplos no contexto também influenciam a forma como o modelo lida com problemas novos. A pesquisa de Dherin e colaboradores parte da combinação entre a camada de atenção e o MLP do Transformer e representa uma passagem direta (forward pass) específica como uma atualização de pesos de baixo posto dependente do contexto, oferecendo uma explicação teórica para o aprendizado em contexto[^ch2-6]. Na inferência real, os pesos do modelo não mudam, e os exemplos influenciam a saída por meio da entrada atual. Para reaproveitar esse tipo de experiência em sessões posteriores, pode-se organizá-la como memória, exemplos ou Skill e carregá-la conforme a tarefa; o Capítulo 9 aprofunda a forma de acumular experiência.
 
 [^ch2-6]: Benoit Dherin et al., Learning without training: The implicit dynamics of in-context learning, 2025.
 
@@ -1039,7 +1039,7 @@ Ao comprimir, também é preciso verificar o protocolo de reenvio das informaç�
 
 Observe primeiro o resumo individual na Figura 2-16: o número de caracteres após o processamento é só 10,9% do original, mas o total acumulado de tokens do agente principal é o maior dos seis grupos. Para explicar como esses dois números podem valer ao mesmo tempo, é preciso rastrear quais materiais foram comprimidos e em quantas rodadas de solicitação eles foram enviados ao modelo.
 
-![Figura 2-16: Comparação de estratégias de compressão de contexto](images/revised/fig2-16.svg)
+![Figura 2-16 Comparação de estratégias de compressão de contexto](images/revised/fig2-16.svg)
 
 > **Experimento 2-10 ★★★: comparação de estratégias de compressão de contexto**
 >
@@ -1059,13 +1059,13 @@ Observe primeiro o resumo individual na Figura 2-16: o número de caracteres ap�
 >
 > A Figura 2-17 compara as entradas e saídas das seis estratégias.
 >
-> ![Figura 2-17: Fluxo de processamento das seis estratégias de compressão](images/revised/fig2-17.svg)
+> ![Figura 2-17 Fluxo de processamento das seis estratégias de compressão](images/revised/fig2-17.svg)
 >
 > Ao comparar os números da Figura 2-16, é preciso distinguir três grandezas: a entrada de uma solicitação determina se o orçamento da janela foi atingido, os tokens acumulados refletem o uso em várias rodadas de chamadas e a taxa de compressão de caracteres descreve a razão entre o comprimento processado e o comprimento original do material contabilizado. O uso acumulado aqui vem das entradas e saídas de cada rodada de solicitação do agente principal; as solicitações independentes ao modelo que gera os resumos não entram nesse campo.
 >
 > Para reproduzir o experimento, configure o modelo e o serviço de busca real conforme as instruções do material de apoio e execute `python experiment.py -m kimi-k3 -n 15 -o results/reproduction.json` no diretório do experimento. Leia as `metrics` de cada estratégia: recalcule a razão de caracteres com `total_compressed_size / total_original_size` e compare `total_tokens` e `iterations`. A linha de base sem compressão também acrescenta ao texto das buscas formatação como título e URL, por isso o número de caracteres processados pode ficar um pouco acima do original. O programa do experimento considera o grupo concluído assim que recebe uma resposta final. Experimente procurar a mesma pessoa nos dois resultados finais: o grupo com citações registra a instituição de Pamela Vagata como Pebblebed, mas a tabela consolidada do grupo de janelamento registra Stripe. A primeira resposta menciona o site da instituição, mas não traz um link de página que possa ser aberto. Os dois grupos entregaram a tabela consolidada, mas os dados sobre a pessoa se contradizem.
 
-[^ch2-compression-results]: O arquivo de resultados do Experimento 2-10, `kimi_k3_real_20260718.json`, guarda os campos estatísticos, as respostas finais e os carimbos de tempo de cada estratégia, permitindo recalcular diretamente a razão de caracteres. A execução de 18 de julho de 2026 usou a condição de proteção antiga; a revisão de código de 22 de julho (commit `aea4d72`) passou a usar a entrada da rodada mais recente em vez da entrada acumulada.
+[^ch2-compression-results]: O arquivo de resultados do Experimento 2-10, `kimi_k3_real_20260718.json`, guarda os campos estatísticos, as respostas finais e os carimbos de data e hora de cada estratégia, permitindo recalcular diretamente a razão de caracteres. A execução de 18 de julho de 2026 usou a condição de proteção antiga; a revisão de código de 22 de julho (commit `aea4d72`) passou a usar a entrada da rodada mais recente em vez da entrada acumulada.
 
 ### Mecanismo de compressão em camadas para produção
 
@@ -1079,7 +1079,7 @@ Saídas de ferramentas podem exigir que o texto integral seja guardado temporari
 
 Esses mecanismos podem cooperar em camadas: o controle na entrada reduz saídas volumosas pontuais, a organização local controla o crescimento cotidiano, e os resumos de etapa e a compressão integral guardam as informações de passagem das tarefas longas.
 
-Lendo o dsh-superagent, o autor notou um detalhe: eventos e resultados de ferramentas podem primeiro chegar como resumo e ID do objeto, e os detalhes são lidos pelo ID quando necessário. Suponha que um conjunto de testes termine em segundo plano e só informe ao primeiro plano “duas falhas”. O primeiro plano consegue relatar o progresso, mas não responde à pergunta seguinte do usuário: “são as mesmas duas de ontem?” Se o resumo trouxer o identificador do registro desta execução de testes, o primeiro plano pode recuperar os nomes dos casos que falharam e compará-los com o registro de ontem.
+Lendo o dsh-superagent, notei um detalhe: eventos e resultados de ferramentas podem primeiro chegar como resumo e ID do objeto, e os detalhes são lidos pelo ID quando necessário. Suponha que um conjunto de testes termine em segundo plano e só informe ao primeiro plano “duas falhas”. O primeiro plano consegue relatar o progresso, mas não responde à pergunta seguinte do usuário: “são as mesmas duas de ontem?” Se o resumo trouxer o identificador do registro desta execução de testes, o primeiro plano pode recuperar os nomes dos casos que falharam e compará-los com o registro de ontem.
 
 ### Princípios de projeto das estratégias de compressão
 
@@ -1094,7 +1094,7 @@ Decisões de arquitetura tomadas no início, os motivos por trás das restriçõ
 
 ### Isolamento de contexto com subagentes
 
-**Para tarefas com entregas bem delimitadas e que produzem muito material intermediário, o autor prefere isolar o trabalho em subagentes.** Uma busca ampla lê muitos materiais úteis apenas na fase exploratória, e isolá-los primeiro reduz a interferência contínua desse conteúdo na tarefa principal. O agente principal entrega a tarefa a um subagente com contexto próprio, que lê os resultados intermediários e devolve conclusões, localização das evidências e questões pendentes. Assim, o contexto do agente principal só precisa guardar as informações de que as decisões seguintes precisam.
+**Para tarefas com entregas bem delimitadas e que produzem muito material intermediário, prefiro isolar o trabalho em subagentes.** Uma busca ampla lê muitos materiais úteis apenas na fase exploratória, e isolá-los primeiro reduz a interferência contínua desse conteúdo na tarefa principal. O agente principal entrega a tarefa a um subagente com contexto próprio, que lê os resultados intermediários e devolve conclusões, localização das evidências e questões pendentes. Assim, o contexto do agente principal só precisa guardar as informações de que as decisões seguintes precisam.
 
 Por exemplo, para “encontrar a função que trata o callback de pagamento”, o agente principal, buscando sozinho, pode precisar ler mais de uma dúzia de arquivos. Delegando a um subagente de busca, pode-se pedir que ele devolva o nome da função, o módulo em que está, os pontos de chamada e a justificativa. A resposta pode ser “`handle_callback`, no módulo de pagamentos, trata o callback; há outros dois pontos de chamada”, com referências que permitam localizá-los. Com base nesses resultados, o agente principal decide se continua lendo o código pertinente.
 
