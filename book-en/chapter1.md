@@ -113,8 +113,8 @@ tools: [{                          assistant: {
 Step 3: result appended to context  Step 4: model replies from result
 tool: {                            assistant: {
   tool_call_id: "call_1",              content: "Beijing today: 28°C, sunny."
-  content: '{"temp":28,"sky":"sunny"}'  }
-}
+  content: '{"temp":28,"sky":"sunny"}'
+}                                  }
 ```
 
 Here, `call_1` links the tool's return value to the call request. The developer describes how to call the tool, writes the function that queries the weather, and hands the result back to the model; the model decides whether to call, which tool to call, and what arguments to pass. Chapter 2 examines the API message structure further.

@@ -489,7 +489,7 @@ In the causal-attention models assumed in this section, adding later tokens does
 >
 > This also shows what the K/V cache is for: as generation proceeds, each new position still reads the Keys and Values of existing positions. Once these vectors are stored, a new position can use them directly for matching and aggregation, avoiding recomputation for the historical positions.
 >
-> With these illustrative weights in mind, use Qwen3-0.6B to examine the attention distributions the model actually computes. The experiment records a short sentence and a generated sequence containing both reasoning and a final answer, and compares the attention matrices of different layers. Figure 2-7 shows layers 0, 13, and 27: the left column is a nine-token short sentence, and the right column is a 17 × 23 computation over the generated sequence, with position ranges labeled as input, reasoning, and answer. The grayscale uses a logarithmic scale so that strong and weak attention weights are visible at the same time.
+> With these illustrative weights in mind, use Qwen3-0.6B to examine the attention distributions the model actually computes. The experiment records a short sentence and a generated sequence containing both reasoning and a final answer, and compares the attention matrices of different layers. Figure 2-7 shows layers 0, 13, and 27: the left column is a nine-token short sentence, and the right column is the sequence the model generated while computing 17 × 23, with position ranges labeled as input, reasoning, and answer. The grayscale uses a logarithmic scale so that strong and weak attention weights are visible at the same time.
 >
 > ![Figure 2-7: Attention Heatmap Visualization](images/revised/fig2-7.png)
 >

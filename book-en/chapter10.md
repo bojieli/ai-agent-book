@@ -214,7 +214,7 @@ For tasks that involve repeatedly improving the same artifact, I recommend start
 
 #### Loop Engineering
 
-Peer collaboration can help with a common problem: **premature termination**. Taking programming and customer-service errands as examples, premature termination can be spotted in three kinds of records.
+Peer collaboration can help with a common problem: **premature termination**. Taking programming and errands that an assistant runs with customer service on the user's behalf as examples, premature termination can be spotted in three kinds of records.
 
 - **Claiming everything is done after only partial completion.** A Coding Agent writes the code but skips the tests and deployment checks; a user asks an assistant to take care of two errands, and after finishing the first it reports that everything has been handled. Each item must be checked against the task list for evidence that it was completed.
 - **Giving up early after one path fails.** A merchant may ask for documents to be submitted through a form instead, or for attachments to be sent to a designated email address. On receiving such a reply, the assistant can continue the errand through the channel the merchant accepts. The reason for the failure must be recorded, along with a judgment of which other paths are worth trying.

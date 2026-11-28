@@ -233,7 +233,7 @@ Start by using the execution record of a single fix for a failing test to estima
 
 Within those 7.5 seconds, which work can proceed at the same time? That depends on the dependencies among the tool calls.
 
-**Parallel Tool Calls, Streaming Execution, and Cascading Abort.**
+**Parallel tool calls, streaming execution, and cascading abort.**
 
 Searching code, reading configuration, and checking logs can often proceed independently. When the model generates these calls in a single response, the Harness can overlap call generation with tool execution: once the interface confirms that the first call has been fully emitted and its arguments and permissions pass validation, the Harness schedules it immediately while continuing to receive the subsequent calls. Completeness should be judged from the interface's call-completion event, not merely from JSON that happens to parse for the moment, to avoid executing prematurely.
 
@@ -241,7 +241,7 @@ Independent calls can run in parallel. For example, the Agent can search for a f
 
 Tool definitions can declare their concurrency support, the resources they access, and how they are canceled; a teaching implementation can schedule any tool that makes no declaration serially. When a call fails, stop the subsequent work that depends on its result, keep the results of independent calls, and return the status of each item to the parent. When canceling a task that has already started, also record whether the cancellation took effect, along with any file changes or external operations that have already occurred.
 
-**Fine-Grained Context Management.**
+**Fine-grained context management.**
 
 A large codebase can enter the context gradually through layered retrieval: first locate the files, then read the relevant functions, and extend to callers and tests where necessary. Each read adds information in service of the current decision, so that the model can see code, constraints, and runtime feedback together.
 
@@ -249,7 +249,7 @@ The read tool should support returning a fragment by line range, such as lines 1
 
 Compilation or testing can produce thousands of lines of output, which can be handled with the truncation and persistence mechanism from Chapter 4: return the beginning, the end, and the number of lines omitted, and save the complete output for retrieval on demand. Since errors may appear in the middle, the Agent can go on to search for error keywords or read the corresponding range.
 
-**Dynamic Injection of Environment Information.**
+**Dynamic injection of environment information.**
 
 In programming tasks, the Agent status bar from Chapter 2 can aggregate four kinds of information:
 
@@ -260,7 +260,7 @@ In programming tasks, the Agent status bar from Chapter 2 can aggregate four kin
 
 The Harness can refresh this summary after operations that change these states and append it to the end of the context on the next model call. Information that changes less often, such as recent commits, can be updated on demand to reduce repeated queries and input volume. Keeping the front of the context stable helps reuse the prefix cache.
 
-**State Persistence in the Command Execution Environment.**
+**State persistence in the command execution environment.**
 
 Changing directories, activating virtual environments, setting environment variables, and starting background services all affect subsequent commands. After the Agent runs `cd` in a shell, the directory change carries over naturally only if subsequent commands keep using that session; when a command runs in a separate process, the working directory is determined by that new process's configuration. The environment variables produced by activating a virtual environment have the same session boundary.
 
@@ -268,7 +268,7 @@ Changing directories, activating virtual environments, setting environment varia
 
 Parallel tasks should use separate sessions or explicit environment snapshots, so that a directory change in one task does not affect another. Clean up background processes together when a task ends; when resuming a task, check again whether the session is still alive. For example, if you come back the next day to continue running tests, the code and dependency manifest can be read back from the workspace, but a service process started in the terminal the day before must first be checked to see whether it is still running. These are exactly the two kinds of state that Chapter 4 distinguishes when estimating sandbox costs.
 
-**Immediate Syntax Feedback.**
+**Immediate syntax feedback.**
 
 After a file is written, the tool layer can automatically run the appropriate language's syntax checker or linter and hand the diagnostics to the model as the tool's return value. For example, when a bracket is missing, it returns the file, the line and column, and the type of error, and the model can fix it in the next round—feedback much like an IDE's instant annotations.
 
@@ -276,7 +276,7 @@ The scope of checks can widen with the change: first check the modified file, th
 
 ### Search Tools in Coding Agents
 
-If an error message contains "amount field missing," you can search for the literal text first and then trace the callers from where the error is raised. If the user only says "sorting is broken" while the code uses English identifiers, searching for that sentence verbatim is of little value. Instead, first locate the interface that displays the result, then follow the fields, call relationships, and test data back to the sorting logic. The four kinds of search tools in Figure 5-3 each exploit different clues; what the first search returns often determines which tool to switch to next.
+If an error message contains "amount field missing," you can search for the literal text first and then trace the callers from where the error is raised. If the user only says "sorting is broken," searching for that phrase verbatim is of little value, because nothing in the code (no identifier, comment, or error message) is likely to contain those words. Instead, first locate the interface that displays the result, then follow the fields, call relationships, and test data back to the sorting logic. The four kinds of search tools in Figure 5-3 each exploit different clues; what the first search returns often determines which tool to switch to next.
 
 ![Figure 5-3: Comparison of Coding Agent Search Tools](images/revised/fig5-3.svg)
 
@@ -523,7 +523,7 @@ Presentations, technical reports, and interactive pages all involve two kinds of
 
 Programmatic generation suits content that is structured and must be revised repeatedly. A GUI, in turn, offers a way to view the result directly and operate on parts of it; the two approaches can be used together.
 
-**PPT Generation Agent.**
+**PPT generation Agent.**
 
 An academic talk must organize a paper's problem, method, experiments, and conclusions into an explanation that unfolds page by page. An Agent can first plan the question each slide should answer, then choose the key points and figures, and finally generate the slide source code. Slidev takes Markdown as its content entry point and supports HTML and Vue components, which makes it well suited to organizing this process into an executable generation pipeline[^ch5-slidev].
 
@@ -568,7 +568,7 @@ This shares the Proposer–Reviewer pattern with the operation approval in Chapt
 
 [^ch5-slidev]: Slidev, *Getting Started*, which describes generating, presenting, and exporting slide decks based on Markdown and web technologies.
 
-**Video Editing Agent.**
+**Video editing Agent.**
 
 **Video-editing operations that can be expressed in a script should go through a programmatic interface first.** Timelines, layers, subtitles, and audio tracks are spread across complex GUI panels, and repeatedly locating and dragging them adds latency and error; a programmatic interface can express operations directly in terms of time ranges, tracks, and effect parameters. Blender's Python API and FFmpeg can both organize part of the editing work into scripts that run repeatably.
 
@@ -586,7 +586,7 @@ The Agent can first understand a request such as "cut out the surfing part," the
 >
 > Timecodes only check where the cut was made. If the same subtitles and slow motion are applied to a deliberately wrong segment, can the Reviewer still spot the error? The experiment first had it check a control clip from 0 to 3 seconds, then look at the revised render. The review covered the big white rabbit in the frame, the subtitles at the bottom, and the duration after the speed change.
 
-**3D and Industrial Parts: Choosing the Right Generation Method.**
+**3D and industrial parts: choosing the right generation method.**
 
 **For industrial parts whose dimensions and assembly relationships are hard constraints, prefer parametric code generation; for objects whose main goal is natural form and appearance, consider generative models first.** The choice depends on whether the artifact can be described precisely with a few parameters, and which relationships must be preserved after a change. CadQuery, OpenSCAD, and Blender scripts provide an editable construction process, while models such as Hunyuan 3D use learned shape priors to generate complex appearances.
 
@@ -622,7 +622,7 @@ An adapter needs explicit inputs and outputs, error handling, and a version rang
 
 Systems that offer only a graphical interface can be handled in a similar way. The Agent first completes the task through Computer Use, introduced in Chapter 6, and then turns the stable sequence of steps into an RPA tool. When interface controls, login state, or page flows change, the tool needs to detect the deviation and relocate its targets. Chapter 9 discusses further how to extract, verify, and reuse workflows from successful trajectories.
 
-**Agent Log Parsing and Visualization.**
+**Agent log parsing and visualization.**
 
 A complex task may involve many model requests, tool executions, and sub-agent interactions. A log overview shows the relationships among steps, their status, and their duration; expanding an entry shows its specific inputs and outputs, helping the reader trace what happened at a given step. New fields, nested structures, and format versions all affect parsing and display.
 
@@ -638,7 +638,7 @@ Parsing and display each have their own checks. Programs check timestamps, statu
 >
 > The parsing results are rendered as a table by Chromium, and visual review checks the column names, row contents, and readability.
 
-**Automatic Analysis and Problem Diagnosis of Agent Execution Logs.**
+**Automatic analysis and problem diagnosis of Agent execution logs.**
 
 Once structured trajectories have been parsed, the Agent can compare the expected flow with the actual actions, drawing on architecture documents and the PRD (Product Requirements Document). For example: before issuing a refund, did the system check whether the order was refundable? After the inventory service timed out, did the program fall back to the cache as agreed?
 
@@ -665,7 +665,7 @@ If the user also wants to edit the material the Agent is working on, the interfa
 
 Imagine a user comparing three travel options. While the destination is still undecided, conversation makes it easy to ask follow-up questions; once the destination is settled, letting the user pick dates and enter the number of travelers directly is easier than going back and forth over several passages of text; finally, to compare how the total price changes with the dates, a chart puts the differences right in front of them. When an Agent generates forms, charts, or application interfaces suited to the task so that the user can fill in, select, and operate directly, that is **Generative UI**.
 
-**Describing Interfaces and Interactions with Protocols.**
+**Describing interfaces and interactions with protocols.**
 
 There are two routes to generating an interface: output code such as HTML and JavaScript and hand it to a controlled environment to execute; or output a declarative structure that client-side components render. The former makes custom layouts and interactions easy to implement; the latter limits the available capabilities to the components and actions the client provides.
 
@@ -677,7 +677,7 @@ The client can receive interface updates incrementally and display them on the w
 
 When code is generated directly, dependencies, resource access, and execution permissions must be checked, and the generated interface must be isolated from the host application's sensitive state. Prompt injection in external material can influence the generation process, and the risk of script execution in the browser also depends on how the page is loaded and isolated.
 
-**Delivering Interactive Results in HTML.**
+**Delivering interactive results in HTML.**
 
 **For research deliverables that include data, demonstrations, and continually updated results, I prefer an HTML website.** A long, linear Markdown report forces readers to keep hunting for context; an interactive web page can bring explanations, data, and demonstrations together behind a single entry point: readers look at the charts, filter the samples they are interested in, expand the details of a particular result, and then operate a demonstration to understand how the system behaves. The Agent can also update the page as the task progresses, so that it keeps a running record of the current results and evidence.
 
@@ -691,7 +691,7 @@ The third is **demonstrating how the system works**. When explaining how several
 
 When work runs for several hours, how does the user find time to step in? When I use a Coding Agent, I want a single spoken instruction to reach the Agent handling the work, want to be able to open the results at any moment, and want to be notified when a new version is ready or a question comes up that needs my decision. For example, two reports are being generated at once. The user opens the sales report, points at the second chart, and says, "Redraw this one by net revenue." The interface should send the identifiers of the current report and chart along with the instruction. When the chart has been redrawn, the notification can open the new version directly; if "net revenue" has two usable definitions, the assistant should lay out both for the user to choose from.
 
-**Clarifying User Intent.**
+**Clarifying user intent.**
 
 When a user says, "I want to book a flight to Beijing," the destination is already clear, while the departure city, the date, and whether the trip is one-way or round-trip still have to be filled in. The Agent can gather these questions into a single conversational turn, or it can generate a form that presents the related conditions on one page.
 
@@ -711,7 +711,7 @@ Figure 5-8 is taken from a run of the experiment below. Follow this submission d
 
 [^ch5-ui-protocols]: The official A2UI documentation and *AG-UI Overview*, which describe, respectively, declarative interface descriptions and event interaction between the Agent and the frontend.
 
-**Generating SQL Queries.**
+**Generating SQL queries.**
 
 Users can pose database queries in natural language, and the Agent generates SQL based on the table schema and business definitions. **When displaying a complete query result table, I prefer the Artifact pattern, letting the results go straight from the database into the interface.** Having the model read a large table and restate it row by row increases token usage and waiting time and introduces transcription errors. The SQL is saved as an inspectable query artifact; when causes need analyzing or trends summarizing, only the necessary aggregate results are handed to the model.
 
@@ -723,7 +723,7 @@ The execution service determines the accessible tables, columns, and rows from a
 
 The Agent can also generate visualization artifacts, such as a bar chart of the department totals. The execution service hands the query results to a controlled visualization runtime, and the interface displays only the permitted data and interactions.
 
-> **Experiment 5-13 ★★: Natural Language Interaction ERP Agent**
+> **Experiment 5-13 ★★: An ERP Agent with Natural-Language Interaction**
 >
 > This experiment uses employee and payroll queries in ERP (Enterprise Resource Planning) as an example of how to generate SQL from business questions and send the database results straight to the page. Two tables are created in PostgreSQL: the employee table contains employee ID, name, department, level, hire date, and termination date, where an empty termination date means the employee is still active; the salary table contains employee ID, pay date, and salary, with one record per employee per month.
 >
@@ -744,7 +744,7 @@ The Agent can also generate visualization artifacts, such as a bar chart of the 
 >
 > This run generated and executed ten SQL queries, all of whose results matched an independent reference calculation, and the browser then rendered the tables directly. The model received the table schemas, the tasks, and the necessary execution feedback, while the database row data passed through the application to the interface.
 
-**Dynamically Generating Software.**
+**Dynamically generating software.**
 
 An Agent can generate interfaces and interaction logic from requirements and keep modifying them in response to user actions. "Imagine with Claude," a temporary research preview Anthropic launched in 2025, demonstrated this kind of interaction: as the user explores the interface, the model continuously generates the corresponding software experience[^ch5-imagine].
 
@@ -761,7 +761,7 @@ In a development environment, HMR (Hot Module Replacement) can update the affect
 [^ch5-imagine]: Anthropic, *Introducing Claude Sonnet 4.5*, which introduces Imagine with Claude, the temporary research preview released alongside the model.
 [^ch5-hmr]: *Vite HMR API* and *FastAPI CLI*, which describe, respectively, frontend hot updates and automatic reloading of the development server.
 
-**Keeping the Permission Boundary Independent of Dynamic Business Code.**
+**Keeping the permission boundary independent of dynamic business code.**
 
 **The more easily business code can be rewritten dynamically by an Agent, the further the final permission boundary should move down into a stable data-access layer.** Traditional applications write authorization checks into reviewed business code; once generated code keeps changing, some new path may omit the same check. Only by routing every read and write through an independent data-access service can permission constraints be preserved. For example, a recruiting application can dynamically generate candidate lists and action forms, while which organization a candidate belongs to and which fields a recruiter may update are continuously checked by a trusted data-access service.
 
@@ -791,13 +791,13 @@ Code generation can also be used to develop Agents themselves. The creator recei
 
 How do you tell whether a change improved general capability or merely happened to fit the problems just seen? Keep back a task that was never given to the creator. For example, develop a price-monitoring Agent using one store's data, then give it samples from another store while rerunning the original task.
 
-**Maintaining the Agent's Runtime Environment.**
+**Maintaining the Agent's runtime environment.**
 
 A new Agent depends on configuration, credentials, session state, services, and a sandbox to run. OpenClaw's `doctor` command offers an example of a maintenance tool: it checks for problems such as legacy configuration migration, OAuth credential status, session locks, plugin installation, gateway health, and sandbox images, and either suggests fixes or performs the corresponding repairs[^ch5-doctor].
 
 These deterministic checks can form the foundation of a self-maintenance process. The detection rules cover known failures, and the repair actions have well-defined inputs and expected results. When designing an Agent diagnostic process on top of this, unresolved problems can be handed to the model together with logs, configuration, and check results, asking it to state which configuration it intends to change and how; the execution layer checks permissions and the scope of the change, then runs health checks and regression tests. Configuration snapshots, change records, and a rollback entry point help the system resume work if a repair fails.
 
-**Carrying Engineering Experience in Reference Implementations.**
+**Carrying engineering experience in reference implementations.**
 
 Creating a specialized Agent involves both domain logic and general-purpose infrastructure. When checking the generated result, start from four kinds of problems:
 

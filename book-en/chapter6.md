@@ -78,13 +78,13 @@ If you ask an assistant to "remind me when the client replies," how does it wake
 
 **Timers** (`set_timer`) wake a task at an agreed time. A one-shot timer suits "call the bank next Monday at 10 a.m. to check on the mortgage"; a recurring timer suits checking service health every hour. Waiting for a reply after sending an email, or redialing after hitting non-business hours, can also be scheduled with a timer. The interface needs to store the time zone, trigger condition, and task identifier, and provide a way to cancel or modify the timer. When an external service only supports queries, scheduled jobs can also handle progress polling.
 
-**Background Task Monitoring** (`monitor_shell`) turns long-running commands into progress events. It returns a task identifier at startup, sends notifications on new output, keywords, or state changes while running, and reports the exit status and result when finished.
+**Background task monitoring** (`monitor_shell`) turns long-running commands into progress events. It returns a task identifier at startup, sends notifications on new output, keywords, or state changes while running, and reports the exit status and result when finished.
 
 Having the model query progress repeatedly costs a model call even when nothing has changed; waiting only for the completion notice may miss a failure midway. I therefore recommend leaving monitoring to the runtime and waking the model only when useful progress, an error, or a stall appears. This lets the Agent keep communicating during a build while still stepping in promptly when something goes wrong. Monitoring rules can filter, merge, and rate-limit events so that not every log line triggers a model call.
 
 For example, after the model subscribes to status updates for a pending ticket, it can end this round of reasoning and wait for a notification carrying the ticket number to wake it. If the other side only provides a query interface, the model can set a scheduled job for its next check. When the time comes, if the ticket is "still in progress," it schedules another check; if the ticket has been resolved, it cancels further checks. In both approaches the runtime does the waiting, and the model makes a judgment only when a notification arrives or a timer expires.
 
-**External Event Channels** (`connect_channel`) subscribe to email, instant messages, or API callbacks. The channel adapter verifies the source, maps the service's own identifiers to threads and correlated objects, and submits events in a unified format; the "Ingress Layer" section below covers this in detail. PineClaw's call-status notifications belong to this category.
+**External event channels** (`connect_channel`) subscribe to email, instant messages, or API callbacks. The channel adapter verifies the source, maps the service's own identifiers to threads and correlated objects, and submits events in a unified format; the "Ingress Layer" section below covers this in detail. PineClaw's call-status notifications belong to this category.
 
 All three tool types need clear trigger conditions, filtering rules, and event payloads. The payload should include the event identifier, time of occurrence, source, related task, and the necessary content, so the Agent can judge whether the event is still valid and what information the next step requires.
 
@@ -98,7 +98,7 @@ OpenClaw's multichannel interaction lets users send messages, wait for progress,
 
 The form of communication can also change with the task: brief progress updates use text, complex results come with images or files, information the user must fill in uses structured cards, and interactive deliverables use the generative UI introduced in Chapter 5. When a channel supports delivery or read receipts, the system stores that status; retries after failure, duplicate messages, and cross-channel synchronization also go into the delivery record.
 
-**Multichannel Notification and User Re-engagement.**
+**Multichannel notification and user re-engagement.**
 
 Instant messaging, SMS, email, phone calls, and app push notifications each suit different levels of urgency and different kinds of content. The Agent can choose a channel based on urgency, user preferences, the user's current status, and message length. A call event that needs immediate confirmation calls for a prompt alert, while a full report can be delivered by email or as an app link.
 
@@ -147,7 +147,7 @@ There are four common kinds of sources. **Conversational channels** include the 
 | Acknowledgment | Client receipt | Return success within the time limit | Track your own read position | Return 2xx within the time limit | Delete the message | Commit the offset |
 | Reply path | Original conversation | Original conversation | Reply email | None | None | None |
 
-**The Unified Envelope.**
+**The unified envelope.**
 
 The adapter converts each raw message into a unified **envelope**. The envelope records only facts that are known on arrival; priority and deadlines are added by routing rules, customer tier and order status by business systems, and processing status is stored separately. The customer's refund request can be written like this:
 
@@ -175,13 +175,13 @@ The adapter converts each raw message into a unified **envelope**. The envelope 
 - `reply`: which outbound adapter to use and which target to send to. A payment callback has no reply path, so this field is empty.
 - `occurred_at` is the time of occurrence given by the source; `expires_at` is the validity period, filled in only for events such as price quotes and verification codes.
 
-**Threads and Correlation.**
+**Threads and correlation.**
 
 A customer first says "refund," then immediately adds "never mind, I'll exchange it instead." The order of these two messages must not be reversed; a different customer's messages are unrelated and can be processed in parallel. **The ingress layer promises ordering only within a thread.** The adapter maps the source's own unit of ordering to `thread`: a conversation in the app, an SQS FIFO message group (`MessageGroupId`), a Kafka partition key, or the Issue or PR number in a GitHub callback. When a source does not guarantee ordering, the runtime uses `occurred_at` or a version number provided by the source to recognize stale states that arrive late—for example, "refund in progress" arriving after "refund succeeded."
 
 The four messages for this refund belong to four threads. Merging them into one comes at a real cost: an unrelated discussion in the after-sales group would have to queue behind the customer's messages, and because thread identifiers often double as partition keys, changing them afterward requires migrating data. **Correlation is expressed in a separate field rather than by rewriting threads.** `correlation` lists the business objects an event concerns, and tasks subscribe to the relevant threads by correlated object.
 
-**Separating Acknowledgment Timing from Progress.**
+**Separating acknowledgment timing from progress.**
 
 **The adapter should acknowledge the source after the event has been written to the ingress log, not after the Agent has finished processing it.** Feishu's event callbacks require a response within 3 seconds and WeCom's within 5, or the event is pushed again; an SQS message that is not deleted within its visibility timeout will be received again. If acknowledgment waits until processing completes, one slightly long model call will trigger a redelivery. By writing to the log first and acknowledging afterward, the delivery guarantees of all sources converge on a single statement: **every event enters the ingress log at least once (at-least-once)**, and the redelivered copy is blocked by the deduplication key.
 
@@ -197,7 +197,7 @@ The system must store three kinds of progress separately:
 
 If offsets are treated as task progress, replaying the log will send replies that have already been sent a second time; once they are separated, replay affects only dispatch progress. The outbound direction corresponds to an outbox: before sending, record the intent to send and the idempotency key, and mark it complete when the channel receipt arrives. How to reconcile after a restart is covered below in "Building a Basic Loop from Email Events."
 
-**Expiry, Coalescing, and Backpressure.**
+**Expiry, coalescing, and backpressure.**
 
 When hundreds of events per second pour into the same thread, they should not be handed to the model one by one. The router handles the backlog before dispatch:
 
@@ -205,7 +205,7 @@ When hundreds of events per second pour into the same thread, they should not be
 - **Coalescing.** `kind` distinguishes two types of events. State events describe the current value of some object, such as the refund status in a payment callback or the order status on Kafka; when several pile up in the same thread, only the latest is handed to the model, and the intermediate values stay in the log. Message events are something a person said or an instruction they gave, such as a customer message or a supervisor's click; they can be handed to the model in batches but must never be dropped.
 - **Backpressure.** Pull-based sources can be pulled more slowly, leaving the backlog at the source. Push-based sources cannot be told to pause, so the adapter keeps writing to the log and acknowledging as usual; the backlog shifts to the ingress log and is absorbed by the first two rules.
 
-**One Refund Across Four Sources.**
+**One refund across four sources.**
 
 1. The customer requests a refund in the app chat. The adapter deduplicates by client message ID, writes the event to the log, and then sends a receipt to the client; the router creates a refund task keyed on `order:12345`, and the task subscribes to this conversation thread.
 2. The amount exceeds the Agent's authority, so it posts an approval card in the WeCom after-sales group and records the card identifier in the task. The supervisor clicks "Approve"; the adapter writes the event to the log, returns success, and fills in the correlated object based on the card identifier.
@@ -230,7 +230,7 @@ A synchronous model interface usually accepts the next batch of messages only af
 
 Cancellation likewise requires the executor's cooperation. After the model stops generating, background tools may still be running; the executor must receive the cancellation signal and report the actual state, much as a Go task performs cleanup after checking `ctx.Done()`. Writes, sends, or payments that have already completed should be undone or compensated through the corresponding business processes.
 
-**Three Processing Strategies.**
+**Three processing strategies.**
 
 Figure 6-3 compares three choices for when a new event arrives. If it queues, the response time depends on when the next safe point comes; if the current task is cancelled, you must confirm which operations have already completed and where work can resume; if a separate loop is started, you must check whether the two tasks will contend for the same resources.
 
@@ -242,7 +242,7 @@ Figure 6-3 compares three choices for when a new event arrives. If it queues, th
 
 **Parallel Processing** suits requests that are independent of the main task and need a timely reply. For example, if the user asks about the weather during a large data analysis, the system can open a separate session to answer the question.
 
-**Urgency and Routing.**
+**Urgency and routing.**
 
 Event types provide initial clues: `user.interrupt`, trusted supervisor instructions, and system alerts can go into a high-priority lane; `user.input`, `agent.input`, `tool.result`, and `timer.trigger` are judged further based on content and task state. When a sender calls their message "urgent" in the body, the system still determines permissions based on verified identity and rules.
 
@@ -289,7 +289,7 @@ The email queue establishes the basis for sequential processing. Next, we add lo
 
 Suppose the Agent is drafting an email and has already called `search_contacts` to look up a contact. Before the result comes back, the user says, "Wait, first check tomorrow's weather." If the current model interface requires every tool call to be matched with its result first, the Harness has to translate the background state into a message sequence the interface will accept.
 
-**Expressing Background State in a Synchronous Message Format.**
+**Expressing background state in a synchronous message format.**
 
 **When staying compatible with a synchronous interface, preserve the pairing of normal calls with their real results as far as possible, and add status responses only when switching tasks midway.** Filling in "still running" for every call too early fills the trajectory with incomplete states and makes it harder for the model to track the real results. Five rules can be followed:
 
@@ -303,13 +303,13 @@ In the contact-lookup example, the complete call is written to the trajectory fi
 
 A status response describes only current execution progress. Steps that depend on the contact data must wait until the real result arrives. The task manager can store states such as `running`, `completed`, `cancelled`, and `failed`, and check that dependencies are satisfied before sending a reply or running later tools.
 
-**Designing Asynchronous Tools Around Task Handles.**
+**Designing asynchronous tools around task handles.**
 
 For newly designed long-running tools, I prefer to define "start" as a complete operation that immediately returns a real task handle. The model can then distinguish "started" from "finished," and later queries, cancellations, and result events share a common basis for correlation. For example, `initiate_phone_call` starts a phone task and returns a task identifier with the status "dialing"; `phone_call_connected` and `phone_call_ended` report when the call connects and when it ends.
 
 The tool description should say clearly: "This tool starts a phone-call task and returns a task ID on success. You can continue with other matters; call progress and the final outcome are delivered as separate events." The tool name signals that this is a start operation, while the return structure and later events show how the task proceeds and ends. The system then provides interfaces for querying, cancelling, and resuming by task ID, so the model knows what it can still do.
 
-**Handling Batched Events One by One.**
+**Handling batched events one by one.**
 
 When several events enter the context at once, the model may respond only to the last one and overlook requirements raised earlier. The runtime should keep a separate processing state for each, so that conditions not yet addressed stay visible. The prompt can ask the model to check each item, and a status bar lists the information not yet handled:
 
@@ -574,7 +574,7 @@ The main LLM can insert control markers into its text, such as `[THINKING]`, `[E
 
 A reference-clip approach organizes the different ways a single speaker expresses themselves into a library. Each segment of text selects a matching emotion, speaking rate, and style, and the synthesized segments are then concatenated in order. Control state needs a defined scope: for example, an emotion persists until the next change, while a pause takes effect only at its position.
 
-> **Experiment 6-8 ★★: Control Token-Driven TTS with Fish Audio**
+> **Experiment 6-8 ★★: Control-Marker-Driven TTS with Fish Audio**
 >
 > This experiment uses Fish Audio S1 to build a voice library of 24 reference clips: four emotions, three speaking rates, and two styles in combination. A parser converts a marked-up reply into speech segments and silence segments, and the execution layer selects a reference clip for each segment and performs the synthesis.
 >
@@ -616,11 +616,11 @@ In Figure 6-13, Anthropic's Computer Use reference implementation provides three
 
 To have the model click a search box, the problem can be posed in two forms. One shows it a screenshot and asks it to report click coordinates. The other numbers the candidate targets and asks it to pick the search box; the numbers can be placed on candidate regions in the screenshot, or they can come from an element list provided by the browser. The three routes are introduced below. When choosing a number, the execution layer is responsible for mapping the number back to the actual target; when reporting coordinates directly, the model must also estimate the target's position, which places higher demands on grounding training and on adapting to screen resolution.
 
-**Set-of-Mark: Visual Annotation.**
+**Set-of-Mark: visual annotation.**
 
 Set-of-Mark (SoM) overlays referable numbers on an image, linking visual regions to the model's output. The original work generated candidate regions using segmentation and similar methods—for example, obtaining regions with SAM or SEEM and then placing marks on them. After the model chooses a number, the execution layer determines where to operate from the corresponding region. This method can be used for desktop software or game interfaces that lack a DOM, provided the control to be clicked falls within a numbered region and the model can see clearly which number it corresponds to.[^ch6-som]
 
-**Structured Element Indexing.**
+**Structured element indexing.**
 
 The browser can also provide another kind of clue. The Document Object Model (DOM) describes which elements the page contains and how they are nested, layout information gives where elements are displayed, and the accessibility tree preserves the roles and accessible names that assistive technologies need. For example, if a button showing only a magnifying-glass icon has been given the accessible name "Search," the Agent has a chance to find it by role and name. In approaches such as browser-use, the system can obtain element information through browser debugging interfaces such as the Chrome DevTools Protocol (CDP), identify input fields, buttons, and links, and then number the actionable elements on the current page. In Figure 6-14, the model has selected [2] in the upper right of the page. How does this number become a click on the Submit button?
 
@@ -641,7 +641,7 @@ The process can be divided into four steps: read the DOM, layout, and any availa
 
 After the model chooses a number, the execution layer resolves it to an element reference or coordinates, checks that the target is still visible and interactive, and then performs the operation. After the page refreshes, scrolls, or dynamically inserts elements, the map must be updated to avoid using stale numbers. Structured indexing can draw on tags, roles, and text, whereas canvases, occlusion, or incomplete semantic markup require judgment from the screenshot. The more elements listed and the larger the screenshot, the more information goes into the context.
 
-**Direct Coordinate Prediction.**
+**Direct coordinate prediction.**
 
 The coordinate route has the model output a position directly from the screenshot and a description of the target—for example, mapping "click the submit button" to a particular point. GUI grounding research such as SeeClick, as well as Claude's Computer Use, adopt coordinate output. The execution layer converts image coordinates into actual desktop coordinates.
 
@@ -913,4 +913,4 @@ This sequence helps locate faults. If the old quote keeps playing after the user
 11. ★★★ Fast interaction requires acting promptly. Using a voice reply, a web form submission, and a robotic grasp as examples, design action tiers, state confirmation, and stop mechanisms so that response speed matches the consequences of the task.
 12. ★★★ Choose one primitive—wake-up, safe point, cancellation, preemption, or fast/slow division of labor—and compare its implementation in event-driven tasks and in robot action chunking. How do the speed of environmental change, the reversibility of actions, and the cost of observation affect the design?
 13. ★★ Should a customer's chat, the approval discussion, and the payment callback for the same order be placed in the same thread? Compare merging threads with subscribing by correlated object in terms of processing order, parallelism, partition-key migration, and permission isolation.
-14. ★★ A voice travel assistant needs to check the weather, read user memory, search the web, look up flights, and book tickets. How should the foreground, background, and runtime divide the work? If the user spells out a fellow traveler's name aloud, and then asks about the weather while waiting for flight results, how do you avoid booking the wrong ticket or failing to report the results?
+14. ★★ A voice travel assistant needs to check the weather, read user memory, search the web, look up flights, and book tickets. How should the foreground, background, and runtime divide the work? If the user says a fellow traveler's name aloud, and then asks about the weather while waiting for flight results, how do you avoid booking the wrong ticket or failing to report the results?

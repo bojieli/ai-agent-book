@@ -49,7 +49,7 @@ This task's `reward_basis` is set to `ENV_ASSERTION`, so the total reward depend
 
 The companion run selected five telecom tasks and ran each once, with GPT-4.1 mini as both the customer service Agent and the user simulator; four tasks passed. We first analyze the France roaming task above and then contrast it with a failed task.
 
-> **Experiment 7-1 ★: Run τ²-bench and Compare It with τ-bench**
+> **Experiment 7-1 ★: Run τ²-bench and Trace Its Evolution from τ-bench**
 >
 > First read one task's user scenario, initialization actions, and scoring conditions, then run one complete interaction. Along the trajectory, mark the agent's queries, the user's actions, the state changes, and the acceptance results, and check which piece of information each judgment was based on.
 >
@@ -348,13 +348,13 @@ Start with pure RAG. On basic recall it answers 18 questions correctly, against 
 
 **Does combining two memory mechanisms naturally yield the strengths of both?** On multi-session disambiguation, the hybrid system answers 14 questions correctly, more than the card approach's 12 and pure RAG's 8. But the historical summary also records two groups of questions worth looking at separately: on 3 questions only the hybrid system was right, and on 8 others at least one single approach was right while the hybrid system was wrong. Counting this way, $40-3+8=45$ questions can be answered correctly by at least one single approach, while the hybrid system as actually run got 40 right. The 45 is a reference obtained by merging two answer sheets after the fact; for the system to achieve that score on its own, it still has to solve the problem of choosing which memory to use while answering. Another 28 of the 180 judgments triggered the hallucination veto.
 
-**Same-Family Models and Multi-Source Judging.**
+**Same-family models and multi-source judging.**
 
 An Agent and a judge model may share the same blind spots, or favor the same style of expression. When the two come from the same model family, check especially whether these preferences affect the scores. If an Agent learns the style the grader likes while continuing to make factual errors the grader cannot catch, its score can still go up. This is an instance of Goodhart's law in evaluation: when a metric is repeatedly used as an optimization target, it can gradually lose its ability to measure actual quality.
 
 Before major version releases and in periodic checks of critical business flows, I recommend multi-source judging: have different model families score independently with the same Rubric, for example letting Claude perform the task and GPT and Gemini judge it. First use human-labeled samples to measure each evaluator's accuracy and disagreements, then decide how to aggregate: routine scores can be weighted-averaged, critical failure conditions are handled by rules fixed in advance, and samples with large disagreement go to human review. Day-to-day runs can use a single judge model, with the checks above catching scoring drift in time.
 
-**Multimodal LLM-as-a-Judge.**
+**Multimodal LLM-as-a-judge.**
 
 Multimodal judging extends the same process to audio, images, and video. The scoring materials need to cover the attributes being judged:
 
@@ -371,7 +371,7 @@ Multimodal judging extends the same process to audio, images, and video. The sco
 >
 > Aggregate the results by service, corpus type, and scoring dimension, and pull high-scoring, low-scoring, and high-disagreement samples for human blind listening.
 
-The companion experiment took four kinds of sample, numbers, polyphonic characters, long sentences, and excited tone, for each of two TTS configurations, and had Voxtral listen and judge directly, producing 8 score records. On a five-point scale, both configurations scored 5.00 for accuracy and 4.00 for naturalness; Fish Audio averaged 4.00 and 3.00 on emotional expression and timbre consistency, and OpenAI 3.75 and 2.75. Both 0.25-point gaps come from the number item: the other three items scored identically on all four dimensions. Take the polyphonic item: the source text ends with "还得还清所有欠款" ("still has to pay off all the debts"), where the two instances of "还" should be read hái and huán respectively. The judge gave both recordings full marks for accuracy, with identical reasoning, but never said character by character what it actually heard.
+The companion experiment took four kinds of sample (numbers, characters with multiple readings, long sentences, and an excited tone) for each of two TTS configurations, had Voxtral listen and judge directly, and produced 8 score records. On a five-point scale, both configurations scored 5.00 for accuracy and 4.00 for naturalness; Fish Audio averaged 4.00 and 3.00 on emotional expression and timbre consistency, and OpenAI 3.75 and 2.75. Both 0.25-point gaps come from the number item: the other three items scored identically on all four dimensions. Take the multiple-reading item: the source text ends with "还得还清所有欠款" ("still has to pay off all the debts"), where the two instances of "还" should be read hái and huán respectively. The judge gave both recordings full marks for accuracy, with identical reasoning, but never said character by character what it actually heard.
 
 The experiment also shows how reference audio shapes what is being evaluated. The reference audio in the records came from Fish S1, so the timbre score measures how much the synthesized speech sounds like that reference recording. When comparing general-purpose TTS, report reading, naturalness, and style separately; when comparing voice cloning, have every approach imitate the same target speaker and calibrate the similarity scores with human blind listening. Reference materials also define "what counts as good": a reference answer specifies what should be said, and a reference image or recording supplies the visual or acoustic features to compare against.
 
@@ -480,7 +480,7 @@ The following mapping can be drawn from failure categories to regression tasks:
 | Distorted verification | Protected acceptance conditions, and the real execution results that completion claims rest on |
 | Incorrect information reported | Amounts, status, times, and required notices in the final reply agree with the facts |
 
-These evaluation data also provide concrete targets for model post-training in Chapter 8 and for continuous Agent evolution in Chapter 9.
+These evaluation data also provide concrete targets for model post-training in Chapter 8 and for continual Agent evolution in Chapter 9.
 
 > **Experiment 7-7 ★★: Trajectory-Prefix Boundary Evaluation: Multiple Representations of the Same Context**
 >
@@ -856,7 +856,7 @@ Digital environments also have a gap between simulation and actual operation, in
 
 If both the customer service agent and the user say "it's fixed," does that make the task a success? Return to the roaming fault at the start of the chapter: acceptance depends on whether the speed test on the user's device reaches the agreed excellent. And if the product gives the user only one chance to have the problem handled, the best of five attempts cannot stand in for the first. When $k$ attempts are allowed, three questions must also be kept apart: at least one success (Pass@k), the best score any single attempt can reach (Best@k), or success every time (Pass^k). Only once the criterion is chosen do you know which tasks to take from public benchmarks, an in-house business set, and production trajectories, which results can be checked by a program, and which need item-by-item Rubric judgment calibrated by people.
 
-Some questions still need a human to read the answer, even after scoring. The user used to prefer brief explanations, but this time explicitly asked for the full migration steps. Stopping the trajectory just before the assistant decides lets you ask it separately what it would do next. It chose to write the complete explanation, yet the scorer failed it because the decision label was not in the allowed set. **Obtaining a piece of information and correctly applying it to the current decision are two different capabilities.** A trajectory prefix can establish whether it used the wrong memory, and it can also reveal which reasonable behavior the scoring rules missed; how good the delivered explanation actually is, only a full task run will show.
+Even after some questions are scored, the answers still need to be read. The user used to prefer brief explanations, but this time explicitly asked for the full migration steps. Stopping the trajectory just before the assistant decides lets you ask it separately what it would do next. It chose to write the complete explanation, yet the scorer failed it because the decision label was not in the allowed set. **Obtaining a piece of information and correctly applying it to the current decision are two different capabilities.** A trajectory prefix can establish whether it used the wrong memory, and it can also reveal which reasonable behavior the scoring rules missed; how good the delivered explanation actually is, only a full task run will show.
 
 When comparing two models or two Harnesses, also ask: are they working on the same set of questions? AndroidWorld's four Wi-Fi tasks passed both before and after trimming the interface tree, with average token usage nearly halved. After expanding to the full task set, if only the trimmed-tree group left records, you could compute its own quality, latency, and cost, but you could not work out how much it saved relative to the full tree.
 

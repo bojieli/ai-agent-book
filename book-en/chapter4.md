@@ -342,7 +342,7 @@ First, check the input. A file tool should resolve the target path, confirm that
 
 Second, check permissions. File access should be confined to a read/write scope, processes should run under a restricted identity, and external APIs should use authorization and credentials that match the task. Quotas and rate limits constrain resource use. A command blacklist can block known dangerous patterns, while command parsing and model review help judge what an operation means; the underlying file system, network, and process permissions limit its actual reach. Chapter 5 discusses further how these mechanisms combine.
 
-**Proposer–Reviewer: Independently Checking Action Plans and Execution Results.**
+**Proposer–Reviewer: independently checking action plans and execution results.**
 
 The **Proposer–Reviewer paradigm** introduced in Chapter 1 also applies to execution tools: the proposer generates an action plan, and the reviewer checks it against the task goal, the authorization, and the acceptance criteria. Depending on when the check happens, it takes the form of pre-approval or post-validation.
 
@@ -356,7 +356,7 @@ On rejection, add the specific reason to the trajectory as a tool result—for e
 
 **Post-validation** checks the artifacts and system state after execution. I recommend switching the method of checking first, having the reviewer examine the running result or the final rendering directly. Reading the same code over and over tends to carry forward the assumptions made when it was generated; switching to a visible, runnable artifact reveals errors that the code's surface does not show. For example, after generating a document from code, render the page to check the layout; after modifying a configuration, run the program in an isolated environment to check whether the configuration takes effect; after writing data, read the target record back to check its content. Chapter 5 uses a presentation to demonstrate this loop: the proposer generates code, the reviewer checks the rendered screenshot, and then reports what needs to change.
 
-**Sidecar: A Checking Module That Runs Alongside the Main Loop.**
+**Sidecar: a checking module that runs alongside the main loop.**
 
 The Sidecar borrows the "sidecar" metaphor from microservice architecture: an auxiliary module that runs alongside the main Agent and takes on a specialized task. Used for security checks, it reviews a concrete action before the call executes; used for context processing, it can also filter memories or compress tool results in parallel.
 
@@ -382,13 +382,13 @@ Table 4-2 Comparison of the Proposer–Reviewer Mechanism and the Sidecar Mechan
 
 When used to supplement context, a Sidecar can filter relevant user memories, summarize long tool outputs, or look up data needed for later steps while the main model works on the current step. The main loop picks up the results at the appropriate point, reducing serial waiting.
 
-**Automated Validation and Feedback Loop.**
+**Automated validation and feedback loop.**
 
 **My recommendation: if the result of an operation can be validated automatically, build the validation into the tool's workflow.** For example, after `write_file` writes code, it can call a syntax checker or linter for that language, organize the diagnostics into file location, line number, error type, and description, and return them together with the write status. Once the Agent sees "Line 10: variable `result` is undefined," it can locate and fix the problem.
 
 Tools should report operation status and validation status separately: the file has been written, yet the check may fail. Syntax checking finds code that cannot be parsed, and static analysis can also catch some name, type, or rule problems; whether the functionality is correct requires the appropriate tests or run results.
 
-**Truncation and Persistence of Long Outputs.**
+**Truncation and persistence of long outputs.**
 
 Terminal logs and program output can be very long. You can set a threshold—for example, above 200 lines or 10,000 characters—beyond which the full result is saved as an artifact that can be revisited, and only the head and tail are returned to the context:
 
@@ -399,7 +399,7 @@ Terminal logs and program output can be very long. You can set a threshold—for
 
 Give each call its own artifact identifier so that later output does not overwrite earlier records. The tool's return value should also keep the exit status, a truncation flag, and the artifact location, making it easy to match the current summary to the full record.
 
-**Isolation and Sandboxing of Execution Environments.**
+**Isolation and sandboxing of execution environments.**
 
 General-purpose tools such as a Python interpreter and a shell can execute programs the model generates. What they can access is determined jointly by the running identity, the file system, and the network policy. A Python virtual environment (venv) isolates package dependencies, but code in it still uses the file, network, and system permissions of the process it runs in; restricting those capabilities requires operating-system or virtualization mechanisms.
 
@@ -420,11 +420,11 @@ If next week the user wants to pick up a desktop that is already open, retrievin
 [^ch4-docker-isolation]: Docker, *Docker Engine security*, explaining how namespaces, resource controls, the kernel, and process privileges affect container isolation.
 [^ch4-firecracker]: Firecracker, Design, describing the KVM-based microVM architecture.
 
-**Observability of Tool Execution.**
+**Observability of tool execution.**
 
 Execution records should answer "who initiated what operation, which resources it affected, and with what result." Each call should record the call ID, time, tool name, necessary arguments, target resource, execution status, and duration, and link to the task and the approval record. Credentials and sensitive content need to be redacted or access-restricted. Aggregating call frequency, success rate, timeout rate, and duration helps locate slow tools, repeated failures, and resource bottlenecks; when anomalies reach a threshold, trigger an alert or pause the related execution.
 
-**Idempotency and Cancellation Semantics.**
+**Idempotency and cancellation semantics.**
 
 Suppose the assistant submits an order, the merchant creates it, but the acknowledgment is lost on the way back. What the assistant sees is a request timeout. If it sends the same order again, how is the merchant to know the user wanted only one?
 
@@ -464,7 +464,7 @@ When several Agents work at once, task assignment also has to become an allocati
 
 Return to the customer email example. You can ask another Agent to extract delivery dates from the attachments, but you should also give it the identifiers of the original messages and require it to return "date, the corresponding sentence, the attachment it came from." When the main Agent receives two conflicting dates, it can then tell that one refers to the order date and the other to the promised delivery date; receiving only "Done" leaves it no way to resolve the discrepancy.
 
-**Configure Sub-Agents by Responsibility.**
+**Configure sub-Agents by responsibility.**
 
 Domain knowledge and workflows can first be loaded on demand through Skills. When a task needs its own context, different tool permissions, or parallel processing, hand it to a separately configured sub-agent. Each sub-agent is configured with a prompt, toolset, and knowledge sources for its responsibility, reducing the interference caused by putting every rule and every piece of intermediate material in the same context. For example, a research Agent supplies sources and evidence, a code review Agent locates problems, and the main Agent assigns tasks and integrates results. When dividing the work, also agree on how shared resources are accessed, so that several Agents do not modify the same file at once or submit the same external operation twice.
 
@@ -475,7 +475,7 @@ A sub-agent's prompt should cover the following:
 - **Task boundaries**: Make clear the scope it may handle, the tools available, resource permissions, and how to escalate when information is missing or conflicts arise.
 - **Output contract**: Return the conclusion, evidence, unresolved items, and current status in an agreed JSON or Markdown structure, so the main Agent can carry on.
 
-**Manage the Sub-Agent Lifecycle.**
+**Manage the sub-Agent lifecycle.**
 
 Collaboration interfaces can be organized into a few groups of primitives: launch, messaging, status, and discovery. `spawn_subagent` creates a sub-agent and assigns it a task, and `cancel_subagent` requests that it stop once the task has lost its purpose; `send_message_to_subagent` passes along additional requirements, and the sub-agent can likewise report progress or ask for clarification; `get_subagent_status` queries status and results. The system can also use `list_agents` to list Agents' responsibilities, availability, and task ownership, helping the main Agent find collaborators.
 
@@ -483,7 +483,7 @@ These interfaces can support several calling modes. A **Synchronous Call** waits
 
 The task ID ties together creation, messages, results, and cancellation. The Harness has to maintain states such as queued, running, completed, failed, and canceled, make clear which states can still receive messages, and decide how to handle external operations that already happened before a cancellation. Context passing, collaboration topology, and division of labor among multiple Agents are developed in Chapter 10.
 
-**Request Human Intervention When a Human Decision Is Needed.**
+**Request human intervention when a human decision is needed.**
 
 HITL (Human-in-the-Loop) suits steps that need the user to choose, authorize, or contribute professional judgment. A request should present the open question, the available actions, and their consequences together, so that a person can decide on that basis. For example, submit for approval once the plan is ready and execution needs explicit authorization; when the task lacks a necessary condition, ask for the missing information.
 
