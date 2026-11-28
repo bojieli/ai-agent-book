@@ -26,7 +26,7 @@ El caso procede del dominio telecom de τ²-bench, de Sierra. El entorno simula 
 
 ### Los cuatro componentes de la definición de una tarea
 
-Para que otro Agente de atención al cliente resuelva el mismo problema, primero hay que restaurar el estado del teléfono y de la cuenta, hacer que el usuario simulado colabore en el diagnóstico con las mismas pautas y, por último, puntuar con el mismo criterio. La tabla siguiente recoge las cuatro partes de la definición de la tarea. Al leerla, preste atención a una distinción: quien redactó la tarea conoce la configuración inicial del teléfono, pero ¿cuánto saben el agente de atención y el usuario al empezar la conversación?
+Para que otro Agente de atención al cliente resuelva el mismo problema, primero hay que restaurar el estado del teléfono y de la cuenta, hacer que el usuario simulado colabore en el diagnóstico con las mismas pautas y, por último, puntuar con el mismo criterio. La tabla siguiente recoge las cuatro partes de la definición de la tarea. Al leerla, presta atención a una distinción: quien redactó la tarea conoce la configuración inicial del teléfono, pero ¿cuánto saben el agente de atención y el usuario al empezar la conversación?
 
 | Parte | Campo | Contenido en este ejemplo |
 | --- | --- | --- |
@@ -53,9 +53,9 @@ La ejecución complementaria toma cinco tareas de telecom, ejecuta cada una una 
 >
 > Lee primero el escenario de usuario, las acciones de inicialización y las condiciones de puntuación de una tarea, y después ejecuta una interacción completa. A lo largo de la trayectoria, marca las consultas del agente de atención, las operaciones del usuario, los cambios de estado y el resultado de la verificación, y comprueba en qué información se basó cada decisión.
 >
-> Al comparar τ-bench con τ²-bench, fíjese sobre todo en si el usuario puede modificar el entorno mediante herramientas y en qué exigencias de coordinación impone ese cambio al agente de atención.
+> Al comparar τ-bench con τ²-bench, fíjate sobre todo en si el usuario puede modificar el entorno mediante herramientas y en qué exigencias de coordinación impone ese cambio al agente de atención.
 >
-> Al mirar la figura 7-2, busque primero quién puede desactivar el modo avión del teléfono y después quién puede modificar la configuración de itinerancia del operador. Lo que cada lado puede hacer es distinto, y eso explica por qué el agente de atención, después de completar sus propias operaciones, todavía tiene que pedir al usuario que haga un test de velocidad en el teléfono.
+> Al mirar la figura 7-2, busca primero quién puede desactivar el modo avión del teléfono y después quién puede modificar la configuración de itinerancia del operador. Lo que cada lado puede hacer es distinto, y eso explica por qué el agente de atención, después de completar sus propias operaciones, todavía tiene que pedir al usuario que haga un test de velocidad en el teléfono.
 >
 > ![Figura 7-2: Entorno de doble control y verificación por capas en τ²-bench](images/revised/fig7-2.svg)
 
@@ -85,7 +85,7 @@ El autor llama «prodigio técnico» a algunas demostraciones de Agentes que imp
 
 Por ejemplo, Anthropic reunió a varios Claude para construir un compilador de C de forma colaborativa y demostró que la ejecución prolongada, la retroalimentación de los tests y el reparto de tareas sostienen un proyecto de ingeniería complejo. Cuando un investigador busca un contraejemplo matemático, también puede hacer que el modelo lo intente una y otra vez y verificar después, de forma independiente, si alguno de esos contraejemplos se sostiene. La revisión de seguridad del software permite comprobar los problemas sospechosos que señala el modelo, y en la creación abierta se puede elegir la mejor entre varias obras.[^ch7-long-running]
 
-Los productos de aplicación también muestran su capacidad mediante tareas complejas. Manus pone una computadora virtual en manos del Agente, de modo que el usuario lo ve manejar la interfaz, buscar información y completar trabajo de forma continuada. OpenClaw recibe encargos por mensajería instantánea, accede a los archivos y servicios ya configurados y autorizados, informa del avance, pide información adicional sobre la marcha, y además puede despertarse mediante un mecanismo programado para revisar los pendientes. Estos comportamientos concretos hacen que al usuario le resulte más fácil entender para qué sirve un Agente.
+Los productos de aplicación también muestran su capacidad mediante tareas complejas. Manus pone un ordenador virtual en manos del Agente, de modo que el usuario lo ve manejar la interfaz, buscar información y completar trabajo de forma continuada. OpenClaw recibe encargos por mensajería instantánea, accede a los archivos y servicios ya configurados y autorizados, informa del avance, pide información adicional sobre la marcha, y además puede despertarse mediante un mecanismo programado para revisar los pendientes. Estos comportamientos concretos hacen que al usuario le resulte más fácil entender para qué sirve un Agente.
 
 A juicio del autor, las demostraciones capaces de completar tipos de tarea nuevos son un factor importante del atractivo de estos productos.
 
@@ -142,13 +142,13 @@ El **criterio de puntuación (Rubric)** explica cómo se dictamina el resultado.
 
 El **protocolo de ejecución (Interaction Protocol)** organiza los turnos de palabra, las llamadas a herramientas y la terminación. El simulador de usuario puede emitir `###STOP###` para cerrar la interacción, y el ejecutor fija además un presupuesto de turnos. El motivo de la terminación y la puntuación de la tarea se registran por separado: cuando el usuario detiene la conversación, las aserciones de entorno siguen siendo las encargadas de determinar si se alcanzó el objetivo; si se agota el presupuesto, también hay que conservar el estado final y los pasos que quedaron sin completar.
 
-### Entornos de evaluación de interacción humano-computadora y de llamada a herramientas
+### Entornos de evaluación de interacción persona-ordenador y de llamada a herramientas
 
 Las tareas de telecom incluyen un simulador de usuario que responde de forma continua y opera el dispositivo. La reparación de código, el análisis de datos y la resolución de problemas matemáticos, en cambio, suelen arrancar con las instrucciones de la tarea, y a partir de ahí el Agente interactúa sobre todo con herramientas. Ambos tipos de entorno necesitan tareas, estado, interfaces, criterios de puntuación y protocolo de ejecución; la diferencia está en si hay que simular un interlocutor y en cómo coordinan sus acciones las dos partes.
 
-En una tarea de código se puede comprobar la salida con tests; en una tarea de base de datos, consultar los registros modificados; en un análisis abierto, quizá haya que pedir a una persona o a un modelo que valore el contenido. Las tareas de interacción humano-computadora suelen exigir, además, reunir dos piezas de evidencia. Por ejemplo, si se ha restablecido la conexión móvil se ve en el estado del dispositivo; si el agente de atención aclaró el número y guio al usuario, se ve en la conversación. Lo mismo ocurre con el reembolso de la figura 7-3: si el pedido ya se canceló se puede consultar en la base de datos; si el agente de atención informó del plazo de abono hay que buscarlo en la conversación.
+En una tarea de código se puede comprobar la salida con tests; en una tarea de base de datos, consultar los registros modificados; en un análisis abierto, quizá haya que pedir a una persona o a un modelo que valore el contenido. Las tareas de interacción persona-ordenador suelen exigir, además, reunir dos piezas de evidencia. Por ejemplo, si se ha restablecido la conexión móvil se ve en el estado del dispositivo; si el agente de atención aclaró el número y guio al usuario, se ve en la conversación. Lo mismo ocurre con el reembolso de la figura 7-3: si el pedido ya se canceló se puede consultar en la base de datos; si el agente de atención informó del plazo de abono hay que buscarlo en la conversación.
 
-![Figura 7-3: Entornos de evaluación de llamada a herramientas y de interacción humano-computadora](images/revised/fig7-3.svg)
+![Figura 7-3: Entornos de evaluación de llamada a herramientas y de interacción persona-ordenador](images/revised/fig7-3.svg)
 
 En Verifiers, estos dos tipos de tarea pueden abordarse con interfaces de entorno distintas. La tabla 7-1 enumera las de la versión 0.1.9 que atienden la respuesta de un solo turno, la llamada a herramientas de varios turnos, la inyección del estado de ejecución y la gestión de recursos del sandbox, para poder contrastarlas con el código.[^ch7-verifiers-env]
 
@@ -248,9 +248,9 @@ Por ejemplo, cuando cambia la estructura de una página web hay que actualizar l
 >
 > Elige tareas de GAIA, AndroidWorld, SWE-bench Verified, Terminal-Bench, OSWorld-Verified y τ²-bench, una fácil, una media y una difícil de cada tipo según la definición de dificultad de cada benchmark. Completa primero la tarea por tu cuenta y revisa después la puntuación oficial; registra la secuencia de operaciones, las ambigüedades encontradas y el producto final.
 >
-> El material complementario conserva 18 casos de Codex manejando estos seis tipos de benchmark, que sirven para contrastar su propio razonamiento. Entre ellos, la tarea de distancia atómica de GAIA diverge del evaluador en el formato de redondeo; en la tarea de multiplicación de AndroidWorld, tras calcular 840, la página sigue sin alcanzar el estado de éxito exigido. En τ²-bench se usa un modelo local para simular al usuario oculto. De los 18 casos, pasan 13.
+> El material complementario conserva 18 casos de Codex manejando estos seis tipos de benchmark, que sirven para contrastar tu propio razonamiento. Entre ellos, la tarea de distancia atómica de GAIA diverge del evaluador en el formato de redondeo; en la tarea de multiplicación de AndroidWorld, tras calcular 840, la página sigue sin alcanzar el estado de éxito exigido. En τ²-bench se usa un modelo local para simular al usuario oculto. De los 18 casos, pasan 13.
 >
-> Al terminar, analice: si la tarea admite varias interpretaciones razonables, si el verificador las cubre y qué operaciones quedan por hacer, una vez obtenido el resultado intermedio correcto, para superar la aceptación.
+> Al terminar, analiza: si la tarea admite varias interpretaciones razonables, si el verificador las cubre y qué operaciones quedan por hacer, una vez obtenido el resultado intermedio correcto, para superar la aceptación.
 
 ### Las tres fuentes de un conjunto de evaluación
 
@@ -320,13 +320,13 @@ Para empezar a usar cuanto antes este método de puntuación, basta con llamar a
 
 > **Experimento 7-3 ★★: Construir un sistema de evaluación de la memoria del usuario basado en Rubric**
 >
-> Implementa una puntuación estructurada en el marco de evaluación de la memoria del usuario del capítulo 3, cubriendo las tres capas de tareas: recuerdo básico, desambiguación entre sesiones y asociación oculta entre sesiones. Las dimensiones de evaluación son la corrección factual, la integridad de los hechos, la corrección de la asociación, la proactividad y una detección de alucinaciones independiente.
+> Implementa una puntuación estructurada en el marco de evaluación de la memoria del usuario del capítulo 3, cubriendo las tres capas de tareas: recuerdo básico, desambiguación multisesión y asociación oculta entre sesiones. Las dimensiones de evaluación son la corrección factual, la integridad de los hechos, la corrección de la asociación, la proactividad y una detección de alucinaciones independiente.
 >
 > La corrección factual comprueba los datos ya aportados: cifras, fechas, nombres. La integridad comprueba los hechos clave que la respuesta debería contener. La corrección de la asociación comprueba las relaciones entre personas, tiempos y sucesos. La proactividad comprueba si se formulan a tiempo sugerencias fundamentadas o advertencias de riesgo. Las cuatro primeras usan una escala de cuatro niveles, cada uno con su criterio explícito, y se completan con ejemplos y casos límite; la detección de alucinaciones actúa como veto.
 >
 > En la implementación se conservan Precision y Recall como nombres de campo de las dos primeras partidas, y lo que registran es el nivel del Rubric. Para informar precision y recall en sentido estadístico hay que definir además unidades de hecho contables y calcular por separado la proporción de hechos correctos sobre los hechos aportados y la proporción de hechos necesarios cubiertos sobre el total de hechos necesarios.
 >
-> Al leer los resultados experimentales, mire primero si la tarea se supera y después cuántos puntos obtuvo. La tarea se considera superada si la corrección factual, la integridad y la corrección de la asociación alcanzan 3 puntos y no se activa el veto por alucinación. La recompensa continua incorpora además la proactividad: cada una de las cuatro partidas se normaliza con $(s-1)/3$ y se promedian; si aparece una alucinación, la recompensa se anula. Por ejemplo, el experimento 7-12 incluye una configuración que recupera con BGE-M3, omite la reordenación y responde con Doubao. En una de las preguntas de siniestros de seguros, las cuatro partidas obtuvieron 3, 3, 3 y 2 puntos. La tarea se superó y la recompensa continua fue de aproximadamente 0,583.
+> Al leer los resultados experimentales, mira primero si la tarea se supera y después cuántos puntos obtuvo. La tarea se considera superada si la corrección factual, la integridad y la corrección de la asociación alcanzan 3 puntos y no se activa el veto por alucinación. La recompensa continua incorpora además la proactividad: cada una de las cuatro partidas se normaliza con $(s-1)/3$ y se promedian; si aparece una alucinación, la recompensa se anula. Por ejemplo, el experimento 7-12 incluye una configuración que recupera con BGE-M3, omite la reordenación y responde con Doubao. En una de las preguntas de siniestros de seguros, las cuatro partidas obtuvieron 3, 3, 3 y 2 puntos. La tarea se superó y la recompensa continua fue de aproximadamente 0,583.
 
 > **Experimento 7-4 ★★: Evaluación comparativa de Advanced JSON Cards frente a RAG**
 >
@@ -338,7 +338,7 @@ La tabla 7-3 recoge el resumen histórico de este experimento. Cada capa tiene 2
 
 Tabla 7-3 Tasa de éxito por capas de tres sistemas de memoria del usuario
 
-| Sistema | Recuerdo básico | Desambiguación entre sesiones | Asociación oculta entre sesiones | Total |
+| Sistema | Recuerdo básico | Desambiguación multisesión | Asociación oculta entre sesiones | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Advanced JSON Cards | 95 % | 60 % | 50 % | 68,3 % (41/60) |
 | RAG | 90 % | 40 % | 15 % | 48,3 % (29/60) |
@@ -346,7 +346,7 @@ Tabla 7-3 Tasa de éxito por capas de tres sistemas de memoria del usuario
 
 Empecemos por RAG en estado puro. En las preguntas de recuerdo básico acierta 18 y la solución de tarjetas acierta 19; en las de asociación oculta entre sesiones, RAG en estado puro acierta solo 3 y la solución de tarjetas acierta 10. Para entender de dónde sale la diferencia de 7 preguntas, se puede tomar primero una pregunta que RAG falló y ver si los resultados de recuperación contienen los dos fragmentos de conversación necesarios para establecer la asociación. Si están los dos, se comprueba después qué dos personas o qué dos hechos relacionó la respuesta. Mirando solo la tasa de éxito no se distingue si faltaba material o si el modelo leyó el material y asoció mal las relaciones.
 
-**¿Basta con juntar los dos mecanismos de memoria para obtener lo mejor de ambos?** El sistema híbrido acierta 14 preguntas de desambiguación entre sesiones, por encima de las 12 de la solución de tarjetas y las 8 de RAG en estado puro. Pero el resumen histórico registra además dos grupos de preguntas que conviene mirar por separado: hay 3 preguntas que solo acierta el sistema híbrido, y otras 8 que al menos una solución individual acierta y el sistema híbrido falla. Con eso, al menos una solución individual acierta $40-3+8=45$ preguntas, mientras que el sistema híbrido realmente ejecutado acierta 40. Las 45 son una referencia obtenida al fusionar a posteriori dos exámenes; para que el sistema alcance esa cifra por sí solo, aún hay que resolver cómo elige la memoria al responder. Además, 28 de los 180 juicios activaron el veto por alucinación.
+**¿Basta con juntar los dos mecanismos de memoria para obtener lo mejor de ambos?** El sistema híbrido acierta 14 preguntas de desambiguación multisesión, por encima de las 12 de la solución de tarjetas y las 8 de RAG en estado puro. Pero el resumen histórico registra además dos grupos de preguntas que conviene mirar por separado: hay 3 preguntas que solo acierta el sistema híbrido, y otras 8 que al menos una solución individual acierta y el sistema híbrido falla. Con eso, al menos una solución individual acierta $40-3+8=45$ preguntas, mientras que el sistema híbrido realmente ejecutado acierta 40. Las 45 son una referencia obtenida al fusionar a posteriori dos exámenes; para que el sistema alcance esa cifra por sí solo, aún hay que resolver cómo elige la memoria al responder. Además, 28 de los 180 juicios activaron el veto por alucinación.
 
 **Modelos de la misma familia y evaluación con varias fuentes.**
 
@@ -369,7 +369,7 @@ La evaluación multimodal extiende el mismo proceso al audio, la imagen y el ví
 >
 > El corpus de prueba cubre frases sueltas y párrafos largos, noticias, relatos y diálogos, tonos neutro, exaltado y triste, además de cifras, nombres propios, caracteres con varias lecturas y palabras dialectales. El módulo de generación puede conectarse a servicios como OpenAI, ElevenLabs, Fish Audio, MiniMax y Doubao. El módulo de evaluación entrega al modelo capaz de recibir audio directamente el texto original, la voz sintetizada que se evalúa, el Rubric y el audio de referencia que requiera la tarea, y pide una puntuación por dimensión con la justificación.
 >
-> Agrega los resultados por servicio, tipo de corpus y dimensión de puntuación, y extraiga las muestras con puntuación alta, puntuación baja y mayor divergencia para una escucha a ciegas por personas.
+> Agrega los resultados por servicio, tipo de corpus y dimensión de puntuación, y extrae las muestras con puntuación alta, puntuación baja y mayor divergencia para una escucha a ciegas por personas.
 
 El experimento complementario toma cuatro tipos de muestra —cifras, caracteres con varias lecturas, frases largas y tono exaltado— para cada una de dos configuraciones de TTS, y Voxtral las escucha y puntúa directamente, lo que da 8 registros de puntuación. En una escala de cinco, ambas configuraciones obtienen 5,00 en exactitud y 4,00 en naturalidad; Fish Audio obtiene 4,00 y 3,00 de media en expresión emocional y consistencia del timbre, y OpenAI, 3,75 y 2,75. Esos 0,25 puntos de diferencia provienen en ambos casos de las preguntas con cifras: en las otras tres, las cuatro puntuaciones coinciden partida por partida. En la pregunta de caracteres con varias lecturas, por ejemplo, el original termina con «还得还清所有欠款» («todavía hay que saldar todas las deudas»), donde los dos «还» deben leerse hái y huán respectivamente. El evaluador dio la máxima puntuación en exactitud a las dos grabaciones, con la misma justificación, pero no señaló palabra por palabra qué había oído.
 
@@ -568,13 +568,13 @@ Esta inclinación la moldean conjuntamente el modelo y el Harness. El prompt del
 
 > **Experimento 7-9 ★★: Medir el umbral de acción de los modelos en un Coding Harness fijo**
 >
-> Proporcione a GPT-5.6-sol y a Claude Sonnet 5 el mismo prompt del sistema, el mismo schema de herramientas, el mismo repositorio de tareas, los mismos comandos de test y el mismo número máximo de turnos, y llámelos a través del mismo punto de acceso de servicio compatible. Un prompt neutro deja que el modelo decida por sí mismo el orden de exploración y modificación. Los tres repositorios de código pequeños cubren respectivamente un bug local, una normalización de identidad entre módulos y una reparación de caché sensible al contrato público, y cada modelo ejecuta tres veces cada tarea de forma independiente, 18 trayectorias en total.
+> Proporciona a GPT-5.6-sol y a Claude Sonnet 5 el mismo prompt del sistema, el mismo schema de herramientas, el mismo repositorio de tareas, los mismos comandos de test y el mismo número máximo de turnos, y llámalos a través del mismo punto de acceso de servicio compatible. Un prompt neutro deja que el modelo decida por sí mismo el orden de exploración y modificación. Los tres repositorios de código pequeños cubren respectivamente un bug local, una normalización de identidad entre módulos y una reparación de caché sensible al contrato público, y cada modelo ejecuta tres veces cada tarea de forma independiente, 18 trayectorias en total.
 >
 > Registra las llamadas a herramientas anteriores al primer intento de edición, el número de archivos leídos y el tiempo empleado, y comprueba después el primer parche sometido a test, los tests finales, el retrabajo y el coste total. En el resumen, GPT-5.6-sol llama de media 6,89 veces a herramientas y lee 4,67 archivos antes del primer intento de edición, y Claude Sonnet 5, 4,56 veces y 3,56 archivos; en la tarea entre módulos el número de archivos leídos es parecido, 7,00 y 6,67. En ambos casos pasan el primer parche sometido a test y los tests finales; cuando la herramienta devuelve el resultado del primer intento de edición, han transcurrido de media 15,01 y 14,48 segundos desde el inicio, respectivamente. El ejecutor cronometra en el momento de la devolución de la herramienta, de modo que esas dos cifras incluyen también el tiempo que tarda la herramienta en procesar la primera petición de edición.
 >
 > ¿Por qué se cronometra hasta el «intento de edición»? Veamos la trayectoria de Claude Sonnet 5 en su segundo intento de la tarea de reparación de caché: primero busca una vez y lee dos archivos, y después quiere modificar un archivo existente con una herramienta que solo sabe crear archivos nuevos. La herramienta rechaza la petición. Cambia a la herramienta de sustitución de texto para modificar el código, y entonces pasa el primer test.
 >
-> Esta comparación muestra las diferencias de camino de acción en condiciones fijas. Añadiendo una condición de prompt del tipo «explora primero» se puede montar un experimento cruzado «modelo × estrategia de prompt»: comparar modelos con el mismo prompt y prompts con el mismo modelo. Registra por separado el número de exploraciones, las llamadas paralelas a herramientas y la latencia del modelo, y juzgue después, junto con la calidad final, el valor de leer más o de editar antes.
+> Esta comparación muestra las diferencias de camino de acción en condiciones fijas. Añadiendo una condición de prompt del tipo «explora primero» se puede montar un experimento cruzado «modelo × estrategia de prompt»: comparar modelos con el mismo prompt y prompts con el mismo modelo. Registra por separado el número de exploraciones, las llamadas paralelas a herramientas y la latencia del modelo, y juzga después, junto con la calidad final, el valor de leer más o de editar antes.
 
 ### Análisis de costes de un sistema de Agentes
 
@@ -611,9 +611,9 @@ Los sistemas en producción deben además seguir el coste por tipo de tarea, mod
 
 > **Experimento 7-10 ★: Análisis de costes de extremo a extremo de una tarea de Agente**
 >
-> Aprenda primero a medir llamada a llamada con el flujo fijo de ocho turnos y pase después a su propia carga de trabajo habitual. Usa LangSmith o un sistema de trazas propio para registrar los tokens de entrada, de entrada en caché, de salida y de pensamiento, el número y el tamaño de los resultados de las llamadas a herramientas, y la latencia de extremo a extremo de peticiones y tareas. Agrega los costes de modelo, herramientas e infraestructura según la facturación de cada servicio.
+> Aprende primero a medir llamada a llamada con el flujo fijo de ocho turnos y pasa después a tu propia carga de trabajo habitual. Usa LangSmith o un sistema de trazas propio para registrar los tokens de entrada, de entrada en caché, de salida y de pensamiento, el número y el tamaño de los resultados de las llamadas a herramientas, y la latencia de extremo a extremo de peticiones y tareas. Agrega los costes de modelo, herramientas e infraestructura según la facturación de cada servicio.
 >
-> Adivínelo antes de medir: con la caché de prefijos ya activada, ¿comprimir además el historial hace que el coste del modelo en ocho turnos sea necesariamente menor? En los registros complementarios de Kimi K2.5, en la configuración que solo estabiliza el prefijo, 14.779 de los 19.508 tokens de entrada se facturan a precio de caché. Tras comprimir también el historial, la entrada total baja a 15.303 tokens, pero la parte facturada a precio normal sube de 4.729 a 7.180. Contando también la salida, el coste de los ocho turnos sube de unos 0,00825 dólares a 0,00906.
+> Adivina antes de medir: con la caché de prefijos ya activada, ¿comprimir además el historial hace que el coste del modelo en ocho turnos sea necesariamente menor? En los registros complementarios de Kimi K2.5, en la configuración que solo estabiliza el prefijo, 14.779 de los 19.508 tokens de entrada se facturan a precio de caché. Tras comprimir también el historial, la entrada total baja a 15.303 tokens, pero la parte facturada a precio normal sube de 4.729 a 7.180. Contando también la salida, el coste de los ocho turnos sube de unos 0,00825 dólares a 0,00906.
 
 ### Iteración continua guiada por la evaluación
 
@@ -633,7 +633,7 @@ Los resultados de la comparación suelen variar según la tarea. Por ejemplo, el
 
 > **Experimento 7-12 ★★: Evaluación de extremo a extremo para elegir el sistema de memoria del usuario**
 >
-> Reutilice la recuperación de contexto o el RAG agéntico del capítulo 3 para comparar tres puntos de elección —modelo de incrustación, reordenador y modelo principal del Agente— sobre el mismo conjunto de 60 preguntas de memoria del usuario.
+> Reutiliza la recuperación de contexto o el RAG agéntico del capítulo 3 para comparar tres puntos de elección —modelo de incrustación, reordenador y modelo principal del Agente— sobre el mismo conjunto de 60 preguntas de memoria del usuario.
 >
 > Los modelos de incrustación pueden incluir versiones de BGE-M3, OpenAI, Qwen o Mistral; los reordenadores abarcan una base sin reordenación y configuraciones de reordenación semántica; el modelo principal se compara, con la misma recuperación, en tasa de éxito de la tarea y eficiencia en el uso de herramientas. Registra por separado la tasa de acierto en el top-5, la recuperación de la información necesaria, la latencia de recuperación y el coste, y anota después la puntuación del Rubric de la respuesta final.
 >
@@ -756,7 +756,7 @@ El proyecto complementario ejecutó después, con un Qwen2.5-7B local, las 580 p
 >
 > Cuarto paso: según los resultados, decide conservar, ajustar o descartar la modificación; si la calidad mejora y el coste aumenta, analiza en qué tareas merece la pena activarla.
 >
-> Quinto paso: lleve la mejora local a la regresión completa en el entorno estándar. Comprueba los objetivos de calidad y coste según el plan de 116 tareas y 5 semillas, y decida después el alcance del lanzamiento y las condiciones de reversión.
+> Quinto paso: lleva la mejora local a la regresión completa en el entorno estándar. Comprueba los objetivos de calidad y coste según el plan de 116 tareas y 5 semillas, y decide después el alcance del lanzamiento y las condiciones de reversión.
 
 ## De la evaluación externa a la evaluación interna: infraestructura de evaluación para Agentes de producción
 
@@ -834,7 +834,7 @@ Las instantáneas de máquina virtual de OSWorld y la inicialización del estado
 >
 > Lee la documentación de arquitectura e interfaces de OpenVLA y SimpleVLA-RL para entender cómo se conectan la codificación visual, el condicionamiento por lenguaje y la salida de acciones. Configura RoboTwin2 y precisa la política y la interfaz de robot utilizadas: tomando como configuración de observación RGB de tres vistas y el estado articular de ambos brazos, de 14 dimensiones en total, y como salida un vector de control articular de 14 dimensiones, comprueba uno por uno el orden de las articulaciones, los campos de la pinza y el modo de normalización.
 >
-> Estudie la aleatorización de objetos y las restricciones espaciales de la tarea `move_can_pot`, y configura una política preentrenada o adaptada que encaje con estas entradas y salidas. Fija las condiciones de la tarea y registra la tasa de éxito, el tiempo de finalización y los tipos de fallo. El experimento complementario usa los mismos pesos de política y predice siempre 25 acciones. Un grupo solo ejecuta la primera acción y vuelve a observar; el otro ejecuta hasta 25 acciones de la secuencia predicha antes de volver a observar. Así solo cambia el modo de ejecución, y ambos grupos pueden compartir modelo, tarea y semillas aleatorias.
+> Estudia la aleatorización de objetos y las restricciones espaciales de la tarea `move_can_pot`, y configura una política preentrenada o adaptada que encaje con estas entradas y salidas. Fija las condiciones de la tarea y registra la tasa de éxito, el tiempo de finalización y los tipos de fallo. El experimento complementario usa los mismos pesos de política y predice siempre 25 acciones. Un grupo solo ejecuta la primera acción y vuelve a observar; el otro ejecuta hasta 25 acciones de la secuencia predicha antes de volver a observar. Así solo cambia el modo de ejecución, y ambos grupos pueden compartir modelo, tarea y semillas aleatorias.
 >
 > Cada grupo hizo 128 pruebas dentro de la distribución y 128 fuera de ella. El grupo que ejecuta una sola acción no tuvo ningún éxito; el que ejecuta la secuencia larga acertó 26 veces, 13 en cada tipo de prueba. La secuencia larga gana en esta tarea, y aun así su tasa de éxito es de solo alrededor del 10 %. Al revisar los vídeos de los fallos, se pueden distinguir primero dos situaciones: ¿la pinza no estaba bien alineada desde el principio, o las primeras acciones eran correctas y después el objeto se desplazó sin que se ajustara a tiempo? En el primer caso hay que revisar la observación inicial y la predicción de acciones; solo el segundo está directamente relacionado con el momento de volver a observar.
 

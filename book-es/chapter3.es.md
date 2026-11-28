@@ -424,11 +424,11 @@ El numerador es el número de documentos que no contienen el término y el denom
 >
 > | Término de la consulta | Documento | Frecuencia TF | Longitud del documento | Contribución BM25 |
 > | --- | --- | ---: | ---: | ---: |
-> | modelo | doc_1 | 5 | 200 | 1.52 |
-> | modelo | doc_3 | 2 | 500 | 0.82 |
-> | modelo | doc_7 | 8 | 150 | 1.68 |
-> | destilación | doc_1 | 3 | 200 | 2.15 |
-> | destilación | doc_5 | 1 | 250 | 1.22 |
+> | modelo | doc_1 | 5 | 200 | 1,52 |
+> | modelo | doc_3 | 2 | 500 | 0,82 |
+> | modelo | doc_7 | 8 | 150 | 1,68 |
+> | destilación | doc_1 | 3 | 200 | 2,15 |
+> | destilación | doc_5 | 1 | 250 | 1,22 |
 >
 > Las contribuciones de ambos términos en doc_1 suman unos 3,67, y la ordenación queda **doc_1 (3,67) > doc_7 (1,68) > doc_5 (1,22) > doc_3 (0,82)**. En doc_1, «destilación» tiene una frecuencia menor que «modelo», pero es más rara y acaba contribuyendo más; además, coincidir con los dos términos eleva todavía más la puntuación total.
 >
@@ -565,7 +565,7 @@ Para el conocimiento que deben mantener conjuntamente personas y Agentes, el aut
 
 Organizar el conocimiento como un sistema de archivos obliga a **crear al mismo tiempo enlaces e índices entre las entradas relacionadas**. Un conjunto de archivos que no se referencian entre sí solo puede recuperar sus relaciones mediante un recorrido del texto completo o una búsqueda semántica; cuantos más archivos hay, más le cuesta al Agente seguir indagando a partir de lo que ya ha encontrado. Los enlaces ofrecen rutas de búsqueda explícitas: por ejemplo, la política de reembolsos apunta a las cláusulas de excepción, el resumen de un contrato apunta al registro de la firma y la entrada de una persona apunta a los eventos relacionados. Una página de entrada explica los temas principales, una página de índice ofrece la navegación y las referencias cruzadas entre entradas permiten buscar en horizontal. Esta organización, parecida a la de los artículos de una enciclopedia, permite conservar parte de las relaciones de forma ligera.
 
-Al construir la base también se puede indicar qué entradas pueden usarse juntas y de qué planes de actuación solo puede elegirse uno en una misma gestión. Por ejemplo, cuando un agente de atención al cliente tramita la cancelación de un pedido, su respuesta debe cumplir a la vez las normas de redacción y las de privacidad, y ambas normas pueden incluirse juntas en el contexto. Si el almacén ha preparado dos planes para cancelar un envío, el índice debe especificar las condiciones de aplicación de cada uno. Para un mismo paquete, si aún no ha salido del almacén se anula la orden de salida; si ya se ha entregado al transportista, se solicita su interceptación. Cuando el ticket solo dice «cancelen el pedido», el Agente debe consultar primero el estado del paquete y cargar después el plan aplicable.
+Al construir la base también se puede indicar qué entradas pueden usarse juntas y de qué planes de actuación solo puede elegirse uno en una misma gestión. Por ejemplo, cuando el servicio de atención al cliente tramita la cancelación de un pedido, su respuesta debe cumplir a la vez las normas de redacción y las de privacidad, y ambas normas pueden incluirse juntas en el contexto. Si el almacén ha preparado dos planes para cancelar un envío, el índice debe especificar las condiciones de aplicación de cada uno. Para un mismo paquete, si aún no ha salido del almacén se anula la orden de salida; si ya se ha entregado al transportista, se solicita su interceptación. Cuando el ticket solo dice «cancelen el pedido», el Agente debe consultar primero el estado del paquete y cargar después el plan aplicable.
 
 El mantenimiento de los enlaces debe incorporarse al proceso de actualización: antes de añadir una entrada se buscan los registros existentes para decidir si se fusiona o se crea una nueva; después de escribirla se añaden las referencias relacionadas y se actualiza el índice del directorio al que pertenece. Los enlaces llevan al lector hasta la cláusula; si esa cláusula se aplica al pedido que tiene entre manos depende todavía de cuándo entró en vigor.
 

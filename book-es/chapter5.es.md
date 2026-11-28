@@ -38,7 +38,7 @@ Si el usuario pide además un recuento por módulo y un gráfico de barras, el A
 
 ### Caso práctico: de Manus a OpenClaw, el núcleo de Coding de un Agente de propósito general
 
-Los Agentes de propósito general como Manus u OpenClaw pueden, dentro de una misma tarea, buscar información, manejar una computadora y ejecutar código. Con frecuencia, un único programa enlaza varias de esas labores: obtiene datos de una API, organiza los resultados de búsqueda y los convierte en gráficos y documentos. Cuando más adelante surge una tarea del mismo tipo, ese programa puede reutilizarse.
+Los Agentes de propósito general como Manus u OpenClaw pueden, dentro de una misma tarea, buscar información, manejar un ordenador y ejecutar código. Con frecuencia, un único programa enlaza varias de esas labores: obtiene datos de una API, organiza los resultados de búsqueda y los convierte en gráficos y documentos. Cuando más adelante surge una tarea del mismo tipo, ese programa puede reutilizarse.
 
 Por ejemplo, existen bibliotecas que crean y modifican directamente documentos de Word y presentaciones de PowerPoint en formato OOXML (Office Open XML); un informe en PDF puede renderizarse a partir de Markdown, HTML o LaTeX, y el análisis y la visualización de datos pueden hacerse en Python. Las operaciones web estables también pueden convertirse en scripts reutilizables; el capítulo 9 explicará con más detalle cómo extraer pasos reutilizables de una operación que salió bien.
 

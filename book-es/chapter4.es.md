@@ -34,7 +34,7 @@ Volvamos a la tarea de correo del principio: abrir el mensaje original para obte
 
 En los primeros tiempos, la práctica habitual al integrar herramientas era envolver directamente cada endpoint de la API. Así la integración es rápida, pero se obtiene con facilidad un conjunto de interfaces de granularidad muy fina. Para completar una tarea, el Agente puede verse obligado a buscar objetos, leer atributos y comprobar condiciones una y otra vez antes de llamar a la interfaz de ejecución. Al diseñar herramientas, estas operaciones pueden integrarse en torno a las tareas habituales; por ejemplo, encadenar la búsqueda de un contacto con el envío del mensaje, o hacer que la búsqueda en registros devuelva directamente las líneas relevantes junto con su contexto[^ch4-tool-design].
 
-**Las herramientas deben diseñarse en torno a la tarea que el Agente ha de completar.** Este enfoque, que diseña las interfaces a partir de cómo las usa el Agente, se denomina **ACI** (Agent-Computer Interface, interfaz Agente-computadora). La HCI se ocupa de cómo interactúan las personas con la computadora; la ACI, de cómo el modelo elige operaciones, construye parámetros, interpreta la retroalimentación y corrige errores.
+**Las herramientas deben diseñarse en torno a la tarea que el Agente ha de completar.** Este enfoque, que diseña las interfaces a partir de cómo las usa el Agente, se denomina **ACI** (Agent-Computer Interface, interfaz Agente-ordenador). La HCI se ocupa de cómo interactúan las personas con el ordenador; la ACI, de cómo el modelo elige operaciones, construye parámetros, interpreta la retroalimentación y corrige errores.
 
 [^ch4-tool-design]: Anthropic, *Writing effective tools for AI agents—using AI agents*, 2025.
 
