@@ -270,6 +270,7 @@ git clone https://github.com/joonspk-research/generative_agents.git chapter10/ge
   <a href="https://github.com/zimo-xiao-zheng"><img src="https://avatars.githubusercontent.com/u/294220494?v=4&amp;s=128" width="64" height="64" alt="@zimo-xiao-zheng" title="@zimo-xiao-zheng" /></a>
   <a href="https://github.com/tortrixx"><img src="https://avatars.githubusercontent.com/u/182950992?v=4&amp;s=128" width="64" height="64" alt="@tortrixx" title="@tortrixx" /></a>
   <a href="https://github.com/ui99ru"><img src="https://avatars.githubusercontent.com/u/216850424?v=4&amp;s=128" width="64" height="64" alt="@ui99ru" title="@ui99ru" /></a>
+  <a href="https://github.com/ilkruglov"><img src="https://avatars.githubusercontent.com/u/231545904?v=4&amp;s=128" width="64" height="64" alt="@ilkruglov" title="@ilkruglov" /></a>
   <a href="https://github.com/MarvinSunnnn"><img src="https://avatars.githubusercontent.com/u/136772096?v=4&amp;s=128" width="64" height="64" alt="@MarvinSunnnn" title="@MarvinSunnnn" /></a>
   <a href="https://github.com/khalilurrrahmanridoykhan"><img src="https://avatars.githubusercontent.com/u/114473324?v=4&amp;s=128" width="64" height="64" alt="@khalilurrrahmanridoykhan" title="@khalilurrrahmanridoykhan" /></a>
   <a href="https://github.com/joonion"><img src="https://avatars.githubusercontent.com/u/312419?v=4&amp;s=128" width="64" height="64" alt="@joonion" title="@joonion" /></a>
