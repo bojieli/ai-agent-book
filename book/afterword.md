@@ -74,6 +74,24 @@
 
 接下来，去造点什么吧。
 
+
+## 附录：3.0 版主要更新 {.unnumbered}
+
+3.0 版沿用十章框架，主要更新如下，各条后的链接指向正文相应小节。
+
+- **重写大部分小节的行文。** 综述式的罗列改为教学式的讲解：先摆出问题和实际结果，再引出概念。一次预算 1200 元的订票委托贯穿第一、六、九章（[观测空间与动作空间](chapter1.md#观测空间与动作空间模型与世界的接口)），第十章则用合译一本书贯穿全章（[上下文经济学](chapter10.md#上下文经济学)）。
+- **新增专用判断模型的用法。** 书中主张由主模型想清楚怎样完成任务，把范围明确的判断交给 TypeSafe 的 Jev 这类专用判断模型（[Harness 工程](chapter1.md#harness-工程模型之外的竞争力)）。书中用它判断新消息要不要唤醒主模型（[事件处理机制](chapter6.md#事件处理机制)），检查工具调用是否超出用户交代的范围（[执行工具](chapter4.md#执行工具)），按评分细则批量评分（[LLM-as-a-Judge](chapter7.md#llm-as-a-judge把质量要求转成逐项评分)），以及从取回的记忆中挑出本次用得上的几条（[记忆框架案例](chapter3.md#记忆框架案例)）。
+- **新增观测空间的稀疏化。** 系统持续观察环境，只把可能改变下一步行动的变化交给主模型。消息由判断模型筛选；语音靠语义 VAD 根据话意判断用户是否说完（[交互时序](chapter6.md#交互时序从级联到全双工)）；屏幕画面则按像素差异挑出关键帧（[能看动画、能听声音的 Computer Use Agent](chapter6.md#能看动画能听声音的-computer-use-agent)）。
+- **新增个人代办 Agent 的案例。** 前言用 Pine 协商账单说明，客服在电话里答应减免时，助手只能报告“客服答应了”；要说“钱已经退了”，还得等账单上出现这笔退款。DeepSeek Harness 团队的 dsh-superagent 原型让主会话只负责接收请求、答复用户，不读代码；每张工单另有执行会话和工作目录（[事件处理机制](chapter6.md#事件处理机制)、[管理者模式](chapter10.md#管理者模式集中分派与跨任务决策)）。
+- **新增办公 Agent 案例。** 用户在 Multica 的工单评论中点名某个 Agent，就能请它临时协助，工单的负责人和状态都不变，书中借此区分临时求助与责任移交（[Agent 间的通信与控制](chapter10.md#agent-间的通信与控制)）。LobeHub 的群聊把同一个方案同时广播给几位专家；若一位专家要用到另一位的结果，就得等前一轮答复写回后再请他发言（[专家小组模式](chapter10.md#专家小组模式)）。
+- **新增科研 Agent 案例。** 数学家 Levent Alpöge 与 Claude 合作，发布了涉及黎曼猜想的 Lean 形式化证明，当天已由独立的证明内核检查通过。书中用它说明怎样审核这类产物：先确认最后的定理确实是原来的猜想，再交给独立的工具检查（[提议者—审核者范式](chapter10.md#提议者审核者范式)）。三维 Navier–Stokes 方程是千禧年难题之一。OpenAI 把“证明光滑性”和“构造反例”分给不同小组，其中一组约一万个 Agent 找到了反例：流体在光滑外力作用下会在有限时间内出现奇性。团队报告，这满足克雷数学研究所题面中允许外力的两种表述，评定结果尚待研究所按程序给出。书中用它说明怎样让多支队伍真正走不同的路线（[管理者模式](chapter10.md#管理者模式集中分派与跨任务决策)）。
+- **修订语音交互。** 新增“工具由前台还是后台调用”的讨论，对照 GPT-Live-1、GPT-Realtime 和豆包实时语音模型 3.0 的做法，并配套新的实验 6-7（[认知时序](chapter6.md#认知时序实时交互与深度思考)）。全双工部分以 Thinking Machines Lab 交互模型的 200 毫秒微轮次为例，配新图逐格说明听和说怎样交错（[交互时序](chapter6.md#交互时序从级联到全双工)）。
+- **全书插图重绘。** 115 幅插图全部改为适合印刷的灰度矢量图。
+- **新增蒙古语版。** 由社区译者 [@ZERO1zx1](https://github.com/ZERO1zx1) 翻译，可下载 [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.pdf) 和 [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.epub)。
+- **合并社区贡献。** 共合并 30 多个 PR，解决 20 多个 Issue。
+
+分章的完整变更，以及实验和思考题的编号对照，见[3.0 版变更清单](https://github.com/bojieli/ai-agent-book/blob/main/docs/CHANGELOG-v3.0.md)。
+
 [^kelvin]: Lord Kelvin, *Nineteenth Century Clouds over the Dynamical Theory of Heat and Light*, 1901，根据 1900 年 4 月 27 日演讲整理。
 
 [^mimo]: 小米 MiMo, “MiMo-V2.5-Pro-UltraSpeed: Pushing 1T-Parameter Model Generation Speed to 1000 TPS”, 2026-06-08。文中介绍 FP4 量化、DFlash 块级并行推测解码与 TileRT 的协同设计。
