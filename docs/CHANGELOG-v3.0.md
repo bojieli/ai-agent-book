@@ -45,7 +45,7 @@
 | 上下文：Agent 的眼睛 / 决定能力上限 | **上下文：Agent 的当前决策视野 / 让模型能力用于具体任务** | 区分外部环境的“观测空间”与当次推理实际送入模型的“当前决策视野” |
 | 从提示工程到 Loop 工程 | **从提示工程到 Graph 工程：工程关注范围的扩展** | 覆盖提示词、上下文、Loop、多组件工作流与多 Agent 协作图的完整演进 |
 | Harness 五要素与「构建」部分的对应 | **Harness 五项功能与全书的对应** | 将功能职责（供给上下文、提供工具、建立护栏、管理生命周期、可观测与评估）与生产实现分层 |
-| 上下文学习的内部机制：检索而非推理 | **上下文学习的内部机制：隐式的局部微调** | 修正“ICL 等于检索/浅层学习”的过度简化，按注意力对前馈层的隐式低秩权重更新准确阐述 |
+| 上下文学习的内部机制：检索而非推理 | （独立小节删除，内容并入「把重复计算的结果整理为可用知识」） | 不再断言“上下文学习是检索而非推理”；改为介绍 Dherin 等人的理论解释：注意力层与 MLP 的组合可表示为与上下文相关的低秩权重更新，推理时模型权重不变 |
 | On-Policy 自蒸馏 | **在轨自蒸馏：用额外上下文构造教师** | 统一第 8 章强化学习与在轨蒸馏（On-Policy Distillation）中文术语 |
 | Ticket（混合使用） | **工单** | 在第 6 章异步事件处理与第 10 章多 Agent 协作中统一译名与状态机口径 |
 
@@ -73,7 +73,7 @@
 - **提示工程、状态栏与压缩修正**（[提示工程：优化系统提示词](https://bojieli.github.io/ai-agent-book/astro/book/chapter2/#提示工程优化系统提示词) · [Agent 状态栏](https://bojieli.github.io/ai-agent-book/astro/book/chapter2/#agent-状态栏通过元信息增强-agent-轨迹管理) · [上下文压缩策略](https://bojieli.github.io/ai-agent-book/astro/book/chapter2/#上下文压缩策略)）：
   - **实验 2-3**（「上下文管理方式的对照」）、**实验 2-4**（十任务六组提示词对照）、**实验 2-5**（Kimi K3 60 次提示注入防御测试）、**实验 2-6**（13 页 PPTX 与论文图表生成修正）、**实验 2-8**（注意力可视化观察状态栏）与 **实验 2-9**（五案例上下文压缩对照）全部对齐真实实验产物，移除无实验记录支撑的预设百分比断言。
   - **Agent 状态栏**：将理论解释从“强制改变注意力分配”修正为“增量维护显式状态、降低长轨迹检索负担”，并补充状态栏方法本身的取舍与局限（`#1170`）。
-  - **上下文学习与压缩**：将小节标题调整为[上下文学习的内部机制：隐式的局部微调](https://bojieli.github.io/ai-agent-book/astro/book/chapter2/#上下文学习的内部机制隐式的局部微调)；补充 Claude Sonnet 4.5 的“上下文焦虑”观察，区分就地压缩与重置交接（Reset & Handoff）的适用场景。
+  - **上下文学习与压缩**：删除 2.0 版的「上下文学习的内部机制：检索而非推理」小节，相关解释并入[把重复计算的结果整理为可用知识](https://bojieli.github.io/ai-agent-book/astro/book/chapter2/#把重复计算的结果整理为可用知识)，改为介绍“与上下文相关的低秩权重更新”这一理论解释；补充 Claude Sonnet 4.5 的“上下文焦虑”观察，区分就地压缩与重置交接（Reset & Handoff）的适用场景。
 
 ### 第三章：用户记忆和知识库（[🌐 在线阅读](https://bojieli.github.io/ai-agent-book/astro/book/chapter3/) · [`book/chapter3.md`](../book/chapter3.md)）
 - **新增「知识的使用方式建模」**（[结构化索引：建立层次与关联](https://bojieli.github.io/ai-agent-book/astro/book/chapter3/#结构化索引建立层次与关联)）：区分事实与经验（预案）、兼容约束与排他使用，指导检索后的知识组装与冲突消解（`#1246`）。
@@ -92,7 +92,7 @@
 - **结构与安全边界校准**（[Harness 工程在 Coding Agent 中的实践](https://bojieli.github.io/ai-agent-book/astro/book/chapter5/#harness-工程在-coding-agent-中的实践) · [故障与错误恢复](https://bojieli.github.io/ai-agent-book/astro/book/chapter5/#故障与错误恢复) · [Coding Agent 的安全](https://bojieli.github.io/ai-agent-book/astro/book/chapter5/#coding-agent-的安全)）：
   - 修正章首阅读路线图与实际小节顺序的一致性；将“持久化终端”小节重构为 **「工具设计的粒度取舍」**，对比持久化会话与显式环境传参的工程利弊。
   - 明确沙盒机制的权限、网络、挂载与资源限额边界（移除“绝不影响宿主机”的绝对化表述）；补充持久记忆放大提示注入风险的防御分析。
-- **16 个实验结果与代码核对**（[代码作为思考工具](https://bojieli.github.io/ai-agent-book/astro/book/chapter5/#代码作为思考工具) · [代码作为业务规则的约束](https://bojieli.github.io/ai-agent-book/astro/book/chapter5/#代码作为业务规则的约束) · [代码生成多媒体内容](https://bojieli.github.io/ai-agent-book/astro/book/chapter5/#代码生成多媒体内容) · [代码创造代码：Agent 自举](https://bojieli.github.io/ai-agent-book/astro/book/chapter5/#代码创造代码agent-自举)）：
+- **16 个实验结果与代码核对**（[代码作为思考工具](https://bojieli.github.io/ai-agent-book/astro/book/chapter5/#代码作为思考工具) · [代码作为业务规则的约束](https://bojieli.github.io/ai-agent-book/astro/book/chapter5/#代码作为业务规则的约束) · [代码驱动的多媒体生成](https://bojieli.github.io/ai-agent-book/astro/book/chapter5/#代码驱动的多媒体生成) · [代码创造代码：Agent 自举](https://bojieli.github.io/ai-agent-book/astro/book/chapter5/#代码创造代码agent-自举)）：
   - 对齐 **实验 5-1 / 5-2**（故障恢复与幂等重放范围）、**实验 5-3 / 5-4**（代码思考在 30 题与 84 题基准上的真实得分 11/30 vs 16/30、63/84 vs 33/84，客观分析弱模型何时受益于代码工具）、**实验 5-5**（60 组业务规则代码约束对照）、**实验 5-6 / 5-7**（双 Agent PPT 生成峰值上下文 2.4 万 vs 9.3 万 token）。
   - 明确 **实验 5-15**（动态软件的数据访问边界）中进程内原型与生产级行级安全（RLS）/独立权限入口的差距。
 
@@ -101,7 +101,7 @@
   - 详解多源异构事件归一化、会话路由、乱序与幂等处理、`dsh-superagent` 主/执行会话分离及工单（`工单`）机制；新增 **图 6-1**（全章插图更新为图 6-1 至 6-14）、两张接入层设计表、**实验 6-1** 多源故障注入扩展及**思考题第 13 题**（`#1239`, `#1242`, `#1244`, `#1245`）。
 - **新增「实验 6-7 ★★：语音 Agent 的工具由前台还是后台调用」**（[认知时序：实时交互与深度思考](https://bojieli.github.io/ai-agent-book/astro/book/chapter6/#认知时序实时交互与深度思考)）：
   - 在「认知时序：实时交互与深度思考」小节中增加快慢双模型工具调用归属的定量分析与实验验证，原实验 6-7 至 6-14 顺延为 **实验 6-8 至 6-15**，新增**思考题第 14 题**（`#1250`, `#1251`）。
-- **多模态与机器人部分精修**（[视觉理解与 GUI 操作](https://bojieli.github.io/ai-agent-book/astro/book/chapter6/#视觉理解与-gui-操作) · [从数字空间到物理世界](https://bojieli.github.io/ai-agent-book/astro/book/chapter6/#从数字空间到物理世界)）：
+- **语音、GUI 与机器人部分精修**（[语音：最自然的人机接口](https://bojieli.github.io/ai-agent-book/astro/book/chapter6/#语音最自然的人机接口) · [Computer Use：GUI 自动化 Agent](https://bojieli.github.io/ai-agent-book/astro/book/chapter6/#computer-usegui-自动化-agent) · [机器人操作：以 XLeRobot 整理桌面为例](https://bojieli.github.io/ai-agent-book/astro/book/chapter6/#机器人操作以-xlerobot-整理桌面为例)）：
   - 核对 Moshi 全双工、Thinking Machines 微轮次、Step-Audio R1.1 / MPS 双模块、τ²-bench voice、SoM、AOI 消融与 Photon-1 世界模型的论文与官方资料，厘清状态模拟与动作学习的边界。
 
 ### 第七章：Agent 的评估（[🌐 在线阅读](https://bojieli.github.io/ai-agent-book/astro/book/chapter7/) · [`book/chapter7.md`](../book/chapter7.md)）
