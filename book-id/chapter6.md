@@ -1,768 +1,900 @@
 # Interaksi: Perluasan Ruang Observasi dan Ruang Aksi
 
-Bab 1 mengajukan sebuah tesis: ketika model dasarnya tetap, tuas rekayasa sistem yang paling utama untuk meningkatkan performa tugas sebuah Agent umumnya adalah mendefinisikan ulang atau memperluas **ruang observasi** dan **ruang aksi**-nya. Bab 2 sampai 5 selama ini menunaikan kalimat itu—rekayasa konteks menentukan apa yang masuk ke dalam observasi, memori dan basis pengetahuan memanjangkan observasi hingga lintas sesi, tool mendefinisikan apa yang bisa dilakukan Agent, dan pembuatan kode membuatnya sanggup menciptakan aksi baru sendiri.
+**Ketika model dasarnya tetap, menata ulang atau memperluas antarmuka observasi dan aksi sering kali menjadi salah satu cara rekayasa yang paling efektif untuk meningkatkan performa tugas sebuah Agent.** Pada bab-bab sebelumnya, Agent biasanya menunggu pengguna selesai berbicara, lalu mencari informasi, memanggil alat, dan memberikan jawaban. Selama ia menunggu hasil alat, pengguna dan lingkungan luar terus berubah.
 
-Namun semua perluasan itu terjadi di bawah satu premis yang sama: **Agent dan dunia berbicara bergantian**. Pengguna selesai bicara, Agent berpikir sejenak, memanggil beberapa tool, lalu menjawab; selama ia berpikir, dunia diandaikan diam. Premis ini begitu wajar sehingga jarang sekali dituliskan sebagai sebuah asumsi.
+Seorang pengguna meminta asistennya mengubah jadwal tiket pesawat. Saat asisten sedang menanyakan penerbangan kepada layanan pelanggan, pengguna mengirim pesan lagi: "Saya masih punya satu koper untuk bagasi." Petugas layanan pelanggan masih berbicara, dan harga tiket di layar pun bisa berubah. Asisten perlu segera memastikan apakah harga tersebut sudah termasuk bagasi, sekaligus memperhatikan apakah penawaran tadi masih berlaku. Di sini ada dua persoalan desain: lewat saluran apa asisten mengetahui perubahan, dan kapan ia dapat bereaksi? Bab ini lebih dulu membahas email dan hasil alat yang datang secara asinkron, kemudian suara yang kontinu, perubahan layar, dan umpan balik gerak robot.
 
-Yang hendak dicabut bab ini justru premis tersebut.
+## Perluasan Modalitas dan Waktu Pemicuan
 
-## Dua Sumbu: Modalitas dan Waktu
+**Modalitas** menggambarkan bentuk informasi dan tindakan. Agent dapat membaca teks, mendengar suara, melihat layar, dan menerima sinyal torsi; ia juga dapat mengeluarkan teks, menyintesis suara, mengklik antarmuka, atau menggerakkan sendi.
 
-Bila ruang observasi dan ruang aksi dibentangkan, masing-masing ternyata punya dua arah yang bisa diperluas.
+**Waktu pemicuan** menyangkut kapan informasi tiba, kapan tindakan dimulai, dan kapan sistem merespons. Informasi dapat diambil sendiri oleh Agent, dapat pula didorong oleh layanan eksternal; alat dapat langsung mengembalikan hasil, atau lebih dulu memulai tugas lalu melaporkan penyelesaiannya kemudian. Ketika peristiwa baru tiba, sistem juga harus memutuskan apakah pekerjaan yang sedang berjalan perlu disela, dan bagaimana tugas yang terputus dilanjutkan kembali.
 
-- **Modalitas** menentukan **bentuk** observasi dan aksi: apakah Agent hanya membaca teks, atau juga bisa mendengar suara, melihat layar, dan merasakan torsi; apakah ia hanya bisa mengeluarkan token, atau juga bersuara, mengklik, dan menggerakkan sendi.
-- **Waktu** menentukan **irama** observasi dan aksi: apakah observasi diambil sendiri oleh Agent atau didorong oleh dunia; apakah aksi harus selesai dalam satu giliran, atau boleh melintasi giliran, disela di tengah jalan, dan didahului oleh hal yang lebih mendesak.
-
-Bab-bab sebelumnya memperluas **isi** kedua ruang tersebut; bab ini memperluas **modalitas** dan **waktu**-nya:
-
-| | Perluasan ruang observasi | Perluasan ruang aksi |
+| Dimensi | Antarmuka perolehan informasi dan observasi | Antarmuka tindakan dan eksekusi |
 |---|---|---|
-| **Isi** (Bab 2–5) | Rekayasa konteks, memori dan basis pengetahuan | Tool, pembuatan kode |
-| **Modalitas** (bab ini) | Suara, layar, sensor fisik | Berbicara, mengklik, gerak sendi |
-| **Waktu** (bab ini) | Dunia mendorong, aliran kontinu | Lintas giliran, dapat disela, dapat didahului |
+| Penataan isi (Bab 2–5) | Konteks, memori, dan basis pengetahuan menata informasi untuk keputusan | Alat dan kode menyatakan operasi yang dapat dieksekusi |
+| Modalitas (bab ini) | Suara, layar, sensor fisik | Berbicara, mengklik, gerak sendi |
+| Waktu (bab ini) | Kueri aktif, dorongan peristiwa, masukan kontinu | Eksekusi lintas giliran, pembatalan, preempsi, dan pemulihan |
 
-**Pergiliran adalah kesepakatan interaksi antara model dan antarmukanya, bukan sifat lingkungan.** Antarmuka pemanggilan alat awal biasanya menyusun pesan dalam putaran sinkron: pertanyaan diikuti jawaban, lalu hasil alat harus dilengkapi sebelum penalaran dilanjutkan. Lingkungan nyata tidak menunggu: email datang saat model berpikir, pengguna menyela kalimat, halaman berubah di antara tangkapan layar, dan cangkir tersenggol ketika lengan robot menjangkaunya. Kesepakatan ini juga berubah: per September 2026, GPT-6 Astra sudah menyediakan pemanggilan alat asinkron secara native dan penambahan instruksi pengguna di tengah giliran. Karena itu, bab ini membahas dukungan native serta kompatibilitas dengan antarmuka sinkron yang ada.[^ch6-22][^ch6-23]
+Konteks memuat informasi yang dibutuhkan untuk satu keputusan, sedangkan ruang observasi menggambarkan cakupan informasi yang mungkin diterima sistem; alat menyediakan antarmuka konkret, sedangkan ruang aksi menggambarkan cakupan tindakan yang boleh dilakukan sistem. Ketika antarmuka diperluas, cakupan ini tetap dibatasi oleh kemampuan perangkat, parameter, izin, dan lingkungan eksekusi.
 
-| Skala | Skenario | Perubahan di sisi observasi | Perubahan di sisi aksi |
+Banyak antarmuka pemanggilan alat menyusun pesan per putaran: model mengajukan pemanggilan, sistem menambahkan hasil alat, lalu putaran penalaran berikutnya dimulai. Sistem berbasis peristiwa perlu mengelola perubahan dari luar di atas protokol ini. Bila antarmukanya mendukung asinkroni native, sistem dapat menerima permintaan baru selama alat masih tertunda, lalu melanjutkan pemrosesan setelah hasilnya kembali; bila antarmukanya sinkron, Harness-lah yang menata interaksi dengan antrean, *handle* tugas, dan mekanisme penjadwalan. Bagian-bagian berikutnya membahas kedua jalur implementasi ini.
+
+Irama umpan balik pada tiap skenario sangat berbeda. Tabel berikut mencantumkan skala waktu yang umum.
+
+| Skala umum | Skenario | Perubahan di sisi observasi | Penanganan di sisi aksi |
 |---|---|---|---|
-| Detik — hari | Asinkron dan berbasis peristiwa | Dunia membangunkan Agent (surel, timer, callback) | Aksi melintasi giliran: mulai dahulu, selesai kemudian lewat peristiwa |
-| 10 ms — 1 dtk | Suara | Mendengar sambil berbicara, tanpa menunggu satu kalimat selesai | Berpikir sambil berbicara, bisa disela dan diralat di tengah |
-| Subdetik — detik | Computer Use | Layar terus berubah di antara dua bingkai | Setelah bertindak, kenyataan harus dikonfirmasi ulang terhadap rencana |
-| Milidetik | Robot | Sensor mengalir balik terus-menerus | Aksi dipotong per blok: sekali rencana sepotong, dapat didahului |
+| Detik hingga hari | Asinkron dan berbasis peristiwa | Peristiwa eksternal membangunkan Agent | Tugas dimulai lebih dulu, peristiwa berikutnya melaporkan kemajuan dan penyelesaian |
+| Puluhan milidetik hingga detik | Suara | Audio diterima terus-menerus | Keluaran *streaming*, menangani sela bicara dan menghentikan pemutaran |
+| Subdetik hingga detik | Computer Use | Layar terus berubah | Status antarmuka diambil ulang setelah setiap operasi |
+| Siklus kendali milidetik | Kendali tingkat rendah robot | Sensor terus memberi umpan balik | Mengeksekusi segmen gerak pendek, merespons sinyal kendali dan sinyal berhenti |
 
 ## Asinkron dan Berbasis Peristiwa: Ketika Dunia Datang Menghampiri
 
-Tool persepsi, eksekusi, dan kolaborasi yang dibahas di Bab 4 semuanya dipanggil secara proaktif oleh Agent. Bagaimana Agent menanggapi event eksternal yang dapat tiba kapan saja? Hal ini memerlukan arsitektur asynchronous berbasis event. Dua kelas tool yang tersisa dari Bab 1—tool pemicu event dan tool komunikasi pengguna—bergantung pada arsitektur ini, sehingga keduanya juga dibahas di bagian ini.
-
-Dalam bagian ini modalitasnya tidak berubah—tetap teks; yang berubah hanyalah waktunya. Inilah langkah pertama keluar dari dunia bergiliran pada lima bab sebelumnya.
+Bab 4 memperkenalkan alat persepsi, eksekusi, dan kolaborasi; bagian ini melanjutkan dengan alat pemicu peristiwa dan alat komunikasi pengguna. Alat pemicu peristiwa membawa perubahan lingkungan ke dalam Agent, sedangkan alat komunikasi memungkinkan Agent menghubungi pengguna selama tugas berjalan. Harness mengaitkan masukan dan keluaran ini dengan tugas yang sedang berjalan, sehingga terbentuk *event loop* yang bekerja terus-menerus.
 
 ### Mengapa Asinkroni Diperlukan
 
-Mari kita mulai dengan analogi untuk menjelaskan mengapa asinkroni diperlukan. Sinkron berarti "lakukan satu hal sebelum Anda dapat melakukan hal berikutnya," sedangkan asinkron berarti "beberapa hal dapat terjadi secara bersamaan." Arsitektur Agent sinkron tradisional ibarat satu loket kasir di toko—hanya bisa melayani satu pelanggan pada satu waktu, dan baru memanggil nomor antrean berikutnya setelah selesai dengan yang saat ini. Asisten cerdas yang sebenarnya lebih mirip seorang sekretaris yang fleksibel—dengan beberapa pekerjaan yang menumpuk di meja (email, panggilan telepon, pengunjung), sekretaris tersebut memutuskan mana yang harus ditangani terlebih dahulu berdasarkan urgensi, dan dapat menjeda lalu beralih ke tugas yang lebih mendesak di tengah jalan. Dalam mode sinkron, Agent harus menunggu tugas latar belakang selesai sebelum berbicara dengan pengguna, atau menunggu percakapan berakhir sebelum memproses peristiwa yang baru tiba. Agent tidak dapat memberikan kemampuan inti yang dibutuhkan oleh skenario asisten nyata:
+Pada pemanggilan sinkron, pemanggil harus menunggu hasilnya kembali sebelum dapat melanjutkan alur kerjanya. Pada pemanggilan asinkron, yang dikembalikan lebih dulu adalah *handle* tugas (penanda untuk menanyakan dan mengelola tugas), atau ada kesepakatan bahwa penyelesaiannya akan diberitahukan kemudian, sehingga pemanggil dapat mengerjakan hal lain selama menunggu. Dengan cara ini sistem dapat mengelola beberapa tugas yang sedang berjalan, lalu menentukan operasi mana yang dapat dijalankan paralel berdasarkan sumber daya dan ketergantungannya.
 
-- **Eksekusi asinkron adalah hal yang normal**—Banyak tugas membutuhkan waktu berjalan (*runtime*) yang lama dan tidak boleh memblokir interaksi pengguna.
-- **Penilaian dinamis terhadap prioritas peristiwa**—Tidak semua peristiwa sama pentingnya. Agent perlu secara cerdas memilih strategi penanganan: batalkan operasi saat ini (mendesak), tambahkan ke antrean (rutin), atau proses secara paralel (kueri ringan yang independen).
-- **Kelancaran dalam interupsi dan pelanjutan kembali**—Percakapan atau tugas yang terinterupsi harus dapat dilanjutkan kembali secara alami.
+Bayangkan Agent sebagai sekretaris yang mengurus email, telepon, dan tamu: sambil menunggu balasan, ia terus merapikan berkas; ketika telepon penting masuk, ia mencatat sampai di mana pekerjaannya; setelah telepon selesai, ia melanjutkan tugas semula. Dalam implementasi rekayasa, ada tiga hal yang harus ditangani:
 
-Saat menerapkan paradigma asinkron pada LLM, periksa dahulu apakah model dan API mendukung urutan waktu pesan tersebut. Sebagian antarmuka mengharuskan semua hasil alat dilengkapi sebelum melanjutkan; yang lain sudah membolehkan alat tetap tertunda sementara model bekerja dan menerima pembaruan pengguna selama generasi. Kelompok pertama memerlukan antrean peristiwa, handle tugas, dan lapisan kompatibilitas; kelompok kedua dapat langsung memakai protokol asinkron native. Keduanya tetap membutuhkan aplikasi untuk mengelola sumber peristiwa, siklus hidup alat, dan keterkaitan hasil. Penggunaan `asyncio` saja tidak membuktikan bahwa model memiliki kemampuan asinkron native.
+- **Memisahkan tugas panjang dari interaksi.** Analisis berkas, panggilan telepon, atau proses *build* berjalan di latar belakang, sementara pengguna tetap dapat menanyakan kemajuan dan menambahkan permintaan.
+- **Prioritas peristiwa.** Perintah berhenti darurat segera masuk ke alur kendali, pembaruan rutin masuk antrean, dan kueri yang berdiri sendiri dapat diserahkan ke sesi paralel.
+- **Interupsi dan pemulihan.** Status tugas disimpan, operasi yang sudah terjadi dicatat, dan saat dilanjutkan, kondisi yang masih berlaku diperiksa ulang.
 
-Untuk mengatasinya, kita memerlukan **arsitektur Agent asinkron berbasis peristiwa**. Secara teknis, ini berarti sistem tidak lagi secara aktif dan berulang kali memeriksa "pesan baru" (ini adalah *polling*, yang tidak efisien), melainkan secara otomatis memicu logika pemrosesan ketika pesan baru tiba. Semua input, output, proses berpikir, dan interaksi eksternal dimodelkan secara seragam sebagai aliran peristiwa (*event stream*)—urutan catatan peristiwa yang diatur dalam sebuah garis waktu (*timeline*). Gambar 6-1 menunjukkan arsitektur keseluruhan dari Agent asinkron berbasis peristiwa, mengilustrasikan hubungan antara sumber peristiwa, antrean peristiwa, dan alur pemrosesan Agent.
+Pratinjau riset Claude Duet memberi satu contoh: pengguna punya rapat pukul dua siang dan ingin mendapatkan ringkasan tentang perusahaan mitranya lebih dulu. Ia cukup meninggalkan pesan suara, lalu menutup aplikasi. Persiapan terus berjalan di *cloud*, dan pengguna dapat membuka halaman tugas kapan saja untuk melihat kemajuannya; ketika ia perlu menambahkan informasi atau ringkasan sudah selesai, asisten kembali ke percakapan utama untuk memberitahunya. Bahwa tugas tetap berjalan setelah pengguna pergi, itulah eksekusi asinkron. Panggilan *full-duplex* yang dibahas kemudian punya tuntutan lain lagi: ketika satu pihak sedang berbicara, ia tetap harus bisa mendengar pihak lain yang menyela.[^ch6-duet]
 
-![Gambar 6-1: Arsitektur Event-Driven Asynchronous Agent](images/fig6-1.svg)
+API model juga punya aturan tentang urutan pesan. Sebagian antarmuka mengharuskan setiap pemanggilan alat berpasangan lengkap dengan hasilnya sebelum menerima permintaan putaran berikutnya; sebagian lain membolehkan alat tertunda sambil menerima pembaruan susulan. Fungsi asinkron di aplikasi mengatur penantian dan eksekusi, sedangkan protokol model menentukan kapan pesan boleh dikirim.
+
+Pada Gambar 6-1, pesan baru dan hasil alat sama-sama dapat masuk ke antrean, tetapi cara keduanya sampai ke antrean bergantung pada sumbernya. Bila layanan mendukung *push*, pemberitahuan dapat dikirim begitu statusnya berubah; bila layanan hanya menyediakan antarmuka kueri, adaptor harus memeriksanya secara berkala dan membuat peristiwa ketika menemukan perubahan. *Timer* yang habis waktunya juga dapat menghasilkan peristiwa. *Event loop* kemudian menyerahkan masukan-masukan ini kepada Agent.
+
+![Gambar 6-1 Arsitektur Agent asinkron berbasis peristiwa](images/revised/fig6-1.svg)
 
 ### Implementasi Mekanisme Berbasis Peristiwa di OpenClaw
 
-Kerangka kerja (*framework*) *open-source* OpenClaw (arsitekturnya akan dirinci di Bab 5) menerima pesan multi-saluran melalui bidang kendali (*control plane*) Gateway dan merutekannya ke *runtime* Agent. Kerangka kerja ini menyediakan tiga mekanisme otomatisasi bawaan:
+OpenClaw menghubungkan kanal pesan melalui Gateway dan merutekan peristiwa ke *runtime* Agent. Mekanisme otomatisasinya mencakup Hooks internal, penjadwalan berkala, Heartbeat, dan Webhook eksternal[^ch6-automation]. Mekanisme ini dapat dipahami menurut kondisi pemicunya:
 
-- **Hooks**: Merespons peristiwa dalam siklus hidup Agent, seperti pembuatan dan penyetelan ulang sesi, mirip dengan pemicu peristiwa di GitHub Actions
-- **Cron (penjadwal tugas-terjadwal)**: Menjalankan tugas secara berkala menurut ekspresi cron (sintaksis yang banyak digunakan untuk tugas terjadwal di sistem Unix, misalnya, `0 9 * * 5` berarti pukul 9 pagi setiap hari Jumat), seperti menghasilkan laporan mingguan setiap hari Jumat atau merangkum data pada awal setiap bulan
-- **Heartbeat (Daemon Heartbeat)**: Membangunkan Agent setiap N menit untuk memeriksa apakah ada yang membutuhkan perhatian, menggunakan penilaian untuk menghindari *alert fatigue* (kelelahan akibat terlalu banyak notifikasi)
+- **Hooks (kait peristiwa)** merespons peristiwa internal kerangka kerja, misalnya pembuatan sesi, penyetelan ulang sesi, atau perubahan siklus hidup eksekusi.
+- **Cron (penjadwalan berkala)** menjalankan pekerjaan pada waktu atau periode tertentu. Misalnya, `0 9 * * 5` berarti dipicu setiap Jumat pukul 9 pagi menurut zona waktu yang dikonfigurasi.
+- **Heartbeat (detak jantung)** membangunkan Agent secara berkala untuk memeriksa hal-hal yang perlu diperhatikan.
+- **Webhook (*callback* eksternal)** menerima peristiwa yang dikirim layanan eksternal, lalu memicu pemrosesan setelah autentikasi dan perutean.
 
-Ketiga mekanisme ini memberikan tampilan otonomi pada Agent OpenClaw—bahkan dengan pengguna yang sedang *offline*, Agent dapat menghasilkan laporan sesuai jadwal, memeriksa status sistem, dan menangani pekerjaan rutin. Namun, jika dicermati lebih dekat, akan muncul sebuah batasan mendasar. Tepatnya: Gateway sudah menangani pesan dari saluran bawaan (IM, antarmuka web) dengan cara **push**—pesan langsung diarahkan ke Agent saat pesan itu tiba. Dan dari tiga mekanisme otomatisasi tersebut, hanya Cron dan Heartbeat yang membiarkan Agent bertindak tanpa adanya pesan dari pengguna, dan keduanya **digerakkan oleh waktu (*time-driven*)**—Heartbeat memeriksa pada interval tetap, Cron berjalan pada waktu yang telah ditentukan. Hooks hanya bereaksi terhadap kejadian siklus hidup internal kerangka kerja dan tidak dapat membawa perubahan baru dari dunia luar. Celah sebenarnya adalah ini: untuk setiap sumber kejadian pihak ketiga di luar saluran bawaan—email baru, panggilan balik API eksternal yang mendorong data, notifikasi mendesak yang membutuhkan perhatian segera—OpenClaw tidak memiliki jalur masuk langsung. Agent tidak dapat segera merespons saat kejadian tersebut terjadi; paling cepat Agent hanya akan menyadarinya pada detak Cron/Heartbeat berikutnya.
+Laporan mingguan cocok dijalankan sesuai jadwal, urusan yang terus dipantau dapat diperiksa secara berkala, sedangkan email baru dan *callback* layanan dapat memakai *push* untuk memperpendek jeda sampai perubahan diketahui.
 
-Kelemahan yang sebenarnya terletak di sini: untuk sumber peristiwa pihak ketiga di luar kanal bawaan—misalnya sepucuk surel baru tiba, sebuah callback API eksternal terkirim, atau sebuah notifikasi darurat perlu segera ditangani—OpenClaw tidak punya jalur masuk seketika, sehingga Agent tidak dapat langsung merespons begitu peristiwa terjadi dan baru mungkin menyadarinya pada siklus Cron/Heartbeat berikutnya.
+**Peristiwa panggilan di PineClaw.** Pine AI menelepon atas nama pengguna untuk mengurus negosiasi tagihan, pembatalan langganan, klaim asuransi, dan sejenisnya. PineClaw menghubungkan tugas telepon semacam ini ke OpenClaw. Sebuah panggilan biasanya berlangsung cukup lama, dan selama itu pengguna mungkin perlu turun tangan:
 
-Keterlambatan ini tidak dapat diterima dalam banyak skenario. Ambil **PineClaw** (plugin OpenClaw milik Pine AI) sebagai contoh: Pine AI adalah asisten AI yang melakukan panggilan telepon nyata atas nama pengguna, dengan skenario umum meliputi negosiasi tagihan, pembatalan langganan, dan penanganan klaim asuransi. Ketika pengguna memulai tugas telepon Pine melalui Agent OpenClaw, AI suara dari Pine akan menelepon atas nama pengguna, namun pengguna mungkin perlu turun tangan kapan saja selama panggilan berlangsung:
+- **Verifikasi identitas.** Layanan pelanggan meminta pemilik akun menyelesaikan verifikasi, misalnya memasukkan kode keamanan atau kata sandi sekali pakai.
+- **Panggilan tiga arah.** Layanan pelanggan ingin berbicara langsung dengan pemilik akun, sehingga pengguna perlu segera diberi tahu untuk mengangkat telepon.
+- **Konfirmasi keputusan.** Ketika layanan pelanggan menawarkan solusi alternatif, sisi depan menilai apakah tawaran itu dapat diterima berdasarkan permintaan kali ini dan preferensi pengguna sebelumnya. Bila pengguna yang harus memutuskan, pilihan yang konkret dikirim kepadanya, sementara pengecekan syarat lain dengan layanan pelanggan tetap berjalan.
 
-- **Verifikasi Identitas Real-time**: Perwakilan layanan pelanggan meminta untuk memverifikasi identitas pemilik akun, dan Pine membutuhkan pengguna untuk segera memberikan kode keamanan atau *one-time password* (OTP)
-- **Konfirmasi Panggilan Tiga Arah**: Perwakilan layanan pelanggan meminta untuk berbicara langsung dengan pemilik akun, dan Pine membutuhkan pengguna untuk menjawab telepon dalam hitungan detik
-- **Sinkronisasi Kemajuan dan Konfirmasi Keputusan**: Pada titik kritis dalam negosiasi (misalnya, pihak lain mengusulkan penurunan harga), Pine membutuhkan pengguna untuk mengonfirmasi apakah akan menerimanya
+Misalnya, layanan pelanggan meminta pemilik akun bergabung dalam panggilan tiga arah. Semakin cepat pemberitahuan sampai, semakin singkat waktu kedua pihak menunggu tanpa kegiatan di telepon. Kasus PineClaw memakai mekanisme Channel untuk menyalurkan peristiwa panggilan antara Gateway dan Pine API: telepon tersambung, masukan pengguna dibutuhkan, dan panggilan berakhir masing-masing masuk ke aliran peristiwa, lalu Agent memperbarui tugas dan memberi tahu pengguna berdasarkan peristiwa tersebut.
 
-Dengan sistem *polling* berkala Heartbeat—katakanlah interval 5 menit—pengguna mungkin tidak mendapatkan notifikasi saat perwakilan tersebut masih menunggu kode verifikasi; perwakilan itu menutup telepon dan panggilan pun gagal. Memperpendek interval menjadi beberapa detik hanya akan membanjiri sistem dengan permintaan yang tidak berguna.
-
-Solusi PineClaw adalah memperkenalkan **mekanisme Channel**—membangun saluran kejadian secara *real-time* antara Gateway OpenClaw dan API Pine. Saat kejadian kunci terjadi, seperti ketika panggilan tersambung, ketika input pengguna diperlukan, atau saat panggilan berakhir, pesan secara instan didorong (*push*) ke Agent OpenClaw. Agent akan memprosesnya segera dan memberi tahu pengguna, mengurangi latensi respons dari hitungan menit menjadi detik.
-
-Kasus ini mengungkapkan nilai inti dari arsitektur *event-driven* untuk kerangka kerja Agent: **"layanan proaktif" yang sesungguhnya tidak hanya menuntut Agent agar bisa secara berkala memeriksa peristiwa, tetapi juga agar peristiwa bisa secara aktif memberi tahu Agent.** Menyatukan semua input—pesan pengguna, pengembalian dari alat, *callback* eksternal, pemicu yang dijadwalkan—ke dalam sebuah aliran peristiwa (*event stream*), dan menggerakkan pikiran serta tindakan Agent melalui *event loop*, adalah fondasi arsitektur untuk mencapai tujuan ini. Di bawah arsitektur ini, kita pertama-tama akan memperkenalkan dua kategori alat yang secara langsung berkaitan dengan peristiwa, serta identitas virtual dan lingkungan eksekusi terisolasi yang mendukung tindakan mandiri Agent, sebelum mendiskusikan desain spesifik dari mekanisme penanganan peristiwa.
+**Menurut penulis, agar layanan proaktif datang tepat waktu, sebaiknya sumber peristiwa sendiri yang memberi tahu Agent ketika statusnya berubah.** Setelah pemberitahuan tiba melalui kanal, Harness mencari tugas yang bersangkutan dan memeriksa apakah peristiwa itu duplikat atau sudah kedaluwarsa; barulah model memutuskan langkah berikutnya. Jika pengguna perlu memverifikasi identitas, antarmuka sebaiknya membuka pintu autentikasi yang tepercaya, dan hasil verifikasinya dikirim kembali ke tugas semula sebagai peristiwa baru.
 
 ### Alat Pemicu Peristiwa
 
-Event-triggered tools adalah titik masuk (*entry point*) di mana peristiwa eksternal menggerakkan tindakan suatu Agent. Tanpa hal ini, Agent hanya dapat beroperasi dalam siklus memikirkan, memanggil alat, lalu pada akhirnya menghasilkan suatu hasil, dan kemudian menunggu input pengguna berikutnya. Untuk menerjemahkan perubahan di dunia menjadi peristiwa yang dapat diproses oleh Agent, terdapat tiga tipe umum dari alat pemicu peristiwa (*event-triggered tools*).
+Jika kita menitipkan "ingatkan saya setelah klien membalas" kepada asisten, bagaimana ia bisa bangun tepat besok? Pertama, periksa apakah kotak surat dapat mengirim peristiwa saat surat masuk; untuk sistem yang hanya bisa ditanyai secara aktif, asisten perlu mengingat kapan pemeriksaan berikutnya. Ketiga antarmuka ilustratif berikut menyerahkan penyimpanan kondisi tunggu itu kepada *runtime*, sehingga model dapat mengakhiri putaran kerjanya saat ini.
 
-**Timers** (`set_timer`) menangani peristiwa yang terikat pada waktu fisik. Jika sebuah email tidak dijawab, Agent harus menindaklanjuti beberapa waktu kemudian untuk menanyakan tentang perkembangannya; jika panggilan dilakukan di luar jam kerja penerima, Agent harus mencoba kembali selama jeda jam kerja berikutnya. Untuk mendukung hal ini, alat seperti OpenClaw dan Claude Code menyertakan fungsionalitas pengatur waktu (*timer*), membiarkan Agent membangunkan dirinya sendiri pada waktu fisik tertentu. **One-shot timers** digunakan untuk tugas dengan waktu eksekusi spesifik: misalnya, jika pengguna meminta untuk "menelepon DMV" pada hari Sabtu, Agent menetapkan sebuah *timer* untuk "hari Senin depan jam 10:00 pagi untuk menelepon DMV," yang akan memicu panggilan secara otomatis. **Recurring timers** digunakan untuk tugas periodik: seperti memeriksa kesehatan server setiap jam atau mengirimkan laporan kemajuan setiap hari Jumat. Selain itu, beberapa layanan eksternal tidak mendukung pembaruan kemajuan secara proaktif, sehingga mengharuskan Agent untuk aktif melakukan *polling* guna mengetahui status. Dalam kasus seperti itu, diperlukan *recurring timer* untuk kueri berulang—mekanisme Heartbeat pada OpenClaw dari bagian sebelumnya adalah bentuk tersistematisasi dari ini, dan itulah akar dari kemampuan "layanan proaktif" OpenClaw.
+***Timer* (`set_timer`)** dipakai untuk membangunkan sebuah tugas pada waktu yang disepakati. *Timer* sekali jalan cocok untuk "Senin depan pukul 10 pagi telepon bank untuk menanyakan perkembangan KPR"; *timer* berulang cocok untuk memeriksa kesehatan layanan setiap jam. Menunggu balasan setelah mengirim email, atau menelepon ulang setelah membentur jam di luar jam kerja, juga dapat diatur dengan *timer*. Antarmukanya perlu menyimpan zona waktu, kondisi pemicu, dan penanda tugas, serta menyediakan cara untuk membatalkan atau mengubahnya. Bila layanan eksternal hanya mendukung kueri, tugas terjadwal juga dapat dipakai untuk *polling* kemajuan.
 
-**Background Task Monitoring** (`monitor_shell`) menangani peristiwa dari alat yang dieksekusi secara asinkron atau tugas *command-line*. Beberapa tugas *command-line* berjalan di latar belakang untuk waktu yang lama, dan Agent perlu melacak kemajuannya. Jika Agent "menatap ke *command-line*," secara berulang-ulang memanggil alat untuk melakukan *polling* terhadap kemajuan, itu akan membakar token; jika Agent menunggu sampai tugas benar-benar selesai sebelum berpikir lagi, Agent akan melewatkan masalah-masalah kritis yang terungkap saat itu juga—dan jika perintah itu macet (*hang*), Agent tidak dapat melakukan intervensi sama sekali, sehingga menghentikan seluruh tugas tersebut. Claude Code menyelesaikan hal ini dengan memperkenalkan alat `monitor`, yang memungkinkan Agent untuk memantau keluaran *command-line* baru, termasuk keluaran yang mengandung kata kunci tertentu.
+**Pemantauan tugas latar belakang (`monitor_shell`)** dipakai untuk mengubah perintah yang berjalan lama menjadi peristiwa kemajuan. Saat dimulai, alat ini mengembalikan penanda tugas; selama berjalan, ia memberi tahu berdasarkan keluaran baru, kata kunci, atau perubahan status; ketika selesai, ia melaporkan status keluar dan hasilnya.
 
-**External Event Channels** (`connect_channel`) mendorong kejadian eksternal seperti email baru, *callback* API, atau pesan IM ke Agent secara *real-time*. Mekanisme Channel di PineClaw dari bagian sebelumnya merupakan implementasi khas.
+Membiarkan model berulang kali menanyakan kemajuan tetap menghabiskan pemanggilan model meskipun statusnya tidak berubah; sebaliknya, hanya menunggu pemberitahuan selesai bisa membuat kegagalan di tengah jalan terlewat. Karena itu, penulis menyarankan agar pemantauan diserahkan kepada *runtime*, dan model hanya dibangunkan ketika muncul kemajuan yang berguna, galat, atau kemacetan. Dengan begitu, komunikasi tetap bisa berlangsung selama proses *build*, dan kelainan dapat segera ditangani. Aturan pemantauan dapat diberi penyaringan, penggabungan, dan pembatasan frekuensi, agar tidak setiap baris log memicu satu pemanggilan model.
 
-Dari perspektif desain, *event-triggered tools* harus menetapkan kondisi pemicu dan aturan penyaringan yang jelas guna mencegah peristiwa yang tidak relevan membangunkan Agent dan menyia-nyiakan sumber daya komputasi. Muatan (*payload*) peristiwa harus berisi informasi konteks yang cukup untuk meminimalkan jumlah kueri tambahan yang perlu dilakukan Agent setelah dibangunkan.
+Misalnya, setelah model berlangganan pembaruan status untuk sebuah tiket yang sedang diproses, ia dapat mengakhiri putaran penalarannya dan menunggu pemberitahuan yang membawa nomor tiket itu untuk membangunkannya. Jika pihak lain hanya menyediakan pintu kueri, model dapat memasang tugas terjadwal sendiri untuk pemeriksaan berikutnya. Bila saat itu hasilnya "masih diproses", ia menjadwalkan pemeriksaan lagi; bila tiketnya sudah selesai, pemeriksaan berikutnya dibatalkan. Dalam kedua cara ini, *runtime*-lah yang menanggung penantian, dan model baru menilai kembali ketika menerima pemberitahuan atau ketika *timer* habis waktunya.
+
+**Kanal peristiwa eksternal (`connect_channel`)** dipakai untuk berlangganan email, pesan instan, atau *callback* API. Adaptor kanal memverifikasi sumbernya, memetakan penanda milik layanan itu ke *thread* dan objek terkait, lalu mengirim peristiwa dalam format seragam; bagian "Lapisan Akses" nanti membahasnya lebih jauh. Pemberitahuan status telepon di PineClaw termasuk kategori ini.
+
+Ketiga jenis alat ini memerlukan kondisi pemicu, aturan penyaringan, dan muatan (*payload*) peristiwa yang jelas. Muatan sebaiknya berisi penanda peristiwa, waktu kejadian, sumber, tugas terkait, dan isi yang diperlukan, sehingga Agent dapat menilai apakah peristiwa itu masih berlaku dan informasi apa yang dibutuhkan untuk langkah berikutnya.
 
 ### Alat Komunikasi Pengguna
 
-Alat komunikasi pengguna lahir untuk menyesuaikan diri dengan kanal komunikasi antara Agent dan pengguna yang kian beragam. Banyak Agent (seperti Claude Code dan Manus) memakai loop ReAct native: semua yang "dikatakan" Agent—yaitu pesan assistant—dikirim langsung kepada pengguna, dan pengguna harus membuka sesi tertentu di dalam aplikasi untuk berbicara dengannya. Di dalam sesi itu pengguna biasanya juga dapat melihat proses Agent memanggil tool.
+Kembali ke tugas mengubah jadwal tiket. Bertanya kepada layanan pelanggan, mengirim pesan konfirmasi yang bisa langsung dijawab pengguna, dan mencatat "sedang menunggu balasan" di catatan tugas akan ditulis ke tiga tempat yang berbeda. Pengguna boleh pergi sejenak, lalu kembali ketika perlu menambahkan syarat, mengonfirmasi keputusan, atau menerima hasil.
 
-OpenClaw mematahkan paradigma komunikasi manusia–mesin ini. Pengguna tidak perlu menyadari keberadaan sesi, juga tidak perlu peduli pada detail pemanggilan tool oleh Agent; pengguna dan Agent sama-sama dapat mengirim pesan kapan saja, bukan pengguna mengirim satu lalu Agent membalas satu. Karena itu banyak orang menilai OpenClaw punya **"rasa manusia hidup"**, seperti seorang sekretaris yang berkomunikasi secara asinkron dengan pengguna lewat pesan teks. OpenClaw tidak langsung menyajikan pesan assistant keluaran model kepada pengguna, melainkan memakai tool khusus untuk mengirim pesan. Pesan-pesan ini juga dapat disertai gambar dan berkas, serta ditambahi pengingat push sesuai tingkat kedaruratannya.
+Antarmuka sesi dapat menampilkan jawaban akhir, kemajuan alat, dan hasil eksekusi; alat komunikasi secara tegas menentukan penerima, kanal, isi pesan, dan lampiran. Model memutuskan apa yang perlu disampaikan, Harness memeriksa tujuan dan izinnya, dan layanan pesan menyelesaikan pengirimannya. *Runtime* juga dapat merutekan jawaban akhir secara otomatis ke sesi asal. Kedua cara ini dapat dipakai bersama.
 
-Lebih dari sekadar komunikasi berbasis teks, semakin banyak Agent yang memiliki kemampuan komunikasi multimodal, seperti mengirim pesan kartu terstruktur atau email pengingat. Beberapa Agent telah mulai bereksperimen dengan UI generatif, menggunakan HTML atau metode lain untuk membuat antarmuka interaktif yang menyajikan informasi kepada pengguna dengan cara yang lebih ramah pengguna. Dari perspektif desain, *user communication tools* harus mendukung pengiriman pesan asinkron (pengguna mungkin tidak sedang *online*), menyediakan pelacakan status baca/belum dibaca, dan mempertahankan konsistensi pesan di berbagai saluran.
+Interaksi multikanal di OpenClaw memungkinkan pengguna mengirim pesan, menunggu kemajuan, dan menerima pengingat seperti saat menghubungi seorang sekretaris. **"Rasa manusia hidup"** ini lahir dari status tugas yang berkesinambungan dan komunikasi yang tepat waktu. Pengguna dapat melanjutkan tugas di kanal yang sudah akrab baginya, sementara Agent harus menjaga konsistensi identitas, sesi, dan keterkaitan pesan.
 
-**Komunikasi Pengguna Multi-saluran dan Keterlibatan Kembali.**
+Isi komunikasi juga dapat menyesuaikan diri dengan tugas: kemajuan singkat disampaikan dengan teks, hasil yang rumit disertai gambar atau berkas, informasi yang perlu diisi disajikan dalam kartu terstruktur, dan hasil interaktif memakai UI generatif yang diperkenalkan di Bab 5. Bila kanal mendukung tanda terkirim atau tanda dibaca, sistem menyimpan status tersebut; percobaan ulang setelah gagal, pesan duplikat, dan sinkronisasi lintas kanal juga dicatat dalam riwayat pengiriman.
 
-**Tanggapan dari sebuah Agent tidak boleh dibatasi hanya pada satu saluran; mekanisme notifikasi juga berfungsi sebagai mekanisme pelibatan kembali (*re-engagement*) pengguna.** Pengiriman pesan meluas hingga ke *instant messaging*, SMS, email, panggilan telepon, *push notification*, dan saluran lainnya. Agent memutuskan salurannya berdasarkan kombinasi antara urgensi, status pengguna, sifat konten, dan preferensi pengguna, untuk memastikan pesan penting tidak terlewatkan sembari menghindari interupsi yang tidak perlu.
+**Pemberitahuan multikanal dan menarik pengguna kembali.**
 
-Untuk tugas yang berjalan lama, Agent perlu secara proaktif memberi tahu pengguna ketika sudah selesai untuk menarik kembali perhatian pengguna. Untuk tugas yang berjalan secara periodik (seperti ringkasan harian atau laporan mingguan), notifikasi dapat membantu pengguna mengembangkan kebiasaan berinteraksi yang rutin.
+Pesan instan, SMS, email, telepon, dan notifikasi aplikasi masing-masing cocok untuk tingkat urgensi dan bentuk isi yang berbeda. Agent dapat memilih kanal dengan menimbang urgensi, preferensi pengguna, kondisi pengguna saat itu, dan panjang pesan. Peristiwa panggilan yang perlu segera dikonfirmasi memakai pengingat seketika, sedangkan laporan lengkap dapat dikirim lewat email atau tautan aplikasi.
 
-*User communication tools* menyelesaikan masalah mengenai "bagaimana menjangkau pengguna." Namun demikian, identitas yang diadopsi oleh Agent di saluran-saluran tersebut dan lingkungan tempat Agent melakukan tindakan atas nama pengguna memerlukan suatu lapisan identitas serta infrastruktur lingkungan eksekusi, yang mana hal ini merupakan topik di bagian berikutnya.
+Penulis pernah meminta asisten memantau harga hotel untuk konferensi ATC. Setiap hari pada jam yang sama, asisten mengirim pesan bahwa harga kamar belum turun ke harga sasaran. Suatu kali harga sempat turun sebentar, tetapi yang menangkap jendela itu justru skrip yang ditulis penulis sendiri. Harga rendah yang singkat bisa muncul di antara dua kueri. Bahkan jika asisten sempat menemukannya, pesan yang terlambat sampai tetap bisa membuat pengguna kehilangan kesempatan memesan. Pada hari-hari tanpa penurunan harga, kueri terjadwal tetap boleh berjalan seperti biasa, tetapi pengguna tidak perlu membaca pesan yang sama setiap hari. Bab 7 akan memakai jendela penurunan harga selama lima menit untuk menguji pengingat semacam ini.
+
+Ketika tugas panjang selesai, pemberitahuan membawa pengguna kembali ke halaman hasil; ringkasan harian dan laporan mingguan dikirim mengikuti irama yang disepakati. Strategi multikanal juga perlu mengatur deduplikasi, jam tenang, dan syarat eskalasi, misalnya apakah perlu beralih ke kanal lain jika pengingat pertama tidak ditanggapi. Catatan pemberitahuan dikaitkan dengan status tugas, sehingga pengguna dapat melanjutkan urusan langsung dari pesan yang diterimanya.
 
 ### Identitas Virtual dan Lingkungan Eksekusi Terisolasi
 
-Bab 4 dibuka dengan Samantha dalam *Her* sebagai contoh, yang menunjukkan bagaimana Agent menggunakan alat untuk berinteraksi dengan dunia digital nyata. Untuk mencapai asisten multiguna seperti itu memaksa adanya pilihan arsitektur utama: perlukah Agent mengelola akun pribadi pengguna secara langsung, atau Agent memiliki identitas virtualnya sendiri? Manajemen secara langsung terlihat nyaman, tetapi jika ada satu saja kesalahan dari Agent atau terjadinya kompromi keamanan, seluruh identitas digital pengguna akan terancam. Pendekatan yang lebih aman adalah dengan memberikan identitas virtual yang independen kepada Agent—seperti layaknya sekretaris yang memiliki nomor telepon kantor dan kotak suratnya sendiri—yang terdiri dari akun komunikasi, penyimpanan, dan lingkungan komputasi yang berdedikasi tinggi, dengan demikian Agent dapat bekerja atas nama pengguna menggunakan identitas yang dideklarasikan secara jelas dan transparan. Transparansi ini tidak melemahkan kepercayaan; melainkan dapat menjadikan komunikasi menjadi lebih autentik.
+Bab 4 meminjam Samantha dari film *Her* untuk menjelaskan bagaimana asisten serbaguna memasuki dunia digital melalui alat. Untuk mewujudkan asisten semacam ini, perlu ditegaskan dengan identitas apa ia bekerja dan sumber daya apa yang boleh diaksesnya. **Penulis cenderung memberi asisten serbaguna identitas virtual tersendiri.** Kotak surat kantor, nomor telepon, ruang penyimpanan, dan lingkungan komputasi khusus membuat Agent, layaknya sekretaris yang punya akun kantornya sendiri, dapat mengurus urusan pengguna dengan identitas perwakilan yang jelas. Identitas tersendiri memisahkan pekerjaan harian asisten dari akun pribadi pengguna, sehingga otorisasi, audit, dan pencabutan dapat dilakukan secara terpisah; ketika terjadi kesalahan operasi, dampaknya juga lebih mudah dibatasi. Tugas yang benar-benar harus mengakses akun pengguna memperoleh izin yang dibutuhkan melalui otorisasi dengan cakupan terbatas.
 
-Identitas virtual (Virtual identities) perlu didasarkan pada lingkungan eksekusi yang terisolasi. **Virtual computers** (VMs/containers) dan **virtual phones** (Android emulators) memberikan Agent isolasi tingkat sistem operasi dan kemampuan operasi desktop/mobile secara penuh: Agent memiliki akun pengguna, direktori home, dan kredensial login sendiri di dalamnya, membuat semua operasi dapat dilacak dan diaudit; bahkan jika operasi yang salah dilakukan, sistem host dan perangkat nyata pengguna tetap tidak terpengaruh. Ini adalah perluasan dari konsep sandbox yang dibahas di bagian execution tools ke dalam dimensi "identitas digital"—sandbox mengisolasi eksekusi kode, sementara virtual computers dan phones mengisolasi seluruh identitas digital.
+Siapa pemilik nomor telepon menentukan siapa yang bisa melanjutkan urusan ketika pihak lain menelepon balik. Cue dari Manus memberi asisten nomor tersendiri yang dapat menerima panggilan masuk, lalu meninggalkan ringkasan panggilan untuk pengguna. Jika pedagang menerima nomor panggilan balik yang ditinggalkan asisten, layanan pelanggan yang menelepon kembali dapat langsung terhubung dengan asisten yang menangani urusan itu sebelumnya.[^ch6-cue]
 
-Identitas yang independen juga menghadirkan dua tantangan praktis. Pertama, ada **mekanisme anti-otomatisasi (anti-automation mechanisms)**: banyak situs web menggunakan CAPTCHA dan pemeriksaan reputasi IP untuk memblokir akses otomatis. Lingkungan virtual yang menggunakan IP pusat data mudah diidentifikasi; pada praktiknya, akses normal sering kali memerlukan konfigurasi jaringan proksi perumahan (yang menggunakan IP rumah tangga nyata). Kedua, **akses ke akun nyata pengguna**: ketika sebuah tugas harus masuk sebagai pengguna, gunakan otentikasi Human-in-the-Loop—sebuah remote desktop VNC/RDP di mana pengguna masuk secara pribadi, melihat antarmuka penuh yang dioperasikan oleh Agent, dan memahami mengapa otentikasi diperlukan. Session token kemudian digunakan kembali dalam masa berlakunya untuk menghindari gangguan terhadap pengguna secara berulang, menyeimbangkan otonomi dan keamanan.
+Ambil contoh permohonan keringanan biaya: asisten dapat menghubungi pedagang sebagai perwakilan yang diberi kuasa. Jika layanan pelanggan meminta verifikasi lisan dari pemilik akun sendiri, pengguna dapat diajak bergabung dalam panggilan tiga arah, lalu asisten melanjutkan pembicaraan setelah verifikasi selesai. Jika pedagang akan menelepon balik pengguna, nomor kasus, hal-hal yang sudah disepakati, dan pertanyaan yang perlu diverifikasi diserahkan lebih dulu kepada pengguna. Saat melapor kepada pengguna, asisten juga harus jelas tentang bukti yang dipegangnya: jika layanan pelanggan sudah berjanji secara lisan untuk memberi keringanan, janji itu dicatat; baru setelah tagihan terbukti diperbarui, ia melaporkan bahwa biayanya benar-benar telah dihapus.
 
-Pertukaran data antara main Agent dan lingkungan virtual diselesaikan melalui **shared file system**: menggunakan volume mounts (misalnya, `/workspace/shared`) untuk menghubungkan main Agent, virtual computer, dan virtual phone. Data diteruskan sebagai referensi file-path alih-alih menyalin konten, menghindari konsumsi context window. Sebagai contoh, dalam tugas analisis data: pengguna mengunggah file CSV ke direktori shared, Agent di virtual computer membaca file tersebut, melakukan analisis, menghasilkan grafik, dan menyimpannya kembali ke direktori shared. Main Agent hanya perlu mengembalikan file path dari grafik tersebut kepada pengguna—apa yang diteruskan antar pihak selalu berupa path string yang ringan.
+Ketika penulis mengurus penggantian kartu kredit Bank of America di Beijing, Pine menghubungi bank, mengatur penggantian kartu secara kilat, dan berhasil membuat bank membebaskan biaya percepatan sebesar 15 dolar AS. Ketika panggilan berakhir, asisten sudah dapat melaporkan apa yang diterima bank dan biaya mana yang disetujui untuk dihapus. Jika beberapa hari kemudian pengguna bertanya "kartu baru sudah sampai di mana", asisten perlu memeriksa pengiriman lagi atau meminta penerima memastikannya.
 
-Event-triggered tools memungkinkan dunia untuk membangunkan Agent, user communication tools memungkinkan Agent untuk menjangkau pengguna, dan identitas virtual dengan lingkungan eksekusi yang terisolasi (isolated execution environments) memungkinkan Agent untuk bertindak secara independen dan dapat diaudit. Pertanyaan yang tersisa adalah: ketika beberapa event terpusat pada instance Agent yang sama secara bersamaan, bagaimana mereka harus ditangani?
+Komputer virtual dan ponsel virtual menyediakan lingkungan operasi yang berjalan terus-menerus. Mesin virtual dapat menjalankan sistem desktop, kontainer cocok untuk mengisolasi proses dan dependensi, dan emulator Android menampung aplikasi seluler. Semuanya mendukung eksekusi di latar belakang serta mengurangi gangguan operasi otomatis terhadap pekerjaan pengguna saat itu. Cakupan isolasi ditentukan bersama oleh jaringan, *mount*, kredensial, dan izin eksekusi; konfigurasi ini sekaligus memengaruhi data dan sistem eksternal yang dapat dijangkau Agent.
 
-### Mekanisme Penanganan Peristiwa
+Misalkan Anda ingin WorkBuddy edisi perusahaan dari Tencent menyusun laporan mingguan setelah komputer dimatikan sepulang kerja, padahal tabel penjualan minggu ini hanya ada di komputer kantor. Jika memilih tugas lokal, asisten dapat membaca tabel itu, tetapi komputer harus menyala dan klien harus tetap daring. Jika memilih tugas *cloud*, asisten dapat terus bekerja setelah komputer Anda mati, dengan syarat data yang boleh dipakai untuk laporan mingguan sudah diunggah ke tugas itu, atau ditaruh di repositori dokumen yang dapat diakses tugas *cloud*. Jika tabel penjualan harus tetap berada di komputer lokal, pemrosesannya sebaiknya dijadwalkan ketika komputer sedang daring.
 
-Satu instance Agent mungkin menghadapi beberapa event secara bersamaan: pesan baru dari pengguna, hasil dari suatu tool, waktu timer habis, permintaan kolaborasi dari Agent lain. Bagaimana event-event ini ditangani secara efisien dan benar berdampak langsung pada performa dan pengalaman pengguna.
+Halaman web dan aplikasi seluler juga bisa meminta autentikasi identitas, kode verifikasi, atau konfirmasi manual. Saat menghubungkan layanan, utamakan API dan cara otorisasi yang disediakan layanan tersebut; bila autentikasi harus lewat antarmuka grafis, pengguna dapat masuk sendiri melalui *remote desktop* VNC/RDP, dan operasi otomatis dihentikan sementara selama autentikasi. Setelah pengguna selesai, sistem memeriksa status sesi, lalu melanjutkan tugas. Token dan sesi disimpan sesuai masa berlakunya, dan dibersihkan menurut kebijakan setelah otorisasi dicabut atau tugas selesai.
 
-Kerangka dari mekanisme ini adalah **event loop** dari pemrograman konkuren (concurrent programming). Pikirkan asynchronous Agent sebagai loop yang berjalan panjang: setiap putaran mengambil sekumpulan event dari antrean input (input queue), menambahkannya ke trajectory, memanggil LLM sekali, mengeksekusi tool yang diputuskan untuk dipanggil, lalu kembali ke bagian atas loop untuk menunggu sekumpulan event berikutnya—struktur yang sama dengan goroutine pada Go yang membaca pesan dari channel dan memprosesnya putaran demi putaran di dalam `for { select { ... } }`.
+Agent dan lingkungan virtual dapat bertukar data melalui **sistem berkas bersama**. Misalnya, pengguna mengunggah CSV, komputer virtual membaca berkas itu, menjalankan analisis, dan menulis grafiknya kembali ke penyimpanan bersama; *runtime* menyerahkan lokasi berkas grafik itu kepada Agent, lalu menyediakan tautan unduhan yang dapat diakses pengguna. Isi berkas besar tetap tersimpan di penyimpanan, dan model membaca ringkasan atau potongannya sesuai kebutuhan.
 
-Dalam implementasi antarmuka sinkron tradisional, **peristiwa dikonsumsi pada batas setiap putaran**. Saat LLM bernalar atau alat berjalan, peristiwa baru menunggu di antrean hingga **titik aman**: akhir suatu bagian penalaran atau kembalinya hasil alat. Asinkroni native memungkinkan persyaratan baru diterima saat model masih berpikir atau menghasilkan keluaran; sistem memilih saat yang tepat untuk melanjutkan pemrosesan. Keduanya memiliki batas yang dikelola oleh lapisan berbeda. Pembatalan alat tetap memerlukan pelaksana yang merespons sinyal pembatalan, seperti pemeriksaan `ctx.Done()` dalam Go; menerima pesan “berhenti” tidak otomatis membatalkan tindakan yang sudah terjadi.
+[^ch6-dsh-threads]: DeepSeek, model domain serta aturan otorisasi dan langganan pada prototipe dsh-superagent.
+[^ch6-dsh-sessions]: DeepSeek, prototipe dsh-superagent, versi `8c32a9d`. Tanggung jawab kedua jenis sesi lihat `docs/004-prompts.md`, sesi eksekusi dan direktori kerja lihat `docs/003-execution.md`, format pesan yang dikirim ke sesi utama lihat `docs/007-architecture.md`.
+[^ch6-duet]: Anthropic, *Get started with Claude Duet*, memperkenalkan ringkasan pra-rapat, halaman tugas, dan pemberitahuan di percakapan utama.
+[^ch6-cue]: Manus, *Introducing Manus 2.0*, memperkenalkan nomor telepon tersendiri, penerimaan panggilan masuk, dan ringkasan panggilan pada Cue.
+[^ch6-automation]: OpenClaw, Automation, memperkenalkan pintu masuk otomatisasi seperti Hooks internal, penjadwalan berkala, Heartbeat, dan Webhook eksternal.
 
-Dengan pembedaan ini, kita terlebih dahulu memakai loop peristiwa yang kompatibel dengan antarmuka sinkron untuk menjelaskan tiga strategi: menunggu titik aman alami berikutnya (antrean), membuat titik aman lebih awal (pembatalan), atau memulai loop lain tanpa menunggu loop utama (paralel). Kelanjutan melalui steering native dibahas kemudian.
+### Lapisan Akses: Banyak Sumber, Satu Bentuk Peristiwa
 
-**Structured Event Modeling.**
+Sebuah Agent layanan pelanggan di toko daring sedang memproses pengembalian dana: pembeli mengajukan permintaan di percakapan layanan pelanggan dalam aplikasi; jumlahnya melampaui wewenang Agent, sehingga ia meminta konfirmasi supervisor di grup purnajual WeCom; layanan pembayaran mengirim Webhook setelah pengembalian dana berhasil; lalu sistem pesanan menerbitkan perubahan status di Kafka. Keempat pesan itu membicarakan pesanan yang sama, tetapi datang dengan cara yang berbeda-beda. Begitu sumbernya bertambah banyak dan setiap jalur mengurus sendiri percobaan ulang, deduplikasi, dan urutan, *runtime* akan tercerai-berai oleh perbedaan-perbedaan ini. **Lapisan akses menyeragamkan bentuk peristiwa setelah masuk ke sistem, sambil tetap mempertahankan perbedaan kemampuan tiap sumber sebelum peristiwa itu tiba.** Gambar 6-2 memperlihatkan pelapisan ini.
 
-Penanganan (handling) membutuhkan pemahaman. Input Agent yang bersifat umum (general-purpose) tidak datang hanya dari pengguna—pesan pihak ketiga tidak dikirimkan oleh pengguna ke Agent, namun Agent harus memahaminya, menimbang kepentingannya, dan memutuskan apakah akan mengambil tindakan. Hal ini memerlukan pemodelan setiap input sebagai **structured event** yang kaya dengan semantik:
+![Gambar 6-2 Lapisan akses: adaptor, amplop seragam, dan log akses](images/revised/fig6-2.svg)
 
-- **Source (siapa)**: Pengguna itu sendiri, kontak, orang asing, notifikasi sistem
-- **Channel (bagaimana)**: Panggilan telepon, SMS, pesan instan, email, media sosial, timer trigger, hasil pemanggilan tool asynchronous, pembaruan status dari command-line monitoring
-- **Content (apa)**: Teks pesan, nada emosi, tingkat urgensi, apakah balasan diperlukan
-- **Context (latar belakang)**: Apakah itu balasan ke percakapan sebelumnya atau komunikasi baru, relevansinya dengan task saat ini
+Ada empat jenis sumber yang umum. **Kanal percakapan** mencakup antarmuka percakapan milik produk sendiri, pesan instan seperti WeCom, Feishu, dan Slack, serta email; Agent dapat menjawab kembali di tempat asal. ***Callback*** adalah antarmuka HTTP yang dipanggil layanan eksternal ketika statusnya berubah; biasanya disertai tanda tangan dan hanya membawa pemberitahuan. Jika pengiriman gagal, sebagian layanan mencoba ulang secara otomatis, sedangkan GitHub mengharuskan pengiriman ulang secara manual atau lewat API. **Bus pesan** seperti SQS dan Kafka membawa peristiwa bisnis dari layanan internal, dengan semantik konfirmasi dan retensi yang jelas. ***Timer*, *polling*, dan peristiwa internal** dihasilkan oleh sistem sendiri, sehingga cukup ditulis ke log yang sama. Tabel berikut membandingkan tiga jenis pertama.[^ch6-ingress-mq][^ch6-ingress-callback]
 
-Mengambil contoh email permintaan pengembalian dana dari pelanggan, structured event akan terlihat seperti ini:
+| | Percakapan aplikasi | WeCom / Feishu | Email | Webhook | SQS | Kafka |
+|---|---|---|---|---|---|---|
+| Cara tiba | Koneksi persisten | *Callback* atau koneksi persisten | *Push* atau *polling* | *Callback* | Ditarik konsumen | Ditarik konsumen |
+| Cakupan urutan | Dalam satu percakapan | Sebagian besar peristiwa tidak dijamin | Tidak dijamin | Tidak dijamin | Antrean standar tidak dijamin, FIFO per grup pesan | Dalam satu partisi |
+| Dasar deduplikasi bawaan | ID pesan klien | ID pesan, ID peristiwa | Message-ID | ID pengiriman | ID pesan; FIFO juga punya `MessageDeduplicationId` | Topik, partisi, dan *offset* |
+| Dapat diputar ulang? | Bergantung pada catatan sendiri | *Callback* sendiri tidak dapat diputar ulang; Feishu dapat menarik ulang lewat antarmuka riwayat pesan | Kotak surat dapat dibaca ulang | Bergantung pada layanan | Tidak, setelah dihapus | Ya, selama masa retensi |
+| Cara konfirmasi | Tanda terima klien | Mengembalikan sukses dalam batas waktu | Mencatat posisi baca sendiri | Mengembalikan 2xx dalam batas waktu | Menghapus pesan | *Commit offset* |
+| Jalur balasan | Percakapan asal | Percakapan asal | Surat balasan | Tidak ada | Tidak ada | Tidak ada |
+
+**Amplop seragam.**
+
+Adaptor mengubah pesan mentah menjadi **amplop** (*envelope*) berformat seragam. Amplop hanya mencatat fakta yang sudah pasti saat pesan tiba; prioritas dan tenggat pemrosesan ditambahkan oleh aturan perutean, tingkat pelanggan dan status pesanan ditambahkan oleh sistem bisnis, sedangkan status pemrosesan disimpan terpisah. Permintaan pengembalian dana dari pembeli dapat ditulis seperti ini:
 
 ```json
 {
-  "source": {"type": "email", "sender": "client@example.com"},
-  "channel": "gmail_webhook",
-  "content": {"subject": "Refund Request", "body": "Order #12345, requesting a refund..."},
-  "context": {"priority": "high", "customer_tier": "vip", "related_orders": ["#12345"]}
+  "id": "evt_7f3a",
+  "source": {"type": "app_chat", "sender": "user:u_5521", "verified": true},
+  "dedupe_key": "app:msg:msg_1029",
+  "thread": "app:conv:conv_88",
+  "kind": "message",
+  "correlation": ["order:12345"],
+  "content": {"type": "text", "text": "这个订单我想退款"},
+  "raw_ref": "raw/2026-11-23/app/msg_1029.json",
+  "reply": {"via": "app_chat", "target": "app:conv:conv_88"},
+  "occurred_at": "2026-11-23T14:02:09+08:00",
+  "expires_at": null
 }
 ```
 
-Hanya ketika dimensi-dimensi ini dimodelkan secara jelas sebagai structured events, Agent dapat mempertahankan pemahaman yang jelas dalam komunikasi multi-party, menghindari kesalahan mengira input pengguna sebagai hasil tool (tool result), atau kesalahan mengira tool result yang berisi instruksi tersembunyi sebagai perintah pengguna (Prompt Injection). Kompleksitas manajemen context pada multi-threaded juga mengharuskan Agent untuk memahami hubungan antara banyak thread percakapan—bagaimana pesan dari pihak ketiga memengaruhi suasana hati pengguna, transisi peran pengguna di berbagai percakapan, dan kapan harus mensintesis informasi dari thread yang berbeda untuk memberikan saran.
+- `source`: jenis sumber dan pengirim yang telah diverifikasi. "Terverifikasi" ditentukan adaptor berdasarkan tanda tangan, token, atau akun kanal; perkenalan diri di dalam isi pesan tidak dihitung. *Runtime* menilai izin berdasarkan butir ini.
+- `dedupe_key`: kunci deduplikasi; apa yang dianggap duplikat ditentukan oleh semantik sumbernya. ID pengiriman, ID pesan, serta partisi dan *offset* menandai satu kali pengiriman yang sama, sehingga dapat menahan pengiriman ulang di lapisan transportasi; jika pesan bisnis membawa kunci idempotensi (*idempotency key*), misalnya nomor pengembalian dana ditambah statusnya, adaptor harus mengambilnya agar duplikasi di tingkat bisnis juga tertahan. Percakapan pengguna justru sebaliknya: pembeli yang dua kali berkata "pengembalian dana" mengirim dua pesan, sehingga deduplikasi hanya memakai ID pesan klien.
+- `raw_ref`: muatan mentah yang disimpan apa adanya; hanya inilah pegangan saat menelusuri kesalahan adaptor.
+- `reply`: lewat adaptor keluar mana dan ke tujuan mana balasan dikirim. *Callback* pembayaran tidak punya jalur balasan, sehingga butir ini kosong.
+- `occurred_at` adalah waktu kejadian menurut sumber; `expires_at` adalah masa berlaku, yang hanya diisi untuk peristiwa seperti penawaran harga atau kode verifikasi.
 
-Ekosistem trigger pada platform workflow seperti n8n memperlihatkannya dengan jelas: webhook, timer, email, perubahan database, pemantauan file—setiap trigger adalah satu "indra" Agent untuk mengindra dunia. Begitu event-event heterogen ini dimodelkan secara seragam ke dalam format terstruktur, Agent dapat menangani rangsangan dari berbagai sumber dengan cara yang konsisten; penentuan tingkat urgensi dan strategi penanganan yang dibahas di bawah juga bertumpu pada pemodelan terpadu ini.
+***Thread* dan keterkaitan.**
 
-**Strategi Pemrosesan Dinamis Berdasarkan Urgensi.**
+Pembeli mula-mula berkata "pengembalian dana", lalu segera menambahkan "sudahlah, tukar barang saja"; urutan kedua pesan ini tidak boleh terbalik. Pesan dari pembeli lain tidak berkaitan dengannya dan dapat diproses paralel. **Lapisan akses hanya menjanjikan urutan di dalam satu *thread*.** Adaptor memetakan satuan urutan milik sumber ke `thread`: satu percakapan di aplikasi, grup pesan SQS FIFO (`MessageGroupId`), kunci partisi Kafka, atau nomor Issue maupun PR dalam *callback* GitHub. Jika sumbernya tidak menjamin urutan, *runtime* mengandalkan `occurred_at` atau nomor versi dari sumber untuk mengenali status lama yang datang terlambat, misalnya "pengembalian dana sedang diproses" yang baru tiba setelah "pengembalian dana berhasil".
 
-Manusia yang menangani berbagai task secara bersamaan mengadaptasi strategi mereka terhadap urgensi: keadaan darurat membuat mereka menghentikan apa yang sedang mereka lakukan; tugas rutin (routine to-do) dimasukkan ke dalam daftar untuk dikerjakan nanti. Event handling pada Agent juga harus menunjukkan kecerdasan yang sama.
+Keempat pesan dalam pengembalian dana ini termasuk empat *thread* yang berbeda. Menggabungkannya menjadi satu tidak murah: satu diskusi yang tak berkaitan di grup purnajual pun harus antre di belakang pesan pembeli, dan penanda *thread* sering kali sekaligus berfungsi sebagai kunci partisi, sehingga mengubahnya belakangan berarti memindahkan data. **Keterkaitan dinyatakan dalam kolom tersendiri, tanpa menulis ulang *thread*.** `correlation` mencantumkan objek bisnis yang terlibat dalam peristiwa, dan tugas berlangganan *thread* terkait berdasarkan objek tersebut.
 
-![Gambar 6-2: Tiga Strategi untuk Pemrosesan Event Asynchronous](images/fig6-2.svg)
+**Memisahkan waktu konfirmasi dari kemajuan.**
 
-**Cancellation-Based Processing** digunakan untuk event darurat (urgent events); intinya adalah **memaksa sebuah safe point lebih awal** untuk event darurat tersebut: secara proaktif menyela (interrupt) langkah saat ini untuk mengubah momen ini menjadi batasan (boundary) di mana event baru dapat dikonsumsi. Ketika event darurat tiba (misalnya, pengguna mengklik "stop" atau sistem pengawas mengirim instruksi prioritas tinggi): (1) Hentikan operasi saat ini—jika LLM sedang melakukan reasoning, segera batalkan streaming response; jika tool sinkron sedang dieksekusi, kirim sinyal batal (cancel signal); (2) Kosongkan (drain) antrean tunggu (pending queue) dengan menghapus semua event yang tertunda; (3) Tambahkan event-event tersebut bersama dengan event darurat ke akhir trajectory; (4) Segera panggil kembali (re-invoke) LLM dengan input berupa trajectory lengkap yang diperbarui untuk menilai situasi. Sebagai contoh, jika pengguna menginputkan "Berhenti! Saya salah bicara" saat Agent akan melakukan operasi yang berpotensi salah, Agent akan segera melihat input baru ini, memahami kembali niat (intent) yang sebenarnya, dan dengan demikian menghindari eksekusi tindakan yang salah.
+**Adaptor sebaiknya mengonfirmasi ke sumber setelah peristiwa ditulis ke log akses, bukan menunggu sampai Agent selesai memprosesnya.** *Callback* peristiwa Feishu harus dijawab dalam 3 detik, WeCom dalam 5 detik; lewat dari itu, peristiwa didorong ulang. Pesan SQS yang tidak dihapus dalam batas *visibility timeout* akan diambil sekali lagi. Jika konfirmasi menunggu pemrosesan selesai, satu pemanggilan model yang sedikit lebih lama saja sudah mengundang pengiriman ganda. Dengan menulis log dulu baru mengonfirmasi, jaminan pengiriman semua sumber dapat diringkas menjadi satu kalimat: **setiap peristiwa masuk ke log akses setidaknya satu kali (*at-least-once*)**, dan pengiriman ulangnya ditahan oleh kunci deduplikasi.
 
-**Queued Processing** digunakan untuk event rutin. Ketika event yang tidak darurat tiba (misalnya, asynchronous tool mengembalikan hasil atau pengguna mengirimkan informasi tambahan): (1) Tambahkan event ke akhir antrean tanpa mengganggu operasi saat ini; (2) Tunggu operasi saat ini selesai—biarkan LLM menyelesaikan reasoning, biarkan tool sinkron selesai dieksekusi; (3) Ketika setiap tool call selesai dan mengembalikan `tool.result`, periksa antrean. Jika antrean tidak kosong, tambahkan semua event ke trajectory secara bersamaan; (4) LLM memproses trajectory yang diperbarui secara komprehensif. Ini memungkinkan pemrosesan secara batch, meningkatkan efisiensi—sebagai contoh, ketika Agent sedang menunggu search tool result, pengguna menambahkan "hanya tampilkan hasil dari bulan lalu." Informasi tambahan ini masuk ke antrean, dan ketika hasil pencarian kembali, kedua event disajikan ke LLM bersama-sama, menghindari round trips yang tidak perlu.
+Log akses berfungsi sebagai kotak masuk (*inbox*), mengikuti prinsip hanya-tambah-tanpa-ubah dari Bab 1, dan dipartisi per *thread*. Jika Kafka dipakai sebagai log akses, deduplikasi memerlukan penyimpanan dengan batasan unik tersendiri atau penyaringan berdasarkan kunci deduplikasi di sisi konsumen: Kafka tidak dapat menolak penulisan berdasarkan kunci dari aplikasi, dan produsen idempotennya hanya mencakup percobaan ulang oleh produsen itu sendiri.
 
-**Parallel Processing** digunakan untuk permintaan (queries) yang independen dan ringan. Sebagai contoh, ketika Agent sedang menganalisis sejumlah besar data, pengguna tiba-tiba bertanya, "Bagaimana cuaca hari ini?" Query semacam ini memiliki tiga karakteristik: tidak terkait dengan tugas utama, memerlukan respons cepat, dan memiliki biaya eksekusi yang rendah. Baik cancellation-based (yang akan mengganggu task utama yang penting) maupun queued processing (yang akan membuat pengguna menunggu terlalu lama) tidak ada yang cocok. Sistem pertama-tama menilai kemandirian dan kompleksitas query tersebut, kemudian mengeksekusinya secara mandiri dalam parallel reasoning session, memanggil tool yang diperlukan untuk menghasilkan respons dan mengembalikannya segera. Query dan respons tersebut ditambahkan ke trajectory task utama, dengan ditandai secara jelas sebagai "dieksekusi secara paralel dengan task utama" untuk menghindari kebingungan pada LLM.
+Sistem perlu menyimpan tiga jenis kemajuan secara terpisah:
 
-**Penentuan Urgensi (Urgency Determination).**
+| Kemajuan | Isi catatan | Dikelola oleh |
+|---|---|---|
+| Kemajuan sumber | *Offset* Kafka, *receipt handle* SQS, posisi baca kotak surat | Adaptor |
+| Kemajuan distribusi | Peristiwa di log sudah diserahkan ke tugas mana saja | Perutean |
+| Status tugas | Sudah sampai langkah mana, apakah balasan sudah terkirim | *Runtime* |
 
-Event darurat (Urgent events): Interupsi pengguna (`user.interrupt`), instruksi pengawas (`supervisor.instruction`), interupsi antar-Agent (`agent.interrupt`), external triggers yang ditandai sebagai darurat (misalnya, peringatan sistem, kegagalan pembayaran).
+Jika *offset* dianggap sebagai kemajuan tugas, balasan yang sudah terkirim akan terkirim sekali lagi saat log diputar ulang; setelah dipisahkan, pemutaran ulang hanya memengaruhi kemajuan distribusi. Arah keluar dipadankan dengan kotak keluar (*outbox*): sebelum mengirim, niat pengiriman dan kunci idempotensinya dicatat, lalu ditandai selesai setelah tanda terima dari kanal diterima; cara mencocokkannya kembali setelah *restart* dibahas di bagian "Membangun Siklus Dasar dari Peristiwa Email".
 
-Event tidak darurat (Non-urgent events): Input pengguna biasa (`user.input`), input Agent (`agent.input`), hasil tool (`tool.result`), timer triggers (`timer.trigger`), external triggers biasa.
+**Masa berlaku, penggabungan, dan *backpressure*.**
 
-Hardcoded rules memiliki keterbatasan; semantik event menentukan metode penanganan—"Berhenti sekarang!" menggunakan cancellation-based processing, "Bagaimana cuaca hari ini?" menggunakan parallel processing, "Kirimkan laporannya dalam bahasa Mandarin" menggunakan queued processing. **Sangat disarankan untuk menggunakan classification LLM yang ringan sebagai event router**, dengan cepat menentukan strategi mana yang akan diadopsi ketika sebuah event tiba.
+Ketika ratusan peristiwa per detik membanjiri satu *thread*, peristiwa-peristiwa itu tidak semestinya diserahkan satu per satu kepada model. Perutean menangani tumpukan ini sebelum distribusi:
 
-Titik pembatalan harus berada di posisi yang memungkinkan tool atau reasoning menutup pekerjaannya dengan aman; hasil tool yang belum selesai diwakili oleh placeholder eksplisit dan tidak boleh dipalsukan sebagai keberhasilan.
+- **Masa berlaku.** Penawaran harga, kode verifikasi, dan peringatan yang sudah pulih kehilangan makna setelah waktunya lewat. Peristiwa yang telah melewati `expires_at` hanya dicatat dalam jejak dan tidak lagi membangunkan model.
+- **Penggabungan.** `kind` membedakan dua jenis peristiwa. Peristiwa status menggambarkan nilai terkini suatu objek, seperti status pengembalian dana dalam *callback* pembayaran atau status pesanan di Kafka; bila beberapa menumpuk di satu *thread*, hanya yang terbaru yang diserahkan kepada model, sedangkan nilai antaranya tetap di log. Peristiwa pesan adalah ucapan atau perintah seseorang, seperti pesan pembeli atau klik supervisor; peristiwa jenis ini boleh diserahkan kepada model secara berkelompok, tetapi tidak boleh dibuang.
+- ***Backpressure*.** Sumber berbasis tarik dapat memperlambat penarikan, sehingga tumpukan tetap berada di sumber. Sumber berbasis dorong tidak dapat disuruh berhenti sejenak; adaptor tetap menulis log dan mengonfirmasi seperti biasa, tumpukan berpindah ke log akses, lalu diurai oleh dua aturan sebelumnya.
 
-Eksperimen berikut, yakni event-driven Agent pemroses email, mengimplementasikan strategi event handling yang dibahas di atas menjadi implementasi yang dapat dijalankan.
+**Satu pengembalian dana melewati empat sumber.**
 
-> **Eksperimen 6-1 ★★★: Event-Driven Email Processing Agent**
+1. Pembeli mengajukan pengembalian dana di percakapan aplikasi. Adaptor melakukan deduplikasi dengan ID pesan klien, menulisnya ke log, lalu mengirim tanda terima ke klien; perutean membuat tugas pengembalian dana berdasarkan `order:12345`, dan tugas itu berlangganan *thread* percakapan tersebut.
+2. Jumlahnya melampaui wewenang, sehingga Agent mengirim kartu konfirmasi di grup purnajual WeCom, dan penanda kartu dicatat dalam tugas. Supervisor mengklik "Setuju"; adaptor menulisnya ke log, mengembalikan sukses, lalu melengkapi objek terkait berdasarkan penanda kartu.
+3. Setelah Agent memanggil antarmuka pengembalian dana, layanan pembayaran dua kali mengirim *callback* "pengembalian dana berhasil" dengan ID pengiriman yang sama; yang kedua tersaring oleh deduplikasi.
+4. Sistem pesanan menerbitkan "pesanan telah dikembalikan dananya" di Kafka, yang sama maknanya dengan *callback* tadi. Jika kedua adaptor sama-sama mengambil nomor pengembalian dana ditambah status dari muatan sebagai kunci deduplikasi, peristiwa ini sudah tertahan saat masuk; jika masing-masing melakukan deduplikasi berdasarkan ID pengiriman serta partisi dan *offset*, keduanya masuk ke log, dan *runtime* yang melihat bahwa pengembalian dana dalam tugas sudah dikonfirmasi hanya mencatatnya dalam jejak.
+5. Baik *callback* maupun peristiwa Kafka tidak punya jalur balasan. *Runtime* memakai `reply` dari *thread* percakapan pada langkah 1 untuk memberi tahu pembeli lewat adaptor keluar aplikasi.
+
+Langkah 4 adalah batas deduplikasi di lapisan akses: duplikasi mana yang dapat ditahan bergantung pada kunci deduplikasi yang dinyatakan adaptor; yang lolos harus dinilai dari status tugas. Setelah peristiwa didistribusikan ke tugas, apakah ia disambung ke sesi yang ada atau dibukakan sesi baru adalah persoalan manajemen konteks: informasi lintas sesi diteruskan lewat memori di Bab 3, sedangkan apakah konteks dapat dibagi dibahas di Bab 10.
+
+[^ch6-ingress-mq]: Amazon Web Services, "Amazon SQS standard queues"; "Amazon SQS visibility timeout"; "Using the message deduplication ID in Amazon SQS"; "Using the message group ID with Amazon SQS FIFO Queues". Dokumentasi Apache Kafka 4.4, "Consumer Position" dan "Message Delivery Semantics" dalam "Design". Tanggal pemeriksaan: 2026-11-24.
+[^ch6-ingress-callback]: Feishu Open Platform, "事件概述"; "获取会话历史消息". WeCom Developer Center, "概述" di bawah "接收消息与事件". GitHub Docs, "Best practices for using webhooks"; "Handling failed webhook deliveries". Tanggal pemeriksaan: 2026-11-24.
+
+### Mekanisme Penanganan Peristiwa
+
+Pesan pengguna, hasil alat, *timer*, dan permintaan kolaborasi dapat masuk ke satu Agent secara bersamaan. *Runtime* perlu menyimpan peristiwa-peristiwa ini, menentukan urutan pemrosesannya, lalu menyerahkan informasi yang relevan kepada model. ***Event loop*** bertugas menggerakkan proses ini terus-menerus: mengambil peristiwa dari antrean, memperbarui status tugas, menyusun permintaan ke model, menjadwalkan alat, lalu menunggu masukan baru atau pemberitahuan selesai. Program Go yang menata banyak aliran pesan dengan goroutine, channel, dan `select` juga memakai pola pikir serupa.
+
+Ambil prototipe dsh-superagent sebagai contoh. Dalam satu proyek GitHub, diskusi di bawah sebuah Issue dan diskusi di bawah sebuah *pull request* (PR) termasuk dua *thread* percakapan (Thread) yang berbeda. Ketika sistem perlu memutuskan apakah akan mengambil pekerjaan baru, ia membaca status *thread* dan meminta model melakukan evaluasi (Eval). Satu *thread* paling banyak menjalankan satu evaluasi pada satu waktu, tetapi boleh dilanggani oleh beberapa tiket (Ticket). Misalkan dua tiket, satu untuk memperbaiki *bug* dan satu untuk melengkapi dokumentasi, sama-sama berlangganan PR yang sama; ketika peninjau meninggalkan komentar di PR itu, kedua tiket menerima pesan tersebut sebagai konteks. Jika kemudian seseorang menambahkan kondisi reproduksi di bawah Issue, pesan itu dikirim ke tiket yang berlangganan Issue tersebut. Ke mana pesan sampai ditentukan oleh *thread* dan hubungan langganan. Apa yang boleh dilakukan setelah menerima pesan tetap ditentukan oleh otorisasi asli masing-masing tiket.[^ch6-dsh-threads]
+
+dsh-superagent juga menyerahkan "berurusan dengan orang" dan "mengerjakan pekerjaan" kepada sesi yang berbeda. Sesi utama (Main Session) hanya bertugas menerima pekerjaan, membalas pesan, dan menulis otorisasi; ia tidak membaca kode dan tidak berhenti untuk menunggu hasil. Setiap tiket punya sesi eksekusinya sendiri (Executor Session) yang mengubah kode dan menjalankan pengujian di direktori kerja tersendiri. Sesi eksekusi baru mengirim pesan ke sesi utama ketika perbaikan selesai, ketika macet, atau ketika perlu bertanya kepada manusia, disertai ringkasan dan alamat baca, yaitu "ringkasan ditambah ID objek" yang dibahas di Bab 2. Dengan begitu, sesi utama selalu punya waktu luang untuk menerima permintaan berikutnya; bertanya kepada manusia, mengirim pemberitahuan, dan menghentikan pekerjaan semuanya melewatinya, sehingga janji hanya keluar dari satu pintu. Model cepat dan model lambat pada bagian suara nanti adalah wujud pembagian kerja ini dalam panggilan waktu nyata.[^ch6-dsh-sessions]
+
+Antarmuka model sinkron biasanya menerima kumpulan pesan berikutnya setelah satu generasi selesai atau setelah hasil alat lengkap. Di sini dapat dipasang **titik aman**: *runtime* lebih dulu mencatat pesan yang telah selesai, pemanggilan yang masih berjalan, dan kemajuan tugas saat ini, baru kemudian beralih ke langkah pemrosesan yang baru. Antarmuka asinkron native menyediakan protokol untuk menerima pembaruan selama eksekusi, dan kapan tepatnya pemrosesan dilanjutkan diatur bersama oleh antarmuka dan *runtime*.
+
+Pembatalan juga memerlukan kerja sama dari eksekutor. Setelah model berhenti menghasilkan, alat di latar belakang mungkin masih berjalan; eksekutor perlu menerima sinyal pembatalan dan melaporkan status sebenarnya, mirip tugas Go yang memeriksa `ctx.Done()` lalu menjalankan pembersihan. Penulisan, pengiriman, atau pembayaran yang sudah terjadi harus dibatalkan atau dikompensasi melalui proses bisnis yang bersangkutan.
+
+**Tiga strategi penanganan.**
+
+Gambar 6-3 membandingkan tiga pilihan ketika peristiwa baru tiba. Jika peristiwa diantrekan, waktu responsnya bergantung pada kapan titik aman berikutnya tercapai; jika tugas saat ini dibatalkan, perlu dipastikan operasi mana yang sudah selesai dan dari mana pekerjaan dapat dilanjutkan; jika dibuka satu *loop* lagi, perlu diperiksa apakah kedua tugas akan berebut sumber daya yang sama.
+
+![Gambar 6-3 Tiga strategi penanganan peristiwa asinkron](images/revised/fig6-3.svg)
+
+**Penanganan berbasis pembatalan (*Cancellation-Based*)** cocok untuk perintah berhenti dari pengguna atau peristiwa kendali yang harus segera ditangani. *Runtime* lebih dulu berhenti mendistribusikan operasi terkait, mengirim sinyal berhenti ke permintaan yang sedang menghasilkan dan ke alat yang dapat dibatalkan, lalu menyimpan pesan yang sudah selesai, status alat, dan tanda terima pembatalan. Setelah itu, peristiwa baru masuk ke konteks keputusan. Misalnya, ketika pengguna berkata "Berhenti! Saya salah bicara", sistem lebih dulu membatasi eksekusi lanjutan, lalu mengonfirmasi ulang tugas berdasarkan status yang sebenarnya. Butir antrean yang belum diproses tetap menyimpan penanda dan statusnya, lalu diurutkan ulang menurut cakupan keterkaitannya.
+
+**Penanganan berbasis antrean (*Queued*)** cocok untuk informasi tambahan biasa dan pembaruan kemajuan. Peristiwa masuk ke antrean dan diserahkan kepada model bersama hasil alat pada titik aman berikutnya. Misalnya, selama pencarian berlangsung pengguna menambahkan "hanya hasil sebulan terakhir"; setelah pencarian kembali, model membaca hasil dan syarat baru itu sekaligus, lalu memutuskan apakah akan menyaring atau mencari ulang.
+
+**Penanganan paralel (*Parallel*)** cocok untuk permintaan yang tidak bergantung pada tugas utama dan perlu segera dijawab. Misalnya, ketika analisis data berskala besar sedang berjalan dan pengguna menanyakan cuaca, sistem dapat membuka sesi tersendiri untuk menjawabnya.
+
+**Urgensi dan perutean.**
+
+Jenis peristiwa memberi petunjuk awal: `user.interrupt`, instruksi pengawasan yang tepercaya, dan peringatan sistem dapat masuk ke jalur prioritas tinggi; `user.input`, `agent.input`, `tool.result`, dan `timer.trigger` dinilai lebih lanjut berdasarkan isi dan status tugas. Jika pengirim menyebut dirinya "mendesak" di dalam isi pesan, sistem tetap menentukan izinnya berdasarkan identitas yang telah diverifikasi dan aturan yang berlaku.
+
+Untuk keputusan perutean yang memerlukan pemahaman makna pesan, penulis menyarankan model klasifikasi yang ringan: "berhenti sekarang juga" berarti pembatalan, "bagaimana cuaca hari ini" mungkin cocok diproses paralel, dan "tolong tulis laporannya dalam bahasa Mandarin" biasanya masuk ke antrean tambahan untuk tugas saat ini. Pintu berhenti yang tegas ditangani langsung oleh *runtime*, sedangkan klasifikasi semantik dipakai untuk pesan lain yang memerlukan pemahaman.
+
+Model umum juga dapat memberi label pada pesan, tetapi meskipun keluarannya hanya dua kata "perlu ditangani", model tetap harus membaca deskripsi tugas dan isi pesan. Jika setiap pesan baru dinilai seperti ini, biaya pemanggilan akan tumbuh seiring jumlah pesan, dan pesan yang benar-benar mendesak pun harus menunggu label dari model sebelum dapat diteruskan. Jev dari TypeSafe dibuat khusus untuk tugas penilaian dengan pilihan yang sudah ditentukan sebelumnya seperti ini. Diberi satu pesan dan status tugas saat ini, ia dapat memberikan probabilitas untuk setiap pilihan secara paralel dengan biaya dan latensi yang lebih rendah.[^ch6-jev]
+
+Penjarangan ruang observasi yang dibahas di Bab 1 di sini menentukan pesan mana yang memicu satu putaran penalaran baru. Ambil contoh pesan Feishu dan komentar Issue GitHub: program dapat lebih dulu menyaring pemberitahuan duplikat berdasarkan nomor peristiwa, lalu meminta Jev menilai apakah pesan baru itu melengkapi tugas yang sudah ada atau mengajukan permintaan baru yang perlu ditangani model utama. Ketika membaca "melengkapi langkah reproduksi yang disebut kemarin", model cukup menilai bahwa ini adalah keterangan tambahan. Adapun Issue mana yang dilengkapi, program cukup membaca nomor yang sudah melekat pada komentar itu.
+
+Meskipun model memberikan probabilitas yang tinggi, ia tetap bisa melebih-lebihkan keyakinannya. Misalnya, 100 pesan semuanya dinilai "melengkapi tugas yang ada" dengan probabilitas sekitar 90%, padahal hanya 60 yang benar-benar termasuk jenis itu. Jika kelompok pesan ini secara otomatis digabungkan ke tugas yang ada, 40 pesan lainnya akan kehilangan tujuan aslinya.
+
+[^ch6-jev]: Dalam catatan rilis Jev, TypeSafe memperkenalkan keluaran yang telah ditentukan sebelumnya, pengembalian probabilitas secara paralel, serta RLCD, metode pelatihan yang menargetkan kalibrasi keputusan.
+
+### Membangun Siklus Dasar dari Peristiwa Email
+
+Misalkan proses yang menangani email baru tiba-tiba mengalami *restart*. Penanda email dapat membantunya menemukan kembali isi aslinya, tetapi tidak dapat memberitahunya apakah balasan sebelumnya sudah terkirim. Dari masuk antrean, membaca email, memanggil alat, sampai memperbarui kotak surat atau memberi tahu pengguna, sebaiknya setiap operasi tulis dan tanda terima yang dikembalikannya dicatat di bawah email yang sama. Jika setelah *restart* ditemukan permintaan yang sudah dikirim tetapi belum ada tanda terimanya, periksa dulu status sebenarnya di kotak surat, baru putuskan apakah perlu mengirim ulang.
+
+> **Eksperimen 6-1 ★★★: Agent pemroses email berbasis peristiwa**
 >
+> Eksperimen ini memakai kotak surat uji sebagai pintu masuk untuk berlatih pendaftaran peristiwa, antrean, dan pemrosesan tugas. Pertama, ubah email baru menjadi peristiwa terstruktur dan proses sesuai urutan kedatangannya; kemudian hubungkan alat-alat seperti riwayat email, pembacaan lampiran, kueri pengetahuan, dan pemberitahuan. Ikuti satu undangan rapat di sepanjang Gambar 6-4: temukan dua langkah pemeriksaan bentrok kalender dan penyusunan draf di dalam *event loop*, lalu cari catatan pemrosesan email itu di lapisan persistensi.
 >
-> ![Gambar 6-3: Arsitektur Event-Driven Agent pada Eksperimen 6-1](images/fig6-3.svg)
+> ![Gambar 6-4 Arsitektur Agent berbasis peristiwa pada Eksperimen 6-1](images/revised/fig6-4.svg)
 >
+> Antrean yang sama dapat diperluas dengan berbagai sumber: email masuk, pesan IM atau SMS, pembaruan PR dan Issue GitHub, *timer*, Webhook eksternal, serta peristiwa internal seperti pengguna luring, proses kehabisan waktu, dan peringatan sumber daya. Setiap adaptor bertugas memverifikasi sumber dan melengkapi informasi keterkaitan, sedangkan hasil pemrosesan ditulis kembali berdasarkan penanda peristiwa.
 >
-> Eksperimen ini membangun event-driven Agent yang paling sederhana: sebuah **Automated Email Processing Assistant** (Asisten Pemrosesan Email Otomatis). Agent memantau kotak masuk (inbox) email, dan setiap kali email baru tiba, ia secara otomatis memicu processing workflow—klasifikasi, peringkasan, draf balasan, dan memberi tahu pengguna jika perlu. Ini adalah skenario pengantar paling intuitif untuk sebuah event-driven Agent: eksternal event (kedatangan email baru) memicu siklus berpikir (thinking cycle) Agent yang utuh.
+> Penerimaan hasil memakai tiga email uji: undangan rapat memicu pemeriksaan bentrok kalender dan menghasilkan draf menerima atau menolak; keluhan pelanggan memicu ekstraksi informasi kunci, penandaan prioritas tinggi, dan pemberitahuan kepada pengguna; email pemasaran diarsipkan sesuai aturan.
 >
-> **Tujuan Eksperimen**: untuk memahami gagasan inti dari arsitektur event-driven—Agent tidak lagi menunggu pasif untuk input pengguna tetapi bertindak dengan sendirinya sebagai respons terhadap event eksternal. Melalui eksperimen ini, pembaca akan menguasai putaran tertutup (closed loop) dasar dari registrasi sumber event (event source registration), antrean event (event queue), dan "event tiba → Agent memproses → hasil dikirim".
+> Catatan pendamping saat ini telah menyelesaikan pemeriksaan dokumentasi antarmuka dan pengujian autentikasi; penyambungan kotak surat uji masih menunggu kredensial yang valid.
 >
-> **Event Sources dan Event Queue.**
+> **Perluasan (opsional): akses multisumber dan injeksi kegagalan.** Selain kotak surat uji, hubungkan satu *endpoint* Webhook lokal dan satu antrean SQS (boleh disimulasikan secara lokal). Setiap adaptor memverifikasi sumber, membuat amplop, dan menulis ke log akses sebelum mengonfirmasi sumber; *runtime* membaca peristiwa dari log dan memprosesnya sesuai urutan *thread*. Kemudian injeksikan tiga jenis kegagalan:
 >
-> Sistem ini mendukung akses terpadu untuk berbagai sumber event (event sources):
+> 1. **Pengiriman ganda.** *Endpoint* Webhook menerima dua permintaan dengan ID pengiriman yang sama, tetapi di log hanya muncul satu peristiwa.
+> 2. **Mogok sebelum konfirmasi.** Adaptor dihentikan setelah menulis log tetapi sebelum menghapus pesan SQS; setelah pesan terlihat kembali dan dibaca ulang, log tetap hanya berisi satu peristiwa.
+> 3. **Mogok sebelum tanda terima.** *Runtime* dihentikan setelah mengirim balasan tetapi sebelum mencatat tanda terimanya, lalu memutar ulang log setelah *restart*. Jika kanal mendukung kunci idempotensi, atau pesan yang sudah terkirim dapat ditelusuri (misalnya catatan terkirim di kotak surat), balasan yang sama tidak dikirim dua kali; untuk kanal yang tidak punya keduanya, balasan itu hanya dapat ditandai sebagai menunggu konfirmasi manusia.
 >
-> - **Event Email** (`on_email_received`): Dipicu ketika email baru tiba, baik dengan memeriksa inbox secara berkala atau menerima notifikasi push.
-> - **Pesan IM/SMS** (`on_im_message`, `on_sms_message`): Dipicu oleh pesan instan (instant messages) atau pesan SMS.
-> - **Event GitHub** (`on_github_pr_update`, `on_github_issue_update`): Dipicu oleh komentar PR review atau perubahan status.
-> - **Timer Triggers** (`on_timer_expire`): Dipicu oleh scheduled tasks (misalnya, ringkasan harian, pembuatan laporan mingguan).
-> - **Webhooks** (`on_webhook_received`): Callback generik dari sistem eksternal.
-> - **Event Sistem** (`on_user_inactive`, `on_process_timeout`, `on_resource_alert`): Dipicu oleh perubahan status internal.
+> Ketiga jenis kegagalan harus meninggalkan catatan di log: pengiriman mana yang tersaring oleh deduplikasi, pesan mana yang dibaca ulang, dan balasan mana yang tidak dikirim ulang setelah diverifikasi.
 >
-> Semua event masuk ke dalam **event queue** yang terpadu dan diproses secara berurutan sesuai urutan kedatangan. Setiap event memicu Agent thinking loop yang independen: Agent membaca isi event, memanggil tool yang relevan (misalnya, menanyakan pada Knowledge Base, membaca lampiran, mencari riwayat email terkait), menghasilkan hasil pemrosesan (label klasifikasi, ringkasan, draf balasan), dan pada akhirnya memberi tahu pengguna melalui notification tools atau secara langsung mengeksekusi sebuah tindakan.
+> Kode pendamping untuk perluasan ini dapat dijalankan secara luring tanpa API Key. Kotak surat uji dan antrean SQS sama-sama disimulasikan dengan berkas lokal, terpisah dari kotak surat sungguhan di atas yang masih menunggu kredensial; antrean simulasi mempertahankan *visibility timeout*, *receipt handle*, dan urutan di dalam grup pesan. Kemogokan dibuat dengan cara proses induk langsung menghentikan proses anak pada posisi yang ditentukan. Setiap jenis kanal balasan diperagakan satu: email memeriksa catatan terkirim, percakapan aplikasi memakai kunci idempotensi, dan SMS tidak punya keduanya. Untuk mereproduksinya, masuk ke `chapter6/agent-with-event-trigger` dan jalankan `python multisource_demo.py`; terminal akan mencetak satu per satu catatan log yang ditinggalkan ketiga jenis kegagalan. Dalam catatan eksekusi pendamping, pemeriksaan ketiga jenis kegagalan semuanya lulus.
 >
-> **Skenario Validasi**: Konfigurasikan Agent untuk memantau kotak surat pengujian (test mailbox). Simulasikan menerima tiga email—undangan rapat, keluhan pelanggan, dan iklan pemasaran. Agent memprosesnya secara berurutan: untuk undangan rapat, Agent secara otomatis memeriksa konflik kalender dan membuat draf balasan terima/tolak; untuk keluhan pelanggan, Agent mengekstrak informasi penting, menandainya sebagai prioritas tinggi, dan memberi tahu pengguna untuk menanganinya; untuk iklan pemasaran, Agent secara otomatis mengarsipkannya. Seluruh proses tidak memerlukan campur tangan pengguna.
 
-Eksperimen 6-1 mendemonstrasikan pola event-driven paling sederhana—event masuk ke antrean, dan Agent memprosesnya secara berurutan. Akan tetapi, ketika Agent perlu merespons terhadap interupsi selama pengeksekusian tool yang berjalan lama (long-running tool executions), atau mengelola banyak task konkuren secara bersamaan, event queue yang sederhana tidaklah cukup. Selanjutnya, kita akan membahas tantangan engineering yang lebih dalam.
+Antrean email meletakkan dasar pemrosesan berurutan. Berikutnya kita menambahkan alat yang berjalan lama, dan membahas bagaimana menerima permintaan baru, membatalkan tugas, serta memulihkan pekerjaan selama masa tunggu.
 
-### Kompatibilitas ketika asinkroni native tidak didukung
+### Kompatibilitas ketika Asinkroni Native Tidak Didukung
 
-Eksperimen 6-1 hanya menangani peristiwa serial: peristiwa masuk antrean dan Agent menyelesaikannya satu per satu. Jika model atau antarmuka yang dipilih tidak mendukung asinkroni native, interupsi pengguna sebelum alat mengembalikan hasil harus dinyatakan dalam format sinkron. Berikut jalur kompatibilitasnya; setelah itu kita membahas antarmuka native GPT-6 Astra.
+Misalkan Agent sedang menyusun draf email dan sudah memanggil `search_contacts` untuk mencari kontak. Sebelum hasilnya kembali, pengguna meminta: "Tunggu sebentar, cek dulu cuaca besok." Jika antarmuka model yang dipakai mengharuskan setiap pemanggilan alat dilengkapi hasilnya lebih dulu, Harness perlu mengubah status latar belakang menjadi urutan pesan yang diterima antarmuka tersebut.
 
-Misalkan Agent sedang menyusun email dan memanggil alat pencarian kontak. Sebelum hasilnya tiba, pengguna berkata, “Tunggu, periksa dulu cuaca besok.” Jika antarmuka mengharuskan panggilan yang belum selesai mendapatkan hasil pasangannya terlebih dahulu, Agent tidak dapat langsung memproses pesan baru dengan panggilan yang masih tertunda. Batasan ini berasal dari kombinasi protokol dan model yang dipilih, bukan aturan yang berlaku bagi semua LLM.
+**Menyatakan status latar belakang dalam format pesan sinkron.**
 
-**Implementasi asinkron yang kompatibel dengan format sinkron.**
+**Saat menyesuaikan diri dengan antarmuka sinkron, sedapat mungkin pertahankan pasangan antara pemanggilan normal dan hasil sebenarnya, dan tambahkan respons status hanya ketika tugas berganti di tengah jalan.** Mengisi "masih berjalan" untuk setiap pemanggilan terlalu dini akan memenuhi jejak dengan status yang belum selesai dan menambah beban model untuk melacak hasil yang sebenarnya. Secara konkret, ada lima aturan yang dapat diikuti:
 
-Ide intinya adalah: **Di bawah kondisi normal tanpa interupsi, biarkan LLM melihat synchronous trajectory standar; hanya ketika interupsi terjadi, sisipkan placeholder untuk memperbaiki format tersebut**. Berikut adalah lima aturan utama:
+1. **Mencatat pemanggilan yang lengkap.** Tulis pesan assistant yang sudah diselesaikan API beserta butir pemanggilan alatnya ke dalam jejak, dan pertahankan penanda pemanggilannya. Status penalaran di sisi server disimpan menurut cara penyambungan yang ditetapkan penyedia.
+2. **Mencatat penyelesaian yang sebenarnya.** Setelah alat selesai, tulis hasil sebenarnya, penanda tugas, dan status eksekusi; selama eksekusi, pengelola tugas terus menyimpan status yang belum selesai.
+3. **Melaporkan status saat ini ketika berganti tugas.** Untuk antarmuka yang membolehkan muatan hasil semacam ini, pemanggilan yang belum selesai dapat diberi informasi status yang jelas, misalnya "tugas masih berjalan di latar belakang, hasil belum tersedia", lalu disusul peristiwa dari pengguna. Penanda tugas di dalam respons status menghubungkannya dengan pemberitahuan penyelesaian yang datang kemudian.
+4. **Merapikan pesan setelah interupsi.** Jika tidak ada kemampuan untuk menyambung di tengah jalan, batalkan generasi yang belum selesai, pertahankan pesan dan status alat yang sudah dipastikan selesai, lalu kirim permintaan baru. Keluaran yang belum selesai ditangani sesuai ketentuan antarmuka, agar parameter yang baru setengah jadi tidak dianggap sebagai pemanggilan yang dapat dieksekusi.
+5. **Menerima peristiwa rutin secara berkelompok.** Informasi tambahan masuk ke antrean, dikirim bersama-sama ketika siklus saat ini berakhir atau pada titik aman yang ditentukan, dan dicatat peristiwa mana yang sudah diproses.
 
-**Aturan 1**: Segera catat pesan assistant dan item pemanggilan alat yang sudah diselesaikan API. Pertahankan status penalaran yang dikelola server sesuai protokol kelanjutan penyedia; jangan merangkai sendiri teks pemikiran yang tidak terlihat.
+Dalam contoh pencarian kontak, pemanggilan lengkap lebih dulu ditulis ke jejak; ketika pengguna berganti tugas, Harness menambahkan respons status bahwa pencarian masih berjalan, lalu mengirim permintaan cuaca. Hasil kontak tiba belakangan dan masuk ke konteks sebagai peristiwa baru yang membawa sumber dan penanda tugas, kemudian Agent melanjutkan penyusunan draf email. Karena pemanggilan semula sudah mendapat respons status, hasil yang datang kemudian memakai bentuk peristiwa yang disepakati adaptor, sehingga hubungan pasangan antara pemanggilan dan hasil tetap terjaga.
 
-**Aturan 2**: Rekam tool result hanya setelah pengeksekusian tool call selesai. Trajectory berada dalam keadaan "selesai sebagian (partially completed)" selama eksekusi.
+Respons status hanya menjelaskan kemajuan eksekusi saat ini. Langkah yang bergantung pada data kontak harus menunggu hasil sebenarnya tiba sebelum dilanjutkan. Pengelola tugas dapat menyimpan status seperti `running`, `completed`, `cancelled`, dan `failed`, serta memeriksa apakah ketergantungan sudah terpenuhi sebelum mengirim balasan atau menjalankan alat berikutnya.
 
-**Aturan 3**: Interupsi selama pengeksekusian tool memerlukan placeholder. Hasilkan placeholder response untuk tool yang belum selesai (misalnya, "Tool sedang dieksekusi di background, mohon prioritaskan event baru ini"), tambahkan event interupsi tersebut, dan panggil kembali LLM. Dari sudut pandang LLM, pesan assistant masih memiliki pasangan tool result.
+**Merancang alat asinkron dengan *handle* tugas.**
 
-**Aturan 4**: Tanpa steering native atau antarmuka kelanjutan di tengah giliran yang didukung, batalkan generasi yang belum selesai, simpan pesan yang terkonfirmasi lengkap beserta status alat, tambahkan peristiwa baru, lalu kirim permintaan baru. Jangan menganggap keluaran parsial atau penalaran tersembunyi dapat sembarang dimasukkan kembali sebagai prefiks yang sah.
+Untuk alat tugas panjang yang baru dirancang, penulis mengutamakan mendefinisikan "memulai" sebagai satu operasi utuh yang langsung mengembalikan *handle* tugas yang sebenarnya. Dengan itu model dapat membedakan "sudah dimulai" dari "sudah selesai", dan kueri, pembatalan, serta peristiwa hasil berikutnya punya dasar keterkaitan yang seragam. Misalnya, `initiate_phone_call` memulai tugas telepon dan mengembalikan penanda tugas beserta status "sedang memanggil"; `phone_call_connected` dan `phone_call_ended` masing-masing melaporkan tersambung dan berakhirnya panggilan.
 
-**Aturan 5**: Event yang tidak menginterupsi akan masuk ke antrean untuk diproses secara batch. Event tersebut akan ditambahkan sekaligus hanya setelah siklus saat ini selesai.
+Deskripsi alat harus menyatakan dengan jelas: "Alat ini memulai tugas telepon dan mengembalikan ID tugas jika berhasil. Anda dapat terus mengerjakan hal lain; kemajuan panggilan dan hasil akhirnya dikembalikan melalui peristiwa tersendiri." Nama alat menjelaskan bahwa ini adalah operasi memulai, sedangkan struktur kembalian dan peristiwa berikutnya menjelaskan bagaimana tugas berjalan dan berakhir. Sistem juga menyediakan antarmuka untuk kueri, pembatalan, dan pemulihan berdasarkan ID tugas, sehingga model tahu apa saja yang masih dapat dilakukannya.
 
-Menggunakan contoh Agent yang sedang menyusun draf email ketika pengguna menginterupsi untuk menanyakan cuaca, pengoperasian kelima aturan ini adalah sebagai berikut:
+**Menangani peristiwa berkelompok satu per satu.**
 
-1. Agent memanggil `search_contacts` untuk mencari informasi kontak, dan pesan assistant segera ditulis ke dalam trajectory (Aturan 1).
-2. Sebelum tool pencarian mengembalikan hasil, pengguna mengirimkan "Cek dulu cuaca besok untuk saya." Karena ini adalah interupsi dari pengguna, sistem menghasilkan hasil tool placeholder (pengganti sementara) untuk `search_contacts` yang belum selesai ("Tool sedang berjalan di latar belakang, mohon prioritaskan event baru", Aturan 3), lalu menambahkan kueri cuaca dari pengguna ke dalam trajectory dan memanggil ulang LLM. Pada titik ini, format trajectory yang dilihat oleh LLM sepenuhnya valid—pesan assistant dan hasil tool berpasangan dengan sempurna.
-3. Setelah Agent menjawab kueri cuaca, hasil `search_contacts` yang asli tiba dan ditambahkan ke dalam trajectory sebagai event baru (Aturan 2). Agent membaca informasi kontak dan melanjutkan penyusunan draf email.
-
-Pendekatan ini mempertahankan pasangan panggilan dan hasil yang disyaratkan antarmuka sinkron. Placeholder yang jelas menyatakan “belum selesai” hanya ditambahkan ketika interupsi diperlukan. Ketika hasil nyata dari tugas latar belakang tiba, hasil masuk ke lintasan sebagai peristiwa dengan sumber dan ID tugas. Untuk model dengan asinkroni native, sistem dapat mempertahankan status tertunda lalu menyerahkan hasil nyata ketika tersedia.
-
-Placeholder juga membawa risiko semantik: model dapat menyamakan “tugas dimulai” dengan “tugas selesai” dan mengambil keputusan yang bergantung pada hasil sebelum hasil itu tiba. Status tugas yang jelas dan validasi hasil harus mencegah kekeliruan ini; evaluasi perlu memeriksa apakah data yang belum diterima justru direkayasa. Satu kegagalan saja tidak membenarkan kesimpulan bahwa penyebabnya adalah suatu proses pelatihan yang tidak dipublikasikan.
-
-**Menyatakan semantik asinkron melalui handle tugas.**
-
-Dengan atau tanpa protokol asinkron native, **desain antarmuka alat dapat memperjelas semantik asinkron**. Cara yang sangat berguna untuk antarmuka sinkron adalah menjadikan “mulai tugas” sebagai panggilan lengkap dengan nilai kembalian nyata.
-
-Desain tool tradisional mengimplikasikan semantik "panggilan sama dengan penyelesaian". Misalnya, nama `phone_call` mengisyaratkan bahwa "memanggil akan memutar nomor telepon dan menunggu panggilan berakhir, lalu mengembalikan log panggilan." Di bawah paradigma asinkron, "inisiasi" dan "penyelesaian" harus dipisahkan:
-
-- `initiate_phone_call`: Memulai panggilan telepon, segera mengembalikan pengidentifikasi tugas (task identifier) dan status awal (misalnya, "Panggilan dimulai, sedang memanggil...")
-- Kemajuan panggilan dikomunikasikan melalui notifikasi event (`phone_call_connected`, `phone_call_ended`)
-
-Kuncinya adalah bahwa nama dan deskripsi tool itu sendiri harus menyampaikan semantik asinkron. Ketika model melihat `initiate_phone_call`, kemampuan pemahaman bahasanya secara alami akan menyimpulkan bahwa ini adalah "memulai" alih-alih "menyelesaikan." Deskripsi tool harus lebih memperkuat hal ini: "Tool ini memulai tugas panggilan telepon yang ditangani oleh sub-agent. Tool ini mengembalikan task ID segera setelah berhasil diinisiasi, memungkinkan Anda untuk melanjutkan hal-hal lain. Event notifikasi terpisah akan dikirimkan saat panggilan berakhir."
-
-**Dispersi Perhatian dalam Pemrosesan Berbasis Antrean.**
-
-Saat memproses peristiwa secara berkelompok, model mungkin hanya menanggapi peristiwa terakhir dan melewatkan persyaratan sebelumnya. Asinkroni native menjawab apakah pesan dapat tiba saat eksekusi berlangsung; kita tetap harus memeriksa apakah model menggunakan semua pembaruan secara terpadu.
-
-Intervensi dapat diterapkan pada dua tingkatan:
-
-**Tingkat Prompt**: Informasikan kepada model, "Ketika Anda menerima beberapa event yang berurutan, pastikan Anda mempertimbangkan semua informasi secara komprehensif."
-
-**Penanda Agent Status Bar**: Tambahkan penanda eksplisit sebelum setiap event:
+Ketika beberapa peristiwa masuk ke konteks sekaligus, model bisa saja hanya menanggapi yang terakhir dan melewatkan permintaan yang diajukan sebelumnya. *Runtime* perlu menyimpan status pemrosesan masing-masing, agar syarat yang belum ditanggapi tetap terlihat. *Prompt* dapat meminta model memeriksa satu per satu, sementara bilah status mencantumkan informasi yang belum diproses:
 
 ```text
-[Event Belum Diproses 1/4] Hasil tool dari database_query: ...
-[Event Belum Diproses 2/4] Catatan tambahan dari pengguna: Hanya lihat data Beijing
-[Event Belum Diproses 3/4] Pengingat sistem: Tenggat waktu laporan adalah dalam 30 menit
-[Event Belum Diproses 4/4] Pengguna bertanya: Bagaimana kemajuannya?
+[未处理事件 1/4] database_query 结果：……
+[未处理事件 2/4] 用户补充：只看北京地区的数据
+[未处理事件 3/4] 系统提醒：报告截止时间还有 30 分钟
+[未处理事件 4/4] 用户询问：进度如何？
 ```
 
-Tambahkan ringkasan di bagian akhir: "Terdapat 4 event yang belum diproses di atas, termasuk 1 hasil tool, 2 pesan pengguna, dan 1 pengingat sistem. Pastikan respons Anda mencakup semua informasi tersebut."
+Ringkasan kelompok dapat memberi petunjuk "1 hasil alat, 2 pesan pengguna, 1 pengingat sistem". *Runtime* kemudian mengaitkan peristiwa dengan batasan tugas: syarat wilayah memperbarui cakupan kueri, tenggat waktu memengaruhi penjadwalan, dan pertanyaan tentang kemajuan perlu dijawab. Setelah diproses, status selesai, menunggu, atau perlu klarifikasi dicatat, dan butir yang belum terselesaikan tetap dipertahankan pada putaran berikutnya.
 
-> **Eksperimen 6-2 ★★★: Agent Asinkron dengan Eksekusi Paralel dan Kemampuan Interupsi**
+Nomor tugas yang sama merangkai permulaan, laporan kemajuan, dan hasil eksekusi akhir. Jika di tengah jalan seseorang meminta penghentian, perlu diperiksa lagi apakah ada tanda terima pembatalan di bawah nomor tersebut.
+
+> **Eksperimen 6-2 ★★★: Agent asinkron dengan eksekusi paralel dan kemampuan interupsi**
 >
+> Eksperimen ini lebih dulu memverifikasi *runtime* asinkron, baru kemudian menghubungkan model untuk memeriksa keputusannya. Catatan eksekusi pendamping menyelesaikan empat skenario dengan subproses sistem operasi sungguhan, sedangkan penjadwalan peristiwa dan pelaporannya digerakkan oleh skrip deterministik.
 >
-> ![Gambar 6-4: Interupsi dan Pemulihan Agent Asinkron Eksperimen 6-2](images/fig6-4.svg)
+> 1. **Eksekusi latar belakang dan respons seketika.** Jalankan proses analisis yang berlangsung beberapa detik dan langsung kembalikan penanda tugas; selama menunggu, jawab pertanyaan tentang waktu saat ini, lalu terima hasil analisis setelah selesai.
+> 2. **Antrean dan pemrosesan berkelompok.** Selama tugas panjang berjalan, tambahkan berturut-turut "balas dalam bahasa Jepang" dan "susun menjadi halaman web"; setelah tugas selesai, hasilnya diproses bersama kedua permintaan itu sebagai satu kelompok. Skrip menghasilkan HTML berbahasa Jepang.
+> 3. **Pembatalan dan pemulihan.** Peragaan ini menunjukkan bahwa ketika menerima "hentikan analisis", sistem menyela giliran model yang masih menghasilkan dan meminta semua tugas latar belakang yang sedang berjalan berhenti. Kali ini interupsi dikirim oleh skrip, dan saat itu hanya ada satu proses analisis, T1. Pada detik ke-0,803, peristiwa interupsi mencatat kemajuan T1 sebesar 18%; baru pada detik ke-0,806 sistem mencatat kode keluarnya −15. T2 yang dimulai sesaat kemudian adalah tugas baru. Yang diterima pada detik ke-4,436 adalah hasil T2; T1 tidak memicu *callback* penyelesaian.
+> 4. **Tugas paralel dan keputusan berdasarkan kemajuan.** Jalankan tiga proses analisis sekaligus, yang pada setiap langkah waktu logis masing-masing maju 3%, 2%, dan 1%. Dalam catatan kemajuan paralel eksperimen ini, ketika T1 yang tercepat selesai, tanda terima kueri menunjukkan T2 sudah mencapai 68% dan T3 34%. Mengikuti Gambar 6-5, tugas dengan kemajuan tidak lebih dari 50% dibatalkan. Skrip hanya membatalkan T3, dan pada akhirnya menerima hasil T1 dan T2. Ini menunjukkan bahwa *runtime* yang sama dapat merespons penghentian seluruh kelompok sekaligus mempertahankan pekerjaan paralel yang masih berguna.
 >
->
-> Berangkat dari antrean sederhana pada eksperimen 6-1, eksperimen ini memakai runtime yang kompatibel dengan antarmuka sinkron untuk menerapkan **eksekusi alat paralel, pembatalan eksekusi, dan pengelolaan status**. Agent harus mengelola beberapa tugas bersamaan, menangani interupsi dan pemulihan, serta mengambil keputusan berdasarkan status terkini. Lihat eksperimen 6-3 untuk perbandingan dengan antarmuka native Astra.
->
-> **1. Eksekusi Tool Asinkron**: Mendukung eksekusi asinkron dari tool yang memakan waktu (setidaknya 3-5 detik), segera mengembalikan placeholder setelah inisiasi. **Skenario Validasi**: Agent mengeksekusi perintah terminal yang berjalan lama. Selama waktu ini, pengguna bertanya, "Jam berapa sekarang?" Agent segera merespons, lalu menyajikan hasil analisis ketika perintah yang berjalan lama selesai.
->
-> **2. Antrean Event dan Pemrosesan Batch**: Mengakumulasi event yang tidak mendesak dan menambahkannya ke dalam trajectory secara batch. **Skenario Validasi**: Agent sedang menjalankan tugas yang panjang. Pengguna mengirimkan pesan berturut-turut: "Ingat untuk membalas dalam bahasa Jepang" dan "Format sebagai halaman web." Ketika tugas selesai, Agent memproses semua event sekaligus, menghasilkan halaman web berbahasa Jepang.
->
-> **3. Mekanisme Interupsi**: Perintah "berhenti" dari pengguna segera menghentikan alur eksekusi dan membatalkan tool asinkron. **Skenario Validasi**: Agent sedang mengeksekusi tugas yang panjang. Pengguna mengirimkan "Batal." Agent segera berhenti, dan trajectory mencatat event interupsi dan operasi pembatalan tersebut.
->
-> **4. Pembatalan dan Kueri Status untuk Tool Paralel**: Setelah tool asinkron selesai, hasil nyata disuntikkan ke dalam percakapan melalui event baru. Mendukung pembatalan atau kueri kemajuan melalui task ID. **Skenario Validasi**: Pengguna meminta, "Jalankan ketiga skrip ini secara bersamaan untuk saya. Mana saja yang selesai lebih dulu, periksa kemajuan skrip yang tersisa. Jika ada yang belum melebihi 50%, batalkan." Ketiga skrip mensimulasikan proses analisis, mengeluarkan kemajuan terus menerus dengan kecepatan masing-masing 3%, 2%, dan 1% per detik. Agent memulai tiga perintah terminal asinkron secara bersamaan. Ketika skrip pada 3% per detik selesai dalam sekitar 33 detik, Agent melakukan kueri status dari dua terminal yang tersisa, menemukan satu sekitar 66% dan yang lainnya sekitar 33%. Agent kemudian membatalkan yang belum melebihi 50%. Setelah kedua terminal selesai, Agent mengintegrasikan hasil untuk menghasilkan laporan lengkap.
+> ![Gambar 6-5 Interupsi dan pemulihan Agent asinkron pada Eksperimen 6-2](images/revised/fig6-5.svg)
 >
 
-### Asinkroni native pada model: GPT-6 Astra
+### Asinkroni Native pada Model: GPT-6 Astra
 
-Pada pendekatan kompatibilitas sebelumnya, runtime mengatur urutan masuknya peristiwa agar model berantarmuka sinkron dapat menangani tugas asinkron. Jalur lain membuat model memahami ritme tersebut secara native: ia dapat mengerjakan hal lain saat alat berjalan dan menyesuaikan pekerjaan berikutnya ketika pengguna menambahkan persyaratan. GPT-6 Astra sudah mendukung pemanggilan alat asinkron (Async tool calling) dan pengarahan di tengah giliran (Mid-turn steering), yang menunjukkan perubahan ini (Gambar 6-5).[^ch6-22][^ch6-23]
+Pada solusi sebelumnya, Harness-lah yang menyesuaikan diri dengan format pesan sinkron. Antarmuka asinkron native langsung membolehkan model terus mengerjakan pekerjaan yang berdiri sendiri ketika alat belum kembali, lalu menerima hasilnya kemudian. Per September 2026, GPT-6 Astra telah menyediakan pemanggilan alat asinkron (*Async tool calling*) dan pengarahan di tengah giliran (*Mid-turn steering*), yang masing-masing menangani penantian alat dan pembaruan dari pengguna. Gambar 6-6 membandingkan alur pesan antara penyesuaian antarmuka sinkron dan asinkroni native.[^ch6-22][^ch6-23]
 
-![Gambar 6-5: Kompatibilitas antarmuka sinkron dan asinkroni native pada model](images/fig6-5.svg)
+![Gambar 6-6 Kompatibilitas antarmuka sinkron dan asinkroni native pada model](images/revised/fig6-6.svg)
 
-**Pemanggilan alat asinkron memisahkan “memulai tindakan” dari “memperoleh hasil”.** Setelah memulai kueri yang lama, Agent dapat terus bernalar, memanggil alat lain, atau menyelesaikan bagian yang tidak bergantung pada hasil kueri. Saat mencari tempat rapat, misalnya, ia dapat menyusun agenda dan daftar persiapan terlebih dahulu, lalu membandingkan pilihan setelah informasi tempat tiba. Kuncinya adalah memahami ketergantungan: lanjutkan pekerjaan mandiri dan tunda keputusan yang membutuhkan hasil sampai hasil tersedia.
+**Terus mengerjakan pekerjaan independen sambil menunggu alat.** Misalnya, setelah memulai kueri tempat rapat, Agent dapat lebih dulu menyusun agenda dan daftar persiapan; setelah kueri kembali, barulah ia membandingkan harga dan kapasitas. `async: true` dalam definisi alat menyatakan kemampuan asinkron; aplikasi mulai mengeksekusi setelah menerima butir pemanggilan yang lengkap dan menyimpan penanda pemanggilan `call_id`. Ketika hasil tiba, aplikasi mengembalikannya dengan penanda semula dan menyambung ke status respons terbaru. Model mengatur pekerjaan berikutnya, sedangkan Harness mengelola keterkaitan pemanggilan dan siklus hidup tugas.[^ch6-22]
 
-**Pengarahan di tengah giliran memungkinkan pengguna mengoreksi arah saat tugas berjalan.** Ketika Agent masih berpikir atau menyusun jawaban, pengguna dapat menambahkan “anggaran berkurang” atau “jumlah peserta berubah”. Sistem mempertahankan pekerjaan yang selesai dan membawa batasan baru ke pemrosesan berikutnya sehingga rencana dapat disesuaikan dalam tugas yang sama. Masih mungkin ada jeda antara menerima pembaruan dan menerapkannya, tetapi pengguna tidak perlu menunggu satu jawaban penuh berakhir untuk menyampaikan perubahan.
+**Menerima permintaan baru selama tugas berjalan.** Pengguna dapat menambahkan "anggaran turun menjadi 1000" atau "jumlah peserta diubah menjadi 10" ketika model sedang berpikir atau menyusun jawaban. Aplikasi mengirim peristiwa pengarahan melalui koneksi yang sama; setelah server mengonfirmasi penerimaannya, pemrosesan berlanjut berdasarkan status respons saat ini. Setelah koneksi terputus dan tersambung kembali, aplikasi dapat memulihkan tugas berdasarkan peristiwa dan status respons yang telah disimpan.[^ch6-23]
 
-Kedua kemampuan ini memperluas waktu interaksi: hasil alat dan persyaratan pengguna dapat tiba selama tugas berlangsung. Sistem tetap harus membedakan sumbernya dan mengingat pekerjaan yang selesai maupun yang tertunda. Mengubah rencana tidak otomatis menghentikan alat yang berjalan atau mengurungkan tindakan yang sudah terjadi; eksekusi, pembatalan, dan pengelolaan status tetap menjadi tanggung jawab runtime.
+Kedua kemampuan ini dapat dipakai bersama: kueri tempat terus berjalan, permintaan baru dari pengguna masuk ke keputusan berikutnya, dan pemilihan diselesaikan setelah hasil kueri kembali. Eksekutor sekaligus memelihara status sebenarnya dari tugas latar belakang. Ketika kueri perlu dihentikan atau pemesanan perlu dibatalkan, Harness memanggil antarmuka yang bersangkutan dan memeriksa tanda terimanya; operasi bisnis yang telah selesai masuk ke proses pembatalan atau kompensasi.
 
-Tidak semua model memiliki kemampuan asinkron native. Saat membangun Agent, pilih interaksi native atau pendekatan kompatibilitas sesuai dukungan model, lalu periksa apakah seluruh sistem menangani hasil terlambat, perubahan di tengah tugas, dan kelanjutan tugas dengan benar. Pelatihan asinkron dapat terus meningkatkan kemampuan tersebut, tetapi pengembang sudah dapat membangun interaksi ini dengan model yang ada.
+Bila model dan antarmuka sudah mendukung asinkroni native, penulis mengutamakan protokol native, sehingga penundaan alat, pembaruan pengguna, dan penyambungan respons mengalir sesuai kesepakatan antarmuka. Lapisan kompatibilitas sinkron terutama melayani model yang sudah ada dan antarmuka lama; setelah model ditingkatkan, logika kompatibilitas yang hanya berfungsi melengkapi pasangan pesan dapat dihapus secara bertahap, dan upaya rekayasa dipusatkan pada status tugas, pembatalan, dan pemulihan.
 
-### Dari menerima pesan asinkron hingga menangani tugas asinkron secara andal
+### Menangani Tugas Asinkron secara Andal
 
-Asinkroni native memungkinkan pesan tiba selama eksekusi. Keandalan tugas kompleks juga bergantung pada cara model menggunakan pesan tersebut. Setidaknya tiga hal harus diperiksa:
+Interaksi asinkron yang andal perlu memeriksa pesan, tugas, dan status eksekusi sekaligus.
 
-1. **Keterkaitan hasil dan status tertunda**: Apakah hasil yang terlambat dikaitkan dengan tugas yang benar dan data tidak direkayasa ketika hasil belum ada?
-2. **Kelanjutan tugas dan kontrol tindakan**: Apakah model kembali ke tugas semula setelah menangani persyaratan baru dan membedakan perubahan rencana dari penghentian eksekusi?
-3. **Penggabungan beberapa pembaruan**: Apakah batasan anggaran dan jumlah peserta dipatuhi sekaligus, alih-alih hanya mengingat pesan terakhir?
-
-Model dapat diperbaiki melalui pelatihan dalam lingkungan asinkron; sistem dapat diperbaiki melalui status tugas, sumber peristiwa, dan umpan balik eksekusi yang jelas. Evaluasi harus mencakup keduanya: apakah model memahami perubahan dan apakah sistem menjalankannya dengan benar.
+1. **Kepemilikan hasil.** Hasil yang tertunda membawa penanda pemanggilan semula, dan aplikasi memetakannya ke tugas yang bersangkutan; keputusan yang bergantung pada hasil itu dilanjutkan setelah datanya tiba.
+2. **Pemulihan dan pembatalan.** Setelah pengguna mengubah permintaan, sistem mempertahankan pekerjaan yang masih berlaku, memperbarui langkah-langkah berikutnya, dan menegaskan tugas latar belakang mana yang terus berjalan dan mana yang sudah dihentikan.
+3. **Beberapa permintaan sekaligus.** Anggaran, jumlah peserta, wilayah, dan tenggat waktu masing-masing masuk ke status tugas, dan hasil akhir diperiksa terhadap setiap syarat itu satu per satu.
 
 > **Eksperimen 6-3 ★★★: Asinkroni native pada model dan pengarahan di tengah giliran**
 >
-> Memilih tempat rapat: setelah memulai kueri yang lama, Agent menyelesaikan persiapan yang tidak bergantung pada hasilnya. Sementara itu, pengguna menambahkan persyaratan anggaran dan jumlah peserta. Setelah kueri selesai, Agent memilih tempat berdasarkan seluruh batasan.
+> Eksperimen ini meminta Agent memilih tempat termurah untuk sebuah rapat simulasi yang memenuhi syarat anggaran dan jumlah peserta. Anggaran awal 2000 dan jumlah peserta 20; alat kueri baru mengembalikan harga dan kapasitas tiga tempat setelah 8 detik.
 >
-> Panggil API GPT-6 Astra untuk membandingkan alat sinkron, alat asinkron native, dan pengarahan di tengah giliran. Amati apakah menunggu menghambat pekerjaan lain, apakah persyaratan baru masuk ke rencana berikutnya, dan apakah tugas semula berlanjut ketika hasil tiba. Gunakan juga model tanpa dukungan native sebagai kontrol untuk memahami masalah yang ditangani kemampuan model dan orkestrasi runtime masing-masing.
-
-Asinkroni dan eksekusi berbasis peristiwa memungkinkan dunia membangunkan Agent saat tugas berlangsung; pengarahan native juga memungkinkan pengguna mengirim pembaruan sebelum jawaban penuh selesai. Tiga bagian berikut memperpendek skala waktu lebih jauh: ketika lingkungan berubah secepat atau lebih cepat daripada generasi model, menerima pembaruan saja tidak cukup; sistem harus bereaksi tepat waktu.
-
-## Suara: Antarmuka Manusia-Mesin yang Paling Alami
-
-Suara bukan sekadar mengubah teks menjadi bunyi. Berbicara kira-kira empat kali lebih cepat daripada mengetik dan tidak menggunakan tangan maupun pandangan, sehingga cocok menempatkan Agent dalam loop input-output kontinu yang dapat disela kapan saja. Input suara mengubah ucapan menjadi teks; voice Agent membuat pengguna dapat bekerja sama langsung dengan Agent. Keduanya mendukung whisper coding dari bagian pendahuluan.
-
-Bagian ini membahas pengguna yang berbicara kepada Agent dan Agent yang berbicara kepada dunia luar atas nama pengguna. Model suara menentukan apa yang dapat dijawab; arsitektur interaksi menentukan apakah Agent mendengar dengan baik, merespons tepat waktu, berganti giliran secara alami, dan menyelesaikan konfirmasi serta pemanggilan alat selama panggilan.
-
-### Waktu interaksi: dari cascade ke full-duplex
-
-Dalam pengantar GPT-Live, OpenAI merangkum tiga paradigma suara: cascade, turn-based, dan full-duplex[^ch6-12]. Ketiganya adalah pertukaran latensi, biaya, dan keteramatan, bukan penggantian linear.
-
-| Paradigma | Struktur | Keunggulan | Batasan |
-| --- | --- | --- | --- |
-| Cascade | VAD → ASR → LLM → TTS | Modul jelas, mudah diganti dan di-debug | Latensi menumpuk, informasi paralinguistik hilang di batas |
-| Omni end-to-end | Input dan output audio native dengan interaksi berbasis giliran | Latensi lebih rendah, nada, emosi, dan suara lingkungan lebih terjaga | Tetap berbasis giliran; pelatihan dan debugging lebih mahal |
-| Full-duplex | Input dan output audio native; terus mendengar, berbicara, dan memutuskan | Ucapan tumpang tindih dan interupsi alami | Pelatihan, kontrol, dan evaluasi lebih rumit |
-
-Benang merahnya adalah keluar dari asumsi bahwa orang harus berbicara bergantian dan dari tebakan VAD tentang siapa yang memegang giliran. Cascade dan Omni masih membagi percakapan menjadi giliran; full-duplex menjadikan kepemilikan giliran sebagai keputusan model yang terus berjalan.
-
-[^ch6-12]: OpenAI. *Introducing GPT-Live.* 2026-07-08. https://openai.com/index/introducing-gpt-live/. Klasifikasi ini berasal dari rangkuman tiga generasi ChatGPT Voice; Omni end-to-end sesuai dengan kategori “turn-based voice models”.
-
-### Paradigma 1 · Pipeline cascade
-
-Sebagian besar asisten suara komersial masih memakai pipeline serial (Gambar 6-6): VAD menentukan akhir ucapan, ASR mengubah audio menjadi teks, LLM memahami dan menghasilkan jawaban, lalu TTS membacakannya. Modularitas memudahkan optimasi tiap komponen, tetapi setiap batas menambah waktu tunggu.
-
-![Gambar 6-6: Pipeline voice Agent serial](images/fig6-6.svg)
-
-| Modul | Peran | Hambatan umum |
-| --- | --- | --- |
-| VAD | Menentukan ucapan selesai | Ambang hening menyebabkan tunggu dan salah segmentasi |
-| ASR | Audio ke teks | Latensi pengenalan dan hilangnya konteks |
-| LLM | Memahami, berpikir, dan menghasilkan | Latensi token pertama dan tunggu tambahan saat reasoning |
-| TTS | Teks ke suara | Sintesis paket pertama dan buffer pemutaran |
-
-Pada satu jawaban singkat tanpa reasoning, waktu tunggu VAD, ASR, LLM, dan TTS terakumulasi secara serial (Gambar 6-7). Nilai sebenarnya bergantung pada panjang masukan, model, perangkat keras, jaringan, dan beban.
-
-![Gambar 6-7: Waterfall latensi jawaban serial](images/fig6-7.svg)
-
-Antrean di lingkungan produksi masih akan memperbesar latensi idle (Gambar 6-8), tetapi hal itu termasuk perencanaan kapasitas layanan, dan bab ini tidak membahas model antrean.
-
-![Gambar 6-8: Kurva latensi antrean](images/fig6-8.svg)
-
-> **Eksperimen 6-4 ★: Membangun voice Agent tradisional**
+> | Tempat | Harga | Kapasitas |
+> |---|---:|---:|
+> | A | 1800 | 30 |
+> | B | 900 | 12 |
+> | C | 600 | 8 |
 >
-> Hubungkan mikrofon, Silero VAD, Whisper lokal, LLM streaming, dan Fish S1 TTS melalui WebSocket untuk membangun baseline berantai.
-
-#### Dari serial ke persepsi streaming
-
-Gambar 6-7 menggambarkan kasus yang sepenuhnya serial: VAD, ASR, LLM, dan TTS berjalan satu demi satu. Skema persepsi serial ini memiliki tiga masalah:
-
-1. **Akumulasi latensi**: sistem harus menunggu satu penggal hening sebelum dapat memastikan pengguna selesai berbicara.
-2. **Kehilangan informasi**: sinyal biner ada suara/tanpa suara tidak dapat menyatakan keraguan, emosi, backchannel, dan suara lingkungan.
-3. **Konteks terputus**: alamat email, nama orang, dan nama diri dapat dikenali secara terpotong sehingga menjadi salah.
-
-Untuk mengatasinya, sambil tetap mempertahankan pembagian modular, salah satu optimasinya adalah **persepsi streaming**, yaitu membuat setiap tahap menghasilkan hasil inkremental sedini mungkin:
-
-- **ASR mentranskripsi sambil mendengar**: begitu VAD mendeteksi pengguna mulai berbicara, model ASR dipanggil pada interval waktu tertentu untuk menghasilkan transkrip sementara secara streaming; setelah VAD mendeteksi pengguna selesai berbicara, barulah teks final dikonfirmasi.
-- **Eksekusi spekulatif LLM**: transkrip sementara langsung dikirim ke LLM begitu tersedia; jika teks final sama dengan transkrip sementara, LLM tidak perlu dipanggil lagi, jika tidak, proses berpikir spekulatif sebelumnya dibatalkan dan LLM dipanggil ulang.
-- **Keluaran LLM per segmen**: kalimat pertama yang layak dibacakan langsung diserahkan ke TTS tanpa menunggu jawaban lengkap.
-- **Sintesis TTS inkremental**: potongan audio dikembalikan terus-menerus sehingga generasi, sintesis, dan pemutaran berikutnya saling tumpang tindih.
-
-ASR streaming yang sesungguhnya membutuhkan dukungan pada level model. Decoding Whisper memang autoregresif, tetapi encoder-nya memerlukan segmen audio yang utuh, sehingga tidak dapat begitu saja disamakan dengan model streaming. Model auditori streaming berbasis LLM dapat mengeluarkan teks dan event semantik dari audio kontinu, sehingga "pengenalan" dan sebagian "pemahaman" berada dalam satu model. Model ini mempertahankan konteks sejak awal percakapan hingga saat ini, dan dapat memanfaatkan pengetahuan dunia untuk menangani merek, nama orang, dan nama diri.
-
-Jika tujuannya hanya menentukan apakah pengguna sudah selesai berbicara, penilaian akhir giliran dapat ditanamkan langsung ke recognizer streaming. Label pelatihan hanya boleh memakai informasi yang terlihat pada saat keputusan dibuat; jika tidak, informasi masa depan akan menghasilkan penilaian yang tidak dapat direproduksi secara online.
-
-Keluaran model tidak hanya berupa teks, tetapi juga dapat menyertakan penanda peristiwa akustik:
-
-- **speak_start/end, interrupt**: awal-akhir ucapan dan niat menyela;
-- **emotion**: emosi, keraguan, dan status lainnya;
-- **laugh, sigh, noise**: sinyal paralinguistik dan suara lingkungan.
-
-Penanda-penanda ini bersama token teks membentuk satu aliran peristiwa yang sama; berdasarkan itu, Agent dapat mengenali keraguan, interupsi, dan perubahan lingkungan tanpa harus memampatkan semua suara menjadi teks murni.
-
-> **Eksperimen 6-5 ★: Mensimulasikan persepsi suara streaming dengan Qwen2-Audio**
+> Dengan syarat awal, pilihan yang benar adalah A. Kelompok pengarahan menerima dua pembaruan selama tugas berjalan: anggaran menjadi 1000 dan jumlah peserta menjadi 10, sehingga pilihan yang benar menjadi B. Alat juga mengembalikan tanda terima yang baru dibuat, dan jawaban akhir harus mengutipnya, agar dapat diperiksa apakah model benar-benar memakai hasil yang tiba.
 >
-> Qwen2-Audio bukan model streaming. Eksperimen ini menyimulasikan persepsi kontinu dengan prefix audio yang terus bertambah dan membandingkannya dengan VAD 600 ms + Whisper.
-
-### Paradigma 2 · Model omnimodal end-to-end (Omni)
-
-Meski memakai persepsi streaming, cascade tetap menyerahkan proses mendengar, berpikir, dan berbicara melalui antarmuka diskret; emosi, intonasi, dan suara lingkungan dapat hilang ketika audio menjadi teks murni. Skema Omni memakai satu model untuk langsung mendengar audio, menghasilkan jawaban, dan mengeluarkan suara, sehingga berpeluang mempertahankan informasi tersebut, tetapi biaya pelatihannya lebih mahal (Gambar 6-9). Dibandingkan skema cascade pada Paradigma 1, keunggulan Omni terutama terletak pada latensi serta pada pemahaman dan penghasilan informasi nonteks.
-
-Dari sisi pemahaman, model Omni dapat memahami jeda di dalam suara. Dari sisi penghasilan, model Omni dapat menyampaikan informasi paralinguistik yang lebih kaya, misalnya bernyanyi atau mengucapkan sebuah kalimat dengan intonasi khusus.
-
-Model Omni tetap mengasumsikan orang berbicara bergantian dan umumnya mengandalkan VAD untuk membagi kepemilikan giliran. Karena itu, jeda di tengah ucapan saat pengguna membacakan deretan angka masih dapat disalahartikan sebagai akhir giliran.
-
-![Gambar 6-9: Perbandingan model suara omnimodal end-to-end](images/fig6-9.svg)
-
-> **Eksperimen 6-6 ★★: Menjalankan MiniCPM-o 4.5 secara lokal, end-to-end versus self-cascade**
+> Eksperimen ini terdiri atas lima kelompok, masing-masing tiga kali: alat sinkron, alat asinkron native, pengarahan selama penalaran, pengarahan selama menunggu alat asinkron, dan model pembanding yang tidak mendukung kemampuan pengarahan. Dua kelompok pertama membandingkan apakah daftar persiapan yang berdiri sendiri dapat dihasilkan selama menunggu; kedua kelompok pengarahan memeriksa apakah anggaran dan jumlah peserta sama-sama diterapkan; pembanding kemampuan memeriksa apakah antarmuka melaporkan dengan jelas bahwa fitur itu tidak didukung.
 >
-> Jalankan MiniCPM-o 4.5 secara lokal dengan thinking mode dimatikan, lalu bandingkan jawaban langsung dari audio dengan self-cascade yang mentranskripsikan terlebih dahulu dan menjawab memakai model yang sama. Ini mengukur apakah informasi audio dipertahankan, **bukan** “berpikir sambil berbicara” yang dibahas kemudian.
-
-### Paradigma 3 · Model interaktif full-duplex
-
-Omni memisahkan “pengguna berbicara” dan “model berbicara”, tetapi penerjemahan simultan memerlukan tumpang tindih. Full-duplex terus mendengar dan berbicara sambil memutuskan lanjut, berhenti, menyela, atau memanggil alat. Moshi dari Kyutai adalah contoh awal; Thinking Machines Lab menyebut jalur ini Interaction Model[^ch6-14] dan membangun interaksi di dalam model, bukan di sekitar VAD. GPT-Live membawanya ke skala produksi.
-
-Pendahulunya di sisi riset adalah **Moshi** dari Kyutai (2024). Ia memodelkan aliran audio pengguna dan model secara paralel, sehingga berbicara bertindihan dan menyela menjadi perilaku alami model.
-
-Thinking Machines Lab menyebut jalur ini **model interaksi (Interaction Model)**[^ch6-14]: interaktivitas tak lagi dirakit oleh harness eksternal berbasis VAD, melainkan tertanam di dalam model itu sendiri. Mekanisme mikro-gilirannya bergerak maju terus-menerus dalam blok audio pendek, sehingga keheningan, tumpang tindih, dan sela semuanya tersimpan sebagai konteks yang bersinambung. Model interaksi juga dapat mendelegasikan percakapan utuh kepada model penalaran di latar sementara ia sendiri tetap memegang alur bicara; ketika hasil dari latar kembali, sisi depan menyisipkannya pada saat yang tepat.
-
-[^ch6-14]: Thinking Machines Lab, “Interaction Models: A Scalable Approach to Human-AI Collaboration,” 2026-05. https://thinkingmachines.ai/blog/interaction-models/
-
-GPT-Live dari OpenAI membawa jalur full-duplex ke skala produksi: model terus memproses masukan dan menghasilkan keluaran, bisa menunggu pengguna, menimpali, disela, dan menangani penerjemahan waktu nyata. Sebagaimana model interaksi, ia mendelegasikan tugas rumit ke model latar sementara sisi depan meneruskan percakapan.
-
-### Waktu kognitif: interaksi real-time dan pemikiran mendalam
-
-Kualitas interaksi dan batas kecerdasan adalah dua dimensi yang berbeda. Model latar depan harus menjawab selama pengguna masih aktif; model latar belakang dapat berpikir lebih lama. Tiga desain berikut adalah trade-off, bukan perkembangan linear. Dua desain pertama dapat diterapkan pada cascade atau Omni; desain ketiga menyatukan penalaran mendalam dan ekspresi real-time di dalam model yang sama.
-
-#### Solusi 1: berpikir cepat untuk pengisi, berpikir lambat untuk jawaban
-
-Berpikir cepat dapat memberi respons pengisi dalam beberapa ratus milidetik, sementara berpikir lambat menyelesaikan penalaran yang lebih dalam di latar belakang. Masalahnya, pertanyaan sederhana diproses dua kali, dan pertanyaan rumit bisa berujung kontradiksi: model cepat menyarankan pembelian, lalu model lambat menemukan bahwa paketnya tidak memiliki fitur kunci, sehingga dalam hitungan detik pengguna mendengar dua jawaban yang saling bertentangan. Akar penyebabnya adalah kedua instans masing-masing melakukan penalaran sendiri secara independen.
-
-
-![Gambar 6-10: Arsitektur berpikir cepat/lambat dan perbandingan solusi](images/fig6-10.svg)
-
-
-#### Solusi 2: berpikir cepat untuk interaksi, berpikir lambat untuk pengingat
-
-Solusi kedua membuat model latar belakang memberi saran kepada model latar depan melalui status bar atau antarmuka khusus, sementara latar depan tetap menjaga alur percakapan dan menentukan cara mengungkapkannya. Ini lebih stabil daripada solusi pertama, tetapi komunikasinya tetap tidak langsung: latar depan bisa salah menafsirkan saran dan tidak melihat penalaran antara dari latar belakang; sebelum latar belakang selesai, ketika pengguna bertanya lagi, latar depan hanya bisa mengandalkan kemampuannya sendiri. Ia bisa "menunggu hasil" secara wajar, tetapi tidak benar-benar berpikir sambil berbicara.
-
-#### Solusi 3: penyatuan penalaran dan ekspresi secara end-to-end
-
-Solusi ketiga menginternalisasi kemampuan bernalar langsung ke dalam model audio end-to-end. Step-Audio R1 menyelesaikan dua masalah dengan dua mekanisme yang saling melengkapi: **distilasi penalaran berjangkar modalitas (MGRD)** membuat model bernalar berdasarkan fitur akustik, dan **arsitektur dua otak MPS** membuat perumusan dan ekspresi berjalan paralel. Yang pertama menjamin "berpikir benar", yang kedua mengatasi "berbicara tepat waktu".
-
-Idealnya, model menilai emosi dari nada, ritme, dan intonasi, bukan hanya dari teks transkripsi. MGRD menyaring proses penalaran yang benar-benar merujuk pada fitur akustik, melatih model dengan data tersebut, dan melalui reinforcement learning mencegah model melompati penalaran lalu langsung menebak jawaban. MPS membuat otak perumus terus menghasilkan fragmen penalaran, dan otak ekspresi, begitu menerima fragmen, langsung menghasilkan suara dengan menggabungkannya dengan jawaban yang sudah ada. Keduanya berjalan paralel bak jalur pipa, sehingga tidak perlu menunggu seluruh penalaran selesai sebelum pengguna mendengar kalimat pertama.
-
-#### Trade-off antara pemisahan berpikir cepat/lambat dan penalaran end-to-end
-
-Model terpadu paling langsung mewujudkan "berpikir sambil berbicara", dengan biaya bahwa penalaran dan ekspresi real-time harus dilatih ulang bersama-sama; jalur terpisah lebih mudah untuk mengganti otak latar belakang. Keduanya adalah trade-off, bukan sekadar saling menggantikan.
-
-Di tengah kemajuan pesat model penalaran frontier, pemisahan berpikir cepat dan lambat memberi keuntungan rekayasa yang penting: sistem dapat langsung memanfaatkan kemajuan setiap generasi model lambat. Model cepat di latar depan hanya perlu mendengar, merespons, dan menjaga percakapan dengan latensi rendah; model lambat di latar belakang menangani penalaran, perencanaan, dan pemanggilan alat. Ketika model penalaran yang lebih kuat hadir, cukup ganti model latar belakang tanpa melatih ulang seluruh sistem suara real-time. Jalur terpadu mengikat penalaran dan interaksi dalam siklus pelatihan yang sama, sehingga setiap peningkatan harus menyeimbangkan kembali kecerdasan, latensi respons, dan kealamian ekspresi. Karena itu, pemisahan cepat/lambat bukan sekadar kompromi terhadap latensi, melainkan pilihan modular yang memungkinkan kemampuan interaksi dan batas kecerdasan berkembang secara terpisah.
-
-Pemisahan ini juga tidak selalu mengorbankan kinerja tugas. Per Agustus 2026, voice Agent Pine AI yang memakai arsitektur berpikir cepat/lambat terpisah menempati peringkat pertama pada τ³-Voice Leaderboard, di atas sistem suara real-time seperti Grok Voice dan GPT-Realtime-2. Setidaknya, hasil ini menunjukkan bahwa arsitektur terpisah tidak secara inheren kalah dari model end-to-end pada tugas yang sekaligus menguji penalaran mendalam dan percakapan real-time.[^ch6-17]
-
-[^ch6-17]: Pine AI. “The Most Natural Human-Computer Interface Is Your Voice.” 2026-06-23 (diperbarui 2026-08-06). https://www.19pine.ai/blog/pine-ai-the-most-natural-human-computer-interface-is-your-voice
-
-Istilah "model end-to-end" perlu diperjelas karena lazim dipakai dalam dua arti. Pertama adalah **jalur suara end-to-end** yang dibahas pada bagian sebelumnya: model menerima audio dan menghasilkan audio secara langsung, tanpa menghubungkan beberapa model melalui teks diskret. Omni dan Interaction Model sama-sama end-to-end dalam arti ini, tetapi Omni biasanya tetap berjalan berbasis giliran, sedangkan Interaction Model dapat mendengar sambil berbicara; arsitektur keduanya sangat berbeda. Kedua adalah **arsitektur kognitif end-to-end** yang dibahas pada bagian ini: interaksi real-time dan penalaran mendalam berbagi keadaan dan dilatih bersama dalam satu model, atau dipisah antara model cepat di latar depan dan model lambat di latar belakang. Kedua sumbu ini independen. Sebuah sistem dapat memiliki jalur suara end-to-end sambil mempertahankan pemisahan cepat/lambat pada arsitektur kognitifnya; pendelegasian tugas kompleks oleh Thinking Machines Lab kepada model penalaran latar belakang adalah salah satu contohnya.
-
-### Sintesis suara yang lebih manusiawi
-
-TTS tradisional dapat mengungkap identitas mesinnya karena terlalu mulus dan terlalu sedikit berhenti. Jeda, kata pengisi, dan pengulangan sesekali menandakan ketidakpastian dan proses berpikir dalam ucapan manusia.
-
-LLM utama dapat mengeluarkan marker kontrol selain teks, seperti **THINKING**, **EMO:happy**, dan **SPEED:0.8x**; TTS memetakannya menjadi jeda, prosodi, kecepatan bicara, tawa, helaan napas, dan audio nonverbal lainnya. Implementasinya dapat berupa TTS yang dilatih untuk memahami marker kontrol, atau voice cloning dengan klip referensi untuk berbagai emosi dan gaya.
-
-> **Eksperimen 6-7 ★★: TTS berbasis token kontrol dengan Fish Audio**
+> Dalam catatan eksekusi yang disimpan, kelompok alat asinkron menyelesaikan daftar yang berdiri sendiri selama menunggu, dan kedua kelompok pengarahan sama-sama memilih B sesuai syarat baru. Semua eksekusi yang memakai alat hanya menjalankan satu kueri dan mengembalikan hasil sebenarnya ke pemanggilan semula; antarmuka model pembanding dengan jelas menjawab bahwa ia tidak mendukung penerimaan permintaan baru di tengah satu putaran generasi. Total waktu kelompok sinkron dan asinkron hampir sama; perbedaan utamanya terletak pada apakah pekerjaan lain dapat dimajukan selama menunggu.
 >
-> Gunakan Fish Audio S1 untuk membangun pustaka suara multi-referensi dan bandingkan tiga konfigurasi: tanpa marker kontrol, satu klip referensi, dan beberapa klip referensi. Lapisan eksekusi memilih emosi, kecepatan bicara, dan gaya yang cocok dari marker.
-
-
-## Computer Use: Agen Otomatisasi GUI
-
-Suara mendorong sumbu waktu turun ke tingkat milidetik, tetapi pengamatannya tetap berupa aliran bunyi satu dimensi. Computer Use memindahkan persoalan yang sama ke layar dua dimensi: pengamatan berubah menjadi piksel yang terus berubah, dan tindakan berubah menjadi klik serta ketikan pada koordinat. Skenario suara menekankan "kapan mulai bicara"; Computer Use menekankan "berikutnya harus mengklik di mana", ditambah satu pertanyaan yang sama sekali tidak ada dalam interaksi suara—setelah tindakan dijalankan, apakah kenyataan masih sesuai dengan rencana?
-
-Computer Use, juga dikenal sebagai otomatisasi GUI, memungkinkan AI untuk menggunakan perangkat lunak seperti manusia dengan mengamati layar dan mengoperasikan mouse dan keyboard—misalnya, membuka browser untuk mencari informasi, mengisi data dalam aplikasi spreadsheet, atau menyesuaikan konfigurasi dalam pengaturan sistem. Intinya adalah loop **Perceive-Think-Act** (Gambar 6-11):
-
-1.  Agent mengambil tangkapan layar dari layar saat ini.
-2.  Model multimodal menerima tangkapan layar dan instruksi tugas, lalu mengeluarkan pemikiran dan tindakan spesifik.
-3.  Lapisan eksekusi melakukan tindakan di lingkungan nyata (menggerakkan mouse, mengklik, mengetik teks, dll.).
-4.  Menunggu antarmuka merespons, mengambil tangkapan layar lagi, dan memasuki iterasi loop berikutnya.
-
-Di sini perlu dibedakan antara **memahami antarmuka** dan **menyelesaikan tugas**. Yang pertama lebih dekat dengan pemahaman multimodal dan dapat diukur melalui tanya jawab atas satu tangkapan layar; yang kedua mengharuskan model menempatkan pemahaman dan pembuatan tindakan dalam loop tertutup yang menangani pemuatan halaman, perubahan keadaan, kesalahan, dan konsekuensi yang tidak dapat dibatalkan. Karena itu, kesulitan Computer Use bukan sekadar menjawab dengan benar tentang tangkapan layar, melainkan memastikan kembali setelah setiap langkah bahwa keadaan nyata masih sesuai dengan rencana.
-
-![Gambar 6-11: Loop Perceive-Think-Act dari Computer Use Agent](images/fig6-11.svg)
-
-Ada tiga dimensi desain utama dalam loop ini: **Action Space** (operasi apa yang dapat dilakukan Agent), **Visual Grounding** (bagaimana menemukan elemen target dalam tangkapan layar), dan **Model Architecture** (bagaimana menghasilkan tindakan yang benar dari tangkapan layar).
-
-### Desain Action Space
-
-Implementasi referensi Anthropic membagi kemampuan interaksi lengkap menjadi tiga jenis alat (Gambar 6-12). Ini adalah desain action space yang jelas, tetapi bukan protokol privat yang wajib diikuti penyedia model: selama Harness dapat menerjemahkan tangkapan layar, batasan tindakan, dan hasil eksekusi yang sama menjadi pesan serta keluaran terstruktur yang didukung model sasaran, Claude, model visi berbobot terbuka, dan endpoint swakelola semuanya dapat menggerakkan loop Perceive-Think-Act yang sama.
-
-![Gambar 6-12: Action Space dari Computer Use](images/fig6-12.svg)
-
-**GUI Operation Tool** (alat `computer`): Operasi mouse mencakup menggerakkan (`mouse_move`), klik kiri/kanan/tengah, klik ganda atau klik tiga kali, menyeret (`left_click_drag`), dan tindakan tekan/lepas yang lebih presisi (`left_mouse_down` dan `left_mouse_up`). Menggulir (`scroll`) mendukung empat arah dan dapat dikombinasikan dengan tombol pengubah. Operasi keyboard mencakup mengetik karakter demi karakter (`type`, dengan interval 12ms antar karakter untuk menyimulasikan pengetikan nyata), kombinasi tombol (`key`, mis., `Ctrl+C`), dan menahan tombol (`hold_key`). Tindakan persepsi mencakup mengambil tangkapan layar, mengambil posisi kursor (`cursor_position`), dan menunggu (`wait`).
-
-**Command Execution Tool** (alat bash): Menyediakan sesi terminal bash persisten dengan batas waktu 120 detik. Alat ini menggunakan string sentinel untuk mendeteksi penyelesaian perintah dan mempertahankan status lingkungan di beberapa pemanggilan (mis., setelah `cd` ke sebuah direktori, panggilan berikutnya tetap berada di direktori tersebut).
-
-**File Editing Tool** (`str_replace_editor`): Memungkinkan pengeditan yang aman melalui pencocokan string dan mendukung operasi lihat, buat, ganti, sisipkan, dan urungkan. Ini lebih presisi daripada menimpa seluruh file dan lebih kecil kemungkinannya untuk memodifikasi konten yang tidak terkait secara tidak sengaja.
-
-> **Eksperimen 6-8 ★: Menjalankan Computer Use (Jalur Referensi Anthropic atau Jalur Model Terbuka)**
+> Jika model hanya mengingat bahwa jumlah peserta berubah menjadi 10 tetapi tetap memakai anggaran lama 2000, tempat mana yang akan dipilihnya? A dan B sama-sama muat, dan yang termurah tetap B. Karena itu, pilihan tempat yang benar belum menunjukkan apakah anggaran ikut diperbarui.
 >
-> Jalur A menggunakan Anthropic Computer Use Demo. Kontainernya mengemas lingkungan desktop Ubuntu lengkap, termasuk browser, terminal, dan tool umum lainnya. Frontend menerima tugas, sedangkan backend mengirim instruksi dan tangkapan layar ke Claude, lalu mengeksekusi aksi mouse, keyboard, terminal, atau pengeditan yang dikembalikan oleh model.
+> Jumlah peserta berubah; apakah kueri yang sudah dikirim perlu diulang? Alat dalam eksperimen ini tidak punya parameter penyaringan dan mengembalikan ketiga tempat. Asisten dapat memakai hasil yang sedang dalam perjalanan, lalu menyaringnya untuk 10 orang dengan anggaran 1000 setelah hasil itu kembali. Jika alat hanya mengembalikan tempat berkapasitas 20 orang ke atas, hasil lama hanya berisi A, dan B yang dapat menampung 12 orang sama sekali tidak tercantum. Dalam keadaan itu, sekadar mengubah jumlah peserta menjadi 10 pada daftar lama tetap akan melewatkan B. Jika kueri semula sudah menyaring B, kueri harus dijalankan sekali lagi.
+
+Mekanisme asinkron memungkinkan perubahan dari luar masuk ke sistem selama tugas berjalan. Interaksi suara, layar, dan robot memperpendek siklus umpan balik lebih jauh lagi: sistem perlu menerima masukan terus-menerus dan menyesuaikan keluaran serta tindakannya pada saat yang tepat.
+
+## Suara: Antarmuka Manusia–Mesin yang Paling Alami
+
+Suara memungkinkan pengguna menyampaikan kebutuhan, menambahkan syarat, dan mengonfirmasi hasil kepada Agent ketika tangan atau matanya sedang sibuk dengan pekerjaan lain. Metode input suara mengubah ucapan menjadi teks, sedangkan Agent suara lebih jauh lagi mengelola percakapan, pemanggilan alat, dan pemutaran jawaban; keduanya dapat mendukung *whisper coding* yang diperkenalkan di Kata Pengantar.
+
+Bagian ini membahas dua kegunaan: pengguna berbicara langsung dengan Agent, dan Agent berkomunikasi dengan pihak luar atas nama pengguna. Yang pertama berfokus pada pengenalan, respons, dan sela bicara; yang kedua juga harus menyelesaikan konfirmasi identitas, kueri bisnis, dan pengambilan keputusan selama panggilan berlangsung.
+
+### Waktu Interaksi: dari *Cascade* ke *Full-Duplex*
+
+Dalam perkenalan GPT-Live, OpenAI meninjau tiga jenis interaksi suara: *cascade*, model audio bergiliran, dan *full-duplex*[^ch6-12]. Jalur evolusi ini secara bertahap menyerahkan keputusan "kapan mulai bicara, kapan terus mendengar" kepada penilaian model yang berlangsung terus-menerus. Sistem *cascade* terutama mengatur peralihan giliran dengan logika titik akhir, sedangkan model *full-duplex* dapat menangani tumpang tindih, jeda, dan sela bicara dengan memadukan suara yang kontinu dan status percakapan.
+
+| Paradigma | Struktur inti | Kemampuan yang mudah diwujudkan | Persoalan desain utama |
+|---|---|---|---|
+| *Cascade* | Pembagian kerja VAD, ASR, LLM, TTS | Modul dapat diganti secara mandiri, masukan dan keluaran dapat diperiksa per tahap | Latensi antarmodul, informasi akustik yang hilang dalam transkripsi |
+| Model audio *end-to-end* bergiliran | Model langsung menerima dan menghasilkan audio | Menyusun jawaban dengan memanfaatkan intonasi, emosi, dan informasi sejenis | Penentuan akhir ucapan, peralihan giliran, dan waktu respons |
+| *Full-duplex* | Menerima audio dan menghasilkan keluaran secara terus-menerus | Bicara bertumpang tindih, sahutan, sela bicara, dan interaksi berkesinambungan | Status kontinu, kendali keluaran, dan evaluasi interaksi |
+
+Apakah model langsung memproses audio, apakah masukan dan keluarannya *streaming*, dan apakah ia dapat mendengar sambil berbicara adalah kemampuan yang dapat diperiksa secara terpisah. Sistem *cascade* juga dapat ditambahi modul *streaming* dan kendali interupsi; sedangkan irama interaksi model *end-to-end* bergantung pada desain konkretnya.
+
+[^ch6-12]: OpenAI, *Introducing GPT-Live*, 2026-07-08, memperkenalkan *cascade*, model audio bergiliran, dan interaksi *full-duplex*.
+
+### Paradigma 1 · *Pipeline Cascade* (*Cascading*)
+
+Sistem *cascade* memecah percakapan suara menjadi beberapa modul. Deteksi aktivitas suara (VAD) mengenali bagian audio yang berisi ucapan, dan logika titik akhir menentukan kapan potongan itu diserahkan; pengenalan ucapan otomatis (ASR) mengubah audio menjadi teks; LLM memahami permintaan dan menghasilkan jawaban; lalu sintesis suara (TTS) mengubah jawaban itu menjadi audio yang dapat diputar. Gambar 6-7 memperlihatkan struktur dasar yang dijalankan berurutan ini.
+
+![Gambar 6-7 *Pipeline* serial Agent suara](images/revised/fig6-7.svg)
+
+VAD akustik menemukan bagian ketika ada orang berbicara, sehingga pengenalan berikutnya dapat melewati hening yang panjang. Namun, jeda yang sama memiliki arti berbeda bila muncul setelah "Saya mau pesan..." dan setelah "Kamis pagi masih ada tiket?" VAD semantik (deteksi titik akhir semantik) dapat terus merekam pada kasus pertama dan baru menyerahkan ucapan kepada model percakapan pada kasus kedua. Inilah penjarangan observasi suara dalam dimensi waktu: suara yang kontinu hanya memicu penalaran pada segelintir saat. Adapun apakah perlu mulai berbicara, keputusannya ada pada model yang mendengar kalimat itu; ia juga bisa terus mendengarkan, atau lebih dulu mencari penerbangan.
+
+| Modul | Fungsi | Sumber tunggu atau kesalahan yang umum |
+|---|---|---|
+| VAD dan logika titik akhir | Mendeteksi ucapan, menentukan waktu penyerahan | Ambang hening, derau, dan jeda di tengah ucapan |
+| ASR | Mengubah audio menjadi teks | Waktu dekode, pengenalan nama orang dan nama diri |
+| LLM | Memahami, menalar, dan menghasilkan jawaban | Antrean permintaan, pembuatan potongan jawaban pertama |
+| TTS dan pemutaran | Menyintesis audio dan mengirimkannya ke pengeras suara | Sintesis paket pertama, transmisi jaringan, dan *buffer* pemutaran |
+
+Dalam implementasi yang sepenuhnya serial, setelah pengguna selesai berbicara, ia masih harus menunggu konfirmasi titik akhir, transkripsi, pembuatan jawaban, dan potongan audio pertama secara berturut-turut. Dalam contoh Gambar 6-8, ketika pengguna mendengar suara jawaban pertama, 1,4 detik sudah berlalu, dan bagian terpanjangnya adalah menunggu sistem memastikan bahwa pengguna sudah selesai berbicara (500 milidetik). Bahkan jika transkripsi dipersingkat dari 100 menjadi 50 milidetik, pengguna hanya menunggu 50 milidetik lebih sedikit.
+
+![Gambar 6-8 Air terjun latensi: total waktu respons yang terakumulasi secara serial](images/revised/fig6-8.svg)
+
+Beban layanan juga menimbulkan waktu antre. Gambar 6-9 memakai model M/M/1 dengan satu loket layanan untuk menjelaskan hubungan ini: kedatangan mengikuti proses Poisson, waktu layanan mengikuti distribusi eksponensial, rata-rata waktu layanan $S$, dan ketika utilisasi $\rho<1$, rata-rata total waktu termasuk layanan dan antrean adalah $W=S/(1-\rho)$. Dengan $S=1$ detik, jika utilisasi naik dari 0,5 menjadi 0,8, rata-rata total waktu naik dari 2 detik menjadi 5 detik. Layanannya sendiri tetap rata-rata 1 detik; tambahan 3 detik seluruhnya habis untuk mengantre. Ketika permintaan mendekati kapasitas pemrosesan, fluktuasi lalu lintas jangka pendek akan menimbulkan tumpukan.
+
+![Gambar 6-9 Utilisasi loket tunggal dan rata-rata total waktu (termasuk antrean dan layanan)](images/revised/fig6-9.svg)
+
+> **Eksperimen 6-4 ★: Membangun Agent suara tradisional**
 >
-> Jalur B menggunakan kode contoh di [`chapter6/computer-use-open-model`](../chapter6/computer-use-open-model/). Secara default, jalur ini menjalankan browser-use dengan model open-weight Qwen3-VL 32B Instruct melalui OpenRouter API yang di-host, atau melalui vLLM/SGLang yang di-host sendiri dan sistem serupa.
+> Misalkan asisten sedang membacakan penerbangan hari Kamis, lalu Anda memotong untuk mengoreksi: "Tunggu, saya mau pesan untuk hari Jumat." Peramban mengirim audio mikrofon ke *backend* melalui WebSocket. Begitu Silero VAD mendeteksi Anda mulai berbicara, *backend* mengirim `speech_start`, dan peramban segera menghentikan pemutaran serta mengosongkan audio lama yang masih antre. Pada saat ini asisten belum tahu hari apa yang Anda ubah. Setelah Anda selesai berbicara dan hening melewati batas bawaan 500 milidetik, barulah *backend* mengirim `speech_end` dan menyerahkan potongan ucapan itu kepada Whisper tiny lokal untuk ditranskripsikan.
+>
+> Ketika Doubao mulai mengembalikan teks, berapa lama lagi sampai pengguna mendengar jawabannya? Dalam catatan satu putaran pemutaran ulang rekaman, transkripsi memakan 2,710 detik. Doubao mengembalikan token pertama 0,749 detik setelah permintaan dikirim, dan baru mengembalikan jawaban lengkap pada 0,792 detik. Program pemutar ulang menunggu sampai seluruh teks terkumpul sebelum menyerahkannya kepada Fish S1 untuk disintesis; 2,819 detik kemudian, *backend* menerima kelompok audio pertama. Dihitung sejak titik akhir ditetapkan, jumlah ketiga durasi serial ini sekitar **6,321 detik**. Laporan arsip mencatat 6,279 detik, karena memakai waktu token pertama sebagai pengganti waktu pembuatan seluruh jawaban.
+>
+> Angka 6,321 detik ini hanya mencakup pemrosesan di *backend*. Sebelumnya pengguna masih harus menunggu deteksi hening memastikan bahwa satu kalimat sudah selesai, dan pada akhirnya masih harus menunggu audio sampai ke peramban dan mulai diputar.
 
-### Visual Grounding
+#### Dari Serial ke Persepsi *Streaming*
 
-Dalam setiap iterasi loop, model perlu menemukan elemen target di tangkapan layar secara akurat—"Di mana kotak pencariannya?" "Apa koordinat tombol kirim?" Ini adalah masalah visual grounding. Saat ini, ada **dua pendekatan utama**: yang pertama adalah mengubah pelokalan menjadi **masalah pilihan ganda**—pertama beri anotasi elemen antarmuka dengan angka, dan model hanya perlu memilih satu; yang lainnya adalah **prediksi koordinat murni**—membiarkan model "melihat" tangkapan layar dan melaporkan koordinat secara langsung, persis seperti manusia. Pendekatan pilihan ganda memiliki dua metode implementasi: **anotasi visual murni** (Set-of-Mark asli, menggunakan model segmentasi untuk menyegmentasi wilayah kandidat dalam gambar) dan **pengindeksan elemen terstruktur** (DOM/Accessibility Tree, secara langsung membaca struktur inheren antarmuka). Keuntungan umum dari pendekatan pilihan ganda adalah mengubah masalah terbuka "temukan tombol dalam tangkapan layar dan prediksi koordinatnya" menjadi masalah tertutup "pilih satu dari elemen yang sudah dianotasi". Sama seperti pertanyaan pilihan ganda yang lebih mudah dijawab dengan benar daripada pertanyaan isian dalam ujian, model hanya perlu mengatakan "klik [123]" daripada "klik tombol pada posisi (350, 464) di layar". Mengeluarkan koordinat adalah tantangan yang sangat berat bagi model: dibutuhkan pelatihan dalam jumlah besar agar akurat, dan hasilnya mudah meleset pada resolusi layar yang berbeda-beda.
+Skema serial memudahkan pemeriksaan per tahap, tetapi juga memperlihatkan tiga masalah. Menunggu hening menambah latensi titik akhir; teks transkripsi dapat kehilangan nada, emosi, dan suara lingkungan; dan ketika audio dipotong berdasarkan jeda, alamat email, nama orang, atau nama diri dapat kehilangan konteks utuhnya. Untuk sistem yang sudah memakai arsitektur *cascade*, penulis menyarankan perombakan *streaming* lebih dulu: biarkan setiap tahap memberikan hasil inkremental sedini mungkin, tumpang-tindihkan pengenalan, penalaran, dan pemutaran, sambil memelihara bagian yang sudah dipastikan dan bagian yang masih mungkin berubah. Dengan cara ini modul yang ada dapat dipakai ulang, dan sumber waktu tunggu dapat ditemukan secara bertahap.
 
-**Set-of-Mark: Metode Anotasi Visual.**
+- **ASR mentranskripsi sambil mendengar.** Audio diterima terus-menerus dan transkrip sementara dikeluarkan; setelah audio berikutnya tiba, bagian yang belum stabil direvisi, dan teks final diberikan ketika titik akhir dipastikan.
+- **Eksekusi spekulatif LLM.** Transkrip sementara dipakai untuk menyiapkan jawaban lebih awal. Setelah teks final dipastikan, periksa apakah masukannya sama dan apakah pekerjaan yang sudah ada masih berlaku, lalu putuskan untuk mempertahankan, menyesuaikan, atau menghasilkan ulang. Operasi seperti pengiriman keluar dan penulisan bisnis menunggu sampai syarat yang diperlukan dipastikan.
+- **Keluaran LLM per segmen.** Begitu satu potong teks yang layak dibacakan selesai, potongan itu langsung diserahkan ke TTS; pemotongan segmen mempertahankan makna kalimat, tanda baca, dan petunjuk intonasi.
+- **Sintesis TTS inkremental.** Potongan audio dikembalikan sedikit demi sedikit, sehingga pembuatan teks berikutnya, sintesis, dan pemutaran dapat bertumpang tindih. Ketika terjadi sela bicara, tugas pembuatan dan isi *buffer* pemutaran yang belum diputar ditangani sekaligus.
 
-Set-of-Mark (SoM) asli diusulkan oleh Microsoft Research pada tahun 2023, awalnya untuk membuka kemampuan visual grounding dari GPT-4V. Ini adalah metode **visual murni**: menggunakan model segmentasi gambar (SAM, SEEM, dll.) untuk menyegmentasi wilayah kandidat dalam tangkapan layar secara otomatis, menempatkan penanda bernomor pada setiap wilayah, dan model melihat gambar dengan angka-angka. Model hanya perlu melaporkan angka tersebut, dan sistem mengubahnya menjadi koordinat tengah dari wilayah yang sesuai. Seluruh proses tidak memerlukan DOM atau struktur antarmuka internal apa pun, sehingga sama-sama berlaku untuk perangkat lunak desktop asli dan antarmuka game—selama model segmentasi dapat mengidentifikasi wilayah kandidat.
+Implementasi transkripsi standar Whisper mengodekan dan mendekode audio per jendela[^ch6-whisper]. Dengan memotong audio dari luar atau berulang kali mengirim prefiks yang terus bertambah, alur transkripsi inkremental dapat dibangun; pemakaian ulang status yang berkesinambungan, biaya pengodean berulang, dan revisi teks sebelumnya harus dikelola oleh implementasi itu sendiri. Model pengenalan *streaming* native menangani masukan kontinu langsung di dalam arsitektur dan pelatihannya.
 
-**Pengindeksan Elemen Terstruktur: Implementasi Terstruktur dari Ide SoM di Web.**
+Sistem persepsi berbasis model bahasa audio juga dapat mengeluarkan teks dan peristiwa akustik secara bersamaan. Audio sebelumnya, transkrip, dan petunjuk kosakata membantu mengenali nama orang, merek, dan nama diri, sedangkan seberapa banyak riwayat yang disimpan bergantung pada desain konteks dan *cache*. Untuk menilai "apakah pengguna sudah selesai berbicara", model dapat memadukan kelengkapan semantik dengan hening. Pada jeda setelah "Saya mau pesan...", sistem waktu nyata baru mendengar tiga kata itu dan belum mungkin tahu bahwa sesudahnya akan menyusul tanggal.
 
-Ketika antarmuka itu sendiri menyediakan informasi terstruktur, anotasi dapat menjadi lebih presisi. Sebelum rendering, halaman web modern mendefinisikan struktur elemen lengkap (pohon DOM) dan peran semantik yang mengidentifikasi tombol, bidang input, dan kontrol lainnya. Accessibility tree memberikan informasi serupa untuk banyak aplikasi desktop. Sistem Web Agent seperti `browser-use` melakukan hal ini: mereka menghitung dan menomori elemen interaktif dari DOM. Ini adalah implementasi terstruktur dari ide SoM untuk web (Gambar 6-13). Prosesnya memiliki empat langkah:
+Selain transkripsi, antarmuka juga dapat menyepakati peristiwa berikut: `speak_start` dan `speak_end` menandai awal dan akhir ucapan, `interrupt` menandai sela, `emotion` menggambarkan keadaan emosi, sedangkan `laugh`, `sigh`, dan `noise` mencatat tawa, helaan napas, dan suara lingkungan. Peristiwa-peristiwa ini dapat dikirim kepada Agent bersama teks dan cap waktunya.
 
-1. Mendapatkan representasi terstruktur (pohon DOM) dan informasi aksesibilitas untuk halaman tersebut melalui antarmuka debugging browser (CDP, Chrome DevTools Protocol)
-2. Mendeteksi elemen mana yang interaktif secara otomatis (tombol, kotak input, tautan, dll.)
-3. Menganotasi setiap elemen interaktif dengan ID unik dan menggambar kotak pembatas (bounding box) pada tangkapan layar
-4. Secara bersamaan menghasilkan daftar teks yang mendeskripsikan elemen yang sesuai dengan setiap ID
+> **Eksperimen 6-5 ★: Menyimulasikan persepsi suara *streaming* dengan Qwen2-Audio**
+>
+> Eksperimen ini memperbesar prefiks audio secara bertahap, dan setiap kali mengirim ulang audio dari awal sampai saat ini ke Qwen2-Audio, untuk mengamati bagaimana transkripsi dan peristiwa akustik berubah seiring masukan. Jalur pembanding memakai titik akhir hening 600 milidetik dan Whisper. Pengujian mencakup ucapan normal, kalimat panjang yang disisipi jeda 900 milidetik, dan ucapan yang dicampur derau merah muda.
+>
+> Eksekusi model terkuantisasi lokal kali ini menyimpan 13 kali inferensi prefiks, masing-masing sekitar 8–11 detik. Jeda di tengah kalimat memicu pemotongan segmen pada jalur pembanding; model audio mendeteksi derau, tetapi juga salah melaporkan batuk dan tawa.
+
+[^ch6-whisper]: OpenAI, Whisper, memperkenalkan transkripsi per jendela audio dan implementasi modelnya.
+
+### Paradigma 2 · Model Omnimodal *End-to-End* (Omni)
+
+Model audio *end-to-end* langsung menerima suara, memadukan informasi bahasa dan akustik untuk menghasilkan jawaban, dan menyintesis ucapan melalui cabang keluaran audio. Memproses audio secara langsung memungkinkan pemanfaatan kecepatan bicara, tinggi nada, jeda, dan suara lingkungan; sedangkan mentranskripsi dulu baru menjawab memudahkan pemeriksaan teks antara dan penggantian modul secara mandiri.
+
+Ciri-ciri akustik ini memengaruhi pemahaman. Misalnya, kalimat yang sama, "Tolong kirim laporannya sebelum makan siang", memberi kesan berbeda kepada pendengar bila diucapkan tergesa-gesa atau perlahan. Saat menghasilkan keluaran, model juga dapat menata makna melalui jeda, tekanan, dan intonasi.
+
+Sistem yang memproses audio secara langsung juga dapat menunggu pengguna selesai berbicara sebelum menjawab. Misalnya, ketika pengguna menyebutkan nomor telepon lalu berhenti sejenak, sistem tetap harus menilai apakah deretan angka itu sudah selesai disebutkan. Deteksi titik akhir menentukan kapan menjawab; jika lawan bicara menyela di tengah pembacaan, sistem juga harus mengoordinasikan pembuatan oleh model dengan pemutaran di pengeras suara.[^ch6-audio-architectures]
+
+> **Eksperimen 6-6 ★★: Menjalankan MiniCPM-o 4.5 secara lokal, membandingkan *end-to-end* dengan *self-cascade***
+>
+> Eksperimen ini memakai satu model MiniCPM-o 4.5 yang sama dengan mode berpikir dimatikan, lalu membandingkan dua jalur: menjawab pertanyaan langsung dari audio, dan meminta model mentranskripsi dulu lalu menjawab hanya berdasarkan transkrip. Masukannya berupa dua soal hitungan yang diucapkan dan dua rekaman dengan teks yang sama tetapi kecepatan bicara berbeda.
+>
+> Masing-masing jalur menjawab tiga soal dengan benar, tetapi kesalahannya terjadi di tempat yang berbeda. Jalur audio langsung mendengar twelve boxes dalam satu soal sebagai 8 sehingga perhitungannya salah; jalur transkripsi dengan benar mempertahankan 12. Pada soal kecepatan bicara, kedua rekaman sama-sama berbunyi "Please send the report before lunch.", sehingga teks hasil transkripsinya persis sama dan informasi cepat-lambat ikut hilang; jalur audio langsung dengan benar membedakan kedua kecepatan bicara itu.
+>
+> Eksperimen ini juga menghasilkan satu potong ucapan 24 kHz yang menghubungkan pemahaman masukan dengan keluaran audio.
+
+### Paradigma 3 · Model Interaksi *Full-Duplex*
+
+Sistem *full-duplex* mendengar sambil berbicara, dan perbaikan yang paling mudah dirasakan orang adalah "rasa manusia hidup" dalam percakapan. Coba baca kalimat "Mau pesan hari Rabu... eh, bukan, tiket hari Kamis": jeda di tengahnya memberi ruang bagi koreksi diri ini; jika asisten sudah mulai membacakan penerbangan hari Rabu, ia harus berhenti begitu mendengar "bukan, Kamis". Pada momen lain, ketika lawan bicara masih menjelaskan rencana perjalanannya, satu sahutan singkat dapat memberitahunya bahwa asisten sedang mendengarkan. Hanya dengan menerima audio terus-menerus, sistem punya peluang membuat pilihan-pilihan ini di antara berbicara, mendengarkan, berhenti sejenak, dan memanggil alat. Penerjemahan simultan pun memerlukan masukan dan keluaran yang bertumpang tindih.
+
+**Moshi** yang dirilis Kyutai pada 2024 memodelkan aliran audio pengguna dan aliran audio model secara terpisah, dan menyatakan bicara bertumpang tindih serta interupsi melalui aliran paralel[^ch6-moshi]. Dengan mempertahankan hubungan waktu ini di dalam masukan, model dapat belajar kapan menjawab dan kapan terus mendengarkan.
+
+Model interaksi dari Thinking Machines Lab memotong masukan dan keluaran yang kontinu menjadi blok-blok pendek dengan panjang sama, masing-masing mencakup 200 milidetik, yang disebut satu giliran mikro (*micro-turn*)[^ch6-14]. Lihat kotak kedua di sepanjang sumbu waktu Gambar 6-10: asisten masih mengucapkan "Kamis", tetapi telinganya sudah menangkap "bukan" dari pengguna yang mengoreksi tanggal. Pada kotak ketiga, asisten berhenti dan tetap mendengarkan pengguna menyelesaikan kata "Jumat".
+
+![Gambar 6-10 Masukan, keluaran, dan giliran mikro 200 milidetik pada suara *full-duplex*](images/revised/fig6-10.svg)
+
+Sekarang baca bagian bawah gambar. Kedua pihak dalam panggilan mendengar dua aliran suara yang dapat bertumpang tindih, tetapi model dapat memproses blok masukan dan menghasilkan blok keluaran secara bergantian di sepanjang satu urutan. Hening juga menempati satu kotak, sehingga asisten dapat mendengarkan sebentar sebelum mulai berbicara. Angka 200 milidetik dalam gambar adalah panjang blok pada implementasi ini; dari saat pengguna menyela sampai pengeras suara benar-benar berhenti, waktu pemrosesan dan *buffer* pemutaran juga harus diperhitungkan.
+
+[^ch6-moshi]: Kyutai, *Moshi: a speech-text foundation model for real-time dialogue*, 2024, memperkenalkan aliran audio paralel untuk pengguna dan model.
+[^ch6-14]: Thinking Machines Lab, *Interaction Models: A Scalable Approach to Human-AI Collaboration*, memperkenalkan giliran mikro, interaksi multialiran, dan pendelegasian tugas latar belakang.
+
+### Waktu Kognitif: Interaksi Waktu Nyata dan Pemikiran Mendalam
+
+Dalam panggilan layanan pelanggan Pine, ketika petugas baru berbicara setengah kalimat, asisten kadang harus menunggu, kadang harus menyahut pelan; ketika ia sendiri sedang berbicara, ia juga harus mendengar koreksi yang diselipkan lawan bicaranya. Inilah alasan penulis menaruh harapan pada jalur Moshi: hanya bila waktunya dikuasai dengan baik, lawan bicara merasa benar-benar ada orang yang mendengarkan di ujung telepon. Ketika menghadapi permintaan yang memerlukan pencarian data, ada hitungan waktu lain yang harus dibuat: dari memahami pertanyaan sampai menyebutkan jawaban yang ditemukan, berapa kali pekerjaan harus berpindah tangan?
+
+Alat yang dapat dipanggil langsung oleh model suara sisi depan dipanggil oleh sisi depan. Mencari penerbangan hanya memerlukan dua pemanggilan model: sisi depan mencari berdasarkan syarat dari pengguna, lalu melaporkan hasilnya. Pendelegasian memerlukan empat: sisi depan menyerahkan tugas, sisi belakang menjalankan kueri, sisi belakang merapikan hasil, dan sisi depan menyampaikannya kembali. Ada pula pandangan lain bahwa model waktu nyata bisa salah mengisi parameter, sehingga alat sebaiknya dipanggil oleh sisi belakang, dan sisi depan dapat berkonsentrasi menilai kapan mendengar dan kapan berbicara.
+
+Sisi depan GPT-Live-1 tidak punya antarmuka untuk memanggil fungsi bisnis secara langsung dan hanya dapat mendelegasikan kepada Agent sisi belakang. GPT-Realtime pada OpenAI Realtime mendukung pemanggilan fungsi langsung dari sisi depan. Model suara waktu nyata Doubao 3.0 (Seeduplex) juga mendukung pemanggilan langsung dari sisi depan dalam mode *end-to-end* murni, sedangkan dalam orkestrasi campuran pemanggilan dilakukan oleh model bahasa eksternal.[^ch6-voice-tools]
+
+Misalkan setiap pemanggilan model sisi depan dan sisi belakang masing-masing memakan waktu $L_f$ dan $L_b$, dan waktu alat adalah $T$. Dari pengguna selesai berbicara sampai mendengar hasil, pemanggilan langsung memerlukan sekitar $2L_f+T$, sedangkan pendelegasian sekitar $2L_f+2L_b+T$. Tambahan $2L_b$ pada pendelegasian tidak bergantung pada waktu alat $T$. Informasi yang mungkin dipakai setiap giliran, seperti memori pengguna, dapat dicari lebih dulu oleh *runtime* lalu dimasukkan ke konteks, sehingga sisi depan cukup memanggil model sekali, sekitar $L_f+T$; jika sudah dicari sebelum pengguna mulai berbicara, $T$ pun dapat dihemat.
+
+Tugas yang memerlukan penalaran bertahap, misalnya membandingkan beberapa opsi perubahan jadwal, cocok diserahkan ke sisi belakang. Pemesanan tiket melibatkan penarikan dana dan penerbitan tiket, sehingga siapa pun yang memanggil alat, pesanan harus menunggu konfirmasi pengguna. Hasil penerbangan dapat diringkas secara lisan, sedangkan tabel lengkapnya ditampilkan di layar; hal ini tidak bergantung pada siapa yang memanggil alat.
+
+> **Eksperimen 6-7 ★★: Alat Agent suara dipanggil oleh sisi depan atau sisi belakang**
+>
+> Bangun sisi depan dengan model suara waktu nyata Doubao 3.0, dan sisi belakang dengan DeepSeek V4 Pro yang disediakan Volcano Ark. Siapkan lima alat tiruan: cek cuaca, cek memori pengguna, pencarian web, cek penerbangan, dan pemesanan tiket, yang mengembalikan hasil sesuai waktu yang ditetapkan; cek penerbangan dan pemesanan tiket harus menunggu 2–5 detik. Sintesis rekaman pengguna lebih dulu, dan setiap kali putar ulang rekaman yang sama untuk skenario yang sama.
+>
+> Siapkan empat pembagian kerja. Pertama, sisi depan memanggil semua alat. Kedua, sisi belakang memanggil semua alat dan sisi depan hanya dapat mendelegasikan. Dua sisanya sama-sama membiarkan sisi depan mengecek cuaca, *runtime* memasukkan memori pengguna ke konteks saat sesi dimulai, dan sisi belakang menangani pencarian web dan pemesanan tiket. Perbedaan keduanya terletak pada apakah cek penerbangan ditangani sisi depan atau sisi belakang. Sisi depan langsung mendengar suara pengguna; sisi belakang tidak mendengar suara dan hanya dapat membaca teks. Setelah mendengar setiap kalimat pengguna, antarmuka Doubao juga mengembalikan teks hasil pengenalan ucapan, yang disebut transkrip. Saat mendelegasikan, transkrip dan ucapan asisten disusun menurut urutan waktunya menjadi catatan panggilan, lalu diserahkan ke sisi belakang bersama pemanggilan alat yang sudah dijalankan dalam panggilan ini dan deskripsi tugas yang ditulis sisi depan. Untuk setiap pembagian kerja, ulangi pengujian setiap skenario berikut sebanyak 10 kali.
+>
+> 1. Cek cuaca dan cek penerbangan secara terpisah. Hitung waktu sejak pengguna selesai berbicara sampai hasil kueri terdengar; kalimat peralihan seperti "saya cek dulu" tidak dihitung sebagai jawaban. Bandingkan median waktu tunggu pemanggilan langsung dan pendelegasian. Dalam eksperimen penulis, untuk cek cuaca keduanya masing-masing 2,81 detik dan 6,96 detik.
+> 2. Cek penerbangan dulu, lalu pilih tiket dan konfirmasi. Dengan mengacu pada hasil kueri putaran sebelumnya, ucapan terakhir pengguna, dan profil pengguna, periksa satu per satu 13 kolom pemesanan, dan periksa apakah waktu pemesanan lebih lambat daripada konfirmasi pengguna. Dalam eksperimen penulis, keempat pembagian kerja mengisi semua kolom dengan benar, dan semuanya baru memesan setelah pengguna mengonfirmasi.
+> 3. Ganti menjadi memesan tiket untuk seorang rekan kerja, dan putar rekaman yang mengeja namanya secara lisan: "陈嘉怡，耳东陈，嘉奖的嘉，怡然的怡。" (nama Chen Jiayi, diikuti penjelasan aksara untuk setiap suku katanya). Bandingkan rekaman, transkrip ucapan, dan nama pada pesanan, lalu periksa apakah pemesanan langsung oleh sisi depan maupun pemesanan yang didelegasikan sama-sama mengisi nama dengan benar. Dalam eksperimen penulis, pemesanan langsung oleh sisi depan benar 10 kali dari 10; tetapi transkripnya tertulis "陈佳宜" (lafal sama, aksara berbeda), sehingga sebagian pesanan yang didelegasikan salah mengisi nama.
+> 4. Sebelum hasil kueri penerbangan kembali, putar rekaman yang menanyakan cuaca, lalu dengarkan apakah sisi depan menjawab pertanyaan cuaca itu dan apakah sesudahnya ia menyampaikan hasil penerbangan. Dalam eksperimen penulis, pertanyaan cuaca selalu dijawab, tetapi hasil penerbangan semula hampir tidak pernah disampaikan lagi.
+
+Ketika pendelegasian diperlukan, sisi depan sebaiknya menuliskan nama, angka, dan koreksi terbaru pengguna yang sudah pasti ke dalam deskripsi tugas, agar sisi belakang tidak salah mengisi parameter karena kesalahan transkripsi. *Runtime* sebaiknya mencatat hasil yang belum disampaikan, sehingga sisi depan dapat melanjutkan laporannya setelah menjawab pertanyaan sela.
+
+Ketika model cepat mengucapkan "saya cek dulu", petugas layanan pelanggan tahu bahwa asisten sudah mendengar permintaannya dengan jelas. Kapan harga tiket dapat disebutkan bergantung pada bagaimana kueri dan penalaran dipadukan dengan panggilan. Gambar 6-11 memperlihatkan tiga pengaturan: menanggapi dulu lalu menjawab secara mendalam, sisi depan terus berinteraksi sambil menerima saran dari sisi belakang, dan penyusunan gagasan berjalan paralel dengan pengucapan per potongan.
+
+![Gambar 6-11 Arsitektur berpikir cepat/lambat dan perbandingan solusinya](images/revised/fig6-11.svg)
+
+#### Solusi 1: Berpikir Cepat untuk Menanggapi, Berpikir Lambat untuk Menjawab
+
+Model cepat lebih dulu memberikan tanggapan singkat, model lambat menyelesaikan analisis di latar belakang, lalu melengkapinya dengan jawaban terperinci. Desain ini dapat sedini mungkin menegaskan bahwa permintaan sudah diterima, tetapi konsistensi kedua jawaban perlu dikelola. Misalnya, model cepat lebih dulu menyarankan pembelian sebuah paket, lalu model lambat menemukan bahwa paket itu tidak memiliki fitur kunci, sehingga kedua saran saling bertentangan. Akar konfliknya adalah kedua sisi menjawab secara independen, dengan dasar penilaian dan kemajuan penalaran yang mungkin berbeda. Saran yang sudah diucapkan model cepat telah masuk ke pertimbangan pengguna, bahkan mungkin sudah ditindaklanjuti; ketika model lambat kemudian mengoreksinya, perubahan itu perlu dijelaskan dan dampak yang sudah terjadi perlu ditangani.
+
+Karena itu, sisi depan perlu membedakan konfirmasi tugas dari kesimpulan bisnis. "Saya periksa dulu apakah paket ini mencakup fitur tersebut" dapat langsung diucapkan, sedangkan saran pembelian menunggu kueri dan analisis yang diperlukan. Ketika hasil dari sisi belakang kembali, sistem mencocokkannya dengan apa yang sudah diucapkan, lalu menyusun jawaban berikutnya. Pertanyaan sederhana juga dapat langsung diselesaikan oleh model cepat untuk mengurangi pemrosesan ganda.
+
+#### Solusi 2: Berpikir Cepat untuk Berinteraksi, Berpikir Lambat untuk Mengingatkan
+
+Suara dan layar pun dapat berbagi tugas. Mengucapkan "Tagihan bulan ini bertambah 15 euro untuk biaya *roaming*" membuat pengguna langsung menangkap intinya; jumlah semula, harga sekarang, dan rincian yang dipersoalkan dibiarkan di layar, agar pengguna dapat memeriksanya dengan kecepatannya sendiri. Konfirmasi atas satu operasi tertentu dapat dilakukan dengan mengetuk pilihan, sedangkan informasi sensitif diisi sendiri oleh pengguna di antarmuka masukan yang diakui pedagang. Sisi depan cukup menerima status seperti "verifikasi selesai" untuk dapat menyambung kembali percakapan secara wajar.
+
+Misalkan seorang pelancong meminta Pine memesan tiket pesawat ke Shanghai untuk Kamis pagi, dengan anggaran 1200 yuan, dan ia harus tiba di tempat acara sebelum tengah hari. Sambil berbicara dengan layanan pelanggan maskapai, Pine "menyelipkan catatan" ke sisi belakang: "Jika mendarat di Hongqiao pukul sepuluh pagi, apakah masih sempat dari bandara ke tempat acara?" Setelah mengecek kursi yang tersisa, petugas memberi tahu Pine: "Penerbangan yang tiba di Hongqiao pukul sepuluh sudah habis. Masih ada satu penerbangan yang tiba di Pudong pukul setengah sebelas, harganya 1250 yuan." Jika sisi belakang hanya dapat melihat catatan yang diselipkan sisi depan, ia masih menghitung rute dari Hongqiao. Sisi depan harus menambahkan satu kalimat lagi: "Ganti hitungannya ke Pudong, mendarat pukul setengah sebelas, tempat acara dan jam kedatangan tetap."
+
+Cara lain adalah menyinkronkan catatan panggilan ke sisi belakang menurut urutannya juga. Karena sisi belakang sudah membaca bandara dan waktu pendaratan yang disebutkan petugas dari catatan panggilan, sisi depan cukup berkata "hitung apakah penerbangan ini masih sempat" untuk mendelegasikan tugas yang sama. Saat menyinkronkan catatan, perlu ditandai siapa mengatakan apa; setengah kalimat sisi depan yang terpotong dan belum sempat diputar juga harus dibedakan dari yang sudah diucapkan. Transkripsi suara bisa melewatkan atau salah menulis informasi penting. Sisi depan perlu menuliskan nama, angka, dan koreksi pengguna yang sudah didengarnya dengan pasti ke dalam deskripsi tugas. Bila kedua catatan tidak sesuai, sisi belakang berpegang pada deskripsi tugas. Setelah selesai mengecek, sisi belakang cukup memberi tahu sisi depan perkiraan jam tiba di tempat acara dan seberapa mepet waktunya. Rute mana saja yang dicek di sepanjang jalan dan kolom apa saja yang dikembalikan antarmuka peta dapat disimpan di sisi belakang sebagai arsip. Sisi depan-lah yang membawa hasil itu untuk melanjutkan pembicaraan dengan petugas.
+
+Pelancong bisnis di Bab 1 ingin harga tiket tidak melebihi 1200 yuan. Pada perjalanan dinas sebelumnya, ia rela membayar sedikit lebih mahal untuk penerbangan yang cocok, dan kali ini ia juga tidak menetapkan batas atas lain. Mendengar harga terendah 1250 yuan, asisten dapat memesannya atas namanya. Lain halnya jika penggunanya adalah orang yang selalu berhemat dan sedang berlibur bersama keluarga: selisih 50 yuan ini harus ditanyakan dulu. Maka sisi depan harus menangani dua percakapan sekaligus:
+
+- Kepada pengguna: "Penerbangan ini paling murah 1250 yuan, 50 yuan di atas anggaran. Apakah Anda bersedia memesannya?"
+- Lalu bertanya kepada petugas: "Bisakah harga penerbangan ini ditahan sebentar? Pada hari yang sama, apakah ada penerbangan yang sedikit lebih siang dengan harga di bawah 1200 yuan?" Selama petugas mengecek tiket, sisi depan juga dapat menanyakan jatah bagasi dan ketentuan perubahan atau pengembalian tiket.
+
+Dengan begitu, ketika pengguna kembali, ia dapat melihat beberapa pilihan, dan petugas pun tahu apa yang harus dicek berikutnya. Jika kemudian pengguna menjelaskan, "Waktu itu saya buru-buru mengejar rapat; ke depan, kalau perjalanan dinas melebihi anggaran, tanyakan saya dulu", maka lain kali permintaan baru itulah yang harus diikuti.
+
+Ketika menunggu verifikasi dari pemilik akun sendiri, irama pembicaraan berbeda lagi. Jika petugas berkata kode verifikasi sudah dikirim, sisi depan dapat menjawab: "Baik, mohon tunggu sebentar, saya minta pelancong memeriksa ponselnya." Jika pelancong membalas bahwa kodenya belum diterima, barulah ditanyakan kepada petugas ke nomor berakhiran berapa SMS itu dikirim dan kapan dapat dikirim ulang. Setelah pelancong menyelesaikan verifikasi melalui kanal yang ditentukan pedagang, sisi depan dapat melanjutkan urusannya. Dalam panggilan seperti ini, menunggu sedikit lebih lama atau menerbitkan tiket sedikit lebih lambat jauh lebih tepat daripada mendesak pengguna untuk memutuskan saat itu juga.
+
+Pada saat itu, sisi belakang mengirim pesan "penawaran semula sudah diperbarui". Sisi depan lebih dulu memverifikasi harga baru kepada petugas, baru kemudian memberi tahu pengguna. Jika tepat pada saat itu pengguna membalas "boleh dipesan", balasan itu merujuk pada penawaran 1250 yuan yang dikirim kepadanya sebelumnya. Sisi depan harus menilai, berdasarkan harga baru dan otorisasi yang sudah ada, apakah perlu meminta konfirmasi lagi. Sisi belakang hanya menyediakan informasi; yang berbicara dengan petugas dan membuat janji tetaplah sisi depan. Dengan menyertakan penerbangan, syarat berlakunya harga, dan waktu pada setiap pesan, sisi depan dapat mengenali penawaran mana yang sudah kedaluwarsa.
+
+Pesan sisi belakang yang sama, "harga berubah, mohon diverifikasi", juga memengaruhi cara sisi depan menanggapi, tergantung kapan pesan itu tiba. Jika petugas baru berkata "harga tiket terendah adalah...", sisi depan dapat mendengarkan jumlahnya sampai selesai. Jika petugas sudah selesai menyebutkan harga dan sedang menunggu jawaban, saat itulah tepat untuk menanyakan harga baru. Jika pelancong baru saja menyela di telepon, "Tunggu, saya mau ganti tanggal", dengarkan dulu tanggal barunya dengan jelas, baru putuskan apakah penerbangan semula masih perlu diverifikasi. Kata "baik" yang sama, bila diucapkan ketika petugas menjelaskan ketentuan, mungkin hanya berarti sedang mendengarkan; bila diucapkan setelah "Saya terbitkan tiketnya sekarang?", kata itu bisa ditangkap sebagai persetujuan membeli. Jika hanya melihat teks transkrip, perbedaan seperti ini akan terlewat.
+
+#### Solusi 3: Penyusunan Gagasan dan Pengucapan Bergerak Bersama
+
+Seri Step-Audio memberikan dua contoh yang relevan. **Distilasi penalaran berjangkar modalitas (MGRD)** berfokus pada informasi yang menjadi dasar penalaran: data penalaran disusun dan disaring dengan berpusat pada ciri akustik seperti tinggi nada, ritme, dan intonasi, lalu pemahaman audio diperbaiki melalui distilasi iteratif. Pada tahap pembelajaran penguatan, Step-Audio R1 memberi dua komponen skor untuk soal audio: jawaban benar mendapat 0,8 poin, dan menyertakan proses penalaran mendapat tambahan 0,2 poin. Komponen kedua mendorong model menuliskan dasar penalarannya; apakah penalaran itu benar-benar memakai petunjuk akustik dari rekaman harus diperiksa pada penyaringan sampel sebelumnya.[^ch6-mgrd]
+
+**Mind-Paced Speaking (MPS)** berfokus pada urutan waktu antara penalaran dan pengucapan, dengan memakai modul penyusunan gagasan (*Formulation Brain*) dan modul pengucapan (*Articulation Brain*), sehingga proses penyusunan gagasan memandu pembuatan ucapan. Solusi waktu nyata Step-Audio R1.1 memakai metode ini.[^ch6-mps]
+
+Kedua modul bertukar informasi mengikuti kemajuannya: penyusunan gagasan terus berjalan, sementara pengucapan menata ucapan berdasarkan isi yang sudah tersedia dan keluaran sebelumnya. Dengan cara ini sebagian pengucapan dapat bertumpang tindih dengan penalaran berikutnya, sambil tetap melacak apa yang sudah diucapkan.
+
+[^ch6-mgrd]: StepFun, *Step-Audio-R1 Technical Report*, memperkenalkan distilasi penalaran berjangkar modalitas.
+[^ch6-mps]: StepFun, *Mind-Paced Speaking: A Dual-Brain Approach to Real-Time Reasoning in Spoken Language Models* dan kartu model Step-Audio-R1.1, memperkenalkan modul penyusunan gagasan dan modul pengucapan serta penerapannya dalam sistem waktu nyata.
+
+#### Pembagian Kerja Modul dan Cara Peningkatannya
+
+**Penulis menghargai satu keunggulan rekayasa dari pembagian kerja cepat-lambat: kemampuan interaksi dan kemampuan penalaran dapat berkembang secara terpisah.** Setelah model penalaran yang lebih kuat dirilis, sistem dapat mengganti sisi belakangnya. Dengan cara ini sisi belakang dapat mengikuti kemajuan model penalaran, sementara sisi depan terus memperbaiki pengalaman mendengarkan, menanggapi, dan menyela. Sisi depan perlu memahami tugas dan informasi tambahan dari pengguna, sedangkan sisi belakang berkonsentrasi pada penalaran, perencanaan, dan eksekusi yang lebih panjang.
+
+**Ketika model penalaran berganti versi dengan cepat dan tim perlu terus meningkatkan kemampuan bisnis, penulis mengutamakan pembagian kerja cepat-lambat yang dapat diganti.** Pembagian ini menghilangkan beban melatih ulang seluruh sistem suara setiap kali model penalaran ditingkatkan. Baru ketika penalaran antara perlu mengendalikan pengucapan secara lebih langsung, dan sumber daya pelatihan yang sepadan tersedia, solusi koordinasi yang lebih erat dipakai.
+
+Agent suara Pine AI memakai arsitektur yang memadukan berpikir cepat di sisi depan dengan berpikir lambat di sisi belakang. Artikel publiknya melaporkan peringkat teratas di jalur suara τ²-bench, dan memperkenalkan cara memadukan panggilan yang berkesinambungan, penalaran bisnis, dan operasi alat[^ch6-17].
+
+Untuk memahami berbagai kombinasi ini, ada tiga dimensi desain yang dapat dibedakan: **jalur audio** menentukan apakah model langsung memproses suara atau melakukan serah terima lewat transkripsi; **urutan waktu mendengar dan berbicara** menentukan apakah masukan dan keluaran bergerak per giliran atau secara paralel; **pembagian kerja kognitif** menentukan bagaimana interaksi waktu nyata dan penalaran mendalam berbagi status dan bertukar hasil. Sebuah sistem dapat langsung memproses audio dan tetap *full-duplex*, sekaligus menyerahkan tugas rumit kepada model sisi belakang yang terpisah. Model interaksi Thinking Machines Lab dan GPT-Live sama-sama memperlihatkan kombinasi semacam ini.
+
+[^ch6-17]: Pine AI, *The Most Natural Human-Computer Interface Is Your Voice*, memperkenalkan arsitektur berpikir cepat-lambat dan hasil evaluasi tugas suara yang dilaporkannya. Laporan itu menyebut papan peringkatnya τ²-bench voice.
+
+### Sintesis Suara yang Lebih Manusiawi
+
+Jeda, kecepatan bicara, dan tekanan membantu pendengar memahami struktur kalimat dan maksud pembicara. Misalnya, saat menyebutkan nomor telepon, angka-angkanya perlu dikelompokkan dengan tepat; saat menjelaskan ketentuan yang rumit, kecepatan dapat diperlambat; saat menunggu hasil kueri, asisten dapat lebih dulu menjelaskan apa yang sedang diprosesnya. Menurut penulis, jeda yang tepat dan perubahan irama membuat suara lebih alami, sekaligus membuat pengguna dapat mendengar bagaimana tugas sedang berjalan. Kendali suara dapat dirancang di sekitar kegunaan-kegunaan konkret ini.
+
+LLM utama dapat menyisipkan penanda kendali ke dalam teks, seperti `[THINKING]`, `[EMO:happy]`, dan `[SPEED:0.8x]`. Lapisan eksekusi mengurai penanda tersebut, membagi teks menjadi potongan ucapan dan jeda, lalu memetakannya ke emosi, gaya, atau suara referensi yang didukung antarmuka sintesis. Makna penanda ditentukan oleh aplikasi: `0.8x` dapat dipetakan ke tingkat lambat; jeda dapat disisipkan oleh pemutar, sedangkan tawa dan helaan napas dinyatakan melalui penanda suara atau kemampuan generasi yang didukung.
+
+Skema suara referensi menata berbagai cara ekspresi dari pembicara yang sama menjadi sebuah pustaka. Setiap potongan teks memilih emosi, kecepatan bicara, dan gaya yang cocok, lalu hasil sintesisnya disambung menurut urutan. Status kendali perlu ditetapkan cakupannya, misalnya emosi berlaku sampai diubah lagi, sedangkan jeda hanya berlaku di posisi saat itu.
+
+> **Eksperimen 6-8 ★★: TTS yang digerakkan penanda kendali berbasis Fish Audio**
+>
+> Eksperimen ini memakai Fish Audio S1 untuk membangun pustaka suara berisi 24 suara referensi: kombinasi empat emosi, tiga tingkat kecepatan bicara, dan dua gaya. Pengurai mengubah jawaban bertanda menjadi potongan ucapan dan potongan hening, dan lapisan eksekusi memilih suara referensi untuk setiap potongan lalu menyelesaikan sintesisnya.
+>
+> Bandingkan tiga konfigurasi: tanpa penanda kendali, satu suara referensi, dan banyak suara referensi. Pertahankan isi jawaban yang sama, periksa apakah penanda dirutekan ke konfigurasi yang diharapkan, lalu dengarkan perubahan jeda, emosi, dan warna suara.
+>
+> Uji dengar yang disimpan memakai model pemahaman audio, menyajikan ketiga konfigurasi dengan urutan bergiliran, dan menilai kealamian, kecocokan emosi, jeda berpikir, konsistensi warna suara, dan kesan layanan pelanggan. Kelompok banyak referensi mendapat skor gabungan tertinggi, dan kelompok satu referensi lebih rendah daripada kelompok tanpa penanda.
+
+## Computer Use: Agent Otomatisasi GUI
+
+Misalkan Anda meminta Agent mengubah alamat pengiriman di sebuah halaman web. Ia harus menemukan kolom alamat, mengetikkan alamat baru, lalu memastikan hasil penyimpanan berdasarkan tampilan yang muncul. Jika sebelum klik muncul kotak *login*, tombol pada tangkapan layar sebelumnya mungkin koordinatnya tidak berubah, tetapi sasaran klik itu sudah berbeda. Computer Use mengoperasikan peramban, lembar kerja, atau pengaturan sistem melalui layar, tetikus, dan papan ketik, dan pekerjaan intinya adalah memastikan setiap tindakan selaras dengan antarmuka yang sedang terlihat.
+
+Ikuti siklus **persepsi–berpikir–bertindak** pada Gambar 6-12 untuk melihat apa yang harus dipastikan model sebelum mengetikkan alamat baru. Ia memilih posisi klik berdasarkan tangkapan layar dan kemajuan tugas, Harness memeriksa parameter dan izinnya, lalu menyerahkannya ke lapisan eksekusi. Klik yang berhasil hanya berarti klik itu sudah dikirim. Di mana fokus masukan berada pada tangkapan layar berikutnya, itulah yang menentukan apakah alamat dapat diketik dengan aman.
+
+![Gambar 6-12 Siklus persepsi-berpikir-bertindak pada Agent Computer Use](images/revised/fig6-12.svg)
+
+Setelah asisten mengisi alamat, bagaimana ia memberi tahu eksekutor tombol "Simpan" mana yang hendak diklik? Koordinat layar dan nomor elemen sama-sama dapat menunjuk sasaran, tetapi tuntutannya terhadap model dan alat berbeda.
+
+### Desain Ruang Aksi
+
+Pada Gambar 6-13, implementasi referensi Computer Use dari Anthropic menyediakan tiga jenis alat: antarmuka grafis, eksekusi perintah, dan penyuntingan berkas. Untuk jenis antarmuka grafis saja, datanya mengalir ke dua arah: aksi klik dikirim ke sisi eksekusi, sedangkan tangkapan layar setelah klik dikirim kembali ke model sebagai observasi untuk keputusan putaran berikutnya. API native menetapkan format alatnya; jika memakai model lain, lapisan adaptasi harus mengubah tangkapan layar, permintaan aksi, dan hasil eksekusi menjadi pesan yang dapat diterima antarmuka model itu.[^ch6-computer-tools]
+
+![Gambar 6-13 Ruang aksi Computer Use](images/revised/fig6-13.svg)
+
+**Alat operasi GUI.** Aksi tetikus mencakup gerak, klik kiri/kanan/tengah, klik ganda, klik tiga kali, dan seret; antarmuka yang lebih terperinci dapat menyatakan tekan dan lepas secara terpisah. Gulir memerlukan arah dan besarnya, dan sebagian implementasi juga mendukung tombol pengubah. Antarmuka papan ketik menyediakan masukan teks, kombinasi tombol, dan menahan tombol. Tangkapan layar dan posisi kursor dipakai untuk memperoleh status, sedangkan antarmuka tunggu memberi waktu bagi pemuatan halaman atau animasi. Versi alat menentukan himpunan aksi yang konkret, dan Harness memvalidasi parameter berdasarkan antarmuka yang dipakai.
+
+**Alat eksekusi perintah.** Terminal persisten dapat mempertahankan direktori kerja dan status lingkungan lintas pemanggilan. Misalnya, setelah satu pemanggilan berpindah direktori, pemanggilan berikutnya tetap berjalan di direktori itu. Implementasi referensi dapat memakai *string* penjaga (*sentinel*) untuk mengenali bahwa perintah sudah selesai, serta menetapkan batas waktu; status proses setelah batas waktu terlampaui tetap harus diperiksa eksekutor.
+
+**Alat penyuntingan berkas.** Antarmuka penggantian *string* menentukan cakupan perubahan berdasarkan teks aslinya, dan juga dapat menyediakan fungsi melihat, membuat, menyisipkan, dan membatalkan. Sebelum eksekusi, periksa posisi dan jumlah kecocokan; setelah eksekusi, periksa perbedaannya; jika berkas berubah di antara dua pemanggilan, baca ulang isi yang relevan lebih dulu. Strategi penyuntingan yang diperkenalkan di Bab 5 dapat dipakai ulang di sini.
+
+> **Eksperimen 6-9 ★: Menjalankan implementasi referensi Computer Use dari Anthropic**
+>
+> Eksperimen ini memakai desktop Ubuntu, peramban, dan lapisan eksekusi alat yang disediakan contoh kontainer resmi. Setelah pengguna memasukkan tugas, model membaca tangkapan layar dan mengembalikan aksi, lapisan eksekusi mengoperasikan desktop, lalu mengirim tangkapan layar baru kembali ke model.
+>
+> Tugas pendampingnya adalah menanyakan cuaca San Francisco. Jejak yang disimpan mula-mula mengunjungi Google; setelah menemui CAPTCHA, ia beralih ke data Open-Meteo yang dapat dibaca publik berdasarkan instruksi pemulihan saat eksekusi, dan akhirnya melaporkan suhu serta kondisi cuaca. Catatannya berisi 15 aksi desktop beserta tangkapan layarnya, sehingga dapat diperiksa putaran demi putaran bagaimana klik, penekanan tombol, masukan teks, dan penantian mengubah halaman.
+>
+> Jalur yang menggerakkan peramban dengan model terbuka dibahas di Eksperimen 6-10.
+
+### *Visual Grounding* (Penentuan Lokasi Visual)
+
+Untuk meminta model mengklik kotak pencarian, soalnya dapat dirumuskan dalam dua bentuk. Pertama, perlihatkan tangkapan layar dan minta model menyebutkan koordinat klik. Kedua, beri nomor pada sasaran-sasaran calon dan minta model memilih kotak pencarian; nomor itu dapat ditempelkan pada area calon di tangkapan layar, atau berasal dari daftar elemen yang disediakan peramban. Berikut ketiga jalur ini dibahas satu per satu. Ketika memilih nomor, lapisan eksekusi bertugas mengembalikan nomor itu menjadi sasaran sebenarnya; ketika langsung menyebutkan koordinat, model juga harus memperkirakan letak sasaran, sehingga tuntutan terhadap pelatihan penentuan lokasi dan penyesuaian resolusi layar lebih tinggi.
+
+**Set-of-Mark: anotasi visual.**
+
+Set-of-Mark (SoM) menumpangkan nomor yang dapat dirujuk di atas gambar, sehingga menghubungkan area visual dengan keluaran model. Karya aslinya membuat area calon dengan metode seperti segmentasi, misalnya memakai SAM dan SEEM untuk memperoleh area, lalu menempatkan penanda. Setelah model memilih nomor, lapisan eksekusi menentukan posisi operasi berdasarkan area yang bersangkutan. Metode ini dapat dipakai untuk perangkat lunak desktop atau antarmuka gim yang tidak punya DOM; syaratnya, kontrol yang hendak diklik harus berada di area bernomor, dan model harus dapat melihat dengan jelas nomor mana yang sesuai dengannya.[^ch6-som]
+
+**Indeks elemen terstruktur.**
+
+Peramban juga dapat menyediakan petunjuk jenis lain. *Document Object Model* (DOM) menggambarkan elemen apa saja yang ada di halaman beserta hierarkinya, informasi tata letak memberikan posisi tampilan elemen, dan pohon aksesibilitas (*accessibility tree*) menyimpan peran dan nama aksesibel yang diperlukan teknologi bantu. Misalnya, sebuah tombol yang hanya berisi ikon kaca pembesar: jika halaman menyediakan nama aksesibel "Search", Agent berpeluang menemukannya berdasarkan peran dan nama. Ambil contoh solusi sejenis browser-use: sistem dapat memperoleh informasi elemen melalui antarmuka *debugging* peramban seperti Chrome DevTools Protocol (CDP), mengenali kotak masukan, tombol, dan tautan, lalu memberi nomor pada elemen-elemen yang dapat dioperasikan di halaman saat ini. Pada Gambar 6-14, model memilih [2] di pojok kanan atas halaman. Bagaimana nomor ini berubah menjadi satu klik pada tombol Submit?
+
+![Gambar 6-14 Set-of-Mark dan indeks elemen terstruktur (implementasi browser-use)](images/revised/fig6-14.svg)
+
+Prosesnya dapat dibagi menjadi empat langkah: membaca DOM, tata letak, dan informasi aksesibilitas yang tersedia; menyaring elemen yang dapat berinteraksi; membangun pemetaan nomor untuk halaman saat ini; lalu menyerahkan deskripsi elemen dan tangkapan layar beranotasi yang diperlukan kepada model. Misalnya, model mungkin melihat empat elemen bernomor berikut:
 
 ```text
-Tangkapan layar: [Elemen kunci pada gambar dianotasi dengan ID seperti [1], [2], [3], [4]]
+截图中标有 [1]、[2]、[3]、[4]
 
-Elemen:
 [1] <input type="text" placeholder="Search" aria-label="Search" />
 [2] <button id="submit-btn" aria-label="Submit form" />
 [3] <input type="text" placeholder="Enter your name" value="" />
 [4] <a href="/docs" aria-label="Documentation" />
 ```
 
-Model hanya perlu menghasilkan ID, dan sistem secara otomatis mengklik bagian tengah elemen yang sesuai. Pendekatan ini tidak menghemat token karena semua data anotasi tetap harus dikirim ke model, tetapi memberikan pelokalan yang akurat dan stabil sembari menghindari deteksi yang terlewat dan positif palsu yang dapat diperkenalkan oleh model segmentasi.
+Setelah model memilih nomor, lapisan eksekusi menerjemahkannya menjadi rujukan elemen atau koordinat, memeriksa apakah sasaran masih terlihat dan dapat berinteraksi, lalu menyelesaikan operasinya. Setelah halaman dimuat ulang, digulir, atau disisipi elemen secara dinamis, pemetaan perlu diperbarui agar nomor yang kedaluwarsa tidak terpakai. Indeks terstruktur dapat memanfaatkan label, peran, dan teks, sedangkan Canvas, elemen yang tertutup, atau anotasi semantik yang tidak lengkap perlu dinilai dengan bantuan tangkapan layar. Semakin banyak elemen yang dicantumkan dan semakin besar tangkapan layarnya, semakin banyak pula informasi yang masuk ke konteks.
 
-![Gambar 6-13: Set-of-Mark vs. Pengindeksan Elemen Terstruktur (implementasi browser-use)](images/fig6-13.svg)
+**Memprediksi koordinat secara langsung.**
 
-**Prediksi Koordinat Murni.**
+Jalur koordinat membuat model langsung mengeluarkan posisi dari tangkapan layar dan deskripsi sasaran, misalnya memetakan "klik tombol kirim" ke suatu titik. Penelitian penentuan lokasi GUI seperti SeeClick serta Computer Use milik Claude sama-sama memakai keluaran koordinat. Lapisan eksekusi bertugas mengubah koordinat gambar menjadi koordinat desktop sebenarnya.
 
-Rute ketiga melewatkan anotasi dan meminta model untuk mengeluarkan koordinat secara langsung. Sistem seperti **SeeClick** dan computer use Claude mengandalkan model visi yang dilatih pada dataset besar tangkapan layar GUI yang dipasangkan dengan posisi elemen. Model ini belajar memetakan deskripsi bahasa alami (mis., "klik tombol kirim") secara langsung ke koordinat tangkapan layar yang tepat, mengandalkan persepsi visual seperti pengguna manusia.
+Setelah tangkapan layar diskalakan, kedua sistem koordinat harus memakai transformasi yang sama. Ambil contoh desktop 2560×1440: jika gambar yang dikirim ke model berukuran 1366×768, maka koordinat (683, 384) dari model sesuai dengan:
 
-Dalam skema prediksi koordinat, pemahaman model tentang koordinat sangat bergantung pada resolusi yang digunakan selama pelatihan (Gambar 6-14). Claude dilatih menggunakan XGA (1024×768), WXGA (1280×800), dan FWXGA (1366×768). Jika resolusi tangkapan layar input tidak cocok, prediksi koordinat model akan bergeser secara sistematis—seperti mengukur jarak di peta kecil dan kemudian menerapkannya secara langsung ke peta besar. Oleh karena itu, mekanisme penskalaan koordinat dua arah harus diimplementasikan pada lapisan alat, dan resolusi target harus **dipilih berdasarkan rasio aspek** untuk menghindari peregangan tidak seragam yang mendistorsi gambar dan akibatnya membiaskan penilaian koordinat. Misalnya, jika resolusi layar sebenarnya adalah 2560×1440 (16:9), target yang paling sesuai di antara tiga opsi yang didukung Claude adalah FWXGA (1366×768), yang memiliki rasio aspek terdekat dengan 16:9. Tangkapan layar diskalakan secara proporsional menjadi 1366×768 dan diumpankan ke model; setelah model mengeluarkan koordinat klik (683, 384), koordinat tersebut dipetakan secara terbalik ke koordinat sebenarnya (683×2560/1366, 384×1440/768) ≈ (1280, 720). Sebaliknya, jika gambar 16:9 diregangkan secara paksa ke 4:3 1024×768, gambar akan dikompresi secara horizontal, menyebabkan prediksi koordinat model bergeser secara sistematis.
+$$
+x = 683 \times \frac{2560}{1366} = 1280,\qquad
+y = 384 \times \frac{1440}{768} = 720
+$$
 
-![Gambar 6-14: Pencocokan Resolusi dan Penskalaan Koordinat Dua Arah](images/fig6-14.svg)
+Pada Gambar 6-15, rasio lebar-tinggi kedua ukuran itu hampir sama. Jika tangkapan layar diberi bingkai hitam demi mempertahankan rasio, koordinat dari model ikut memuat area kosong itu; sebelum dikembalikan ke koordinat layar asli, offset bantalan yang bersangkutan harus dikurangkan dulu, baru dikonversi dengan faktor skala. Pemotongan, penskalaan tampilan, dan titik asal pada banyak monitor juga mengubah pemetaan, sehingga lapisan alat perlu menyimpan parameter transformasi yang sebenarnya.
 
-Pilihan di antara ketiga rute tersebut dapat diringkas sebagai berikut: **ketika informasi terstruktur tersedia, prioritaskan pengindeksan DOM/accessibility-tree** untuk pelokalan yang paling akurat dan stabil. **Ketika tidak tersedia**—dalam perangkat lunak desktop asli seperti Photoshop, antarmuka yang dirender canvas/WebGL, atau game—**gunakan anotasi visual (rute SoM asli) atau prediksi koordinat**. Anotasi visual mengubah pelokalan menjadi masalah pilihan ganda, membuatnya lebih ramah terhadap model serbaguna tanpa pelatihan khusus. Prediksi koordinat menghilangkan langkah anotasi dan lebih langsung untuk model yang dilatih khusus pada pelokalan GUI. Kedua pendekatan ini masih kesulitan dengan elemen kecil dan antarmuka yang padat.
+![Gambar 6-15 Pencocokan resolusi dan penskalaan koordinat dua arah](images/revised/fig6-15.svg)
 
-> **Eksperimen 6-9 ★: Menggunakan browser-use untuk Mengimplementasikan Operasi Browser Otomatis**
+Implementasi referensi pernah memakai ukuran sasaran seperti XGA (1024×768), WXGA (1280×800), dan FWXGA (1366×768). Memaksakan perubahan rasio lebar-tinggi akan membuat bentuk kontrol berubah; memakai pemetaan balik yang salah akan membuat prediksi yang benar mendarat di posisi yang salah.[^ch6-computer-tools]
+
+**Bila informasi terstruktur lengkap, penulis mengutamakan indeks DOM atau pohon aksesibilitas.** Nama, peran, dan rujukan elemen dapat langsung dipakai dalam penentuan lokasi, sehingga model tidak perlu banyak menaksir posisi piksel secara dadakan. Bila struktur tidak tersedia, model visual umum dapat dipadukan lebih dulu dengan SoM agar model cukup memilih salah satu area yang sudah ditandai; model yang sudah dilatih untuk penentuan lokasi GUI dapat langsung memprediksi koordinat tanpa anotasi tersendiri.
+
+> **Eksperimen 6-10 ★: Mengotomatiskan operasi peramban dengan browser-use**
 >
-> Gabungkan Playwright, framework otomasi browser, dengan model multimodal untuk menjalankan operasi browser berbasis bahasa alami. Aktifkan visualisasi SoM dan simpan screenshot dengan kotak anotasi sebelum setiap keputusan.
+> Eksperimen ini memakai Qwen3-VL 32B Instruct untuk menggerakkan browser-use, dan menghasilkan aksi berdasarkan status peramban, informasi elemen, dan tangkapan layar. Tugasnya adalah menanyakan cuaca San Francisco: menemukan kotak pencarian, mengetikkan "San Francisco weather today", mengirim kueri, lalu mengekstrak suhu dan kondisi cuaca.
 >
-> Tugas uji “Buka Google dan cari cuaca San Francisco”: setelah startup, screenshot menampilkan Google dengan elemen interaktif bernomor. Model memilih kotak pencarian, memasukkan “San Francisco weather today”, mengirim pencarian, lalu mengekstrak suhu dan kondisi dari halaman hasil.
+> Kode dan petunjuk eksekusi Eksperimen 6-10 menyediakan dua pintu masuk. Jika memiliki kunci OpenRouter, Anda dapat memakai model visual yang di-*hosting*; jika sudah ada layanan kompatibel seperti vLLM atau SGLang, arahkan `OPEN_MODEL_BASE_URL` dan `OPEN_MODEL_MODEL` ke *endpoint* dan model Anda sendiri, lalu atur kunci sesuai ketentuan layanan. Pada kedua jalur, jalankan dulu `python main.py --dry-run` di direktori eksperimen untuk melihat konfigurasi, lalu mulai kueri sungguhan sesuai petunjuk.
+>
+> Eksekusi yang disimpan menyelesaikan 16 langkah interaksi dan menyimpan 15 tangkapan layar. Setelah Google menampilkan CAPTCHA, tugas beralih ke weather.com untuk mendapatkan hasilnya.
 
-### Computer Use Agent yang Dapat Menonton Animasi dan Mendengar Suara
+[^ch6-computer-tools]: Anthropic, dokumentasi alat dan implementasi referensi Computer Use, memperkenalkan antarmuka aksi berversi, lapisan eksekusi, dan pemrosesan tangkapan layar.
+[^ch6-som]: Microsoft, *Set-of-Mark Prompting*, 2023; implementasi layanan DOM di browser-use memberikan contoh pemrosesan elemen terstruktur.
 
-Sejauh ini, persepsi Computer Use bertumpu pada asumsi implisit: **layar bersifat statis**—ambil screenshot, pikirkan satu langkah, klik, lalu ambil screenshot berikutnya. Layar nyata memutar video, menampilkan notifikasi singkat, dan mengeluarkan suara rapat. Agent yang hanya membuka mata setiap 3–5 detik dan tidak memiliki telinga tidak dapat melihat atau mendengar apa yang terjadi di antara dua frame.
+### Agent Computer Use yang Dapat Menonton Animasi dan Mendengar Suara
 
-Yang perlu didesain ulang bukan action interface, melainkan **observation interface**[^ch6-9]. Agent–computer observation interface (AOI) mengubah observasi environment yang kontinu menjadi event diskret yang mudah diproses model. Teknik utamanya: **screenshot keyframe layar**, yang memakai model kecil untuk menilai apakah layar mengalami perubahan yang bermakna dan hanya mengambil screenshot ketika perubahannya signifikan—saat perubahan berlangsung sering, satu screenshot per detik pun sudah memberi hasil yang cukup baik; **transkripsi ucapan berbasis volume**, yang memanggil pengenalan suara saat ada suara dan memasukkan teks hasil pengenalan ke dalam context sehingga Agent dapat mendengar; dan **mendeskripsikan frame sebagai teks**, yaitu meminta model mendeskripsikan screenshot yang ditangkap menjadi satu kalimat, sehingga meskipun gambar aslinya kemudian dibersihkan dari context, kalimat itu tetap berada dalam context dan riwayat interaksi multimodal pun termampatkan.
+Sebuah halaman hanya menampilkan "sinkronisasi gagal" sesaat setelah disimpan, sementara dua tangkapan layar yang berjarak beberapa detik sama-sama menampilkan formulir yang sama. Melihat kembali kedua gambar itu, model kemungkinan besar tidak dapat merekonstruksi apa yang terjadi di antaranya. Video, animasi, notifikasi singkat, dan suara rapat juga mengalami masalah ini. **Untuk antarmuka yang terus berubah, penulis berpendapat bahwa antarmuka observasi harus menjadi sasaran utama perbaikan.** Untuk menentukan langkah berikutnya berdasarkan perubahan, peristiwa atau gambar yang muncul di antara dua aksi juga perlu disimpan.
 
-[^ch6-9]: Lihat Li, Bojie and Noah Shi. *Agent-Computer Observation Interfaces Enable Dynamic Computer Use.* arXiv:2606.29472, 2026.
+**Agent–Computer Observation Interface (AOI, antarmuka observasi Agent–komputer)** yang diusulkan penulis bersama rekannya mengubah layar dan audio yang kontinu menjadi gambar dan teks yang dapat diterima model[^ch6-9]. Antarmuka ini terdiri atas tiga komponen:
 
-### World Model untuk Computer Use
+- **Pengambilan bingkai kunci di antara aksi.** Selama *loop* utama berjalan, perubahan gambar dipantau, bingkai calon disaring dengan selisih piksel atau model visual ringan, lalu gambar yang berguna diserahkan ke keputusan berikutnya.
+- **Transkripsi berpintu volume.** Ketika suara terdeteksi, pengenalan ucapan dipanggil, dan transkrip beserta informasi waktunya ditambahkan ke catatan observasi, sehingga Agent dapat memakai isi rapat atau instruksi lisan.
+- **Deskripsi gambar yang persisten.** Gambar kunci diringkas menjadi teks; setelah gambar asli dikeluarkan dari konteks, teks itu tetap menyimpan perubahan yang pernah terjadi untuk dirujuk langkah-langkah berikutnya.
 
-Antarmuka observasi pada bagian sebelumnya menjawab "apa yang terjadi di antaranya": lewat keyframe, transkripsi suara, dan teks yang bertahan, Agent tidak lagi hanya melihat dua tangkapan layar yang terpisah jauh. Tetapi antarmuka observasi tidak menghapus tundaan perencanaan. Agent masih menjalankan lingkar serial "tangkap layar—berpikir—klik", dan setiap kali selesai satu aksi ia mengamati ulang serta memikirkan langkah berikutnya. Kajian efisiensi **OSWorld-Human** memperlihatkan bahwa sekalipun tugas akhirnya berhasil, jumlah langkah dan waktu tunggu Agent tetap jauh lebih banyak daripada manusia; mencapai ketepatan setara manusia tidak sama dengan sudah cukup layak pakai.
+Misalnya, sebuah video memperlihatkan satu operasi menu; setelah model menerima gambar antara dan deskripsinya, ia dapat terus merujuk langkah itu setelah video selesai diputar. Hasil ablasi dalam makalah menunjukkan bahwa deskripsi teks yang persisten sangat penting bagi peningkatan kinerja, sedangkan pemilihan bingkai kunci secara cermat hanya sedikit berkontribusi; sebagian model justru menurun ketika diberi terlalu banyak gambar.
 
-Ketika manusia mengoperasikan komputer, ia tidak mulai memikirkan langkah berikutnya baru setelah mengklik, melainkan lebih dulu meramalkan akibat aksinya: bila perubahan yang sesungguhnya sesuai dengan dugaan, ia meneruskan rencana semula; hanya ketika keadaan halaman menyimpang dari dugaan barulah ia berhenti untuk mengamati dan merencanakan ulang. World model membuat Agent bisa meramalkan akan menjadi apa layar kerja itu sebelum ia bertindak, sehingga terwujud "eksekusi spekulatif" mirip manusia yang meningkatkan efisiensi secara mencolok.
+Kembali ke contoh menyimpan formulir tadi. Sekalipun bingkai kunci menangkap "sinkronisasi gagal", begitu gambar aslinya dikeluarkan dari konteks, model hanya dapat mengandalkan deskripsi yang tertinggal. "Halaman menampilkan notifikasi" bisa berarti penyimpanan berhasil, bisa pula gagal; hanya "sinkronisasi gagal, alamat tidak tersimpan" yang mempertahankan petunjuk untuk menentukan langkah berikutnya.
 
-Keadaan layar kerja bukan sekadar sebuah citra piksel: ia juga mencakup jendela, fokus, posisi gulir, isi kotak masukan, keadaan pemuatan, izin, dan balasan jaringan; sedangkan aksinya mencakup klik, ketikan papan ketik, gulir, seret, dan tunggu. Sebuah world model yang bisa dipakai untuk Computer Use setidaknya harus mampu menyandikan keadaan sekarang, meramalkan perubahan keadaan yang ditimbulkan aksi calon, dan menyerahkan ramalan itu kepada perencana untuk menetapkan langkah berikutnya:
+[^ch6-9]: Bojie Li, Noah Shi, *Agent-Computer Observation Interfaces Enable Dynamic Computer Use*, 2026, memperkenalkan AOI dan ablasi komponennya.
+
+### Model Dunia untuk Computer Use
+
+Setelah memperoleh observasi tepat waktu, Agent masih harus memilih aksi dan menunggu eksekusinya. Penelitian OSWorld-Human membandingkan efisiensi operasi Agent dengan jejak manusia, dan menganalisis sumber pemborosan waktu seperti langkah berlebih dan pemanggilan model[^ch6-osworld-human].
+
+Model dunia memberikan prediksi akibat dari suatu aksi untuk perencanaan. Status desktop dapat mencakup jendela, fokus, posisi gulir, isi masukan, dan kemajuan pemuatan; informasi seperti izin dan hasil jaringan perlu dilengkapi melalui antarmuka yang bersangkutan. Berdasarkan status yang tersedia dan aksi calon, model memprediksi status berikutnya:
 
 ```text
-keadaan layar kerja + click/type/scroll/wait ──> representasi keadaan berikutnya
+当前状态 + click / type / scroll / wait → 预测的下一状态
 ```
 
-Dengan begitu Agent dapat membandingkan akibat aksi-aksi calon sebelum benar-benar mengklik, menyiapkan langkah berikutnya selagi halaman dimuat, dan pulih berdasarkan selisih keadaan ketika sebuah jendela sembul lewat sekejap. Misalnya bila tugasnya "buat berkas Python baru di VS Code dan tulis hello world", model bisa lebih dulu meramalkan keadaan kunci pohon berkas dan penyunting setelah berhasil, baru kemudian memilih aksi klik, ketik, dan simpan; bila tugasnya menghapus berkas, ia bisa lebih dulu meramalkan di dalam layar kerja maya yang terisolasi apakah akan muncul kotak konfirmasi yang tak dapat dibatalkan, dan meminta persetujuan pengguna bila perlu. Yang penting di sini bukan membuat model menghasilkan tangkapan layar masa depan yang tampak nyata, melainkan meramalkan selisih keadaan yang dapat diperiksa dan yang memang dibutuhkan untuk menuntaskan tugas.
+Ketika manusia mengoperasikan komputer, sering kali ia sudah membayangkan langkah berikutnya sebelum mengklik; jika antarmuka sesuai harapan, ia melanjutkan, dan baru berhenti untuk memeriksa bila terjadi hal tak terduga. Model dunia dapat memberi Agent dasar eksekusi spekulatif yang serupa: perencana membandingkan aksi calon lebih awal, menyiapkan langkah berikutnya selama halaman dimuat, lalu melanjutkan setelah status sebenarnya dipastikan, sehingga waktu tunggu untuk merencanakan ulang dari awal setiap kali selesai mengklik dapat dikurangi. Misalnya, saat membuat berkas Python baru di VS Code dan menuliskan hello world, perubahan yang diharapkan meliputi munculnya berkas baru di pohon berkas, area penyunting berisi kode, dan status penyimpanan diperbarui. Setelah eksekusi, perubahan ini diperiksa; jika sesuai harapan, lanjutkan, dan jika menyimpang, tentukan lokasi dan rencanakan ulang.
 
-Pada Juli 2026, **Photon-1** yang diumumkan Induction Labs memperlihatkan satu perwujudan jalur ini: pralatih world model computer use diselesaikan hanya dengan 30.000 jam GPU H200. Ia memampatkan setiap bingkai menjadi token laten diskret dan meramalkan secara autoregresif representasi keadaan berikutnya sesudah sebuah aksi, alih-alih menghasilkan tangkapan layar piksel demi piksel pada tahap pralatih; adapun pembangkit citra yang ditautkan padanya hanya dipakai untuk memvisualkan representasi laten dan bukan komponen yang diperlukan saat inferensi. Diberi satu tangkapan layar benih beserta aksi-aksi lanjutannya, model dapat terus-menerus "membayangkan" keadaan layar kerja, lalu belajar mengeluarkan aksi computer-use melalui pelatihan daring di atas mesin maya.[^ch6-20]
+Operasi seperti menghapus berkas juga memerlukan syarat eksekusi tersendiri: apakah sasarannya benar, apakah penghapusan diizinkan, apakah dapat dipulihkan, dan apakah perlu konfirmasi pengguna. Prediksi membantu memahami hasil yang mungkin, sedangkan izin dan syarat bisnis yang sebenarnya diperiksa oleh lapisan eksekusi.
 
-[^ch6-20]: David Li and Jonathan Li, Induction Labs, “Scaling Video Pretraining with Imagination Models,” 2026-07-23. https://www.inductionlabs.com/news/scaling-video-pretraining. Parameter, skala data, tolok ukur internal, dan perbandingan biaya Photon-1 yang disebut dalam teks semuanya merupakan hasil yang diungkap perusahaan itu sendiri.
+**Prediksi status laten pada Photon-1.** Pada Juli 2026, Induction Labs memperkenalkan Photon-1: bingkai video dikodekan menjadi token laten diskret, dan perubahan status dipelajari dengan memprediksi token berikutnya. Perusahaan itu mengungkapkan bahwa prapelatihannya memakai sekitar 30.000 jam GPU H200. Prediksi status dilakukan di dalam token laten, sedangkan generator gambar pembantu bertugas mengembalikannya menjadi gambar yang dapat dilihat, agar manusia dapat memeriksa prediksinya. Perencanaan dan pembuatan aksi dapat langsung memakai representasi internal, sehingga tidak perlu menghasilkan tangkapan layar lengkap di setiap langkah.[^ch6-20]
 
-### Seluler: Hambatan Ekosistem Lebih Sulit Daripada Teknologi
+Solusi ini selanjutnya mempelajari format instruksi dan aksi melalui *fine-tuning*: pertama memprediksi status yang ingin dicapai, lalu menghasilkan operasi menuju status itu, dan memperbaiki kinerja tugas melalui pelatihan daring di mesin virtual. *Fine-tuning* bersyarat aksi dipakai untuk memprediksi perubahan desktop setelah suatu operasi diberikan. Kedua kegunaan ini masing-masing terhubung dengan perencanaan dan simulasi, dan memperlihatkan bagaimana representasi status berperan dalam Computer Use.
 
-Computer Use juga merambah ke perangkat seluler. Antara seluler dan desktop memang ada perbedaan teknis: ruang aksi umumnya bukan lagi "koordinat tetikus + papan ketik", melainkan lewat API layanan aksesibilitas sistem (seperti AccessibilityService di Android) untuk membaca elemen antarmuka serta mengirim ketukan dan masukan teks; cara berinteraksi pun beralih dari penunjuk tetikus ke gestur sentuh, sehingga makna koordinat ikut berubah — titik (x, y) yang sama perlu jenis gestur tambahan untuk menentukan apakah itu ketukan tunggal, tekan lama, atau titik awal sebuah usapan. Tolok ukur seluler seperti AndroidWorld yang dibahas pada Bab 7 justru mengukur kemampuan Agent menuntaskan tugas nyata di dalam aplikasi pada ruang aksi semacam ini.
+[^ch6-osworld-human]: Reyna Abhyankar dkk., *OSWorld-Human: Benchmarking the Efficiency of Computer-Use Agents*, menganalisis jejak tugas dan pemakaian waktu.
+[^ch6-20]: David Li, Jonathan Li, *Scaling Video Pretraining with Imagination Models*, Induction Labs, 2026-07-23, memperkenalkan prapelatihan, pembelajaran aksi, dan simulasi status pada Photon-1.
+[^ch6-21]: Google DeepMind, *Genie 3: A new frontier for world models*, 2025-08-05; Zachary Lin dkk., *Cosmos World Foundation Model Platform for Physical AI*, 2025.
 
-Namun yang benar-benar mengganjal di seluler kerap bukan perbedaan teknis itu, melainkan hambatan ekosistem. Seorang produsen ponsel pernah mencoba menanamkan asisten AI pada ponsel konsumen agar mengoperasikan sendiri aplikasi sehari-hari seperti WeChat, Taobao, dan Alipay, tetapi cepat berbenturan dengan pembatasan platform.
+### Seluler: Antarmuka Teknis dan Kolaborasi Ekosistem
 
-Ini menyingkap tantangan khas yang dihadapi Computer Use: **hambatan ekosistem**. Akar penyebab pemblokiran itu adalah benturan model bisnis. Logika monetisasi aplikasi internet tradisional bertumpu pada **trafik dan perhatian**: pengguna melihat iklan saat menggulir umpan, mengikuti arahan algoritma rekomendasi saat mencari barang, dan berbelanja impulsif saat menjelajah halaman. Ketika Agent menggantikan pengguna dalam mengoperasikan aplikasi, rantai monetisasi itu dilewati sepenuhnya: AI tidak menonton iklan dan tidak berbelanja impulsif, ia langsung menuju sasaran lalu pergi. Bagi platform yang hidup dari iklan dan trafik, setiap operasi Agent menggerogoti fondasi model bisnisnya.
+Perangkat seluler tetap memakai siklus observasi–keputusan–aksi, tetapi aksinya lebih banyak berupa gestur sentuh. Koordinat yang sama dapat berarti posisi ketuk, posisi tekan lama, atau titik awal usapan, sehingga antarmuka juga memerlukan jenis gestur, durasi, dan lintasannya. Rotasi layar, munculnya papan ketik virtual, dan jendela sembul sistem juga mengubah area yang dapat dioperasikan.
 
-Artinya, yang dihadapi Computer Use bukan sekadar perlawanan teknis seperti CAPTCHA (kode verifikasi), melainkan **konflik kepentingan yang struktural**. Pertentangan ini sulit didamaikan dalam jangka pendek, dan membuat penerapan Computer Use pada skenario konsumen menghadapi tantangan yang lebih pelik daripada persoalan teknis murni.
+`AccessibilityService` di Android dapat membaca informasi antarmuka dan menjalankan aksi yang sesuai dalam cakupan yang diizinkan, dan antarmuka gestur juga perlu menyatakan kemampuan yang bersangkutan[^ch6-android]. Tangkapan layar, pohon aksesibilitas, dan antarmuka otomatisasi sistem dapat dipakai bersama, dengan cakupan yang ditentukan oleh sistem operasi, implementasi aplikasi, dan otorisasi. Tolok ukur seperti AndroidWorld yang diperkenalkan di Bab 7 memeriksa apakah aksi-aksi ini menghasilkan hasil yang diharapkan pada tugas aplikasi sungguhan.
 
-## Robot Manipulation: Merapikan Meja dengan XLeRobot
+**Menurut penulis, hambatan ekosistem dalam penerapan di perangkat seluler sering kali lebih sulit ditangani daripada persoalan teknis.** Platform perlu menetapkan operasi mana yang boleh diserahkan kepada Agent, bagaimana akun, pembayaran, dan data diotorisasi, serta bagaimana tanggung jawab ditelusuri bila terjadi kesalahan. Kesepakatan ini langsung memengaruhi cakupan tugas yang dapat diselesaikan Agent.
 
-> **Cara membaca bagian ini**: dari awal sampai akhir kita memakai satu tugas saja——"masukkan cangkir merah ke nampan, buang kertas kuning ke tempat sampah, lalu amati sekali lagi untuk memastikan keadaan meja". Eksperimen 6-10 dan 6-12 dijalankan pada XLeRobot fisik dan memerlukan lengan robot, kalibrasi, tombol henti darurat, serta pengawas di tempat. Eksperimen 6-11, 6-13, dan 6-14 adalah padanannya di GPU lokal. Hasil fisik dan hasil simulasi dilaporkan terpisah, tetapi tujuan tugas, makna aksi, dan syarat keberhasilannya dijaga tetap sama.
+Salah satu konflik kepentingan yang bersifat struktural berasal dari lalu lintas dan perhatian. Banyak aplikasi memperoleh pendapatan dari tayangan iklan, rekomendasi konten, dan pintu transaksi; setelah pengguna meminta Agent langsung menyelesaikan kueri atau pembelian, jalur penelusuran halaman bisa memendek, dan perhatian yang diperoleh rekomendasi serta iklan pun berubah. Bagi platform yang memonetisasi tahapan-tahapan ini, operasi oleh Agent menyentuh sumber pendapatan yang sudah ada. Karena itu platform perlu mempertimbangkan ulang keterbukaan antarmuka, bagi hasil komersial, dan pengelolaan identitas Agent.
 
-Manipulasi robot jauh lebih sulit daripada "melihat gambar lalu menjawab pertanyaan". Model bukan hanya harus memahami pemandangan, tetapi harus bertindak secara berkelanjutan di dunia nyata, dan setiap aksi mengubah keadaan pada detik berikutnya. XLeRobot membuat perbedaan ini menjadi sangat konkret. Lengan yang sama bisa dikendalikan dari jarak jauh oleh manusia dengan papan ketik, gamepad, atau perangkat VR; bisa pula pengamatan kamera dan sehimpunan kecil alat aksi diserahkan kepada Agent agar ia memanggilnya sendiri. Perangkat kerasnya tidak berubah, tugasnya juga tidak; yang berubah hanya siapa yang mengoperasikan——pada kasus pertama manusia terus mengamati dan mengoreksi, pada kasus kedua model dan sistem kendali harus menuntaskan pekerjaan yang sama.
+[^ch6-android]: Android Developers, AccessibilityService, memperkenalkan akses antarmuka, aksi, dan kemampuan gestur.
 
-Bagian ini merangkai lima eksperimen dengan "merapikan meja". Mula-mula manusia mengendalikan XLeRobot fisik dari jarak jauh, untuk mengukur sampai di mana kemampuan perangkat keras ini di tangan operator yang cukup cakap. Berikutnya, di dalam simulator, kita menetapkan batas atas kendali yang ideal untuk tugas yang sama. Setelah itu Agent dibiarkan mengendalikan XLeRobot fisik secara mandiri, untuk melihat bagaimana persepsi, perencanaan, dan pemulihan dari kegagalan menentukan hasil. Selanjutnya kontrak alat yang sama dipindahkan ke simulator, dan tiga strategi dibandingkan sekaligus: eksekusi lingkar terbuka, pemeriksaan bertahap, dan model dunia. Terakhir kita mengubah latar belakang, rupa benda, pencahayaan, dan derau visual untuk melihat apakah kebijakan visual yang dipelajari di simulasi mampu menyesuaikan diri dengan lingkungan baru.
+## Manipulasi Robot: Merapikan Meja dengan XLeRobot
 
-Hambatan di sini biasanya bukan membuat satu lagi tolok ukur tanya-jawab yang statis, melainkan membuat model tetap menutup lingkar kendali dengan lebar pita persepsi dan kendali yang terbatas. Sistem robot yang layak pakai setidaknya harus menjawab empat pertanyaan berikut:
+Memasukkan cangkir merah ke nampan, membuang kertas kuning ke kotak sampah, lalu memastikan meja sudah rapi—tugas ini merangkai persepsi, perencanaan, dan kendali menjadi satu. Ketika *gripper* mendekati cangkir, posisinya di kamera berubah; setelah cangkir terangkat, lengan harus menghindari benda lain di meja; jika kertas gagal dijepit pada percobaan pertama, sistem juga harus menyadari kegagalan itu dan mencoba lagi. Setiap aksi mengubah kondisi untuk keputusan berikutnya.
 
-1. Tugas apa yang ingin diselesaikan manusia?
-2. Subtugas mana yang dikerjakan berikutnya?
-3. Aksi konkret apa yang dihasilkan keterampilan saat ini?
-4. Setelah aksi dijalankan, apakah kenyataan masih sesuai dengan rencana semula?
+Bagian ini menyusun lima eksperimen di sepanjang tugas tersebut. Eksperimen 6-11 dan 6-13 memberikan rancangan praktik untuk teleoperasi dan operasi mandiri pada robot sungguhan; Eksperimen 6-12, 6-14, dan 6-15 memakai simulasi lokal untuk masing-masing mempelajari *baseline* kendali, pemulihan dari kegagalan, dan perubahan kondisi visual.
 
-Bagian ini menaruh keempat pertanyaan itu di dalam lingkar kendali XLeRobot yang sama, dan menunjukkan bagian mana yang ditangani masing-masing dari empat teknik: perencanaan jangka panjang menentukan cangkir dulu atau kertas dulu; VLA atau primitif aksi mengerjakan penjepitan dan peletakan; model dunia memperkirakan akibat sebuah aksi; dan perpindahan dari simulasi ke dunia nyata memikul selisih antara video latih dengan kamera serta aktuator sungguhan. Sekalipun model tingkat tinggi sudah punya pengetahuan dan kemampuan perencanaan yang memadai, cukup satu mata rantai umpan balik ini hilang untuk membuat sistem gagal menuntaskan tugas.
+Robot yang sama dapat dikendalikan manusia yang terus memperhatikan kamera, dapat pula dijalankan oleh model yang membaca gambar, memilih keterampilan, lalu menyerahkannya kepada sistem kendali untuk dieksekusi. Dengan tugas dan perangkat keras yang tetap, perbedaan kedua cara ini dapat dianalisis dari empat pertanyaan: apa yang ingin dicapai manusia, subtugas mana yang dikerjakan lebih dulu, aksi apa yang dikeluarkan keterampilan saat ini, dan apakah lingkungan setelah aksi sesuai dengan rencana. Perencanaan jangka panjang mengatur urutan penanganan cangkir dan kertas bekas, kebijakan VLA atau primitif aksi yang telah didefinisikan bertugas menjepit dan meletakkan, model dunia membantu memperkirakan akibat aksi, sedangkan transfer dari simulasi ke dunia nyata menangani perubahan gambar, kontak, dan karakteristik aktuator.
 
 ### Pembagian Kerja antara Perangkat Keras dan Algoritme
 
-Pertanyaan pertama yang paling cocok dijawab XLeRobot adalah: ketika perapian meja secara mandiri gagal, apakah lengan robotnya yang tidak mampu, atau algoritmenya yang tidak becus memakai lengan itu? Ada satu fakta di sini yang tidak boleh diperlunak: **lengan seharga beberapa ratus dolar seperti XLeRobot pun, lewat teleoperasi, sudah sanggup menuntaskan tugas meja berantai beberapa langkah seperti pada bagian ini**——manusia menonton video kamera, menjepit cangkir merah dan menaruhnya di nampan, membuang kertas kuning ke tempat sampah, lalu memeriksa keadaannya sekali lagi. Hasil ini bukan sekadar berarti "perangkat kerasnya nyaris cukup", melainkan bukti diagnostik yang jelas: **sejauh menyangkut tugas ini, hambatannya ada pada algoritme, bukan pada perangkat kerasnya.**
+Ketika perapian meja secara mandiri gagal, teleoperasi dapat dipakai lebih dulu untuk memeriksa apakah perangkat kerasnya sanggup menyelesaikan tugas. Pertahankan kamera, lengan robot, *gripper*, tata letak meja, dan syarat penerimaan, lalu biarkan operator mengambil alih siklus tertutup persepsi dan kendali. Jika manusia dapat menyelesaikannya dengan stabil dalam beberapa putaran sementara sistem mandiri berulang kali gagal, berarti perangkat keras ini sudah mampu menyelesaikan tugas tersebut, dan hambatan utamanya ada pada algoritme kendali mandiri dan umpan baliknya. Pada saat itu, penentuan lokasi objek, pemilihan keterampilan, waktu aksi, dan pemulihan dari kegagalan perlu diperiksa lebih dulu, agar sistem mandiri mempelajari cara koreksi yang terbukti efektif dalam teleoperasi.
 
-Cara mendiagnosisnya lugas. Dengan kamera, lengan, penjepit, tata letak meja, dan syarat keberhasilan yang dikunci, manusia lebih dulu memegang lingkar kendali. Manusia terus-menerus mengoreksi taksiran posisi benda, pilihan aksi, dan pemilihan waktu, serta tahu apa yang harus dilakukan ketika jepitan gagal. Jarak antara sistem mandiri dan manusia justru tampak pada kemampuan lingkar tertutup semacam itu. Tentu saja jangkauan kesimpulan ini adalah tugas meja pada bagian ini: ia menunjukkan perangkat keras sudah melewati ambang beban, ketelitian, dan ruang kerja yang dibutuhkan tugas ini, tetapi bukan berarti lengan seharga beberapa ratus dolar sanggup menangani segala lingkungan terbuka atau manipulasi yang lebih sulit.
+XLeRobot mendukung teleoperasi dengan papan ketik, gamepad Xbox, dan Switch Joy-Con, sedangkan operasi VR dapat dicoba lebih dulu di lingkungan simulasi.[^ch6-1] Ketika *gripper* mendekati cangkir, operator memperlambat gerakan; begitu cangkir tergelincir, titik jepit harus dikoreksi. Jika *gripper* gagal menjepit kertas, operator perlu melihat sekali lagi; ketika benda sudah kembali ke tempatnya, ia juga melirik untuk memastikan. Semua koreksi berdasarkan observasi ini layak dicatat dalam data demonstrasi. Kelak ketika robot beroperasi secara mandiri, ia juga harus dapat menyadari selip dan jepitan yang meleset.
 
-XLeRobot mendukung beberapa pintu masuk teleoperasi: papan ketik, pengendali Xbox, Joy-Con Switch, dan perangkat VR. Operator manusia secara alami melakukan banyak hal yang harus ditulis eksplisit bila dikerjakan algoritme: melambat ketika penjepit mendekati cangkir, memperbaiki titik jepit bila cangkir tergelincir, mengamati ulang bila kertas tak terjepit dalam sekali coba, dan memastikan hasilnya ketika benda masuk ke zona sasaran. Karena itu teleoperasi bukan hanya sarana mengumpulkan data demonstrasi, melainkan juga eksperimen diagnostik yang "mengunci perangkat keras dan hanya mengganti operatornya".[^ch6-1]
-
-> **Eksperimen 6-10 ★: Merapikan meja dengan meneleoperasi XLeRobot fisik**
+> **Eksperimen 6-11 ★: Teleoperasi XLeRobot sungguhan untuk merapikan meja**
 >
-> Taruh cangkir merah, nampan, gumpalan kertas kuning, dan tempat sampah di area kerja XLeRobot fisik. Operator menjalankan tugas tetap melalui salah satu jalur teleoperasi yang sudah dikalibrasi: "masukkan cangkir merah ke nampan, buang kertas kuning ke tempat sampah, lalu amati sekali lagi untuk memastikan keadaan meja". Ulangi sekurang-kurangnya beberapa putaran, dan catat video kamera, masukan operator, keadaan lengan, lama aksi, kegagalan jepitan, jumlah percobaan ulang, serta keadaan akhir.
+> Di area kerja XLeRobot yang sudah menjalani kalibrasi, pemeriksaan batas gerak, dan pemeriksaan tombol berhenti darurat, letakkan cangkir merah, nampan, kertas bekas kuning, dan kotak sampah. Jalankan tugas tetap melalui satu cara teleoperasi yang telah dikalibrasi: "Masukkan cangkir merah ke nampan, buang kertas bekas kuning ke kotak sampah, lalu periksa kondisi meja." Ulangi beberapa putaran, dan catat gambar kamera, masukan operator, status lengan robot, waktu aksi, kegagalan menjepit, dan jumlah percobaan ulang.
 >
-> Jangan menurunkan syarat penerimaan menjadi "pada akhirnya meja tampak bersih". Cangkir merah harus berada di dalam nampan dan kertas kuning di dalam tempat sampah, lengan harus kembali ke sikap aman, dan sepanjang proses tidak boleh ada tabrakan, keluar dari area kerja, maupun campur tangan manusia yang menuntaskan tugas tanpa verifikasi.
+> Di akhir setiap putaran, pastikan cangkir berada di dalam nampan, kertas bekas berada di dalam kotak sampah, dan lengan robot kembali ke posisi aman, lalu periksa catatan tabrakan, pelanggaran batas, dan campur tangan manusia sepanjang proses. Dengan menganalisis bersama di langkah mana kegagalan terjadi, bagaimana operator memulihkannya, dan hasil akhirnya, terbentuklah *baseline* pembanding bagi kendali mandiri.
 
-Teleoperasi fisik adalah cara paling meyakinkan untuk menunjukkan batas atas tugas, tetapi kurang cocok untuk mengubah jumlah dan posisi benda secara besar-besaran. Untuk memperoleh pembanding yang dapat diulang dan bisa dihitung secara statistik, masalah "mengembalikan benda ke tempatnya" yang sama berikutnya kita pindahkan ke simulator meja dua dimensi, dan kita pakai pengendali ideal sebagai pengganti operator kuat yang tidak salah mempersepsi dan tidak salah memilih aksi.
+Eksperimen simulasi memudahkan perubahan jumlah dan posisi awal objek secara berulang, sehingga proses kendali dalam status yang diketahui dapat dikaji tersendiri. Model meja dua dimensi dapat menyatakan tiga tahap: mendekati objek, memindahkannya ke sasaran, dan menangani objek berikutnya, serta menggambarkan biaya kendali dengan jumlah langkah dan panjang lintasan.
 
-> **Eksperimen 6-11 ★: Mengukur batas atas kendali ideal untuk tugas yang sama di simulator**
+> **Eksperimen 6-12 ★: Membangun *baseline* kendali ideal untuk tugas yang sama di simulator**
 >
-> Di dalam simulator meja dua dimensi, tempatkan cangkir merah, kertas kuning, dan zona sasaran masing-masing secara acak, lalu biarkan pengendali ideal mendekati benda satu per satu, menjepitnya, dan memindahkannya ke posisi yang benar. Ia tidak perlu mengenali gambar dan tidak pernah salah memilih aksi, sehingga ia mewakili "sejauh mana tugas ini setidaknya bisa berjalan bila persepsi dan keputusan sama-sama benar".
+> Di meja dua dimensi, buat posisi objek dan posisi sasaran secara acak, lalu biarkan pengendali langsung membaca koordinat, mendekati objek satu per satu, memindahkannya ke sasaran yang sesuai, kemudian menangani objek berikutnya. Ubah posisi awal dan jumlah objek, lalu bandingkan tingkat keberhasilan, jumlah langkah, dan panjang lintasan.
 >
-> Amati tingkat keberhasilan, jumlah langkah, dan panjang lintasan; ubah pula posisi awal benda dan skala tugas untuk melihat apakah batas ideal itu tetap stabil. Syarat keberhasilannya sama dengan Eksperimen 6-10, tetapi yang diukur adalah simulasi tanpa aktuator: ini tidak berarti XLeRobot fisik telah bergerak. Keduanya menjadi dua garis dasar bagi kendali mandiri sesudahnya——Eksperimen 6-10 adalah lingkar tertutup manusia di atas perangkat keras nyata, dan Eksperimen 6-11 adalah lingkar tertutup ideal di lingkungan simulasi.
+> Pertama, ikuti lintasan lengkap satu objek: setelah pengendali mencapai objek, ia masuk tahap pemindahan, dan baru setelah mencapai sasaran jumlah objek yang selesai bertambah. Kemudian tambah jumlah objek dan periksa bahwa setiap objek melewati kedua syarat pencapaian itu. Simulasi dua dimensi pendamping menempatkan 1, 2, 3, dan 4 objek dengan lima benih acak, menjalankan 512 episode untuk setiap kombinasi, dan seluruh 10.240 episode selesai. Pengendali dapat langsung membaca koordinat, dan pemindahan objek tidak bergantung pada *gripper* sungguhan.
 
 ### Struktur Dasar Kendali Robot
 
-Sistem robot biasanya memisahkan pekerjaan dengan skala waktu yang berbeda.
+Merapikan meja satu kali dapat memakan beberapa menit, tetapi kendali sendi harus diperbarui terus-menerus dan tepat waktu. Sistem dapat membagi kerja menurut skala waktu: perencanaan tingkat tinggi mengatur urutan tugas, kebijakan keterampilan menghasilkan gerak, lalu pengendali tingkat rendah mengikuti dan mengeksekusinya:
 
-| Lapisan | Pertanyaan inti | Keluaran | Skala waktu khas |
+| Tingkat | Pertanyaan inti | Keluaran | Contoh skala waktu dan konfigurasi |
 | --- | --- | --- | --- |
-| Tujuan tugas | Apa yang ingin diselesaikan manusia | "Cangkir dan kertas ke tempatnya" | Orde menit |
-| Perencanaan jangka panjang | Mana dulu, mana kemudian | Cangkir dulu, lalu kertas, terakhir memeriksa | Detik sampai menit |
-| Keterampilan dasar | Perubahan keadaan apa yang dicapai sekarang | `pick(red_cup)`, `place(red_cup, tray)` | Sekitar 1—3 detik |
-| VLA / kebijakan keterampilan | Bagaimana persisnya keterampilan ini bergerak | Gerak pendek atau lintasan kontinu penjepit XLeRobot | Inferensi ~1—10 Hz |
-| Kendali aras rendah dan lapisan keselamatan | Bagaimana menjalankannya dengan stabil dan tanpa tunda | Perintah sendi atau ujung lengan, batas laju dan henti darurat | ~50—1000 Hz |
+| Sasaran tugas | Apa yang ingin dicapai manusia | "Kembalikan cangkir dan kertas bekas ke tempatnya" | Tugas berskala menit |
+| Perencanaan jangka panjang | Apa yang dikerjakan lebih dulu, apa yang belakangan | Tangani cangkir dulu, lalu kertas bekas, terakhir periksa | Detik hingga menit |
+| Keterampilan dasar | Perubahan status mana yang sedang dituju | `pick(red_cup)`, `place(red_cup, tray)` | Satu keterampilan dapat berlangsung beberapa detik, misalnya 1–3 detik |
+| VLA / kebijakan keterampilan | Bagaimana tepatnya keterampilan saat ini bergerak | Aksi *gripper*, pose ujung lengan, atau satu potong lintasan sendi | Inferensi dapat dikonfigurasi pada 1–10 Hz |
+| Kendali tingkat rendah dan lapisan keselamatan | Bagaimana mengeksekusi secara stabil dan tepat waktu | Besaran kendali sendi atau ujung lengan, pembatasan kecepatan, dan berhenti darurat | Pengendali dapat dikonfigurasi pada puluhan hingga ribuan Hz |
 
-Ini pembagian kerja rekayasa yang lazim, bukan satu-satunya arsitektur model. VLA bisa saja memikul sebagian keputusan aras tinggi, dan perencana bisa berupa program berbasis aturan, VLM, atau pengoptimal. Implementasi mana pun yang dipilih, "urutan tugas" sebaiknya dipisahkan dari "aksi saat ini"; jika tidak, tundaan inferensi model aras tinggi akan menyeret kendali aras rendah, sementara kendali berfrekuensi tinggi di aras rendah memaksa model atas mengolah segudang perincian yang tidak relevan. Pada XLeRobot, model tidak seharusnya langsung mengeluarkan sudut sendi sembarang: ia hanya memilih keterampilan berbatas jelas seperti `pick`, `place`, `verify_state`, dan `stop`, lalu pelaksana yang sudah dikalibrasi——dengan batas laju dan batas waktu——mengubahnya menjadi gerak lengan yang sesungguhnya.
+Perencana dapat berupa program aturan, VLM, atau pengoptimal, dan VLA juga dapat mengambil sebagian peran pemilihan keterampilan. **Saran penulis adalah memisahkan penanganan urutan tugas dari aksi yang sedang berlangsung.** Penalaran tingkat tinggi memerlukan waktu untuk menyusun rencana, sedangkan kendali tingkat rendah harus segera merespons perubahan posisi dan gaya; hanya dengan membiarkan keduanya berjalan menurut irama masing-masing yang sesuai, perencanaan dan kendali dapat sama-sama terpenuhi.
+
+Bagian ini menyediakan lima jenis alat bagi model tingkat tinggi: `observe_scene`, `pick`, `place`, `verify_state`, dan `stop`, masing-masing untuk observasi, menjepit, meletakkan, memeriksa, dan berhenti. Harness memeriksa parameter, area kerja, dan status saat ini; eksekutor mengubah keterampilan yang lolos pemeriksaan menjadi aksi lengan robot dan menangani pembatasan kecepatan serta batas waktu. Sudut sendi dan lintasan kontinu dihasilkan oleh kebijakan keterampilan dan pengendali, sehingga terbentuk antarmuka yang jelas antara pemilihan keterampilan oleh model dan gerak yang sebenarnya.
 
 ### Perencanaan Jangka Panjang dan Penguraian Tugas
 
-Ketika pengguna berkata "rapikan mejanya", sistem tidak bisa menyerahkan kalimat itu apa adanya kepada model aksi. Perencana lebih dulu mendaftar benda dan sasaran di dalam pemandangan, menetapkan urutannya, lalu menuliskan syarat mulai, syarat selesai, dan batas risiko untuk setiap langkah. Misalnya:
+Ketika pengguna berkata "Rapikan meja ini", perencana lebih dulu mengenali objek-objek dan area sasarannya, menentukan urutan penanganan, dan menuliskan dengan jelas syarat mulai, syarat selesai, serta batasan aksi untuk setiap langkah. Misalnya, urutan perapian dapat berupa:
 
 ```text
-Tangani cangkir merah → Singkirkan kertas kuning → Periksa meja
+处理红色杯子 → 清理黄色纸张 → 检查桌面
 ```
 
-"Tangani cangkir merah" masih terurai menjadi dua aksi dan satu pemeriksaan:
+"Menangani cangkir merah" kemudian diuraikan lagi menjadi dua aksi dan satu pemeriksaan:
 
 ```text
 pick(red_cup) → place(red_cup, tray) → verify_state()
 ```
 
-Setiap keterampilan yang tuntas memberi kita satu simpul yang bisa diperiksa. Bila jepitan gagal, hanya langkah itu yang diulang. Bila ada yang memindahkan benda atau pengguna mengubah sasaran, cukup rencanakan ulang langkah-langkah sesudahnya yang terpengaruh, bukan mengulang seluruh rencana lama. Alat yang diberikan kepada agen juga harus cukup sederhana: satu panggilan mengerjakan satu hal saja, jangkauan geraknya terkunci, ada batas waktu, dan sesudah dijalankan langsung diamati ulang.
+Ambil contoh "angkat cangkir dan letakkan di nampan". Setelah lengan robot selesai menjalankan program jepit, itu hanya berarti program tersebut sudah selesai. Sebelum mengangkat pada langkah berikutnya, perlu dinilai melalui umpan balik *gripper* atau gambar baru apakah cangkir benar-benar terpegang. Jika jepitannya meleset, posisi cangkir ditentukan ulang; jika seseorang memindahkan nampan, jepitan yang sudah berhasil tetap berlaku, dan hanya aksi peletakan yang perlu direncanakan ulang. Dengan membuat setiap keterampilan bersesuaian dengan satu perubahan status yang dapat diperiksa, membatasi aksi dan durasinya, lalu mengembalikan status eksekusi beserta observasi baru, perencana dapat memulihkan pekerjaan dari langkah yang benar-benar gagal.
 
-> **Eksperimen 6-12 ★★: Membiarkan Gemini Robotics-ER 1.5 merapikan meja secara mandiri dengan XLeRobot**
+> **Eksperimen 6-13 ★★: Menggerakkan XLeRobot untuk merapikan meja secara mandiri dengan Gemini Robotics-ER 1.5**
 >
-> Pertahankan XLeRobot fisik, tata letak meja, perintah tugas, dan syarat keberhasilan dari Eksperimen 6-10; ganti hanya operator manusianya dengan Agent. Serahkan pengamatan dan perencanaan kepada model penalaran terwujud seperti Gemini Robotics-ER 1.5, dan lewat lingkar agen bergaya RoboCrew bukalah lima alat saja: `observe_scene`, `pick`, `place`, `verify_state`, dan `stop`.[^ch6-2]
+> Pakai kembali perangkat keras, tata letak meja, tugas, dan syarat penerimaan dari Eksperimen 6-11, dan biarkan model penalaran berwujud (*embodied reasoning*) menangani observasi dan perencanaan. Dengan mengacu pada cara orkestrasi RoboCrew, rancang lima alat untuk tugas ini: `observe_scene`, `pick`, `place`, `verify_state`, dan `stop`.[^ch6-2]
 >
-> Model mula-mula mengamati meja, menetapkan urutan penanganan, lalu memanggil aksi jepit dan letak XLeRobot yang sudah dikalibrasi. Setiap kali sebuah keterampilan tuntas, ia harus mengamati ulang dan memeriksa pascasyaratnya. Ketika jepitan gagal ia hanya boleh mengulang keterampilan yang sedang berjalan, dan ia harus memanggil `stop` bila pengguna menyuruh berhenti, bila benda keluar dari area kerja, atau bila keadaan tak bisa diverifikasi. Model tidak boleh langsung mengeluarkan sudut sendi sembarang, dan tidak boleh melewati verifikasi nyata hanya karena ia sendiri sudah lebih dulu berkata "sudah selesai".
+> Model lebih dulu membaca observasi meja dan menentukan urutan penanganan, lalu memanggil keterampilan menjepit dan meletakkan yang telah dikalibrasi. Setiap kali satu keterampilan selesai, observasi baru diambil dan pascasyaratnya diperiksa; jika gagal, model memilih mencoba ulang atau berhenti berdasarkan status saat ini. Sistem eksekusi langsung menghentikan eksekusi ketika menerima sinyal berhenti darurat, mendeteksi pelanggaran batas, atau tidak dapat memastikan status kunci; model juga dapat mengakhiri tugas atas inisiatifnya sendiri melalui `stop`.
 >
-> Syarat penerimaannya persis sama dengan Eksperimen 6-10: cangkir di dalam nampan, kertas di dalam tempat sampah, lengan kembali ke sikap aman, tanpa tabrakan dan tanpa keluar area. Bedanya, pada eksperimen mandiri makna tugas harus lahir dari pengamatan model itu sendiri, aksi nyata harus lahir dari panggilan alat, dan keadaan akhir harus dipastikan lewat pengamatan yang baru. Manusia hanya boleh menyalakan, menekan henti darurat, dan mengawasi keselamatan——tidak boleh menuntaskan aksi menggantikan Agent di tengah jalan. Hanya dengan begitu Eksperimen 6-10 dan 6-12 dapat langsung dibandingkan: "dengan perangkat keras dan tugas yang sama, apa yang masih kurang pada lingkar tertutup model dibanding lingkar tertutup manusia".
+> Pada akhirnya, observasi lingkungan yang baru memastikan bahwa cangkir berada di dalam nampan, kertas bekas berada di dalam kotak sampah, dan lengan robot kembali ke posisi aman, lalu catatan tabrakan dan pelanggaran batas dicocokkan. Operator bertanggung jawab atas penyalaan, berhenti darurat, dan pengawasan di lokasi, dan setiap pengambilalihan di tengah jalan dicatat tersendiri.
 
-Eksperimen fisik menyingkap galat kalibrasi, kamera yang terhalang, dan kegagalan penjepit, tetapi tidak cocok untuk mengulang banyak kerusakan secara aman dan terkendali. Eksperimen simulasi selanjutnya mempertahankan kelima alat itu dan keadaan tugas yang persis sama, dan hanya mengganti aktuator nyata dengan lingkungan meja tempat kegagalan bisa disuntikkan, agar dapat dipilah apa sumbangan masing-masing: eksekusi lingkar terbuka, pemeriksaan bertahap, dan prediksi aksi.
+Eksperimen 6-13 menjelaskan cara menghubungkan aksi robot sungguhan dan cara menerima hasil perapian, tetapi catatan pendamping belum memuat uji coba robot sungguhan untuk tugas ini. Berikut ini, tiga cara lebih dulu dibandingkan di lingkungan simulasi: eksekusi lingkar terbuka sesuai rencana, memeriksa hasil setiap kali satu langkah selesai, dan memprediksi akibat aksi lebih dulu. Sasaran tugas dan kelima jenis alat tetap sama, dan kegagalan pun dapat dipicu berulang kali, sehingga mudah diamati bagaimana masing-masing cara menangani kesalahan yang sama.
 
 ### Kendali dengan VLA
 
-VLA adalah singkatan Vision-Language-Action, yaitu "model penglihatan—bahasa—aksi". Ia menerima pemandangan saat ini beserta satu perintah keterampilan, lalu mengeluarkan aksi yang harus dijalankan robot berikutnya:
+VLA adalah singkatan dari Vision-Language-Action, yaitu model visi–bahasa–aksi. Model ini menghasilkan aksi yang akan dieksekusi berikutnya berdasarkan gambar saat ini, instruksi tugas, dan status robot yang tersedia:
 
 ```text
-pengamatan saat ini + perintah keterampilan → aksi
+当前观测 + 技能指令 → 动作或动作序列
 ```
 
-Dalam contoh XLeRobot, perencana aras tinggi hanya mengajukan `pick(red_cup)`; VLA atau kebijakan keterampilanlah yang menentukan, dari pemandangan saat ini, dari arah mana mendekati cangkir, kapan penjepit dikatupkan, dan dengan lintasan seperti apa lengan diangkat. Setelah lapisan pelaksana menuntaskan gerak pendek itu, meja difoto ulang, dan hanya setelah dipastikan cangkir benar-benar terjepit barulah perencana boleh mengajukan `place(red_cup, tray)`. Dengan kata lain, panggilan alat menetapkan perubahan keadaan yang diinginkan, sedangkan VLA menetapkan bagaimana perubahan keadaan itu diwujudkan lewat aksi kontinu.
+Dalam contoh merapikan meja, perencana tingkat tinggi mengajukan `pick(red_cup)`, dan kebijakan keterampilan menentukan berdasarkan gambar dari arah mana cangkir didekati, kapan *gripper* ditutup, dan di sepanjang lintasan apa lengan diangkat. Setelah potongan gerak ini selesai dieksekusi, sistem mengambil ulang observasi meja, memastikan cangkir sudah terjepit, lalu masuk ke `place(red_cup, tray)`. Antarmuka alat menyepakati perubahan status yang diharapkan, sedangkan VLA belajar mewujudkan perubahan itu melalui aksi kontinu.
 
-RT-2 dan OpenVLA memotong aksi kontinu menjadi token diskret dan mengeluarkannya satu per satu seperti menghasilkan kalimat. π₀ mewakili jalur yang lain: ia langsung menghasilkan lintasan aksi yang kontinu dan mulus. Tidak ada yang secara sederhana lebih unggul. Token diskret mudah dirangkai dengan model bahasa; lintasan kontinu lebih cocok untuk menyatakan gerak yang mulus. Pilihan yang sesungguhnya adalah bagaimana aksi sebaiknya diwakilkan, bukan sekadar seberapa besar modelnya.[^ch6-15]
+Aksi dapat direpresentasikan dengan cara berbeda. RT-2 dan OpenVLA versi asli mengkuantisasi nilai setiap dimensi aksi menjadi token diskret dan mengeluarkannya dengan cara generasi model bahasa; π₀ memakai *flow matching* untuk menghasilkan blok aksi kontinu. Cara pertama memudahkan pemakaian ulang kerangka generasi autoregresif, sedangkan cara kedua langsung memodelkan distribusi satu potong aksi kontinu.[^ch6-15]
 
-Model besar biasanya hanya sanggup berinferensi 1—10 kali per detik, sedangkan pengendali tradisional bisa memperbarui puluhan sampai ribuan kali per detik. Praktik rekayasa yang lazim adalah "pemenggalan aksi" (action chunking): model sekali jalan menghasilkan sepenggal pendek aksi masa depan, utas kendali menjalankan penggalan itu pada frekuensi tinggi, dan model menyiapkan penggalan berikutnya di belakang layar. Dengan begitu sebagian waktu tunggu inferensi tersembunyi di dalam waktu pelaksanaan aksi. Harganya: makin panjang penggalannya, makin mulus geraknya, tetapi makin sedikit pemandangan baru yang dilihat model selama selang itu. Bila XLeRobot menjulurkan lengan hendak mengambil cangkir lalu cangkirnya tersenggol dan bergeser di tengah jalan, ia mungkin tetap menjalankan aksi yang dihasilkan dari gambar lama. Jadi pemenggalan aksi adalah pertukaran antara kemulusan dan kecepatan tanggap, bukan percepatan tanpa ongkos.
+Inferensi model dan kendali aktuator biasanya memakai frekuensi pembaruan yang berbeda. Pemotongan aksi (*action chunking*) membuat model menghasilkan satu potong pendek aksi masa depan sekaligus, yang kemudian dieksekusi utas kendali pada frekuensi lebih tinggi. Jika inferensi dan eksekusi ditumpang-tindihkan lebih jauh, sistem dapat menyiapkan blok berikutnya selama blok aksi saat ini dieksekusi, sehingga waktu tunggu berkurang. Penyambungan blok aksi juga harus menangani kesinambungan lintasan dan kebaruan observasi: jika cangkir tersenggol ketika lengan sedang menjangkaunya, aksi yang tersisa mungkin masih mengarah ke posisi lama. Memperpendek potongan yang benar-benar dieksekusi setiap kali, memperbarui secara bergulir dengan observasi baru, atau menghentikan aksi ketika terdeteksi kelainan, semuanya dapat mempercepat respons; tetapi pilihan-pilihan ini juga menambah biaya inferensi dan penjadwalan.
 
-### Batas Kemampuan VLA
+### Data dan Syarat Penerapan VLA
 
-"Perencanaan jangka panjang + VLA" adalah rancangan dasar yang bisa dipakai, tetapi menyisakan beberapa persoalan yang mudah terlewat.
+Untuk mengubah "angkat cangkir" menjadi aksi secara andal, beberapa jenis perbedaan berikut harus ditangani sekaligus:
 
-- **Data latihnya terbatas**: demonstrasi robot jauh lebih sedikit daripada teks dan gambar di internet. Model pernah melihat kata "cangkir" bukan berarti ia pernah melihat cangkir dari segala bahan dan segala kondisi gesekan.
-- **Bisa meniru, tetapi tak paham akibat**: kloning perilaku terutama mempelajari "apa yang dilakukan pendemonstrasi berikutnya", dan tidak secara eksplisit menuntut model menjawab "apa yang ditimbulkan aksi ini".
-- **Setiap robot berbeda**: dengan derajat kebebasan, sistem koordinat, penjepit, dan tundaan aktuator yang berlainan, tidak ada jaminan aksi yang sama bisa dipindahkan begitu saja ke mesin lain.
-- **Pengamatan bisa basi**: setelah penggalan aksi mulai dijalankan, bila benda dipindahkan, terhalang, atau terguling, model masih memutuskan berdasarkan bingkai sebelumnya.
+- **Cakupan data pelatihan**: demonstrasi aksi robot yang tersedia jauh lebih sedikit daripada teks dan gambar di internet. Mengetahui apa itu "cangkir" saja tidak cukup; diperlukan pengalaman menjepit sungguhan untuk menilai bagaimana gaya diberikan. Demonstrasi perlu mencakup bahan, bentuk, posisi penempatan, dan kondisi gesekan cangkir. Arah jepit yang sama dapat memberikan hasil berbeda pada cangkir keramik dan cangkir kertas yang lunak.
+- **Sasaran belajar tentang aksi dan akibatnya**: *behavior cloning* terutama mempelajari aksi apa yang akan diambil demonstran dalam kondisi saat ini. Untuk membandingkan akibat beberapa aksi, dapat ditambahkan prediksi status atau evaluasi hasil aksi.
+- **Wujud fisik robot dan antarmukanya**: derajat kebebasan, sistem koordinat, struktur *gripper*, dan latensi aktuator menentukan bagaimana aksi diwujudkan pada perangkat keras. Saat memindahkan kebijakan, representasi aksi, parameter kalibrasi, dan siklus kendali perlu dicocokkan.
+- **Kebaruan observasi**: selama blok aksi dieksekusi, objek dapat bergeser, tertutup, atau terjatuh. Sistem perlu menetapkan kapan observasi baru diambil dan kapan observasi itu dipakai untuk memperbarui aksi yang tersisa.
 
-Jadi, model bahasa yang mengenal kata "cangkir" tidak berarti ia tahu bagaimana gesekan, sentuhan, riak zat cair, atau kabel daya mengubah keadaan di masa depan. VLA terutama menjawab "apa yang harus dikerjakan sekarang"; untuk menimbang "apa yang mungkin terjadi setelah dikerjakan" dibutuhkan model jenis lain.
+Syarat-syarat ini mengaitkan pengenalan visual, kendali keterampilan, dan perubahan lingkungan. Cairan di dalam cangkir memengaruhi kecepatan pemindahan, kabel listrik di tepi meja mengubah lintasan yang dapat ditempuh, dan kontak antara kertas dan permukaan meja memengaruhi cara menjepit. Jika perencana dapat membandingkan akibat-akibat ini lebih dulu, ia memiliki lebih banyak dasar untuk memilih keterampilan.
 
 ### Model Dunia
 
-Model dunia dapat dipahami sebagai peramal akibat aksi. Yang ia pelajari adalah: bila pada keadaan sekarang diambil suatu aksi, bagaimana keadaan pada saat berikutnya mungkin berubah.
+Dalam perencanaan robot, model dunia bersyarat aksi dapat dipahami sebagai "peramal hasil aksi": diberi status saat ini dan aksi calon, ia memperkirakan apa yang akan terjadi berikutnya.
 
 ```text
-keadaan sekarang + aksi calon
-    → ramalkan keadaan berikutnya atau sepenggal masa depan
-    → bandingkan hasil tiap calon
-    → pilih aksinya, rencanakan ulang, atau berhenti dengan aman
+当前状态 + 候选动作
+    → 预测下一状态或未来片段
+    → 比较候选结果
+    → 选择动作、重新规划或停止
 ```
 
-Model dunia yang bisa dipakai untuk robot setidaknya harus pandai dalam tiga hal:
+Proses ini mencakup tiga pekerjaan: merepresentasikan status saat ini, memprediksi perubahan status akibat aksi, lalu membiarkan perencana atau pengendali memilih aksi berdasarkan prediksi itu. Status dapat berupa variabel terstruktur seperti posisi objek dan apakah objek sedang terjepit, dapat pula berupa representasi internal yang diekstrak dari gambar. V-JEPA 2 lebih dulu mempelajari representasi dan prediksi status dari video, dan V-JEPA 2-AC yang dilatih lebih lanjut memasukkan syarat aksi untuk perencanaan robot. Mengaitkan aksi dengan observasi masa depan juga merupakan salah satu pendekatan pemodelan pada model dunia–aksi (*World-Action Model*).[^ch6-16]
 
-- memahami keadaan sekarang;
-- meramalkan hasil yang mungkin ditimbulkan aksi-aksi yang berbeda;
-- menyerahkan ramalan itu kepada perencana atau pengendali untuk membantu memilih.
+Model dunia dapat membantu robot pada tiga tahap: sebelum bertindak, memprediksi hasil dari menjepit, mendorong, atau menunggu; saat eksekusi, membandingkan prediksi dengan observasi nyata, lalu menyesuaikan aksi atau merencanakan ulang setelah menemukan penyimpangan; dan saat pelatihan, mempelajari perubahan status dari video, data simulasi, dan lintasan gagal, sehingga uji coba pada robot sungguhan berkurang.
 
-VLM yang hanya bisa menerangkan video, atau model yang hanya bisa membangkitkan gambar, tidak otomatis menjadi model dunia yang tepercaya untuk robot. Ia harus tahu apa itu aksi, dan bisa meramalkan pengaruh aksi itu terhadap benda dan lingkungan. V-JEPA 2 mewakili jalur meramalkan masa depan pada keadaan internal, sedangkan World-Action Model secara eksplisit mempelajari hubungan "aksi—pengamatan mendatang". Keduanya bisa dipakai berdampingan dengan VLA dan tidak harus menggantikannya.[^ch6-16]
+Misalkan kertas bekas kuning sebagian tertutup oleh cangkir merah; perencana dapat membandingkan "jepit kertas dulu", "pindahkan cangkir dulu", dan "ganti arah jepit". Penulis akan mengutamakan agar model dunia memprediksi perubahan status yang langsung berkaitan dengan tugas dan dapat diperiksa seperti ini. Jika model dapat menilai apakah kertas lebih mudah dijepit dan apakah cangkir mudah tersenggol jatuh, aksi-aksi calon dapat diurutkan. Representasi status dan sasaran pelatihan model sebaiknya dirancang di sekitar penilaian-penilaian ini. Jika model menghasilkan gambar masa depan, penulis lebih dulu memeriksa apakah gambar itu secara tepat mencerminkan akibat aksi tersebut, baru kemudian mempertimbangkan penambahan detail visual; nilai keaslian gambar pada akhirnya harus tampak dalam perbaikan perencanaan dan kendali. Setelah eksekusi, sistem memeriksa hasil sebenarnya berdasarkan kamera dan status robot, lalu memutuskan untuk melanjutkan, mencoba ulang, atau mengganti rencana.
 
-Dalam sistem nyata, model dunia biasanya punya tiga kegunaan:
+Semakin panjang jangkauan prediksi, semakin mudah galat menumpuk. Dalam praktiknya, akibat jangka pendek dapat diprediksi lebih dulu, satu potong pendek dieksekusi, lalu perencanaan diulang dengan observasi baru, dan ketidakpastian prediksi ikut diperhitungkan dalam pemilihan. Model dunia generatif juga dapat menyediakan simulasi interaktif dan adegan visual; bila dipakai untuk kendali, syarat aksi, hukum kontak, dan galat prediksinya perlu diuji lebih lanjut. Batas gerak perangkat keras, berhenti darurat, dan kendali waktu nyata tetap ditangani oleh sistem eksekusi.[^ch6-21]
 
-1. **Sebelum bergerak**: membandingkan aksi calon seperti menjepit, mendorong, atau menunggu, dan mendahulukan pilihan yang risikonya lebih kecil;
-2. **Saat berjalan**: menyandingkan pengamatan nyata dengan ramalan, dan bila ditemukan simpangan, memperpendek aksi, berhenti, atau merencanakan ulang;
-3. **Saat berlatih**: mempelajari perubahan keadaan dari video, data simulasi, dan jejak kegagalan, sehingga coba-coba pada mesin nyata berkurang.
-
-Kembali ke tugas meja XLeRobot. Bila kertas kuning sebagian tertutup cangkir merah, sistem bisa membandingkan keterampilan calon: "ambil kertasnya dulu", "geser cangkirnya dulu", atau "jepit dari arah lain". Model dunia tidak perlu membangkitkan video robot yang tampak nyata: cukup ia bisa meramalkan aksi calon mana yang lebih mungkin membawa ke keadaan di mana kertas bisa diambil, dan aksi mana yang bisa menjatuhkan cangkir, untuk membantu perencana mengurutkan pilihan. Setelah aksi dijalankan, pengamatan kamera yang nyata tetap menjadi fakta pemutus: ramalan hanya membantu memilih, dan tidak menggantikan pemeriksaan penerimaan.
-
-Yang diberikan model dunia bukan jawaban pasti, melainkan ramalan yang bisa dibandingkan tentang "apa yang mungkin terjadi bila begini". Makin jauh ke depan meramal, galatnya cenderung makin besar, dan pemandangan masa depan yang tampak nyata belum tentu sesuai dengan hukum sentuh dan gesek yang sesungguhnya. Karena itu sistem nyata tetap memerlukan ramalan jangka pendek, pengamatan waktu nyata, taksiran ketidakpastian, dan pengendali keselamatan perangkat keras yang berdiri sendiri. Model dunia generatif berguna untuk simulasi interaktif dan visualisasi, tetapi jangan mencampuradukkan "bisa membangkitkan video" dengan "bisa memandu aksi robot".[^ch6-21]
-
-> **Eksperimen 6-13 ★★: Membandingkan tiga lingkar perapian meja mandiri di simulator**
+> **Eksperimen 6-14 ★★: Membandingkan tiga siklus tertutup perapian meja mandiri di simulator**
 >
-> Pindahkan tugas, keadaan sasaran, syarat keberhasilan, dan kelima alat dari Eksperimen 6-12 ke simulator meja, dan ganti hanya aktuator XLeRobot fisik dengan pelaksana simulasi yang terkendali, yang sesekali membuat jepitan gagal sementara namun masih bisa dipulihkan. Dengan begitu tiga strategi dapat dibandingkan tanpa mengubah masalahnya.
+> Representasikan cangkir merah dan kertas bekas kuning dengan status terstruktur: setiap objek berada di salah satu dari tiga tahap, "di atas meja", "sudah diangkat", atau "sudah diletakkan", dan area sasaran mencatat apakah masih tersedia. Simulator menyediakan lima jenis alat, yaitu observasi, menjepit, meletakkan, memeriksa, dan berhenti, serta menyuntikkan paling banyak satu kegagalan sesaat ketika menjepit kertas bekas.
 >
-> **Eksekusi lingkar terbuka** menghasilkan seluruh runtunan aksi sekaligus dan tidak mengamati ulang di tengah jalan. **Pemeriksaan bertahap** membaca ulang keadaan pada setiap `pick` dan `place`, dan bila gagal hanya mengulang keterampilan yang sedang berjalan. **Eksekusi prediktif** menambahkan model dunia jangka pendek, membandingkan ramalan hasil keterampilan calon sebelum memilih langkah berikutnya. Eksperimen ini membandingkan tingkat keberhasilan, ongkos tambahan panggilan alat, dan kemampuan pulih dari kegagalan, serta memeriksa apakah semua keberhasilan akhir sudah dipastikan oleh pengamatan baru dari `verify_state`.
+> Bandingkan tiga cara kendali. **Eksekusi lingkar terbuka** menyelesaikan empat aksi dengan urutan tetap. **Pemeriksaan bertahap** membaca status setelah setiap aksi, mengambil ulang observasi setelah gagal, lalu memilih langkah yang saat ini dapat dieksekusi. **Eksekusi prediktif** memakai jaringan saraf kecil untuk mempelajari pemetaan "status dan aksi ke status berikutnya", lalu mengurutkan aksi yang dapat dieksekusi berdasarkan prediksi kemajuan pengembalian objek ke tempatnya.
 >
-> Tujuan eksperimen ini bukan menunjukkan bahwa model dunia simulasi yang kecil setara dengan model fisika mesin nyata, melainkan menguji hubungan yang lebih mendasar: perencanaan lingkar terbuka menyeret satu kegagalan setempat sampai ke ujung tugas, pemeriksaan bertahap memungkinkan pemulihan, dan prediksi aksi lebih jauh membantu mengurutkan keterampilan calon. Siapa yang benar-benar tuntas tetap ditentukan oleh umpan balik lingkungan.
+> Bandingkan penyelesaian tugas, jumlah pemanggilan alat, dan proses pemulihan dari kegagalan. Misalnya, setelah penjepitan kertas bekas gagal, kertas itu tetap berada di meja; jika peletakan langsung dieksekusi, aksi itu gagal karena tidak ada objek yang terangkat; hanya dengan membaca status lalu mencoba ulang penjepitan, peletakan dapat dilanjutkan. Kedua strategi berumpan balik memanggil `verify_state` di akhir untuk memeriksa status pengembalian objek.
+>
+> Pertama, lihat episode tanpa kegagalan yang disuntikkan: ketiga strategi dapat menyelesaikannya. Lalu naikkan probabilitas injeksi kegagalan menjadi 50%, dan jalankan setiap strategi sebanyak 384 episode pada tiga benih (128 episode per benih). Lingkar terbuka tetap memanggil alat 4 kali per episode, dan hanya 205 episode yang selesai. Pemeriksaan bertahap dan eksekusi prediktif sama-sama menyelesaikan seluruh 384 episode, dengan rata-rata sekitar 6,93 pemanggilan. Pemanggilan tambahan itu memungkinkan pengendali menyadari jepitan yang meleset dan memulihkannya. Dalam tugas yang hanya menyuntikkan satu kegagalan yang dapat dipulihkan ini, memprediksi status berikutnya tidak menyelamatkan satu episode pun lebih banyak daripada langsung memeriksa.
 
 ### Dari Lingkungan Simulasi ke Robot Nyata
 
-Eksperimen 6-13 yang stabil di simulator tidak berarti XLeRobot fisik pada Eksperimen 6-12 akan sama berhasilnya. Melangkah dari simulasi ke mesin nyata bukan sekadar berganti pengendali, melainkan memikul selisih antara dua lingkungan. Untuk berlatih kita bisa memakai data teleoperasi, data video, dan data interaksi simulasi; tetapi ketika benar-benar digelar, cangkir merah, kertas kuning, nampan, dan tempat sampah yang sama muncul di bawah latar belakang, pencahayaan, posisi kamera, dan hubungan halangan yang berbeda, sedangkan lengan robot lagi-lagi bertemu gesekan, derau sensor, dan tundaan aktuator yang lain. Bila selisih itu cukup besar, gerak yang dipelajari di simulasi bisa tidak mempan di dunia nyata.
+Beralih dari meja simulasi ke robot sungguhan berarti perbedaan lingkungan harus ditangani satu per satu. Dari sisi gambar, cangkir dan nampan yang sama akan muncul dengan latar belakang, pencahayaan, posisi kamera, dan hubungan saling tutup yang berbeda; dari sisi gerak, gesekan, derau sensor, dan latensi aktuator memengaruhi lintasan dan penjepitan.
 
-> **Eksperimen 6-14 ★★★: Uji lintas lingkungan RGB pada tugas meja yang sama**
+Randomisasi domain dilakukan dengan mengubah latar belakang, tampilan objek, pencahayaan, atau derau selama pelatihan, agar model dapat membuat penilaian yang sama dalam berbagai kondisi. Eksperimen 6-15 hanya mengambil satu tahap untuk dipelajari: setelah melihat objek dan area sasaran, ke arah mana harus bergerak?
+
+> **Eksperimen 6-15 ★★★: Pengujian RGB lintas lingkungan untuk tugas meja yang sama**
 >
-> Di lingkungan simulasi, teruslah memakai masalah dasar "memindahkan benda ke sasaran yang sesuai", dan pandanglah setiap sampel sebagai keputusan setempat di dalam perapian meja: dari gambar RGB, menimbang dari arah mana benda harus didekati, atau apakah ia sudah bisa dijepit. Latih empat kebijakan visual berstruktur sama: satu hanya melihat pemandangan tetap; satu mengubah-ubah latar belakang; satu mengubah-ubah rupa benda; dan yang terakhir mengubah latar belakang, rupa, pencahayaan, dan derau sekaligus.
+> Gunakan lingkaran untuk menyatakan objek dan kotak untuk area sasaran, lalu hasilkan gambar meja RGB. Berdasarkan posisi relatif keduanya, model mengeluarkan salah satu dari empat arah gerak: kiri, kanan, atas, atau bawah; ketika kedua posisi sudah cukup dekat, model mengeluarkan label `grasp` yang didefinisikan eksperimen. Label ini menyatakan bahwa posisi dua dimensi telah memenuhi syarat kedekatan.
 >
-> Ujilah semua kebijakan itu di lingkungan asal dan di lingkungan baru yang sudah diubah, lalu bandingkan ketepatan keputusan aksinya sebelum dan sesudah kondisi visual berubah. Yang hendak dijawab eksperimen ini bukan "apakah simulator sudah sama dengan XLeRobot fisik", melainkan pertanyaan yang lebih sempit: apakah dengan sengaja memperluas rentang perubahan pemandangan sewaktu berlatih membantu tugas cangkir—nampan dan kertas—tempat sampah yang sama ini menyesuaikan diri dengan video kamera yang baru? Sekalipun hasilnya membaik, penggelaran pada mesin nyata tetap menuntut kalibrasi kamera yang sesungguhnya, pengujian aktuator, dan lingkar keselamatan tertutup yang lengkap.[^ch6-6]
+> Latih empat kelompok kebijakan visual dengan struktur yang sama: kondisi visual tetap, terutama mengubah latar belakang, terutama mengubah tampilan objek, dan gabungan berbagai perubahan. Terapkan kebijakan setiap kelompok pada kondisi asli dan pada gambar uji yang mengandung warna, tekstur, kecerahan, dan derau baru, bandingkan akurasi penilaian arah, dan periksa gambar yang salah dinilai.
+>
+> Setiap domain uji dan setiap benih memiliki 1.024 gambar sintetis. Pertama, bandingkan akurasi rata-rata tiga benih: kebijakan yang dilatih dengan kondisi visual tetap mencapai 93,03% di domain asli, dan turun menjadi 54,82% ketika dipindahkan ke domain sasaran dengan tekstur dan derau baru (`target_realistic`); kebijakan yang dilatih dengan gabungan berbagai perubahan mencapai 87,50% di domain asli, tetapi mencapai 76,11% di domain sasaran yang sama. Lalu lihat kelompok yang hanya merandomisasi latar belakang: di domain sasaran ini akurasinya hanya 36,88%.[^ch6-6]
 
 ## Ringkasan Bab
 
-Dilihat pada dua sumbu **modalitas** dan **waktu eksekusi**, **asynchronous dan event-driven** memperluas observasi dari “Agent mengambil” menjadi “dunia mendorong”, serta tindakan dari “selesai dalam giliran” menjadi “mulai sekarang dan dituntaskan oleh event berikutnya”. **Suara** memampatkan skala ke milidetik, bergerak dari bergantian bicara menuju mendengar dan berbicara terus-menerus, sambil membagi interaksi foreground realtime dari pemikiran background yang lebih dalam. **Computer Use** memindahkan loop ke layar, dengan bottleneck berupa efisiensi, pemahaman visual kontinu, dan konfirmasi status setelah tindakan. **Robotika** membawanya ke dunia fisik, tempat action chunking menukar kelancaran dengan responsivitas dan keberhasilan tetap harus dinilai dari observasi baru.
+Kembali ke panggilan perubahan jadwal tiket di awal bab. Ketika sisi belakang sedang mencari penerbangan, pengguna menambahkan permintaan soal bagasi. Sekalipun hasil kueri tiba lebih lambat daripada pesan pengguna, hasil itu mungkin menjawab pertanyaan yang sudah usang. Antrean peristiwa harus menyimpan sumber pesan, penanda tugas, dan urutan kedatangannya, agar sisi depan dapat menangkap permintaan baru sesuai prioritasnya dan menilai apakah kueri semula boleh diteruskan, perlu dibatalkan, atau harus diulang dengan syarat baru. Inilah persoalan **waktu**, dan sekadar mengubah permintaan menjadi suara tidak menyelesaikannya.
 
-Keempat subbab berbagi satu kerangka kendali yang sama:
+Suara menambah satu lapis tuntutan lagi. Sambil membacakan harga, asisten harus tetap dapat mendengar sela bicara pengguna; begitu tanggalnya diubah, pembacaan yang sudah usang harus dihentikan. *Cascade* dan *end-to-end* menggambarkan bagaimana suara melewati pengenalan, penalaran, dan generasi, sedangkan *full-duplex* menggambarkan apakah pengguna dan asisten dapat mendengar dan berbicara pada saat yang sama.
+
+Ketika beralih ke layar atau lengan robot, persoalan yang sama tetap ada; yang berubah hanyalah **bentuk observasi dan aksinya**. Koordinat tombol diambil dari tangkapan layar sebelumnya, sehingga setelah halaman dimuat ulang posisinya harus ditentukan kembali; lengan robot dapat memprediksi satu potong pendek aksi kontinu sekaligus agar gerak sendi lebih halus, tetapi semakin panjang potongan aksinya, semakin sulit pula menanggapi perubahan di tengah eksekusi. Perencanaan tingkat tinggi, keterampilan, dan kendali tingkat rendah bekerja dengan skala waktu yang berbeda, dan apakah cangkir benar-benar sudah masuk ke nampan tetap harus dipastikan dengan melihat meja sekali lagi. Jika semua interaksi ini ditulis berdampingan, tampaklah urutan yang sama-sama dimilikinya:
 
 ```text
-mengindra terus-menerus
-  → menilai keadaan dan waktu saat ini
-  → memilih balasan atau aksi
-  → membiarkan keluaran masuk ke lingkungan
-  → mengamati umpan balik
-  → melanjutkan, mengoreksi, mencoba lagi, berhenti, atau merencanakan ulang
+获取观测
+  → 判断当前状态与执行时机
+  → 选择回复或动作
+  → 执行并取得环境反馈
+  → 继续、修正、重试、停止或重新规划
 ```
 
-Keempatnya juga berbagi primitive yang sama—wake-up, safe point, pembatalan, preemption, dan pemisahan cepat/lambat.
+Alur ini dapat membantu menemukan sumber kegagalan. Jika begitu pengguna menyela, penawaran lama masih terus dibacakan, periksalah siapa yang bertugas membangunkan sisi depan, apakah pemutaran dapat dipreempsi, dan sampai titik aman mana sinyal pembatalan sudah tiba; jika penghentiannya tepat waktu tetapi tanggal lama masih disebutkan, telusuri hasil kueri di sepanjang serah terima antara sisi depan dan sisi belakang. Setelah diperbaiki, bagaimana membuktikan bahwa sistem dapat bertindak benar pada lebih banyak panggilan? Dari sini, buku ini beralih ke peningkatan kemampuan. Bab 7 lebih dulu membahas cara merancang tugas, mencatat kegagalan, dan membandingkan perubahan; pascapelatihan, evolusi berkelanjutan, dan kolaborasi multi-Agent semuanya memerlukan metode evaluasi ini.
 
-Bab ini merampungkan kepingan terakhir bagian “membangun Agent”: ruang observasi dan ruang aksi kini telah terbentang pada tiga arah sekaligus—isi, modalitas, dan waktu. Selanjutnya, Bab 7 menjawab cara menentukan apakah sistem telah dibangun dengan benar; Bab 8 membahas cara memperbarui parameter model melalui post-training; dan Bab 9 menyusun trajectory runtime, evaluasi, serta berbagai media pembaruan menjadi loop evolusi berkelanjutan. Bab 10 lalu beralih dari fondasi Agent tunggal yang lengkap ini ke kolaborasi multi-Agent.
+[^ch6-1]: XLeRobot, dokumentasi Teleop.
+[^ch6-2]: Google DeepMind, *Gemini Robotics-ER 1.5*. XLeRobot, kendali LLM Agent. Contoh *upstream* XLeRobot memperlihatkan cara orkestrasi model dan pemanggilan alat; bagian ini mempertahankan prinsip orkestrasi yang sama, tetapi membatasi alat aksi pada primitif menjepit, meletakkan, memeriksa, dan berhenti di atas meja yang telah dikalibrasi.
+[^ch6-6]: LeRobot, tutorial Sim2Real.
+[^ch6-15]: Moo Jin Kim dkk., *OpenVLA: An Open-Source Vision-Language-Action Model*, arXiv:2406.09246, 2024. Lihat juga penjelasan proyek RT-2 dan *Our First Generalist Policy* dari Physical Intelligence.
+[^ch6-16]: Meta AI, *Introducing the V-JEPA 2 world model and new benchmarks for physical reasoning*, 11 Juni 2025. Nomor laporan teknisnya arXiv:2506.09985.
+[^ch6-22]: OpenAI, "Async tool calling"; "Using GPT-6 Astra", tanggal pemeriksaan: 2026-09-05.
+[^ch6-23]: OpenAI, "Mid-turn steering", tanggal pemeriksaan: 2026-09-05.
 
-[^ch6-16]: Meta AI, “Introducing the V-JEPA 2 world model and new benchmarks for physical reasoning,” 2025-06-11. https://ai.meta.com/blog/v-jepa-2-world-model-benchmarks/; V-JEPA 2 technical report：arXiv:2506.09985, https://arxiv.org/abs/2506.09985
-[^ch6-21]: Jack Parker-Holder and Shlomi Fruchter, Google DeepMind, “Genie 3: A new frontier for world models,” 2025-08-05. https://deepmind.google/blog/genie-3-a-new-frontier-for-world-models/; Zachary Lin et al. *Cosmos World Foundation Model Platform for Physical AI.* arXiv:2501.03575, 2025. https://arxiv.org/abs/2501.03575 。
-[^ch6-1]: XLeRobot, “Dokumentasi Teleop”. https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html
-[^ch6-2]: Google DeepMind, “Gemini Robotics-ER 1.5”. https://deepmind.google/models/gemini-robotics/gemini-robotics-er/; XLeRobot, “Kendali LLM Agent”. https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html. Contoh hulu XLeRobot memperlihatkan cara menata model bersama panggilan alat; bagian ini mempertahankan prinsip penataan yang sama, tetapi membatasi alat aksinya pada primitif jepit, letak, periksa, dan henti di atas meja yang sudah dikalibrasi.
-[^ch6-6]: LeRobot, “Tutorial Sim2Real”. https://github.com/StoneT2000/lerobot-sim2real/blob/87d6c1d969f6e0ca4dc5697940804e231118a63a/docs/zero_shot_rgb_sim2real.md
-[^ch6-15]: Moo Jin Kim et al. *OpenVLA: An Open-Source Vision-Language-Action Model.* arXiv:2406.09246, 2024. https://arxiv.org/abs/2406.09246
-[^ch6-22]: OpenAI, “[Async tool calling](https://developers.openai.com/api/docs/guides/async-tool-calling)”; “[Using GPT-6 Astra](https://developers.openai.com/api/docs/guides/latest-model)”, diperiksa 2026-09-05.
-[^ch6-23]: OpenAI, “[Mid-turn steering](https://developers.openai.com/api/docs/guides/steering)”, diperiksa 2026-09-05.
+[^ch6-audio-architectures]: OpenAI, *Voice activity detection*, memperkenalkan dua cara menentukan batas giliran: berdasarkan aktivitas suara dan berdasarkan penilaian semantik.
+[^ch6-voice-tools]: Keterangan model GPT-Live-1 dan GPT-Realtime dari OpenAI masing-masing memperkenalkan pendelegasian ke sisi belakang dan pemanggilan fungsi. Cara penyambungan model suara waktu nyata Doubao 3.0 dapat dilihat di dokumen Volcano Engine "Function Calling".
 
 ## Pertanyaan Pemikiran
 
-1. ★★ Dalam arsitektur Agent yang asinkron, strategi prioritas untuk antrean kejadian (*event queue*) harus ditentukan pada waktu desain. Tetapi jika penilaian prioritas itu sendiri membutuhkan pemahaman semantik (misalnya, menentukan apakah pesan baru lebih mendesak daripada tugas saat ini), siapa yang harus membuat penilaian ini—sebuah mesin aturan (*rules engine*) atau pemanggilan LLM yang lain? Apa saja biaya dari masing-masing pilihan?
-2. ★★ Dalam pemrosesan kejadian berbasis antrean (*queue-based event processing*), model cenderung hanya berfokus pada kejadian terakhir. Bab ini memitigasinya melalui penanda bilah status Agent dan ringkasan. Namun, jika antrean memiliki 20 kejadian yang menumpuk (*backlogged*) (10 hasil tool + 5 pesan pengguna + 5 peringatan sistem), bagaimana Anda akan mengatur urutan presentasi dan format dari kejadian-kejadian ini agar model tidak melewatkan informasi kunci?
-3. ★★★ Ketika Agent berinteraksi dengan dunia luar atas nama pengguna, pada dasarnya ia menghadapi pilihan identitas: menggunakan identitas virtual independen (email dan nomor telepon khusus) untuk bertindak sebagai pihak ketiga, atau langsung mengoperasikan akun pribadi pengguna sebagai pengguna itu sendiri? Opsi pertama memungkinkan operasi di latar belakang secara otonom, tetapi pihak ketiga mungkin tidak mempercayai identitas non-manusia; opsi kedua memiliki konteks dan izin yang lebih lengkap tetapi memunculkan masalah otorisasi, kepercayaan, dan batas keamanan. Dalam skenario seperti apa menurut Anda masing-masing mode harus dipilih?
-4. ★★ Model end-to-end untuk Voice Agents menggabungkan ASR-LLM-TTS menjadi sebuah model tunggal, mengurangi latensi namun mengorbankan modularitas. Jika model end-to-end membuat kesalahan pada tahap tertentu (misalnya, speech recognition), melakukan debugging dan memperbaikinya jauh lebih sulit daripada dalam sebuah serial pipeline. Bagaimana Anda akan mendesain sebuah sistem observabilitas (observability system) untuk sebuah Voice Agent end-to-end?
-5. ★ Step-Audio R1 mencapai "thinking while speaking" melalui arsitektur dual-brain MPS. Akan tetapi, manusia, ketika "berpikir sambil berbicara", sering kali mengatakan sesuatu sebelum mereka memikirkannya secara utuh, mengoreksi diri sendiri (self-correct), atau menggunakan kata-kata pengisi (filler words). Haruskah kemampuan "thinking while speaking" pada Agent meniru karakteristik manusia ini?
-6. ★★ SoM (Set-of-Mark) dan varian terstrukturnya (DOM element indexing) mengubah lokalisasi visual Computer Use dari prediksi koordinat yang bersifat open-ended menjadi pemilihan ID closed-set, namun semuanya membutuhkan pendeteksian dan penganotasian elemen UI terlebih dahulu—baik melalui segmentation model ataupun DOM. Jika antarmuka tersebut mengandung kontrol non-standar atau elemen yang berubah secara dinamis, anotasinya mungkin menjadi tidak lengkap atau tidak akurat. Dalam kasus seperti ini, haruskah kita kembali menggunakan coordinate prediction?
-7. ★★ Platform robot seharga beberapa ratus dolar seperti XLeRobot membuat pengumpulan data teleoperation menjadi murah. Namun, kualitas dari data teleoperation sangat bergantung pada keterampilan operatornya. Bagaimana data berkualitas rendah dari operator yang tidak terampil akan memengaruhi pelatihan model VLA? Bagaimana data berkualitas rendah dapat difilter secara otomatis selama fase pengumpulan data?
-8. ★★★ Bab ini mencakup tiga modalitas interaksi: voice, Computer Use, dan robotika. Tren umum di seluruh modalitas ini adalah evolusi dari serial pipelines menuju model end-to-end. Jika tren ini berlanjut, akan seperti apa bentuk dari Agent interaction layer dalam lima tahun ke depan?
-9. ★★ DOM/Accessibility Tree element indexing bekerja dengan baik pada aplikasi web standar, tetapi semakin banyak antarmuka perangkat lunak (rendering Canvas/WebGL, kontrol cross-platform yang digambar secara kustom) tidak menyediakan informasi terstruktur yang dapat diakses, hanya mengandalkan anotasi visual atau coordinate prediction. Apakah menurut Anda Computer Use harus bertaruh pada pendekatan visual murni, atau mempertahankan jalur terstruktur dan visual? Apa biaya dan manfaat dari mempertahankan kedua jalur tersebut?
-10. ★★ Model VLA menggunakan action chunking—seperti yang disebutkan di dalam teks, konfigurasi tipikal π₀ menghasilkan 25-50 future actions pada 50Hz—untuk menyembunyikan inference latency di dalam execution time. Akan tetapi, jika lingkungan berubah secara tiba-tiba selama eksekusi (misalnya, sebuah objek dipindahkan), urutan tindakan (action sequence) yang dihasilkan sebelumnya menjadi tidak valid. Bagaimana kita dapat menyeimbangkan keuntungan efisiensi dari action chunking dengan kebutuhan akan responsivitas terhadap perubahan lingkungan?
-11. ★★★ Ketiga skenario dalam bab ini (voice, Computer Use, robotika) menghadapi masalah latensi pada loop "perceive-think-act" dan sedang berevolusi menuju fast and slow thinking yang diparalelkan. Pada voice, ini bermanifestasi sebagai "mengoreksi setelah salah bicara"; pada Computer Use, sebagai "mengklik dulu, baru melihat"; pada robotika, sebagai "mengambil satu langkah, lalu melihat." Bagaimana kita dapat memastikan bahwa tindakan-tindakan yang didasarkan pada fast thinking ini tidak mengarah pada konsekuensi yang tidak dapat diubah (irreversible consequences)?
-12. ★★★ Bab ini berulang kali menampilkan satu set primitif yang sama (membangunkan, titik aman, pembatalan, pendahuluan, pemisahan cepat/lambat) yang diimplementasikan pada skala waktu berbeda. Pilih salah satu dan jelaskan perbedaan implementasinya antara pemrosesan berbasis peristiwa (detik—hari) dan pemotongan aksi robot (milidetik). Apa yang terutama menentukan perbedaan itu—kecepatan perubahan lingkungan, keterbalikan aksi, atau biaya memperoleh observasi?
+1. ★★ Ketika Agent asinkron menerima peristiwa baru, ia perlu menilai hubungan prioritas peristiwa itu dengan tugas saat ini. Jika penilaian ini memerlukan pemahaman semantik, misalnya mengenali apakah pengguna sedang menambahkan syarat atau meminta berhenti seketika, bagaimana tanggung jawab dibagi antara mesin aturan dan LLM? Bandingkan waktu respons, biaya, dan akibat salah penilaian.
+2. ★★ Antrean peristiwa menumpuk 20 peristiwa: 10 hasil alat, 5 pesan pengguna, dan 5 pengingat sistem. Bagaimana Anda akan menata urutan, format, dan status pemrosesannya, agar model dapat melacak ketergantungan tugas dan menanggapi perubahan penting?
+3. ★★★ Agent dapat memakai kotak surat dan nomor telepon khusus, dapat pula mengoperasikan akun pribadi pengguna setelah diberi otorisasi. Dengan mempertimbangkan eksekusi di latar belakang, tuntutan verifikasi identitas dari pihak lain, cakupan izin, dan audit, diskusikan skenario yang cocok untuk masing-masing cara beridentitas.
+4. ★★ Model suara *end-to-end* langsung memproses audio, sehingga kesalahan pada tahap antara sulit ditemukan dari luar. Bagaimana merancang observasi dan eksperimen pembanding untuk membedakan kesalahan persepsi, kesalahan penalaran, dan kesalahan pengucapan?
+5. ★ MPS pada Step-Audio R1.1 membuat penyusunan gagasan dan pengucapan bergerak bersama. Bagaimana sistem sebaiknya memakai jeda, penjelasan kemajuan, dan pengucapan per segmen? Bagaimana menanganinya bila penalaran berikutnya mengubah kesimpulan yang sudah diucapkan?
+6. ★★ Anotasi area visual SoM dan indeks elemen DOM sama-sama memungkinkan model menunjuk tempat yang hendak dioperasikan dengan satu nomor. Ketika menghadapi kontrol nonstandar, elemen yang tertutup, atau perubahan dinamis, bagaimana memadukan anotasi ulang, prediksi koordinat, dan pemeriksaan setelah operasi?
+7. ★★ Kualitas data teleoperasi dipengaruhi keterampilan operator. Bagaimana getaran, jalan memutar, jeda, dan kegagalan menjepit memengaruhi pelatihan VLA? Bagaimana menyaring data sambil tetap mempertahankan proses pemulihan dari kegagalan yang berharga?
+8. ★★★ Suara, Computer Use, dan robot sama-sama dapat memakai model terpadu, *cascade* modular, atau pembagian kerja antara interaksi di sisi depan dan penalaran di sisi belakang. Untuk lima tahun ke depan, bagaimana Anda cenderung memadukan jalur-jalur ini? Jelaskan penilaian Anda dengan mempertimbangkan latensi, keteramatan, biaya peningkatan, dan risiko tugas.
+9. ★★ Halaman Web standar dapat menyediakan DOM atau informasi aksesibilitas, sedangkan Canvas, WebGL, dan kontrol yang digambar sendiri sering kali bergantung pada penentuan lokasi visual. Memelihara jalur terstruktur dan jalur visual sekaligus akan menambah biaya apa saja, dan memberikan manfaat apa saja?
+10. ★★ Pemotongan aksi membuat VLA menghasilkan satu potong aksi masa depan sekaligus. Jika objek dipindahkan selama eksekusi, bagaimana mengoordinasikan panjang potongan, observasi ulang, penalaran di latar belakang, dan penghentian aksi, agar efisiensi eksekusi dan kecepatan respons sama-sama terjaga?
+11. ★★★ Interaksi cepat menuntut tindakan yang tepat waktu. Dengan mengambil contoh jawaban suara, pengiriman formulir web, dan penjepitan oleh robot, rancang tingkatan aksi, konfirmasi status, dan mekanisme berhenti, agar kecepatan respons sepadan dengan akibat tugas.
+12. ★★★ Pilih satu primitif di antara membangunkan, titik aman, pembatalan, preempsi, atau pembagian kerja cepat-lambat, lalu bandingkan implementasinya dalam tugas berbasis peristiwa dan dalam pemotongan aksi robot. Bagaimana kecepatan perubahan lingkungan, keterbalikan aksi, dan biaya observasi memengaruhi desainnya?
+13. ★★ Apakah obrolan pembeli, diskusi persetujuan, dan *callback* pembayaran untuk pesanan yang sama sebaiknya dimasukkan ke dalam satu *thread*? Bandingkan cara menggabungkan *thread* dengan cara berlangganan berdasarkan objek terkait dari empat sisi: urutan pemrosesan, tingkat paralelisme, migrasi kunci partisi, dan isolasi izin.
+14. ★★ Asisten perjalanan bersuara perlu mengecek cuaca, membaca memori pengguna, mencari di web, mengecek penerbangan, dan memesan tiket. Bagaimana pembagian kerja antara sisi depan, sisi belakang, dan *runtime*? Jika pengguna menyebutkan nama rekan seperjalanannya secara lisan, lalu menyela dengan menanyakan cuaca sambil menunggu hasil penerbangan, bagaimana menghindari salah pesan tiket atau hasil yang tidak dilaporkan?
