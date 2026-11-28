@@ -6,6 +6,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 
+const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
 const dist = fileURLToPath(new URL('../dist/', import.meta.url));
 const source = readFileSync(
   new URL('../../book-en/chapter1.md', import.meta.url),
@@ -34,7 +35,10 @@ const article = chapter.match(/<article\b[^>]*>([\s\S]*?)<\/article>/)?.[1];
 assert.ok(article, 'The complete chapter must be rendered in an article.');
 const count = (html, tag) =>
   [...html.matchAll(new RegExp(`<${tag}\\b`, 'g'))].length;
-const usesRevisedManuscript = ({ lang }) => lang === 'zh-CN' || lang === 'ru';
+// An edition follows the 3.0 manuscript once it ships the redrawn figures.
+// Deriving this from the files lets each translation move to 3.0 on its own.
+const usesRevisedManuscript = ({ directory }) =>
+  existsSync(join(repositoryRoot, directory, 'images', 'revised', 'fig5-1.svg'));
 const ids = (html) =>
   new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]));
 const displayMathCount = (markdown) => {
@@ -855,11 +859,13 @@ test('Chapter 5 architecture banner fits its web canvas in every edition', () =>
       const [, width, height] = svg.match(/viewBox="0 0 (\d+) (\d+)"/);
       if (revised) {
         const original = readFileSync(join(dist, paths.original), 'utf8');
-        const labelPattern = edition.lang === 'ru'
-          ? /<tspan\b[^>]*>([^<]+)<\/tspan>/g
-          : /<g aria-label="([^"]+)"/g;
+        // Chinese draws labels as outlined glyphs; translations use live text.
         const labels = (source) =>
-          [...source.matchAll(labelPattern)].map((match) => match[1]);
+          [
+            ...source.matchAll(
+              /<g aria-label="([^"]+)"|<(?:text|tspan)\b[^>]*>([^<]+)<\/(?:text|tspan)>/g,
+            ),
+          ].map((match) => match[1] ?? match[2]);
         assert.ok(labels(original).length > 0);
         assert.deepEqual(labels(svg), labels(original));
         assert.equal(
