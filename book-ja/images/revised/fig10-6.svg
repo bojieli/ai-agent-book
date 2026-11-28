@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="106.000mm" height="90.571mm" viewBox="0 0 900 769" role="img" aria-labelledby="title desc">
-<title id="title">Manager による並列調整</title><desc id="desc">並列メンバーの状態、メッセージキューと後続タスクの依存関係。</desc>
+<title id="title">Manager による並行協調</title><desc id="desc">並行メンバーの状態、メッセージキューと後続タスクの依存関係。</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
 <rect width="900" height="769" fill="#ffffff" y="0" />
 <rect x="20" y="20" width="860" height="110" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
