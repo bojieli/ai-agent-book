@@ -30,6 +30,7 @@ CHAPTERS=(
     chapter9.ja.md
     chapter10.ja.md
     afterword.ja.md
+    reference-answers.ja.md
 )
 
 # Verify all chapters exist
