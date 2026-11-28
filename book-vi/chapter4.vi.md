@@ -2,7 +2,7 @@
 
 Trong bộ phim khoa học viễn tưởng *Her*, trợ lý AI Samantha sắp xếp email, giúp trả lời thư, lo các việc xuất bản và chuyển qua lại giữa nhiều kênh liên lạc. Một trợ lý như vậy phải biến khả năng hiểu ngôn ngữ thành thao tác trên các hệ thống bên ngoài. Agent làm việc đó thông qua **công cụ**. Công cụ là “giác quan và tay chân” của Agent: vừa cung cấp quan sát, vừa thực hiện hành động. Các Agent đa dụng mà cuốn sách này bàn tới, như Manus và OpenClaw, cũng phải dùng công cụ để truy cập thế giới số.
 
-Giả sử người dùng nói: “Tìm giúp tôi ngày giao hàng mà khách hàng nhắc trong email, sắp thành bảng rồi gửi cho tôi.” Mô hình có thể quyết định xem bức thư nào, nhưng muốn đọc nguyên văn thì phải truy cập hộp thư, muốn gửi bảng đi thì phải gọi giao diện gửi thư. Nên thiết kế những công cụ này ra sao, và khi cần thì mô hình tìm thấy chúng bằng cách nào? Chương này trước hết phân biệt năm loại công cụ, sau đó bàn về cách mô tả, kết nối và khám phá công cụ, cuối cùng lần lượt thiết kế giao diện nhận thức, thực thi và cộng tác. Kích hoạt sự kiện và giao tiếp với người dùng còn liên quan tới việc khi nào đánh thức Agent và chuyển tin nhắn qua nhiều kênh thế nào, nên được để lại cho Chương 6.
+Giả sử người dùng nói: “Tìm giúp tôi ngày giao hàng mà khách hàng nhắc trong email, sắp thành bảng rồi gửi cho tôi.” Mô hình có thể quyết định xem bức thư nào, nhưng muốn đọc nguyên văn thì phải truy cập hộp thư, muốn gửi bảng đi thì phải gọi giao diện gửi thư. Nên thiết kế những công cụ này ra sao, và khi cần thì mô hình tìm thấy chúng bằng cách nào? Chương này trước hết phân biệt năm loại công cụ, sau đó bàn về cách mô tả, kết nối và khám phá công cụ, cuối cùng lần lượt thiết kế giao diện nhận thức, thực thi và cộng tác. Kích hoạt sự kiện và giao tiếp với người dùng còn liên quan tới việc khi nào đánh thức Agent và chuyển tin nhắn qua nhiều kênh thế nào, sẽ được bàn ở Chương 6.
 
 ## Phân loại công cụ
 
@@ -34,7 +34,7 @@ Quay lại nhiệm vụ email ở đầu chương: mở thư gốc để lấy n
 
 Thời kỳ đầu, cách phổ biến để kết nối công cụ là bọc thẳng từng endpoint API. Cách này nhanh, nhưng dễ cho ra một bộ giao diện rất vụn. Để xong một việc, Agent có thể phải nhiều lần tìm đối tượng, đọc thuộc tính, kiểm tra điều kiện rồi mới gọi giao diện thực thi. Khi thiết kế, có thể gom các thao tác này quanh những nhiệm vụ thường gặp, chẳng hạn nối việc tìm liên hệ với việc gửi tin nhắn, hoặc để công cụ tìm log trả về luôn các dòng liên quan kèm ngữ cảnh xung quanh[^ch4-tool-design].
 
-**Công cụ nên được thiết kế quanh nhiệm vụ mà Agent cần hoàn thành.** Cách nghĩ xuất phát từ việc Agent dùng giao diện ra sao này được gọi là **ACI** (Agent-Computer Interface, giao diện Agent–máy tính). HCI quan tâm con người tương tác với máy tính thế nào; ACI quan tâm mô hình chọn thao tác, tạo tham số, hiểu phản hồi và sửa lỗi ra sao.
+**Công cụ nên được thiết kế quanh nhiệm vụ mà Agent cần hoàn thành.** Cách thiết kế giao diện xuất phát từ việc Agent sử dụng nó ra sao như vậy được gọi là **ACI** (Agent-Computer Interface, giao diện Agent–máy tính). HCI quan tâm con người tương tác với máy tính thế nào; ACI quan tâm mô hình chọn thao tác, tạo tham số, hiểu phản hồi và sửa lỗi ra sao.
 
 [^ch4-tool-design]: Anthropic, *Writing effective tools for AI agents—using AI agents*, 2025.
 
@@ -47,7 +47,7 @@ Khi giao việc “triển khai ứng dụng” cho mô hình, có thể thiết
 
 Ví dụ, một Skill triển khai có thể lần lượt hướng dẫn: dùng `npm run build` để build dự án, dùng `docker build -t app:latest .` để đóng gói image, rồi dùng `kubectl apply -f deploy.yaml` để áp các tài nguyên định nghĩa trong manifest lên cluster hiện tại. Agent thực hiện các bước này qua công cụ terminal, dùng chung một lối vào thực thi.
 
-Công cụ được hiện thực thế nào và mô hình đọc được hướng dẫn của nó vào lúc nào là hai câu hỏi khác nhau. Hàng trăm công cụ chuyên dụng có thể chỉ hiển thị chỉ mục và nạp Schema khi cần; vài Skill thì có thể để danh mục thường trú trong ngữ cảnh, khi số lượng tăng mới thêm cơ chế truy xuất. Chọn giao diện chuyên dụng hay trình thực thi đa năng ảnh hưởng đến cách truyền tham số và cách bảo trì mã; chọn đưa hết một lần hay nạp theo nhu cầu ảnh hưởng đến việc mô hình thấy được những công cụ nào ở bước này. Phần “Khi có quá nhiều công cụ” ở sau sẽ bàn về chiến lược hé lộ.
+Công cụ được hiện thực thế nào và mô hình đọc được hướng dẫn của nó vào lúc nào là hai câu hỏi khác nhau. Hàng trăm công cụ chuyên dụng có thể chỉ hiển thị chỉ mục và nạp Schema khi cần; vài Skill thì có thể để danh mục thường trú trong ngữ cảnh, khi số lượng tăng mới thêm cơ chế truy xuất. Chọn giao diện chuyên dụng hay trình thực thi đa năng ảnh hưởng đến cách truyền tham số và cách bảo trì mã; chọn đưa hết một lần hay nạp theo nhu cầu ảnh hưởng đến việc mô hình thấy được những công cụ nào ở bước này. Phần “Khi có quá nhiều công cụ” ở sau sẽ bàn về chiến lược tiết lộ.
 
 **Tác giả khuyên ưu tiên công cụ đa năng, rồi mới bổ sung giao diện chuyên dụng theo nhu cầu về quyền, tham số và hiệu năng.** Ví dụ, cài sẵn SymPy, NumPy và pandas cho `code_interpreter` trong sandbox, Agent sẽ viết được Python để làm phép tính số học, tính toán ký hiệu, xử lý mảng và phân tích dữ liệu. Cách này tận dụng tối đa khả năng sinh mã của mô hình: một trình thông dịch chứa được nhiều thuật toán, lại có thể kết hợp các thư viện sẵn có để giải những bài toán chưa lường trước. Mô hình lo sinh mã, môi trường chạy lo thực thi và giới hạn quyền truy cập tệp, mạng và tài nguyên.
 
@@ -85,7 +85,7 @@ Kiểu giao diện này thường được gọi là **Code Mode**. Lấy máy c
 
 Khi viết mô tả cho một công cụ, có thể hình dung trước yêu cầu dễ khiến nó bị dùng sai nhất. Người dùng nói “tìm các điều khoản trong hợp đồng có nhắc đến tiền phạt vi phạm”, công cụ tìm theo tên tệp chỉ trả về những tệp có tên khớp; dù có được một đường dẫn, mô hình vẫn phải đọc nội dung. Mô tả công cụ phải giúp mô hình dựa vào đó mà phán đoán nên chọn giao diện nào, khi gọi cần cung cấp gì, và kết quả nhận được đủ để trả lời câu hỏi gì.
 
-**Nói rõ khi nào dùng.** Mô tả của công cụ tìm kiếm web có thể viết “dùng khi cần thông tin thời gian thực hoặc tra cứu sự kiện chưa biết”, để mô hình đối chiếu được nhu cầu người dùng với mục đích công cụ. Nếu chỉ ghi “tìm nội dung liên quan”, mô hình còn phải tự đoán phạm vi tìm kiếm và điều kiện áp dụng.
+**Nói rõ khi nào dùng.** Mô tả của công cụ tìm kiếm web có thể viết “dùng khi cần thông tin thời gian thực hoặc tra cứu dữ kiện chưa biết”, để mô hình đối chiếu được nhu cầu người dùng với mục đích công cụ. Nếu chỉ ghi “tìm nội dung liên quan”, mô hình còn phải tự đoán phạm vi tìm kiếm và điều kiện áp dụng.
 
 **Nêu rõ đầu vào và phạm vi tìm kiếm.** Ví dụ, công cụ tìm theo tên tệp có thể ghi “so khớp theo tên tệp và đường dẫn; muốn tìm chữ trong tệp thì dùng `grep_file`”. Viết rõ ranh giới với các công cụ lân cận giúp mô hình chọn đúng lối vào ngay trong một lần gọi. **Theo tác giả, nói rõ các điều kiện biên thường quan trọng hơn liệt kê chức năng.** Công cụ nhận đầu vào gì, tìm trong phạm vi nào, gặp kết quả rỗng hoặc lỗi thì xử lý ra sao, đều ảnh hưởng trực tiếp đến quyết định tiếp theo của mô hình.
 
@@ -162,7 +162,7 @@ Script đi kèm Skill, server MCP cục bộ và dịch vụ từ xa đều có 
 
 ## Khi có quá nhiều công cụ: tổ chức phân tầng và khám phá công cụ chủ động
 
-Khi số công cụ tăng từ vài chục lên hàng trăm, hàng nghìn, mô hình vừa phải tìm ra năng lực phù hợp, vừa phải hiểu được khác biệt giữa những giao diện na ná nhau. Định nghĩa đầy đủ chiếm nhiều ngữ cảnh; nếu định nghĩa nằm ở phần tiền tố của prompt, việc thêm, bớt hay sắp lại công cụ còn có thể làm ngắn đi phần tiền tố cache dùng lại được. Công cụ có tên và mục đích gần nhau càng nhiều, mô hình càng dễ chọn nhầm lối vào hoặc bỏ sót năng lực cần thiết. Vì vậy, kho công cụ lớn nên mặc định nạp theo nhu cầu, đồng thời thiết kế tốt danh mục phân loại và giao diện khám phá, để mô hình trước hết tìm được các công cụ liên quan đến nhiệm vụ hiện tại, rồi mới dựa vào mục đích của từng cái mà chọn một.
+Khi số công cụ tăng từ hơn chục lên hàng trăm, hàng nghìn, mô hình vừa phải tìm ra năng lực phù hợp, vừa phải hiểu được khác biệt giữa những giao diện na ná nhau. Định nghĩa đầy đủ chiếm nhiều ngữ cảnh; nếu định nghĩa nằm ở phần tiền tố của prompt, việc thêm, bớt hay sắp lại công cụ còn có thể làm ngắn đi phần tiền tố cache dùng lại được. Công cụ có tên và mục đích gần nhau càng nhiều, mô hình càng dễ chọn nhầm lối vào hoặc bỏ sót năng lực cần thiết. Vì vậy, kho công cụ lớn nên mặc định nạp theo nhu cầu, đồng thời thiết kế tốt danh mục phân loại và giao diện khám phá, để mô hình trước hết tìm được các công cụ liên quan đến nhiệm vụ hiện tại, rồi mới dựa vào mục đích của từng cái mà chọn một.
 
 Có thể hình dung việc khám phá công cụ như lật một cuốn sổ tay được sắp theo nhiệm vụ. Mục lục cho mô hình biết nên tìm ở mục nào; đang làm mà nảy ra nhu cầu mới thì nó quay lại tìm tiếp; chọn được một năng lực rồi mới đọc tham số, thứ tự thao tác và ví dụ. Chỉ mục theo loại, tìm kiếm chủ động và Skill trình bày dưới đây lần lượt giải quyết ba việc ấy; cả công cụ chuyên dụng lẫn trình thực thi đa năng đều có thể đến tay mô hình qua những lối vào này.
 
@@ -187,7 +187,7 @@ Lấy việc “tìm xem một bài báo khoa học dùng những dữ liệu n�
 
 **Thu hẹp phạm vi công cụ bằng truy xuất trước.** Dựa vào mô tả nhiệm vụ, host có thể truy xuất theo từ khóa hoặc theo ngữ nghĩa trên tên, phần giới thiệu và mô tả tham số của công cụ, chỉ đưa định nghĩa của những công cụ khớp cho mô hình. Trả về quá ít có thể bỏ sót giao diện cần dùng ở bước sau; trả về quá nhiều vừa tốn ngữ cảnh vừa khó chọn. Lần truy xuất đầu có thể dựa vào yêu cầu của người dùng, các lần sau bổ sung theo tiến độ nhiệm vụ.
 
-### Khám phá công cụ chủ động, gốc từ mô hình
+### Khám phá công cụ chủ động do chính mô hình thực hiện
 
 Nhu cầu công cụ của một nhiệm vụ phức tạp thường chỉ dần lộ ra trong lúc thực hiện. Ví dụ, “Debug the file” có thể trước hết cần đọc tệp, sau đó mới cần tra phụ thuộc, chạy kiểm thử và phân tích lỗi. Chỉ truy xuất một lần lúc bắt đầu thì dễ bỏ sót những năng lực cần đến về sau.
 
@@ -226,7 +226,7 @@ Thiết kế này đòi hỏi mô hình hiểu được các định nghĩa côn
 >
 > **Kết quả chạy**: theo thứ tự các nhiệm vụ trên, nhóm khám phá chủ động lần lượt nối thêm 3.939, 1.853 và 2.632 token định nghĩa công cụ. Cả hai nhóm đều chọn được năng lực mà từng nhiệm vụ cần; lớp thích ứng thực thi lo điền tham số nhiệm vụ, tải hàng loạt và sinh mã vẽ biểu đồ, cuối cùng đều qua được kiểm tra lời gọi công cụ và sản phẩm đầu ra.
 >
-> Thấy định nghĩa công cụ ngắn đi, còn phải hỏi tiếp: mô hình chọn đúng vì đọc ít hơn, hay vì bớt được những công cụ dễ gây nhầm? Hai nhóm ban đầu khác nhau cả ở cách lọc, vị trí tin nhắn, thanh trạng thái, lời nhắc khám phá lẫn số vòng gọi. Thí nghiệm chọn một bước đi kèm (`selection_ablation.py`) thu hẹp câu hỏi về “bước đầu tiên chọn công cụ nào”. Trước hết giữ nguyên cùng một loạt ứng viên, thêm văn bản đệm vào system message để xem đầu vào dài ra có làm đổi lựa chọn không. Sau đó vẫn giữ các ứng viên ấy, thêm một lượng công cụ gây nhiễu tương đương và bớt văn bản đệm, sao cho đầu vào của cả hai nhóm đều là 6.144 token. Như vậy, công cụ đúng vẫn nằm trong tập ứng viên ban đầu, và có thể xét riêng tác động của vài phương án gây nhiễu thêm vào.
+> Thấy định nghĩa công cụ ngắn đi, còn phải hỏi tiếp: mô hình chọn đúng vì đọc ít hơn, hay vì bớt được những công cụ dễ gây nhầm? Hai nhóm ban đầu khác nhau cả ở cách lọc, vị trí tin nhắn, thanh trạng thái, lời nhắc khám phá lẫn số vòng gọi. Thí nghiệm đi kèm về lựa chọn ở một bước (`selection_ablation.py`) thu hẹp câu hỏi xuống còn “bước đầu tiên chọn công cụ nào”. Trước hết giữ nguyên cùng một loạt ứng viên, thêm văn bản đệm vào system message để xem đầu vào dài ra có làm đổi lựa chọn không. Sau đó vẫn giữ các ứng viên ấy, thêm một lượng công cụ gây nhiễu tương đương và bớt văn bản đệm, sao cho đầu vào của cả hai nhóm đều là 6.144 token. Như vậy, công cụ đúng vẫn nằm trong tập ứng viên ban đầu, và có thể xét riêng tác động của vài phương án gây nhiễu thêm vào.
 >
 > Nếu chọn công cụ ngẫu nhiên, giao diện cần dùng ở bước đầu có thể hoàn toàn không có trong danh sách. Chỉ khi nó đã có mặt trong danh sách mà mô hình lại chọn cái khác, mới tính là mô hình chọn sai.
 >
@@ -234,9 +234,9 @@ Thiết kế này đòi hỏi mô hình hiểu được các định nghĩa côn
 
 ### Skills: biến khám phá công cụ thành “tra cứu theo nhu cầu”
 
-Chương 2 đã giới thiệu cơ chế hé lộ dần (Progressive Disclosure) của Skills. Nhìn từ góc độ thiết kế công cụ, nó sắp xếp cách dùng năng lực thành một bộ tài liệu tra cứu được theo nhu cầu: mô hình trước hết chọn Skill dựa vào phần giới thiệu, sau đó đọc các bước thao tác, cuối cùng gọi công cụ hoặc chạy script tùy nhiệm vụ.
+Chương 2 đã giới thiệu cơ chế tiết lộ dần (Progressive Disclosure) của Skills. Nhìn từ góc độ thiết kế công cụ, nó sắp xếp cách dùng năng lực thành một bộ tài liệu tra cứu được theo nhu cầu: mô hình trước hết chọn Skill dựa vào phần giới thiệu, sau đó đọc các bước thao tác, cuối cùng gọi công cụ hoặc chạy script tùy nhiệm vụ.
 
-**Hé lộ dần gồm ba bước.** Lúc khởi động, nạp `name` và `description` của từng Skill để mô hình biết có những năng lực nào và mỗi cái dùng cho việc gì; khi được chọn, đọc toàn bộ `SKILL.md`; trong lúc thực hiện, tra tiếp các tài liệu, mẫu hoặc script mà nó dẫn tới[^ch4-skill-format]. Ví dụ, khi xử lý PDF, trước hết xác định cần trích văn bản hay điền biểu mẫu, rồi mới đọc phần hướng dẫn tương ứng. Như vậy, chi tiết cần cho từng thao tác có thể nằm sẵn trong gói năng lực và chỉ dần đi vào ngữ cảnh theo nhiệm vụ. Tổng chi phí của danh mục phụ thuộc vào số Skill và độ dài phần giới thiệu.
+**Tiết lộ dần gồm ba bước.** Lúc khởi động, nạp `name` và `description` của từng Skill để mô hình biết có những năng lực nào và mỗi cái dùng cho việc gì; khi được chọn, đọc toàn bộ `SKILL.md`; trong lúc thực hiện, tra tiếp các tài liệu, mẫu hoặc script mà nó dẫn tới[^ch4-skill-format]. Ví dụ, khi xử lý PDF, trước hết xác định cần trích văn bản hay điền biểu mẫu, rồi mới đọc phần hướng dẫn tương ứng. Như vậy, chi tiết cần cho từng thao tác có thể nằm sẵn trong gói năng lực và chỉ dần đi vào ngữ cảnh theo nhiệm vụ. Tổng chi phí của danh mục phụ thuộc vào số Skill và độ dài phần giới thiệu.
 
 Quá trình này giống tra sách công cụ: xem mục lục trước, lật đến mục liên quan, gặp vấn đề cụ thể thì tra tiếp ví dụ. Với kho năng lực quy mô nhỏ, chủ yếu gồm quy trình thao tác và tài liệu tham khảo, tác giả ưu tiên dùng danh mục Skill kết hợp đọc tệp. Cách này tận dụng khả năng đọc tài liệu và gọi công cụ đa năng sẵn có của mô hình; lúc đầu chỉ cần duy trì phần giới thiệu, các tham chiếu và hướng dẫn thao tác, không cần một dịch vụ truy xuất công cụ riêng. Khi kho năng lực lớn lên, danh mục khó duyệt, mới thêm truy xuất theo từ khóa hoặc theo ngữ nghĩa.
 
@@ -254,7 +254,7 @@ MCP và Skill Hub cũng có thể cùng đảm nhận việc phân phối. Skill
 
 Giả sử người dùng cần tính lại tổng số tiền trong một báo cáo. Công cụ tìm kiếm trả về một đoạn tóm tắt khớp, đủ để tìm ra báo cáo, nhưng chưa chắc cho thấy số tiền tính theo đơn vị gì. Phải để mô hình lần theo tóm tắt đọc tới bảng gốc, thấy tên cột, đơn vị và dòng tổng cộng, nó mới có điều kiện tính lại. Khi thiết kế công cụ nhận thức, có hai câu hỏi nối tiếp nhau: lần này trả về những tài liệu nào, và khi tài liệu chưa đủ, mô hình còn đọc tiếp được từ đâu?
 
-Một lần tìm kiếm có thể trả về hàng vạn ký tự, một tệp PDF có thể dài hàng trăm trang. Có thể kết hợp **nén có nhận biết ngữ cảnh** ở Chương 2: khi đầu ra vượt ngưỡng đặt trước, trích nội dung liên quan theo câu hỏi hiện tại. Ví dụ, lấy 10000 ký tự làm điểm kích hoạt, trả về bản tóm tắt và giữ lại lối vào để đọc kết quả gốc, để mô hình vẫn đối chiếu được trích dẫn, bảng biểu hay chi tiết.
+Một lần tìm kiếm có thể trả về hàng vạn ký tự, một tệp PDF có thể dài hàng trăm trang. Có thể kết hợp **nén có nhận biết ngữ cảnh** ở Chương 2: khi đầu ra vượt ngưỡng đặt trước, trích nội dung liên quan theo câu hỏi hiện tại. Ví dụ, lấy 10.000 ký tự làm điểm kích hoạt, trả về bản tóm tắt và giữ lại lối vào để đọc kết quả gốc, để mô hình vẫn đối chiếu được trích dẫn, bảng biểu hay chi tiết.
 
 **Liệt kê kết quả tìm kiếm trước; mô hình chọn mục nào thì đọc toàn văn mục đó.** Danh sách trả về nên có tiêu đề, vị trí và đoạn trích, giúp Agent phán đoán kết quả nào đáng đọc. Khi kết quả nhiều, dùng phân trang hoặc con trỏ (`cursor`): mặc định trả về vài mục đầu và nói rõ cách lấy trang tiếp theo; nếu lấy được tổng số thì trả về luôn. Dựa trên bằng chứng đã có, mô hình có thể quyết định lật trang tiếp hoặc mở một kết quả để đọc nguyên văn.
 
@@ -358,7 +358,7 @@ Khi từ chối, đưa lý do cụ thể vào trajectory dưới dạng kết qu
 
 **Sidecar: mô-đun kiểm tra chạy kèm vòng lặp chính.**
 
-Sidecar mượn hình ảnh “xe thùng bên” trong kiến trúc microservice, chỉ một mô-đun phụ chạy kèm Agent chính và đảm nhận một việc chuyên biệt. Khi dùng cho kiểm tra an toàn, nó thẩm định hành động cụ thể trước khi lời gọi được thực thi; khi dùng để xử lý ngữ cảnh, nó cũng có thể song song lọc bộ nhớ hoặc nén kết quả công cụ.
+Sidecar mượn hình ảnh chiếc thùng gắn bên xe mô tô (sidecar) trong kiến trúc microservice, chỉ một mô-đun phụ chạy kèm Agent chính và đảm nhận một việc chuyên biệt. Khi dùng cho kiểm tra an toàn, nó thẩm định hành động cụ thể trước khi lời gọi được thực thi; khi dùng để xử lý ngữ cảnh, nó cũng có thể song song lọc bộ nhớ hoặc nén kết quả công cụ.
 
 Auto Mode của Claude Code tự động phán đoán một lời gọi công cụ có được cho qua hay không. Trong bản hiện thực Anthropic công bố tháng 3 năm 2026, các quy tắc cho phép thông thường xử lý trước một phần lời gọi, phần còn lại giao cho bộ phân loại dựa trên mô hình; bộ phân loại phán đoán nhanh trước, rồi phân tích sâu hơn những lời gọi bị chặn lại. Nó đọc tin nhắn người dùng và lời gọi công cụ, loại bỏ phần giải thích của mô hình chính và nội dung công cụ trả về, để phán đoán xoay quanh ý định người dùng và hành động thực tế[^ch4-auto-mode].
 
@@ -390,7 +390,7 @@ Công cụ nên báo riêng trạng thái thao tác và trạng thái xác minh:
 
 **Cắt bớt và lưu trữ đầu ra dài.**
 
-Log terminal và đầu ra chương trình có thể rất dài. Có thể đặt ngưỡng, ví dụ khi vượt 200 dòng hoặc 10000 ký tự, thì lưu toàn bộ kết quả thành một sản phẩm tra lại được, chỉ trả về đoạn đầu và đoạn cuối cho ngữ cảnh:
+Log terminal và đầu ra chương trình có thể rất dài. Có thể đặt ngưỡng, ví dụ khi vượt 200 dòng hoặc 10.000 ký tự, thì lưu toàn bộ kết quả thành một sản phẩm tra lại được, chỉ trả về đoạn đầu và đoạn cuối cho ngữ cảnh:
 
 - Giữ 50 dòng đầu, cung cấp thông tin khởi động và ngữ cảnh ban đầu.
 - Giữ 50 dòng cuối, cung cấp trạng thái kết thúc hoặc lỗi ở cuối.
@@ -426,7 +426,7 @@ Bản ghi vận hành phải trả lời được câu hỏi “ai đã thực h
 
 **Tính lũy đẳng và ngữ nghĩa hủy.**
 
-Giả sử trợ lý gửi một đơn hàng, người bán đã tạo đơn nhưng hồi đáp bị mất dọc đường. Thứ trợ lý thấy là yêu cầu quá thời gian. Nếu nó gửi lại đúng đơn đó, làm sao người bán biết người dùng chỉ muốn mua một phần?
+Giả sử trợ lý gửi một đơn hàng, người bán đã tạo đơn nhưng hồi đáp bị mất dọc đường. Thứ trợ lý thấy là yêu cầu quá thời gian. Nếu nó gửi lại đúng đơn đó, làm sao người bán biết người dùng chỉ muốn đặt một đơn?
 
 Một cách là để trợ lý lưu một **khóa lũy đẳng** trước lần gửi đầu tiên. Khi cùng người dùng thử lại đơn này, dùng lại khóa cũ và tham số cũ. Server gắn khóa với loại thao tác, tham số và trạng thái xử lý, đăng ký và loại trùng một cách nguyên tử. Như vậy dù nhận hai yêu cầu, server cũng chỉ tạo một đơn; đó là **tính lũy đẳng**. Mỗi yêu cầu mạng vẫn có thể có mã lời gọi riêng, tiện truy xem lần nào quá thời gian, lần nào nhận được hồi đáp.
 
@@ -489,15 +489,15 @@ HITL (Human-in-the-Loop, con người trong vòng lặp) phù hợp với nhữn
 
 Con người có thể phản hồi chậm, nên yêu cầu cần có thời hạn hiệu lực và hành vi khi quá hạn. Ví dụ, chờ năm phút thì lưu trạng thái việc đang chờ, tạm dừng các thao tác phụ thuộc vào câu trả lời đó, hoặc thực hiện phương án thận trọng đã được cấp quyền trước. Khi yêu cầu đã hết hạn, bị hủy hoặc đã được xử lý, câu trả lời trùng lặp phải nhận về trạng thái hiện tại; cần quyết định lại thì tạo yêu cầu mới. Thông báo có thể gửi theo mức ưu tiên: yêu cầu khẩn dùng kênh tức thời đã cấu hình, yêu cầu thường vào email hoặc hàng đợi việc cần làm.
 
-Việc con người phê duyệt, từ chối và lý do sửa đổi còn có thể trở thành dữ liệu phản hồi. Trước hết lưu nhiệm vụ, bằng chứng và quyết định lúc đó, rồi đánh giá kinh nghiệm nào dùng lại được: quy tắc nghiệp vụ rõ ràng có thể vào cơ sở tri thức hoặc Skill, còn phán đoán theo sở thích có thể sắp xếp thành mẫu đánh giá hoặc mẫu post-training. Chương 9 sẽ bàn cách sàng lọc các trajectory này và chọn cách cập nhật.
+Việc con người phê duyệt, từ chối và lý do sửa đổi còn có thể trở thành dữ liệu phản hồi. Trước hết lưu nhiệm vụ, bằng chứng và quyết định lúc đó, rồi đánh giá kinh nghiệm nào dùng lại được: quy tắc nghiệp vụ rõ ràng có thể vào cơ sở tri thức hoặc Skill, còn phán đoán theo sở thích có thể sắp xếp thành mẫu đánh giá hoặc mẫu hậu huấn luyện. Chương 9 sẽ bàn cách sàng lọc các trajectory này và chọn cách cập nhật.
 
 > **Thí nghiệm 4-5 ★★: Máy chủ MCP cho công cụ cộng tác**
 >
 > Thí nghiệm này hiện thực các giao diện quản lý Agent con, nhờ con người hỗ trợ và gửi thông báo, luyện hai cách truyền ngữ cảnh cùng hai kiểu gọi đồng bộ và bất đồng bộ.
 >
-> Trước hết nhận một yêu cầu hỏi về hoàn tiền. Món hàng mua cách đây ba ngày, số tiền 80 đô la Singapore. Quy định của cửa hàng nói các khoản hoàn tiền trong vòng bảy ngày kể từ khi mua và dưới 100 đô la Singapore thì được duyệt. Agent chính giao việc “xét theo quy định cửa hàng xem khoản hoàn tiền này có đủ điều kiện không” cho một Agent con; nó nên gửi kèm những sự kiện nào cùng nhiệm vụ?
+> Trước hết nhận một yêu cầu hỏi về hoàn tiền. Món hàng mua cách đây ba ngày, số tiền 80 đô la Singapore. Quy định của cửa hàng nói các khoản hoàn tiền trong vòng bảy ngày kể từ khi mua và dưới 100 đô la Singapore thì được duyệt. Agent chính giao việc “xét theo quy định cửa hàng xem khoản hoàn tiền này có đủ điều kiện không” cho một Agent con; nó nên gửi kèm những dữ kiện nào cùng nhiệm vụ?
 >
-> Khi giao việc đồng bộ bằng `mcp_spawn_subagent`, nhóm chỉ truyền ngữ cảnh cần thiết đã bỏ sót bản ghi mua hàng, chỉ gửi quy định cửa hàng. Trạng thái ở lớp ngoài của hồi đáp là `completed`, vì Agent con đã trả lời; mở câu trả lời ra, trạng thái bên trong lại là `need_info`, thiếu số tiền và thời điểm mua. Agent chính dùng `mcp_send_message_to_subagent` bổ sung “hàng chưa qua sử dụng”, vẫn không trả lời được hai câu hỏi kia. Nhóm dùng mô hình sinh bản tóm tắt chuyển cả ba ngày, 80 đô la Singapore và quy định cửa hàng sang cùng lúc, mới nhận được phán đoán “đủ điều kiện hoàn tiền”.
+> Khi giao việc đồng bộ bằng `mcp_spawn_subagent`, nhóm chỉ truyền ngữ cảnh cần thiết đã bỏ sót bản ghi mua hàng, chỉ gửi quy định cửa hàng. Trạng thái ở lớp ngoài của hồi đáp là `completed`, vì Agent con đã trả lời; mở câu trả lời ra, trạng thái bên trong lại là `need_info`, thiếu số tiền và thời điểm mua. Agent chính dùng `mcp_send_message_to_subagent` bổ sung “hàng chưa qua sử dụng”, vẫn không trả lời được hai câu hỏi kia. Nhóm dùng mô hình tóm tắt ngữ cảnh thì gửi cho Agent con cùng lúc cả ba dữ kiện: hàng mua cách đây ba ngày, số tiền 80 đô la Singapore và quy định cửa hàng, nên mới nhận được phán đoán “đủ điều kiện hoàn tiền”.
 >
 > Đổi sang giao việc bất đồng bộ, hồi đáp khởi tạo trả về cả `task_id` lẫn `subagent_id`. Trong giao diện của thí nghiệm này, khi tra trạng thái, gửi thêm tin nhắn hay yêu cầu hủy, tham số dùng là `subagent_id`. Lần theo mã định danh này có thể thấy bản ghi của cùng một Agent con đi từ `running` tới `completed`. Xin ý kiến con người lại có `request_id` riêng: `mcp_request_admin_approval` xin phê duyệt, `mcp_request_admin_input` xin bổ sung thông tin. Trong lần chạy thật, quản trị viên đã phê duyệt việc công bố bản ghi thí nghiệm này. Một yêu cầu khác chờ một giây thì quá hạn, hồi đáp ghi rõ cả `approved: false` lẫn `timeout: true`; dựa vào đó chỉ có thể báo với Agent chính rằng chưa được phê duyệt.
 >

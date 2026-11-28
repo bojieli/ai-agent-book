@@ -230,7 +230,7 @@ Harness kiểm tra yêu cầu, điều phối hai công cụ, viết giá trị 
 }
 ```
 
-Đọc yêu cầu thứ hai theo `call_def456`: trong tin nhắn `assistant` phía trước, đó là mã của lần tra thời tiết Vancouver; tin nhắn `tool` phía sau dùng đúng mã ấy để gửi về 13,2 ℃ và trời quang. Kể cả khi thời tiết về trước giờ, Harness vẫn khớp được kết quả với yêu cầu. Ở lượt này, mô hình đọc được cùng lúc câu hỏi ban đầu của người dùng, hai truy vấn do chính nó phát ra và dữ liệu công cụ tra về. Bước tiếp theo là trả lời người dùng.
+Đọc yêu cầu thứ hai theo `call_def456`: trong tin nhắn `assistant` phía trước, đó là mã của lần tra thời tiết Vancouver; tin nhắn `tool` phía sau dùng đúng mã ấy để gửi về 13,2 ℃ và trời quang. Kể cả khi kết quả thời tiết về trước kết quả giờ, Harness vẫn khớp được kết quả với yêu cầu. Ở lượt này, mô hình đọc được cùng lúc câu hỏi ban đầu của người dùng, hai truy vấn do chính nó phát ra và dữ liệu công cụ tra về. Bước tiếp theo là trả lời người dùng.
 
 **Mô hình dựa vào kết quả công cụ để sinh câu trả lời cuối cùng:**
 
@@ -469,7 +469,7 @@ Với mô hình causal attention (attention nhân quả) dùng trong phần này
 
 > **Thí nghiệm 2-2 ★: Trực quan hóa cơ chế attention**
 >
-> Trước hết, dùng câu “thời tiết của Bắc Kinh thế nào” để hiểu một lần tính attention. Để dễ trình bày, Hình 2-6 chia câu thành bốn đơn vị ngữ nghĩa; trong mô hình thật, tokenizer mới là thứ cắt đầu vào. Khi xử lý vị trí “thế nào”, lớp attention phải tổng hợp biểu diễn hiện tại từ thông tin đã có. Query, Key và Value lần lượt đảm nhận vai trò truy vấn, so khớp và tổng hợp thông tin.
+> Trước hết, dùng câu “Bắc Kinh hôm nay thời tiết thế nào” để hiểu một lần tính attention. Để dễ trình bày, Hình 2-6 chia câu thành bốn đơn vị ngữ nghĩa; trong mô hình thật, tokenizer mới là thứ cắt đầu vào. Khi xử lý vị trí “thế nào”, lớp attention phải tổng hợp biểu diễn hiện tại từ thông tin đã có. Query, Key và Value lần lượt đảm nhận vai trò truy vấn, so khớp và tổng hợp thông tin.
 >
 > | Vectơ | Vai trò | Cách hiểu trực quan trong ví dụ này |
 > | --- | --- | --- |
@@ -510,9 +510,9 @@ Ví dụ API ở trên là một dãy tin nhắn có vai trò, còn đầu vào 
 
 ![Hình 2-8 Cấu trúc token của Chat Template](images/revised/fig2-8.svg)
 
-Các họ mô hình như Qwen, Llama, Gemma đều có chat template riêng. Cùng một dãy tin nhắn API, giao cho các mô hình khác nhau, có thể được chuyển thành những thẻ vai trò và thẻ ranh giới khác nhau. Với API được lưu trữ (hosted), máy chủ thường làm việc chuyển đổi này; khi tự triển khai, phải cấu hình cho dịch vụ suy luận một template khớp với mô hình.
+Các họ mô hình như Qwen, Llama, Gemma đều có chat template riêng. Cùng một dãy tin nhắn API, giao cho các mô hình khác nhau, có thể được chuyển thành những thẻ vai trò và thẻ ranh giới khác nhau. Với API do nhà cung cấp vận hành (hosted), máy chủ thường làm việc chuyển đổi này; khi tự triển khai, phải cấu hình cho dịch vụ suy luận một template khớp với mô hình.
 
-Giả sử người dùng gửi “Vancouver 17,9 °C”, và công cụ thời tiết cũng tình cờ trả về đúng dòng chữ đó. Đưa riêng hai tin nhắn này qua template của Qwen3-0.6B, ta được hai đoạn đầu vào trong Hình 2-9. Cả hai đều mở đầu bằng `<|im_start|>user`, vậy thẻ nào cho biết dòng chữ đến từ công cụ?
+Giả sử người dùng gửi `Vancouver 17.9 °C`, và công cụ thời tiết cũng tình cờ trả về đúng dòng chữ đó. Đưa riêng hai tin nhắn này qua template của Qwen3-0.6B, ta được hai đoạn đầu vào trong Hình 2-9. Cả hai đều mở đầu bằng `<|im_start|>user`, vậy thẻ nào cho biết dòng chữ đến từ công cụ?
 
 ![Hình 2-9 Tin nhắn người dùng và kết quả công cụ trong template Qwen3](images/revised/fig2-9.svg)
 
@@ -520,7 +520,7 @@ Cột phải có thêm một cặp thẻ `<tool_response>`. Template còn dựa 
 
 Chẳng hạn, mô hình đọc file xong vẫn còn phải phân tích tiếp. Gửi trả kết quả công cụ theo vai trò `tool` thì template nhận ra đó là phản hồi công cụ trong nhiệm vụ hiện tại; nếu viết thẳng kết quả ấy thành một tin nhắn `user` thông thường, template có thể coi nó là một truy vấn mới và thay đổi phạm vi giữ lại suy luận trước đó. Giống như làm tiếp một bài toán thì phải giữ lại giấy nháp: Harness nên lưu các trường suy luận mà dịch vụ yêu cầu, rồi gọi tiếp theo đúng cấu trúc tin nhắn.
 
-**Từ suy luận một lượt tiến đến Agent tầm xa, phần suy nghĩ trong lịch sử dần trở thành trạng thái nhiệm vụ cần duy trì.** Chat template của DeepSeek-R1 thời kỳ đầu bỏ phần suy nghĩ trong các câu trả lời lịch sử, chỉ giữ câu trả lời cuối[^ch2-r1-template]; còn giao thức gọi công cụ về sau của DeepSeek lại yêu cầu gửi trả thông tin suy luận. Khi một lượt hỏi đáp kết thúc, câu trả lời cuối có thể đã chứa thông tin cần cho lượt sau; nhưng khi nhiệm vụ công cụ mới đi được nửa đường, “vì sao tra file này” hay “đã loại trừ những giả thuyết nào” có thể chỉ nằm trong phần suy luận trung gian. Giữ lại những thông tin này giúp lượt sau làm tiếp theo mạch suy nghĩ sẵn có.
+**Từ suy luận một lượt tiến đến Agent làm nhiệm vụ dài hạn, phần suy nghĩ trong lịch sử dần trở thành trạng thái nhiệm vụ cần duy trì.** Chat template của DeepSeek-R1 thời kỳ đầu bỏ phần suy nghĩ trong các câu trả lời lịch sử, chỉ giữ câu trả lời cuối[^ch2-r1-template]; còn giao thức gọi công cụ về sau của DeepSeek lại yêu cầu gửi trả thông tin suy luận. Khi một lượt hỏi đáp kết thúc, câu trả lời cuối có thể đã chứa thông tin cần cho lượt sau; nhưng khi nhiệm vụ công cụ mới đi được nửa đường, “vì sao tra file này” hay “đã loại trừ những giả thuyết nào” có thể chỉ nằm trong phần suy luận trung gian. Giữ lại những thông tin này giúp lượt sau làm tiếp theo mạch suy nghĩ sẵn có.
 
 **Cách gửi trả thông tin suy luận do giao thức của mô hình quyết định.** Khi tích hợp, phải xử lý đồng thời `content`, `tool_calls` và các trường suy luận mà dịch vụ cung cấp. Vài phương án dưới đây cho thấy những quy tắc nối tiếp khác nhau:
 
@@ -569,9 +569,9 @@ Với cùng mô hình và cấu hình tính toán, các vị trí trước $k$ c
 >
 > **Cấu hình người dùng động** cập nhật số lần gọi còn lại hoặc số dư tài khoản trong các tin nhắn phía đầu. Bản thân trạng thái là thông tin nhiệm vụ cần đến; điểm mấu chốt của thiết kế là vị trí cập nhật: nối trạng thái mới nhất vào cuối và ghi rõ thời điểm có hiệu lực, thì giữ được cả tiến độ lẫn tiền tố. Thanh trạng thái Agent ở phần sau sẽ dùng cách tổ chức này.
 >
-> **Sắp xếp lại định nghĩa công cụ** đổi thứ tự danh sách công cụ ở mỗi lượt. Tên và tham số tuy giống nhau, nhưng thứ tự token sau tuần tự hóa đã khác. Mở báo cáo chạy của Kimi K2.6, cột `Hit%` của nhóm cơ sở và nhóm sắp xếp lại đều là 100%. Hai nhóm thật sự tái sử dụng lượng đầu vào như nhau sao? Nhóm cơ sở qua ba lượt có tổng cộng 7.567 token đầu vào, trong đó 768 token trúng cache; nhóm sắp xếp lại cũng ba lượt, 7.568 token đầu vào nhưng chỉ có 256 token trúng. Lấy số token trong cache chia cho số token đầu vào, ta được 10,1% và 3,4% ở cột `Cache%`. Cột `Hit%` còn lại đếm theo các yêu cầu được xét là có trúng: nhóm cơ sở ghi hai lần trúng, nhóm sắp xếp lại chỉ ghi một lần, và cả hai nhóm đều ghi số lần trượt là không. Tình trạng trúng cache của các yêu cầu còn lại thì chỉ dựa vào bản ghi này không thể xác định. Cố định thứ tự công cụ giúp tránh để tiền tố thay đổi vô cớ.
+> **Sắp xếp lại định nghĩa công cụ** đổi thứ tự danh sách công cụ ở mỗi lượt. Tên và tham số tuy giống nhau, nhưng thứ tự token sau tuần tự hóa đã khác. Mở báo cáo chạy của Kimi K2.6, cột `Hit%` của nhóm cơ sở và nhóm sắp xếp lại đều là 100%. Hai nhóm thật sự tái sử dụng lượng đầu vào như nhau sao? Nhóm cơ sở qua ba lượt có tổng cộng 7.567 token đầu vào, trong đó 768 token trúng cache; nhóm sắp xếp lại cũng ba lượt, 7.568 token đầu vào nhưng chỉ có 256 token trúng. Lấy số token trong cache chia cho số token đầu vào, ta được 10,1% và 3,4% ở cột `Cache%`. Cột `Hit%` còn lại đếm theo các yêu cầu được xét là có trúng: nhóm cơ sở ghi hai lần trúng, nhóm sắp xếp lại chỉ ghi một lần, và cả hai nhóm đều ghi số lần trượt là không. Còn các yêu cầu khác có trúng cache hay không thì chỉ dựa vào bản ghi này chưa thể xác định. Cố định thứ tự công cụ giúp tránh để tiền tố thay đổi vô cớ.
 >
-> **Cửa sổ trượt** chỉ giữ một đoạn lịch sử gần nhất. Giả sử giữ mười lượt tương tác, thì đến lượt thứ mười lăm có thể không còn đọc được nội dung file then chốt lấy ở lượt thứ hai. Ngoài việc rút ngắn tiền tố chung, việc cắt bỏ còn làm thay đổi các dữ kiện và tiến độ nhiệm vụ mà mô hình nắm được. Phần cài đặt đi kèm lấy sáu tin nhắn lịch sử gần nhất làm điểm xuất phát, rồi bổ sung ngược về trước các yêu cầu gọi tương ứng với kết quả công cụ. Nhóm cửa sổ trượt tái sử dụng 1.510 trong 2.224 token đầu vào, tỉ lệ cache đạt 67,9%, cao nhất trong sáu nhóm. Nhưng xem tiếp bản ghi công cụ của nhóm cửa sổ trượt trong Thí nghiệm 2-3: mô hình ba lần tìm file, rồi đọc hai file, mà không giao bản tóm tắt ba câu người dùng yêu cầu.
+> **Cửa sổ trượt** chỉ giữ một đoạn lịch sử gần nhất. Giả sử giữ mười lượt tương tác, thì đến lượt thứ mười lăm có thể không còn đọc được nội dung file then chốt lấy ở lượt thứ hai. Ngoài việc rút ngắn tiền tố chung, việc cắt bỏ còn làm thay đổi các dữ kiện và tiến độ nhiệm vụ mà mô hình nắm được. Phần cài đặt đi kèm lấy sáu tin nhắn lịch sử gần nhất làm điểm xuất phát, rồi bổ sung ngược về trước các yêu cầu gọi tương ứng với kết quả công cụ. Nhóm cửa sổ trượt tái sử dụng 1.510 trong 2.224 token đầu vào, tỷ lệ cache đạt 67,9%, cao nhất trong sáu nhóm. Nhưng xem tiếp bản ghi công cụ của nhóm cửa sổ trượt trong Thí nghiệm 2-3: mô hình ba lần tìm file, rồi đọc hai file, mà không giao bản tóm tắt ba câu người dùng yêu cầu.
 >
 > **Định dạng văn bản** viết lại lịch sử có vai trò thành văn bản kiểu `USER: ...`, `ASSISTANT: ...`. Cách này làm thay đổi ranh giới tin nhắn và cấu trúc công cụ trong template, mô hình phải tự khôi phục các quan hệ ban đầu từ nội dung chữ. Lần này nhóm văn bản vẫn sinh được câu trả lời cuối và vẫn có trúng cache. Các vai trò tin nhắn, mã gọi và trường kết quả công cụ mà giao diện cung cấp giúp truyền đạt các quan hệ này một cách ổn định.
 >
@@ -591,7 +591,7 @@ Về tính phí, phải xét riêng việc ghi và đọc. Với một số mô 
 
 ### Cache như một ràng buộc kiến trúc
 
-**Trong hệ thống sản xuất, cache đã trở thành một ràng buộc kiến trúc.** Prompt được sắp xếp ra sao, Agent con bắt đầu từ đâu, phiên được khôi phục thế nào, đều ảnh hưởng tới lượng tính toán có thể tái sử dụng. **Ngay từ đầu thiết kế đã phải bố trí ranh giới cache.** Xác định trước nội dung nào dùng chung được, trạng thái nào sẽ thay đổi, rồi mới tổ chức prompt và cấu trúc phiên, sẽ giảm được việc tính lại liên tục khi chạy. Đợi đến khi độ trễ và chi phí của nhiệm vụ dài hạn đã thành vấn đề mới điều chỉnh các cấu trúc này, thì thường phải động đến quản lý trạng thái, Agent con và khôi phục phiên.
+**Trong hệ thống chạy thực tế (production), cache đã trở thành một ràng buộc kiến trúc.** Prompt được sắp xếp ra sao, Agent con bắt đầu từ đâu, phiên được khôi phục thế nào, đều ảnh hưởng tới lượng tính toán có thể tái sử dụng. **Ngay từ đầu thiết kế đã phải bố trí ranh giới cache.** Xác định trước nội dung nào dùng chung được, trạng thái nào sẽ thay đổi, rồi mới tổ chức prompt và cấu trúc phiên, sẽ giảm được việc tính lại liên tục khi chạy. Đợi đến khi độ trễ và chi phí của nhiệm vụ dài hạn đã thành vấn đề mới điều chỉnh các cấu trúc này, thì thường phải động đến quản lý trạng thái, Agent con và khôi phục phiên.
 
 **Sắp xếp tiền tố theo mức độ ổn định.** Chỉ dẫn và định nghĩa công cụ dùng chung cho nhiều nhiệm vụ có thể đặt ở đầu, sau đó mới đến hồ sơ người dùng, trạng thái phiên và observation mới, được nhóm theo phạm vi áp dụng. Ví dụ, hệ điều hành có hai lựa chọn macOS/Linux, chế độ chạy có thường/gỡ lỗi, ngôn ngữ có tiếng Trung/tiếng Anh; ba điều kiện độc lập tạo ra tối đa $2\times2\times2=8$ tổ hợp tiền tố. Đẩy những trường hay thay đổi ra sau phần dùng chung giúp tăng cơ hội tái sử dụng tiền tố chung. Phạm vi chia sẻ của phần chung còn phải tuân theo ranh giới tổ chức, workspace và quyền riêng tư của dịch vụ.
 
@@ -619,7 +619,7 @@ Khi đổi mô hình giữa chừng, dịch vụ còn kiểm tra xem mô hình �
 >
 > **Ghép nối (Composition)** nối cache kỹ năng tính sẵn vào một ngữ cảnh mới. Với mô hình dùng mã hóa vị trí xoay (RoPE), phải điều chỉnh biểu diễn vị trí trong cache trước rồi mới ghép. Có thể hình dung việc này như đánh số lại một trang ghi chép sẵn có để nối vào sau một tài liệu khác. Bài báo so sánh mười hai mô hình; độ tương đồng cosine của logits đầu ra giữa ghép nối và tính lại toàn bộ đạt 0,90–0,999; bản thân việc định vị lại cache và ghép nối có thể xử lý tuyến tính theo độ dài, giảm việc tính lại attention cho cả đoạn ngữ cảnh.
 >
-> Việc nối thêm thông tin đính chính còn có thể kết hợp với cache tiền tố hiện có. Trong benchmark trực tuyến trên vLLM của bài báo, cách kết hợp này giữ được tỉ lệ trúng cache tiền tố khoảng 98,5%, độ trễ token đầu tiên p90 bằng khoảng 1/398 đến 1/53 so với mốc cơ sở.
+> Việc nối thêm thông tin đính chính còn có thể kết hợp với cache tiền tố hiện có. Trong benchmark trực tuyến trên vLLM của bài báo, cách kết hợp này giữ được tỷ lệ trúng cache tiền tố khoảng 98,5%, độ trễ token đầu tiên p90 bằng khoảng 1/398 đến 1/53 so với mốc cơ sở.
 >
 > **Tác giả lạc quan về hướng nghiên cứu này, vì nó hứa hẹn giúp việc cập nhật ngữ cảnh giữ lại được nhiều tính toán sẵn có hơn.** Agent thường xuyên cập nhật trường bộ nhớ, thêm trạng thái hoặc thay định nghĩa công cụ; nếu các trạng thái liên quan có thể được sửa và ghép như ghi chép, chi phí duy trì ngữ cảnh dài sẽ có cơ hội giảm mạnh.
 
@@ -643,7 +643,7 @@ Yêu cầu về giọng điệu nên được cụ thể hóa thành cách diễ
 
 Kiểu nhấn mạnh bằng chữ in hoa như “NEVER do X” có thể dùng để làm nổi bật yêu cầu then chốt. Quan trọng hơn là nói rõ yêu cầu áp dụng trong tình huống nào, và khi đó phải hành động ra sao.
 
-### Prompt có cấu trúc: tổ chức tầng lớp và ranh giới nội dung
+### Prompt có cấu trúc: tổ chức phân cấp và ranh giới nội dung
 
 Tiêu đề, danh sách và thẻ giúp tổ chức những prompt dài. Tiêu đề Markdown hợp để thể hiện chương mục và các bước, còn thẻ kiểu XML hợp để chia các khối nội dung có công dụng khác nhau, ví dụ dùng `<working_directory>` bọc thông tin thư mục làm việc. Tên thẻ nên nói thẳng công dụng của nội dung, để mô hình dễ nhận ra quan hệ giữa các khối.
 
@@ -666,7 +666,7 @@ Cùng một prompt có thể kết hợp cả hai cách viết:
 </network_request>
 ```
 
-Markdown tạo ra tầng lớp dễ đọc, còn `<file_operation>` và `<network_request>` phân định phạm vi áp dụng của quy tắc. Ví dụ, “thử lại tối đa 3 lần” chỉ áp dụng cho yêu cầu mạng; khi sửa file thì tuân theo nhóm quy tắc sao lưu phía trên.
+Markdown tạo ra cấu trúc phân cấp dễ đọc, còn `<file_operation>` và `<network_request>` phân định phạm vi áp dụng của quy tắc. Ví dụ, “thử lại tối đa 3 lần” chỉ áp dụng cho yêu cầu mạng; khi sửa file thì tuân theo nhóm quy tắc sao lưu phía trên.
 
 ### Tổ chức quy tắc theo quy trình
 
@@ -703,7 +703,7 @@ Cùng một hồ sơ đơn hàng, rốt cuộc xếp vào loại yêu cầu nào
 
 Lấy ví dụ một Agent gọi điện thay người dùng để giảm phí thuê bao hoặc đòi hoàn tiền: nhóm muốn hạ ngưỡng thử bằng chính sách “không làm được thì hoàn tiền”, đồng thời đặt cách thu phí rõ ràng cho các nhiệm vụ đặc biệt. Có thể thiết kế ba loại tính phí:
 
-- **Hoa hồng theo số tiền tiết kiệm**: thương lượng giảm hóa đơn hiện có, thu một tỉ lệ nhất định trên số tiền thực sự tiết kiệm được, ví dụ 20%.
+- **Hoa hồng theo số tiền tiết kiệm**: thương lượng giảm hóa đơn hiện có, thu một tỷ lệ nhất định trên số tiền thực sự tiết kiệm được, ví dụ 20%.
 - **Phí cố định theo dịch vụ**: các nhiệm vụ mang tính dịch vụ như đặt bàn nhà hàng, thu phí theo loại hoặc độ phức tạp của nhiệm vụ.
 - **Thu trước cho nhiệm vụ khó**: với nhiệm vụ khó thỏa mãn một số điều kiện nhất định, nói trước khoản phí thu trước và điều khoản không hoàn tiền, người dùng xác nhận rồi mới nhận việc.
 
@@ -711,9 +711,9 @@ Nếu viết “chọn loại tính phí phù hợp theo tình hình nhiệm v�
 
 Prompt tương ứng có thể ghi thẳng ranh giới giữa các loại: “NEVER use percentage_based_one_time for refunds and service cancellations. Use fixed_fee instead.” Nghĩa là hoàn tiền và hủy dịch vụ dùng `fixed_fee`, chỉ thương lượng giảm hóa đơn hiện có mới áp dụng hình thức hoa hồng.
 
-Nhóm còn phải ước lượng việc này có bao nhiêu phần chắc làm được. Thương nhân chấp nhận những yêu cầu nào, người dùng này có đủ điều kiện không, hóa đơn đã thu những khoản gì, các ủy thác tương tự trước đây kết quả ra sao, đều ảnh hưởng tới cách nhận việc. Nếu quy tắc dùng ngưỡng “trên 60% thì vào chế độ có thể hoàn tiền, dưới 30% thì không nhận”, thì còn phải viết rõ cách xử lý khoảng ở giữa và các giá trị biên.
+Nhóm còn phải ước lượng việc này có bao nhiêu phần chắc làm được. Nhà cung cấp chấp nhận những yêu cầu nào, người dùng này có đủ điều kiện không, hóa đơn đã thu những khoản gì, các ủy thác tương tự trước đây kết quả ra sao, đều ảnh hưởng tới cách nhận việc. Nếu quy tắc dùng ngưỡng “trên 60% thì vào chế độ có thể hoàn tiền, dưới 30% thì không nhận”, thì còn phải viết rõ cách xử lý khoảng ở giữa và các giá trị biên.
 
-Phép tính số tiền phải nêu rõ đơn vị, cơ số và thứ tự làm tròn. Ví dụ, phí gọi điện cộng dồn theo 0,05 đô la Mỹ mỗi phút, tổng xong mới làm tròn đến đô la nguyên; số tiền tiết kiệm lấy hóa đơn hiện có làm mốc. Nếu hóa đơn hiện tại là 150 đô la, thương nhân có thể tăng lên 180 đô la vào năm sau, thì phần tăng giá tiềm năng tránh được nhờ giữ giá hiện tại phải được xử lý theo cách tính đã thỏa thuận trước, không được tự động tính vào số tiền tiết kiệm do giảm hóa đơn hiện có.
+Phép tính số tiền phải nêu rõ đơn vị, cơ số và thứ tự làm tròn. Ví dụ, phí gọi điện cộng dồn theo 0,05 đô la Mỹ mỗi phút, tổng xong mới làm tròn đến đô la nguyên; số tiền tiết kiệm lấy hóa đơn hiện có làm mốc. Nếu hóa đơn hiện tại là 150 đô la, nhà cung cấp có thể tăng lên 180 đô la vào năm sau, thì phần tăng giá tiềm năng tránh được nhờ giữ giá hiện tại phải được xử lý theo cách tính đã thỏa thuận trước, không được tự động tính vào số tiền tiết kiệm do giảm hóa đơn hiện có.
 
 Lời khuyên của tác giả là **để người phụ trách sản phẩm dẫn dắt việc thiết kế quy tắc nghiệp vụ**, kết hợp dữ liệu thực tế, phản hồi người dùng và kinh nghiệm vận hành để duy trì các định nghĩa này; kỹ sư sau đó hiện thực chúng vào prompt, tham số công cụ, logic tính phí và quy tắc xác minh.
 
@@ -733,7 +733,7 @@ Những thông tin này có thể viết rất cụ thể. Ví dụ, công cụ 
 
 Khi có ít công cụ, có thể gửi định nghĩa `tools` đầy đủ kèm yêu cầu, và giữ ổn định tên, nội dung, thứ tự ở các lượt sau. Khi công cụ nhiều lên, định nghĩa đầy đủ sẽ chiếm rất nhiều ngữ cảnh, còn khiến mô hình khó phân biệt các công cụ gần giống nhau. Lúc này có thể dùng **nạp theo nhu cầu**: trước hết cho mô hình biết có những năng lực nào, khi cần mới truy xuất và nạp schema đầy đủ của các công cụ liên quan. Skills ở phần dưới cũng dùng cách tổ chức “đưa mục lục trước, nạp chi tiết sau” này.
 
-OpenAI Responses API dùng `defer_loading: true` để đánh dấu các công cụ nạp trễ. Trong luồng tìm kiếm công cụ do client quản lý, mô hình phát ra `tool_search_call`, client trả về định nghĩa công cụ được chọn qua `tool_search_output`; các công cụ hay dùng cũng có thể cung cấp trực tiếp, dùng cùng các công cụ nạp trễ[^ch2-toolsearch-oai]. Với mô hình và cấu hình dịch vụ hỗ trợ tìm kiếm công cụ, Claude Code mặc định nạp các công cụ MCP theo nhu cầu: khi bắt đầu phiên chỉ cung cấp tên công cụ và mô tả máy chủ, tìm kiếm xong mới nạp định nghĩa đầy đủ. Nó cũng có chế độ ngưỡng, bật nạp trễ khi định nghĩa công cụ chiếm tới một tỉ lệ ngữ cảnh nhất định[^ch2-toolsearch-cc]. Template phát hiện công cụ Apps/Connectors của Codex thì dùng BM25 để truy xuất siêu dữ liệu công cụ, và cung cấp các công cụ khớp cho lần gọi mô hình kế tiếp[^ch2-toolsearch-codex].
+OpenAI Responses API dùng `defer_loading: true` để đánh dấu các công cụ nạp trễ. Trong luồng tìm kiếm công cụ do client quản lý, mô hình phát ra `tool_search_call`, client trả về định nghĩa công cụ được chọn qua `tool_search_output`; các công cụ hay dùng cũng có thể cung cấp trực tiếp, dùng cùng các công cụ nạp trễ[^ch2-toolsearch-oai]. Với mô hình và cấu hình dịch vụ hỗ trợ tìm kiếm công cụ, Claude Code mặc định nạp các công cụ MCP theo nhu cầu: khi bắt đầu phiên chỉ cung cấp tên công cụ và mô tả máy chủ, tìm kiếm xong mới nạp định nghĩa đầy đủ. Nó cũng có chế độ ngưỡng, bật nạp trễ khi định nghĩa công cụ chiếm tới một tỷ lệ ngữ cảnh nhất định[^ch2-toolsearch-cc]. Template phát hiện công cụ Apps/Connectors của Codex thì dùng BM25 để truy xuất siêu dữ liệu công cụ, và cung cấp các công cụ khớp cho lần gọi mô hình kế tiếp[^ch2-toolsearch-codex].
 
 Nạp theo nhu cầu còn phải phối hợp với cache tiền tố. Với giao diện hỗ trợ nối thêm định nghĩa công cụ trong phiên, nội dung sẵn có giữ nguyên chỗ, định nghĩa mới theo kết quả phát hiện được đưa vào phần ngữ cảnh phía sau. Trong causal attention, K, V của mỗi token chỉ phụ thuộc vào chính nó và nội dung đứng trước, nên nội dung thêm vào cuối vẫn giữ được điều kiện tái sử dụng tiền tố trước đó. Các lượt sau tiếp tục nối tin nhắn sau đoạn lịch sử này, còn các định nghĩa đã nạp vẫn ở vị trí cũ. Có những giao diện lại thêm công cụ mới vào tập `tools` ở đầu yêu cầu. Khi đó, các tin nhắn lịch sử đứng sau định nghĩa mới dù không hề thay đổi vẫn phải tính lại.
 
@@ -741,7 +741,7 @@ Nạp theo nhu cầu còn phải phối hợp với cache tiền tố. Với gia
 [^ch2-toolsearch-cc]: Anthropic, Scale with MCP tool search, tài liệu Claude Code.
 [^ch2-toolsearch-codex]: OpenAI Codex, template phát hiện công cụ Apps/Connectors.
 
-> **Thí nghiệm 2-4 ★★: Thí nghiệm loại bỏ dần (ablation) với Prompt Engineering**
+> **Thí nghiệm 2-4 ★★: Cắt bỏ từng thành phần (ablation) với Prompt Engineering**
 >
 > Trong một prompt, giọng điệu, cách tổ chức thông tin và mô tả công cụ mỗi thứ đóng vai trò gì? Thí nghiệm này dùng nhiệm vụ chăm sóc khách hàng hàng không của τ-bench để đối chiếu. τ-bench dựng các kịch bản tương tác bằng người dùng mô phỏng, công cụ nghiệp vụ và quy tắc, rồi kiểm tra trạng thái đích sau khi nhiệm vụ kết thúc; hàng không và bán lẻ là hai lĩnh vực nhiệm vụ trong đó[^ch2-tau-bench].
 >
@@ -797,7 +797,7 @@ Khi làm thủ tục hoàn tiền, mô hình có thể tìm sổ tay hoàn tiề
 
 **Agent Skills** đóng gói phương pháp xử lý, tài liệu tham khảo, script và template của một loại nhiệm vụ thành gói có thể tái sử dụng. Nhân viên mới không cần học thuộc toàn bộ sổ tay thao tác của công ty ngay ngày nhận việc, mô hình cũng có thể đợi đến lúc làm việc mới đọc kỹ chương tương ứng. Cách nạp này gọi là **tiết lộ dần (Progressive Disclosure)**[^ch2-3].
 
-Vẫn dùng mười món hàng ở Chương 1 để xét xem thông tin nào đáng viết thành Skill. Giả sử người dùng muốn so sánh giá đến tay đã gồm phí vận chuyển, thì chỉ cần đưa chi tiết hàng và địa chỉ nhận lần này vào ngữ cảnh hiện tại là đủ. Nếu nhóm thường xuyên phải so giá giữa các thương nhân, thì cách đối chiếu quy cách, phân biệt đơn giá với giá trọn bộ, đánh dấu phí vận chuyển chưa rõ, có thể sắp xếp thành một Skill so giá. Lần sau có người chỉ muốn xem có những mẫu nào, mục lục vẫn hiển thị, còn cả quy trình kiểm giá có thể đợi đến khi người dùng cần so giá mới nạp.
+Vẫn dùng mười món hàng ở Chương 1 để xét xem thông tin nào đáng viết thành Skill. Giả sử người dùng muốn so sánh giá đến tay đã gồm phí vận chuyển, thì chỉ cần đưa chi tiết hàng và địa chỉ nhận lần này vào ngữ cảnh hiện tại là đủ. Nếu nhóm thường xuyên phải so giá giữa các cửa hàng, thì cách đối chiếu quy cách, phân biệt đơn giá với giá trọn bộ, đánh dấu phí vận chuyển chưa rõ, có thể sắp xếp thành một Skill so giá. Lần sau có người chỉ muốn xem có những mẫu nào, mục lục vẫn hiển thị, còn cả quy trình kiểm giá có thể đợi đến khi người dùng cần so giá mới nạp.
 
 **Tầng thứ nhất là siêu dữ liệu.** Mỗi Skill dùng `SKILL.md` để tự mô tả; phần YAML frontmatter ở đầu file được ngăn bằng `---`, trong đó có `name` và `description`. Runtime trước hết sắp tên và mô tả thành mục lục, để mô hình phán đoán nhiệm vụ hiện tại cần những Skill nào. Cách sắp xếp và trình bày mục lục do Harness quản lý; quy trình đầy đủ được nạp sau khi Skill được chọn.
 
@@ -881,7 +881,7 @@ Người dùng giục: “Gọi lại lần nữa được không?” Phía trá
 
 ### Từ bản ghi thô đến trạng thái tường minh
 
-Xét một nhiệm vụ chăm sóc khách hàng qua điện thoại: hệ thống quy định trong cùng một nhiệm vụ, mỗi thương nhân chỉ được gọi tối đa ba lần. Giữa ba cuộc gọi có thể xen kẽ tìm kiếm, đọc tài liệu và câu hỏi thêm của người dùng. Muốn quyết định còn gọi tiếp được hay không, mô hình phải tìm đủ các bản ghi liên quan trong đoạn lịch sử này, phân biệt từng thương nhân, rồi tính số lần cộng dồn.
+Xét một nhiệm vụ chăm sóc khách hàng qua điện thoại: hệ thống quy định trong cùng một nhiệm vụ, mỗi doanh nghiệp chỉ được gọi tối đa ba lần. Giữa ba cuộc gọi có thể xen kẽ tìm kiếm, đọc tài liệu và câu hỏi thêm của người dùng. Muốn quyết định còn gọi tiếp được hay không, mô hình phải tìm đủ các bản ghi liên quan trong đoạn lịch sử này, phân biệt từng doanh nghiệp, rồi tính số lần cộng dồn.
 
 Runtime có thể cập nhật bộ đếm sau mỗi lần gọi, trả về thẳng “đây là cuộc gọi thứ 3 tới Xfinity, đã đạt giới hạn của nhiệm vụ này”. Quyết định kế tiếp có thể dùng ngay kết quả đó. Số lần gọi do chương trình duy trì, còn mô hình kết hợp với tiến độ nhiệm vụ để quyết định tiếp theo nên chờ, tìm kênh khác, hay giải thích tình hình hiện tại cho người dùng; tầng thực thi đồng thời dựa vào bộ đếm để kiểm tra các yêu cầu quay số tiếp theo.
 
@@ -893,7 +893,7 @@ Trajectory dài còn khiến việc tìm thông tin then chốt khó hơn. Gom m
 
 > **Thí nghiệm 2-8 ★★: Quan sát hiệu quả của thanh trạng thái Agent qua trực quan hóa attention**
 >
-> Thí nghiệm này dùng Qwen3-0.6B, dựng một trajectory hoàn tiền chăm sóc khách hàng: Agent đã gọi điện cho Xfinity ba lần, xen giữa là các lần tìm kiếm trên mạng, sau đó người dùng hỏi thêm “Có thể gọi lại để giục họ không?” Quy tắc hệ thống giới hạn mỗi thương nhân chỉ được gọi tối đa ba lần trong cùng một nhiệm vụ.
+> Thí nghiệm này dùng Qwen3-0.6B, dựng một trajectory hoàn tiền chăm sóc khách hàng: Agent đã gọi điện cho Xfinity ba lần, xen giữa là các lần tìm kiếm trên mạng, sau đó người dùng hỏi thêm “Có thể gọi lại để giục họ không?” Quy tắc hệ thống giới hạn mỗi doanh nghiệp chỉ được gọi tối đa ba lần trong cùng một nhiệm vụ.
 >
 > Hai nhóm đầu vào giữ nguyên lịch sử và câu hỏi thêm của người dùng. Nhóm A dùng thẳng trajectory thô; nhóm B thêm trạng thái sau vào cuối:
 >
@@ -968,7 +968,7 @@ Lượt sau có thể hoàn thành một mục TODO, cũng có thể thêm một
 
 Khi trạng thái rất ngắn, mà phía sau nó đã có rất nhiều kết quả công cụ nằm trong cache, giữ trạng thái cũ có thể rẻ hơn tính lại một hậu tố dài; khi trạng thái dài và cập nhật thường xuyên, thay thế giúp kiểm soát sự tích tụ của trạng thái lịch sử.
 
-Có thể dùng một mô hình thô để ước lượng điểm phân ranh giới: gọi mỗi bản trạng thái là $S$ token, mỗi lần thay thế thì phần hậu tố đã cache sau trạng thái cũ phải tính lại trung bình $R$ token (không tính nội dung gửi lần đầu ở lượt này), tổng cộng chèn trạng thái $N$ lần, và đơn giá đầu vào trong cache bằng $\alpha$ lần đầu vào thông thường. Bỏ qua chi phí chung của hai phương án, $C_{\text{thay thế}} \approx (N-1)(1-\alpha)R$, $C_{\text{nối thêm}} \approx \alpha S N(N-1)/2$. Với $N>1$, khi $\alpha SN/2 < (1-\alpha)R$ thì chi phí ước tính của nối thêm lâu dài thấp hơn; ngược lại, thay thế mỗi lượt rẻ hơn. Ở đây lấy đơn giá đầu vào thông thường làm đơn vị chi phí: phương án thay thế trả thêm phần chênh lệch giữa việc đọc hậu tố từ cache và xử lý lại nó, còn phương án nối thêm trả thêm phí đọc lặp lại các trạng thái lịch sử.
+Có thể dùng một mô hình thô để ước lượng điểm hòa vốn giữa hai cách: gọi mỗi bản trạng thái là $S$ token, mỗi lần thay thế thì phần hậu tố đã cache sau trạng thái cũ phải tính lại trung bình $R$ token (không tính nội dung gửi lần đầu ở lượt này), tổng cộng chèn trạng thái $N$ lần, và đơn giá đầu vào trong cache bằng $\alpha$ lần đầu vào thông thường. Bỏ qua chi phí chung của hai phương án, $C_{\text{thay thế}} \approx (N-1)(1-\alpha)R$, $C_{\text{nối thêm}} \approx \alpha S N(N-1)/2$. Với $N>1$, khi $\alpha SN/2 < (1-\alpha)R$ thì chi phí ước tính của nối thêm lâu dài thấp hơn; ngược lại, thay thế mỗi lượt rẻ hơn. Ở đây lấy đơn giá đầu vào thông thường làm đơn vị chi phí: phương án thay thế trả thêm phần chênh lệch giữa việc đọc hậu tố từ cache và xử lý lại nó, còn phương án nối thêm trả thêm phí đọc lặp lại các trạng thái lịch sử.
 
 Lấy ví dụ, mỗi lần chèn trạng thái 100 token, chèn tổng cộng 10 lần, đọc cache tính bằng một phần mười giá đầu vào thông thường. Phương án nối thêm ở các yêu cầu sau lần lượt đọc thêm 1, 2, …, 9 bản trạng thái cũ, chi phí phụ trội tương đương 450 token đầu vào thông thường. Nếu thay trạng thái khiến trung bình 1000 token đã cache phía sau phải xử lý lại, chín lần thay thế tốn thêm tương đương 8100 token đầu vào thông thường, nên nối thêm rẻ hơn. Nếu trạng thái cũ vốn nằm ở cuối cache, phía sau không có nội dung nào đã cache, thì $R=0$ trong công thức, và thay thế trực tiếp lại tiết kiệm được chi phí tương đương 450 token ấy.
 
@@ -986,7 +986,7 @@ Lấy ví dụ, mỗi lần chèn trạng thái 100 token, chèn tổng cộng 1
 >
 > **Nhận biết trạng thái hệ thống** cung cấp thời gian hiện tại, thư mục làm việc, hệ điều hành, Shell và phiên bản Python. Công cụ lệnh trong thí nghiệm nhận ra các thao tác chuyển thư mục đứng riêng, cập nhật thư mục làm việc do runtime duy trì, rồi dùng cho các lần gọi sau; còn thay đổi thư mục của tiến trình con trong lệnh phức hợp thì tuân theo phạm vi thực thi của tiến trình tương ứng. Các trường môi trường cũng giúp mô hình chọn công cụ khả dụng, ví dụ dựa vào hệ thống thực tế và phần mềm đã cài để chọn `apt` hay `brew`.
 >
-> Trong phép đối chiếu với Kimi K3 lần này, mỗi loại nhiệm vụ có năm trường hợp. Cấu hình dấu thời gian và cấu hình kết hợp đều đạt cả năm, các nhóm đối chứng tương ứng đạt ba; bộ đếm gọi công cụ và trạng thái hệ thống, bật hay tắt đều đạt năm. Cấu hình TODO đạt không, nhóm đối chứng đạt một; cấu hình lỗi chi tiết đạt bốn, nhóm đối chứng đạt năm.
+> Trong phép đối chiếu với Kimi K3 lần này, mỗi loại nhiệm vụ có năm trường hợp. Cấu hình dấu thời gian và cấu hình kết hợp đều đạt cả năm, các nhóm đối chứng tương ứng đạt ba; bộ đếm gọi công cụ và trạng thái hệ thống, bật hay tắt đều đạt năm. Cấu hình TODO không đạt trường hợp nào, nhóm đối chứng đạt một; cấu hình lỗi chi tiết đạt bốn, nhóm đối chứng đạt năm.
 
 **Thanh trạng thái nên do mã duy trì càng nhiều càng tốt.** Mô hình sẽ dùng thẳng các thống kê và giới hạn trong đó, một dòng “đã gọi ba lần” sai có thể làm thay đổi hành động về sau. Đếm, thời gian và chuyển đổi trạng thái giao cho chương trình; khi cần hiểu ngữ nghĩa, trước hết để mô hình trích xuất từng mục, rồi để mã tổng hợp và kiểm chứng, tránh bắt mô hình thống kê cả đoạn lịch sử dài trong một lần. Giữ quan hệ tương ứng giữa sự kiện gốc, kết quả trích xuất và trạng thái cuối cùng, để dễ phát hiện đếm trùng, đếm sót và nhầm lẫn nguồn.
 
@@ -1045,27 +1045,27 @@ Xem trước phương án tóm tắt lẻ trong Hình 2-16: số ký tự sau x�
 >
 > Thí nghiệm này dùng Kimi K3 để tìm hiểu tình trạng nghề nghiệp của các nhà đồng sáng lập OpenAI. Nhiệm vụ đòi hỏi lần lượt lập danh sách nhân sự, tra cứu kinh nghiệm và thay đổi chức vụ, rồi đối chiếu các dữ kiện liên quan với nguồn. Để quan sát việc nén và xử lý tràn, thí nghiệm đặt ngân sách ngữ cảnh phía ứng dụng là 128.000 token, giữ một mốc cơ sở không nén, rồi so sánh năm cách xử lý, mỗi cách chạy tối đa 15 lượt[^ch2-compression-results].
 >
-> **Chiến lược một: không nén.** Kết quả tìm kiếm và đọc trang được đưa nguyên vẹn vào lịch sử. Bảy lần gọi công cụ đếm được 367.246 ký tự gốc. Chương trình kích hoạt cơ chế bảo vệ và dừng ở lượt thứ năm, tổng lượng dùng của Agent chính là 166.043 token. Phiên bản cũ dùng tổng số token đầu vào của mọi lần yêu cầu để kích hoạt bảo vệ, nên con số 165.227 trong thông báo lỗi là đầu vào cộng dồn. Chẳng hạn, cùng một đoạn lịch sử được gửi mỗi lần một lượt trong ba lượt yêu cầu, thì sẽ bị cộng ba lần.
+> **Chiến lược một: không nén.** Kết quả tìm kiếm và đọc trang được đưa nguyên vẹn vào lịch sử. Bảy lần gọi công cụ đếm được 367.246 ký tự gốc. Chương trình kích hoạt cơ chế bảo vệ và dừng ở lượt thứ năm, tổng lượng dùng của Agent chính là 166.043 token. Phiên bản cũ dùng tổng số token đầu vào của mọi lần yêu cầu để kích hoạt bảo vệ, nên con số 165.227 trong thông báo lỗi là đầu vào cộng dồn. Chẳng hạn, cùng một đoạn lịch sử được gửi đi trong cả ba lượt yêu cầu thì sẽ bị cộng ba lần.
 >
-> **Chiến lược hai: tóm tắt lẻ.** Mỗi kết quả tìm kiếm được tóm tắt riêng thành hai đến ba đoạn, giữ nội dung chính của từng trang. Cách này dễ xử lý song song, cũng dễ giữ ranh giới giữa các trang; khi nhiều trang cùng kể về một sự kiện, thông tin trùng lặp vẫn đi vào lịch sử. Cấu hình này dùng mười hai lượt để sinh câu trả lời cuối, Agent chính dùng tổng cộng 276.608 token, tỉ lệ nén ký tự là 10,9%.
+> **Chiến lược hai: tóm tắt lẻ.** Mỗi kết quả tìm kiếm được tóm tắt riêng thành hai đến ba đoạn, giữ nội dung chính của từng trang. Cách này dễ xử lý song song, cũng dễ giữ ranh giới giữa các trang; khi nhiều trang cùng kể về một sự kiện, thông tin trùng lặp vẫn đi vào lịch sử. Cấu hình này dùng mười hai lượt để sinh câu trả lời cuối, Agent chính dùng tổng cộng 276.608 token, tỷ lệ nén ký tự là 10,9%.
 >
-> **Chiến lược ba: tóm tắt gộp.** Gộp một lô kết quả tìm kiếm rồi sinh một bản tóm tắt tổng hợp, tiện cho việc gom các dữ kiện trùng lặp và quan hệ giữa các nguồn khác nhau. Cấu hình này dùng mười lượt để sinh câu trả lời cuối, Agent chính dùng tổng cộng 93.449 token, tỉ lệ nén ký tự là 4,3%.
+> **Chiến lược ba: tóm tắt gộp.** Gộp một lô kết quả tìm kiếm rồi sinh một bản tóm tắt tổng hợp, tiện cho việc gom các dữ kiện trùng lặp và quan hệ giữa các nguồn khác nhau. Cấu hình này dùng mười lượt để sinh câu trả lời cuối, Agent chính dùng tổng cộng 93.449 token, tỷ lệ nén ký tự là 4,3%.
 >
-> **Chiến lược bốn: tóm tắt theo ngữ cảnh.** Khi nén, cung cấp đồng thời truy vấn hiện tại và thông tin đã nắm được, ví dụ thêm `Given the search query: {query}` và `Current context: {context}` vào prompt. Mô hình dựa vào đó giữ các dữ kiện liên quan đến câu hỏi hiện tại, và ưu tiên bổ sung những chỗ còn thiếu trong bản tóm tắt sẵn có. Cấu hình này dùng bảy lượt để sinh câu trả lời cuối, Agent chính dùng tổng cộng 40.157 token, tỉ lệ nén ký tự là 3,0%. Trong đó có một lần nén đã gom khoảng một trăm năm mươi nghìn ký tự thành khoảng hai nghìn ký tự mà vẫn giữ được tên nhân sự và thay đổi chức vụ.
+> **Chiến lược bốn: tóm tắt theo ngữ cảnh.** Khi nén, cung cấp đồng thời truy vấn hiện tại và thông tin đã nắm được, ví dụ thêm `Given the search query: {query}` và `Current context: {context}` vào prompt. Mô hình dựa vào đó giữ các dữ kiện liên quan đến câu hỏi hiện tại, và ưu tiên bổ sung những chỗ còn thiếu trong bản tóm tắt sẵn có. Cấu hình này dùng bảy lượt để sinh câu trả lời cuối, Agent chính dùng tổng cộng 40.157 token, tỷ lệ nén ký tự là 3,0%. Trong đó có một lần nén đã gom khoảng một trăm năm mươi nghìn ký tự thành khoảng hai nghìn ký tự mà vẫn giữ được tên nhân sự và thay đổi chức vụ.
 >
 > **Chiến lược năm: tóm tắt theo ngữ cảnh kèm trích dẫn.** Trong bản tóm tắt bám theo nhiệm vụ, giữ lại đường dẫn nguồn ứng với từng dữ kiện. Cấu hình này dùng mười lượt để sinh câu trả lời cuối, Agent chính dùng tổng cộng 222.992 token. Tổng hợp theo bản ghi công cụ, tài liệu sau xử lý có 52.891 ký tự, nguyên văn có 1.295.044 ký tự, chia ra được khoảng 4,1%.
 >
-> **Chiến lược sáu: cửa sổ thích ứng.** Giai đoạn đầu giữ tài liệu gốc, khi đầu vào chạm ngưỡng mới sắp xếp theo lô. Thí nghiệm dùng ba cơ chế: kích hoạt nén khi vượt 80% ngân sách; tổng hợp các kết quả công cụ chưa được nén; gắn nhãn `[COMPRESSED]` cho các kết quả đã xử lý để tránh tóm tắt lặp. Với ngân sách 128.000 token của thí nghiệm, ngưỡng kích hoạt là 102.400 token. Cấu hình này dùng bảy lượt để sinh câu trả lời cuối, Agent chính dùng tổng cộng 174.601 token. Bản ghi lịch sử kích hoạt ngưỡng theo đầu vào cộng dồn; về sau chương trình đã đổi sang kiểm tra kích thước đầu vào của lần yêu cầu gần nhất.
+> **Chiến lược sáu: cửa sổ thích ứng.** Giai đoạn đầu giữ tài liệu gốc, khi đầu vào chạm ngưỡng mới sắp xếp theo lô. Thí nghiệm dùng ba cơ chế: kích hoạt nén khi vượt 80% ngân sách; tổng hợp các kết quả công cụ chưa được nén; gắn nhãn `[COMPRESSED]` cho các kết quả đã xử lý để tránh tóm tắt lặp. Với ngân sách 128.000 token của thí nghiệm, ngưỡng kích hoạt là 102.400 token. Cấu hình này dùng bảy lượt để sinh câu trả lời cuối, Agent chính dùng tổng cộng 174.601 token. Lần chạy được ghi lại này kích hoạt ngưỡng theo đầu vào cộng dồn; về sau chương trình đã đổi sang kiểm tra kích thước đầu vào của lần yêu cầu gần nhất.
 >
 > Hình 2-17 đối chiếu đầu vào và đầu ra của sáu chiến lược.
 >
 > ![Hình 2-17 Luồng xử lý của sáu chiến lược nén](images/revised/fig2-17.svg)
 >
-> Khi so sánh các con số trong Hình 2-16, phải phân biệt ba đại lượng: đầu vào của một lần yêu cầu quyết định có chạm ngân sách cửa sổ hay không; token cộng dồn phản ánh lượng dùng qua nhiều lượt gọi; tỉ lệ nén ký tự mô tả tỉ số giữa độ dài sau xử lý và độ dài gốc của phần tài liệu được thống kê. Lượng dùng cộng dồn ở đây lấy từ đầu vào và đầu ra trong các lượt yêu cầu của Agent chính; các yêu cầu mô hình riêng để sinh bản tóm tắt không được gộp vào trường này.
+> Khi so sánh các con số trong Hình 2-16, phải phân biệt ba đại lượng: đầu vào của một lần yêu cầu quyết định có chạm ngân sách cửa sổ hay không; token cộng dồn phản ánh lượng dùng qua nhiều lượt gọi; tỷ lệ nén ký tự mô tả tỉ số giữa độ dài sau xử lý và độ dài gốc của phần tài liệu được thống kê. Lượng dùng cộng dồn ở đây lấy từ đầu vào và đầu ra trong các lượt yêu cầu của Agent chính; các yêu cầu mô hình riêng để sinh bản tóm tắt không được gộp vào trường này.
 >
-> Khi tái hiện thí nghiệm, cấu hình mô hình và dịch vụ tìm kiếm thật theo hướng dẫn đi kèm, rồi chạy `python experiment.py -m kimi-k3 -n 15 -o results/reproduction.json` trong thư mục thí nghiệm. Đọc `metrics` của từng chiến lược: dùng `total_compressed_size / total_original_size` để tính lại tỉ lệ ký tự, rồi so sánh `total_tokens` và `iterations`. Mốc cơ sở không nén cũng thêm định dạng như tiêu đề, URL cho phần thân kết quả tìm kiếm, nên số ký tự sau xử lý có thể nhỉnh hơn nguyên văn một chút. Chương trình thí nghiệm hễ nhận được câu trả lời cuối là ghi nhóm đó là hoàn thành. Thử tra cùng một người trong hai sản phẩm cuối: nhóm kèm trích dẫn ghi nơi làm việc của Pamela Vagata là Pebblebed, còn bảng tổng hợp của nhóm cửa sổ hóa lại ghi là Stripe. Câu trả lời trước có nhắc đến trang web của tổ chức nhưng không đưa ra đường dẫn mở được. Cả hai nhóm đều giao bảng tổng hợp, nhưng thông tin về nhân vật lại mâu thuẫn nhau.
+> Khi tái hiện thí nghiệm, cấu hình mô hình và dịch vụ tìm kiếm thật theo hướng dẫn đi kèm, rồi chạy `python experiment.py -m kimi-k3 -n 15 -o results/reproduction.json` trong thư mục thí nghiệm. Đọc `metrics` của từng chiến lược: dùng `total_compressed_size / total_original_size` để tính lại tỷ lệ ký tự, rồi so sánh `total_tokens` và `iterations`. Mốc cơ sở không nén cũng thêm định dạng như tiêu đề, URL cho phần thân kết quả tìm kiếm, nên số ký tự sau xử lý có thể nhỉnh hơn nguyên văn một chút. Chương trình thí nghiệm hễ nhận được câu trả lời cuối là ghi nhóm đó là hoàn thành. Thử tra cùng một người trong hai sản phẩm cuối: nhóm kèm trích dẫn ghi nơi làm việc của Pamela Vagata là Pebblebed, còn bảng tổng hợp của nhóm cửa sổ thích ứng lại ghi là Stripe. Câu trả lời trước có nhắc đến trang web của tổ chức nhưng không đưa ra đường dẫn mở được. Cả hai nhóm đều giao bảng tổng hợp, nhưng thông tin về nhân vật lại mâu thuẫn nhau.
 
-[^ch2-compression-results]: File kết quả `kimi_k3_real_20260718.json` của Thí nghiệm 2-10 lưu các trường thống kê, câu trả lời cuối và dấu thời gian của từng chiến lược, có thể dùng trực tiếp để tính lại tỉ lệ ký tự. Lần chạy ngày 18 tháng 7 năm 2026 dùng điều kiện bảo vệ phiên bản cũ; bản sửa mã ngày 22 tháng 7 (commit `aea4d72`) đã đổi đầu vào cộng dồn thành đầu vào của lượt yêu cầu gần nhất.
+[^ch2-compression-results]: File kết quả `kimi_k3_real_20260718.json` của Thí nghiệm 2-10 lưu các trường thống kê, câu trả lời cuối và dấu thời gian của từng chiến lược, có thể dùng trực tiếp để tính lại tỷ lệ ký tự. Lần chạy ngày 18 tháng 7 năm 2026 dùng điều kiện bảo vệ phiên bản cũ; bản sửa mã ngày 22 tháng 7 (commit `aea4d72`) đã đổi đầu vào cộng dồn thành đầu vào của lượt yêu cầu gần nhất.
 
 ### Cơ chế nén phân tầng cho môi trường sản xuất
 
@@ -1079,7 +1079,7 @@ Xem trước phương án tóm tắt lẻ trong Hình 2-16: số ký tự sau x�
 
 Các cơ chế này có thể phối hợp theo tầng: kiểm soát ở lối vào giảm những đầu ra lớn đổ vào một lúc, sắp xếp cục bộ kiểm soát sự tăng trưởng hằng ngày, còn tóm tắt theo giai đoạn và nén toàn bộ lưu thông tin bàn giao cho nhiệm vụ dài.
 
-Khi đọc dsh-superagent, tác giả để ý một chi tiết: sự kiện và kết quả công cụ có thể gửi bản tóm tắt cùng ID đối tượng trước, khi cần chi tiết mới dùng ID để đọc. Giả sử phía sau chạy xong một bộ kiểm thử, chỉ báo cho phía trước “có hai mục thất bại”, thì phía trước báo được tiến độ, nhưng không trả lời được câu người dùng hỏi tiếp: “Có phải hai mục hôm qua không?” Nếu bản tóm tắt kèm định danh của bản ghi kiểm thử lần này, phía trước có thể lấy về tên các ca kiểm thử thất bại để đối chiếu với bản ghi hôm qua.
+Khi đọc dsh-superagent, tác giả để ý một chi tiết: sự kiện và kết quả công cụ có thể gửi bản tóm tắt cùng ID đối tượng trước, khi cần chi tiết mới dùng ID để đọc. Giả sử một tác vụ nền chạy xong một bộ kiểm thử và chỉ báo cho Agent tiền cảnh “có hai mục thất bại”, thì Agent tiền cảnh báo được tiến độ, nhưng không trả lời được câu người dùng hỏi tiếp: “Có phải hai mục hôm qua không?” Nếu bản tóm tắt kèm định danh của bản ghi kiểm thử lần này, Agent tiền cảnh có thể lấy về tên các ca kiểm thử thất bại để đối chiếu với bản ghi hôm qua.
 
 ### Nguyên tắc thiết kế chiến lược nén
 
@@ -1098,7 +1098,7 @@ Các quyết định kiến trúc ban đầu, lý do đằng sau ràng buộc v�
 
 Ví dụ, để “tìm hàm xử lý callback thanh toán”, nếu Agent chính tự tìm, có thể phải đọc hơn chục file. Giao cho một Agent con tìm kiếm, có thể yêu cầu nó trả về tên hàm, module chứa hàm, các điểm gọi và căn cứ phán đoán. Câu trả lời của nó có thể là “`handle_callback` trong module thanh toán phụ trách xử lý callback, ngoài ra còn hai điểm gọi”, kèm các trích dẫn định vị được. Agent chính dựa vào kết quả này để quyết định có đọc tiếp mã liên quan hay không.
 
-Mô tả nhiệm vụ phải đủ đầy đủ: mục tiêu là gì, phạm vi tìm kiếm rộng đến đâu, phải tuân thủ những ràng buộc nào, trả về theo định dạng nào, và gặp chỗ mơ hồ thì xử lý ra sao. Nếu cả yêu cầu ủy thác lẫn kết quả trả về đều được nối vào lịch sử, tiền tố sẵn có của Agent chính vẫn tái sử dụng được.
+Mô tả nhiệm vụ phải đầy đủ: mục tiêu là gì, phạm vi tìm kiếm rộng đến đâu, phải tuân thủ những ràng buộc nào, trả về theo định dạng nào, và gặp chỗ mơ hồ thì xử lý ra sao. Nếu cả yêu cầu ủy thác lẫn kết quả trả về đều được nối vào lịch sử, tiền tố sẵn có của Agent chính vẫn tái sử dụng được.
 
 Chương 4 sẽ bàn về thiết kế giao diện khi dùng Agent con như một công cụ, Chương 10 bàn sâu hơn về cách phân công ngữ cảnh trong hệ thống multi-agent.
 
@@ -1120,4 +1120,4 @@ Nhiệm vụ này kết thúc thì bộ đếm ba cuộc gọi có thể lưu tr
 6. ★★★ Ví dụ cửa hàng thú cưng bao gồm cả truy xuất từng bản ghi lẫn thống kê tổng thể. Hãy thiết kế bản ghi gốc, bản tóm tắt thống kê và cơ chế định tuyến truy vấn để hệ thống trả lời hiệu quả cả hai loại câu hỏi, và nói rõ khi nào phải cập nhật bản tóm tắt.
 7. ★★★ Một Skill đã có trong mục lục, nhưng mô hình không nhận ra nó áp dụng cho nhiệm vụ hiện tại. Bạn sẽ rà soát vấn đề từ bốn khía cạnh: mô tả, cách tổ chức mục lục, kích hoạt tường minh và các mẫu đánh giá như thế nào?
 8. ★★ Skill đã được nạp thành công, nhưng mô hình lại bỏ sót bước xác minh trong đó. Hãy thiết kế một thí nghiệm đối chứng để phân biệt vấn đề nằm ở khâu kích hoạt, hiểu, dùng công cụ hay phán định hoàn thành, và so sánh kết quả giữa các mô hình khác nhau.
-9. ★★★ Hệ thống có rất nhiều công cụ, và tập công cụ lại thường xuyên thay đổi. Bạn sẽ bố trí vị trí của định nghĩa cố định, mục lục công cụ, kết quả nạp theo nhu cầu và trạng thái lúc chạy như thế nào? Hãy cân nhắc đồng thời độ chính xác khi phát hiện, ngân sách ngữ cảnh và tỉ lệ trúng cache.
+9. ★★★ Hệ thống có rất nhiều công cụ, và tập công cụ lại thường xuyên thay đổi. Bạn sẽ bố trí vị trí của định nghĩa cố định, mục lục công cụ, kết quả nạp theo nhu cầu và trạng thái lúc chạy như thế nào? Hãy cân nhắc đồng thời độ chính xác khi phát hiện, ngân sách ngữ cảnh và tỷ lệ trúng cache.

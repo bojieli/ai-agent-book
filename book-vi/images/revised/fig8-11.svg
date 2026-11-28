@@ -5,7 +5,7 @@
 <rect width="900" height="643" fill="#ffffff" y="0" />
 <rect x="20" y="20" width="860" height="105" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
 <rect x="20" y="20" width="860" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="450" y="53" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">Chẩn đoán kết quả nhiệm vụ trước</text><text x="450" y="100" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="22.0" font-weight="400" fill="#292929">pass@k · tỷ lệ phân tích định dạng · tiến triển từng phần · quy nguyên lỗi</text><path d="M160 125 L160 180" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<text x="450" y="53" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">Trước hết, chẩn đoán kết quả nhiệm vụ</text><text x="450" y="100" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="22.0" font-weight="400" fill="#292929">pass@k · tỷ lệ phân tích định dạng · tiến triển từng phần · quy nguyên lỗi</text><path d="M160 125 L160 180" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
 <path d="M450 125 L450 180" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
 <path d="M740 125 L740 180" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
 <rect x="20" y="180" width="270" height="215" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />

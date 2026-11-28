@@ -2,7 +2,7 @@
 
 **Khi mô hình nền đã cố định, tổ chức lại hoặc mở rộng giao diện quan sát và giao diện hành động thường là một trong những biện pháp kỹ thuật hiệu quả nhất để nâng cao kết quả nhiệm vụ của Agent.** Ở các chương trước, Agent thường đợi người dùng nói xong rồi mới tra cứu tài liệu, gọi công cụ và đưa ra câu trả lời. Trong lúc nó chờ kết quả công cụ, người dùng và môi trường bên ngoài vẫn tiếp tục thay đổi.
 
-Người dùng nhờ trợ lý đổi vé máy bay. Trợ lý đang hỏi tổng đài viên về chuyến bay thì người dùng nhắn thêm "Tôi còn một kiện hành lý cần ký gửi"; tổng đài viên vẫn đang nói, còn giá vé hiển thị trên màn hình cũng có thể thay đổi. Trợ lý cần kịp thời hỏi rõ giá vé đã gồm hành lý ký gửi chưa, đồng thời phải để ý xem mức giá vừa báo còn hiệu lực không. Ở đây có hai câu hỏi thiết kế: trợ lý biết được thay đổi qua những kênh nào, và nó có thể phản ứng vào lúc nào? Chương này trước hết bàn về email và kết quả công cụ đến bất đồng bộ, sau đó xem xét giọng nói liên tục, màn hình biến đổi và phản hồi chuyển động của robot.
+Người dùng nhờ trợ lý đổi vé máy bay. Trợ lý đang hỏi tổng đài viên về chuyến bay thì người dùng nhắn thêm “Tôi còn một kiện hành lý cần ký gửi”; tổng đài viên vẫn đang nói, còn giá vé hiển thị trên màn hình cũng có thể thay đổi. Trợ lý cần kịp thời hỏi rõ giá vé đã gồm hành lý ký gửi chưa, đồng thời phải để ý xem mức giá vừa báo còn hiệu lực không. Ở đây có hai câu hỏi thiết kế: trợ lý biết được thay đổi qua những kênh nào, và nó có thể phản ứng vào lúc nào? Chương này trước hết bàn về email và kết quả công cụ đến bất đồng bộ, sau đó xem xét giọng nói liên tục, màn hình biến đổi và phản hồi chuyển động của robot.
 
 ## Mở rộng phương thức và thời điểm kích hoạt
 
@@ -14,7 +14,7 @@ Người dùng nhờ trợ lý đổi vé máy bay. Trợ lý đang hỏi tổng
 |---|---|---|
 | Tổ chức nội dung (Chương 2–5) | Ngữ cảnh, bộ nhớ và cơ sở tri thức tổ chức thông tin ra quyết định | Công cụ và mã biểu đạt thao tác có thể thực thi |
 | Phương thức (chương này) | Giọng nói, màn hình, cảm biến vật lý | Nói, nhấp chuột, chuyển động khớp |
-| Thời điểm (chương này) | Chủ động truy vấn, sự kiện được đẩy tới, đầu vào liên tục | Thực thi vượt lượt, hủy, giành quyền và khôi phục |
+| Thời điểm (chương này) | Chủ động truy vấn, sự kiện được đẩy tới, đầu vào liên tục | Thực thi kéo dài qua nhiều lượt, hủy, chiếm quyền (preemption) và khôi phục |
 
 Ngữ cảnh chứa thông tin cần cho một lần ra quyết định cụ thể, còn không gian quan sát mô tả phạm vi thông tin mà hệ thống có thể nhận; công cụ cung cấp giao diện cụ thể, còn không gian hành động mô tả phạm vi hành động mà hệ thống được phép thực hiện. Khi mở rộng giao diện, các phạm vi này vẫn bị ràng buộc bởi năng lực thiết bị, tham số, quyền hạn và môi trường chạy.
 
@@ -74,27 +74,27 @@ Ví dụ, tổng đài viên cần chủ tài khoản tham gia cuộc gọi ba b
 
 ### Công cụ kích hoạt sự kiện
 
-Nếu giao cho trợ lý việc "khách hàng hồi âm thì nhắc tôi", làm sao nó tỉnh dậy đúng lúc vào ngày mai? Trước hết hãy xem hộp thư có đẩy sự kiện khi thư đến được không; với hệ thống chỉ cho phép chủ động truy vấn, trợ lý phải nhớ lần kiểm tra tiếp theo. Ba giao diện minh họa dưới đây giao các điều kiện chờ ấy cho runtime lưu giữ, để mô hình có thể kết thúc lượt làm việc hiện tại.
+Nếu giao cho trợ lý việc “khách hàng hồi âm thì nhắc tôi”, làm sao nó tỉnh dậy đúng lúc vào ngày mai? Trước hết hãy xem hộp thư có đẩy sự kiện khi thư đến được không; với hệ thống chỉ cho phép chủ động truy vấn, trợ lý phải nhớ lần kiểm tra tiếp theo. Ba giao diện minh họa dưới đây giao các điều kiện chờ ấy cho runtime lưu giữ, để mô hình có thể kết thúc lượt làm việc hiện tại.
 
-**Bộ hẹn giờ (`set_timer`)** dùng để đánh thức một tác vụ vào thời điểm đã hẹn. Bộ hẹn giờ một lần hợp với việc như "10 giờ sáng thứ Hai tuần sau gọi ngân hàng hỏi tiến độ khoản vay mua nhà"; bộ hẹn giờ lặp hợp với việc kiểm tra tình trạng dịch vụ mỗi giờ một lần. Gửi email rồi chờ hồi âm, hay gặp ngoài giờ làm việc thì gọi lại sau, cũng có thể sắp xếp bằng bộ hẹn giờ. Giao diện cần lưu múi giờ, điều kiện kích hoạt và định danh tác vụ, đồng thời cung cấp lối hủy hoặc sửa. Khi dịch vụ bên ngoài chỉ hỗ trợ truy vấn, tác vụ hẹn giờ còn có thể đảm nhận việc hỏi tiến độ định kỳ.
+**Bộ hẹn giờ (`set_timer`)** dùng để đánh thức một tác vụ vào thời điểm đã hẹn. Bộ hẹn giờ một lần hợp với việc như “10 giờ sáng thứ Hai tuần sau gọi ngân hàng hỏi tiến độ khoản vay mua nhà”; bộ hẹn giờ lặp hợp với việc kiểm tra tình trạng dịch vụ mỗi giờ một lần. Gửi email rồi chờ hồi âm, hay gặp ngoài giờ làm việc thì gọi lại sau, cũng có thể sắp xếp bằng bộ hẹn giờ. Giao diện cần lưu múi giờ, điều kiện kích hoạt và định danh tác vụ, đồng thời cung cấp lối hủy hoặc sửa. Khi dịch vụ bên ngoài chỉ hỗ trợ truy vấn, tác vụ hẹn giờ còn có thể đảm nhận việc hỏi tiến độ định kỳ.
 
 **Giám sát tác vụ nền (`monitor_shell`)** dùng để biến một lệnh chạy lâu thành các sự kiện tiến độ. Khi khởi động, nó trả về định danh tác vụ; trong lúc chạy, nó thông báo theo đầu ra mới, từ khóa hoặc thay đổi trạng thái; khi kết thúc, nó báo trạng thái thoát và kết quả.
 
 Để mô hình hỏi tiến độ liên tục thì ngay cả khi trạng thái không đổi cũng tốn một lần gọi mô hình; chỉ chờ thông báo kết thúc thì lại có thể bỏ lỡ sự cố giữa chừng. Vì vậy, tác giả khuyên giao việc giám sát cho runtime, chỉ đánh thức mô hình khi xuất hiện tiến độ hữu ích, lỗi hoặc tình trạng đứng im. Như vậy vừa có thể tiếp tục trao đổi trong lúc build, vừa có thể kịp thời can thiệp khi có bất thường. Quy tắc giám sát có thể đặt bộ lọc, gộp và giới hạn tần suất để mỗi dòng log không gây ra một lần gọi mô hình.
 
-Ví dụ, sau khi đăng ký nhận cập nhật trạng thái cho một phiếu yêu cầu đang chờ xử lý, mô hình có thể kết thúc lượt suy luận này và đợi thông báo mang mã phiếu đánh thức nó. Nếu bên kia chỉ cung cấp lối truy vấn, mô hình có thể tự đặt một tác vụ hẹn giờ cho lần kiểm tra sau. Đến lúc đó nếu thấy "vẫn đang xử lý" thì hẹn thêm một lần nữa; nếu thấy phiếu đã xử lý xong thì hủy các lần kiểm tra tiếp theo. Cả hai cách đều để runtime lo việc chờ, mô hình chỉ đánh giá lại khi nhận được thông báo hoặc khi bộ hẹn giờ hết hạn.
+Ví dụ, sau khi đăng ký nhận cập nhật trạng thái cho một phiếu yêu cầu đang chờ xử lý, mô hình có thể kết thúc lượt suy luận này và đợi thông báo mang mã phiếu đánh thức nó. Nếu bên kia chỉ cung cấp lối truy vấn, mô hình có thể tự đặt một tác vụ hẹn giờ cho lần kiểm tra sau. Đến lúc đó nếu thấy “vẫn đang xử lý” thì hẹn thêm một lần nữa; nếu thấy phiếu đã xử lý xong thì hủy các lần kiểm tra tiếp theo. Cả hai cách đều để runtime lo việc chờ, mô hình chỉ đánh giá lại khi nhận được thông báo hoặc khi bộ hẹn giờ hết hạn.
 
-**Kênh sự kiện bên ngoài (`connect_channel`)** dùng để đăng ký nhận email, tin nhắn tức thời hoặc callback API. Bộ điều hợp kênh xác minh nguồn, ánh xạ định danh riêng của dịch vụ thành luồng và đối tượng liên quan, rồi gửi sự kiện theo định dạng thống nhất; mục "Tầng tiếp nhận" ở phần sau sẽ trình bày kỹ. Thông báo trạng thái cuộc gọi của PineClaw thuộc loại này.
+**Kênh sự kiện bên ngoài (`connect_channel`)** dùng để đăng ký nhận email, tin nhắn tức thời hoặc callback API. Bộ điều hợp kênh xác minh nguồn, ánh xạ định danh riêng của dịch vụ thành luồng và đối tượng liên quan, rồi gửi sự kiện theo định dạng thống nhất; mục “Tầng tiếp nhận” ở phần sau sẽ trình bày kỹ. Thông báo trạng thái cuộc gọi của PineClaw thuộc loại này.
 
 Cả ba loại công cụ đều cần xác định rõ điều kiện kích hoạt, quy tắc lọc và payload của sự kiện. Payload nên chứa định danh sự kiện, thời điểm xảy ra, nguồn, tác vụ liên quan và nội dung cần thiết, để Agent đánh giá được sự kiện còn hiệu lực không và bước tiếp theo cần những thông tin gì.
 
 ### Công cụ giao tiếp với người dùng
 
-Quay lại tác vụ đổi vé. Đặt câu hỏi cho tổng đài viên, gửi cho người dùng một tin xác nhận mà họ có thể trả lời ngay, và ghi vào hồ sơ tác vụ "đang chờ hồi âm" là ba việc ghi vào ba chỗ khác nhau. Người dùng có thể tạm rời đi, đến khi cần bổ sung điều kiện, xác nhận quyết định hoặc nhận kết quả thì quay lại.
+Quay lại tác vụ đổi vé. Đặt câu hỏi cho tổng đài viên, gửi cho người dùng một tin xác nhận mà họ có thể trả lời ngay, và ghi vào hồ sơ tác vụ “đang chờ hồi âm” là ba việc ghi vào ba chỗ khác nhau. Người dùng có thể tạm rời đi, đến khi cần bổ sung điều kiện, xác nhận quyết định hoặc nhận kết quả thì quay lại.
 
 Giao diện hội thoại có thể hiển thị câu trả lời cuối cùng, tiến độ công cụ và kết quả thực thi; còn công cụ giao tiếp thì chỉ định rõ người nhận, kênh, nội dung tin nhắn và tệp đính kèm. Mô hình quyết định cần nói gì, Harness kiểm tra đích đến và quyền hạn, dịch vụ tin nhắn thực hiện việc gửi. Runtime cũng có thể tự định tuyến câu trả lời cuối cùng về phiên ban đầu. Hai cách này có thể dùng phối hợp.
 
-Tương tác đa kênh của OpenClaw cho phép người dùng gửi tin nhắn, chờ tiến độ và nhận nhắc nhở như khi liên lạc với một thư ký. "Cảm giác như người thật" này đến từ trạng thái tác vụ được duy trì liên tục và sự giao tiếp kịp thời. Người dùng có thể tiếp tục tác vụ trên kênh quen thuộc, còn Agent phải giữ nhất quán danh tính, phiên và liên kết giữa các tin nhắn.
+Tương tác đa kênh của OpenClaw cho phép người dùng gửi tin nhắn, chờ tiến độ và nhận nhắc nhở như khi liên lạc với một thư ký. “Cảm giác như người thật” này đến từ trạng thái tác vụ được duy trì liên tục và sự giao tiếp kịp thời. Người dùng có thể tiếp tục tác vụ trên kênh quen thuộc, còn Agent phải giữ nhất quán danh tính, phiên và liên kết giữa các tin nhắn.
 
 Nội dung giao tiếp cũng có thể thay đổi theo tác vụ: tiến độ ngắn thì dùng chữ, kết quả phức tạp thì kèm hình ảnh hoặc tệp, thông tin cần điền thì dùng thẻ có cấu trúc, sản phẩm tương tác thì dùng generative UI giới thiệu ở Chương 5. Khi kênh hỗ trợ xác nhận đã gửi hoặc đã đọc, hệ thống lưu lại trạng thái tương ứng; việc gửi lại khi thất bại, tin nhắn trùng lặp và đồng bộ giữa các kênh cũng được đưa vào hồ sơ gửi.
 
@@ -114,7 +114,7 @@ Số điện thoại thuộc về ai quyết định ai có thể tiếp tục c
 
 Lấy việc xin miễn giảm phí làm ví dụ: trợ lý có thể liên hệ doanh nghiệp với tư cách người đại diện được ủy quyền. Nếu tổng đài viên yêu cầu chính chủ xác minh bằng lời, có thể mời người dùng tham gia cuộc gọi ba bên, xác minh xong thì trợ lý tiếp tục trao đổi. Nếu doanh nghiệp sẽ gọi lại cho người dùng, trước tiên hãy chuyển cho người dùng mã hồ sơ, những điều đã thỏa thuận và các vấn đề cần xác minh. Khi báo cáo với người dùng, cũng phải nói rõ bằng chứng đang có: tổng đài viên mới hứa miệng sẽ miễn giảm thì ghi lại lời hứa ấy; về sau tra thấy hóa đơn đã cập nhật thì mới báo phí đã thực sự được miễn giảm.
 
-Khi tác giả làm lại thẻ tín dụng Bank of America lúc ở Bắc Kinh, Pine đã liên hệ ngân hàng, sắp xếp làm thẻ gấp và xin được miễn khoản phí làm gấp 15 đô la. Khi cuộc gọi kết thúc, trợ lý đã có thể báo cáo ngân hàng tiếp nhận việc gì, đồng ý miễn khoản phí nào. Vài ngày sau nếu người dùng hỏi "thẻ mới đến đâu rồi", thì phải tra lại vận đơn hoặc nhờ người nhận xác nhận.
+Khi tác giả làm lại thẻ tín dụng Bank of America lúc ở Bắc Kinh, Pine đã liên hệ ngân hàng, sắp xếp làm thẻ gấp và xin được miễn khoản phí làm gấp 15 đô la. Khi cuộc gọi kết thúc, trợ lý đã có thể báo cáo ngân hàng tiếp nhận việc gì, đồng ý miễn khoản phí nào. Vài ngày sau nếu người dùng hỏi “thẻ mới đến đâu rồi”, thì phải tra lại vận đơn hoặc nhờ người nhận xác nhận.
 
 Máy tính ảo và điện thoại ảo cung cấp môi trường thao tác chạy liên tục. Máy ảo có thể chạy hệ thống desktop, container hợp với việc cô lập tiến trình và các phụ thuộc, trình giả lập Android chạy ứng dụng di động. Chúng hỗ trợ chạy nền, cũng giảm được việc thao tác tự động làm phiền công việc hiện tại của người dùng. Phạm vi cô lập do mạng, các điểm mount, thông tin xác thực và quyền chạy cùng quyết định; những cấu hình này đồng thời ảnh hưởng đến dữ liệu và hệ thống bên ngoài mà Agent có thể chạm tới.
 
@@ -136,7 +136,7 @@ Agent chăm sóc khách hàng của một cửa hàng trực tuyến xử lý m�
 
 ![Hình 6-2 Tầng tiếp nhận: bộ điều hợp, phong bì thống nhất và nhật ký tiếp nhận](images/revised/fig6-2.svg)
 
-Nguồn thường gặp có bốn loại. **Kênh hội thoại** gồm giao diện trò chuyện của chính sản phẩm, các ứng dụng nhắn tin tức thời như WeCom, Feishu, Slack, và email; Agent có thể trả lời ngay tại chỗ. **Callback** là giao diện HTTP mà dịch vụ bên ngoài gọi khi trạng thái thay đổi, thường có chữ ký và chỉ mang thông báo; khi gửi thất bại, có dịch vụ tự thử lại, còn GitHub thì phải gửi lại thủ công hoặc qua API. **Bus tin nhắn** như SQS, Kafka mang sự kiện nghiệp vụ của các dịch vụ nội bộ, có ngữ nghĩa xác nhận và lưu giữ rõ ràng. **Bộ hẹn giờ, truy vấn định kỳ và sự kiện nội bộ** do chính hệ thống tạo ra, chỉ cần ghi vào cùng một nhật ký. Bảng dưới đây so sánh ba loại đầu.[^ch6-ingress-mq][^ch6-ingress-callback]
+Nguồn thường gặp có bốn loại. **Kênh hội thoại** gồm giao diện trò chuyện của chính sản phẩm, các ứng dụng nhắn tin tức thời như WeCom, Feishu, Slack, và email; Agent có thể trả lời ngay trong kênh gốc. **Callback** là giao diện HTTP mà dịch vụ bên ngoài gọi khi trạng thái thay đổi, thường có chữ ký và chỉ mang thông báo; khi gửi thất bại, có dịch vụ tự thử lại, còn GitHub thì phải gửi lại thủ công hoặc qua API. **Bus tin nhắn** như SQS, Kafka mang sự kiện nghiệp vụ của các dịch vụ nội bộ, có ngữ nghĩa xác nhận và lưu giữ rõ ràng. **Bộ hẹn giờ, truy vấn định kỳ và sự kiện nội bộ** do chính hệ thống tạo ra, chỉ cần ghi vào cùng một nhật ký. Bảng dưới đây so sánh ba loại đầu.[^ch6-ingress-mq][^ch6-ingress-callback]
 
 | | Trò chuyện trên App | WeCom / Feishu | Email | Webhook | SQS | Kafka |
 |---|---|---|---|---|---|---|
@@ -167,15 +167,15 @@ Bộ điều hợp chuyển tin nhắn gốc thành một **phong bì** (envelop
 }
 ```
 
-- `source`: loại nguồn và người gửi đã được xác minh. "Đã xác minh" do bộ điều hợp đánh giá dựa trên chữ ký, token hoặc tài khoản kênh; lời tự giới thiệu trong nội dung tin nhắn không tính. Runtime dựa vào mục này để xét quyền hạn.
-- `dedupe_key`: khóa khử trùng lặp; thế nào là trùng lặp do ngữ nghĩa của nguồn quyết định. ID lần gửi, ID tin nhắn, phân vùng và offset định danh cùng một lần gửi, chặn được việc gửi lại ở tầng truyền tải; nếu tin nhắn nghiệp vụ có khóa idempotency (idempotency key), chẳng hạn mã phiếu hoàn tiền kèm trạng thái, bộ điều hợp phải lấy nó ra thì mới chặn được trùng lặp về mặt nghiệp vụ. Hội thoại với người dùng thì ngược lại: khách hàng nói "hoàn tiền" hai lần là hai tin nhắn, chỉ khử trùng lặp theo ID tin nhắn phía client.
+- `source`: loại nguồn và người gửi đã được xác minh. “Đã xác minh” do bộ điều hợp đánh giá dựa trên chữ ký, token hoặc tài khoản kênh; lời tự giới thiệu trong nội dung tin nhắn không tính. Runtime dựa vào mục này để xét quyền hạn.
+- `dedupe_key`: khóa khử trùng lặp; thế nào là trùng lặp do ngữ nghĩa của nguồn quyết định. ID lần gửi, ID tin nhắn, phân vùng và offset định danh cùng một lần gửi, chặn được việc gửi lại ở tầng truyền tải; nếu tin nhắn nghiệp vụ có khóa idempotency (idempotency key), chẳng hạn mã phiếu hoàn tiền kèm trạng thái, bộ điều hợp phải lấy nó ra thì mới chặn được trùng lặp về mặt nghiệp vụ. Hội thoại với người dùng thì ngược lại: khách hàng nói “hoàn tiền” hai lần là hai tin nhắn, chỉ khử trùng lặp theo ID tin nhắn phía client.
 - `raw_ref`: payload gốc được lưu nguyên dạng; khi điều tra lỗi của bộ điều hợp, chỉ có thể dựa vào nó.
 - `reply`: đi qua bộ điều hợp đầu ra nào, gửi tới đích nào. Callback thanh toán không có đường trả lời, mục này để trống.
 - `occurred_at` là thời điểm xảy ra do nguồn cung cấp; `expires_at` là thời hạn hiệu lực, chỉ điền cho các sự kiện như báo giá, mã xác minh.
 
 **Luồng và liên kết.**
 
-Khách hàng nói "hoàn tiền" trước, ngay sau đó bổ sung "thôi, đổi hàng vậy"; thứ tự hai tin nhắn này không được đảo; tin nhắn của một khách hàng khác không liên quan đến chúng, có thể xử lý song song. **Tầng tiếp nhận chỉ cam kết thứ tự trong phạm vi một luồng.** Bộ điều hợp ánh xạ đơn vị thứ tự riêng của nguồn thành `thread`: một cuộc trò chuyện trên App, một nhóm tin nhắn của SQS FIFO (`MessageGroupId`), khóa phân vùng của Kafka, số Issue hoặc PR trong callback của GitHub. Khi nguồn không bảo đảm thứ tự, runtime dựa vào `occurred_at` hoặc số phiên bản do nguồn cung cấp để nhận ra trạng thái cũ đến muộn, chẳng hạn "đang xử lý hoàn tiền" lại đến sau "hoàn tiền thành công".
+Khách hàng nói “hoàn tiền” trước, ngay sau đó bổ sung “thôi, đổi hàng vậy”; thứ tự hai tin nhắn này không được đảo; tin nhắn của một khách hàng khác không liên quan đến chúng, có thể xử lý song song. **Tầng tiếp nhận chỉ cam kết thứ tự trong phạm vi một luồng.** Bộ điều hợp ánh xạ đơn vị thứ tự riêng của nguồn thành `thread`: một cuộc trò chuyện trên App, một nhóm tin nhắn của SQS FIFO (`MessageGroupId`), khóa phân vùng của Kafka, số Issue hoặc PR trong callback của GitHub. Khi nguồn không bảo đảm thứ tự, runtime dựa vào `occurred_at` hoặc số phiên bản do nguồn cung cấp để nhận ra trạng thái cũ đến muộn, chẳng hạn “đang xử lý hoàn tiền” lại đến sau “hoàn tiền thành công”.
 
 Bốn tin nhắn của khoản hoàn tiền này thuộc bốn luồng khác nhau. Gộp chúng thành một luồng phải trả giá không nhỏ: một cuộc thảo luận không liên quan trong nhóm hậu mãi cũng phải xếp sau tin nhắn của khách hàng, mà định danh luồng lại thường kiêm luôn khóa phân vùng, sửa về sau thì phải di chuyển dữ liệu. **Quan hệ liên kết được biểu đạt bằng một trường riêng, không viết lại luồng.** `correlation` liệt kê các đối tượng nghiệp vụ mà sự kiện liên quan, tác vụ đăng ký các luồng liên quan theo đối tượng liên kết.
 
@@ -193,7 +193,7 @@ Hệ thống phải lưu riêng ba loại tiến độ:
 | Tiến độ phân phát | Sự kiện trong nhật ký đã giao cho những tác vụ nào | Bộ định tuyến |
 | Trạng thái tác vụ | Đã xử lý đến bước nào, câu trả lời đã gửi chưa | Runtime |
 
-Nếu coi offset là tiến độ tác vụ, khi phát lại nhật ký, những câu trả lời đã gửi sẽ bị gửi thêm lần nữa; tách riêng ra thì việc phát lại chỉ ảnh hưởng đến tiến độ phân phát. Chiều đi ra tương ứng với hộp thư đi (outbox): trước khi gửi, ghi lại ý định gửi và khóa idempotency, nhận được biên nhận của kênh mới đánh dấu hoàn thành; sau khi khởi động lại thì đối chiếu thế nào, xem mục "Dựng vòng lặp cơ bản từ sự kiện email" ở phần sau.
+Nếu coi offset là tiến độ tác vụ, khi phát lại nhật ký, những câu trả lời đã gửi sẽ bị gửi thêm lần nữa; tách riêng ra thì việc phát lại chỉ ảnh hưởng đến tiến độ phân phát. Chiều đi ra tương ứng với hộp thư đi (outbox): trước khi gửi, ghi lại ý định gửi và khóa idempotency, nhận được biên nhận của kênh mới đánh dấu hoàn thành; sau khi khởi động lại thì đối chiếu thế nào, xem mục “Dựng vòng lặp cơ bản từ sự kiện email” ở phần sau.
 
 **Thời hiệu, gộp và áp lực ngược.**
 
@@ -206,15 +206,15 @@ Khi mỗi giây có hàng trăm sự kiện đổ về cùng một luồng, khô
 **Một khoản hoàn tiền đi qua bốn nguồn.**
 
 1. Khách hàng yêu cầu hoàn tiền trong cuộc trò chuyện trên App. Bộ điều hợp khử trùng lặp theo ID tin nhắn phía client, ghi vào nhật ký rồi gửi biên nhận cho client; bộ định tuyến tạo tác vụ hoàn tiền theo `order:12345`, tác vụ đăng ký luồng hội thoại này.
-2. Số tiền vượt quyền hạn, Agent gửi thẻ xác nhận vào nhóm hậu mãi trên WeCom, định danh thẻ được ghi vào tác vụ. Quản lý nhấp "Đồng ý", bộ điều hợp ghi vào nhật ký rồi trả về thành công, và bổ sung đối tượng liên kết theo định danh thẻ.
-3. Sau khi Agent gọi giao diện hoàn tiền, dịch vụ thanh toán callback "hoàn tiền thành công" hai lần với cùng một ID lần gửi, lần thứ hai bị khử trùng lặp.
-4. Hệ thống đơn hàng phát "đơn hàng đã hoàn tiền" lên Kafka, cùng một chuyện với callback. Nếu cả hai bộ điều hợp đều lấy mã phiếu hoàn tiền kèm trạng thái từ payload làm khóa khử trùng lặp, sự kiện này bị chặn ngay lúc tiếp nhận; nếu chúng khử trùng lặp riêng theo ID lần gửi và theo phân vùng cùng offset, cả hai đều vào nhật ký, runtime thấy trong tác vụ khoản hoàn tiền đã được xác nhận nên chỉ ghi nó vào trajectory.
+2. Số tiền vượt quyền hạn, Agent gửi thẻ xác nhận vào nhóm hậu mãi trên WeCom, định danh thẻ được ghi vào tác vụ. Quản lý nhấp “Đồng ý”, bộ điều hợp ghi vào nhật ký rồi trả về thành công, và bổ sung đối tượng liên kết theo định danh thẻ.
+3. Sau khi Agent gọi giao diện hoàn tiền, dịch vụ thanh toán callback “hoàn tiền thành công” hai lần với cùng một ID lần gửi, lần thứ hai bị khử trùng lặp.
+4. Hệ thống đơn hàng phát “đơn hàng đã hoàn tiền” lên Kafka, cùng một chuyện với callback. Nếu cả hai bộ điều hợp đều lấy mã phiếu hoàn tiền kèm trạng thái từ payload làm khóa khử trùng lặp, sự kiện này bị chặn ngay lúc tiếp nhận; nếu chúng khử trùng lặp riêng theo ID lần gửi và theo phân vùng cùng offset, cả hai đều vào nhật ký, runtime thấy trong tác vụ khoản hoàn tiền đã được xác nhận nên chỉ ghi nó vào trajectory.
 5. Callback và sự kiện Kafka đều không có đường trả lời. Runtime dùng `reply` của luồng hội thoại ở bước 1, thông báo cho khách hàng qua bộ điều hợp đầu ra của App.
 
 Bước 4 là ranh giới của việc khử trùng lặp ở tầng tiếp nhận: chặn được những trùng lặp nào tùy vào khóa khử trùng lặp mà bộ điều hợp khai báo; những gì lọt qua thì dựa vào trạng thái tác vụ để phán đoán. Sau khi sự kiện được phân phát cho tác vụ, việc nối tiếp vào phiên đã có hay mở phiên mới thuộc về quản lý ngữ cảnh: thông tin giữa các phiên được truyền qua bộ nhớ ở Chương 3, còn ngữ cảnh có thể chia sẻ hay không thì xem Chương 10.
 
-[^ch6-ingress-mq]: Amazon Web Services, "Amazon SQS standard queues"; "Amazon SQS visibility timeout"; "Using the message deduplication ID in Amazon SQS"; "Using the message group ID with Amazon SQS FIFO Queues". Tài liệu Apache Kafka 4.4, mục "Consumer Position" và "Message Delivery Semantics" trong "Design". Ngày đối chiếu: 2026-11-24.
-[^ch6-ingress-callback]: Nền tảng mở Feishu, "Tổng quan sự kiện"; "Lấy lịch sử tin nhắn của cuộc trò chuyện". Trung tâm nhà phát triển WeCom, "Tổng quan" trong "Nhận tin nhắn và sự kiện". GitHub Docs, "Best practices for using webhooks"; "Handling failed webhook deliveries". Ngày đối chiếu: 2026-11-24.
+[^ch6-ingress-mq]: Amazon Web Services, “Amazon SQS standard queues”; “Amazon SQS visibility timeout”; “Using the message deduplication ID in Amazon SQS”; “Using the message group ID with Amazon SQS FIFO Queues”. Tài liệu Apache Kafka 4.4, mục “Consumer Position” và “Message Delivery Semantics” trong “Design”. Ngày đối chiếu: 2026-11-24.
+[^ch6-ingress-callback]: Nền tảng mở Feishu, “Tổng quan sự kiện”; “Lấy lịch sử tin nhắn của cuộc trò chuyện”. Trung tâm nhà phát triển WeCom, “Tổng quan” trong “Nhận tin nhắn và sự kiện”. GitHub Docs, “Best practices for using webhooks”; “Handling failed webhook deliveries”. Ngày đối chiếu: 2026-11-24.
 
 ### Cơ chế xử lý sự kiện
 
@@ -222,7 +222,7 @@ Tin nhắn của người dùng, kết quả công cụ, bộ hẹn giờ và y�
 
 Lấy nguyên mẫu dsh-superagent làm ví dụ: trong cùng một dự án GitHub, cuộc thảo luận dưới một Issue và cuộc thảo luận dưới một pull request (PR) thuộc về hai luồng hội thoại (Thread) khác nhau. Khi hệ thống cần phán đoán có nhận việc mới hay không, nó đọc trạng thái luồng và cho mô hình đánh giá (Eval). Mỗi luồng cùng lúc chỉ có tối đa một lần đánh giá, nhưng có thể có nhiều phiếu công việc (Ticket) đăng ký theo dõi nó. Giả sử hai phiếu công việc, một sửa lỗi và một bổ sung tài liệu, cùng đăng ký một PR; người review để lại bình luận dưới PR thì cả hai phiếu đều nhận bình luận ấy làm ngữ cảnh. Nếu sau đó có người bổ sung điều kiện tái hiện lỗi dưới Issue, tin nhắn này sẽ đến phiếu công việc đăng ký Issue đó. Tin nhắn đến tay ai là do luồng và quan hệ đăng ký quyết định. Còn nhận tin nhắn rồi được làm những gì thì vẫn do quyền hạn vốn có của từng phiếu công việc quyết định.[^ch6-dsh-threads]
 
-dsh-superagent còn giao việc "giao tiếp với người" và việc "làm việc" cho hai loại phiên khác nhau. Phiên chính (Main Session) chỉ lo nhận việc, trả lời và ghi ủy quyền, không đọc mã, cũng không dừng lại chờ kết quả; mỗi phiếu công việc có phiên thực thi (Executor Session) riêng, sửa mã và chạy kiểm thử trong một thư mục làm việc riêng. Chỉ khi đã sửa xong, bị kẹt hoặc cần hỏi người, phiên thực thi mới gửi phiên chính một tin nhắn, kèm bản tóm tắt và địa chỉ để đọc, tức là kiểu "tóm tắt kèm ID đối tượng" nói ở Chương 2. Như vậy phiên chính luôn rảnh tay nhận yêu cầu tiếp theo; việc hỏi người, gửi thông báo hay ra lệnh dừng cũng đều đi qua nó, nên cam kết chỉ phát ra từ một cửa. Mô hình nhanh–chậm trong phần giọng nói phía sau chính là dạng phân công này trong cuộc gọi thời gian thực.[^ch6-dsh-sessions]
+dsh-superagent còn giao việc “giao tiếp với người” và việc “làm việc” cho hai loại phiên khác nhau. Phiên chính (Main Session) chỉ lo nhận việc, trả lời và ghi ủy quyền, không đọc mã, cũng không dừng lại chờ kết quả; mỗi phiếu công việc có phiên thực thi (Executor Session) riêng, sửa mã và chạy kiểm thử trong một thư mục làm việc riêng. Chỉ khi đã sửa xong, bị kẹt hoặc cần hỏi người, phiên thực thi mới gửi phiên chính một tin nhắn, kèm bản tóm tắt và địa chỉ để đọc, tức là kiểu “tóm tắt kèm ID đối tượng” nói ở Chương 2. Như vậy phiên chính luôn rảnh tay nhận yêu cầu tiếp theo; việc hỏi người, gửi thông báo hay ra lệnh dừng cũng đều đi qua nó, nên cam kết chỉ phát ra từ một cửa. Mô hình nhanh–chậm trong phần giọng nói phía sau chính là dạng phân công này trong cuộc gọi thời gian thực.[^ch6-dsh-sessions]
 
 Giao diện mô hình đồng bộ thường nhận lô tin nhắn tiếp theo sau khi một lần sinh kết thúc hoặc khi kết quả công cụ đã đủ. Tại đây có thể đặt một **điểm an toàn**: runtime ghi lại các tin nhắn đã hoàn tất, các lời gọi vẫn đang chạy và tiến độ tác vụ hiện tại, rồi mới chuyển sang bước xử lý mới. Giao diện bất đồng bộ nguyên bản thì cung cấp giao thức nhận cập nhật trong lúc đang chạy, thời điểm nối tiếp cụ thể do giao diện và runtime cùng sắp xếp.
 
@@ -234,23 +234,23 @@ Hình 6-3 so sánh ba lựa chọn khi sự kiện mới đến. Để nó xếp
 
 ![Hình 6-3 Ba chiến lược xử lý sự kiện bất đồng bộ](images/revised/fig6-3.svg)
 
-**Xử lý kiểu hủy (Cancellation-Based)** hợp với lệnh dừng của người dùng hoặc các sự kiện điều khiển cần xử lý ngay. Runtime trước hết ngừng phân phát thêm các thao tác liên quan, gửi tín hiệu dừng tới yêu cầu đang sinh và các công cụ có thể hủy, rồi lưu các tin nhắn đã hoàn tất, trạng thái công cụ và biên nhận hủy. Sau đó sự kiện mới mới vào ngữ cảnh ra quyết định. Ví dụ, người dùng nói "Dừng! Tôi nói nhầm", hệ thống trước hết chặn các bước thực thi tiếp theo, rồi dựa trên trạng thái thực tế hiện tại để xác nhận lại tác vụ. Các mục chưa xử lý trong hàng đợi giữ nguyên định danh và trạng thái, được sắp xếp lại theo phạm vi liên quan.
+**Xử lý kiểu hủy (Cancellation-Based)** hợp với lệnh dừng của người dùng hoặc các sự kiện điều khiển cần xử lý ngay. Runtime trước hết ngừng phân phát thêm các thao tác liên quan, gửi tín hiệu dừng tới yêu cầu đang sinh và các công cụ có thể hủy, rồi lưu các tin nhắn đã hoàn tất, trạng thái công cụ và biên nhận hủy. Sau đó sự kiện mới mới vào ngữ cảnh ra quyết định. Ví dụ, người dùng nói “Dừng! Tôi nói nhầm”, hệ thống trước hết chặn các bước thực thi tiếp theo, rồi dựa trên trạng thái thực tế hiện tại để xác nhận lại tác vụ. Các mục chưa xử lý trong hàng đợi giữ nguyên định danh và trạng thái, được sắp xếp lại theo phạm vi liên quan.
 
-**Xử lý kiểu hàng đợi (Queued)** hợp với thông tin bổ sung thông thường và cập nhật tiến độ. Sự kiện vào hàng đợi, đến điểm an toàn kế tiếp thì được giao cho mô hình cùng với kết quả công cụ. Ví dụ, trong lúc tìm kiếm, người dùng bổ sung "chỉ xem kết quả trong tháng gần nhất"; khi kết quả tìm kiếm trả về, mô hình đọc đồng thời kết quả và điều kiện mới, rồi quyết định lọc lại hay tìm lại.
+**Xử lý kiểu hàng đợi (Queued)** hợp với thông tin bổ sung thông thường và cập nhật tiến độ. Sự kiện vào hàng đợi, đến điểm an toàn kế tiếp thì được giao cho mô hình cùng với kết quả công cụ. Ví dụ, trong lúc tìm kiếm, người dùng bổ sung “chỉ xem kết quả trong tháng gần nhất”; khi kết quả tìm kiếm trả về, mô hình đọc đồng thời kết quả và điều kiện mới, rồi quyết định lọc lại hay tìm lại.
 
 **Xử lý song song (Parallel)** hợp với các yêu cầu độc lập với tác vụ chính và cần trả lời kịp thời. Ví dụ, trong lúc phân tích một lượng dữ liệu lớn, người dùng hỏi thời tiết; hệ thống có thể mở một phiên độc lập để tra cứu.
 
 **Mức khẩn cấp và định tuyến.**
 
-Loại sự kiện cho manh mối ban đầu: `user.interrupt`, chỉ thị giám sát đáng tin cậy và cảnh báo hệ thống có thể vào kênh ưu tiên cao; `user.input`, `agent.input`, `tool.result` và `timer.trigger` thì phải xét thêm nội dung và trạng thái tác vụ. Khi người gửi tự xưng "khẩn cấp" trong nội dung, hệ thống vẫn xác định quyền hạn theo danh tính đã xác minh và theo quy tắc.
+Loại sự kiện cho manh mối ban đầu: `user.interrupt`, chỉ thị giám sát đáng tin cậy và cảnh báo hệ thống có thể vào kênh ưu tiên cao; `user.input`, `agent.input`, `tool.result` và `timer.trigger` thì phải xét thêm nội dung và trạng thái tác vụ. Khi người gửi tự xưng “khẩn cấp” trong nội dung, hệ thống vẫn xác định quyền hạn theo danh tính đã xác minh và theo quy tắc.
 
-Với những quyết định định tuyến cần hiểu nghĩa của tin nhắn, tác giả khuyên dùng một mô hình phân loại nhẹ: "dừng lại ngay" ứng với hủy, "hôm nay thời tiết thế nào" có thể hợp với song song, "báo cáo hãy viết bằng tiếng Trung" thường vào hàng đợi bổ sung của tác vụ hiện tại. Lối dừng rõ ràng do runtime xử lý trực tiếp, phân loại ngữ nghĩa dùng cho những tin nhắn còn lại cần phải hiểu.
+Với những quyết định định tuyến cần hiểu nghĩa của tin nhắn, tác giả khuyên dùng một mô hình phân loại nhẹ: “dừng lại ngay” ứng với hủy, “hôm nay thời tiết thế nào” có thể hợp với song song, “báo cáo hãy viết bằng tiếng Trung” thường vào hàng đợi bổ sung của tác vụ hiện tại. Lối dừng rõ ràng do runtime xử lý trực tiếp, phân loại ngữ nghĩa dùng cho những tin nhắn còn lại cần phải hiểu.
 
-Mô hình đa năng cũng gắn nhãn được cho tin nhắn, nhưng dù chỉ xuất ra vài chữ "cần xử lý", mô hình vẫn phải đọc vào mô tả tác vụ và nội dung tin nhắn. Mỗi tin nhắn mới đều phán đoán như vậy một lần thì chi phí gọi mô hình tăng theo lượng tin nhắn, mà tin nhắn thực sự khẩn cấp cũng phải chờ mô hình gắn nhãn xong mới đi tiếp được. Jev của TypeSafe chuyên xử lý loại phán đoán có tập lựa chọn cho trước như thế này. Đưa cho nó một tin nhắn và trạng thái tác vụ hiện tại, nó có thể trả về song song xác suất của từng lựa chọn với chi phí và độ trễ thấp.[^ch6-jev]
+Mô hình đa năng cũng gắn nhãn được cho tin nhắn, nhưng dù chỉ xuất ra vài chữ “cần xử lý”, mô hình vẫn phải đọc vào mô tả tác vụ và nội dung tin nhắn. Mỗi tin nhắn mới đều phán đoán như vậy một lần thì chi phí gọi mô hình tăng theo lượng tin nhắn, mà tin nhắn thực sự khẩn cấp cũng phải chờ mô hình gắn nhãn xong mới đi tiếp được. Jev của TypeSafe chuyên xử lý loại phán đoán có tập lựa chọn cho trước như thế này. Đưa cho nó một tin nhắn và trạng thái tác vụ hiện tại, nó có thể trả về song song xác suất của từng lựa chọn với chi phí và độ trễ thấp.[^ch6-jev]
 
-Việc làm thưa không gian quan sát bàn ở Chương 1, đến đây quyết định tin nhắn nào sẽ kích hoạt một lần suy luận mới. Lấy tin nhắn Feishu và bình luận trên GitHub Issue làm ví dụ: chương trình có thể lọc thông báo trùng theo mã sự kiện trước, rồi để Jev phán đoán tin nhắn mới là bổ sung cho tác vụ đã có hay là một yêu cầu mới cần mô hình chính xử lý. Đọc thấy "bổ sung các bước tái hiện đã nói hôm qua", mô hình chỉ cần nhận ra đây là một lời bổ sung. Còn bổ sung cho Issue nào thì chương trình đọc thẳng mã số đi kèm bình luận là được.
+Việc làm thưa không gian quan sát bàn ở Chương 1, đến đây quyết định tin nhắn nào sẽ kích hoạt một lần suy luận mới. Lấy tin nhắn Feishu và bình luận trên GitHub Issue làm ví dụ: chương trình có thể lọc thông báo trùng theo mã sự kiện trước, rồi để Jev phán đoán tin nhắn mới là bổ sung cho tác vụ đã có hay là một yêu cầu mới cần mô hình chính xử lý. Đọc thấy “bổ sung các bước tái hiện đã nói hôm qua”, mô hình chỉ cần nhận ra đây là một lời bổ sung. Còn bổ sung cho Issue nào thì chương trình đọc thẳng mã số đi kèm bình luận là được.
 
-Kể cả khi mô hình đưa ra xác suất rất cao, nó vẫn có thể đánh giá quá cao độ chắc chắn của mình. Ví dụ, 100 tin nhắn đều bị xếp vào "bổ sung cho tác vụ đã có" với xác suất khoảng 90%, nhưng thực tế chỉ 60 tin thuộc loại này. Tự động gộp cả lô vào tác vụ đã có thì sẽ bỏ lỡ mục đích thực sự của 40 tin còn lại.
+Kể cả khi mô hình đưa ra xác suất rất cao, nó vẫn có thể đánh giá quá cao độ chắc chắn của mình. Ví dụ, 100 tin nhắn đều bị xếp vào “bổ sung cho tác vụ đã có” với xác suất khoảng 90%, nhưng thực tế chỉ 60 tin thuộc loại này. Tự động gộp cả lô vào tác vụ đã có thì sẽ bỏ lỡ mục đích thực sự của 40 tin còn lại.
 
 [^ch6-jev]: Trong ghi chú phát hành Jev, TypeSafe giới thiệu đầu ra định nghĩa trước, việc trả về xác suất song song và phương pháp huấn luyện RLCD hướng tới hiệu chuẩn quyết định.
 
@@ -285,15 +285,15 @@ Hàng đợi email đặt nền cho việc xử lý tuần tự. Tiếp theo, ta
 
 ### Phương án tương thích khi không có bất đồng bộ nguyên bản
 
-Giả sử Agent đang soạn một email và đã gọi `search_contacts` để tìm người liên hệ. Kết quả chưa về thì người dùng yêu cầu "khoan đã, tra thời tiết ngày mai trước". Nếu giao diện mô hình hiện tại đòi mỗi lời gọi công cụ phải có kết quả đi kèm trước, Harness phải chuyển trạng thái chạy nền thành một chuỗi tin nhắn mà giao diện chấp nhận.
+Giả sử Agent đang soạn một email và đã gọi `search_contacts` để tìm người liên hệ. Kết quả chưa về thì người dùng yêu cầu “khoan đã, tra thời tiết ngày mai trước”. Nếu giao diện mô hình hiện tại đòi mỗi lời gọi công cụ phải có kết quả đi kèm trước, Harness phải chuyển trạng thái chạy nền thành một chuỗi tin nhắn mà giao diện chấp nhận.
 
 **Biểu đạt trạng thái chạy nền trong định dạng tin nhắn đồng bộ.**
 
-**Khi tương thích với giao diện đồng bộ, nên cố giữ việc ghép cặp giữa lời gọi bình thường và kết quả thực, chỉ chèn phản hồi trạng thái khi chuyển tác vụ giữa chừng.** Điền sớm "vẫn đang chạy" cho mọi lời gọi sẽ khiến trajectory đầy những trạng thái dở dang, làm mô hình vất vả hơn khi theo dõi kết quả thực. Cụ thể có thể theo năm quy tắc:
+**Khi tương thích với giao diện đồng bộ, nên cố giữ việc ghép cặp giữa lời gọi bình thường và kết quả thực, chỉ chèn phản hồi trạng thái khi chuyển tác vụ giữa chừng.** Điền sớm “vẫn đang chạy” cho mọi lời gọi sẽ khiến trajectory đầy những trạng thái dở dang, làm mô hình vất vả hơn khi theo dõi kết quả thực. Cụ thể có thể theo năm quy tắc:
 
 1. **Ghi đầy đủ lời gọi.** Ghi vào trajectory tin nhắn assistant mà API đã hoàn tất cùng các mục gọi công cụ, giữ nguyên định danh lời gọi. Trạng thái suy luận phía máy chủ được lưu theo cách nối tiếp mà nhà cung cấp quy định.
 2. **Ghi lại việc hoàn tất thực sự.** Khi công cụ xong, ghi kết quả thực, định danh tác vụ và trạng thái thực thi; trong lúc thực thi, bộ quản lý tác vụ liên tục lưu trạng thái chưa hoàn tất.
-3. **Báo trạng thái hiện tại khi chuyển việc.** Với giao diện cho phép loại payload kết quả này, có thể trả về cho lời gọi đang chờ một thông tin trạng thái rõ ràng, ví dụ "tác vụ vẫn chạy ở nền, chưa có kết quả", rồi nối thêm sự kiện của người dùng. Định danh tác vụ trong phản hồi trạng thái liên kết với thông báo hoàn tất về sau.
+3. **Báo trạng thái hiện tại khi chuyển việc.** Với giao diện cho phép loại payload kết quả này, có thể trả về cho lời gọi đang chờ một thông tin trạng thái rõ ràng, ví dụ “tác vụ vẫn chạy ở nền, chưa có kết quả”, rồi nối thêm sự kiện của người dùng. Định danh tác vụ trong phản hồi trạng thái liên kết với thông báo hoàn tất về sau.
 4. **Sắp xếp lại tin nhắn sau khi ngắt.** Khi không có khả năng nối tiếp giữa chừng, hủy phần sinh chưa xong, giữ lại các tin nhắn và trạng thái công cụ đã xác nhận hoàn tất, rồi gửi yêu cầu mới. Đầu ra dở dang được xử lý theo quy định của giao diện, tránh coi nửa đoạn tham số là một lời gọi có thể thực thi.
 5. **Nhận sự kiện thông thường theo lô.** Thông tin bổ sung vào hàng đợi, đến khi chu kỳ hiện tại kết thúc hoặc tới điểm an toàn chỉ định thì gửi một lượt, đồng thời ghi lại sự kiện nào đã được xử lý.
 
@@ -303,13 +303,13 @@ Phản hồi trạng thái chỉ cho biết tiến độ thực thi hiện tại
 
 **Thiết kế công cụ bất đồng bộ bằng handle tác vụ.**
 
-Với công cụ tác vụ dài thiết kế mới, tác giả ưu tiên định nghĩa "khởi động" là một thao tác trọn vẹn, trả về ngay một handle tác vụ thực. Nhờ đó mô hình phân biệt được "đã khởi động" và "đã hoàn tất", còn các truy vấn, lệnh hủy và sự kiện kết quả về sau cũng có chung một căn cứ liên kết. Ví dụ, `initiate_phone_call` khởi động tác vụ gọi điện, trả về định danh tác vụ và trạng thái "đang quay số"; `phone_call_connected` và `phone_call_ended` lần lượt báo đã kết nối và đã kết thúc.
+Với công cụ tác vụ dài thiết kế mới, tác giả ưu tiên định nghĩa “khởi động” là một thao tác trọn vẹn, trả về ngay một handle tác vụ thực. Nhờ đó mô hình phân biệt được “đã khởi động” và “đã hoàn tất”, còn các truy vấn, lệnh hủy và sự kiện kết quả về sau cũng có chung một căn cứ liên kết. Ví dụ, `initiate_phone_call` khởi động tác vụ gọi điện, trả về định danh tác vụ và trạng thái “đang quay số”; `phone_call_connected` và `phone_call_ended` lần lượt báo đã kết nối và đã kết thúc.
 
-Mô tả công cụ nên ghi rõ: "Công cụ này khởi động tác vụ gọi điện, thành công thì trả về ID tác vụ. Bạn có thể tiếp tục xử lý việc khác; tiến độ và kết quả cuộc gọi được trả về qua các sự kiện riêng." Tên công cụ cho biết đây là thao tác khởi động, còn cấu trúc trả về và các sự kiện tiếp theo cho biết tác vụ tiến triển và kết thúc thế nào. Hệ thống cung cấp thêm giao diện truy vấn, hủy và khôi phục theo ID tác vụ, để mô hình biết hiện mình còn làm được gì.
+Mô tả công cụ nên ghi rõ: “Công cụ này khởi động tác vụ gọi điện, thành công thì trả về ID tác vụ. Bạn có thể tiếp tục xử lý việc khác; tiến độ và kết quả cuộc gọi được trả về qua các sự kiện riêng.” Tên công cụ cho biết đây là thao tác khởi động, còn cấu trúc trả về và các sự kiện tiếp theo cho biết tác vụ tiến triển và kết thúc thế nào. Hệ thống cung cấp thêm giao diện truy vấn, hủy và khôi phục theo ID tác vụ, để mô hình biết hiện mình còn làm được gì.
 
 **Xử lý từng mục trong lô sự kiện.**
 
-Khi nhiều sự kiện cùng lúc vào ngữ cảnh, mô hình có thể chỉ đáp lại cái cuối cùng và bỏ sót các yêu cầu đã nêu trước đó. Runtime nên giữ trạng thái xử lý riêng của từng sự kiện, để những điều kiện chưa được đáp ứng vẫn hiển thị. Prompt có thể yêu cầu mô hình kiểm tra từng mục, còn thanh trạng thái thì liệt kê những thông tin chưa xử lý:
+Khi nhiều sự kiện cùng lúc vào ngữ cảnh, mô hình có thể chỉ đáp lại cái cuối cùng và bỏ sót các yêu cầu đã nêu trước đó. Runtime nên giữ trạng thái xử lý riêng của từng sự kiện, để những điều kiện chưa được phản hồi vẫn hiển thị. Prompt có thể yêu cầu mô hình kiểm tra từng mục, còn thanh trạng thái thì liệt kê những thông tin chưa xử lý:
 
 ```text
 [Sự kiện chưa xử lý 1/4] Kết quả database_query: ……
@@ -318,7 +318,7 @@ Khi nhiều sự kiện cùng lúc vào ngữ cảnh, mô hình có thể chỉ 
 [Sự kiện chưa xử lý 4/4] Người dùng hỏi: tiến độ thế nào rồi?
 ```
 
-Bản tóm tắt lô có thể nhắc "1 kết quả công cụ, 2 tin nhắn người dùng, 1 nhắc nhở hệ thống". Runtime còn gắn sự kiện với các ràng buộc của tác vụ: điều kiện khu vực cập nhật phạm vi truy vấn, hạn chót ảnh hưởng đến điều phối, câu hỏi tiến độ cần được trả lời. Sau khi xử lý, ghi lại trạng thái hoàn tất, đang chờ hoặc cần làm rõ, lượt sau tiếp tục giữ các mục chưa giải quyết.
+Bản tóm tắt lô có thể nhắc “1 kết quả công cụ, 2 tin nhắn người dùng, 1 nhắc nhở hệ thống”. Runtime còn gắn sự kiện với các ràng buộc của tác vụ: điều kiện khu vực cập nhật phạm vi truy vấn, hạn chót ảnh hưởng đến điều phối, câu hỏi tiến độ cần được trả lời. Sau khi xử lý, ghi lại trạng thái hoàn tất, đang chờ hoặc cần làm rõ, lượt sau tiếp tục giữ các mục chưa giải quyết.
 
 Cùng một mã tác vụ xâu chuỗi việc khởi động, các báo cáo tiến độ và kết quả thực thi cuối cùng. Nếu giữa chừng có người yêu cầu dừng, thì phải kiểm tra thêm dưới mã này đã có biên nhận hủy hay chưa.
 
@@ -327,8 +327,8 @@ Cùng một mã tác vụ xâu chuỗi việc khởi động, các báo cáo ti�
 > Thí nghiệm này kiểm chứng runtime bất đồng bộ trước, rồi mới tích hợp mô hình để kiểm tra quyết định. Bản ghi chạy đi kèm dùng các tiến trình con thật của hệ điều hành để hoàn thành bốn kịch bản, việc điều phối sự kiện và báo cáo do một script tất định điều khiển.
 >
 > 1. **Thực thi nền và phản hồi tức thì.** Khởi động một tiến trình phân tích kéo dài vài giây, trả ngay định danh tác vụ; trong lúc chờ thì trả lời giờ hiện tại, xong thì nhận kết quả phân tích.
-> 2. **Hàng đợi và xử lý theo lô.** Trong lúc tác vụ dài chạy, lần lượt bổ sung "trả lời bằng tiếng Nhật" và "trình bày thành trang web"; tác vụ xong thì kết quả và hai yêu cầu được xử lý như một lô. Script sinh ra HTML tiếng Nhật.
-> 3. **Hủy và khôi phục.** Minh họa việc khi nhận "dừng phân tích", hệ thống ngắt lượt mô hình còn đang sinh và yêu cầu mọi tác vụ nền đang chạy dừng lại. Lần này lệnh ngắt do script phát ra, lúc đó chỉ có một tiến trình phân tích T1. Ở giây 0,803, sự kiện ngắt ghi tiến độ của T1 là 18%; đến giây 0,806 hệ thống mới ghi được mã thoát −15 của nó. T2 khởi động ngay sau đó là một tác vụ mới. Kết quả nhận được ở giây 4,436 là của T2, T1 không kích hoạt callback hoàn tất.
+> 2. **Hàng đợi và xử lý theo lô.** Trong lúc tác vụ dài chạy, lần lượt bổ sung “trả lời bằng tiếng Nhật” và “trình bày thành trang web”; tác vụ xong thì kết quả và hai yêu cầu được xử lý như một lô. Script sinh ra HTML tiếng Nhật.
+> 3. **Hủy và khôi phục.** Minh họa việc khi nhận “dừng phân tích”, hệ thống ngắt lượt mô hình còn đang sinh và yêu cầu mọi tác vụ nền đang chạy dừng lại. Lần này lệnh ngắt do script phát ra, lúc đó chỉ có một tiến trình phân tích T1. Ở giây 0,803, sự kiện ngắt ghi tiến độ của T1 là 18%; đến giây 0,806 hệ thống mới ghi được mã thoát −15 của nó. T2 khởi động ngay sau đó là một tác vụ mới. Kết quả nhận được ở giây 4,436 là của T2, T1 không kích hoạt callback hoàn tất.
 > 4. **Tác vụ song song và quyết định theo tiến độ.** Khởi động cùng lúc ba tiến trình phân tích, mỗi bước thời gian logic lần lượt tiến 3%, 2%, 1%. Trong bản ghi tiến độ song song của thí nghiệm, khi T1 nhanh nhất hoàn tất, biên nhận truy vấn cho thấy T2 đã đến 68%, T3 đến 34%. Theo Hình 6-5, tác vụ có tiến độ không quá 50% sẽ bị hủy. Script chỉ hủy T3, cuối cùng nhận được kết quả của T1 và T2. Điều này cho thấy cùng một runtime vừa đáp ứng được lệnh dừng cả lô, vừa giữ lại được những công việc song song còn hữu ích.
 >
 > ![Hình 6-5 Ngắt và khôi phục Agent bất đồng bộ trong Thí nghiệm 6-2](images/revised/fig6-5.svg)
@@ -342,7 +342,7 @@ Phương án trên do Harness tự điều chỉnh để khớp định dạng t
 
 **Tiếp tục công việc độc lập trong lúc chờ công cụ.** Ví dụ, sau khi Agent gửi truy vấn địa điểm tổ chức họp, nó có thể sắp xếp chương trình và danh sách chuẩn bị trước; truy vấn trả về rồi mới so sánh giá và sức chứa. `async: true` trong định nghĩa công cụ khai báo năng lực bất đồng bộ; ứng dụng nhận đầy đủ mục gọi rồi khởi động thực thi và lưu định danh lời gọi `call_id`. Khi kết quả đến, ứng dụng trả kết quả về theo định danh gốc và nối tiếp trạng thái phản hồi mới nhất. Mô hình sắp xếp công việc tiếp theo, Harness quản lý việc liên kết lời gọi và vòng đời tác vụ.[^ch6-22]
 
-**Nhận yêu cầu mới khi tác vụ đang chạy.** Người dùng có thể bổ sung "ngân sách giảm còn 1000", "số người tham dự đổi thành 10" khi mô hình đang suy nghĩ hoặc đang sắp xếp câu trả lời. Ứng dụng gửi sự kiện điều hướng qua cùng một kết nối, máy chủ xác nhận đã nhận rồi tiếp tục xử lý theo trạng thái phản hồi hiện tại. Khi mất kết nối và kết nối lại, ứng dụng có thể khôi phục tác vụ theo các sự kiện và trạng thái phản hồi đã lưu.[^ch6-23]
+**Nhận yêu cầu mới khi tác vụ đang chạy.** Người dùng có thể bổ sung “ngân sách giảm còn 1000”, “số người tham dự đổi thành 10” khi mô hình đang suy nghĩ hoặc đang sắp xếp câu trả lời. Ứng dụng gửi sự kiện điều hướng qua cùng một kết nối, máy chủ xác nhận đã nhận rồi tiếp tục xử lý theo trạng thái phản hồi hiện tại. Khi mất kết nối và kết nối lại, ứng dụng có thể khôi phục tác vụ theo các sự kiện và trạng thái phản hồi đã lưu.[^ch6-23]
 
 Hai năng lực này có thể kết hợp: truy vấn địa điểm tiếp tục chạy, yêu cầu mới của người dùng đi vào các quyết định sau đó, kết quả truy vấn trả về thì hoàn tất việc chọn. Bộ thực thi đồng thời duy trì trạng thái thực của tác vụ nền. Khi cần dừng truy vấn hoặc hủy đặt chỗ, Harness gọi giao diện tương ứng và kiểm tra biên nhận; các thao tác nghiệp vụ đã hoàn tất thì đi vào quy trình hoàn tác hoặc bù trừ.
 
@@ -384,11 +384,11 @@ Giọng nói cho phép người dùng nói rõ nhu cầu, bổ sung điều ki�
 
 Phần này bàn về hai cách dùng: người dùng trò chuyện trực tiếp với Agent, và Agent thay người dùng giao tiếp với người bên ngoài. Cách thứ nhất quan tâm đến nhận dạng, phản hồi và chen lời; cách thứ hai còn phải hoàn tất xác minh danh tính, tra cứu nghiệp vụ và ra quyết định ngay trong cuộc gọi.
 
-### Thời gian tương tác: từ cascade đến full-duplex
+### Nhịp thời gian của tương tác: từ cascade đến full-duplex
 
-Trong bài giới thiệu GPT-Live, OpenAI điểm lại ba kiểu tương tác giọng nói: cascade, mô hình âm thanh theo lượt và full-duplex[^ch6-12]. Lộ trình tiến hóa này dần giao việc "khi nào lên tiếng, khi nào nghe tiếp" cho mô hình phán đoán liên tục. Hệ thống cascade chủ yếu dựa vào logic phát hiện điểm cuối để sắp xếp việc trao lượt, còn mô hình full-duplex có thể kết hợp âm thanh liên tục với trạng thái hội thoại để xử lý lời nói chồng nhau, khoảng ngừng và chen lời.
+Trong bài giới thiệu GPT-Live, OpenAI điểm lại ba kiểu tương tác giọng nói: cascade, mô hình âm thanh theo lượt và full-duplex[^ch6-12]. Lộ trình tiến hóa này dần giao việc “khi nào lên tiếng, khi nào nghe tiếp” cho mô hình phán đoán liên tục. Hệ thống cascade chủ yếu dựa vào logic phát hiện điểm cuối để sắp xếp việc trao lượt, còn mô hình full-duplex có thể kết hợp âm thanh liên tục với trạng thái hội thoại để xử lý lời nói chồng nhau, khoảng ngừng và chen lời.
 
-| Mô hình | Cấu trúc cốt lõi | Năng lực dễ hiện thực | Vấn đề thiết kế chính |
+| Mô thức | Cấu trúc cốt lõi | Năng lực dễ hiện thực | Vấn đề thiết kế chính |
 |---|---|---|---|
 | Cascade | Phân công VAD, ASR, LLM, TTS | Thay riêng từng mô-đun, kiểm tra đầu vào/đầu ra từng đoạn | Độ trễ giữa các mô-đun, thông tin âm học bị mất khi phiên âm |
 | Mô hình âm thanh end-to-end theo lượt | Mô hình trực tiếp nhận và sinh âm thanh | Dùng ngữ điệu, cảm xúc… để tổ chức câu trả lời | Phán đoán kết thúc lời nói, chuyển lượt và thời điểm phản hồi |
@@ -398,13 +398,13 @@ Mô hình có trực tiếp xử lý âm thanh không, đầu vào và đầu ra
 
 [^ch6-12]: OpenAI, *Introducing GPT-Live*, 2026-07-08, giới thiệu cascade, mô hình âm thanh theo lượt và tương tác full-duplex.
 
-### Mô hình 1 · Pipeline cascade (Cascading)
+### Mô thức 1 · Pipeline cascade (Cascading)
 
 Hệ thống cascade tách hội thoại giọng nói thành vài mô-đun. Phát hiện hoạt động giọng nói (VAD) tìm các đoạn có tiếng nói trong âm thanh, logic điểm cuối quyết định khi nào gửi đoạn đó đi; nhận dạng giọng nói tự động (ASR) chuyển âm thanh thành chữ; LLM hiểu yêu cầu và sinh câu trả lời; tổng hợp giọng nói (TTS) biến câu trả lời thành âm thanh phát được. Hình 6-7 thể hiện cấu trúc cơ bản chạy tuần tự.
 
 ![Hình 6-7 Pipeline tuần tự của Agent giọng nói](images/revised/fig6-7.svg)
 
-VAD âm học tìm ra những đoạn có người nói, nhờ đó bước nhận dạng phía sau có thể bỏ qua các khoảng lặng dài. Nhưng cùng một khoảng ngừng, xuất hiện sau "Tôi muốn đặt…" và sau "Sáng thứ Năm còn vé không?" lại mang ý nghĩa khác nhau. VAD ngữ nghĩa (phát hiện điểm cuối theo ngữ nghĩa) có thể tiếp tục thu âm trong trường hợp đầu, đến trường hợp sau mới chuyển lời nói cho mô hình hội thoại. Đây chính là làm thưa quan sát giọng nói theo thời gian: một đoạn âm thanh liên tục chỉ kích hoạt suy luận tại vài thời điểm. Còn có lên tiếng hay không là do mô hình nghe câu đó quyết định; nó cũng có thể nghe tiếp, hoặc tra chuyến bay trước.
+VAD âm học tìm ra những đoạn có người nói, nhờ đó bước nhận dạng phía sau có thể bỏ qua các khoảng lặng dài. Nhưng cùng một khoảng ngừng, xuất hiện sau “Tôi muốn đặt…” và sau “Sáng thứ Năm còn vé không?” lại mang ý nghĩa khác nhau. VAD ngữ nghĩa (phát hiện điểm cuối theo ngữ nghĩa) có thể tiếp tục thu âm trong trường hợp đầu, đến trường hợp sau mới chuyển lời nói cho mô hình hội thoại. Đây chính là làm thưa quan sát giọng nói theo thời gian: một đoạn âm thanh liên tục chỉ kích hoạt suy luận tại vài thời điểm. Còn có lên tiếng hay không là do mô hình nghe câu đó quyết định; nó cũng có thể nghe tiếp, hoặc tra chuyến bay trước.
 
 | Mô-đun | Vai trò | Nguồn chờ đợi hoặc lỗi thường gặp |
 |---|---|---|
@@ -423,7 +423,7 @@ Tải dịch vụ còn gây ra thời gian xếp hàng. Hình 6-9 dùng mô hìn
 
 > **Thí nghiệm 6-4 ★: Xây dựng Agent giọng nói truyền thống**
 >
-> Giả sử trợ lý đang đọc các chuyến bay ngày thứ Năm thì bạn lên tiếng sửa: "Khoan, tôi muốn đặt thứ Sáu." Trình duyệt gửi âm thanh micro tới backend qua WebSocket. Silero VAD vừa phát hiện bạn mở lời, backend liền phát `speech_start`, trình duyệt lập tức dừng phát và xóa phần âm thanh cũ đang xếp hàng. Lúc này trợ lý vẫn chưa biết bạn đổi sang ngày nào. Đợi bạn nói xong và im lặng quá 500 mili giây mặc định, backend mới phát `speech_end` và chuyển đoạn giọng nói này cho Whisper tiny chạy cục bộ để phiên âm.
+> Giả sử trợ lý đang đọc các chuyến bay ngày thứ Năm thì bạn lên tiếng sửa: “Khoan, tôi muốn đặt thứ Sáu.” Trình duyệt gửi âm thanh micro tới backend qua WebSocket. Silero VAD vừa phát hiện bạn mở lời, backend liền phát `speech_start`, trình duyệt lập tức dừng phát và xóa phần âm thanh cũ đang xếp hàng. Lúc này trợ lý vẫn chưa biết bạn đổi sang ngày nào. Đợi bạn nói xong và im lặng quá 500 mili giây mặc định, backend mới phát `speech_end` và chuyển đoạn giọng nói này cho Whisper tiny chạy cục bộ để phiên âm.
 >
 > Từ lúc Doubao bắt đầu trả chữ về, còn bao lâu nữa người dùng mới nghe thấy câu trả lời? Trong bản ghi của một lượt phát lại bản thu âm, phiên âm mất 2,710 giây. Doubao trả token đầu tiên sau 0,749 giây kể từ khi gửi yêu cầu, đến 0,792 giây mới trả đủ câu trả lời. Chương trình phát lại đợi nhận đủ chữ rồi mới giao cho Fish S1 tổng hợp; thêm 2,819 giây nữa backend mới nhận được lô âm thanh đầu tiên. Tính từ lúc xác định điểm cuối, cộng ba đoạn thời gian tuần tự này lại được khoảng **6,321 giây**. Báo cáo lưu trữ ghi 6,279 giây, vì nó lấy thời gian của token đầu tiên thay cho thời gian sinh cả câu trả lời.
 >
@@ -440,7 +440,7 @@ Phương án tuần tự dễ kiểm tra từng đoạn, nhưng cũng bộc lộ
 
 Cách hiện thực phiên âm thông thường của Whisper mã hóa và giải mã theo cửa sổ âm thanh[^ch6-whisper]. Cắt khối từ bên ngoài hoặc gửi lại nhiều lần phần tiền tố tích lũy có thể dựng được quy trình phiên âm tăng dần; việc tái sử dụng trạng thái liên tục, chi phí mã hóa lặp và sửa đổi văn bản lịch sử phải do cách hiện thực cụ thể tự quản lý. Mô hình nhận dạng streaming nguyên bản thì xử lý trực tiếp đầu vào liên tục ngay trong kiến trúc và quá trình huấn luyện.
 
-Hệ thống cảm nhận dựa trên mô hình ngôn ngữ âm thanh còn có thể xuất đồng thời văn bản và sự kiện âm học. Âm thanh lịch sử, bản phiên âm và gợi ý từ vựng giúp nhận dạng tên người, thương hiệu và danh từ riêng; giữ lại bao nhiêu lịch sử thì tùy vào thiết kế ngữ cảnh và bộ nhớ đệm. Với câu hỏi "người dùng đã nói xong chưa", mô hình có thể kết hợp độ trọn vẹn về ngữ nghĩa với khoảng lặng để phán đoán. Tại khoảng ngừng sau "Tôi muốn đặt…", hệ thống thời gian thực mới chỉ nghe được mấy chữ ấy, chưa thể biết phía sau sẽ là một ngày nào.
+Hệ thống cảm nhận dựa trên mô hình ngôn ngữ âm thanh còn có thể xuất đồng thời văn bản và sự kiện âm học. Âm thanh lịch sử, bản phiên âm và gợi ý từ vựng giúp nhận dạng tên người, thương hiệu và danh từ riêng; giữ lại bao nhiêu lịch sử thì tùy vào thiết kế ngữ cảnh và bộ nhớ đệm. Với câu hỏi “người dùng đã nói xong chưa”, mô hình có thể kết hợp độ trọn vẹn về ngữ nghĩa với khoảng lặng để phán đoán. Tại khoảng ngừng sau “Tôi muốn đặt…”, hệ thống thời gian thực mới chỉ nghe được mấy chữ ấy, chưa thể biết phía sau sẽ là một ngày nào.
 
 Ngoài phiên âm, giao diện còn có thể quy ước các sự kiện sau: `speak_start`, `speak_end` cho biết bắt đầu và kết thúc lời nói, `interrupt` cho biết ngắt lời, `emotion` mô tả trạng thái cảm xúc, `laugh`, `sigh`, `noise` ghi lại tiếng cười, tiếng thở dài và âm thanh môi trường. Các sự kiện này có thể được gửi cho Agent cùng với chữ và dấu thời gian.
 
@@ -452,11 +452,11 @@ Ngoài phiên âm, giao diện còn có thể quy ước các sự kiện sau: `
 
 [^ch6-whisper]: OpenAI, Whisper, giới thiệu phiên âm theo cửa sổ âm thanh và cách hiện thực mô hình.
 
-### Mô hình 2 · Mô hình đa phương thức end-to-end (Omni)
+### Mô thức 2 · Mô hình đa phương thức end-to-end (Omni)
 
 Mô hình âm thanh end-to-end trực tiếp nhận âm thanh, kết hợp thông tin ngôn ngữ và âm học để sinh câu trả lời, rồi tổng hợp giọng nói qua nhánh đầu ra âm thanh. Xử lý trực tiếp âm thanh tận dụng được tốc độ nói, cao độ, khoảng ngừng và âm thanh môi trường; phiên âm trước rồi mới trả lời thì dễ kiểm tra văn bản trung gian và thay riêng từng mô-đun.
 
-Những đặc trưng âm học này ảnh hưởng đến việc hiểu. Ví dụ, cùng một câu "Hãy gửi báo cáo trước bữa trưa", nói gấp gáp và nói chậm rãi tạo cho người nghe cảm nhận khác nhau. Khi xuất ra, mô hình cũng có thể dùng khoảng ngừng, trọng âm và ngữ điệu để tổ chức ý.
+Những đặc trưng âm học này ảnh hưởng đến việc hiểu. Ví dụ, cùng một câu “Hãy gửi báo cáo trước bữa trưa”, nói gấp gáp và nói chậm rãi tạo cho người nghe cảm nhận khác nhau. Khi xuất ra, mô hình cũng có thể dùng khoảng ngừng, trọng âm và ngữ điệu để tổ chức ý.
 
 Hệ thống xử lý trực tiếp âm thanh cũng có thể đợi người dùng nói xong rồi mới trả lời. Chẳng hạn người dùng đọc số điện thoại và ngừng một chút, hệ thống vẫn phải phán đoán dãy số đã đọc xong chưa. Phát hiện điểm cuối quyết định khi nào phản hồi; nếu đối phương chen lời giữa lúc đang phát, hệ thống còn phải điều phối việc sinh của mô hình với việc phát của loa.[^ch6-audio-architectures]
 
@@ -464,17 +464,17 @@ Hệ thống xử lý trực tiếp âm thanh cũng có thể đợi người d�
 >
 > Thí nghiệm này cố định cùng một mô hình MiniCPM-o 4.5, tắt chế độ suy nghĩ, so sánh hai đường: trả lời trực tiếp từ âm thanh, và để mô hình phiên âm trước rồi chỉ trả lời dựa trên bản phiên âm. Đầu vào gồm hai bài toán số học đọc bằng lời và hai đoạn giọng nói cùng câu chữ nhưng khác tốc độ nói.
 >
-> Mỗi đường đúng ba câu, lỗi rơi vào những chỗ khác nhau. Đường âm thanh trực tiếp nghe nhầm twelve boxes trong một bài thành 8, dẫn đến tính sai; đường phiên âm giữ đúng con số 12. Ở câu về tốc độ nói, cả hai đoạn âm thanh đều nói "Please send the report before lunch.", sau khi phiên âm thì chữ giống hệt nhau, thông tin nhanh chậm theo đó mất đi; đường âm thanh trực tiếp thì phân biệt đúng hai tốc độ nói.
+> Mỗi đường đúng ba câu, lỗi rơi vào những chỗ khác nhau. Đường âm thanh trực tiếp nghe nhầm twelve boxes trong một bài thành 8, dẫn đến tính sai; đường phiên âm giữ đúng con số 12. Ở câu về tốc độ nói, cả hai đoạn âm thanh đều nói “Please send the report before lunch.”, sau khi phiên âm thì chữ giống hệt nhau, thông tin nhanh chậm theo đó mất đi; đường âm thanh trực tiếp thì phân biệt đúng hai tốc độ nói.
 >
 > Thí nghiệm còn sinh một đoạn giọng nói 24 kHz, nối việc hiểu đầu vào với đầu ra âm thanh.
 
-### Mô hình 3 · Mô hình tương tác full-duplex
+### Mô thức 3 · Mô hình tương tác full-duplex
 
-Hệ thống full-duplex vừa nói vừa nghe, cải thiện dễ nhận thấy nhất là cảm giác như người thật khi trò chuyện. Thử đọc câu "Muốn đặt vé thứ Tư… không, thứ Năm": khoảng ngừng ở giữa chứa được lần tự sửa này; nếu trợ lý đã bắt đầu đọc các chuyến thứ Tư, nghe thấy "không, thứ Năm" thì phải dừng lại. Một loại thời điểm khác là khi đối phương còn đang giải thích lịch trình, một tiếng đệm ngắn nhẹ cho họ biết trợ lý đang nghe. Chỉ khi liên tục nhận âm thanh mới có điều kiện lựa chọn giữa nói, nghe, ngừng và gọi công cụ như thế. Phiên dịch song song cũng cần đầu vào và đầu ra chồng lên nhau.
+Hệ thống full-duplex vừa nói vừa nghe, cải thiện dễ nhận thấy nhất là cảm giác như người thật khi trò chuyện. Thử đọc câu “Muốn đặt vé thứ Tư… không, thứ Năm”: khoảng ngừng ở giữa chứa được lần tự sửa này; nếu trợ lý đã bắt đầu đọc các chuyến thứ Tư, nghe thấy “không, thứ Năm” thì phải dừng lại. Một loại thời điểm khác là khi đối phương còn đang giải thích lịch trình, một tiếng đệm ngắn nhẹ cho họ biết trợ lý đang nghe. Chỉ khi liên tục nhận âm thanh mới có điều kiện lựa chọn giữa nói, nghe, ngừng và gọi công cụ như thế. Phiên dịch song song cũng cần đầu vào và đầu ra chồng lên nhau.
 
 **Moshi** do Kyutai công bố năm 2024 mô hình hóa riêng luồng âm thanh của người dùng và của mô hình, dùng các luồng song song để biểu diễn lời nói chồng và ngắt lời[^ch6-moshi]. Giữ các quan hệ thời gian này trong đầu vào thì mô hình học được khi nào nên đáp, khi nào nên tiếp tục lắng nghe.
 
-Mô hình tương tác của Thinking Machines Lab cắt đầu vào và đầu ra liên tục thành các khối ngắn bằng nhau, mỗi khối 200 mili giây, gọi là một vi lượt (micro-turn)[^ch6-14]. Theo trục thời gian ở Hình 6-10, xem ô thứ hai: trợ lý vẫn đang nói "năm" thì đã nghe thấy tiếng "không" của người dùng sửa ngày. Đến ô thứ ba, trợ lý dừng lại, vẫn nghe người dùng nói hết chữ "thứ Sáu".
+Mô hình tương tác của Thinking Machines Lab cắt đầu vào và đầu ra liên tục thành các khối ngắn bằng nhau, mỗi khối 200 mili giây, gọi là một vi lượt (micro-turn)[^ch6-14]. Theo trục thời gian ở Hình 6-10, xem ô thứ hai: trợ lý vẫn đang nói “năm” thì đã nghe thấy tiếng “không” của người dùng sửa ngày. Đến ô thứ ba, trợ lý dừng lại, vẫn nghe người dùng nói hết chữ “thứ Sáu”.
 
 ![Hình 6-10 Đầu vào, đầu ra và vi lượt 200 mili giây của giọng nói full-duplex](images/revised/fig6-10.svg)
 
@@ -483,7 +483,7 @@ Xem tiếp nửa dưới của hình. Hai bên trong cuộc gọi nghe thấy ha
 [^ch6-moshi]: Kyutai, *Moshi: a speech-text foundation model for real-time dialogue*, 2024, giới thiệu các luồng âm thanh song song của người dùng và mô hình.
 [^ch6-14]: Thinking Machines Lab, *Interaction Models: A Scalable Approach to Human-AI Collaboration*, giới thiệu vi lượt, tương tác đa luồng và ủy thác tác vụ nền.
 
-### Thời gian nhận thức: tương tác thời gian thực và suy nghĩ sâu
+### Nhịp thời gian của nhận thức: tương tác thời gian thực và suy nghĩ sâu
 
 Trong các cuộc gọi tổng đài của Pine, khi tổng đài viên nói được nửa câu, có lúc trợ lý nên chờ, có lúc nên khẽ đáp một tiếng; khi chính mình đang nói, nó cũng phải nghe được lời sửa mà đối phương chen vào. Đây chính là lý do tác giả đánh giá cao hướng đi của Moshi: nắm thời điểm tốt thì đối phương mới cảm thấy đầu dây bên này thực sự có người đang nghe. Gặp yêu cầu phải tra cứu, lại phải tính thêm một bài toán thời gian khác: từ lúc hiểu câu hỏi đến lúc đọc ra câu trả lời tra được, phải qua tay bao nhiêu lần?
 
@@ -501,14 +501,14 @@ Những tác vụ cần suy luận nhiều bước, chẳng hạn so sánh vài 
 >
 > Đặt bốn kiểu phân công. Kiểu thứ nhất để tiền cảnh gọi mọi công cụ. Kiểu thứ hai để hậu cảnh gọi mọi công cụ, tiền cảnh chỉ được ủy thác. Hai kiểu còn lại đều để tiền cảnh tra thời tiết, runtime đặt bộ nhớ người dùng vào ngữ cảnh khi bắt đầu phiên, hậu cảnh lo tìm kiếm web và đặt vé. Khác biệt giữa hai kiểu này là việc tra chuyến bay do tiền cảnh hay hậu cảnh đảm nhận. Tiền cảnh nghe trực tiếp giọng người dùng; hậu cảnh không nghe được tiếng, chỉ đọc được chữ. Giao diện của Doubao, sau khi nghe hết mỗi câu của người dùng, sẽ trả thêm phần chữ do nhận dạng giọng nói tạo ra, gọi là bản phiên âm. Khi ủy thác, bản phiên âm và những gì trợ lý đã nói được sắp theo thứ tự thời gian thành biên bản cuộc gọi, rồi giao cho hậu cảnh cùng với các lời gọi công cụ đã thực hiện trong cuộc gọi này và mô tả tác vụ do tiền cảnh viết. Với mỗi kiểu phân công, lặp lại mỗi kịch bản dưới đây 10 lần.
 >
-> 1. Tra riêng thời tiết và chuyến bay. Bấm giờ từ lúc người dùng nói xong đến khi nghe được kết quả tra cứu; những câu chuyển tiếp như "để tôi tra một chút" không tính là câu trả lời. So sánh trung vị thời gian chờ của gọi trực tiếp và ủy thác. Trong thí nghiệm của tác giả, khi tra thời tiết, hai con số lần lượt là 2,81 giây và 6,96 giây.
+> 1. Tra riêng thời tiết và chuyến bay. Bấm giờ từ lúc người dùng nói xong đến khi nghe được kết quả tra cứu; những câu chuyển tiếp như “để tôi tra một chút” không tính là câu trả lời. So sánh trung vị thời gian chờ của gọi trực tiếp và ủy thác. Trong thí nghiệm của tác giả, khi tra thời tiết, hai con số lần lượt là 2,81 giây và 6,96 giây.
 > 2. Tra chuyến bay trước, rồi chọn vé và xác nhận. Đối chiếu với kết quả truy vấn lượt trước, lời người dùng vừa nói và hồ sơ người dùng, kiểm tra lần lượt 13 trường của đơn đặt vé, và kiểm tra thời điểm đặt có muộn hơn lúc người dùng xác nhận không. Trong thí nghiệm của tác giả, cả bốn kiểu phân công đều điền đúng mọi trường và đều chỉ đặt sau khi người dùng xác nhận.
-> 3. Đổi sang đặt vé cho đồng nghiệp, phát bản ghi âm đọc tên: "Trần Gia Di, Trần bộ Nhĩ Đông, Gia trong gia thưởng, Di trong di nhiên." Đối chiếu bản ghi âm, bản phiên âm và tên trên đơn, kiểm tra cả đặt vé trực tiếp ở tiền cảnh lẫn đặt vé qua ủy thác có điền đúng tên không. Trong thí nghiệm của tác giả, tiền cảnh đặt trực tiếp đúng cả 10 lần; bản phiên âm lại ghi thành một tên khác đồng âm, nên khi ủy thác có những đơn điền sai tên.
+> 3. Đổi sang đặt vé cho đồng nghiệp, phát bản ghi âm đọc tên: “Trần Gia Di, Trần bộ Nhĩ Đông, Gia trong gia thưởng, Di trong di nhiên.” Đối chiếu bản ghi âm, bản phiên âm và tên trên đơn, kiểm tra cả đặt vé trực tiếp ở tiền cảnh lẫn đặt vé qua ủy thác có điền đúng tên không. Trong thí nghiệm của tác giả, tiền cảnh đặt trực tiếp đúng cả 10 lần; bản phiên âm lại ghi thành 陈佳宜 (Trần Giai Nghi, đồng âm với tên đúng 陈嘉怡 trong tiếng Trung), nên khi ủy thác có những đơn điền sai tên.
 > 4. Phát bản ghi âm hỏi thời tiết trước khi kết quả tra chuyến bay trả về, nghe xem tiền cảnh có trả lời câu hỏi thời tiết không, rồi có đọc ra kết quả chuyến bay không. Trong thí nghiệm của tác giả, câu hỏi thời tiết đều được trả lời, nhưng kết quả chuyến bay ban đầu hầu như không được nói ra nữa.
 
 Khi cần ủy thác, tiền cảnh nên ghi vào mô tả tác vụ những tên người, con số mà nó chắc chắn và những lời sửa người dùng vừa đưa ra, để hậu cảnh không điền sai tham số vì lỗi phiên âm. Runtime nên ghi lại những kết quả chưa được nói ra, để tiền cảnh trả lời xong câu hỏi chen ngang thì tiếp tục báo cáo.
 
-Mô hình nhanh nói một câu "để tôi tra một chút" có thể cho tổng đài viên biết trợ lý đã nghe rõ yêu cầu. Còn khi nào đọc ra được giá vé thì tùy vào việc truy vấn và suy luận phối hợp với cuộc gọi thế nào. Hình 6-11 thể hiện ba cách sắp xếp: phản hồi trước rồi trả lời sâu, tiền cảnh tương tác liên tục và nhận gợi ý từ hậu cảnh, và việc hình thành ý cùng biểu đạt tiến song song theo từng đoạn.
+Mô hình nhanh nói một câu “để tôi tra một chút” có thể cho tổng đài viên biết trợ lý đã nghe rõ yêu cầu. Còn khi nào đọc ra được giá vé thì tùy vào việc truy vấn và suy luận phối hợp với cuộc gọi thế nào. Hình 6-11 thể hiện ba cách sắp xếp: phản hồi trước rồi trả lời sâu, tiền cảnh tương tác liên tục và nhận gợi ý từ hậu cảnh, và việc hình thành ý cùng biểu đạt tiến song song theo từng đoạn.
 
 ![Hình 6-11 Kiến trúc suy nghĩ nhanh/chậm và so sánh các phương án](images/revised/fig6-11.svg)
 
@@ -516,28 +516,28 @@ Mô hình nhanh nói một câu "để tôi tra một chút" có thể cho tổn
 
 Mô hình nhanh đưa ra một phản hồi ngắn trước, mô hình chậm hoàn tất phân tích ở hậu cảnh rồi bổ sung câu trả lời chi tiết. Thiết kế này xác nhận được sớm rằng yêu cầu đã được tiếp nhận, nhưng phải quản lý tính nhất quán giữa hai lần trả lời. Ví dụ, mô hình nhanh gợi ý mua một gói dịch vụ, sau đó mô hình chậm phát hiện gói này thiếu một tính năng then chốt, hai lời gợi ý sẽ mâu thuẫn. Gốc rễ của mâu thuẫn là hai bên trả lời độc lập, căn cứ phán đoán và tiến độ suy luận có thể khác nhau. Lời gợi ý mô hình nhanh đã nói ra đi vào phán đoán của người dùng, người dùng thậm chí có thể hành động theo nó; mô hình chậm sửa lại sau đó thì còn phải giải thích thay đổi và xử lý những ảnh hưởng đã phát sinh.
 
-Vì vậy, tiền cảnh nên phân biệt xác nhận tác vụ với kết luận nghiệp vụ. "Tôi sẽ kiểm tra xem gói này có tính năng đó không" có thể nói ngay, còn lời khuyên mua hàng thì phải chờ những truy vấn và phân tích cần thiết. Khi kết quả hậu cảnh trả về, hệ thống đối chiếu nó với những gì đã nói ra rồi mới tổ chức câu trả lời tiếp theo. Câu hỏi đơn giản có thể để mô hình nhanh trả lời luôn, bớt xử lý lặp.
+Vì vậy, tiền cảnh nên phân biệt xác nhận tác vụ với kết luận nghiệp vụ. “Tôi sẽ kiểm tra xem gói này có tính năng đó không” có thể nói ngay, còn lời khuyên mua hàng thì phải chờ những truy vấn và phân tích cần thiết. Khi kết quả hậu cảnh trả về, hệ thống đối chiếu nó với những gì đã nói ra rồi mới tổ chức câu trả lời tiếp theo. Câu hỏi đơn giản có thể để mô hình nhanh trả lời luôn, bớt xử lý lặp.
 
 #### Phương án 2: nghĩ nhanh để tương tác, nghĩ chậm để nhắc
 
-Giọng nói và màn hình cũng có thể phân công. Nói bằng lời "hóa đơn tháng này nhiều hơn 15 euro phí chuyển vùng", người dùng nắm ngay trọng điểm; để số tiền gốc, giá hiện tại và chi tiết tranh chấp trên màn hình, người dùng có thể đối chiếu theo tốc độ của mình. Xác nhận một thao tác cụ thể thì có thể nhấp chọn, thông tin nhạy cảm thì để người dùng tự điền trên giao diện nhập liệu mà doanh nghiệp chấp nhận. Tiền cảnh chỉ cần nhận trạng thái kiểu "đã xác minh xong" là có thể nối lại cuộc trò chuyện một cách tự nhiên.
+Giọng nói và màn hình cũng có thể phân công. Nói bằng lời “hóa đơn tháng này nhiều hơn 15 euro phí chuyển vùng”, người dùng nắm ngay trọng điểm; để số tiền gốc, giá hiện tại và chi tiết tranh chấp trên màn hình, người dùng có thể đối chiếu theo tốc độ của mình. Xác nhận một thao tác cụ thể thì có thể nhấp chọn, thông tin nhạy cảm thì để người dùng tự điền trên giao diện nhập liệu mà doanh nghiệp chấp nhận. Tiền cảnh chỉ cần nhận trạng thái kiểu “đã xác minh xong” là có thể nối lại cuộc trò chuyện một cách tự nhiên.
 
-Giả sử một hành khách nhờ Pine đặt vé máy bay đi Thượng Hải sáng thứ Năm, ngân sách 1200 tệ, phải đến hội trường trước buổi trưa. Pine vừa nói chuyện với tổng đài hãng hàng không, vừa "chuyển mẩu giấy" cho hậu cảnh: "Nếu mười giờ sáng đến Hồng Kiều, từ sân bay tới hội trường có kịp không?" Tổng đài viên tra xong số vé còn lại và nói với Pine: "Chuyến mười giờ đến Hồng Kiều hết vé rồi. Còn một chuyến mười giờ rưỡi đến Phố Đông, giá 1250 tệ." Nếu hậu cảnh chỉ thấy được mẩu giấy tiền cảnh chuyển sang, nó vẫn đang tính quãng đường xuất phát từ Hồng Kiều. Tiền cảnh phải dặn thêm một câu: "Tính lại theo Phố Đông, hạ cánh mười giờ rưỡi, hội trường và giờ phải có mặt giữ nguyên."
+Giả sử một hành khách nhờ Pine đặt vé máy bay đi Thượng Hải sáng thứ Năm, ngân sách 1200 tệ, phải đến hội trường trước buổi trưa. Pine vừa nói chuyện với tổng đài hãng hàng không, vừa “chuyển mẩu giấy” cho hậu cảnh: “Nếu mười giờ sáng đến Hồng Kiều, từ sân bay tới hội trường có kịp không?” Tổng đài viên tra xong số vé còn lại và nói với Pine: “Chuyến mười giờ đến Hồng Kiều hết vé rồi. Còn một chuyến mười giờ rưỡi đến Phố Đông, giá 1250 tệ.” Nếu hậu cảnh chỉ thấy được mẩu giấy tiền cảnh chuyển sang, nó vẫn đang tính quãng đường xuất phát từ Hồng Kiều. Tiền cảnh phải dặn thêm một câu: “Tính lại theo Phố Đông, hạ cánh mười giờ rưỡi, hội trường và giờ phải có mặt giữ nguyên.”
 
-Một cách khác là đồng bộ cả biên bản cuộc gọi theo thứ tự cho hậu cảnh. Hậu cảnh đã đọc được từ biên bản sân bay và giờ hạ cánh mà tổng đài viên báo, tiền cảnh chỉ cần nói "tính xem chuyến này có kịp không" là ủy thác được cùng một việc. Khi đồng bộ biên bản phải ghi rõ ai nói gì; nửa câu tiền cảnh bị ngắt, chưa phát ra cũng phải được phân biệt với những gì đã nói ra. Bản phiên âm có thể ghi sót hoặc ghi sai thông tin then chốt. Tiền cảnh nên ghi vào mô tả tác vụ những tên người, con số nó nghe chắc và các lời sửa của người dùng. Khi hai bản ghi không khớp, hậu cảnh lấy mô tả tác vụ làm chuẩn. Hậu cảnh tra xong chỉ cần báo cho tiền cảnh dự kiến mấy giờ đến được hội trường và thời gian sít sao đến đâu. Đã tra những tuyến đường nào, giao diện bản đồ trả về những trường gì thì có thể để lại ở hậu cảnh để tra cứu khi cần. Tiền cảnh cầm kết quả ấy tiếp tục trao đổi với tổng đài viên.
+Một cách khác là đồng bộ cả biên bản cuộc gọi theo thứ tự cho hậu cảnh. Hậu cảnh đã đọc được từ biên bản sân bay và giờ hạ cánh mà tổng đài viên báo, tiền cảnh chỉ cần nói “tính xem chuyến này có kịp không” là ủy thác được cùng một việc. Khi đồng bộ biên bản phải ghi rõ ai nói gì; nửa câu tiền cảnh bị ngắt, chưa phát ra cũng phải được phân biệt với những gì đã nói ra. Bản phiên âm có thể ghi sót hoặc ghi sai thông tin then chốt. Tiền cảnh nên ghi vào mô tả tác vụ những tên người, con số nó nghe chắc và các lời sửa của người dùng. Khi hai bản ghi không khớp, hậu cảnh lấy mô tả tác vụ làm chuẩn. Hậu cảnh tra xong chỉ cần báo cho tiền cảnh dự kiến mấy giờ đến được hội trường và thời gian sít sao đến đâu. Đã tra những tuyến đường nào, giao diện bản đồ trả về những trường gì thì có thể để lại ở hậu cảnh để tra cứu khi cần. Tiền cảnh cầm kết quả ấy tiếp tục trao đổi với tổng đài viên.
 
 Vị hành khách đi công tác ở Chương 1 muốn giá vé không quá 1200 tệ. Những chuyến công tác trước, anh sẵn lòng trả thêm một chút cho chuyến bay phù hợp, lần này cũng không đặt thêm mức trần nào khác. Nghe giá thấp nhất là 1250 tệ, trợ lý có thể đặt thay anh. Còn nếu là một người dùng vốn luôn chi tiêu chặt chẽ đang đưa gia đình đi chơi, thì 50 tệ này phải hỏi trước. Khi đó tiền cảnh phải cùng lúc lo hai cuộc hội thoại:
 
-- Gửi người dùng: "Chuyến này rẻ nhất là 1250 tệ, vượt ngân sách 50 tệ. Bạn có muốn đặt không?"
-- Rồi hỏi tổng đài viên: "Chuyến này giữ giá giúp tôi một lúc được không? Cùng ngày, đi muộn hơn một chút, có chuyến nào dưới 1200 tệ không?" Trong lúc tổng đài viên tra vé, tiền cảnh còn có thể hỏi rõ tiêu chuẩn hành lý và điều kiện hoàn đổi.
+- Gửi người dùng: “Chuyến này rẻ nhất là 1250 tệ, vượt ngân sách 50 tệ. Bạn có muốn đặt không?”
+- Rồi hỏi tổng đài viên: “Chuyến này giữ giá giúp tôi một lúc được không? Cùng ngày, đi muộn hơn một chút, có chuyến nào dưới 1200 tệ không?” Trong lúc tổng đài viên tra vé, tiền cảnh còn có thể hỏi rõ tiêu chuẩn hành lý và điều kiện hoàn đổi.
 
-Như vậy, khi người dùng quay lại sẽ thấy vài lựa chọn, tổng đài viên cũng biết tiếp theo cần tra gì. Nếu sau đó người dùng giải thích "lần trước là vì gấp đi họp, sau này đi công tác mà vượt ngân sách thì cũng hỏi tôi trước", thì lần sau phải làm theo yêu cầu mới này.
+Như vậy, khi người dùng quay lại sẽ thấy vài lựa chọn, tổng đài viên cũng biết tiếp theo cần tra gì. Nếu sau đó người dùng giải thích “lần trước là vì gấp đi họp, sau này đi công tác mà vượt ngân sách thì cũng hỏi tôi trước”, thì lần sau phải làm theo yêu cầu mới này.
 
-Lúc chờ chính chủ xác minh, nhịp trò chuyện lại khác. Tổng đài viên nói mã xác minh đã gửi, tiền cảnh có thể đáp: "Vâng, xin chờ một chút, tôi nhờ hành khách xem điện thoại." Nếu hành khách nhắn lại là chưa nhận được, thì hỏi tổng đài viên tin nhắn đã gửi tới số có đuôi nào, bao lâu nữa có thể gửi lại. Hành khách xác minh xong trên kênh do doanh nghiệp chỉ định thì tiền cảnh có thể làm tiếp. Trong những cuộc gọi như vậy, chờ thêm một lúc hay xuất vé muộn hơn một chút đều thích hợp hơn là giục người dùng quyết định ngay tại chỗ.
+Lúc chờ chính chủ xác minh, nhịp trò chuyện lại khác. Tổng đài viên nói mã xác minh đã gửi, tiền cảnh có thể đáp: “Vâng, xin chờ một chút, tôi nhờ hành khách xem điện thoại.” Nếu hành khách nhắn lại là chưa nhận được, thì hỏi tổng đài viên tin nhắn đã gửi tới số có đuôi nào, bao lâu nữa có thể gửi lại. Hành khách xác minh xong trên kênh do doanh nghiệp chỉ định thì tiền cảnh có thể làm tiếp. Trong những cuộc gọi như vậy, chờ thêm một lúc hay xuất vé muộn hơn một chút đều thích hợp hơn là giục người dùng quyết định ngay tại chỗ.
 
-Đúng lúc này, hậu cảnh gửi tới "báo giá ban đầu đã được cập nhật". Tiền cảnh xác minh giá mới với tổng đài viên trước rồi mới báo người dùng. Nếu người dùng vừa đúng lúc ấy trả lời "đặt đi", câu trả lời này ứng với báo giá 1250 tệ gửi cho họ trước đó. Tiền cảnh phải căn cứ vào giá mới và ủy quyền đã có để phán đoán có cần xác nhận lại không. Hậu cảnh chỉ cung cấp thông tin, người trò chuyện với tổng đài viên và đưa ra cam kết luôn là tiền cảnh. Tin nhắn phải mang theo chuyến bay, điều kiện áp dụng giá và thời điểm, tiền cảnh mới nhận ra báo giá nào đã hết hạn.
+Đúng lúc này, hậu cảnh gửi tới “báo giá ban đầu đã được cập nhật”. Tiền cảnh xác minh giá mới với tổng đài viên trước rồi mới báo người dùng. Nếu người dùng vừa đúng lúc ấy trả lời “đặt đi”, câu trả lời này ứng với báo giá 1250 tệ gửi cho họ trước đó. Tiền cảnh phải căn cứ vào giá mới và ủy quyền đã có để phán đoán có cần xác nhận lại không. Hậu cảnh chỉ cung cấp thông tin, người trò chuyện với tổng đài viên và đưa ra cam kết luôn là tiền cảnh. Tin nhắn phải mang theo chuyến bay, điều kiện áp dụng giá và thời điểm, tiền cảnh mới nhận ra báo giá nào đã hết hạn.
 
-Cùng một tin nhắn hậu cảnh "giá đã thay đổi, vui lòng xác minh", đến vào thời điểm khác nhau cũng làm thay đổi cách tiền cảnh tiếp lời. Nếu tổng đài viên vừa nói "giá vé thấp nhất là…", tiền cảnh có thể nghe hết con số trước. Nếu tổng đài viên đã báo giá xong và đang chờ trả lời, đây là lúc thích hợp để hỏi lại giá mới. Nếu hành khách vừa chen vào cuộc gọi "khoan, tôi đổi ngày", thì nghe rõ ngày mới trước, rồi mới quyết định có còn cần xác minh chuyến bay cũ không. Cùng một câu "vâng", nói lúc tổng đài viên đang giới thiệu điều khoản có thể chỉ có nghĩa là đang nghe, nhưng nói sau câu "Bây giờ tôi xuất vé cho anh nhé?" thì có thể bị hiểu là đồng ý mua. Chỉ nhìn văn bản phiên âm sẽ bỏ sót những khác biệt như vậy.
+Cùng một tin nhắn hậu cảnh “giá đã thay đổi, vui lòng xác minh”, đến vào thời điểm khác nhau cũng làm thay đổi cách tiền cảnh tiếp lời. Nếu tổng đài viên vừa nói “giá vé thấp nhất là…”, tiền cảnh có thể nghe hết con số trước. Nếu tổng đài viên đã báo giá xong và đang chờ trả lời, đây là lúc thích hợp để hỏi lại giá mới. Nếu hành khách vừa chen vào cuộc gọi “khoan, tôi đổi ngày”, thì nghe rõ ngày mới trước, rồi mới quyết định có còn cần xác minh chuyến bay cũ không. Cùng một câu “vâng”, nói lúc tổng đài viên đang giới thiệu điều khoản có thể chỉ có nghĩa là đang nghe, nhưng nói sau câu “Bây giờ tôi xuất vé cho anh nhé?” thì có thể bị hiểu là đồng ý mua. Chỉ nhìn văn bản phiên âm sẽ bỏ sót những khác biệt như vậy.
 
 #### Phương án 3: hình thành ý và biểu đạt cùng tiến
 
@@ -580,13 +580,13 @@ Phương án giọng tham chiếu tổ chức các cách biểu đạt khác nha
 
 ## Computer Use: Agent tự động hóa GUI
 
-Giả sử bạn nhờ Agent sửa địa chỉ nhận hàng trên một trang web. Nó phải tìm ô địa chỉ, nhập địa chỉ mới, rồi dựa vào nội dung hiển thị lại để xác nhận đã lưu. Nếu ngay trước cú nhấp bật lên một hộp đăng nhập, thì dù tọa độ nút trong ảnh chụp màn hình trước không đổi, đối tượng của cú nhấp này cũng đã khác. Computer Use thao tác trình duyệt, bảng tính hay phần cài đặt hệ thống qua màn hình, chuột và bàn phím; bài học cốt lõi của nó là làm cho mỗi hành động theo kịp giao diện đang hiện trước mắt.
+Giả sử bạn nhờ Agent sửa địa chỉ nhận hàng trên một trang web. Nó phải tìm ô địa chỉ, nhập địa chỉ mới, rồi dựa vào nội dung hiển thị lại để xác nhận đã lưu. Nếu ngay trước cú nhấp bật lên một hộp đăng nhập, thì dù tọa độ nút trong ảnh chụp màn hình trước không đổi, đối tượng của cú nhấp này cũng đã khác. Computer Use thao tác trình duyệt, bảng tính hay phần cài đặt hệ thống qua màn hình, chuột và bàn phím; việc cốt lõi của nó là làm cho mỗi hành động theo kịp giao diện đang hiện trước mắt.
 
 Theo vòng lặp **cảm nhận—suy nghĩ—hành động** ở Hình 6-12, hãy xem trước khi nhập địa chỉ mới, mô hình phải xác nhận những gì. Nó chọn vị trí nhấp dựa trên ảnh chụp màn hình và tiến độ tác vụ, Harness kiểm tra tham số và quyền hạn, rồi giao cho tầng thực thi. Nhấp thành công chỉ có nghĩa là cú nhấp đã được gửi đi. Trong ảnh chụp màn hình tiếp theo, tiêu điểm nhập liệu nằm ở đâu mới quyết định bước tiếp theo có nhập địa chỉ an toàn được hay không.
 
 ![Hình 6-12 Vòng lặp cảm nhận-suy nghĩ-hành động của Agent Computer Use](images/revised/fig6-12.svg)
 
-Trợ lý điền xong địa chỉ, nó nên báo cho bộ thực thi biết mình muốn nhấp nút "Lưu" nào bằng cách nào? Tọa độ màn hình và số hiệu phần tử đều chỉ định được mục tiêu, nhưng đòi hỏi khác nhau ở mô hình và công cụ.
+Trợ lý điền xong địa chỉ, nó nên báo cho bộ thực thi biết mình muốn nhấp nút “Lưu” nào bằng cách nào? Tọa độ màn hình và số hiệu phần tử đều chỉ định được mục tiêu, nhưng đòi hỏi khác nhau ở mô hình và công cụ.
 
 ### Thiết kế không gian hành động
 
@@ -608,17 +608,17 @@ Trong Hình 6-13, bản hiện thực tham chiếu Computer Use của Anthropic 
 >
 > Đường dùng mô hình mở điều khiển trình duyệt xem Thí nghiệm 6-10.
 
-### Định vị trực quan (Grounding)
+### Định vị thị giác (Grounding)
 
 Muốn mô hình nhấp vào ô tìm kiếm, có thể ra đề theo hai cách. Một là cho nó xem ảnh chụp màn hình và bảo nó báo tọa độ nhấp. Hai là đánh số các mục tiêu ứng viên rồi bảo nó chọn ô tìm kiếm; số hiệu có thể ghi trên các vùng ứng viên trong ảnh chụp, cũng có thể lấy từ danh sách phần tử mà trình duyệt cung cấp. Dưới đây lần lượt giới thiệu ba hướng này. Khi chọn số hiệu, tầng thực thi lo việc khôi phục số hiệu thành mục tiêu thực; khi báo tọa độ trực tiếp, mô hình còn phải ước lượng vị trí mục tiêu, đòi hỏi cao hơn về huấn luyện định vị và việc thích ứng với độ phân giải màn hình.
 
-**Set-of-Mark: đánh dấu trực quan.**
+**Set-of-Mark: đánh dấu thị giác.**
 
-Set-of-Mark (SoM) phủ lên ảnh các số hiệu có thể tham chiếu, nối vùng trực quan với đầu ra của mô hình. Công trình gốc dùng các phương pháp như phân đoạn ảnh để tạo vùng ứng viên, chẳng hạn dùng SAM, SEEM lấy vùng rồi đặt dấu. Mô hình chọn số hiệu, tầng thực thi căn cứ vào vùng tương ứng để xác định vị trí thao tác. Phương pháp này dùng được cho phần mềm desktop hoặc giao diện trò chơi không có DOM, nhưng điều khiển cần nhấp phải nằm trong một vùng có số hiệu, và mô hình còn phải nhìn rõ nó ứng với số hiệu nào.[^ch6-som]
+Set-of-Mark (SoM) phủ lên ảnh các số hiệu có thể tham chiếu, nối vùng hình ảnh với đầu ra của mô hình. Công trình gốc dùng các phương pháp như phân đoạn ảnh để tạo vùng ứng viên, chẳng hạn dùng SAM, SEEM lấy vùng rồi đặt dấu. Mô hình chọn số hiệu, tầng thực thi căn cứ vào vùng tương ứng để xác định vị trí thao tác. Phương pháp này dùng được cho phần mềm desktop hoặc giao diện trò chơi không có DOM, nhưng phần tử điều khiển (control) cần nhấp phải nằm trong một vùng có số hiệu, và mô hình còn phải nhìn rõ nó ứng với số hiệu nào.[^ch6-som]
 
 **Chỉ mục phần tử có cấu trúc.**
 
-Trình duyệt còn cung cấp được một loại manh mối khác. Mô hình đối tượng tài liệu (DOM) mô tả trang có những phần tử nào và thứ bậc của chúng, thông tin bố cục cho biết vị trí hiển thị của phần tử, còn cây trợ năng (accessibility tree) giữ vai trò và tên truy cập mà công nghệ hỗ trợ cần. Ví dụ, một nút chỉ có biểu tượng kính lúp, nếu trang cung cấp tên truy cập "Tìm kiếm", Agent có cơ hội tìm ra nó theo vai trò và tên. Lấy các phương án như browser-use làm ví dụ, hệ thống có thể lấy thông tin phần tử qua giao diện gỡ lỗi của trình duyệt như Chrome DevTools Protocol (CDP), nhận diện ô nhập, nút và liên kết, rồi đánh số các phần tử thao tác được trên trang hiện tại. Trong Hình 6-14, mô hình chọn [2] ở góc trên bên phải trang. Số hiệu này biến thành một cú nhấp vào nút Submit như thế nào?
+Trình duyệt còn cung cấp được một loại manh mối khác. Mô hình đối tượng tài liệu (DOM) mô tả trang có những phần tử nào và thứ bậc của chúng, thông tin bố cục cho biết vị trí hiển thị của phần tử, còn cây trợ năng (accessibility tree) giữ vai trò và tên truy cập mà công nghệ hỗ trợ cần. Ví dụ, một nút chỉ có biểu tượng kính lúp, nếu trang cung cấp tên truy cập “Tìm kiếm”, Agent có cơ hội tìm ra nó theo vai trò và tên. Lấy các phương án như browser-use làm ví dụ, hệ thống có thể lấy thông tin phần tử qua giao diện gỡ lỗi của trình duyệt như Chrome DevTools Protocol (CDP), nhận diện ô nhập, nút và liên kết, rồi đánh số các phần tử thao tác được trên trang hiện tại. Trong Hình 6-14, mô hình chọn [2] ở góc trên bên phải trang. Số hiệu này biến thành một cú nhấp vào nút Submit như thế nào?
 
 ![Hình 6-14 Set-of-Mark và chỉ mục phần tử có cấu trúc (hiện thực của browser-use)](images/revised/fig6-14.svg)
 
@@ -637,7 +637,7 @@ Mô hình chọn số hiệu, tầng thực thi phân giải thành tham chiếu
 
 **Dự đoán tọa độ trực tiếp.**
 
-Hướng tọa độ để mô hình xuất thẳng vị trí từ ảnh chụp màn hình và mô tả mục tiêu, ví dụ ánh xạ "nhấp nút gửi" thành một điểm nào đó. Các nghiên cứu định vị GUI như SeeClick và Computer Use của Claude đều dùng đầu ra tọa độ. Tầng thực thi lo chuyển tọa độ ảnh sang tọa độ desktop thực.
+Hướng tọa độ để mô hình xuất thẳng vị trí từ ảnh chụp màn hình và mô tả mục tiêu, ví dụ ánh xạ “nhấp nút gửi” thành một điểm nào đó. Các nghiên cứu định vị GUI như SeeClick và Computer Use của Claude đều dùng đầu ra tọa độ. Tầng thực thi lo chuyển tọa độ ảnh sang tọa độ desktop thực.
 
 Khi ảnh chụp bị co giãn, hai hệ tọa độ phải dùng cùng một phép biến đổi. Lấy desktop 2560×1440 làm ví dụ, nếu ảnh gửi cho mô hình là 1366×768, thì tọa độ (683, 384) mà mô hình đưa ra tương ứng với:
 
@@ -650,13 +650,13 @@ Trong Hình 6-15, tỷ lệ khung hình của hai kích thước gần bằng nh
 
 ![Hình 6-15 Khớp độ phân giải và co giãn tọa độ hai chiều](images/revised/fig6-15.svg)
 
-Bản hiện thực tham chiếu từng dùng các kích thước đích như XGA (1024×768), WXGA (1280×800) và FWXGA (1366×768). Ép đổi tỷ lệ khung hình sẽ làm biến dạng hình dạng điều khiển; dùng sai phép ánh xạ ngược thì dự đoán đúng cũng rơi vào vị trí sai.[^ch6-computer-tools]
+Bản hiện thực tham chiếu từng dùng các kích thước đích như XGA (1024×768), WXGA (1280×800) và FWXGA (1366×768). Ép đổi tỷ lệ khung hình sẽ làm biến dạng hình dạng các phần tử điều khiển; dùng sai phép ánh xạ ngược thì dự đoán đúng cũng rơi vào vị trí sai.[^ch6-computer-tools]
 
 **Khi thông tin cấu trúc đầy đủ, tác giả ưu tiên dùng chỉ mục DOM hoặc cây trợ năng.** Tên, vai trò và tham chiếu của phần tử có thể tham gia trực tiếp vào việc định vị, giảm phần việc mô hình phải tạm ước lượng vị trí điểm ảnh. Khi thiếu cấu trúc, mô hình thị giác đa năng có thể kết hợp với SoM trước, để mô hình chọn một trong các vùng đã đánh dấu; mô hình đã được huấn luyện định vị GUI thì có thể dự đoán tọa độ trực tiếp, bỏ qua bước đánh dấu riêng.
 
 > **Thí nghiệm 6-10 ★: Tự động thao tác trình duyệt bằng browser-use**
 >
-> Thí nghiệm này dùng Qwen3-VL 32B Instruct điều khiển browser-use, sinh hành động từ trạng thái trình duyệt, thông tin phần tử và ảnh chụp màn hình. Tác vụ là tra thời tiết San Francisco: định vị ô tìm kiếm, nhập "San Francisco weather today", gửi truy vấn, rồi trích xuất nhiệt độ và tình trạng thời tiết.
+> Thí nghiệm này dùng Qwen3-VL 32B Instruct điều khiển browser-use, sinh hành động từ trạng thái trình duyệt, thông tin phần tử và ảnh chụp màn hình. Tác vụ là tra thời tiết San Francisco: định vị ô tìm kiếm, nhập “San Francisco weather today”, gửi truy vấn, rồi trích xuất nhiệt độ và tình trạng thời tiết.
 >
 > Mã và hướng dẫn chạy của Thí nghiệm 6-10 có hai lối vào. Nếu có khóa OpenRouter, có thể dùng mô hình thị giác được lưu trữ sẵn; nếu đã có dịch vụ tương thích như vLLM, SGLang, có thể trỏ `OPEN_MODEL_BASE_URL` và `OPEN_MODEL_MODEL` tới endpoint và mô hình của mình, rồi đặt khóa theo yêu cầu của dịch vụ. Cả hai hướng đều chạy `python main.py --dry-run` trong thư mục thí nghiệm trước để xem cấu hình, rồi theo hướng dẫn khởi động truy vấn thực.
 >
@@ -667,7 +667,7 @@ Bản hiện thực tham chiếu từng dùng các kích thước đích như XG
 
 ### Agent Computer Use xem được hoạt ảnh, nghe được âm thanh
 
-Trang chỉ thoáng hiện "Đồng bộ thất bại" sau khi lưu, nhưng hai ảnh chụp màn hình cách nhau vài giây lại đều cho thấy cùng một biểu mẫu. Xem lại hai ảnh này, nhiều khả năng mô hình không khôi phục được điều gì đã xảy ra ở giữa. Video, hoạt ảnh, thông báo thoáng qua và giọng nói trong cuộc họp cũng gặp vấn đề này. **Với giao diện biến đổi liên tục, tác giả chủ trương lấy giao diện quan sát làm đối tượng cải tiến trọng tâm.** Muốn quyết định bước tiếp theo dựa trên thay đổi, thì phải lưu lại cả những sự kiện hay khung hình xuất hiện giữa các hành động.
+Trang chỉ thoáng hiện “Đồng bộ thất bại” sau khi lưu, nhưng hai ảnh chụp màn hình cách nhau vài giây lại đều cho thấy cùng một biểu mẫu. Xem lại hai ảnh này, nhiều khả năng mô hình không khôi phục được điều gì đã xảy ra ở giữa. Video, hoạt ảnh, thông báo thoáng qua và giọng nói trong cuộc họp cũng gặp vấn đề này. **Với giao diện biến đổi liên tục, tác giả chủ trương lấy giao diện quan sát làm đối tượng cải tiến trọng tâm.** Muốn quyết định bước tiếp theo dựa trên thay đổi, thì phải lưu lại cả những sự kiện hay khung hình xuất hiện giữa các hành động.
 
 **Agent–Computer Observation Interface (AOI, giao diện quan sát Agent—máy tính)** do tác giả và cộng sự đề xuất chuyển màn hình và âm thanh liên tục thành hình ảnh và văn bản mà mô hình nhận được[^ch6-9]. Giao diện gồm ba thành phần:
 
@@ -675,11 +675,11 @@ Trang chỉ thoáng hiện "Đồng bộ thất bại" sau khi lưu, nhưng hai 
 - **Phiên âm có cổng âm lượng.** Phát hiện có âm thanh thì gọi nhận dạng giọng nói, thêm bản phiên âm và thông tin thời gian vào hồ sơ quan sát, giúp Agent dùng được nội dung cuộc họp hoặc chỉ dẫn bằng lời.
 - **Mô tả hình ảnh bền vững.** Tóm tắt các khung hình then chốt thành văn bản; sau khi ảnh gốc bị đưa ra khỏi ngữ cảnh, văn bản vẫn giữ những thay đổi đã xảy ra để các bước sau tham chiếu.
 
-Ví dụ, một video trình diễn một thao tác trên menu; mô hình nhận được khung hình trung gian và mô tả tương ứng thì vẫn có thể tham khảo bước đó sau khi video phát xong. Kết quả ablation của bài báo cho thấy mô tả văn bản bền vững đặc biệt quan trọng đối với mức cải thiện, còn việc chọn khung hình then chốt tinh vi đóng góp ít hơn; một số mô hình khi thêm quá nhiều hình ảnh lại còn kém đi.
+Ví dụ, một video trình diễn một thao tác trên menu; mô hình nhận được khung hình trung gian và mô tả tương ứng thì vẫn có thể tham khảo bước đó sau khi video phát xong. Kết quả thí nghiệm cắt bỏ (ablation) của bài báo cho thấy mô tả văn bản bền vững đặc biệt quan trọng đối với mức cải thiện, còn việc chọn khung hình then chốt tinh vi đóng góp ít hơn; một số mô hình khi thêm quá nhiều hình ảnh lại còn kém đi.
 
-Quay lại ví dụ lưu biểu mẫu vừa rồi. Kể cả khi khung hình then chốt chụp được "Đồng bộ thất bại", một khi ảnh gốc bị đưa ra khỏi ngữ cảnh, mô hình chỉ còn dựa vào mô tả để lại. "Trang hiện thông báo" có thể là lưu thành công, cũng có thể là thất bại; "Đồng bộ thất bại, địa chỉ chưa được lưu" mới giữ được manh mối quyết định bước tiếp theo.
+Quay lại ví dụ lưu biểu mẫu vừa rồi. Kể cả khi khung hình then chốt chụp được “Đồng bộ thất bại”, một khi ảnh gốc bị đưa ra khỏi ngữ cảnh, mô hình chỉ còn dựa vào mô tả để lại. “Trang hiện thông báo” có thể là lưu thành công, cũng có thể là thất bại; “Đồng bộ thất bại, địa chỉ chưa được lưu” mới giữ được manh mối quyết định bước tiếp theo.
 
-[^ch6-9]: Bojie Li, Noah Shi, *Agent-Computer Observation Interfaces Enable Dynamic Computer Use*, 2026, giới thiệu AOI và ablation các thành phần của nó.
+[^ch6-9]: Bojie Li, Noah Shi, *Agent-Computer Observation Interfaces Enable Dynamic Computer Use*, 2026, giới thiệu AOI và thí nghiệm cắt bỏ các thành phần của nó.
 
 ### Mô hình thế giới cho Computer Use
 
@@ -721,7 +721,7 @@ Một xung đột lợi ích mang tính cấu trúc đến từ lưu lượng v�
 
 Phần này sắp xếp năm thí nghiệm theo nhiệm vụ đó. Thí nghiệm 6-11 và 6-13 đưa ra thiết kế thực hành cho điều khiển từ xa và thao tác tự chủ trên robot thật; Thí nghiệm 6-12, 6-14 và 6-15 dùng mô phỏng cục bộ, lần lượt nghiên cứu đường cơ sở điều khiển, khôi phục sau thất bại và thay đổi điều kiện thị giác.
 
-Cùng một robot có thể do người liên tục nhìn camera mà điều khiển, cũng có thể do mô hình đọc hình ảnh, chọn kỹ năng rồi giao cho hệ thống điều khiển thực thi. Giữ nguyên nhiệm vụ và phần cứng, có thể phân tích khác biệt giữa hai cách qua bốn câu hỏi: con người muốn hoàn thành điều gì, tiếp theo làm nhiệm vụ con nào trước, kỹ năng hiện tại xuất ra những hành động nào, và môi trường sau hành động có khớp với kế hoạch không. Lập kế hoạch dài hạn sắp xếp thứ tự xử lý cốc và giấy vụn, chính sách VLA hoặc các hành động nguyên thủy định nghĩa sẵn đảm nhận việc gắp và đặt, mô hình thế giới giúp ước lượng hệ quả của hành động, còn việc chuyển giao từ mô phỏng sang thực tế xử lý những thay đổi về hình ảnh, tiếp xúc và đặc tính của cơ cấu chấp hành.
+Cùng một robot có thể do người liên tục nhìn camera mà điều khiển, cũng có thể do mô hình đọc hình ảnh, chọn kỹ năng rồi giao cho hệ thống điều khiển thực thi. Giữ nguyên nhiệm vụ và phần cứng, có thể phân tích khác biệt giữa hai cách qua bốn câu hỏi: con người muốn hoàn thành điều gì, tiếp theo làm nhiệm vụ con nào trước, kỹ năng hiện tại xuất ra những hành động nào, và môi trường sau hành động có khớp với kế hoạch không. Lập kế hoạch dài hạn sắp xếp thứ tự xử lý cốc và giấy vụn, chiến lược VLA hoặc các hành động nguyên thủy định nghĩa sẵn đảm nhận việc gắp và đặt, mô hình thế giới giúp ước lượng hệ quả của hành động, còn việc chuyển giao từ mô phỏng sang thực tế xử lý những thay đổi về hình ảnh, tiếp xúc và đặc tính của cơ cấu chấp hành.
 
 ### Phân công giữa phần cứng và thuật toán
 
@@ -731,7 +731,7 @@ XLeRobot hỗ trợ điều khiển từ xa bằng bàn phím, tay cầm Xbox v�
 
 > **Thí nghiệm 6-11 ★: Điều khiển từ xa XLeRobot thật để dọn bàn**
 >
-> Trong khu vực làm việc của XLeRobot đã hoàn tất hiệu chuẩn, kiểm tra giới hạn hành trình và dừng khẩn cấp, đặt một chiếc cốc đỏ, một khay, một tờ giấy vụn màu vàng và một thùng rác. Dùng một cách điều khiển từ xa đã hiệu chuẩn để thực hiện nhiệm vụ cố định: "Đặt chiếc cốc đỏ vào khay, bỏ giấy vụn màu vàng vào thùng rác, cuối cùng xác nhận trạng thái mặt bàn." Lặp lại nhiều lượt, ghi lại hình ảnh camera, đầu vào của người vận hành, trạng thái cánh tay, thời gian hành động, số lần gắp hụt và số lần thử lại.
+> Trong khu vực làm việc của XLeRobot đã hoàn tất hiệu chuẩn, kiểm tra giới hạn hành trình và dừng khẩn cấp, đặt một chiếc cốc đỏ, một khay, một tờ giấy vụn màu vàng và một thùng rác. Dùng một cách điều khiển từ xa đã hiệu chuẩn để thực hiện nhiệm vụ cố định: “Đặt chiếc cốc đỏ vào khay, bỏ giấy vụn màu vàng vào thùng rác, cuối cùng xác nhận trạng thái mặt bàn.” Lặp lại nhiều lượt, ghi lại hình ảnh camera, đầu vào của người vận hành, trạng thái cánh tay, thời gian hành động, số lần gắp hụt và số lần thử lại.
 >
 > Cuối mỗi lượt, xác nhận cốc nằm trong khay, giấy vụn nằm trong thùng rác, cánh tay đã về tư thế an toàn, và kiểm tra hồ sơ va chạm, vượt giới hạn và can thiệp thủ công trong suốt quá trình. Đặt cạnh nhau thất bại xảy ra ở bước nào, người vận hành khôi phục ra sao và kết quả cuối cùng để phân tích, sẽ có được đường cơ sở đối chứng cho điều khiển tự chủ.
 
@@ -745,35 +745,35 @@ Thí nghiệm mô phỏng thì thuận tiện cho việc lặp lại thay đổi
 
 ### Cấu trúc cơ bản của điều khiển robot
 
-Dọn một lần bàn có thể mất vài phút, nhưng điều khiển khớp lại phải cập nhật liên tục và kịp thời. Hệ thống có thể phân công theo thang thời gian: để lập kế hoạch tầng cao sắp xếp thứ tự nhiệm vụ, để chính sách kỹ năng sinh chuyển động, rồi để bộ điều khiển tầng thấp bám theo mà thực thi:
+Dọn một lần bàn có thể mất vài phút, nhưng điều khiển khớp lại phải cập nhật liên tục và kịp thời. Hệ thống có thể phân công theo thang thời gian: để lập kế hoạch tầng cao sắp xếp thứ tự nhiệm vụ, để chiến lược kỹ năng sinh chuyển động, rồi để bộ điều khiển tầng thấp bám theo mà thực thi:
 
 | Tầng | Câu hỏi cốt lõi | Đầu ra | Ví dụ thang thời gian và cấu hình |
 | --- | --- | --- | --- |
-| Mục tiêu nhiệm vụ | Con người muốn hoàn thành điều gì | "Đưa cốc và giấy vụn về đúng chỗ" | Nhiệm vụ cấp phút |
+| Mục tiêu nhiệm vụ | Con người muốn hoàn thành điều gì | “Đưa cốc và giấy vụn về đúng chỗ” | Nhiệm vụ cấp phút |
 | Lập kế hoạch dài hạn | Làm gì trước, làm gì sau | Xử lý cốc trước, rồi giấy vụn, cuối cùng kiểm tra | Giây đến phút |
 | Kỹ năng cơ bản | Hiện cần tạo ra thay đổi trạng thái nào | `pick(red_cup)`, `place(red_cup, tray)` | Một kỹ năng có thể kéo dài vài giây, như 1–3 giây |
-| VLA / chính sách kỹ năng | Kỹ năng hiện tại cụ thể chuyển động thế nào | Động tác kẹp gắp, tư thế đầu cuối hoặc một đoạn quỹ đạo khớp | Có thể cấu hình suy luận ở 1–10 Hz |
+| VLA / chiến lược kỹ năng | Kỹ năng hiện tại cụ thể chuyển động thế nào | Động tác kẹp gắp, tư thế đầu cuối hoặc một đoạn quỹ đạo khớp | Có thể cấu hình suy luận ở 1–10 Hz |
 | Điều khiển tầng thấp và tầng an toàn | Thực thi ổn định, kịp thời thế nào | Lượng điều khiển khớp hoặc đầu cuối, giới hạn tốc độ và dừng khẩn cấp | Bộ điều khiển có thể cấu hình từ vài chục đến hàng nghìn Hz |
 
 Bộ lập kế hoạch có thể dùng chương trình quy tắc, VLM hoặc bộ tối ưu, VLA cũng có thể đảm nhận một phần việc chọn kỹ năng. **Lời khuyên của tác giả là xử lý tách biệt thứ tự nhiệm vụ và hành động trước mắt.** Suy luận tầng cao cần thời gian để tổ chức kế hoạch, điều khiển tầng thấp cần phản ứng kịp với thay đổi về vị trí và lực; để hai bên chạy theo nhịp thích hợp của riêng mình mới lo được cả lập kế hoạch lẫn điều khiển.
 
-Phần này cung cấp cho mô hình tầng cao năm loại công cụ `observe_scene`, `pick`, `place`, `verify_state` và `stop`, lần lượt dùng để quan sát, gắp, đặt, kiểm tra và dừng. Harness kiểm tra tham số, khu vực làm việc và trạng thái hiện tại, bộ thực thi chuyển các kỹ năng đã qua kiểm tra thành chuyển động của cánh tay, đồng thời xử lý giới hạn tốc độ và quá thời gian. Góc khớp và quỹ đạo liên tục do chính sách kỹ năng và bộ điều khiển sinh ra, nhờ đó giữa việc mô hình chọn kỹ năng và chuyển động thực tế hình thành một giao diện rõ ràng.
+Phần này cung cấp cho mô hình tầng cao năm loại công cụ `observe_scene`, `pick`, `place`, `verify_state` và `stop`, lần lượt dùng để quan sát, gắp, đặt, kiểm tra và dừng. Harness kiểm tra tham số, khu vực làm việc và trạng thái hiện tại, bộ thực thi chuyển các kỹ năng đã qua kiểm tra thành chuyển động của cánh tay, đồng thời xử lý giới hạn tốc độ và quá thời gian. Góc khớp và quỹ đạo liên tục do chiến lược kỹ năng và bộ điều khiển sinh ra, nhờ đó giữa việc mô hình chọn kỹ năng và chuyển động thực tế hình thành một giao diện rõ ràng.
 
 ### Lập kế hoạch dài hạn và phân rã nhiệm vụ
 
-Khi người dùng nói "dọn bàn cho sạch", bộ lập kế hoạch trước hết nhận diện các vật thể và khu vực đích của chúng, xác định thứ tự xử lý, và ghi rõ cho mỗi bước điều kiện bắt đầu, điều kiện hoàn thành và giới hạn hành động. Ví dụ, thứ tự dọn có thể là:
+Khi người dùng nói “dọn bàn cho sạch”, bộ lập kế hoạch trước hết nhận diện các vật thể và khu vực đích của chúng, xác định thứ tự xử lý, và ghi rõ cho mỗi bước điều kiện bắt đầu, điều kiện hoàn thành và giới hạn hành động. Ví dụ, thứ tự dọn có thể là:
 
 ```text
 Xử lý cốc đỏ → dọn giấy vàng → kiểm tra mặt bàn
 ```
 
-"Xử lý cốc đỏ" lại tách tiếp thành hai hành động và một lần kiểm tra:
+“Xử lý cốc đỏ” lại tách tiếp thành hai hành động và một lần kiểm tra:
 
 ```text
 pick(red_cup) → place(red_cup, tray) → verify_state()
 ```
 
-Lấy "nhấc cốc lên và đặt vào khay" làm ví dụ: cánh tay chạy xong chương trình gắp chỉ cho biết đoạn chương trình ấy đã kết thúc. Trước khi nâng lên ở bước tiếp theo, còn phải dựa vào phản hồi của kẹp gắp hoặc hình ảnh mới để phán đoán cốc đã thực sự được giữ chưa. Nếu gắp hụt thì định vị lại chiếc cốc; nếu có người dời khay đi, lần gắp đã thành công vẫn có hiệu lực, chỉ cần lập kế hoạch lại động tác đặt. Cho mỗi kỹ năng ứng với một thay đổi trạng thái kiểm tra được, giới hạn hành động và thời lượng, rồi trả về trạng thái thực thi và quan sát mới, thì bộ lập kế hoạch có thể khôi phục từ đúng bước đã thực sự hỏng.
+Lấy “nhấc cốc lên và đặt vào khay” làm ví dụ: cánh tay chạy xong chương trình gắp chỉ cho biết đoạn chương trình ấy đã kết thúc. Trước khi nâng lên ở bước tiếp theo, còn phải dựa vào phản hồi của kẹp gắp hoặc hình ảnh mới để phán đoán cốc đã thực sự được giữ chưa. Nếu gắp hụt thì định vị lại chiếc cốc; nếu có người dời khay đi, lần gắp đã thành công vẫn có hiệu lực, chỉ cần lập kế hoạch lại động tác đặt. Cho mỗi kỹ năng ứng với một thay đổi trạng thái kiểm tra được, giới hạn hành động và thời lượng, rồi trả về trạng thái thực thi và quan sát mới, thì bộ lập kế hoạch có thể khôi phục từ đúng bước đã thực sự hỏng.
 
 > **Thí nghiệm 6-13 ★★: Dùng Gemini Robotics-ER 1.5 điều khiển XLeRobot tự chủ dọn bàn**
 >
@@ -793,7 +793,7 @@ VLA là viết tắt của Vision-Language-Action, tức mô hình thị giác�
 Quan sát hiện tại + chỉ dẫn kỹ năng → hành động hoặc chuỗi hành động
 ```
 
-Trong ví dụ dọn bàn, bộ lập kế hoạch tầng cao gửi `pick(red_cup)`, chính sách kỹ năng căn cứ vào hình ảnh để quyết định tiếp cận cốc từ hướng nào, khi nào khép kẹp, và nâng cánh tay theo quỹ đạo nào. Thực hiện xong đoạn chuyển động này, hệ thống lấy lại quan sát mặt bàn, xác nhận cốc đã được kẹp rồi mới chuyển sang `place(red_cup, tray)`. Giao diện công cụ quy ước thay đổi trạng thái mong muốn, còn VLA học cách thực hiện thay đổi đó bằng hành động liên tục.
+Trong ví dụ dọn bàn, bộ lập kế hoạch tầng cao gửi `pick(red_cup)`, chiến lược kỹ năng căn cứ vào hình ảnh để quyết định tiếp cận cốc từ hướng nào, khi nào khép kẹp, và nâng cánh tay theo quỹ đạo nào. Thực hiện xong đoạn chuyển động này, hệ thống lấy lại quan sát mặt bàn, xác nhận cốc đã được kẹp rồi mới chuyển sang `place(red_cup, tray)`. Giao diện công cụ quy ước thay đổi trạng thái mong muốn, còn VLA học cách thực hiện thay đổi đó bằng hành động liên tục.
 
 Hành động có thể dùng nhiều cách biểu diễn khác nhau. RT-2 và OpenVLA nguyên bản lượng tử hóa giá trị của từng chiều hành động thành token rời rạc, xuất ra theo cách sinh của mô hình ngôn ngữ; π₀ dùng flow matching để sinh các khối hành động liên tục. Cách trước thuận tiện tái sử dụng framework sinh tự hồi quy, cách sau mô hình hóa trực tiếp phân phối của một đoạn hành động liên tục.[^ch6-15]
 
@@ -801,18 +801,18 @@ Suy luận của mô hình và điều khiển cơ cấu chấp hành thường 
 
 ### Dữ liệu và điều kiện triển khai VLA
 
-Muốn biến "nhấc cốc lên" thành hành động một cách ổn định, phải xử lý đồng thời mấy loại khác biệt sau:
+Muốn biến “nhấc cốc lên” thành hành động một cách ổn định, phải xử lý đồng thời mấy loại khác biệt sau:
 
-- **Độ bao phủ của dữ liệu huấn luyện**: số trình diễn hành động robot dùng được ít hơn rất nhiều so với chữ và ảnh trên internet; biết "cái cốc" là gì vẫn cần kinh nghiệm gắp thực tế để phán đoán dùng lực thế nào. Trình diễn phải bao được chất liệu, hình dạng, tư thế đặt và điều kiện ma sát của cốc. Cùng một hướng gắp, áp vào cốc sứ và cốc giấy mềm có thể cho kết quả khác nhau.
+- **Độ bao phủ của dữ liệu huấn luyện**: số trình diễn hành động robot dùng được ít hơn rất nhiều so với chữ và ảnh trên internet; biết “cái cốc” là gì vẫn cần kinh nghiệm gắp thực tế để phán đoán dùng lực thế nào. Trình diễn phải bao được chất liệu, hình dạng, tư thế đặt và điều kiện ma sát của cốc. Cùng một hướng gắp, áp vào cốc sứ và cốc giấy mềm có thể cho kết quả khác nhau.
 - **Mục tiêu học hành động và hệ quả**: nhân bản hành vi (behavior cloning) chủ yếu học xem người trình diễn sẽ làm gì trong điều kiện hiện tại. Muốn so sánh hệ quả của nhiều hành động, có thể thêm dự đoán trạng thái hoặc đánh giá kết quả hành động.
-- **Thân robot và giao diện**: số bậc tự do, hệ tọa độ, cấu trúc kẹp gắp và độ trễ của cơ cấu chấp hành quyết định hành động được áp vào phần cứng ra sao. Khi chuyển giao chính sách, phải khớp cách biểu diễn hành động, tham số hiệu chuẩn và chu kỳ điều khiển.
+- **Thân robot và giao diện**: số bậc tự do, hệ tọa độ, cấu trúc kẹp gắp và độ trễ của cơ cấu chấp hành quyết định hành động được áp vào phần cứng ra sao. Khi chuyển giao chiến lược, phải khớp cách biểu diễn hành động, tham số hiệu chuẩn và chu kỳ điều khiển.
 - **Thời hiệu của quan sát**: trong lúc thực thi một khối hành động, vật thể có thể di chuyển, bị che hoặc bị đổ. Hệ thống phải quy định khi nào lấy quan sát mới và khi nào dùng nó để cập nhật phần hành động còn lại.
 
 Những điều kiện này nối nhận dạng thị giác, điều khiển kỹ năng và thay đổi của môi trường với nhau. Chất lỏng trong cốc ảnh hưởng đến tốc độ vận chuyển, dây điện ở mép bàn làm thay đổi đường đi khả thi, tiếp xúc giữa tờ giấy và mặt bàn ảnh hưởng đến cách kẹp. Nếu bộ lập kế hoạch so sánh được những hệ quả này từ trước, nó sẽ có thêm căn cứ cho việc chọn kỹ năng.
 
 ### Mô hình thế giới
 
-Trong lập kế hoạch robot, có thể hiểu mô hình thế giới có điều kiện hành động là một "bộ dự đoán kết quả hành động": cho trạng thái hiện tại và một hành động ứng viên, nó ước lượng điều gì sẽ xảy ra tiếp theo.
+Trong lập kế hoạch robot, có thể hiểu mô hình thế giới có điều kiện hành động là một “bộ dự đoán kết quả hành động”: cho trạng thái hiện tại và một hành động ứng viên, nó ước lượng điều gì sẽ xảy ra tiếp theo.
 
 ```text
 Trạng thái hiện tại + hành động ứng viên
@@ -825,15 +825,15 @@ Quá trình này gồm ba việc: biểu diễn trạng thái hiện tại, dự
 
 Mô hình thế giới có thể giúp robot ở ba giai đoạn: trước khi ra tay, dự đoán riêng kết quả của việc gắp, đẩy hay chờ; khi thực thi, đối chiếu dự đoán với quan sát thực tế, phát hiện sai lệch thì điều chỉnh hành động hoặc lập kế hoạch lại; khi huấn luyện, dùng video, dữ liệu mô phỏng và trajectory thất bại để học thay đổi trạng thái, giảm thử sai trên robot thật.
 
-Giả sử tờ giấy vụn màu vàng bị chiếc cốc đỏ che mất một phần, bộ lập kế hoạch có thể so sánh "gắp giấy trước", "dời cốc trước" và "đổi hướng gắp". Tác giả sẽ ưu tiên để mô hình thế giới dự đoán những thay đổi trạng thái liên quan trực tiếp đến nhiệm vụ và kiểm tra được như thế này. Phán đoán được tờ giấy có dễ kẹp hơn không, chiếc cốc có dễ bị đổ không, là đủ để xếp hạng các hành động ứng viên. Cách biểu diễn trạng thái và mục tiêu huấn luyện của mô hình nên được thiết kế xoay quanh những phán đoán này. Nếu mô hình sinh hình ảnh tương lai, tác giả sẽ ưu tiên kiểm tra hình ảnh có phản ánh chính xác các hệ quả hành động này không, rồi mới tính đến chuyện thêm chi tiết thị giác; giá trị của độ chân thực hình ảnh rốt cuộc phải thể hiện ở cải thiện trong lập kế hoạch và điều khiển. Sau khi thực thi, hệ thống lại căn cứ vào camera và trạng thái robot để kiểm tra kết quả thực tế, quyết định tiếp tục, thử lại hay đổi phương án.
+Giả sử tờ giấy vụn màu vàng bị chiếc cốc đỏ che mất một phần, bộ lập kế hoạch có thể so sánh “gắp giấy trước”, “dời cốc trước” và “đổi hướng gắp”. Tác giả sẽ ưu tiên để mô hình thế giới dự đoán những thay đổi trạng thái liên quan trực tiếp đến nhiệm vụ và kiểm tra được như thế này. Phán đoán được tờ giấy có dễ kẹp hơn không, chiếc cốc có dễ bị đổ không, là đủ để xếp hạng các hành động ứng viên. Cách biểu diễn trạng thái và mục tiêu huấn luyện của mô hình nên được thiết kế xoay quanh những phán đoán này. Nếu mô hình sinh hình ảnh tương lai, tác giả sẽ ưu tiên kiểm tra hình ảnh có phản ánh chính xác các hệ quả hành động này không, rồi mới tính đến chuyện thêm chi tiết thị giác; giá trị của độ chân thực hình ảnh rốt cuộc phải thể hiện ở cải thiện trong lập kế hoạch và điều khiển. Sau khi thực thi, hệ thống lại căn cứ vào camera và trạng thái robot để kiểm tra kết quả thực tế, quyết định tiếp tục, thử lại hay đổi phương án.
 
 Phạm vi dự đoán càng dài, sai số càng dễ tích lũy. Trong thực tế có thể dự đoán hệ quả ngắn hạn trước, thực thi một đoạn ngắn, rồi dùng quan sát mới để lập kế hoạch lại, đồng thời đưa độ bất định của dự đoán vào việc lựa chọn. Mô hình thế giới sinh còn có thể cung cấp mô phỏng tương tác và cảnh trực quan; khi dùng cho điều khiển, phải kiểm nghiệm thêm điều kiện hành động, quy luật tiếp xúc và sai số dự đoán. Giới hạn hành trình phần cứng, dừng khẩn cấp và điều khiển thời gian thực vẫn do hệ thống thực thi đảm nhận.[^ch6-21]
 
 > **Thí nghiệm 6-14 ★★: So sánh ba vòng kín tự chủ dọn bàn trong mô phỏng**
 >
-> Dùng trạng thái có cấu trúc để biểu diễn chiếc cốc đỏ và tờ giấy vụn màu vàng: mỗi vật thể ở một trong ba giai đoạn "trên bàn", "đã nhấc lên" hoặc "đã đặt", khu vực đích ghi lại có dùng được không. Bộ mô phỏng cung cấp năm loại công cụ quan sát, gắp, đặt, kiểm tra và dừng, và khi gắp giấy vụn thì tiêm tối đa một lần thất bại thoáng qua.
+> Dùng trạng thái có cấu trúc để biểu diễn chiếc cốc đỏ và tờ giấy vụn màu vàng: mỗi vật thể ở một trong ba giai đoạn “trên bàn”, “đã nhấc lên” hoặc “đã đặt”, khu vực đích ghi lại có dùng được không. Bộ mô phỏng cung cấp năm loại công cụ quan sát, gắp, đặt, kiểm tra và dừng, và khi gắp giấy vụn thì tiêm tối đa một lần thất bại thoáng qua.
 >
-> So sánh ba cách điều khiển. **Thực thi vòng hở** hoàn thành bốn hành động theo thứ tự cố định. **Kiểm tra từng bước** đọc trạng thái sau mỗi hành động, thất bại thì lấy lại quan sát rồi chọn bước có thể thực thi hiện tại. **Thực thi dự đoán** dùng một mạng nơ-ron nhỏ học ánh xạ "trạng thái và hành động sang trạng thái tiếp theo", xếp hạng các hành động có thể thực thi theo tiến độ đưa vật về chỗ được dự đoán.
+> So sánh ba cách điều khiển. **Thực thi vòng hở** hoàn thành bốn hành động theo thứ tự cố định. **Kiểm tra từng bước** đọc trạng thái sau mỗi hành động, thất bại thì lấy lại quan sát rồi chọn bước có thể thực thi hiện tại. **Thực thi dự đoán** dùng một mạng nơ-ron nhỏ học ánh xạ “trạng thái và hành động sang trạng thái tiếp theo”, xếp hạng các hành động có thể thực thi theo tiến độ đưa vật về chỗ được dự đoán.
 >
 > So sánh mức độ hoàn thành nhiệm vụ, số lần gọi công cụ và quá trình khôi phục sau thất bại. Ví dụ, gắp giấy vụn thất bại thì nó vẫn nằm trên bàn, thực thi đặt ngay sẽ thất bại vì chưa nhấc được vật; đọc trạng thái rồi thử gắp lại mới tiếp tục đặt được. Hai chiến lược có phản hồi gọi `verify_state` khi kết thúc để kiểm tra trạng thái đã về chỗ.
 >
@@ -849,9 +849,9 @@ Cách làm ngẫu nhiên hóa miền (domain randomization) là thay đổi nề
 >
 > Dùng hình tròn biểu diễn vật thể, hình vuông biểu diễn khu vực đích, sinh ảnh mặt bàn RGB. Mô hình căn cứ vào vị trí tương đối của hai thứ để xuất một trong bốn hướng di chuyển trái, phải, lên, xuống; khi hai vị trí đủ gần nhau, xuất nhãn `grasp` do thí nghiệm định nghĩa. Nhãn này cho biết vị trí hai chiều đã thỏa điều kiện tiếp cận.
 >
-> Huấn luyện bốn nhóm chính sách thị giác có cùng cấu trúc: điều kiện thị giác cố định, chủ yếu thay đổi nền, chủ yếu thay đổi ngoại hình vật thể, và kết hợp nhiều loại thay đổi. Áp chính sách của từng nhóm lên điều kiện gốc và lên ảnh kiểm thử có màu sắc, kết cấu, độ sáng và nhiễu mới, so sánh độ chính xác của phán đoán hướng, và xem các ảnh bị phán đoán sai.
+> Huấn luyện bốn nhóm chiến lược thị giác có cùng cấu trúc: điều kiện thị giác cố định, chủ yếu thay đổi nền, chủ yếu thay đổi ngoại hình vật thể, và kết hợp nhiều loại thay đổi. Áp chiến lược của từng nhóm lên điều kiện gốc và lên ảnh kiểm thử có màu sắc, kết cấu, độ sáng và nhiễu mới, so sánh độ chính xác của phán đoán hướng, và xem các ảnh bị phán đoán sai.
 >
-> Mỗi miền kiểm thử, mỗi hạt giống đều có 1.024 ảnh tổng hợp. Trước hết so sánh độ chính xác trung bình qua ba hạt giống: chính sách huấn luyện với điều kiện thị giác cố định đạt 93,03% ở miền gốc, chuyển sang miền đích có kết cấu và nhiễu mới (`target_realistic`) thì giảm còn 54,82%; chính sách huấn luyện với tổ hợp nhiều loại thay đổi đạt 87,50% ở miền gốc, nhưng ở cùng miền đích lại đạt 76,11%. Còn nhóm chỉ ngẫu nhiên hóa nền thì ở miền đích này chỉ đạt 36,88%.[^ch6-6]
+> Mỗi miền kiểm thử, mỗi hạt giống đều có 1.024 ảnh tổng hợp. Trước hết so sánh độ chính xác trung bình qua ba hạt giống: chiến lược huấn luyện với điều kiện thị giác cố định đạt 93,03% ở miền gốc, chuyển sang miền đích có kết cấu và nhiễu mới (`target_realistic`) thì giảm còn 54,82%; chiến lược huấn luyện với tổ hợp nhiều loại thay đổi đạt 87,50% ở miền gốc, nhưng ở cùng miền đích lại đạt 76,11%. Còn nhóm chỉ ngẫu nhiên hóa nền thì ở miền đích này chỉ đạt 36,88%.[^ch6-6]
 
 ## Tóm tắt chương
 
@@ -869,32 +869,32 @@ Thu nhận quan sát
   → tiếp tục, sửa, thử lại, dừng hoặc lập kế hoạch lại
 ```
 
-Quy trình này giúp khoanh vùng sự cố. Nếu người dùng vừa chen lời mà báo giá cũ vẫn tiếp tục được đọc, hãy kiểm tra ai chịu trách nhiệm đánh thức tiền cảnh, có giành quyền phát được không, và tín hiệu hủy đã đến điểm an toàn nào; nếu dừng kịp mà vẫn báo ra ngày cũ, thì phải lần theo khâu bàn giao giữa tiền cảnh và hậu cảnh để tra kết quả truy vấn. Sửa xong rồi, làm sao chứng minh nó làm đúng trong nhiều cuộc gọi hơn nữa? Từ đây, cuốn sách chuyển sang cải tiến năng lực. Chương 7 trước hết bàn cách thiết kế tác vụ, ghi lại thất bại và so sánh các thay đổi; post-training, tiến hóa liên tục và cộng tác nhiều Agent đều cần đến bộ phương pháp đánh giá này.
+Quy trình này giúp khoanh vùng sự cố. Nếu người dùng vừa chen lời mà báo giá cũ vẫn tiếp tục được đọc, hãy kiểm tra ai chịu trách nhiệm đánh thức tiền cảnh, có chiếm quyền phát được không, và tín hiệu hủy đã đến điểm an toàn nào; nếu dừng kịp mà vẫn báo ra ngày cũ, thì phải lần theo khâu bàn giao giữa tiền cảnh và hậu cảnh để tra kết quả truy vấn. Sửa xong rồi, làm sao chứng minh nó làm đúng trong nhiều cuộc gọi hơn nữa? Từ đây, cuốn sách chuyển sang cải tiến năng lực. Chương 7 trước hết bàn cách thiết kế tác vụ, ghi lại thất bại và so sánh các thay đổi; hậu huấn luyện, tiến hóa liên tục và cộng tác nhiều Agent đều cần đến bộ phương pháp đánh giá này.
 
 [^ch6-1]: XLeRobot, tài liệu Teleop.
 [^ch6-2]: Google DeepMind, *Gemini Robotics-ER 1.5*. XLeRobot, điều khiển bằng LLM Agent. Ví dụ upstream của XLeRobot minh họa cách điều phối mô hình và tool calling; phần này giữ cùng nguyên tắc điều phối, nhưng giới hạn công cụ hành động ở các hành động nguyên thủy đã hiệu chuẩn cho việc gắp, đặt, kiểm tra và dừng trên mặt bàn.
 [^ch6-6]: LeRobot, hướng dẫn Sim2Real.
 [^ch6-15]: Moo Jin Kim và cộng sự, *OpenVLA: An Open-Source Vision-Language-Action Model*, arXiv:2406.09246, 2024. Xem thêm phần giới thiệu dự án RT-2 và *Our First Generalist Policy* của Physical Intelligence.
 [^ch6-16]: Meta AI, *Introducing the V-JEPA 2 world model and new benchmarks for physical reasoning*, ngày 11 tháng 6 năm 2025. Mã báo cáo kỹ thuật là arXiv:2506.09985.
-[^ch6-22]: OpenAI, "Async tool calling"; "Using GPT-6 Astra", ngày đối chiếu: 2026-09-05.
-[^ch6-23]: OpenAI, "Mid-turn steering", ngày đối chiếu: 2026-09-05.
+[^ch6-22]: OpenAI, “Async tool calling”; “Using GPT-6 Astra”, ngày đối chiếu: 2026-09-05.
+[^ch6-23]: OpenAI, “Mid-turn steering”, ngày đối chiếu: 2026-09-05.
 
 [^ch6-audio-architectures]: OpenAI, *Voice activity detection*, giới thiệu hai cách xác định ranh giới lượt: theo hoạt động âm thanh và theo phán đoán ngữ nghĩa.
-[^ch6-voice-tools]: Tài liệu mô hình GPT-Live-1 và GPT-Realtime của OpenAI lần lượt giới thiệu việc ủy thác cho hậu cảnh và việc gọi hàm. Cách tích hợp mô hình giọng nói thời gian thực Doubao 3.0 xem tài liệu "Function Calling" của Volcano Engine.
+[^ch6-voice-tools]: Tài liệu mô hình GPT-Live-1 và GPT-Realtime của OpenAI lần lượt giới thiệu việc ủy thác cho hậu cảnh và việc gọi hàm. Cách tích hợp mô hình giọng nói thời gian thực Doubao 3.0 xem tài liệu “Function Calling” của Volcano Engine.
 
-## Câu hỏi tư duy
+## Câu hỏi suy ngẫm
 
 1. ★★ Khi nhận sự kiện mới, Agent bất đồng bộ phải phán đoán quan hệ ưu tiên giữa sự kiện ấy và tác vụ hiện tại. Nếu phán đoán này cần hiểu ngữ nghĩa, ví dụ nhận ra người dùng đang bổ sung điều kiện hay đang yêu cầu dừng ngay, nên phân chia trách nhiệm giữa bộ máy quy tắc và LLM như thế nào? Hãy so sánh thời gian phản hồi, chi phí và hậu quả của phán đoán sai.
 2. ★★ Hàng đợi sự kiện tồn đọng 20 sự kiện: 10 kết quả công cụ, 5 tin nhắn người dùng và 5 nhắc nhở hệ thống. Bạn sẽ tổ chức thứ tự, định dạng và trạng thái xử lý của chúng ra sao để mô hình theo dõi được các phụ thuộc của tác vụ và phản hồi được những thay đổi quan trọng?
 3. ★★★ Agent có thể dùng hộp thư và số điện thoại riêng, cũng có thể thao tác tài khoản cá nhân của người dùng sau khi được ủy quyền. Hãy kết hợp việc chạy nền, yêu cầu xác minh danh tính của đối phương, phạm vi quyền hạn và kiểm toán để bàn về những tình huống phù hợp với từng cách dùng danh tính.
 4. ★★ Mô hình giọng nói end-to-end xử lý trực tiếp âm thanh, lỗi ở các khâu trung gian khó khoanh vùng từ bên ngoài. Làm thế nào để thiết kế quan sát và thí nghiệm đối chứng, phân biệt lỗi cảm nhận, lỗi suy luận và lỗi biểu đạt?
 5. ★ MPS của Step-Audio R1.1 cho việc hình thành ý và biểu đạt cùng tiến. Hệ thống nên dùng khoảng ngừng, lời thông báo tiến độ và biểu đạt theo đoạn như thế nào? Khi suy luận về sau làm thay đổi kết luận đã nói ra, nên xử lý ra sao?
-6. ★★ Cả việc đánh dấu vùng trực quan của SoM lẫn chỉ mục phần tử DOM đều cho phép mô hình dùng một số hiệu để chỉ ra chỗ cần thao tác. Khi gặp điều khiển phi chuẩn, bị che khuất hoặc thay đổi động, nên kết hợp đánh dấu lại, dự đoán tọa độ và kiểm tra sau thao tác ra sao?
+6. ★★ Cả việc đánh dấu vùng thị giác của SoM lẫn chỉ mục phần tử DOM đều cho phép mô hình dùng một số hiệu để chỉ ra chỗ cần thao tác. Khi gặp phần tử điều khiển phi chuẩn, bị che khuất hoặc thay đổi động, nên kết hợp đánh dấu lại, dự đoán tọa độ và kiểm tra sau thao tác ra sao?
 7. ★★ Chất lượng dữ liệu điều khiển từ xa chịu ảnh hưởng của tay nghề người vận hành. Rung tay, đi vòng, khựng lại và gắp hụt sẽ ảnh hưởng thế nào đến huấn luyện VLA? Làm sao lọc dữ liệu mà vẫn giữ được những quá trình khôi phục sau thất bại có giá trị?
 8. ★★★ Giọng nói, Computer Use và robot đều có thể dùng mô hình thống nhất, cascade theo mô-đun, hoặc phân công giữa tương tác ở tiền cảnh và suy luận ở hậu cảnh. Hướng tới năm năm tới, bạn nghiêng về cách kết hợp các hướng này như thế nào? Hãy kết hợp độ trễ, khả năng quan sát, chi phí nâng cấp và rủi ro tác vụ để giải thích nhận định của mình.
-9. ★★ Trang Web chuẩn có thể cung cấp DOM hoặc thông tin trợ năng, còn Canvas, WebGL và điều khiển tự vẽ thường phải dựa vào định vị trực quan. Duy trì đồng thời cả hai đường có cấu trúc và trực quan sẽ tăng những chi phí nào, và thu được những lợi ích nào?
+9. ★★ Trang Web chuẩn có thể cung cấp DOM hoặc thông tin trợ năng, còn Canvas, WebGL và phần tử điều khiển tự vẽ thường phải dựa vào định vị thị giác. Duy trì đồng thời cả hai đường có cấu trúc và thị giác sẽ tăng những chi phí nào, và thu được những lợi ích nào?
 10. ★★ Chia khối hành động cho VLA mỗi lần sinh một đoạn hành động tương lai. Nếu vật thể bị dời đi trong lúc thực thi, làm sao điều phối độ dài khối, việc quan sát lại, suy luận ở hậu cảnh và ngắt hành động để vừa giữ hiệu suất thực thi vừa giữ tốc độ phản ứng?
 11. ★★★ Tương tác nhanh đòi hỏi hành động kịp thời. Hãy lần lượt lấy câu trả lời bằng giọng nói, việc gửi trang web và việc robot gắp vật làm ví dụ, thiết kế cách phân cấp hành động, xác nhận trạng thái và cơ chế dừng, sao cho tốc độ phản hồi tương xứng với hậu quả của tác vụ.
-12. ★★★ Chọn một nguyên thủy trong số đánh thức, điểm an toàn, hủy, giành quyền hoặc phân công nhanh–chậm, so sánh cách hiện thực nó trong tác vụ hướng sự kiện và trong chia khối hành động của robot. Tốc độ thay đổi của môi trường, khả năng đảo ngược của hành động và chi phí quan sát ảnh hưởng đến thiết kế ra sao?
+12. ★★★ Chọn một nguyên thủy trong số đánh thức, điểm an toàn, hủy, chiếm quyền hoặc phân công nhanh–chậm, so sánh cách hiện thực nó trong tác vụ hướng sự kiện và trong chia khối hành động của robot. Tốc độ thay đổi của môi trường, khả năng đảo ngược của hành động và chi phí quan sát ảnh hưởng đến thiết kế ra sao?
 13. ★★ Cuộc trò chuyện với khách hàng, cuộc thảo luận phê duyệt và callback thanh toán của cùng một đơn hàng có nên gộp vào cùng một luồng không? Hãy so sánh hai cách gộp luồng và đăng ký theo đối tượng liên kết từ bốn mặt: thứ tự xử lý, mức độ song song, việc di chuyển khóa phân vùng và cách ly quyền hạn.
 14. ★★ Một trợ lý du lịch bằng giọng nói phải tra thời tiết, đọc bộ nhớ người dùng, tìm kiếm web, tra chuyến bay và đặt vé. Tiền cảnh, hậu cảnh và runtime nên phân công thế nào? Nếu người dùng đọc tên người đi cùng, rồi lại chen hỏi thời tiết trong lúc chờ kết quả chuyến bay, làm sao tránh đặt sai vé hoặc bỏ sót kết quả?

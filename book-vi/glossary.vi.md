@@ -24,7 +24,7 @@ Bản dịch tiếng Việt ưu tiên **giữ thuật ngữ kỹ thuật chính 
 | Action Space | Action Space | Tập hợp hành động/công cụ mà Agent có thể thực hiện. |
 | Observation Space | Observation Space | Tập hợp thông tin Agent có thể quan sát. |
 | Policy | Policy | Chiến lược ra quyết định trong RL; ánh xạ observation sang action. |
-| Post-training | post-training | Các bước sau pretraining như SFT/RL để tinh chỉnh hành vi mô hình. |
+| Post-training | hậu huấn luyện (post-training) | Các bước sau pretraining như SFT/RL để tinh chỉnh hành vi mô hình. |
 | SFT | SFT / supervised fine-tuning | Fine-tuning có giám sát bằng dữ liệu mẫu. |
 | RL | RL / reinforcement learning | Học tăng cường bằng reward từ môi trường hoặc verifier. |
 | Mid-training | Mid-training | Huấn luyện tiếp trên phân phối đích (lĩnh vực, ngôn ngữ, năng lực) giữa pretraining và SFT/RL. |

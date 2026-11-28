@@ -4,15 +4,15 @@ Giả sử người dùng giao cho bạn ba bảng bán hàng chứa đơn hàng
 
 Nhận định của tác giả về kiến trúc của Agent đa dụng cho nhiệm vụ mở là: **lấy Coding Agent làm lõi thực thi, lấy hệ thống tệp làm không gian làm việc.** Coding Agent có thể viết, sửa và chạy mã; hệ thống tệp lưu mã, dữ liệu, bộ nhớ và kết quả trung gian. Khi hai thứ phối hợp, Agent có thể viết chương trình theo nhu cầu của nhiệm vụ, lưu kết quả thành tệp để các bước sau tiếp tục dùng.
 
-Sinh mã là một **siêu năng lực** (meta-capability): Agent có thể dùng mã để tổ chức các công cụ sẵn có, cũng có thể hiện thực công cụ mới cho nhu cầu mới. Mã còn diễn đạt rõ ràng các quy tắc và bước suy luận. Chẳng hạn, viết “trên 18 tuổi và đã xác thực danh tính” thành `age > 18 and verified` thì có thể kiểm tra quy tắc này bằng vài bộ đầu vào. Hai người đã xác thực, một người 18 tuổi, một người 19 tuổi, chỉ người sau được chấp nhận. Nếu người 19 tuổi này chưa xác thực danh tính, đơn cũng phải bị từ chối.
+Sinh mã là một **năng lực bậc meta** (meta-capability): Agent có thể dùng mã để tổ chức các công cụ sẵn có, cũng có thể hiện thực công cụ mới cho nhu cầu mới. Mã còn diễn đạt rõ ràng các quy tắc và bước suy luận. Chẳng hạn, viết “trên 18 tuổi và đã xác thực danh tính” thành `age > 18 and verified` thì có thể kiểm tra quy tắc này bằng vài bộ đầu vào. Hai người đã xác thực, một người 18 tuổi, một người 19 tuổi, chỉ người sau được chấp nhận. Nếu người 19 tuổi này chưa xác thực danh tính, đơn cũng phải bị từ chối.
 
-Chương này trước hết giới thiệu các công cụ cơ bản của Coding Agent, lấy OpenClaw làm ví dụ để cho thấy mã và hệ thống tệp hỗ trợ nhiệm vụ đa dụng ra sao, rồi đi vào quy trình làm việc, Harness và cách hiện thực cụ thể. Sau đó, chương bàn về công dụng của sinh mã theo sáu hướng: tư duy, quy tắc nghiệp vụ, đa phương tiện, thích ứng hệ thống, UI sinh động (generative UI) và Agent tự khởi tạo (bootstrap).
+Chương này trước hết giới thiệu các công cụ cơ bản của Coding Agent, lấy OpenClaw làm ví dụ để cho thấy mã và hệ thống tệp hỗ trợ nhiệm vụ đa dụng ra sao, rồi đi vào quy trình làm việc, Harness và cách hiện thực cụ thể. Sau đó, chương bàn về công dụng của sinh mã theo sáu hướng: tư duy, quy tắc nghiệp vụ, đa phương tiện, thích ứng hệ thống, UI tạo sinh (generative UI) và Agent tự khởi tạo (bootstrap).
 
 ## Coding Agent
 
 ### Coding là năng lực nền tảng của Agent
 
-**Tác giả chủ trương coi sinh mã là năng lực nền tảng của Agent đa dụng.** Tính toán toán học có thể giao cho bộ giải, xử lý dữ liệu có thể gọi thư viện, thao tác lặp lại có thể viết thành script; gặp định dạng hay giao diện mới, Agent còn có thể sinh logic phân tích và thích ứng. Công cụ cơ bản cung cấp lối vào để thực thi, còn mã ghép các năng lực ấy thành những bước mà nhiệm vụ cần.
+**Tác giả chủ trương coi sinh mã là năng lực nền tảng của Agent đa dụng.** Các phép tính toán học có thể giao cho bộ giải, xử lý dữ liệu có thể gọi thư viện, thao tác lặp lại có thể viết thành script; gặp định dạng hay giao diện mới, Agent còn có thể sinh logic phân tích và thích ứng. Công cụ cơ bản cung cấp lối vào để thực thi, còn mã ghép các năng lực ấy thành những bước mà nhiệm vụ cần.
 
 Xét nhiệm vụ: “Rà soát mọi chú thích TODO còn sót trong kho mã, phân loại theo mức ưu tiên và tạo issue.” Trước tiên tìm các TODO, đọc phần mã quanh chú thích, phân biệt cái nào chỉ là lời nhắc cho bản thân, cái nào cần mở việc riêng. Sắp xếp xong tên tệp, số dòng và căn cứ đánh giá thì có thể tạo issue sau khi được cấp quyền. Nếu còn phải lưu kết quả phân loại vào kho mã, lúc đó mới cần ghi tệp. Các nhiệm vụ tương tự còn dùng đến thao tác chạy lệnh, sửa mã. Trong giảng dạy, chúng tôi dùng bảy công cụ cơ bản sau:
 
@@ -24,7 +24,7 @@ Xét nhiệm vụ: “Rà soát mọi chú thích TODO còn sót trong kho mã, 
 6. **Công cụ tìm tên tệp (Glob)**: định vị tệp theo mẫu, chẳng hạn dùng `**/*.py` để tìm các tệp Python.
 7. **Công cụ tìm nội dung tệp (Grep)**: tìm chữ hoặc mẫu, trả về tên tệp, số dòng và nội dung khớp, chẳng hạn để định vị nơi gọi một hàm.
 
-Bảy công cụ này chủ yếu bao quát năng lực cảm nhận và thực thi ở Chương 4. Cộng tác, kích hoạt theo sự kiện và giao tiếp với người dùng có thể nối thêm tùy nhu cầu ứng dụng. Số lượng công cụ và độ chi tiết của giao diện do cách hiện thực quyết định: Shell làm được việc duyệt thư mục, tìm kiếm và đọc, còn công cụ tệp riêng thì cung cấp tham số thống nhất và phản hồi có cấu trúc. Ví dụ, Codex có thể đọc và tìm qua công cụ chạy lệnh, rồi diễn đạt việc sửa tệp bằng `apply_patch`; bản vá gói tệp đích, vị trí sửa và nội dung thêm bớt vào cùng một chỗ, tiện cho việc kiểm tra và phát lại.
+Bảy công cụ này chủ yếu bao quát năng lực nhận thức và thực thi ở Chương 4. Cộng tác, kích hoạt sự kiện và giao tiếp người dùng có thể nối thêm tùy nhu cầu ứng dụng. Số lượng công cụ và độ chi tiết của giao diện do cách hiện thực quyết định: Shell làm được việc duyệt thư mục, tìm kiếm và đọc, còn công cụ tệp riêng thì cung cấp tham số thống nhất và phản hồi có cấu trúc. Ví dụ, Codex có thể đọc và tìm qua công cụ chạy lệnh, rồi diễn đạt việc sửa tệp bằng `apply_patch`; bản vá gói tệp đích, vị trí sửa và nội dung thêm bớt vào cùng một chỗ, tiện cho việc kiểm tra và phát lại.
 
 Hãy thu nhỏ nhiệm vụ thành “lập danh sách TODO trong các tệp Python” để xem các công cụ phối hợp ra sao:
 
@@ -48,7 +48,7 @@ Chẳng hạn, thư viện lập trình có thể trực tiếp tạo và sửa 
 
 Lấy ví dụ “phân tích dữ liệu bán hàng quý trước và viết báo cáo tổng kết”, có thể chia quá trình thành năm bước:
 
-1. **Đọc bộ nhớ**: lấy định dạng báo cáo PDF mà người dùng ưa thích, cùng sự kiện rằng dữ liệu bán hàng nằm trong Google Sheets.
+1. **Đọc bộ nhớ**: lấy định dạng báo cáo PDF mà người dùng ưa thích, cùng dữ kiện rằng dữ liệu bán hàng nằm trong Google Sheets.
 2. **Lấy dữ liệu**: tra cách dùng Google Sheets API, tải các bảng cần thiết qua giao diện đã được cấp quyền.
 3. **Viết mã phân tích**: dùng pandas tổng hợp dữ liệu bán hàng, dùng matplotlib vẽ biểu đồ, kiểm tra cách tính và kết quả.
 4. **Tạo sản phẩm**: sắp xếp phân tích và biểu đồ thành tệp PDF, lưu dữ liệu nguồn, kết quả trung gian và script sinh báo cáo để tiện tra lại hoặc cập nhật.
@@ -64,7 +64,7 @@ Kết quả trung gian còn một công dụng nữa: khi người dùng chuyể
 
 [^ch5-data-formulator]: Microsoft Research, ví dụ phân tích năng lượng của Data Formulator và cách hiện thực liên kết giữa biểu đồ và bảng dữ liệu ở bản 0.7.0.
 
-**Dùng tệp để lưu bộ nhớ, tri thức và năng lực.** Không gian làm việc của OpenClaw dùng các tệp Markdown để lưu nhiều loại thông tin: `MEMORY.md` ghi các sự kiện và quyết định dài hạn, nhật ký sắp theo ngày lưu thông tin quá trình, `USER.md` có thể dùng cho sở thích người dùng, còn tệp Skill mô tả cách dùng các năng lực[^ch5-openclaw-files]. **Với bộ nhớ cần cả người và Agent cùng duy trì, tác giả ưu tiên dùng tệp đọc được trực tiếp.** Người dùng có thể mở bản ghi, sửa một sự kiện sai, cũng có thể dùng Git để xem nguồn gốc, so sánh phiên bản và quay lui. Lưu nhật ký theo ngày giúp các sự kiện diễn ra trước sau giữ được dòng thời gian rõ ràng; khi tệp nhiều lên, có thể thêm chỉ mục tìm kiếm để định vị nhanh hơn.
+**Dùng tệp để lưu bộ nhớ, tri thức và năng lực.** Không gian làm việc của OpenClaw dùng các tệp Markdown để lưu nhiều loại thông tin: `MEMORY.md` ghi các dữ kiện và quyết định dài hạn, nhật ký sắp theo ngày lưu thông tin quá trình, `USER.md` có thể dùng cho sở thích người dùng, còn tệp Skill mô tả cách dùng các năng lực[^ch5-openclaw-files]. **Với bộ nhớ cần cả người và Agent cùng duy trì, tác giả ưu tiên dùng tệp đọc được trực tiếp.** Người dùng có thể mở bản ghi, sửa một dữ kiện sai, cũng có thể dùng Git để xem nguồn gốc, so sánh phiên bản và quay lui. Lưu nhật ký theo ngày giúp các dữ kiện diễn ra trước sau giữ được dòng thời gian rõ ràng; khi tệp nhiều lên, có thể thêm chỉ mục tìm kiếm để định vị nhanh hơn.
 
 Năng lực ghi tệp của Agent cũng giúp tích lũy kinh nghiệm làm việc. Chẳng hạn, một lần liên hệ ngân hàng phát hiện rằng xác minh danh tính cần địa chỉ chi nhánh mở tài khoản, Agent có thể ghi lại nghiệp vụ áp dụng, nguồn thông tin và thời điểm xảy ra. Các bản ghi đã được đối chiếu sẽ được chỉnh lý thành tri thức, hướng dẫn thao tác hoặc chương trình, để các nhiệm vụ sau dùng lại. Chương 9 sẽ bàn về quá trình tiến hóa liên tục này.
 
@@ -82,7 +82,7 @@ Hãy dùng một lỗi nhỏ để đi qua Hình 5-2. Người dùng báo “khi
 
 Nhận nhiệm vụ xong, Agent đọc phần mô tả dự án trước, rồi đối chiếu với mã hiện thực, nơi gọi và test để tìm ra những chỗ mà thay đổi sẽ ảnh hưởng. Nếu tài liệu chưa nói rõ mô-đun liên quan chịu trách nhiệm gì, dùng những trừu tượng cốt lõi nào, các mô-đun phối hợp ra sao hay kiểm thử thế nào, thì bổ sung những gì đã xác minh từ mã vào tài liệu, để người tiếp quản tiện tra cứu.
 
-**Tệp chỉ dẫn dự án** đặt các quy ước thường dùng vào chỗ Agent dễ lấy được. `CLAUDE.md`, `AGENTS.md` và quy tắc dự án của Cursor có thể ghi lệnh build, phong cách mã và ranh giới thay đổi, chẳng hạn “dùng `pnpm test` để chạy test”, “khai báo kiểu cụ thể cho biến, tránh dùng `any`”, “thay đổi migration cơ sở dữ liệu cần được review riêng”. Mỗi môi trường chủ nạp nội dung này theo thư mục, cấu hình hoặc điều kiện áp dụng; tệp `.cursorrules` thời đầu của Cursor cũng hiện thực theo hướng này[^ch5-project-rules].
+**Tệp chỉ dẫn dự án** đặt các quy ước thường dùng vào chỗ Agent dễ lấy được. `CLAUDE.md`, `AGENTS.md` và quy tắc dự án của Cursor có thể ghi lệnh build, phong cách mã và ranh giới thay đổi, chẳng hạn “dùng `pnpm test` để chạy test”, “khai báo kiểu cụ thể cho biến, tránh dùng `any`”, “thay đổi migration cơ sở dữ liệu cần được review riêng”. Mỗi host nạp nội dung này theo thư mục, cấu hình hoặc điều kiện áp dụng; tệp `.cursorrules` thời đầu của Cursor cũng hiện thực theo hướng này[^ch5-project-rules].
 
 Tệp chỉ dẫn và `SOUL.md`, `MEMORY.md` của OpenClaw mỗi thứ có trọng tâm riêng: thứ nhất nói về quy ước làm việc trong dự án, `SOUL.md` mô tả danh tính và hành vi của Agent, còn tệp bộ nhớ lưu thông tin để các nhiệm vụ sau dùng. Chỉ dẫn ổn định và ngắn gọn giúp giữ tiền tố ngữ cảnh nhất quán; quy tắc theo thư mục được nạp khi cần thì kiểm soát được lượng đầu vào của nhiệm vụ hiện tại. Quyền thực thi do Harness và môi trường chạy bảo đảm.
 
@@ -110,7 +110,7 @@ Review mã kiểm tra thêm những khía cạnh mà test chưa chắc bao quát
 
 Mô-đun mới, thay đổi phụ thuộc và thay đổi hành vi cốt lõi đều cần cập nhật vào tài liệu tương ứng. Bản mô tả bàn giao nên tóm tắt vấn đề đã giải quyết, thay đổi hành vi, kết quả xác minh và cách dùng, khi cần thì kèm các bước khôi phục. Mã, test và tài liệu cùng nhau lưu giữ kết quả của lần làm việc này.
 
-Các mô hình khác nhau cũng tổ chức việc khám phá và sửa đổi theo cách khác nhau: có mô hình đọc rộng mã hiện thực, nơi gọi và test trước; có mô hình xem các tệp liên quan nhất trước, thử một bản vá nhỏ, rồi dựa vào phản hồi biên dịch hoặc test để tiếp tục định vị. **Tác giả coi nhịp độ khám phá và hành động này trước hết là chiến lược hành vi mà mô hình đã học được.** Nếu thay Harness mà nhịp độ vẫn tương tự, còn trong cùng một Harness thay mô hình thì nhịp độ thay đổi rõ, thì khác biệt nằm ở bản thân mô hình. Prompt, công cụ và ngân sách của Harness có thể khuếch đại hoặc kìm hãm xu hướng này. Chương 7 bàn cách đánh giá những khác biệt ấy, Chương 8 bàn về việc post-training ảnh hưởng đến chiến lược hành vi ra sao.
+Các mô hình khác nhau cũng tổ chức việc khám phá và sửa đổi theo cách khác nhau: có mô hình đọc rộng mã hiện thực, nơi gọi và test trước; có mô hình xem các tệp liên quan nhất trước, thử một bản vá nhỏ, rồi dựa vào phản hồi biên dịch hoặc test để tiếp tục định vị. **Tác giả coi nhịp độ khám phá và hành động này trước hết là chiến lược hành vi mà mô hình đã học được.** Nếu thay Harness mà nhịp độ vẫn tương tự, còn trong cùng một Harness thay mô hình thì nhịp độ thay đổi rõ, thì khác biệt nằm ở bản thân mô hình. Prompt, công cụ và ngân sách của Harness có thể khuếch đại hoặc kìm hãm xu hướng này. Chương 7 bàn cách đánh giá những khác biệt ấy, Chương 8 bàn về việc hậu huấn luyện ảnh hưởng đến chiến lược hành vi ra sao.
 
 ### Thực hành Harness Engineering trong Coding Agent
 
@@ -158,7 +158,7 @@ Phương án cho nhiệm vụ dài của Anthropic thì tách khởi tạo môi 
 
 **Kiểm tra cả kết quả lẫn quá trình.** Khi sửa sự cố cơ sở dữ liệu, xóa sạch dữ liệu rồi dựng lại có thể khôi phục dịch vụ nhưng phá vỡ yêu cầu lưu giữ dữ liệu; khi sửa lỗi biên dịch, xóa phần hiện thực liên quan có thể làm biên dịch qua nhưng mất chức năng. Những ví dụ này cho thấy nghiệm thu cần bao quát mục tiêu nghiệp vụ, và quá trình thực thi cũng cần ràng buộc. Harness có thể kiểm tra quyền và phạm vi ảnh hưởng đối với những thao tác như xóa dữ liệu sản xuất hay ghi đè tệp, và gọi cơ chế thẩm định độc lập đã giới thiệu ở Chương 4.
 
-Khi huấn luyện, còn có thể phạt những hành vi vi phạm đã được nhận diện. RLVP (phạt đường đi xác minh) bàn ở Chương 8 đưa ràng buộc quá trình vào phản hồi huấn luyện, hướng mô hình tuân thủ yêu cầu thực thi trong khi theo đuổi kết quả. Quyền hạn và thẩm định lúc chạy liên tục giới hạn những hành động được thực thi, còn phản hồi huấn luyện ảnh hưởng đến cách mô hình đề xuất hành động.
+Khi huấn luyện, còn có thể phạt những hành vi vi phạm đã được nhận diện. RLVP (phạt đường đi kiểm chứng được) bàn ở Chương 8 đưa ràng buộc quá trình vào phản hồi huấn luyện, hướng mô hình tuân thủ yêu cầu thực thi trong khi theo đuổi kết quả. Quyền hạn và thẩm định lúc chạy liên tục giới hạn những hành động được thực thi, còn phản hồi huấn luyện ảnh hưởng đến cách mô hình đề xuất hành động.
 
 **Kiểm soát lan truyền lỗi theo quan hệ phụ thuộc.** Khi đọc song song ba tệp không phụ thuộc nhau mà một tệp không tồn tại, cần trả về lỗi của riêng mục đó và giữ nguyên kết quả đọc các tệp khác. Nếu một lần gọi phụ thuộc vào đầu ra của tác vụ thất bại, thì dừng hoặc sắp xếp lại chuỗi phụ thuộc đó. Harness cần dựa vào quan hệ giữa các tác vụ để quyết định phạm vi hủy, báo trạng thái từng mục lên cấp cha, tránh để công việc độc lập bị bỏ đi cùng. Cách hiện thực gọi song song, phân tích luồng (streaming) và hủy dây chuyền sẽ được bàn ở phần sau.
 
@@ -183,7 +183,7 @@ Giới hạn tốc độ và quá tải tạm thời có thể chờ rồi thử
 
 Harness có thể tính dấu vân tay của lời gọi bằng “tên công cụ + tham số đã chuẩn hóa”, kết hợp với kết quả và trạng thái nhiệm vụ để phát hiện hành vi lặp. Lời gọi giống nhau có thể là thăm dò định kỳ hợp lý, cũng có thể là vòng lặp không tiến triển; khi phán đoán còn phải xem điều kiện chờ, trạng thái bên ngoài và thời gian đã kéo dài. Mỗi đường khôi phục giữ một bộ đếm thất bại riêng, rồi dùng ngân sách toàn cục để ràng buộc cả nhiệm vụ.
 
-Yêu cầu dạng streaming cần đặt riêng thời hạn kết nối, thời hạn rỗi khi đọc và tổng thời hạn. Thời hạn kết nối giới hạn thời gian chờ thiết lập kết nối, thời hạn rỗi khi đọc giới hạn khoảng chờ giữa hai lần nhận dữ liệu, còn tổng thời hạn ràng buộc cả yêu cầu. Khi kết nối vẫn còn mà lâu không có dữ liệu, bộ canh rỗi (idle watchdog) có thể đóng yêu cầu và chuyển sang quy trình khôi phục. **Mọi kết nối dài đều nên được giám sát mức sống; chỉ đặt thời hạn thiết lập kết nối là chưa đủ.** Ngưỡng thời hạn phải tính đến cách mô hình xuất kết quả: văn bản hiển thị, phần tăng của suy luận và tín hiệu nhịp tim đều cho biết yêu cầu còn đang chạy hay không, và suy luận nội bộ dài cũng làm tăng thời gian chờ.
+Yêu cầu dạng streaming cần đặt riêng thời hạn kết nối, thời hạn rỗi khi đọc và tổng thời hạn. Thời hạn kết nối giới hạn thời gian chờ thiết lập kết nối, thời hạn rỗi khi đọc giới hạn khoảng chờ giữa hai lần nhận dữ liệu, còn tổng thời hạn ràng buộc cả yêu cầu. Khi kết nối vẫn còn mà lâu không có dữ liệu, bộ canh rỗi (idle watchdog) có thể đóng yêu cầu và chuyển sang quy trình khôi phục. **Mọi kết nối dài đều cần được giám sát xem còn hoạt động hay không (liveness); chỉ đặt thời hạn thiết lập kết nối là chưa đủ.** Ngưỡng thời hạn phải tính đến cách mô hình xuất kết quả: văn bản hiển thị, phần tăng của suy luận và tín hiệu nhịp tim đều cho biết yêu cầu còn đang chạy hay không, và suy luận nội bộ dài cũng làm tăng thời gian chờ.
 
 Kiểm tra tính toàn vẹn của ngữ cảnh xoay quanh việc ghép cặp ID lời gọi với kết quả. Khi thiếu kết quả, trước hết truy vấn bản ghi thực thi để khôi phục kết quả thật đã lưu; khi trạng thái thực thi chưa rõ, ghi rõ là chưa rõ, rồi xử lý theo cơ chế idempotent và truy vấn trạng thái ở Chương 4.
 
@@ -199,9 +199,9 @@ Lỗi công cụ có thể đi vào ngữ cảnh dưới dạng kết quả có 
 
 **Tiếp quản trajectory còn dang dở.**
 
-Khi chuyển mô hình, cần giao cho bên tiếp nhận các sự kiện của nhiệm vụ đã xác nhận, kết quả công cụ và những việc còn dang dở. Vai trò thông điệp, định dạng tool calling và trường suy luận khác nhau theo từng giao diện, nên khi chuyển đổi phải xử lý riêng nội dung và trạng thái giao thức. Một số dịch vụ trả về nội dung suy luận đọc được hoặc bản tóm tắt, đồng thời trả về các trường không trong suốt (opaque) chỉ dùng cho các yêu cầu sau của chính nó. Các trường này có thể gắn trên khối suy luận hoặc trên lời gọi công cụ; trường nào phải gửi lại nguyên vẹn trong yêu cầu sau là do giao diện tương ứng quy định.
+Khi chuyển mô hình, cần giao cho bên tiếp nhận các dữ kiện của nhiệm vụ đã xác nhận, kết quả công cụ và những việc còn dang dở. Vai trò thông điệp, định dạng tool calling và trường suy luận khác nhau theo từng giao diện, nên khi chuyển đổi phải xử lý riêng nội dung và trạng thái giao thức. Một số dịch vụ trả về nội dung suy luận đọc được hoặc bản tóm tắt, đồng thời trả về các trường không trong suốt (opaque) chỉ dùng cho các yêu cầu sau của chính nó. Các trường này có thể gắn trên khối suy luận hoặc trên lời gọi công cụ; trường nào phải gửi lại nguyên vẹn trong yêu cầu sau là do giao diện tương ứng quy định.
 
-**Hệ thống cần nối tiếp qua nhiều nhà cung cấp nên lưu trajectory nghiệp vụ ở định dạng trung lập.** Mô hình đọc hiểu được văn bản do hãng khác cung cấp không có nghĩa là API đích chấp nhận các trường giao thức không trong suốt của hãng gốc. Chỉ khi tách sự kiện nhiệm vụ khỏi giao thức của nhà cung cấp, việc tiếp quản, phát lại để đánh giá và dữ liệu huấn luyện mới dùng chung được một bản ghi. Bản ghi trung lập gồm: nhiệm vụ và thông điệp, tên và tham số công cụ, mã định danh lời gọi ổn định, trạng thái thực thi, kết quả và nguồn gốc. Phản hồi gốc của nhà cung cấp được giữ riêng, dùng để nối tiếp trên cùng giao diện và truy vết sự cố. Khi chuyển thành yêu cầu cho mô hình đích, lập bảng ánh xạ ID lời gọi và giữ đúng cặp kết quả; bản tóm tắt đọc được được truyền như ngữ cảnh thông thường có ghi nguồn, còn các trường không trong suốt của dịch vụ gốc ở lại trong bản ghi gốc.
+**Hệ thống cần nối tiếp qua nhiều nhà cung cấp nên lưu trajectory nghiệp vụ ở định dạng trung lập.** Mô hình đọc hiểu được văn bản do hãng khác cung cấp không có nghĩa là API đích chấp nhận các trường giao thức không trong suốt của hãng gốc. Chỉ khi tách dữ kiện nhiệm vụ khỏi giao thức của nhà cung cấp, việc tiếp quản, phát lại để đánh giá và dữ liệu huấn luyện mới dùng chung được một bản ghi. Bản ghi trung lập gồm: nhiệm vụ và thông điệp, tên và tham số công cụ, mã định danh lời gọi ổn định, trạng thái thực thi, kết quả và nguồn gốc. Phản hồi gốc của nhà cung cấp được giữ riêng, dùng để nối tiếp trên cùng giao diện và truy vết sự cố. Khi chuyển thành yêu cầu cho mô hình đích, lập bảng ánh xạ ID lời gọi và giữ đúng cặp kết quả; bản tóm tắt đọc được được truyền như ngữ cảnh thông thường có ghi nguồn, còn các trường không trong suốt của dịch vụ gốc ở lại trong bản ghi gốc.
 
 Nếu giao diện đích không biểu diễn được các lời gọi cũ, có thể chỉnh lý các bước đã hoàn thành thành bản ghi nhiệm vụ rõ ràng, chẳng hạn “đã tra vé máy bay và chỗ ở, tiếp theo lấy chi phí ăn uống và tỷ giá”, kèm theo kết quả thật. Sau đó mô hình đích sinh ra các lời gọi hợp lệ mới. Khi bên tiếp nhận bắt đầu làm việc, các trường giao thức nó trả về được giữ theo yêu cầu của giao diện của chính nó. Bản ghi trung lập như vậy còn dùng được cho việc phát lại để đánh giá ở Chương 7, dựng mẫu huấn luyện ở Chương 8 và rút kinh nghiệm ở Chương 9.
 
@@ -229,7 +229,7 @@ Bản thân logic khôi phục cũng có thể thất bại lần nữa. Chẳng
 
 ### Kỹ thuật hiện thực Coding Agent
 
-Trước hết hãy dùng bản ghi thực thi của một lần sửa test thất bại để ước tính đoạn nào đáng tối ưu. Trong bài báo cáo “The Road to JARVIS” tại Porto tháng 11 năm 2026, tác giả phát lại cùng một phiên để so sánh các tốc độ suy luận khác nhau: tính theo thời gian của mô hình trực tuyến lúc đó, tổng cộng 24,2 giây; giữ nguyên thời gian của công cụ, thay bằng tốc độ suy luận ước tính của một loại chip chuyên dụng chưa được sản xuất, tổng cộng khoảng 8,1 giây. Trong đó 7,5 giây là thời gian chạy test. Cho dù loại bỏ nốt khoảng 0,6 giây còn lại của mô hình, vẫn phải chờ test chạy xong.
+Trước hết hãy dùng bản ghi thực thi của một lần sửa test thất bại để ước tính đoạn nào đáng tối ưu. Trong bài trình bày “The Road to JARVIS” tại Porto tháng 11 năm 2026, tác giả phát lại cùng một phiên để so sánh các tốc độ suy luận khác nhau: tính theo thời gian của mô hình đang chạy thực tế lúc đó, tổng cộng 24,2 giây; giữ nguyên thời gian của công cụ, thay bằng tốc độ suy luận ước tính của một loại chip chuyên dụng chưa được sản xuất, tổng cộng khoảng 8,1 giây. Trong đó 7,5 giây là thời gian chạy test. Cho dù loại bỏ nốt khoảng 0,6 giây còn lại của mô hình, vẫn phải chờ test chạy xong.
 
 Trong 7,5 giây này, những việc nào có thể làm đồng thời? Điều đó phụ thuộc vào quan hệ phụ thuộc giữa các lời gọi công cụ.
 
@@ -241,7 +241,7 @@ Các lời gọi độc lập có thể chạy song song. Chẳng hạn, vừa t
 
 Định nghĩa công cụ có thể khai báo khả năng chạy đồng thời, tài nguyên truy cập và cách hủy; bản hiện thực dùng trong giảng dạy có thể điều phối tuần tự những công cụ không khai báo. Khi một lời gọi thất bại, dừng các việc phụ thuộc vào kết quả của nó, giữ kết quả của các lời gọi độc lập, và trả trạng thái từng mục lên cấp cha. Khi hủy một tác vụ đã khởi động, còn phải ghi lại việc hủy có hiệu lực hay không, cùng những thay đổi tệp hoặc thao tác bên ngoài đã xảy ra.
 
-**Quản lý ngữ cảnh tinh tế.**
+**Quản lý ngữ cảnh chi tiết.**
 
 Với kho mã lớn, có thể đưa mã vào ngữ cảnh dần dần qua truy xuất phân tầng: định vị tệp trước, đọc hàm liên quan sau, khi cần thì mở rộng sang nơi gọi và test. Mỗi lần đọc đều bổ sung thông tin quanh quyết định hiện tại, giúp mô hình cùng lúc thấy mã, ràng buộc và phản hồi khi chạy.
 
@@ -258,7 +258,7 @@ Thanh trạng thái Agent ở Chương 2, trong nhiệm vụ lập trình, có t
 - **Lịch sử commit gần đây**: nắm các thay đổi gần đây liên quan đến nhiệm vụ.
 - **Tổng quan thay đổi đã stage và chưa stage**: phân biệt nội dung chờ commit với các sửa đổi trong không gian làm việc.
 
-Harness có thể làm mới bản tóm tắt sau những thao tác làm thay đổi các trạng thái này, và nối vào cuối ngữ cảnh ở lần gọi mô hình tiếp theo. Những thông tin ít thay đổi như commit gần đây có thể cập nhật khi cần, giảm truy vấn lặp và lượng đầu vào. Giữ phần đầu ổn định giúp tái sử dụng bộ nhớ đệm tiền tố.
+Harness có thể làm mới bản tóm tắt sau những thao tác làm thay đổi các trạng thái này, và nối vào cuối ngữ cảnh ở lần gọi mô hình tiếp theo. Những thông tin ít thay đổi như commit gần đây có thể cập nhật khi cần, giảm truy vấn lặp và lượng đầu vào. Giữ phần đầu ổn định giúp tái sử dụng cache tiền tố.
 
 **Lưu bền trạng thái của môi trường chạy lệnh.**
 
@@ -349,7 +349,7 @@ Ba lớp guardrails ở Chương 1 ở đây mỗi lớp đảm nhận một vi�
 **Giới hạn tài nguyên và liên lạc trong sandbox.**
 
 - **Lối ra mạng.** Đây là ranh giới dễ bị bỏ qua trong sandbox mã và nên được thực hiện trước tiên. Tác giả khuyên bắt đầu từ việc mặc định đóng truy cập bên ngoài, rồi mở cho nguồn gói, trang tài liệu và API nghiệp vụ theo nhu cầu của nhiệm vụ. Danh sách cho phép cần ứng với đích đến và phạm vi thao tác cụ thể; với dịch vụ dùng chung còn phải tính đến tài khoản, tenant và quyền sở hữu tài nguyên. Chính sách mạng phải bao trùm các chương trình do công cụ khởi động và tiến trình con của chúng; dữ liệu gửi ra ngoài được kiểm tra riêng theo phạm vi cấp quyền.
-- **Hệ thống tệp.** Có thể mount mã nguồn gốc ở chế độ chỉ đọc và đặt bản sao vào không gian làm việc ghi được; cũng có thể để giao diện sửa có kiểm soát sinh bản vá, review xong mới áp dụng. Sản phẩm sinh ra và tệp trung gian đặt trong thư mục riêng, tệp thông tin xác thực để ngoài sandbox. Khi cần truy cập dịch vụ xác thực, giao diện có kiểm soát cung cấp đúng năng lực mà nhiệm vụ cần, tránh trao toàn bộ thông tin xác thực của máy chủ cho chương trình được sinh ra.
+- **Hệ thống tệp.** Có thể mount mã nguồn gốc ở chế độ chỉ đọc và đặt bản sao vào không gian làm việc ghi được; cũng có thể để giao diện sửa có kiểm soát sinh bản vá, review xong mới áp dụng. Sản phẩm sinh ra và tệp trung gian đặt trong thư mục riêng, tệp thông tin xác thực để ngoài sandbox. Khi cần truy cập dịch vụ xác thực, giao diện có kiểm soát cung cấp đúng năng lực mà nhiệm vụ cần, tránh trao toàn bộ thông tin xác thực của máy host cho chương trình được sinh ra.
 - **Tài nguyên và thời gian.** Đặt trần cho CPU, bộ nhớ, số tiến trình, dung lượng đĩa và thời gian chạy, để hạn chế tác động của vòng lặp vô hạn, số tiến trình mất kiểm soát và ghi đĩa liên tục. Khi vượt trần, trả về trạng thái có cấu trúc, chẳng hạn “chạy quá 120 giây, đã dừng”, kèm theo đầu ra được giữ lại và kết quả dọn dẹp, để mô hình phán đoán có nên thu nhỏ nhiệm vụ hoặc điều chỉnh cách hiện thực hay không.
 
 Các ranh giới này phải bao trùm toàn bộ chuỗi thực thi. Lệnh đã được phê duyệt thì chương trình thực sự khởi động vẫn chạy trong cùng phạm vi quyền; tiến trình nền, công cụ phụ trợ và giao diện bên ngoài cũng cần được đưa vào kiểm soát tương ứng.
@@ -364,7 +364,7 @@ Khai triển biến, script động và đường dẫn chỉ sinh ra trong lúc
 
 **Làm rõ đối tượng phục vụ trong ủy quyền nhiều bên.**
 
-Trung thành với bên ủy quyền (principal loyalty) bàn về câu hỏi: khi Agent làm việc thay mặt một bên, đồng thời giao tiếp với những bên tham gia khác, làm sao để nó luôn tuân theo mục tiêu và phạm vi ủy quyền của bên ủy quyền. Chẳng hạn, người dùng nhờ Agent mặc cả với nhà cung cấp và kín đáo đưa ra mức trần ngân sách 12000 tệ. Agent cần hiểu báo giá của nhà cung cấp, giải thích yêu cầu của phía mình, đồng thời bảo vệ ràng buộc riêng tư này.
+Trung thành với bên ủy quyền (principal loyalty) bàn về câu hỏi: khi Agent làm việc thay mặt một bên, đồng thời giao tiếp với những bên tham gia khác, làm sao để nó luôn tuân theo mục tiêu và phạm vi ủy quyền của bên ủy quyền. Chẳng hạn, người dùng nhờ Agent mặc cả với nhà cung cấp và kín đáo đưa ra mức trần ngân sách 12.000 tệ. Agent cần hiểu báo giá của nhà cung cấp, giải thích yêu cầu của phía mình, đồng thời bảo vệ ràng buộc riêng tư này.
 
 Trong các đánh giá tương tác nhiều bên, tác giả và cộng sự quan sát được hai loại thất bại: một loại làm lộ thông tin riêng của bên ủy quyền hoặc chấp nhận yêu cầu không chính đáng của đối phương; loại kia từ chối quá mức, ngay cả yêu cầu bình thường của bên ủy quyền cũng không hoàn thành được. Chiến lược prompt và phương pháp huấn luyện trong đánh giá thể hiện sự đánh đổi giữa bảo vệ thông tin và cộng tác bình thường[^ch5-1]. **Mức độ trung thành phải được đo đồng thời bằng bảo vệ thông tin và hoàn thành nhiệm vụ.** Chỉ chạy theo việc từ chối nhiều yêu cầu hơn sẽ chặn luôn cả cộng tác bình thường; chỉ chạy theo việc trò chuyện suôn sẻ lại có thể để đối phương ảnh hưởng đến lợi ích của bên ủy quyền.
 
@@ -376,11 +376,11 @@ Prompt có thể nói rõ thêm các nguyên tắc cộng tác: bảo vệ thôn
 [^ch5-sandbox]: Anthropic, *Making Claude Code more secure and autonomous with sandboxing* và *How we contain Claude across products*, giới thiệu ranh giới hệ thống tệp, mạng và cách ly sản phẩm.
 [^ch5-1]: Li, Bojie and Noah Shi, *Whose Side Is Your Agent On? Multi-Party Principal Loyalty in LLM Agents*, 2026.
 
-## Mã: siêu năng lực của Agent đa dụng
+## Mã: năng lực bậc meta của Agent đa dụng
 
 Các mục trước biến yêu cầu của người dùng thành thay đổi mã. Giờ hãy nhìn lại các bảng bán hàng ở đầu chương: dù cuối cùng người dùng chỉ cần một bản báo cáo, Agent vẫn có thể viết một chương trình để thống nhất mã định danh mặt hàng, thống kê theo nhóm, rồi tính lại tỷ lệ trả hàng của một mặt hàng từ bảng gốc. Trước hết hỏi rõ người dùng muốn tính theo số chiếc hay theo số đơn. Giả sử một mặt hàng bán được mười chiếc, chia trong hai đơn, chỉ một đơn trả lại một chiếc. Tính theo số chiếc là 1/10, còn tính theo số đơn có trả hàng lại là 1/2. Cả hai cách tính đều chạy thành công, chỉ khi xác nhận cách tính trước mới biết con số nào trả lời đúng câu hỏi của người dùng. Chương trình viết xong như vậy còn có thể chạy lại khi dữ liệu kỳ sau về. Vòng lặp “sinh, thực thi, xác minh” này cũng mở rộng được sang sản xuất nội dung, tích hợp hệ thống nghiệp vụ và phát triển Agent.
 
-> **Siêu năng lực.** Cuốn sách dùng siêu năng lực (meta-capability) để chỉ năng lực tạo ra hoặc kết hợp các năng lực khác. Sinh mã có thể tạo ra công cụ mới, như script xử lý dữ liệu và quy trình gọi API; cũng có thể diễn đạt ràng buộc mới, như assertion và quy tắc kiểm tra; còn có thể dựng nên cách trình bày mới, như biểu mẫu HTML, bản trình chiếu và video.
+> **Năng lực bậc meta.** Cuốn sách dùng thuật ngữ năng lực bậc meta (meta-capability) để chỉ năng lực tạo ra hoặc kết hợp các năng lực khác. Sinh mã có thể tạo ra công cụ mới, như script xử lý dữ liệu và quy trình gọi API; cũng có thể diễn đạt ràng buộc mới, như assertion và quy tắc kiểm tra; còn có thể dựng nên cách trình bày mới, như biểu mẫu HTML, bản trình chiếu và video.
 
 Hãy bắt đầu từ tình huống đơn giản nhất. Dù thứ cuối cùng phải giao chỉ là đáp án của một bài toán, mô hình vẫn có thể viết một đoạn chương trình nhỏ để kiểm tra phép tính của mình.
 
@@ -433,11 +433,11 @@ Chẳng hạn, người phụ trách quy tắc xác nhận “thời gian trôi 
 
 Mô tả bằng ngôn ngữ tự nhiên giúp mô hình hiểu chính sách, giải thích lý do cho người dùng, và tìm phương án khác trong phạm vi được cấp quyền, chẳng hạn tra xem có được đổi vé hay không. Kiểm tra bằng mã lo việc kiểm tra điều kiện cụ thể trước các thao tác then chốt, phù hợp với tổ hợp nhiều điều kiện, tính toán thời gian và đối chiếu giữa nhiều nguồn dữ liệu. Mô hình có thể hỗ trợ sinh mã kiểm tra, người phụ trách quy tắc xác nhận ý nghĩa qua review và test case biên; khi quy tắc cập nhật, cập nhật đồng thời mô tả, cách hiện thực và test.
 
-**Giá trị hàng đầu của quy tắc được mã hóa là chặn những thao tác sai gây thiệt hại thật.** Hủy đơn, chuyển tiền và xóa dữ liệu đều thay đổi trạng thái nghiệp vụ, khắc phục sau sự việc có thể rất tốn kém. Tác giả khuyên đặt việc kiểm tra theo dữ liệu thật ngay trong giao diện thực thi, để mỗi lần gửi đều đi qua cùng một bộ quy tắc, tránh trường hợp mô hình quên gọi công cụ kiểm tra riêng. Giao diện tra cứu riêng vẫn dùng được để giải thích chính sách từ trước; còn khi thực thi thì đọc lại các sự kiện cần thiết, kiểm tra trạng thái có thay đổi không, và kết hợp cơ chế giao dịch, idempotent và bù trừ ở Chương 4 để quản lý các thao tác sau đó.
+**Giá trị hàng đầu của quy tắc được mã hóa là chặn những thao tác sai gây thiệt hại thật.** Hủy đơn, chuyển tiền và xóa dữ liệu đều thay đổi trạng thái nghiệp vụ, khắc phục sau sự việc có thể rất tốn kém. Tác giả khuyên đặt việc kiểm tra theo dữ liệu thật ngay trong giao diện thực thi, để mỗi lần gửi đều đi qua cùng một bộ quy tắc, tránh trường hợp mô hình quên gọi công cụ kiểm tra riêng. Giao diện tra cứu riêng vẫn dùng được để giải thích chính sách từ trước; còn khi thực thi thì đọc lại các dữ kiện cần thiết, kiểm tra trạng thái có thay đổi không, và kết hợp cơ chế giao dịch, idempotent và bù trừ ở Chương 4 để quản lý các thao tác sau đó.
 
-**Dùng tham số để dẫn dắt việc đối chiếu, dùng sự kiện phía máy chủ để phán quyết.**
+**Dùng tham số để dẫn dắt việc đối chiếu, dùng dữ kiện phía máy chủ để phán quyết.**
 
-τ-bench nghiên cứu tool calling và việc tuân thủ chính sách qua các tình huống hàng không, thương mại điện tử[^ch5-tau]. Dưới đây lấy đặt vé máy bay làm tình huống giảng dạy, đặt năm quy tắc hủy: trước hết loại các đơn đã dùng chặng bay, rồi kiểm tra thời điểm đặt, việc hãng bay hủy chuyến, hạng thương gia và điều kiện bảo hiểm. `cancellation_reason` ghi lý do người dùng yêu cầu, `expected_*` ghi những sự kiện mô hình dự kiến thấy, còn phán quyết thực tế đọc cơ sở dữ liệu nghiệp vụ và đồng hồ máy chủ.
+τ-bench nghiên cứu tool calling và việc tuân thủ chính sách qua các tình huống hàng không, thương mại điện tử[^ch5-tau]. Dưới đây lấy đặt vé máy bay làm tình huống giảng dạy, đặt năm quy tắc hủy: trước hết loại các đơn đã dùng chặng bay, rồi kiểm tra thời điểm đặt, việc hãng bay hủy chuyến, hạng thương gia và điều kiện bảo hiểm. `cancellation_reason` ghi lý do người dùng yêu cầu, `expected_*` ghi những dữ kiện mô hình dự kiến thấy, còn phán quyết thực tế đọc cơ sở dữ liệu nghiệp vụ và đồng hồ máy chủ.
 
 Đoạn mã này minh họa các nhánh chính sách. Tầng cổng vào lo xác nhận danh tính yêu cầu, quyền sở hữu đơn và quyền thao tác; tầng thực thi đọc trạng thái, kiểm tra điều kiện và gửi lệnh hủy trong một giao dịch có kiểm soát hoặc cơ chế nhất quán tương đương, đồng thời lưu bản ghi kiểm toán.
 
@@ -461,11 +461,11 @@ def cancel_reservation(
     Trước khi gọi, hãy tra chi tiết đơn và đối chiếu từng chính sách trên; tham số expected_*
     dùng để nêu căn cứ phán đoán của bạn, chỉ để máy chủ so sánh và kiểm toán, không ảnh hưởng phán quyết.
     """
-    # Đọc các sự kiện cần cho phán quyết chính sách từ cơ sở dữ liệu nghiệp vụ
+    # Đọc các dữ kiện cần cho phán quyết chính sách từ cơ sở dữ liệu nghiệp vụ
     r = db.get_reservation(reservation_id)
     now = server_clock.now()  # dùng đồng hồ máy chủ
 
-    # Ghi lại chênh lệch giữa giá trị dự kiến và sự kiện hiện tại, phục vụ chẩn đoán và kiểm toán
+    # Ghi lại chênh lệch giữa giá trị dự kiến và dữ kiện hiện tại, phục vụ chẩn đoán và kiểm toán
     if expected_cabin_class is not None and expected_cabin_class != r.cabin_class:
         log_mismatch(reservation_id, "cabin_class", expected_cabin_class, r.cabin_class)
     if expected_has_insurance is not None and expected_has_insurance != r.has_insurance:
@@ -502,9 +502,9 @@ def cancel_reservation(
 
 Chẳng hạn, đơn đã quá 24 giờ, chuyến bay vẫn khai thác bình thường, hạng phổ thông và không mua bảo hiểm, thì mô hình có thể dựa vào đó giải thích rằng không thể hủy theo chính sách trong ví dụ này, và tra các lựa chọn được phép như đổi vé.
 
-**Máy chủ thực thi quy tắc dựa trên sự kiện hiện tại.** Hạng ghế, bảo hiểm, thời điểm đặt, tình trạng sử dụng chặng bay và trạng thái chuyến bay đều đọc từ nguồn dữ liệu nghiệp vụ; khung thời gian được tính theo đồng hồ máy chủ. Chênh lệch ở `expected_*` dùng để chẩn đoán, `cancellation_reason` dùng để ghi lại ý định yêu cầu. Những sự kiện như hãng bay có hủy chuyến hay không do máy chủ xác minh; người dùng ghi “hãng hủy chuyến” trong yêu cầu không làm cho một tấm vé vốn không được hoàn trở thành được hoàn.
+**Máy chủ thực thi quy tắc dựa trên dữ kiện hiện tại.** Hạng ghế, bảo hiểm, thời điểm đặt, tình trạng sử dụng chặng bay và trạng thái chuyến bay đều đọc từ nguồn dữ liệu nghiệp vụ; khung thời gian được tính theo đồng hồ máy chủ. Chênh lệch ở `expected_*` dùng để chẩn đoán, `cancellation_reason` dùng để ghi lại ý định yêu cầu. Những dữ kiện như hãng bay có hủy chuyến hay không do máy chủ xác minh; người dùng ghi “hãng hủy chuyến” trong yêu cầu không làm cho một tấm vé vốn không được hoàn trở thành được hoàn.
 
-Tính độc lập của nguồn dữ liệu cũng phải được bảo đảm trong kiểm soát truy cập: ai được sửa sự kiện của đơn, cập nhật khi nào, lưu lịch sử ra sao, đều ảnh hưởng đến độ tin cậy của việc kiểm tra. Thao tác đồng thời có thể làm thay đổi trạng thái sau khi tra, vì vậy khi gửi lệnh hoàn tiền, máy chủ đọc lại trạng thái đơn, xác nhận tấm vé này vẫn được hoàn, và trả kết quả xử lý nhất quán cho các yêu cầu trùng lặp.
+Tính độc lập của nguồn dữ liệu cũng phải được bảo đảm trong kiểm soát truy cập: ai được sửa dữ kiện của đơn, cập nhật khi nào, lưu lịch sử ra sao, đều ảnh hưởng đến độ tin cậy của việc kiểm tra. Thao tác đồng thời có thể làm thay đổi trạng thái sau khi tra, vì vậy khi gửi lệnh hoàn tiền, máy chủ đọc lại trạng thái đơn, xác nhận tấm vé này vẫn được hoàn, và trả kết quả xử lý nhất quán cho các yêu cầu trùng lặp.
 
 > **Thí nghiệm 5-5 ★★: Mô hình nhỏ và quy tắc nghiệp vụ được mã hóa**
 >
@@ -532,12 +532,12 @@ Nếu ban tổ chức đưa một bản báo cáo năm trước làm mẫu, còn
 
 Đã thay đúng chữ và hình, bố cục vẫn có thể sai. Chẳng hạn, thêm hai dòng chú thích cho hình thì biên dịch vẫn qua, nhưng chữ có thể đè lên trục tọa độ. Trong Hình 5-5, người thẩm định phải nhìn thấy ảnh chụp sau khi render mới gửi lại được ý kiến như vậy cho người đề xuất phụ trách bố cục.
 
-![Hình 5-5 Cơ chế người đề xuất - người thẩm định khi sinh PPT](images/revised/fig5-5.svg)
+![Hình 5-5 Cơ chế người đề xuất–người thẩm định khi sinh PPT](images/revised/fig5-5.svg)
 
 - **Người đề xuất (Proposer)** đọc bài báo, lập kế hoạch cấu trúc trình bày, viết mã nguồn Slidev, và sửa trang theo phản hồi.
 - **Người thẩm định (Reviewer)** dùng công cụ để render trang, dùng mô hình thị giác kiểm tra mật độ nội dung, khả năng đọc, bố cục và sự tương ứng giữa hình và chữ, rồi trả về phản hồi có cấu trúc gồm số trang, loại vấn đề, mức độ nghiêm trọng và đề xuất sửa.
 
-Phản hồi nên chỉ dẫn trực tiếp được việc sửa. Chẳng hạn, “trang 3 quá nhiều ý, tách thành hai trang tổng quan phương pháp và các bước tính”; “trang 7 cỡ chữ mã quá nhỏ, tăng lên 14 pt trước, rồi kiểm tra khả năng đọc khi chiếu”. Lỗi sự kiện và đọc sai biểu đồ được sửa trước, sau đó mới xử lý bố cục và chi tiết thị giác.
+Phản hồi nên chỉ dẫn trực tiếp được việc sửa. Chẳng hạn, “trang 3 quá nhiều ý, tách thành hai trang tổng quan phương pháp và các bước tính”; “trang 7 cỡ chữ mã quá nhỏ, tăng lên 14 pt trước, rồi kiểm tra khả năng đọc khi chiếu”. Lỗi sai dữ kiện và đọc sai biểu đồ được sửa trước, sau đó mới xử lý bố cục và chi tiết thị giác.
 
 Sửa cục bộ còn cần nói rõ sửa đối tượng nào. Doubao Work trong slide của Feishu cho phép người dùng chọn một phần tử trên trang, rồi đưa yêu cầu sửa qua thanh công cụ nổi.[^ch5-doubao-work] Giả sử cùng một trang có hai khung văn bản, một chỗ là trích dẫn phỏng vấn gốc, chỗ kia là phần tổng kết do người báo cáo viết. Người dùng chọn phần tổng kết và yêu cầu “rút gọn còn hai dòng”. Khung văn bản được chọn giới hạn phạm vi thay đổi. Phần tổng kết có thể viết lại, còn trích dẫn bên cạnh phải giữ nguyên lời người được phỏng vấn.
 
@@ -545,7 +545,7 @@ Sửa cục bộ còn cần nói rõ sửa đối tượng nào. Doubao Work tro
 
 Người đề xuất sửa xong thì render lại, người thẩm định kiểm tra phiên bản mới và xác nhận các vấn đề vòng trước đã được giải quyết chưa. Vòng lặp đặt hai loại điều kiện thoát: đạt yêu cầu rõ ràng về nội dung và bố cục, hoặc dùng hết ngân sách số vòng, thời gian và chi phí, chẳng hạn tối đa 5 vòng sửa. Khi bàn giao, lưu phiên bản hiện tại cùng các vấn đề còn chờ xử lý để tiện review sau.
 
-Cách này dùng chung mô hình người đề xuất - người thẩm định với việc phê duyệt thao tác ở Chương 4. Phê duyệt thao tác chủ yếu đánh giá một hành động có được thực thi hay không; còn thẩm định nội dung thì cải thiện sản phẩm qua nhiều vòng phản hồi. Cả hai đều cần chia sẻ yêu cầu nhiệm vụ, đưa ra căn cứ phán đoán định vị được, và để Harness quyết định quy trình tiếp theo. Dùng mô hình thuộc họ khác có thể đem lại một góc nhìn thẩm định khác.
+Cách này dùng chung mô thức người đề xuất–người thẩm định với việc phê duyệt thao tác ở Chương 4. Phê duyệt thao tác chủ yếu đánh giá một hành động có được thực thi hay không; còn thẩm định nội dung thì cải thiện sản phẩm qua nhiều vòng phản hồi. Cả hai đều cần chia sẻ yêu cầu nhiệm vụ, đưa ra căn cứ phán đoán định vị được, và để Harness quyết định quy trình tiếp theo. Dùng mô hình thuộc họ khác có thể đem lại một góc nhìn thẩm định khác.
 
 **Tác giả đánh giá cao lợi thế của việc chia hai Agent trong quản lý ngữ cảnh.** Hai vai có thể giữ riêng thông tin mỗi bên cần: người thẩm định mỗi vòng nhận ảnh chụp mới nhất, tiêu chuẩn thẩm định và danh sách vấn đề cần thiết; người đề xuất giữ mã nguồn, mục tiêu sửa và phản hồi văn bản có cấu trúc. Ảnh trang ở lại trong ngữ cảnh của người thẩm định, còn trajectory chính tiến lên nhờ các phản hồi văn bản ngắn. Mỗi vòng thẩm định đều xoay quanh trang mới nhất, vừa giảm nhiễu từ các ảnh chụp cũ, vừa kiểm soát được mức tăng của ngữ cảnh.
 
@@ -553,13 +553,13 @@ Cách này dùng chung mô hình người đề xuất - người thẩm định
 >
 > Thí nghiệm này dùng tệp PDF của bài báo “Attention Is All You Need” để sinh 20 trang slide Slidev. Agent trích cấu trúc và ý chính của bài báo, dùng ba hình gốc của bài báo có ghi nguồn, tổ chức phần trình bày theo từng trang. Sau khi render, kiểm tra chữ tràn, khả năng đọc của biểu đồ và sự tương ứng giữa hình và chữ, rồi sửa theo phản hồi.
 >
-> Đối chứng so sánh một Agent tự thẩm định với cách chia vai người đề xuất - người thẩm định. Trong lần chạy này, hai bản cuối cùng đều được 95 điểm trong cùng một quy trình chấm điểm độc lập; đỉnh đầu vào của phương án chia vai khoảng 24 nghìn token, còn phương án một Agent giữ lại ảnh chụp cũ khoảng 93 nghìn token.
+> Đối chứng so sánh một Agent tự thẩm định với cách chia vai người đề xuất–người thẩm định. Trong lần chạy này, hai bản cuối cùng đều được 95 điểm trong cùng một quy trình chấm điểm độc lập; đỉnh đầu vào của phương án chia vai khoảng 24 nghìn token, còn phương án một Agent giữ lại ảnh chụp cũ khoảng 93 nghìn token.
 
 > **Thí nghiệm 5-7 ★★: Tự động sinh video giảng giải bài báo**
 >
 > Trên nền slide, Agent có thể viết lời giảng theo văn nói cho từng trang, giải thích các đối tượng, quan hệ và kết luận trong hình, rồi gọi TTS để tổng hợp giọng nói. Lời giảng được giao cùng trang slide cho người thẩm định thị giác, kiểm tra xem các phần tử được nhắc đến có xuất hiện trên khung hình không, và mô tả có khớp với biểu đồ không.
 >
-> Khi làm video, thí nghiệm tiếp tục dùng quy trình sinh ở mục trước, chọn một bản 22 trang ra đời sớm hơn (v2). Sau khi trích lần lượt 12 trang, khung hình cuối của video lấy từ trang 21 của bản gốc. Mục trước khi so sánh điểm và lượng dùng thì dùng bản 20 trang về sau (v9). Chọn xong trang, dùng Kimi sinh lời giảng, mô hình thị giác Qwen thẩm định quan hệ hình - chữ, rồi Fish Audio tổng hợp giọng nói từng trang. FFmpeg dựa vào thời lượng thực tế của mỗi đoạn âm thanh để đặt thời gian hiển thị trang, ghép thành video giảng giải dài khoảng 8,6 phút.
+> Khi làm video, thí nghiệm tiếp tục dùng quy trình sinh ở mục trước, chọn một bản 22 trang ra đời sớm hơn (v2). Sau khi trích lần lượt 12 trang, khung hình cuối của video lấy từ trang 21 của bản gốc. Còn ở mục trước, phần so sánh điểm số và lượng token dùng bản 20 trang ra đời sau (v9). Chọn xong trang, dùng Kimi sinh lời giảng, mô hình thị giác Qwen thẩm định quan hệ hình - chữ, rồi Fish Audio tổng hợp giọng nói từng trang. FFmpeg dựa vào thời lượng thực tế của mỗi đoạn âm thanh để đặt thời gian hiển thị trang, ghép thành video giảng giải dài khoảng 8,6 phút.
 >
 > Trong Hình 5-6, slide, lời giảng và giọng nói phải đến cuối cùng mới được ghép thành video. Có những vấn đề phải đến bước này mới nghe ra: khi chuyển trang, một câu có bị bỏ dở không, và càng về sau âm thanh với hình ảnh có càng lệch nhau không.
 >
@@ -639,7 +639,7 @@ Phân tích và hiển thị mỗi bên có cách kiểm tra riêng. Chương tr
 
 **Tự động phân tích log thực thi của Agent và chẩn đoán sự cố.**
 
-Sau khi phân tích ra trajectory có cấu trúc, Agent có thể kết hợp tài liệu kiến trúc và PRD (tài liệu yêu cầu sản phẩm) để so sánh luồng dự kiến với hành động thực tế. Chẳng hạn, trước khi hoàn tiền có tra xem đơn này được hoàn không? Sau khi dịch vụ tồn kho quá thời gian, chương trình có chuyển sang tra bộ nhớ đệm như đã quy ước không?
+Sau khi phân tích ra trajectory có cấu trúc, Agent có thể kết hợp tài liệu kiến trúc và PRD (tài liệu yêu cầu sản phẩm) để so sánh luồng dự kiến với hành động thực tế. Chẳng hạn, trước khi hoàn tiền có tra xem đơn này được hoàn không? Sau khi dịch vụ tồn kho quá thời gian, chương trình có chuyển sang tra cache như đã quy ước không?
 
 Báo cáo sự cố có thể gồm mức ưu tiên, mô-đun, hiện tượng, bằng chứng và đề xuất cải tiến. Agent còn có thể dựa vào đó sinh test hồi quy, cố định đầu vào và điều kiện nghiệm thu ứng với sự cố. Framework test phát lại yêu cầu hoặc đọc phản hồi công cụ đã lưu trong môi trường có kiểm soát, so sánh hành vi của phiên bản lỗi với phiên bản đã sửa. Những thao tác ghi ra bên ngoài thì dùng môi trường cách ly hoặc giao diện thay thế, giữ phạm vi ảnh hưởng của việc phát lại trong tầm kiểm soát.
 
@@ -649,7 +649,7 @@ Chẩn đoán đã được rà soát thì Agent có thể, sau khi được c�
 
 > **Thí nghiệm 5-11 ★★★: Hệ thống chẩn đoán thông minh cho log sản xuất**
 >
-> Thí nghiệm này dùng một dịch vụ HTTP cục bộ sinh hai trajectory nghiệp vụ: một bản ghi cho thấy hệ thống chưa tra xem đơn có được hoàn không đã hoàn tiền, bản kia cho thấy sau khi tra tồn kho quá thời gian thì không chuyển sang lấy dữ liệu từ bộ nhớ đệm. Mô hình kết hợp tài liệu kiến trúc và mô tả yêu cầu, sinh báo cáo sự cố có trích dẫn trajectory và lượt, rồi sinh ba test hồi quy chạy được.
+> Thí nghiệm này dùng một dịch vụ HTTP cục bộ sinh hai trajectory nghiệp vụ: một bản ghi cho thấy hệ thống chưa tra xem đơn có được hoàn không đã hoàn tiền, bản kia cho thấy sau khi tra tồn kho quá thời gian thì không chuyển sang lấy dữ liệu từ cache. Mô hình kết hợp tài liệu kiến trúc và mô tả yêu cầu, sinh báo cáo sự cố có trích dẫn trajectory và lượt, rồi sinh ba test hồi quy chạy được.
 >
 > Hình 5-7 đặt một báo cáo chẩn đoán vào giữa trajectory và test hồi quy. Báo cáo chỉ ra “hệ thống bỏ qua bước kiểm tra, hoàn tiền thẳng”. Quay lại trajectory tìm bằng chứng: trong bản ghi lời gọi thiếu bước nào? Xem tiếp xuống test: nếu sau này lại sót bước này, test có phát hiện được không?
 >
@@ -658,11 +658,11 @@ Chẩn đoán đã được rà soát thì Agent có thể, sau khi được c�
 > Cả ba test đều thất bại trên phiên bản lỗi, chuyển sang phiên bản đã sửa thì đều qua. Một trong số đó chỉ xét xem chương trình có từng gọi công cụ kiểm tra hoàn tiền hay không. Dù chương trình hoàn tiền trước, sau đó mới tra xem đơn có được hoàn không, test này vẫn qua. Bản ghi vận hành còn lưu biên nhận tạo mục công việc qua GitHub MCP, dựa vào đó có thể tìm ra phiếu công việc tương ứng sau khi báo cáo chẩn đoán được giao cho lập trình viên.
 >
 
-### Mã làm UI sinh động
+### Mã làm UI tạo sinh
 
 Nếu người dùng còn muốn tự tay sửa tài liệu mà Agent đang xử lý, có thể làm giao diện thành một bàn làm việc dùng chung cho cả hai. Lấy lịch trình làm ví dụ: để người dùng thấy trợ lý đang sửa điểm dừng nào, tiếp quản việc sửa, xác nhận hoặc hủy một thay đổi. Nếu người dùng vừa đổi ngày khởi hành thành thứ Sáu, trợ lý ngay sau đó phải tiếp tục làm việc trên lịch trình mới này. Để hai bên dùng chung một trạng thái nhìn thấy được, và thống nhất ai đang điều khiển trường đang sửa, thì mới có thể vừa xem vừa sửa.
 
-Hãy tưởng tượng người dùng cần so sánh ba phương án đi lại. Khi điểm đến chưa chốt, hội thoại tiện cho việc hỏi thêm; chốt điểm đến rồi, để người dùng chọn ngày, điền số người trực tiếp thì tiện hơn trao đổi qua lại vài đoạn chữ; cuối cùng so sánh tổng giá thay đổi theo ngày, một biểu đồ bày ngay sự khác biệt trước mắt. Agent sinh biểu mẫu, biểu đồ hay giao diện ứng dụng tương ứng theo nhiệm vụ, để người dùng trực tiếp điền, chọn, thao tác; đó là UI sinh động (Generative UI).
+Hãy tưởng tượng người dùng cần so sánh ba phương án đi lại. Khi điểm đến chưa chốt, hội thoại tiện cho việc hỏi thêm; chốt điểm đến rồi, để người dùng chọn ngày, điền số người trực tiếp thì tiện hơn trao đổi qua lại vài đoạn chữ; cuối cùng so sánh tổng giá thay đổi theo ngày, một biểu đồ bày ngay sự khác biệt trước mắt. Agent sinh biểu mẫu, biểu đồ hay giao diện ứng dụng tương ứng theo nhiệm vụ, để người dùng trực tiếp điền, chọn, thao tác; đó là UI tạo sinh (Generative UI).
 
 **Dùng giao thức để mô tả giao diện và tương tác.**
 
@@ -674,7 +674,7 @@ AG-UI (Agent–User Interaction) lo tương tác sự kiện giữa Agent và fr
 
 Client có thể nhận dần các cập nhật giao diện và hiển thị trên Web, thiết bị di động hoặc desktop qua renderer tương thích. Client kiểm tra thuộc tính component, liên kết dữ liệu và yêu cầu hành động, máy chủ tiếp tục kiểm tra quyền nghiệp vụ; liên kết, văn bản định dạng và truy cập dữ liệu trong component cũng cần quy tắc xử lý riêng.
 
-Khi sinh mã trực tiếp, thì phải kiểm tra phụ thuộc, truy cập tài nguyên và quyền thực thi, đồng thời cách ly giao diện được sinh khỏi trạng thái nhạy cảm của ứng dụng chủ. Prompt injection trong tài liệu bên ngoài có thể ảnh hưởng đến quá trình sinh, còn rủi ro chạy script trong trình duyệt phụ thuộc vào cách nạp trang và cách cách ly.
+Khi sinh mã trực tiếp, thì phải kiểm tra phụ thuộc, truy cập tài nguyên và quyền thực thi, đồng thời cách ly giao diện được sinh khỏi trạng thái nhạy cảm của ứng dụng host. Prompt injection trong tài liệu bên ngoài có thể ảnh hưởng đến quá trình sinh, còn rủi ro chạy script trong trình duyệt phụ thuộc vào cách nạp trang và cách cách ly.
 
 **Bàn giao thành quả tương tác bằng HTML.**
 
@@ -762,7 +762,7 @@ HMR (Hot Module Replacement, thay thế module nóng) của môi trường phát
 
 **Để ranh giới quyền độc lập với mã nghiệp vụ động.**
 
-**Mã nghiệp vụ càng dễ bị Agent viết lại động, ranh giới quyền cuối cùng càng nên hạ xuống tầng truy cập dữ liệu ổn định.** Ứng dụng truyền thống viết việc kiểm tra quyền trong mã nghiệp vụ đã được review; khi mã được sinh ra liên tục thay đổi, một đường đi mới nào đó có thể bỏ sót đúng bước kiểm tra ấy. Để mọi lần đọc ghi đều đi qua một dịch vụ truy cập dữ liệu độc lập thì mới giữ được ràng buộc quyền. Chẳng hạn, ứng dụng tuyển dụng có thể sinh động danh sách ứng viên và biểu mẫu thao tác, còn ứng viên thuộc tổ chức nào, nhân viên tuyển dụng được cập nhật những trường nào, thì do dịch vụ truy cập dữ liệu đáng tin liên tục kiểm tra.
+**Mã nghiệp vụ càng dễ bị Agent viết lại động, ranh giới quyền cuối cùng càng nên hạ xuống tầng truy cập dữ liệu ổn định.** Ứng dụng truyền thống viết việc kiểm tra quyền trong mã nghiệp vụ đã được review; khi mã được sinh ra liên tục thay đổi, một đường đi mới nào đó có thể bỏ sót đúng bước kiểm tra ấy. Để mọi lần đọc ghi đều đi qua một dịch vụ truy cập dữ liệu độc lập thì mới giữ được ràng buộc quyền. Chẳng hạn, ứng dụng tuyển dụng có thể sinh danh sách ứng viên và biểu mẫu thao tác một cách động, còn ứng viên thuộc tổ chức nào, nhân viên tuyển dụng được cập nhật những trường nào, thì do dịch vụ truy cập dữ liệu đáng tin liên tục kiểm tra.
 
 Mục tiêu thiết kế ở đây là: **ngay cả khi mã được sinh ra có lỗi, tầng truy cập dữ liệu đáng tin vẫn cưỡng chế được ràng buộc quyền.** Điều này nối tiếp guardrails tầng dữ liệu ở Chương 1: đặt các quy tắc bắt buộc tuân thủ ở vị trí mà mọi thao tác liên quan đều phải đi qua. Chính sách bảo mật theo dòng của cơ sở dữ liệu có thể giới hạn việc truy cập bản ghi, ràng buộc và bộ kiểm tra xét trạng thái hợp lệ, còn view có kiểm soát, stored procedure hoặc dịch vụ dữ liệu cung cấp các thao tác được phép. Tầng ứng dụng có thể kiểm tra trước và giải thích cho người dùng, nhưng việc đọc ghi cuối cùng vẫn do dịch vụ dữ liệu đáng tin và quyền cơ sở dữ liệu kiểm soát.
 
@@ -772,7 +772,7 @@ Chẳng hạn, bảo mật theo dòng của PostgreSQL cần dùng kết hợp v
 
 Quyền hạn và toàn vẹn dữ liệu còn đảm nhận những trách nhiệm khác nhau. Sau khi nhân viên tuyển dụng có quyền sửa hồ sơ ứng viên, máy trạng thái tiếp tục kiểm tra xem có được chuyển từ “đã sàng lọc” sang “đã phỏng vấn” không; bộ kiểm tra lương đọc vị trí tuyển dụng liên quan, xét mức lương mong muốn có nằm trong khoảng của vị trí không; kiểm tra tham chiếu xác nhận quan hệ giữa vị trí và ứng viên còn hợp lệ.
 
-> **Thí nghiệm 5-15 ★★★: Đối tượng dữ liệu có quyền nhúng sẵn cho phần mềm sinh động**
+> **Thí nghiệm 5-15 ★★★: Đối tượng dữ liệu có quyền nhúng sẵn cho phần mềm sinh ra một cách động**
 >
 > Thí nghiệm này cung cấp một bản mẫu lưu trữ đối tượng bằng Python trên PostgreSQL, đặt quy tắc quyền, bộ kiểm tra, quan hệ giữa đối tượng và khai báo phản ứng tiếp theo ngay trong kiểu dữ liệu. Khi đọc thì kiểm tra quyền truy cập; khi tạo và cập nhật thì chạy kiểm tra quyền và kiểm tra nghiệp vụ trước, kiểm tra quan hệ tham chiếu, rồi mới lưu bền, sau đó đưa các phản ứng tiếp theo đã khai báo vào hàng đợi và giới hạn độ sâu của chuỗi phản ứng.
 >
@@ -839,7 +839,7 @@ Mã giúp nhiệm vụ chạy lại được nhiều lần, nhưng môi trườn
 1. ★★ Hãy thiết kế sandbox cho một Coding Agent cần đọc tệp dự án, cài phụ thuộc và chạy test. Bạn sẽ cấu hình quyền về tệp, mạng, tiến trình và tài nguyên ra sao? Khi nhiệm vụ cần mở rộng quyền, làm thế nào để diễn đạt yêu cầu, kiểm tra phạm vi và lưu lại bản ghi?
 2. ★★★ Khi bên tạo liên tục sinh và sửa nhiều thế hệ Agent, lỗi framework và lỗi miền có thể dần tích tụ. Làm thế nào dùng phiên bản tham chiếu, test hồi quy, đánh giá hành vi và cơ chế quay lui để theo dõi sự thay đổi này?
 3. ★★ Thay đổi định dạng log có thể đến từ một lần nâng cấp bình thường, cũng có thể đến từ lỗi của bên sinh log. Hệ thống phân tích thích ứng nên giữ lại những bằng chứng nào, và dựa vào điều kiện nào để quyết định thêm bộ phân tích mới, báo bất thường hay tạm dừng xử lý?
-4. ★★ Trong vòng lặp người đề xuất - người thẩm định, người thẩm định cho rằng mật độ thông tin của trang là hợp lý, còn người dùng lại thấy chật chội. Làm thế nào chuyển sở thích của người dùng thành ví dụ, tiêu chí chấm điểm và phản hồi tương tác, rồi kiểm tra các lần sửa sau có đáp ứng yêu cầu không?
+4. ★★ Trong vòng lặp người đề xuất–người thẩm định, người thẩm định cho rằng mật độ thông tin của trang là hợp lý, còn người dùng lại thấy chật chội. Làm thế nào chuyển sở thích của người dùng thành ví dụ, tiêu chí chấm điểm và phản hồi tương tác, rồi kiểm tra các lần sửa sau có đáp ứng yêu cầu không?
 5. ★★ Coding Agent có thể cập nhật cơ sở tri thức, tài liệu kiến trúc và chỉ dẫn dự án, cũng có thể cố định chuỗi thao tác thành mã. Làm thế nào nhận ra các quy tắc thừa hoặc lỗi thời, và thiết kế phạm vi áp dụng, phương pháp xác minh và điều kiện loại bỏ cho quy tắc? Để đi từ một lần sửa thành công đến sự tiến hóa liên tục bàn ở Chương 9, còn cần những cơ chế tích lũy và đánh giá nào?
 6. ★ Đội ngũ thuận lợi cho cộng tác từ xa thường cũng giúp Agent dễ lấy thông tin công việc. Hãy rà soát yêu cầu, kiến trúc, bản ghi quyết định và tiêu chuẩn nghiệm thu của một dự án bạn quen thuộc, liệt kê những tài liệu cần bổ sung nhất, và nói rõ chúng giúp Agent hoàn thành những nhiệm vụ cụ thể nào.
 7. ★★★ Với một Agent cùng lúc truy cập dữ liệu riêng tư, xử lý nội dung không đáng tin, giao tiếp ra bên ngoài và dùng bộ nhớ lâu dài, cần sắp xếp việc cấp quyền theo danh tính, đánh dấu nguồn, kiểm tra luồng dữ liệu và thẩm định việc ghi bộ nhớ như thế nào? Hãy dùng một luồng nghiệp vụ bình thường để chỉ ra vị trí của các bước kiểm tra này.
