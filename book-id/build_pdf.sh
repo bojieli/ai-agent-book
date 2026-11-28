@@ -52,6 +52,7 @@ CHAPTERS=(
     chapter9.md
     chapter10.md
     afterword.md
+    reference-answers.md
 )
 
 # Verify all chapters exist
