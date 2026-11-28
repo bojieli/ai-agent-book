@@ -54,5 +54,5 @@
 <path d="M637.9021363665481 541.787 L672.0978636334519 566.213" fill="none" stroke="#222222" stroke-width="4" marker-end="url(#arrow)" />
 <path d="M505 124 L505 267" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)" />
 <path d="M620 351 L620 507" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)" />
-<text x="105" y="136" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="26.0" font-weight="400" fill="#292929">Entrada</text><path d="M140 130 L178 132" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<text x="135" y="136" text-anchor="end" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="26.0" font-weight="400" fill="#292929">Entrada</text><path d="M140 130 L178 132" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
 <text x="450" y="657" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="22.7" font-weight="400" fill="#292929">Gris: aristas　　Flecha continua: búsqueda en capa　　Discontinua: bajar capa</text><defs /></svg>
