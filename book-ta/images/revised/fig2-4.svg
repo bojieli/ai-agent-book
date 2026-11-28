@@ -12,7 +12,7 @@
 <rect x="212" y="232" width="130" height="60" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
 <text x="277" y="270" text-anchor="middle" font-family="&quot;Noto Sans Tamil&quot;, &quot;Noto Serif Tamil&quot;, &quot;Tamil Sangam MN&quot;, sans-serif" font-size="24.0" font-weight="400" fill="#292929">assistant</text><path d="M342 262 L384 262" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
 <rect x="384" y="232" width="130" height="60" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
-<text x="449" y="270" text-anchor="middle" font-family="&quot;Noto Sans Tamil&quot;, &quot;Noto Serif Tamil&quot;, &quot;Tamil Sangam MN&quot;, sans-serif" font-size="19.9" font-weight="400" fill="#292929">tool முடிவு</text><path d="M514 262 L556 262" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<text x="449" y="270" text-anchor="middle" font-family="&quot;Noto Sans Tamil&quot;, &quot;Noto Serif Tamil&quot;, &quot;Tamil Sangam MN&quot;, sans-serif" font-size="26" font-weight="400" fill="#292929">tool முடிவு</text><path d="M514 262 L556 262" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
 <rect x="556" y="232" width="130" height="60" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
 <text x="621" y="270" text-anchor="middle" font-family="&quot;Noto Sans Tamil&quot;, &quot;Noto Serif Tamil&quot;, &quot;Tamil Sangam MN&quot;, sans-serif" font-size="26.0" font-weight="400" fill="#292929">user</text><path d="M686 262 L728 262" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
 <rect x="728" y="232" width="130" height="60" rx="6" fill="#f2f2f2" stroke="#333333" stroke-width="1.8" />
