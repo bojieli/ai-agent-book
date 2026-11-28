@@ -289,14 +289,14 @@ A store has revised its refund policy, and a user asks: "I bought something last
 Start with the case where there is only one version of the policy. The following simplified interface queries the same store's refund process, showing how the retrieval results flow into the model's answer:
 
 ```python
-query = "退款流程"
+query = "refund process"
 results = retriever.search(query, top_k=2)
 # results = [
-#   "退款政策：订单签收后7天内可申请全额退款，需提供订单号。退款将在3–5个工作日内到账。",
-#   "退款操作：进入‘我的订单’，选择订单，点击‘申请退款’。"
+#   "Refund policy: A full refund can be requested within 7 days of delivery; the order number is required. Refunds arrive within 3–5 business days.",
+#   "Refund steps: Go to 'My Orders', select the order, and click 'Request refund'."
 # ]
-answer = llm.generate(system="你是客服助手。", context=results, question=query)
-# 回答包含申请期限、所需信息、操作步骤和到账时间。
+answer = llm.generate(system="You are a customer service assistant.", context=results, question=query)
+# The answer covers the deadline, the required information, the steps, and when the money arrives.
 ```
 
 Compare Figure 3-5 with the two retrieval results in the code: the steps for requesting a refund come from "Refund steps," while the 3–5 business days before the money arrives comes from "Refund policy." If the retrieval results contained only the steps, would the model still have any basis for telling the user when the money will arrive? This question bears directly on how the manual should be chunked.

@@ -66,9 +66,9 @@ Products differ in their tasks, but all of them can be understood in terms of th
 
 Suppose the lowest fare the customer service representative can find is 1,250 yuan. The model weighs common sense, this particular trip, and what it remembers of the user's habits. For a user on a business trip who is usually willing to pay a little more for a convenient itinerary, Pine might book it on the spot; for a family vacation where the user has previously made clear that total cost matters, it might first tell the user about the difference and keep asking the representative to look for other flights. If the user later adds, "Next time a fare is over budget, ask me first," that feedback gives the next decision a basis more specific than general experience.
 
-Take another scenario: a bank's customer service representative offers to mail documents to the user's home, but the assistant remembers that the user is traveling abroad. What needs to change this time is the delivery method: the assistant can explain the difficulty of receiving mail right there and push for delivery by email. Or consider a bill reduction: if the representative agrees verbally on the phone, the assistant can accurately report the merchant's promise, but confirming that the charge was actually reduced requires the next bill as a new observation. An assistant's action space can extend to real phone calls, yet its conclusions remain bounded by its observation space.
+Take another scenario: a bank's customer service representative offers to mail documents to the user's home, but the assistant remembers that the user is traveling abroad. What needs to change this time is the delivery method: the assistant on the call can explain right there that the user cannot receive mail, and push for delivery by email. Or consider a bill reduction: if the representative agrees verbally on the phone, the assistant can accurately report the merchant's promise, but confirming that the charge was actually reduced requires the next bill as a new observation. An assistant's action space can extend to real phone calls, yet its conclusions remain bounded by its observation space.
 
-Viewed by what is being delegated, this book will meet three kinds of applications: personal errands, office collaboration, and scientific exploration. The same assistant can take on tasks of different kinds; what differs is who authorizes it, what it can change, and who signs off on the result in the end. In the office, can a ticket be closed once a colleague hands back the results of a check? Suppose a project lead, in a Multica ticket, mentions the assistant by name and asks it to check a discrepancy in a budget spreadsheet. The comment triggers the check, but the ticket still belongs to its original owner and its status stays unchanged. The assistant hands back the two amounts and their sources, which answers the colleague's question; whether the budget as a whole is ready to submit is still for the owner to judge in light of the other open items.[^ch1-multica]
+Viewed by what is being delegated, the applications in this book fall into three kinds: personal errands, office collaboration, and scientific exploration. The same assistant can take on tasks of different kinds; what differs is who authorizes it, what it can change, and who signs off on the result in the end. In the office, can a ticket be closed once a colleague hands back the results of a check? Suppose a project lead, in a Multica ticket, mentions the assistant by name and asks it to check a discrepancy in a budget spreadsheet. The comment triggers the check, but the ticket still belongs to its original owner and its status stays unchanged. The assistant hands back the two amounts and their sources, which answers the colleague's question; whether the budget as a whole is ready to submit is still for the owner to judge in light of the other open items.[^ch1-multica]
 
 The same question applies to scientific work: on what grounds do we say progress has been made? When Google DeepMind's AlphaEvolve searched for matrix multiplication algorithms, the model proposed candidate programs, and an evaluator ran them, checking whether the products were computed correctly and how many multiplications were used. Later rounds of search could keep improving the programs that performed well. The research team reported that one of the resulting algorithms multiplies two $4\times 4$ complex matrices with 48 scalar multiplications. "Using fewer multiplications" has a definite thing to count, and the algorithm must still produce the correct matrix product.[^ch1-alphaevolve]
 
@@ -98,22 +98,22 @@ Chapter 4 develops the design of these five types of tools. Interface definition
 
 **Tool Calling** is the model's ability to request an operation in an agreed format. The common form, Function Calling, expresses the request as a tool name plus structured arguments. This book uses the term "tool calling" throughout.
 
-Take a weather query for Beijing. The model can write out the city name, but the actual temperature appears in context only after the Harness performs the query. Here are the four steps of messages for this call:
+Take a weather query for Beijing. The model can write out the city name, but the actual temperature appears in context only after the Harness performs the query. Here are the messages for this call, in four steps:
 
 ```text
-第一步：声明工具                    第二步：模型决定调用
+Step 1: declare the tool            Step 2: model decides to call
 tools: [{                          assistant: {
   name: "get_weather",               tool_calls: [{
   parameters: {                        id: "call_1",
     city: "string"                     function: "get_weather",
-  }                                    arguments: {city: "北京"}
+  }                                    arguments: {city: "Beijing"}
 }]                                   }]
                                    }
 
-第三步：结果追加到上下文              第四步：模型基于结果回复
+Step 3: result appended to context  Step 4: model replies from result
 tool: {                            assistant: {
-  tool_call_id: "call_1",              content: "北京今天 28°C，晴。"
-  content: '{"temp":28,"sky":"晴"}'  }
+  tool_call_id: "call_1",              content: "Beijing today: 28°C, sunny."
+  content: '{"temp":28,"sky":"sunny"}'  }
 }
 ```
 
@@ -220,7 +220,7 @@ repeat:
     if decision has no tool call:
         return decision.answer
 
-    for call in decision.tool_calls:  # 相互独立的调用可并行执行
+    for call in decision.tool_calls:  # independent calls can run in parallel
         validated_call = Harness.validate(call)
         observation = Harness.dispatch(validated_call)
         history.append(observation)
@@ -229,13 +229,13 @@ repeat:
 Below is an excerpt of messages in the order of the August baseline run, keeping the original call IDs and parameter names; conversion results list only the amount and currency, and the calculation code is abbreviated. When you reach the second round, trace where each term in the sum comes from: there are four quarterly revenue figures, so why did the tool return only three converted results?
 
 ```text
-消息历史 = [
+message_history = [
   {role: "user",
-   content: "Q1 250万美元，Q2 210万欧元，Q3 180万英镑，Q4 3.8亿日元。用工具换算为美元，计算年度总收入和季度平均收入。"},
+   content: "Q1 2.5M USD, Q2 2.1M EUR, Q3 1.8M GBP, Q4 380M JPY. Convert to USD with the tools and compute total annual revenue and average quarterly revenue."},
 
-  # 第一轮：提出三个换汇请求
+  # Round 1: request three currency conversions
   {role: "assistant",
-   reasoning: "先将 EUR、GBP、JPY 收入换算为 USD。",
+   reasoning: "First convert the EUR, GBP, and JPY revenue to USD.",
    tool_calls: [
      {id: "convert_currency_0", name: "convert_currency",
       args: {amount: 2100000, from_currency: "EUR", to_currency: "USD"}},
@@ -248,9 +248,9 @@ Below is an excerpt of messages in the order of the August baseline run, keeping
   {role: "tool", tool_call_id: "convert_currency_1", content: "2278481.01 USD"},
   {role: "tool", tool_call_id: "convert_currency_2", content: "2541806.02 USD"},
 
-  # 第二轮：根据换汇结果计算
+  # Round 2: compute from the conversion results
   {role: "assistant",
-   reasoning: "第一季度原本就是美元，加上其余三笔换汇结果，求和后除以4。",
+   reasoning: "Q1 is already in USD; add the other three converted amounts, then divide the sum by 4.",
    tool_calls: [
      {id: "code_interpreter_3", name: "code_interpreter",
       args: {code: """
@@ -262,16 +262,16 @@ Below is an excerpt of messages in the order of the August baseline run, keeping
   {role: "tool", tool_call_id: "code_interpreter_3",
    content: "9602895.73 2400723.93"},
 
-  # 第三轮：交付结果
+  # Round 3: deliver the result
   {role: "assistant",
-   reasoning: "计算完成，按两位小数报告结果。",
-   content: "年度总收入为9,602,895.73美元，季度平均收入为2,400,723.93美元。"}
+   reasoning: "Calculation done; report the results to two decimal places.",
+   content: "Total annual revenue is $9,602,895.73; average quarterly revenue is $2,400,723.93."}
 ]
 ```
 
 The first quarter's 2.5 million dollars is already in the user message and can go straight into the sum. The other three amounts come from the tool's returns; adding all four and dividing by 4 lets you check the final quarterly average. The model was called three times and tools four times in all: in the first round the model requested three independent conversions at once, in the second it requested running the summation code, and in the third it answered the user directly.
 
-Recording the execution as a structured trajectory also helps developers improve the system. A developer can follow the user request, model decisions, call arguments, and tool results to locate where a failure happened; by aggregating many trajectories, they can identify repeated operations, improve tool interfaces, or refine decision paths. Experience that has been evaluated and filtered can be written into a knowledge base or used as post-training data to improve the model. Chapters 7 through 9 cover evaluation, post-training, and continuous evolution, respectively.
+Recording the execution as a structured trajectory also helps developers improve the system. A developer can follow the user request, model decisions, call arguments, and tool results to locate where a failure happened; by aggregating many trajectories, they can identify repeated operations, improve tool interfaces, or refine decision paths. Experience that has been evaluated and filtered can be written into a knowledge base or used as post-training data to improve the model. Chapters 7 through 9 cover evaluation, post-training, and continual evolution, respectively.
 
 The currency task took only a few tool calls. Search and analysis tasks often need longer loops and are more likely to run into missing information and tool failures. The next two experiments show how such tasks advance step by step, and what the client and the server are each responsible for.
 
@@ -400,7 +400,7 @@ Before changing the prompt for a failed task, first look at where the failure ha
 
 **Harness Engineering** focuses on how the model runs and interacts with the Environment. It organizes context construction, tool dispatch, permissions, verification, and error recovery into an executable system that lets the model complete tasks continuously.
 
-**Loop Engineering** focuses on sustained autonomous operation: after one run ends, who discovers the next piece of work, when to start again, when to verify results, and by what criteria a task counts as truly done. Chapter 10 develops this perspective alongside multi-Agent collaboration systems.
+**Loop Engineering** focuses on sustained autonomous operation: after one run ends, who discovers the next piece of work, when to start again, when to verify results, and by what criteria a task counts as truly done. Chapter 10 develops this perspective alongside multi-agent collaboration systems.
 
 **Graph Engineering** focuses on combining multiple execution units. Agent loops, deterministic programs, and human approvals can serve as nodes; edges specify routing and dependencies; structured state passes between nodes and is checkpointed at key boundaries. Discussions that emerged in 2026 used this name to sum up these orchestration problems[^ch1-graph-engineering].
 

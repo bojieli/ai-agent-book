@@ -66,7 +66,7 @@ Intermediate results serve another purpose: when the user asks a related follow-
 
 **Storing memory, knowledge, and capabilities in files.** OpenClaw's workspace uses Markdown files to hold several kinds of information: `MEMORY.md` records long-term facts and decisions, date-organized logs hold process information, `USER.md` can hold user preferences, and Skill files explain how to use a capability[^ch5-openclaw-files]. **For memory that humans and the Agent maintain together, I prefer files that can be read directly.** Users can open a record and correct a wrong fact, and they can use Git to see where it came from, compare versions, and roll back. Keeping logs by date gives events a clear timeline; as the number of files grows, a search index can be added to speed up lookup.
 
-The Agent's ability to write files also lets it accumulate task experience. For example, if a call to a bank reveals that identity verification requires the address of the branch where the account was opened, the Agent can record this along with the business it applies to, the source of the information, and when it happened. Once checked, such records can be organized into knowledge, operating instructions, or programs that later tasks can reuse. Chapter 9 discusses this process of continuous evolution.
+The Agent's ability to write files also lets it accumulate task experience. For example, if a call to a bank reveals that identity verification requires the address of the branch where the account was opened, the Agent can record this along with the business it applies to, the source of the information, and when it happened. Once checked, such records can be organized into knowledge, operating instructions, or programs that later tasks can reuse. Chapter 9 discusses this process of continual evolution.
 
 [^ch5-openclaw-files]: OpenClaw, *Agent workspace* and *Memory overview*, which describe the workspace, file-based memory, and the retrieval mechanism.
 
@@ -268,7 +268,7 @@ Changing directories, activating virtual environments, setting environment varia
 
 Parallel tasks should use separate sessions or explicit environment snapshots, so that a directory change in one task does not affect another. Clean up background processes together when a task ends; when resuming a task, check again whether the session is still alive. For example, if you come back the next day to continue running tests, the code and dependency manifest can be read back from the workspace, but a service process started in the terminal the day before must first be checked to see whether it is still running. These are exactly the two kinds of state that Chapter 4 distinguishes when estimating sandbox costs.
 
-**Instant Syntax Feedback Mechanism.**
+**Immediate Syntax Feedback.**
 
 After a file is written, the tool layer can automatically run the appropriate language's syntax checker or linter and hand the diagnostics to the model as the tool's return value. For example, when a bracket is missing, it returns the file, the line and column, and the type of error, and the model can fix it in the next round—feedback much like an IDE's instant annotations.
 
@@ -340,7 +340,7 @@ The tool must check the order in which the two pieces of original text occur and
 
 A Coding Agent can read a project, modify files, run programs, and possibly reach external services over the network. When designing permissions, follow the data flow and check three questions: what content enters the context, what operations the model can request, and what mechanism ultimately approves and executes those operations.
 
-Simon Willison summarized one class of prompt-injection risk as the "Lethal Triad": access to private data, exposure to untrusted content, and the ability to communicate externally[^ch5-trifecta]. For example, an assistant that can read private files, processes external email, and can send messages needs clear authorization boundaries between reading, understanding, and sending. Once instructions in external content are treated as the user's requests, they can drive unauthorized transfers of data.
+Simon Willison summarized one class of prompt-injection risk as the "lethal trifecta": access to private data, exposure to untrusted content, and the ability to communicate externally[^ch5-trifecta]. For example, an assistant that can read private files, processes external email, and can send messages needs clear authorization boundaries between reading, understanding, and sending. Once instructions in external content are treated as the user's requests, they can drive unauthorized transfers of data.
 
 Beyond these three dimensions, I also recommend checking a fourth: **persistent memory amplifies the impact of prompt injection**. If external content enters long-term memory, its influence can cross sessions and resurface in later tasks. Memory writes should therefore record their source, scope of applicability, and confirmation status, and these attributes should be preserved on read. The trustworthiness of text stored in `MEMORY.md` still depends on how it came to be there. When an erroneous record is discovered, it must be possible to locate, correct, and retract the related content.
 
@@ -393,10 +393,10 @@ For example, a class has 40 students: 60% take math, 45% take physics, and 25% t
 Writing the quantities as meaningfully named variables lets you check each item in turn:
 
 ```python
-math = 40 * 60 // 100       # 24 人选数学
-phys = 40 * 45 // 100       # 18 人选物理
-both = 40 * 25 // 100       # 10 人两门都选
-only_phys = phys - both     # 8 人只选物理
+math = 40 * 60 // 100       # 24 students take math
+phys = 40 * 45 // 100       # 18 take physics
+both = 40 * 25 // 100       # 10 take both
+only_phys = phys - both     # 8 take only physics
 ```
 
 Symbolic computation extends this division of labor further. It can keep exact forms such as $\sqrt{2}$ and transform expressions according to algebraic rules. Squaring it directly gives the integer 2. Rounding to 1.414 first and then squaring gives 1.999396. When a problem calls for exact simplification, keep the symbols; when it calls for reporting a measured value, evaluate to the specified precision at the end. In discussing the combination of LLMs with Wolfram|Alpha, Wolfram emphasized how language understanding and computational capability complement each other[^ch5-wolfram]. An Agent can first turn a natural-language question into a Wolfram Language or Python expression, then call the computation system and continue reasoning with the result.
@@ -445,27 +445,28 @@ The code shows the policy branches. The entry layer is responsible for confirmin
 def cancel_reservation(
     reservation_id: str,
     cancellation_reason: str,        # "change_of_plan", "airline_cancelled", "other"
-    expected_cabin_class: str | None = None,  # 可选：模型预期的舱位
-    expected_has_insurance: bool | None = None  # 可选：模型预期的保险状态
+    expected_cabin_class: str | None = None,  # optional: cabin class the model expects
+    expected_has_insurance: bool | None = None  # optional: insurance status the model expects
 ) -> dict:
     """
-    取消航班预订。
+    Cancel a flight reservation.
 
-    取消政策（服务端根据数据库真值强制执行）：
-    - 规则 1: 已使用任何航段的订单不可取消
-    - 规则 2: 通过规则 1 后，预订后 24 小时内可取消
-    - 规则 3: 通过规则 1 后，航空公司取消的航班可取消
-    - 规则 4: 通过规则 1 后，商务舱可取消
-    - 规则 5: 基础经济舱和经济舱需购买旅行保险才可取消
+    Cancellation policy (enforced by the server against database ground truth):
+    - Rule 1: reservations with any used segment cannot be canceled
+    - Rule 2: after passing rule 1, cancellable within 24 hours of booking
+    - Rule 3: after passing rule 1, flights canceled by the airline are cancellable
+    - Rule 4: after passing rule 1, business class is cancellable
+    - Rule 5: basic economy and economy are cancellable only with travel insurance
 
-    调用前请先查询订单详情，逐条核对上述政策；expected_* 参数用于
-    陈述你的判断依据，仅供服务端比对与审计，不影响政策裁决。
+    Query the reservation details first and check each rule above; the expected_*
+    parameters state the basis for your judgment, are used only for server-side
+    comparison and auditing, and do not affect the policy decision.
     """
-    # 从业务数据库读取政策判断所需的事实
+    # Read the facts the policy decision needs from the business database
     r = db.get_reservation(reservation_id)
-    now = server_clock.now()  # 使用服务端时钟
+    now = server_clock.now()  # use the server clock
 
-    # 记录预期值与当前事实的差异，供诊断和审计
+    # Log differences between expected values and current facts for diagnosis and auditing
     if expected_cabin_class is not None and expected_cabin_class != r.cabin_class:
         log_mismatch(reservation_id, "cabin_class", expected_cabin_class, r.cabin_class)
     if expected_has_insurance is not None and expected_has_insurance != r.has_insurance:
@@ -532,7 +533,7 @@ If the organizers provide a previous year's talk as a template, its page structu
 
 Even with the right text and images in place, the layout can still go wrong. Add a two-line caption to a figure, for example, and the deck may compile while the text covers the chart's axis. In Figure 5-5, it is only by looking at the rendered screenshot that the reviewer can send this kind of comment back to the proposer responsible for layout.
 
-![Figure 5-5: The Proposer-Reviewer Mechanism for PPT Generation](images/revised/fig5-5.svg)
+![Figure 5-5: The Proposer–Reviewer Mechanism for PPT Generation](images/revised/fig5-5.svg)
 
 - **The Proposer** reads the paper, plans the structure of the talk, writes the Slidev source, and revises pages based on feedback.
 - **The Reviewer** renders the pages with a tool, uses a vision model to check content density, readability, layout, and the correspondence between figures and text, and returns structured feedback containing the page number, issue type, severity, and a suggested fix.
@@ -545,7 +546,7 @@ A local edit also needs to say which object it applies to. Doubao Work in Feishu
 
 After the Proposer revises, the pages are re-rendered, and the Reviewer checks the new version and confirms whether the previous round's issues have been resolved. The loop has two kinds of exit condition: the explicit content and layout requirements are met, or the budget of rounds, time, and cost is used up, for example a maximum of five rounds of revision. At delivery, save the current version together with the issues still outstanding, to make later review easier.
 
-This shares the Proposer-Reviewer pattern with the operation approval in Chapter 4. Operation approval mainly judges whether a particular action may be executed; content review improves an artifact through multiple rounds of feedback. Both require shared task requirements and locatable grounds for each judgment, with the Harness deciding the subsequent flow. Using models from different families can provide an additional review perspective.
+This shares the Proposer–Reviewer pattern with the operation approval in Chapter 4. Operation approval mainly judges whether a particular action may be executed; content review improves an artifact through multiple rounds of feedback. Both require shared task requirements and locatable grounds for each judgment, with the Harness deciding the subsequent flow. Using models from different families can provide an additional review perspective.
 
 **I value the advantage of a two-Agent division of labor for context management.** Each role can keep the information it needs: in every round, the Reviewer receives the latest screenshots, the review criteria, and the necessary list of issues; the Proposer keeps the source code, the revision goals, and the structured text feedback. Page images stay in the Reviewer's context, while the main trajectory moves the revisions forward through short text feedback. Each round of review centers on the latest pages, which both reduces interference from historical screenshots and keeps the context from growing.
 
@@ -553,7 +554,7 @@ This shares the Proposer-Reviewer pattern with the operation approval in Chapter
 >
 > This experiment takes the PDF of "Attention Is All You Need" and generates a 20-slide Slidev deck. The Agent extracts the paper's structure and key points, uses three figures from the original paper with their sources recorded, and organizes the explanation slide by slide. After rendering, it checks for text overflow, chart readability, and the correspondence between figures and text, then revises according to the feedback.
 >
-> The comparison is between single-Agent self-review and a Proposer-Reviewer division of labor. In this run, both final decks scored 95 in the same independent scoring process; the peak input of the division-of-labor approach was about 24,000 tokens, versus about 93,000 tokens for the single-Agent approach that kept historical screenshots.
+> The comparison is between single-Agent self-review and a Proposer–Reviewer division of labor. In this run, both final decks scored 95 in the same independent scoring process; the peak input of the division-of-labor approach was about 24,000 tokens, versus about 93,000 tokens for the single-Agent approach that kept historical screenshots.
 
 > **Experiment 5-7 ★★: Automatic Generation of Paper Explanation Videos**
 >
@@ -839,8 +840,8 @@ Code lets a task be executed repeatedly, but the environment does not necessaril
 1. ★★ Design a sandbox for a Coding Agent that needs to read project files, install dependencies, and run tests. How would you configure file, network, process, and resource permissions? When the task needs broader permissions, how should the request be expressed, its scope checked, and a record kept?
 2. ★★★ When a creator generates and modifies Agents over many successive generations, framework defects and domain errors may gradually accumulate. How can reference versions, regression tests, behavioral evaluation, and rollback mechanisms be used to track such drift?
 3. ★★ A change in log format may come from a normal upgrade or from a defect in the producer. What evidence should an adaptive parsing system keep, and on what conditions should it decide to add a new parser, report an anomaly, or pause processing?
-4. ★★ In a Proposer-Reviewer loop, the Reviewer considers a page's information density reasonable, but the user finds it crowded. How can user preferences be turned into examples, scoring criteria, and interactive feedback, and how can you check whether subsequent revisions meet them?
-5. ★★ A Coding Agent can update the knowledge base, architecture documentation, and project instructions, and can also turn sequences of operations into code. How can redundant or outdated rules be identified, and how should rules be given a scope of applicability, a verification method, and exit conditions? What accumulation and evaluation mechanisms are still needed to go from a single successful change to the continuous evolution discussed in Chapter 9?
+4. ★★ In a Proposer–Reviewer loop, the Reviewer considers a page's information density reasonable, but the user finds it crowded. How can user preferences be turned into examples, scoring criteria, and interactive feedback, and how can you check whether subsequent revisions meet them?
+5. ★★ A Coding Agent can update the knowledge base, architecture documentation, and project instructions, and can also turn sequences of operations into code. How can redundant or outdated rules be identified, and how should rules be given a scope of applicability, a verification method, and exit conditions? What accumulation and evaluation mechanisms are still needed to go from a single successful change to the continual evolution discussed in Chapter 9?
 6. ★ Teams that are friendly to remote collaboration usually also make it easier for Agents to obtain work information. Examine the requirements, architecture, decision records, and acceptance criteria of a project you know well, list the documents most in need of filling in, and explain which specific tasks they would help an Agent complete.
 7. ★★★ For an Agent that simultaneously accesses private data, processes untrusted content, communicates externally, and uses persistent memory, how would you arrange identity authorization, source labeling, data-flow checks, and review of memory writes? Use a normal business workflow to show where these checks sit.
 8. ★★ In the Artifact pattern for SQL and HTML, the model generates the artifact, the execution service handles the query or rendering, and the interface presents the results directly. Which information is suitable to hand back to the model for interpretation? How do you check query permissions, resource budgets, page isolation, and the consistency of the displayed results?

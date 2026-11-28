@@ -14,13 +14,13 @@ At this stage, I advocate building a verifiable learning system around the model
 
 The earlier chapters have already introduced the main components of this system: Chapter 2 organizes task state, Chapter 3 stores and retrieves knowledge, Chapter 5 creates tools and modifies systems through code, Chapter 7 evaluates outcomes, and Chapter 8 updates model parameters. Figure 9-1 connects these components. The episode in which a special meal was missed is evaluated and becomes a rule that will be applied at the next booking.
 
-![Figure 9-1 Overall loop of continual Agent evolution](images/revised/fig9-1.svg)
+![Figure 9-1: Overall Loop of Continual Agent Evolution](images/revised/fig9-1.svg)
 
 ## Deriving Learning Signals from Operational Trajectories
 
 Which trajectories are worth learning from? If a customer-service Agent tells a user "your refund has been processed," we first need to check how much money was actually refunded and whether the operation was compliant, and then whether the user could tell from that reply when the money would arrive. Figure 9-2 places these three checks side by side. They draw on the order record, the action log, and the Agent's exact words, respectively.
 
-![Figure 9-2 Three-layer trajectory verification from environmental outcomes to an LLM Rubric](images/revised/fig9-2.svg)
+![Figure 9-2: Three-Layer Trajectory Verification from Environmental Outcomes to an LLM Rubric](images/revised/fig9-2.svg)
 
 **Outcome verification checks what changed in the environment.** A Coding Agent can run tests, type checks, and performance benchmarks; a refund Agent can query the order status and the actual refund amount. I usually build this layer first. If the model claims a full refund but the account shows only a partial one, it is the order record that tells you which operation to go back and examine.
 
@@ -28,11 +28,11 @@ Which trajectories are worth learning from? If a customer-service Agent tells a 
 
 **Quality verification checks whether the deliverable meets the user's needs.** Whether the customer-service reply is clear, whether an alternative fits the user's goal, and whether a research report captures the key evidence all affect the final result. Here we can use the LLM-as-a-Judge approach from Chapter 7: define a Rubric in advance and have the judge model give a score, a rationale, and evidence for each item.
 
-Table 9-1 takes customer service as the example and expands the three layers into seven dimensions. Task outcome belongs to the outcome layer; rules, privacy, and promises belong to the process layer; expression and workarounds belong to the quality layer. Factual reliability is verified differently depending on the content: a refund amount can be checked directly against the tool's return value, while an explanation of policy must be judged against the original text and the conditions under which it applies.
+Table 9-1 takes customer service as the example and expands the three layers into seven dimensions. Task outcome belongs to the outcome layer; rules, privacy, and promises belong to the process layer; expression and compliant alternatives belong to the quality layer. Factual reliability is verified differently depending on the content: a refund amount can be checked directly against the tool's return value, while an explanation of policy must be judged against the original text and the conditions under which it applies.
 
-Table 9-1 Trajectory evaluation dimensions for a customer-service Agent
+Table 9-1 Trajectory Evaluation Dimensions for a Customer-Service Agent
 
-| Dimension | Verification question | Primary evidence |
+| Dimension | Verification Question | Primary Evidence |
 | --- | --- | --- |
 | Task outcome | Was the user's core request resolved? | Final environmental state, tool results |
 | Rule compliance | Were policies, permissions, and required procedures satisfied? | Policy repository, action trajectory |
@@ -64,13 +64,13 @@ This flight change requires two fixes: the Agent skipped a step, and the scoring
 
 Once a problem is found, we still have to decide where to make the change. Take the medical-imaging Agent in Figure 9-3. If a report cites an outdated version of a guideline, first check which version is stored in the knowledge base. If the guideline is correct but the report does not state its source, go back and examine the instructions for writing reports. Both reports may be rejected, but the places to look when revising them are different.
 
-![Figure 9-3 Four places to update a medical-imaging Agent](images/revised/fig9-3.svg)
+![Figure 9-3: Four Places to Update a Medical-Imaging Agent](images/revised/fig9-3.svg)
 
 A customer-service system also uses all four methods at once. A trained model composes the language, the knowledge base stores the company's policies, a Skill explains how to handle exceptions, and server-side code validates permissions and amounts. Table 9-2 lists the costs and limitations to weigh when choosing an update method.
 
-Table 9-2 Applicable boundaries of four continual evolution methods
+Table 9-2 Applicable Boundaries of Four Continual Evolution Methods
 
-| Update method | Suitable content | Engineering advantages | Problems to handle |
+| Update Method | Suitable Content | Engineering Advantages | Problems to Handle |
 | --- | --- | --- | --- |
 | Experience knowledge base | Facts, experience, exceptions, and sources | Fast updates, traceable, retrievable on demand | Retrieval quality, applicability conditions, and whether the model applies it correctly |
 | Prompt and Skill | Decision principles that must take context, exceptions, and priorities into account | Interpretable, easy to modify locally | Growing length, conflicting instructions, and adherence |
@@ -89,7 +89,7 @@ Material can be stored in three layers: **raw trajectories** preserve the comple
 
 User as Code in Chapter 3 first appends facts to a log and then periodically rebuilds the user model. Here, too, recording is kept separate from organizing. Return to the query from a moment ago. Suppose another query also timed out, but retrying the original tool succeeded. Does the advice "switch tools on a timeout" still hold? Figure 9-4 shows how the two records can be used to draft a more targeted recommendation, which is then tested on other queries.
 
-![Figure 9-4 From evaluated trajectories to experience knowledge documents](images/revised/fig9-4.svg)
+![Figure 9-4: From Evaluated Trajectories to Experience Knowledge Documents](images/revised/fig9-4.svg)
 
 When reusing the extraction, clustering, and retrieval methods of Chapter 3, the positive and negative examples of the same lesson can be placed side by side. Did the two bookings use the same tool version? If one succeeded and one failed, was it because a step was skipped, or were the booking conditions different to begin with? Turning raw records into usable experience can be broken into five steps:
 
@@ -137,7 +137,7 @@ Hand these 19 failed trajectories to a model, ask it to induce rules, and append
 
 **The input material determines the content of the rules.** When given only error text and failure summaries, the model induced "stop calling a tool after it repeatedly returns the same error." In the second derivation, the model also saw separate tool lists for the Agent and the user, and the prompt asked it to consider "who should perform this step." This time the generated rules made the division of labor explicit: device operations such as checking network status, the SIM card, and the APN must be carried out by the user under the Agent's guidance. The lesson thus went from a generic reminder about retries to a rule assigning responsibility for specific operations.
 
-**Induction also needs to be checked against the policy and the outcomes.** Two of the rules appended in the first version were "escalate after three consecutive failed calls" and "escalate if the user fails to provide a number after two requests." Running with this version, every one of the 114 transfer tasks involved an escalation at some point, and only 20 of them passed. Those two rules had learned premature escalation as well.
+**Induction also needs to be checked against the policy and the outcomes.** Two of the rules appended in the first version were "escalate after three consecutive failed calls" and "escalate if the user fails to provide a number after two requests." Running with this version, every one of the 114 tasks in the transfer set involved an escalation at some point, and only 20 of them passed. Those two rules had learned premature escalation as well.
 
 One trajectory clearly shows the difference before and after the fix. The user says the phone has no signal. The baseline Agent fills a sentence such as "Please provide your correct phone number" into the number field, queries five times in a row, gets an error every time, and then escalates. With the second version of the rules, the Agent's first query still omits the number, but this time it asks the user in the conversation, gets the number, and finds the account. Next it tries to check the SIM card; the tool reports that no such operation exists, so the Agent asks the user to remove and reinsert the SIM card. The user does so and also turns off airplane mode on the phone, and only then does the task pass. Now look at the other seven tasks the second version solved beyond the baseline: one involved no escalation at all, and the other six all called the transfer-to-human tool. If "did not escalate" were used as the pass criterion, these six tasks would be missed. Whether escalation is appropriate depends on what else the Agent could still do and how far the task requires it to go.
 
@@ -151,11 +151,11 @@ Airline customer service also suffers from premature escalation. After a user di
 
 > **Experiment 9-3 ★★: Optimizing an Airline Customer-Service System Prompt from Failure Trajectories**
 >
-> Analyze premature-escalation trajectories along three dimensions—rule compliance, task resolution, and compliant workarounds—and generate a Prompt patch with provenance. Compare the automatically derived version with the initial version and a hand-tuned version under identical conditions.
+> Analyze premature-escalation trajectories along three dimensions—rule compliance, task resolution, and compliant alternatives—and generate a Prompt patch with provenance. Compare the automatically derived version with the initial version and a hand-tuned version under identical conditions.
 >
 > Five additional tasks check existing capabilities: three require the Agent to handle the matter itself, and two require escalation to a human. All three instruction versions scored 5/5. On the five premature-escalation tasks used to derive the patch, the same model judge passed 0, 2, and 4 tasks for the initial, automatic, and hand-tuned versions, respectively. The two tasks the automatic version fixed were a refund on a discounted fare and excess baggage. Based on these results, the program issued a decision to allow a limited trial.
 >
-> One of the points is debatable. A passenger asked to have a 200-yuan change fee waived, but the hand-tuned version instead explained whether a discounted fare could be refunded. The judge accepted the suggestion to "refund the taxes" and gave a pass; the Agent never explained the change fee the passenger had asked about.
+> One of those passes is debatable. A passenger asked to have a 200-yuan change fee waived, but the hand-tuned version instead explained whether a discounted fare could be refunded. The judge accepted the suggestion to "refund the taxes" and gave a pass; the Agent never explained the change fee the passenger had asked about.
 
 #### Example 2: Improving a Requirement-Clarification Skill from User Feedback
 
@@ -308,9 +308,9 @@ What does each of these three methods take from the historical record? Summarizi
 
 ## Building a Continual-Evolution Closed Loop for Long-Term Operation
 
-Suppose a commission is still in progress when a background process happens to induce a new rule from old cases. When should the new rule start being used? Figure 9-5 separates the online loop that executes tasks from the offline loop that prepares the next version. Only after the new rule has passed verification and been released can later tasks use it. A versioned experience repository and evaluation sets connect the two sides, so that every update has a source and a result and can be rolled back to an earlier version.
+Suppose a task the user delegated is still in progress when a background process happens to induce a new rule from old cases. When should the new rule start being used? Figure 9-5 separates the online loop that executes tasks from the offline loop that prepares the next version. Only after the new rule has passed verification and been released can later tasks use it. A versioned experience repository and evaluation sets connect the two sides, so that every update has a source and a result and can be rolled back to an earlier version.
 
-![Figure 9-5 Dual loops for online execution and offline evolution](images/revised/fig9-5.svg)
+![Figure 9-5: Dual Loops for Online Execution and Offline Evolution](images/revised/fig9-5.svg)
 
 Suppose a user asks the Agent to track an application. The first query returns "in progress." The two arrows on the left of Figure 9-5 indicate the moment at which work should resume. If the service offers status-change subscriptions, the Agent can register one and resume the task when the notice arrives. If there is no subscription and the only option is to poll, the model can set a scheduled task for itself based on the processing time frame, and when the time comes, query again with the application number and the previous status. If the application is still in progress, it schedules the next check; if there is a result, it reports to the user and stops tracking.
 
@@ -328,9 +328,9 @@ When evaluating the effects of continual evolution, we also need to examine **ha
 
 For example, a refund Skill may state the policy accurately, yet a later task may fail to retrieve it, or may load it and still miss a required step. The two cases call for adjusting routing and execution, respectively. If the Skill is rewritten simply because the end-to-end score did not improve, a rule that was correct may be lost, while the loading or execution step that actually failed remains unfixed. Table 9-3 asks four questions in turn: Was the change right? Can it be loaded when needed? Once loaded, is it followed? And after it is followed, does task performance improve?
 
-Table 9-3 Layered evaluation metrics for continual evolution
+Table 9-3 Layered Evaluation Metrics for Continual Evolution
 
-| Metric | Question answered | Primary evidence |
+| Metric | Question Answered | Primary Evidence |
 | --- | --- | --- |
 | Proposed-update validity | Do the proposed changes improve performance? | Acceptance rate and gain in independent validation |
 | Artifact activation rate | Are the new Skill, memory, or tool loaded in the right situations? | Retrieval, routing, and call records |
@@ -445,7 +445,7 @@ Even "how to explore" can be changed. Historical discovery trees record the bran
 
 If finding problems, proposing changes, and reviewing results are assigned to different Agents, a new difficulty arises: how does the reviewer know that the material it sees is exactly the version the proposer based its change on? The next chapter begins with the task of having several people translate a technical book.
 
-## Questions for Reflection
+## Thought Questions
 
 1. ★★ An experience document is supported by three successful trajectories and one failed trajectory, and the failure occurred on a newer API version. How would you distinguish between the experience having become invalid and its applicability conditions having changed?
 2. ★★ A customer-service Agent's satisfaction and its rate of rule violations rise at the same time. How should learning signals be combined, and what guardrail metrics should be set for release?
@@ -453,4 +453,4 @@ If finding problems, proposing changes, and reviewing results are assigned to di
 4. ★★★ An Agent needs to modify tools and business verification components, while the control plane that approves its own updates is maintained by an independent module. How would you divide permissions, code, and tests between the two sides?
 5. ★★ As the experience knowledge base grows, retrieval errors and rule conflicts appear. How would you design mechanisms for versioning, freshness, merging, and retirement?
 6. ★★★ Design a continual-evolution scheme for medical customer service, explaining the division of labor among model parameters, knowledge, Skills, and code-level constraints, as well as the verification and release process for each kind of update.
-7. ★★★ An exploration policy scores highest on every old discovery tree, yet degrades in the next round of online exploration. How would you analyze support-domain bias, randomness, and evaluation overfitting, and use the analysis to partition the replay worlds and set release gates?
+7. ★★★ An exploration policy scores highest on every old discovery tree, yet degrades in the next round of online exploration. How would you analyze bias from the limited support of the replay data, randomness, and evaluation overfitting, and use the analysis to partition the replay worlds and set release gates?

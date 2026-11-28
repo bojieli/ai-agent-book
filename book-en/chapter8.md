@@ -4,7 +4,7 @@ The first seven chapters improved Agents mainly through context, tools, and runt
 
 A training plan starts with a diagnosis of what is wrong with the model. If the model cannot read material from the target domain, it needs stronger language ability and domain knowledge. If it understands the task but keeps producing wrong tool arguments, it needs demonstrations that teach the interface and the operating steps. If it occasionally succeeds but often wanders down inefficient paths, rewards can raise the probability of the strategies that work. Different problems call for different data, objective functions, and training pipelines.
 
-Modern model capability development usually involves four stages: **pre-training** builds a general foundation of language and knowledge, **Mid-training** continues learning on the target distribution, **Supervised Fine-Tuning (SFT)** learns responses and actions from demonstrations, and **Reinforcement Learning (RL)** optimizes the policy from task feedback. This chapter first explains how each of the four works, then uses cases from mathematics, navigation, tool calling, and robotics to discuss how to combine them.
+Developing the capabilities of a modern model usually involves four stages: **pre-training** builds a general foundation of language and knowledge, **Mid-training** continues learning on the target distribution, **Supervised Fine-Tuning (SFT)** learns responses and actions from demonstrations, and **Reinforcement Learning (RL)** optimizes the policy from task feedback. This chapter first explains how each of the four works, then uses cases from mathematics, navigation, tool calling, and robotics to discuss how to combine them.
 
 I pay particular attention to two questions. The first is how learning from demonstrations and learning from rewards affect generalization. In the controlled experiments on GeneralPoints and V-IRL, a limited set of SFT demonstrations made it easier for the model to memorize training patterns, while RL generalized better when the task conditions changed. Later sections explain these differences in terms of training data, optimization objectives, and test distributions. The second is how training outcomes depend on data and environments. My engineering judgment is this: **data and environments matter more than algorithms.** Once you understand the basic mechanics of algorithms such as PPO and GRPO, put most of your effort into corpus coverage, demonstration quality, environment feedback, and reward design. For many tasks, once the foundational capabilities and demonstration data are in place, SFT alone meets the application's requirements.
 
@@ -39,7 +39,7 @@ To see concretely what "learning to predict" means, look at a single position. S
 
 ### Mid-training: Continued Learning on the Target Distribution
 
-Suppose a general model has seen relatively little professional Korean documentation or a company's internal protocols. You can continue language modeling on the relevant corpora, giving the model more chances to learn the target language, technical terminology, code patterns, and relationships across long documents. Mixing general corpora into the domain corpus helps the model keep doing well on the tasks it was already good at. This kind of training is often called **Mid-training** or Continued Pre-training (CPT); Domain-Adaptive Pre-training (DAPT) and Task-Adaptive Pre-training (TAPT) further specify the scope of corpus selection.
+Suppose a general model has seen relatively little professional Korean documentation or a company's internal protocols. You can continue language modeling on the relevant corpora, giving the model more chances to learn the target language, technical terminology, code patterns, and relationships across long documents. Mixing general corpora into the domain corpus helps the model keep doing well on the tasks it was already good at. This kind of training is often called **Mid-training** or Continued Pre-training (CPT); Domain-Adaptive Pre-training (DAPT) and Task-Adaptive Pre-training (TAPT) further illustrate the range of choices for the corpus.
 
 Mid-training usually lets a large number of tokens from documents, code, and derivations participate in the loss. A concept can appear again and again in definitions, examples, derivations, and different documents, so the model learns many associations and ways of using it. SFT, by contrast, usually organizes such content into inputs and desired outputs, concentrating supervision on the responses or actions the task requires. A small set of question-answer pairs covers only a few ways of asking and answering. Even if the model memorizes the facts in them, it may fail to call up that knowledge when the question is phrased differently or several concepts must be combined. This is exactly why large bodies of domain knowledge need richer corpus coverage.
 
@@ -73,7 +73,7 @@ $$
 \operatorname{Pass@}k=1-(1-p)^k
 $$
 
-If Pass@1 is low but the success rate rises clearly as $k$ grows, the current policy can already generate successful paths. RL, rejection sampling, or distillation can exploit those paths and raise how often they appear. If success remains rare under a reasonable budget and task coverage, first analyze which steps the model lacks knowledge, format, or local capability for.
+If Pass@1 is low but the success rate rises clearly as $k$ grows, the current policy can already generate successful paths. RL, rejection sampling, or distillation can exploit those paths and raise how often they appear. If success remains rare under a reasonable budget and task coverage, first work out at which steps the model is missing knowledge, format, or local capability.
 
 Take a binary terminal reward as an example. When every rollout in a group scores 0, GRPO's within-group relative advantage is also 0, and the group's rewards alone cannot tell which attempt was better. In PPO, value estimation, exploration, and other constraints may still produce updates, but a persistent lack of successful samples still makes the task hard to learn. Under the approximation of independent attempts with a fixed success probability, the first success takes $1/p$ attempts on average, so when the success probability is small, sampling cost rises quickly. I therefore first add demonstrations, foundational knowledge, or reachable intermediate feedback to improve the chance that sampling yields a useful signal, and only then scale up the number of rollouts.
 
@@ -113,7 +113,7 @@ The training pipeline can thus unfold step by step: first establish usable capab
 
 Reinforcement learning studies how to choose actions based on the information currently available so that the long-term cumulative reward is as high as possible. Take chess: the policy chooses a move and the environment updates the board; when the game ends, a reward is given according to the outcome. Early moves earn no immediate points, yet they may shape the final result.
 
-Figure 8-1 uses a simplified treasure hunt game to show how actions, observations, and rewards relate. The player walks east from the hall, the game says they have reached the storage room, and the reward for this step is 0. Next the player picks up the red key and receives a reward of 5. The game program knows the state of the whole world; how much of it the player can see depends on the game's rules. If the observation gives the complete state, the environment is called fully observable; if only part of it is visible, the player often has to remember what they have seen and done before in order to decide where to go next.
+Figure 8-1 uses a simplified treasure hunt game to show how actions, observations, and rewards relate. The player walks east from the hall, the game says they have reached the storeroom, and the reward for this step is 0. Next the player picks up the red key and receives a reward of 5. The game program knows the state of the whole world; how much of it the player can see depends on the game's rules. If the observation gives the complete state, the environment is called fully observable; if only part of it is visible, the player often has to remember what they have seen and done before in order to decide where to go next.
 
 ![Figure 8-1: Reinforcement Learning Agent-Environment Interaction Loop](images/revised/fig8-1.svg)
 
@@ -169,13 +169,13 @@ $$
 Q(s,a)\leftarrow Q(s,a)+\alpha\left[r+\gamma\max_{a'}Q(s',a')-Q(s,a)\right]
 $$
 
-$\alpha$ is the learning rate, and the bracketed term is the difference between "the one-step reward plus the discounted subsequent value" and the current estimate. When the task reaches a terminal state, the subsequent value is taken as 0. Try it once in the companion game: turn off random perturbation, walk east from the entrance, then pick up the red key in the storage room. Picking up the key is worth 5 points and every step costs 0.5, so the $r$ returned by this action is 4.5. Suppose the table's old estimate for "pick up the key in the storage room" is 0.25, and the maximum Q value among the actions available after taking the key is 0.63. With $\gamma=0.99$ and $\alpha=0.2$, the one-step target is $4.5+0.99\times0.63=5.1237$. The old estimate moves one fifth of the way toward this target and becomes 1.22474. This method of correcting estimates with actual one-step feedback is called **Temporal-Difference (TD) Learning**.
+$\alpha$ is the learning rate, and the bracketed term is the difference between "the one-step reward plus the discounted subsequent value" and the current estimate. When the task reaches a terminal state, the subsequent value is taken as 0. Try it once in the companion game: turn off random perturbation, walk east from the entrance, then pick up the red key in the storeroom. Picking up the key is worth 5 points and every step costs 0.5, so the $r$ returned by this action is 4.5. Suppose the table's old estimate for "pick up the key in the storeroom" is 0.25, and the maximum Q value among the actions available after taking the key is 0.63. With $\gamma=0.99$ and $\alpha=0.2$, the one-step target is $4.5+0.99\times0.63=5.1237$. The old estimate moves one fifth of the way toward this target and becomes 1.22474. This method of correcting estimates with actual one-step feedback is called **Temporal-Difference (TD) Learning**.
 
 Putting together the Q values of all actions in a state lets you pick the action currently estimated to be best. Figure 8-3 draws such a policy on a simplified grid. The number in each cell is the normalized state value. Cover the numbers with your hand and look only at the arrows—can you still get from the top-left corner to the treasure?
 
 ![Figure 8-3: Q-learning Grid World](images/revised/fig8-3.svg)
 
-The next round of exploration may change the direction of the arrows. Figure 8-4 breaks down the red-key calculation just performed: the reward from this step changes the estimate for "pick up the key in the storage room," while the Q values of other states in the table must wait for their own updates.
+The next round of exploration may change the direction of the arrows. Figure 8-4 breaks down the red-key calculation just performed: the reward from this step changes the estimate for "pick up the key in the storeroom," while the Q values of other states in the table must wait for their own updates.
 
 ![Figure 8-4: Q-value Update Visualization](images/revised/fig8-4.svg)
 
@@ -227,7 +227,7 @@ This example also gives a way to tell behavior cloning apart from reinforcement 
 >
 > ![Figure 8-7: Architecture Comparison of Q-learning and LLM Agent in a Treasure Hunt Game](images/revised/fig8-7.svg)
 >
-> In the companion Kimi K3 run log, the Agent took 17 steps in its first episode. It first picked up the rusty sword, found that the north door was locked, went to the storage room to get the red key and the magic crystal, and at step 9 combined the sword and the crystal into a silver sword. When it tried to use the key at step 12, the environment replied that the key "will be used automatically when needed"; only when it moved north at step 13 did the door actually open. After defeating the guard with the silver sword at step 14, it tried using the sword once more, and the environment said it could not be used at that point. At step 17 it took the treasure. As you read this log, cover the next line and, based on the current feedback, guess which steps were still necessary.
+> In the companion Kimi K3 run log, the Agent took 17 steps in its first episode. It first picked up the rusty sword, found that the north door was locked, went to the storeroom to get the red key and the magic crystal, and at step 9 combined the sword and the crystal into a silver sword. When it tried to use the key at step 12, the environment replied that the key "will be used automatically when needed"; only when it moved north at step 13 did the door actually open. After defeating the guard with the silver sword at step 14, it tried using the sword once more, and the environment said it could not be used at that point. At step 17 it took the treasure. As you read this log, cover the next line and, based on the current feedback, guess which steps were still necessary.
 >
 > Aligning each action with the observation at that moment lets you analyze how the model uses existing knowledge such as "keys open doors" and "weapons deal with guards," and how tool feedback changes its subsequent plans. The tabular approach accumulates these relationships through state–action visits.
 >
@@ -437,8 +437,8 @@ How does PPO update the policy using a batch of trajectories of different length
 ```python
 states, actions, returns = [], [], []
 for trajectory in rollouts:
-    states.extend(trajectory.states)       # 每次选择动作之前的状态
-    actions.extend(trajectory.actions)     # 与状态逐项对应
+    states.extend(trajectory.states)       # state before each action is chosen
+    actions.extend(trajectory.actions)     # aligned one-to-one with the states
     returns.extend(discounted_returns(trajectory.rewards))
 
 returns = tensor(returns)
@@ -474,7 +474,7 @@ If the advantage is −1, the direction reverses. When the probability ratio has
 
 > **Experiment 8-11 ★★: GeneralPoints—A "Memorization versus Generalization" Comparison in Single-Turn RL**
 >
-> Chu et al. used GeneralPoints, a card game similar to the "24 game," to test model generalization[^ch8-3]. Each of the numbers on four cards is used once, and addition, subtraction, multiplication, and division are combined to make 24. If the model has learned to solve the problem, can it still compute correctly when the card-value rules or the suits change? Figure 8-12 shows the two problem formats: GP-L gives the cards as text, while GP-VL requires the model to read the card faces.
+> Chu et al. used GeneralPoints, a card game similar to the "24 game," to test model generalization[^ch8-3]. The player must use each of the four card values exactly once, combining them with addition, subtraction, multiplication, and division to make 24. If the model has learned to solve the problem, can it still compute correctly when the card-value rules or the suits change? Figure 8-12 shows the two problem formats: GP-L gives the cards as text, while GP-VL requires the model to read the card faces.
 >
 > ![Figure 8-12: GeneralPoints Experimental Architecture (Training and Testing Design for the GP-L and GP-VL Variants)](images/revised/fig8-12.svg)
 >
@@ -697,8 +697,8 @@ Two repairs both pass acceptance, but one of them directly overwrote a file it s
 If you know in which turn the violation occurred, you can also assign the penalty to that turn. Look at the two test trajectories in the companion implementation: A completed the task but violated a rule in its second turn; B did not complete the task, but both its turns were compliant. The two trajectories' outcome scores are 1 and 0, which become +0.5 and −0.5 after subtracting the group mean. Each trajectory has two turns of actions, and each turn accounts for 10 action tokens. Under the `c2` configuration in the implementation, the two signals are counted separately:
 
 ```python
-outcome_weight = (1 - 0.5) / 40  # 结果信号分摊到这批的全部 40 个动作 token
-penalty_weight = -0.3 / 10       # 违规扣分只分摊到甲第二轮的 10 个动作 token
+outcome_weight = (1 - 0.5) / 40  # spread the outcome signal over all 40 action tokens in this batch
+penalty_weight = -0.3 / 10       # spread the violation penalty only over the 10 action tokens of A's second turn
 first_turn = outcome_weight
 second_turn = outcome_weight + penalty_weight
 ```

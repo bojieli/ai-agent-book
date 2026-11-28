@@ -1,6 +1,6 @@
 # Evaluating Agents
 
-The first six chapters covered how to build a single Agent: context, memory, knowledge bases, tools, code, and the interfaces for observation and action. Once the system is built, you need a set of repeatable tasks to judge what it can do, under which conditions it tends to fail, and what to change next. Evaluation results also provide feedback for post-training and continuous evolution.
+The first six chapters covered how to build a single Agent: context, memory, knowledge bases, tools, code, and the interfaces for observation and action. Once the system is built, you need a set of repeatable tasks to judge what it can do, under which conditions it tends to fail, and what to change next. Evaluation results also provide feedback for post-training and continual evolution.
 
 During development, many choices have to be compared on real tasks: which model to use, which tools to expose, what content and indexing the knowledge base should use, how to organize user memory, prompts, and Skills, and which constraints the Harness should add. These choices also interact. More detailed tool descriptions, for example, may reduce parameter errors but increase context overhead; adding a verification step may raise the success rate while lengthening completion time.
 
@@ -405,7 +405,7 @@ For attribution at scale, I first use rules to find run records that may contain
 
 The user receives the Agent's final reply, while the business system retains the state produced by its actions; both need acceptance checks. When a refund has been submitted, the user should be told the amount, the processing status, and the next step accurately; when a task is only partly done, the reply should list what has been completed and what is still pending. Checking environment state and checking required notices can use separate scoring items, which makes it easy to distinguish execution errors from reporting errors.
 
-Imagine a customer service delegate assistant asked by a user to request a fee waiver from a merchant. During the call the representative says "we'll waive that fee," and the recording can verify that **the representative verbally agreed**. The final bill goes to the user. The report to the user should keep the same verb: "The representative agreed to waive the fee." Counting this kind of task toward a verbal-commitment rate is perfectly reasonable. To compute the rate at which the waiver actually shows up, you need the new bill or the user's later confirmation.
+Imagine an assistant that handles customer-service calls on a user's behalf being asked to request a fee waiver from a merchant. During the call the representative says "we'll waive that fee," and the recording can verify that **the representative verbally agreed**. The final bill goes to the user. The report to the user should keep the same verb: "The representative agreed to waive the fee." Counting this kind of task toward a verbal-commitment rate is perfectly reasonable. To compute the rate at which the waiver actually shows up, you need the new bill or the user's later confirmation.
 
 The same delegation sometimes has to hand off between several channels. If the merchant will call the user back directly, the assistant can send the user, in advance, the purpose of the call, what has already been agreed, and the questions still open. If the merchant requires the account holder to complete a verbal verification, the assistant can explain what the user needs to do, join a three-way call, and continue once verification is done. When a one-time verification code is involved, follow the code's instructions and let the user complete the verification in the trusted interface the merchant specifies. How should these actions be evaluated? In the callback case, check whether the user received the handoff summary before answering the phone; in the verification case, check whether the user could join at the right point and whether the task could continue after verification.
 
@@ -498,7 +498,7 @@ After reading two answers to the same open-ended question, people can often say 
 
 ![Figure 7-6: Elo Rating and Pairwise Comparison Ranking](images/revised/fig7-6.svg)
 
-The **Elo rating** was originally used for board games. On the common 400-point scale, the expected score of model A against model B is:
+The **Elo rating** was originally devised for chess. On the common 400-point scale, the expected score of model A against model B is:
 
 $$
 E_A=\frac{1}{1+10^{(R_B-R_A)/400}}
@@ -736,7 +736,7 @@ Table 7-5 Three Rounds of Experiments on the AndroidWorld Wi-Fi Subset
 | H5 | Switched to the UIAutomator element tree | 25%→100% | 2.498× | Keep the effective observation, keep reducing input cost |
 | H5C | Trimmed the UIAutomator element tree | 100%→100% | 0.506× | Expand to a wider task set for regression |
 
-Why fix observation first? On failure, the program had already opened the Internet panel, but the original interface often returned only the status bar. No matter how carefully the model reads navigation hints, it cannot find controls that are not in the settings page. With the full element tree, all four tasks succeeded, but average token usage reached 2.498 times the control, above the 1.5× ceiling set for that round. The next round therefore kept the controls' text, state, and executable actions and tried removing empty containers. In this paired comparison, all four tasks passed both before and after trimming, and average usage fell from 139,439.5 to 70,557.5 tokens. The 0.506 in the table is the ratio of these two numbers.
+Why fix observation first? On failure, the program had already opened the Internet panel, but the original interface often returned only the status bar. No matter how carefully the model read the navigation hints, it still could not find the controls on the settings page, because they never reached its observation. With the full element tree, all four tasks succeeded, but average token usage reached 2.498 times the control, above the 1.5× ceiling set for that round. The next round therefore kept the controls' text, state, and executable actions and tried removing empty containers. In this paired comparison, all four tasks passed both before and after trimming, and average usage fell from 139,439.5 to 70,557.5 tokens. The 0.506 in the table is the ratio of these two numbers.
 
 ### Continuous Iteration: Bringing a Local Improvement into the Full Regression
 

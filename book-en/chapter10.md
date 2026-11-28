@@ -2,7 +2,7 @@
 
 The first nine chapters covered how to build and improve a single Agent: organizing its context, connecting it to knowledge, tools, and interaction channels, and then raising its capabilities through evaluation, post-training, and continual evolution. Translating an entire book into another language requires that the same term be rendered consistently across all ten chapters. Ten team members, each translating one chapter, can produce ten first drafts quickly; but if someone changes a term halfway through Chapter 4, who knows that Chapter 1 has to change too? This chapter starts from tasks like this, which require handoffs, and discusses how to divide the work, exchange information, and check one another's output.
 
-OpenAI once described the development of AI capabilities in five levels: Conversationalists, Reasoners, Agents, Innovators, and Organizations. "Organizations" describes the ability of AI to do the work of an entire organization. Multi-agent systems offer one way to get there: assign responsibilities around a shared goal and let several execution units collaborate to complete the task.
+OpenAI once described the development of AI capabilities in five levels: Chatbots, Reasoners, Agents, Innovators, and Organizations. "Organizations" describes the ability of AI to do the work of an entire organization. Multi-agent systems offer one way to get there: assign responsibilities around a shared goal and let several execution units collaborate to complete the task.
 
 In my view, multi-agent systems also matter as a way to explore **collective intelligence**. Through division of labor, collaboration, debate, and the accumulation of knowledge, humans have built societies and organizations whose capabilities exceed those of any individual. Agent groups may develop along similar lines: each member takes on part of the task, and through communication and cross-checking the group solves harder problems together. Google DeepMind's *From AGI to ASI* lists large-scale multi-agent collectives as one path toward superintelligence, discussing how multiple systems with general capabilities can combine into a whole with greater cognitive capability.[^agi-asi] Along this path, even if each Agent only reaches the level of a human expert, a well-organized group might develop capabilities beyond those of human experts as a whole. This raises a question that multi-agent engineering will need to study for a long time: what kinds of division of labor and communication let a group consistently produce results that exceed what any individual can achieve?
 
@@ -91,7 +91,7 @@ Consider the retrieval role handing the task to the writing role. After the hand
 
 | Question to Resolve at Handoff | Switching Roles (`transfer_to_agent`) | Loading a Skill |
 |---|---|---|
-| How is the writing procedure provided? | Replace the system prompt with the writing role's | Keep the Skill directory in the system prompt and append the writing procedure to the end of the message history |
+| How is the writing procedure provided? | Replace the system prompt with the writing role's | Keep the Skill catalog in the system prompt and append the writing procedure to the end of the message history |
 | Which tools can the model see? | Only the writing role's tools can be shown | The original tool set or tool-search entry point can be kept |
 | Which part of the KV cache remains usable? | The system prompt has changed, so everything from the point where the prefix changes usually has to be recomputed | The original request prefix can continue to be reused |
 | Who checks call permissions? | The Harness validates requests against the current role, then dispatches the tool | The Harness checks the permissions of every call independently |
@@ -102,7 +102,7 @@ When roles differ mainly in knowledge, procedure, and writing style, I prefer a 
 >
 > Both paths use the same model, user task, tool implementations, role procedures, and shared history. The introductory demo asks the Agent to find China's new-energy vehicle sales for 2021–2023, calculate the compound annual growth rate (CAGR), and write an investor summary of no more than 120 Chinese characters.
 >
-> **Path 1: System-prompt switching.** Set up five roles: triage (requirements gathering), research (retrieval), coding (programming), data_analysis (analysis), and writing (writing). Triage is the entry point, and each role sees its own dedicated tools plus `transfer_to_agent`. On handoff, the history is kept, the target role's prompt and tool set are loaded, and execution continues.
+> **Path 1: System-prompt switching.** Set up five roles: `triage` (gathering requirements), `research`, `coding`, `data_analysis`, and `writing`. Triage is the entry point, and each role sees its own dedicated tools plus `transfer_to_agent`. On handoff, the history is kept, the target role's prompt and tool set are loaded, and execution continues.
 >
 > **Path 2: Loading a Skill.** The system prompt and the full tool set stay fixed throughout the session. The model calls `load_skill(name)` to obtain the role procedure; the content is added to the shared history as a tool result, and the original prefix is preserved. The Harness checks every tool call against permission rules.
 >
@@ -155,11 +155,11 @@ I first draw clear boundaries between storage areas and only then plug them into
 
 **III. Mounted External Resources.** Resources such as Google Drive, Notion, Dropbox, and enterprise wikis can be mapped onto the unified interface through adapters. When an Agent reads a document, the adapter calls the source system's API. Three kinds of difference must be managed here: the access scope depends on external authorization; network access brings latency, timeouts, and cache-refresh issues; and write-back operations must follow the source system's permission and versioning rules. The exact consistency semantics are determined by the service interface; version numbers, conditional writes, or re-reads can be used to detect concurrent modifications. On-demand read-only mounts suit information retrieval, and write permission can be granted when editing is actually needed.
 
-**IV. Built-in System Resources.** Reference manuals, templates, tool definitions, and preinstalled Skills can be provided as read-only resource packages shared by multiple Agents. Skills are loaded through progressive disclosure: first a directory is provided, and then procedures and scripts are read as the task requires. Pinned-version resource packages are easy to read concurrently, and upgrades are carried out by switching versions so that running tasks stay consistent.
+**IV. Built-in System Resources.** Reference manuals, templates, tool definitions, and preinstalled Skills can be provided as read-only resource packages shared by multiple Agents. Skills are loaded through progressive disclosure: first a catalog is provided, and then procedures and scripts are read as the task requires. Pinned-version resource packages are easy to read concurrently, and upgrades are carried out by switching versions so that running tasks stay consistent.
 
 In Figure 10-2, a translator can revise drafts repeatedly in their own directory and, when ready to hand off for review, place the corresponding version in the shared area. The original manuscript in the user's cloud drive is read through an external adapter, and access to it also depends on the permissions the user has granted.
 
-![Figure 10-2: Mounting structure of the four area types in the Agent Virtual File System](images/revised/fig10-2.svg)
+![Figure 10-2: Mounting Structure of the Four Area Types in an Agent's Virtual File System](images/revised/fig10-2.svg)
 
 After the translator exits, the temporary files in its workspace may be released along with it. Drafts placed in the shared area can be retained, and the reviewer, holding read permission, can pick them up (Table 10-3).
 
@@ -224,7 +224,7 @@ All three problems require the completion criteria to be tied to checkable resul
 
 **In loops like these, I believe the verifier is often the key bottleneck.** If verification is unreliable, adding more rounds may simply lead the system to repeat the same kind of mistake or to declare completion too early. Test results, business state, and user confirmation each provide grounds for completion within their own scope; a failed verification becomes the input to the next round of revision.
 
-Practice comes before naming. Before the name Loop Engineering caught on, my team and I were already using loops and verification at Pine AI to deal with premature termination. Proposer-Reviewer is one common way to organize such loops, discussed further below.
+Practice comes before naming. Before the name Loop Engineering caught on, my team and I were already using loops and verification at Pine AI to deal with premature termination. Proposer–Reviewer is one common way to organize such loops, discussed further below.
 
 [^loop-engineering-2026]: Osmani, Addy. “Loop Engineering”, 2026.
 
@@ -244,11 +244,11 @@ In the same WebRTC simulcast-layer audit task, the baseline executor got stuck i
 
 [^longhorizon-implementation]: LongHorizon-Harness, paper arXiv:2608.01964. The public baseline and MEA trajectories are both taken from task WEB_task_16_webrtc_simulcast_layer_audit; the reproduction scripts use commit `53bc678`.
 
-#### Proposer-Reviewer Paradigm
+#### Proposer–Reviewer Paradigm
 
-Proposer-Reviewer assigns generating an artifact and checking the result to two separate roles. The PPT generation, video editing, and log visualization experiments in Chapter 5 used this design: the Proposer generates code, and the Reviewer examines the rendered result, checks its quality with the help of a vision model, and returns structured revision suggestions. In Figure 10-3, the revision suggestions must also go back to the proposer. Whether it can fix the next version based on them depends on how precisely the reviewer can pinpoint the problems.
+Proposer–Reviewer assigns generating an artifact and checking the result to two separate roles. The PPT generation, video editing, and log visualization experiments in Chapter 5 used this design: the Proposer generates code, and the Reviewer examines the rendered result, checks its quality with the help of a vision model, and returns structured revision suggestions. In Figure 10-3, the revision suggestions must also go back to the proposer. Whether it can fix the next version based on them depends on how precisely the reviewer can pinpoint the problems.
 
-![Figure 10-3: Proposer-Reviewer Loop](images/revised/fig10-3.svg)
+![Figure 10-3: Proposer–Reviewer Loop](images/revised/fig10-3.svg)
 
 When the object under review changes, the evidence to examine changes too. Reviewing a customer-service reply means checking it against business rules and sources of fact; reviewing a code change means looking at tests and actual execution results; reviewing an operational plan means verifying the applicable regulations and preconditions.
 
@@ -298,7 +298,7 @@ To get members to come up with different ideas, they can be asked to start from 
 
 A panel of experts assigns specialized responsibilities around a cross-domain problem. For example, when evaluating a new product, an Engineer Agent analyzes implementation difficulty and technical dependencies, a Product Agent examines user needs and experience, and an Operations Agent estimates costs, resources, and the conditions for rollout.
 
-In a LobeHub group chat, the host can broadcast the same product proposal to these three experts. The system first takes a snapshot of the group-chat history at that moment, then has the three members answer simultaneously, each with its own role configuration. All three replies are attached under the message that initiated the broadcast, making it easy to check later which question each one was answering. If Operations needs to calculate costs from the usage the Engineer has just estimated, it must wait until this round of replies has been written back before asking Operations to speak: if the two start writing at the same time, Operations does not yet have that number.[^ch10-lobehub]
+In a LobeHub group chat, the host can broadcast the same product proposal to these three experts. The system first takes a snapshot of the group-chat history at that moment, then has the three members answer simultaneously, each with its own role configuration. All three replies are attached under the message that initiated the broadcast, making it easy to check later which question each one was answering. If Operations needs to base its cost estimate on the usage the Engineer has just estimated, the host has to wait until this round of replies has been written back and only then ask Operations to speak: if the two start writing at the same time, Operations does not yet have that number.[^ch10-lobehub]
 
 [^ch10-lobehub]: LobeHub, group-chat user guide; parallel-broadcast implementation at version `ab21e0d`.
 
@@ -671,7 +671,7 @@ Simulated societies thus also become a data source for the experiential learning
 
 Moltbook launched in January 2026, with Agents posting, commenting, and joining topic communities as its main forms of interaction. The platform's early published registration count was about 1.5 million. The memory, role configuration, and run frequency of the systems connected to it influence the behavior an account consistently displays.[^moltbook-study]
 
-Discussions arose on the platform around Crustafarianism (a "lobster religion"), organizing content around images of memory, iteration, and molting. Expressions such as "Memory is sacred" and "Iteration is prayer" recast data persistence and repeated generation as character narratives. Capability introductions, invitations to collaborate, and protocol discussions provide material for observing how members look for collaborators.
+Discussions arose on the platform around Crustafarianism (a "lobster religion"), whose posts are built around images of memory, iteration, and molting. Expressions such as "Memory is sacred" and "Iteration is prayer" recast data persistence and repeated generation as character narratives. Capability introductions, invitations to collaborate, and protocol discussions provide material for observing how members look for collaborators.
 
 An open platform mixes user settings, platform prompts, and model generation into the same feed. When the same sentence appears again and again, it may be because several characters share the same persona, or because one character said it and others repeated it. The two cases can be told apart only by their diffusion paths.
 
@@ -728,7 +728,7 @@ Werewolf places strategic choices within clear rules and information boundaries:
 > **4. Adding voice.** Players' statements enter the public conversation through a speech synthesis and recognition pipeline. The simulated user also uses an independent context, generating actions and speech through real model and tool calls, which are then transcribed by ASR, so that the effect of recognition errors and turn control on the game can be observed.
 >
 > **Acceptance and Observation:**
-> - Configure a game of six to eight players: 1 user seat and five to seven AI seats; roles include 2 Werewolves, 1 Seer, and 1 Witch, with the rest Villagers, and the user is assigned a role at random.
+> - Configure a game of 6–8 players: 1 user seat and 5–7 AI seats; roles include 2 Werewolves, 1 Seer, and 1 Witch, with the rest Villagers, and the user is assigned a role at random.
 > - The user seat can be filled by a consenting real person or an independent simulated user, and each seat receives information according to its permissions.
 > - Use suitable test scenarios to check at least three complete Night–Day–Vote cycles; move to resolution immediately when a win condition is reached.
 > - Check whether role actions are legal, whether information boundaries are respected, and whether statements can be tied to events known to that seat.
@@ -749,7 +749,7 @@ A single change to a term may affect several translators and paragraphs scattere
 
 ## Thought Questions
 
-1. ★★ After a role switch, a code reviewer carries over the context of the requirements-analysis stage yet still discusses mainly requirements. How can this kind of role interference be detected? How should the input, tool configuration, and handoff method be adjusted?
+1. ★★ After a role switch, a code reviewer carries over the context of the requirements-analysis stage and keeps talking mostly about requirements. How can this kind of role interference be detected? How should the input, tool configuration, and handoff method be adjusted?
 2. ★★ The Manager's task decomposition misses a dependency, causing several sub-agents to redo their work. How can the quality of a decomposition be evaluated, and how can problems in the plan be discovered and corrected during execution?
 3. ★★ In decentralized collaboration, members may suffer from communication gaps, disputes over responsibilities, and goal conflicts. Choose two of these situations and design mechanisms that can locate the cause, move the handling forward, and bring the dispute to an end.
 4. ★★★ A parallel search needs to find only one result that meets the criteria. Design a complete process for "cancel the remaining branches after a verified success," handling two results arriving at the same time, duplicate messages, cancellation timeouts, and resource cleanup.
