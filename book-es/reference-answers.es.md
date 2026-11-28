@@ -88,7 +88,7 @@ Las respuestas de referencia han sido generadas por IA y revisadas ligeramente p
 
 **7. (★★★) Una Skill ya está en el catálogo, pero el modelo no ha descubierto que se aplica a la tarea actual. ¿Cómo investigarías el problema desde cuatro aspectos: la descripción, la organización del catálogo, la activación explícita y los ejemplos de evaluación?**
 
-> Se comprueba si el nombre y la descripción de la Skill cubren las formulaciones reales de las tareas, y se añaden condiciones de activación concretas y los límites con los que es fácil confundirlo. Cuando el directorio es grande, pueden recuperarse candidatos según la tarea. La activación explícita ofrece una vía directa de carga; el conjunto de evaluación incluye a la vez casos que deberían activarlo, casos que no deberían y casos con descripciones parecidas, y cuenta por separado las omisiones y las selecciones erróneas.
+> Se comprueba si el nombre y la descripción de la Skill cubren las formulaciones reales de las tareas, y se añaden condiciones de activación concretas y los límites con los que es fácil confundirla. Cuando el directorio es grande, pueden recuperarse candidatos según la tarea. La activación explícita ofrece una vía directa de carga; el conjunto de evaluación incluye a la vez casos que deberían activarla, casos que no deberían y casos con descripciones parecidas, y cuenta por separado las omisiones y las selecciones erróneas.
 
 **8. (★★) Una Skill se ha cargado correctamente, pero el modelo omite uno de sus pasos de verificación. Diseña un experimento controlado que distinga si el problema está en la activación, en la comprensión, en el uso de herramientas o en la decisión de dar por terminado, y compara el comportamiento de distintos modelos.**
 
