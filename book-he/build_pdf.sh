@@ -10,8 +10,9 @@
 #               fonts shipped with TeX Live (David CLM / Nachlieli CLM).
 # Usage: cd book-he && bash build_pdf.sh
 #
-# Figures live in book-he/images/. They are currently the English figure set:
-# the SVG labels have not been translated to Hebrew yet.
+# Figures live in book-he/images/revised/, retranslated from the Chinese 3.0
+# figure set by scripts/i18n/svg_text.py (live Hebrew <text>, not outlined).
+# book-he/images/ still holds the flat 2.0 figure set and is no longer used.
 
 set -e
 
@@ -26,6 +27,8 @@ fi
 export MKTEXTFM=0
 
 OUT="AI-Agents-in-Depth-v3.0-he.pdf"
+# Figures for the 3.0 text live under images/revised (mirrors book-ru/build_pdf.sh).
+IMG_DIR="images/revised"
 CHAPTERS=(
     introduction.he.md
     chapter1.he.md
@@ -39,6 +42,7 @@ CHAPTERS=(
     chapter9.he.md
     chapter10.he.md
     afterword.he.md
+    reference-answers.he.md
 )
 
 for ch in "${CHAPTERS[@]}"; do
@@ -47,6 +51,11 @@ for ch in "${CHAPTERS[@]}"; do
         exit 1
     fi
 done
+
+if [ ! -d "$IMG_DIR" ]; then
+    echo "Error: $IMG_DIR not found" >&2
+    exit 1
+fi
 
 echo "Building Hebrew PDF from ${#CHAPTERS[@]} files..."
 
