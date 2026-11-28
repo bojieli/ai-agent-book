@@ -105,6 +105,7 @@ CHAPTERS=(
     chapter9.md
     chapter10.md
     afterword.md
+    reference-answers.md
 )
 
 
@@ -121,7 +122,43 @@ done
 
 
 # ──────────────────────────────────────────────────────────────
-# 5. PDF файл үүсгэх
+# 5. SVG → PDF
+#
+# pandoc нь xelatex-ийн тусламжтайгаар SVG-г шууд оруулж чадахгүй тул
+# зургуудыг урьдчилан PDF болгоно. Орчуулсан шошгонууд SVG дотор
+# бэлэн байгаа (svg_text.py), энд зөвхөн растержуулна. Идемпотент:
+# зөвхөн шинэ эсвэл өөрчлөгдсөн файлыг хөрвүүлнэ.
+# ──────────────────────────────────────────────────────────────
+
+IMG_DIR="images/revised"
+
+convert_one() {  # $1 = svg, $2 = pdf
+    if command -v rsvg-convert >/dev/null 2>&1; then
+        rsvg-convert -f pdf -o "$2" "$1"
+    elif command -v inkscape >/dev/null 2>&1; then
+        inkscape --export-type=pdf --export-filename="$2" "$1" >/dev/null 2>&1
+    else
+        return 1
+    fi
+}
+
+if command -v rsvg-convert >/dev/null 2>&1 || command -v inkscape >/dev/null 2>&1; then
+    n=0
+    for svg in "$IMG_DIR"/*.svg; do
+        [ -f "$svg" ] || continue
+        pdf="${svg%.svg}.pdf"
+        if [ ! -f "$pdf" ] || [ "$svg" -nt "$pdf" ]; then
+            convert_one "$svg" "$pdf" && n=$((n+1))
+        fi
+    done
+    echo "SVG → PDF: $n файл хөрвүүлэв."
+else
+    echo "Анхаар: rsvg-convert ч, inkscape ч олдсонгүй — SVG зургууд PDF-д орохгүй." >&2
+fi
+
+
+# ──────────────────────────────────────────────────────────────
+# 6. PDF файл үүсгэх
 # ──────────────────────────────────────────────────────────────
 
 echo "Нийт ${#CHAPTERS[@]} файлаас PDF үүсгэж байна..."
@@ -130,6 +167,8 @@ pandoc "${CHAPTERS[@]}" \
     -o "$OUT" \
     --from=markdown+lists_without_preceding_blankline \
     --pdf-engine=xelatex \
+    --resource-path=. \
+    --lua-filter=svg2pdf.lua \
     --lua-filter=crossref.lua \
     --lua-filter=experiment_box.lua \
     --toc \
@@ -150,7 +189,7 @@ pandoc "${CHAPTERS[@]}" \
 
 
 # ──────────────────────────────────────────────────────────────
-# 6. Үүсгэсэн PDF файлыг шалгах
+# 7. Үүсгэсэн PDF файлыг шалгах
 # ──────────────────────────────────────────────────────────────
 
 if [ -f "$OUT" ]; then
