@@ -1,4 +1,4 @@
-# Model Sonrası Eğitim
+# Modelin Sonradan Eğitimi
 
 İlk yedi bölüm Agent'ı ağırlıklı olarak context, araçlar ve çalışma mekanizması üzerinden iyileştirdi. Bu bölüm model parametrelerine dönüyor: modelin görevi daha kararlı anlaması, araçları kullanması, geri bildirimi işlemesi ve yeni durumlarda uygun eylemi seçmesi nasıl sağlanır? Bu yetenekler eğitimle adım adım kurulabilir. Bölüm 7'nin görev kümesi, doğrulayıcıları ve simülasyon ortamları da böylece eğitimin ihtiyaç duyduğu veri ve geri bildirim kaynağına dönüşür.
 
@@ -29,7 +29,7 @@ Tablo 8-1 Model yeteneği geliştirmenin dört halkası
 
 Otoregresif dil modeli verilen önceki bağlamdan sonra sözlükteki her token için olasılık atar. Girdi "Çin'in başkenti" olduğunda eğitim metinlerinde sonra gelen karakter ya da sözcük parçası denetim hedefidir. Token bölütlemesini tokenizer belirler; "Pekin" bir ya da birkaç token'a karşılık gelebilir.
 
-Eğitim **kayıp fonksiyonuyla (Loss)** modelin gerçek sonraki token'a atadığı olasılığı ölçer: olasılık düştükçe ilgili negatif logaritmik kayıp büyür. Ardından kaybın parametrelere göre gradyanı hesaplanır, optimizasyon ağırlıkları günceller. Gradyan hangi parametre değişikliklerinin kaybı etkilediğini betimler; öğrenme oranı ve optimizasyon birlikte bu adımın nasıl yapılacağına karar verir. Büyük metinlerdeki sözcük yapısı, dilbilgisi, olgular ve akıl yürütme ilişkileri bu tekrarlanan tahminle model parametrelerine girer.
+Eğitim **kayıp fonksiyonuyla (Loss)** modelin gerçek sonraki token'a atadığı olasılığı ölçer: olasılık düştükçe ilgili negatif logaritmik kayıp büyür. Ardından kaybın parametrelere göre gradyanı hesaplanır, optimize edici (optimizer) ağırlıkları günceller. Gradyan hangi parametre değişikliklerinin kaybı etkilediğini betimler; öğrenme oranı ve optimize edici birlikte bu adımın nasıl yapılacağına karar verir. Büyük metinlerdeki sözcük yapısı, dilbilgisi, olgular ve akıl yürütme ilişkileri bu tekrarlanan tahminle model parametrelerine girer.
 
 Sonraki eğitimleri anlamak için modelin **koşullu olasılık dağılımı** ürettiğini akılda tutmak kilit noktadır. Eğitim bu dağılımı değiştirir; bazı devamlar ya da eylemler ilgili bağlamda daha olası hâle gelir. Üretim sırasında çözümleme kuralları token'ları seçer ve yanıt adım adım oluşur.
 
@@ -57,7 +57,7 @@ SFT'nin verimi token token yoğun gösterimden gelir. Biçimi kararlı ve görev
 
 > **Parametre verimli eğitim: LoRA**
 >
-> Tam parametre ince ayarı çok sayıda ağırlık için gradyan ve optimizasyon durumu saklamayı gerektirir. LoRA (Low-Rank Adaptation, düşük ranklı uyarlama) özgün $W$ matrisini dondurup güncellemeyi iki küçük matrisin çarpımıyla ifade eder: $W'=W+\gamma BA$. Rank güncellemenin kapasitesini, $\gamma$ ölçeklemeyi denetler; eğitilebilir parametre sayısı ranka, hedef katmanlara ve model yapısına bağlıdır. LoRA hem SFT'de hem RL'de kullanılabilir ve aynı temel modele birkaç adaptör yüklenebilir. Yazar genellikle önce LoRA ile bir sonrası eğitim temel düzeni kurar, veri ve eğitim planlarını daha düşük bellek ve depolama maliyetiyle karşılaştırır; adaptör kapasitesi yetmediğinde rankı artırır ya da tam parametre eğitimini karşılaştırır.
+> Tam parametre ince ayarı çok sayıda ağırlık için gradyan ve optimize edici durumu saklamayı gerektirir. LoRA (Low-Rank Adaptation, düşük ranklı uyarlama) özgün $W$ matrisini dondurup güncellemeyi iki küçük matrisin çarpımıyla ifade eder: $W'=W+\gamma BA$. Rank güncellemenin kapasitesini, $\gamma$ ölçeklemeyi denetler; eğitilebilir parametre sayısı ranka, hedef katmanlara ve model yapısına bağlıdır. LoRA hem SFT'de hem RL'de kullanılabilir ve aynı temel modele birkaç adaptör yüklenebilir. Yazar genellikle önce LoRA ile bir sonradan eğitim temel çizgisi kurar, veri ve eğitim planlarını daha düşük bellek ve depolama maliyetiyle karşılaştırır; adaptör kapasitesi yetmediğinde rankı artırır ya da tam parametre eğitimini karşılaştırır.
 >
 > "LoRA Without Regret" çalışması birkaç yararlı yapılandırma ipucu veriyor: MLP gibi ana ağırlıkları uyarlamaya katın, rankı kademeli artırarak kapasitenin yeterli olup olmadığını kontrol edin ve LoRA için ayrıca öğrenme oranı arayın. Testlerinde LoRA'ya uygun öğrenme oranı tam parametre ince ayarının yaklaşık on katıydı; RL daha düşük rankla da iyi sonuç verdi.[^ch8-1] Pratikte SFT için 64–256, RL için 8–32 rank aralıkları daha düşük ranklarla birlikte aday olarak karşılaştırılabilir.
 
@@ -97,13 +97,13 @@ Tablo 8-2 SFT ile RL'in eğitim mekanizmalarının karşılaştırması
 
 Bu iki hedef olasılık dağılımı açısından da anlaşılabilir. Gösterimlerde birden çok doğru yazım varsa en çok olabilirlik eğitimi modeli bunların hepsini kapsamaya iter; buna sık sık **kapsayıcı (mass-covering)** eğilim denir. RL ise olasılığı ödüle göre yeniden dağıtır; ödül farkları ve ilgili düzenlileştirme koşullarında olasılık az sayıda yüksek ödüllü kalıba toplanabilir; bu da **tepe arayan (mode-seeking)** davranıştır. Sonunda ne kadar çeşitliliğin korunacağı veriye, KL kısıtına, entropi düzenlileştirmesine ve örnekleme ayarlarına bağlıdır.
 
-**Sonrası eğitim ne zaman harekete geçileceğini de etkiler.** Gösterimler tekrar tekrar "önce depoyu genişçe oku, sonra düzenle" sırasını sunarsa model bu keşif sırasını öğrenir; geri bildirim hızlı konumlandırma, değişiklik ve test bileşimini sürekli onaylarsa ilgili davranış pekişir. Modelin okumadan düzenlemeye ne zaman geçtiği iki kazanç arasındaki ödünleşimi yansıtır: bir dosya daha okumak ne kadar güven artırır, kodu önce değiştirip test çalıştırmak ne kadar geçerli geri bildirim getirir? Bölüm 7 aynı Coding Harness'ta bu farkı gözlemledi: bazı modeller birçok dosya okuduktan sonra harekete geçti, bazıları çok erken değişikliğe başladı.
+**Sonradan eğitim ne zaman harekete geçileceğini de etkiler.** Gösterimler tekrar tekrar "önce depoyu genişçe oku, sonra düzenle" sırasını sunarsa model bu keşif sırasını öğrenir; geri bildirim hızlı konumlandırma, değişiklik ve test bileşimini sürekli onaylarsa ilgili davranış pekişir. Modelin okumadan düzenlemeye ne zaman geçtiği iki kazanç arasındaki ödünleşimi yansıtır: bir dosya daha okumak ne kadar güven artırır, kodu önce değiştirip test çalıştırmak ne kadar geçerli geri bildirim getirir? Bölüm 7 aynı Coding Harness'ta bu farkı gözlemledi: bazı modeller birçok dosya okuduktan sonra harekete geçti, bazıları çok erken değişikliğe başladı.
 
 Çevrimiçi etkileşim üç tür öğrenme fırsatı da sunar.
 
 - **Gösterimlerde olmayan yaklaşımları denemek.** Model mevcut bilgiyi birleştirerek yeni bir yol önerebilir, ortam da sonucu kontrol eder. SimpleVLA-RL'in robot örneği gösterim dışı eylem stratejileri içerir; keşfin nasıl geçerli davranış ürettiği ileride görevle birlikte açıklanacak.
 - **Doğrulaması üretmekten kolay görevlerden yararlanmak.** Matematik yanıtları, kod testleri ve biçimsel kanıtlar ilgili doğrulayıcılarla kontrol edilebilir. Model soruyu kendi çözer, kod yazar ya da kanıt verir, sonra doğrulama sonucuna göre ödül alır. Doğrulayıcının hangi koşulları kapsadığı modelin hangi davranışa doğru optimize edileceğini de belirler.
-- **Politikanın gerçekte ulaştığı durumlarda öğrenmek.** Model gösterimden saptığında yeni durumlara girer ve sonraki eylemleri de değişir; buna **eşdeğişken kayması (covariate shift)** denir. Klasik dizi taklit öğrenmesinin ilgili varsayımında hata üst sınırı iz uzunluğu $T$ ile $T^2$ oranında büyüyebilir; çevrimiçi veri toplayarak politikanın ziyaret ettiği durumları kapsamak hata üst sınırını $T$ ile doğrusal büyümeye iyileştirebilir. İlerideki On-Policy Distillation mevcut politikanın ürettiği context'ten yararlanıp öğretmenin yoğun denetimini ekleyecek.
+- **Politikanın gerçekte ulaştığı durumlarda öğrenmek.** Model gösterimden saptığında yeni durumlara girer ve sonraki eylemleri de değişir; buna **eşdeğişken kayması (covariate shift)** denir. Klasik dizi taklit öğrenmesinin ilgili varsayımında hata üst sınırı iz uzunluğu $T$ ile $T^2$ oranında büyüyebilir; çevrimiçi veri toplayarak politikanın ziyaret ettiği durumları kapsamak hata üst sınırını $T$ ile doğrusal büyümeye iyileştirebilir. İlerideki politika içi damıtma (On-Policy Distillation) mevcut politikanın ürettiği context'ten yararlanıp öğretmenin yoğun denetimini ekleyecek.
 
 Eğitim akışı böylece adım adım açılabilir: önce kullanılabilir yetenek ve davranış protokolü kurulur, sonra üretim, doğrulama ve güncelleme döngüsüyle performans yükseltilir. İlerideki klasik RL ve ön eğitim temelleri kısımları arka planı tamamlar; doğrudan Mid-training kısmına geçip somut veri seçimini tartışmayı da seçebilirsiniz.
 
@@ -201,7 +201,7 @@ LLM bir aracı çağırmadan önce ara hesaplama üretebilir, çağrıyı doğru
 
 Değişken uzunluklu diziler çok daha geniş bir bileşim alanı yaratır. Model sorgu, program, JSON parametreleri ve çok adımlı türetmeler yazabilir; dizi uzunluğu bütçe ve context ile sınırlıdır. Ön eğitim aramaya bir başlangıç noktası sağlar: matematik malzemeleri sık sık koşul analizi ve hesap içerir, kod ve tartışmalar ise konumlandırma, değişiklik ve doğrulama içerir. Model bu yapıları ödünç alarak aday yollar üretebilir, sonra ortam geri bildirimine göre ayarlar. Mevcut bilgi yararlı eylem bileşimlerinin baştan itibaren daha kolay örneklenmesini sağlar ve çok sayıda ilgisiz yolda kör deneme yanılma ihtiyacını azaltır.
 
-Örneğin "yabancı para tutarını dolara çevir" işi döviz kurunu almayı ve hesap yapmayı gerektirir. Ön eğitim modelin böyle ilişkili adımları daha kolay üretmesini sağlar; sonrası eğitim ise kurun kaynağına, hesap sonucuna ve görev kısıtlarına göre yolun olasılığını daha ileri düzeyde ayarlayabilir. Dil bilgisi burada başlangıç politikasını, ödül ise görev geri bildirimini sağlar.
+Örneğin "yabancı para tutarını dolara çevir" işi döviz kurunu almayı ve hesap yapmayı gerektirir. Ön eğitim modelin böyle ilişkili adımları daha kolay üretmesini sağlar; sonradan eğitim ise kurun kaynağına, hesap sonucuna ve görev kısıtlarına göre yolun olasılığını daha ileri düzeyde ayarlayabilir. Dil bilgisi burada başlangıç politikasını, ödül ise görev geri bildirimini sağlar.
 
 Şekil 8-5 bu kısımdaki iki düzeni karşılaştırıyor: tablolu Q-learning belirtilen durum kodlamasından ve keşif kurallarından başlar, LLM Agent ise ön eğitilmiş dil politikasından başlar ve araç gözlemleriyle geçmiş deneyimi context aracılığıyla düzenler.
 
@@ -233,13 +233,13 @@ Bu örnek davranış klonlama ile pekiştirmeli öğrenmeyi ayırmanın yolunu d
 >
 > Bu karşılaştırmada Q-learning 10000 oyunu 2,12 saniyede eğitti, sonra açgözlü politikayla ayrıca 100 oyun değerlendirildi; hepsi tamamlandı, ortalama 12 adım. Kimi bir oyunda modeli 17 kez çağırdı ve 6 dakika 56 saniye sürdü. Yazar bundan şu seçim ilkesini çıkarıyor: simülasyon ucuz ve çok tekrarlanabilir olduğunda geleneksel RL'in keşfinden tam olarak yararlanılabilir; her etkileşim bekleme, ücret ya da gerçek işlem bedeli getiriyorsa mevcut bilgiden yararlanabilen politika tercih edilerek her etkileşimin değeri yükseltilir.
 
-Bu iki deney bölümü önceki mühendislik yöntemlerine bağlar: context bir çalıştırma içinde deneyimi düzenleyebilir, dış bellek deneyimi görevler arasında saklayabilir, sonrası eğitim ise parametre güncellemesiyle politikayı değiştirir. Aşağıda önce dil ve görsel ön eğitimin temel süreci tamamlanıyor, sonra somut eğitim verisi ve optimizasyon yöntemleri tartışılıyor.
+Bu iki deney bölümü önceki mühendislik yöntemlerine bağlar: context bir çalıştırma içinde deneyimi düzenleyebilir, dış bellek deneyimi görevler arasında saklayabilir, sonradan eğitim ise parametre güncellemesiyle politikayı değiştirir. Aşağıda önce dil ve görsel ön eğitimin temel süreci tamamlanıyor, sonra somut eğitim verisi ve optimizasyon yöntemleri tartışılıyor.
 
 ## Model ön eğitimi temelleri `[isteğe bağlı okuma]`
 
 Ön eğitim modelin başlangıç temsilini ve üretim dağılımını kurar; sonraki eğitimler bu başlangıç noktasından parametreleri ayarlamayı sürdürür. Bu başlangıç noktasını anlamak için önce küçük bir dil modelinin metinden nasıl öğrendiğine, sonra görsel girdiye nasıl bağlandığına bakılabilir.
 
-Metin önce **token'lara ayırmayla (Tokenization)** ayrık token'lara dönüşür. Örneğin "programlamayı seviyorum" cümlesi "programlamayı", "seviyorum" gibi birimlere ayrılabilir; gerçek bölütlemeyi tokenizer belirler. Eğitim önceki token'ları context alıp sonraki token'ı tahmin eder, kaybı hesaplar ve parametreleri günceller. Şekil 8-8'de eğitim cümlesi "ortam" sözcüğüne kadar kapatılıp sonraki sözcük tahmin edilir, sonra özgün metin açılır. Bu konum bir ileri kaydırıldığında bir sonraki tahmin sorusu elde edilir.
+Metin önce **token'lara ayırmayla (Tokenization)** ayrık token'lara dönüşür. Örneğin "programlamayı seviyorum" cümlesi "programlamayı", "seviyorum" gibi birimlere ayrılabilir; gerçek bölütlemeyi tokenizer belirler. Eğitim önceki token'ları context alıp sonraki token'ı tahmin eder, kaybı hesaplar ve parametreleri günceller. Şekil 8-8'de önce eğitim cümlesini "gerçek" sözcüğünden sonrasını görmeyecek biçimde kapatın, bir sonraki parçayı ("ortamda") tahmin edin, sonra özgün metni açın. Bu konum bir ileri kaydırıldığında bir sonraki tahmin sorusu elde edilir.
 
 ![Şekil 8-8 Ön eğitimde sonraki token tahmini](images/revised/fig8-8.svg)
 
@@ -247,7 +247,7 @@ Temel dil modellemesinin ardından talimat gösterimleri eklenerek yanıt biçim
 
 > **Deney 8-3 ★★: Sıfırdan LLM eğitmek — algoritma iyileştirmesinin gücü**
 >
-> Yaklaşık yüz milyon parametreli MiniMind 2 ile tüketici düzeyi bir GPU'da ön eğitimi, SFT'yi ve tercih optimizasyonunu tamamlayın. Temel düzen ile QK Norm ve Muon optimizasyonunun eklendiği yapılandırmayı karşılaştırarak kayıp düşüşünü, hedef kaliteye ulaşma süresini ve üretim sonuçlarını gözlemleyin. Eşlik eden özet yaklaşık 3 kat yakınsama hızı artışı kaydetti; tam eğitim yaklaşık 14 saat ve yaklaşık 34 dolar tuttu.
+> Yaklaşık yüz milyon parametreli MiniMind 2 ile tüketici düzeyi bir GPU'da ön eğitimi, SFT'yi ve tercih optimizasyonunu tamamlayın. Temel çizgi ile QK Norm ve Muon optimize edicisinin eklendiği yapılandırmayı karşılaştırarak kayıp düşüşünü, hedef kaliteye ulaşma süresini ve üretim sonuçlarını gözlemleyin. Eşlik eden özet yaklaşık 3 kat yakınsama hızı artışı kaydetti; tam eğitim yaklaşık 14 saat ve yaklaşık 34 dolar tuttu.
 >
 > QK Norm dikkat mekanizmasındaki sorgu ve anahtarların sayısal ölçeğini ayarlar, Muon ise ilgili parametrelerin optimizasyon güncelleme biçimini değiştirir.
 >
@@ -261,9 +261,9 @@ Temel dil modellemesinin ardından talimat gösterimleri eklenerek yanıt biçim
 >
 > Birinci aşamada görsel kodlayıcı ve LLM dondurulur, yeni eklenen izdüşüm katmanı eğitilir ve görüntü özelliklerinin dil tahminine katılması sağlanır; ikinci aşamada yapılandırmaya göre LLM çözülür ve yüksek kaliteli görüntü–betimleme ya da soru-cevap verisiyle SFT yapılır. Nesne tanıma, ayrıntı betimleme, ilişki yargısı ve dil yeteneğindeki değişim ayrı ayrı gözlenir.
 >
-> Bu mimari mevcut görsel ve dil modellerini yeniden kullanır; önce kıtalar arası bağlantı modülünü eğitmeye odaklanmak, bütçe sınırlıyken öncelikle denenmeye değer bir çözümdür. Dondurulmuş ağırlıklar eğitilebilir durumu azaltır; sonraki aşamada göreve göre ilgili modüller çözülür. Betimleme yanlışsa önce nesne bilgisinin görsel temsile girip girmediği kontrol edilir; bilgi varsa ama model kullanamıyorsa izdüşüm katmanının ifade kapasitesi, hizalama verisi ve dil üretimi denetimi incelenmelidir. Çıktı ayrıca eylem temsiline çevrilip denetim arayüzüne hizalanırsa Bölüm 6'daki VLA mimarisine bağlanır.
+> Bu mimari mevcut görsel ve dil modellerini yeniden kullanır; önce kipler arası bağlantı modülünü eğitmeye odaklanmak, bütçe sınırlıyken öncelikle denenmeye değer bir çözümdür. Dondurulmuş ağırlıklar eğitilebilir durumu azaltır; sonraki aşamada göreve göre ilgili modüller çözülür. Betimleme yanlışsa önce nesne bilgisinin görsel temsile girip girmediği kontrol edilir; bilgi varsa ama model kullanamıyorsa izdüşüm katmanının ifade kapasitesi, hizalama verisi ve dil üretimi denetimi incelenmelidir. Çıktı ayrıca eylem temsiline çevrilip denetim arayüzüne hizalanırsa Bölüm 6'daki VLA mimarisine bağlanır.
 
-İki deney optimizasyon yapılandırmasının ve kiplar arası bağlantının eğitimi nasıl etkilediğini gösteriyor. Bütçe kısıtlıyken yazar önce algoritma ve mimari iyileştirmelerinin kazancını karşılaştırmayı, sonra model ölçeğini büyütmeye karar vermeyi öneriyor. Mevcut bir model yeni bir dile ya da alana girerken ön eğitim ağırlıklarından öğrenmeyi sürdürebilir; sonraki kısım bu eğitim için verinin nasıl seçileceğini tartışıyor.
+İki deney optimizasyon yapılandırmasının ve kipler arası bağlantının eğitimi nasıl etkilediğini gösteriyor. Bütçe kısıtlıyken yazar önce algoritma ve mimari iyileştirmelerinin kazancını karşılaştırmayı, sonra model ölçeğini büyütmeye karar vermeyi öneriyor. Mevcut bir model yeni bir dile ya da alana girerken ön eğitim ağırlıklarından öğrenmeyi sürdürebilir; sonraki kısım bu eğitim için verinin nasıl seçileceğini tartışıyor.
 
 ## Mid-training: bilgi ve temel yetenekleri tamamlamak
 
@@ -301,7 +301,7 @@ Bu farkın gerçek malzemede de görülüp görülmediğini anlamak için LongBe
 
 Uzun akıl yürütme ve çok turlu araç çağrıları context'i sürekli uzatır; önceki talimatlar, olgular ve görev durumu sonraki kararlara katılmayı sürdürmelidir. Model uzun metinde bilgiyi bulamıyor ya da kısıtları koruyamıyorsa uzun soluklu Agent güvenilir çalışamaz. Eğitim bütçesi büyütülmeden önce küçük ölçekli yapılandırmalarla veri oranları ve eğitim miktarı karşılaştırılmalıdır. Sık güncellenen ve kaynak gerektiren olgularda yazar önce RAG'i kullanır; kararlı ve büyük ölçekli alan bilgisi ile temel yetenekler için parametrelere yazmayı düşünür.
 
-> **Deney 8-5 ★★: Yeni bir dil öğrenmek için eğitimi sürdürmek**
+> **Deney 8-5 ★★: Sürekli ön eğitimle yeni bir dil öğrenmek**
 >
 > Mistral 7B v0.3'ten başlayıp Korece Wikipedia ve benzeri malzemeyle Korece yeteneğini artırın. Eğitimde önce yaklaşık %80 Korece, %20 İngilizce karışım kullanın, sonra Korece talimat verisiyle SFT yapın; dil modellemesi ve diyalog davranışındaki değişimi ayrı ayrı gözlemleyin.
 >
@@ -311,7 +311,7 @@ Uzun akıl yürütme ve çok turlu araç çağrıları context'i sürekli uzatı
 
 ## SFT (denetimli ince ayar)
 
-Alan derlemi modelin bir arayüzü birkaç kez daha görmesini sağlar; ama çağrı başarısız olduktan sonra parametreyi nasıl düzelteceğini öğretmek için bir kez de göstermek gerekir. SFT görev girdisi verip modeli gösterimdeki yanıtı ya da eylemi token token üretmeye eğitir. Şekil 8-10'a bakarken önce hangi davranışın öğretileceğini netleştirin, sonra gösterimin nasıl toplanacağına karar verin. Gösterimdeki olgular, üslup ve çıktı biçimi de eğitime birlikte girer.
+Alan derlemi modelin bir arayüzü birkaç kez daha görmesini sağlar; ama çağrı başarısız olduktan sonra parametreyi nasıl düzelteceğini öğretmek için bunu doğrudan bir kez göstermek de mümkündür. SFT görev girdisi verip modeli gösterimdeki yanıtı ya da eylemi token token üretmeye eğitir. Şekil 8-10'a bakarken önce hangi davranışın öğretileceğini netleştirin, sonra gösterimin nasıl toplanacağına karar verin. Gösterimdeki olgular, üslup ve çıktı biçimi de eğitime birlikte girer.
 
 ![Şekil 8-10 Denetimli ince ayar (SFT) hattı](images/revised/fig8-10.svg)
 
@@ -321,7 +321,7 @@ Veri genellikle üç yoldan gelir: insan uzmanlar kilit davranışları ve sın�
 
 Veri hazırlığında önce görev dağılımı, çıktı schema'sı ve kabul biçimi belirlenmelidir. Gösterimler kontrolden geçtikten sonra yinelenenler ayıklanır, örnek türlerinin oranı ayarlanır ve veri kümeleri bölünür. Örnek sayısı ile kapsam birlikte tasarlanmalıdır: aynı soru kalıbını binlerce kez tekrarlamak aynı kalıbı pekiştirir; kilit koşullar etrafında çeşitleme yapmak modelin farklı girdilerde uygun davranışı seçmesine yardım eder. Yazar önce kilit durumları kapsayan bir gösterim grubunu ince ince düzeltir, sonra ölçeği büyütür. SFT hedef çıktıyı token token öğrendiği için hatalı olgular, gereksiz adımlar ve uygunsuz çalışma alışkanlıkları da parametrelere girer.
 
-> **Deney 8-6 ★★★: Ses SFT'si — sesten kopyalamadan paralinguistik modellemeye `[genişletme deneyi]`**
+> **Deney 8-6 ★★★: Ses SFT'si — ses klonlamadan paralinguistik modellemeye `[genişletme deneyi]`**
 >
 > Orpheus ve Sesame CSM örneklerinde konuşmacı koşulunun, diyalog context'inin ve ifade işaretlerinin ses üretimine nasıl katıldığını karşılaştırın. Orpheus sesi token olarak temsil eder, referans metin–ses parçasıyla ilgili tınıyı üretebilir ve `<laugh>`, `<sigh>` gibi ifade işaretleri sunar. Sesame CSM ise metni, konuşmacı tanımlayıcısını ve mevcut ses parçasını alıp sonraki sesi üretir.[^ch8-speech-conditioning]
 >
@@ -341,7 +341,7 @@ Veri hazırlığında önce görev dağılımı, çıktı schema'sı ve kabul bi
 >
 > İlk eğitim örneğini açtığınızda görülüyor: Kimi K3 öğretmen, içine Latin harfleri karışmış Arapça bir metni okuyup yargısının dayanağını açıkladı ve sonunda dil kodunu `ar` olarak verdi. SmolLM2-135M-Instruct öğrencisine verilen gösterim yalnızca özgün metin ve `ar` içeriyordu. Aynı 80 test kaydında öğretmen tarafındaki istek ortalama yaklaşık 386 token, öğrenci tarafındaki yaklaşık 97 token okudu. Bu iki sayı kendi tokenizer'larıyla sayıldı.
 >
-> Eşlik eden dil tanıma karşılaştırma kaydı "doğru yanıtlama" ile "biçime uygun çıktı"yı ayrıştırmaya yarar. Öğretmen 160 eğitim örneğinde gösterim üretti, ayrıca 80 test kaydının hepsini doğru yanıtladı. İnce ayar görmemiş öğrencinin testte tek bir çıktısı bile puanlayıcı tarafından ayrıştırılamadı ve puanı sıfır oldu; ince ayardan sonra 80 kaydın hepsi ayrıştırılabildi, 76'sının etiketi doğruydu. Temel düzenin sıfır puanı tek başına "dili tanımadı" ile "tanıdı ama biçime uymadı"yı ayırt edemez. Bu test kümesi 75 farklı metin içeriyordu; eğitim ile test arasında tıpatıp aynı metin yoktu.
+> Eşlik eden dil tanıma karşılaştırma kaydı "doğru yanıtlama" ile "biçime uygun çıktı"yı ayrıştırmaya yarar. Öğretmen 160 eğitim örneğinde gösterim üretti, ayrıca 80 test kaydının hepsini doğru yanıtladı. İnce ayar görmemiş öğrencinin testte tek bir çıktısı bile puanlayıcı tarafından ayrıştırılamadı ve puanı sıfır oldu; ince ayardan sonra 80 kaydın hepsi ayrıştırılabildi, 76'sının etiketi doğruydu. Temel çizginin sıfır puanı tek başına "dili tanımadı" ile "tanıdı ama biçime uymadı"yı ayırt edemez. Bu test kümesi 75 farklı metin içeriyordu; eğitim ile test arasında tıpatıp aynı metin yoktu.
 >
 > Veri kurulumu öğrencinin görevi tamamlaması için gereken koşulları da korumalıdır. Öğretmen en güncel araç sonucuna dayanıyorsa ilgili sonuç öğrenci girdisine konabilir ya da araç arayüzü korunur; öğretmende sistematik hata varsa bağımsız doğrulamayla süzülür.
 >
@@ -353,15 +353,15 @@ Veri hazırlığında önce görev dağılımı, çıktı schema'sı ve kabul bi
 >
 > Birinci adım: öğretmen aynı soruya birkaç çözüm versin. Matematik sorusunda önce yanıt doğrulanır, kod sorusunda testler çalıştırılır ve yalnızca kontrolden geçen çözümler tutulur; bu süzmeye **reddetme yoluyla örnekleme (Rejection Sampling)** denir. Süzülen çözümlerle denetimli ince ayar yapılması **reddetme yoluyla örnekleme ince ayarı (Rejection Sampling Fine-Tuning, RFT)** olarak adlandırılır. Öğrenci akıl yürütme sürecini de öğrenecekse ara adımlar da kontrol edilmeli, türetmesi hatalı olup tesadüfen doğru yanıta ulaşan gösterimler ayıklanmalıdır.
 >
-> Güvenilir doğrulayıcısı olan görevlerde yazar önce bir RFT temel düzeni kurmayı öneriyor: üretim, süzme ve SFT ile eğitim akışı kurulur, çevrimiçi politika optimizasyonu ve değer kestirimi uygulama işi ortadan kalkar, sonra RL'in ek yatırımının değip değmeyeceğine karar verilir.
+> Güvenilir doğrulayıcısı olan görevlerde yazar önce bir RFT temel çizgisi kurmayı öneriyor: üretim, süzme ve SFT ile eğitim akışı kurulur, çevrimiçi politika optimizasyonu ve değer kestirimi uygulama işi ortadan kalkar, sonra RL'in ek yatırımının değip değmeyeceğine karar verilir.
 >
 > İkinci adım: öğrenciyi eğitmek. Seçilen modelin diyalog biçimine göre "soru→akıl yürütme metni + nihai yanıt" düzenlenir; `<think>` ve `</think>` gibi sınırlar kullanılıyorsa hangi token'ların kayba gireceği netleştirilir. 7B ölçeğindeki bir öğrenciyle başlanıp tam iz, sadeleştirilmiş iz ve yalnızca nihai yanıtı denetleyen yapılandırmalar karşılaştırılabilir.
 >
-> Üçüncü adım: öğrencinin ne öğrendiğine bakmak. Eşlik eden deney Kimi K3'e 24 AIME matematik sorusu çözdürdü, doğru yanıtlanan 23 akıl yürütme izini Qwen2.5-1.5B-Instruct'ı ince ayar için kullandı. Aynı soru kümesinde öğrenci 1 doğrudan 2 doğruya çıktı, öğretmen 23 doğru yaptı. Eğitilmiş öğrenci ara sıra geri dönüp sağlamasını yaptı, ama soru bazlı eşli test doğrulukta güvenilir bir artış göstermedi ($p=1.0$).
+> Üçüncü adım: öğrencinin ne öğrendiğine bakmak. Eşlik eden deney Kimi K3'e 24 AIME matematik sorusu çözdürdü ve doğru yanıtlanan 23 akıl yürütme izini Qwen2.5-1.5B-Instruct'ın ince ayarında kullandı. Aynı soru kümesinde öğrenci 1 doğrudan 2 doğruya çıktı, öğretmen 23 doğru yaptı. Eğitilmiş öğrenci ara sıra geri dönüp sağlamasını yaptı, ama soru bazlı eşli test doğrulukta güvenilir bir artış göstermedi ($p=1.0$).
 
 > **Kitap çalışması: damıtma deneyinin geliştirme süreci**
 >
-> Yazar başlangıçta damıtma deneyini GPT-5.6-Sol ile çalışan Codex ile gerçekleştirdi, ret yanıtı aldıktan sonra Claude Opus 5 ile çalışan Claude Code'a geçti, o da sürdüremedi. Ardından Kimi K3 ile kodu yazıp çalıştırmayı tamamladı.
+> Yazar damıtma deneyini önce GPT-5.6-Sol ile çalışan Codex ile gerçekleştirmeye çalıştı; ret yanıtı alınca Claude Opus 5 ile çalışan Claude Code'a geçti, o da işi sürdüremedi. Kodu yazıp çalıştırmayı sonunda Kimi K3 ile tamamladı.
 
 Bu dört örnek de denetimli öğrenme kullanıyor ve farklı şeyler öğreniyor: sesteki tını ve ifade koşulları, çok dilli akıl yürütmede dil denetimi, Prompt damıtmada doğrudan yanıtlama ve CoT damıtmada problem çözme süreci.
 
@@ -369,7 +369,7 @@ Bu dört örnek de denetimli öğrenme kullanıyor ve farklı şeyler öğreniyo
 
 Gerçek bir şikâyetten bir grup eğitim sorusu üretmek için hangi bilgi değiştirilebilir, hangi ilişki korunmalıdır? Üretim izinden kullanıcı niyeti, başlangıç durumu, kullanılabilir araçlar, iş kısıtları ve yaygın başarısızlıklar çıkarılıp görev şablonuna dönüştürülür. Kimlik, sipariş, dosya ve kimlik bilgileri değiştirilmelidir; özgün sorun iki benzer siparişi ilgilendiriyorsa üretilen örnekte de bu ayrımı gerektiren ilişki korunmalıdır. Örnek ancak sıfırlanabilir bir ortamda çalıştırılırsa yeni sorunun asıl güçlüğü koruyup korumadığı anlaşılır.
 
-Tam akış şöyledir: **üretim vakası→görev şablonu→sentetik örnek→birden çok aday iz→görev ve iz doğrulaması→eğitim verisi**. İki doğrulama türü farklı sorunlardan sorumludur: görev doğrulaması koşulların yeterli olup olmadığını, hedefin tamamlanabilirliğini ve başvuru sonucun doğruluğunu; iz doğrulaması ise görev sonundaki durumu, araç çağrılarının sırasını ve yürütme sürecinin iş kısıtlarına uygunluğunu tek tek kontrol eder.
+Tam akış şöyledir: **üretim vakası→görev şablonu→sentetik örnek→birden çok aday iz→görev ve iz doğrulaması→eğitim verisi**. İki doğrulama türü farklı sorunlardan sorumludur: görev doğrulaması koşulların yeterli olup olmadığını, hedefin tamamlanabilirliğini ve referans sonucunun doğruluğunu; iz doğrulaması ise görev sonundaki durumu, araç çağrılarının sırasını ve yürütme sürecinin iş kısıtlarına uygunluğunu tek tek kontrol eder.
 
 Yürütülebilir koşullarda testler, veritabanı doğrulamaları ya da durum farkı kontrolleri kullanılır; açık uçlu iletişim kalitesi Rubric ve model değerlendirmesiyle ölçülüp insan örneklemesiyle kalibre edilir. Yetenek grafiği, yürütülebilir ortam ve bağımsız doğrulayıcılar birleştirilerek görev kapsamı planlı biçimde genişletilebilir.[^ch8-12][^ch8-17][^ch8-18][^ch8-19][^ch8-20]
 
@@ -379,9 +379,9 @@ Eğitim ve değerlendirme kümelerinin ayrılması hedefe göre seçilir: aynı 
 
 İnce ayar bittikten sonra eğitim malzemesi ağırlıklardan yeniden kontrol edilebilir mi? Açık kaynaklı akıl yürütme modeli s1'i örnek alalım. Eğitimdeki token'lara ayırma ve metin işleme biçimine göre açık örnekler token numaralarına çevrilip yinelenenler ayıklandığında bir liste elde edilir. Sonra ince ayar öncesi ve sonrası giriş gömme matrisi satır satır karşılaştırılır, hangi token'ların vektörünün değiştiği kaydedilir. Yazarın kontrolünde iki listedeki 16.573 numara tek tek örtüştü. Bu kontrol için doğru temel modeli ve tokenizer'ı bulmak, sistem prompt'unu ve uzun örnek kırpmasını eğitim yapılandırmasına göre kurmak gerekir; ayrıca eğitimin gerçekten giriş gömmesini güncellediği ve giriş gömmesinin çıktı katmanı ağırlıklarından ayrı olduğu doğrulanmalıdır. Örneğin yalnızca dikkat katmanlarında LoRA eğitildiğinde giriş gömmesi olduğu gibi korunur ve kullanılan token'lar bu yolla listelenemez.[^ch8-token-provenance]
 
-Kanıtın sınırı üç token'la görülebilir. İki açık örneğin token'lara ayrıldığında `[10, 20]` ve `[20, 30]` olduğunu, yinelenenler ayıklandığında `{10, 20, 30}` elde edildiğini varsayalım. Şimdi bir `[30, 10]` örneği daha eklenip yeniden hesaplanırsa küme tıpatıp aynı kalır. Kontrolde her numara örtüşse bile üçüncü örneğin kullanılıp kullanılmadığı yine anlaşılamaz, bir değerlendirme sorusunun eğitim kümesine karışmadığı da elenemez.
+Kanıtın sınırı üç token'la görülebilir. İki açık örneğin token'lara ayrıldığında `[10, 20]` ve `[20, 30]` olduğunu, yinelenenler ayıklandığında `{10, 20, 30}` elde edildiğini varsayalım. Şimdi bir `[30, 10]` örneği daha eklenip yeniden hesaplanırsa küme tıpatıp aynı kalır. Kontrolde her numara örtüşse bile üçüncü örneğin kullanılıp kullanılmadığı yine anlaşılamaz, bir değerlendirme sorusunun eğitim kümesine karışmış olma ihtimali de dışlanamaz.
 
-[^ch8-token-provenance]: Li Bojie'nin training-forensics projesi s1 gibi modellerin token kümelerini ve ön işleme koşullarını kaydeder; gömme ağırlığı paylaşımının ve LoRA karşılaştırma yöntemine etkisini tartışır.
+[^ch8-token-provenance]: Li Bojie'nin training-forensics projesi s1 gibi modellerin token kümelerini ve ön işleme koşullarını kaydeder; gömme ağırlığı paylaşımının ve LoRA'nın karşılaştırma yöntemine etkisini tartışır.
 
 Bölüm 7'deki "erken bitirme" vakasını örnek alalım: görevin tamamlandığını ilan etmeye hazırlanılan anda önek kesilir, doğrulanmamış tamamlandı bildirimi `rejected`, kalan hedefleri kontrol edip ilgili testleri çalıştırdıktan sonra yanıt verme davranışı `chosen` olarak kaydedilir. Tercih çifti DPO'da kullanılabilir; doğrulamadan geçen sürdürme davranışı tek başına SFT gösterimi de olabilir.
 
@@ -400,9 +400,9 @@ Tablo 8-4 Mid-training, SFT ve RL seçim ölçütleri
 | Alan dili, kavramlar ya da temel işlemler zayıf; çok örneklemede ilerleme az | Derlem kapsamı ve temel yetenek | Mid-training; aranabilir olgularla RAG | Alan görevleri, genel yeteneği sınayan küme ve kısmen doğru izler |
 | İçerik kullanılabilir, ama biçim, parametre ya da sabit akış kararsız | Gösterimler, arayüzler ve kısıtlar | SFT, kısıtlı çözümleme ya da araç doğrulaması | Ayrıştırma başarısı, görev sonucu ve kurtarma davranışı |
 | Ara sıra görev tamamlanıyor, ama başarı oranı düşük ya da sık sık yanlış yol | Ödül kalitesi, keşif ve görev dağılımı | RL | Görev kazancı, ödül farkı, bağımsız genelleme ve maliyet |
-| Gösterim ya da tercih verisi var, etkileşim ortamı henüz kurulmamış | Çevrimdışı veri kapsamı ve doğrulama biçimi | SFT, RFT, çevrimdışı tercih optimizasyonu | Temel düzen kalitesi, veri yanlılığı ve ortam kurmanın kazancı |
+| Gösterim ya da tercih verisi var, etkileşim ortamı henüz kurulmamış | Çevrimdışı veri kapsamı ve doğrulama biçimi | SFT, RFT, çevrimdışı tercih optimizasyonu | Temel çizgi kalitesi, veri yanlılığı ve ortam kurmanın kazancı |
 
-Dört adımda ilerlenebilir. Önce prompt, context, araçlar ve kısıtlar çözümünün temel düzeni kurulur. Bu yöntemler görev gereksinimlerini zaten karşılıyorsa yazar dışarıdan düzenlenebilir çözümü korumayı, eğitim, dağıtım ve regresyon bakım maliyetini azaltmayı tercih eder. Dinamik olgular getirme ve sürüm yönetimiyle sağlanır; tekrar tekrar öğrenilmesi gereken örtük yargılar, algı kalıpları ve kararlı davranışlar için parametre eğitimi düşünülür.
+Dört adımda ilerlenebilir. Önce prompt, context, araçlar ve kısıtlar çözümünün temel çizgisi kurulur. Bu yöntemler görev gereksinimlerini zaten karşılıyorsa yazar dışarıdan düzenlenebilir çözümü korumayı, eğitim, dağıtım ve regresyon bakım maliyetini azaltmayı tercih eder. Dinamik olgular getirme ve sürüm yönetimiyle sağlanır; tekrar tekrar öğrenilmesi gereken örtük yargılar, algı kalıpları ve kararlı davranışlar için parametre eğitimi düşünülür.
 
 İkinci adımda ayrılmış görevlerde başarı, kısmi ilerleme, ayrıştırma sonucu ve hata türleri gözlenir. Örnekleme yapılandırması sabitlendikten sonra Pass@1 ve Pass@k mevcut politikanın kullanılabilir yolu olup olmadığını gösterir; başarısız izler bilgi eksikliğini, geri bildirim eksikliğini ve akış hatasını ayırmaya yardım eder.
 
@@ -414,9 +414,9 @@ Her adımda sonraki yatırıma değerlendirme sonucu karar verir: biçimi net g�
 
 Okuma kılavuzundaki sipariş sorununa dönelim. Aynı gerçek araç açıklamasını modele doğrudan verip parametreyi doğru yazıp yazamadığına bakın. Açıklamadaki alanlar değiştiyse önce çalışma anında sorgulanabilen açıklama güncellenir. Alanların anlamı net olduğu hâlde model kullanıcı metnini tekrar tekrar sipariş numarası alanına yazıyorsa sorgulama, netleştirme ve doğru parametre doldurmayı içeren SFT gösterimleri verilebilir. Model zaten ara sıra işi tümüyle tamamlayabiliyor ve farklı sorgu sıraları farklı başarı ve maliyet üretiyorsa birden çok politika izini karşılaştırma koşulu oluşmuş demektir.
 
-## Tek turlu pekiştirmeli öğrenme: bellek ve genelleme karşılaştırması
+## Tek turlu pekiştirmeli öğrenme: ezberleme ve genelleme karşılaştırması
 
-Tek turlu görev bir girdiyle başlar, modelin yanıtı teslim edip ödül almasıyla biter. Model yanıt üretirken yine çok adımlı akıl yürütebilir; eğitim sistemi aynı soruyu tekrar tekrar denetebilir. Etkileşimi tek yanıtla sınırlamak, eğitim yönteminin davranışı nasıl değiştirdiğini gözlemeyi kolaylaştırır. Aşağıda önce AdaptThink ile modelin akıl yürütme bütçesini nasıl dağıtmayı öğrendiği, sonra GeneralPoints ile SFT ve RL'in kural ve görsel görünüş değiştiğinde nasıl davrandığı gösteriliyor.
+Tek turlu görev bir girdiyle başlar, modelin yanıtı teslim edip ödül almasıyla biter. Model yanıt üretirken yine çok adımlı akıl yürütebilir; eğitim sistemi modelin aynı soruyu tekrar tekrar denemesini de sağlayabilir. Etkileşimi tek yanıtla sınırlamak, eğitim yönteminin davranışı nasıl değiştirdiğini gözlemeyi kolaylaştırır. Aşağıda önce AdaptThink ile modelin akıl yürütme bütçesini nasıl dağıtmayı öğrendiği, sonra GeneralPoints ile SFT ve RL'in kural ve görsel görünüş değiştiğinde nasıl davrandığı gösteriliyor.
 
 Önce RL algoritmalarının ödülle modeli nasıl güncellediğini anlamak sonraki deneylerdeki eğitim sürecini okumayı sağlar. Bu bölümdeki RL eğitimleri ağırlıklı olarak **politika gradyanına** dayanır. Aynı sorudan birkaç örneklemeyle başlayalım: model birkaç yanıt üretir, her yanıtın ödülü bir temel çizgiyle karşılaştırılır. Temel çizgiyi aşan yanıt olumlu sinyal alır ve üretim olasılığı artar; altında kalan yanıt olumsuz sinyal alır ve olasılığı düşer.
 
@@ -462,17 +462,17 @@ Avantaj −1 ise yön tersine döner. Olasılık oranı 0,6'ya düştüğünde a
 >
 > Akıl yürütme modelleri sorunları çözmek için genellikle uzun akıl yürütme kullanır. Basit sorularda doğrudan yanıt vermek üretim maliyetini düşürebilir. AdaptThink modele Thinking ve NoThinking olmak üzere iki mod sunar: bu protokolü destekleyen modellerde NoThinking akıl yürütme bölümünü `<think></think>` ile bitirip doğrudan yanıt üretir. Eğitimin hedefi, modelin göreve göre uygun akıl yürütme bütçesini seçmesidir.
 >
-> Yöntem iki temel bileşen içerir. **Kısıtlı optimizasyon hedefi** modeli NoThinking kullanım oranını artırmaya teşvik ederken genel yanıt performansını korur; **önem örneklemesi** iki modun örnekleme oranını ayarlar, sonra ağırlıklarla örnekleme dağılımı ile optimizasyon hedefi arasındaki farkı düzeltir. Başlangıç modeli genellikle Thinking'e eğilimlidir; NoThinking örneklerini kendiliğinden artırmak, eğitimin iki modu karşılaştırabilmesi için sinyal sağlar. Buradaki soğuk başlangıç sorunu, eğitimin ilk döneminde NoThinking örneklerinin az olmasıdır.
+> Yöntem iki temel bileşen içerir. **Kısıtlı optimizasyon hedefi** modeli NoThinking kullanım oranını artırmaya teşvik ederken genel yanıt performansını korur; **önem örneklemesi** iki modun örnekleme oranını ayarlar, sonra ağırlıklarla örnekleme dağılımı ile optimizasyon hedefi arasındaki farkı düzeltir. Başlangıç modeli genellikle Thinking'e eğilimlidir; eğitimin iki modu karşılaştıracak sinyal alabilmesi için NoThinking örnekleri bilinçli olarak artırılmalıdır. Buradaki soğuk başlangıç sorunu, eğitimin ilk döneminde NoThinking örneklerinin az olmasıdır.
 >
 > Kitaptaki deney 8 adet H100 80GB GPU kullandı. 300. adımda MATH500 doğruluğu %81,00'den %81,80'e çıktı, ortalama yanıt uzunluğu yaklaşık 4.911 token'dan 1.577'ye indi; GSM8K doğruluğu %79,68'den %81,88'e çıktı, yanıt uzunluğu yaklaşık 1.025 token'dan 477'ye indi; AIME mean@16 %31,46'dan %31,04'e indi, yanıt uzunluğu yaklaşık 12.120 token'dan 6.402'ye düştü. Üç kümenin yanıt uzunluğu sırasıyla yaklaşık %68, %53 ve %47 azaldı.
 >
-> Üç veri kümesinin NoThinking oranı sırasıyla %83,80, %84,15 ve %56,25 oldu. Model AIME'de daha fazla akıl yürütme hesaplaması korudu, MATH500 ve GSM8K'de ise daha sık doğrudan yanıtladı. AIME2024 her soruda 16 örnekleme yapılarak değerlendirildi; mean@16 bu 16 yanıtın ortalama doğruluğudur. 300. adımda ortalama yanıt neredeyse yarıya indi, doğruluk da yaklaşık 0,42 puan düştü.
+> Üç veri kümesinin NoThinking oranı sırasıyla %83,80, %84,15 ve %56,25 oldu. Model AIME'de daha fazla akıl yürütme hesaplaması korudu, MATH500 ve GSM8K'de ise daha sık doğrudan yanıtladı. AIME2024 her soruda 16 örnekleme yapılarak değerlendirildi; mean@16 bu 16 yanıtın ortalama doğruluğudur. 300. adımda ortalama yanıt neredeyse yarıya indi, doğruluk da yaklaşık 0,42 yüzde puan düştü.
 >
 > 300. adım eğitim yolundaki bir doğrulamadır. Ekip aslında 3.140 adım planlamıştı; çalıştırma sonradan anormal biçimde kesildi ve son doğrulama kaydı 410. adımda durdu. O anda AIME2024 ortalama doğruluğu %31,88, ortalama yanıt yaklaşık 5.874 token'dı.
 >
 > AdaptThink, Prompt damıtmayla birleştirilebilir: damıtma tekrar kullanılan talimatları ve çözüm kalıplarını parametrelere yazar, AdaptThink ise her göreve ne kadar akıl yürütme hesaplaması ayrılacağını öğrenir. İkisi yanıt kalitesini, gecikmeyi ve maliyeti birlikte etkiler.
 
-> **Deney 8-11 ★★: GeneralPoints — tek turlu RL'de "bellek ve genelleme" karşılaştırması**
+> **Deney 8-11 ★★: GeneralPoints — tek turlu RL'de "ezberleme ve genelleme" karşılaştırması**
 >
 > Chu ve arkadaşları "24 oyunu"na benzeyen GeneralPoints kart oyunuyla modelin genelleme yeteneğini sınadılar[^ch8-3]. Dört karttaki sayılar birer kez kullanılarak toplama, çıkarma, çarpma ve bölmeyle 24 elde edilmelidir. Model problemi öğrendiyse kart kuralı ya da renkler değiştiğinde yine doğru hesaplayabilir mi? Şekil 8-12 iki soru biçimini gösteriyor: GP-L metni doğrudan verir, GP-VL ise modelin kartı okumasını ister.
 >
@@ -484,13 +484,13 @@ Avantaj −1 ise yön tersine döner. Olasılık oranı 0,6'ya düştüğünde a
 >
 > `[7, J, 3, 5]` örneğinde J=10 iken `(J−7)×(5+3)=24` yazılabilir; J 11 olduğunda bu ifade 32 verir ve `(11−5)×(7−3)=24` gerekir. Aynı kart kümesi böylece modelden mevcut kuralı okumasını ve hesabı yeniden düzenlemesini ister.
 >
-> İki eğitim yöntemi dağılım dışı testte belirgin farklılaştı. **Kural OOD**: GP-L'de RL başarı oranı %11,5'ten %15,0'a, yani 3,5 puan arttı; SFT %11,5'ten %3,4'e, yani 8,1 puan düştü. GP-VL'de RL 3,0 puan artırdı, SFT 5,6 puan kaybetti. **Görsel OOD**: GP-VL'de RL %23,6'dan %41,2'ye, yani 17,6 puan yükseldi; SFT %23,6'dan %13,7'ye, yani 9,9 puan düştü.
+> İki eğitim yöntemi dağılım dışı testte belirgin farklılaştı. **Kural OOD**: GP-L'de RL başarı oranı %11,5'ten %15,0'a, yani 3,5 yüzde puan arttı; SFT %11,5'ten %3,4'e, yani 8,1 yüzde puan düştü. GP-VL'de RL 3,0 yüzde puan artırdı, SFT 5,6 yüzde puan kaybetti. **Görsel OOD**: GP-VL'de RL %23,6'dan %41,2'ye, yani 17,6 yüzde puan yükseldi; SFT %23,6'dan %13,7'ye, yani 9,9 yüzde puan düştü.
 >
 > Kart tanıma sonuçlarını ayrıca incelemek nihai yanıt performansı ile görsel algıyı birbirine bağlar: RL dalında tanıma doğruluğu görev başarısıyla birlikte arttı, SFT dalında düştü. Araştırma bu farkı eğitim hedefine bağladı: token token uydurma eğilimi gösterimdeki metin kalıplarını pekiştirebilir, sonuç ödülü ise modelden sürekli kartı doğru okumasını ve hesabı tamamlamasını ister. Algı doğruluğu bu mekanizmayı çözümlemek için ara ölçüt sağladı.
 >
 > Önce SFT yapılmasının nedeni çıktı biçiminden de anlaşılabilir. Deneydeki Llama-3.2-Vision-11B temel modeli istenen yapılandırılmış çıktıyı kararlı biçimde üretemiyordu, doğrulayıcı da görev ödülünü hesaplayamıyordu; doğrudan uçtan uca RL denemesi bu yüzden başarısız oldu. SFT önce ayrıştırılabilir ve puanlanabilir çıktıyı kurdu, sonraki RL ancak o zaman görev geri bildiriminden yararlanabildi. Daha önceki DeepSeek-R1-Zero ise puanlanabilir yanıt üretebilen bir temel modelden başlayıp doğrudan RL'e girdi.
 >
-> Model doğrulayıcının geri bildiriminden ne kadar öğrenebilir? Makalenin Şekil 10'u salt metin kart görevini (GP-L) ayrıca karşılaştırıyor. Araştırmacılar 1, 3, 5 ve 10 doğrulama yinelemesi kurup RL modellerini ayrı ayrı eğitti ve değerlendirdi. Aynı eğitim hesaplama bütçesinde 10 doğrulamaya izin verilen grubun yeni kuraldaki başarı oranı kendi eğitim başlangıcına göre 5,99 puan, yalnızca 1 doğrulama yapan grubunki 0,48 puan arttı.
+> Model doğrulayıcının geri bildiriminden ne kadar öğrenebilir? Makalenin Şekil 10'u salt metin kart görevini (GP-L) ayrıca karşılaştırıyor. Araştırmacılar 1, 3, 5 ve 10 doğrulama yinelemesi kurup RL modellerini ayrı ayrı eğitti ve değerlendirdi. Aynı eğitim hesaplama bütçesinde 10 doğrulamaya izin verilen grubun yeni kuraldaki başarı oranı kendi eğitim başlangıcına göre 5,99 yüzde puan, yalnızca 1 doğrulama yapan grubunki 0,48 yüzde puan arttı.
 >
 > Bu deneydeki dağılım kayması altında SFT performansı neden düştü, RL neden daha iyi davrandı? Gözlemlerle uyumlu bir açıklama şudur: sınırlı SFT verisi "J/Q/K görünce 10 say" sabit kalıbını pekiştirdi; testte J=11 olduğunda model yine 10 ile hesapladı. Sonuç odaklı RL dalı ise "doğru yanıtı bulana kadar yeniden hesapla" stratejisini pekiştirmeye daha yatkındı ve J 11 olduğunda da bunu uygulayabildi.
 >
@@ -500,13 +500,13 @@ Avantaj −1 ise yön tersine döner. Olasılık oranı 0,6'ya düştüğünde a
 
 **GRPO (Group Relative Policy Optimization)** DeepSeek tarafından önerildi; öğrenme sinyalini aynı soruya yapılan birden çok denemenin göreli performansından kurar. SWE-bench tarzı bir kod onarım görevini örnek alalım: bir Python projesindeki `parser.py` boş girdide `IndexError` tetikliyor; Agent'ın uygulamayı düzeltmesi ve test dosyalarını değiştirmemesi gerekiyor. Bir eğitim yinelemesi dört adıma ayrılabilir.
 
-**Birinci adım: politika modeline tekrar tekrar denetmek.** Politika modeli eğitilmekte olan dil modelidir. Sistem aynı başlangıç kodunu ve sorun açıklamasını 16 yalıtılmış sandbox'a koyar ve modelin görevi 16 kez bağımsız tamamlamasını sağlar. Her deneme kod okumayla başlar, değişiklik ve testten geçip sonucu teslim etmeye kadar sürer; bu eksiksiz etkileşim izine bir **rollout** denir. Rastgele örnekleme aynı başlangıçtan farklı yollar üretir: bazıları sınır kontrolünü tamamlar, bazıları yalnızca istisnayı yakalar, bazıları yanlış dosyayı değiştirir, bazıları da testleri değiştirmeye çalışır.
+**Birinci adım: politika modelinin görevi tekrar tekrar denemesini sağlamak.** Politika modeli eğitilmekte olan dil modelidir. Sistem aynı başlangıç kodunu ve sorun açıklamasını 16 yalıtılmış sandbox'a koyar ve modelin görevi 16 kez bağımsız tamamlamasını sağlar. Her deneme kod okumayla başlar, değişiklik ve testten geçip sonucu teslim etmeye kadar sürer; bu eksiksiz etkileşim izine bir **rollout** denir. Rastgele örnekleme aynı başlangıçtan farklı yollar üretir: bazıları sınır kontrolünü tamamlar, bazıları yalnızca istisnayı yakalar, bazıları yanlış dosyayı değiştirir, bazıları da testleri değiştirmeye çalışır.
 
 **İkinci adım: ödülü hesaplamak.** Her rollout bittikten sonra doğrulayıcı yamayı temiz bir ortamda uygular ve testleri çalıştırır. 16 denemenin 4'ünün tüm testleri geçip test dosyalarını değiştirmediğini, 12'sinin başarısız olduğunu varsayalım; geçen 4'ü 1, kalan 12'si 0 ödül alır. Şekil 8-13 bu 16 izin puanlamasını tek tabloda gösteriyor. Bu tür kod görevlerinde ödül doğrudan testlerle ve kurallarla hesaplanabilir. Okunabilirlik, açıklama kalitesi gibi teste dökülmesi zor hedeflerde insan değerlendirmesi ya da ödül modeli de kullanılabilir.
 
 **Üçüncü adım: göreli avantajı hesaplamak.** Ödül yalnızca tek bir izin başarılı mı başarısız mı olduğunu söyler; **göreli avantaj** ise aynı gruptaki diğer denemelere göre ne kadar iyi olduğunu gösterir. Bu grubun ortalama başarı oranı 4/16'dır: testi geçen 4 iz grup ortalamasının üstündedir ve olumlu avantaj alır; başarısız 12 iz ortalamanın altındadır ve olumsuz avantaj alır. Grup içi standart sapmayla normalize edilirse ödül ortalaması 0,25, standart sapma yaklaşık 0,433 olur; başarılı izlerin avantajı yaklaşık 1,73, başarısızlarınki yaklaşık −0,58'dir. GRPO öğrenme sinyalini bu tür grup içi karşılaştırmayla kurar. 16 ödülün hepsi aynıysa her birinden grup ortalaması çıkarılınca sıfır elde edilir. Paydaya çok küçük bir kararlılık terimi eklemek sıfıra bölmeyi önler; normalize edildikten sonra da bu grubun sonuç ödülü eğitimin hangi ize yönelmesi gerektiğini gösteremez. Bu durumda yol kısıtlarının, süreç ödülünün ya da kısmi ilerlemenin aynı gruptaki izleri ayırt edip edemediği kontrol edilebilir. Örneğin kodu düzeltemeyen iki denemeden yalnızca biri önceden başarısız olan sınır testini geçmiştir. Bu ara sonuç bağımsız olarak doğrulanabiliyorsa öğrenmede kullanılabilecek bir ipucu daha eklenmiş olur.
 
-**Dördüncü adım: politikayı gradyan inişiyle güncellemek.** Eğitim programı göreli avantajı eğitim kaybına çevirir, gradyanı hesaplar, sonra optimizasyon (AdamW, Muon gibi) gradyan inişini uygular; olumlu avantajlı izlerdeki seçimlerin olasılığını artırır, olumsuz avantajlı izlerdekilerin olasılığını düşürür. Eğitim pek çok görev ve rollout üzerinde bu seçimlerin olasılıklarını tekrar tekrar ayarlar. Optimizasyon etkisini gösterdikçe benzer hatalarla karşılaşıldığında "önce sorunu yeniden üret, sınır koşullarını kontrol et, uygulamayı değiştir ve testleri çalıştır" daha sık, "istisnayı örtbas et, testi değiştir, doğrulamadan teslim et" daha seyrek görülür.
+**Dördüncü adım: politikayı gradyan inişiyle güncellemek.** Eğitim programı göreli avantajı eğitim kaybına çevirir, gradyanı hesaplar, sonra optimize edici (AdamW, Muon gibi) gradyan inişini uygular; olumlu avantajlı izlerdeki seçimlerin olasılığını artırır, olumsuz avantajlı izlerdekilerin olasılığını düşürür. Eğitim pek çok görev ve rollout üzerinde bu seçimlerin olasılıklarını tekrar tekrar ayarlar. Optimizasyon etkisini gösterdikçe benzer hatalarla karşılaşıldığında "önce sorunu yeniden üret, sınır koşullarını kontrol et, uygulamayı değiştir ve testleri çalıştır" daha sık, "istisnayı örtbas et, testi değiştir, doğrulamadan teslim et" daha seyrek görülür.
 
 ![Şekil 8-13 Kod onarım örneği: 16 rollout'un doğrulanması ve göreli avantajı](images/revised/fig8-13.svg)
 
@@ -526,9 +526,9 @@ Never Give Up bu seçimi örnekleme sürecine koyar. A'nın hepsi doğruysa bu g
 
 ### LLM RL'de neden genellikle On-Policy tercih edilir
 
-**Online (çevrimiçi)** ve **On-policy (politika üstü)** iki farklı yönü betimler. Çevrimiçi eğitim çalışma sırasında ortamla sürekli etkileşip veri üretir; politika üstü eğitim ise verinin kaynağına odaklanır ve izleri üreten davranış politikası $\mu$'nün optimize edilecek politika $\pi_\theta$ ile aynı ya da yeterince yakın olmasını ister. Asenkron bir küme sürekli çevrimiçi örnekleme yapabilir, ama worker birkaç kontrol noktası geride kalırsa döndürdüğü veri politika eskimesi taşır ve politika dışı (off-policy) bir bileşen oluşur.
+**Online (çevrimiçi)** ve **On-policy (politika içi)** iki farklı yönü betimler. Çevrimiçi eğitim çalışma sırasında ortamla sürekli etkileşip veri üretir; politika içi eğitim ise verinin kaynağına odaklanır ve izleri üreten davranış politikası $\mu$'nün optimize edilecek politika $\pi_\theta$ ile aynı ya da yeterince yakın olmasını ister. Asenkron bir küme sürekli çevrimiçi örnekleme yapabilir, ama worker birkaç kontrol noktası geride kalırsa döndürdüğü veri politika eskimesi taşır ve politika dışı (off-policy) bir bileşen oluşur.
 
-Yazar önce politika üstüne yakın eğitimle kararlı bir temel düzen kurmayı, sonra verimi artırmak için asenkron örnekleme ya da eski veri yeniden kullanımı eklemeyi öneriyor. Bu bölümdeki PPO/GRPO reçeteleri genellikle her step başında en son politikayla örnekleme yapar. PPO ardından aynı parti üzerinde birkaç tur küçük parti güncellemesi yapar; mevcut politika veriyi üreten `old_policy`'den giderek uzaklaşır. Olasılık oranı bu değişimi ölçer, kırpma hedefi ise aşırı büyük güncellemeleri bastırır.
+Yazar önce politika içine yakın eğitimle kararlı bir temel çizgi kurmayı, sonra verimi artırmak için asenkron örnekleme ya da eski veri yeniden kullanımı eklemeyi öneriyor. Bu bölümdeki PPO/GRPO reçeteleri genellikle her step başında en son politikayla örnekleme yapar. PPO ardından aynı parti üzerinde birkaç tur küçük parti güncellemesi yapar; mevcut politika veriyi üreten `old_policy`'den giderek uzaklaşır. Olasılık oranı bu değişimi ölçer, kırpma hedefi ise aşırı büyük güncellemeleri bastırır.
 
 Politika gradyanının hedefi mevcut politika $\pi_\theta$ altındaki beklenen ödülle ilgilidir. Davranış politikası $\mu$ ile örneklenmiş veri kullanılırken önce aynı durumdaki eylem olasılık oranı hesaplanabilir, sonra buna göre önem düzeltmesi kurulabilir:
 
@@ -610,7 +610,7 @@ Doğrulama da verim bütçesine katılmalıdır. Lean kernel, test çalıştır�
 
 ![Şekil 8-15 Çok turlu etkileşimde kredi atama](images/revised/fig8-15.svg)
 
-Aynı sorun müşteri hizmetleri görüşmelerinde de ortaya çıkar. Örneğin kullanıcı 10. turda olumlu değerlendirme verdi. 2. turda hangi ücretin tartışmalı olduğunu netleştirmek de 7. turda ücreti açıklamak da yardımcı olmuş olabilir. Yalnızca son olumlu değerlendirmeye bakarak her birinin ne kadar katkı yaptığı ayırt edilemez. Aşağıdaki iki deney sırasıyla eğitimcinin navigasyon eylemlerini adım adım kontrol edebildiği ve robotun başarısını yalnızca görev sonucundan yargılayabildiği durumları tartışıyor.
+Aynı sorun müşteri hizmetleri görüşmelerinde de ortaya çıkar. Örneğin kullanıcı 10. turda olumlu değerlendirme verdi. 2. turda hangi ücretin tartışmalı olduğunu netleştirmek de 7. turda ücreti açıklamak da yardımcı olmuş olabilir. Yalnızca son olumlu değerlendirmeye bakarak her birinin ne kadar katkı yaptığı ayırt edilemez. Aşağıdaki iki deney sırasıyla eğitimi yürütenin navigasyon eylemlerini adım adım kontrol edebildiği ve robotun başarısını yalnızca görev sonucundan yargılayabildiği durumları tartışıyor.
 
 > **Deney 8-12 ★★★: V-IRL-VL — çok turlu görsel navigasyon**
 >
@@ -622,7 +622,7 @@ Aynı sorun müşteri hizmetleri görüşmelerinde de ortaya çıkar. Örneğin 
 
 ### Araç çağrısı: dış yetenekleri etkileşim içinde kullanmayı öğrenmek
 
-Dış araçlar bağlandığında model arama yapabilir, kod çalıştırabilir, dosya değiştirebilir, veritabanı sorgulayabilir ya da göreve göre birkaç API'yi birleştirebilir. Harness çağrıları doğrular ve zamanlar, araçlar ortamda yürütülüp gözlem döndürür. Şekil 8-16 bir görevdeki kararları görev bittikten sonraki eğitimden ayırıyor. Sağdaki oku izlendiğinde araç sonucu geçerli göreve döner ve model bir sonraki adıma onunla karar verir. Aşağıya doğru okunduğunda eğitim programı görev bittikten sonra bütün izle ödülü hesaplar, parametreleri günceller ve bir sonraki tur örnekleme yeni politikayla yapılır. Bir görevde art arda birkaç araç çağrılacaksa önceki dönüşün sonucu sonraki çağrının parametrelerini etkiler.
+Dış araçlar bağlandığında model arama yapabilir, kod çalıştırabilir, dosya değiştirebilir, veritabanı sorgulayabilir ya da göreve göre birkaç API'yi birleştirebilir. Harness çağrıları doğrular ve zamanlar, araçlar ortamda yürütülüp gözlem döndürür. Şekil 8-16 bir görevdeki kararları görev bittikten sonraki eğitimden ayırıyor. Sağdaki ok izlendiğinde araç sonucu geçerli göreve döner ve model bir sonraki adıma onunla karar verir. Aşağıya doğru okunduğunda eğitim programı görev bittikten sonra bütün izle ödülü hesaplar, parametreleri günceller ve bir sonraki tur örnekleme yeni politikayla yapılır. Bir görevde art arda birkaç araç çağrılacaksa önceki dönüşün sonucu sonraki çağrının parametrelerini etkiler.
 
 ![Şekil 8-16 Araç çağrısında RL ödül döngüsü](images/revised/fig8-16.svg)
 
@@ -654,7 +654,7 @@ Araç bir sonuç döndürdüğünde eğitim programı hangi adımı ödüllendir
 
 ## Ödül tasarımı: görev hedefini öğrenme sinyaline dönüştürmek
 
-Aynı tutarı iade eden iki iade izi düşünün; biri zorunlu kimlik doğrulamasını atlamıştır. Yalnızca nihai bakiyeye bakılırsa ikisi aynı puanı alır. Kullanıcının verdiği yetkinin bütün gereksinimlerini öğrenme sinyaline dönüştürmek için önce sonucu kimin doğrulayabileceği, hangi adımın kanıt üreteceği ve modele hangi bilgilerin geri verilmesi gerektiği belirlenir, sonra yoldaki yetki ve süreç kısıtlarının ayrı ayrı doğrulanıp doğrulanamayacağı kontrol edilir.
+Aynı tutarı iade eden iki iade izi düşünün; biri zorunlu kimlik doğrulamasını atlamıştır. Yalnızca nihai bakiyeye bakılırsa ikisi aynı puanı alır. Kullanıcının devrettiği görevin bütün gereksinimlerini öğrenme sinyaline dönüştürmek için önce sonucu kimin doğrulayabileceği, hangi adımın kanıt üreteceği ve modele hangi bilgilerin geri verilmesi gerektiği belirlenir, sonra yoldaki yetki ve süreç kısıtlarının ayrı ayrı doğrulanıp doğrulanamayacağı kontrol edilir.
 
 ### Ödül nereden gelir: kurallar, insan tercihi ve model değerlendirmesi
 
@@ -676,7 +676,7 @@ Coding Agent'ın erken bitirmesini örnek alalım: model tamamlandı bildirimini
 
 **Süreç ödülü** ara adımlarda geri bildirim verir; örneğin kimlik doğrulamayı, parametre seçimini, navigasyon eylemlerini ya da akıl yürütme adımlarını değerlendirir. Süreci değerlendiren modele **PRM (Process Reward Model)** denir. OpenAI'ın *Let's Verify Step by Step*[^ch8-7] çalışması matematiksel akıl yürütmede adım adım doğrulamayı inceledi. Süreç sinyali modelin hatayı bulmasına yardım eder, ama etiketleme ve doğrulama maliyetini artırır. Belirli bir çözüm sırası tek doğru yol sayılırsa diğer geçerli stratejilerin ödülü de düşer. Bu yüzden yazar süreç sinyalini yalnızca gerçekten doğrulanabilen ara olaylar için ekler ve modelin çeşitli geçerli çözümleri keşfetmesini sürdürmesini sağlar. V-IRL-VL (Deney 8-12) adım adım navigasyon geri bildirimi, SimpleVLA-RL (Deney 8-13) ise uç ödülü kullandı; iki görev geri bildirim inceliği için farklı seçimleri gösteriyor.
 
-Pratikte önce sonuç ödülü temel düzeni kurulabilir, sonra kimlik doğrulamanın tamamlanması ve testlerin geçmesi gibi ara olaylar için süreç sinyali eklenebilir. Sonlu uzunluktaki çok turlu görevlerde indirim faktörü $\gamma=1$ alınabilir; böylece uç ödülü geriye yayılırken aynı ağırlığı korur. PPO değer kestirimi ve avantaj hesabıyla geri bildirimi her adımın eylemine bağlar; iz düzeyinde avantaj kullanan GRPO ise genellikle aynı avantaj ağırlığıyla o izdeki üretilmiş token'ların politika kaybını hesaplar.
+Pratikte önce sonuç ödülü temel çizgisi kurulabilir, sonra kimlik doğrulamanın tamamlanması ve testlerin geçmesi gibi ara olaylar için süreç sinyali eklenebilir. Sonlu uzunluktaki çok turlu görevlerde indirim faktörü $\gamma=1$ alınabilir; böylece uç ödülü geriye yayılırken aynı ağırlığı korur. PPO değer kestirimi ve avantaj hesabıyla geri bildirimi her adımın eylemine bağlar; iz düzeyinde avantaj kullanan GRPO ise genellikle aynı avantaj ağırlığıyla o izdeki üretilmiş token'ların politika kaybını hesaplar.
 
 ### Ödül ne kadar bilgi taşımalı: skaler, vektör ve üretken tanı
 
@@ -703,7 +703,7 @@ first_turn = outcome_weight
 second_turn = outcome_weight + penalty_weight
 ```
 
-A'nın ilk turunda her eylem token'ı +0,0125, ikinci turunda −0,0175 ağırlık alır. Böylece aynı başarılı onarımdaki iki eylem zıt yönlü eğitim sinyali alabilir. Bu ağırlıklar politika kaybına girdiğinde optimizasyon parametreleri buna göre günceller. Müşteri hizmetleri görevinde de araç kayıtları hangi turda yetki kontrolünün atlandığını gösterebiliyorsa ceza aynı biçimde dağıtılabilir.
+A'nın ilk turunda her eylem token'ı +0,0125, ikinci turunda −0,0175 ağırlık alır. Böylece aynı başarılı onarımdaki iki eylem zıt yönlü eğitim sinyali alabilir. Bu ağırlıklar politika kaybına girdiğinde optimize edici parametreleri buna göre günceller. Müşteri hizmetleri görevinde de araç kayıtları hangi turda yetki kontrolünün atlandığını gösterebiliyorsa ceza aynı biçimde dağıtılabilir.
 
 Yol sinyalinin etkisi grup içi farktan anlaşılabilir. Bir GRPO iz grubunun sonuç ödülleri aynıysa bu ödülden hesaplanan avantaj sıfırdır; ihlal sayıları farklıysa yol cezası yeni bir karşılaştırma dayanağı sağlar. Kısmi ilerleme ödülü de aynı koşula uyar: modelin en azından farklı düzeylerde ilerleme örneklemesi gerekir ki ayrım oluşsun.
 
@@ -723,9 +723,9 @@ Bir Agent rollout'u çoğu zaman birkaç tur model üretimi ve araç yürütmesi
 
 Uç ödül kullanıldığında bütün bir iz tek bir başarı puanı alabilir. İş aracı "kredi kartının son dört hanesi gerekiyor" diye uyarmış, Agent bu bilgiyi atlamış ve sonunda ödül 0 almış olsun. Eğitimin birkaç denemeden başarısızlığın eksik alandan mı, araç parametresinden mi yoksa sonraki işlem hatasından mı geldiğini ayırt etmesi gerekir. Öğretmen bu iz üzerinde adım adım denetim verebiliyorsa tek bir ortam etkileşimi daha ince öğrenme sinyali üretebilir.
 
-### Politikaya bağlı damıtma: bir rollout'tan yoğun denetim üretmek
+### Politika içi damıtma: bir rollout'tan yoğun denetim üretmek
 
-**Politikaya bağlı damıtma (On-Policy Distillation)** izi öğrenci üretir, öğretmen öğrencinin gerçekte ürettiği önekler üzerinde denetim sağlar. Thinking Machines Lab 2025'teki çalışmasında bu eğitim biçimini sistematik olarak gösterdi[^ch8-10]. Üç yöntem türünü anlamak için "eğitim durumunu kim üretir" ile "öğrenme sinyalini kim sağlar" ayrılabilir:
+**Politika içi damıtma (On-Policy Distillation)** izi öğrenci üretir, öğretmen öğrencinin gerçekte ürettiği önekler üzerinde denetim sağlar. Thinking Machines Lab 2025'teki çalışmasında bu eğitim biçimini sistematik olarak gösterdi[^ch8-10]. Üç yöntem türünü anlamak için "eğitim durumunu kim üretir" ile "öğrenme sinyalini kim sağlar" ayrılabilir:
 
 | Yöntem | İzi ya da durumu kim üretir | Başlıca öğrenme sinyali |
 | --- | --- | --- |
@@ -733,7 +733,7 @@ Uç ödül kullanıldığında bütün bir iz tek bir başarı puanı alabilir. 
 | On-policy RL | Mevcut öğrenci | Sonuç ya da süreç ödülü |
 | On-policy Distillation | Mevcut öğrenci | Öğretmenin öğrenci öneki için token bazlı olasılık değerlendirmesi |
 
-Örneğin öğretmenin gösterimi hep önce siparişi sorgular, sonra iade başvurusu yapar; öğrenci ise doğrudan iadeyi başlatabilir ve "sipariş numarası eksik" hatası alır. Politikaya bağlı damıtma öğretmene öğrencinin ulaştığı bu durumu değerlendirtir ve bilgiyi nasıl tamamlayacağını gösterir. Böylece eğitim öğrencinin kendi hatalarını ve kurtarma yollarını kapsar.
+Örneğin öğretmenin gösterimi hep önce siparişi sorgular, sonra iade başvurusu yapar; öğrenci ise doğrudan iadeyi başlatabilir ve "sipariş numarası eksik" hatası alır. Politika içi damıtma öğretmene öğrencinin ulaştığı bu durumu değerlendirtir ve bilgiyi nasıl tamamlayacağını gösterir. Böylece eğitim öğrencinin kendi hatalarını ve kurtarma yollarını kapsar.
 
 Bir uygulama biçimi, öğrencinin ürettiği önek üzerinde öğrenci ile öğretmen arasındaki ters KL'yi en küçüklemektir:
 
@@ -758,25 +758,25 @@ for prefix in model_generated_positions(trajectory):
 update_student(loss)
 ```
 
-Öğrenci keşiften sorumludur, öğretmen birçok konumda denetim sağlar; ek maliyet ağırlıklı olarak öğretmen çıkarımından gelir. Ortam etkileşimi pahalı ve öğretmen öğrenciye güvenilir biçimde rehberlik edebiliyorsa yazar önce politikaya bağlı damıtmayı karşılaştırır; böylece her ortam çağrısı daha çok geçerli öğrenme sinyali üretir. Hedef dil, alan bilgisi ya da temel eylemlerde yetersiz öğrenciler için önce Mid-training ve gösterim eğitimiyle geçerli bir başlangıç noktası kurulup sonra politikaya bağlı damıtmaya geçilebilir.
+Öğrenci keşiften sorumludur, öğretmen birçok konumda denetim sağlar; ek maliyet ağırlıklı olarak öğretmen çıkarımından gelir. Ortam etkileşimi pahalı ve öğretmen öğrenciye güvenilir biçimde rehberlik edebiliyorsa yazar önce politika içi damıtmayı karşılaştırır; böylece her ortam çağrısı daha çok geçerli öğrenme sinyali üretir. Hedef dil, alan bilgisi ya da temel eylemlerde yetersiz öğrenciler için önce Mid-training ve gösterim eğitimiyle geçerli bir başlangıç noktası kurulup sonra politika içi damıtmaya geçilebilir.
 
 Örnekleme ile eğitimin tutarlılığı da aynı ölçüde önemlidir: örnekleme motoru izleri $\mu$ politikasıyla üretir, eğitim motoru kaybı $\pi_\theta$ ile hesaplar; ikisi arasındaki fark eğitim durumlarının dağılımını değiştirir.
 
 Thinking Machines Lab'in matematik görevlerindeki karşılaştırması yaklaşık bir büyüklük mertebesi eğitim verimi kazancı gösterdi. Çok turlu Agent'larda aynı karşılaştırma biçimi sürdürülebilir; görev başarı oranı, ortam çağrısı sayısı ve öğretmen hesaplama maliyeti birlikte kaydedilir. Kazancı, öğrencinin ortamda karşılaştığı durumlar ile öğretmenin güvenilir geri bildirim verip veremediği birlikte belirler.
 
-Yazar ve çalışma arkadaşları "zaman algısı" görevinde DPO'yu, dört RL tarifini ve politikaya bağlı damıtmayı da karşılaştırdı[^ch8-11]. İlk tarifler sırasıyla seyrek ödül, hedef kayması, rollout biçimi uyuşmazlığı ve politika çöküşü gibi sorunlarla karşılaştı. Dondurulmuş bir Qwen3-32B öğretmenine geçilip öğrencinin kendi çok turlu izleri üzerinde token bazlı hizalama yapıldığında eğitim düzgün biçimde yakınsadı; dört koşulda geçme oranı aynı kaynaklı SFT temel düzeyinden 23–47 yüzde puanı yüksek çıktı. Bu deneyim yazara her etkileşimin sağladığı sinyal yoğunluğunun önemini daha çok gösterdi. Aynı etkileşimdeki ara kararların hepsi öğrenmeye katılabildiğinde mevcut izlerin değeri daha tam olarak kullanılır.
+Yazar ve çalışma arkadaşları "zaman algısı" görevinde DPO'yu, dört RL reçetesini ve politika içi damıtmayı da karşılaştırdı[^ch8-11]. İlk reçeteler sırasıyla seyrek ödül, hedef kayması, rollout biçimi uyuşmazlığı ve politika çöküşü gibi sorunlarla karşılaştı. Dondurulmuş bir Qwen3-32B öğretmenine geçilip öğrencinin kendi çok turlu izleri üzerinde token bazlı hizalama yapıldığında eğitim düzgün biçimde yakınsadı; dört koşulda geçme oranı aynı kaynaklı SFT temel çizgisinden 23–47 yüzde puanı yüksek çıktı. Bu deneyim yazara her etkileşimin sağladığı sinyal yoğunluğunun önemini daha çok gösterdi. Aynı etkileşimdeki ara kararların hepsi öğrenmeye katılabildiğinde mevcut izlerin değeri daha tam olarak kullanılır.
 
-Matematik öğretmeni akıl yürütmede, kod öğretmeni program onarmada iyiyse bir öğrenci ikisinin güçlü yanlarını nasıl öğrenir? Çok öğretmenli politikaya bağlı damıtma (MOPD) yukarıdaki eğitim sürecini korur, yalnızca sabit öğretmeni sorunun alanına göre seçilen öğretmenle değiştirir. Öğrenci bir kod sorusu çözerken yarı yolda yanlış bir yola girse bile o ana kadar yazdığı öneki kod öğretmenine verir ve sonraki adımın olasılık dağılımını alır; sıra matematik sorusuna geldiğinde öğrencinin çözüm sürecinde rehberliği matematik öğretmeni yapar. Her alanın öğretmeni önce bağımsız olarak eğitilebilir, damıtma aşamasında öğretmenlerin parametreleri sabitlenir. Dağıtımda yalnızca tek bir öğrenci çalıştırılır.[^ch8-mopd]
+Matematik öğretmeni akıl yürütmede, kod öğretmeni program onarmada iyiyse bir öğrenci ikisinin güçlü yanlarını nasıl öğrenir? Çok öğretmenli politika içi damıtma (MOPD) yukarıdaki eğitim sürecini korur, yalnızca sabit öğretmeni sorunun alanına göre seçilen öğretmenle değiştirir. Öğrenci bir kod sorusu çözerken yarı yolda yanlış bir yola girse bile o ana kadar yazdığı öneki kod öğretmenine verir ve sonraki adımın olasılık dağılımını alır; sıra matematik sorusuna geldiğinde öğrencinin çözüm sürecinde rehberliği matematik öğretmeni yapar. Her alanın öğretmeni önce bağımsız olarak eğitilebilir, damıtma aşamasında öğretmenlerin parametreleri sabitlenir. Dağıtımda yalnızca tek bir öğrenci çalıştırılır.[^ch8-mopd]
 
 Burada iki pratik koşul vardır. Birincisi, token bazlı KL'yi yukarıdaki formülle hesaplamak için öğrencinin verdiği önek üzerinde hizalanabilir öğretmen olasılıkları elde edilebilmelidir. Elinizde yalnızca öğretmenin yazdığı birkaç tam yanıt varsa bunlar SFT için kullanılabilir, ama bu kaybı hesaplamaya yetmez. İkincisi, kabulde her alanın sonucu ayrı ayrı incelenmelidir. Öğrencinin matematik puanı yükselip kod puanı düştüğünde yükselen genel ortalama bu gerilemeyi kolayca gizler.
 
-[^ch8-mopd]: Wenhan Ma ve diğerleri, *MOPD: Multi-Teacher On-Policy Distillation for Capability Integration in LLM Post-Training*, 2026. Makale alanlara göre eğitilmiş öğretmenler kullanır ve öğrencinin kendi izleri üzerinde damıtma yapar.
+[^ch8-mopd]: Wenhan Ma ve arkadaşları, *MOPD: Multi-Teacher On-Policy Distillation for Capability Integration in LLM Post-Training*, 2026. Makale alanlara göre eğitilmiş öğretmenler kullanır ve öğrencinin kendi izleri üzerinde damıtma yapar.
 
-### Politikaya bağlı öz-damıtma: ek context ile öğretmen kurmak
+### Politika içi öz-damıtma: ek context ile öğretmen kurmak
 
 Ekibin elinde bu alanda iyi olan tek bir model varsa öğretmen kim olacak? Aynı soru ona iki kez verilebilir. İlkinde dağıtım koşullarındaki gibi yalnızca kullanıcı sorusu verilir; ikincisinde ayrıca standart yanıt, uzman gösterimi ya da alan belgeleri eklenir. İkinci yanıttaki fazladan bilgi, ilk koşuldaki öğrenciye rehberlik etmek için kullanılabilir.
 
-**Politikaya bağlı öz-damıtma (On-Policy Self-Distillation, OPSD)**[^ch8-15] aynı modele iki rol verir: öğrenci yalnızca görev girdisini görür, öğretmen ayrıca standart yanıtı ya da doğrulanmış çözümü görür. Öğrenci izi ürettikten sonra öğretmen bu ayrıcalıklı bilgiyle her öneki değerlendirir ve denetimi öğrenciye geri aktarır.
+**Politika içi öz-damıtma (On-Policy Self-Distillation, OPSD)**[^ch8-15] aynı modele iki rol verir: öğrenci yalnızca görev girdisini görür, öğretmen ayrıca standart yanıtı ya da doğrulanmış çözümü görür. Öğrenci izi ürettikten sonra öğretmen bu ayrıcalıklı bilgiyle her öneki değerlendirir ve denetimi öğrenciye geri aktarır.
 
 Örneğin öğrenci bir matematik sorusu çözerken öğretmen doğru yanıtı zaten bilir. Öğretmen buna dayanarak öğrencinin mevcut akıl yürütme yönünü değerlendirebilir; öğrenci de yalnızca soruyu gördüğü koşulda kendi üretimini iyileştirmeyi öğrenir. Aşağıdaki sözde kod ek context'in ve gradyan yalıtımının yerini gösteriyor:
 
@@ -790,24 +790,24 @@ for prefix in model_generated_positions(trajectory):
 update(model, loss)
 ```
 
-Ayrıcalıklı bilgi yalnızca eğitim sırasındaki öğretmen koluna girer; öğrenci girdisi ve değerlendirme girdisi dağıtımdakiyle aynı kalır. Sözde kod boyunca iki bilgi yolu kontrol edilebilir: standart yanıt yalnızca öğretmen önekini kuran satıra girer, dağıtımda öğrenci onu görmez; öğretmen çıktısı gradyan durdurmadan geçer, bu yüzden bu adımda iki dağılım arasındaki farka göre yalnızca öğrenci kolu parametreleri günceller. Sonraki turda güncellenmiş model kullanıldığında öğretmenin yargısı da değişebilir. Böylece aynı model, eğitim tarafındaki daha zengin bilgiyi kullanarak kendi gerçek üretimine denetim sağlar.
+Ayrıcalıklı bilgi yalnızca eğitim sırasındaki öğretmen koluna girer; öğrenci girdisi ve değerlendirme girdisi dağıtımdakiyle aynı kalır. Sözde kod boyunca iki bilgi yolu kontrol edilebilir: standart yanıt yalnızca öğretmen önekini kuran satıra girer, dağıtımda öğrenci onu görmez; öğretmen çıktısına gradyan durdurma (stop_gradient) uygulanır; bu yüzden bu adımda iki dağılım arasındaki farka göre yalnızca öğrenci kolu parametreleri günceller. Sonraki turda güncellenmiş model kullanıldığında öğretmenin yargısı da değişebilir. Böylece aynı model, eğitim tarafındaki daha zengin bilgiyi kullanarak kendi gerçek üretimine denetim sağlar.
 
 Ayrıcalıklı bilgi insan gösterimlerinden ya da süzülmüş alan belgelerinden de gelebilir. Seçerken bu bilginin öğretmenin yargısını iyileştirip iyileştirmediği kontrol edilmelidir: bilgiyi alan öğretmen öğrencinin hatalarını ne kadar iyi tanırsa damıtma sinyali o kadar yararlı olur. Eğitim sırasında önceden test için ayrılmış örneklerle mevcut yetenekler ve üretim üslubu da kontrol edilmelidir; Purified OPSD gibi çalışmalar düzenlileştirme kısıtlarıyla modelin özgün akıl yürütme üslubunu korumasına ayrıca yardım eder[^ch8-16].
 
-## Sorun vakalarından sonrası eğitime
+## Sorun vakalarından sonradan eğitime
 
-Bölüm 7 üretimdeki sorunları yeniden üretilebilir görevlere, başarısızlık nedenlerine ve değerlendirme ölçütlerine dönüştürdü. Bu malzemeler sonrası eğitimde de kullanılabilir: tam görev etkileşim ortamını, hatadan önceki iz öneki karar context'ini sağlar, doğrulayıcı da yeni üretilen davranışı kontrol eder. Tablo 8-5 bunların eğitim yöntemleriyle karşılıklarını listeliyor.
+Bölüm 7 üretimdeki sorunları yeniden üretilebilir görevlere, başarısızlık nedenlerine ve değerlendirme ölçütlerine dönüştürdü. Bu malzemeler sonradan eğitimde de kullanılabilir: tam görev etkileşim ortamını, hatadan önceki iz öneki karar context'ini sağlar, doğrulayıcı da yeni üretilen davranışı kontrol eder. Tablo 8-5 bunların eğitim yöntemleriyle karşılıklarını listeliyor.
 
-Tablo 8-5 Bölüm 7'nin değerlendirme malzemeleri ve sonrası eğitimdeki kullanımları
+Tablo 8-5 Bölüm 7'nin değerlendirme malzemeleri ve sonradan eğitimdeki kullanımları
 
 | Bölüm 7'deki malzeme | Bölüm 8'deki eğitim kullanımı |
 | --- | --- |
 | Uçtan uca görev ve doğrulayıcı | RL örnekleme görevleri, doğrulanabilir ödül, ret örneklemesi için görev havuzu |
-| İz öneki ve sonraki davranış | DPO tercih çiftleri, SFT karar gösterimleri, politikaya bağlı damıtmada öğretmen girdisi |
+| İz öneki ve sonraki davranış | DPO tercih çiftleri, SFT karar gösterimleri, politika içi damıtmada öğretmen girdisi |
 | Başarısızlık konumu ve hata türü | Süreç değerlendirme etiketleri, doğrulanabilir yol cezası kuralları |
 | Rubric kalemlerinin puanları ve insan etiketli standart yanıtlar | Çok boyutlu ödül, üretken ödül modelinin eğitimi ve kalibrasyonu |
 
-Geçmiş önekler devam görevlerinin başlangıç noktası olabilir. Politikaya bağlı damıtmada önce mevcut öğrenci bu noktadan üretmeyi sürdürür, sonra öğretmen öğrencinin gerçekte ürettiği öneki değerlendirir; araç çalıştırmak gerekiyorsa karşılık gelen ortam durumu da geri yüklenir. Böylece Bölüm 7'deki yerel karar değerlendirmesi bu bölümün örnekleme ve eğitim akışına bağlanır.
+Geçmiş önekler devam görevlerinin başlangıç noktası olabilir. Politika içi damıtmada önce mevcut öğrenci bu noktadan üretmeyi sürdürür, sonra öğretmen öğrencinin gerçekte ürettiği öneki değerlendirir; araç çalıştırmak gerekiyorsa karşılık gelen ortam durumu da geri yüklenir. Böylece Bölüm 7'deki yerel karar değerlendirmesi bu bölümün örnekleme ve eğitim akışına bağlanır.
 
 Eğitimde kullanılan görevler, değerlendirme için ayrılan görevlerden ayrılmalıdır. İki taraf arayüzü ve doğrulama mantığını paylaşabilir, ama ayrı görev örnekleri kullanır; görevler arası genellemeyi incelemek gerekiyorsa görev şablonuna ya da iş türüne göre de bölünebilir. Aşağıda bu dönüşümün nasıl yapılacağı üç örnekle gösteriliyor.
 
@@ -853,13 +853,13 @@ Nedeni analiz ederken önce izi modelin "bitti" demek üzere olduğu anda durdur
 
 Bölüm 5 `edit_file(path, old_string, new_string)` gibi araçları tanıttı. Model özgün metni `old_string` içine kopyalamalı, araç da tam eşleştirme yapar. Boşluk, satır sonu, ters eğik çizgi ya da Unicode karakterlerindeki bir fark eşleştirmenin başarısız olmasına yol açabilir.
 
-Önce bilgi aktarım zinciri boyunca adım adım karşılaştırın: **dosyanın ham baytları → araç dönüşü → Harness serileştirmesi → model context'i → modelin token çıktısı → çözülmüş dize → çağrı parametresi ayrıştırması → araç eşleştirmesi**. Okuma aşaması baytları değiştirdiyse araç onarılır; kaçış ya da context birleştirme içeriği değiştirdiyse Harness onarılır; kodlayıp yeniden çözmede değişiklik oluyorsa tokenizer kontrol edilir. Model girdisi bozulmadan kalmışken fark ilk olarak model üretiminde ortaya çıkıyorsa bu vaka tam kopyalama yeteneği için sonrası eğitimde kullanılabilir.
+Önce bilgi aktarım zinciri boyunca adım adım karşılaştırın: **dosyanın ham baytları → araç dönüşü → Harness serileştirmesi → model context'i → modelin token çıktısı → çözülmüş dize → çağrı parametresi ayrıştırması → araç eşleştirmesi**. Okuma aşaması baytları değiştirdiyse araç onarılır; kaçış ya da context birleştirme içeriği değiştirdiyse Harness onarılır; kodlayıp yeniden çözmede değişiklik oluyorsa tokenizer kontrol edilir. Model girdisi bozulmadan kalmışken fark ilk olarak model üretiminde ortaya çıkıyorsa bu vaka tam kopyalama yeteneği için sonradan eğitimde kullanılabilir.
 
 Eğitim verisi üç tür görev içerebilir: belirtilen içeriği harfi harfine yinelemek; birbirine benzeyen ve aynı uzunluktaki birkaç dize arasından tam olarak aynı olanı seçmek; özgün metni araç çağrısının `old_string` alanına yazmak. Örneklere boşluklar, gerçek satır sonları, ters eğik çizgiler ve farklı Unicode gösterimleri eklenerek gerçek düzenlemede hataya açık yerler kapsanır.
 
 > **Deney 8-19 ★★: Özel dizelerin tam kopyalanması için SFT**
 >
-> Deney Qwen3-8B'yi temel alır, bf16 LoRA ile 2 epoch eğitir ve istemi kayıp hesabının dışında tutar. Doğrudan yineleme sorularında hedef dize gösterim olarak kullanılır; araç parametresi sorularında yalnızca `old_string` içeren tam JSON gösterim olur; alan adları, tırnaklar ve parantezler bile token bazlı denetime dahildir. Deney ayrıca tokenizer'ın kodlama—çözme tutarlılığını ayrı olarak test eder.
+> Deney Qwen3-8B'yi temel alır, bf16 LoRA ile 2 epoch eğitir ve prompt'u kayıp hesabının dışında tutar. Doğrudan yineleme sorularında hedef dize gösterim olarak kullanılır; araç parametresi sorularında yalnızca `old_string` içeren tam JSON gösterim olur; alan adları, tırnaklar ve parantezler bile token bazlı denetime dahildir. Deney ayrıca tokenizer'ın kodlama—çözme tutarlılığını ayrı olarak test eder.
 >
 > Modelin ayrılmış kümedeki bayt bazlı tam eşleşme oranı %37,5'ten %78,9'a çıktı, bağımsız sınır kümesinde %80,1 oldu; iki grupta ilk bayt ayrışmasının ortalama konumu sırasıyla 54,0 ve 54,2 idi. Ayrıca ayrılmış ve sınır kümelerinden toplam 512 yoklama ile üç tokenizer karşılaştırıldı; Qwen3 ile Qwen2.5'in kayıpsız gidiş-dönüş oranı her ikisinde de %80,1'di.
 >
@@ -867,13 +867,13 @@ Eğitim verisi üç tür görev içerebilir: belirtilen içeriği harfi harfine 
 
 Bu üç vakanın her biri için bir tanı kartı yazın: başarısızlıktan önce modelin gerçekten görebildiği girdiyi saklayın, en az bir kabul edilebilir eylem yazın, sonra "yüzeyde benzer ama izlenmemesi gereken" bir karşıt örnek yazın. Örneğin düzenlemede çakışma varsa dosya yeniden okunmalıdır; dosya değişmemiş ve değişiklik doğrulanmışsa bitirmeye izin verilir. İlkiyle eğitip ardından eğitime hiç katılmamış benzer ve karşıt görevlerle kabul yapıldığında ancak modelin koşullu yargıyı mı yoksa her durumda bir adım fazlasını yapmayı mı öğrendiği kontrol edilebilir.
 
-## Sonrası eğitim uygulamasında önemli noktalar
+## Sonradan eğitim uygulamasında önemli noktalar
 
-Sonrası eğitim planı çözülecek sorundan yola çıkmalıdır. Alan bilgisi eksikliği, kararsız çıktı protokolü ve zayıf eylem seçimi farklı veri ve geri bildirim gerektirir. Yazar veri ve ortam kalitesine daha çok önem verir: bunlar modelin hangi sorunlarla karşılaşacağını ve hangi sinyali alacağını belirler, eğitim algoritması da sinyali parametre güncellemesine dönüştürür.
+Sonradan eğitim planı çözülecek sorundan yola çıkmalıdır. Alan bilgisi eksikliği, kararsız çıktı protokolü ve zayıf eylem seçimi farklı veri ve geri bildirim gerektirir. Yazar veri ve ortam kalitesine daha çok önem verir: bunlar modelin hangi sorunlarla karşılaşacağını ve hangi sinyali alacağını belirler, eğitim algoritması da sinyali parametre güncellemesine dönüştürür.
 
 Projede uygularken aşağıdaki sırayla kontrol edilebilir.
 
-1. **Bilginin ve yeteneğin nerede tutulacağına karar verin.** Kararlı alan corpus'u Mid-training için kullanılabilir, gösterimler modele nasıl yanıt verip davranacağını öğretebilir; zamanında güncellenmesi, alıntılanması, yetki denetimi ya da silinmesi gereken olgular RAG ile yönetilmeye uygundur.
+1. **Bilginin ve yeteneğin nerede tutulacağına karar verin.** Kararlı alan derlemi Mid-training için kullanılabilir, gösterimler modele nasıl yanıt verip davranacağını öğretebilir; zamanında güncellenmesi, alıntılanması, yetki denetimi ya da silinmesi gereken olgular RAG ile yönetilmeye uygundur.
 2. **Çıktının puanlanıp puanlanamadığını kontrol edin.** Az sayıda görevde JSON ayrıştırma oranını, parametre bütünlüğünü ve araç çağrısı başarı oranını ölçün. Biçim hataları sıksa önce SFT ya da kısıtlı çözümlemeyle iyileştirin, sonra RL örneklemesini büyütün.
 3. **Etkin context uzunluğunu kontrol edin.** Model 128K token alabildikten sonra bu uzunlukta arama, akıl yürütme ve planlama yapıp yapamadığını da kontrol edin. Yazar pencereyi büyütmeden önce "yetenek × uzunluk" matrisiyle kademe kademe kabul yapar, kısa örnekleri ve önceki aşama verilerini karıştırarak kısa menzilli yeteneği korur.
 4. **Geçerli izlerin örneklenme olasılığını kontrol edin.** `pass@k`, kısmi ilerleme ve grup içi ödül farkı birlikte gözlemlenir. Başarılı örnekler çok azsa Mid-training, SFT, damıtma ya da müfredat görevleriyle daha iyi bir başlangıç noktası kurulabilir; kısmi ödüller mevcut politikanın ulaşabileceği ilerlemeye karşılık gelmelidir.
@@ -881,13 +881,13 @@ Projede uygularken aşağıdaki sırayla kontrol edilebilir.
 6. **Ortam geri bildirimini kalibre edin.** Simülasyon ile dağıtımdaki kullanıcı ifadelerini, araç hatalarını ve durum değişimlerini karşılaştırın, farkları eğitim görevlerine ekleyin. Kararlı bir ortam kurmanın maliyeti de eğitim bütçesine dahil edilmelidir.
 7. **Genellemeyi ve unutmayı ayrılmış görevlerle izleyin.** Hedef yetenek ile mevcut genel yetenekler birlikte gözlemlenir. Eğitim metrikleri iyileşmeyi sürdürürken ayrılmış görevlerdeki performans düşüyorsa veri oranları, epoch sayısı ya da düzenlileştirme ayarlanır ve kontrol noktası doğrulama sonuçlarına göre seçilir.
 8. **Değer kestirimini ve keşfi gözlemleyin.** PPO'nun değer hatası avantaj hesabını etkiler; örnekleme sıcaklığı ve rastlantısallık aday yolların çeşitliliğini etkiler. Ödül dalgalanması, değer hatası, çıktı entropisi ve iz farkları birlikte incelendiğinde eğitimin neden durduğunu yargılamak kolaylaşır.
-9. **Örnekleme ile eğitimin sayısal tutarlılığını ölçün.** Güncellemeden önce iki taraftaki log probability değerlerini karşılaştırın; olasılık oranını, yaklaşık KL'yi, kırpma oranını ve politika bayatlığını izleyin; ağırlıkları, şablonları ve hesaplama yapılandırmasını hizalayın.
+9. **Örnekleme ile eğitimin sayısal tutarlılığını ölçün.** Güncellemeden önce iki taraftaki log probability değerlerini karşılaştırın; olasılık oranını, yaklaşık KL'yi, kırpma oranını ve politika eskimesini izleyin; ağırlıkları, şablonları ve hesaplama yapılandırmasını hizalayın.
 10. **Maliyeti bütün zincir boyunca kestirin.** RL maliyeti model üretimini, araç yürütmesini, doğrulamayı, parametre güncellemesini ve beklemeyi içerir. ReTool'un süre karşılaştırması örneklemenin eğitim süresini büyük ölçüde uzatabileceğini gösteriyor. SFT hedef performansa zaten ulaştıysa kaynaklar öncelikle veri tamamlamaya ve dağıtım değerlendirmesine ayrılabilir.
-11. **Her veri türünün denetim kalitesini kontrol edin.** Mid-training corpus'undaki yanlış ilişkiler, SFT gösterimlerindeki gürültü, RL doğrulayıcısının yanlılığı eğitim sinyaline girer. Önce küçük veri partilerinden ve izlerden örnek kontrol edin, sonra ölçeği büyütün.
+11. **Her veri türünün denetim kalitesini kontrol edin.** Mid-training derlemindeki yanlış ilişkiler, SFT gösterimlerindeki gürültü, RL doğrulayıcısının yanlılığı eğitim sinyaline girer. Önce küçük veri partilerinden ve izlerden örnek kontrol edin, sonra ölçeği büyütün.
 
-Bu kontroller düşük maliyetli bir deneme eğitimi oluşturabilir: az miktarda alan corpus'u bilgi kazancını ve unutmayı, az sayıda gösterim davranışın öğrenilebilirliğini, küçük bir rollout partisi de ödül farkını ve çalışma maliyetini sınar. Deneme eğitimi bir sonraki yatırım için dayanak sağlar.
+Bu kontroller düşük maliyetli bir deneme eğitimi oluşturabilir: az miktarda alan derlemi bilgi kazancını ve unutmayı, az sayıda gösterim davranışın öğrenilebilirliğini, küçük bir rollout partisi de ödül farkını ve çalışma maliyetini sınar. Deneme eğitimi bir sonraki yatırım için dayanak sağlar.
 
-**Sonrası eğitim RAG ve context içi öğrenmeyle de birlikte çalışabilir.** Bir para transferi asistanı geliştirdiğinizi varsayın. Önce modele birkaç örnek konuşma gösterip kullanıcıya onay sürecini açıkça anlatmayı denetebilirsiniz; örnek arttıkça her okumanın süresi ve maliyeti de artabilir. Politika değiştiğinde bilgi tabanından güncel madde alınır ve yanıta kaynağı eklenir. Transferi gönderme adımına gelindiğinde onay limiti yıllardır değişmemiş olsa bile tutar ve yetki program tarafından doğrulanmalıdır. Hangi yöntemin kullanılacağına karar verirken bilginin ne sıklıkla değiştiğinin yanı sıra karar dayanağının kurala dönüştürülüp dönüştürülemeyeceğine de bakılır. Doğal bir üslup ya da tıbbi görüntülerdeki biçimler kurallarla eksiksiz sıralanamaz; bu tür kalıpları öğrenmek çoğu zaman parametre eğitimi gerektirir.
+**Sonradan eğitim RAG ve context içi öğrenmeyle de birlikte çalışabilir.** Bir para transferi asistanı geliştirdiğinizi varsayın. Önce modele birkaç örnek konuşma gösterip kullanıcıya onay sürecini açıkça anlatmayı denemesini sağlayabilirsiniz; örnek arttıkça her okumanın süresi ve maliyeti de artabilir. Politika değiştiğinde bilgi tabanından güncel madde alınır ve yanıta kaynağı eklenir. Transferi gönderme adımına gelindiğinde onay limiti yıllardır değişmemiş olsa bile tutar ve yetki program tarafından doğrulanmalıdır. Hangi yöntemin kullanılacağına karar verirken bilginin ne sıklıkla değiştiğinin yanı sıra karar dayanağının kurala dönüştürülüp dönüştürülemeyeceğine de bakılır. Doğal bir üslup ya da tıbbi görüntülerdeki biçimler kurallarla eksiksiz sıralanamaz; bu tür kalıpları öğrenmek çoğu zaman parametre eğitimi gerektirir.
 
 Bir sistem önce context ile stratejiyi doğrulayabilir, RAG ile kanıt sağlayabilir, programla katı kısıtları uygulayabilir, sonra Mid-training, SFT ve RL ile model yeteneğini iyileştirebilir. Model hedefe ulaştıktan sonra damıtmayla davranış daha küçük bir modele aktarılarak dağıtım maliyeti de düşürülebilir.
 
@@ -897,15 +897,15 @@ Bir sistem önce context ile stratejiyi doğrulayabilir, RAG ile kanıt sağlaya
 
 ## Bölüm özeti
 
-Modelin doğru yapamadığı bir soruyla karşılaştığınızda önce ona birkaç kez daha denetin ve nerede başarısız olduğuna bakın. Makul örneklemeden sonra `pass@k` hâlâ sıfıra yakınsa önce alan bilgisinin ya da temel yeteneğin eksik olup olmadığını kontrol edin, sonra Mid-training ile corpus eklemeye karar verin. Uzun belgeleri tam okuyamıyorsa eğitim uzunluğunu kademe kademe artırın ve kısa görevlerle mevcut yetenekleri kontrol edin. Model ara sıra doğru yanıtlıyor ama araç parametrelerini sık sık ayrıştırılamayan biçimde yazıyorsa önce SFT gösterimi yapmaya değer. Ancak çeşitli yürütülebilir izler üretebildiğinde ve ödül bunları birbirinden ayırabildiğinde RL'in iyi stratejilerin seçilme olasılığını artırma şansı olur.
+Modelin doğru yapamadığı bir soruyla karşılaştığınızda önce birkaç kez daha denemesini sağlayın ve nerede başarısız olduğuna bakın. Makul örneklemeden sonra `pass@k` hâlâ sıfıra yakınsa önce alan bilgisinin ya da temel yeteneğin eksik olup olmadığını kontrol edin, sonra Mid-training ile derlem eklemeye karar verin. Uzun belgeleri tam okuyamıyorsa eğitim uzunluğunu kademe kademe artırın ve kısa görevlerle mevcut yetenekleri kontrol edin. Model ara sıra doğru yanıtlıyor ama araç parametrelerini sık sık ayrıştırılamayan biçimde yazıyorsa önce SFT gösterimi yapmaya değer. Ancak çeşitli yürütülebilir izler üretebildiğinde ve ödül bunları birbirinden ayırabildiğinde RL'in iyi stratejilerin seçilme olasılığını artırma şansı olur.
 
 **Yazar önce veriye ve ortama yatırım yapar.** GeneralPoints'in kural ve görsel aktarım deneylerinde sınırlı gösterimle eğitilen SFT modeli kolayca aşırı uyum gösterdi, RL kolu dağılım dışı görevlerde daha iyi performans verdi. Gösterim kümesi ya da doğrulama yöntemi değişirse bu karşılaştırma yeniden yapılmalıdır. ReTool, V-IRL ve SimpleVLA-RL gibi çok turlu görevlerde ayrıca araç yürütmesi, navigasyon ya da eylem denetimindeki hangi olayların geri bildirime değer olduğuna karar vermek gerekir. Gerçek ortam karşılanamayacak kadar pahalıysa araç dönüşleri ve durum geçişleri simüle edilebilir, ama modelin simülatörün yanlılıklarından yararlanmayı öğrenip öğrenmediği gerçek görevde kontrol edilmelidir. Bazı görevler yalnızca temel bilgi ve gösterimler tamamlandığında teslim gereksinimlerini karşılar.
 
-**Yazara göre bugün Agent RL'in başlıca darboğazları örnek verimi ve dağılım tutarlılığıdır.** Tek bir araç etkileşimi bu kadar pahalıysa ondan daha fazla şey öğrenilebilir mi? Politikaya bağlı damıtma öğretmenin öğrencinin gerçekten ulaştığı konumda token bazlı rehberlik vermesini sağlar; RLVP de doğrulanabilir ara olaylarla uç ödülünü tamamlar. Öte yandan örneklemede kullanılan politika eğitim sürümünün gerisinde kalmışsa ya da örnekleme ve eğitim tarafları aynı çıktı için belirgin biçimde farklı olasılıklar hesaplıyorsa ödül eğrisini yorumlamadan önce bu farkı incelemek gerekir.
+**Yazara göre bugün Agent RL'in başlıca darboğazları örnek verimi ve dağılım tutarlılığıdır.** Tek bir araç etkileşimi bu kadar pahalıysa ondan daha fazla şey öğrenilebilir mi? Politika içi damıtma öğretmenin öğrencinin gerçekten ulaştığı konumda token bazlı rehberlik vermesini sağlar; RLVP de doğrulanabilir ara olaylarla uç ödülünü tamamlar. Öte yandan örneklemede kullanılan politika eğitim sürümünün gerisinde kalmışsa ya da örnekleme ve eğitim tarafları aynı çıktı için belirgin biçimde farklı olasılıklar hesaplıyorsa ödül eğrisini yorumlamadan önce bu farkı incelemek gerekir.
 
 Erken toparlama, düzenleme kapsamını yanlış belirleme ve dizeleri tam kopyalayamama, tek bir başarısızlıktan somut eğitim örneklerine kadar izlenebilir. Bu soru düzeltildikten sonra bağımsız örneklerle ve önceden doğru yapılan görevlerle regresyon doğrulaması da yapılmalıdır. Bir sonraki başarısızlık grubu geldiğinde hangileri için modeli yeniden eğitmeye değer, hangileri için yalnızca bilgiyi, talimatları ya da programı güncellemek yeter? Bir sonraki bölümün ele aldığı seçim tam olarak budur.
 
-[^ch8-ppo-method]: Schulman ve diğerleri, *Proximal Policy Optimization Algorithms*, 2017, arXiv:1707.06347.
+[^ch8-ppo-method]: Schulman ve arkadaşları, *Proximal Policy Optimization Algorithms*, 2017, arXiv:1707.06347.
 
 [^ch8-1]: Schulman, John and Thinking Machines Lab, “LoRA Without Regret”, 2025.
 [^ch8-2]: Shunyu Yao, “The Second Half”, 10 Nisan 2025.
@@ -956,5 +956,5 @@ Erken toparlama, düzenleme kapsamını yanlış belirleme ve dizeleri tam kopya
 9. ★★ Bir izin ara adımlarının çoğu doğru ama sonunda başarısız oluyor; başka bir iz doğru sonuca ulaşıyor ama süreç kısıtını ihlal ediyor. Bu iki izi değerlendirmek için süreç ve sonuç nasıl birleştirilir?
 10. ★★★ SWE-bench, τ²-bench ve AndroidWorld'ün ortamları ve doğrulayıcıları eğitimde kullanılabilir. Eğitim malzemesinden yararlanırken bağımsız değerlendirmeyi de korumak için görev örneklerini ve şablonları nasıl bölersiniz?
 11. ★★★ Hedef görevin pass@1 değeri çok düşük. Mid-training, SFT ya da RL arasında karar vermek için pass@k'yı, biçim ayrıştırma oranını, kısmi ilerleme oranını ve başarısızlık nedenlerini nasıl birleştirirsiniz?
-12. ★★★ Bir rollout partisinde yalnızca birkaç aşırı uzun yanıt henüz bitmemiş, diğer görevler tamamlanmış. Eş zamansız örneklemenin getirdiği politika bayatlığını denetim altında tutarken eğitim kümesinin kullanım oranını nasıl artırırsınız?
+12. ★★★ Bir rollout partisinde yalnızca birkaç aşırı uzun yanıt henüz bitmemiş, diğer görevler tamamlanmış. Asenkron örneklemenin getirdiği politika eskimesini denetim altında tutarken eğitim kümesinin kullanım oranını nasıl artırırsınız?
 13. ★★★ Arama motorunu ya da kullanıcıyı bir modelle simüle ederken hangi simülasyon yanlılıkları Agent'ı yanıltabilir? Eğitimi görev durumu ve gerçek etkileşimlerle nasıl kalibre edersiniz?

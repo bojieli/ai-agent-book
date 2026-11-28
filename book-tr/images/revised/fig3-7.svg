@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="106.000mm" height="80.324mm" viewBox="0 0 900 682" role="img" aria-labelledby="title desc">
-<title id="title">HNSW dizin yapısı</title><desc id="desc">Aynı düğüm farklı katmanlarda aynı harfi kullanır. Arama üst katmandaki girişten başlar, katman katman iner ve alt katmanda adayları genişletir. Koyu oklar örnek arama yolunu gösterir.</desc>
+<title id="title">HNSW indeks yapısı</title><desc id="desc">Aynı düğüm farklı katmanlarda aynı harfi kullanır. Arama üst katmandaki girişten başlar, katman katman iner ve alt katmanda adayları genişletir. Koyu oklar örnek arama yolunu gösterir.</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
 <rect width="900" height="682" fill="#ffffff" y="0" />
 <rect x="20" y="20" width="860" height="167" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<text x="245" y="54" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="25.8" font-weight="700" fill="#292929">Layer 2: az düğüm · uzun bağlantı</text><path d="M200 132 L505 102" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<text x="32" y="54" text-anchor="start" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="24" font-weight="700" fill="#292929">Katman 2: az düğüm · uzun bağlantı</text><path d="M200 132 L505 102" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M505 102 L755 107" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <circle cx="200" cy="132" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
 <text x="200" y="139" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">A</text><circle cx="505" cy="102" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
 <text x="505" y="109" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">D</text><circle cx="755" cy="107" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
 <text x="755" y="114" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">F</text><rect x="20" y="207" width="860" height="180" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<text x="245" y="241" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="25.8" font-weight="700" fill="#292929">Layer 1: daha çok düğüm · daralma</text><path d="M200 319 L300 284" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<text x="32" y="241" text-anchor="start" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="24" font-weight="700" fill="#292929">Katman 1: daha çok düğüm · daralma</text><path d="M200 319 L300 284" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M200 319 L505 289" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M300 284 L505 289" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M505 289 L620 329" fill="none" stroke="#aaaaaa" stroke-width="2" />
@@ -22,7 +22,7 @@
 <text x="505" y="296" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">D</text><circle cx="620" cy="329" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
 <text x="620" y="336" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">E</text><circle cx="755" cy="294" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
 <text x="755" y="301" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">F</text><rect x="20" y="407" width="860" height="205" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
-<text x="245" y="441" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="21.8" font-weight="700" fill="#292929">Layer 0: tüm düğümler · aday genişletme</text><path d="M200 519 L300 484" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<text x="32" y="441" text-anchor="start" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="22" font-weight="700" fill="#292929">Katman 0: tüm düğümler · aday genişletme</text><path d="M200 519 L300 484" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M200 519 L235 574" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M200 519 L400 539" fill="none" stroke="#aaaaaa" stroke-width="2" />
 <path d="M300 484 L400 539" fill="none" stroke="#aaaaaa" stroke-width="2" />
@@ -55,4 +55,4 @@
 <path d="M505 124 L505 267" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)" />
 <path d="M620 351 L620 507" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)" />
 <text x="105" y="136" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="26.0" font-weight="400" fill="#292929">Giriş</text><path d="M140 130 L178 132" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
-<text x="450" y="657" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="23.1" font-weight="400" fill="#292929">Gri çizgi: komşuluk   Düz ok: katman içi arama   Kesikli ok: bir katman iniş</text><defs /></svg>
+<text x="450" y="657" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="20" font-weight="400" fill="#292929">Gri çizgi: komşuluk · Düz ok: katman içi arama · Kesikli ok: bir alt katmana iniş</text><defs /></svg>

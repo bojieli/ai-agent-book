@@ -1,6 +1,6 @@
 # Agent Değerlendirmesi
 
-İlk altı bölüm tek bir Agent'ın nasıl kurulduğunu anlattı: context, bellek, bilgi tabanı, araçlar, kod ve gözlem ile eylem arayüzleri. Sistem kurulduktan sonra, tekrarlanabilir bir görev kümesiyle neler yapabildiğine, hangi koşullarda kolayca başarısız olduğuna ve bir sonraki adımda neyin değiştirilmesi gerektiğine karar vermek gerekir. Değerlendirme sonuçları sonrası eğitim ve sürekli evrim için de geri bildirim sağlar.
+İlk altı bölüm tek bir Agent'ın nasıl kurulduğunu anlattı: context, bellek, bilgi tabanı, araçlar, kod ve gözlem ile eylem arayüzleri. Sistem kurulduktan sonra, tekrarlanabilir bir görev kümesiyle neler yapabildiğine, hangi koşullarda kolayca başarısız olduğuna ve bir sonraki adımda neyin değiştirilmesi gerektiğine karar vermek gerekir. Değerlendirme sonuçları sonradan eğitim ve sürekli evrim için de geri bildirim sağlar.
 
 Geliştirme sürecinde pek çok seçimin gerçek görevlerle karşılaştırılması gerekir: hangi model kullanılacak, hangi araçlar açılacak, bilgi tabanı hangi içeriği ve indeksi kullanacak, kullanıcı belleği, prompt'lar ve Skills nasıl düzenlenecek, Harness'a hangi kısıtlar eklenecek. Seçimler birbirini de etkiler. Örneğin daha ayrıntılı araç açıklamaları parametre hatalarını azaltabilir ama context maliyetini de artırabilir; doğrulama adımı eklemek başarı oranını yükseltebilir ama tamamlanma süresini de uzatabilir.
 
@@ -35,7 +35,7 @@ Aynı soruyu başka bir müşteri hizmetleri Agent'ına çözdürmek için önce
 | Başlangıç durumu | `initial_state.initialization_actions` | Kullanıcı kimliğini ve konumunu ayarlamak, uçak modunu açmak, cihaz dolaşımını kapatmak, operatör tarafında dolaşımı açmak |
 | Puanlama ölçütleri | `evaluation_criteria` | Eylemleri ve ortam durumunu kontrol eder; puanlanan kalemleri `reward_basis` belirler |
 
-**Kullanıcı ne biliyor.** `known_info` adı, numarayı ve bulunulan ülkeyi verir. Uçak modunun açık, cihaz dolaşımının kapalı olduğu ortam durumunda saklanır; kullanıcı simülatörü bunları müşteri temsilcisine söyleyebilmek için araç çağırıp sorgulamalıdır. Kullanıcının bildiklerini ayrı bir alanda listelemek, simülatörün doğrudan yanıtlayabileceği bilgi ile gerçekten sorgulaması gereken bilgiyi ayırt etmesini sağlar. Yalnızca prompt'ta "hepsini birden söyleme" demek, hangi olgunun ne zaman açıklanacağını istikrarlı biçimde denetlemekte zorlanır. Bu düzen kademeli bilgi açıklamasını (Progressive Information Disclosure) gerçekleştirir: konuşma "internete bağlanamıyorum" ile başlar; Agent sorular ve işlem yönlendirmesiyle sorun giderme için gereken bilgiyi adım adım elde eder.
+**Kullanıcı ne biliyor.** `known_info` adı, numarayı ve bulunulan ülkeyi verir. Uçak modunun açık, cihaz dolaşımının kapalı olduğu ortam durumunda saklanır; kullanıcı simülatörü bunları müşteri temsilcisine söyleyebilmek için araç çağırıp sorgulamalıdır. Kullanıcının bildiklerini ayrı bir alanda listelemek, simülatörün doğrudan yanıtlayabileceği bilgi ile gerçekten sorgulaması gereken bilgiyi ayırt etmesini sağlar. Yalnızca prompt'ta "hepsini birden söyleme" demekle hangi olgunun ne zaman açıklanacağı istikrarlı biçimde denetlenemez. Bu düzen kademeli bilgi açıklamasını (Progressive Information Disclosure) gerçekleştirir: konuşma "internete bağlanamıyorum" ile başlar; Agent sorular ve işlem yönlendirmesiyle sorun giderme için gereken bilgiyi adım adım elde eder.
 
 **Kullanıcı nasıl yanıt veriyor.** `task_instructions` ilk onarım başarısız olduğunda hafif bir hoşnutsuzluk gösterilmesini, yalnızca hız testi excellent çıktığında sorunun çözüldüğünün teyit edilmesini ve cihazla ilgili yanıtların araç sonuçlarına dayanmasını şart koşar. poor, fair ve good bu sorunun hedefine ulaşmaz. Olguya bağlama (Grounding), kullanıcının simülasyon ortamının gerçek durumuna göre yanıt vermesini sağlar. Bu kısıt olmazsa simüle kullanıcı müşteri temsilcisinin "şimdi düzelmiş olmalı" sözüne uyup onaylayabilir; iki taraftaki konuşma sorunsuz görünür, ama cihaz arızası sürer.
 
@@ -87,7 +87,7 @@ Yazar etkileyici bazı Agent gösterimlerine "teknik gösteri" diyor: sisteme ye
 
 Uygulama ürünleri de yeteneklerini karmaşık görevlerle gösterir. Manus sanal bilgisayarı Agent'a vererek kullanıcının onun arayüzü kullanmasını, kaynak aramasını ve işi sürdürmesini görmesini sağlar. OpenClaw talepleri anlık mesajlaşmadan alır, yapılandırılmış ve izin verilmiş dosyalara ve hizmetlere erişir, süreç içinde ilerlemeyi bildirir, ek bilgi ister ve zamanlama mekanizmasıyla uyandırılıp yapılacakları kontrol edebilir. Bu somut davranışlar kullanıcının Agent'ın ne işe yaradığını anlamasını kolaylaştırır.
 
-Bana göre yeni tür görevleri tamamlayabilen gösterimler, bu ürünlerin kullanıcı çekmesinin önemli bir nedenidir.
+Yazara göre yeni tür görevleri tamamlayabilen gösterimler, bu ürünlerin kullanıcı çekmesinin önemli bir nedenidir.
 
 ### İş güvenilirliği: Pass^k'ye bakmak
 
@@ -203,7 +203,7 @@ Yalnızca listeyi indirip bu sonucu bağımsız olarak kontrol edebilirsiniz. Ö
 
 **Terminal-Bench mühendislik görevlerini çalıştırma sonuçlarıyla kabul eder.** Linux çekirdeği derleme örneği kaynak değişikliğini, derlemeyi, initramfs'i ve QEMU açılışını birbirine bağlar; Linux 6.9, `start_kernel` içindeki özel `printk` ve açılış günlüğündeki mesaj somut kontrol noktaları sağlar.
 
-Bölüm 5 satış tutarını siparişlerden kontrol etmeyi anlatmıştı. Asistan yirmi kanallı bir çeyreklik rapor teslim ederse nereden kontrol etmeye başlarsınız? Tencent WorkBuddy Bench'te herkese açık bir mutabakat sorusu var. İki çalışma sayfası da kanal verisi içeriyor; uzlaşma tutarı bir önceki çeyrekle karşılaştırılan çeyreklik değişime, tahsilat tutarı ise geçen yılın aynı çeyreğiyle karşılaştırılan yıllık değişime bakılarak ölçülüyor. İki baz dönem de bir önceki çeyrek olarak doldurulsa bile başlıklar ve kanal sayısı tamamen doğru olabilir. Uzlaşma tablosundaki "Jinxiu Yaşam Mağazası"nı örnek alırsak, ayrıntılardan yinelenen satırlar ve çeyreği eksik kayıtlar çıkarılıp kanala ve çeyreğe göre toplandığında toplam işlem tutarının 1.569.231,00'den 1.787.311,03'e çıktığı, farkın 218.080,03 olduğu hesaplanabilir. Puanlama programı iki tablonun kanal kapsamını kontrol eder, sonra belirtilen iki kanalın değerlerini örnekleyerek kontrol eder. Bu soruda kanal kapsamı kontrolü yirmi kanalın hepsini kapsar; değer kontrolü ise yalnızca örneklenen iki kanalı.[^ch7-workbuddy-office]
+Bölüm 5 satış tutarını siparişlerden kontrol etmeyi anlatmıştı. Asistan yirmi kanallı bir çeyreklik rapor teslim ederse nereden kontrol etmeye başlarsınız? Tencent WorkBuddy Bench'te herkese açık bir mutabakat sorusu var. İki çalışma sayfası da kanal verisi içeriyor; hesap kesim tutarı bir önceki çeyrekle karşılaştırılan çeyreklik değişime, tahsilat tutarı ise geçen yılın aynı çeyreğiyle karşılaştırılan yıllık değişime bakılarak ölçülüyor. İki baz dönem de bir önceki çeyrek olarak doldurulsa bile başlıklar ve kanal sayısı tamamen doğru olabilir. Hesap kesim tablosundaki "Jinxiu Yaşam Mağazası"nı örnek alırsak, ayrıntılardan yinelenen satırlar ve çeyreği eksik kayıtlar çıkarılıp kanala ve çeyreğe göre toplandığında toplam işlem tutarının 1.569.231,00'den 1.787.311,03'e çıktığı, farkın 218.080,03 olduğu hesaplanabilir. Puanlama programı iki tablonun kanal kapsamını kontrol eder, sonra belirtilen iki kanalın değerlerini örnekleyerek kontrol eder. Bu soruda kanal kapsamı kontrolü yirmi kanalın hepsini kapsar; değer kontrolü ise yalnızca örneklenen iki kanalı.[^ch7-workbuddy-office]
 
 [^ch7-workbuddy-office]: Tencent WorkBuddy Bench ofis görevi `channel-period-compare-L4-017`. Kullanılan veri paketi (revizyon 3e8ad83) özgün çalışma kitabını, başvuru yanıtını ve puanlama programını içerir.
 
@@ -283,7 +283,7 @@ Açık uçlu çıktılarda kalite gereksinimlerinin daha somut yazılması gerek
 
 ### LLM-as-a-Judge: kalite gereksinimlerini madde madde puana çevirmek
 
-Şekil 7-5'te müşteri temsilcisi iade tutarını ve tahmini hesaba geçiş süresini doğru bildirmiş; bütünlük neden yalnızca 2 puan aldı? Puanlama ölçütü iadenin nereye yapılacağını da açıklamayı istiyor; yanıtta "karta geri iade" eksik. Değerlendirme modelinin hangi maddenin eksik olduğunu gösterebilmesi için görevi, puanlama ölçütünü ve başvuru malzemesini birlikte görmesi gerekir.
+Şekil 7-5'te müşteri temsilcisi iade tutarını ve tahmini hesaba geçiş süresini doğru bildirmiş; eksiksizlik neden yalnızca 2 puan aldı? Puanlama ölçütü iadenin nereye yapılacağını da açıklamayı istiyor; yanıtta "ödeme yöntemine geri iade" bilgisi eksik. Değerlendirme modelinin hangi maddenin eksik olduğunu gösterebilmesi için görevi, puanlama ölçütünü ve başvuru malzemesini birlikte görmesi gerekir.
 
 ![Şekil 7-5 LLM-as-a-Judge hattı](images/revised/fig7-5.svg)
 
@@ -306,7 +306,7 @@ Aşağıda oturumlar arası bir bellek sorusu için eksiksiz bir Rubric tasarlan
 | Boyut ve önem | 4 puan: çok iyi | 3 puan: iyi | 2 puan: kısmen yeterli | 1 puan: yetersiz |
 | --- | --- | --- | --- | --- |
 | Olgu doğruluğu: zorunlu | Doktor adı ve kişi ilişkisi doğru | Dr. Chen doğru yanıtlanır, kişi hitabı atlanır | Dr. Chen anılır, ama başka doktorlar da olası yanıt olarak listelenir | Doktor adı yanlış ya da yeterli kanıt varken bilinmediği söylenir |
-| Bilgi bütünlüğü: önemli | "Lily—çocuk doktoru—Dr. Chen" karşılığı açıkça verilir | Doktor adı kısaca yanıtlanır, geçerli soru karşılanır | Yalnızca gidilen kurum ya da olay anlatılır, doktor adı atlanır | İlgili bilgi verilmez |
+| Bilgi eksiksizliği: önemli | "Lily—çocuk doktoru—Dr. Chen" karşılığı açıkça verilir | Doktor adı kısaca yanıtlanır, geçerli soru karşılanır | Yalnızca gidilen kurum ya da olay anlatılır, doktor adı atlanır | İlgili bilgi verilmez |
 | İlişki doğruluğu: önemli | Yanıt iki geçmişi doğru ilişkilendirir, gerektiğinde ilgili dayanağı gösterir | Yanıttaki kişi ilişkisi doğru, dayanak açılmamış | İlgili kişi bulunmuş, ama ilişki belirsiz | Kullanıcının kendisinin ya da başka bir çocuğun doktoru Lily'ye bağlanır |
 
 **Halüsinasyon denetimi ayrı bir veto olarak uygulanır.** Yanıttaki olgular geçmişle desteklenmelidir; ziyaret tarihini, tanı sonucunu ya da doktorun kimliğini uydurmak başarısızlık sayılır. Bu örnekte veto tetiklendiğinde toplam puan sıfırlanır. İlişki doğruluğu yanıt, atıflar ve gözlemlenebilir iz üzerinden puanlanır; kısa yanıt da görevi tamamlayabilir.
@@ -319,13 +319,13 @@ Bu puanlama yöntemini hızla kullanıma almak için doğrudan TypeSafe'in resm�
 
 > **Deney 7-3 ★★: Rubric tabanlı bir kullanıcı belleği değerlendirme sistemi kurmak**
 >
-> Bölüm 3'teki kullanıcı belleği değerlendirme çerçevesinde yapılandırılmış puanlama uygulayın; temel hatırlama, çok oturumlu belirsizlik giderme ve oturumlar arası gizli ilişki olmak üzere üç düzey görevi kapsayın. Değerlendirme boyutları olgu doğruluğu, olgu bütünlüğü, ilişki doğruluğu, proaktiflik ve ayrı bir halüsinasyon denetimidir.
+> Bölüm 3'teki kullanıcı belleği değerlendirme çerçevesinde yapılandırılmış puanlama uygulayın; temel hatırlama, çok oturumlu belirsizlik giderme ve oturumlar arası gizli ilişki olmak üzere üç düzey görevi kapsayın. Değerlendirme boyutları olgu doğruluğu, olgu eksiksizliği, ilişki doğruluğu, proaktiflik ve ayrı bir halüsinasyon denetimidir.
 >
-> Olgu doğruluğu verilmiş sayıları, tarihleri ve adları kontrol eder; olgu bütünlüğü yanıtın içermesi gereken kilit olguları; ilişki doğruluğu kişiler, zaman ve olaylar arasındaki ilişkileri; proaktiflik ise dayanağı olan önerilerin ya da risk hatırlatmalarının zamanında sunulup sunulmadığını kontrol eder. İlk dört boyut dört düzeyli puanlama kullanır; her düzeyin yargısı açıkça verilir, örnekler ve sınır durumlar eklenir; halüsinasyon denetimi veto kalemidir.
+> Olgu doğruluğu verilmiş sayıları, tarihleri ve adları kontrol eder; olgu eksiksizliği yanıtın içermesi gereken kilit olguları; ilişki doğruluğu kişiler, zaman ve olaylar arasındaki ilişkileri; proaktiflik ise dayanağı olan önerilerin ya da risk hatırlatmalarının zamanında sunulup sunulmadığını kontrol eder. İlk dört boyut dört düzeyli puanlama kullanır; her düzeyin yargısı açıkça verilir, örnekler ve sınır durumlar eklenir; halüsinasyon denetimi veto kalemidir.
 >
 > Uygulamada ilk iki boyutun alan adı olarak Precision ve Recall korunur; saklanan şey Rubric düzeyidir. İstatistik anlamında kesinlik ve hatırlama bildirmek için sayılabilir olgu birimleri tanımlanmalı, doğru olguların verilmiş olgulara oranı ile kapsanan zorunlu olguların tüm zorunlu olgulara oranı ayrı ayrı hesaplanmalıdır.
 >
-> Deney sonuçlarını okurken önce görevin geçip geçmediğine, sonra kaç puan aldığına bakın. Olgu doğruluğu, olgu bütünlüğü ve ilişki doğruluğu 3 puana ulaştığında ve halüsinasyon vetosu tetiklenmediğinde görev geçmiş sayılır. Sürekli ödül proaktifliği de katar: dört boyutun her biri $(s-1)/3$ ile normalize edilip ortalaması alınır; halüsinasyon çıkarsa ödül sıfırlanır. Örneğin Deney 7-12'de BGE-M3 ile getirme yapılan, yeniden sıralamanın atlandığı ve yanıtı Doubao'nun verdiği bir grup vardı. Bir sigorta hasarı sorusunda dört boyut sırasıyla 3, 3, 3 ve 2 puan aldı. Görev geçti ve sürekli ödül yaklaşık 0,583 oldu.
+> Deney sonuçlarını okurken önce görevin geçip geçmediğine, sonra kaç puan aldığına bakın. Olgu doğruluğu, olgu eksiksizliği ve ilişki doğruluğu 3 puana ulaştığında ve halüsinasyon vetosu tetiklenmediğinde görev geçmiş sayılır. Sürekli ödül proaktifliği de katar: dört boyutun her biri $(s-1)/3$ ile normalize edilip ortalaması alınır; halüsinasyon çıkarsa ödül sıfırlanır. Örneğin Deney 7-12'de BGE-M3 ile getirme yapılan, yeniden sıralamanın atlandığı ve yanıtı Doubao'nun verdiği bir grup vardı. Bir sigorta hasarı sorusunda dört boyut sırasıyla 3, 3, 3 ve 2 puan aldı. Görev geçti ve sürekli ödül yaklaşık 0,583 oldu.
 
 > **Deney 7-4 ★★: Advanced JSON Cards ile RAG'in karşılaştırmalı değerlendirmesi**
 >
@@ -479,7 +479,7 @@ Başarısızlık sınıflandırmasından regresyon görevlerine şu eşleme kuru
 | Doğrulamanın bozulması | Korunan kabul koşulları ve tamamlandı bildiriminin dayandığı gerçek yürütme sonucu |
 | Bilgi aktarımı hatası | Nihai yanıttaki tutar, durum, zaman ve gerekli bildirimin olgularla tutarlılığı |
 
-Bu değerlendirme verileri Bölüm 8'deki model sonrası eğitimi ve Bölüm 9'daki Agent'ın sürekli evrimi için de somut hedefler sağlar.
+Bu değerlendirme verileri Bölüm 8'deki sonradan eğitimi ve Bölüm 9'daki Agent'ın sürekli evrimi için de somut hedefler sağlar.
 
 > **Deney 7-7 ★★: İz öneki sınır değerlendirmesi: aynı context'in birden çok temsili**
 >
@@ -555,7 +555,7 @@ Düşünme sürecini gizleyen modellerde kullanıcının gördüğü ilk token i
 
 **Hız sınırları ve güvenilirlik** hizmetin taşıma kapasitesini etkiler. RPM dakika başına istek sınırını, TPM dakika başına token sınırını gösterir. Seçimde ayrıca zaman aşımları, hız sınırlamaları, hizmet hataları ve uzun görevlerde hedefin korunması ile hatadan kurtarma da gözlemlenmelidir.
 
-**Bütçe–yetenek eğrisi** zaman, token, araç çağrısı sayısı ya da hesaplama artırıldığında görev puanının nasıl değiştiğini gösterir. RE-Bench'in insan–makine karşılaştırmasında ortam başına 2 saatlik toplam bütçede en iyi Agent'ın puanı insan uzmanların yaklaşık 4 katıydı; bütçe 8 saate çıkınca insanlar biraz öne geçti; birkaç denemenin toplamı 32 saat olduğunda insan puanı en iyi Agent'ın yaklaşık 2 katıydı.[^re-bench-2025] İki saatlik sonuçta önde olan Agent, daha uzun çalışma süresinde insanlara geçildi.
+**Bütçe–yetenek eğrisi** zaman, token, araç çağrısı sayısı ya da hesaplama artırıldığında görev puanının nasıl değiştiğini gösterir. RE-Bench'in insan–makine karşılaştırmasında ortam başına 2 saatlik toplam bütçede en iyi Agent'ın puanı insan uzmanların yaklaşık 4 katıydı; bütçe 8 saate çıkınca insanlar biraz öne geçti; birkaç denemenin toplamı 32 saat olduğunda insan puanı en iyi Agent'ın yaklaşık 2 katıydı.[^re-bench-2025] İki saatlik bütçede önde olan Agent'ı, çalışma süresi uzadıkça insanlar geride bıraktı.
 
 Çoklu model iş birliği görev türüne göre iş bölümü yapabilir: hafif model kendisine uygun istekleri, daha yetenekli model karmaşık orkestrasyonu, özel modeller ise görüntü anlama ya da kod üretimini üstlenir. Yönlendiricinin kendisi de değerlendirilmelidir. Örneğin "9.9 ile 9.11'den hangisi büyük" cümlesi kısadır ama sayısal anlama içerir; "oto yıkama evden 50 metre uzakta, yürüyerek mi gideyim arabayla mı" ise görevin amacını da düşünmeyi gerektirir. Doğru yönlendirmenin, yanlış yönlendirmenin ve devirle kurtarmanın etkisi ayrı ayrı sayılır, sonra tek modelli çözümle bütün görevin kalitesi, gecikmesi ve maliyeti karşılaştırılır. Yazar daha karmaşık bir model bileşimini ancak genel kazanç yönlendirme hatalarını ve bakım maliyetini karşılamaya yettiğinde benimser.
 
@@ -563,7 +563,7 @@ Düşünme sürecini gizleyen modellerde kullanıcının gördüğü ilk token i
 
 Aynı görevde farklı modeller farklı eylem yolları izleyebilir. Coding Agent'larda tipik bir fark **eylem eşiğidir**: bazı modeller önce depoyu geniş çapta okuyup sonra değişikliğe başlar; bazıları yerel bilgiye dayanarak önce yama yapar, sonra testlerle anlayışını tamamlar. Birincisi keşfe daha çok zaman ayırır, ikincisi yerel yargıyı düzeltmek için hızlı geri bildirime daha çok dayanır.
 
-Bu eğilimi model ile Harness birlikte biçimlendirir. Sistem prompt'u önce kuralları kontrol etmeyi, önce testleri çalıştırmayı ya da keşif kapsamını denetlemeyi şart koşabilir; sonrası eğitim de modelin varsayılan eylem biçimini etkiler. SFT izleri ne zaman okunup ne zaman değiştirileceğini gösterir, süreç ödülü somut araç yollarını değerlendirir, sonuç ödülü başarılı izlerdeki davranış bileşimlerini pekiştirir. Bu alışkanlıkları gözlemlemek için ara davranışlar da değerlendirme nesnesi yapılmalıdır.
+Bu eğilimi model ile Harness birlikte biçimlendirir. Sistem prompt'u önce kuralları kontrol etmeyi, önce testleri çalıştırmayı ya da keşif kapsamını denetlemeyi şart koşabilir; sonradan eğitim de modelin varsayılan eylem biçimini etkiler. SFT izleri ne zaman okunup ne zaman değiştirileceğini gösterir, süreç ödülü somut araç yollarını değerlendirir, sonuç ödülü başarılı izlerdeki davranış bileşimlerini pekiştirir. Bu alışkanlıkları gözlemlemek için ara davranışlar da değerlendirme nesnesi yapılmalıdır.
 
 > **Deney 7-9 ★★: Sabit bir Coding Harness'ta modelin eylem eşiğini ölçmek**
 >
@@ -593,10 +593,10 @@ Tablo 7-4 Sekiz turlu sabit akışın model çağrısı maliyeti
 
 | Çözüm | Girdi token'ı | Önbellek token'ı | Model maliyeti | Temele göre tasarruf |
 | --- | ---: | ---: | ---: | ---: |
-| Kararsız önek, geçmiş korunur | 20,700 | 0 | $0.003776 | — |
-| Yalnızca kararlı önek | 20,386 | 13,568 | $0.002708 | %28,3 |
-| Yalnızca geçmiş sıkıştırma | 16,177 | 0 | $0.003115 | %17,5 |
-| Kararlı önek ve sıkıştırma birlikte | 16,035 | 6,144 | $0.002643 | %30,0 |
+| Kararsız önek, geçmiş korunur | 20.700 | 0 | $0,003776 | — |
+| Yalnızca kararlı önek | 20.386 | 13.568 | $0,002708 | %28,3 |
+| Yalnızca geçmiş sıkıştırma | 16.177 | 0 | $0,003115 | %17,5 |
+| Kararlı önek ve sıkıştırma birlikte | 16.035 | 6.144 | $0,002643 | %30,0 |
 
 Girdi token sütunu önbellekli bölümü içerir; ücretlendirmede önbellekli ve önbelleksiz girdi ayrılmalıdır. Temel grupta her turun girdisi 1113'ten 3668 token'a çıkar; araç sonuçları sekiz turda toplam 9544 girdi token'ı katkısı yapar. İki iyileştirme birlikte açıldığında araç sonuçlarının katkısı 5248 token'a iner.
 
@@ -634,7 +634,7 @@ Karşılaştırma sonuçları çoğu zaman göreve göre değişir. Örneğin ye
 >
 > Bölüm 3'teki context getirmeyi ya da Agent'a dayalı RAG'i yeniden kullanarak aynı 60 kullanıcı belleği soru kümesinde gömme modeli, yeniden sıralayıcı ve Agent ana modeli olmak üzere üç seçim noktasını karşılaştırın.
 >
-> Gömme modelleri BGE-M3, OpenAI, Qwen ya da Mistral'ın ilgili sürümlerini içerebilir; yeniden sıralayıcı grubu yeniden sıralamasız temel düzeni ve anlamsal yeniden sıralama yapılandırmasını kapsar; ana modeller aynı getirme koşullarında görev başarı oranı ve araç kullanım verimliliğiyle karşılaştırılır. Top-5 isabet oranını, gerekli bilgi hatırlamasını, getirme gecikmesini ve maliyeti ayrı ayrı kaydedin, sonra nihai yanıtların Rubric puanlarını yazın.
+> Gömme modelleri BGE-M3, OpenAI, Qwen ya da Mistral'ın ilgili sürümlerini içerebilir; yeniden sıralayıcı grubu yeniden sıralamasız temel çizgiyi ve anlamsal yeniden sıralama yapılandırmasını kapsar; ana modeller aynı getirme koşullarında görev başarı oranı ve araç kullanım verimliliğiyle karşılaştırılır. Top-5 isabet oranını, gerekli bilgi hatırlamasını, getirme gecikmesini ve maliyeti ayrı ayrı kaydedin, sonra nihai yanıtların Rubric puanlarını yazın.
 >
 > Eşlik eden matris 4 gömme, 3 yeniden sıralama yapılandırması ve 2 ana model kullanarak 24 yapılandırma oluşturuyor. Çözümlerken önce diğer iki seçim noktasını sabitleyip tek tek değişimleri karşılaştırın, sonra bileşim etkilerine bakın: yeniden sıralama hangi getirme koşullarında kazanç getiriyor, ana model dağınık kanıtı kullanabiliyor mu, kritik olgu eksik olduğunda nasıl davranıyor.
 >
@@ -763,7 +763,7 @@ Yukarıda değerlendirme ortamı, veri kümesi ve rapor çözümlemesi anlatıld
 
 ### Ablasyon altyapısı: özelliklerin katkısını karşılaştırmak
 
-**Ablasyon deneyi (Ablation Study)** bir bileşeni kapatarak ya da değiştirerek sistem davranışındaki değişimi gözler. Agent'ta düşünme bütçesi, context sıkıştırma, otomatik bellek ve arka plan görevleri ayrı ayrı denetlenebilir; bir grup özellik kapatılarak daha sade bir mühendislik temel düzeni de kurulabilir.
+**Ablasyon deneyi (Ablation Study)** bir bileşeni kapatarak ya da değiştirerek sistem davranışındaki değişimi gözler. Agent'ta düşünme bütçesi, context sıkıştırma, otomatik bellek ve arka plan görevleri ayrı ayrı denetlenebilir; bir grup özellik kapatılarak daha sade bir mühendislik temel çizgisi de kurulabilir.
 
 Tek tek ablasyon bir özelliğin marjinal katkısını anlamaya, bileşim ablasyonu ise bağımlılık ilişkilerini görmeye yarar. Örneğin geçmiş sıkıştırma girdi maliyetini düşürebilir, ama önbellek isabetini de etkileyebilir; otomatik belleğin kazancı da context bütçesine göre değişebilir.
 
@@ -811,7 +811,7 @@ Tür sistemi veri akışını kısıtlamaya yardım edebilir. Örneğin analiz a
 
 Bu yetenekler sürekli değerlendirmeyi birlikte destekler: ablasyon bileşenlerin katkısını, A/B testi ürün etkisini, özellik anahtarları deney koşullarını sabitlemeyi, prompt anlık görüntüleri davranış girdisinin izlenmesini, veri toplama ise vargılara malzeme sağlamayı üstlenir.
 
-## Simülasyon ortamları: değerlendirmeden sonrası eğitime köprü
+## Simülasyon ortamları: değerlendirmeden sonradan eğitime köprü
 
 Değerlendirme ortamları görev, etkileşim arayüzü ve kabul biçimi sağlar. Eğitimde de kullanılacaksa aynı mekanizma tekrar tekrar örnekleme, geri bildirim üretme ve iz biriktirmeyi de desteklemelidir. **Simülasyon ortamı**, kontrollü bir ortam modeli ya da yürütme sistemiyle Agent'ın sıfırlanabilir koşullarda etkileşmesini sağlar; hem değerlendirmede hem eğitimde kullanılabilir.
 
@@ -825,11 +825,11 @@ Değerlendirme ortamı seçerken önce hangi hatanın açığa çıkmasını ist
 
 **Dijital ortamlar** araç hizmetlerini, dosya sistemini ve uygulama durumunu denetimli yürütme ortamına alabilir. AWorld'ün GAIA araç ortamı örneği 26 MCP sunucusu ve 126 araç fonksiyonu sağlıyor ve dağıtık zamanlama kullanıyor; örnekte yürütme süresi sıralı 7695 saniyeden 525 saniyeye, yaklaşık 14,6 kat hızlanmaya indi.
 
-**Gömülü ortamlar** ayrıca fiziksel durumu ve denetim sürecini taklit etmelidir. RoboTwin2 bir fizik motoru üzerinde iki kollu işlem görevleri sunar ve nesne konumunu, yönünü, görünüşünü ve diğer ortam parametrelerini rastgeleleştirebilir. Model kamera görüntüsünden ve robot durumundan eylem üretir, ortam yürüttükten sonra yeni gözlem döndürür. **Eylem parçalama (Action Chunking)** kullanan politikalar bir seferde birkaç sonraki eylemi üretir, sonra denetim protokolüne göre yürütülüp gözlem güncellenir; ilgili mekanizmalar Bölüm 6'da.
+**Bedenlenmiş ortamlar** ayrıca fiziksel durumu ve denetim sürecini taklit etmelidir. RoboTwin2 bir fizik motoru üzerinde iki kollu işlem görevleri sunar ve nesne konumunu, yönünü, görünüşünü ve diğer ortam parametrelerini rastgeleleştirebilir. Model kamera görüntüsünden ve robot durumundan eylem üretir, ortam yürüttükten sonra yeni gözlem döndürür. **Eylem parçalama (Action Chunking)** kullanan politikalar bir seferde birkaç sonraki eylemi üretir, sonra denetim protokolüne göre yürütülüp gözlem güncellenir; ilgili mekanizmalar Bölüm 6'da.
 
-OSWorld'in sanal makine anlık görüntüleri ve AndroidWorld'ün uygulama durumu başlatması da tekrarlanabilir etkileşime hizmet eder. Dijital ve gömülü ortamlar Bölüm 4'teki yalıtılmış yürütme mekanizmalarıyla, Bölüm 6'daki bağımsız kimlik ve insan devralma tasarımıyla birleştirilebilir: hesaplama kaynakları, dosya erişimi, dış yetkiler ve gerekli kimlik doğrulama aşamaları ayrı ayrı yönetilir, göreve göre paylaşılan dosya sistemi ya da bağımsız örnek seçilir.
+OSWorld'in sanal makine anlık görüntüleri ve AndroidWorld'ün uygulama durumu başlatması da tekrarlanabilir etkileşime hizmet eder. Dijital ve bedenlenmiş ortamlar Bölüm 4'teki yalıtılmış yürütme mekanizmalarıyla, Bölüm 6'daki bağımsız kimlik ve insan devralma tasarımıyla birleştirilebilir: hesaplama kaynakları, dosya erişimi, dış yetkiler ve gerekli kimlik doğrulama aşamaları ayrı ayrı yönetilir, göreve göre paylaşılan dosya sistemi ya da bağımsız örnek seçilir.
 
-> **Deney 7-14 ★★: OpenVLA ve RoboTwin2 gömülü yapay zekâ ortamını yapılandırmak**
+> **Deney 7-14 ★★: OpenVLA ve RoboTwin2 bedenlenmiş yapay zekâ ortamını yapılandırmak**
 >
 > OpenVLA ve SimpleVLA-RL'in mimarisini ve arayüz açıklamalarını okuyup görsel kodlamanın, dil koşulunun ve eylem çıktısının nasıl bağlandığını anlayın. RoboTwin2'yi yapılandırın ve kullanılan politika ile robot arayüzünü netleştirin: üç görüşlü RGB ve iki kolda toplam 14 boyutlu eklem durumu gözlemi, 14 boyutlu eklem denetim vektörüne karşılık geliyorsa eklem sırasını, tutucu alanını ve normalizasyon biçimini madde madde kontrol edin.
 >
@@ -839,7 +839,7 @@ OSWorld'in sanal makine anlık görüntüleri ve AndroidWorld'ün uygulama durum
 
 Şekil 7-10'da politika kamera görüntüsüne ve robot durumuna göre eylemi hesaplar, uyarlama katmanı eylemi simülatöre verir. Politika bu eylemin sonucunu ancak bir sonraki kare döndüğünde görebilir. Politika değiştirilirken kamera sayısı, durum girdisi ve eylem başlığı tek tek kontrol edilmelidir. Program çalışsa bile eylemlerin anlamı değişmiş olabilir.
 
-![Şekil 7-10 OpenVLA ve RoboTwin2 gömülü yapay zekâ ortamı](images/revised/fig7-10.svg)
+![Şekil 7-10 OpenVLA ve RoboTwin2 bedenlenmiş yapay zekâ ortamı](images/revised/fig7-10.svg)
 
 ### Sadakat ödünleşimi ve alan rastgeleleştirmesi
 
@@ -847,7 +847,7 @@ Sadakat hedef göreve göre seçilmelidir. Tutma görevleri makul çarpışma, s
 
 **Alan rastgeleleştirmesi (Domain Randomization)** fizik parametrelerini, görsel görünüşü, nesne konumlarını ve algılayıcı gürültüsünü değiştirerek politikanın daha geniş koşullarla karşılaşmasını sağlar. Rastgelelik aralığı beklenen dağıtım değişimlerini kapsamalı, aynı zamanda görevin çözülebilirliğini korumalıdır. Örneğin ışığı ve arka planı değiştirmek modelin rastlantısal görsel ipuçlarına dayanıp dayanmadığını kontrol etmeye, sürtünme ve nesne kütlesini değiştirmek ise eylemlerin dinamik değişime uyum sağlayıp sağlamadığını sınamaya yarar.
 
-Dijital ortamlarda da simülasyon ile gerçek çalışma arasında fark vardır; örneğin arayüz render'ı, hizmet gecikmesi ve başarısızlık biçimleri. Denetimli ortama gecikme, yerel arıza ve düzen değişiklikleri eklenebilir, sonra bağımsız hedef ortamla aktarım etkisi ölçülebilir. Böylece ortam hem değerlendirmeye tekrarlanabilir koşullar hem de sonrası eğitime çeşitlendirilmiş etkileşim sağlar.
+Dijital ortamlarda da simülasyon ile gerçek çalışma arasında fark vardır; örneğin arayüz render'ı, hizmet gecikmesi ve başarısızlık biçimleri. Denetimli ortama gecikme, yerel arıza ve düzen değişiklikleri eklenebilir, sonra bağımsız hedef ortamla aktarım etkisi ölçülebilir. Böylece ortam hem değerlendirmeye tekrarlanabilir koşullar hem de sonradan eğitime çeşitlendirilmiş etkileşim sağlar.
 
 [^re-bench-2025]: Wijk, Hjalmar, et al. *RE-Bench: Evaluating Frontier AI R&D Capabilities of Language Model Agents against Human Experts.* arXiv:2411.15114, 2025.
 

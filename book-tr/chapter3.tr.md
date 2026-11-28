@@ -50,7 +50,7 @@ Açık kıyaslama **LoCoMo** (Long-term Conversational Memory, uzun süreli konu
 
 [^ch3-locomo]: Maharana ve arkadaşlarının LoCoMo makalesi (arXiv:2402.17753) Kısım 4.1'de beş soru-cevap türünün tanımlarını verir. Yazarların proje sayfası veriyi ve konuşma örneklerini sunar.
 
-Bu tür kıyaslamaları ve bellek ürünlerindeki pratiği birlikte değerlendirerek dikkat edilmesi gereken yetenekleri sekiz maddede topluyorum:
+Bu tür kıyaslamaları ve bellek ürünlerindeki pratiği birlikte değerlendirerek dikkat edilmesi gereken yetenekleri yazar sekiz maddede topluyor:
 
 - **Kişisel bilginin korunması**: Kullanıcının kimliği gibi uzun süreli bilgileri doğru saklamak ve geri getirmek.
 - **Tercih takibi**: Kullanıcı tercihlerini kaydetmek ve yeni açık ifadelerle güncellemek.
@@ -119,9 +119,9 @@ Kullanıcı "ailem için yıllık sağlık kontrolü ayarla" dediğinde sistem `
 
 ### İleri bilgi temsili biçimi: yürütülebilir kod
 
-Olgular saklandıktan sonra istatistik toplamak, çelişkileri kontrol etmek ve iş kurallarına göre bir sonraki adıma karar vermek de gerekir. **User as Code** (UaC) çalışmasında kullanıcı bilgilerini türlendirilmiş Python nesneleri olarak düzenlemeyi ve bu işlemleri fonksiyon olarak yazmayı denedim[^uac]. Model olguları konuşmadan çıkarır, program ise iyi tanımlanmış hesaplamaları yürütür.
+Olgular saklandıktan sonra istatistik toplamak, çelişkileri kontrol etmek ve iş kurallarına göre bir sonraki adıma karar vermek de gerekir. Yazar **User as Code** (UaC) çalışmasında kullanıcı bilgilerini türlendirilmiş Python nesneleri olarak düzenlemeyi ve bu işlemleri fonksiyon olarak yazmayı denedi[^uac]. Model olguları konuşmadan çıkarır, program ise iyi tanımlanmış hesaplamaları yürütür.
 
-Tarih karşılaştırması, tutar toplama ve açık iş kısıtları için hesaplamayı fonksiyon olarak yazmayı tercih ederim; böylece aynı olgu kümesi yeniden üretilebilir ve test edilebilir sonuçlar verir. Model anlamsal anlamaya odaklanabilir; uzun konuşmalarda tekrar tekrar zihinden hesap yapma ve kuralları kontrol etme yükü azalır. Belleğin temsili ve kullanımı da aynı kod içinde denetlenebilir.
+Tarih karşılaştırması, tutar toplama ve açık iş kısıtları için yazar hesaplamayı fonksiyon olarak yazmayı tercih ediyor; böylece aynı olgu kümesi yeniden üretilebilir ve test edilebilir sonuçlar verir. Model anlamsal anlamaya odaklanabilir; uzun konuşmalarda tekrar tekrar zihinden hesap yapma ve kuralları kontrol etme yükü azalır. Belleğin temsili ve kullanımı da aynı kod içinde denetlenebilir.
 
 UaC iki aşamalı bir akış kullanır: önce çıkarılan olgular bir günlüğe eklenir, sonra düzenli aralıklarla kontrol noktası üretilip türlendirilmiş durum günlükten yeniden kurulur. Günlük olguların kaynağını ve değişim sürecini korur; durum nesnesi ise o an sorgulanabilecek alanları sağlar.
 
@@ -248,7 +248,7 @@ Memobase yeni konuşmayı önce bir tampona alır; tampon belirli bir boyuta ula
 
 Asistanın hem son bilet alımının akışını hatırlaması hem kullanıcının koltuk tercihine ve bilet iadesi sürecine hâkim olması gerekiyorsa, Şekil 3-4'teki gibi olaylar, olgular ve akışlar ayrı ayrı saklanabilir. Her görev geldiğinde de işe yarayan kısımlar çalışma belleğine konur.
 
-![Şekil 3-4 Çok türlü belleğin birlikte çalıştığı bir başvuru mimarisi](images/revised/fig3-4.svg)
+![Şekil 3-4 Çok türlü belleğin birlikte çalıştığı bir referans mimari](images/revised/fig3-4.svg)
 
 Epizodik bellek olay dizisini ve zaman damgası, duygu etiketi, görev tanımlayıcısı gibi meta verileri saklar; zaman ve konuya göre birleşik arama yapılabilir. Örneğin "bütçeyi en son konuştuğumuzda" konu eşleşmesinin yanı sıra zamana göre sıralamayı da gerektirir. Semantik bellek olaylardan çıkarılan olguları ve tercihleri, prosedürel bellek ise tekrar tekrar kullanılan akışları saklar.
 
@@ -335,9 +335,9 @@ $$
 >
 > "Kedi nasıl beslenir" $A=(0.9,0.5,0.1)$, "Kedi besleme rehberi" $B=(0.8,0.6,0.1)$ ve "Hisse yatırım stratejisi" $C=(0.1,0.1,0.9)$ cümleleri için üç örnek vektör kullanalım.
 >
-> $A\cdot B=0.9\times0.8+0.5\times0.6+0.1\times0.1=1.03$. İkisinin büyüklüğü sırasıyla $\sqrt{1.07}$ ve $\sqrt{1.01}$; benzerlik yaklaşık **0.991**.
+> $A\cdot B=0.9\times0.8+0.5\times0.6+0.1\times0.1=1.03$. İkisinin büyüklüğü sırasıyla $\sqrt{1.07}$ ve $\sqrt{1.01}$; benzerlik yaklaşık **0,991**.
 >
-> $A\cdot C=0.9\times0.1+0.5\times0.1+0.1\times0.9=0.23$, $C$'nin büyüklüğü $\sqrt{0.83}$; benzerlik yaklaşık **0.244**. Bu vektörlerde kediyle ilgili sorgu besleme rehberine daha yakındır.
+> $A\cdot C=0.9\times0.1+0.5\times0.1+0.1\times0.9=0.23$, $C$'nin büyüklüğü $\sqrt{0.83}$; benzerlik yaklaşık **0,244**. Bu vektörlerde kediyle ilgili sorgu besleme rehberine daha yakındır.
 
 Gerçek modeller genellikle yüzlerden binlerceye uzanan boyutlar kullanır.
 
@@ -376,7 +376,7 @@ Gerçek modeller genellikle yüzlerden binlerceye uzanan boyutlar kullanır.
 > | Hatırlama ve hız | Ağaç sayısı ve sorgu arama bütçesiyle ayarlanır | Kurma parametreleri ve sorgu arama kapsamıyla ayarlanır |
 > | Kullanım senaryosu | Dağıtılması ve paylaşılması kolay statik indeks | Sürekli yazılan ve sorgulanan dinamik indeks |
 >
-> Bu çalıştırmada önce 240 metin parçasıyla bir kütüphane kuruldu. Aynı 20 sorgu için iki indeks de kesin aramanın bulduğu ilk 10 komşunun hepsini buldu. İlk kurulumda ANNOY bir Linux konteynerinde yaklaşık 13 milisaniyede, HNSW yerel ortamda yaklaşık 78 milisaniyede kuruldu; kaydedilen indeksler sırasıyla yaklaşık 1,40 MB ve 1,02 MB'tı. Kalan 60 parça eklendiğinde ANNOY indeksi yeniden kurdu, HNSW ise yeni vektörleri doğrudan ekledi. Bu noktada kütüphanede 300 parça vardı ve önceki komşular da değişmiş olabilirdi. Yeni kütüphanede kesin arama yeniden yapıldığında iki indeksin ortalama hatırlama oranı yine %100'dü.
+> Bu çalıştırmada önce 240 metin parçasıyla bir veri kümesi kuruldu. Aynı 20 sorgu için iki indeks de kesin aramanın bulduğu ilk 10 komşunun hepsini buldu. İlk kurulumda ANNOY bir Linux konteynerinde yaklaşık 13 milisaniyede, HNSW yerel ortamda yaklaşık 78 milisaniyede kuruldu; kaydedilen indeksler sırasıyla yaklaşık 1,40 MB ve 1,02 MB'tı. Kalan 60 parça eklendiğinde ANNOY indeksi yeniden kurdu, HNSW ise yeni vektörleri doğrudan ekledi. Bu noktada veri kümesinde 300 parça vardı ve önceki komşular da değişmiş olabilirdi. Yeni veri kümesinde kesin arama yeniden yapıldığında iki indeksin ortalama hatırlama oranı yine %100'dü.
 
 [^ch3-ann]: Spotify'ın Annoy proje açıklaması salt okunur indeksin nasıl kurulacağını, bellek eşlemeyle nasıl yükleneceğini ve sorguda incelenen düğüm sayısının `search_k` ile nasıl ayarlanacağını anlatır. hnswlib proje açıklamasının Python arayüzü bölümü vektör eklemek için `add_items` yöntemini ve sorgu kapsamını ayarlamak için `set_ef` yöntemini verir.
 
@@ -424,13 +424,13 @@ Pay sözcüğü içermeyen belgelerin sayısını, payda ise içeren belgelerin 
 >
 > | Sorgu sözcüğü | Belge | Terim sıklığı TF | Belge uzunluğu | BM25 katkısı |
 > | --- | --- | ---: | ---: | ---: |
-> | model | doc_1 | 5 | 200 | 1.52 |
-> | model | doc_3 | 2 | 500 | 0.82 |
-> | model | doc_7 | 8 | 150 | 1.68 |
-> | damıtma | doc_1 | 3 | 200 | 2.15 |
-> | damıtma | doc_5 | 1 | 250 | 1.22 |
+> | model | doc_1 | 5 | 200 | 1,52 |
+> | model | doc_3 | 2 | 500 | 0,82 |
+> | model | doc_7 | 8 | 150 | 1,68 |
+> | damıtma | doc_1 | 3 | 200 | 2,15 |
+> | damıtma | doc_5 | 1 | 250 | 1,22 |
 >
-> İki sözcüğün doc_1'deki katkılarının toplamı yaklaşık 3,67'dir; sıralama **doc_1 (3.67) > doc_7 (1.68) > doc_5 (1.22) > doc_3 (0.82)** olur. doc_1'de "damıtma"nın terim sıklığı "model"inkinden düşüktür, ama daha nadir olduğu için nihai katkısı daha büyüktür; iki sözcüğün birlikte eşleşmesi de toplam puanı ayrıca yükseltir.
+> İki sözcüğün doc_1'deki katkılarının toplamı yaklaşık 3,67'dir; sıralama **doc_1 (3,67) > doc_7 (1,68) > doc_5 (1,22) > doc_3 (0,82)** olur. doc_1'de "damıtma"nın terim sıklığı "model"inkinden düşüktür, ama daha nadir olduğu için nihai katkısı daha büyüktür; iki sözcüğün birlikte eşleşmesi de toplam puanı ayrıca yükseltir.
 >
 > Şimdi eşlik eden deneyin İngilizce derleminde `cat` sorgusunu yapın. İlgili olarak işaretlenmiş iki kısa metin sırasıyla `kitten` ve `feline` kullanıyor; ters indekste `cat` bulunamıyor ve aday listesi boş kalıyor. Yukarıdaki terim sıklığı ağırlıkları ne kadar yükseltilirse yükseltilsin puanlanacak tek bir belge yok. Bu iki kısa metindeki sözcüklerle yeniden sorgularsanız her birinin aday listesine girdiğini görürsünüz.
 
@@ -488,11 +488,11 @@ Bu kısımda sırasıyla birkaç düzenleme biçimini tartışıyoruz: RAPTOR ve
 
 Önce sorgunun ihtiyaç duyduğu bilgi ile ham kayıtlar arasındaki açığı anlamak için iki örneğe bakalım.
 
-**Örnek bir: siyah ve beyaz kedileri saymak.** Önceki bölümde program 100 kafesi sayıp 90 siyah ve 10 beyaz kedi buldu. Bu kez getiriciden yalnızca üst sıradaki 20 kaydı döndürmesini istiyoruz. Bunların 18'inin geçerli renk bilgisi verdiğini, 15'inin siyah, 3'ünün beyaz kedi olduğunu varsayalım. Hesaplanan %83,3 (15/18) bu geçerli kayıtlar arasındaki siyah kedi oranıdır; dükkânın tamamında siyah kedi oranı ise %90'dır (90/100). Getirici kayıtları ilgililiğe göre seçer; dükkânın tamamı için temsilî bir örneklem çekmez.
+**Birinci örnek: siyah ve beyaz kedileri saymak.** Önceki bölümde program 100 kafesi sayıp 90 siyah ve 10 beyaz kedi buldu. Bu kez getiriciden yalnızca üst sıradaki 20 kaydı döndürmesini istiyoruz. Bunların 18'inin geçerli renk bilgisi verdiğini, 15'inin siyah, 3'ünün beyaz kedi olduğunu varsayalım. Hesaplanan %83,3 (15/18) bu geçerli kayıtlar arasındaki siyah kedi oranıdır; dükkânın tamamında siyah kedi oranı ise %90'dır (90/100). Getirici kayıtları ilgililiğe göre seçer; dükkânın tamamı için temsilî bir örneklem çekmez.
 
 Dükkânın genel oranı sık soruluyorsa bütün kafesler önceden sayılabilir, siyah ve beyaz kedilerin sayısı saklanabilir, istatistiğin kapsamı ve güncellenme zamanı da belirtilebilir. Kafesteki kedi değişirse ilgili ayrıntı güncellenip toplam yeniden hesaplanır. 37 numaralı kafeste ne olduğu sorulursa yine o ayrıntı kaydına bakmak gerekir.
 
-**Örnek iki: hemşireler doktorlara verilen indirimden yararlanabilir mi?** Xfinity indirim danışmanlığı etrafında kurgulanmış bir öğretim senaryosunu ele alalım: iş kayıtlarında gazi John onaylanmış, doktor Sarah indirim almış, öğretmen Mike'a ise koşulları karşılamadığı söylenmiş. Her iş kaydı bir işlem sonucunu kaydediyor. Bir hemşire indirimden yararlanıp yararlanamayacağını sorduğunda yalnızca benzer iş kayıtlarını getirmek üç sorunla karşılaşır.
+**İkinci örnek: hemşireler doktorlara verilen indirimden yararlanabilir mi?** Xfinity indirim danışmanlığı etrafında kurgulanmış bir öğretim senaryosunu ele alalım: iş kayıtlarında gazi John onaylanmış, doktor Sarah indirim almış, öğretmen Mike'a ise koşulları karşılamadığı söylenmiş. Her iş kaydı bir işlem sonucunu kaydediyor. Bir hemşire indirimden yararlanıp yararlanamayacağını sorduğunda yalnızca benzer iş kayıtlarını getirmek üç sorunla karşılaşır.
 
 - **Meslekler benzer diye aynı indirim geçerli olmayabilir.** "Hemşire" ile "doktor" anlamca yakındır ve Sarah'ın kaydı üst sıralarda çıkabilir; ama indirimin geçerli olup olmadığı kampanya koşullarının kimlerin başvurabileceğini ve hangi belgenin gösterilmesi gerektiğini nasıl belirlediğine bağlıdır.
 - **Tek tek iş kayıtları geçerlilik koşullarının tamamını listelemez.** Birinin onaylanması, yalnızca o kişinin o koşullardaki sonucunu doğrudan açıklar; getirme sayısını artırmak da hiç görülmemiş kategorileri ya da istisnaları bulmayı garanti etmez.
@@ -500,11 +500,11 @@ Dükkânın genel oranı sık soruluyorsa bütün kafesler önceden sayılabilir
 
 İndeksleme sırasında aynı kampanyanın iş kayıtları birbirine bağlanabilir, ardından ilgili resmî koşullara bakılıp geçerli kişiler, istisnalar, yürürlük tarihi ve madde kaynağı bir kural kartı olarak derlenebilir. Örneğin bu öğretim senaryosundaki koşullar muvazzaf ve emekli askerleri ile lisanslı sağlık personelini açıkça kapsıyor, öğretmen kategorisini dışlıyorsa bu koşullar madde madde saklanır; hemşirenin sağlık personeli kapsamına girip girmediği de koşullarla teyit edilir. İş kayıtları gerçek işlem sürecini açıklamak ve uygulama farklarını bulmak için saklanmaya devam eder.
 
-Bu iki örnek farklı bilgi ihtiyaçlarını gösteriyor: kedi saymak dükkânın tüm kafeslerini toplamayı, kimin indirimden yararlanabileceğine karar vermek ise eksiksiz koşulları ve istisnaları bulmayı gerektirir. Bu tür sorgularda yazar istatistiklerin ve kuralların kütüphane kurma aşamasına öne alınmasını savunuyor. Yalnızca dönen parçaları çoğaltmakla model eksiksiz istatistik kapsamını ya da bu başvurunun kabul edilmesini belirleyen koşulları göremeyebilir. Görev etrafında istatistik özetleri, kural kartları ve kaynak ilişkileri kurulduğunda getirme, kararı desteklemeye yetecek bilgiyi tek seferde getirebilir ve özgün malzemeye geri bakmayı sürdürebilir.
+Bu iki örnek farklı bilgi ihtiyaçlarını gösteriyor: kedi saymak dükkânın tüm kafeslerini toplamayı, kimin indirimden yararlanabileceğine karar vermek ise eksiksiz koşulları ve istisnaları bulmayı gerektirir. Bu tür sorgularda yazar istatistiklerin ve kuralların bilgi tabanını kurma aşamasına öne alınmasını savunuyor. Yalnızca dönen parçaları çoğaltmakla model eksiksiz istatistik kapsamını ya da bu başvurunun kabul edilmesini belirleyen koşulları göremeyebilir. Görev etrafında istatistik özetleri, kural kartları ve kaynak ilişkileri kurulduğunda getirme, kararı desteklemeye yetecek bilgiyi tek seferde getirebilir ve özgün malzemeye geri bakmayı sürdürebilir.
 
 ### Yapılandırılmış indeks: hiyerarşi ve ilişki kurmak
 
-Uzun bir rapor okurken "onarım başvurusunda hangi alan doldurulacak" sorusunun yanıtı çoğu zaman tek bir paragrafta bulunur; "birkaç arıza türü neden tekrar tekrar ortaya çıkıyor" sorusu ise birkaç bölüme yayılır. Bu tür sorguları birlikte ele almak istiyorsanız kütüphane kurulurken özetler üretilebilir, hiyerarşi kurulabilir ya da varlıklar ve ilişkiler çıkarılabilir. Aşağıdaki RAPTOR özyinelemeli özetlerle hiyerarşi kurar; GraphRAG ise malzemeyi varlık ilişkileri ve topluluk özetleriyle düzenler.
+Uzun bir rapor okurken "onarım başvurusunda hangi alan doldurulacak" sorusunun yanıtı çoğu zaman tek bir paragrafta bulunur; "birkaç arıza türü neden tekrar tekrar ortaya çıkıyor" sorusu ise birkaç bölüme yayılır. Bu tür sorguları birlikte ele almak istiyorsanız bilgi tabanı kurulurken özetler üretilebilir, hiyerarşi kurulabilir ya da varlıklar ve ilişkiler çıkarılabilir. Aşağıdaki RAPTOR özyinelemeli özetlerle hiyerarşi kurar; GraphRAG ise malzemeyi varlık ilişkileri ve topluluk özetleriyle düzenler.
 
 **RAPTOR** (Recursive Abstractive Processing for Tree-Organized Retrieval) metin parçalarından başlar, önce her parçayı vektöre kodlar, benzerliğe göre gruplara ayırır, sonra her grup için özet üretir. Özetleri yeni bir metin parçası kümesi sayıp bu adımları yinelediğinizde Şekil 3-10'daki ağaç oluşur. Okları 3, 4 ve 5 numaralı parçalardan yukarı izlerseniz bunların birlikte B özetini ürettiğini, bir üstte A, B ve C gruplarının özetlerinin de genel özete dönüştüğünü görürsünüz.[^ch3-raptor]
 
@@ -565,7 +565,7 @@ Sorgu önce özeti okuyup konumu belirleyebilir, sonra genel bakışı okuyup do
 
 Bilgiyi dosya sistemiyle düzenlemek, **ilgili kayıtlar için bağlantı ve indeks kurmayı** da zorunlu kılar. Birbirine atıf yapmayan bir dosya yığınında ilişkiler yalnızca tam metin taramasıyla ya da anlamsal aramayla yeniden bulunabilir; dosya sayısı arttıkça Agent'ın bulduğu içerikten devam ederek izlemesi de zorlaşır. Bağlantılar net arama yolları sağlar; örneğin iade politikası istisna maddelerine, sözleşme özeti imza kaydına, kişi kaydı ilgili olaylara işaret edebilir. Giriş sayfası ana konuları açıklar, dizin sayfası gezinmeyi sağlar, kayıtlar arası çapraz atıflar yatay aramayı destekler. Bu, ansiklopedi maddelerinin düzenlenmesine benzer ve ilişkilerin bir kısmını daha hafif bir yolla saklar.
 
-Kütüphane kurulurken hangi kayıtların birlikte kullanılabileceği, hangi planların aynı işlemde yalnızca birinin seçilebileceği de belirtilebilir. Örneğin müşteri hizmetleri sipariş iptali talebini işlerken yanıt hem üslup kurallarına hem gizlilik kurallarına uymalıdır; iki kural birlikte context'e konabilir. Depo sevkiyat iptali için iki ayrı plan hazırlamışsa indekste ikisinin geçerlilik koşulları açıkça yazılmalıdır. Aynı koli için henüz depodan çıkmamışsa çıkış belgesi iptal edilir, kuryeye teslim edilmişse durdurma talebi yapılır. İş kaydında yalnızca "siparişi iptal et" yazıyorsa Agent önce koli durumunu kontrol edip sonra uygun planı yüklemelidir.
+Bilgi tabanı kurulurken hangi kayıtların birlikte kullanılabileceği, hangi planların aynı işlemde yalnızca birinin seçilebileceği de belirtilebilir. Örneğin müşteri hizmetleri sipariş iptali talebini işlerken yanıt hem üslup kurallarına hem gizlilik kurallarına uymalıdır; iki kural birlikte context'e konabilir. Depo sevkiyat iptali için iki ayrı plan hazırlamışsa indekste ikisinin geçerlilik koşulları açıkça yazılmalıdır. Aynı koli için henüz depodan çıkmamışsa çıkış belgesi iptal edilir, kuryeye teslim edilmişse durdurma talebi yapılır. İş kaydında yalnızca "siparişi iptal et" yazıyorsa Agent önce koli durumunu kontrol edip sonra uygun planı yüklemelidir.
 
 Bağlantı bakımı güncelleme akışına yazılmalıdır: yeni kayıt eklemeden önce mevcut kayıtlar aranır, birleştirilecek mi yeni mi oluşturulacak karar verilir; yazdıktan sonra ilgili atıflar eklenir ve ait olduğu dizinin indeksi güncellenir. Bağlantı okuyucuyu maddeye götürür; maddenin eldeki siparişe uygulanıp uygulanmadığı ise maddelerin ne zaman yürürlüğe girdiğine bakmayı gerektirir.
 
@@ -590,7 +590,7 @@ Bu tasarımda **öneren de denetleyici de araç çağırabilen, sürekli sorgula
 
 İkisinin arama kapsamı geçerli değişikliğin ilgilendirdiği bilgiyi ve özgün kanıtları kapsamalı, kullanıcı, kiracı ve görev yetkileriyle sınırlanmalıdır. Denetim izi, başvurulan araç sonuçları ve geri bildirim birlikte arşivlenir; sonradan denetleyicinin gerçekte neyi doğruladığı kontrol edilebilir.
 
-Model seçiminde yazar yakın yetenekte, farklı ailelerden gelen bir bileşimi tercih ediyor; örneğin Claude ile GPT, DeepSeek ile Kimi. Farklı eğitim verileri ve akıl yürütme alışkanlıkları farklı yargılar getirebilir. Denetleyici kanıtları bağımsız olarak getirmeli, değişiklikteki iddiaları ve koşulları kontrol etmelidir. Yetkiler çalışma sistemi tarafından uygulanmalıdır: öneren çalışma dalına yazar, denetleyici kanıtları okur ve sonucu bildirir, birleştirme ve yayım hizmeti ise ana kütüphaneyi ve çevrimiçi indeksi güncelleme yetkisini elinde tutar.
+Model seçiminde yazar yakın yetenekte, farklı ailelerden gelen bir bileşimi tercih ediyor; örneğin Claude ile GPT, DeepSeek ile Kimi. Farklı eğitim verileri ve akıl yürütme alışkanlıkları farklı yargılar getirebilir. Denetleyici kanıtları bağımsız olarak getirmeli, değişiklikteki iddiaları ve koşulları kontrol etmelidir. Yetkiler çalışma sistemi tarafından uygulanmalıdır: öneren çalışma dalına yazar, denetleyici kanıtları okur ve sonucu bildirir, birleştirme ve yayım hizmeti ise ana bilgi tabanını ve çevrimiçi indeksi güncelleme yetkisini elinde tutar.
 
 #### Kullanıcı belleği ve bilgi tabanında düzenli derleme
 
@@ -599,7 +599,7 @@ Birçok yerel güncellemeden sonra aynı olgu birden çok dosyaya dağılmış, 
 Derleme üç iş içerir.
 
 1. **Yinelemeyi giderme, birleştirme ve yapı düzenleme.** Yinelenen, süresi geçmiş ya da aşırı parçalanmış kayıtları bulup ilgili içeriği birleştirmek, aşırı büyük dosyaları bölmek, bağlantıları, giriş ve dizin sayfalarını güncellemek. Hizmetteki eski ifadeler silinirken yerlerine geçen kayıt ve özgün dayanak kaydedilir.
-2. **Özgün malzemeye geri bakmak.** Her derleme turu yalnızca önceki turun özetini yeniden yazarsa erken dönemdeki eksiklikler ve yanlış anlamalar tur tur aktarılır. Bu yüzden konuşmalara, yürütme izlerine, iş belgelerine ve araç çıktılarına bakıp özetin kilit olguları kaçırıp kaçırmadığı, olumsuzlamayı, zamanı ya da koşulu kaybedip kaybetmediği, tahmini kesin sonuç gibi yazıp yazmadığı kontrol edilmelidir. Büyük bilgi tabanları dizin, zaman ya da konuya göre partiler hâlinde işlenebilir; kapsam listesi denetlenen, denetlenecek ve tartışmalı kısımları kaydederek tüm kütüphanenin kontrolü tamamlanana kadar ilerlenir.
+2. **Özgün malzemeye geri bakmak.** Her derleme turu yalnızca önceki turun özetini yeniden yazarsa erken dönemdeki eksiklikler ve yanlış anlamalar tur tur aktarılır. Bu yüzden konuşmalara, yürütme izlerine, iş belgelerine ve araç çıktılarına bakıp özetin kilit olguları kaçırıp kaçırmadığı, olumsuzlamayı, zamanı ya da koşulu kaybedip kaybetmediği, tahmini kesin sonuç gibi yazıp yazmadığı kontrol edilmelidir. Büyük bilgi tabanları dizin, zaman ya da konuya göre partiler hâlinde işlenebilir; kapsam listesi denetlenen, denetlenecek ve tartışmalı kısımları kaydederek tüm bilgi tabanının kontrolü tamamlanana kadar ilerlenir.
 3. **Çelişkileri ve geçerlilik kapsamını ele almak.** Çelişkili kayıtların kaynağını, zamanını, nesnesini, bölgesini, görevini ve ön koşullarını karşılaştırmak. İki bilgi farklı senaryolara uyuyorsa kapsamları tamamlanır; yeni kanıt eski kuralın yerine açıkça geçiyorsa sürüm ilişkisi saklanır; dayanak yetersizse teyit bekleyen maddeler ve tamamlanması gereken kanıtlar kaydedilir.
 
 Derleme sonucu da değişiklik olarak incelemeye gönderilir. Büyük yeniden düzenlemeler dizin ya da konuya göre birkaç PR'a bölünebilir ve ortak bir derleme planı ile kapsam listesi paylaşılabilir; ilgili değişiklikler geçtikten sonra türetilmiş indeksler yeniden kurulur ve tipik getirme ve soru-cevap örnekleri yeniden oynatılarak önceden bulunabilen bilginin hâlâ erişilebilir olduğu kontrol edilir. Tetikleme haftalık, aylık gibi dönemlerle ya da yeni kayıt sayısı, çelişki sayısı veya getirme kalitesindeki değişime göre eşiklerle yapılabilir.
@@ -620,11 +620,11 @@ Derleme sonucu da değişiklik olarak incelemeye gönderilir. Büyük yeniden d�
 
 ![Şekil 3-13 Agent'a dayalı RAG sistem mimarisi](images/revised/fig3-13.svg)
 
-**Getirilen içeriğin güven sınırı.** Dış belgeler modelin davranışını değiştirmeye çalışan metinler içerebilir ya da kütüphaneye girmeden önce yanlış olgularla doldurulmuş olabilir. Birincisi dolaylı prompt enjeksiyonu, ikincisi bilgi tabanı zehirlenmesidir. Ele alırken içeriğin kaynağını ve yürütme yetkilerini birlikte yönetmek gerekir: getirme sonucu kaynak, sürüm ve atıf konumuyla birlikte yanıt kanıtı olarak gelir; para transferi, silme ve dışarıya e-posta gönderme gibi eylemler ise Harness ve yürütme ortamı tarafından kullanıcı yetkisine göre doğrulanır. Kütüphaneye alım incelemesi, kaynak izleme ve olgu doğrulaması yanlış bilginin yayılmasını daha ileri düzeyde denetler. Bölüm 2'de tanıtılan kaynak etiketleme ile Bölüm 4'teki araç kısıtları burada birlikte devreye girer.
+**Getirilen içeriğin güven sınırı.** Dış belgeler modelin davranışını değiştirmeye çalışan metinler içerebilir ya da bilgi tabanına alınmadan önce yanlış olgularla doldurulmuş olabilir. Birincisi dolaylı prompt enjeksiyonu, ikincisi bilgi tabanı zehirlenmesidir. Ele alırken içeriğin kaynağını ve yürütme yetkilerini birlikte yönetmek gerekir: getirme sonucu kaynak, sürüm ve atıf konumuyla birlikte yanıt kanıtı olarak gelir; para transferi, silme ve dışarıya e-posta gönderme gibi eylemler ise Harness ve yürütme ortamı tarafından kullanıcı yetkisine göre doğrulanır. Bilgi tabanına alım incelemesi, kaynak izleme ve olgu doğrulaması yanlış bilginin yayılmasını daha ileri düzeyde denetler. Bölüm 2'de tanıtılan kaynak etiketleme ile Bölüm 4'teki araç kısıtları burada birlikte devreye girer.
 
 > **Deney 3-8 ★★: Tek getirme ile çok turlu getirmenin karşılaştırılması**
 >
-> Bu deney aynı Çince hukuki malzemeyi, aynı BM25 getiricisini ve aynı modeli kullanarak yedi soruda iki modu karşılaştırıyor: temel düzen özgün soruyla bir kez arar, Agent modu modelin sorguyu ayarlamasına izin verir ve en fazla dört arama yapar.
+> Bu deney aynı Çince hukuki malzemeyi, aynı BM25 getiricisini ve aynı modeli kullanarak yedi soruda iki modu karşılaştırıyor: temel çizgi özgün soruyla bir kez arar, Agent modu modelin sorguyu ayarlamasına izin verir ve en fazla dört arama yapar.
 >
 > "Meşru müdafaa nasıl düzenlenmiştir" gibi bir sorguda doğrudan getirme ana maddeleri verir. Daha karmaşık bir örnek: "Sarhoşken dikkatsizlikle ağır yaralanmaya yol açan ve hırsızlık sabıkası bulunan kişi nasıl cezalandırılır?" Soru aynı anda mevcut eylemi, sarhoşluk durumunu ve önceki kaydı ilgilendirir; getirme sırasında ilgili malzemelerin ayrı ayrı bulunması ve geçerlilik koşullarının kontrol edilmesi gerekir.
 >
@@ -642,7 +642,7 @@ Aynı getirme döngüsü kullanıcı geçmişi için de kullanılabilir. Aşağ�
 >
 > Buna göre bir getirme rotası tasarlanabilir: önce araç ve servis kayıtları aranır; diğer araca dair ipucu bulununca Tesla'nın planı sorgulanır; en sonunda Honda'nın mevcut randevusu açıklanır ve kullanıcının Tesla için de randevu isteyip istemediği teyit edilir. Bu çalıştırmanın gerçek kaydında yalnızca `scheduled car services` sorgusu yapıldı; sıradan getirme grubunun yanıtı Honda'ya odaklandı ve Tesla'yı atladı.
 >
-> Bir başka zorluk art arda değişikliklerden kaynaklanıyor. Para transferi örneğinde eş bir düzenleme kuruyor, kocası ardından tutarı ve tarihi değiştiriyor, eş yeniden ayarlıyor. Kayıtlar getirildikten sonra değişikliğin zamana, kişiye ve teyit durumuna göre yeniden kurulması ve en son geçerli talimatın bulunması gerekir. Mevcut parçalar zaman bilgisini zaten saklıyor, ama getirme yine kilit bir değişikliği kaçırabilir; bu yüzden parçalara olay arka planı da eklenebilir.
+> Bir başka zorluk art arda değişikliklerden kaynaklanıyor. Para transferi örneğinde kadın bir talimat oluşturuyor, kocası ardından tutarı ve tarihi değiştiriyor, kadın yeniden ayarlıyor. Kayıtlar getirildikten sonra değişikliğin zamana, kişiye ve teyit durumuna göre yeniden kurulması ve en son geçerli talimatın bulunması gerekir. Mevcut parçalar zaman bilgisini zaten saklıyor, ama getirme yine kilit bir değişikliği kaçırabilir; bu yüzden parçalara olay arka planı da eklenebilir.
 >
 > Bu 60 örneğin 18'inde yalnızca bir kez, 6'sında iki kez arama yapıldı, 36'sında üç hakkın tamamı kullanıldı. Sıradan parça getirme grubu 47'sini geçti: temel hatırlamada 19, çok oturumlu getirmede 15, proaktif hizmette 13. Sonraki kısım aynı örneklerde context önekini ve yapılandırılmış belleği karşılaştırarak bunların sırasıyla hangi bilgileri tamamladığını çözümlüyor.
 
@@ -670,7 +670,7 @@ Bu yöntem Bölüm 2'deki context farkındalıklı sıkıştırmayla birlikte ku
 >
 > Aynı raporda context'li gömmeler BM25 ile birleştirildiğinde top-20 getirme başarısızlık oranı %5,7'den %2,9'a, yani göreli olarak yaklaşık %49 düştü; yeniden sıralama eklendiğinde %1,9'a, yani göreli olarak yaklaşık %67 düştü. Raporun kullandığı başarısızlık oranı $1-\mathrm{recall@20}$'dir.
 
-Tekrar tekrar sorgulanan ve içeriği görece kararlı malzeme kütüphanelerinde yazar parça arka planını indeks kurulurken tamamlamayı öneriyor; tek seferlik işlem sonraki pek çok sorguya hizmet eder. Şirket adı, olayın öznesi ve zaman bölme sırasında kaybolduysa yalnızca getirme sayısını artırmak yine gönderimi belirsiz bir parça yığını getirebilir. Önek üretilirken bu ipuçlarının tamamlanması, sonraki getirmenin malzemeyi bunlarla bulmasını sağlar.
+Tekrar tekrar sorgulanan ve içeriği görece kararlı bilgi tabanlarında yazar parça arka planını indeks kurulurken tamamlamayı öneriyor; tek seferlik işlem sonraki pek çok sorguya hizmet eder. Şirket adı, olayın öznesi ve zaman bölme sırasında kaybolduysa yalnızca getirme sayısını artırmak yine gönderimi belirsiz bir parça yığını getirebilir. Önek üretilirken bu ipuçlarının tamamlanması, sonraki getirmenin malzemeyi bunlarla bulmasını sağlar.
 
 > **Deney 3-11 ★★★: Belleği context önekleri ve yapılandırılmış kartlarla güçlendirmek**
 >
@@ -740,7 +740,7 @@ Bu yolu çok kipliliğe genişletmek için görüntü ya da ses temsillerinin ad
 
 Bölümün başındaki bilet talebine dönelim. "Pencere kenarını tercih ederim" bu kullanıcıdan gelir; "kaç parça bagaj hakkı var" ise havayolunun seyahat tarihinde geçerli olan koşullarına bakmayı gerektirir. İki bilgiyi de tek bir cümle olarak saklamak en önemli farkı kolayca kaybettirir: ilk cümle kimin için geçerlidir, ikincisi ne zamandan itibaren yürürlüktedir? Saklarken kaynak, zaman ve geçerlilik koşulları bırakılırsa geri getirildiğinde bu sefer kullanılıp kullanılamayacağına karar vermenin dayanağı olur. Tek tek olgular kısa notlar olarak yazılmaya uygundur; kişi ilişkilerini açıklamak ya da olayın gelişimini korumak gerekiyorsa kartlar ya da özgün paragraflar kullanılabilir; tarihler ve miktarlar türlendirilmiş alanlar olarak saklanıp hesaplamaya programa bırakılabilir.
 
-Asistan bagaj hakkını yanlış bildirdiyse önce yürürlükteki koşulların kütüphaneye girip girmediğine, sonra koşulun hangi parçaya bölündüğüne, getiricinin onu bulup bulmadığına, yeniden sıralamadan sonra kaçıncı sırada olduğuna, en son da modelin hangi malzemeleri aldığına bakın. Özgün metin çoksa yapılandırılmış bir genel bakış context'te tutulup ayrıntılar ihtiyaç anında getirilebilir. Bölüm özetleri konu bulmaya, ilişki indeksi bağlantıları aramaya yardım eder; bir parça gönderimini kaybettiyse kaynak arka planı eklenebilir; tek bir getirme yine kanıt eksik bırakıyorsa Agent sorgusunu değiştirip aramayı sürdürebilir.
+Asistan bagaj hakkını yanlış bildirdiyse önce yürürlükteki koşulların bilgi tabanına girip girmediğine, sonra koşulun hangi parçaya bölündüğüne, getiricinin onu bulup bulmadığına, yeniden sıralamadan sonra kaçıncı sırada olduğuna, en son da modelin hangi malzemeleri aldığına bakın. Özgün metin çoksa yapılandırılmış bir genel bakış context'te tutulup ayrıntılar ihtiyaç anında getirilebilir. Bölüm özetleri konu bulmaya, ilişki indeksi bağlantıları aramaya yardım eder; bir parça gönderimini kaybettiyse kaynak arka planı eklenebilir; tek bir getirme yine kanıt eksik bırakıyorsa Agent sorgusunu değiştirip aramayı sürdürebilir.
 
 Havayolu yeni kurallar yayımladıktan sonra önce küçük kapsamlı bir güncelleme yapılabilir; yeni ve eski maddelerin yürürlük tarihleri ve kaynakları korunur. Biriken yinelenen kayıtlar, çelişkiler ve yapısal değişiklikler ise düzenli olarak derlenir. Öneren değişikliği gönderir, denetleyici kanıtları kontrol eder, onaylandıktan sonra hizmet indeksi yeniden kurulur. Sürüm kayıtları sayesinde daha önce yanlış yanıtlanan soru yeniden oynatılabilir ve eski yanıtın o zaman hangi belgeye dayandığı bulunabilir. Yürütme sonuçlarından nasıl daha fazla deneyim biriktirileceğini Bölüm 9 özel olarak tartışacak.
 
@@ -756,7 +756,7 @@ Havayolu yeni kurallar yayımladıktan sonra önce küçük kapsamlı bir günce
 6. ★ RAPTOR'un çok katmanlı özetleri ile GraphRAG'in varlık ilişkileri ve topluluk özetleri sırasıyla hangi sorguları destekler? Genel bakış, yerel ayrıntı ve çok atlamalı ilişki için birer örnek verin ve hangi kanıtların kontrol edilmesi gerektiğini açıklayın.
 7. ★★ Dizinler, bağlantılar ve vektör indeksleri bilgiyi düzenlemede nasıl birlikte çalışır? İnsanların ve Agent'ların birlikte bakımını yaptığı bir bilgi tabanı tasarlayın; gezinme, anlamsal arama, sürüm güncelleme ve yetki filtresinin her birinin yerini açıklayın.
 8. ★★★ Örneklerden alan çıkarılıp kümeleme yapıldıktan sonra prototipin işe yarayıp yaramadığına nasıl karar verilir? Kümeleme özelliklerinin önemini, sonuç tahmin yeteneğini ve nedensel açıklamayı birbirinden ayırın; ayrılmış örneklerle değerlendirme ve uzman incelemesi akışı tasarlayın.
-9. ★★★ Markdown tabanlı bir kullanıcı bellek kütüphanesi için artımlı güncelleme ve düzenli derleme akışı tasarlayın. Denetleyici ile öneren aynı modeli kullanıyorsa ve denetleyici yalnızca önerenin seçtiği parçaları görebiliyorsa hangi hatalar kolayca kaçar? Kanıt kapsamı, araç yetkileri ve denetim değerlendirmesi açısından iyileştirmeler önerin.
+9. ★★★ Markdown tabanlı bir kullanıcı belleği deposu için artımlı güncelleme ve düzenli derleme akışı tasarlayın. Denetleyici ile öneren aynı modeli kullanıyorsa ve denetleyici yalnızca önerenin seçtiği parçaları görebiliyorsa hangi hatalar kolayca kaçar? Kanıt kapsamı, araç yetkileri ve denetim değerlendirmesi açısından iyileştirmeler önerin.
 
 [^ch3-glove]: Pennington ve arkadaşları, GloVe: Global Vectors for Word Representation, 2014.
 

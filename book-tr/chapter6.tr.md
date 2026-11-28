@@ -6,7 +6,7 @@ Kullanıcı asistandan uçak biletini değiştirmesini istemiş olsun. Asistan u
 
 ## Kip ve tetikleme zamanının genişletilmesi
 
-**Kip**, bilginin ve eylemin biçimini betimler. Agent metin okuyabilir, sesi dinleyebilir, ekranı görebilir ve moment sinyalleri alabilir; ayrıca metin, sentezlenmiş ses, arayüz tıklaması ya da eklem hareketi üretebilir.
+**Kip**, bilginin ve eylemin biçimini betimler. Agent metin okuyabilir, sesi dinleyebilir, ekranı görebilir ve tork sinyalleri alabilir; ayrıca metin, sentezlenmiş ses, arayüz tıklaması ya da eklem hareketi üretebilir.
 
 **Tetikleme zamanı**, bilginin ne zaman ulaştığına, eylemin ne zaman başladığına ve sistemin ne zaman tepki verdiğine odaklanır. Bilgi Agent tarafından sorgulanabileceği gibi dış hizmetler tarafından da itilebilir; araçlar sonucu hemen döndürebileceği gibi önce bir görev başlatıp tamamlandığını sonra bildirebilir. Yeni bir olay geldiğinde sistem mevcut işi kesintiye uğratıp uğratmayacağına ve yarıda kalan görevi nasıl sürdüreceğine de karar vermelidir.
 
@@ -18,7 +18,7 @@ Kullanıcı asistandan uçak biletini değiştirmesini istemiş olsun. Asistan u
 
 Context belirli bir karar için gereken bilgiyi taşır, gözlem uzayı sistemin alabileceği bilginin kapsamını betimler; araçlar somut arayüzler sağlar, eylem uzayı sistemin yürütmesine izin verilen eylemlerin kapsamını betimler. Arayüzler genişletilirken bu kapsamlar yine cihaz yetenekleri, parametreler, yetkiler ve çalışma ortamıyla sınırlıdır.
 
-Pek çok araç çağrısı arayüzü mesajları turlara göre düzenler: model çağrıyı önerir, sistem araç sonucunu ekler, sonra bir sonraki akıl yürütme turu başlar. Olay güdümlü sistemler bu protokol üzerinde dış değişiklikleri yönetmek zorundadır. Arayüz yerleşik asenkronu destekliyorsa araç askıdayken yeni talepler alınabilir ve sonuç döndükten sonra işleme devam edilir; senkron arayüzlerde ise Harness kuyruklar, görev tutamaçları ve zamanlama mekanizmalarıyla etkileşimi düzenler. İki uygulama yolu aşağıda ayrı ayrı tartışılıyor.
+Pek çok araç çağrısı arayüzü mesajları turlara göre düzenler: model çağrıyı önerir, sistem araç sonucunu ekler, sonra bir sonraki akıl yürütme turu başlar. Olay güdümlü sistemler bu protokol üzerinde dış değişiklikleri yönetmek zorundadır. Arayüzün yerleşik asenkron desteği varsa araç askıdayken yeni talepler alınabilir ve sonuç döndükten sonra işleme devam edilir; senkron arayüzlerde ise Harness kuyruklar, görev tutamaçları ve zamanlama mekanizmalarıyla etkileşimi düzenler. İki uygulama yolu aşağıda ayrı ayrı tartışılıyor.
 
 Farklı senaryolarda geri bildirimin ritmi çok değişir. Aşağıdaki tablo yaygın zaman ölçeklerini listeliyor.
 
@@ -70,11 +70,11 @@ Haftalık rapor zamanında çalışmaya, sürekli izlenen yapılacak işler dön
 
 Örneğin temsilci hesap sahibinin üçlü görüşmeye katılmasını istiyor. Bildirim ne kadar erken ulaşırsa iki tarafın telefonda boş bekleme süresi o kadar kısalır. PineClaw örneği, Gateway ile Pine API arasında görüşme olaylarını bağlayan bir Channel mekanizması kullanır: telefonun bağlanması, kullanıcı girdisinin gerekmesi ve görüşmenin bitmesi ayrı ayrı olay akışına girer; Agent buna göre görevi günceller ve kullanıcıyı bilgilendirir.
 
-**Bence proaktif hizmetin zamanında olması için en iyisi, durum değiştiğinde olay kaynağının Agent'a haber vermesidir.** Bildirim kanaldan ulaştıktan sonra Harness ilgili görevi bulur, yinelenip yinelenmediğini ve süresinin geçip geçmediğini kontrol eder, model bir sonraki adıma karar verir. Kullanıcının kimliğini doğrulaması gerekiyorsa arayüz güvenilir kimlik doğrulama girişini açmalı, doğrulama sonucu yeni bir olay olarak özgün göreve geri gönderilmelidir.
+**Yazara göre proaktif hizmetin zamanında olması için en iyisi, durum değiştiğinde olay kaynağının Agent'a haber vermesidir.** Bildirim kanaldan ulaştıktan sonra Harness ilgili görevi bulur, yinelenip yinelenmediğini ve süresinin geçip geçmediğini kontrol eder, model bir sonraki adıma karar verir. Kullanıcının kimliğini doğrulaması gerekiyorsa arayüz güvenilir kimlik doğrulama girişini açmalı, doğrulama sonucu yeni bir olay olarak özgün göreve geri gönderilmelidir.
 
 ### Olay tetikleme araçları
 
-"Müşteri yanıt verdiğinde beni uyar" işini asistana verirsek yarın tam zamanında nasıl uyanacak? Önce posta kutusunun mektup geldiğinde olay itip itemediğine bakılır; yalnızca proaktif sorguya izin veren sistemlerde ise bir sonraki kontrol zamanının hatırlanması gerekir. Aşağıdaki üç örnek arayüz bu bekleme koşullarını çalışma zamanına saklatır; model mevcut turdaki işini bitirebilir.
+"Müşteri yanıt verdiğinde beni uyar" işini asistana verirsek yarın tam zamanında nasıl uyanacak? Önce posta kutusunun yeni e-posta geldiğinde olay itip itemediğine bakılır; yalnızca proaktif sorguya izin veren sistemlerde ise bir sonraki kontrol zamanının hatırlanması gerekir. Aşağıdaki üç örnek arayüz bu bekleme koşullarını çalışma zamanına saklatır; model mevcut turdaki işini bitirebilir.
 
 **Zamanlayıcı (`set_timer`)** bir görevi kararlaştırılan anda uyandırmaya yarar. Tek seferlik zamanlayıcı "gelecek pazartesi sabah 10'da bankayı arayıp konut kredisinin durumunu sor" işine uygundur; döngülü zamanlayıcı hizmet sağlığını saatte bir kontrol etmeye. E-posta gönderdikten sonra yanıt beklemek, çalışma saati dışında kalınca yeniden aramak da zamanlayıcıyla düzenlenebilir. Arayüz saat dilimini, tetikleme koşulunu ve görev tanımlayıcısını saklamalı, iptal ya da değişiklik girişi sunmalıdır. Dış hizmet yalnızca sorguyu destekliyorsa zamanlanmış görev ilerleme yoklamasını da üstlenebilir.
 
@@ -82,7 +82,7 @@ Haftalık rapor zamanında çalışmaya, sürekli izlenen yapılacak işler dön
 
 Modelin ilerlemeyi tekrar tekrar sorgulamasını sağlamak, durum değişmese bile model çağrısı tüketir; yalnızca bitiş bildirimini beklemek ise aradaki arızaları kaçırabilir. Bu yüzden yazar izlemeyi çalışma zamanına bırakmayı, modeli yalnızca işe yarar ilerleme, hata ya da durgunluk ortaya çıktığında uyandırmayı öneriyor. Böylece derleme sırasında iletişim sürebilir ve anormalliklere zamanında müdahale edilebilir. İzleme kuralları filtreleme, birleştirme ve hız sınırı koyabilir; her günlük satırının bir model çağrısı doğurması önlenir.
 
-Örneğin model bekleyen bir iş kaydına durum güncellemesi abone olduktan sonra bu turdaki akıl yürütmeyi bitirebilir ve iş kaydı numarasıyla gelen bildirimi bekler. Karşı taraf yalnızca sorgu girişi sunuyorsa model bir sonraki kontrol için kendine zamanlanmış görev kurabilir. Kontrolde "hâlâ işleniyor" görürse yeniden randevu verir; iş kaydının kapandığını görürse sonraki kontrolleri iptal eder. İki yöntemde de beklemeyi çalışma zamanı üstlenir; model yalnızca bildirim geldiğinde ya da zamanlayıcı dolduğunda yeniden karar verir.
+Örneğin model bekleyen bir iş kaydının durum güncellemelerine abone olduktan sonra bu turdaki akıl yürütmeyi bitirebilir ve iş kaydı numarasıyla gelen bildirimi bekler. Karşı taraf yalnızca sorgu girişi sunuyorsa model bir sonraki kontrol için kendine zamanlanmış görev kurabilir. Kontrolde "hâlâ işleniyor" görürse bir kontrol daha kurar; iş kaydının kapandığını görürse sonraki kontrolleri iptal eder. İki yöntemde de beklemeyi çalışma zamanı üstlenir; model yalnızca bildirim geldiğinde ya da zamanlayıcı dolduğunda yeniden karar verir.
 
 **Dış olay kanalı (`connect_channel`)** e-posta, anlık mesaj ya da API geri çağrısına abone olmaya yarar. Kanal uyarlayıcısı kaynağı doğrular, hizmetin kendi tanımlayıcısını iş parçacığı ve ilgili nesneye eşler, sonra birleşik biçimde olay gönderir; bu, ilerideki "bağlantı katmanı" kısmında açılıyor. PineClaw'ın telefon durumu bildirimleri bu türe girer.
 
@@ -96,13 +96,13 @@ Sohbet arayüzü nihai yanıtı, araç ilerlemesini ve yürütme sonuçlarını 
 
 OpenClaw'ın çok kanallı etkileşimi kullanıcının bir sekretere yazar gibi mesaj göndermesini, ilerlemeyi beklemesini ve hatırlatma almasını sağlar. Bu "canlı biri varmış" hissi sürekli görev durumundan ve zamanında iletişimden gelir. Kullanıcı alışkın olduğu kanalda görevi sürdürebilir; Agent ise kimliğin, oturumun ve mesaj ilişkisinin tutarlı kalmasını sağlamalıdır.
 
-İletişim içeriği de göreve göre değişebilir: kısa ilerleme metinle, karmaşık sonuç görsel ya da dosyayla, doldurulacak bilgi yapılandırılmış kartla, etkileşimli çıktı ise Bölüm 5'te tanıtılan üretken UI ile iletilir. Kanal teslim ya da okundu makbuzu destekliyorsa sistem ilgili durumu saklar; başarısız yeniden deneme, yinelenen mesaj ve kanallar arası eşitleme de teslim kaydına girer.
+İletişim içeriği de göreve göre değişebilir: kısa ilerleme metinle, karmaşık sonuç görsel ya da dosyayla, doldurulacak bilgi yapılandırılmış kartla, etkileşimli çıktı ise Bölüm 5'te tanıtılan üretken UI ile iletilir. Kanal teslim ya da okundu makbuzu destekliyorsa sistem ilgili durumu saklar; başarısızlık sonrası yeniden denemeler, yinelenen mesaj ve kanallar arası eşitleme de teslim kaydına girer.
 
 **Çok kanallı bildirim ve kullanıcıyı geri çağırma.**
 
 Anlık mesajlaşma, SMS, e-posta, telefon ve uygulama bildirimleri farklı aciliyet düzeylerine ve içerik biçimlerine uygundur. Agent aciliyeti, kullanıcı tercihini, mevcut durumu ve mesaj uzunluğunu birlikte değerlendirerek kanal seçebilir. Hemen teyit gerektiren görüşme olaylarında zamanında hatırlatma, tam raporlarda e-posta ya da uygulama bağlantısı kullanılır.
 
-Bir kez asistana ATC konferansındaki otel fiyatlarını izlemesini söylemiştim. Asistan her gün aynı saatte fiyatın hedefe inmediğini bildiren bir mesaj gönderiyordu. Bir kez fiyat kısa süreliğine düştü, ama bu pencereyi kendi yazdığım betik yakaladı. Kısa süreli düşük fiyat iki sorgu arasında ortaya çıkabilir. Asistan zamanında fark etse bile mesaj geç ulaşırsa kullanıcı rezervasyonu kaçırabilir. Fiyatın düşmediği günlerde zamanlanmış sorgu normal çalışabilir; kullanıcının her gün aynı içerikli mesajı okuması gerekmez. Bölüm 7 bu tür bir hatırlatmayı beş dakikalık bir indirim penceresiyle sınamak için kullanılacak.
+Yazar bir keresinde asistandan ATC konferansındaki otel fiyatlarını izlemesini istemişti. Asistan her gün aynı saatte fiyatın hedefe inmediğini bildiren bir mesaj gönderiyordu. Bir kez fiyat kısa süreliğine düştü, ama bu pencereyi yazarın kendi yazdığı betik yakaladı. Kısa süreli düşük fiyat iki sorgu arasında ortaya çıkabilir. Asistan zamanında fark etse bile mesaj geç ulaşırsa kullanıcı rezervasyonu kaçırabilir. Fiyatın düşmediği günlerde zamanlanmış sorgu normal çalışabilir; kullanıcının her gün aynı içerikli mesajı okuması gerekmez. Bölüm 7 bu tür bir hatırlatmayı beş dakikalık bir indirim penceresiyle sınayacak.
 
 Uzun bir görev bittiğinde bildirim kullanıcıyı sonuç sayfasına geri getirir; günlük özetler ve haftalık raporlar kararlaştırılan ritimde gönderilir. Çok kanallı strateji yineleme giderme, sessiz saatler ve yükseltme koşulları da tanımlamalıdır; örneğin ilk hatırlatmaya yanıt gelmezse başka bir kanala geçilip geçilmeyeceği. Bildirim kayıtları görev durumuna bağlanır; kullanıcı aldığı mesajdan işe devam edebilir.
 
@@ -114,7 +114,7 @@ Telefon numarasının kime ait olduğu, karşı taraf geri aradığında işi ki
 
 Ücret indirimi örneğinde asistan yetkili temsilci kimliğiyle satıcıyla iletişim kurabilir. Temsilci kişinin kendisinin sözlü doğrulama yapmasını isterse kullanıcı üçlü görüşmeye çağrılabilir; doğrulama bittikten sonra asistan görüşmeyi sürdürür. Satıcı kullanıcıyı geri arayacaksa dosya numarası, üzerinde anlaşılmış konular ve doğrulanması gereken sorular önceden kullanıcıya verilir. Kullanıcıya rapor verirken eldeki kanıt da net söylenmelidir: temsilci indirimi sözlü olarak kabul ettiyse bu söz kaydedilir; faturanın güncellendiği sonradan görülürse ücretin gerçekten düştüğü bildirilir.
 
-Pekin'de bir ABD bankasının kredi kartını yeniletirken Pine bankayla iletişime geçti, acil kart yenileme ayarladı ve 15 dolarlık acil işlem ücretinin alınmamasını sağladı. Görüşme bittiğinde asistan bankanın neyi kabul ettiğini ve hangi ücretten vazgeçmeyi onayladığını bildirebiliyordu. Kullanıcı birkaç gün sonra "yeni kart nerede" diye sorarsa kargo sorgulanmalı ya da alıcıdan teyit istenmelidir.
+Yazar Pekin'deyken Bank of America kredi kartını yeniletirken Pine bankayla iletişime geçti, acil kart yenileme ayarladı ve 15 dolarlık acil işlem ücretinin alınmamasını sağladı. Görüşme bittiğinde asistan bankanın neyi kabul ettiğini ve hangi ücretten vazgeçmeyi onayladığını bildirebiliyordu. Kullanıcı birkaç gün sonra "yeni kart nerede" diye sorarsa kargo sorgulanmalı ya da alıcıdan teyit istenmelidir.
 
 Sanal bilgisayarlar ve sanal telefonlar sürekli çalışan işlem ortamı sağlar. Sanal makineler masaüstü sistemini çalıştırabilir, konteynerler süreçleri ve bağımlılıkları yalıtabilir, Android emülatörleri mobil uygulamaları taşır. Arka planda çalışmayı destekler ve otomatik işlemlerin kullanıcının mevcut işini rahatsız etmesini azaltır. Yalıtım kapsamını ağ, bağlanan dizinler, kimlik bilgileri ve çalışma yetkileri birlikte belirler; bu yapılandırma Agent'ın erişebildiği verileri ve dış sistemleri de etkiler.
 
@@ -136,7 +136,7 @@ Bir e-ticaret sitesinin müşteri hizmetleri Agent'ı bir iadeyi işliyor: müş
 
 ![Şekil 6-2 Bağlantı katmanı: uyarlayıcılar, birleşik zarf ve bağlantı günlüğü](images/revised/fig6-2.svg)
 
-Yaygın dört kaynak türü vardır. **Sohbet kanalları** ürünün kendi konuşma arayüzünü, WeCom, Feishu, Slack gibi anlık mesajlaşmayı ve e-postayı kapsar; Agent aynı yere yanıt verebilir. **Geri çağrılar** dış hizmetlerin durum değiştiğinde çağırdığı HTTP arayüzleridir; genellikle imza taşır ve yalnızca bildirim gönderir; teslimat başarısız olduğunda bazı hizmetler otomatik yeniden dener, GitHub ise elle ya da API üzerinden yeniden gönderir. **Mesaj yolları** SQS, Kafka gibi iç hizmetlerin iş olaylarını taşır ve net onay ile saklama semantiği sunar. **Zamanlayıcılar, yoklamalar ve iç olaylar** sistemin kendi ürettiği olaylardır; aynı günlüğe yazılır. Aşağıdaki tablo ilk üç türü karşılaştırıyor.[^ch6-ingress-mq][^ch6-ingress-callback]
+Yaygın dört kaynak türü vardır. **Sohbet kanalları** ürünün kendi konuşma arayüzünü, WeCom, Feishu, Slack gibi anlık mesajlaşmayı ve e-postayı kapsar; Agent aynı yere yanıt verebilir. **Geri çağrılar** dış hizmetlerin durum değiştiğinde çağırdığı HTTP arayüzleridir; genellikle imza taşır ve yalnızca bildirim gönderir; teslimat başarısız olduğunda bazı hizmetler otomatik yeniden dener, GitHub ise elle ya da API üzerinden yeniden gönderir. **Mesaj veri yolları** (message bus) SQS, Kafka gibi iç hizmetlerin iş olaylarını taşır ve net onay ile saklama semantiği sunar. **Zamanlayıcılar, yoklamalar ve iç olaylar** sistemin kendi ürettiği olaylardır; aynı günlüğe yazılır. Aşağıdaki tablo ilk üç türü karşılaştırıyor.[^ch6-ingress-mq][^ch6-ingress-callback]
 
 | | Uygulama sohbeti | WeCom / Feishu | E-posta | Webhook | SQS | Kafka |
 |---|---|---|---|---|---|---|
@@ -149,7 +149,7 @@ Yaygın dört kaynak türü vardır. **Sohbet kanalları** ürünün kendi konu�
 
 **Birleşik zarf.**
 
-Uyarlayıcı ham mesajı birleşik biçimdeki bir **zarf** (envelope) dönüştürür. Zarf yalnızca varış anında belirlenebilen olguları kaydeder; öncelik ve işlem süresi yönlendirme kurallarıyla, müşteri kademesi ve sipariş durumu iş sistemiyle tamamlanır, işlem durumu ayrı saklanır. Müşterinin iade başvurusu şöyle yazılabilir:
+Uyarlayıcı ham mesajı birleşik biçimdeki bir **zarfa** (envelope) dönüştürür. Zarf yalnızca varış anında belirlenebilen olguları kaydeder; öncelik ve işlem süresi yönlendirme kurallarıyla, müşteri kademesi ve sipariş durumu iş sistemiyle tamamlanır, işlem durumu ayrı saklanır. Müşterinin iade başvurusu şöyle yazılabilir:
 
 ```json
 {
@@ -328,16 +328,16 @@ Aynı görev numarası başlatmayı, ilerleme bildirimlerini ve nihai yürütme 
 >
 > 1. **Arka plan yürütme ve anlık yanıt.** Birkaç saniye süren bir analiz süreci başlatılır ve görev tanımlayıcısı hemen döner; bekleme sırasında mevcut saat yanıtlanır, bitişte analiz sonucu alınır.
 > 2. **Kuyruk ve toplu işleme.** Uzun görev sırasında sırayla "Japonca yanıtla" ve "web sayfası olarak düzenle" eklenir; görev bittiğinde sonuç ve iki gereksinim tek parti olarak işlenir. Betik Japonca HTML üretir.
-> 3. **İptal ve kurtarma.** "Analizi durdur" alındığında üretilmekte olan model turu kesilir ve çalışan tüm arka plan görevlerinin durması istenir. Bu kez kesmeyi betik gönderdi ve o anda yalnızca bir analiz süreci (T1) vardı. 0,803. saniyede kesme olayı T1'in ilerlemesini %18 olarak kaydeder; 0,806. saniyede sistem onun çıkış kodunu (−15) kaydedebilir. Hemen ardından başlatılan T2 yeni bir görevdir. 4,436. saniyede alınan T2'nin sonucudur; T1 tamamlanma geri çağrısını tetiklemez.
+> 3. **İptal ve kurtarma.** "Analizi durdur" alındığında üretilmekte olan model turu kesilir ve çalışan tüm arka plan görevlerinin durması istenir. Bu çalıştırmada kesmeyi betik gönderdi ve o anda yalnızca bir analiz süreci (T1) vardı. 0,803. saniyede kesme olayı T1'in ilerlemesini %18 olarak kaydetti; sistem T1'in çıkış kodunu (−15) ancak 0,806. saniyede kaydetti. Hemen ardından başlatılan T2 yeni bir görevdi. 4,436. saniyede alınan sonuç T2'ye aitti; T1 tamamlanma geri çağrısını tetiklemedi.
 > 4. **Paralel görevler ve ilerleme kararı.** Üç analiz süreci aynı anda başlatılır; her mantıksal zaman adımında sırasıyla %3, %2, %1 ilerler. Bu deneyin paralel ilerleme kaydında en hızlı T1 bittiğinde sorgu makbuzu T2'nin %68'e, T3'ün %34'e geldiğini gösterir. Şekil 6-5 boyunca izlendiğinde ilerlemesi %50'yi geçmeyen görevler iptal edilir. Betik yalnızca T3'ü iptal etti ve sonunda T1 ile T2'nin sonuçları alındı. Bu, aynı çalışma zamanının hem toplu durdurmaya tepki verebildiğini hem de hâlâ yararlı olan paralel işi koruyabildiğini gösterir.
 >
 > ![Şekil 6-5 Deney 6-2 asenkron Agent'ta kesme ve kurtarma](images/revised/fig6-5.svg)
 
-### Modelin yerleşik asenkronu: GPT-6 Astra
+### Modelde yerleşik asenkron destek: GPT-6 Astra
 
-Önceki çözümlerde Harness senkron mesaj biçimine uyum sağlıyordu. Yerleşik asenkron arayüzler ise modelin araç henüz dönmeden bağımsız işlere devam etmesine ve sonucu sonradan almasına doğrudan izin verir. Eylül 2026 itibarıyla GPT-6 Astra asenkron araç çağrısını (Async tool calling) ve tur ortası yönlendirmeyi (Mid-turn steering) sunuyor; bunlar sırasıyla araç beklemesini ve kullanıcı güncellemelerini ele alır. Şekil 6-6 senkron arayüz uyumu ile yerleşik asenkronun mesaj akışını karşılaştırıyor.[^ch6-22][^ch6-23]
+Önceki çözümlerde Harness senkron mesaj biçimine uyum sağlıyordu. Yerleşik asenkron arayüzler ise modelin araç henüz dönmeden bağımsız işlere devam etmesine ve sonucu sonradan almasına doğrudan izin verir. Eylül 2026 itibarıyla GPT-6 Astra asenkron araç çağrısını (Async tool calling) ve tur ortası yönlendirmeyi (Mid-turn steering) sunuyor; bunlar sırasıyla araç beklemesini ve kullanıcı güncellemelerini ele alır. Şekil 6-6 senkron arayüz uyumu ile yerleşik asenkron desteğin mesaj akışını karşılaştırıyor.[^ch6-22][^ch6-23]
 
-![Şekil 6-6 Senkron arayüz uyumu ve modelin yerleşik asenkronu](images/revised/fig6-6.svg)
+![Şekil 6-6 Senkron arayüz uyumu ve modelde yerleşik asenkron destek](images/revised/fig6-6.svg)
 
 **Aracı beklerken bağımsız işe devam etmek.** Örneğin Agent toplantı mekânı sorgusunu başlattıktan sonra gündemi ve hazırlık listesini düzenleyebilir; sorgu döndüğünde fiyatları ve kapasiteleri karşılaştırır. Araç tanımındaki `async: true` asenkron yeteneği bildirir; uygulama eksiksiz çağrı kalemini aldıktan sonra yürütmeyi başlatır ve `call_id` çağrı tanımlayıcısını saklar. Sonuç geldiğinde uygulama onu özgün tanımlayıcıyla geri verir ve en güncel yanıt durumunu sürdürür. Sonraki işi model düzenler, Harness çağrı ilişkisini ve görev yaşam döngüsünü yönetir.[^ch6-22]
 
@@ -345,7 +345,7 @@ Aynı görev numarası başlatmayı, ilerleme bildirimlerini ve nihai yürütme 
 
 Bu iki yetenek birlikte kullanılabilir: mekân sorgusu çalışmayı sürdürürken kullanıcının yeni gereksinimleri sonraki karara girer, sorgu sonucu döndükten sonra seçim tamamlanır. Yürütücü arka plan görevlerinin gerçek durumunu aynı zamanda tutar. Sorguyu durdurmak ya da rezervasyonu iptal etmek gerektiğinde Harness ilgili arayüzü çağırır ve makbuzu kontrol eder; tamamlanmış iş işlemleri geri alma ya da telafi akışına girer.
 
-Model ve arayüz yerleşik asenkronu destekliyorsa yazar önce yerleşik protokolü kullanır; böylece araç askıda kalması, kullanıcı güncellemeleri ve yanıtın sürdürülmesi arayüz anlaşmasına göre akar. Senkron uyum katmanı esas olarak mevcut modellere ve eski arayüzlere hizmet eder; model yükseltildikten sonra yalnızca mesaj eşleşmesini tamamlamak için kullanılan uyum mantığı adım adım kaldırılıp mühendislik yatırımı görev durumuna, iptale ve kurtarmaya yoğunlaştırılabilir.
+Model ve arayüzün yerleşik asenkron desteği varsa yazar önce yerleşik protokolü kullanır; böylece araç askıda kalması, kullanıcı güncellemeleri ve yanıtın sürdürülmesi arayüz anlaşmasına göre akar. Senkron uyum katmanı esas olarak mevcut modellere ve eski arayüzlere hizmet eder; model yükseltildikten sonra yalnızca mesaj eşleşmesini tamamlamak için kullanılan uyum mantığı adım adım kaldırılıp mühendislik yatırımı görev durumuna, iptale ve kurtarmaya yoğunlaştırılabilir.
 
 ### Asenkron görevleri güvenilir biçimde işlemek
 
@@ -355,7 +355,7 @@ Güvenilir asenkron etkileşim mesajı, görevi ve yürütme durumunu birlikte k
 2. **Kurtarma ve iptal.** Kullanıcı gereksinimi değiştirdiğinde sistem hâlâ geçerli işi korur, sonraki adımları günceller ve hangi arka plan görevlerinin süreceğini, hangilerinin durduğunu açıkça belirtir.
 3. **Birden çok gereksinim.** Bütçe, kişi sayısı, bölge ve teslim zamanı ayrı ayrı görev durumuna girer; nihai sonuç bu koşulları tek tek kontrol eder.
 
-> **Deney 6-3 ★★★: Modelin yerleşik asenkronu ve tur ortası yönlendirme**
+> **Deney 6-3 ★★★: Modelde yerleşik asenkron destek ve tur ortası yönlendirme**
 >
 > Bu deney Agent'ın bütçe ve kişi sayısı gereksinimlerini karşılayan en ucuz toplantı mekânını seçmesini istiyor. Başlangıç bütçesi 2000, kişi sayısı 20'dir; sorgu aracı 8 saniye sonra üç mekânın fiyatını ve kapasitesini döndürür.
 >
@@ -371,7 +371,7 @@ Güvenilir asenkron etkileşim mesajı, görevi ve yürütme durumunu birlikte k
 >
 > Saklanan çalıştırma kayıtlarında asenkron araç grubu bekleme sırasında bağımsız listeyi tamamladı, iki yönlendirme grubu da yeni koşullara göre B'yi seçti. Araç kullanan çalıştırmaların hepsi sorguyu yalnızca bir kez yürüttü ve gerçek sonucu özgün çağrıya geri verdi; kontrol modelinin arayüzü ise bir üretim turunun ortasında yeni gereksinim kabul etmediğini açıkça bildirdi. Senkron ve asenkron grupların toplam süresi birbirine yakındı; temel fark bekleme sırasında başka işlerin ilerleyip ilerleyemediğinde ortaya çıktı.
 >
-> Model yalnızca kişi sayısının 10'a çıktığını hatırlayıp eski bütçeye (2000) göre seçim yapsaydı hangi mekânı seçerdi? A ve B de sığar, en ucuzu yine B'dir. Dolayısıyla mekânın doğru seçilmesi bütçenin güncellenip güncellenmediğini göstermez.
+> Model yalnızca kişi sayısının 10'a indiğini hatırlayıp eski bütçeye (2000) göre seçim yapsaydı hangi mekânı seçerdi? A ve B de sığar, en ucuzu yine B'dir. Dolayısıyla mekânın doğru seçilmesi bütçenin güncellenip güncellenmediğini göstermez.
 >
 > Kişi sayısı değiştiğinde gönderilmiş sorgu yeniden yapılmalı mı? Bu deneyin aracının filtre parametresi yoktur, üç mekânın hepsini döndürür. Asistan yoldaki sonucu yeniden kullanıp döndüğünde 10 kişi ve 1000 bütçeye göre filtreleyebilir. Araç yalnızca 20 kişiden fazlasını alan mekânları döndürseydi eski sonuçta yalnızca A olurdu ve 12 kişi alan B listede hiç bulunmazdı. O zaman eski listede kişi sayısını 10 yapmak yine B'yi kaçırırdı; özgün sorgu B'yi baştan elediyse yeniden sorgulamak gerekir.
 
@@ -403,7 +403,7 @@ Kademeli sistem sesli konuşmayı birkaç modüle böler. Ses etkinliği algıla
 
 ![Şekil 6-7 Sesli Agent'ın sıralı hattı](images/revised/fig6-7.svg)
 
-Akustik VAD kimin konuştuğu aralıkları bulur; sonraki tanıma uzun sessizlikleri atlayabilir. Ama aynı duraklama "Rezervasyon yapmak isti..." arkasında da "Perşembe sabahı bilet var mı?" arkasında da farklı anlam taşır. Anlamsal VAD (anlamsal uç nokta algılama) ilk durumda ses almaya devam edebilir, sözü ancak ikinci durumda diyalog modeline verir. Bu, ses gözleminin zaman içinde seyreltilmesidir: kesintisiz bir ses yalnızca birkaç anda çıkarım tetikler. Konuşmaya başlanıp başlanmayacağına ise cümleyi duyan model karar verir; dinlemeyi sürdürebilir ya da önce uçuşları sorgulayabilir.
+Akustik VAD birinin konuştuğu aralıkları bulur; sonraki tanıma uzun sessizlikleri atlayabilir. Ama aynı duraklama "Rezervasyon yapmak isti..." sözünden sonra geldiğinde başka, "Perşembe sabahı bilet var mı?" sorusundan sonra geldiğinde başka bir anlam taşır. Anlamsal VAD (anlamsal uç nokta algılama) ilk durumda ses almaya devam edebilir, sözü ancak ikinci durumda diyalog modeline verir. Bu, ses gözleminin zaman içinde seyreltilmesidir: kesintisiz bir ses yalnızca birkaç anda çıkarım tetikler. Konuşmaya başlanıp başlanmayacağına ise cümleyi duyan model karar verir; dinlemeyi sürdürebilir ya da önce uçuşları sorgulayabilir.
 
 | Modül | İşlevi | Yaygın bekleme ya da hata kaynakları |
 |---|---|---|
@@ -432,7 +432,7 @@ Hizmet yükü kuyruk beklemesi de getirir. Şekil 6-9 bu ilişkiyi M/M/1 tek sun
 
 Sıralı çözüm parça parça kontrolü kolaylaştırır ve üç sorunu da ortaya koyar. Sessizliği beklemek uç nokta gecikmesini artırır; transkripsiyon metni tonlamayı, duyguyu ve ortam sesini kaçırabilir; ses duraklamaya göre bölünürken e-posta adresi, kişi adı ya da özel terim tam context'ini kaybedebilir. Kademeli mimariyi zaten kullanan sistemler için yazar önce akışlı dönüşümü öneriyor: her aşama artımlı sonucu olabildiğince erken versin, tanıma, akıl yürütme ve oynatma örtüşsün, teyit edilmiş kısımlar ile hâlâ değişebilecek kısımlar ayrı tutulsun. Böylece mevcut modüller yeniden kullanılabilir ve beklemenin nereden geldiği adım adım bulunabilir.
 
-- **ASR dinlerken çevirir.** Ses sürekli alınır, geçici transkripsiyon üretilir; sonraki ses geldiğinde kararsız kısımlar düzeltilir, uç nokta teyit edildiğinde nihai metin verilir.
+- **ASR dinlerken yazıya döker.** Ses sürekli alınır, geçici transkripsiyon üretilir; sonraki ses geldiğinde kararsız kısımlar düzeltilir, uç nokta teyit edildiğinde nihai metin verilir.
 - **LLM tahmini yürütme.** Geçici transkripsiyonla yanıt önceden hazırlanır. Nihai metin teyit edildikten sonra girdinin aynı olup olmadığı ve mevcut işin hâlâ uygun olup olmadığı kontrol edilir, sonra korumaya, ayarlamaya ya da yeniden üretmeye karar verilir. Dışarıya gönderme ve iş verisine yazma gibi işlemler gereken koşullar teyit edildikten sonra yürütülür.
 - **LLM parçalı çıktı.** Okumaya uygun bir metin parçası tamamlandığında TTS'e verilir; parçalama sırasında cümle anlamı, noktalama ve tonlama ipuçları korunur.
 - **TTS artımlı sentez.** Ses blokları adım adım döner; sonraki metin üretimi, sentez ve oynatma örtüşebilir. Söz kesildiğinde üretim görevi ve oynatma tamponundaki henüz çalınmamış içerik birlikte ele alınır.
@@ -511,7 +511,7 @@ Hızlı modelin "bir bakayım" demesi müşteri temsilcisine asistanın talebi a
 
 ![Şekil 6-11 Hızlı/yavaş düşünme mimarisi ve çözüm karşılaştırması](images/revised/fig6-11.svg)
 
-#### Çözüm bir: hızlı düşünme yanıt verir, yavaş düşünme cevaplar
+#### Çözüm bir: hızlı düşünme ilk tepkiyi verir, yavaş düşünme asıl yanıtı verir
 
 Hızlı model önce kısa bir karşılık verir, yavaş model analizi arka planda tamamlayıp ayrıntılı yanıtı sonra ekler. Bu tasarım isteğin alındığını erkenden teyit edebilir, ama iki yanıtın tutarlılığının yönetilmesi gerekir. Örneğin hızlı model önce bir paketin alınmasını önerir, yavaş model ardından paketin kilit bir özellikten yoksun olduğunu fark ederse öneriler çelişir. Çelişkinin kökü iki tarafın bağımsız yanıt vermesindedir; karar dayanakları ve akıl yürütme ilerlemeleri farklı olabilir. Hızlı modelin söylediği öneri kullanıcının kararına girmiştir; kullanıcı buna göre harekete bile geçmiş olabilir. Yavaş model sonradan düzeltirse değişikliği açıklamak ve oluşmuş etkiyi ele almak gerekir.
 
@@ -523,7 +523,7 @@ Ses ile ekran da iş bölümü yapabilir. Sözlü olarak "bu ayki faturada 15 av
 
 Yolcunun Pine'dan perşembe sabahı Şanghay'a bir uçak bileti almasını istediğini varsayalım; bütçe 1200 yuan ve öğlene kadar etkinlik yerine yetişmesi gerekiyor. Pine bir yandan havayolu temsilcisiyle konuşurken bir yandan arka plana "not uzatıyor": "Saat onda Hongqiao'ya inersek havalimanından etkinlik yerine yetişebilir miyiz?" Temsilci boş koltuklara bakıp Pine'a şöyle diyor: "Saat onda Hongqiao'ya inen uçuş doldu. Saat on buçukta Pudong'a inen bir uçuş var, bilet 1250 yuan." Arka plan yalnızca ön planın uzattığı notu görebiliyorsa hâlâ Hongqiao'dan çıkan yolu hesaplıyordur. Ön planın bir cümle daha söylemesi gerekir: "Pudong için yeniden hesapla, on buçukta iniş, etkinlik yeri ve varış saati aynı."
 
-Başka bir yöntem, görüşme kaydını da sırasıyla arka plana eşitlemektir. Arka plan temsilcinin söylediği havalimanını ve iniş saatini görüşme kaydından okumuşsa ön planın yalnızca "bu uçuşun yetişip yetişmediğini hesapla" demesi aynı işi devretmeye yeter. Kayıt eşitlenirken kimin ne söylediği belirtilmeli; ön planın sözü kesildiği için henüz söylenmemiş yarım cümlesi de söylenmiş içerikten ayrılmalıdır. Konuşma transkripsiyonu kilit bilgileri atlayabilir ya da yanlış yazabilir. Ön plan doğru duyduğu adları, sayıları ve kullanıcının düzeltmelerini görev açıklamasına yazmalıdır. İki kayıt arasında fark varsa arka plan görev açıklamasını esas alır. Arka plan işini bitirdiğinde ön plana yalnızca etkinlik yerine saat kaçta varılacağını ve zamanın ne kadar sıkışık olduğunu söyler. Hangi yolların denendiği, harita arayüzünün hangi alanları döndürdüğü arka planda başvuru için kalabilir. Sonucu alan ön plan temsilciyle görüşmeyi sürdürür.
+Başka bir yöntem, görüşme kaydını da sırasıyla arka plana eşitlemektir. Arka plan temsilcinin söylediği havalimanını ve iniş saatini görüşme kaydından okumuşsa ön planın yalnızca "bu uçuşun yetişip yetişmediğini hesapla" demesi aynı işi devretmeye yeter. Kayıt eşitlenirken kimin ne söylediği belirtilmeli; ön planın sözü kesildiği için henüz söylenmemiş yarım cümlesi de söylenmiş içerikten ayrılmalıdır. Konuşma transkripsiyonu kilit bilgileri atlayabilir ya da yanlış yazabilir. Ön plan doğru duyduğu adları, sayıları ve kullanıcının düzeltmelerini görev açıklamasına yazmalıdır. İki kayıt arasında fark varsa arka plan görev açıklamasını esas alır. Arka plan işini bitirdiğinde ön plana yalnızca etkinlik yerine saat kaçta varılacağını ve zamanın ne kadar sıkışık olduğunu söyler. Hangi yolların denendiği, harita arayüzünün hangi alanları döndürdüğü arka planda sonradan bakmak için kalabilir. Sonucu alan ön plan temsilciyle görüşmeyi sürdürür.
 
 Bölüm 1'deki iş seyahatindeki yolcu bileti 1200 yuan içinde tutmak istiyordu. Eskiden iş seyahatlerinde uygun bir uçuş için biraz fazla ödemeye razıydı; bu sefer de ayrıca bir üst sınır koymadı. En düşük fiyatın 1250 yuan olduğunu duyunca asistan bileti onun adına alabilir. Her zaman hesabını kitabını bilen bir kullanıcı ailesiyle tatile çıkıyorsa bu 50 yuan önce sorulmalıdır. Ön plan böylece iki konuşmayı birden gözetmek zorundadır:
 
@@ -557,13 +557,13 @@ Step-Audio serisi iki ilgili örnek sunar. **Kipe çapalı akıl yürütme damı
 
 Pine AI'ın sesli Agent'ı ön planda hızlı düşünme ile arka planda yavaş düşünmenin birlikte çalıştığı bir mimari kullanır. Yayımlanan yazısı τ²-bench ses kategorisinde ilk sıraya çıktığını bildiriyor ve sürekli görüşmenin, iş akıl yürütmesinin ve araç işlemlerinin nasıl birleştirildiğini anlatıyor[^ch6-17].
 
-Bu bileşimleri anlarken üç tasarım boyutu ayırt edilebilir: **ses yolu** modelin sesi doğrudan mı işlediğini yoksa transkripsiyonla mı devrettiğini belirler; **dinleme–konuşma zamanlaması** girdi ve çıktının tur tur mu paralel mi ilerlediğini belirler; **bilişsel iş bölümü** gerçek zamanlı etkileşim ile derin akıl yürütmenin durumu nasıl paylaştığını ve sonuçları nasıl değiştirdiğini belirler. Bir sistem sesi doğrudan işleyip tam çift yönlülüğü koruyabilir, aynı zamanda karmaşık görevleri bağımsız bir arka plan modeline verebilir. Thinking Machines Lab'in etkileşim modeli de GPT-Live de bu tür bileşimleri göstermektedir.
+Bu bileşimleri anlarken üç tasarım boyutu ayırt edilebilir: **ses yolu** modelin sesi doğrudan mı işlediğini yoksa transkripsiyonla mı devrettiğini belirler; **dinleme–konuşma zamanlaması** girdi ve çıktının tur tur mu paralel mi ilerlediğini belirler; **bilişsel iş bölümü** gerçek zamanlı etkileşim ile derin akıl yürütmenin durumu nasıl paylaştığını ve sonuçları nasıl alıp verdiğini belirler. Bir sistem sesi doğrudan işleyip tam çift yönlülüğü koruyabilir, aynı zamanda karmaşık görevleri bağımsız bir arka plan modeline verebilir. Thinking Machines Lab'in etkileşim modeli de GPT-Live de bu tür bileşimleri göstermektedir.
 
 [^ch6-17]: Pine AI, *The Most Natural Human-Computer Interface Is Your Voice*; hızlı–yavaş düşünme mimarisini ve bildirdiği ses görevi değerlendirme sonuçlarını tanıtır. Rapor sıralamayı τ²-bench voice olarak anar.
 
 ### İnsana daha çok benzeyen konuşma sentezi
 
-Duraklamalar, konuşma hızı ve vurgu dinleyicinin cümle yapısını ve konuşanın niyetini anlamasına yardım eder. Örneğin telefon numarası söylenirken uygun gruplama gerekir, karmaşık koşullar anlatılırken yavaşlanabilir, sorgu sonucu beklenirken önce neyin işlendiği açıklanabilir. Bence uygun duraklama ve ritim değişimi sesi daha doğal kılar, kullanıcının görevin nasıl ilerlediğini duymasını da sağlar. Ses denetimi bu somut kullanımlar etrafında tasarlanabilir.
+Duraklamalar, konuşma hızı ve vurgu dinleyicinin cümle yapısını ve konuşanın niyetini anlamasına yardım eder. Örneğin telefon numarası söylenirken uygun gruplama gerekir, karmaşık koşullar anlatılırken yavaşlanabilir, sorgu sonucu beklenirken önce neyin işlendiği açıklanabilir. Yazara göre uygun duraklama ve ritim değişimi sesi daha doğal kılar, kullanıcının görevin nasıl ilerlediğini duymasını da sağlar. Ses denetimi bu somut kullanımlar etrafında tasarlanabilir.
 
 Ana LLM metne `[THINKING]`, `[EMO:happy]` ve `[SPEED:0.8x]` gibi denetim işaretleri ekleyebilir. Yürütme katmanı işaretleri ayrıştırır, metni ses ve duraklama parçalarına böler, sonra sentez arayüzünün desteklediği duygu, üslup ya da referans sesle eşler. İşaretlerin anlamını uygulama tanımlar: `0.8x` yavaş kademeye eşlenebilir; duraklamayı oynatıcı ekleyebilir; gülüş ve iç çekme desteklenen ses işaretleriyle ya da üretim yeteneğiyle ifade edilir.
 
@@ -579,7 +579,7 @@ Referans ses çözümü aynı konuşmacının farklı ifade biçimlerini bir kit
 
 ## Computer Use: GUI otomasyonu yapan Agent
 
-Agent'tan web sayfasındaki teslimat adresini değiştirmesini istediğinizi varsayalım. Önce adres alanını bulması, yeni adresi yazması, sonra yankıya bakarak kaydın sonucunu doğrulaması gerekir. Tıklamadan önce bir oturum açma penceresi çıkarsa, önceki ekran görüntüsündeki düğmenin koordinatı değişmemiş olsa bile bu tıklamanın nesnesi değişmiştir. Computer Use tarayıcıyı, tabloları ya da sistem ayarlarını ekran, fare ve klavye üzerinden kullanır; temel işi her eylemin gözünün önündeki arayüzle uyumlu kalmasını sağlamaktır.
+Agent'tan web sayfasındaki teslimat adresini değiştirmesini istediğinizi varsayalım. Önce adres alanını bulması, yeni adresi yazması, sonra ekranda görünen sonuca bakarak kaydın sonucunu doğrulaması gerekir. Tıklamadan önce bir oturum açma penceresi çıkarsa, önceki ekran görüntüsündeki düğmenin koordinatı değişmemiş olsa bile bu tıklamanın nesnesi değişmiştir. Computer Use tarayıcıyı, tabloları ya da sistem ayarlarını ekran, fare ve klavye üzerinden kullanır; temel işi her eylemin gözünün önündeki arayüzle uyumlu kalmasını sağlamaktır.
 
 Şekil 6-12'deki **algıla—düşün—eyle** döngüsünü izleyerek modelin yeni adresi yazmadan önce neyi teyit etmesi gerektiğine bakın. Model ekran görüntüsüne ve görev ilerleyişine göre tıklanacak yeri seçer, Harness parametreleri ve yetkileri kontrol eder, sonra yürütme katmanına verir. Tıklamanın başarılı olması yalnızca bu tıklamanın gönderildiğini gösterir. Bir sonraki ekran görüntüsünde girdi odağının nereye düştüğü, adresin güvenle yazılıp yazılamayacağını belirler.
 
@@ -589,17 +589,17 @@ Asistan adresi doldurduktan sonra yürütücüye hangi "Kaydet" düğmesine tık
 
 ### Eylem uzayı tasarımı
 
-Şekil 6-13'te Anthropic'in Computer Use başvuru uygulaması grafik arayüz, komut yürütme ve dosya düzenleme olmak üzere üç araç türü sunar. Yalnızca grafik arayüze bakıldığında verinin iki gittiği yer vardır: tıklama eylemi yürütme tarafına gider, tıklamadan sonraki ekran görüntüsü bir sonraki kararın gözlemi olarak modele döner. Yerleşik API araç biçimini belirler; başka bir model kullanılırsa uyarlama katmanı ekran görüntüsünü, eylem talebini ve yürütme sonucunu ilgili arayüzün kabul ettiği mesajlara çevirmelidir.[^ch6-computer-tools]
+Şekil 6-13'te Anthropic'in Computer Use referans uygulaması grafik arayüz, komut yürütme ve dosya düzenleme olmak üzere üç araç türü sunar. Yalnızca grafik arayüze bakıldığında verinin iki gittiği yer vardır: tıklama eylemi yürütme tarafına gider, tıklamadan sonraki ekran görüntüsü bir sonraki kararın gözlemi olarak modele döner. Yerleşik API araç biçimini belirler; başka bir model kullanılırsa uyarlama katmanı ekran görüntüsünü, eylem talebini ve yürütme sonucunu ilgili arayüzün kabul ettiği mesajlara çevirmelidir.[^ch6-computer-tools]
 
 ![Şekil 6-13 Computer Use eylem uzayı](images/revised/fig6-13.svg)
 
 **GUI işlem araçları.** Fare eylemleri arasında konumlandırma, sol/sağ/orta tıklama, çift ve üç tıklama ile sürükleme vardır; daha ince arayüzler basmayı ve bırakmayı ayrı ayrı ifade edebilir. Kaydırma yön ve miktar ister; bazı uygulamalar değiştirici tuşları da destekler. Klavye arayüzü metin girişi, bileşik tuşlar ve tuş basılı tutmayı sunar. Ekran görüntüsü ve imleç konumu durumu almak, bekleme arayüzü ise sayfa yüklemesine ya da animasyona zaman tanımak içindir. Araç sürümü somut eylem kümesini belirler; Harness parametreleri kullanılan arayüze göre doğrular.
 
-**Komut yürütme araçları.** Kalıcı terminal çalışma dizinini ve ortam durumunu çağrılar arasında koruyabilir. Örneğin bir çağrıda dizin değiştirildiyse sonraki çağrı o dizinde çalışır. Başvuru uygulaması komutun bittiğini bir işaret dizesiyle tanıyabilir ve zaman aşımı koyabilir; zaman aşımından sonraki süreç durumunu yine yürütücü kontrol etmelidir.
+**Komut yürütme araçları.** Kalıcı terminal çalışma dizinini ve ortam durumunu çağrılar arasında koruyabilir. Örneğin bir çağrıda dizin değiştirildiyse sonraki çağrı o dizinde çalışır. Referans uygulama komutun bittiğini bir işaret dizesiyle tanıyabilir ve zaman aşımı koyabilir; zaman aşımından sonraki süreç durumunu yine yürütücü kontrol etmelidir.
 
 **Dosya düzenleme araçları.** Dize değiştirme arayüzü değişiklik kapsamını özgün metne göre bulur; görüntüleme, oluşturma, ekleme ve geri alma da sunulabilir. Yürütmeden önce eşleşen konum ve sayı, yürütmeden sonra fark kontrol edilir; dosya iki çağrı arasında değiştiyse ilgili içerik önce yeniden okunur. Bölüm 5'te tanıtılan düzenleme stratejileri burada yeniden kullanılabilir.
 
-> **Deney 6-9 ★: Anthropic Computer Use başvuru uygulamasını çalıştırmak**
+> **Deney 6-9 ★: Anthropic Computer Use referans uygulamasını çalıştırmak**
 >
 > Bu deney resmî konteyner örneğinin sağladığı Ubuntu masaüstünü, tarayıcıyı ve araç yürütme katmanını kullanıyor. Kullanıcı görevi girdikten sonra model ekran görüntüsünü okuyup eylem döndürür, yürütme katmanı masaüstünü kullanır ve yeni ekran görüntüsü modele geri verilir.
 >
@@ -632,7 +632,7 @@ Ekran görüntüsünde [1], [2], [3], [4] işaretli
 [4] <a href="/docs" aria-label="Documentation" />
 ```
 
-Model numarayı seçtikten sonra yürütme katmanı bunu öğe başvurusuna ya da koordinata çözer, hedefin hâlâ görünür ve etkileşebilir olup olmadığını kontrol eder, sonra işlemi tamamlar. Sayfa yenilendiğinde, kaydırıldığında ya da öğeler dinamik olarak eklendiğinde eşleme güncellenmelidir; böylece süresi geçmiş numaralar kullanılmaz. Yapılandırılmış indeks etiketlerden, rollerden ve metinden yararlanabilir; Canvas, örtüşme ya da eksik anlamsal işaretleme durumlarında ekran görüntüsüyle birlikte değerlendirme gerekir. Listelenen öğe sayısı ve ekran görüntüsü büyüdükçe context'e giren bilgi de artar.
+Model numarayı seçtikten sonra yürütme katmanı bunu öğe referansına ya da koordinata çözer, hedefin hâlâ görünür ve etkileşebilir olup olmadığını kontrol eder, sonra işlemi tamamlar. Sayfa yenilendiğinde, kaydırıldığında ya da öğeler dinamik olarak eklendiğinde eşleme güncellenmelidir; böylece süresi geçmiş numaralar kullanılmaz. Yapılandırılmış indeks etiketlerden, rollerden ve metinden yararlanabilir; Canvas, örtüşme ya da eksik anlamsal işaretleme durumlarında ekran görüntüsüyle birlikte değerlendirme gerekir. Listelenen öğe sayısı ve ekran görüntüsü büyüdükçe context'e giren bilgi de artar.
 
 **Doğrudan koordinat kestirme.**
 
@@ -649,9 +649,9 @@ $$
 
 ![Şekil 6-15 Çözünürlük eşleştirmesi ve iki yönlü koordinat ölçekleme](images/revised/fig6-15.svg)
 
-Başvuru uygulaması bir dönem XGA (1024×768), WXGA (1280×800) ve FWXGA (1366×768) gibi hedef boyutlar kullandı. En-boy oranını zorla değiştirmek denetimlerin biçimini bozar; yanlış geri eşleme ise doğru kestirimi yanlış konuma düşürür.[^ch6-computer-tools]
+Referans uygulama bir dönem XGA (1024×768), WXGA (1280×800) ve FWXGA (1366×768) gibi hedef boyutlar kullandı. En-boy oranını zorla değiştirmek denetimlerin biçimini bozar; yanlış geri eşleme ise doğru kestirimi yanlış konuma düşürür.[^ch6-computer-tools]
 
-**Yapılandırılmış bilgi eksiksiz olduğunda yazar önce DOM ya da erişilebilirlik ağacı indeksini kullanır.** Öğenin adı, rolü ve başvurusu doğrudan konumlandırmaya katılır; modelin piksel konumunu anlık kestirme işi azalır. Yapı yoksa genel görsel model önce SoM ile birlikte kullanılıp modelin işaretli bölgelerden birini seçmesi sağlanabilir; GUI konumlandırma eğitimi almış modeller ise koordinatı doğrudan kestirip ayrı işaretlemeyi ortadan kaldırabilir.
+**Yapılandırılmış bilgi eksiksiz olduğunda yazar önce DOM ya da erişilebilirlik ağacı indeksini kullanır.** Öğenin adı, rolü ve referansı doğrudan konumlandırmaya katılır; modelin piksel konumunu anlık kestirme işi azalır. Yapı yoksa genel görsel model önce SoM ile birlikte kullanılıp modelin işaretli bölgelerden birini seçmesi sağlanabilir; GUI konumlandırma eğitimi almış modeller ise koordinatı doğrudan kestirip ayrı işaretlemeyi ortadan kaldırabilir.
 
 > **Deney 6-10 ★: browser-use ile otomatik tarayıcı işlemi**
 >
@@ -661,7 +661,7 @@ Başvuru uygulaması bir dönem XGA (1024×768), WXGA (1280×800) ve FWXGA (1366
 >
 > Saklanan çalıştırma 16 etkileşim adımını tamamladı ve 15 ekran görüntüsünü korudu. Google'da doğrulama kodu çıktıktan sonra görev weather.com'dan sonuç alacak şekilde değiştirildi.
 
-[^ch6-computer-tools]: Anthropic, Computer Use araç belgeleri ve başvuru uygulaması; sürümlenmiş eylem arayüzünü, yürütme katmanını ve ekran görüntüsü işlemeyi tanıtır.
+[^ch6-computer-tools]: Anthropic, Computer Use araç belgeleri ve referans uygulaması; sürümlenmiş eylem arayüzünü, yürütme katmanını ve ekran görüntüsü işlemeyi tanıtır.
 [^ch6-som]: Microsoft, *Set-of-Mark Prompting*, 2023; browser-use'un DOM hizmeti uygulaması yapılandırılmış öğe işleme örneğini sunar.
 
 ### Animasyon görebilen, ses duyabilen Computer Use Agent
@@ -706,9 +706,9 @@ Dosya silme gibi işlemler ayrıca kendi yürütme koşullarını gerektirir: he
 
 Mobil de algıla—karar ver—eyle döngüsünü sürdürür; eylemler daha çok dokunma hareketleriyle ifade edilir. Aynı koordinat tek tıklamanın konumunu, uzun basmanın konumunu ya da kaydırmanın başlangıcını gösterebilir; bu yüzden arayüz hareket türünü, süresini ve yolu da ister. Ekran döndürme, yazılım klavyesinin açılması ve sistem pencereleri de işlem yapılabilir alanı değiştirir.
 
-Android'in `AccessibilityService` arayüzü izin verilen kapsamda arayüz bilgisini okuyabilir ve ilgili eylemleri yürütebilir; hareket arayüzü için ilgili yeteneğin bildirilmesi de gerekir[^ch6-android]. Ekran görüntüsü, erişilebilirlik ağacı ve sistem otomasyon arayüzleri birlikte kullanılabilir; somut kullanılabilir kapsamı işletim sistemi, uygulama uygulaması ve yetkilendirme belirler. Bölüm 7'de tanıtılan AndroidWorld gibi kıyaslamalar bu eylemlerin gerçek uygulama görevlerinde beklenen sonucu verip vermediğini kontrol eder.
+Android'in `AccessibilityService` arayüzü izin verilen kapsamda arayüz bilgisini okuyabilir ve ilgili eylemleri yürütebilir; hareket arayüzü için ilgili yeteneğin bildirilmesi de gerekir[^ch6-android]. Ekran görüntüsü, erişilebilirlik ağacı ve sistem otomasyon arayüzleri birlikte kullanılabilir; somut kullanılabilir kapsamı işletim sistemi, uygulamanın kendi gerçeklemesi ve yetkilendirme belirler. Bölüm 7'de tanıtılan AndroidWorld gibi kıyaslamalar bu eylemlerin gerçek uygulama görevlerinde beklenen sonucu verip vermediğini kontrol eder.
 
-**Bence mobilde yaygınlaşmanın ekosistem engelleri teknik sorunlardan çoğu zaman daha zordur.** Platform hangi işlemlerin vekile bırakılabileceğini, hesaba, ödemeye ve veriye nasıl yetki verileceğini, hata çıktığında sorumluluğun nasıl izleneceğini belirlemelidir. Bu anlaşmalar Agent'ın tamamlayabileceği görev kapsamını doğrudan etkiler.
+**Yazara göre mobilde yaygınlaşmanın ekosistem engelleri teknik sorunlardan çoğu zaman daha zordur.** Platform hangi işlemlerin vekile bırakılabileceğini, hesaba, ödemeye ve veriye nasıl yetki verileceğini, hata çıktığında sorumluluğun nasıl izleneceğini belirlemelidir. Bu anlaşmalar Agent'ın tamamlayabileceği görev kapsamını doğrudan etkiler.
 
 Yapısal bir çıkar çatışması trafikten ve dikkatten kaynaklanır. Pek çok uygulama reklam gösterimi, içerik önerisi ve işlem girişi üzerinden gelir elde eder; kullanıcı Agent'a sorguyu ya da satın almayı doğrudan yaptırdığında sayfa gezme yolu kısalabilir ve önerilerle reklamların aldığı dikkat değişebilir. Bu halkalardan gelir elde eden platformlar için vekil işlemler mevcut gelir kaynağına dokunur. Platformun arayüz açılımını, ticari gelir paylaşımını ve vekil kimlik yönetimini yeniden düşünmesi gerekir.
 
@@ -754,7 +754,7 @@ Bir masayı toplamak birkaç dakika sürebilir, eklem denetimi ise sürekli ve z
 | VLA / beceri politikası | Mevcut beceri tam olarak nasıl hareket edecek | Tutucu eylemi, uç efektör pozu ya da bir eklem yörüngesi | 1–10 Hz çıkarım yapılandırması |
 | Alt düzey denetim ve güvenlik katmanı | Nasıl istikrarlı ve zamanında yürütülecek | Eklem ya da uç efektör denetim değerleri, hız sınırı ve acil durdurma | Denetleyici onlarca ile binlerce Hz arasında yapılandırılabilir |
 
-Planlayıcı kural programı, VLM ya da en iyileyici kullanabilir; VLA da beceri seçiminin bir kısmını üstlenebilir. **Yazarın önerisi görev sırası ile o anki hareketi ayrı ele almaktır.** Üst düzey akıl yürütmenin planı düzenlemek için zamana, alt düzey denetimin konum ve kuvvet değişimlerine zamanında tepki vermek için zamana ihtiyacı vardır; ikisi kendi uygun ritminde çalıştığında planlama ile denetim birlikte yürütülebilir.
+Planlayıcı kural programı, VLM ya da en iyileyici kullanabilir; VLA da beceri seçiminin bir kısmını üstlenebilir. **Yazarın önerisi görev sırası ile o anki hareketi ayrı ele almaktır.** Üst düzey akıl yürütme planı kurmak için zamana ihtiyaç duyar; alt düzey denetim ise konum ve kuvvet değişimlerine anında tepki vermelidir. İkisi kendi uygun ritminde çalıştığında planlama ile denetim birlikte gözetilebilir.
 
 Bu kısım üst düzey modele `observe_scene`, `pick`, `place`, `verify_state` ve `stop` olmak üzere beş araç türü sunuyor; bunlar sırasıyla gözlem, tutma, bırakma, kontrol ve durdurma içindir. Harness parametreleri, çalışma alanını ve mevcut durumu kontrol eder; yürütücü kontrolden geçen beceriyi robot kol hareketine dönüştürür ve hız sınırı ile zaman aşımını işler. Eklem açıları ve sürekli yörüngeler beceri politikası ile denetleyici tarafından üretilir; modelin beceri seçimi ile gerçek hareket arasında böylece net bir arayüz oluşur.
 
@@ -772,13 +772,13 @@ Kırmızı bardağı işle → sarı kâğıdı temizle → masayı kontrol et
 pick(red_cup) → place(red_cup, tray) → verify_state()
 ```
 
-"Bardağı al ve tepsiye koy" örneğinde robot kol tutma programını bitirdiğinde bu yalnızca program parçasının bittiğini gösterir. Kolu kaldırmadan önce tutucu geri bildirimiyle ya da yeni görüntüyle bardağın gerçekten tutulduğuna karar vermek gerekir. Boşa tuttuysa bardak yeniden konumlandırılır; biri tepsini taşıdıysa başarılı tutma hâlâ geçerlidir, yalnızca bırakma eylemi yeniden planlanır. Her beceriyi kontrol edilebilir bir durum değişikliğine karşılık getirip eylemi ve süreyi sınırlayarak yürütme durumunu ve yeni gözlemi geri döndürmek, planlayıcının gerçekte hata veren adımdan toparlanmasını sağlar.
+"Bardağı al ve tepsiye koy" örneğinde robot kol tutma programını bitirdiğinde bu yalnızca program parçasının bittiğini gösterir. Kolu kaldırmadan önce tutucu geri bildirimiyle ya da yeni görüntüyle bardağın gerçekten tutulduğuna karar vermek gerekir. Boşa tuttuysa bardak yeniden konumlandırılır; biri tepsiyi taşıdıysa başarılı tutma hâlâ geçerlidir, yalnızca bırakma eylemi yeniden planlanır. Her beceriyi kontrol edilebilir bir durum değişikliğine karşılık getirip eylemi ve süreyi sınırlayarak yürütme durumunu ve yeni gözlemi geri döndürmek, planlayıcının gerçekte hata veren adımdan toparlanmasını sağlar.
 
 > **Deney 6-13 ★★: Gemini Robotics-ER 1.5 ile XLeRobot'u masayı otonom toplamaya yönlendirmek**
 >
-> Deney 6-11'in donanımını, masa düzenini, görevini ve kabul koşullarını sürdürün; gözlemden ve planlamadan gömülü akıl yürütme modeli sorumlu olsun. RoboCrew'un orkestrasyon biçimini örnek alarak bu görev için beş araç tasarlayın: `observe_scene`, `pick`, `place`, `verify_state` ve `stop`.[^ch6-2]
+> Deney 6-11'in donanımını, masa düzenini, görevini ve kabul koşullarını sürdürün; gözlemden ve planlamadan bedenlenmiş akıl yürütme (embodied reasoning) modeli sorumlu olsun. RoboCrew'un orkestrasyon biçimini örnek alarak bu görev için beş araç tasarlayın: `observe_scene`, `pick`, `place`, `verify_state` ve `stop`.[^ch6-2]
 >
-> Model önce masa gözlemini okur ve işlem sırasına karar verir, sonra kalibre edilmiş tutma ve bırakma becerilerini çağırır. Her beceri bittiğinde yeni gözlem alınır ve sonraki koşullar kontrol edilir; başarısızlıkta mevcut duruma göre yeniden deneme ya da durma seçilir. Çalışma sistemi acil durdurma sinyali aldığında, sınır ihlali ya da kritik durum teyit edilemediğinde yürütmeyi doğrudan durdurur; model de `stop` ile görevi kendiliğinden bitirebilir.
+> Model önce masa gözlemini okur ve işlem sırasına karar verir, sonra kalibre edilmiş tutma ve bırakma becerilerini çağırır. Her beceri bittiğinde yeni gözlem alınır ve son koşullar (postcondition) kontrol edilir; başarısızlıkta mevcut duruma göre yeniden deneme ya da durma seçilir. Çalışma sistemi acil durdurma sinyali aldığında, sınır ihlali ya da kritik durum teyit edilemediğinde yürütmeyi doğrudan durdurur; model de `stop` ile görevi kendiliğinden bitirebilir.
 >
 > Sonunda yeni ortam gözlemi bardağın tepside, kâğıdın çöp kutusunda olduğunu ve kolun güvenli duruşa döndüğünü teyit eder; çarpışma ve sınır ihlali kayıtları kontrol edilir. Operatör başlatmadan, acil durdurmadan ve yerinde gözetimden sorumludur; arada devralmalar ayrıca kaydedilir.
 
@@ -868,7 +868,7 @@ Gözlemi al
   → sürdür, düzelt, yeniden dene, dur ya da yeniden planla
 ```
 
-Bu akış arızaların yerini bulmaya yardım eder. Kullanıcı söze girdiği hâlde eski fiyat okunmaya devam ediyorsa ön planı kimin uyandırdığına, oynatmanın kesilip kesilemediğine ve iptal sinyalinin hangi güvenli noktaya ulaştığına bakılır; durma zamanında olduğu hâlde eski tarih yine söyleniyorsa ön plan ile arka plan arasındaki devir boyunca sorgu sonucu izlenmelidir. Düzelttikten sonra daha çok görüşmede de doğru davrandığını nasıl kanıtlarız? Kitap buradan itibaren yetenek iyileştirmeye geçiyor. Bölüm 7 önce görevlerin nasıl tasarlanacağını, başarısızlıkların nasıl kaydedileceğini ve değişikliklerin nasıl karşılaştırılacağını anlatıyor; sonrası eğitim, sürekli evrim ve çoklu Agent iş birliğinin hepsi bu değerlendirme yöntemini kullanacak.
+Bu akış arızaların yerini bulmaya yardım eder. Kullanıcı söze girdiği hâlde eski fiyat okunmaya devam ediyorsa ön planı kimin uyandırdığına, oynatmanın kesilip kesilemediğine ve iptal sinyalinin hangi güvenli noktaya ulaştığına bakılır; durma zamanında olduğu hâlde eski tarih yine söyleniyorsa ön plan ile arka plan arasındaki devir boyunca sorgu sonucu izlenmelidir. Düzelttikten sonra daha çok görüşmede de doğru davrandığını nasıl kanıtlarız? Kitap buradan itibaren yetenek iyileştirmeye geçiyor. Bölüm 7 önce görevlerin nasıl tasarlanacağını, başarısızlıkların nasıl kaydedileceğini ve değişikliklerin nasıl karşılaştırılacağını anlatıyor; sonraki bölümlerdeki sonradan eğitim, sürekli evrim ve çoklu Agent iş birliği de bu değerlendirme yöntemini kullanacak.
 
 [^ch6-1]: XLeRobot, Teleop belgeleri.
 [^ch6-2]: Google DeepMind, *Gemini Robotics-ER 1.5*. XLeRobot, LLM Agent denetimi. XLeRobot'un yukarı akış örneği model ile araç çağrısı orkestrasyonunu gösterir; bu kısım aynı orkestrasyon ilkesini korur, ancak eylem araçlarını kalibre edilmiş masa tutma, bırakma, kontrol ve durdurma ilkelleriyle sınırlar.

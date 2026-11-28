@@ -20,7 +20,7 @@ Bir görev düşünün: "Depodaki tüm eski TODO yorumlarını derle, önceliğe
 2. **Bash Shell (komut satırı terminali)**: Derleme, test ve dosya işleme komutlarını yürütür; çıktıyı ve çıkış durumunu döndürür.
 3. **Dosya okuma aracı**: Kodu, yapılandırmayı, belgeleri ve günlükleri okur; içeriği kapsama göre getirmeyi destekler.
 4. **Dosya yazma aracı**: Dosya oluşturur ya da içeriğin tamamını değiştirir.
-5. **Dosya düzenleme aracı**: Var olan dosyayı yerel olarak değiştirir; bakım ve yineleme için uygundur.
+5. **Dosya düzenleme aracı**: Var olan dosyanın yalnızca bir bölümünü değiştirir; bakım ve yineleme için uygundur.
 6. **Dosya adı arama aracı (Glob)**: Dosyaları kalıba göre bulur; örneğin `**/*.py` ile Python dosyaları.
 7. **Dosya içeriği arama aracı (Grep)**: Metni ya da kalıbı arar ve dosya adını, satır numarasını ve eşleşen içeriği döndürür; örneğin bir fonksiyonun çağrıldığı yerleri bulmak.
 
@@ -28,7 +28,7 @@ Bu yedi araç ağırlıklı olarak Bölüm 4'teki algılama ve yürütme yetenek
 
 Önce görevi "Python dosyalarındaki TODO listesini derlemek" düzeyine indirip araçların nasıl birlikte çalıştığına bakalım:
 
-| Adım | İşlem | Dönen değer ya da ürün |
+| Adım | İşlem | Dönen değer ya da artifact |
 | --- | --- | --- |
 | Yorumları ara | Grep ile `TODO` ara, kapsamı `**/*.py` ile sınırla | `api.py` 42. satır: add rate limiting; `db.py` 15. satır: migrate to PostgreSQL; `test_api.py` 8. satır: add edge case tests |
 | Listeyi düzenle | Write ile `TODO_LIST.md` yaz | Üç yapılacak iş ve her birinin dosyası, satır numarası ve açıklaması |
@@ -51,14 +51,14 @@ Manus, OpenClaw gibi genel amaçlı Agent'lar tek bir görevde kaynak araştıra
 1. **Belleği okumak**: Kullanıcının tercih ettiği PDF rapor biçimini ve satış verisinin Google Sheets'te durduğu bilgisini almak.
 2. **Veriyi elde etmek**: Google Sheets API'sinin kullanımına bakmak, yetkilendirilmiş arayüz üzerinden gereken tabloları indirmek.
 3. **Analiz kodunu yazmak**: pandas ile satış verisini toplamak, matplotlib ile grafik üretmek, istatistik ölçütlerini ve sonucu kontrol etmek.
-4. **Ürünü oluşturmak**: Analizi ve grafikleri PDF olarak düzenlemek, kaynak veriyi, ara sonuçları ve üretim betiğini geri bakılabilir ya da güncellenebilir biçimde saklamak.
+4. **Artifact'i oluşturmak**: Analizi ve grafikleri PDF olarak düzenlemek, kaynak veriyi, ara sonuçları ve üretim betiğini geri bakılabilir ya da güncellenebilir biçimde saklamak.
 5. **Belleği güncellemek**: Teyit edilmiş veri kaynağını ve tablo tanımlayıcısını, sonraki görevlerde aranmak üzere kaydetmek.
 
 Aynı görev Qwen Office'e verilirse kullanıcı satış ayrıntılarını doğrudan yükleyip veriyi analiz ettirebilir ve görselleştirilmiş rapor ürettirebilir.[^ch5-qwenwork] Diyelim bir siparişten 100 yuan tahsil edilmiş, ardından 20 yuan iade edilmiş; çeyreklik net satışa yalnızca 80 yuan girmelidir. Rapor grafiğinde 100 yuan hesaplandıysa grafikten özet tabloya ve özgün ayrıntılara inerek hangi iadenin atlandığı görülebilir.
 
 [^ch5-qwenwork]: Qwen Office yardım merkezi, Qwen Office tanıtımı; veri dosyası yükleme, veri analizi ve görselleştirilmiş rapor üretme işlevlerini tanıtır.
 
-Dosya sistemi bu adımları birbirine bağlar: bir önceki adımın sakladığı sonuç bir sonrakinin girdisi olabilir, program aynı veriyi tekrar tekrar okuyabilir. Görev kesintiye uğradığında Agent saklanmış ürünlere bakarak ilerlemeyi doğrulayabilir ve tamamlanmamış kısımdan devam edebilir.
+Dosya sistemi bu adımları birbirine bağlar: bir önceki adımın sakladığı sonuç bir sonrakinin girdisi olabilir, program aynı veriyi tekrar tekrar okuyabilir. Görev kesintiye uğradığında Agent saklanmış artifact'lere bakarak ilerlemeyi doğrulayabilir ve tamamlanmamış kısımdan devam edebilir.
 
 Ara sonuçların bir işlevi daha var: kullanıcı ilgili bir soru sorduğunda uygun bir adımdan devam edilebilir. Microsoft Research'ün Data Formulator'ı bunu ülke bazında elektrik üretim verisiyle gösterir. Özgün tablo her enerji türünün üretimini kaydeder; analist önce ülkelerin yıllara göre yenilenebilir enerji payını elde eder, sonra buna göre sıralama grafiği çizer. Bir ülkenin payının ne kadar arttığını görmek istendiğinde, yalnızca grafikteki sıraya bakarak iki yıl arasındaki yüzde puan farkı görülemez. Arayüzde saklanan türetme adımları boyunca pay tablosuna dönüp iki yılın değerleri çıkarılabilir.[^ch5-data-formulator]
 
@@ -110,7 +110,7 @@ Kod incelemesi testlerin kapsamayabileceği yönleri de kontrol eder; örneğin 
 
 Yeni modüller, bağımlılık değişiklikleri ve çekirdek davranış değişikliklerinin hepsi ilgili belgelere yansıtılmalıdır. Teslim notu çözülen sorunu, davranış değişikliklerini, doğrulama sonuçlarını ve kullanım biçimini özetlemeli, gerekirse geri alma adımlarını eklemelidir. Kod, testler ve belgeler bu görevin sonucunu birlikte saklar.
 
-Farklı modeller keşfi ve değişikliği farklı biçimlerde düzenler: bazıları önce uygulamayı, çağıranları ve testleri geniş çapta okur; bazıları önce en ilgili dosyaya bakar, küçük bir yama dener, sonra derleme ya da test geri bildirimiyle sorunu daraltmaya devam eder. **Yazar bu keşif ve eylem temposunu her şeyden önce modelin öğrendiği bir davranış stratejisi olarak görüyor.** Harness değiştirildikten sonra benzer tempo sürüyor, aynı Harness'ta model değiştirildiğinde ise tempo belirgin biçimde değişiyorsa fark modelin kendisine işaret eder. Harness'ın prompt'ları, araçları ve bütçesi bu eğilimi büyütebilir ya da bastırabilir. Bölüm 7 bu farkların nasıl değerlendirileceğini, Bölüm 8 ise sonrası eğitimin davranış stratejisini nasıl etkilediğini tartışıyor.
+Farklı modeller keşfi ve değişikliği farklı biçimlerde düzenler: bazıları önce uygulamayı, çağıranları ve testleri geniş çapta okur; bazıları önce en ilgili dosyaya bakar, küçük bir yama dener, sonra derleme ya da test geri bildirimiyle sorunu daraltmaya devam eder. **Yazar bu keşif ve eylem temposunu her şeyden önce modelin öğrendiği bir davranış stratejisi olarak görüyor.** Harness değiştirildikten sonra benzer tempo sürüyor, aynı Harness'ta model değiştirildiğinde ise tempo belirgin biçimde değişiyorsa fark modelin kendisine işaret eder. Harness'ın prompt'ları, araçları ve bütçesi bu eğilimi büyütebilir ya da bastırabilir. Bölüm 7 bu farkların nasıl değerlendirileceğini, Bölüm 8 ise sonradan eğitimin davranış stratejisini nasıl etkilediğini tartışıyor.
 
 ### Coding Agent'ta Harness mühendisliği pratiği
 
@@ -129,7 +129,7 @@ Model sorunu anlamaktan, plan ve kod üretmekten sorumludur; Harness çalışma 
 
 Görevin net olup olmadığı ve sonucun otomatik doğrulanıp doğrulanamayacağı, Agent'ın çalışma biçimini birlikte etkiler. Tablo 5-1 dört bileşimi listeliyor ve her birine eklenmesi gereken mühendislik işini veriyor. Gereksinimleri netleştirerek, örnekler ve kontroller ekleyerek başta belirsiz olan görev adım adım yürütülebilir bir hedefe dönüştürülebilir.
 
-Tablo 5-1 Görev netliği ve doğrulama otomasyonu dört çeyreği
+Tablo 5-1 Görev netliği ve doğrulama otomasyonu düzeyine göre dört bölge
 
 | | Sonuç otomatik doğrulanabilir | Sonuç insan tarafından doğrulanmalı |
 | --- | --- | --- |
@@ -144,7 +144,7 @@ Büyük ölçekli kod geçişleri bu bileşenlerin nasıl birlikte çalıştığ
 
 LangChain'in pratiği, başarısızlık izlerine göre Harness'ın nasıl iyileştirileceğini gösterir: model sabit tutulur, görevin hangi adımda takıldığı ya da hatayla bittiği çözümlenir, sonra sistem prompt'u, araç ara katmanı, öz denetim döngüsü ve akıl yürütme bütçesi ayarlanır. Bölüm 1 Terminal Bench 2.0 örneğini tanıtmıştı; burada odak "başarısızlığı kaydet—değişiklik öner—yeniden değerlendir" yineleme yöntemindedir[^ch5-langchain-harness].
 
-Anthropic'in uzun görev çözümü ise ortamın başlatılmasını sürekli yürütmeden ayırır. Başlatıcı Agent görev listesini ve çalışma ortamını kurar, sonraki Coding Agent'lar maddeleri tek tek ilerletip kodu, test sonuçlarını ve ilerlemeyi saklar. Yeni oturumlar bu ürünleri okuyup işe devam eder; context'ler arası devirde bilgi kaybı azalır[^ch5-long-harness].
+Anthropic'in uzun görev çözümü ise ortamın başlatılmasını sürekli yürütmeden ayırır. Başlatıcı Agent görev listesini ve çalışma ortamını kurar, sonraki Coding Agent'lar maddeleri tek tek ilerletip kodu, test sonuçlarını ve ilerlemeyi saklar. Yeni oturumlar bu artifact'leri okuyup işe devam eder; context'ler arası devirde bilgi kaybı azalır[^ch5-long-harness].
 
 [^ch5-langchain-harness]: LangChain, *Improving Deep Agents with harness engineering*, 17 Şubat 2026.
 [^ch5-long-harness]: Anthropic, *Effective harnesses for long-running agents*, 26 Kasım 2025.
@@ -207,7 +207,7 @@ Hedef arayüz eski çağrıyı ifade edemiyorsa tamamlanmış adımlar açık bi
 
 > **Deney 5-1 ★★★: Üreticiler arası iz devralma**
 >
-> Bu deneyde Agent uçak biletini, konaklamayı, yemek masrafını ve döviz kurunu sorgulayıp Çin yuanı cinsinden toplamı hesaplıyor. İlk iki araç çağrısı tamamlandıktan sonra betik önceden belirlenmiş bir kesme noktasında hizmeti değiştiriyor ve kaynak hizmetin kullanılamaz hâle gelmesinden sonraki devralmayı canlandırıyor; alıcı taraf kalan adımları işlemeyi sürdürüyor. Deney Moonshot, Anthropic ve Google'ın üç modelini kullanarak altı yönlü geçiş bileşimini karşılaştırıyor.
+> Bu deneyde Agent uçak biletini, konaklamayı, yemek masrafını ve döviz kurunu sorgulayıp Çin yuanı cinsinden toplamı hesaplıyor. İlk iki araç çağrısı tamamlandıktan sonra betik önceden belirlenmiş bir kesme noktasında hizmeti değiştiriyor ve kaynak hizmetin kullanılamaz hâle gelmesinden sonraki devralmayı canlandırıyor; alıcı taraf kalan adımları işlemeyi sürdürüyor. Deney Moonshot, Anthropic ve Google'ın üç modelini kullanarak yönü belli altı geçiş bileşimini (kaynak → hedef) karşılaştırıyor.
 >
 > Üç işleme biçimi şunlardır: alan eşlemesiyle özgün mesajları aktarmak; akıl yürütme içeriğini ve opak alanları silip mesajları dönüştürmek; tarafsız izle görev durumunu saklayıp hedef arayüze göre context'i yeniden kurmak. Geçiş konumu betikle denetlendi, alıcı tarafın biçim hataları gerçek hizmet yanıtlarından alındı.
 >
@@ -229,7 +229,7 @@ Kurtarma mantığı kendisi de başarısız olabilir. Örneğin context taşmas�
 
 ### Coding Agent uygulama teknikleri
 
-Başarısız bir testi düzeltme kaydından hangi parçanın optimize edilmeye değer olduğunu tahmin etmek için başlayalım. Kasım 2026'da Porto'da sunduğum *The Road to JARVIS* konuşmasında aynı oturumu yeniden oynatarak farklı çıkarım hızlarını karşılaştırdım: o günkü çevrimiçi modelin süresiyle toplam 24,2 saniye; araç süreleri sabit tutulup henüz üretilmemiş özel bir çipin tahmini çıkarım hızıyla toplam yaklaşık 8,1 saniye. Bunun 7,5 saniyesi testleri çalıştırmakla geçiyordu. Kalan yaklaşık 0,6 saniyelik model süresi de tamamen kaldırılsa testlerin bitmesi yine beklenir.
+Önce başarısız bir testi düzelten bir yürütme kaydı üzerinden hangi kısmın optimize edilmeye değer olduğunu tahmin edelim. Yazar, Kasım 2026'da Porto'da sunduğu *The Road to JARVIS* konuşmasında aynı oturumu yeniden oynatarak farklı çıkarım hızlarını karşılaştırdı: o günkü çevrimiçi modelin süresiyle toplam 24,2 saniye; araç süreleri sabit tutulup henüz üretilmemiş özel bir çipin tahmini çıkarım hızıyla toplam yaklaşık 8,1 saniye. Bunun 7,5 saniyesi testleri çalıştırmakla geçiyordu. Kalan yaklaşık 0,6 saniyelik model süresi de tamamen kaldırılsa testlerin bitmesi yine beklenir.
 
 Bu 7,5 saniyede hangi işler aynı anda yapılabilir? Buna araç çağrıları arasındaki bağımlılık ilişkileri karar verir.
 
@@ -272,7 +272,7 @@ Paralel görevler ayrı oturumlar ya da açık ortam anlık görüntüleri kulla
 
 Dosya yazıldıktan sonra araç katmanı ilgili dilin söz dizimi denetleyicisini ya da linter'ını otomatik çalıştırıp tanıları araç dönüş değeri olarak modele verebilir. Örneğin parantez eksikse dosya, satır-sütun konumu ve hata türü döner; model bir sonraki turda düzeltebilir. Bu, IDE'nin anlık işaretlemesine benzer bir geri bildirim döngüsü oluşturur.
 
-Kontrol kapsamı değişiklikle birlikte genişletilebilir: önce değişen dosya kontrol edilir, sonra etkilenen modüllerin testleri çalıştırılır, en sonunda teslim gereksinimlerine göre regresyon kontrolleri yapılır. Hafif kontroller yerel sorunları erkenden bulmaya, entegrasyon testleri ise modüller arası davranışı kontrol etmeye yarar.
+Kontrol kapsamı değişiklikle birlikte genişletilebilir: önce değişen dosya kontrol edilir, sonra etkilenen modüllerin testleri çalıştırılır, en sonunda teslim gereksinimlerine göre regresyon kontrolleri yapılır. Hafif kontroller sınırlı kapsamlı sorunları erkenden bulmaya, entegrasyon testleri ise modüller arası davranışı kontrol etmeye yarar.
 
 ### Coding Agent'ta arama araçları
 
@@ -295,12 +295,12 @@ Metin eşleştirme doğrudan dosya içeriğine karşılık gelir; sonuçları ko
 
 **Coding Agent'ın arama yeteneğini kurarken yazar önce Grep, Glob ve kapsamlı okumayı iyi kurmayı öneriyor.** Model arama sonuçlarına göre sorguyu yeniden yazmayı, çağıranları ve testleri açmayı sürdürerek kapsamı adım adım daraltabilir. Bu araçlar geçerli çalışma alanını doğrudan okur; gömme indeksi kurup kodla eşitleme işini ortadan kaldırır. Büyük kod tabanlarında tekrar tekrar keşif yapılıyor, yalnızca işlev betimlemesi verilip giriş noktası zor bulunuyorsa anlamsal indeks eklenerek hatırlama iyileştirilebilir. Cursor bir dönem gömmeye dayalı kod tabanı indeksini tanıtmış, sonraki arama belgelerinde ise yerel Instant Grep indeksini ve keşif yapan alt Agent'ları anlatmıştır[^ch5-search]. Bu gelişim de "grep benzeri arayüz kullanmak" ile "indeks kurup kurmamak"ın iki ayrı tasarım boyutu olduğunu gösterir: aynı arama arayüzü altta tarama ya da indeks kullanabilir.
 
-**Sembol düzeyinde tanım ve başvuru arama.** Dil sunucuları söz dizimi, kapsam ve tür bilgisinden yararlanarak "tanıma git" ve "başvuruları bul" hizmeti verebilir. Örneğin `authenticate` 42. satırda tanımlanmış ve 189. satırda çağrılmışsa araç iki konumun ilişkisini döndürebilir ve başka kapsamlardaki aynı adlı sembolleri ayırt edebilir. Claude Code'un kod zekâsı eklentisi böyle bir bağlantı biçimidir: dil sunucusu protokolü (LSP) üzerinden sembol gezinmesi ve düzenleme sonrası tanı sağlar[^ch5-lsp].
+**Sembol düzeyinde tanım ve referans arama.** Dil sunucuları söz dizimi, kapsam ve tür bilgisinden yararlanarak "tanıma git" ve "referansları bul" hizmeti verebilir. Örneğin `authenticate` 42. satırda tanımlanmış ve 189. satırda çağrılmışsa araç iki konumun ilişkisini döndürebilir ve başka kapsamlardaki aynı adlı sembolleri ayırt edebilir. Claude Code'un kod zekâsı eklentisi böyle bir bağlantı biçimidir: dil sunucusu protokolü (LSP) üzerinden sembol gezinmesi ve düzenleme sonrası tanı sağlar[^ch5-lsp].
 
 Sembol araçlarının etkisi dil desteğine, proje yapılandırmasına ve analiz durumuna bağlıdır. Agent metin aramasıyla dizeleri, yorumları ya da dil sunucusunun henüz çözümlemediği dosyaları tamamlayabilir.
 
 [^ch5-search]: Cursor, *Securely indexing large codebases* ve Search; gömmeye dayalı indeks çözümünü ve sonraki yerel arama mekanizmasını sırasıyla tanıtır.
-[^ch5-lsp]: Anthropic, *Code intelligence plugins*; LSP üzerinden tanım, başvuru ve canlı tanı sağlamayı tanıtır.
+[^ch5-lsp]: Anthropic, *Code intelligence plugins*; LSP üzerinden tanım, referans ve canlı tanı sağlamayı tanıtır.
 
 ### Coding Agent'ta dosya düzenleme araçları
 
@@ -308,7 +308,7 @@ Model bir dosyayı okuduktan sonra bir başkasının dosyanın başına bir yoru
 
 ![Şekil 5-4 Beş dosya düzenleme çözümünün karşılaştırması](images/revised/fig5-4.svg)
 
-**Fark betimlemesi + Apply Model.** Ana model değişiklik niyetini ve kod parçalarını verir; örneğin Git diff benzeri ekleme/çıkarma betimlemesi ya da değişmeyen kısımları atlama işaretleriyle geçen bir kod iskeleti. Özel bir uygulama modeli özgün dosyayla birlikte değiştirilmiş tam içeriği üretir. Cursor'ın erken dönem Fast Apply özelliği bu fikrin temsilcisiydi[^ch5-apply]. "Değişikliği önermek" ile "değişikliği uygulamak" iki modele ayrılır. Temel modeller kesin yerel düzenlemeleri üretmede daha iyi hâle geldikçe bu iki modelli akış yerini daha basit çözümlere bıraktı.
+**Fark betimlemesi + Apply Model.** Ana model değişiklik niyetini ve kod parçalarını verir; örneğin Git diff benzeri ekleme/çıkarma betimlemesi ya da değişmeyen kısımları atlama işaretleriyle geçen bir kod iskeleti. Özel bir uygulama modeli özgün dosyayla birlikte değiştirilmiş tam içeriği üretir. Cursor'ın erken dönem Fast Apply özelliği bu fikrin temsilcisiydi[^ch5-apply]. "Değişikliği önermek" ile "değişikliği uygulamak" iki modele ayrılır. Temel modeller kesin kısmi düzenlemeleri üretmede daha iyi hâle geldikçe bu iki modelli akış yerini daha basit çözümlere bıraktı.
 
 Bu iş bölümü ana modelin kod mantığını ifade etmeye odaklanmasını, uygulama modelinin yerel değişikliği dosyaya birleştirmesini sağlar. Kontrolün odağı da birleştirme sonucuna kayar: benzer parçalar konum belirsizliği yaratabilir, atlama işaretleri yanlış anlaşılabilir, değişmeyen bölgeler beklenmedik biçimde yeniden yazılabilir.
 
@@ -330,7 +330,7 @@ Bu nedenle toplu düzenlemeler aynı ilk anlık görüntüye birlikte başvurup 
 
 Araç iki özgün metin parçasının hangisinin önce geldiğini kontrol etmeli ve arayüz anlaşmasına göre baş ve son parçaların değiştirilip değiştirilmeyeceğine karar vermelidir. Yalnızca koşula uyan tek bir aralık varsa işlem yapılır; birden çok yer eşleşiyorsa bu konumlar modele bildirilip context'i tamamlaması istenir. İç içe yapılarda ya da yinelenen kodda komşu fonksiyon adları, imzalar gibi ek çapalar aralığı netleştirmeye yardım eder.
 
-**Yeni bir Coding Agent kurarken yazar eski dizeden yeni dizeye gibi basit ve deterministik bir düzenleme arayüzüyle başlamayı öneriyor.** Özgün metne dayalı konumlandırma nettir, başarısızlık nedeni kolay açıklanır, fark da kolay denetlenir. Model yerel değişiklikleri güvenilir biçimde üretebildiğinde Harness daha fazla işi deterministik programa bırakabilir ve ek uygulama modelinden kurtulabilir. Büyük silmelerde parametre hacmini sıkıştırmak gerektiğinde baş-son çapaları ya da anlık görüntüye dayalı satır numarası düzenlemesi devreye alınır. Codex'in `apply_patch` aracı ise kısıtlı yamalarla çok yerli değişikliği ifade eden başka bir doğrudan düzenleme yolunu göstermektedir.
+**Yeni bir Coding Agent kurarken yazar eski dizeden yeni dizeye gibi basit ve deterministik bir düzenleme arayüzüyle başlamayı öneriyor.** Özgün metne dayalı konumlandırma nettir, başarısızlık nedeni kolay açıklanır, fark da kolay denetlenir. Model kısmi değişiklikleri güvenilir biçimde üretebildiğinde Harness daha fazla işi deterministik programa bırakabilir ve ek uygulama modelinden kurtulabilir. Büyük silmelerde parametre hacmini sıkıştırmak gerektiğinde baş-son çapaları ya da anlık görüntüye dayalı satır numarası düzenlemesi devreye alınır. Codex'in `apply_patch` aracı ise kısıtlı yamalarla çok yerli değişikliği ifade eden başka bir doğrudan düzenleme yolunu göstermektedir.
 
 [^ch5-direct-edit]: Anthropic, *Tools reference*, Edit aracı; Cursor, 0.50 sürüm notları, 15 Mayıs 2025, Search & Replace'in sunulması; 1.3 sürüm notları Search & Replace ile Apply optimizasyonlarını birlikte kaydeder.
 
@@ -349,7 +349,7 @@ Bölüm 1'deki üç korkuluk katmanı burada sırasıyla iş üstlenir: context 
 **Sandbox içinde kaynakları ve iletişimi sınırlamak.**
 
 - **Ağ çıkışı.** Kod sandbox'ında kolayca gözden kaçan ve öncelikle uygulanması gereken sınırdır. Yazar dış erişime varsayılan olarak kapalı başlamayı, görev gerektikçe paket kaynaklarına, belge sitelerine ve iş API'lerine izin vermeyi öneriyor. İzin listesi somut hedeflere ve işlem kapsamına karşılık gelmelidir; paylaşılan hizmetlerde hesap, kiracı ve kaynak sahipliği de düşünülmelidir. Ağ politikası aracın başlattığı programları ve alt süreçlerini de kapsamalı, dışarıya aktarılan veriler ayrıca yetki kapsamına göre kontrol edilmelidir.
-- **Dosya sistemi.** Özgün kaynak kodu salt okunur bağlanıp kopyası yazılabilir çalışma alanına konabilir; ya da denetimli düzenleme arayüzü yamayı üretip incelemeden sonra uygulayabilir. Ürünler ve ara ara dosyalar ayrı dizinde tutulur, kimlik bilgisi dosyaları sandbox'ın dışında kalır. Kimlik doğrulamalı bir hizmete erişmek gerektiğinde görevin ihtiyaç duyduğu yeteneği denetimli arayüz sağlar; ana makinenin bütün kimlik bilgileri üretilen programa verilmez.
+- **Dosya sistemi.** Özgün kaynak kodu salt okunur bağlanıp kopyası yazılabilir çalışma alanına konabilir; ya da denetimli düzenleme arayüzü yamayı üretip incelemeden sonra uygulayabilir. Üretilen çıktılar ve ara dosyalar ayrı dizinde tutulur, kimlik bilgisi dosyaları sandbox'ın dışında kalır. Kimlik doğrulamalı bir hizmete erişmek gerektiğinde görevin ihtiyaç duyduğu yeteneği denetimli arayüz sağlar; ana makinenin bütün kimlik bilgileri üretilen programa verilmez.
 - **Kaynaklar ve süre.** CPU, bellek, süreç sayısı, disk alanı ve çalışma süresi için üst sınırlar konur; sonsuz döngülerin, süreç sayısının denetimden çıkmasının ve sürekli diske yazmanın etkisi sınırlanır. Sınır aşıldığında yapılandırılmış bir durum döndürülür; örneğin "yürütme 120 saniyeyi aştı, sonlandırıldı" ve korunan çıktı ile temizlik sonucu eklenir; model görevi küçültmeye ya da uygulamayı değiştirmeye karar verebilir.
 
 Bu sınırlar yürütme zincirinin tamamını kapsamalıdır. Komut onaylandıktan sonra gerçekten başlatılan program aynı yetki kapsamında çalışmayı sürdürür; arka plan süreçleri, yardımcı araçlar ve dış arayüzler de ilgili denetime dahil edilmelidir.
@@ -362,13 +362,13 @@ Shell komutları program adı, parametreler, yönlendirme, boru hatları ve alt 
 
 Değişken açılımı, dinamik betikler ve ancak çalışma sırasında oluşan yollar gerçek davranışın bir kısmını yürütme anına bırakır. Harness belirlenemeyen kısımlar için daha açık bir çağrı biçimi isteyebilir, incelemeye devredebilir ya da kısıtlı ortamda yürütebilir. Model destekli inceleme context'e dayalı yargı sağlar, deterministik erişim denetimi ise gerçek etkiyi kısıtlar. Bölüm 4'te tanıtılan Sidecar hazırlık işleriyle paralel çalışabilir; dış etkisi olan işlemler inceleme geçtikten sonra gönderilir.
 
-**Çok taraflı devirde hizmet verilen tarafı netleştirmek.**
+**Çok taraflı temsilde hizmet verilen tarafı netleştirmek.**
 
 Asil sadakati (principal loyalty), bir Agent bir taraf adına iş görürken diğer katılımcılarla iletişim kurduğunda asilin hedeflerine ve yetkisine nasıl sürekli uyacağını tartışır. Örneğin kullanıcı Agent'tan bir tedarikçiyle pazarlık yapmasını ister ve özel olarak 12.000 yuanlık bütçe üst sınırını verir. Agent tedarikçinin teklifini anlamalı, kendi tarafının taleplerini açıklamalı ve aynı zamanda bu özel kısıtı korumalıdır.
 
 Yazar meslektaşlarıyla yaptığı çok taraflı etkileşim değerlendirmesinde iki tür başarısızlık gözledi: bir grup asilin özel bilgisini sızdırdı ya da karşı tarafın uygunsuz taleplerini kabul etti; diğer grup aşırı reddetti ve asilin olağan isteklerini bile tamamlayamadı. Değerlendirmedeki prompt stratejileri ve eğitim yöntemleri bilgi koruma ile normal iş birliği arasında bir ödünleşim gösterdi[^ch5-1]. **Sadakat bilgi korumayı ve görevin tamamlanmasını birlikte ölçmelidir.** Yalnızca daha çok isteği reddetmeye çalışmak normal iş birliğini de tıkar; yalnızca görüşmeyi sorunsuz bitirmeye çalışmak ise karşı tarafın asilin çıkarını etkilemesine izin verebilir.
 
-Coding Agent açısından depo dosyaları, araç çıktıları ve üçüncü taraf MCP yanıtları görev bilgisini içerebildiği gibi davranışı değiştirmeyi isteyen metinler de taşıyabilir. Harness gerçek kaynağa göre devir talimatını dış malzemeden ayırmalı, mesajlara kaynak ve rol eklemeli, devir kapsamını yürütülebilir yetkilere eşlemelidir. Dış malzemede kendini "kullanıcı isteği" diye tanıtan metin güvenilir bir kanaldan teyit edilmelidir.
+Coding Agent açısından depo dosyaları, araç çıktıları ve üçüncü taraf MCP yanıtları görev bilgisini içerebildiği gibi davranışı değiştirmeyi isteyen metinler de taşıyabilir. Harness gerçek kaynağa göre asilin (müvekkilin) talimatlarını dış malzemeden ayırmalı, mesajlara kaynak ve rol eklemeli, verilen yetki kapsamını yürütülebilir yetkilere eşlemelidir. Dış malzemede kendini "kullanıcı isteği" diye tanıtan metin güvenilir bir kanaldan teyit edilmelidir.
 
 Prompt ayrıca iş birliği ilkelerini açıklayabilir: asilin özel bilgisini korumak, bazen bir kaydın var olup olmadığını bile gizli tutmak; dışarıya yalnızca gerekli içeriği açıklamak; iç sınır ile kamuya açık tutumu ayırmak; yetki kapsamı içinde görevi ilerletmek; tekrarlanan taleplerde tutarlı bir yetki ölçütü sürdürmek. Yetki genişlediğinde ya da hizmet verilen taraf değiştiğinde bu güvenilir kanaldan teyit edilmeli ve çalışma zamanı yetkileri birlikte güncellenmelidir. Model böylece net bir davranış dayanağına sahip olur; araçlar ve ortam ise gerçek erişim sınırlarını uygular.
 
@@ -378,7 +378,7 @@ Prompt ayrıca iş birliği ilkelerini açıklayabilir: asilin özel bilgisini k
 
 ## Kod: genel amaçlı Agent'ın üst yeteneği
 
-Önceki kısımlar kullanıcı gereksinimini kod değişikliğine dönüştürdü. Şimdi baştaki satış tablolarına dönelim: kullanıcı sonunda yalnızca bir rapor istese bile Agent ürün tanımlarını birleştiren, gruplayarak istatistik çıkaran ve bir ürün için iade oranını özgün tablodan yeniden hesaplayan bir program yazabilir. Önce kullanıcının adede göre mi sipariş sayısına göre mi istatistik istediğini netleştirmek gerekir. Bir üründen on adet satıldığını, bunların iki siparişte olduğunu ve yalnızca bir siparişte bir adet iade edildiğini varsayalım. Adede göre 1/10, iadesi olan siparişe göre 1/2 çıkar. İki hesap da hatasız çalışır; hangisinin kullanıcının sorusunu yanıtladığı ancak ölçüt önceden teyit edilirse bilinir. Böyle yazılmış program sonraki dönemin verisi geldiğinde yeniden çalıştırılabilir. Bu "üret—yürüt—doğrula" döngüsü içerik üretimine, iş sistemi entegrasyonuna ve Agent geliştirmeye de uzanır.
+Önceki kısımlar kullanıcı gereksinimini kod değişikliğine dönüştürdü. Şimdi baştaki satış tablolarına dönelim: kullanıcı sonunda yalnızca bir rapor istese bile Agent ürün tanımlayıcılarını tek biçime getiren, gruplayarak istatistik çıkaran ve bir ürün için iade oranını özgün tablodan yeniden hesaplayan bir program yazabilir. Önce kullanıcının adede göre mi sipariş sayısına göre mi istatistik istediğini netleştirmek gerekir. Bir üründen on adet satıldığını, bunların iki siparişte olduğunu ve yalnızca bir siparişte bir adet iade edildiğini varsayalım. Adede göre 1/10, iadesi olan siparişe göre 1/2 çıkar. İki hesap da hatasız çalışır; hangisinin kullanıcının sorusunu yanıtladığı ancak ölçüt önceden teyit edilirse bilinir. Böyle yazılmış program sonraki dönemin verisi geldiğinde yeniden çalıştırılabilir. Bu "üret—yürüt—doğrula" döngüsü içerik üretimine, iş sistemi entegrasyonuna ve Agent geliştirmeye de uzanır.
 
 > **Üst yetenek.** Bu kitap üst yeteneği (meta-capability) başka yetenekleri yaratma ya da birleştirme yeteneği olarak kullanır. Kod üretimi yeni araçlar üretebilir; örneğin veri işleme betikleri ve API çağrı akışları. Yeni kısıtlar da ifade edebilir; örneğin doğrulama koşulları ve denetim kuralları. Yeni sunum biçimleri de kurabilir; örneğin HTML formları, sunumlar ve videolar.
 
@@ -386,9 +386,9 @@ En basit durumdan başlayalım. Teslim edilecek şey tek bir sorunun yanıtı ol
 
 ### Düşünme aracı olarak kod
 
-**Kesin hesaplama ve biçimsel kısıtlar için yazar önce modelin yürütülebilir bir ifade yazmasını, sonra hesaplamayı yorumlayıcıya ya da çözücüye bırakmasını tercih eder.** Sözcük sözcük yanıt üretmek kopyalama ve hesap hatalarına, koşulların atlanmasına yol açabilir; program bu adımları sabitleyip tekrar tekrar yürütebilir. Matematik ve mantık görevleri genellikle iki halkadan oluşur: önce problem ifadesi ilişkilere ve kısıtlara çevrilir, sonra sonuç hesaplanır. LLM sorunu anlamaya, çözüm önermeye ve program yazmaya yardım edebilir; yorumlayıcı ya da çözücü ise belirlenen işlemi yürütür.
+**Kesin hesaplama ve biçimsel kısıtlar için yazar önce modelin yürütülebilir bir ifade yazmasını, sonra hesaplamayı yorumlayıcıya ya da çözücüye bırakmasını tercih eder.** Sözcük sözcük yanıt üretmek kopyalama ve hesap hatalarına, koşulların atlanmasına yol açabilir; program bu adımları sabitleyip tekrar tekrar yürütebilir. Matematik ve mantık görevleri genellikle iki aşamadan oluşur: önce problem ifadesi ilişkilere ve kısıtlara çevrilir, sonra sonuç hesaplanır. LLM sorunu anlamaya, çözüm önermeye ve program yazmaya yardım edebilir; yorumlayıcı ya da çözücü ise belirlenen işlemi yürütür.
 
-Örneğin bir sınıfta 40 öğrenci var; %60'ı matematik, %45'i fizik, %25'i ikisini birden seçiyor. Yalnızca fizik seçenlerin sayısı için fizik seçenlerden iki dersi birlikte seçenleri çıkarmak gerekir: 18 − 10 = 8. Yanlışlıkla matematik seçenler kullanılırsa 24 − 10 = 14 bulunur. Hata çıkarılan terimi seçme adımında yapılır.
+Örneğin bir sınıfta 40 öğrenci var; %60'ı matematik, %45'i fizik, %25'i ikisini birden seçiyor. Yalnızca fizik seçenlerin sayısı için fizik seçenlerden iki dersi birlikte seçenleri çıkarmak gerekir: 18 − 10 = 8. Yanlışlıkla matematik seçenler kullanılırsa 24 − 10 = 14 bulunur. Hata, eksileni (çıkarma işleminde ilk terimi) seçme adımında yapılır.
 
 Nicel ilişkileri anlamlı değişkenlerle yazmak her terimi tek tek kontrol etmeyi sağlar:
 
@@ -433,13 +433,13 @@ Mantık problemleri de böyle ele alınabilir. Şövalye ve düzenbaz bulmacası
 
 Doğal dil açıklaması modelin politikayı anlamasına, kullanıcıya nedeni açıklamasına ve yetki kapsamında başka çözümler aramasına yardım eder; örneğin tarih değişikliğine izin verilip verilmediğini sorgulamak. Koda dökülmüş doğrulama ise kritik işlemlerden önce somut koşulları kontrol eder; çok koşullu bileşimler, zaman hesapları ve veri kaynakları arası kontroller için uygundur. Model doğrulama kodunun üretilmesine yardım edebilir; kural sahibi inceleme ve sınır örnekleriyle anlamı teyit eder; kural güncellendiğinde açıklama, uygulama ve testler birlikte güncellenir.
 
-**Koda dökülmüş kuralların birincil değeri, gerçek kayba yol açacak hatalı işlemleri engellemesidir.** Sipariş iptali, para transferi ve veri silme iş durumunu değiştirir; sonradan telafi pahalıya gelebilir. Yazar doğruluk kontrolünün doğrudan yürütme arayüzüne konmasını öneriyor; böylece her gönderim aynı kural kümesinden geçer ve modelin ayrı bir kontrol aracını çağırmayı atlaması önlenir. Bağımsız sorgu arayüzü yine politikayı önceden açıklamak için kullanılabilir; yürütme sırasında gereken olgular yeniden okunur, durumun değişip değişmediği kontrol edilir ve Bölüm 4'te tanıtılan işlem, idempotentlik ve telafi mekanizmalarıyla sonraki adımlar yönetilir.
+**Koda dökülmüş kuralların birincil değeri, gerçek kayba yol açacak hatalı işlemleri engellemesidir.** Sipariş iptali, para transferi ve veri silme iş durumunu değiştirir; sonradan telafi pahalıya gelebilir. Yazar, sunucudaki gerçek verilere dayalı doğrulamanın doğrudan yürütme arayüzüne konmasını öneriyor; böylece her gönderim aynı kural kümesinden geçer ve modelin ayrı bir kontrol aracını çağırmayı atlaması önlenir. Bağımsız sorgu arayüzü yine politikayı önceden açıklamak için kullanılabilir; yürütme sırasında gereken olgular yeniden okunur, durumun değişip değişmediği kontrol edilir ve Bölüm 4'te tanıtılan transaction (veritabanı işlemi), idempotentlik ve telafi mekanizmalarıyla sonraki adımlar yönetilir.
 
 **Parametrelerle kontrolü yönlendirin, kararı sunucudaki olgularla verin.**
 
-τ-bench hava yolu, e-ticaret gibi senaryolarda araç çağrısını ve politikalara uyumu inceler[^ch5-tau]. Aşağıda hava yolu rezervasyonu öğretim senaryosu olarak kullanılıyor ve beş iptal kuralı tanımlanıyor: önce herhangi bir bacağı kullanılmış siparişler elenir, sonra rezervasyon zamanı, havayolunun iptali, business sınıfı ve sigorta koşulları kontrol edilir. `cancellation_reason` kullanıcının başvuru nedenini, `expected_*` ise modelin görmeyi beklediği olguları kaydeder; gerçek karar iş veritabanından ve sunucu saatinden okunur.
+τ-bench hava yolu, e-ticaret gibi senaryolarda araç çağrısını ve politikalara uyumu inceler[^ch5-tau]. Aşağıda hava yolu rezervasyonu öğretim senaryosu olarak kullanılıyor ve beş iptal kuralı tanımlanıyor: önce herhangi bir uçuş ayağı kullanılmış rezervasyonlar elenir, sonra rezervasyon zamanı, havayolunun iptali, business sınıfı ve sigorta koşulları kontrol edilir. `cancellation_reason` kullanıcının başvuru nedenini, `expected_*` ise modelin görmeyi beklediği olguları kaydeder; gerçek karar iş veritabanından ve sunucu saatinden okunur.
 
-Bu kod politika dallarını gösterir. Giriş katmanı istek kimliğini, sipariş sahipliğini ve işlem yetkisini doğrular; yürütme katmanı denetimli bir işlem içinde ya da eşdeğer bir tutarlılık mekanizmasıyla durumu okur, koşulları doğrular, iptali gönderir ve denetim kaydını saklar.
+Bu kod politika dallarını gösterir. Giriş katmanı istek kimliğini, sipariş sahipliğini ve işlem yetkisini doğrular; yürütme katmanı denetimli bir transaction içinde ya da eşdeğer bir tutarlılık mekanizmasıyla durumu okur, koşulları doğrular, iptali gönderir ve denetim kaydını saklar.
 
 ```python
 def cancel_reservation(
@@ -452,7 +452,7 @@ def cancel_reservation(
     Uçuş rezervasyonunu iptal eder.
 
     İptal politikası (sunucu, veritabanındaki gerçek değerlere göre uygular):
-    - Kural 1: Herhangi bir bacağı kullanılmış siparişler iptal edilemez
+    - Kural 1: Herhangi bir uçuş ayağı kullanılmış rezervasyonlar iptal edilemez
     - Kural 2: Kural 1'i geçtikten sonra, rezervasyondan sonraki 24 saat içinde iptal edilebilir
     - Kural 3: Kural 1'i geçtikten sonra, havayolunun iptal ettiği uçuşlar iptal edilebilir
     - Kural 4: Kural 1'i geçtikten sonra, business sınıfı iptal edilebilir
@@ -502,7 +502,7 @@ def cancel_reservation(
 
 Örneğin sipariş 24 saati aşmışsa, uçuş normal işliyorsa, kabin ekonomi ve sigorta yoksa model buna dayanarak bu örnekteki politikaya göre iptalin yapılamayacağını açıklayabilir ve tarih değişikliği gibi izin verilen seçenekleri sorgulayabilir.
 
-**Sunucu kuralları güncel olgulara göre uygular.** Kabin sınıfı, sigorta, rezervasyon zamanı, bacak kullanım durumu ve uçuş durumu iş veri kaynağından okunur; zaman aralığı sunucu saatiyle hesaplanır. `expected_*` farkları tanı için, `cancellation_reason` ise başvuru niyetini kaydetmek için kullanılır. Havayolunun uçuşu iptal edip etmediği gibi olguları sunucu doğrular; kullanıcının başvuruda "havayolu iptal etti" yazması, aslında iade edilemeyen bir bileti iade edilebilir kılmaz.
+**Sunucu kuralları güncel olgulara göre uygular.** Kabin sınıfı, sigorta, rezervasyon zamanı, uçuş ayağı kullanım durumu ve uçuş durumu iş veri kaynağından okunur; zaman aralığı sunucu saatiyle hesaplanır. `expected_*` farkları tanı için, `cancellation_reason` ise başvuru niyetini kaydetmek için kullanılır. Havayolunun uçuşu iptal edip etmediği gibi olguları sunucu doğrular; kullanıcının başvuruda "havayolu iptal etti" yazması, aslında iade edilemeyen bir bileti iade edilebilir kılmaz.
 
 Veri kaynaklarının bağımsızlığı da erişim denetimine yansımalıdır: sipariş olgularını kimin değiştirebileceği, ne zaman güncelleneceği ve geçmişin nasıl saklanacağı doğrulamanın güvenilirliğini etkiler. Eşzamanlı işlemler durumu sorgudan sonra değiştirebilir; bu yüzden iade gönderilirken sunucu sipariş durumunu yeniden okur, biletin hâlâ iade edilebilir olduğunu doğrular ve yinelenen isteklere tutarlı bir sonuç döndürür.
 
@@ -518,7 +518,7 @@ Veri kaynaklarının bağımsızlığı da erişim denetimine yansımalıdır: s
 
 ### Kodla üretilen çoklu ortam içeriği
 
-Sunumlar, teknik raporlar ve etkileşimli sayfalar hem içerik düzenlemesini hem görsel sunumu içerir. Agent önce yapıyı koda ya da işaretleme diline yazabilir, sonra görüntülenebilir bir ürün üretmek için render araçlarını çağırabilir. Örneğin HTML sayfa yapısını, CSS düzen ve biçimi, JavaScript etkileşimi ifade eder. Öğe konumları ve biçim böylece değiştirilebilir parametrelere dönüşür; toplu ayarlama, tekrar üretme ve sürüm karşılaştırması kolaylaşır.
+Sunumlar, teknik raporlar ve etkileşimli sayfalar hem içerik düzenlemesini hem görsel sunumu içerir. Agent önce yapıyı koda ya da işaretleme diline yazabilir, sonra görüntülenebilir bir çıktı üretmek için render araçlarını çağırabilir. Örneğin HTML sayfa yapısını, CSS düzen ve biçimi, JavaScript etkileşimi ifade eder. Öğe konumları ve biçim böylece değiştirilebilir parametrelere dönüşür; toplu ayarlama, tekrar üretme ve sürüm karşılaştırması kolaylaşır.
 
 Programatik üretim yapısı olan ve tekrar tekrar değiştirilmesi gereken içeriğe uygundur. GUI ise doğrudan görüntüleme ve yerel işlem girişi sağlar; iki yöntem birlikte kullanılabilir.
 
@@ -539,7 +539,7 @@ Metin ve görsel doğru değiştirilse bile sayfa düzeni bozulabilir. Örneğin
 
 Geri bildirim doğrudan değişikliğe yol açabilmelidir. Örneğin "3. sayfada çok fazla ana nokta var, yöntem özeti ve hesaplama adımları olarak iki sayfaya böl"; "7. sayfadaki kod yazısı çok küçük, önce 14 puntoya çıkar, sonra projeksiyonda okunabilirliği kontrol et". Olgu hataları ve grafik yanlış okumaları önce düzeltilir, sonra düzen ve görsel ayrıntılar ele alınır.
 
-Yerel düzenlemede hangi nesnenin değiştirileceği de belirtilmelidir. Feishu Slides içindeki Doubao özelliği kullanıcının sayfa öğesini seçip açılır araç çubuğundan düzenleme istemesine izin verir.[^ch5-doubao-work] Aynı sayfada iki metin kutusu olduğunu varsayalım: biri özgün söyleşiden alıntı, diğeri sunan kişinin yazdığı özet. Kullanıcı özeti seçip "iki satıra sığdır" diyor. Seçilmiş metin kutusu değişiklik kapsamını sınırlar: özet yeniden yazılabilir, yandaki alıntı ise görüşülen kişinin sözlerini korumalıdır.
+Kısmi düzenlemede hangi nesnenin değiştirileceği de belirtilmelidir. Feishu Slides içindeki Doubao özelliği kullanıcının sayfa öğesini seçip açılır araç çubuğundan düzenleme istemesine izin verir.[^ch5-doubao-work] Aynı sayfada iki metin kutusu olduğunu varsayalım: biri özgün söyleşiden alıntı, diğeri sunan kişinin yazdığı özet. Kullanıcı özeti seçip "iki satıra sığdır" diyor. Seçilmiş metin kutusu değişiklik kapsamını sınırlar: özet yeniden yazılabilir, yandaki alıntı ise görüşülen kişinin sözlerini korumalıdır.
 
 [^ch5-doubao-work]: Feishu yardım merkezi, slaytlarda Doubao kullanımı.
 
@@ -553,13 +553,13 @@ Bu, Bölüm 4'teki işlem onayıyla aynı öneren–denetleyen kalıbını payla
 >
 > Bu deney *Attention Is All You Need* makalesinin PDF'ini kullanarak 20 sayfalık bir Slidev sunumu üretiyor. Agent makalenin yapısını ve ana noktalarını çıkarır, kaynağı kayıtlı üç özgün makale şeklini kullanır ve anlatıyı sayfa sayfa düzenler. Render sonrası metin taşmasını, grafiklerin okunabilirliğini ve metin-görsel ilişkisini kontrol edip geri bildirime göre değişiklik yapar.
 >
-> Karşılaştırma tek Agent'lı öz denetim ile öneren–denetleyen iş bölümünü ele alıyor. Bu çalıştırmada iki nihai metin aynı bağımsız puanlama akışında 95'er puan aldı; iş bölümü çözümünün tepe girdisi yaklaşık 24 bin token, geçmiş ekran görüntülerini saklayan tek Agent'lı çözümünki ise yaklaşık 93 bin token oldu.
+> Karşılaştırma tek Agent'lı öz denetim ile öneren–denetleyen iş bölümünü ele alıyor. Bu çalıştırmada iki nihai sunum aynı bağımsız puanlama akışında 95'er puan aldı; iş bölümü çözümünün tepe girdisi yaklaşık 24 bin token, geçmiş ekran görüntülerini saklayan tek Agent'lı çözümünki ise yaklaşık 93 bin token oldu.
 
 > **Deney 5-7 ★★: Makale anlatım videosunun otomatik üretimi**
 >
 > Slaytların üzerine Agent her sayfa için konuşma dilinde bir anlatım yazabilir; görseldeki nesneleri, ilişkileri ve vargıları açıklar, sonra TTS ile sesi sentezler. Metin ve sayfa birlikte görsel denetleyiciye verilir; anlatılan öğelerin görüntüde görünüp görünmediği ve betimlemenin grafikle tutarlı olup olmadığı kontrol edilir.
 >
-> Video üretirken deney önceki kısımdaki akışı sürdürüyor ve daha eski bir 22 sayfalık metni (v2) kullanıyor. Sırayla 12 sayfa seçildiğinde videonun son görüntüsü özgün metnin 21. sayfasından geliyor. Önceki kısımda puan ve kullanım karşılaştırılırken sonraki 20 sayfalık metin (v9) kullanılmıştı. Sayfalar seçildikten sonra anlatım metni Kimi ile üretildi, metin-görsel ilişkisi Qwen görsel modeliyle denetlendi, sonra ses Fish Audio ile sayfa sayfa sentezlendi. FFmpeg her ses parçasının gerçek süresine göre sayfanın ekranda kalma süresini ayarladı ve yaklaşık 8,6 dakikalık anlatım videosu birleştirildi.
+> Video üretirken deney önceki kısımdaki akışı sürdürüyor ve daha eski 22 sayfalık bir taslağı (v2) kullanıyor. Sırayla 12 sayfa seçildiğinde videonun son görüntüsü özgün taslağın 21. sayfasından geliyor. Önceki kısımda puan ve kullanım karşılaştırılırken sonraki 20 sayfalık taslak (v9) kullanılmıştı. Sayfalar seçildikten sonra anlatım metni Kimi ile üretildi, metin-görsel ilişkisi Qwen görsel modeliyle denetlendi, sonra ses Fish Audio ile sayfa sayfa sentezlendi. FFmpeg her ses parçasının gerçek süresine göre sayfanın ekranda kalma süresini ayarladı ve yaklaşık 8,6 dakikalık anlatım videosu birleştirildi.
 >
 > Şekil 5-6'da slaytlar, anlatım metni ve ses ancak en sonda videoya dönüşür. Bazı sorunlar ancak bu adımda duyulabilir: sayfa değişirken bir cümle yarım mı kaldı, ilerledikçe ses ile görüntü birbirinden kopuyor mu?
 >
@@ -575,13 +575,13 @@ Agent önce "sörf kısmını kesip çıkar" gibi bir isteği anlayıp malzemede
 
 > **Deney 5-8 ★★: API tabanlı akıllı video kurgusu**
 >
-> Bu deney hedefi konumlandırmayı, betik üretmeyi ve efekt incelemesini tek akışta birleştiriyor. Önce video başvurusu, hedef soru ve kare örnekleme aralığı video analizi alt Agent'ına verilir; alt Agent çok sayıda görüntüyü işleyip ana Agent'a zaman aralığını ve dayanağını döndürür.
+> Bu deney hedefi konumlandırmayı, betik üretmeyi ve efekt incelemesini tek akışta birleştiriyor. Önce video referansı, hedef soru ve kare örnekleme aralığı video analizi alt Agent'ına verilir; alt Agent çok sayıda görüntüyü işleyip ana Agent'a zaman aralığını ve dayanağını döndürür.
 >
 > Konumlandırma iki adımdadır. İlk adımda her 10 saniyede bir kare alınıp hedefin yaklaşık aralığı bulunur; örneğin "sörf 40–110. saniyeler arası". İkinci adımda aday aralığın ve komşu sınırların etrafında her saniye bir kare alınarak başlangıç ve bitiş kesinleştirilir. Kaba örnekleme aralığından kısa sahneler iki kare arasına düşebilir; hedefin süresine göre örnekleme sıklaştırılabilir ya da iki örnekleme arasındaki görüntülere geri bakılabilir.
 >
 > Aralık belirlendikten sonra öneren Blender Python betiğini üretir ve kesme ile gereken altyazı, hız değişimi gibi işlemleri yapar. Denetleyici önizlemeyi kontrol eder ve ayarlanması gereken sınırları ve efektleri bildirir; değişiklik geçtikten sonra tam video çıkarılır.
 >
-> Gerçekte çekilen görüntü, bir beyaz tavşanın çayırda tek başına yürüdüğü bir plandı. Her 10 saniyede bir kareye bakıldığında model aralığı 10–20. saniyeler olarak belirledi. Doğrudan 10. saniyeden kesilseydi planın başından bir bölüm kaybolurdu. Bu yüzden program her iki yana 5 saniye pay ekledi ve 5–25. saniyeler arasında her saniye bir kare alarak aday aralığı 9–12. saniyelere indirdi. Denetleyici kesitin komşu görüntüyü de içerdiğini fark etti; düzeltilmiş aralık 9,25–11,00 saniye oldu. İnsan etiketlemesindeki 9,08–11,20 saniyeyle karşılaştırıldığında başlangıç 0,17 saniye geç, bitiş 0,20 saniye erken; iki uç da 3 saniyeyi aşmayan hata koşulunu karşıladı.
+> Gerçek denemede kesilen görüntü, bir beyaz tavşanın çayırda tek başına yürüdüğü bir plandı. Her 10 saniyede bir kareye bakıldığında model aralığı 10–20. saniyeler olarak belirledi. Doğrudan 10. saniyeden kesilseydi planın başından bir bölüm kaybolurdu. Bu yüzden program her iki yana 5 saniye pay ekledi ve 5–25. saniyeler arasında her saniye bir kare alarak aday aralığı 9–12. saniyelere indirdi. Denetleyici kesitin komşu görüntüyü de içerdiğini fark etti; düzeltilmiş aralık 9,25–11,00 saniye oldu. İnsan etiketlemesindeki 9,08–11,20 saniyeyle karşılaştırıldığında başlangıç 0,17 saniye geç, bitiş 0,20 saniye erken; iki uç da 3 saniyeyi aşmayan hata koşulunu karşıladı.
 >
 > Zaman kodu yalnızca nerede kesildiğini kontrol edebilir. Aynı altyazı ve ağır çekim, bilerek yanlış seçilmiş bir görüntüye uygulanırsa denetleyici hatayı yine fark edebilir mi? Deney önce ona 0–3. saniyeler arasındaki karşılaştırma parçasını kontrol ettirdi, sonra düzeltilmiş render'a baktırdı. İnceleme nesneleri görüntüdeki beyaz tavşan, alt yazı ve hız değişiminden sonraki süreydi.
 
@@ -595,7 +595,7 @@ Agent önce "sörf kısmını kesip çıkar" gibi bir isteği anlayıp malzemede
 
 **Nasıl saklanır ve değiştirilir?** B-rep (sınır temsili) katıyı yüz, kenar ve köşe noktalarıyla betimler; üçgen ağ ise yüzeyi yüzey parçalarıyla yaklaşık olarak temsil eder. CadQuery CAD veri alışverişi için STEP, ayrıca STL ağı dışa aktarabilir; düzenlenebilir parametreler ve yapım mantığı CadQuery kaynak kodunda saklanır[^ch5-cad]. CNC işleme akışına girmek için ayrıca süreç planlaması, takım yolları ve tezgâh uyarlaması gerekir.
 
-Örneğin montaj deliklerini M5'e uygunluktan M6'ya uygunluğa çevirmek için delik çapı parametresi değiştirilip yeniden üretim sonrası dış çapın, kalınlığın ve delik konumlarının korunup korunmadığı kontrol edilir. Üretken modelde değişiklik yöntemi arayüz yeteneğine bağlıdır; yeniden üretilebilir ya da yerel düzenleme ve sonraki geometri işlemleriyle birleştirilebilir.
+Örneğin montaj deliklerini M5'e uygunluktan M6'ya uygunluğa çevirmek için delik çapı parametresi değiştirilip yeniden üretim sonrası dış çapın, kalınlığın ve delik konumlarının korunup korunmadığı kontrol edilir. Üretken modelde değişiklik yöntemi arayüz yeteneğine bağlıdır; yeniden üretilebilir ya da kısmi düzenleme ve sonraki geometri işlemleriyle birleştirilebilir.
 
 İki yol birlikte kullanıldığında iş bölümü de net olmalıdır: boyutlar ve montaj ilişkileri parametrik koda, doku ve serbest görünüş üretken modele verilir. **Kilit boyutlar tekrar tekrar kesin değişiklik gerektiriyorsa düzenlenebilir yapım süreci, tek seferlik üretilmiş bir görünüşten daha değerlidir.**
 
@@ -655,7 +655,7 @@ Tanı incelendikten sonra Agent, ilgili yetkiyi aldığında MCP üzerinden GitH
 >
 > ![Şekil 5-7 Üretim günlükleri için akıllı tanı hattı](images/revised/fig5-7.svg)
 >
-> Üç test kusurlu sürümde başarısız oldu, düzeltilmiş sürümde geçti. Testlerden biri yalnızca programın iade kontrol aracını çağırıp çağırmadığına bakıyor. Program önce parayı iade edip bu siparişin iade edilip edilemeyeceğini sonradan sorgulasa bile bu test geçer. Çalıştırma kaydında GitHub MCP'nin iş kaydı oluşturma makbuzu da saklanıyor; tanı raporu geliştiriciye verildikten sonra hangi iş kaydına karşılık geldiği böylece bulunabilir.
+> Üç test kusurlu sürümde başarısız oldu, düzeltilmiş sürümde geçti. Testlerden biri yalnızca programın iade kontrol aracını çağırıp çağırmadığına bakıyor. Program önce parayı iade edip bu siparişin iade edilip edilemeyeceğini sonradan sorgulasa bile bu test geçer. Çalıştırma kaydında GitHub MCP'nin iş kaydı oluşturma yanıtı da saklanıyor; tanı raporu geliştiriciye verildikten sonra hangi iş kaydına karşılık geldiği böylece bulunabilir.
 
 ### Üretken UI olarak kod
 
@@ -683,7 +683,7 @@ Yazarın araştırma pratiğini örnek alırsak her araştırma projesinin, ara�
 
 Birincisi **deney verisinin izlenebilirliği**. Sayfa örnekleri, prompt'ları, model yanıtlarını ve puanları birbirine bağlar ve tek tek kontrol etmeyi destekler. Örneğin aynı tür yanıtlar hep düşük puan alıyorsa puan kaydından özgün yanıta ve prompt'a geri gidilebilir.
 
-İkincisi **eğitim göstergelerinin izlenmesi**. Yazar eğitimin iç durumunu yansıtan sinyallere "dahiliye göstergeleri" diyor: eğitim ve doğrulama kaybı, gradyan normu, öğrenme oranı, pekiştirmeli öğrenmede ise ödül, KL ıraksaması ve politika entropisi. Dil modellerinde ayrıca modelin verilen metin dizisini tahmin etme başarısını ölçen şaşkınlık kullanılabilir. Tıbbi kontroldeki fizyolojik göstergeler gibi bu eğriler kimi zaman sorunları nihai görev puanından daha erken ortaya koyar. Bunları görev doğruluğuyla birlikte izlemek, yakınsamama, gradyan anormalliği ve eğitim bozulmasının hangi aşamada başladığını bulmayı kolaylaştırır.
+İkincisi **eğitim göstergelerinin izlenmesi**. Yazar eğitimin iç durumunu yansıtan sinyallere "dahiliye göstergeleri" diyor: eğitim ve doğrulama kaybı, gradyan normu, öğrenme oranı, pekiştirmeli öğrenmede ise ödül, KL ıraksaması ve politika entropisi. Dil modellerinde ayrıca modelin verilen metin dizisini tahmin etme başarısını ölçen perplexity (şaşkınlık) kullanılabilir. Tıbbi kontroldeki fizyolojik göstergeler gibi bu eğriler kimi zaman sorunları nihai görev puanından daha erken ortaya koyar. Bunları görev doğruluğuyla birlikte izlemek, yakınsamama, gradyan anormalliği ve eğitim bozulmasının hangi aşamada başladığını bulmayı kolaylaştırır.
 
 Üçüncüsü **çalışma ilkesinin gösterimi**. Birkaç modülün nasıl birlikte çalıştığını anlatırken sayfa okurun bir girdiyi değiştirmesine, ara durumu görmesine ve çıktıdaki değişimi deney kaydıyla karşılaştırmasına izin verebilir.
 
@@ -695,23 +695,23 @@ Kullanıcı "Pekin'e bir uçak bileti almak istiyorum" dediğinde varış noktas
 
 Formdaki denetimler farklı bilgi türlerine karşılık gelir: metin kutusu serbest girdi toplar, açılır menü ve radyo düğmeleri seçenekleri listeler, onay kutuları çoklu seçime izin verir, tarih seçici zaman doldurmayı kolaylaştırır. JavaScript basamaklı ilişkileri ifade edebilir; örneğin "gidiş-dönüş" seçildiğinde dönüş tarihi gösterilir ve dönüşün kalkıştan önce olmaması kontrol edilir. Seçim değiştiğinde geçersiz alanların temizlenmesi ya da yok sayılması da gerekir.
 
-Şekil 5-8 aşağıdaki deneyin bir çalıştırmasından alınmıştır. Bu başvuruyu aşağıya doğru izleyin: tarayıcının döndürdüğü dört alanın içinde varış noktası yok; model yolcunun Pekin'e gideceğini nereden biliyor?
+Şekil 5-8 aşağıdaki deneyin bir çalıştırmasından alınmıştır. Bu gönderimi adım adım izleyin: tarayıcının döndürdüğü dört alanın içinde varış noktası yok; model yolcunun Pekin'e gideceğini nereden biliyor?
 
 ![Şekil 5-8 Uçak bileti formundan eksiksiz yolculuğa](images/revised/fig5-8.svg)
 
 > **Deney 5-12 ★★: Dinamik form üretimiyle niyet netleştirme sistemi**
 >
-> Bu deney "Pekin'e bir uçak bileti almak istiyorum" isteğinden yola çıkıp modele bir HTML formu ürettiriyor: kalkış şehri metin kutusu, kalkış tarihi tarih seçici, seyahat türü gidiş ve gidiş-dönüş seçenekleri, dönüş tarihi ise gidiş-dönüş seçildiğinde görünür.
+> Bu deney "Pekin'e bir uçak bileti almak istiyorum" isteğinden yola çıkıp modele bir HTML formu ürettiriyor: kalkış şehri metin kutusu, kalkış tarihi tarih seçici, seyahat türü tek yön ve gidiş-dönüş seçenekleri, dönüş tarihi ise gidiş-dönüş seçildiğinde görünür.
 >
 > Program ilk talebi ve form verisini birlikte modele geri verir. Yalnızca gönderilen alanlar korunursa, her denetim doğru doldurulmuş olsa bile varış noktası yine eksik kalır.
 >
-> Aynı formla bir adım daha deneyin: dönüş tarihini doldurduktan sonra gidiş seçeneğine geçin. Sayfa dönüş girdisini gizler, ama gönderilen JSON hem gidiş seçeneğini hem de 18 Ağustos dönüş tarihini korur. Gidiş seçildiğinde istemci geçersiz dönüş tarihini de temizlemelidir.
+> Aynı formla bir adım daha deneyin: dönüş tarihini doldurduktan sonra tek yön seçeneğine geçin. Sayfa dönüş girdisini gizler, ama gönderilen JSON hem tek yön seçimini hem de 18 Ağustos dönüş tarihini korur. Tek yön seçildiğinde istemci geçersiz dönüş tarihini de temizlemelidir.
 
 [^ch5-ui-protocols]: A2UI resmî belgeleri ve *AG-UI Overview*; bildirimsel arayüz betimlemesini ve Agent–ön uç olay etkileşimini sırasıyla tanıtır.
 
 **SQL sorgusu üretmek.**
 
-Kullanıcı veritabanı sorgularını doğal dille sorabilir; Agent tablo yapısına ve iş ölçütlerine göre SQL üretir. **Tam sorgu tablosunu gösterirken yazar Artifact modunu kullanır; böylece sonuç doğrudan veritabanından arayüze geçer.** Modelin büyük tabloyu okuyup satır satır tekrarlaması token kullanımını ve bekleme süresini artırır, ayrıca kopyalama hatası getirir. SQL denetlenebilir bir sorgu ürünü olarak saklanır; nedeni çözümlemek ya da eğilim özetlemek gerektiğinde gerekli toplam sonuçlar modele verilir.
+Kullanıcı veritabanı sorgularını doğal dille sorabilir; Agent tablo yapısına ve iş ölçütlerine göre SQL üretir. **Tam sorgu tablosunu gösterirken yazar Artifact modunu kullanır; böylece sonuç doğrudan veritabanından arayüze geçer.** Modelin büyük tabloyu okuyup satır satır tekrarlaması token kullanımını ve bekleme süresini artırır, ayrıca kopyalama hatası getirir. SQL denetlenebilir bir sorgu artifact'i olarak saklanır; nedeni çözümlemek ya da eğilim özetlemek gerektiğinde gerekli toplam sonuçlar modele verilir.
 
 Şekil 5-9'da kullanıcı her departmandaki çalışan sayısını görmek istiyor; sayfa veritabanının döndürdüğü istatistik tablosunu doğrudan gösterebilir. Kullanıcı ardından "pazarlama departmanı Ar-Ge'den kaç kişi fazla" diye sorarsa model tablodaki 9 ve 5'i alıp farkı 4 olarak hesaplar. "Geçen ay da bu kadar fark var mıydı" diye sorulursa eldeki tablo yetmez; geçen ayın istatistik tarihine göre yeniden sorgulamak gerekir.
 
@@ -719,7 +719,7 @@ Kullanıcı veritabanı sorgularını doğal dille sorabilir; Agent tablo yapıs
 
 Yürütme hizmeti güvenilir kimliğe göre erişilebilecek tabloları, sütunları ve satırları belirler, kısıtlı veritabanı hesabı kullanır ve SQL yapısını ve işlem türünü doğrular. Sorgu senaryosu onaylanmış salt okunur sorgularla sınırlandırılabilir; fonksiyon çağrıları, süre bütçesi, dönen satır sayısı ve veri kapsamı denetlenir; kullanıcı girdisi değerleri parametreli bağlama ile geçirilir.
 
-Agent görselleştirme ürünleri de üretebilir; örneğin departman özetini çubuk grafik olarak göstermek. Yürütme hizmeti sorgu sonucunu denetimli görselleştirme ortamına verir; arayüz yalnızca izin verilen veriyi ve etkileşimi gösterir.
+Agent görselleştirme artifact'leri de üretebilir; örneğin departman özetini çubuk grafik olarak göstermek. Yürütme hizmeti sorgu sonucunu denetimli görselleştirme ortamına verir; arayüz yalnızca izin verilen veriyi ve etkileşimi gösterir.
 
 > **Deney 5-13 ★★: Doğal dille etkileşen ERP Agent'ı**
 >
@@ -740,7 +740,7 @@ Agent görselleştirme ürünleri de üretebilir; örneğin departman özetini �
 >
 > Sorgudan önce istatistik ölçütleri netleştirilmelidir. Örneğin görevdeki çalışanın kıdemi sorgu tarihine kadar, ayrılmış çalışanınki ayrılış tarihine kadar hesaplanır; "ortalama maaş"ın ödeme kayıtlarına göre mi çalışan ortalamasına göre mi alınacağı belirlenmelidir; artış sıralamasında geçen yıl kaydı olmayan çalışanların nasıl ele alınacağı da çözülmelidir.
 >
-> Bu çalıştırmada on SQL üretilip yürütüldü; sonuçların hepsi bağımsız başvuru hesaplarıyla uyuştu, ardından tablolar doğrudan tarayıcıda render edildi. Model tablo yapısını, görevi ve gerekli yürütme geri bildirimini aldı; veritabanı satır verileri uygulama üzerinden arayüze aktarıldı.
+> Bu çalıştırmada on SQL üretilip yürütüldü; sonuçların hepsi bağımsız referans hesaplamalarıyla uyuştu, ardından tablolar doğrudan tarayıcıda render edildi. Model tablo yapısını, görevi ve gerekli yürütme geri bildirimini aldı; veritabanı satır verileri uygulama üzerinden arayüze aktarıldı.
 
 **Dinamik olarak üretilen yazılım.**
 
@@ -769,11 +769,11 @@ Her işlem ayrıca güvenilir bir **erişim context'i** (access context) gerekti
 
 Örneğin PostgreSQL'in satır düzeyi güvenliği veritabanı rol yapılandırmasıyla birlikte kullanılmalıdır. Uygulama bağlantısı politikayla kısıtlanmış bir rol kullanır ve uygulama hesabının erişim politikalarını değiştirme yetkisi yoktur[^ch5-rls]. Kurallar ve kimlik bağlama mekanizması bağımsız olarak incelenir; iş arayüzü ise bu kapsam içinde sürekli değişebilir.
 
-Yetki ile veri bütünlüğü farklı sorumluluklar üstlenir. İşe alım uzmanı aday kaydını değiştirme yetkisine sahip olduktan sonra durum makinesi "elendi" durumundan "mülakat yapıldı" durumuna geçişe izin verilip verilmediğini kontrol etmeyi sürdürür; maaş doğrulayıcısı ilgili pozisyonu okuyup beklenen maaşın pozisyon aralığında olup olmadığını kontrol eder; başvuru denetimi pozisyon ile aday ilişkisinin geçerli olduğunu doğrular.
+Yetki ile veri bütünlüğü farklı sorumluluklar üstlenir. İşe alım uzmanı aday kaydını değiştirme yetkisine sahip olduktan sonra durum makinesi "ön elemeden geçti" durumundan "mülakat yapıldı" durumuna geçişe izin verilip verilmediğini kontrol etmeyi sürdürür; maaş doğrulayıcısı ilgili pozisyonu okuyup beklenen maaşın pozisyon aralığında olup olmadığını kontrol eder; referans bütünlüğü denetimi pozisyon ile aday ilişkisinin geçerli olduğunu doğrular.
 
 > **Deney 5-15 ★★★: Dinamik üretilen yazılım için yetkiyi içeren veri nesneleri**
 >
-> Bu deney PostgreSQL üzerinde çalışan bir Python nesne deposu prototipi sunuyor; yetki kurallarını, doğrulayıcıları, nesne ilişkilerini ve sonraki tepki bildirimlerini veri türüne yerleştiriyor. Okumada erişim yetkisi kontrol ediliyor; oluşturma ve güncellemede önce yetki ve iş doğrulaması yapılıyor, başvuru ilişkileri kontrol ediliyor, sonra kalıcı hâle getiriliyor; ardından bildirilmiş sonraki tepkiler kuyruğa ekleniyor ve tepki zincirinin derinliği sınırlanıyor.
+> Bu deney PostgreSQL üzerinde çalışan bir Python nesne deposu prototipi sunuyor; yetki kurallarını, doğrulayıcıları, nesne ilişkilerini ve sonraki tepki bildirimlerini veri türüne yerleştiriyor. Okumada erişim yetkisi kontrol ediliyor; oluşturma ve güncellemede önce yetki ve iş doğrulaması yapılıyor, referans ilişkileri kontrol ediliyor, sonra kalıcı hâle getiriliyor; ardından bildirilmiş sonraki tepkiler kuyruğa ekleniyor ve tepki zincirinin derinliği sınırlanıyor.
 >
 > İşe alım örneği pozisyon, aday, mülakat ve değerlendirme nesnelerini içeriyor. Aday sırasıyla başvuru, eleme, mülakat, teklif gönderimi ve işe alım aşamalarından geçiyor; ilgili aşamalardan ret durumuna da geçilebiliyor; maaş aralığı ilişkili pozisyondan geliyor. Örnek normal durum güncellemesi, geçersiz durum atlaması, pozisyon maaş aralığının aşılması ve farklı kiracıdan erişim gibi kontroller içeriyor; okurun yetkilendirme ile iş doğrulamasının hangi sorunları ayrı ayrı ele aldığını anlamasına yardım ediyor.
 >
@@ -783,11 +783,11 @@ Yetki ile veri bütünlüğü farklı sorumluluklar üstlenir. İşe alım uzman
 
 ### Kod yaratan kod: Agent'ın kendini başlatması
 
-Kod üretim yeteneği Agent'ın kendisini geliştirmek için de kullanılabilir. Yaratıcı görev gereksinimini alır, yeni Agent'ın prompt'larını, araçlarını ve çalışma döngüsünü üretir ya da değiştirir, sonra ürünü testler ve gerçek etkileşimlerle kontrol eder. Şekil 5-10 bu kendini başlatma döngüsünü gösteriyor: mevcut uygulama başlangıç noktası sağlar, görev geri bildirimi değişikliği yönlendirir, doğrulama sonuçları hangi değişikliklerin korunacağına karar verir.
+Kod üretim yeteneği Agent'ın kendisini geliştirmek için de kullanılabilir. Oluşturucu görev gereksinimini alır, yeni Agent'ın prompt'larını, araçlarını ve çalışma döngüsünü üretir ya da değiştirir, sonra ürünü testler ve gerçek etkileşimlerle kontrol eder. Şekil 5-10 bu kendini başlatma döngüsünü gösteriyor: mevcut uygulama başlangıç noktası sağlar, görev geri bildirimi değişikliği yönlendirir, doğrulama sonuçları hangi değişikliklerin korunacağına karar verir.
 
 ![Şekil 5-10 Agent'ın kendini başlatma döngüsü](images/revised/fig5-10.svg)
 
-Bir değişikliğin genel yeteneği mi iyileştirdiği, yoksa yeni görülen soruya mı tesadüfen uyduğu nasıl ayırt edilir? Yaratıcıya verilmemiş bir görev saklanır. Örneğin bir mağazanın verisiyle fiyat izleme Agent'ı geliştirilir, sonra ona başka bir mağazanın örnekleri verilir ve özgün görevler de yeniden çalıştırılır.
+Bir değişikliğin genel yeteneği mi iyileştirdiği, yoksa yeni görülen soruya mı tesadüfen uyduğu nasıl ayırt edilir? Oluşturucuya verilmemiş bir görev saklanır. Örneğin bir mağazanın verisiyle fiyat izleme Agent'ı geliştirilir, sonra ona başka bir mağazanın örnekleri verilir ve özgün görevler de yeniden çalıştırılır.
 
 **Agent'ın çalışma ortamını bakımda tutmak.**
 
@@ -795,26 +795,26 @@ Yeni Agent'ın çalışması yapılandırmaya, kimlik bilgilerine, oturum durumu
 
 Bu deterministik kontroller öz bakım akışının temeli olabilir. Tespit kuralları bilinen arızaları kapsar, onarım eylemlerinin net girdileri ve beklenen sonuçları vardır. Agent tanı akışını daha ileri tasarlarken henüz çözülmemiş sorunlar günlüklerle, yapılandırmayla ve kontrol sonuçlarıyla birlikte modele verilip hangi yapılandırmayı nasıl değiştireceğini açıklaması istenebilir; yürütme katmanı yetkiyi ve değişiklik kapsamını kontrol eder, sonra sağlık kontrolleri ve regresyon testleri çalıştırılır. Yapılandırma anlık görüntüleri, değişiklik kayıtları ve geri dönüş girişi, onarım başarısız olduğunda sistemin işe dönmesine yardım eder.
 
-**Mühendislik deneyimini başvuru uygulamasıyla taşımak.**
+**Mühendislik deneyimini referans uygulamayla taşımak.**
 
 Özel bir Agent oluşturmak hem alan mantığını hem genel altyapıyı ilgilendirir. Üretilen sonucu kontrol ederken dört tür sorudan başlanabilir:
 
 1. **Context ve çalışma döngüsü.** Roller, araç çağrısı tanımlayıcıları ve araç sonuçları arasındaki ilişki korunur; çok turlu durum, sonlandırma koşulları, bütçe ve istisna kurtarma kontrol edilir. Yapılandırılmış mesajlar protokol ilişkilerinin bakımını kolaylaştırır; kararlı önek ise prompt önbelleği için koşul yaratır.
 2. **Araç arayüzleri.** Araç açıklaması amacı, geçerlilik koşullarını ve kullanım sınırlarını anlatır; parametreler tür, anlam ve somut örnek içerir. Yürütme katmanı parametreleri, kimliği ve iş durumunu doğrulamayı sürdürür.
-3. **Model ve API seçimi.** Modeller eğitim verisinde sık görülen eski modelleri ve eski arayüzleri sürdürmeye yatkındır; akıcı yazılmış kod bile güncel olmayan seçimler yapabilir. Yaratıcıya bakımlı seçim malzemeleri verilmeli ya da resmî belgeleri araması sağlanmalı, model yetenekleri, arayüz sürümleri ve çağrı biçimleri kontrol edilmelidir. Üretimden sonraki gerçek çağrılar yapılandırmanın çalışıp çalışmadığını sınar.
+3. **Model ve API seçimi.** Modeller eğitim verisinde sık görülen eski modelleri ve eski arayüzleri sürdürmeye yatkındır; akıcı yazılmış kod bile güncel olmayan seçimler yapabilir. Oluşturucuya bakımlı seçim malzemeleri verilmeli ya da resmî belgeleri araması sağlanmalı, model yetenekleri, arayüz sürümleri ve çağrı biçimleri kontrol edilmelidir. Üretimden sonraki gerçek çağrılar yapılandırmanın çalışıp çalışmadığını sınar.
 4. **Bağımlılıklar ve ekosistem uyumluluğu.** Kitaplıkların bakım durumu, sürümleri ve arayüz değişiklikleri kontrol edilir; birleşik program bağımlılık kurulumu, derleme kontrolü ve testlerle doğrulanır.
 
-**Özel Agent oluştururken yazar yaratıcının önce doğrulanmış bir başvuru uygulamasını kopyalamasını, sonra alan değişiklikleri yapmasını tercih ediyor.** Prompt'lar mesaj protokolündeki, durum yönetimindeki ve kurtarma mekanizmalarındaki bütün ayrıntıları tüketemez; başvuru kodu ise bu mühendislik deneyimini doğrudan yeni sisteme taşır. Model programlamada iyi olsa bile görev açıklamasında açıkça söylenmeyen çalışma koşullarını atlayabilir; çerçeveyi yeniden kullanmak bu tür tekrarlanan hataları azaltır. Yaratıcı uygun temel çerçeveyi kopyalar, sistem prompt'unu yeni role uyacak şekilde ayarlar, alan araçlarını ekler ya da çıkarır, iş mantığını değiştirir ve ilgili testleri tamamlar. Mesaj işleme, çağrı ilişkilendirme, durum yönetimi ve çıkış yolları çerçeve tarafından sağlanır; alan değişiklikleri yeni örneklerle doğrulanır.
+**Özel Agent oluştururken yazar oluşturucunun önce doğrulanmış bir referans uygulamayı kopyalamasını, sonra alan değişiklikleri yapmasını tercih ediyor.** Prompt'lar mesaj protokolündeki, durum yönetimindeki ve kurtarma mekanizmalarındaki bütün ayrıntıları eksiksiz kapsayamaz; referans kod ise bu mühendislik deneyimini doğrudan yeni sisteme taşır. Model programlamada iyi olsa bile görev açıklamasında açıkça söylenmeyen çalışma koşullarını atlayabilir; çerçeveyi yeniden kullanmak bu tür tekrarlanan hataları azaltır. Oluşturucu uygun temel çerçeveyi kopyalar, sistem prompt'unu yeni role uyacak şekilde ayarlar, alan araçlarını ekler ya da çıkarır, iş mantığını değiştirir ve ilgili testleri tamamlar. Mesaj işleme, çağrı ilişkilendirme, durum yönetimi ve çıkış yolları çerçeve tarafından sağlanır; alan değişiklikleri yeni örneklerle doğrulanır.
 
-Şablon çok daha hızlıysa "birkaç işlevi eksik yaptı" açıklaması nasıl elenir? Aşağıda iki yaratıcı grubu aynı türde bir Agent'ı teslim ediyor ve aynı kontrol kümesinden geçiyor.
+Şablon çok daha hızlıysa "birkaç işlevi eksik yaptı" açıklaması nasıl elenir? Aşağıda iki oluşturucu grubu aynı türde bir Agent'ı teslim ediyor ve aynı kontrol kümesinden geçiyor.
 
-> **Deney 5-16 ★★★: Agent yaratabilen bir Agent geliştirmek**
+> **Deney 5-16 ★★★: Agent oluşturabilen bir Agent geliştirmek**
 >
-> Aynı yaratıcı modelden bir yayın inceleme Agent'ı kurmasını isteyin: bir grup dağıtım kontrol kaydını okusun, zorunlu kontrol maddelerinden biri geçmemişse yayını reddetsin ve dayanağı göstersin. Sıfırdan oluşturmada model çalışma döngüsünü, araç protokolünü, alan araçlarını, komut satırı girişini ve testleri yazmak zorundadır. Şablon yolunda önce yapılandırılmış kayıtları kontrol edebilen bir Agent kopyalanır, model yalnızca alan şartnamesini doldurur. Örneğin durum hangi alanda tutuluyor, hangi değerler geçtiği anlamına geliyor? Oluşturma betiği şartnameye göre sistem prompt'unu, araç tanımlarını ve açıklama belgelerini üretir. Var olan Python aracı şartnameyi okuyup kontrolü yürütür. İki yol da üst programlamayı yansıtır: programla başka programlar üretmek ya da değiştirmek.
+> Aynı oluşturucu modelden bir yayın inceleme Agent'ı kurmasını isteyin: bir grup dağıtım kontrol kaydını okusun, zorunlu kontrol maddelerinden biri geçmemişse yayını reddetsin ve dayanağı göstersin. Sıfırdan oluşturmada model çalışma döngüsünü, araç protokolünü, alan araçlarını, komut satırı girişini ve testleri yazmak zorundadır. Şablon yolunda önce yapılandırılmış kayıtları kontrol edebilen bir Agent kopyalanır, model yalnızca alan şartnamesini doldurur. Örneğin durum hangi alanda tutuluyor, hangi değerler geçtiği anlamına geliyor? Oluşturma betiği şartnameye göre sistem prompt'unu, araç tanımlarını ve açıklama belgelerini üretir. Var olan Python aracı şartnameyi okuyup kontrolü yürütür. İki yol da üst programlamayı yansıtır: programla başka programlar üretmek ya da değiştirmek.
 >
 > Şekil 5-11'de iki yol aynı kabul koşullarında birleşiyor.
 >
-> ![Şekil 5-11 Agent yaratabilen Agent hattı](images/revised/fig5-11.svg)
+> ![Şekil 5-11 Agent oluşturabilen Agent hattı](images/revised/fig5-11.svg)
 >
 > İki yol aynı görev gereksinimlerini ve kabul koşullarını kullanıyor. Önce ürün yapısı, derleme ve testler kontrol ediliyor, sonra standart mesajlardaki araç çağrısı ile sonuç ilişkisi kontrol ediliyor, en sonunda gerçek model görevleri ve çok turlu etkileşimler çalıştırılarak context kırpma, durum yönetimi ve çağrı sayısı sınırı doğrulanıyor.
 >
@@ -836,11 +836,11 @@ Kod görevlerin tekrar tekrar yürütülmesini sağlar, ama ortam yürütmenin b
 ## Düşünce Soruları
 
 1. ★★ Proje dosyalarını okuması, bağımlılık kurması ve testleri çalıştırması gereken bir Coding Agent için sandbox tasarlayın. Dosya, ağ, süreç ve kaynak yetkilerini nasıl yapılandırırdınız? Görev yetkinin genişletilmesini gerektirdiğinde talep nasıl ifade edilir, kapsam nasıl kontrol edilir ve kayıt nasıl tutulur?
-2. ★★★ Yaratıcı art arda birçok kuşak Agent üretip değiştirdiğinde çerçeve kusurları ve alan hataları adım adım birikebilir. Bu değişimi başvuru sürümleri, regresyon testleri, davranış değerlendirmesi ve geri dönüş mekanizmalarıyla nasıl izlersiniz?
+2. ★★★ Oluşturucu art arda birçok kuşak Agent üretip değiştirdiğinde çerçeve kusurları ve alan hataları adım adım birikebilir. Bu değişimi referans sürümler, regresyon testleri, davranış değerlendirmesi ve geri dönüş mekanizmalarıyla nasıl izlersiniz?
 3. ★★ Günlük biçimindeki bir değişiklik normal bir yükseltmeden de üretici kusurundan da gelebilir. Uyarlanabilir ayrıştırma sistemi hangi kanıtları saklamalı, yeni ayrıştırıcı eklemeye, anormallik bildirmeye ya da işlemeyi durdurmaya hangi koşullara göre karar vermelidir?
 4. ★★ Öneren–denetleyen döngüsünde denetleyici sayfadaki bilgi yoğunluğunu makul buluyor, kullanıcı ise kalabalık buluyor. Kullanıcı tercihini örneklere, puanlama koşullarına ve etkileşim geri bildirimine nasıl dönüştürür, sonraki değişikliklerin gereksinime uyup uymadığını nasıl kontrol edersiniz?
 5. ★★ Coding Agent bilgi tabanını, mimari belgeleri ve proje talimatlarını güncelleyebilir, işlem dizilerini koda da sabitleyebilir. Gereksiz ya da eskimiş kuralları nasıl tespit eder, kurallar için geçerlilik kapsamı, doğrulama yöntemi ve çıkış koşulu nasıl tasarlarsınız? Tek bir başarılı değişiklikten Bölüm 9'da tartışılan sürekli evrime geçmek için başka hangi birikim ve değerlendirme mekanizmaları gerekir?
 6. ★ Uzaktan iş birliğine uygun ekipler genellikle Agent'ın çalışma bilgisi edinmesini de kolaylaştırır. Tanıdığınız bir projenin gereksinimlerini, mimarisini, karar kayıtlarını ve kabul ölçütlerini inceleyin; en çok eklenmesi gereken belgeleri listeleyin ve bunların Agent'ın hangi somut görevleri tamamlamasına yardım edeceğini açıklayın.
 7. ★★★ Aynı anda özel veriye erişen, güvenilmeyen içeriği işleyen, dışarıyla iletişim kuran ve kalıcı bellek kullanan bir Agent için kimlik yetkilendirmesini, kaynak etiketlemesini, veri akışı denetimini ve bellek yazma incelemesini nasıl düzenlersiniz? Bu kontrollerin yerini olağan bir iş akışı üzerinden açıklayın.
-8. ★★ SQL ve HTML'in Artifact modunda model ürünü üretir, yürütme hizmeti sorguyu ya da render'ı işler, arayüz sonucu doğrudan gösterir. Hangi bilgilerin açıklama için yeniden modele verilmesi uygundur? Sorgu yetkisini, kaynak bütçesini, sayfa yalıtımını ve gösterilen sonucun tutarlılığını nasıl kontrol edersiniz?
+8. ★★ SQL ve HTML'in Artifact modunda model artifact'i üretir, yürütme hizmeti sorguyu ya da render'ı işler, arayüz sonucu doğrudan gösterir. Hangi bilgilerin açıklama için yeniden modele verilmesi uygundur? Sorgu yetkisini, kaynak bütçesini, sayfa yalıtımını ve gösterilen sonucun tutarlılığını nasıl kontrol edersiniz?
 9. ★★ Araç kuralları veritabanındaki iş durumuna göre doğrular, parametre açıklamaları ise modelin çağrıyı hazırlamasına yardım eder. Rezervasyon iptalini örnek alarak doğal dildeki politikanın, parametre örneklerinin, yürütme katmanı doğrulamasının ve sınır testlerinin sırasıyla hangi sorumluluğu üstlendiğini açıklayın; politika değiştiğinde hangi içeriklerin birlikte güncellenmesi gerekir?
