@@ -45,6 +45,8 @@ PROVIDER_KEY_VARS = [
     "TEAMOROUTER_BASE_URL",
     "STRAITLY_API_KEY",
     "STRAITLY_BASE_URL",
+    "LLMTR_API_KEY",
+    "LLMTR_BASE_URL",
     "ARK_API_KEY",
     "MOONSHOT_API_KEY",
     "KIMI_API_KEY",
@@ -477,6 +479,38 @@ def test_straitly_base_url_override(monkeypatch):
     assert resolve_backend("straitly").base_url == "https://straitly.example/v1"
 
 
+def test_llmtr_key_uses_multi_model_gateway_directly(monkeypatch):
+    monkeypatch.setenv("LLMTR_API_KEY", "test-llmtr-key")
+    backend = resolve_backend("llmtr")
+    assert backend.api_key == "test-llmtr-key"
+    assert backend.base_url == "https://llmtr.com/v1"
+    assert backend.model == "qwen/qwen3.8-flash"
+    assert backend.provider == "llmtr"
+    assert backend.using_openrouter is False
+
+
+def test_llmtr_keeps_bare_model_ids(monkeypatch):
+    monkeypatch.setenv("LLMTR_API_KEY", "test-llmtr-key")
+    backend = resolve_backend("llmtr", model="claude-sonnet-5-5")
+    assert backend.model == "claude-sonnet-5-5"
+
+
+def test_explicit_llmtr_keeps_gpt5_requests_on_its_endpoint(monkeypatch):
+    monkeypatch.setenv("LLMTR_API_KEY", "direct-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "fallback-key")
+    backend = resolve_backend("llmtr", model="gpt-5.6-luna")
+    assert backend.api_key == "direct-key"
+    assert backend.provider == "llmtr"
+    assert backend.model == "gpt-5.6-luna"
+    assert backend.using_openrouter is False
+
+
+def test_llmtr_base_url_override(monkeypatch):
+    monkeypatch.setenv("LLMTR_API_KEY", "test-llmtr-key")
+    monkeypatch.setenv("LLMTR_BASE_URL", "https://llmtr.example/v1")
+    assert resolve_backend("llmtr").base_url == "https://llmtr.example/v1"
+
+
 def test_explicit_cheaperinference_provider_is_not_hijacked_for_gpt5(monkeypatch):
     monkeypatch.setenv("CHEAPERINFERENCE_API_KEY", "test-cheaperinference-key")
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
@@ -689,6 +723,7 @@ def test_supported_providers_covers_registry_and_aliases():
     assert "onomeo" in SUPPORTED_PROVIDERS
     assert "teamorouter" in SUPPORTED_PROVIDERS
     assert "straitly" in SUPPORTED_PROVIDERS
+    assert "llmtr" in SUPPORTED_PROVIDERS
 
 
 def test_fallback_key_is_not_reusable_as_a_provider_key(monkeypatch):

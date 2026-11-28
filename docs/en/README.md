@@ -124,6 +124,7 @@ It is recommended to apply for API keys from several platforms for convenient le
 | **onomeo** | <https://onomeo.com/> | One key for Claude, GPT, Gemini, DeepSeek and other models through an OpenAI-compatible API, plus free models, pay as you go | Global |
 | **TeamoRouter** | <https://teamorouter.com/> | One key for Claude, GPT, Gemini, DeepSeek, GLM, Kimi, Qwen and other models through an OpenAI-compatible API, prepaid pay-as-you-go; pays by card, WeChat Pay, Alipay or USDT | Global |
 | **Straitly** | <https://straitly.ai/> | One OpenAI-compatible API key for 100+ models including Claude, GPT, Gemini, Grok and DeepSeek, prepaid pay per token, no subscription | Global |
+| **LLMTR** | <https://llmtr.com/> | One OpenAI-compatible API key for models from multiple vendors (Qwen, Mistral, and others), prepaid pay per token | Global |
 | **Krill AI** | [www.krill-code.com](https://www.krill-code.com/register?invite=Q8D3L35725) | One-stop access to major global and China-domestic models (OpenAI, Claude, Gemini, Grok, Kimi, GLM, DeepSeek, Qwen, Minimax) | Global + Mainland China |
 | **OpenRouter** | <https://openrouter.ai/> | One-stop access to major global and China-domestic models (GPT, Claude, Gemini, Kimi, GLM, DeepSeek, Qwen, etc.) | Global |
 
