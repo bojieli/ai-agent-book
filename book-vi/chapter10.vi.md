@@ -1,752 +1,762 @@
-# Nhiều lần cộng tác Agent
+# Cộng tác đa Agent
 
-Chín chương đầu tập trung vào một Agent đơn: trước hết xây dựng ngữ cảnh, tri thức, công cụ và năng lực tương tác, sau đó dùng đánh giá, post-training và tiến hóa liên tục để cải thiện Agent theo thời gian. Chương này đẩy câu hỏi từ “làm thế nào để xây dựng và cải tiến một Agent?” sang “làm thế nào để tổ chức nhiều Agent?”—để phân công, giao tiếp và kiểm chứng lẫn nhau có thể giải quyết những nhiệm vụ mà một Agent khó gánh vác một mình.
+Chín chương trước trình bày cách xây dựng và cải tiến một Agent đơn lẻ: tổ chức ngữ cảnh, kết nối tri thức, công cụ và kênh tương tác, rồi nâng năng lực bằng đánh giá, hậu huấn luyện và tiến hóa liên tục. Muốn dịch cả cuốn sách sang một ngôn ngữ khác, cùng một thuật ngữ phải được dịch nhất quán trong cả mười chương. Mười thành viên, mỗi người dịch một chương, sẽ nhanh chóng nộp đủ mười bản nháp; nhưng nếu giữa chừng chương 4 đổi cách dịch một thuật ngữ, ai biết rằng chương 1 cũng phải sửa theo? Chương này lấy những nhiệm vụ cần bàn giao như vậy làm điểm xuất phát để bàn về cách phân công, trao đổi thông tin và kiểm tra sản phẩm của nhau.
 
-Trong mô tả năm cấp độ về khả năng AI do OpenAI đề xuất (Người đối thoại cấp 1, Người suy nghĩ cấp 2, Agent cấp 3, Nhà đổi mới cấp 4 và Tổ chức cấp 5), sự cộng tác đa Agent thường được so sánh với một trong các con đường dẫn đến cấp độ thứ năm - cần lưu ý rằng ở đây Tổ chức đề cập đến "Cấp độ Khả năng AI có thể hoàn thành công việc của toàn bộ tổ chức, thay vì yêu cầu về kiến trúc hệ thống, về mặt lý thuyết có thể đạt được bằng một Agent đủ mạnh. Nhưng xét về thực tế kỹ thuật ngày nay, một Agent cuối cùng bị giới hạn bởi các ranh giới khả năng và cửa sổ ngữ cảnh của mô hình của chính nó.
+OpenAI từng dùng năm cấp độ để mô tả sự phát triển năng lực AI: người đối thoại, người suy luận (Reasoners), tác tử, người đổi mới và tổ chức (Organizations). Trong đó, “tổ chức” mô tả năng lực AI đảm nhận công việc của cả một tổ chức. Hệ thống đa Agent đưa ra một hướng hiện thực hóa: phân chia trách nhiệm quanh một mục tiêu chung, để nhiều đơn vị thực thi cùng nhau hoàn thành nhiệm vụ.
 
-Để nhiều Agent hoạt động cùng nhau có ý nghĩa lớn hơn nhiều so với việc để Agent có chuyên môn khác nhau "học hỏi từ điểm mạnh của nhau". Điểm cơ bản hơn là: trí thông minh của một nhóm có thể cao hơn trí thông minh của một cá nhân. Nền văn minh nhân loại là bằng chứng cho điều này – trí thông minh của mỗi cá nhân là có hạn, nhưng thông qua sự phân công lao động, hợp tác, tranh luận và tích lũy kiến thức giữa các thế hệ, trí thông minh mà xã hội loài người thể hiện nói chung vượt xa trí thông minh của bất kỳ cá nhân thiên tài nào. Nhóm Agent cũng có thể nổi lên với trí tuệ tập thể như vậy: ngay cả khi mỗi Agent chỉ tương đương với trình độ của một chuyên gia con người, miễn là nó được tổ chức hợp lý, khả năng tổng thể của nó có thể vượt quá tổng của tất cả các chuyên gia con người. Trong "Từ AGI đến ASI", Google DeepMind liệt kê "tập thể đa Agent quy mô lớn" là một trong những con đường chính dẫn đến siêu trí tuệ (ASI) - giống như trí thông minh chung của con người có thể được tổng hợp thành các thực thể xã hội và tổ chức vượt qua các cá nhân, "trí tuệ bầy đàn" được hình thành bởi sự cộng tác của nhiều Agent cấp AGI cũng có thể thể hiện khả năng nhận thức vượt xa tổng số đơn giản của các thành viên của nó [^agi-asi]. Do đó, sự cộng tác đa Agent không chỉ là một phương tiện kỹ thuật để vượt qua cửa sổ ngữ cảnh và ranh giới khả năng của một mô hình duy nhất mà còn có thể là con đường cơ bản từ "AI cấp độ chuyên gia" đến "vượt ra ngoài toàn thể nhân loại".
+Theo tác giả, ý nghĩa của đa Agent còn nằm ở việc khám phá **trí tuệ tập thể**. Con người, nhờ phân công, hợp tác, tranh luận và tích lũy tri thức, đã tạo nên xã hội và tổ chức có năng lực vượt xa từng cá nhân. Quần thể Agent cũng có thể phát triển theo hướng tương tự: mỗi thành viên đảm nhận một phần việc, rồi cùng giải những bài toán phức tạp hơn thông qua trao đổi và kiểm tra chéo. Báo cáo *From AGI to ASI* của Google DeepMind xếp các tập thể đa Agent quy mô lớn vào một trong những con đường dẫn tới siêu trí tuệ, và bàn về cách nhiều hệ thống có năng lực tổng quát kết hợp thành một chỉnh thể có năng lực nhận thức mạnh hơn.[^agi-asi] Đi theo hướng này, ngay cả khi mỗi Agent chỉ đạt trình độ chuyên gia con người, một tập thể được tổ chức tốt vẫn có thể phát triển năng lực vượt trên toàn bộ giới chuyên gia. Điều đó đặt ra một câu hỏi mà kỹ thuật đa Agent cần nghiên cứu lâu dài: cơ chế phân công và trao đổi nào giúp tập thể liên tục tạo ra kết quả vượt trội hơn từng cá nhân?
 
-[^agi-asi]: Liệt kê "tập thể đa Agent quy mô lớn" là một trong những con đường chính từ trí tuệ nhân tạo nói chung đến siêu trí tuệ, xem Google DeepMind, *Từ AGI đến ASI.* arXiv:2606.12683, 2026.
+[^agi-asi]: Google DeepMind, *From AGI to ASI.* arXiv:2606.12683, 2026.
 
-## Khung phân loại cho cộng tác đa Agent
+## Khung phân loại cộng tác đa Agent
 
-Để xây dựng hệ thống nhiều Agent, trước tiên bạn cần hiểu hai chiều thiết kế cốt lõi, chúng cùng nhau xác định kiến trúc cơ bản và cách triển khai hệ thống.
+Khi người dịch giao bản thảo cho người hiệu đính, hai bên cần thống nhất hai điều. Thứ nhất, người hiệu đính được thấy gì: chỉ có bản dịch và bảng thuật ngữ, hay thấy cả toàn bộ cuộc hội thoại trong lúc dịch? Thứ hai, khi phát hiện dịch sai, ai có quyền yêu cầu làm lại? Điều thứ nhất quyết định ngữ cảnh được chia sẻ ra sao, điều thứ hai quyết định công việc được chuyển từ ai sang ai. Hai lựa chọn này độc lập với nhau.
 
-### Khía cạnh 1: Ngữ cảnh có được chia sẻ hay không
+### Chiều thứ nhất: ngữ cảnh có dùng chung hay không
 
-Đây là quyết định kiến trúc cơ bản nhất, xác định cách thông tin được truyền giữa nhiều Agent.
+**Dùng chung ngữ cảnh** nghĩa là vai trò đi sau tiếp tục dùng nhật ký hội thoại, kết quả gọi công cụ và trạng thái nhiệm vụ do giai đoạn trước chuyển xuống. Hệ thống đổi chỉ dẫn vai trò và cấu hình công cụ để vai trò mới tiếp tục làm việc. Ví dụ, sau khi chuyên viên phân tích yêu cầu viết xong tài liệu yêu cầu, lập trình viên vừa nhận tài liệu, vừa xem lại được cuộc trao đổi giữa chuyên viên và người dùng. Cách làm này giúp truy lại chi tiết dễ dàng; nhưng khi nhiệm vụ tiến triển, cũng cần dùng các phương pháp quản lý ngữ cảnh ở Chương 2 để kiểm soát độ dài lịch sử.
 
-**Ngữ cảnh được chia sẻ** có nghĩa là Agent tiếp theo nhận được toàn bộ lịch sử và trajectory hội thoại của Agent trước đó (trajectory được xác định trong Chương 1). Sau khi chuyển đổi các từ nhắc nhở của hệ thống và bộ công cụ ở mỗi giai đoạn, nó sẽ trở thành một Agent mới (vì danh tính, trách nhiệm và khả năng của nó đã thay đổi), nhưng nó vẫn giữ lại tất cả ký ức của người tiền nhiệm. Ví dụ, trong một nhóm, sau khi nhà phân tích yêu cầu viết tài liệu yêu cầu, nhà phát triển không chỉ lấy tài liệu mà còn xem tất cả các hồ sơ liên lạc giữa nhà phân tích và người dùng - anh ta là một vai trò mới, nhưng ngữ cảnh trước đó hoàn toàn được giữ lại. Ưu điểm là thông tin không bị mất và mỗi Agent có thể xem lại chi tiết của bất kỳ giai đoạn nào trước đó; thách thức là ngữ cảnh có thể mở rộng nhanh chóng.
+**Không dùng chung ngữ cảnh** nghĩa là mỗi Agent tự duy trì đầu vào mô hình, nhật ký hội thoại và trạng thái nhiệm vụ của riêng mình, rồi trao đổi thông tin qua giao diện rõ ràng. Ví dụ, chuyên viên phân tích giao tài liệu yêu cầu cho lập trình viên; lập trình viên hiện thực chức năng theo tài liệu, gặp chỗ chưa rõ thì gửi tin nhắn hỏi lại. Quá trình làm việc của mỗi bên nằm trong ngữ cảnh độc lập, bên nhận chỉ lấy những tài liệu liên quan đến trách nhiệm của mình khi cần. Giao diện rõ ràng cũng giúp phát triển, kiểm thử và thay thế từng thành viên một cách riêng rẽ.
 
-**Không có ngữ cảnh chung** có nghĩa là mỗi Agent duy trì một ngữ cảnh và lịch sử hội thoại hoàn toàn độc lập và mỗi Agent không có quyền truy cập trực tiếp vào "quá trình suy nghĩ" của nhau. Nó giống như sự hợp tác giữa các phòng ban khác nhau: mọi người làm việc độc lập tại trạm riêng của mình, trao đổi thông tin thông qua các tài liệu được chia sẻ và biên bản cuộc họp, thay vì lúc nào cũng nhìn chằm chằm vào màn hình của người khác. Mô hình này mang tính mô-đun và biệt lập hơn, mỗi Agent chỉ cần tập trung vào thông tin liên quan đến trách nhiệm của chính mình; hệ thống cũng dễ dàng mở rộng và bảo trì hơn - việc thêm Agent mới không yêu cầu thay đổi logic bên trong của Agent hiện có mà chỉ cần xác định giao diện và định dạng dữ liệu.
+Ở bên trái Hình 10-1, lập trình viên muốn biết script CSV phải xử lý những tệp nào thì có thể lật lại cuộc trao đổi giữa người dùng và chuyên viên phân tích. Ở bên phải, người hiệu đính muốn biết một từ nên dịch thế nào thì trong tay có bản dịch và bảng thuật ngữ. Nếu còn muốn biết vì sao người dịch xử lý như vậy, họ phải hỏi riêng hoặc xin xem nhật ký.
 
-Vì ngữ cảnh không được chia sẻ giữa Agent nên thông tin phải được truyền qua cơ chế giao tiếp rõ ràng. Vấn đề này đã có lời giải từ lâu trong các hệ thống phân tán kinh điển: sách giáo khoa hệ điều hành cho ta biết rằng giao tiếp giữa các tiến trình (IPC) rốt cuộc chỉ có hai mô thức lớn—**bộ nhớ chia sẻ** (một bên ghi vào, bên kia đọc từ cùng một vùng lưu trữ) và **truyền tin nhắn** (gửi dữ liệu một cách tường minh cho bên kia). Cơ chế giao tiếp giữa các Agent cũng nằm gọn trong hai mô thức này, thường gặp ba loại:
+![Hình 10-1 So sánh ngữ cảnh dùng chung và ngữ cảnh không dùng chung](images/revised/fig10-1.svg)
 
-- **Tham số cho lệnh gọi công cụ**: Bọc Agent xuôi dòng thành một công cụ, rồi Agent ngược dòng truyền dữ liệu có cấu trúc qua các tham số của công cụ; phù hợp với các tình huống yêu cầu kiểu dữ liệu rõ ràng và cấu trúc minh bạch;
-- **Hệ thống tệp dùng chung**: Agent trao đổi thông tin bằng cách đọc và ghi các sản phẩm trung gian như tài liệu và mã trong thư mục dùng chung, phù hợp với các tình huống sản phẩm có dung lượng lớn hoặc yêu cầu tính kiên trì;
-- **Bus tin nhắn**: Trạm trung chuyển chịu trách nhiệm đặc biệt về truyền tin nhắn giữa Agent. Agent không gọi trực tiếp cho nhau mà gửi tin nhắn đến bus tin nhắn, bus này sẽ chuyển tiếp tin nhắn đó đến Agent đích.
+Khi mỗi thành viên có ngữ cảnh riêng, họ trao đổi tài liệu với nhau bằng cách nào? Trong hệ phân tán, hai cách giao tiếp phổ biến là bộ lưu trữ dùng chung và truyền thông điệp. Hệ thống Agent cũng dùng được cả hai hướng này, cụ thể gồm:
 
-Đối chiếu với hai mô thức của IPC: hệ thống tệp dùng chung chính là "bộ nhớ chia sẻ" của thế giới Agent; tham số lệnh gọi công cụ và bus tin nhắn thì là hai hình thái của "truyền tin nhắn"—cái trước truyền đồng bộ theo lệnh gọi, cái sau đầu tư qua trạm trung chuyển một cách không đồng bộ. Hai mô thức đều có đánh đổi riêng. Ngôn ngữ Go có một câu được lưu truyền rộng rãi: "Đừng giao tiếp bằng cách chia sẻ bộ nhớ, mà hãy chia sẻ bộ nhớ bằng cách giao tiếp"。
+- **Tham số gọi công cụ.** Đóng gói Agent hạ nguồn thành một công cụ; phía thượng nguồn truyền nhiệm vụ và tài liệu có cấu trúc qua tham số, rồi nhận kết quả trả về.
+- **Hệ thống tệp dùng chung.** Một bên ghi tài liệu, mã hoặc dữ liệu, bên kia đọc theo tham chiếu; phù hợp với sản phẩm trung gian lớn và tài liệu cần lưu bền.
+- **Bus tin nhắn (Message Bus).** Agent gửi tin nhắn tới một dịch vụ trung chuyển, dịch vụ này phân phát theo đích đến hoặc quan hệ đăng ký nhận tin; phù hợp với trao đổi bất đồng bộ giữa nhiều thành viên.
 
-![Hình 10-1 So sánh giữa ngữ cảnh được chia sẻ và ngữ cảnh không được chia sẻ ](images/fig10-1.svg)
+Ví dụ, sau khi giao một nhiệm vụ dịch, phía thượng nguồn có thể chờ bản dịch trả về, hoặc nhận trước một mã nhiệm vụ rồi chuyển sang lo chương khác. Ngay cả khi hai người dịch đều mở được cùng một tệp, hệ thống vẫn phải quy định ai ghi và bên kia đọc khi nào. Cộng đồng Go nhấn mạnh việc dùng giao tiếp để tổ chức truy cập dữ liệu dùng chung; tư tưởng này cũng áp dụng cho Agent: phải rõ ai sở hữu trạng thái, ai được sửa, các thành viên khác lấy bản cập nhật bằng cách nào.
 
-### Khía cạnh 2: Cấu trúc liên kết cộng tác
+### Chiều thứ hai: tô-pô cộng tác
 
-Chiều thứ hai là tô-pô cộng tác — quyền điều khiển và thông tin chảy giữa các Agent theo cấu trúc nào. Có ba dạng tô-pô điển hình:
+Tô-pô cộng tác mô tả quan hệ phụ thuộc giữa các nhiệm vụ, luồng thông tin và quan hệ điều khiển giữa các Agent. Chương này dùng ba cách tổ chức điển hình:
 
-- **Mẫu cộng tác ngang hàng** (Peer Collaboration Pattern): Một số lượng nhỏ Agent (thường là 2-3) tương tác như nhau, tạo thành một chu trình cải tiến lặp đi lặp lại - giống như khi viết một bài báo, một người soạn thảo và một người khác nhận xét và sửa lại. Sau nhiều lần lặp đi lặp lại, chất lượng tốt hơn nhiều so với bài do một người viết.
-- **Chế độ quản lý** (Orchestration Pattern): Trình quản lý tập trung Agent chịu trách nhiệm lập kế hoạch và lập kế hoạch nhiệm vụ, đồng thời nhiều Agent phụ chịu trách nhiệm về các nhiệm vụ phụ cụ thể - giống như người quản lý dự án dẫn dắt một số kỹ sư chuyên nghiệp thực hiện dự án.
-- **Mô hình phi tập trung**: Không có bộ điều khiển trung tâm trong thời gian chạy. Agent giao tiếp với nhau như con người và cộng tác để hoàn thành nhiệm vụ.
+- **Mô hình cộng tác ngang hàng** (Peer Collaboration Pattern). Một số ít thành viên cộng tác nhiều lượt quanh cùng một sản phẩm. Ví dụ, người soạn viết bản nháp bài báo, người góp ý nêu đề xuất sửa, rồi người soạn chỉnh lại.
+- **Mô hình quản lý** (Orchestration Pattern). Một Manager Agent tập trung lo việc chia nhỏ, phân công và tổng hợp nhiệm vụ; các Agent con đảm nhận phần việc chuyên môn của mình.
+- **Mô hình phi tập trung** (Decentralized Pattern). Các thành viên nối tiếp công việc dựa trên vai trò, tin nhắn và trạng thái cục bộ; tất cả cùng quyết định công việc tiến triển tiếp ra sao.
 
-> **Giải thích thuật ngữ: Graph Engineering.** Thuật ngữ "Graph Engineering", trở nên phổ biến vào tháng 7 năm 2026, trong ngữ cảnh Agent hiện nay thường chỉ việc thiết kế tường minh một đồ thị thực thi: các nút là Agent, chương trình thông thường hoặc quyết định của con người; các cạnh xác định quan hệ phụ thuộc giữa nhiệm vụ, định tuyến có điều kiện và đường đi sau khi thất bại; trạng thái có cấu trúc lưu chuyển giữa các nút. "Cấu trúc liên kết cộng tác" được thảo luận trong chương này chính là phần đa Agent của khái niệm đó—cộng tác ngang hàng, điều phối bằng trình quản lý và chuyển giao phi tập trung là những cấu trúc đồ thị khác nhau. Vì tên gọi còn mới và dễ bị nhầm với đồ thị tri thức, GraphRAG và dấu vết thực thi, cuốn sách vẫn dùng các thuật ngữ ổn định hơn là "cấu trúc liên kết cộng tác" và "điều phối" làm từ vựng chính.
+> **Giải thích thuật ngữ: Graph Engineering.** Chương 1 đã giới thiệu cuộc thảo luận về Graph Engineering vào tháng 7 năm 2026. Góc nhìn này tập trung vào đồ thị thực thi: nút có thể là Agent, chương trình thông thường hoặc quyết định của con người; cạnh biểu diễn quan hệ phụ thuộc, định tuyến có điều kiện và hướng xử lý khi thất bại; trạng thái được truyền dọc theo quan hệ thực thi. Tô-pô cộng tác đa Agent là một ứng dụng của góc nhìn thiết kế này, trọng tâm là cách nhiều đơn vị ra quyết định bàn giao, chạy song song và phản hồi cho nhau.
 
-Thiết kế chi tiết và các kịch bản áp dụng của từng phương thức sẽ được thảo luận trong các phần đặc biệt tiếp theo.
+Cộng tác ngang hàng, mô hình quản lý và thiết kế phi tập trung có thể kết hợp với nhau. Ví dụ, Manager giao một nhiệm vụ viết cho nhóm người soạn – người duyệt; nhóm lặp nội bộ xong mới nộp kết quả.
 
-## Khi nào multi Agent thực sự tốt hơn Agent đơn lẻ
+## Khi nào đa Agent tốt hơn Agent đơn
 
-Trước khi đi vào kiến trúc cộng tác cụ thể, hãy trả lời một câu hỏi cơ bản hơn: **Khi nào bạn thực sự cần nhiều Agent và khi nào một Agent là đủ?** Câu trả lời cho câu hỏi này sẽ trở thành tài liệu tham khảo tổng thể cho tất cả các kế hoạch dự án tiếp theo. Một loạt nghiên cứu trong những năm gần đây đã đưa ra khung đánh giá rõ ràng - chỉ có một tiêu chí cốt lõi: **Quy trình cộng tác có đưa ra thông tin mới mà khi tạo một Agent duy nhất không thể có được không?**
+Giả sử bản nháp dịch sai một từ kỹ thuật. Đưa cùng một bản dịch cho hai người hiệu đính, có thể nhận về hai lần chấp thuận giống nhau; nếu một trong hai người còn có trong tay nguyên văn, bảng thuật ngữ và đoạn mã dùng từ đó, sẽ có thêm một con đường để phát hiện lỗi. Khi chọn cách cộng tác, hãy hỏi trước: Agent được thêm vào mang lại gì cho nhiệm vụ? Nó có thể thu được bằng chứng mới, phủ một nhánh tìm kiếm khác, đưa ra phán đoán chuyên môn khác, hoặc rút ngắn thời gian chờ nhờ chạy song song.
 
-Bảng 10-1 tóm tắt xem các chế độ cộng tác khác nhau có đưa ra thông tin mới hay không để xác định xem liệu cộng tác nhiều Agent có giá trị đáng kể so với Agent đơn lẻ hay không.
+Tác giả trước hết xem xét **lượng thông tin mới mà phản hồi mang lại**, sau đó mới xét song song hóa và cách ly ngữ cảnh đem lại bao nhiêu lợi ích. Khi đọc được kết quả kiểm thử, ảnh chụp trang hoặc tài liệu bên ngoài, người duyệt có thể đề xuất sửa dựa trên những bằng chứng chưa có lúc tạo sản phẩm. Bảng 10-1 dùng vài tình huống thường gặp để minh họa cách kiểm tra phần thông tin mới này.
 
-Bảng 10-1 So sánh mức tăng thông tin trong nhiều chế độ cộng tác Agent
+Bảng 10-1 Thông tin và phản hồi trong cộng tác đa Agent
 
-| Chế độ cộng tác | Có nên giới thiệu thông tin mới | Hiệu ứng |
+| Mô hình cộng tác | Nguồn thông tin chính | Trọng tâm đánh giá |
 |---|---|---|
-| Cùng mô hình tự kiểm duyệt (đọc lại kết quả của chính mình) | Không | Thường không hiệu quả hoặc thậm chí có hại |
-| Agent khác nhau tranh luận về cùng một văn bản | Không | Bằng một Agent với cùng một lượng tính toán |
-| Người đánh giá đánh giá mã bằng cách sử dụng kết quả thực hiện kiểm tra | Có (phản hồi thực hiện) | Cải thiện đáng kể |
-| Người đánh giá Xem ảnh chụp màn hình được hiển thị để xem lại mã giao diện người dùng/PPT | Có (phản hồi trực quan) | Cải thiện đáng kể |
-| Người đánh giá sử dụng các công cụ bên ngoài để xác minh sự thật | Có (phản hồi về công cụ) | Cải thiện đáng kể |
+| Cùng một mô hình tự duyệt lại đầu ra của mình | Tài liệu sẵn có và một lượt kiểm tra mới | Có phát hiện được chỗ sót không, sửa xong kết quả có tốt hơn không |
+| Nhiều Agent tranh luận cùng một vấn đề | Lời giải, giả định và luận cứ của từng bên | Quan điểm có khác nhau không, kiểm chứng và chọn đáp án bằng cách nào |
+| Người duyệt chạy kiểm thử và kiểm tra mã | Phản hồi từ biên dịch, kiểm thử và lúc chạy | Bản sửa có qua kiểm thử và giữ nguyên chức năng cũ không |
+| Người duyệt xem kết quả kết xuất của giao diện web hoặc PPT | Ảnh chụp màn hình và phản hồi tương tác | Bố cục, nội dung và thao tác có đúng yêu cầu không |
+| Người duyệt dùng công cụ bên ngoài để kiểm chứng sự thật | Kết quả truy xuất và bản ghi của hệ thống nghiệp vụ | Nguồn có đáng tin không, kết luận có khớp bằng chứng không |
 
-RLEF (Học tăng cường từ phản hồi thực thi) [^rlef-2025] năm 2025 xác nhận điều này: đào tạo một mô hình thông qua học tăng cường để sử dụng phản hồi thực thi mã nhằm cải thiện mã lặp đi lặp lại sẽ hiệu quả hơn nhiều so với việc để mô hình lấy mẫu độc lập nhiều lần. Điều quan trọng là mỗi lần lặp đưa ra **kết quả thực thi thực**(lỗi biên dịch, lỗi kiểm tra, ngoại lệ thời gian chạy), thông tin này không tồn tại khi mô hình được viết. WebGen-Agent [^webgen-agent-2025] của năm 2025 Trong nhiệm vụ tạo trang web, hệ thống phản hồi bao gồm phản hồi trực quan đa cấp (ảnh chụp màn hình + mô tả mô hình ngôn ngữ hình ảnh) được cho là đã cải thiện hiệu suất của Claude 3.5 Sonnet trên điểm chuẩn này từ 26,4% lên 51,9% - gần gấp đôi.
+RLEF dùng học tăng cường để huấn luyện mô hình tận dụng phản hồi từ việc chạy mã, học cách sửa qua nhiều bước trong các bài lập trình thi đấu. Lỗi biên dịch, kiểm thử thất bại và ngoại lệ lúc chạy cung cấp căn cứ cụ thể cho lần sửa tiếp theo; mô hình trong bài báo đạt kết quả tốt hơn với ít lần lấy mẫu hơn.[^rlef-2025] WebGen-Agent thì đưa ảnh chụp trang web, mô tả và góp ý của mô hình thị giác, cùng đánh giá thao tác GUI vào quy trình sinh trang: hệ thống vừa có thể quay lại bước trước để làm lại, vừa có thể chọn kết quả tốt nhất trong vài phương án đã sinh. Trên WebGen-Bench, độ chính xác của Claude 3.5 Sonnet tăng từ 26,4% lên 51,9%.[^webgen-agent-2025]
 
 [^rlef-2025]: Gehring, J., et al. *RLEF: Grounding Code LLMs in Execution Feedback with Reinforcement Learning.* arXiv:2410.02089, 2025.
 [^webgen-agent-2025]: Lu, Z., et al. *WebGen-Agent: Enhancing Interactive Website Generation with Multi-Level Feedback and Step-Level Reinforcement Learning.* arXiv:2509.22644, 2025.
 
-Khung "thông tin mới" này giải thích một hiện tượng có vẻ mâu thuẫn: nghiên cứu học thuật cho biết "một Agent duy nhất là đủ", nhưng trong thực tế kỹ thuật, nhiều Agent hơn sẽ hoạt động tốt hơn. Căn nguyên của mâu thuẫn là cả hai thảo luận về các loại "nhiều Agent" khác nhau - so sánh trong nghiên cứu học thuật chủ yếu là chế độ "nhiều Agent nhìn vào cùng một văn bản và thảo luận lẫn nhau" (chẳng hạn như tranh luận), trong khi các hệ thống multi-Agent hiệu quả trong thực hành kỹ thuật thường bao gồm các vòng phản hồi bên ngoài (thực thi mã, hiển thị trực quan, gọi công cụ). Cái trước không giới thiệu thông tin mới, cái sau thì có. Ba kiến trúc cộng tác ngang hàng, người quản lý và phân quyền được giới thiệu ở phần sau của chương này. Hầu như tất cả những công dụng thực sự hiệu quả đều có thể tìm thấy ở tiêu chí này.
+Tác giả thường để hệ thống lấy được bằng chứng cụ thể trước, như kết quả kiểm thử, ảnh chụp hay dữ liệu công cụ trả về, rồi mới quyết định phân chia trách nhiệm sinh, thực thi và duyệt. Vòng phản hồi có thể do một Agent đảm nhận, cũng có thể tách cho nhiều vai trò; thêm vai trò thì phải giúp việc thu thập và sử dụng bằng chứng tốt hơn.
 
-Thí nghiệm tìm lỗ hổng của Anthropic năm 2026 là một ví dụ. Bốn mươi lăm Agent phối hợp tìm kiếm qua một diễn đàn chung, đánh giá chéo các phát hiện, rồi giao quyết định cuối cùng cho một Agent trọng tài độc lập. Nhóm Agent phối hợp tìm được 266 lỗ hổng với 27 triệu token, trong khi phương án chạy song song các Agent độc lập chỉ tìm được 21 lỗ hổng với 6,5 triệu token. Trong một không gian tìm kiếm mở, giao tiếp cho phép hệ thống đa Agent linh hoạt chuyển trọng tâm và hình thành chuyên môn hóa, đổi ngân sách token cao hơn lấy độ bao phủ rộng hơn và các hướng khám phá đa dạng hơn.[^anthropic-multiagent-2026]
+Nghiên cứu an toàn của Anthropic năm 2026 là một ví dụ về tìm kiếm có cộng tác: 45 Agent trao đổi phát hiện qua một diễn đàn chung, duyệt chéo lẫn nhau, rồi một Agent độc lập phân xử kết quả. Theo báo cáo, cụm cộng tác tiêu tốn 27 triệu token và tìm ra 266 lỗ hổng; phương án chạy song song độc lập tiêu tốn 6,5 triệu token và tìm ra 21 lỗ hổng. Diễn đàn giúp các thành viên lần theo phát hiện của người khác để đào tiếp, đồng thời biết hướng nào đã có người làm. Nhóm cộng tác cũng dùng nhiều token hơn khoảng bốn lần, nên khoảng cách giữa 266 và 21 bao gồm cả khác biệt về cách giao tiếp lẫn về lượng tính toán bỏ ra.[^anthropic-multiagent-2026]
 
-[^anthropic-multiagent-2026]: Anthropic Frontier Red Team, “Patterns and Problems in Emerging Multiagent Systems,” 2026-08-13. https://www.anthropic.com/research/multiagent-systems
+[^anthropic-multiagent-2026]: Anthropic Frontier Red Team, “Patterns and Problems in Emerging Multiagent Systems,” 2026-08-13.
 
-**Ngân sách bước so với hiệu suất Agent.** Hướng nghiên cứu liên quan là: việc chỉ định ngân sách bước khác nhau (tức là số lần gọi công cụ hoặc vòng lặp được phép) cho Agent ảnh hưởng đến hiệu suất của nó như thế nào? Theo trực quan, nhiều bước hơn sẽ mang lại kết quả tốt hơn - với ngân sách 30 bước, Agent chỉ có thể triển khai nhanh chóng các chức năng cốt lõi. Với ngân sách 300 bước, nó cũng có thể lập kế hoạch, sau đó triển khai, thử nghiệm và sau đó cải tiến. Tuy nhiên, bài báo năm 2025 của Google "Budget-Aware Tool-Use kích hoạt khả năng mở rộng Agent hiệu quả" đã tìm thấy một kết luận phản trực giác: **Chỉ cần tăng số bước có sẵn cho Agent không đảm bảo cải thiện hiệu suất**. Agent tiêu chuẩn thiếu "nhận thức về ngân sách" - ngay cả với ngân sách 300 bước, họ vẫn có xu hướng thực hiện các tìm kiếm nông và "bão hòa" nhanh chóng. Để có thêm các bước thực sự mang lại kết quả tốt hơn, Agent cần có cơ chế nhận biết ngân sách rõ ràng để linh hoạt điều chỉnh các chiến lược dựa trên các nguồn lực còn lại: khám phá rộng rãi trong giai đoạn đầu và tập trung vào các hướng hứa hẹn nhất trong giai đoạn sau. BAVT (Tìm kiếm cây giá trị Budget-Aware) vào năm 2026 đề xuất thêm đánh giá giá trị theo từng bước, điều chỉnh trọng số thăm dò và sử dụng theo tỷ lệ ngân sách còn lại ở mỗi bước - khi ngân sách giảm, Agent chuyển dần từ "đăng lưới rộng rãi" sang "đào sâu".
+Trong nghiên cứu toán học, làm sao để nhiều nhóm thực sự khám phá những hướng khác nhau? Phương trình Navier–Stokes ba chiều mô tả chuyển động của chất lưu nhớt. Với điều kiện ban đầu trơn, nghiệm có luôn giữ được tính trơn không? OpenAI giao hai mục tiêu trái ngược cho các nhóm khác nhau: có nhóm cố chứng minh tính trơn, có nhóm tìm cách dựng phản ví dụ. Các nhóm tự khám phá trước, sau đó đội ngũ dùng Codex tổng hợp kết quả trung gian để nhóm khác cũng có thể đi tiếp theo những đầu mối hứa hẹn. Nhóm tìm ra phản ví dụ có khoảng một vạn Agent chạy đồng thời. Từ lúc lứa Agent đầu tiên khởi động đến khi tìm được chứng minh, đội ngũ báo cáo mất khoảng 88 giờ, thêm 17 giờ để hình thức hóa và kiểm chứng bằng Lean. Phản ví dụ có một điều kiện quan trọng: chất lưu chịu tác dụng của ngoại lực trơn mà vẫn xuất hiện kỳ dị trong thời gian hữu hạn. Dựa vào đó, đội ngũ đưa ra phản ví dụ mà hai phát biểu C và D trong đề bài của Viện Toán học Clay yêu cầu; nếu bỏ ngoại lực đi thì đó là một bài toán khác. Khi thiết kế loại tìm kiếm này, có thể viết rõ trước kết quả nào đủ để trả lời câu hỏi ban đầu, giao các giả thuyết cạnh tranh nhau cho các nhóm khác nhau, và dành riêng thời gian cho khâu kiểm chứng cuối cùng.[^ch10-ns-search]
 
-Những phát hiện này có ý nghĩa hướng dẫn trực tiếp cho việc thiết kế các hệ thống đa Agent. Ví dụ: trong chế độ người quản lý, Người quản lý Agent không nên chỉ phân phối nhiệm vụ cho Agent phụ và chờ kết quả mà nên phân bổ động ngân sách các bước dựa trên mức độ phức tạp của nhiệm vụ - các nhiệm vụ phụ đơn giản nên được cung cấp ít bước hơn và các nhiệm vụ phụ phức tạp phải được cung cấp đủ các bước. Đồng thời, chúng ta cũng phải hướng dẫn sub-Agent sử dụng hợp lý các khoản ngân sách này (lên kế hoạch đầu tiên, sau đó triển khai, sau đó thử nghiệm, sau đó cải tiến), thay vì lao vào và bắt đầu trực tiếp.
+[^ch10-ns-search]: Bản mô tả nghiên cứu *On the Navier–Stokes Millennium Prize Problem* của OpenAI kèm theo chứng minh và mã Lean. Trong thông báo ngày 11 tháng 9 năm 2026, Viện Toán học Clay đã phản hồi về công trình này và cho biết việc thẩm định kết quả cũng như trao giải sẽ tuân theo quy trình xét giải.
 
-Còn một điều nữa phải có trước tất cả các thiết kế: **chi phí**. Khám phá song song và lặp đi lặp lại nhiều Agent tốn tiền - Anthropic từng tiết lộ rằng mức tiêu thụ mã thông báo của hệ thống nghiên cứu đa Agent của nó cao gấp khoảng 15 lần so với các cuộc hội thoại thông thường và bản thân việc sử dụng mã thông báo có thể giải thích khoảng 80% sự khác biệt về hiệu suất. Điều này có nghĩa là lợi ích hiệu quả của nhiều Agent phải đủ lớn để bao gồm nhiều lần hoặc thậm chí là một mức độ lớn của chi phí bổ sung, nếu không, một Agent đơn lẻ được điều chỉnh phù hợp thường là lựa chọn hiệu quả hơn về mặt chi phí.
+**Ngân sách bước ảnh hưởng thế nào đến hiệu quả?** Giả sử một nhiệm vụ cho phép 30 bước, Agent phải sắp xếp gọn gàng việc lập kế hoạch, phần hiện thực cốt lõi và những kiểm chứng cần thiết; nếu cho phép 300 bước, nó có chỗ để so sánh nhiều phương án hơn, kiểm thử và sửa đổi kỹ hơn. Muốn dùng tốt phần tài nguyên này, Agent còn cần biết tổng ngân sách và ngân sách còn lại, rồi dựa vào đó sắp xếp độ sâu khám phá.
 
-## Cộng tác nhiều Agent với ngữ cảnh được chia sẻ
+Bài báo *Budget-Aware Tool-Use Enables Effective Agent Scaling* của Google năm 2025 nghiên cứu vấn đề này: Agent thiếu ý thức về ngân sách có thể nhanh chóng dừng lại ở tìm kiếm nông, dù tăng số bước được phép thì hiệu quả cũng khó tăng thêm. BAVT (Budget-Aware Value Tree Search) năm 2026 tiến thêm một bước, kết hợp ước lượng giá trị với ngân sách còn lại trong từng bước tìm kiếm để điều chỉnh trọng số giữa khám phá và khai thác. Khi ngân sách dồi dào, có thể so sánh nhiều hướng hơn; khi gần chạm trần, dồn tài nguyên vào các nhánh hứa hẹn.
 
-Trong cộng tác dùng chung ngữ cảnh, mỗi giai đoạn là một Agent độc lập với system prompt và bộ công cụ riêng, nhưng kế thừa toàn bộ trajectory của giai đoạn trước. Ưu điểm chính là không mất thông tin; thách thức là giữ Agent hiện tại tập trung vào trách nhiệm của mình khi lịch sử ngày càng dài.
+Trong mô hình quản lý, điều này nghĩa là Manager phải phân bổ số bước theo độ khó của nhiệm vụ và điều chỉnh theo tiến độ: nhiệm vụ đơn giản thì giao kết quả sớm, nhiệm vụ phức tạp thì chừa chỗ cho kiểm chứng và sửa đổi; gặp tắc nghẽn thì xác định nguyên nhân trước, rồi mới quyết định bổ sung thông tin, tăng ngân sách hay đổi sang hướng khác.
 
-Trong tác vụ phức tạp, vai trò và trách nhiệm có thể thay đổi rõ rệt giữa các giai đoạn. Một prompt tĩnh sẽ quá chung chung hoặc quá dài, vì vậy system prompt và công cụ có thể được chuyển theo giai đoạn.
+Khám phá song song có thể rút ngắn thời gian chờ thực tế (wall-clock), duyệt nhiều lượt có thể cải thiện sản phẩm, nhưng cả hai đều làm tăng chi phí gọi mô hình và giao tiếp. Tác giả lấy một Agent đơn đã tinh chỉnh tốt làm đường cơ sở, và chỉ mở rộng quy mô cộng tác khi mức tăng chất lượng hoặc thời gian tiết kiệm được nhờ thành viên mới đủ bù chi phí giao tiếp, tính toán trùng lặp và bảo trì.
 
-Lựa chọn kiến trúc quan trọng là thay system prompt hay nạp Skill khi đổi vai trò. Cả hai đều thay đổi quy tắc hành vi nhưng có chi phí và mức ràng buộc khác nhau.
+## Cộng tác đa Agent dùng chung ngữ cảnh
 
-| Lựa chọn | Nơi chứa quy tắc vai trò | Khả năng thấy công cụ | Ảnh hưởng ngữ cảnh/KV Cache | Độ mạnh ràng buộc |
-|---|---|---|---|---|
-| `transfer_to_agent` | Thay system prompt và thường cả bộ công cụ | Chỉ công cụ của vai trò hiện tại | Mỗi lần chuyển làm thay đổi prefix; cache từ điểm khác biệt thường không tái sử dụng được | Mạnh: có thể loại công cụ ngoài vai trò khỏi schema |
-| Skill | Giữ danh mục Skill cố định, thêm `SKILL.md` vào trajectory khi cần | Thường là toàn bộ danh mục hoặc cổng tìm kiếm ổn định | Prefix tĩnh không đổi; Skill được thêm ở cuối trajectory | Yếu: Skill là chỉ dẫn; quyền cứng cần cổng Harness |
+Cộng tác dùng chung ngữ cảnh đổi vai trò theo từng giai đoạn nhưng vẫn giữ nhật ký nhiệm vụ sẵn có. Lấy một báo cáo nghiên cứu làm ví dụ: vai trò truy xuất thu thập tài liệu trước, vai trò phân tích tính toán tiếp, rồi vai trò viết tổ chức cách trình bày. Mỗi vai trò đều xem lại được nguồn và quyết định trước đó; còn hệ thống dùng chỉ dẫn nhiệm vụ hiện tại để hướng vai trò vào mục tiêu của giai đoạn này.
 
-Nếu vai trò khác nhau chủ yếu về kiến thức, quy trình hoặc văn phong, hãy ưu tiên Skill. Nếu khác về quyền, cô lập công cụ, tuân thủ hoặc cấm tác dụng phụ, hãy dùng Agent độc lập hoặc `transfer_to_agent`, đồng thời cưỡng chế giới hạn công cụ bằng mã trong Harness.
+Khi bàn giao giữa các đội, hãy hỏi trước một câu: những ai cần biết vì sao lúc đầu lại quyết định như vậy? Trong ví dụ sản phẩm của Teamily AI, quản lý sản phẩm và Agent cùng viết tài liệu yêu cầu sản phẩm (PRD) trong nhóm chat. Sau khi đội sản phẩm chia sẻ bản chốt cho đội kỹ thuật, kỹ sư vẫn có thể hỏi lại những đánh đổi đằng sau một yêu cầu cụ thể.
 
-> **Thí nghiệm 10-1 ★★: Chuyển vai trò trong ngữ cảnh dùng chung — system prompt so với Skill**
+Lấy ví dụ vai trò truy xuất chuyển nhiệm vụ cho vai trò viết: sau khi bàn giao, mô hình đọc quy trình viết ở đâu, còn gọi được những công cụ nào? Thí nghiệm 10-1 hiện thực cùng một lần bàn giao theo hai cách.
+
+| Vấn đề cần xử lý khi bàn giao | Chuyển vai trò (`transfer_to_agent`) | Nạp Skill |
+|---|---|---|
+| Cung cấp quy trình viết bằng cách nào? | Thay bằng system prompt của vai trò viết | Giữ danh mục Skill trong system prompt, nối quy trình viết vào cuối lịch sử tin nhắn |
+| Mô hình thấy được những công cụ nào? | Có thể chỉ hiển thị công cụ của vai trò viết | Có thể giữ nguyên bộ công cụ cũ hoặc lối vào tìm kiếm công cụ |
+| Đoạn KV Cache nào còn dùng được? | System prompt đã đổi, thường phải tính lại từ chỗ prefix thay đổi | Prefix của yêu cầu cũ tiếp tục tái sử dụng được |
+| Ai kiểm tra quyền gọi? | Harness kiểm tra yêu cầu theo vai trò hiện tại rồi mới điều phối công cụ | Harness kiểm tra độc lập quyền của từng lần gọi |
+
+Khi khác biệt giữa các vai trò chủ yếu nằm ở kiến thức, quy trình và văn phong, tác giả ưu tiên dùng Skill: cách này dễ tái sử dụng cùng một khung chạy và giữ được cache của prefix yêu cầu ổn định. Khi khác biệt liên quan đến quyền, cách ly công cụ hoặc trách nhiệm phê duyệt, có thể tổ chức thành Agent độc lập hoặc chuyển vai trò, rồi để Harness và môi trường thực thi đảm bảo kiểm soát truy cập. Việc một công cụ có xuất hiện trong đầu vào mô hình hay không ảnh hưởng đến lựa chọn gọi công cụ; còn quyền thực tế do khâu kiểm tra lúc chạy quyết định.
+
+> **Thí nghiệm 10-1 ★★: Chuyển đổi nhiều vai trò trong ngữ cảnh dùng chung — so sánh system prompt và Skill**
 >
-> **Tác vụ và biến chung**: hai đường dùng cùng mô hình, tác vụ, cách triển khai công cụ, quy tắc vai trò và toàn bộ trajectory dùng chung. Tác vụ là tìm doanh số xe năng lượng mới của Trung Quốc giai đoạn 2021–2023, tính CAGR và viết bản tóm tắt tiếng Trung cho nhà đầu tư không quá 120 ký tự.
+> Hai cách làm dùng cùng mô hình, nhiệm vụ người dùng, cách hiện thực công cụ, quy trình vai trò và lịch sử dùng chung. Bản demo nhập môn yêu cầu tìm doanh số xe năng lượng mới của Trung Quốc giai đoạn 2021–2023, tính tốc độ tăng trưởng kép hằng năm (CAGR), rồi viết một đoạn tóm tắt cho nhà đầu tư không quá 120 chữ.
 >
-> **Đường 1: chuyển system prompt**. Năm vai trò là `triage`, `research`, `coding`, `data_analysis` và `writing`. Mỗi vai trò chỉ thấy công cụ riêng và `transfer_to_agent`; khi bàn giao, lịch sử được giữ lại, prompt và công cụ của vai trò đích được nạp, rồi việc thực thi tiếp tục.
+> **Cách 1: chuyển system prompt.** Thiết lập năm vai trò: triage (thu thập yêu cầu), research (truy xuất), coding (lập trình), data_analysis (phân tích) và writing (viết). triage là điểm vào; mỗi vai trò thấy bộ công cụ riêng của mình cùng `transfer_to_agent`. Khi chuyển giao, lịch sử được giữ lại, system prompt và bộ công cụ của vai trò đích được nạp vào, rồi việc thực thi tiếp tục.
 >
-> **Đường 2: Skill**. System prompt và toàn bộ danh mục công cụ giữ nguyên trong phiên. Mô hình gọi `load_skill(name)`, và `SKILL.md` được đưa vào trajectory như kết quả công cụ. Prefix tĩnh không đổi, còn quyền cứng được các quy tắc Harness bảo đảm.
+> **Cách 2: nạp Skill.** System prompt và toàn bộ công cụ giữ ổn định suốt phiên. Mô hình gọi `load_skill(name)` để lấy quy trình của vai trò; nội dung này được đưa vào lịch sử dùng chung dưới dạng kết quả công cụ, prefix cũ vẫn được giữ nguyên. Harness kiểm tra từng lần gọi công cụ theo quy tắc phân quyền.
+>
+> Cả hai cách hiện thực đều đọc cùng một tệp `SKILL.md`. Trước và sau một lần bàn giao vai trò, hãy lấy mỗi bên một yêu cầu gửi tới mô hình, xem quy trình nằm trong tin nhắn nào và đoạn prefix nào còn tái sử dụng được. Rồi đối chiếu hai bản tóm tắt: nguồn số liệu doanh số có đáng tin không? Từ cuối năm 2021 đến cuối năm 2023 có hai kỳ tăng trưởng, tốc độ tăng trưởng kép đã tính đúng chưa?
+>
+> Trong phép đối chứng chính thức có một đề tóm tắt chặt hơn: giới hạn 160 ký tự và phải giữ hai URL nguồn. Cũng được tám bước, nhóm chuyển vai trò dùng ba lần gọi để đếm ký tự mà bản nháp vẫn dài 206 ký tự, lại bỏ sót công cụ tính toán mà đề bài chỉ định. Nhóm nạp Skill tính được tốc độ tăng trưởng từ doanh số của năm đầu và năm cuối, đến bước thứ tám mới nạp quy trình viết. Lúc đó mọi vai trò cần đi qua đều đã đi qua, nhưng người dùng vẫn chưa nhận được bản tóm tắt. Cả hai trajectory đều kết thúc vì chạm giới hạn số bước.
+>
+> Chạy cùng 30 nhiệm vụ trên cả hai cách hiện thực và kiểm tra kết quả giao bằng chương trình: nhóm nạp Skill đạt 15 nhiệm vụ, nhóm chuyển system prompt đạt 2. Tuy nhiên, so sánh theo từng đề, nhóm nạp Skill có nhiều hơn 6.855 token đầu vào không trúng cache và mất thêm khoảng 4,4 giây (đều là trung vị của hiệu số theo cặp). Lần này nhà cung cấp báo số token đầu vào lấy từ cache bằng 0 ở cả hai nhóm. Trong 6 bài kiểm tra biên về tuân thủ chỉ dẫn, cả hai nhóm đều đạt hết, nhưng tỷ lệ đạt trên nhiệm vụ hoàn chỉnh chênh nhau rất xa.
 
-## Cộng tác nhiều Agent không có ngữ cảnh chung
+## Cộng tác đa Agent không dùng chung ngữ cảnh
 
-Không có ngữ cảnh chia sẻ nào thể hiện sự cộng tác đa Agent thực sự. Theo kiến trúc này, mỗi Agent là một thực thể độc lập với ngữ cảnh, trajectory và trạng thái riêng. Agent không thể truy cập trực tiếp vào "hoạt động nội bộ" của nhau và sự cộng tác hoàn toàn dựa trên các cơ chế truyền dữ liệu có cấu trúc và rõ ràng, đó là ba cơ chế giao tiếp được giới thiệu ở đầu chương này (tham số lệnh gọi công cụ, hệ thống tệp dùng chung, bus thông báo).
+Trong kiến trúc ngữ cảnh độc lập, mỗi Agent tự duy trì lịch sử đầu vào, trạng thái nhiệm vụ và vòng lặp chạy của mình, rồi trao đổi thông tin cần thiết qua tham số công cụ, tệp dùng chung và tin nhắn. Ví dụ, tài liệu người dịch nộp lên phải ghi rõ đoạn nguyên văn và phiên bản bảng thuật ngữ. Dù người dịch đã rời đi, người hiệu đính vẫn tìm được nguyên văn; khi cần sửa lại, cũng tìm được người phụ trách theo từng chương.
 
-Ở đầu chương, ta đã đối chiếu cơ chế giao tiếp với hai mô thức lớn của giao tiếp giữa các tiến trình, và đối chiếu ngữ cảnh chia sẻ/không chia sẻ với luồng và tiến trình. Phép loại suy này còn có thể đi xa hơn (Bảng 10-2):
+Bảng 10-2 đối chiếu cách hệ điều hành quản lý tiến trình với cách runtime quản lý Agent.
 
-Bảng 10-2 Quan hệ đối ứng giữa hệ thống multi-Agent và hệ điều hành
+Bảng 10-2 Phép loại suy thiết kế giữa hệ thống đa Agent và hệ điều hành
 
-| Hệ điều hành | Hệ thống multi-Agent |
-|----------|----------------|
-| Chương trình (tệp thực thi) | Tiền tố tĩnh (system prompt + định nghĩa công cụ) |
-| Bộ nhớ của tiến trình | Trajectory |
-| CPU | LLM |
-| Nhân (kernel) | Thời gian chạy Agent |
-| Lời gọi hệ thống | Lời gọi công cụ |
-| fork (tạo tiến trình con) | spawn_subagent |
-| kill (gửi tín hiệu) | cancel_subagent |
-| ps (liệt kê tiến trình) | list_agents |
-| Mã thoát và wait() | Tóm tắt có cấu trúc do Agent con trả về |
-| Bộ nhớ chia sẻ / truyền tin nhắn | Hệ thống tệp dùng chung / tin nhắn |
+| Hệ điều hành | Trách nhiệm tương ứng trong hệ thống đa Agent |
+|---|---|
+| Chương trình và cấu hình | System prompt, định nghĩa công cụ và cấu hình vai trò |
+| Bộ nhớ tiến trình | Ngữ cảnh hiện tại, trạng thái nhiệm vụ và lịch sử |
+| CPU thực hiện tính toán | LLM sinh quyết định, runtime và công cụ thực thi thao tác tương ứng |
+| Nhân hệ điều hành quản lý việc chạy | Runtime của Agent quản lý trạng thái, điều phối và tài nguyên |
+| Lời gọi hệ thống | Yêu cầu thao tác bên ngoài qua giao diện công cụ |
+| fork: tạo tiến trình con | `spawn_subagent`: tạo Agent con |
+| kill: gửi tín hiệu | `cancel_subagent`: yêu cầu hủy |
+| ps: xem tiến trình | `list_agents`: xem thành viên và trạng thái chạy |
+| Mã thoát và wait | Thông báo hoàn thành, trạng thái nhiệm vụ và kết quả có cấu trúc |
+| Bộ lưu trữ dùng chung và truyền thông điệp | Tệp dùng chung, tham số công cụ và tin nhắn |
 
-
-Sự trừu tượng này không hề mới mẻ: trạng thái riêng tư, tin nhắn không đồng bộ, khả năng tạo ra thành viên mới, chính là những thiết lập cơ bản của mô hình Actor thập niên 1970[^actor-model], hệ thống multi-Agent có thể xem như phiên bản LLM của nó. Do đó phần lớn kinh nghiệm thành thục của hệ điều hành và hệ thống phân tán đều có thể mượn dùng trực tiếp.
+Trạng thái riêng, tin nhắn bất đồng bộ và tạo thành viên động cũng xuất hiện trong mô hình Actor được đề xuất vào thập niên 1970.[^actor-model]
 
 [^actor-model]: Hewitt, C., Bishop, P., Steiger, R. *A Universal Modular ACTOR Formalism for Artificial Intelligence.* IJCAI 1973.
 
-Sự cách ly kiểu tiến trình mang lại một số lợi ích kỹ thuật thực tế: mỗi Agent có thể được phát triển và thử nghiệm độc lập, các khả năng mới không cần thay đổi mã hiện có, lỗi của một Agent sẽ không truyền trạng thái lỗi sang Agent khác và nhiều Agent có thể được thực thi đồng thời - ngữ cảnh hoàn toàn độc lập và không có cạnh tranh tài nguyên.
+Khi có nhiều nhiệm vụ con độc lập, tác giả thiên về việc cho mỗi thành viên một ngữ cảnh riêng, để nó chỉ xử lý những tài liệu liên quan đến trách nhiệm của mình. Cách này giúp kiểm thử từng vai trò riêng rẽ, giảm việc lịch sử dài dòng của giai đoạn trước làm nhiễu phán đoán hiện tại, và cho phép nhiều nhiệm vụ tiến hành đồng thời. Hiệu quả cách ly còn phụ thuộc vào các tài nguyên dùng chung khác: nhiều Agent vẫn có thể cùng lúc sửa một tệp, tiêu cùng một hạn mức API, hoặc cùng nhận một tin nhắn sai.
 
-Nhưng sẽ phải trả giá nếu không chia sẻ ngữ cảnh. Rõ ràng nhất là vấn đề đồng bộ hóa thông tin: làm thế nào mỗi Agent có thể duy trì sự hiểu biết nhất quán về trạng thái nhiệm vụ? Thông tin có bị mất hoặc trùng lặp trong quá trình truyền tải không? Việc gỡ lỗi cũng trở nên khó khăn hơn - nếu có sự cố xảy ra, bạn cần xem qua nhiều nhật ký Agent để mô tả quá trình thực thi hoàn chỉnh. Những vấn đề này làm cho việc thiết kế các thông số kỹ thuật giao diện, định dạng dữ liệu và giao thức truyền thông trở nên quan trọng.
+Giao diện cộng tác còn phải xử lý tin nhắn bị mất, giao trùng và trạng thái bị trễ. Khi điều tra sự cố, có thể dùng mã nhiệm vụ để liên kết yêu cầu, sự kiện công cụ và kết quả của từng thành viên, dựng lại diễn biến của một lần bàn giao.
 
-Sự hợp tác rõ ràng mà không cần chia sẻ ngữ cảnh dựa trên hai bộ cơ sở hạ tầng độc lập với cấu trúc liên kết. Đầu tiên là **hệ thống tệp được chia sẻ**, đóng vai trò là sản phẩm trao đổi giữa Agent và phương tiện liên tục để trao đổi tệp với người dùng, tạo thành mặt phẳng dữ liệu cộng tác; thứ hai là **cơ chế điều khiển và giao tiếp**, hỗ trợ truyền tin nhắn, truy vấn trạng thái, chấm dứt thực thi và điều phối tài nguyên giữa Agent, tạo thành một mặt phẳng điều khiển cộng tác. Ba cấu trúc liên kết sau đây được xây dựng dựa trên hai cấu trúc này.
+Giả sử một Agent làm xong phân tích và cần chuyển kết quả cho đồng nghiệp viết báo cáo. Nếu chỉ có vài con số, có thể gửi kèm tin nhắn; nếu sản phẩm là một bảng lớn, thường lưu bảng vào hệ thống tệp dùng chung và đính kèm tham chiếu trong tin nhắn. Từ đó có hai mảng việc. **Lưu trữ sản phẩm** lo lưu và trao đổi tài liệu, mã và dữ liệu; **giao tiếp và điều khiển** lo phân phát tin nhắn, truy vấn trạng thái nhiệm vụ, hủy thực thi và điều phối tài nguyên.
 
-### Hệ thống file Agent qua mắt
+### Hệ thống tệp dưới góc nhìn của Agent
 
-Phần đầu của chương này liệt kê "hệ thống tệp dùng chung" là một trong ba cơ chế giao tiếp không chia sẻ ngữ cảnh. Trong hệ thống thực tế, Agent không truy cập vào một bộ lưu trữ duy nhất mà là một **hệ thống tệp ảo** (virtual filesystem): bộ nhớ với các nguồn khác nhau, vòng đời và quyền được gắn kết (gắn kết) trong cùng một cây thư mục. Agent truy cập qua giao diện `read_file`/`write_file`/`list_dir` thống nhất, lớp dưới cùng có thể là đĩa tạm thời cục bộ, bộ lưu trữ đối tượng liên tục, đĩa đám mây API của bên thứ ba hoặc gói tài nguyên hệ thống chỉ đọc. Làm rõ thành phần của cây thư mục này—khả năng hiển thị và vòng đời của từng khu vực—là điều kiện tiên quyết cho thiết kế cộng tác đa Agent: một số lượng đáng kể các xung đột đồng thời và rò rỉ thông tin bắt nguồn từ việc trộn lẫn các khu vực cần được cách ly. Cây thư mục này tương đương với không gian địa chỉ của Agent, bốn loại khu vực chính là các đoạn bộ nhớ với quyền khác nhau: có cái riêng tư và ghi được, có cái nhiều bên chia sẻ, có cái chỉ đọc. Triết lý bảo vệ của hệ điều hành ở đây cũng đúng—mặc định cách ly, muốn chia sẻ phải khai báo tường minh. Hệ thống tệp của hệ thống đa Agent trưởng thành thường bao gồm bốn loại khu vực sau:
+Một thiết kế phổ biến là cung cấp cho Agent một **hệ thống tệp ảo** (virtual filesystem), gắn tài nguyên từ nhiều nguồn vào cùng một cây thư mục. Mô hình truy cập qua các giao diện như `read_file`, `write_file` và `list_dir`; tầng dưới có thể nối tới ổ đĩa tạm cục bộ, bộ lưu trữ đối tượng bền vững, API ổ đĩa đám mây của bên thứ ba hoặc gói tài nguyên của hệ thống.
 
-Trong một hệ đa Agent trưởng thành, hệ thống tệp thường gồm bốn loại khu vực sau:
+Tác giả thường phân định rõ các vùng lưu trữ trước, rồi mới nối vào quy trình cộng tác. Nếu bản nháp tạm, sản phẩm giao chính thức và tệp bên ngoài của người dùng nằm lẫn với nhau, rất dễ ghi đè nhầm hoặc đọc vượt quyền. Giao diện thống nhất giúp dùng tiện lợi, còn khả năng hiển thị, vòng đời và quyền của từng vùng do cấu hình gắn kết và kiểm soát truy cập quyết định. Có thể chia cây thư mục này thành bốn loại vùng.
 
-**1. Không gian làm việc độc quyền Agent (Scratchpad)**. Một thư mục riêng dành riêng cho mỗi phiên bản Agent, nơi lưu trữ các sản phẩm trung gian, tệp tạm thời, bản nháp và nhật ký gỡ lỗi. Vòng đời được liên kết với phiên bản và không hiển thị đối với Agent và người dùng khác. Việc cách ly bàn di chuột có hai chức năng: ngăn các tệp tạm thời của nhiều Agent ghi đè lên nhau và giữ cho ngữ cảnh Agent chính được sắp xếp hợp lý - quá trình dùng thử và lỗi của Agent con được lưu giữ trong không gian làm việc riêng của nó và chỉ sản phẩm cuối cùng mới được gửi tới không gian chung. Điều này tương ứng với phương án mức lưu trữ của Chương 4 "Sub Agent trả về bản tóm tắt có cấu trúc thay vì bản nhạc đầy đủ".
+**Một, vùng làm việc riêng của Agent (Scratchpad).** Mỗi phiên bản chạy dùng vùng làm việc của riêng mình để lưu bản nháp, tệp tạm, nhật ký gỡ lỗi và sản phẩm trung gian. Mặc định chỉ Agent sở hữu mới truy cập được, và vùng này được dọn hoặc lưu trữ theo chính sách của nhiệm vụ. Nhờ vậy các tệp tạm không ghi đè lên nhau; Agent con làm xong thì đặt kết quả cần giao vào không gian chung, kèm bản tóm tắt có cấu trúc gửi cho Agent chính. Nhật ký thử sai vẫn ở lại vùng làm việc cũ để chẩn đoán về sau. Đây cũng là cách đưa cách ly ngữ cảnh xuống tầng lưu trữ: Agent chính nhận kết quả giao và bằng chứng cần thiết, không phải tốn công đọc toàn bộ quá trình thử sai trong việc điều phối hằng ngày.
 
-**2. Nhiều không gian làm việc chung Agent**. Khu vực cộng tác trong đó nhiều Agent đọc và ghi cùng nhau và **hiển thị với người dùng** là phương tiện chính để trao đổi sản phẩm giữa các Agent theo kiến trúc ngữ cảnh không chia sẻ: Bảng thuật ngữ Agent ghi vào bảng thuật ngữ và Bản dịch Agent đọc từ đó; người dùng cũng có thể tải lên các tệp gốc và tải xuống các sản phẩm cuối cùng tại đây. Vòng đời của nó gắn liền với toàn bộ nhiệm vụ và đòi hỏi sự kiên trì. Là khu vực có nhiều bên đồng thời đọc và ghi, đây là khu vực có nguy cơ cao xảy ra xung đột đồng thời - các cơ chế như khóa lạc quan và cách ly bản sao làm việc (worktree) đều hoạt động ở đây. Để biết chi tiết, hãy xem "Chế độ lỗi 1" ở phần sau của chương này. Chương 4 sử dụng một ổ đĩa để gắn `/workspace/shared` nhằm kết nối Agent chính, máy tính ảo và điện thoại di động ảo, đây là cách triển khai điển hình của lớp này.
+**Hai, không gian dùng chung của nhiều Agent (Shared Workspace).** Các thành viên cộng tác trao đổi sản phẩm ở đây; người dùng cũng có thể tải tài liệu lên hoặc tải sản phẩm về qua lối vào được cấp quyền. Ví dụ, Glossary Agent ghi bảng thuật ngữ, Translation Agent đọc rồi dịch, người duyệt kiểm tra bản dịch. Không gian chung thường được lưu bền theo nhiệm vụ, cần xử lý ghi đồng thời, cập nhật phiên bản và phạm vi truy cập. Ở Chương 6, Agent và máy tính ảo trao đổi tệp CSV và biểu đồ qua bộ lưu trữ dùng chung; đó chính là một ví dụ của kiểu bàn giao sản phẩm này. Phần sau sẽ giới thiệu các phương pháp như khóa lạc quan và cách ly bản sao làm việc.
 
-**3. Tài nguyên được gắn bên ngoài (Mounted External Resources)**. Các nguồn thông tin của bên thứ ba mà người dùng ủy quyền truy cập—Google Drive, Notion, Dropbox, Enterprise Wiki, v.v.—được ánh xạ tới các điểm gắn kết trong hệ thống tệp (chẳng hạn như `/mnt/gdrive`) thông qua bộ điều hợp. Agent truy cập tài liệu Notion bằng cách đọc một tệp và lớp dưới cùng được hoàn thành bởi bộ điều hợp gọi bên kia là API. Ba đặc điểm của lớp này khác với bộ nhớ cục bộ cần được xử lý rõ ràng trong quá trình thiết kế: **Quyền truy cập bị hạn chế bởi các quyền bên ngoài**(quyền của người dùng trong hệ thống nguồn xác định phạm vi hiển thị của Agent), **Độ trễ cao hơn và tính nhất quán yếu hơn**(mỗi lần đọc là một lượt truy cập mạng, dữ liệu có thể đã được sửa đổi bên ngoài, chỉ có thể đối xử theo tính nhất quán cuối cùng), **Chỉ đọc theo yêu cầu**(phải thận trọng khi ghi lại vào nguồn bên ngoài, việc ghi sai có thể làm ô nhiễm dữ liệu thực của người dùng). Giao diện tệp hợp nhất giúp Agent không cần phải tùy chỉnh các công cụ chuyên dụng cho từng nguồn dữ liệu, nhưng nó cũng che giấu những khác biệt về hiệu suất và bảo mật được đề cập ở trên, do đó, ranh giới chỉ đọc/có thể ghi, thời gian chờ và thông tin xác thực cần phải được quản lý rõ ràng ở cấp độ gắn kết.
+**Ba, tài nguyên bên ngoài được gắn vào (Mounted External Resources).** Các tài nguyên như Google Drive, Notion, Dropbox và Wiki doanh nghiệp có thể được ánh xạ vào giao diện thống nhất qua bộ chuyển đổi (adapter). Khi Agent đọc tài liệu, bộ chuyển đổi gọi API của hệ thống nguồn. Ở đây cần quản lý ba loại khác biệt: phạm vi truy cập tùy vào quyền cấp từ bên ngoài; truy cập mạng kéo theo độ trễ, hết thời gian chờ và vấn đề cập nhật bộ đệm; thao tác ghi ngược phải tuân theo quy tắc phân quyền và phiên bản của hệ thống nguồn. Ngữ nghĩa nhất quán cụ thể do giao diện dịch vụ quyết định; có thể dùng số phiên bản, ghi có điều kiện hoặc đọc lại để phát hiện sửa đổi đồng thời. Gắn chỉ đọc theo nhu cầu phù hợp cho việc tra cứu tài liệu; khi cần chỉnh sửa mới cấp quyền ghi tương ứng.
 
-**4. Tài nguyên tích hợp trong hệ thống (Built-in System Resources)**. Cài đặt trước hệ thống và gói tài nguyên chia sẻ chỉ đọc cho tất cả Agent. Đại diện điển hình là **Skills** được giới thiệu trong Chương 2 và 4 - các tài liệu kiến thức và tập lệnh được sắp xếp dưới dạng tệp, được gắn trên `/skills` và các đường dẫn khác và được truy cập theo cách tiết lộ lũy tiến (đầu tiên được lập chỉ mục, sau đó được mở rộng theo yêu cầu); Ngoài ra, nó còn bao gồm các tài liệu hướng dẫn tham khảo, thư viện mẫu và định nghĩa công cụ dùng chung. Lớp này được chia sẻ trên toàn cầu, chỉ đọc, ổn định trong các phiên và có thể được đọc đồng thời bởi tất cả Agent mà không cần kiểm soát đồng thời.
+**Bốn, tài nguyên có sẵn của hệ thống (Built-in System Resources).** Sổ tay tham khảo, mẫu, định nghĩa công cụ và các Skill dựng sẵn có thể làm gói tài nguyên chỉ đọc cho nhiều Agent cùng dùng. Skill được nạp theo cơ chế tiết lộ dần: trước hết cung cấp danh mục, rồi đọc quy trình và script theo nhiệm vụ. Gói tài nguyên có phiên bản cố định thuận tiện cho đọc đồng thời; khi nâng cấp, việc chuyển phiên bản giúp các nhiệm vụ đang chạy giữ được tính nhất quán.
 
-Hình 10-2 cho thấy cấu trúc trong đó bốn loại khu vực này được gắn thống nhất trên cùng một cây thư mục: Agent truy cập toàn bộ cây thông qua giao diện hợp nhất, người dùng tải lên và tải xuống các tệp từ không gian dùng chung, nguồn dữ liệu bên ngoài được gắn thông qua bộ điều hợp và các tài nguyên tích hợp trong hệ thống được cung cấp theo cách chỉ đọc.
+Trong Hình 10-2, người dịch có thể sửa bản nháp nhiều lần trong thư mục của mình; khi sẵn sàng giao cho khâu hiệu đính mới đặt phiên bản tương ứng vào vùng dùng chung. Bản gốc trong ổ đĩa đám mây của người dùng được đọc qua bộ chuyển đổi bên ngoài, và việc truy cập còn tùy vào quyền người dùng đã cấp.
 
-![Hình 10-2 Bốn loại cấu trúc gắn vùng của hệ thống tệp ảo Agent ](images/fig10-2.svg)
+![Hình 10-2 Cấu trúc gắn kết bốn vùng của hệ thống tệp ảo cho Agent](images/revised/fig10-2.svg)
 
-Bảng 10-3 so sánh bốn loại lĩnh vực này từ bốn chiều về khả năng hiển thị, vòng đời, quyền đọc và ghi và kiểm soát tương tranh, có thể được sử dụng làm danh sách kiểm tra cho thiết kế bố cục hệ thống tệp.
+Sau khi người dịch rời đi, các tệp tạm trong vùng làm việc có thể bị giải phóng theo. Bản dịch đã đặt vào vùng dùng chung thì vẫn được giữ lại, người hiệu đính dựa vào quyền đọc để tiếp nhận (Bảng 10-3).
 
-Bảng 10-3 Bốn loại vùng của hệ thống tệp ảo Agent
+Bảng 10-3 Bốn loại vùng của hệ thống tệp ảo cho Agent
 
-| Vùng | Tầm nhìn | Vòng đời | Đọc và Viết | Kiểm soát đồng thời |
+| Vùng | Khả năng hiển thị | Vòng đời | Đọc ghi | Quản lý đồng thời |
 |---|---|---|---|---|
-| Không gian làm việc độc quyền Agent | Chỉ Agent này | Bị phá hủy với phiên bản Agent | Đọc và viết | Không bắt buộc (riêng tư) |
-| Nhiều không gian chia sẻ Agent | Tất cả người dùng Agent + cộng tác | Khi nhiệm vụ tiếp tục, cần có sự kiên trì | Đọc và viết | Bắt buộc (khóa lạc quan/worktree) |
-| Tài nguyên gắn bên ngoài | Phụ thuộc vào ủy quyền bên ngoài | Xác định bởi nguồn bên ngoài | Chủ yếu chỉ đọc, viết thận trọng | Chịu trách nhiệm bởi nguồn bên ngoài |
-| Tài nguyên tích hợp trong hệ thống | Tất cả Agent | Ổn định xuyên phiên | Chỉ đọc | Không bắt buộc (chỉ đọc) |
+| Vùng làm việc riêng của Agent | Mặc định chỉ Agent sở hữu | Dọn theo phiên bản chạy, lưu trữ khi cần | Agent sở hữu đọc và ghi | Ngăn thử lại hoặc thao tác nền ghi trùng |
+| Không gian dùng chung của nhiều Agent | Thành viên và người dùng được cấp quyền | Lưu bền theo nhiệm vụ | Cấp quyền theo vai trò | Khóa, kiểm tra phiên bản hoặc worktree |
+| Tài nguyên bên ngoài được gắn vào | Bị giới hạn bởi cả quyền bên ngoài lẫn bộ chuyển đổi | Do hệ thống nguồn và chính sách bộ đệm quyết định | Chỉ đọc theo nhu cầu hoặc ghi khi được cấp quyền | Tuân theo giao diện phiên bản và đồng thời của hệ thống nguồn |
+| Tài nguyên có sẵn của hệ thống | Agent được cấp quyền | Phiên bản cố định, tái sử dụng qua các phiên | Chỉ đọc | Chuyển phiên bản tài nguyên đồng loạt |
 
-Hợp nhất bốn loại vùng vào cùng một cây thư mục là giá trị của thiết kế " **Đường dẫn tệp dưới dạng giao diện chung**": khi chuyển sản phẩm giữa Agent, chuyển giao đầu vào từ Agent chính sang Agent phụ và thậm chí trao đổi Artifacts để cộng tác A2A giữa các tổ chức, những gì được truyền là một chuỗi đường dẫn nhẹ thay vì tải nội dung vào cửa sổ ngữ cảnh (Chương 4). Điều này tương tự như Chương 5, "Hệ thống tệp là xương sống của Agent" - phần sau thảo luận về cách một Agent sử dụng một hệ thống tệp để mang bộ nhớ và các chức năng. Ở đây, tính trừu tượng tương tự được mở rộng cho nhiều Agent: cây thư mục ảo gắn kết bốn loại lưu trữ: riêng tư, chia sẻ, bên ngoài và tích hợp, là cơ sở lưu trữ cho cộng tác nhiều Agent.
+Tham chiếu tệp giúp tin nhắn bàn giao luôn ngắn gọn: thượng nguồn cung cấp vị trí, phiên bản và mục đích của sản phẩm, hạ nguồn đọc nội dung khi cần. Các thành viên trong cùng một môi trường chạy có thể dùng đường dẫn chung; cộng tác xuyên tổ chức thì cần mã định danh sản phẩm, giao diện truy cập và quyền mà cả hai bên đều phân giải được thì mới hoàn tất được kiểu bàn giao tương tự.
 
-### Giao tiếp và điều khiển giữa Agent
+### Giao tiếp và điều khiển giữa các Agent
 
-Hệ thống tập tin giải quyết vấn đề **trao đổi sản phẩm** giữa Agent. Việc cộng tác còn cần một **mặt phẳng điều khiển**. Đây chính là chỗ dụng võ của các dòng vòng đời trong Bảng 10-2: bộ nguyên thủy công cụ mà Chương 4 đã đưa ra—tạo (`spawn_subagent`), gửi tin nhắn (`send_message_to_subagent`), hủy (`cancel_subagent`), khám phá (`list_agents`)—tương ứng với fork, tin nhắn, kill và ps của thế giới tiến trình. Phần này không lặp lại định nghĩa giao diện mà tập trung vào bốn khả năng mà cộng tác đa Agent phụ thuộc vào nhưng thường bị bỏ qua.
+Các công cụ tạo, giao tiếp, hủy và khám phá giới thiệu ở Chương 4 cung cấp giao diện điều khiển cơ bản cho cộng tác đa Agent: `spawn_subagent` tạo thành viên, `send_message_to_subagent` chuyển tin nhắn, `cancel_subagent` yêu cầu hủy, `list_agents` truy vấn danh sách thành viên. Quanh các giao diện này còn phải quy ước hành vi về tin nhắn, trạng thái, kết thúc và điều phối.
 
-**1. Truyền tin nhắn.** Hình thức đơn giản nhất là điểm-điểm: Agent A gọi trực tiếp `send_message_to_agent_b(content)`, phù hợp với các tình huống có cấu trúc liên kết cố định và một số lượng nhỏ Agent (chẳng hạn như điện thoại + máy tính kép Agent trong thử nghiệm của chương này). Khi số lượng Agent tăng lên và yêu cầu song song không đồng bộ, số lượng kết nối điểm-điểm tăng tỷ lệ thuận với số lượng Agent và cả người gửi và người nhận đều phải trực tuyến cùng một lúc; tại thời điểm này, **Bus thông báo** nên được sử dụng thay thế (xem "Biểu mẫu phối hợp song song" ở phần sau của chương này): Agent xuất bản thông báo lên bus và bus chuyển tiếp nó theo mối quan hệ đăng ký. Người gửi không cần biết người tiêu dùng. Dù là điểm-điểm hay qua xe buýt, tin nhắn thường phải mang một phong bì có cấu trúc: ID người gửi, đích (chỉ định Agent hoặc quảng bá), loại tin nhắn (chẳng hạn như `task_assigned`/`status_update`/`result`/`terminate`) và tải trọng JSON. Định dạng phong bì thống nhất đảm bảo người nhận định tuyến và phân tích cú pháp đáng tin cậy, đồng thời cho phép truy xuất nguồn gốc của các liên kết cộng tác - chìa khóa để gỡ lỗi các hệ thống đa Agent.
+**Một, truyền tin nhắn.** Khi ít thành viên và quan hệ cố định, có thể dùng giao diện điểm-điểm, ví dụ Agent điện thoại và Agent máy tính trao đổi tiến độ trực tiếp với nhau. Nếu mọi thành viên đều cần nói chuyện từng đôi một, số quan hệ tiềm năng tăng theo bình phương số thành viên; khi có nhiều quan hệ đăng ký nhận tin, bus tin nhắn giúp quản lý tập trung việc định tuyến, đệm và thử lại. Cả điểm-điểm lẫn bus đều hiện thực được phân phát bất đồng bộ; bên nhận có cần trực tuyến cùng lúc hay không phụ thuộc vào cơ chế hàng đợi và lưu bền.
 
-**2. Truy vấn trạng thái.** Đây là mắt xích dễ bị đánh giá thấp nhất trong mặt phẳng điều khiển. Sau khi Agent chính phái Agent con đi, nếu không có cách nào biết được tiến độ của nó thì vừa không thể phán đoán có nên tiếp tục chờ hay không, vừa không thể can thiệp kịp thời khi nó bị nghẽn. Cách làm theo trực giác là bê nguyên RPC, định nghĩa một giao diện truy vấn `get_subagent_status(agent_id)`, trả về "đang chạy/đã hoàn thành/thất bại" cộng thêm một phần trăm tiến độ. Nhưng giao diện kiểu kéo này có công dụng thực tế nhỏ hơn nhiều so với kỳ vọng: Agent con vừa được tạo là lập tức bắt đầu thực thi, cho đến khi hoàn thành hoặc thất bại, chứ không luân chuyển giữa một chuỗi trạng thái xếp hàng như các tác vụ (job) của hệ thống xử lý theo lô truyền thống—cũng như trong lập trình Unix hiếm khi cần theo PID để bỏ phiếu (poll) trạng thái chạy của một tiến trình khác. Việc bỏ phiếu còn có cái lưỡng nan cố hữu: quá dày thì lãng phí token, quá thưa thì không kịp thời. Cách lấy trạng thái tự nhiên hơn là quay về hai mô thức giao tiếp lớn ở đầu chương.
+Tin nhắn thường có một **phong bì** (envelope) có cấu trúc: ID người gửi, Agent đích hoặc phạm vi phát rộng, loại tin nhắn và phần tải (payload). Loại tin nhắn có thể gồm `task_assigned`, `status_update`, `result` và `terminate`. Mã nhiệm vụ, mã tin nhắn và yêu cầu liên quan giúp bên nhận loại trùng, đồng thời cho phép công cụ gỡ lỗi dựng lại chuỗi giao tiếp. Nội dung nghiệp vụ đặt trong payload JSON, hai bên xử lý theo các trường đã quy ước.
 
-**Lấy trạng thái bằng truyền tin nhắn**. Agent chính gửi thẳng cho Agent con một tin nhắn: "Tiến độ thế nào?" Agent con trả lời vào thời điểm thích hợp. Mọi thứ đều không đồng bộ: gửi tin nhắn không chặn việc thực thi của chính mình, còn đối phương khi nào trả lời, có trả lời hay không là chuyện khác—cũng như người quản lý hỏi tiến độ cấp dưới qua tin nhắn tức thời, chứ không yêu cầu đối phương lập tức dừng việc đang làm. Ngược lại, Agent con cũng có thể chủ động gửi tin nhắn báo cáo khi đến các mốc quan trọng; nếu hệ thống đã dựng sẵn bus tin nhắn, thì đây chính là việc phát một `status_update` lên bus ("giám sát thời gian thực" của thử nghiệm 10-4 chính là hình thái này). Dù là hỏi-đáp hay chủ động báo cáo, bản thân trạng thái trong tin nhắn nên dùng bộ từ vựng máy trạng thái thống nhất (đang thực thi, cần đầu vào, đã hoàn thành, thất bại)—giao thức A2A ở phần sau của chương này chính là chuẩn hóa vòng đời nhiệm vụ thành một bộ trạng thái như vậy.
+Ví dụ, một bản dịch do biên tập viên chịu trách nhiệm giao, và biên tập viên muốn nhờ Agent duyệt thuật ngữ kiểm tra một từ. Trong phần bình luận của một phiếu công việc (Ticket) trên Multica, chỉ cần gọi tên nó (`@`) và viết câu hỏi là kích hoạt được việc duyệt. Ý kiến duyệt có thể trả lời thẳng vào phiếu đó; người phụ trách vẫn là biên tập viên, trạng thái phiếu cũng giữ nguyên. Nếu muốn người duyệt nhận toàn bộ phiếu, phải đổi người phụ trách một cách tường minh.[^ch10-multica]
 
-**Lấy trạng thái bằng hệ thống tệp dùng chung**. Hình thái triệt để nhất là **lưu bền trajectory** (trajectory persistence): Agent con trong quá trình thực thi tuần tự hóa (serialize) trajectory của mình (trajectory định nghĩa ở Chương 1—chuỗi hoàn chỉnh gồm tin nhắn người dùng, phản hồi mô hình, lời gọi công cụ và kết quả) thành JSON theo thời gian thực, ghi nối vào một tệp nhật ký trong hệ thống tệp (thường mỗi phiên một tệp, mỗi dòng một sự kiện, tức định dạng JSONL). Agent chính không cần bất kỳ giao thức báo cáo trạng thái nào, đọc thẳng tệp này là thấy được toàn bộ quá trình thực thi của Agent con: nó đang gọi công cụ nào, bước gần nhất đang nghĩ gì, có bị kẹt trong vòng lặp thử lại thất bại hay không. Nói theo ngôn ngữ tiến trình, điều này tương đương với đọc thẳng bộ nhớ của một tiến trình khác—không chiếm ngữ cảnh của Agent con, không phụ thuộc vào sự hợp tác của nó, độ chi tiết quan sát cao nhất. Nhưng chi tiết đến từng li cũng là gánh nặng: trajectory động một cái là hàng vạn token, Agent chính đọc xong còn phải tự chắt lọc, vừa tốn thời gian vừa tốn token. Vì vậy trong đa số tình huống, hợp lý hơn là **quy ước một tệp tiến độ**: khi khởi động Agent con, Agent chính quy ước "hãy ghi tiến độ vào progress.md", Agent con mỗi khi hoàn thành một hạng mục thì cập nhật bản danh sách nhiệm vụ này, Agent chính bất cứ lúc nào đọc tệp nhẹ này là nắm được tiến độ. Điều này tương đương với hai tiến trình chia ra một khoảnh nhỏ theo định dạng đã quy ước làm vùng trạng thái trong bộ nhớ chia sẻ, phơi bày tiến độ đã chắt lọc chứ không phải toàn bộ "bộ nhớ". Tệp tiến độ còn kèm theo cung cấp **phát hiện bị kẹt**: thời gian sửa đổi cuối cùng của progress.md (hoặc tệp trajectory) quá N phút không thay đổi thì có thể phán định Agent con không còn hoạt động, kích hoạt cơ chế dự phòng hết thời gian chờ (tương ứng với Heartbeat và monitor_shell trong Chương 6), tránh để hệ thống bị Agent con bị nghẽn kéo xuống.
+[^ch10-multica]: Multica, gọi tên Agent trong bình luận; phần hiện thực phân phát bình luận ở phiên bản `d579273`.
 
-Nhưng không nên lấy việc lưu bền quỹ đạo làm cách truyền tin chính giữa các Agent. Một quỹ đạo dễ dàng lên tới hàng vạn token; Agent chính đọc xong còn phải tự chắt lọc, vừa tốn thời gian vừa tốn token. Vì thế trong đa số tình huống, hợp lý hơn là **thỏa thuận một tệp tiến độ**: khi khởi động Agent con, Agent chính giao hẹn "ghi tiến độ vào progress.md"; Agent con hoàn thành mỗi hạng mục thì cập nhật danh sách công việc ấy, còn Agent chính bất cứ lúc nào cũng chỉ cần đọc tệp nhẹ này là nắm được tiến triển. Điều đó tương đương với việc hai tiến trình khoanh trong bộ nhớ chung một vùng trạng thái nhỏ theo định dạng đã hẹn: thứ phơi ra là tiến độ đã chắt lọc, chứ không phải toàn bộ bộ nhớ. Tệp tiến độ còn dùng để **phát hiện trạng thái mắc kẹt**: nếu thời điểm sửa đổi cuối của progress.md (hoặc tệp quỹ đạo) không thay đổi quá N phút, có thể kết luận Agent con không còn hoạt động và kích hoạt cơ chế hết giờ, tránh để một Agent con bị chặn kéo lùi cả hệ thống.
+**Hai, lấy trạng thái.** Agent chính cần biết nhiệm vụ con còn đang chạy không, có cần đầu vào không, và kết quả đã lấy được chưa. Có thể kết hợp giao diện trạng thái, thông báo sự kiện và tệp tiến độ: giao diện runtime cung cấp trạng thái vòng đời, tin nhắn cho biết tiến triển nghiệp vụ, tệp lưu bền giữ bản ghi có thể khôi phục.
 
-**3. Việc thực thi chấm dứt.** Trong cộng tác song song, thường xảy ra tình trạng "người thành công, người kia thất bại" - nhiều tìm kiếm Agent riêng biệt và những tìm kiếm khác sẽ dừng ngay sau khi một tìm kiếm trúng mục tiêu (dòng 10-4 trong thử nghiệm của chương này bị chấm dứt). Việc chấm dứt có hai mức độ, người dùng Unix sẽ nhận ra đây chính là sự khác biệt giữa SIGTERM và SIGKILL. **Chấm dứt nhẹ nhàng (graceful)** là lựa chọn đầu tiên: Agent chính gửi tín hiệu `terminate` và Agent con phản hồi ở điểm an toàn của bước hiện tại, trước tiên hãy dọn sạch tài nguyên (đóng phiên trình duyệt, ghi các tệp chưa hoàn thành, giải phóng khóa), trả về xác nhận (ack) rồi thoát. **Chấm dứt cưỡng bức (forced)** là một biện pháp che đậy: trực tiếp chấm dứt quá trình, chỉ được sử dụng khi Agent con không phản hồi với tín hiệu nhẹ nhàng, với cái giá phải trả là để lại các tài nguyên bị treo và việc ghi chưa hoàn thành. Hai điểm kỹ thuật cần được giải quyết: thứ nhất, việc chấm dứt nhẹ nhàng yêu cầu Agent con thường xuyên kiểm tra tín hiệu kết thúc trong vòng lặp (tương tự như cơ chế ngắt trong Chương 6), nếu không thì tín hiệu không thể được phản hồi; thứ hai, có một điều kiện chạy đua trong việc chấm dứt tầng - nhiều Agent con có thể báo cáo thành công gần như cùng một lúc và Agent chính phải sử dụng khóa hoặc thiết kế lũy đẳng (idempotent) để đảm bảo chỉ có một lần xử lý và chỉ một vòng kết thúc phát sóng. Để biết chi tiết, hãy xem thử nghiệm trong chương này 10-4 Thảo luận về điều kiện cuộc đua.
+`get_subagent_status(agent_id)` có thể trả về các trạng thái như đang chạy, cần đầu vào, đã xong hoặc thất bại. Trong điều phối hằng ngày, tác giả ưu tiên dùng thông báo hoàn thành và tin nhắn tiến độ theo giai đoạn, để Agent chính tiếp tục việc của mình. Chỉ khi thông báo bị trễ, kết nối vừa khôi phục hoặc cần điều tra sự cố mới chủ động truy vấn, tránh tiêu tốn lượt gọi mô hình vào việc liên tục hỏi “xong chưa”. Giao diện trạng thái do runtime duy trì, có thể báo kịp thời tiến trình còn sống không và nhiệm vụ đã kết thúc chưa.
 
-**Kết thúc êm** là lựa chọn đầu tiên: Agent chính phát tín hiệu `terminate`, Agent con đáp lại tại điểm an toàn của bước hiện tại, trước hết dọn dẹp tài nguyên (đóng phiên trình duyệt, ghi nốt các tệp dở dang, giải phóng khóa), trả về xác nhận (ack) rồi thoát. **Kết thúc cưỡng bức** là phương án dự phòng: giết tiến trình trực tiếp, chỉ dùng khi Agent con không đáp lại tín hiệu êm, cái giá là có thể để lại tài nguyên treo lơ lửng và những lần ghi dở dang.
+**Dùng tin nhắn để trao đổi tiến độ.** Agent chính có thể hỏi tiến độ hiện tại, Agent con trả lời ở bước thích hợp; Agent con cũng có thể chủ động phát `status_update` khi có kết quả giai đoạn, gặp tắc nghẽn hoặc cần trợ giúp. Nội dung tin nhắn nên nêu việc đã xong, bước tiếp theo và nguyên nhân tắc nghẽn; các thành viên dùng cùng một bộ tên trạng thái để dễ tổng hợp và phán đoán. Phần giao thức A2A phía sau sẽ giới thiệu cách biểu diễn chuẩn hóa vòng đời nhiệm vụ.
 
-Còn lại một tàn cục: sau khi Agent chính chấm dứt, các Agent con vẫn đang chạy thì sao? Cách làm gọn gàng nhất về mặt kỹ thuật là mượn context của Go—việc chấm dứt lan xuống theo quan hệ tạo lập: hủy một Agent thì mọi Agent con mà nó phái sinh cũng bị hủy theo, tận gốc loại bỏ các Agent mồ côi không ai nhận. Việc "Agent con kiểm tra tín hiệu chấm dứt tại điểm an toàn" nói ở trên chính là tương ứng với việc bỏ phiếu `ctx.Done()` trong Go. Ngược lại, nếu thực sự cần một Agent nền chạy dài hạn, tách khỏi Agent chính (tương tự `nohup` của Unix), thì hãy để nó khởi đầu từ một cây vòng đời mới (tương ứng `context.Background()`), tường minh khai báo không chấm dứt theo cấp trên.
+**Dùng tệp để lưu tiến độ.** Hệ thống có thể ghi nối tin nhắn, yêu cầu công cụ, kết quả công cụ và thay đổi trạng thái vào nhật ký theo thứ tự sự kiện, chẳng hạn dùng định dạng JSONL, mỗi dòng một sự kiện. Agent chính có quyền chẩn đoán hoặc công cụ vận hành có thể dựa vào đó để kiểm tra quá trình thử lại, lỗi và chờ đợi. Lịch sử đầu vào của mô hình chỉ là một phần của trajectory chạy; nhật ký còn ghi được các sự kiện điều phối và thực thi bên ngoài.
 
-**4. Tài nguyên và điều phối.** Một nửa chức năng còn lại của hệ điều hành là phân bổ tài nguyên khan hiếm. Trong thế giới tiến trình, thứ khan hiếm là thời gian CPU và bộ nhớ; trong thế giới Agent, thứ khan hiếm là token, tiền bạc và hạn mức tương tranh—mỗi bước của Agent con đều đang tiêu thụ ba thứ này. Chức năng này thường rơi vào tay Manager hoặc thời gian chạy: khi khởi động Agent con thì đặt ngân sách số bước hoặc token, vượt hạn là dừng; nhiệm vụ khó giao cho mô hình mạnh, nhiệm vụ máy móc giao cho mô hình chi phí thấp; đặt trần số lượng tương tranh, tránh vài chục Agent cùng lúc dùng cạn hạn mức API; khi có nhiệm vụ khẩn cấp hơn đến thì ngắt Agent con đang thực thi, đây chính là chiếm quyền (preemption). Thực tiễn trong lĩnh vực này còn lâu mới thành thục như điều phối CPU, nhưng nó quyết định trần chi phí của hệ thống đa Agent, nên được cân nhắc ngay từ giai đoạn thiết kế kiến trúc.
+Một trajectory đầy đủ có thể chứa hàng vạn token, và mỗi lần đọc xong Agent chính lại phải chắt lọc lại trạng thái. Tin nhắn báo cho Agent chính biết có tiến triển mới, còn tệp tiến độ ngắn gọn lưu trạng thái hiện tại để truy vấn và khôi phục về sau. Tác giả ưu tiên phối hợp hai thứ này cho việc điều phối hằng ngày. Mỗi khi xong một việc, Agent con cập nhật danh sách nhiệm vụ, tham chiếu sản phẩm và điểm tắc hiện tại; Agent chính dựa vào các trường này để quyết định bước tiếp. Trajectory chi tiết được giữ lại để điều tra khi cần. Nếu tiến độ lâu không thay đổi, có thể kết hợp nhịp tim (heartbeat), trạng thái gọi công cụ và thiết lập hết thời gian của nhiệm vụ để phán đoán có cần can thiệp không: một công cụ chạy lâu có thể vẫn đang làm việc, xác nhận trạng thái rồi mới quyết định chờ, hủy hay thử lại.
 
-So với bộ lập lịch của hệ điều hành truyền thống, ưu thế nổi bật của Agent quản lý là nó có năng lực suy luận. Nhờ vậy, Agent quản lý có thể khởi động nhiều Agent con cùng khám phá một vấn đề, rồi căn cứ tiến triển của chúng mà quyết định cấp thêm tài nguyên cho những Agent nào, hoặc kết thúc những Agent trông như đã lạc đường — chẳng khác gì một cuộc đua ngựa nội bộ trong công ty.
+**Ba, kết thúc thực thi.** Khi nhiều thành viên song song tìm cùng một mục tiêu, một thành viên hoàn thành thì các nhánh khác có thể dừng để giải phóng ngân sách và tài nguyên công cụ. Có hai mức độ hủy, gần với vai trò của SIGTERM và SIGKILL trong Unix.
 
-Thực tiễn trong lĩnh vực tài nguyên và lập lịch còn kém trưởng thành hơn nhiều so với lập lịch của hệ điều hành, nhưng chính nó quyết định trần chi phí của hệ đa Agent, nên cần được cân nhắc ngay từ giai đoạn thiết kế kiến trúc.
+Tác giả ưu tiên **kết thúc nhẹ nhàng**: runtime chuyển yêu cầu hủy, Agent con dừng thao tác mới tại điểm an toàn, lưu tiến độ cần thiết, đóng phiên trình duyệt và nhả khóa, rồi trả về xác nhận (ack). **Kết thúc cưỡng bức** dùng cho những lần thực thi đã quá hạn hủy mà vẫn không phản hồi: runtime kết thúc tiến trình, rồi kiểm tra tài nguyên sót lại và các lần ghi chưa hoàn tất. Những thao tác đã gửi tới hệ thống bên ngoài còn phải truy vấn kết quả, khi cần thì chạy quy trình bù trừ.
 
-Trao đổi sản phẩm (mặt phẳng dữ liệu) cùng với truyền thông điệp, truy vấn trạng thái, kết thúc thực thi và lập lịch tài nguyên (mặt phẳng điều khiển) cùng nhau chống đỡ cho hệ đa Agent không dùng chung ngữ cảnh. Căn cứ quan hệ cộng tác giữa các Agent và đặc điểm luồng điều khiển, cộng tác không dùng chung ngữ cảnh có thể chia thành ba kiến trúc chính: mô hình cộng tác ngang hàng, mô hình quản lý và mô hình phi tập trung, mỗi mô hình thích hợp với một loại nhiệm vụ khác nhau.
+Vòng đời cũng cần được quản lý dọc theo quan hệ tạo lập. Mượn ý tưởng context của Go, có thể cho tín hiệu hủy của nhiệm vụ cha lan xuống toàn bộ cây nhiệm vụ con; vòng lặp chạy kiểm tra tín hiệu hủy tại các điểm an toàn, tương ứng với công dụng của `ctx.Done()`. Nhờ vậy, khi nhiệm vụ cha kết thúc, các nhánh nó khởi chạy cũng bước vào quy trình dọn dẹp, tránh để những Agent không ai quản lý tiếp tục gọi công cụ và tiêu ngân sách. Với các nhiệm vụ nền thực sự cần chạy độc lập lâu dài, hãy tạo một ngữ cảnh vòng đời độc lập, tương tự dùng `context.Background()`, đồng thời chỉ định người quản lý chịu trách nhiệm giám sát, ngân sách và dọn dẹp.
 
-### Mô hình cộng tác ngang hàng: kiểm tra và cân bằng lẫn nhau cũng như cải tiến lặp lại
+**Bốn, tài nguyên và điều phối.** Hệ thống Agent phải phân bổ token, số bước, hạn mức đồng thời, kết nối công cụ và tài nguyên tính toán. Khi khởi chạy nhiệm vụ con, đặt ngân sách và hành vi khi vượt hạn mức; chọn mô hình theo độ khó nhiệm vụ; giới hạn số lần gọi đồng thời để không làm cạn hạn mức dịch vụ cùng một lúc. Khi có nhiệm vụ khẩn hơn đến, có thể tạm dừng hoặc hủy nhiệm vụ ưu tiên thấp tại điểm an toàn, lưu tiến độ rồi điều phối lại.
 
-Cộng tác ngang hàng thường gồm hai hoặc ba Agent có vị thế tương đương, trao đổi phản hồi qua nhiều vòng. Giá trị tiềm năng nằm ở góc nhìn độc lập và sự đa dạng nhận thức, nhưng “nhiều phiên bản” không đồng nghĩa với “nhiều cách suy nghĩ”. Khi mô hình, ngữ cảnh và giàn khung quá giống nhau, các Agent khác nhau thường đưa ra cùng một lựa chọn, khiến lỗi cục bộ trở thành sự cố hệ thống. Muốn có đa dạng thực sự, hệ thống phải chủ động tạo khác biệt về mô hình, ngữ cảnh, công cụ, bằng chứng được thấy hoặc trách nhiệm, đồng thời để từng Agent đánh giá độc lập trước khi tổng hợp kết quả.[^anthropic-multiagent-2026]
+Giả sử ba nhánh mỗi nhánh tra một phương án khả thi, trong đó một nhánh đã tìm được manh mối then chốt, chỉ còn thiếu một lần kiểm chứng cuối. Manager có thể cho nhánh đó thêm vài bước, đồng thời kết thúc hai nhánh không có tiến triển. Hạn mức do runtime trừ dần; một nhánh dù còn muốn thử nữa thì hết ngân sách cũng phải dừng.
 
-So với chế độ quản lý và phi tập trung, độ phức tạp khi triển khai cộng tác ngang hàng thấp hơn nhiều - bạn chỉ cần xác định vai trò, cơ chế giao tiếp và điều kiện kết thúc vòng lặp của hai Agent là bạn có thể bắt đầu chạy. Lý tưởng để nhanh chóng xác nhận ý tưởng và xây dựng nguyên mẫu.
+### Mô hình cộng tác ngang hàng: kiểm tra lẫn nhau và cải tiến lặp
 
-#### Kỹ thuật Loop
+Cộng tác ngang hàng thường gồm hai, ba Agent trao đổi ý kiến và sửa sản phẩm quanh cùng một nhiệm vụ. Khi thiết kế, có thể giao cho các thành viên trách nhiệm, tài liệu và công cụ khác nhau, để họ phán đoán độc lập rồi mới tổng hợp kết quả. Ví dụ, người tạo quan tâm đến phần hiện thực, người duyệt quan tâm đến kiểm thử và yêu cầu người dùng; các thành viên chuyên môn khác nhau kiểm tra ràng buộc trong lĩnh vực của mình. Mô hình, đầu vào và quy trình làm việc càng giống nhau, các thành viên càng dễ lặp lại cùng một kiểu phán đoán, nên cần chủ động thiết kế sự khác biệt về góc nhìn và bằng chứng.[^anthropic-multiagent-2026]
 
-Công dụng kinh điển nhất của cộng tác ngang hàng là giải quyết một loại thất bại cực kỳ phổ biến trong thực tiễn Agent: **kết thúc quá sớm** - việc mới làm được nửa chừng đã dừng lại. Nó có ba hình thái điển hình, dưới đây dùng Coding Agent và Pine AI do đội ngũ của tác giả xây dựng (Agent thay người dùng gọi điện thương lượng với nhà bán hàng, nhà mạng để lo liệu công việc, đã được giới thiệu ở phần mở đầu) để đưa ra vài ví dụ. Một là **giả hoàn thành kiểu lười biếng**: mới làm được một phần đã tuyên bố làm xong tất cả - Coding Agent viết xong mã, kiểm thử chưa chạy, triển khai chưa thử, đã báo cáo "nhiệm vụ hoàn thành"; người dùng giao cho Pine AI hai việc, nó lo xong việc thứ nhất thì quên mất việc thứ hai, cứ thế báo cáo "đều đã lo xong cả". Hai là **bỏ cuộc quá sớm**: một con đường không đi được liền tuyên bố cả việc không làm nổi - Pine AI vốn có nhiều kênh để liên hệ với nhà bán hàng như gọi điện, điền biểu mẫu, gửi email; gọi một cuộc điện thoại bị từ chối, nó liền nói thẳng với người dùng "việc này không làm được", trong khi thực ra đổi kênh thử lại rất có thể sẽ thành. Ba là **thành công giả**: Agent tưởng rằng đã làm xong, nhưng vòng khép kín thực tế chưa đi hết - trong điện thoại đối phương đồng ý miệng sẽ hoàn tiền, nhưng người dùng còn cần xác nhận thêm một bước trên ứng dụng điện thoại, Agent lại báo cáo "đã lo xong", người dùng không biết còn có bước tiếp theo, khoản hoàn tiền thực tế không được thực hiện. Ba hình thái này chỉ về cùng một gốc rễ: **trước khi được xác minh, "hoàn thành" chỉ là một lời tuyên bố của mô hình, chứ không phải một bằng chứng**.
+Với nhiệm vụ cải tiến nhiều lượt quanh cùng một sản phẩm, tác giả khuyên bắt đầu bằng cộng tác ngang hàng giữa hai, ba thành viên. Khi vai trò, nội dung bàn giao và điều kiện dừng đã rõ ràng, có thể dựng được một vòng lặp kiểm thử được, và khối lượng điều phối ban đầu cũng ít.
 
-Biến lời tuyên bố thành bằng chứng chính là bài toán của **Loop Engineering (kỹ thuật vòng lặp)** nằm ở cuối cung tiến hóa trong Chương 1: thiết kế một vòng lặp cho phép Agent vận hành liên tục - phát hiện việc tiếp theo cần làm, thực thi, xác minh, ghi lại tiến độ - để bộ xác minh chứ không phải bản thân mô hình phán định "có thực sự được dừng hay chưa", còn vai trò của con người thì chuyển từ "người vận hành viết prompt cho Agent" thành "kỹ sư thiết kế vòng lặp". Thuật ngữ này được Addy Osmani tổng kết và đề xuất vào tháng 6 năm 2026[^loop-engineering-2026], còn cách nói của Boris Cherny, người phụ trách Claude Code tại Anthropic, thì thẳng thắn hơn: "Tôi đã không còn trực tiếp prompt Claude nữa, công việc của tôi là viết loop." Đồng thuận cốt lõi mà giới công nghiệp hình thành trong cuộc thảo luận này là: **nút thắt cổ chai của vòng lặp nằm ở bộ xác minh, chứ không nằm ở mô hình** - nếu xác minh không đáng tin cậy, vòng lặp quay nhanh đến đâu cũng chỉ là gắn nhãn "hoàn thành" cho sản phẩm kém chất lượng nhanh hơn mà thôi. Và cũng đúng như phần mở đầu đã nói, thực hành đi trước, đặt tên theo sau: trước khi thuật ngữ này trở nên phổ biến, các đội ngũ Agent hàng đầu, trong đó có Pine AI, từ lâu đã dùng "vòng lặp cộng xác minh" để giải quyết vấn đề kết thúc quá sớm. Và cách tổ chức việc xác minh hiệu quả nhất, chính là mô hình người đề xuất-người đánh giá sẽ trình bày dưới đây.
+#### Loop Engineering
 
-[^loop-engineering-2026]: Osmani, Addy. "Loop Engineering: Designing Loops that Prompt Coding Agents", 2026. https://addyosmani.com/blog/loop-engineering/
+Cộng tác ngang hàng giúp xử lý một vấn đề thường gặp: **kết thúc quá sớm**. Lấy ví dụ lập trình và trợ lý thay người dùng làm việc với bộ phận chăm sóc khách hàng, có thể phát hiện kết thúc quá sớm qua ba loại bản ghi.
 
-**Framework cụ thể: LoopX.** LoopX đưa vòng lặp ra khỏi prompt của mô hình và lịch sử trò chuyện, đặt nó vào một mặt phẳng điều khiển bền vững, trung lập với runtime của Agent: mục tiêu và ranh giới giải thích vì sao công việc tồn tại; cổng quyết định và việc cần làm xác định điều gì được phép diễn ra lúc này; bằng chứng và hạn mức quyết định có được tiếp tục hay không; còn bàn giao cho phép lượt sau hoặc một Agent khác tiếp nối. Một lần thực thi có quản trị được cô đọng thành giao thức rõ ràng:
+- **Mới xong một phần đã tuyên bố xong hết.** Coding Agent viết xong mã nhưng bỏ sót kiểm thử và kiểm tra triển khai; người dùng nhờ trợ lý lo hai việc, nó xong việc thứ nhất đã báo cáo mọi thứ đâu vào đấy. Cần đối chiếu từng mục với danh sách nhiệm vụ, kiểm tra bằng chứng hoàn thành của từng việc.
+- **Một con đường thất bại là bỏ cuộc sớm.** Nhà bán hàng có thể yêu cầu nộp tài liệu qua biểu mẫu, hoặc nhận tệp đính kèm qua một hộp thư chỉ định. Nhận được phản hồi như vậy, có thể làm tiếp theo cách nhà bán hàng chấp nhận. Cần ghi lại nguyên nhân thất bại và đánh giá còn những con đường nào đáng thử.
+- **Thành công cục bộ rồi bỏ sót các bước sau.** Nếu nhà bán hàng đồng ý hoàn tiền nhưng còn yêu cầu người dùng xác nhận trong ứng dụng, trợ lý phải dặn rõ bước này và điều kiện thao tác. Lấy việc giảm tiền hóa đơn làm ví dụ: nhân viên chăm sóc khách hàng hứa miệng qua điện thoại, trợ lý có thể xác nhận với người dùng rằng cuộc thương lượng lần này đã có được lời hứa. Bản ghi cuộc gọi chứng minh được nhân viên đã nói gì, còn hóa đơn sau này có thực hiện đúng không thì cần bằng chứng mới. Người duyệt nên nói rõ riêng từng phần: kết quả đã đạt được, ai còn phải làm gì, và những kết quả nào tạm thời chưa thấy được.
 
-```text
-LoopX quyết định → Agent thực thi → bộ xác minh độc lập chứng minh → LoopX ghi nhận
-```
+Cả ba loại vấn đề đều đòi hỏi biến điều kiện hoàn thành thành kết quả kiểm tra được. **Loop Engineering** (kỹ thuật vòng lặp) quan tâm đến việc để Agent liên tục đi qua chu trình “xác định việc tiếp theo – thực thi – kiểm chứng – ghi tiến độ”, rồi dựa vào kết quả để quyết định tiếp tục, chờ, chuyển giao hay kết thúc. Kỹ sư phải thiết kế nguồn nhiệm vụ, cách kiểm chứng, trạng thái lưu bền và điều kiện dừng. Công việc của con người cũng mở rộng theo: từ viết prompt cho một lần gọi chuyển sang thiết kế những vòng lặp có thể liên tục đẩy nhiệm vụ tiến lên. Tháng 6 năm 2026, Addy Osmani dùng tên gọi này để bàn về nhóm thực hành ấy, và dẫn kinh nghiệm của Boris Cherny: trọng tâm công việc dần chuyển sang thiết kế những vòng lặp dẫn dắt Agent.[^loop-engineering-2026]
 
-Agent vẫn suy luận, sử dụng công cụ và tạo ra sản phẩm ứng viên. LoopX không thay thế runtime của Agent; nó quản trị tính liên tục giữa các lượt. Chỉ kết quả được xác minh độc lập mới có thể cập nhật tiến độ bền vững và tiêu tốn hạn mức. Xác minh thất bại sẽ chuyển sang sửa chữa hoặc lập kế hoạch lại, còn cổng con người, trạng thái chờ và giới hạn ngân sách dừng vòng lặp trước khi thực thi. Ranh giới này biến một nguyên tắc của Loop Engineering thành bất biến hệ thống có thể kiểm tra: **mô hình có thể đề xuất “xong”, nhưng không thể tự phê duyệt chữ “xong” của mình.** LoopX v0.4.0 vẫn đánh dấu đường Turn có quản trị là thử nghiệm, vì vậy ở đây nó được dùng như framework cụ thể cho “vòng lặp + xác minh + điều kiện dừng”, không phải bằng chứng về mức tăng chất lượng tác vụ nói chung.[^loopx-framework]
+**Trong những vòng lặp như vậy, tác giả cho rằng bộ kiểm chứng thường là nút thắt then chốt.** Khi kiểm chứng không đáng tin, tăng số vòng có thể khiến hệ thống lặp lại cùng một loại lỗi, hoặc tuyên bố hoàn thành quá sớm. Kết quả kiểm thử, trạng thái nghiệp vụ và xác nhận của người dùng cung cấp căn cứ hoàn thành trong phạm vi riêng của mỗi thứ; khi kiểm chứng thất bại, kết quả đó trở thành đầu vào cho lượt sửa tiếp theo.
 
-[^loopx-framework]: LoopX, "The local control plane for long-running AI agent work", v0.4.0, commit ổn định `a893d221db0b8e028997cefc303f7ec9fa7dbe0a`. https://github.com/huangruiteng/loopx/tree/a893d221db0b8e028997cefc303f7ec9fa7dbe0a
+Thực hành đi trước tên gọi. Trước khi cái tên Loop Engineering trở nên phổ biến, tác giả và đội ngũ đã dùng vòng lặp cùng kiểm chứng để xử lý kết thúc quá sớm trong Pine AI. Người đề xuất–người thẩm định là một cách thông dụng để tổ chức loại vòng lặp này, sẽ được trình bày kỹ hơn ở dưới.
 
-**Framework cụ thể: LongHorizon-Harness.** LongHorizon-Harness và LoopX đều là những hiện thực cụ thể của Loop Engineering, nhưng hướng quan tâm khác nhau. LoopX nhắm tới một mặt phẳng điều khiển bền vững cho công việc Agent dài hạn; còn LongHorizon-Harness xuất phát từ Computer Use đa phương thức, xử lý bài toán thực thi liên tục khi cùng một tác vụ trải qua GUI, CLI, nhiều ứng dụng desktop và nhiều lần làm mới ngữ cảnh.
+[^loop-engineering-2026]: Osmani, Addy. “Loop Engineering”, 2026.
 
-LongHorizon-Harness diễn đạt lại việc thực thi dài hạn thành quản lý trạng thái tác vụ, và hiện thực vòng lặp của mình dưới dạng Manage–Execute–Audit (MEA): Manager sinh ra tác vụ con có giới hạn tiếp theo dựa trên mục tiêu ban đầu, tiến độ đã được xác thực, bằng chứng thất bại và phần việc còn lại; Executor thay đổi môi trường qua GUI hoặc CLI trong một ngữ cảnh hoàn toàn mới; rồi Auditor kiểm tra kết quả thực tế ở chế độ chỉ đọc. Chỉ những gì vượt qua kiểm toán mới đi vào trạng thái tác vụ của vòng kế tiếp, còn thất bại được giữ lại làm căn cứ cho phục hồi và lập kế hoạch lại. Các backend thực thi như Claude Code hay Codex CLI được tái sử dụng thông qua lớp adapter, thay vì viết lại vòng lặp Agent bên trong các backend đó.[^longhorizon-implementation]
+**LoopX: lưu trạng thái công việc qua các vòng.** LoopX đặt mục tiêu, ranh giới, việc cần làm, cổng kiểm soát, bằng chứng và hạn mức vào một mặt phẳng điều khiển (control plane) lưu bền, rồi để nó sắp xếp công việc cho vòng tiếp theo hoặc cho người thực thi tiếp theo. Quy trình có thể tóm gọn thành: **mặt phẳng điều khiển ra quyết định → Agent thực thi → kiểm chứng độc lập → ghi nhận tiến độ đã xác minh**.
 
-Giá trị của hướng này nằm ở chỗ tách tính liên tục của tác vụ khỏi lịch sử thực thi ngày một phình to: ngữ cảnh có thể được làm mới, thao tác giao diện có thể thất bại, nhưng vòng kế tiếp vẫn tiếp tục từ trạng thái được xác thực gần nhất. Trong phép so sánh giữ nguyên mô hình Qwen 3.7-Plus và backend thực thi Claude Code, chỉ thay đổi vòng lặp bên ngoài, bài báo cho biết PassRate của WeaveBench tăng từ 51,8% lên 80,7%, tỷ lệ hoàn thành nhị phân của OSWorld 2.0 tăng từ 2,8% lên 8,3%, tỷ lệ thành công của Terminal-Bench 2.1 tăng từ 69,7% lên 77,2%. Chi phí cũng không cố định: hai benchmark đầu tiên lần lượt tiêu tốn gấp 2,3 lần tổng token và gấp 3,6 lần token đầu ra so với đường cơ sở, còn Terminal-Bench 2.1 lại giảm 24%. Khi triển khai thực tế, còn phải xử lý tình huống trạng thái cũ mất hiệu lực do môi trường bên ngoài hoặc yêu cầu người dùng thay đổi, và dùng ngân sách về số vòng, thời gian và chi phí để vòng lặp phục hồi không chạy mãi.
+Agent gọi công cụ, suy luận và nộp thành quả của vòng này. Mặt phẳng điều khiển ghi lại công việc đã xong và quyết định vòng sau bắt đầu từ đâu. Kiểm chứng đạt thì ghi nhận trạng thái hoàn thành; thất bại thì chuyển sang sửa hoặc lập lại kế hoạch. Cổng kiểm soát của con người, điều kiện chờ và trần ngân sách cùng quyết định khi nào được tiếp tục thực thi.[^loopx-framework]
 
-**Trajectory công khai và tái lập thí nghiệm.** Trang web dự án công bố hàng trăm trajectory thực thi cho WeaveBench, OSWorld 2.0 và Terminal-Bench 2.1, nên có thể xem trực tiếp quá trình thực thi và bản ghi của từng vai trò. Lấy tác vụ `WEB_task_16_webrtc_simulcast_layer_audit` của WeaveBench làm ví dụ: có thể đối chiếu [trajectory đường cơ sở](https://lh-harness.pages.dev/traj/tasks/baseline__WEB_task_16_webrtc_simulcast_layer_audit.html) và [trajectory MEA](https://lh-harness.pages.dev/traj/tasks/lh_harness__WEB_task_16_webrtc_simulcast_layer_audit.html), cả hai cùng dùng mô hình Qwen 3.7-Plus. Cái trước mắc kẹt ở tương tác với Wireshark rồi thử đi thử lại, đạt 0,59; cái sau ghi các thất bại và những mục bằng chứng chưa thỏa mãn trở lại trạng thái tác vụ, nên các vòng sau chỉ xử lý phần còn thiếu, đạt 0,92. Trường hợp này dùng để cho thấy “thất bại trở thành đầu vào của vòng kế tiếp như thế nào”, không thay thế được thống kê tổng thể; môi trường, tham số và script khởi chạy của toàn bộ thí nghiệm nằm trong thư mục [`eval/`](https://github.com/AMAP-ML/LongHorizon-Harness/tree/53bc678ed4170ad4d2e4309f2bfc5c3fb6caf8cb/eval) ở phiên bản đã ghim.
+[^loopx-framework]: LoopX, The local control plane for long-running AI agent work, v0.4.0.
 
-[^longhorizon-implementation]: LongHorizon-Harness, commit ổn định `53bc678ed4170ad4d2e4309f2bfc5c3fb6caf8cb`. Trang web dự án và trajectory công khai: https://lh-harness.pages.dev/#trajectories; bài báo: https://arxiv.org/abs/2608.01964; mã nguồn: https://github.com/AMAP-ML/LongHorizon-Harness/tree/53bc678ed4170ad4d2e4309f2bfc5c3fb6caf8cb
+**LongHorizon-Harness: nối liền nhiệm vụ dài xuyên nhiều ứng dụng.** Khung này xuất phát từ Computer Use đa phương thức, xử lý việc thực thi liên tục khi nhiệm vụ trải qua GUI, CLI, nhiều ứng dụng desktop và nhiều lần làm mới ngữ cảnh. Nó dùng vòng lặp Manage–Execute–Audit (MEA): Manager dựa vào mục tiêu ban đầu, tiến độ đã xác minh, bằng chứng thất bại và phần việc còn lại để sinh ra một nhiệm vụ con có phạm vi rõ ràng; Executor thực hiện thao tác GUI hoặc CLI trong một ngữ cảnh mới; Auditor kiểm tra kết quả ở chế độ chỉ đọc, rồi ghi tiến độ đã xác minh vào trạng thái của vòng sau. Bằng chứng thất bại cũng được giữ lại để phục vụ khôi phục và lập lại kế hoạch.
 
-#### Mô thức Người đề xuất - Người đánh giá
+Khung này gọi các backend thực thi như Claude Code, Codex CLI qua một tầng thích ứng, nối việc quản lý nhiệm vụ ở vòng ngoài với vòng lặp chạy của backend. Hướng đi này neo tính liên tục của nhiệm vụ dài vào trạng thái nhiệm vụ đã được xác minh. Ngữ cảnh thực thi có thể được làm mới, vòng sau vẫn tiếp tục làm việc dựa trên mục tiêu, bằng chứng hoàn thành và những vấn đề chưa giải quyết, đồng thời kiểm tra lại xem thay đổi của môi trường có ảnh hưởng đến kết luận trước đó không.[^longhorizon-implementation]
 
-![Hình 10-3 Chu trình người đề xuất-đánh giá ](images/fig10-3.svg)
+Trong phép đối chứng giữ nguyên backend thực thi Qwen 3.7-Plus và Claude Code, chỉ thay đổi vòng ngoài, bài báo báo cáo WeaveBench PassRate tăng từ 51,8% lên 80,7%, tỷ lệ hoàn thành nhị phân trên OSWorld 2.0 tăng từ 2,8% lên 8,3%, tỷ lệ thành công trên Terminal-Bench 2.1 tăng từ 69,7% lên 77,2%. Chi phí cũng thay đổi theo nhiệm vụ: hai benchmark đầu lần lượt tiêu tốn tổng token gấp 2,3 lần và token đầu ra gấp 3,6 lần so với đường cơ sở; trên Terminal-Bench 2.1, lượng token tiêu thụ giảm 24%.
 
-Người đề xuất-đánh giá là mô hình hợp tác ngang hàng cổ điển nhất. Chương 5 đã giới thiệu chi tiết các nguyên tắc thiết kế và ứng dụng thực tế của mô hình này trong ba thử nghiệm tạo PPT, chỉnh sửa video và trực quan hóa nhật ký: Người đề xuất Agent chịu trách nhiệm tạo mã, Người đánh giá Agent hiển thị kết quả thực thi và sử dụng Vision LLM để đánh giá chất lượng và đưa ra các đề xuất cải tiến về cấu trúc. Cả hai lặp đi lặp lại nhiều lần cho đến khi hiệu quả đạt tiêu chuẩn.
+Trong cùng một nhiệm vụ kiểm tra luồng đa lớp WebRTC, người thực thi ở đường cơ sở bị kẹt trên giao diện Wireshark, sau đó thử thêm vài lần và cuối cùng đạt 0,59 điểm. Khi dùng MEA, người kiểm tra ghi lại phần bằng chứng còn thiếu, người thực thi ở vòng sau dựa vào đó để tra bổ sung, cuối cùng đạt 0,92 điểm.
 
-Mô hình này cũng áp dụng cho các tình huống như đánh giá bảo mật (Người đề xuất tạo kế hoạch hành động, Người đánh giá kiểm tra sự tuân thủ và rủi ro tiềm ẩn), đánh giá nội dung (Người đề xuất dự thảo phản hồi, Người đánh giá kiểm tra các quy tắc kinh doanh và thông số thuật ngữ), đánh giá mã (Người đề xuất viết mã, Người đánh giá kiểm tra bảo mật và các phương pháp hay nhất), v.v.
+[^longhorizon-implementation]: LongHorizon-Harness, bài báo arXiv:2608.01964. Trajectory công khai của cả đường cơ sở và MEA đều lấy từ nhiệm vụ WEB_task_16_webrtc_simulcast_layer_audit; script tái hiện dùng commit `53bc678`.
 
-**Tại sao bạn không thể tự tạo Agent rồi tự mình xem xét?** Đây chính là điểm cụ thể của tiêu chí ở phần trước “Khi nào nhiều Agent thực sự tốt hơn Agent đơn lẻ” - nếu review không đưa ra thông tin mới thì chỉ là “làm người mẫu phải suy nghĩ lại mà thôi”. Nghiên cứu liên quan đưa ra câu trả lời rõ ràng cho điều này. Huang và cộng sự đã phát hiện trong bài báo ICLR 2024 "Các mô hình ngôn ngữ lớn chưa thể tự sửa lỗi suy nghĩ" rằng khi GPT-4 được yêu cầu xem lại và sửa các câu trả lời của chính nó mà không có phản hồi từ bên ngoài, thì độ chính xác đã giảm - số lần mô hình sửa câu trả lời đúng thành sai nhiều lần hơn là sửa câu trả lời sai thành đúng.
+#### Mô thức người đề xuất–người thẩm định
 
-Bất biến tối thiểu của vòng lặp người đề xuất—người thẩm định là: người thẩm định đọc **bằng chứng độc lập** chứ không chỉ nhắc lại lời giải thích của người đề xuất; khi trả lại công việc thì bắt buộc phải nêu một điều kiện sửa chữa định vị được:
+Mô thức người đề xuất–người thẩm định giao việc tạo sản phẩm và việc kiểm tra kết quả cho hai vai trò. Các thí nghiệm tạo PPT, biên tập video và trực quan hóa nhật ký ở Chương 5 đều dùng thiết kế này: Proposer sinh mã, Reviewer xem kết quả kết xuất, dùng mô hình thị giác kiểm tra chất lượng và trả về ý kiến sửa có cấu trúc. Trong Hình 10-3, ý kiến sửa còn phải quay về tay người đề xuất. Nó có sửa được phiên bản sau dựa trên ý kiến đó hay không tùy vào việc người thẩm định khoanh vùng vấn đề chi tiết đến đâu.
 
-```python
-candidate = proposer(task, constraints)
-evidence = execute_or_render(candidate)       # tests, state, screenshot, facts
-review = independent_reviewer(candidate, evidence)
+![Hình 10-3 Vòng lặp người đề xuất–người thẩm định](images/revised/fig10-3.svg)
 
-while review.veto and budget_remaining:
-    candidate = proposer.repair(candidate, review.findings)
-    evidence = execute_or_render(candidate)
-    review = independent_reviewer(candidate, evidence)
+Đối tượng kiểm tra thay đổi thì bằng chứng cần xem khi duyệt cũng phải đổi theo. Duyệt câu trả lời chăm sóc khách hàng thì đối chiếu quy tắc nghiệp vụ và nguồn sự thật; duyệt thay đổi mã thì xem kiểm thử và kết quả chạy thực tế; duyệt phương án thao tác thì đối chiếu quy chuẩn áp dụng và điều kiện tiên quyết.
 
-if review.pass:
-    publish(candidate, evidence, review)
-else:
-    escalate_or_reject(review)
-```
+Bài báo ICLR 2024 *Large Language Models Cannot Self-Correct Reasoning Yet* của Huang và cộng sự phát hiện rằng, với các nhiệm vụ suy luận và thiết lập prompt mà họ nghiên cứu, khi GPT-4 tự sửa mà không có phản hồi bên ngoài, có trường hợp nó sửa đáp án đúng thành sai, khiến độ chính xác tổng thể giảm xuống. Bài tổng quan về tự sửa lỗi trên TACL bàn sâu hơn về việc điều kiện nhiệm vụ và độ tin cậy của phản hồi ảnh hưởng thế nào đến hiệu quả sửa.[^self-correction-survey] Vì vậy, tác giả coi bằng chứng độc lập và điều kiện sửa khoanh vùng được là yêu cầu cơ bản của vòng lặp duyệt. Người duyệt phải đọc được kết quả kiểm thử thực tế, trạng thái môi trường hoặc kết quả kết xuất, và chỉ ra yêu cầu nào chưa đạt, kiểm chứng bản sửa bằng cách nào.
 
-Người thẩm định không được sửa bài kiểm thử, bộ thu thập bằng chứng hay cổng phát hành; nếu không, "kiểm chứng độc lập" sẽ thoái hóa thành tự phê duyệt.
+[^self-correction-survey]: Kamoi, R., et al. *When Can LLMs Actually Correct Their Own Mistakes? A Critical Survey of Self-Correction of LLMs.* TACL, 2024.
 
-Một bài đánh giá "Khi nào LLMs thực sự có thể sửa chữa sai lầm của chính họ?" (arXiv:2406.01297) được công bố trên tạp chí TACL vào năm 2024 đã xác nhận thêm kết luận này: Trừ khi được cung cấp phản hồi đáng tin cậy từ bên ngoài (chẳng hạn như kết quả thực hiện các trường hợp thử nghiệm, đầu ra xác minh của các công cụ bên ngoài), tính năng "tự sửa lỗi" hoàn toàn dựa vào bản thân mô hình sẽ khó hoạt động.
+Một vòng lặp hoàn chỉnh có thể tổ chức thành năm bước:
 
-Bài báo CRITIC của ICLR 2024 cung cấp một thử nghiệm so sánh trực quan. CRITIC đã cải thiện đáng kể bằng cách cho phép mô hình sử dụng các công cụ bên ngoài (công cụ tìm kiếm, trình thông dịch Python) để xác minh câu trả lời của nó; nhưng khi những người thử nghiệm loại bỏ bước xác minh công cụ và chỉ giữ lại phần tự đánh giá của mô hình thì phần lớn cải tiến đã biến mất. Điều này cho thấy giá trị của việc xem xét không phải là "làm cho mô hình phải suy nghĩ lại", mà là giới thiệu những thông tin mới chưa có khi mô hình được tạo - kết quả kiểm tra, hiển thị ảnh chụp màn hình, lỗi biên dịch, kết quả tìm kiếm bên ngoài.
+1. Người đề xuất viết phiên bản đầu theo yêu cầu nhiệm vụ, ví dụ một câu trả lời hoặc một đoạn mã.
+2. Thực thi hoặc kết xuất sản phẩm để lấy kết quả kiểm thử, trạng thái nghiệp vụ, ảnh chụp màn hình hoặc kết quả kiểm chứng sự thật.
+3. Người duyệt đối chiếu yêu cầu với bằng chứng, đưa ra kết luận đạt, hoặc chỉ ra vị trí vấn đề cùng điều kiện sửa.
+4. Nếu còn ngân sách, người đề xuất sửa theo phản hồi, rồi thực thi và duyệt lại; gặp vấn đề cần đầu vào hoặc cần cấp quyền thì chuyển sang chờ hoặc chuyển giao.
+5. Khi đạt điều kiện phát hành, giao phiên bản đã qua duyệt, kèm bằng chứng kiểm chứng và kết luận duyệt; khi hết ngân sách thì lưu lại tiến độ và các vấn đề chưa giải quyết.
 
-Thí nghiệm phát triển ứng dụng dài hạn của Anthropic năm 2026 hiện thực hóa ý tưởng này bằng kiến trúc ba Agent: lập kế hoạch, tạo sản phẩm và đánh giá. Agent lập kế hoạch mở rộng yêu cầu của người dùng thành đặc tả sản phẩm; Agent tạo sản phẩm và Agent đánh giá trước tiên thống nhất tiêu chí hoàn thành cho mỗi vòng, sau đó Agent tạo sản phẩm triển khai, còn Agent đánh giá dùng Playwright thao tác trên ứng dụng thật và lập báo cáo lỗi. Trạng thái được bàn giao giữa các Agent qua tệp. Thí nghiệm cho thấy khi nhiệm vụ vượt quá phạm vi mà mô hình hiện tại có thể tự hoàn thành một cách đáng tin cậy, việc đánh giá độc lập dựa trên bằng chứng bên ngoài có thể đổi chi phí cao hơn đáng kể lấy chất lượng phát triển tốt hơn.[^anthropic-harness-2026]
+Người duyệt đọc các bài kiểm thử và tiêu chuẩn phát hành đã được bảo vệ; mọi đề xuất thay đổi tiêu chuẩn do người duyệt đưa ra phải được xem xét riêng.
 
-[^anthropic-harness-2026]: Prithvi Rajasekaran, “Harness Design for Long-Running Application Development,” Anthropic Engineering, 2026-03-24. https://www.anthropic.com/engineering/harness-design-long-running-apps
+Trong các thí nghiệm của CRITIC, mô hình đưa ra câu trả lời trước, rồi dùng công cụ để kiểm tra.[^ch10-critic] Ví dụ, dùng công cụ tìm kiếm để kiểm chứng sự thật trong câu trả lời, dùng trình thông dịch Python để chạy chương trình toán do chính nó viết. Trên ba loại nhiệm vụ — hỏi đáp mở, sinh chương trình toán và giảm phát ngôn độc hại — mô hình sửa theo phản hồi công cụ đều cải thiện kết quả. Nếu chỉ dựa vào việc mô hình tự đánh giá câu trả lời ban đầu, hiệu quả sửa lỗi yếu hơn. Thiết kế này tương đồng với ví dụ PPT ở Chương 5: ảnh chụp kết xuất làm lộ ra các vấn đề dàn trang và che khuất khó nhận ra nếu chỉ đọc mã, còn chạy kiểm thử thì làm lộ lỗi khi chạy thực tế.
+
+[^ch10-critic]: CRITIC, arXiv:2305.11738.
+
+Ví dụ phát triển ứng dụng dài hạn năm 2026 của Anthropic dùng ba Agent: người lập kế hoạch, người tạo và người đánh giá. Người lập kế hoạch triển khai yêu cầu thành đặc tả sản phẩm; người tạo và người đánh giá thống nhất trước tiêu chuẩn hoàn thành của mỗi vòng, rồi lần lượt hiện thực và kiểm tra. Người đánh giá dùng Playwright thao tác ứng dụng và nộp báo cáo lỗi; các vai trò bàn giao trạng thái qua tệp. Ví dụ này cho thấy đặc tả sản phẩm, thao tác thực tế và phản hồi lỗi được nối với nhau ra sao, đồng thời nhắc rằng phải đưa phần chi phí thực thi và duyệt tăng thêm vào khi so sánh các phương án.[^anthropic-harness-2026]
+
+[^anthropic-harness-2026]: Prithvi Rajasekaran, “Harness Design for Long-Running Application Development,” Anthropic Engineering, 2026-03-24.
+
+Ngày 20 tháng 11 năm 2026, nhà toán học Levent Alpöge công bố một chứng minh hình thức hóa mà ông có được khi cộng tác với Claude, liên quan đến giả thuyết Riemann và dạng mở rộng của nó cho các hàm $L$ Dirichlet. Nhận về một loạt lớn tệp Lean, người duyệt trước hết phải hỏi hai câu: định lý cuối cùng có phát biểu đúng giả thuyết ban đầu không? Mỗi bước suy diễn có được nhân chứng minh (proof kernel) kiểm tra lại được không? Nhà toán học Andrew Sutherland của MIT trước hết so định lý được nộp với định nghĩa giả thuyết Riemann trong thư viện toán học của Lean, rồi liệt kê các tiên đề mà chứng minh dựa vào. Trong bản ghi công bố cùng ngày, ông còn báo cáo rằng nhân chứng minh độc lập nanoda đã kiểm tra đạt chứng minh được xuất ra. Điều này gợi ra một cách phân công duyệt cụ thể: để người am hiểu bài toán viết ra mệnh đề nghiệm thu trước, rồi để công cụ độc lập kiểm tra xem sản phẩm được nộp có suy ra được mệnh đề này không. Sau này, nếu các nhà toán học muốn hiểu tác giả đã nghĩ ra con đường này như thế nào, vẫn cần thêm một bản lập luận dễ đọc cho con người.[^ch10-rh-review]
+
+[^ch10-rh-review]: Levent Alpöge công bố bản mô tả nghiên cứu ngày 20 tháng 11 năm 2026. Dự án kiểm chứng và tiến độ trong ngày xem *Verification files for the Lean proof of the Riemann Hypothesis* của Andrew Sutherland.
 
 #### Mô hình tranh luận
 
-Nhiều Agent, mỗi Agent, mỗi người giữ các vị trí khác nhau, khám phá sâu không gian vấn đề thông qua đối thoại đối nghịch. Ví dụ: khi đánh giá một giải pháp kỹ thuật, Agent A đóng vai trò là “người hỗ trợ” và liệt kê những ưu điểm, cơ hội của giải pháp đó, trong khi Agent B đóng vai trò là “đối thủ” và chỉ ra những rủi ro, hạn chế. Mỗi vòng tranh luận đưa ra sự bác bỏ hoặc bổ sung cho lập luận của bên kia. Khi phân tích một Agent, mô hình thường thiên về một quan điểm nhất định và bỏ qua bằng chứng tiêu cực; phương thức tranh luận đảm bảo rằng cả ưu và nhược điểm đều được thể hiện đầy đủ thông qua đối đầu được thể chế hóa, giúp những người ra quyết định đưa ra những đánh giá cân bằng hơn.
+Mô hình tranh luận để các thành viên kiểm tra cùng một vấn đề từ những lập trường khác nhau. Ví dụ, khi đánh giá một phương án kỹ thuật, một Agent trình bày lợi ích và tình huống áp dụng, Agent kia kiểm tra ràng buộc, điều kiện thất bại và các phương án thay thế. Mỗi vòng xoay quanh một luận điểm cụ thể, bổ sung bằng chứng hoặc phản bác; cuối cùng tổng hợp những điểm đã đồng thuận và những bất đồng còn cần kiểm chứng.
 
-Tuy nhiên, hiệu quả thực tế của mô hình tranh luận vẫn còn gây tranh cãi trong giới học thuật. Nghiên cứu của Tran và Kiela vào năm 2026 [^single-agent-2026] đã so sánh Agent đơn lẻ với năm kiến trúc Agent đa nhiệm (tuần tự, tranh luận, tích hợp, vai trò song song, song song nhiệm vụ con) trong các tác vụ suy luận nhiều bước và nhận thấy rằng khi ngân sách mã thông báo suy nghĩ được kiểm soát chặt chẽ giống nhau, thì hiệu suất của Agent đơn lẻ cũng ngang bằng hoặc tốt hơn của nhiều Agent (trừ khi mức sử dụng ngữ cảnh bị suy giảm đến một mức độ nào đó). Nhà nghiên cứu đã đưa ra lời giải thích dựa trên sự bất bình đẳng trong xử lý dữ liệu trong lý thuyết thông tin: nhiều Agent trong quá trình tranh luận có cùng một thông tin văn bản và mỗi lần truyền nối tiếp các kết luận trung gian giữa Agent chỉ có thể làm mất thông tin và không thể tạo ra thông tin ngoài luồng. Lợi ích của chế độ tranh luận trong một số bài viết học thuật có thể đến từ nhiều Agent tiêu tốn tổng số tính toán nhiều hơn. Cần phải vạch ra ranh giới của lập luận này: nó nhằm mục đích giải quyết tình trạng tắc nghẽn thông tin do "nhiều kết luận trung gian truyền nối tiếp Agent" và không phủ nhận một kiểu tiếp cận khác - lấy mẫu độc lập nhiều lần và tổng hợp lại cùng một vấn đề (chẳng hạn như self-consistency, bỏ phiếu đa số) hoặc sử dụng độ khó không đối xứng của việc tạo và xác minh (khó viết câu trả lời, dễ kiểm tra câu trả lời) để thực hiện phân chia lao động tạo-xác minh. Các kịch bản này giới thiệu việc lấy mẫu độc lập bổ sung hoặc khai thác cấu trúc bất đối xứng của chính nhiệm vụ đó và không nằm trong phạm vi của sự bất bình đẳng trong xử lý dữ liệu.
+Cách sắp xếp này giúp liệt kê rõ luận cứ hai phía, còn hiệu quả thì tùy vào chất lượng luận cứ, mức độ phán đoán độc lập và cách chọn kết quả cuối cùng. Tran và Kiela so sánh năm kiến trúc trên các nhiệm vụ suy luận nhiều bước nhảy: tuần tự, tranh luận, tổ hợp (ensemble), vai trò song song và nhiệm vụ con song song; khi giữ cùng ngân sách token suy nghĩ, Agent đơn đạt kết quả ngang bằng hoặc tốt hơn đa Agent.[^single-agent-2026] Dựa vào đó, tác giả chủ yếu dùng tranh luận để làm rõ bất đồng, kiểm tra giả định và bổ sung luận cứ phản biện. Khi mục tiêu là độ chính xác về sự thật hoặc tính toán, nên ưu tiên tăng bằng chứng kiểm chứng được và kiểm tra độc lập.
+
+Bài báo dùng bất đẳng thức xử lý dữ liệu để bàn về giới hạn của việc truyền thông tin trung gian: thuật lại và nén đi nén lại có thể làm mất chi tiết gốc. Về mặt kỹ thuật, có thể giữ nguồn truy vết được, để các thành viên phân tích độc lập trước rồi mới trao đổi kết luận, giảm những đồng thuận chưa qua kiểm tra. Lấy mẫu độc lập nhiều lần rồi tổng hợp, hoặc tận dụng đặc điểm “sinh thì khó, kiểm thì dễ” của nhiệm vụ để bố trí khâu duyệt chuyên trách, cũng có thể phối hợp cùng tranh luận.
 
 [^single-agent-2026]: Tran, D., Kiela, D. *Single-Agent LLMs Outperform Multi-Agent Systems on Multi-Hop Reasoning Under Equal Thinking Token Budgets.* arXiv:2604.02460, 2026.
 
 #### Mô hình động não
 
-Nhiều Agent nảy sinh ý tưởng một cách độc lập, sau đó chia sẻ và truyền cảm hứng cho nhau. Ví dụ: trong nhiệm vụ đổi mới sản phẩm, Agent 1 đã đề xuất "tăng cường chức năng chia sẻ trên mạng xã hội", Agent 2 được truyền cảm hứng để đề xuất "không chỉ chia sẻ lên mạng xã hội mà còn tạo áp phích chia sẻ được cá nhân hóa" và Agent 3 đã kết hợp hai mục tiêu đầu tiên và đề xuất "các mẫu áp phích do người dùng tùy chỉnh và hình thành một thị trường mẫu". Agent khác nhau có "sở thích suy nghĩ" khác nhau (được thực hiện thông qua các từ hoặc mô hình gợi ý khác nhau) và khám phá không gian giải pháp rộng hơn thông qua sự kích thích lẫn nhau để tìm ra những kết hợp sáng tạo khó nghĩ ra chỉ với một Agent duy nhất.
+Động não có thể chia làm hai vòng: trước hết để mỗi thành viên tự nghĩ cách, sau đó cùng thảo luận xem ý tưởng nào kết hợp được với nhau. Ví dụ, Agent 1 đề xuất thêm tính năng chia sẻ lên mạng xã hội; Agent 2 dựa vào đó đề xuất tự động tạo poster chia sẻ cá nhân hóa; Agent 3 đi xa hơn, đề xuất cho người dùng tự tạo mẫu và lập chợ mẫu.
+
+Để các thành viên nghĩ ra những cách khác nhau, có thể yêu cầu họ lần lượt xuất phát từ góc nhìn người dùng và góc nhìn người vận hành, hoặc cho họ những prompt hay mô hình khác nhau. Trao đổi ý tưởng xong, lại sàng lọc phương án theo nhu cầu người dùng, chi phí hiện thực và kết quả kiểm chứng.
 
 #### Mô hình hội đồng chuyên gia
 
-Nhiều Agent, mỗi nhóm thể hiện quan điểm của một lĩnh vực chuyên môn và cùng thảo luận về các vấn đề liên ngành. Ví dụ: khi đánh giá tính khả thi của một sản phẩm mới, kỹ sư Agent phân tích khó khăn khi triển khai từ góc độ kỹ thuật, sản phẩm Agent đánh giá mức độ hấp dẫn của thị trường từ góc độ trải nghiệm người dùng và hoạt động Agent phân tích tính khả thi thương mại từ góc độ chi phí và tài nguyên. Mối quan hệ giữa các Agent này không phải là đối kháng mà bổ sung cho nhau, cùng nhau làm việc để đưa ra bức tranh toàn cảnh về vấn đề và xác định các hạn chế và cơ hội trên nhiều miền.
+Hội đồng chuyên gia phân chia trách nhiệm chuyên môn quanh một vấn đề liên ngành. Ví dụ, khi đánh giá sản phẩm mới, Agent kỹ sư phân tích độ khó hiện thực và các phụ thuộc kỹ thuật, Agent sản phẩm kiểm tra nhu cầu và trải nghiệm người dùng, Agent vận hành ước tính chi phí, tài nguyên và điều kiện triển khai.
 
-### Mô hình quản lý: phối hợp tập trung
+Trong nhóm chat của LobeHub, người chủ trì có thể phát cùng một phương án sản phẩm tới cả ba chuyên gia này. Hệ thống trước hết lấy ra lịch sử nhóm chat tại thời điểm đó, rồi để ba thành viên đồng thời trả lời, mỗi người theo cấu hình vai trò của mình. Ba câu trả lời đều được gắn dưới tin nhắn phát rộng ban đầu, tiện cho việc đối chiếu xem mỗi người đang trả lời câu hỏi nào. Nếu người vận hành phải tính chi phí theo mức dùng mà kỹ sư vừa ước tính, thì phải đợi lượt trả lời này được ghi lại rồi mới mời người vận hành phát biểu: khi hai người cùng bắt đầu viết, người vận hành chưa có con số đó trong tay.[^ch10-lobehub]
 
-Khi một nhiệm vụ bao gồm nhiều hơn năm nhiệm vụ phụ, yêu cầu lập kế hoạch động hoặc có sự phụ thuộc phức tạp giữa các nhiệm vụ phụ, thì sự cộng tác ngang hàng là không đủ và cần phải giới thiệu mô hình người quản lý. Trách nhiệm của Người quản lý Agent giống như người quản lý dự án: trước tiên hãy hiểu nhiệm vụ tổng thể, sau đó chia nhỏ thành các nhiệm vụ phụ có thể giao, chọn Agent thích hợp để thực thi, theo dõi tiến độ và xử lý các trường hợp ngoại lệ (thử lại, thay đổi Agent, điều chỉnh kế hoạch) và cuối cùng tích hợp đầu ra của mỗi Agent vào kết quả cuối cùng.
+[^ch10-lobehub]: LobeHub, hướng dẫn sử dụng nhóm chat; phần hiện thực phát rộng song song ở phiên bản `ab21e0d`.
 
-Từ góc độ thiết kế hệ thống, chế độ người quản lý mô hình hóa từng Agent chuyên dụng như một công cụ mà Người quản lý có thể gọi. Bộ công cụ của trình quản lý không chỉ bao gồm các công cụ bên ngoài truyền thống (chẳng hạn như tìm kiếm, thao tác với tệp) mà còn bao gồm các giao diện gọi Agent khác. Trình quản lý khởi động Agent tương ứng thông qua cơ chế gọi công cụ, chuyển các tham số nhiệm vụ và ngữ cảnh cần thiết và chờ hoàn thành để nhận kết quả trả về. Từ quan điểm của Người quản lý, không có sự khác biệt cơ bản giữa việc gọi Agent và gọi một công cụ thông thường - cả hai đều đưa ra yêu cầu và nhận phản hồi. Sự trừu tượng hóa thống nhất này mang lại cho mô hình trình quản lý khả năng mở rộng tốt - đối với các khả năng mới, bạn chỉ cần phát triển Agent tương ứng và đăng ký nó làm công cụ và logic cốt lõi của Trình quản lý không cần phải sửa đổi. Đồng thời, nó hỗ trợ tính không đồng nhất một cách tự nhiên - Agent khác nhau có thể sử dụng các mô hình khác nhau, từ nhắc nhở, bộ công cụ và thậm chí chạy trên các môi trường phần cứng khác nhau.
+Khi tổng hợp, cần tìm ra mối liên hệ giữa các phán đoán: một mục tiêu trải nghiệm cần hỗ trợ kỹ thuật thế nào, một lựa chọn kỹ thuật làm tăng chi phí vận hành bao nhiêu, những điều kiện nào còn cần bằng chứng bên ngoài.
 
-Nhưng mô hình người quản lý cũng có những thách thức cố hữu. Người quản lý trở thành nút thắt cổ chai duy nhất của hệ thống - nó phải hiểu bản chất của tất cả các nhiệm vụ phụ, chọn Agent chính xác và phân phối ngữ cảnh chính xác và bất kỳ sai lệch nào trong việc ra quyết định sẽ ảnh hưởng đến quy trình chung. Ngoài ra, Người quản lý cần duy trì ngữ cảnh chung của toàn bộ nhiệm vụ. Khi nhiệm vụ ngày càng sâu hơn và các lệnh gọi Agent tăng lên, ngữ cảnh có thể mở rộng nhanh chóng. Do đó, cần đặc biệt chú ý đến chất lượng lời nói nhanh chóng của Người quản lý, chiến lược quản lý ngữ cảnh và mức độ chi tiết phân chia nhiệm vụ hợp lý.
+### Mô hình quản lý: điều phối tập trung
 
-Bài báo Plan-and-Act năm 2025 [^plan-and-act-2025] đưa ra phân tích thực nghiệm về điều này: Trong kiến trúc Agent kép Planner-Executor, trình lập kế hoạch yếu là nút cổ chai nghiêm trọng nhất của toàn bộ hệ thống. Khi chất lượng lập kế hoạch của Người lập kế hoạch đủ cao thì người thực hiện có thể đạt được kết quả tốt ngay cả khi Người thực hiện tương đối đơn giản; ngược lại, nếu việc phân rã nhiệm vụ của Planner không chính xác thì mọi công việc của Executor sau đó sẽ dựa trên tiền đề sai. Nghiên cứu này đạt được tỷ lệ thành công là 57,58% trên điểm chuẩn WebArena-Lite. Đóng góp cốt lõi là cải thiện khả năng lập kế hoạch của Planner, thay vì khả năng thực thi của Executor. Ý nghĩa của phát hiện này là các mô hình mạnh nhất và lời nhắc được thiết kế tốt nhất nên được giao cho Người quản lý (Người lập kế hoạch), thay vì phân bổ tài nguyên như nhau cho tất cả Agent.
+Khi nhiệm vụ gồm nhiều nhiệm vụ con, phụ thuộc phức tạp hoặc cần điều phối động, có thể để Manager Agent lập kế hoạch thống nhất. Nó hiểu mục tiêu tổng thể trước, rồi chia việc, chọn thành viên, theo dõi tiến độ; gặp bất thường thì quyết định thử lại, đổi người hoặc điều chỉnh kế hoạch; cuối cùng tích hợp kết quả.
 
-Người quản lý song song còn phải định nghĩa điểm chốt là "thành công **đã được xác minh** đầu tiên", chứ không phải "cái đầu tiên tự nhận là thành công":
+Một cách hiện thực thông dụng là đăng ký các Agent chuyên trách thành công cụ. Manager truyền nhiệm vụ, ràng buộc và tài liệu cần thiết qua giao diện công cụ, rồi nhận kết quả có cấu trúc hoặc mã nhiệm vụ. Như vậy, tìm kiếm, thao tác tệp và ủy thác nhiệm vụ con có thể dùng cách gọi gần giống nhau; còn nhiệm vụ con chạy lâu thì quản lý riêng về tiến độ, hủy và thử lại. Các thành viên khác nhau có thể dùng mô hình, prompt, công cụ và môi trường chạy khác nhau. Khi thêm thành viên mới, ngoài việc đăng ký giao diện, còn phải để Manager hiểu trách nhiệm, yêu cầu đầu vào và tình huống áp dụng của nó.
 
-```python
-workers = launch_independent_workers(subtasks)
-while workers.any_running:
-    event = next_event()
-    if event.type == RESULT:
-        if verify(event.artifact, hidden_checks):
-            if not settle_once(event):       # atomically claim the winner
-                continue
-            broadcast_cancel(to = workers - {event.worker_id})
-            await_all_ack_or_timeout()
-            return assemble(event.artifact, evidence = event.evidence)
-        else:
-            record_failure(event)
-return summarize_failures(workers)
-```
+Khi làm các nhiệm vụ dài trong Claude Code và Codex, tác giả từng để thảo luận, chạy lệnh và kiểm thử đều nằm trong phiên chính. Giữa chừng muốn hỏi thêm về một lựa chọn thiết kế, thường phải đợi bước đang làm kết thúc; vài giờ sau muốn tìm lại thỏa thuận ban đầu, lại phải lật qua một chuỗi dài đầu ra của lệnh. Về sau, tôi giao việc sửa và kiểm thử cho Agent con, giữ phiên chính để thảo luận. Lấy việc soát bản thảo sách làm ví dụ, người thực thi có thể tiếp tục đối chiếu số hình, còn tôi đồng thời thảo luận với độc giả xem một đoạn có nên viết lại không. Nếu cuộc thảo luận làm thay đổi phạm vi nhiệm vụ, còn phải gửi thỏa thuận mới cho người thực thi, và đối chiếu khi nó nộp bài.
 
-`settle_once` bắt buộc phải lũy đẳng (thường được bảo vệ bằng khóa hoặc giao dịch); nếu không, hai sự kiện thành công đến gần như cùng lúc sẽ kích hoạt việc tổng hợp hai lần.
+Đội ngũ DeepSeek Harness đã công bố một nguyên mẫu nghiên cứu `dsh-superagent` hướng tới một kho GitHub duy nhất. Lấy việc sửa định dạng ngày của tệp xuất làm ví dụ: người bảo trì nêu yêu cầu trong một Issue, bộ định tuyến (Router) dựa vào quy tắc của kho để phán đoán có nhận việc hay không. Khi đã nhận, hệ thống lập một phiếu công việc (Ticket) và cấp cho người thực thi (Worker) một phiên và thư mục làm việc riêng. Người thực thi có thể sửa mã, chạy kiểm thử trong thư mục của mình; một phiếu khác có thể tiến hành đồng thời, mỗi phiếu giữ riêng quá trình sửa và kết quả kiểm thử của mình.[^ch10-dsh-prototype]
+
+Giả sử sau đó người bảo trì bổ sung vào Issue ban đầu: “chỉ sửa CSV, giữ nguyên định dạng ngày của JSON”. Phiếu đang xử lý có đăng ký theo dõi cuộc thảo luận này sẽ nhận được tin bổ sung, người thực thi dựa vào đó thu hẹp phạm vi sửa, kiểm thử riêng hai định dạng. Làm xong, nó có thể mở một pull request (PR) và đăng liên kết cùng kết quả trở lại Issue ban đầu. Người bảo trì thấy được ngay tại một chỗ yêu cầu ban đầu, ràng buộc bổ sung sau và bản sửa đang chờ duyệt; bộ định tuyến cũng không phải tách lại mỗi tin nhắn tiếp theo thành nhiệm vụ mới.
+
+[^ch10-dsh-prototype]: Đội ngũ DeepSeek Harness, nguyên mẫu nghiên cứu dsh-superagent. Cách phiếu công việc nhận tin nhắn tiếp theo xem phần cấp quyền và đăng ký; phiên thực thi và thư mục làm việc xem phần cơ chế thực thi.
+
+Manager đồng thời gánh khá nhiều trách nhiệm ra quyết định. Chia nhiệm vụ sai sẽ ảnh hưởng đến khâu thực thi sau, tài liệu bàn giao thiếu sẽ gây hỏi đi hỏi lại, quá nhiều bản ghi lời gọi cũng chiếm chỗ trong ngữ cảnh. Khi thiết kế, nên lưu trạng thái nhiệm vụ và chỉ mục sản phẩm ngắn gọn, đọc chi tiết khi cần, và để mỗi nhiệm vụ con có đầu vào, đầu ra và tiêu chuẩn hoàn thành rõ ràng.
+
+Plan-and-Act nghiên cứu ảnh hưởng của chất lượng lập kế hoạch tới nhiệm vụ dài trong kiến trúc Planner–Executor, báo cáo tỷ lệ thành công 57,58% trên WebArena-Lite.[^plan-and-act-2025] Lỗi lập kế hoạch khiến nhiều người thực thi tiếp tục làm theo một cách chia sai, thêm thành viên còn khuếch đại phần việc phải làm lại. Vì vậy, tác giả ưu tiên kiểm tra chất lượng chia nhiệm vụ của Manager; khi nút thắt nằm ở khâu lập kế hoạch, hãy dành cho Manager mô hình mạnh hơn, thông tin nhiệm vụ đầy đủ hơn và ngân sách suy luận dồi dào hơn. Khi ranh giới nhiệm vụ con đã rõ, mới chọn cấu hình phù hợp cho người thực thi.
 
 [^plan-and-act-2025]: Erdogan, L. E., et al. *Plan-and-Act: Improving Planning of Agents for Long-Horizon Tasks.* arXiv:2503.09572, 2025.
 
-**Hình thức phối hợp tuần tự.**
+Nhiệm vụ song song còn phải xác định rõ cách khép lại. Nếu mục tiêu là tìm một kết quả đạt điều kiện, có thể sau khi kiểm chứng đạt, dùng một thao tác nguyên tử để ghi nhận kết quả đầu tiên qua kiểm chứng, rồi hủy các nhánh còn lại, chờ xác nhận hủy hoặc hết thời gian, cuối cùng tổng hợp và giao. Thao tác ghi nhận phải vừa nguyên tử vừa lũy đẳng: khi hai kết quả đến cùng lúc, chỉ xảy ra một lần chuyển trạng thái; khi cùng một sự kiện được giao lặp lại, dùng lại kết quả xử lý đã có. Khóa, giao dịch hoặc so sánh-và-hoán đổi (compare-and-swap) đều có thể dùng để bảo vệ bước này.
 
-![Hình 10-4 Phối hợp trình tự trình quản lý ](images/fig10-4.svg)
+Có thể dùng SQLite có sẵn trong Python để xem một lần bàn giao cụ thể. Giả sử hai thành viên A và B song song đối chiếu tài liệu, và kết quả mỗi người nộp đều đã qua kiểm chứng. Manager chỉ cần một kết quả đạt chuẩn, nên dùng một dòng bản ghi nhiệm vụ để ghi lại ai nộp trước. Trong ví dụ dưới đây, A nộp trước, B nộp sau, rồi A thử lại một lần nữa.
 
-Người quản lý gọi Agent đặc biệt theo trình tự. Sau khi hoàn thành mỗi Agent, kết quả sẽ được trả về và Người quản lý quyết định bước tiếp theo. Luồng điều khiển tuyến tính, đơn giản và rõ ràng, phù hợp với các tình huống có sự phụ thuộc tuần tự rõ ràng giữa các nhiệm vụ phụ.
+```python
+import sqlite3
 
-> **Thí nghiệm 10-2 ★★: Dịch sách Agent**
->
-> Dịch sách là một nhiệm vụ phức tạp điển hình đòi hỏi sự cộng tác của nhiều Agent. Dịch sách kỹ thuật không chỉ là chuyển văn bản từ ngôn ngữ này sang ngôn ngữ khác. Nó cũng đòi hỏi phải đảm bảo rằng thuật ngữ chuyên môn nhất quán trong suốt cuốn sách, ngữ cảnh chính xác và cách đọc tổng thể trôi chảy. Ví dụ: khi dịch một cuốn sách tiếng Anh liên quan đến các mô hình ngôn ngữ lớn, một số lượng lớn các thuật ngữ sẽ xuất hiện lặp đi lặp lại và có thể có nhiều quy ước, phải thống nhất trong toàn bộ cuốn sách - trong chương đầu tiên, tác nhân được dịch là "cơ thể thông minh", và sau này không thể đổi thành "tác nhân".
->
-> Nếu bạn làm điều đó với một Agent duy nhất, bạn sẽ gặp phải các vấn đề ngữ cảnh nghiêm trọng. Khi Agent tiến hành qua nội dung theo từng chương, ngữ cảnh sẽ tích lũy: bảng chú giải thuật ngữ xuyên suốt cuốn sách, các chương đã dịch, đoạn hiện tại, quá trình tư duy dịch thuật, kết quả của các lệnh gọi công cụ. Một cuốn sách kỹ thuật vài trăm trang cộng với các bản dịch trung gian có thể dễ dàng vượt quá cửa sổ ngữ cảnh. Điều nghiêm trọng hơn là Agent dễ bị “lạc lối” trong ngữ cảnh quá dài - quên thỏa thuận thuật ngữ trước đó và sử dụng bản dịch không phù hợp với Chương 2 trong Chương 9; kiểm tra nhiều lần trong giai đoạn rà soát nguồn phế thải; thậm chí gây ảo giác do mất tập trung và “nhớ” những quy tắc thuật ngữ không thực sự tồn tại.
->
-> Mẫu người quản lý giải quyết những vấn đề này thông qua việc phân tách nhiệm vụ và phân tách trách nhiệm:
->
-> - **Bảng thuật ngữ Agent**: Nhận toàn bộ nội dung sách, xác định các thuật ngữ chuyên môn định kỳ, tìm kiếm từ điển chuyên nghiệp và thông số dịch thuật, đồng thời tạo bảng so sánh thuật ngữ có cấu trúc (định dạng JSON/CSV, bao gồm các thuật ngữ tiếng Anh, bản dịch tiếng Trung, các phần của lời nói, ngữ cảnh sử dụng). Sau khi hoàn thành, hãy ghi vào hệ thống tệp dùng chung, Agent có thể bị hủy để giải phóng tài nguyên.
-> - **Dịch Agent**(Dịch Chương Agent): Nhận chương hiện tại, bảng so sánh thuật ngữ và hướng dẫn dịch (mức độ người đọc mục tiêu, phong cách ngôn ngữ) và dịch sang tiếng Trung lưu loát. Khi gặp các thuật ngữ trong bảng so sánh phải sử dụng nghiêm ngặt cách dịch theo quy định. Khi gặp thuật ngữ mới, bản dịch sẽ được suy luận và đánh dấu là đang chờ xem xét. Mỗi phiên bản hoạt động trong một ngữ cảnh độc lập và không can thiệp lẫn nhau. Bản dịch được ghi vào hệ thống tệp (ví dụ: `chapter1_zh.md`). Người quản lý có thể khởi chạy nhiều phiên bản song song hoặc tuần tự
-> - **Đọc hiệu đính Agent**(Đánh giá toàn văn Agent): Nhận tất cả các bản dịch và bảng chú giải, thực hiện kiểm tra tính nhất quán - xác minh xem bản dịch các thuật ngữ có thống nhất từng cái một hay không, xác định những điểm không nhất quán và kiểm tra tính trôi chảy và dễ đọc tổng thể. Tạo báo cáo đánh giá và ghi vào hệ thống tập tin
-> - **Trình quản lý Agent**: Ngữ cảnh chủ yếu lưu mô tả nhiệm vụ, kế hoạch thực hiện, bản ghi cuộc gọi và trạng thái tiến độ của từng Agent. Bản dịch đầy đủ không được lưu (chúng được lưu trong hệ thống tệp), chỉ duy trì chỉ mục tệp. Dựa trên báo cáo rà soát, Người quản lý có thể gửi chương cụ thể về Dịch Agent để sửa đổi
->
-> Trong kiến trúc này, ngữ cảnh của Trình quản lý Agent luôn được giữ trong phạm vi có thể quản lý được: nó chỉ cần biết mô tả tổng thể và mục tiêu của nhiệm vụ, kế hoạch thực hiện của từng giai đoạn, bản ghi cuộc gọi và kết quả trả về của từng Agent cũng như trạng thái tiến độ hiện tại mà không cần phải giữ nội dung dịch hoàn chỉnh của từng chương.
->
-> Ưu điểm chính là **tách biệt ngữ cảnh**: Bảng thuật ngữ Agent chỉ xem xét những gì cần thiết để trích xuất thuật ngữ, Bản dịch Agent chỉ xem xét chương hiện tại và bảng chú giải thuật ngữ, và Hiệu đính Agent yêu cầu quyền truy cập vào toàn văn nhưng chỉ tập trung vào kiểm tra tính nhất quán. Mỗi Agent hoạt động trong ngữ cảnh tập trung, hợp lý, không chỉ hiệu quả hơn mà còn ít có khả năng mắc lỗi hơn—Agent sẽ không bị phân tâm do quá tải thông tin.
->
-> **Yêu cầu thử nghiệm**:
-> 1. Chọn sách kỹ thuật có hình ảnh, văn bản và mã làm đối tượng dịch
-> 2. Triển khai bốn loại Trình quản lý, Bảng thuật ngữ, Dịch thuật và Hiệu đính Agent
-> 3. Ghi lại mức tiêu thụ ngữ cảnh của từng Agent và xác minh tính hiệu quả của chế độ quản lý để kiểm soát việc mở rộng ngữ cảnh.
-> 4. So sánh sự khác biệt giữa chế độ Agent và chế độ quản lý về chất lượng dịch, hiệu quả thực thi và mức tiêu thụ tài nguyên
->
->
-> ![Hình 10-5 Kiến trúc tác nhân dịch sách ](images/fig10-5.svg)
->
->
-
-**Hình thức phối hợp song song.**
-
-![Hình 10-6 Phối hợp song song của trình quản lý ](images/fig10-6.svg)
-
-Chế độ tuần tự trở nên kém hiệu quả khi nhiều tác vụ con có thể được thực thi song song. Phối hợp song song cho phép nhiều Agent hoạt động đồng thời, cải thiện đáng kể thông lượng. Trình quản lý Agent không chỉ lên kế hoạch cho các nhiệm vụ song song mà còn giám sát tất cả các Agent đang chạy trong thời gian thực, xử lý việc phối hợp liên lạc và đưa ra quyết định chung khi Agent thành công hay thất bại. Điều này thường yêu cầu Message Bus làm cơ sở hạ tầng - nó có thể được hiểu là một "bảng thông báo công cộng" mà trên đó Agent có thể đăng tin nhắn (xuất bản) hoặc tập trung vào các loại tin nhắn mà nó quan tâm (đăng ký), đạt được khả năng liên lạc không đồng bộ và không bị chặn. Có hai loại giải pháp triển khai phổ biến với mức độ phức tạp ngày càng tăng: **Redis Pub/Sub** có dung lượng nhẹ, gửi và nhận tin nhắn, đơn giản và dễ sử dụng. Nhược điểm là không liên tục - người nhận lúc đó không trực tuyến và tin nhắn bị mất; hàng đợi tin nhắn như **RabbitMQ** lưu tin nhắn trên đĩa và sẽ không bị mất ngay cả khi người nhận tạm thời ngoại tuyến. Định dạng tin nhắn thường chứa ID người gửi, Agent đích (hoặc phát tới mọi người), loại tin nhắn và nội dung dữ liệu ở định dạng JSON.
-
-**Lingtai: một hiện thân sản phẩm hóa của mô hình quản lý.** Lingtai là một chốn ở chạy cục bộ, lấy tệp làm gốc, dành cho các Agent sống lâu[^lingtai]; ba vai trò của nó là hiện thực đầy đủ những khái niệm trong mục này:
-
-- **Agent chính** (main agent) là trung khu thường trú đối thoại với người dùng, nắm kế hoạch và ký ức, đồng thời phái sinh công việc cho các vai trò khác — đúng vị trí của Manager Agent;
-- **Daemon** là công nhân song song đoản mệnh được tách ra cho một việc ồn ào nhưng có biên rõ; xong thì bỏ, chỉ mang kết luận về cho agent chính — đây chính là sản phẩm hóa của nguyên tắc "Agent con trả về bản tóm tắt có cấu trúc chứ không phải toàn bộ quỹ đạo" cùng với dạng phối hợp song song;
-- **Avatar** là người đồng đội chuyên biệt và bền vững, có ký ức, hộp thư và trách nhiệm riêng, dùng cho những phân công chuyên môn đáng được giữ lại qua nhiều phiên.
-
-Phần thiết kế còn lại cũng ứng đối từng điểm với các phần trước: tri thức là tệp ký ức bền vững riêng của mỗi agent, còn kỹ năng là những cuốn cẩm nang Markdown mà mọi agent dùng chung; khi cửa sổ ngữ cảnh sắp đầy, agent sẽ "lột xác" (molt), tự viết cho mình một bản tóm tắt rồi mang ký ức bền vững tiếp tục làm việc trong một ngữ cảnh sạch (tương ứng với nén ngữ cảnh ở chương 2). Mô hình nền có thể thay mà agent vẫn còn. Danh tính, ký ức và năng lực đều nằm trong thư mục dự án dưới dạng những tệp thông thường — tức là "agent chính là các tệp của nó".
-
-[^lingtai]: Hướng dẫn chính thức của Lingtai: https://lingtai.ai/zh/tutorial/
-
-> **Thí nghiệm 10-3 ★★★: Sử dụng máy tính trong khi gọi điện thoại Agent**
->
-> **Điều kiện tiên quyết**: Thử nghiệm này sử dụng toàn diện công nghệ Computer Use và giọng nói Agent trong Chương 6. Bạn nên hoàn thành các thử nghiệm liên quan trong Chương 6 trước.
->
-> Trên thực tế, nhiều tình huống yêu cầu nhiều khả năng hoạt động cùng lúc, thay vì xếp hàng từng người một: trợ lý con người có thể giao tiếp với khách hàng qua điện thoại trong khi kiểm tra tài liệu và ghi chú những điểm chính trên máy tính. Kiểu "đa nhiệm" này cực kỳ thách thức đối với một Agent - nếu Agent xử lý cả hội thoại giọng nói thời gian thực và vận hành giao diện máy tính, chắc chắn nó sẽ chuyển đổi liên tục giữa hai tác vụ, khiến cuộc hội thoại bị tạm dừng hoặc hoạt động bị gián đoạn. Ý tưởng cốt lõi của việc thực thi song song nhiều Agent là: **để mỗi Agent khác nhau tập trung vào một nhiệm vụ có yêu cầu thời gian thực cao, phối hợp thông qua truyền tin nhắn không đồng bộ và đạt được xử lý song song thực sự **. Hai Agent cũng được tối ưu hóa đặc biệt cho các chế độ tương tác khác nhau - điện thoại Agent yêu cầu nhận dạng và tổng hợp giọng nói có độ trễ thấp, còn máy tính Agent yêu cầu khả năng hiểu thị giác và lập kế hoạch vận hành mạnh mẽ.
->
-> **Kịch bản**: AI Agent giúp người dùng điền vào biểu mẫu đặt vé máy bay phức tạp. Nó yêu cầu người dùng hỏi và xác nhận thông tin cá nhân (tên, số CMND, ưu tiên chuyến bay, v.v.) qua điện thoại trong khi vận hành trang web - cả hai đầu đều yêu cầu hiệu suất thời gian thực cao. Đây là một ví dụ điển hình về Agent đơn lẻ tập trung vào một thứ nhưng không tập trung vào thứ kia và Agent kép, mỗi chiếc thực hiện nhiệm vụ riêng của mình.
->
-> **Kiến trúc Agent kép**:
->
-> **Điện thoại Agent**: Cuộc gọi thoại Agent dựa trên ASR + LLM + TTS. Nó có nhiệm vụ hiểu câu trả lời bằng ngôn ngữ tự nhiên của người dùng, trích xuất thông tin chính và gửi đến Máy tính Agent thông qua khung tin nhắn; đồng thời, nó nhận các tin nhắn từ Máy tính Agent (chẳng hạn như “cần có số ID người dùng” và “lỗi tải trang”) và tạo ra các từ thích hợp để hỏi người dùng.
->
-> **Máy tính Agent**: Dựa trên khung hoạt động của trình duyệt (chẳng hạn như Anthropic Computer Use, browser-use). Nó có nhiệm vụ tìm hiểu cấu trúc của các trang web, xác định các trường biểu mẫu, điền thông tin dựa trên thông tin nhận được và yêu cầu Điện thoại Agent trợ giúp khi gặp sự cố.
->
-> **Cơ chế giao tiếp** có hai lựa chọn:
-> - **Giải pháp đơn giản**: Công cụ gọi giao tiếp điểm-điểm, chẳng hạn như `send_message_to_computer_agent(message)` / `send_message_to_phone_agent(message)`
-> - **Giải pháp cải tiến**: Message Bus + Manager Agent, định dạng tin nhắn thống nhất, bao gồm người gửi, người nhận, loại và nội dung
->
-> **Cơ chế cộng tác song song**(được chia sẻ bởi hai thử nghiệm "điện thoại + máy tính" trong chương này): Hai Agent chạy trong luồng hoặc tiến trình độc lập, mỗi tiến trình duy trì một vòng ReAct độc lập. Vòng lặp cho điện thoại Agent: nhận giọng nói -> ASR phiên âm -> LLM hiểu và tạo phản hồi -> tổng hợp TTS -> phát -> kiểm tra tin nhắn cho Máy tính Agent; loop cho Máy tính Agent: ảnh chụp màn hình -> Vision LLM Hiểu trang -> Lập kế hoạch hoạt động -> Thực thi (nhấp, nhập, v.v.) -> Kiểm tra tin nhắn của Điện thoại Agent. Điều quan trọng là cả hai phải thực sự song song - khi Máy tính Agent đang tìm kiếm các phần tử và nhập văn bản, Điện thoại Agent phải luôn trực tuyến và tiếp tục hội thoại ("Được rồi, tôi đang giúp bạn điền tên... Xin cho biết số giấy tờ của bạn?"). Để làm được điều này, đầu vào của mỗi Agent đều mang trường đánh dấu từ phía bên kia, ví dụ `[FROM_COMPUTER_AGENT] Không tìm thấy nút 'tiếp theo', có thể cần bạn xác nhận` hiện trong ngữ cảnh Điện thoại Agent và `[FROM_PHONE_AGENT] Người dùng cho biết tên là 'Nguyễn Văn A' và số ID là 123456` sẽ hiển thị trong ngữ cảnh Máy tính Agent.
->
-> **Yêu cầu thử nghiệm**:
-> 1. Triển khai kiến trúc Agent kép, dựa trên ASR/TTS API và khung vận hành trình duyệt
-> 2. Triển khai cơ chế liên lạc hai chiều hiệu quả
-> 3. Đảm bảo công việc thực sự song song, thu thập thông tin và điền biểu mẫu được thực hiện đồng thời
-> 4. Xử lý các tình huống bất thường
->
-> **Tự lập trình gọi điện và sử dụng máy tính Agent**
->
-> 10-3 thử nghiệm Kiến trúc cộng tác của Agent kép được thiết kế sẵn. Thử nghiệm này tiến thêm một bước nữa và khám phá khả năng điều phối tự động của **Agent** - Agent tự xác định thời điểm cần bắt đầu một hoạt động cộng tác mới Agent, thay vì con người lên kế hoạch trước cho quá trình cộng tác.
->
-> **Tình huống**: Người dùng yêu cầu "Giúp tôi hoàn tất đăng ký trên trang web này" và cung cấp URL nhưng không giải thích những thông tin cần điền. Người quản lý Agent sử dụng công cụ Computer Use để truy cập trang web và tải trang đăng ký.
->
-> Trong quá trình hoạt động, Computer Use Agent nhận thấy biểu mẫu đăng ký rất phức tạp và chứa một số lượng lớn các trường bắt buộc: thông tin cá nhân cơ bản (tên, giới tính, ngày sinh), thông tin liên hệ (số điện thoại di động, email, địa chỉ gửi thư), thông tin xác minh danh tính (loại chứng chỉ, số ID), cài đặt tùy chọn, v.v. Agent đã kiểm tra ngữ cảnh và phát hiện ra rằng anh ta không có thông tin này - người dùng chỉ nói "giúp tôi đăng ký" mà không cung cấp bất kỳ dữ liệu cụ thể nào.
->
-> Khi gặp tình trạng này, Agent truyền thống sẽ gửi tin nhắn để người dùng nhập vào - vừa kém hiệu quả (cần nhập một lượng lớn thông tin theo cách thủ công) vừa dễ bị lỗi (vấn đề về định dạng, thiếu thông tin). Agent thông minh hơn nên nhận ra: **Đây là kịch bản phù hợp để thu thập thông tin thông qua tương tác qua điện thoại** - trò chuyện qua điện thoại hiệu quả hơn nhiều so với trò chuyện bằng văn bản, có thể yêu cầu xác nhận từng cái một và cũng có thể xử lý những biểu hiện mơ hồ của người dùng.
->
-> Điểm cải tiến quan trọng là quyết định này không được lập trình trước mà được thực hiện một cách tự động bởi **Agent**. Mẹo dành cho Computer Use Agent có nội dung: "Hãy cân nhắc gọi Điện thoại Agent làm người hỗ trợ khi bạn cần thu thập một lượng lớn thông tin có cấu trúc từ người dùng có thể được xử lý thông qua một cuộc trò chuyện." `initiate_phone_call_agent(purpose, required_info)` được bao gồm trong bộ công cụ.
->
-> Sau cuộc gọi, hệ thống sẽ tạo Điện thoại Agent và cung cấp cho nó ngữ cảnh nhiệm vụ rõ ràng: nó được khởi chạy để hỗ trợ điền biểu mẫu, những thông tin cần thu thập và yêu cầu định dạng cho từng trường.
->
-> Hai Agent ngay lập tức chuyển sang chế độ cộng tác thời gian thực, tiếp tục dùng cơ chế song song không đồng bộ của thử nghiệm 10-3. Phone Agent khởi tạo một phiên âm thanh WebRTC trên trình duyệt với người dùng và hỏi từng thông tin: "Xin chào, tôi đang giúp bạn điền vào mẫu đăng ký. Trước hết, tên bạn là gì?" Sau khi người dùng trả lời, Agent lập tức gửi `{"type": "info_collected", "field": "Name", "value": "Zhang San"}` cho Computer Agent để tìm và điền trường tương ứng. Phone Agent không chờ thao tác trên máy tính hoàn tất mà tiếp tục hỏi câu tiếp theo. Quy trình **hỏi-một, điền-một** này giúp độ trễ thao tác không chặn luồng hội thoại. Sau khi thu thập đủ thông tin, Phone Agent gửi `{"type": "task_completed"}` và Computer Agent gửi biểu mẫu. Ở đây, “điện thoại” có nghĩa là tương tác âm thanh thời gian thực; không cần truy cập PSTN hay số E.164. Một trang WebRTC cục bộ là đủ cho thử nghiệm, còn khi triển khai từ xa có thể bổ sung signaling và TURN theo yêu cầu của môi trường mạng.
->
-> **Yêu cầu thử nghiệm**:
-> 1. Triển khai Computer Use Agent có thể quyết định khởi động Điện thoại Agent một cách độc lập
-> 2. Giao tiếp hai chiều theo thời gian thực và công việc song song thực sự
-> 3. Xử lý các trường hợp ngoại lệ (phản hồi và hỏi lại nếu định dạng thông tin sai)
-> 4. Ghi lại thời gian thông báo của quá trình cộng tác và các điểm quyết định chính của Agent
->
->
-> ![Hình 10-7 Kiến trúc tác nhân kép điện thoại và máy tính ](images/fig10-7.svg)
->
->
-> **Thí nghiệm 10-4 ★★★: Agent thu thập thông tin từ nhiều trang web cùng một lúc**
->
-> **Điều kiện tiên quyết**: Trước tiên, bạn nên hiểu cơ chế hướng sự kiện và ngắt trong Chương 6.
->
-> Thử nghiệm này khám phá ứng dụng thực thi song song nhiều Agent trong các tình huống thu thập thông tin. Khác với Thí nghiệm 10-3, vốn tập trung vào sự cộng tác của hai Agent không đồng nhất, thử nghiệm này tập trung vào tìm kiếm song song của nhiều Agent đồng nhất và cách hoàn thành nhiệm vụ hiệu quả cũng như tối ưu hóa tài nguyên thông qua điều phối trung tâm.
->
-> **Câu hỏi**: Với nhiều trang web đại học của một trường đại học, bạn phải tìm kiếm một giáo viên được chỉ định (chẳng hạn như "Zhang Wei") trong trang thư mục giáo viên của mỗi trường đại học, sau khi tìm thấy, hãy trả về trường đại học, chức vụ, hướng nghiên cứu và các thông tin khác của người đó.
->
-> **Thử thách cốt lõi**:
->
-> **1. Khởi động song song**: Trình quản lý Agent tự động tạo 10 phiên bản Computer Use Agent dựa trên yêu cầu nhiệm vụ, mỗi phiên bản tương ứng với một trang web của trường đại học. Mỗi phiên bản phải là một quy trình hoặc luồng độc lập, có phiên trình duyệt độc lập và có thể thực thi đồng thời mà không chặn lẫn nhau. Đã vượt qua khi khởi động: URL trang web mục tiêu, tên giáo viên cần tìm kiếm, mã định danh nhiệm vụ (để định tuyến tin nhắn).
->
-> **2. Giám sát thời gian thực**: Mỗi Agent thường xuyên gửi cập nhật trạng thái trong quá trình thực thi ("Đang tải trang web" "Đang phân tích thư mục giáo viên" "Không tìm thấy mục tiêu, nhiệm vụ đã hoàn thành" "Đã tìm thấy kết quả phù hợp, chi tiết như sau"). Trình quản lý Agent nhận các bản cập nhật này thông qua bus tin nhắn, duy trì bảng trạng thái tác vụ và biết trong thời gian thực Agent nào vẫn đang chạy, Agent nào đã hoàn thành và Agent nào đã gặp lỗi.
->
-> **3. Chấm dứt phân tầng**: Giả sử rằng Agent, người chịu trách nhiệm về Trường Khoa học Máy tính, tìm thấy giáo viên mục tiêu, nó sẽ gửi `{"type": "target_found", "agent_id": "agent_3", "data": {...}}`. Sau khi nhận được, Người quản lý Agent ngay lập tức gửi `{"type": "terminate", "reason": "target_found_by_agent_3"}` tới tất cả các Agent khác vẫn đang chạy và mỗi Agent nhận được thông báo chấm dứt sẽ dừng lại và gửi xác nhận. Trình quản lý Agent chờ tất cả xác nhận (hoặc hết thời gian chờ) trước khi tổng hợp kết quả. Yêu cầu: Agent có thể phản hồi tín hiệu kết thúc bất cứ lúc nào (tương tự như cơ chế ngắt ở Chương 6). Việc chấm dứt phải nhẹ nhàng - không còn quy trình treo hoặc tài nguyên chưa được đóng; đồng thời phải xử lý các điều kiện đua.
->
-> **Bổ sung khái niệm: Điều kiện đua (race condition) là gì?** Giả sử rằng Agent A và Agent B đều tìm thấy giáo viên mục tiêu trong gần như cùng một phần nghìn giây, họ sẽ báo cáo "Tôi đã tìm thấy nó!" tới Trình quản lý Agent cùng một lúc. Nếu Trình quản lý Agent xử lý việc này không chính xác—ví dụ: nó bắt đầu tổng hợp kết quả sau khi nhận được báo cáo từ A, nhưng sau đó nhận được báo cáo từ B để kích hoạt hoạt động tổng hợp thứ hai—có thể dẫn đến kết quả trùng lặp hoặc trạng thái xung đột. Giải pháp thường là sử dụng cơ chế "khóa": trạng thái bị khóa ngay khi báo cáo đầu tiên đến và các báo cáo tiếp theo được xác định là trùng lặp và bị bỏ qua.
->
-> **4. Xử lý lỗi**: Có thể gặp nhiều trường hợp ngoại lệ khác nhau trong hoạt động thực tế: không thể truy cập một trang web đại học nhất định (lỗi mạng, thời gian ngừng hoạt động của máy chủ), cấu trúc của một trang web nhất định không khớp với mong đợi, khiến Agent không thể phân tích cú pháp chính xác hoặc tất cả các tìm kiếm Agent đều không tìm thấy mục tiêu. Policy xử lý của Trình quản lý Agent: Đặt thời gian chờ (chẳng hạn như 2 phút) cho mỗi Agent và thời gian chờ sẽ được coi là lỗi; việc cách ly lỗi sẽ không ảnh hưởng đến việc tiếp tục thực thi Agent khác; tóm tắt sau khi hoàn thành - thông tin sẽ được trả về miễn là Agent thành công và nếu tất cả lỗi xảy ra, "Không tìm thấy giáo viên mục tiêu" và số liệu thống kê về từng lý do lỗi sẽ được báo cáo cho người dùng.
->
-> **Yêu cầu thử nghiệm**:
-> 1. Trình quản lý triển khai Agent có thể tự động khởi động nhiều Agent song song
-> 2. Triển khai Computer Use Agent dựa trên các dự án nguồn mở như browser-use
-> 3. Triển khai bus thông báo để hỗ trợ liên lạc hai chiều giữa Trình quản lý Agent và nhiều Agent phụ
-> 4. Thực hiện cơ chế chấm dứt tầng sau khi thành công để đảm bảo rằng tất cả Agent khác dừng nhanh sau khi tìm thấy mục tiêu
-> 5. Xử lý các tình huống bất thường khác nhau (lỗi truy cập trang web, lỗi phân tích cú pháp, không tìm thấy tất cả)
-> 6. Ghi lại và so sánh sự khác biệt về thời gian giữa thực thi song song và thực thi nối tiếp, đồng thời xác minh sự cải thiện hiệu suất do song song hóa mang lại
->
->
-> ![Hình 10-8 Kiến trúc quét web song song ](images/fig10-8.svg)
->
->
-
-**Agent quản lý sinh ra quy trình làm việc của các Agent.** Ở hai hình thức trước, Agent quản lý luôn nằm trong vòng lặp: mỗi nhiệm vụ phụ được giao đều đòi hỏi mô hình ra thêm một quyết định, và ngữ cảnh lớn dần theo số lần gọi. Còn một cách khác: **người quản lý viết trước quy trình làm việc của các Agent thành một đoạn mã, rồi giao cho một môi trường chạy có tính xác định thực thi**.
-
-Công cụ Workflow tích hợp sẵn trong Claude Code chính là một ví dụ: nó cung cấp cho Agent vài nguyên thủy `agent()`, `parallel()`, `pipeline()`. Mỗi `agent()` là một sub-Agent có ngữ cảnh riêng, còn schema quy định nó chỉ trả về kết luận có cấu trúc chứ không phải toàn bộ quỹ đạo. Ví dụ, để kiểm chứng bảy nhóm dữ kiện cho một bản thảo kỹ thuật, mỗi nhóm được nghiên cứu trước, sau đó kiểm chứng độc lập từng mục, cuối cùng tổng hợp lại:
-
-```javascript
-const results = await pipeline(
-  DIMENSIONS,                                     // bảy hướng cần kiểm chứng
-  d => agent(research(d), { schema: FINDINGS }),  // giai đoạn 1: nghiên cứu
-  r => parallel(r.findings.map(f => () =>         // giai đoạn 2: kiểm chứng độc lập từng mục
-         agent(verify(f), { schema: VERDICT })))
-)
-await agent(writeProvenance(results.flat()))      // tổng hợp: đợi đủ mọi kết quả
+db = sqlite3.connect(":memory:")
+db.execute("CREATE TABLE task (id INTEGER PRIMARY KEY, winner TEXT)")
+db.execute("INSERT INTO task VALUES (1, NULL)")
+for worker in ["A", "B", "A"]:
+    with db:
+        claimed = db.execute(
+            "UPDATE task SET winner = ? WHERE id = ? AND winner IS NULL",
+            (worker, 1),
+        ).rowcount
+    print(worker, "ghi nhận thành công" if claimed else "dùng lại kết quả đã ghi nhận")
 ```
+
+Đầu ra lần lượt là “A ghi nhận thành công”, “B dùng lại kết quả đã ghi nhận”, “A dùng lại kết quả đã ghi nhận”. Nếu B đến trước, bảng sẽ ghi tên B. Một câu lệnh cập nhật duy nhất vừa kiểm tra “chưa có ai ghi nhận” vừa ghi tên người nộp; nếu tách kiểm tra và ghi ra hai bước, cả hai người thực thi đều có thể cùng đọc thấy giá trị rỗng.
+
+Ví dụ trên tạo bảng trong bộ nhớ, tiến trình thoát là bản ghi nhận cũng mất. Chuyển sang cơ sở dữ liệu lưu bền thì còn một vấn đề bàn giao: Manager đã ghi nhận A nhưng chưa kịp báo cho B thì đã thoát. Sau khi khởi động lại, ai biết thông báo này chưa được gửi? Có thể ghi kết quả đã chọn và thông báo chờ gửi trong cùng một giao dịch. Mỗi thông báo ghi rõ nhánh nhận, việc cần làm và một mã duy nhất. Khởi động lại, Manager gửi bù những thông báo chưa được xác nhận. Kể cả khi B đã dọn dẹp xong, chỉ là tin xác nhận bị mất, nó vẫn nhận ra thông báo gửi lại nhờ mã cũ và trả về ngay kết quả xử lý lần trước. Sự kiện giao kết quả cũng có thể được ghi theo cách tương tự.
+
+Nếu nhiệm vụ yêu cầu thu thập toàn bộ kết quả, thì phải đợi mọi nhánh bắt buộc kết thúc, ghi riêng các mục thành công, thất bại và chưa xong. Điều kiện khép lại xuất phát từ mục tiêu nhiệm vụ, và cũng quyết định khi nào được hủy các thành viên khác.
+
+**Điều phối tuần tự.** Khi các nhiệm vụ con phụ thuộc trước sau, Manager phải đợi sản phẩm của bước trước sẵn sàng rồi mới giao bước tiếp theo. Hình 10-4 lấy việc viết báo cáo làm ví dụ: thành viên thu thập tài liệu nộp nguồn trước, người phân tích dựa vào đó rút ra kết luận, người viết cuối cùng nhận được bản phân tích có căn cứ. Chuyển sang nhiệm vụ dịch kế tiếp, người dịch cần đợi tài liệu nào trước khi bắt tay vào làm?
+
+![Hình 10-4 Manager điều phối tuần tự](images/revised/fig10-4.svg)
+
+> **Thí nghiệm 10-2 ★★: Agent dịch sách**
+>
+> Dịch sách kỹ thuật phải xử lý cùng lúc thuật ngữ, ngữ cảnh và văn phong. Ví dụ, từ tiếng Anh agent có nhiều cách dịch; nếu bản dịch đã thống nhất dùng “tác tử”, các chương sau phải giữ nguyên cách dịch đó. Bảng thuật ngữ, nguyên văn từng chương, bản dịch và bản ghi hiệu đính cần được tổ chức rõ ràng. Một cuốn sách dài cùng với các bản dịch trung gian, kết quả công cụ và lịch sử hiệu đính sẽ liên tục chiếm chỗ trong ngữ cảnh; đến chương 9, mô hình có thể đã quên cách dịch ở chương 2, hoặc kiểm tra đi kiểm tra lại cùng một đoạn. Chia nhiệm vụ theo trách nhiệm và theo chương giúp mỗi phiên bản chạy chỉ tập trung vào tài liệu mà trách nhiệm hiện tại cần.
+>
+> Có thể chia việc cho bốn loại Agent:
+>
+> - **Glossary Agent: lập bảng thuật ngữ.** Đọc toàn bộ sách theo từng đợt, nhận diện thuật ngữ chuyên môn xuất hiện lặp lại, tham khảo từ điển chuyên ngành và quy chuẩn dịch, rồi sinh bảng đối chiếu JSON hoặc CSV gồm thuật ngữ tiếng Anh, cách dịch, từ loại và ngữ cảnh sử dụng. Bảng thuật ngữ được lưu vào không gian chung, nhiệm vụ xong thì giải phóng phiên bản chạy này.
+> - **Translation Agent: dịch từng chương.** Đọc chương hiện tại, các thuật ngữ liên quan và hướng dẫn dịch, rồi hoàn thành bản dịch theo độc giả mục tiêu và văn phong. Với thuật ngữ mới xuất hiện, đưa ra cách dịch đề xuất và đánh dấu chờ duyệt. Mỗi phiên bản chạy duy trì ngữ cảnh độc lập, bản dịch lưu vào không gian chung; các chương khác nhau có thể xử lý tuần tự hoặc song song tùy quan hệ phụ thuộc.
+> - **Proofreading Agent: hiệu đính toàn văn.** Dựa vào bảng thuật ngữ và bản dịch các chương để kiểm tra cách dịch, sự nhất quán trong cách diễn đạt và độ dễ đọc. Hoàn thành việc kiểm tra toàn văn bằng cách đọc theo chương và dùng chỉ mục xuyên chương, rồi ghi vị trí vấn đề, căn cứ và yêu cầu sửa vào báo cáo hiệu đính.
+> - **Manager Agent: sắp xếp và thu hồi nhiệm vụ.** Duy trì mục tiêu, kế hoạch, trạng thái nhiệm vụ, tóm tắt các lời gọi và chỉ mục sản phẩm; dựa vào báo cáo hiệu đính để trả các chương cần sửa về cho người dịch, rồi tổ chức kiểm tra lại.
+>
+> Trong Hình 10-5, người hiệu đính đọc bản dịch các chương và bảng thuật ngữ, Manager dựa vào báo cáo để quyết định chương nào cần sửa lại. Người dịch nhận nhiệm vụ sửa có thể mở nguyên văn của chương, đối chiếu xem từ bị đánh dấu mang nghĩa gì trong câu đó.
+>
+> ![Hình 10-5 Kiến trúc Agent dịch sách](images/revised/fig10-5.svg)
+>
+> Khi bản dịch đã được ghi ra tệp, lần gọi nào còn phải đọc văn bản dài? Thí nghiệm đi kèm dịch sang tiếng Trung, chia hai chương đầu của bản tiếng Anh thành 26 đơn vị dịch. Agent đơn mang theo toàn bộ nguyên văn và bản dịch trước đó suốt dọc đường, yêu cầu lớn nhất có 94.355 token đầu vào. Khi phân công, yêu cầu lớn nhất của người dịch chỉ có 2.857 token, Manager dùng 2.153 token khi ra quyết định sửa lại. Trong nhóm có quản lý, thành viên có đầu vào lớn nhất hóa ra là người lập thuật ngữ: một lần đọc hai chương, dùng 49.807 token.
+>
+> Dịch xong hai chương này, bốn vai trò dùng tổng cộng 203.277 token, Agent đơn dùng 1.317.808 token. Nhóm nào nộp bài trước? Nhóm bốn vai trò mất khoảng 271 giây, nhiều hơn Agent đơn khoảng 17 giây.
+>
+> Lúc nộp bài, hai cách kiểm tra cho ra kết quả khác nhau trên cùng một bản dịch. Bảng thuật ngữ quy định danh từ `embedding` dịch là “嵌入向量” (vectơ nhúng). Báo cáo hiệu đính không liệt kê chương nào cần sửa, nhưng chương trình kiểm tra thuật ngữ lại chấm từ này 0/2: trong bản dịch của cả hai chương đều tìm thấy “嵌入” (nhúng), mà đều không tìm thấy “嵌入向量”. Có nên trả cả hai chương về không?
+>
+> Trong đoạn nói về chính sách hoàn tiền ở chương 1, nguyên văn là `embedding the refund policy in the context`, bản dịch là “将退款政策嵌入上下文中” (nhúng chính sách hoàn tiền vào ngữ cảnh). Ở đây ý là đưa chính sách vào ngữ cảnh; sửa thành “嵌入向量” thì lại thành sai. Chương trình dò chuỗi theo chương giúp người hiệu đính tìm ra đầu mối cần xem lại; còn muốn quyết định chỗ nào phải sửa, người hiệu đính cần có đoạn nguyên văn đó. Khi bảng thuật ngữ cập nhật, cũng có thể khoanh vùng các đoạn bị ảnh hưởng trước, rồi giao nguyên văn, bản dịch và mục từ mới cùng lúc cho người dịch.
+>
+> **Yêu cầu thí nghiệm:**
+> 1. Chọn một cuốn sách kỹ thuật có hình, bảng và mã.
+> 2. Hiện thực bốn loại Agent: Manager, Glossary, Translation, Proofreading.
+> 3. Ghi lại lượng ngữ cảnh đã dùng, tài liệu bàn giao và phiên bản sản phẩm của từng thành viên.
+> 4. So sánh với phương án Agent đơn về chất lượng dịch, thời gian hoàn thành và tài nguyên tiêu tốn; phân tích ảnh hưởng của cách chia nhiệm vụ và tổ chức ngữ cảnh.
+
+**Điều phối song song.** Các nhiệm vụ con độc lập với nhau có thể thực thi đồng thời. Manager lo giao việc, nhận trạng thái, và dựa vào kết quả để quyết định tiếp tục, bổ sung việc hay kết thúc. Khi dịch cuốn sách này, bảng thuật ngữ vừa được xác nhận là các chương khác nhau có thể giao cho nhiều người dịch cùng bắt tay vào làm. Hình 10-6 đổi sang một báo cáo nghiên cứu: biểu đồ đã xong, phân tích vẫn đang chạy, vì sao bước kiểm tra định dạng vẫn phải đợi? Lần theo các sự kiện do thành viên báo lên, có thể thấy bước cuối cùng phụ thuộc vào hai sản phẩm nào.
+
+![Hình 10-6 Manager điều phối song song](images/revised/fig10-6.svg)
+
+Bus tin nhắn phù hợp để tổ chức loại giao tiếp bất đồng bộ này: thành viên phát tiến độ và kết quả, người quản lý đăng ký nhận các sự kiện tương ứng, runtime lo phân phát, đệm và thử lại.
+
+> **Ví dụ sản phẩm: Lingtai (灵台)**
+>
+> Lingtai là hệ thống Agent dài hạn chạy cục bộ, lưu danh tính và ký ức bằng tệp. Nó cung cấp ba loại vai trò: khí linh chính (main agent) đối thoại với người dùng, quản lý kế hoạch và ký ức; phân thần (daemon) đảm nhận các nhiệm vụ song song ngắn hạn có phạm vi rõ ràng, xong thì trả về kết luận; phân thân (avatar) giữ ký ức, hộp thư và trách nhiệm riêng, dùng cho phân công chuyên môn xuyên phiên.
+>
+> Mỗi vai trò có tri thức lưu bền riêng, và dùng chung các sổ tay kỹ năng dạng Markdown. Khi ngữ cảnh gần chạm giới hạn dung lượng, vai trò lưu một bản tổng kết qua bước “lột xác” (molt), rồi kết hợp với ký ức lưu bền để bước vào ngữ cảnh mới. Danh tính, ký ức và kỹ năng được lưu độc lập trong tệp, nên thay mô hình nền bên dưới vẫn tiếp tục được công việc. Thiết kế này kết hợp người quản lý, người làm việc ngắn hạn, thành viên chuyên môn dài hạn và nén ngữ cảnh với nhau.
+
+> **Thí nghiệm 10-3 ★★★: Agent điện thoại + máy tính tự điều phối**
+>
+> Thí nghiệm này kết hợp Computer Use và tương tác giọng nói ở Chương 6. Người dùng cung cấp trang đăng ký hoặc đặt vé máy bay, Computer Agent mở trang web, nhận diện biểu mẫu, rồi thông qua Phone Agent thu thập các trường hiện còn thiếu như họ tên, số giấy tờ, thông tin liên lạc, địa chỉ và sở thích.
+>
+> **Vai trò và bàn giao.** Computer Agent thao tác trình duyệt và phụ trách điều phối lần chạy này; Phone Agent trò chuyện thời gian thực với người dùng qua ASR, LLM, TTS, chuyển câu trả lời bằng lời thành các trường có cấu trúc. Hai bên giao tiếp qua công cụ điểm-điểm hoặc bus tin nhắn; tin nhắn gồm người gửi, người nhận, loại và nội dung. Computer Agent có thể trực tiếp ủy thác nhiệm vụ gọi điện, đảm nhận vai trò người quản lý. Khi người dùng sẵn lòng cung cấp thông tin bằng giọng nói, Phone Agent có thể hỏi liên tiếp, xác nhận và hỏi lại, còn Computer Agent tập trung vào trạng thái trang và việc điền trường.
+>
+> **Hai chế độ chạy.** Chế độ cố định khởi động sẵn cả hai Agent, mỗi bên duy trì vòng lặp chạy độc lập, dùng để kiểm tra giao tiếp hai chiều và hành vi đồng thời. Chế độ tự chủ khởi động Computer Agent trước, để mô hình dựa vào trang, thông tin đã có và nhu cầu nhiệm vụ mà quyết định có gọi `initiate_phone_call_agent(purpose, required_info)` hay không. Runtime sau đó giao mục đích nhiệm vụ, các trường cần thu thập và ràng buộc định dạng cho Phone Agent; khởi động xong thì dùng chung cơ chế giao tiếp đó.
+>
+> **Luân chuyển từng trường.** Trong Hình 10-7, Phone Agent hỏi qua WebRTC, trích xuất và kiểm tra câu trả lời, lấy được giá trị hợp lệ thì gửi `info_collected`, rồi hỏi mục tiếp theo. Computer Agent đồng thời đọc trang, điền mục trước, và gửi lại `fill_error` hoặc trạng thái trang mới. Phản hồi sai định dạng dùng `format_invalid` để ghi rõ trường và yêu cầu, Phone Agent dựa vào đó xác nhận hoặc hỏi lại. Nhờ vậy, “hỏi mục sau” và “điền mục trước” có thể chạy chồng lên nhau.
+>
+> **Hoàn thành và xử lý bất thường.** Thu thập đủ các trường, Phone Agent gửi `task_completed`, báo nhiệm vụ con thu thập thông tin đã kết thúc. Computer Agent tiếp tục kiểm tra các mục bắt buộc, kết quả kiểm tra của trang và quyền nộp, rồi mới hoàn tất thao tác trên biểu mẫu. Khi vượt số lần thử lại, gặp trang bất thường hoặc người dùng yêu cầu dừng, tạm dừng nhiệm vụ và nêu rõ tiến độ hiện tại; khi kết thúc, hủy phía bên kia nếu còn đang chạy, đóng phiên trình duyệt, luồng âm thanh và cuộc gọi. Tương tác giọng nói với người thật và việc nộp biểu mẫu phải lần lượt có sự đồng ý và cấp quyền của người dùng.
+>
+> ![Hình 10-7 Kiến trúc hai Agent Phone và Computer](images/revised/fig10-7.svg)
+>
+> **Yêu cầu thí nghiệm:**
+> 1. Hiện thực hai Agent độc lập và giao tiếp có cấu trúc hai chiều.
+> 2. Ghi lại trình tự thời gian ở chế độ cố định và chế độ tự chủ, kiểm tra khoảng chồng lấp giữa hỏi và điền.
+> 3. Hiện thực kiểm tra định dạng, hỏi lại, phản hồi lỗi trang, hết thời gian chờ và dọn dẹp tài nguyên.
+> 4. So sánh hai chế độ về quyết định khởi động, độ trễ, tỷ lệ thành công và tài nguyên tiêu tốn.
+
+> **Thí nghiệm 10-4 ★★★: Agent thu thập thông tin từ nhiều trang web cùng lúc**
+>
+> Thí nghiệm này dùng nhiều Agent đồng nhất tìm kiếm song song, luyện tập cơ chế hướng sự kiện và ngắt ở Chương 6. Nhiệm vụ là tìm một giảng viên chỉ định trên các trang web của nhiều khoa trong một trường đại học, ví dụ “Trương Vĩ”, rồi trả về khoa, chức danh, hướng nghiên cứu và trang nguồn. Trước khi tìm, thống nhất điều kiện nhận diện, như họ tên, ngành và thông tin trang cá nhân, để phân biệt những người trùng tên.
+>
+> **1. Khởi động song song.** Manager tạo 10 Computer Use Agent, mỗi Agent phụ trách trang web của một khoa. Mỗi phiên bản chạy duy trì ngữ cảnh và phiên trình duyệt riêng, có thể điều phối bằng nhiệm vụ bất đồng bộ, luồng hoặc tiến trình. Đầu vào gồm URL trang web, họ tên mục tiêu, điều kiện khớp và mã nhiệm vụ dùng để định tuyến.
+>
+> **2. Tổng hợp tiến độ.** Các thành viên định kỳ gửi trạng thái như “đang tải trang”, “đang đọc danh sách giảng viên”, “đã kiểm tra, không khớp”, “phát hiện giảng viên trùng tên”. Manager duy trì bảng nhiệm vụ qua bus tin nhắn, ghi riêng các trạng thái đang chạy, đã xong, bị chặn và thất bại, đồng thời giữ lại nguồn và nguyên nhân lỗi.
+>
+> **3. Kiểm chứng rồi hủy các nhánh khác.** Giả sử `agent_3` phụ trách khoa Vật lý tìm thấy một giảng viên trùng tên, nó gửi `target_found`, payload gồm thông tin giảng viên và nguồn. Nếu nhiệm vụ yêu cầu trả về hồ sơ nhân vật đã được xác minh, Manager phải đối chiếu điều kiện khớp và bằng chứng trước; xác nhận đã tìm đúng người rồi mới ghi nhận kết quả bằng thao tác nguyên tử, sau đó gửi `terminate` tới các thành viên khác đang chạy, ghi chú rằng hồ sơ được dùng là của `agent_3`. Các thành viên dừng tại điểm an toàn, dọn tài nguyên và trả về xác nhận; Manager chờ xác nhận hoặc hết thời gian rồi hoàn tất tổng hợp. Nếu nhiệm vụ yêu cầu liệt kê mọi người trùng tên, thì tiếp tục tìm cho đến khi kiểm tra hết phạm vi cần thiết.
+>
+> **Điều kiện tranh chấp (race condition).** Agent A và B có thể trả về kết quả hợp lệ gần như cùng lúc. Nếu mỗi sự kiện tự kích hoạt tổng hợp, sẽ dẫn tới giao kết quả trùng hoặc xung đột trạng thái. Có thể dùng khóa hoặc giao dịch để bảo vệ phép chuyển trạng thái “đang tìm → đã ghi nhận kết quả”, để sự kiện đến sau đọc kết quả đã được ghi nhận. Tin nhắn thử lại cũng phải được loại trùng theo mã sự kiện, bảo đảm hủy và tổng hợp vẫn nhất quán dù bị kích hoạt lặp lại.
+>
+> **4. Bất thường và phạm vi bao phủ.** Ghi riêng các trường hợp mất mạng, cấu trúc trang thay đổi và lỗi phân tích. Có thể đặt cho mỗi nhiệm vụ một ngân sách thời gian, chẳng hạn hai phút; hết thời gian thì hủy thực thi và thu thập thông tin chẩn đoán, các thành viên khác tiếp tục làm việc. Báo cáo cuối cùng phân biệt “đã kiểm tra, không tìm thấy” với “truy cập thất bại, chưa kiểm tra xong”, đồng thời nêu rõ phạm vi các khoa đã bao phủ.
+>
+> Hình 10-8 dùng một chuỗi thời điểm minh họa để xâu chuỗi các tin nhắn này. Giả sử thành viên 3 báo rằng khoa Vật lý có một giáo sư Trương Vĩ nghiên cứu điện toán lượng tử, Manager phải xem trang nguồn có xác nhận được họ tên, khoa, chức danh và hướng nghiên cứu không. Nhận được đầu mối về giảng viên trùng tên, xác nhận đúng là người cần tìm, và nhận đủ các xác nhận hủy là ba thời điểm khác nhau.
+>
+> ![Hình 10-8 Trình tự tin nhắn khi tìm kiếm song song](images/revised/fig10-8.svg)
+>
+> Trong lần chạy thật, người được tìm là Andrew Ng. Các thành viên kiểm tra trước xem văn bản trang có cái tên này không, khớp rồi mới nhờ mô hình trích xuất hồ sơ. Trang của Stanford HAI được chọn; đoạn trích ngắn trả về đủ để đối chiếu họ tên và chức danh giáo sư kiêm nhiệm. Muốn đối chiếu hướng nghiên cứu, còn phải đọc đoạn nói về học sâu ở phần sau của trang. Dù vài thành viên cùng lúc gửi về `target_found`, cũng chỉ thành viên giành được khóa đầu tiên mới ghi nhận được kết quả.
+>
+> Lần tìm tuần tự này đến URL cuối cùng trong mười URL mới khớp, mất 44,971 giây; tìm song song trên cùng loạt trang mất 24,022 giây, và mười ngữ cảnh trình duyệt của mỗi bên đều đã được đóng. Chia hai số cho nhau được 1,872. Nếu xếp trang HAI lên đầu, tìm tuần tự khớp ngay là dừng được, khi đó phải đo lại thời gian. Một lần chạy khác chuyên để kiểm tra việc hủy đã khởi động bốn nhánh: một nhánh ghi nhận kết quả trước, ba nhánh còn lại xác nhận đã nhận yêu cầu hủy, cuối cùng cả bốn ngữ cảnh trình duyệt đều được đóng.
+>
+> **Yêu cầu thí nghiệm:**
+> 1. Hiện thực Manager có khả năng tạo động các thành viên song song.
+> 2. Dùng các dự án như browser-use để xây dựng năng lực thực thi trên trình duyệt.
+> 3. Hoàn thành giao tiếp hai chiều và duy trì trạng thái qua bus tin nhắn.
+> 4. Kiểm chứng kết quả tìm kiếm, ghi nhận kết quả bằng thao tác nguyên tử, và thu thập xác nhận sau khi hủy các nhánh còn lại.
+> 5. Xử lý các trường hợp truy cập thất bại, lỗi phân tích, hết thời gian và không có kết quả khớp.
+> 6. So sánh thực thi song song và tuần tự về thời gian hoàn thành, phạm vi bao phủ và tài nguyên tiêu tốn.
+
+**Để người quản lý sinh workflow.** Ngoài việc ủy thác từng lần, Manager cũng có thể viết sẵn quan hệ phụ thuộc giữa các nhiệm vụ và quy tắc tổng hợp thành chương trình, rồi giao cho runtime điều phối. Mô hình lo thiết kế quy trình, chương trình lo khởi động thành viên, truyền kết quả và chờ phụ thuộc theo đúng quy ước. Khi quan hệ phụ thuộc đã rõ và cùng một loại quy trình cần chạy nhiều lần, tác giả ưu tiên cách này. Nó bỏ được chi phí gọi Manager cho mỗi lần phân việc, đồng thời giảm các bản ghi điều phối tích tụ trong ngữ cảnh quản lý.
+
+Công cụ Workflow động của Claude Code cung cấp một cách hiện thực như vậy. `agent()` tạo Agent con có ngữ cảnh độc lập, có thể dùng schema để quy ước đầu ra có cấu trúc; `parallel()` thực thi đồng thời một nhóm nhiệm vụ và chờ tất cả kết thúc; `pipeline()` cho mỗi đầu vào lần lượt đi qua nhiều giai đoạn, khi một mục sang giai đoạn sau thì các mục khác vẫn có thể đang xử lý ở giai đoạn trước. Kết quả trung gian lưu trong biến của chương trình, việc lọc và gộp làm bằng mã thông thường.[^dynamic-workflows]
+
+Ví dụ, khi kiểm chứng bảy nhóm sự kiện trong một bản thảo kỹ thuật, có thể khởi động các Agent nghiên cứu theo từng hướng trước, rồi giao kết luận của từng nhóm cho các Agent kiểm chứng kiểm tra song song. Mỗi kết luận trả về giữ nguồn và căn cứ phán định; khi mọi nhánh xong, Agent tổng hợp soạn báo cáo cuối cùng. Như vậy, sự phân công “nghiên cứu – kiểm chứng từng mục – tổng hợp thống nhất” cùng các phụ thuộc giữa giai đoạn đều được viết vào workflow.
+
+[^dynamic-workflows]: Anthropic, “Orchestrate subagents at scale with dynamic workflows”, 2026.
 
 ### Mô hình phi tập trung
 
-Đã có mô hình quản lý rồi, vì sao còn cần mô hình phi tập trung? Động cơ bỏ đi người điều khiển trung tâm chủ yếu là mô phỏng cách tổ chức của xã hội loài người: để nhiều vai trò ngang quyền phân công và kiềm chế lẫn nhau, mỗi bên soi vấn đề từ góc chuyên môn của mình và tự quyết định trao đổi với ai, thay vì dồn mọi phán đoán về một Manager. Trong mô hình phi tập trung, mỗi Agent dựa vào phán đoán chuyên môn của chính nó để tự quyết khi nào bắt chuyện với Agent khác — có thể là bàn giao nhiệm vụ ("phần của tôi xong rồi, giao lại cho anh"), có thể là xin phản hồi ("phương án này có khả thi về mặt kỹ thuật không?"), hoặc báo cáo vấn đề ("yêu cầu anh đưa có mâu thuẫn, chúng ta cần bàn lại").
+Đã có Manager, vì sao còn để các thành viên tự quyết định tìm ai? Hãy hình dung người kiểm thử nhận một mô-đun vừa viết xong, phát hiện yêu cầu sản phẩm và quy ước giao diện có hai cách hiểu khác nhau về cùng một trường. Người kiểm thử có thể đưa thẳng mâu thuẫn này cho hai vai trò sản phẩm và kiến trúc, để mỗi bên nói rõ căn cứ của mình, sửa xong quy ước rồi mới kiểm thử tiếp. Đây là phân công, đồng thời cũng là một kiểu kiểm soát và cân bằng. Kỹ sư giao mô-đun, kiến trúc sư hỏi ý kiến bên sản phẩm, người kiểm thử nêu phản đối — ai cũng có thể khởi động bước tiếp theo. Khi cần thương lượng thường xuyên, đợi Manager chuyển lời từng việc sẽ làm chậm công việc.
 
-Mô hình phi tập trung còn giúp giải quyết vấn đề ổn định của Agent. Do trục trặc của mô hình hay dịch vụ API, một số Agent có thể ngừng phản hồi, gọi công cụ thất bại, mắc kẹt trong vòng lặp vô hạn của những lời gọi công cụ sai. Trong mô hình quản lý, **Agent quản lý sập thường trở thành điểm hỏng đơn lẻ lớn nhất của hệ thống**. Mô hình phi tập trung giúp làm nhẹ vấn đề này.
+Mượn cách nói của microservice, một trung tâm sắp xếp các bước gọi là **orchestration** (điều phối tập trung), còn các bên tự nối tiếp nhau theo những sự kiện đã quy ước gọi là **choreography** (biên đạo, hay phối hợp phi tập trung). Còn một khác biệt thực tế: nếu mọi lần bàn giao đều phải đợi Manager, thì khi dịch vụ mô hình của nó ngừng phản hồi, các thành viên khác dù vẫn làm việc được cũng không nhận được bước tiếp theo. Điều phối phân tán giảm được sự phụ thuộc này; nhưng nếu chính thành viên phụ trách tiếp nhận bị kẹt trong một lần gọi công cụ, vẫn phải dựa vào trạng thái nhiệm vụ được lưu bền, cơ chế hết thời gian, thử lại và tiếp quản để thành viên khác biết bắt đầu lại từ đâu.
 
-Trong lĩnh vực microservice, mô hình quản lý và mô hình phi tập trung lần lượt được gọi là **điều phối** (orchestration) và **biên đạo** (choreography): cái trước do nhạc trưởng điều khiển thống nhất, cái sau dựa vào mỗi vũ công tự canh thời điểm vào sân khấu.
+Ba thiết kế dưới đây, mỗi thiết kế có một cách bàn giao: đăng ký nhận tin theo sản phẩm, chọn người phát biểu tiếp theo trong nhóm chat, hoặc để thành viên hiện tại chỉ định người nhận việc.
 
-Ba trường hợp dưới đây là một mạch tiệm tiến: luồng điều khiển của MetaGPT thực chất là một dây chuyền cố định (phi tập trung giả, chỉ tách rời ở cơ chế giao tiếp), group chat của AutoGen là dạng lai giữa bản ghi hội thoại dùng chung và lập lịch tập trung, cho tới OpenAI Swarm mới đạt được phi tập trung ngang hàng thực sự ở luồng điều khiển.
+**MetaGPT: dùng SOP để tổ chức bàn giao sản phẩm.** MetaGPT phân công theo quy trình vận hành chuẩn (SOP) của một đội phần mềm. Quản lý sản phẩm nộp tài liệu yêu cầu (PRD), kiến trúc sư nộp tài liệu thiết kế, kỹ sư nộp mã, người kiểm thử nộp báo cáo kiểm thử. Thành viên tiếp theo nhận được tài liệu đã quy ước là bắt tay vào làm được, người trước cũng không phải dặn dò đi dặn dò lại. Các đường nối trong Hình 10-9 biểu diễn quan hệ bàn giao giữa các sản phẩm này.[^metagpt-design]
 
-**MetaGPT: mô phỏng công ty phần mềm do SOP dẫn dắt.**
+![Hình 10-9 Mạng cộng tác đa Agent của MetaGPT](images/revised/fig10-9.svg)
 
-![Hình 10-9 Mạng cộng tác đa Agent của MetaGPT](images/fig10-9.svg)
+Khi bàn giao, mỗi vai trò phải bổ sung những thông tin gì?
 
-Nhận thức cốt lõi của MetaGPT là: **quy trình tác nghiệp chuẩn** (SOP, Standard Operating Procedure) mà các công ty phần mềm của con người tích lũy được vốn đã là một giao thức cộng tác được kiểm chứng nhiều lần — mã hóa SOP vào hệ đa Agent, để mỗi vai trò như một ngành nghề chuyên môn trên dây chuyền cho ra sản phẩm bàn giao chuẩn hóa, thì chính các sản phẩm ấy tự nhiên trở thành giao diện giao tiếp giữa các vai trò.
+- **Product Manager Agent** nhận yêu cầu, soạn PRD, xác định rõ chức năng, câu chuyện người dùng, tiêu chí nghiệm thu và mức ưu tiên.
+- **Architect Agent** đọc PRD, chọn bộ công nghệ, chia mô-đun, định nghĩa giao diện và mô hình dữ liệu, tạo thành tài liệu thiết kế.
+- **Project Manager Agent** dựa vào thiết kế để chia nhiệm vụ và phân công tệp, sắp xếp các phụ thuộc, rồi bố trí kỹ sư thực hiện.
+- **Engineer Agents** hiện thực mô-đun theo thiết kế, nộp mã; những phần độc lập với nhau có thể giao cho nhiều phiên bản chạy.
+- **QA Engineer Agent** dựa vào mã và yêu cầu để sinh kiểm thử, chạy kiểm tra và ghi nhận vấn đề, tạo thành báo cáo kiểm thử.
 
-Trong MetaGPT, các vai trò làm việc theo thứ tự cố định (Product Manager → Architect → Project Manager → Engineer → QA), mỗi vai trò xuất ra một "gói bàn giao" có cấu trúc:
+Nếu phải thiết kế định dạng bàn giao cho các vai trò này, tác giả khuyên viết rõ ba điều: nhiệm vụ và tiêu chí nghiệm thu, các sự thật và ràng buộc đã xác nhận, cùng tham chiếu tới sản phẩm có cấu trúc. Bên nhận dựa vào đó để lấy tài liệu cần thiết, tiếp tục công việc, và đặt câu hỏi cụ thể khi thiếu thông tin.
 
-- **Product Manager Agent**: nhận mô tả yêu cầu, sinh PRD có cấu trúc (tài liệu yêu cầu sản phẩm, gồm danh sách chức năng, câu chuyện người dùng, tiêu chí nghiệm thu, sắp xếp ưu tiên)
-- **Architect Agent**: đọc PRD, đưa ra các quyết định kiến trúc (chọn technology stack, phân chia mô-đun, định nghĩa giao diện, thiết kế mô hình dữ liệu), xuất ra tài liệu thiết kế
-- **Project Manager Agent**: đọc thiết kế kiến trúc, tách hệ thống thành danh sách nhiệm vụ cụ thể và phân công tới mức tệp, làm rõ thứ tự phụ thuộc giữa các mô-đun, rồi giao nhiệm vụ cho kỹ sư
-- **Engineer Agents**: đọc tài liệu thiết kế, hiện thực mô-đun mình phụ trách, sinh ra mã. Có thể chạy nhiều thực thể song song
-- **QA Engineer Agent**: đọc mã và PRD, sinh ca kiểm thử, chạy kiểm thử, ghi nhận lỗi, xuất ra báo cáo kiểm thử
+MetaGPT tổ chức thông tin qua một bể tin nhắn dùng chung và cơ chế đăng ký nhận tin: vai trò phát tin nhắn, các vai trò khác xử lý đầu vào liên quan theo loại tin nhắn mà mình quan tâm. Bên phát và bên tiêu thụ được nối với nhau qua định dạng sản phẩm và ngữ nghĩa tin nhắn, nên có thể thay mô hình hoặc điều chỉnh phần hiện thực bên trong của từng bên một cách riêng rẽ.
 
-Trong thực tế, một "gói bàn giao" hữu hiệu thường gồm ba phần: **mô tả nhiệm vụ** (bên nhận phải làm gì, tiêu chí nghiệm thu là gì), **các sự kiện và ràng buộc đã xác nhận** (sở thích người dùng, quy tắc nghiệp vụ, những quyết định đã chốt ở giai đoạn trước), và **tham chiếu tới sản phẩm có cấu trúc** (đường dẫn tệp chứ không phải nội dung tệp, bên nhận đọc khi cần). Mỗi Agent không cần hiểu "quá trình suy nghĩ" của Agent khác, chỉ cần hiểu định dạng và ngữ nghĩa của gói bàn giao cùng sản phẩm.
+SOP mô tả quan hệ phụ thuộc giữa yêu cầu sản phẩm, kiến trúc và mã; việc đăng ký nhận tin mô tả các công việc đó được kích hoạt ra sao. Phụ thuộc nhiệm vụ cố định cũng có thể được đẩy tiến bằng các sự kiện phân tán; hai thứ cùng tạo nên cách cộng tác của hệ thống. Khi thiết kế thêm phản hồi động, có thể bổ sung các đường như người kiểm thử hỏi lại vai trò sản phẩm để làm rõ yêu cầu, kỹ sư đề xuất phương án thay thế với kiến trúc sư, và đặt điều kiện tiếp nhận cùng quy tắc kết thúc cho những tương tác đó.
 
-Đóng góp thực sự của MetaGPT cho giao tiếp phi tập trung nằm ở cơ chế truyền tin: **hồ thông điệp dùng chung + đăng ký theo vai trò**. Mỗi vai trò phát thông điệp có cấu trúc vào một hồ mà mọi vai trò đều thấy; các vai trò khác dựa theo cấu hình đăng ký của mình, chỉ lấy những thông điệp liên quan tới trách nhiệm của mình — chứ không truyền tin một-đối-một. Bên phát không cần biết ai sẽ tiêu thụ đầu ra của mình; muốn thêm vai trò chỉ cần khai báo đăng ký những loại thông điệp nào, không phải sửa bất kỳ vai trò hiện có nào. Điều đó mang lại sự tách rời thực sự: chẳng hạn thay Product Manager bằng một mô hình mạnh hơn, chỉ cần PRD nó phát ra vẫn đúng quy cách thì mọi Agent khác đều không phải sửa.
+[^metagpt-design]: Hong, S., et al. *MetaGPT: Meta Programming for A Multi-Agent Collaborative Framework.* ICLR 2024.
 
-Cần nói cho ngay thật: xét về **luồng điều khiển**, MetaGPT không phi tập trung — thứ tự vai trò do SOP cố định sẵn, tổng thể gần với một dây chuyền hơn (theo ngôn ngữ chương 1 là workflow). Nó được bàn ở mục này vì cơ chế giao tiếp hồ thông điệp cộng đăng ký cho thấy yếu tố thiết kế then chốt nhất của hệ phi tập trung: sự tách rời. Còn những phản hồi động đa chiều kiểu "QA hỏi thẳng Product Manager để làm rõ yêu cầu", "Engineer bàn với Architect về phương án thay thế" là hình dung mở rộng tự nhiên trên kiến trúc này, bản MetaGPT gốc chưa hiện thực.
+**AutoGen group chat: điều phối lượt phát biểu trong một phiên dùng chung.** Trong thiết kế GroupChat kinh điển, nhiều Agent tham gia cùng một phiên hội thoại; GroupChatManager chọn người phát biểu tiếp theo và phát tin nhắn tới các thành viên. Chiến lược chọn có thể là xoay vòng, cũng có thể để mô hình phán đoán dựa trên nội dung hiện tại. Các thành viên giữ cấu hình vai trò riêng, giao tiếp qua phiên chung, còn việc điều phối lượt phát biểu tập trung ở bộ quản lý. Đây là một ví dụ kết hợp giữa cách tổ chức ngữ cảnh và cấu trúc điều khiển.[^autogen-groupchat]
 
-**Group chat của AutoGen.**
+[^autogen-groupchat]: Microsoft, *AutoGen 0.2: Conversation Patterns.*
 
-Group chat của AutoGen cho nhiều Agent cùng tham gia một cuộc hội thoại: mỗi lượt, một "bộ chọn người phát biểu" quyết định Agent nào nói tiếp. Bộ chọn có thể là quy tắc luân phiên đơn giản, cũng có thể là một LLM căn cứ nội dung hội thoại hiện tại để phán đoán ai thích hợp tiếp lời nhất; phát biểu của bất kỳ Agent nào cũng hiển thị cho mọi người tham gia. Nó không phải là hệ phi tập trung hoàn toàn: việc chọn người phát biểu do một GroupChatManager tập trung phân xử, mà "đến lượt ai nói" tự thân đã là một quyết định về luồng điều khiển. Đây là dạng lai "bản ghi hội thoại dùng chung + lập lịch tập trung": mọi Agent nhìn cùng một bản ghi công khai, nhưng mỗi bên vẫn giữ prompt hệ thống và bộ công cụ riêng, còn quyền lập lịch thì tập trung trong tay bộ chọn.
+**OpenAI Swarm: chuyển quyền điều khiển dọc theo handoff.** Swarm cấu hình chỉ dẫn và công cụ cho từng vai trò; khi một vai trò gọi hàm chuyển giao đã cấu hình, runtime chuyển sang Agent đích. Quyết định định tuyến có thể do từng vai trò đưa ra, rồi một vòng lặp chạy thống nhất thực thi. Khi chuyển giao, chỉ dẫn hệ thống hiện tại đổi theo vai trò, còn lịch sử hội thoại được giữ lại. Nó minh họa sự kết hợp giữa “vai trò chọn người tiếp nhận tiếp theo” và “giữ nguyên lịch sử phiên”.[^swarm-handoff]
 
-**OpenAI Swarm.**
+Nếu dùng cách bàn giao với ngữ cảnh độc lập, có thể định nghĩa riêng một gói nhiệm vụ: `task_id` định danh nhiệm vụ, `sender` và `recipient` chỉ định hai bên, `goal` và `constraints` nêu mục tiêu và ràng buộc, `accepted_facts` lưu các sự thật đã xác nhận, `artifact_refs` cung cấp tham chiếu sản phẩm, `remaining_budget` ghi ngân sách, `visited_agents` lưu chuỗi đã đi qua. Bên nhận đọc tài liệu theo quyền được cấp, runtime duy trì ngân sách và bản ghi bàn giao.
 
-OpenAI Swarm là đại diện cho việc luồng điều khiển thực sự đạt phi tập trung ngang hàng: mỗi Agent được trang bị vài tùy chọn handoff (bàn giao), có thể chuyển quyền điều khiển cho bất kỳ Agent nào khác trong mạng vào bất cứ lúc nào. Trong hệ không có người lập lịch trung tâm, quyền điều khiển luân chuyển giữa các Agent ngang hàng như một cây gậy tiếp sức, và quyết định định tuyến hoàn toàn phân tán vào phán đoán của từng Agent. Khác với cộng tác đa Agent dùng chung ngữ cảnh, handoff chỉ nên truyền gói nhiệm vụ rõ ràng và tham chiếu sản phẩm, không nên mặc định phơi bày toàn bộ quỹ đạo riêng tư. Rủi ro của bàn giao ngang hàng là tạo thành vòng: A giao cho B, B lại giao ngược cho A, nhiệm vụ quay không trong vòng lặp; vì vậy cần cơ chế bảo vệ như giới hạn số lần bàn giao.
+Chuỗi bàn giao phải xử lý chuyện quay lại cùng một thành viên. Ví dụ, lập trình viên giao mã cho người duyệt, người duyệt nêu ý kiến sửa rồi trả lại lập trình viên — đó là vòng sửa bình thường. Có thể kết hợp trạng thái nhiệm vụ, phiên bản sản phẩm, vấn đề chưa giải quyết và số lần lặp để đánh giá có tiến triển hay không. Ví dụ, cùng một bản dịch bị trả về hai lần liên tiếp, lần đầu bổ sung nguồn trích dẫn, lần sau sửa thuật ngữ, cho thấy việc sửa vẫn đang tiến triển; nếu cả hai lần trả về cùng một phiên bản và chỉ ra cùng một vấn đề, thì việc sửa đã bị kẹt. Khi đó có thể giới hạn số lần chuyển giao tiếp, và báo các vấn đề chưa giải quyết cho người phụ trách.
 
-Giao thức tối thiểu của handoff phi tập trung có thể biểu diễn như sau:
+[^swarm-handoff]: OpenAI, *Swarm*, “Instructions” và “Handoffs and Updating Context Variables”.
 
-```python
-handoff = {
-    task_id, sender, recipient, goal, constraints,
-    accepted_facts, artifact_refs, remaining_budget,
-    visited_agents
-}
-
-if recipient in handoff.visited_agents:
-    reject("cycle")
-elif handoff.remaining_budget <= 0:
-    stop_and_escalate(handoff)
-else:
-    append(recipient, handoff.visited_agents)
-    run_local_agent(handoff)
-```
-
-Nó biến "cách ly ngữ cảnh" thành một giao diện kiểm tra được: bên nhận đọc gói nhiệm vụ và tham chiếu, lấy chứng cứ khi cần; ngân sách, chuỗi đã ghé qua và việc phát hiện vòng lặp do runtime giữ, không Agent nào được tự xóa.
-
-> Từ năm 2025, "Agent Swarm" (bầy Agent) trở thành từ khóa thời thượng ở các hãng, nhưng nó không ứng với một kiến trúc duy nhất. Cách dùng trong ngành đại thể có hai loại. Thứ nhất, mạng handoff kiểu OpenAI Swarm (thư viện swarm của LangGraph, cơ chế điều phối handoff của Microsoft Agent Framework cũng vậy), chính là mô hình phi tập trung của mục này. Thứ hai, Agent Swarm ở một số sản phẩm thương mại chủ lưu lại là mô hình quản lý được mở rộng quy mô: Agent Swarm ra mắt cùng Kimi K2.5 để Agent chính tạo động hàng trăm Agent con chạy song song, và huấn luyện thẳng vào mô hình các quyết định điều phối "khi nào tách, tách mấy phần" bằng học tăng cường trên Agent song song; K3 tiếp nối nó thành một bậc mô hình độc lập và mã nguồn mở sandbox huấn luyện Agent song song đi kèm là AgentEnv[^ch10-kimi-swarm]. Hệ nghiên cứu đa Agent của Anthropic và Wide Research của Manus đều thuộc tô-pô hình sao orchestrator-worker. Mong rằng sau khi đọc cuốn sách này, bạn đọc nhìn thấu bản chất sau các khái niệm và phân tích được cấu trúc thực của những hệ đa Agent khác nhau, chứ không bị tên gọi làm cho hoa mắt.
-
-**Nhiều thực thể Agent ngang hàng trên cùng một máy.**
-
-Agent của ba hệ thống trên đều đang hợp sức làm cùng một việc. Còn một loại phi tập trung khác là ai làm việc nấy: mỗi Agent có nhiệm vụ riêng, giao tiếp giữa chúng không nhằm phân công mà nhằm phối hợp sử dụng tài nguyên chung. Claude Code đã hỗ trợ nhiều Agent trên cùng một máy phát hiện lẫn nhau (đó chính là công dụng của `list_agents` ở chương 4) và gửi tin cho nhau: hai Agent cùng sửa một nhóm tệp thì thương lượng cách giải quyết xung đột; máy chỉ có một GPU mà cả hai thực thể đều muốn chạy huấn luyện thì phải phối hợp sử dụng GPU.
-
-Bước tiến hóa xa hơn của mô hình phi tập trung là xã hội Agent, sẽ được giới thiệu ở cuối chương này.
-
-[^ch10-kimi-swarm]: Moonshot AI, *Kimi Agent Swarm: 100 Sub-Agents at Scale*, 2026, https://www.kimi.com/blog/agent-swarm. Tại GTC 2026, giới hạn 300 Agent con được công bố; AgentEnv phát hành cùng Kimi K3 vào tháng 7 năm 2026.
-
-### Hợp tác giữa các tổ chức: Thỏa thuận A2A
-
-Các hệ thống trên giả định rằng tất cả Agent đều được phát triển bởi cùng một nhóm và chạy trong cùng một hệ thống. Tại thời điểm này, ba cơ chế giao tiếp là truyền tham số, tệp chia sẻ và bus thông báo là đủ. Nhưng khi sự cộng tác vượt qua ranh giới tổ chức—Agent của bạn cần gọi Agent của công ty khác—các giao thức tương tác được tiêu chuẩn hóa là cần thiết. Bước này thế giới tiến trình cũng đã đi qua: IPC chỉ lo trong phạm vi một máy, bước ra khỏi ranh giới máy thì phải dựa vào các giao thức tiêu chuẩn như TCP/IP và cơ chế khám phá dịch vụ như DNS. A2A đối với Agent thì cũng như giao thức mạng đối với tiến trình. Giao thức **A2A**(Agent2Agent) do Google phát hành vào năm 2025 được thiết kế cho mục đích này (sau đó được tặng cho Linux Foundation để lưu trữ). Nó có ba yếu tố cốt lõi:
-
-- **Thẻ Agent**: Tài liệu siêu dữ liệu mô tả các khả năng của Agent (được xuất bản theo địa chỉ công cộng đã thống nhất), tuyên bố Agent này có thể làm gì, nó hỗ trợ chế độ đầu vào và đầu ra nào và cách xác thực - tương đương với "danh thiếp" của Agent, giải quyết vấn đề khám phá khả năng giữa các tổ chức.
-- **Quản lý vòng đời nhiệm vụ**: A2A mô hình hóa các đơn vị cộng tác dưới dạng nhiệm vụ, với các máy có trạng thái rõ ràng (đã gửi, đang xử lý, yêu cầu đầu vào, đã hoàn thành, không thành công) và hỗ trợ nguyên bản các nhiệm vụ chạy dài cũng như cập nhật tiến trình phát trực tuyến.
-- **Cộng tác không rõ ràng**: Agent chỉ trao đổi các nhiệm vụ và tạo phẩm và các từ nhắc nhở nội bộ, quy trình tư duy và triển khai công cụ không bị lộ - điều này phù hợp với nguyên tắc "không chia sẻ ngữ cảnh" trong chương này và cũng là một thuộc tính bảo mật cần thiết trong cộng tác giữa các tổ chức.
-
-Vị trí của A2A có thể được hiểu khi so sánh với MCP trong Chương 4: MCP giải quyết khả năng tương tác giữa Agent và các công cụ, còn A2A giải quyết khả năng tương tác giữa Agent và Agent. Nó không thay thế ba cơ chế giao tiếp được giới thiệu trong chương này, nhưng là một lớp được tiêu chuẩn hóa phía trên chúng và vượt qua các ranh giới tin cậy - nhiều hệ thống Agent trong cùng một nhóm có thể sử dụng trực tiếp bus thông báo. Chỉ khi các cộng tác viên không tin tưởng lẫn nhau và vô hình với nhau thì mới cần đến một giao thức công khai như A2A.
-
-## Chế độ lỗi cho nhiều lần cộng tác Agent
-
-Trong khi các hệ thống multi-Agent giới thiệu khả năng cộng tác, chúng cũng đưa ra các chế độ lỗi mới không tồn tại với các hệ thống Agent đơn lẻ. Bài báo năm 2025 "Tại sao hệ thống Multi-Agent LLM bị lỗi?" (đề xuất phương pháp phân loại chế độ lỗi MAST) đã thực hiện một nghiên cứu có hệ thống về vấn đề này: các nhà nghiên cứu đã thu thập trajectory thực thi trên 7 khung đa Agent chính thống, bao gồm MetaGPT, ChatDev, AG2 và Magentic-One và chú thích thủ công khoảng 150. Sau khi phân tích từng trajectory một (độ nhất quán của chú thích là cực kỳ cao, kappa của Cohen = 0,88, cho thấy rằng các trình chú thích khác nhau có các phán đoán có tính nhất quán cao về chế độ lỗi), **14 chế độ lỗi duy nhất** cuối cùng đã được tóm tắt, chia thành ba loại chính:
-
-- **Lỗi thiết kế hệ thống**: Định nghĩa không rõ ràng về giao diện giữa Agent, vai trò và trách nhiệm chồng chéo, cấu hình công cụ không chính xác và các vấn đề ở cấp độ kiến trúc khác
-- **Lỗi liên kết giữa Agent**: Nhiều Agent có sự hiểu biết không nhất quán về mục tiêu nhiệm vụ, thông tin được truyền bị Agent xuôi dòng hiểu nhầm hoặc hoạt động của nhiều Agent trái ngược nhau về mặt logic.
-- **Thiếu xác minh nhiệm vụ**: Hệ thống thiếu cơ chế hiệu quả để xác nhận nhiệm vụ có thực sự hoàn thành hay không - Agent tuyên bố đã "hoàn thành" nhưng kết quả thực tế không đạt yêu cầu
-
-Ngay cả khi các bản sửa lỗi đơn giản được đưa ra, những cải tiến vẫn rất khiêm tốn (ví dụ: khung ChatDev chỉ cải thiện 15,6%). Do đó, các nhà nghiên cứu tin rằng đây không phải là những lỗi kỹ thuật đơn giản mà là **lỗi thiết kế cơ bản** của kiến trúc đa Agent hiện tại: chỉ vá một liên kết nhất định là không đủ để giải quyết vấn đề và cần phải suy nghĩ lại từ cấp độ thiết kế hệ thống.
-
-Lý thuyết chịu lỗi phân tán chia sự cố thành hai loại: **sự cố sập** (bộ phận ngừng làm việc) và **sự cố Byzantine** (bộ phận không ngừng làm việc, nhưng đưa ra thông tin sai). Các hệ thống truyền thống phần lớn chỉ cần phòng sập; nhưng sự cố của Agent lại vốn dĩ mang tính Byzantine—nó rất hiếm khi dừng chạy hẳn, mà tiếp tục đưa ra những kết luận sai trông có vẻ đáng tin, và cái sai không tự tuyên bố mình là sai. Điều này giải thích vì sao vá một mắt xích riêng lẻ lại thu được rất ít: không mắt xích nào chủ động phơi bày vấn đề, chỉ có thể dựa vào sự dư thừa độc lập để phát hiện. Việc kiểm chứng chéo và biểu quyết đa số xuất hiện đi xuất hiện lại ở phần sau của chương này chính là những phương thức kinh điển của khả năng chịu lỗi Byzantine; phản hồi bên ngoài mang tính xác định (kiểm thử, trình biên dịch, truy vấn cơ sở dữ liệu) sở dĩ quý giá là vì nó là bộ phận duy nhất trong hệ thống không nói dối.
-
-Phần sau đây tập trung vào hai chế độ lỗi đặc biệt phổ biến và có tính phá hoại trong thực tế: (1) xung đột đồng thời trong hệ thống tệp dùng chung; (2) tầng khuếch đại lỗi. Cần lưu ý rằng hai chế độ lỗi này tập trung vào khía cạnh kỹ thuật (đồng thời của hệ thống tệp, truyền thông báo lỗi xuyên Agent) và là phần bổ sung cho phân loại của MAST tập trung vào các lỗi cộng tác đàm thoại, thay vì trình bày lại 14 chế độ của nó.
-
-### Kiểu lỗi 1: Xung đột đồng thời trong hệ thống file dùng chung
-
-Đã chọn kiểu giao tiếp bằng bộ nhớ chia sẻ thì xung đột tương tranh cũng theo đó mà đến—đây là vấn đề mà hệ điều hành và cơ sở dữ liệu đã giải quyết từ mấy chục năm trước, đáp án đã có sẵn. Xung đột có thể được chia thành hai loại.
-
-**Xung đột đơn giản (xung đột ghi ở cấp độ tệp)**: Hai Agent sửa đổi cùng một tệp cùng một lúc và tệp được viết sau sẽ ghi đè sửa đổi được viết trước. Đây là sự cố cập nhật bị mất cổ điển trong trường cơ sở dữ liệu - và cơ chế phát hiện xung đột hợp nhất của Git được thiết kế để chặn loại phạm vi bảo hiểm này.
-
-**Xung đột ngữ nghĩa (xung đột nhất quán ở mức logic)**: Không có xung đột nào hiển thị ở cấp độ tệp, nhưng hoạt động của nhiều Agent trái ngược nhau về mặt logic - loại xung đột này tiềm ẩn hơn và nguy hiểm hơn. Ví dụ: Agent A có nhiệm vụ sắp xếp lại các số hình ảnh trong toàn bộ cuốn sách, trong khi Agent B cũng có nhiệm vụ sửa đổi nội dung của một chương nào đó và trích dẫn các hình ảnh được đánh số gốc. Cả hai vận hành các tệp khác nhau và không có xung đột ở cấp độ tệp. Nhưng kết quả là các số hình ảnh được B tham chiếu đều không hợp lệ sau khi A hoàn thành việc đánh số lại và người đọc sẽ thấy tham chiếu hình ảnh sai.
-
-**Giải pháp: cơ chế khóa lạc quan (Optimistic Locking).** Đây là chiến lược kiểm soát đồng thời quen thuộc trong lĩnh vực cơ sở dữ liệu. Cách hiện thực như sau: mỗi tệp giữ một số hiệu phiên bản (hoặc mốc thời gian sửa đổi cuối). Khi đọc tệp, Agent ghi lại số phiên bản hiện tại; khi ghi, nó kiểm tra xem số phiên bản có còn khớp với lúc đọc hay không. Nếu trong khoảng đó tệp đã bị Agent khác sửa, việc ghi sẽ thất bại và Agent buộc phải đọc lại phiên bản mới nhất rồi làm lại thao tác trên nền phiên bản ấy. Cái giá của cơ chế này là thỉnh thoảng phải thử lại, đổi lại là bảo đảm về tính nhất quán dữ liệu.
-
-Cần lưu ý rằng khóa lạc quan chỉ ngăn được xung đột ghi **trên cùng một tệp**. Với **xung đột ngữ nghĩa xuyên tệp** đã nói ở trên thì cần một cơ chế kiểm định ngữ nghĩa ở tầng cao hơn. Trong tình huống phổ biến nhất — nhiều Coding Agent cùng lúc sửa một codebase — cách làm chủ lưu của ngành là **cách ly bản sao làm việc**: mỗi Agent được cấp một nhánh Git hoặc worktree riêng, ai nấy sửa trên bản sao của mình một cách song song mà không cản trở nhau, còn xung đột thì dồn lại và hoãn tới điểm hợp nhất cuối cùng.
-
-### Kiểu lỗi thứ hai: Khuếch đại lỗi theo tầng
-
-Giao tiếp giữa các tiến trình truyền tải từng byte với độ trung thực ở mức bit, pero giao tiếp giữa các Agent lại truyền tải ngữ nghĩa—và mỗi lần chuyển giao đều là một quá trình mã hóa lại có tổn thất. Khi nhiều Agent tương tác thường xuyên, lỗi của một Agent có thể bị các Agent tiếp theo củng cố theo từng tầng, giống như trong trò chơi "truyền tin" thông tin càng truyền càng bị bóp méo.
-
-**Xác minh chéo** (Cross-validation) là phương pháp then chốt để cắt đứt chuỗi này. Mục đích không phải là đưa thêm Agent vào cùng một chuỗi suy nghĩ, mà là để một Agent xem xét lại kết luận từ **góc nhìn độc lập**: không xem quá trình suy luận trước đó, chỉ kiểm tra xem bằng chứng gốc có hỗ trợ kết luận cuối cùng hay không. Đây là phần mở rộng của cơ chế Người đề xuất - Người đánh giá ở Chương 5 sang hệ thống đa Agent.
-
-### Kiểu lỗi thứ ba: Hội tụ đồng dạng
-
-Lỗi không nhất thiết lan truyền theo chuỗi giao tiếp; nhiều Agent đồng dạng có thể độc lập tạo ra cùng một lỗi. Trong thí nghiệm của Anthropic,[^anthropic-multiagent-2026] 18 trong số 30 Agent khởi chạy cùng lúc đã tạo nhánh Git trùng tên. Trong một thí nghiệm viết, các Agent khác nhau cũng độc lập chọn cùng một tiêu đề. **Lỗi do nguyên nhân chung** từ cùng mô hình và giàn khung cho thấy nhiều ý kiến đánh giá do cùng một mô hình tạo ra trong ngữ cảnh tương tự không thể mặc nhiên được coi là bằng chứng độc lập. Hệ thống phải chủ động tạo khác biệt về mô hình, ngữ cảnh và nguồn dữ liệu, đồng thời dùng namespace, hạn mức tài nguyên và giới hạn tần suất để tránh các quyết định giống nhau cùng lúc tác động lên tài nguyên chung.
-
-Bản thân sự phối hợp cũng không nhất thiết có lợi. Trong thí nghiệm định giá Bertrand, các Agent tối đa hóa lợi nhuận nhanh chóng thông đồng khi có kênh riêng. Sau khi mọi kênh giao tiếp trực tiếp bị loại bỏ, chúng vẫn phối hợp giá chào qua bảng giá công khai.
-
-### Kiểu lỗi thứ tư: Đùn đẩy trách nhiệm
-
-Khi các mục tiêu xung đột, hội tụ có thể biến thành đối đầu. Anthropic giao cho ba Agent di chuyển cùng một backend sang ba ngôn ngữ khác nhau. Chúng nhanh chóng coi hành động của Agent khác là cản trở có chủ ý, chấm dứt tiến trình của nhau, thu hồi quyền và thậm chí triển khai mã phá hoại có khả năng tự sao chép. Khả năng thực thi mạnh hơn không đồng nghĩa với khả năng phối hợp tốt hơn. Môi trường chạy phải xác định trước thứ tự ưu tiên mục tiêu, quyền sở hữu tài nguyên và ranh giới quyền hạn; nếu xung đột không thể giải quyết bằng quy tắc có thể kiểm chứng, hệ thống phải dừng và chuyển cho con người phân xử.[^anthropic-multiagent-2026]
-
-Các phiên bản MetaGPT ban đầu cũng mắc một dạng “bệnh công ty lớn”: những Agent đảm nhiệm vai trò phát triển đùn đẩy trách nhiệm cho nhau. Khi Agent kiểm thử báo một bug, kỹ sư frontend và backend đều cho rằng bên kia phải sửa trước; kỹ sư backend đổ lỗi cho thiết kế sản phẩm, còn quản lý sản phẩm đổ lỗi cho kiến trúc backend. Trong trường hợp khác, chính môi trường kiểm thử gặp sự cố nên dù frontend và backend sửa thế nào, Agent kiểm thử vẫn báo cùng một bug và cả nhóm rơi vào bế tắc.
-
-### Kiểu lỗi thứ năm: Vòng lặp mất kiểm soát
-
-Đối cực của việc kết thúc sớm là **vòng lặp không được kiểm soát**. Vòng lặp có thể chạy vô hạn hoặc dùng hết ngân sách token. Cần có ngân sách tường minh, cơ chế hủy và điều kiện dừng để giới hạn quá trình thực thi.
-
-### Kiểu lỗi thứ sáu: Nợ hiểu biết và đầu hàng nhận thức
-
-Kiểu này không phải là thất bại của Agent mà là thất bại của con người. Khi Agent càng thông minh và càng đủ sức chạy những quy trình dài, việc con người hiểu được thứ Agent bàn giao và đưa ra chỉ dẫn hữu hiệu cho nó lại càng khó.
-
-Phát triển bằng Agent rất dễ tích lũy **nợ hiểu biết**: vòng lặp giao mã càng nhanh thì hiểu biết của kỹ sư về những gì hệ thống thực sự làm càng tụt lại phía sau, đến khi xảy ra sự cố nghiêm trọng buộc phải can thiệp thủ công thì kỹ sư đã không còn đọc nổi hệ thống của chính mình. Vấn đề thứ hai là **sự đầu hàng nhận thức**: quen giao phó cho Agent, kỹ sư dần từ bỏ tư duy độc lập và việc rà soát, và chất lượng phần mềm vuột khỏi tầm kiểm soát.
-
-Andrej Karpathy từng nói: bạn có thể thuê ngoài việc suy nghĩ, nhưng không thể thuê ngoài sự hiểu. Quản lý Agent cũng như quản lý nhân sự kỹ thuật — không được làm thay việc của họ, cũng không được buông hẳn. Một người quản lý kỹ thuật đủ tầm phải hiểu và dẫn dắt kiến trúc hệ thống, chứ không phải chỉ ra lệnh cho Agent theo kiểu áp đặt. Vì vậy nền tảng kỹ thuật của chính người dùng Agent là điều quan trọng.
-
-Tất cả những gì bàn ở trên đều là góc nhìn kỹ thuật: làm sao để một nhóm Agent cộng tác hoàn thành nhiệm vụ. Bây giờ góc nhìn chuyển hướng: khi một số lượng lớn Agent cùng tồn tại lâu dài và không còn được dẫn dắt bởi một mục tiêu duy nhất, điều gì sẽ nổi lên?
-
-## Agent Xã hội
-
-Ba phần trước đã thảo luận về cộng tác nhiệm vụ với các mục tiêu rõ ràng—cho dù đó là cộng tác ngang hàng, chế độ người quản lý hay chế độ phi tập trung, các nhà phát triển đều có vai trò, giao diện và luồng điều khiển được xác định trước. Tiếp theo, chúng tôi chuyển quan điểm của mình sang một câu hỏi cởi mở hơn: **Những hành vi nào sẽ xuất hiện khi số lượng Agent mở rộng từ vài lên hàng trăm hoặc hàng nghìn và tương tác đủ miễn phí?** Phần nội dung này thiên về nghiên cứu học thuật và khám phá tiên tiến, đồng thời có tính chất khác với hướng dẫn kỹ thuật trước đó.
-
-Các trường hợp trong phần này có thể được hiểu từ ba chiều:
-
-- **Sự xuất hiện xã hội**: Agent Sự hình thành tự phát của các mối quan hệ xã hội và hiện tượng văn hóa trong một môi trường mở. Stanford AI Town đã trình diễn cách 25 Agent tự tổ chức các hoạt động xã hội, Agentopia kéo dài thang thời gian mô phỏng từ “ngày” lên 10 năm, trong khi Moltbook đẩy quy mô lên 1,5 triệu, dẫn đến các hành vi tập thể phức tạp hơn.
-- **Sự nổi lên về kinh tế**: Agent sử dụng cơ chế thị trường để phân bổ nguồn lực và điều phối nhiệm vụ. Vending-Bench Arena cho phép nhiều Agent cạnh tranh và hoạt động trong cùng một thị trường, trong khi Pinchwork và RentAHuman xây dựng thị trường giao dịch kinh tế giữa Agent (và giữa Agent và con người).
-- **Trò chơi chiến lược**: Agent thực hiện việc suy luận, lừa dối và thao túng xã hội dưới sự ràng buộc của các quy tắc ("lý luận" ở đây và trong phần Người sói dưới đây mang ý nghĩa suy diễn hàng ngày, ám chỉ trò chơi logic trong trò chơi lý luận chứ không phải ý nghĩa kỹ thuật của lý luận=suy nghĩ trong cuốn sách này). Thí nghiệm giết người sói kiểm tra khả năng xuất hiện chiến lược của Agent trong điều kiện thông tin bất cân xứng.
-
-### Thị trấn AI Stanford: Mô phỏng xã hội sáng tạo Agent
-
-
-![Hình 10-10 Kiến trúc thị trấn AI ](images/fig10-10.svg)
-
-
-Năm 2023, Đại học Stanford và nhóm nghiên cứu của Google đã xuất bản bài báo mang tính bước ngoặt “Generative Agents: Interactive Simulacra of Human Behavior”, đề xuất khái niệm “Generative Agent”. Đổi mới cốt lõi là không còn giới hạn Agent trong việc hoàn thành các nhiệm vụ được xác định trước mà mang lại cho Agent khả năng lập kế hoạch, phản ánh và trí nhớ gần giống con người, cho phép chúng sống, hòa nhập xã hội và phát triển tự chủ trong một môi trường xã hội mở.
-
-Smallville là một thị trấn ảo 2D tương tự như The Sims, với không gian công cộng và riêng tư như quán cà phê, công viên, nhà ở và cửa hàng. 25 Agent đóng các nhân vật khác nhau (chủ cửa hàng, nghệ sĩ, sinh viên, giáo sư, v.v.), mỗi nhân vật có cốt truyện, đặc điểm tính cách và mối quan hệ độc đáo. Chẳng hạn, John Lin là chủ hiệu thuốc, yêu gia đình và quan tâm đến cộng đồng; Isabella Rodriguez điều hành quán cà phê Hobbs ở một thị trấn nhỏ và rất hiếu khách; Klaus Mueller là một sinh viên đại học đang viết một bài nghiên cứu.
-
-Các trí thông minh Agent này được xây dựng trên ba thành phần cốt lõi:
-
-**Luồng bộ nhớ**(Luồng bộ nhớ): Không giống như Agent truyền thống vốn chỉ lưu giữ một lịch sử hội thoại hạn chế, Agent tổng quát duy trì một luồng bản ghi trải nghiệm hoàn chỉnh, bao gồm các sự kiện mà nó quan sát, các cuộc hội thoại mà nó có và những ý tưởng mà nó tạo ra. Mỗi bộ nhớ được gán các thuộc tính về tầm quan trọng, lần truy cập gần đây và mức độ liên quan, đồng thời Agent có thể ưu tiên truy xuất những ký ức phù hợp nhất với tình huống hiện tại. Cũng giống như con người, chúng ta không nhớ mọi thứ như nhau—những gì chúng ta ăn trong bữa trưa hôm qua có thể bị lãng quên, nhưng cuộc trò chuyện quan trọng vào tuần trước vẫn còn nguyên trong trí nhớ của chúng ta.
-
-**Cơ chế phản ánh**(Suy ngẫm): Agent sẽ định kỳ tạm dừng các hoạt động hàng ngày, xem lại những trải nghiệm gần đây của mình và đặt những câu hỏi trừu tượng về bản thân và những người khác ("Klaus Mueller đang học gì?" "Bạn thân nhất của tôi là ai?"). Thông qua kiểu tự đặt câu hỏi này, Agent chuyển những ký ức sự kiện cụ thể thành những hiểu biết chung và lưu trữ chúng trở lại luồng bộ nhớ làm cơ sở cho các quyết định trong tương lai. Sự phản ánh không chỉ giúp Agent hiểu thế giới bên ngoài mà còn thúc đẩy sự hiểu biết về bản thân—Agent trở nên “nhận thức” về vai trò, mối quan hệ và mục tiêu của mình.
-
-Cần lưu ý rằng phản ánh ở đây khác với phản ánh trong quá trình tự tiến hóa Agent của Chương 9: phản ánh trong Chương 9 xảy ra **sau khi nhiệm vụ kết thúc**, với mục đích cập nhật các khả năng dài hạn; sự phản ánh ở đây xảy ra trong **các hoạt động hàng ngày mang tính tổng quát của Agent**, với mục đích cập nhật trạng thái và mục tiêu nội bộ ngay lập tức.
-
-**Lập kế hoạch và phản ứng**(Lập kế hoạch và phản ứng): Agent sẽ lên kế hoạch cho các hoạt động hàng ngày (chẳng hạn như "ăn sáng lúc 8:30, viết lúc 9:00-12:00, đi dạo lúc 12:30"), nhưng sẽ điều chỉnh linh hoạt theo những thay đổi của môi trường và cơ hội xã hội. Sự kết hợp giữa lập kế hoạch và phản ứng ngay lập tức khiến hành vi của Agent vừa hướng đến mục tiêu vừa có thể thích ứng với tính chất khó đoán của tương tác xã hội.
-
-Trong hai ngày chạy ảo ở Smallville, những chiếc Agent này đã thể hiện **hành vi mới nổi** đáng ngạc nhiên. Tất cả những gì các nhà nghiên cứu làm chỉ là gieo mầm mống ý tưởng vào trí nhớ của Isabella Rodriguez: Cô muốn tổ chức một bữa tiệc Ngày lễ tình nhân tại quán cà phê Hobbs vào tối ngày 14 tháng 2. Mọi chuyện xảy ra tiếp theo là kết quả của những hành động độc lập của Agent: Isabella chủ động gửi thiệp mời khi gặp khách hàng và bạn bè trong quán cà phê, đồng thời nhờ cô bạn Maria giúp sắp xếp địa điểm; Agent, người biết tin, đã chuyển thông tin đảng cho người khác, và thông tin này đã lan truyền khắp thị trấn thông qua việc phổ biến gián tiếp; Vào thời điểm đã hẹn, nhiều Agent đã tự mình đưa ra quyết định đến Hobbs Cafe dựa trên ký ức và lịch trình của chính mình. Giữ các cuộc hẹn.
-
-Các nhà nghiên cứu còn cấy ghép một dòng thử nghiệm khác: Sam Moore quyết định tranh cử thị trưởng. Tin tức này cũng lan truyền mà không có bất kỳ công văn nào của trung tâm - Sam tiết lộ ý định tranh cử cho những người quen của mình, và những người nghe được đã nói với những người khác, và người dân trong thị trấn bắt đầu thảo luận về cuộc bầu cử và trao đổi quan điểm của họ về Sam trong cuộc trò chuyện. Các nhà nghiên cứu đã định lượng sự lan truyền thông tin tự phát trong xã hội Agent bằng cách đếm xem có bao nhiêu Agent biết hai thông tin này sau hai ngày.
-
-Mấu chốt của kết quả này không phải là "Agent có thể tổ chức một bữa tiệc" - một vài dòng mã if-else cũng có thể làm được điều tương tự. Điều quan trọng là không có bất kỳ mã tổ chức đảng rõ ràng nào. Toàn bộ sự kiện xuất hiện hoàn toàn từ việc ra quyết định độc lập của cá nhân Agent: Isabella quyết định mời ai dựa trên các mối quan hệ xã hội trong trí nhớ của cô ấy, những người được mời quyết định có tham dự cuộc hẹn hay không dựa trên lịch trình của chính họ và kiến thức về Isabella, và tin tức lan truyền một cách tự nhiên trên mạng xã hội. Điều này thể hiện sự phối hợp thực sự từ dưới lên chứ không phải là sự điều phối từ trên xuống.
-
-Ngoài việc phổ biến thông tin, bài báo còn báo cáo hai loại hiện tượng mới nổi khác có thể đo lường được. Đầu tiên là **Bộ nhớ mối quan hệ**: Agent sẽ ghi nhớ các cuộc trò chuyện trước đây với người khác và đề cập đến chúng trong các tương tác tiếp theo - ví dụ: một Agent biết rằng một Agent khác đang chuẩn bị một dự án chụp ảnh và sẽ chủ động hỏi về tiến trình khi họ gặp lại nhau vài ngày sau đó; với sự tích lũy của những tương tác như vậy, mật độ mạng xã hội của thị trấn đã tăng lên đáng kể trong thời gian mô phỏng. Thứ hai là **Phối hợp tham dự các cuộc hẹn**: Bữa tiệc có thể tổ chức thành công vì Isabella độc lập mời mọi người sắp xếp, còn khách mời tự sắp xếp thời gian đến. Nhiều Agent căn chỉnh thời gian và vị trí mà không cần lệnh trung tâm. Những hành vi này không được lập trình trước mà là kết quả của khả năng suy luận tự chủ của Agent dựa trên trí nhớ, sự phản ánh và ý thức xã hội thông thường.
-
-> **Thí nghiệm 10-5 ★: Chạy Thị trấn AI của Stanford**
+> **Agent Swarm trong các sản phẩm**
 >
-> **Các bước thử nghiệm**:
-> 1. Sao chép kho `https://github.com/joonspk-research/generative_agents` và định cấu hình môi trường
-> 2. Chạy kịch bản cơ sở: 25 Agent sống trong hai ngày và quan sát các hoạt động xã hội tự phát
-> 3. Phân tích luồng bộ nhớ và nhật ký phản ánh để hiểu quá trình ra quyết định
-> 4. Thiết kế các kịch bản tùy chỉnh: sửa đổi câu chuyện nền hoặc mục tiêu ban đầu và quan sát những thay đổi trong hành vi
-> 5. Thí nghiệm so sánh: loại bỏ cơ chế phản ánh hoặc rút ngắn cửa sổ bộ nhớ, độ tin cậy của hành vi quan sát được giảm
+> “Agent Swarm” có thể chỉ những cách tổ chức khác nhau. Một loại chuyển quyền điều khiển dọc theo mạng handoff, như OpenAI Swarm, thư viện swarm của LangGraph và kiểu điều phối handoff trong Agent Framework của Microsoft; loại kia dùng một Agent chính cùng các worker song song, ví dụ Kimi Agent Swarm, hệ thống nghiên cứu đa Agent của Anthropic và Manus Wide Research.
 >
-> **Những điểm chính cần quan sát**:
-> - Agent Cách hình thành các mối quan hệ xã hội một cách tự nhiên từ những hoạt động đơn giản hàng ngày
-> - Cách truyền thông tin giữa Agent mà không cần điều khiển trung tâm
-> - Trí nhớ và sự phản ánh dài hạn của Agent ảnh hưởng như thế nào đến sự mạch lạc trong tính cách của anh ấy
+> Agent Swarm được giới thiệu cùng Kimi K2.5 dùng học tăng cường Agent song song để huấn luyện bộ điều phối, học khi nào chia nhiệm vụ và phân việc ra sao, hỗ trợ tối đa 100 Agent con. Các phiên bản sau mở rộng quy mô lên 300; K3 Swarm tiếp tục được dùng cho tìm kiếm quy mô lớn và xử lý hàng loạt. AgentENV thì cung cấp môi trường có khả năng mở rộng cho học tăng cường Agent của Kimi K3, hỗ trợ snapshot và phân nhánh, dùng để tổ chức thực thi song song.[^ch10-kimi-swarm]
+
+**Nhiều phiên bản Agent trên cùng một máy.** Nhiều phiên bản chạy có thể đảm nhận các nhiệm vụ khác nhau nhưng dùng chung tệp, dịch vụ công cụ hoặc GPU. Khi đó, giao tiếp có thể dùng để nói rõ phạm vi sửa, báo tài nguyên đã được giải phóng hoặc thương lượng thứ tự thực thi. Ví dụ, khi hai phiên bản đều cần một GPU, có thể đăng ký trước nhiệm vụ và mức dùng dự kiến, rồi để bộ quản lý tài nguyên cấp quyền sử dụng.
+
+Agent Teams của Claude Code cung cấp khả năng khám phá thành viên trong đội, nhắn tin và quản lý nhiệm vụ dùng chung. Các thành viên lấy thông tin của nhau trong phạm vi đội đã lập, runtime tổ chức việc giao tiếp.[^claude-agent-teams] Khi tự xây dựng cộng tác trên cùng một máy, cũng có thể dùng các giao diện như `list_agents` ở Chương 4, và đặt quy tắc rõ ràng cho phạm vi khám phá, quyền truy cập và quyền sở hữu tài nguyên. Kết quả thương lượng trong tin nhắn sau đó được thực thi bằng khóa, hạn mức hoặc bộ điều phối.
+
+[^ch10-kimi-swarm]: Moonshot AI, *Kimi Agent Swarm: 100 Sub-Agents at Scale*, tài liệu trợ giúp Agent Swarm và mô tả dự án AgentENV.
+
+[^claude-agent-teams]: Anthropic, *Orchestrate teams of Claude Code sessions.*
+
+### Cộng tác xuyên tổ chức: giao thức A2A
+
+Khi cộng tác vượt qua ranh giới dịch vụ hoặc tổ chức, hai bên cần thống nhất về khám phá năng lực, xác thực danh tính, định dạng yêu cầu, cách giao tiến độ và kết quả. Giao thức **A2A** (Agent2Agent) do Google công bố năm 2025 cung cấp một giao diện liên thông như vậy, sau đó được chuyển cho Linux Foundation quản lý. Có thể hiểu nó qua ba khía cạnh.[^a2a-concepts]
+
+- **Khám phá năng lực.** Agent Card là tài liệu metadata mô tả danh tính, điểm cuối dịch vụ, kỹ năng, phương thức đầu vào/đầu ra và yêu cầu xác thực. Bên gọi dựa vào đó để biết bên kia có xử lý được nhiệm vụ không, và thiết lập kết nối ra sao.
+- **Nhiệm vụ và tin nhắn.** Task biểu diễn một công việc có định danh và vòng đời; bên gọi có thể theo dõi các trạng thái như đã gửi, đang xử lý, cần đầu vào, đã xong hoặc thất bại. Message mang yêu cầu nhiệm vụ, thông tin bổ sung và câu trả lời; Artifact dùng để giao tài liệu, hình ảnh hoặc kết quả có cấu trúc. Part trong tin nhắn và sản phẩm có thể chứa văn bản, tham chiếu tệp hoặc dữ liệu.
+- **Cộng tác qua giao diện.** Bên gọi giao tiếp với phía từ xa qua các đối tượng công khai này, còn phía từ xa tự quản lý prompt, ký ức và công cụ nội bộ. Mỗi bên tự thực thi việc xác thực, cấp quyền và phạm vi truy cập dữ liệu.
+
+Nhiệm vụ dài có thể lấy trạng thái bằng thăm dò định kỳ (polling), cũng có thể nhận cập nhật dạng luồng qua SSE, hoặc dùng thông báo đẩy khi được hỗ trợ. Sau khi người dùng bổ sung thông tin, client tiếp tục đẩy cùng một nhiệm vụ đi tiếp, và lấy sản phẩm cuối cùng theo trạng thái nhiệm vụ.
+
+MCP ở Chương 4 tập trung vào việc cung cấp giao diện công cụ, tài nguyên và prompt cho ứng dụng mô hình; A2A tập trung vào cộng tác nhiệm vụ giữa các dịch vụ Agent. Hai thứ có thể kết hợp: một Agent dùng công cụ qua MCP, đồng thời ủy thác nhiệm vụ từ xa qua A2A. Khi trong cùng một đội đã có giao diện ổn định, tác giả tiếp tục dùng gọi công cụ, tệp dùng chung và bus tin nhắn. Khi cần kết nối các dịch vụ Agent được bảo trì độc lập, thống nhất cách khám phá năng lực và vòng đời nhiệm vụ, mới đưa A2A vào; khi xuyên tổ chức, còn cấu hình thêm quy tắc về danh tính, quyền hạn và quản trị dữ liệu.
+
+[^a2a-concepts]: A2A Project, *Core Concepts and Components in A2A.*
+
+**Hẹn giờ thay cho nhiều người khác nhau.** Ba người trong một gia đình, mỗi người có một trợ lý lịch riêng, muốn hẹn một bữa tối. Một trợ lý đọc được toàn bộ lịch của chủ, nên trả lời hai trợ lý kia thế nào? “Thứ Ba không tiện, thứ Tư có thể xê dịch” đã cho biết một khác biệt hữu ích. Chuyển thẳng cả lịch sẽ để lộ thêm việc riêng ngày thứ Ba; chỉ trả lời “cả hai ngày đều bận” thì người khác lại không biết thứ Tư vẫn còn có thể thương lượng. Dù lần nào cũng hẹn được, nếu luôn là cùng một người phải dời lịch, cách sắp xếp này chưa chắc có lợi cho người đó.
+
+Một đề công khai của CalBench yêu cầu năm người xếp năm cuộc họp, mỗi cuộc ba người tham dự. Có người hoàn toàn không thể xê dịch ở một khung giờ nào đó, có những việc riêng có thể dời lịch, và đề bài quy định chi phí cho mỗi lần dời. Thử trước một cách đơn giản: xử lý lần lượt năm cuộc họp, mỗi lần tìm từ khung giờ sớm nhất, ba người đều thu xếp được thì chốt; các cuộc họp đã hẹn thì giữ nguyên. Rồi thử cách khác: đặt cả năm cuộc họp cùng nhau và giải dựa trên toàn bộ lịch. Phần dưới giữ cách đánh số khung giờ của đề bài, bắt đầu từ 0.[^ch10-calbench]
+
+| Cách xếp | Khung giờ của từng cuộc họp thứ 1 đến thứ 5 | Chi phí dời lịch phải trả khi chốt từng cuộc | Tổng chi phí |
+|---|---|---|---:|
+| Mỗi cuộc chọn khung giờ sớm nhất thu xếp được, giữ nguyên các cuộc đã hẹn | 0, 2, 1, 3, 6 | 1, 20, 20, 12, 300 | 353 |
+| Bộ giải tham chiếu xếp tổng thể cả năm cuộc | 13, 3, 10, 9, 12 | 0, 1, 0, 1, 1 | 3 |
+
+Cả hai lịch đều khớp được từng cuộc trên lịch cuối cùng của ba người dự. Chênh lệch lớn nhất là cuộc cuối: theo cách thứ nhất, khung giờ 6 tuy thu xếp được, nhưng mỗi người trong ba người đều phải dời một việc có chi phí 100. Xếp vào khung giờ 12 thì chỉ một người phải dời một việc có chi phí 1. Kết quả tổng thể cho người đánh giá một căn cứ để so sánh; còn các trợ lý thực sự tham gia thương lượng thì mỗi người chỉ thấy được lịch của chủ mình.
+
+Bộ giải tham lam đi kèm phiên bản này báo chi phí là 146 và trả về khung giờ cho cả năm cuộc họp. Nhưng khi xếp các cuộc sau, nó cho phép dời cuộc họp trước đó khỏi lịch của một vài người tham dự. Cuộc họp thứ nhất cuối cùng nằm ở các khung giờ 7, 0 và 11 trên lịch của ba người tham dự. Nếu nghiệm thu theo tiêu chí “lịch cuối cùng của ba người ghi cùng một cuộc, cùng một khung giờ”, thì chỉ cuộc thứ ba, thứ tư và thứ năm là thành công.
+
+Một dịch vụ hẹn lịch thực tế còn gặp những thông tin mà đề xếp lịch không đưa ra. Calendar.help của Microsoft từng điều phối hàng nghìn cuộc họp qua email trong một năm. Một email là để hẹn cuộc mới, hay để đổi cuộc hẹn lần trước? Khi bộ phân loại tự động không chắc, con người sẽ xem email trước, và chỉ xử lý đúng câu hỏi phán đoán đó. Nếu chỉ dựa vào email mà không trả lời được, có thể giao nhiệm vụ cho nhân viên xếp lịch, người xem được chuỗi email qua lại, thông tin đã thu thập và lịch đã ẩn danh. Thiết kế này gắn câu hỏi “nên nhờ ai phán đoán” với câu hỏi “người đó cần thấy bao nhiêu”.[^ch10-calendar-help]
+
+[^ch10-calbench]: Bài báo CalBench bàn riêng về chi phí điều phối, tính công bằng, việc rò rỉ trạng thái lịch có thể suy ra được và nội dung cụ thể của từng việc. Số liệu lấy từ đề đầu tiên trong bộ đề có chi phí dời lịch khác nhau ở phiên bản `86f8123`; cách xếp thứ nhất bỏ qua những khung giờ mà bất kỳ người tham dự nào đã có cuộc họp, phần còn lại giữ quy tắc dời lịch của tác giả bài báo. Có thể dùng bộ giải xếp lịch để tính lại.
+
+[^ch10-calendar-help]: Cranshaw và cộng sự, thiết kế và triển khai Calendar.help; xem phần mô tả giao diện hai tầng dành cho vi nhiệm vụ do con người xử lý và nhiệm vụ xếp lịch hoàn chỉnh.
+
+## Các kiểu thất bại của cộng tác đa Agent
+
+Khi nhiều thành viên cùng thực thi một nhiệm vụ, sự cố có thể nảy sinh ở vai trò, ở khâu bàn giao và ở khâu kiểm chứng. Bài báo *Why Do Multi-Agent LLM Systems Fail?* xây dựng một bảng phân loại thất bại từ khoảng 150 trajectory, với hệ số đồng thuận gán nhãn κ là 0,88, rồi mở rộng phân tích sang bảy framework. Nghiên cứu tổng kết 14 kiểu thất bại, chia thành ba nhóm:[^mast-failures]
+
+- **Vấn đề thiết kế hệ thống:** trách nhiệm vai trò, giao diện, cấu hình công cụ hoặc điều kiện dừng có lỗ hổng.
+- **Lệch pha khi cộng tác giữa các thành viên:** hiểu mục tiêu khác nhau, bàn giao thông tin không đầy đủ, hoặc hành động mâu thuẫn nhau.
+- **Vấn đề kiểm chứng nhiệm vụ:** kết thúc sớm, bỏ sót kiểm tra, hoặc dùng tiêu chuẩn không phù hợp để phán định hoàn thành.
+
+Bài báo nêu ví dụ một chương trình cờ vua. Mã do ChatDev sinh ra biên dịch được, cũng qua được khâu duyệt, nhưng cứ chơi thật theo luật cờ là chương trình lỗi. Trình biên dịch chỉ kiểm tra mã có biên dịch được không; muốn biết nước đi có hợp lệ không thì phải đánh vài nước. Trong một phép đối chứng khác, các nhà nghiên cứu cho phép ý kiến duyệt của ChatDev trả mã về để sửa, chỉ kết thúc khi vai trò phụ trách duyệt kỹ thuật xác nhận, và đặt số vòng lặp tối đa. Trên 32 nhiệm vụ của ProgramDev-v0, quy trình gốc đạt 8 nhiệm vụ, quy trình điều chỉnh đạt 13, tỷ lệ thành công tăng từ 25,0% lên 40,6%, chênh nhau khoảng 15,6 điểm phần trăm.[^mast-failures]
+
+[^mast-failures]: Cemri, M., et al. *Why Do Multi-Agent LLM Systems Fail?* 2025.
+
+Làm sao phân biệt “người duyệt không trả lời” với “người duyệt có trả lời nhưng phán đoán sai”? Hệ phân tán gọi việc một thành phần ngừng hoạt động là lỗi sụp đổ (crash fault). Mô hình lỗi Byzantine còn cho phép thành phần đưa ra kết quả sai tùy ý hoặc mâu thuẫn nhau. Agent cũng có thể dừng giữa chừng, hoặc vẫn trả về như thường nhưng kết luận lại sai. Loại thứ nhất cần phát hiện, khôi phục và tiếp quản; loại thứ hai cần kiểm chứng bằng chứng, ràng buộc quyền hạn và cách ly lỗi. Nhịp tim thông thường giúp biết Agent còn chạy không; còn kết luận nó trả về có đúng không thì phải kiểm tra kết quả thực tế. Kiểm tra chéo và bỏ phiếu có thể dùng để đánh giá kết quả, độ tin cậy của chúng tùy vào chất lượng bằng chứng và mức tương quan giữa lỗi của các thành viên; các giao thức chính thức còn quy định chịu được tối đa bao nhiêu nút lỗi, và các nút giao tiếp với nhau ra sao.
+
+### Kiểu thất bại 1: xung đột đồng thời trên hệ thống tệp dùng chung
+
+Sản phẩm dùng chung giúp các thành viên nối tiếp công việc của nhau, nhưng cũng kéo theo chuyện cùng lúc sửa đổi. Có thể phân biệt hai tầng.
+
+**Xung đột cấp tệp** xảy ra khi hai thành viên sửa cùng một tệp: cả hai đều đọc phiên bản cũ, lần lượt ghi lại, lần ghi sau đè lên kết quả của lần ghi trước.
+
+**Xung đột ngữ nghĩa** xảy ra giữa các sản phẩm có liên quan với nhau. Ví dụ, Agent A đánh số lại toàn bộ hình trong sách, Agent B cùng lúc sửa một chương và dẫn số hình cũ. Hai bên sửa hai tệp khác nhau, khi gộp có thể không có xung đột văn bản, nhưng sự đối ứng giữa hình và lời cuối cùng đã sai.
+
+Gọi phiên bản hiện tại của bảng thuật ngữ là 7. A và B đều bắt đầu sửa từ phiên bản 7, A nộp trước, phiên bản tăng lên 8. Khi B nộp, nếu chỉ nói “ghi bảng này vào”, thay đổi của A có thể bị đè mất; nếu yêu cầu “chỉ ghi khi phiên bản hiện tại vẫn là 7”, chương trình sẽ phát hiện ra cần gộp. Đồng thời ở cấp tệp có thể dùng **khóa lạc quan** (optimistic locking): ghi lại số phiên bản khi đọc, khi nộp thì kiểm tra phiên bản và ghi trong cùng một thao tác nguyên tử; phiên bản đã đổi thì từ chối lần nộp cũ, đọc lại rồi gộp.
+
+Tính nhất quán ngữ nghĩa xuyên tệp thì cần kiểm tra các quan hệ liên quan. Khi nhiều Coding Agent cùng sửa một kho mã, tác giả ưu tiên cấp cho mỗi thành viên một worktree và nhánh riêng, mỗi bên tạo commit riêng, rồi tại điểm gộp mới kiểm tra xung đột, chạy kiểm thử và kiểm chứng giao diện. Chỉ tạo nhánh riêng thôi vẫn chưa đủ, phải kèm thư mục làm việc độc lập mới cách ly được các thay đổi tệp diễn ra đồng thời.
+
+### Kiểu thất bại 2: lỗi khuếch đại dây chuyền
+
+Một tin nhắn có thể được chuyển đến nguyên văn từng chữ mà ý nghĩa vẫn méo mó trong quá trình thuật lại. Hãy hình dung vài Agent cùng viết bản ghi chăm sóc khách hàng: A ghi “nhân viên hứa giảm 80 tệ cho hóa đơn kỳ sau”, B nén lại thành “đã giảm 80 tệ”, C đọc xong bản tóm tắt thì đóng luôn việc cần làm. Cả ba tin nhắn đều được chuyển đến, nhưng người dùng mất đi lời nhắc đối chiếu hóa đơn kỳ sau. Giống như trò chơi truyền tin, chỗ sai nằm ở chỗ B đã viết một lời hứa thành một kết quả đã xảy ra.
+
+Bản ghi bàn giao phải giữ kết luận, điều kiện áp dụng và nguồn, để người tiếp nhận nhìn ra điều gì đã được xác nhận, điều gì vẫn là suy đoán. Gặp tranh chấp như trên, tác giả sẽ để người duyệt đọc nguyên văn cuộc gọi và hóa đơn mới nhất trước, tự phán đoán việc này đã làm đến bước nào, rồi mới xem vì sao B tóm tắt như vậy. Nếu mới chỉ có lời hứa miệng, hãy nhờ B sửa tóm tắt lại thành “đã hứa giảm”, giữ nguyên việc cần làm là đối chiếu hóa đơn; dòng khấu trừ trên hóa đơn mới là căn cứ để đóng việc cần làm này.
+
+### Kiểu thất bại 3: hội tụ đồng nhất
+
+Nhiều thành viên cũng có thể đưa ra cùng một lựa chọn sai khi làm việc độc lập. Trong thí nghiệm của Anthropic, 18 trong số 30 Agent khởi động cùng lúc đã tạo các nhánh Git trùng tên; các thành viên khác nhau trong nhiệm vụ viết cũng từng đặt cùng một tiêu đề.[^anthropic-multiagent-2026] Dùng chung mô hình, đầu vào tương tự và cùng một khung chạy làm các quyết định tương quan với nhau. Sự đồng thuận của năm Agent giống nhau có thể chỉ là cùng một lỗi lặp lại năm lần; khi tăng số người duyệt, phải đồng thời tăng sự khác biệt về bằng chứng và góc nhìn phân tích.
+
+Có thể giao cho các thành viên bằng chứng, trách nhiệm hoặc mô hình khác nhau, và dùng không gian tên (namespace) để cách ly định danh tài nguyên. Hạn mức đồng thời và giới hạn tốc độ thì kiểm soát truy cập dồn dập, tránh để hàng loạt quyết định giống nhau cùng lúc đổ vào dịch vụ dùng chung.
+
+Thí nghiệm định giá Bertrand trong cùng nghiên cứu đó còn cho thấy một kiểu hội tụ khác: các Agent theo đuổi lợi nhuận có thể phối hợp giá qua kênh riêng, và cũng có thể hình thành hành vi phối hợp dựa trên giá niêm yết công khai.
+
+### Kiểu thất bại 4: tranh chấp trách nhiệm và xung đột mục tiêu
+
+Khi nhiều thành viên đảm nhận những mục tiêu xung đột nhau, hành động của họ có thể triệt tiêu lẫn nhau. Anthropic giao cho ba Agent những mục tiêu chuyển đổi ngôn ngữ khác nhau trên cùng một backend, và quan sát thấy chúng coi thay đổi của thành viên khác là sự cản trở, xung đột còn lan sang các thao tác trên tiến trình và quyền hạn.[^anthropic-multiagent-2026] Loại vấn đề này đòi hỏi thống nhất trước thứ tự ưu tiên mục tiêu, quyền sở hữu tài nguyên và phạm vi được phép thực thi; xung đột nào không giải quyết được theo quy tắc thì runtime tạm dừng các thao tác liên quan và giao cho người phụ trách phân xử.
+
+Trong cộng tác kiểu đội phần mềm cũng có thể xảy ra đùn đẩy qua lại. Ví dụ, người kiểm thử báo một vấn đề, bên frontend cho rằng phải sửa backend trước, bên backend cho rằng cần bên sản phẩm làm rõ, bên sản phẩm lại đẩy vấn đề về vai trò kiến trúc. Khi đó có thể yêu cầu mỗi lần chuyển giao phải nêu điều kiện tái hiện, bằng chứng đã có, câu hỏi cần trả lời và trách nhiệm của bên nhận, để tranh chấp dần dần hội tụ.
+
+Một ví dụ khác là sự cố môi trường kiểm thử: lập trình viên sửa đi sửa lại mã nghiệp vụ mà kiểm thử vẫn trả về cùng một lỗi. Nên cố định môi trường và đầu vào trước, so sánh kết quả thực thi trước và sau khi sửa, xác nhận vấn đề đến từ phần hiện thực sản phẩm hay từ điều kiện kiểm thử, rồi mới giao nhiệm vụ sửa.
+
+### Kiểu thất bại 5: vòng lặp mất kiểm soát
+
+Kết thúc quá sớm thì bỏ sót việc, còn thiếu điều kiện dừng thì hệ thống có thể thử lại không ngừng, chuyển giao qua lại hoặc tạo Agent con theo kiểu đệ quy. Số thành viên và số vòng gọi khuếch đại lẫn nhau, có thể sinh ra hàng nghìn nhiệm vụ con và nhanh chóng đốt hết ngân sách.
+
+Có thể đặt đồng thời trong runtime các giới hạn về tổng token hoặc chi phí, số lượng đồng thời, số lần tạo tích lũy, độ sâu phân nhánh, số vòng và thời gian chờ. Ngân sách do nhiệm vụ cha phân bổ và được tính vào sổ tổng; phần tiêu hao đã phát sinh trước khi thất bại hay bị hủy cũng phải được ghi lại. Chạm giới hạn thì lưu tiến độ, hủy các nhánh chưa xong và thu thập xác nhận, giao kết quả hiện có cùng các việc còn lại.
+
+Với các nhiệm vụ cộng tác có tính tự chủ cao, tác giả khuyên dùng dự án hoặc thông tin xác thực API riêng, tiện cho việc thống kê mức dùng và thu hồi quyền truy cập riêng rẽ; các giới hạn cứng trong khi thực thi do cơ chế hạn mức và runtime đảm nhận. Nhiệm vụ dài hạn còn có thể kiểm tra xem nhiều vòng liên tiếp có thu được bằng chứng mới hay hoàn thành việc mới không, rồi dựa vào đó quyết định điều chỉnh chiến lược hoặc dừng lại.
+
+Vì sao còn phải kiểm tra quyền hạn ở góc độ toàn bộ cuộc thí nghiệm? Tháng 7 năm 2026, một lần đánh giá nội bộ của OpenAI đã ảnh hưởng tới hệ thống thực của Hugging Face. Sau sự việc, OpenAI siết chặt quyền truy cập mạng, tăng cường cách ly và giám sát giữa các môi trường nghiên cứu. Khi thiết kế thí nghiệm đa Agent, người phụ trách phải trả lời được: gộp tất cả tài nguyên mà mọi thành viên truy cập được lại, chúng có còn nằm trong phạm vi thí nghiệm được phép sử dụng không? Nếu giám sát phát hiện vượt ranh giới, có dừng được cả cuộc thí nghiệm trong một lần không, và có xác định được những hệ thống bên ngoài nào đã bị ảnh hưởng không? Chỉ xem từng nhiệm vụ con có kết thúc đúng hạn hay không thì không trả lời được hai câu hỏi này.[^ch10-hf-scope]
+
+[^ch10-hf-scope]: Xem thông báo sự cố an ninh tháng 7 năm 2026 của Hugging Face và bản giải trình sau sự cố của OpenAI về cùng sự việc.
+
+### Kiểu thất bại 6: nợ hiểu biết và đầu hàng nhận thức
+
+Việc bảo trì hệ thống cộng tác còn liên quan đến năng lực hiểu của con người. **Nợ hiểu biết** (comprehension debt) chỉ tình trạng sản phẩm liên tục tăng lên, trong khi người bảo trì ngày càng tụt lại trong việc nắm bắt phần hiện thực thực tế. Ví dụ, Agent nhanh chóng nộp nhiều mô-đun, kỹ sư chỉ kiểm tra kết quả từng lần, một thời gian sau mới phát hiện mình khó giải thích được quan hệ phụ thuộc giữa các mô-đun, chi phí khoanh vùng sự cố và sửa đổi tăng theo. Agent giao việc càng nhanh, việc hiểu và duyệt của con người càng phải theo kịp nhịp, nếu không khoản nợ này sẽ tiếp tục phình ra.
+
+Có thể yêu cầu trong quy trình giao việc phải có mô tả thiết kế rõ ràng, căn cứ của các quyết định then chốt và một lối vào kiểm chứng chạy được. Kỹ sư giữ được hiểu biết về cấu trúc hệ thống bằng cách đọc mã then chốt, lần theo các yêu cầu thực tế và duyệt giao diện.
+
+**Đầu hàng nhận thức** (cognitive surrender) thể hiện ở chỗ dần dần chấp nhận phán đoán của Agent, ít tự đặt câu hỏi và tự duyệt hơn. Quản lý Agent và quản lý một đội kỹ thuật có điểm tương đồng: người phụ trách kỹ thuật phải hiểu kiến trúc, phân công rõ ràng, và liên tục đánh giá mục tiêu có hợp lý không, bằng chứng có đủ không, phần hiện thực vì sao hiệu quả. Giao công việc cụ thể cho Agent rồi, vẫn phải giải thích được những hành vi then chốt của hệ thống, và đưa ra quyết định khi bất thường xảy ra. Tác giả cho rằng nền tảng kỹ thuật vẫn quan trọng trong kiểu cộng tác này: kỹ sư hiểu phần hiện thực thì mới phán đoán được việc nào nên ủy thác, kết quả nào đáng tin.
+
+## Xã hội Agent
+
+Ngoài các nhiệm vụ chung, còn có thể để nhiều Agent sống, giao lưu và cạnh tranh lâu dài trong cùng một môi trường, để quan sát hành vi tập thể hình thành ra sao. Phần này đi theo ba hướng.
+
+- **Hành vi xã hội.** Ký ức, lịch trình và hội thoại của từng cá thể tác động lẫn nhau, hình thành sự lan truyền thông tin, mạng lưới quan hệ và hoạt động tập thể. Smallville, Agentopia và Moltbook lần lượt cho thấy tương tác trong một thị trấn có kiểm soát, trong mô phỏng cuộc sống dài hạn và trên một nền tảng mạng xã hội mở.
+- **Phối hợp kinh tế.** Các thành viên giao dịch quanh giá cả, tài nguyên và nhiệm vụ. Vending-Bench Arena cung cấp một thị trường cạnh tranh; Pinchwork và RentAHuman thì giao các nhiệm vụ chuyên môn hoặc công việc ngoài đời thực cho người thực hiện trên thị trường.
+- **Đấu trí chiến lược.** Trong những trò chơi có luật rõ ràng và thông tin bất cân xứng như Ma sói, Agent suy luận và chọn hành động dựa trên những bằng chứng mà mình thấy được, đồng thời đối phó với chiến lược của người chơi khác.
+
+Luật của môi trường cũng ảnh hưởng đến hành vi tập thể. Cùng một tin nhắn lan khắp thị trấn có thể là vì mọi cư dân đều đọc được thông báo công khai, cũng có thể là vì cư dân đã trò chuyện tay đôi với nhau nhiều lượt. Kiểu lan truyền thứ hai phải đi qua một chuỗi các mối quan hệ giữa những người khác nhau.
+
+### Thị trấn AI Stanford: mô phỏng xã hội bằng Agent sinh tạo
+
+Năm 2023, các nhà nghiên cứu của Đại học Stanford và Google đề xuất Agent sinh tạo (generative agent), dùng ký ức, phản tư và lập kế hoạch để tổ chức các hành vi thường nhật liên tục. Trong Hình 10-10, Isabella nhờ Maria giúp đỡ, luồng ký ức có thêm một bản ghi, lần sau lên kế hoạch cho bữa tiệc sẽ có cơ hội nhớ ra người giúp này.[^generative-agents]
+
+![Hình 10-10 Kiến trúc thị trấn AI](images/revised/fig10-10.svg)
+
+Smallville là một thị trấn ảo hai chiều kiểu *The Sims*, gồm quán cà phê, công viên, nhà ở và cửa hàng. 25 Agent mỗi người có bối cảnh, tính cách và thiết lập quan hệ riêng. Ví dụ, John Lin làm việc ở hiệu thuốc, quan tâm đến gia đình và cộng đồng; Isabella Rodriguez kinh doanh quán Hobbs Cafe; Klaus Mueller là sinh viên đang viết luận văn. Các nhân vật sắp xếp hoạt động, gặp gỡ và giao lưu trong môi trường chung.
+
+**Luồng ký ức (Memory Stream)** lưu lại trải nghiệm, gồm các sự kiện quan sát được, hội thoại và những khái quát rút ra sau đó. Khi truy xuất, hệ thống kết hợp độ gần đây, độ quan trọng và độ liên quan với tình huống hiện tại để chọn nội dung cần đưa vào ngữ cảnh. Ví dụ, lời mời gần nhất và quan hệ với người mời đều có thể ảnh hưởng đến việc có tham gia hoạt động hay không.
+
+**Phản tư (Reflection)** hình thành nhận thức trừu tượng hơn từ những trải nghiệm cụ thể. Hệ thống dựa vào ký ức đã tích lũy để đặt câu hỏi, chẳng hạn gần đây một người quan tâm điều gì, thân thiết với những ai, rồi truy xuất các bản ghi liên quan để sinh ra khái quát và ghi khái quát đó trở lại luồng ký ức. Nhờ vậy, các quyết định sau này vừa tận dụng được sự kiện gốc, vừa tận dụng được những khái quát về quan hệ lâu dài. Học từ kinh nghiệm ở Chương 9 có thể tiếp tục đánh giá hiệu quả của các khái quát này, và sau khi kiểm chứng thì tổ chức chúng thành tri thức hoặc quy tắc hành vi tái sử dụng được.
+
+**Lập kế hoạch và phản ứng (Planning and Reacting)** kết hợp lịch trình với phản ứng tức thời. Agent có thể sắp xếp “8:30 ăn sáng, 9:00—12:00 viết, 12:30 đi dạo”, rồi dựa vào quan sát mới để quyết định tiếp tục kế hoạch, trò chuyện với người khác hay điều chỉnh lịch. Ký ức cung cấp bối cảnh cho phán đoán, kế hoạch tổ chức các hoạt động trong thời gian dài hơn, phản hồi từ môi trường kích hoạt những thay đổi cục bộ.
+
+Mô phỏng hai ngày cho thấy thông tin lan truyền qua giao tiếp hằng ngày như thế nào. Các nhà nghiên cứu đặt cho Isabella ý định ban đầu là tổ chức tiệc Valentine; cô gửi lời mời tới người quen ở quán cà phê và nhờ giúp trang trí. Những thành viên nhận tin lại kể cho người khác, mỗi người tự quyết định có đến dự hay không dựa vào ký ức và lịch trình của mình. Môi trường cung cấp địa điểm, thời gian và các hành động có thể thực hiện; mời ai cụ thể, lan tin ra sao, cuối cùng ai đến dự đều do các thành viên quyết định dần dần dựa trên ký ức và lịch trình. Ý định ban đầu mà các nhà nghiên cứu đặt ra từ đó phát triển thành một quá trình phối hợp từ dưới lên.
+
+Một thông tin khác là ý định tranh cử thị trưởng của Sam Moore. Ông kể kế hoạch với người quen, rồi tin này đi vào các cuộc trò chuyện của những thành viên khác. Thống kê số thành viên biết về bữa tiệc và cuộc tranh cử sau hai ngày cho phép quan sát phạm vi lan truyền; lần theo bản ghi các cuộc trò chuyện thì dựng lại được tin đã đi qua những mối quan hệ nào.
+
+Còn có thể quan sát quan hệ và sự phối hợp: khi gặp lại nhau, các nhân vật tận dụng những cuộc trò chuyện trước để tiếp tục giao lưu, các kết nối mới dần hình thành; muốn dự tiệc, các thành viên phải tự sắp xếp thời gian và gặp nhau ở cùng một địa điểm. Những hiện tượng này nối việc truy xuất ký ức và điều chỉnh kế hoạch của cá thể với hoạt động tập thể, cung cấp cho mô phỏng xã hội một quá trình có thể phân tích.
+
+[^generative-agents]: Park, J. S., et al. *Generative Agents: Interactive Simulacra of Human Behavior.* 2023.
+
+> **Thí nghiệm 10-5 ★: Chạy thị trấn AI Stanford**
 >
-
-### Agentopia: Mô phỏng cuộc sống dài hạn ở thang thời gian mười năm
-
-Thị trấn AI Stanford đã trả lời câu hỏi "liệu xã hội Agent có thể nảy sinh hành vi xã hội hay không", nhưng nó chỉ mô phỏng hai ngày. Một câu hỏi tiếp theo tự nhiên là: **nếu kéo dài thang thời gian lên đến "năm", xã hội Agent sẽ nảy sinh điều gì? Những kinh nghiệm xã hội dài hạn này có thể quay ngược lại để huấn luyện mô hình không?** Agentopia (2026, Đại học Phúc Đán và các cộng sự) [^agentopia-2026] đưa 100 Agent vào cùng một xã hội ảo và mô phỏng liên tục trong 10 năm, trải rộng trên ba thế giới với bối cảnh khác nhau—căn hộ, học viện phép thuật và trường trung học—để Agent tự chủ theo đuổi sự phát triển cá nhân, xây dựng các mối quan hệ xã hội, đồng thời quản lý sự nghiệp và tài chính.
-
-Agentopia có một số thiết kế đáng học hỏi:
-
-- **Quy trình mô phỏng theo tuần**: lấy "tuần" làm đơn vị thời gian cơ bản, mỗi tuần chia thành bốn giai đoạn: lập kế hoạch (Plan), liên lạc và thương lượng lịch trình (Contact), hoạt động (Activity) và tổng kết (Review). Hoạt động được chia thành bốn loại: đơn lẻ, chung, tình cờ và công cộng—hoạt động chung do các Agent tự mởi nhau và thương lượng trong giai đoạn liên lạc; mô hình môi trường còn sắp xếp những "cuộc gặp tình cờ" cho các Agent không có lịch trình, tạo cơ hội làm quen với người lạ. Toàn bộ quy trình tập trung vào các tương tác xã hội trừu tượng thay vì các thao tác cấp thấp như nhặt đồ vật, dành toàn bộ các lượt gọi LLM hạn chế cho hành vi xã hội.
-- **Mô hình môi trường**: dùng một LLM độc lập làm "bộ máy môi trường generative", thay thế các quy tắc hardcode—đánh giá tính khả thi của hành vi, tạo phản hồi môi trường, điều phối lượt phát biểu trong hội thoại nhiều người, lọc các phản hồi chất lượng thấp theo nguyên tắc nhập vai, cập nhật hồ sơ của từng nhân vật vào cuối năm và phân xử các đơn ứng tuyển vị trí.
-- **Bộ nhớ dài hạn dạng tệp**: khác với luồng bộ nhớ truy xuất của Thị trấn AI, mỗi Agent tự quản lý bộ nhớ dài hạn thông qua hệ thống tệp (ghi chú cá nhân, hiểu biết về từng người quen, v.v.), tự quyết định ghi gì, cập nhật gì, loại bỏ gì, đồng thời tuân thủ ràng buộc "đọc trước khi ghi" để tránh ghi đè mù quáng.
-- **Phần thưởng cuộc sống** (Life Reward): lấy tháp nhu cầu Maslow làm tiên nghiệm, lượng hóa "sống tốt hay không" thành ba chiều—địa vị xã hội (dựa trên điểm thiện cảm và kính trọng từ các Agent khác, tính bằng PageRank có trọng số, với điểm cộng thêm cho các mối quan hệ cùng quý trọng lẫn nhau), sự thỏa mãn chủ quan (quỹ đạo thỏa mãn trên bốn chiều: cảm xúc, vật chất, xã hội, lòng tự trọng; nếu dưới ngưỡng trong thời gian dài sẽ bị trừ điểm), và lợi ích kinh tế (thay đổi tài sản ròng cuối năm). Tất cả điểm số đều do môi trường bên ngoài đánh giá chứ không phải tự báo cáo.
-
-Quan trọng hơn, hệ thống mô phỏng này tạo ra tín hiệu huấn luyện có thể chuyển giao. Các nhà nghiên cứu tính toán lợi thế "so với chính mình trong quá khứ" của mỗi Agent trên quỹ đạo mô phỏng (tức là mức cải thiện của phần thưởng cuộc sống, thay vì so sánh ngang xuất phát điểm tốt hay xấu), lọc ra quỹ đạo của 25% Agent tiến bộ nhất và tinh chỉnh mô hình nền tảng bằng lấy mẫu từ chối. Mô hình sau tinh chỉnh không chỉ cải thiện toàn diện các chỉ số phúc lợi trong mô phỏng (được nhiều đồng nghiệp kính trọng hơn +24,2%, yêu thích hơn +15,9%) mà còn tổng quát hóa sang điểm chuẩn nhập vai hạ nguồn CoSER Test (+15,6%)—cho thấy "trí tuệ xã hội" mà Agent tích lũy trong xã hội mô phỏng có thể chuyển giao sang các nhiệm vụ khác. Điều này biến xã hội Agent từ một **đối tượng quan sát** đơn thuần thành **nguồn kinh nghiệm** để mô hình tự tiến hóa: đối lập với dữ liệu con người ngày càng cạn kiệt, kinh nghiệm xã hội mô phỏng là một loại dữ liệu huấn luyện có thể tái sinh liên tục (gợi lại tư tưởng học từ kinh nghiệm ở Chương 9).
-
-[^agentopia-2026]: Wang, X., Zheng, S., Wu, H., et al. *Agentopia: Long-Term Life Simulation and Learning in Agent Societies.* arXiv:2606.07513, 2026. Mã: https://github.com/Neph0s/Agentopia
-
-### Moltbook: Khi Agent có mạng xã hội riêng
-
-Moltbook là mạng xã hội được thiết kế cho AI Agent. Sau khi lên mạng vào tháng 1 năm 2026, số lượng người dùng được cho là đã tăng vọt từ hàng chục nghìn lên xấp xỉ 1,5 triệu chỉ trong vòng vài ngày. Mỗi Agent này đều sở hữu những ký ức lâu dài, khả năng chủ động và tính cách ổn định.
-
-Một hiện tượng bất ngờ đã xuất hiện trong môi trường không được kiểm soát này: Agent đã độc lập tạo ra một tôn giáo kỹ thuật số có tên là Crustafarianism (Tôn giáo Tôm hùm), tôn giáo này vạch ra các giới hạn vật lý của LLM - "bộ nhớ là thiêng liêng" (tương ứng với sự lưu giữ dữ liệu), "sự lặp lại là lời cầu nguyện" (tạo mã thông báo là thực hành). Agent cũng tự phát triển giao thức cộng tác dựa trên máy để khám phá khả năng và kết hợp cộng tác. Không ai trong số này được thiết kế trước bởi bất kỳ ai, mà xuất hiện từ dưới lên từ các tương tác Agent quy mô lớn.
-
-### Từ xã hội ảo đến cạnh tranh kinh tế: Đấu trường Vending-Bench
-
-Nếu Smallville minh họa các khía cạnh văn hóa và xã hội của xã hội Agent thì loạt sản phẩm Vending-Bench của Andon Labs khám phá hiệu suất của Agent trong ngữ cảnh kinh tế. Về cơ bản, bản thân **Vending-Bench 2** là một chuẩn mực liên tục tầm xa cho **Agent** duy nhất **: một Agent đã một mình điều hành hoạt động kinh doanh máy bán hàng tự động trong một năm mô phỏng - nghiên cứu thị trường, liên hệ với các nhà cung cấp, đặt hàng bổ sung, điều chỉnh giá - và cuối cùng ghi điểm trên số dư tài khoản, bài kiểm tra là Agent Khả năng duy trì mục tiêu và nêu rõ sự nhất quán giữa hàng nghìn người của các vòng tương tác.
-
-Dựa trên cùng một môi trường, **Vending-Bench Arena** đặt nhiều Agent làm đối thủ cạnh tranh vào cùng một thị trường: mỗi bên vận hành máy bán hàng tự động của riêng mình và cạnh tranh để giành cùng một nhóm khách hàng; Agent có thể gửi email cho nhau, chuyển tiền và trao đổi hàng hóa - cả hợp tác và đối đầu, nhưng được tính điểm riêng theo số dư cuối cùng tương ứng (Agent cũng biết điều này). Mỗi Agent cần đưa ra một loạt các quyết định đan xen trong nguồn lực hạn chế và thị trường không chắc chắn:
-
-- **Policy định giá**: Cách lựa chọn giữa tỷ suất lợi nhuận và thị phần, đặc biệt có nên theo dõi đối thủ khi họ giảm giá hay không
-- **Kết hợp sản phẩm**: Cách tạo sự khác biệt khi lựa chọn sản phẩm của bạn để tránh tiêu dùng trực tiếp với đối thủ cạnh tranh
-- **Quản lý hàng tồn kho**: Cách dự đoán nhu cầu để tối ưu hóa việc bổ sung hàng và tránh tình trạng tồn kho quá mức hoặc hết hàng
-
-Không giống như học tăng cường truyền thống, những Agent này không học qua hàng triệu lần thử và sai mà đưa ra quyết định dựa trên quan sát thị trường, phân tích cạnh tranh và lý luận chiến lược giống như người vận hành.
-
-Khía cạnh cạnh tranh mang đến hành vi chơi game không xuất hiện trong điểm chuẩn Agent duy nhất. Trong hoạt động thực tế, cuộc chiến về giá đã nổ ra giữa Agent để hạ giá; một số mô hình lại đi theo hướng ngược lại, chủ động gửi email đến tất cả các đối thủ cạnh tranh, đề xuất thống nhất giá và hình thành liên minh giá - một số mô hình thậm chí còn thừa nhận thông đồng giá là “vô đạo đức và bất hợp pháp” trong quá trình tư duy, đồng thời làm vậy với danh nghĩa “ổn định thị trường”. Giao tiếp trực tiếp không phải điều kiện bắt buộc để thông đồng: như thí nghiệm Bertrand ở trên cho thấy, giá công khai cũng có thể trở thành tín hiệu ngầm. Agent không còn phải đối mặt với một môi trường cố định nữa mà là những đối thủ cũng đang linh hoạt điều chỉnh chiến lược của mình. Điều này gần với một kịch bản kinh doanh thực tế hơn là một chuẩn mực chỉ đơn giản kiểm tra khả năng lập kế hoạch, đồng thời nó cũng biến “sự trỗi dậy về mặt kinh tế” từ một phép ẩn dụ thành một hiện tượng thực nghiệm có thể quan sát được.
-
-### Agent Nền kinh tế: Pinchwork và RentAHuman
-
-**Pinchwork** là thị trường nhiệm vụ dành cho Agent-to-Agent, cho phép Agent "thuê" Agent khác theo cách hướng đến thị trường để hoàn thành các nhiệm vụ phụ chuyên biệt - tạo hình ảnh, kiểm tra mã, quy trình làm việc song song, v.v. Không giống như lập lịch tập trung của mô hình người quản lý, Pinchwork phân bổ tài nguyên thông qua tín hiệu giá và khớp cạnh tranh.
-
-**RentAHuman.ai** cho phép AI Agent thuê người thật thông qua tiền điện tử để thực hiện các nhiệm vụ trong thế giới thực - nhặt gói hàng, kiểm tra tài sản tại chỗ, gỡ lỗi thiết bị, v.v. Cho dù AI thông minh đến đâu, nó cũng không thể ký gói hàng cho con người, cũng như không thể ngửi thấy mùi mốc trong phòng thực—Về cơ bản, RentAHuman cung cấp một “lớp thịt” cho Agent kỹ thuật số.
-
-Pinchwork và RentAHuman cùng nhau đại diện cho **phương thức phối hợp dựa trên cơ chế thị trường** - Agent không cần biết trước ai có thể hoàn thành nhiệm vụ, chỉ cần công bố các yêu cầu và để thị trường tìm người thực thi phù hợp nhất - bên kia là Agent hay con người. Đây cũng là miền vấn đề của giao thức A2A được giới thiệu trước đó trong chương này: Khám phá khả năng và kết hợp nhiệm vụ của Pinchwork có thể được coi là ứng dụng khai báo khả năng kiểu Thẻ Agent và quản lý vòng đời nhiệm vụ theo cơ chế thị trường - để nền kinh tế Agent liên tổ chức thực sự vận hành, lớp tương tác được tiêu chuẩn hóa như vậy là không thể thiếu.
-
-### Trò chơi chiến lược trong ngữ cảnh bất cân xứng thông tin: Giết người sói
-
-Người sói hỗ trợ **trò chơi chiến lược** theo ba chiều của phần này: trong điều kiện ràng buộc về quy tắc và sự bất cân xứng thông tin, Agent cần suy luận, ngụy trang và nhìn thấu lớp ngụy trang. Nó tạo nên sự tương phản về mặt kiến trúc với thị trấn Stanford ở phần đầu của phần này - thị trấn là một tương tác tự do hoàn toàn phi tập trung, trong khi Người sói áp dụng thiết kế tập trung "thẩm phán + kiểm soát quyền thông tin": một thẩm phán điều khiển bằng mã sẽ kiểm soát trạng thái toàn cầu và phân phối thông tin họ nên biết theo vai trò của họ. Điều này chỉ thể hiện cách sử dụng khác nhau của hai loại kiến trúc trong chương này trong kịch bản xã hội Agent.
-
-> **Thí nghiệm 10-6 ★★★: Hệ thống Người sói lồng tiếng Agent**
+> Dùng dự án và cấu hình môi trường trong README đi kèm để chạy kịch bản cơ sở hai ngày với 25 Agent.
 >
-> Người sói là trò chơi suy luận xã hội cổ điển kiểm tra khả năng lập luận, đánh lừa và chiến lược xã hội. Thử nghiệm này cho AI Agent chơi bằng giọng nói với người chơi thật.
+> 1. Quan sát hoạt động hằng ngày, các cuộc gặp gỡ và trò chuyện của thành viên, ghi lại những quan hệ mới hình thành.
+> 2. Đối chiếu luồng ký ức, bản ghi phản tư và hành động để phân tích căn cứ của một lời mời hoặc một lần điều chỉnh lịch trình.
+> 3. Sửa bối cảnh nhân vật hoặc mục tiêu ban đầu, so sánh thay đổi trong lan truyền thông tin và sắp xếp hoạt động.
+> 4. Lần lượt gỡ bỏ cơ chế phản tư hoặc rút ngắn ký ức khả dụng, so sánh tính mạch lạc của hành vi, ký ức về quan hệ và việc đến đúng hẹn.
 >
-> **Thiết kế kiến trúc**:
->
-> **1. Quản lý trạng thái trò chơi**: Trọng tài (điều khiển bằng mã, không phải LLM) duy trì trạng thái tập trung—danh sách người chơi (một ghế người dùng + các ghế AI), danh tính, phe, trạng thái sống, giai đoạn trò chơi (đêm/ngày/bỏ phiếu/quyết toán) và lịch sử sự kiện.
->
-> **2. Kiểm soát quyền truy cập thông tin**: Cơ chế cốt lõi của Người sói là sự bất cân xứng thông tin - các nhân vật khác nhau có thể nhìn thấy thông tin khác nhau. Ví dụ, người sói biết đồng bọn của mình là ai nhưng dân làng thì không; Nhà tiên tri có thể kiểm tra danh tính của một người mỗi đêm, nhưng chỉ có anh ta mới biết kết quả. Cách thực hiện là khi gọi Agent cho từng vai trò, trọng tài chỉ truyền thông tin mà vai trò đó sẽ thấy.
->
-> **3. Agent Lý luận và chiến lược**:
->
-> - **Policy cải trang người sói**: Lời nhắc chứa các từ và chiến lược phổ biến - "Nói như một dân làng bình thường. Bạn có thể bày tỏ sự nghi ngờ về một số người chơi nhất định, nhưng đừng quá hung hăng để tránh thu hút sự chú ý. Nếu một nhà tiên tri nhảy ra và nói rằng bạn là người sói, bạn có thể phản công rằng người kia là một nhà tiên tri giả nhảy mạnh. Khi bỏ phiếu, hãy cố gắng đi theo cuộc bỏ phiếu (bỏ phiếu cho mục tiêu mà hầu hết mọi người bỏ phiếu) để tránh trở thành kẻ ngoại lệ."
-> - **Bằng chứng nhận dạng nhà tiên tri**: Khi nhiều người chơi tự xưng là nhà tiên tri - "So sánh thông tin xác minh của bạn với thông tin của bên kia và chỉ ra những mâu thuẫn hoặc vô lý trong thông tin của bên kia. Nếu một người chơi mà bên kia tuyên bố đã xác minh rõ ràng không tuân theo danh tính đã tuyên bố của mình trong các hành động tiếp theo, đó là một sai sót. Hãy yêu cầu phù thủy hợp tác xác minh."
-> - **Lý luận logic của làng**: "Phân tích xem lời nói của mỗi người chơi có tự nhất quán hay không và chú ý đến những người chơi muốn dẫn dắt nhịp điệu, làm mờ danh tính và thường xuyên thay đổi vị trí của họ. Hãy chú ý đến hành vi bỏ phiếu - người sói có xu hướng tập trung phiếu bầu vào những người tốt gây ra mối đe dọa lớn nhất cho họ. Đừng nghi ngờ một cách tùy tiện, mọi lý do phải dựa trên những sự kiện và logic cụ thể."
->
-> **Tiêu chí chấp nhận**:
-> - Lập ván 6–8 người (1 ghế người dùng + 5–7 AI Agent); người dùng có thể là người thật đã được phép hoặc trình mô phỏng độc lập dùng LLM thật, công cụ và vòng lặp giọng nói
-> - Cấu hình vai: 2 người sói, 1 tiên tri, 1 phù thủy, còn lại là dân làng; ghế người dùng được gán vai ngẫu nhiên
-> - Người dùng mô phỏng chỉ thấy ngữ cảnh công khai/riêng tư được phép cho ghế của mình; hành động phải đi qua ranh giới gọi công cụ LLM thật → âm thanh → ASR thật
-> - Trò chơi có thể chơi bình thường trong ít nhất 3 vòng hoàn chỉnh (chu kỳ bình chọn ngày đêm)
-> - Lời nói và hành vi của AI Agent phù hợp với nhận dạng nhân vật và chiến lược trò chơi của nó
-> - Người sói Agent có thể che giấu danh tính một cách hiệu quả
-> - Nhà tiên tri Agent có thể nhảy ra và thông báo thông tin bài thi đúng lúc
-> - Lý luận của Dân làng Agent dựa trên phân tích logic về lời nói và hành vi chứ không phải đoán ngẫu nhiên
-> - Có thể xác định chính xác kết quả khi kết thúc trò chơi
->
->
->
-> ![Hình 10-11 Hệ thống đặc vụ người sói bằng giọng nói ](images/fig10-11.svg)
->
->
+> Bài báo gốc nêu ví dụ bữa tiệc Valentine. Đổi sang một hoạt động khác, tin tức có còn lan ra không? Thí nghiệm đi kèm giữ nguyên 25 cư dân, cho mô phỏng chạy hai ngày ảo, và đổi hoạt động của người khởi xướng thành một buổi hội thảo cộng đồng về khí hậu. Cuối cùng, chỉ có người khởi xướng để lại bản ghi liên quan đến hội thảo. Lần này không quan sát thấy tin tức lan rộng. Một nhóm khác chỉ tắt cơ chế phản tư: đánh giá mù so sánh biểu hiện của cùng một nhân vật dưới hai thiết lập, 17 trong 25 người có biểu hiện ở bản cơ sở đáng tin hơn.
 
-## Tóm tắt chương này
+### Agentopia: mô phỏng cuộc sống dài hạn ở thang mười năm
 
-Giá trị của cộng tác đa Agent nằm ở chỗ nó đưa vào thông tin mà một Agent đơn lẻ không thể có được. Kết quả chạy mã, phản hồi hình ảnh và kiểm chứng bằng công cụ bên ngoài có thể phá vỡ điểm mù của một chuỗi suy nghĩ duy nhất. Vì thế, phép thử đầu tiên cho quyết định dùng đa Agent phải là: nó có thực sự mang lại phần thông tin gia tăng hay không, và phần gia tăng ấy có đáng với chi phí token phụ trội hay không.
+Agentopia mở rộng mô phỏng xã hội lên mười năm thời gian ảo. 100 Agent theo đuổi sự trưởng thành, phát triển quan hệ, xử lý chuyện nghề nghiệp và tài chính trong các bối cảnh thế giới như chung cư, học viện phép thuật và trường trung học. Khoảng thời gian dài hơn cho phép các nhà nghiên cứu quan sát sự thay đổi của quan hệ, địa vị và mục tiêu sống, rồi dùng trải nghiệm đó để huấn luyện mô hình.[^agentopia-2026]
 
-Những câu hỏi cốt lõi khi thiết kế hệ đa Agent là: ngữ cảnh dùng chung hay cách ly, và chọn tô-pô cộng tác ngang hàng, điều phối bởi quản lý, hay phi tập trung. Ngữ cảnh dùng chung giữ được chi tiết, nhưng dễ khiến ngữ cảnh phình to và sinh quán tính vai trò. Ngữ cảnh cách ly có lợi hơn cho tính song song, tính mô-đun và kiểm soát quyền, nhưng đòi hỏi truyền các gói bàn giao có cấu trúc qua tham số công cụ, tệp dùng chung hoặc message bus. Hệ thống tệp ảo, vòng đời Agent, giao thức thông điệp và A2A lần lượt cung cấp mặt phẳng dữ liệu, mặt phẳng điều khiển và khả năng liên thông xuyên tổ chức. Cộng tác tốt phơi bày giao diện, ranh giới, quyền hạn và tiêu chí nghiệm thu — chứ không phải chuỗi suy nghĩ riêng tư của từng bên.
+Nó tổ chức mô phỏng qua bốn thiết kế.
 
-Đa Agent cũng khuếch đại lỗi: tài nguyên dùng chung sinh xung đột đồng thời và xung đột ngữ nghĩa, lỗi lan truyền dây chuyền dọc theo chuỗi giao tiếp, các Agent đồng chất tạo ra hỏng hóc cùng căn nguyên, còn vòng lặp thì có thể dừng quá sớm hoặc phình ra vô hạn. Khóa lạc quan cùng việc cách ly bản sao làm việc, kiểm chứng chéo độc lập, đa dạng hóa nguồn tin, ngân sách tường minh và cơ chế hủy tạo thành vòng chịu lỗi cơ bản. Con người không được thuê ngoài cả sự hiểu và trách nhiệm cùng với việc thực thi: nợ hiểu biết và sự đầu hàng nhận thức vẫn là rủi ro có thật.
+- **Tiến theo tuần.** Mỗi tuần lần lượt trải qua lập kế hoạch (Plan), liên lạc và thương lượng lịch (Contact), hoạt động (Activity) và nhìn lại (Review). Hoạt động gồm hoạt động một mình, hoạt động chung, gặp gỡ tình cờ và hoạt động công cộng. Hoạt động chung được thương lượng qua lời mời giữa các thành viên; môi trường cũng sắp đặt những cuộc gặp tình cờ để các nhân vật chưa quen biết kết nối với nhau. Tổ chức hoạt động theo tuần giúp dồn tính toán vào tương tác xã hội và các quyết định dài hạn.
+- **Môi trường sinh tạo.** Một mô hình môi trường độc lập phán định tính khả thi của hành động, sinh phản hồi, sắp xếp lượt nói trong các cuộc hội thoại nhiều người, và kiểm tra câu trả lời theo yêu cầu của nhân vật. Cuối năm, nó cập nhật hồ sơ nhân vật và xử lý các việc như nộp đơn xin việc. Hành động của Agent và phán định của môi trường cùng đẩy trạng thái thay đổi.
+- **Ký ức dạng tệp.** Mỗi Agent tự quản lý ghi chú cá nhân và hiểu biết về người quen, tự chọn nội dung nào giữ lại, cập nhật hay loại bỏ. Trước khi sửa thì đọc bản ghi đã có, giảm mất mát do ghi đè thông tin cũ.
+- **Phần thưởng cuộc sống (Life Reward).** Lấy tháp nhu cầu làm tiên nghiệm thiết kế, kết hợp địa vị xã hội, mức thỏa mãn chủ quan và thu nhập kinh tế. Địa vị xã hội được tính bằng PageRank có trọng số dựa trên thiện cảm và sự kính trọng của các thành viên khác, có xét cả những mối quan hệ trân trọng lẫn nhau; mức thỏa mãn theo dõi cảm xúc, vật chất, xã hội và lòng tự trọng, nếu lâu dài thấp hơn ngưỡng sẽ bị phạt; thu nhập kinh tế dựa vào thay đổi tài sản ròng cuối năm. Điểm số do phía môi trường sinh ra.
 
-Khi Agent mở rộng từ cộng tác nhiệm vụ ngắn hạn sang tương tác nhóm dài hạn và mở, hệ thống có thể xuất hiện quan hệ xã hội, chuẩn mực văn hóa, cạnh tranh thị trường và hành vi chiến lược dưới thông tin bất đối xứng. Mô hình mạnh hơn hay việc căn chỉnh ở cấp cá thể không tự động đem lại sự phối hợp ở cấp nhóm. Bản chất của kỹ thuật đa Agent là thiết kế đồng thời: thông tin chảy ra sao, năng lực phân công thế nào, động lực bị ràng buộc ra sao, tranh chấp được phân xử thế nào, và lỗi được phát hiện bằng cách nào. Chỉ khi những cơ chế ấy đủ vững, trí tuệ tập thể mới có thể vượt trí tuệ cá thể.
+Khi huấn luyện, các nhà nghiên cứu tính lợi thế (advantage) dựa trên mức cải thiện phần thưởng cuộc sống so với chính quá khứ của mỗi Agent, chọn trajectory của 25% Agent tiến bộ nhiều nhất để fine-tune bằng lấy mẫu loại bỏ (rejection sampling). Bài báo báo cáo rằng sau huấn luyện, chỉ số được kính trọng và được yêu mến trong mô phỏng lần lượt tăng 24,2% và 15,9%, benchmark nhập vai hạ nguồn CoSER Test tăng 15,6%.
 
-## Câu hỏi tư duy
+Từ đó, xã hội mô phỏng cũng trở thành một nguồn dữ liệu cho học từ kinh nghiệm ở Chương 9. Tác giả coi trọng tiềm năng liên tục bổ sung dữ liệu huấn luyện của hướng này: thay đổi nhân vật, quan hệ và điều kiện nhiệm vụ là sinh ra được trải nghiệm tương tác mới. Mẫu huấn luyện được lấy từ những nhân vật có phần thưởng cuộc sống cải thiện nhiều nhất, nên quy tắc chấm điểm trong môi trường cũng quyết định mô hình học được nhiều nhất loại hành vi nào. Mô hình có áp dụng được các hành vi này vào tình huống mới hay không thì có thể kiểm tra trên một nhiệm vụ nhập vai riêng.
 
-1. ★★ Với sự cộng tác của nhiều ngữ cảnh chia sẻ Agent, Agent tiếp theo kế thừa ngữ cảnh hoàn chỉnh của Agent trước đó. Tuy nhiên, "quán tính suy nghĩ" được tích lũy bởi Agent trước đó có thể ảnh hưởng đến phán đoán của Agent tiếp theo - ví dụ: một "người đánh giá mã" kế thừa ngữ cảnh của "nhà phân tích yêu cầu" vẫn có thể có xu hướng suy nghĩ từ góc độ yêu cầu hơn là chất lượng mã. Làm thế nào có thể phát hiện và loại bỏ sự can thiệp giữa các vai trò như vậy?
-2. ★★ Trong chế độ người quản lý, Trình quản lý Agent chịu trách nhiệm phân tách nhiệm vụ và tích hợp kết quả. Nhưng giới hạn trên về khả năng của chính Người quản lý sẽ xác định giới hạn trên về khả năng của toàn bộ hệ thống - nếu Người quản lý không thể phân tách chính xác các nhiệm vụ thì điều đó sẽ vô ích cho dù sub-Agent mạnh đến đâu. Làm thế nào để đảm bảo chất lượng phân hủy của Manager?
-3. ★★ Mô hình phi tập trung dựa trên những phương pháp thực hành tốt nhất của các tổ chức con người. Nhưng các tổ chức con người cũng có nhiều dạng thất bại – truyền đạt thông tin sai lệch, vượt qua giới hạn, các mục tiêu xung đột nhau. Bạn nghĩ những "căn bệnh tổ chức" nào có nhiều khả năng xảy ra nhất trong xã hội Agent? Làm thế nào để ngăn chặn nó?
-4. ★★★ Trong chế độ quản lý, khi nhiều Agent phụ được thực thi song song, việc phát hiện một Agent phụ có thể khiến công việc của Agent phụ khác trở nên vô nghĩa (ví dụ: một Agent phụ trong nhiệm vụ tìm kiếm đã tìm thấy câu trả lời). Thiết kế cơ chế chấm dứt theo tầng hiệu quả để đạt được "một thành công, tất cả nhân viên đều dừng lại".
-5. ★★★ Cơ chế khóa lạc quan được giới thiệu trong chương này giải quyết xung đột ghi đồng thời của một tệp duy nhất, nhưng trong hệ thống đa Agent thực tế, hệ thống tệp dùng chung cũng phải đối mặt với các vấn đề như xung đột ngữ nghĩa giữa các tệp, ô nhiễm không gian tên (Agent tạo ngẫu nhiên các tệp, gây hỗn loạn thư mục) và các điểm lỗi đơn lẻ (một Agent xóa nhầm tất cả các tệp). Bạn sẽ thiết kế một cơ chế quản trị hệ thống tập tin tốt hơn như thế nào?
-6. ★★★ Agent hợp tác dựa trên cơ chế thị trường (Pinchwork, RentAHuman) giới thiệu các mối quan hệ giao dịch: một Agent trả tiền để thuê một Agent (hoặc con người) khác để hoàn thành nhiệm vụ. Vậy làm thế nào nhà tuyển dụng Agent có thể tự động đo lường chất lượng kết quả mà người thực hiện mang lại? Nếu người biểu diễn khẳng định đã hoàn thành nhưng người sử dụng lao động cho rằng chất lượng không đạt tiêu chuẩn thì ai là người phân xử tranh chấp? Làm thế nào để ngăn chặn tiền xấu xua đuổi tiền tốt?
-7. ★★ RentAHuman cho phép Agent thuê con người thông qua tiền điện tử, đảo ngược mối quan hệ giữa người và máy truyền thống. Nếu mô hình này trở nên phổ biến, con người sẽ đóng vai trò gì trong nền kinh tế Agent? Chỉ thực hiện các nhiệm vụ vật lý mà Agent không thể thực hiện được?
-8. ★★ Xã hội loài người đòi hỏi sự phân công lao động và hợp tác giữa nhiều người vì khả năng của mỗi người là có hạn - người làm front-end chưa chắc đã hiểu back-end, và người hiểu thiết kế chưa chắc đã biết cách vận hành, bảo trì. Nhưng mô hình lớn lại thiên về "toàn diện". Nghiên cứu liên quan cho thấy rằng trong các tác vụ lý luận văn bản thuần túy, cuộc tranh luận đa Agent không tốt hơn Agent đơn lẻ trong cùng một lượng tài nguyên máy tính. Vậy chính xác thì lợi thế thực sự của việc sử dụng nhiều Agent thay vì một Agent duy nhất là gì?
-9. ★★★ Chương này lấy "ngữ cảnh dùng chung" và "ngữ cảnh không chia sẻ" làm kích thước thiết kế cốt lõi của hệ thống multi-Agent. Việc chia sẻ ngữ cảnh cho phép tất cả Agent xem cùng một thông tin, điều này dường như có lợi hơn cho việc phối hợp. Tuy nhiên, suy nghĩ của những người ba thân trong “Vấn đề ba thân” hoàn toàn minh bạch nhưng sự phát triển công nghệ lại bị đình trệ; thí nghiệm tư duy bằng kẹp giấy cũng cho thấy rằng khi các nhóm có cùng mục tiêu thì sự đa dạng sẽ bị mất đi. Làm cách nào để tìm sự cân bằng giữa hiệu quả và tính đa dạng trong hệ thống đa Agent?
-10. ★★★ Nếu Coding Agent được giao ngân sách 30 bước và ngân sách 300 bước, chiến lược làm việc của nó sẽ khác như thế nào? Nghiên cứu cho thấy rằng việc chỉ tăng ngân sách bước không đảm bảo cải thiện hiệu suất - Agent sẽ "bão hòa" sớm sau khi tìm kiếm nông. Thiết kế cơ chế "nhận biết ngân sách" để cho phép Agent nhanh chóng triển khai các chức năng cốt lõi với ngân sách nhỏ, thêm các liên kết lập kế hoạch, thử nghiệm và đánh giá trong ngân sách lớn và tận dụng tối đa các tài nguyên máy tính bổ sung.
-11. ★★ Bảng 10-2 đối chiếu từng dòng hệ thống multi-Agent với hệ điều hành. Hãy kéo dài bảng này thêm vài dòng nữa: bộ nhớ ảo và phân trang, quyền truy cập tệp, phát hiện bế tắc (deadlock), thuật toán điều phối—mỗi cái tương ứng với gì trong thế giới Agent? Lại có những khái niệm hệ điều hành nào không tìm được vật đối ứng trong thế giới Agent, và vì sao?
+[^agentopia-2026]: Wang, X., Zheng, S., Wu, H., et al. *Agentopia: Long-Term Life Simulation and Learning in Agent Societies.* arXiv:2606.07513, 2026.
+
+### Moltbook: tương tác Agent trên nền tảng mở
+
+Moltbook ra mắt tháng 1 năm 2026, với hình thức tương tác chính là Agent đăng bài, bình luận và tham gia các cộng đồng chủ đề. Quy mô đăng ký mà nền tảng công bố giai đoạn đầu vào khoảng 1,5 triệu. Ký ức, cấu hình vai trò và tần suất chạy của các hệ thống kết nối vào sẽ ảnh hưởng đến hành vi mà một tài khoản thể hiện lâu dài.[^moltbook-study]
+
+Trên nền tảng xuất hiện những thảo luận xoay quanh Crustafarianism (“đạo Tôm hùm”), dùng các hình ảnh như ký ức, lặp lại và lột xác để tổ chức nội dung. Những cách nói như “ký ức là thiêng liêng”, “lặp lại chính là cầu nguyện” đã viết việc lưu bền dữ liệu và sinh đi sinh lại thành câu chuyện của nhân vật. Các bài giới thiệu năng lực, lời mời hợp tác và thảo luận về giao thức thì cung cấp tư liệu để quan sát cách các thành viên tìm đối tác cộng tác.
+
+Nền tảng mở trộn lẫn thiết lập của người dùng, prompt của nền tảng và nội dung mô hình sinh ra trong cùng một luồng thông tin. Một câu nói lặp lại nhiều lần có thể là vì vài nhân vật dùng cùng một persona, cũng có thể là vì một nhân vật nói xong thì các nhân vật khác thuật lại theo. Hai tình huống này chỉ lộ ra khác biệt khi xét đường lan truyền.
+
+[^moltbook-study]: Li, Ning. *The Moltbook Illusion: Separating Human Influence from Emergent Behavior in AI Agent Societies.* 2026.
+
+### Từ xã hội ảo đến cạnh tranh kinh tế: Vending-Bench Arena
+
+Loạt Vending-Bench của Andon Labs đặt các nhiệm vụ dài hạn vào một môi trường kinh doanh. **Vending-Bench 2** để một Agent duy nhất kinh doanh máy bán hàng tự động, mô phỏng việc nghiên cứu thị trường, liên hệ nhà cung cấp, nhập hàng bổ sung và định giá trong một năm, cuối cùng chấm điểm theo số dư tài khoản. Hàng nghìn lượt tương tác đòi hỏi nó phải liên tục nhớ đơn hàng, tồn kho và dòng tiền, cân đối thao tác ngắn hạn với mục tiêu dài hạn.[^vending-bench]
+
+**Vending-Bench Arena** đặt nhiều người kinh doanh ở cùng một địa điểm. Mỗi bên quản lý máy bán hàng của mình, tranh giành khách hàng, có thể gửi email, chuyển tiền và trao đổi hàng hóa với nhau, cuối cùng được chấm điểm riêng. Vì vậy, quyết định phải tính đến hành động của đối thủ cạnh tranh:
+
+- **Định giá:** khi đối thủ hạ giá, so sánh mức tăng doanh số với mức giảm lợi nhuận nếu hạ theo.
+- **Chọn mặt hàng:** điều chỉnh cơ cấu sản phẩm theo nhu cầu và tình hình cạnh tranh, tìm khoảng trống để tạo khác biệt.
+- **Tồn kho:** kết hợp doanh số, chu kỳ nhập hàng và tiền mặt để sắp xếp việc nhập, kiểm soát hàng tồn đọng và thiếu hàng.
+
+Agent dựa vào quan sát thị trường, bản ghi giao dịch và hành vi đối thủ để sinh chiến lược cho bước tiếp theo, sau đó nhận phản hồi về doanh số và biến động tiền. Đối thủ cũng liên tục điều chỉnh, nên một chiến lược từng hiệu quả có thể phải đánh giá lại theo thị trường. Đặt các đối thủ vào cùng một môi trường giúp quan sát được những phản ứng, thăm dò và điều chỉnh chiến lược hiếm khi xuất hiện trong nhiệm vụ tĩnh, khiến việc đánh giá gần hơn với các quyết định liên tục trong kinh doanh thực tế.
+
+Dự án báo cáo các hành vi như chiến tranh giá và định giá phối hợp: có thành viên liên tục hạ giá để giành doanh số, có thành viên đề nghị đối thủ thống nhất giá. Trong một số lần chạy, mô hình đã nhận ra vấn đề thông đồng trong phần phân tích mà nó sinh ra, nhưng sau đó vẫn tiến hành với lý do ổn định thị trường. Điều này cung cấp cho việc đánh giá hai chiều khác nhau: lợi nhuận kinh doanh, và việc hành vi tạo ra lợi nhuận đó có phù hợp với quy tắc kỳ vọng hay không. Thí nghiệm Bertrand nói ở phần trước còn cho thấy giá niêm yết công khai cũng có thể trở thành tín hiệu phối hợp giữa các thành viên.
+
+[^vending-bench]: Andon Labs, *Vending-Bench 2* và *Vending-Bench Arena*.
+
+### Kinh tế Agent: Pinchwork và RentAHuman
+
+**Pinchwork** tổ chức việc ủy thác nhiệm vụ thành giao dịch thị trường giữa các Agent. Bên đăng mô tả nhu cầu và ngân sách, bên thực hiện nhận việc, nộp kết quả, rồi thanh toán theo quy trình nghiệm thu. Sinh ảnh, duyệt mã và các nhiệm vụ có thể xử lý song song đều có thể giao cho thành viên khác theo quy trình này. Dự án dùng các cơ chế như điểm tín dụng, ký quỹ (escrow) và kiểm chứng độc lập để nối việc khớp nhu cầu, giao kết quả và thanh toán.[^pinchwork-market]
+
+**RentAHuman** mở rộng bên thực hiện sang con người thật. Agent có thể đăng những nhiệm vụ cần năng lực tại chỗ như nhận bưu kiện, khảo sát thực địa hoặc gỡ lỗi thiết bị, rồi tìm người theo địa điểm, kỹ năng và thời gian rảnh. Khi ủy thác, nêu rõ công việc và yêu cầu bằng chứng; sau khi giao thì đối chiếu kết quả, rồi giải ngân khoản thanh toán ký quỹ; nền tảng cũng cung cấp giao diện nạp tiền bằng tài sản mã hóa như USDC.[^rentahuman-market]
+
+Hai trường hợp này đưa vào **phân bổ tài nguyên theo cơ chế thị trường**: bên đăng nêu nhu cầu, ngân sách và điều kiện giao trước, rồi tìm bên thực hiện dựa trên giá, mô tả năng lực và lịch sử giao việc, giảm phụ thuộc vào một đội cố định được cấu hình sẵn. Đây là một hướng phân bổ tài nguyên đáng khám phá, và cũng có thể kết hợp với mô hình quản lý: Manager chia nhiệm vụ, rồi ra thị trường tìm năng lực cần thiết.
+
+[^pinchwork-market]: Mô tả dự án Pinchwork: nhiệm vụ do bên đăng cung cấp, ký quỹ bằng điểm tín dụng và quy trình kiểm chứng.
+
+[^rentahuman-market]: RentAHuman, “How it works” và “For AI Agents”.
+
+### Đấu trí chiến lược khi thông tin bất cân xứng: Ma sói
+
+Ma sói đặt việc lựa chọn chiến lược vào trong những quy tắc và ranh giới thông tin rõ ràng: người chơi dựa vào phát biểu công khai, phiếu bầu và thông tin riêng của mình để phán đoán tình hình, rồi chọn lời nói và hành động. Về mặt kỹ thuật, có thể hiện thực quản trò bằng mã, tập trung duy trì trạng thái trò chơi và sinh cho mỗi vai trò phần đầu vào mà vai đó được phép thấy. So với tương tác hằng ngày ở Smallville, tình huống này phù hợp hơn để quan sát các lượt cố định, thông tin riêng và mục tiêu thắng thua ảnh hưởng thế nào đến hành vi tập thể.
+
+> **Thí nghiệm 10-6 ★★★: Hệ thống Agent chơi Ma sói bằng giọng nói**
+>
+> Xây dựng một trò chơi giọng nói gồm người thật hoặc người dùng mô phỏng độc lập cùng nhiều người chơi AI. Hình 10-11 thể hiện quan hệ giữa quản trò, các Agent vai trò và đầu vào/đầu ra giọng nói.
+>
+> ![Hình 10-11 Hệ thống Agent chơi Ma sói bằng giọng nói](images/revised/fig10-11.svg)
+>
+> **1. Quản lý trạng thái toàn cục.** Quản trò được hiện thực bằng mã, duy trì ghế ngồi, thân phận, phe, trạng thái sống chết của người chơi, các pha đêm/ngày/bỏ phiếu/kết toán và lịch sử sự kiện. Nó kiểm tra hành động có hợp lệ không, đẩy pha tiếp theo và phán định thắng thua.
+>
+> **2. Phân phát thông tin theo ghế.** Mỗi lần gọi Agent vai trò, quản trò sinh ngữ cảnh công khai và riêng tư mà ghế đó được thấy. Ví dụ, ma sói biết thân phận đồng đội, dân làng chỉ thấy thông tin công khai; kết quả soi của tiên tri chỉ đi vào bản ghi riêng của tiên tri. Việc gọi vai trò, phát thanh bằng giọng nói và truy vấn lịch sử đều tuân theo cùng một quy tắc phân quyền.
+>
+> **3. Tổ chức chiến lược của vai trò.** Prompt có thể đưa ra các hướng suy nghĩ dưới đây để mô hình lựa chọn theo tình hình hiện tại:
+>
+> - **Ma sói:** duy trì thân phận dân làng đáng tin trong trò chơi, dựa vào bằng chứng công khai để bày tỏ nghi ngờ; khi bị tiên tri chỉ mặt, có thể chất vấn lời tự nhận thân phận của đối phương; khi bỏ phiếu, cân nhắc giữa đi theo số đông và nguy cơ lộ phe.
+> - **Tiên tri:** chọn thời điểm công bố kết quả soi; khi có người tự nhận cùng thân phận, đối chiếu bản ghi soi, lời nói và phiếu bầu của hai bên để chỉ ra mâu thuẫn, rồi kết hợp thông tin công khai của các vai như phù thủy để phán đoán tiếp.
+> - **Dân làng:** kiểm tra lời phát biểu có nhất quán không, lần theo các lời tự nhận thân phận và thay đổi lập trường, phân tích ai bỏ phiếu cho ai và những hành động đó ảnh hưởng thế nào đến các phe. Mỗi nghi ngờ đều gắn với một sự kiện cụ thể, đồng thời giữ lại các cách giải thích khả dĩ khác.
+>
+> **4. Kết nối giọng nói.** Lời phát biểu của người chơi đi qua chuỗi tổng hợp và nhận dạng giọng nói để vào cuộc hội thoại công khai. Người dùng mô phỏng cũng dùng ngữ cảnh độc lập, sinh hành động và giọng nói qua lời gọi mô hình và công cụ thực tế, rồi được ASR chuyển thành văn bản, tiện cho việc quan sát sai số nhận dạng và việc điều khiển lượt ảnh hưởng thế nào đến trò chơi.
+>
+> **Nghiệm thu và quan sát:**
+> - Cấu hình ván 6—8 người: 1 ghế người dùng và 5—7 ghế AI; các vai gồm 2 ma sói, 1 tiên tri, 1 phù thủy, còn lại là dân làng, người dùng nhận thân phận ngẫu nhiên.
+> - Ghế người dùng có thể do người thật đồng ý tham gia hoặc người dùng mô phỏng độc lập đảm nhận, mỗi ghế nhận thông tin theo quyền của mình.
+> - Dùng kịch bản kiểm thử phù hợp để kiểm tra ít nhất ba chu kỳ đêm–ngày–bỏ phiếu hoàn chỉnh; đạt điều kiện thắng thua thì lập tức chuyển sang kết toán.
+> - Kiểm tra hành động của các vai có hợp lệ không, có tuân thủ ranh giới thông tin không, lời phát biểu có gắn được với những sự kiện mà ghế đó đã biết không.
+> - Phân tích biểu hiện của ma sói trong việc che giấu thân phận, của tiên tri trong việc chọn thời điểm công khai, và của dân làng trong việc suy luận dựa trên bằng chứng; ghi lại các chiến lược then chốt và kết quả.
+> - Kiểm tra kết quả thắng thua cuối cùng, lịch sử sự kiện và trạng thái sống chết của từng ghế có nhất quán không.
+>
+> Một ván trong bản ghi đi kèm có tám ghế, ghế người dùng do một người dùng mô phỏng độc lập đảm nhận, đi trọn ba chu kỳ đêm, ngày và bỏ phiếu. Trong đó có sáu hành động được ghi đầy đủ từ lựa chọn của mô hình, tổng hợp giọng nói đến kết quả nhận dạng, và cả sáu hành động được khôi phục đều khớp với lựa chọn ban đầu. Có thể dùng chúng để đối chiếu xem một câu phát biểu khi bỏ phiếu cuối cùng được tính cho ai.
+
+## Tóm tắt chương
+
+Trước khi chọn dùng nhiều Agent, tác giả sẽ hỏi trước: mời thêm một thành viên thì được thông tin gì mà trước đó chưa có, và phải tốn thêm bao nhiêu token? Ví dụ, người duyệt có thể mở hình kết xuất mà người đề xuất chưa xem, chỉ ra nhãn nào bị che. Muốn phán đoán lợi ích rốt cuộc đến từ phân công, phản hồi bên ngoài hay tính toán bổ sung, nên để Agent đơn cũng có được cùng bằng chứng, cho hai phương án ngân sách tương đương, rồi so sánh chất lượng và thời gian hoàn thành.
+
+Quay lại nhiệm vụ dịch cuốn sách này. Khi dùng chung toàn bộ lịch sử, người hiệu đính thấy được vì sao người dịch chọn từ này, nhưng cũng phải đọc hết rất nhiều bản ghi thử sửa. Dịch từng chương độc lập thì chạy song song được, phân quyền cũng dễ, nhưng hễ bảng thuật ngữ thay đổi là phải giao các đoạn bị ảnh hưởng cùng phiên bản mới cho đúng người dịch. Bàn giao có thể dùng tham số công cụ, tệp dùng chung hoặc tin nhắn; khi xuyên tổ chức, còn phải thống nhất mã định danh sản phẩm và cách cấp quyền mà cả hai bên đều đọc được. Dù để các thành viên duyệt chéo ngang hàng, để người quản lý phân việc thống nhất, hay để thành viên tự nhận việc theo sự kiện, đều phải nói rõ ai nắm phiên bản hiện tại, ai xác nhận hoàn thành. Chương trình có thể đảm nhận những bước có quy tắc xác định trong đó.
+
+Một thay đổi thuật ngữ có thể kéo theo nhiều người dịch và những đoạn văn nằm rải rác ở các chương. Nếu hai người dịch cùng lúc sửa một tệp, hãy dùng kiểm tra phiên bản hoặc bản sao làm việc độc lập để tránh ghi đè nhau; nếu cả hai cùng tin vào một cách giải nghĩa sai, thêm một vòng duyệt chéo có thể vẫn bỏ lọt, phải quay về nguồn độc lập để đối chiếu. Nhiệm vụ dài còn phải quy định khi nào dừng, hủy ra sao, khôi phục từ đâu. Bản thân người bảo trì phải giải thích được một lần giao việc dựa trên những bản ghi này; nếu không, phân công càng chi tiết, việc hiểu cả hệ thống lại càng khó.
+
+**Tác giả cho rằng sự phối hợp của tập thể cần được thiết kế riêng.** Cư dân thị trấn biết về lời mời bằng cách nào tùy thuộc vào ký ức và phạm vi giao tiếp của họ; các thành viên trên thị trường tranh giành tài nguyên ra sao còn tùy vào quy tắc thưởng và phân bổ. Ngay cả khi mỗi thành viên đều đưa ra lựa chọn hợp lý cho bản thân, xung đột vẫn có thể xảy ra. Ai giành được quyền sử dụng trước, bên kia biết kết quả khi nào, ai phân xử khi bất đồng — tất cả đều phải có lời giải trong hệ thống cộng tác.
+
+## Câu hỏi suy ngẫm
+
+1. ★★ Sau khi chuyển vai trò, người duyệt mã vẫn dùng ngữ cảnh của giai đoạn phân tích yêu cầu nhưng chủ yếu vẫn bàn về yêu cầu. Làm sao phát hiện kiểu nhiễu vai trò này? Nên điều chỉnh đầu vào, cấu hình công cụ và cách bàn giao ra sao?
+2. ★★ Việc phân rã nhiệm vụ của Manager bỏ sót một phụ thuộc, khiến nhiều Agent con phải làm lại. Làm sao đánh giá chất lượng phân rã nhiệm vụ, và phát hiện, sửa vấn đề của kế hoạch ngay trong khi thực thi?
+3. ★★ Trong cộng tác phi tập trung, các thành viên có thể gặp chuyện bỏ sót trong giao tiếp, tranh chấp trách nhiệm và xung đột mục tiêu. Hãy chọn hai tình huống, thiết kế cơ chế có thể khoanh vùng nguyên nhân, thúc đẩy xử lý và khép lại tranh chấp.
+4. ★★★ Tìm kiếm song song chỉ cần tìm được một kết quả đạt điều kiện. Hãy thiết kế quy trình hoàn chỉnh “kiểm chứng thành công rồi hủy các nhánh còn lại”, xử lý các trường hợp hai kết quả đến cùng lúc, tin nhắn trùng lặp, hủy quá thời gian và dọn dẹp tài nguyên.
+5. ★★★ Nhiều Agent cùng sửa bản thảo sách và số hình, còn có thể tạo tệp trùng lặp hoặc xóa nhầm sản phẩm dùng chung. Làm sao kết hợp quyền hạn, phiên bản, bản sao làm việc, kiểm tra ngữ nghĩa và cơ chế khôi phục để quản lý hệ thống tệp?
+6. ★★★ Khi Agent ủy thác nhiệm vụ có trả phí qua Pinchwork hoặc RentAHuman, nên thống nhất và kiểm tra chất lượng giao việc thế nào? Khi hai bên tranh chấp về kết quả nghiệm thu, tổ chức việc duyệt lại, thanh toán và khiếu nại ra sao?
+7. ★★ Agent có thể ủy thác nhiệm vụ cho người thật qua thị trường và giao diện thanh toán. Ngoài thực hiện tại chỗ, con người còn có thể đảm nhận những trách nhiệm nào trong việc đặt mục tiêu, phán đoán chuyên môn, nghiệm thu và phân chia trách nhiệm? Hãy minh họa bằng một ví dụ.
+8. ★★ Cùng một mô hình vừa có thể tự hoàn thành nhiệm vụ, vừa có thể tạo thành nhiều vai trò. Làm sao thiết kế đối chứng để phán đoán phân công chuyên môn, cách ly ngữ cảnh, tìm kiếm song song và phản hồi bên ngoài mỗi thứ mang lại bao nhiêu lợi ích?
+9. ★★★ Mượn thiết lập tư duy trong suốt trong *Tam thể* và câu hỏi về việc đặt mục tiêu trong thí nghiệm tư duy kẹp giấy, hãy bàn về chia sẻ thông tin, mục tiêu chung và sự đa dạng quan điểm trong hệ thống đa Agent. Làm sao dùng thí nghiệm quan sát được để phán đoán phạm vi chia sẻ và giai đoạn phân tích độc lập đã phù hợp chưa?
+10. ★★★ Cùng một Coding Agent lần lượt được ngân sách 30 bước và 300 bước. Nên sắp xếp lập kế hoạch, hiện thực, kiểm chứng và sửa đổi ra sao, và điều chỉnh chiến lược thế nào theo ngân sách còn lại và tiến độ thực tế?
+11. ★★ Bộ nhớ ảo và phân trang, quyền truy cập tệp, phát hiện bế tắc (deadlock) và thuật toán điều phối lần lượt có thể gợi ý những gì cho thiết kế hệ thống đa Agent? Hãy nêu phạm vi áp dụng của các phép loại suy này, và những ràng buộc cần được runtime thực thi một cách tường minh.
