@@ -242,7 +242,7 @@ A Figura 6-3 compara as três opções quando chega um novo evento. Se o evento 
 
 **Urgência e roteamento.**
 
-O tipo de evento dá uma primeira pista: `user.interrupt`, instruções de supervisão confiáveis e alertas do sistema podem entrar no canal de alta prioridade; `user.input`, `agent.input`, `tool.result` e `timer.trigger` são avaliados também pelo conteúdo e pelo estado da tarefa. Quando o remetente se declara “urgente” no corpo da mensagem, o sistema continua definindo as permissões pela identidade verificada e pelas regras.
+O tipo de evento dá uma primeira pista: `user.interrupt`, instruções de supervisão confiáveis e alertas do sistema podem entrar no canal de alta prioridade; `user.input`, `agent.input`, `tool.result` e `timer.trigger` são avaliados também pelo conteúdo e pelo estado da tarefa. Quando o remetente afirma, no corpo da mensagem, que o assunto é “urgente”, o sistema continua definindo as permissões pela identidade verificada e pelas regras.
 
 Para decisões de roteamento que exigem entender o significado da mensagem, recomendo um modelo leve de classificação: “pare agora” corresponde a cancelamento; “como está o tempo hoje?” pode ser tratado em paralelo; “faça o relatório em chinês” normalmente vai para a fila de complementos da tarefa atual. Comandos de parada explícitos (como um botão de parar) são tratados diretamente pelo runtime, e a classificação semântica fica para as demais mensagens que exigem compreensão.
 

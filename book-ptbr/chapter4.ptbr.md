@@ -87,7 +87,7 @@ Ao escrever a descrição de uma ferramenta, comece imaginando a solicitação q
 
 **Explique quando usar a ferramenta.** A descrição da pesquisa na web pode dizer: “Use quando precisar obter informações em tempo real ou encontrar fatos desconhecidos”, para que o modelo associe a necessidade do usuário à finalidade da ferramenta. Com apenas “Pesquisa conteúdo relevante”, o modelo precisa adivinhar sozinho o escopo da busca e as condições de uso.
 
-**Deixe claros a entrada e o escopo da busca.** Uma ferramenta de busca por nome de arquivo, por exemplo, pode informar: “Faz correspondência por nome de arquivo e caminho; para procurar texto dentro dos arquivos, use `grep_file`.” Deixar clara a divisão de funções entre ferramentas vizinhas ajuda o modelo a escolher o ponto de entrada certo em uma única chamada. **Na minha visão, explicitar as condições de contorno costuma importar mais do que enumerar funcionalidades.** Que entradas a ferramenta aceita, que escopo ela pesquisa e como lida com resultados vazios ou erros — tudo isso afeta diretamente a próxima decisão do modelo.
+**Deixe claros a entrada e o escopo da busca.** Uma ferramenta de busca por nome de arquivo, por exemplo, pode informar: “Faz correspondência por nome de arquivo e caminho; para procurar texto dentro dos arquivos, use `grep_file`.” Deixar clara a divisão de funções entre ferramentas vizinhas ajuda o modelo a escolher o ponto de entrada certo em uma única chamada. **Na minha visão, deixar claros os limites de uso costuma importar mais do que enumerar funcionalidades.** Que entradas a ferramenta aceita, que escopo ela pesquisa e como lida com resultados vazios ou erros — tudo isso afeta diretamente a próxima decisão do modelo.
 
 **Descreva os parâmetros com especificação e exemplo.** `timestamp` pode ser descrito como “formato RFC3339, por exemplo, `2024-03-15T14:30:00Z`”. Em tarefas complexas, o modelo precisa escolher ferramentas, extrair informações do histórico da trajetória e ponderar os passos seguintes ao mesmo tempo; o formato dos parâmetros é apenas um detalhe entre muitos. Uma string completa fornece um formato a ser seguido diretamente, e o modelo pode montar o parâmetro por analogia, com menos chances de errar ao reinterpretar a terminologia.
 
@@ -99,7 +99,7 @@ Também é possível anexar de um a cinco exemplos de chamada verificados, cobri
 
 [^ch4-json-schema]: JSON Schema, tipos de objeto e restrições de propriedades. O conjunto de palavras-chave de esquema aceito por cada interface de modelo é definido pelo respectivo serviço.
 
-[^ch4-tool-examples]: Anthropic, *Introducing advanced tool use on the Claude Developer Platform*, 24 nov. 2025, seção Tool Use Examples.
+[^ch4-tool-examples]: Anthropic, *Introducing advanced tool use on the Claude Developer Platform*, 24 de novembro de 2025, seção Tool Use Examples.
 
 Quando o agente escolhe a ferramenta errada com frequência, recomendo **verificar primeiro as descrições das ferramentas**: se várias ferramentas têm nomes parecidos, se o escopo da busca está claro, se faltam exemplos nos parâmetros. O mesmo método vale para os nomes, resumos e instruções de operação das Skills.
 
@@ -151,13 +151,13 @@ Em tempo de execução, também é possível usar o Sidecar, apresentado mais ad
 
 Os scripts anexados a uma Skill, os servidores MCP locais e os serviços remotos têm, cada um, seu local de execução e seu escopo de permissões. Na revisão, verifique a origem do código, o ambiente de execução, as permissões de arquivo e rede e o caminho percorrido pelas credenciais; se passos fornecidos externamente orientarem o download ou a execução de outros programas, eles também entram nessa cadeia de verificação. As varreduras das plataformas oferecem pistas auxiliares; o isolamento na execução, o mínimo privilégio e a revisão de mudanças controlam diretamente o que é executado.
 
-[^ch4-mcp-origin]: Anthropic, *Introducing the Model Context Protocol*, 25 nov. 2024.
+[^ch4-mcp-origin]: Anthropic, *Introducing the Model Context Protocol*, 25 de novembro de 2024.
 [^ch4-mcp-architecture]: Especificação do MCP versão 2026-07-28, seções de arquitetura e visão geral do protocolo.
 [^ch4-mcp-tools]: MCP, Tools, incluindo lista de ferramentas, esquemas de entrada e saída e resultados de chamada.
 [^ch4-mcp-versioning]: MCP, *Versioning and Compatibility*, que explica os metadados por requisição, a descoberta de capacidades e a compatibilidade com o handshake das versões anteriores.
 [^ch4-mcp-transports]: MCP, visão geral de transporte e especificação de transporte 2025-11-25; esta última explica a substituição do antigo esquema HTTP+SSE pelo Streamable HTTP.
 [^ch4-mcp-primitives]: MCP, seções Resources e Prompts.
-[^ch4-skills-sh]: Vercel, *Introducing skills, the open agent skills ecosystem*, 20 jan. 2026.
+[^ch4-skills-sh]: Vercel, *Introducing skills, the open agent skills ecosystem*, 20 de janeiro de 2026.
 [^ch4-clawhub]: OpenClaw, instruções de uso do ClawHub.
 
 ## O que fazer quando há ferramentas demais: organização hierárquica e descoberta proativa de ferramentas
@@ -172,8 +172,8 @@ Pense na descoberta de ferramentas como consultar um manual organizado por taref
 
 O design inicial do Pi, por sua vez, priorizava ferramentas de CLI acompanhadas de README, que o agente lia sob demanda para depois usar a capacidade pela linha de comando[^ch4-pi-no-mcp]. A extensão da comunidade `pi-mcp-adapter` aplica uma ideia semelhante ao MCP: por padrão, oferece ao modelo uma ferramenta proxy de cerca de 200 tokens, com a qual o modelo pesquisa ferramentas, consulta definições e faz chamadas, nessa ordem; o servidor só é iniciado na primeira chamada. A versão 0.99 do Pi também passou a ter suporte nativo a MCP, com um mecanismo de descoberta sob demanda[^ch4-pi-mcp-adapter]. Essas implementações tratam separadamente a integração do protocolo e o carregamento no contexto: o backend se conecta aos serviços MCP, e o frontend, por meio de um índice curto ou de uma interface proxy, ajuda o modelo a encontrar a capacidade de que precisa.
 
-[^ch4-cursor-discovery]: Cursor, *Dynamic context discovery*, 6 jan. 2026.
-[^ch4-pi-no-mcp]: Mario Zechner, *What if you don’t need MCP at all?*, 2 nov. 2025, que apresenta a abordagem de usar CLIs e ler a documentação sob demanda.
+[^ch4-cursor-discovery]: Cursor, *Dynamic context discovery*, 6 de janeiro de 2026.
+[^ch4-pi-no-mcp]: Mario Zechner, *What if you don’t need MCP at all?*, 2 de novembro de 2025, que apresenta a abordagem de usar CLIs e ler a documentação sob demanda.
 [^ch4-pi-mcp-adapter]: pi-mcp-adapter, README do projeto: ferramenta proxy, inicialização tardia e comparação com o suporte nativo a MCP do Pi.
 
 **Organize o catálogo de ferramentas por tarefa.** Quando o número de ferramentas cresce, é possível agrupá-las pela forma de obter informações, para que o modelo localize primeiro a categoria e depois escolha a interface específica:
@@ -196,7 +196,7 @@ Em tarefas complexas, a necessidade de ferramentas costuma surgir aos poucos, ao
 Na engenharia, também é possível manter ferramentas básicas como `web_search` e `code_interpreter` e acrescentar uma interface de busca de ferramentas. O modelo descreve a capacidade que lhe falta, a interface devolve as definições de algumas ferramentas correspondentes, e o modelo escolhe uma delas para chamar. A Tool Search Tool da Anthropic adota essa descoberta sob demanda: as ferramentas mais usadas são carregadas diretamente, e as demais têm o carregamento adiado com `defer_loading`. Na avaliação interna de MCP divulgada pela Anthropic, a busca de ferramentas elevou a precisão do Opus 4 de 49% para 74%[^ch4-tool-search-eval].
 
 [^mcp-zero-2025]: Xiang Fei, Xiawu Zheng, Hao Feng, *MCP-Zero: Proactive Toolchain Construction for LLM Agents from Scratch*, 2025. A redução de cerca de 98% vem do cenário com o conjunto completo de ferramentas do APIBank; ver a Tabela 1 do artigo.
-[^ch4-tool-search-eval]: Anthropic, *Introducing advanced tool use on the Claude Developer Platform*, 24 nov. 2025, seção Tool Search Tool.
+[^ch4-tool-search-eval]: Anthropic, *Introducing advanced tool use on the Claude Developer Platform*, 24 de novembro de 2025, seção Tool Search Tool.
 
 **Procure primeiro o servidor, depois a ferramenta.** Um servidor MCP costuma oferecer um conjunto de ferramentas em torno de uma plataforma ou de um negócio. No exemplo da Figura 4-2, o servidor do GitHub é escolhido primeiro pela descrição da capacidade, e depois três candidatas são selecionadas entre suas ferramentas. Operações de mesmo nome podem pertencer a plataformas diferentes, e o primeiro passo já elimina um conjunto de candidatas irrelevantes. Mas, se esse passo deixar de fora o servidor correto, nenhuma comparação cuidadosa entre ferramentas no passo seguinte conseguirá recuperá-lo.
 
@@ -342,9 +342,9 @@ A primeira verificação é da entrada. As ferramentas de arquivo devem resolver
 
 A segunda é das permissões. O acesso a arquivos deve ter escopo de leitura e escrita delimitado, os processos devem rodar sob uma identidade restrita, e as APIs externas devem usar a autorização e as credenciais correspondentes à tarefa. Cotas e limites de taxa restringem o uso de recursos. Listas de comandos proibidos podem barrar padrões perigosos conhecidos, enquanto a análise do comando e a revisão pelo modelo ajudam a entender o que a operação significa; as permissões de sistema de arquivos, rede e processos na camada inferior limitam o alcance real dos efeitos. O Capítulo 5 discutirá como combinar esses mecanismos.
 
-**Proponente-revisor: verificação independente do plano de ação e do resultado da execução.**
+**Proponente–revisor: verificação independente do plano de ação e do resultado da execução.**
 
-O **paradigma proponente-revisor (Proposer–Reviewer)** apresentado no Capítulo 1 também se aplica às ferramentas de execução: o proponente gera o plano de ação, e o revisor o examina à luz do objetivo da tarefa, da autorização e dos critérios de aceitação. Conforme o momento da verificação, distingue-se a aprovação prévia da validação posterior.
+O **paradigma proponente–revisor (Proposer–Reviewer)** apresentado no Capítulo 1 também se aplica às ferramentas de execução: o proponente gera o plano de ação, e o revisor o examina à luz do objetivo da tarefa, da autorização e dos critérios de aceitação. Conforme o momento da verificação, distingue-se a aprovação prévia da validação posterior.
 
 A **aprovação prévia** ocorre antes do envio da operação. Antes de enviar um e-mail, por exemplo, o revisor verifica se destinatários, corpo, anexos e alcance do envio atendem ao pedido do usuário; antes de alterar uma configuração crítica, verifica o ambiente de destino, o conteúdo da mudança e o plano de recuperação. Com base no resultado da revisão, o Harness decide executar, exigir alterações ou encaminhar para tratamento humano.
 
@@ -366,13 +366,13 @@ Ao projetar seu próprio módulo de verificação, use como entrada o nome da fe
 
 A verificação pode rodar em paralelo com a geração do conteúdo seguinte ou com a atualização da interface pelo modelo principal, reduzindo a espera extra; já a chamada que está sendo verificada precisa aguardar a liberação. Suponha que o usuário diga “dê uma olhada na configuração”, mas o modelo principal se prepare para gravar o arquivo. O caminho pode ser perfeitamente válido, e ainda assim o sentido da operação mudou de consulta para alteração. Ao projetar esse tipo de verificação, pode-se usar um modelo de julgamento, como o Jev, para comparar as palavras do usuário com os parâmetros da ferramenta e distinguir “atende ao pedido”, “vai além do pedido” e “precisa de confirmação adicional”. O resultado da classificação alimenta o fluxo de aprovação, e as permissões de acesso a arquivos continuam sendo verificadas a cada operação pela camada de execução.
 
-[^ch4-auto-mode]: Anthropic, *How we built Claude Code auto mode: a safer way to skip permissions*, 25 mar. 2026, que descreve as camadas de permissão, o classificador de chamadas e o isolamento da entrada.
+[^ch4-auto-mode]: Anthropic, *How we built Claude Code auto mode: a safer way to skip permissions*, 25 de março de 2026, que descreve as camadas de permissão, o classificador de chamadas e o isolamento da entrada.
 
-O proponente-revisor descreve a divisão de responsabilidades; o Sidecar descreve a relação de execução entre um módulo auxiliar e o loop principal. O revisor pode ser desempenhado por um Sidecar, e o Sidecar pode realizar outras tarefas. A Tabela 4-2 compara os dois a partir dos usos típicos discutidos nesta seção.
+O proponente–revisor descreve a divisão de responsabilidades; o Sidecar descreve a relação de execução entre um módulo auxiliar e o loop principal. O revisor pode ser desempenhado por um Sidecar, e o Sidecar pode realizar outras tarefas. A Tabela 4-2 compara os dois a partir dos usos típicos discutidos nesta seção.
 
-Tabela 4-2 Comparação entre o mecanismo proponente-revisor e o mecanismo Sidecar
+Tabela 4-2 Comparação entre o mecanismo proponente–revisor e o mecanismo Sidecar
 
-| Dimensão | Proponente-revisor | Sidecar |
+| Dimensão | Proponente–revisor | Sidecar |
 | --- | --- | --- |
 | Papel principal | Realizar uma verificação independente da proposta ou do resultado | Acompanhar o loop principal e assumir tarefas específicas |
 | Momento de execução | Aprovação antes da ação ou validação depois dela | Acionado quando necessário, pode rodar em paralelo com o loop principal |

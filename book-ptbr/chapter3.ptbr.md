@@ -10,7 +10,7 @@ As duas precisam resolver como guardar as informações e como encontrá-las qua
 
 ## Sistema de memória do usuário
 
-Vale decompor a frase “na semana que vem estou no exterior; mande os documentos do banco por e-mail”. O usuário informou uma viagem com prazo definido e, dentro desse período, indicou como quer receber correspondência. Quando o banco propuser enviar documentos pelo correio, o assistente pode se apoiar nisso para pedir a entrega eletrônica; terminada a viagem, uma nova questão de correspondência exige reavaliar as condições do momento. Se o sistema guardar apenas “o usuário não gosta de cartas em papel”, poderá até recuperar essa memória mais tarde, mas vai aplicá-la fora do seu alcance.
+Vale decompor a frase “na semana que vem estou no exterior; mande os documentos do banco por e-mail”. O usuário informou uma viagem com prazo definido e, dentro desse período, indicou como quer receber correspondência. Quando o banco propuser enviar documentos pelo correio, o assistente pode se apoiar nisso para pedir a entrega eletrônica; terminada a viagem, uma nova questão de correspondência exige reavaliar as condições do momento. Se o sistema guardar apenas “o usuário não gosta de cartas em papel”, poderá até recuperar essa memória mais tarde, mas vai aplicá-la fora do âmbito em que ela vale.
 
 Agora, as passagens aéreas. Se o usuário diz “aquela passagem de 1250 da última vez saiu mais cara do que eu esperava”, o sistema pode guardar pelo menos a cotação daquela ocasião, o orçamento da época, o contexto da viagem e esse comentário. Diante de uma situação parecida, o modelo passará a tratar com mais cautela cotações acima do orçamento. Se o usuário acrescentar “daqui em diante, em viagens em família, pergunte a mim primeiro”, fica estabelecida uma condição explícita de consulta para as futuras viagens em família. Daí se distinguem três tipos de informação: o que o usuário de fato disse, em que condições estava naquele momento e o que o modelo inferiu dessa experiência.
 
@@ -380,7 +380,7 @@ O **BGE-M3** oferece ao mesmo tempo representações densas, esparsas e multivet
 
 [^ch3-ann]: A descrição do projeto Annoy, do Spotify, explica como construir índices somente leitura, carregá-los por mapeamento em memória e usar `search_k` para ajustar o número de nós examinados na consulta. A parte sobre a interface Python na descrição do projeto hnswlib apresenta o método `add_items`, para acrescentar vetores, e o método `set_ef`, para ajustar o alcance da consulta.
 
-**O índice deve ser escolhido conforme a forma de atualização do conhecimento.** Quando o corpus é publicado em lotes periódicos e vários processos compartilham o mesmo índice somente leitura, eu consideraria primeiro o ANNOY; quando novos documentos chegam continuamente e é preciso inserir on-line, prefiro o HNSW. O modelo de embedding determina a representação semântica; o índice determina se essas representações podem ser usadas com latência e custo de atualização adequados. Juntos, determinam a eficácia do serviço de recuperação.
+**O índice deve ser escolhido conforme a forma de atualização do conhecimento.** Quando o corpus é publicado em lotes periódicos e vários processos compartilham o mesmo índice somente leitura, eu consideraria primeiro o ANNOY; quando novos documentos chegam continuamente e é preciso inserir online, prefiro o HNSW. O modelo de embedding determina a representação semântica; o índice determina se essas representações podem ser usadas com latência e custo de atualização adequados. Juntos, determinam a eficácia do serviço de recuperação.
 
 Ajustando o número de árvores e o orçamento de busca do ANNOY, ou o grau de vizinhança e o alcance da busca do HNSW, pode-se observar como variam a revocação e a latência[^ch3-ann]. A revocação do índice mede se os vizinhos-alvo foram encontrados; se esses vizinhos respondem à pergunta do usuário depende da representação de embedding e do conteúdo do material.
 
@@ -424,11 +424,11 @@ O numerador é o número de documentos que não contêm a palavra, e o denominad
 >
 > | Termo da consulta | Documento | Frequência TF | Comprimento do documento | Contribuição BM25 |
 > | --- | --- | ---: | ---: | ---: |
-> | modelo | doc_1 | 5 | 200 | 1.52 |
-> | modelo | doc_3 | 2 | 500 | 0.82 |
-> | modelo | doc_7 | 8 | 150 | 1.68 |
-> | destilação | doc_1 | 3 | 200 | 2.15 |
-> | destilação | doc_5 | 1 | 250 | 1.22 |
+> | modelo | doc_1 | 5 | 200 | 1,52 |
+> | modelo | doc_3 | 2 | 500 | 0,82 |
+> | modelo | doc_7 | 8 | 150 | 1,68 |
+> | destilação | doc_1 | 3 | 200 | 2,15 |
+> | destilação | doc_5 | 1 | 250 | 1,22 |
 >
 > Somando as contribuições das duas palavras em doc_1, obtém-se cerca de 3,67, e a ordenação é **doc_1 (3,67) > doc_7 (1,68) > doc_5 (1,22) > doc_3 (0,82)**. Em doc_1, “destilação” tem frequência menor que “modelo”, mas é mais rara, e por isso contribui mais; casar as duas palavras ao mesmo tempo eleva ainda mais o total.
 >
@@ -498,7 +498,7 @@ Se a proporção da loja inteira for perguntada com frequência, pode-se contar 
 - **Tickets isolados não listam todas as condições de elegibilidade.** A aprovação de uma pessoa só mostra diretamente o resultado dela nas condições daquele momento; aumentar o número de resultados recuperados nem sempre revela categorias ou exceções que nunca apareceram.
 - **O alcance do material não está claro.** Os tickets podem vir de promoções ou épocas diferentes. É preciso confirmar primeiro quais registros se aplicam e que base normativa está faltando.
 
-Na indexação, pode-se ligar os tickets de uma mesma promoção, consultar o regulamento oficial correspondente e organizar em fichas de regras o público elegível, as exceções, a data de vigência e a origem de cada cláusula. Por exemplo, se o regulamento dessa situação didática abrange expressamente militares da ativa e veteranos e profissionais de saúde habilitados, e exclui a categoria de professores, essas condições são guardadas item a item; se enfermeiras se enquadram como profissionais de saúde também é confirmado pelo regulamento. Os tickets continuam guardados, para explicar como os atendimentos de fato ocorreram e revelar diferenças na execução.
+Na indexação, pode-se ligar os tickets de uma mesma promoção, consultar o regulamento oficial correspondente e organizar em fichas de regras o público elegível, as exceções, a data de vigência e a origem de cada cláusula. Por exemplo, se o regulamento dessa situação didática abrange expressamente militares da ativa e veteranos, bem como profissionais de saúde habilitados, e exclui a categoria de professores, essas condições são guardadas item a item; se enfermeiras se enquadram como profissionais de saúde também é confirmado pelo regulamento. Os tickets continuam guardados, para explicar como os atendimentos de fato ocorreram e revelar diferenças na execução.
 
 Os dois exemplos ilustram necessidades de informação diferentes: contar gatos exige percorrer todas as gaiolas da loja; decidir quem tem direito ao desconto exige consultar o regulamento completo e suas exceções. Para consultas desse tipo, defendo antecipar para a fase de construção da base as estatísticas e a organização das regras. Apenas aumentar os trechos recuperados pode deixar o modelo sem ver o escopo completo da contagem ou as cláusulas que decidem se este pedido será aprovado. Construindo resumos estatísticos, fichas de regras e relações de origem em torno da tarefa, a recuperação obtém de uma vez informação suficiente para fundamentar a decisão e ainda permite voltar ao material original.
 
@@ -543,7 +543,7 @@ Recomendo acertar primeiro a divisão em blocos e a recuperação híbrida e só
 
 ### O paradigma do sistema de arquivos: organizar o conhecimento em diretórios
 
-O **OpenViking** organiza memórias, recursos e skills em um sistema de arquivos virtual. Cada item é referenciado por uma URI `viking://`, e o agente pode navegar pelos diretórios, ler visões gerais e então acessar o conteúdo de que precisa[^ch3-openviking-uri]. Conforme o uso da informação, os diretórios podem ser entendidos em três grupos: recursos externos, dados do usuário e skills e experiências usadas pelo agente. Os identificadores de usuário e de agente delimitam ainda os respectivos espaços de nomes.
+O **OpenViking** organiza memórias, recursos e Skills em um sistema de arquivos virtual. Cada item é referenciado por uma URI `viking://`, e o agente pode navegar pelos diretórios, ler visões gerais e então acessar o conteúdo de que precisa[^ch3-openviking-uri]. Conforme o uso da informação, os diretórios podem ser entendidos em três grupos: recursos externos, dados do usuário, e Skills e experiências usadas pelo agente. Os identificadores de usuário e de agente delimitam ainda os respectivos espaços de nomes.
 
 | Conteúdo | Uso típico |
 | --- | --- |
