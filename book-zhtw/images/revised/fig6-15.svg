@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="106.000mm" height="89.511mm" viewBox="0 0 900 760" role="img" aria-labelledby="title desc">
-<title id="title">解析度匹配與雙向座標縮放</title><desc id="desc">在桌面與工具截圖中標出同一中心點並演示如何逆向換算。</desc>
+<title id="title">解析度匹配與雙向座標縮放</title><desc id="desc">在桌面與工具截圖中標出同一中心點並示範如何逆向換算。</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
 <rect width="900" height="760" fill="#ffffff" y="0" />
 <text x="215" y="48" text-anchor="middle" font-family="&quot;Noto Sans CJK TC&quot;, &quot;Source Han Sans TC&quot;, &quot;PingFang TC&quot;, &quot;Microsoft JhengHei&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">實際螢幕</text><text x="705" y="48" text-anchor="middle" font-family="&quot;Noto Sans CJK TC&quot;, &quot;Source Han Sans TC&quot;, &quot;PingFang TC&quot;, &quot;Microsoft JhengHei&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">工具輸出截圖</text><rect x="31.0" y="75" width="368" height="207" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
