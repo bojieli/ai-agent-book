@@ -41,6 +41,7 @@ CHAPTERS=(
     chapter9.md
     chapter10.md
     afterword.md
+    reference-answers.md
 )
 
 # Verify all chapters exist
@@ -51,14 +52,45 @@ for ch in "${CHAPTERS[@]}"; do
     fi
 done
 
+# ── SVG → PDF ────────────────────────────────────────────────────────────────
+# The 3.0 figures live in images/revised and are plain-text SVG whose labels are
+# Hungarian <text> nodes. XeLaTeX cannot read SVG, so rasterise each one to a PDF
+# beside it (idempotent: only new or changed files are converted) and let
+# svg2pdf.lua point the image references at the .pdf.
+IMG_DIR="images/revised"
+convert_one() {  # $1 = svg, $2 = pdf
+    if command -v rsvg-convert >/dev/null 2>&1; then
+        rsvg-convert -f pdf -o "$2" "$1"
+    elif command -v inkscape >/dev/null 2>&1; then
+        inkscape --export-type=pdf --export-filename="$2" "$1" >/dev/null 2>&1
+    else
+        return 1
+    fi
+}
+if command -v rsvg-convert >/dev/null 2>&1 || command -v inkscape >/dev/null 2>&1; then
+    n=0
+    for svg in "$IMG_DIR"/*.svg; do
+        [ -f "$svg" ] || continue
+        pdf="${svg%.svg}.pdf"
+        if [ ! -f "$pdf" ] || [ "$svg" -nt "$pdf" ]; then
+            convert_one "$svg" "$pdf" && n=$((n+1))
+        fi
+    done
+    echo "SVG → PDF: converted $n file(s)."
+else
+    echo "Warning: neither rsvg-convert nor inkscape found — SVG figures will not embed." >&2
+fi
+
 echo "Building PDF from ${#CHAPTERS[@]} files..."
 
 pandoc "${CHAPTERS[@]}" \
     -o "$OUT" \
     --from markdown+lists_without_preceding_blankline \
     --pdf-engine=xelatex \
+    --resource-path=. \
     --lua-filter=crossref.lua \
     --lua-filter=experiment_box.lua \
+    --lua-filter=svg2pdf.lua \
     --toc \
     --toc-depth=3 \
     --number-sections \
