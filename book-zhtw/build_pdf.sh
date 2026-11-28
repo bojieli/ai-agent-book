@@ -25,6 +25,7 @@ CHAPTERS=(
     chapter9.zhtw.md
     chapter10.zhtw.md
     afterword.zhtw.md
+    reference-answers.zhtw.md
 )
 
 # Verify all chapters exist
