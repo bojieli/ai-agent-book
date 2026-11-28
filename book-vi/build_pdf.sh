@@ -43,6 +43,7 @@ CHAPTERS=(
     chapter9.vi.md
     chapter10.vi.md
     afterword.vi.md
+    reference-answers.vi.md
 )
 
 for ch in "${CHAPTERS[@]}"; do
@@ -52,8 +53,10 @@ for ch in "${CHAPTERS[@]}"; do
     fi
 done
 
-echo "Checking Vietnamese SVG layout..."
-python3 fix_svg_text_layout.py --check
+# 3.0 figures live in images/revised (live-text SVGs built by scripts/i18n/svg_text.py).
+IMG_DIR="images/revised"
+echo "Checking Vietnamese SVG layout in $IMG_DIR..."
+python3 ../scripts/i18n/svg_text.py check "$IMG_DIR"/*.svg --lang vi
 
 echo "Building Vietnamese PDF from ${#CHAPTERS[@]} files..."
 echo "Note: after the initial Pandoc warnings, XeLaTeX may be quiet for several minutes."
