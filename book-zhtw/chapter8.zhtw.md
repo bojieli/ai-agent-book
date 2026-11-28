@@ -57,7 +57,7 @@ SFT 的效率來自逐 token 的密集示範。對於格式穩定、任務範圍
 
 > **參數高效訓練：LoRA**
 >
-> 全參數微調需要為大量權重儲存梯度和最佳化器狀態。LoRA（Low-Rank Adaptation，低秩適配）凍結原矩陣 $W$，用兩個較小矩陣的乘積表示更新：$W'=W+\gamma BA$。其中秩（rank）控制更新的容量，$\gamma$ 控制縮放；可訓練參數量取決於 rank、目標層和模型結構。LoRA 可以用於 SFT，也可以用於 RL，並支援同一基礎模型載入多個適配器。筆者通常先用 LoRA 建立後訓練基線，以較低的顯示記憶體和儲存開銷比較資料與訓練方案；適配器容量不足時，再增加 rank 或比較全參數訓練。
+> 全參數微調需要為大量權重儲存梯度和最佳化器狀態。LoRA（Low-Rank Adaptation，低秩適配）凍結原矩陣 $W$，用兩個較小矩陣的乘積表示更新：$W'=W+\gamma BA$。其中秩（rank）控制更新的容量，$\gamma$ 控制縮放；可訓練參數量取決於 rank、目標層和模型結構。LoRA 可以用於 SFT，也可以用於 RL，並支援同一基礎模型載入多個適配器。筆者通常先用 LoRA 建立後訓練基線，以較低的GPU 記憶體和儲存開銷比較資料與訓練方案；適配器容量不足時，再增加 rank 或比較全參數訓練。
 >
 > 「LoRA Without Regret」的實驗給出了幾項有用的配置線索：把 MLP 等主要權重納入適配，逐步增加 rank 檢查容量是否足夠，並為 LoRA 單獨搜尋學習率。其測試中，適合 LoRA 的學習率約為全參微調的十倍，RL 在較低 rank 下也取得了良好結果。[^ch8-1] 實踐中可將 SFT 的 rank 64～256、RL 的 rank 8～32 作為候選範圍，連同更低 rank 一起比較。
 
@@ -313,7 +313,7 @@ LLM 可以在呼叫工具前生成一段中間計算，也可以直接輸出呼�
 
 領域語料能讓模型多見幾次某個介面，但要教它在呼叫失敗後改正參數，還可以直接示範一次。SFT 給定任務輸入，逐個 token 訓練模型生成示範中的回答或動作。看圖8-10 時，先想清楚準備教哪一種行為，再決定怎樣收集示範。示範中的事實、語氣和輸出格式也會一同進入訓練。
 
-![圖8-10 監督微調（SFT）流水線](images/revised/fig8-10.svg)
+![圖8-10 監督微調（SFT）管線](images/revised/fig8-10.svg)
 
 資料通常來自三條途徑：人工專家定義關鍵行為和邊界，教師模型成批編寫示範，驗證器從模型取樣中篩選有效輸出。三者可以組合使用。例如，先由專家寫出少量工具呼叫示範，再讓教師改變任務條件生成更多樣本，最後檢查參數、執行結果與業務約束。
 
@@ -590,7 +590,7 @@ Agent 的 RL 訓練需要反覆執行任務。一次程式碼修復可以在隔�
 
 ### 環境、任務分布與評估隔離
 
-訓練環境決定模型能夠經歷什麼。可重設的狀態支援重試，隔離副本支援並行，明確的狀態與驗證規則支援重現和計分。任務可以沿用前文的資料合成方法：從真實業務日誌提取任務藍圖，去除身份資訊，再生成虛構的人物、訂單、檔案與初始狀態。
+訓練環境決定模型能夠經歷什麼。可重設的狀態讓重試成為可能，隔離副本讓任務可以並行，明確的狀態與驗證規則讓結果可以重現和計分。任務可以沿用前文的資料合成方法：從真實業務日誌提取任務藍圖，去除身份資訊，再生成虛構的人物、訂單、檔案與初始狀態。
 
 訓練與評估可以複用任務生成器和驗證程式碼，具體任務則應劃分為獨立集合。參考 SWE-Gym、τ²-bench 和 AndroidWorld 的環境設計[^ch8-28]，驗收測試、評分所需的隱藏狀態與參考解法儲存在驗證器一側，Agent 透過任務約定的介面取得觀測。擴大取樣前，先用少量 rollout 檢查任務能否完成、驗證器能否區分有效與無效結果。及早發現評分偏差，可以減少策略利用驗證漏洞的機會。
 
@@ -634,7 +634,7 @@ Search-R1[^ch8-25]訓練模型決定何時搜尋、提交什麼查詢，並結�
 >
 > 圖8-17 用一元二次方程展示文字推理、程式碼生成和直譯器回饋如何交替進行。
 >
-> ![圖8-17 ReTool 交織文字-程式碼思考與沙盒執行回饋迴圈](images/revised/fig8-17.svg)
+> ![圖8-17 ReTool 交織文字-程式碼思考與沙盒執行回饋迴路](images/revised/fig8-17.svg)
 >
 > ReTool 在 SFT 預熱後，用交織的文字思考、程式碼執行和直譯器回饋進行 PPO 訓練。模型逐漸學會什麼時候值得執行程式碼，以及報錯後該怎樣修改。這裡用的是 DAPO-Math-17k 的訓練資料，更新策略用的仍是標準 PPO[^ch8-26][^ch8-27]。
 >
@@ -934,7 +934,7 @@ Agent 尚未執行測試便宣稱完成，只改完三個需求中的兩個便�
 [^ch8-26]: Feng, Jiazhan et al., 「ReTool: Reinforcement Learning for Strategic Tool Use in LLMs」, 2025. arXiv:2504.11536.
 [^ch8-27]: Yu, Qiying et al., 「DAPO: An Open-Source LLM Reinforcement Learning System at Scale」, 2025. arXiv:2503.14476.
 [^ch8-28]: Pan, Jiayi et al., 「Training Software Engineering Agents and Verifiers with SWE-Gym」, 2024. arXiv:2412.21139；Barres, Victor et al., 「$\tau^2$-Bench: Evaluating Conversational Agents in a Dual-Control Environment」, 2025. arXiv:2506.07982；Rawles, Christopher et al., 「AndroidWorld: A Dynamic Benchmarking Environment for Autonomous Agents」, 2024. arXiv:2405.14573.
-[^ch8-29]: storm, 「長程智慧體自我檢查與早停行為：Reward Seeking 現象及其緩解措施」，青稞社區，2026 年 8 月 6 日。
+[^ch8-29]: storm, 「長程智能體自我檢查與早停行為：Reward Seeking 現象及其緩解措施」，青稞社區，2026 年 8 月 6 日。
 [^ch8-30]: Gururangan, Suchin et al., 「Don't Stop Pretraining: Adapt Language Models to Domains and Tasks」, ACL, 2020.
 [^ch8-31]: Jiang, Zhengbao et al., 「Instruction-tuned Language Models are Better Knowledge Learners」, ACL, 2024.
 [^ch8-32]: Zheng, Chujie et al., 「Stabilizing Reinforcement Learning with LLMs: Formulation and Practices」, 2025. arXiv:2512.01374.
@@ -946,7 +946,7 @@ Agent 尚未執行測試便宣稱完成，只改完三個需求中的兩個便�
 ## 思考題
 
 1. ★★ 一次定向微調改善了目標任務，卻降低了通用工具呼叫能力。你會如何設計檢查原有能力的測試集、調整資料配比和訓練量，並比較全參微調與 LoRA 的效果？
-2. ★★ 某項領域能力既可以透過參數訓練學習，也可以用上下文示例和知識檢索支援。你會依據哪些因素選擇方案？
+2. ★★ 某項領域能力既可以透過參數訓練學習，也可以透過上下文示例和知識檢索來提供。你會依據哪些因素選擇方案？
 3. ★★ 分別蒸餾直接回答的 Chat 模型、生成推理過程的 Reasoning 模型，以及多輪使用工具的 Agentic 模型，需要哪些訓練材料和驗證方法？
 4. ★★★ 客服 Agent 用 10 輪互動完成任務，最終獲得成功獎勵。你會如何把這一訊號關聯到中間決策？哪些步驟適合增加過程獎勵？
 5. ★★★ 你有 10,000 美元預算提升客服 Agent 的表現。如何安排評估、上下文與知識、Prompt／Skills、程式約束和參數訓練的投入？
