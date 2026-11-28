@@ -5,7 +5,7 @@
 <rect width="900" height="898" fill="#ffffff" y="0" />
 <rect x="20" y="20" width="860" height="120" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
 <rect x="20" y="20" width="860" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />
-<text x="450" y="53" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">Felhasználói igény</text><text x="450" y="100" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="21.3" font-weight="400" fill="#292929">Kiadás-jóváhagyó ágens: telepítési ellenőrzések alapján dönt a kiadásról</text><path d="M450 140 L450 160" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<text x="450" y="53" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">Felhasználói igény</text><text x="450" y="100" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="21.7" font-weight="400" fill="#292929">Kiadás-jóváhagyó ügynök: telepítési ellenőrzések alapján dönt a kiadásról</text><path d="M450 140 L450 160" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
 <path d="M225 190 L225 160 L675 160 L675 190" fill="none" stroke="#333333" stroke-width="1.8" />
 <rect x="20" y="190" width="410" height="180" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
 <rect x="20" y="190" width="410" height="48" rx="6" fill="#dedede" stroke="#333333" stroke-width="1.8" />

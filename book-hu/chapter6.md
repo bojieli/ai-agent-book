@@ -1,20 +1,20 @@
 # Interakció: a megfigyelési és a cselekvési tér kiterjesztése
 
-**Rögzített alapmodell mellett a megfigyelési és a cselekvési interfész átszervezése vagy kiterjesztése gyakran az egyik leghatékonyabb mérnöki eszköz az Agent feladatteljesítményének javítására.** Az előző fejezetekben az Agent jellemzően megvárta, amíg a felhasználó befejezi a mondandóját, majd utánanézett a dolgoknak, eszközöket hívott, és válaszolt. Amíg azonban az eszközök eredményére várt, a felhasználó és a külső környezet tovább változott.
+**Rögzített alapmodell mellett a megfigyelési és a cselekvési interfész átszervezése vagy kiterjesztése gyakran az egyik leghatékonyabb mérnöki eszköz az ügynök feladatteljesítményének javítására.** Az előző fejezetekben az ügynök jellemzően megvárta, amíg a felhasználó befejezi a mondandóját, majd utánanézett a dolgoknak, eszközöket hívott, és válaszolt. Amíg azonban az eszközök eredményére várt, a felhasználó és a külső környezet tovább változott.
 
 A felhasználó megbízza az asszisztensét, hogy foglalja át a repülőjegyét. Miközben az asszisztens az ügyfélszolgálattól érdeklődik a járatokról, a felhasználó üzen: „Még egy bőröndöt fel kell adnom.” Az ügyintéző még beszél, a képernyőn látható jegyár is változhat. Az asszisztensnek időben meg kell kérdeznie, hogy az ár tartalmazza-e a feladott poggyászt, és arra is figyelnie kell, hogy az imént kapott ajánlat érvényes-e még. Két tervezési kérdés adódik: milyen csatornákon értesülhet az asszisztens a változásokról, és mikor tud rájuk reagálni? A fejezet először az aszinkron módon érkező e-mailekkel és eszközeredményekkel foglalkozik, majd a folyamatos beszédet, a képernyő változásait és a robotok mozgásából érkező visszajelzést vizsgálja.
 
 ## A modalitás és az időzítés kiterjesztése
 
-A **modalitás** az információ és a cselekvés formáját írja le. Az Agent olvashat szöveget, hallgathat hangot, nézheti a képernyőt és fogadhat nyomatékjeleket; kimenetként írhat szöveget, szintetizálhat beszédet, kattinthat a felületen vagy ízületeket mozgathat.
+A **modalitás** az információ és a cselekvés formáját írja le. Az ügynök olvashat szöveget, hallgathat hangot, nézheti a képernyőt és fogadhat nyomatékjeleket; kimenetként írhat szöveget, szintetizálhat beszédet, kattinthat a felületen vagy ízületeket mozgathat.
 
-Az **időzítés** arra vonatkozik, mikor érkezik meg az információ, mikor kezdődik a cselekvés, és mikor reagál a rendszer. Az információt az Agent maga is lekérdezheti, de egy külső szolgáltatás is odaküldheti; egy eszköz azonnal visszaadhatja az eredményt, de el is indíthat egy feladatot, és csak később jelezheti a befejezést. Új esemény érkezésekor a rendszernek azt is el kell döntenie, megszakítsa-e az éppen folyó munkát, és hogyan folytassa a félbeszakított feladatot.
+Az **időzítés** arra vonatkozik, mikor érkezik meg az információ, mikor kezdődik a cselekvés, és mikor reagál a rendszer. Az információt az ügynök maga is lekérdezheti, de egy külső szolgáltatás is odaküldheti; egy eszköz azonnal visszaadhatja az eredményt, de el is indíthat egy feladatot, és csak később jelezheti a befejezést. Új esemény érkezésekor a rendszernek azt is el kell döntenie, megszakítsa-e az éppen folyó munkát, és hogyan folytassa a félbeszakított feladatot.
 
 | Dimenzió | Információszerzés és megfigyelési interfész | Cselekvés és végrehajtási interfész |
 |---|---|---|
 | Tartalomszervezés (2–5. fejezet) | A kontextus, a memória és a tudásbázis rendezi a döntéshez szükséges információt | Az eszközök és a kód fejezik ki a végrehajtható műveleteket |
 | Modalitás (ez a fejezet) | Beszéd, képernyő, fizikai érzékelők | Beszéd, kattintás, ízületmozgás |
-| Időzítés (ez a fejezet) | Aktív lekérdezés, eseményküldés, folyamatos bemenet | Köröket átívelő végrehajtás, visszavonás, kiszorítás és folytatás |
+| Időzítés (ez a fejezet) | Aktív lekérdezés, eseményküldés, folyamatos bemenet | Köröket átívelő végrehajtás, megszakítás, kiszorítás és folytatás |
 
 A kontextus egy adott döntéshez szükséges információt hordozza, a megfigyelési tér pedig azt írja le, milyen információt fogadhat egyáltalán a rendszer; az eszközök konkrét interfészt adnak, a cselekvési tér pedig a rendszer számára megengedett cselekvések körét írja le. Az interfészek kiterjesztésekor ezeket a köröket továbbra is korlátozza az eszközök képessége, a paraméterek, a jogosultságok és a futási környezet.
 
@@ -24,20 +24,20 @@ A visszajelzés üteme forgatókönyvenként nagyon eltér. Az alábbi tábláza
 
 | Jellemző skála | Forgatókönyv | Változás a megfigyelés oldalán | Kezelés a cselekvés oldalán |
 |---|---|---|---|
-| Másodperctől napokig | Aszinkron és eseményvezérelt | Külső esemény ébreszti fel az Agentet | Előbb elindítja a feladatot, a későbbi események jelzik a haladást és a befejezést |
+| Másodperctől napokig | Aszinkron és eseményvezérelt | Külső esemény ébreszti fel az ügynököt | Előbb elindítja a feladatot, a későbbi események jelzik a haladást és a befejezést |
 | Néhányszor tíz ezredmásodperctől másodpercekig | Beszéd | Folyamatosan érkező hang | Folyamatos kimenet, közbeszólás és a lejátszás leállításának kezelése |
-| Másodperc alatt, illetve néhány másodperc | Computer Use | A képernyő folyamatosan változik | Művelet után újra le kell kérni a felület állapotát |
+| Másodpercnél rövidebbtől néhány másodpercig | Computer Use | A képernyő folyamatosan változik | Művelet után újra le kell kérni a felület állapotát |
 | Ezredmásodperces vezérlési ciklus | Alacsony szintű robotvezérlés | Az érzékelők folyamatosan visszajeleznek | Rövid mozgásszakaszok végrehajtása, reagálás a vezérlő- és leállítójelekre |
 
 ## Aszinkron és eseményvezérelt: amikor a világ kopogtat be
 
-A 4. fejezet bemutatta az érzékelő, végrehajtó és együttműködési eszközöket; ez a szakasz az eseményindító és a felhasználói kommunikációs eszközökkel folytatja. Az eseményindító eszközök a környezet változásait juttatják el az Agenthez, a kommunikációs eszközök pedig lehetővé teszik, hogy az Agent a feladat menete közben felvegye a kapcsolatot a felhasználóval. A Harness ezeket a be- és kimeneteket a futó feladatokhoz kapcsolja, és így folyamatosan működő eseményhurok jön létre.
+A 4. fejezet bemutatta az érzékelő, végrehajtó és együttműködési eszközöket; ez a szakasz az eseményindító és a felhasználói kommunikációs eszközökkel folytatja. Az eseményindító eszközök a környezet változásait juttatják el az ügynökhöz, a kommunikációs eszközök pedig lehetővé teszik, hogy az ügynök a feladat menete közben felvegye a kapcsolatot a felhasználóval. A Harness ezeket a be- és kimeneteket a futó feladatokhoz kapcsolja, és így folyamatosan működő eseményhurok jön létre.
 
 ### Miért van szükség aszinkron működésre?
 
 Szinkron hívásnál a hívónak meg kell várnia az eredményt, mielőtt folytathatná a megkezdett folyamatot. Aszinkron hívásnál a hívó előbb egy feladatleírót kap (egy azonosítót, amellyel a feladat lekérdezhető és kezelhető), vagy megállapodnak, hogy a befejezésről később értesítést kap, így a várakozás alatt más munkával foglalkozhat. Ennek alapján a rendszer több folyamatban lévő feladatot is kezelhet, és az erőforrások meg a függőségek szerint dönti el, mely műveletek futhatnak párhuzamosan.
 
-Gondoljunk az Agentre úgy, mint egy titkárra, aki e-maileket, telefonhívásokat és látogatókat intéz: amíg a válaszlevélre vár, tovább rendezi az iratokat; ha sürgős hívás érkezik, félreteszi, ahol éppen tartott, és a hívás után visszatér az eredeti feladathoz. A mérnöki megvalósításban ennek három dolog felel meg:
+Gondoljunk az ügynökre úgy, mint egy titkárra, aki e-maileket, telefonhívásokat és látogatókat intéz: amíg a válaszlevélre vár, tovább rendezi az iratokat; ha sürgős hívás érkezik, félreteszi, ahol éppen tartott, és a hívás után visszatér az eredeti feladathoz. A mérnöki megvalósításban ennek három dolog felel meg:
 
 - **A hosszú feladatok és az interakció szétválasztása.** A fájlelemzés, a telefonhívás vagy a buildfolyamat a háttérben halad, a felhasználó közben lekérdezheti az állását, és kiegészítheti a kéréseit.
 - **Eseményprioritás.** A vészleállítás azonnal a vezérlési folyamatba kerül, a rutinszerű frissítések sorba állnak, a független lekérdezések pedig párhuzamos munkamenetre bízhatók.
@@ -47,17 +47,17 @@ A Claude Duet kutatási előzetese jó példát ad erre: a felhasználónak dél
 
 A modell-API-k az üzenetek sorrendjére is szabályokat írnak elő. Egyes interfészek csak akkor fogadják el a következő kérést, ha minden eszközhívásnak megvan a párja az eredmények között; mások megengedik, hogy egy eszköz függőben maradjon, és közben további frissítések érkezzenek. Az alkalmazás aszinkron függvényei a várakozást és a végrehajtást ütemezik, a modellprotokoll pedig azt szabja meg, mikor küldhetők be üzenetek.
 
-A 6-1. ábrán az új üzenetek és az eszközeredmények egyaránt bekerülhetnek a sorba, de hogy miként jutnak oda, az a forrástól függ. Ha a szolgáltatás támogatja a küldést (push), az állapot változásakor rögtön értesítést küldhet; ha csak lekérdezési interfészt kínál, az adapternek rendszeresen meg kell néznie, és változás esetén eseményt kell létrehoznia. Egy időzítő lejárta is eseményt kelthet. Az eseményhurok aztán ezeket a bemeneteket adja át az Agentnek.
+A 6-1. ábrán az új üzenetek és az eszközeredmények egyaránt bekerülhetnek a sorba, de hogy miként jutnak oda, az a forrástól függ. Ha a szolgáltatás támogatja a küldést (push), az állapot változásakor rögtön értesítést küldhet; ha csak lekérdezési interfészt kínál, az adapternek rendszeresen meg kell néznie, és változás esetén eseményt kell létrehoznia. Egy időzítő lejárta is eseményt kelthet. Az eseményhurok aztán ezeket a bemeneteket adja át az ügynöknek.
 
-![6-1. ábra: Eseményvezérelt aszinkron Agent-architektúra](images/revised/fig6-1.svg)
+![6-1. ábra: Eseményvezérelt aszinkron ügynökarchitektúra](images/revised/fig6-1.svg)
 
 ### Az eseményvezérelt működés megvalósítása az OpenClaw-ban
 
-Az OpenClaw egy Gateway-en keresztül csatlakozik az üzenetcsatornákhoz, és onnan irányítja az eseményeket az Agent futtatókörnyezetébe. Automatizálási mechanizmusai közé tartoznak a belső Hookok, az időzített ütemezés, a Heartbeat és a külső Webhookok mint belépési pontok[^ch6-automation]. Ezek indítási feltételük szerint érthetők meg:
+Az OpenClaw egy Gateway-en keresztül csatlakozik az üzenetcsatornákhoz, és onnan irányítja az eseményeket az ügynök futtatókörnyezetébe. Automatizálási mechanizmusai közé tartoznak a belső Hookok, az időzített ütemezés, a Heartbeat és a külső Webhookok mint belépési pontok[^ch6-automation]. Ezek indítási feltételük szerint érthetők meg:
 
 - **Hooks (eseményhorgok):** a keretrendszer belső eseményeire reagálnak, például egy munkamenet létrehozására, visszaállítására vagy a futás életciklusának változásaira.
 - **Cron (időzített ütemezés):** megadott időpontban vagy rendszeres időközönként végez el munkát. Például a `0 9 * * 5` a beállított időzónában minden péntek reggel 9 órakor indít.
-- **Heartbeat (szívverés):** rendszeres időközönként felébreszti az Agentet, hogy megnézze, van-e figyelmet igénylő ügy.
+- **Heartbeat (szívverés):** rendszeres időközönként felébreszti az ügynököt, hogy megnézze, van-e figyelmet igénylő ügy.
 - **Webhook (külső visszahívás):** külső szolgáltatások által beküldött eseményeket fogad, amelyek hitelesítés és útválasztás után indítják el a feldolgozást.
 
 A heti jelentést érdemes menetrend szerint futtatni, a folyamatos figyelmet igénylő teendőket rendszeresen ellenőrizni, az új e-mailek és a szolgáltatások visszahívásai esetében pedig a küldés révén lerövidíthető az észlelés késése.
@@ -68,15 +68,15 @@ A heti jelentést érdemes menetrend szerint futtatni, a folyamatos figyelmet ig
 - **Háromoldalú hívás.** Az ügyintéző közvetlenül a számlatulajdonossal akar beszélni, ezért a felhasználót időben értesíteni kell, hogy vegye fel a telefont.
 - **Döntés megerősítése.** Ha az ügyintéző alternatív ajánlatot tesz, az előtér a mostani megbízás és a felhasználó korábbi preferenciái alapján mérlegeli, elfogadható-e. Ha a felhasználónak kell döntenie, konkrét lehetőségeket küld neki, és közben tovább egyezteti a többi feltételt az ügyintézővel.
 
-Tegyük fel például, hogy az ügyintéző azt kéri, hogy a számlatulajdonos csatlakozzon a hívásba. Minél hamarabb ér oda az értesítés, annál kevesebb ideig várakoznak tétlenül a vonal két végén. A PineClaw-eset Channel mechanizmust használ, amely a Gateway és a Pine API között közvetíti a hívás eseményeit: a hívás létrejötte, a felhasználói bevitel szükségessége és a hívás vége külön-külön kerül az eseményfolyamba, az Agent pedig ezek alapján frissíti a feladatot és értesíti a felhasználót.
+Tegyük fel például, hogy az ügyintéző azt kéri, hogy a számlatulajdonos csatlakozzon a hívásba. Minél hamarabb ér oda az értesítés, annál kevesebb ideig várakoznak tétlenül a vonal két végén. A PineClaw-eset Channel mechanizmust használ, amely a Gateway és a Pine API között közvetíti a hívás eseményeit: a hívás létrejötte, a felhasználói bevitel szükségessége és a hívás vége külön-külön kerül az eseményfolyamba, az ügynök pedig ezek alapján frissíti a feladatot és értesíti a felhasználót.
 
-**Úgy gondolom, hogy a proaktív szolgáltatás akkor lehet igazán időszerű, ha az eseményforrás maga értesíti az Agentet, amikor megváltozik az állapota.** Miután az értesítés a csatornán át megérkezett, a Harness megkeresi a hozzá tartozó feladatot, ellenőrzi, nem ismétlődés-e és nem járt-e le, majd a modell dönt a következő lépésről. Ha a felhasználónak igazolnia kell magát, a felületnek egy megbízható hitelesítési belépési pontot kell megnyitnia, és az ellenőrzés eredménye új eseményként tér vissza az eredeti feladathoz.
+**Úgy gondolom, hogy a proaktív szolgáltatás akkor lehet igazán időszerű, ha az eseményforrás maga értesíti az ügynököt, amikor megváltozik az állapota.** Miután az értesítés a csatornán át megérkezett, a Harness megkeresi a hozzá tartozó feladatot, ellenőrzi, nem ismétlődés-e és nem járt-e le, majd a modell dönt a következő lépésről. Ha a felhasználónak igazolnia kell magát, a felületnek egy megbízható hitelesítési belépési pontot kell megnyitnia, és az ellenőrzés eredménye új eseményként tér vissza az eredeti feladathoz.
 
 ### Eseményindító eszközök
 
-Ha az asszisztensre bízzuk, hogy „szólj, ha az ügyfél válaszolt”, hogyan ébred fel holnap éppen a megfelelő pillanatban? Először azt kell megnézni, hogy a postafiók tud-e eseményt küldeni levél érkezésekor; ha egy rendszer csak aktív lekérdezést enged, meg kell jegyezni a következő ellenőrzés időpontját. Az alábbi három szemléltető interfész ezeket a várakozási feltételeket a futtatókörnyezetre bízza, így a modell befejezheti az aktuális munkakört.
+Ha az asszisztensre bízzuk, hogy „szólj, ha az ügyfél válaszolt”, hogyan ébred fel holnap éppen a megfelelő pillanatban? Először azt kell megnézni, hogy a postafiók tud-e eseményt küldeni levél érkezésekor; ha egy rendszer csak aktív lekérdezést enged, meg kell jegyezni a következő ellenőrzés időpontját. Az alábbi három szemléltető interfész ezeket a várakozási feltételeket a futtatókörnyezetre bízza, így a modell lezárhatja az aktuális kört.
 
-**Az időzítő (`set_timer`)** egy feladat előre megbeszélt időpontban való felébresztésére szolgál. Az egyszeri időzítő olyan esetekre való, mint „jövő hétfő délelőtt 10-kor hívd fel a bankot, és érdeklődj a lakáshitel állásáról”; az ismétlődő időzítő például a szolgáltatás állapotának óránkénti ellenőrzésére alkalmas. Egy elküldött e-mailre adott válasz kivárását, vagy munkaidőn kívüli hívás után az újratárcsázást szintén időzítővel lehet beütemezni. Az interfésznek el kell tárolnia az időzónát, az indítási feltételt és a feladatazonosítót, és lehetőséget kell adnia a visszavonásra vagy módosításra. Ha a külső szolgáltatás csak lekérdezést támogat, az időzített feladat a haladás rendszeres lekérdezését is elvégezheti.
+**Az időzítő (`set_timer`)** egy feladat előre megbeszélt időpontban való felébresztésére szolgál. Az egyszeri időzítő olyan esetekre való, mint „jövő hétfő délelőtt 10-kor hívd fel a bankot, és érdeklődj a lakáshitel állásáról”; az ismétlődő időzítő például a szolgáltatás állapotának óránkénti ellenőrzésére alkalmas. Egy elküldött e-mailre adott válasz kivárását, vagy munkaidőn kívüli hívás után az újratárcsázást szintén időzítővel lehet beütemezni. Az interfésznek el kell tárolnia az időzónát, az indítási feltételt és a feladatazonosítót, és lehetőséget kell adnia a lemondásra vagy módosításra. Ha a külső szolgáltatás csak lekérdezést támogat, az időzített feladat a haladás rendszeres lekérdezését is elvégezheti.
 
 **A háttérfeladat-figyelés (`monitor_shell`)** a hosszan futó parancsokat haladási eseményekké alakítja. Indításkor feladatazonosítót ad vissza, futás közben az új kimenet, kulcsszavak vagy állapotváltozások alapján értesít, a végén pedig jelenti a kilépési állapotot és az eredményt.
 
@@ -86,7 +86,7 @@ Ha például a modell feliratkozik egy függőben lévő munkajegy állapotfriss
 
 **A külső eseménycsatornák (`connect_channel`)** e-mailekre, azonnali üzenetekre vagy API-visszahívásokra való feliratkozásra szolgálnak. A csatornaadapter ellenőrzi a forrást, a szolgáltatás saját azonosítóit szálakra és kapcsolódó objektumokra képezi le, majd egységes formátumú eseményt ad át; ezt a később következő, a fogadórétegről szóló szakasz fejti ki. A PineClaw telefonos állapotértesítései ebbe a csoportba tartoznak.
 
-Mindhárom eszköztípusnál egyértelmű indítási feltételek, szűrési szabályok és eseményadat (payload) kell. Az eseményadatnak tartalmaznia kell az esemény azonosítóját, időpontját, forrását, a kapcsolódó feladatot és a szükséges tartalmat, hogy az Agent el tudja dönteni, érvényes-e még az esemény, és milyen információra van szüksége a következő lépéshez.
+Mindhárom eszköztípusnál egyértelmű indítási feltételek, szűrési szabályok és eseményadat (payload) kell. Az eseményadatnak tartalmaznia kell az esemény azonosítóját, időpontját, forrását, a kapcsolódó feladatot és a szükséges tartalmat, hogy az ügynök el tudja dönteni, érvényes-e még az esemény, és milyen információra van szüksége a következő lépéshez.
 
 ### Felhasználói kommunikációs eszközök
 
@@ -94,21 +94,21 @@ Térjünk vissza az átfoglalási feladathoz. Kérdést intézni az ügyintéző
 
 A beszélgetési felület megjelenítheti a végső választ, az eszközök haladását és a végrehajtás eredményét; a kommunikációs eszközök viszont kifejezetten megadják a címzettet, a csatornát, az üzenet tartalmát és a mellékleteket. A modell dönti el, mit kell közölni, a Harness ellenőrzi a célt és a jogosultságot, az üzenetküldő szolgáltatás pedig kézbesít. A futtatókörnyezet a végső választ automatikusan az eredeti munkamenetbe is irányíthatja. A két módszer együtt is használható.
 
-Az OpenClaw többcsatornás interakciója révén a felhasználó úgy küldhet üzenetet, várhatja a fejleményeket és kaphat emlékeztetőt, mintha egy titkárral érintkezne. Ez az „élő ember” érzés a folyamatosan követett feladatállapotból és az időszerű kommunikációból fakad. A felhasználó a megszokott csatornáján folytathatja a feladatot, az Agentnek pedig következetesen kell kezelnie az identitást, a munkamenetet és az üzenetek összerendelését.
+Az OpenClaw többcsatornás interakciója révén a felhasználó úgy küldhet üzenetet, várhatja a fejleményeket és kaphat emlékeztetőt, mintha egy titkárral érintkezne. Ez az „élő ember” érzés a folyamatosan követett feladatállapotból és az időszerű kommunikációból fakad. A felhasználó a megszokott csatornáján folytathatja a feladatot, az ügynöknek pedig következetesen kell kezelnie az identitást, a munkamenetet és az üzenetek összerendelését.
 
 A kommunikáció tartalma is igazodhat a feladathoz: rövid előrehaladási jelentéshez szöveg, összetett eredményhez kép vagy fájl melléklet, kitöltendő adatokhoz strukturált kártya, interaktív eredményhez pedig az 5. fejezetben bemutatott generatív UI. Ha a csatorna támogatja a kézbesítési vagy olvasási visszaigazolást, a rendszer elmenti a megfelelő állapotot; az újrapróbálkozások, az ismétlődő üzenetek és a csatornák közötti szinkronizálás szintén a kézbesítési nyilvántartásba kerül.
 
 **Többcsatornás értesítés és a felhasználó visszahívása.**
 
-Az azonnali üzenet, az SMS, az e-mail, a telefonhívás és az alkalmazásértesítés más-más sürgősségi szinthez és tartalomformához illik. Az Agent a sürgősség, a felhasználói preferenciák, a felhasználó aktuális állapota és az üzenet hossza alapján választhat csatornát. Az azonnali megerősítést igénylő hívásesemények gyors emlékeztetőt kapnak, a teljes jelentés pedig e-mailben vagy alkalmazáslinken keresztül kézbesíthető.
+Az azonnali üzenet, az SMS, az e-mail, a telefonhívás és az alkalmazásértesítés más-más sürgősségi szinthez és tartalomformához illik. Az ügynök a sürgősség, a felhasználói preferenciák, a felhasználó aktuális állapota és az üzenet hossza alapján választhat csatornát. Az azonnali megerősítést igénylő hívásesemények gyors emlékeztetőt kapnak, a teljes jelentés pedig e-mailben vagy alkalmazáslinken keresztül kézbesíthető.
 
-Egyszer megkértem az asszisztensemet, hogy figyelje egy ATC-konferencia szállodai árait. Az asszisztens minden nap ugyanabban az időben üzent, hogy az ár még nem csökkent a célár alá. Egyszer az ár rövid időre leesett, de ezt az ablakot a saját magam írta szkript kapta el. A rövid ideig tartó alacsony ár két lekérdezés között is felbukkanhat. Ha az asszisztens időben észre is veszi, de az üzenete későn ér célba, a felhasználó akkor is lemaradhat a foglalásról. Azokon a napokon, amikor nincs árcsökkenés, az időzített lekérdezés zavartalanul futhat tovább, a felhasználónak pedig nem kell minden nap elolvasnia egy ugyanolyan üzenetet. A 7. fejezet egy ötperces árcsökkenési ablakkal teszi próbára ezt a fajta emlékeztetőt.
+Egyszer megkértem az asszisztensemet, hogy figyelje egy ATC-konferencia szállodai árait. Az asszisztens minden nap ugyanabban az időben üzent, hogy az ár még nem csökkent a célár alá. Egyszer az ár rövid időre leesett, de ezt az ablakot az általam írt szkript kapta el. A rövid ideig tartó alacsony ár két lekérdezés között is felbukkanhat. Ha az asszisztens időben észre is veszi, de az üzenete későn ér célba, a felhasználó akkor is lemaradhat a foglalásról. Azokon a napokon, amikor nincs árcsökkenés, az időzített lekérdezés zavartalanul futhat tovább, a felhasználónak pedig nem kell minden nap elolvasnia egy ugyanolyan üzenetet. A 7. fejezet egy ötperces árcsökkenési ablakkal teszi próbára ezt a fajta emlékeztetőt.
 
 Amikor egy hosszú feladat befejeződik, az értesítés visszavezeti a felhasználót az eredményoldalra; a napi összefoglalók és a heti jelentések pedig a megbeszélt ütemben érkeznek. A többcsatornás stratégiában duplikációszűrést, csendes időszakokat és eszkalációs feltételeket is be kell állítani – például azt, hogy ha az első emlékeztetőre nem jön válasz, másik csatornára kell-e váltani. Az értesítési napló a feladatállapothoz kapcsolódik, így a felhasználó a kapott üzenetből folytathatja az ügyet.
 
 ### Virtuális identitás és elszigetelt végrehajtási környezet
 
-A 4. fejezet a *Her* című film Samanthájával szemléltette, hogyan lép be egy általános asszisztens eszközök révén a digitális világba. Egy ilyen asszisztens megvalósításakor tisztázni kell, milyen identitással dolgozik, és milyen erőforrásokhoz férhet hozzá. **Én amellett vagyok, hogy az általános asszisztens önálló virtuális identitást kapjon.** Saját hivatali postafiókkal, telefonszámmal, tárhellyel és számítási környezettel az Agent úgy intézheti a felhasználó ügyeit egyértelmű megbízotti identitással, mint egy titkár, akinek saját irodai fiókjai vannak. Az önálló identitás elválasztja az asszisztens mindennapi munkáját a felhasználó személyes fiókjaitól, így külön engedélyezhető, auditálható és visszavonható; tévedés esetén a kár köre is könnyebben behatárolható. Ha egy feladathoz feltétlenül hozzá kell férni a felhasználó fiókjához, a szükséges jogosultságot szűkített hatókörű engedélyezéssel kell megszerezni.
+A 4. fejezet a *Her* című film Samanthájával szemléltette, hogyan lép be egy általános asszisztens eszközök révén a digitális világba. Egy ilyen asszisztens megvalósításakor tisztázni kell, milyen identitással dolgozik, és milyen erőforrásokhoz férhet hozzá. **Én amellett vagyok, hogy az általános asszisztens önálló virtuális identitást kapjon.** Saját hivatali postafiókkal, telefonszámmal, tárhellyel és számítási környezettel az ügynök úgy intézheti a felhasználó ügyeit egyértelmű megbízotti identitással, mint egy titkár, akinek saját irodai fiókjai vannak. Az önálló identitás elválasztja az asszisztens mindennapi munkáját a felhasználó személyes fiókjaitól, így külön engedélyezhető, auditálható és visszavonható; tévedés esetén a kár köre is könnyebben behatárolható. Ha egy feladathoz feltétlenül hozzá kell férni a felhasználó fiókjához, a szükséges jogosultságot szűkített hatókörű engedélyezéssel kell megszerezni.
 
 Az, hogy kié a telefonszám, eldönti, ki folytathatja az ügyet, amikor a másik fél visszahív. A Manus Cue szolgáltatása önálló számot ad az asszisztensnek, amely fogadhat bejövő hívásokat, és a hívás összefoglalóját a felhasználónak hagyja. Ha a kereskedő elfogadja az asszisztens által megadott visszahívási számot, az ügyintéző hívása közvetlenül az ügyet korábban intéző asszisztenshez fut be.[^ch6-cue]
 
@@ -116,13 +116,13 @@ Vegyünk egy díjelengedési ügyet: az asszisztens meghatalmazott képviselők�
 
 Amikor Pekingben a Bank of America hitelkártyámat kellett pótoltatnom, a Pine felvette a kapcsolatot a bankkal, sürgősségi kártyapótlást intézett, és elérte, hogy elengedjék a 15 dolláros sürgősségi díjat. A hívás végére az asszisztens már be tudott számolni arról, mit fogadott be a bank, és melyik díjat engedte el. Ha a felhasználó néhány nap múlva megkérdezi, „hol tart az új kártya”, ahhoz újra le kell kérdezni a szállítást, vagy a címzettől kell megerősítést kérni.
 
-A virtuális számítógép és a virtuális telefon folyamatosan futó működési környezetet biztosít. A virtuális gépen asztali rendszer futtatható, a konténer a folyamatok és függőségek elszigetelésére alkalmas, az Android-emulátor pedig a mobilalkalmazásokat futtatja. Mindegyik működhet a háttérben, és csökkenti azt is, hogy az automatikus műveletek zavarják a felhasználó aktuális munkáját. Az elszigetelés hatókörét együttesen határozza meg a hálózat, a csatolt kötetek, a hitelesítő adatok és a futási jogosultságok; ugyanezek a beállítások befolyásolják azt is, mely adatokhoz és külső rendszerekhez fér hozzá az Agent.
+A virtuális számítógép és a virtuális telefon folyamatosan futó működési környezetet biztosít. A virtuális gépen asztali rendszer futtatható, a konténer a folyamatok és függőségek elszigetelésére alkalmas, az Android-emulátor pedig a mobilalkalmazásokat futtatja. Mindegyik működhet a háttérben, és csökkenti azt is, hogy az automatikus műveletek zavarják a felhasználó aktuális munkáját. Az elszigetelés hatókörét együttesen határozza meg a hálózat, a csatolt kötetek, a hitelesítő adatok és a futási jogosultságok; ugyanezek a beállítások befolyásolják azt is, mely adatokhoz és külső rendszerekhez fér hozzá az ügynök.
 
 Tegyük fel, hogy azt szeretné, hogy munka után, a gép kikapcsolása után a Tencent WorkBuddy vállalati változata készítse el a heti jelentést, az e heti értékesítési táblázat viszont csak az irodai számítógépén létezik. Ha helyi feladatot választ, az asszisztens elolvashatja a táblázatot, de a gépnek bekapcsolva, a kliensnek pedig online kell maradnia. Ha felhőfeladatot választ, az asszisztens a gép kikapcsolása után is dolgozhat, feltéve hogy előzőleg feltöltötte a feladathoz a heti jelentésben felhasználható adatokat, vagy olyan dokumentumtárba tette őket, amelyhez a felhőfeladat hozzáfér. Ha az értékesítési táblázatnak a helyi gépen kell maradnia, a feldolgozást arra az időre kell ütemezni, amikor a számítógép online van.
 
 A weboldalak és mobilalkalmazások személyazonosság-ellenőrzést, CAPTCHA-t vagy emberi megerősítést is kérhetnek. Csatlakozáskor elsősorban a szolgáltatás által kínált API-t és engedélyezési módot érdemes használni; ha grafikus felületen kell hitelesíteni, VNC/RDP távoli asztalon a felhasználó maga jelentkezhet be, a hitelesítés idejére pedig szünetelnek az automatikus műveletek. Miután a felhasználó végzett, a rendszer ellenőrzi a munkamenet állapotát, és folytatja a feladatot. A tokeneket és munkameneteket érvényességi idejük szerint kell tárolni, az engedély visszavonása vagy a feladat vége után pedig a szabályzat szerint törölni.
 
-Az Agent és a virtuális környezet egy **megosztott fájlrendszeren** keresztül cserélhet adatot. Például a felhasználó feltölt egy CSV-fájlt, a virtuális számítógép beolvassa, elvégzi az elemzést, és a diagramokat visszaírja a megosztott tárolóba; a futtatókörnyezet átadja az Agentnek a diagram fájlhelyét, az pedig elérhető letöltési lehetőséget kínál a felhasználónak. A nagy fájlok tartalma a tárolóban marad, a modell szükség szerint csak összefoglalót vagy részleteket olvas be.
+Az ügynök és a virtuális környezet egy **megosztott fájlrendszeren** keresztül cserélhet adatot. Például a felhasználó feltölt egy CSV-fájlt, a virtuális számítógép beolvassa, elvégzi az elemzést, és a diagramokat visszaírja a megosztott tárolóba; a futtatókörnyezet átadja az ügynöknek a diagram fájlhelyét, az pedig elérhető letöltési lehetőséget kínál a felhasználónak. A nagy fájlok tartalma a tárolóban marad, a modell szükség szerint csak összefoglalót vagy részleteket olvas be.
 
 [^ch6-dsh-threads]: DeepSeek, a dsh-superagent prototípus tartománymodellje, valamint engedélyezési és feliratkozási szabályai.
 [^ch6-dsh-sessions]: DeepSeek, dsh-superagent prototípus, `8c32a9d` verzió. A kétféle munkamenet feladatköreit a `docs/004-prompts.md`, a végrehajtó munkamenetet és a munkakönyvtárat a `docs/003-execution.md`, a fő munkamenetbe küldött üzenetek formátumát a `docs/007-architecture.md` írja le.
@@ -132,11 +132,11 @@ Az Agent és a virtuális környezet egy **megosztott fájlrendszeren** kereszt�
 
 ### Fogadóréteg: sokféle forrás, egyféle esemény
 
-Egy webáruház ügyfélszolgálati Agentje egy visszatérítést intéz: a vásárló az alkalmazás ügyfélszolgálati csevegésében nyújtja be a kérelmet; az összeg meghaladja az Agent jogkörét, ezért a WeCom (vállalati WeChat) ügyfélszolgálati csoportjában jóváhagyást kér a vezetőtől; a sikeres visszatérítés után a fizetési szolgáltatás Webhookot küld; a rendelési rendszer pedig ezt követően Kafkán teszi közzé az állapotváltozást. A négy üzenet ugyanarról a rendelésről szól, de mind más úton érkezik. Ha sok a forrás, és minden útvonal maga kezeli az újrapróbálkozást, a duplikációszűrést és a sorrendet, ezek a különbségek szétszabdalják a futtatókörnyezetet. **A fogadóréteg egységesíti az események alakját, miután beléptek a rendszerbe, de megőrzi a források közötti, beérkezés előtti képességbeli különbségeket.** A 6-2. ábra ezt a rétegzést mutatja.
+Egy webáruház ügyfélszolgálati ügynöke egy visszatérítést intéz: a vásárló az alkalmazás ügyfélszolgálati csevegésében nyújtja be a kérelmet; az összeg meghaladja az ügynök jogkörét, ezért a WeCom (vállalati WeChat) ügyfélszolgálati csoportjában jóváhagyást kér a vezetőtől; a sikeres visszatérítés után a fizetési szolgáltatás Webhookot küld; a rendelési rendszer pedig ezt követően Kafkán teszi közzé az állapotváltozást. A négy üzenet ugyanarról a rendelésről szól, de mind más úton érkezik. Ha sok a forrás, és minden útvonal maga kezeli az újrapróbálkozást, a duplikációszűrést és a sorrendet, ezek a különbségek szétszabdalják a futtatókörnyezetet. **A fogadóréteg egységesíti az események alakját, miután beléptek a rendszerbe, de megőrzi a források közötti, beérkezés előtti képességbeli különbségeket.** A 6-2. ábra ezt a rétegzést mutatja.
 
 ![6-2. ábra: Fogadóréteg: adapterek, egységes boríték és fogadási napló](images/revised/fig6-2.svg)
 
-A források négy gyakori csoportba sorolhatók. A **beszélgetési csatornák** közé tartozik a termék saját csevegőfelülete, az olyan azonnali üzenetküldők, mint a WeCom, a Feishu vagy a Slack, valamint az e-mail; ezeken az Agent ugyanott válaszolhat, ahonnan az üzenet jött. A **visszahívás** olyan HTTP-interfész, amelyet egy külső szolgáltatás állapotváltozáskor hív meg; általában aláírással érkezik, és csak értesítést hoz. Sikertelen kézbesítés után egyes szolgáltatások maguktól újrapróbálkoznak, a GitHubnál viszont kézzel vagy API-n keresztül kell újraküldeni. Az **üzenetbuszok**, például az SQS vagy a Kafka, a belső szolgáltatások üzleti eseményeit szállítják, egyértelmű visszaigazolási és megőrzési szemantikával. Az **időzítőket, a lekérdezést és a belső eseményeket** maga a rendszer állítja elő, ezeket elég ugyanabba a naplóba írni. Az alábbi táblázat az első három csoportot hasonlítja össze.[^ch6-ingress-mq][^ch6-ingress-callback]
+A források négy gyakori csoportba sorolhatók. A **beszélgetési csatornák** közé tartozik a termék saját csevegőfelülete, az olyan azonnali üzenetküldők, mint a WeCom, a Feishu vagy a Slack, valamint az e-mail; ezeken az ügynök ugyanott válaszolhat, ahonnan az üzenet jött. A **visszahívás** olyan HTTP-interfész, amelyet egy külső szolgáltatás állapotváltozáskor hív meg; általában aláírással érkezik, és csak értesítést hoz. Sikertelen kézbesítés után egyes szolgáltatások maguktól újrapróbálkoznak, a GitHubnál viszont kézzel vagy API-n keresztül kell újraküldeni. Az **üzenetbuszok**, például az SQS vagy a Kafka, a belső szolgáltatások üzleti eseményeit szállítják, egyértelmű visszaigazolási és megőrzési szemantikával. Az **időzítőket, a lekérdezést és a belső eseményeket** maga a rendszer állítja elő, ezeket elég ugyanabba a naplóba írni. Az alábbi táblázat az első három csoportot hasonlítja össze.[^ch6-ingress-mq][^ch6-ingress-callback]
 
 | | Alkalmazáson belüli csevegés | WeCom / Feishu | E-mail | Webhook | SQS | Kafka |
 |---|---|---|---|---|---|---|
@@ -159,7 +159,7 @@ Az adapter a nyers üzenetet egységes formátumú **borítékká** (envelope) a
   "thread": "app:conv:conv_88",
   "kind": "message",
   "correlation": ["order:12345"],
-  "content": {"type": "text", "text": "这个订单我想退款"},
+  "content": {"type": "text", "text": "Ehhez a rendeléshez visszatérítést kérek"},
   "raw_ref": "raw/2026-11-23/app/msg_1029.json",
   "reply": {"via": "app_chat", "target": "app:conv:conv_88"},
   "occurred_at": "2026-11-23T14:02:09+08:00",
@@ -181,7 +181,7 @@ E visszatérítés négy üzenete négy különböző szálhoz tartozik. Ha egy 
 
 **A visszaigazolás időpontja és a haladás nyilvántartása külön.**
 
-**Az adapternek akkor kell visszaigazolnia a forrás felé, amikor az esemény már bekerült a fogadási naplóba, nem pedig akkor, amikor az Agent befejezte a feldolgozást.** A Feishu eseményvisszahívásai 3 másodpercen, a WeComéi 5 másodpercen belüli választ várnak, különben újraküldik az eseményt; az SQS-üzenetet, ha a láthatósági időkorláton belül nem törlik, újra ki lehet olvasni. Ha a feldolgozás végéig várnánk a visszaigazolással, egyetlen kicsit hosszabb modellhívás is ismételt kézbesítést okozna. Ha előbb a naplóba írunk, és csak utána igazolunk vissza, a források kézbesítési garanciái egyetlen mondatba sűríthetők: **minden esemény legalább egyszer bekerül a fogadási naplóba (at-least-once)**, az újraküldött példányt pedig a duplikációszűrési kulcs szűri ki.
+**Az adapternek akkor kell visszaigazolnia a forrás felé, amikor az esemény már bekerült a fogadási naplóba, nem pedig akkor, amikor az ügynök befejezte a feldolgozást.** A Feishu eseményvisszahívásai 3 másodpercen, a WeComéi 5 másodpercen belüli választ várnak, különben újraküldik az eseményt; az SQS-üzenetet, ha a láthatósági időkorláton belül nem törlik, újra ki lehet olvasni. Ha a feldolgozás végéig várnánk a visszaigazolással, egyetlen kicsit hosszabb modellhívás is ismételt kézbesítést okozna. Ha előbb a naplóba írunk, és csak utána igazolunk vissza, a források kézbesítési garanciái egyetlen mondatba sűríthetők: **minden esemény legalább egyszer bekerül a fogadási naplóba (at-least-once)**, az újraküldött példányt pedig a duplikációszűrési kulcs szűri ki.
 
 A fogadási napló postaládaként (inbox) működik: követi az 1. fejezet „csak hozzáfűzni, sosem módosítani” elvét, és szálanként van particionálva. Ha a fogadási napló Kafkára épül, a duplikációszűréshez külön, egyediségi megkötést kezelő tároló kell, vagy a fogyasztói oldalon kell a kulcs alapján szűrni: a Kafka nem tudja elutasítani az írást az alkalmazás által megadott kulcs alapján, idempotens producere pedig csak a producer saját újrapróbálkozásaira terjed ki.
 
@@ -206,8 +206,8 @@ Ha egyetlen szálon másodpercenként több száz esemény zúdul be, nem szabad
 **Egy visszatérítés útja négy forráson át.**
 
 1. A vásárló az alkalmazás csevegésében visszatérítést kér. Az adapter a kliensoldali üzenetazonosító alapján szűri a duplikátumokat, beírja az eseményt a naplóba, majd nyugtát küld a kliensnek; az útválasztó az `order:12345` alapján létrehozza a visszatérítési feladatot, amely feliratkozik erre a beszélgetési szálra.
-2. Az összeg meghaladja a jogkört, ezért az Agent jóváhagyási kártyát küld a WeCom ügyfélszolgálati csoportjába, a kártya azonosítóját pedig a feladatban rögzíti. A vezető a „Jóváhagyom” gombra kattint; az adapter naplóz, sikeres választ ad, és a kártyaazonosító alapján pótolja a kapcsolódó objektumot.
-3. Miután az Agent meghívta a visszatérítési interfészt, a fizetési szolgáltatás kétszer küld „visszatérítés sikeres” visszahívást, azonos kézbesítési azonosítóval; a másodikat kiszűri a duplikációszűrés.
+2. Az összeg meghaladja a jogkört, ezért az ügynök jóváhagyási kártyát küld a WeCom ügyfélszolgálati csoportjába, a kártya azonosítóját pedig a feladatban rögzíti. A vezető a „Jóváhagyom” gombra kattint; az adapter naplóz, sikeres választ ad, és a kártyaazonosító alapján pótolja a kapcsolódó objektumot.
+3. Miután az ügynök meghívta a visszatérítési interfészt, a fizetési szolgáltatás kétszer küld „visszatérítés sikeres” visszahívást, azonos kézbesítési azonosítóval; a másodikat kiszűri a duplikációszűrés.
 4. A rendelési rendszer Kafkán közzéteszi, hogy „a rendelést visszatérítették”, ami ugyanarról szól, mint a visszahívás. Ha mindkét adapter az eseményadatból kiemelt visszatérítési számot és állapotot használja duplikációszűrési kulcsként, ez az esemény már a fogadáskor kiesik; ha az egyik a kézbesítési azonosító, a másik a partíció és az offset alapján szűr, mindkettő bekerül a naplóba, a futtatókörnyezet pedig látja, hogy a feladatban a visszatérítés már megerősített, és csak a trajektóriába jegyzi fel.
 5. Sem a visszahívásnak, sem a Kafka-eseménynek nincs válaszútvonala. A futtatókörnyezet az 1. lépés beszélgetési szálának `reply` mezőjét használja, és az alkalmazás kimenő adapterén át értesíti a vásárlót.
 
@@ -218,23 +218,23 @@ A 4. lépés a fogadórétegbeli duplikációszűrés határát mutatja: hogy mi
 
 ### Eseménykezelési mechanizmus
 
-Felhasználói üzenetek, eszközeredmények, időzítők és együttműködési kérések egyszerre is érkezhetnek ugyanahhoz az Agenthez. A futtatókörnyezetnek el kell tárolnia ezeket az eseményeket, meg kell határoznia a feldolgozási sorrendet, majd a releváns információt át kell adnia a modellnek. Az **eseményhurok** (event loop) viszi előre folyamatosan ezt a folyamatot: kivesz egy eseményt a sorból, frissíti a feladatállapotot, összeállítja a modellkérést, ütemezi az eszközöket, majd új bemenetre vagy befejezési értesítésre vár. A Go programok, amelyek goroutine-okkal, channelekkel és `select` utasítással szervezik a több irányból érkező üzeneteket, hasonló elvet követnek.
+Felhasználói üzenetek, eszközeredmények, időzítők és együttműködési kérések egyszerre is érkezhetnek ugyanahhoz az ügynökhöz. A futtatókörnyezetnek el kell tárolnia ezeket az eseményeket, meg kell határoznia a feldolgozási sorrendet, majd a releváns információt át kell adnia a modellnek. Az **eseményhurok** (event loop) viszi előre folyamatosan ezt a folyamatot: kivesz egy eseményt a sorból, frissíti a feladatállapotot, összeállítja a modellkérést, ütemezi az eszközöket, majd új bemenetre vagy befejezési értesítésre vár. A Go programok, amelyek goroutine-okkal, channelekkel és `select` utasítással szervezik a több irányból érkező üzeneteket, hasonló elvet követnek.
 
-Vegyük példaként a dsh-superagent prototípust: ugyanabban a GitHub-projektben egy Issue alatti és egy lehívási kérés (PR) alatti beszélgetés két külön munkamenetszálhoz (Thread) tartozik. Amikor a rendszernek el kell döntenie, átvállal-e új munkát, beolvassa a szál állapotát, és a modellel kiértékelteti (Eval). Egy szálon egyszerre legfeljebb egy kiértékelés folyhat, de több munkajegy (Ticket) is feliratkozhat rá. Tegyük fel, hogy egy hibajavítási és egy dokumentáció-kiegészítési munkajegy egyaránt feliratkozott ugyanarra a PR-re; ha egy bíráló megjegyzést ír a PR alá, mindkét munkajegy megkapja ezt az üzenetet kontextusként. Ha ezután valaki az Issue alatt pótolja a hiba reprodukálásának feltételeit, ez az üzenet az Issue-ra feliratkozott munkajegyhez jut el. Hogy az üzenet kihez kerül, azt a szálak és a feliratkozások döntik el. Hogy az üzenet megkapása után mit tehet egy munkajegy, azt továbbra is a saját, korábban kapott engedélyei határozzák meg.[^ch6-dsh-threads]
+Vegyük példaként a dsh-superagent prototípust: ugyanabban a GitHub-projektben egy Issue alatti és egy pull request (PR) alatti beszélgetés két külön munkamenetszálhoz (Thread) tartozik. Amikor a rendszernek el kell döntenie, átvállal-e új munkát, beolvassa a szál állapotát, és a modellel kiértékelteti (Eval). Egy szálon egyszerre legfeljebb egy kiértékelés folyhat, de több munkajegy (Ticket) is feliratkozhat rá. Tegyük fel, hogy egy hibajavítási és egy dokumentáció-kiegészítési munkajegy egyaránt feliratkozott ugyanarra a PR-re; ha egy bíráló megjegyzést ír a PR alá, mindkét munkajegy megkapja ezt az üzenetet kontextusként. Ha ezután valaki az Issue alatt pótolja a hiba reprodukálásának feltételeit, ez az üzenet az Issue-ra feliratkozott munkajegyhez jut el. Hogy az üzenet kihez kerül, azt a szálak és a feliratkozások döntik el. Hogy az üzenet megkapása után mit tehet egy munkajegy, azt továbbra is a saját, korábban kapott engedélyei határozzák meg.[^ch6-dsh-threads]
 
 A dsh-superagent az „emberekkel való érintkezést” és a „munkavégzést” is külön munkamenetekre bízza. A fő munkamenet (Main Session) csak a megbízások fogadásával, a válaszadással és az engedélyek rögzítésével foglalkozik; kódot nem olvas, és nem áll meg eredményre várni. Minden munkajegynek saját végrehajtó munkamenete (Executor Session) van, amely külön munkakönyvtárban módosítja a kódot és futtatja a teszteket. A végrehajtó munkamenet csak akkor küld üzenetet a fő munkamenetnek, ha elkészült, elakadt vagy kérdeznie kell valakit; ilyenkor összefoglalót és olvasási címet csatol, vagyis a 2. fejezetben tárgyalt „összefoglaló plusz objektumazonosító” formát. Így a fő munkamenetnek mindig van szabad kapacitása a következő kérésre, és mivel a kérdések, az értesítések és a leállítások is rajta mennek át, kötelezettségvállalás csak egyetlen ponton keresztül születik. A beszédről szóló későbbi rész gyors és lassú modellje ugyanennek a munkamegosztásnak a valós idejű hívásokban megjelenő formája.[^ch6-dsh-sessions]
 
 A szinkron modellinterfészek általában egy generálás befejeztével vagy az eszközeredmények teljes beillesztése után fogadják a következő üzenetcsomagot. Itt **biztonságos pont** állítható be: a futtatókörnyezet először rögzíti a befejezett üzeneteket, a még futó hívásokat és az aktuális feladat haladását, majd áttér az új feldolgozási lépésre. A natív aszinkron interfészek ezzel szemben olyan protokollt kínálnak, amely futás közben is fogad frissítéseket; a pontos folytatási időpontot az interfész és a futtatókörnyezet együtt határozza meg.
 
-A visszavonáshoz a végrehajtó együttműködése is kell. Ha a modell leállítja a generálást, a háttéreszközök még futhatnak; a végrehajtónak fogadnia kell a visszavonási jelet, és jelentenie kell a tényleges állapotot, hasonlóan ahhoz, ahogy egy Go-feladat a `ctx.Done()` ellenőrzése után elvégzi a takarítást. A már befejezett írásokat, küldéseket vagy fizetéseket a megfelelő üzleti folyamaton keresztül kell visszavonni vagy kompenzálni.
+A megszakításhoz a végrehajtó együttműködése is kell. Ha a modell leállítja a generálást, a háttéreszközök még futhatnak; a végrehajtónak fogadnia kell a megszakítási jelet, és jelentenie kell a tényleges állapotot, hasonlóan ahhoz, ahogy egy Go-feladat a `ctx.Done()` ellenőrzése után elvégzi a takarítást. A már befejezett írásokat, küldéseket vagy fizetéseket a megfelelő üzleti folyamaton keresztül kell visszavonni vagy kompenzálni.
 
 **Három kezelési stratégia.**
 
-A 6-3. ábra azt a három lehetőséget hasonlítja össze, amely egy új esemény beérkezésekor kínálkozik. Ha sorba állítjuk, a reakcióidő attól függ, mikor jön el a következő biztonságos pont; ha visszavonjuk az aktuális feladatot, tisztázni kell, mely műveletek fejeződtek be, és honnan lehet folytatni; ha új hurkot nyitunk, ellenőrizni kell, nem versengenek-e a feladatok ugyanazért az erőforrásért.
+A 6-3. ábra azt a három lehetőséget hasonlítja össze, amely egy új esemény beérkezésekor kínálkozik. Ha sorba állítjuk, a reakcióidő attól függ, mikor jön el a következő biztonságos pont; ha megszakítjuk az aktuális feladatot, tisztázni kell, mely műveletek fejeződtek be, és honnan lehet folytatni; ha új hurkot nyitunk, ellenőrizni kell, nem versengenek-e a feladatok ugyanazért az erőforrásért.
 
 ![6-3. ábra: Az aszinkron események kezelésének három stratégiája](images/revised/fig6-3.svg)
 
-**A visszavonásos kezelés (Cancellation-Based)** a felhasználói leállító utasításokhoz és az azonnali kezelést igénylő vezérlőeseményekhez illik. A futtatókörnyezet először leállítja a kapcsolódó műveletek további kiosztását, leállítójelet küld a generálás alatt álló kérésnek és a visszavonható eszközöknek, majd elmenti a befejezett üzeneteket, az eszközök állapotát és a visszavonási nyugtákat. Ezután kerül az új esemény a döntési kontextusba. Ha például a felhasználó azt mondja: „Állj! Rosszul mondtam”, a rendszer előbb korlátozza a további végrehajtást, majd a tényleges állapot alapján újra tisztázza a feladatot. A még feldolgozatlan sorelemek megtartják azonosítójukat és állapotukat, és a kapcsolódási körük szerint rendeződnek újra.
+**A megszakításos kezelés (Cancellation-Based)** a felhasználói leállító utasításokhoz és az azonnali kezelést igénylő vezérlőeseményekhez illik. A futtatókörnyezet először leállítja a kapcsolódó műveletek további kiosztását, leállítójelet küld a generálás alatt álló kérésnek és a megszakítható eszközöknek, majd elmenti a befejezett üzeneteket, az eszközök állapotát és a megszakítási nyugtákat. Ezután kerül az új esemény a döntési kontextusba. Ha például a felhasználó azt mondja: „Állj! Rosszul mondtam”, a rendszer előbb korlátozza a további végrehajtást, majd a tényleges állapot alapján újra tisztázza a feladatot. A még feldolgozatlan sorelemek megtartják azonosítójukat és állapotukat, és a kapcsolódási körük szerint rendeződnek újra.
 
 **A sorba állító kezelés (Queued)** a rutinszerű kiegészítésekhez és előrehaladási frissítésekhez illik. Az esemény a sorba kerül, és a következő biztonságos ponton az eszközeredményekkel együtt jut el a modellhez. Ha például keresés közben a felhasználó hozzáteszi, hogy „csak az utolsó egy hónap eredményei érdekelnek”, a keresés visszatérése után a modell egyszerre olvassa az eredményeket és az új feltételt, majd eldönti, hogy szűr vagy újra keres.
 
@@ -244,7 +244,7 @@ A 6-3. ábra azt a három lehetőséget hasonlítja össze, amely egy új esemé
 
 Az esemény típusa adja az első támpontot: a `user.interrupt`, a megbízható felügyeleti utasítások és a rendszerriasztások magas prioritású csatornára kerülhetnek; a `user.input`, `agent.input`, `tool.result` és `timer.trigger` eseményekről a tartalom és a feladatállapot alapján kell dönteni. Ha a küldő az üzenet szövegében „sürgősnek” nevezi magát, a rendszer akkor is az ellenőrzött identitás és a szabályok alapján állapítja meg a jogosultságot.
 
-Az üzenet jelentésének megértését igénylő útválasztási döntésekhez könnyűsúlyú osztályozó modellt javaslok: az „azonnal állj le” visszavonást jelent, a „milyen idő van ma” valószínűleg párhuzamosan kezelhető, a „a jelentést kérem kínaiul” pedig általában az aktuális feladat kiegészítési sorába kerül. Az egyértelmű leállítási belépési pontokat a futtatókörnyezet közvetlenül kezeli, a szemantikai osztályozás a többi, megértést igénylő üzenetre vonatkozik.
+Az üzenet jelentésének megértését igénylő útválasztási döntésekhez könnyűsúlyú osztályozó modellt javaslok: az „azonnal állj le” megszakítást jelent, a „milyen idő van ma” valószínűleg párhuzamosan kezelhető, az „a jelentést kérem kínaiul” pedig általában az aktuális feladat kiegészítési sorába kerül. Az egyértelmű leállítási belépési pontokat a futtatókörnyezet közvetlenül kezeli, a szemantikai osztályozás a többi, megértést igénylő üzenetre vonatkozik.
 
 Az általános modellek is tudnak címkét adni az üzeneteknek, de még ha csak annyit adnak is ki, hogy „kezelendő”, akkor is be kell olvasniuk a feladatleírást és az üzenet tartalmát. Ha minden új üzenetről így döntünk, a hívási költség az üzenetek számával együtt nő, és a valóban sürgős üzenetnek is meg kell várnia, amíg a modell címkét ad. A TypeSafe Jev nevű modellje kifejezetten az ilyen, előre megadott választási lehetőségek közötti döntési feladatokra készült. Ha megkapja az üzenetet és az aktuális feladatállapotot, alacsony költséggel és késleltetéssel, párhuzamosan adja meg az egyes lehetőségek valószínűségét.[^ch6-jev]
 
@@ -258,11 +258,11 @@ A modell nagyon magas valószínűség megadásakor is túlbecsülheti a saját 
 
 Tegyük fel, hogy az új e-maileket feldolgozó folyamat váratlanul újraindul. Az e-mail azonosítója alapján megtalálja az eredeti levelet, azt azonban nem tudja meg belőle, hogy az előző válasz elment-e. A sorba állítástól, a levél elolvasásán és az eszközhívásokon át a postafiók frissítéséig vagy a felhasználó értesítéséig érdemes minden írási műveletet és a visszakapott nyugtát ugyanahhoz az e-mailhez rögzíteni. Ha újraindítás után kiderül, hogy egy kérés elment, de nyugta nem jött rá, előbb a postafiók tényleges állapotát kell ellenőrizni, és csak utána dönteni az újraküldésről.
 
-> **6-1. kísérlet ★★★: Eseményvezérelt e-mail-feldolgozó Agent**
+> **6-1. kísérlet ★★★: Eseményvezérelt e-mail-feldolgozó ügynök**
 >
 > A kísérlet egy tesztpostafiókot használ belépési pontként, és az eseményregisztrációt, a sort és a feladatfeldolgozást gyakoroltatja. Először az új e-maileket strukturált eseményekké alakítjuk, és beérkezési sorrendben dolgozzuk fel őket; ezután bekapcsoljuk az e-mail-előzmények, a mellékletolvasás, a tudáslekérdezés és az értesítés eszközeit. Kövessünk végig egy meghívót a 6-4. ábrán: keressük meg az eseményhurokban a naptárütközés-ellenőrzés és a válaszvázlat megírásának lépését, majd a tárolási rétegben ennek az e-mailnek a feldolgozási nyilvántartását.
 >
-> ![6-4. ábra: A 6-1. kísérlet eseményvezérelt Agent-architektúrája](images/revised/fig6-4.svg)
+> ![6-4. ábra: A 6-1. kísérlet eseményvezérelt ügynökarchitektúrája](images/revised/fig6-4.svg)
 >
 > Ugyanaz a sor többféle forrással bővíthető: beérkező e-mail, azonnali üzenet vagy SMS, GitHub PR- és Issue-frissítések, időzítők, külső Webhookok, valamint olyan belső események, mint a felhasználó offline állapota, a folyamat időtúllépése vagy az erőforrás-riasztás. Minden adapter ellenőrzi a forrást és kiegészíti a kapcsolódási információkat, a feldolgozás eredménye pedig az eseményazonosító szerint íródik vissza.
 >
@@ -285,7 +285,7 @@ Az e-mail-sor megteremtette a sorrendi feldolgozás alapját. A következőkben 
 
 ### Kompatibilitási megoldás natív aszinkron támogatás nélkül
 
-Tegyük fel, hogy az Agent éppen egy e-mailt fogalmaz, és már meghívta a `search_contacts` eszközt egy névjegy megkereséséhez. Mielőtt az eredmény megérkezne, a felhasználó azt kéri: „Várj, előbb nézd meg a holnapi időjárást.” Ha az aktuális modellinterfész megköveteli, hogy minden eszközhívásnak előbb meglegyen az eredménye, a Harnessnek a háttérbeli állapotot az interfész által elfogadott üzenetsorozattá kell alakítania.
+Tegyük fel, hogy az ügynök éppen egy e-mailt fogalmaz, és már meghívta a `search_contacts` eszközt egy névjegy megkereséséhez. Mielőtt az eredmény megérkezne, a felhasználó azt kéri: „Várj, előbb nézd meg a holnapi időjárást.” Ha az aktuális modellinterfész megköveteli, hogy minden eszközhívásnak előbb meglegyen az eredménye, a Harnessnek a háttérbeli állapotot az interfész által elfogadott üzenetsorozattá kell alakítania.
 
 **A háttérállapot kifejezése szinkron üzenetformátumban.**
 
@@ -297,41 +297,41 @@ Tegyük fel, hogy az Agent éppen egy e-mailt fogalmaz, és már meghívta a `se
 4. **Az üzenetek rendezése megszakítás után.** Ha nincs lehetőség menet közbeni folytatásra, a befejezetlen generálást vissza kell vonni, meg kell tartani a biztosan befejezett üzeneteket és eszközállapotokat, majd új kérést kell küldeni. A befejezetlen kimenetet az interfész előírásai szerint kell kezelni, nehogy félkész paraméterek végrehajtható hívásként szerepeljenek.
 5. **A rutinszerű események csoportos fogadása.** A kiegészítések a sorba kerülnek, és az aktuális ciklus végén vagy egy kijelölt biztonságos ponton együtt kerülnek beküldésre; közben rögzíteni kell, mely eseményeket dolgoztuk már fel.
 
-A névjegykeresési példában a teljes hívás először bekerül a trajektóriába; amikor a felhasználó feladatot vált, a Harness beilleszt egy állapotválaszt arról, hogy a keresés még fut, majd elküldi az időjárási kérést. A névjegykeresés eredménye később érkezik meg, és forrást meg feladatazonosítót hordozó új eseményként kerül a kontextusba, az Agent pedig ezután folytatja az e-mail megfogalmazását. Ha az eredeti hívás már kapott állapotválaszt, a későbbi eredmény az adapter által rögzített eseményformában érkezik, így megmarad a hívás és az eredmény párosítása.
+A névjegykeresési példában a teljes hívás először bekerül a trajektóriába; amikor a felhasználó feladatot vált, a Harness beilleszt egy állapotválaszt arról, hogy a keresés még fut, majd elküldi az időjárási kérést. A névjegykeresés eredménye később érkezik meg, és forrást meg feladatazonosítót hordozó új eseményként kerül a kontextusba, az ügynök pedig ezután folytatja az e-mail megfogalmazását. Ha az eredeti hívás már kapott állapotválaszt, a későbbi eredmény az adapter által rögzített eseményformában érkezik, így megmarad a hívás és az eredmény párosítása.
 
 Az állapotválasz csak az aktuális végrehajtási előrehaladást írja le. A névjegyadatoktól függő lépések csak a valódi eredmény megérkezése után folytatódhatnak. A feladatkezelő olyan állapotokat tárolhat, mint a `running`, `completed`, `cancelled` vagy `failed`, és válasz küldése vagy további eszközök végrehajtása előtt ellenőrzi, teljesülnek-e a függőségek.
 
 **Aszinkron eszközök tervezése feladatleírókkal.**
 
-Az újonnan tervezett, hosszan futó eszközöknél én az „indítást” teszem meg önálló, teljes műveletnek, amely azonnal valódi feladatleírót ad vissza. A modell ennek alapján meg tudja különböztetni az „elindult” és a „befejeződött” állapotot, a későbbi lekérdezések, visszavonások és eredményesemények pedig egységes összekapcsolási alapot kapnak. Például az `initiate_phone_call` telefonos feladatot indít, és visszaadja a feladatazonosítót a „tárcsázás folyamatban” állapottal együtt; a `phone_call_connected` és a `phone_call_ended` külön jelenti a hívás létrejöttét és befejezését.
+Az újonnan tervezett, hosszan futó eszközöknél én az „indítást” teszem meg önálló, teljes műveletnek, amely azonnal valódi feladatleírót ad vissza. A modell ennek alapján meg tudja különböztetni az „elindult” és a „befejeződött” állapotot, a későbbi lekérdezések, megszakítások és eredményesemények pedig egységes összekapcsolási alapot kapnak. Például az `initiate_phone_call` telefonos feladatot indít, és visszaadja a feladatazonosítót a „tárcsázás folyamatban” állapottal együtt; a `phone_call_connected` és a `phone_call_ended` külön jelenti a hívás létrejöttét és befejezését.
 
-Az eszközleírásban ezt egyértelműen meg kell fogalmazni: „Ez az eszköz telefonos feladatot indít, siker esetén visszaadja a feladatazonosítót. Közben más ügyekkel is foglalkozhatsz; a hívás előrehaladásáról és eredményéről külön események értesítenek.” Az eszköz neve jelzi, hogy indító műveletről van szó, a visszatérési szerkezet és a későbbi események pedig azt mutatják meg, hogyan halad és fejeződik be a feladat. A rendszer ezen felül feladatazonosító szerinti lekérdezési, visszavonási és folytatási interfészt is ad, hogy a modell tudja, mit tehet még az adott helyzetben.
+Az eszközleírásban ezt egyértelműen meg kell fogalmazni: „Ez az eszköz telefonos feladatot indít, siker esetén visszaadja a feladatazonosítót. Közben más ügyekkel is foglalkozhatsz; a hívás előrehaladásáról és eredményéről külön események értesítenek.” Az eszköz neve jelzi, hogy indító műveletről van szó, a visszatérési szerkezet és a későbbi események pedig azt mutatják meg, hogyan halad és fejeződik be a feladat. A rendszer ezen felül feladatazonosító szerinti lekérdezési, megszakítási és folytatási interfészt is ad, hogy a modell tudja, mit tehet még az adott helyzetben.
 
 **A csoportos események tételes kezelése.**
 
 Ha egyszerre több esemény kerül a kontextusba, a modell könnyen csak az utolsóra reagál, és elsikkadnak a korábban megfogalmazott kérések. A futtatókörnyezetnek külön kell nyilvántartania mindegyik feldolgozási állapotát, hogy a még meg nem válaszolt feltételek láthatók maradjanak. A promptban elő lehet írni a modellnek a tételes ellenőrzést, az állapotsor pedig felsorolja a még feldolgozatlan információkat:
 
 ```text
-[未处理事件 1/4] database_query 结果：……
-[未处理事件 2/4] 用户补充：只看北京地区的数据
-[未处理事件 3/4] 系统提醒：报告截止时间还有 30 分钟
-[未处理事件 4/4] 用户询问：进度如何？
+[Feldolgozatlan esemény 1/4] database_query eredménye: …
+[Feldolgozatlan esemény 2/4] Felhasználói kiegészítés: csak a pekingi adatok érdekelnek
+[Feldolgozatlan esemény 3/4] Rendszeremlékeztető: 30 perc van hátra a jelentés határidejéig
+[Feldolgozatlan esemény 4/4] Felhasználói kérdés: hogy áll a munka?
 ```
 
 A csomagösszefoglaló jelezheti például: „1 eszközeredmény, 2 felhasználói üzenet, 1 rendszeremlékeztető”. A futtatókörnyezet ezen túl a feladat megkötéseihez is hozzárendeli az eseményeket: a régióra vonatkozó feltétel módosítja a lekérdezés hatókörét, a határidő az ütemezést befolyásolja, a haladásra vonatkozó kérdésre pedig válaszolni kell. A feldolgozás után rögzíteni kell, hogy egy tétel elkészült, várakozik vagy tisztázásra szorul, a következő körben pedig a megoldatlan tételek továbbra is láthatók maradnak.
 
-Ugyanaz a feladatazonosító fűzi össze az indítást, az előrehaladási jelentéseket és a végső végrehajtási eredményt. Ha menet közben valaki leállítást kér, azt is meg kell nézni, van-e ehhez az azonosítóhoz visszavonási nyugta.
+Ugyanaz a feladatazonosító fűzi össze az indítást, az előrehaladási jelentéseket és a végső végrehajtási eredményt. Ha menet közben valaki leállítást kér, azt is meg kell nézni, van-e ehhez az azonosítóhoz megszakítási nyugta.
 
-> **6-2. kísérlet ★★★: Párhuzamos végrehajtásra és megszakításra képes aszinkron Agent**
+> **6-2. kísérlet ★★★: Párhuzamos végrehajtásra és megszakításra képes aszinkron ügynök**
 >
 > A kísérlet először az aszinkron futtatókörnyezetet ellenőrzi, majd egy modellt kapcsol be a döntések vizsgálatához. A mellékelt futási jegyzőkönyv valódi operációs rendszerbeli gyermekfolyamatokkal hajt végre négy forgatókönyvet, az események ütemezését és a jelentéseket determinisztikus szkript vezérli.
 >
 > 1. **Háttérbeli végrehajtás és azonnali válasz.** Elindítunk egy néhány másodpercig futó elemzőfolyamatot, amely azonnal visszaadja a feladatazonosítót; a várakozás alatt a rendszer megmondja a pontos időt, a befejezés után pedig fogadja az elemzés eredményét.
 > 2. **Sor és csoportos feldolgozás.** A hosszú feladat alatt egymás után érkezik a „válaszolj japánul” és a „rendezd weboldallá” kiegészítés; a feladat befejezése után az eredményt és a két kérést egy csomagként dolgozzuk fel. A szkript japán nyelvű HTML-t állít elő.
-> 3. **Visszavonás és folytatás.** A bemutató szerint a „állítsd le az elemzést” utasítás megszakítja a még generálás alatt álló modellkört, és minden futó háttérfeladatot leállásra szólít fel. Ezúttal a szkript küldi a megszakítást, és ekkor csak egyetlen elemzőfolyamat, a T1 fut. A 0,803. másodpercben a megszakítási esemény 18%-os haladást rögzít a T1-hez; a rendszer csak a 0,806. másodpercben jegyzi fel −15-ös kilépési kódját. A közvetlenül utána induló T2 új feladat. A 4,436. másodpercben a T2 eredménye érkezik meg, a T1 nem váltott ki befejezési visszahívást.
-> 4. **Párhuzamos feladatok és haladásalapú döntés.** Egyszerre három elemzőfolyamatot indítunk, amelyek logikai időlépésenként 3%-ot, 2%-ot, illetve 1%-ot haladnak. A kísérlet párhuzamos haladási naplója szerint amikor a leggyorsabb T1 végez, a lekérdezési nyugta szerint a T2 68%-on, a T3 34%-on áll. A 6-5. ábrán követhető, hogy az 50%-ot meg nem haladó feladatokat a rendszer visszavonja. A szkript csak a T3-at vonta vissza, végül a T1 és a T2 eredménye érkezett meg. Ez azt mutatja, hogy ugyanaz a futtatókörnyezet képes a teljes csomag leállítására reagálni, és közben megtartani a még hasznos párhuzamos munkát.
+> 3. **Megszakítás és folytatás.** A bemutató szerint az „állítsd le az elemzést” utasítás megszakítja a még generálás alatt álló modellkört, és minden futó háttérfeladatot leállásra szólít fel. Ezúttal a szkript küldi a megszakítást, és ekkor csak egyetlen elemzőfolyamat, a T1 fut. A 0,803. másodpercben a megszakítási esemény 18%-os haladást rögzít a T1-hez; a rendszer csak a 0,806. másodpercben jegyzi fel −15-ös kilépési kódját. A közvetlenül utána induló T2 új feladat. A 4,436. másodpercben a T2 eredménye érkezik meg, a T1 nem váltott ki befejezési visszahívást.
+> 4. **Párhuzamos feladatok és haladásalapú döntés.** Egyszerre három elemzőfolyamatot indítunk, amelyek logikai időlépésenként 3%-ot, 2%-ot, illetve 1%-ot haladnak. A kísérlet párhuzamos haladási naplója szerint amikor a leggyorsabb T1 végez, a lekérdezési nyugta szerint a T2 68%-on, a T3 34%-on áll. A 6-5. ábrán követhető, hogy az 50%-ot meg nem haladó feladatokat a rendszer megszakítja. A szkript csak a T3-at szakította meg, végül a T1 és a T2 eredménye érkezett meg. Ez azt mutatja, hogy ugyanaz a futtatókörnyezet képes a teljes csomag leállítására reagálni, és közben megtartani a még hasznos párhuzamos munkát.
 >
-> ![6-5. ábra: A 6-2. kísérlet aszinkron Agentjének megszakítása és folytatása](images/revised/fig6-5.svg)
+> ![6-5. ábra: A 6-2. kísérlet aszinkron ügynökének megszakítása és folytatása](images/revised/fig6-5.svg)
 >
 
 ### A modell natív aszinkron működése: GPT-6 Astra
@@ -340,11 +340,11 @@ Az eddigi megoldásokban a Harness illesztette a szinkron üzenetformátumhoz a 
 
 ![6-6. ábra: Szinkron interfészkompatibilitás és a modell natív aszinkron működése](images/revised/fig6-6.svg)
 
-**Független munka az eszközre várva.** Ha például az Agent rendezvényhelyszín-lekérdezést indít, közben összeállíthatja a napirendet és az előkészítési listát; a lekérdezés visszatérése után pedig összehasonlíthatja az árakat és a befogadóképességet. Az eszközdefinícióban az `async: true` jelzi az aszinkron képességet; az alkalmazás a teljes hívási elem megérkezése után indítja a végrehajtást, és elmenti a `call_id` hívásazonosítót. Az eredmény megérkezésekor az alkalmazás az eredeti azonosítóval adja vissza az eredményt, és a legfrissebb válaszállapothoz kapcsolódik. A modell ütemezi a további munkát, a Harness kezeli a hívások összerendelését és a feladatok életciklusát.[^ch6-22]
+**Független munka az eszközre várva.** Ha például az ügynök rendezvényhelyszín-lekérdezést indít, közben összeállíthatja a napirendet és az előkészítési listát; a lekérdezés visszatérése után pedig összehasonlíthatja az árakat és a befogadóképességet. Az eszközdefinícióban az `async: true` jelzi az aszinkron képességet; az alkalmazás a teljes hívási elem megérkezése után indítja a végrehajtást, és elmenti a `call_id` hívásazonosítót. Az eredmény megérkezésekor az alkalmazás az eredeti azonosítóval adja vissza az eredményt, és a legfrissebb válaszállapothoz kapcsolódik. A modell ütemezi a további munkát, a Harness kezeli a hívások összerendelését és a feladatok életciklusát.[^ch6-22]
 
 **Új kérések fogadása a feladat közben.** A felhasználó kiegészítheti, hogy „a keret 1000-re csökken” vagy „a résztvevők száma 10-re változik”, miközben a modell gondolkodik vagy a választ fogalmazza. Az alkalmazás ugyanazon a kapcsolaton küld irányító eseményt, a szerver a fogadás visszaigazolása után az aktuális válaszállapot szerint folytatja a feldolgozást. A kapcsolat megszakadása és újraépülése után az alkalmazás az elmentett események és válaszállapot alapján folytathatja a feladatot.[^ch6-23]
 
-A két képesség együtt is használható: a helyszín-lekérdezés tovább fut, a felhasználó új kérései bekerülnek a további döntésekbe, a lekérdezés eredményének megérkezése után pedig megszületik a választás. A végrehajtó közben a háttérfeladatok valódi állapotát is nyilvántartja. Ha le kell állítani a lekérdezést vagy vissza kell vonni egy foglalást, a Harness meghívja a megfelelő interfészt, és ellenőrzi a nyugtát; a már befejezett üzleti műveletek visszavonási vagy kompenzációs folyamatba kerülnek.
+A két képesség együtt is használható: a helyszín-lekérdezés tovább fut, a felhasználó új kérései bekerülnek a további döntésekbe, a lekérdezés eredményének megérkezése után pedig megszületik a választás. A végrehajtó közben a háttérfeladatok valódi állapotát is nyilvántartja. Ha le kell állítani a lekérdezést vagy le kell mondani egy foglalást, a Harness meghívja a megfelelő interfészt, és ellenőrzi a nyugtát; a már befejezett üzleti műveletek visszavonási vagy kompenzációs folyamatba kerülnek.
 
 Ha a modell és az interfész már támogatja a natív aszinkron működést, én a natív protokollt részesítem előnyben, és hagyom, hogy az eszközök függőben tartása, a felhasználói frissítések és a válaszok folytatása az interfész szabályai szerint menjen. A szinkron kompatibilitási réteg elsősorban a meglévő modelleket és a régi interfészeket szolgálja; a modell frissítése után fokozatosan eltávolítható az a kompatibilitási logika, amely csak az üzenetpárosítás kiegészítésére szolgált, és a mérnöki ráfordítás a feladatállapotra, a visszavonásra és a folytatásra összpontosítható.
 
@@ -353,12 +353,12 @@ Ha a modell és az interfész már támogatja a natív aszinkron működést, é
 A megbízható aszinkron interakcióhoz egyszerre kell ellenőrizni az üzeneteket, a feladatokat és a végrehajtási állapotot.
 
 1. **Az eredmények hovatartozása.** A késve érkező eredmény az eredeti hívásazonosítót hordozza, az alkalmazás ez alapján rendeli a megfelelő feladathoz; az ettől az eredménytől függő döntések az adatok megérkezése után folytatódnak.
-2. **Folytatás és visszavonás.** Ha a felhasználó megváltoztatja a kérését, a rendszer megtartja a még érvényes munkát, frissíti a további lépéseket, és egyértelművé teszi, mely háttérfeladatok futnak tovább és melyek álltak le.
+2. **Folytatás és megszakítás.** Ha a felhasználó megváltoztatja a kérését, a rendszer megtartja a még érvényes munkát, frissíti a további lépéseket, és egyértelművé teszi, mely háttérfeladatok futnak tovább és melyek álltak le.
 3. **Több kérés.** A keret, a létszám, a régió és a határidő külön-külön kerül a feladatállapotba, a végeredményt pedig ezek mindegyikével szemben ellenőrizni kell.
 
 > **6-3. kísérlet ★★★: A modell natív aszinkron működése és kör közbeni irányítás**
 >
-> A kísérletben az Agentnek egy szimulált konferenciához kell kiválasztania a legolcsóbb olyan helyszínt, amely megfelel a keretnek és a létszámnak. A kezdeti keret 2000, a létszám 20; a lekérdező eszköz 8 másodperc után adja vissza három helyszín árát és befogadóképességét.
+> A kísérletben az ügynöknek egy szimulált konferenciához kell kiválasztania a legolcsóbb olyan helyszínt, amely megfelel a keretnek és a létszámnak. A kezdeti keret 2000, a létszám 20; a lekérdező eszköz 8 másodperc után adja vissza három helyszín árát és befogadóképességét.
 >
 > | Helyszín | Ár | Befogadóképesség |
 > |---|---:|---:|
@@ -380,9 +380,9 @@ Az aszinkron mechanizmus lehetővé teszi, hogy a külső változások a feladat
 
 ## Beszéd: a legtermészetesebb ember-gép interfész
 
-A beszéd lehetővé teszi, hogy a felhasználó akkor is elmondja az Agentnek, mire van szüksége, kiegészítse a feltételeket és megerősítse az eredményt, amikor keze vagy tekintete más munkával van elfoglalva. A hangalapú beviteli módszer szöveggé alakítja a diktálást, a hang-Agent ennél tovább megy: a párbeszédet, az eszközhívásokat és a válasz lejátszását is kezeli. Mindkettő támogathatja az előszóban bemutatott whisper codingot.
+A beszéd lehetővé teszi, hogy a felhasználó akkor is elmondja az ügynöknek, mire van szüksége, kiegészítse a feltételeket és megerősítse az eredményt, amikor keze vagy tekintete más munkával van elfoglalva. A hangalapú beviteli módszer szöveggé alakítja a diktálást, a hangügynök ennél tovább megy: a párbeszédet, az eszközhívásokat és a válasz lejátszását is kezeli. Mindkettő támogathatja az előszóban bemutatott whisper codingot.
 
-Ez a szakasz két felhasználási módot tárgyal: amikor a felhasználó közvetlenül az Agenttel beszél, és amikor az Agent a felhasználó nevében külső személyekkel kommunikál. Az előbbinél a felismerés, a válaszadás és a közbeszólás áll a középpontban, az utóbbinál ezen felül a hívás közben a személyazonosság megerősítését, az üzleti lekérdezéseket és a döntéseket is el kell végezni.
+Ez a szakasz két felhasználási módot tárgyal: amikor a felhasználó közvetlenül az ügynökkel beszél, és amikor az ügynök a felhasználó nevében külső személyekkel kommunikál. Az előbbinél a felismerés, a válaszadás és a közbeszólás áll a középpontban, az utóbbinál ezen felül a hívás közben a személyazonosság megerősítését, az üzleti lekérdezéseket és a döntéseket is el kell végezni.
 
 ### Interakciós időzítés: a kaszkádtól a teljes duplexig
 
@@ -402,7 +402,7 @@ Az, hogy a modell közvetlenül dolgozza-e fel a hangot, hogy a be- és kimenet 
 
 A kaszkádrendszer több modulra bontja a hangalapú párbeszédet. A beszédaktivitás-érzékelés (VAD) megtalálja a hangban a beszédszakaszokat, a végpontdetektáló logika pedig eldönti, mikor kerüljön továbbításra az adott szakasz; az automatikus beszédfelismerés (ASR) szöveggé alakítja a hangot; az LLM megérti a kérést és megírja a választ; a beszédszintézis (TTS) pedig lejátszható hanggá alakítja a választ. A 6-7. ábra a sorban egymás után végrehajtott alapszerkezetet mutatja.
 
-![6-7. ábra: A hang-Agent soros csővezetéke](images/revised/fig6-7.svg)
+![6-7. ábra: A hangügynök soros csővezetéke](images/revised/fig6-7.svg)
 
 Az akusztikus VAD megtalálja azokat a szakaszokat, amelyekben valaki beszél, így a felismerés átugorhatja a hosszú csendeket. Ugyanaz a szünet azonban mást jelent a „Szeretnék foglalni…” után, mint a „Van még jegy csütörtök délelőttre?” után. A szemantikus VAD (szemantikus végpontdetektálás) az első esetben tovább hallgat, és csak a második esetben adja át a szót a párbeszédmodellnek. Ez a hangalapú megfigyelés időbeli ritkítása: egy folyamatos hangfolyam csak néhány pillanatban vált ki következtetést. Hogy megszólaljon-e, azt az a modell dönti el, amely a mondatot hallotta; hallgathat tovább is, vagy előbb utánanézhet a járatoknak.
 
@@ -421,7 +421,7 @@ A szolgáltatás terhelése sorban állást is okoz. A 6-9. ábra az M/M/1 egycs
 
 ![6-9. ábra: Egycsatornás kihasználtság és átlagos teljes idő (sorban állással és kiszolgálással)](images/revised/fig6-9.svg)
 
-> **6-4. kísérlet ★: Hagyományos hang-Agent építése**
+> **6-4. kísérlet ★: Hagyományos hangügynök építése**
 >
 > Tegyük fel, hogy az asszisztens éppen a csütörtöki járatokat sorolja, ön pedig közbeszól: „Várjon, péntekre szeretnék foglalni.” A böngésző WebSocketen küldi a mikrofon hangját a háttérrendszernek. Amint a Silero VAD észleli, hogy megszólalt, a háttérrendszer `speech_start` jelet küld, a böngésző pedig azonnal leállítja a lejátszást, és kiüríti a sorban álló régi hangot. Az asszisztens ekkor még nem tudja, melyik napra módosított. Csak miután befejezte, és a csend meghaladja az alapértelmezett 500 ezredmásodpercet, küldi el a háttérrendszer a `speech_end` jelet, és adja át a beszédszakaszt a helyi Whisper tiny modellnek átírásra.
 >
@@ -442,7 +442,7 @@ A Whisper szokásos átírási megvalósítása hangablakonként kódol és dek�
 
 A hangalapú nyelvi modellekre épülő érzékelő rendszerek a szöveget és az akusztikai eseményeket együtt is kiadhatják. A korábbi hang, az átirat és a szókincsre vonatkozó tippek segítenek a nevek, márkák és szakkifejezések felismerésében; hogy mennyi előzmény marad meg, az a kontextus- és gyorsítótár-tervezéstől függ. Annak megítéléséhez, hogy „befejezte-e a felhasználó”, a modell a szemantikai teljességet és a csendet együtt veheti figyelembe. A „Szeretnék foglalni…” utáni szünetnél a valós idejű rendszer csak ezt a pár szót hallotta, és még nem tudhatja, hogy dátum következik.
 
-Az átiraton túl az interfész a következő eseményekben is megállapodhat: a `speak_start` és `speak_end` a beszéd kezdetét és végét jelzi, az `interrupt` a közbeszólást, az `emotion` az érzelmi állapotot írja le, a `laugh`, `sigh` és `noise` pedig a nevetést, a sóhajt és a környezeti zajt rögzíti. Ezek az események a szöveggel és az időbélyegekkel együtt juthatnak el az Agenthez.
+Az átiraton túl az interfész a következő eseményekben is megállapodhat: a `speak_start` és `speak_end` a beszéd kezdetét és végét jelzi, az `interrupt` a közbeszólást, az `emotion` az érzelmi állapotot írja le, a `laugh`, `sigh` és `noise` pedig a nevetést, a sóhajt és a környezeti zajt rögzíti. Ezek az események a szöveggel és az időbélyegekkel együtt juthatnak el az ügynökhöz.
 
 > **6-5. kísérlet ★: Folyamatos hangérzékelés szimulálása a Qwen2-Audióval**
 >
@@ -489,13 +489,13 @@ A Pine ügyfélszolgálati hívásaiban, amikor az ügyintéző félbehagy egy m
 
 Azokat az eszközöket, amelyeket az előtérben futó hangmodell közvetlenül meghívhat, az előtér hívja meg. Egy járatlekérdezéshez mindössze két modellhívás kell: az előtér a felhasználó által megadott feltételekkel lekérdez, majd jelenti az eredményt. Delegálás esetén négy kell: az előtér átadja a feladatot, a háttér elindítja a lekérdezést, a háttér rendezi az eredményt, az előtér pedig továbbadja. Egy másik álláspont szerint a valós idejű modell hibás paramétereket adhat meg, ezért az eszközöket a háttérnek kell hívnia, az előtér pedig összpontosítson arra, mikor hallgasson és mikor beszéljen.
 
-A GPT-Live-1 előterének nincs interfésze üzleti függvények közvetlen hívására, csak a háttérben futó Agentre delegálhat. Az OpenAI Realtime GPT-Realtime modellje támogatja, hogy az előtér közvetlenül függvényt hívjon. A Doubao valós idejű hangmodell 3.0 (Seeduplex) tisztán végponttól végpontig tartó módban szintén támogatja az előtérbeli közvetlen hívást, vegyes vezénylésnél viszont a külső nyelvi modell hív.[^ch6-voice-tools]
+A GPT-Live-1 előterének nincs interfésze üzleti függvények közvetlen hívására, csak a háttérben futó ügynökre delegálhat. Az OpenAI Realtime GPT-Realtime modellje támogatja, hogy az előtér közvetlenül függvényt hívjon. A Doubao valós idejű hangmodell 3.0 (Seeduplex) tisztán végponttól végpontig tartó módban szintén támogatja az előtérbeli közvetlen hívást, vegyes vezénylésnél viszont a külső nyelvi modell hív.[^ch6-voice-tools]
 
 Jelölje $L_f$ és $L_b$ az elő- és a háttérmodell egy-egy hívásának idejét, $T$ pedig az eszköz futásidejét. Attól, hogy a felhasználó befejezte a mondatot, addig, hogy meghallja az eredményt, közvetlen hívásnál nagyjából $2L_f+T$, delegálásnál nagyjából $2L_f+2L_b+T$ idő telik el. A delegálás $2L_b$ többlete független a $T$ eszközidőtől. Az olyan információt, amelyre minden körben szükség lehet, például a felhasználói memóriát, a futtatókörnyezet előre lekérdezheti és a kontextusba helyezheti; így az előtérnek csak egyszer kell meghívnia a modellt, ami nagyjából $L_f+T$; ha pedig a lekérdezés már azelőtt megtörtént, hogy a felhasználó megszólalt, még a $T$ is megspórolható.
 
 A többlépéses következtetést igénylő feladatokat, például több átfoglalási lehetőség összehasonlítását, érdemes a háttérre bízni. A jegyfoglalás terheléssel és jegykiállítással jár, ezért – bárki hívja is az eszközt – csak a felhasználó megerősítése után szabad megrendelni. A járatok eredményét szóban össze lehet foglalni, a teljes táblázat pedig a képernyőn jeleníthető meg; ez független attól, ki hívja az eszközt.
 
-> **6-7. kísérlet ★★: Az előtér vagy a háttér hívja a hang-Agent eszközeit?**
+> **6-7. kísérlet ★★: Az előtér vagy a háttér hívja a hangügynök eszközeit?**
 >
 > Az előteret a Doubao valós idejű hangmodell 3.0-val, a hátteret a Volcano Ark által kínált DeepSeek V4 Pro modellel építjük fel. Öt szimulált eszközt készítünk elő – időjárás-lekérdezés, felhasználói memória lekérdezése, webes keresés, járatlekérdezés és jegyfoglalás –, amelyek előre beállított idő után adnak eredményt; a járatlekérdezés és a jegyfoglalás 2–5 másodpercig tart. A felhasználói felvételeket előre szintetizáljuk, és minden alkalommal ugyanannak a forgatókönyvnek a felvételét játsszuk vissza.
 >
@@ -556,7 +556,7 @@ A két modul az előrehaladás szerint cserél információt: a gondolatszervez�
 
 **Ha a következtetési modellek gyorsan fejlődnek, a csapatnak pedig folyamatosan bővítenie kell az üzleti képességeket, én a cserélhető gyors-lassú munkamegosztást választom.** Ez a munkamegosztás megspórolja azt a terhet, hogy a következtetési modell minden frissítésekor újra kelljen tanítani az egész hangrendszert. Szorosabb együttműködésen alapuló megoldást akkor érdemes választani, ha a köztes következtetésnek közvetlenebbül kell irányítania a kifejezést, és megvannak hozzá a tanítási erőforrások.
 
-A Pine AI hang-Agentje az előtérbeli gyors és a háttérbeli lassú gondolkodás együttműködésére épülő architektúrát használ. Nyilvános cikkében arról számol be, hogy a τ²-bench hangalapú versenyágában az első helyet szerezte meg, és bemutatja, hogyan kapcsolja össze a folyamatos hívást, az üzleti következtetést és az eszközműveleteket[^ch6-17].
+A Pine AI hangügynöke az előtérbeli gyors és a háttérbeli lassú gondolkodás együttműködésére épülő architektúrát használ. Nyilvános cikkében arról számol be, hogy a τ²-bench hangalapú versenyágában az első helyet szerezte meg, és bemutatja, hogyan kapcsolja össze a folyamatos hívást, az üzleti következtetést és az eszközműveleteket[^ch6-17].
 
 Ezeknek a kombinációknak a megértéséhez három tervezési dimenziót lehet megkülönböztetni: a **hangútvonal** eldönti, hogy a modell közvetlenül dolgozza-e fel a hangot, vagy átiraton keresztül adják át; a **hallgatás és beszéd időzítése** eldönti, hogy a be- és kimenet körönként vagy párhuzamosan halad-e; a **kognitív munkamegosztás** pedig azt, hogy a valós idejű interakció és a mély következtetés hogyan osztozik az állapoton és cserél eredményeket. Egy rendszer közvetlenül dolgozhatja fel a hangot, teljes duplex módban működhet, és közben az összetett feladatokat külön háttérmodellre bízhatja. A Thinking Machines Lab interakciós modellje és a GPT-Live egyaránt ilyen kombinációt mutat be.
 
@@ -578,9 +578,9 @@ A referenciahangos megoldás ugyanannak a beszélőnek különböző kifejezésm
 >
 > Az elmentett hallgatási teszt hangmegértő modellt használt, a három beállítást váltakozó sorrendben mutatta be, és a természetességet, az érzelmi illeszkedést, a gondolkodási szüneteket, a hangszín egységességét és az ügyfélszolgálati benyomást értékelte. A több referenciahangos csoport kapta a legmagasabb összesített pontszámot, az egy referenciahangos csoport viszont a jelölő nélküli csoport alatt maradt.
 
-## Computer Use: GUI-automatizáló Agentek
+## Computer Use: GUI-automatizáló ügynökök
 
-Tegyük fel, hogy megkéri az Agentet, módosítsa a szállítási címet egy weboldalon. Először meg kell találnia a címmezőt, be kell írnia az új címet, majd a visszajelzés alapján meg kell győződnie róla, hogy a mentés sikerült. Ha a kattintás előtt felugrik egy bejelentkezési ablak, akkor az előző képernyőképen látott gomb hiába maradt ugyanott, a kattintás már egészen mást ér. A Computer Use a képernyőn, az egéren és a billentyűzeten keresztül kezeli a böngészőt, a táblázatokat vagy a rendszerbeállításokat, és fő feladata az, hogy minden cselekvés lépést tartson a szem előtt lévő felülettel.
+Tegyük fel, hogy megkéri az ügynököt, módosítsa a szállítási címet egy weboldalon. Először meg kell találnia a címmezőt, be kell írnia az új címet, majd a visszajelzés alapján meg kell győződnie róla, hogy a mentés sikerült. Ha a kattintás előtt felugrik egy bejelentkezési ablak, akkor az előző képernyőképen látott gomb hiába maradt ugyanott, a kattintás már egészen mást ér. A Computer Use a képernyőn, az egéren és a billentyűzeten keresztül kezeli a böngészőt, a táblázatokat vagy a rendszerbeállításokat, és fő feladata az, hogy minden cselekvés lépést tartson a szem előtt lévő felülettel.
 
 Kövessük a 6-12. ábra **érzékelés–gondolkodás–cselekvés** ciklusát, és nézzük meg, mit kell megerősítenie a modellnek, mielőtt beírja az új címet. A képernyőkép és a feladat állása alapján kiválasztja a kattintás helyét, a Harness ellenőrzi a paramétereket és a jogosultságokat, majd átadja a végrehajtó rétegnek. A sikeres kattintás csak annyit jelent, hogy a kattintás elment. Hogy a következő képernyőképen hová került a beviteli fókusz, az dönti el, hogy biztonságosan beírható-e a cím.
 
@@ -618,14 +618,14 @@ A Set-of-Mark (SoM) hivatkozható számokat helyez a képre, és így köti öss
 
 **Strukturált elemindexelés.**
 
-A böngésző másfajta támpontokat is adhat. A dokumentum-objektummodell (DOM) leírja, milyen elemek vannak az oldalon és milyen hierarchiában, az elrendezési információ megadja az elemek megjelenítési helyét, az akadálymentességi fa (accessibility tree) pedig megőrzi a segítő technológiákhoz szükséges szerepeket és hozzáférhető neveket. Ha például egy csak nagyító ikont tartalmazó gombhoz az oldal megadta a „Keresés” hozzáférhető nevet, az Agentnek esélye van szerep és név alapján megtalálni. A browser-use típusú megoldásoknál a rendszer a Chrome DevTools Protocol (CDP) és hasonló böngészős hibakereső interfészek segítségével gyűjti be az elemek adatait, felismeri a beviteli mezőket, gombokat és hivatkozásokat, majd megszámozza az aktuális oldalon ezeket a kezelhető elemeket. A 6-14. ábrán a modell az oldal jobb felső sarkában lévő [2]-t választotta. Hogyan válik ebből a számból kattintás a Submit gombra?
+A böngésző másfajta támpontokat is adhat. A dokumentum-objektummodell (DOM) leírja, milyen elemek vannak az oldalon és milyen hierarchiában, az elrendezési információ megadja az elemek megjelenítési helyét, az akadálymentességi fa (accessibility tree) pedig megőrzi a segítő technológiákhoz szükséges szerepeket és hozzáférhető neveket. Ha például egy csak nagyító ikont tartalmazó gombhoz az oldal megadta a „Keresés” hozzáférhető nevet, az ügynöknek esélye van szerep és név alapján megtalálni. A browser-use típusú megoldásoknál a rendszer a Chrome DevTools Protocol (CDP) és hasonló böngészős hibakereső interfészek segítségével gyűjti be az elemek adatait, felismeri a beviteli mezőket, gombokat és hivatkozásokat, majd megszámozza az aktuális oldalon ezeket a kezelhető elemeket. A 6-14. ábrán a modell az oldal jobb felső sarkában lévő [2]-t választotta. Hogyan válik ebből a számból kattintás a Submit gombra?
 
 ![6-14. ábra: Set-of-Mark és strukturált elemindexelés (browser-use megvalósítás)](images/revised/fig6-14.svg)
 
 A feldolgozás négy lépésre bontható: a DOM, az elrendezés és az elérhető akadálymentességi információk beolvasása; az interaktív elemek kiszűrése; az aktuális oldal számozási leképezésének felépítése; valamint az elemleírások és a szükséges jelölt képernyőkép átadása a modellnek. A modell például a következő négy számozott elemet láthatja:
 
 ```text
-截图中标有 [1]、[2]、[3]、[4]
+A képernyőképen jelölve: [1], [2], [3], [4]
 
 [1] <input type="text" placeholder="Search" aria-label="Search" />
 [2] <button id="submit-btn" aria-label="Submit form" />
@@ -667,12 +667,12 @@ A referencia-megvalósítás korábban olyan célméreteket használt, mint az X
 
 ### Animációt látó és hangot halló Computer Use Agent
 
-Egy oldal a mentés után csak rövid időre jeleníti meg a „Szinkronizálás sikertelen” üzenetet, a néhány másodperc különbséggel készült két képernyőképen viszont ugyanaz az űrlap látszik. Ha a modell újra megnézi ezt a két képet, nagy valószínűséggel nem tudja rekonstruálni, mi történt közben. A videóknál, animációknál, rövid ideig látható értesítéseknél és a megbeszélések hangjánál ugyanez a probléma. **A folyamatosan változó felületeknél úgy gondolom, hogy a megfigyelési interfészt kell a fejlesztés középpontjába állítani.** Ha a változások alapján akarunk dönteni a következő lépésről, a cselekvések között felbukkanó eseményeket és képeket is meg kell őrizni.
+Egy oldal a mentés után csak rövid időre jeleníti meg a „Szinkronizálás sikertelen” üzenetet, a néhány másodperc különbséggel készült két képernyőképen viszont ugyanaz az űrlap látszik. Ha a modell újra megnézi ezt a két képet, nagy valószínűséggel nem tudja rekonstruálni, mi történt közben. A videóknál, animációknál, rövid ideig látható értesítéseknél és a megbeszélések hangjánál ugyanez a probléma. **Úgy gondolom, hogy a folyamatosan változó felületeknél a megfigyelési interfészt kell a fejlesztés középpontjába állítani.** Ha a változások alapján akarunk dönteni a következő lépésről, a cselekvések között felbukkanó eseményeket és képeket is meg kell őrizni.
 
-A társszerzőimmel javasolt **Agent–Computer Observation Interface (AOI, Agent–számítógép megfigyelési interfész)** a folyamatos képernyőt és hangot a modell által fogadható képekké és szöveggé alakítja[^ch6-9]. Az interfész három összetevőből áll:
+A társszerzőimmel közösen javasolt **Agent–Computer Observation Interface (AOI, ügynök–számítógép megfigyelési interfész)** a folyamatos képernyőt és hangot a modell által fogadható képekké és szöveggé alakítja[^ch6-9]. Az interfész három összetevőből áll:
 
 - **Kulcsképkockák rögzítése a cselekvések között.** A főhurok futása közben figyeli a képváltozásokat, pixelkülönbség vagy könnyűsúlyú vizuális modell segítségével szűri a jelölt képkockákat, majd a hasznos képeket a következő döntéshez adja.
-- **Hangerőkapuval vezérelt átírás.** Hang észlelésekor beszédfelismerést hív meg, és az átiratot az időinformációkkal együtt a megfigyelési naplóba illeszti, hogy az Agent felhasználhassa a megbeszélés tartalmát vagy a szóbeli utasításokat.
+- **Hangerőkapuval vezérelt átírás.** Hang észlelésekor beszédfelismerést hív meg, és az átiratot az időinformációkkal együtt a megfigyelési naplóba illeszti, hogy az ügynök felhasználhassa a megbeszélés tartalmát vagy a szóbeli utasításokat.
 - **Tartós képleírások.** A kulcsképeket szövegesen összefoglalja; miután az eredeti kép kikerült a kontextusból, a szöveg továbbra is megőrzi a bekövetkezett változásokat, és a későbbi lépések hivatkozhatnak rá.
 
 Ha például egy videó bemutat egy menüműveletet, a modell a köztes képeket és a hozzájuk tartozó leírásokat megkapva a lejátszás vége után is felhasználhatja ezt a lépést. A cikk ablációs eredményei szerint a tartós szöveges leírások különösen fontosak a nyereség szempontjából, a kulcsképkockák finom kiválasztása kevesebbet tesz hozzá; egyes modellek túl sok kép hozzáadásakor éppen hogy romlanak.
@@ -683,15 +683,15 @@ Térjünk vissza az imént említett űrlapmentéshez. Ha a kulcsképkocka el is
 
 ### Világmodellek a Computer Use-hoz
 
-Miután időben megkapta a megfigyelést, az Agentnek még cselekvést kell választania, és meg kell várnia a végrehajtást. Az OSWorld-Human kutatás az Agentek műveleti hatékonyságát emberi trajektóriákkal vetette össze, és elemezte az olyan időveszteség-forrásokat, mint a felesleges lépések és a modellhívások[^ch6-osworld-human].
+Miután időben megkapta a megfigyelést, az ügynöknek még cselekvést kell választania, és meg kell várnia a végrehajtást. Az OSWorld-Human kutatás az ügynökök műveleti hatékonyságát emberi trajektóriákkal vetette össze, és elemezte az olyan időveszteség-forrásokat, mint a felesleges lépések és a modellhívások[^ch6-osworld-human].
 
 A világmodell előrejelzést ad a tervezéshez a cselekvések következményeiről. Az asztal állapota magában foglalhatja az ablakokat, a fókuszt, a görgetési pozíciót, a beírt tartalmat és a betöltés állását; a jogosultságokat, a hálózati eredményeket és hasonló információkat viszont a megfelelő interfészeken keresztül kell kiegészíteni. A modell az aktuálisan elérhető állapot és a jelölt cselekvés alapján jelzi előre a következő állapotot:
 
 ```text
-当前状态 + click / type / scroll / wait → 预测的下一状态
+aktuális állapot + click / type / scroll / wait → előre jelzett következő állapot
 ```
 
-Amikor ember használja a számítógépet, a kattintás előtt gyakran már elképzeli a következő lépést; ha a felület megfelel a várakozásnak, folytatja, ha valami váratlan történik, megáll és megnézi. A világmodell hasonló alapot adhat az Agentnek a spekulatív végrehajtáshoz: a tervező előre összehasonlítja a jelölt cselekvéseket, az oldal betöltése alatt előkészíti a következő lépéseket, és a valós állapot megerősítése után folytatja a végrehajtást, így nem kell minden kattintás után elölről tervezni. Ha például a VS Code-ban új Python-fájlt hozunk létre, és beleírjuk, hogy hello world, a várt változások: az új fájl megjelenik a fájlfában, a szerkesztőterület tartalmazza a kódot, és frissül a mentési állapot. Végrehajtás után ezeket a változásokat kell ellenőrizni; ha megfelelnek a várakozásnak, folytatható a munka, ha eltérés van, újra kell helymeghatározni és tervezni.
+Amikor ember használja a számítógépet, a kattintás előtt gyakran már elképzeli a következő lépést; ha a felület megfelel a várakozásnak, folytatja, ha valami váratlan történik, megáll és megnézi. A világmodell hasonló alapot adhat az ügynöknek a spekulatív végrehajtáshoz: a tervező előre összehasonlítja a jelölt cselekvéseket, az oldal betöltése alatt előkészíti a következő lépéseket, és a valós állapot megerősítése után folytatja a végrehajtást, így nem kell minden kattintás után elölről tervezni. Ha például a VS Code-ban új Python-fájlt hozunk létre, és beleírjuk, hogy hello world, a várt változások: az új fájl megjelenik a fájlfában, a szerkesztőterület tartalmazza a kódot, és frissül a mentési állapot. Végrehajtás után ezeket a változásokat kell ellenőrizni; ha megfelelnek a várakozásnak, folytatható a munka, ha eltérés van, újra kell helymeghatározni és tervezni.
 
 A fájltörléshez és hasonló műveletekhez önálló végrehajtási feltételek is kellenek: helyes-e a célpont, engedélyezett-e a törlés, visszaállítható-e, és szükség van-e a felhasználó megerősítésére. Az előrejelzés segít megérteni a lehetséges eredményt, a tényleges jogosultságokat és üzleti feltételeket a végrehajtó réteg ellenőrzi.
 
@@ -709,9 +709,9 @@ A mobilon továbbra is a megfigyelés–döntés–cselekvés ciklus működik, 
 
 Az Android `AccessibilityService` szolgáltatása az engedélyezett körön belül beolvashatja a felület adatait és végrehajthatja a megfelelő műveleteket; a gesztusinterfészekhez a megfelelő képességet is deklarálni kell[^ch6-android]. A képernyőképek, az akadálymentességi fa és a rendszer automatizálási interfészei együtt is használhatók, a konkrét elérhető kört az operációs rendszer, az alkalmazás megvalósítása és az engedélyek határozzák meg. A 7. fejezetben bemutatott AndroidWorld és hasonló benchmarkok valós alkalmazásfeladatokon ellenőrzik, hogy ezek a cselekvések elérik-e a várt eredményt.
 
-**Úgy gondolom, hogy a mobilos megvalósításban az ökoszisztéma korlátai gyakran nehezebben kezelhetők, mint a technikai problémák.** A platformoknak meg kell határozniuk, mely műveletek bízhatók megbízottra, hogyan kell engedélyezni a fiókokat, a fizetést és az adatokat, és hogyan követhető vissza a felelősség hiba esetén. Ezek a megállapodások közvetlenül befolyásolják, milyen kört fedhetnek le az Agent által elvégezhető feladatok.
+**Úgy gondolom, hogy a mobilos megvalósításban az ökoszisztéma korlátai gyakran nehezebben kezelhetők, mint a technikai problémák.** A platformoknak meg kell határozniuk, mely műveletek adhatók át egy ügynöknek, hogyan kell engedélyezni a fiókokat, a fizetést és az adatokat, és hogyan követhető vissza a felelősség hiba esetén. Ezek a megállapodások közvetlenül befolyásolják, milyen kört fedhetnek le az ügynök által elvégezhető feladatok.
 
-Az egyik szerkezeti érdekellentét a forgalomból és a figyelemből fakad. Sok alkalmazás a hirdetések megjelenítéséből, a tartalomajánlásból és a tranzakciós belépési pontokból szerez bevételt; ha a felhasználó az Agentre bízza a lekérdezés vagy a vásárlás közvetlen elvégzését, az oldalbejárási útvonal lerövidülhet, és megváltozik az ajánlásokra és hirdetésekre jutó figyelem is. Az ezekre a pontokra épülő bevételszerzésű platformoknál a megbízotti műveletek a meglévő bevételi forrásokat érintik. A platformoknak ezért újra kell gondolniuk az interfészek megnyitását, a bevételmegosztást és a megbízotti identitások kezelését.
+Az egyik szerkezeti érdekellentét a forgalomból és a figyelemből fakad. Sok alkalmazás a hirdetések megjelenítéséből, a tartalomajánlásból és a tranzakciós belépési pontokból szerez bevételt; ha a felhasználó az ügynökre bízza a lekérdezés vagy a vásárlás közvetlen elvégzését, az oldalbejárási útvonal lerövidülhet, és megváltozik az ajánlásokra és hirdetésekre jutó figyelem is. Azoknál a platformoknál, amelyek ezekből a pontokból szereznek bevételt, a megbízotti műveletek a meglévő bevételi forrásokat érintik. A platformoknak ezért újra kell gondolniuk az interfészek megnyitását, a bevételmegosztást és a megbízotti identitások kezelését.
 
 [^ch6-android]: Android Developers, AccessibilityService; bemutatja a felülethez való hozzáférést, a műveleteket és a gesztusképességeket.
 
@@ -764,7 +764,7 @@ Ez a szakasz öt eszköztípust ad a magas szintű modellnek: `observe_scene`, `
 Amikor a felhasználó azt mondja, „rakd rendbe az asztalt”, a tervező először azonosítja a tárgyakat és a hozzájuk tartozó célterületeket, meghatározza a feldolgozás sorrendjét, és minden lépéshez világosan leírja a kezdési feltételt, a befejezési feltételt és a cselekvés korlátait. A rendrakás sorrendje például ez lehet:
 
 ```text
-处理红色杯子 → 清理黄色纸张 → 检查桌面
+piros pohár kezelése → sárga papír eltakarítása → asztal ellenőrzése
 ```
 
 A „piros pohár kezelése” tovább bomlik két cselekvésre és egy ellenőrzésre:
@@ -790,7 +790,7 @@ A 6-13. kísérlet megmutatja, hogyan kell bekötni a valódi robot cselekvései
 A VLA a Vision-Language-Action rövidítése, vagyis látás–nyelv–cselekvés modell. Az aktuális kép, a feladatutasítás és a robot elérhető állapota alapján állítja elő a következő végrehajtandó cselekvést:
 
 ```text
-当前观测 + 技能指令 → 动作或动作序列
+aktuális megfigyelés + készségutasítás → cselekvés vagy cselekvéssorozat
 ```
 
 Az asztalrendrakási példában a magas szintű tervező kiadja a `pick(red_cup)` utasítást, a készségstratégia pedig a kép alapján dönti el, melyik irányból közelítse meg a poharat, mikor zárja a megfogót, és milyen pályán emelje fel a kart. E mozgásszakasz végrehajtása után a rendszer újra lekéri az asztal megfigyelését, megerősíti, hogy a pohár a megfogóban van, és csak ezután lép tovább a `place(red_cup, tray)` lépésre. Az eszközinterfész rögzíti a várt állapotváltozást, a VLA pedig megtanulja, hogyan érje el ezt a változást folyamatos cselekvésekkel.
@@ -804,7 +804,7 @@ A modell következtetése és a beavatkozók vezérlése általában eltérő fr
 Ahhoz, hogy a „fogd meg a poharat” megbízhatóan cselekvéssé váljon, egyszerre többféle eltérést kell kezelni:
 
 - **A tanítóadatok lefedettsége:** a rendelkezésre álló robotos cselekvésbemutatók száma messze elmarad az internetes szövegekétől és képekétől; ha a modell tudja is, mi a „pohár”, valós fogási tapasztalat kell ahhoz, hogy megítélje, mekkora erőt fejtsen ki. A bemutatóknak le kell fedniük a pohár anyagát, alakját, elhelyezkedését és a súrlódási viszonyokat. Ugyanaz a fogási irány egy kerámiabögrénél és egy puha papírpohárnál eltérő eredményt adhat.
-- **A cselekvés és a következmény tanulási célja:** a viselkedésklónozás főként azt tanulja meg, milyen cselekvést választana a bemutató az adott körülmények között. Ha több cselekvés következményeit kell összehasonlítani, állapot-előrejelzés vagy a cselekvés eredményének értékelése is hozzáadható.
+- **A cselekvés és a következmény tanulási célja:** a viselkedésklónozás főként azt tanulja meg, milyen cselekvést választana a bemutatást végző ember az adott körülmények között. Ha több cselekvés következményeit kell összehasonlítani, állapot-előrejelzés vagy a cselekvés eredményének értékelése is hozzáadható.
 - **A robot teste és interfésze:** a szabadsági fokok, a koordináta-rendszer, a megfogó szerkezete és a beavatkozók késleltetése dönti el, hogyan valósul meg a cselekvés a hardveren. Egy stratégia átvitelekor egyeztetni kell a cselekvésábrázolást, a kalibrációs paramétereket és a vezérlési ciklust.
 - **A megfigyelés frissessége:** egy cselekvési blokk végrehajtása alatt a tárgy elmozdulhat, takarásba kerülhet vagy feldőlhet. A rendszernek meg kell határoznia, mikor kér le új megfigyelést, és mikor frissíti vele a hátralévő cselekvéseket.
 
@@ -815,17 +815,17 @@ Ezek a feltételek összekapcsolják a vizuális felismerést, a készségvezér
 A robotos tervezésben a cselekvésfeltételes világmodell „cselekvéskimenet-előrejelzőként” érthető: az aktuális állapot és egy jelölt cselekvés alapján megbecsüli, mi fog történni.
 
 ```text
-当前状态 + 候选动作
-    → 预测下一状态或未来片段
-    → 比较候选结果
-    → 选择动作、重新规划或停止
+aktuális állapot + jelölt cselekvés
+    → a következő állapot vagy jövőbeli szakasz előrejelzése
+    → a jelölt eredmények összevetése
+    → cselekvés kiválasztása, újratervezés vagy leállás
 ```
 
 Ez a folyamat három munkát foglal magában: az aktuális állapot ábrázolását, a cselekvés okozta állapotváltozás előrejelzését, majd azt, hogy a tervező vagy a vezérlő ennek alapján válasszon cselekvést. Az állapot lehet strukturált változók összessége – például a tárgyak helyzete, vagy hogy egy tárgy a megfogóban van-e –, de lehet képekből kinyert belső reprezentáció is. A V-JEPA 2 először videókból tanulja meg az állapotreprezentációt és az előrejelzést, a továbbtanított V-JEPA 2-AC pedig cselekvésfeltételt vezet be, és robotos tervezésre szolgál. A cselekvések és a jövőbeli megfigyelések összekapcsolása a világ–cselekvés modellek (World-Action Model) egyik modellezési iránya is.[^ch6-16]
 
 A világmodell három szakaszban segítheti a robotot: a cselekvés előtt külön-külön előrejelezheti, mi lesz a megfogás, a tolás vagy a várakozás eredménye; végrehajtás közben összevetheti az előrejelzést a tényleges megfigyeléssel, és eltérés esetén módosíthatja a cselekvést vagy újratervezhet; tanításkor pedig videókból, szimulációs adatokból és sikertelen trajektóriákból tanulhatja meg az állapotváltozásokat, csökkentve a valódi robottal végzett próbálkozások számát.
 
-Tegyük fel, hogy a sárga papírhulladékot részben eltakarja a piros pohár; a tervező ilyenkor összehasonlíthatja a „előbb a papírt fogd meg”, „előbb tedd odébb a poharat” és „válts fogási irányt” lehetőségeket. Én elsősorban az ilyen, a feladathoz közvetlenül kapcsolódó és ellenőrizhető állapotváltozások előrejelzését várnám a világmodelltől. Ha meg tudja ítélni, hogy a papír könnyebben megfogható-e, és hogy a pohár könnyen feldől-e, akkor sorba tudja rendezni a jelölt cselekvéseket. A modell állapotreprezentációját és tanítási célját ezek köré a döntések köré kell tervezni. Ha a modell jövőbeli képeket állít elő, én először azt ellenőrizném, hogy a képek pontosan tükrözik-e ezeket a cselekvési következményeket, és csak utána foglalkoznék további vizuális részletekkel; a képi élethűség értékének végső soron a tervezés és a vezérlés javulásában kell megmutatkoznia. A végrehajtás után a rendszer a kamera és a robot állapota alapján ellenőrzi a tényleges eredményt, és dönt a folytatásról, az újrapróbálkozásról vagy a terv megváltoztatásáról.
+Tegyük fel, hogy a sárga papírhulladékot részben eltakarja a piros pohár; a tervező ilyenkor összehasonlíthatja az „előbb a papírt fogd meg”, „előbb tedd odébb a poharat” és „válts fogási irányt” lehetőségeket. Én elsősorban az ilyen, a feladathoz közvetlenül kapcsolódó és ellenőrizhető állapotváltozások előrejelzését várnám a világmodelltől. Ha meg tudja ítélni, hogy a papír könnyebben megfogható-e, és hogy a pohár könnyen feldől-e, akkor sorba tudja rendezni a jelölt cselekvéseket. A modell állapotreprezentációját és tanítási célját ezek köré a döntések köré kell tervezni. Ha a modell jövőbeli képeket állít elő, én először azt ellenőrizném, hogy a képek pontosan tükrözik-e ezeket a cselekvési következményeket, és csak utána foglalkoznék további vizuális részletekkel; a képi élethűség értékének végső soron a tervezés és a vezérlés javulásában kell megmutatkoznia. A végrehajtás után a rendszer a kamera és a robot állapota alapján ellenőrzi a tényleges eredményt, és dönt a folytatásról, az újrapróbálkozásról vagy a terv megváltoztatásáról.
 
 Minél hosszabb az előrejelzés időtávja, annál könnyebben halmozódnak a hibák. A gyakorlatban először rövid távú következményeket lehet előrejelezni, egy rövid szakaszt végrehajtani, majd új megfigyelés alapján újratervezni, és közben az előrejelzés bizonytalanságát is figyelembe venni a választásnál. A generatív világmodellek interaktív szimulációt és vizualizált jeleneteket is kínálhatnak; vezérlésre használva azonban tovább kell vizsgálni a cselekvésfeltételeket, az érintkezési törvényszerűségeket és az előrejelzési hibát. A hardveres végállások, a vészleállítás és a valós idejű vezérlés továbbra is a végrehajtó rendszer feladata.[^ch6-21]
 
@@ -862,17 +862,17 @@ A beszéd újabb követelményt hoz. Az árajánlat felolvasása közben is hall
 Ha képernyőre vagy robotkarra váltunk, ugyanez a kérdés megmarad, csak **a megfigyelés és a cselekvés formája** változik. A gomb koordinátája az előző képernyőképről származik, az oldal frissülése után újra meg kell határozni a helyét; a robotkar egyszerre egy rövid folyamatos cselekvésszakaszt is előre jelezhet, hogy az ízületek mozgása simább legyen, de minél hosszabb a szakasz, annál nehezebb végrehajtás közben a változásokra reagálni. A magas szintű tervezés, a készségek és az alacsony szintű vezérlés eltérő időskálán dolgozik, és hogy a pohár végül a tálcára került-e, ahhoz még egyszer rá kell nézni az asztalra. Ha ezeket az interakciókat egymás mellé írjuk, kirajzolódik közös sorrendjük:
 
 ```text
-获取观测
-  → 判断当前状态与执行时机
-  → 选择回复或动作
-  → 执行并取得环境反馈
-  → 继续、修正、重试、停止或重新规划
+megfigyelés megszerzése
+  → az aktuális állapot és a végrehajtás időzítésének megítélése
+  → válasz vagy cselekvés kiválasztása
+  → végrehajtás és környezeti visszajelzés
+  → folytatás, javítás, újrapróbálkozás, leállás vagy újratervezés
 ```
 
-Ez a folyamat segíthet a hibák helyének felderítésében. Ha a felhasználó közbeszól, a régi árajánlat felolvasása mégis folytatódik, azt kell megnézni, ki felel az előtér felébresztéséért, kiszorítható-e a lejátszás, és melyik biztonságos pontig jutott el a visszavonási jel; ha a leállítás időben megtörtént, mégis a régi dátum hangzik el, akkor az elő- és a háttér közötti átadás mentén kell visszakeresni a lekérdezés eredményét. A javítás után hogyan bizonyítható, hogy sokkal több hívásban is helyesen működik? Innentől a könyv a képességek fejlesztésére tér át. A 7. fejezet először azt mutatja be, hogyan kell feladatokat tervezni, hibákat rögzíteni és változtatásokat összehasonlítani; az utótanítás, a folyamatos fejlődés és a több Agent együttműködése egyaránt erre az értékelési módszerre épül.
+Ez a folyamat segíthet a hibák helyének felderítésében. Ha a felhasználó közbeszól, a régi árajánlat felolvasása mégis folytatódik, azt kell megnézni, ki felel az előtér felébresztéséért, kiszorítható-e a lejátszás, és melyik biztonságos pontig jutott el a megszakítási jel; ha a leállítás időben megtörtént, mégis a régi dátum hangzik el, akkor az elő- és a háttér közötti átadás mentén kell visszakeresni a lekérdezés eredményét. A javítás után hogyan bizonyítható, hogy sokkal több hívásban is helyesen működik? Innentől a könyv a képességek fejlesztésére tér át. A 7. fejezet először azt mutatja be, hogyan kell feladatokat tervezni, hibákat rögzíteni és változtatásokat összehasonlítani; az utótanítás, a folyamatos fejlődés és a több ügynök együttműködése egyaránt erre az értékelési módszerre épül.
 
 [^ch6-1]: XLeRobot, Teleop dokumentáció.
-[^ch6-2]: Google DeepMind, *Gemini Robotics-ER 1.5*. XLeRobot, LLM Agent-vezérlés. Az XLeRobot upstream példája a modell és az eszközhívások vezénylését mutatja be; ez a szakasz ugyanezt a vezénylési elvet követi, de a cselekvési eszközöket kalibrált asztali megfogó, lehelyező, ellenőrző és leállító primitívekre korlátozza.
+[^ch6-2]: Google DeepMind, *Gemini Robotics-ER 1.5*. XLeRobot, LLM ügynökvezérlés. Az XLeRobot upstream példája a modell és az eszközhívások vezénylését mutatja be; ez a szakasz ugyanezt a vezénylési elvet követi, de a cselekvési eszközöket kalibrált asztali megfogó, lehelyező, ellenőrző és leállító primitívekre korlátozza.
 [^ch6-6]: LeRobot, Sim2Real oktatóanyag.
 [^ch6-15]: Moo Jin Kim és munkatársai, *OpenVLA: An Open-Source Vision-Language-Action Model*, arXiv:2406.09246, 2024. Lásd még az RT-2 projektleírását és a Physical Intelligence *Our First Generalist Policy* című írását.
 [^ch6-16]: Meta AI, *Introducing the V-JEPA 2 world model and new benchmarks for physical reasoning*, 2025. június 11. A technikai jelentés száma arXiv:2506.09985.
@@ -882,19 +882,19 @@ Ez a folyamat segíthet a hibák helyének felderítésében. Ha a felhasználó
 [^ch6-audio-architectures]: OpenAI, *Voice activity detection*; bemutatja a szóváltási határok hangaktivitás és szemantikai megítélés alapján történő megállapításának két módját.
 [^ch6-voice-tools]: Az OpenAI GPT-Live-1 és GPT-Realtime modellleírásai a háttérbe delegálást, illetve a függvényhívást mutatják be. A Doubao valós idejű hangmodell 3.0 bekötési módját a Volcano Engine „Function Calling” című dokumentációja írja le.
 
-## Elgondolkodtató kérdések
+## Gondolkodtató kérdések
 
-1. ★★ Amikor egy aszinkron Agent új eseményt kap, meg kell ítélnie, milyen prioritási viszonyban áll az aktuális feladattal. Ha ehhez a döntéshez szemantikai megértés kell – például annak felismerése, hogy a felhasználó feltételt egészít ki, vagy azonnali leállítást kér –, hogyan kell felosztani a feladatokat a szabálymotor és az LLM között? Hasonlítsa össze a válaszidőt, a költséget és a téves döntés következményeit.
-2. ★★ Az eseménysorban 20 esemény torlódott fel: 10 eszközeredmény, 5 felhasználói üzenet és 5 rendszeremlékeztető. Hogyan szervezné meg a sorrendjüket, formátumukat és feldolgozási állapotukat, hogy a modell követni tudja a feladatok függőségeit, és reagáljon a fontos változásokra?
-3. ★★★ Az Agent használhat saját postafiókot és telefonszámot, de engedélyezés után a felhasználó személyes fiókjait is kezelheti. A háttérbeli futás, a másik fél személyazonosság-ellenőrzési követelményei, a jogosultsági kör és az auditálás figyelembevételével vitassa meg, milyen forgatókönyvekhez illik a kétféle identitásmód.
-4. ★★ A végponttól végpontig tartó hangmodell közvetlenül dolgozza fel a hangot, így a köztes szakaszok hibái kívülről nehezebben lokalizálhatók. Hogyan tervezne megfigyelést és összehasonlító kísérleteket az érzékelési, a következtetési és a kifejezési hibák megkülönböztetésére?
+1. ★★ Amikor egy aszinkron ügynök új eseményt kap, meg kell ítélnie, milyen prioritási viszonyban áll az aktuális feladattal. Ha ehhez a döntéshez szemantikai megértés kell – például annak felismerése, hogy a felhasználó feltételt egészít ki, vagy azonnali leállítást kér –, hogyan kell felosztani a feladatokat a szabálymotor és az LLM között? Hasonlítsd össze a válaszidőt, a költséget és a téves döntés következményeit.
+2. ★★ Az eseménysorban 20 esemény torlódott fel: 10 eszközeredmény, 5 felhasználói üzenet és 5 rendszeremlékeztető. Hogyan szerveznéd meg a sorrendjüket, formátumukat és feldolgozási állapotukat, hogy a modell követni tudja a feladatok függőségeit, és reagáljon a fontos változásokra?
+3. ★★★ Az ügynök használhat saját postafiókot és telefonszámot, de engedélyezés után a felhasználó személyes fiókjait is kezelheti. A háttérbeli futás, a másik fél személyazonosság-ellenőrzési követelményei, a jogosultsági kör és az auditálás figyelembevételével vitasd meg, milyen forgatókönyvekhez illik a kétféle identitásmód.
+4. ★★ A végponttól végpontig tartó hangmodell közvetlenül dolgozza fel a hangot, így a köztes szakaszok hibái kívülről nehezebben lokalizálhatók. Hogyan terveznél megfigyelést és összehasonlító kísérleteket az érzékelési, a következtetési és a kifejezési hibák megkülönböztetésére?
 5. ★ A Step-Audio R1.1 MPS-módszere összehangoltan viszi előre a gondolatszervezést és a kifejezést. Hogyan használja a rendszer a szüneteket, az előrehaladásról szóló tájékoztatást és a szakaszos kifejezést? Hogyan kell eljárni, ha a későbbi következtetés megváltoztatja a már kimondott következtetést?
-6. ★★ Az SoM vizuális területjelölése és a DOM-elemindexelés egyaránt lehetővé teszi, hogy a modell egyetlen számmal jelölje meg, hol kell műveletet végezni. Nem szabványos vezérlők, takarás vagy dinamikus változás esetén hogyan kombinálná az újbóli jelölést, a koordináta-előrejelzést és a művelet utáni ellenőrzést?
-7. ★★ A távvezérlési adatok minőségét befolyásolja a kezelő ügyessége. Hogyan hat a remegés, a kerülőút, a megtorpanás és a sikertelen fogás a VLA tanítására? Hogyan szűrné az adatokat úgy, hogy közben megmaradjanak az értékes hibákból való helyreállási folyamatok?
-8. ★★★ A beszéd, a Computer Use és a robotika egyaránt épülhet egységes modellre, moduláris kaszkádra vagy az előtérbeli interakció és a háttérbeli következtetés munkamegosztására. A következő öt évet tekintve hogyan kombinálná ezeket az irányokat? Indokolja döntését a késleltetés, a megfigyelhetőség, a fejlesztési költség és a feladat kockázata alapján.
+6. ★★ Az SoM vizuális területjelölése és a DOM-elemindexelés egyaránt lehetővé teszi, hogy a modell egyetlen számmal jelölje meg, hol kell műveletet végezni. Nem szabványos vezérlők, takarás vagy dinamikus változás esetén hogyan kombinálnád az újbóli jelölést, a koordináta-előrejelzést és a művelet utáni ellenőrzést?
+7. ★★ A távvezérlési adatok minőségét befolyásolja a kezelő ügyessége. Hogyan hat a remegés, a kerülőút, a megtorpanás és a sikertelen fogás a VLA tanítására? Hogyan szűrnéd az adatokat úgy, hogy közben megmaradjanak az értékes hibákból való helyreállási folyamatok?
+8. ★★★ A beszéd, a Computer Use és a robotika egyaránt épülhet egységes modellre, moduláris kaszkádra vagy az előtérbeli interakció és a háttérbeli következtetés munkamegosztására. A következő öt évet tekintve hogyan kombinálnád ezeket az irányokat? Indokold a döntésedet a késleltetés, a megfigyelhetőség, a fejlesztési költség és a feladat kockázata alapján.
 9. ★★ A szabványos weboldalak DOM- vagy akadálymentességi információt adhatnak, a Canvas, a WebGL és a saját rajzolású vezérlők viszont gyakran vizuális helymeghatározásra szorulnak. Milyen költségekkel jár a strukturált és a vizuális útvonal párhuzamos karbantartása, és milyen előnyökkel?
-10. ★★ A cselekvésdarabolás révén a VLA egyszerre egy jövőbeli cselekvésszakaszt állít elő. Ha végrehajtás közben a tárgyat elmozdítják, hogyan hangolná össze a blokkhosszt, az újbóli megfigyelést, a háttérbeli következtetést és a cselekvés megszakítását, hogy a végrehajtás hatékonysága és a reakciókészség egyaránt érvényesüljön?
-11. ★★★ A gyors interakció időben megtett cselekvést követel. A hangalapú válasz, a weboldali űrlapküldés és a robotos megfogás példáján tervezzen cselekvési fokozatokat, állapotmegerősítést és leállítási mechanizmust úgy, hogy a reakciósebesség összhangban legyen a feladat következményeivel.
-12. ★★★ Válassza ki az ébresztés, a biztonságos pont, a visszavonás, a kiszorítás vagy a gyors-lassú munkamegosztás primitívjei közül az egyiket, és hasonlítsa össze megvalósítását az eseményvezérelt feladatokban és a robotos cselekvésdarabolásban. Hogyan befolyásolja a tervezést a környezet változásának sebessége, a cselekvések visszafordíthatósága és a megfigyelés költsége?
-13. ★★ Ugyanannak a rendelésnek a vásárlói csevegése, a jóváhagyási megbeszélés és a fizetési visszahívás ugyanabba a szálba tartozzon-e? A feldolgozási sorrend, a párhuzamosság, a partíciókulcs migrációja és a jogosultságok elkülönítése szempontjából hasonlítsa össze a szálak összevonását és a kapcsolódó objektumok szerinti feliratkozást.
-14. ★★ Egy hangalapú utazási asszisztensnek időjárást kell lekérdeznie, felhasználói memóriát kell olvasnia, a weben kell keresnie, járatokat kell lekérdeznie és jegyet kell foglalnia. Hogyan osszák meg a munkát az előtér, a háttér és a futtatókörnyezet? Ha a felhasználó szóban diktálja egy útitárs nevét, majd a járateredményre várva megkérdezi az időjárást, hogyan kerülhető el a hibás jegyfoglalás vagy az eredmény elhallgatása?
+10. ★★ A cselekvésdarabolás révén a VLA egyszerre egy jövőbeli cselekvésszakaszt állít elő. Ha végrehajtás közben a tárgyat elmozdítják, hogyan hangolnád össze a blokkhosszt, az újbóli megfigyelést, a háttérbeli következtetést és a cselekvés megszakítását, hogy a végrehajtás hatékonysága és a reakciókészség egyaránt érvényesüljön?
+11. ★★★ A gyors interakció időben megtett cselekvést követel. A hangalapú válasz, a weboldali űrlapküldés és a robotos megfogás példáján tervezz cselekvési fokozatokat, állapotmegerősítést és leállítási mechanizmust úgy, hogy a reakciósebesség összhangban legyen a feladat következményeivel.
+12. ★★★ Válaszd ki az ébresztés, a biztonságos pont, a visszavonás, a kiszorítás vagy a gyors-lassú munkamegosztás primitívjei közül az egyiket, és hasonlítsd össze megvalósítását az eseményvezérelt feladatokban és a robotos cselekvésdarabolásban. Hogyan befolyásolja a tervezést a környezet változásának sebessége, a cselekvések visszafordíthatósága és a megfigyelés költsége?
+13. ★★ Ugyanannak a rendelésnek a vásárlói csevegése, a jóváhagyási megbeszélés és a fizetési visszahívás ugyanabba a szálba tartozzon-e? A feldolgozási sorrend, a párhuzamosság, a partíciókulcs migrációja és a jogosultságok elkülönítése szempontjából hasonlítsd össze a szálak összevonását és a kapcsolódó objektumok szerinti feliratkozást.
+14. ★★ Egy hangalapú utazási asszisztensnek időjárást kell lekérdeznie, felhasználói memóriát kell olvasnia, a weben kell keresnie, járatokat kell lekérdeznie és jegyet kell foglalnia. Hogyan osszák meg a munkát az előtér, a háttér és a futtatókörnyezet? Ha a felhasználó szóban diktálja egy útitárs nevét, majd a járateredményre várva megkérdezi az időjárást, hogyan kerülhető el a hibás jegyfoglalás, illetve az, hogy az eredmény elmondása kimaradjon?

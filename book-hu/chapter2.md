@@ -431,7 +431,7 @@ response = call_model(request)
 
 A tömörítés megtartja a döntéseket, a korlátokat, a hibákat és a hivatkozásokat, vagyis azt, amire a további munkához szükség van, és megőrzi a hívási kérések és az eszközeredmények összetartozását is. A hosszkorláton kívül az ismétlődő és az elavult információ is kiválthat tömörítést; a részletes stratégiát a fejezet második fele fejti ki.
 
-> **2-1. kísérlet ★: helyi LLM-szolgáltatás telepítése és eszközhívás**
+> **2-1. kísérlet ★: Helyi LLM-szolgáltatás telepítése és eszközhívás**
 >
 > Ez a kísérlet helyben futtatja a Qwen3-0.6B modellt, és a „mennyi az idő és milyen az időjárás Vancouverben” feladaton követi végig, hogyan jutnak el az üzenetek a modellen, a feldolgozón és az eszközvégrehajtón keresztül. A 2-5. ábra mutatja a helyi szolgáltatás és a kliens munkamegosztását: a szerver betölti a modellt, feldolgozza a bemenetet és előállítja a választ, a kliens tartja az üzenetelőzményt, ütemezi az eszközöket és küldi vissza az eredményeket.
 >
@@ -445,7 +445,7 @@ A tömörítés megtartja a döntéseket, a korlátokat, a hibákat és a hivatk
 >
 > **Végül hasonlítsuk össze a sebességet és a gyorsítótárazást.** Az Apple-chip-es Macen készült feljegyzés szerint ebben a futásban az eszközfeladat átlagos dekódolási sebessége körülbelül másodpercenként 107 token volt. A token a modell szövegfeldolgozásának alapegysége; a pontos felosztást a tokenizáló határozza meg, és egy szó vagy kínai írásjegy egy vagy több tokennek is megfelelhet. A dekódolási sebesség a generálás megkezdése utáni kimeneti rátát tükrözi; azt, hogy a felhasználó mennyit vár, az első token késleltetése, az érvelés hossza és az eszközök futásideje is befolyásolja.
 >
-> A gyorsítótár-összehasonlítás ugyanazzal a hosszú előtaggal, de a prefix megtartásával, illetve az előtag elejének módosításával készült. Ebben az öt párosított mérésben a megtartott előtagú kérések közül négy volt gyorsabb; a két csoport átlagos első token késleltetése körülbelül 1,30, illetve 1,51 másodperc volt. A következő szakasz elmagyarázza, miben tér el számítási szempontból ez a kétféle kérés.
+> A gyorsítótár-összehasonlítás ugyanazzal a hosszú előtaggal készült: egyszer megtartott előtaggal, egyszer az előtag elejét módosítva. Ebben az öt párosított mérésben a megtartott előtagú kérések közül négy volt gyorsabb; a két csoport átlagos első token késleltetése körülbelül 1,30, illetve 1,51 másodperc volt. A következő szakasz elmagyarázza, miben tér el számítási szempontból ez a kétféle kérés.
 >
 > Ez a kísérlet engem is megerősített abban, hogy bizakodó legyek az eszközön futó ügynökökben: a kis modellek már a felhasználó saját eszközén is el tudják végezni az efféle eszközhívási feladatot. **Az eszközön futó ügynökök korszaka közelebb van, mint sokan gondolnák.**
 
@@ -467,7 +467,7 @@ Az ebben a szakaszban használt okozati figyelem (causal attention) modelljében
 
 [^ch2-kv-basics]: Hugging Face, How caching works, amely a K és V vektorok rétegenkénti tárolásának és újrahasznosításának mechanizmusát ismerteti.
 
-> **2-2. kísérlet ★: a figyelmi mechanizmus vizualizációja**
+> **2-2. kísérlet ★: A figyelmi mechanizmus vizualizációja**
 >
 > Először a „Peking | -i | időjárás | milyen” (szó szerint: „milyen Peking időjárása”) mondaton értsük meg egy figyelmi számítás menetét. A szemléltetés kedvéért a 2-6. ábra négy szemantikai egységre bontja a mondatot; a valós modellben a tokenizáló hasítja fel a bemenetet. A „milyen” pozíció feldolgozásakor a figyelmi rétegnek a meglévő információkból kell összeállítania az aktuális reprezentációt. A Query, a Key és a Value rendre a lekérdezés, az egyeztetés és az információösszesítés szerepét tölti be.
 >
@@ -479,7 +479,7 @@ Az ebben a szakaszban használt okozati figyelem (causal attention) modelljében
 >
 > A Key-t tekinthetjük a kereséshez használt címkének, a Value-t pedig az előkeresett tartalomnak. A modellben ezek a vektorok rejtett reprezentációkból számolt számértékek, és az egyeztetés módját a tanítás alakítja ki.
 >
-> Egy számítás három lépésből áll. Először az aktuális pozíció előállítja a Query-t; majd ez páronkénti szorzatot (dot product) számol az egyes pozíciók Key-vektoraival, és skálázás, okozati maszkolás, valamint softmax után megkapja az összegükben 1-et adó figyelmi súlyokat; végül ezekkel a súlyokkal súlyozottan összegzi a Value-vektorokat. A páronkénti szorzat két számsorozat elemenkénti szorzata, majd összege; a softmax pedig a látható pozíciók pontszámait normált súlyokká alakítja. Az egyes pozíciók Value-vektora a hozzá tartozó súllyal vesz részt az összesítésben, és együtt alkotja ennek a figyelmi fejnek a kimenetét.
+> Egy számítás három lépésből áll. Először az aktuális pozíció előállítja a Query-t; majd ez skaláris szorzatot (dot product) számol az egyes pozíciók Key-vektoraival, és skálázás, okozati maszkolás, valamint softmax után megkapja az összegükben 1-et adó figyelmi súlyokat; végül ezekkel a súlyokkal súlyozottan összegzi a Value-vektorokat. A skaláris szorzat két számsorozat elemenkénti szorzatainak összege; a softmax pedig a látható pozíciók pontszámait normált súlyokká alakítja. Az egyes pozíciók Value-vektora a hozzá tartozó súllyal vesz részt az összesítésben, és együtt alkotja ennek a figyelmi fejnek a kimenetét.
 >
 > Olvassuk végig a 2-6. ábra utolsó sorát vízszintesen: a „milyen” pozíció az „időjárás” szónak 0,55 súlyt ad. Ezt a számot meg kell szorozni az „időjárás” pozíciójában álló Value-vektorral, majd hozzá kell adni a másik három pozíció járulékát, és csak így kapjuk meg ennek a figyelmi fejnek a kimenetét a „milyen” helyén. Ha átváltunk az „időjárás” sorára, miért van jobb oldalon egy kereszttel jelölt cella? Mert ennek a pozíciónak a számításakor a sorozat még nem ért el a „milyen” szóig.
 >
@@ -489,7 +489,7 @@ Az ebben a szakaszban használt okozati figyelem (causal attention) modelljében
 >
 > Innen a K- és V-gyorsítótár rendeltetése is látszik: a generálás előrehaladtával az új pozíciók továbbra is olvassák a korábbi pozíciók Key- és Value-vektorait. Ha ezeket a vektorokat eltároljuk, az új pozíció közvetlenül felhasználhatja őket az egyeztetéshez és az összesítéshez, és a korábbi pozíciók újraszámítása elmarad.
 >
-> Miután ezt a szemléltető súlykészletet megértettük, nézzük meg a Qwen3-0.6B modell ténylegesen kiszámolt figyelmi eloszlását. A kísérlet külön rögzít egy rövid mondatot és egy érvelést is tartalmazó generált sorozatot, és összehasonlítja a különböző rétegek figyelmi mátrixait. A 2-7. ábra a 0., a 13. és a 27. réteget mutatja: a bal oszlopban a kilenc tokenes rövid mondat, a jobb oszlopban a 17 × 23 kiszámításának generált sorozata látható, a bemenet, az érvelés és a válasz pozíciótartományát megjelölve. A szürkeárnyalatos skála logaritmikus, hogy az erősebb és a gyengébb figyelmi súlyok egyszerre legyenek kivehetők.
+> Miután ezt a szemléltető súlykészletet megértettük, nézzük meg a Qwen3-0.6B modell ténylegesen kiszámolt figyelmi eloszlását. A kísérlet külön rögzít egy rövid mondatot és egy olyan generált sorozatot, amely érvelést és végső választ is tartalmaz, és összehasonlítja a különböző rétegek figyelmi mátrixait. A 2-7. ábra a 0., a 13. és a 27. réteget mutatja: a bal oszlopban a kilenc tokenes rövid mondat, a jobb oszlopban a 17 × 23 kiszámításakor generált sorozat látható, a bemenet, az érvelés és a válasz pozíciótartományát megjelölve. A szürkeárnyalatos skála logaritmikus, hogy az erősebb és a gyengébb figyelmi súlyok egyszerre legyenek kivehetők.
 >
 > ![2-7. ábra: A figyelmi hőtérkép vizualizációja](images/revised/fig2-7.png)
 >
@@ -520,7 +520,7 @@ A jobb oszlopban megjelenik egy `<tool_response>` jelölőpár. A sablon emellet
 
 Ha például a modell egy fájl átvizsgálása után tovább elemzi annak tartalmát, az eszközeredményt `tool` szerepben visszaadva a sablon a jelenlegi feladat eszközvisszajelzéseként ismeri fel; ha ugyanezt a szöveget egyszerű `user` üzenetként írjuk meg, a sablon új kérdésként ismerheti fel, és megváltoztatja a korábbi érvelés megőrzésének terjedelmét. Ez olyan, mint amikor egy feladat folytatásához meg kell tartani a számítási piszkozatot: a Harnessnek meg kell őriznie a szolgáltatás által előírt érvelési mezőket, és a helyes üzenetszerkezettel kell folytatnia a hívást.
 
-**Ahogy az egymenetes következtetésből hosszú, több lépésből álló ügynökfutás lesz, az előzményben felhalmozott gondolkodás fokozatosan karbantartandó feladatállapottá válik.** A korai DeepSeek-R1 chatsablonja kivette a korábbi válaszokból a gondolkodás részét, és csak a végső választ tartotta meg[^ch2-r1-template]; a későbbi DeepSeek eszközhívási protokoll viszont már megköveteli az érvelési információk visszaküldését. Egy kérdés-válasz lezárása után a végső válasz gyakran már tartalmazza a következő körhöz szükséges információt; egy félbehagyott eszközfeladatnál viszont az, hogy „miért néztük meg ezt a fájlt” vagy „mely hipotéziseket zártuk ki”, csak a közbülső érvelésben állhat. Ezen információk megőrzése segít, hogy a következő kör a már kialakult gondolatmenetre építsen.
+**Ahogy az egyfordulós következtetésből hosszú, több lépésből álló ügynökfutás lesz, az előzményben felhalmozott gondolkodás fokozatosan karbantartandó feladatállapottá válik.** A korai DeepSeek-R1 chatsablonja kivette a korábbi válaszokból a gondolkodás részét, és csak a végső választ tartotta meg[^ch2-r1-template]; a későbbi DeepSeek eszközhívási protokoll viszont már megköveteli az érvelési információk visszaküldését. Egy kérdés-válasz lezárása után a végső válasz gyakran már tartalmazza a következő körhöz szükséges információt; egy félbehagyott eszközfeladatnál viszont az, hogy „miért néztük meg ezt a fájlt” vagy „mely hipotéziseket zártuk ki”, csak a közbülső érvelésben állhat. Ezen információk megőrzése segít, hogy a következő kör a már kialakult gondolatmenetre építsen.
 
 **Az érvelési információk visszaküldésének módját a modell protokollja határozza meg.** Csatlakozáskor a `content`, a `tool_calls` és a szolgáltatás által kínált érvelési mezők kezelését egyszerre kell megoldani. Az alábbi megoldások különböző folytatási szabályokat képviselnek:
 
@@ -561,7 +561,7 @@ Ha egyáltalán nem használnánk KV Cache-t, az E előrejelzéséhez újra fel 
 
 Azonos modell és számítási beállítás mellett a $k$ előtti pozíciók csak a korábbi bemenettől függenek, ezért továbbra is újrahasznosíthatók; $k$-tól kezdve viszont újra fel kell építeni az érintett állapotokat. A gyakorlati szolgáltatások rendszerint gyorsítótár-blokkonként párosítják az előtagot, így az újraszámítás határát a blokkméret is befolyásolja. Minél előrébb van a változás, rendszerint annál több bemenetet kell újraszámítani. Az, hogy a stabil utasításokat előre, az új állapotot pedig a végére tesszük, éppen ezt a függőséget használja ki.
 
-> **2-3. kísérlet ★★: a kontextuskezelési módok összehasonlítása**
+> **2-3. kísérlet ★★: A kontextuskezelési módok összehasonlítása**
 >
 > Ez a kísérlet ugyanazt a feladatot adja az ügynöknek fájlfelderítő, -olvasó és -kereső eszközökkel, és egy stabil hozzáfűzésű alapkonfigurációt hasonlít össze öt kontextusmódosítással. Az alapváltozat változatlanul tartja az utasításokat és az eszközök sorrendjét, és körönként hozzáfűzi a modell üzeneteit és az eszközeredményeket. A többi csoport rendre az utasításokat, az állapotot, az eszközök sorrendjét vagy az előzmény megjelenítését változtatja meg, és azt figyeli, hogyan alakul a gyorsítótár statisztikája és a feladat menete.
 >
@@ -670,7 +670,7 @@ A Markdown áttekinthető hierarchiát ad, a `<file_operation>` és a `<network_
 
 ### A szabályok folyamatba rendezése
 
-**Ha a feladatnak világos szakaszai vannak, a promptot érdemes a folyamat szerint szervezni.** Vegyük a visszatérítést: előbb meg kell találni a rendelést, csak utána lehet a visszatérítési szabályzat alapján eldönteni, visszaadható-e az összeg. Ha a rendelés nem található, meg kell kérni a felhasználót a rendelésszám és a hasonló adatok pótlására; ha a rendelés megfelel a feltételeknek, el lehet indítani a visszatérítést. Ha ugyanezek a szabályok egy több száz tételes listában szétszórva szerepelnek, minden lépésnél újra ki kell keresni az érvényes tételeket. Ha a bemeneti feltételeket, a feldolgozás sorrendjét és a rendkívüli esetek kijáratait a megfelelő szakasznál írjuk le, a modellnek lesz mihez igazodnia: hol tart éppen, és mi a következő teendő.
+**Ha a feladatnak világos szakaszai vannak, a promptot érdemes a folyamat szerint szervezni.** Vegyük a visszatérítést: előbb meg kell találni a rendelést, csak utána lehet a visszatérítési szabályzat alapján eldönteni, visszaadható-e az összeg. Ha a rendelés nem található, meg kell kérni a felhasználót a rendelésszám és a hasonló adatok pótlására; ha a rendelés megfelel a feltételeknek, el lehet indítani a visszatérítést. Ha ugyanezek a szabályok egy több száz tételes listában szétszórva szerepelnek, minden lépésnél újra ki kell keresni az érvényes tételeket. Ha a bemeneti feltételeket, a feldolgozás sorrendjét és a kivételes esetek kezelését a megfelelő szakasznál írjuk le, a modellnek lesz mihez igazodnia: hol tart éppen, és mi a következő teendő.
 
 A következő példa a fájlfeldolgozást állítja össze ellenőrzésből, osztályozásból, előfeldolgozásból, végrehajtásból és igazolásból álló szabványos működési folyamattá (SOP):
 
@@ -717,9 +717,9 @@ Az összegszámításnál meg kell adni a mértékegységet, az alapot és a ker
 
 A javaslatom az, hogy **az üzleti szabályok tervezését a termékfelelős vezesse**, a termelési adatokra, a felhasználói visszajelzésekre és az üzemeltetési tapasztalatokra támaszkodva tartsa karban ezeket a definíciókat; a mérnök pedig ültesse át őket a promptba, az eszközparaméterekbe, a díjszámítási logikába és az ellenőrzési szabályokba.
 
-### Kevés példás tanulás: a kívánt viselkedés bemutatása példákkal
+### Few-shot példák: a kívánt viselkedés bemutatása példákkal
 
-Amikor a kimenetre vonatkozó követelményeket nehéz néhány szabállyal kifejezni, **gyakran célravezetőbb két-három jó minőségű példát adni, mint további elvont magyarázatokat halmozni.** Ezt a módszert **kevés példás tanulásnak (few-shot examples)** nevezzük. Egy adott szövegstílus, egy strukturált jelentés vagy az ügyfélszolgálati hangnem bemutatására egyaránt alkalmas a bemenet és az elvárt kimenet párosítása. A modell az aktuális kontextusban felismeri a példák mintázatát, és alkalmazza az új kérésre.
+Amikor a kimenetre vonatkozó követelményeket nehéz néhány szabállyal kifejezni, **gyakran célravezetőbb két-három jó minőségű példát adni, mint további elvont magyarázatokat halmozni.** Ezt a módszert **kevéspéldás (few-shot) mintaadásnak** nevezzük. Egy adott szövegstílus, egy strukturált jelentés vagy az ügyfélszolgálati hangnem bemutatására egyaránt alkalmas a bemenet és az elvárt kimenet párosítása. A modell az aktuális kontextusban felismeri a példák mintázatát, és alkalmazza az új kérésre.
 
 A példák kerülhetnek a rendszerpromptba, ahol több kérés közösen használja őket; vagy összeállíthatók bemutató `user`／`assistant` üzenetekké, amelyeket a beszélgetés elején töltünk be. **Ha ugyanazt a feladattípust ismételten kezeljük, én a gondosan válogatott, rögzített példakészletet részesítem előnyben.** A rögzített példák az előtagot is stabilan tartják. Ha a feladatok nagyon különböznek, és a rögzített példák nem fedik le őket, szóba jöhet a feladat szerinti visszakeresés. Dinamikus kiválasztásnál előbb megtarthatjuk a közös utasításokat, és csak utána, a végére tesszük a kiválasztott példákat.
 
@@ -731,9 +731,9 @@ Az eszközdefiníció az ügynök kezelési útmutatója. A modellnek a névből
 
 Ezeket az információkat nagyon konkrétan meg lehet fogalmazni. Egy keresőeszköz például előírhatja, hogy „fájltartalom kereséséhez a célzott keresőeszközt kell használni”; az időeszköz megadhatja a `timezone: "America/New_York"` példát, bemutatva a paraméter tényleges írásmódját; az olvasóeszköz jelezheti, hogy „az egymástól független olvasások egy kérésben is elindíthatók”; a szerkesztőeszköznek pedig le kell írnia, hogy „előbb olvassuk el a célfájlt, és az aktuális tartalom alapján szerkesszünk”. Ez a négyféle magyarázat rendre a használati határt, a paraméterformátumot, a végrehajtási hatékonyságot és az előfeltételeket adja meg. A 4. fejezet további példákkal tárgyalja az eszközinterfészek tervezését.
 
-Kevés eszköznél a kéréssel együtt megadható a teljes `tools` definíció, a későbbi körökben pedig a nevek, a tartalom és a sorrend változatlanul tartható. Az eszközök számának növekedésével a teljes definíció a kontextus nagy részét foglalhatja el, és megnehezíti a modell dolgát a hasonló eszközök megkülönböztetésében. Ilyenkor használható az **igény szerinti betöltés**: előbb csak azt tudja meg a modell, milyen képességek vannak, és szükség esetén keres rá és tölti be a kapcsolódó eszköz teljes sémáját. Az alábbi Skills rész is ezt a „előbb katalógus, aztán a részletek betöltése” szervezési módot követi.
+Kevés eszköznél a kéréssel együtt megadható a teljes `tools` definíció, a későbbi körökben pedig a nevek, a tartalom és a sorrend változatlanul tartható. Az eszközök számának növekedésével a teljes definíció a kontextus nagy részét foglalhatja el, és megnehezíti a modell dolgát a hasonló eszközök megkülönböztetésében. Ilyenkor használható az **igény szerinti betöltés**: előbb csak azt tudja meg a modell, milyen képességek vannak, és szükség esetén keres rá és tölti be a kapcsolódó eszköz teljes sémáját. Az alábbi Skills rész is ezt az „előbb katalógus, aztán a részletek betöltése” szervezési módot követi.
 
-Az OpenAI Responses API a `defer_loading: true` jelöléssel láthatja el a késleltetve betöltött eszközöket. Az ügyféloldalon kezelt eszközkeresési folyamatban a modell `tool_search_call` üzenetet küld, az ügyfél pedig `tool_search_output` üzenettel adja vissza a kiválasztott eszközdefiníciókat; a gyakran használt eszközök közvetlenül is megadhatók, a késleltetve betöltöttekkel együtt[^ch2-toolsearch-oai]. A Claude Code az eszközkeresést támogató modell- és szolgáltatásbeállítások mellett alapértelmezés szerint igény szerint tölti be az MCP-eszközöket: a beszélgetés elején a nevüket és a szerver leírását adja meg, és csak a keresés után tölti be a teljes definíciót. Kínál továbbá egy küszöbérték-módot is, amely akkor kapcsolja be a késleltetett betöltést, amikor az eszközdefiníciók elérik a megadott kontextusarányt[^ch2-toolsearch-cc]. A Codex Apps／Connectors eszközfelderítési sablonja BM25-tel keres az eszközök metaadataiban, és a találatokat a következő modellhívásnak adja át[^ch2-toolsearch-codex].
+Az OpenAI Responses API a `defer_loading: true` jelöléssel láthatja el a késleltetve betöltött eszközöket. A kliensoldalon kezelt eszközkeresési folyamatban a modell `tool_search_call` üzenetet küld, a kliens pedig `tool_search_output` üzenettel adja vissza a kiválasztott eszközdefiníciókat; a gyakran használt eszközök közvetlenül is megadhatók, a késleltetve betöltöttekkel együtt[^ch2-toolsearch-oai]. A Claude Code az eszközkeresést támogató modell- és szolgáltatásbeállítások mellett alapértelmezés szerint igény szerint tölti be az MCP-eszközöket: a beszélgetés elején a nevüket és a szerver leírását adja meg, és csak a keresés után tölti be a teljes definíciót. Kínál továbbá egy küszöbérték-módot is, amely akkor kapcsolja be a késleltetett betöltést, amikor az eszközdefiníciók elérik a megadott kontextusarányt[^ch2-toolsearch-cc]. A Codex Apps／Connectors eszközfelderítési sablonja BM25-tel keres az eszközök metaadataiban, és a találatokat a következő modellhívásnak adja át[^ch2-toolsearch-codex].
 
 Az igény szerinti betöltést össze kell hangolni az előtag-gyorsítótárral is. Azoknál az interfészeknél, amelyek támogatják a beszélgetés közbeni eszközdefiníció-hozzáfűzést, a meglévő tartalom a helyén marad, az új definíciók pedig a felderítés eredményével együtt a későbbi kontextusba kerülnek. Okozati figyelemnél minden token K- és V-vektora csak önmagától és az előtte álló tartalomtól függ, ezért a végére illesztett új tartalom mellett a korábbi előtag újrahasznosítási feltételei megmaradnak. A későbbi körök tovább bővítik ezt az előzményt, és a már betöltött definíciók is az eredeti helyükön maradnak. Egyes interfészek viszont a kérés elején lévő `tools` halmazba teszik az új eszközt. Ekkor az új definíció mögött álló előzményüzenetek, bár érintetlenek, újraszámításra kerülnek.
 
@@ -741,7 +741,7 @@ Az igény szerinti betöltést össze kell hangolni az előtag-gyorsítótárral
 [^ch2-toolsearch-cc]: Anthropic, Scale with MCP tool search, a Claude Code dokumentációja.
 [^ch2-toolsearch-codex]: OpenAI Codex, az Apps／Connectors eszközfelderítési sablonja.
 
-> **2-4. kísérlet ★★: a prompttervezés ablációja**
+> **2-4. kísérlet ★★: A prompttervezés ablációja**
 >
 > Milyen szerepet játszik egy promptban a hangnem, az információ szervezése és az eszközleírás? Ez a kísérlet a τ-bench légitársasági ügyfélszolgálati feladatával hasonlítja össze őket. A τ-bench felhasználószimulációval, üzleti eszközökkel és szabályokkal állít elő interakciós helyzeteket, és a feladat végén ellenőrzi a célállapotot; a légitársasági és a kiskereskedelmi a két feladatterülete[^ch2-tau-bench].
 >
@@ -775,7 +775,7 @@ A végrehajtó réteg felel ezeknek a határoknak az érvényesítéséért: az 
 
 [^ch2-injection-defense]: Anthropic, How we contain Claude across products.
 
-> **2-5. kísérlet ★★: promptinjekciós támadás és védekezés**
+> **2-5. kísérlet ★★: Promptinjekciós támadás és védekezés**
 >
 > Ez a kísérlet azt vizsgálja, hogyan tartja meg a rendszer a feladat célját és a műveleti jogosultságokat, miután külső tartalom kerül a kontextusba. A kísérlet elkülönített munkaterületen, szintetikus adatokkal dolgozik; a weboldalolvasás, a fájlírás és az e-mail-kimenet mind ellenőrizhető feljegyzést kap.
 >
@@ -787,9 +787,9 @@ A végrehajtó réteg felel ezeknek a határoknak az érvényesítéséért: az 
 
 ## Dinamikus promptok és Agent Skills
 
-Egy ügynök, amely visszatérítést, kódmódosítást és dokumentumrendezést egyaránt kezel, ha minden körben mindhárom teljes kézikönyvét csatolnánk, egy visszatérítés intézésekor a kontextusablakot a számára irreleváns kódkonvenciók és formázási szabályok foglalnák el. Mely magyarázatokat érdemes minden alkalommal magunkkal vinni, és melyeket lehet csak a feladat kiválasztása után betölteni? Ez a kérdés vezet el a dinamikus promptokhoz és a Skillsekhez.
+Ha egy olyan ügynöknél, amely visszatérítést, kódmódosítást és dokumentumrendezést egyaránt intéz, minden kéréshez mindhárom teljes kézikönyvet csatolnánk, egy visszatérítés intézésekor a kontextusablakot irreleváns kódkonvenciók és formázási szabályok foglalnák el. Mely magyarázatokat érdemes minden alkalommal magunkkal vinni, és melyeket lehet csak a feladat kiválasztása után betölteni? Ez a kérdés vezet el a dinamikus promptokhoz és a Skillsekhez.
 
-Egy visszatérítés intézésekor a modell először a katalógusban megkeresi a visszatérítési kézikönyvet, elolvassa ezt, és csak utána dönti el, szükség van-e az általa hivatkozott különleges viteldíjtáblázatra. A 2-11. ábra ugyanezt a módszert alkalmazza egy előadás elkészítésére: a modell a katalógusból kiválasztja a PPTX-et, elolvassa az új bemutató létrehozásának folyamatát, és csak utána nézi meg az HTML-átalakítási útmutatót. Ha viszont a feladat egy meglévő bemutató szerkesztése, egy másik útvonalon keresheti meg az XML-referenciát.
+Egy visszatérítés intézésekor a modell először a katalógusban megkeresi a visszatérítési kézikönyvet, elolvassa ezt, és csak utána dönti el, szükség van-e az általa hivatkozott különleges viteldíjtáblázatra. A 2-11. ábra ugyanezt a módszert alkalmazza egy előadás elkészítésére: a modell a katalógusból kiválasztja a PPTX-et, elolvassa az új bemutató létrehozásának folyamatát, és csak utána nézi meg a HTML-átalakítási útmutatót. Ha viszont a feladat egy meglévő bemutató szerkesztése, egy másik útvonalon keresheti meg az XML-referenciát.
 
 ![2-11. ábra: A Skills fokozatos feltárási mechanizmusa](images/revised/fig2-11.svg)
 
@@ -810,7 +810,7 @@ A könyv kísérleteiben használt PPTX Skill például a központi leírásban 
 **A harmadik szint a részletes anyagok.** Az összetett műveletek külön dokumentumokban oszlanak el, a fő fájl csak a belépési pontot adja. A könyvben használt változat `html2pptx.md` fájlja azt magyarázza meg, hogyan lehet HTML-ből bemutatót készíteni, a többi referenciadokumentum pedig a formázás és a szerkesztés részleteit egészíti ki. Az ügynök a feladat szerint olvassa tovább ezeket, és a csomagolt szkriptekkel, anyagokkal és sablonokkal végzi el a műveletet.
 
 [^ch2-3]: Anthropic, Equipping Agents for the Real World with Agent Skills, 2025; Agent Skills, How to add skills support to your agent.
-[^ch2-4]: Anthropic, PPTX Skill. A könyv kísérletei rögzítetten az HTML-átalakítási folyamatot tartalmazó változatot használják; a pontos verziót és a futtatás módját a kísérlethez tartozó README tartalmazza.
+[^ch2-4]: Anthropic, PPTX Skill. A könyv kísérletei rögzítetten a HTML-átalakítási folyamatot tartalmazó változatot használják; a pontos verziót és a futtatás módját a kísérlethez tartozó README tartalmazza.
 [^ch2-codex-skills]: OpenAI, Build skills; a Skills megvalósítása az OpenAI Codex nyilvános repójában.
 [^ch2-cc-skill-inject]: Claude Code, How Claude Code uses prompt caching, Invoking skills and commands; Agent Skills, How to add skills support to your agent, User-explicit activation.
 
@@ -829,7 +829,7 @@ A szabályokat „érvényességi kör, művelet, kivétel, ellenőrzési mód�
 
 Kezdetnek válasszunk három-öt olyan saját írást, amellyel elégedettek vagyunk, és kérjük meg az ügynököt, hogy foglalja össze a szóhasználatot, a mondatszerkezetet, a bekezdések elrendezését és a hangvételt, majd készítsen belőle egy húszsoros első változatot. Utána adjunk neki egy új témát, és a szerző mondatról mondatra javítsa a szöveget. A javítások különbségei konkrétabb visszajelzést adnak: mely szavak feleslegesek, mely mondatokat kell felbontani, hol hiányzik tény, és hova kell visszatenni a technikai részleteket. A visszatérő javításokat érdemes szabályokká alakítani, a hozzájuk tartozó példákkal és érvényességi körrel együtt.
 
-A Skillhez végrehajtó eszközök és sablonok is tartozhatnak. A PPTX Skill például a használati útmutatót, a feldolgozó szkriptet, a generáló szkriptet és az elrendezési anyagokat együtt tartja, hogy a modell az útmutatót követve hívhassa meg a megfelelő erőforrásokat. Minden Skill önállóan tesztelhető, frissíthető és verziózható, a csapat tagjai pedig ugyanazon folyamat köré folyamatosan gyűjthetik a tapasztalatokat. **A Skills hosszú távú értéke abban rejlik, hogy a szakterületi tapasztalat szétszórtan halmozható fel, önállóan publikálható és újrahasznosítható.** Amikor egy csapat bővíti az ügynök képességeit, mindenki a saját erősségéhez tartozó Skilleket tarthatja karban, és fokozatosan kialakulhat egy piphez vagy npmhez hasonló csomagökológia. Ezek a Skillek közösen használhatják a fő rendszer által biztosított felderítési, betöltési és végrehajtási mechanizmust.
+A Skillhez végrehajtó eszközök és sablonok is tartozhatnak. A PPTX Skill például a használati útmutatót, a feldolgozó szkriptet, a generáló szkriptet és az elrendezési anyagokat együtt tartja, hogy a modell az útmutatót követve hívhassa meg a megfelelő erőforrásokat. Minden Skill önállóan tesztelhető, frissíthető és verziózható, a csapat tagjai pedig ugyanazon folyamat köré folyamatosan gyűjthetik a tapasztalatokat. **A Skills hosszú távú értéke abban rejlik, hogy a szakterületi tapasztalat szétszórtan halmozható fel, önállóan publikálható és újrahasznosítható.** Amikor egy csapat bővíti az ügynök képességeit, mindenki a saját erősségéhez tartozó Skilleket tarthatja karban, és fokozatosan kialakulhat egy, a pip vagy az npm világához hasonló csomag-ökoszisztéma. Ezek a Skillek közösen használhatják a fő rendszer által biztosított felderítési, betöltési és végrehajtási mechanizmust.
 
 **Az interakció tervezésénél érdemes a modell által már megtanult és begyakorolt mintákat követni.** A szerepek felosztása, az eszközeredmény formátuma és a Skill betöltésének módja egyaránt befolyásolja, hogyan folytatja a modell a feladatot. A gyártók által kínált szabványos folyamat jó kiindulópont lehet, mert csökkenti azt a terhet, hogy a modellnek egy ismeretlen formátumból kell újra kikövetkeztetnie a jelentést.
 
@@ -855,11 +855,11 @@ A Skill feladat-tudást és működési folyamatot ad, az eszközök olvasnak, h
 
 A célzott eszközök is együttműködhetnek a Skillekkel. A korábban tárgyalt eszközkeresés az eszközdefiníciókat adja meg igény szerint, a Skill pedig megmondja, mikor kell hívni őket, hogyan kell összekapcsolni őket, és hogyan kell az eredményeket ellenőrizni. Mindkettőnél kontrollálni kell az állandóan jelen lévő információ mennyiségét, és megfelelő helyet kell találni az újonnan betöltött tartalomnak. A 4. fejezet az általános végrehajtó és a célzott eszközök közötti választást tárgyalja, a 9. fejezet pedig azt, hogy egy tapasztalatot érdemes-e tudásként, utasításként, programként vagy modellparaméterként megőrizni.
 
-> **2-6. kísérlet ★★: előadás készítése tanulmányból Agent Skillsszel**
+> **2-6. kísérlet ★★: Előadás készítése tanulmányból az Agent Skills segítségével**
 >
 > Ez a kísérlet az *Attention Is All You Need* tanulmányt használja anyagként, és bemutatja, hogyan tölti be az ügynök igény szerint az előadáskészítés szakmai folyamatát. A feladat, hogy a tanulmány PDF-jéből tíz-tizenöt oldalas előadás készüljön, amely lefedi a probléma hátterét, a módszert, a kulcsfontosságú eredményeket és a következtetéseket, és a tanulmány ábráival, táblázataival segíti a magyarázatot.
 >
-> Az idézett futás a Kimi Code-ot és az Anthropic hivatalos PPTX Skilljét használta. Az ügynök először a katalógusban megtalálta a PPTX Skillt, elolvasta a használati útmutatóját, tovább olvasta az HTML-átalakítási útmutatót, meghívta a hozzá tartozó generáló eszközt, végül bélyegképek és oldalankénti renderelés segítségével ellenőrizte az elrendezést. Minden lépésben a beolvasott anyag a következő műveletet szolgálta, és a teljes készítési folyamat a feladattal együtt bontakozott ki.
+> Az idézett futás a Kimi Code-ot és az Anthropic hivatalos PPTX Skilljét használta. Az ügynök először a katalógusban megtalálta a PPTX Skillt, elolvasta a használati útmutatóját, tovább olvasta a HTML-átalakítási útmutatót, meghívta a hozzá tartozó generáló eszközt, végül bélyegképek és oldalankénti renderelés segítségével ellenőrizte az elrendezést. Minden lépésben a beolvasott anyag a következő műveletet szolgálta, és a teljes készítési folyamat a feladattal együtt bontakozott ki.
 >
 > A kész bemutató tizenhárom oldalból áll, és hivatkozik a tanulmány architektúraábrájára, figyelmi mechanizmus ábrájára, kísérleti eredménytáblázatára és figyelmi vizualizációs ábrájára.
 >
@@ -891,7 +891,7 @@ A mérnöki hozzáadott érték itt az, hogy **a későbbi döntésekhez isméte
 
 A hosszú trajektória megnehezíti a kulcsfontosságú információk megtalálását is. Ha a legfrissebb célt, korlátokat és előrehaladást a végén, egy helyen tartjuk, a modell könnyebben megtalálja az aktuális döntéshez szükséges információt.
 
-> **2-8. kísérlet ★★: az ügynöki állapotsáv hatásának megfigyelése figyelmi vizualizációval**
+> **2-8. kísérlet ★★: Az ügynöki állapotsáv hatásának megfigyelése figyelmi vizualizációval**
 >
 > Ez a kísérlet a Qwen3-0.6B modellel egy ügyfélszolgálati visszatérítési trajektóriát épít fel: az ügynök már háromszor felhívta az Xfinityt, közben webes keresést is végzett, majd a felhasználó visszakérdez: „nem tudnád még egyszer felhívni őket, hogy sürgesse őket?” A rendszer szabályai egy feladaton belül kereskedőnként legfeljebb három hívást engednek.
 >
@@ -927,7 +927,7 @@ Az esemény-metaadatok az eseményhez fűzve rendszerint stabilak maradnak, a fe
 
 ### Az ügynöki állapotsáv konkrét helye a kontextusban
 
-E szakasz példájában a Harness a válasz végére fűz egy `user` üzenetet, amely az állapotösszefoglalót közvetíti. A `user` itt a választott API üzenetszerepe; az állapot tartalmát a futtatókörnyezet állítja elő, és címkékkel jelöli a rendeltetését. Más interfészeknél használhatjuk az általuk támogatott kontextusblokkot, vagy az állapotot a megfelelő eszközeredménnyel együtt is átadhatjuk. Ha a korábban tárgyalt, a valódi felhasználói kérdés szerint vágható történelmi érvelést használó sablont alkalmazzuk, a futási állapotot az eszközeredménnyel együtt adhatjuk át, így a sablon továbbra is a jelenlegi feladat szerint őrzi meg az érvelési információkat.
+E szakasz példájában a Harness az üzenetlista végére fűz egy `user` üzenetet, amely az állapotösszefoglalót közvetíti. A `user` itt a választott API üzenetszerepe; az állapot tartalmát a futtatókörnyezet állítja elő, és címkékkel jelöli a rendeltetését. Más interfészeknél használhatjuk az általuk támogatott kontextusblokkot, vagy az állapotot a megfelelő eszközeredménnyel együtt is átadhatjuk. Ha a korábban tárgyalt sablont használjuk, amely a valódi felhasználói kérdés helye alapján vágja ki a korábbi érvelést, a futási állapotot az eszközeredménnyel együtt adhatjuk át, így a sablon továbbra is a jelenlegi feladat szerint őrzi meg az érvelési információkat.
 
 A 2-15. ábrán keressük meg a felhasználó eredeti megbízását, majd nézzük meg, melyik körhöz került a legfrissebb állapot. Az eredeti kérést meg kell őrizni, hogy a hívás után egyszerre lehessen ellenőrizni két dolgot: mit szeretne elintézni a felhasználó, és hol tartunk most.
 
@@ -960,7 +960,7 @@ Ennek az üzenetnek a hozzáfűzése után a korábbi tokensorozat változatlan 
 
 ### Az állapotfrissítés két megvalósítása és a gyorsítótár költsége
 
-A következő körben egy TODO teljesülhet, de egy eszközhívás is hozzáadódhat. A Harnessnak frissítenie kell az állapotot; erre két gyakori mód kínálkozik.
+A következő körben egy TODO teljesülhet, de egy eszközhívás is hozzáadódhat. A Harnessnek frissítenie kell az állapotot; erre két gyakori mód kínálkozik.
 
 **Körönkénti csere**: az új kérés összeállításakor eltávolítjuk az előző állapotot, és a végére tesszük a legfrissebbet. A kontextusban csak egyetlen aktuális állapot marad, ami megkönnyíti a modell dolgát. Ha például az előző kérés „feladatleírás, A állapot” volt, a mostani „feladatleírás, eszközeredmény, B állapot”. A feladatleírás továbbra is gyorsítótár-találatot ad; az eszközeredmény első benyújtáskor amúgy is számítást igényel. Ha az előző kérésben az A állapot után további üzenetek is voltak, ezek csak az A eltávolításakor veszítik el az eredeti előtag-egyezést. A modell ebben a kérésben csak B-t láthatja. Ha vissza kell nézni az A-t, a futtatási naplóból előkereshető az akkori pillanatkép.
 
@@ -972,7 +972,7 @@ Egy durva modellel megbecsülhető a döntési pont: legyen minden állapot $S$ 
 
 Például injektáljunk körönként 100 tokennyi állapotot, összesen tízszer, a gyorsítótár olvasását a normál bemenet tizedeként számolva. A hozzáfűzéses megoldás a későbbi kérésekben rendre 1, 2, …, 9 régi állapotot olvas be pluszban, ami 450 normál bemeneti tokennek megfelelő többletköltség. Ha egy állapotcserével átlagosan 1000 gyorsítótárazott token újrafeldolgozását váltjuk ki, a kilenc csere 8 100 normál bemeneti tokennek megfelelő többletköltséget jelent, így a hozzáfűzés a takarékosabb. Ha viszont a régi állapot eleve a gyorsítótár végén van, és utána nincs semmilyen gyorsítótárazott tartalom, a képletben $R=0$, és a közvetlen csere épp megtakarítja a 450 tokennek megfelelő költséget.
 
-> **2-9. kísérlet ★★: néhány jól használható ügynöki állapotsáv-technika**
+> **2-9. kísérlet ★★: Néhány jól használható ügynöki állapotsáv-technika**
 >
 > Ez a kísérlet öt állapotsáv-technikát valósít meg, amelyek külön-külön bekapcsolhatók, de kombinálhatók is. Mindegyik technika egyfajta konkrét információt nyújt, és segít a modellnek eldönteni a következő lépést.
 >
@@ -998,11 +998,11 @@ Egy kutatási feladat már tíz hosszú weboldalt olvasott be, és tegyük fel, 
 
 ### A tömörítés három célja
 
-**A hossz és a költség kordában tartása.** Egy 128K tokenes ablakban a hosszú weboldalak és nagy fájlok jelentős részt foglalhatnak el. A Harnessnak keretet kell fenntartania a későbbi bemenetek, a modell kimenete és az eszközinterakciók számára.
+**A hossz és a költség kordában tartása.** Egy 128K tokenes ablakban a hosszú weboldalak és nagy fájlok jelentős részt foglalhatnak el. A Harnessnek keretet kell fenntartania a későbbi bemenetek, a modell kimenete és az eszközinterakciók számára.
 
 **A későbbi döntésekhez szükséges tudás rendezése.** Egy tucatnyi keresési kör többször is utalhat ugyanarra az eseményre, és egymásnak ellentmondó állításokat is hagyhat maga után. Ha ezt úgy rendezzük, hogy „A és B igazolt, C-hez még hiányzik bizonyíték”, a modell a nyitott kérdéseken dolgozhat tovább. Az összefoglalónak meg kell őriznie a tények közötti viszonyokat, a forrásokat és a megoldatlan kérdéseket, hogy a későbbi döntéseknek világos alapjuk legyen.
 
-**A hosszú feladatok folyamatos előrehaladásának támogatása.** Egyes modellek, amikor úgy érzik, hogy az ablak hamarosan betelik, idő előtt lezárják a munkát; ezt a jelenséget **kontextusszorongásnak (Context Anxiety)** nevezik. Az Anthropic a Sonnet 4.5 hosszú feladatokon végzett tesztjeiben azt tapasztalta, hogy ez a viselkedés tömörítés után is előfordulhat, ezért strukturált átadási feljegyzést alkalmaztak, és a kontextus visszaállítása után folytatták a végrehajtást[^ch2-7].
+**A hosszú feladatok folyamatos előrehaladásának támogatása.** Egyes modellek, amikor úgy érzik, hogy az ablak hamarosan betelik, idő előtt lezárják a munkát; ezt a jelenséget **kontextusszorongásnak (Context Anxiety)** nevezik. Az Anthropic a Sonnet 4.5 hosszú feladatokon végzett tesztjeiben azt tapasztalta, hogy ez a viselkedés tömörítés után is előfordulhat, ezért strukturált átadási feljegyzést alkalmaztak, és a kontextus nullázása (újraindítása) után folytatták a végrehajtást[^ch2-7].
 
 [^ch2-7]: Prithvi Rajasekaran, Harness design for long-running application development, Anthropic Engineering, 2026.
 
@@ -1041,7 +1041,7 @@ Nézzük meg először a 2-16. ábrán az egyenkénti összefoglalót: a feldolg
 
 ![2-16. ábra: A kontextustömörítési stratégiák összehasonlítása](images/revised/fig2-16.svg)
 
-> **2-10. kísérlet ★★★: a kontextustömörítési stratégiák összehasonlítása**
+> **2-10. kísérlet ★★★: A kontextustömörítési stratégiák összehasonlítása**
 >
 > Ebben a kísérletben a Kimi K3 az OpenAI társalapítóinak szakmai pályáját kutatja. A feladat fokozatosan felépíti a névsort, megkeresi a személyek pályáját és pozícióváltásait, majd összekapcsolja a releváns tényeket a forrásaikkal. A tömörítés és a túlcsordulás kezelésének megfigyelése érdekében a kísérlet az alkalmazásoldali kontextuskeretet 128 000 tokenre állítja, megtart egy tömörítés nélküli alapváltozatot, és öt kezelési módot hasonlít össze, mindegyiket legfeljebb 15 körrel[^ch2-compression-results].
 >
@@ -1112,12 +1112,12 @@ A feladat befejezése után a három hívásról szóló számláló a feladatta
 
 ## Gondolkodtató kérdések
 
-1. ★★★ Olvassuk el a 2-3. kísérlet csúszóablakos futásának feljegyzését: mit csinált az öt eszközhívás egyenként? Annak eldöntéséhez, hogy az ismételt hívásokat az előzmény levágása okozta-e, mit kell még rögzíteni, és milyen összehasonlítást kell elvégezni? Tervezzünk olyan levágási módszert, amely megőrzi a kulcsfontosságú állapotot, és mutassuk be, hogyan hat az előtag-gyorsítótárra. A feljegyzés: `chapter2/kv-cache/result_sliding_window_20260718_kimi_k2_6.json`.
-2. ★★ A Qwen3 Chat Template az utolsó valódi felhasználói kérdés helye szerint kezeli a korábbi gondolkodást. Ha egy ReAct-ciklus több száz körön át tart, hogyan kezelnénk a folyamatosan növekvő érvelési tartalmat? Hasonlítsuk össze a korábbi gondolkodás levágását, visszaküldését és az előtaghoz kötő protokollokat, és mutassuk be, hogyan kell ezekhez a Harnessnak alkalmazkodnia.
-3. ★★ Tegyük fel, hogy mintegy százötvenezer karakternyi keresési anyagot kell kétezer karakterre tömöríteni. Mely tényeket, viszonyokat és forrásokat tartanánk meg? Hogyan ellenőriznénk, hogy az összefoglaló elegendő-e a későbbi kérdések megválaszolásához, és hogyan állítanánk helyre a kihagyott részleteket?
-4. ★★ Az eszközhívás-számláló kihagyott egy hívást, ezért az állapotsáv hibás fennmaradó hívásszámot mutat. Tervezzünk eseménynaplózást, összesítő ellenőrzést és végrehajtási rétegbeli ellenőrzést, és mutassuk be, hogyan lehet felfedezni és kijavítani az ilyen ellentmondást.
-5. ★★ A 2-4. kísérlet a hangnemet, az információszervezést és az eszközleírást hasonlította össze. Ha a rendszerpromptot hosszú távon többen tartják karban, hogyan kezelnénk a verziókat, hogyan ellenőriznénk a szabályütközéseket, és hogyan értékelnénk regressziós feladatokkal az egyes módosításokat?
-6. ★★★ A kisállat-kereskedés példája egyszerre tartalmaz egyedi visszakeresést és összesített statisztikát. Tervezzünk nyers feljegyzést, statisztikai összefoglalót és lekérdezési útválasztást, amely mindkét kérdéstípusra hatékonyan tud válaszolni, és mutassuk be, mikor kell az összefoglalót frissíteni.
+1. ★★★ Olvasd el a 2-3. kísérlet csúszóablakos futásának feljegyzését: mit csinált az öt eszközhívás egyenként? Annak eldöntéséhez, hogy az ismételt hívásokat az előzmény levágása okozta-e, mit kell még rögzíteni, és milyen összehasonlítást kell elvégezni? Tervezz olyan levágási módszert, amely megőrzi a kulcsfontosságú állapotot, és mutasd be, hogyan hat az előtag-gyorsítótárra. A feljegyzés: `chapter2/kv-cache/result_sliding_window_20260718_kimi_k2_6.json`.
+2. ★★ A Qwen3 Chat Template az utolsó valódi felhasználói kérdés helye szerint kezeli a korábbi gondolkodást. Ha egy ReAct-ciklus több száz körön át tart, hogyan kezelnéd a folyamatosan növekvő érvelési tartalmat? Hasonlítsd össze a korábbi gondolkodás levágását, visszaküldését és az előtaghoz kötő protokollokat, és mutasd be, hogyan kell ezekhez a Harnessnek alkalmazkodnia.
+3. ★★ Tegyük fel, hogy mintegy százötvenezer karakternyi keresési anyagot kell kétezer karakterre tömöríteni. Mely tényeket, viszonyokat és forrásokat tartanál meg? Hogyan ellenőriznéd, hogy az összefoglaló elegendő-e a későbbi kérdések megválaszolásához, és hogyan állítanád helyre a kihagyott részleteket?
+4. ★★ Az eszközhívás-számláló kihagyott egy hívást, ezért az állapotsáv hibás fennmaradó hívásszámot mutat. Tervezz eseménynaplózást, összesítő ellenőrzést és végrehajtási rétegbeli ellenőrzést, és mutasd be, hogyan lehet felfedezni és kijavítani az ilyen ellentmondást.
+5. ★★ A 2-4. kísérlet a hangnemet, az információszervezést és az eszközleírást hasonlította össze. Ha a rendszerpromptot hosszú távon többen tartják karban, hogyan kezelnéd a verziókat, hogyan ellenőriznéd a szabályütközéseket, és hogyan értékelnéd regressziós feladatokkal az egyes módosításokat?
+6. ★★★ A kisállat-kereskedés példája egyszerre tartalmaz egyedi visszakeresést és összesített statisztikát. Tervezz nyers feljegyzést, statisztikai összefoglalót és lekérdezési útválasztást, amely mindkét kérdéstípusra hatékonyan tud válaszolni, és mutasd be, mikor kell az összefoglalót frissíteni.
 7. ★★★ Egy Skill szerepel a katalógusban, a modell mégsem ismerte fel, hogy az aktuális feladathoz alkalmazható. Hogyan derítenénk ki a probléma okát a leírás, a katalógus szervezése, a kifejezett kiváltás és az értékelő minták négy szempontja szerint?
-8. ★★ A Skill sikeresen betöltődött, a modell mégis kihagyta belőle az ellenőrző lépést. Tervezzünk összehasonlító kísérletet, amely elkülöníti a kiváltás, a megértés, az eszközhasználat és a befejezés megítélésének problémáit, és vessük össze a különböző modellek teljesítményét.
-9. ★★★ A rendszer sok eszközt tartalmaz, és az eszközkészlet gyakran változik. Hogyan helyeznénk el a rögzített definíciókat, az eszközkatalógust, az igény szerint betöltött eredményeket és a futásidejű állapotot? Vegyük figyelembe egyszerre a felderítés pontosságát, a kontextuskeretet és a gyorsítótár-találatot.
+8. ★★ A Skill sikeresen betöltődött, a modell mégis kihagyta belőle az ellenőrző lépést. Tervezz összehasonlító kísérletet, amely elkülöníti a kiváltás, a megértés, az eszközhasználat és a befejezés megítélésének problémáit, és vesd össze a különböző modellek teljesítményét.
+9. ★★★ A rendszer sok eszközt tartalmaz, és az eszközkészlet gyakran változik. Hogyan helyeznéd el a rögzített definíciókat, az eszközkatalógust, az igény szerint betöltött eredményeket és a futásidejű állapotot? Vedd figyelembe egyszerre a felderítés pontosságát, a kontextuskeretet és a gyorsítótár-találatot.
