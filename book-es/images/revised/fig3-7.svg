@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" width="106.000mm" height="80.324mm" viewBox="0 0 900 682" role="img" aria-labelledby="title desc">
+<ns0:title id="title">Estructura de índice HNSW</ns0:title><ns0:desc id="desc">Un mismo nodo lleva la misma letra en todas las capas. La búsqueda parte del punto de entrada en la capa superior, desciende capa a capa y amplía los candidatos en la capa inferior. Las flechas oscuras marcan una ruta de búsqueda de ejemplo.</ns0:desc>
+<ns0:defs><ns0:marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><ns0:path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></ns0:marker></ns0:defs>
+<ns0:rect width="900" height="682" fill="#ffffff" y="0" />
+<ns0:rect x="20" y="20" width="860" height="167" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<ns0:text x="231" y="54" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="21.8" font-weight="700" fill="#292929">Layer 2: pocos nodos · enlaces largos</ns0:text><ns0:path d="M200 132 L505 102" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M505 102 L755 107" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:circle cx="200" cy="132" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="191.03" y="139" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">A</ns0:text><ns0:circle cx="505" cy="102" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="495" y="109" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">D</ns0:text><ns0:circle cx="755" cy="107" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="746.81" y="114" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">F</ns0:text><ns0:rect x="20" y="207" width="860" height="180" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<ns0:text x="231" y="241" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="25.0" font-weight="700" fill="#292929">Layer 1: más nodos · rango menor</ns0:text><ns0:path d="M200 319 L300 284" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M200 319 L505 289" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M300 284 L505 289" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M505 289 L620 329" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M505 289 L755 294" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M620 329 L755 294" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:circle cx="200" cy="319" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="191.03" y="326" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">A</ns0:text><ns0:circle cx="300" cy="284" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="290.47" y="291" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">B</ns0:text><ns0:circle cx="505" cy="289" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="495" y="296" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">D</ns0:text><ns0:circle cx="620" cy="329" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="611.39" y="336" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">E</ns0:text><ns0:circle cx="755" cy="294" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="746.81" y="301" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">F</ns0:text><ns0:rect x="20" y="407" width="860" height="205" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
+<ns0:text x="231" y="441" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="22.3" font-weight="700" fill="#292929">Layer 0: todos · ampliar candidatos</ns0:text><ns0:path d="M200 519 L300 484" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M200 519 L235 574" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M200 519 L400 539" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M300 484 L400 539" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M300 484 L505 489" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M400 539 L505 489" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M400 539 L350 584" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M400 539 L485 579" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M505 489 L620 529" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M505 489 L485 579" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M620 529 L485 579" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M620 529 L755 494" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M620 529 L690 579" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M755 494 L690 579" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M235 574 L350 584" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M350 584 L485 579" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:path d="M485 579 L690 579" fill="none" stroke="#aaaaaa" stroke-width="2" />
+<ns0:circle cx="200" cy="519" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="191.03" y="526" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">A</ns0:text><ns0:circle cx="300" cy="484" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="290.47" y="491" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">B</ns0:text><ns0:circle cx="400" cy="539" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="390.82" y="546" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">C</ns0:text><ns0:circle cx="505" cy="489" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="495" y="496" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">D</ns0:text><ns0:circle cx="620" cy="529" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="611.39" y="536" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">E</ns0:text><ns0:circle cx="755" cy="494" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="746.81" y="501" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">F</ns0:text><ns0:circle cx="235" cy="574" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="224.96" y="581" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">G</ns0:text><ns0:circle cx="350" cy="584" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="339.4" y="591" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">H</ns0:text><ns0:circle cx="485" cy="579" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="480.38" y="586" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">I</ns0:text><ns0:circle cx="690" cy="579" r="19" fill="#eeeeee" stroke="#333333" stroke-width="2" />
+<ns0:text x="682.05" y="586" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="28.0" font-weight="700" fill="#292929">J</ns0:text><ns0:path d="M221.89434303924287 129.846 L483.10565696075713 104.154" fill="none" stroke="#222222" stroke-width="4" marker-end="url(#arrow)" />
+<ns0:path d="M525.7789295275355 296.227 L599.2210704724645 321.773" fill="none" stroke="#222222" stroke-width="4" marker-end="url(#arrow)" />
+<ns0:path d="M637.9021363665481 541.787 L672.0978636334519 566.213" fill="none" stroke="#222222" stroke-width="4" marker-end="url(#arrow)" />
+<ns0:path d="M505 124 L505 267" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)" />
+<ns0:path d="M620 351 L620 507" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)" />
+<ns0:text x="92" y="136" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="26.0" font-weight="400" fill="#292929">Entrada</ns0:text><ns0:path d="M140 130 L178 132" fill="none" stroke="#333333" stroke-width="1.8" marker-end="url(#arrow)" />
+<ns0:text x="437" y="657" text-anchor="middle" font-family="&quot;DejaVu Sans&quot;, Arial, &quot;Helvetica Neue&quot;, sans-serif" font-size="22.7" font-weight="400" fill="#292929">Gris: aristas　　Flecha continua: búsqueda en capa　　Discontinua: bajar capa</ns0:text><ns0:defs /></ns0:svg>
