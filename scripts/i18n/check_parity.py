@@ -19,7 +19,13 @@ import re
 import sys
 from pathlib import Path
 
+# The checkout to inspect. Defaults to the current directory when it is a
+# checkout (so `python3 /path/to/check_parity.py book-ja` run inside a git
+# worktree checks that worktree, not the copy the script lives in), else the
+# repository this script belongs to. `--root DIR` overrides both.
 ROOT = Path(__file__).resolve().parents[2]
+if (Path.cwd() / 'book' / 'chapter1.md').exists():
+    ROOT = Path.cwd().resolve()
 
 # edition directory → filename suffix used by its chapter files
 EDITIONS = {
@@ -180,7 +186,12 @@ def compare(edition: str, document: str) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
+    global ROOT
     selected = argv[1:]
+    if '--root' in selected:
+        index = selected.index('--root')
+        ROOT = Path(selected[index + 1]).resolve()
+        del selected[index:index + 2]
     missing = [name for name in selected if name not in EDITIONS]
     if missing:
         print(f'unknown edition(s): {", ".join(missing)}; known: {", ".join(sorted(EDITIONS))}')
