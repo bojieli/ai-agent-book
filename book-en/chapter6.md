@@ -1,768 +1,916 @@
 # Interaction: Expanding the Observation and Action Spaces
 
-Chapter 1 made a claim: when the underlying model is fixed, the most effective system-engineering lever for improving an Agent's task performance is usually to redefine or expand its **observation space** and **action space**. Chapters 2 through 5 have explored this idea in practice—context engineering decides what goes into the observation, memory and knowledge bases stretch the observation across sessions, tools define what the Agent can do, and code generation lets it create new actions of its own.
+**When the underlying model is fixed, reorganizing or expanding the observation and action interfaces is often one of the most effective engineering levers for improving an Agent's task performance.** In the previous chapters, the Agent usually waited for the user to finish speaking, then looked things up, called tools, and replied. While it waited for tool results, however, the user and the outside environment kept changing.
 
-But all of these expansions happened under one shared premise: **the Agent and the world take turns speaking**. The user finishes a sentence, the Agent thinks for a while, calls a few tools, and replies; while it is thinking, the world is assumed to stand still. The premise is so natural that it is rarely written down as an assumption at all.
+Suppose a user asks an assistant to change a flight. While the assistant is checking flights with the airline's agent, the user sends another message: "I have one more bag to check." The airline agent is still talking, and the fare on the screen may change too. The assistant needs to ask promptly whether the fare includes checked baggage, and it must also watch whether the quote it just heard is still valid. Two design questions arise here: through which channels can the assistant learn about a change, and when can it react? This chapter first discusses emails and tool results that arrive asynchronously, then turns to continuous speech, changing screens, and the feedback a robot gets from its own actions.
 
-This chapter removes exactly that premise.
+## Expanding Modality and Timing
 
-## Two Axes: Modality and Timing
+**Modality** describes the form that information and action take. An Agent can read text, listen to sound, look at a screen, and receive torque signals; it can also output text, synthesize speech, click on an interface, or drive joints.
 
-Both the observation space and the action space can be expanded along two dimensions.
+**Timing** concerns when information arrives, when an action starts, and when the system responds. Information can be fetched by the Agent or pushed by an external service; a tool can return its result immediately, or start a task first and report completion later. When a new event arrives, the system must also decide whether to interrupt the current work and how to resume an interrupted task.
 
-- **Modality** decides the **form** of observation and action: does the Agent only read text, or can it also hear sound, see the screen, and sense torque; can it only emit tokens, or also speak, click, and drive joints.
-- **Timing** decides the **rhythm** of observation and action: does the Agent go and fetch an observation, or does the world push it; must an action finish within one turn, or may it span turns, be interrupted midway, and be preempted by something more urgent.
-
-The previous chapters expanded the **content** of these two spaces; this chapter expands their **modality** and **timing**:
-
-| | Expanding the observation space | Expanding the action space |
+| Dimension | Information and observation interfaces | Action and execution interfaces |
 |---|---|---|
-| **Content** (Chapters 2–5) | Context engineering, memory and knowledge bases | Tools, code generation |
-| **Modality** (this chapter) | Voice, screen, physical sensors | Speaking, clicking, joint motion |
-| **Timing** (this chapter) | The world pushes, continuous streams | Across turns, interruptible, preemptible |
+| Content organization (Chapters 2–5) | Context, memory, and knowledge bases organize the information for decisions | Tools and code express executable operations |
+| Modality (this chapter) | Voice, screen, physical sensors | Speaking, clicking, joint motion |
+| Timing (this chapter) | Active queries, pushed events, continuous input | Cross-turn execution, cancellation, preemption, and resumption |
 
-**Turn-taking is an interaction convention of the model and its interface, not a property of the environment.** Early tool-calling interfaces generally organized messages into synchronous rounds: a question was followed by an answer, and tool results had to be supplied before reasoning continued. The real environment does not wait for the model to react: mail arrives while it is thinking, the user cuts in mid-sentence, a page changes between screenshots, and a cup is knocked over while the arm reaches for it. This convention is changing too: as of September 2026, GPT-6 Astra offers native asynchronous tool calling and the ability to add user instructions mid-turn. This chapter therefore covers both native support and compatibility with existing synchronous interfaces.[^ch6-22][^ch6-23]
+Context carries the information needed for a particular decision, whereas the observation space describes the full range of information the system can receive. Likewise, tools provide concrete interfaces, whereas the action space describes the full range of actions the system is allowed to take. When interfaces are expanded, these ranges are still constrained by device capabilities, parameters, permissions, and the runtime environment.
 
-| Scale | Scenario | Change on the observation side | Change on the action side |
+Many tool-calling interfaces organize messages in rounds: the model proposes a call, the system supplies the tool result, and the next round of reasoning begins. An event-driven system has to manage external changes on top of this protocol. When the interface supports native asynchrony, it can accept new requirements while a tool is pending and continue once the result returns; with a synchronous interface, the Harness organizes the interaction using queues, task handles, and scheduling. Later sections discuss the two implementation routes in turn.
+
+Feedback rhythms differ greatly across scenarios. The table below lists common timescales.
+
+| Typical scale | Scenario | Change on the observation side | Handling on the action side |
 |---|---|---|---|
-| Seconds — days | Async and event-driven | The world wakes the Agent (mail, timers, callbacks) | Actions span turns: start now, finish later on an event |
-| 10 ms — 1 s | Voice | Listen while speaking, without waiting for a full sentence | Think while speaking, interruptible, revisable midway |
-| Sub-second — seconds | Computer Use | The screen keeps changing between frames | After acting, reality must be re-confirmed against the plan |
-| Milliseconds | Robotics | Sensors stream back continuously | Actions are chunked: plan a little at a time, preemptible |
+| Seconds to days | Async and event-driven | External events wake the Agent | Start a task first; later events report progress and completion |
+| Tens of milliseconds to seconds | Voice | Audio arrives continuously | Stream output; handle barge-in and stop playback |
+| Sub-second to seconds | Computer Use | The screen keeps changing | Re-acquire the interface state after each operation |
+| Millisecond control cycles | Low-level robot control | Sensors stream back continuously | Execute short action segments; respond to control and stop signals |
 
 ## Async and Event-Driven: When the World Comes Looking for You
 
-The perception, execution, and collaboration tools discussed in Chapter 4 are all invoked proactively by the Agent. How should an Agent respond to external events that may arrive at any time? This requires an event-driven asynchronous architecture. The two remaining tool classes from Chapter 1—event-trigger tools and user-communication tools—depend on this architecture, so they are discussed here as well.
+Chapter 4 introduced perception, execution, and collaboration tools; this section continues with event-trigger tools and user-communication tools. Event-trigger tools bring environmental changes to the Agent, while communication tools let the Agent reach the user as a task progresses. The Harness associates these inputs and outputs with the running tasks, forming an event loop that keeps working.
 
-The modality does not change in this section—it is still text; only the timing changes. This is the first step out of the turn-based world of the previous five chapters.
+### Why Asynchrony Is Needed
 
-### Why Asynchrony is Needed
+A synchronous call must wait for its result before the caller can continue. An asynchronous call instead returns a task handle first (an identifier used to query and manage the task), or promises to send a notification on completion, so the caller can handle other work while waiting. The system can then organize several in-flight tasks and decide, based on resources and dependencies, which operations can run in parallel.
 
-Let's start with an analogy to explain why asynchrony is needed. Synchronous means "do one thing before you can do the next," while asynchronous means "multiple things can happen concurrently." A traditional synchronous Agent architecture is like a single checkout counter at a store—it can only handle one customer at a time, and only calls the next number after finishing with the current one. A truly intelligent assistant is more like a flexible secretary—with multiple pending items on the desk (emails, phone calls, visitors), the secretary decides which to handle first based on urgency, and can pause and switch to a more urgent task mid-way. In synchronous mode, the Agent either has to wait for a background task to complete before talking to the user, or wait for the conversation to end before processing a newly arrived event. It cannot deliver the core capabilities a real assistant scenario requires:
+Think of the Agent as a secretary who handles mail, phone calls, and visitors: while waiting for a reply, the secretary keeps preparing materials; when an urgent call comes in, the secretary sets aside the current work, then resumes it after the call. In engineering terms, three things must be handled:
 
-- **Asynchronous execution is the norm**—Many tasks require long runtimes and should not block user interaction.
-- **Dynamic judgment of event priority**—Not all events are equally important. The Agent needs to intelligently choose a handling strategy: cancel the current operation (urgent), add it to a queue (routine), or process in parallel (independent lightweight query).
-- **Smooth interruption and resumption**—An interrupted conversation or task should be able to resume naturally.
+- **Separating long tasks from interaction.** File analysis, phone calls, or builds proceed in the background, while the user can still ask about progress and add requirements.
+- **Event priority.** Emergency stops enter the control flow promptly, routine updates go into a queue, and independent queries can be handed to a parallel session.
+- **Interruption and resumption.** Save the task state, record the operations that have already happened, and on resumption recheck which conditions still hold.
 
-When applying the asynchronous paradigm to an LLM, first check whether the model and API support this message timing. Some interfaces require all tool results before work can continue; others already allow tools to remain pending while the model keeps working and accepts user updates during generation. The former need event queues, task handles, and a compatibility layer; the latter can use native asynchronous protocols directly. Both still require the application to manage event sources, tool lifecycles, and result ownership. Using `asyncio` in the code alone does not establish that the model has native asynchronous capabilities.
+The research preview of Claude Duet offers an example. A user has a meeting at 2 p.m. and wants a briefing on the other company beforehand. They can leave a voice message and close the app. The preparation continues in the cloud, and the user can open the task page at any time to check progress; when the assistant needs more information or the briefing is ready, it returns to the main conversation to notify them. What this illustrates is asynchronous execution: the task keeps moving after the user leaves. The full-duplex calls discussed later add another requirement: while one party is speaking, it must still be able to hear the other party cut in.[^ch6-duet]
 
-To solve this, we need an **event-driven asynchronous Agent architecture**. Technically, this means the system no longer actively and repeatedly checks for "new messages" (this is polling, which is inefficient), but instead automatically triggers processing logic when a new message arrives. All inputs, outputs, thought processes, and external interactions are uniformly modeled as an event stream—a sequence of event records arranged on a timeline. Figure 6-1 shows the overall architecture of an event-driven asynchronous Agent, illustrating the relationship between event sources, the event queue, and the Agent processing flow.
+Model APIs also have conventions about message order. Some interfaces require every tool call to be paired with its result before they accept the next request; others allow a tool to stay pending and accept later updates. The application's asynchronous functions arrange waiting and execution, while the model protocol determines when messages may be submitted.
 
-![Figure 6-1: Event-Driven Asynchronous Agent Architecture](images/fig6-1.svg)
+In Figure 6-1, both new messages and tool results can enter the queue, but how they reach the queue depends on the source. If a service supports push, it can send a notification as soon as its state changes; if it only offers a query interface, an adapter has to check it periodically and generate an event when it detects a change. Timers can also produce events when they expire. The event loop then hands these inputs to the Agent.
+
+![Figure 6-1: Event-Driven Asynchronous Agent Architecture](images/revised/fig6-1.svg)
 
 ### Implementing Event-Driven Mechanisms in OpenClaw
 
-The open-source framework OpenClaw receives multi-channel messages through a Gateway control plane and routes them to the Agent runtime. It provides three built-in event-driven mechanisms:
+OpenClaw connects messaging channels through its Gateway and routes events to the Agent runtime. Its automation mechanisms include entry points such as internal Hooks, scheduled jobs, Heartbeat, and external Webhooks[^ch6-automation]. They can be understood by what triggers them:
 
-- **Hooks**: Respond to events in the Agent's lifecycle, such as session creation and reset, similar to event triggers in GitHub Actions
-- **Cron (scheduled-task scheduler)**: Execute periodic tasks according to cron expressions (a widely used syntax for scheduled tasks in Unix systems, e.g., `0 9 * * 5` means 9 AM every Friday)
-- **Heartbeat (Heartbeat Daemon)**: Wakes up the Agent every N minutes to check whether anything requires attention
+- **Hooks** respond to events inside the framework, such as session creation, reset, or changes in the run lifecycle.
+- **Cron (scheduled jobs)** runs work at specified times or intervals. For example, `0 9 * * 5` fires at 9 a.m. every Friday in the configured time zone.
+- **Heartbeat** wakes the Agent periodically to check for items that need attention.
+- **Webhooks (external callbacks)** receive events submitted by external services and trigger processing after authentication and routing.
 
-These three mechanisms give OpenClaw Agents the appearance of autonomy—even with the user offline, the Agent can generate reports on schedule, check system status, and handle routine chores. The Gateway already handles messages from built-in channels such as IM and the web interface in **push** fashion. Of the three mechanisms, only Cron and Heartbeat let the Agent act without a user message, and both are **time-driven**: Heartbeat checks at fixed intervals, Cron fires at preset times, and Hooks originate inside the OpenClaw framework rather than outside it.
+A weekly report suits a fixed schedule, ongoing to-dos can be checked periodically, and new emails and service callbacks can use push to shorten the delay before they are noticed.
 
-The real gap is third-party event sources beyond the built-in channels: a new email, an external API callback, or an urgent notification. OpenClaw has no immediate ingress path for them, so the Agent cannot respond immediately and may only notice at the next Cron or Heartbeat tick.
+**Call events in PineClaw.** Pine AI makes phone calls on the user's behalf to negotiate bills, cancel subscriptions, and handle insurance claims. PineClaw brings these phone tasks into OpenClaw. A call usually lasts a while, and the user may need to step in during it:
 
-This delay is unacceptable in many scenarios. Take **PineClaw** (Pine AI's OpenClaw plugin) as an example: Pine AI is an AI assistant that makes real phone calls on behalf of the user, with typical scenarios including negotiating bills, canceling subscriptions, and handling insurance claims. When a user initiates a Pine phone task through an OpenClaw Agent, Pine's voice AI will make the call on behalf of the user, but the user may need to intervene at any time during the call:
+- **Identity verification.** The representative asks the account holder to verify their identity, for example by entering a security code or a one-time password.
+- **Three-way calls.** The representative asks to speak directly with the account holder, so the user must be notified promptly to join.
+- **Decision confirmation.** When the representative proposes an alternative, the foreground judges whether it is acceptable based on this particular request and the user's past preferences. When the user needs to decide, it sends them the specific options while continuing to check other terms with the representative.
 
-- **Real-time Identity Verification**: The customer service representative asks to verify the account holder's identity, and Pine needs the user to immediately provide a security code or one-time password (OTP)
-- **Three-Way Call Confirmation**: The customer service representative asks to speak directly with the account holder, and Pine needs the user to answer the phone within seconds
-- **Progress Sync and Decision Confirmation**: At a critical point in the negotiation (e.g., the other party proposes a price reduction), Pine needs the user to confirm whether to accept
+Suppose, for example, the representative needs the account holder to join a three-way call. The sooner the notification arrives, the less time both parties spend waiting on the line. The PineClaw case uses a Channel mechanism to connect call events between the Gateway and the Pine API: call connected, user input needed, and call ended each enter the event stream, and the Agent updates the task and notifies the user accordingly.
 
-With Heartbeat's periodic polling, the user might not get the notification while the representative is still waiting for the verification code; the representative hangs up and the call fails.
-
-PineClaw's solution is a **Channel mechanism** that establishes a real-time event path between OpenClaw's Gateway and the Pine API. When a call connects, needs user input, or ends, the message is pushed immediately to the OpenClaw Agent, which handles it and notifies the user.
-
-This case reveals the core value of an event-driven architecture for Agent frameworks: **true "proactive service" requires not only that the Agent can periodically check for events, but also that events can actively notify the Agent.** Unifying all inputs—user messages, tool returns, external callbacks, scheduled triggers—into an event stream, and driving the Agent's thinking and actions through an event loop, is the architectural foundation for achieving this goal. Under this architecture, we will first introduce the two tool categories directly related to events, as well as the virtual identity and isolated execution environment that support the Agent's independent actions, before discussing the specific design of the event handling mechanism.
+**In my view, timely proactive service is best achieved by having the event source notify the Agent when its state changes.** Once a notification arrives through a channel, the Harness finds the corresponding task and checks whether the event is a duplicate or has expired; then the model decides the next step. If the user needs to verify their identity, the interface should open a trusted authentication entry point, and the verification result is sent back to the original task as a new event.
 
 ### Event-Triggered Tools
 
-Event-triggered tools are the entry points through which external events drive an Agent's actions. Without them, an Agent can only operate in a continuous loop of thinking, calling tools, and finally outputting a result, then waiting for the user's next input. To translate changes in the world into events an Agent can process, there are three common types of event-triggered tools.
+If you ask an assistant to "remind me when the client replies," how does it wake up at exactly the right moment tomorrow? First check whether the mailbox can push an event when mail arrives; for systems that can only be queried, the assistant has to remember when to check next. The three illustrative interfaces below hand these waiting conditions to the runtime for safekeeping, so the model can end its current round of work.
 
-**Timers** (`set_timer`) handle events tied to physical time. If an email goes unanswered, the Agent should follow up after a while to ask about progress; if a call is placed outside the recipient's business hours, it should retry during the next business window. Tools like OpenClaw and Claude Code therefore let an Agent wake itself at a specified time. **One-shot timers** handle tasks with a specific time: if a user asks on Saturday to “call the bank's mortgage department for a status update,” the Agent sets “call the bank next Monday at 10:00 AM,” and the timer triggers the call. **Recurring timers** handle periodic tasks, such as checking server health every hour. Some external services cannot push progress updates and must be polled; the recurring timer provides that polling. OpenClaw's Heartbeat is a systematized version of this mechanism and the basis of its “proactive service” capability.
+**Timers** (`set_timer`) wake a task at an agreed time. A one-shot timer suits "call the bank next Monday at 10 a.m. to check on the mortgage"; a recurring timer suits checking service health every hour. Waiting for a reply after sending an email, or redialing after hitting non-business hours, can also be scheduled with a timer. The interface needs to store the time zone, trigger condition, and task identifier, and provide a way to cancel or modify the timer. When an external service only supports queries, scheduled jobs can also handle progress polling.
 
-**Background Task Monitoring** (`monitor_shell`) handles events from asynchronously executing tools or command-line tasks. Some command-line tasks run in the background for a long time, and the Agent needs to track their progress. If the Agent "stares at the command line," repeatedly calling a tool to poll for progress, it burns tokens; if it waits until the task has fully finished before thinking again, it misses critical problems as they unfold—and if the command hangs, it cannot intervene at all, stalling the whole task. Claude Code solves this by introducing a `monitor` tool, allowing the Agent to monitor new command-line output, including output that contains specific keywords.
+**Background task monitoring** (`monitor_shell`) turns long-running commands into progress events. It returns a task identifier at startup, sends notifications on new output, keywords, or state changes while running, and reports the exit status and result when finished.
 
-**External Event Channels** (`connect_channel`) push external events like new emails, API callbacks, or IM messages to the Agent in real time. The Channel mechanism in PineClaw from the previous section is a typical implementation.
+Having the model query progress repeatedly costs a model call even when nothing has changed; waiting only for the completion notice may miss a failure midway. I therefore recommend leaving monitoring to the runtime and waking the model only when useful progress, an error, or a stall appears. This lets the Agent keep communicating during a build while still stepping in promptly when something goes wrong. Monitoring rules can filter, merge, and rate-limit events so that not every log line triggers a model call.
 
-From a design perspective, event-triggered tools should define clear trigger conditions and filtering rules to prevent irrelevant events from waking the Agent and wasting computational resources. The event payload should contain sufficient context information to minimize the number of additional queries the Agent needs to make after being woken up.
+For example, after the model subscribes to status updates for a pending ticket, it can end this round of reasoning and wait for a notification carrying the ticket number to wake it. If the other side only provides a query interface, the model can set a scheduled job for its next check. When the time comes, if the ticket is "still in progress," it schedules another check; if the ticket has been resolved, it cancels further checks. In both approaches the runtime does the waiting, and the model makes a judgment only when a notification arrives or a timer expires.
+
+**External event channels** (`connect_channel`) subscribe to email, instant messages, or API callbacks. The channel adapter verifies the source, maps the service's own identifiers to threads and correlated objects, and submits events in a unified format; the "Ingress Layer" section below covers this in detail. PineClaw's call-status notifications belong to this category.
+
+All three tool types need clear trigger conditions, filtering rules, and event payloads. The payload should include the event identifier, time of occurrence, source, related task, and the necessary content, so the Agent can judge whether the event is still valid and what information the next step requires.
 
 ### User Communication Tools
 
-User communication tools arise as communication channels between Agents and users diversify. Many Agents, such as Claude Code and Manus, use a native ReAct loop: everything the Agent “says” (an assistant message) is sent directly to the user, who must open a specific session in the app to converse with it. The session often exposes the Agent's tool-call process.
+Back to the flight-change task. A question to the airline agent, a confirmation message to the user that they can answer directly, and a note in the task record saying "awaiting reply" go to three different places. The user can step away for a while and come back when they need to add conditions, confirm a decision, or receive the result.
 
-OpenClaw breaks this pattern. Users do not need to think in terms of individual sessions or follow the details of tool calls; both user and Agent can send messages at any time instead of alternating one request with one response. This gives OpenClaw what many describe as a **“human-like presence”**, communicating asynchronously like a secretary. Rather than sending raw assistant messages, OpenClaw uses dedicated messaging tools whose messages can include images and files and can trigger push notifications based on urgency.
+A conversation interface can display the final reply, tool progress, and execution results; communication tools, by contrast, explicitly specify the recipient, channel, message content, and attachments. The model decides what needs to be said, the Harness checks the target and permissions, and the messaging service handles delivery. The runtime can also route the final reply back to the original conversation automatically. The two approaches can work together.
 
-Beyond communicating with users through text, a growing number of Agents have **multimodal communication capabilities**, such as sending structured card messages or reminder emails. Some Agents have begun experimenting with **Generative UI**—using HTML and similar means to generate interactive interfaces that present information to the user in a friendlier way. At the design level, user communication tools should support asynchronous messaging (the user may not be online), provide read/unread status tracking, and keep messages consistent across channels.
+OpenClaw's multichannel interaction lets users send messages, wait for progress, and receive reminders as they would with a secretary. This "human-like presence" comes from persistent task state and timely communication. Users can continue a task in the channels they already use, while the Agent must keep identities, sessions, and message associations consistent.
 
-**Multi-channel User Communication and Re-engagement.**
+The form of communication can also change with the task: brief progress updates use text, complex results come with images or files, information the user must fill in uses structured cards, and interactive deliverables use the generative UI introduced in Chapter 5. When a channel supports delivery or read receipts, the system stores that status; retries after failure, duplicate messages, and cross-channel synchronization also go into the delivery record.
 
-**An Agent's response should not be limited to a single channel; the notification mechanism also serves as a user re-engagement mechanism.** Message sending extends to instant messaging, SMS, email, phone calls, push notifications, and other channels. The Agent decides on the channel based on a combination of urgency, user status, content nature, and user preferences, ensuring important messages are not missed while avoiding redundant interruptions.
+**Multichannel notification and user re-engagement.**
 
-For long-running tasks, the Agent needs to proactively notify the user upon completion to bring the user's attention back. For periodic tasks (like daily summaries or weekly reports), notifications can help users develop a regular interaction habit.
+Instant messaging, SMS, email, phone calls, and app push notifications each suit different levels of urgency and different kinds of content. The Agent can choose a channel based on urgency, user preferences, the user's current status, and message length. A call event that needs immediate confirmation calls for a prompt alert, while a full report can be delivered by email or as an app link.
 
-User communication tools solve the problem of "how to reach the user." However, the identity the Agent assumes on these channels and the environment in which it performs actions on behalf of the user require a layer of identity and execution-environment infrastructure, which is the topic of the next section.
+I once had an assistant watch hotel prices for the ATC conference. Every day at the same time, the assistant sent a message saying the price had not yet dropped to the target. Once the price dipped briefly, and the window was caught not by the assistant but by a script I had written. A brief low price can appear between two checks. Even if the assistant catches it in time, a late message may still cause the user to miss the booking. On days with no price drop, the scheduled checks can keep running without the user having to read the same message every day. Chapter 7 uses a five-minute price-drop window to test this kind of alert.
+
+When a long task finishes, a notification brings the user back to the results page; daily summaries and weekly reports are sent on an agreed schedule. A multichannel strategy should also set rules for deduplication, quiet hours, and escalation—for example, whether to switch to another channel if the first alert goes unanswered. Notification records are linked to task state so that users can continue working from the message they received.
 
 ### Virtual Identity and Isolated Execution Environment
 
-Chapter 4 opens with Samantha in *Her* as an example, illustrating how an Agent uses tools to interact with the real digital world. Achieving such a general-purpose assistant forces a key architectural choice: should the Agent manage the user's personal accounts directly, or hold a virtual identity of its own? Direct management looks convenient, but one Agent error or compromise exposes the user's entire digital identity. The safer approach is to give the Agent an independent virtual identity—the way a secretary has their own office phone and mailbox—comprising dedicated communication accounts, storage, and computing environments, so the Agent can work on the user's behalf under a transparent, clearly declared identity. This transparency does not weaken trust; it can make communication more authentic.
+Chapter 4 used Samantha from *Her* to show how a general-purpose assistant enters the digital world through tools. Building such an assistant requires being clear about what identity it works under and which resources it may access. **I lean toward giving a general-purpose assistant an independent virtual identity.** A dedicated work mailbox, phone number, storage, and computing environment let the Agent act on the user's behalf under a clearly declared agent identity, like a secretary with their own work accounts. An independent identity separates the assistant's day-to-day work from the user's personal accounts, making it easier to grant, audit, and revoke permissions separately; when a mistake happens, the damage is also easier to contain. Tasks that must access the user's accounts obtain the permissions they need through scoped authorization.
 
-Virtual identities need isolated execution environments. **Virtual computers** (VMs/containers) and **virtual phones** (Android emulators) give the Agent operating-system isolation and full desktop or mobile capabilities. First, a virtual computer can run around the clock regardless of whether the user's device is online and without disrupting the apps the user is operating. Second, an Agent error can at worst crash the virtual environment rather than the user's real device. Finally, isolation prevents the Agent from freely accessing the user's local files.
+Whoever owns the phone number determines who can pick up the thread when the other party calls back. Manus's Cue gives the assistant its own number, so it can answer incoming calls and leave a call summary for the user. If a business accepts the callback number the assistant leaves, the representative who calls back reaches the same assistant that handled the case before.[^ch6-cue]
 
-An independent identity also presents two practical challenges. First, there are **anti-bot mechanisms**: many websites use CAPTCHAs and IP reputation checks to block automated access. Virtual environments using data center IPs are easily identified; in practice, normal access often requires configuring a residential proxy network (which uses real household IPs). Second, **access to the user's real accounts**: when a task must log in as the user, use Human-in-the-Loop authentication—a VNC/RDP remote desktop where the user logs in personally, sees the full interface the Agent is operating, and understands why authentication is needed. The session token is then reused within its validity period to avoid interrupting the user repeatedly, balancing autonomy and security.
+Take a fee waiver as an example. The assistant can contact the business as the user's authorized representative. If the representative requires the account holder to verify verbally, the assistant can invite the user into a three-way call and take over the conversation again once verification is complete. If the business will call the user back, the assistant first gives the user the case number, what has already been agreed, and the questions still to be confirmed. When reporting to the user, it should also be clear about the evidence it holds: if the representative has verbally agreed to the waiver, it records that promise; only after the updated bill shows up does it report that the fee has actually been waived.
 
-Data exchange between the Agent and virtual environments uses a **shared file system**: volume mounts such as `/workspace/shared` connect the Agent, virtual computer, and virtual phone. Data is passed by file-path reference rather than copied into context. For example, a user uploads a CSV to the shared directory; the Agent in the virtual computer analyzes it and saves a chart there; the Agent returns only the chart's path. Every handoff remains a lightweight path string.
+When I needed a replacement Bank of America credit card while in Beijing, Pine contacted the bank, arranged an expedited replacement, and got the $15 expedite fee waived. By the end of the call, the assistant could already report what the bank had accepted and which fee it had agreed to waive. If, a few days later, the user asks "Where is the new card?", answering requires checking the shipment tracking again or asking the recipient to confirm.
 
-Event-triggered tools allow the world to wake the Agent, user communication tools allow the Agent to reach the user, and virtual identities with isolated execution environments allow the Agent to act independently and auditably. The remaining question is: when multiple events converge on the same Agent instance simultaneously, how should they be handled?
+Virtual computers and virtual phones provide operating environments that run continuously. Virtual machines can run desktop systems, containers are well suited to isolating processes and dependencies, and Android emulators host mobile apps. They support background operation and reduce the interference of automated operations with the user's current work. The scope of isolation is determined jointly by networking, mounts, credentials, and runtime permissions; these settings also determine which data and external systems the Agent can reach.
 
-### Event Handling Mechanism
+Suppose you want Tencent WorkBuddy Enterprise to generate your weekly report after you shut down your computer for the day, but this week's sales spreadsheet exists only on your office computer. If you choose a local task, the assistant can read the spreadsheet, but the computer must be on and the client online. If you choose a cloud task, the assistant can keep working after you shut down, provided you first upload the data approved for the weekly report to the task, or place it in a document library the cloud task can access. If the spreadsheet must stay on your machine, the work should be scheduled while the computer is online.
 
-A single Agent instance may face multiple events concurrently: a new message from the user, a result from a tool, a timer expiring, a collaboration request from another Agent. How these events are handled efficiently and correctly directly impacts performance and user experience.
+Websites and mobile apps may also require authentication, CAPTCHAs, or manual confirmation. When integrating, prefer the APIs and authorization methods the service provides; when authentication requires a graphical interface, a VNC/RDP remote desktop can let the user log in personally, with automated operations paused during authentication. After the user finishes, the system checks the session state and then resumes the task. Tokens and sessions are stored according to their validity periods and cleaned up per policy when authorization is revoked or the task ends.
 
-The skeleton of this mechanism is the **event loop** from concurrent programming. Think of an asynchronous Agent as a long-running loop: each round takes a batch of events off the input queue, appends them to the trajectory, invokes the LLM once, executes the tools it decides to call, then returns to the top of the loop to wait for the next batch of events—the same structure as a Go goroutine reading messages from a channel and processing them round by round inside a `for { select { ... } }`.
+The Agent and virtual environments can exchange data through a **shared file system**. For example, a user uploads a CSV; the virtual computer reads the file, runs the analysis, and writes a chart back to shared storage; the runtime hands the chart's file location to the Agent, then gives the user an accessible download link. Large file contents stay in storage, and the model reads summaries or excerpts as needed.
 
-In a traditional synchronous-interface implementation, **events are consumed at the boundaries of each round**. While the LLM is reasoning or a tool is executing, new events wait in a queue until the round reaches a **safe point**—the end of a stretch of reasoning or the return of a tool call. Native asynchrony allows new requirements to arrive while the model is still thinking or producing output, with the system choosing an appropriate moment to continue processing. Both have boundaries, managed by different layers. Cancelling a tool still requires its executor to respond to a cancellation signal, much like checking `ctx.Done()` in Go; receiving a “stop” message does not itself undo actions that have already occurred.
+[^ch6-dsh-threads]: DeepSeek, the domain model and the authorization and subscription rules of the dsh-superagent prototype.
+[^ch6-dsh-sessions]: DeepSeek, dsh-superagent prototype, version `8c32a9d`. The responsibilities of the two kinds of sessions are described in `docs/004-prompts.md`, executor sessions and working directories in `docs/003-execution.md`, and the format of messages sent to the main session in `docs/007-architecture.md`.
+[^ch6-duet]: Anthropic, *Get started with Claude Duet*, which describes pre-meeting briefings, the task page, and notifications in the main conversation.
+[^ch6-cue]: Manus, *Introducing Manus 2.0*, which describes Cue's dedicated phone number, call answering, and call summaries.
+[^ch6-automation]: OpenClaw, Automation, which describes automation entry points such as internal Hooks, scheduled jobs, Heartbeat, and external Webhooks.
 
-With this distinction in mind, we first use an event loop compatible with synchronous interfaces to explain three strategies: let events wait for the next natural safe point (queuing), create a safe point early (cancellation), or start another loop without waiting for the main loop's safe point (parallel processing). We return to native steering later.
+### The Ingress Layer: Many Sources, One Event
 
-**Structured Event Modeling.**
+An online store's customer-service Agent handles a refund. The customer requests it in the app's support chat; the amount exceeds the Agent's authority, so it asks a supervisor to approve in the after-sales group on WeCom; the payment service sends a Webhook when the refund succeeds; and the order system then publishes a status change on Kafka. All four messages concern the same order, yet each arrives differently. As the number of sources grows, if each link handles retries, deduplication, and ordering on its own, these differences tear the runtime apart. **The ingress layer unifies the form events take once they enter the system, while preserving the differences in capability among sources before they arrive.** Figure 6-2 shows this layering.
 
-Handling requires understanding. A general-purpose Agent's input doesn't come only from the user—a third-party message is not sent by the user to the Agent, yet the Agent must understand it, weigh its importance, and decide whether to step in. This requires modeling each input as a **structured event** rich with semantics:
+![Figure 6-2: The Ingress Layer: Adapters, a Unified Envelope, and the Ingress Log](images/revised/fig6-2.svg)
 
-- **Source (who)**: The user themselves, a contact, a stranger, a system notification
-- **Channel (how)**: Phone call, SMS, instant message, email, social media, timer trigger, asynchronous tool call result, command-line monitoring status update
-- **Content (what)**: Message text, emotional tone, urgency, whether a reply is needed
-- **Context (background)**: Whether it's a reply to a previous conversation or a new communication, its relevance to the current task
+There are four common kinds of sources. **Conversational channels** include the product's own chat interface, instant messaging such as WeCom, Feishu, and Slack, and email; the Agent can reply where the message came from. **Callbacks** are HTTP endpoints that external services call when their state changes; they are usually signed and carry only a notification. When delivery fails, some services retry automatically, whereas GitHub requires redelivery by hand or through its API. **Message buses** such as SQS and Kafka carry business events between internal services and have well-defined acknowledgment and retention semantics. **Timers, polling, and internal events** are generated by the system itself and simply need to be written to the same log. The table below compares the first three kinds.[^ch6-ingress-mq][^ch6-ingress-callback]
 
-Taking a customer refund request email as an example, the structured event looks like this:
+| | App chat | WeCom / Feishu | Email | Webhook | SQS | Kafka |
+|---|---|---|---|---|---|---|
+| Arrival | Persistent connection | Callback or persistent connection | Push or polling | Callback | Consumer pull | Consumer pull |
+| Ordering scope | Within a conversation | Not guaranteed for most events | Not guaranteed | Not guaranteed | Not guaranteed for standard queues; per message group for FIFO | Within a partition |
+| Native deduplication basis | Client message ID | Message ID, event ID | Message-ID | Delivery ID | Message ID; FIFO also has `MessageDeduplicationId` | Topic, partition, and offset |
+| Replayable? | Depends on your own records | Callbacks themselves cannot be replayed; Feishu's message history API can backfill | The mailbox can be reread | Depends on the service | Not after deletion | Within the retention period |
+| Acknowledgment | Client receipt | Return success within the time limit | Track your own read position | Return 2xx within the time limit | Delete the message | Commit the offset |
+| Reply path | Original conversation | Original conversation | Reply email | None | None | None |
+
+**The unified envelope.**
+
+The adapter converts each raw message into a unified **envelope**. The envelope records only facts that are known on arrival; priority and deadlines are added by routing rules, customer tier and order status by business systems, and processing status is stored separately. The customer's refund request can be written like this:
 
 ```json
 {
-  "source": {"type": "email", "sender": "client@example.com"},
-  "channel": "gmail_webhook",
-  "content": {"subject": "Refund Request", "body": "Order #12345, requesting a refund..."},
-  "context": {"priority": "high", "customer_tier": "vip", "related_orders": ["#12345"]}
+  "id": "evt_7f3a",
+  "source": {"type": "app_chat", "sender": "user:u_5521", "verified": true},
+  "dedupe_key": "app:msg:msg_1029",
+  "thread": "app:conv:conv_88",
+  "kind": "message",
+  "correlation": ["order:12345"],
+  "content": {"type": "text", "text": "这个订单我想退款"},
+  "raw_ref": "raw/2026-11-23/app/msg_1029.json",
+  "reply": {"via": "app_chat", "target": "app:conv:conv_88"},
+  "occurred_at": "2026-11-23T14:02:09+08:00",
+  "expires_at": null
 }
 ```
 
-Only when these dimensions are clearly modeled as structured events can the Agent maintain a clear understanding in multi-party communication, avoiding mistaking user input for a tool result, or mistaking a tool result containing hidden instructions for a user command (prompt injection). The complexity of multi-threaded context management also requires the Agent to understand the relationships between multiple conversation threads—how a message from a third party affects the user's mood, the user's role transitions across different conversations, and when to synthesize information from different threads to provide advice.
+(The message text reads "I'd like a refund for this order.")
 
-The trigger ecosystem of workflow platforms such as n8n makes the point: webhooks, timers, email, database changes, file watchers—each trigger is one of the Agent's "senses" for perceiving the world. Once these heterogeneous events are modeled uniformly in a structured format, the Agent can handle stimuli from different sources in a consistent way; the urgency determination and processing strategies discussed below all rest on this unified modeling.
+- `source`: the source type and the verified sender. "Verified" is determined by the adapter from signatures, tokens, or channel accounts—not from a self-introduction in the message body; the runtime decides permissions based on this field.
+- `dedupe_key`: the deduplication key; what counts as a duplicate is determined by the source's semantics. Delivery IDs, message IDs, and partition-plus-offset identify a single delivery and block redeliveries at the transport layer. If a business message carries an idempotency key—for example, a refund number plus status—the adapter must extract it to block business-level duplicates. User conversations are the opposite case: a customer saying "refund" twice sends two messages, so deduplication uses only the client message ID.
+- `raw_ref`: the raw payload, stored verbatim; when an adapter misbehaves, it is the only thing you can debug from.
+- `reply`: which outbound adapter to use and which target to send to. A payment callback has no reply path, so this field is empty.
+- `occurred_at` is the time of occurrence given by the source; `expires_at` is the validity period, filled in only for events such as price quotes and verification codes.
 
-**Dynamic Processing Strategy Based on Urgency.**
+**Threads and correlation.**
 
-Humans juggling multiple tasks adapt their strategy to urgency: an emergency makes them drop what they're doing; a routine to-do goes on the list for later. An Agent's event handling should show the same intelligence.
+A customer first says "refund," then immediately adds "never mind, I'll exchange it instead." The order of these two messages must not be reversed; a different customer's messages are unrelated and can be processed in parallel. **The ingress layer promises ordering only within a thread.** The adapter maps the source's own unit of ordering to `thread`: a conversation in the app, an SQS FIFO message group (`MessageGroupId`), a Kafka partition key, or the Issue or PR number in a GitHub callback. When a source does not guarantee ordering, the runtime uses `occurred_at` or a version number provided by the source to recognize stale states that arrive late—for example, "refund in progress" arriving after "refund succeeded."
 
-![Figure 6-2: Three Strategies for Asynchronous Event Processing](images/fig6-2.svg)
+The four messages for this refund belong to four threads. Merging them into one comes at a real cost: an unrelated discussion in the after-sales group would have to queue behind the customer's messages, and because thread identifiers often double as partition keys, changing them afterward requires migrating data. **Correlation is expressed in a separate field rather than by rewriting threads.** `correlation` lists the business objects an event concerns, and tasks subscribe to the relevant threads by correlated object.
 
-**Cancellation-Based Processing** is used for urgent events; its essence is **forcing a safe point early** for the urgent event: proactively interrupting the current step to turn this instant into a boundary at which the new event can be consumed. When an urgent event arrives (e.g., the user clicks "stop" or a supervisory system sends a high-priority instruction): (1) Stop the current operation—if the LLM is reasoning, immediately cancel the streaming response; if a synchronous tool is executing, send a cancel signal; (2) Drain the pending queue by removing all pending events; (3) Append those events together with the urgent event to the end of the trajectory; (4) Immediately re-invoke the LLM with the updated complete trajectory as input to assess the situation. For example, if the user inputs "Stop! I said the wrong thing" while the Agent is about to perform a potentially erroneous operation, the Agent will immediately see this new input, reassess what the user intended, and thus avoid executing the wrong action.
+**Separating acknowledgment timing from progress.**
 
-**Queued Processing** is used for routine events. When a non-urgent event arrives (e.g., an asynchronous tool returns a result or the user sends supplementary information): (1) Add the event to the end of the queue without interrupting the current operation; (2) Wait for the current operation to complete—let the LLM finish reasoning, let the synchronous tool finish executing; (3) When any tool call completes and returns a `tool.result`, check the queue. If the queue is non-empty, append all events to the trajectory at once; (4) The LLM processes the updated trajectory comprehensively. This enables batch processing, improving efficiency—for example, while the Agent is waiting for a search tool result, the user adds "only show results from the last month." This supplementary information enters the queue, and when the search results return, both events are presented to the LLM together, avoiding unnecessary round trips.
+**The adapter should acknowledge the source after the event has been written to the ingress log, not after the Agent has finished processing it.** Feishu's event callbacks require a response within 3 seconds and WeCom's within 5, or the event is pushed again; an SQS message that is not deleted within its visibility timeout will be received again. If acknowledgment waits until processing completes, one slightly long model call will trigger a redelivery. By writing to the log first and acknowledging afterward, the delivery guarantees of all sources converge on a single statement: **every event enters the ingress log at least once (at-least-once)**, and the redelivered copy is blocked by the deduplication key.
 
-**Parallel Processing** is used for independent, lightweight queries. For example, while the Agent is analyzing a large amount of data, the user suddenly asks, "What's the weather like today?" Such queries have three characteristics: they are unrelated to the main task, require a quick response, and have low execution cost. Neither cancellation-based (would interrupt the important main task) nor queued processing (would make the user wait too long) is suitable. The system first assesses the query's independence and complexity, then executes it independently in a parallel reasoning session, calling necessary tools to generate a response and returning it immediately. The query and response are appended to the main task's trajectory, clearly marked as "executed in parallel with the main task" to avoid confusing the LLM.
+The ingress log acts as an inbox. It follows the append-only principle from Chapter 1 and is partitioned by thread. When Kafka serves as the ingress log, deduplication requires a separate store with a uniqueness constraint or filtering by deduplication key on the consumer side: Kafka cannot reject writes based on an application-supplied key, and its idempotent producer covers only the producer's own retries.
 
-**Urgency Determination.**
+The system must store three kinds of progress separately:
 
-Urgent events: User interrupt (`user.interrupt`), supervisor instruction (`supervisor.instruction`), inter-Agent interrupt (`agent.interrupt`), external triggers marked as urgent (e.g., system alerts, payment failures).
+| Progress | What is recorded | Maintained by |
+|---|---|---|
+| Source progress | Kafka offset, SQS receipt handle, mailbox read position | Adapter |
+| Dispatch progress | Which tasks each event in the log has been handed to | Router |
+| Task state | Which step processing has reached; whether the reply has been sent | Runtime |
 
-Non-urgent events: Regular user input (`user.input`), Agent input (`agent.input`), tool results (`tool.result`), timer triggers (`timer.trigger`), regular external triggers.
+If offsets are treated as task progress, replaying the log will send replies that have already been sent a second time; once they are separated, replay affects only dispatch progress. The outbound direction corresponds to an outbox: before sending, record the intent to send and the idempotency key, and mark it complete when the channel receipt arrives. How to reconcile after a restart is covered below in "Building a Basic Loop from Email Events."
 
-Hardcoded rules have limitations; the semantics of the event dictate the handling method—"Stop immediately!" uses cancellation-based processing, "What's the weather like today?" uses parallel processing, "Send the report in Chinese" uses queued processing. **It is recommended to use a lightweight classification LLM as an event router**, quickly determining which strategy to adopt when an event arrives.
+**Expiry, coalescing, and backpressure.**
 
-A cancellation point must be a position where the tool or the reasoning can wind down safely; an unfinished tool result is represented by an explicit placeholder and must never be faked as a success.
+When hundreds of events per second pour into the same thread, they should not be handed to the model one by one. The router handles the backlog before dispatch:
 
-The following experiment, an event-driven email processing Agent, implements the event handling strategies discussed above into a runnable implementation.
+- **Expiry.** Price quotes, verification codes, and alerts that have already cleared lose their meaning after a while. Events past `expires_at` are only recorded in the trajectory and no longer wake the model.
+- **Coalescing.** `kind` distinguishes two types of events. State events describe the current value of some object, such as the refund status in a payment callback or the order status on Kafka; when several pile up in the same thread, only the latest is handed to the model, and the intermediate values stay in the log. Message events are something a person said or an instruction they gave, such as a customer message or a supervisor's click; they can be handed to the model in batches but must never be dropped.
+- **Backpressure.** Pull-based sources can be pulled more slowly, leaving the backlog at the source. Push-based sources cannot be told to pause, so the adapter keeps writing to the log and acknowledging as usual; the backlog shifts to the ingress log and is absorbed by the first two rules.
+
+**One refund across four sources.**
+
+1. The customer requests a refund in the app chat. The adapter deduplicates by client message ID, writes the event to the log, and then sends a receipt to the client; the router creates a refund task keyed on `order:12345`, and the task subscribes to this conversation thread.
+2. The amount exceeds the Agent's authority, so it posts an approval card in the WeCom after-sales group and records the card identifier in the task. The supervisor clicks "Approve"; the adapter writes the event to the log, returns success, and fills in the correlated object based on the card identifier.
+3. After the Agent calls the refund API, the payment service sends the "refund succeeded" callback twice with the same delivery ID, and the second is deduplicated.
+4. The order system publishes "order refunded" on Kafka, which says the same thing as the callback. If both adapters extract the refund number plus status from the payload as their deduplication key, this event is blocked at ingress; if one deduplicates by delivery ID and the other by partition and offset, both enter the log, and the runtime, seeing that the task has already confirmed the refund, only records the event in the trajectory.
+5. Neither the callback nor the Kafka event has a reply path. The runtime uses the `reply` of the conversation thread from step 1 and notifies the customer through the app's outbound adapter.
+
+Step 4 marks the boundary of ingress-layer deduplication: which duplicates can be blocked depends on which deduplication keys the adapters declare; anything that slips through must be judged from task state. Once an event has been dispatched to a task, whether it continues an existing session or opens a new one is a question of context management: information that crosses sessions is carried by the memory discussed in Chapter 3, and whether contexts can be shared is discussed in Chapter 10.
+
+[^ch6-ingress-mq]: Amazon Web Services, "Amazon SQS standard queues"; "Amazon SQS visibility timeout"; "Using the message deduplication ID in Amazon SQS"; "Using the message group ID with Amazon SQS FIFO Queues." Apache Kafka 4.4 documentation, "Consumer Position" and "Message Delivery Semantics" in "Design." Checked 2026-11-24.
+[^ch6-ingress-callback]: Feishu Open Platform, "Event overview"; "Obtain chat history messages." WeCom Developer Center, "Overview" under "Receiving messages and events." GitHub Docs, "Best practices for using webhooks"; "Handling failed webhook deliveries." Checked 2026-11-24.
+
+### Event Handling Mechanism
+
+User messages, tool results, timers, and collaboration requests may all reach one Agent at the same time. The runtime has to store these events, decide the order in which to process them, and then hand the relevant information to the model. The **event loop** keeps this process moving: it takes events off the queue, updates task state, assembles model requests, schedules tools, and then waits for new input or completion notices. Go programs that organize multiple message streams with goroutines, channels, and `select` follow a similar idea.
+
+Take the dsh-superagent prototype as an example. Within one GitHub project, the discussion under an Issue and the discussion under a pull request (PR) belong to two separate conversation threads. When the system needs to decide whether to take on new work, it reads in the thread state and has the model evaluate it (an "Eval" in the prototype's terms). Each thread runs at most one Eval at a time, but several tickets can subscribe to it. Suppose two tickets, one fixing a bug and one adding documentation, both subscribe to the same PR. When a reviewer comments on the PR, both tickets receive the comment as context. If someone later adds reproduction steps under the Issue, that message is delivered to the tickets subscribed to the Issue. Who receives a message depends on threads and subscriptions; what each ticket may do after receiving it is still governed by that ticket's existing authorization.[^ch6-dsh-threads]
+
+dsh-superagent also assigns "dealing with people" and "doing the work" to different sessions. The Main Session only takes requests, replies, and writes authorizations; it does not read code and never stops to wait for results. Each ticket has its own Executor Session, which modifies code and runs tests in a separate working directory. Only when an executor session has finished a fix, gotten stuck, or needs to ask a person does it send a message to the main session, attaching a summary and a location to read from—the "summary plus object ID" from Chapter 2. As a result, the main session is always free to take the next request, and asking people questions, sending notifications, and calling a halt all go through it, so commitments are made from a single point. The fast and slow models in the voice section later are what this division of labor looks like in a real-time call.[^ch6-dsh-sessions]
+
+A synchronous model interface usually accepts the next batch of messages only after one generation finishes or the tool results have all been supplied. This is where **safe points** can be placed: the runtime first records the completed messages, the calls still running, and the current task progress, and then switches to the new processing step. A native asynchronous interface instead provides a protocol for receiving updates during a run, and the exact moment of continuation is arranged jointly by the interface and the runtime.
+
+Cancellation likewise requires the executor's cooperation. After the model stops generating, background tools may still be running; the executor must receive the cancellation signal and report the actual state, much as a Go task performs cleanup after checking `ctx.Done()`. Writes, sends, or payments that have already completed should be undone or compensated through the corresponding business processes.
+
+**Three processing strategies.**
+
+Figure 6-3 compares three choices for when a new event arrives. If it queues, the response time depends on when the next safe point comes; if the current task is cancelled, you must confirm which operations have already completed and where work can resume; if a separate loop is started, you must check whether the two tasks will contend for the same resources.
+
+![Figure 6-3: Three Strategies for Asynchronous Event Processing](images/revised/fig6-3.svg)
+
+**Cancellation-Based Processing** suits user stop commands and control events that need immediate handling. The runtime first stops dispatching related operations, sends stop signals to in-progress generation requests and cancellable tools, and then saves the completed messages, tool states, and cancellation receipts. The new event then enters the decision context. For example, when the user says "Stop! I said the wrong thing," the system first restricts further execution, then reconfirms the task against the actual current state. Queue items not yet processed keep their identifiers and states and are reordered according to their correlation scope.
+
+**Queued Processing** suits routine supplementary information and progress updates. The event enters the queue and is handed to the model together with the tool results at the next safe point. For example, if the user adds "only show results from the last month" during a search, the model reads the results and the new condition together when the search returns, then decides whether to filter or search again.
+
+**Parallel Processing** suits requests that are independent of the main task and need a timely reply. For example, if the user asks about the weather during a large data analysis, the system can open a separate session to answer the question.
+
+**Urgency and routing.**
+
+Event types provide initial clues: `user.interrupt`, trusted supervisor instructions, and system alerts can go into a high-priority lane; `user.input`, `agent.input`, `tool.result`, and `timer.trigger` are judged further based on content and task state. When a sender calls their message "urgent" in the body, the system still determines permissions based on verified identity and rules.
+
+For routing decisions that require understanding what a message means, I recommend a lightweight classification model: "Stop right now" maps to cancellation, "What's the weather today?" may suit parallel processing, and "Please write the report in Chinese" usually goes into the current task's supplementary queue. Explicit stop entry points are handled directly by the runtime, and semantic classification is used for the remaining messages that require understanding.
+
+A general-purpose model can also label messages, but even to output a two-word label like "needs handling," it still has to read the task description and the message content. Making that judgment for every new message means call costs grow with message volume, and a genuinely urgent message also has to wait for the model's label before it can move on. TypeSafe's Jev is built specifically for this kind of judgment task, where the options are given in advance. Given a message and the current task state, it returns the probability of each option in parallel at lower cost and latency.[^ch6-jev]
+
+The observation-space sparsification discussed in Chapter 1 determines here which messages trigger a new round of reasoning. Take Feishu messages and GitHub Issue comments as an example: the program can first filter duplicate notifications by event ID, then let Jev judge whether a new message supplements an existing task or makes a new request that the main model must handle. On reading "adding the reproduction steps I mentioned yesterday," the model need only judge that this is a supplementary note. Which Issue it supplements, the program can read directly from the ID attached to the comment.
+
+Even when the model reports a high probability, it may be overconfident. For example, 100 messages may all be judged "supplements an existing task" with a probability of about 90%, while only 60 of them actually are. Automatically merging this batch into existing tasks would miss what the other 40 messages were really for.
+
+[^ch6-jev]: In its release notes for Jev, TypeSafe describes predefined outputs, probabilities returned in parallel, and RLCD, a training method that targets decision calibration.
+
+### Building a Basic Loop from Email Events
+
+Suppose the process handling new email suddenly restarts. The email's identifier helps it find the original message, but cannot tell it whether the previous reply was sent. From enqueuing, reading the email, and calling tools to updating the mailbox or notifying the user, it is best to record every write operation and the receipt it returns under the same email. After a restart, if the system finds a request that was sent but has no receipt, it first verifies the actual state of the mailbox, then decides whether to resend.
 
 > **Experiment 6-1 ★★★: Event-Driven Email Processing Agent**
 >
+> This experiment uses a test mailbox as the entry point to practice event registration, queuing, and task processing. First, turn new emails into structured events and process them in order of arrival; then connect tools for email history, attachment reading, knowledge lookup, and notifications. Follow a meeting invitation through Figure 6-4: in the event loop, find the two steps of calendar-conflict checking and drafting, then look in the persistence layer for this email's processing record.
 >
-> ![Figure 6-3: Experiment 6-1 Event-Driven Agent Architecture](images/fig6-3.svg)
+> ![Figure 6-4: Experiment 6-1 Event-Driven Agent Architecture](images/revised/fig6-4.svg)
 >
+> The same queue can be extended to many sources: incoming email, IM or SMS messages, GitHub PR and Issue updates, timers, external Webhooks, and internal events such as the user going offline, process timeouts, and resource alerts. Each adapter verifies its source and adds correlation information, and processing results are written back by event identifier.
 >
-> This experiment builds the simplest event-driven Agent: an **Automated Email Processing Assistant**. The Agent monitors the email inbox, and whenever a new email arrives, it automatically triggers a processing workflow—classification, summarization, draft reply, and notifying the user if necessary. This is the most intuitive introductory scenario for an event-driven Agent: an external event (new email arrival) triggers a complete Agent thinking cycle.
+> Acceptance uses three test emails: a meeting invitation triggers a calendar-conflict check and produces an accept or decline draft; a customer complaint triggers key-information extraction, a high-priority flag, and a user notification; a marketing email is archived by rule.
 >
-> **Experiment Objective**: to understand the core idea of event-driven architecture—the Agent no longer waits passively for user input but acts on its own in response to external events. Through this experiment, readers will master the basic closed loop of event source registration, the event queue, and "event arrives → Agent processes → result delivered".
+> The accompanying records so far cover verification against the interface documentation and an authentication probe; connecting the test mailbox still awaits valid credentials.
 >
-> **Event Sources and Event Queue.**
+> **Extension (optional): multisource ingress and fault injection.** In addition to the test mailbox, connect a local Webhook endpoint and an SQS queue (a local simulation will do). Each adapter verifies its source, builds an envelope, and acknowledges the source only after writing to the ingress log; the runtime reads events from the log and processes them in thread order. Then inject three kinds of faults:
 >
-> The system supports unified access for multiple event sources:
+> 1. **Duplicate delivery.** The Webhook endpoint receives two requests with the same delivery ID; only one event appears in the log.
+> 2. **Crash before acknowledgment.** The adapter is killed after writing to the log but before deleting the SQS message; after the message becomes visible again and is received a second time, the log still contains only one event.
+> 3. **Crash before the receipt.** The runtime is killed after sending a reply but before recording the receipt, and replays from the log on restart. If the channel supports idempotency keys, or the sent message can be looked up (for example, in the mailbox's sent folder), the same reply is not sent twice; for a channel that offers neither, the reply can only be marked as awaiting human confirmation.
 >
-> - **Email Events** (`on_email_received`): Triggered when a new email arrives, either by periodically checking the inbox or receiving push notifications.
-> - **IM/SMS Messages** (`on_im_message`, `on_sms_message`): Triggered by instant messages or SMS messages.
-> - **GitHub Events** (`on_github_pr_update`, `on_github_issue_update`): Triggered by PR review comments or status changes.
-> - **Timer Triggers** (`on_timer_expire`): Triggered by scheduled tasks (e.g., daily summaries, weekly report generation).
-> - **Webhooks** (`on_webhook_received`): Generic callbacks from external systems.
-> - **System Events** (`on_user_inactive`, `on_process_timeout`, `on_resource_alert`): Triggered by internal state changes.
+> All three faults should leave records in the log: which delivery was deduplicated, which message was received again, and which reply was verified and not resent.
 >
-> All events enter a unified **event queue** and are processed sequentially in order of arrival. Each event triggers an independent Agent thinking loop: the Agent reads the event content, calls relevant tools (e.g., querying the knowledge base, reading attachments, searching related email history), generates a processing result (classification labels, summaries, draft replies), and finally either notifies the user via notification tools or directly executes an action.
+> The accompanying code for this extension runs offline and needs no API key. Both the test mailbox and the SQS queue are simulated with local files, separate from the real mailbox above that is awaiting credentials; the simulated queue preserves visibility timeouts, receipt handles, and ordering within a message group. Crashes are produced by the parent process killing the child process at a specified point. Each reply channel demonstrates one approach: email checks the sent folder, app chat uses an idempotency key, and SMS has neither. To reproduce, go to `chapter6/agent-with-event-trigger` and run `python multisource_demo.py`; the terminal prints, item by item, the log records left by the three faults. In the accompanying run record, all three fault checks passed.
 >
-> **Validation Scenario**: Configure the Agent to monitor a test mailbox. Simulate receiving three emails—a meeting invitation, a customer complaint, and a marketing advertisement. The Agent processes them sequentially: for the meeting invitation, it automatically checks for calendar conflicts and drafts an accept/decline reply; for the customer complaint, it extracts key information, marks it as high priority, and notifies the user to handle it; for the marketing advertisement, it automatically archives it. The entire process requires no user intervention.
 
-Experiment 6-1 demonstrates the simplest event-driven pattern—events enter a queue, and the Agent processes them sequentially. However, when the Agent needs to respond to interruptions during long-running tool executions, or manage multiple concurrent tasks simultaneously, a simple event queue is insufficient. Next, we discuss deeper engineering challenges.
+The email queue establishes the basis for sequential processing. Next, we add long-running tools and discuss how to accept new requirements, cancel tasks, and resume work while waiting.
 
 ### Compatibility When Native Asynchrony Is Unavailable
 
-Experiment 6-1 handles only serial events: events enter the queue, and the Agent processes them one after another. If the chosen model or interface does not support native asynchrony, a user interruption before a tool returns must be expressed within a synchronous format. We introduce a compatibility approach here, then discuss GPT-6 Astra's native interface later.
+Suppose the Agent is drafting an email and has already called `search_contacts` to look up a contact. Before the result comes back, the user says, "Wait, first check tomorrow's weather." If the current model interface requires every tool call to be matched with its result first, the Harness has to translate the background state into a message sequence the interface will accept.
 
-Suppose the Agent is helping a user draft an email and has called a tool to search for contact information. Before the search returns, the user says, “Wait, first check tomorrow's weather for me.” If the interface requires outstanding tool calls to receive their corresponding results first, the Agent cannot directly process this new message with a call still pending. This restriction comes from the chosen combination of protocol and model; it is not a rule every LLM must follow.
+**Expressing background state in a synchronous message format.**
 
-**An Asynchronous Implementation Compatible with a Synchronous Format.**
+**When staying compatible with a synchronous interface, preserve the pairing of normal calls with their real results as far as possible, and add status responses only when switching tasks midway.** Filling in "still running" for every call too early fills the trajectory with incomplete states and makes it harder for the model to track the real results. Five rules can be followed:
 
-The core idea is: **Under normal conditions without interruptions, let the LLM see a standard synchronous trajectory; only when an interruption occurs, insert placeholders to fix the format**. Here are five key rules:
+1. **Record complete calls.** Write the assistant messages and tool-call items that the API has completed into the trajectory, keeping their call identifiers. Preserve server-side reasoning state using the continuation method the provider specifies.
+2. **Record real completion.** When a tool finishes, write the actual result, task identifier, and execution status; while it runs, the task manager keeps storing the incomplete state.
+3. **Report the current state when switching.** For interfaces that allow this kind of result payload, return explicit status information for the pending call—for example, "The task is still running in the background; no result yet"—and then append the user event. The task identifier in the status response links it to the later completion notice.
+4. **Tidy up messages after an interruption.** Without mid-turn continuation, cancel the unfinished generation, keep the messages and tool states confirmed as complete, and submit a new request. Handle unfinished output as the interface specifies, so that half-written arguments are never treated as an executable call.
+5. **Receive routine events in batches.** Supplementary information goes into the queue and is submitted together at the end of the current cycle or at a designated safe point, with a record of which events have been processed.
 
-**Rule 1**: Promptly record completed assistant messages and tool-call items from the API. Preserve server-managed reasoning state according to the provider's continuation protocol; do not assemble invisible reasoning text yourself.
+In the contact-lookup example, the complete call is written to the trajectory first; when the user switches tasks, the Harness adds a status response saying the lookup is still running, then submits the weather request. The contact result arrives later and enters the context as a new event tagged with its source and task identifier, after which the Agent continues drafting the email. Because the original call has already received a status response, the later result uses the event form agreed on by the adapter, preserving the call–result pairing.
 
-**Rule 2**: Record the tool result only when the tool call is complete. The trajectory is in a "partially completed" state during execution.
+A status response describes only current execution progress. Steps that depend on the contact data must wait until the real result arrives. The task manager can store states such as `running`, `completed`, `cancelled`, and `failed`, and check that dependencies are satisfied before sending a reply or running later tools.
 
-**Rule 3**: Interruptions during tool execution require placeholders. Generate a placeholder response for the unfinished tool (e.g., "The tool is executing in the background, please prioritize the new event"), append the interruption event, and re-invoke the LLM. From the LLM's perspective, the assistant message still has a paired tool result.
+**Designing asynchronous tools around task handles.**
 
-**Rule 4**: Without native steering or a supported mid-turn continuation interface, cancel unfinished generation, retain confirmed completed messages and tool state, append the new event, and send a new request. Do not assume that partial output or hidden reasoning can be freely fed back as a valid prefix.
+For newly designed long-running tools, I prefer to define "start" as a complete operation that immediately returns a real task handle. The model can then distinguish "started" from "finished," and later queries, cancellations, and result events share a common basis for correlation. For example, `initiate_phone_call` starts a phone task and returns a task identifier with the status "dialing"; `phone_call_connected` and `phone_call_ended` report when the call connects and when it ends.
 
-**Rule 5**: Non-interrupting events enter the queue for batch processing. They are appended all at once only after the current cycle is complete.
+The tool description should say clearly: "This tool starts a phone-call task and returns a task ID on success. You can continue with other matters; call progress and the final outcome are delivered as separate events." The tool name signals that this is a start operation, while the return structure and later events show how the task proceeds and ends. The system then provides interfaces for querying, cancelling, and resuming by task ID, so the model knows what it can still do.
 
-Using the example of the Agent drafting an email when the user interrupts to ask about the weather, the operation of these five rules is as follows:
+**Handling batched events one by one.**
 
-1. The Agent calls `search_contacts` to search for contact information, and the assistant message is immediately written to the trajectory (Rule 1).
-2. Before the search tool returns results, the user sends "First check tomorrow's weather for me." Since this is a user interruption, the system generates a placeholder tool result for the unfinished `search_contacts` ("The tool is executing in the background, please prioritize the new event", Rule 3), then appends the user's weather query to the trajectory and re-invokes the LLM. At this point, the trajectory format seen by the LLM is completely valid—the assistant message and tool result are perfectly paired.
-3. After the Agent answers the weather query, the original `search_contacts` result arrives and is appended to the trajectory as a new event (Rule 2). The Agent reads the contact information and continues drafting the email.
-
-This approach maintains the tool/result pairing required by a synchronous interface. A placeholder explicitly marked “unfinished” is introduced only when an interruption is needed. When the real background result arrives, it enters the trajectory as an event with a source and task ID. For models that already support native asynchrony, the system can retain the task's pending state and pass the real result to the model when it arrives.
-
-Placeholders also carry a semantic risk: the model may confuse “task started” with “task completed” and make a decision that depends on a result before that result arrives. Clear task state and result validation should prevent this confusion, and evaluation should check for fabricated data that has not yet arrived. A single failure does not justify attributing the cause to an undisclosed training process.
-
-**Expressing Asynchronous Semantics Through Task Handles.**
-
-Whether or not a native asynchronous protocol is used, **tool-interface design can make asynchronous semantics explicit**. One approach especially useful for synchronous interfaces is to make “start task” a complete call with a real return value.
-
-Traditional tool design implies a "call equals completion" semantics. For example, the name `phone_call` suggests "calling will dial the phone and wait for the call to end, returning the call log." Under the asynchronous paradigm, "initiation" and "completion" should be decoupled:
-
-- `initiate_phone_call`: Initiates a phone call, immediately returning a task identifier and initial status (e.g., "Call initiated, dialing...")
-- Call progress is communicated via event notifications (`phone_call_connected`, `phone_call_ended`)
-
-The key is that the tool's name and description themselves should convey asynchronous semantics. When the model sees `initiate_phone_call`, its language understanding capabilities will naturally infer this is "initiating" rather than "completing." The tool description should further reinforce this: "This tool initiates a phone call task handled by a sub-agent. It returns the task ID immediately upon successful initiation, allowing you to continue with other matters. A separate notification event will be sent when the call ends."
-
-**Overlooking Earlier Events in Queue-Based Processing.**
-
-When processing events in a batch, a model may respond only to the last event and overlook earlier requirements. Native asynchrony addresses whether messages can arrive during execution; we must still check whether the model incorporates all updates.
-
-Intervention can be applied at two levels:
-
-**Prompt Level**: Inform the model, "When you receive multiple consecutive events, please ensure you comprehensively consider all the information."
-
-**Agent Status Bar Markers**: Add explicit markers before each event:
+When several events enter the context at once, the model may respond only to the last one and overlook requirements raised earlier. The runtime should keep a separate processing state for each, so that conditions not yet addressed stay visible. The prompt can ask the model to check each item, and a status bar lists the information not yet handled:
 
 ```text
-[Unprocessed Event 1/4] Tool result from database_query: ...
-[Unprocessed Event 2/4] User supplementary note: Only look at Beijing data
-[Unprocessed Event 3/4] System reminder: Report deadline is in 30 minutes
-[Unprocessed Event 4/4] User asks: What's the progress?
+[未处理事件 1/4] database_query 结果：……
+[未处理事件 2/4] 用户补充：只看北京地区的数据
+[未处理事件 3/4] 系统提醒：报告截止时间还有 30 分钟
+[未处理事件 4/4] 用户询问：进度如何？
 ```
 
-Add a summary at the end: "There are 4 unprocessed events above, including 1 tool result, 2 user messages, and 1 system reminder. Please ensure your response covers all the information."
+(The four lines read: unprocessed event 1/4, the `database_query` result; 2/4, a user note to look only at data for the Beijing region; 3/4, a system reminder that the report is due in 30 minutes; 4/4, the user asking how it is going.)
+
+A batch summary can note "1 tool result, 2 user messages, 1 system reminder." The runtime further links events to task constraints: the region condition updates the query scope, the deadline affects scheduling, and the progress question needs a reply. After processing, it records each item as done, waiting, or needing clarification, and unresolved items carry over to the next round.
+
+The same task number ties together the start, the progress reports, and the final execution result. If someone asks to stop midway, check whether a cancellation receipt exists under that number.
 
 > **Experiment 6-2 ★★★: Asynchronous Agent with Parallel Execution and Interruption Capabilities**
 >
+> This experiment first validates the asynchronous runtime, then connects a model to check its decisions. The accompanying run record completes four scenarios with real operating-system subprocesses, with event scheduling and reporting driven by a deterministic script.
 >
-> ![Figure 6-4: Experiment 6-2 Asynchronous Agent Interruption and Recovery](images/fig6-4.svg)
+> 1. **Background execution with immediate response.** Start an analysis process that runs for several seconds and return a task identifier immediately; answer a question about the current time while waiting, and receive the analysis result when it finishes.
+> 2. **Queuing and batching.** During a long task, add "reply in Japanese" and then "turn it into a webpage"; when the task finishes, process the result and both requests as one batch. The script produces Japanese HTML.
+> 3. **Cancellation and resumption.** Demonstrate that receiving "stop the analysis" interrupts the model turn still being generated and requires every running background task to stop. Here the script issues the interruption, and only one analysis process, T1, is running at the time. At 0.803 seconds the interruption event records T1's progress as 18%; only at 0.806 seconds does the system record its exit code, −15. T2, started immediately afterward, is a new task. The result received at 4.436 seconds belongs to T2; T1 never triggers a completion callback.
+> 4. **Parallel tasks and progress-based decisions.** Start three analysis processes at once, advancing by 3%, 2%, and 1% per logical time step. In this experiment's parallel progress record, when the fastest, T1, finishes, the query receipts show T2 at 68% and T3 at 34%. Following Figure 6-5, tasks at or below 50% progress are cancelled. The script cancels only T3 and ultimately receives the results of T1 and T2. This shows that the same runtime can both honor a stop that applies to the whole batch and keep parallel work that is still useful.
 >
->
-> Building on the simple event queue in Experiment 6-1, this experiment uses a runtime compatible with synchronous interfaces to implement **parallel tool execution, execution cancellation, and state management**. The Agent must manage several concurrent tasks, handle interruptions and recovery, and make dynamic decisions from current state. See Experiment 6-3 for the native Astra comparison.
->
-> **1. Asynchronous Tool Execution**: Supports asynchronous execution of time-consuming tools (at least 3-5 seconds), returning a placeholder immediately upon initiation. **Validation Scenario**: The Agent executes a long-running terminal command. During this time, the user asks, "What time is it now?" The Agent responds immediately, then presents the analysis result when the long-running command completes.
->
-> **2. Event Queue and Batch Processing**: Accumulates non-urgent events and appends them to the trajectory in a batch. **Validation Scenario**: The Agent is executing a long task. The user sends consecutive messages: "Remember to reply in Japanese" and "Format it as a webpage." When the task completes, the Agent processes all events at once, generating a Japanese webpage.
->
-> **3. Interruption Mechanism**: A user's "stop" command immediately terminates the execution flow and cancels the asynchronous tool. **Validation Scenario**: The Agent is executing a long task. The user sends "Cancel." The Agent stops immediately, and the trajectory records the interruption event and the cancellation operation.
->
-> **4. Cancellation and Status Query for Parallel Tools**: After an asynchronous tool completes, the real result is injected into the conversation via a new event. Supports cancellation or progress query via task ID. **Validation Scenario**: The user requests, "Run these three scripts simultaneously for me. Whichever finishes first, check the progress of the remaining scripts. If any hasn't exceeded 50%, cancel it." The three scripts simulate analysis processes, outputting progress continuously at speeds of 3%, 2%, and 1% per second, respectively. The Agent starts three asynchronous terminal commands simultaneously. When the script at 3% per second finishes in about 33 seconds, the Agent queries the status of the remaining two terminals, finding one at about 66% and the other at about 33%. It then cancels the one that hasn't exceeded 50%. After both terminals complete, it integrates the results to generate a complete report.
+> ![Figure 6-5: Experiment 6-2 Asynchronous Agent Interruption and Recovery](images/revised/fig6-5.svg)
 >
 
 ### Model-Native Asynchrony: GPT-6 Astra
 
-In the compatibility approach above, the runtime orders incoming events so that a model with a synchronous interface can participate in asynchronous tasks. Another approach lets the model understand this interaction rhythm natively: it can do other work while a tool runs and adjust subsequent work when the user adds requirements midway. GPT-6 Astra already supports Async tool calling and Mid-turn steering, illustrating this change (Figure 6-5).[^ch6-22][^ch6-23]
+In the approach above, the Harness adapts to a synchronous message format. A native asynchronous interface instead lets the model keep working on independent tasks while a tool has not yet returned, and receive the result later. As of September 2026, GPT-6 Astra offers Async tool calling and Mid-turn steering, which handle tool waits and user updates respectively. Figure 6-6 contrasts the message flows of synchronous-interface adaptation and native asynchrony.[^ch6-22][^ch6-23]
 
-![Figure 6-5: Synchronous-Interface Compatibility and Model-Native Asynchrony](images/fig6-5.svg)
+![Figure 6-6: Synchronous-Interface Compatibility and Model-Native Asynchrony](images/revised/fig6-6.svg)
 
-**Asynchronous tool calling separates “starting an action” from “obtaining its result.”** After starting a slow query, an Agent can continue reasoning, call other tools, or handle parts that do not depend on the query result. While looking up meeting venues, for example, it can prepare the agenda and checklist, then compare options when venue information arrives. The key is to distinguish dependencies: keep independent work moving, and defer decisions that require the result until it arrives.
+**Keep working independently while waiting for a tool.** For example, after starting a query for meeting venues, the Agent can first prepare the agenda and checklist; when the query returns, it compares prices and capacities. The `async: true` declaration in the tool definition marks the tool as asynchronous; the application starts execution once it receives the complete call item and saves the call identifier `call_id`. When the result arrives, the application returns it under the original identifier and continues from the latest response state. The model plans the follow-up work, while the Harness manages call correlation and the task lifecycle.[^ch6-22]
 
-**Mid-turn steering lets the user correct the direction while a task is underway.** While the Agent is still thinking or composing its answer, the user can add requirements such as “the budget has decreased” or “the number of attendees has changed.” The system retains completed work and brings the new constraints into subsequent processing, allowing the Agent to adjust its plan within the same task. There may still be a delay between receiving an update and acting on it, but the user need not wait for an entire answer to finish before expressing the change.
+**Accept new requirements while the task is underway.** While the model is thinking or composing its answer, the user can add "the budget is now 1000" or "attendance is now 10." The application sends a steering event over the same connection; once the server acknowledges receipt, it continues from the current response state. After a dropped connection, the application can restore the task from the saved events and response state.[^ch6-23]
 
-These capabilities extend the timing of interaction: tool results and user requirements can both arrive as a task progresses. The system must still distinguish their sources and remember which work is complete and which remains pending. Changing a plan does not itself stop running tools or undo actions already taken; actual execution, cancellation, and state management remain the runtime's responsibility.
+The two capabilities can be combined: the venue query keeps running, the user's new requirements feed into later decisions, and the choice is made once the query returns. Meanwhile the executor maintains the real state of background tasks. When a query must be stopped or a booking cancelled, the Harness calls the corresponding interface and checks the receipt; business operations that have already completed go through an undo or compensation process.
 
-Not every model has native asynchronous capabilities. When building an Agent, choose native interaction or a compatibility approach according to the model's support, then check whether the whole system correctly handles delayed results, mid-task changes, and task resumption. Asynchronous training can improve these capabilities further, but developers can already build this kind of interaction using existing models.
+When the model and interface already support native asynchrony, I prefer the native protocol, letting pending tools, user updates, and response continuation flow as the interface specifies. The synchronous compatibility layer mainly serves existing models and legacy interfaces; after a model upgrade, the logic that exists only to complete message pairings can be removed gradually, concentrating engineering effort on task state, cancellation, and resumption.
 
-### From Receiving Asynchronous Messages to Handling Asynchronous Tasks Reliably
+### Handling Asynchronous Tasks Reliably
 
-Native asynchrony addresses whether messages can arrive during execution. Reliability in complex tasks also depends on how the model uses those messages. At least three things need checking:
+Reliable asynchronous interaction requires checking messages, tasks, and execution state together.
 
-1. **Result ownership and pending state**: Can the model associate a delayed result with the correct task and avoid inventing data when the result is absent?
-2. **Task resumption and action control**: Can it return to the original task after handling new requirements and distinguish changing a plan from stopping execution?
-3. **Integrating multiple updates**: Can it respect both budget and attendance constraints, rather than remembering only the last message?
-
-These issues can be addressed through model training in asynchronous environments and through clearer task state, event sources, and execution feedback in the system. Evaluation must cover both layers: whether the model understood the change and whether the system executed accordingly.
+1. **Result ownership.** A delayed result carries the original call identifier, which the application maps to the corresponding task; decisions that depend on the result continue only after the data arrives.
+2. **Resumption and cancellation.** When the user changes requirements, the system keeps the work that is still valid, updates the remaining steps, and makes explicit which background tasks are still running and which have stopped.
+3. **Multiple requirements.** Budget, attendance, region, and deadline each enter the task state, and the final result is checked against each of these conditions.
 
 > **Experiment 6-3 ★★★: Model-Native Asynchrony and Mid-Turn Steering**
 >
-> Choose a venue for a meeting: after starting a slow query, the Agent completes preparation that does not depend on the result. Meanwhile, the user adds budget and attendance requirements. Once the query finishes, the Agent selects a venue according to all constraints.
+> In this experiment the Agent chooses the cheapest venue for a simulated meeting that satisfies the budget and attendance requirements. The initial budget is 2000 and attendance is 20; the query tool takes 8 seconds to return quotes and capacities for three venues.
 >
-> Call the GPT-6 Astra API to compare synchronous tools, native asynchronous tools, and mid-turn steering. Observe whether waiting blocks other work, whether new requirements enter subsequent plans, and whether the original task resumes when results arrive. Then use a model without native support as a control to understand what model capabilities and runtime orchestration each address.
+> | Venue | Price | Capacity |
+> |---|---:|---:|
+> | A | 1800 | 30 |
+> | B | 900 | 12 |
+> | C | 600 | 8 |
+>
+> Under the initial conditions, A is the right choice. The steering groups receive two updates while the task is in progress: the budget changes to 1000 and attendance to 10, at which point B is the right choice. The tool also returns a freshly generated receipt that the final answer must cite, which makes it possible to check whether the model used the result that actually arrived.
+>
+> The experiment has five groups, three runs each: synchronous tools, native asynchronous tools, steering during reasoning, steering while waiting on an asynchronous tool, and a control model without steering support. The first two groups compare whether an independent preparation checklist can be produced while waiting; the two steering groups check whether the budget and attendance updates both take effect; the capability control checks whether the interface explicitly reports that steering is unsupported.
+>
+> In the saved run records, the asynchronous-tool group completed the independent checklist while waiting, and both steering groups chose B under the new conditions. Every run with tools executed the query only once and returned the actual result to the original call; the control model's interface explicitly replied that it does not support receiving new requirements midway through a generation. The synchronous and asynchronous groups took about the same total time; the main difference was whether other work could move forward during the wait.
+>
+> If the model remembered only that attendance changed to 10 and still used the old budget of 2000, which venue would it pick? Both A and B can seat everyone, and B is still the cheapest. So picking the right venue does not by itself show that the budget was updated.
+>
+> When attendance changes, should the query already in flight be rerun? The tool in this experiment has no filtering parameters and returns all three venues. The assistant can reuse the result already on its way and filter it for 10 people and a budget of 1000 once it arrives. If the tool returned only venues for 20 or more people, the old result would contain only A, and B, which seats 12, would not be in it at all. Changing attendance to 10 within the old list would then still miss B. If the original query has already filtered B out, it must be run again.
 
-Asynchrony and event-driven execution let the world wake an Agent while a task is underway; native steering also lets the user submit updates before a full answer finishes. The next three sections compress the timescale further: when the environment changes as fast as or faster than the model generates, receiving updates is not enough—the system must also react in time.
+Asynchronous mechanisms let external changes enter the system while a task is underway. Voice, screen, and robot interaction shorten the feedback cycle further: the system must receive input continuously and adjust its output and actions at the right moments.
 
 ## Voice: The Most Natural Human-Machine Interface
 
-Voice is not merely text turned into sound. Speaking is roughly four times faster than typing and leaves the hands and eyes free, so it naturally places an Agent in a continuous input-output loop where the user may interrupt at any moment. Dictation converts speech into text; a voice Agent lets the user collaborate with the Agent directly. Both support the whisper-coding workflow introduced earlier.
+Voice lets users describe what they need, add conditions, and confirm results even while their hands or eyes are busy with other work. Voice input methods convert dictation into text, while a voice Agent goes further and manages the conversation, tool calls, and reply playback; both can support the whisper coding described in the Introduction.
 
-This section covers two directions: the user speaking to an Agent, and an Agent speaking to the outside world on the user's behalf. The voice model determines what the Agent can answer; the interaction architecture determines whether it can hear clearly, respond in time, hand over naturally, and complete confirmations and tool calls during a call. We first examine interaction timing, then cognitive timing and expressive quality.
+This section covers two uses: the user talking directly to an Agent, and an Agent communicating with outside parties on the user's behalf. The former centers on recognition, response, and barge-in; the latter must also complete identity confirmation, business inquiries, and decisions during the call.
 
-### Interaction timing: from cascaded to full-duplex
+### Interaction Timing: From Cascaded to Full-Duplex
 
-OpenAI's GPT-Live introduction describes three voice-interaction paradigms—cascaded, turn-based, and full-duplex[^ch6-12]. They are not a simple old-to-new replacement; they trade latency, cost, and observability in different ways:
+In its introduction to GPT-Live, OpenAI reviewed three kinds of voice interaction: cascaded, turn-based audio models, and full-duplex[^ch6-12]. This progression gradually hands the ongoing judgment of "when to speak and when to keep listening" to the model. A cascaded system relies mainly on endpointing logic to arrange handoffs, while a full-duplex model can draw on continuous sound and conversational state to handle overlap, pauses, and interruptions.
 
-| Paradigm | Core structure | Main advantage | Main limitation |
-| --- | --- | --- | --- |
-| Cascaded | VAD → ASR → LLM → TTS | Clear modules that are easy to replace and debug | Latency accumulates and paralinguistic information is lost at interfaces |
-| End-to-end Omni | Native audio input and output with turn-based interaction | Lower latency and better preservation of tone, emotion, and ambient sound | Still turn-based; training and debugging cost more |
-| Full-duplex | Native audio input and output with continuous listening, speaking, and decision-making | Overlapping speech, natural interruption, and continuous streams | Training, control, and evaluation are more complex |
+| Paradigm | Core structure | Capabilities it makes easy | Main design problems |
+|---|---|---|---|
+| Cascaded | VAD, ASR, LLM, and TTS as separate stages | Swapping modules independently; inspecting inputs and outputs stage by stage | Latency between modules; acoustic information lost in transcription |
+| Turn-based end-to-end audio model | The model receives and generates audio directly | Using intonation, emotion, and similar cues to shape the reply | Detecting the end of an utterance, switching turns, and timing the response |
+| Full-duplex | Continuously receives audio while generating output | Overlapping speech, backchannels, barge-in, and continuous interaction | Continuous state, output control, and interaction evaluation |
 
-The common thread is escaping the assumption that people must speak one at a time, and escaping VAD's guess about who has the floor. Cascaded and Omni systems still divide interaction into turns; full-duplex makes turn ownership a continuous model decision.
+Whether the model processes audio directly, whether input and output are streamed, and whether it can listen and speak at the same time are capabilities that can be examined separately. A cascaded system can add streaming modules and interruption control; the interaction rhythm of an end-to-end model depends on its specific design.
 
-[^ch6-12]: OpenAI. *Introducing GPT-Live.* 2026-07-08. https://openai.com/index/introducing-gpt-live/ The cascaded / turn-based / full-duplex taxonomy comes from the article's summary of three generations of ChatGPT Voice; its “end-to-end omnimodal (Omni)” term corresponds to the “turn-based voice models” category.
+[^ch6-12]: OpenAI, *Introducing GPT-Live*, 2026-07-08, which describes cascaded systems, turn-based audio models, and full-duplex interaction.
 
-### Paradigm 1 · Cascaded pipeline
+### Paradigm 1 · Cascaded Pipeline
 
-Most commercial voice assistants still use a serial pipeline (Figure 6-6): VAD decides when the user has finished, ASR converts audio to text, the LLM understands and generates a reply, and TTS speaks it. Modularity lets each component be optimized independently, but every boundary can add waiting time.
+A cascaded system splits a voice conversation into several modules. Voice activity detection (VAD) identifies speech segments in the audio, and endpointing logic decides when to submit a segment; automatic speech recognition (ASR) converts the audio into text; the LLM understands the request and generates a reply; and text-to-speech (TTS) turns the reply into playable audio. Figure 6-7 shows the basic structure, executed in sequence.
 
-![Figure 6-6: Serial voice Agent pipeline](images/fig6-6.svg)
+![Figure 6-7: Serial Voice Agent Pipeline](images/revised/fig6-7.svg)
 
-| Module | Role | Typical bottleneck |
-| --- | --- | --- |
-| VAD | Decide whether speech has ended | Silence thresholds add waiting and split turns incorrectly |
-| ASR | Convert audio to text | Recognition latency and loss of context |
-| LLM | Understand, reason, and generate | Time to first token; reasoning adds more waiting |
-| TTS | Convert text to speech | First-packet synthesis and playback buffering |
+Acoustic VAD finds the stretches where someone is speaking, so later recognition can skip long silences. Yet the same pause means different things after "I'd like to book…" and after "Are there any tickets Thursday morning?" Semantic VAD (semantic endpoint detection) can keep listening in the first case and hand the utterance to the dialogue model only in the second. This is sparsification of voice observation over time: a continuous stream of sound triggers reasoning at only a few moments. Whether to speak is up to the model that hears the utterance; it may also keep listening, or look up flights first.
 
-For a short reply without reasoning, VAD, ASR, LLM, and TTS waiting time accumulates serially (Figure 6-7). The real value depends on input length, model, hardware, network, and load.
+| Module | Role | Common sources of waiting or error |
+|---|---|---|
+| VAD and endpointing | Detect speech; decide when to submit | Silence thresholds, noise, and pauses mid-utterance |
+| ASR | Convert audio to text | Decoding time; recognizing names and proper nouns |
+| LLM | Understand, reason, and generate the reply | Request queuing; generating the first segment of the reply |
+| TTS and playback | Synthesize audio and deliver it to the speaker | First-packet synthesis, network transfer, and playback buffering |
 
-![Figure 6-7: Latency waterfall for a serial response](images/fig6-7.svg)
+In a fully serial implementation, after the user finishes speaking they must wait in turn for endpoint confirmation, transcription, reply generation, and the first audio segment. In the example in Figure 6-8, 1.4 seconds have passed by the time the user hears the first sound of the reply, and the longest single stretch is waiting for the system to confirm that the user has finished (500 milliseconds). Even if transcription were cut from 100 milliseconds to 50, the user would wait only 50 milliseconds less.
 
-Production queueing amplifies idle latency further (Figure 6-8), but capacity planning is outside this chapter's scope.
+![Figure 6-8: Latency Waterfall: Serial Accumulation of Total Response Time](images/revised/fig6-8.svg)
 
-![Figure 6-8: Queueing latency curve](images/fig6-8.svg)
+Service load also adds queuing delay. Figure 6-9 uses the M/M/1 single-server model to illustrate this relationship: with Poisson arrivals, exponentially distributed service times, a mean service time of $S$, and utilization $\rho<1$, the mean total time including service and queuing is $W=S/(1-\rho)$. With $S=1$ second, raising utilization from 0.5 to 0.8 raises the mean total time from 2 seconds to 5. Service itself still averages 1 second; the extra 3 seconds are all spent in the queue. As requests approach capacity, short bursts of traffic build up a backlog.
 
-> **Experiment 6-4 ★: Build a traditional voice Agent**
+![Figure 6-9: Single-Server Utilization and Mean Total Time (Queuing Plus Service)](images/revised/fig6-9.svg)
+
+> **Experiment 6-4 ★: Build a Traditional Voice Agent**
 >
-> Connect a microphone, Silero VAD, local Whisper, a streaming LLM, and Fish S1 TTS over WebSocket to establish the cascaded baseline.
-
-#### From serial to streaming perception
-
-Figure 6-7 describes the fully serial case: VAD, ASR, LLM, and TTS run one after another. This serial perception approach has three problems:
-
-1. **Accumulated latency:** it must wait through silence before confirming the end.
-2. **Lost information:** a binary speech/no-speech signal cannot express hesitation, emotion, backchannels, or ambient sound.
-3. **Broken context:** email addresses, names, and proper nouns may be split across chunks and misrecognized.
-
-To address this while keeping the modular split, one optimization is **streaming perception**, which lets each stage produce incremental results as early as possible:
-
-- **Streaming ASR:** once VAD detects that the user has started speaking, the ASR model is called at fixed intervals to produce a provisional transcript in a streaming fashion; once VAD detects that the user has finished, the final text is confirmed.
-- **LLM speculative execution:** the provisional transcript is sent to the LLM as soon as it exists. If the final text matches the provisional transcript, the LLM is not called again; otherwise the earlier speculative thinking is cancelled and the LLM is called again.
-- **Segmented LLM output:** the first speakable sentence goes to TTS without waiting for the full reply.
-- **Incremental TTS:** audio chunks are returned continuously so later generation, synthesis, and playback overlap.
-
-A truly streaming ASR needs model-level support. Whisper's decoder is autoregressive, but its encoder expects a complete audio segment, so it cannot simply be equated with a streaming model. An LLM-based streaming-audio model can emit text and semantic events from continuous audio, placing recognition and part of understanding in one model. It keeps the conversation context from the beginning up to the present moment and can use world knowledge for brands, names, and proper nouns.
-
-If the only goal is deciding whether the user has finished, endpointing can be built into the streaming recognizer. The model combines semantics and silence to judge whether an utterance is complete. Training labels must contain only information visible at decision time, or hindsight will produce a judgment that cannot be reproduced online.
-
-The model can emit acoustic-event markers as well as words:
-
-- **speak_start/end, interrupt:** speech boundaries and interruption intent;
-- **emotion:** emotion and hesitation;
-- **laugh, sigh, noise:** paralinguistic and environmental sound.
-
-Together with text tokens, these markers form one event stream. The Agent can detect hesitation, interruption, and environmental changes without compressing every sound into plain text.
-
-> **Experiment 6-5 ★: Simulate streaming voice perception with Qwen2-Audio**
+> Suppose the assistant is reading out Thursday's flights and you cut in to correct it: "Wait, I want to book Friday." The browser sends the microphone audio to the backend over WebSocket. As soon as Silero VAD detects that you have started speaking, the backend emits `speech_start`, and the browser immediately stops playback and clears the queued old audio. At this point the assistant does not yet know which day you changed to. Only after you finish and the silence exceeds the default 500 milliseconds does the backend emit `speech_end` and hand the speech to a local Whisper tiny model for transcription.
 >
-> Qwen2-Audio is not itself a streaming model. This experiment simulates continuous perception with increasing audio prefixes and compares it with 600 ms VAD + Whisper.
-
-### Paradigm 2 · End-to-end omnimodal models (Omni)
-
-Even with streaming perception, a cascade passes listening, thinking, and speaking through discrete interfaces; emotion, intonation, and ambient sound may be lost when audio becomes plain text. The Omni approach uses one model to listen to audio, generate a reply, and speak it, which can preserve those signals, though at a higher training cost (Figure 6-9). Compared with the cascaded pipeline of Paradigm 1, Omni's advantage shows up mainly in latency and in understanding and generating non-text information.
-
-On the understanding side, Omni models can pick up on pauses in the voice. On the generation side, Omni models can convey richer paralinguistic information—singing, or delivering a line in a distinctive tone.
-
-Omni models still assume turn-taking and generally use VAD to assign the floor. A mid-utterance pause while the user reads out a string of digits can therefore still be mistaken for the end of the turn.
-
-![Figure 6-9: End-to-end omnimodal speech-model comparison](images/fig6-9.svg)
-
-> **Experiment 6-6 ★★: Run MiniCPM-o 4.5 locally—end-to-end versus self-cascade**
+> Once Doubao starts returning text, how long is it before the user hears the answer? In the record of one replayed recording, transcription took 2.710 seconds. Doubao returned its first token 0.749 seconds after the request was sent, and the complete answer only at 0.792 seconds. The replay program waited until all the text had arrived before handing it to Fish S1 for synthesis; another 2.819 seconds passed before the backend received the first batch of audio. Adding up these three serial stages, counted from the endpoint decision, gives about **6.321 seconds**. The archived report says 6.279 seconds because it used the time to the first token in place of the time to generate the whole answer.
 >
-> Run MiniCPM-o 4.5 locally with thinking mode disabled, comparing direct answers from audio against a self-cascade that first transcribes and then answers with the same model. This measures whether audio information is preserved, **not** the “thinking while speaking” discussed later.
+> These 6.321 seconds cover only backend processing. Before them, the user must wait for silence detection to decide the utterance is over; after them, the audio still has to reach the browser and start playing.
 
-### Paradigm 3 · Full-duplex interactive models
+#### From Serial to Streaming Perception
 
-Omni still divides conversation into “the user speaks” and “the model speaks,” but simultaneous interpreting and similar tasks require overlap. A full-duplex model therefore does not presuppose turns: it listens and speaks continuously and repeatedly decides whether to continue, pause, interrupt, or call a tool.
+A serial design is easy to inspect stage by stage, but it also exposes three problems. Waiting for silence adds endpointing latency; the transcript may miss tone, emotion, and ambient sound; and when audio is split at pauses, email addresses, names, or proper nouns may lose their full context. For systems already built on a cascaded architecture, I recommend a streaming retrofit first: let each stage deliver incremental results as early as possible, overlap recognition, reasoning, and playback, and keep track of which parts are confirmed and which may still change. This reuses the existing modules and makes it possible to pinpoint, step by step, where the waiting comes from.
 
-Kyutai's **Moshi** (2024) was an early research example. It models the user's and the model's audio streams in parallel, so overlapping speech and interruption can be natural behaviors.
+- **ASR transcribes while listening.** It receives audio continuously and outputs provisional transcripts; as more audio arrives it revises the unstable parts, and it delivers the final text when the endpoint is confirmed.
+- **LLM speculative execution.** The provisional transcript is used to prepare a reply in advance. Once the final text is confirmed, the system checks whether the input matches and whether the work already done still applies, then decides to keep, adjust, or regenerate it. Operations such as sending messages externally or writing business data wait until the required conditions are confirmed.
+- **Segmented LLM output.** As soon as a segment of text suitable for speaking is complete, it goes to TTS; segmentation preserves sentence meaning, punctuation, and intonation cues.
+- **Incremental TTS.** Audio chunks come back progressively, so later text generation, synthesis, and playback can overlap. When the user barges in, both the generation task and the unplayed content in the playback buffer must be handled.
 
-Thinking Machines Lab calls this an **Interaction Model**[^ch6-14]: interaction is built into the model instead of assembled around it with VAD and other external harnesses. Its micro-turn mechanism advances in short audio blocks, preserving silence, overlap, and interruption as continuous context. It can delegate the full conversation to a background reasoning model while it keeps the conversation alive, then incorporate the result at a suitable moment.
+Whisper's standard transcription implementation encodes and decodes audio in windows[^ch6-whisper]. An incremental transcription pipeline can be built by chunking externally or repeatedly submitting the accumulated prefix; reusing persistent state, the cost of repeated encoding, and revising earlier text must be managed by the specific implementation. Native streaming recognition models, by contrast, handle continuous input directly in their architecture and training.
 
-[^ch6-14]: Thinking Machines Lab, “Interaction Models: A Scalable Approach to Human-AI Collaboration,” 2026-05. https://thinkingmachines.ai/blog/interaction-models/
+A perception system built on an audio language model can also output text and acoustic events jointly. Past audio, transcripts, and vocabulary hints help recognize names, brands, and proper nouns; how much history is kept depends on the context and cache design. To decide whether the user has finished, the model can combine semantic completeness with silence. At the pause in "I'd like to book…", however, a real-time system has heard only those few words and has no way of knowing that a date will follow.
 
-OpenAI's GPT-Live brings the full-duplex path to production scale: it continuously processes input and generates output, can wait, backchannel, be interrupted, and handle realtime translation. Like the Interaction Model, it delegates complex work to a background model while the foreground model maintains the conversation.
+Beyond transcription, the interface can also define the following events: `speak_start` and `speak_end` mark the start and end of speech, `interrupt` marks an interruption, `emotion` describes emotional state, and `laugh`, `sigh`, and `noise` record laughter, sighs, and ambient sound. These events can be sent to the Agent together with the text and timestamps.
 
-### Cognitive timing: realtime interaction and deep thinking
-
-Interaction quality and intelligence ceiling are different dimensions. The foreground model must respond while the user is still engaged; the background model can spend longer thinking. The following three designs are trade-offs, not a linear progression. The first two can wrap a cascade or Omni model; the third instead unifies deep reasoning and realtime expression within the same model.
-
-#### Solution 1: Fast thinking for fillers, slow thinking for answers
-
-Fast thinking can give a holding response within a few hundred milliseconds while slow thinking performs a deeper derivation in the background. Simple questions may be processed twice, while hard questions can produce contradictions: the fast model recommends a purchase, then the slow model discovers that a key feature is missing. The root cause is two independent instances thinking separately.
-
-![Figure 6-10: Fast/slow thinking architecture and design alternatives](images/fig6-10.svg)
-
-#### Solution 2: Fast thinking for interaction, slow thinking for advice
-
-The background model can send advice through a status bar or dedicated interface while the foreground model keeps the conversation alive and decides how to phrase it. This is more stable than Solution 1, but communication is still indirect: the foreground can misunderstand the advice and cannot see the background's intermediate reasoning. Before the background finishes, follow-up questions still rely on the foreground model. It can naturally wait for a result, but it cannot truly think while speaking.
-
-#### Solution 3: End-to-end unification of thinking and expression
-
-This design internalizes reasoning directly in an end-to-end audio model. Step-Audio R1 uses two complementary mechanisms: **Modality-Grounded Reasoning Distillation (MGRD)** grounds thinking in acoustic features, while the **MPS dual-brain architecture** lets planning and expression proceed in parallel. The first helps the model think correctly; the second helps it speak in time.
-
-Ideally, the model infers emotion from pitch, rhythm, and intonation rather than only from the transcript. MGRD selects reasoning traces that actually cite acoustic features, trains on them, and uses reinforcement learning to prevent guessing without thinking. MPS lets the planning brain continuously emit thought segments; the expression brain combines each segment with the partial reply and immediately generates speech. The pipeline runs in parallel, so the listener need not wait for the entire chain of reasoning before hearing the first sentence.
-
-#### The trade-off between separated fast/slow thinking and end-to-end reasoning
-
-A unified model implements “thinking while speaking” most directly, but thinking and realtime expression must be retrained together. A decoupled design makes it easier to swap the background brain. These are trade-offs, not simple substitutes.
-
-As frontier reasoning models advance rapidly, separating fast and slow thinking offers an important engineering advantage: it captures the gains from each new generation of slow models directly. The fast foreground model only needs to listen, respond, and sustain the conversation with low latency, while the slow background model handles reasoning, planning, and tool use. When a stronger reasoning model arrives, only the background model needs to be replaced; the entire realtime voice system need not be retrained. A unified design binds reasoning and interaction to the same training cycle, so every upgrade must rebalance intelligence, response latency, and natural expression. Fast/slow separation is therefore not merely a compromise on latency, but a modular choice that lets interaction capability and the intelligence ceiling evolve independently.
-
-This separation does not necessarily sacrifice task performance. As of August 2026, Pine AI's voice Agent, which uses a separated fast/slow architecture, ranked first on the τ³-Voice Leaderboard, ahead of realtime voice systems including Grok Voice and GPT-Realtime-2. At minimum, this result shows that a decoupled architecture is not inherently inferior to end-to-end models on tasks that jointly test deep reasoning and realtime conversation.[^ch6-17]
-
-[^ch6-17]: Pine AI. “The Most Natural Human-Computer Interface Is Your Voice.” 2026-06-23 (updated 2026-08-06). https://www.19pine.ai/blog/pine-ai-the-most-natural-human-computer-interface-is-your-voice
-
-The term “end-to-end model” needs one further clarification because it is commonly used in two senses. The first is **an end-to-end speech path**, discussed in the preceding section: the model receives audio and produces audio directly instead of connecting multiple models through discrete text. Both Omni and Interaction Models are end-to-end in this sense, but Omni models usually remain turn-based, whereas Interaction Models can listen and speak at the same time; their architectures differ substantially. The second is **an end-to-end cognitive architecture**, discussed in this section: realtime interaction and deep reasoning either share state and are trained together within one model, or are split between a fast foreground model and a slow background model. The two axes are independent. A system can have an end-to-end speech path while retaining fast/slow separation in its cognitive architecture; Thinking Machines Lab's delegation of complex tasks to a background reasoner is one such combination.
-
-### More human-like speech synthesis
-
-Traditional TTS can sound artificial when it is too smooth and pauses too little. Pauses, filler words, and occasional repetition signal uncertainty and thought in human speech.
-
-The main LLM can emit control markers in addition to text, such as **THINKING**, **EMO:happy**, and **SPEED:0.8x**; TTS maps them to pauses, prosody, speaking rate, laughter, sighs, and other nonverbal audio. The implementation can be a TTS trained to understand control markers, or voice cloning with reference clips for different emotions and styles.
-
-> **Experiment 6-7 ★★: Control token-driven TTS with Fish Audio**
+> **Experiment 6-5 ★: Simulating Streaming Voice Perception with Qwen2-Audio**
 >
-> Use Fish Audio S1 to build a multi-reference voice library and compare three configurations: no control markers, one reference clip, and multiple reference clips. The execution layer selects matching emotion, speaking rate, and style from the markers.
+> This experiment progressively lengthens the audio prefix, each time feeding the audio from the start up to the current moment back into Qwen2-Audio, and observes how the transcript and acoustic events change as the input grows. The baseline path uses a 600-millisecond silence endpoint with Whisper. The test material includes normal speech, a long sentence with a 900-millisecond pause inserted, and speech mixed with pink noise.
+>
+> This run of the locally quantized model kept 13 prefix inferences, each taking about 8 to 11 seconds. The mid-sentence pause triggered a segment split in the baseline path; the audio model detected the noise but also falsely reported coughing and laughter.
+
+[^ch6-whisper]: OpenAI, Whisper, which describes windowed audio transcription and the model implementation.
+
+### Paradigm 2 · End-to-End Omnimodal Models (Omni)
+
+An end-to-end audio model receives sound directly, combines linguistic and acoustic information to generate a reply, and synthesizes speech through an audio output branch. Processing audio directly makes it possible to use speaking rate, pitch, pauses, and ambient sound; transcribing first and then answering makes it easier to inspect the intermediate text and replace modules independently.
+
+These acoustic features affect understanding. For example, the same sentence, "Please send the report before lunch," leaves the listener with a different impression when said hurriedly than when said slowly. On the output side, the model can also organize meaning through pauses, stress, and intonation.
+
+A system that processes audio directly may still wait until the user finishes before answering. If a user pauses while reading out a phone number, for instance, the system still has to judge whether the string of digits is complete. Endpoint detection decides when to respond; if the other party cuts in during playback, the system must also coordinate model generation with speaker playback.[^ch6-audio-architectures]
+
+> **Experiment 6-6 ★★: Run MiniCPM-o 4.5 Locally—End-to-End Versus Self-Cascade**
+>
+> This experiment fixes a single MiniCPM-o 4.5 model with thinking mode disabled and compares two paths: answering questions directly from audio, and having the model first transcribe and then answer from the transcript alone. The inputs include two spoken arithmetic problems and two recordings with identical words but different speaking rates.
+>
+> Each path answered three items correctly, with errors in different places. The direct-audio path heard "twelve boxes" in one problem as 8, producing a wrong calculation; the transcription path correctly kept 12. In the speaking-rate items, both recordings say "Please send the report before lunch."; after transcription the text is identical and the information about speed is lost, whereas the direct-audio path correctly distinguished the two rates.
+>
+> The experiment also generated a 24 kHz speech clip, connecting input understanding with audio output.
+
+### Paradigm 3 · Full-Duplex Interactive Models
+
+A full-duplex system listens while it speaks, and the improvement people notice most readily is how alive the conversation feels. Read the sentence "I'd like a ticket for Wednesday… no, Thursday": the pause in the middle leaves room for the self-correction, and if the assistant has already started reading out Wednesday's flights, it should stop when it hears "no, Thursday." Another kind of timing: while the other party is still explaining their itinerary, a brief, light acknowledgment lets them know the assistant is listening. Only by receiving audio continuously does a system have the chance to make these choices among speaking, listening, pausing, and calling tools. Simultaneous interpretation likewise requires input and output to overlap.
+
+**Moshi**, released by Kyutai in 2024, models the user's and the model's audio streams separately, using parallel streams to represent overlapping speech and interruption[^ch6-moshi]. By keeping these temporal relationships in its input, the model can learn when to respond and when to keep listening.
+
+Thinking Machines Lab's interaction model slices continuous input and output into short blocks of equal length, each covering 200 milliseconds, called a micro-turn[^ch6-14]. Look at the second cell on the timeline in Figure 6-10: the assistant is still saying "Thurs-," and the user's "no," correcting the date, is already coming in. By the third cell, the assistant has stopped and is still listening as the user finishes saying "Friday."
+
+![Figure 6-10: Full-Duplex Voice Input, Output, and 200-Millisecond Micro-Turns](images/revised/fig6-10.svg)
+
+Now read the lower half of the figure. The two parties on the call hear two streams of sound that can overlap, but the model can process input blocks and generate output blocks alternately along a single sequence. Silence occupies a cell too, so the assistant can listen for a while before speaking. The 200 milliseconds in the figure is this implementation's block length; the time from the user's barge-in until the speaker actually stops also includes processing time and playback buffering.
+
+[^ch6-moshi]: Kyutai, *Moshi: a speech-text foundation model for real-time dialogue*, 2024, which describes parallel audio streams for the user and the model.
+[^ch6-14]: Thinking Machines Lab, *Interaction Models: A Scalable Approach to Human-AI Collaboration*, which describes micro-turns, multistream interaction, and delegation of background tasks.
+
+### Cognitive Timing: Real-Time Interaction and Deep Thinking
+
+In Pine's customer-service calls, when the representative is halfway through a sentence, the assistant should sometimes wait and sometimes give a soft acknowledgment; while it is speaking itself, it must also hear corrections the other party cuts in with. This is why I am optimistic about the route Moshi represents: only when the timing is right does the other party feel that someone on this end of the line is really listening. For requests that require looking something up, there is another time budget to work out: between understanding the question and reporting the answer, how many handoffs are there?
+
+Tools the foreground voice model can call directly should be called by the foreground. Looking up flights then takes only two model calls: the foreground queries with the conditions the user gave, then reports the result. Delegation takes four: the foreground hands off the task, the background issues the query, the background organizes the result, and the foreground relays it. A competing view holds that a real-time model may fill in parameters wrongly, so the background should call the tools and leave the foreground to focus on when to listen and when to speak.
+
+GPT-Live-1's foreground has no interface for calling business functions directly and can only delegate to a background Agent. OpenAI Realtime's GPT-Realtime supports direct function calls from the foreground. Doubao Realtime Voice Model 3.0 (Seeduplex) also supports direct foreground calls in pure end-to-end mode, while in hybrid orchestration the calls are made by an external language model.[^ch6-voice-tools]
+
+Let each call to the foreground and background models take $L_f$ and $L_b$ respectively, and let the tool take $T$. From the moment the user finishes speaking until they hear the result, a direct call takes about $2L_f+T$ and delegation about $2L_f+2L_b+T$. The extra $2L_b$ of delegation is independent of the tool time $T$. Information that may be needed in every turn, such as user memory, can be looked up by the runtime and placed in the context, so the foreground needs only one model call, taking about $L_f+T$; if it has already been looked up before the user speaks, even $T$ is saved.
+
+Tasks that need multistep reasoning, such as comparing several rebooking options, are better handed to the background. Booking a ticket involves charging a card and issuing the ticket, so whoever calls the tool, the order must wait for the user's confirmation. Flight results can be summarized aloud while the full table is shown on screen, regardless of who calls the tool.
+
+> **Experiment 6-7 ★★: Should a Voice Agent's Tools Be Called by the Foreground or the Background?**
+>
+> Build the foreground with Doubao Realtime Voice Model 3.0 and the background with DeepSeek V4 Pro served by Volcano Ark. Prepare five mock tools—weather lookup, user-memory lookup, web search, flight search, and booking—that return results after set delays, with flight search and booking taking two to five seconds. Pre-synthesize the user's recordings and replay the same recording for each run of a scenario.
+>
+> Set up four divisions of labor. In the first, the foreground calls every tool. In the second, the background calls every tool and the foreground can only delegate. In the remaining two, the foreground looks up the weather, the runtime puts the user's memory into the context at the start of the session, and the background handles web search and booking; the two differ in whether flight search is handled by the foreground or the background. The foreground hears the user's voice directly; the background cannot hear it and can only read text. After each sentence the user speaks, Doubao's interface also returns the text produced by speech recognition, called the transcript. When delegating, the transcripts and the assistant's own utterances are arranged in order into a call log, which is handed to the background together with the tool calls already executed in this call and the task description written by the foreground. Under each division of labor, repeat each of the following scenarios 10 times.
+>
+> 1. Look up the weather and flights separately. Time from when the user finishes speaking until they hear the result; filler such as "Let me check" does not count as an answer. Compare the median wait for direct calls versus delegation. In my experiment, for the weather lookup these were 2.81 seconds and 6.96 seconds respectively.
+> 2. Look up flights first, then choose a ticket and confirm. Check each of the 13 booking fields against the previous search result, what the user just said, and the user's profile, and check that the order was placed after the user confirmed. In my experiment, all four divisions of labor filled in every field correctly and placed the order only after the user confirmed.
+> 3. Switch to booking for a colleague and play a recording that spells out the name: "陈嘉怡, 耳东陈, 嘉奖的嘉, 怡然的怡" (Chen Jiayi, with each character identified by a familiar word containing it, the usual way Chinese speakers spell a name aloud). Compare the recording, the speech transcript, and the name on the order to check whether both direct booking by the foreground and delegated booking got the name right. In my experiment, direct booking by the foreground was correct all 10 times; the transcript, however, rendered the name as "陈佳宜," a homophone written with different characters, and some delegated orders got the name wrong as a result.
+> 4. Play a recording asking about the weather before the flight search returns, and listen for whether the foreground answers the weather question and then reports the flight results. In my experiment, the weather question was always answered, but the original flight results were almost never reported afterward.
+
+When delegation is needed, the foreground should write the names and numbers it is confident about, as well as any correction the user has just made, into the task description, so the background does not fill in wrong parameters because of transcription errors. The runtime should keep track of results not yet spoken, so the foreground can continue reporting them after answering an interjected question.
+
+A quick "Let me check" from the fast model tells the representative that the assistant has heard the request. When the fare can actually be reported, though, depends on how lookup and reasoning are coordinated with the call. Figure 6-11 shows three arrangements: respond first and answer in depth later; have the foreground keep interacting while receiving advice from the background; and advance formulation and expression in parallel, segment by segment.
+
+![Figure 6-11: Fast/Slow Thinking Architectures Compared](images/revised/fig6-11.svg)
+
+#### Approach 1: Fast Thinking Responds, Slow Thinking Answers
+
+The fast model gives a brief response first, and the slow model completes the analysis in the background and then supplies a detailed answer. This design acknowledges the request early, but the consistency of the two answers must be managed. For example, the fast model may first recommend buying a certain plan, and the slow model may then discover that the plan lacks a key feature, so the two recommendations conflict. The root of the conflict is that the two sides answer independently, with possibly different grounds for judgment and different progress in their reasoning. Advice the fast model has already spoken has entered the user's thinking, and the user may even have acted on it; when the slow model corrects it, the system must explain the change and deal with any consequences already incurred.
+
+The foreground should therefore distinguish acknowledging a task from stating a business conclusion. "I'll check whether the plan includes that feature" can be said immediately, whereas a purchase recommendation waits for the necessary lookup and analysis. When the background result comes back, the system compares it with what has already been said before composing the next reply. Simple questions can be handled entirely by the fast model, reducing duplicate processing.
+
+#### Approach 2: Fast Thinking Interacts, Slow Thinking Advises
+
+Voice and screen can also divide the work. Said aloud, "This month's bill has an extra €15 roaming charge" lets the user grasp the key point at once; leaving the original amount, the current price, and the disputed line items on screen lets the user check them at their own pace. Confirming a specific action can be done with a tap, while sensitive information should be entered by the user in an input interface the business recognizes. The foreground needs only to receive a status such as "verification complete" to pick the conversation back up naturally.
+
+Suppose a traveler asks Pine to book a flight to Shanghai on Thursday morning, with a budget of 1,200 yuan and a need to reach the venue by noon. While on the phone with the airline, Pine passes a "note" to the background: "If we land at Hongqiao at ten, is there enough time to get from the airport to the venue?" The airline agent checks availability and tells Pine: "The flight landing at Hongqiao at ten is sold out. There's one landing at Pudong at ten-thirty, for 1,250 yuan." If the background can see only the notes the foreground passes it, it is still calculating the route from Hongqiao. The foreground has to add another instruction: "Recalculate for Pudong, landing at ten-thirty; the venue and arrival time are unchanged."
+
+Another approach is to sync the call log to the background in order as well. Having already read the airport and landing time the agent gave in the call log, the background can take on the same task when the foreground simply says "Work out whether this flight gets us there in time." When syncing the log, mark who said what; half-sentences from the foreground that were cut off before being played must also be distinguished from what has actually been said. Speech transcripts may omit or garble key information, so the foreground should write the names, numbers, and user corrections it heard accurately into the task description. When the two records disagree, the background follows the task description. Once the background finishes, it need only tell the foreground the estimated time of arrival at the venue and how tight the schedule is. Which routes it checked along the way, and which fields the map API returned, can stay in the background for reference. The foreground then takes the result and continues negotiating with the agent.
+
+The business traveler from Chapter 1 wanted the fare kept within 1,200 yuan. On past trips they were willing to pay a little more for a suitable flight, and they set no separate cap this time. Hearing that the lowest fare is 1,250 yuan, the assistant can book it for them. For a habitually frugal user traveling with family, however, those 50 yuan should be raised first. The foreground then has to look after two conversations at once:
+
+- To the user: "The lowest fare on this flight is 1,250 yuan, 50 over budget. Would you like to book it?"
+- Continuing with the agent: "Can you hold this fare for a little while? Is there anything later the same day under 1,200 yuan?" While the agent checks, the foreground can also ask about the baggage allowance and the change and refund terms.
+
+That way, when the user comes back they can see several options, and the agent knows what to look up next. If the user later explains, "Last time I was rushing to a meeting; from now on, ask me first whenever a business trip goes over budget," the assistant must follow this new rule next time.
+
+Waiting for the account holder to verify their identity calls for a different conversational rhythm. When the agent says the verification code has been sent, the foreground can reply: "Thank you, please hold on a moment while I ask the traveler to check their phone." If the traveler messages back that nothing has arrived yet, the foreground then asks the agent which number ending the text was sent to and how soon it can be resent. Once the traveler completes verification through the channel the business specifies, the foreground can carry on. In a call like this, waiting a little longer or issuing the ticket a little later is better than pressing the user to decide on the spot.
+
+At this point, the background sends "the original quote has been updated." The foreground first confirms the new price with the agent, then tells the user. If the user happens to reply "Go ahead and book" at that very moment, the reply refers to the 1,250-yuan quote sent earlier. The foreground must judge from the new price and the existing authorization whether to ask for confirmation again. The background only supplies information; it is always the foreground that talks to the agent and makes commitments. Only when messages carry the flight, the conditions under which a price applies, and a timestamp can the foreground tell which quote is out of date.
+
+The moment at which the same background message, "The price has changed; please verify," arrives also affects how the foreground should respond. If the agent has just said "The lowest fare is…", the foreground can first hear out the amount. If the agent has finished quoting and is waiting for an answer, this is the right time to ask about the new price. If the traveler has just cut in on the call with "Wait, let me change the date," the foreground should first get the new date clear, then decide whether the original flight still needs verifying. The same "OK," said while the agent is explaining the terms, may only mean "I'm listening"; said after "Shall I issue the ticket for you now?", it may be taken as agreeing to buy. Looking only at the transcript text misses distinctions like these.
+
+#### Approach 3: Formulation and Expression Advance Together
+
+The Step-Audio series provides two related examples. **Modality-Grounded Reasoning Distillation (MGRD)** concerns the information that reasoning relies on: it constructs and filters reasoning data around acoustic features such as pitch, rhythm, and intonation, and improves audio understanding through iterative distillation. In its reinforcement learning stage, Step-Audio R1 scores audio questions on two items: 0.8 points for a correct answer, plus 0.2 points for giving a reasoning process. The latter encourages the model to write out its grounds; whether the reasoning actually uses acoustic cues from the recording has to be checked during the earlier sample filtering.[^ch6-mgrd]
+
+**Mind-Paced Speaking (MPS)** concerns the timing of reasoning and expression. It uses a Formulation Brain and an Articulation Brain, letting the formulation process guide speech generation. Step-Audio R1.1's real-time solution adopts this method.[^ch6-mps]
+
+The two modules exchange information as they progress: formulation keeps moving forward, while articulation composes speech from the content already available and what has been said so far. This lets part of the expression overlap with later reasoning while keeping track of what has already been said.
+
+[^ch6-mgrd]: StepFun, *Step-Audio-R1 Technical Report*, which describes Modality-Grounded Reasoning Distillation.
+[^ch6-mps]: StepFun, *Mind-Paced Speaking: A Dual-Brain Approach to Real-Time Reasoning in Spoken Language Models*, and the Step-Audio-R1.1 model card, which describe the formulation and articulation modules and their use in a real-time system.
+
+#### Division of Labor and Upgrade Path
+
+**I value one engineering advantage of the fast/slow split: interaction capability and reasoning capability can evolve separately.** When a stronger reasoning model is released, the system can swap out the background. The background thus keeps pace with progress in reasoning models, while the foreground can keep improving the experience of listening, responding, and handling barge-in. The foreground needs to understand the task and the user's additions, while the background concentrates on longer reasoning, planning, and execution.
+
+**When reasoning models are iterating quickly and the team needs to keep upgrading business capabilities, I prefer a replaceable fast/slow split.** It spares the team from retraining the entire voice system every time the reasoning model is upgraded. A more tightly coupled design is worth adopting when intermediate reasoning needs to control expression more directly and the corresponding training resources are available.
+
+Pine AI's voice Agent uses an architecture in which fast thinking in the foreground works with slow thinking in the background. Its public article reports a first-place result on the τ²-bench voice track and describes how it combines continuous calls, business reasoning, and tool operation[^ch6-17].
+
+To make sense of these combinations, it helps to distinguish three design dimensions: the **audio path** determines whether the model processes sound directly or hands off through a transcript; **listen–speak timing** determines whether input and output proceed in turns or in parallel; and the **cognitive division of labor** determines how real-time interaction and deep reasoning share state and exchange results. A system can process audio directly and remain full-duplex while handing complex tasks to a separate background model. Thinking Machines Lab's interaction model and GPT-Live both demonstrate this kind of combination.
+
+[^ch6-17]: Pine AI, *The Most Natural Human-Computer Interface Is Your Voice*, which describes the fast/slow thinking architecture and the voice-task evaluation results it reports. The report refers to the leaderboard as τ²-bench voice.
+
+### More Human-Like Speech Synthesis
+
+Pauses, speaking rate, and stress help listeners understand sentence structure and the speaker's intent. For example, a phone number should be read out in appropriate groups, complex terms can be explained more slowly, and while waiting for a lookup the system can first say what it is working on. In my view, well-placed pauses and changes in rhythm make speech sound more natural and also let users hear how the task is progressing. Voice control can be designed around these concrete uses.
+
+The main LLM can insert control markers into its text, such as `[THINKING]`, `[EMO:happy]`, and `[SPEED:0.8x]`. The execution layer parses the markers, splits the text into speech and pause segments, and maps them to the emotions, styles, or reference clips the synthesis interface supports. The meaning of each marker is defined by the application: `0.8x` can map to a slow setting; pauses can be inserted by the player; and laughter or sighs are expressed through supported sound markers or generation capabilities.
+
+A reference-clip approach organizes the different ways a single speaker expresses themselves into a library. Each segment of text selects a matching emotion, speaking rate, and style, and the synthesized segments are then concatenated in order. Control state needs a defined scope: for example, an emotion persists until the next change, while a pause takes effect only at its position.
+
+> **Experiment 6-8 ★★: Control-Marker-Driven TTS with Fish Audio**
+>
+> This experiment uses Fish Audio S1 to build a voice library of 24 reference clips: four emotions, three speaking rates, and two styles in combination. A parser converts a marked-up reply into speech segments and silence segments, and the execution layer selects a reference clip for each segment and performs the synthesis.
+>
+> Compare three configurations: no control markers, a single reference clip, and multiple reference clips. Keep the reply content identical, check whether the markers are routed to the expected configuration, and then listen for changes in pausing, emotion, and timbre.
+>
+> The saved listening test used an audio understanding model, presenting the three configurations in rotating order and rating naturalness, emotional fit, thinking pauses, timbre consistency, and how much it sounded like a customer-service agent. The multiple-reference group scored highest overall, and the single-reference group scored below the no-marker group.
 
 ## Computer Use: GUI Automation Agents
 
-Voice pushed the timing axis down to the millisecond, but its observation is still a one-dimensional stream of sound. Computer Use moves the same problem onto a two-dimensional screen: observation becomes continuously changing pixels, and action becomes clicks and keystrokes at coordinates. Voice scenarios emphasize *when to speak*; Computer Use emphasizes *where to click next*—plus a question that does not exist in voice interaction at all: after an action executes, is reality still consistent with the plan?
+Suppose you ask an Agent to change the shipping address on a web page. It must first find the address field, type the new address, and then confirm from what the page displays that the change was saved. If a login dialog pops up just before a click, then even though the button in the previous screenshot has not moved, the target of that click has changed. Computer Use operates browsers, spreadsheets, or system settings through the screen, mouse, and keyboard, and its core challenge is making every action keep up with the interface actually in front of it.
 
-Computer Use, also known as GUI automation, allows AI to use software like a human by observing the screen and operating the mouse and keyboard—for example, opening a browser to search for information, filling in data in a spreadsheet application, or adjusting configurations in system settings. Its core is a **Perceive-Think-Act** loop (Figure 6-11):
+Follow the **Perceive-Think-Act** loop in Figure 6-12 and consider what the model must confirm before typing the new address. It chooses where to click based on the screenshot and task progress; the Harness checks the arguments and permissions, then passes the action to the execution layer. A successful click only means the click was sent. Where the input focus lands in the next screenshot is what determines whether it is safe to type the address next.
 
-1.  The Agent takes a screenshot of the current screen.
-2.  A multimodal model receives the screenshot and task instruction, and outputs a thought and a specific action.
-3.  The execution layer performs the action in the real environment (moving the mouse, clicking, typing text, etc.).
-4.  It waits for the interface to respond, takes another screenshot, and enters the next loop iteration.
+![Figure 6-12: Computer Use Agent's Perceive-Think-Act Loop](images/revised/fig6-12.svg)
 
-It is important to distinguish **understanding the interface** from **completing the task**. The former is closer to multimodal understanding and can be measured with one-shot screenshot question answering. The latter requires the model to put understanding and action generation into a closed loop that handles page loading, state changes, mistakes, and irreversible consequences. The challenge of Computer Use is therefore not merely answering correctly about a screenshot, but reconfirming after every step that reality still matches the plan.
-
-![Figure 6-11: Computer Use Agent's Perceive-Think-Act Loop](images/fig6-11.svg)
-
-There are three key design dimensions in this loop: **Action Space** (what operations the Agent can perform), **Visual Grounding** (how to find the target element in the screenshot), and **Model Architecture** (how to generate the correct action from the screenshot).
+Once the address is filled in, how should the assistant tell the executor which "Save" button to click? Screen coordinates and element numbers can both identify the target, but they place different demands on the model and the tools.
 
 ### Action Space Design
 
-Anthropic's reference implementation divides a complete interaction capability into three types of tools (Figure 6-12). This is a clear action-space design, but not a private protocol that model providers must follow: as long as the Harness can translate the same screenshots, action constraints, and execution results into messages and structured outputs supported by the target model, Claude, open-weight vision models, and self-hosted endpoints can all drive the same Perceive-Think-Act loop.
+In Figure 6-13, Anthropic's Computer Use reference implementation provides three kinds of tools: GUI operation, command execution, and file editing. Even within the GUI category alone, data flows in two directions: the click action goes to the executor, and the screenshot taken after the click goes back to the model as the observation for the next decision. The native API defines the tool format; with a different model, an adapter layer has to convert screenshots, action requests, and execution results into messages that model's interface can accept.[^ch6-computer-tools]
 
-![Figure 6-12: Computer Use Action Space](images/fig6-12.svg)
+![Figure 6-13: Computer Use Action Space](images/revised/fig6-13.svg)
 
-**GUI Operation Tool** (`computer` tool): Mouse operations include moving (`mouse_move`), left/right/middle clicks, double-clicking or triple-clicking, dragging (`left_click_drag`), and more precise press/release actions (`left_mouse_down` and `left_mouse_up`). Scrolling (`scroll`) supports four directions and can be combined with modifier keys. Keyboard operations include typing character by character (`type`, with a 12ms interval between characters to simulate real typing), key combinations (`key`, e.g., `Ctrl+C`), and holding a key (`hold_key`). Perception actions include taking a screenshot, retrieving the cursor position (`cursor_position`), and waiting (`wait`).
+**GUI operation tool.** Mouse actions include moving, left/right/middle clicks, double-clicks, triple-clicks, and dragging; finer-grained interfaces can express pressing and releasing separately. Scrolling requires a direction and an amount, and some implementations also support modifier keys. The keyboard interface provides text input, key combinations, and holding a key down. Screenshots and the cursor position are used to obtain state, and a wait action gives page loads or animations time to finish. The tool version determines the exact set of actions, and the Harness validates arguments according to the interface in use.
 
-**Command Execution Tool** (bash tool): Provides a persistent bash terminal session with a 120-second timeout. It uses a sentinel string to detect command completion and maintains environment state across multiple calls (e.g., after `cd` to a directory, the next call remains in that directory).
+**Command execution tool.** A persistent terminal keeps the working directory and environment state across calls. For example, after one call changes directory, the next call continues to run in that directory. The reference implementation can use a sentinel string to detect when a command has finished and set a timeout; the state of a process after a timeout still needs to be checked by the executor.
 
-**File Editing Tool** (`str_replace_editor`): Enables safe editing through string matching and supports view, create, replace, insert, and undo operations. It is more precise than overwriting an entire file and less likely to modify unrelated content accidentally.
+**File editing tool.** A string-replacement interface locates the region to modify by its original text, and can also offer viewing, creation, insertion, and undo. Before executing, check the location and number of matches; afterward, check the diff; if the file changed between two calls, reread the relevant content first. The editing strategies introduced in Chapter 5 can be reused here.
 
-> **Experiment 6-8 ★: Running Computer Use (Anthropic Reference Path or Open-Model Path)**
+> **Experiment 6-9 ★: Running the Anthropic Computer Use Reference Implementation**
 >
-> Path A uses the Anthropic Computer Use Demo. Its container packages a complete Ubuntu desktop environment, including a browser, terminal, and other common tools. The frontend receives a task, while the backend sends the instructions and screenshots to Claude and then executes the mouse, keyboard, terminal, or editing actions returned by the model.
+> This experiment uses the Ubuntu desktop, browser, and tool execution layer provided by the official container example. After the user enters a task, the model reads the screenshot and returns an action, the execution layer operates the desktop, and the new screenshot is returned to the model.
 >
-> Path B uses the example code in [`chapter6/computer-use-open-model`](../chapter6/computer-use-open-model/). By default, it drives browser-use with the open-weight Qwen3-VL 32B Instruct model through the hosted OpenRouter API, or through self-hosted vLLM/SGLang and similar systems.
+> The accompanying task looks up the weather in San Francisco. The saved trajectory first visits Google, runs into a CAPTCHA, follows a recovery instruction given during the run to switch to publicly readable Open-Meteo data, and finally reports the temperature and conditions. The record contains 15 desktop actions and the corresponding screenshots, so you can check round by round how clicks, key presses, text input, and waits change the page.
+>
+> For the path in which an open model drives the browser, see Experiment 6-10.
 
 ### Visual Grounding
 
-In each iteration of the loop, the model needs to accurately locate the target element in the screenshot—"Where is the search box?" "What are the coordinates of the submit button?" This is the visual grounding problem. Currently, there are **two main approaches**: one is to turn localization into a **multiple-choice problem**—first annotate the interface elements with numbers, and the model only needs to select one; the other is **pure coordinate prediction**—letting the model "look" at the screenshot and report coordinates directly, just like a human. The multiple-choice approach has two implementation methods: **pure visual annotation** (the original Set-of-Mark, using a segmentation model to segment candidate regions in the image) and **structured element indexing** (DOM/Accessibility Tree, directly reading the interface's inherent structure). The common advantage of the multiple-choice approach is that it transforms the open-ended problem of "find the button in the screenshot and predict its coordinates" into a closed-ended one of "choose one from the already annotated elements." Just as multiple-choice questions are easier to answer correctly than fill-in-the-blank questions in an exam, the model only needs to say "click [123]" instead of "click the button at screen coordinates (350, 464)." Predicting coordinates directly is especially hard for a model—it takes extensive training to get right, and it is prone to error across different screen resolutions.
+To have the model click a search box, the problem can be posed in two forms. One shows it a screenshot and asks it to report click coordinates. The other numbers the candidate targets and asks it to pick the search box; the numbers can be placed on candidate regions in the screenshot, or they can come from an element list provided by the browser. The three routes are introduced below. When choosing a number, the execution layer is responsible for mapping the number back to the actual target; when reporting coordinates directly, the model must also estimate the target's position, which places higher demands on grounding training and on adapting to screen resolution.
 
-**Set-of-Mark: Visual Annotation Method.**
+**Set-of-Mark: visual annotation.**
 
-The original Set-of-Mark (SoM) was proposed by Microsoft Research in 2023, initially to unlock the visual grounding capabilities of GPT-4V. It is a **purely visual** method: it uses image segmentation models (SAM, SEEM, etc.) to automatically segment candidate regions in the screenshot, overlays a numbered marker on each region, and the model sees an image with numbers. The model only needs to report the number, and the system converts it into the center coordinates of the corresponding region. The entire process does not require a DOM or any internal interface structure, so it is equally applicable to native desktop software and game interfaces—as long as the segmentation model can identify the candidate regions.
+Set-of-Mark (SoM) overlays referable numbers on an image, linking visual regions to the model's output. The original work generated candidate regions using segmentation and similar methods—for example, obtaining regions with SAM or SEEM and then placing marks on them. After the model chooses a number, the execution layer determines where to operate from the corresponding region. This method can be used for desktop software or game interfaces that lack a DOM, provided the control to be clicked falls within a numbered region and the model can see clearly which number it corresponds to.[^ch6-som]
 
-**Structured Element Indexing: A Structured Implementation of the SoM Idea on the Web.**
+**Structured element indexing.**
 
-When the interface itself provides structured information, annotation can be more precise. Before rendering, modern web pages define a complete element structure (the DOM tree) and semantic roles that identify buttons, input fields, and other controls. Accessibility trees provide similar information for many desktop applications. Web Agent systems such as `browser-use` take exactly this route: they enumerate and number interactive elements from the DOM. This is a structured implementation of the SoM idea for the web (Figure 6-13). The process has four steps:
+The browser can also provide another kind of clue. The Document Object Model (DOM) describes which elements the page contains and how they are nested, layout information gives where elements are displayed, and the accessibility tree preserves the roles and accessible names that assistive technologies need. For example, if a button showing only a magnifying-glass icon has been given the accessible name "Search," the Agent has a chance to find it by role and name. In approaches such as browser-use, the system can obtain element information through browser debugging interfaces such as the Chrome DevTools Protocol (CDP), identify input fields, buttons, and links, and then number the actionable elements on the current page. In Figure 6-14, the model has selected [2] in the upper right of the page. How does this number become a click on the Submit button?
 
-1. Obtain the structured representation (DOM tree) and accessibility information for the page through the browser's debugging interface (CDP, Chrome DevTools Protocol)
-2. Automatically detect which elements are interactive (buttons, input boxes, links, etc.)
-3. Annotate each interactive element with a unique ID and draw bounding boxes on the screenshot
-4. Simultaneously generate a text list describing the element corresponding to each ID
+![Figure 6-14: Set-of-Mark vs. Structured Element Indexing (browser-use Implementation)](images/revised/fig6-14.svg)
+
+The process can be divided into four steps: read the DOM, layout, and any available accessibility information; filter for interactive elements; build a numbering map for the current page; and give the model the element descriptions together with an annotated screenshot where needed. For example, the model might see the following four numbered elements:
 
 ```text
-Screenshot: [Key elements in the image are annotated with IDs like [1], [2], [3], [4]]
+截图中标有 [1]、[2]、[3]、[4]
 
-Elements:
 [1] <input type="text" placeholder="Search" aria-label="Search" />
 [2] <button id="submit-btn" aria-label="Submit form" />
 [3] <input type="text" placeholder="Enter your name" value="" />
 [4] <a href="/docs" aria-label="Documentation" />
 ```
 
-The model only needs to output an ID, and the system automatically clicks the center of the corresponding element. This approach does not save tokens because all annotation data must still be sent to the model, but it provides accurate, stable localization while avoiding the missed detections and false positives that segmentation models can introduce.
+(The first line notes that the screenshot is marked with [1], [2], [3], and [4].)
 
+After the model chooses a number, the execution layer resolves it to an element reference or coordinates, checks that the target is still visible and interactive, and then performs the operation. After the page refreshes, scrolls, or dynamically inserts elements, the map must be updated to avoid using stale numbers. Structured indexing can draw on tags, roles, and text, whereas canvases, occlusion, or incomplete semantic markup require judgment from the screenshot. The more elements listed and the larger the screenshot, the more information goes into the context.
 
-![Figure 6-13: Set-of-Mark vs. Structured Element Indexing (browser-use implementation)](images/fig6-13.svg)
+**Direct coordinate prediction.**
 
-**Pure Coordinate Prediction.**
+The coordinate route has the model output a position directly from the screenshot and a description of the target—for example, mapping "click the submit button" to a particular point. GUI grounding research such as SeeClick, as well as Claude's Computer Use, adopt coordinate output. The execution layer converts image coordinates into actual desktop coordinates.
 
-The third route skips annotation and asks the model to output coordinates directly. Systems such as **SeeClick** and Claude's computer use rely on vision models trained on massive datasets of GUI screenshots paired with element positions. These models learn to map natural-language descriptions (e.g., "click the submit button") directly to precise screenshot coordinates, relying on visual perception much like a human user.
+When a screenshot is scaled, both coordinate systems must use the same transformation. Take a 2560×1440 desktop: if the image sent to the model is 1366×768, the model's output (683, 384) corresponds to:
 
-In coordinate prediction schemes, the model's understanding of coordinates is highly dependent on the resolution used during training (Figure 6-14). Claude was trained using XGA (1024×768), WXGA (1280×800), and FWXGA (1366×768). If the input screenshot resolution does not match, the model's predicted coordinates will systematically shift—like measuring a distance on a small map and then applying it directly to a large map. Therefore, a bidirectional coordinate scaling mechanism must be implemented at the tool layer, and the target resolution must be **selected based on the aspect ratio** to avoid non-uniform stretching that distorts the image and consequently biases coordinate judgment. For example, if the actual screen resolution is 2560×1440 (16:9), the most suitable target among Claude's three supported options is FWXGA (1366×768), which has an aspect ratio closest to 16:9. The screenshot is proportionally scaled to 1366×768 and fed to the model; after the model outputs the click coordinates (683, 384), they are inversely mapped to the real coordinates (683×2560/1366, 384×1440/768) ≈ (1280, 720). Conversely, if a 16:9 image is forcibly stretched into the 4:3 1024×768, the image will be horizontally compressed, causing the model's predicted coordinates to systematically shift.
+$$
+x = 683 \times \frac{2560}{1366} = 1280,\qquad
+y = 384 \times \frac{1440}{768} = 720
+$$
 
+In Figure 6-15, the two sizes have nearly the same aspect ratio. If the screenshot was letterboxed to preserve its proportions, the model's coordinates include the padding; before converting back to the original screen coordinates, first subtract the corresponding padding offset, then apply the scaling factor. Cropping, display scaling, and the origin of multimonitor setups also change the mapping, so the tool layer should store the actual transformation parameters.
 
-![Figure 6-14: Resolution Matching and Bidirectional Coordinate Scaling](images/fig6-14.svg)
+![Figure 6-15: Resolution Matching and Bidirectional Coordinate Scaling](images/revised/fig6-15.svg)
 
+The reference implementation has used target sizes such as XGA (1024×768), WXGA (1280×800), and FWXGA (1366×768). Forcing a change in aspect ratio distorts the shapes of controls, and using the wrong inverse mapping puts a correct prediction in the wrong place.[^ch6-computer-tools]
 
-The choice among the three routes can be summarized as follows: **when structured information is available, prioritize DOM/accessibility-tree indexing** for the most accurate and stable localization. **When it is unavailable**—in native desktop software such as Photoshop, canvas/WebGL-rendered interfaces, or games—**use either visual annotation (the original SoM route) or coordinate prediction**. Visual annotation turns localization into a multiple-choice problem, making it friendlier to general-purpose models without specialized training. Coordinate prediction eliminates the annotation step and is more direct for models trained specifically on GUI localization. Both approaches still struggle with small elements and dense interfaces.
+**When structured information is complete, I prefer DOM or accessibility-tree indexing.** Element names, roles, and references can take part in grounding directly, reducing the work of having the model estimate pixel positions on the fly. When structure is missing, a general-purpose vision model can first be paired with SoM so that it chooses one of the marked regions; a model already trained on GUI grounding can predict coordinates directly, skipping the separate annotation step.
 
-> **Experiment 6-9 ★: Using browser-use to Implement Automated Browser Operations**
+> **Experiment 6-10 ★: Using browser-use to Implement Automated Browser Operations**
 >
-> Use Playwright, a browser-automation framework, together with a multimodal model to implement natural-language-driven browser operations. Enable SoM visualization and save a screenshot with annotated bounding boxes before every decision.
+> This experiment uses Qwen3-VL 32B Instruct to drive browser-use, generating actions from browser state, element information, and screenshots. The task is to look up the weather in San Francisco: locate the search box, type "San Francisco weather today," submit the query, and extract the temperature and conditions.
 >
-> Test task “Open Google and query San Francisco weather”: after startup, the screenshot shows Google Search with numbered interactive elements. The model selects the search box, enters “San Francisco weather today,” submits it, and extracts the temperature and conditions from the results page.
+> The code and instructions for Experiment 6-10 provide two entry points. With an OpenRouter key, you can use a hosted vision model; if you already have a compatible service such as vLLM or SGLang, you can point `OPEN_MODEL_BASE_URL` and `OPEN_MODEL_MODEL` at your own endpoint and model and set the key as the service requires. Both routes start by running `python main.py --dry-run` in the experiment directory to review the configuration, then launch the actual query according to the instructions.
+>
+> The saved run completed 16 steps of interaction and kept 15 screenshots. When Google presented a CAPTCHA, the task switched to weather.com to get the result.
+
+[^ch6-computer-tools]: Anthropic, Computer Use tool documentation and reference implementation, which describe the versioned action interface, the execution layer, and screenshot handling.
+[^ch6-som]: Microsoft, *Set-of-Mark Prompting*, 2023; browser-use's DOM service implementation provides an example of structured element handling.
 
 ### A Computer Use Agent That Can Watch Animations and Hear Sound
 
-So far, Computer Use perception has rested on an implicit assumption: **the screen is static**—take a screenshot, reason one step, click, and take the next screenshot. Real screens play videos, flash short-lived notifications, and carry voices from meetings. An Agent that opens its eyes only once every 3–5 seconds and has no ears cannot see or hear what happens between two frames.
+A page shows "Sync failed" only briefly after saving, yet two screenshots taken a few seconds apart both show the same form. Looking at the two images again, the model will very likely be unable to reconstruct what happened in between. Videos, animations, short-lived notifications, and meeting audio have the same problem. **For interfaces that change continuously, I argue that the observation interface should be the main target for improvement.** To decide the next step based on change, the events and frames that appeared between actions must also be preserved.
 
-What needs redesign is not the action interface but the **observation interface**[^ch6-9]. An Agent–computer observation interface (AOI) converts continuous environmental observation into discrete events the model can handle. Its key techniques are: **screen keyframe capture**, which uses a small model to judge whether the screen has changed meaningfully and only takes a screenshot on a significant change—when changes are frequent, capturing once per second already works well; **volume-gated speech transcription**, which invokes recognition when sound is present and feeds the recognized text into the context so the Agent can hear; and **describing the screen as text**, so the model turns each captured screenshot into a one-sentence description that stays in the context after the original image leaves it, compressing multimodal interaction history.
+The **Agent–Computer Observation Interface (AOI)**, which a collaborator and I proposed, converts the continuous screen and audio into images and text that a model can take in[^ch6-9]. The interface has three components:
 
-[^ch6-9]: See Li, Bojie and Noah Shi. *Agent-Computer Observation Interfaces Enable Dynamic Computer Use.* arXiv:2606.29472, 2026.
+- **Keyframe capture between actions.** While the main loop runs, monitor changes on screen, filter candidate frames by pixel difference or a lightweight vision model, and pass the useful frames to the next decision.
+- **Volume-gated transcription.** When sound is detected, invoke speech recognition and add the transcript with timing information to the observation record, helping the Agent use meeting content or spoken instructions.
+- **Persistent screen descriptions.** Summarize key frames as text; after the original image leaves the context, the text still preserves what changed, for later steps to refer to.
+
+For example, if a video demonstrates a menu operation, a model that receives the intermediate frames and their descriptions can keep referring to that step after playback ends. The paper's ablation results show that persistent text descriptions are especially important to the gains, while finer keyframe selection contributes less; some models actually degrade when too many images are added.
+
+Return to the earlier example of saving a form. Even if a keyframe captured "Sync failed," once the original image leaves the context the model can rely only on the description left behind. "A notification appeared on the page" could mean the save succeeded or failed; only "Sync failed; address not saved" preserves the clue needed to decide the next step.
+
+[^ch6-9]: Bojie Li and Noah Shi, *Agent-Computer Observation Interfaces Enable Dynamic Computer Use*, 2026, which introduces AOI and ablates its components.
 
 ### World Models for Computer Use
 
-The observation interface of the previous section answers "what happened in between?": with keyframes, speech transcription and persistent text, the Agent no longer sees only two screenshots taken far apart. But an observation interface does not remove planning latency. The Agent is still running a serial "screenshot—think—click" loop, re-observing and reasoning about the next step after every single action. The **OSWorld-Human** efficiency study shows that even when a task eventually succeeds, the Agent takes markedly more steps and waits markedly longer than a person does; reaching human-level accuracy is not the same as being practical.
+Once it has timely observations, the Agent still has to choose an action and wait for it to execute. The OSWorld-Human study compares Agents' operating efficiency with human trajectories and analyzes sources of time cost such as redundant steps and model calls[^ch6-osworld-human].
 
-People do not start thinking about the next step only after clicking. They first predict what an action will do: if the actual change matches the expectation, they carry on with the existing plan; only when the page state departs from what was expected do they stop to observe and plan again. A world model lets the Agent predict what the desktop may turn into before it acts, giving it this human-like "speculative execution" and improving efficiency substantially.
-
-Desktop state is more than a grid of pixels. It also includes windows, focus, scroll position, input-field contents, loading state, permissions and network responses; actions include clicking, typing, scrolling, dragging and waiting. A world model usable for Computer Use must at minimum encode the current state, predict the state change a candidate action would cause, and hand that prediction to the planner to decide the next step:
+A world model gives planning a prediction of an action's consequences. Desktop state can include windows, focus, scroll position, input contents, and loading progress; information such as permissions and network results has to be filled in through the corresponding interfaces. From the currently available state and a candidate action, the model predicts the next state:
 
 ```text
-desktop state + click/type/scroll/wait ──> representation of the next state
+当前状态 + click / type / scroll / wait → 预测的下一状态
 ```
 
-This lets the Agent compare the consequences of candidate actions before it actually clicks, prepare the next step while a page is loading, and recover from a dialog that flashed past by reasoning about the state difference. If the task is "create a new Python file in VS Code and write hello world", the model can first predict the key state of the file tree and editor on success, and only then choose the click, type and save actions; if the task is to delete a file, it can predict inside an isolated virtual desktop whether an irreversible confirmation dialog will appear, and ask the user to confirm when necessary. The point here is not to have the model generate a photorealistic future screenshot, but to predict the checkable state differences that completing the task requires.
+(That is: current state + click / type / scroll / wait → predicted next state.)
 
-In July 2026, **Photon-1** from Induction Labs demonstrated one implementation of this route, completing the pretraining of a computer use world model with only 30,000 hours of H200 GPU time. It compresses each frame into discrete latent tokens and autoregressively predicts the representation of the next state after an action, rather than generating screenshots pixel by pixel during pretraining; the image generator attached to it serves only to visualize the latent representations and is not a component required for inference. Given a seed screenshot and the actions that follow, the model can "imagine" desktop states continuously, and then learn to output computer-use actions through online training on virtual machines.[^ch6-20]
+When people use a computer, they often anticipate the next step before clicking; if the interface behaves as expected they carry on, and only when something unexpected happens do they stop to check. A world model can give an Agent a similar basis for speculative execution: the planner compares candidate actions in advance, prepares later steps while a page is loading, and continues once the real state is confirmed, reducing the wait caused by replanning from scratch after every click. For example, when creating a new Python file in VS Code and writing hello world, the expected changes include a new file appearing in the file tree, the editor containing the code, and the saved status updating. After execution, check these changes: if they match expectations, continue; if they deviate, relocate the target and replan.
 
-[^ch6-20]: David Li and Jonathan Li, Induction Labs, “Scaling Video Pretraining with Imagination Models,” 2026-07-23. https://www.inductionlabs.com/news/scaling-video-pretraining. The parameters, data scale, internal benchmarks and cost comparisons reported for Photon-1 are figures disclosed by the company.
+Operations such as deleting files also need independent execution conditions: whether the target is correct, whether deletion is allowed, whether it can be undone, and whether the user must confirm. Prediction helps in understanding the likely outcome, while actual permissions and business conditions are checked by the execution layer.
 
-### Mobile: Ecosystem Barriers Are Harder Than Technology
+**Latent-state prediction in Photon-1.** In July 2026, Induction Labs introduced Photon-1, which encodes video frames as discrete latent tokens and learns state changes by predicting subsequent tokens. The company disclosed that its pretraining used about 30,000 H200 GPU hours. State prediction happens in the latent tokens, and an auxiliary image generator turns them back into viewable frames so people can inspect the predictions. Planning and action generation can use the internal representation directly, avoiding the cost of generating a full screenshot at every step.[^ch6-20]
 
-Computer Use is also expanding to mobile devices. Mobile and desktop systems do differ technically: instead of relying on mouse coordinates and keyboard input, the mobile action space typically uses the system's accessibility-service API (e.g., Android's `AccessibilityService`) to read interface elements and issue clicks or enter text. Interaction also shifts from a mouse pointer to touch gestures, changing the meaning of coordinates. The same `(x, y)` position might indicate a tap, a long press, or the starting point of a swipe, so the action must also specify a gesture type. Mobile benchmarks such as AndroidWorld, introduced in Chapter 7, evaluate an Agent's ability to complete tasks in real applications within this action space.
+The approach goes on to learn instruction and action formats through fine-tuning: it first predicts the state it wants to reach, then generates the operations that lead there, and improves task performance through online training in virtual machines. Action-conditioned fine-tuning, in turn, is used to predict how the desktop changes after a given operation. These two uses connect to planning and simulation respectively, showing how state representations can take part in Computer Use.
 
-However, what truly hinders mobile Computer Use is often not these technical differences, but ecosystem barriers. Some phone manufacturers have attempted to integrate AI assistants into consumer-grade phones so that the assistants can automatically operate everyday apps like WeChat, Taobao, and Alipay, but they quickly encountered platform restrictions.
+[^ch6-osworld-human]: Reyna Abhyankar et al., *OSWorld-Human: Benchmarking the Efficiency of Computer-Use Agents*, which analyzes task trajectories and time costs.
+[^ch6-20]: David Li and Jonathan Li, *Scaling Video Pretraining with Imagination Models*, Induction Labs, 2026-07-23, which describes Photon-1's pretraining, action learning, and state simulation.
+[^ch6-21]: Google DeepMind, *Genie 3: A new frontier for world models*, 2025-08-05; Zachary Lin et al., *Cosmos World Foundation Model Platform for Physical AI*, 2025.
 
-This reveals a unique challenge for Computer Use: **ecosystem barriers**. The fundamental reason behind these restrictions is a conflict of business models. The core monetization logic of traditional internet applications is **traffic and attention**: users see ads while scrolling through feeds, are guided by recommendation algorithms when searching for products, and make impulse purchases while browsing pages. When an Agent operates on the user's behalf, that monetization chain is bypassed entirely: the AI ignores ads, makes no impulse purchases, heads straight for the goal, finishes the task, and leaves. For platforms that live on advertising and traffic, every Agent operation erodes the foundation of the business model.
+### Mobile: Technical Interfaces and Ecosystem Cooperation
 
-This means that Computer Use faces not only technical countermeasures such as CAPTCHAs, but also a **structural conflict of interest**. This conflict will be difficult to resolve in the short term and poses a greater obstacle to consumer adoption than purely technical problems.
+Mobile devices still use the observe–decide–act loop, but actions take the form of touch gestures more often. The same coordinate can mean a tap location, a long-press location, or the starting point of a swipe, so the interface also needs a gesture type, a duration, and a path. Screen rotation, the soft keyboard appearing, and system pop-ups also change the operable area.
+
+Android's `AccessibilityService` can read interface information and perform corresponding actions within the scope it has been granted, and the gesture interface requires declaring the corresponding capability[^ch6-android]. Screenshots, the accessibility tree, and system automation interfaces can be used together, with the exact scope available determined by the operating system, the app's implementation, and authorization. Benchmarks such as AndroidWorld, introduced in Chapter 7, check whether these actions produce the expected results in real app tasks.
+
+**In my view, the ecosystem barriers to deploying on mobile are often harder to deal with than the technical problems.** Platforms need to decide which operations can be delegated to an agent, how accounts, payments, and data are authorized, and how responsibility is traced when something goes wrong. These arrangements directly shape the range of tasks an Agent can complete.
+
+One structural conflict of interest comes from traffic and attention. Many apps earn revenue from ad impressions, content recommendations, and transaction entry points; when users delegate an Agent to complete a query or purchase directly, browsing paths may shorten, and the attention captured by recommendations and ads changes too. For platforms that monetize these steps, agent operation touches their existing sources of revenue. Platforms therefore need to rethink interface access, revenue sharing, and the management of agent identities.
+
+[^ch6-android]: Android Developers, AccessibilityService, which describes interface access, actions, and gesture capabilities.
 
 ## Robot Manipulation: Tidying a Desk with XLeRobot
 
-> **Reading note**: This section uses one task throughout—"put the red cup in the tray, put the yellow scrap paper in the bin, then observe again and confirm the state of the desk." Experiments 6-10 and 6-12 run on real XLeRobot hardware and need an arm, calibration, an emergency stop and an on-site observer; experiments 6-11, 6-13 and 6-14 are the corresponding local-GPU experiments. Hardware and simulation are reported separately, but the task goal, the action semantics and the success conditions stay the same.
+Put the red cup in the tray, put the yellow scrap paper in the bin, and finally confirm that the desk is tidy—this task ties perception, planning, and control together. As the gripper approaches the cup, the cup's position in the camera image changes; once the cup is picked up, the arm must avoid other objects on the desk; if the paper slips out of the gripper on the first try, the system must notice the failure and try again. Every action changes the conditions for the next decision.
 
-Robot manipulation is much harder than answering questions about a picture. The model has to understand the scene and then take actions continuously in the real world, where every action changes what the next moment looks like. XLeRobot makes that difference concrete: the same arm can be teleoperated by a person through a keyboard, a gamepad or a VR device, or it can hand camera observations and a constrained set of action tools to an Agent to call on its own. The hardware and the task stay fixed; only the operator changes—in the first case a human observes and corrects continuously, in the second the model and the control system must do the same work.
+This section organizes five experiments around this task. Experiments 6-11 and 6-13 give practical designs for teleoperation and autonomous operation on real hardware; Experiments 6-12, 6-14, and 6-15 use local simulation to study the control baseline, failure recovery, and changing visual conditions respectively.
 
-This section runs five experiments on "tidy the desk." First a human teleoperates the real XLeRobot, measuring what the hardware can do under a sufficiently capable operator; then a simulator establishes the ideal control ceiling for the same task. Next an Agent controls the real XLeRobot autonomously, showing how perception, planning and failure recovery affect the result; then the same tool contract goes into the simulator so that open-loop execution, step-by-step checking and world models can be compared in bulk. Finally the background, object appearance, lighting and visual noise change, to see whether a visual policy learned in simulation adapts to a new environment.
+The same robot can be operated by a person who continuously watches the camera, or by a model that reads the image, chooses a skill, and hands it to the control system for execution. Keeping the task and hardware fixed, the difference between the two can be analyzed through four questions: what the person wants done, which subtask comes next, what actions the current skill outputs, and whether the environment matches the plan after the action. Long-horizon planning arranges the order in which the cup and the paper are handled; a VLA policy or predefined action primitives perform the grasping and placing; a world model helps estimate the consequences of actions; and sim-to-real transfer handles changes in imagery, contact, and actuator characteristics.
 
-The bottleneck here is usually not one more static question-answering benchmark, but whether the model can keep closing the loop under limited perception and control bandwidth. A usable robot system has to answer at least four questions:
+### The Division of Labor Between Hardware and Algorithms
 
-1. What task does the person want done?
-2. Which subtask comes next?
-3. What actions does the current skill actually emit?
-4. After the action executes, does reality still match the plan?
+When autonomous desk tidying fails, teleoperation can first be used to check whether the hardware can do the task. Keep the camera, arm, gripper, desk layout, and acceptance conditions fixed, and let an operator take over the perception and control loop. If a person succeeds consistently over many rounds while the autonomous system keeps failing, this hardware can already handle the current task, and the bottleneck lies mainly in the algorithms and feedback of autonomous control. The priority then is to investigate object localization, skill selection, action timing, and failure recovery, so the autonomous system learns the corrections that work under teleoperation.
 
-This section places those four questions inside one XLeRobot control loop and shows what each of four techniques is responsible for: long-horizon planning decides whether the cup or the paper is handled first, a VLA or action primitive performs the grasp and the placement, a world model estimates the consequences of an action, and sim-to-real transfer handles the differences between training footage and the real camera and actuators. Even when the high-level model already has enough knowledge and planning ability, losing any one of these feedback links can still leave the task unfinished.
+XLeRobot supports teleoperation with a keyboard, an Xbox controller, and Switch Joy-Cons, and VR control can be tried out first in a simulated environment.[^ch6-1] As the gripper nears the cup, the operator slows down; if the cup slips, the grasp point has to be corrected. If the gripper fails to pick up the paper, the operator looks again; when an object is in place, the operator takes a look to confirm. All of these observation-driven corrections are worth recording in the demonstration data. Later, when the robot operates autonomously, it must likewise be able to detect slips and missed grasps.
 
-### The Division of Labour Between Hardware and Algorithms
-
-The first question XLeRobot is best suited to answer is this: when autonomous desk tidying fails, is it the arm that cannot do it, or the algorithm that is not using the arm well? There is a fact that cannot be overlooked: **an arm costing only a few hundred dollars, like XLeRobot, can already complete the kind of continuous multi-step desk task in this section through teleoperation**—a person watches the camera feed, picks up the red cup and puts it in the tray, then puts the yellow scrap paper in the bin and confirms the state again. That result is not merely "the hardware is barely feasible"; it is a clear piece of diagnostic evidence: **for this task the hardware itself is not the bottleneck, the algorithm is.**
-
-The diagnostic method is direct: keep the camera, the arm, the gripper, the desk layout and the success conditions fixed, and let a human take over the loop. A human continuously corrects object localization, action choice and timing, and handles failed grasps; the gap between an autonomous system and a person lies precisely in those closed-loop abilities. The scope of the claim is of course this section's desk task: it shows the hardware has cleared the payload, precision and workspace thresholds this task requires, not that a few-hundred-dollar arm can handle every open environment or harder manipulation.
-
-XLeRobot supports keyboard, Xbox controller, Switch Joy-Con and VR teleoperation. A human operator naturally does many things an algorithm has to implement explicitly: slowing the gripper as it nears the cup, correcting the grasp point when the cup slides, observing again after failing to pinch the paper the first time, and checking the outcome once an object is in the target area. Teleoperation is therefore not only a way to collect demonstrations but also a "fix the hardware, swap the operator" diagnostic experiment.[^ch6-1]
-
-> **Experiment 6-10 ★: Teleoperating a real XLeRobot to tidy a desk**
+> **Experiment 6-11 ★: Teleoperating a Real XLeRobot to Tidy a Desk**
 >
-> Place a red cup, a tray, yellow scrap paper and a bin in the real XLeRobot workspace. Using one calibrated teleoperation method, the operator performs the fixed task: "put the red cup in the tray, put the yellow scrap paper in the bin, then observe again and confirm the state of the desk." Repeat for several rounds at minimum, recording the camera feed, operator input, arm state, action timing, failed grasps, retry counts and the final state.
+> In an XLeRobot workspace that has passed calibration, joint-limit, and emergency-stop checks, place a red cup, a tray, yellow scrap paper, and a bin. Using one calibrated teleoperation method, perform the fixed task: "Put the red cup in the tray, put the yellow scrap paper in the bin, and finally confirm the state of the desk." Repeat for several rounds, recording the camera feed, operator input, arm state, action timing, failed grasps, and retry counts.
 >
-> Acceptance cannot rest on "the desk looks tidy at the end." The red cup must be inside the tray, the yellow paper inside the bin, the arm back in a safe pose, with no collision, no out-of-bounds motion and no unconfirmed manual intervention along the way.
+> At the end of each round, confirm that the cup is inside the tray, the paper is inside the bin, and the arm has returned to a safe pose, and review the records of collisions, out-of-bounds motion, and manual intervention throughout. Analyzing at which step failures occurred, how the operator recovered, and the final result together yields a baseline against which autonomous control can be compared.
 
-Teleoperation on real hardware gives the most convincing ceiling for the task, but it is not suited to varying object counts and positions in bulk. To obtain a repeatable, statistically meaningful control, the next step moves the same "put objects where they belong" problem into a 2D desktop simulator, using an ideal controller to stand in for a strong operator who never misperceives and never picks the wrong action.
+Simulation experiments, by contrast, make it easy to vary the number and initial positions of objects repeatedly and to study the control process alone under a known state. A 2D desktop model can represent approaching an object, carrying it to the target, and moving on to the next object as three phases, describing control overhead by the number of steps to completion and path length.
 
-> **Experiment 6-11 ★: Measuring the ideal control ceiling for the same task in simulation**
+> **Experiment 6-12 ★: Establishing an Ideal Control Baseline for the Same Task in Simulation**
 >
-> In a 2D desktop simulator, randomly place the red cup, the yellow paper and their target areas, and let an ideal controller approach each object in turn, grasp it and move it to the right place. It does not need to recognise images and never picks the wrong action, so it represents "what this task can at least achieve when perception and decision-making are both correct."
+> On a 2D desktop, randomly generate object positions and target positions, and let a controller read the coordinates directly, approach each object in turn, move it to its target, and then handle the next object. Vary the initial positions and the number of objects, and compare success rate, steps to completion, and path length.
 >
-> The experiment tracks task success rate, number of steps and path length, and varies initial object positions and task scale to see whether the ideal ceiling stays stable. It uses the same success conditions as experiment 6-10, but measures results from an idealized simulation and does not imply the real XLeRobot has been run. Together the two establish the reference lines for the autonomous control that follows: experiment 6-10 is a human loop on real hardware, experiment 6-11 an ideal loop in simulation.
+> First, follow the complete trajectory of a single object: the controller enters the carrying phase when it reaches the object, and the completed count increments only when it reaches the target. Then increase the number of objects and check that every object passes through both of these arrival conditions. The accompanying 2D simulation places 1, 2, 3, and 4 objects under each of five random seeds and runs 512 episodes for each combination, and all 10,240 episodes are completed. The controller can read coordinates directly, and moving objects does not depend on a real gripper.
 
 ### The Basic Structure of Robot Control
 
-Robot systems usually separate work by timescale:
+Tidying a desk once may take several minutes, yet joint control must be updated continuously and promptly. The system can divide the work by timescale: high-level planning arranges the order of tasks, skill policies generate motion, and a low-level controller tracks execution:
 
-| Layer | Core question | Output | Typical timescale |
+| Layer | Core question | Output | Timescale and example configuration |
 | --- | --- | --- | --- |
-| Task goal | What does the person want done | "Put the cup and the paper away" | Minutes |
+| Task goal | What does the person want done | "Put the cup and the paper away" | Minutes per task |
 | Long-horizon planning | What comes first, what comes after | Handle the cup, then the paper, then check | Seconds to minutes |
-| Basic skills | Which state change to achieve now | `pick(red_cup)`, `place(red_cup, tray)` | About 1–3 s |
-| VLA / skill policy | How this skill actually moves | A short motion or continuous trajectory of the XLeRobot gripper | About 1–10 Hz inference |
-| Low-level control and safety | How to execute stably and in time | Joint or end-effector commands, speed limits and emergency stop | About 50–1000 Hz |
+| Basic skills | Which state change to achieve now | `pick(red_cup)`, `place(red_cup, tray)` | One skill may last several seconds, e.g., 1–3 s |
+| VLA / skill policy | How the current skill actually moves | Gripper actions, end-effector poses, or a segment of joint trajectory | Inference can be configured at 1–10 Hz |
+| Low-level control and safety | How to execute stably and promptly | Joint or end-effector commands, speed limits, and emergency stop | Controllers can be configured at tens to thousands of Hz |
 
-This is a common engineering split, not the only model architecture. A VLA can take on part of the high-level judgement, and the planner can be a rule-based program, a VLM or an optimiser. Whichever implementation you choose, "task order" and "the action right now" should stay separate; otherwise the high-level model's inference latency drags down low-level control, and high-frequency low-level control forces the high-level model to process a great deal of irrelevant detail. For XLeRobot the model should not emit arbitrary joint angles directly; it only selects bounded skills such as `pick`, `place`, `verify_state` or `stop`, and a calibrated, speed-limited executor with timeouts turns those skills into real arm motion.
+The planner can be a rule-based program, a VLM, or an optimizer, and a VLA can also take on part of skill selection. **My recommendation is to handle task order and the immediate action separately.** High-level reasoning needs time to organize a plan, while low-level control needs to respond promptly to changes in position and force; only by letting each run at its own appropriate rhythm can a system do justice to both planning and control.
+
+This section gives the high-level model five kinds of tools—`observe_scene`, `pick`, `place`, `verify_state`, and `stop`—for observing, grasping, placing, checking, and stopping respectively. The Harness checks arguments, the workspace, and the current state; the executor converts skills that pass these checks into arm motion and handles speed limits and timeouts. Joint angles and continuous trajectories are generated by skill policies and controllers, giving a clean interface between the model's choice of skill and the actual motion.
 
 ### Long-Horizon Planning and Task Decomposition
 
-When the user says "tidy up the desk," the system cannot hand that sentence straight to an action model. The planner first lists the objects and goals in the scene, then decides the order, and for each step writes down the start condition, the completion condition and the risk limits. For example:
+When the user says "Tidy up the desk," the planner first identifies the objects and their target areas, decides the order of handling, and writes down for each step its start condition, completion condition, and action limits. For example, the order might be:
 
 ```text
-handle the red cup → clear the yellow paper → check the desk
+处理红色杯子 → 清理黄色纸张 → 检查桌面
 ```
 
-"Handle the red cup" then decomposes further into two actions and one check:
+(That is: handle the red cup → clear the yellow paper → check the desk.)
+
+"Handle the red cup" breaks down further into two actions and one check:
 
 ```text
 pick(red_cup) → place(red_cup, tray) → verify_state()
 ```
 
-Each completed skill provides a checkpoint where the outcome can be verified. If a grasp fails, only that step is retried; if someone moves an object, or the user changes the goal, only the affected later steps need replanning—the old plan does not have to be redone from scratch. The tools given to the agent should be equally simple: one call does one thing, the range of motion is fixed, there is a timeout, and observation happens again immediately after execution.
+Take "pick up the cup and put it in the tray." When the arm finishes running its grasp routine, that only means the routine has ended. Before lifting, the system must use gripper feedback or a new image to judge whether the cup is really held. If the grasp missed, it relocates the cup; if someone has moved the tray, the successful grasp still counts and only the placement needs replanning. When each skill corresponds to a checkable state change, with bounded actions and duration, and returns its execution status and a fresh observation, the planner can recover from the exact step that went wrong.
 
-> **Experiment 6-12 ★★: Driving XLeRobot to tidy a desk autonomously with Gemini Robotics-ER 1.5**
+> **Experiment 6-13 ★★: Driving XLeRobot to Tidy a Desk Autonomously with Gemini Robotics-ER 1.5**
 >
-> Keep the real XLeRobot, the desk layout, the task instruction and the success conditions of experiment 6-10 unchanged, and replace the human operator with an Agent. An embodied reasoning model such as Gemini Robotics-ER 1.5 can handle observation and planning, exposing only five tools through a RoboCrew-style agent loop: `observe_scene`, `pick`, `place`, `verify_state` and `stop`.[^ch6-2]
+> Keep the hardware, desk layout, task, and acceptance conditions of Experiment 6-11, and let an embodied reasoning model handle observation and planning. Following RoboCrew's orchestration approach, design five tools for this task: `observe_scene`, `pick`, `place`, `verify_state`, and `stop`.[^ch6-2]
 >
-> The model first observes the desk, decides the order, then calls the calibrated XLeRobot grasp and place actions. After every completed skill it must observe again and check the postcondition; on a failed grasp it may only retry the current skill, and it must call `stop` when the user says stop, when an object leaves the workspace, or when the state cannot be confirmed. The model cannot emit arbitrary joint angles, nor skip a real check merely because it previously said "done."
+> The model first reads the desk observation and decides the order of handling, then calls the calibrated grasp and place skills. After completing each skill, it obtains a new observation and checks the postconditions; after a failure, it chooses to retry or stop based on the current state. The runtime stops execution directly when it receives an emergency-stop signal, detects out-of-bounds motion, or cannot confirm a key state, and the model can also end the task itself by calling `stop`.
 >
-> The acceptance criteria are exactly those of experiment 6-10: cup in the tray, paper in the bin, arm back in a safe pose, no collision and no out-of-bounds motion. The difference is that in the autonomous experiment the task semantics must come from the model's own observation, the real actions must come from tool calls, and the final state must be confirmed by a fresh observation; the human may only start the run, hit the emergency stop and supervise safety, never complete an action on the Agent's behalf midway. Only then can experiments 6-10 and 6-12 be compared directly on "same hardware, same task—what is still missing between the human loop and the model loop."
+> Finally, a fresh observation of the environment confirms that the cup is inside the tray, the paper is inside the bin, and the arm has returned to a safe pose, and the collision and out-of-bounds records are reviewed. The operator is responsible for starting the run, the emergency stop, and on-site supervision, and any midway takeover is recorded separately.
 
-Real-hardware experiments expose calibration error, camera occlusion and gripper failure, but they are poorly suited to repeating large numbers of faults safely and controllably. The simulation experiments that follow keep these five tools and exactly the same task state, replacing only the real actuator with a desktop environment into which failures can be injected, in order to separate what open-loop execution, step-by-step checking and action prediction each contribute.
+Experiment 6-13 shows how to connect real-hardware actions and how to accept the tidying result, but the accompanying records do not yet include real-hardware trials of this task. Below, three approaches are first compared in simulation: executing the plan open-loop, checking the result after every step, and predicting an action's consequences first. The task goal and the five kinds of tools stay the same, and faults can be triggered repeatedly, making it easy to observe how each approach handles the same mistake.
 
 ### VLA Control
 
-VLA stands for Vision-Language-Action. It takes the current frame and one skill instruction, then emits the action the robot should perform next:
+VLA stands for Vision-Language-Action. A VLA model generates the actions to execute next from the current image, the task instruction, and whatever robot state is available:
 
 ```text
-current observation + skill instruction → action
+当前观测 + 技能指令 → 动作或动作序列
 ```
 
-In the XLeRobot case the high-level planner only submits `pick(red_cup)`; the VLA or skill policy still has to decide, from the current frame, which direction to approach the cup from, when the gripper closes and along what trajectory the arm lifts. After the execution layer finishes that short motion it photographs the desk again, and only once the cup is confirmed to be held may the planner submit `place(red_cup, tray)`. A tool call therefore defines the desired state change, while the VLA defines how to realise that change through continuous motion.
+(That is: current observation + skill instruction → action or action sequence.)
 
-RT-2 and OpenVLA cut continuous actions into discrete tokens and emit them one at a time, like generating text; π₀ represents the other route, producing continuous, smooth action trajectories directly. Neither is simply better: discrete tokens combine more easily with language models, while continuous trajectories usually express smooth motion better. The real trade-off is how the action should be represented, not merely model size.[^ch6-15]
+In the desk-tidying example, the high-level planner submits `pick(red_cup)`, and the skill policy decides from the image which direction to approach the cup from, when to close the gripper, and along what trajectory to lift the arm. After executing this segment of motion, the system obtains a new observation of the desk, confirms that the cup has been grasped, and then proceeds to `place(red_cup, tray)`. The tool interface specifies the desired state change, while the VLA learns to achieve that change through continuous motion.
 
-A large model can usually run inference only 1–10 times per second, whereas a traditional controller may update tens to thousands of times per second. A common engineering answer is "action chunking": the model generates a short segment of future actions at once, a control thread executes that segment at a higher rate, and the model prepares the next segment in the background. This hides part of the inference wait inside the execution time. The cost is that the longer the segment, the smoother the motion but the fewer new frames the model sees during it; if the cup is knocked while XLeRobot reaches for it, the arm may still be executing actions generated from the old frame. Action chunking is therefore a trade-off between smoothness and reaction speed, not free acceleration.
+Actions can be represented in different ways. RT-2 and the original OpenVLA quantize the value of each action dimension into discrete tokens and output them the way a language model generates text; π₀ uses flow matching to generate continuous action chunks. The former makes it easy to reuse an autoregressive generation framework, while the latter directly models the distribution of a continuous segment of actions.[^ch6-15]
 
-### The Limits of VLAs
+Model inference and actuator control usually run at different update rates. Action chunking has the model generate a short segment of future actions at once, which a control thread executes at a higher rate. By further overlapping inference with execution, the system can prepare the next chunk while executing the current one, reducing waiting. Joining chunks also requires handling trajectory continuity and observation freshness: if the cup is bumped as the arm reaches for it, the remaining actions may still point to the old position. Shortening the segment actually executed each time, updating on a rolling basis with new observations, or interrupting the action when an anomaly is detected all improve responsiveness; these choices also add inference and scheduling overhead.
 
-"Long-horizon planning + VLA" is a practical baseline, but several problems are easy to overlook:
+### Data and Deployment Conditions for VLAs
 
-- **Limited training data**: robot demonstrations are far scarcer than internet text and images. That a model has seen the word "cup" does not mean it has seen cups of every material and friction condition.
-- **Imitation without consequence**: behaviour cloning mainly learns "what the demonstrator did next," and never explicitly requires the model to answer "what will this action cause."
-- **Robots differ**: different robots have different degrees of freedom, coordinate frames, grippers and actuator latencies, so the same action does not necessarily transfer to another machine.
-- **Observations go stale**: once an action chunk starts executing, an object may be moved, occluded or knocked over while the model is still deciding from the previous frame.
+Turning "pick up the cup" into reliable action requires dealing with several kinds of differences at once:
 
-So a language model knowing what a "cup" is does not mean it knows how friction, contact, liquid sloshing and a power cable will change the future state. A VLA mainly answers "what should be done now"; another kind of model is needed to judge "what may happen afterwards."
+- **Coverage of the training data**: robot action demonstrations are far scarcer than internet text and images. Knowing what a "cup" is still leaves the question of how much force to apply, which takes actual grasping experience. Demonstrations need to cover the cup's material, shape, pose, and friction conditions. The same grasp direction can produce different results on a ceramic mug and on a soft paper cup.
+- **Learning objectives for actions and consequences**: behavior cloning mainly learns what action the demonstrator would take under the current conditions. To compare the consequences of several actions, state prediction or evaluation of action outcomes can be added.
+- **Robot embodiment and interfaces**: degrees of freedom, coordinate frames, gripper design, and actuator latency determine how actions land on the hardware. Transferring a policy requires matching the action representation, calibration parameters, and control cycle.
+- **Freshness of observations**: while an action chunk executes, objects may be moved, occluded, or knocked over. The system must specify when to obtain new observations and when to use them to update the remaining actions.
+
+These conditions link visual recognition, skill control, and environmental change. Liquid in the cup affects how fast it can be carried, a power cord on the edge of the desk changes the feasible paths, and the contact between paper and desk affects how it can be gripped. If the planner can compare these consequences in advance, it has more to go on when choosing a skill.
 
 ### World Models
 
-A world model can be understood as an "action-outcome predictor." What it learns is: given the current state and some action, how the next state may change.
+In robot planning, an action-conditioned world model can be understood as an "action-outcome predictor": given the current state and a candidate action, it estimates what will happen next.
 
 ```text
-current state + candidate action
-    → predict the next state or a future segment
-    → compare candidate outcomes
-    → choose an action, replan, or stop safely
+当前状态 + 候选动作
+    → 预测下一状态或未来片段
+    → 比较候选结果
+    → 选择动作、重新规划或停止
 ```
 
-A world model usable for robotics has to do at least three things well:
+(That is: current state + candidate action → predict the next state or a future segment → compare candidate outcomes → choose an action, replan, or stop.)
 
-- understand the current state;
-- predict the outcomes different actions may bring;
-- pass those predictions to the planner or controller to help them choose.
+This process involves three jobs: representing the current state, predicting the state change an action causes, and letting the planner or controller choose an action on that basis. The state can consist of structured variables such as object positions and whether something is grasped, or of an internal representation extracted from images. V-JEPA 2 first learns state representations and prediction from video, and the further-trained V-JEPA 2-AC adds action conditioning for robot planning. Linking actions to future observations is also one modeling approach of World-Action Models.[^ch6-16]
 
-A VLM that can only describe video, or a model that can only generate frames, does not automatically become a reliable robot world model. It must also know what the actions are and be able to predict their effect on objects and the environment. V-JEPA 2 represents the route of predicting the future in an internal state, while World-Action Models explicitly learn the "action–future observation" relationship. These models can work alongside a VLA; they need not replace it.[^ch6-16]
+A world model can help a robot at three stages: before acting, it predicts what grasping, pushing, or waiting would each lead to; during execution, it compares predictions with actual observations and adjusts the action or replans when it detects a deviation; during training, it learns state changes from video, simulation data, and failure trajectories, reducing trial and error on real hardware.
 
-In practical systems a world model is typically used in three ways:
+Suppose the yellow scrap paper is partly hidden by the red cup. The planner can compare "grab the paper first," "move the cup first," and "grasp from a different direction." I would first have the world model predict the state changes that bear directly on the task and can be checked. If it can judge whether the paper becomes easier to grip and whether the cup is likely to be knocked over, it can rank the candidate actions. The model's state representation and training objectives should be designed around these judgments. If the model generates future frames, I would first check whether those frames accurately reflect these consequences before adding visual detail; the value of photorealism must ultimately show up as better planning and control. After execution, the system checks the actual result against the camera and robot state and decides whether to continue, retry, or switch plans.
 
-1. **Before acting**: compare candidates such as grasping, pushing or waiting, and prefer the lower-risk option;
-2. **During execution**: compare the real observation against the prediction, and on divergence shorten the action, stop, or replan;
-3. **During training**: learn state transitions from video, simulation data and failure trajectories, reducing trial and error on real hardware.
+The longer the prediction horizon, the more easily errors accumulate. In practice, one can predict short-term consequences first, execute a short segment, replan with new observations, and factor the uncertainty of predictions into the choice. Generative world models can also provide interactive simulation and visualized scenes; for use in control, the action conditioning, contact behavior, and prediction error must be validated further. Hardware limits, emergency stops, and real-time control remain the responsibility of the execution system.[^ch6-21]
 
-Back to the XLeRobot desk task: if the yellow paper is partly hidden under the red cup, the system can compare candidate skills such as "grab the paper first," "move the cup first" and "approach from another direction." The world model does not need to generate photorealistic robot video; predicting which candidates are more likely to make the paper graspable and which might knock the cup over is already enough to help the planner rank them. Once an action executes, the real camera observation remains the final truth; prediction can inform the choice but cannot replace checking that the task succeeded.
-
-What a world model gives is not a definite answer but a comparable prediction of "if I do this, what may happen." The further ahead it predicts, the larger the error usually grows, and a future frame that looks realistic may still violate real contact and friction. Practical systems therefore still need short-horizon prediction, real-time observation, an estimate of uncertainty, and an independent hardware safety controller. Generative world models can serve interactive simulation or visualisation, but "can generate video" must not be conflated with "can guide robot action."[^ch6-21]
-
-> **Experiment 6-13 ★★: Comparing three autonomous desk-tidying loops in simulation**
+> **Experiment 6-14 ★★: Comparing Three Autonomous Desk-Tidying Loops in Simulation**
 >
-> Put the task, object state, success conditions and five tools of experiment 6-12 into the desktop simulator unchanged, replacing only the real XLeRobot actuator with a controllable simulated one, and let grasps occasionally suffer recoverable transient failures. This allows three strategies to be compared without changing the problem.
+> Represent the red cup and the yellow scrap paper with structured state: each object is in one of three phases—"on the desk," "picked up," or "placed"—and each target area records whether it is available. The simulator provides five kinds of tools for observing, grasping, placing, checking, and stopping, and injects at most one transient failure when grasping the paper.
 >
-> **Open-loop execution** generates the full action sequence once and never observes again midway; **step-by-step checking** re-reads the state after every `pick` and `place` and retries only the current skill on failure; **predictive execution** adds a short-horizon world model, comparing the expected outcomes of candidate skills before choosing the next step. The experiment compares task success rate, tool-call overhead and failure-recovery ability, and checks that every final success is confirmed by a fresh `verify_state` observation.
+> Compare three control approaches. **Open-loop execution** performs the four actions in a fixed order. **Step-by-step checking** reads the state after each action and, after a failure, obtains a new observation before choosing the step that can currently be executed. **Predictive execution** uses a small neural network to learn the mapping from "state and action to next state" and ranks the executable actions by predicted progress toward having everything put away.
 >
-> The point is not to prove that a small simulated world model equals a real robot's physics model, but to verify a more basic relationship: an open-loop plan carries a single local failure all the way to the end of the task, step-by-step checking can recover, and action prediction can further help rank candidate skills. Whether the task is truly finished must still be decided by environment feedback.
+> Compare task completion, the number of tool calls, and the failure-recovery process. For example, after a failed grasp the paper remains on the desk, so attempting to place it directly fails because nothing was picked up; only by reading the state and retrying the grasp can placement proceed. Both feedback strategies call `verify_state` at the end to check that everything is in place.
+>
+> First, look at episodes without injected faults: all three strategies complete the task. With the fault-injection probability set to 50%, each strategy runs 384 episodes across three seeds (128 episodes per seed). Open-loop execution still makes 4 tool calls per episode and completes only 205 episodes. Step-by-step checking and predictive execution both complete all 384 episodes, each averaging about 6.93 calls. The extra calls are what let the controller detect a missed grasp and recover. In this task, where only one recoverable fault is injected, predicting the next state did not save a single episode more than simply checking again.
 
 ### From Simulation to a Real Robot
 
-Even if experiment 6-13 is stable in the simulator, that does not imply the real XLeRobot of experiment 6-12 will succeed the same way. Going from simulation to a real robot is not a matter of swapping in yet another controller, but of handling the differences between two environments. Training may use teleoperation data, video data or simulated interaction data; in real deployment the same red cup, yellow paper, tray and bin appear against different backgrounds, lighting, camera positions and occlusion relationships, and the arm additionally meets different friction, sensor noise and actuator latency. Once those differences are large enough, motions learned in simulation may fail in reality.
+Moving from a simulated desk to a real robot requires dealing with environmental differences one by one. On the visual side, the same cup and tray appear against different backgrounds, lighting, camera positions, and occlusion relationships; on the motion side, friction, sensor noise, and actuator latency affect trajectories and grasps.
 
-> **Experiment 6-14 ★★★: A cross-environment RGB test on the same desk task**
+Domain randomization varies backgrounds, object appearance, lighting, or noise during training, so the model learns to make the same judgment under many conditions. Experiment 6-15 studies just one link in this chain: having seen the object and the target area, which way should the arm move?
+
+> **Experiment 6-15 ★★★: A Cross-Environment RGB Test on the Same Desk Task**
 >
-> Keep using the basic "move the object to its target" problem in simulation, treating each sample as one local decision within desk tidying: from the RGB frame, judge which direction to approach the object from, or whether it can already be grasped. Train four visual policies with identical structure: one sees only a fixed scene, one varies the background, one varies object appearance, and the last varies background, appearance, lighting and noise together.
+> Generate RGB desk images with a circle representing the object and a square representing the target area. From their relative positions, the model outputs one of four movement directions—left, right, up, or down; when the two positions are close enough, it outputs the experiment-defined `grasp` label. This label means the 2D positions satisfy the approach condition.
 >
-> All policies are tested in the original environment and in the changed one, comparing action-decision accuracy before and after the visual conditions change. The question here is not "is the simulator already equal to the real XLeRobot," but a narrower one: does actively widening the range of visual variation during training help the same cup–tray, paper–bin task adapt to a new camera view? Even if the result improves, real deployment still requires real camera calibration, actuator testing and a complete safety loop.[^ch6-6]
+> Train four groups of visual policies with identical structure: fixed visual conditions, mainly varied backgrounds, mainly varied object appearance, and a combination of several kinds of variation. Apply each group's policy to the original conditions and to test images with new colors, textures, brightness, and noise; compare direction accuracy and examine the images on which judgments go wrong.
+>
+> Each test domain has 1,024 synthetic images per seed. First compare the average accuracy across three seeds: the policy trained under fixed visual conditions scores 93.03% in the source domain but drops to 54.82% in the target domain with new textures and noise (`target_realistic`); the policy trained with a combination of variations scores 87.50% in the source domain yet reaches 76.11% in the same target domain. Now look at the group that randomized only the background: it scores just 36.88% in this target domain.[^ch6-6]
 
 ## Chapter Summary
 
-Viewed along the two axes of **modality** and **execution timing**, **asynchrony and event-driven execution** expand observation from “the Agent fetches it” to “the world pushes it,” and action from “finish within the turn” to “start now and finish through later events.” **Voice** compresses the scale to milliseconds, moving from turn-taking toward continuous listening and speaking while dividing realtime foreground interaction from deeper background thought. **Computer Use** moves the loop to the screen, where the bottlenecks include efficiency, continuous visual understanding, and state confirmation after actions. **Robotics** moves it into the physical world, where action chunking trades smoothness against responsiveness and completion must still be judged from a new observation.
+Return to the flight-change call from the start of the chapter. While the background was searching for flights, the user added a baggage requirement. Even if the search result arrives after the user's message, it may answer the old question. The event queue must preserve each message's source, task identifier, and order, so that the foreground can pick up new requirements by priority and decide whether the original search can continue, should be cancelled, or must be rerun with new conditions. This is a problem of **timing**, and simply switching the request to voice does not solve it.
 
-The four sections share one control skeleton:
+Voice adds another layer of requirements. While reading out a fare, the assistant must still hear the user cut in, and once the date changes, it should stop the outdated announcement. Cascaded and end-to-end describe how sound passes through recognition, reasoning, and generation; full-duplex describes whether the user and the assistant can listen and speak at the same time.
+
+Move to a screen or a robotic arm and the same problem remains; only the **form of observation and action** changes. Button coordinates taken from the previous screenshot must be relocated after the page refreshes; a robotic arm can predict a short segment of continuous motion at a time for smoother joint movement, but the longer the segment, the harder it is to respond to changes mid-execution. High-level planning, skills, and low-level control work on different timescales, and whether the cup actually ended up in the tray still requires another look at the desk. Putting these interactions side by side reveals the sequence they share:
 
 ```text
-keep perceiving
-  → judge current state and timing
-  → choose a reply or an action
-  → let the output enter the environment
-  → observe the feedback
-  → continue, correct, retry, stop, or replan
+获取观测
+  → 判断当前状态与执行时机
+  → 选择回复或动作
+  → 执行并取得环境反馈
+  → 继续、修正、重试、停止或重新规划
 ```
 
-They also share the same primitives—wake-up, safe points, cancellation, preemption, and fast/slow separation.
+(That is: obtain an observation → judge the current state and the timing of execution → choose a reply or an action → execute and obtain feedback from the environment → continue, correct, retry, stop, or replan.)
 
-This chapter completes the last piece of the “building an Agent” part: the observation and action spaces have now been expanded in all three directions—content, modality, and timing. Next, Chapter 7 asks how to determine whether the system was built correctly; Chapter 8 explains how post-training updates model parameters; and Chapter 9 organizes runtime trajectories, evaluation, and multiple update carriers into a continual-evolution loop. Chapter 10 then moves from this complete single-Agent foundation to multi-Agent collaboration.
+This sequence helps locate faults. If the old quote keeps playing after the user cuts in, check who is responsible for waking the foreground, whether playback can be preempted, and which safe point the cancellation signal reached. If playback stops promptly but the old date is still reported, trace the search result along the handoff between foreground and background. Once it is fixed, how do you show that it gets things right across many more calls? From here, the book turns to improving capabilities. Chapter 7 first explains how to design tasks, record failures, and compare changes; post-training, continual evolution, and multi-agent collaboration all rely on this evaluation methodology.
 
-[^ch6-16]: Meta AI, “Introducing the V-JEPA 2 world model and new benchmarks for physical reasoning,” 2025-06-11. https://ai.meta.com/blog/v-jepa-2-world-model-benchmarks/; V-JEPA 2 technical report：arXiv:2506.09985, https://arxiv.org/abs/2506.09985
-[^ch6-21]: Jack Parker-Holder and Shlomi Fruchter, Google DeepMind, “Genie 3: A new frontier for world models,” 2025-08-05. https://deepmind.google/blog/genie-3-a-new-frontier-for-world-models/; Zachary Lin et al. *Cosmos World Foundation Model Platform for Physical AI.* arXiv:2501.03575, 2025. https://arxiv.org/abs/2501.03575 。
-[^ch6-1]: XLeRobot, "Teleop documentation". https://xlerobot.readthedocs.io/en/latest/software/getting_started/XLeRobot_teleop.html
-[^ch6-2]: Google DeepMind, "Gemini Robotics-ER 1.5". https://deepmind.google/models/gemini-robotics/gemini-robotics-er/; XLeRobot, "LLM Agent control". https://xlerobot.readthedocs.io/en/latest/software/getting_started/LLM_agent.html. The upstream XLeRobot example shows how the model and tool calls are orchestrated; this section keeps the same orchestration principle but restricts the action tools to calibrated desktop grasp, place, check and stop primitives.
-[^ch6-6]: LeRobot, "Sim2Real tutorial". https://github.com/StoneT2000/lerobot-sim2real/blob/87d6c1d969f6e0ca4dc5697940804e231118a63a/docs/zero_shot_rgb_sim2real.md
-[^ch6-15]: Moo Jin Kim et al. *OpenVLA: An Open-Source Vision-Language-Action Model.* arXiv:2406.09246, 2024. https://arxiv.org/abs/2406.09246
-[^ch6-22]: OpenAI, “[Async tool calling](https://developers.openai.com/api/docs/guides/async-tool-calling)”; “[Using GPT-6 Astra](https://developers.openai.com/api/docs/guides/latest-model)”, checked 2026-09-05.
-[^ch6-23]: OpenAI, “[Mid-turn steering](https://developers.openai.com/api/docs/guides/steering)”, checked 2026-09-05.
+[^ch6-1]: XLeRobot, Teleop documentation.
+[^ch6-2]: Google DeepMind, *Gemini Robotics-ER 1.5*. XLeRobot, LLM Agent control. The upstream XLeRobot example shows how the model and tool calls are orchestrated; this section keeps the same orchestration principle but restricts the action tools to calibrated desktop grasp, place, check, and stop primitives.
+[^ch6-6]: LeRobot, Sim2Real tutorial.
+[^ch6-15]: Moo Jin Kim et al., *OpenVLA: An Open-Source Vision-Language-Action Model*, arXiv:2406.09246, 2024. See also the RT-2 project page and Physical Intelligence's *Our First Generalist Policy*.
+[^ch6-16]: Meta AI, *Introducing the V-JEPA 2 world model and new benchmarks for physical reasoning*, June 11, 2025. Technical report: arXiv:2506.09985.
+[^ch6-22]: OpenAI, "Async tool calling"; "Using GPT-6 Astra," checked 2026-09-05.
+[^ch6-23]: OpenAI, "Mid-turn steering," checked 2026-09-05.
+
+[^ch6-audio-architectures]: OpenAI, *Voice activity detection*, which describes two ways of determining turn boundaries: by voice activity and by semantic judgment.
+[^ch6-voice-tools]: OpenAI's model documentation for GPT-Live-1 and GPT-Realtime describes background delegation and function calling respectively. For how to integrate Doubao Realtime Voice Model 3.0, see Volcano Engine's "Function Calling."
 
 ## Thought Questions
 
-1. ★★ In an asynchronous Agent architecture, the priority strategy for the event queue must be determined at design time. But if priority judgment itself requires semantic understanding (e.g., determining whether a new message is more urgent than the current task), who should make this judgment—a rules engine or another LLM call? What are the costs of each?
-2. ★★ In queue-based event processing, models tend to focus only on the last event. This chapter mitigates this through Agent status bar markers and summarization. But if the queue has 20 events backlogged (10 tool results + 5 user messages + 5 system alerts), how would you organize the presentation order and format of these events so that the model does not miss key information?
-3. ★★★ When an Agent interacts with the external world on behalf of a user, it essentially faces an identity choice: use an independent virtual identity (dedicated email and phone number) to act as a third party, or directly operate the user's personal accounts as the user? The former allows autonomous background operation, but third parties may not trust a non-human identity; the latter has more complete context and permissions but introduces authorization, trust, and security-boundary issues. In what scenarios do you think each mode should be chosen?
-4. ★★ The end-to-end model for voice Agents merges ASR-LLM-TTS into a single model, reducing latency but losing modularity. If the end-to-end model makes an error in a specific stage (e.g., speech recognition), debugging and fixing it is much harder than in a serial pipeline. How would you design an observability system for an end-to-end voice Agent?
-5. ★ Step-Audio R1 achieves "thinking while speaking" through the MPS dual-brain architecture. However, humans, when "thinking while speaking," often say things before they have fully thought them through, self-correct, or use filler words. Should an Agent's "thinking while speaking" mimic these human characteristics?
-6. ★★ SoM (Set-of-Mark) and its structured variants (DOM element indexing) convert Computer Use's visual localization from open-ended coordinate prediction to closed-set ID selection, but they all require detecting and annotating UI elements first—whether via a segmentation model or the DOM. If the interface contains non-standard controls or dynamically changing elements, the annotations may be incomplete or inaccurate. In such cases, should we fall back to coordinate prediction?
-7. ★★ Robot platforms like XLeRobot, costing a few hundred dollars, make teleoperation data collection inexpensive. However, the quality of teleoperation data depends heavily on the operator's skill. How would low-quality data from an unskilled operator affect the training of a VLA model? How can low-quality data be automatically filtered during the data collection phase?
-8. ★★★ This chapter covers three forms of interaction: voice, Computer Use, and robotics. Interaction architectures can improve through end-to-end integration, modular cascades, or separation of foreground interaction from background reasoning, without requiring a corresponding increase in reasoning capability. Over the next five years, should Agents prioritize stronger unified models or retain separate, replaceable models for fast interaction and deeper reasoning? Discuss the trade-offs in latency, observability, the pace of model upgrades, and task risk.
-9. ★★ DOM/Accessibility Tree element indexing works well on standard web applications, but an increasing number of software interfaces (Canvas/WebGL rendering, cross-platform custom-drawn controls) do not provide accessible structured information, relying solely on visual annotation or coordinate prediction. Do you think Computer Use should bet on a purely visual approach, or maintain both structured and visual paths? What are the costs and benefits of maintaining both paths?
-10. ★★ VLA models use action chunking—as mentioned in the text, the model generates a short sequence of future actions at once, and a control thread executes them at a higher rate—to hide inference latency within execution time. However, if the environment changes suddenly during execution (e.g., an object is moved), the pre-generated action sequence becomes invalid. How can we balance the efficiency advantage of action chunking with the need for responsiveness to environmental changes?
-11. ★★★ All three scenarios in this chapter—voice, Computer Use, and robotics—face latency in the "perceive-think-act" loop and need to divide responsibilities between deeper reasoning and timely interaction. In voice, this manifests as "correcting after misspeaking"; in Computer Use, as "clicking first, then looking"; in robotics, as "taking a step, then looking." How can classifying actions by risk, using reversible operations, verifying state, enforcing permission controls, and stopping safely prevent fast interaction from causing irreversible consequences?
-12. ★★★ The same set of primitives (wake-up, safe point, cancellation, preemption, fast/slow separation) recurs in this chapter at different time scales. Pick one and explain how its implementation differs between event-driven processing (seconds to days) and robot action chunking (milliseconds). What mainly determines that difference—the speed at which the environment changes, the reversibility of the action, or the cost of obtaining an observation?
+1. ★★ When an asynchronous Agent receives a new event, it must judge how the event ranks against the current task. If this judgment involves semantic understanding—for example, recognizing whether the user is adding a condition or demanding an immediate stop—how should responsibilities be divided between a rules engine and an LLM? Compare response time, cost, and the consequences of misjudgment.
+2. ★★ The event queue has a backlog of 20 events: 10 tool results, 5 user messages, and 5 system reminders. How would you organize their order, format, and processing status so that the model can track task dependencies and respond to important changes?
+3. ★★★ An Agent can use a dedicated email address and phone number, or it can operate the user's personal accounts after being authorized. Considering background operation, the other party's identity-verification requirements, the scope of permissions, and auditing, discuss the scenarios each identity approach suits.
+4. ★★ An end-to-end voice model processes audio directly, so errors in its intermediate stages are hard to locate from the outside. How would you design observations and controlled experiments to distinguish perception errors, reasoning errors, and expression errors?
+5. ★ Step-Audio R1.1's MPS lets formulation and expression advance together. How should the system use pauses, progress updates, and segmented expression? When later reasoning changes a conclusion that has already been spoken, how should it be handled?
+6. ★★ Both SoM's visual region annotation and DOM element indexing let the model point to where it wants to act with a single number. When facing nonstandard controls, occlusion, or dynamic changes, how would you combine re-annotation, coordinate prediction, and post-action checks?
+7. ★★ The quality of teleoperation data depends on the operator's skill. How do jitter, detours, pauses, and failed grasps affect VLA training? How can data be filtered while keeping valuable failure-recovery sequences?
+8. ★★★ Voice, Computer Use, and robotics can all use unified models, modular cascades, or a division of labor between foreground interaction and background reasoning. Looking ahead five years, how would you combine these routes? Explain your judgment in terms of latency, observability, upgrade cost, and task risk.
+9. ★★ Standard web pages can provide DOM or accessibility information, whereas Canvas, WebGL, and custom-drawn controls often rely on visual grounding. What costs does maintaining both structured and visual paths add, and what benefits does it bring?
+10. ★★ Action chunking lets a VLA generate a segment of future actions at once. If an object is moved during execution, how would you coordinate chunk length, re-observation, background reasoning, and action interruption to balance execution efficiency with responsiveness?
+11. ★★★ Fast interaction requires acting promptly. Using a voice reply, a web form submission, and a robotic grasp as examples, design action tiers, state confirmation, and stop mechanisms so that response speed matches the consequences of the task.
+12. ★★★ Choose one primitive—wake-up, safe point, cancellation, preemption, or fast/slow division of labor—and compare its implementation in event-driven tasks and in robot action chunking. How do the speed of environmental change, the reversibility of actions, and the cost of observation affect the design?
+13. ★★ Should a customer's chat, the approval discussion, and the payment callback for the same order be placed in the same thread? Compare merging threads with subscribing by correlated object in terms of processing order, parallelism, partition-key migration, and permission isolation.
+14. ★★ A voice travel assistant needs to check the weather, read user memory, search the web, look up flights, and book tickets. How should the foreground, background, and runtime divide the work? If the user says a fellow traveler's name aloud, and then asks about the weather while waiting for flight results, how do you avoid booking the wrong ticket or failing to report the results?
