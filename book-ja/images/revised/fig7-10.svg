@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="106.000mm" height="124.609mm" viewBox="0 0 900 1058" role="img" aria-labelledby="title desc">
-<title id="title">OpenVLA と RoboTwin2 の身体性 AI 環境</title><desc id="desc">ポリシーの適合、関節制御、環境フィードバック。</desc>
+<title id="title">OpenVLA と RoboTwin2 の身体性 AI 環境</title><desc id="desc">方策の適合、関節制御、環境フィードバック。</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
 <rect width="900" height="1058" fill="#ffffff" y="0" />
 <rect x="20" y="20" width="860" height="100" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />

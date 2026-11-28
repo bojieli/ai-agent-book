@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="106.000mm" height="128.378mm" viewBox="0 0 900 1090" role="img" aria-labelledby="title desc">
-<title id="title">コード修正の例：16 回の rollout の検証と相対アドバンテージ</title><desc id="desc">独立したサンドボックスでのサンプリング、二値報酬、グループ内アドバンテージとパラメータ更新。</desc>
+<title id="title">コード修正の例：16 回の rollout の検証と相対アドバンテージ</title><desc id="desc">独立したサンドボックスでのサンプリング、二値報酬、群内アドバンテージとパラメータ更新。</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#333333" /></marker></defs>
 <rect width="900" height="1090" fill="#ffffff" y="0" />
 <rect x="20" y="20" width="860" height="145" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.8" />
