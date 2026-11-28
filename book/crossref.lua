@@ -87,5 +87,20 @@ return {
         return linkify(el.text)
       end
     end,
-  }
+-- A link from one chapter source file to another, as in the reading guide at
+-- the end of the afterword (chapter6.md#从邮件事件建立基本循环). All chapters are
+-- one LaTeX document, so a section anchor becomes an internal link and Pandoc
+-- resolves it to that heading; a bare chapter link goes to the chapter label.
+Link = function(el)
+  local number, anchor = el.target:match('^chapter(%d+)%.md#(.+)$')
+  if anchor then
+    el.target = '#' .. anchor
+    return el
+  end
+  number = el.target:match('^chapter(%d+)%.md$')
+  if number then
+    return pandoc.RawInline('latex',
+      '\\crossreflink{' .. chap_label(number) .. '}{' .. pandoc.utils.stringify(el.content) .. '}')
+  end
+end,  },
 }

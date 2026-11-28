@@ -74,6 +74,24 @@
 
 接下来，去造点什么吧。
 
+
+## 附录：3.0 版相对 2.0 版的重读指引 {.unnumbered}
+
+3.0 版沿用 2.0 版的十章框架，但几乎每一节都重新写过，技术事实与实验记录也重新核对过。读过 2.0 版的读者，建议优先阅读下列新增或大幅扩写的小节：
+
+- **第 1 章　AI Agent 入门**：[观测空间与动作空间：模型与世界的接口](chapter1.md#观测空间与动作空间模型与世界的接口)、[工具：Agent 的感官和手脚](chapter1.md#工具agent-的感官和手脚)、[上下文：Agent 的当前决策视野](chapter1.md#上下文agent-的当前决策视野)、[从提示工程到 Graph 工程：工程关注范围的扩展](chapter1.md#从提示工程到-graph-工程工程关注范围的扩展)。
+- **第 2 章　上下文工程**：[上下文：让模型能力用于具体任务](chapter2.md#上下文让模型能力用于具体任务)、[从 API 消息到模型 Token：Chat Template](chapter2.md#从-api-消息到模型-tokenchat-template)、[KV Cache 与 Prompt Cache：两个层级的缓存](chapter2.md#kv-cache-与-prompt-cache两个层级的缓存)、[缓存作为架构约束](chapter2.md#缓存作为架构约束)、[压缩与 KV Cache 的取舍](chapter2.md#压缩与-kv-cache-的取舍)。
+- **第 3 章　用户记忆和知识库**：[稠密嵌入：用向量表示文本](chapter3.md#稠密嵌入用向量表示文本)、[稀疏表示：从关键词到相关性评分](chapter3.md#稀疏表示从关键词到相关性评分)、[混合检索：合并两路结果再重排](chapter3.md#混合检索合并两路结果再重排)、[知识的组织与检索](chapter3.md#知识的组织与检索)、[结构化索引：建立层次与关联](chapter3.md#结构化索引建立层次与关联)。
+- **第 4 章　工具**：[工具描述：说明用途、参数与反馈](chapter4.md#工具描述说明用途参数与反馈)、[工具生态：MCP 与 Skill Hub](chapter4.md#工具生态mcp-与-skill-hub)、[层次化组织与按需加载](chapter4.md#层次化组织与按需加载)。
+- **第 5 章　Coding Agent 与通用 Agent**：[Harness 工程在 Coding Agent 中的实践](chapter5.md#harness-工程在-coding-agent-中的实践)、[故障与错误恢复](chapter5.md#故障与错误恢复)、[Coding Agent 的安全](chapter5.md#coding-agent-的安全)、[代码作为思考工具](chapter5.md#代码作为思考工具)。
+- **第 6 章　交互：观察与动作空间的扩展**：[接入层：多种来源，一种事件](chapter6.md#接入层多种来源一种事件)、[从邮件事件建立基本循环](chapter6.md#从邮件事件建立基本循环)、[可靠处理异步任务](chapter6.md#可靠处理异步任务)、[认知时序：实时交互与深度思考](chapter6.md#认知时序实时交互与深度思考)。
+- **第 7 章　Agent 的评估**：[从一条任务理解评估：τ²-bench 的 telecom 领域](chapter7.md)、[沿着运行轨迹检查结果](chapter7.md#沿着运行轨迹检查结果)、[LLM-as-a-Judge：把质量要求转成逐项评分](chapter7.md#llm-as-a-judge把质量要求转成逐项评分)、[A/B 测试：区分改动机制与业务目标](chapter7.md#ab-测试区分改动机制与业务目标)。
+- **第 8 章　模型后训练**：[预训练：从下一个 token 学习文本规律](chapter8.md#预训练从下一个-token-学习文本规律)、[根据模型起点安排 SFT 与 RL](chapter8.md#根据模型起点安排-sft-与-rl)、[奖励在什么时候给：结果与过程](chapter8.md#奖励在什么时候给结果与过程)、[路径约束与 RLVP](chapter8.md#路径约束与-rlvp)、[在轨自蒸馏：用额外上下文构造教师](chapter8.md#在轨自蒸馏用额外上下文构造教师)。
+- **第 9 章　Agent 的持续进化**：[从更新产物到优化更新方法](chapter9.md#从更新产物到优化更新方法)、[开放式任务中的证据与评价](chapter9.md#开放式任务中的证据与评价)。
+- **第 10 章　多 Agent 协作**：[多 Agent 何时优于单 Agent](chapter10.md#多-agent-何时优于单-agent)、[对等协作模式：相互检查与迭代改进](chapter10.md#对等协作模式相互检查与迭代改进)、[跨组织协作：A2A 协议](chapter10.md#跨组织协作a2a-协议)、[Moltbook：开放平台上的 Agent 交互](chapter10.md#moltbook开放平台上的-agent-交互)。
+
+完整的变更说明与编号对照见仓库中的 `docs/CHANGELOG-v3.0.md`。
+
 [^kelvin]: Lord Kelvin, *Nineteenth Century Clouds over the Dynamical Theory of Heat and Light*, 1901，根据 1900 年 4 月 27 日演讲整理。
 
 [^mimo]: 小米 MiMo, “MiMo-V2.5-Pro-UltraSpeed: Pushing 1T-Parameter Model Generation Speed to 1000 TPS”, 2026-06-08。文中介绍 FP4 量化、DFlash 块级并行推测解码与 TileRT 的协同设计。

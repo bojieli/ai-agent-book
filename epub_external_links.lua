@@ -3,12 +3,25 @@
 -- Those directories are not bundled into EPUB files, so make the links point
 -- at the corresponding directory on GitHub before Pandoc packages the book.
 
-function Link(link)
+local heading_ids = {}
+
+local function collect(doc)
+  doc:walk({ Header = function(header) heading_ids[header.identifier] = true end })
+end
+
+local function Link(link)
   -- Links between chapter source files are valid in the repository, but the
   -- Markdown filenames are not packaged into an EPUB.  Point these links at
   -- the corresponding source file on GitHub so EPUBCheck does not reject a
   -- dangling resource (and readers can still follow the reference).
   local chapter_file, chapter_suffix = link.target:match("^(chapter%d+%.md)(.*)$")
+  -- A section anchor that is a heading in this book stays inside the EPUB,
+  -- so a reader of the reading guide in the afterword can jump straight there.
+  local anchor = chapter_suffix and chapter_suffix:match("^#(.+)$")
+  if anchor and heading_ids[anchor] then
+    link.target = "#" .. anchor
+    return link
+  end
   if chapter_file and (chapter_suffix == "" or chapter_suffix:match("^[#?]")) then
     link.target = "https://github.com/bojieli/ai-agent-book/blob/main/book/" .. chapter_file .. chapter_suffix
     return link
@@ -25,3 +38,9 @@ function Link(link)
     return link
   end
 end
+
+-- Collect every heading identifier first, then rewrite links against that set.
+return {
+  { Pandoc = function(doc) collect(doc) end },
+  { Link = Link },
+}
