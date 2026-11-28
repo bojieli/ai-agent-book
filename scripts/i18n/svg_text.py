@@ -46,6 +46,8 @@ SVG_NS = 'http://www.w3.org/2000/svg'
 # an SVG <text> to anything that parses the file as HTML, which matters when a
 # reader or a measuring browser inlines the figure.
 ET.register_namespace('', SVG_NS)
+# Embedded raster images link with xlink:href; keep that prefix rather than ns1.
+ET.register_namespace('xlink', 'http://www.w3.org/1999/xlink')
 NS = f'{{{SVG_NS}}}'
 
 # Font stacks per script. Each lists the fonts the CI PDF build installs (see
