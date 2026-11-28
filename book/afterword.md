@@ -75,22 +75,22 @@
 接下来，去造点什么吧。
 
 
-## 附录：3.0 版相对 2.0 版的重读指引 {.unnumbered}
+## 附录：3.0 版主要更新 {.unnumbered}
 
-3.0 版沿用 2.0 版的十章框架，但几乎每一节都重新写过，技术事实与实验记录也重新核对过。读过 2.0 版的读者，建议优先阅读下列新增或大幅扩写的小节：
+3.0 版沿用十章框架，主要更新如下，各条后的链接指向正文相应小节。
 
-- **第 1 章　AI Agent 入门**：[观测空间与动作空间：模型与世界的接口](chapter1.md#观测空间与动作空间模型与世界的接口)、[工具：Agent 的感官和手脚](chapter1.md#工具agent-的感官和手脚)、[上下文：Agent 的当前决策视野](chapter1.md#上下文agent-的当前决策视野)、[从提示工程到 Graph 工程：工程关注范围的扩展](chapter1.md#从提示工程到-graph-工程工程关注范围的扩展)。
-- **第 2 章　上下文工程**：[上下文：让模型能力用于具体任务](chapter2.md#上下文让模型能力用于具体任务)、[从 API 消息到模型 Token：Chat Template](chapter2.md#从-api-消息到模型-tokenchat-template)、[KV Cache 与 Prompt Cache：两个层级的缓存](chapter2.md#kv-cache-与-prompt-cache两个层级的缓存)、[缓存作为架构约束](chapter2.md#缓存作为架构约束)、[压缩与 KV Cache 的取舍](chapter2.md#压缩与-kv-cache-的取舍)。
-- **第 3 章　用户记忆和知识库**：[稠密嵌入：用向量表示文本](chapter3.md#稠密嵌入用向量表示文本)、[稀疏表示：从关键词到相关性评分](chapter3.md#稀疏表示从关键词到相关性评分)、[混合检索：合并两路结果再重排](chapter3.md#混合检索合并两路结果再重排)、[知识的组织与检索](chapter3.md#知识的组织与检索)、[结构化索引：建立层次与关联](chapter3.md#结构化索引建立层次与关联)。
-- **第 4 章　工具**：[工具描述：说明用途、参数与反馈](chapter4.md#工具描述说明用途参数与反馈)、[工具生态：MCP 与 Skill Hub](chapter4.md#工具生态mcp-与-skill-hub)、[层次化组织与按需加载](chapter4.md#层次化组织与按需加载)。
-- **第 5 章　Coding Agent 与通用 Agent**：[Harness 工程在 Coding Agent 中的实践](chapter5.md#harness-工程在-coding-agent-中的实践)、[故障与错误恢复](chapter5.md#故障与错误恢复)、[Coding Agent 的安全](chapter5.md#coding-agent-的安全)、[代码作为思考工具](chapter5.md#代码作为思考工具)。
-- **第 6 章　交互：观察与动作空间的扩展**：[接入层：多种来源，一种事件](chapter6.md#接入层多种来源一种事件)、[从邮件事件建立基本循环](chapter6.md#从邮件事件建立基本循环)、[可靠处理异步任务](chapter6.md#可靠处理异步任务)、[认知时序：实时交互与深度思考](chapter6.md#认知时序实时交互与深度思考)。
-- **第 7 章　Agent 的评估**：[从一条任务理解评估：τ²-bench 的 telecom 领域](chapter7.md)、[沿着运行轨迹检查结果](chapter7.md#沿着运行轨迹检查结果)、[LLM-as-a-Judge：把质量要求转成逐项评分](chapter7.md#llm-as-a-judge把质量要求转成逐项评分)、[A/B 测试：区分改动机制与业务目标](chapter7.md#ab-测试区分改动机制与业务目标)。
-- **第 8 章　模型后训练**：[预训练：从下一个 token 学习文本规律](chapter8.md#预训练从下一个-token-学习文本规律)、[根据模型起点安排 SFT 与 RL](chapter8.md#根据模型起点安排-sft-与-rl)、[奖励在什么时候给：结果与过程](chapter8.md#奖励在什么时候给结果与过程)、[路径约束与 RLVP](chapter8.md#路径约束与-rlvp)、[在轨自蒸馏：用额外上下文构造教师](chapter8.md#在轨自蒸馏用额外上下文构造教师)。
-- **第 9 章　Agent 的持续进化**：[从更新产物到优化更新方法](chapter9.md#从更新产物到优化更新方法)、[开放式任务中的证据与评价](chapter9.md#开放式任务中的证据与评价)。
-- **第 10 章　多 Agent 协作**：[多 Agent 何时优于单 Agent](chapter10.md#多-agent-何时优于单-agent)、[对等协作模式：相互检查与迭代改进](chapter10.md#对等协作模式相互检查与迭代改进)、[跨组织协作：A2A 协议](chapter10.md#跨组织协作a2a-协议)、[Moltbook：开放平台上的 Agent 交互](chapter10.md#moltbook开放平台上的-agent-交互)。
+- **重写大部分小节的行文。** 综述式的罗列改为教学式的讲解：先摆出问题和实际结果，再引出概念。一次预算 1200 元的订票委托贯穿第一、六、九章（[观测空间与动作空间](chapter1.md#观测空间与动作空间模型与世界的接口)），第十章则用合译一本书贯穿全章（[上下文经济学](chapter10.md#上下文经济学)）。
+- **新增专用判断模型的用法。** 书中主张由主模型想清楚怎样完成任务，把范围明确的判断交给 TypeSafe 的 Jev 这类专用判断模型（[Harness 工程](chapter1.md#harness-工程模型之外的竞争力)）。书中用它判断新消息要不要唤醒主模型（[事件处理机制](chapter6.md#事件处理机制)），检查工具调用是否超出用户交代的范围（[执行工具](chapter4.md#执行工具)），按评分细则批量评分（[LLM-as-a-Judge](chapter7.md#llm-as-a-judge把质量要求转成逐项评分)），以及从取回的记忆中挑出本次用得上的几条（[记忆框架案例](chapter3.md#记忆框架案例)）。
+- **新增观测空间的稀疏化。** 系统持续观察环境，只把可能改变下一步行动的变化交给主模型。消息由判断模型筛选；语音靠语义 VAD 根据话意判断用户是否说完（[交互时序](chapter6.md#交互时序从级联到全双工)）；屏幕画面则按像素差异挑出关键帧（[能看动画、能听声音的 Computer Use Agent](chapter6.md#能看动画能听声音的-computer-use-agent)）。
+- **新增个人代办 Agent 的案例。** 前言用 Pine 协商账单说明，客服在电话里答应减免时，助手只能报告“客服答应了”；要说“钱已经退了”，还得等账单上出现这笔退款。DeepSeek Harness 团队的 dsh-superagent 原型让主会话只负责接收请求、答复用户，不读代码；每张工单另有执行会话和工作目录（[事件处理机制](chapter6.md#事件处理机制)、[管理者模式](chapter10.md#管理者模式集中分派与跨任务决策)）。
+- **新增办公 Agent 案例。** 用户在 Multica 的工单评论中点名某个 Agent，就能请它临时协助，工单的负责人和状态都不变，书中借此区分临时求助与责任移交（[Agent 间的通信与控制](chapter10.md#agent-间的通信与控制)）。LobeHub 的群聊把同一个方案同时广播给几位专家；若一位专家要用到另一位的结果，就得等前一轮答复写回后再请他发言（[专家小组模式](chapter10.md#专家小组模式)）。
+- **新增科研 Agent 案例。** 数学家 Levent Alpöge 与 Claude 合作，发布了涉及黎曼猜想的 Lean 形式化证明，当天已由独立的证明内核检查通过。书中用它说明怎样审核这类产物：先确认最后的定理确实是原来的猜想，再交给独立的工具检查（[提议者—审核者范式](chapter10.md#提议者审核者范式)）。三维 Navier–Stokes 方程是千禧年难题之一。OpenAI 把“证明光滑性”和“构造反例”分给不同小组，其中一组约一万个 Agent 找到了反例：流体在光滑外力作用下会在有限时间内出现奇性。团队报告，这满足克雷数学研究所题面中允许外力的两种表述，评定结果尚待研究所按程序给出。书中用它说明怎样让多支队伍真正走不同的路线（[管理者模式](chapter10.md#管理者模式集中分派与跨任务决策)）。
+- **修订语音交互。** 新增“工具由前台还是后台调用”的讨论，对照 GPT-Live-1、GPT-Realtime 和豆包实时语音模型 3.0 的做法，并配套新的实验 6-7（[认知时序](chapter6.md#认知时序实时交互与深度思考)）。全双工部分以 Thinking Machines Lab 交互模型的 200 毫秒微轮次为例，配新图逐格说明听和说怎样交错（[交互时序](chapter6.md#交互时序从级联到全双工)）。
+- **全书插图重绘。** 115 幅插图全部改为适合印刷的灰度矢量图。
+- **新增蒙古语版。** 由社区译者 [@ZERO1zx1](https://github.com/ZERO1zx1) 翻译，可下载 [PDF](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.pdf) 和 [EPUB](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-mn.epub)。
+- **合并社区贡献。** 共合并 30 多个 PR，解决 20 多个 Issue。
 
-完整的变更说明与编号对照见仓库中的 `docs/CHANGELOG-v3.0.md`。
+分章的完整变更，以及实验和思考题的编号对照，见[3.0 版变更清单](https://github.com/bojieli/ai-agent-book/blob/main/docs/CHANGELOG-v3.0.md)。
 
 [^kelvin]: Lord Kelvin, *Nineteenth Century Clouds over the Dynamical Theory of Heat and Light*, 1901，根据 1900 年 4 月 27 日演讲整理。
 

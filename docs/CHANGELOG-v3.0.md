@@ -91,9 +91,15 @@
 
 ### 第 10 章　多 Agent 协作
 
-- **[多 Agent 何时优于单 Agent](https://bojieli.github.io/ai-agent-book/astro/book/chapter10/#多-agent-何时优于单-agent)**：新增小节：先问新增的 Agent 带来什么信息增量（新证据、另一条搜索路径、不同专业判断），再看并行与上下文隔离能带来多少收益。
-- **[对等协作模式：相互检查与迭代改进](https://bojieli.github.io/ai-agent-book/astro/book/chapter10/#对等协作模式相互检查与迭代改进)**：新增小节，与管理者模式对照。
-- **[跨组织协作：A2A 协议](https://bojieli.github.io/ai-agent-book/astro/book/chapter10/#跨组织协作a2a-协议)**：按协议现状重写。
+全章按设计问题重新组织，用合译一本书时一次跨章的术语变更贯穿始终。
+
+- **[上下文经济学](https://bojieli.github.io/ai-agent-book/astro/book/chapter10/#上下文经济学)**：新增章首小节。保留背景要付出处理和维护成本，重新取得背景要检索和理解，交给另一位成员还要同步变化。由此引出两项选择：成员是否共享上下文，由谁决定下一步。
+- **[多 Agent 何时优于单 Agent](https://bojieli.github.io/ai-agent-book/astro/book/chapter10/#多-agent-何时优于单-agent)**：先问新增的 Agent 带来什么信息增量（新证据、另一条搜索路径、不同的专业判断），再看并行与上下文隔离能带来多少收益。
+- **[从任务依赖到角色与组织](https://bojieli.github.io/ai-agent-book/astro/book/chapter10/#从任务依赖到角色与组织)**：新增小节，讲哪些工作必须一起做、决策权怎样划分，以及按次外包、临时成员和常驻成员各适合什么情形。
+- **[交接时传什么，以哪份记录为准](https://bojieli.github.io/ai-agent-book/astro/book/chapter10/#交接时传什么以哪份记录为准)**：新增小节，比较点对点、广播和“公告板加事件通知”三种交接方式。
+- **[对等协作模式：围绕同一产物反复修订](https://bojieli.github.io/ai-agent-book/astro/book/chapter10/#对等协作模式围绕同一产物反复修订)** 与 **[管理者模式：集中分派与跨任务决策](https://bojieli.github.io/ai-agent-book/astro/book/chapter10/#管理者模式集中分派与跨任务决策)**：补充 Multica、LobeHub、dsh-superagent，以及黎曼猜想形式化证明的审核和 Navier–Stokes 反例搜索等案例。
+- **[验收、取消与恢复](https://bojieli.github.io/ai-agent-book/astro/book/chapter10/#验收取消与恢复)**：新增小节，把 Loop 工程、并行分支的收尾、验证预算和失败模式放到同一个问题下。
+- **[跨组织协作：A2A 协议](https://bojieli.github.io/ai-agent-book/astro/book/chapter10/#跨组织协作a2a-协议)**：按协议现状重写，移到章末与 Agent 社会一起讨论。
 - **[Moltbook：开放平台上的 Agent 交互](https://bojieli.github.io/ai-agent-book/astro/book/chapter10/#moltbook开放平台上的-agent-交互)**：新增案例：2026 年 1 月上线，早期注册规模约 150 万；开放平台把用户设定、平台提示与模型生成混在同一条信息流里，传播行为难以归因。
 - 编号变化：实验与思考题编号不变。
 
@@ -111,7 +117,7 @@
 
 ## 书内怎么找
 
-中文版 PDF、EPUB 与[在线阅读站](https://bojieli.github.io/ai-agent-book/astro/)的后记末尾附有本清单的精简版（[附录：3.0 版相对 2.0 版的重读指引](../book/afterword.md)），PDF 与网页读者都可以从那里按章跳转。
+中文版 PDF、EPUB 与[在线阅读站](https://bojieli.github.io/ai-agent-book/astro/)的后记末尾附有本清单的精简版（[附录：3.0 版主要更新](../book/afterword.md)），PDF 与网页读者都可以从那里按章跳转。
 
 ## 非中文版本
 
